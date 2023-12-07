@@ -2,9 +2,12 @@
 
 namespace App\Services;
 
+use App\Enums\CustomerTypeEnum;
 use App\Enums\DatabaseColumnsString;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypeId;
+use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Enums\TravelQuoteEnum;
 use App\Facades\Ken;
@@ -12,6 +15,7 @@ use App\Models\TravelMemberDetail;
 use App\Models\TravelQuote;
 use App\Models\TravelQuotePlan;
 use App\Models\TravelQuoteRequestDetail;
+use App\Repositories\CustomerMembersRepository;
 use App\Traits\AddPremiumAllLobs;
 use App\Traits\RolePermissionConditions;
 use Auth;
@@ -92,7 +96,27 @@ class TravelQuoteService extends BaseService
             'end_date',
             'direction_code',
             'coverage_code',
-            'tqr.primary_member_id'
+            'tqr.primary_member_id',
+            'tqr.risk_score',
+            'tqr.kyc_decision',
+            DB::raw('IF(EXISTS (
+                SELECT *
+                FROM quote_request_entity_mapping
+                WHERE quote_type_id = '.QuoteTypeId::Travel.' AND quote_request_id = tqr.id),
+                "'.CustomerTypeEnum::Entity.'", "'.CustomerTypeEnum::Individual.'")
+            as customer_type'),
+            'c.insured_first_name',
+            'c.insured_last_name',
+            'c.emirates_id_number',
+            'c.emirates_id_expiry_date',
+            'qrem.entity_id',
+            'ent.code as entity_code',
+            'ent.trade_license_no',
+            'ent.company_name',
+            'ent.company_address',
+            'qrem.entity_type_code',
+            'ent.industry_type_code',
+            'ent.emirate_of_registration_id'
         )
             ->leftJoin('travel_cover_for as tcf', 'tcf.id', '=', 'tqr.travel_cover_for_id')
             ->leftJoin('travel_quote_request_detail as tqrd', 'tqr.id', '=', 'tqrd.travel_quote_request_id')
@@ -105,7 +129,13 @@ class TravelQuoteService extends BaseService
             ->leftJoin('currently_located_in as cli', 'cli.id', '=', 'tqr.currently_located_in_id')
             ->leftJoin('nationality', 'nationality.id', '=', 'tqr.destination_id')
             ->leftJoin('travel_plan as tp', 'tp.id', '=', 'tqr.plan_id')
-            ->leftJoin('payment_status as ps', 'ps.id', '=', 'tqr.payment_status_id');
+            ->leftJoin('payment_status as ps', 'ps.id', '=', 'tqr.payment_status_id')
+            ->leftJoin('customer as c', 'tqr.customer_id', 'c.id')
+            ->leftJoin('quote_request_entity_mapping as qrem', function ($entityMappingJoin) {
+                $entityMappingJoin->on('qrem.quote_type_id', '=', DB::raw(QuoteTypeId::Travel));
+                $entityMappingJoin->on('qrem.quote_request_id', '=', 'tqr.id');
+            })
+            ->leftJoin('entities as ent', 'qrem.entity_id', '=', 'ent.id');
     }
 
     public function saveTravelQuote(Request $request)
@@ -162,6 +192,11 @@ class TravelQuoteService extends BaseService
 
         if ($request->uuid != null) {
             $travelQuote['quoteUID'] = $request->uuid;
+            $travelQuoteData = TravelQuote::where('uuid', $travelQuote['quoteUID'])->first();
+            $selectedColumns = ['id', 'gender', 'dob'];
+            $travelersMembers = CustomerMembersRepository::getMemberInfo('quote_id', $travelQuoteData->id, QuoteTypes::TRAVEL->name, CustomerTypeEnum::Individual, $selectedColumns);
+            $travelQuote['members'] = $travelersMembers;
+            $this->setQuoteUpdatedAt($travelQuoteData->id);
             $response = Ken::request('/get-revised-travel-quote-plans', 'post', $travelQuote);
 
             return $response;
@@ -522,6 +557,7 @@ class TravelQuoteService extends BaseService
         return [
             'id' => 'readonly|none',
             'code' => 'input|title',
+            'customer_type' => 'input|title',
             'first_name' => 'input|text|required',
             'last_name' => 'input|text|required',
             'email' => 'input|email|required',
@@ -633,6 +669,9 @@ class TravelQuoteService extends BaseService
             case 'parent_duplicate_quote_id':
                 $title = 'Parent Ref-ID';
                 break;
+            case 'customer_type':
+                $title = 'Customer Type';
+                break;
             default:
                 break;
         }
@@ -737,7 +776,7 @@ class TravelQuoteService extends BaseService
 
     public function getMembersDetail($id)
     {
-        return TravelMemberDetail::where('travel_quote_request_id', $id)->get();
+        return TravelMemberDetail::where('travel_quote_request_id', $id)->with('nationality', 'relation')->get();
     }
 
     public function getAboveAgeMembers($id)
@@ -851,5 +890,12 @@ class TravelQuoteService extends BaseService
         $travelQuotePlans = TravelQuotePlan::where('travel_quote_request_id', $id)->first();
 
         return $travelQuotePlans;
+    }
+
+    public function setQuoteUpdatedAt($id)
+    {
+        $travelQuote = TravelQuote::find($id);
+        $travelQuote->quote_updated_at = Carbon::now();
+        $travelQuote->save();
     }
 }

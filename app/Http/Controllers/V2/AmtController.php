@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\V2;
 
+use App\Enums\CustomerTypeEnum;
+use App\Enums\LookupsEnum;
 use App\Enums\quoteBusinessTypeCode;
 use App\Enums\quoteStatusCode;
 use App\Enums\QuoteStatusEnum;
@@ -12,10 +14,18 @@ use App\Enums\RolesEnum;
 use App\Http\Controllers\Controller;
 use App\Models\BusinessInsuranceType;
 use App\Models\BusinessQuote;
+use App\Models\Emirate;
+use App\Models\Entity;
 use App\Models\GroupMedicalType;
+use App\Models\Nationality;
+use App\Repositories\BusinessQuoteRepository;
+use App\Repositories\CustomerMembersRepository;
+use App\Repositories\DocumentTypeRepository;
+use App\Repositories\InsuranceProviderRepository;
+use App\Repositories\LookupRepository;
 use App\Repositories\LostReasonRepository;
 use App\Repositories\QuoteStatusRepository;
-use App\Services\ActivitiesService;
+use App\Services\AMLService;
 use App\Services\BusinessQuoteService;
 use App\Services\CRUDService;
 use App\Services\CustomerService;
@@ -30,30 +40,7 @@ use Illuminate\Support\Facades\Redirect;
 
 class AmtController extends Controller
 {
-    protected $businessQuoteService;
-    protected $crudService;
-    protected $lookupService;
-    protected $customerService;
-    protected $dropdownSourceService;
-    protected $activityService;
-
     use RolePermissionConditions;
-
-    public function __construct(
-        BusinessQuoteService $businessQuoteService,
-        CRUDService $crudService,
-        LookupService $lookupService,
-        CustomerService $customerService,
-        DropdownSourceService $dropdownSourceService,
-        ActivitiesService $activityService
-    ) {
-        $this->businessQuoteService = $businessQuoteService;
-        $this->crudService = $crudService;
-        $this->lookupService = $lookupService;
-        $this->customerService = $customerService;
-        $this->dropdownSourceService = $dropdownSourceService;
-        $this->activityService = $activityService;
-    }
 
     /**
      * Display a listing of the resource.
@@ -101,8 +88,7 @@ class AmtController extends Controller
             $data->where('bqr.advisor_id', Auth::user()->id);    // fetch leads assigned to the user
         }
         $this->whereBasedOnRole($data, 'bqr');
-
-        $leadStatuses = $this->dropdownSourceService->getDropdownSource('quote_status_id', QuoteTypeId::Business);
+        $leadStatuses = app(DropdownSourceService::class)->getDropdownSource('quote_status_id', QuoteTypeId::Business);
 
         $advisors = DB::table('users as u')
             ->join('model_has_roles as mr', 'mr.model_id', '=', 'u.id')
@@ -214,7 +200,7 @@ class AmtController extends Controller
             'number_of_employees' => 'required',
             'brief_details' => 'required',
         ]);
-        $record = $this->businessQuoteService->saveBusinessQuote($request);
+        $record = app(BusinessQuoteService::class)->saveBusinessQuote($request);
         if (isset($record->message) && str_contains($record->message, 'Error')) {
             return Redirect::back()->with('message', $record->message)->withInput();
         } else {
@@ -232,30 +218,61 @@ class AmtController extends Controller
      */
     public function show($id)
     {
-        $record = BusinessQuote::with(
-            'advisor',
-            'previousAdvisor',
-            'businessQuoteRequestDetail.lostReason'
-        )->where([
+        $crudService = app(CRUDService::class);
+        $record = BusinessQuoteRepository::getBy([
             'uuid' => $id,
             'business_type_of_insurance_id' => quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical),
-        ])->first();
-        abort_if(! $record, 404);
+        ]);
 
+        $companyType = LookupRepository::where('key', LookupsEnum::COMPANY_TYPE)->get();
         $data = $record->toArray();
         $record->lost_reason = $data['business_quote_request_detail']['lost_reason']['text'] ?? null;
         $record->previous_advisor_id_text = $data['previous_advisor']['name'] ?? null;
-        $quoteDetails = $this->businessQuoteService->getDetailEntity($record->id);
+        $quoteDetails = app(BusinessQuoteService::class)->getDetailEntity($record->id);
         $quoteStatuses = QuoteStatusRepository::byQuoteTypeId(QuoteTypes::BUSINESS->id())->get();
         $lostReasons = LostReasonRepository::orderBy('text', 'asc')->get();
-        $allowedDuplicateLOB = $this->crudService->getAllowedDuplicateLOB('Group Medical', $record->code);
-        $customerAdditionalContacts = $this->customerService->getAdditionalContacts($record->customer_id, $record->mobile_no);
+        $allowedDuplicateLOB = $crudService->getAllowedDuplicateLOB('Group Medical', $record->code);
+        $customerAdditionalContacts = app(CustomerService::class)->getAdditionalContacts($record->customer_id, $record->mobile_no);
+        $UBODetails = CustomerMembersRepository::getBy($record->id, QuoteTypes::BUSINESS->name, CustomerTypeEnum::Entity);
+
+        $nationalities = Nationality::where('is_active', 1)->select('id', 'text')->get();
+        $UBORelations = LookupRepository::where('key', LookupsEnum::UBO_RELATION)->get();
+        $emirates = Emirate::where('is_active', 1)->select('id', 'text')->get();
+
+        if (AMLService::checkAMLStatusFailed(QuoteTypes::BUSINESS->id(), $record->id)) {
+            $quoteStatuses = collect($quoteStatuses)->filter(function ($value) {
+                return $value['id'] != QuoteStatusEnum::TransactionApproved;
+            })->values();
+        }
+
+        $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypes::BUSINESS->id());
+        $countries = Nationality::all();
+        $amlQuoteStatus = $crudService->checkAmlQuoteStatus($record->quote_status_id);
+        $entities = Entity::all();
+        $lookupService = app(LookupService::class);
+        $legalStructure = $lookupService->getLegalStructure();
+        $idDocumentType = $lookupService->getEntityDocumentTypes();
+        $issuancePlace = $lookupService->getIssuancePlaces();
+        $issuanceAuthorities = $lookupService->getIssuanceAuthorities();
+
+        $documentTypes = DocumentTypeRepository::byQuoteTypeId(QuoteTypes::BUSINESS->id())->get();
 
         return inertia('GroupMedicalQuote/Show', [
+            'documentTypes' => $documentTypes,
+            'storageUrl' => storageUrl(),
+            'amlQuoteStatus' => $amlQuoteStatus,
+            'countryList' => $countries,
+            'entities' => $entities,
+            'legalStructure' => $legalStructure,
+            'idDocumentType' => $idDocumentType,
+            'issuancePlace' => $issuancePlace,
+            'issuanceAuthorities' => $issuanceAuthorities,
+            'quoteType' => quoteTypeCode::Business,
             'quote' => $record,
             'quoteDetails' => $quoteDetails,
+            'quoteTypeId' => QuoteTypeId::Business,
             'allowedDuplicateLOB' => $allowedDuplicateLOB,
-            'genderOptions' => $this->crudService->getGenderOptions(),
+            'genderOptions' => $crudService->getGenderOptions(),
             'typeCode' => quoteTypeCode::GroupMedical,
             'lostReasons' => $lostReasons,
             'quoteStatuses' => $quoteStatuses,
@@ -263,6 +280,13 @@ class AmtController extends Controller
             'canAddBatchNumber' => auth()->user()->hasRole(RolesEnum::GMManager),
             'quoteStatusEnum' => QuoteStatusEnum::asArray(),
             'customerAdditionalContacts' => $customerAdditionalContacts,
+            'customerTypeEnum' => CustomerTypeEnum::asArray(),
+            'companyTypes' => $companyType,
+            'UBOsDetails' => $UBODetails,
+            'UBORelations' => $UBORelations,
+            'nationalities' => $nationalities,
+            'emirates' => $emirates,
+            'insuranceProviders' => $insuranceProviders,
         ]);
     }
 
@@ -313,7 +337,7 @@ class AmtController extends Controller
             'group_medical_type_id' => 'required',
             'premium' => 'required',
         ]);
-        $this->crudService->updateModelByType('business', $request, $id);
+        app(CRUDService::class)->updateModelByType('business', $request, $id);
 
         return redirect('medical/amt/'.$id)->with('success', 'Lead has been updated');
     }
@@ -321,7 +345,7 @@ class AmtController extends Controller
     public function cardsView(Request $request)
     {
         $quotes = [];
-        $leadStatuses = $this->dropdownSourceService->getDropdownSource('quote_status_id', QuoteTypeId::Business);
+        $leadStatuses = app(DropdownSourceService::class)->getDropdownSource('quote_status_id', QuoteTypeId::Business);
 
         $leadStatuses = $leadStatuses->filter(function ($item) {
             return $item->text == quoteStatusCode::NEWLEAD || $item->text == quoteStatusCode::QUOTED || $item->text == quoteStatusCode::FOLLOWEDUP || $item->text == quoteStatusCode::NEGOTIATION || $item->text == quoteStatusCode::PAYMENTPENDING || $item->text == quoteStatusCode::APPLICATION_PENDING || $item->text == quoteStatusCode::PLOICY_DOCUMENTS_PENDING || $item->text == quoteStatusCode::TRANSACTIONAPPROVED;
