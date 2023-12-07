@@ -7,6 +7,7 @@ use App\Enums\DatabaseColumnsString;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
+use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Enums\TravelQuoteEnum;
 use App\Facades\Ken;
@@ -14,6 +15,7 @@ use App\Models\TravelMemberDetail;
 use App\Models\TravelQuote;
 use App\Models\TravelQuotePlan;
 use App\Models\TravelQuoteRequestDetail;
+use App\Repositories\CustomerMembersRepository;
 use App\Traits\AddPremiumAllLobs;
 use App\Traits\RolePermissionConditions;
 use Auth;
@@ -191,6 +193,11 @@ class TravelQuoteService extends BaseService
 
         if ($request->uuid != null) {
             $travelQuote['quoteUID'] = $request->uuid;
+            $travelQuoteData = TravelQuote::where('uuid', $travelQuote['quoteUID'])->first();
+            $selectedColumns = ['id', 'gender', 'dob'];
+            $travelersMembers = CustomerMembersRepository::getMemberInfo('quote_id', $travelQuoteData->id, QuoteTypes::TRAVEL->name, CustomerTypeEnum::Individual, $selectedColumns);
+            $travelQuote['members'] = $travelersMembers;
+            $this->setQuoteUpdatedAt($travelQuoteData->id);
             $response = Ken::request('/get-revised-travel-quote-plans', 'post', $travelQuote);
 
             return $response;
@@ -851,5 +858,12 @@ class TravelQuoteService extends BaseService
         $travelQuotePlans = TravelQuotePlan::where('travel_quote_request_id', $id)->first();
 
         return $travelQuotePlans;
+    }
+
+    public function setQuoteUpdatedAt($id)
+    {
+        $travelQuote = TravelQuote::find($id);
+        $travelQuote->quote_updated_at = Carbon::now();
+        $travelQuote->save();
     }
 }

@@ -235,6 +235,7 @@ const travelerForm = useForm({
   dob: '',
   nationality_id: null,
   relation_code: null,
+  gender: null,
   customer_id: page.props.quote.customer_id,
   customer_type: page.props.quote.customer_type,
 });
@@ -260,6 +261,10 @@ const travelerTable = reactive({
     {
       text: 'Date of Birth',
       value: 'dob',
+    },
+    {
+      text: 'Gender',
+      value: 'gender',
     },
     {
       text: 'Relation',
@@ -305,6 +310,7 @@ const addTravelMember = isValid => {
       travelerForm.nationality_id = '';
       travelerForm.relation_code = '';
       travelerForm.id = null;
+      travelerForm.gender = null;
       travelerForm.reset();
     },
   });
@@ -318,6 +324,7 @@ const onAddTraveler = () => {
   travelerForm.relation_code = '';
   travelerForm.id = null;
   travelerTable.addTraveler = true;
+  travelerForm.gender = null;
 };
 
 const travelerName = ref('');
@@ -327,6 +334,7 @@ const onEditTraveler = traveler => {
   travelerForm.id = traveler.id;
   travelerForm.first_name = traveler.first_name;
   travelerForm.dob = traveler.dob;
+  travelerForm.gender = traveler.gender;
   travelerForm.relation_code = traveler.relation_code;
   travelerForm.nationality_id = traveler.nationality_id;
   travelerTable.addTraveler = true;
@@ -354,6 +362,7 @@ const editTraveler = isValid => {
       travelerForm.nationality_id = '';
       travelerForm.relation_code = '';
       travelerForm.id = null;
+      travelerForm.gender = null;
       travelerForm.reset();
     },
   });
@@ -997,6 +1006,12 @@ const prefillPlanId = ref(page.props.quote.prefill_plan_id);
 const handleChildUpdate = planId => {
   prefillPlanId.value = planId;
 };
+
+const genderList = [
+    { value: 'M', label: 'Male' },
+    { value: 'F', label: 'Female' },
+];
+
 </script>
 
 <template>
@@ -1288,14 +1303,8 @@ const handleChildUpdate = planId => {
           }}
           Profile
         </h3>
-        <x-button
-          size="sm"
-          color="orange"
-          v-if="quote.kyc_decision === 'Complete'"
-        >
-          KYC - Complete
-        </x-button>
-        <x-button size="sm" color="primary" v-else> KYC - Pending </x-button>
+        <x-tag color="success" v-if="quote.kyc_decision === 'Complete'"> KYC - Complete </x-tag>
+        <x-tag color="amber" v-else> KYC - Pending </x-tag>
       </div>
       <x-divider class="mb-4 mt-1" />
       <x-form @submit="updateProfileDetails" :auto-focus="false">
@@ -1601,6 +1610,9 @@ const handleChildUpdate = planId => {
         <template #item-relation="{ relation }">
           {{ relation?.text }}
         </template>
+        <template #item-gender="{ gender }">
+          {{ gender === 'M' ? 'Male' : gender === 'F' ? 'Female' : ''  }}
+        </template>
         <template #item-nationality="{ nationality }">
           {{ nationality?.text }}
         </template>
@@ -1667,6 +1679,15 @@ const handleChildUpdate = planId => {
               placeholder="Select Relation"
               class="w-full"
             />
+            <x-field label="Gender*" >
+              <x-select
+                  v-model="travelerForm.gender"
+                  placeholder="Gender"
+                  :options="genderList"
+                  :rules="[isRequired]"
+                  class="w-full"
+              />
+            </x-field>
           </div>
           <div class="text-right space-x-4 mt-8">
             <x-button size="sm" @click.prevent="modals.addTraveler = false">

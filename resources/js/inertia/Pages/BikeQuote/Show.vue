@@ -370,6 +370,8 @@ const linkEntity = () => {
           }}
           Profile
         </h3>
+        <x-tag color="success" v-if="quote.kyc_decision === 'Complete'"> KYC - Complete </x-tag>
+        <x-tag color="amber" v-else> KYC - Pending </x-tag>
       </div>
       <x-divider class="mb-4 mt-1" />
       <x-form @submit="updateProfileDetails" :auto-focus="false">
