@@ -152,7 +152,9 @@ class HealthQuoteService extends BaseService
             WHEN hqr.assignment_type = 4 THEN "Manual ReAssigned" ELSE "" END) as assignment_type'),
             'ihp.code as plan_provider_code',
             'ihp.code as plan_provider_code',
-            'hqr.health_plan_co_payment_id'
+            'hqr.health_plan_co_payment_id',
+            'hp.text as health_plan_name_text',
+            'ihp.text as plan_provider_name_text',
         )
             ->leftJoin('marital_status as ms', 'ms.id', '=', 'hqr.marital_status_id')
             ->leftJoin('health_quote_request_detail as hqrd', 'hqrd.health_quote_request_id', '=', 'hqr.id')
