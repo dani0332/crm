@@ -199,5 +199,67 @@ class AddNewDocumentTypeSeeder extends Seeder
             ]);
         }
 
+        $documentTypesCount = DocumentType::get()->where('code', 'CYCPD')->count();
+        if (! $documentTypesCount) {
+            \DB::table('document_types')->insert([
+                'code' => 'CYCPD',
+                'text' => 'Payment Proof',
+                'max_files' => 15,
+                'max_size' => 30,
+                'folder_path' => 'cycle',
+                'accepted_files' => '.png,.pdf,.jpeg,.jpg',
+                'quote_type_id' => 10,
+                'send_to_customer' => true,
+                'sort_order' => 1,
+                'is_required' => 0,
+            ]);
+        }
+        $documentTypesCount = DocumentType::get()->where('code', 'CYCPDR')->count();
+        if (! $documentTypesCount) {
+            \DB::table('document_types')->insert([
+                'code' => 'CYCPDR',
+                'text' => 'Receipt',
+                'max_files' => 15,
+                'max_size' => 30,
+                'folder_path' => 'cycle',
+                'accepted_files' => '.png,.pdf,.jpeg,.jpg',
+                'quote_type_id' => 10,
+                'send_to_customer' => true,
+                'sort_order' => 2,
+                'is_required' => 0,
+            ]);
+        }
+
+        $documentTypesCount = DocumentType::get()->where('code', 'YPD')->count();
+        if (! $documentTypesCount) {
+            \DB::table('document_types')->insert([
+                'code' => 'YPD',
+                'text' => 'Payment Proof',
+                'max_files' => 15,
+                'max_size' => 30,
+                'folder_path' => 'yacht',
+                'accepted_files' => '.png,.pdf,.jpeg,.jpg',
+                'quote_type_id' => 7,
+                'send_to_customer' => true,
+                'sort_order' => 1,
+                'is_required' => 0,
+            ]);
+        }
+        $documentTypesCount = DocumentType::get()->where('code', 'YPDR')->count();
+        if (! $documentTypesCount) {
+            \DB::table('document_types')->insert([
+                'code' => 'YPDR',
+                'text' => 'Receipt',
+                'max_files' => 15,
+                'max_size' => 30,
+                'folder_path' => 'yacht',
+                'accepted_files' => '.png,.pdf,.jpeg,.jpg',
+                'quote_type_id' => 7,
+                'send_to_customer' => true,
+                'sort_order' => 2,
+                'is_required' => 0,
+            ]);
+        }
+
     }
 }

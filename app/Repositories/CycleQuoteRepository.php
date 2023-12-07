@@ -122,8 +122,14 @@ class CycleQuoteRepository extends BaseRepository
                 'nationality',
                 'quoteDetail.lostReason',
                 'quoteDetail.previousAdvisor',
+                'insuranceProviderDetails',
                 'payments' => function ($q) {
-                    $q->with(['paymentStatus', 'personalPlan', 'paymentMethod', 'paymentStatusLogs', 'insuranceProvider']);
+                    $q->with([
+                        'paymentStatus', 'personalPlan', 'paymentMethod', 'paymentStatusLogs', 'insuranceProvider',
+                        'paymentSplits.paymentStatus', 
+                        'paymentSplits.paymentMethod', 
+                        'paymentSplits.documents',
+                    ]);
                 },
                 'customer',
                 'createdBy',

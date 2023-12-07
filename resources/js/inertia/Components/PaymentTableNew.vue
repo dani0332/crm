@@ -78,6 +78,8 @@ const isDiscountReasonError = ref(false);
 const isCreditApprovalView = ref(false);
 const isCreditCardView = ref(false);
 
+const modal2Ref = ref(null);
+
 // Array of quote types to check against
 const quoteTypesToCheck = ['Car', 'Health', 'Travel']; //Ecommerce LOBs
 // Declare initialAmount variable
@@ -158,6 +160,11 @@ const onCopyPaymentLink = (paymentLink,paymentStatus) => {
     ];
     currentFileIndex.value = filesTest.value.findIndex(item => item.id === fileId);
     isGalleryModelOpen.value = true;
+    setTimeout(() => {
+      if (modal2Ref.value) {
+        modal2Ref.value.focus();
+      }
+    }, 0);
   };
 
   const previousFile = () => {
@@ -166,6 +173,14 @@ const onCopyPaymentLink = (paymentLink,paymentStatus) => {
       zoomLevel.value = 1;
     }      
   };
+
+  const handleKeyDown = (event) => {
+    if (event.key === 'ArrowLeft' && hasPreviousFile) {
+      previousFile();
+    } else if (event.key === 'ArrowRight' && hasNextFile) {
+      nextFile();
+    }
+  } 
 
   const currentFile = computed(() => {
     return filesTest.value[currentFileIndex.value];
@@ -275,10 +290,11 @@ const validatePaymentOption = () => {
         (paymentMethodsForm.frequency === 'monthly' || paymentMethodsForm.frequency === 'quarterly' 
         || paymentMethodsForm.frequency === 'semi_annual' || paymentMethodsForm.frequency === 'custom')
         && paymentMethodsModels.value[1]=='IP' && paymentMethodsForm.collection_type === 'insurer'
-        && (fileUploadModels.value[1]===undefined || fileUploadModels.value[1].length===0)
         ){
-          isDocumentNotUploaded.value[1] = true;
-          issueFound = true;
+          if ((fileUploadModels.value[1]===undefined || fileUploadModels.value[1].length===0)) {
+            isDocumentNotUploaded.value[1] = true;
+            issueFound = true;
+          }          
       } else {
         for (let i = 1; i <= paymentMethodsForm.payment_no; i++) { 
           isDocumentNotUploaded.value[i] = false;
@@ -610,7 +626,7 @@ const calculateDueDates = () => {
 }
 
 const calculatePaymentBreakup = (changeMethod = true) => {  
-
+  isDocumentNotUploaded.value = [];
   var perInstallmentPrice = parseFloat(((totalAmount.value-paidAmountSum.value)/(paymentMethodsForm.payment_no-totalPaidAmount.value)).toFixed(2));
   console.log('azhar9991='+JSON.stringify(paymentMethodsModels.value));
   if ( paymentMethodsForm.status === 'edit') {
@@ -2636,16 +2652,16 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
       </x-form>
     
       <div class="modal-overlay fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center" v-if="isGalleryModelOpen">
-        <div class="modal-container bg-white w-full max-w-full overflow-hidden rounded-lg">
-          <div class="modal-header text-sm text-white bg-gray-800">
+        <div class="modal-container bg-white w-full max-w-full overflow-hidden rounded-lg" tabindex="0" ref="modal2Ref" @keydown="handleKeyDown">        
+          <div class="modal-header text-base text-white bg-gray-800">
             <div class="flex items-center justify-between">
               <div class="flex items-center space-x-2">
                 {{ currentFile.original_name }}
               </div>          
-              <div class="flex items-center space-x-2">
-                <span @click="closeInnerModal" class="text-gray-300 font-bold cursor-pointer pr-1">
+              <div class="flex items-center space-x-2" >
+                <span @click="closeInnerModal" class="text-gray-300 font-bold cursor-pointer pr-1" >
                   <!-- SVG for Close Modal -->
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="w-4 h-4">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" tabindex="0" viewBox="0 0 24 24" stroke="currentColor" class="w-4 h-4">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                   </svg>
                 </span>
@@ -2656,7 +2672,7 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
                 <!-- SVG for Previous -->
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="w-6 h-6 text-gray-300">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
-                </svg>                
+                </svg>Previous                
               </div>
               <div class="flex items-center space-x-2" v-if="currentFile.doc_mime_type != 'application/pdf'">
                 <div class="flex items-center space-x-2 cursor-pointer" @click="zoomOut">
@@ -2675,6 +2691,7 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
               </div>
               <div class="flex items-center space-x-2 cursor-pointer" @click="nextFile" :class="{ 'opacity-50 cursor-not-allowed': !hasNextFile }">
                 <!-- SVG for Next -->
+                Next
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="w-6 h-6 text-gray-300">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
                 </svg>                
