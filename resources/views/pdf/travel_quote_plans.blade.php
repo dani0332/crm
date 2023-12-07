@@ -60,9 +60,7 @@
         }
         table.tbl-dec {
             border: none;
-        }
-        table.tbl-dec {
-            font-size: 8px;
+            font-size: 3px;
         }
         table.tbl-dec tr td, table.tbl-dec tr td a {border: none;}
         table {
@@ -120,7 +118,7 @@
         }
         td > p, th > p {
             padding: 4px;
-            font-size: 14px;
+            font-size: 12px !important;
             text-align: center;
             font-weight: normal;
         }
@@ -128,10 +126,10 @@
             text-align: left;
         }
         .text-xs {
-            font-size: 13px;
+            font-size: 10px;
         }
         .text-sm {
-            font-size: 14px;
+            font-size: 10px;
         }
         .text-xl {
             font-size: 16px;
@@ -151,24 +149,32 @@
         .text-black{color: #000000;}
         .provider {
             border: 1px solid #bfbfbf;
-            font-size: 15px;
-            line-height: 28px;
+            /*font-size: 15px;*/
+            /*line-height: 28px;*/
             font-weight: 400;
             color: #4ea4a8;
             vertical-align: middle;
-            max-height: 50px;
-            height: 50px;
+            /*max-height: 50px;*/
+            /*height: 50px;*/
         }
         .spacer {
             padding: 3px;
         }
-        .alfred { text-align: right;padding-right: 0;vertical-align: bottom;border-left: none;border-top: none;width:400px;min-width:400px}
+        .alfred {
+            text-align: right;
+            padding-right: 0;
+            vertical-align: bottom;
+            border-left: none;
+            border-top: none;
+            width:400px;
+            min-width:400px;
+        }
         .quote-info {
             text-align: right;
             vertical-align: bottom;
             margin-top: -1px;
             background: #EFF6FF;
-            font-size: 14px;
+            font-size: 10px;
             text-align: left;
             padding: 8px;
             max-width: 100%;
@@ -187,12 +193,12 @@
         .btn-all-quotes {
             background-color: #1d83bc;
             color: #ffffff;
-            padding: 8px 25px;
-            margin-top: 20px;
+            padding: 8px 12px;
+            margin-top: 30px;
             text-align: center;
             text-decoration: none;
             display: inline-block;
-            font-size: 15px;
+            font-size: 12px;
             font-weight: bold;
             border-radius: 5px;
             margin-bottom: 0px;
@@ -201,13 +207,13 @@
         {
             background-color: #FE7333;
             color: #ffffff;
-            padding: 12px 15px;
+            padding: 10px 12px;
             text-align: center;
             text-decoration: none;
             display: inline-block;
-            font-size: 14px;
+            font-size: 10px;
             font-weight: bold;
-            border-radius: 5px;
+            border-radius: 4px;
         }
         .btn-buy:hover{
             background-color: #d7fbd0;
@@ -217,7 +223,7 @@
             background-color: #1d83bc;
         }
         .heading-desc {
-            font-size: 12px;
+            font-size: 10px;
         }
         .provider-logo {
             width: 100px;
@@ -399,7 +405,7 @@
             <div style="float: left;">
                  <img style="height: 110px; border-radius: 50%;" src="{{$quote->advisor?->profile_photo_path != null?$quote->advisor?->profile_photo_path:public_path('image/alfred-theme.png')}}">
             </div>
-            <div style="float: left; margin-left: 10px; margin-top: 20px">
+            <div style="float: left; margin-left: 10px; margin-top: 10px">
                 @if(isset($quote->advisor->name) && !empty($quote->advisor->name))
                     <p class="text-left text-white text-xl">Name: {{ $quote->advisor?->name }}</p>
                 @endif
@@ -426,13 +432,11 @@
 
     {{-- PDF Page Inner Content --}}
     <main>
-        <table class="table-fixed text-center tbl-plans" style="position: relative;top: 100px;margin-bottom: 130px;table-layout: fixed">
+        <table class="table-fixed text-center tbl-plans" style="position: relative;top: 90px;margin-bottom: 70px;table-layout: fixed">
             <thead>
                 <tr>
-                    <th class="alfred" style="width:500px;min-width: 500px" >
-                        <span style="width:400px;min-width: 400px">
+                    <th class="alfred" >
                         <img src="{{public_path('images/alfred.png')}}"  />
-                            </span>
                     </th>
                     @foreach($planIds as $planId)
                     <th class="provider" style="border: solid 1px #bfbfbf;">
@@ -595,7 +599,7 @@
             </tbody>
         </table>
 
-        <table class="tbl-dec">
+        <table class="tbl-dec" style="margin-top: 20px; padding-top: 40px;">
             <tbody>
                 <tr>
                     <td>
