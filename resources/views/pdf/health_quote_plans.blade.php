@@ -208,6 +208,12 @@
         }
         .provider-logo {
             width: 100px;
+            position: absolute; 
+            top: 50%; 
+            left: 50%; 
+            transform: translate(-50%, -50%); 
+            max-width: 100%; 
+            max-height: 100%;
         }
         .no-border {border: none;}
         footer {
@@ -431,7 +437,7 @@
                                         $providerLogoImage = public_path('images/insurance_providers/default.png');
                                     }
                                @endphp
-                               <img style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); max-width: 100%; max-height: 100%;" class="provider-logo" alt="" src="{{$providerLogoImage}}" />
+                               <img class="provider-logo" alt="" src="{{$providerLogoImage}}" />
                     </th>
                     @endforeach
                 </tr>
