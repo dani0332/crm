@@ -261,7 +261,7 @@ class AMLService
     {
         $membersFor = ($request->customer_type == CustomerTypeEnum::Entity) ? CustomerTypeEnum::Entity : CustomerTypeEnum::Individual;
 
-        return CustomerMembersRepository::getBy('quote_id', $quoteRequestId, $quoteType->code, $membersFor);
+        return CustomerMembersRepository::getBy($quoteRequestId, $quoteType->code, $membersFor);
     }
 
     public static function updateAMLDecisionLexisNexis($request)
@@ -294,7 +294,11 @@ class AMLService
     {
         $status = KycLog::withTrashed()->select(DB::raw('LEFT(customer_code, 3) AS splitted_customer_code'))
             ->where(['quote_request_id' => $quoteRequestId, 'quote_type_id' => $quoteTypeId])
-            ->whereNot('decision', AMLDecisionStatusEnum::RYU)
+            ->where(function ($ryuFilter) {
+                $ryuFilter->whereNotIn('decision', [AMLDecisionStatusEnum::RYU]);
+                $ryuFilter->orWhereNull('decision');
+            })
+            ->whereNull('screenshot')
             ->orderBy('id', 'desc')
             ->value('splitted_customer_code');
 
@@ -312,9 +316,10 @@ class AMLService
         $fetchAMLRecords = KycLog::withTrashed()->where([
             'quote_type_id' => $quoteTypeId,
             'quote_request_id' => $quoteRequestId,
-        ])->pluck('decision')->filter(function ($value) {
-            return $value != AMLDecisionStatusEnum::RYU;
-        });
+        ])->where(function ($ryuFilter) {
+            $ryuFilter->whereNotIn('decision', [AMLDecisionStatusEnum::RYU]);
+            $ryuFilter->orWhereNull('decision');
+        })->whereNull('screenshot')->pluck('decision');
 
         if ($fetchAMLRecords->count() == 0) {
             return true;

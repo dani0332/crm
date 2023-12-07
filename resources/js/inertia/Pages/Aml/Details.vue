@@ -644,7 +644,7 @@ onMounted(() => {
         <template #item-status="{ match_found, decision }">
           {{
             match_found > 0
-              ? decision === null
+              ? (decision === null || decision === amlDecisionStatusEnum.ESCALATED)
                 ? amlDecisionStatusEnum.ESCALATED
                 : decision === amlDecisionStatusEnum.TRUE_MATCH_REJECT_RISK
                 ? amlDecisionStatusEnum.REJECTED

@@ -144,6 +144,7 @@
             vertical-align: middle;
             max-height: 50px;
             height: 50px;
+            position: relative;
         }
         .spacer {
             padding: 3px;
@@ -423,18 +424,14 @@
                         <img src="{{public_path('images/alfred.png')}}"  />
                     </th>
                     @foreach($planIds as $planId)
-                    <th class="provider" style="border: solid 1px #bfbfbf;">
-                        <div class="rounded-full">
-                            <p class="relative top-[40%] m-auto text-xs">
+                    <th class="provider" style="border: solid 1px #bfbfbf; position : relative">
                                 @php
                                     $providerLogoImage = public_path('images/insurance_providers/' . strtolower($plans[$planId]->providerCode) . '.png');
                                     if(!file_exists($providerLogoImage)) {
                                         $providerLogoImage = public_path('images/insurance_providers/default.png');
                                     }
                                @endphp
-                                <img class="provider-logo" alt="" src="{{$providerLogoImage}}" />
-                            </p>
-                        </div>
+                               <img style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); max-width: 100%; max-height: 100%;" class="provider-logo" alt="" src="{{$providerLogoImage}}" />
                     </th>
                     @endforeach
                 </tr>
