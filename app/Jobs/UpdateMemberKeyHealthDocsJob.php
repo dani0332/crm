@@ -44,9 +44,9 @@ class UpdateMemberKeyHealthDocsJob implements ShouldQueue
 
                             $customerMemberFilter = [
                                 'quote_id' => $getOldHealthMemberRecord->health_quote_request_id,
-                                'customer_entity_id' => $getOldHealthMemberRecord->customer_id ?? '',
-                                'code' => $getOldHealthMemberRecord->code ?? '',
-                                'dob' => $getOldHealthMemberRecord->dob ?? ''
+                                'customer_entity_id' => $getOldHealthMemberRecord->customer_id,
+                                'code' => $getOldHealthMemberRecord->code,
+                                'dob' => $getOldHealthMemberRecord->dob
                             ];
 
                             $getCustomerMemberRecord = CustomerMembers::where($customerMemberFilter)->where('quote_type', HealthQuote::class)->get();
