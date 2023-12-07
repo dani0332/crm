@@ -19,13 +19,13 @@ class CustomerMembersRepository extends BaseRepository
         $quoteModelObject = $this->getModelObject(strtolower($quoteType));
 
         return $this->where([
-            'quote_type' => ltrim($quoteModelObject,'\\'),
+            'quote_type' => ltrim($quoteModelObject, '\\'),
             'quote_id' => $quote_request_id,
-            'customer_type' => $customerType
+            'customer_type' => $customerType,
         ])->with([
             'relation',
             'emirate',
-            'nationality'
+            'nationality',
         ])->get();
     }
 
