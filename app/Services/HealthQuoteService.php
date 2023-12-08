@@ -273,20 +273,26 @@ class HealthQuoteService extends BaseService
         return $response;
     }
 
-    public function getGridData($model, $request)
+    public function getGridData($model = null, $request = null)
     {
+
         $searchProperties = [];
         $isRenewalUser = Auth::user()->isRenewalUser();
         $isRenewalAdvisor = Auth::user()->isRenewalAdvisor();
         $isRenewalManager = Auth::user()->isRenewalManager();
         $isNewManager = Auth::user()->isNewBusinessManager();
         $isNewAdvisor = Auth::user()->isNewBusinessAdvisor();
-        if ($isRenewalUser || $isRenewalManager || $isRenewalAdvisor) {
-            $searchProperties = $model->renewalSearchProperties;
-        } elseif ($isNewManager || $isNewAdvisor) {
-            $searchProperties = $model->newBusinessSearchProperties;
+        if ($model != null) {
+            if ($isRenewalUser || $isRenewalManager || $isRenewalAdvisor) {
+                $searchProperties = $model->renewalSearchProperties;
+            } elseif ($isNewManager || $isNewAdvisor) {
+                $searchProperties = $model->newBusinessSearchProperties;
+            } else {
+                $searchProperties = $model->searchProperties;
+            }
         } else {
-            $searchProperties = $model->searchProperties;
+            $searchProperties = $this->fillModelSearchProperties();
+            $request = request();
         }
 
         if (

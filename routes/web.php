@@ -293,8 +293,6 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::resource('car', CRUDController::class);
         Route::get('/car/{id}/send-update-log/{uuid}', [SendUpdateLogController::class, 'show'])->name('quotes.car.view-update-log');
         Route::get('health-cards', [HealthQuoteController::class, 'cardsView'])->name('health.cards');
-        Route::get('health-export', [CRUDController::class, 'exportHealthLeads'])->name('health.export');
-        Route::get('car-export', [CRUDController::class, 'exportCarLeads'])->name('car.export');
 
         Route::get('home-cards', [CRUDController::class, 'cardsViewHome'])->name('home-cardView');
         Route::resource('home', CRUDController::class);
