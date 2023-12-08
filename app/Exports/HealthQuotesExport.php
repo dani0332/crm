@@ -3,28 +3,28 @@
 namespace App\Exports;
 
 use App\Services\CRUDService;
+use App\Services\HealthQuoteService;
 use Carbon\Carbon;
 use Maatwebsite\Excel\Concerns\Exportable;
-use Maatwebsite\Excel\Concerns\FromQuery;
+use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
 
-class HealthQuotesExport implements FromQuery, ShouldAutoSize, WithHeadings, WithMapping
+class HealthQuotesExport implements FromCollection, ShouldAutoSize, WithHeadings, WithMapping
 {
     use Exportable;
 
     private $genderOptions;
 
-    public function __construct($query)
+    public function __construct()
     {
         $this->genderOptions = app(CRUDService::class)->getGenderOptions();
-        $this->query = $query;
     }
 
-    public function query()
+    public function collection()
     {
-        return $this->query;
+        return app(HealthQuoteService::class)->getGridData()->get();
     }
 
     public function headings(): array

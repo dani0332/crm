@@ -765,9 +765,18 @@ class CarQuoteService extends BaseService
         }
     }
 
-    public function getGridData($model, $request)
+    public function getGridData($model = null, $request = null)
     {
-        $searchProperties = $model->searchProperties;
+        if ($model == null && $request == null) {
+            $searchProperties = $this->fillModelSearchProperties();
+            $request = request();
+        } else {
+            $searchProperties = $model->searchProperties;
+        }
+
+        if (isset($request->created_at_start)) {
+            $request['created_at'] = $request->created_at_start;
+        }
 
         // if ($request->ajax()) {
         $this->addLeadViewEligibilityCheck();
