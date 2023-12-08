@@ -42,8 +42,9 @@ class QuoteSyncUpdateCommand extends Command
 
         $isQuoteSyncEnabled = ApplicationStorage::where('key_name', 'quote_sync_enabled')->first();
 
-        if (!$isQuoteSyncEnabled || $isQuoteSyncEnabled->value == 0) {
+        if (! $isQuoteSyncEnabled || $isQuoteSyncEnabled->value == 0) {
             info('----------- QuoteSync is disabled -----------');
+
             return;
         }
         info('----------- QuoteSync is enabled -----------');
