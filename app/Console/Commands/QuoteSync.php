@@ -12,6 +12,7 @@ use App\Models\JetskiQuote;
 use App\Models\LifeQuote;
 use App\Models\PersonalQuote;
 use App\Models\PetQuote;
+use App\Models\QuoteSync;
 use App\Models\TravelQuote;
 use App\Models\YachtQuote;
 use Exception;
@@ -19,7 +20,7 @@ use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
-class ResetLeadAllocationCounts extends Command
+class QuoteSyncCommand extends Command
 {
     /**
      * The name and signature of the console command.

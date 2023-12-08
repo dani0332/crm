@@ -7,6 +7,7 @@ use App\Jobs\CarLost\CarSoldResubmissions;
 use App\Jobs\CarLost\UnconSubmissionReminder;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
+use Predis\Configuration\Option\Commands;
 
 class Kernel extends ConsoleKernel
 {
@@ -23,6 +24,7 @@ class Kernel extends ConsoleKernel
         Commands\LeadsReassignment::class,
         Commands\ResetLeadAllocationCounts::class,
         Commands\UpdateHealthStatus::class,
+        Commands\QuoteSync::class,
     ];
 
     /**
@@ -48,8 +50,8 @@ class Kernel extends ConsoleKernel
             ->withoutOverlapping(1)->onOneServer()
             ->at('9:00');
 
-        $schedule
-            ->command('AddBatchNumber:cron')->timezone('Asia/Dubai')->weeklyOn(1, '0:00')->onOneServer()->withoutOverlapping(1);
+        // $schedule
+        //     ->command('AddBatchNumber:cron')->timezone('Asia/Dubai')->weeklyOn(1, '0:00')->onOneServer()->withoutOverlapping(1);
 
         $schedule
             ->command(UpdateHealthStatus::class)->timezone('Asia/Dubai')->dailyAt('01:00')->onOneServer()->withoutOverlapping(1);
