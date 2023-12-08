@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\AMLDecisionStatusEnum;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\EnvEnum;
 use App\Enums\QuoteTypes;
@@ -12,6 +13,7 @@ use App\Models\BusinessQuote;
 use App\Models\CarQuote;
 use App\Models\HealthQuote;
 use App\Models\HomeQuote;
+use App\Models\KycLog;
 use App\Models\LifeQuote;
 use App\Models\PersonalQuote;
 use App\Models\PetQuote;
@@ -20,7 +22,7 @@ use App\Models\User;
 use App\Models\YachtQuote;
 use App\Repositories\CustomerMembersRepository;
 use Carbon\Carbon;
-use Config;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 
 class AMLService
@@ -74,25 +76,6 @@ class AMLService
 
     public static function getQuoteDetails($quoteTypeId, $quoteRequestId)
     {
-        $migratedQuoteTypes = [
-            QuoteTypes::BIKE->id(),
-            QuoteTypes::YACHT->id(),
-            QuoteTypes::PET->id(),
-            QuoteTypes::CYCLE->id(),
-            QuoteTypes::JETSKI->id(),
-        ];
-        $isDataMigrated = true;
-        $quoteRequestDetails = [];
-
-        if (in_array($quoteTypeId, $migratedQuoteTypes)) {
-            $checkAMLService = new CheckAmlService();
-            $isDataMigrated = $checkAMLService->isDataMigrated($quoteTypeId, $quoteRequestId);
-
-            if (! $isDataMigrated) {
-                $quoteRequestId = $checkAMLService->getPersonalQuoteId($quoteTypeId, $quoteRequestId);
-            }
-        }
-
         if ($quoteTypeId == QuoteTypes::CAR->id()) {
             $quoteRequestDetails = CarQuote::with([
                 'quoteStatus',
@@ -166,24 +149,14 @@ class AMLService
                 'nationality',
             ])->where('id', $quoteRequestId)->firstOrFail();
         } elseif ($quoteTypeId == QuoteTypes::PET->id()) {
-            if ($isDataMigrated) {
-                $quoteRequestDetails = PersonalQuote::byQuoteTypeId(QuoteTypes::PET->id())->with([
-                    'petQuote',
-                    'customer.detail',
-                    'quoteStatus',
-                    'payments.paymentMethod',
-                    'payments.getCustomerPaymentInstrument',
-                    'paymentStatus',
-                ])->where('id', $quoteRequestId)->firstOrFail();
-            } else {
-                $quoteRequestDetails = PetQuote::with([
-                    'quoteStatus',
-                    'payments.paymentMethod',
-                    'payments.getCustomerPaymentInstrument',
-                    'paymentStatus',
-                    'customer.detail',
-                ])->where('id', $quoteRequestId)->firstOrFail();
-            }
+            $quoteRequestDetails = PersonalQuote::byQuoteTypeId(QuoteTypes::PET->id())->with([
+                'petQuote',
+                'customer.detail',
+                'quoteStatus',
+                'payments.paymentMethod',
+                'payments.getCustomerPaymentInstrument',
+                'paymentStatus',
+            ])->where('id', $quoteRequestId)->firstOrFail();
         } elseif ($quoteTypeId == QuoteTypes::BIKE->id()) {
             $quoteRequestDetails = PersonalQuote::byQuoteTypeId(QuoteTypes::BIKE->id())->with([
                 'bikeQuote',
@@ -193,7 +166,6 @@ class AMLService
                 'payments.getCustomerPaymentInstrument',
                 'paymentStatus',
             ])->where('id', $quoteRequestId)->firstOrFail();
-
         } elseif ($quoteTypeId == QuoteTypes::CYCLE->id()) {
             $quoteRequestDetails = PersonalQuote::byQuoteTypeId(QuoteTypes::CYCLE->id())->with([
                 'cycleQuote',
@@ -203,7 +175,6 @@ class AMLService
                 'payments.getCustomerPaymentInstrument',
                 'paymentStatus',
             ])->where('id', $quoteRequestId)->firstOrFail();
-
         } elseif ($quoteTypeId == QuoteTypes::YACHT->id()) {
             $quoteRequestDetails = PersonalQuote::byQuoteTypeId(QuoteTypes::YACHT->id())->with([
                 'yachtQuote',
@@ -213,7 +184,6 @@ class AMLService
                 'payments.getCustomerPaymentInstrument',
                 'paymentStatus',
             ])->where('id', $quoteRequestId)->firstOrFail();
-
         } elseif ($quoteTypeId == QuoteTypes::JETSKI->id()) {
             $quoteRequestDetails = PersonalQuote::byQuoteTypeId(QuoteTypes::JETSKI->id())->with([
                 'jetskiQuote',
@@ -223,7 +193,6 @@ class AMLService
                 'payments.getCustomerPaymentInstrument',
                 'paymentStatus',
             ])->where('id', $quoteRequestId)->firstOrFail();
-
         }
 
         return $quoteRequestDetails;
@@ -231,10 +200,10 @@ class AMLService
 
     public static function sendAMLErrorEmailtoEngTeam($amlQuoteUrl, $apiResponseMessage, $amlDataForEmail, $getStatusCode)
     {
-        $emailSystem = Config::get('constants.emailL_sys');
-        $errorEmailRecipients = explode(',', Config::get('constants.ERROR_EMAIL_RECIPIENTS'));
+        $emailSystem = config('constants.emailL_sys');
+        $errorEmailRecipients = explode(',', config('constants.ERROR_EMAIL_RECIPIENTS'));
 
-        $subject = $emailSystem.' BRIDGER SEARCH API ERROR | '.\Request::url().' | '.date(Config::get('constants.DB_DATE_FORMAT_MATCH'));
+        $subject = $emailSystem.' BRIDGER SEARCH API ERROR | '.\Request::url().' | '.date(config('constants.DB_DATE_FORMAT_MATCH'));
         MailService::sendEmail('AmlErrorMail', [
             'amlUrl' => $amlQuoteUrl,
             'emailAmlData' => $amlDataForEmail,
@@ -246,7 +215,7 @@ class AMLService
     public static function sendAMLMatchedEmailtoComplianceTeam($amlQuoteUrl, $quoteRefId, $amlResultCount, $customerOrEntityName, $quoteType, $loginUserEmail, $forComplianceSuperUser = false)
     {
         $emailRecipients = [];
-        $emailSystem = Config::get('constants.emailL_sys');
+        $emailSystem = config('constants.emailL_sys');
         $complianceRole = $forComplianceSuperUser ? RolesEnum::ComplianceSuperUser : RolesEnum::COMPLIANCE;
         $recipients = User::select('users.email as user_email')
             ->leftjoin('model_has_roles', 'users.id', 'model_has_roles.model_id')
@@ -257,13 +226,15 @@ class AMLService
             $emailRecipients[] = $recipient->user_email;
         }
 
+        info('AML Email trigger to Role:('.$complianceRole.')');
+
         if (strtolower($emailSystem) == EnvEnum::PRODUCTION) {
-            $fromEmail = Config::get('constants.MAIL_FROM_ADDRESS_AML');
-            $fromName = Config::get('constants.MAIL_FROM_NAME_AML');
+            $fromEmail = config('constants.MAIL_FROM_ADDRESS_AML');
+            $fromName = config('constants.MAIL_FROM_NAME_AML');
             $emailSubject = 'IMCRM | New AML Matches Found for Ref-ID : '.$quoteRefId;
         } else {
-            $fromEmail = Config::get('constants.MAIL_FROM_ADDRESS');
-            $fromName = Config::get('constants.MAIL_FROM_NAME');
+            $fromEmail = config('constants.MAIL_FROM_ADDRESS');
+            $fromName = config('constants.MAIL_FROM_NAME');
             $emailSubject = $emailSystem.' | IMCRM | New AML Matches Found for Ref-ID : '.$quoteRefId;
         }
         Mail::send(
@@ -275,8 +246,12 @@ class AMLService
                 'quoteTypeName' => $quoteType,
                 'quoteCdbId' => $quoteRefId,
             ],
-            function ($message) use ($emailSubject, $emailRecipients, $fromName, $fromEmail, $loginUserEmail) {
-                $message->to($emailRecipients)->cc($loginUserEmail)->subject($emailSubject);
+            function ($message) use ($emailSubject, $emailRecipients, $fromName, $fromEmail, $loginUserEmail, $forComplianceSuperUser) {
+                $message->to($emailRecipients);
+                if (in_array($loginUserEmail, $emailRecipients) || ! $forComplianceSuperUser) {
+                    $message->cc($loginUserEmail);
+                }
+                $message->subject($emailSubject);
                 $message->from($fromEmail, $fromName);
             }
         );
@@ -286,7 +261,7 @@ class AMLService
     {
         $membersFor = ($request->customer_type == CustomerTypeEnum::Entity) ? CustomerTypeEnum::Entity : CustomerTypeEnum::Individual;
 
-        return CustomerMembersRepository::getBy('quote_id', $quoteRequestId, $quoteType->code, $membersFor);
+        return CustomerMembersRepository::getBy($quoteRequestId, $quoteType->code, $membersFor);
     }
 
     public static function updateAMLDecisionLexisNexis($request)
@@ -313,5 +288,45 @@ class AMLService
         $bridgerInsightService->updateDecisionOnLexisNexis($bridgerAPIToken, $request->result_id, $matchResultsForUpdate, $request->notes);
 
         return true;
+    }
+
+    public static function getKycType($quoteTypeId, $quoteRequestId)
+    {
+        $status = KycLog::withTrashed()->select(DB::raw('LEFT(customer_code, 3) AS splitted_customer_code'))
+            ->where(['quote_request_id' => $quoteRequestId, 'quote_type_id' => $quoteTypeId])
+            ->where(function ($ryuFilter) {
+                $ryuFilter->whereNotIn('decision', [AMLDecisionStatusEnum::RYU]);
+                $ryuFilter->orWhereNull('decision');
+            })
+            ->whereNull('screenshot')
+            ->orderBy('id', 'desc')
+            ->value('splitted_customer_code');
+
+        if ($status == null && $quoteTypeId == QuoteTypes::BUSINESS->id()) {
+            $status = CustomerTypeEnum::EntityShort;
+        } elseif ($status == null && $quoteTypeId != QuoteTypes::BUSINESS->id()) {
+            $status = CustomerTypeEnum::IndividualShort;
+        }
+
+        return $status;
+    }
+
+    public static function checkAMLStatusFailed($quoteTypeId, $quoteRequestId)
+    {
+        $fetchAMLRecords = KycLog::withTrashed()->where([
+            'quote_type_id' => $quoteTypeId,
+            'quote_request_id' => $quoteRequestId,
+        ])->where(function ($ryuFilter) {
+            $ryuFilter->whereNotIn('decision', [AMLDecisionStatusEnum::RYU]);
+            $ryuFilter->orWhereNull('decision');
+        })->whereNull('screenshot')->pluck('decision');
+
+        if ($fetchAMLRecords->count() == 0) {
+            return true;
+        }
+
+        return collect($fetchAMLRecords)->contains(function ($value) {
+            return in_array($value, [AMLDecisionStatusEnum::TRUE_MATCH, AMLDecisionStatusEnum::TRUE_MATCH_REJECT_RISK, null]);
+        });
     }
 }

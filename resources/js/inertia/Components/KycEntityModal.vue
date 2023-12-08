@@ -16,7 +16,6 @@ const props = defineProps({
   amlQuoteStatus: Number,
   nationalities: Array,
   modelType: String,
-  entities: Array,
   legalStructure: Array,
   idDocumentType: Array,
   issuancePlace: Array,
@@ -50,17 +49,17 @@ const kycForm = reactive({
   communication_address: props.entityDetails?.entity?.communication_address ?? null,
   mobile_number: props.entityDetails?.entity?.mobile_no ?? props.quote.mobile_no,
   email: props.entityDetails?.entity?.email ?? props.quote.email,
-  website: props.entityDetails?.entity?.website,
+  website: props.entityDetails?.entity?.website ?? null,
   id_document_type: props.entityDetails?.entity?.id_type ?? null,
   id_number: props.entityDetails?.entity?.id_number ?? null,
   id_issue_date: convertDate(props.entityDetails?.entity?.id_issuance_date),
   id_expiry_date: convertDate(props.entityDetails?.entity?.id_expiry_date),
   place_of_issue: props.entityDetails?.entity?.issuance_place ?? null,
   issuing_authority: props.entityDetails?.entity?.id_issuance_authority ?? null,
-  manager_name: null,
-  manager_nationality: null,
-  manager_dob: null,
-  manager_position: null,
+  manager_name: props.entityDetails?.entity?.quote_member?.first_name ?? null,
+  manager_nationality: props.entityDetails?.entity?.quote_member?.nationality_id ?? null,
+  manager_dob: props.entityDetails?.entity?.quote_member?.dob ?? null,
+  manager_position: props.entityDetails?.entity?.quote_member?.relation_code ?? null,
   pep: props.entityDetails?.entity?.pep ?? props.amlQuoteStatus,
   financial_sanctions: props.entityDetails?.entity?.financial_sanctions ?? props.amlQuoteStatus,
   dual_nationality: props.entityDetails?.entity?.dual_nationality ?? props.amlQuoteStatus,
@@ -115,24 +114,10 @@ const countryList = computed(() => {
   }));
 });
 
-const minDate = computed(() => {
-  const today = new Date();
-  const tomorrow = new Date(today);
-
-  return tomorrow.setDate(today.getDate() + 1);
-});
-
 const nationalityOptions = computed(() => {
   return props.nationalities.map(nat => ({
     value: nat.id,
     label: nat.text,
-  }));
-});
-
-const entitiesOptions = computed(() => {
-  return props.entities.map(nat => ({
-    value: nat.id,
-    label: nat.industry_type_code,
   }));
 });
 
@@ -393,7 +378,6 @@ onMounted(() => {
         <DatePicker
           v-model="kycForm.id_expiry_date"
           class="w-full"
-          :min-date="minDate"
           :rules="[isRequired]"
         />
       </div>

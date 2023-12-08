@@ -151,7 +151,9 @@ class HealthQuoteService extends BaseService
             WHEN hqr.assignment_type = 4 THEN "Manual ReAssigned" ELSE "" END) as assignment_type'),
             'ihp.code as plan_provider_code',
             'ihp.code as plan_provider_code',
-            'hqr.health_plan_co_payment_id'
+            'hqr.health_plan_co_payment_id',
+            'hp.text as health_plan_name_text',
+            'ihp.text as plan_provider_name_text',
         )
             ->leftJoin('marital_status as ms', 'ms.id', '=', 'hqr.marital_status_id')
             ->leftJoin('health_quote_request_detail as hqrd', 'hqrd.health_quote_request_id', '=', 'hqr.id')
@@ -271,20 +273,26 @@ class HealthQuoteService extends BaseService
         return $response;
     }
 
-    public function getGridData($model, $request)
+    public function getGridData($model = null, $request = null)
     {
+
         $searchProperties = [];
         $isRenewalUser = Auth::user()->isRenewalUser();
         $isRenewalAdvisor = Auth::user()->isRenewalAdvisor();
         $isRenewalManager = Auth::user()->isRenewalManager();
         $isNewManager = Auth::user()->isNewBusinessManager();
         $isNewAdvisor = Auth::user()->isNewBusinessAdvisor();
-        if ($isRenewalUser || $isRenewalManager || $isRenewalAdvisor) {
-            $searchProperties = $model->renewalSearchProperties;
-        } elseif ($isNewManager || $isNewAdvisor) {
-            $searchProperties = $model->newBusinessSearchProperties;
+        if ($model != null) {
+            if ($isRenewalUser || $isRenewalManager || $isRenewalAdvisor) {
+                $searchProperties = $model->renewalSearchProperties;
+            } elseif ($isNewManager || $isNewAdvisor) {
+                $searchProperties = $model->newBusinessSearchProperties;
+            } else {
+                $searchProperties = $model->searchProperties;
+            }
         } else {
-            $searchProperties = $model->searchProperties;
+            $searchProperties = $this->fillModelSearchProperties();
+            $request = request();
         }
 
         if (

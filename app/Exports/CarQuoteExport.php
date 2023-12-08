@@ -2,24 +2,20 @@
 
 namespace App\Exports;
 
+use App\Services\CarQuoteService;
 use Maatwebsite\Excel\Concerns\Exportable;
-use Maatwebsite\Excel\Concerns\FromQuery;
+use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
 
-class CarQuoteExport implements FromQuery, ShouldAutoSize, WithHeadings, WithMapping
+class CarQuoteExport implements FromCollection, ShouldAutoSize, WithHeadings, WithMapping
 {
     use Exportable;
 
-    public function __construct($query)
+    public function collection()
     {
-        $this->query = $query;
-    }
-
-    public function query()
-    {
-        return $this->query;
+        return app(CarQuoteService::class)->getGridData()->get();
     }
 
     public function headings(): array

@@ -9,16 +9,14 @@ const props = defineProps({
   entityDetails: Object,
   membersDetails: Object,
   uboDetails: Object,
-  memberRelations: Object,
-  uboRelations: Object,
   nationalities: Object,
   emirates: Object,
-  industryType: Object,
   customerTypeEnum: Object,
   businessTypeCode: Object,
   businessCoverTypeText: Array,
   businessCommuModeText: Array,
   kycLogs: Array,
+  kycStatus: String,
   quoteStatusCode: { type: [Object, String] },
   isCurrentUserFromCompliance: { type: [Array, Number] },
   isCurrentUserFromPaAml: { type: [Array, Number] },
@@ -31,12 +29,12 @@ const props = defineProps({
   customerDetails: Object,
   amlDecisionStatusEnum: Object,
   lookups: Object,
-  entities: Object,
 });
 const page = usePage();
 const rolesEnum = page.props.rolesEnum;
 const paymentsRef = ref(page.props.quoteRequest.payments);
 const hasRole = role => useHasRole(role);
+const hasAnyRole = roles => useHasAnyRole(roles);
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
 
@@ -593,20 +591,17 @@ onMounted(() => {
 
     <!-- AML Screening Models Start -->
     <EntityModel
-      v-if="quoteType.code === quoteTypeCodeEnum.Business"
-      v-model="modals.insuranceForm"
-      :quoteType="quoteType"
-      :quoteDetails="quoteRequest"
-      :entityDetails="entityDetails"
-      :nationalities="nationalities"
-      :membersDetails="membersDetails"
-      :uboDetails="uboDetails"
-      :memberRelations="memberRelations"
-      :uboRelations="uboRelations"
-      :customerTypeEnum="customerTypeEnum"
-      :lookups="lookups"
-      :entities="entities"
-      :quote-aml-status="page.props.quoteAmlStatus"
+        v-if="props.kycStatus === 'ENT'"
+        v-model="modals.insuranceForm"
+        :quoteType="quoteType"
+        :quoteDetails="quoteRequest"
+        :entityDetails="entityDetails"
+        :nationalities="nationalities"
+        :membersDetails="membersDetails"
+        :uboDetails="uboDetails"
+        :customerTypeEnum="customerTypeEnum"
+        :lookups="lookups"
+        :quote-aml-status="page.props.quoteAmlStatus"
     />
 
     <IndividualModel
@@ -617,14 +612,10 @@ onMounted(() => {
       :entityDetails="entityDetails"
       :nationalities="nationalities"
       :emirates="emirates"
-      :industryType="industryType"
       :membersDetails="membersDetails"
       :uboDetails="uboDetails"
-      :memberRelations="memberRelations"
-      :uboRelations="uboRelations"
       :customerTypeEnum="customerTypeEnum"
       :lookups="lookups"
-      :entities="entities"
       :quote-aml-status="page.props.quoteAmlStatus"
       :customer-details="props.customerDetails"
     />
@@ -653,7 +644,7 @@ onMounted(() => {
         <template #item-status="{ match_found, decision }">
           {{
             match_found > 0
-              ? decision === null
+              ? (decision === null || decision === amlDecisionStatusEnum.ESCALATED)
                 ? amlDecisionStatusEnum.ESCALATED
                 : decision === amlDecisionStatusEnum.TRUE_MATCH_REJECT_RISK
                 ? amlDecisionStatusEnum.REJECTED
@@ -661,7 +652,7 @@ onMounted(() => {
               : amlDecisionStatusEnum.PASS
           }}
         </template>
-        <template v-if="hasRole(rolesEnum.COMPLIANCE)" #item-action="{ id }">
+        <template v-if="hasAnyRole([rolesEnum.COMPLIANCE, rolesEnum.ComplianceSuperUser])" #item-action="{ id }">
           <div class="space-x-4">
             <x-button
               size="xs"
@@ -675,44 +666,6 @@ onMounted(() => {
         </template>
       </DataTable>
     </div>
-
-    <!-- <div class="p-4 rounded shadow mb-6 bg-white">
-      <div class="flex flex-wrap gap-3 justify-between items-center mb-4">
-        <h3 class="font-semibold text-primary-800 text-lg">Payer Details</h3>
-      </div>
-      <x-divider class="mb-4 mt-1" />
-      <DataTable
-        table-class-name="tablefixed"
-        :headers="payersTableHeader"
-        :loading="loader.table"
-        :items="paymentsRef || []"
-        border-cell
-        hide-rows-per-page
-        hide-footer
-        fixed-checkbox
-      >
-        <template #payment_ref_id="{ code }">
-          {{ code }}
-        </template>
-        <template #payment-method="{ payment_method }">
-          {{ payment_method.name }}
-        </template>
-        <template #payer-name="item">
-          {{
-            paymentsRef.get_customer_payment_instrument.car_holder_name
-              ? paymentsRef.get_customer_payment_instrument.car_holder_name
-              : 'N/A'
-          }}
-        </template>
-        <template #total-amount="{ captured_amount }">
-          {{ captured_amount }}
-        </template>
-        <template #paid_by="{ paid_by }">
-          {{ paymentsRef.paid_by ? paymentsRef.paid_by : 'Third Party' }}
-        </template>
-      </DataTable>
-    </div> -->
-
     <AuditLogs
       :type="`App\\Models\\${quoteType.code}Quote`"
       :id="quoteRequest.id"

@@ -1,5 +1,6 @@
 <script setup>
 import { useForm } from '@inertiajs/vue3';
+import {onMounted} from "vue";
 
 const props = defineProps({
   quoteDetails: Object,
@@ -81,6 +82,7 @@ const uboForm = useForm({
   quote_type: props.quoteType.code,
   customer_type: props.customerType,
   quote_request_id: props.quoteDetails.id,
+  quote_id: props.quoteDetails.id, //Added this quote_id because quote_request_id is not getting in Controller Request.
   customer_id: props.quoteDetails.customer_id,
   entity_id: props.entity_id ?? null,
   id: null,
@@ -113,13 +115,12 @@ const onUBOSubmit = isValid => {
   loader.value.form = true;
   if (editUBODetails.value) {
     axios
-      .put(`/members/${uboForm.id}`, uboForm)
+      .post('/members/update', uboForm)
       .then(res => {
         notification.success({
           title: 'UBO Updated Successfully',
           position: 'top',
         });
-        uboForm.reset();
           if (res.status) {
               let { data } = res.data;
 
@@ -175,7 +176,7 @@ const onUBOSubmit = isValid => {
   <x-form @submit="onUBOSubmit" :auto-focus="false">
     <div v-show="addUBODetails" class="mb-4">
       <div class="flex justify-between">
-        <h3 class="font-semibold text-primary-800 text-lg mb-3">
+        <h3 v-if="uboForm.entity_id !== null" class="font-semibold text-primary-800 text-lg mb-3">
           Add UBO Details
         </h3>
         <x-button @click.prevent="addUBOToggle" size="sm" color="red">
@@ -239,6 +240,7 @@ const onUBOSubmit = isValid => {
       </x-button>
       <x-button
         v-else
+        v-if="uboForm.entity_id !== null"
         @click.prevent="addUBOToggle(true)"
         size="sm"
         color="orange"

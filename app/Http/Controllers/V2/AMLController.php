@@ -35,7 +35,6 @@ use App\Models\UAEAMLListUploads;
 use App\Repositories\CustomerMembersRepository;
 use App\Repositories\CustomerRepository;
 use App\Repositories\EntityRepository;
-use App\Repositories\LookupRepository;
 use App\Repositories\NationalityRepository;
 use App\Repositories\QuoteTypeRepository;
 use App\Services\AMLService;
@@ -47,6 +46,7 @@ use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use DataTables;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class AMLController extends Controller
 {
@@ -88,11 +88,10 @@ class AMLController extends Controller
                     if (isset($request->amlCreatedStartDate) && ! empty($request->amlCreatedStartDate)) {
                         $quoteRequestTable = AMLService::isDataMigrated($quoteTypeId, '', $request->amlCreatedStartDate) ? 'personal_quotes' : $quoteRequestTable;
                     } else {
-                        if (isset($request->searchType) && in_array($request->searchType, ['cdbId', 'customerEmail', 'id'])) {
+                        if (isset($request->searchType) && in_array($request->searchType, ['cdbId', 'customerEmail'])) {
                             $searchType = match ($request->searchType) {
                                 'cdbId' => 'code',
                                 'customerEmail' => 'email',
-                                'id' => 'id'
                             };
 
                             $createdDate =
@@ -104,12 +103,17 @@ class AMLController extends Controller
                     }
                 }
 
-                $dataAml = AML::select('kyc_logs.*', 'quote_type.text as quote_type_text', $quoteRequestTable.'.code as cdb_id')
-                    ->leftjoin('quote_type', 'quote_type.id', 'kyc_logs.quote_type_id')
-                    ->leftjoin($quoteRequestTable, $quoteRequestTable.'.id', 'kyc_logs.quote_request_id')
-                    ->where('kyc_logs.quote_type_id', $quoteTypeId)
-                    ->orderBy('kyc_logs.created_at', 'desc');
+                $dataAml = DB::table($quoteRequestTable);
+                if ($quoteRequestTable == strtolower(quoteTypeCode::Pet).'_quote_request') {
+                    $dataAml = $dataAml->select($quoteRequestTable.'.*', $quoteRequestTable.'.personal_quote_id as id', DB::raw('"'.$request->quoteType.' Insurance" as quote_type_text, "'.$quoteTypeId.'" as quote_type_id'), $quoteRequestTable.'.code as cdb_id');
+                } else {
+                    $dataAml = $dataAml->select($quoteRequestTable.'.*', DB::raw('"'.$request->quoteType.' Insurance" as quote_type_text, "'.$quoteTypeId.'" as quote_type_id'), $quoteRequestTable.'.code as cdb_id');
+                }
 
+                $dataAml = $dataAml->orderBy($quoteRequestTable.'.created_at', 'desc');
+                if ($quoteRequestTable == 'personal_quotes') {
+                    $dataAml->where($quoteRequestTable.'.quote_type_id', $quoteTypeId);
+                }
                 if (
                     isset($request->searchType) && ! empty($request->searchType) &&
                     isset($request->searchField) && ! empty($request->searchField)
@@ -117,9 +121,7 @@ class AMLController extends Controller
                     if ($request->searchType == 'cdbId') {
                         $dataAml->where($quoteRequestTable.'.code', $request->searchField);
                     }
-                    if ($request->searchType == 'id') {
-                        $dataAml->where('kyc_logs.id', $request->searchField);
-                    }
+
                     if ($request->searchType == 'customerEmail') {
                         $dataAml->where($quoteRequestTable.'.email', $request->searchField);
                     }
@@ -136,9 +138,9 @@ class AMLController extends Controller
                     isset($request->amlCreatedStartDate) && ! empty($request->amlCreatedStartDate) &&
                     isset($request->amlCreatedEndDate) && ! empty($request->amlCreatedEndDate)
                 ) {
-                    $amlCreatedDate = date(config('constants.DATE_FORMAT_ONLY'), strtotime($request->amlCreatedStartDate));
-                    $amlEndDate = date(config('constants.DATE_FORMAT_ONLY'), strtotime($request->amlCreatedEndDate));
-                    $dataAml->whereBetween('kyc_logs.created_at', [$amlCreatedDate, $amlEndDate]);
+                    $amlCreatedDate = date(config('constants.DATE_FORMAT_ONLY').' 00:00:00', strtotime($request->amlCreatedStartDate));
+                    $amlEndDate = date(config('constants.DATE_FORMAT_ONLY').' 23:59:59', strtotime($request->amlCreatedEndDate));
+                    $dataAml->whereBetween($quoteRequestTable.'.created_at', [$amlCreatedDate, $amlEndDate]);
                 }
 
                 $quotes = $dataAml->simplePaginate(10)->withQueryString();
@@ -192,20 +194,19 @@ class AMLController extends Controller
             ->where(function ($aml) {
                 $aml->whereNotIn('decision', [AMLDecisionStatusEnum::RYU]);
                 $aml->orWhereNull('decision');
-            });
+            })->whereNull('screenshot');
         $kycLogs = $amlRecordFetch->orderBy('created_at', 'desc')->get();
-
         $quoteRequest = AMLService::getQuoteDetails($quoteTypeId, $quoteRequestId);
-        $customerDetails = Customer::where('id', $quoteRequest->customer_id)->with('detail')->firstOrFail();
-        $entityDetails = QuoteRequestEntityMapping::with('entity')->where(['quote_type_id' => $quoteTypeId, 'quote_request_id' => $quoteRequestId])->first() ?? [];
-        $membersDetail = CustomerMembersRepository::getBy('quote_id', $quoteRequest->id, $quoteType->code);
 
-        $uboDetails = CustomerMembersRepository::getBy('quote_id', $quoteRequest->id, $quoteType->code, CustomerTypeEnum::Entity);
-        $memberRelations = LookupRepository::where('key', LookupsEnum::MEMBER_RELATION)->get();
-        $uboRelations = LookupRepository::where('key', LookupsEnum::UBO_RELATION)->get();
+        $customerDetails = Customer::where('id', $quoteRequest->customer_id)->with('detail')->firstOrFail();
+        $entityDetails = QuoteRequestEntityMapping::with(['entity', 'entity.quoteMember'])
+            ->where(['quote_type_id' => $quoteTypeId, 'quote_request_id' => $quoteRequestId])
+            ->first() ?? [];
+        $membersDetail = CustomerMembersRepository::getBy($quoteRequest->id, $quoteType->code);
+
+        $uboDetails = CustomerMembersRepository::getBy($quoteRequest->id, $quoteType->code, CustomerTypeEnum::Entity);
         $nationalities = NationalityRepository::withActive()->get();
         $emirates = Emirate::where('is_active', 1)->orderBy('sort_order')->get();
-        $industryType = LookupRepository::where('key', LookupsEnum::COMPANY_TYPE)->get();
         $isCurrentUserFromCompliance = auth()->user()->hasRole(RolesEnum::COMPLIANCE) ? 1 : 0;
         $isCurrentUserFromPaAml = auth()->user()->hasAnyRole([RolesEnum::PA, RolesEnum::AML]) ? 1 : 0;
         $sanctionListService = app(SanctionListService::class);
@@ -234,14 +235,18 @@ class AMLController extends Controller
             LookupsEnum::PROFESSIONAL_TITLE,
             LookupsEnum::UBO_RELATION,
             LookupsEnum::COMPANY_TYPE,
+            LookupsEnum::MEMBER_RELATION,
         ])->get()->groupBy('key');
 
         //lookups , loop through each key, replace - with _ and update key
         $lookups = $lookups->mapWithKeys(function ($item, $key) {
             return [str_replace('-', '_', $key) => $item];
         });
-        $entities = Entity::all();
         $amlDecisionStatusEnum = AMLDecisionStatusEnum::asArray();
+
+        $kycStatus = AMLService::getKycType($quoteTypeId, $quoteRequestId);
+
+        // dd($entityDetails->entity->quoteMember);
 
         $data = [
             'quoteType' => $quoteType,
@@ -249,13 +254,11 @@ class AMLController extends Controller
             'entityDetails' => $entityDetails,
             'membersDetails' => $membersDetail,
             'uboDetails' => $uboDetails,
-            'memberRelations' => $memberRelations,
-            'uboRelations' => $uboRelations,
             'nationalities' => $nationalities,
             'emirates' => $emirates,
-            'industryType' => $industryType,
             'customerTypeEnum' => CustomerTypeEnum::asArray(),
             'kycLogs' => $kycLogs,
+            'kycStatus' => $kycStatus,
             'quoteStatusCode' => $quoteStatusCode,
             'isCurrentUserFromCompliance' => $isCurrentUserFromCompliance,
             'isCurrentUserFromPaAml' => $isCurrentUserFromPaAml,
@@ -268,7 +271,6 @@ class AMLController extends Controller
             'customerDetails' => $customerDetails,
             'amlDecisionStatusEnum' => $amlDecisionStatusEnum,
             'lookups' => $lookups,
-            'entities' => $entities,
             'quoteAmlStatus' => $this->checkAmlQuoteStatus($quoteRequest->quote_status_id),
         ];
 
@@ -322,21 +324,28 @@ class AMLController extends Controller
 
     public function quoteUpdate(AMLCheckRequest $AMLCheckRequest, $quoteTypeId, $quoteRequestId)
     {
+
         $quoteId = $quoteRequestId;
         $quoteType = QuoteType::where('id', $quoteTypeId)->firstOrFail();
 
-        if (checkPersonalQuotes($quoteType->code) && (! AMLService::isDataMigrated($quoteTypeId, $quoteRequestId))) {
-            $quoteId = AMLService::getPersonalQuoteId($quoteTypeId, $quoteId);
-        }
+        /*if (checkPersonalQuotes($quoteType->code) && (! AMLService::isDataMigrated($quoteTypeId, $quoteRequestId))) {
+            $quoteId = AMLService::getPersonalQuoteId($quoteTypeId, $quoteRequestId);
+        } */
 
         $updateQuote = $this->getQuoteObject($quoteType->code, $quoteId);
         $getMemberOrUBODetails = AMLService::getMemberOrUBODetails($AMLCheckRequest, $quoteType, $quoteId);
+        if ($getMemberOrUBODetails) {
+            $memberValidateCheck = collect($getMemberOrUBODetails)->pluck('first_name')->toArray();
+            if (in_array(null, $memberValidateCheck)) {
+                return redirect()->back()->with('error', 'First Name missing');
+            }
+        }
 
         if ($updateQuote) {
             info('Bridger Insight - Get Quote Successfully');
             if (auth()->user()->hasAnyRole([RolesEnum::AML, RolesEnum::PA])) {
                 if (checkPersonalQuotes($quoteType->code)) {
-                    AMLService::updatePaIdForPersonalQuotes($quoteTypeId, $quoteRequestId, AMLService::isDataMigrated($quoteTypeId, $quoteId));
+                    AMLService::updatePaIdForPersonalQuotes($quoteTypeId, $quoteRequestId, true);
                 } else {
                     $updateQuote->pa_id = auth()->user()->id;
                     $updateQuote->save();
@@ -351,7 +360,7 @@ class AMLController extends Controller
                 ->where(function ($aml) {
                     $aml->whereNotIn('decision', [AMLDecisionStatusEnum::RYU]);
                     $aml->orWhereNull('decision');
-                })->withTrashed()->get()->pluck('decision')->toArray();
+                })->whereNull('screenshot')->withTrashed()->get()->pluck('decision')->toArray();
 
             if ($AMLCheckRequest->customer_type == CustomerTypeEnum::Individual) {
                 info('Bridger Insight - Customer type : Individual');
@@ -589,22 +598,18 @@ class AMLController extends Controller
 
     public function sendBridgerResponse(Request $request)
     {
-        if (auth()->user()->hasRole(RolesEnum::ComplianceSuperUser)) {
-            info('Bridger Insight : Email Triggered to Compliance Super User');
-            AMLService::sendAMLMatchedEmailtoComplianceTeam(
-                config('constants.APP_URL').$request['aml_quote_url'],
-                $request['quote_ref_id'],
-                $request['bridger_response'],
-                $request['customer_entity_name'],
-                $request['quote_type_text'],
-                auth()->user()->email,
-                true
-            );
+        info('Bridger Insight : Email Triggered to Compliance Super User - Ref ID: '.$request['quote_ref_id'].' - Email triggered by: '.auth()->user()->email);
+        AMLService::sendAMLMatchedEmailtoComplianceTeam(
+            config('constants.APP_URL').$request['aml_quote_url'],
+            $request['quote_ref_id'],
+            $request['bridger_response'],
+            $request['customer_entity_name'],
+            $request['quote_type_text'],
+            auth()->user()->email,
+            true
+        );
 
-            return response()->json(['message' => 'Email Triggered to Compliance Super User']);
-        }
-
-        return true;
+        return response()->json(['message' => 'Email Triggered to Compliance Super User']);
     }
 
     private function checkAmlQuoteStatus($statusId)
