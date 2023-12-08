@@ -261,7 +261,7 @@ const memberIndexPerId = id => {
 };
 
 const updateGeneralInfo = () => {
-  if (confirm('Do you want to update this values?')) {
+//   if (confirm('Do you want to update this values?')) {
     totalLoadingPrice.value = 0;
     if (loadingPrices.value.length > 0) {
       loadingPrices.value.forEach(loadingPrice => {
@@ -271,7 +271,7 @@ const updateGeneralInfo = () => {
     }
     loadingPriceBeingUpdated.value = false;
     emit('membersDetailsReviewed', true);
-  }
+//   }
 };
 
 const onLoadingPricesUpdate = member => {
@@ -494,8 +494,8 @@ onUpdated(() => {
                 </dd>
                 <dd v-else>
                   {{
-                    (finalPrice =
-                      selectedCopay.premium +
+                    finalPrice =
+                      (selectedCopay.premium +
                       (props.plan.basmah || 0) +
                       (props.plan.policyFee || 0) +
                       totalLoadingPrice)?.toLocaleString()
@@ -505,28 +505,28 @@ onUpdated(() => {
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">Loading Price</dt>
                 <dd>
-                  {{ totalLoadingPrice?.toLocaleString() }}
+                  {{ Number(totalLoadingPrice).toFixed(2)?.toLocaleString() }}
                 </dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">Total VAT amount</dt>
                 <dd>
-                  {{ (vatAmount = totalLoadingPrice * 0.05)?.toLocaleString() }}
+                  {{ vatAmount = Number(finalPrice * 0.05).toFixed(2)?.toLocaleString() }}
                 </dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">Basmah</dt>
-                <dd>{{ props.plan.basmah?.toLocaleString() }}</dd>
+                <dd>{{ Number(props.plan.basmah).toFixed(2)?.toLocaleString() }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">Total Price with VAT</dt>
                 <dd>
-                  {{ (finalPrice + vatAmount)?.toLocaleString() }}
+                  {{ Number((Number(finalPrice) + Number(vatAmount)).toFixed(2)?.toLocaleString()) }}
                 </dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">Policy Fee</dt>
-                <dd>{{ props.plan.policyFee?.toLocaleString() }}</dd>
+                <dd>{{ Number(props.plan.policyFee).toFixed(2)?.toLocaleString() }}</dd>
               </div>
               <!-- <div class="grid sm:grid-cols-2">
               <dt class="font-medium">Total (exclusive of VAT)</dt>
@@ -634,24 +634,79 @@ onUpdated(() => {
 
           <TabPanel>
             <div class="p-4">
-              <x-table
+              <DataTable
                 :headers="[
                   { text: 'Relationship', value: 'memberCategoryText' },
                   { text: 'DOB', value: 'dob' },
                   { text: 'Gender', value: 'gender' },
-                  { text: 'Base Price', value: 'premium' },
+                  { text: 'Base Price', value: 'premium'},
                   { text: 'Loading Price', value: 'loadingPrice' },
                   { text: 'Final Price', value: 'finalPrice' },
                 ]"
                 :items="props.plan.memberPremiumBreakdown || []"
+                hide-rows-per-page
+                hide-footer
+                table-class-name="plain"
               >
-                <template #item-dob="{ item }">
-                  {{ dateFormat(item.dob) }}
+                <template #header-premium="header">
+                    <div class="customize-header">
+                        <x-tooltip position="bottom" class="arrow-t">
+                        <span
+                            class="font-semibold tracking-widest uppercase text-xs underline decoration-dotted decoration-primary-600 cursor-help"
+                        >
+                            {{header.text}}
+                        </span>
+                        <template #tooltip>
+                            <div class="whitespace-normal normal-case text-[10px]">
+                                Base Price (exclusive of  VAT, Basmah & Policy Fee)
+                            </div>
+                        </template>
+                        </x-tooltip>
+                    </div>
                 </template>
-                <template #item-gender="{ item }">
-                  {{ genderText(item.gender) }}
+
+                <template #header-loadingPrice="header">
+                    <div class="customize-header">
+                        <x-tooltip position="bottom" class="arrow-t">
+                        <span
+                            class="font-semibold tracking-widest uppercase text-xs underline decoration-dotted decoration-primary-600 cursor-help"
+                        >
+                            {{header.text}}
+                        </span>
+                        <template #tooltip>
+                            <div class="whitespace-normal normal-case text-[10px]">
+                                Additional cost or fee that is added to the base price. This extra charge is
+                                applied to cover specific risks or factors associated with the policyholder,
+                                such as pre-existing medical conditions or other higher-risk situations
+                                (exclusive of VAT)
+                            </div>
+                        </template>
+                        </x-tooltip>
+                    </div>
                 </template>
-                <template #item-premium="{ item }">
+
+                <template #header-finalPrice="header">
+                    <div class="customize-header">
+                        <x-tooltip position="bottom" class="arrow-t">
+                        <span
+                            class="font-semibold tracking-widest uppercase text-xs underline decoration-dotted decoration-primary-600 cursor-help"
+                        >
+                            {{header.text}}
+                        </span>
+                        <template #tooltip> <div class="whitespace-normal normal-case text-[10px]">Total Price (exclusive of  VAT)</div> </template>
+                        </x-tooltip>
+                    </div>
+                </template>
+
+                <template #item-dob="{ dob }">
+                    <section class="w-28">
+                        {{ dateFormat(dob) }}
+                    </section>
+                </template>
+                <template #item-gender="{ gender }">
+                  {{ genderText(gender) }}
+                </template>
+                <template #item-premium="item">
                   <section v-for="data in item.ratesPerCopay">
                         <x-input
                         v-if="data.healthPlanCoPaymentId == selectedCopay.id"
@@ -685,7 +740,7 @@ onUpdated(() => {
                   </section>
                 </template>
 
-                <template #item-loadingPrice="{ item }">
+                <template #item-loadingPrice="item">
                     <section v-for="data in item.ratesPerCopay">
                         <x-input
                             v-if="data.healthPlanCoPaymentId == selectedCopay.id && data.loadingPrice != undefined"
@@ -742,7 +797,7 @@ onUpdated(() => {
                   /> -->
                 </template>
 
-                <template #item-finalPrice="{ item }">
+                <template #item-finalPrice="item">
                   <section v-for="data in item.ratesPerCopay">
                     <x-input
                       v-if="data.healthPlanCoPaymentId == selectedCopay.id && data.loadingPrice != undefined"
@@ -822,7 +877,7 @@ onUpdated(() => {
                   Update
                 </x-button>
               </template> -->
-              </x-table>
+              </DataTable>
               <div class="grid md:grid-cols-1 gap-5 p-4 float-right">
                 <x-button
                   :disabled="!isManual"
@@ -885,6 +940,7 @@ onUpdated(() => {
                 class="w-full"
                 v-model="coPay"
                 :options="coPayOptions"
+                :disabled="!isManual"
                 :single="true"
                 label="Co-Pay"
                 placeholder="Select a Co-Pay option"

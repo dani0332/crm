@@ -818,15 +818,19 @@ const getSmallestCopayRateAsDefaultValue = () => {
   let smallestCopayValue = 0;
   let defaultCopayId = 0;
   let smallestCopayVAT = 0;
+  let smallestCopayLoadingPrice = 0;
   plansTable.data.forEach(element => {
     element.ratesPerCopay?.forEach(function callback(value, index) {
+
       if (index == 0) {
         smallestCopayValue = Number(value.premium);
         smallestCopayVAT = Number(value.vat);
+        smallestCopayLoadingPrice = Number(value.loadingPrice ? value.loadingPrice : 0);
         defaultCopayId = value.healthPlanCoPaymentId;
       } else if (value.premium < smallestCopayValue) {
         smallestCopayValue = Number(value.premium);
         smallestCopayVAT = Number(value.vat);
+        smallestCopayLoadingPrice = Number(value.loadingPrice ? value.loadingPrice : 0);
         defaultCopayId = value.healthPlanCoPaymentId;
       }
     });
@@ -835,11 +839,17 @@ const getSmallestCopayRateAsDefaultValue = () => {
       element.actualPremium = selectedCoPay.premium;
       element.vat = selectedCoPay.vat;
       element.selectedCopayId = selectedCoPay.id;
+      element.loadingPrice = selectedCoPay.loadingPrice;
     } else {
       element.selectedCopayId = defaultCopayId;
       element.actualPremium = smallestCopayValue;
       element.vat = smallestCopayVAT;
+      element.loadingPrice = smallestCopayLoadingPrice;
+
     }
+    console.log(element.providerName);
+    console.log(element.actualPremium);
+    console.log(element.vat);
   });
 };
 
@@ -2533,9 +2543,9 @@ const handleChildUpdate = planId => {
             </x-tag>
           </div>
         </template>
-        <template #item-total="{ actualPremium, policyFee, basmah, vat }">
+        <template #item-total="{ actualPremium, policyFee, basmah, vat, loadingPrice }">
           {{
-            fixedValue(actualPremium + (policyFee || 0) + (basmah || 0) + vat)
+            fixedValue(actualPremium + (policyFee || 0) + (basmah || 0) + vat + (loadingPrice || 0))
           }}
         </template>
         <template #item-action="item">
