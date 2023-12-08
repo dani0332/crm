@@ -166,11 +166,15 @@ class AMLController extends Controller
         $aml->quote_type_text = $aml->quotetype->text;
         $quoteStatusCodes = quoteStatusCode::asArray();
         $amlDecisionStatusCodes = AMLDecisionStatusEnum::asArray();
+        $manualStatusUpdateIM = collect($amlResults[0]->ManualStatusUpdateIM ?? []);
 
         if (isset($amlResults[0]->Watchlist)) {
             $responseFrom = 'Bridger';
-            $amlResults = collect($amlResults[0]->Watchlist->Matches)->filter(function ($value) {
-                $value->decision = (! $value->FalsePositive && ! $value->TrueMatch) ? AMLDecisionStatusEnum::UNKNOWN : AMLDecisionStatusEnum::TRUE_MATCH;
+
+            $amlResults = collect($amlResults[0]->Watchlist->Matches)->filter(function ($value) use ($manualStatusUpdateIM) {
+                $value->decision = (! $value->FalsePositive && ! $value->TrueMatch) ?
+                    ($manualStatusUpdateIM->has($value->ID) ? $manualStatusUpdateIM->get($value->ID) : AMLDecisionStatusEnum::UNKNOWN) :
+                    AMLDecisionStatusEnum::TRUE_MATCH;
 
                 return $value->FalsePositive == false;
             })->values();
@@ -362,18 +366,6 @@ class AMLController extends Controller
                 info('Bridger Insight - Customer type : Individual');
                 $customer = Customer::with('nationality')->findOrFail($AMLCheckRequest->customer_id);
                 $customerUpdate = $AMLCheckRequest->validated();
-                // Temporary comment this code, please don't remove it.
-                //                if ( filter_var(\request()->withFullName, FILTER_VALIDATE_BOOLEAN)) {
-                //                    $fullName = explode(' ', \request()->insured_fullname);
-                //                    $insuredFirstName = $fullName[0] ?? '';
-                //                    unset($fullName[0]);
-                //                    $customerUpdate = [
-                //                        'nationality_id' => $AMLCheckRequest->nationality_id,
-                //                        'dob' => $AMLCheckRequest->dob,
-                //                        'insured_first_name' => $insuredFirstName,
-                //                        'insured_last_name' => implode(' ', $fullName)
-                //                    ];
-                //                }
                 $customer->update($customerUpdate);
                 $customer->refresh();
                 info('Bridger Insight - Customer Updated Successfully');
@@ -384,7 +376,6 @@ class AMLController extends Controller
                     'dob' => Carbon::parse($customer->dob)->format(config('constants.DATE_FORMAT_ONLY')),
                     'nationality' => $customer->nationality->toArray() ?? [],
                     'code' => CustomerTypeEnum::IndividualShort.'-'.$customer->id,
-                    //                    'with_full_name' => \request()->withFullName
                 ];
 
                 foreach ($getMemberOrUBODetails as $memberDetail) {
@@ -594,18 +585,44 @@ class AMLController extends Controller
 
     public function sendBridgerResponse(Request $request)
     {
-        info('Bridger Insight : Email Triggered to Compliance Super User - Ref ID: '.$request['quote_ref_id'].' - Email triggered by: '.auth()->user()->email);
-        AMLService::sendAMLMatchedEmailtoComplianceTeam(
-            config('constants.APP_URL').$request['aml_quote_url'],
-            $request['quote_ref_id'],
-            $request['bridger_response'],
-            $request['customer_entity_name'],
-            $request['quote_type_text'],
-            auth()->user()->email,
-            true
-        );
+        $response = [];
+        $kycLog = KycLog::withTrashed()->where('id', $request->aml_id)->first();
 
-        return response()->json(['message' => 'Email Triggered to Compliance Super User']);
+        if (AMLService::checkModifiedRecord($kycLog->updated_at, $request->last_updated_at)) {
+            return response()->json(['status' => 'error','message' => 'Record already modified please refresh the page']);
+        }
+
+        $bridgerResponse = json_decode($kycLog->results);
+        if ($request->bridger_decision_type == AMLDecisionStatusEnum::TRUE_MATCH) {
+            $bridgerResponse[0]->ManualStatusUpdateIM = [$request->bridger_match_id => $request->bridger_decision_type];
+        } else {
+            unset($bridgerResponse[0]->ManualStatusUpdateIM->{$request->bridger_match_id});
+        }
+
+        $kycLog->results = json_encode($bridgerResponse);
+
+        if ($request->bridger_decision_type == AMLDecisionStatusEnum::TRUE_MATCH) {
+            info('Bridger Insight : Email Triggered to Compliance Super User - Ref ID: '.$request['quote_ref_id'].' - Email triggered by: '.auth()->user()->email);
+            AMLService::sendAMLMatchedEmailtoComplianceTeam(
+                config('constants.APP_URL').$request['aml_quote_url'],
+                $request['quote_ref_id'],
+                $request['bridger_response'],
+                $request['customer_entity_name'],
+                $request['quote_type_text'],
+                auth()->user()->email,
+                true
+            );
+            $response = ['status' => 'success','message' => 'Email Triggered to Compliance Super User'];
+
+            if (auth()->user()->hasRole(RolesEnum::COMPLIANCE)) {
+                $kycLog->decision = AMLDecisionStatusEnum::SENT_FOR_REVIEW;
+                $response['result_state'] = AMLDecisionStatusEnum::SENT_FOR_REVIEW;
+            }
+        }
+
+        $kycLog->save();
+
+        return response()->json($response);
     }
 
     private function checkAmlQuoteStatus($statusId)
