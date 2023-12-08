@@ -96,7 +96,7 @@ class LifeQuoteController extends Controller
 
         $advisors = UserRepository::getPersonalQuoteAdvisors(QuoteTypes::LIFE->value);
         $memberRelations = LookupRepository::where('key', LookupsEnum::MEMBER_RELATION)->get();
-        $membersDetails = CustomerMembersRepository::getBy('quote_id', $quote->id, QuoteTypes::LIFE->name);
+        $membersDetails = CustomerMembersRepository::getBy($quote->id, QuoteTypes::LIFE->name);
         $quoteStatuses = QuoteStatusRepository::byQuoteTypeId(QuoteTypes::LIFE->id())->get();
         $lostReasons = LostReasonRepository::orderBy('text', 'asc')->get();
         $nationalities = NationalityRepository::withActive()->get();
@@ -107,7 +107,7 @@ class LifeQuoteController extends Controller
             'quote_request_id' => $quote->id,
         ])->with('assignee')->orderBy('created_at', 'desc')->get();
 
-        $uboDetails = CustomerMembersRepository::getBy('quote_id', $quote->id, QuoteTypes::LIFE->name, CustomerTypeEnum::Entity);
+        $uboDetails = CustomerMembersRepository::getBy($quote->id, QuoteTypes::LIFE->name, CustomerTypeEnum::Entity);
         $uboRelations = LookupRepository::where('key', LookupsEnum::UBO_RELATION)->get();
         $emirates = Emirate::where('is_active', 1)->select('id', 'text')->get();
 

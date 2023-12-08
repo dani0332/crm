@@ -181,7 +181,7 @@ class TravelController extends Controller
         $fields = array_diff_key($fields, array_flip($removeFields));
 
         $embeddedProducts = EmbeddedProductRepository::byQuoteType(self::TYPE_ID, $record->id);
-        $uboDetails = CustomerMembersRepository::getBy('quote_id', $record->id, QuoteTypes::TRAVEL->name, CustomerTypeEnum::Entity);
+        $uboDetails = CustomerMembersRepository::getBy($record->id, QuoteTypes::TRAVEL->name, CustomerTypeEnum::Entity);
         $uboRelations = LookupRepository::where('key', LookupsEnum::UBO_RELATION)->get();
         $emirates = Emirate::where('is_active', 1)->select('id', 'text')->get();
 
@@ -198,7 +198,7 @@ class TravelController extends Controller
             'assignmentTypes' => $assignmentTypes,
             'genderOptions' => $this->crudService->getGenderOptions(),
             'lostReasons' => $this->lookupService->getLostReasons(),
-            'travelers' => CustomerMembersRepository::getBy('quote_id', $record->id, QuoteTypes::TRAVEL->name),
+            'travelers' => CustomerMembersRepository::getBy($record->id, QuoteTypes::TRAVEL->name),
             'ecomDetails' => $ecomDetails,
             'quoteDocuments' => array_values($quoteDocuments->toArray()),
             'documentTypes' => $documentTypes,

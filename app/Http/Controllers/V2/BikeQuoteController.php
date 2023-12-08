@@ -98,7 +98,7 @@ class BikeQuoteController extends Controller
         $quote = BikeQuoteRepository::getBy('uuid', $uuid);
 
         $quoteStatuses = QuoteStatusRepository::byQuoteTypeId(QuoteTypes::BIKE->id())->get();
-        $membersDetail = CustomerMembersRepository::getBy('quote_id', $quote->id, QuoteTypes::BIKE->name);
+        $membersDetail = CustomerMembersRepository::getBy($quote->id, QuoteTypes::BIKE->name);
         $documentTypes = DocumentTypeRepository::byQuoteTypeId(QuoteTypes::BIKE->id())->get();
         $paymentMethods = PaymentMethodRepository::orderBy('name')->get();
         $nationalities = Nationality::where('is_active', 1)->select('id', 'text')->get();
@@ -114,7 +114,7 @@ class BikeQuoteController extends Controller
 
         $lostReasons = LostReasonRepository::orderBy('text', 'asc')->get();
         $embeddedProducts = EmbeddedProductRepository::byQuoteType(QuoteTypes::BIKE->id(), $quote->id);
-        $uboDetails = CustomerMembersRepository::getBy('quote_id', $quote->id, QuoteTypes::BIKE->name, CustomerTypeEnum::Entity);
+        $uboDetails = CustomerMembersRepository::getBy($quote->id, QuoteTypes::BIKE->name, CustomerTypeEnum::Entity);
         $uboRelations = LookupRepository::where('key', LookupsEnum::UBO_RELATION)->get();
         $emirates = Emirate::where('is_active', 1)->select('id', 'text')->get();
 
