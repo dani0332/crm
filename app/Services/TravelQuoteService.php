@@ -11,6 +11,7 @@ use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Enums\TravelQuoteEnum;
 use App\Facades\Ken;
+use App\Models\CustomerMembers;
 use App\Models\TravelMemberDetail;
 use App\Models\TravelQuote;
 use App\Models\TravelQuotePlan;
@@ -781,8 +782,11 @@ class TravelQuoteService extends BaseService
 
     public function getAboveAgeMembers($id)
     {
-        return TravelMemberDetail::where('travel_quote_request_id', $id)
+        return CustomerMembers::where('quote_id', $id)
+            ->where('quote_type', 'App\Models\TravelQuote')
             ->whereDate('dob', '<=', now()->subYears(65))->count();
+        /*return TravelMemberDetail::where('travel_quote_request_id', $id)
+            ->whereDate('dob', '<=', now()->subYears(65))->count();*/
     }
 
     public function getDuplicateEntityByCode($code)
