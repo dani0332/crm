@@ -7,6 +7,7 @@ use App\Enums\GenericRequestEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
+use App\Enums\PaymentTooltip;
 use App\Enums\PermissionsEnum;
 use App\Enums\quoteStatusCode;
 use App\Enums\QuoteStatusEnum;
@@ -276,6 +277,8 @@ class BusinessQuoteController extends Controller
             'nationalities' => $nationalities,
             'emirates' => $emirates,
             'canAddBatchNumber' => auth()->user()->hasRole(RolesEnum::CorplineManager),
+            'paymentTooltipEnum' => PaymentTooltip::asArray(),
+            'paymentStatusEnum' => PaymentStatusEnum::asArray(),
         ]);
     }
 

@@ -1,5 +1,6 @@
 <script setup>
 import QuoteDocuments from '@/inertia/Pages/PersonalQuote/Partials/QuoteDocuments.vue';
+import PaymentTableNew from '../../Components/PaymentTableNew.vue'; 
 
 defineProps({
   quote: Object,
@@ -28,6 +29,8 @@ defineProps({
   canAddBatchNumber: Boolean,
   documentTypes: Object,
   storageUrl: String,
+  paymentStatusEnum: Object,
+  paymentTooltipEnum: Object,
 });
 
 const page = usePage();
@@ -35,6 +38,7 @@ const { isRequired } = useRules();
 const hasAnyRole = roles => useHasAnyRole(roles);
 const rolesEnum = page.props.rolesEnum;
 const notification = useNotifications('toast');
+const hasRole = role => useHasRole(role);
 
 const { copy, copied } = useClipboard();
 
@@ -1171,7 +1175,19 @@ const linkEntity = () => {
     />
 
     <!-- Payments -->
+    <PaymentTableNew 
+			v-if="hasRole(rolesEnum.BetaUser)"
+			:quoteType="page.props.quoteType"
+			:payments="payments"
+			:paymentDocument="documentTypes.QUOTE.filter(item => item.code === 'CLPD' || item.code === 'CLPDR')"
+			:quoteRequest="quoteRequest"
+			:paymentStatusEnum="paymentStatusEnum"
+			:paymentTooltipEnum="paymentTooltipEnum"
+			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name, tooltip: pm.tool_tip } })"
+			:storageUrl="storageUrl"
+		/>
     <PaymentTable
+      v-else
       :payments="payments"
       :can="permissions"
       :isBetaUser="isBetaUser"
