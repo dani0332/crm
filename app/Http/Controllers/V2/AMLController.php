@@ -26,7 +26,6 @@ use App\Models\Emirate;
 use App\Models\Entity;
 use App\Models\KycLog;
 use App\Models\Lookup;
-use App\Models\PaymentDetails;
 use App\Models\PersonalQuote;
 use App\Models\QuoteRequestEntityMapping;
 use App\Models\QuoteStatus;
@@ -246,8 +245,6 @@ class AMLController extends Controller
         $amlDecisionStatusEnum = AMLDecisionStatusEnum::asArray();
 
         $kycStatus = AMLService::getKycType($quoteTypeId, $quoteRequestId);
-
-        $paymentDetails = PaymentDetails::where('quote_request_id', $quoteRequestId)->get();
 
         $data = [
             'quoteType' => $quoteType,
