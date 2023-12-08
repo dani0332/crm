@@ -50,7 +50,7 @@ const userForm = useForm({
   manager: props.userManagerIds ?? null,
   sub_team_id: null,
   additionalTeams: props?.selectedAdditionalTeams ?? [],
-  is_active: props.user?.is_active ?? false,
+  is_active: props.user?.is_active ? true : false,
   primary_product: props.userProductIds ? props?.userProductIds[0] : null,
   permissions: props?.userPermissions ?? null,
 });
@@ -194,14 +194,14 @@ onMounted(() => setInitialState());
       width="150"
     />
   </div>
-  <div class="grid sm:grid-cols-1 justify-center my-2" v-if="isEdit">
+  <!-- <div class="grid sm:grid-cols-1 justify-center my-2" v-if="isEdit">
     <x-toggle
       class="mx-auto"
       size="xs"
       v-model="userForm.is_active"
       color="primary"
     />
-  </div>
+  </div> -->
   <x-form @submit="onSubmit" :auto-focus="false">
     <div class="grid sm:grid-cols-2 gap-4">
       <x-field label="NAME" required>
@@ -325,7 +325,7 @@ onMounted(() => setInitialState());
         </x-select>
       </x-field>
     </div>
-    <div class="grid sm:grid-cols-1 gap-4 mt-4">
+    <div class="grid sm:grid-cols-2 gap-4 mt-4">
       <x-field label="MANAGER">
         <ComboBox
           v-model="userForm.manager"
@@ -337,6 +337,17 @@ onMounted(() => setInitialState());
           "
           :loading="loader.managers"
         />
+      </x-field>
+      <x-field label="IS ACTIVE">
+        <x-select
+          v-model="userForm.is_active"
+          :options="[
+            { value: false, label: 'No' },
+            { value: true, label: 'Yes' },
+          ]"
+          class="w-full"
+        >
+        </x-select>
       </x-field>
     </div>
 
