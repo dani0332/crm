@@ -2,18 +2,18 @@
 
 namespace App\Console\Commands;
 
-use App\Models\PersonalQuote;
-use App\Models\CarQuote;
-use App\Models\HomeQuote;
-use App\Models\HealthQuote;
-use App\Models\LifeQuote;
-use App\Models\PetQuote;
-use App\Models\YachtQuote;
-use App\Models\BusinessQuote;
 use App\Models\BikeQuote;
-use App\Models\TravelQuote;
-use App\Models\JetskiQuote;
+use App\Models\BusinessQuote;
+use App\Models\CarQuote;
 use App\Models\CycleQuote;
+use App\Models\HealthQuote;
+use App\Models\HomeQuote;
+use App\Models\JetskiQuote;
+use App\Models\LifeQuote;
+use App\Models\PersonalQuote;
+use App\Models\PetQuote;
+use App\Models\TravelQuote;
+use App\Models\YachtQuote;
 use Exception;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
