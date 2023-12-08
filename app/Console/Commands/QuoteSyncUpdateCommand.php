@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Models\ApplicationStorage;
 use App\Models\BikeQuote;
 use App\Models\BusinessQuote;
 use App\Models\CarQuote;
@@ -20,7 +21,7 @@ use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
-class QuoteSyncCommand extends Command
+class QuoteSyncUpdateCommand extends Command
 {
     /**
      * The name and signature of the console command.
@@ -38,6 +39,14 @@ class QuoteSyncCommand extends Command
 
     public function handle()
     {
+
+        $isQuoteSyncEnabled = ApplicationStorage::where('key_name', 'quote_sync_enabled')->first();
+
+        if (!$isQuoteSyncEnabled || $isQuoteSyncEnabled->value == 0) {
+            info('----------- QuoteSync is disabled -----------');
+            return;
+        }
+        info('----------- QuoteSync is enabled -----------');
 
         $entries = QuoteSync::where('is_synced', false)->get();
 
