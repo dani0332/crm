@@ -168,7 +168,7 @@ const filters = reactive({
   email: '',
   mobile_no: '',
   quote_status_id: [],
-  created_at: page.props.createdAtStart || '',
+  created_at_start: page.props.createdAtStart || '',
   currently_insured_with: '',
   renewal_expiry_date: '',
   is_ecommerce: '',
@@ -198,7 +198,7 @@ const canExport = ref(false);
 watch(
   () => filters,
   () => {
-    if (filters.created_at && filters.created_at_end) {
+    if (filters.created_at_start && filters.created_at_end) {
       canExport.value = true;
     } else {
       canExport.value = false;
@@ -354,7 +354,7 @@ onMounted(() => {
           placeholder="Search by Last Name"
         />
         <DatePicker
-          v-model="filters.created_at"
+          v-model="filters.created_at_start"
           label="Created Date Start"
           :rules="
             filters.code ||
@@ -510,7 +510,7 @@ onMounted(() => {
             v-if="canExport"
             size="sm"
             color="emerald"
-            :href="`/quotes/car-export?${objToUrl(filters)}`"
+            :href="`/car/leads-export?${objToUrl(filters)}`"
             class="justify-self-start"
           >
             Export
