@@ -33,7 +33,7 @@ class ResetLeadAllocationCounts extends Command
         foreach ($entries as $entry) {
             info('Syncing QuoteSync entry: '.$entry->id);
             $quote = PersonalQuote::where('uuid', $entry->quote_uuid)->first();
-            info('Syncing QuoteSync entry: '.$entry->id.' quote Id : '.$quote->uuid);
+            info('Syncing QuoteSync entry: '.$entry->id);
             if ($quote) {
                 DB::beginTransaction();
                 try {
