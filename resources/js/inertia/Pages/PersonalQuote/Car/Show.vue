@@ -3278,7 +3278,7 @@ const showSendUpdate = computed(() => !sectionExpanded?.value);
     </div>
 
     <SendUpdates
-      v-if="showSendUpdate"
+      v-if="true || showSendUpdate"
       :showAddButton="true"
       reportableType="CarQuote"
       :reportableId="record.id"

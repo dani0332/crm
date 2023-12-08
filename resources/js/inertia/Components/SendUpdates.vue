@@ -175,10 +175,10 @@ const findOption = (item, key) => {
           :hide-footer="sendUpdatesTable.data <= 10"
         >
           <template #header-code="{ text, tooltip }">
-            <x-tooltip position="bottom">
+            <x-tooltip position="right">
               <span class="underline decoration-dotted">{{ text }}</span>
               <template #tooltip>
-                <span class="capitalize">
+                <span class="capitalize whitespace-break-spaces">
                   {{ tooltip }}
                 </span>
               </template>
@@ -188,7 +188,7 @@ const findOption = (item, key) => {
             <x-tooltip position="bottom">
               <span class="underline decoration-dotted">{{ text }}</span>
               <template #tooltip>
-                <span class="capitalize">
+                <span class="capitalize whitespace-break-spaces">
                   {{ tooltip }}
                 </span>
               </template>
@@ -198,7 +198,7 @@ const findOption = (item, key) => {
             <x-tooltip position="bottom">
               <span class="underline decoration-dotted">{{ text }}</span>
               <template #tooltip>
-                <span class="capitalize">
+                <span class="capitalize whitespace-break-spaces">
                   {{ tooltip }}
                 </span>
               </template>
@@ -208,7 +208,7 @@ const findOption = (item, key) => {
             <x-tooltip position="bottom">
               <span class="underline decoration-dotted">{{ text }}</span>
               <template #tooltip>
-                <span class="capitalize">
+                <span class="capitalize whitespace-break-spaces">
                   {{ tooltip }}
                 </span>
               </template>
@@ -218,7 +218,7 @@ const findOption = (item, key) => {
             <x-tooltip position="bottom">
               <span class="underline decoration-dotted">{{ text }}</span>
               <template #tooltip>
-                <span class="capitalize">
+                <span class="capitalize whitespace-break-spaces">
                   {{ tooltip }}
                 </span>
               </template>
@@ -253,10 +253,10 @@ const findOption = (item, key) => {
       </template>
 
       <!-- modal 1 -->
-      <div class="w-full flex gap-5 justify-center text-center my-10 mb-20" v-if="modals.step === 'step1'">
+      <div class="w-full flex gap-5 justify-center text-center my-10 mb-20 items-stretch" v-if="modals.step === 'step1'">
         <template v-for="option in options" :key="option.title">
           <x-tooltip position="bottom" class="arrow-t">
-            <x-button color="primary" class="py-8 px-6 rounded-xl w-[200px]" @click="setOption('step2', option)">
+            <x-button color="primary" class="py-8 px-6 rounded-xl w-[200px] whitespace-break-spaces" @click="setOption('step2', option)">
               {{ option.title }}
             </x-button>
             <template #tooltip> <div class="truncate w-40">{{ option.description }}</div> </template>
