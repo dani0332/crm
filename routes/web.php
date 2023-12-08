@@ -429,8 +429,8 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::post('aml/{quoteTypeId}/details/{quoteRequestId}/update-customer-details', [$controller, 'updateCustomerDetails'])->name('aml-update-customer-details');
         Route::post('aml/{quoteTypeId}/details/{quoteRequestId}/update-entity-details', [$controller, 'updateEntityDetails'])->name('aml-update-entity-details');
         Route::post('aml/insured-payer-update', [$controller, 'insuredPayerDetailsUpdate'])->name('insuredPayerDetailsUpdate');
-        Route::get('aml/download/history', [$controller, 'sanctionListHistory'])->name('sanctionListHistory');
-        Route::get('aml/upload/uae', [$controller, 'uploadUaeSanctionList'])->name('uploadUaeSanctionList');
+        // Route::get('aml/download/history', [$controller, 'sanctionListHistory'])->name('sanctionListHistory');
+        // Route::get('aml/upload/uae', [$controller, 'uploadUaeSanctionList'])->name('uploadUaeSanctionList');
         Route::post('aml/upload/uae-list', [$controller, 'uaeSanctionListUpload'])->name('uaeSanctionListUpload');
         Route::get('aml-fetch-entity', [V2AMLController::class, 'fetchEntity'])->name('aml-fetch-entity');
         Route::post('link-entity-details', [V2AMLController::class, 'linkEntityDetails'])->name('link-entity-details');
