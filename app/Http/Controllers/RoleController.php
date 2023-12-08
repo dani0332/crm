@@ -174,6 +174,7 @@ class RoleController extends Controller
         $role->name = $request->input('name');
         $role->save();
         $role->syncPermissions($request->input('permission'));
+
         return redirect(route('roles.show', $role->id))->with('success', 'Role has been updated');
         // if (isset($request->return_to_view)) {
         //     return redirect('admin/roles/' . $role->id)->with('success', 'Role has been updated');
@@ -189,6 +190,7 @@ class RoleController extends Controller
     public function destroy($id)
     {
         DB::table('roles')->where('id', $id)->delete();
+
         return redirect()->route('roles.index')->with('message', 'Role has been deleted');
 
         // return redirect()->route('roles.index')->with('message', 'Role has been deleted');

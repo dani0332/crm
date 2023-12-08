@@ -26,7 +26,7 @@ class TeamController extends Controller
     {
         $query = Team::with('parent')->whereNotNull('type');
 
-        if (isset($request->name) && !empty($request->name)) {
+        if (isset($request->name) && ! empty($request->name)) {
             $name = $request->name;
             $query->whereRaw('LOWER(name) LIKE ?', [strtolower("%{$name}%")]);
         }
@@ -82,7 +82,7 @@ class TeamController extends Controller
         $team->save();
 
         if (isset($request->return_to_view)) {
-            return redirect('generic/team/' . $team->id)->with('success', 'Team has been stored');
+            return redirect('generic/team/'.$team->id)->with('success', 'Team has been stored');
         }
 
         return redirect(route('team.show', $team->id))->with('success', 'Team has been stored');
@@ -98,6 +98,7 @@ class TeamController extends Controller
     {
         $data = Team::where('id', $id)->first();
         $data->parent_team_id = $this->teamService->getTeamNameById($data->parent_team_id);
+
         return inertia('Admin/Teams/Show', [
             'team' => $data,
         ]);

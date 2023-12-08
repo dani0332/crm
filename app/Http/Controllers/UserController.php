@@ -169,7 +169,7 @@ class UserController extends Controller
 
         $user->assignRole($request->input('roles'));
         if (isset($request->return_to_view)) {
-            return redirect('admin/users/' . $user->id)->with('success', 'User has been stored');
+            return redirect('admin/users/'.$user->id)->with('success', 'User has been stored');
         }
     }
 
@@ -237,7 +237,7 @@ class UserController extends Controller
         if (isset($user->additional_team_ids)) {
             $selectedAdditionalTeams = array_map('intval', explode(',', $user->additional_team_ids));
         }
-        
+
         $products = $this->getAllProducts();
 
         $userTeamIds = $this->getUserTeams($user->id)->pluck('id')->toArray();
@@ -327,13 +327,13 @@ class UserController extends Controller
          * this needs to be updated with new team/product structure
          */
 
-        if (!empty($request->primary_product)) {
+        if (! empty($request->primary_product)) {
             $user->team_id = $request->primary_product;
         }
 
         $this->leadAllocationService->updateUserAllocationRecord($user->id, null, null, $user->is_active);
 
-        if (!empty($request->additionalTeams) && isset($request->additionalTeams)) {
+        if (! empty($request->additionalTeams) && isset($request->additionalTeams)) {
             if (count((array) $request->additionalTeams) > 1) {
                 $user->additional_team_ids = implode(',', $request->additionalTeams);
             } else {
@@ -341,7 +341,7 @@ class UserController extends Controller
             }
         }
 
-        if (!empty($request->sub_team_id) && $request->sub_team_id != '0') {
+        if (! empty($request->sub_team_id) && $request->sub_team_id != '0') {
             $user->sub_team_id = $request->sub_team_id;
         }
 
@@ -376,7 +376,7 @@ class UserController extends Controller
             }
         }
 
-        $permissions = (!empty($request->permissions) && count($request->permissions)) ? $request->permissions : [];
+        $permissions = (! empty($request->permissions) && count($request->permissions)) ? $request->permissions : [];
         $user->syncPermissions($permissions);
 
         // Updating user roles
@@ -513,7 +513,7 @@ class UserController extends Controller
     private function getManagersBasedOnTeamId($teamId, $userId = null)
     {
         $teams = Team::whereIn('id', $teamId)->get();
-        if (!$teams) {
+        if (! $teams) {
             return [];
         }
 
@@ -527,7 +527,7 @@ class UserController extends Controller
             } elseif ($teamName == strtoupper(quoteTypeCode::Business)) {
                 $roleNames = [RolesEnum::GMManager, RolesEnum::GMDeputyManager, RolesEnum::CorplineManager, RolesEnum::CorplineDeputyManager, RolesEnum::BusinessManager, RolesEnum::BusinessDeputyManager, RolesEnum::GMRenewalManager, RolesEnum::CorplineRenewalManager, RolesEnum::GMNewBusinessManager, RolesEnum::CorplineNewBusinessManager];
             } else {
-                $roleNames = [$teamName . '_MANAGER', $teamName . '_DEPUTY_MANAGER', $teamName . '_RENEWAL_MANAGER', $teamName . '_NEW_BUSINESS_MANAGER'];
+                $roleNames = [$teamName.'_MANAGER', $teamName.'_DEPUTY_MANAGER', $teamName.'_RENEWAL_MANAGER', $teamName.'_NEW_BUSINESS_MANAGER'];
             }
             foreach ($roleNames as $role) {
                 array_push($combinedRoleNames, $role);
