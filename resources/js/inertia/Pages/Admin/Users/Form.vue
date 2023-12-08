@@ -44,15 +44,15 @@ const userForm = useForm({
   mobile_no: props.user?.mobile_no ?? null,
   landline_no: props.user?.landline_no ?? null,
   password: null,
-  products: props.userProductIds?.length > 0 ? props.userProductIds : [],
+  products: props?.userProductIds?.length > 0 ? props.userProductIds : [],
   teams: props.userTeamIds?.length > 0 ? props.userTeamIds : null,
   roles: selectedRoles.value?.length > 0 ? selectedRoles.value : null,
   manager: props.userManagerIds ?? null,
   sub_team_id: null,
-  additionalTeams: props.selectedAdditionalTeams ?? [],
+  additionalTeams: props?.selectedAdditionalTeams ?? [],
   is_active: props.user?.is_active ?? false,
-  primary_product: props.userProductIds[0] ?? null,
-  permissions: props.userPermissions ?? null,
+  primary_product: props.userProductIds ? props?.userProductIds[0] : null,
+  permissions: props?.userPermissions ?? null,
 });
 
 const isEdit = computed(() => {
@@ -293,37 +293,37 @@ onMounted(() => setInitialState());
         />
       </x-field>
     </div>
-    <div class="grid sm:grid-cols-2 gap-4" v-if="isEdit">
-      <div
-        class="grid sm:grid-cols-2 gap-4"
-        v-if="isEdit && hasRole(rolesEnum.ADMIN)"
-      >
-        <x-field label="PERMISSIONS">
-          <ComboBox
-            :multiple="true"
-            v-model="userForm.permissions"
-            :options="
-              props.permissions.map(x => ({
-                value: x.id,
-                label: x.name,
-              }))
-            "
-          />
-        </x-field>
-        <x-field label="PRIMARY PRODUCT">
-          <x-select
-            v-model="userForm.primary_product"
-            :options="
-              props.products.map(item => ({
-                value: item.id,
-                label: item.name,
-              }))
-            "
-            class="w-full"
-          >
-          </x-select>
-        </x-field>
-      </div>
+
+    <div
+      class="grid grid-cols-2 gap-4"
+      v-if="isEdit && hasRole(rolesEnum.Admin)"
+    >
+      <x-field label="PERMISSIONS">
+        <ComboBox
+          :multiple="true"
+          v-model="userForm.permissions"
+          :options="
+            props.permissions.map(x => ({
+              value: x.id,
+              label: x.name,
+            }))
+          "
+          class="w-full"
+        />
+      </x-field>
+      <x-field label="PRIMARY PRODUCT">
+        <x-select
+          v-model="userForm.primary_product"
+          :options="
+            props.products.map(item => ({
+              value: item.id,
+              label: item.name,
+            }))
+          "
+          class="w-full"
+        >
+        </x-select>
+      </x-field>
     </div>
     <div class="grid sm:grid-cols-1 gap-4 mt-4">
       <x-field label="MANAGER">
