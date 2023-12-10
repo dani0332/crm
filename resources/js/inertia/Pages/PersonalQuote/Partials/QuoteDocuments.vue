@@ -128,14 +128,17 @@ const uploadFile = (doc, files) => {
 
 <template>
   <div class="p-4 rounded shadow mb-6 bg-white">
-    <x-collapse :expanded="expanded" show-icon>
-      <div class="flex justify-between items-center mb-4">
-        <h3 class="font-semibold text-primary-800 text-lg">
-          Documents
-          <x-tag size="sm">{{ quoteDocuments.length || 0 }}</x-tag>
-        </h3>
-      </div>
-      <template #content>
+    <Collapsible :expanded="expanded">
+      <template #header>
+        <div class="flex justify-between items-center">
+          <h3 class="font-semibold text-primary-800 text-lg">
+            Documents
+            <x-tag size="sm">{{ quoteDocuments.length || 0 }}</x-tag>
+          </h3>
+        </div>
+      </template>
+      <template #body>
+        <x-divider class="my-4" />
         <div class="flex gap-2 mb-4 justify-end">
           <x-button @click.prevent="modals.doc = true" size="sm" color="orange">
             Upload Documents
@@ -174,7 +177,7 @@ const uploadFile = (doc, files) => {
       </template>
         </DataTable>
       </template>
-    </x-collapse>
+    </Collapsible>
 
     <x-modal v-model="modals.doc" size="xl" show-close backdrop>
       <template #header> Upload Documents </template>

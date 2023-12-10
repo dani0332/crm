@@ -195,11 +195,6 @@ class LookupService extends BaseService
         ->get();
     }
 
-    public function getOptionByCategoryId()
-    {
-        
-    }
-
     public function getCompanyTypes()
     {
         return Lookup::where('key', LookupsEnum::COMPANY_TYPE)->get();

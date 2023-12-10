@@ -170,14 +170,17 @@ const memberDeleteConfirmed = () => {
 
 <template>
   <div class="p-4 rounded shadow mb-6 bg-white">
-    <x-collapse :expanded="expanded" show-icon>
-      <div class="flex justify-between items-center mb-4">
-        <h3 class="font-semibold text-primary-800 text-lg">
-          Member Details
-          <x-tag size="sm">{{ computedMembers.length || 0 }}</x-tag>
-        </h3>
-      </div>
-      <template #content>
+    <Collapsible :expanded="expanded">
+      <template #header>
+        <div class="flex justify-between items-center">
+          <h3 class="font-semibold text-primary-800 text-lg">
+            Member Details
+            <x-tag size="sm">{{ computedMembers.length || 0 }}</x-tag>
+          </h3>
+        </div>
+      </template>
+      <template #body>
+        <x-divider class="my-4" />
         <div class="flex mb-3 justify-end">
           <x-button @click.prevent="addMemberModal" size="sm" color="orange">
             Add Member
@@ -227,7 +230,7 @@ const memberDeleteConfirmed = () => {
           </template>
         </DataTable>
       </template>
-    </x-collapse>
+    </Collapsible>
 
     <x-modal v-model="modals.member" size="lg" show-close backdrop>
       <template #header>

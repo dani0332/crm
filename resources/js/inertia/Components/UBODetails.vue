@@ -186,14 +186,17 @@ const UBODeleteConfirmed = () => {
 
 <template>
   <div class="p-4 rounded shadow mb-6 bg-white">
-    <x-collapse :expanded="expanded" show-icon>
-      <div class="flex justify-between items-center mb-4">
-        <h3 class="font-semibold text-primary-800 text-lg">
-          UBO Details
-          <x-tag size="sm">{{ computedUboMembers.length || 0 }}</x-tag>
-        </h3>
-      </div>
-      <template #content>
+    <Collapsible :expanded="expanded">
+      <template #header>
+        <div class="flex justify-between items-center">
+          <h3 class="font-semibold text-primary-800 text-lg">
+            UBO Details
+            <x-tag size="sm">{{ computedUboMembers.length || 0 }}</x-tag>
+          </h3>
+        </div>
+      </template>
+      <template #body>
+        <x-divider class="my-4" />
         <div class="flex mb-3 justify-end">
           <x-button
             v-if="
@@ -251,7 +254,7 @@ const UBODeleteConfirmed = () => {
           </template>
         </DataTable>
       </template>
-    </x-collapse>
+    </Collapsible>
 
     <x-modal v-model="modals.UBO" size="lg" show-close backdrop>
       <template #header> {{ UBOActionEdit ? 'Edit' : 'Add' }} UBO </template>

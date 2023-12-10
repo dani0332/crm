@@ -35,14 +35,14 @@ const historyDataTable = [
 <template>
   <!--  show lead history data -->
   <div class="p-4 rounded shadow mb-6 bg-white">
-    <x-collapse :expanded="expanded" show-icon>
-      <template #default="{ collapsed }">
+    <Collapsible :expanded="expanded">
+      <template #header>
         <div>
           <h3 class="font-semibold text-primary-800 text-lg">Lead History</h3>
-          <x-divider class="my-4" v-if="!collapsed" />
         </div>
       </template>
-      <template #content>
+      <template #body>
+        <x-divider class="my-4" />
         <div v-if="historyData === null" class="text-center py-3">
           <x-button
             size="sm"
@@ -66,6 +66,6 @@ const historyDataTable = [
           :hide-footer="historyData.length < 15"
         />
       </template>
-    </x-collapse>
+    </Collapsible>
   </div>
 </template>

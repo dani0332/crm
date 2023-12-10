@@ -149,17 +149,17 @@ const onDeleteConfirmation = () => {
 
 <template>
   <div class="p-4 rounded shadow mb-6 bg-white">
-    <x-collapse :expanded="expanded" show-icon>
-      <template #default="{ collapsed }">
-        <div class="flex justify-between items-center mb-4">
+    <Collapsible :expanded="expanded">
+      <template #header>
+        <div class="flex justify-between items-center">
           <h3 class="font-semibold text-primary-800 text-lg">
             New Lead Activity
             <x-tag size="sm">{{ activities.length || 0 }}</x-tag>
           </h3>
         </div>
-        <x-divider class="my-4" v-if="!collapsed" />
       </template>
-      <template #content>
+      <template #body>
+        <x-divider class="my-4" />
         <div class="mb-4 flex justify-end">
           <x-button size="sm" color="orange" @click.prevent="addActivity">
             Add Activity
@@ -210,7 +210,7 @@ const onDeleteConfirmation = () => {
           </template>
         </DataTable>
       </template>
-    </x-collapse>
+    </Collapsible>
     <x-modal v-model="modals.activity" size="lg" show-close backdrop>
       <template #header>
         {{ activityActionEdit ? 'Edit' : 'Add' }} Lead Activity

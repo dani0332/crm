@@ -10,22 +10,6 @@ use Illuminate\Http\Request;
 class SendUpdateLogController extends Controller
 {
     /**
-     * Display a listing of the resource.
-     */
-    public function index()
-    {
-        //
-    }
-
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
-    }
-
-    /**
      * Store a newly created resource in storage.
      */
     public function store(Request $request)
@@ -46,9 +30,7 @@ class SendUpdateLogController extends Controller
     {
         $sendUpdateLog = SendUpdateLogRepository::getLogByUuid($uuid);
 
-//        $quoteTyeId = $this->getQuoteTypeId($sendUpdateLog->reportable_type);
-
-        $sendUpdateOptions = (new LookupService)->getSendUpdateOptions($id);
+        $sendUpdateOptions = (new LookupService)->getSendUpdateOptions($sendUpdateLog->quote_type_id);
 
         return inertia('SendUpdateLog/Show', [
             'quoteId' => $id,
@@ -77,11 +59,6 @@ class SendUpdateLogController extends Controller
      * Remove the specified resource from storage.
      */
     public function destroy(string $id)
-    {
-        //
-    }
-
-    private function getQuoteTypeId()
     {
         //
     }

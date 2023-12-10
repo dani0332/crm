@@ -210,15 +210,17 @@ const additionalContactDeleteConfirmed = () => {
 <template>
   <div>
     <div class="p-4 rounded shadow mb-6 bg-white">
-      <x-collapse :expanded="expanded" show-icon>
-        <div class="flex flex-wrap gap-3 justify-between items-center mb-4">
-          <h3 class="font-semibold text-primary-800 text-lg">
-            Customer Additional Contacts
-            <x-tag size="sm">{{ contacts.length || 0 }}</x-tag>
-          </h3>
-        </div>
-        <template #content>
-          <div class="flex mb-3 justify-end">
+      <Collapsible :expanded="expanded">
+        <template #header>
+          <div class="flex flex-wrap gap-3 justify-between items-center">
+            <h3 class="font-semibold text-primary-800 text-lg">
+              Customer Additional Contacts
+              <x-tag size="sm">{{ contacts.length || 0 }}</x-tag>
+            </h3>
+          </div>
+        </template>
+        <template #body>
+          <div class="flex my-4 justify-end">
             <x-button
               size="sm"
               color="orange"
@@ -263,7 +265,7 @@ const additionalContactDeleteConfirmed = () => {
             </template>
           </DataTable>
         </template>
-      </x-collapse>
+      </Collapsible>
 
       <x-modal v-model="modals.addContact" size="lg" show-close backdrop>
         <template #header> Add Additional Contacts </template>

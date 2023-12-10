@@ -1488,14 +1488,14 @@ const showSendUpdate = computed(() => !sectionExpanded?.value);
     />
 
     <div class="p-4 rounded shadow mb-6 bg-white">
-      <x-collapse :expanded="sectionExpanded" show-icon>
-        <template #default="{ collapsed }">
+      <Collapsible :expanded="sectionExpanded">
+        <template #header>
           <div class="flex justify-between items-center flex-wrap gap-2">
             <h3 class="text-lg font-semibold text-primary-800">E-COM Detail</h3>
           </div>
-          <x-divider class="my-4" v-if="!collapsed" />
         </template>
-        <template #content>
+        <template #body>
+          <x-divider class="my-4" />
           <div class="text-sm">
             <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
               <div class="grid sm:grid-cols-2">
@@ -1591,18 +1591,18 @@ const showSendUpdate = computed(() => !sectionExpanded?.value);
             </div>
           </div>
         </template>
-      </x-collapse>
+      </Collapsible>
     </div>
 
     <div class="p-4 rounded shadow mb-6 bg-white">
-      <x-collapse :expanded="sectionExpanded" show-icon>
-        <template #default="{ collapsed }">
-          <div class="flex justify-between items-center mb-4">
+      <Collapsible :expanded="sectionExpanded">
+        <template #header>
+          <div class="flex justify-between items-center">
             <h3 class="font-semibold text-primary-800 text-lg">Car Details</h3>
           </div>
-          <x-divider class="mb-4 mt-1" v-if="!collapsed" />
         </template>
-        <template #content>
+        <template #body>
+          <x-divider class="my-4" />
           <div class="flex mb-4 justify-end">
             <template
               v-if="
@@ -1801,7 +1801,7 @@ const showSendUpdate = computed(() => !sectionExpanded?.value);
             </Link>
           </div>
         </template>
-      </x-collapse>
+      </Collapsible>
     </div>
 
     <x-modal v-model="modals.duplicate" size="lg" show-close backdrop>
@@ -1846,9 +1846,9 @@ const showSendUpdate = computed(() => !sectionExpanded?.value);
     </x-modal>
 
     <div class="p-4 rounded shadow mb-6 bg-white">
-      <x-collapse :expanded="sectionExpanded" show-icon>
-        <template #default="{ collapsed }">
-          <div class="flex justify-between items-center mb-4">
+      <Collapsible :expanded="sectionExpanded">
+        <template #header>
+          <div class="flex justify-between items-center">
             <h3 class="font-semibold text-primary-800 text-lg">
               {{
                 record.customer_type == page.props.customerTypeEnum.Individual
@@ -1858,9 +1858,9 @@ const showSendUpdate = computed(() => !sectionExpanded?.value);
               Profile
             </h3>
           </div>
-          <x-divider class="mb-4 mt-1" v-if="!collapsed" />
         </template>
-        <template #content>
+        <template #body>
+          <x-divider class="my-4" />
           <div class="flex mb-3 justify-end">
             <x-tag color="success" v-if="quote.kyc_decision === 'Complete'"> KYC - Complete </x-tag>
             <x-tag color="amber" v-else> KYC - Pending </x-tag>
@@ -2065,7 +2065,7 @@ const showSendUpdate = computed(() => !sectionExpanded?.value);
             </div>
           </x-form>
         </template>
-      </x-collapse>
+      </Collapsible>
     </div>
 
     <x-modal v-model="getParentEntityModel" size="lg" show-close backdrop>
@@ -2179,16 +2179,16 @@ const showSendUpdate = computed(() => !sectionExpanded?.value);
     />
 
     <div class="p-4 rounded shadow mb-6 bg-white">
-      <x-collapse :expanded="sectionExpanded" show-icon>
-        <template #default="{ collapsed }">
+      <Collapsible :expanded="sectionExpanded">
+        <template #header>
           <div>
-            <h3 class="font-semibold text-primary-800 text-lg mb-3">
+            <h3 class="font-semibold text-primary-800 text-lg">
               Lead Status
             </h3>
-            <x-divider v-if="!collapsed" class="mb-4 mt-4" />
           </div>
         </template>
-        <template #content>
+        <template #body>
+          <x-divider class="my-4" />
           <div class="flex flex-wrap md:flex-nowrap gap-6 w-full">
             <div class="w-full md:w-50">
               <div class="flex flex-col gap-4">
@@ -2474,7 +2474,7 @@ const showSendUpdate = computed(() => !sectionExpanded?.value);
             </x-button>
           </div>
         </template>
-      </x-collapse>
+      </Collapsible>
     </div>
     <!-- <QuoteStatus
 			:quoteStatuses="leadStatuses"
@@ -2498,16 +2498,16 @@ const showSendUpdate = computed(() => !sectionExpanded?.value);
     />
 
     <div class="p-4 rounded shadow mb-6 bg-white">
-      <x-collapse :expanded="sectionExpanded" show-icon>
-        <template #default="{ collapsed }">
+      <Collapsible :expanded="sectionExpanded">
+        <template #header>
           <div>
-            <h3 class="font-semibold text-primary-800 text-lg mb-4">
+            <h3 class="font-semibold text-primary-800 text-lg">
               Assumptions
             </h3>
-            <x-divider class="mb-4 mt-1" v-if="!collapsed" />
           </div>
         </template>
-        <template #content>
+        <template #body>
+          <x-divider class="my-4" />
           <div class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5">
             <div class="w-full md:w-1/2">
               <x-field label="Cylinder" required>
@@ -2669,18 +2669,21 @@ const showSendUpdate = computed(() => !sectionExpanded?.value);
             </template>
           </div>
         </template>
-      </x-collapse>
+      </Collapsible>
     </div>
 
     <div class="p-4 rounded shadow mb-6 bg-white">
-      <x-collapse :expanded="sectionExpanded" show-icon>
-        <div class="flex justify-between items-center mb-4">
-          <h3 class="font-semibold text-primary-800 text-lg">
-            Available Plans
-            <x-tag size="sm">{{ availablePlansItems.length || 0 }}</x-tag>
-          </h3>
-        </div>
-        <template #content>
+      <Collapsible :expanded="sectionExpanded">
+        <template #header>
+          <div class="flex justify-between items-center">
+            <h3 class="font-semibold text-primary-800 text-lg">
+              Available Plans
+              <x-tag size="sm">{{ availablePlansItems.length || 0 }}</x-tag>
+            </h3>
+          </div>
+        </template>
+        <template #body>
+          <x-divider class="my-4" />
           <div v-if="!hasRole(rolesEnum.PA)" class="flex mb-4 justify-end">
             <x-tooltip
               v-if="!hideFollowUp && can(permissionEnum.PAUSE_AUTO_FOLLOWUPS)"
@@ -2991,7 +2994,7 @@ const showSendUpdate = computed(() => !sectionExpanded?.value);
     
 
         </template>
-      </x-collapse>
+      </Collapsible>
       
       <x-modal v-model="modals.changeInsurer" show-close backdrop>
         <template #header> Change Insurer </template>
@@ -3112,11 +3115,14 @@ const showSendUpdate = computed(() => !sectionExpanded?.value);
         >
         </DataTable>
       </x-modal>
-      <x-collapse :expanded="sectionExpanded" show-icon>
-        <h3 class="font-semibold text-primary-800 text-lg mb-4">
-          Auto Followup - Emails
-        </h3>
-        <template #content>
+      <Collapsible :expanded="sectionExpanded">
+        <template #header>
+          <h3 class="font-semibold text-primary-800 text-lg">
+            Auto Followup - Emails
+          </h3>
+        </template>
+        <template #body>
+          <x-divider class="my-4" />
           <DataTable
             table-class-name="tablefixed compact"
             :headers="emailsHeaders"
@@ -3155,7 +3161,7 @@ const showSendUpdate = computed(() => !sectionExpanded?.value);
           >
           </DataTable>
         </template>
-      </x-collapse>
+      </Collapsible>
     </div>
 
     <EmbeddedProducts
@@ -3169,16 +3175,16 @@ const showSendUpdate = computed(() => !sectionExpanded?.value);
     />
 
     <div class="p-4 rounded shadow mb-6 bg-white" v-if="isQuoteDocumentEnabled">
-      <x-collapse expanded show-icon>
-        <template #default="{ collapsed }">
+      <Collapsible expanded>
+        <template #header>
           <div>
-            <h3 class="font-semibold text-primary-800 text-lg mb-4">
+            <h3 class="font-semibold text-primary-800 text-lg">
               Policy Details
             </h3>
-            <x-divider class="mb-4 mt-1" v-if="!collapsed" />
           </div>
         </template>
-        <template #content>
+        <template #body>
+          <x-divider class="my-4" />
           <div class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5">
             <div class="w-full md:w-1/2">
               <x-textarea
@@ -3274,25 +3280,29 @@ const showSendUpdate = computed(() => !sectionExpanded?.value);
             </x-button>
           </div>
         </template>
-      </x-collapse>
+      </Collapsible>
     </div>
 
     <SendUpdates
-      v-if="true || showSendUpdate"
+      v-if="showSendUpdate"
       :showAddButton="true"
       reportableType="CarQuote"
       :reportableId="record.id"
+      :quote_type_id="$page.props.quoteTypeId"
       :reportableUuid="record.uuid"
       :options="sendUpdateOptions"
       :data="sendUpdateLogs"
     />
 
     <div class="p-4 rounded shadow mb-6 bg-white" v-if="isQuoteDocumentEnabled">
-      <x-collapse :expanded="sectionExpanded" show-icon>
-        <div class="flex justify-between items-center mb-4">
-          <h3 class="font-semibold text-primary-800 text-lg">Documents</h3>
-        </div>
-        <template #content>
+      <Collapsible :expanded="sectionExpanded">
+        <template #header>
+          <div class="flex justify-between items-center">
+            <h3 class="font-semibold text-primary-800 text-lg">Documents</h3>
+          </div>
+        </template>
+        <template #body>
+          <x-divider class="my-4" />
           <div class="my-2 flex justify-end">
             <x-button
               class="mr-2"
@@ -3364,7 +3374,7 @@ const showSendUpdate = computed(() => !sectionExpanded?.value);
             </template>
           </DataTable>
         </template>
-      </x-collapse>
+      </Collapsible>
       <x-modal v-model="modals.docConfirm" show-close backdrop>
         <template #header> Delete Document </template>
         <p>Are you sure you want to delete this document?</p>
@@ -3440,35 +3450,38 @@ const showSendUpdate = computed(() => !sectionExpanded?.value);
     </div>
 
     <div class="p-4 rounded shadow mb-6 bg-white">
-      <x-collapse :expanded="sectionExpanded" show-icon>
-        <div class="flex justify-between items-center mb-4">
-          <h3 class="font-semibold text-primary-800 text-lg">Email Status</h3>
-          <div>
-            <template
-              v-if="
-                !can(permissionEnum.ApprovePayments) && !hasRole(rolesEnum.PA)
-              "
-            >
-              <template v-if="displaySendPolicyButton">
-                <!-- <a class="btn btn-sm btn-primary" style="float:right;" data-quote-type="{{ $quoteType }}"
-                              data-quote-uuid="{{ $record->uuid }}" onclick="sendQuoteDocumentsToCustomer(this)">Send Policy</a> -->
+      <Collapsible :expanded="sectionExpanded">
+        <template #header>
+          <div class="flex justify-between items-center">
+            <h3 class="font-semibold text-primary-800 text-lg">Email Status</h3>
+            <div>
+              <template
+                v-if="
+                  !can(permissionEnum.ApprovePayments) && !hasRole(rolesEnum.PA)
+                "
+              >
+                <template v-if="displaySendPolicyButton">
+                  <!-- <a class="btn btn-sm btn-primary" style="float:right;" data-quote-type="{{ $quoteType }}"
+                                data-quote-uuid="{{ $record->uuid }}" onclick="sendQuoteDocumentsToCustomer(this)">Send Policy</a> -->
+                </template>
               </template>
-            </template>
-            <x-button
-              v-if="
-                record.payment_status_id === permissionEnum.AUTHORISED &&
-                !hasRole(rolesEnum.PA)
-              "
-              @click.prevent="onAddPaymentModal"
-              size="sm"
-              color="orange"
-              class="mr-2"
-            >
-              Copy upload Link
-            </x-button>
+              <x-button
+                v-if="
+                  record.payment_status_id === permissionEnum.AUTHORISED &&
+                  !hasRole(rolesEnum.PA)
+                "
+                @click.prevent="onAddPaymentModal"
+                size="sm"
+                color="orange"
+                class="mr-2"
+              >
+                Copy upload Link
+              </x-button>
+            </div>
           </div>
-        </div>
-        <template #content>
+        </template>
+        <template #body>
+          <x-divider class="my-4" />
           <DataTable
             table-class-name="tablefixed compact"
             :headers="emailStatusTable.columns"
@@ -3501,7 +3514,7 @@ const showSendUpdate = computed(() => !sectionExpanded?.value);
             </template>
           </DataTable>
         </template>
-      </x-collapse>
+      </Collapsible>
     </div>
 
     <!-- <div class="p-4 rounded shadow mb-6 bg-white">
@@ -3570,14 +3583,17 @@ const showSendUpdate = computed(() => !sectionExpanded?.value);
 		</div>  -->
 
     <div class="p-4 rounded shadow mb-6 bg-white">
-      <x-collapse :expanded="sectionExpanded" show-icon>
-        <div class="flex justify-between items-center mb-4">
-          <h3 class="font-semibold text-primary-800 text-lg">
-            Lead Activities
-            <x-tag size="sm">{{ activities.length || 0 }}</x-tag>
-          </h3>
-        </div>
-        <template #content>
+      <Collapsible :expanded="sectionExpanded">
+        <template #header>
+          <div class="flex justify-between items-center">
+            <h3 class="font-semibold text-primary-800 text-lg">
+              Lead Activities
+              <x-tag size="sm">{{ activities.length || 0 }}</x-tag>
+            </h3>
+          </div>
+        </template>
+        <template #body>
+          <x-divider class="my-4" />
           <div class="mb-4 flex justify-end">
             <template
               v-if="
@@ -3637,7 +3653,7 @@ const showSendUpdate = computed(() => !sectionExpanded?.value);
             </template>
           </DataTable>
         </template>
-      </x-collapse>
+      </Collapsible>
       <x-modal v-model="modals.activityConfirm" show-close backdrop>
         <template #header> Delete Activity </template>
         <p>Are you sure you want to delete this activity?</p>
@@ -3733,16 +3749,16 @@ const showSendUpdate = computed(() => !sectionExpanded?.value);
     />
 
     <div class="p-4 rounded shadow mb-6 bg-white">
-      <x-collapse :expanded="sectionExpanded" show-icon>
-        <template #default="{ collapsed }">
+      <Collapsible :expanded="sectionExpanded">
+        <template #header>
           <div>
-            <h3 class="font-semibold text-primary-800 text-lg mb-4">
+            <h3 class="font-semibold text-primary-800 text-lg">
               Lead History
             </h3>
-            <x-divider class="mb-4 mt-1" v-if="!collapsed" />
           </div>
         </template>
-        <template #content>
+        <template #body>
+          <x-divider class="my-4" />
           <div v-if="historyData === null" class="text-center py-3">
             <x-button
               size="sm"
@@ -3765,7 +3781,7 @@ const showSendUpdate = computed(() => !sectionExpanded?.value);
             :hide-footer="historyData.length < 15"
           />
         </template>
-      </x-collapse>
+      </Collapsible>
     </div>
   </div>
   <AuditLogs

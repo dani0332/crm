@@ -116,14 +116,14 @@ const submitpolicyForm = isValid => {
 
 <template>
   <div class="p-4 rounded shadow mb-6 bg-white">
-    <x-collapse :expanded="expanded" show-icon>
-      <template #default="{ collapsed }">
+    <Collapsible :expanded="expanded">
+      <template #header>
         <div>
           <h3 class="font-semibold text-primary-800 text-lg">Policy Details</h3>
-          <x-divider class="mb-4 mt-4" v-if="!collapsed" />
         </div>
       </template>
-      <template #content>
+      <template #body>
+        <x-divider class="my-4" />
         <x-form @submit="submitpolicyForm" :auto-focus="false">
           <div class="flex gap-6 w-full">
             <div class="w-full md:w-1/2">
@@ -212,6 +212,6 @@ const submitpolicyForm = isValid => {
           </div>
         </x-form>
       </template>
-    </x-collapse>
+    </Collapsible>
   </div>
 </template>

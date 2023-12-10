@@ -23,13 +23,9 @@ class SendUpdateLogRepository extends BaseRepository
     public function fetchCreate($request) 
     {        
         try {
-            $name = $request['childCategory']['title'];
-            $code = '';
-            collect(explode(" ", $name))->each(function ($word) use (&$code) {
-                $code .= mb_substr(ucfirst($word), 0, 1);
-            });
+            $code = $request['childCategory']['slug'];
 
-            $uuid = Str::upper(Str::random(8)); // EF-JHU12L1
+            $uuid = Str::limit(base64_encode(now()), 5);
 
             $res = $this->create([
                 'reportable_type' => $request['reportable_type'],

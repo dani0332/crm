@@ -199,16 +199,19 @@ const additionalContact = computed(() => {
 </script>
 <template>
   <div class="p-4 rounded shadow mb-6 bg-white">
-    <x-collapse :expanded="expanded" show-icon>
-      <div class="flex flex-wrap gap-3 justify-between items-center mb-4">
-        <h3 class="font-semibold text-primary-800 text-lg">
-          Customer Additional Contacts
-          <x-tag size="sm">{{
-              additionalContact.length > 0 ? additionalContact.length : 0
-          }}</x-tag>
-        </h3>
-      </div>
-      <template #content>
+    <Collapsible :expanded="expanded">
+      <template #header>
+        <div class="flex flex-wrap gap-3 justify-between items-center">
+          <h3 class="font-semibold text-primary-800 text-lg">
+            Customer Additional Contacts
+            <x-tag size="sm">{{
+                additionalContact.length > 0 ? additionalContact.length : 0
+            }}</x-tag>
+          </h3>
+        </div>
+      </template>
+      <template #body>
+        <x-divider class="my-4" />
         <div class="mb-4 flex justify-end">
           <x-button size="sm" color="orange" @click="addContactModal">
             Add Additional Contacts
@@ -249,7 +252,7 @@ const additionalContact = computed(() => {
           </template>
         </DataTable>
       </template>
-    </x-collapse>
+    </Collapsible>
 
     <x-modal v-model="modals.addContact" size="lg" show-close backdrop>
       <template #header> Add Additional Contacts </template>

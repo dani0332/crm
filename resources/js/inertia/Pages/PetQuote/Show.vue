@@ -296,11 +296,14 @@ const sectionExpanded = computed(() => {
     </x-modal>
 
     <div class="p-4 rounded shadow mb-6 bg-white">
-      <x-collapse :expanded="sectionExpanded" show-icon>
-        <div class="flex justify-between items-center flex-wrap gap-2 mb-5">
-          <h3 class="text-lg font-semibold text-primary-800">Pet Detail</h3>
-        </div>
-        <template #content>
+      <Collapsible :expanded="sectionExpanded">
+        <template #header>
+          <div class="flex justify-between items-center flex-wrap gap-2">
+            <h3 class="text-lg font-semibold text-primary-800">Pet Detail</h3>
+          </div>
+        </template>
+        <template #body>
+          <x-divider class="my-4" />
           <div class="flex gap-2 mb-4 justify-end">
             <x-button size="sm" color="#ff5e00" @click.prevent="openDuplicate">
               Duplicate Lead
@@ -465,13 +468,13 @@ const sectionExpanded = computed(() => {
             </dl>
           </div>
         </template>
-      </x-collapse>
+      </Collapsible>
     </div>
 
     <div class="p-4 rounded shadow mb-6 bg-white">
-      <x-collapse :expanded="sectionExpanded" show-icon>
-        <template #default="{ collapsed }">
-          <div class="flex justify-between items-center mb-4">
+      <Collapsible :expanded="sectionExpanded">
+        <template #header>
+          <div class="flex justify-between items-center">
             <h3 class="font-semibold text-primary-800 text-lg">
               {{
                 quote.customer_type == page.props.customerTypeEnum.Individual
@@ -481,9 +484,9 @@ const sectionExpanded = computed(() => {
               Profile
             </h3>
           </div>
-          <x-divider class="mb-4 mt-1" v-if="!collapsed" />
         </template>
-        <template #content>
+        <template #body>
+          <x-divider class="my-4" />
           <div class="flex mb-4 justify-end">
             <x-tag color="success" v-if="quote.kyc_decision === 'Complete'">
               KYC - Complete
@@ -687,7 +690,7 @@ const sectionExpanded = computed(() => {
             </div>
           </x-form>
         </template>
-      </x-collapse>
+      </Collapsible>
     </div>
 
     <x-modal v-model="getParentEntityModel" size="lg" show-close backdrop>

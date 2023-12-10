@@ -200,13 +200,16 @@ const approvePayment = payment => {
 
 <template>
   <div class="p-4 rounded shadow mb-6 bg-white">
-    <x-collapse expanded show-icon>
-      <div class="flex justify-between gap-4 items-center mb-4">
-        <h3 class="font-semibold text-primary-800 text-lg">
-          Payments <x-tag size="sm">{{ payments.length || 0 }}</x-tag>
-        </h3>
-      </div>
-      <template #content>
+    <collapsible expanded>
+      <template #header>
+        <div class="flex justify-between gap-4 items-center">
+          <h3 class="font-semibold text-primary-800 text-lg">
+            Payments <x-tag size="sm">{{ payments.length || 0 }}</x-tag>
+          </h3>
+        </div>
+      </template>
+      <template #body>
+        <x-divider class="my-4" />
         <div class="my-4 flex justify-end">
           <x-button
             v-if="
@@ -274,7 +277,7 @@ const approvePayment = payment => {
           </template>
         </DataTable>
       </template>
-    </x-collapse>
+    </Collapsible>
     <x-modal v-model="createPaymentModal" size="lg" show-close backdrop>
       <template #header>
         <span class="text-primary-800 font-semibold">

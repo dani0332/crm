@@ -63,14 +63,14 @@ const allowStatusUpdate = computed(() => {
 
 <template>
   <div class="p-4 rounded shadow mb-6 bg-primary-50/25">
-    <x-collapse :expanded="expanded" show-icon>
-      <template #default="{ collapsed }">
+    <Collapsible :expanded="expanded">
+      <template #header>
         <div>
-          <h3 class="font-semibold text-primary-800 text-lg mb-4">Lead Status</h3>
-          <x-divider class="mb-4 mt-1" v-if="!collapsed" />
+          <h3 class="font-semibold text-primary-800 text-lg">Lead Status</h3>
         </div>
       </template>
-      <template #content>
+      <template #body>
+        <x-divider class="my-4" />
         <div class="flex flex-wrap md:flex-nowrap gap-6 w-full">
           <div class="w-full md:w-1/2">
             <div class="flex flex-col gap-4">
@@ -134,6 +134,6 @@ const allowStatusUpdate = computed(() => {
           </x-button>
         </div>
       </template>
-    </x-collapse>
+    </Collapsible>
   </div>
 </template>

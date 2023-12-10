@@ -430,11 +430,14 @@ const sectionExpanded = computed(() => {
     </x-modal>
 
     <div class="p-4 rounded shadow mb-6 bg-white">
-      <x-collapse :expanded="sectionExpanded" show-icon>
-        <div class="flex justify-between items-center flex-wrap gap-2 mb-5">
-          <h2 class="text-xl font-semibold">Group Medical Lead Detail</h2>
-        </div>
-        <template #content>
+      <Collapsible :expanded="sectionExpanded">
+        <template #header>
+          <div class="flex justify-between items-center flex-wrap gap-2">
+            <h2 class="text-xl font-semibold">Group Medical Lead Detail</h2>
+          </div>
+        </template>
+        <template #body>
+          <x-divider class="my-4" />
           <div class="flex gap-2 mb-3 justify-end">
             <x-button
               v-if="isDuplicateAllowed"
@@ -600,18 +603,18 @@ const sectionExpanded = computed(() => {
             </dl>
           </div>
         </template>
-      </x-collapse>
+      </Collapsible>
     </div>
 
     <div class="p-4 rounded shadow mb-6 bg-white">
-      <x-collapse :expanded="sectionExpanded" show-icon>
-        <template #default="{ collapsed }">
-          <div class="flex justify-between items-center mb-4">
+      <Collapsible :expanded="sectionExpanded">
+        <template #header>
+          <div class="flex justify-between items-center">
             <h3 class="font-semibold text-primary-800 text-lg">Entity Profile</h3>
           </div>
-          <x-divider class="mb-4 mt-1" v-if="!collapsed" />
         </template>
-        <template #content>
+        <template #body>
+          <x-divider class="my-4" />
           <div class="flex mb-3 justify-end">
         <x-tag color="success" v-if="quote.kyc_decision === 'Complete'"> KYC - Complete </x-tag>
         <x-tag color="amber" v-else> KYC - Pending </x-tag>
@@ -724,7 +727,7 @@ const sectionExpanded = computed(() => {
             </div>
           </x-form>
         </template>
-      </x-collapse>
+      </Collapsible>
     </div>
 
     <x-modal v-model="getParentEntityModel" size="lg" show-close backdrop>
@@ -859,14 +862,14 @@ const sectionExpanded = computed(() => {
     />
 
     <div class="p-4 rounded shadow mb-6 bg-primary-50/25">
-      <x-collapse :expanded="sectionExpanded" show-icon>
-        <template #default="{ collapsed }">
+      <Collapsible :expanded="sectionExpanded">
+        <template #header>
           <div>
             <h3 class="font-semibold text-primary-800 text-lg">Lead Status</h3>
-            <x-divider class="mb-4 mt-1" v-if="!collapsed" />
           </div>
         </template>
-        <template #content>
+        <template #body>
+          <x-divider class="my-4" />
           <div class="flex flex-wrap md:flex-nowrap gap-6 w-full">
             <div class="w-full md:w-1/2">
               <div class="flex flex-col gap-4">
@@ -938,18 +941,18 @@ const sectionExpanded = computed(() => {
             </x-button>
           </div>
         </template>
-      </x-collapse>
+      </Collapsible>
     </div>
 
     <div class="p-4 rounded shadow mb-6 bg-white">
-      <x-collapse :expanded="sectionExpanded" show-icon>
-        <template #default="{ collapsed }">
+      <Collapsible :expanded="sectionExpanded">
+        <template #header>
           <div>
             <h3 class="font-semibold text-primary-800 text-lg">Lead History</h3>
-            <x-divider class="mb-4 mt-1" v-if="!collapsed" />
           </div>
         </template>
-        <template #content>
+        <template #body>
+          <x-divider class="my-4" />
           <div v-if="historyData === null" class="text-center py-3">
             <x-button
               size="sm"
@@ -972,7 +975,7 @@ const sectionExpanded = computed(() => {
             :hide-footer="historyData.length < 15"
           />
         </template>
-      </x-collapse>
+      </Collapsible>
     </div>
   </div>
 </template>

@@ -27,6 +27,10 @@ const props = defineProps({
   options: {
     type: Array,
     required: true
+  },
+  quote_type_id: {
+    type: Number,
+    required: true  
   }
 })
 
@@ -110,8 +114,7 @@ const onAddUpdate = () => {
   form
     .transform(data => ({
       ...data,
-      quote_type_id: '',
-      model_type: data.reportable_type,
+      quote_type_id: props.quote_type_id,
       reportable_type: `App\\Models\\${data.reportable_type}`
     }))
     .post(`/send-update-logs`, {
@@ -149,13 +152,15 @@ const findOption = (item, key) => {
 
 <template>
   <div class="p-4 rounded shadow mb-6 bg-white">
-    <x-collapse expanded show-icon>
-      <div class="flex justify-between gap-4 items-center mb-4">
-        <h3 class="font-semibold text-primary-800 text-lg">
-          Send Update
-        </h3>
-      </div>
-      <template #content>
+    <Collapsible expanded>
+      <template #header>
+        <div class="flex justify-between gap-4 items-center">
+          <h3 class="font-semibold text-primary-800 text-lg">
+            Send Update
+          </h3>
+        </div>
+      </template>
+      <template #body>
         <div class="my-4 flex justify-end">
           <x-button
             v-if="showAddButton"
@@ -167,12 +172,13 @@ const findOption = (item, key) => {
           </x-button>
         </div>
         <DataTable
-          table-class-name="tablefixed compact"
+          table-class-name="tablefixed compact w-100"
           :headers="sendUpdatesTable.headers"
           :items="sendUpdatesTable.data"
           border-cell
           hide-rows-per-page
-          :hide-footer="sendUpdatesTable.data <= 10"
+          :rows-per-page="10"
+          :hide-footer="sendUpdatesTable.data.length <= 10"
         >
           <template #header-code="{ text, tooltip }">
             <x-tooltip position="right">
@@ -204,7 +210,7 @@ const findOption = (item, key) => {
               </template>
             </x-tooltip>
           </template>
-          <template #header-status="{ text, tooltip }">
+          <!-- <template #header-status="{ text, tooltip }">
             <x-tooltip position="bottom">
               <span class="underline decoration-dotted">{{ text }}</span>
               <template #tooltip>
@@ -213,8 +219,8 @@ const findOption = (item, key) => {
                 </span>
               </template>
             </x-tooltip>
-          </template>
-          <template #header-created_at="{ text, tooltip }">
+          </template> -->
+          <!-- <template #header-created_at="{ text, tooltip }">
             <x-tooltip position="bottom">
               <span class="underline decoration-dotted">{{ text }}</span>
               <template #tooltip>
@@ -223,7 +229,7 @@ const findOption = (item, key) => {
                 </span>
               </template>
             </x-tooltip>
-          </template>
+          </template> -->
           <template #item-code="{ code, uuid }">
             <Link :href="route('quotes.car.view-update-log', {id: reportableUuid, uuid: uuid})" class="text-primary-800 underline">{{ code }}</Link>
           </template>
@@ -241,7 +247,8 @@ const findOption = (item, key) => {
           </template>
         </DataTable>
       </template>
-    </x-collapse>
+    </Collapsible>
+
     <x-modal v-model="modals.show" size="lg" show-close backdrop @update:modelValue="resetForm">
       <template #header>
         <div class="flex gap-3">
@@ -265,10 +272,10 @@ const findOption = (item, key) => {
       </div>
 
       <!-- modal 2 -->
-      <div class="w-full flex gap-5 justify-center text-center mb-10" v-else-if="modals.step === 'step2'">
+      <div class="w-full flex gap-5 justify-center text-center py-5 items-stretch" v-else-if="modals.step === 'step2'">
         <template v-for="category in form.parentCategory?.childs" :key="category.title">
           <x-tooltip position="bottom" class="arrow-t">
-            <x-button color="primary" class="py-8 px-6 rounded-xl w-[200px]" @click="setOption('step3', category)">
+            <x-button color="primary" class="py-8 px-6 rounded-xl w-[200px] whitespace-break-spaces" @click="setOption('step3', category)">
               {{ category.title }}
             </x-button>
             <template #tooltip> <div>{{ category.description }}</div> </template>

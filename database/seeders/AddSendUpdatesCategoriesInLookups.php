@@ -33,7 +33,7 @@ class AddSendUpdatesCategoriesInLookups extends Seeder
             foreach ($option['types'] as $type) {
                 $typeCategory = Lookup::create([
                     'key' => $type['name'],
-                    'code' => Str::slug(Str::limit($type['name'], 20)),
+                    'code' => $type['key'],
                     'text' => $type['tooltip'],
                     'parent_id' => $parentOption->id,
                 ]);
@@ -95,11 +95,13 @@ class AddSendUpdatesCategoriesInLookups extends Seeder
                 'types' => [
                     [
                         'name' => 'Endorsement financial',
+                        'code' => 'EF',
                         'tooltip' => 'Modifications or revisions to an existing policy that result in financial implications. This encompasses actions like adding extra coverage, midterm addition or removal of members, and extending the policy duration. There is involvement of collection an additional amount or a refund of a certain amount in the policy.',
                         'subTypes' => $this->getEndorsementFinancialSubTypes()
                     ],
                     [
                         'name' => 'Endorsement non financial',
+                        'code' => 'EN',
                         'tooltip' => 'Modifications or alterations made to an existing policy without any associated financial effects. This includes actions such as name amendments, details to be updated and requests for certificates of insurance. Here, there is no involvement of collecting or refunding any amount.',
                         'subTypes' => $this->getEndorsementNonFinancialSubTypes()
                     ],
@@ -111,11 +113,13 @@ class AddSendUpdatesCategoriesInLookups extends Seeder
                 'types' => [
                     [
                         'name' => 'Cancellation from inception',
+                        'code' => 'CI',
                         'tooltip' => 'With this option, policyholders can request the cancellation of their insurance policy from the inception date. This means the policy will be considered null and void as if it was never in effect',
                         'subTypes' => $this->getCancellationFromInceptionSubTypes()
                     ],
                     [
                         'name' => 'Cancellation from inception and reissuance',
+                        'code' => 'CIR',
                         'tooltip' => 'To cancel the insurance policy from the inception date and subsequently reissue a new policy as required. This is typically used if we started a policy with an incorrect inception date, there is a change in the insurer selected and an update to the covers included in the policy.',
                         'subTypes' => $this->getCancellationFromReissuanceSubTypes()
                     ],
@@ -127,11 +131,13 @@ class AddSendUpdatesCategoriesInLookups extends Seeder
                 'types' => [
                     [
                         'name' => 'Correction of policy upload',
+                        'code' => 'CPU',
                         'tooltip' => "This feature enables advisors to rectify any errors or inaccuracies in insurance policy documents. It ensures that the policy documentation is accurate and up to date. This could include scenarios where we sent the incorrect policy documents to the client, which belonged to another client.",
                         'subTypes' => []
                     ],
                     [
                         'name' => 'Correction of policy details',
+                        'code' => 'CPD',
                         'tooltip' => 'To correct errors or inaccuracies in the insurance policy documents, ensuring that the policy information is accurate and aligned with their coverage needs.',
                         'subTypes' => []
                     ],

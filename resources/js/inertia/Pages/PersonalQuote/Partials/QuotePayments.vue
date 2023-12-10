@@ -234,12 +234,15 @@ const rolesEnum = page.props.rolesEnum;
 
 <template>
   <div class="p-4 rounded shadow mb-6 bg-white">
-    <x-collapse :expanded="expanded" show-icon>
-      <div class="flex justify-between gap-4 items-center mb-4">
-        <h3 class="font-semibold text-primary-800 text-lg">Payments</h3>
-      </div>
+    <Collapsible :expanded="expanded">
+      <template #header>
+        <div class="flex justify-between gap-4 items-center">
+          <h3 class="font-semibold text-primary-800 text-lg">Payments</h3>
+        </div>
+      </template>
       
-      <template #content>
+      <template #body>
+        <x-divider class="my-4" />
         <div class="mb-4 flex justify-end">
           <x-button
             v-if="
@@ -307,7 +310,7 @@ const rolesEnum = page.props.rolesEnum;
           </template>
         </DataTable>
       </template>
-    </x-collapse>
+    </Collapsible>
 
     <x-modal v-model="paymentModal" size="lg" show-close backdrop>
       <template #header>

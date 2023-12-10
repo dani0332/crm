@@ -60,13 +60,16 @@ const rolesEnum = page.props.rolesEnum;
 
 <template>
   <div class="p-4 rounded shadow mb-6 bg-white">
-    <x-collapse :expanded="expanded" show-icon>
-      <div class="flex justify-between gap-4 items-center mb-4">
-        <h3 class="font-semibold text-primary-800 text-lg">
-          Last Year's Policy Details
-        </h3>
-      </div>
-      <template #content>
+    <Collapsible :expanded="expanded">
+      <template #header>
+        <div class="flex justify-between gap-4 items-center">
+          <h3 class="font-semibold text-primary-800 text-lg">
+            Last Year's Policy Details
+          </h3>
+        </div>
+      </template>
+      <template #body>
+        <x-divider class="my-4" />
         <x-form @submit="onSubmit" :auto-focus="false">
           <div class="p-4 rounded shadow mb-6 bg-white">
             <div class="text-sm">
@@ -138,6 +141,6 @@ const rolesEnum = page.props.rolesEnum;
           </div>
         </x-form>
       </template>
-    </x-collapse>   
+    </Collapsible>   
   </div>
 </template>

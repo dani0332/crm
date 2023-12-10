@@ -71,14 +71,14 @@ const onLoadAuditLogData = async () => {
 
 <template>
   <div class="p-4 rounded shadow mb-6 bg-white">
-    <x-collapse :expanded="expanded" show-icon>
-      <template #default="{ collapsed }">
+    <Collapsible :expanded="expanded">
+      <template #header>
         <div>
-          <h3 class="font-semibold text-primary-800 text-lg mb-4">Audit Logs</h3>
-          <x-divider class="mb-4 mt-1" v-if="!collapsed" />
+          <h3 class="font-semibold text-primary-800 text-lg">Audit Logs</h3>
         </div>
       </template>
-      <template #content>
+      <template #body>
+        <x-divider class="my-4" v-if="!collapsed" />
         <div class="text-center py-3" v-if="auditLogs.data === null">
           <x-button
             size="sm"
@@ -105,6 +105,6 @@ const onLoadAuditLogData = async () => {
           </template>
         </DataTable>
       </template>
-    </x-collapse>
+    </Collapsible>
   </div>
 </template>

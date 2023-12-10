@@ -45,11 +45,11 @@ const sectionExpanded = computed(() => {
     <Head title="Jetski Quotes" />
 
     <div class="p-4 rounded shadow mb-6 bg-white">
-      <x-collapse :expanded="sectionExpanded" show-icon>
+      <Collapsible :expanded="sectionExpanded">
         <div class="flex justify-between items-center flex-wrap gap-2 mb-5">
           <h2 class="text-xl font-semibold">Jetski Detail</h2>
         </div>
-        <template #content>
+        <template #body>
           <div class="flex gap-2 mb-4 justify-end">
             <Link
               v-if="can(permissionsEnum.JetskiQuotesEdit)"
@@ -219,7 +219,7 @@ const sectionExpanded = computed(() => {
             </dl>
           </div>
         </template>
-      </x-collapse>
+      </Collapsible>
     </div>
 
     <LastYearPolicyDetail

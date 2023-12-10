@@ -256,13 +256,14 @@ const providerId = computed(() => {
 
 <template>
   <div class="p-4 rounded shadow mb-6 bg-white">
-    <x-collapse expanded show-icon>
-      <template #default="{ collapsed }">
-        <div class="flex justify-between gap-4 items-center mb-4">
+    <Collapsible expanded>
+      <template #header>
+        <div class="flex justify-between gap-4 items-center">
           <h3 class="font-semibold text-primary-800 text-lg">Payments</h3>
         </div>
       </template>
-      <template #content>
+      <template #body>
+        <x-divider class="my-4" />
         <div class="mb-4 flex justify-end">
           <x-button
             v-if="(can(permissionEnum.PaymentsCreate) &&
@@ -327,7 +328,7 @@ const providerId = computed(() => {
             </template>
         </DataTable>
       </template>
-    </x-collapse>
+    </Collapsible>
     <x-modal v-model="createPaymentModal" size="lg" show-close backdrop>
       <template #header>
         <span class="text-primary-800 font-semibold">

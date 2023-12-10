@@ -263,15 +263,17 @@ const hasAnyRole = roles => useHasAnyRole(roles);
     "
     class="p-4 rounded shadow mb-6 bg-white"
   >
-    <x-collapse :expanded="expanded" show-icon>
-      <div class="flex flex-wrap gap-4 justify-between items-center mb-4">
-        <h3 class="font-semibold text-primary-800 text-lg">
-          Embedded Products
-          <x-tag size="sm">{{ props.data.length || 0 }}</x-tag>
-        </h3>
-      </div>
-      <template #content>
-        <div class="flex flex-wrap gap-3 justify-end mb-4">
+    <Collapsible :expanded="expanded">
+      <template #header>
+        <div class="flex flex-wrap gap-4 justify-between items-center">
+          <h3 class="font-semibold text-primary-800 text-lg">
+            Embedded Products
+            <x-tag size="sm">{{ props.data.length || 0 }}</x-tag>
+          </h3>
+        </div>
+      </template>
+      <template #body>
+        <div class="flex flex-wrap gap-3 justify-end my-4">
           <x-button
             v-if="selectedEp.length > 0"
             size="sm"
@@ -377,7 +379,7 @@ const hasAnyRole = roles => useHasAnyRole(roles);
           </template>
         </DataTable>
       </template>
-    </x-collapse>
+    </Collapsible>
     <x-modal v-model="modals.cancelPayment" size="lg" show-close backdrop>
       <template #header> Cancel Payment </template>
 
