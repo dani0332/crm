@@ -2149,6 +2149,17 @@ const sectionExpanded = computed(() => {
       </x-modal>
     </div>
 
+    <SendUpdates
+      v-if="showSendUpdate"
+      :showAddButton="true"
+      reportableType="BikeQuote"
+      :reportableId="record.id"
+      :quote_type_id="$page.props.quoteTypeId"
+      :reportableUuid="record.uuid"
+      :options="sendUpdateOptions"
+      :data="sendUpdateLogs"
+    />
+
     <PaymentTable
       :payments="payments"
       :can="permissions"

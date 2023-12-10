@@ -1227,6 +1227,17 @@ const sectionExpanded = computed(() => {
       :quote="quote"
     />
 
+    <SendUpdates
+      v-if="showSendUpdate"
+      :showAddButton="true"
+      reportableType="BikeQuote"
+      :reportableId="record.id"
+      :quote_type_id="$page.props.quoteTypeId"
+      :reportableUuid="record.uuid"
+      :options="sendUpdateOptions"
+      :data="sendUpdateLogs"
+    />
+
     <div class="p-4 rounded shadow mb-6 bg-white">
       <Collapsible :expanded="sectionExpanded">
         <template #header>
