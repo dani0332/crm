@@ -173,6 +173,7 @@ class PaymentSplitsRepository
                         $splitPaymentInformation['payment_status_id'] = $childPaymentStatus;
                     }*/
                     $paymentSplitRecord->update($splitPaymentInformation);
+                    $this->setMasterPaymentStatus($paymentSplitRecord->id);
                 }
                 //add document references
                 if (isset($request->split_payment_details['document_detail'][$i])

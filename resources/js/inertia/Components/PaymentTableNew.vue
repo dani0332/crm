@@ -492,7 +492,20 @@ const handleApprovalReasonChange = () => {
   //customize payment method based on collection type
   if(paymentMethodsForm.credit_approval !== ''){
     paymentTypesFiltered.value = paymentTypes.value;
-    paymentTypesFiltered.value = paymentTypesFiltered.value.filter(item => !['IN_PL', 'PPR', 'MP', 'PP', 'IP','CSH','CC','BT'].includes(item.value));    
+    paymentTypesFiltered.value = paymentTypesFiltered.value.filter(item => !['IN_PL', 'PPR', 'MP', 'PP'].includes(item.value));    
+    if (paymentMethodsForm.collection_type === 'insurer') {
+      if (paymentMethodsForm.frequency === 'upfront' || paymentMethodsForm.frequency === 'split_payments' ){
+        paymentTypesFiltered.value = paymentTypesFiltered.value.filter(item => !['PDC', 'CHQ','CSH','CC','BT'].includes(item.value));    
+      } else {
+        paymentTypesFiltered.value = paymentTypesFiltered.value.filter(item => !['CHQ','CSH','CC','BT'].includes(item.value));    
+      }      
+    } else {      
+      if (paymentMethodsForm.frequency === 'upfront' || paymentMethodsForm.frequency === 'split_payments' ){
+        paymentTypesFiltered.value = paymentTypesFiltered.value.filter(item => !['PDC','IP'].includes(item.value));    
+      } else {
+        paymentTypesFiltered.value = paymentTypesFiltered.value.filter(item => !['IP'].includes(item.value));
+      }    
+    } 
     for (let i = 1; i <= paymentMethodsForm.payment_no; i++) {
       paymentMethodsModels.value[i] = 'CA';
     }
@@ -1987,7 +2000,7 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
             <ToolTip
                title="DISCOUNT REASON"
               :tooltip="(isFieldReadonly)? discountReasons.find(item => item.value === paymentMethodsForm.discount_reason).tooltip: paymentTooltipEnum.DISCOUNT_REASON"
-              :required=true
+              :required="!isFieldReadonly"
             />          
           <x-field class="w-full">
               <span v-if="isFieldReadonly">                 
@@ -2042,7 +2055,7 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
               </x-field>
             </div>            
             
-            <div v-if="isDiscountEnabled && isFieldReadonly && paymentMethodsForm.discount!='N/A'">            
+            <div v-if="isDiscountEnabled && paymentMethodsForm.discount!='N/A'">            
               <ToolTip
                 title="TOTAL AMOUNT"
                 :tooltip="paymentTooltipEnum.TOTAL_AMOUNT_VIEW"                
