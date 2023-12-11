@@ -7,6 +7,7 @@ const props = defineProps({
   memberRelations: Object,
   customerType: String,
   entity_id: Number,
+    cardHolderName:Object,
 });
 
 const { isRequired } = useRules();
@@ -84,7 +85,7 @@ const memberForm = useForm({
   relation_code: null,
   nationality_id: null,
   is_third_party_payer: true,
-  from_aml_model: true
+  from_aml_model: true,
 });
 
 function onMemberSubmit(isValid) {
@@ -215,7 +216,7 @@ function onMemberSubmit(isValid) {
         <div class="grid md:grid-cols-2 mb-5 gap-4">
           <x-field label="Payer Name" required>
             <x-input
-              v-model="memberForm.first_name"
+              v-model="cardHolderName.card_holder_name"
               :rules="[isRequired]"
               placeholder="Payer Name"
               type="text"

@@ -22,10 +22,12 @@ use App\Models\BusinessCoverType;
 use App\Models\BusinessQuoteType;
 use App\Models\CommunicationMode;
 use App\Models\Customer;
+use App\Models\CustomerPaymentInstrument;
 use App\Models\Emirate;
 use App\Models\Entity;
 use App\Models\KycLog;
 use App\Models\Lookup;
+use App\Models\Payment;
 use App\Models\PersonalQuote;
 use App\Models\QuoteRequestEntityMapping;
 use App\Models\QuoteStatus;
@@ -187,7 +189,6 @@ class AMLController extends Controller
 
     public function amlQuoteDetails($quoteTypeId, $quoteRequestId)
     {
-
         $quoteStatusCode = '';
         $quoteType = QuoteType::where('id', $quoteTypeId)->firstOrFail();
         $isCompanySearchEnabled = ApplicationStorage::where('key_name', '=', 'IS_AML_ENTITY_SEARCH_ENABLED')->value('value');
@@ -198,8 +199,9 @@ class AMLController extends Controller
             });
         $kycLogs = $amlRecordFetch->orderBy('created_at', 'desc')->get();
         $quoteRequest = AMLService::getQuoteDetails($quoteTypeId, $quoteRequestId);
-
+        //dd($quoteRequest->code);
         $customerDetails = Customer::where('id', $quoteRequest->customer_id)->with('detail')->firstOrFail();
+
         $entityDetails = QuoteRequestEntityMapping::with('entity')->where(['quote_type_id' => $quoteTypeId, 'quote_request_id' => $quoteRequestId])->first() ?? [];
         $membersDetail = CustomerMembersRepository::getBy('quote_id', $quoteRequest->id, $quoteType->code);
 
@@ -245,6 +247,16 @@ class AMLController extends Controller
 
         $kycStatus = AMLService::getKycType($quoteTypeId, $quoteRequestId);
 
+
+        $payment = Payment::where('code',$quoteRequest->code)
+            ->with(['getCustomerPaymentInstrument' => function ($query) { $query->whereNotNull ('card_holder_name'); }])
+            ->first();
+        $cardHolderName = '';
+        if(isset($payment->getCustomerPaymentInstrument->card_holder_name)){
+
+            $cardHolderName = $payment->getCustomerPaymentInstrument;
+        }
+
         $data = [
             'quoteType' => $quoteType,
             'quoteRequest' => $quoteRequest,
@@ -269,6 +281,7 @@ class AMLController extends Controller
             'amlDecisionStatusEnum' => $amlDecisionStatusEnum,
             'lookups' => $lookups,
             'quoteAmlStatus' => $this->checkAmlQuoteStatus($quoteRequest->quote_status_id),
+            'cardHolderName' => $cardHolderName,
         ];
 
         if ($quoteType->code == quoteTypeCode::Business) {
@@ -276,7 +289,6 @@ class AMLController extends Controller
             $data['businessCoverTypeText'] = BusinessCoverType::where('id', $quoteRequest->business_cover_type_id)->value('text');
             $data['businessCommuModeText'] = CommunicationMode::where('id', $quoteRequest->business_communication_mode_id)->value('text');
         }
-
         return inertia('Aml/Details', $data);
     }
 

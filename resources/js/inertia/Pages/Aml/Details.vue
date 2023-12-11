@@ -29,6 +29,7 @@ const props = defineProps({
   customerDetails: Object,
   amlDecisionStatusEnum: Object,
   lookups: Object,
+    cardHolderName:Object,
 });
 const page = usePage();
 const rolesEnum = page.props.rolesEnum;
@@ -618,6 +619,7 @@ onMounted(() => {
       :lookups="lookups"
       :quote-aml-status="page.props.quoteAmlStatus"
       :customer-details="props.customerDetails"
+      :cardHolderName="cardHolderName"
     />
 
     <div class="p-4 rounded shadow mb-6 bg-white">
