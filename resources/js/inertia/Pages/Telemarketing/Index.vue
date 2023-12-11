@@ -1,10 +1,13 @@
 <script setup>
+import { onMounted } from 'vue';
+
 const props = defineProps({
   tmLeadStatuses: Array,
   handlers: Array,
   tmLeadTypes: Array,
   tmInsuranceTypes: Array,
   isCurrentUserIsAdvisor: String,
+  queryTmLeads: Object,
 });
 
 const loader = reactive({ table: false });
@@ -18,11 +21,21 @@ const handlersOptions = ref([
 ]);
 
 const filters = reactive({
-  search_by: '',
-  leadStatusid: '',
+  searchType: 'cdbID',
+  searchField: '',
   assigned_to_id: '',
   tm_lead_types_id: '',
-  tm_insurance_types_id: '',
+  tm_lead_statuses_id: '',
+  tmLeadsStartDate: '',
+  tmLeadsEndDate: '',
+  page: 1,
+});
+
+const showdates = computed(() => {
+  return filters.searchType == 'created_at' ||
+    filters.searchType == 'updated_at'
+    ? true
+    : false;
 });
 
 const tableHeader = ref([
@@ -39,6 +52,32 @@ const tableHeader = ref([
   { text: 'CREATED AT', value: 'premium' },
   { text: 'UPDATED AT', value: 'policy_number' },
 ]);
+
+const onReset = () => {};
+function onSubmit(isValid) {
+  if (isValid) {
+    filters.page = 1;
+
+    Object.keys(filters).forEach(
+      key =>
+        (filters[key] === '' || filters[key].length === 0) &&
+        delete filters[key],
+    );
+
+    router.visit(route('tmleads-list'), {
+      method: 'get',
+      data: filters,
+      preserveState: true,
+      preserveScroll: true,
+      onBefore: () => (loader.table = true),
+      onSuccess: () => (loader.table = false),
+    });
+  } else {
+    console.log('Invalid');
+  }
+}
+
+onMounted(() => onSubmit());
 </script>
 <template>
   <div>
@@ -53,7 +92,7 @@ const tableHeader = ref([
       <div class="grid sm:grid-cols-2 md:grid-cols-3 gap-4">
         <x-field label="Search By">
           <x-select
-            v-model="filters.search_by"
+            v-model="filters.searchType"
             placeholder="Search by"
             :options="[
               { value: 'cdbID', label: 'TM ID' },
@@ -71,11 +110,15 @@ const tableHeader = ref([
           />
         </x-field>
         <x-field label="Search Value">
-          <x-input placeholder="Search value" class="w-full" />
+          <x-input
+            v-model="filters.searchField"
+            placeholder="Search value"
+            class="w-full"
+          />
         </x-field>
         <x-field label="Lead Status">
           <x-select
-            v-model="filters.leadStatusid"
+            v-model="filters.tm_lead_statuses_id"
             placeholder="Lead status"
             :options="
               tmLeadStatuses.map(item => ({
@@ -86,6 +129,7 @@ const tableHeader = ref([
             class="w-full"
           />
         </x-field>
+
         <x-field label="Lead Owner">
           <x-select
             v-model="filters.assigned_to_id"
@@ -106,7 +150,7 @@ const tableHeader = ref([
             :options="
               tmLeadTypes.map(item => ({
                 value: item.id,
-                label: item.name,
+                label: item.text,
               }))
             "
             class="w-full"
@@ -119,10 +163,24 @@ const tableHeader = ref([
             :options="
               tmInsuranceTypes.map(item => ({
                 value: item.id,
-                label: item.name,
+                label: item.text,
               }))
             "
             class="w-full"
+          />
+        </x-field>
+        <x-field label="Start Date" v-if="showdates">
+          <DatePicker
+            name="created_at_start"
+            class="w-full"
+            v-model="filters.tmLeadsStartDate"
+          />
+        </x-field>
+        <x-field label="End Date" v-if="showdates">
+          <DatePicker
+            name="created_at_start"
+            class="w-full"
+            v-model="filters.tmLeadsEndDate"
           />
         </x-field>
       </div>
@@ -137,11 +195,10 @@ const tableHeader = ref([
     </x-form>
 
     <DataTable
-      v-model:items-selected="quotesSelected"
       table-class-name="tablefixed"
       :headers="tableHeader"
       :loading="loader.table"
-      :items="quotes.data || []"
+      :items="queryTmLeads.data || []"
       border-cell
       hide-rows-per-page
       hide-footer
@@ -151,7 +208,6 @@ const tableHeader = ref([
         <Link class="text-primary-500 hover:underline">
           {{ code }}
         </Link>
-        <!-- <span v-else>{{ code }}</span> -->
       </template>
     </DataTable>
 

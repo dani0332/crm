@@ -52,7 +52,8 @@ class TmLeadController extends Controller
             $isCurrentUserIsAdvisor = '0';
         }
 
-        if ($request->ajax()) {
+        // $queryTmLeads = '';
+        // if ($request->ajax() || true) {
             $queryTmLeads = $tmLead::select(
                 'tm_leads.id as id',
                 'tm_leads.customer_name as customer_name',
@@ -126,18 +127,27 @@ class TmLeadController extends Controller
                 $queryTmLeads->where('tm_leads.tm_lead_types_id', $request->tm_lead_types_id);
             }
 
-            return $datatables::of($queryTmLeads)
-                ->addIndexColumn()
-                ->make(true);
-        }
+            $tmLead = $queryTmLeads->paginate();
+            // return $datatables::of($queryTmLeads)
+            //     ->addIndexColumn()
+            //     ->make(true);
+        // }
 
-        return view('tmlead.view', compact(
-            'handlers',
-            'isCurrentUserIsAdvisor',
-            'tmInsuranceTypes',
-            'tmLeadTypes',
-            'tmLeadStatuses'
-        ));
+        return inertia('Telemarketing/Index', [
+            'handlers' => $handlers,
+            'isCurrentUserIsAdvisor' => $isCurrentUserIsAdvisor,
+            'tmInsuranceTypes' => $tmInsuranceTypes,
+            'tmLeadTypes' => $tmLeadTypes,
+            'tmLeadStatuses' => $tmLeadStatuses,
+            'queryTmLeads' => $tmLead
+        ]);
+        // return view('tmlead.view', compact(
+        //     'handlers',
+        //     'isCurrentUserIsAdvisor',
+        //     'tmInsuranceTypes',
+        //     'tmLeadTypes',
+        //     'tmLeadStatuses'
+        // ));
     }
 
     /**
