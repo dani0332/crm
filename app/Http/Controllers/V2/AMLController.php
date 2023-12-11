@@ -246,8 +246,6 @@ class AMLController extends Controller
 
         $kycStatus = AMLService::getKycType($quoteTypeId, $quoteRequestId);
 
-        // dd($entityDetails->entity->quoteMember);
-
         $data = [
             'quoteType' => $quoteType,
             'quoteRequest' => $quoteRequest,

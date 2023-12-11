@@ -3,6 +3,7 @@ import LazyDocumentUploader from './Partials/DocumentUploader.vue';
 import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue';
 
+const page = usePage();
 defineProps({
   quote: Object,
   allowedDuplicateLOB: Array,
@@ -47,7 +48,7 @@ defineProps({
   canAddBatchNumber: Boolean,
 });
 
-const page = usePage();
+
 const hasAnyRole = roles => useHasAnyRole(roles);
 const checkedItems = ref([]);
 const checkCheckedPlans = computed(() => {
@@ -75,16 +76,15 @@ const dateFormat = date => {
   if (!date) return '';
   return useDateFormat(date, 'DD-MM-YYYY');
 };
-
 const dateTimeFormat = date => {
   if (!date) return '';
   return useDateFormat(date, 'DD-MM-YYYY HH:mm:ss');
 };
-
 const notification = useNotifications('toast');
 
 const rolesEnum = page.props.rolesEnum;
 const hasRole = role => useHasRole(role);
+
 
 const {
   isRequired,
@@ -95,14 +95,12 @@ const {
   isEmail,
   isMobileNo,
 } = useRules();
-
 const confirmDeleteData = reactive({
   docs: null,
   member: null,
   activity: null,
   contact: null,
 });
-
 const memberActionEdit = ref(false),
   activityActionEdit = ref(false),
   selectedPlan = ref(null),
@@ -116,7 +114,6 @@ const memberActionEdit = ref(false),
       reason => reason.text === page.props.quote.lost_reason,
     )?.id || null,
   );
-
 const leadDuplicateForm = useForm({
   modelType: 'travel',
   parentType: 'travel',
@@ -126,7 +123,6 @@ const leadDuplicateForm = useForm({
   lob_team: [],
   lob_team_sub_selection: null,
 });
-
 const openDuplicate = () => {
   modals.duplicate = true;
   leadDuplicateForm.reset();
