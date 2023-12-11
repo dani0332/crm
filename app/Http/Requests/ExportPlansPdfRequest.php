@@ -19,7 +19,7 @@ class ExportPlansPdfRequest extends FormRequest
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     protected function prepareForValidation()
     {

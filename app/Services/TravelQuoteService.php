@@ -868,8 +868,6 @@ class TravelQuoteService extends BaseService
     public function updateManualPlansBulk($request)
     {
         // api not available for now
-        return;
-
 
     }
     public function exportPlansPdf($quoteType, $data, $quotePlans = null)
