@@ -2186,11 +2186,11 @@ const genderList = [
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div class="flex flex-wrap gap-4 justify-between items-center mb-4">
         <h3 class="font-semibold text-primary-800 text-lg">
-            Available Plans
+            Available PlansAvaila
         </h3>
           <div>
               <x-button-group v-if="selectedPlans.length > 0" size="sm" class="mr-2">
-                  <x-button
+                <!--  <x-button
                       @click.prevent="onTogglePlans(false)"
                       :loading="toggleLoader"
                   >
@@ -2201,7 +2201,7 @@ const genderList = [
                       :loading="toggleLoader"
                   >
                       Hide
-                  </x-button>
+                  </x-button>-->
               </x-button-group>
         <x-button
           v-if="

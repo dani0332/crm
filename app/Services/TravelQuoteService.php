@@ -31,16 +31,14 @@ class TravelQuoteService extends BaseService
 {
     protected $query;
     protected $leadAllocationService;
-    protected $httpService;
 
     use AddPremiumAllLobs;
     use GenericQueriesAllLobs;
     use RolePermissionConditions;
 
-    public function __construct(LeadAllocationService $leadAllocationService, HttpRequestService $httpService)
+    public function __construct(LeadAllocationService $leadAllocationService)
     {
         $this->leadAllocationService = $leadAllocationService;
-        $this->httpService = $httpService;
         $this->query = DB::table('travel_quote_request as tqr')->select(
             'tqr.id',
             'tqr.uuid',
@@ -901,7 +899,8 @@ class TravelQuoteService extends BaseService
                 'apiUserName' => $apiUserName,
                 'apiPassword' => $apiPassword,
             ];
-            $response = $this->httpService->processRequest($dataArray, $apiCreds);
+            $httpService = app(HttpRequestService::class);
+            $response = $httpService->processRequest($dataArray, $apiCreds);
 
             return $response;
         }
