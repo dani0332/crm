@@ -1604,27 +1604,27 @@ const genderList = [
       v-if="quote.customer_type == page.props.customerTypeEnum.Individual"
       class="p-4 rounded shadow mb-6 bg-white"
     >
-      <div class="flex flex-wrap gap-4 justify-between items-center mb-4">
-        <h3 class="font-semibold text-primary-800 text-lg">
-          Member Details
-          <x-tag size="sm">{{ travelers.length || 0 }}</x-tag>
-        </h3>
-        <div class="flex flex-wrap gap-3">
-          <x-button size="sm" color="orange" @click.prevent="onAddTraveler">
-            Add Member
-          </x-button>
-        </div>
+    <div class="flex flex-wrap gap-4 justify-between items-center mb-4">
+      <h3 class="font-semibold text-primary-800 text-lg">
+        Member Details
+        <x-tag size="sm">{{ travelers.length || 0 }}</x-tag>
+      </h3>
+      <div class="flex flex-wrap gap-3">
+        <x-button size="sm" color="orange" @click.prevent="onAddTraveler">
+          Add Member
+        </x-button>
       </div>
-      <DataTable
-        table-class-name="tablefixed compact"
-        :headers="travelerTable.columns"
-        :items="travelers || []"
-        border-cell
-        hide-rows-per-page
-        :rows-per-page="15"
-        :hide-footer="travelers.length < 15"
-        show-index
-      >
+    </div>
+    <DataTable
+      table-class-name="tablefixed compact"
+      :headers="travelerTable.columns"
+      :items="travelers || []"
+      border-cell
+      hide-rows-per-page
+      :rows-per-page="15"
+      :hide-footer="travelers.length < 15"
+      show-index
+    >
         <template #item-index="{ index, code }">
           <div>{{ code ?? 'Member ' + index }}</div>
         </template>
