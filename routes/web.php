@@ -302,8 +302,6 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::get('carrevival/{uuid}', [CRUDController::class, 'show']);
 
         Route::get('health-cards', [HealthQuoteController::class, 'cardsView'])->name('health.cards');
-        Route::get('health-export', [CRUDController::class, 'exportHealthLeads'])->name('health.export');
-        Route::get('car-export', [CRUDController::class, 'exportCarLeads'])->name('car.export');
 
         Route::get('home-cards', [CRUDController::class, 'cardsViewHome'])->name('home-cardView');
         Route::resource('home', CRUDController::class);
