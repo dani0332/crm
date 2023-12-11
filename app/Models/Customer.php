@@ -14,6 +14,16 @@ class Customer extends Model implements AuditableContract
     protected $table = 'customer';
     protected $guarded = [];
 
+    /**
+     * customer detail relation
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasOne
+     */
+    public function detail()
+    {
+        return $this->hasOne(CustomerDetail::class);
+    }
+
     public function nationality()
     {
         return $this->hasOne(Nationality::class, 'id', 'nationality_id');
@@ -78,4 +88,18 @@ class Customer extends Model implements AuditableContract
     {
         return $this->belongsTo(self::class, 'id', 'customer_id');
     }
+
+    public function customerDetail()
+    {
+        return $this->hasOne(CustomerDetail::class, 'customer_id', 'id');
+    }
+
+    /**
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function additionalContacts()
+    {
+        return $this->hasMany(CustomerAdditionalContact::class, 'customer_id', 'id');
+    }
+
 }

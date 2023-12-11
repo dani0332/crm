@@ -16,6 +16,7 @@ enum QuoteTypes: string
     case CYCLE = 'Cycle';
     case JETSKI = 'Jetski';
     case AMT = 'Amt';
+    case PERSONAL = 'Personal';
     case GROUP_MEDICAL = 'Group Medical';
     case CORPLINE = 'Corpline';
 

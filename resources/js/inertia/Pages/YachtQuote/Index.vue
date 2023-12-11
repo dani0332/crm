@@ -31,6 +31,7 @@ let availableFilters = {
   is_ecommerce: '',
   quote_status_id: '',
   page: 1,
+  previous_quote_policy_number_text:''
 };
 
 const filters = reactive(availableFilters);
@@ -101,6 +102,7 @@ const tableHeader = [
   { text: 'SOURCE', value: 'source' },
   { text: 'CURRENTLY INSURED WITH', value: 'currently_insured_with' },
   { text: 'IS ECOMMERCE', value: 'is_ecommerce' },
+  { text: 'Previous Policy Number', value: 'previous_quote_policy_number' },
 ];
 
 const quotesSelected = ref([]);
@@ -291,6 +293,14 @@ watch(
             class="w-full"
           />
         </x-field>
+        <x-input
+          v-model="filters.previous_quote_policy_number_text"
+          type="text"
+          name="previous_quote_policy_number"
+          label="Previous Policy Number"
+          class="w-full"
+          placeholder="Search by Previous Policy Number"
+        />
       </div>
       <div class="flex justify-between gap-3 mb-4 mt-1">
         <div v-if="can(permissionsEnum.DATA_EXTRACTION)">

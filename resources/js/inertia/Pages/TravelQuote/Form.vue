@@ -68,6 +68,7 @@ const quoteForm = useForm({
     props.quote?.ilivein_accommodation_type_id || null,
   days_cover_for: props.quote?.days_cover_for || null,
   members: [{ value: 'male', label: 'Male', primary: true }],
+  edit_mode: editMode.value,
 });
 
 const rules = {
@@ -356,8 +357,8 @@ function resetTravelInfo(value) {
 
       <template
         v-if="
-          quoteForm.has_arrived_uae == '0' ||
-          quoteForm.has_arrived_destination == '0'
+          !editMode && (quoteForm.has_arrived_uae == '0' ||
+          quoteForm.has_arrived_destination == '0')
         "
       >
         <div
@@ -404,8 +405,9 @@ function resetTravelInfo(value) {
 
       <x-button
         v-if="
+          !editMode && (
           quoteForm.has_arrived_uae == '0' ||
-          quoteForm.has_arrived_destination == '0'
+          quoteForm.has_arrived_destination == '0' )
         "
         size="md"
         color="emerald"

@@ -51,7 +51,6 @@ class AdvisorPerformanceReportService extends BaseService
 
         if (! auth()->user()->hasRole(RolesEnum::LeadPool)) {
             $userIds = $this->walkTree(auth()->user()->id);
-            info('user ids for advisor performance report are : '.json_encode($userIds));
             $query = $query->whereIn('car_quote_request.advisor_id', $userIds);
         }
 
@@ -131,15 +130,12 @@ class AdvisorPerformanceReportService extends BaseService
         $query->whereBetween('car_quote_request_detail.advisor_assigned_date', [$startDate, $endDate]);
 
         if (isset($filters->tiers) && count($filters->tiers) > 0) {
-            info('tiersFilter are : '.json_encode($filters->tiers));
             $query->whereIn('car_quote_request.tier_id', $filters->tiers);
         }
         if (isset($filters->assignmentTypes) && $filters->assignmentTypes != 'All') {
-            info('assignment_type are : '.json_encode($filters->assignmentTypes));
             $query->where('car_quote_request.assignment_type', $filters->assignmentTypes);
         }
         if (isset($filters->teams) && count($filters->teams) > 0) {
-            info('teamsFilter are : '.json_encode($filters->teams));
             $value = $filters->teams;
             $query->whereIn('users.id', function ($query) use ($value) {
                 $query->distinct()
@@ -152,7 +148,6 @@ class AdvisorPerformanceReportService extends BaseService
         }
 
         if (isset($filters->leadSourceFilter) && count($filters->leadSourceFilter) > 0) {
-            info('leadSourceFilter are : '.json_encode($filters->leadSourceFilter));
             $query->whereIn('car_quote_request.source', $filters->leadSourceFilter);
         }
 
