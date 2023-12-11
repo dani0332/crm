@@ -80,7 +80,7 @@ const memberForm = useForm({
   customer_id: props.quoteDetails.customer_id,
   entity_id: props.entity_id ?? null,
   id: null,
-  first_name: null,
+  first_name: props.cardHolderName.card_holder_name,
   dob: null,
   relation_code: null,
   nationality_id: null,
@@ -216,7 +216,7 @@ function onMemberSubmit(isValid) {
         <div class="grid md:grid-cols-2 mb-5 gap-4">
           <x-field label="Payer Name" required>
             <x-input
-              v-model="cardHolderName.card_holder_name"
+              v-model="memberForm.first_name"
               :rules="[isRequired]"
               placeholder="Payer Name"
               type="text"
