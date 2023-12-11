@@ -591,7 +591,7 @@ class AMLController extends Controller
         $kycLog = KycLog::withTrashed()->where('id', $request->aml_id)->first();
 
         if (checkModifiedRecord($kycLog->updated_at, $request->last_updated_at)) {
-            return response()->json(['status' => 'error','message' => 'Record already modified please refresh the page']);
+            return response()->json(['status' => 'error', 'message' => 'Record already modified please refresh the page']);
         }
 
         $bridgerResponse = json_decode($kycLog->results);
@@ -605,7 +605,7 @@ class AMLController extends Controller
             if ((collect($manualStatusIM)->has($request->bridger_match_id) && $manualStatusIM[$request->bridger_match_id] == AMLDecisionStatusEnum::TRUE_MATCH) &&
                 $request->bridger_decision_type == AMLDecisionStatusEnum::FALSE_POSITIVE) {
                 $kycLog->decision = AMLDecisionStatusEnum::ESCALATED;
-                $response = ['status' => 'success','message' => 'Result update successfully'];
+                $response = ['status' => 'success', 'message' => 'Result update successfully'];
             }
             unset($bridgerResponse[0]->ManualStatusUpdateIM->{$request->bridger_match_id});
         }

@@ -570,7 +570,7 @@ if (! function_exists('getRepositoryObject')) {
     }
 }
 
-if(! function_exists('checkModifiedRecord')) {
+if (! function_exists('checkModifiedRecord')) {
     function checkModifiedRecord($firstDate, $secondDate): bool
     {
         return Carbon::parse($firstDate)->format(config('constants.datetime_format')) !==
