@@ -168,7 +168,7 @@ const filters = reactive({
   email: '',
   mobile_no: '',
   quote_status_id: [],
-  created_at: page.props.createdAtStart || '',
+  created_at_start: page.props.createdAtStart || '',
   currently_insured_with: '',
   renewal_expiry_date: '',
   is_ecommerce: '',
@@ -198,7 +198,7 @@ const canExport = ref(false);
 watch(
   () => filters,
   () => {
-    if (filters.created_at && filters.created_at_end) {
+    if (filters.created_at_start && filters.created_at_end) {
       canExport.value = true;
     } else {
       canExport.value = false;
@@ -261,7 +261,7 @@ function onReset() {
 
 const objToUrl = obj => {
   Object.keys(obj).forEach(
-    key => (obj[key] === '' || obj[key].length === 0) && delete obj[key],
+    key => (obj[key] === '' || obj[key]?.length === 0) && delete obj[key],
   );
   return Object.keys(obj)
     .map(key => {
@@ -354,14 +354,28 @@ onMounted(() => {
           placeholder="Search by Last Name"
         />
         <DatePicker
-          v-model="filters.created_at"
+          v-model="filters.created_at_start"
           label="Created Date Start"
-          :rules="filters.code || filters.email || filters.renewal_batch || filters.quote_batch_id ? [] : [isRequired]"
+          :rules="
+            filters.code ||
+            filters.email ||
+            filters.renewal_batch ||
+            filters.quote_batch_id
+              ? []
+              : [isRequired]
+          "
         />
         <DatePicker
           v-model="filters.created_at_end"
           label="Created Date End"
-          :rules="filters.code || filters.email || filters.renewal_batch || filters.quote_batch_id ? [] : [isRequired]"
+          :rules="
+            filters.code ||
+            filters.email ||
+            filters.renewal_batch ||
+            filters.quote_batch_id
+              ? []
+              : [isRequired]
+          "
         />
         <x-input
           v-model="filters.email"
@@ -496,7 +510,7 @@ onMounted(() => {
             v-if="canExport"
             size="sm"
             color="emerald"
-            :href="`/quotes/car-export?${objToUrl(filters)}`"
+            :href="`/car/leads-export?${objToUrl(filters)}`"
             class="justify-self-start"
           >
             Export

@@ -193,4 +193,10 @@ class CentralService
                 return [];
         }
     }
+
+    public function savePlanDetails()
+    {
+
+    }
+
 }

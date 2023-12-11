@@ -18,4 +18,11 @@ class QuoteTypeRepository extends BaseRepository
     {
         return $this->withActive()->orderBy('sort_order')->get();
     }
+
+    public function fetchAllowedQuoteForAml()
+    {
+        $notAllowedQuoted = [];
+
+        return $this->whereNotIn('id', $notAllowedQuoted)->withActive()->orderBy('sort_order')->get();
+    }
 }
