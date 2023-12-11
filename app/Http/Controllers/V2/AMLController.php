@@ -597,13 +597,23 @@ class AMLController extends Controller
         }
 
         $bridgerResponse = json_decode($kycLog->results);
-        if ($request->bridger_decision_type == AMLDecisionStatusEnum::TRUE_MATCH) {
+        $manualStatusIM = (array) $bridgerResponse[0]->ManualStatusUpdateIM ?? [];
+
+        if ($request->bridger_decision_type == AMLDecisionStatusEnum::TRUE_MATCH && auth()->user()->hasRole(RolesEnum::COMPLIANCE)) {
             $bridgerResponse[0]->ManualStatusUpdateIM = [$request->bridger_match_id => $request->bridger_decision_type];
+            $kycLog->decision = AMLDecisionStatusEnum::SENT_FOR_REVIEW;
+            $response['result_state'] = AMLDecisionStatusEnum::SENT_FOR_REVIEW;
         } else {
+            if ((collect($manualStatusIM)->has($request->bridger_match_id) && $manualStatusIM[$request->bridger_match_id] == AMLDecisionStatusEnum::TRUE_MATCH) &&
+                $request->bridger_decision_type == AMLDecisionStatusEnum::FALSE_POSITIVE) {
+                $kycLog->decision = AMLDecisionStatusEnum::ESCALATED;
+                $response = ['status' => 'success','message' => 'Result update successfully'];
+            }
             unset($bridgerResponse[0]->ManualStatusUpdateIM->{$request->bridger_match_id});
         }
 
         $kycLog->results = json_encode($bridgerResponse);
+        $kycLog->save();
 
         if ($request->bridger_decision_type == AMLDecisionStatusEnum::TRUE_MATCH) {
             info('Bridger Insight : Email Triggered to Compliance Super User - Ref ID: '.$request['quote_ref_id'].' - Email triggered by: '.auth()->user()->email);
@@ -616,15 +626,9 @@ class AMLController extends Controller
                 auth()->user()->email,
                 true
             );
-            $response = ['status' => 'success','message' => 'Email Triggered to Compliance Super User'];
-
-            if (auth()->user()->hasRole(RolesEnum::COMPLIANCE)) {
-                $kycLog->decision = AMLDecisionStatusEnum::SENT_FOR_REVIEW;
-                $response['result_state'] = AMLDecisionStatusEnum::SENT_FOR_REVIEW;
-            }
+            $response['status'] = 'success';
+            $response['message'] = 'Email Triggered to Compliance Super User';
         }
-
-        $kycLog->save();
 
         return response()->json($response);
     }
