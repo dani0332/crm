@@ -912,7 +912,7 @@ class TravelQuoteService extends BaseService
         $addons = (isset($data['addons'])) ? $data['addons'] : null;
 
         $quotePlans = $this->getQuotePlans($data['quote_uuid']);
-        if (!isset($quotePlans->quotes->plans)) {
+        if (! isset($quotePlans->quotes->plans)) {
             return ['error' => 'Quote plans not available'];
         }
 
@@ -927,7 +927,7 @@ class TravelQuoteService extends BaseService
             ->loadView('pdf.travel_quote_plans', compact('quotePlans', 'planIds', 'quote', 'addons', 'providers'));
 
         // generate pdf with file name e.g. InsuranceMarket.ae™ Motor Insurance Comparison for Rahul.pdf
-        $pdfName = 'InsuranceMarket.ae™ Travel Insurance Comparison for ' . $quote->first_name . ' ' . $quote->last_name . '.pdf';
+        $pdfName = 'InsuranceMarket.ae™ Travel Insurance Comparison for '.$quote->first_name.' '.$quote->last_name.'.pdf';
 
         return ['pdf' => $pdf, 'name' => $pdfName];
 

@@ -19,7 +19,7 @@ class ExportPlansPdfRequest extends FormRequest
     }
 
     /**
-     * {@inheritDoc}
+     * @inheritDoc
      */
     protected function prepareForValidation()
     {
@@ -30,7 +30,7 @@ class ExportPlansPdfRequest extends FormRequest
 
     /**
      * quoteType, quoteUuid, and PlanIds are required to run this feature
-     * this request validation is in use to export pdf from IMCRM form and API endPoint
+     * this request validation is in use to export pdf from IMCRM form and API endPoint.
      *
      * @return array
      */
@@ -47,7 +47,7 @@ class ExportPlansPdfRequest extends FormRequest
     }
 
     /**
-     * allowed for car quote only
+     * allowed for car quote only.
      */
     public function withValidator($validator)
     {
@@ -65,7 +65,7 @@ class ExportPlansPdfRequest extends FormRequest
     {
         return [
             'plan_ids.max' => 'Maximum 5 plans are allowed to select',
-            'plan_ids.min' => (request()->quoteType = 'travel') ? 'Minimum 1 plans should be selected' : 'Minimum 3 plans should be selected',
+            'plan_ids.min' => (request()->quoteType = 'travel') ? 'Minimum 1 plan should be selected' : 'Minimum 3 plans should be selected',
         ];
     }
 }
