@@ -6,6 +6,7 @@ use App\Models\CustomerMembers;
 use App\Models\HealthMemberDetail;
 use App\Models\HealthQuote;
 use App\Models\QuoteDocument;
+use Carbon\Carbon;
 use Http\Client\Exception;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -20,6 +21,8 @@ class UpdateMemberKeyHealthDocsJob implements ShouldQueue
     public $tries = 3;
     public $timeout = 30;
     public $backoff = 300;
+    protected $multipleRecords = 0;
+    protected $multipleRecordsFilter = [];
 
     /**
      * Execute the job.
@@ -46,17 +49,23 @@ class UpdateMemberKeyHealthDocsJob implements ShouldQueue
                                 'quote_id' => $getOldHealthMemberRecord->health_quote_request_id,
                                 'customer_entity_id' => $getOldHealthMemberRecord->customer_id,
                                 'code' => $getOldHealthMemberRecord->code,
-                                'dob' => $getOldHealthMemberRecord->dob
+                                'dob' => Carbon::parse($getOldHealthMemberRecord->dob)->format('Y-m-d')
                             ];
 
                             $getCustomerMemberRecord = CustomerMembers::where($customerMemberFilter)->where('quote_type', HealthQuote::class)->get();
-                            if ($getOldHealthMemberRecord->count() == 1) {
-                                info('Updating... Quote Document ID: '.$healthDocument->id.' - Old member_detail_id: '.$healthDocument->member_detail_id.' - New member_detail_id: '.$getCustomerMemberRecord[0]->id);
-                                $healthDocument->old_member_detail_id = $healthDocument->member_detail_id;
-                                $healthDocument->member_detail_id = $getCustomerMemberRecord[0]->id;
-                                $healthDocument->save();
+                            if ($getCustomerMemberRecord) {
+                                if ($getCustomerMemberRecord->count() == 1) {
+                                    info('Updating... Quote Document ID: '.$healthDocument->id.' - Old member_detail_id: '.$healthDocument->member_detail_id.' - New member_detail_id: '.$getCustomerMemberRecord[0]->id);
+                                    $healthDocument->old_member_detail_id = $healthDocument->member_detail_id;
+                                    $healthDocument->member_detail_id = $getCustomerMemberRecord[0]->id;
+                                    $healthDocument->save();
+                                } else {
+                                    $this->multipleRecords++;
+                                    $this->multipleRecordsFilter[] = $customerMemberFilter;
+                                    info('Multiple records found in customer_members against Quote Request ID: ' . $getOldHealthMemberRecord->health_quote_request_id . ' - Customer ID: ' . $getOldHealthMemberRecord->customer_id . ' - Code: ' . $getOldHealthMemberRecord->code . ' - DOB: ' . $getOldHealthMemberRecord->dob);
+                                }
                             } else {
-                                info('Multiple records found in customer_members against Quote Request ID: ' . $getOldHealthMemberRecord->health_quote_request_id . ' - Customer ID: ' . $getOldHealthMemberRecord->customer_id . ' - Code: ' . $getOldHealthMemberRecord->code . ' - DOB: ' . $getOldHealthMemberRecord->dob);
+                                info('Record not found in customer_members table against : Quote Request ID: ' .$getOldHealthMemberRecord->health_quote_request_id. ' - Customer Entity ID: ' .$getOldHealthMemberRecord->customer_id. ' - Code: ' . $getOldHealthMemberRecord->code. ' - DOB: ' .Carbon::parse($getOldHealthMemberRecord->dob)->format('Y-m-d'));
                             }
                         } else {
                             info('Record not found in health_quote_request_member_details against : Quote Request ID : ' . $healthDocument->quote_documentable_id . ' - ID : ' . $healthDocument->member_detail_id);
@@ -64,6 +73,8 @@ class UpdateMemberKeyHealthDocsJob implements ShouldQueue
                     }
                 });
 
+            info('Total multiple records found : '.$this->multipleRecords);
+            info('Multiple records found against filters : ' .json_encode($this->multipleRecordsFilter));
             info('------------------- Update Member Detail ID Job End At : ' . now() . ' -------------------');
         } catch (Exception $exception) {
             \Log::error('Update Member Detail ID Job - Error - Message: '.$exception->getMessage());
