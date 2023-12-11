@@ -115,6 +115,14 @@ class YachtQuoteController extends Controller
         $lookupService = app(LookupService::class);
         $industryType = $lookupService->getCompanyTypes();
 
+        $sendUpdateOptions = [];
+        $sendUpdateLogs = [];
+
+        if ($quote->quote_status_id == QuoteStatusEnum::PolicyIssued) {
+            $sendUpdateOptions = $lookupService->getSendUpdateOptions(QuoteTypes::YACHT->id());
+            $sendUpdateLogs = $quote->load('sendUpdateLogs');
+        }
+
         return inertia('YachtQuote/Show', [
             'quoteType' => QuoteTypes::YACHT,
             'quote' => $quote,
@@ -138,6 +146,8 @@ class YachtQuoteController extends Controller
             'nationalities' => $nationalities,
             'industryType' => $industryType,
             'emirates' => $emirates,
+            'sendUpdateOptions' => $sendUpdateOptions,
+            'sendUpdateLogs' => $sendUpdateLogs,
         ]);
     }
 

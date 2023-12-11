@@ -24,6 +24,7 @@ use App\Repositories\PersonalPlanRepository;
 use App\Repositories\QuoteStatusRepository;
 use App\Repositories\UserRepository;
 use App\Services\AMLService;
+use App\Services\LookupService;
 use App\Traits\GenericQueriesAllLobs;
 
 class BikeQuoteController extends Controller
@@ -122,6 +123,14 @@ class BikeQuoteController extends Controller
             })->values();
         }
 
+        $sendUpdateOptions = [];
+        $sendUpdateLogs = [];
+
+        if ($quote->quote_status_id == QuoteStatusEnum::PolicyIssued) {
+            $sendUpdateOptions = (new LookupService)->getSendUpdateOptions(QuoteTypes::BIKE->id());
+            $sendUpdateLogs = $quote->load('sendUpdateLogs');
+        }
+
         return inertia('BikeQuote/Show', [
             'quoteType' => QuoteTypes::BIKE,
             'quote' => $quote,
@@ -146,6 +155,8 @@ class BikeQuoteController extends Controller
             'emirates' => $emirates,
             'UBOsDetails' => $uboDetails,
             'UBORelations' => $uboRelations,
+            'sendUpdateOptions' => $sendUpdateOptions,
+            'sendUpdateLogs' => $sendUpdateLogs,
         ]);
     }
 

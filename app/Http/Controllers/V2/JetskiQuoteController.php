@@ -18,6 +18,7 @@ use App\Repositories\PaymentMethodRepository;
 use App\Repositories\PersonalPlanRepository;
 use App\Repositories\QuoteStatusRepository;
 use App\Repositories\UserRepository;
+use App\Services\LookupService;
 
 class JetskiQuoteController extends Controller
 {
@@ -108,6 +109,14 @@ class JetskiQuoteController extends Controller
 
         $embeddedProducts = EmbeddedProductRepository::byQuoteType(QuoteTypes::JETSKI->id(), $quote->id);
 
+        $sendUpdateOptions = [];
+        $sendUpdateLogs = [];
+
+        if ($quote->quote_status_id == QuoteStatusEnum::PolicyIssued) {
+            $sendUpdateOptions = (new LookupService)->getSendUpdateOptions(QuoteTypes::YACHT->id());
+            $sendUpdateLogs = $quote->load('sendUpdateLogs');
+        }
+
         return inertia('JetskiQuote/Show', [
             'quoteType' => QuoteTypes::JETSKI,
             'quote' => $quote,
@@ -126,6 +135,8 @@ class JetskiQuoteController extends Controller
             'customerTypeEnum' => CustomerTypeEnum::asArray(),
             'modelType' => QuoteTypes::JETSKI,
             'canAddBatchNumber' => auth()->user()->hasRole(RolesEnum::JetskiManager),
+            'sendUpdateOptions' => $sendUpdateOptions,
+            'sendUpdateLogs' => $sendUpdateLogs,
         ]);
     }
 

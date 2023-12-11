@@ -25,6 +25,7 @@ use App\Repositories\QuoteStatusRepository;
 use App\Repositories\UserRepository;
 use App\Services\AMLService;
 use App\Services\CentralService;
+use App\Services\LookupService;
 use Illuminate\Http\Request;
 
 class LifeQuoteController extends Controller
@@ -109,6 +110,14 @@ class LifeQuoteController extends Controller
             })->values();
         }
 
+        $sendUpdateOptions = [];
+        $sendUpdateLogs = [];
+
+        if ($quote->quote_status_id == QuoteStatusEnum::PolicyIssued) {
+            $sendUpdateOptions = (new LookupService)->getSendUpdateOptions(QuoteTypes::LIFE->id());
+            $sendUpdateLogs = $quote->load('sendUpdateLogs');
+        }
+
         $activitiesData = [];
         foreach ($activities as $activity) {
             $activitiesData[] = [
@@ -124,6 +133,8 @@ class LifeQuoteController extends Controller
                 'assignee' => $activity->assignee->name,
                 'assignee_id' => $activity->assignee_id,
                 'status' => $activity->status,
+                'sendUpdateOptions' => $sendUpdateOptions,
+                'sendUpdateLogs' => $sendUpdateLogs,
             ];
         }
 

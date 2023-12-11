@@ -502,6 +502,14 @@ class CRUDController extends Controller
         $model = $this->genericModel;
         $model_name = $this->genericModel->modelType.'Quote';
 
+        $sendUpdateOptions = [];
+        $sendUpdateLogs = [];
+
+        if ($record->quote_status_id == QuoteStatusEnum::PolicyIssued) {
+            $sendUpdateOptions = $this->lookupService->getSendUpdateOptions($quoteTypeId);
+            $sendUpdateLogs = $paymentEntityModel->sendUpdateLogs;
+        }
+
         $customTitles = $customTableList = [];
         if (Auth::user()->isRenewalManager() || Auth::user()->isRenewalAdvisor()) {
             $isRenewalUser = true;
@@ -629,14 +637,7 @@ class CRUDController extends Controller
                     $carInsuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypeId::Car);
                 }
             }
-
-            $sendUpdateOptions = [];
-            $sendUpdateLogs = [];
             
-            // if ($record->quote_status_id == QuoteStatusEnum::PolicyIssued) {
-                $sendUpdateOptions = $this->lookupService->getSendUpdateOptions($quoteTypeId);
-                $sendUpdateLogs = $paymentEntityModel->sendUpdateLogs;
-            // }
             // return view('shared.show', compact([
             //     'record', 'model', 'customTitles', 'listQuotePlans', 'customTableList', 'embeddedProducts',
             //     'ecomCarInsuranceQuoteUrl', 'carQuotePlanAddons', 'vehicleTypes', 'leadStatuses', 'mainPayment',
@@ -769,6 +770,8 @@ class CRUDController extends Controller
                 'storageUrl' => storageUrl(),
                 'quoteDocuments' => array_values($quoteDocuments->toArray()),
                 'quote' => $record,
+                'sendUpdateOptions' => $sendUpdateOptions, 
+                'sendUpdateLogs' => $sendUpdateLogs,
                 'allowedDuplicateLOB' => $allowedDuplicateLOB,
                 'leadStatuses' => array_values($leadStatuses->toArray()),
                 'advisors' => $advisors,
@@ -889,6 +892,8 @@ class CRUDController extends Controller
             return inertia('HealthQuote/Show', [
                 'paymentLink' => $paymentLink,
                 'quote' => $record,
+                'sendUpdateOptions' => $sendUpdateOptions, 
+                'sendUpdateLogs' => $sendUpdateLogs,
                 'genderOptions' => $this->crudService->getGenderOptions(),
                 'allowedDuplicateLOB' => $allowedDuplicateLOB,
                 'leadStatuses' => array_values($leadStatuses->toArray()),

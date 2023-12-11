@@ -1230,7 +1230,7 @@ const sectionExpanded = computed(() => {
     <SendUpdates
       v-if="showSendUpdate"
       :showAddButton="true"
-      reportableType="BikeQuote"
+      reportableType="CorpLineQuote"
       :reportableId="record.id"
       :quote_type_id="$page.props.quoteTypeId"
       :reportableUuid="record.uuid"

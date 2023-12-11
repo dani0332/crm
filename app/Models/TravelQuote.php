@@ -111,4 +111,10 @@ class TravelQuote extends Model implements AuditableContract
         return $this->hasOne(QuoteRequestEntityMapping::class, 'quote_request_id')
             ->where('quote_type_id', QuoteTypeId::Travel);
     }
+
+    public function sendUpdateLogs()
+    {
+        return $this->morphMany(SendUpdateLog::class, 'reportable');
+    }
+
 }

@@ -26,6 +26,7 @@ use App\Repositories\QuoteStatusRepository;
 use App\Repositories\UserRepository;
 use App\Services\AMLService;
 use App\Services\CentralService;
+use App\Services\LookupService;
 
 class PetQuoteController extends Controller
 {
@@ -105,6 +106,14 @@ class PetQuoteController extends Controller
             'quote_request_id' => $quote->id,
         ])->with('assignee')->orderBy('created_at', 'desc')->get();
 
+        $sendUpdateOptions = [];
+        $sendUpdateLogs = [];
+
+        if ($quote->quote_status_id == QuoteStatusEnum::PolicyIssued) {
+            $sendUpdateOptions = (new LookupService)->getSendUpdateOptions(QuoteTypes::PET->id());
+            $sendUpdateLogs = $quote->load('sendUpdateLogs');
+        }
+
         $lostReasons = LostReasonRepository::orderBy('text', 'asc')->get();
         $duplicateAllowedLobs = (new CentralService())->duplicateAllowedLobsList(QuoteTypes::PET->value, $quote->code);
         $embeddedProducts = EmbeddedProductRepository::byQuoteType(QuoteTypes::PET->id(), $quote->id);
@@ -116,7 +125,7 @@ class PetQuoteController extends Controller
 
         return inertia('PetQuote/Show', [
             'quoteType' => QuoteTypes::PET,
-            'quote' => $quote,
+            'quote' => $quote,            
             'activities' => $activities,
             'lostReasons' => $lostReasons,
             'advisors' => $advisors,
@@ -141,6 +150,8 @@ class PetQuoteController extends Controller
             'emirates' => $emirates,
             'UBOsDetails' => $uboDetails,
             'UBORelations' => $uboRelations,
+            'sendUpdateOptions' => $sendUpdateOptions,
+            'sendUpdateLogs' => $sendUpdateLogs,
         ]);
     }
 

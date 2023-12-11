@@ -101,7 +101,7 @@ const onUpdateLog = () => {
 					<div class="flex justify-end">
 						<x-button size="sm" @click="state.edit = true" v-if="!state.edit">Edit</x-button>
 						<template v-else>
-							<x-button size="sm" color="success" @click="state.edit = false" class="mr-3">Cancel</x-button>
+							<x-button size="sm" color="orange" @click="state.edit = false" class="mr-3">Cancel</x-button>
 							<x-button size="sm" color="primary" @click="onUpdateLog">Update</x-button>
 						</template>
 					</div>

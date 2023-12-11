@@ -72,4 +72,9 @@ class BikeQuote extends Model implements AuditableContract
     {
         return $this->morphMany(QuoteDocument::class, 'quote_documentable');
     }
+
+    public function sendUpdateLogs()
+    {
+        return $this->morphMany(SendUpdateLog::class, 'reportable');
+    }
 }
