@@ -329,7 +329,7 @@ const moveToImcrm = async (policyNumber, validateAll = true) => {
           </div>
 
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">POLICY NUMBER</dt>
+            <dt class="font-medium">Policy Number</dt>
             <dd>{{ policy.policy?.policy_no }}</dd>
           </div>
 
@@ -492,7 +492,7 @@ const moveToImcrm = async (policyNumber, validateAll = true) => {
           @click="setSelectedLead({ link: 'new' })"
         />
         <label for="radio-create-new"
-          ><strong>No matches found. Create new IMCRN lead</strong></label
+          ><strong>No matches found. Create new IMCRM lead</strong></label
         >
       </div>
 
