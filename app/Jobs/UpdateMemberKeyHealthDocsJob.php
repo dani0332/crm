@@ -53,7 +53,7 @@ class UpdateMemberKeyHealthDocsJob implements ShouldQueue
                             ];
 
                             $getCustomerMemberRecord = CustomerMembers::where($customerMemberFilter)->where('quote_type', HealthQuote::class)->get();
-                            if ($getCustomerMemberRecord) {
+                            if ($getCustomerMemberRecord->count()) {
                                 if ($getCustomerMemberRecord->count() == 1) {
                                     info('Updating... Quote Document ID: '.$healthDocument->id.' - Old member_detail_id: '.$healthDocument->member_detail_id.' - New member_detail_id: '.$getCustomerMemberRecord[0]->id);
                                     $healthDocument->old_member_detail_id = $healthDocument->member_detail_id;
