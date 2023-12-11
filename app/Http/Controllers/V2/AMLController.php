@@ -592,7 +592,7 @@ class AMLController extends Controller
         $response = [];
         $kycLog = KycLog::withTrashed()->where('id', $request->aml_id)->first();
 
-        if (AMLService::checkModifiedRecord($kycLog->updated_at, $request->last_updated_at)) {
+        if (checkModifiedRecord($kycLog->updated_at, $request->last_updated_at)) {
             return response()->json(['status' => 'error','message' => 'Record already modified please refresh the page']);
         }
 

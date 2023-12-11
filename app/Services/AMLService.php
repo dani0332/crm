@@ -329,10 +329,4 @@ class AMLService
             return in_array($value, [AMLDecisionStatusEnum::TRUE_MATCH, AMLDecisionStatusEnum::TRUE_MATCH_REJECT_RISK, null]);
         });
     }
-
-    public static function checkModifiedRecord($firstDate, $secondDate)
-    {
-        return Carbon::parse($firstDate)->format(config('constants.datetime_format')) !==
-            Carbon::parse($secondDate)->format(config('constants.datetime_format'));
-    }
 }

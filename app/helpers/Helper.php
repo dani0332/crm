@@ -569,3 +569,11 @@ if (! function_exists('getRepositoryObject')) {
         return 'App\\Repositories\\'.$quoteType.'QuoteRepository';
     }
 }
+
+if(! function_exists('checkModifiedRecord')) {
+    function checkModifiedRecord($firstDate, $secondDate): bool
+    {
+        return Carbon::parse($firstDate)->format(config('constants.datetime_format')) !==
+            Carbon::parse($secondDate)->format(config('constants.datetime_format'));
+    }
+}
