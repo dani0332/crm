@@ -1091,9 +1091,7 @@ const onTogglePlans = toggle => {
         title: 'Plans has been updated',
         position: 'top',
       });
-      router.reload({
-        preserveScroll: true,
-      });
+      onLoadAvailablePlansData();
     })
     .catch(error => {
       notification.error({
@@ -3170,7 +3168,6 @@ const showSendUpdate = computed(() => !sectionExpanded?.value);
       :code="record.code"
       :quote="record"
       :modelType="quoteType"
-      :paymentStatusEnum="paymentStatusEnum"
       :expanded="sectionExpanded"
     />
 
