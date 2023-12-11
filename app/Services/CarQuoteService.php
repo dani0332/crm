@@ -767,9 +767,18 @@ class CarQuoteService extends BaseService
         }
     }
 
-    public function getGridData($model, $request)
+    public function getGridData($model = null, $request = null)
     {
-        $searchProperties = $model->searchProperties;
+        if ($model == null && $request == null) {
+            $searchProperties = $this->fillModelSearchProperties();
+            $request = request();
+        } else {
+            $searchProperties = $model->searchProperties;
+        }
+
+        if (isset($request->created_at_start)) {
+            $request['created_at'] = $request->created_at_start;
+        }
 
         // if ($request->ajax()) {
         $this->addLeadViewEligibilityCheck();
@@ -796,7 +805,7 @@ class CarQuoteService extends BaseService
             $dateTo = $this->parseDate($request['next_followup_date_end'], false);
             $this->query->whereBetween('cqrd.next_followup_date', [$dateFrom, $dateTo]);
         }
-        if (! isset($request->code) && ! isset($request->email) && ! isset($request->created_at)) {
+        if (! isset($request->code) && ! isset($request->email) && ! isset($request->mobile_no) && ! isset($request->created_at)) {
             $this->query->whereBetween('cqr.created_at', [now()->startOfDay()->toDateTimeString(), now()->endOfDay()->toDateTimeString()]);
         }
         if (

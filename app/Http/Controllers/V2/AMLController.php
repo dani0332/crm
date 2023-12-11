@@ -199,7 +199,9 @@ class AMLController extends Controller
         $quoteRequest = AMLService::getQuoteDetails($quoteTypeId, $quoteRequestId);
 
         $customerDetails = Customer::where('id', $quoteRequest->customer_id)->with('detail')->firstOrFail();
-        $entityDetails = QuoteRequestEntityMapping::with('entity')->where(['quote_type_id' => $quoteTypeId, 'quote_request_id' => $quoteRequestId])->first() ?? [];
+        $entityDetails = QuoteRequestEntityMapping::with(['entity', 'entity.quoteMember'])
+            ->where(['quote_type_id' => $quoteTypeId, 'quote_request_id' => $quoteRequestId])
+            ->first() ?? [];
         $membersDetail = CustomerMembersRepository::getBy($quoteRequest->id, $quoteType->code);
 
         $uboDetails = CustomerMembersRepository::getBy($quoteRequest->id, $quoteType->code, CustomerTypeEnum::Entity);
@@ -243,6 +245,8 @@ class AMLController extends Controller
         $amlDecisionStatusEnum = AMLDecisionStatusEnum::asArray();
 
         $kycStatus = AMLService::getKycType($quoteTypeId, $quoteRequestId);
+
+        // dd($entityDetails->entity->quoteMember);
 
         $data = [
             'quoteType' => $quoteType,
