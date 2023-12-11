@@ -867,42 +867,10 @@ class TravelQuoteService extends BaseService
 
     public function updateManualPlansBulk($request)
     {
-        return;
         // api not available for now
-      /*  $apiEndPoint = config('constants.KEN_API_ENDPOINT').'/save-manual-travel-quote-plans';
-        $apiToken = config('constants.KEN_API_TOKEN');
-        $apiTimeout = config('constants.KEN_API_TIMEOUT');
-        $apiUserName = config('constants.KEN_API_USER');
-        $apiPassword = config('constants.KEN_API_PWD');
+        return;
 
-        if ($request->planIds) {
-            $data = $request->planIds;
-            $isDisabled = $request->toggle;
-            $plansArray = [];
-            for ($i = 0; $i < count($data); $i++) {
-                $apiArray = [
-                    'planId' => (int) $data[$i],
-                    'isHidden' => filter_var($isDisabled, FILTER_VALIDATE_BOOLEAN),
-                    'isManualUpdate' => false,
-                ];
-                array_push($plansArray, $apiArray);
-            }
-            $dataArray = [
-                'quoteUID' => $request->quote_uuid,
-                'isDisabled' => true,
-                'planId' => $plansArray[0]['planId'],
 
-            ];
-
-            $apiCreds = [
-                'apiEndPoint' => $apiEndPoint,
-                'apiToken' => $apiToken,
-                'apiTimeout' => $apiTimeout,
-                'apiUserName' => $apiUserName,
-                'apiPassword' => $apiPassword,
-            ];
-
-        } */
     }
     public function exportPlansPdf($quoteType, $data, $quotePlans = null)
     {
