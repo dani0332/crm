@@ -3,6 +3,7 @@ import LazyDocumentUploader from './Partials/DocumentUploader.vue';
 import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue';
 
+const page = usePage();
 defineProps({
   quote: Object,
   allowedDuplicateLOB: Array,
@@ -34,6 +35,7 @@ defineProps({
   isBetaUser: Boolean,
   payments: Array,
   quoteRequest: Object,
+  permissions: Object,
   paymentMethods: Object,
   insuranceProviders: Array,
   embeddedProducts: Array,
@@ -46,7 +48,7 @@ defineProps({
   canAddBatchNumber: Boolean,
 });
 
-const page = usePage();
+
 const hasAnyRole = roles => useHasAnyRole(roles);
 const checkedItems = ref([]);
 const checkCheckedPlans = computed(() => {
