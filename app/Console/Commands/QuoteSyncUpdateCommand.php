@@ -109,7 +109,7 @@ class QuoteSyncUpdateCommand extends Command
                         }
                         info('Syncing QuoteSync entry: '.$entry->id.' personalQuote: '.$personalQuote);
                         $personalQuote->save();
-                        $entry->update(['processed' => true]);
+                        $entry->update(['is_synced' => true, 'synced_at' => now()]);
                         DB::commit();
                     } catch (Exception $e) {
                         DB::rollBack();
