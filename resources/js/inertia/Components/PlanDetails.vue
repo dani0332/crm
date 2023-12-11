@@ -20,8 +20,7 @@ const planDetailsForm = useForm({
   insurance_provider_id: props.quote?.insurance_provider_id ?? null,
   price_vat_applicable : props.quote?.price_vat_applicable ?? null,// price vat applicable
   price_vat_not_applicable: props.quote?.price_vat_not_applicable ?? null,//price vat not applicable  
-  price_with_vat: props.quote?.price_with_vat ?? null,
-  //price_without_vat: null,
+  price_with_vat: props.quote?.price_with_vat ?? null,  
   insurer_quote_number: props.quote?.insurer_quote_number ?? null,
 
 });
@@ -80,9 +79,10 @@ const updatePriceWithVat = () => {
     planDetailsForm.price_with_vat = ((price / 100) * 5) + price;
   }
 
-  else if(planDetailsForm.price_vat_not_applicable != "") {
+  if(planDetailsForm.price_vat_not_applicable != "") {
+    console.log(planDetailsForm.price_vat_not_applicable, 'price_vat_not_applicable');
     let price = parseFloat(planDetailsForm.price_vat_not_applicable);
-    planDetailsForm.price_with_vat = ((price / 100) * 5) + price;
+    planDetailsForm.price_with_vat = price;
   }
 
 }
@@ -134,6 +134,7 @@ const rolesEnum = page.props.rolesEnum;
             type="number"
             label="Price (VAT not applicable)"
             class="w-full"
+            @change="updatePriceWithVat"
           />
         </div>
 
