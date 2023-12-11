@@ -47,8 +47,6 @@ const submitPlanDetailsForm = isValid => {
 
   planDetailsForm.setError([]);
 
-  console.log(url, "URL");
-
   planDetailsForm.post(url, {
     preserveScroll: true,
     onError: errors => {
@@ -79,8 +77,7 @@ const updatePriceWithVat = () => {
     planDetailsForm.price_with_vat = ((price / 100) * 5) + price;
   }
 
-  if(planDetailsForm.price_vat_not_applicable != "") {
-    console.log(planDetailsForm.price_vat_not_applicable, 'price_vat_not_applicable');
+  if(planDetailsForm.price_vat_not_applicable != "") {    
     let price = parseFloat(planDetailsForm.price_vat_not_applicable);
     planDetailsForm.price_with_vat = price;
   }
