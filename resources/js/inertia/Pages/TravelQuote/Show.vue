@@ -49,6 +49,29 @@ defineProps({
 
 const page = usePage();
 const hasAnyRole = roles => useHasAnyRole(roles);
+const checkedItems = ref([]);
+const checkCheckedPlans = computed(() => {
+    return true;
+});
+const checkedCount = computed(() => {
+    return checkedItems.value.length;
+});
+const updateCheckedCount = (id, event) => {
+    if (event.target.checked) {
+        if(checkedItems.value.length < 6) {
+            checkedItems.value.push(id);
+        }else{
+            return false;
+        }
+    } else {
+        var index =  checkedItems.value.indexOf(id);
+        if (index != -1) {
+            checkedItems.value.splice(id, 1);
+        }
+    }
+};
+
+
 
 const dateFormat = date => {
   if (!date) return '';
@@ -61,8 +84,10 @@ const dateTimeFormat = date => {
 };
 
 const notification = useNotifications('toast');
+
 const rolesEnum = page.props.rolesEnum;
 const hasRole = role => useHasRole(role);
+
 
 const {
   isRequired,
@@ -84,6 +109,8 @@ const confirmDeleteData = reactive({
 const memberActionEdit = ref(false),
   activityActionEdit = ref(false),
   selectedPlan = ref(null),
+    selectedPlans = ref([]),
+    toggleLoader = ref(false),
   selectedPlansPdf = ref([]),
   exportLoader = ref(false),
   historyLoading = ref(false),
@@ -517,6 +544,92 @@ const sendPolicyToClient = () => {
       }
     });
   }
+};
+
+
+const onTogglePlans = toggle => {
+    toggleLoader.value = true;
+
+    const planIds = useArrayUnique(
+        selectedPlans.value.map(p => {
+            return p.id;
+        }),
+    ).value;
+
+    axios
+        .post(route('manualPlanToggle', { quoteType: 'travel' }), {
+            modelType: 'Travel',
+            planIds: planIds,
+            quote_uuid: page.props.quote.uuid,
+            toggle: toggle,
+        })
+        .then(response => {
+            notification.success({
+                title: 'Plans has been updated',
+                position: 'top',
+            });
+            router.reload({
+                preserveScroll: true,
+            });
+        })
+        .catch(error => {
+            notification.error({
+                title: error,
+                position: 'top',
+            });
+        })
+        .finally(() => {
+            toggleLoader.value = false;
+            selectedPlans.value = [];
+        });
+};
+
+
+const onExportPlans = () => {
+
+    if (selectedPlans.value.length < 2 || selectedPlans.value.length > 5) {
+        notification.error({
+            title: 'Please select 2 to 5 plans to download PDF.',
+            position: 'top',
+        });
+        return;
+    }
+    exportLoader.value = true;
+    const planIds = selectedPlans.value.map(p => {
+        return p.id;
+    });
+
+    axios
+        .post(
+            '/api/v1/quotes/travel/export-plans-pdf',
+            {
+                plan_ids: planIds,
+                quote_uuid: page.props.quote.uuid,
+                modelType: 'travel',
+                quoteType:'travel'
+            },
+            {
+                responseType: 'json',
+            },
+        )
+        .then(response => {
+            const link = document.createElement('a');
+            let fileName = response.data.name;
+            link.href = response.data.data;
+            link.setAttribute('download', fileName);
+            document.body.appendChild(link);
+            link.click();
+            notification.success({
+                title: 'Plans Exported',
+                position: 'top',
+            });
+        })
+        .catch(error => {
+            console.log(error);
+        })
+        .finally(() => {
+            exportLoader.value = false;
+        });
 };
 
 const onDocDelete = name => {
@@ -1023,6 +1136,29 @@ const sectionExpanded = computed(() => {
 <template>
   <div>
     <Head title="Travel Detail" />
+    <div class="flex justify-between items-center flex-wrap gap-2">
+      <h2 class="text-xl font-semibold">Travel Detail</h2>
+      <div class="flex gap-2">
+        <x-button
+          size="sm"
+          color="#ff5e00"
+          @click.prevent="openDuplicate"
+          v-if="permissions.canNotApprovePayments"
+        >
+          Duplicate Lead
+        </x-button>
+        <Link :href="route('travel.index')" preserve-scroll>
+          <x-button size="sm" color="primary" tag="div"> Travel List </x-button>
+        </Link>
+
+        <Link
+          v-if="permissions.canEditQuote == true"
+          :href="route('travel.edit', quote.uuid)"
+        >
+          <x-button size="sm" tag="div">Edit</x-button>
+        </Link>
+      </div>
+    </div>
 
     <x-modal v-model="modals.duplicate" size="lg" show-close backdrop>
       <template #header> Duplicate Lead </template>
@@ -1115,6 +1251,7 @@ const sectionExpanded = computed(() => {
                     <template #tooltip> Reference ID </template>
                   </x-tooltip>
                 </dt>
+
                 <dt v-else-if="field.title == 'Parent Ref-ID'">
                   <x-tooltip position="bottom">
                     <label
@@ -1919,6 +2056,7 @@ const sectionExpanded = computed(() => {
         <template #header>
           <div>
             <h3 class="font-semibold text-primary-800 text-lg">Policy Details</h3>
+        <x-divider class="mb-4 mt-1" />
           </div>
         </template>
         <template #body>
@@ -2178,23 +2316,44 @@ const sectionExpanded = computed(() => {
               Available Plans
             </h3>
           </div>
-        </template>
-        <template #body>
-          <x-divider class="my-4" /> 
-          <div class="my-4 flex justify-end">
-            <x-button
-              v-if="
-                availablePlansTable.data.length > 0 &&
-                permissions.canNotApprovePayments
-              "
+              <x-button-group v-if="selectedPlans.length > 0" size="sm" class="mr-2">
+                <!--  <x-button
+                      @click.prevent="onTogglePlans(false)"
+                      :loading="toggleLoader"
+                  >
+                      Show
+                  </x-button>
+                  <x-button
+                      @click.prevent="onTogglePlans(true)"
+                      :loading="toggleLoader"
+                  >
+                      Hide
+                  </x-button>-->
+              </x-button-group>
+        <x-button
+          v-if="
+            availablePlansTable.data.length > 0 &&
+            permissions.canNotApprovePayments
+          "
+          size="sm"
+          color="orange"
+          class="mr-2"
+          @click.prevent="onCopyText(ecomTravelInsuranceQuoteUrl + quote.uuid)"
+        >
+          Copy Link
+        </x-button>
+
+
+          <x-button
+              v-if="selectedPlans.length > 0"
               size="sm"
-              color="orange"
-              @click.prevent="
-                onCopyText(ecomTravelInsuranceQuoteUrl + quote.uuid)
-              "
-            >
-              Copy Link
-            </x-button>
+              color="emerald"
+              @click.prevent="onExportPlans"
+              :loading="exportLoader"
+          >
+              Download PDF
+          </x-button>
+          </div>
           </div>
 
           <div
@@ -2212,6 +2371,7 @@ const sectionExpanded = computed(() => {
           </div>
           <div v-else>
             <DataTable
+            v-model:items-selected="selectedPlans"
               table-class-name="tablefixed compact"
               :headers="availablePlansTable.columns"
               :items="availablePlansTable.data || []"
@@ -2305,6 +2465,7 @@ const sectionExpanded = computed(() => {
               Add Activity
             </x-button>
           </div>
+      <x-divider class="my-4" />
           <DataTable
             table-class-name="compact"
             :headers="activityTable"
@@ -2429,6 +2590,7 @@ const sectionExpanded = computed(() => {
         </template>
       </x-modal>
     </div>
+    <div class="p-4 rounded shadow mb-6 bg-warning"></div>
 
     <div class="p-4 rounded shadow mb-6 bg-white">
       <Collapsible :expanded="sectionExpanded">
