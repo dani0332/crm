@@ -35,6 +35,8 @@ defineProps({
   UBORelations: Array,
   UBOsDetails: Array,
   canAddBatchNumber: Boolean,
+  sendUpdateOptions: Array,
+  sendUpdateLogs: Array
 });
 
 const page = usePage();

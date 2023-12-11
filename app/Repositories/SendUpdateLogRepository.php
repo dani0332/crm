@@ -54,4 +54,25 @@ class SendUpdateLogRepository extends BaseRepository
     {
         return $this->where('uuid', $uuid)->firstOrFail();
     }
+
+    public function fetchGetLogsById($id)
+    {
+        return $this->where('id', $id)->get();
+    }
+
+    public function fetchUpdateLog($id, $data)
+    {
+        try {
+            $log = $this->where('id', $id)->update([
+                'notes' => $data['notes'],
+                'option_id' => $data['option_id'],
+            ]);
+        } catch(\Exception $ex) {
+            $log = (object) [
+                'message' => $ex->getMessage()
+            ];
+        }
+
+        return $log;
+    }
 }

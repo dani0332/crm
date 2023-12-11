@@ -71,6 +71,16 @@ const resetForm = () => {
   modals.step = 'step1'
 }
 
+onMounted(() => {
+  // fetchLogs();
+})
+
+// const fetchLogs = () => {
+//   axios.get(route('send-update-logs.get-by-id', { id: props.reportableId }))
+//     .then(res => sendUpdatesTable.data = res.data.logs)
+//     .catch(err => console.log('err', err))
+// }
+
 const setOption = (next_step, value) => {
   switch (next_step) {
     case 'step1':

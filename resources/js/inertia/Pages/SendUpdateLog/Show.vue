@@ -5,9 +5,16 @@ const props = defineProps({
   sendUpdateOptions: Array,
 });
 
+const notification = useToast();
+
 const state = reactive({
-	edit: false,
-})
+  edit: false,
+});
+
+const sendUpdateForm = useForm({
+  notes: props.sendUpdateLog?.notes || '',
+  option_id: props.sendUpdateLog?.option_id || null,
+});
 
 const currentOption = computed(() => {
   let cat = null;
@@ -26,10 +33,10 @@ const selectedType = computed(() => {
 });
 
 const updateLogOptions = computed(() => {
-	return selectedType.value?.childs.map(child => ({
-		value: child.id,
-		label: child.title
-	}));
+  return selectedType.value?.childs.map(child => ({
+    value: child.id,
+    label: child.title,
+  }));
 });
 
 const redirectBack = () => {
@@ -37,8 +44,27 @@ const redirectBack = () => {
 };
 
 const onUpdateLog = () => {
-
-}
+  sendUpdateForm.patch(
+    route('send-update-logs.update', { id: props.sendUpdateLog.id }),
+    {
+      preserverScroll: true,
+      onSuccess: ({ props }) => {
+        notification.success({
+          title: 'Log updated successfully',
+          position: 'top',
+        });
+      },
+      onError: errors => {
+        Object.keys(errors).forEach(function (key) {
+          notification.error({
+            title: errors[key],
+            position: 'top',
+          });
+        });
+      },
+    },
+  );
+};
 </script>
 
 <template>
@@ -61,50 +87,67 @@ const onUpdateLog = () => {
         </template>
         <template #body>
           <x-divider class="my-4" />
-					<div class="text-sm">
-						<dl class="grid md:grid-cols-2 gap-y-4">
-							<div class="grid sm:grid-cols-2">
-								<dt class="font-bold text-right mr-10">SU REF ID</dt>
-								<dd>{{ sendUpdateLog.code }}</dd>
-							</div>
-							<div class="grid sm:grid-cols-2 ml-[-250px]">
-								<dt class="font-bold text-right mr-10">Notes</dt>
-								<dd>
-									<x-input
-										v-model="sendUpdateLog.notes"
-										size="xs"
-										:disabled="!state.edit"
-									/>
-								</dd>
-							</div>
-							<div class="grid sm:grid-cols-2">
-								<dt class="font-bold text-right mr-10">Transaction Type</dt>
-								<dd>{{ currentOption.title }}</dd>
-							</div>
-							<div class="grid sm:grid-cols-2 ml-[-250px]">
-								<dt class="font-bold text-right mr-10">STATUS</dt>
-								<dd>{{ sendUpdateLog.status }}</dd>
-							</div>
-							<div class="grid sm:grid-cols-2">
-								<dt class="font-bold text-right mr-10">Sub Type</dt>
-								<dd>
-									<x-select
-										size="xs"
-										:disabled="!state.edit"
-										v-model="sendUpdateLog.option_id"
-										:options="updateLogOptions"
-									/>
-								</dd>
-							</div>
-						</dl>
-					</div>
-					<div class="flex justify-end">
-						<x-button size="sm" @click="state.edit = true" v-if="!state.edit">Edit</x-button>
-						<template v-else>
-							<x-button size="sm" color="orange" @click="state.edit = false" class="mr-3">Cancel</x-button>
-							<x-button size="sm" color="primary" @click="onUpdateLog">Update</x-button>
-						</template>
-					</div>
+          <div class="text-sm">
+            <dl class="grid md:grid-cols-2 gap-y-4">
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-bold text-right mr-10">SU REF ID</dt>
+                <dd>{{ sendUpdateLog.code }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2 ml-[-250px]">
+                <dt class="font-bold text-right mr-10">Notes</dt>
+                <dd>
+                  <x-input
+                    v-model="sendUpdateForm.notes"
+                    size="xs"
+                    :disabled="!state.edit"
+                  />
+                </dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-bold text-right mr-10">Transaction Type</dt>
+                <dd>{{ currentOption.title }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2 ml-[-250px]">
+                <dt class="font-bold text-right mr-10">STATUS</dt>
+                <dd>{{ sendUpdateLog.status }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-bold text-right mr-10">Sub Type</dt>
+                <dd>
+                  <x-select
+                    size="xs"
+                    :disabled="!state.edit"
+                    v-model="sendUpdateForm.option_id"
+                    :options="updateLogOptions"
+                  />
+                </dd>
+              </div>
+            </dl>
+          </div>
+          <div class="flex justify-end">
+            <x-button size="sm" @click="state.edit = true" v-if="!state.edit"
+              >Edit</x-button
+            >
+            <template v-else>
+              <x-button
+                size="sm"
+                color="orange"
+                @click="state.edit = false"
+                class="mr-3"
+                :loading="sendUpdateForm.processing"
+                :disabled="sendUpdateForm.processing"
+                >Cancel</x-button
+              >
+              <x-button
+                size="sm"
+                color="primary"
+                @click="onUpdateLog"
+                :loading="sendUpdateForm.processing"
+                :disabled="sendUpdateForm.processing"
+                >Update</x-button
+              >
+            </template>
+          </div>
         </template>
       </Collapsible>
     </div>

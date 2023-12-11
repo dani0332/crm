@@ -504,10 +504,11 @@ class CRUDController extends Controller
 
         $sendUpdateOptions = [];
         $sendUpdateLogs = [];
-
+        $sendUpdateEnum = (object) [];
         if ($record->quote_status_id == QuoteStatusEnum::PolicyIssued) {
             $sendUpdateOptions = $this->lookupService->getSendUpdateOptions($quoteTypeId);
             $sendUpdateLogs = $paymentEntityModel->sendUpdateLogs;
+            $sendUpdateEnum = SendUpdateLogStatusEnum::asArray();
         }
 
         $customTitles = $customTableList = [];
@@ -677,7 +678,6 @@ class CRUDController extends Controller
             $memberRelations = LookupRepository::where('key', LookupsEnum::MEMBER_RELATION)->get();
             $membersDetails = CustomerMembersRepository::getBy($record->id, QuoteTypes::CAR->name);
             $customerTypeEnum = CustomerTypeEnum::asArray();
-            $sendUpdateEnum = SendUpdateLogStatusEnum::asArray();
             $industryType = LookupRepository::where('key', LookupsEnum::COMPANY_TYPE)->get();
             $nationalities = NationalityRepository::withActive()->get();
 
@@ -810,6 +810,7 @@ class CRUDController extends Controller
                 'UBORelations' => $uboRelations,
                 'emirates' => $emirates,
                 'quoteType' => QuoteTypes::HOME,
+                'sendUpdateEnum' => $sendUpdateEnum
             ]);
         }
 
@@ -943,6 +944,7 @@ class CRUDController extends Controller
                 'industryType' => $industryType,
                 'UBOsDetails' => $uboDetails,
                 'UBORelations' => $uboRelations,
+                'sendUpdateEnum' => $sendUpdateEnum
             ]);
         } else {
             return view('shared.show', compact([

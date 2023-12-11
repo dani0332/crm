@@ -28,6 +28,8 @@ defineProps({
   canAddBatchNumber: Boolean,
   documentTypes: Object,
   storageUrl: String,
+  sendUpdateOptions: Array,
+  sendUpdateLogs: Array
 });
 
 const page = usePage();

@@ -52,7 +52,13 @@ class SendUpdateLogController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        //
+        $log = SendUpdateLogRepository::updateLog($id, $request->all());
+
+        if (isset($log->message) && !empty($log->message)) {
+            vAbort($log->message);
+        }
+
+        return redirect()->back();
     }
 
     /**
@@ -61,5 +67,12 @@ class SendUpdateLogController extends Controller
     public function destroy(string $id)
     {
         //
+    }
+
+    public function getLogsById($id)
+    {
+        $logs = SendUpdateLogRepository::getLogsById($id);
+
+        return response()->json(compact('logs'));
     }
 }

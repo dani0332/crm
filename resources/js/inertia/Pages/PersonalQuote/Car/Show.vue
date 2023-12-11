@@ -1456,14 +1456,14 @@ const handleChildUpdate = planId => {
   prefillPlanId.value = planId;
 };
 
-const sectionExpanded = computed(() => {
-  return !(
+const policyIssued = computed(() => {
+  return (
     page.props.record.quote_status_id ===
     page.props.quoteStatusEnum.PolicyIssued
   );
 });
 
-const showSendUpdate = computed(() => !sectionExpanded?.value);
+const sectionExpanded = computed(() => !policyIssued.value);
 </script>
 
 <template>
@@ -3281,7 +3281,7 @@ const showSendUpdate = computed(() => !sectionExpanded?.value);
     </div>
 
     <SendUpdates
-      v-if="showSendUpdate"
+      v-if="policyIssued"
       :showAddButton="true"
       reportableType="CarQuote"
       :reportableId="record.id"

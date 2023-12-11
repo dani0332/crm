@@ -440,6 +440,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     });
 
     Route::resource('send-update-logs', SendUpdateLogController::class);
+    Route::get('send-update-log/{id}', [SendUpdateLogController::class, 'getLogsById'])->name('send-update-logs.get-by-id');
 
     Route::group(['prefix' => 'medical'], function () {
         if (in_array('Business', newUi())) {
