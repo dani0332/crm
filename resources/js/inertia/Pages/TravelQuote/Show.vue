@@ -2186,7 +2186,7 @@ const genderList = [
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div class="flex flex-wrap gap-4 justify-between items-center mb-4">
         <h3 class="font-semibold text-primary-800 text-lg">
-            Available PlansAvaila
+            Available Plans
         </h3>
           <div>
               <x-button-group v-if="selectedPlans.length > 0" size="sm" class="mr-2">
