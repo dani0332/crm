@@ -24,8 +24,6 @@ use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Enums\TiersEnum;
-use App\Exports\CarQuoteExport;
-use App\Exports\HealthQuotesExport;
 use App\Facades\Capi;
 use App\Http\Requests\ExportPlansPdfRequest;
 use App\Http\Requests\UpdateLeadStatusRequest;
@@ -1658,40 +1656,6 @@ class CRUDController extends Controller
         $pdf = $response['pdf'];
 
         return $pdf->download($response['name']);
-    }
-
-    /**
-     * export health leads to excel sheet.
-     */
-    public function exportHealthLeads(Request $request)
-    {
-        $created_at_start = $request->created_at_start;
-        $created_at_end = $request->created_at_end;
-
-        if (Carbon::parse($created_at_start)->diffInDays(Carbon::parse($created_at_end)) > 120) {
-            return back()->with('error', 'Maximum of 120 days (created date) are allowed to be exported.');
-        }
-
-        $query = $this->crudService->getGridData($this->genericModel, $request);
-
-        return (new HealthQuotesExport($query))->download('Health-List.xlsx');
-    }
-
-    /**
-     * export health leads to excel sheet.
-     */
-    public function exportCarLeads(Request $request)
-    {
-        $created_at_start = $request->created_at_start;
-        $created_at_end = $request->created_at_end;
-
-        if (Carbon::parse($created_at_start)->diffInDays(Carbon::parse($created_at_end)) > 120) {
-            return back()->with('error', 'Maximum of 120 days (created date) are allowed to be exported.');
-        }
-
-        $query = $this->crudService->getGridData($this->genericModel, $request);
-
-        return (new CarQuoteExport($query))->download('Car-List.xlsx');
     }
 
     public function destroyDocument($quoteType, $quoteUuId, $id)

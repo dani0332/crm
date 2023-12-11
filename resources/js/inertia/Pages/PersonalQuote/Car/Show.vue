@@ -1092,9 +1092,7 @@ const onTogglePlans = toggle => {
         title: 'Plans has been updated',
         position: 'top',
       });
-      router.reload({
-        preserveScroll: true,
-      });
+      onLoadAvailablePlansData();
     })
     .catch(error => {
       notification.error({
@@ -1827,7 +1825,9 @@ const handleChildUpdate = planId => {
           }}
           Profile
         </h3>
-        <x-tag color="success" v-if="quote.kyc_decision === 'Complete'"> KYC - Complete </x-tag>
+        <x-tag color="success" v-if="quote.kyc_decision === 'Complete'">
+          KYC - Complete
+        </x-tag>
         <x-tag color="amber" v-else> KYC - Pending </x-tag>
       </div>
       <x-divider class="mb-4 mt-1" />
