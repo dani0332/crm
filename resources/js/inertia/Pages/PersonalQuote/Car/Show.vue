@@ -521,10 +521,10 @@ const policyDetailsState = reactive({
 });
 
 const planQuoteInsurerNumber = computed(() => {
-  let obj = page.props.listQuotePlans.filter(
+  let obj = page.props?.listQuotePlans?.filter(
     item => item.id == page.props.record.plan_id,
   );
-  return obj[0]?.insurerQuoteNo;
+  return obj === undefined ? null : obj[0]?.insurerQuoteNo || null;
 });
 const vatAmount = computed(() => {
   return (page.props.record.premium * 0.05).toFixed(2);
