@@ -11,6 +11,7 @@ final class AMLDecisionStatusEnum extends Enum
     const PASS = 'Pass';
     const ESCALATED = 'Escalated';
     const REJECTED = 'Rejected';
+    const SENT_FOR_REVIEW = 'SentForReview';
     const UNKNOWN = 'Unknown';
     const FALSE_POSITIVE = 'FalsePositive';
     const TRUE_MATCH = 'TrueMatch';
