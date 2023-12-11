@@ -867,7 +867,9 @@ class TravelQuoteService extends BaseService
 
     public function updateManualPlansBulk($request)
     {
-        $apiEndPoint = config('constants.KEN_API_ENDPOINT').'/save-manual-travel-quote-plans';
+        return;
+        // api not available for now
+      /*  $apiEndPoint = config('constants.KEN_API_ENDPOINT').'/save-manual-travel-quote-plans';
         $apiToken = config('constants.KEN_API_TOKEN');
         $apiTimeout = config('constants.KEN_API_TIMEOUT');
         $apiUserName = config('constants.KEN_API_USER');
@@ -899,11 +901,8 @@ class TravelQuoteService extends BaseService
                 'apiUserName' => $apiUserName,
                 'apiPassword' => $apiPassword,
             ];
-            $httpService = app(HttpRequestService::class);
-            $response = $httpService->processRequest($dataArray, $apiCreds);
 
-            return $response;
-        }
+        } */
     }
     public function exportPlansPdf($quoteType, $data, $quotePlans = null)
     {
