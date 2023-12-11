@@ -28,7 +28,7 @@ class QuoteSyncUpdateCommand extends Command
      *
      * @var string
      */
-    protected $signature = 'QuoteSync:cron';
+    protected $signature = 'QuoteSyncUpdate:cron';
 
     protected $description = 'Sync Quotes Data from QuoteSync table to respective quote tables';
 
@@ -101,6 +101,7 @@ class QuoteSyncUpdateCommand extends Command
                         $newValues = json_decode($entry->updated_fields, true);
                         $personalQuote = new PersonalQuote();
                         $personalQuote->uuid = $entry->quote_uuid;
+                        $personalQuote->quote_type_id = $entry->quote_type_id;
                         foreach ($newValues as $column => $value) {
                             if (Schema::hasColumn('personal_quotes', $column)) {
                                 $personalQuote->$column = $value;

@@ -63,7 +63,7 @@ class Kernel extends ConsoleKernel
 
         $schedule->command('ResetLeadAllocationCounts:cron')->timezone('Asia/Dubai')->dailyAt('23:59')->onOneServer()->withoutOverlapping(1);
 
-        $schedule->command('QuoteSync:cron')->everyMinute()->onOneServer()->withoutOverlapping(1);
+        $schedule->command('QuoteSyncUpdate:cron')->everyMinute()->onOneServer()->withoutOverlapping(1);
 
     }
 
