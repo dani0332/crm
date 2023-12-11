@@ -36,7 +36,18 @@ class SageApi extends Controller
         $request->commission = 0;
         $request->commissionIncludingVat = 0;
 
-
+        // OTHER REQUEST FIELDS
+        /*
+        $request->advisorName = 0;
+        $request->subClass = 0;
+        $request->requestType = 0;
+        $request->policyIssuer = 0;
+        $request->policyNumber = 0;
+        $request->mainClassInsurance = 0;
+        $request->invoiceDescription = 0;
+        $request->bookingDate = 0;
+        $request->customerId = 0;
+        */
 
         $request->callExtra = true;
         $messageFromAP = $this->processRequest($request, $leadStatus);

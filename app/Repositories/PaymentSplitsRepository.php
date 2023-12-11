@@ -29,9 +29,24 @@ class PaymentSplitsRepository
             ->get();
     }
 
+    public function calculateDiscount($totalSplitPayments, $discountValue)
+    {
+        $discount = 0;
+        if ($totalSplitPayments > 0) {
+            $discount = $discountValue / $totalSplitPayments;
+        }
+        return $discount;
+    }
+
     public function addPaymentSplits($request, $quoteID)
     {
-        for ($i = 1; $i <= (count($request->split_payment_details['split_amount']) - 1); $i++) {
+        $totalSplitPayments = (count($request->split_payment_details['split_amount']) - 1);
+        $discount = 0;
+        if (isset($request->discount_value) && $request->discount_value>0) {
+            $discount = $this->calculateDiscount($totalSplitPayments,$request->discount_value);;
+        }
+       
+        for ($i = 1; $i <= $totalSplitPayments; $i++) {
             if (isset($request->split_payment_details['payment_type'][$i]) && $request->split_payment_details['payment_type'][$i] != null) {
                 $childPaymentStatus = $this->getChildPaymentStatus($request->split_payment_details['payment_type'][$i]);
                 $splitPaymentInformation = [
@@ -42,6 +57,7 @@ class PaymentSplitsRepository
                     'payment_amount' => $request->split_payment_details['split_amount'][$i],
                     'due_date' => $request->split_payment_details['due_date'][$i],
                     'payment_status_id' => $childPaymentStatus,
+                    'discount_value' => $discount,
                 ];
 
                 $paymentSplitRecord = PaymentSplits::create($splitPaymentInformation);
@@ -146,7 +162,13 @@ class PaymentSplitsRepository
             }
         }
 
-        for ($i = 1; $i <= (count($request->split_payment_details['split_amount']) - 1); $i++) {
+        $totalSplitPayments = (count($request->split_payment_details['split_amount']) - 1);
+        $discount = 0;
+        if (isset($request->discount_value) && $request->discount_value>0 && count($paymentPaidSerialNo) == 0) {
+            $discount = $this->calculateDiscount($totalSplitPayments,$request->discount_value);;
+        }
+        
+        for ($i = 1; $i <= $totalSplitPayments; $i++) {
             if (in_array($i, $paymentPaidSerialNo)) {
                 continue;
             }
@@ -160,6 +182,7 @@ class PaymentSplitsRepository
                     'check_detail' => isset($request->split_payment_details['check_detail'][$i]) ? $request->split_payment_details['check_detail'][$i] : null,
                     'payment_amount' => $request->split_payment_details['split_amount'][$i],
                     'due_date' => $request->split_payment_details['due_date'][$i],
+                    'discount_value' => $discount,
                 ];
                 $childPaymentStatus = $this->getChildPaymentStatus($request->split_payment_details['payment_type'][$i]);
                 $splitPaymentInformation['payment_status_id'] = $childPaymentStatus;
