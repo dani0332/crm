@@ -51,27 +51,25 @@ const page = usePage();
 const hasAnyRole = roles => useHasAnyRole(roles);
 const checkedItems = ref([]);
 const checkCheckedPlans = computed(() => {
-    return true;
+  return true;
 });
 const checkedCount = computed(() => {
-    return checkedItems.value.length;
+  return checkedItems.value.length;
 });
 const updateCheckedCount = (id, event) => {
-    if (event.target.checked) {
-        if(checkedItems.value.length < 6) {
-            checkedItems.value.push(id);
-        }else{
-            return false;
-        }
+  if (event.target.checked) {
+    if (checkedItems.value.length < 6) {
+      checkedItems.value.push(id);
     } else {
-        var index =  checkedItems.value.indexOf(id);
-        if (index != -1) {
-            checkedItems.value.splice(id, 1);
-        }
+      return false;
     }
+  } else {
+    var index = checkedItems.value.indexOf(id);
+    if (index != -1) {
+      checkedItems.value.splice(id, 1);
+    }
+  }
 };
-
-
 
 const dateFormat = date => {
   if (!date) return '';
@@ -87,7 +85,6 @@ const notification = useNotifications('toast');
 
 const rolesEnum = page.props.rolesEnum;
 const hasRole = role => useHasRole(role);
-
 
 const {
   isRequired,
@@ -109,8 +106,8 @@ const confirmDeleteData = reactive({
 const memberActionEdit = ref(false),
   activityActionEdit = ref(false),
   selectedPlan = ref(null),
-    selectedPlans = ref([]),
-    toggleLoader = ref(false),
+  selectedPlans = ref([]),
+  toggleLoader = ref(false),
   selectedPlansPdf = ref([]),
   exportLoader = ref(false),
   historyLoading = ref(false),
@@ -546,90 +543,87 @@ const sendPolicyToClient = () => {
   }
 };
 
-
 const onTogglePlans = toggle => {
-    toggleLoader.value = true;
+  toggleLoader.value = true;
 
-    const planIds = useArrayUnique(
-        selectedPlans.value.map(p => {
-            return p.id;
-        }),
-    ).value;
+  const planIds = useArrayUnique(
+    selectedPlans.value.map(p => {
+      return p.id;
+    }),
+  ).value;
 
-    axios
-        .post(route('manualPlanToggle', { quoteType: 'travel' }), {
-            modelType: 'Travel',
-            planIds: planIds,
-            quote_uuid: page.props.quote.uuid,
-            toggle: toggle,
-        })
-        .then(response => {
-            notification.success({
-                title: 'Plans has been updated',
-                position: 'top',
-            });
-            router.reload({
-                preserveScroll: true,
-            });
-        })
-        .catch(error => {
-            notification.error({
-                title: error,
-                position: 'top',
-            });
-        })
-        .finally(() => {
-            toggleLoader.value = false;
-            selectedPlans.value = [];
-        });
+  axios
+    .post(route('manualPlanToggle', { quoteType: 'travel' }), {
+      modelType: 'Travel',
+      planIds: planIds,
+      quote_uuid: page.props.quote.uuid,
+      toggle: toggle,
+    })
+    .then(response => {
+      notification.success({
+        title: 'Plans has been updated',
+        position: 'top',
+      });
+      router.reload({
+        preserveScroll: true,
+      });
+    })
+    .catch(error => {
+      notification.error({
+        title: error,
+        position: 'top',
+      });
+    })
+    .finally(() => {
+      toggleLoader.value = false;
+      selectedPlans.value = [];
+    });
 };
 
-
 const onExportPlans = () => {
-
-    if (selectedPlans.value.length < 2 || selectedPlans.value.length > 5) {
-        notification.error({
-            title: 'Please select 2 to 5 plans to download PDF.',
-            position: 'top',
-        });
-        return;
-    }
-    exportLoader.value = true;
-    const planIds = selectedPlans.value.map(p => {
-        return p.id;
+  if (selectedPlans.value.length < 2 || selectedPlans.value.length > 5) {
+    notification.error({
+      title: 'Please select 2 to 5 plans to download PDF.',
+      position: 'top',
     });
+    return;
+  }
+  exportLoader.value = true;
+  const planIds = selectedPlans.value.map(p => {
+    return p.id;
+  });
 
-    axios
-        .post(
-            '/api/v1/quotes/travel/export-plans-pdf',
-            {
-                plan_ids: planIds,
-                quote_uuid: page.props.quote.uuid,
-                modelType: 'travel',
-                quoteType:'travel'
-            },
-            {
-                responseType: 'json',
-            },
-        )
-        .then(response => {
-            const link = document.createElement('a');
-            let fileName = response.data.name;
-            link.href = response.data.data;
-            link.setAttribute('download', fileName);
-            document.body.appendChild(link);
-            link.click();
-            notification.success({
-                title: 'Plans Exported',
-                position: 'top',
-            });
-        })
-        .catch(error => {
-            console.log(error);
-        })
-        .finally(() => {
-            exportLoader.value = false;
-        });
+  axios
+    .post(
+      '/api/v1/quotes/travel/export-plans-pdf',
+      {
+        plan_ids: planIds,
+        quote_uuid: page.props.quote.uuid,
+        modelType: 'travel',
+        quoteType: 'travel',
+      },
+      {
+        responseType: 'json',
+      },
+    )
+    .then(response => {
+      const link = document.createElement('a');
+      let fileName = response.data.name;
+      link.href = response.data.data;
+      link.setAttribute('download', fileName);
+      document.body.appendChild(link);
+      link.click();
+      notification.success({
+        title: 'Plans Exported',
+        position: 'top',
+      });
+    })
+    .catch(error => {
+      console.log(error);
+    })
+    .finally(() => {
+      exportLoader.value = false;
+    });
 };
 
 const onDocDelete = name => {
@@ -1121,8 +1115,8 @@ const handleChildUpdate = planId => {
 };
 
 const genderList = [
-    { value: 'M', label: 'Male' },
-    { value: 'F', label: 'Female' },
+  { value: 'M', label: 'Male' },
+  { value: 'F', label: 'Female' },
 ];
 
 const sectionExpanded = computed(() => {
@@ -1136,29 +1130,6 @@ const sectionExpanded = computed(() => {
 <template>
   <div>
     <Head title="Travel Detail" />
-    <div class="flex justify-between items-center flex-wrap gap-2">
-      <h2 class="text-xl font-semibold">Travel Detail</h2>
-      <div class="flex gap-2">
-        <x-button
-          size="sm"
-          color="#ff5e00"
-          @click.prevent="openDuplicate"
-          v-if="permissions.canNotApprovePayments"
-        >
-          Duplicate Lead
-        </x-button>
-        <Link :href="route('travel.index')" preserve-scroll>
-          <x-button size="sm" color="primary" tag="div"> Travel List </x-button>
-        </Link>
-
-        <Link
-          v-if="permissions.canEditQuote == true"
-          :href="route('travel.edit', quote.uuid)"
-        >
-          <x-button size="sm" tag="div">Edit</x-button>
-        </Link>
-      </div>
-    </div>
 
     <x-modal v-model="modals.duplicate" size="lg" show-close backdrop>
       <template #header> Duplicate Lead </template>
@@ -1206,8 +1177,10 @@ const sectionExpanded = computed(() => {
       <Collapsible :expanded="sectionExpanded">
         <template #header>
           <div class="flex justify-between items-center flex-wrap gap-2">
-            <h3 class="text-lg font-semibold text-primary-800">Travel Detail</h3>
-          </div>          
+            <h3 class="text-lg font-semibold text-primary-800">
+              Travel Detail
+            </h3>
+          </div>
         </template>
         <template #body>
           <x-divider class="my-4" />
@@ -1262,16 +1235,16 @@ const sectionExpanded = computed(() => {
                     <template #tooltip> Parent Reference ID </template>
                   </x-tooltip>
                 </dt>
-            <div
-              class="grid sm:grid-cols-2"
-              v-else-if="
-                hasAnyRole([rolesEnum.Admin, rolesEnum.Engineering]) &&
-                field.title == 'ID'
-              "
-            >
-              <dt class="font-medium uppercase">{{ field.title }}</dt>
-              <dd>{{ field?.value }}</dd>
-            </div>
+                <div
+                  class="grid sm:grid-cols-2"
+                  v-else-if="
+                    hasAnyRole([rolesEnum.Admin, rolesEnum.Engineering]) &&
+                    field.title == 'ID'
+                  "
+                >
+                  <dt class="font-medium uppercase">{{ field.title }}</dt>
+                  <dd>{{ field?.value }}</dd>
+                </div>
                 <dt v-else class="font-medium uppercase">{{ field.title }}</dt>
                 <dd>{{ field?.value }}</dd>
               </div>
@@ -1455,8 +1428,10 @@ const sectionExpanded = computed(() => {
         <template #body>
           <x-divider class="my-4" />
           <div class="flex mb-3 justify-end">
-            <x-tag color="success" v-if="quote.kyc_decision === 'Complete'"> KYC - Complete </x-tag>
-        <x-tag color="amber" v-else> KYC - Pending </x-tag>
+            <x-tag color="success" v-if="quote.kyc_decision === 'Complete'">
+              KYC - Complete
+            </x-tag>
+            <x-tag color="amber" v-else> KYC - Pending </x-tag>
           </div>
 
           <x-form @submit="updateProfileDetails" :auto-focus="false">
@@ -1742,7 +1717,7 @@ const sectionExpanded = computed(() => {
           <div class="flex flex-wrap gap-4 justify-between items-center">
             <h3 class="font-semibold text-primary-800 text-lg">
               Member Details
-            <x-tag size="sm">{{ travelers.length || 0 }}</x-tag>
+              <x-tag size="sm">{{ travelers.length || 0 }}</x-tag>
             </h3>
           </div>
         </template>
@@ -1757,11 +1732,11 @@ const sectionExpanded = computed(() => {
           <DataTable
             table-class-name="tablefixed compact"
             :headers="travelerTable.columns"
-        :items="travelers || []"
+            :items="travelers || []"
             border-cell
             hide-rows-per-page
             :rows-per-page="15"
-        :hide-footer="travelers.length < 15"
+            :hide-footer="travelers.length < 15"
             show-index
           >
             <template #item-index="{ index, code }">
@@ -1771,15 +1746,15 @@ const sectionExpanded = computed(() => {
               {{ dateFormat(dob).value }}
             </template>
 
-        <template #item-relation="{ relation }">
-          {{ relation?.text }}
-        </template>
-        <template #item-gender="{ gender }">
-          {{ gender === 'M' ? 'Male' : gender === 'F' ? 'Female' : ''  }}
-        </template>
-        <template #item-nationality="{ nationality }">
-          {{ nationality?.text }}
-        </template>
+            <template #item-relation="{ relation }">
+              {{ relation?.text }}
+            </template>
+            <template #item-gender="{ gender }">
+              {{ gender === 'M' ? 'Male' : gender === 'F' ? 'Female' : '' }}
+            </template>
+            <template #item-nationality="{ nationality }">
+              {{ nationality?.text }}
+            </template>
 
             <template #item-action="item">
               <div class="flex gap-2">
@@ -1845,13 +1820,13 @@ const sectionExpanded = computed(() => {
               placeholder="Select Relation"
               class="w-full"
             />
-            <x-field label="Gender*" >
+            <x-field label="Gender*">
               <x-select
-                  v-model="travelerForm.gender"
-                  placeholder="Gender"
-                  :options="genderList"
-                  :rules="[isRequired]"
-                  class="w-full"
+                v-model="travelerForm.gender"
+                placeholder="Gender"
+                :options="genderList"
+                :rules="[isRequired]"
+                class="w-full"
               />
             </x-field>
           </div>
@@ -1928,9 +1903,7 @@ const sectionExpanded = computed(() => {
       <Collapsible :expanded="sectionExpanded">
         <template #header>
           <div>
-            <h3 class="font-semibold text-primary-800 text-lg">
-              Lead Status
-            </h3>
+            <h3 class="font-semibold text-primary-800 text-lg">Lead Status</h3>
           </div>
         </template>
         <template #body>
@@ -2055,8 +2028,9 @@ const sectionExpanded = computed(() => {
       <Collapsible expanded>
         <template #header>
           <div>
-            <h3 class="font-semibold text-primary-800 text-lg">Policy Details</h3>
-        <x-divider class="mb-4 mt-1" />
+            <h3 class="font-semibold text-primary-800 text-lg">
+              Policy Details
+            </h3>
           </div>
         </template>
         <template #body>
@@ -2194,7 +2168,7 @@ const sectionExpanded = computed(() => {
           </div>
         </template>
         <template #body>
-          <x-divider class="my-4" /> 
+          <x-divider class="my-4" />
           <div class="flex gap-2 mb-3 justify-end">
             <x-button
               @click.prevent="modals.doc = true"
@@ -2316,8 +2290,16 @@ const sectionExpanded = computed(() => {
               Available Plans
             </h3>
           </div>
-              <x-button-group v-if="selectedPlans.length > 0" size="sm" class="mr-2">
-                <!--  <x-button
+        </template>
+        <template #body>
+          <x-divider class="my-4" />
+          <div class="flex justify-end mb-4">
+            <x-button-group
+              v-if="selectedPlans.length > 0"
+              size="sm"
+              class="mr-2"
+            >
+              <!--  <x-button
                       @click.prevent="onTogglePlans(false)"
                       :loading="toggleLoader"
                   >
@@ -2329,33 +2311,32 @@ const sectionExpanded = computed(() => {
                   >
                       Hide
                   </x-button>-->
-              </x-button-group>
-        <x-button
-          v-if="
-            availablePlansTable.data.length > 0 &&
-            permissions.canNotApprovePayments
-          "
-          size="sm"
-          color="orange"
-          class="mr-2"
-          @click.prevent="onCopyText(ecomTravelInsuranceQuoteUrl + quote.uuid)"
-        >
-          Copy Link
-        </x-button>
+            </x-button-group>
+            <x-button
+              v-if="
+                availablePlansTable.data.length > 0 &&
+                permissions.canNotApprovePayments
+              "
+              size="sm"
+              color="orange"
+              class="mr-2"
+              @click.prevent="
+                onCopyText(ecomTravelInsuranceQuoteUrl + quote.uuid)
+              "
+            >
+              Copy Link
+            </x-button>
 
-
-          <x-button
+            <x-button
               v-if="selectedPlans.length > 0"
               size="sm"
               color="emerald"
               @click.prevent="onExportPlans"
               :loading="exportLoader"
-          >
+            >
               Download PDF
-          </x-button>
+            </x-button>
           </div>
-          </div>
-
           <div
             v-if="
               availablePlansTable.data &&
@@ -2371,7 +2352,7 @@ const sectionExpanded = computed(() => {
           </div>
           <div v-else>
             <DataTable
-            v-model:items-selected="selectedPlans"
+              v-model:items-selected="selectedPlans"
               table-class-name="tablefixed compact"
               :headers="availablePlansTable.columns"
               :items="availablePlansTable.data || []"
@@ -2403,7 +2384,7 @@ const sectionExpanded = computed(() => {
                   >
                     View
                   </x-button>
-
+  
                   <!-- v-if="hasRole(rolesEnum.TravelAdvisor)" hide for now -->
                   <span v-if="true == false">
                     <SelectPlan
@@ -2414,7 +2395,7 @@ const sectionExpanded = computed(() => {
                       :quoteType="modelType"
                       :uuid="quote.uuid"
                     />
-
+  
                     <x-button
                       class="ml-1"
                       v-else
@@ -2430,7 +2411,7 @@ const sectionExpanded = computed(() => {
               </template>
             </DataTable>
           </div>
-        </template>
+        </template>        
       </Collapsible>
 
       <x-modal v-model="modals.planDetails" size="xl" show-close backdrop>
@@ -2465,7 +2446,7 @@ const sectionExpanded = computed(() => {
               Add Activity
             </x-button>
           </div>
-      <x-divider class="my-4" />
+          <x-divider class="my-4" />
           <DataTable
             table-class-name="compact"
             :headers="activityTable"
@@ -2596,9 +2577,7 @@ const sectionExpanded = computed(() => {
       <Collapsible :expanded="sectionExpanded">
         <template #header>
           <div>
-            <h3 class="font-semibold text-primary-800 text-lg">
-              Lead History
-            </h3>
+            <h3 class="font-semibold text-primary-800 text-lg">Lead History</h3>
           </div>
         </template>
         <template #body>
