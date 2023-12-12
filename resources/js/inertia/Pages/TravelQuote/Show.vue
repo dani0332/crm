@@ -619,11 +619,11 @@ const availablePlansTable = reactive({
       value: 'travelType',
     },
     {
-      text: 'Actual Price',
+      text: 'Price',
       value: 'actualPremium',
     },
     {
-      text: 'Price with VAT',
+      text: 'Total Price',
       value: 'discountPremium',
     },
     {

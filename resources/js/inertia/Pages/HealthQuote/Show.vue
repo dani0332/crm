@@ -528,7 +528,7 @@ const plansTable = reactive({
       value: 'eligibilityName',
     },
     {
-      text: 'Base Price',
+      text: 'Price',
       value: 'actualPremium',
     },
     {
