@@ -106,32 +106,40 @@ const setSelectedOption = (e, item) => {
 
   if (index != -1) amlResults.value[index].decision = e;
 
-  if(e === props.amlDecisionStatusCode.TRUE_MATCH && props.responseFrom === 'Bridger') {
+  let data = {
+      aml_id : props.aml.id,
+      aml_quote_url : `/kyc/aml/${props.aml.quote_type_id}/details/${props.aml.quote_request_id}`,
+      quote_ref_id : props.aml.quote_request_id,
+      customer_entity_name : props.aml.input,
+      quote_type_text : props.aml.quote_type_text,
+      bridger_response: props.aml.results_found,
+      last_updated_at : props.aml.updated_at,
+      bridger_match_id : item.ID,
+      bridger_decision_type: e
 
-      // Send Bridger Response to Compliance Super User when Decision True Match
-      let data = {
-          aml_quote_url : `/kyc/aml/${props.aml.quote_type_id}/details/${props.aml.quote_request_id}`,
-          quote_ref_id : props.aml.quote_request_id,
-          customer_entity_name : props.aml.input,
-          quote_type_text : props.aml.quote_type_text,
-          bridger_response: props.aml.results_found,
-      };
+  };
 
-      axios.post(`/kyc/send-bridger-response`, data)
-          .then(res => {
-              console.log(res)
+  axios.post(`/kyc/send-bridger-response`, data)
+      .then(res => {
+          if (res.data.status === 'success') {
+              checkDecisionLockStatus.value = res.data.result_state === props.amlDecisionStatusCode.SENT_FOR_REVIEW;
               notification.success({
                   title: res.data.message,
                   position: 'top',
               });
-          })
-          .catch(err => {
-              console.log(err);
-          })
-  }
-
+          } else if(res.data.status === 'error') {
+              notification.error({
+                  title: res.data.message,
+                  position: 'top',
+              });
+          }
+      })
+      .catch(err => {
+          console.log(err);
+      })
 };
-const checkDecisionLockStatus = (props.aml.decision === props.amlDecisionStatusCode.TRUE_MATCH_REJECT_RISK && hasRole(rolesEnum.COMPLIANCE));
+
+const checkDecisionLockStatus = ref((props.aml.decision === props.amlDecisionStatusCode.TRUE_MATCH_REJECT_RISK || props.aml.decision === props.amlDecisionStatusCode.SENT_FOR_REVIEW ) && hasRole(rolesEnum.COMPLIANCE));
 
 const isTrue = computed(() => {
   return amlResults.value.some(x => x.decision == 'TrueMatch');
