@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\V2;
 
+use App\Enums\SendUpdateLogStatusEnum;
 use App\Http\Controllers\Controller;
 use App\Repositories\SendUpdateLogRepository;
 use App\Services\LookupService;
@@ -26,9 +27,9 @@ class SendUpdateLogController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show($id, $uuid)
+    public function show($id, $code)
     {
-        $sendUpdateLog = SendUpdateLogRepository::getLogByUuid($uuid);
+        $sendUpdateLog = SendUpdateLogRepository::getLogByCode($code);
 
         $sendUpdateOptions = (new LookupService)->getSendUpdateOptions($sendUpdateLog->quote_type_id);
 
@@ -36,6 +37,7 @@ class SendUpdateLogController extends Controller
             'quoteId' => $id,
             'sendUpdateLog' => $sendUpdateLog,
             'sendUpdateOptions' => $sendUpdateOptions,
+            'sendUpdateStatusEnum' => SendUpdateLogStatusEnum::asArray()
         ]);
     }
 

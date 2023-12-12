@@ -37,6 +37,8 @@ const props = defineProps({
 const page = usePage();
 const dateFormat = date => date ? useDateFormat(date, 'DD-MM-YYYY').value : '-';
 
+const optionError = ref(false);
+
 const sendUpdatesTable = reactive({
   headers: [
     { text: 'SU-REF ID', value: 'code', tooltip: 'A unique reference identifier assigned to each "Send Update" request, allowing for easy tracking and reference.' },
@@ -71,6 +73,16 @@ const resetForm = () => {
   modals.step = 'step1'
 }
 
+watch(
+  () => form.option, 
+  (value) => {
+    if (value !== null && optionError.value) {
+      optionError.value = false
+    }
+  },
+  { deep: true, immediate: true }
+)
+
 onMounted(() => {
   // fetchLogs();
 })
@@ -95,10 +107,10 @@ const setOption = (next_step, value) => {
       form.childCategory = value
       modals.step = next_step
 
-      if (form.childCategory.childs.length === 0) {
+      if (['CPD', 'CPU'].includes(form.childCategory.slug)) {
         modals.step = 'step1';
         modals.show = false;
-        onAddUpdate();
+        onAddUpdate(true);
       }
 
       break;
@@ -120,7 +132,16 @@ const goBack = () => {
   }
 }
 
-const onAddUpdate = () => {
+const onAddUpdate = (autoSubmit) => {
+  if (! autoSubmit) {
+    if (form.option === null) {
+      optionError.value = true;
+      return;
+    }
+  }
+
+  optionError.value = false;
+
   form
     .transform(data => ({
       ...data,
@@ -240,8 +261,8 @@ const findOption = (item, key) => {
               </template>
             </x-tooltip>
           </template> -->
-          <template #item-code="{ code, uuid }">
-            <Link :href="route('quotes.car.view-update-log', {id: reportableUuid, uuid: uuid})" class="text-primary-800 underline">{{ code }}</Link>
+          <template #item-code="{ code }">
+            <Link :href="route('quotes.car.view-update-log', {id: reportableUuid, code: code})" class="text-primary-800 underline">{{ code }}</Link>
           </template>
 
           <template #item-type="item">
@@ -300,6 +321,7 @@ const findOption = (item, key) => {
             <ComboBox
               v-model="form.option"
               :single="true"
+              :hasError="optionError"
               :options="form.childCategory.childs.map(item => ({ label: item.title, value: item.id, tooltip: item.tooltip }))"
               :rules="[isRequired]"
               :placeholder="['endorsement financial', 'endorsement non financial'].includes(form.childCategory.title.toLowerCase()) ? 'Select Subtype' : 'Select Reason'"
@@ -310,7 +332,7 @@ const findOption = (item, key) => {
             <x-button 
               size="sm" 
               color="primary" 
-              @click="onAddUpdate"
+              @click="onAddUpdate(false)"
               :disabled="form.processing"
               :loading="form.processing"
             >

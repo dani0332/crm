@@ -20,20 +20,22 @@ class SendUpdateLogRepository extends BaseRepository
      * 
      * 
      */
-    public function fetchCreate($request) 
-    {        
+    public function fetchCreate($data) 
+    {
         try {
-            $code = $request['childCategory']['slug'];
+            $code = $data['childCategory']['slug'];
 
-            $uuid = Str::limit(base64_encode(now()), 5);
+            $count = $this->fetchGetCount($data['reportable_id'], $data['childCategory']['id']);
+
+            $uuid = date('m') . date('y') . '-' . ($count + 1);
 
             $res = $this->create([
-                'reportable_type' => $request['reportable_type'],
-                'reportable_id' => $request['reportable_id'],
-                'quote_type_id' => $request['quote_type_id'],
-                'category_id' => $request['childCategory']['id'],
-                'option_id' => $request['option'],
-                'status' => $request['status'],
+                'reportable_type' => $data['reportable_type'],
+                'reportable_id' => $data['reportable_id'],
+                'quote_type_id' => $data['quote_type_id'],
+                'category_id' => $data['childCategory']['id'],
+                'option_id' => $data['option'],
+                'status' => $data['status'],
                 'uuid' => $uuid,
                 'code' => $code . '-' . $uuid
             ]);            
@@ -46,13 +48,9 @@ class SendUpdateLogRepository extends BaseRepository
         return $res;
     }
 
-    /**
-     * 
-     * 
-     */
-    public function fetchGetLogByUuid($uuid)
+    public function fetchGetLogByCode($code)
     {
-        return $this->where('uuid', $uuid)->firstOrFail();
+        return $this->where('code', $code)->firstOrFail();
     }
 
     public function fetchGetLogsById($id)
@@ -74,5 +72,13 @@ class SendUpdateLogRepository extends BaseRepository
         }
 
         return $log;
+    }
+
+    public function fetchGetCount($id, $categoryId) 
+    {
+        return $this->where([
+            'reportable_id' => $id,
+            'category_id' => $categoryId
+        ])->count();
     }
 }

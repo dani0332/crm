@@ -33,7 +33,7 @@ class AddSendUpdatesCategoriesInLookups extends Seeder
             foreach ($option['types'] as $type) {
                 $typeCategory = Lookup::create([
                     'key' => $type['name'],
-                    'code' => $type['key'],
+                    'code' => $type['code'],
                     'text' => $type['tooltip'],
                     'parent_id' => $parentOption->id,
                 ]);
