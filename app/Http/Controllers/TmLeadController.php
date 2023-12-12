@@ -177,19 +177,33 @@ class TmLeadController extends Controller
             $isUserTmAdvisor = '0';
         }
 
-        return view('tmlead.add', compact(
-            'tmLeadStatuses',
-            'tmInsuranceTypes',
-            'handlers',
-            'nationalities',
-            'yearsOfDrivings',
-            'carMakes',
-            'carModels',
-            'emiratesOfRegistrations',
-            'carTypeInsurances',
-            'tmLeadTypes',
-            'isUserTmAdvisor'
-        ));
+        return inertia('Telemarketing/Form', [
+            'tmLeadStatuses' =>  $tmLeadStatuses,
+            'tmInsuranceTypes' => $tmInsuranceTypes,
+            'handlers' => $handlers,
+            'nationalities' => $nationalities,
+            'yearsOfDrivings' => $yearsOfDrivings,
+            'carMakes' => $carMakes,
+            'carModels' => $carModels,
+            'emiratesOfRegistrations' => $emiratesOfRegistrations,
+            'carTypeInsurances' => $carTypeInsurances,
+            'tmLeadTypes' => $tmLeadTypes,
+            'isUserTmAdvisor' => $isUserTmAdvisor
+        ]);
+
+        // return view('tmlead.add', compact(
+        //     'tmLeadStatuses',
+        //     'tmInsuranceTypes',
+        //     'handlers',
+        //     'nationalities',
+        //     'yearsOfDrivings',
+        //     'carMakes',
+        //     'carModels',
+        //     'emiratesOfRegistrations',
+        //     'carTypeInsurances',
+        //     'tmLeadTypes',
+        //     'isUserTmAdvisor'
+        // ));
     }
 
     /**
@@ -241,14 +255,23 @@ class TmLeadController extends Controller
         $tmInsuranceTypeCode = TmInsuranceType::where('id', '=', $tmlead->tm_insurance_types_id)->value('code');
         $tmLeadStatuses = $this->getLeadStatuses();
 
-        return view('tmlead.show', compact(
-            'tmlead',
-            'tmLeadStatusCode',
-            'tmInsuranceTypeCode',
-            'tmLeadStatuses',
-            'isLeadEditable',
-            'customerCorrectPhoneNo'
-        ));
+        return inertia('Telemarketing/Show', [
+            'tmlead' => $tmlead,
+            'tmLeadStatusCode' => $tmLeadStatusCode,
+            'tmInsuranceTypeCode' => $tmInsuranceTypeCode,
+            'tmLeadStatuses' => $tmLeadStatuses,
+            'isLeadEditable' => $isLeadEditable,
+            'customerCorrectPhoneNo' => $customerCorrectPhoneNo
+        ]);
+
+        // return view('tmlead.show', compact(
+        //     'tmlead',
+        //     'tmLeadStatusCode',
+        //     'tmInsuranceTypeCode',
+        //     'tmLeadStatuses',
+        //     'isLeadEditable',
+        //     'customerCorrectPhoneNo'
+        // ));
     }
 
     /**
@@ -281,20 +304,35 @@ class TmLeadController extends Controller
             ->leftjoin('roles', 'roles.id', 'model_has_roles.role_id')
             ->whereIn('roles.name', ['TM_ADVISOR', 'TM_DEPUTY', 'TM_MANAGER'])->orderBy('roles.name', 'asc')->get();
 
-        return view('tmlead.edit', compact(
-            'tmlead',
-            'tmLeadStatuses',
-            'tmInsuranceTypes',
-            'handlers',
-            'nationalities',
-            'yearsOfDrivings',
-            'carMakes',
-            'carModels',
-            'emiratesOfRegistrations',
-            'carTypeInsurances',
-            'tmLeadTypes',
-            'isUserTmAdvisor'
-        ));
+        return inertia('Telemarketing/Form', [
+            'tmlead' => $tmlead,
+            'tmLeadStatuses' =>  $tmLeadStatuses,
+            'tmInsuranceTypes' => $tmInsuranceTypes,
+            'handlers' => $handlers,
+            'nationalities' => $nationalities,
+            'yearsOfDrivings' => $yearsOfDrivings,
+            'carMakes' => $carMakes,
+            'carModels' => $carModels,
+            'emiratesOfRegistrations' => $emiratesOfRegistrations,
+            'carTypeInsurances' => $carTypeInsurances,
+            'tmLeadTypes' => $tmLeadTypes,
+            'isUserTmAdvisor' => $isUserTmAdvisor
+        ]);
+
+        // return view('tmlead.edit', compact(
+        //     'tmlead',
+        //     'tmLeadStatuses',
+        //     'tmInsuranceTypes',
+        //     'handlers',
+        //     'nationalities',
+        //     'yearsOfDrivings',
+        //     'carMakes',
+        //     'carModels',
+        //     'emiratesOfRegistrations',
+        //     'carTypeInsurances',
+        //     'tmLeadTypes',
+        //     'isUserTmAdvisor'
+        // ));
     }
 
     /**

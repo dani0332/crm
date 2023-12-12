@@ -1,5 +1,6 @@
 <script setup>
-import { onMounted } from 'vue';
+import { useForm } from '@inertiajs/vue3';
+import LeadAssignment from '../PersonalQuote/Partials/LeadAssignment.vue';
 
 const props = defineProps({
   tmLeadStatuses: Array,
@@ -10,10 +11,21 @@ const props = defineProps({
   queryTmLeads: Object,
 });
 
+const page = usePage();
+const { isRequired } = useRules();
+
 const loader = reactive({ table: false });
+const itemsSelected = ref([]);
+
+const hasRole = role => useHasRole(role);
+const rolesEnum = page.props.rolesEnum;
+
+const can = permission => useCan(permission);
+const permissionsEnum = page.props.permissionsEnum;
+
 const handlersOptions = ref([
   ...[
-    { name: 'All', id: '' },
+    { name: 'All', id: ' ' },
     { name: 'Unassigned', id: 'Unassigned' },
     { name: 'MyLeads', id: 'MyLeads' },
   ],
@@ -23,7 +35,7 @@ const handlersOptions = ref([
 const filters = reactive({
   searchType: 'cdbID',
   searchField: '',
-  assigned_to_id: '',
+  assigned_to_id: ' ',
   tm_lead_types_id: '',
   tm_lead_statuses_id: '',
   tmLeadsStartDate: '',
@@ -38,35 +50,41 @@ const showdates = computed(() => {
     : false;
 });
 
+const canAssignLead = computed(() => {
+  return props.isCurrentUserIsAdvisor == '0' ? true : false;
+});
+
 const tableHeader = ref([
-  { text: 'Ref-ID', value: 'uuid' },
-  { text: 'TM ID', value: 'first_name' },
-  { text: 'CUSTOMER NAME', value: 'last_name' },
-  { text: 'INSURANCE TYPE', value: 'quote_status' },
-  { text: 'LEAD STATUS', value: 'advisor' },
-  { text: 'NOTES', value: 'created_at' },
-  { text: 'ENQUIER DATE', value: 'updated_at' },
-  { text: 'ALLOCATION DATE', value: 'transapp_code' },
-  { text: 'NEXT FOLLOW-UP DATE', value: 'source' },
-  { text: 'ADVISOR', value: 'lost_reason' },
-  { text: 'CREATED AT', value: 'premium' },
-  { text: 'UPDATED AT', value: 'policy_number' },
+  { text: 'TM ID', value: 'cdb_id' },
+  { text: 'CUSTOMER NAME', value: 'customer_name' },
+  { text: 'INSURANCE TYPE', value: 'tm_insurance_types_text' },
+  { text: 'LEAD STATUS', value: 'tm_lead_status_text' },
+  { text: 'NOTES', value: 'notes' },
+  { text: 'ENQUIER DATE', value: 'enquiry_date' },
+  { text: 'ALLOCATION DATE', value: 'allocation_date' },
+  { text: 'NEXT FOLLOW-UP DATE', value: 'next_followup_date' },
+  { text: 'ADVISOR', value: 'handlers_name' },
+  { text: 'CREATED AT', value: 'tm_created_at' },
+  { text: 'UPDATED AT', value: 'tm_updated_at' },
 ]);
 
-const onReset = () => {};
+const onReset = () => {
+  router.visit(route('tmleads-list'), {
+    method: 'get',
+    data: { page: 1 },
+    preserveScroll: true,
+    onBefore: () => (loader.table = true),
+    onSuccess: () => (loader.table = false),
+  });
+};
+
 function onSubmit(isValid) {
   if (isValid) {
     filters.page = 1;
 
-    Object.keys(filters).forEach(
-      key =>
-        (filters[key] === '' || filters[key].length === 0) &&
-        delete filters[key],
-    );
-
     router.visit(route('tmleads-list'), {
       method: 'get',
-      data: filters,
+      data: useGenerateQueryString(filters),
       preserveState: true,
       preserveScroll: true,
       onBefore: () => (loader.table = true),
@@ -77,14 +95,21 @@ function onSubmit(isValid) {
   }
 }
 
-onMounted(() => onSubmit());
+const onLeadAssigned = () => {
+  itemsSelected.value = [];
+};
 </script>
 <template>
   <div>
     <Head title="TM Leads" />
     <div class="flex justify-between items-center">
       <h2 class="text-xl font-semibold">TM Leads</h2>
-      <x-button size="sm" color="#ff5e00"> Create TM Lead </x-button>
+      <Link
+        v-if="can(permissionsEnum.TeleMarketingCreate)"
+        :href="route('tmleads-create')"
+      >
+        <x-button size="sm" color="#ff5e00"> Create TM Lead </x-button>
+      </Link>
     </div>
     <x-divider class="my-4" />
     <!--   filters     -->
@@ -130,7 +155,7 @@ onMounted(() => onSubmit());
           />
         </x-field>
 
-        <x-field label="Lead Owner">
+        <x-field label="Lead Owner" v-if="canAssignLead">
           <x-select
             v-model="filters.assigned_to_id"
             placeholder="Search value"
@@ -194,7 +219,24 @@ onMounted(() => onSubmit());
       </div>
     </x-form>
 
+    <Transition name="fade">
+      <div v-if="itemsSelected.length > 0 && canAssignLead" class="mb-4">
+        <LeadAssignment
+          :selected="itemsSelected.map(e => e.id)"
+          :advisors="
+            handlers.map(item => ({
+              value: item.id,
+              label: item.name,
+            }))
+          "
+          :quoteType="'tmlead'"
+          @success="onLeadAssigned"
+        />
+      </div>
+    </Transition>
+
     <DataTable
+      v-model:items-selected="itemsSelected"
       table-class-name="tablefixed"
       :headers="tableHeader"
       :loading="loader.table"
@@ -204,21 +246,24 @@ onMounted(() => onSubmit());
       hide-footer
       fixed-checkbox
     >
-      <template #item-uuid="{ code, uuid }">
-        <Link class="text-primary-500 hover:underline">
-          {{ code }}
+      <template #item-cdb_id="{ cdb_id }">
+        <Link
+          class="text-primary-500 hover:underline"
+          :href="route('tmleads-show', cdb_id.split('-')[1])"
+        >
+          {{ cdb_id }}
         </Link>
       </template>
     </DataTable>
 
-    <!-- <Pagination
+    <Pagination
       :links="{
-        next: quotes.next_page_url,
-        prev: quotes.prev_page_url,
-        current: quotes.current_page,
-        from: quotes.from,
-        to: quotes.to,
+        next: queryTmLeads.next_page_url,
+        prev: queryTmLeads.prev_page_url,
+        current: queryTmLeads.current_page,
+        from: queryTmLeads.from,
+        to: queryTmLeads.to,
       }"
-    /> -->
+    />
   </div>
 </template>

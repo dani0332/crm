@@ -459,7 +459,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::get('/car-model', [TmLeadController::class, 'carModelBasedOnCarMake']);
         Route::resource('tmuploadlead', TmUploadLeadController::class);
         Route::get('tmleads/{tmLeadID}/tmLeadUpdate', [TmLeadController::class, 'tmLeadUpdate'])->name('tmLeadUpdate');
-        Route::get('/tmLeadsAssign', [TmLeadController::class, 'tmLeadsAssign']);
+        Route::post('/tmLeadsAssign', [TmLeadController::class, 'tmLeadsAssign']);
     });
 
     Route::get('/car-model', [AjaxController::class, 'carModelBasedOnCarMake']);
