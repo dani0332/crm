@@ -385,7 +385,7 @@ class AMLController extends Controller
                     );
                 }
 
-                if (! in_array(true, session()->get('amlResponseCheck')) && !AMLService::checkAMLStatusFailed($quoteTypeId, $quoteRequestId)) {
+                if (! in_array(true, session()->get('amlResponseCheck')) && ! AMLService::checkAMLStatusFailed($quoteTypeId, $quoteRequestId)) {
                     $updateQuote->quote_status_id = QuoteStatusEnum::AMLScreeningCleared;
                     $updateQuote->save();
                     info('Bridger Insight Service - Update Lead Quote Status to AML Screen Clear - ID:'.QuoteStatusEnum::AMLScreeningCleared);
@@ -422,7 +422,7 @@ class AMLController extends Controller
                     BridgerAMLJob::dispatchSync($bridgerAPIToken, $memberDetail, $quoteRequestId, $quoteTypeId, CustomerTypeEnum::Individual, auth()->user()->email);
                 }
 
-                if (! in_array(true, session()->get('amlResponseCheck')) && !AMLService::checkAMLStatusFailed($quoteTypeId, $quoteRequestId)) {
+                if (! in_array(true, session()->get('amlResponseCheck')) && ! AMLService::checkAMLStatusFailed($quoteTypeId, $quoteRequestId)) {
                     $updateQuote->quote_status_id = QuoteStatusEnum::AMLScreeningCleared;
                     $updateQuote->save();
                     info('Bridger Insight Service - Update Lead Quote Status to AML Screen Clear - ID:'.QuoteStatusEnum::AMLScreeningCleared);
@@ -554,8 +554,9 @@ class AMLController extends Controller
                 $response = ['status' => 'success', 'message' => 'Result update successfully'];
             }
 
-            if (!empty($manualStatusIM))
+            if (! empty($manualStatusIM)) {
                 unset($bridgerResponse[0]->ManualStatusUpdateIM->{$request->bridger_match_id});
+            }
         }
 
         $kycLog->results = json_encode($bridgerResponse);
