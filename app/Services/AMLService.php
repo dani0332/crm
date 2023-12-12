@@ -216,11 +216,11 @@ class AMLService
     {
         $emailRecipients = [];
         $emailSystem = config('constants.emailL_sys');
-        $complianceRole = $forComplianceSuperUser ? RolesEnum::ComplianceSuperUser : RolesEnum::COMPLIANCE;
+        $complianceRole = $forComplianceSuperUser ? [RolesEnum::ComplianceSuperUser] : [RolesEnum::COMPLIANCE, RolesEnum::ComplianceSuperUser];
         $recipients = User::select('users.email as user_email')
             ->leftjoin('model_has_roles', 'users.id', 'model_has_roles.model_id')
             ->leftjoin('roles', 'model_has_roles.role_id', 'roles.id')
-            ->whereIn('roles.name', [$complianceRole])->get();
+            ->whereIn('roles.name', $complianceRole)->get();
 
         foreach ($recipients as $recipient) {
             $emailRecipients[] = $recipient->user_email;
