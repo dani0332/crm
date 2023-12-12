@@ -1,42 +1,44 @@
 @extends('layouts.app')
 @section('title', 'Lead Allocation Management')
 @section('content')
-<meta name="csrf-token" content="{{ csrf_token() }}" />
-<link href="{{ asset('css/bootstrap-toggle.css') }}" rel="stylesheet">
-<script src="{{ asset('vendors/jquery/dist/jquery.min.js') }}"></script>
+    <meta name="csrf-token" content="{{ csrf_token() }}"/>
+    <link href="{{ asset('css/bootstrap-toggle.css') }}" rel="stylesheet">
+    <script src="{{ asset('vendors/jquery/dist/jquery.min.js') }}"></script>
 
-<script src="{{ asset('js/bootstrap-toggle.min.js') }}"></script>
+    <script src="{{ asset('js/bootstrap-toggle.min.js') }}"></script>
 
-<script>
-    function getStatusText(statusId){
-        var statusText = '';
-        switch(parseInt(statusId)){
-            case 1:
-                statusText = 'Online';
-                break;
-            case 2:
-                statusText = 'Offline';
-                break;
-            case 3:
-                statusText = 'Unavailable';
-                break;
-            case 4:
-                statusText = 'Sick';
-                break;
-            case 5:
-                statusText = 'On leave';
-                break;
-            default:
-                statusText = 'Unavailable'
-                break;
+    <script>
+        function getStatusText(statusId) {
+            var statusText = '';
+            switch (parseInt(statusId)) {
+                case 1:
+                    statusText = 'Online';
+                    break;
+                case 2:
+                    statusText = 'Offline';
+                    break;
+                case 3:
+                    statusText = 'Unavailable';
+                    break;
+                case 4:
+                    statusText = 'Sick';
+                    break;
+                case 5:
+                    statusText = 'On leave';
+                    break;
+                default:
+                    statusText = 'Unavailable'
+                    break;
+            }
+            return statusText;
         }
-        return statusText;
-    }
-    var leadAllocationDataTable = null;
-    $(document).ready(function() {
-        var isAutoAllocationWorking = JSON.parse('<?php echo json_encode($isAutoAllocationWorking); ?>');
-        var indexLastColumn = $(".lead_allocation_table").find('tr')[0].cells.length-1;
-        leadAllocationDataTable = $('.lead_allocation_table').DataTable({
+
+        var leadAllocationDataTable = null;
+        $(document).ready(function () {
+            var isAutoAllocationWorking = JSON.parse('<?php
+                                                      echo json_encode($isAutoAllocationWorking); ?>');
+            var indexLastColumn = $(".lead_allocation_table").find('tr')[0].cells.length - 1;
+            leadAllocationDataTable = $('.lead_allocation_table').DataTable({
                 info: true,
                 serverSide: true,
                 searching: false,
@@ -45,11 +47,11 @@
                 lengthChange: false,
                 ajax: config.routes.lead_allocation_index_route,
                 columns: [{
-                        data: 'userId',
-                        name: 'userId',
-                        orderable: true,
-                        searchable: false
-                    },
+                    data: 'userId',
+                    name: 'userId',
+                    orderable: true,
+                    searchable: false
+                },
                     {
                         data: 'userName',
                         name: 'userName',
@@ -73,7 +75,7 @@
                         name: 'last_allocated',
                         orderable: true,
                         searchable: false,
-                        render: function(data, type, row) {
+                        render: function (data, type, row) {
                             if (data == null) {
                                 return '-';
                             } else {
@@ -92,7 +94,7 @@
                         name: 'is_available',
                         orderable: true,
                         searchable: false,
-                        render: function(data, type, row) {
+                        render: function (data, type, row) {
                             var statusText = getStatusText(data);
                             if (data == 1) {
                                 var html = `
@@ -259,55 +261,67 @@
         });
 </script>
 
-
 <div class="row">
-    <div class="col-md-12 col-sm-12 ">
-        <div class="x_panel">
-            <div class="x_title">
-                <h2>Lead Allocation Management</h2>
-               @if(Auth::user()->isAdmin())
-               <span class="status-text"></span><label class="switch " style="margin-left: 20px;float: left;margin-top: 5px;">
-                <input type="checkbox" @if($isAutoAllocationWorking == '1')  checked="checked" @endif class="leadSwitch success" id="jobSwitch" name="jobSwitch">
-                <span class="slider round"></span>
-            </label>
-               @endif
-                <div class="clearfix"></div>
-            </div>
+    <div class="x_panel">
+        <div class="x_title">
+            <h2>Lead Allocation Management</h2>
+            @if(Auth::user()->isAdmin())
+                <span class="status-text"></span><label class="switch " style="margin-left: 20px;float: left;margin-top: 5px;">
+                    <input type="checkbox" @if($isAutoAllocationWorking == '1')  checked="checked" @endif class="leadSwitch success" id="jobSwitch" name="jobSwitch">
+                    <span class="slider round"></span>
+                </label>
+            @endif
+            <div class="clearfix"></div>
+        </div>
+        <div class="col-md-3 col-lg-2" style="border-radius: 10px; border-left: 3px solid #A1C86B;margin-bottom: 20px;font-size: 26px;background: whitesmoke;height: 120px;padding-top: 10px;">
+            <span style="font-size: 18px">Team </span>
+            <br/>
+            <b><span style="color: black;">Health</span></b>
+        </div>
+        <div class="col-md-3 col-lg-2" style="border-radius: 10px; border-left: 3px solid #4183BD; margin-left: 70px;margin-bottom: 20px;font-size: 26px;background: whitesmoke;height: 120px;padding-top: 10px;">
+            <span style="font-size: 18px">Assigned Lead Count </span>
+            <br/>
+            <b><span style="color: black;">{{$totalAssignedLeadCount}}</span></b>
+        </div>
+        <div class="col-md-3 col-lg-2" style="border-radius: 10px; border-left: 3px solid #3015ca; margin-left: 70px;margin-bottom: 20px;font-size: 26px;background: whitesmoke;height: 120px;padding-top: 10px;">
+            <span style="font-size: 18px">Total Advisors</span>
+            <br/>
+            <b><span style="color: black;">{{ $unAvailableUsers + $availableUsers}}</span></b>
+        </div>
+        <div class="col-md-3 col-lg-2" style="border-radius: 10px; border-left: 3px solid #facb19; margin-left: 70px;margin-bottom: 20px;font-size: 26px;background: whitesmoke;height: 120px;padding-top: 10px;">
+            <span style="font-size: 18px;">Availabe / UnAvailable</span>
+            <br/>
+            <b><span style="color: black;"><label id="availableUsers">{{$availableUsers}} </label> /
+                        <label id="UnavailableUsers">{{$unAvailableUsers}}</label></span></b>
+        </div>
+        <div class="col-md-12 col-lg-12">
+            <span style="font-size: 18px;">Unassigned leads count</span>
+        </div>
+        <div class="col-md-3 col-lg-2" style="margin-top: 10px; border-radius: 10px; border-left: 3px solid #e46122;margin-bottom: 20px;font-size: 26px;background: whitesmoke;height: 120px;padding-top: 10px;">
+            <span style="font-size: 18px">Good </span>
+            <br/>
+            <b><span style="color: black;">{{ $unAssignedGood }}</span></b>
+        </div>
+        <div class="col-md-3 col-lg-2" style="margin-top: 10px; border-radius: 10px; border-left: 3px solid #db8b1d; margin-left: 70px;margin-bottom: 20px;font-size: 26px;background: whitesmoke;height: 120px;padding-top: 10px;">
+            <span style="font-size: 18px">Best</span>
+            <br/>
+            <b><span style="color: black;">{{ $unAssignedBest }}</span></b>
+        </div>
+        <div class="col-md-3 col-lg-2" style="margin-top: 10px; border-radius: 10px; border-left: 3px solid #d80ca8; margin-left: 70px;margin-bottom: 20px;font-size: 26px;background: whitesmoke;height: 120px;padding-top: 10px;">
+            <span style="font-size: 18px">Entry Level</span>
+            <br/>
+            <b><span style="color: black;">{{ $unAssignedEntryLevel }}</span></b>
+        </div>
+        <div class="col-md-12 col-sm-12 ">
             <div class="x_content">
-                <br />
+                <br/>
                 @if (session()->has('message'))
-                <div class="alert alert-danger">{{ session()->get('message') }}</div>
+                    <div class="alert alert-danger">{{ session()->get('message') }}</div>
                 @endif
                 @if (session()->has('success'))
-                <div class="alert alert-success">{{ session()->get('success') }}</div>
+                    <div class="alert alert-success">{{ session()->get('success') }}</div>
                 @endif
-                <div class="col-md-12" style="margin-left:8px;">
-                    <div class="col-md-3"
-                        style="border-radius: 10px;float: left;border-left: 3px solid #A1C86B;margin-bottom: 50px;font-size: 26px;background: whitesmoke;width: 250px;height: 120px;padding-left: 15px;padding-top: 18px;">
-                        <span style="font-size: 21px">Team </span>
-                        <br />
-                        <b><span style="color: black;">Health</span></b>
-                    </div>
-                    <div class="col-md-3"
-                        style="border-radius: 10px;float: left;border-left: 3px solid #4183BD;    margin-left: 70px;margin-bottom: 50px;font-size: 26px;background: whitesmoke;width: 250px;height: 120px;padding-left: 15px;padding-top: 18px;">
-                        <span style="font-size: 21px">Assigned Lead Count </span>
-                        <br />
-                        <b><span style="color: black;">{{$totalAssignedLeadCount}}</span></b>
-                    </div>
-                    <div class="col-md-3"
-                        style="border-radius: 10px;float: left;border-left: 3px solid #3015ca;    margin-left: 70px;margin-bottom: 50px;font-size: 26px;background: whitesmoke;width: 250px;height: 120px;padding-left: 15px;padding-top: 18px;">
-                        <span style="font-size: 21px">Total Advisors</span>
-                        <br />
-                        <b><span style="color: black;">{{ $unAvailableUsers + $availableUsers}}</span></b>
-                    </div>
-                    <div class="col-md-3"
-                        style="border-radius: 10px;float: left;border-left: 3px solid #facb19; margin-left: 70px;margin-bottom: 50px;font-size: 26px;background: whitesmoke;width: 250px;height: 120px;padding-left: 15px;padding-top: 18px;">
-                        <span style="font-size: 21px">Availabe / UnAvailable</span>
-                        <br />
-                        <b><span style="color: black;"><label id="availableUsers">{{$availableUsers}} </label> /
-                                <label id="UnavailableUsers">{{$unAvailableUsers}}</label></span></b>
-                    </div>
-                </div>
+
                 <table class="table table-striped jambo_table  lead_allocation_table" style="width:100%">
                     <thead>
                         <tr>
@@ -316,15 +330,15 @@
                             <th style="width: 15% !important">Team Type</th>
                             <th style="width: 15% !important">Total Assigned Leads</th>
                             <th style="width: 15% !important">Last Allocation</th>
-                            <th style="width: 15% !important">Max Cap Limit <i class="fa fa-info-circle" id="tooltip"
-                                    data-toggle="tooltip" data-placement="top"
-                                    title="For Unlimited Capactiy Add ( -1 )"></i>
+                            <th style="width: 15% !important">
+                                Max Cap Limit
+                                <i class="fa fa-info-circle" id="tooltip" data-toggle="tooltip" data-placement="top"
+                                   title="For Unlimited Capactiy Add ( -1 )"></i>
                             </th>
                             <th style="width: 12% !important;">Status</th>
                         </tr>
                     </thead>
                     <tbody>
-
                     </tbody>
                 </table>
             </div>
@@ -354,6 +368,5 @@
             </div>
         </div>
     </div>
-
 </div>
 @endsection
