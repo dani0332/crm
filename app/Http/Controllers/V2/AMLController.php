@@ -559,7 +559,9 @@ class AMLController extends Controller
                 $kycLog->decision = AMLDecisionStatusEnum::ESCALATED;
                 $response = ['status' => 'success', 'message' => 'Result update successfully'];
             }
-            unset($bridgerResponse[0]->ManualStatusUpdateIM->{$request->bridger_match_id});
+
+            if (!empty($manualStatusIM))
+                unset($bridgerResponse[0]->ManualStatusUpdateIM->{$request->bridger_match_id});
         }
 
         $kycLog->results = json_encode($bridgerResponse);
