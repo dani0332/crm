@@ -1326,10 +1326,17 @@ class HealthQuoteService extends BaseService
                     'dob' => $value['dob'],
                     'gender' => $value['gender'],
                     'memberCategoryText' => $value['memberCategoryText'],
-                    'premium' => isset($value['premium'])?((float) $value['premium']):null,
-                    'basmah' =>  isset($value['basmah'])?((int) $value['basmah']):null,
-                    'vat' => isset($value['vat'])?((int) $value['vat']):null
                 ];
+                if (isset($value['premium'])) {
+                    $array['premium'] = (float) $value['premium'];
+                }
+                if (isset($value['basmah'])) {
+                    $array['basmah'] = (int) $value['basmah'];
+                }
+                if (isset($value['vat'])) {
+                    $array['vat'] = (int) $value['vat'];
+                }
+
                 array_push($membersBreakDown, $array);
             }
             $plansArray['memberPremiumBreakdown'] = $membersBreakDown;
