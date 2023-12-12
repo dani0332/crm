@@ -157,7 +157,7 @@ class CentralController extends Controller
         $quote = $repository::where('code', $code)->firstOrFail();
         $quote->update($request->validated());
 
-        return redirect()->back()->with('success', 'updated successfully');
+        return redirect()->back();
     }
 
     public function updateSelectedPlan($quoteType, $uuid, $planId)

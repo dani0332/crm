@@ -62,10 +62,10 @@ const submitPlanDetailsForm = isValid => {
       });
     },
     onSuccess: () => {
-      notification.success({
-        title: 'Plan details saved',
-        position: 'top',
-      });
+       notification.success({
+         title: 'Plan details saved',
+         position: 'top',
+       });
     },
   });
 }
