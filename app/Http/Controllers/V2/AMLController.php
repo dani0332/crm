@@ -595,7 +595,7 @@ class AMLController extends Controller
         }
 
         $bridgerResponse = json_decode($kycLog->results);
-        $manualStatusIM = (array) $bridgerResponse[0]->ManualStatusUpdateIM ?? [];
+        $manualStatusIM = isset($bridgerResponse[0]->ManualStatusUpdateIM) ? (array) $bridgerResponse[0]->ManualStatusUpdateIM : [];
 
         if ($request->bridger_decision_type == AMLDecisionStatusEnum::TRUE_MATCH && auth()->user()->hasRole(RolesEnum::COMPLIANCE)) {
             $bridgerResponse[0]->ManualStatusUpdateIM = [$request->bridger_match_id => $request->bridger_decision_type];
