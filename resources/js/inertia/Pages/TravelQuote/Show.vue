@@ -3,6 +3,7 @@ import LazyDocumentUploader from './Partials/DocumentUploader.vue';
 import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue';
 
+const page = usePage();
 defineProps({
   quote: Object,
   allowedDuplicateLOB: Array,
@@ -47,22 +48,45 @@ defineProps({
   canAddBatchNumber: Boolean,
 });
 
-const page = usePage();
+
 const hasAnyRole = roles => useHasAnyRole(roles);
+const checkedItems = ref([]);
+const checkCheckedPlans = computed(() => {
+    return true;
+});
+const checkedCount = computed(() => {
+    return checkedItems.value.length;
+});
+const updateCheckedCount = (id, event) => {
+    if (event.target.checked) {
+        if(checkedItems.value.length < 6) {
+            checkedItems.value.push(id);
+        }else{
+            return false;
+        }
+    } else {
+        var index =  checkedItems.value.indexOf(id);
+        if (index != -1) {
+            checkedItems.value.splice(id, 1);
+        }
+    }
+};
+
+
 
 const dateFormat = date => {
   if (!date) return '';
   return useDateFormat(date, 'DD-MM-YYYY');
 };
-
 const dateTimeFormat = date => {
   if (!date) return '';
   return useDateFormat(date, 'DD-MM-YYYY HH:mm:ss');
 };
-
 const notification = useNotifications('toast');
+
 const rolesEnum = page.props.rolesEnum;
 const hasRole = role => useHasRole(role);
+
 
 const {
   isRequired,
@@ -73,17 +97,17 @@ const {
   isEmail,
   isMobileNo,
 } = useRules();
-
 const confirmDeleteData = reactive({
   docs: null,
   member: null,
   activity: null,
   contact: null,
 });
-
 const memberActionEdit = ref(false),
   activityActionEdit = ref(false),
   selectedPlan = ref(null),
+    selectedPlans = ref([]),
+    toggleLoader = ref(false),
   selectedPlansPdf = ref([]),
   exportLoader = ref(false),
   historyLoading = ref(false),
@@ -92,7 +116,6 @@ const memberActionEdit = ref(false),
       reason => reason.text === page.props.quote.lost_reason,
     )?.id || null,
   );
-
 const leadDuplicateForm = useForm({
   modelType: 'travel',
   parentType: 'travel',
@@ -102,7 +125,6 @@ const leadDuplicateForm = useForm({
   lob_team: [],
   lob_team_sub_selection: null,
 });
-
 const openDuplicate = () => {
   modals.duplicate = true;
   leadDuplicateForm.reset();
@@ -235,6 +257,7 @@ const travelerForm = useForm({
   dob: '',
   nationality_id: null,
   relation_code: null,
+  gender: null,
   customer_id: page.props.quote.customer_id,
   customer_type: page.props.quote.customer_type,
 });
@@ -260,6 +283,10 @@ const travelerTable = reactive({
     {
       text: 'Date of Birth',
       value: 'dob',
+    },
+    {
+      text: 'Gender',
+      value: 'gender',
     },
     {
       text: 'Relation',
@@ -305,6 +332,7 @@ const addTravelMember = isValid => {
       travelerForm.nationality_id = '';
       travelerForm.relation_code = '';
       travelerForm.id = null;
+      travelerForm.gender = null;
       travelerForm.reset();
     },
   });
@@ -318,6 +346,7 @@ const onAddTraveler = () => {
   travelerForm.relation_code = '';
   travelerForm.id = null;
   travelerTable.addTraveler = true;
+  travelerForm.gender = null;
 };
 
 const travelerName = ref('');
@@ -327,6 +356,7 @@ const onEditTraveler = traveler => {
   travelerForm.id = traveler.id;
   travelerForm.first_name = traveler.first_name;
   travelerForm.dob = traveler.dob;
+  travelerForm.gender = traveler.gender;
   travelerForm.relation_code = traveler.relation_code;
   travelerForm.nationality_id = traveler.nationality_id;
   travelerTable.addTraveler = true;
@@ -354,6 +384,7 @@ const editTraveler = isValid => {
       travelerForm.nationality_id = '';
       travelerForm.relation_code = '';
       travelerForm.id = null;
+      travelerForm.gender = null;
       travelerForm.reset();
     },
   });
@@ -508,6 +539,92 @@ const sendPolicyToClient = () => {
       }
     });
   }
+};
+
+
+const onTogglePlans = toggle => {
+    toggleLoader.value = true;
+
+    const planIds = useArrayUnique(
+        selectedPlans.value.map(p => {
+            return p.id;
+        }),
+    ).value;
+
+    axios
+        .post(route('manualPlanToggle', { quoteType: 'travel' }), {
+            modelType: 'Travel',
+            planIds: planIds,
+            quote_uuid: page.props.quote.uuid,
+            toggle: toggle,
+        })
+        .then(response => {
+            notification.success({
+                title: 'Plans has been updated',
+                position: 'top',
+            });
+            router.reload({
+                preserveScroll: true,
+            });
+        })
+        .catch(error => {
+            notification.error({
+                title: error,
+                position: 'top',
+            });
+        })
+        .finally(() => {
+            toggleLoader.value = false;
+            selectedPlans.value = [];
+        });
+};
+
+
+const onExportPlans = () => {
+
+    if (selectedPlans.value.length < 2 || selectedPlans.value.length > 5) {
+        notification.error({
+            title: 'Please select 2 to 5 plans to download PDF.',
+            position: 'top',
+        });
+        return;
+    }
+    exportLoader.value = true;
+    const planIds = selectedPlans.value.map(p => {
+        return p.id;
+    });
+
+    axios
+        .post(
+            '/api/v1/quotes/travel/export-plans-pdf',
+            {
+                plan_ids: planIds,
+                quote_uuid: page.props.quote.uuid,
+                modelType: 'travel',
+                quoteType:'travel'
+            },
+            {
+                responseType: 'json',
+            },
+        )
+        .then(response => {
+            const link = document.createElement('a');
+            let fileName = response.data.name;
+            link.href = response.data.data;
+            link.setAttribute('download', fileName);
+            document.body.appendChild(link);
+            link.click();
+            notification.success({
+                title: 'Plans Exported',
+                position: 'top',
+            });
+        })
+        .catch(error => {
+            console.log(error);
+        })
+        .finally(() => {
+            exportLoader.value = false;
+        });
 };
 
 const onDocDelete = name => {
@@ -997,6 +1114,12 @@ const prefillPlanId = ref(page.props.quote.prefill_plan_id);
 const handleChildUpdate = planId => {
   prefillPlanId.value = planId;
 };
+
+const genderList = [
+    { value: 'M', label: 'Male' },
+    { value: 'F', label: 'Female' },
+];
+
 </script>
 
 <template>
@@ -1279,14 +1402,8 @@ const handleChildUpdate = planId => {
           }}
           Profile
         </h3>
-        <x-button
-          size="sm"
-          color="orange"
-          v-if="quote.kyc_decision === 'Complete'"
-        >
-          KYC - Complete
-        </x-button>
-        <x-button size="sm" color="primary" v-else> KYC - Pending </x-button>
+        <x-tag color="success" v-if="quote.kyc_decision === 'Complete'"> KYC - Complete </x-tag>
+        <x-tag color="amber" v-else> KYC - Pending </x-tag>
       </div>
       <x-divider class="mb-4 mt-1" />
       <x-form @submit="updateProfileDetails" :auto-focus="false">
@@ -1592,6 +1709,9 @@ const handleChildUpdate = planId => {
         <template #item-relation="{ relation }">
           {{ relation?.text }}
         </template>
+        <template #item-gender="{ gender }">
+          {{ gender === 'M' ? 'Male' : gender === 'F' ? 'Female' : ''  }}
+        </template>
         <template #item-nationality="{ nationality }">
           {{ nationality?.text }}
         </template>
@@ -1658,6 +1778,15 @@ const handleChildUpdate = planId => {
               placeholder="Select Relation"
               class="w-full"
             />
+            <x-field label="Gender*" >
+              <x-select
+                  v-model="travelerForm.gender"
+                  placeholder="Gender"
+                  :options="genderList"
+                  :rules="[isRequired]"
+                  class="w-full"
+              />
+            </x-field>
           </div>
           <div class="text-right space-x-4 mt-8">
             <x-button size="sm" @click.prevent="modals.addTraveler = false">
@@ -2056,7 +2185,24 @@ const handleChildUpdate = planId => {
 
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div class="flex flex-wrap gap-4 justify-between items-center mb-4">
-        <h3 class="font-semibold text-primary-800 text-lg">Available Plans</h3>
+        <h3 class="font-semibold text-primary-800 text-lg">
+            Available Plans
+        </h3>
+          <div>
+              <x-button-group v-if="selectedPlans.length > 0" size="sm" class="mr-2">
+                <!--  <x-button
+                      @click.prevent="onTogglePlans(false)"
+                      :loading="toggleLoader"
+                  >
+                      Show
+                  </x-button>
+                  <x-button
+                      @click.prevent="onTogglePlans(true)"
+                      :loading="toggleLoader"
+                  >
+                      Hide
+                  </x-button>-->
+              </x-button-group>
         <x-button
           v-if="
             availablePlansTable.data.length > 0 &&
@@ -2064,10 +2210,23 @@ const handleChildUpdate = planId => {
           "
           size="sm"
           color="orange"
+          class="mr-2"
           @click.prevent="onCopyText(ecomTravelInsuranceQuoteUrl + quote.uuid)"
         >
           Copy Link
         </x-button>
+
+
+         <!-- <x-button
+              v-if="selectedPlans.length > 0"
+              size="sm"
+              color="emerald"
+              @click.prevent="onExportPlans"
+              :loading="exportLoader"
+          >
+              Download PDF
+          </x-button>-->
+          </div>
       </div>
 
       <div
@@ -2084,7 +2243,9 @@ const handleChildUpdate = planId => {
         </p>
       </div>
       <div v-else>
+        <!-- for future use  v-model:items-selected="selectedPlans" -->
         <DataTable
+
           table-class-name="tablefixed compact"
           :headers="availablePlansTable.columns"
           :items="availablePlansTable.data || []"

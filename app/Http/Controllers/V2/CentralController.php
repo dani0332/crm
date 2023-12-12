@@ -6,6 +6,8 @@ use App\Enums\CustomerTypeEnum;
 use App\Enums\QuoteTypes;
 use App\Exports\AmtQuoteExport;
 use App\Exports\BusinessQuoteExport;
+use App\Exports\CarQuoteExport;
+use App\Exports\HealthQuotesExport;
 use App\Exports\HomeQuoteExport;
 use App\Exports\LifeQuotesExport;
 use App\Exports\PersonalQuotesExport;
@@ -90,6 +92,12 @@ class CentralController extends Controller
 
             case QuoteTypes::TRAVEL->value:
                 return Excel::download(new TravelQuoteExport, 'travel_leads.xlsx');
+
+            case QuoteTypes::CAR->value:
+                return Excel::download(new CarQuoteExport, 'Car-List.xlsx');
+
+            case QuoteTypes::HEALTH->value:
+                return Excel::download(new HealthQuotesExport, 'Health-List.xlsx');
 
             default:
                 return false;

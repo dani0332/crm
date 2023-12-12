@@ -192,8 +192,8 @@ const insuredFormDetails = useForm({
   id_issuance_authority:
     props.entityDetails?.entity?.id_issuance_authority ?? null,
 
-  insured_first_name: props.quoteDetails?.customer?.insured_first_name ?? null,
-  insured_last_name: props.quoteDetails?.customer?.insured_last_name ?? null,
+  insured_first_name: props.quoteDetails?.customer?.insured_first_name ?? props.quoteType.code === 'Health' ? props.membersDetails[0]?.first_name : null,
+  insured_last_name: props.quoteDetails?.customer?.insured_last_name ?? props.quoteType.code === 'Health' ? props.membersDetails[0]?.last_name : null,
   nationality_id: props.quoteDetails?.customer.nationality_id ?? null,
   dob: props.quoteDetails?.customer.dob ?? null,
 

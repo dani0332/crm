@@ -34,6 +34,7 @@ const page = usePage();
 const rolesEnum = page.props.rolesEnum;
 const paymentsRef = ref(page.props.quoteRequest.payments);
 const hasRole = role => useHasRole(role);
+const hasAnyRole = roles => useHasAnyRole(roles);
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
 
@@ -88,6 +89,16 @@ const dateToYear = date => {
     return `${year}`;
   }
   return '';
+};
+
+const decisionStatus = {
+    [props.amlDecisionStatusEnum.PASS] : "Pass",
+    [props.amlDecisionStatusEnum.FALSE_POSITIVE] : "Pass",
+    [props.amlDecisionStatusEnum.TRUE_MATCH_ACCEPT_RISK] : "Pass",
+    [props.amlDecisionStatusEnum.ESCALATED] : "Escalated",
+    [props.amlDecisionStatusEnum.SENT_FOR_REVIEW] : "Sent For Review",
+    [props.amlDecisionStatusEnum.REJECTED] : "Rejected",
+    [props.amlDecisionStatusEnum.TRUE_MATCH_REJECT_RISK] : "Rejected",
 };
 
 onMounted(() => {
@@ -640,18 +651,12 @@ onMounted(() => {
         <template #item-full_name="{ EntityDetails }">
           {{ EntityDetails.Name.Full ?? '' }}
         </template>
+
         <template #item-status="{ match_found, decision }">
-          {{
-            match_found > 0
-              ? decision === null
-                ? amlDecisionStatusEnum.ESCALATED
-                : decision === amlDecisionStatusEnum.TRUE_MATCH_REJECT_RISK
-                ? amlDecisionStatusEnum.REJECTED
-                : amlDecisionStatusEnum.PASS
-              : amlDecisionStatusEnum.PASS
-          }}
+         {{ match_found > 0 ? (decision !== null ? decisionStatus[decision] : amlDecisionStatusEnum.ESCALATED) : amlDecisionStatusEnum.PASS}}
         </template>
-        <template v-if="hasRole(rolesEnum.COMPLIANCE)" #item-action="{ id }">
+
+        <template v-if="can(permissionsEnum.AMLDecisionUpdate)" #item-action="{ id }">
           <div class="space-x-4">
             <x-button
               size="xs"
