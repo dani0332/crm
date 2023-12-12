@@ -219,7 +219,7 @@ const sectionExpanded = computed(() => !policyIssued.value);
     <div class="p-4 rounded shadow mb-6 bg-white">
       <Collapsible :expanded="sectionExpanded">
         <template #header>
-          <div class="flex justify-between items-center flex-wrap gap-2 mb-5">
+          <div class="flex justify-between items-center flex-wrap gap-2">
             <h2 class="text-xl font-semibold">Yacht Detail</h2>            
           </div>
         </template>
@@ -375,7 +375,7 @@ const sectionExpanded = computed(() => !policyIssued.value);
     <div class="p-4 rounded shadow mb-6 bg-white">
       <Collapsible :expanded="sectionExpanded">
         <template #header>
-          <div class="flex justify-between items-center mb-4">
+          <div class="flex justify-between items-center">
             <h3 class="font-semibold text-primary-800 text-lg">
               {{
                 quote.customer_type == page.props.customerTypeEnum.Individual
