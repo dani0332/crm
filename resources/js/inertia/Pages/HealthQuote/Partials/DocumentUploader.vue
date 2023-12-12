@@ -41,13 +41,8 @@ const uploadFile = (doc, memberId, files) => {
     .post('/quotes/health/documents/store', {
       preserveScroll: true,
       preserveState: true,
-      only: ['quoteDocuments'],
       onFinish: () => {
         isUploading.value = false;
-        notification.success({
-          title: 'File Uploaded',
-          position: 'top',
-        });
       },
     });
 };

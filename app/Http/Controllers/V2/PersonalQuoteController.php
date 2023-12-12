@@ -26,7 +26,7 @@ class PersonalQuoteController extends Controller
     {
         PersonalQuoteRepository::uploadDocument($quoteId, request()->file('file'), $request->validated());
 
-        return back()->with('message', 'Document uploaded successfully');
+        return back()->with('message', 'File Uploaded');
     }
 
     /**

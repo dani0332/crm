@@ -107,7 +107,7 @@ class QuoteDocumentController extends Controller
 
         $this->quoteDocumentService->uploadQuoteDocument($request->file('file'), $request->all(), $quote);
 
-        return redirect()->back()->with('success', 'Document Uploaded Successfully');
+        return redirect()->back()->with('success', 'File Uploaded');
     }
 
     public function sendPolicyDocument($quoteType, $quoteUuId)
