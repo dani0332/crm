@@ -113,7 +113,7 @@ const rolesEnum = page.props.rolesEnum;
         <div class="w-full md:w-1/5">
           <x-input
             v-model="planDetailsForm.price_vat_applicable"
-            :rules="props.quoteType == quoteTypeCodeEnum.Life ? [] : [isRequired]"
+            :rules="props.quoteType == quoteTypeCodeEnum.Life || props.quoteType == quoteTypeCodeEnum.Business ? [] : [isRequired]"
             :disabled="props.quoteType == quoteTypeCodeEnum.Life && props.quoteType != quoteTypeCodeEnum.Business"
             :error="planDetailsForm.errors.price_vat_applicable"
             label="Price (VAT Applicable)"
