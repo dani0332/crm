@@ -780,8 +780,20 @@ const linkEntity = () => {
       :activities="activities"
       :advisors="advisors"
       :quote-type="quoteType"
-    />
+    />  
 
+    <QuoteStatus
+      :quote="quote"
+      :quote-type="quoteType"
+      :quote-statuses="quoteStatuses"
+      :lost-reasons="lostReasons"
+      :quoteStatusEnum="quoteStatusEnum"
+    />
+    <PlanDetails
+      :insuranceProviders="insuranceProviders"
+      :quote="quote"
+      :quoteType="quoteType"
+    />
     <PaymentTableNew 
 			v-if="hasRole(rolesEnum.BetaUser)"
 			:quoteType="quoteType"
@@ -804,14 +816,6 @@ const linkEntity = () => {
       :personal-plans="personalPlans"
     />
 
-    <QuoteStatus
-      :quote="quote"
-      :quote-type="quoteType"
-      :quote-statuses="quoteStatuses"
-      :lost-reasons="lostReasons"
-      :quoteStatusEnum="quoteStatusEnum"
-    />
-
     <QuoteDocuments
       :document-types="documentTypes"
       :quote-documents="quote.documents || []"
@@ -821,11 +825,7 @@ const linkEntity = () => {
 
     <QuotePolicy :quote="quote" :can="can" :quoteStatusEnum="quoteStatusEnum" />
 
-    <PlanDetails
-      :insuranceProviders="insuranceProviders"
-      :quote="quote"
-      :quoteType="quoteType"
-    />
+    
 
     <EmbeddedProducts
       :data="embeddedProducts"

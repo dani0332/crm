@@ -1500,15 +1500,16 @@ const getCaptureOption = computed(() => {
 
 const getPlanName = computed(() => {
   const plan = planDetail;
-  return plan ? plan.text : 'Not Available';
+  return (quoteTypesToCheck.includes(props.quoteType) && plan) ? plan.text : 'Not Available';
 });
 
 const providerName = computed(() => {
   const plan = planDetail;
-  if (plan && plan.insurance_provider) {
-    return plan.insurance_provider.text;
-  }
-  return 'Not Available';
+    if (quoteTypesToCheck.includes(props.quoteType) && plan.insurance_provider) {
+      return plan ? plan.insurance_provider.text : 'Not Available';
+    } else {
+      return plan ? plan.text : 'Not Available';
+    }  
 });
 
 const providerId = computed(() => {

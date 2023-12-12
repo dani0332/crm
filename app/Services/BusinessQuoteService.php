@@ -138,7 +138,10 @@ class BusinessQuoteService extends BaseService
 
     public function getEntityPlain($id)
     {
-        return BusinessQuote::where('id', $id)->first();
+        //return BusinessQuote::where('id', $id)->first();
+        return BusinessQuote::where('id', $id)->with(['payments.paymentSplits' => function ($query) {
+            $query->orderBy('sr_no', 'asc');
+        }, 'payments.paymentSplits.paymentStatus', 'payments.paymentSplits.paymentMethod', 'payments.paymentSplits.documents'])->first();
     }
 
     public function updateChildRecord($id)
