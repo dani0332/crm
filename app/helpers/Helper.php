@@ -584,6 +584,9 @@ if (! function_exists('getModelNameForDocument')) {
             case in_array($quoteType, [quoteTypeCode::Pet, quoteTypeCode::Bike, quoteTypeCode::Cycle, quoteTypeCode::Yacht]):
                 $quoteType = quoteTypeCode::PERSONAL;
                 break;
+            case quoteTypeCode::Travel:
+                $quoteType = quoteTypeCode::Travel;
+                break;
             default:
                 if ($read) {
                     $quoteType = 'Personal';

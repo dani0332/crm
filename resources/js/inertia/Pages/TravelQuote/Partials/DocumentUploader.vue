@@ -22,7 +22,13 @@ const docForm = useForm({
 
 
 const uploadFile = (doc, memberId, files) => {
-  if (files.length == 0) return;
+  if (files.length == 0) {
+    notification.error({
+      title: 'Incorrect file type\nPlease upload a ' + doc.accepted_files + ' file',
+      position: 'top',
+    });
+    return false;
+  }
   isUploading.value = true;
   docForm
     .transform(data => ({
@@ -36,13 +42,16 @@ const uploadFile = (doc, memberId, files) => {
     .post('/quotes/travel/documents/store', {
       preserveScroll: true,
       preserveState: true,
-      only: ['quoteDocuments'],
-      onFinish: () => {
-        isUploading.value = false;
-        notification.success({
-          title: 'File Uploaded',
+      onError: errors => {
+        docForm.setError(errors.error);
+        notification.error({
+          title: 'File upload failed',
           position: 'top',
         });
+      },
+
+      onFinish: () => {
+        isUploading.value = false;
       },
     });
 };
@@ -51,6 +60,11 @@ const uploadFile = (doc, memberId, files) => {
 <template>
   <div>
     <div>
+      <x-alert color="error" class="mb-5" v-if="Object.keys(docForm.errors).length">
+        <ul>
+          <li v-for="error in docForm?.errors">{{ error }}</li>
+        </ul>
+      </x-alert>
       <x-tab-group v-model="memberTabs" class="pb-10" variant="block">
         <x-tab value="quote-documents" label="Documents">
           <div

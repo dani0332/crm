@@ -481,10 +481,6 @@ const quoteDocumentsTable = reactive({
       text: 'Created By',
       value: 'created_by_name',
     },
-    {
-      text: 'Action',
-      value: 'action',
-    },
   ],
 });
 
