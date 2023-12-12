@@ -21,15 +21,24 @@ const isEdit = computed(() => {
 });
 
 const leadForm = useForm({
-  id: null,
-  tm_lead_types_id: null,
-  customer_name: null,
-  tm_insurance_types_id: null,
-  email_address: null,
-  phone_number: null,
-  enquiry_date: null,
-  allocation_date: null,
-  dob: null,
+  id: props.tmlead?.id ?? null,
+  tm_lead_types_id: props.tmlead?.tm_lead_types_id ?? null,
+  customer_name: props.tmlead?.customer_name ?? null,
+  tm_insurance_types_id: props?.tmlead?.tm_insurance_types_id ?? null,
+  email_address: props.tmlead?.email_address ?? null,
+  phone_number: props.tmlead?.phone_number ?? null,
+  enquiry_date: props.tmlead?.enquiry_date ?? null,
+  allocation_date: props.tmlead?.allocation_date ?? null,
+  dob: props.tmlead?.dob ?? null,
+  car_type_insurance_id: props.tmlead?.car_type_insurance_id ?? null,
+  years_of_driving_id: props.tmlead?.years_of_driving_id ?? null,
+  car_make_id: props.tmlead?.car_make_id ?? null,
+  car_model_id: props.tmlead?.car_model_id ?? null,
+  year_of_manufacture: props.tmlead?.year_of_manufacture ?? null,
+  emirates_of_registration_id:
+    props.tmlead?.emirates_of_registration_id ?? null,
+  car_value: props.tmlead?.car_value ?? null,
+  nationality_id: props.tmlead?.nationality_id ?? null,
 });
 
 function onSubmit(isValid) {
@@ -130,9 +139,89 @@ function onSubmit(isValid) {
           :rules="[isRequired]"
         />
       </x-field>
-      <!-- <x-field label="DOB">
+      <!-- <template> -->
+      <x-field label="DOB">
         <DatePicker class="w-full" v-model="leadForm.dob" />
-      </x-field> -->
+      </x-field>
+      <x-field label="Car Type of Insurance" required>
+        <x-select
+          v-model="leadForm.car_type_insurance_id"
+          :options="
+            carTypeInsurances.map(item => ({
+              value: item.id,
+              label: item.text,
+            }))
+          "
+          class="w-full"
+        />
+      </x-field>
+      <x-field label="Years of driving" required>
+        <x-select
+          v-model="leadForm.years_of_driving_id"
+          :options="
+            yearsOfDrivings.map(item => ({
+              value: item.id,
+              label: item.text,
+            }))
+          "
+          class="w-full"
+        />
+      </x-field>
+      <x-field label="Car Make" required>
+        <x-select
+          v-model="leadForm.car_make_id"
+          :options="
+            carMakes.map(item => ({
+              value: item.id,
+              label: item.text,
+            }))
+          "
+          class="w-full"
+        />
+      </x-field>
+      <x-field label="Car Model" required>
+        <x-select
+          v-model="leadForm.car_model_id"
+          :options="
+            carModels.map(item => ({
+              value: item.id,
+              label: item.text,
+            }))
+          "
+          class="w-full"
+        />
+      </x-field>
+      <x-field label="Year of Manufacture">
+        <DatePicker class="w-full" v-model="leadForm.year_of_manufacture" />
+      </x-field>
+      <x-field label="Emirates of Registration" required>
+        <x-select
+          v-model="leadForm.emirates_of_registration_id"
+          :options="
+            emiratesOfRegistrations.map(item => ({
+              value: item.id,
+              label: item.text,
+            }))
+          "
+          class="w-full"
+        />
+      </x-field>
+      <x-field label="Car Value" required>
+        <x-input v-model="leadForm.car_value" type="text" class="w-full" />
+      </x-field>
+      <x-field label="Nationality" required>
+        <x-select
+          v-model="leadForm.nationality_id"
+          :options="
+            nationalities.map(item => ({
+              value: item.id,
+              label: item.text,
+            }))
+          "
+          class="w-full"
+        />
+      </x-field>
+      <!-- </template> -->
     </div>
 
     <x-divider class="my-4" />

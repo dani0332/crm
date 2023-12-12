@@ -12,8 +12,11 @@ const page = usePage();
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
 
+const { isRequired } = useRules();
+
 const leadForm = useForm({
   id: props.tmlead.id ?? null,
+  tmLeadId: props.tmlead.id ?? null,
   no_answer_count: props.tmlead?.no_answer_count ?? null,
   tm_lead_statuses_id: props.tmlead?.tm_lead_statuses_id ?? null,
   next_followup_date: props.tmlead?.next_followup_date ?? null,
@@ -22,22 +25,16 @@ const leadForm = useForm({
 
 function onSubmit(isValid) {
   if (isValid) {
-    leadForm.clearErrors();
-    const url = route(`${props.tmlead.id}/tmLeadUpdate`);
-
-    leadForm.submit('post', url, {
-      onError: errors => {
-        leadForm.setError(errors);
-      },
-      onSuccess: response => {
-        leadForm.reset();
-      },
+    leadForm.get(route('tmLeadUpdate', props.tmlead.id), {
+      preserveScroll: true,
+      onSuccess: () => {},
+      onError: errors => {},
     });
   }
 }
 </script>
 <template>
-  <Head title="TeleMarkating" />
+  <Head title="TeleMarkating Details" />
   <div class="flex justify-between items-center flex-wrap gap-2 mb-5">
     <h2 class="text-xl font-semibold">TeleMarkating Detail</h2>
     <div class="flex gap-2">
@@ -45,6 +42,7 @@ function onSubmit(isValid) {
         :href="route('tmleads-delete', tmlead.id)"
         preserve-scroll
         v-if="can(permissionsEnum.TeleMarketingDelete)"
+        method="delete"
       >
         <x-button size="sm" color="primary" tag="div"> Delete </x-button>
       </Link>
@@ -228,11 +226,12 @@ function onSubmit(isValid) {
           />
         </x-field>
       </div>
+      <div class="flex justify-end">
+        <x-button type="submit" class="mt-4" color="emerald" size="sm">
+          Update
+        </x-button>
+      </div>
     </x-form>
-
-    <div class="flex justify-end">
-      <x-button class="mt-4" color="emerald" size="sm"> Update </x-button>
-    </div>
   </div>
   <AuditLogs :type="'App\\Models\\TmLead'" :id="$page.props.tmlead.id" />
 </template>
