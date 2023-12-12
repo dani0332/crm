@@ -114,6 +114,12 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::post('/reports/fetch-advisor-by-team', [ReportsController::class, 'fetchAdvisorListByTeam']);
     Route::post('/reports/fetch-subteams-advisor-by-team', [ReportsController::class, 'fetchSubTeamsAdvisorListByTeam']);
 
+    Route::get('update-member-key-quote-document', function () {
+        if (auth()->user()->hasRole(\App\Enums\RolesEnum::Admin)) {
+            \App\Jobs\UpdateMemberKeyHealthDocsJob::dispatch();
+        }
+    });
+
     Route::group(['middleware' => ['check_route_access']], function () {
         Route::post('update-team-allocation-threshold', [AllocationThresholdController::class, 'updateAllocation']);
         Route::get('/accumulative-dashboard', [DashboardController::class, 'renderMainDashboard'])->name('main-dashboard-view');
@@ -291,8 +297,6 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::resource('health', CRUDController::class);
         Route::resource('car', CRUDController::class);
         Route::get('health-cards', [HealthQuoteController::class, 'cardsView'])->name('health.cards');
-        Route::get('health-export', [CRUDController::class, 'exportHealthLeads'])->name('health.export');
-        Route::get('car-export', [CRUDController::class, 'exportCarLeads'])->name('car.export');
 
         Route::get('home-cards', [CRUDController::class, 'cardsViewHome'])->name('home-cardView');
         Route::resource('home', CRUDController::class);
@@ -430,7 +434,6 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::get('aml/{quoteTypeId}/details/{quoteRequestId}/quoteUpdate', [$controller, 'quoteUpdate'])->name('quoteUpdate');
         Route::post('aml/{quoteTypeId}/details/{quoteRequestId}/update-customer-details', [$controller, 'updateCustomerDetails'])->name('aml-update-customer-details');
         Route::post('aml/{quoteTypeId}/details/{quoteRequestId}/update-entity-details', [$controller, 'updateEntityDetails'])->name('aml-update-entity-details');
-        Route::post('aml/insured-payer-update', [$controller, 'insuredPayerDetailsUpdate'])->name('insuredPayerDetailsUpdate');
         Route::get('aml/download/history', [$controller, 'sanctionListHistory'])->name('sanctionListHistory');
         Route::get('aml/upload/uae', [$controller, 'uploadUaeSanctionList'])->name('uploadUaeSanctionList');
         Route::post('aml/upload/uae-list', [$controller, 'uaeSanctionListUpload'])->name('uaeSanctionListUpload');
@@ -453,16 +456,16 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::resource('age', AgeDiscountController::class);
     });
 
-    Route::group(['prefix' => 'telemarketing'], function () {
-        Route::resource('tmleads', TmLeadController::class);
-        Route::resource('tminsurancetype', TmInsuranceTypeController::class);
-        Route::resource('tmcallstatus', TmCallStatusController::class);
-        Route::resource('tmleadstatus', TmLeadStatusController::class);
-        Route::get('/car-model', [TmLeadController::class, 'carModelBasedOnCarMake']);
-        Route::resource('tmuploadlead', TmUploadLeadController::class);
-        Route::get('tmleads/{tmLeadID}/tmLeadUpdate', [TmLeadController::class, 'tmLeadUpdate'])->name('tmLeadUpdate');
-        Route::get('/tmLeadsAssign', [TmLeadController::class, 'tmLeadsAssign']);
-    });
+    // Route::group(['prefix' => 'telemarketing'], function () {
+    //     Route::resource('tmleads', TmLeadController::class);
+    //     Route::resource('tminsurancetype', TmInsuranceTypeController::class);
+    //     Route::resource('tmcallstatus', TmCallStatusController::class);
+    //     Route::resource('tmleadstatus', TmLeadStatusController::class);
+    //     Route::get('/car-model', [TmLeadController::class, 'carModelBasedOnCarMake']);
+    //     Route::resource('tmuploadlead', TmUploadLeadController::class);
+    //     Route::get('tmleads/{tmLeadID}/tmLeadUpdate', [TmLeadController::class, 'tmLeadUpdate'])->name('tmLeadUpdate');
+    //     Route::get('/tmLeadsAssign', [TmLeadController::class, 'tmLeadsAssign']);
+    // });
 
     Route::get('/car-model', [AjaxController::class, 'carModelBasedOnCarMake']);
     Route::get('/car-make', [AjaxController::class, 'getCarMake']);
@@ -484,6 +487,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::post('update-car-plan-details', [CarQuoteController::class, 'updateCarPlanDetails']);
 
     Route::resource('members', MembersDetailController::class);
+    Route::post('members/update', [MembersDetailController::class, 'uboUpdate']);
     Route::get('/insurance-provider-plans', [ClaimController::class, 'carPlansByInsuranceProvider']);
     Route::get('/insurance-provider-plans-health', [HealthQuoteController::class, 'plansByInsuranceProvider']);
     Route::get('/insurance-provider-networks', [HealthQuoteController::class, 'networksByInsuranceProvider']);

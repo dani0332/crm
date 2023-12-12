@@ -6,26 +6,25 @@ use App\Services\CRUDService;
 use App\Services\HealthQuoteService;
 use Carbon\Carbon;
 use Maatwebsite\Excel\Concerns\Exportable;
-use Maatwebsite\Excel\Concerns\FromQuery;
+use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
 
-class HealthQuotesExport implements FromQuery, ShouldAutoSize, WithHeadings, WithMapping
+class HealthQuotesExport implements FromCollection, ShouldAutoSize, WithHeadings, WithMapping
 {
     use Exportable;
 
     private $genderOptions;
 
-    public function __construct($query)
+    public function __construct()
     {
         $this->genderOptions = app(CRUDService::class)->getGenderOptions();
-        $this->query = $query;
     }
 
-    public function query()
+    public function collection()
     {
-        return $this->query;
+        return app(HealthQuoteService::class)->getGridData()->get();
     }
 
     public function headings(): array
@@ -56,9 +55,7 @@ class HealthQuotesExport implements FromQuery, ShouldAutoSize, WithHeadings, Wit
             'Nationality',
             'Age Bands',
             'Emirates of Visa',
-            'Member Category',
-            'Salary Band',
-            'HEALTH INSURANCE',
+            'FOR WHOM DO YOU REQUIRE HEALTH INSURANCE?',
             'TYPE OF PLAN',
             'Provider Name',
         ];
@@ -66,8 +63,6 @@ class HealthQuotesExport implements FromQuery, ShouldAutoSize, WithHeadings, Wit
 
     public function map($quote): array
     {
-        $ecomDetails = app(HealthQuoteService::class)->getEcomDetails($quote);
-
         return [
             $quote->code,
             $quote->first_name,
@@ -94,11 +89,9 @@ class HealthQuotesExport implements FromQuery, ShouldAutoSize, WithHeadings, Wit
             $quote->nationality_id_text,
             Carbon::parse($quote->dob)->age,
             $quote->emirate_of_your_visa_id_text,
-            $quote->member_category_id_text,
-            $quote->salary_band_id_text,
             $quote->customer_type,
-            $ecomDetails['planName'] ?? '',
-            $ecomDetails['providerName'] ?? '',
+            $quote->health_plan_name_text,
+            $quote->plan_provider_name_text,
         ];
     }
 }

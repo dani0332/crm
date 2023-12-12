@@ -571,7 +571,7 @@ if (! function_exists('getRepositoryObject')) {
 }
 
 if (! function_exists('getModelNameForDocument')) {
-    function getModelNameForDocument($quoteType = 'personal', $read= false)
+    function getModelNameForDocument($quoteType = 'personal', $read = false)
     {
         $quoteType = ucfirst($quoteType);
         switch ($quoteType) {
@@ -592,6 +592,15 @@ if (! function_exists('getModelNameForDocument')) {
                     $quoteType = 'Personal';
                 }
         }
-        return 'App\\Models\\' . $quoteType . 'Quote';
+
+        return 'App\\Models\\'.$quoteType.'Quote';
+    }
+}
+
+if (! function_exists('checkModifiedRecord')) {
+    function checkModifiedRecord($firstDate, $secondDate): bool
+    {
+        return Carbon::parse($firstDate)->format(config('constants.datetime_format')) !==
+            Carbon::parse($secondDate)->format(config('constants.datetime_format'));
     }
 }

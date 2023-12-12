@@ -193,7 +193,7 @@ class QuoteDocumentService extends BaseService
 
     public function getQuoteDocuments($quoteType, $recordId)
     {
-        $quoteTypeDoc= getModelNameForDocument($quoteType);
+        $quoteTypeDoc = getModelNameForDocument($quoteType);
         $quote = app()->make($quoteTypeDoc)::where('id', $recordId)->first();
         if ($quote && $quote->documents) {
             $quote->documents->load('createdBy:id,name');
@@ -215,6 +215,7 @@ class QuoteDocumentService extends BaseService
             default:
                 $quoteTypeDoc = $quoteType;
         }
+
         return $quoteTypeDoc;
     }
 }

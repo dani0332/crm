@@ -5,7 +5,6 @@ namespace App\Repositories;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
-use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Facades\Capi;
 use App\Models\QuoteDocument;
@@ -19,7 +18,7 @@ class PersonalQuoteRepository extends BaseRepository
 {
     public function model()
     {
-        return getModelNameForDocument(request()->folder_path ?? "");
+        return getModelNameForDocument(request()->folder_path ?? '');
     }
 
     /**
@@ -64,7 +63,7 @@ class PersonalQuoteRepository extends BaseRepository
     public function fetchUploadDocument($id, $file, $data)
     {
         $query = DocumentTypeRepository::where('code', $data['document_type_code']);
-        if (request()->quote_type_id){
+        if (request()->quote_type_id) {
             $query->where('quote_type_id', request()->quote_type_id);
         }
         $documentType = $query->first();

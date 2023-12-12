@@ -57,35 +57,37 @@ const decisionOptions = [
 ];
 
 function submitDecision(decision) {
-  submitDecisionLoading.value = true;
-  let quoteStatusCode = passingDecisions.includes(decision)
-    ? props.quoteStatusCode.AMLScreeningCleared
-    : props.quoteStatusCode.AMLScreeningFailed;
-  let url = `${props.aml.quote_type_id}/details/${props.aml.quote_request_id}
+  if (complianceRules()) {
+    submitDecisionLoading.value = true;
+    let quoteStatusCode = passingDecisions.includes(decision)
+        ? props.quoteStatusCode.AMLScreeningCleared
+        : props.quoteStatusCode.AMLScreeningFailed;
+    let url = `${props.aml.quote_type_id}/details/${props.aml.quote_request_id}
     /quoteStatusUpdate/${quoteStatusCode}?notes=${decisionNotes.value}&aml_id=${props.aml.id}&aml_decision=${decision}
     &decisonsForUpdatePortal=[${JSON.stringify(decisionSelected.value)}]&result_id=${JSON.parse(props.aml.results)[0].ResultID}`;
 
-  axios
-    .get(url)
-    .then(response => {
-      submitDecisionLoading.value = false;
-      decisionNotesModal.value = false;
-      if (response.status) {
-        notification.success({
-          title: 'Quote Status Updated',
-          position: 'top',
+    axios
+        .get(url)
+        .then(response => {
+          submitDecisionLoading.value = false;
+          decisionNotesModal.value = false;
+          if (response.status) {
+            notification.success({
+              title: 'Quote Status Updated',
+              position: 'top',
+            });
+            window.location = `/kyc/aml/${props.aml.quote_type_id}/details/${props.aml.quote_request_id}`;
+          } else {
+            notification.error({
+              title: 'Quote Status not Updated',
+              position: 'top',
+            });
+          }
+        })
+        .catch(err => {
+          console.log(err);
         });
-        window.location = `/kyc/aml/${props.aml.quote_type_id}/details/${props.aml.quote_request_id}`;
-      } else {
-        notification.error({
-          title: 'Quote Status not Updated',
-          position: 'top',
-        });
-      }
-    })
-    .catch(err => {
-      console.log(err);
-    });
+  }
 }
 
 const submitAMLDecision = decision => {
@@ -104,31 +106,40 @@ const setSelectedOption = (e, item) => {
 
   if (index != -1) amlResults.value[index].decision = e;
 
-  if(e === props.amlDecisionStatusCode.TRUE_MATCH && props.responseFrom === 'Bridger') {
+  let data = {
+      aml_id : props.aml.id,
+      aml_quote_url : `/kyc/aml/${props.aml.quote_type_id}/details/${props.aml.quote_request_id}`,
+      quote_ref_id : props.aml.quote_request_id,
+      customer_entity_name : props.aml.input,
+      quote_type_text : props.aml.quote_type_text,
+      bridger_response: props.aml.results_found,
+      last_updated_at : props.aml.updated_at,
+      bridger_match_id : item.ID,
+      bridger_decision_type: e
 
-      // Send Bridger Response to Compliance Super User when Decision True Match
-      let data = {
-          aml_quote_url : `/kyc/aml/${props.aml.quote_type_id}/details/${props.aml.quote_request_id}`,
-          quote_ref_id : props.aml.quote_request_id,
-          customer_entity_name : props.aml.input,
-          quote_type_text : props.aml.quote_type_text,
-          bridger_response: props.aml.results_found,
-      };
+  };
 
-      axios.post(`/kyc/send-bridger-response`, data)
-          .then(res => {
-              console.log(res)
+  axios.post(`/kyc/send-bridger-response`, data)
+      .then(res => {
+          if (res.data.status === 'success') {
+              checkDecisionLockStatus.value = res.data.result_state === props.amlDecisionStatusCode.SENT_FOR_REVIEW;
               notification.success({
                   title: res.data.message,
                   position: 'top',
               });
-          })
-          .catch(err => {
-              console.log(err);
-          })
-  }
-
+          } else if(res.data.status === 'error') {
+              notification.error({
+                  title: res.data.message,
+                  position: 'top',
+              });
+          }
+      })
+      .catch(err => {
+          console.log(err);
+      })
 };
+
+const checkDecisionLockStatus = ref((props.aml.decision === props.amlDecisionStatusCode.TRUE_MATCH_REJECT_RISK || props.aml.decision === props.amlDecisionStatusCode.SENT_FOR_REVIEW ) && hasRole(rolesEnum.COMPLIANCE));
 
 const isTrue = computed(() => {
   return amlResults.value.some(x => x.decision == 'TrueMatch');
@@ -137,6 +148,18 @@ const isTrue = computed(() => {
 const falsePositive = computed(() => {
   return amlResults.value.every(x => x.decision == 'FalsePositive');
 });
+
+const notesRequired = ref(false);
+
+function complianceRules () {
+  if((hasRole(rolesEnum.COMPLIANCE) || hasRole(rolesEnum.ComplianceSuperUser)) && decisionNotes.value == '') {
+    notesRequired.value = 'This field is required';
+    return false;
+  }
+
+  notesRequired.value = false;
+  return true;
+}
 
 </script>
 
@@ -230,6 +253,7 @@ const falsePositive = computed(() => {
               ]"
               placeholder="Select Result"
               class="w-full"
+              :disabled="checkDecisionLockStatus"
               @update:modelValue="setSelectedOption($event, item)"
               size="xs"
             />
@@ -360,6 +384,7 @@ const falsePositive = computed(() => {
           v-model="decisionNotes"
           placeholder="Notes"
           class="w-full"
+          :error="notesRequired"
         ></x-textarea>
 
         <template #actions>

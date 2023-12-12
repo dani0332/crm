@@ -42,7 +42,7 @@ const UBORelationOptions = computed(() => {
     }));
 });
 
-const uboMembers = ref(props.uboDetails);
+const uboMembers = ref(props.UBOsDetails);
 const computedUboMembers = computed(() => {
     return uboMembers && uboMembers.value && uboMembers.value.filter(x => !x.is_third_party_payer);
 });

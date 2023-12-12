@@ -2,7 +2,6 @@
 
 namespace App\Http\Requests;
 
-use App\Enums\PaymentStatusEnum;
 use App\Models\DocumentType;
 use App\Repositories\PersonalQuoteRepository;
 use Illuminate\Foundation\Http\FormRequest;
@@ -45,11 +44,10 @@ class PersonalQuoteDocumentRequest extends FormRequest
      */
     public function withValidator($validator)
     {
-        $quoteId= '';
-        if (!empty(request()->quoteId)){
+        $quoteId = '';
+        if (! empty(request()->quoteId)) {
             $quoteId = request()->quoteId;
-        }
-        else if (!empty(request()->quote_id)){
+        } elseif (! empty(request()->quote_id)) {
             $quoteId = request()->quote_id;
         }
         $validator->after(function ($validator) use ($quoteId) {

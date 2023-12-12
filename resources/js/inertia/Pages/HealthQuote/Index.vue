@@ -386,7 +386,7 @@ onMounted(() => {
             v-if="canExport"
             size="sm"
             color="emerald"
-            :href="`/quotes/health-export?${objToUrl(filters)}`"
+            :href="`/health/leads-export?${objToUrl(filters)}`"
             class="justify-self-start"
           >
             Export

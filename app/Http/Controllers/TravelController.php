@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Enums\AmlSearchType;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\LookupsEnum;
@@ -20,13 +19,12 @@ use App\Http\Requests\StoreTravelRequest;
 use App\Http\Requests\TravelRenewalsUploadRequest;
 use App\Http\Requests\UpdateTravelRequest;
 use App\Models\Emirate;
-use App\Models\Entity;
-use App\Models\Nationality;
 use App\Repositories\CustomerMembersRepository;
 use App\Repositories\EmbeddedProductRepository;
 use App\Repositories\InsuranceProviderRepository;
 use App\Repositories\LookupRepository;
 use App\Repositories\NationalityRepository;
+use App\Services\AMLService;
 use App\Services\CRUDService;
 use App\Services\DropdownSourceService;
 use App\Services\LookupService;
@@ -118,11 +116,12 @@ class TravelController extends Controller
             ];
         })->values();
 
-        if ($record->quote_status_id !== QuoteStatusEnum::AMLScreeningCleared) {
+        if (AMLService::checkAMLStatusFailed(self::TYPE_ID, $record->id)) {
             $dropdownSource['quote_status_id'] = collect($dropdownSource['quote_status_id'])->filter(function ($value) {
                 return $value['id'] != QuoteStatusEnum::TransactionApproved;
             })->values();
         }
+
         $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypeId::Travel);
         $filteredInsuranceProviders = [];
         if (! empty($insuranceProviders)) {
@@ -146,7 +145,6 @@ class TravelController extends Controller
             $payment->approved_button = $payment->payment_status_id == PaymentStatusEnum::PAID;
         });
 
-        $isRenewalUser = auth()->user()->isRenewalUser();
         $renewalAdvisors = $this->travelQuoteService->getRenewalAdvisors();
         $this->travelQuoteService->fillData();
         $nationalities = NationalityRepository::withActive()->get();
@@ -178,40 +176,11 @@ class TravelController extends Controller
         $fields = array_diff_key($fields, array_flip($removeFields));
 
         $embeddedProducts = EmbeddedProductRepository::byQuoteType(self::TYPE_ID, $record->id);
-        $uboDetails = CustomerMembersRepository::getBy('quote_id', $record->id, QuoteTypes::TRAVEL->name, CustomerTypeEnum::Entity);
+        $uboDetails = CustomerMembersRepository::getBy($record->id, QuoteTypes::TRAVEL->name, CustomerTypeEnum::Entity);
         $uboRelations = LookupRepository::where('key', LookupsEnum::UBO_RELATION)->get();
         $emirates = Emirate::where('is_active', 1)->select('id', 'text')->get();
 
-        $amlQuoteStatus = $this->crudService->checkAmlQuoteStatus($record->quote_status_id);
-        $countries = Nationality::all();
-        $entities = $residentialStatus = $legalStructure = $idDocumentType = $modeOfContact = $employmentSectors = $companyPosition = $issuancePlace = $issuanceAuthorities = null;
-        if ($record->customer_type == AmlSearchType::ENTITY) {
-            $entities = Entity::all();
-            $legalStructure = $this->lookupService->getLegalStructure();
-            $idDocumentType = $this->lookupService->getEntityDocumentTypes();
-            $issuancePlace = $this->lookupService->getIssuancePlaces();
-            $issuanceAuthorities = $this->lookupService->getIssuanceAuthorities();
-        } else {
-            $idDocumentType = $this->lookupService->getIndividualDocumentTypes();
-            $modeOfContact = $this->lookupService->getModeOfContact();
-            $employmentSectors = $this->lookupService->getEmploymentSector();
-            $residentialStatus = $this->lookupService->getResidentialStatus();
-            $companyPosition = $this->lookupService->getCompanyPosition();
-        }
-
         return inertia('TravelQuote/Show', [
-            'amlQuoteStatus' => $amlQuoteStatus,
-            'countryList' => $countries,
-            'entities' => $entities,
-            'legalStructure' => $legalStructure,
-            'idDocumentType' => $idDocumentType,
-            'issuancePlace' => $issuancePlace,
-            'issuanceAuthorities' => $issuanceAuthorities,
-            'modeOfContact' => $modeOfContact,
-            'employmentSectors' => $employmentSectors,
-            'residentialStatus' => $residentialStatus,
-            'companyPosition' => $companyPosition,
-            'quoteType' => quoteTypeCode::Travel,
             'quote' => $record,
             'fieldsToDisplay' => $fields,
             'modelType' => $this->genericModel->modelType,
@@ -224,7 +193,7 @@ class TravelController extends Controller
             'assignmentTypes' => $assignmentTypes,
             'genderOptions' => $this->crudService->getGenderOptions(),
             'lostReasons' => $this->lookupService->getLostReasons(),
-            'travelers' => CustomerMembersRepository::getBy('quote_id', $record->id, QuoteTypes::TRAVEL->name),
+            'travelers' => CustomerMembersRepository::getBy($record->id, QuoteTypes::TRAVEL->name),
             'ecomDetails' => $ecomDetails,
             'quoteDocuments' => array_values($quoteDocuments->toArray()),
             'documentTypes' => $documentTypes,
@@ -243,7 +212,6 @@ class TravelController extends Controller
             'embeddedProducts' => $embeddedProducts,
             'canAddBatchNumber' => auth()->user()->hasRole(RolesEnum::TravelManager),
             'message' => session('message'),
-            'quoteType' => QuoteTypes::TRAVEL,
             'permissions' => [
                 'admin' => auth()->user()->hasAnyRole([RolesEnum::Admin]),
                 'isManualAllocationAllowed' => auth()->user()->isAdmin() || auth()->user()->hasRole(RolesEnum::LeadPool) ? true : false,

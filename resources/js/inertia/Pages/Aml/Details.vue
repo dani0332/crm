@@ -34,6 +34,7 @@ const page = usePage();
 const rolesEnum = page.props.rolesEnum;
 const paymentsRef = ref(page.props.quoteRequest.payments);
 const hasRole = role => useHasRole(role);
+const hasAnyRole = roles => useHasAnyRole(roles);
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
 
@@ -88,6 +89,16 @@ const dateToYear = date => {
     return `${year}`;
   }
   return '';
+};
+
+const decisionStatus = {
+    [props.amlDecisionStatusEnum.PASS] : "Pass",
+    [props.amlDecisionStatusEnum.FALSE_POSITIVE] : "Pass",
+    [props.amlDecisionStatusEnum.TRUE_MATCH_ACCEPT_RISK] : "Pass",
+    [props.amlDecisionStatusEnum.ESCALATED] : "Escalated",
+    [props.amlDecisionStatusEnum.SENT_FOR_REVIEW] : "Sent For Review",
+    [props.amlDecisionStatusEnum.REJECTED] : "Rejected",
+    [props.amlDecisionStatusEnum.TRUE_MATCH_REJECT_RISK] : "Rejected",
 };
 
 onMounted(() => {
@@ -590,7 +601,7 @@ onMounted(() => {
 
     <!-- AML Screening Models Start -->
     <EntityModel
-        v-if="props.kycStatus === 'Entity'"
+        v-if="props.kycStatus === 'ENT'"
         v-model="modals.insuranceForm"
         :quoteType="quoteType"
         :quoteDetails="quoteRequest"
@@ -640,18 +651,12 @@ onMounted(() => {
         <template #item-full_name="{ EntityDetails }">
           {{ EntityDetails.Name.Full ?? '' }}
         </template>
+
         <template #item-status="{ match_found, decision }">
-          {{
-            match_found > 0
-              ? decision === null
-                ? amlDecisionStatusEnum.ESCALATED
-                : decision === amlDecisionStatusEnum.TRUE_MATCH_REJECT_RISK
-                ? amlDecisionStatusEnum.REJECTED
-                : amlDecisionStatusEnum.PASS
-              : amlDecisionStatusEnum.PASS
-          }}
+         {{ match_found > 0 ? (decision !== null ? decisionStatus[decision] : amlDecisionStatusEnum.ESCALATED) : amlDecisionStatusEnum.PASS}}
         </template>
-        <template v-if="hasRole(rolesEnum.COMPLIANCE)" #item-action="{ id }">
+
+        <template v-if="can(permissionsEnum.AMLDecisionUpdate)" #item-action="{ id }">
           <div class="space-x-4">
             <x-button
               size="xs"
@@ -665,44 +670,6 @@ onMounted(() => {
         </template>
       </DataTable>
     </div>
-
-    <!-- <div class="p-4 rounded shadow mb-6 bg-white">
-      <div class="flex flex-wrap gap-3 justify-between items-center mb-4">
-        <h3 class="font-semibold text-primary-800 text-lg">Payer Details</h3>
-      </div>
-      <x-divider class="mb-4 mt-1" />
-      <DataTable
-        table-class-name="tablefixed"
-        :headers="payersTableHeader"
-        :loading="loader.table"
-        :items="paymentsRef || []"
-        border-cell
-        hide-rows-per-page
-        hide-footer
-        fixed-checkbox
-      >
-        <template #payment_ref_id="{ code }">
-          {{ code }}
-        </template>
-        <template #payment-method="{ payment_method }">
-          {{ payment_method.name }}
-        </template>
-        <template #payer-name="item">
-          {{
-            paymentsRef.get_customer_payment_instrument.car_holder_name
-              ? paymentsRef.get_customer_payment_instrument.car_holder_name
-              : 'N/A'
-          }}
-        </template>
-        <template #total-amount="{ captured_amount }">
-          {{ captured_amount }}
-        </template>
-        <template #paid_by="{ paid_by }">
-          {{ paymentsRef.paid_by ? paymentsRef.paid_by : 'Third Party' }}
-        </template>
-      </DataTable>
-    </div> -->
-
     <AuditLogs
       :type="`App\\Models\\${quoteType.code}Quote`"
       :id="quoteRequest.id"

@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\V2;
 
-use App\Enums\AmlSearchType;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\QuoteStatusEnum;
@@ -11,7 +10,7 @@ use App\Enums\RolesEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\BikeQuoteRequest;
 use App\Http\Requests\YachtQuoteRequest;
-use App\Models\Entity;
+use App\Models\Emirate;
 use App\Models\Nationality;
 use App\Repositories\ActivityRepository;
 use App\Repositories\CustomerMembersRepository;
@@ -25,7 +24,7 @@ use App\Repositories\PersonalPlanRepository;
 use App\Repositories\QuoteStatusRepository;
 use App\Repositories\UserRepository;
 use App\Repositories\YachtQuoteRepository;
-use App\Services\CRUDService;
+use App\Services\AMLService;
 use App\Services\LookupService;
 
 class YachtQuoteController extends Controller
@@ -88,7 +87,7 @@ class YachtQuoteController extends Controller
         $quote = YachtQuoteRepository::getBy('uuid', $uuid);
 
         $quoteStatuses = QuoteStatusRepository::byQuoteTypeId(QuoteTypes::YACHT->id())->get();
-        $membersDetail = CustomerMembersRepository::getBy('quote_id', $quote->id, QuoteTypes::YACHT->name);
+        $membersDetail = CustomerMembersRepository::getBy($quote->id, QuoteTypes::YACHT->name);
         $quote->load('documents.createdBy');
 
         $documentTypes = DocumentTypeRepository::byQuoteTypeId(QuoteTypes::YACHT->id())->get();
@@ -104,44 +103,19 @@ class YachtQuoteController extends Controller
             'quote_request_id' => $quote->id,
         ])->with('assignee')->orderBy('created_at', 'desc')->get();
 
-        if ($quote->quote_status_id !== QuoteStatusEnum::AMLScreeningCleared) {
+        if (AMLService::checkAMLStatusFailed(QuoteTypes::YACHT->id(), $quote->id)) {
             $quoteStatuses = collect($quoteStatuses)->filter(function ($value) {
                 return $value['id'] != QuoteStatusEnum::TransactionApproved;
             })->values();
         }
 
         $lostReasons = LostReasonRepository::orderBy('text', 'asc')->get();
+        $emirates = Emirate::where('is_active', 1)->select('id', 'text')->get();
         $embeddedProducts = EmbeddedProductRepository::byQuoteType(QuoteTypes::YACHT->id(), $quote->id);
-        $amlQuoteStatus = app(CRUDService::class)->checkAmlQuoteStatus($quote->quote_status_id);
-        $countries = Nationality::all();
-        $entities = $residentialStatus = $legalStructure = $idDocumentType = $modeOfContact = $employmentSectors = $companyPosition = $issuancePlace = $issuanceAuthorities = null;
         $lookupService = app(LookupService::class);
-        if ($quote->customer_type == AmlSearchType::ENTITY) {
-            $entities = Entity::all();
-            $legalStructure = $lookupService->getLegalStructure();
-            $idDocumentType = $lookupService->getEntityDocumentTypes();
-            $issuancePlace = $lookupService->getIssuancePlaces();
-            $issuanceAuthorities = $lookupService->getIssuanceAuthorities();
-        } else {
-            $idDocumentType = $lookupService->getIndividualDocumentTypes();
-            $modeOfContact = $lookupService->getModeOfContact();
-            $employmentSectors = $lookupService->getEmploymentSector();
-            $residentialStatus = $lookupService->getResidentialStatus();
-            $companyPosition = $lookupService->getCompanyPosition();
-        }
+        $industryType = $lookupService->getCompanyTypes();
 
         return inertia('YachtQuote/Show', [
-            'amlQuoteStatus' => $amlQuoteStatus,
-            'countryList' => $countries,
-            'entities' => $entities,
-            'legalStructure' => $legalStructure,
-            'idDocumentType' => $idDocumentType,
-            'issuancePlace' => $issuancePlace,
-            'issuanceAuthorities' => $issuanceAuthorities,
-            'modeOfContact' => $modeOfContact,
-            'employmentSectors' => $employmentSectors,
-            'residentialStatus' => $residentialStatus,
-            'companyPosition' => $companyPosition,
             'quoteType' => QuoteTypes::YACHT,
             'quote' => $quote,
             'activities' => $activities,
@@ -162,6 +136,8 @@ class YachtQuoteController extends Controller
             'membersDetails' => $membersDetail,
             'memberRelations' => $memberRelations,
             'nationalities' => $nationalities,
+            'industryType' => $industryType,
+            'emirates' => $emirates,
         ]);
     }
 
