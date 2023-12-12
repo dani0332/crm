@@ -2323,7 +2323,8 @@ const sectionExpanded = computed(() => {
               Copy Link
             </x-button>
 
-            <x-button
+
+         <!-- <x-button
               v-if="selectedPlans.length > 0"
               size="sm"
               color="emerald"
@@ -2331,7 +2332,7 @@ const sectionExpanded = computed(() => {
               :loading="exportLoader"
             >
               Download PDF
-            </x-button>
+          </x-button>-->
           </div>
           <div
             v-if="
@@ -2347,8 +2348,9 @@ const sectionExpanded = computed(() => {
             </p>
           </div>
           <div v-else>
+        <!-- for future use  v-model:items-selected="selectedPlans" -->
             <DataTable
-              v-model:items-selected="selectedPlans"
+
               table-class-name="tablefixed compact"
               :headers="availablePlansTable.columns"
               :items="availablePlansTable.data || []"
