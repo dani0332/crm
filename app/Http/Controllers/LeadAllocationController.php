@@ -73,7 +73,7 @@ class LeadAllocationController extends Controller
                 'isAutoAllocationWorking',
                 'unAssignedGood',
                 'unAssignedBest',
-                'unAssignedEntryLevel'
+                'unAssignedEntryLevel',
             ]));
         } else {
             abort(403, 'Unauthorized action.');
