@@ -795,6 +795,12 @@ const linkEntity = () => {
       :quote-type="quoteType"
     />
 
+    <PlanDetails
+      :insuranceProviders="insuranceProviders"
+      :quote="quote"
+      :quoteType="quoteType"
+    />
+
     <QuotePayments
       :can="can"
       :payments="quote.payments"
@@ -822,12 +828,7 @@ const linkEntity = () => {
 
     <QuotePolicy :quote="quote" :can="can" :quoteStatusEnum="quoteStatusEnum" />
 
-    <PlanDetails
-      :insuranceProviders="insuranceProviders"
-      :quote="quote"
-      :quoteType="quoteType"
-    />
-
+    
     <EmbeddedProducts
       :data="embeddedProducts"
       :link="quote.uuid"

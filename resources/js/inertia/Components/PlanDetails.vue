@@ -70,16 +70,16 @@ const submitPlanDetailsForm = isValid => {
   });
 }
 
-const updatePriceWithVat = () => {  
+const updatePriceWithVat = () => {
   
-  if(planDetailsForm.price_vat_applicable != "") {
+  if(planDetailsForm.price_vat_applicable !== null && planDetailsForm.price_vat_applicable !== "") {
     let price = parseFloat(planDetailsForm.price_vat_applicable);
-    planDetailsForm.price_with_vat = ((price / 100) * 5) + price;
+    planDetailsForm.price_with_vat = (((price / 100) * 5) + price).toFixed(2);
   }
 
-  if(planDetailsForm.price_vat_not_applicable != "") {    
+  if(planDetailsForm.price_vat_not_applicable !== null && planDetailsForm.price_vat_not_applicable !== "") {    
     let price = parseFloat(planDetailsForm.price_vat_not_applicable);
-    planDetailsForm.price_with_vat = price;
+    planDetailsForm.price_with_vat = price.toFixed(2);
   }
 
 }
