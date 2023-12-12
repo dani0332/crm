@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\AssignmentTypeEnum;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\DatabaseColumnsString;
+use App\Enums\DefaultAdvisorEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\HealthTeamType;
 use App\Enums\LeadSourceTypes;
@@ -383,8 +384,13 @@ class HealthQuoteService extends BaseService
         if (isset($request->quote_status) && is_array($request->quote_status) && count($request->quote_status) > 0) {
             $this->query->whereIn('quote_status_id', $request->quote_status);
         }
+
+        if (isset($request->advisors) && in_array(DefaultAdvisorEnum::UNASSIGNED, $request->advisors)) {
+            $this->query->whereNull('hqr.advisor_id');
+        }
+
         // advisors filter
-        if (isset($request->advisors) && is_array($request->advisors) && count($request->advisors) > 0) {
+        if (isset($request->advisors) && is_array($request->advisors) && count($request->advisors) > 0 && ! in_array(DefaultAdvisorEnum::UNASSIGNED, $request->advisors)) {
             $this->query->whereIn('advisor_id', $request->advisors)->orWhereIn('wcu_id', $request->advisors);
         }
         // is_renewal filter

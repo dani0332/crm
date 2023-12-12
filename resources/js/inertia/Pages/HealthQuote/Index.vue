@@ -123,6 +123,15 @@ const advisorOptions = computed(() => {
   }));
 });
 
+const modifiedAdvisorOptions = ref([]);
+
+modifiedAdvisorOptions.value = advisorOptions.value;
+
+modifiedAdvisorOptions.value.push({
+  value: 'unassigned',
+  label: 'Unassigned',
+});
+
 function onSubmit(isValid) {
   if (isValid) {
     filters.page = 1;
@@ -332,7 +341,7 @@ onMounted(() => {
           v-model="filters.advisors"
           label="Advisor"
           placeholder="Search by Advisor"
-          :options="advisorOptions"
+          :options="modifiedAdvisorOptions"
         />
         <x-select
           v-model="filters.is_ecommerce"
