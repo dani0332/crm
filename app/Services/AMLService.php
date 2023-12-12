@@ -313,6 +313,14 @@ class AMLService
 
     public static function checkAMLStatusFailed($quoteTypeId, $quoteRequestId)
     {
+        $failedScreeningDecisions = [
+            null,
+            AMLDecisionStatusEnum::ESCALATED,
+            AMLDecisionStatusEnum::SENT_FOR_REVIEW,
+            AMLDecisionStatusEnum::TRUE_MATCH,
+            AMLDecisionStatusEnum::TRUE_MATCH_REJECT_RISK,
+        ];
+
         $fetchAMLRecords = KycLog::withTrashed()->where([
             'quote_type_id' => $quoteTypeId,
             'quote_request_id' => $quoteRequestId,
@@ -325,8 +333,8 @@ class AMLService
             return true;
         }
 
-        return collect($fetchAMLRecords)->contains(function ($value) {
-            return in_array($value, [AMLDecisionStatusEnum::TRUE_MATCH, AMLDecisionStatusEnum::TRUE_MATCH_REJECT_RISK, null]);
+        return collect($fetchAMLRecords)->contains(function ($value) use ($failedScreeningDecisions) {
+            return in_array($value, $failedScreeningDecisions);
         });
     }
 }
