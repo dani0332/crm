@@ -60,6 +60,7 @@
         }
         table.tbl-dec {
             border: none;
+            font-size: 3px;
         }
         table.tbl-dec tr td, table.tbl-dec tr td a {border: none;}
         table {
@@ -107,9 +108,17 @@
         thead > tr > th {
             border: 1px solid #bfbfbf;
         }
+        thead > tr > th:first-child {
+            max-width: 30%;
+        }
+        tr th:first-child, tr td:first-child{
+            width: 400px;
+            min-width: 400px;
+            max-width: 400px;
+        }
         td > p, th > p {
             padding: 4px;
-            font-size: 14px;
+            font-size: 12px !important;
             text-align: center;
             font-weight: normal;
         }
@@ -117,10 +126,10 @@
             text-align: left;
         }
         .text-xs {
-            font-size: 13px;
+            font-size: 10px;
         }
         .text-sm {
-            font-size: 14px;
+            font-size: 10px;
         }
         .text-xl {
             font-size: 16px;
@@ -131,31 +140,41 @@
         .bg-light-blue {
             border: 1px solid #bfbfbf;
             background: #EFF6FF;
-            padding: 8px;
+            padding: 1px 8px;
             color: #252525;
+        }
+        .bg-light-blue p{
+            padding: 1px !important;
         }
         .text-black{color: #000000;}
         .provider {
             border: 1px solid #bfbfbf;
-            font-size: 15px;
-            line-height: 28px;
+            /*font-size: 15px;*/
+            /*line-height: 28px;*/
             font-weight: 400;
             color: #4ea4a8;
             vertical-align: middle;
-            max-height: 50px;
-            height: 50px;
-            position: relative;
+            /*max-height: 50px;*/
+            /*height: 50px;*/
         }
         .spacer {
             padding: 3px;
         }
-        .alfred { text-align: right;padding-right: 0;vertical-align: bottom;border-left: none;border-top: none;}
+        .alfred {
+            text-align: right;
+            padding-right: 0;
+            vertical-align: bottom;
+            border-left: none;
+            border-top: none;
+            width:400px;
+            min-width:400px;
+        }
         .quote-info {
             text-align: right;
             vertical-align: bottom;
             margin-top: -1px;
             background: #EFF6FF;
-            font-size: 14px;
+            font-size: 10px;
             text-align: left;
             padding: 8px;
             max-width: 100%;
@@ -174,12 +193,12 @@
         .btn-all-quotes {
             background-color: #1d83bc;
             color: #ffffff;
-            padding: 8px 25px;
-            margin-top: 50px;
+            padding: 8px 12px;
+            margin-top: 30px;
             text-align: center;
             text-decoration: none;
             display: inline-block;
-            font-size: 15px;
+            font-size: 12px;
             font-weight: bold;
             border-radius: 5px;
             margin-bottom: 0px;
@@ -188,13 +207,13 @@
         {
             background-color: #FE7333;
             color: #ffffff;
-            padding: 12px 15px;
+            padding: 10px 12px;
             text-align: center;
             text-decoration: none;
             display: inline-block;
-            font-size: 14px;
+            font-size: 10px;
             font-weight: bold;
-            border-radius: 5px;
+            border-radius: 4px;
         }
         .btn-buy:hover{
             background-color: #d7fbd0;
@@ -204,16 +223,10 @@
             background-color: #1d83bc;
         }
         .heading-desc {
-            font-size: 12px;
+            font-size: 10px;
         }
         .provider-logo {
             width: 100px;
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            max-width: 100%;
-            max-height: 100%;
         }
         .no-border {border: none;}
         footer {
@@ -256,23 +269,32 @@
         .text-center {text-align: center;}
         .text-white { color: #ffffff}
         .text-underline{text-decoration:underline }
+        .hidden{
+            display: none;
+        }
+        tr:has(td) {
+            display: none;
+        }
+
 
     </style>
 </head>
 <body>
     {{-- First Page --}}
-    <img src="{{public_path('images/quote_plans_pages/rm-p1-1.png')}}" class="full-page-image" />
+    <img src="{{public_path('images/quote_plans_pages/travel-p1-1.png')}}" class="full-page-image" />
     @php
         $websitURL = config('constants.AFIA_WEBSITE_DOMAIN');
         $plans = [];
         $benefits = ['feature', 'inpatient', 'outpatient', 'exclusion', 'coInsurance', 'regionCover', 'maternityCover', 'networkList'];
         $vatPercentage = \App\Models\ApplicationStorage::where('key_name', \App\Enums\ApplicationStorageEnums::VAT_VALUE)->first()->value ?? 0;
 
-        foreach ($quotePlans->quote->plans as &$quotePlan){
+        foreach ($quotePlans->quotes->plans as &$quotePlan){
             $addonsPrice = $addonsVat =
             $quotePlan->discountPremium =
-            $quotePlan->vat =
             $quotePlan->total= 0;
+            if(!isset($quotePlan->vat)){
+                $quotePlan->vat = 0;
+            }
 
             if (! isset($quotePlan->id) || ! in_array($quotePlan->id, $planIds)) {
                 continue;
@@ -284,29 +306,22 @@
                     $quotePlan->{$benefit} = json_decode(collect(@$quotePlan->benefits->{$benefit})->keyBy('code')->toJson());
                 }
             }
-            $quotePlan->addons = isset($addons) ? ($addons[$quotePlan->id] ?? []) : json_decode(collect($quotePlan->addons)->keyBy('code')->toJson());
+             $quotePlan->exclusion = json_decode(collect($quotePlan->benefits->exclusion)->keyBy('code')->toJson());
+        $quotePlan->inclusion = json_decode(collect($quotePlan->benefits->inclusion)->keyBy('code')->toJson());
+        $quotePlan->feature = json_decode(collect($quotePlan->benefits->feature)->keyBy('code')->toJson());
+        $quotePlan->emergencyMedicalCover = json_decode(collect($quotePlan->benefits->emergencyMedicalCover)->keyBy('code')->toJson());
+        $quotePlan->covid19 = json_decode(collect($quotePlan->benefits->covid19)->keyBy('code')->toJson());
+        $quotePlan->travelInconvenienceCover = json_decode(collect($quotePlan->benefits->travelInconvenienceCover)->keyBy('code')->toJson());
+
+            // $quotePlan->addons = isset($addons) ? $addons[$quotePlan->id] : json_decode(collect($quotePlan->addons)->keyBy('code')->toJson());
+             $discountPremium = $vat = [];
 
             // Discount Premium and VAT new Implementation
-            if(isset($quotePlan->addons['coPayment'])) {
-                $coPayId = $quotePlan->addons['coPayment']['id'];
-                foreach ($quotePlan->ratesPerCopay as $coPayKey => $coPayVal) {
-                    if( $coPayVal->healthPlanCoPaymentId == $coPayId) {
-                        $quotePlan->discountPremium = $coPayVal->discountPremium;
-                        $quotePlan->vat = $coPayVal->vat;
-                        $quotePlan->total = ($quotePlan->discountPremium + $coPayVal->vat);
-                    }
-                }
-            } else {
-                $discountPremium = $vat = [];
-                foreach ($quotePlan->ratesPerCopay as $coPayKey => $coPayVal) {
-                    $discountPremium[] =  $coPayVal->discountPremium;
-                    $vat[] = $coPayVal->vat;
-                }
-                $minVat = collect($vat)->min();
-                $quotePlan->discountPremium = collect($discountPremium)->min();
-                $quotePlan->vat = $minVat;
-                $quotePlan->total = ($quotePlan->discountPremium + $minVat);
-            }
+
+                $quotePlan->vat = $quotePlan->vat;
+               //$quotePlan->vat = 100;
+                $quotePlan->total = ($quotePlan->actualPremium + $quotePlan->vat);
+                $quotePlan->discountPremium = $quotePlan->discountPremium;
 
             foreach ($quotePlan->benefits as &$benefit) {
 
@@ -328,7 +343,7 @@
             }
 
             // Add Policy Price
-            $policyFee = (isset($providers[$quotePlan->providerId]['health_policy_fee'])) ? $providers[$quotePlan->providerId]['health_policy_fee'] : 0;
+            $policyFee = (isset($providers[$quotePlan->providerId]['travel_policy_fee'])) ? $providers[$quotePlan->providerId]['travel_policy_fee'] : 0;
             $quotePlan->discountPremium += $policyFee;
             // $quotePlan->vat += ($policyFee * ($vatPercentage / 100 ));
             $quotePlan->total += $policyFee;
@@ -338,47 +353,41 @@
         $planIds = collect($plans)->sortByDesc('isRenewal')->pluck('id')->toArray();
 
         $features = [
-            ["code" => "heading", "title" => "BENEFITS"],
-            ["code" => "annualLimit", "title" => "Annual Claim Limit", "type" => 'feature'],
-            ["code" => "regionsCovered", "title" => "Regions Covered", "type" => 'regionCover'],
-            ["code" => "billingHospitalsOutpatient", "title" => "Direct Billing Network (Outpatient)", "type" => 'networkList'],
-            ["code" => "billingHospitalsInpatient", "title" => "Direct Billing Network (Inpatient)", "type" => 'networkList'],
-            ["code" => "preExistingOrChronic", "title" => "Pre‐existing & Chronic Conditions", "type" => 'inpatient'],
+            ["code" => "heading", "title" => "TRAVEL INCONVENIENCE BENEFITS"],
 
-            ["code" => "heading", "title" => "Outpatient Benefits*", "description" => "*All benefits, limits and sublimits are subject to applicable excess, co‐insurance/co‐pays and prior authorization; Specific benefits varies for each insurer, please refer to table of benefits for more details"],
-            ["code" => "medicine", "title" => "Medicines", "type" => 'outpatient'],
-            ["code" => "consultation", "title" => "Consultation & Diagnostic", "type" => 'outpatient'],
-            ["code" => "alternativeMedicineAndTreatment", "title" => "Alternative Medicine", "type" => ['outpatient', 'exclusion']],
-            ["code" => "physiotherapy", "title" => "Physiotherapy", "type" => 'outpatient'],
-            ["code" => "dentalCover", "title" => "Routine Dental", "type" => ['outpatient', 'exclusion'] ],
-            ["code" => "visionAndHearingCover", "title" => "Routine Optical", "type" => 'outpatient'],
+            ["code" => "travelCancellationCurtailment", "title" => "Cancellation / Curtailment", "type" => 'feature'],
+            ["code" => "travelCancellationTestPositive", "title" => "Cancellation due to testing positive for COVID prior to departure", "type" => 'covid19'],
+            ["code" => "travelCancellationRestrictionCovid19", "title" => "Cancellation due to travel restrictions against COVID-19", "type" => 'travelInconvenienceCover'],
+            ["code" => "travelDelayedBaggage", "title" => "Delayed Baggage", "type" => 'travelInconvenienceCover'],
+            ["code" => "travelDelayedDeparture", "title" => "Delayed Departure", "type" => 'travelInconvenienceCover'],
+            ["code" => "travelHijack", "title" => "Hijack", "type" => 'exclusion'],
+            ["code" => "travelLegalExpenses", "title" => "Legal Expenses", "type" => 'travelLegalExpenses'],
+            ["code" => "travelMissedDeparture", "title" => "Missed Departure", "type" => 'travelInconvenienceCover'],
+            ["code" => "travelPassportAssistance", "title" => "Passport Assistance", "type" => 'travelInconvenienceCover'],
+            ["code" => "travelPersonalAccident", "title" => "Personal Accident", "type" => 'feature'],
+            ["code" => "travelPersonalBaggage", "title" => "Personal Baggage", "type" => 'travelInconvenienceCover'],
+            ["code" => "travelPersonalLiability", "title" => "Personal Liability", "type" => 'travelInconvenienceCover'],
+            ["code" => "travelPersonalMoney", "title" => "Personal Money", "type" => 'travelInconvenienceCover'],
+            ["code" => "travelTravelVisaRejection", "title" => "Travel Visa Rejection", "type" => 'travelInconvenienceCover'],
 
-            ["code" => "heading", "title" => "Inpatient Benefits*", "description" => "*All benefits, limits and sub limits are subject to applicable excess co‐insurance/co‐pays and prior authorization; Specific benefits varies for each insurer, please refer to table of benefits for more details"],
-            ["code" => "surgeryRecovery", "title" => "Medicines, Surgery and Recovery, Diagnostics and Physiotherapy", "type" => 'inpatient'],
-            ["code" => "roomBoard", "title" => "Room and board", "type" => 'inpatient'],
+            ["code" => "heading", "title" => "Emergency Medical Benefits"],
 
-            ["code" => "heading", "title" => "Maternity Cover"],
-            ["code" => "testCovered", "title" => "Outpatient Maternity", "type" => 'maternityCover'],
-            ["code" => "coInsurance", "title" => "Outpatient Maternity Co‐insurance", "type" => 'maternityCover'],
-            ["code" => "normalDelivery", "title" => "Delivery", "type" => 'maternityCover'],
-            ["code" => "newBorn", "title" => "Newborn Cover", "type" => 'maternityCover'],
+            ["code" => "travelEmergencyDental", "title" => "Emergency Dental", "type" => 'emergencyMedicalCover'],
+            ["code" => "travelEmergencyMedicalExpenses", "title" => "Emergency Medical Expenses", "type" => 'emergencyMedicalCover'],
+            ["code" => "travelEmergencyTransport", "title" => "Emergency Transport", "type" => 'emergencyMedicalCover'],
+            ["code" => "travelRepatriationOfMortalRemains", "title" => "Repatriation of mortal remains", "type" => 'inclusion'],
+            ["code" => "travelRepatriationOtherInsuredPerson", "title" => "Repatriation of other insured Person", "type" => 'exclusion'],
 
-            ["code" => "heading", "title" => "Co‐pay or Co‐insurance"],
-            ["code" => "coPayment", "title" => "Outpatient co-pay", "type" => 'coInsurance'],
-            // ["code" => "consultation", "title" => "Outpatient Consultation", "type" => 'coInsurance'],
-            // ["code" => "diagnostics", "title" => "Outpatient Diagnostics", "type" => 'coInsurance'],
-            ["code" => "physiotherapy", "title" => "Outpatient Physiotherapy", "type" => 'coInsurance'],
-            // ["code" => "medicine", "title" => "Outpatient Medicine", "type" => 'coInsurance'],
-            ["code" => "dentalCover", "title" => "Routine Dental", "type" => 'coInsurance'],
-            ["code" => "opticalCover", "title" => "Routine Optical", "type" => 'coInsurance'],
-            ["code" => "inpatient", "title" => "Inpatient", "type" => 'coInsurance'],
+            ["code" => "heading", "title" => "EXCESS"],
+            ["code" => "heading", "title" => "COVID 19"],
 
-            ["code" => "spacer"],
-            ["code" => "discountPremium", "title" => "Price", "type" => "info",  "heading_class" => "text-heading", "row_class" => 'row-spacing'],
-            ["code" => "spacer"],
+            ["code" => "travelTestingCost", "title" => "Testing Cost", "type" => 'covid19'],
+            ["code" => "travelQuarantineTestedPositive", "title" => "Accommodation cost if tested positive", "type" => 'covid19'],
+            ["code" => "travelTreatmentTestedPositive", "title" => "Treatment if tested positive - hospitalized for more than 24 hrs", "type" => 'covid19'],
+             ["code" => "actualPremium", "title" => "Premium", "type" => "info",  "heading_class" => "text-heading", "row_class" => 'row-spacing'],
             ["code" => "vat", "title" => "VAT", "type" => "info",  "heading_class" => "text-heading", "row_class" => 'row-spacing'],
-            ["code" => "spacer"],
-            ["code" => "total", "title" => "Total", "type" => "info",  "heading_class" => "text-heading", "row_class" => 'row-spacing'],
+            ["code" => "total", "title" => "Total Premium", "type" => "info",  "heading_class" => "text-heading", "row_class" => 'row-spacing'],
+
         ];
 
     @endphp
@@ -394,9 +403,9 @@
     <footer>
         <table class="tbl-footer">
             <div style="float: left;">
-                    <img style="height: 110px; border-radius: 50%;" src="{{$quote->advisor?->profile_photo_path != null?$quote->advisor?->profile_photo_path:public_path('image/alfred-theme.png')}}">
+                 <img style="height: 110px; border-radius: 50%;" src="{{$quote->advisor?->profile_photo_path != null?$quote->advisor?->profile_photo_path:public_path('image/alfred-theme.png')}}">
             </div>
-            <div style="float: left; margin-left: 10px; margin-top: 20px">
+            <div style="float: left; margin-left: 10px; margin-top: 10px">
                 @if(isset($quote->advisor->name) && !empty($quote->advisor->name))
                     <p class="text-left text-white text-xl">Name: {{ $quote->advisor?->name }}</p>
                 @endif
@@ -407,7 +416,7 @@
                     <p class="text-left text-white text-xl mar">Mobile number: {{ formatMobileNumber($quote->advisor->mobile_no) }} <span class="text-white" style="margin-top:3px"><img style="height:20px;" src="{{ public_path('images/whatsapp-small.png') }}"></span></p>
                 @endif
                 @if(isset($quote->advisor->landline_no) && !empty($quote->advisor->landline_no))
-                    <p class="text-left text-white text-xl">Direct Line: <a class="text-white" href="tel:{{ $quote->advisor->landline_no }}">{{ formatLandlineNumber($quote->advisor->landline_no) }}</a></p>
+                    <p class="text-left text-white text-xl">Direct Line: <a class="text-white" href="tel:{{ $quote->advisor->landline_no }}">{{ $quote->advisor->landline_no }}</a></p>
                 @endif
 
             </div>
@@ -423,61 +432,62 @@
 
     {{-- PDF Page Inner Content --}}
     <main>
-        <table class="table-fixed text-center tbl-plans" style="position: relative;top: 100px;margin-bottom: 130px;">
+        <table class="table-fixed text-center tbl-plans" style="position: relative;top: 90px;margin-bottom: 70px;table-layout: fixed">
             <thead>
                 <tr>
-                    <th class="alfred" rowspan="3">
+                    <th class="alfred" >
                         <img src="{{public_path('images/alfred.png')}}"  />
                     </th>
                     @foreach($planIds as $planId)
-                    <th class="provider" style="border: solid 1px #bfbfbf; position : relative">
+                    <th class="provider" style="border: solid 1px #bfbfbf;">
+                        <div class="rounded-full">
+                            <p class="relative top-[40%] m-auto text-xs">
                                 @php
                                     $providerLogoImage = public_path('images/insurance_providers/' . strtolower($plans[$planId]->providerCode) . '.png');
                                     if(!file_exists($providerLogoImage)) {
                                         $providerLogoImage = public_path('images/insurance_providers/default.png');
                                     }
                                @endphp
-                               <img class="provider-logo" alt="" src="{{$providerLogoImage}}" />
+                                <img class="provider-logo" alt="" src="{{$providerLogoImage}}" />
+                            </p>
+                        </div>
                     </th>
                     @endforeach
                 </tr>
-                <tr>
-                @foreach($planIds as $planId)
-                    <th class="provider-name" >
-                        <p class="text-center">
-                            {{ $plans[$planId]->providerName }}
-                        </p>
-                    </th>
-                @endforeach
-                </tr>
-                <tr>
-                @foreach($planIds as $planId)
-                    <th style="padding: 0;margin: 0;">
-                        <p class="text-center">
-                            {{ $plans[$planId]->name }}
-                        </p>
-                    </th>
-                @endforeach
-                </tr>
                 {{-- buy now row --}}
                 <tr>
-                    <th class="bg-light-blue" >
-                        <p class="quote-info">Health insurance comparison for: <b>{{ $quote->first_name  }} {{$quote->last_name}}</b></p>
+                    <th class="bg-light-blue" style="width: 25% !important;">
+                        <p class="quote-info">Travel insurance comparison for: <b>{{ $quote->first_name  }} {{$quote->last_name}}</b></p>
                     </th>
                     @foreach($planIds as $planId)
-                        <th>
+                        <th rowspan="4">
                             <p class="text-center">
+                                    <a target="_blank" class="btn-buy" href="{{($websitURL . '/travel-insurance/quote/' . $quote->uuid .  '/payment/?providerCode=' . $plans[$planId]->providerCode . '&planId=' . $planId . ( (isset($plans[$planId]->addons['coPayment']['id']) ? ('&selectedCopayId=' . $plans[$planId]->addons['coPayment']['id']) : '') ) )}}" >Buy Now</a>
                                 @if($plans[$planId]->discountPremium)
-                                    <a target="_blank" class="btn-buy" href="{{($websitURL . '/health-insurance/quote/' . $quote->uuid .  '/payment/?providerCode=' . $plans[$planId]->providerCode . '&planId=' . $planId . ( (isset($plans[$planId]->addons['coPayment']['id']) ? ('&selectedCopayId=' . $plans[$planId]->addons['coPayment']['id']) : '') ) )}}" >Buy Now</a>
                                 @else
-                                    N/A
                                 @endif
                             </p>
                         </th>
                     @endforeach
                 </tr>
+            <tr>
+                <th class="bg-light-blue" >
+                    <p class="quote-info">Main Country: <b>N/A</b></p>
+                </th>
+            </tr>
+            <tr>
+                <th class="bg-light-blue" >
+                    <p class="quote-info">Number of Days: <b>{{ $quote->days_cover_for  }} </b></p>
+                </th>
+            </tr>
+                <tr>
+                    <th class="bg-light-blue" >
+                        <p class="quote-info">Region: <b>{{ $quote->regionCoverFor?->text  }}</b></p>
+                    </th>
+                </tr>
             </thead>
             <tbody>
+            @php $featCount = 0 @endphp
                 @foreach($features as $feature)
 
                 @if($feature['code'] == 'coPayment' && !isset($addons))
@@ -504,53 +514,92 @@
                 @endif
 
                 {{-- feature rows --}}
-                <tr class="{{ ($feature['row_class'] ?? "")}}" >
+                   <?php $planIterate = 0; ?>
+                <tr class="<?php echo 'row_'.$featCount; ?> {{ ($feature['row_class'] ?? "")}}" >
                     <td class="{{@$feature['heading_class']}}"><p class="text-left">{{@$feature['title']}}</p></td>
                     @foreach($planIds as $planId)
-                    <td class="{{@$feature['col_class']}}">
-                        <p>
-                            @if($feature['type'] == 'info')
-                                {!!  $plans[$planId]->{$feature['code']} ? formatAmount($plans[$planId]->{$feature['code']})  : 'N/A' !!}
+                        <?php $return_value = '';
+                            ?>
+                        @if($feature['type'] == 'info')
 
-                            @elseif($feature['type'] == 'prop')
-                                {!!  $plans[$planId]->{$feature['code']} !!}
+                            @php $return_value =  $plans[$planId]->{$feature['code']} ? formatAmount($plans[$planId]->{$feature['code']})  : 'N/A' @endphp
 
-                            @elseif($feature['type'] == 'buy')
-                                @if($plans[$planId]->discountPremium)
-                                    <a target="_blank" class="btn-buy" href="{{($websitURL . '/car-insurance/quote/' . $quote->uuid .  '/payment/?providerCode=' . $plans[$planId]->providerCode . '&planId=' . $planId)}}" >Buy Now</a>
-                                @else
-                                    N/A
+
+                        @elseif($feature['type'] == 'prop')
+                            @php $return_value =   $plans[$planId]->{$feature['code']}  @endphp
+
+                        @elseif($feature['type'] == 'buy')
+
+                                @php  $return_value = `<a target="_blank" class="btn-buy" href="{{($websitURL . '/car-insurance/quote/' . $quote->uuid .  '/payment/?providerCode=' . $plans[$planId]->providerCode . '&planId=' . $planId)}}" >Buy Now</a>`; @endphp
+
+                        @elseif(is_array($feature['type']))
+                            @php $value = "Excluded";  @endphp
+                            @foreach($feature['type'] as $type)
+                                @if(isset($plans[$planId]->{$type}->{$feature['code']}->value))
+                                    @php $value = $plans[$planId]->{$type}->{$feature['code']}->value; break; @endphp
                                 @endif
-
-                            @elseif(is_array($feature['type']))
-                                @php $value = "Excluded"; @endphp
-                                @foreach($feature['type'] as $type)
-                                    @if(isset($plans[$planId]->{$type}->{$feature['code']}->value))
-                                        @php $value = $plans[$planId]->{$type}->{$feature['code']}->value; break; @endphp
-                                    @endif
-                                @endforeach
-                                {!! ($value)  !!}
+                            @endforeach
+                            @php  $return_value  = $value; @endphp
+                        @else
+                            @if($feature['code'] == 'coPayment')
+                                @php  $return_value = $addons[$planId]['coPayment']['text'] ?? 'N/A'; @endphp
                             @else
-                                @if($feature['code'] == 'coPayment')
-                                    {{ $addons[$planId]['coPayment']['text'] ?? 'N/A' }}
-                                @else
-                                    {!!  $plans[$planId]->{$feature['type']}->{$feature['code']}->value ?? 'Excluded' !!}
-                                @endif
+                                @php  $return_value =  $plans[$planId]->{$feature['type']}->{$feature['code']}->value ?? 'Excluded' ; @endphp
                             @endif
-                        </p>
-                    </td>
+                        @endif
+                        <td class="{{@$feature['col_class']}}">
+                            <p>
+                    <?php if($return_value == 'Excluded'){
+                            $planIterate++;
+                    ?>
+                                Excluded
+                    <?php }else{
+                        $planIterate = 0;
+                        ?>
+                        <?php echo $return_value ?>
+
+                  <?php  } ?>
+                  </p>
+
+                        </td>
+                            <?php if(count($planIds) == $planIterate){
+
+                            ?>
+                            <style>
+                                .row_<?php echo $featCount; ?>{
+                                    display: none !important;
+                                }
+                            </style>
+                    <?php
+
+                        }
+                        ?>
+
                     @endforeach
                 </tr>
+                    <?php $featCount++; ?>
                  @endforeach
                 <tr>
+                    <td >
+
+                    </td>
+                    @foreach($planIds as $planId)
+                        <td>
+                            <p class="text-center">
+                                    <a target="_blank" class="btn-buy" href="{{($websitURL . '/travel-insurance/quote/' . $quote->uuid .  '/payment/?providerCode=' . $plans[$planId]->providerCode . '&planId=' . $planId . ( (isset($plans[$planId]->addons['coPayment']['id']) ? ('&selectedCopayId=' . $plans[$planId]->addons['coPayment']['id']) : '') ) )}}" >Buy Now</a>
+                            </p>
+                        </td>
+                    @endforeach
+                </tr>
+                <tr>
                     <td colspan="{{sizeof($planIds) + 1}}" class="no-border text-center" >
-                        <a target="_blank" class="btn-all-quotes" href="{{($websitURL . '/health-insurance/quote/' . $quote->uuid )}}" >See all your quotes</a>
+                        <a target="_blank" class="btn-all-quotes" href="{{($websitURL . '/travel-insurance/quote/' . $quote->uuid )}}" >View all quotes</a>
                     </td>
                 </tr>
             </tbody>
         </table>
 
-        <table class="tbl-dec">
+        <table class="tbl-dec" style="margin-top: 20px; padding-top: 40px;">
             <tbody>
                 <tr>
                     <td>
@@ -559,7 +608,7 @@
                         <span class="text-sm"><b>DISCLAIMER</b></span>
                         <p class="text-left text-xs">
                             Whilst we try to ensure the currency and accuracy of the details in the comparison table, there may occasion where there are differences in the covers provided. In such cases, the covers detailed in the insurer's policy wordings and schedules will supersede the details provided by us.<br/><br/>
-                            To view the full text of <b>MATERIAL INFORMATION DECLARATION</b> and <b>DISCLAIMER</b>, please refer to the <a class="text-black" href="{{($websitURL . '/health-insurance/quote/' . $quote->uuid )}}"><b>quote</b></a>.
+                            To view the full text of <b>MATERIAL INFORMATION DECLARATION</b> and <b>DISCLAIMER</b>, please refer to the <a class="text-black" href="{{($websitURL . '/travel-insurance/quote/' . $quote->uuid )}}"><b>quote</b></a>.
                         </p>
                     </td>
                 </tr>
@@ -568,6 +617,6 @@
     </main>
 
     {{-- Last Page --}}
-    <img src="{{public_path('images/quote_plans_pages/rm-p3-2.png')}}" class="full-page-image"  />
+    <img src="{{public_path('images/quote_plans_pages/travel-p1-2.png')}}" class="full-page-image"  />
 </body>
 </html>
