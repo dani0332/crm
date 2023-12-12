@@ -21,7 +21,7 @@ class SendUpdateLogController extends Controller
             vAbort($response->message);
         }
 
-        return redirect(route('quotes.car.view-update-log', ['id' => $request->reportable_uuid, 'uuid' => $response->uuid]));
+        return redirect(route('quotes.car.view-update-log', ['id' => $request->reportable_uuid, 'code' => $response->code]));
     }
 
     /**
