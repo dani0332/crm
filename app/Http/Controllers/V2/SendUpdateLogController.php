@@ -21,15 +21,15 @@ class SendUpdateLogController extends Controller
             vAbort($response->message);
         }
 
-        return redirect(route('quotes.car.view-update-log', ['id' => $request->reportable_uuid, 'code' => $response->code]));
+        return redirect(route('quotes.car.view-update-log', ['id' => $request->reportable_uuid, 'uuid' => $response->uuid]));
     }
 
     /**
      * Display the specified resource.
      */
-    public function show($id, $code)
+    public function show($id, $uuid)
     {
-        $sendUpdateLog = SendUpdateLogRepository::getLogByCode($code);
+        $sendUpdateLog = SendUpdateLogRepository::getLogByUuid($uuid);
 
         $sendUpdateOptions = (new LookupService)->getSendUpdateOptions($sendUpdateLog->quote_type_id);
 

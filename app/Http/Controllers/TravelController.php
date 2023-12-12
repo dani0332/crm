@@ -14,6 +14,7 @@ use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
+use App\Enums\SendUpdateLogStatusEnum;
 use App\Enums\TravelQuoteEnum;
 use App\Http\Requests\StoreTravelRequest;
 use App\Http\Requests\TravelRenewalsUploadRequest;
@@ -180,6 +181,15 @@ class TravelController extends Controller
         $uboRelations = LookupRepository::where('key', LookupsEnum::UBO_RELATION)->get();
         $emirates = Emirate::where('is_active', 1)->select('id', 'text')->get();
 
+        $sendUpdateOptions = [];
+        $sendUpdateLogs = [];
+        $sendUpdateEnum = (object) [];
+        if ($record->quote_status_id == QuoteStatusEnum::PolicyIssued) {
+            $sendUpdateOptions = $this->lookupService->getSendUpdateOptions(QuoteTypeId::Travel);
+            $sendUpdateLogs = $paymentEntityModel->sendUpdateLogs;
+            $sendUpdateEnum = SendUpdateLogStatusEnum::asArray();
+        }
+
         return inertia('TravelQuote/Show', [
             'quote' => $record,
             'fieldsToDisplay' => $fields,
@@ -234,6 +244,7 @@ class TravelController extends Controller
                 'paymentStatusEnum' => PaymentStatusEnum::asArray(),
                 'travelQuoteEnum' => TravelQuoteEnum::asArray(),
             ],
+            'sendUpdateEnum' => $sendUpdateEnum,
             'customerTypeEnum' => CustomerTypeEnum::asArray(),
             'nationalities' => $nationalities,
             'memberRelations' => $memberRelations,
@@ -241,6 +252,8 @@ class TravelController extends Controller
             'UBOsDetails' => $uboDetails,
             'UBORelations' => $uboRelations,
             'emirates' => $emirates,
+            'sendUpdateOptions' => $sendUpdateOptions,
+            'sendUpdateLogs' => $sendUpdateLogs
         ]);
     }
 

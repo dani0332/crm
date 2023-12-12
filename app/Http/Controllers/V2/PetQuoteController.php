@@ -8,6 +8,7 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
+use App\Enums\SendUpdateLogStatusEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\PetQuoteRequest;
 use App\Models\Emirate;
@@ -23,6 +24,7 @@ use App\Repositories\PaymentMethodRepository;
 use App\Repositories\PersonalPlanRepository;
 use App\Repositories\PetQuoteRepository;
 use App\Repositories\QuoteStatusRepository;
+use App\Repositories\SendUpdateLogRepository;
 use App\Repositories\UserRepository;
 use App\Services\AMLService;
 use App\Services\CentralService;
@@ -108,10 +110,11 @@ class PetQuoteController extends Controller
 
         $sendUpdateOptions = [];
         $sendUpdateLogs = [];
-
+        $sendUpdateEnum = (object) [];
         if ($quote->quote_status_id == QuoteStatusEnum::PolicyIssued) {
             $sendUpdateOptions = (new LookupService)->getSendUpdateOptions(QuoteTypes::PET->id());
-            $sendUpdateLogs = $quote->load('sendUpdateLogs');
+            $sendUpdateLogs = SendUpdateLogRepository::findByQuoteId('PetQuote', $quote->id);
+            $sendUpdateEnum = SendUpdateLogStatusEnum::asArray();
         }
 
         $lostReasons = LostReasonRepository::orderBy('text', 'asc')->get();
@@ -152,6 +155,7 @@ class PetQuoteController extends Controller
             'UBORelations' => $uboRelations,
             'sendUpdateOptions' => $sendUpdateOptions,
             'sendUpdateLogs' => $sendUpdateLogs,
+            'sendUpdateEnum' => $sendUpdateEnum
         ]);
     }
 

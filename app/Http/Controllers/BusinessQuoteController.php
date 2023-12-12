@@ -14,6 +14,7 @@ use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
+use App\Enums\SendUpdateLogStatusEnum;
 use App\Http\Requests\StoreBusinessQuoteRequest;
 use App\Http\Requests\UpdateBusinessQuoteRequest;
 use App\Models\BusinessQuote;
@@ -23,6 +24,7 @@ use App\Models\Nationality;
 use App\Repositories\CustomerMembersRepository;
 use App\Repositories\InsuranceProviderRepository;
 use App\Repositories\LookupRepository;
+use App\Repositories\SendUpdateLogRepository;
 use App\Services\AMLService;
 use App\Services\BusinessQuoteService;
 use App\Services\CRUDService;
@@ -212,6 +214,15 @@ class BusinessQuoteController extends Controller
         $issuancePlace = $this->lookupService->getIssuancePlaces();
         $issuanceAuthorities = $this->lookupService->getIssuanceAuthorities();
 
+        $sendUpdateOptions = [];
+        $sendUpdateLogs = [];
+        $sendUpdateEnum = (object) [];
+        if ($record->quote_status_id == QuoteStatusEnum::PolicyIssued) {
+            $sendUpdateOptions = (new LookupService)->getSendUpdateOptions(QuoteTypes::BUSINESS->id());
+            $sendUpdateLogs = SendUpdateLogRepository::findByQuoteId('BusinessQuote', $record->id);
+            $sendUpdateEnum = SendUpdateLogStatusEnum::asArray();
+        }
+
         return inertia('CorpLineQuote/Show', [
             'storageUrl' => storageUrl(),
             'amlQuoteStatus' => $amlQuoteStatus,
@@ -276,6 +287,9 @@ class BusinessQuoteController extends Controller
             'nationalities' => $nationalities,
             'emirates' => $emirates,
             'canAddBatchNumber' => auth()->user()->hasRole(RolesEnum::CorplineManager),
+            'sendUpdateOptions' => $sendUpdateOptions,
+            'sendUpdateLogs' => $sendUpdateLogs,
+            'sendUpdateEnum' => $sendUpdateEnum
         ]);
     }
 

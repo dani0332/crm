@@ -15,6 +15,7 @@ const state = reactive({
 const sendUpdateForm = useForm({
   notes: props.sendUpdateLog?.notes || '',
   option_id: props.sendUpdateLog?.option_id || null,
+  change_reason: props.sendUpdateLog?.change_reason || ''
 });
 
 const currentOption = computed(() => {
@@ -47,6 +48,10 @@ const isEditDisabled = computed(() => {
   );
 })
 
+const changeReasonOptions = computed(() => {
+  return [];
+}); 
+
 const redirectBack = () => {
   history.back();
 };
@@ -60,7 +65,6 @@ const onEdit = () => {
   } else {
     state.edit = true
   }
-  
 }
 
 const onUpdateLog = () => {
@@ -121,23 +125,38 @@ const onUpdateLog = () => {
             </dd>
           </div>
           <div class="grid sm:grid-cols-2">
-            <dt class="font-bold text-right mr-10">Transaction Type</dt>
-            <dd>{{ currentOption.title }}</dd>
+            <template v-if="selectedType.slug !== 'EN' && selectedType.slug !== 'CPU'">
+              <dt class="font-bold text-right mr-10">Transaction Type</dt>
+              <dd>{{ currentOption.title }}</dd>
+            </template>
           </div>
           <div class="grid sm:grid-cols-2 ml-[-250px]">
             <dt class="font-bold text-right mr-10">STATUS</dt>
             <dd>{{ sendUpdateLog.status }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
-            <dt class="font-bold text-right mr-10">Sub Type</dt>
-            <dd>
-              <x-select
-                size="xs"
-                :disabled="!state.edit"
-                v-model="sendUpdateForm.option_id"
-                :options="updateLogOptions"
-              />
-            </dd>
+            <template v-if="selectedType.slug !== 'CI' && selectedType.slug !== 'CIR' && selectedType.slug !== 'CPU' && selectedType.slug !== 'CPD'">
+              <dt class="font-bold text-right mr-10">Sub Type</dt>
+              <dd>
+                <x-select
+                  size="xs"
+                  :disabled="!state.edit"
+                  v-model="sendUpdateForm.option_id"
+                  :options="updateLogOptions"
+                />
+              </dd>
+            </template>
+            <template v-else-if="selectedType.slug !== 'CPU' && selectedType.slug !== 'CPD'">
+              <dt class="font-bold text-right mr-10">Reason</dt>
+              <dd>
+                <x-select
+                  size="xs"
+                  :disabled="!state.edit"
+                  v-model="sendUpdateForm.change_reason"
+                  :options="changeReasonOptions"
+                />
+              </dd>
+            </template>
           </div>
         </dl>
       </div>

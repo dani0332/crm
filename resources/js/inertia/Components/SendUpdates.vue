@@ -222,7 +222,7 @@ const findOption = (item, key) => {
             </x-tooltip>
           </template>
           <template #header-type="{ text, tooltip }">
-            <x-tooltip position="bottom">
+            <x-tooltip position="bottom" block>
               <span class="underline decoration-dotted">{{ text }}</span>
               <template #tooltip>
                 <span class="capitalize whitespace-break-spaces">
@@ -232,7 +232,7 @@ const findOption = (item, key) => {
             </x-tooltip>
           </template>
           <template #header-sub_type="{ text, tooltip }">
-            <x-tooltip position="bottom">
+            <x-tooltip position="bottom" block>
               <span class="underline decoration-dotted">{{ text }}</span>
               <template #tooltip>
                 <span class="capitalize whitespace-break-spaces">
@@ -261,8 +261,8 @@ const findOption = (item, key) => {
               </template>
             </x-tooltip>
           </template> -->
-          <template #item-code="{ code }">
-            <Link :href="route('quotes.car.view-update-log', {id: reportableUuid, code: code})" class="text-primary-800 underline">{{ code }}</Link>
+          <template #item-code="{ code, uuid }">
+            <Link :href="route('quotes.car.view-update-log', {id: reportableUuid, uuid: uuid})" class="text-primary-800 underline">{{ code }}</Link>
           </template>
 
           <template #item-type="item">

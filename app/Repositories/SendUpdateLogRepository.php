@@ -27,7 +27,9 @@ class SendUpdateLogRepository extends BaseRepository
 
             $count = $this->fetchGetCount($data['reportable_id'], $data['childCategory']['id']);
 
-            $uuid = date('m') . date('y') . '-' . ($count + 1);
+            $code = $code . '-' . date('m') . date('y') . '-' . ($count + 1);
+
+            $uuid = strtoupper(Str::random(6));
 
             $res = $this->create([
                 'reportable_type' => $data['reportable_type'],
@@ -37,7 +39,7 @@ class SendUpdateLogRepository extends BaseRepository
                 'option_id' => $data['option'],
                 'status' => $data['status'],
                 'uuid' => $uuid,
-                'code' => $code . '-' . $uuid
+                'code' => $code
             ]);            
         } catch (\Throwable $th) {
             $res = (object) [
@@ -48,9 +50,9 @@ class SendUpdateLogRepository extends BaseRepository
         return $res;
     }
 
-    public function fetchGetLogByCode($code)
+    public function fetchGetLogByUuid($uuid)
     {
-        return $this->where('code', $code)->firstOrFail();
+        return $this->where('uuid', $uuid)->firstOrFail();
     }
 
     public function fetchGetLogsById($id)
@@ -80,5 +82,13 @@ class SendUpdateLogRepository extends BaseRepository
             'reportable_id' => $id,
             'category_id' => $categoryId
         ])->count();
+    }
+
+    public function fetchFindByQuoteId($reportableTye, $reportableId) 
+    {   
+        return $this->where([
+            'reportable_type' => "App\\Models\\$reportableTye",
+            'reportable_id' => $reportableId
+        ])->get();
     }
 }

@@ -11,6 +11,7 @@ use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
+use App\Enums\SendUpdateLogStatusEnum;
 use App\Http\Controllers\Controller;
 use App\Models\BusinessInsuranceType;
 use App\Models\BusinessQuote;
@@ -25,6 +26,7 @@ use App\Repositories\InsuranceProviderRepository;
 use App\Repositories\LookupRepository;
 use App\Repositories\LostReasonRepository;
 use App\Repositories\QuoteStatusRepository;
+use App\Repositories\SendUpdateLogRepository;
 use App\Services\AMLService;
 use App\Services\BusinessQuoteService;
 use App\Services\CRUDService;
@@ -257,6 +259,15 @@ class AmtController extends Controller
 
         $documentTypes = DocumentTypeRepository::byQuoteTypeId(QuoteTypes::BUSINESS->id())->get();
 
+        $sendUpdateOptions = [];
+        $sendUpdateLogs = [];
+        $sendUpdateEnum = (object) [];
+        if ($record->quote_status_id == QuoteStatusEnum::PolicyIssued) {
+            $sendUpdateOptions = (new LookupService)->getSendUpdateOptions(QuoteTypes::BUSINESS->id());
+            $sendUpdateLogs = SendUpdateLogRepository::findByQuoteId('BusinessQuote', $record->id);
+            $sendUpdateEnum = SendUpdateLogStatusEnum::asArray();
+        }
+
         return inertia('GroupMedicalQuote/Show', [
             'documentTypes' => $documentTypes,
             'storageUrl' => storageUrl(),
@@ -287,6 +298,9 @@ class AmtController extends Controller
             'nationalities' => $nationalities,
             'emirates' => $emirates,
             'insuranceProviders' => $insuranceProviders,
+            'sendUpdateOptions' => $sendUpdateOptions,
+            'sendUpdateLogs' => $sendUpdateLogs,
+            'sendUpdateEnum' => $sendUpdateEnum
         ]);
     }
 

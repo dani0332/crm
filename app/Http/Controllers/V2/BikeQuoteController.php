@@ -7,6 +7,7 @@ use App\Enums\LookupsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
+use App\Enums\SendUpdateLogStatusEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\BikeQuoteRequest;
 use App\Models\Emirate;
@@ -22,6 +23,7 @@ use App\Repositories\LostReasonRepository;
 use App\Repositories\PaymentMethodRepository;
 use App\Repositories\PersonalPlanRepository;
 use App\Repositories\QuoteStatusRepository;
+use App\Repositories\SendUpdateLogRepository;
 use App\Repositories\UserRepository;
 use App\Services\AMLService;
 use App\Services\LookupService;
@@ -125,10 +127,11 @@ class BikeQuoteController extends Controller
 
         $sendUpdateOptions = [];
         $sendUpdateLogs = [];
-
+        $sendUpdateEnum = (object) [];
         if ($quote->quote_status_id == QuoteStatusEnum::PolicyIssued) {
             $sendUpdateOptions = (new LookupService)->getSendUpdateOptions(QuoteTypes::BIKE->id());
-            $sendUpdateLogs = $quote->load('sendUpdateLogs');
+            $sendUpdateLogs = SendUpdateLogRepository::findByQuoteId('BikeQuote', $quote->id);
+            $sendUpdateEnum = SendUpdateLogStatusEnum::asArray();
         }
 
         return inertia('BikeQuote/Show', [
@@ -136,6 +139,7 @@ class BikeQuoteController extends Controller
             'quote' => $quote,
             'activities' => $activities,
             'lostReasons' => $lostReasons,
+            'quoteTypeId' => QuoteTypes::BIKE->id(),
             'advisors' => $advisors,
             'quoteStatusEnum' => QuoteStatusEnum::asArray(),
             'documentTypes' => $documentTypes,
@@ -157,6 +161,7 @@ class BikeQuoteController extends Controller
             'UBORelations' => $uboRelations,
             'sendUpdateOptions' => $sendUpdateOptions,
             'sendUpdateLogs' => $sendUpdateLogs,
+            'sendUpdateEnum' => $sendUpdateEnum
         ]);
     }
 

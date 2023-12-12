@@ -9,9 +9,11 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
+use App\Enums\SendUpdateLogStatusEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\LifeQuoteRequest;
 use App\Models\Emirate;
+use App\Models\SendUpdateLog;
 use App\Repositories\ActivityRepository;
 use App\Repositories\CustomerMembersRepository;
 use App\Repositories\CustomerRepository;
@@ -22,6 +24,7 @@ use App\Repositories\LookupRepository;
 use App\Repositories\LostReasonRepository;
 use App\Repositories\NationalityRepository;
 use App\Repositories\QuoteStatusRepository;
+use App\Repositories\SendUpdateLogRepository;
 use App\Repositories\UserRepository;
 use App\Services\AMLService;
 use App\Services\CentralService;
@@ -112,10 +115,11 @@ class LifeQuoteController extends Controller
 
         $sendUpdateOptions = [];
         $sendUpdateLogs = [];
-
+        $sendUpdateEnum = (object) [];
         if ($quote->quote_status_id == QuoteStatusEnum::PolicyIssued) {
             $sendUpdateOptions = (new LookupService)->getSendUpdateOptions(QuoteTypes::LIFE->id());
-            $sendUpdateLogs = $quote->load('sendUpdateLogs');
+            $sendUpdateLogs = SendUpdateLogRepository::findByQuoteId('LifeQuote', $quote->id);
+            $sendUpdateEnum = SendUpdateLogStatusEnum::asArray();
         }
 
         $activitiesData = [];
@@ -133,8 +137,6 @@ class LifeQuoteController extends Controller
                 'assignee' => $activity->assignee->name,
                 'assignee_id' => $activity->assignee_id,
                 'status' => $activity->status,
-                'sendUpdateOptions' => $sendUpdateOptions,
-                'sendUpdateLogs' => $sendUpdateLogs,
             ];
         }
 
@@ -164,6 +166,9 @@ class LifeQuoteController extends Controller
             'emirates' => $emirates,
             'UBOsDetails' => $uboDetails,
             'UBORelations' => $uboRelations,
+            'sendUpdateEnum' => $sendUpdateEnum,
+            'sendUpdateOptions' => $sendUpdateOptions,
+            'sendUpdateLogs' => $sendUpdateLogs,
         ]);
     }
 

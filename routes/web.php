@@ -297,7 +297,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::group(['prefix' => 'quotes'], function () {
         Route::resource('health', CRUDController::class);
         Route::resource('car', CRUDController::class);
-        Route::get('/car/{id}/send-update-log/{code}', [SendUpdateLogController::class, 'show'])->name('quotes.car.view-update-log');
+        Route::get('/car/{id}/send-update-log/{uuid}', [SendUpdateLogController::class, 'show'])->name('quotes.car.view-update-log');
         Route::get('health-cards', [HealthQuoteController::class, 'cardsView'])->name('health.cards');
 
         Route::get('home-cards', [CRUDController::class, 'cardsViewHome'])->name('home-cardView');

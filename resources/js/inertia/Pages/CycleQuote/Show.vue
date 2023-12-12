@@ -265,12 +265,13 @@ const linkEntity = () => {
     });
 };
 
-const sectionExpanded = computed(() => {
-  return !(
-    page.props.quote.quote_status_id ===
-    page.props.quoteStatusEnum.PolicyIssued
+const policyIssued = computed(() => {
+  return (
+    page.props.quote.quote_status_id === page.props.quoteStatusEnum.PolicyIssued
   );
-})
+});
+
+const sectionExpanded = computed(() => !policyIssued.value);
 </script>
 
 <template>
@@ -834,12 +835,12 @@ const sectionExpanded = computed(() => {
     />
 
     <SendUpdates
-      v-if="showSendUpdate"
+      v-if="policyIssued"
       :showAddButton="true"
       reportableType="CycleQuote"
-      :reportableId="record.id"
+      :reportableId="quote.id"
       :quote_type_id="$page.props.quoteTypeId"
-      :reportableUuid="record.uuid"
+      :reportableUuid="quote.uuid"
       :options="sendUpdateOptions"
       :data="sendUpdateLogs"
     />
