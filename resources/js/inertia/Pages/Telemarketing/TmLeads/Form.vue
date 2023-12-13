@@ -1,4 +1,6 @@
 <script setup>
+import { onMounted } from 'vue';
+
 const props = defineProps({
   tmlead: Object,
   tmLeadStatuses: Array,
@@ -41,6 +43,19 @@ const leadForm = useForm({
   nationality_id: props.tmlead?.nationality_id ?? null,
 });
 
+const tmInsuranceTypes = ref([...props.tmInsuranceTypes]);
+
+const showCarKeys = ref(false);
+
+const handleshowCarKeys = e => {
+  let insuranceType = tmInsuranceTypes.value.find(x => {
+    if (x.id == e || x.id == leadForm.tm_insurance_types_id) return x;
+  });
+  insuranceType && insuranceType.code == 'Car'
+    ? (showCarKeys.value = true)
+    : (showCarKeys.value = false);
+};
+
 function onSubmit(isValid) {
   if (isValid) {
     leadForm.clearErrors();
@@ -59,6 +74,10 @@ function onSubmit(isValid) {
     });
   }
 }
+
+onMounted(() => {
+  handleshowCarKeys();
+});
 </script>
 <template>
   <Head title="Add TM Lead" />
@@ -107,6 +126,7 @@ function onSubmit(isValid) {
           "
           class="w-full"
           :rules="[isRequired]"
+          @update:modelValue="handleshowCarKeys($event)"
         />
       </x-field>
       <x-field label="Email Address" required>
@@ -139,10 +159,11 @@ function onSubmit(isValid) {
           :rules="[isRequired]"
         />
       </x-field>
-      <!-- <template> -->
       <x-field label="DOB">
         <DatePicker class="w-full" v-model="leadForm.dob" />
       </x-field>
+    </div>
+    <div v-show="showCarKeys" class="grid sm:grid-cols-2 gap-4 mt-4">
       <x-field label="Car Type of Insurance" required>
         <x-select
           v-model="leadForm.car_type_insurance_id"
@@ -221,7 +242,6 @@ function onSubmit(isValid) {
           class="w-full"
         />
       </x-field>
-      <!-- </template> -->
     </div>
 
     <x-divider class="my-4" />
