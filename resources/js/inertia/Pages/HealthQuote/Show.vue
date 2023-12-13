@@ -564,7 +564,6 @@ const onLoadAvailablePlansData = async () => {
   axios
     .post(url, data)
     .then(res => {
-        console.log('res avail plaaaaaaaaaans', res);
       plansTable.data = res.data.length > 0 ? res?.data[0] : [];
       getSmallestCopayRateAsDefaultValue();
     })
@@ -809,9 +808,7 @@ const getSmallestCopayRateAsDefaultValue = () => {
   let defaultCopayId = 0;
   let smallestCopayVAT = 0;
   plansTable.data.forEach(element => {
-      console.log('value of plansss ele',element);
     element.ratesPerCopay.forEach(function callback(value, index) {
-        console.log('value of value',value);
       if (index == 0) {
         smallestCopayValue = Number(value.premium);
         smallestCopayVAT = Number(value.vat);
@@ -823,7 +820,6 @@ const getSmallestCopayRateAsDefaultValue = () => {
       }
     });
 
-    console.log('element name',element.name);
     if (isMounted.value && selectedCoPay.planId == element.id) {
       element.actualPremium = selectedCoPay.premium;
       element.vat = selectedCoPay.vat;
