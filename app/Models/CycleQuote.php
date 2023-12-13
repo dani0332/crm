@@ -30,4 +30,9 @@ class CycleQuote extends Model
     {
         return $this->belongsTo(YearOfManufacture::class);
     }
+
+    public function documents()
+    {
+        return $this->morphMany(QuoteDocument::class, 'quote_documentable');
+    }
 }

@@ -177,7 +177,7 @@ return [
             ],
         ],
         'uat' => [
-            'supervisor-test' => [
+            'supervisor-uat' => [
                 'connection' => 'redis',
                 'queue' => 'default,renewals',
                 'balance' => 'auto',
@@ -187,6 +187,17 @@ return [
                 'timeout' => 60,
             ],
         ],
+        // 'uat2' => [
+        //     'supervisor-uat2' => [
+        //         'connection' => 'redis',
+        //         'queue' => 'default,renewals',
+        //         'balance' => 'auto',
+        //         'maxProcesses' => 3,
+        //         'processes' => 1,
+        //         'tries' => 3,
+        //         'timeout' => 60,
+        //     ],
+        // ],
         'staging' => [
             'supervisor-stg' => [
                 'connection' => 'redis',
@@ -209,17 +220,17 @@ return [
                 'timeout' => 60,
             ],
         ],
-        'test' => [
-            'supervisor-test' => [
-                'connection' => 'redis',
-                'queue' => 'default,renewals',
-                'balance' => 'auto',
-                'maxProcesses' => 3,
-                'processes' => 1,
-                'tries' => 3,
-                'timeout' => 60,
-            ],
-        ],
+        // 'test' => [
+        //     'supervisor-test' => [
+        //         'connection' => 'redis',
+        //         'queue' => 'default,renewals',
+        //         'balance' => 'auto',
+        //         'maxProcesses' => 3,
+        //         'processes' => 1,
+        //         'tries' => 3,
+        //         'timeout' => 60,
+        //     ],
+        // ],
         'local' => [
             'supervisor-dev' => [
                 'connection' => 'redis',

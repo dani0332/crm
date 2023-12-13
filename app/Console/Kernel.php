@@ -33,7 +33,6 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
-
         $schedule
             ->command('UpdateUserStatus:cron')->everyMinute()->onOneServer()->withoutOverlapping(1);
 

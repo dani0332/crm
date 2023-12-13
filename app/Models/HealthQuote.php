@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\QuoteTypeId;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use OwenIt\Auditing\Auditable;
@@ -16,12 +17,12 @@ class HealthQuote extends Model implements AuditableContract
 
     public function emirate()
     {
-        return $this->hasOne(Emirate::class, 'id', 'emirate_of_your_visa_id');
+        return $this->belongsTo(Emirate::class, 'emirate_of_your_visa_id');
     }
 
     public function customer()
     {
-        return $this->hasOne(Customer::class, 'id', 'customer_id');
+        return $this->belongsTo(Customer::class, 'customer_id');
     }
 
     public function currentlyInsured()
@@ -31,17 +32,27 @@ class HealthQuote extends Model implements AuditableContract
 
     public function nationality()
     {
-        return $this->hasOne(Nationality::class, 'id', 'nationality_id');
+        return $this->belongsTo(Nationality::class, 'nationality_id');
     }
 
     public function paymentStatus()
     {
-        return $this->hasOne(PaymentStatus::class, 'id', 'payment_status_id');
+        return $this->belongsTo(PaymentStatus::class, 'payment_status_id');
     }
 
     public function quoteStatus()
     {
-        return $this->hasOne(QuoteStatus::class, 'id', 'quote_status_id');
+        return $this->belongsTo(QuoteStatus::class, 'quote_status_id');
+    }
+
+    public function healthCoverFor()
+    {
+        return $this->belongsTo(HealthCoverFor::class, 'cover_for_id');
+    }
+
+    public function maritalStatus()
+    {
+        return $this->belongsTo(MartialStatus::class, 'marital_status_id');
     }
 
     public function healthQuoteRequestDetail()
@@ -94,7 +105,7 @@ class HealthQuote extends Model implements AuditableContract
      */
     public function members()
     {
-        return $this->hasMany(HealthMemberDetail::class, 'health_quote_request_id');
+        return $this->morphMany(CustomerMembers::class, 'quote');
     }
 
     public function payments()
@@ -115,5 +126,16 @@ class HealthQuote extends Model implements AuditableContract
     public function healthLeadType()
     {
         return $this->belongsTo(HealthLeadType::class, 'lead_type_id');
+    }
+
+    public function quoteRequestEntityMapping()
+    {
+        return $this->hasOne(QuoteRequestEntityMapping::class, 'quote_request_id')
+            ->where('quote_type_id', QuoteTypeId::Health);
+    }
+
+    public function customerMembers()
+    {
+        return $this->morphMany(CustomerMembers::class, 'quote');
     }
 }

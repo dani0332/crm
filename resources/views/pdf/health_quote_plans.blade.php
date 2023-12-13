@@ -144,6 +144,7 @@
             vertical-align: middle;
             max-height: 50px;
             height: 50px;
+            position: relative;
         }
         .spacer {
             padding: 3px;
@@ -207,6 +208,12 @@
         }
         .provider-logo {
             width: 100px;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            max-width: 100%;
+            max-height: 100%;
         }
         .no-border {border: none;}
         footer {
@@ -277,7 +284,7 @@
                     $quotePlan->{$benefit} = json_decode(collect(@$quotePlan->benefits->{$benefit})->keyBy('code')->toJson());
                 }
             }
-            $quotePlan->addons = isset($addons) ? $addons[$quotePlan->id] : json_decode(collect($quotePlan->addons)->keyBy('code')->toJson());
+            $quotePlan->addons = isset($addons) ? ($addons[$quotePlan->id] ?? []) : json_decode(collect($quotePlan->addons)->keyBy('code')->toJson());
 
             // Discount Premium and VAT new Implementation
             if(isset($quotePlan->addons['coPayment'])) {
@@ -423,18 +430,14 @@
                         <img src="{{public_path('images/alfred.png')}}"  />
                     </th>
                     @foreach($planIds as $planId)
-                    <th class="provider" style="border: solid 1px #bfbfbf;">
-                        <div class="rounded-full">
-                            <p class="relative top-[40%] m-auto text-xs">
+                    <th class="provider" style="border: solid 1px #bfbfbf; position : relative">
                                 @php
                                     $providerLogoImage = public_path('images/insurance_providers/' . strtolower($plans[$planId]->providerCode) . '.png');
                                     if(!file_exists($providerLogoImage)) {
                                         $providerLogoImage = public_path('images/insurance_providers/default.png');
                                     }
                                @endphp
-                                <img class="provider-logo" alt="" src="{{$providerLogoImage}}" />
-                            </p>
-                        </div>
+                               <img class="provider-logo" alt="" src="{{$providerLogoImage}}" />
                     </th>
                     @endforeach
                 </tr>
