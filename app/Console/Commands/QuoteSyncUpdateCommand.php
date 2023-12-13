@@ -52,31 +52,33 @@ class QuoteSyncUpdateCommand extends Command
         $entries = QuoteSync::where('is_synced', false)->get();
 
         foreach ($entries as $entry) {
-            info('Syncing QuoteSync entry: '.$entry->id);
+            info('Syncing entry: '.$entry->quote_uuid);
             $quote = PersonalQuote::where('uuid', $entry->quote_uuid)->first();
-            info('Syncing QuoteSync entry: '.$entry->id);
             if ($quote) {
                 DB::beginTransaction();
                 try {
+                    info("Entry for quote : ". $entry->quote_uuid . " found in personal quotes table");
                     $newValues = json_decode($entry->updated_fields, true);
-
                     foreach ($newValues as $column => $value) {
                         if (Schema::hasColumn('personal_quotes', $column)) {
+                            $columnType = DB::getSchemaBuilder()->getColumnType('personal_quotes', $column);
+                            // Surround the value with quotes if it's a string, date, or datetime
+                            if (in_array($columnType, ['string', 'date', 'datetime'])) {
+                                $value = "'$value'";
+                            }
                             $quote->$column = $value;
                         }
                     }
 
                     $quote->save();
-
                     $entry->update(['is_synced' => true, 'synced_at' => now()]);
-
                     DB::commit();
-
                 } catch (Exception $e) {
                     DB::rollBack();
-                    info(' QuoteSyncJob Error: '.$e->getMessage());
+                    info('QuoteSyncJob Error: ' . $e->getMessage());
                 }
             } else {
+                info("Entry for quote : ". $entry->quote_uuid . " not found in personal quotes table");
                 $quoteTypeModels = [
                     1 => CarQuote::class,
                     2 => HomeQuote::class,
@@ -92,9 +94,7 @@ class QuoteSyncUpdateCommand extends Command
                 ];
 
                 $modelClassName = $quoteTypeModels[$entry->quote_type_id];
-
                 $sourceQuote = $modelClassName::where('uuid', $entry->quote_uuid)->first();
-
                 if ($sourceQuote) {
                     DB::beginTransaction();
                     try {
@@ -107,12 +107,14 @@ class QuoteSyncUpdateCommand extends Command
                                 $personalQuote->$column = $value;
                             }
                         }
-                        info('Syncing QuoteSync entry: '.$entry->id.' personalQuote: '.$personalQuote);
+                        info("Saving entry for quote : ". $entry->quote_uuid . " in personal quotes table");
                         $personalQuote->save();
                         $entry->update(['is_synced' => true, 'synced_at' => now()]);
+                        info("Entry for quote : ". $entry->quote_uuid . " saved in personal quotes table");
                         DB::commit();
                     } catch (Exception $e) {
                         DB::rollBack();
+                        info("Error while saving entry for quote : ". $entry->quote_uuid . " in personal quotes table");
                         info(' QuoteSyncJob Error: '.$e->getMessage());
                     }
                 }
