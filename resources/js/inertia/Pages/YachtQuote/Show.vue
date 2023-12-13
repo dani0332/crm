@@ -734,9 +734,9 @@ const sectionExpanded = computed(() => !policyIssued.value);
       v-if="policyIssued"
       :showAddButton="true"
       reportableType="YachtQuote"
-      :reportableId="record.id"
+      :reportableId="quote.id"
       :quote_type_id="$page.props.quoteTypeId"
-      :reportableUuid="record.uuid"
+      :reportableUuid="quote.uuid"
       :options="sendUpdateOptions"
       :data="sendUpdateLogs"
     />
