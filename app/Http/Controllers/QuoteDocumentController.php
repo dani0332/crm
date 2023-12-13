@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
-use App\Http\Requests\PersonalQuoteDocumentRequest;
+use App\Http\Requests\QuotesDocumentRequest;
 use App\Models\DocumentType;
 use App\Models\QuoteDocument;
 use App\Services\ActivitiesService;
@@ -97,7 +97,7 @@ class QuoteDocumentController extends Controller
         ));
     }
 
-    public function store($quoteType, PersonalQuoteDocumentRequest $request)
+    public function store($quoteType, QuotesDocumentRequest $request)
     {
         if (! $request->hasFile('file') ||
             ! ($quote = $this->getQuoteObject($quoteType, $request->quote_id))

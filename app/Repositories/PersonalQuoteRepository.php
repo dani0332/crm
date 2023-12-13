@@ -7,6 +7,7 @@ use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Facades\Capi;
+use App\Models\PersonalQuote;
 use App\Models\QuoteDocument;
 use App\Models\QuoteStatusLog;
 use Carbon\Carbon;
@@ -18,7 +19,7 @@ class PersonalQuoteRepository extends BaseRepository
 {
     public function model()
     {
-        return getModelNameForDocument(request()->folder_path ?? '');
+        return PersonalQuote::class;
     }
 
     /**
@@ -67,7 +68,7 @@ class PersonalQuoteRepository extends BaseRepository
             $query->where('quote_type_id', request()->quote_type_id);
         }
         $documentType = $query->first();
-        $quote = $this->whereId($id)->first();
+        $quote = DocumentQuoteRepository::whereId($id)->first();
 
         $originalName = $file->getClientOriginalName();
         $docName = preg_replace('/\s+/', '', uniqid().'_'.$originalName);

@@ -204,18 +204,4 @@ class QuoteDocumentService extends BaseService
         }
     }
 
-    private function getDocumentType($quoteType)
-    {
-        $quoteTypeDoc = ucfirst($quoteType);
-
-        switch ($quoteTypeDoc) {
-            case quoteTypeCode::Home:
-                $quoteTypeDoc = quoteTypeCode::PERSONAL;
-                break;
-            default:
-                $quoteTypeDoc = $quoteType;
-        }
-
-        return $quoteTypeDoc;
-    }
 }

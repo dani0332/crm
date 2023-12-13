@@ -587,10 +587,6 @@ if (! function_exists('getModelNameForDocument')) {
             case quoteTypeCode::Travel:
                 $quoteType = quoteTypeCode::Travel;
                 break;
-            default:
-                if ($read) {
-                    $quoteType = 'Personal';
-                }
         }
 
         return 'App\\Models\\'.$quoteType.'Quote';
