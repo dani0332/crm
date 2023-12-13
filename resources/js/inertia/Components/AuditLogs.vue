@@ -12,6 +12,9 @@ const props = defineProps({
     required: false,
     type: String,
   },
+  url: {
+    type: String,
+  },
   quoteCode: {
     required: false,
     type: String,
@@ -44,7 +47,7 @@ const onLoadAuditLogData = async () => {
     jsonData: true,
   };
 
-  let url = '/auditlogs';
+  let url = props.url ?? '/auditlogs';
 
   if (props.quoteType != undefined) {
     data = {
