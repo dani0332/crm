@@ -1376,6 +1376,10 @@ const uploadDocument = (doc, files, count) => {
           } else {
               quoteDocuments = data.props.quote.documents;
           }
+          //quoteDocuments = [...quoteDocuments].reverse();
+          // Sort the array by the "id" property in descending order
+          quoteDocuments.sort((a, b) => b.id - a.id);
+          console.log('quoteDocuments=' + JSON.stringify(quoteDocuments));
           if (paymentMethodsForm.status === 'view') {
             isApprovedDocumentNotUploaded.value = false;
             for (let i = 0; i < files.length; i++) {
