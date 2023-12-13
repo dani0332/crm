@@ -60,6 +60,10 @@ class QuoteSyncUpdateCommand extends Command
                     info('Entry for quote : '.$entry->quote_uuid.' found in personal quotes table');
                     $newValues = json_decode($entry->updated_fields, true);
                     foreach ($newValues as $column => $value) {
+                        if ($column === 'id') {
+                            continue;
+                        }
+
                         if (Schema::hasColumn('personal_quotes', $column)) {
                             $columnType = DB::getSchemaBuilder()->getColumnType('personal_quotes', $column);
                             // Surround the value with quotes if it's a string, date, or datetime
@@ -103,6 +107,10 @@ class QuoteSyncUpdateCommand extends Command
                         $personalQuote->uuid = $entry->quote_uuid;
                         $personalQuote->quote_type_id = $entry->quote_type_id;
                         foreach ($newValues as $column => $value) {
+                            if ($column === 'id') {
+                                continue;
+                            }
+
                             if (Schema::hasColumn('personal_quotes', $column)) {
                                 $personalQuote->$column = $value;
                             }
