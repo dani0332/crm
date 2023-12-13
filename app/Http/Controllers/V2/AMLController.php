@@ -326,21 +326,27 @@ class AMLController extends Controller
 
     public function quoteUpdate(AMLCheckRequest $AMLCheckRequest, $quoteTypeId, $quoteRequestId)
     {
-
         $quoteId = $quoteRequestId;
         $quoteType = QuoteType::where('id', $quoteTypeId)->firstOrFail();
-
-        /*if (checkPersonalQuotes($quoteType->code) && (! AMLService::isDataMigrated($quoteTypeId, $quoteRequestId))) {
-            $quoteId = AMLService::getPersonalQuoteId($quoteTypeId, $quoteRequestId);
-        } */
-
         $updateQuote = $this->getQuoteObject($quoteType->code, $quoteId);
         $getMemberOrUBODetails = AMLService::getMemberOrUBODetails($AMLCheckRequest, $quoteType, $quoteId);
+
         if ($getMemberOrUBODetails) {
             $memberValidateCheck = collect($getMemberOrUBODetails)->pluck('first_name')->toArray();
-            if (in_array(null, $memberValidateCheck)) {
+            if (in_array(null, $memberValidateCheck))
                 return redirect()->back()->with('error', 'First Name missing');
-            }
+
+            $getLastScreening = KycLog::withTrashed()->where([
+                'quote_type_id' => $quoteTypeId,
+                'quote_request_id' => $quoteRequestId,
+            ])->where(function ($ryuFilter) {
+                $ryuFilter->whereNotIn('decision', [AMLDecisionStatusEnum::RYU]);
+                $ryuFilter->orWhereNull('decision');
+            })->whereNull('screenshot')->get()->last() ?? [];
+
+            $getMemberOrUBODetails = collect($getMemberOrUBODetails)->filter(function ($value) use ($getLastScreening) {
+               return  $value->updated_at >= $getLastScreening?->created_at;
+            });
         }
 
         if ($updateQuote) {
@@ -355,8 +361,7 @@ class AMLController extends Controller
             }
 
             session()->put('amlResponseCheck', []);
-            $bridgerInsightService = new BridgerInsightService();
-            $bridgerAPIToken = $bridgerInsightService->getJWTToken();
+            info('Bridger Insight - Customer type : '. $AMLCheckRequest->customer_type);
 
             $kycLogs = KycLog::where(['quote_request_id' => $quoteRequestId, 'quote_type_id' => $quoteTypeId])
                 ->where(function ($aml) {
@@ -365,20 +370,32 @@ class AMLController extends Controller
                 })->whereNull('screenshot')->withTrashed()->get()->pluck('decision')->toArray();
 
             if ($AMLCheckRequest->customer_type == CustomerTypeEnum::Individual) {
-                info('Bridger Insight - Customer type : Individual');
                 $customer = Customer::with('nationality')->findOrFail($AMLCheckRequest->customer_id);
-                $customerUpdate = $AMLCheckRequest->validated();
-                $customer->update($customerUpdate);
-                $customer->refresh();
-                info('Bridger Insight - Customer Updated Successfully');
 
-                $getMemberOrUBODetails[] = [
-                    'first_name' => $customer->insured_first_name,
-                    'last_name' => $customer->insured_last_name,
-                    'dob' => Carbon::parse($customer->dob)->format(config('constants.DATE_FORMAT_ONLY')),
-                    'nationality' => $customer->nationality->toArray() ?? [],
-                    'code' => CustomerTypeEnum::IndividualShort.'-'.$customer->id,
-                ];
+                $customer->nationality_id = $AMLCheckRequest->nationality_id;
+                $customer->dob = $AMLCheckRequest->dob;
+                $customer->insured_first_name = $AMLCheckRequest->insured_first_name;
+                $customer->insured_last_name = $AMLCheckRequest->insured_last_name;
+
+                if ($customer->isDirty() || ($customer->updated_at >= $getLastScreening?->created_at) ) {
+                    $customer->save();
+                    $customer->refresh();
+                    info('Bridger Insight - Customer Updated Successfully');
+
+                    $getMemberOrUBODetails[] = [
+                        'first_name' => $customer->insured_first_name,
+                        'last_name' => $customer->insured_last_name,
+                        'dob' => Carbon::parse($customer->dob)->format(config('constants.DATE_FORMAT_ONLY')),
+                        'nationality' => $customer->nationality->toArray() ?? [],
+                        'code' => CustomerTypeEnum::IndividualShort.'-'.$customer->id,
+                    ];
+                }
+
+                if (empty($getMemberOrUBODetails->toArray()))
+                    return redirect()->back()->with('success', 'AML Screening Completed');
+
+                $bridgerInsightService = new BridgerInsightService();
+                $bridgerAPIToken = $bridgerInsightService->getJWTToken();
 
                 foreach ($getMemberOrUBODetails as $memberDetail) {
                     BridgerAMLJob::dispatchSync(
@@ -404,7 +421,6 @@ class AMLController extends Controller
             }
 
             if ($AMLCheckRequest->customer_type == CustomerTypeEnum::Entity) {
-                info('Bridger Insight - Customer type : Entity');
                 $entity = Entity::updateOrCreate(['trade_license_no' => $AMLCheckRequest->trade_license_no], [
                     'company_name' => $AMLCheckRequest->company_name,
                     'company_address' => $AMLCheckRequest->company_address,
@@ -419,6 +435,9 @@ class AMLController extends Controller
                     'quote_type_id' => $quoteType->id,
                     'quote_request_id' => $quoteRequestId,
                 ], ['entity_id' => $entityId, 'entity_type_code' => $AMLCheckRequest->entity_type_code]);
+
+                $bridgerInsightService = new BridgerInsightService();
+                $bridgerAPIToken = $bridgerInsightService->getJWTToken();
 
                 // Bridger Insight API Call for Entity
                 $entityDetailsForApi = ['company_name' => $entity->company_name, 'code' => CustomerTypeEnum::EntityShort.'-'.$entity->id];
