@@ -20,6 +20,7 @@ use App\Http\Requests\PlanDetailsRequest;
 use App\Http\Requests\UpdateLastYearPolicyRequest;
 use App\Models\Customer;
 use App\Models\Entity;
+use App\Models\Payment;
 use App\Models\QuoteRequestEntityMapping;
 use App\Services\CentralService;
 use App\Traits\GenericQueriesAllLobs;
@@ -123,13 +124,12 @@ class CentralController extends Controller
 
         if ($customerProfileRequest->customer_type == CustomerTypeEnum::Entity) {
             $entity = Entity::updateOrCreate(['trade_license_no' => $customerProfileRequest->trade_license_no], $customerProfileRequest->validated());
-            $entity->update(['code' => CustomerTypeEnum::EntityShort.'-'.$entity->id]);
+            $entity->update(['code' => CustomerTypeEnum::EntityShort . '-' . $entity->id]);
 
             QuoteRequestEntityMapping::updateOrCreate([
                 'quote_type_id' => $customerProfileRequest->quote_type_id,
                 'quote_request_id' => $customerProfileRequest->quote_request_id,
             ], ['entity_id' => $entity->id, 'entity_type_code' => $customerProfileRequest->entity_type_code]);
-
         }
 
         return redirect()->back();
@@ -155,10 +155,32 @@ class CentralController extends Controller
 
     public function updateBookingPolicy(Request $request)
     {
-        dd($request->all());
+        $paymentInformation = [
+            'insurer_invoice_date' => $request->invoice_date,
+            'tax_invoice_number' => $request->insurer_tax_invoice_number,
+            // 'captured_amount' => $request->insurer_commmission_invoice_number,
+            // 'captured_amount' => $request->broker_invoice_number,
+            'commission_vat_not_applicable' => $request->commission_vat_not_applicable,
+            'commission_vat_applicable' => $request->commission_vat_applicable,
+            // 'insurance_provider_id' => $request->commission_percentage,
+            'commission_vat' => $request->vat_on_commission,
+            'commission' => $request->total_commission,
+        ];
+        $payment = Payment::where('code', $request->payment_code)->first();
+        if (!$payment) {
+            return back()->with('message', 'Payment record not found');
+        }
+        $payment->update($paymentInformation);
 
         return redirect()->back()->with('success', 'Booking Status has been updated.');
     }
+
+    public function sendBookingPolicy(Request $request)
+    {
+
+        return response()->json(['message' => 'policy send successfully'], 200);
+    }
+
     public function loadAvailablePlans($type, $id)
     {
         return (new CentralService())->loadAvailablePlans($type, $id);
@@ -184,5 +206,4 @@ class CentralController extends Controller
 
         return redirect()->back()->with('success', 'updated successfully');
     }
-
 }

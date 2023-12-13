@@ -1,6 +1,6 @@
 <script setup>
 const page = usePage();
-
+const notification = useNotifications('toast');
 const props = defineProps({
   quote: {
     type: Object,
@@ -14,45 +14,118 @@ const props = defineProps({
     type: Array,
     default: [],
   },
+  payments: {
+    type: Array,
+    default: [],
+  },
 });
 
-const bPForm = useForm({
-  insurer_invoice_date: null,
-});
+const dateToYMD = date => {
+  if (date) {
+    const [year, month, day] = date.split('-');
+    return `${year}-${month}-${day}`;
+  }
+  return '';
+};
 
 const bp = reactive({
   isEditing: false,
 });
 
-const bpForm = useForm({
-  insurer_invoice_date: '',
-  insurer_tax_invoice_number: '',
-  insurer_commmission_invoice_number: '',
-  commission_vat_not_applicable: '',
-  commission_vat_applicable: '',
-  commission_percentage: '',
+const transactionPaymentStatus = computed(() => {
+  if (page.props?.payments[0]?.captured_amount === 0) {
+    return 'Not Paid';
+  }
+  if (
+    page.props?.payments[0]?.total_amount >
+    page.props?.payments[0]?.captured_amount
+  ) {
+    return 'Partially Paid';
+  }
+  if (
+    page.props?.payments[0]?.total_amount ===
+    page.props?.payments[0]?.captured_amount
+  ) {
+    return 'Paid';
+  }
 });
+const bpForm = useForm({
+  booking_date: new Date().toJSON().slice(0, 10),
+  transaction_payment_status: transactionPaymentStatus.value,
+  invoice_date: dateToYMD(page.props.payments[0]?.insurer_invoice_date) || '',
+  invoice_description: page.props.bPDetails.invoiceDescription || '',
+  broker_invoice_number: page.props.bPDetails.brokerInvoiceNo || '',
+  insurer_tax_invoice_number: page.props?.payments[0]?.tax_invoice_number || '',
+  insurer_commmission_invoice_number: '',
+  commission_vat_not_applicable:
+    page.props?.payments[0]?.commission_vat_not_applicable || '',
+  commission_vat_applicable:
+    page.props?.payments[0]?.commission_vat_applicable || '',
+  commission_percentage: '',
+  vat_on_commission: page.props?.payments[0]?.commission_vat || '',
+  total_commission: page.props?.payments[0]?.commission || '',
+  payment_code: page.props?.payments[0]?.code,
+  discount: page.props?.payments[0]?.discount_value || '',
+});
+
 const onUpdateBpDetails = () => {
   bpForm.post('/quotes/update-booking-policy', {
     preserveScroll: true,
     onSuccess: () => {
-      policyDetailsState.isEditing = false;
+      // policyDetailsState.isEditing = false;
     },
   });
 };
 
-console.log('quote' + JSON.stringify(props.quote));
+const modals = reactive({
+  sendPolicyConfirm: false,
+  isConfirmed: false,
+});
+const confirmSendPolicy = () => {
+  modals.sendPolicyConfirm = true;
+};
 
-const notVatCommission = () => {};
+const submitPolicy = () => {
+  let url = '/quotes/send-booking-policy';
+  axios.post(url).then(response => {
+    console.log(response);
+    if (response.status == 200) {
+      notification.success({
+        title: 'Policy Sent Successfully',
+        position: 'top',
+      });
 
-const vatCommission = () => {
+      modals.sendPolicyConfirm = false;
+    } else {
+      notification.error({
+        title: 'Policy Sending Failed',
+        position: 'top',
+      });
+    }
+  });
+};
+
+const caculateCommission = () => {
   if (bpForm.commission_vat_applicable > 0) {
     bpForm.commission_percentage = (
       (bpForm.commission_vat_applicable / props.quote?.price_without_vat) *
       100
     ).toFixed(2);
+
+    bpForm.vat_on_commission = bpForm.commission_percentage * (0.05).toFixed(2);
+    bpForm.total_commission =
+      Number(bpForm.vat_on_commission) +
+      Number(bpForm.commission_vat_applicable);
+  } else if (bpForm.commission_vat_not_applicable > 0) {
+    bpForm.commission_percentage = (
+      (bpForm.commission_vat_not_applicable / props.quote?.price_without_vat) *
+      100
+    ).toFixed(2);
+    bpForm.total_commission = bpForm.commission_vat_not_applicable;
   } else {
     bpForm.commission_percentage = '';
+    bpForm.vat_on_commission = '';
+    bpForm.total_commission = '';
   }
 };
 </script>
@@ -68,11 +141,11 @@ const vatCommission = () => {
       <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
         <div class="grid sm:grid-cols-2">
           <dt class="font-medium">Booking Date</dt>
-          <dd></dd>
+          <dd>{{ bpForm.booking_date }}</dd>
         </div>
         <div class="grid sm:grid-cols-2">
           <dt class="font-medium">Invoice Description</dt>
-          <dd></dd>
+          <dd>{{ bpForm.invoice_description }}</dd>
         </div>
         <div class="grid sm:grid-cols-2">
           <dt class="font-medium">Main Class Insurance</dt>
@@ -80,7 +153,7 @@ const vatCommission = () => {
         </div>
         <div class="grid sm:grid-cols-2">
           <dt class="font-medium">Transaction Payment Status</dt>
-          <dd>Not Paid</dd>
+          <dd>{{ bpForm.transaction_payment_status }}</dd>
         </div>
         <div class="grid sm:grid-cols-2">
           <dt class="font-medium">Sub Class</dt>
@@ -90,9 +163,9 @@ const vatCommission = () => {
           <dt class="font-medium">Insurer Invoice Date</dt>
           <dd>
             <DatePicker
-              v-model="bPForm.insurer_invoice_date"
+              v-model="bpForm.invoice_date"
               type="date"
-              placeholder="Expiry Date"
+              placeholder="Insurer Invoice Date"
               class="w-full"
               :disabled="!bp.isEditing"
             />
@@ -100,7 +173,7 @@ const vatCommission = () => {
         </div>
         <div class="grid sm:grid-cols-2">
           <dt class="font-medium">Broker Invoice Number</dt>
-          <dd></dd>
+          <dd>{{ bpForm.broker_invoice_number }}</dd>
         </div>
         <div class="grid sm:grid-cols-2">
           <dt class="font-medium">Insurer Tax Invoice Number</dt>
@@ -115,7 +188,7 @@ const vatCommission = () => {
         </div>
         <div class="grid sm:grid-cols-2">
           <dt class="font-medium">Discount</dt>
-          <dd></dd>
+          <dd>{{ bpForm.discount }}</dd>
         </div>
         <div class="grid sm:grid-cols-2">
           <dt class="font-medium">Insurer Commmission Invoice Number</dt>
@@ -137,7 +210,7 @@ const vatCommission = () => {
           <dd>
             <x-input
               v-model="bpForm.commission_vat_not_applicable"
-              @change="notVatCommission"
+              @change="caculateCommission"
               placeholder="Commmission VAT NOT APPLICABLE"
               class="w-full"
               :disabled="
@@ -147,15 +220,15 @@ const vatCommission = () => {
           </dd>
         </div>
         <div class="grid sm:grid-cols-2">
-          <dt class="font-medium">VAT on commission</dt>
-          <dd></dd>
+          <dt class="font-medium">VAT on Commission</dt>
+          <dd>{{ bpForm.vat_on_commission }}</dd>
         </div>
         <div class="grid sm:grid-cols-2">
           <dt class="font-medium">Commmission VAT APPLICABLE</dt>
           <dd>
             <x-input
               v-model="bpForm.commission_vat_applicable"
-              @change="vatCommission"
+              @change="caculateCommission"
               placeholder="Commmission VAT APPLICABLE"
               class="w-full"
               :disabled="
@@ -165,8 +238,8 @@ const vatCommission = () => {
           </dd>
         </div>
         <div class="grid sm:grid-cols-2">
-          <dt class="font-medium">Total commission</dt>
-          <dd></dd>
+          <dt class="font-medium">Total Commission</dt>
+          <dd>{{ bpForm.total_commission }}</dd>
         </div>
       </dl>
       <div class="flex flex-wrap md:flex-nowrap gap-6 w-full">
@@ -179,7 +252,7 @@ const vatCommission = () => {
           class="mt-4 mr-2"
           color="emerald"
           size="sm"
-          :loading="bPForm.processing"
+          :loading="bpForm.processing"
           @click.prevent="bp.isEditing = false"
         >
           Cancel
@@ -189,7 +262,7 @@ const vatCommission = () => {
           class="mt-4 mr-2"
           color="emerald"
           size="sm"
-          :loading="bPForm.processing"
+          :loading="bpForm.processing"
           @click.prevent="onUpdateBpDetails"
         >
           Update
@@ -207,11 +280,41 @@ const vatCommission = () => {
           size="sm"
           color="orange"
           class="mt-4"
+          @click.prevent="confirmSendPolicy"
+          :disabled="bp.isEditing"
           v-if="props.bPDetails?.sendButton"
         >
           {{ props.bPDetails?.text }}
         </x-button>
       </div>
     </div>
+
+    <x-modal v-model="modals.sendPolicyConfirm" show-close backdrop>
+      <template #header> Send Policy </template>
+      <x-checkbox
+        v-model="modals.isConfirmed"
+        label="I confirm and attest that all the information is correct"
+      />
+      <template #actions>
+        <div class="text-right space-x-4">
+          <x-button
+            size="sm"
+            ghost
+            @click.prevent="modals.sendPolicyConfirm = false"
+          >
+            Cancel
+          </x-button>
+
+          <x-button
+            size="sm"
+            color="error"
+            :disabled="!modals.isConfirmed"
+            @click.prevent="submitPolicy"
+          >
+            Confirm
+          </x-button>
+        </div>
+      </template>
+    </x-modal>
   </div>
 </template>

@@ -14,7 +14,10 @@ class Payment extends Model
     protected $primaryKey = 'code';
     public $incrementing = false;
     protected $keyType = 'string';
-    protected $fillable = ['code', 'payment_status_id', 'plan_id', 'captured_amount', 'captured_at', 'authorized_at', 'payment_methods_code', 'insurance_provider_id', 'created_by', 'updated_by', 'is_approved', 'reference', 'collection_type', 'payment_link', 'payer_name', 'paid_by'];
+    protected $fillable = [
+        'code', 'payment_status_id', 'plan_id', 'captured_amount', 'captured_at', 'authorized_at', 'payment_methods_code', 'insurance_provider_id', 'created_by', 'updated_by', 'is_approved', 'reference', 'collection_type', 'payment_link', 'payer_name', 'paid_by',
+        'commission_vat', 'commission_without_vat', 'commission_vat_applicable', 'commission_vat_not_applicable', 'commission', 'tax_invoice_number', 'broker_invoice_number', 'insurer_invoice_date',
+    ];
     protected $forceDeleting = true;
 
     /**
@@ -152,5 +155,4 @@ class Payment extends Model
     {
         return $this->belongsTo(InsuranceProvider::class);
     }
-
 }

@@ -89,6 +89,8 @@ const page = usePage();
 const notification = useNotifications('toast');
 const showfollowup = ref(false);
 
+console.log(page.props);
+
 const permissionEnum = page.props.permissionsEnum;
 const rolesEnum = page.props.rolesEnum;
 
@@ -3239,39 +3241,49 @@ const handleChildUpdate = planId => {
           </ul>
         </x-alert>
 
-        <div
-          v-for="documentType in documentTypes"
-          :key="documentType.id"
-          class="grid md:grid-cols-2 gap-2 my-4 border-b"
-        >
-          <div class="flex flex-col gap-1">
-            <h5 class="text-sm font-semibold">
-              {{ documentType.text }}
-            </h5>
-            <p class="text-xs">Max files: {{ documentType.max_files }}</p>
-            <p class="text-xs">Supported: {{ documentType.accepted_files }}</p>
-            <p class="text-xs">Max file size: {{ documentType.max_size }} MB</p>
-          </div>
-          <div class="pb-4">
-            <Dropzone
-              :id="documentType.id"
-              :accept="documentType.accepted_files"
-              :max-files="documentType.max_files"
-              :max-size="documentType.max_size"
-              :loading="docForm.processing"
-              @change="uploadFile(documentType, $event)"
-            />
-            <a
-              v-for="quoteDocument in page.props.quoteDocuments.filter(
-                d => d.document_type_code == documentType.code,
-              )"
-              :key="quoteDocument.id"
-              :href="storageUrl + quoteDocument.doc_url"
-              target="_blank"
-              class="block px-2 py-1 border rounded mt-1 text-xs hover:text-primary-600 truncate"
+        <div v-for="(value, key, index) in documentTypes" :key="index">
+          <strong>{{ key + ' Dcouments' }}</strong>
+
+          <div v-if="Array.isArray(value)">
+            <div
+              v-for="(documentType, name, index) in value"
+              :key="documentType.id"
+              class="grid md:grid-cols-2 gap-2 my-4 border-b"
             >
-              {{ quoteDocument.original_name || quoteDocument.doc_name }}
-            </a>
+              <div class="flex flex-col gap-1">
+                <h5 class="text-sm font-semibold">
+                  {{ documentType.text }}
+                </h5>
+                <p class="text-xs">Max files: {{ documentType.max_files }}</p>
+                <p class="text-xs">
+                  Supported: {{ documentType.accepted_files }}
+                </p>
+                <p class="text-xs">
+                  Max file size: {{ documentType.max_size }} MB
+                </p>
+              </div>
+              <div class="pb-4">
+                <Dropzone
+                  :id="documentType.id"
+                  :accept="documentType.accepted_files"
+                  :max-files="documentType.max_files"
+                  :max-size="documentType.max_size"
+                  :loading="docForm.processing"
+                  @change="uploadFile(documentType, $event)"
+                />
+                <a
+                  v-for="quoteDocument in page.props.quoteDocuments.filter(
+                    d => d.document_type_code == documentType.code,
+                  )"
+                  :key="quoteDocument.id"
+                  :href="storageUrl + quoteDocument.doc_url"
+                  target="_blank"
+                  class="block px-2 py-1 border rounded mt-1 text-xs hover:text-primary-600 truncate"
+                >
+                  {{ quoteDocument.original_name || quoteDocument.doc_name }}
+                </a>
+              </div>
+            </div>
           </div>
         </div>
       </x-modal>
@@ -3284,6 +3296,7 @@ const handleChildUpdate = planId => {
       :quote="record"
       :quoteType="quoteType"
       :bPDetails="bPDetails"
+      :payments="payments"
     />
 
     <div class="p-4 rounded shadow mb-6 bg-white">
