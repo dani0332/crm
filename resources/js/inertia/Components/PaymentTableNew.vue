@@ -1433,7 +1433,8 @@ const getCaptureValidation = computed(() => {
       } else {
         let ipPaymentStatus = paymentRecord.payment_splits.filter(item => item.payment_method.code === "IP");
         if (ipPaymentStatus.length > 0) {
-          let ipPending = ipPaymentStatus.filter(item => item.payment_status_id===props.paymentStatusEnum.PAID);
+          let ipPending = ipPaymentStatus.filter(item => item.payment_status_id===props.paymentStatusEnum.PENDING 
+            || item.payment_status_id===props.paymentStatusEnum.PAID);
           if( ipPending.length===ipPaymentStatus.length ) {
             return true;
           } 
