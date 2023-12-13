@@ -1360,8 +1360,6 @@ const uploadDocument = (doc, files, count) => {
         preserveState: true,
         onError: errors => {
           documentForm.setError(errors.error);
-          console.log("errors");
-          console.log(errors);
           notification.error({
             title: 'File upload failed',
             position: 'top',
@@ -1370,7 +1368,7 @@ const uploadDocument = (doc, files, count) => {
         },
         onSuccess: (data) => {
           let quoteDocuments = [];
-          if (quoteTypesToCheck.includes(props.quoteType)) {
+          if (quoteTypesToCheck.includes(props.quoteType) || props.quoteType === 'Home') {
               quoteDocuments = data.props.quoteDocuments;
           } else {
               quoteDocuments = data.props.quote.documents;

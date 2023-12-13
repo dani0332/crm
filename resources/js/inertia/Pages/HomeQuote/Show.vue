@@ -2,6 +2,7 @@
 import MemberDetails from '../../Components/MemberDetails.vue';
 import QuoteDocuments from '@/inertia/Pages/PersonalQuote/Partials/QuoteDocuments.vue';
 import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue';
+import PaymentTableNew from '../../Components/PaymentTableNew.vue'; 
 
 defineProps({
   quote: Object,
@@ -35,6 +36,8 @@ defineProps({
   quoteDocuments: Object,
   documentTypes: Object,
   storageUrl: String,
+  paymentStatusEnum: Object,
+  paymentTooltipEnum: Object,
 });
 
 const page = usePage();
@@ -42,6 +45,7 @@ const { isRequired } = useRules();
 const notification = useNotifications('toast');
 const hasAnyRole = roles => useHasAnyRole(roles);
 const rolesEnum = page.props.rolesEnum;
+const hasRole = role => useHasRole(role);
 
 const modals = reactive({
   duplicate: false,
@@ -1037,6 +1041,28 @@ const linkEntity = () => {
       :quote="quote"
       :quoteType="quoteType"
     />
+
+    <PaymentTableNew 
+			v-if="hasRole(rolesEnum.BetaUser)"
+			:quoteType="quoteType"
+			:payments="payments"
+			:paymentDocument="documentTypes.filter(item => item.code === 'HOMPD' || item.code === 'HOMPDR')"
+			:quoteRequest="quoteRequest"
+			:paymentStatusEnum="paymentStatusEnum"
+			:paymentTooltipEnum="paymentTooltipEnum"
+			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name, tooltip: pm.tool_tip } })"
+			:storageUrl="storageUrl"
+		/>
+    <PaymentTable
+      v-else
+      :payments="payments"
+      :can="can"
+      :isBetaUser="isBetaUser"
+      :quoteRequest="quoteRequest"
+      :paymentMethods="paymentMethods"
+      :insuranceProviders="insuranceProviders"
+      :quote="quote"
+    />
     
 
     <EmbeddedProducts
@@ -1184,17 +1210,7 @@ const linkEntity = () => {
           </div>
         </template>
       </x-modal>
-    </div>
-
-    <PaymentTable
-      :payments="payments"
-      :can="can"
-      :isBetaUser="isBetaUser"
-      :quoteRequest="quoteRequest"
-      :paymentMethods="paymentMethods"
-      :insuranceProviders="insuranceProviders"
-      :quote="quote"
-    />
+    </div>  
 
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div>
@@ -1224,6 +1240,6 @@ const linkEntity = () => {
       />
     </div>
 
-    <AuditLogs :type="'App\\Models\\HomeQuote'" :id="$page.props.quote.id" />
+    <AuditLogs :type="'App\\Models\\HomeQuote'" :id="$page.props.quote.id" :quoteCode="$page.props.quote.code" />
   </div>
 </template>

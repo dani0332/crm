@@ -729,7 +729,7 @@ class CRUDController extends Controller
             $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypeId::Home);
             $uboDetails = CustomerMembersRepository::getBy($record->id, QuoteTypes::HOME->name, CustomerTypeEnum::Entity);
             $uboRelations = LookupRepository::where('key', LookupsEnum::UBO_RELATION)->get();
-            $emirates = Emirate::where('is_active', 1)->select('id', 'text')->get();
+            $emirates = Emirate::where('is_active', 1)->select('id', 'text')->get();           
 
             $payments->each(function ($payment) {
                 $allow = $payment->payment_status_id != PaymentStatusEnum::CAPTURED && $payment->payment_status_id != PaymentStatusEnum::AUTHORISED && ! auth()->user()->hasRole(RolesEnum::PA);
@@ -741,15 +741,18 @@ class CRUDController extends Controller
                 $payment->approved_button = $payment->payment_status_id == PaymentStatusEnum::PAID;
             });
 
-            $filteredPaymentMethods = $paymentMethods->filter(function ($paymentMethod) {
-                return $paymentMethod->code == PaymentMethodsEnum::CreditCard;
-            })->map(function ($paymentMethod) {
-                return [
-                    'value' => $paymentMethod->code,
-                    'label' => $paymentMethod->name,
-                ];
-            })->values();
-
+            if (auth()->user()->hasRole(RolesEnum::BetaUser)) {
+                $filteredPaymentMethods = $this->lookupService->getPaymentMethods();
+            } else {
+                $filteredPaymentMethods = $paymentMethods->filter(function ($paymentMethod) {
+                    return $paymentMethod->code == PaymentMethodsEnum::CreditCard;
+                })->map(function ($paymentMethod) {
+                    return [
+                        'value' => $paymentMethod->code,
+                        'label' => $paymentMethod->name,
+                    ];
+                })->values();
+            }
             $filteredInsuranceProviders = [];
             if (! empty($insuranceProviders)) {
 
@@ -761,6 +764,8 @@ class CRUDController extends Controller
                 })->sortBy('label')->values();
             }
 
+            $documentTypes = $this->quoteDocumentService->getQuoteDocumentsForUpload(QuoteTypeId::Home);
+          
             return inertia('HomeQuote/Show', [
                 'storageUrl' => storageUrl(),
                 'quoteDocuments' => array_values($quoteDocuments->toArray()),
@@ -804,6 +809,8 @@ class CRUDController extends Controller
                 'emirates' => $emirates,
                 'quoteType' => QuoteTypes::HOME,
                 'paymentTooltipEnum' => PaymentTooltip::asArray(),
+                'paymentStatusEnum' => PaymentStatusEnum::asArray(),
+                'documentTypes' => $documentTypes,
             ]);
         }
 
