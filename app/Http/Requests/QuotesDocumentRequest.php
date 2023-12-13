@@ -3,7 +3,7 @@
 namespace App\Http\Requests;
 
 use App\Models\DocumentType;
-use App\Repositories\DocumentQuoteRepository;
+use App\Repositories\GenericQuoteRepository;
 use Illuminate\Foundation\Http\FormRequest;
 
 class QuotesDocumentRequest extends FormRequest
@@ -53,7 +53,7 @@ class QuotesDocumentRequest extends FormRequest
         $validator->after(function ($validator) use ($quoteId) {
             if (! empty($quoteId)) {
 
-                $quote = DocumentQuoteRepository::where('id', $quoteId)->firstOrFail();
+                $quote = GenericQuoteRepository::where('id', $quoteId)->firstOrFail();
                 //check for maximum number of files uploaded against selected quote and document type
                 if ($this->documentType && $quote && $quote->documents->where('document_type_code', request()->document_type_code)->count() >= $this->documentType->max_files) {
                     $validator->errors()->add('error', 'You can only upload a maximum of '.$this->documentType->max_files.' files for ( '.$this->documentType->text.' )');

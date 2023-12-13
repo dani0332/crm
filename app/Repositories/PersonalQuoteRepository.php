@@ -68,7 +68,7 @@ class PersonalQuoteRepository extends BaseRepository
             $query->where('quote_type_id', request()->quote_type_id);
         }
         $documentType = $query->first();
-        $quote = DocumentQuoteRepository::whereId($id)->first();
+        $quote = GenericQuoteRepository::whereId($id)->first();
 
         $originalName = $file->getClientOriginalName();
         $docName = preg_replace('/\s+/', '', uniqid().'_'.$originalName);

@@ -5,7 +5,7 @@ namespace App\Repositories;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypes;
 
-class DocumentQuoteRepository extends BaseRepository
+class GenericQuoteRepository extends BaseRepository
 {
     public function model()
     {

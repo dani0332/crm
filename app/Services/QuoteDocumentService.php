@@ -6,7 +6,7 @@ use App\Enums\quoteTypeCode;
 use App\Enums\RolesEnum;
 use App\Models\DocumentType;
 use App\Models\QuoteDocument;
-use App\Repositories\DocumentQuoteRepository;
+use App\Repositories\GenericQuoteRepository;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
@@ -194,7 +194,7 @@ class QuoteDocumentService extends BaseService
 
     public function getQuoteDocuments($quoteType, $recordId)
     {
-        $quoteTypeDoc = app(DocumentQuoteRepository::class)->getModelNameForDocument($quoteType);
+        $quoteTypeDoc = app(GenericQuoteRepository::class)->getModelNameForDocument($quoteType);
         $quote = app()->make($quoteTypeDoc)::where('id', $recordId)->first();
         if ($quote && $quote->documents) {
             $quote->documents->load('createdBy:id,name');
