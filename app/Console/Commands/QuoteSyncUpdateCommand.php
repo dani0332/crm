@@ -57,7 +57,7 @@ class QuoteSyncUpdateCommand extends Command
             if ($quote) {
                 DB::beginTransaction();
                 try {
-                    info("Entry for quote : ". $entry->quote_uuid . " found in personal quotes table");
+                    info('Entry for quote : '.$entry->quote_uuid.' found in personal quotes table');
                     $newValues = json_decode($entry->updated_fields, true);
                     foreach ($newValues as $column => $value) {
                         if (Schema::hasColumn('personal_quotes', $column)) {
@@ -75,10 +75,10 @@ class QuoteSyncUpdateCommand extends Command
                     DB::commit();
                 } catch (Exception $e) {
                     DB::rollBack();
-                    info('QuoteSyncJob Error: ' . $e->getMessage());
+                    info('QuoteSyncJob Error: '.$e->getMessage());
                 }
             } else {
-                info("Entry for quote : ". $entry->quote_uuid . " not found in personal quotes table");
+                info('Entry for quote : '.$entry->quote_uuid.' not found in personal quotes table');
                 $quoteTypeModels = [
                     1 => CarQuote::class,
                     2 => HomeQuote::class,
@@ -107,14 +107,14 @@ class QuoteSyncUpdateCommand extends Command
                                 $personalQuote->$column = $value;
                             }
                         }
-                        info("Saving entry for quote : ". $entry->quote_uuid . " in personal quotes table");
+                        info('Saving entry for quote : '.$entry->quote_uuid.' in personal quotes table');
                         $personalQuote->save();
                         $entry->update(['is_synced' => true, 'synced_at' => now()]);
-                        info("Entry for quote : ". $entry->quote_uuid . " saved in personal quotes table");
+                        info('Entry for quote : '.$entry->quote_uuid.' saved in personal quotes table');
                         DB::commit();
                     } catch (Exception $e) {
                         DB::rollBack();
-                        info("Error while saving entry for quote : ". $entry->quote_uuid . " in personal quotes table");
+                        info('Error while saving entry for quote : '.$entry->quote_uuid.' in personal quotes table');
                         info(' QuoteSyncJob Error: '.$e->getMessage());
                     }
                 }
