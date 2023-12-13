@@ -90,7 +90,7 @@ class BridgerInsightService
                     $customerOrEntityName = '';
             }
 
-            info('Bridger Insight Service AML Screening API Payload : '.json_encode($amlSearchData));
+            info('Bridger Insight Service - AML Screening API Payload : '.json_encode($amlSearchData));
 
             try {
                 $bridgerRequest = $bridgerClient->post(
@@ -167,7 +167,7 @@ class BridgerInsightService
 
                             if (isset($getDecodeContents->Records)) {
                                 AMLService::sendAMLMatchedEmailtoComplianceTeam($amlQuoteUrl, $quoteRefId, $amlResultCount, $customerOrEntityName, $quoteType->text, $loginCustomerID);
-                                Log::info('Bridger Insight Service - AML Matched Email triggered to Compliance Team');
+                                Log::info('Bridger Insight Service - AML Matched Email triggered to Compliance and Compliance Super Users. Triggered By:' .auth()->user()->email);
                             }
                         }
                     }
@@ -303,7 +303,7 @@ class BridgerInsightService
             $getContents = $bridgerRequest->getBody();
             $getDecodeContents = json_decode($getContents);
 
-            Log::info('Bridger Insight Service - AML Decision Update API Call Response : '.json_encode($getContents));
+            Log::info('Bridger Insight Service - Lexis Nexis Decision Update API Response : '.json_encode($getContents));
         } catch (Exception $exception) {
             Log::error('Bridger Insight Service - Failed - Error : '.$exception->getMessage());
         }
