@@ -35,7 +35,7 @@ class TmLeadController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index(Request $request, TmLead $tmLead, Datatables $datatables)
+    public function index(Request $request, TmLead $tmLead)
     {
         $handlers = User::select('users.*')
             ->leftjoin('model_has_roles', 'users.id', 'model_has_roles.model_id')
@@ -52,8 +52,6 @@ class TmLeadController extends Controller
             $isCurrentUserIsAdvisor = '0';
         }
 
-        // $queryTmLeads = '';
-        // if ($request->ajax() || true) {
             $queryTmLeads = $tmLead::select(
                 'tm_leads.id as id',
                 'tm_leads.customer_name as customer_name',
@@ -128,12 +126,9 @@ class TmLeadController extends Controller
             }
 
             $tmLead = $queryTmLeads->paginate();
-            // return $datatables::of($queryTmLeads)
-            //     ->addIndexColumn()
-            //     ->make(true);
-        // }
 
-        return inertia('Telemarketing/Index', [
+
+        return inertia('Telemarketing/TmLeads/Index', [
             'handlers' => $handlers,
             'isCurrentUserIsAdvisor' => $isCurrentUserIsAdvisor,
             'tmInsuranceTypes' => $tmInsuranceTypes,
@@ -141,13 +136,6 @@ class TmLeadController extends Controller
             'tmLeadStatuses' => $tmLeadStatuses,
             'queryTmLeads' => $tmLead
         ]);
-        // return view('tmlead.view', compact(
-        //     'handlers',
-        //     'isCurrentUserIsAdvisor',
-        //     'tmInsuranceTypes',
-        //     'tmLeadTypes',
-        //     'tmLeadStatuses'
-        // ));
     }
 
     /**
@@ -177,7 +165,7 @@ class TmLeadController extends Controller
             $isUserTmAdvisor = '0';
         }
 
-        return inertia('Telemarketing/Form', [
+        return inertia('Telemarketing/TmLeads/Form', [
             'tmLeadStatuses' =>  $tmLeadStatuses,
             'tmInsuranceTypes' => $tmInsuranceTypes,
             'handlers' => $handlers,
@@ -191,19 +179,6 @@ class TmLeadController extends Controller
             'isUserTmAdvisor' => $isUserTmAdvisor
         ]);
 
-        // return view('tmlead.add', compact(
-        //     'tmLeadStatuses',
-        //     'tmInsuranceTypes',
-        //     'handlers',
-        //     'nationalities',
-        //     'yearsOfDrivings',
-        //     'carMakes',
-        //     'carModels',
-        //     'emiratesOfRegistrations',
-        //     'carTypeInsurances',
-        //     'tmLeadTypes',
-        //     'isUserTmAdvisor'
-        // ));
     }
 
     /**
@@ -255,7 +230,7 @@ class TmLeadController extends Controller
         $tmInsuranceTypeCode = TmInsuranceType::where('id', '=', $tmlead->tm_insurance_types_id)->value('code');
         $tmLeadStatuses = $this->getLeadStatuses();
 
-        return inertia('Telemarketing/Show', [
+        return inertia('Telemarketing/TmLeads/Show', [
             'tmlead' => $tmlead,
             'tmLeadStatusCode' => $tmLeadStatusCode,
             'tmInsuranceTypeCode' => $tmInsuranceTypeCode,
@@ -264,14 +239,6 @@ class TmLeadController extends Controller
             'customerCorrectPhoneNo' => $customerCorrectPhoneNo
         ]);
 
-        // return view('tmlead.show', compact(
-        //     'tmlead',
-        //     'tmLeadStatusCode',
-        //     'tmInsuranceTypeCode',
-        //     'tmLeadStatuses',
-        //     'isLeadEditable',
-        //     'customerCorrectPhoneNo'
-        // ));
     }
 
     /**
@@ -304,7 +271,7 @@ class TmLeadController extends Controller
             ->leftjoin('roles', 'roles.id', 'model_has_roles.role_id')
             ->whereIn('roles.name', ['TM_ADVISOR', 'TM_DEPUTY', 'TM_MANAGER'])->orderBy('roles.name', 'asc')->get();
 
-        return inertia('Telemarketing/Form', [
+        return inertia('Telemarketing/TmLeads/Form', [
             'tmlead' => $tmlead,
             'tmLeadStatuses' =>  $tmLeadStatuses,
             'tmInsuranceTypes' => $tmInsuranceTypes,
@@ -319,20 +286,6 @@ class TmLeadController extends Controller
             'isUserTmAdvisor' => $isUserTmAdvisor
         ]);
 
-        // return view('tmlead.edit', compact(
-        //     'tmlead',
-        //     'tmLeadStatuses',
-        //     'tmInsuranceTypes',
-        //     'handlers',
-        //     'nationalities',
-        //     'yearsOfDrivings',
-        //     'carMakes',
-        //     'carModels',
-        //     'emiratesOfRegistrations',
-        //     'carTypeInsurances',
-        //     'tmLeadTypes',
-        //     'isUserTmAdvisor'
-        // ));
     }
 
     /**
@@ -369,7 +322,6 @@ class TmLeadController extends Controller
     {
         $currentDateTime = date('Y-m-d H:i:s');
         $tmLeadStatusCode = TmLeadStatus::where('id', '=', $request->tm_lead_statuses_id)->value('code');
-        // dd($tmLeadStatusCode);
 
         $this->validate($request, [
             'tm_lead_statuses_id' => 'required',

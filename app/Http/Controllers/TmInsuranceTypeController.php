@@ -23,19 +23,20 @@ class TmInsuranceTypeController extends Controller
      */
     public function index(Request $request)
     {
-        if ($request->ajax()) {
-            $data = TmInsuranceType::select('*')->where('is_deleted', 0)->orderBy('sort_order', 'asc');
+        // if ($request->ajax()) {
+            $data = TmInsuranceType::select('*')->where('is_deleted', 0)->orderBy('sort_order', 'asc')->paginate();
 
-            return Datatables::of($data)
-                ->addIndexColumn()
-                ->addColumn('action', function ($row) {
-                    return view('tminsurancetype.actions', compact('row'))->render();
-                })
-                ->rawColumns(['action'])
-                ->make(true);
-        }
-
-        return view('tminsurancetype.view');
+            // return Datatables::of($data)
+            //     ->addIndexColumn()
+            //     ->addColumn('action', function ($row) {
+            //         return view('tminsurancetype.actions', compact('row'))->render();
+            //     })
+            //     ->rawColumns(['action'])
+            //     ->make(true);
+        // }
+            
+        return inertia('Telemarketing/TmInsuranceType/Index', ["tminsurancetype" => $data]);
+        // return view('tminsurancetype.view');
     }
 
     /**
@@ -45,7 +46,8 @@ class TmInsuranceTypeController extends Controller
      */
     public function create()
     {
-        return view('tminsurancetype.add');
+        return inertia('Telemarketing/TmInsuranceType/Form', ["tminsurancetype" => null]);
+        // return view('tminsurancetype.add');
     }
 
     /**
@@ -84,7 +86,8 @@ class TmInsuranceTypeController extends Controller
      */
     public function show(TmInsuranceType $tminsurancetype)
     {
-        return view('tminsurancetype.show', compact('tminsurancetype'));
+        return inertia('Telemarketing/TmInsuranceType/Show', ["tminsurancetype" => $tminsurancetype]);
+        // return view('tminsurancetype.show', compact('tminsurancetype'));
     }
 
     /**
@@ -94,7 +97,8 @@ class TmInsuranceTypeController extends Controller
      */
     public function edit(TmInsuranceType $tminsurancetype)
     {
-        return view('tminsurancetype.edit', compact('tminsurancetype'));
+        return inertia('Telemarketing/TmInsuranceType/Form', ["tminsurancetype" => $tminsurancetype]);
+        // return view('tminsurancetype.edit', compact('tminsurancetype'));
     }
 
     /**

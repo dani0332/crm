@@ -1,6 +1,6 @@
 <script setup>
 import { useForm } from '@inertiajs/vue3';
-import LeadAssignment from '../PersonalQuote/Partials/LeadAssignment.vue';
+import LeadAssignment from '../../PersonalQuote/Partials/LeadAssignment.vue';
 
 const props = defineProps({
   tmLeadStatuses: Array,

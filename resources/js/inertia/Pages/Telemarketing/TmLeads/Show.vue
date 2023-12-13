@@ -43,6 +43,7 @@ function onSubmit(isValid) {
         preserve-scroll
         v-if="can(permissionsEnum.TeleMarketingDelete)"
         method="delete"
+        as="button"
       >
         <x-button size="sm" color="primary" tag="div"> Delete </x-button>
       </Link>
@@ -51,6 +52,9 @@ function onSubmit(isValid) {
         v-if="can(permissionsEnum.TeleMarketingEdit) && isLeadEditable == '1'"
       >
         <x-button size="sm" tag="div">Edit</x-button>
+      </Link>
+      <Link :href="route('tmleads-list')">
+        <x-button size="sm" color="#ff5e00"> TeleMarkating List </x-button>
       </Link>
     </div>
   </div>
@@ -233,5 +237,9 @@ function onSubmit(isValid) {
       </div>
     </x-form>
   </div>
-  <AuditLogs :type="'App\\Models\\TmLead'" :id="$page.props.tmlead.id" />
+  <AuditLogs
+    v-if="can(permissionsEnum.Auditable)"
+    :type="'App\\Models\\TmLead'"
+    :id="$page.props.tmlead.id"
+  />
 </template>
