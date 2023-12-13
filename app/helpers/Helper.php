@@ -570,29 +570,6 @@ if (! function_exists('getRepositoryObject')) {
     }
 }
 
-if (! function_exists('getModelNameForDocument')) {
-    function getModelNameForDocument($quoteType = 'personal', $read = false)
-    {
-        $quoteType = ucfirst($quoteType);
-        switch ($quoteType) {
-            case quoteTypeCode::Business:
-                $quoteType = quoteTypeCode::Business;
-                break;
-            case quoteTypeCode::Home:
-                $quoteType = quoteTypeCode::Home;
-                break;
-            case in_array($quoteType, [quoteTypeCode::Pet, quoteTypeCode::Bike, quoteTypeCode::Cycle, quoteTypeCode::Yacht]):
-                $quoteType = quoteTypeCode::PERSONAL;
-                break;
-            case quoteTypeCode::Travel:
-                $quoteType = quoteTypeCode::Travel;
-                break;
-        }
-
-        return 'App\\Models\\'.$quoteType.'Quote';
-    }
-}
-
 if (! function_exists('checkModifiedRecord')) {
     function checkModifiedRecord($firstDate, $secondDate): bool
     {
