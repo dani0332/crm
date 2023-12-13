@@ -78,6 +78,7 @@ class QuoteSyncUpdateCommand extends Command
                     $entry->update(['is_synced' => true, 'synced_at' => now()]);
                     DB::commit();
                 } catch (Exception $e) {
+                    info('Error while updating entry for quote : '.$entry->quote_uuid.' in personal quotes table');
                     DB::rollBack();
                     info('QuoteSyncJob Error: '.$e->getMessage());
                 }
