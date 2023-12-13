@@ -1032,12 +1032,12 @@ const linkEntity = () => {
         </x-button>
       </div>
     </div>
-
     <PlanDetails
       :insuranceProviders="insuranceProviders"
       :quote="quote"
       :quoteType="quoteType"
     />
+    
 
     <EmbeddedProducts
       :data="embeddedProducts"

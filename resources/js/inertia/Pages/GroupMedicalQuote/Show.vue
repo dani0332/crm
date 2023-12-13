@@ -826,12 +826,6 @@ const linkEntity = () => {
       :quote="quote"
     />
 
-    <PlanDetails
-      :insuranceProviders="insuranceProviders"
-      :quote="quote"
-      :quoteType="page.props.quoteType"
-    />
-
     <div class="p-4 rounded shadow mb-6 bg-primary-50/25">
       <div>
         <h3 class="font-semibold text-primary-800 text-lg">Lead Status</h3>
@@ -907,6 +901,11 @@ const linkEntity = () => {
         </x-button>
       </div>
     </div>
+    <PlanDetails
+      :insuranceProviders="insuranceProviders"
+      :quote="quote"
+      :quoteType="page.props.quoteType"
+    />
 
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div>
