@@ -36,12 +36,12 @@ const updateSelectedPlan = () => {
 
 <template>
     <x-button
-        v-show="false"
         size="xs"
         color="success"
         outlined
         :loading="isLoading"
-        @click.prevent="updateSelectedPlan(item)"
+        v-if="props.plan.actualPremium > 0"
+        @click.prevent="updateSelectedPlan()"
     >
         Select
     </x-button>

@@ -677,16 +677,14 @@ const linkEntity = () => {
       :activities="activities"
       :advisors="advisors"
       :quote-type="quoteType"
-    />   
-
-    <QuoteStatus
+    />
+  <QuoteStatus
       :quote="quote"
       :quote-type="quoteType"
       :quote-statuses="quoteStatuses"
       :lost-reasons="lostReasons"
       :quote-status-enum="quoteStatusEnum"
     />
-
     <PlanDetails
       :insuranceProviders="insuranceProviders"
       :quote="quote"
@@ -726,9 +724,9 @@ const linkEntity = () => {
       :quote="quote"
       :can="can"
       :quoteStatusEnum="quoteStatusesEnum"
-    />   
+    />
 
-    <EmbeddedProducts
+   <EmbeddedProducts
       :data="embeddedProducts"
       :link="quote.uuid"
       :code="quote.code"

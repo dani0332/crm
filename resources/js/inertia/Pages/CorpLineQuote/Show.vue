@@ -1166,13 +1166,13 @@ const linkEntity = () => {
           </div>
         </template>
       </x-modal>
-    </div>
-
+    </div> 
     <PlanDetails
       :insuranceProviders="insuranceProvidersAll"
       :quote="quote"
       :quoteType="page.props.quoteType"
     />
+   
 
     <!-- Payments -->
     <PaymentTableNew 

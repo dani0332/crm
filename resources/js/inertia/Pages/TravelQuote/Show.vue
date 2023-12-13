@@ -740,11 +740,11 @@ const availablePlansTable = reactive({
       value: 'travelType',
     },
     {
-      text: 'Actual Price',
+      text: 'Price',
       value: 'actualPremium',
     },
     {
-      text: 'Price with VAT',
+      text: 'Total Price',
       value: 'discountPremium',
     },
     {
@@ -2294,8 +2294,7 @@ const genderList = [
                 View
               </x-button>
 
-              <!-- v-if="hasRole(rolesEnum.TravelAdvisor)" hide for now -->
-              <span v-if="true == false">
+              <span v-if="hasRole(rolesEnum.TravelAdvisor)">
                 <SelectPlan
                   class="ml-1"
                   v-if="prefillPlanId != item.id"

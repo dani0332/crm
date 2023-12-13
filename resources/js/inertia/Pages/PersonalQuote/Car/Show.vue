@@ -257,9 +257,9 @@ const availablePlansTable = reactive({
     { text: 'PAB cover', value: 'addons' },
     { text: 'Roadside assistance', value: 'roadSideAssistance' },
     { text: 'Oman cover TPL', value: 'omanCoverTPL' },
-    { text: 'Actual Price', value: 'actualPremium' },
+    { text: 'Price', value: 'actualPremium' },
     { text: 'Discounted Price', value: 'discountPremium' },
-    { text: 'Price with VAT.', value: 'premiumWithVat' },
+    { text: 'Total Price', value: 'premiumWithVat' },
     { text: 'Excess', value: 'excess' },
     { text: 'Action', value: 'action' },
   ],
@@ -2911,8 +2911,7 @@ const handleChildUpdate = planId => {
               </x-button>
             </template>
 
-            <!-- v-if="hasRole(rolesEnum.CarAdvisor)" , hide it temp -->
-            <span v-if="true == false">
+            <span v-if="hasRole(rolesEnum.CarAdvisor)">
               <SelectPlan
                 v-if="prefillPlanId != item.id"
                 @update:updatePlanId="handleChildUpdate"

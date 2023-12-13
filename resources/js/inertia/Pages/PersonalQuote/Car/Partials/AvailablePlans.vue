@@ -271,7 +271,7 @@ const onToggleManual = () => {
               />
             </div>
             <div class="grid sm:grid-cols-2">
-              <dt class="mt-2">Actual Price:</dt>
+              <dt class="mt-2">Price:</dt>
               <x-input
                 v-model="planForm.actual_premium"
                 :disabled="!planForm.is_manual_update"
@@ -343,7 +343,7 @@ const onToggleManual = () => {
           </dl>
           <dl class="grid md:grid-cols-2 gap-x-6 border-top pl-4">
             <div class="grid sm:grid-cols-2">
-              <dt class="font-bold">Total Price with VAT:</dt>
+              <dt class="font-bold">Total Price:</dt>
               <dd>AED: {{ totalPremiumWithVat.toFixed(2) }}</dd>
             </div>
             <div class="flex justify-end">

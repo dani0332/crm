@@ -976,11 +976,12 @@ const linkEntity = () => {
       :canAddBatchNumber="canAddBatchNumber"
     />
 
-    <PlanDetails
+   <PlanDetails
       :insuranceProviders="insuranceProviders"
       :quote="quote"
       :quoteType="quoteType"
     />
+
 
     <div class="p-4 rounded shadow mb-6 bg-primary-50/25">
       <div>
