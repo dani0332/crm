@@ -92,6 +92,16 @@ const dateToYear = date => {
   return '';
 };
 
+const decisionStatus = {
+    [props.amlDecisionStatusEnum.PASS] : "Pass",
+    [props.amlDecisionStatusEnum.FALSE_POSITIVE] : "Pass",
+    [props.amlDecisionStatusEnum.TRUE_MATCH_ACCEPT_RISK] : "Pass",
+    [props.amlDecisionStatusEnum.ESCALATED] : "Escalated",
+    [props.amlDecisionStatusEnum.SENT_FOR_REVIEW] : "Sent For Review",
+    [props.amlDecisionStatusEnum.REJECTED] : "Rejected",
+    [props.amlDecisionStatusEnum.TRUE_MATCH_REJECT_RISK] : "Rejected",
+};
+
 onMounted(() => {
   // paymentsRef.value = page.props.quoteRequest.payments;
 });
@@ -642,18 +652,12 @@ onMounted(() => {
         <template #item-full_name="{ EntityDetails }">
           {{ EntityDetails.Name.Full ?? '' }}
         </template>
+
         <template #item-status="{ match_found, decision }">
-          {{
-            match_found > 0
-              ? (decision === null || decision === amlDecisionStatusEnum.ESCALATED)
-                ? amlDecisionStatusEnum.ESCALATED
-                : decision === amlDecisionStatusEnum.TRUE_MATCH_REJECT_RISK
-                ? amlDecisionStatusEnum.REJECTED
-                : amlDecisionStatusEnum.PASS
-              : amlDecisionStatusEnum.PASS
-          }}
+         {{ match_found > 0 ? (decision !== null ? decisionStatus[decision] : amlDecisionStatusEnum.ESCALATED) : amlDecisionStatusEnum.PASS}}
         </template>
-        <template v-if="hasAnyRole([rolesEnum.COMPLIANCE, rolesEnum.ComplianceSuperUser])" #item-action="{ id }">
+
+        <template v-if="can(permissionsEnum.AMLDecisionUpdate)" #item-action="{ id }">
           <div class="space-x-4">
             <x-button
               size="xs"

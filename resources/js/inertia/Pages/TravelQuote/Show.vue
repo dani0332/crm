@@ -2217,7 +2217,7 @@ const genderList = [
         </x-button>
 
 
-          <x-button
+         <!-- <x-button
               v-if="selectedPlans.length > 0"
               size="sm"
               color="emerald"
@@ -2225,7 +2225,7 @@ const genderList = [
               :loading="exportLoader"
           >
               Download PDF
-          </x-button>
+          </x-button>-->
           </div>
       </div>
 
@@ -2243,8 +2243,9 @@ const genderList = [
         </p>
       </div>
       <div v-else>
+        <!-- for future use  v-model:items-selected="selectedPlans" -->
         <DataTable
-            v-model:items-selected="selectedPlans"
+
           table-class-name="tablefixed compact"
           :headers="availablePlansTable.columns"
           :items="availablePlansTable.data || []"
