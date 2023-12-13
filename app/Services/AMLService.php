@@ -216,17 +216,17 @@ class AMLService
     {
         $emailRecipients = [];
         $emailSystem = config('constants.emailL_sys');
-        $complianceRole = $forComplianceSuperUser ? RolesEnum::ComplianceSuperUser : RolesEnum::COMPLIANCE;
+        $complianceRole = $forComplianceSuperUser ? [RolesEnum::ComplianceSuperUser] : [RolesEnum::COMPLIANCE, RolesEnum::ComplianceSuperUser];
         $recipients = User::select('users.email as user_email')
             ->leftjoin('model_has_roles', 'users.id', 'model_has_roles.model_id')
             ->leftjoin('roles', 'model_has_roles.role_id', 'roles.id')
-            ->whereIn('roles.name', [$complianceRole])->get();
+            ->whereIn('roles.name', $complianceRole)->get();
 
         foreach ($recipients as $recipient) {
             $emailRecipients[] = $recipient->user_email;
         }
 
-        info('AML Email trigger to Role:('.$complianceRole.')');
+        info('AML Email trigger to Role:('.json_encode($complianceRole).')');
 
         if (strtolower($emailSystem) == EnvEnum::PRODUCTION) {
             $fromEmail = config('constants.MAIL_FROM_ADDRESS_AML');
@@ -313,6 +313,14 @@ class AMLService
 
     public static function checkAMLStatusFailed($quoteTypeId, $quoteRequestId)
     {
+        $failedScreeningDecisions = [
+            null,
+            AMLDecisionStatusEnum::ESCALATED,
+            AMLDecisionStatusEnum::SENT_FOR_REVIEW,
+            AMLDecisionStatusEnum::TRUE_MATCH,
+            AMLDecisionStatusEnum::TRUE_MATCH_REJECT_RISK,
+        ];
+
         $fetchAMLRecords = KycLog::withTrashed()->where([
             'quote_type_id' => $quoteTypeId,
             'quote_request_id' => $quoteRequestId,
@@ -325,8 +333,8 @@ class AMLService
             return true;
         }
 
-        return collect($fetchAMLRecords)->contains(function ($value) {
-            return in_array($value, [AMLDecisionStatusEnum::TRUE_MATCH, AMLDecisionStatusEnum::TRUE_MATCH_REJECT_RISK, null]);
+        return collect($fetchAMLRecords)->contains(function ($value) use ($failedScreeningDecisions) {
+            return in_array($value, $failedScreeningDecisions);
         });
     }
 }
