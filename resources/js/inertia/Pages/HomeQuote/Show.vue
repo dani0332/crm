@@ -1033,6 +1033,12 @@ const linkEntity = () => {
       </div>
     </div>
 
+    <PlanDetails
+      :insuranceProviders="insuranceProviders"
+      :quote="quote"
+      :quoteType="quoteType"
+    />
+
     <EmbeddedProducts
       :data="embeddedProducts"
       :link="quote.uuid"
