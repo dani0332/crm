@@ -208,11 +208,11 @@
         }
         .provider-logo {
             width: 100px;
-            position: absolute; 
-            top: 50%; 
-            left: 50%; 
-            transform: translate(-50%, -50%); 
-            max-width: 100%; 
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            max-width: 100%;
             max-height: 100%;
         }
         .no-border {border: none;}
@@ -284,7 +284,7 @@
                     $quotePlan->{$benefit} = json_decode(collect(@$quotePlan->benefits->{$benefit})->keyBy('code')->toJson());
                 }
             }
-            $quotePlan->addons = isset($addons) ? $addons[$quotePlan->id] : json_decode(collect($quotePlan->addons)->keyBy('code')->toJson());
+            $quotePlan->addons = isset($addons) ? ($addons[$quotePlan->id] ?? []) : json_decode(collect($quotePlan->addons)->keyBy('code')->toJson());
 
             // Discount Premium and VAT new Implementation
             if(isset($quotePlan->addons['coPayment'])) {
