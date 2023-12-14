@@ -188,7 +188,7 @@ class AMLController extends Controller
             'responseFrom' => $responseFrom,
             'quoteStatusCode' => $quoteStatusCodes,
             'amlDecisionStatusCode' => $amlDecisionStatusCodes,
-            'quoteObject' => $quoteObject
+            'quoteObject' => $quoteObject,
         ]);
     }
 
@@ -301,7 +301,7 @@ class AMLController extends Controller
             $quotePaID = $updateQuoteStatusResp[3];
             $clientFullName = $updateQuoteStatusResp[4];
             if (auth()->user()->hasRole(RolesEnum::ComplianceSuperUser) && in_array(request()->aml_decision, [AMLDecisionStatusEnum::TRUE_MATCH_REJECT_RISK, AMLDecisionStatusEnum::TRUE_MATCH_ACCEPT_RISK])) {
-                info('AML Screening Bridger - Decision update Email triggered to Compliance and Compliance Super Users. Quote Type:' . $quoteTypeId . ' - Quote Request ID: ' . $quoteRequestId . '. Triggered by:' . auth()->user()->email);
+                info('AML Screening Bridger - Decision update Email triggered to Compliance and Compliance Super Users. Quote Type:'.$quoteTypeId.' - Quote Request ID: '.$quoteRequestId.'. Triggered by:'.auth()->user()->email);
                 app(CheckAmlService::class)->sendAMLQuoteStatusChangeNotification($quoteTypeId, $quoteRequestId, $quoteStatusText, $quoteCdbId, $quoteTypeText, $quotePaID, $clientFullName);
             }
             // Update Decision on Lexis Nexis Portal
@@ -592,7 +592,7 @@ class AMLController extends Controller
         info('AML Screening Bridger - IMCRM AML Log decision Updated. Old Decision:'.$oldDecision.' - New Decision:'.$newDecision.'. Updated By:'.auth()->user()->email);
 
         if ($request->bridger_decision_type == AMLDecisionStatusEnum::TRUE_MATCH) {
-            info('AML Screening Bridger - AML Logs Result Filter Updated. Email triggered to Compliance Super User - Quote ID: ' . $request['quote_id'] . '. Triggered By: ' . auth()->user()->email);
+            info('AML Screening Bridger - AML Logs Result Filter Updated. Email triggered to Compliance Super User - Quote ID: '.$request['quote_id'].'. Triggered By: '.auth()->user()->email);
             AMLService::sendAMLMatchedEmailtoComplianceTeam(
                 config('constants.APP_URL').$request['aml_quote_url'],
                 $request['quote_ref_id'],
