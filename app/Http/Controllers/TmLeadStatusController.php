@@ -22,7 +22,7 @@ class TmLeadStatusController extends Controller
      */
     public function index(Request $request)
     {
-        $data = TmLeadStatus::select('*')->where('is_deleted', 0)->orderBy('sort_order', 'asc')->paginate();
+        $data = TmLeadStatus::orderBy('sort_order', 'asc')->paginate();
 
         return inertia('Telemarketing/TmLeadStatus/Index', ['tmleadstatus' => $data]);
     }

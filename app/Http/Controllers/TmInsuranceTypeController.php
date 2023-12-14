@@ -22,7 +22,7 @@ class TmInsuranceTypeController extends Controller
      */
     public function index(Request $request)
     {
-        $data = TmInsuranceType::select('*')->where('is_deleted', 0)->orderBy('sort_order', 'asc')->paginate();
+        $data = TmInsuranceType::orderBy('sort_order', 'asc')->paginate();
 
         return inertia('Telemarketing/TmInsuranceType/Index', ['tminsurancetype' => $data]);
     }
