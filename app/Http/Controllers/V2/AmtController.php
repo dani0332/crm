@@ -255,7 +255,7 @@ class AmtController extends Controller
         $issuancePlace = $lookupService->getIssuancePlaces();
         $issuanceAuthorities = $lookupService->getIssuanceAuthorities();
 
-        $documentTypes = DocumentTypeRepository::byQuoteTypeId(QuoteTypes::BUSINESS->id())->where('is_active', 1)->get();
+        $documentTypes = DocumentTypeRepository::byQuoteTypeId(QuoteTypes::BUSINESS->id())->active()->get();
 
         return inertia('GroupMedicalQuote/Show', [
             'documentTypes' => $documentTypes,
