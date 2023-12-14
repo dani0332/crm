@@ -50,9 +50,6 @@ const submitPlanDetailsForm = isValid => {
   planDetailsForm.post(url, {
     preserveScroll: true,
     onError: errors => {
-
-      console.log(errors);
-
       //planDetailsForm.errors = errors;
       planDetailsForm.setError(errors);
 
@@ -66,21 +63,44 @@ const submitPlanDetailsForm = isValid => {
          title: 'Plan details saved',
          position: 'top',
        });
+
+      //reload for payment task for now, should be handled by props update along with hafeez 
+      setTimeout(() => {
+        location.reload();
+      }, 500);
+
     },
   });
 }
 
 const updatePriceWithVat = () => {
-  
-  if(planDetailsForm.price_vat_applicable !== null && planDetailsForm.price_vat_applicable !== "") {
-    let price = parseFloat(planDetailsForm.price_vat_applicable);
-    planDetailsForm.price_with_vat = (((price / 100) * 5) + price).toFixed(2);
+
+  let priceVatApp = parseFloat((planDetailsForm.price_vat_applicable !== null && planDetailsForm.price_vat_applicable !== "") ? planDetailsForm.price_vat_applicable : 0);
+  let priceVatNotApp = parseFloat((planDetailsForm.price_vat_not_applicable !== null && planDetailsForm.price_vat_not_applicable !== "") ? planDetailsForm.price_vat_not_applicable : 0);
+
+  if(props.quoteType == quoteTypeCodeEnum.Business)
+  {
+      //let priceVatApp = parseFloat( (planDetailsForm.price_vat_applicable ! ?? 0.00) );
+      //let priceVatNotApp = parseFloat(planDetailsForm.price_vat_not_applicable ?? 0.00);
+      console.log("TOTAL", priceVatApp, priceVatNotApp);
+      let totalPrice = parseFloat((priceVatApp + priceVatNotApp)  + ( (priceVatApp  / 100) * 5 ));
+      
+      planDetailsForm.price_with_vat =totalPrice.toFixed(2);
+  }
+  else
+  {
+    if(priceVatApp) {
+      let price = parseFloat(planDetailsForm.price_vat_applicable);
+      planDetailsForm.price_with_vat = (((price / 100) * 5) + price).toFixed(2);
+    }
+
+    if(priceVatNotApp) {    
+      let price = parseFloat(planDetailsForm.price_vat_not_applicable);
+      planDetailsForm.price_with_vat = price.toFixed(2);
+    }
   }
 
-  if(planDetailsForm.price_vat_not_applicable !== null && planDetailsForm.price_vat_not_applicable !== "") {    
-    let price = parseFloat(planDetailsForm.price_vat_not_applicable);
-    planDetailsForm.price_with_vat = price.toFixed(2);
-  }
+  
 
 }
 
