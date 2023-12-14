@@ -267,11 +267,11 @@ class AMLService
     public static function updateAMLDecisionLexisNexis($request)
     {
         if (! $request->result_id) {
-            info('Bridger Insight - AML Decision Update API Call - Result Id not found');
+            info('AML Screening Bridger - Lexis Nexis Decision update API Call - Result Id not found');
 
             return false;
         }
-        info('Bridger Insight - AML Decision Update API Call. AML ID: '.($request->aml_id ?? '-').' - Lexis Nexis Alert ID: '.($request->result_id ?? '-'));
+        info('AML Screening Bridger - Lexis Nexis Decision update API Call. AML ID: '.($request->aml_id ?? '-').' - Lexis Nexis Alert ID: '.($request->result_id ?? '-').'. Triggered by:'.auth()->user()->email);
 
         $bridgerInsightService = new BridgerInsightService();
         $bridgerAPIToken = $bridgerInsightService->getJWTToken();
