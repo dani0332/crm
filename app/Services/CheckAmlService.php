@@ -200,12 +200,13 @@ class CheckAmlService
         );
     }
 
-    public function sendAMLQuoteStatusChangeNotification($quoteTypeId, $quoteRequestId, $quoteStatusText, $quoteCdbId, $quoteTypeText, $quotePaID, $clientFullName)
+    public function sendAMLQuoteStatusChangeNotification($quoteTypeId, $quoteRequestId, $quoteStatusText, $quoteCdbId, $quoteTypeText, $quotePaID, $clientFullName, $forComplianceSuperUser = false)
     {
+        $complianceRole = $forComplianceSuperUser ? [RolesEnum::ComplianceSuperUser] : [RolesEnum::COMPLIANCE, RolesEnum::ComplianceSuperUser];
         $complianceUsersEmails = User::select('users.email as user_email')
             ->leftjoin('model_has_roles', 'users.id', 'model_has_roles.model_id')
             ->leftjoin('roles', 'model_has_roles.role_id', 'roles.id')
-            ->whereIn('roles.name', [RolesEnum::COMPLIANCE])->get();
+            ->whereIn('roles.name', $complianceRole)->get();
 
         $complianceEmailRecipients = [];
         foreach ($complianceUsersEmails as $complianceUsersEmail) {
