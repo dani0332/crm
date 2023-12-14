@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\QuoteTypes;
+use App\Enums\RolesEnum;
 use App\Models\AML;
 use App\Models\BikeQuote;
 use App\Models\CycleQuote;
@@ -204,7 +205,7 @@ class CheckAmlService
         $complianceUsersEmails = User::select('users.email as user_email')
             ->leftjoin('model_has_roles', 'users.id', 'model_has_roles.model_id')
             ->leftjoin('roles', 'model_has_roles.role_id', 'roles.id')
-            ->whereIn('roles.name', ['COMPLIANCE'])->get();
+            ->whereIn('roles.name', [RolesEnum::COMPLIANCE])->get();
 
         $complianceEmailRecipients = [];
         foreach ($complianceUsersEmails as $complianceUsersEmail) {
