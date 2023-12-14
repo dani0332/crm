@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\TmLeadStatus;
-use DataTables;
 use Illuminate\Http\Request;
 
 class TmLeadStatusController extends Controller
@@ -23,9 +22,9 @@ class TmLeadStatusController extends Controller
      */
     public function index(Request $request)
     {
-            $data = TmLeadStatus::select('*')->where('is_deleted', 0)->orderBy('sort_order', 'asc')->paginate();
+        $data = TmLeadStatus::select('*')->where('is_deleted', 0)->orderBy('sort_order', 'asc')->paginate();
 
-        return inertia('Telemarketing/TmLeadStatus/Index', ["tmleadstatus" => $data]);
+        return inertia('Telemarketing/TmLeadStatus/Index', ['tmleadstatus' => $data]);
     }
 
     /**
@@ -35,7 +34,7 @@ class TmLeadStatusController extends Controller
      */
     public function create()
     {
-        return inertia('Telemarketing/TmLeadStatus/Form', ["tmleadstatus" => null]);
+        return inertia('Telemarketing/TmLeadStatus/Form', ['tmleadstatus' => null]);
     }
 
     /**
@@ -74,7 +73,7 @@ class TmLeadStatusController extends Controller
      */
     public function show(TmLeadStatus $tmleadstatus)
     {
-        return inertia('Telemarketing/TmLeadStatus/Show', ["tmleadstatus" => $tmleadstatus]);
+        return inertia('Telemarketing/TmLeadStatus/Show', ['tmleadstatus' => $tmleadstatus]);
     }
 
     /**
@@ -84,7 +83,7 @@ class TmLeadStatusController extends Controller
      */
     public function edit(TmLeadStatus $tmleadstatus)
     {
-        return inertia('Telemarketing/TmLeadStatus/Form', ["tmleadstatus" => $tmleadstatus]);
+        return inertia('Telemarketing/TmLeadStatus/Form', ['tmleadstatus' => $tmleadstatus]);
     }
 
     /**

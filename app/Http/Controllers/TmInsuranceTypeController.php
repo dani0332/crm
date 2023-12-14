@@ -23,7 +23,8 @@ class TmInsuranceTypeController extends Controller
     public function index(Request $request)
     {
         $data = TmInsuranceType::select('*')->where('is_deleted', 0)->orderBy('sort_order', 'asc')->paginate();
-        return inertia('Telemarketing/TmInsuranceType/Index', ["tminsurancetype" => $data]);
+
+        return inertia('Telemarketing/TmInsuranceType/Index', ['tminsurancetype' => $data]);
     }
 
     /**
@@ -33,8 +34,8 @@ class TmInsuranceTypeController extends Controller
      */
     public function create()
     {
-        return inertia('Telemarketing/TmInsuranceType/Form', ["tminsurancetype" => null]);
-       
+        return inertia('Telemarketing/TmInsuranceType/Form', ['tminsurancetype' => null]);
+
     }
 
     /**
@@ -60,7 +61,7 @@ class TmInsuranceTypeController extends Controller
         $TmInsuranceType->save();
 
         if (isset($request->return_to_view)) {
-            return redirect('telemarketing/tminsurancetype/' . $TmInsuranceType->id)->with('success', 'TM Insurance Type has been stored');
+            return redirect('telemarketing/tminsurancetype/'.$TmInsuranceType->id)->with('success', 'TM Insurance Type has been stored');
         }
 
         return redirect()->back()->with('success', 'TM Insurance Type has been stored');
@@ -73,8 +74,8 @@ class TmInsuranceTypeController extends Controller
      */
     public function show(TmInsuranceType $tminsurancetype)
     {
-        return inertia('Telemarketing/TmInsuranceType/Show', ["tminsurancetype" => $tminsurancetype]);
-        
+        return inertia('Telemarketing/TmInsuranceType/Show', ['tminsurancetype' => $tminsurancetype]);
+
     }
 
     /**
@@ -84,8 +85,8 @@ class TmInsuranceTypeController extends Controller
      */
     public function edit(TmInsuranceType $tminsurancetype)
     {
-        return inertia('Telemarketing/TmInsuranceType/Form', ["tminsurancetype" => $tminsurancetype]);
-        
+        return inertia('Telemarketing/TmInsuranceType/Form', ['tminsurancetype' => $tminsurancetype]);
+
     }
 
     /**
@@ -110,7 +111,7 @@ class TmInsuranceTypeController extends Controller
         $tminsurancetype->save();
 
         if (isset($request->return_to_view)) {
-            return redirect('telemarketing/tminsurancetype/' . $tminsurancetype->id)->with('success', 'TM Insurance Type has been updated');
+            return redirect('telemarketing/tminsurancetype/'.$tminsurancetype->id)->with('success', 'TM Insurance Type has been updated');
         }
 
         return redirect()->back()->with('success', 'TM Insurance Type has been updated');

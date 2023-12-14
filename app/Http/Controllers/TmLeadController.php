@@ -12,7 +12,6 @@ use App\Models\User;
 use App\Services\TMLeadsService;
 use Auth;
 use Carbon\Carbon;
-use DataTables;
 use Illuminate\Http\Request;
 
 class TmLeadController extends Controller
@@ -52,81 +51,80 @@ class TmLeadController extends Controller
             $isCurrentUserIsAdvisor = '0';
         }
 
-            $queryTmLeads = $tmLead::select(
-                'tm_leads.id as id',
-                'tm_leads.customer_name as customer_name',
-                'tm_leads.notes as notes',
-                'tm_leads.enquiry_date as enquiry_date',
-                'tm_leads.allocation_date as allocation_date',
-                'tm_leads.next_followup_date as next_followup_date',
-                'tm_leads.created_at as tm_created_at',
-                'tm_leads.updated_at as tm_updated_at',
-                'tm_leads.cdb_id as cdb_id',
-                'tm_lead_statuses.code as tm_lead_status_code',
-                'handlers.name as handlers_name',
-                'tm_insurance_types.text as tm_insurance_types_text',
-                'tm_lead_statuses.text as tm_lead_status_text',
-                'tm_lead_types.text as tm_lead_type',
-            )
-                ->leftjoin('tm_lead_statuses', 'tm_leads.tm_lead_statuses_id', 'tm_lead_statuses.id')
-                ->leftjoin('users as handlers', 'tm_leads.assigned_to_id', 'handlers.id')
-                ->leftjoin('tm_insurance_types', 'tm_leads.tm_insurance_types_id', 'tm_insurance_types.id')
-                ->leftjoin('tm_lead_types', 'tm_leads.tm_lead_types_id', 'tm_lead_types.id')
-                ->whereRaw('tm_leads.is_deleted=0')
-                ->orderByRaw('tm_leads.next_followup_date IS NULL, tm_leads.next_followup_date, tm_leads.created_at');
+        $queryTmLeads = $tmLead::select(
+            'tm_leads.id as id',
+            'tm_leads.customer_name as customer_name',
+            'tm_leads.notes as notes',
+            'tm_leads.enquiry_date as enquiry_date',
+            'tm_leads.allocation_date as allocation_date',
+            'tm_leads.next_followup_date as next_followup_date',
+            'tm_leads.created_at as tm_created_at',
+            'tm_leads.updated_at as tm_updated_at',
+            'tm_leads.cdb_id as cdb_id',
+            'tm_lead_statuses.code as tm_lead_status_code',
+            'handlers.name as handlers_name',
+            'tm_insurance_types.text as tm_insurance_types_text',
+            'tm_lead_statuses.text as tm_lead_status_text',
+            'tm_lead_types.text as tm_lead_type',
+        )
+            ->leftjoin('tm_lead_statuses', 'tm_leads.tm_lead_statuses_id', 'tm_lead_statuses.id')
+            ->leftjoin('users as handlers', 'tm_leads.assigned_to_id', 'handlers.id')
+            ->leftjoin('tm_insurance_types', 'tm_leads.tm_insurance_types_id', 'tm_insurance_types.id')
+            ->leftjoin('tm_lead_types', 'tm_leads.tm_lead_types_id', 'tm_lead_types.id')
+            ->whereRaw('tm_leads.is_deleted=0')
+            ->orderByRaw('tm_leads.next_followup_date IS NULL, tm_leads.next_followup_date, tm_leads.created_at');
 
-            if (Auth::user()->hasRole('TM_ADVISOR')) {
+        if (Auth::user()->hasRole('TM_ADVISOR')) {
+            $queryTmLeads->where('tm_leads.assigned_to_id', Auth::user()->id);
+        }
+
+        if (isset($request->tm_lead_statuses_id) && ! empty($request->tm_lead_statuses_id)) {
+            $queryTmLeads->where('tm_leads.tm_lead_statuses_id', $request->tm_lead_statuses_id);
+        }
+
+        if (
+            isset($request->searchType) && ! empty($request->searchType)
+            && isset($request->searchField) && ! empty($request->searchField)
+        ) {
+            if ($request->searchType == 'cdbID') {
+                $queryTmLeads->where('tm_leads.cdb_id', $request->searchField);
+            } elseif ($request->searchType == 'emailAddress') {
+                $queryTmLeads->where('tm_leads.email_address', $request->searchField);
+            } elseif ($request->searchType == 'phoneNumber') {
+                $queryTmLeads->where('tm_leads.phone_number', $request->searchField);
+            } else {
+                $queryTmLeads->where($request->searchType, $request->searchField);
+            }
+        }
+        if (
+            isset($request->searchType) && ! empty($request->searchType)
+            && isset($request->tmLeadsStartDate) && ! empty($request->tmLeadsStartDate)
+            && isset($request->tmLeadsEndDate) && ! empty($request->tmLeadsEndDate)
+            && ($request->searchType != 'cdbID' && $request->searchType != 'emailAddress' && $request->searchType != 'phoneNumber')
+        ) {
+            if ($request->tmLeadsEndDate >= $request->tmLeadsStartDate) {
+                $tmLeadsDateFrom = Carbon::createFromFormat('Y-m-d', $request->tmLeadsStartDate)->startOfDay()->toDateTimeString();
+                $tmLeadsDateTo = Carbon::createFromFormat('Y-m-d', $request->tmLeadsEndDate)->endOfDay()->toDateTimeString();
+                $queryTmLeads->whereBetween('tm_leads.'.$request->searchType, [$tmLeadsDateFrom, $tmLeadsDateTo]);
+            }
+        }
+        if (isset($request->assigned_to_id) && ! empty($request->assigned_to_id)) {
+            if ($request->assigned_to_id == 'Unassigned') {
+                $queryTmLeads->where('tm_leads.assigned_to_id', '=', '')->orWhereNull('tm_leads.assigned_to_id');
+            } elseif ($request->assigned_to_id == 'MyLeads') {
                 $queryTmLeads->where('tm_leads.assigned_to_id', Auth::user()->id);
+            } else {
+                $queryTmLeads->where('tm_leads.assigned_to_id', $request->assigned_to_id);
             }
+        }
+        if (isset($request->tm_insurance_types_id) && ! empty($request->tm_insurance_types_id)) {
+            $queryTmLeads->where('tm_leads.tm_insurance_types_id', $request->tm_insurance_types_id);
+        }
+        if (isset($request->tm_lead_types_id) && ! empty($request->tm_lead_types_id)) {
+            $queryTmLeads->where('tm_leads.tm_lead_types_id', $request->tm_lead_types_id);
+        }
 
-            if (isset($request->tm_lead_statuses_id) && ! empty($request->tm_lead_statuses_id)) {
-                $queryTmLeads->where('tm_leads.tm_lead_statuses_id', $request->tm_lead_statuses_id);
-            }
-
-            if (
-                isset($request->searchType) && ! empty($request->searchType)
-                && isset($request->searchField) && ! empty($request->searchField)
-            ) {
-                if ($request->searchType == 'cdbID') {
-                    $queryTmLeads->where('tm_leads.cdb_id', $request->searchField);
-                } elseif ($request->searchType == 'emailAddress') {
-                    $queryTmLeads->where('tm_leads.email_address', $request->searchField);
-                } elseif ($request->searchType == 'phoneNumber') {
-                    $queryTmLeads->where('tm_leads.phone_number', $request->searchField);
-                } else {
-                    $queryTmLeads->where($request->searchType, $request->searchField);
-                }
-            }
-            if (
-                isset($request->searchType) && ! empty($request->searchType)
-                && isset($request->tmLeadsStartDate) && ! empty($request->tmLeadsStartDate)
-                && isset($request->tmLeadsEndDate) && ! empty($request->tmLeadsEndDate)
-                && ($request->searchType != 'cdbID' && $request->searchType != 'emailAddress' && $request->searchType != 'phoneNumber')
-            ) {
-                if ($request->tmLeadsEndDate >= $request->tmLeadsStartDate) {
-                    $tmLeadsDateFrom = Carbon::createFromFormat('Y-m-d', $request->tmLeadsStartDate)->startOfDay()->toDateTimeString();
-                    $tmLeadsDateTo = Carbon::createFromFormat('Y-m-d', $request->tmLeadsEndDate)->endOfDay()->toDateTimeString();
-                    $queryTmLeads->whereBetween('tm_leads.'.$request->searchType, [$tmLeadsDateFrom, $tmLeadsDateTo]);
-                }
-            }
-            if (isset($request->assigned_to_id) && ! empty($request->assigned_to_id)) {
-                if ($request->assigned_to_id == 'Unassigned') {
-                    $queryTmLeads->where('tm_leads.assigned_to_id', '=', '')->orWhereNull('tm_leads.assigned_to_id');
-                } elseif ($request->assigned_to_id == 'MyLeads') {
-                    $queryTmLeads->where('tm_leads.assigned_to_id', Auth::user()->id);
-                } else {
-                    $queryTmLeads->where('tm_leads.assigned_to_id', $request->assigned_to_id);
-                }
-            }
-            if (isset($request->tm_insurance_types_id) && ! empty($request->tm_insurance_types_id)) {
-                $queryTmLeads->where('tm_leads.tm_insurance_types_id', $request->tm_insurance_types_id);
-            }
-            if (isset($request->tm_lead_types_id) && ! empty($request->tm_lead_types_id)) {
-                $queryTmLeads->where('tm_leads.tm_lead_types_id', $request->tm_lead_types_id);
-            }
-
-            $tmLead = $queryTmLeads->paginate();
-
+        $tmLead = $queryTmLeads->paginate();
 
         return inertia('Telemarketing/TmLeads/Index', [
             'handlers' => $handlers,
@@ -134,7 +132,7 @@ class TmLeadController extends Controller
             'tmInsuranceTypes' => $tmInsuranceTypes,
             'tmLeadTypes' => $tmLeadTypes,
             'tmLeadStatuses' => $tmLeadStatuses,
-            'queryTmLeads' => $tmLead
+            'queryTmLeads' => $tmLead,
         ]);
     }
 
@@ -166,7 +164,7 @@ class TmLeadController extends Controller
         }
 
         return inertia('Telemarketing/TmLeads/Form', [
-            'tmLeadStatuses' =>  $tmLeadStatuses,
+            'tmLeadStatuses' => $tmLeadStatuses,
             'tmInsuranceTypes' => $tmInsuranceTypes,
             'handlers' => $handlers,
             'nationalities' => $nationalities,
@@ -176,7 +174,7 @@ class TmLeadController extends Controller
             'emiratesOfRegistrations' => $emiratesOfRegistrations,
             'carTypeInsurances' => $carTypeInsurances,
             'tmLeadTypes' => $tmLeadTypes,
-            'isUserTmAdvisor' => $isUserTmAdvisor
+            'isUserTmAdvisor' => $isUserTmAdvisor,
         ]);
 
     }
@@ -236,7 +234,7 @@ class TmLeadController extends Controller
             'tmInsuranceTypeCode' => $tmInsuranceTypeCode,
             'tmLeadStatuses' => $tmLeadStatuses,
             'isLeadEditable' => $isLeadEditable,
-            'customerCorrectPhoneNo' => $customerCorrectPhoneNo
+            'customerCorrectPhoneNo' => $customerCorrectPhoneNo,
         ]);
 
     }
@@ -273,7 +271,7 @@ class TmLeadController extends Controller
 
         return inertia('Telemarketing/TmLeads/Form', [
             'tmlead' => $tmlead,
-            'tmLeadStatuses' =>  $tmLeadStatuses,
+            'tmLeadStatuses' => $tmLeadStatuses,
             'tmInsuranceTypes' => $tmInsuranceTypes,
             'handlers' => $handlers,
             'nationalities' => $nationalities,
@@ -283,7 +281,7 @@ class TmLeadController extends Controller
             'emiratesOfRegistrations' => $emiratesOfRegistrations,
             'carTypeInsurances' => $carTypeInsurances,
             'tmLeadTypes' => $tmLeadTypes,
-            'isUserTmAdvisor' => $isUserTmAdvisor
+            'isUserTmAdvisor' => $isUserTmAdvisor,
         ]);
 
     }

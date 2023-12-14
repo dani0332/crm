@@ -7,7 +7,6 @@ use App\Models\TmUploadLead;
 use App\Services\TMUploadLeadsService;
 use Auth;
 use Config;
-use DataTables;
 use Illuminate\Http\Request;
 
 class TmUploadLeadController extends Controller
@@ -30,15 +29,14 @@ class TmUploadLeadController extends Controller
      */
     public function index(Request $request, TmUploadLead $tmUploadLead)
     {
-            $dataTmLeads = $tmUploadLead::select('tm_upload_leads.*', 'users.name as user_name')
-                ->leftjoin('users', 'tm_upload_leads.created_by_id', 'users.id')
-                ->where('tm_upload_leads.is_deleted', 0)
-                ->orderBy('tm_upload_leads.created_at', 'desc')
-                ->paginate();
-
+        $dataTmLeads = $tmUploadLead::select('tm_upload_leads.*', 'users.name as user_name')
+            ->leftjoin('users', 'tm_upload_leads.created_by_id', 'users.id')
+            ->where('tm_upload_leads.is_deleted', 0)
+            ->orderBy('tm_upload_leads.created_at', 'desc')
+            ->paginate();
 
         return inertia('Telemarketing/UploadTmLead/Index', [
-            'dataTmLeads' => $dataTmLeads, 
+            'dataTmLeads' => $dataTmLeads,
         ]);
     }
 
@@ -102,7 +100,7 @@ class TmUploadLeadController extends Controller
     public function show(TmUploadLead $tmuploadlead)
     {
         return inertia('Telemarketing/UploadTmLead/Show', [
-            'tmuploadlead' => $tmuploadlead, 
+            'tmuploadlead' => $tmuploadlead,
         ]);
     }
 
