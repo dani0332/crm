@@ -30,20 +30,16 @@ class TmUploadLeadController extends Controller
      */
     public function index(Request $request, TmUploadLead $tmUploadLead)
     {
-        // if ($request->ajax()) {
             $dataTmLeads = $tmUploadLead::select('tm_upload_leads.*', 'users.name as user_name')
                 ->leftjoin('users', 'tm_upload_leads.created_by_id', 'users.id')
                 ->where('tm_upload_leads.is_deleted', 0)
                 ->orderBy('tm_upload_leads.created_at', 'desc')
                 ->paginate();
 
-            // return $datatables::of($dataTmLeads)->addIndexColumn()->make(true);
-        // }
 
         return inertia('Telemarketing/UploadTmLead/Index', [
             'dataTmLeads' => $dataTmLeads, 
         ]);
-        // return view('tmuploadlead.view');
     }
 
     /**
@@ -54,7 +50,6 @@ class TmUploadLeadController extends Controller
     public function create()
     {
         return inertia('Telemarketing/UploadTmLead/Form');
-        // return view('tmuploadlead.add');
     }
 
     /**
@@ -109,7 +104,6 @@ class TmUploadLeadController extends Controller
         return inertia('Telemarketing/UploadTmLead/Show', [
             'tmuploadlead' => $tmuploadlead, 
         ]);
-        // return view('tmuploadlead.show', compact('tmuploadlead'));
     }
 
     /**

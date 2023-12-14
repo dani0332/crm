@@ -23,19 +23,9 @@ class TmLeadStatusController extends Controller
      */
     public function index(Request $request)
     {
-        // if ($request->ajax()) {
             $data = TmLeadStatus::select('*')->where('is_deleted', 0)->orderBy('sort_order', 'asc')->paginate();
 
-            // return Datatables::of($data)
-            //     ->addIndexColumn()
-            //     ->addColumn('action', function ($row) {
-            //         return view('tmleadstatus.actions', compact('row'))->render();
-            //     })
-            //     ->rawColumns(['action'])
-            //     ->make(true);
-        // }
         return inertia('Telemarketing/TmLeadStatus/Index', ["tmleadstatus" => $data]);
-        // return view('tmleadstatus.view');
     }
 
     /**
@@ -46,7 +36,6 @@ class TmLeadStatusController extends Controller
     public function create()
     {
         return inertia('Telemarketing/TmLeadStatus/Form', ["tmleadstatus" => null]);
-        // return view('tmleadstatus.add');
     }
 
     /**
@@ -86,7 +75,6 @@ class TmLeadStatusController extends Controller
     public function show(TmLeadStatus $tmleadstatus)
     {
         return inertia('Telemarketing/TmLeadStatus/Show', ["tmleadstatus" => $tmleadstatus]);
-        // return view('tmleadstatus.show', compact('tmleadstatus'));
     }
 
     /**
@@ -97,7 +85,6 @@ class TmLeadStatusController extends Controller
     public function edit(TmLeadStatus $tmleadstatus)
     {
         return inertia('Telemarketing/TmLeadStatus/Form', ["tmleadstatus" => $tmleadstatus]);
-        // return view('tmleadstatus.edit', compact('tmleadstatus'));
     }
 
     /**
