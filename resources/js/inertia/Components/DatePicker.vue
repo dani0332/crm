@@ -39,8 +39,8 @@ const props = defineProps({
   },
   minDate: {
     type: Date,
-    default: '',
-  }
+    default: null,
+  },
 });
 
 const selectedData = computed({
