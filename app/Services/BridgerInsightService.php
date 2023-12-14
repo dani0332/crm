@@ -167,7 +167,7 @@ class BridgerInsightService
 
                             if (isset($getDecodeContents->Records)) {
                                 AMLService::sendAMLMatchedEmailtoComplianceTeam($amlQuoteUrl, $quoteRefId, $amlResultCount, $customerOrEntityName, $quoteType->text, $loginCustomerID);
-                                Log::info('Bridger Insight Service - AML Matched Email triggered to Compliance and Compliance Super Users. Triggered By:' .auth()->user()->email);
+                                Log::info('Bridger Insight Service - AML Matched Email triggered to Compliance and Compliance Super Users. Triggered By:'.auth()->user()->email);
                             }
                         }
                     }

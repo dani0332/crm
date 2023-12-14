@@ -271,7 +271,7 @@ class AMLService
 
             return false;
         }
-        info('AML Screening Bridger - Lexis Nexis Decision update API Call. AML ID: '.($request->aml_id ?? '-').' - Lexis Nexis Alert ID: '.($request->result_id ?? '-'). '. Triggered by:' .auth()->user()->email);
+        info('AML Screening Bridger - Lexis Nexis Decision update API Call. AML ID: '.($request->aml_id ?? '-').' - Lexis Nexis Alert ID: '.($request->result_id ?? '-').'. Triggered by:'.auth()->user()->email);
 
         $bridgerInsightService = new BridgerInsightService();
         $bridgerAPIToken = $bridgerInsightService->getJWTToken();

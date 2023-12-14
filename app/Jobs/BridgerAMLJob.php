@@ -43,7 +43,7 @@ class BridgerAMLJob implements ShouldQueue
     public function handle(BridgerInsightService $bridgerInsightService): void
     {
         try {
-            info('AML Screening Bridger Job - AML Screening run with Code '.$this->payload['code'].' - Data : '.json_encode($this->payload). '. Triggered By:' .$this->loginCustomerEmail);
+            info('AML Screening Bridger Job - AML Screening run with Code '.$this->payload['code'].' - Data : '.json_encode($this->payload).'. Triggered By:'.$this->loginCustomerEmail);
             $bridgerInsightService->searchAMLResult($this->bridgerAPIToken, $this->payload, $this->quoteRequestID, $this->quoteTypeID, $this->customerType, $this->loginCustomerEmail);
         } catch (\Exception $exception) {
             info('AML Screening Bridger Job Exception: '.$exception->getMessage());
