@@ -17,6 +17,7 @@ use App\Repositories\CustomerMembersRepository;
 use App\Repositories\CustomerRepository;
 use App\Repositories\DocumentTypeRepository;
 use App\Repositories\EmbeddedProductRepository;
+use App\Repositories\InsuranceProviderRepository;
 use App\Repositories\LifeQuoteRepository;
 use App\Repositories\LookupRepository;
 use App\Repositories\LostReasonRepository;
@@ -83,6 +84,7 @@ class LifeQuoteController extends Controller
      */
     public function show($uuid)
     {
+
         $quote = LifeQuoteRepository::getBy('uuid', $uuid);
         $duplicateAllowedLobs = (new CentralService())->duplicateAllowedLobsList(QuoteTypes::LIFE->value, $quote->code);
 
@@ -94,6 +96,7 @@ class LifeQuoteController extends Controller
         $nationalities = NationalityRepository::withActive()->get();
         $embeddedProducts = EmbeddedProductRepository::byQuoteType(QuoteTypes::LIFE->id(), $quote->id);
         $industryType = LookupRepository::where('key', LookupsEnum::COMPANY_TYPE)->get();
+        $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypes::LIFE->id());
         $activities = ActivityRepository::where([
             'quote_type_id' => QuoteTypes::LIFE->id(),
             'quote_request_id' => $quote->id,
@@ -108,6 +111,7 @@ class LifeQuoteController extends Controller
                 return $value['id'] != QuoteStatusEnum::TransactionApproved;
             })->values();
         }
+
 
         $activitiesData = [];
         foreach ($activities as $activity) {
@@ -153,6 +157,7 @@ class LifeQuoteController extends Controller
             'emirates' => $emirates,
             'UBOsDetails' => $uboDetails,
             'UBORelations' => $uboRelations,
+            'insuranceProviders' => $insuranceProviders
         ]);
     }
 
