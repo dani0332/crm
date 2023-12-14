@@ -37,35 +37,17 @@ const isProviderEmpty = ref(false);
 const rules = {
   isNumber: v => !isNaN(Number(v)) || 'Field must be a number',
   conditionalRequired: v => {
+    const vatApplicable = planDetailsForm.price_vat_applicable;
+    const vatNotApplicable = planDetailsForm.price_vat_not_applicable;
+
     if (props.quoteType == quoteTypeCodeEnum.Business) {
-      if (
-        (planDetailsForm.price_vat_applicable !== null &&
-          planDetailsForm.price_vat_applicable !== '') ||
-        (planDetailsForm.price_vat_not_applicable !== null &&
-          planDetailsForm.price_vat_not_applicable !== '')
-      ) {
-        return true;
-      } else {
-        return 'Either Price (VAT Applicable) or Price (VAT Not Applicable) should be entered';
-      }
+      return vatApplicable || vatNotApplicable
+        ? true
+        : 'Either Price (VAT Applicable) or Price (VAT Not Applicable) should be entered';
     } else if (props.quoteType == quoteTypeCodeEnum.Life) {
-      if (
-        planDetailsForm.price_vat_not_applicable !== null &&
-        planDetailsForm.price_vat_not_applicable !== ''
-      ) {
-        return true;
-      } else {
-        return 'Price (VAT not applicable) is required';
-      }
+      return vatNotApplicable ? true : 'Price (VAT not applicable) is required';
     } else {
-      if (
-        planDetailsForm.price_vat_applicable !== null &&
-        planDetailsForm.price_vat_applicable !== ''
-      ) {
-        return true;
-      } else {
-        return 'Price (VAT Applicable) is required';
-      }
+      return vatApplicable ? true : 'Price (VAT Applicable) is required';
     }
   },
 };
