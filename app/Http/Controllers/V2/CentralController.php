@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\V2;
 
 use App\Enums\CustomerTypeEnum;
+use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Exports\AmtQuoteExport;
 use App\Exports\BusinessQuoteExport;
@@ -26,6 +27,7 @@ use App\Services\CentralService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use League\CommonMark\Extension\SmartPunct\Quote;
 use Maatwebsite\Excel\Facades\Excel;
 
 class CentralController extends Controller
@@ -177,7 +179,23 @@ class CentralController extends Controller
 
     public function sendBookingPolicy(Request $request)
     {
+        $quote = $this->getQuoteObject($request->model_type, $request->quote_id);
 
+        if (!$quote) {
+            return redirect()->back()->with('error', 'Error in Sending Policy.');
+        }
+
+        if ($request->send_policy_type == 'customer') {
+
+            $quote->update([
+                'quote_status_id' => QuoteStatusEnum::PolicySentToCustomer,
+            ]);
+        } elseif ($request->send_policy_type == 'sage') {
+
+            $quote->update([
+                'quote_status_id' => QuoteStatusEnum::PolicyBooked,
+            ]);
+        }
         return response()->json(['message' => 'policy send successfully'], 200);
     }
 

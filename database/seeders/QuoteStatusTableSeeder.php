@@ -2,6 +2,9 @@
 
 namespace Database\Seeders;
 
+use App\Enums\QuoteStatusEnum;
+use App\Enums\QuoteTypeId;
+use App\Enums\QuoteTypes;
 use App\Models\QuoteStatus;
 use App\Models\QuoteStatusMap;
 use Illuminate\Database\Seeder;
@@ -20,7 +23,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // New Lead
         $carNewLeadMap = DB::table('quote_status_map')->where(['quote_type_id' => 1, 'quote_status_id' => 8])->first();
-        if (! $carNewLeadMap) {
+        if (!$carNewLeadMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 1,
                 'quote_status_id' => 8,
@@ -34,7 +37,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Price too high
         $carPriceTooHigh = DB::table('quote_status')->where('code', 'PriceTooHigh')->first();
-        if (! $carPriceTooHigh) {
+        if (!$carPriceTooHigh) {
             $carPriceTooHighId = DB::table('quote_status')->insertGetId([
                 'id' => 40,
                 'code' => 'PriceTooHigh',
@@ -49,7 +52,7 @@ class QuoteStatusTableSeeder extends Seeder
             ]);
 
             $carPriceTooHighMap = DB::table('quote_status_map')->where(['quote_type_id' => 1, 'quote_status_id' => $carPriceTooHighId])->first();
-            if (! $carPriceTooHighMap) {
+            if (!$carPriceTooHighMap) {
                 DB::table('quote_status_map')->insert([
                     'quote_type_id' => 1,
                     'quote_status_id' => $carPriceTooHighId,
@@ -64,7 +67,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Policy purchased before first call
         $carPolicyPurchasedBeforeFirstCall = DB::table('quote_status')->where('code', 'PolicyPurchasedBeforeFirstCall')->first();
-        if (! $carPolicyPurchasedBeforeFirstCall) {
+        if (!$carPolicyPurchasedBeforeFirstCall) {
             $carPolicyPurchasedBeforeFirstCallId = DB::table('quote_status')->insertGetId([
                 'id' => 41,
                 'code' => 'PolicyPurchasedBeforeFirstCall',
@@ -79,7 +82,7 @@ class QuoteStatusTableSeeder extends Seeder
             ]);
 
             $carPolicyPurchasedBeforeFirstCallMap = DB::table('quote_status_map')->where(['quote_type_id' => 1, 'quote_status_id' => $carPolicyPurchasedBeforeFirstCallId])->first();
-            if (! $carPolicyPurchasedBeforeFirstCallMap) {
+            if (!$carPolicyPurchasedBeforeFirstCallMap) {
                 DB::table('quote_status_map')->insert([
                     'quote_type_id' => 1,
                     'quote_status_id' => $carPolicyPurchasedBeforeFirstCallId,
@@ -94,7 +97,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Not contactable-P&E
         $carNotContactablePe = DB::table('quote_status')->where('code', 'NotContactablePe')->first();
-        if (! $carNotContactablePe) {
+        if (!$carNotContactablePe) {
             $carNotContactablePeId = DB::table('quote_status')->insertGetId([
                 'id' => 42,
                 'code' => 'NotContactablePe',
@@ -109,7 +112,7 @@ class QuoteStatusTableSeeder extends Seeder
             ]);
 
             $carNotContactablePeMap = DB::table('quote_status_map')->where(['quote_type_id' => 1, 'quote_status_id' => $carNotContactablePeId])->first();
-            if (! $carNotContactablePeMap) {
+            if (!$carNotContactablePeMap) {
                 DB::table('quote_status_map')->insert([
                     'quote_type_id' => 1,
                     'quote_status_id' => $carNotContactablePeId,
@@ -124,7 +127,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Follow-up Call
         $carFollowupCall = DB::table('quote_status')->where('code', 'FollowupCall')->first();
-        if (! $carFollowupCall) {
+        if (!$carFollowupCall) {
             $carFollowupCallId = DB::table('quote_status')->insertGetId([
                 'id' => 43,
                 'code' => 'FollowupCall',
@@ -139,7 +142,7 @@ class QuoteStatusTableSeeder extends Seeder
             ]);
 
             $carFollowupCallMap = DB::table('quote_status_map')->where(['quote_type_id' => 1, 'quote_status_id' => $carFollowupCallId])->first();
-            if (! $carFollowupCallMap) {
+            if (!$carFollowupCallMap) {
                 DB::table('quote_status_map')->insert([
                     'quote_type_id' => 1,
                     'quote_status_id' => $carFollowupCallId,
@@ -154,7 +157,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Interested
         $carInterested = DB::table('quote_status')->where('code', 'Interested')->first();
-        if (! $carInterested) {
+        if (!$carInterested) {
             $carInterestedId = DB::table('quote_status')->insertGetId([
                 'id' => 44,
                 'code' => 'Interested',
@@ -169,7 +172,7 @@ class QuoteStatusTableSeeder extends Seeder
             ]);
 
             $carInterestedMap = DB::table('quote_status_map')->where(['quote_type_id' => 1, 'quote_status_id' => $carInterestedId])->first();
-            if (! $carInterestedMap) {
+            if (!$carInterestedMap) {
                 DB::table('quote_status_map')->insert([
                     'quote_type_id' => 1,
                     'quote_status_id' => $carInterestedId,
@@ -184,7 +187,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // No Answer
         $carNoAnswer = DB::table('quote_status')->where('code', 'NoAnswer')->first();
-        if (! $carNoAnswer) {
+        if (!$carNoAnswer) {
             $carNoAnswerId = DB::table('quote_status')->insertGetId([
                 'id' => 45,
                 'code' => 'NoAnswer',
@@ -199,7 +202,7 @@ class QuoteStatusTableSeeder extends Seeder
             ]);
 
             $carNoAnswerMap = DB::table('quote_status_map')->where(['quote_type_id' => 1, 'quote_status_id' => $carNoAnswerId])->first();
-            if (! $carNoAnswerMap) {
+            if (!$carNoAnswerMap) {
                 DB::table('quote_status_map')->insert([
                     'quote_type_id' => 1,
                     'quote_status_id' => $carNoAnswerId,
@@ -214,7 +217,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Not Interested
         $carNotInterested = DB::table('quote_status')->where('code', 'NotInterested')->first();
-        if (! $carNotInterested) {
+        if (!$carNotInterested) {
             $carNotInterestedId = DB::table('quote_status')->insertGetId([
                 'id' => 46,
                 'code' => 'NotInterested',
@@ -229,7 +232,7 @@ class QuoteStatusTableSeeder extends Seeder
             ]);
 
             $carNotInterestedMap = DB::table('quote_status_map')->where(['quote_type_id' => 1, 'quote_status_id' => $carNotInterestedId])->first();
-            if (! $carNotInterestedMap) {
+            if (!$carNotInterestedMap) {
                 DB::table('quote_status_map')->insert([
                     'quote_type_id' => 1,
                     'quote_status_id' => $carNotInterestedId,
@@ -244,7 +247,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Not Eligible for Insurance
         $carNotEligibleForInsurance = DB::table('quote_status')->where('code', 'NotEligibleForInsurance')->first();
-        if (! $carNotEligibleForInsurance) {
+        if (!$carNotEligibleForInsurance) {
             $carNotEligibleForInsuranceId = DB::table('quote_status')->insertGetId([
                 'id' => 47,
                 'code' => 'NotEligibleForInsurance',
@@ -259,7 +262,7 @@ class QuoteStatusTableSeeder extends Seeder
             ]);
 
             $carNotEligibleForInsuranceMap = DB::table('quote_status_map')->where(['quote_type_id' => 1, 'quote_status_id' => $carNotEligibleForInsuranceId])->first();
-            if (! $carNotEligibleForInsuranceMap) {
+            if (!$carNotEligibleForInsuranceMap) {
                 DB::table('quote_status_map')->insert([
                     'quote_type_id' => 1,
                     'quote_status_id' => $carNotEligibleForInsuranceId,
@@ -274,7 +277,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // AFIA Renewal
         $carAfiaRenewal = DB::table('quote_status')->where('code', 'AfiaRenewal')->first();
-        if (! $carAfiaRenewal) {
+        if (!$carAfiaRenewal) {
             $carAfiaRenewalId = DB::table('quote_status')->insertGetId([
                 'id' => 48,
                 'code' => 'AfiaRenewal',
@@ -289,7 +292,7 @@ class QuoteStatusTableSeeder extends Seeder
             ]);
 
             $carAfiaRenewalMap = DB::table('quote_status_map')->where(['quote_type_id' => 1, 'quote_status_id' => $carAfiaRenewalId])->first();
-            if (! $carAfiaRenewalMap) {
+            if (!$carAfiaRenewalMap) {
                 DB::table('quote_status_map')->insert([
                     'quote_type_id' => 1,
                     'quote_status_id' => $carAfiaRenewalId,
@@ -304,7 +307,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Not looking for motor insurance
         $carNotLookingForMotorInsurance = DB::table('quote_status')->where('code', 'NotLookingForMotorInsurance')->first();
-        if (! $carNotLookingForMotorInsurance) {
+        if (!$carNotLookingForMotorInsurance) {
             $carNotLookingForMotorInsuranceId = DB::table('quote_status')->insertGetId([
                 'id' => 49,
                 'code' => 'NotLookingForMotorInsurance',
@@ -319,7 +322,7 @@ class QuoteStatusTableSeeder extends Seeder
             ]);
 
             $carNotLookingForMotorInsuranceMap = DB::table('quote_status_map')->where(['quote_type_id' => 1, 'quote_status_id' => $carNotLookingForMotorInsuranceId])->first();
-            if (! $carNotLookingForMotorInsuranceMap) {
+            if (!$carNotLookingForMotorInsuranceMap) {
                 DB::table('quote_status_map')->insert([
                     'quote_type_id' => 1,
                     'quote_status_id' => $carNotLookingForMotorInsuranceId,
@@ -334,7 +337,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Non-GCC Spec
         $carNonGccSpec = DB::table('quote_status')->where('code', 'NonGccSpec')->first();
-        if (! $carNonGccSpec) {
+        if (!$carNonGccSpec) {
             $carNonGccSpecId = DB::table('quote_status')->insertGetId([
                 'id' => 50,
                 'code' => 'NonGccSpec',
@@ -349,7 +352,7 @@ class QuoteStatusTableSeeder extends Seeder
             ]);
 
             $carNonGccSpecMap = DB::table('quote_status_map')->where(['quote_type_id' => 1, 'quote_status_id' => $carNonGccSpecId])->first();
-            if (! $carNonGccSpecMap) {
+            if (!$carNonGccSpecMap) {
                 DB::table('quote_status_map')->insert([
                     'quote_type_id' => 1,
                     'quote_status_id' => $carNonGccSpecId,
@@ -364,7 +367,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Quoted
         $carQuotedMap = DB::table('quote_status_map')->where(['quote_type_id' => 1, 'quote_status_id' => 2])->first();
-        if (! $carQuotedMap) {
+        if (!$carQuotedMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 1,
                 'quote_status_id' => 2,
@@ -378,7 +381,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Lost
         $carLostMap = DB::table('quote_status_map')->where(['quote_type_id' => 1, 'quote_status_id' => 17])->first();
-        if (! $carLostMap) {
+        if (!$carLostMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 1,
                 'quote_status_id' => 17,
@@ -392,7 +395,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Duplicate
         $carDuplicateMap = DB::table('quote_status_map')->where(['quote_type_id' => 1, 'quote_status_id' => 35])->first();
-        if (! $carDuplicateMap) {
+        if (!$carDuplicateMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 1,
                 'quote_status_id' => 35,
@@ -406,7 +409,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Fake
         $carFakeMap = DB::table('quote_status_map')->where(['quote_type_id' => 1, 'quote_status_id' => 9])->first();
-        if (! $carFakeMap) {
+        if (!$carFakeMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 1,
                 'quote_status_id' => 9,
@@ -424,7 +427,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // New Lead
         $healthNewLeadMap = DB::table('quote_status_map')->where(['quote_type_id' => 3, 'quote_status_id' => 8])->first();
-        if (! $healthNewLeadMap) {
+        if (!$healthNewLeadMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 3,
                 'quote_status_id' => 8,
@@ -438,7 +441,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Qualification Pending
         $healthQualificationPendingMap = DB::table('quote_status_map')->where(['quote_type_id' => 3, 'quote_status_id' => 30])->first();
-        if (! $healthQualificationPendingMap) {
+        if (!$healthQualificationPendingMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 3,
                 'quote_status_id' => 30,
@@ -452,7 +455,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Qualified
         $healthQualifiedgMap = DB::table('quote_status_map')->where(['quote_type_id' => 3, 'quote_status_id' => 31])->first();
-        if (! $healthQualifiedgMap) {
+        if (!$healthQualifiedgMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 3,
                 'quote_status_id' => 31,
@@ -466,7 +469,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Quoted
         $healthQuotedMap = DB::table('quote_status_map')->where(['quote_type_id' => 3, 'quote_status_id' => 2])->first();
-        if (! $healthQuotedMap) {
+        if (!$healthQuotedMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 3,
                 'quote_status_id' => 2,
@@ -480,12 +483,12 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Followed Up
         $healthFollowedUp = QuoteStatus::find(24);
-        if (! $healthFollowedUp) {
+        if (!$healthFollowedUp) {
             DB::insert("INSERT INTO `quote_status` (`id`, `code`, `text`, `text_ar`, `is_active`, `sort_order`, `is_deleted`, `created_at`, `updated_at`, `deleted_at`, `uuid`, `created_by`, `updated_by`)
             VALUES(24, 'Followed Up', 'Followed Up', NULL, 1, 5, 0, '2021-02-01 08:47:52', '2021-02-01 08:47:52', NULL, '4cf834e6-79e2-11ec-954e-f23017e1271d', '', '');");
         }
         $healthFollowedUpMap = DB::table('quote_status_map')->where(['quote_type_id' => 3, 'quote_status_id' => 24])->first();
-        if (! $healthFollowedUpMap) {
+        if (!$healthFollowedUpMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 3,
                 'quote_status_id' => 24,
@@ -498,7 +501,7 @@ class QuoteStatusTableSeeder extends Seeder
         }
         // AML Screening Cleared
         $amlScreeningCleared = DB::table('quote_status_map')->where(['quote_type_id' => 3, 'quote_status_id' => 6])->first();
-        if (! $amlScreeningCleared) {
+        if (!$amlScreeningCleared) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 3,
                 'quote_status_id' => 6,
@@ -512,7 +515,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // AML Screening Failed
         $amlScreeningFailed = DB::table('quote_status_map')->where(['quote_type_id' => 3, 'quote_status_id' => 7])->first();
-        if (! $amlScreeningFailed) {
+        if (!$amlScreeningFailed) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 3,
                 'quote_status_id' => 7,
@@ -526,7 +529,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // In Negotiation
         $healthInNegotiationMap = DB::table('quote_status_map')->where(['quote_type_id' => 3, 'quote_status_id' => 25])->first();
-        if (! $healthInNegotiationMap) {
+        if (!$healthInNegotiationMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 3,
                 'quote_status_id' => 25,
@@ -540,7 +543,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Application Pending
         $healthApplicationPendingMap = DB::table('quote_status_map')->where(['quote_type_id' => 3, 'quote_status_id' => 26])->first();
-        if (! $healthApplicationPendingMap) {
+        if (!$healthApplicationPendingMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 3,
                 'quote_status_id' => 26,
@@ -554,7 +557,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Missing Documents Requested
         $healthMissingDocumentsRequestedMap = DB::table('quote_status_map')->where(['quote_type_id' => 3, 'quote_status_id' => 14])->first();
-        if (! $healthMissingDocumentsRequestedMap) {
+        if (!$healthMissingDocumentsRequestedMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 3,
                 'quote_status_id' => 14,
@@ -574,7 +577,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Application Submitted
         $healthApplicationSubmittedMap = DB::table('quote_status_map')->where(['quote_type_id' => 3, 'quote_status_id' => 36])->first();
-        if (! $healthApplicationSubmittedMap) {
+        if (!$healthApplicationSubmittedMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 3,
                 'quote_status_id' => 36,
@@ -612,7 +615,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // KYC Cleared
         $healthKycClearedMap = DB::table('quote_status_map')->where(['quote_type_id' => 3, 'quote_status_id' => 19])->first();
-        if (! $healthKycClearedMap) {
+        if (!$healthKycClearedMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 3,
                 'quote_status_id' => 19,
@@ -626,7 +629,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Payment Pending
         $healthPaymentPendingMap = DB::table('quote_status_map')->where(['quote_type_id' => 3, 'quote_status_id' => 28])->first();
-        if (! $healthPaymentPendingMap) {
+        if (!$healthPaymentPendingMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 3,
                 'quote_status_id' => 28,
@@ -640,7 +643,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Transaction Approved
         $healthTransactionApprovedMap = DB::table('quote_status_map')->where(['quote_type_id' => 3, 'quote_status_id' => 15])->first();
-        if (! $healthTransactionApprovedMap) {
+        if (!$healthTransactionApprovedMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 3,
                 'quote_status_id' => 15,
@@ -654,7 +657,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Policy Documents Pending
         $healthPolicyDocumentsPendingMap = DB::table('quote_status_map')->where(['quote_type_id' => 3, 'quote_status_id' => 29])->first();
-        if (! $healthPolicyDocumentsPendingMap) {
+        if (!$healthPolicyDocumentsPendingMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 3,
                 'quote_status_id' => 29,
@@ -668,7 +671,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Policy Issued
         $healthPolicyIssuedMap = DB::table('quote_status_map')->where(['quote_type_id' => 3, 'quote_status_id' => 33])->first();
-        if (! $healthPolicyIssuedMap) {
+        if (!$healthPolicyIssuedMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 3,
                 'quote_status_id' => 33,
@@ -682,7 +685,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Lost
         $healthLostdMap = DB::table('quote_status_map')->where(['quote_type_id' => 3, 'quote_status_id' => 17])->first();
-        if (! $healthLostdMap) {
+        if (!$healthLostdMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 3,
                 'quote_status_id' => 17,
@@ -696,7 +699,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Fake
         $healthFakedMap = DB::table('quote_status_map')->where(['quote_type_id' => 3, 'quote_status_id' => 9])->first();
-        if (! $healthFakedMap) {
+        if (!$healthFakedMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 3,
                 'quote_status_id' => 9,
@@ -710,7 +713,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Duplicate
         $healthDuplicatedMap = DB::table('quote_status_map')->where(['quote_type_id' => 3, 'quote_status_id' => 35])->first();
-        if (! $healthDuplicatedMap) {
+        if (!$healthDuplicatedMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 3,
                 'quote_status_id' => 35,
@@ -728,7 +731,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // New Lead
         $travelNewLeadMap = DB::table('quote_status_map')->where(['quote_type_id' => 8, 'quote_status_id' => 8])->first();
-        if (! $travelNewLeadMap) {
+        if (!$travelNewLeadMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 8,
                 'quote_status_id' => 8,
@@ -742,7 +745,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Qualification Pending
         $travelQualificationPendingMap = DB::table('quote_status_map')->where(['quote_type_id' => 8, 'quote_status_id' => 30])->first();
-        if (! $travelQualificationPendingMap) {
+        if (!$travelQualificationPendingMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 8,
                 'quote_status_id' => 30,
@@ -756,7 +759,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Qualified
         $travelQualifiedgMap = DB::table('quote_status_map')->where(['quote_type_id' => 8, 'quote_status_id' => 31])->first();
-        if (! $travelQualifiedgMap) {
+        if (!$travelQualifiedgMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 8,
                 'quote_status_id' => 31,
@@ -770,7 +773,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Quoted
         $travelQuotedMap = DB::table('quote_status_map')->where(['quote_type_id' => 8, 'quote_status_id' => 2])->first();
-        if (! $travelQuotedMap) {
+        if (!$travelQuotedMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 8,
                 'quote_status_id' => 2,
@@ -784,7 +787,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Followed Up
         $travelFollowedUpMap = DB::table('quote_status_map')->where(['quote_type_id' => 8, 'quote_status_id' => 24])->first();
-        if (! $travelFollowedUpMap) {
+        if (!$travelFollowedUpMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 8,
                 'quote_status_id' => 24,
@@ -798,7 +801,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // In Negotiation
         $travelInNegotiationMap = DB::table('quote_status_map')->where(['quote_type_id' => 8, 'quote_status_id' => 25])->first();
-        if (! $travelInNegotiationMap) {
+        if (!$travelInNegotiationMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 8,
                 'quote_status_id' => 25,
@@ -812,7 +815,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Application Pending
         $travelApplicationPendingMap = DB::table('quote_status_map')->where(['quote_type_id' => 8, 'quote_status_id' => 26])->first();
-        if (! $travelApplicationPendingMap) {
+        if (!$travelApplicationPendingMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 8,
                 'quote_status_id' => 26,
@@ -826,7 +829,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Missing Documents Requested
         $travelMissingDocumentsRequestedMap = DB::table('quote_status_map')->where(['quote_type_id' => 8, 'quote_status_id' => 14])->first();
-        if (! $travelMissingDocumentsRequestedMap) {
+        if (!$travelMissingDocumentsRequestedMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 8,
                 'quote_status_id' => 14,
@@ -840,7 +843,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Pending with UW
         $travelPendingWithUwMap = DB::table('quote_status_map')->where(['quote_type_id' => 8, 'quote_status_id' => 27])->first();
-        if (! $travelPendingWithUwMap) {
+        if (!$travelPendingWithUwMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 8,
                 'quote_status_id' => 27,
@@ -854,7 +857,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Application Submitted
         $travelApplicationSubmittedMap = DB::table('quote_status_map')->where(['quote_type_id' => 8, 'quote_status_id' => 36])->first();
-        if (! $travelApplicationSubmittedMap) {
+        if (!$travelApplicationSubmittedMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 8,
                 'quote_status_id' => 36,
@@ -868,7 +871,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // FTC Pending
         $travelFtcPendingMap = DB::table('quote_status_map')->where(['quote_type_id' => 8, 'quote_status_id' => 22])->first();
-        if (! $travelFtcPendingMap) {
+        if (!$travelFtcPendingMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 8,
                 'quote_status_id' => 22,
@@ -882,7 +885,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // FTC Sent
         $travelFtcSentMap = DB::table('quote_status_map')->where(['quote_type_id' => 8, 'quote_status_id' => 10])->first();
-        if (! $travelFtcSentMap) {
+        if (!$travelFtcSentMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 8,
                 'quote_status_id' => 10,
@@ -896,7 +899,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // FTC Accepted
         $travelFtcAcceptedMap = DB::table('quote_status_map')->where(['quote_type_id' => 8, 'quote_status_id' => 11])->first();
-        if (! $travelFtcAcceptedMap) {
+        if (!$travelFtcAcceptedMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 8,
                 'quote_status_id' => 11,
@@ -910,7 +913,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // FTC Resubmitted
         $travelFtcResubmittedMap = DB::table('quote_status_map')->where(['quote_type_id' => 8, 'quote_status_id' => 12])->first();
-        if (! $travelFtcResubmittedMap) {
+        if (!$travelFtcResubmittedMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 8,
                 'quote_status_id' => 12,
@@ -924,7 +927,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // KYC Cleared
         $travelKycClearedMap = DB::table('quote_status_map')->where(['quote_type_id' => 8, 'quote_status_id' => 19])->first();
-        if (! $travelKycClearedMap) {
+        if (!$travelKycClearedMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 8,
                 'quote_status_id' => 19,
@@ -938,7 +941,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Payment Pending
         $travelPaymentPendingMap = DB::table('quote_status_map')->where(['quote_type_id' => 8, 'quote_status_id' => 28])->first();
-        if (! $travelPaymentPendingMap) {
+        if (!$travelPaymentPendingMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 8,
                 'quote_status_id' => 28,
@@ -952,7 +955,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Transaction Approved
         $travelTransactionApprovedMap = DB::table('quote_status_map')->where(['quote_type_id' => 8, 'quote_status_id' => 15])->first();
-        if (! $travelTransactionApprovedMap) {
+        if (!$travelTransactionApprovedMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 8,
                 'quote_status_id' => 15,
@@ -966,7 +969,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Policy Documents Pending
         $travelPolicyDocumentsPendingMap = DB::table('quote_status_map')->where(['quote_type_id' => 8, 'quote_status_id' => 29])->first();
-        if (! $travelPolicyDocumentsPendingMap) {
+        if (!$travelPolicyDocumentsPendingMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 8,
                 'quote_status_id' => 29,
@@ -980,7 +983,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Policy Issued
         $travelPolicyIssuedMap = DB::table('quote_status_map')->where(['quote_type_id' => 8, 'quote_status_id' => 33])->first();
-        if (! $travelPolicyIssuedMap) {
+        if (!$travelPolicyIssuedMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 8,
                 'quote_status_id' => 33,
@@ -994,7 +997,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Lost
         $travelLostdMap = DB::table('quote_status_map')->where(['quote_type_id' => 8, 'quote_status_id' => 17])->first();
-        if (! $travelLostdMap) {
+        if (!$travelLostdMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 8,
                 'quote_status_id' => 17,
@@ -1008,7 +1011,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Fake
         $travelFakedMap = DB::table('quote_status_map')->where(['quote_type_id' => 8, 'quote_status_id' => 9])->first();
-        if (! $travelFakedMap) {
+        if (!$travelFakedMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 8,
                 'quote_status_id' => 9,
@@ -1022,7 +1025,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Duplicate
         $travelDuplicatedMap = DB::table('quote_status_map')->where(['quote_type_id' => 8, 'quote_status_id' => 35])->first();
-        if (! $travelDuplicatedMap) {
+        if (!$travelDuplicatedMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 8,
                 'quote_status_id' => 35,
@@ -1040,7 +1043,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // New Lead
         $homeNewLeadMap = DB::table('quote_status_map')->where(['quote_type_id' => 2, 'quote_status_id' => 8])->first();
-        if (! $homeNewLeadMap) {
+        if (!$homeNewLeadMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 2,
                 'quote_status_id' => 8,
@@ -1054,7 +1057,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Qualification Pending
         $homeQualificationPendingMap = DB::table('quote_status_map')->where(['quote_type_id' => 2, 'quote_status_id' => 30])->first();
-        if (! $homeQualificationPendingMap) {
+        if (!$homeQualificationPendingMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 2,
                 'quote_status_id' => 30,
@@ -1068,7 +1071,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Qualified
         $homeQualifiedgMap = DB::table('quote_status_map')->where(['quote_type_id' => 2, 'quote_status_id' => 31])->first();
-        if (! $homeQualifiedgMap) {
+        if (!$homeQualifiedgMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 2,
                 'quote_status_id' => 31,
@@ -1082,7 +1085,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Quoted
         $homeQuotedMap = DB::table('quote_status_map')->where(['quote_type_id' => 2, 'quote_status_id' => 2])->first();
-        if (! $homeQuotedMap) {
+        if (!$homeQuotedMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 2,
                 'quote_status_id' => 2,
@@ -1096,7 +1099,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Followed Up
         $homeFollowedUpMap = DB::table('quote_status_map')->where(['quote_type_id' => 2, 'quote_status_id' => 24])->first();
-        if (! $homeFollowedUpMap) {
+        if (!$homeFollowedUpMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 2,
                 'quote_status_id' => 24,
@@ -1110,7 +1113,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // In Negotiation
         $homeInNegotiationMap = DB::table('quote_status_map')->where(['quote_type_id' => 2, 'quote_status_id' => 25])->first();
-        if (! $homeInNegotiationMap) {
+        if (!$homeInNegotiationMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 2,
                 'quote_status_id' => 25,
@@ -1124,7 +1127,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Application Pending
         $homeApplicationPendingMap = DB::table('quote_status_map')->where(['quote_type_id' => 2, 'quote_status_id' => 26])->first();
-        if (! $homeApplicationPendingMap) {
+        if (!$homeApplicationPendingMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 2,
                 'quote_status_id' => 26,
@@ -1138,7 +1141,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Missing Documents Requested
         $homeMissingDocumentsRequestedMap = DB::table('quote_status_map')->where(['quote_type_id' => 2, 'quote_status_id' => 14])->first();
-        if (! $homeMissingDocumentsRequestedMap) {
+        if (!$homeMissingDocumentsRequestedMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 2,
                 'quote_status_id' => 14,
@@ -1152,7 +1155,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Pending with UW
         $homePendingWithUwMap = DB::table('quote_status_map')->where(['quote_type_id' => 2, 'quote_status_id' => 27])->first();
-        if (! $homePendingWithUwMap) {
+        if (!$homePendingWithUwMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 2,
                 'quote_status_id' => 27,
@@ -1166,7 +1169,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Application Submitted
         $homeApplicationSubmittedMap = DB::table('quote_status_map')->where(['quote_type_id' => 2, 'quote_status_id' => 36])->first();
-        if (! $homeApplicationSubmittedMap) {
+        if (!$homeApplicationSubmittedMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 2,
                 'quote_status_id' => 36,
@@ -1180,7 +1183,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // FTC Pending
         $homeFtcPendingMap = DB::table('quote_status_map')->where(['quote_type_id' => 2, 'quote_status_id' => 22])->first();
-        if (! $homeFtcPendingMap) {
+        if (!$homeFtcPendingMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 2,
                 'quote_status_id' => 22,
@@ -1194,7 +1197,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // FTC Sent
         $homeFtcSentMap = DB::table('quote_status_map')->where(['quote_type_id' => 2, 'quote_status_id' => 10])->first();
-        if (! $homeFtcSentMap) {
+        if (!$homeFtcSentMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 2,
                 'quote_status_id' => 10,
@@ -1208,7 +1211,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // FTC Accepted
         $homeFtcAcceptedMap = DB::table('quote_status_map')->where(['quote_type_id' => 2, 'quote_status_id' => 11])->first();
-        if (! $homeFtcAcceptedMap) {
+        if (!$homeFtcAcceptedMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 2,
                 'quote_status_id' => 11,
@@ -1222,7 +1225,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // FTC Resubmitted
         $homeFtcResubmittedMap = DB::table('quote_status_map')->where(['quote_type_id' => 2, 'quote_status_id' => 12])->first();
-        if (! $homeFtcResubmittedMap) {
+        if (!$homeFtcResubmittedMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 2,
                 'quote_status_id' => 12,
@@ -1236,7 +1239,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // KYC Cleared
         $homeKycClearedMap = DB::table('quote_status_map')->where(['quote_type_id' => 2, 'quote_status_id' => 19])->first();
-        if (! $homeKycClearedMap) {
+        if (!$homeKycClearedMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 2,
                 'quote_status_id' => 19,
@@ -1250,7 +1253,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Payment Pending
         $homePaymentPendingMap = DB::table('quote_status_map')->where(['quote_type_id' => 2, 'quote_status_id' => 28])->first();
-        if (! $homePaymentPendingMap) {
+        if (!$homePaymentPendingMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 2,
                 'quote_status_id' => 28,
@@ -1264,7 +1267,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Transaction Approved
         $homeTransactionApprovedMap = DB::table('quote_status_map')->where(['quote_type_id' => 2, 'quote_status_id' => 15])->first();
-        if (! $homeTransactionApprovedMap) {
+        if (!$homeTransactionApprovedMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 2,
                 'quote_status_id' => 15,
@@ -1278,7 +1281,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Policy Documents Pending
         $homePolicyDocumentsPendingMap = DB::table('quote_status_map')->where(['quote_type_id' => 2, 'quote_status_id' => 29])->first();
-        if (! $homePolicyDocumentsPendingMap) {
+        if (!$homePolicyDocumentsPendingMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 2,
                 'quote_status_id' => 29,
@@ -1292,7 +1295,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Policy Issued
         $homePolicyIssuedMap = DB::table('quote_status_map')->where(['quote_type_id' => 2, 'quote_status_id' => 33])->first();
-        if (! $homePolicyIssuedMap) {
+        if (!$homePolicyIssuedMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 2,
                 'quote_status_id' => 33,
@@ -1306,7 +1309,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Lost
         $homeLostdMap = DB::table('quote_status_map')->where(['quote_type_id' => 2, 'quote_status_id' => 17])->first();
-        if (! $homeLostdMap) {
+        if (!$homeLostdMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 2,
                 'quote_status_id' => 17,
@@ -1320,7 +1323,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Fake
         $homeFakedMap = DB::table('quote_status_map')->where(['quote_type_id' => 2, 'quote_status_id' => 9])->first();
-        if (! $homeFakedMap) {
+        if (!$homeFakedMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 2,
                 'quote_status_id' => 9,
@@ -1334,7 +1337,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Duplicate
         $homeDuplicatedMap = DB::table('quote_status_map')->where(['quote_type_id' => 2, 'quote_status_id' => 35])->first();
-        if (! $homeDuplicatedMap) {
+        if (!$homeDuplicatedMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 2,
                 'quote_status_id' => 35,
@@ -1352,7 +1355,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // New Lead
         $lifeNewLeadMap = DB::table('quote_status_map')->where(['quote_type_id' => 4, 'quote_status_id' => 8])->first();
-        if (! $lifeNewLeadMap) {
+        if (!$lifeNewLeadMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 4,
                 'quote_status_id' => 8,
@@ -1366,7 +1369,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Qualification Pending
         $lifeQualificationPendingMap = DB::table('quote_status_map')->where(['quote_type_id' => 4, 'quote_status_id' => 30])->first();
-        if (! $lifeQualificationPendingMap) {
+        if (!$lifeQualificationPendingMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 4,
                 'quote_status_id' => 30,
@@ -1380,7 +1383,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Qualified
         $lifeQualifiedgMap = DB::table('quote_status_map')->where(['quote_type_id' => 4, 'quote_status_id' => 31])->first();
-        if (! $lifeQualifiedgMap) {
+        if (!$lifeQualifiedgMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 4,
                 'quote_status_id' => 31,
@@ -1394,7 +1397,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Quoted
         $lifeQuotedMap = DB::table('quote_status_map')->where(['quote_type_id' => 4, 'quote_status_id' => 2])->first();
-        if (! $lifeQuotedMap) {
+        if (!$lifeQuotedMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 4,
                 'quote_status_id' => 2,
@@ -1408,7 +1411,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Followed Up
         $lifeFollowedUpMap = DB::table('quote_status_map')->where(['quote_type_id' => 4, 'quote_status_id' => 24])->first();
-        if (! $lifeFollowedUpMap) {
+        if (!$lifeFollowedUpMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 4,
                 'quote_status_id' => 24,
@@ -1422,7 +1425,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // In Negotiation
         $lifeInNegotiationMap = DB::table('quote_status_map')->where(['quote_type_id' => 4, 'quote_status_id' => 25])->first();
-        if (! $lifeInNegotiationMap) {
+        if (!$lifeInNegotiationMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 4,
                 'quote_status_id' => 25,
@@ -1436,7 +1439,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Application Pending
         $lifeApplicationPendingMap = DB::table('quote_status_map')->where(['quote_type_id' => 4, 'quote_status_id' => 26])->first();
-        if (! $lifeApplicationPendingMap) {
+        if (!$lifeApplicationPendingMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 4,
                 'quote_status_id' => 26,
@@ -1450,7 +1453,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Missing Documents Requested
         $lifeMissingDocumentsRequestedMap = DB::table('quote_status_map')->where(['quote_type_id' => 4, 'quote_status_id' => 14])->first();
-        if (! $lifeMissingDocumentsRequestedMap) {
+        if (!$lifeMissingDocumentsRequestedMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 4,
                 'quote_status_id' => 14,
@@ -1464,7 +1467,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Pending with UW
         $lifePendingWithUwMap = DB::table('quote_status_map')->where(['quote_type_id' => 4, 'quote_status_id' => 27])->first();
-        if (! $lifePendingWithUwMap) {
+        if (!$lifePendingWithUwMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 4,
                 'quote_status_id' => 27,
@@ -1478,7 +1481,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Application Submitted
         $lifeApplicationSubmittedMap = DB::table('quote_status_map')->where(['quote_type_id' => 4, 'quote_status_id' => 36])->first();
-        if (! $lifeApplicationSubmittedMap) {
+        if (!$lifeApplicationSubmittedMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 4,
                 'quote_status_id' => 36,
@@ -1492,7 +1495,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // FTC Pending
         $lifeFtcPendingMap = DB::table('quote_status_map')->where(['quote_type_id' => 4, 'quote_status_id' => 22])->first();
-        if (! $lifeFtcPendingMap) {
+        if (!$lifeFtcPendingMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 4,
                 'quote_status_id' => 22,
@@ -1506,7 +1509,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // FTC Sent
         $lifeFtcSentMap = DB::table('quote_status_map')->where(['quote_type_id' => 4, 'quote_status_id' => 10])->first();
-        if (! $lifeFtcSentMap) {
+        if (!$lifeFtcSentMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 4,
                 'quote_status_id' => 10,
@@ -1520,7 +1523,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // FTC Accepted
         $lifeFtcAcceptedMap = DB::table('quote_status_map')->where(['quote_type_id' => 4, 'quote_status_id' => 11])->first();
-        if (! $lifeFtcAcceptedMap) {
+        if (!$lifeFtcAcceptedMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 4,
                 'quote_status_id' => 11,
@@ -1534,7 +1537,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // FTC Resubmitted
         $lifeFtcResubmittedMap = DB::table('quote_status_map')->where(['quote_type_id' => 4, 'quote_status_id' => 12])->first();
-        if (! $lifeFtcResubmittedMap) {
+        if (!$lifeFtcResubmittedMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 4,
                 'quote_status_id' => 12,
@@ -1548,7 +1551,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // KYC Cleared
         $lifeKycClearedMap = DB::table('quote_status_map')->where(['quote_type_id' => 4, 'quote_status_id' => 19])->first();
-        if (! $lifeKycClearedMap) {
+        if (!$lifeKycClearedMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 4,
                 'quote_status_id' => 19,
@@ -1562,7 +1565,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Payment Pending
         $lifePaymentPendingMap = DB::table('quote_status_map')->where(['quote_type_id' => 4, 'quote_status_id' => 28])->first();
-        if (! $lifePaymentPendingMap) {
+        if (!$lifePaymentPendingMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 4,
                 'quote_status_id' => 28,
@@ -1576,7 +1579,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Transaction Approved
         $lifeTransactionApprovedMap = DB::table('quote_status_map')->where(['quote_type_id' => 4, 'quote_status_id' => 15])->first();
-        if (! $lifeTransactionApprovedMap) {
+        if (!$lifeTransactionApprovedMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 4,
                 'quote_status_id' => 15,
@@ -1590,7 +1593,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Policy Documents Pending
         $lifePolicyDocumentsPendingMap = DB::table('quote_status_map')->where(['quote_type_id' => 4, 'quote_status_id' => 29])->first();
-        if (! $lifePolicyDocumentsPendingMap) {
+        if (!$lifePolicyDocumentsPendingMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 4,
                 'quote_status_id' => 29,
@@ -1604,7 +1607,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Policy Issued
         $lifePolicyIssuedMap = DB::table('quote_status_map')->where(['quote_type_id' => 4, 'quote_status_id' => 33])->first();
-        if (! $lifePolicyIssuedMap) {
+        if (!$lifePolicyIssuedMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 4,
                 'quote_status_id' => 33,
@@ -1618,7 +1621,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Lost
         $lifeLostdMap = DB::table('quote_status_map')->where(['quote_type_id' => 4, 'quote_status_id' => 17])->first();
-        if (! $lifeLostdMap) {
+        if (!$lifeLostdMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 4,
                 'quote_status_id' => 17,
@@ -1632,7 +1635,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Fake
         $lifeFakedMap = DB::table('quote_status_map')->where(['quote_type_id' => 4, 'quote_status_id' => 9])->first();
-        if (! $lifeFakedMap) {
+        if (!$lifeFakedMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 4,
                 'quote_status_id' => 9,
@@ -1646,7 +1649,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Duplicate
         $lifeDuplicatedMap = DB::table('quote_status_map')->where(['quote_type_id' => 4, 'quote_status_id' => 35])->first();
-        if (! $lifeDuplicatedMap) {
+        if (!$lifeDuplicatedMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 4,
                 'quote_status_id' => 35,
@@ -1664,7 +1667,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // New Lead
         $businessNewLeadMap = DB::table('quote_status_map')->where(['quote_type_id' => 5, 'quote_status_id' => 8])->first();
-        if (! $businessNewLeadMap) {
+        if (!$businessNewLeadMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 5,
                 'quote_status_id' => 8,
@@ -1678,7 +1681,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Qualification Pending
         $businessQualificationPendingMap = DB::table('quote_status_map')->where(['quote_type_id' => 5, 'quote_status_id' => 30])->first();
-        if (! $businessQualificationPendingMap) {
+        if (!$businessQualificationPendingMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 5,
                 'quote_status_id' => 30,
@@ -1692,7 +1695,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Qualified
         $businessQualifiedgMap = DB::table('quote_status_map')->where(['quote_type_id' => 5, 'quote_status_id' => 31])->first();
-        if (! $businessQualifiedgMap) {
+        if (!$businessQualifiedgMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 5,
                 'quote_status_id' => 31,
@@ -1706,7 +1709,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Quoted
         $businessQuotedMap = DB::table('quote_status_map')->where(['quote_type_id' => 5, 'quote_status_id' => 2])->first();
-        if (! $businessQuotedMap) {
+        if (!$businessQuotedMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 5,
                 'quote_status_id' => 2,
@@ -1720,7 +1723,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Followed Up
         $businessFollowedUpMap = DB::table('quote_status_map')->where(['quote_type_id' => 5, 'quote_status_id' => 24])->first();
-        if (! $businessFollowedUpMap) {
+        if (!$businessFollowedUpMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 5,
                 'quote_status_id' => 24,
@@ -1734,7 +1737,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // In Negotiation
         $businessInNegotiationMap = DB::table('quote_status_map')->where(['quote_type_id' => 5, 'quote_status_id' => 25])->first();
-        if (! $businessInNegotiationMap) {
+        if (!$businessInNegotiationMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 5,
                 'quote_status_id' => 25,
@@ -1748,7 +1751,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Application Pending
         $businessApplicationPendingMap = DB::table('quote_status_map')->where(['quote_type_id' => 5, 'quote_status_id' => 26])->first();
-        if (! $businessApplicationPendingMap) {
+        if (!$businessApplicationPendingMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 5,
                 'quote_status_id' => 26,
@@ -1762,7 +1765,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Missing Documents Requested
         $businessMissingDocumentsRequestedMap = DB::table('quote_status_map')->where(['quote_type_id' => 5, 'quote_status_id' => 14])->first();
-        if (! $businessMissingDocumentsRequestedMap) {
+        if (!$businessMissingDocumentsRequestedMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 5,
                 'quote_status_id' => 14,
@@ -1776,7 +1779,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Pending with UW
         $businessPendingWithUwMap = DB::table('quote_status_map')->where(['quote_type_id' => 5, 'quote_status_id' => 27])->first();
-        if (! $businessPendingWithUwMap) {
+        if (!$businessPendingWithUwMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 5,
                 'quote_status_id' => 27,
@@ -1790,7 +1793,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Application Submitted
         $businessApplicationSubmittedMap = DB::table('quote_status_map')->where(['quote_type_id' => 5, 'quote_status_id' => 36])->first();
-        if (! $businessApplicationSubmittedMap) {
+        if (!$businessApplicationSubmittedMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 5,
                 'quote_status_id' => 36,
@@ -1804,7 +1807,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // FTC Pending
         $businessFtcPendingMap = DB::table('quote_status_map')->where(['quote_type_id' => 5, 'quote_status_id' => 22])->first();
-        if (! $businessFtcPendingMap) {
+        if (!$businessFtcPendingMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 5,
                 'quote_status_id' => 22,
@@ -1818,7 +1821,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // FTC Sent
         $businessFtcSentMap = DB::table('quote_status_map')->where(['quote_type_id' => 5, 'quote_status_id' => 10])->first();
-        if (! $businessFtcSentMap) {
+        if (!$businessFtcSentMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 5,
                 'quote_status_id' => 10,
@@ -1832,7 +1835,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // FTC Accepted
         $businessFtcAcceptedMap = DB::table('quote_status_map')->where(['quote_type_id' => 5, 'quote_status_id' => 11])->first();
-        if (! $businessFtcAcceptedMap) {
+        if (!$businessFtcAcceptedMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 5,
                 'quote_status_id' => 11,
@@ -1846,7 +1849,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // FTC Resubmitted
         $businessFtcResubmittedMap = DB::table('quote_status_map')->where(['quote_type_id' => 5, 'quote_status_id' => 12])->first();
-        if (! $businessFtcResubmittedMap) {
+        if (!$businessFtcResubmittedMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 5,
                 'quote_status_id' => 12,
@@ -1860,7 +1863,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // KYC Cleared
         $businessKycClearedMap = DB::table('quote_status_map')->where(['quote_type_id' => 5, 'quote_status_id' => 19])->first();
-        if (! $businessKycClearedMap) {
+        if (!$businessKycClearedMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 5,
                 'quote_status_id' => 19,
@@ -1874,7 +1877,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Payment Pending
         $businessPaymentPendingMap = DB::table('quote_status_map')->where(['quote_type_id' => 5, 'quote_status_id' => 28])->first();
-        if (! $businessPaymentPendingMap) {
+        if (!$businessPaymentPendingMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 5,
                 'quote_status_id' => 28,
@@ -1888,7 +1891,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Transaction Approved
         $businessTransactionApprovedMap = DB::table('quote_status_map')->where(['quote_type_id' => 5, 'quote_status_id' => 15])->first();
-        if (! $businessTransactionApprovedMap) {
+        if (!$businessTransactionApprovedMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 5,
                 'quote_status_id' => 15,
@@ -1902,7 +1905,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Policy Documents Pending
         $businessPolicyDocumentsPendingMap = DB::table('quote_status_map')->where(['quote_type_id' => 5, 'quote_status_id' => 29])->first();
-        if (! $businessPolicyDocumentsPendingMap) {
+        if (!$businessPolicyDocumentsPendingMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 5,
                 'quote_status_id' => 29,
@@ -1916,7 +1919,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Policy Issued
         $businessPolicyIssuedMap = DB::table('quote_status_map')->where(['quote_type_id' => 5, 'quote_status_id' => 33])->first();
-        if (! $businessPolicyIssuedMap) {
+        if (!$businessPolicyIssuedMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 5,
                 'quote_status_id' => 33,
@@ -1930,7 +1933,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Lost
         $businessLostdMap = DB::table('quote_status_map')->where(['quote_type_id' => 5, 'quote_status_id' => 17])->first();
-        if (! $businessLostdMap) {
+        if (!$businessLostdMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 5,
                 'quote_status_id' => 17,
@@ -1944,7 +1947,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Fake
         $businessFakedMap = DB::table('quote_status_map')->where(['quote_type_id' => 5, 'quote_status_id' => 9])->first();
-        if (! $businessFakedMap) {
+        if (!$businessFakedMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 5,
                 'quote_status_id' => 9,
@@ -1958,7 +1961,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Duplicate
         $businessDuplicatedMap = DB::table('quote_status_map')->where(['quote_type_id' => 5, 'quote_status_id' => 35])->first();
-        if (! $businessDuplicatedMap) {
+        if (!$businessDuplicatedMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 5,
                 'quote_status_id' => 35,
@@ -1976,7 +1979,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // New Lead
         $bikeNewLeadMap = DB::table('quote_status_map')->where(['quote_type_id' => 6, 'quote_status_id' => 8])->first();
-        if (! $bikeNewLeadMap) {
+        if (!$bikeNewLeadMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 6,
                 'quote_status_id' => 8,
@@ -1990,7 +1993,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Qualification Pending
         $bikeQualificationPendingMap = DB::table('quote_status_map')->where(['quote_type_id' => 6, 'quote_status_id' => 30])->first();
-        if (! $bikeQualificationPendingMap) {
+        if (!$bikeQualificationPendingMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 6,
                 'quote_status_id' => 30,
@@ -2004,7 +2007,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Qualified
         $bikeQualifiedgMap = DB::table('quote_status_map')->where(['quote_type_id' => 6, 'quote_status_id' => 31])->first();
-        if (! $bikeQualifiedgMap) {
+        if (!$bikeQualifiedgMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 6,
                 'quote_status_id' => 31,
@@ -2018,7 +2021,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Quoted
         $bikeQuotedMap = DB::table('quote_status_map')->where(['quote_type_id' => 6, 'quote_status_id' => 2])->first();
-        if (! $bikeQuotedMap) {
+        if (!$bikeQuotedMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 6,
                 'quote_status_id' => 2,
@@ -2032,7 +2035,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Followed Up
         $bikeFollowedUpMap = DB::table('quote_status_map')->where(['quote_type_id' => 6, 'quote_status_id' => 24])->first();
-        if (! $bikeFollowedUpMap) {
+        if (!$bikeFollowedUpMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 6,
                 'quote_status_id' => 24,
@@ -2046,7 +2049,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // In Negotiation
         $bikeInNegotiationMap = DB::table('quote_status_map')->where(['quote_type_id' => 6, 'quote_status_id' => 25])->first();
-        if (! $bikeInNegotiationMap) {
+        if (!$bikeInNegotiationMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 6,
                 'quote_status_id' => 25,
@@ -2060,7 +2063,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Application Pending
         $bikeApplicationPendingMap = DB::table('quote_status_map')->where(['quote_type_id' => 6, 'quote_status_id' => 26])->first();
-        if (! $bikeApplicationPendingMap) {
+        if (!$bikeApplicationPendingMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 6,
                 'quote_status_id' => 26,
@@ -2074,7 +2077,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Missing Documents Requested
         $bikeMissingDocumentsRequestedMap = DB::table('quote_status_map')->where(['quote_type_id' => 6, 'quote_status_id' => 14])->first();
-        if (! $bikeMissingDocumentsRequestedMap) {
+        if (!$bikeMissingDocumentsRequestedMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 6,
                 'quote_status_id' => 14,
@@ -2088,7 +2091,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Pending with UW
         $bikePendingWithUwMap = DB::table('quote_status_map')->where(['quote_type_id' => 6, 'quote_status_id' => 27])->first();
-        if (! $bikePendingWithUwMap) {
+        if (!$bikePendingWithUwMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 6,
                 'quote_status_id' => 27,
@@ -2102,7 +2105,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Application Submitted
         $bikeApplicationSubmittedMap = DB::table('quote_status_map')->where(['quote_type_id' => 6, 'quote_status_id' => 36])->first();
-        if (! $bikeApplicationSubmittedMap) {
+        if (!$bikeApplicationSubmittedMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 6,
                 'quote_status_id' => 36,
@@ -2116,7 +2119,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // FTC Pending
         $bikeFtcPendingMap = DB::table('quote_status_map')->where(['quote_type_id' => 6, 'quote_status_id' => 22])->first();
-        if (! $bikeFtcPendingMap) {
+        if (!$bikeFtcPendingMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 6,
                 'quote_status_id' => 22,
@@ -2130,7 +2133,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // FTC Sent
         $bikeFtcSentMap = DB::table('quote_status_map')->where(['quote_type_id' => 6, 'quote_status_id' => 10])->first();
-        if (! $bikeFtcSentMap) {
+        if (!$bikeFtcSentMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 6,
                 'quote_status_id' => 10,
@@ -2144,7 +2147,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // FTC Accepted
         $bikeFtcAcceptedMap = DB::table('quote_status_map')->where(['quote_type_id' => 6, 'quote_status_id' => 11])->first();
-        if (! $bikeFtcAcceptedMap) {
+        if (!$bikeFtcAcceptedMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 6,
                 'quote_status_id' => 11,
@@ -2158,7 +2161,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // FTC Resubmitted
         $bikeFtcResubmittedMap = DB::table('quote_status_map')->where(['quote_type_id' => 6, 'quote_status_id' => 12])->first();
-        if (! $bikeFtcResubmittedMap) {
+        if (!$bikeFtcResubmittedMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 6,
                 'quote_status_id' => 12,
@@ -2172,7 +2175,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // KYC Cleared
         $bikeKycClearedMap = DB::table('quote_status_map')->where(['quote_type_id' => 6, 'quote_status_id' => 19])->first();
-        if (! $bikeKycClearedMap) {
+        if (!$bikeKycClearedMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 6,
                 'quote_status_id' => 19,
@@ -2186,7 +2189,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Payment Pending
         $bikePaymentPendingMap = DB::table('quote_status_map')->where(['quote_type_id' => 6, 'quote_status_id' => 28])->first();
-        if (! $bikePaymentPendingMap) {
+        if (!$bikePaymentPendingMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 6,
                 'quote_status_id' => 28,
@@ -2200,7 +2203,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Transaction Approved
         $bikeTransactionApprovedMap = DB::table('quote_status_map')->where(['quote_type_id' => 6, 'quote_status_id' => 15])->first();
-        if (! $bikeTransactionApprovedMap) {
+        if (!$bikeTransactionApprovedMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 6,
                 'quote_status_id' => 15,
@@ -2214,7 +2217,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Policy Documents Pending
         $bikePolicyDocumentsPendingMap = DB::table('quote_status_map')->where(['quote_type_id' => 6, 'quote_status_id' => 29])->first();
-        if (! $bikePolicyDocumentsPendingMap) {
+        if (!$bikePolicyDocumentsPendingMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 6,
                 'quote_status_id' => 29,
@@ -2228,7 +2231,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Policy Issued
         $bikePolicyIssuedMap = DB::table('quote_status_map')->where(['quote_type_id' => 6, 'quote_status_id' => 33])->first();
-        if (! $bikePolicyIssuedMap) {
+        if (!$bikePolicyIssuedMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 6,
                 'quote_status_id' => 33,
@@ -2242,7 +2245,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Lost
         $bikeLostdMap = DB::table('quote_status_map')->where(['quote_type_id' => 6, 'quote_status_id' => 17])->first();
-        if (! $bikeLostdMap) {
+        if (!$bikeLostdMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 6,
                 'quote_status_id' => 17,
@@ -2256,7 +2259,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Fake
         $bikeFakedMap = DB::table('quote_status_map')->where(['quote_type_id' => 6, 'quote_status_id' => 9])->first();
-        if (! $bikeFakedMap) {
+        if (!$bikeFakedMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 6,
                 'quote_status_id' => 9,
@@ -2270,7 +2273,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Duplicate
         $bikeDuplicatedMap = DB::table('quote_status_map')->where(['quote_type_id' => 6, 'quote_status_id' => 35])->first();
-        if (! $bikeDuplicatedMap) {
+        if (!$bikeDuplicatedMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 6,
                 'quote_status_id' => 35,
@@ -2288,7 +2291,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // New Lead
         $yachtNewLeadMap = DB::table('quote_status_map')->where(['quote_type_id' => 7, 'quote_status_id' => 8])->first();
-        if (! $yachtNewLeadMap) {
+        if (!$yachtNewLeadMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 7,
                 'quote_status_id' => 8,
@@ -2302,7 +2305,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Qualification Pending
         $yachtQualificationPendingMap = DB::table('quote_status_map')->where(['quote_type_id' => 7, 'quote_status_id' => 30])->first();
-        if (! $yachtQualificationPendingMap) {
+        if (!$yachtQualificationPendingMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 7,
                 'quote_status_id' => 30,
@@ -2316,7 +2319,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Qualified
         $yachtQualifiedgMap = DB::table('quote_status_map')->where(['quote_type_id' => 7, 'quote_status_id' => 31])->first();
-        if (! $yachtQualifiedgMap) {
+        if (!$yachtQualifiedgMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 7,
                 'quote_status_id' => 31,
@@ -2330,7 +2333,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Quoted
         $yachtQuotedMap = DB::table('quote_status_map')->where(['quote_type_id' => 7, 'quote_status_id' => 2])->first();
-        if (! $yachtQuotedMap) {
+        if (!$yachtQuotedMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 7,
                 'quote_status_id' => 2,
@@ -2344,7 +2347,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Followed Up
         $yachtFollowedUpMap = DB::table('quote_status_map')->where(['quote_type_id' => 7, 'quote_status_id' => 24])->first();
-        if (! $yachtFollowedUpMap) {
+        if (!$yachtFollowedUpMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 7,
                 'quote_status_id' => 24,
@@ -2358,7 +2361,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // In Negotiation
         $yachtInNegotiationMap = DB::table('quote_status_map')->where(['quote_type_id' => 7, 'quote_status_id' => 25])->first();
-        if (! $yachtInNegotiationMap) {
+        if (!$yachtInNegotiationMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 7,
                 'quote_status_id' => 25,
@@ -2372,7 +2375,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Application Pending
         $yachtApplicationPendingMap = DB::table('quote_status_map')->where(['quote_type_id' => 7, 'quote_status_id' => 26])->first();
-        if (! $yachtApplicationPendingMap) {
+        if (!$yachtApplicationPendingMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 7,
                 'quote_status_id' => 26,
@@ -2386,7 +2389,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Missing Documents Requested
         $yachtMissingDocumentsRequestedMap = DB::table('quote_status_map')->where(['quote_type_id' => 7, 'quote_status_id' => 14])->first();
-        if (! $yachtMissingDocumentsRequestedMap) {
+        if (!$yachtMissingDocumentsRequestedMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 7,
                 'quote_status_id' => 14,
@@ -2400,7 +2403,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Pending with UW
         $yachtPendingWithUwMap = DB::table('quote_status_map')->where(['quote_type_id' => 7, 'quote_status_id' => 27])->first();
-        if (! $yachtPendingWithUwMap) {
+        if (!$yachtPendingWithUwMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 7,
                 'quote_status_id' => 27,
@@ -2414,7 +2417,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Application Submitted
         $yachtApplicationSubmittedMap = DB::table('quote_status_map')->where(['quote_type_id' => 7, 'quote_status_id' => 36])->first();
-        if (! $yachtApplicationSubmittedMap) {
+        if (!$yachtApplicationSubmittedMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 7,
                 'quote_status_id' => 36,
@@ -2428,7 +2431,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // FTC Pending
         $yachtFtcPendingMap = DB::table('quote_status_map')->where(['quote_type_id' => 7, 'quote_status_id' => 22])->first();
-        if (! $yachtFtcPendingMap) {
+        if (!$yachtFtcPendingMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 7,
                 'quote_status_id' => 22,
@@ -2442,7 +2445,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // FTC Sent
         $yachtFtcSentMap = DB::table('quote_status_map')->where(['quote_type_id' => 7, 'quote_status_id' => 10])->first();
-        if (! $yachtFtcSentMap) {
+        if (!$yachtFtcSentMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 7,
                 'quote_status_id' => 10,
@@ -2456,7 +2459,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // FTC Accepted
         $yachtFtcAcceptedMap = DB::table('quote_status_map')->where(['quote_type_id' => 7, 'quote_status_id' => 11])->first();
-        if (! $yachtFtcAcceptedMap) {
+        if (!$yachtFtcAcceptedMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 7,
                 'quote_status_id' => 11,
@@ -2470,7 +2473,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // FTC Resubmitted
         $yachtFtcResubmittedMap = DB::table('quote_status_map')->where(['quote_type_id' => 7, 'quote_status_id' => 12])->first();
-        if (! $yachtFtcResubmittedMap) {
+        if (!$yachtFtcResubmittedMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 7,
                 'quote_status_id' => 12,
@@ -2484,7 +2487,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // KYC Cleared
         $yachtKycClearedMap = DB::table('quote_status_map')->where(['quote_type_id' => 7, 'quote_status_id' => 19])->first();
-        if (! $yachtKycClearedMap) {
+        if (!$yachtKycClearedMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 7,
                 'quote_status_id' => 19,
@@ -2498,7 +2501,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Payment Pending
         $yachtPaymentPendingMap = DB::table('quote_status_map')->where(['quote_type_id' => 7, 'quote_status_id' => 28])->first();
-        if (! $yachtPaymentPendingMap) {
+        if (!$yachtPaymentPendingMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 7,
                 'quote_status_id' => 28,
@@ -2512,7 +2515,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Transaction Approved
         $yachtTransactionApprovedMap = DB::table('quote_status_map')->where(['quote_type_id' => 7, 'quote_status_id' => 15])->first();
-        if (! $yachtTransactionApprovedMap) {
+        if (!$yachtTransactionApprovedMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 7,
                 'quote_status_id' => 15,
@@ -2526,7 +2529,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Policy Documents Pending
         $yachtPolicyDocumentsPendingMap = DB::table('quote_status_map')->where(['quote_type_id' => 7, 'quote_status_id' => 29])->first();
-        if (! $yachtPolicyDocumentsPendingMap) {
+        if (!$yachtPolicyDocumentsPendingMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 7,
                 'quote_status_id' => 29,
@@ -2540,7 +2543,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Policy Issued
         $yachtPolicyIssuedMap = DB::table('quote_status_map')->where(['quote_type_id' => 7, 'quote_status_id' => 33])->first();
-        if (! $yachtPolicyIssuedMap) {
+        if (!$yachtPolicyIssuedMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 7,
                 'quote_status_id' => 33,
@@ -2554,7 +2557,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Lost
         $yachtLostdMap = DB::table('quote_status_map')->where(['quote_type_id' => 7, 'quote_status_id' => 17])->first();
-        if (! $yachtLostdMap) {
+        if (!$yachtLostdMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 7,
                 'quote_status_id' => 17,
@@ -2568,7 +2571,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Fake
         $yachtFakedMap = DB::table('quote_status_map')->where(['quote_type_id' => 7, 'quote_status_id' => 9])->first();
-        if (! $yachtFakedMap) {
+        if (!$yachtFakedMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 7,
                 'quote_status_id' => 9,
@@ -2582,7 +2585,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Duplicate
         $yachtDuplicatedMap = DB::table('quote_status_map')->where(['quote_type_id' => 7, 'quote_status_id' => 35])->first();
-        if (! $yachtDuplicatedMap) {
+        if (!$yachtDuplicatedMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 7,
                 'quote_status_id' => 35,
@@ -2600,7 +2603,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // New Lead
         $petNewLeadMap = DB::table('quote_status_map')->where(['quote_type_id' => 9, 'quote_status_id' => 8])->first();
-        if (! $petNewLeadMap) {
+        if (!$petNewLeadMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 9,
                 'quote_status_id' => 8,
@@ -2614,7 +2617,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Qualification Pending
         $petQualificationPendingMap = DB::table('quote_status_map')->where(['quote_type_id' => 9, 'quote_status_id' => 30])->first();
-        if (! $petQualificationPendingMap) {
+        if (!$petQualificationPendingMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 9,
                 'quote_status_id' => 30,
@@ -2628,7 +2631,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Qualified
         $petQualifiedgMap = DB::table('quote_status_map')->where(['quote_type_id' => 9, 'quote_status_id' => 31])->first();
-        if (! $petQualifiedgMap) {
+        if (!$petQualifiedgMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 9,
                 'quote_status_id' => 31,
@@ -2642,7 +2645,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Quoted
         $petQuotedMap = DB::table('quote_status_map')->where(['quote_type_id' => 9, 'quote_status_id' => 2])->first();
-        if (! $petQuotedMap) {
+        if (!$petQuotedMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 9,
                 'quote_status_id' => 2,
@@ -2656,7 +2659,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Followed Up
         $petFollowedUpMap = DB::table('quote_status_map')->where(['quote_type_id' => 9, 'quote_status_id' => 24])->first();
-        if (! $petFollowedUpMap) {
+        if (!$petFollowedUpMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 9,
                 'quote_status_id' => 24,
@@ -2670,7 +2673,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // In Negotiation
         $petInNegotiationMap = DB::table('quote_status_map')->where(['quote_type_id' => 9, 'quote_status_id' => 25])->first();
-        if (! $petInNegotiationMap) {
+        if (!$petInNegotiationMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 9,
                 'quote_status_id' => 25,
@@ -2684,7 +2687,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Application Pending
         $petApplicationPendingMap = DB::table('quote_status_map')->where(['quote_type_id' => 9, 'quote_status_id' => 26])->first();
-        if (! $petApplicationPendingMap) {
+        if (!$petApplicationPendingMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 9,
                 'quote_status_id' => 26,
@@ -2698,7 +2701,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Missing Documents Requested
         $petMissingDocumentsRequestedMap = DB::table('quote_status_map')->where(['quote_type_id' => 9, 'quote_status_id' => 14])->first();
-        if (! $petMissingDocumentsRequestedMap) {
+        if (!$petMissingDocumentsRequestedMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 9,
                 'quote_status_id' => 14,
@@ -2712,7 +2715,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Pending with UW
         $petPendingWithUwMap = DB::table('quote_status_map')->where(['quote_type_id' => 9, 'quote_status_id' => 27])->first();
-        if (! $petPendingWithUwMap) {
+        if (!$petPendingWithUwMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 9,
                 'quote_status_id' => 27,
@@ -2726,7 +2729,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Application Submitted
         $petApplicationSubmittedMap = DB::table('quote_status_map')->where(['quote_type_id' => 9, 'quote_status_id' => 36])->first();
-        if (! $petApplicationSubmittedMap) {
+        if (!$petApplicationSubmittedMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 9,
                 'quote_status_id' => 36,
@@ -2740,7 +2743,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // FTC Pending
         $petFtcPendingMap = DB::table('quote_status_map')->where(['quote_type_id' => 9, 'quote_status_id' => 22])->first();
-        if (! $petFtcPendingMap) {
+        if (!$petFtcPendingMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 9,
                 'quote_status_id' => 22,
@@ -2754,7 +2757,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // FTC Sent
         $petFtcSentMap = DB::table('quote_status_map')->where(['quote_type_id' => 9, 'quote_status_id' => 10])->first();
-        if (! $petFtcSentMap) {
+        if (!$petFtcSentMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 9,
                 'quote_status_id' => 10,
@@ -2768,7 +2771,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // FTC Accepted
         $petFtcAcceptedMap = DB::table('quote_status_map')->where(['quote_type_id' => 9, 'quote_status_id' => 11])->first();
-        if (! $petFtcAcceptedMap) {
+        if (!$petFtcAcceptedMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 9,
                 'quote_status_id' => 11,
@@ -2782,7 +2785,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // FTC Resubmitted
         $petFtcResubmittedMap = DB::table('quote_status_map')->where(['quote_type_id' => 9, 'quote_status_id' => 12])->first();
-        if (! $petFtcResubmittedMap) {
+        if (!$petFtcResubmittedMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 9,
                 'quote_status_id' => 12,
@@ -2796,7 +2799,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // KYC Cleared
         $petKycClearedMap = DB::table('quote_status_map')->where(['quote_type_id' => 9, 'quote_status_id' => 19])->first();
-        if (! $petKycClearedMap) {
+        if (!$petKycClearedMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 9,
                 'quote_status_id' => 19,
@@ -2810,7 +2813,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Payment Pending
         $petPaymentPendingMap = DB::table('quote_status_map')->where(['quote_type_id' => 9, 'quote_status_id' => 28])->first();
-        if (! $petPaymentPendingMap) {
+        if (!$petPaymentPendingMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 9,
                 'quote_status_id' => 28,
@@ -2824,7 +2827,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Transaction Approved
         $petTransactionApprovedMap = DB::table('quote_status_map')->where(['quote_type_id' => 9, 'quote_status_id' => 15])->first();
-        if (! $petTransactionApprovedMap) {
+        if (!$petTransactionApprovedMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 9,
                 'quote_status_id' => 15,
@@ -2838,7 +2841,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Policy Documents Pending
         $petPolicyDocumentsPendingMap = DB::table('quote_status_map')->where(['quote_type_id' => 9, 'quote_status_id' => 29])->first();
-        if (! $petPolicyDocumentsPendingMap) {
+        if (!$petPolicyDocumentsPendingMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 9,
                 'quote_status_id' => 29,
@@ -2852,7 +2855,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Policy Issued
         $petPolicyIssuedMap = DB::table('quote_status_map')->where(['quote_type_id' => 9, 'quote_status_id' => 33])->first();
-        if (! $petPolicyIssuedMap) {
+        if (!$petPolicyIssuedMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 9,
                 'quote_status_id' => 33,
@@ -2866,7 +2869,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Lost
         $petLostdMap = DB::table('quote_status_map')->where(['quote_type_id' => 9, 'quote_status_id' => 17])->first();
-        if (! $petLostdMap) {
+        if (!$petLostdMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 9,
                 'quote_status_id' => 17,
@@ -2880,7 +2883,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Fake
         $petFakedMap = DB::table('quote_status_map')->where(['quote_type_id' => 9, 'quote_status_id' => 9])->first();
-        if (! $petFakedMap) {
+        if (!$petFakedMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 9,
                 'quote_status_id' => 9,
@@ -2894,7 +2897,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Duplicate
         $petDuplicatedMap = DB::table('quote_status_map')->where(['quote_type_id' => 9, 'quote_status_id' => 35])->first();
-        if (! $petDuplicatedMap) {
+        if (!$petDuplicatedMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 9,
                 'quote_status_id' => 35,
@@ -2911,7 +2914,7 @@ class QuoteStatusTableSeeder extends Seeder
         // CYCLE - START
         // New Lead
         $cycleNewLeadMap = DB::table('quote_status_map')->where(['quote_type_id' => 10, 'quote_status_id' => 8])->first();
-        if (! $cycleNewLeadMap) {
+        if (!$cycleNewLeadMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 10,
                 'quote_status_id' => 8,
@@ -2925,7 +2928,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Qualification Pending
         $cycleQualificationPendingMap = DB::table('quote_status_map')->where(['quote_type_id' => 10, 'quote_status_id' => 30])->first();
-        if (! $cycleQualificationPendingMap) {
+        if (!$cycleQualificationPendingMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 10,
                 'quote_status_id' => 30,
@@ -2939,7 +2942,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Qualified
         $cycleQualifiedgMap = DB::table('quote_status_map')->where(['quote_type_id' => 10, 'quote_status_id' => 31])->first();
-        if (! $cycleQualifiedgMap) {
+        if (!$cycleQualifiedgMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 10,
                 'quote_status_id' => 31,
@@ -2953,7 +2956,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Quoted
         $cycleQuotedMap = DB::table('quote_status_map')->where(['quote_type_id' => 10, 'quote_status_id' => 2])->first();
-        if (! $cycleQuotedMap) {
+        if (!$cycleQuotedMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 10,
                 'quote_status_id' => 2,
@@ -2967,7 +2970,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Followed Up
         $cycleFollowedUpMap = DB::table('quote_status_map')->where(['quote_type_id' => 10, 'quote_status_id' => 24])->first();
-        if (! $cycleFollowedUpMap) {
+        if (!$cycleFollowedUpMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 10,
                 'quote_status_id' => 24,
@@ -2981,7 +2984,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // In Negotiation
         $cycleInNegotiationMap = DB::table('quote_status_map')->where(['quote_type_id' => 10, 'quote_status_id' => 25])->first();
-        if (! $cycleInNegotiationMap) {
+        if (!$cycleInNegotiationMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 10,
                 'quote_status_id' => 25,
@@ -2995,7 +2998,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Application Pending
         $cycleApplicationPendingMap = DB::table('quote_status_map')->where(['quote_type_id' => 10, 'quote_status_id' => 26])->first();
-        if (! $cycleApplicationPendingMap) {
+        if (!$cycleApplicationPendingMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 10,
                 'quote_status_id' => 26,
@@ -3009,7 +3012,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Missing Documents Requested
         $cycleMissingDocumentsRequestedMap = DB::table('quote_status_map')->where(['quote_type_id' => 10, 'quote_status_id' => 14])->first();
-        if (! $cycleMissingDocumentsRequestedMap) {
+        if (!$cycleMissingDocumentsRequestedMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 10,
                 'quote_status_id' => 14,
@@ -3023,7 +3026,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Pending with UW
         $cyclePendingWithUwMap = DB::table('quote_status_map')->where(['quote_type_id' => 10, 'quote_status_id' => 27])->first();
-        if (! $cyclePendingWithUwMap) {
+        if (!$cyclePendingWithUwMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 10,
                 'quote_status_id' => 27,
@@ -3037,7 +3040,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Application Submitted
         $cycleApplicationSubmittedMap = DB::table('quote_status_map')->where(['quote_type_id' => 10, 'quote_status_id' => 36])->first();
-        if (! $cycleApplicationSubmittedMap) {
+        if (!$cycleApplicationSubmittedMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 10,
                 'quote_status_id' => 36,
@@ -3051,7 +3054,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // FTC Pending
         $cycleFtcPendingMap = DB::table('quote_status_map')->where(['quote_type_id' => 10, 'quote_status_id' => 22])->first();
-        if (! $cycleFtcPendingMap) {
+        if (!$cycleFtcPendingMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 10,
                 'quote_status_id' => 22,
@@ -3065,7 +3068,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // FTC Sent
         $cycleFtcSentMap = DB::table('quote_status_map')->where(['quote_type_id' => 10, 'quote_status_id' => 10])->first();
-        if (! $cycleFtcSentMap) {
+        if (!$cycleFtcSentMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 10,
                 'quote_status_id' => 10,
@@ -3079,7 +3082,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // FTC Accepted
         $cycleFtcAcceptedMap = DB::table('quote_status_map')->where(['quote_type_id' => 10, 'quote_status_id' => 11])->first();
-        if (! $cycleFtcAcceptedMap) {
+        if (!$cycleFtcAcceptedMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 10,
                 'quote_status_id' => 11,
@@ -3093,7 +3096,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // FTC Resubmitted
         $cycleFtcResubmittedMap = DB::table('quote_status_map')->where(['quote_type_id' => 10, 'quote_status_id' => 12])->first();
-        if (! $cycleFtcResubmittedMap) {
+        if (!$cycleFtcResubmittedMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 10,
                 'quote_status_id' => 12,
@@ -3107,7 +3110,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // KYC Cleared
         $cycleKycClearedMap = DB::table('quote_status_map')->where(['quote_type_id' => 10, 'quote_status_id' => 19])->first();
-        if (! $cycleKycClearedMap) {
+        if (!$cycleKycClearedMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 10,
                 'quote_status_id' => 19,
@@ -3121,7 +3124,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Payment Pending
         $cyclePaymentPendingMap = DB::table('quote_status_map')->where(['quote_type_id' => 10, 'quote_status_id' => 28])->first();
-        if (! $cyclePaymentPendingMap) {
+        if (!$cyclePaymentPendingMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 10,
                 'quote_status_id' => 28,
@@ -3135,7 +3138,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Transaction Approved
         $cycleTransactionApprovedMap = DB::table('quote_status_map')->where(['quote_type_id' => 10, 'quote_status_id' => 15])->first();
-        if (! $cycleTransactionApprovedMap) {
+        if (!$cycleTransactionApprovedMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 10,
                 'quote_status_id' => 15,
@@ -3149,7 +3152,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Policy Documents Pending
         $cyclePolicyDocumentsPendingMap = DB::table('quote_status_map')->where(['quote_type_id' => 10, 'quote_status_id' => 29])->first();
-        if (! $cyclePolicyDocumentsPendingMap) {
+        if (!$cyclePolicyDocumentsPendingMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 10,
                 'quote_status_id' => 29,
@@ -3163,7 +3166,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Policy Issued
         $cyclePolicyIssuedMap = DB::table('quote_status_map')->where(['quote_type_id' => 10, 'quote_status_id' => 33])->first();
-        if (! $cyclePolicyIssuedMap) {
+        if (!$cyclePolicyIssuedMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 10,
                 'quote_status_id' => 33,
@@ -3177,7 +3180,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Lost
         $cycleLostdMap = DB::table('quote_status_map')->where(['quote_type_id' => 10, 'quote_status_id' => 17])->first();
-        if (! $cycleLostdMap) {
+        if (!$cycleLostdMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 10,
                 'quote_status_id' => 17,
@@ -3191,7 +3194,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Fake
         $cycleFakedMap = DB::table('quote_status_map')->where(['quote_type_id' => 10, 'quote_status_id' => 9])->first();
-        if (! $cycleFakedMap) {
+        if (!$cycleFakedMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 10,
                 'quote_status_id' => 9,
@@ -3205,7 +3208,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Duplicate
         $cycleDuplicatedMap = DB::table('quote_status_map')->where(['quote_type_id' => 10, 'quote_status_id' => 35])->first();
-        if (! $cycleDuplicatedMap) {
+        if (!$cycleDuplicatedMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 10,
                 'quote_status_id' => 35,
@@ -3221,7 +3224,7 @@ class QuoteStatusTableSeeder extends Seeder
         // JETSKI - START
         // New Lead
         $jetskiNewLeadMap = DB::table('quote_status_map')->where(['quote_type_id' => 11, 'quote_status_id' => 8])->first();
-        if (! $jetskiNewLeadMap) {
+        if (!$jetskiNewLeadMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 11,
                 'quote_status_id' => 8,
@@ -3235,7 +3238,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Qualification Pending
         $jetskiQualificationPendingMap = DB::table('quote_status_map')->where(['quote_type_id' => 11, 'quote_status_id' => 30])->first();
-        if (! $jetskiQualificationPendingMap) {
+        if (!$jetskiQualificationPendingMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 11,
                 'quote_status_id' => 30,
@@ -3249,7 +3252,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Qualified
         $jetskiQualifiedgMap = DB::table('quote_status_map')->where(['quote_type_id' => 11, 'quote_status_id' => 31])->first();
-        if (! $jetskiQualifiedgMap) {
+        if (!$jetskiQualifiedgMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 11,
                 'quote_status_id' => 31,
@@ -3263,7 +3266,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Quoted
         $jetskiQuotedMap = DB::table('quote_status_map')->where(['quote_type_id' => 11, 'quote_status_id' => 2])->first();
-        if (! $jetskiQuotedMap) {
+        if (!$jetskiQuotedMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 11,
                 'quote_status_id' => 2,
@@ -3277,7 +3280,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Followed Up
         $jetskiFollowedUpMap = DB::table('quote_status_map')->where(['quote_type_id' => 11, 'quote_status_id' => 24])->first();
-        if (! $jetskiFollowedUpMap) {
+        if (!$jetskiFollowedUpMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 11,
                 'quote_status_id' => 24,
@@ -3291,7 +3294,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // In Negotiation
         $jetskiInNegotiationMap = DB::table('quote_status_map')->where(['quote_type_id' => 11, 'quote_status_id' => 25])->first();
-        if (! $jetskiInNegotiationMap) {
+        if (!$jetskiInNegotiationMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 11,
                 'quote_status_id' => 25,
@@ -3305,7 +3308,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Application Pending
         $jetskiApplicationPendingMap = DB::table('quote_status_map')->where(['quote_type_id' => 11, 'quote_status_id' => 26])->first();
-        if (! $jetskiApplicationPendingMap) {
+        if (!$jetskiApplicationPendingMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 11,
                 'quote_status_id' => 26,
@@ -3319,7 +3322,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Missing Documents Requested
         $jetskiMissingDocumentsRequestedMap = DB::table('quote_status_map')->where(['quote_type_id' => 11, 'quote_status_id' => 14])->first();
-        if (! $jetskiMissingDocumentsRequestedMap) {
+        if (!$jetskiMissingDocumentsRequestedMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 11,
                 'quote_status_id' => 14,
@@ -3333,7 +3336,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Pending with UW
         $jetskiPendingWithUwMap = DB::table('quote_status_map')->where(['quote_type_id' => 11, 'quote_status_id' => 27])->first();
-        if (! $jetskiPendingWithUwMap) {
+        if (!$jetskiPendingWithUwMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 11,
                 'quote_status_id' => 27,
@@ -3347,7 +3350,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Application Submitted
         $jetskiApplicationSubmittedMap = DB::table('quote_status_map')->where(['quote_type_id' => 11, 'quote_status_id' => 36])->first();
-        if (! $jetskiApplicationSubmittedMap) {
+        if (!$jetskiApplicationSubmittedMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 11,
                 'quote_status_id' => 36,
@@ -3361,7 +3364,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // FTC Pending
         $jetskiFtcPendingMap = DB::table('quote_status_map')->where(['quote_type_id' => 11, 'quote_status_id' => 22])->first();
-        if (! $jetskiFtcPendingMap) {
+        if (!$jetskiFtcPendingMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 11,
                 'quote_status_id' => 22,
@@ -3375,7 +3378,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // FTC Sent
         $jetskiFtcSentMap = DB::table('quote_status_map')->where(['quote_type_id' => 11, 'quote_status_id' => 10])->first();
-        if (! $jetskiFtcSentMap) {
+        if (!$jetskiFtcSentMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 11,
                 'quote_status_id' => 10,
@@ -3389,7 +3392,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // FTC Accepted
         $jetskiFtcAcceptedMap = DB::table('quote_status_map')->where(['quote_type_id' => 11, 'quote_status_id' => 11])->first();
-        if (! $jetskiFtcAcceptedMap) {
+        if (!$jetskiFtcAcceptedMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 11,
                 'quote_status_id' => 11,
@@ -3403,7 +3406,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // FTC Resubmitted
         $jetskiFtcResubmittedMap = DB::table('quote_status_map')->where(['quote_type_id' => 11, 'quote_status_id' => 12])->first();
-        if (! $jetskiFtcResubmittedMap) {
+        if (!$jetskiFtcResubmittedMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 11,
                 'quote_status_id' => 12,
@@ -3417,7 +3420,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // KYC Cleared
         $jetskiKycClearedMap = DB::table('quote_status_map')->where(['quote_type_id' => 11, 'quote_status_id' => 19])->first();
-        if (! $jetskiKycClearedMap) {
+        if (!$jetskiKycClearedMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 11,
                 'quote_status_id' => 19,
@@ -3431,7 +3434,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Payment Pending
         $jetskiPaymentPendingMap = DB::table('quote_status_map')->where(['quote_type_id' => 11, 'quote_status_id' => 28])->first();
-        if (! $jetskiPaymentPendingMap) {
+        if (!$jetskiPaymentPendingMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 11,
                 'quote_status_id' => 28,
@@ -3445,7 +3448,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Transaction Approved
         $jetskiTransactionApprovedMap = DB::table('quote_status_map')->where(['quote_type_id' => 11, 'quote_status_id' => 15])->first();
-        if (! $jetskiTransactionApprovedMap) {
+        if (!$jetskiTransactionApprovedMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 11,
                 'quote_status_id' => 15,
@@ -3459,7 +3462,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Policy Documents Pending
         $jetskiPolicyDocumentsPendingMap = DB::table('quote_status_map')->where(['quote_type_id' => 11, 'quote_status_id' => 29])->first();
-        if (! $jetskiPolicyDocumentsPendingMap) {
+        if (!$jetskiPolicyDocumentsPendingMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 11,
                 'quote_status_id' => 29,
@@ -3473,7 +3476,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Policy Issued
         $jetskiPolicyIssuedMap = DB::table('quote_status_map')->where(['quote_type_id' => 11, 'quote_status_id' => 33])->first();
-        if (! $jetskiPolicyIssuedMap) {
+        if (!$jetskiPolicyIssuedMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 11,
                 'quote_status_id' => 33,
@@ -3487,7 +3490,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Lost
         $jetskiLostdMap = DB::table('quote_status_map')->where(['quote_type_id' => 11, 'quote_status_id' => 17])->first();
-        if (! $jetskiLostdMap) {
+        if (!$jetskiLostdMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 11,
                 'quote_status_id' => 17,
@@ -3501,7 +3504,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Fake
         $jetskiFakedMap = DB::table('quote_status_map')->where(['quote_type_id' => 11, 'quote_status_id' => 9])->first();
-        if (! $jetskiFakedMap) {
+        if (!$jetskiFakedMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 11,
                 'quote_status_id' => 9,
@@ -3515,7 +3518,7 @@ class QuoteStatusTableSeeder extends Seeder
 
         // Duplicate
         $jetskiDuplicatedMap = DB::table('quote_status_map')->where(['quote_type_id' => 11, 'quote_status_id' => 35])->first();
-        if (! $jetskiDuplicatedMap) {
+        if (!$jetskiDuplicatedMap) {
             DB::table('quote_status_map')->insert([
                 'quote_type_id' => 11,
                 'quote_status_id' => 35,
@@ -3527,5 +3530,80 @@ class QuoteStatusTableSeeder extends Seeder
             ]);
         }
         // JETSKI - END
+
+
+
+        $lobs = [
+            QuoteTypes::CAR->id(),
+            QuoteTypes::HOME->id(),
+            QuoteTypes::HEALTH->id(),
+            QuoteTypes::LIFE->id(),
+            QuoteTypes::BUSINESS->id(),
+            QuoteTypes::BIKE->id(),
+            QuoteTypes::YACHT->id(),
+            QuoteTypes::TRAVEL->id(),
+            QuoteTypes::PET->id(),
+            QuoteTypes::CYCLE->id(),
+            QuoteTypes::JETSKI->id(),
+        ];
+
+        // Policy Sent to Customer
+        if (!QuoteStatus::where('id', QuoteStatusEnum::PolicySentToCustomer)->first()) {
+            QuoteStatus::create([
+                'id' => QuoteStatusEnum::PolicySentToCustomer,
+                'text' => 'Policy Sent to Customer',
+                'text_ar' => 'Policy Sent to Customer',
+                'code' => 'PolicySentToCustomer',
+                'sort_order' => 19,
+                'is_active' => 1,
+                'created_by' => 'nouman.hussain@insurancemarket.ae',
+                'updated_by' => 'nouman.hussain@insurancemarket.ae',
+            ]);
+            foreach ($lobs as $key => $item) {
+
+                $mapping = DB::table('quote_status_map')->where(['quote_type_id' => $item, 'quote_status_id' => QuoteStatusEnum::PolicySentToCustomer])->first();
+                if (!$mapping) {
+                    DB::table('quote_status_map')->insert([
+                        'quote_type_id' => $item,
+                        'quote_status_id' => QuoteStatusEnum::PolicySentToCustomer,
+                        'sort_order' =>  ++$key,
+                        'created_by' => 'nouman.hussain@insurancemarket.ae',
+                        'updated_by' => 'nouman.hussain@insurancemarket.ae',
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
+                }
+            }
+        }
+
+
+        // Policy Booked
+        if (!QuoteStatus::where('id', QuoteStatusEnum::PolicyBooked)->first()) {
+            QuoteStatus::create([
+                'id' => QuoteStatusEnum::PolicyBooked,
+                'text' => 'Policy Booked',
+                'text_ar' => 'Policy Booked',
+                'code' => 'PolicyBooked',
+                'sort_order' => 20,
+                'is_active' => 1,
+                'created_by' => 'nouman.hussain@insurancemarket.ae',
+                'updated_by' => 'nouman.hussain@insurancemarket.ae',
+            ]);
+            foreach ($lobs as $key => $item) {
+
+                $mapping = DB::table('quote_status_map')->where(['quote_type_id' => $item, 'quote_status_id' => QuoteStatusEnum::PolicyBooked])->first();
+                if (!$mapping) {
+                    DB::table('quote_status_map')->insert([
+                        'quote_type_id' => $item,
+                        'quote_status_id' => QuoteStatusEnum::PolicyBooked,
+                        'sort_order' =>  ++$key,
+                        'created_by' => 'nouman.hussain@insurancemarket.ae',
+                        'updated_by' => 'nouman.hussain@insurancemarket.ae',
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
+                }
+            }
+        }
     }
 }

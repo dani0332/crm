@@ -87,7 +87,12 @@ const confirmSendPolicy = () => {
 
 const submitPolicy = () => {
   let url = '/quotes/send-booking-policy';
-  axios.post(url).then(response => {
+  let data = {
+    send_policy_type: props.bPDetails.sendPolicyType,
+    model_type: props?.quoteType,
+    quote_id: props?.quote?.id,
+  };
+  axios.post(url, data).then(response => {
     console.log(response);
     if (response.status == 200) {
       notification.success({
