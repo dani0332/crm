@@ -11,7 +11,7 @@ const props = defineProps({
   insuranceProviders: Object
 });
 
-const { isRequired } = useRules();
+const { isRequired, isNumber } = useRules();
 
 const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
 
@@ -36,12 +36,32 @@ const isProviderEmpty = ref(false);
 
 const submitPlanDetailsForm = isValid => {
 
+  planDetailsForm.clearErrors();
+
+  if(props.quoteType == quoteTypeCodeEnum.Business) {
+
+    if(!planDetailsForm.price_vat_applicable && !planDetailsForm.price_vat_not_applicable) {
+      planDetailsForm.setError('price_vat_applicable', 'Either Price (VAT Applicable) or Price (VAT Not Applicable) should be entered');
+      planDetailsForm.setError('price_vat_not_applicable', 'Either Price (VAT Applicable) or Price (VAT Not Applicable) should be entered');
+      return;
+    }
+
+    if(isNaN(Number(planDetailsForm.price_vat_applicable))) {
+      planDetailsForm.setError('price_vat_applicable', 'Price (VAT Applicable) must be a valid number');
+      return;
+    }
+
+    if(isNaN(Number(planDetailsForm.price_vat_not_applicable))) {
+      planDetailsForm.setError('price_vat_not_applicable', 'Price (VAT Not Applicable) must be a valid number');
+      return;
+    }
+
+  }  
+
   if(!planDetailsForm.insurance_provider_id) isProviderEmpty.value = true;
   else isProviderEmpty.value = false;
 
   if(!isValid) return;
-
-  console.log(props.quote?.code, isValid, "LLLK");
 
   let url = `/personal-quotes/${props.quoteType}/${props.quote?.code}/save-plan-details`;
 
@@ -74,6 +94,8 @@ const submitPlanDetailsForm = isValid => {
 }
 
 const updatePriceWithVat = () => {
+
+  planDetailsForm.price_with_vat = "";
 
   let priceVatApp = parseFloat((planDetailsForm.price_vat_applicable !== null && planDetailsForm.price_vat_applicable !== "") ? planDetailsForm.price_vat_applicable : 0);
   let priceVatNotApp = parseFloat((planDetailsForm.price_vat_not_applicable !== null && planDetailsForm.price_vat_not_applicable !== "") ? planDetailsForm.price_vat_not_applicable : 0);
@@ -133,12 +155,12 @@ const rolesEnum = page.props.rolesEnum;
         <div class="w-full md:w-1/5">
           <x-input
             v-model="planDetailsForm.price_vat_applicable"
-            :rules="props.quoteType == quoteTypeCodeEnum.Life || props.quoteType == quoteTypeCodeEnum.Business ? [] : [isRequired]"
+            :rules="props.quoteType == quoteTypeCodeEnum.Life ? [] : [isNumber]"            
             :disabled="props.quoteType == quoteTypeCodeEnum.Life && props.quoteType != quoteTypeCodeEnum.Business"
             :error="planDetailsForm.errors.price_vat_applicable"
             label="Price (VAT Applicable)"
             class="w-full"
-            type="number"
+            type="text"
             @change="updatePriceWithVat"
           />
         </div>
@@ -146,9 +168,10 @@ const rolesEnum = page.props.rolesEnum;
         <div class="w-full md:w-1/5">
           <x-input
             v-model="planDetailsForm.price_vat_not_applicable"
+            :rules="props.quoteType == quoteTypeCodeEnum.Life ? [isNumber] : []"
             :error="planDetailsForm.errors.price_vat_not_applicable"
             :disabled="props.quoteType != quoteTypeCodeEnum.Life && props.quoteType != quoteTypeCodeEnum.Business"
-            type="number"
+            type="text"
             label="Price (VAT not applicable)"
             class="w-full"
             @change="updatePriceWithVat"
