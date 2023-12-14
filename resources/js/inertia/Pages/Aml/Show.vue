@@ -5,6 +5,7 @@ const props = defineProps({
   responseFrom: String,
   quoteStatusCode: Object,
   amlDecisionStatusCode: Object,
+    quoteObject: Object,
 });
 const page = usePage();
 const notification = useToast();
@@ -109,7 +110,8 @@ const setSelectedOption = (e, item) => {
   let data = {
       aml_id : props.aml.id,
       aml_quote_url : `/kyc/aml/${props.aml.quote_type_id}/details/${props.aml.quote_request_id}`,
-      quote_ref_id : props.aml.quote_request_id,
+      quote_id : props.aml.quote_request_id,
+      quote_ref_id : props.quoteObject.code,
       customer_entity_name : props.aml.input,
       quote_type_text : props.aml.quote_type_text,
       bridger_response: props.aml.results_found,

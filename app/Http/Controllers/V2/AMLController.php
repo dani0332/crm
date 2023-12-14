@@ -167,6 +167,8 @@ class AMLController extends Controller
         $quoteStatusCodes = quoteStatusCode::asArray();
         $amlDecisionStatusCodes = AMLDecisionStatusEnum::asArray();
         $manualStatusUpdateIM = collect($amlResults[0]->ManualStatusUpdateIM ?? []);
+        $quoteType = QuoteType::where('id', $aml->quote_type_id)->first();
+        $quoteObject = $this->getQuoteObject($quoteType->code, $aml->quote_request_id);
 
         if (isset($amlResults[0]->Watchlist)) {
             $responseFrom = 'Bridger';
@@ -186,6 +188,7 @@ class AMLController extends Controller
             'responseFrom' => $responseFrom,
             'quoteStatusCode' => $quoteStatusCodes,
             'amlDecisionStatusCode' => $amlDecisionStatusCodes,
+            'quoteObject' => $quoteObject
         ]);
     }
 
@@ -297,8 +300,8 @@ class AMLController extends Controller
             $quoteTypeText = $updateQuoteStatusResp[2];
             $quotePaID = $updateQuoteStatusResp[3];
             $clientFullName = $updateQuoteStatusResp[4];
-            if (auth()->user()->hasRole(RolesEnum::COMPLIANCE)) {
-                info('Bridger Insight - Decision update Email triggered to Compliance Team');
+            if (auth()->user()->hasRole(RolesEnum::ComplianceSuperUser) && in_array(request()->aml_decision, [AMLDecisionStatusEnum::TRUE_MATCH_REJECT_RISK, AMLDecisionStatusEnum::TRUE_MATCH_ACCEPT_RISK])) {
+                info('Bridger Insight - Decision update Email triggered to Compliance and Compliance Super Users');
                 app(CheckAmlService::class)->sendAMLQuoteStatusChangeNotification($quoteTypeId, $quoteRequestId, $quoteStatusText, $quoteCdbId, $quoteTypeText, $quotePaID, $clientFullName);
             }
             // Update Decision on Lexis Nexis Portal
@@ -563,7 +566,7 @@ class AMLController extends Controller
         $kycLog->save();
 
         if ($request->bridger_decision_type == AMLDecisionStatusEnum::TRUE_MATCH) {
-            info('Bridger Insight : Email Triggered to Compliance Super User - Ref ID: '.$request['quote_ref_id'].' - Email triggered by: '.auth()->user()->email);
+            info('Bridger Insight : Email Triggered to Compliance Super User - Ref ID: '.$request['quote_id'].' - Email triggered by: '.auth()->user()->email);
             AMLService::sendAMLMatchedEmailtoComplianceTeam(
                 config('constants.APP_URL').$request['aml_quote_url'],
                 $request['quote_ref_id'],
