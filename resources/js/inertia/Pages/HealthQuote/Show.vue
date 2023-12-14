@@ -2300,29 +2300,7 @@ const handleChildUpdate = planId => {
         </dl>
       </div>
     </div>
-
-    <PaymentTableNew 
-			v-if="hasRole(rolesEnum.BetaUser)"
-			quoteType="Health"
-			:payments="payments"
-			:paymentDocument="documentTypes.QUOTE.filter(item => item.code === 'HPD' || item.code === 'HPDR')"
-			:quoteRequest="quoteRequest"
-			:paymentStatusEnum="paymentStatusEnum"
-			:paymentTooltipEnum="paymentTooltipEnum"
-			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name, tooltip: pm.tool_tip } })"
-			:storageUrl="storageUrl"
-      :eCommercePrice="ecomDetails.priceWithVAT?ecomDetails.priceWithVAT:0"
-		/>
-    <PaymentTable
-      v-else
-      :payments="payments"
-      :can="can"
-      :isBetaUser="isBetaUser"
-      :quoteRequest="quoteRequest"
-      :paymentMethods="paymentMethods"
-      :insuranceProviders="insuranceProviders"
-      :quote="quote"
-    />
+    
 
     <!-- <div class="p-4 rounded shadow mb-6 bg-white" v-if="isQuoteDocumentEnabled">
       <div>
@@ -2683,6 +2661,28 @@ const handleChildUpdate = planId => {
         </div>
       </x-modal>
     </div>
+    <PaymentTableNew 
+			v-if="hasRole(rolesEnum.BetaUser)"
+			quoteType="Health"
+			:payments="payments"
+			:paymentDocument="documentTypes.QUOTE.filter(item => item.code === 'HPD' || item.code === 'HPDR')"
+			:quoteRequest="quoteRequest"
+			:paymentStatusEnum="paymentStatusEnum"
+			:paymentTooltipEnum="paymentTooltipEnum"
+			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name, tooltip: pm.tool_tip } })"
+			:storageUrl="storageUrl"
+      :eCommercePrice="ecomDetails.priceWithVAT?ecomDetails.priceWithVAT:0"
+		/>
+    <PaymentTable
+      v-else
+      :payments="payments"
+      :can="can"
+      :isBetaUser="isBetaUser"
+      :quoteRequest="quoteRequest"
+      :paymentMethods="paymentMethods"
+      :insuranceProviders="insuranceProviders"
+      :quote="quote"
+    />
     <EmbeddedProducts
       :data="embeddedProducts"
       :link="quote.uuid"

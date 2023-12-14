@@ -1161,7 +1161,7 @@ class CRUDController extends Controller
             $modelType = $request->get('modelType');
         }
         $ignoreModelTypes = ['Bike','Cycle','Yacht'];
-        if ( !in_array($modelType,$ignoreModelTypes) ) {
+        if ( !in_array($modelType,$ignoreModelTypes) && $modelType != null ) {
             $quoteTypes = 'Health,Car,Travel,Life,Home,Business,Pet';
             $serviceType = str_contains($quoteTypes, ucwords($modelType)) ? strtolower($modelType).'QuoteService' : lcfirst(ucwords($modelType)).'Service';
             $this->genericModel->properties = $this->{$serviceType}->fillModelProperties();

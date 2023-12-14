@@ -1505,6 +1505,9 @@ const getCaptureOption = computed(() => {
 });
 
 const getPlanName = computed(() => {
+  if (props.quoteType === 'Travel') {
+    return 'Not Available';
+  } 
   const plan = planDetail;
   return (quoteTypesToCheck.includes(props.quoteType) && plan) ? plan.text : 'Not Available';
 });

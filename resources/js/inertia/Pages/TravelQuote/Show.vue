@@ -1965,29 +1965,7 @@ const genderList = [
           </div>
         </dl>
       </div>
-    </div>
-
-    <PaymentTableNew 
-			v-if="hasRole(rolesEnum.BetaUser)"
-			quoteType="Travel"
-			:payments="payments"
-			:paymentDocument="documentTypes.QUOTE.filter(item => item.code === 'TPD' || item.code === 'TPDR')"
-			:quoteRequest="quoteRequest"
-			:paymentStatusEnum="enums.paymentStatusEnum"
-			:paymentTooltipEnum="paymentTooltipEnum"
-			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name, tooltip: pm.tool_tip } })"
-			:storageUrl="storageUrl"
-		/>
-    <PaymentTable
-      v-else
-      :payments="payments"
-      :can="permissions"
-      :isBetaUser="isBetaUser"
-      :quoteRequest="quoteRequest"
-      :paymentMethods="paymentMethods"
-      :insuranceProviders="insuranceProviders"
-      :quote="quote"
-    />
+    </div>    
 
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div>
@@ -2325,6 +2303,28 @@ const genderList = [
         <LazyAvailablePlan :plan="planDetails" />
       </x-modal>
     </div>
+
+    <PaymentTableNew 
+			v-if="hasRole(rolesEnum.BetaUser)"
+			quoteType="Travel"
+			:payments="payments"
+			:paymentDocument="documentTypes.QUOTE.filter(item => item.code === 'TPD' || item.code === 'TPDR')"
+			:quoteRequest="quoteRequest"
+			:paymentStatusEnum="enums.paymentStatusEnum"
+			:paymentTooltipEnum="paymentTooltipEnum"
+			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name, tooltip: pm.tool_tip } })"
+			:storageUrl="storageUrl"
+		/>
+    <PaymentTable
+      v-else
+      :payments="payments"
+      :can="permissions"
+      :isBetaUser="isBetaUser"
+      :quoteRequest="quoteRequest"
+      :paymentMethods="paymentMethods"
+      :insuranceProviders="insuranceProviders"
+      :quote="quote"
+    />
 
     <EmbeddedProducts
       :data="embeddedProducts"

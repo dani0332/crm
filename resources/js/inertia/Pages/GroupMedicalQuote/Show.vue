@@ -1,5 +1,6 @@
 <script setup>
 import QuoteDocuments from '@/inertia/Pages/PersonalQuote/Partials/QuoteDocuments.vue';
+import PaymentTableNew from '../../Components/PaymentTableNew.vue'; 
 
 defineProps({
   quote: Object,
@@ -20,6 +21,9 @@ defineProps({
   documentTypes: Object,
   storageUrl: String,
   insuranceProviders: Object,
+  paymentStatusEnum: Object,
+  paymentTooltipEnum: Object,
+  paymentMethods: Array,
 });
 
 const page = usePage();
@@ -28,6 +32,7 @@ const { isRequired } = useRules();
 
 const can = permission => useCan(permission);
 const hasAnyRole = roles => useHasAnyRole(roles);
+const hasRole = role => useHasRole(role);
 const permissionsEnum = page.props.permissionsEnum;
 const rolesEnum = page.props.rolesEnum;
 
@@ -906,6 +911,18 @@ const linkEntity = () => {
       :quote="quote"
       :quoteType="page.props.quoteType"
     />
+
+    <PaymentTableNew 
+			v-if="hasRole(rolesEnum.BetaUser)"
+			:quoteType="page.props.quoteType"
+			:payments="quote.payments"
+			:paymentDocument="documentTypes.filter(item => item.code === 'GMQPD' || item.code === 'GMQPDR')"
+			:quoteRequest="quote"
+			:paymentStatusEnum="paymentStatusEnum"
+			:paymentTooltipEnum="paymentTooltipEnum"
+			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name, tooltip: pm.tool_tip } })"
+			:storageUrl="storageUrl"
+		/>
 
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div>

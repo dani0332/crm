@@ -323,6 +323,37 @@ class AddNewDocumentTypeSeeder extends Seeder
             ]);
         }
 
+        $documentTypesCount = DocumentType::get()->where('code', 'GMQPD')->count();
+        if (! $documentTypesCount) {
+            \DB::table('document_types')->insert([
+                'code' => 'GMQPD',
+                'text' => 'Payment Proof',
+                'max_files' => 15,
+                'max_size' => 30,
+                'folder_path' => 'business',
+                'accepted_files' => '.png,.pdf,.jpeg,.jpg',
+                'quote_type_id' => 5,
+                'send_to_customer' => true,
+                'sort_order' => 1,
+                'is_required' => 0,
+            ]);
+        }
+        $documentTypesCount = DocumentType::get()->where('code', 'GMQPDR')->count();
+        if (! $documentTypesCount) {
+            \DB::table('document_types')->insert([
+                'code' => 'GMQPDR',
+                'text' => 'Receipt',
+                'max_files' => 15,
+                'max_size' => 30,
+                'folder_path' => 'business',
+                'accepted_files' => '.png,.pdf,.jpeg,.jpg',
+                'quote_type_id' => 5,
+                'send_to_customer' => true,
+                'sort_order' => 2,
+                'is_required' => 0,
+            ]);
+        }
+
 
     }
 }

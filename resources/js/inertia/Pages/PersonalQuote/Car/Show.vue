@@ -2429,30 +2429,7 @@ const handleChildUpdate = planId => {
 			:quoteType="quoteType"
 			:quote="record"
 		/> -->
-	<PaymentTableNew 
-			v-if="hasRole(rolesEnum.BetaUser)"
-			quoteType="Car"
-			:payments="payments"
-			:paymentDocument="page.props.documentTypes.filter(item => item.code === 'CPD' || item.code === 'CPDR')"
-			:quoteRequest="paymentEntityModel"
-			:paymentStatusEnum="paymentStatusEnum"
-			:paymentTooltipEnum="paymentTooltipEnum"
-			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name, tooltip: pm.tool_tip } })"
-			:storageUrl="storageUrl"
-		/>
-    <PaymentTable
-		v-else
-      :payments="payments"
-      :quoteRequest="paymentEntityModel"
-      :paymentStatusEnum="paymentStatusEnum"
-      :isCommercialVehicles="isCommercialVehicles"
-      :carInsuranceProviders="carInsuranceProviders"
-      :paymentMethods="
-        paymentMethods.map(pm => {
-          return { value: pm.code, label: pm.name };
-        })
-      "
-    />
+	
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div>
         <h3 class="font-semibold text-primary-800 text-lg">Assumptions</h3>
@@ -3028,6 +3005,31 @@ const handleChildUpdate = planId => {
          missing @error="onPlanError" -->
       </x-modal>
     </div>
+
+    <PaymentTableNew 
+			v-if="hasRole(rolesEnum.BetaUser)"
+			quoteType="Car"
+			:payments="payments"
+			:paymentDocument="page.props.documentTypes.filter(item => item.code === 'CPD' || item.code === 'CPDR')"
+			:quoteRequest="paymentEntityModel"
+			:paymentStatusEnum="paymentStatusEnum"
+			:paymentTooltipEnum="paymentTooltipEnum"
+			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name, tooltip: pm.tool_tip } })"
+			:storageUrl="storageUrl"
+		/>
+    <PaymentTable
+		v-else
+      :payments="payments"
+      :quoteRequest="paymentEntityModel"
+      :paymentStatusEnum="paymentStatusEnum"
+      :isCommercialVehicles="isCommercialVehicles"
+      :carInsuranceProviders="carInsuranceProviders"
+      :paymentMethods="
+        paymentMethods.map(pm => {
+          return { value: pm.code, label: pm.name };
+        })
+      "
+    />
 
     <div
       class="p-4 rounded shadow mb-6 bg-white"

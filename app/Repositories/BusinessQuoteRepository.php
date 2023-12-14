@@ -66,7 +66,15 @@ class BusinessQuoteRepository extends BaseRepository
                 'advisor',
                 'previousAdvisor',
                 'businessQuoteRequestDetail.lostReason',
-                'customer',
+                'customer',                
+                'insuranceProviderDetails',
+                'payments' => function ($q) {
+                    $q->with(['paymentStatus', 'personalPlan', 'paymentMethod',
+                        'paymentSplits.paymentStatus', 
+                        'paymentSplits.paymentMethod', 
+                        'paymentSplits.documents',
+                ]);
+                },
                 'quoteRequestEntityMapping' => function ($entityMapping) {
                     $entityMapping->with('entity');
                 },
