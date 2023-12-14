@@ -11,8 +11,6 @@ const props = defineProps({
   insuranceProviders: Object,
 });
 
-const { isRequired, isNumber } = useRules();
-
 const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
 
 const planDetailsForm = useForm({
@@ -79,8 +77,6 @@ const submitPlanDetailsForm = isValid => {
   if (!isValid) return;
 
   let url = `/personal-quotes/${props.quoteType}/${props.quote?.code}/save-plan-details`;
-
-  // planDetailsForm.setError([]);
 
   planDetailsForm.post(url, {
     preserveScroll: true,
