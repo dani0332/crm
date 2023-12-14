@@ -531,3 +531,7 @@ Route::group(['middleware' => ['auth.rest']], function () {
 
 Route::POST('/processInslyRenewalData', [RenewalDataProcessingController::class, 'FetchAndProcessInslyData'])
     ->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class]);
+
+Route::get('mirza', function () {
+    event(new \App\Events\PaymentNotifications(1012));
+});

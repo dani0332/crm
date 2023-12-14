@@ -1,4 +1,6 @@
 <script setup>
+import PaymentNotification from "../Components/PaymentNotification.vue";
+
 const page = usePage();
 const user = computed(() => page.props.auth.user);
 const navLinks = computed(() => page.props.sidebar);
@@ -239,6 +241,7 @@ const onLogout = () => {
 
             <div class="flex gap-3 items-center">
               <!-- <UserStatus /> -->
+              <PaymentNotification />
               <x-popover align="right" block>
                 <x-button size="sm" ghost>
                   <div class="flex gap-3 items-center">
