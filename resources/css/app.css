@@ -423,3 +423,6 @@ border-primary animate-spin;
   border-color: rgb(55 65 81) transparent transparent transparent;
   transform: rotate(360deg);
 }
+.x-notification{
+  @apply z-50;
+}

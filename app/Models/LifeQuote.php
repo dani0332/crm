@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\FilterTypes;
+use App\Enums\QuoteTypeId;
 use App\Traits\FilterCriteria;
 use App\Traits\QuoteModelTrait;
 use Carbon\Carbon;
@@ -37,7 +38,7 @@ class LifeQuote extends Model implements AuditableContract
 
     public function quoteStatus()
     {
-        return $this->hasOne(QuoteStatus::class, 'id', 'quote_status_id');
+        return $this->belongsTo(QuoteStatus::class, 'quote_status_id');
     }
 
     public function lifeQuoteRequestDetail()
@@ -63,32 +64,32 @@ class LifeQuote extends Model implements AuditableContract
         return $this->belongsTo(LifePurposeOfInsurance::class, 'purpose_of_insurance_id', 'id');
     }
 
-    public function childern()
+    public function children()
     {
         return $this->belongsTo(LifeChildren::class, 'children_id', 'id');
     }
 
     public function currency()
     {
-        return $this->belongsTo(CurrencyType::class, 'sum_insured_currency_id', 'id');
+        return $this->belongsTo(CurrencyType::class, 'sum_insured_currency_id');
     }
 
     public function insuranceTenure()
     {
-        return $this->belongsTo(LifeInsuranceTenure::class, 'tenure_of_insurance_id', 'id');
+        return $this->belongsTo(LifeInsuranceTenure::class, 'tenure_of_insurance_id');
     }
 
     public function numberOfYears()
     {
-        return $this->belongsTo(LifeNumberOfYears::class, 'number_of_years_id', 'id');
+        return $this->belongsTo(LifeNumberOfYears::class, 'number_of_years_id');
     }
     public function maritalStatus()
     {
-        return $this->belongsTo(MartialStatus::class, 'marital_status_id', 'id');
+        return $this->belongsTo(MartialStatus::class, 'marital_status_id');
     }
     public function paymentStatus()
     {
-        return $this->belongsTo(PaymentStatus::class, 'payment_status_id', 'id');
+        return $this->belongsTo(PaymentStatus::class, 'payment_status_id');
     }
 
     public function payments()
@@ -99,5 +100,16 @@ class LifeQuote extends Model implements AuditableContract
     public function customer()
     {
         return $this->belongsTo(Customer::class);
+    }
+
+    public function quoteRequestEntityMapping()
+    {
+        return $this->hasOne(QuoteRequestEntityMapping::class, 'quote_request_id')
+            ->where('quote_type_id', QuoteTypeId::Life);
+    }
+
+    public function documents()
+    {
+        return $this->morphMany(QuoteDocument::class, 'quote_documentable');
     }
 }

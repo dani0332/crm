@@ -1,5 +1,4 @@
 import indielayer from '@indielayer/ui/tailwind.preset';
-import forms from '@tailwindcss/forms'
 
 export default {
   presets: [indielayer()],
@@ -80,9 +79,4 @@ export default {
       },
     },
   },
-  plugins: ['forms'
-    // require('@tailwindcss/forms')({
-    //   strategy: 'class',
-    // }),
-  ],
 };

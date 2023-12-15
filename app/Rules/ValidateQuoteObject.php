@@ -9,6 +9,13 @@ class ValidateQuoteObject implements Rule
 {
     use GenericQueriesAllLobs;
 
+    private $quoteType;
+
+    public function __construct()
+    {
+        $this->quoteType = (request()->quoteType) ?? request()->quote_type;
+    }
+
     /**
      * Determine if the validation rule passes.
      *
@@ -18,9 +25,7 @@ class ValidateQuoteObject implements Rule
      */
     public function passes($attribute, $value)
     {
-        $quoteType = (request()->quoteType) ?? request()->quote_type;
-
-        return $this->getQuoteObject($quoteType, request()->quote_uuid);
+        return $this->getQuoteObject($this->quoteType, request()->quote_uuid);
     }
 
     /**
