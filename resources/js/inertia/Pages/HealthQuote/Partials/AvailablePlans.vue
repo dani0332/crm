@@ -538,7 +538,7 @@ onUpdated(() => {
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">Total Price with VAT</dt>
                 <dd>
-                  {{ Number((Number(finalPrice) + Number(vatAmount)).toFixed(2)?.toLocaleString()) }}
+                  {{ Number((Number(finalPrice) + Number(vatAmount)).toFixed(2))?.toLocaleString() }}
                 </dd>
               </div>
               <div class="grid sm:grid-cols-2">
@@ -982,6 +982,16 @@ onUpdated(() => {
               Update & Save
             </x-button>
           </div> -->
+          <div class="grid md:grid-cols-1 gap-5 p-4 float-right">
+                <x-button
+                  :disabled="!isManual"
+                  color="primary"
+                  size="sm"
+                  @click="onLoadingPricesUpdate(props.plan.memberPremiumBreakdown)"
+                >
+                  Update & Save
+                </x-button>
+              </div>
           </TabPanel>
           <!-- between here -->
           <TabPanel>

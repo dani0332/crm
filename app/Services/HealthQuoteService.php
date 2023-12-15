@@ -1368,6 +1368,7 @@ class HealthQuoteService extends BaseService
             $plansArray = [
                 'planId' => (int) $request->planId,
                 'isManualUpdate' => true,
+                'selectedCopayId' => (int) $copayId,
                 'memberPremiumBreakdown' => '',
             ];
             foreach ($request->planDetails as $key => $value) {
