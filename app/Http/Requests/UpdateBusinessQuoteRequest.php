@@ -44,6 +44,9 @@ class UpdateBusinessQuoteRequest extends FormRequest
                 $rule[] = 'min:7';
                 $rule[] = 'max:20';
             }
+            if ($key == 'number_of_employees') {
+                $rule = 'required|numeric|max:2147483645';
+            }
             $rules[$key] = $rule;
         }
 

@@ -7,6 +7,13 @@ const props = defineProps({
 
 const isEdit = computed(() => (props.quote.uuid ? true : false));
 
+const maxValidation = (maxValue) => {
+    return (value) => {
+        const isValid = value <= maxValue;
+        return isValid || `Value must be less than or equal to ${maxValue}.`;
+    };
+}
+
 const quoteForm = useForm({
   modelType: '"Business"',
   gender: '',
@@ -151,7 +158,7 @@ function onSubmit(isValid) {
           <x-input
             v-model="quoteForm.number_of_employees"
             type="number"
-            :rules="[isRequired, isNumber]"
+            :rules="[isRequired, isNumber, maxValidation(2147483645)]"
             class="w-full"
             :error="quoteForm.errors.number_of_employees"
           />
