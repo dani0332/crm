@@ -1026,6 +1026,36 @@ const linkEntity = () => {
       </div>
     </div>
 
+    <PlanDetails
+      :insuranceProviders="insuranceProvidersAll"
+      :quote="quote"
+      :quoteType="page.props.quoteType"
+    />  
+
+    <!-- Payments -->
+    <PaymentTableNew 
+			v-if="hasRole(rolesEnum.BetaUser)"
+			:quoteType="page.props.quoteType"
+			:payments="payments"
+			:paymentDocument="documentTypes.QUOTE && documentTypes.QUOTE.filter && documentTypes.QUOTE.filter(item => item.code === 'CLPD' || item.code === 'CLPDR')"
+			:quoteRequest="quoteRequest"
+			:paymentStatusEnum="paymentStatusEnum"
+			:paymentTooltipEnum="paymentTooltipEnum"
+			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name, tooltip: pm.tool_tip } })"
+			:storageUrl="storageUrl"
+      quoteSubType="Corpline"
+		/>
+    <PaymentTable
+      v-else
+      :payments="payments"
+      :can="permissions"
+      :isBetaUser="isBetaUser"
+      :quoteRequest="quoteRequest"
+      :paymentMethods="paymentMethods"
+      :insuranceProviders="insuranceProviders"
+      :quote="quote"
+    />
+
     <QuoteDocuments
       :document-types="documentTypes"
       :quote-documents="page.props.quoteDocuments || []"
@@ -1167,35 +1197,7 @@ const linkEntity = () => {
         </template>
       </x-modal>
     </div> 
-    <PlanDetails
-      :insuranceProviders="insuranceProvidersAll"
-      :quote="quote"
-      :quoteType="page.props.quoteType"
-    />
-   
-
-    <!-- Payments -->
-    <PaymentTableNew 
-			v-if="hasRole(rolesEnum.BetaUser)"
-			:quoteType="page.props.quoteType"
-			:payments="payments"
-			:paymentDocument="documentTypes.QUOTE && documentTypes.QUOTE.filter && documentTypes.QUOTE.filter(item => item.code === 'CLPD' || item.code === 'CLPDR')"
-			:quoteRequest="quoteRequest"
-			:paymentStatusEnum="paymentStatusEnum"
-			:paymentTooltipEnum="paymentTooltipEnum"
-			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name, tooltip: pm.tool_tip } })"
-			:storageUrl="storageUrl"
-		/>
-    <PaymentTable
-      v-else
-      :payments="payments"
-      :can="permissions"
-      :isBetaUser="isBetaUser"
-      :quoteRequest="quoteRequest"
-      :paymentMethods="paymentMethods"
-      :insuranceProviders="insuranceProviders"
-      :quote="quote"
-    />
+    
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div>
         <h3 class="font-semibold text-primary-800 text-lg">Lead History</h3>
@@ -1227,6 +1229,7 @@ const linkEntity = () => {
     <AuditLogs
       :type="'App\\Models\\BusinessQuote'"
       :id="$page.props.quote.id"
+      :quoteCode="$page.props.quote.code"
     />
   </div>
 </template>

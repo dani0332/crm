@@ -922,6 +922,7 @@ const linkEntity = () => {
 			:paymentTooltipEnum="paymentTooltipEnum"
 			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name, tooltip: pm.tool_tip } })"
 			:storageUrl="storageUrl"
+      quoteSubType="Group Medical"
 		/>
 
     <div class="p-4 rounded shadow mb-6 bg-white">

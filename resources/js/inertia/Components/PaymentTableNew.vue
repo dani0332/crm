@@ -24,6 +24,10 @@ const props = defineProps({
     type: String,
     default: '0',
   },
+  quoteSubType: {
+    type: String,
+    default: '',
+  },
 });
 console.log('QUOTEREQUEST='+JSON.stringify(props.quoteRequest));
 const createPaymentModal = ref(false);
@@ -840,7 +844,7 @@ const addPaymentModal = () => {
     return;
   }
 
-  if( props.quoteType === 'Health' || props.quoteType === 'Group Medical' || 
+  if( props.quoteType === 'Health' || props.quoteSubType === 'Group Medical' || 
       props.quoteType === 'Life' || props.quoteType === 'Marine'){
     paymentMethodsForm.collection_type = 'insurer';
   } else {
@@ -1371,11 +1375,12 @@ const uploadDocument = (doc, files, count) => {
         },
         onSuccess: (data) => {
           let quoteDocuments = [];
-          if (quoteTypesToCheck.includes(props.quoteType) || props.quoteType === 'Home') {
+          if (quoteTypesToCheck.includes(props.quoteType) || props.quoteType === 'Home' 
+          || props.quoteSubType === 'Corpline') {
               quoteDocuments = data.props.quoteDocuments;
           } else {
               quoteDocuments = data.props.quote.documents;
-          }
+          }          
           //quoteDocuments = [...quoteDocuments].reverse();
           // Sort the array by the "id" property in descending order
           quoteDocuments.sort((a, b) => b.id - a.id);
@@ -1394,7 +1399,7 @@ const uploadDocument = (doc, files, count) => {
             fileUploadModels.value[count].push(quoteDocuments[i]);
           }
           isDocumentNotUploaded.value[count] = false;
-          console.log('azhar9999=' + JSON.stringify(quoteDocuments[0]));
+         
           resolve(data);
         },
         onFinish: () => {
@@ -1403,7 +1408,6 @@ const uploadDocument = (doc, files, count) => {
       });
   });
 };
-
 
 const getCaptureValidation = computed(() => {  
   if ( props.payments.length>0 ) {
@@ -1474,8 +1478,6 @@ const getCaptureValidation = computed(() => {
         return true;
       }*/
       return true;
-
-
     }
   }
   return false;
@@ -2796,7 +2798,6 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
 .custom-dropdown {
   position: relative;
 }
-
 .close-icon {
   position: absolute;
   top: 8px;
@@ -2807,29 +2808,17 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
   font-size: 1.rem;
   font-weight: normal;
 }
-
-.close-icon22 {
-  position: absolute;
-  top: 8px;
-  left: 0;
-  margin-left: 445px;
-  cursor: pointer;
-  color: #333; /* Customize the close icon color */
-}
-
 .delete-pointer {
   cursor: pointer;
   padding-left: 5px;
   font-weight: bold;
 }
-
 .expand-pointer {
     cursor: pointer;
     font-size: 20px;
     font-weight: bold;
     color: #1d83bc;
 }
-
 .custom-tooltip-content {
   max-width: 200px; /* Adjust the max-width as needed */
   white-space: normal; /* Allow the text to wrap */
@@ -2838,7 +2827,7 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
   font-size: 12px;
   text-transform: none;
   }
-  .custom-height {
+.custom-height {
     min-height: 160px;
   }
 </style>
