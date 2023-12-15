@@ -21,7 +21,13 @@ const docForm = useForm({
 });
 
 const uploadFile = (doc, memberId, files) => {
-  if (files.length == 0) return;
+  if (files.length == 0) {
+    notification.error({
+      title: 'Incorrect file type\nPlease upload a ' + doc.accepted_files + ' file',
+      position: 'top',
+    });
+    return false;
+  }
   isUploading.value = true;
   docForm
     .transform(data => ({
@@ -35,13 +41,8 @@ const uploadFile = (doc, memberId, files) => {
     .post('/quotes/health/documents/store', {
       preserveScroll: true,
       preserveState: true,
-      only: ['quoteDocuments'],
       onFinish: () => {
         isUploading.value = false;
-        notification.success({
-          title: 'File Uploaded',
-          position: 'top',
-        });
       },
     });
 };
