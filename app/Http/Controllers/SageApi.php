@@ -28,9 +28,9 @@ class SageApi extends Controller
         $request->invoicePaymentStatus = 'pending';
         $request->premiumWithoutTax = 100;
         $request->discount = 0;
-        
-        $request->insurerInvoiceDate = "2023-03-22";
-        $request->policyExpiryDate = "2025-03-22";        
+
+        $request->insurerInvoiceDate = '2023-03-22';
+        $request->policyExpiryDate = '2025-03-22';
         $request->premiumWithTax = 100;
         $request->vatOnCommission = 0;
         $request->commission = 0;
@@ -56,7 +56,6 @@ class SageApi extends Controller
         $request->callExtra = false;
         ////$message = $this->processRequest($request, $leadStatus); //will create prem and commision
 
-        
         $request->invoicePaymentStatus = 'paid';
         $createPrepaymentReciept = [
             'BatchRecordType' => 'CA',
@@ -82,35 +81,32 @@ class SageApi extends Controller
         $responseData = json_decode($message, true);
         $documentNumberForReciept = $responseData['ReceiptsAdjustments'][0]['DocumentNumber'];
         $batchNumberReciept = $responseData['ReceiptsAdjustments'][0]['BatchNumber'];
-        
-        
+
         echo $batchNumberReciept;
         $createPostBatchStatus = [
             'BatchStatus' => 'ReadyToPost',
         ];
         $message = $this->sageApiService->postToSage300('AR/ARInvoiceBatches('.$batchNumberReciept.')', $createPostBatchStatus);
         $responseData = json_decode($message, true);
-        echo "<pre>"; print_r($responseData);
+        echo '<pre>';
+        print_r($responseData);
         $createPostBatchStatus = [
             'BatchStatus' => 'Posted',
         ];
         $message = $this->sageApiService->postToSage300('AR/ARInvoiceBatches('.$batchNumberReciept.')', $createPostBatchStatus);
         $responseData = json_decode($message, true);
-        echo "<pre>"; print_r($responseData);
+        echo '<pre>';
+        print_r($responseData);
 
         dd($responseData);
-        
+
         //session(['documentNumberForReciept' => $documentNumberForReciept]);
 
-        
         //HERE I NEED TO CALL NEW ENDPOINTS TO POST ON SAGE DASHBOARD
 
         ////$message = $this->processRequest($request, $leadStatus);
-        
-        
-        
-        
-        echo  $documentNumberForReciept; 
+
+        echo $documentNumberForReciept;
         dd($responseData);
         exit;
 

@@ -126,8 +126,8 @@ class CycleQuoteRepository extends BaseRepository
                 'payments' => function ($q) {
                     $q->with([
                         'paymentStatus', 'personalPlan', 'paymentMethod', 'paymentStatusLogs', 'insuranceProvider',
-                        'paymentSplits.paymentStatus', 
-                        'paymentSplits.paymentMethod', 
+                        'paymentSplits.paymentStatus',
+                        'paymentSplits.paymentMethod',
                         'paymentSplits.documents',
                     ]);
                 },

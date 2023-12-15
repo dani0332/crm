@@ -645,8 +645,8 @@ class HomeQuoteService extends BaseService
     }
 
     public function getEntityPlain($id)
-    {        
-        return HomeQuote::where('id', $id)->with(['insuranceProviderDetails','payments.paymentSplits' => function ($query) {
+    {
+        return HomeQuote::where('id', $id)->with(['insuranceProviderDetails', 'payments.paymentSplits' => function ($query) {
             $query->orderBy('sr_no', 'asc');
         }, 'payments.paymentSplits.paymentStatus', 'payments.paymentSplits.paymentMethod', 'payments.paymentSplits.documents'])->first();
     }

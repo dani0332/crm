@@ -27,7 +27,7 @@ class AddNewDocumentTypeSeeder extends Seeder
                 'is_required' => 0,
             ]);
         }
-       $documentTypesCount = DocumentType::get()->where('code', 'CPDR')->count();
+        $documentTypesCount = DocumentType::get()->where('code', 'CPDR')->count();
         if (! $documentTypesCount) {
             \DB::table('document_types')->insert([
                 'code' => 'CPDR',
@@ -73,7 +73,6 @@ class AddNewDocumentTypeSeeder extends Seeder
                 'is_required' => 0,
             ]);
         }
-        
 
         $documentTypesCount = DocumentType::get()->where('code', 'TPD')->count();
         if (! $documentTypesCount) {
@@ -105,7 +104,7 @@ class AddNewDocumentTypeSeeder extends Seeder
                 'is_required' => 0,
             ]);
         }
-        
+
         $documentTypesCount = DocumentType::get()->where('code', 'LPD')->count();
         if (! $documentTypesCount) {
             \DB::table('document_types')->insert([
@@ -353,7 +352,6 @@ class AddNewDocumentTypeSeeder extends Seeder
                 'is_required' => 0,
             ]);
         }
-
 
     }
 }

@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::table('payments', function (Blueprint $table) {
             if (! Schema::hasColumn('payments', 'discount_custom_reason')) {
                 $table->text('discount_custom_reason')->nullable();
-            }           
+            }
         });
     }
 

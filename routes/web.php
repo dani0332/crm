@@ -116,12 +116,6 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::post('/reports/fetch-advisor-by-team', [ReportsController::class, 'fetchAdvisorListByTeam']);
     Route::post('/reports/fetch-subteams-advisor-by-team', [ReportsController::class, 'fetchSubTeamsAdvisorListByTeam']);
 
-    Route::get('update-member-key-quote-document', function () {
-        if (auth()->user()->hasRole(\App\Enums\RolesEnum::Admin)) {
-            \App\Jobs\UpdateMemberKeyHealthDocsJob::dispatch();
-        }
-    });
-
     Route::group(['middleware' => ['check_route_access']], function () {
         Route::post('update-team-allocation-threshold', [AllocationThresholdController::class, 'updateAllocation']);
         Route::get('/accumulative-dashboard', [DashboardController::class, 'renderMainDashboard'])->name('main-dashboard-view');
@@ -467,16 +461,16 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::resource('age', AgeDiscountController::class);
     });
 
-    // Route::group(['prefix' => 'telemarketing'], function () {
-    //     Route::resource('tmleads', TmLeadController::class);
-    //     Route::resource('tminsurancetype', TmInsuranceTypeController::class);
-    //     Route::resource('tmcallstatus', TmCallStatusController::class);
-    //     Route::resource('tmleadstatus', TmLeadStatusController::class);
-    //     Route::get('/car-model', [TmLeadController::class, 'carModelBasedOnCarMake']);
-    //     Route::resource('tmuploadlead', TmUploadLeadController::class);
-    //     Route::get('tmleads/{tmLeadID}/tmLeadUpdate', [TmLeadController::class, 'tmLeadUpdate'])->name('tmLeadUpdate');
-    //     Route::get('/tmLeadsAssign', [TmLeadController::class, 'tmLeadsAssign']);
-    // });
+    Route::group(['prefix' => 'telemarketing'], function () {
+        Route::resource('tmleads', TmLeadController::class)->names(generateRouteNames('tmleads'));
+        Route::resource('tminsurancetype', TmInsuranceTypeController::class);
+        Route::resource('tmcallstatus', TmCallStatusController::class);
+        Route::resource('tmleadstatus', TmLeadStatusController::class);
+        Route::get('/car-model', [TmLeadController::class, 'carModelBasedOnCarMake']);
+        Route::resource('tmuploadlead', TmUploadLeadController::class)->names(generateRouteNames('tmuploadlead'));
+        Route::get('tmleads/{tmLeadID}/tmLeadUpdate', [TmLeadController::class, 'tmLeadUpdate'])->name('tmLeadUpdate');
+        Route::post('/tmLeadsAssign', [TmLeadController::class, 'tmLeadsAssign']);
+    });
 
     Route::get('/car-model', [AjaxController::class, 'carModelBasedOnCarMake']);
     Route::get('/car-make', [AjaxController::class, 'getCarMake']);

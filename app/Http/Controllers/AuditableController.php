@@ -38,7 +38,7 @@ class AuditableController extends Controller
 
     public function loadAuditLogs(Request $request)
     {
-         $code = isset($request->code) ? $request->code : '';
+        $code = isset($request->code) ? $request->code : '';
         $auditableTypes = ['App\Models\Payment', 'App\Models\PaymentSplits'];
         $query = DB::table('audits')
             ->select('audits.*', 'users.name')
@@ -54,7 +54,7 @@ class AuditableController extends Controller
         }
 
         return $query->orderBy('created_at', 'desc')->get();
- 
+
     }
 
     public function loadApiLogs(Request $request)

@@ -83,10 +83,10 @@ class LifeQuoteRepository extends BaseRepository
 
     public function fetchGetBy($column, $value)
     {
-        
+
         $quote = $this->where($column, $value)->with(['advisor', 'quoteStatus', 'nationality', 'previousAdvisor', 'lifeQuoteRequestDetail.lostReason',
             'purposeOfInsurance', 'children', 'currency', 'insuranceTenure', 'numberOfYears', 'maritalStatus',
-            'paymentStatus', 'customer.additionalContactInfo', 'insuranceProviderDetails', 
+            'paymentStatus', 'customer.additionalContactInfo', 'insuranceProviderDetails',
             'payments.paymentMethod', 'payments.paymentStatus', 'payments.paymentSplits.paymentStatus', 'payments.paymentSplits.paymentMethod', 'payments.paymentSplits.documents',
             'quoteRequestEntityMapping' => function ($entityMapping) {
                 $entityMapping->with('entity');

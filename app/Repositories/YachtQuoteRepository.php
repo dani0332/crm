@@ -88,10 +88,10 @@ class YachtQuoteRepository extends BaseRepository
                 'insuranceProviderDetails',
                 'payments' => function ($q) {
                     $q->with(['paymentStatus', 'personalPlan', 'paymentMethod',
-                        'paymentSplits.paymentStatus', 
-                        'paymentSplits.paymentMethod', 
+                        'paymentSplits.paymentStatus',
+                        'paymentSplits.paymentMethod',
                         'paymentSplits.documents',
-                ]);
+                    ]);
                 },
                 'createdBy',
                 'updatedBy',

@@ -114,8 +114,8 @@ class BikeQuoteRepository extends BaseRepository
                         'paymentMethod',
                         'paymentStatusLogs',
                         'insuranceProvider',
-                        'paymentSplits.paymentStatus', 
-                        'paymentSplits.paymentMethod', 
+                        'paymentSplits.paymentStatus',
+                        'paymentSplits.paymentMethod',
                         'paymentSplits.documents',
                     ]);
                 },

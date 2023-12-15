@@ -4,12 +4,10 @@ namespace App\Http\Controllers\V2;
 
 use App\Enums\CustomerTypeEnum;
 use App\Enums\LookupsEnum;
-use App\Enums\quoteStatusCode;
-use App\Enums\QuoteStatusEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PaymentTooltip;
-use App\Services\LookupService;
-use App\Repositories\InsuranceProviderRepository;
+use App\Enums\quoteStatusCode;
+use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
@@ -21,6 +19,7 @@ use App\Repositories\CustomerMembersRepository;
 use App\Repositories\CustomerRepository;
 use App\Repositories\DocumentTypeRepository;
 use App\Repositories\EmbeddedProductRepository;
+use App\Repositories\InsuranceProviderRepository;
 use App\Repositories\LifeQuoteRepository;
 use App\Repositories\LookupRepository;
 use App\Repositories\LostReasonRepository;
@@ -29,6 +28,7 @@ use App\Repositories\QuoteStatusRepository;
 use App\Repositories\UserRepository;
 use App\Services\AMLService;
 use App\Services\CentralService;
+use App\Services\LookupService;
 use Illuminate\Http\Request;
 
 class LifeQuoteController extends Controller
@@ -89,7 +89,7 @@ class LifeQuoteController extends Controller
     {
         $quote = LifeQuoteRepository::getBy('uuid', $uuid);
         $payments = $quote->payments;
-        
+
         $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypeId::Life);
 
         $duplicateAllowedLobs = (new CentralService())->duplicateAllowedLobsList(QuoteTypes::LIFE->value, $quote->code);

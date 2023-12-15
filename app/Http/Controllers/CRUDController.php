@@ -729,7 +729,7 @@ class CRUDController extends Controller
             $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypeId::Home);
             $uboDetails = CustomerMembersRepository::getBy($record->id, QuoteTypes::HOME->name, CustomerTypeEnum::Entity);
             $uboRelations = LookupRepository::where('key', LookupsEnum::UBO_RELATION)->get();
-            $emirates = Emirate::where('is_active', 1)->select('id', 'text')->get();           
+            $emirates = Emirate::where('is_active', 1)->select('id', 'text')->get();
 
             $payments->each(function ($payment) {
                 $allow = $payment->payment_status_id != PaymentStatusEnum::CAPTURED && $payment->payment_status_id != PaymentStatusEnum::AUTHORISED && ! auth()->user()->hasRole(RolesEnum::PA);
@@ -765,7 +765,7 @@ class CRUDController extends Controller
             }
 
             $documentTypes = $this->quoteDocumentService->getQuoteDocumentsForUpload(QuoteTypeId::Home);
-          
+
             return inertia('HomeQuote/Show', [
                 'storageUrl' => storageUrl(),
                 'quoteDocuments' => array_values($quoteDocuments->toArray()),
@@ -1160,8 +1160,8 @@ class CRUDController extends Controller
         if ($modelType == null) {
             $modelType = $request->get('modelType');
         }
-        $ignoreModelTypes = ['Bike','Cycle','Yacht'];
-        if ( !in_array($modelType,$ignoreModelTypes) && $modelType != null ) {
+        $ignoreModelTypes = ['Bike', 'Cycle', 'Yacht'];
+        if (! in_array($modelType, $ignoreModelTypes) && $modelType != null) {
             $quoteTypes = 'Health,Car,Travel,Life,Home,Business,Pet';
             $serviceType = str_contains($quoteTypes, ucwords($modelType)) ? strtolower($modelType).'QuoteService' : lcfirst(ucwords($modelType)).'Service';
             $this->genericModel->properties = $this->{$serviceType}->fillModelProperties();
@@ -1782,15 +1782,16 @@ class CRUDController extends Controller
     }
 
     public function splitPaymentUpdate(Request $request)
-    {   
-        if (auth()->user()->can(PermissionsEnum::ApprovePayments)){
+    {
+        if (auth()->user()->can(PermissionsEnum::ApprovePayments)) {
             $successMessage = $this->paymentSplitsRepository->updatePaymentStatus($request);
+
             return back()->with('success', $successMessage);
         } else {
             return back()->with('error', 'You are not authorized');
         }
     }
-    
+
     public function splitPaymentsApprove(Request $request)
     {
         if (auth()->user()->can(PermissionsEnum::ApprovePayments)) {
