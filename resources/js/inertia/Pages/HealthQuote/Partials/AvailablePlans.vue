@@ -127,7 +127,7 @@ const onMemberUpdate = member => {
 };
 
 const selectedCopay = ref([]);
-const defaultCopayId = ref(null);
+const defaultCopayId = ref(props.plan?.selectedCopayId);
 
 const onCoPaySelect = copayId => {
     props.plan.ratesPerCopay?.forEach(element => {
@@ -171,6 +171,9 @@ const onCoPaySelect = copayId => {
         });
     }
 
+    console.log("selected copay");
+    console.log(selectedCopay.value);
+
     emit('copayUpdate', selectedCopay.value);
 };
 
@@ -208,8 +211,21 @@ const defaultLoadingPrice = ref(0);
 
 const getDefaultVaues = () => {
   let smallestCopayValue = 0;
-  if (selectedCopay.value === undefined || selectedCopay.value.length == 0) {
+  if (defaultCopayId.value != undefined || defaultCopayId != null)
+  {
+    console.log("default copay is not null");
+    console.log(defaultCopayId.value);
     props.plan?.ratesPerCopay?.forEach(function callback(element, index) {
+        if (element.healthPlanCoPaymentId == defaultCopayId.value) {
+            smallestCopayValue = element.premium;
+        }
+    });
+    newActualPremium.value = smallestCopayValue;
+  } else if ( (defaultCopayId.value == undefined || defaultCopayId == null)
+   && (selectedCopay.value === undefined || selectedCopay.value.length == 0)) {
+    props.plan?.ratesPerCopay?.forEach(function callback(element, index) {
+        console.log("default copay is null");
+
       if (index == 0) {
         smallestCopayValue = element.premium;
         defaultCopayId.value = element.healthPlanCoPaymentId;
@@ -315,6 +331,7 @@ const onLoadingPricesUpdate = member => {
 };
 
 onUpdated(() => {
+    defaultCopayId.value = props.plan?.selectedCopayId;
     loadingPrices.value = [];
     selectedCopay.value = [];
     totalLoadingPrice.value = 0;
@@ -494,8 +511,8 @@ onUpdated(() => {
                 </dd>
                 <dd v-else>
                   {{
-                    finalPrice =
-                      (selectedCopay.premium +
+                    (finalPrice =
+                      selectedCopay.premium +
                       (props.plan.basmah || 0) +
                       (props.plan.policyFee || 0) +
                       totalLoadingPrice)?.toLocaleString()

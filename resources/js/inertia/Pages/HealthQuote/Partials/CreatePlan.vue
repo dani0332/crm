@@ -32,8 +32,10 @@ const totalLoadingPrice = computed(() => {
 });
 
 const options = reactive({
-  insurancePlans: [],
-  loading: false,
+    networks: [],
+    insurancePlans: [],
+    coPayments: [],
+    loading: false,
 });
 
 const genderText = v => {
@@ -65,6 +67,11 @@ const numFixed = num => {
 const isEmptyField = ref(false);
 
 const onSubmit = isValid => {
+
+    console.log(createForm);
+    console.log(props.members);
+    console.log(membersPrice);
+    return;
   if (createForm.provider_id == null) {
     isEmptyField.value = true;
   } else {
@@ -96,19 +103,80 @@ const onSubmit = isValid => {
     });
 };
 
+const planId = ref(null);
+
 watch(
   () => createForm?.provider_id,
   value => {
     if (value) {
       options.loading = true;
+      options.networks = [];
+      options.insurancePlans = [];
+      options.coPayments = [];
       axios
         .get(
           `/insurance-provider-plans-health?insuranceProviderId=${value}&quoteUuId=${props.uuid}`,
         )
         .then(res => {
-          if (res.data.length > 0) {
-            options.insurancePlans = res.data;
+            console.log(value);
+        //   if (res.data.healthPlans?.length > 0) {
+        //     options.insurancePlans = res.data.healthPlans;
+        //   }
+          if (res.data.networks?.length > 0) {
+            options.networks = res.data.networks;
           }
+        //   console.log(res.data.copays);
+        //   if (res.data.copays) {
+        //     options.coPayments = res.data.copays;
+        //   }
+        })
+        .catch(err => {
+            emit('error');
+        })
+        .finally(() => {
+          options.loading = false;
+        //   createForm.plan_id = null;
+        });
+    }
+  },
+);
+
+watch(
+    () => createForm?.plan_id,
+    value => {
+        if (value) {
+            planId.value = value;
+        }
+    },
+);
+
+watch(
+  () => createForm?.network_id,
+  value => {
+    if (value) {
+      options.loading = true;
+      options.insurancePlans = [];
+      options.coPayments = [];
+      axios
+        .get(
+          `/network-plans-health?insuranceProviderId=${createForm?.provider_id}&network=${value}&quoteUuId=${props.uuid}`,
+        )
+        .then(res => {
+          if (res.data.healthPlans?.length > 0) {
+            options.insurancePlans = res.data.healthPlans;
+          }else{
+            options.insurancePlans = [];
+        }
+        //   if (res.data.networks?.length > 0) {
+        //     options.networks = res.data.networks;
+        //   }
+        //   console.log(res.data.copays);
+        //   if (res.data.copays) {
+        //     options.coPayments = res.data.copays;
+        //   }
+        })
+        .catch(err => {
+            emit('error');
         })
         .finally(() => {
           options.loading = false;
@@ -117,6 +185,36 @@ watch(
     }
   },
 );
+
+watch(
+  () => createForm?.plan_id,
+  value => {
+    if (value) {
+      options.loading = true;
+      options.coPayments = [];
+      axios
+        .get(
+          `/health-plan-copays?planId=${value}`,
+        )
+        .then(res => {
+          console.log(res.data.copays?.length > 0);
+          if (res.data.copays) {
+            options.coPayments = res.data.copays;
+          }else{
+            options.coPayments = [];
+        }
+        })
+        .catch(err => {
+            emit('error');
+        })
+        .finally(() => {
+          options.loading = false;
+        });
+    }
+  },
+);
+
+
 </script>
 
 <template>
@@ -144,12 +242,7 @@ watch(
         :disabled="!createForm.provider_id"
         class="w-full"
         :helper="!createForm.provider_id ? 'Select a provider first' : ''"
-        :options="
-          options.insurancePlans?.map(item => ({
-            value: item.id,
-            label: item.text,
-          }))
-        "
+        :options="options.networks"
         :loading="options.loading"
         :rules="[isRequired]"
       />
@@ -158,9 +251,9 @@ watch(
         v-model="createForm.plan_id"
         label="Plan"
         placeholder="Please Select Plan"
-        :disabled="!createForm.provider_id"
+        :disabled="!createForm.network_id"
         class="w-full"
-        :helper="!createForm.provider_id ? 'Select a provider first' : ''"
+        :helper="!createForm.provider_id ? 'Select a network first' : ''"
         :options="
           options.insurancePlans?.map(item => ({
             value: item.id,
@@ -175,11 +268,11 @@ watch(
         v-model="createForm.deductibles"
         label="Deductibles and Co-pay"
         placeholder="Select Deductibles and Co-pay"
-        :disabled="!createForm.provider_id"
+        :disabled="!createForm.plan_id"
         class="w-full"
-        :helper="!createForm.provider_id ? 'Select a provider first' : ''"
+        :helper="!createForm.provider_id ? 'Select a plan first' : ''"
         :options="
-          options.insurancePlans?.map(item => ({
+          options.coPayments?.map(item => ({
             value: item.id,
             label: item.text,
           }))

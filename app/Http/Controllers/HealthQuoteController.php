@@ -80,25 +80,134 @@ class HealthQuoteController extends Controller
         $insuranceProviderId = $request->insuranceProviderId;
         $quoteUuId = $request->quoteUuId;
 
+        $networks = InsuranceProviderRepository::networksByInsuranceProviders([
+            'insuranceProviderId' => $insuranceProviderId,
+        ]);
+
+        // dd($networks);
+
+        // $quotePlans = $this->healthQuoteService->getQuotePlans($quoteUuId);
+        // dd($quotePlans);
+
+        // $quotePlanId = [];
+        // $healthPlans = [];
+        // $listQuotePlans = [];
+        // $copays = [];
+
+        // if (isset($quotePlans->quote->plans)) {
+        //     $listQuotePlans = $quotePlans->quote->plans;
+        // }
+
+        // dd($listQuotePlans);
+        // return;
+
+        // foreach ($listQuotePlans as $key => $quotePlan) {
+        //     if (! isset($quotePlan->id)) {
+        //         continue;
+        //     }
+
+        //     // dd($quotePlan);
+
+        //     $quotePlanId[] = $quotePlan->id;
+
+        //     $copays[$quotePlan->id] = $quotePlan->coPayments;
+        // }
+
+        // dd($healthPlans);
+
+        // $healthPlans = $this->healthQuoteService->getNonQuotedHealthPlans($insuranceProviderId, $quotePlanId);
+
+        // dd($healthPlans->toArray());
+
+        $data = [
+            // 'healthPlans' => $healthPlans,
+            'networks' => $networks->toArray(),
+            // 'copays' => $copays,
+        ];
+
+        // dd($data);
+        return response()->json($data);
+    }
+
+    public function plansByNetwork(Request $request)
+    {
+        $network = trim($request->network);
+        $quoteUuId = $request->quoteUuId;
+        $insuranceProviderId = $request->insuranceProviderId;
+
+        // dd($request->toArray());
+
+        // $networks = InsuranceProviderRepository::networksByInsuranceProviders([
+        //     'insuranceProviderId' => $insuranceProviderId,
+        // ]);
+
+        // dd($networks);
+
         $quotePlans = $this->healthQuoteService->getQuotePlans($quoteUuId);
+        // dd($quotePlans);
 
         $quotePlanId = [];
+        $healthPlans = [];
         $listQuotePlans = [];
-        if (isset($quotePlans->quotes->plans)) {
-            $listQuotePlans = $quotePlans->quotes->plans;
+        // $copays = [];
+
+        if (isset($quotePlans->quote->plans)) {
+            $listQuotePlans = $quotePlans->quote->plans;
         }
+
+        // dd($listQuotePlans);
+        // return;
 
         foreach ($listQuotePlans as $key => $quotePlan) {
-            if (! isset($quotePlan->id)) {
+            if (! isset($quotePlan->id) ) {
                 continue;
             }
+            // dd($quotePlan->eligibilityName);
 
-            $quotePlanId[] = $quotePlan->id;
+            if (isset($quotePlan->eligibilityName) && $quotePlan->eligibilityName === $network
+            && $quotePlan->providerId == $insuranceProviderId) {
+
+                $healthPlans[] = [
+                    'id' => $quotePlan->id,
+                    'text' => $quotePlan->name,
+                ];
+            }
+
+            // $quotePlanId[] = $quotePlan->id;
+
         }
 
-        $healthPlans = $this->healthQuoteService->getNonQuotedHealthPlans($insuranceProviderId, $quotePlanId);
+        // dd($healthPlans);
 
-        return response()->json($healthPlans);
+        // if ($insuranceProviderId){
+            $healthPlans = $this->healthQuoteService->getNonQuotedHealthPlans($insuranceProviderId, $quotePlanId);
+        // }else {
+        //     return response()->json(['message' => 'Insurnace provider not found.']);
+        // }
+
+        // dd($healthPlans->toArray());
+
+        $data = [
+            'healthPlans' => $healthPlans,
+            // 'networks' => $networks->toArray(),
+            // 'copays' => $copays,
+        ];
+        // dump($insuranceProviderId);
+        // dd($data);
+        return response()->json($data);
+    }
+
+    public function copaysByPlan(Request $request)
+    {
+        $healthPlanId = $request->planId;
+
+        $copays = $this->healthQuoteService->getCopaysByPlanId($healthPlanId);
+
+        $data = [
+            'copays' => $copays,
+        ];
+
+        return response()->json($data);
     }
 
     public function networksByInsuranceProvider(InsurerProviderNetworkRequest $request)

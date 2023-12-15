@@ -1658,4 +1658,14 @@ class HealthQuoteService extends BaseService
 
         return [$result, $skipLead];
     }
+
+    public function getCopaysByPlanId($planId)
+    {
+        $copays = DB::table('health_plan_co_payments')
+            ->select('id', 'text')
+            ->where('health_plan_id', $planId)
+            ->get()->toArray();
+
+        return $copays;
+    }
 }

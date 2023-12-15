@@ -487,6 +487,8 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::post('members/update', [MembersDetailController::class, 'uboUpdate']);
     Route::get('/insurance-provider-plans', [ClaimController::class, 'carPlansByInsuranceProvider']);
     Route::get('/insurance-provider-plans-health', [HealthQuoteController::class, 'plansByInsuranceProvider']);
+    Route::get('/network-plans-health', [HealthQuoteController::class, 'plansByNetwork']);
+    Route::get('/health-plan-copays', [HealthQuoteController::class, 'copaysByPlan']);
     Route::get('/insurance-provider-networks', [HealthQuoteController::class, 'networksByInsuranceProvider']);
     Route::post('/car-plan-manual-update-process', [ClaimController::class, 'carPlanUpdateManualProcess']);
     Route::resource('travelers', TravelMembersDetailController::class);

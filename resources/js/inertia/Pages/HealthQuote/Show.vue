@@ -820,19 +820,29 @@ const getSmallestCopayRateAsDefaultValue = () => {
   let smallestCopayVAT = 0;
   let smallestCopayLoadingPrice = 0;
   plansTable.data.forEach(element => {
+    console.log(element.selectedCopayId );
+    defaultCopayId = element.selectedCopayId;
     element.ratesPerCopay?.forEach(function callback(value, index) {
 
-      if (index == 0) {
-        smallestCopayValue = Number(value.premium);
-        smallestCopayVAT = Number(value.vat);
-        smallestCopayLoadingPrice = Number(value.loadingPrice ? value.loadingPrice : 0);
-        defaultCopayId = value.healthPlanCoPaymentId;
-      } else if (value.premium < smallestCopayValue) {
-        smallestCopayValue = Number(value.premium);
-        smallestCopayVAT = Number(value.vat);
-        smallestCopayLoadingPrice = Number(value.loadingPrice ? value.loadingPrice : 0);
-        defaultCopayId = value.healthPlanCoPaymentId;
-      }
+        if ( element.selectedCopayId && defaultCopayId == value.healthPlanCoPaymentId) {
+            smallestCopayValue = Number(value.premium);
+            smallestCopayVAT = Number(value.vat);
+            smallestCopayLoadingPrice = Number(value.loadingPrice ? value.loadingPrice : 0);
+            defaultCopayId = element.selectedCopayId;
+        } else if (element.selectedCopayId == undefined || element.selectedCopayId == null)
+        {
+            if (index == 0) {
+                smallestCopayValue = Number(value.premium);
+                smallestCopayVAT = Number(value.vat);
+                smallestCopayLoadingPrice = Number(value.loadingPrice ? value.loadingPrice : 0);
+                defaultCopayId = value.healthPlanCoPaymentId;
+            } else if (value.premium < smallestCopayValue) {
+                smallestCopayValue = Number(value.premium);
+                smallestCopayVAT = Number(value.vat);
+                smallestCopayLoadingPrice = Number(value.loadingPrice ? value.loadingPrice : 0);
+                defaultCopayId = value.healthPlanCoPaymentId;
+            }
+        }
     });
 
     if (isMounted.value && selectedCoPay.planId == element.id) {
@@ -847,7 +857,9 @@ const getSmallestCopayRateAsDefaultValue = () => {
       element.loadingPrice = smallestCopayLoadingPrice;
 
     }
+
     console.log(element.providerName);
+    console.log(defaultCopayId);
     console.log(element.actualPremium);
     console.log(element.vat);
   });
