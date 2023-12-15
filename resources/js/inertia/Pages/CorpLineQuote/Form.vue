@@ -16,13 +16,13 @@ const maxValidation = (maxValue) => {
 
 const quoteForm = useForm({
   modelType: '"Business"',
-  gender: '',
+  gender: props.quote.gender,
   first_name: props.quote.first_name,
   last_name: props.quote.last_name,
   email: props.quote.email,
   mobile_no: props.quote.mobile_no,
   premium: props.quote.premium,
-  company_name: props.quote.company_name,
+  company_name: props.quote.business_company_name,
   number_of_employees: props.quote.number_of_employees,
   business_type_of_insurance_id: props.quote.business_type_of_insurance_id,
   group_medical_type_id: props.selectedGmType,
