@@ -134,6 +134,7 @@ class BusinessQuoteController extends Controller
      */
     public function show($id)
     {
+        dd(';lljljjjkl');
         $quoteType = strtolower($this->genericModel->modelType);
         $record = $this->crudService->getEntity($this->genericModel->modelType, $id);
         abort_if(! $record, 404);
