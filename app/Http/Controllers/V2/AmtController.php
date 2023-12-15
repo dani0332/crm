@@ -245,7 +245,7 @@ class AmtController extends Controller
             })->values();
         }
 
-        $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypes::BUSINESS->id());
+        $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypes::GROUP_MEDICAL->id());
         $countries = Nationality::all();
         $amlQuoteStatus = $crudService->checkAmlQuoteStatus($record->quote_status_id);
         $entities = Entity::all();
