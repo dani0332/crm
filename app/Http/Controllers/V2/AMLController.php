@@ -253,6 +253,8 @@ class AMLController extends Controller
 
         $kycStatus = AMLService::getKycType($quoteTypeId, $quoteRequestId);
 
+        $amlScreeningStatus = [QuoteStatusEnum::AMLScreeningCleared => 2, QuoteStatusEnum::AMLScreeningFailed => 3];
+
         $data = [
             'quoteType' => $quoteType,
             'quoteRequest' => $quoteRequest,
@@ -276,7 +278,7 @@ class AMLController extends Controller
             'customerDetails' => $customerDetails,
             'amlDecisionStatusEnum' => $amlDecisionStatusEnum,
             'lookups' => $lookups,
-            'quoteAmlStatus' => $this->checkAmlQuoteStatus($quoteRequest->quote_status_id),
+            'quoteAmlStatus' => $amlScreeningStatus[$quoteRequest->quote_status_id] ?? null,
         ];
 
         if ($quoteType->code == quoteTypeCode::Business) {
@@ -607,17 +609,6 @@ class AMLController extends Controller
         }
 
         return response()->json($response);
-    }
-
-    private function checkAmlQuoteStatus($statusId)
-    {
-        if ($statusId == QuoteStatusEnum::AMLScreeningCleared) {
-            return 2;
-        } elseif ($statusId == QuoteStatusEnum::AMLScreeningFailed) {
-            return 1;
-        }
-
-        return null;
     }
 
     private function AMLJobDispatchForMembers($updateQuote, $membersDetails, $bridgerAPIToken, $quoteRequestId, $quoteTypeId, $customerType)
