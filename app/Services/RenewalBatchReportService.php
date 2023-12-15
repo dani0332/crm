@@ -79,7 +79,6 @@ class RenewalBatchReportService extends BaseService
          */
         $authUserIsManager = auth()->user()->hasRole(RolesEnum::CarManager);
         $authUserIsRenewalsManager = auth()->user()->hasRole(RolesEnum::RenewalsManager);
-        $authUserIsDeputyManager = auth()->user()->hasRole(RolesEnum::CarDeputyManager);
         $authUserIsCEO = auth()->user()->hasRole(RolesEnum::SeniorManagement);
         $authUserIsAccounts = auth()->user()->hasRole(RolesEnum::Accounts);
         $authUserIsAdvisor = auth()->user()->hasRole(RolesEnum::CarAdvisor);
@@ -93,21 +92,10 @@ class RenewalBatchReportService extends BaseService
             ->map(fn ($users) => $users->name)
             ->toArray();
         // filteration of valid advisores based on roles
-        if ($authUserIsDeputyManager || $authUserIsManager || $authUserIsRenewalsManager) {
-            if ($authUserIsDeputyManager) {
-                $userIds = [];
-                $userManagerIds = $this->getUserManagers($authUserId)->pluck('id')->toArray();
-                if (empty($userManagerIds)) {
-                    $userIds = $this->deputyManagerWalkTree($authUserId);
-                } elseif (count($userManagerIds) > 0) {
-                    foreach ($userManagerIds as $key => $value) {
-                        $users = $this->deputyWalkTreeMirrorForManager($value);
-                        $userIds = array_merge($userIds, $users);
-                    }
-                }
-            } else {
-                $userIds = $this->walkTree($authUserId);
-            }
+        if ($authUserIsManager || $authUserIsRenewalsManager) {
+
+            $userIds = $this->walkTree($authUserId);
+
             foreach ($carAdvisors as $key => $value) {
                 if (! in_array($key, $userIds)) {
                     unset($carAdvisors[$key]);
@@ -204,7 +192,6 @@ class RenewalBatchReportService extends BaseService
         $authUserIsManager = auth()->user()->hasRole(RolesEnum::CarManager);
         $authUserIsRenewalsManager = auth()->user()->hasRole(RolesEnum::RenewalsManager);
         $authUserIsAdvisor = auth()->user()->hasRole(RolesEnum::CarAdvisor);
-        $authUserIsDeputyManager = auth()->user()->hasRole(RolesEnum::CarDeputyManager);
         $authUserIsCEO = auth()->user()->hasRole(RolesEnum::SeniorManagement);
         $authUserIsAccounts = auth()->user()->hasRole(RolesEnum::Accounts);
         /**
@@ -364,20 +351,7 @@ class RenewalBatchReportService extends BaseService
                 $advisorsFilter = $this->getUsersByTeamIds($teamsIds)->pluck('id')->toArray();
             }
 
-            if ($authUserIsDeputyManager) {
-                $userIds = [];
-                if ($authUserIsDeputyManager) {
-                    $userManagerIds = $this->getUserManagers($authUserId)->pluck('id')->toArray();
-                    if (empty($userManagerIds)) {
-                        $userIds = $this->deputyManagerWalkTree($authUserId);
-                    } elseif (count($userManagerIds) > 0) {
-                        foreach ($userManagerIds as $key => $value) {
-                            $users = $this->deputyWalkTreeMirrorForManager($value);
-                            $userIds = array_merge($userIds, $users);
-                        }
-                    }
-                }
-            } elseif ($authUserIsCEO || $authUserIsAccounts) {
+            if ($authUserIsCEO || $authUserIsAccounts) {
                 // get instance of crud service with the help of app service container
                 $crudService = app()->make(CRUDService::class);
                 // get car advisors
@@ -455,21 +429,9 @@ class RenewalBatchReportService extends BaseService
             );
 
             $query = $query->whereIn('car_quote_request.advisor_id', $userIds);
-        } elseif (! isset($filters->advisors) && $authUserIsDeputyManager || $authUserIsManager || $authUserIsRenewalsManager) {
+        } elseif (! isset($filters->advisors) && $authUserIsManager || $authUserIsRenewalsManager) {
             $userIds = [];
-            if ($authUserIsDeputyManager) {
-                $userManagerIds = $this->getUserManagers($authUserId)->pluck('id')->toArray();
-                if (empty($userManagerIds)) {
-                    $userIds = $this->deputyManagerWalkTree($authUserId);
-                } elseif (count($userManagerIds) > 0) {
-                    foreach ($userManagerIds as $key => $value) {
-                        $users = $this->deputyWalkTreeMirrorForManager($value);
-                        $userIds = array_merge($userIds, $users);
-                    }
-                }
-            } else {
-                $userIds = $this->walkTree($authUserId);
-            }
+            $userIds = $this->walkTree($authUserId);
             $query = $query->whereIn('car_quote_request.advisor_id', $userIds);
         } elseif (! isset($filters->advisors) && $authUserIsAdvisor && ! $authUserIsManager && ! $authUserIsRenewalsManager) {
             $query->whereIn('car_quote_request.advisor_id', array_merge([$authUserId], $teamUsersIds));

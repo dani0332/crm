@@ -554,7 +554,7 @@ watch(
                     :deselect-all="filters.teams?.length > 0" />
 
                 <ComboBox
-                    v-if="hasAnyRole([rolesEnum.CarManager, rolesEnum.RenewalsManager, rolesEnum.CarDeputyManager, rolesEnum.SeniorManagement, rolesEnum.Accounts])"
+                    v-if="hasAnyRole([rolesEnum.CarManager, rolesEnum.RenewalsManager, rolesEnum.SeniorManagement, rolesEnum.Accounts])"
                     v-model="filters.advisors" label="Advisors" placeholder="Search by Advisors" :options="advisorOptions"
                     :loading="loaders.advisorOptions" :select-all="filters.advisors?.length > 0"
                     :deselect-all="filters.advisors?.length > 0" />
@@ -618,7 +618,7 @@ watch(
                                     Approved Uncontactable
                                 </th>
 
-                                <th v-if="hasAnyRole([rolesEnum.CarManager, rolesEnum.RenewalsManager, rolesEnum.CarDeputyManager, rolesEnum.SeniorManagement, rolesEnum.Accounts])"
+                                <th v-if="hasAnyRole([rolesEnum.CarManager, rolesEnum.RenewalsManager, rolesEnum.SeniorManagement, rolesEnum.Accounts])"
                                     class="py-2 font-semibold tracking-widest uppercase text-xs px-3 sticky top-0 text-left">
                                     Ratio - Approved Car Sold and Uncontactable
                                 </th>
@@ -658,7 +658,7 @@ watch(
                                 <td class="x-table-cell px-3 py-4 align-middle">
                                     {{ item.uncontactable.toLocaleString() }}
                                 </td>
-                                <td v-if="hasAnyRole([rolesEnum.CarManager, rolesEnum.RenewalsManager, rolesEnum.CarDeputyManager, rolesEnum.SeniorManagement, rolesEnum.Accounts])"
+                                <td v-if="hasAnyRole([rolesEnum.CarManager, rolesEnum.RenewalsManager, rolesEnum.SeniorManagement, rolesEnum.Accounts])"
                                     class="x-table-cell px-3 py-4 align-middle">
                                     {{ item.ratioCarSoldUncontactable }} %
                                 </td>

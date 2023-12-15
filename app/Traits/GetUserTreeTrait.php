@@ -40,49 +40,6 @@ trait GetUserTreeTrait
         return array_unique($childUserIds);
     }
 
-    /**
-     * to be used in retention report for deputy manager role
-     * for getting the deputy manager's manager team
-     *
-     * @param [type] $userId
-     * @return void
-     */
-    public function deputyWalkTreeMirrorForManager($managerId)
-    {
-        $childUserIds = [$managerId];
-        $carTeam = $this->getProductByName(quoteTypeCode::Car);
-        if (auth()->user()->hasAnyRole([RolesEnum::CarDeputyManager])) {
-            $userAllTeams = DB::table('teams')
-                ->join('user_team', 'user_team.team_id', 'teams.id')
-                ->where('user_id', $managerId)
-                ->where('teams.parent_team_id', $carTeam->id)->select('teams.id');
-            $teamMates = DB::table('user_team')->whereIn('team_id', $userAllTeams)->pluck('user_id');
-            foreach ($teamMates as $teamMateId) {
-                array_push($childUserIds, $teamMateId);
-            }
-        }
-
-        return array_unique($childUserIds);
-    }
-
-    public function deputyManagerWalkTree($userId)
-    {
-        $childUserIds = [$userId];
-        $car = $this->getProductByName(quoteTypeCode::Car);
-        $carTeamIds = $this->getTeamsByProductId($car->id)->pluck('id');
-        $carUserIds = $this->getUsersByTeamIds($carTeamIds)->pluck('id');
-        $teamMates = DB::table('user_manager')->where('manager_id', $userId)->whereIn('user_id', $carUserIds)->pluck('user_id');
-        foreach ($teamMates as $teamMateId) {
-            $nextChild = DB::table('user_manager')->where('manager_id', $teamMateId)->whereIn('user_id', $carUserIds)->pluck('user_id');
-            if (count($nextChild) > 0) {
-                $this->walkTree($teamMateId);
-            }
-            array_push($childUserIds, $teamMateId);
-        }
-
-        return array_unique($childUserIds);
-    }
-
     public static function StaticWalkTree($userId)
     {
         $childUserIds = [];
