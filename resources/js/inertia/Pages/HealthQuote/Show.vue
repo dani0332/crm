@@ -2309,7 +2309,7 @@ const handleChildUpdate = planId => {
             <dd>{{ fixedValue(ecomDetails.priceWithVAT) }}</dd>
           </div>
             <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">Co Payment</dt>
+                <dt class="font-medium">CO-PAY / CO-INSURANCE</dt>
                 <dd>{{ (coPayment)?coPayment.text:'N/A' }}</dd>
             </div>
         </dl>
