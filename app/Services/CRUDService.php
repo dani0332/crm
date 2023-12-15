@@ -326,10 +326,11 @@ class CRUDService extends BaseService
                 strtolower($request->modelType) == strtolower(quoteTypeCode::Health)
                 && in_array($entity->health_team_type, [HealthTeamType::EBP, HealthTeamType::RM_NB, HealthTeamType::RM_SPEED])
             ) {
+                if ($entity->quote_status_id == QuoteStatusEnum::FollowedUp && $entity->advisor_id) {
+                    CammyJob::dispatch($entity, 'intro');
+                }
                 if ($request->leadStatus == QuoteStatusEnum::Qualified && $entity->advisor_id) {
-                    CammyJob::dispatch($entity, 'intro')->delay(now()->addSeconds(3));
-                    IntroEmailJob::dispatch(quoteTypeCode::Health, 'Capi', $entity->uuid, 'send-rm-intro-email', null, false)
-                        ->delay(now()->addSeconds(3));
+                    IntroEmailJob::dispatch(quoteTypeCode::Health, 'Capi', $entity->uuid, 'send-rm-intro-email', null, false);
                 } else {
                     SyncSIBContactJob::dispatch($entity);
                 }
@@ -534,6 +535,7 @@ class CRUDService extends BaseService
 
         return $genderOptions;
     }
+
     public function toggleSelection($data, $quoteTypeId)
     {
         $toggleData = [
@@ -546,6 +548,7 @@ class CRUDService extends BaseService
 
         return $response;
     }
+
     public function cancelPayment($request)
     {
         $embeddedProductOptionsIds = EmbeddedProductOption::where('embedded_product_id', $request->embedded_id)->pluck('id');
@@ -594,6 +597,7 @@ class CRUDService extends BaseService
 
         return response(['Transaction does not exist'], 403);
     }
+
     public function processCancelPayment($data)
     {
         $planData = [
@@ -624,6 +628,7 @@ class CRUDService extends BaseService
 
         return '';
     }
+
     public function scoreBreakdown($quote, $type)
     {
         $scoreList = [];
@@ -693,12 +698,11 @@ class CRUDService extends BaseService
             }
 
             return $scoreList;
-
         }
     }
+
     public function calculateScore($quote)
     {
-
         if ($quote->payments->first() && isset($quote->customer)) {
             $paymentTopScore = 0;
             $paymentAuthorized = 0;
@@ -723,7 +727,6 @@ class CRUDService extends BaseService
             if (isset($quote->customer->customerDetail)) {
                 $customerDetail = $quote->customer->customerDetail;
                 if (isset($customerDetail)) {
-
                     $customerScore += in_array(strtolower($customerDetail->job_title), Kyc::PROFESSION_THREE_RATING) ? 3 : (in_array(strtolower($customerDetail->job_title), Kyc::PROFESSION_TWO_RATING) ? 2 : 1);
                     $customerScore += in_array(strtolower($customerDetail->residential_status), Kyc::RESIDENT_STATUS_THREE_RATING) ? 3 : 1;
                     $customerScore += in_array(strtolower($customerDetail->mode_of_delivery), Kyc::MODE_OF_DELIVERY_THREE_RATING) ? 3 : 1;
