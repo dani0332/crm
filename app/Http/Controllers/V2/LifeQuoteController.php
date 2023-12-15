@@ -112,7 +112,6 @@ class LifeQuoteController extends Controller
             })->values();
         }
 
-
         $activitiesData = [];
         foreach ($activities as $activity) {
             $activitiesData[] = [
@@ -157,7 +156,7 @@ class LifeQuoteController extends Controller
             'emirates' => $emirates,
             'UBOsDetails' => $uboDetails,
             'UBORelations' => $uboRelations,
-            'insuranceProviders' => $insuranceProviders
+            'insuranceProviders' => $insuranceProviders,
         ]);
     }
 

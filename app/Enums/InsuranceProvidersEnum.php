@@ -51,7 +51,6 @@ final class InsuranceProvidersEnum extends Enum
     public const SAICO = 'SAICO';
     public const NLGIC = 'NLGIC';
     public const AFNIC = 'AFNIC';
-
     public const FPIL = 'FPIL';
     public const ZILL = 'ZILL';
     public const STF = 'STF';

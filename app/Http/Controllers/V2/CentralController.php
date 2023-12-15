@@ -159,14 +159,12 @@ class CentralController extends Controller
     }
 
     /**
-     * @param $quoteType
-     * @param $code
-     * @param PlanDetailsRequest $request
      * @return \Illuminate\Http\RedirectResponse
      */
     public function savePlanDetails($quoteType, $code, PlanDetailsRequest $request)
     {
         $response = (new CentralService())->savePlanDetails($quoteType, $code, $request->safe());
+
         return redirect()->back();
     }
 

@@ -5,7 +5,6 @@ namespace Database\Seeders;
 use App\Enums\InsuranceProvidersEnum;
 use App\Enums\QuoteTypes;
 use App\Models\InsuranceProvider;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class InsuranceQuoteTypeSeeder extends Seeder
@@ -22,7 +21,7 @@ class InsuranceQuoteTypeSeeder extends Seeder
         $quoteTypes = [
             ['quote_type_id' => QuoteTypes::LIFE->id(), 'providers' => [
                 InsuranceProvidersEnum::FPIL, InsuranceProvidersEnum::ZILL, InsuranceProvidersEnum::MTL, InsuranceProvidersEnum::OI2,
-                InsuranceProvidersEnum::SI, InsuranceProvidersEnum::OIC
+                InsuranceProvidersEnum::SI, InsuranceProvidersEnum::OIC,
             ]],
             ['quote_type_id' => QuoteTypes::YACHT->id(), 'providers' => [
                 InsuranceProvidersEnum::ALJALIL, InsuranceProvidersEnum::AXA, InsuranceProvidersEnum::OI2, InsuranceProvidersEnum::OUNB,
@@ -30,18 +29,15 @@ class InsuranceQuoteTypeSeeder extends Seeder
             ]],
             ['quote_type_id' => QuoteTypes::CORPLINE->id(), 'providers' => [
                 InsuranceProvidersEnum::AIG,
-            ]]
+            ]],
         ];
 
-        foreach ($quoteTypes as $quoteType)
-        {
+        foreach ($quoteTypes as $quoteType) {
             $quoteTypeId = $quoteType['quote_type_id'];
             $providers = $quoteType['providers'];
 
-            foreach ($providers as $provider)
-            {
-                if($provider = InsuranceProvider::where('code', $provider)->first())
-                {
+            foreach ($providers as $provider) {
+                if ($provider = InsuranceProvider::where('code', $provider)->first()) {
                     $provider->quoteTypes()->attach($quoteTypeId);
                 }
 
