@@ -150,7 +150,6 @@ class BusinessQuoteController extends Controller
         $quoteDocuments = $this->businessQuoteService->getQuoteDocuments($this->genericModel->modelType, $record->id);
         $displaySendPolicyButton = $this->businessQuoteService->displaySendPolicyButton($record, $quoteDocuments, self::TYPE_ID);
         $documentTypes = $this->businessQuoteService->getQuoteDocumentsForUpload(self::TYPE_ID);
-        $documentTypes = collect($documentTypes)->groupBy('category');
 
         $activities = $this->businessQuoteService->getActivityByLeadId($record->id, strtolower($this->genericModel->modelType));
         $customerAdditionalContacts = $this->businessQuoteService->getAdditionalContacts($record->customer_id, $record->mobile_no);
@@ -175,7 +174,7 @@ class BusinessQuoteController extends Controller
 
         $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypeId::Corpline);
         $companyType = LookupRepository::where('key', LookupsEnum::COMPANY_TYPE)->get();
-        $UBODetails = CustomerMembersRepository::getBy('quote_id', $record->id, QuoteTypes::BUSINESS->name, CustomerTypeEnum::Entity);
+        $UBODetails = CustomerMembersRepository::getBy($record->id, QuoteTypes::BUSINESS->name, CustomerTypeEnum::Entity);
         $nationalities = Nationality::where('is_active', 1)->select('id', 'text')->get();
         $UBORelations = LookupRepository::where('key', LookupsEnum::UBO_RELATION)->get();
         $emirates = Emirate::where('is_active', 1)->select('id', 'text')->get();
