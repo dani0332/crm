@@ -76,6 +76,7 @@ defineProps({
   carPlanTypeEnum: Object,
   policyIssuanceStatus: Array,
   bPDetails: Array,
+  documentTypesByCategory: Array,
   customerTypeEnum: Object,
   memberRelations: Array,
   membersDetails: Array,
@@ -244,8 +245,8 @@ function repairTypeCheck(repairType) {
     ? coreInsurer.includes(repairType.providerCode)
       ? 'Premium workshop'
       : halfLiveInsurer.includes(repairType.providerCode)
-      ? 'Non-Agency workshop'
-      : 'NON-AGENCY'
+        ? 'Non-Agency workshop'
+        : 'NON-AGENCY'
     : repairType.repairType;
 }
 
@@ -3254,7 +3255,10 @@ const handleChildUpdate = planId => {
           </ul>
         </x-alert>
 
-        <div v-for="(value, key, index) in documentTypes" :key="index">
+        <div
+          v-for="(value, key, index) in documentTypesByCategory"
+          :key="index"
+        >
           <strong>{{ key + ' Dcouments' }}</strong>
 
           <div v-if="Array.isArray(value)">

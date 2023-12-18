@@ -501,9 +501,9 @@ class CRUDController extends Controller
 
         $insuranceProviderLeadCount = $insuranceProviderCode = '';
         if (!empty($payments)) {
-            $insurance_provider_id = $payments[0]['insurance_provider_id'];
-            $insuranceProviderCode = InsuranceProviderRepository::where('id', $insurance_provider_id)->value('code');
-            $insuranceProviderLeadCount = Payment::where('insurance_provider_id', '=', $insurance_provider_id)->count();
+            // $insurance_provider_id = $payments[0]['insurance_provider_id'];
+            // $insuranceProviderCode = InsuranceProviderRepository::where('id', $insurance_provider_id)->value('code');
+            // $insuranceProviderLeadCount = Payment::where('insurance_provider_id', '=', $insurance_provider_id)->count();
         }
         $mainPayment = $paymentEntityModel->payments()->where('code', '=', $paymentEntityModel->code)->first();
         $paymentLink = config('constants.PAYMENT_REDIRECT_LINK');
@@ -665,8 +665,8 @@ class CRUDController extends Controller
             $docUploadURL = config('constants.ECOM_CAR_INSURANCE_QUOTE_URL') . $record->uuid . '/thankyou';
             $documentTypes = $this->quoteDocumentService->getQuoteDocumentsForUpload(QuoteTypeId::Car);
 
-            $documentTypes = collect($documentTypes)->groupBy('category');
-            $documentTypes->all();
+            $documentTypesByCategory = collect($documentTypes)->groupBy('category');
+            $documentTypesByCategory->all();
             $quoteDocuments = array_values($quoteDocuments->toArray());
             $planURL = $ecomCarInsuranceQuoteUrl . $record->uuid;
             $storageUrl = storageUrl();
@@ -724,7 +724,7 @@ class CRUDController extends Controller
                 'paymentEntityModel', 'payments', 'paymentMethods', 'isQuoteDocumentEnabled', 'quoteDocuments', 'displaySendPolicyButton', 'customerAdditionalContacts', 'lostApproveReasons', 'lostRejectReasons', 'allowQuoteLogAction', 'carLostChangeStatus',
                 'carMakeText', 'carModelText', 'advisor', 'tiers', 'daysAfterCapturedPayment', 'access', 'carPlanFeaturesCodeEnum', 'carPlanExclusionsCodeEnum', 'documentTypes', 'planURL', 'storageUrl', 'kyoEndPoint',
                 'carPlanTypeEnum', 'UBORelations', 'UBOsDetails', 'emirates', 'customerTypeEnum', 'memberRelations', 'membersDetails', 'industryType', 'nationalities',
-                'isCommercialVehicles', 'carInsuranceProviders', 'policyIssuanceStatus', 'bPDetails',
+                'isCommercialVehicles', 'carInsuranceProviders', 'policyIssuanceStatus', 'bPDetails', 'documentTypesByCategory'
             ]));
         }
 
