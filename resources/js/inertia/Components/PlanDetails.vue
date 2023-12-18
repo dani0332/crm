@@ -94,6 +94,7 @@ const updatePriceWithVat = () => {
       ? planDetailsForm.price_vat_applicable
       : 0,
   );
+
   let priceVatNotApp = parseFloat(
     planDetailsForm.price_vat_not_applicable !== null &&
       planDetailsForm.price_vat_not_applicable !== ''
@@ -111,6 +112,7 @@ const updatePriceWithVat = () => {
 
     planDetailsForm.price_with_vat = totalPrice.toFixed(2);
   } else {
+
     if (priceVatApp) {
       let price = parseFloat(planDetailsForm.price_vat_applicable);
       planDetailsForm.price_with_vat = ((price / 100) * 5 + price).toFixed(2);
@@ -125,6 +127,7 @@ const updatePriceWithVat = () => {
 
 const hasRole = role => useHasRole(role);
 const rolesEnum = page.props.rolesEnum;
+
 </script>
 
 <template>
