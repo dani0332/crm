@@ -20,16 +20,15 @@ const planDetailsForm = useForm({
   insurance_provider_id: props.quote?.insurance_provider_id ?? null,
   price_vat_applicable : props.quote?.price_vat_applicable ?? null,// price vat applicable
   price_vat_not_applicable: props.quote?.price_vat_not_applicable ?? null,//price vat not applicable  
-  price_with_vat: props.quote?.price_with_vat ?? null,
-  //price_without_vat: null,
+  price_with_vat: props.quote?.price_with_vat ?? null,  
   insurer_quote_number: props.quote?.insurer_quote_number ?? null,
 
 });
 
 const insuranceProviderOptions = computed(() => {
   return props?.insuranceProviders?.map(provider => ({
-    value: provider.id,
-    label: provider.text,
+    value: (provider?.id) ? provider.id : (provider?.value) ? provider.value : null,
+    label: (provider?.text) ? provider.text : (provider?.label) ? provider.label : null,
   }));
 });
 
@@ -48,8 +47,6 @@ const submitPlanDetailsForm = isValid => {
 
   planDetailsForm.setError([]);
 
-  console.log(url, "URL");
-
   planDetailsForm.post(url, {
     preserveScroll: true,
     onError: errors => {
@@ -65,24 +62,24 @@ const submitPlanDetailsForm = isValid => {
       });
     },
     onSuccess: () => {
-      notification.success({
-        title: 'Plan details saved',
-        position: 'top',
-      });
+       notification.success({
+         title: 'Plan details saved',
+         position: 'top',
+       });
     },
   });
 }
 
-const updatePriceWithVat = () => {  
+const updatePriceWithVat = () => {
   
-  if(planDetailsForm.price_vat_applicable != "") {
+  if(planDetailsForm.price_vat_applicable !== null && planDetailsForm.price_vat_applicable !== "") {
     let price = parseFloat(planDetailsForm.price_vat_applicable);
-    planDetailsForm.price_with_vat = ((price / 100) * 5) + price;
+    planDetailsForm.price_with_vat = (((price / 100) * 5) + price).toFixed(2);
   }
 
-  else if(planDetailsForm.price_vat_not_applicable != "") {
+  if(planDetailsForm.price_vat_not_applicable !== null && planDetailsForm.price_vat_not_applicable !== "") {    
     let price = parseFloat(planDetailsForm.price_vat_not_applicable);
-    planDetailsForm.price_with_vat = ((price / 100) * 5) + price;
+    planDetailsForm.price_with_vat = price.toFixed(2);
   }
 
 }
@@ -93,7 +90,7 @@ const rolesEnum = page.props.rolesEnum;
 </script>
 
 <template>
-  <div class="p-4 rounded shadow mb-6 bg-white" v-show="false">
+  <div class="p-4 rounded shadow mb-6 bg-white">
     <div>
       <h3 class="font-semibold text-primary-800 text-lg">Plan Details</h3>
       <x-divider class="mb-4 mt-1" />
@@ -116,7 +113,7 @@ const rolesEnum = page.props.rolesEnum;
         <div class="w-full md:w-1/5">
           <x-input
             v-model="planDetailsForm.price_vat_applicable"
-            :rules="props.quoteType == quoteTypeCodeEnum.Life ? [] : [isRequired]"
+            :rules="props.quoteType == quoteTypeCodeEnum.Life || props.quoteType == quoteTypeCodeEnum.Business ? [] : [isRequired]"
             :disabled="props.quoteType == quoteTypeCodeEnum.Life && props.quoteType != quoteTypeCodeEnum.Business"
             :error="planDetailsForm.errors.price_vat_applicable"
             label="Price (VAT Applicable)"
@@ -134,6 +131,7 @@ const rolesEnum = page.props.rolesEnum;
             type="number"
             label="Price (VAT not applicable)"
             class="w-full"
+            @change="updatePriceWithVat"
           />
         </div>
 

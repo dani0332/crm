@@ -35,4 +35,9 @@ class CycleQuote extends Model
     {
         return $this->morphMany(QuoteDocument::class, 'quote_documentable');
     }
+
+    public function insuranceProviderDetails()
+    {
+        return $this->hasOne(InsuranceProvider::class, 'id', 'insurance_provider_id');
+    }
 }

@@ -162,10 +162,13 @@ class CentralController extends Controller
     {
         $repository = getRepositoryObject($quoteType);
 
-        $quote = $repository::where('code', $code)->firstOrFail();
-        $quote->update($request->validated());
+        $data = $request->safe();
+        $data->price_with_vat = $data->price_vat_applicable ? ($data->price_vat_applicable + (($data->price_vat_applicable / 100) * 5)) : $data->price_vat_not_applicable;
 
-        return redirect()->back()->with('success', 'updated successfully');
+        $quote = $repository::where('code', $code)->firstOrFail();
+        $quote->update($data->toArray());
+
+        return redirect()->back();
     }
 
     public function updateSelectedPlan($quoteType, $uuid, $planId)

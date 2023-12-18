@@ -4,6 +4,8 @@ namespace App\Http\Controllers\V2;
 
 use App\Enums\CustomerTypeEnum;
 use App\Enums\LookupsEnum;
+use App\Enums\PaymentStatusEnum;
+use App\Enums\PaymentTooltip;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
@@ -146,6 +148,8 @@ class BikeQuoteController extends Controller
             'emirates' => $emirates,
             'UBOsDetails' => $uboDetails,
             'UBORelations' => $uboRelations,
+            'paymentTooltipEnum' => PaymentTooltip::asArray(),
+            'paymentStatusEnum' => PaymentStatusEnum::asArray(),
         ]);
     }
 

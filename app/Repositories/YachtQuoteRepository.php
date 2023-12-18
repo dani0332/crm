@@ -85,8 +85,13 @@ class YachtQuoteRepository extends BaseRepository
                 'nationality',
                 'quoteDetail.lostReason',
                 'quoteDetail.previousAdvisor',
+                'insuranceProviderDetails',
                 'payments' => function ($q) {
-                    $q->with(['paymentStatus', 'personalPlan', 'paymentMethod']);
+                    $q->with(['paymentStatus', 'personalPlan', 'paymentMethod',
+                        'paymentSplits.paymentStatus',
+                        'paymentSplits.paymentMethod',
+                        'paymentSplits.documents',
+                    ]);
                 },
                 'createdBy',
                 'updatedBy',

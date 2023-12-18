@@ -1,4 +1,5 @@
 <script setup>
+import PaymentTableNew from './../../Components/PaymentTableNew.vue';
 import LazyDocumentUploader from './Partials/DocumentUploader.vue';
 import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 import LazyCreatePlan from './Partials/CreatePlan.vue';
@@ -48,10 +49,12 @@ defineProps({
   canAddBatchNumber: Boolean,
   paymentLink: String,
   quoteType: String,
+  paymentTooltipEnum: Object,
+  storageUrl: String,
 });
 
 const page = usePage();
-
+console.log("haf"+JSON.stringify(page.props.documentTypes));
 const notification = useToast();
 const hasRole = role => useHasRole(role);
 const hasAnyRole = roles => useHasAnyRole(roles);
@@ -528,7 +531,7 @@ const plansTable = reactive({
       value: 'eligibilityName',
     },
     {
-      text: 'Base Price',
+      text: 'Price',
       value: 'actualPremium',
     },
     {
@@ -2297,16 +2300,7 @@ const handleChildUpdate = planId => {
         </dl>
       </div>
     </div>
-
-    <PaymentTable
-      :payments="payments"
-      :can="can"
-      :isBetaUser="isBetaUser"
-      :quoteRequest="quoteRequest"
-      :paymentMethods="paymentMethods"
-      :insuranceProviders="insuranceProviders"
-      :quote="quote"
-    />
+    
 
     <!-- <div class="p-4 rounded shadow mb-6 bg-white" v-if="isQuoteDocumentEnabled">
       <div>
@@ -2537,8 +2531,7 @@ const handleChildUpdate = planId => {
               Copy
             </x-button>
 
-            <!-- v-if="hasRole(page.props.rolesEnum.HealthAdvisor)", hide it for now -->
-            <span v-if="true == false">
+            <span v-if="hasRole(page.props.rolesEnum.HealthAdvisor)">
               <SelectPlan
                 v-if="prefillPlanId != item.id"
                 @update:updatePlanId="handleChildUpdate"
@@ -2668,6 +2661,28 @@ const handleChildUpdate = planId => {
         </div>
       </x-modal>
     </div>
+    <PaymentTableNew 
+			v-if="hasRole(rolesEnum.BetaUser)"
+			quoteType="Health"
+			:payments="payments"
+			:paymentDocument="documentTypes.QUOTE.filter(item => item.code === 'HPD' || item.code === 'HPDR')"
+			:quoteRequest="quoteRequest"
+			:paymentStatusEnum="paymentStatusEnum"
+			:paymentTooltipEnum="paymentTooltipEnum"
+			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name, tooltip: pm.tool_tip } })"
+			:storageUrl="storageUrl"
+      :eCommercePrice="ecomDetails.priceWithVAT?ecomDetails.priceWithVAT:0"
+		/>
+    <PaymentTable
+      v-else
+      :payments="payments"
+      :can="can"
+      :isBetaUser="isBetaUser"
+      :quoteRequest="quoteRequest"
+      :paymentMethods="paymentMethods"
+      :insuranceProviders="insuranceProviders"
+      :quote="quote"
+    />
     <EmbeddedProducts
       :data="embeddedProducts"
       :link="quote.uuid"
@@ -2925,6 +2940,6 @@ const handleChildUpdate = planId => {
       />
     </div>
 
-    <AuditLogs :type="'App\\Models\\HealthQuote'" :id="$page.props.quote.id" />
+    <AuditLogs :type="'App\\Models\\HealthQuote'" :id="$page.props.quote.id" :quoteCode="$page.props.quote.code"/>
   </div>
 </template>

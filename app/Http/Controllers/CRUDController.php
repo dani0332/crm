@@ -16,6 +16,7 @@ use App\Enums\LeadSourceEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
+use App\Enums\PaymentTooltip;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
@@ -47,6 +48,7 @@ use App\Repositories\EmbeddedProductRepository;
 use App\Repositories\InsuranceProviderRepository;
 use App\Repositories\LookupRepository;
 use App\Repositories\NationalityRepository;
+use App\Repositories\PaymentSplitsRepository;
 use App\Repositories\RenewalBatchRepository;
 use App\Repositories\UserRepository;
 use App\Services\ActivitiesService;
@@ -107,6 +109,7 @@ class CRUDController extends Controller
     protected $quoteDocumentService;
     protected $emailDataService;
     protected $allocationService;
+    protected $paymentSplitsRepository;
 
     use GenericQueriesAllLobs;
 
@@ -134,6 +137,7 @@ class CRUDController extends Controller
         QuoteDocumentService $quoteDocumentService,
         EmailDataService $emailDataService,
         AllocationService $allocationService,
+        PaymentSplitsRepository $paymentSplitsRepository,
     ) {
         $this->genericModel = new GenericModel();
         $this->healthQuoteService = $healthService;
@@ -160,6 +164,7 @@ class CRUDController extends Controller
         $this->allocationService = $allocationService;
         $this->setModelType($request);
         $this->fillModelByModelType(ucwords($this->genericModel->modelType), $request);
+        $this->paymentSplitsRepository = $paymentSplitsRepository;
     }
 
     /**
@@ -481,6 +486,7 @@ class CRUDController extends Controller
         }
         $quoteType = strtolower($this->genericModel->modelType);
         $quoteTypeId = $this->activityService->getQuoteTypeId($quoteType);
+        $paymentTooltipEnum = PaymentTooltip::asArray();
         $record = $this->crudService->getEntity($this->genericModel->modelType, $id);
         abort_if(! $record, 404);
 
@@ -678,7 +684,7 @@ class CRUDController extends Controller
                 'yearsOfManufacture', 'notesForCustomers', 'quoteType', 'quoteTypeId', 'trimList', 'autoAllocationDisabled', 'embeddedProducts', 'genericRequestEnum',
                 'paymentEntityModel', 'payments', 'paymentMethods', 'isQuoteDocumentEnabled', 'quoteDocuments', 'displaySendPolicyButton', 'customerAdditionalContacts', 'lostApproveReasons', 'lostRejectReasons', 'allowQuoteLogAction', 'carLostChangeStatus',
                 'carMakeText', 'carModelText', 'advisor', 'tiers', 'daysAfterCapturedPayment', 'access', 'carPlanFeaturesCodeEnum', 'carPlanExclusionsCodeEnum', 'documentTypes', 'planURL', 'storageUrl', 'kyoEndPoint',
-                'carPlanTypeEnum', 'UBORelations', 'UBOsDetails', 'emirates', 'customerTypeEnum', 'memberRelations', 'membersDetails', 'industryType', 'nationalities',
+                'carPlanTypeEnum', 'UBORelations', 'UBOsDetails', 'emirates', 'customerTypeEnum', 'memberRelations', 'membersDetails', 'industryType', 'nationalities', 'paymentTooltipEnum',
                 'isCommercialVehicles', 'carInsuranceProviders',
             ]));
         }
@@ -735,15 +741,18 @@ class CRUDController extends Controller
                 $payment->approved_button = $payment->payment_status_id == PaymentStatusEnum::PAID;
             });
 
-            $filteredPaymentMethods = $paymentMethods->filter(function ($paymentMethod) {
-                return $paymentMethod->code == PaymentMethodsEnum::CreditCard;
-            })->map(function ($paymentMethod) {
-                return [
-                    'value' => $paymentMethod->code,
-                    'label' => $paymentMethod->name,
-                ];
-            })->values();
-
+            if (auth()->user()->hasRole(RolesEnum::BetaUser)) {
+                $filteredPaymentMethods = $this->lookupService->getPaymentMethods();
+            } else {
+                $filteredPaymentMethods = $paymentMethods->filter(function ($paymentMethod) {
+                    return $paymentMethod->code == PaymentMethodsEnum::CreditCard;
+                })->map(function ($paymentMethod) {
+                    return [
+                        'value' => $paymentMethod->code,
+                        'label' => $paymentMethod->name,
+                    ];
+                })->values();
+            }
             $filteredInsuranceProviders = [];
             if (! empty($insuranceProviders)) {
 
@@ -754,6 +763,8 @@ class CRUDController extends Controller
                     ];
                 })->sortBy('label')->values();
             }
+            $documentTypes = $this->quoteDocumentService->getQuoteDocumentsForUpload(QuoteTypeId::Home);
+
             $documentTypes = $this->quoteDocumentService->getQuoteDocumentsForUpload(QuoteTypeId::Home);
 
             return inertia('HomeQuote/Show', [
@@ -798,6 +809,8 @@ class CRUDController extends Controller
                 'UBORelations' => $uboRelations,
                 'emirates' => $emirates,
                 'quoteType' => QuoteTypes::HOME,
+                'paymentTooltipEnum' => PaymentTooltip::asArray(),
+                'paymentStatusEnum' => PaymentStatusEnum::asArray(),
                 'documentTypes' => $documentTypes,
             ]);
         }
@@ -855,15 +868,18 @@ class CRUDController extends Controller
                 $payment->approved_button = $payment->payment_status_id == PaymentStatusEnum::PAID;
             });
 
-            $paymentMethods = $paymentMethods->filter(function ($paymentMethod) {
-                return $paymentMethod->code == PaymentMethodsEnum::CreditCard;
-            })->map(function ($paymentMethod) {
-                return [
-                    'value' => $paymentMethod->code,
-                    'label' => $paymentMethod->name,
-                ];
-            })->values();
-
+            if (auth()->user()->hasRole(RolesEnum::BetaUser)) {
+                $paymentMethods = $this->lookupService->getPaymentMethods();
+            } else {
+                $paymentMethods = $paymentMethods->filter(function ($paymentMethod) {
+                    return $paymentMethod->code == PaymentMethodsEnum::CreditCard;
+                })->map(function ($paymentMethod) {
+                    return [
+                        'value' => $paymentMethod->code,
+                        'label' => $paymentMethod->name,
+                    ];
+                })->values();
+            }
             if (! empty($insuranceProviders)) {
 
                 $insuranceProviders = $insuranceProviders?->map(function ($paymentMethod) {
@@ -919,6 +935,8 @@ class CRUDController extends Controller
                 'canAddBatchNumber' => auth()->user()->hasRole(RolesEnum::HealthManager),
                 'embeddedProducts' => $embeddedProducts,
                 'quoteType' => QuoteTypes::HEALTH,
+                'paymentTooltipEnum' => PaymentTooltip::asArray(),
+                'storageUrl' => storageUrl(),
                 'can' => [
                     'approve_payments' => auth()->user()->can(PermissionsEnum::ApprovePayments),
                     'edit_payments' => auth()->user()->can(PermissionsEnum::PaymentsEdit),
@@ -1143,11 +1161,14 @@ class CRUDController extends Controller
         if ($modelType == null) {
             $modelType = $request->get('modelType');
         }
-        $quoteTypes = 'Health,Car,Travel,Life,Home,Business,Pet';
-        $serviceType = str_contains($quoteTypes, ucwords($modelType)) ? strtolower($modelType).'QuoteService' : lcfirst(ucwords($modelType)).'Service';
-        $this->genericModel->properties = $this->{$serviceType}->fillModelProperties();
-        $this->genericModel->skipProperties = $this->{$serviceType}->fillModelSkipProperties();
-        $this->genericModel->searchProperties = $this->{$serviceType}->fillModelSearchProperties();
+        $ignoreModelTypes = ['Bike', 'Cycle', 'Yacht'];
+        if (! in_array($modelType, $ignoreModelTypes) && $modelType != null) {
+            $quoteTypes = 'Health,Car,Travel,Life,Home,Business,Pet';
+            $serviceType = str_contains($quoteTypes, ucwords($modelType)) ? strtolower($modelType).'QuoteService' : lcfirst(ucwords($modelType)).'Service';
+            $this->genericModel->properties = $this->{$serviceType}->fillModelProperties();
+            $this->genericModel->skipProperties = $this->{$serviceType}->fillModelSkipProperties();
+            $this->genericModel->searchProperties = $this->{$serviceType}->fillModelSearchProperties();
+        }
     }
 
     public function getDropdownSourceNameForDisplay($modelType, $propertyName, $recordId)
@@ -1664,60 +1685,190 @@ class CRUDController extends Controller
         if (! $quoteModel) {
             return response()->json(['success' => false]);
         }
-        $paymentInformation = [
-            'collection_type' => $request->collection_type,
-            'captured_amount' => $request->captured_amount,
-            'payment_methods_code' => $request->payment_methods,
-            'payment_status_id' => PaymentStatusEnum::DRAFT,
-            'plan_id' => ! empty($request->plan_id) ? $request->plan_id : null,
-            'insurance_provider_id' => ! empty($request->insurance_provider_id) ? $request->insurance_provider_id : null,
-            'created_by' => $request->user()->id,
-            'updated_by' => $request->user()->id,
-        ];
+        if (auth()->user()->hasRole(RolesEnum::BetaUser)) {
 
-        $count = $quoteModel->payments->count();
-        $paymentInformation['code'] = ($count > 0) ? $quoteModel->code.'-'.$count : $quoteModel->code;
+            if (! (Auth::user()->hasRole(RolesEnum::CarAdvisor))) {
+                return;
+            }
 
-        if ($request->reference) {
-            $paymentInformation['reference'] = $request->reference;
+            $masterPaymentStatus = PaymentStatusEnum::NEW;
+            if ($request->payment_methods == PaymentMethodsEnum::CreditApproval) {
+                $masterPaymentStatus = PaymentStatusEnum::CREDIT_APPROVED;
+            }
+            $paymentInformation = [
+                'total_price' => $request->total_price,
+                'notes' => ! empty($request->notes) ? $request->notes : null,
+                'custom_reason' => ! empty($request->custom_reason) ? $request->custom_reason : null,
+                'discount_reason' => $request->discount_reason,
+                'discount_custom_reason' => $request->discount_custom_reason,
+                'discount_type' => $request->discount,
+                'frequency' => $request->frequency,
+                'credit_approval' => $request->credit_approval,
+                'total_payments' => $request->payment_no,
+                'collection_type' => $request->collection_type,
+                'captured_amount' => 0,
+                'total_amount' => $request->total_amount, //amount after discount
+                'collection_date' => $request->collection_date,
+                'discount_value' => $request->discount_value,
+                'payment_methods_code' => $request->payment_methods,
+                'payment_status_id' => $masterPaymentStatus,
+                'plan_id' => ! empty($request->plan_id) ? $request->plan_id : null,
+                'insurance_provider_id' => ! empty($request->insurance_provider_id) ? $request->insurance_provider_id : null,
+                'created_by' => $request->user()->id,
+                'updated_by' => $request->user()->id,
+            ];
+
+            $count = $quoteModel->payments->count();
+            $paymentInformation['code'] = ($count > 0) ? $quoteModel->code.'-'.$count : $quoteModel->code;
+
+            if ($request->reference) {
+                $paymentInformation['reference'] = $request->reference;
+            }
+            if ($request->payment_methods != PaymentMethodsEnum::CreditCard && $request->payment_methods != PaymentMethodsEnum::InsureNowPayLater) {
+                $paymentInformation['authorized_at'] = now();
+            }
+            $payment = Payment::create($paymentInformation);
+
+            //Add split payments start
+            $this->paymentSplitsRepository->addPaymentSplits($request, $paymentInformation['code']);
+            //Add split payments ends
+
+            $quoteModel->payments()->save($payment);
+            $paymentLog = new PaymentStatusLog([
+                'current_payment_status_id' => PaymentStatusEnum::NEW,
+                'payment_code' => $paymentInformation['code'],
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+            $paymentLog->save();
+            $quoteModel->quote_status_id = QuoteStatusEnum::PaymentPending;
+            $quoteModel->save();
+
+            return back()->with('success', 'Payment Added');
+        } else {
+            $paymentInformation = [
+                'collection_type' => $request->collection_type,
+                'captured_amount' => $request->captured_amount,
+                'payment_methods_code' => $request->payment_methods,
+                'payment_status_id' => PaymentStatusEnum::DRAFT,
+                'plan_id' => ! empty($request->plan_id) ? $request->plan_id : null,
+                'insurance_provider_id' => ! empty($request->insurance_provider_id) ? $request->insurance_provider_id : null,
+                'created_by' => $request->user()->id,
+                'updated_by' => $request->user()->id,
+            ];
+
+            $count = $quoteModel->payments->count();
+            $paymentInformation['code'] = ($count > 0) ? $quoteModel->code.'-'.$count : $quoteModel->code;
+
+            if ($request->reference) {
+                $paymentInformation['reference'] = $request->reference;
+            }
+            if ($request->payment_methods != PaymentMethodsEnum::CreditCard && $request->payment_methods != PaymentMethodsEnum::InsureNowPayLater) {
+                $paymentInformation['authorized_at'] = now();
+            }
+            $payment = Payment::create($paymentInformation);
+            $quoteModel->payments()->save($payment);
+            $paymentLog = new PaymentStatusLog([
+                'current_payment_status_id' => PaymentStatusEnum::DRAFT,
+                'payment_code' => $paymentInformation['code'],
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+            $paymentLog->save();
+            $quoteModel->quote_status_id = QuoteStatusEnum::PaymentPending;
+            $quoteModel->save();
+
+            return back()->with('success', 'Payment has been created');
         }
-        if ($request->payment_methods != PaymentMethodsEnum::CreditCard && $request->payment_methods != PaymentMethodsEnum::InsureNowPayLater) {
-            $paymentInformation['authorized_at'] = now();
-        }
-        $payment = Payment::create($paymentInformation);
-        $quoteModel->payments()->save($payment);
-        $paymentLog = new PaymentStatusLog([
-            'current_payment_status_id' => PaymentStatusEnum::DRAFT,
-            'payment_code' => $paymentInformation['code'],
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-        $paymentLog->save();
-        $quoteModel->quote_status_id = QuoteStatusEnum::PaymentPending;
-        $quoteModel->save();
+    }
 
-        return back()->with('success', 'Payment has been created');
+    public function splitPaymentUpdate(Request $request)
+    {
+        if (auth()->user()->can(PermissionsEnum::ApprovePayments)) {
+            $successMessage = $this->paymentSplitsRepository->updatePaymentStatus($request);
+
+            return back()->with('success', $successMessage);
+        } else {
+            return back()->with('error', 'You are not authorized');
+        }
+    }
+
+    public function splitPaymentsApprove(Request $request)
+    {
+        if (auth()->user()->can(PermissionsEnum::ApprovePayments)) {
+            $successMessage = $this->paymentSplitsRepository->updateSplitPaymentsApprove($request);
+
+            return back()->with('success', $successMessage);
+        } else {
+            return back()->with('error', 'You are not authorized');
+        }
     }
 
     public function updatePayment(Request $request)
     {
-        $paymentInformation = [
-            'collection_type' => $request->collection_type,
-            'captured_amount' => $request->captured_amount,
-            'payment_methods_code' => $request->payment_methods,
-            'insurance_provider_id' => $request->insurance_provider_id,
-            'updated_by' => $request->user()->id,
-        ];
-        if ($request->reference) {
-            $paymentInformation['reference'] = $request->reference;
-        }
-        $payment = Payment::where('code', $request->paymentCode)->first();
-        if (! $payment) {
-            return back()->with('message', 'Payment record not found');
-        }
-        $payment->update($paymentInformation);
 
-        return back()->with('success', 'Payment has been updated');
+        if (auth()->user()->hasRole(RolesEnum::BetaUser)) {
+            if (! (Auth::user()->hasRole(RolesEnum::CarAdvisor))) {
+                return;
+            }
+            $paymentInformation = [
+                'total_price' => $request->total_price,
+                'notes' => ! empty($request->notes) ? $request->notes : null,
+                'custom_reason' => ! empty($request->custom_reason) ? $request->custom_reason : null,
+                'discount_reason' => $request->discount_reason,
+                'discount_custom_reason' => $request->discount_custom_reason,
+                'discount_type' => $request->discount,
+                'frequency' => $request->frequency,
+                'credit_approval' => $request->credit_approval,
+                'total_payments' => $request->payment_no,
+                'collection_type' => $request->collection_type,
+                'captured_amount' => $request->captured_amount,
+                'total_amount' => $request->total_amount, //amount after discount
+                'collection_date' => $request->collection_date,
+                'discount_value' => $request->discount_value,
+                'payment_methods_code' => $request->payment_methods,
+                'insurance_provider_id' => ! empty($request->insurance_provider_id) ? $request->insurance_provider_id : null,
+                'updated_by' => $request->user()->id,
+            ];
+
+            if ($request->reference) {
+                $paymentInformation['reference'] = $request->reference;
+            }
+            $payment = Payment::where('code', $request->paymentCode)->first();
+            if (! $payment) {
+                return back()->with('message', 'Payment record not found');
+            }
+
+            if ($request->payment_methods == PaymentMethodsEnum::CreditApproval) {
+                $paymentInformation['payment_status_id'] = PaymentStatusEnum::CREDIT_APPROVED;
+            } elseif ($payment->payment_status_id == PaymentStatusEnum::CREDIT_APPROVED) {
+                $paymentInformation['payment_status_id'] = PaymentStatusEnum::NEW;
+            }
+            $payment->update($paymentInformation);
+
+            //Update split payments start
+            $this->paymentSplitsRepository->updatePaymentSplits($request);
+
+            return back()->with('success', 'Payment Updated');
+        } else {
+            $paymentInformation = [
+                'collection_type' => $request->collection_type,
+                'captured_amount' => $request->captured_amount,
+                'payment_methods_code' => $request->payment_methods,
+                'insurance_provider_id' => $request->insurance_provider_id,
+                'updated_by' => $request->user()->id,
+            ];
+            if ($request->reference) {
+                $paymentInformation['reference'] = $request->reference;
+            }
+            $payment = Payment::where('code', $request->paymentCode)->first();
+            if (! $payment) {
+                return back()->with('message', 'Payment record not found');
+            }
+            $payment->update($paymentInformation);
+
+            return back()->with('success', 'Payment has been updated');
+        }
     }
 
     public function sendEmailOneClickBuy(Request $request)

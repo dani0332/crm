@@ -4,6 +4,8 @@ namespace App\Http\Controllers\V2;
 
 use App\Enums\CustomerTypeEnum;
 use App\Enums\LookupsEnum;
+use App\Enums\PaymentStatusEnum;
+use App\Enums\PaymentTooltip;
 use App\Enums\quoteBusinessTypeCode;
 use App\Enums\quoteStatusCode;
 use App\Enums\QuoteStatusEnum;
@@ -250,6 +252,7 @@ class AmtController extends Controller
         $amlQuoteStatus = $crudService->checkAmlQuoteStatus($record->quote_status_id);
         $entities = Entity::all();
         $lookupService = app(LookupService::class);
+        $paymentMethods = $lookupService->getPaymentMethods();
         $legalStructure = $lookupService->getLegalStructure();
         $idDocumentType = $lookupService->getEntityDocumentTypes();
         $issuancePlace = $lookupService->getIssuancePlaces();
@@ -287,6 +290,9 @@ class AmtController extends Controller
             'nationalities' => $nationalities,
             'emirates' => $emirates,
             'insuranceProviders' => $insuranceProviders,
+            'paymentTooltipEnum' => PaymentTooltip::asArray(),
+            'paymentStatusEnum' => PaymentStatusEnum::asArray(),
+            'paymentMethods' => $paymentMethods,
         ]);
     }
 

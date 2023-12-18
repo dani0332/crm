@@ -1,4 +1,5 @@
 <script setup>
+import PaymentTableNew from './../../Components/PaymentTableNew.vue';
 import LazyDocumentUploader from './Partials/DocumentUploader.vue';
 import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue';
@@ -13,6 +14,7 @@ defineProps({
   isManualAllocationAllowed: Boolean,
   genderOptions: Object,
   leadStatuses: Array,
+  permissions: Object,
   enums: Object,
   lostReasons: Array,
   ecomDetails: Object,
@@ -46,6 +48,8 @@ defineProps({
   UBORelations: Array,
   UBOsDetails: Array,
   canAddBatchNumber: Boolean,
+  paymentTooltipEnum: Object,
+  storageUrl: String,
 });
 
 
@@ -86,7 +90,7 @@ const notification = useNotifications('toast');
 
 const rolesEnum = page.props.rolesEnum;
 const hasRole = role => useHasRole(role);
-
+const can = permission => useCan(permission);
 
 const {
   isRequired,
@@ -732,11 +736,11 @@ const availablePlansTable = reactive({
       value: 'travelType',
     },
     {
-      text: 'Actual Price',
+      text: 'Price',
       value: 'actualPremium',
     },
     {
-      text: 'Price with VAT',
+      text: 'Total Price',
       value: 'discountPremium',
     },
     {
@@ -1957,7 +1961,7 @@ const genderList = [
           </div>
         </dl>
       </div>
-    </div>
+    </div>    
 
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div>
@@ -2164,17 +2168,7 @@ const genderList = [
         </template>
       </x-modal>
     </div>
-
-    <PaymentTable
-      :payments="payments"
-      :can="permissions"
-      :isBetaUser="isBetaUser"
-      :quoteRequest="quoteRequest"
-      :paymentMethods="paymentMethods"
-      :insuranceProviders="insuranceProviders"
-      :quote="quote"
-    />
-
+   
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div class="flex flex-wrap gap-4 justify-between items-center mb-4">
         <h3 class="font-semibold text-primary-800 text-lg">
@@ -2270,8 +2264,7 @@ const genderList = [
                 View
               </x-button>
 
-              <!-- v-if="hasRole(rolesEnum.TravelAdvisor)" hide for now -->
-              <span v-if="true == false">
+              <span v-if="hasRole(rolesEnum.TravelAdvisor)">
                 <SelectPlan
                   class="ml-1"
                   v-if="prefillPlanId != item.id"
@@ -2302,6 +2295,28 @@ const genderList = [
         <LazyAvailablePlan :plan="planDetails" />
       </x-modal>
     </div>
+
+    <PaymentTableNew 
+			v-if="hasRole(rolesEnum.BetaUser)"
+			quoteType="Travel"
+			:payments="payments"
+			:paymentDocument="documentTypes.QUOTE.filter(item => item.code === 'TPD' || item.code === 'TPDR')"
+			:quoteRequest="quoteRequest"
+			:paymentStatusEnum="enums.paymentStatusEnum"
+			:paymentTooltipEnum="paymentTooltipEnum"
+			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name, tooltip: pm.tool_tip } })"
+			:storageUrl="storageUrl"
+		/>
+    <PaymentTable
+      v-else
+      :payments="payments"
+      :can="permissions"
+      :isBetaUser="isBetaUser"
+      :quoteRequest="quoteRequest"
+      :paymentMethods="paymentMethods"
+      :insuranceProviders="insuranceProviders"
+      :quote="quote"
+    />
 
     <EmbeddedProducts
       :data="embeddedProducts"
@@ -2474,7 +2489,7 @@ const genderList = [
       />
     </div>
 
-    <AuditLogs :type="'App\\Models\\TravelQuote'" :id="$page.props.quote.id" />
+    <AuditLogs :type="'App\\Models\\TravelQuote'" :id="$page.props.quote.id" :quoteCode="$page.props.quote.code"/>
   </div>
 </template>
 <style>

@@ -43,6 +43,10 @@ class DatabaseSeeder extends Seeder
             LookupSeeder::class,
             //            AddNewDocumentTypesSeeder::class,
             // UpdateCustomerToHealthAndTravelMemberDetails::class,
+            PaymentMethodsAddSeeder::class,
+            AddNewDocumentTypeSeeder::class,
+            PaymentStatusAddSeeder::class,
+            updateDocTypePayment::class,
         ]);
     }
 }

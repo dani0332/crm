@@ -1,5 +1,6 @@
 <script setup>
-import MemberDetails from '../../Components/MemberDetails.vue';
+import PaymentTableNew from '../../Components/PaymentTableNew.vue';
+import MemberDetails from "../../Components/MemberDetails.vue";
 import QuoteDocuments from '../PersonalQuote/Partials/QuoteDocuments';
 import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue';
 
@@ -25,6 +26,11 @@ defineProps({
   canAddBatchNumber: Boolean,
   documentTypes: Object,
   storageUrl: String,
+  payments: Array,
+  paymentStatusEnum: Object,
+  paymentTooltipEnum: Object,
+  paymentMethods: Array,
+  insuranceProviders: Array,
 });
 
 const { isRequired } = useRules();
@@ -970,11 +976,12 @@ const linkEntity = () => {
       :canAddBatchNumber="canAddBatchNumber"
     />
 
-    <PlanDetails
+   <PlanDetails
       :insuranceProviders="insuranceProviders"
       :quote="quote"
       :quoteType="quoteType"
     />
+
 
     <div class="p-4 rounded shadow mb-6 bg-primary-50/25">
       <div>
@@ -1051,7 +1058,17 @@ const linkEntity = () => {
         </x-button>
       </div>
     </div>
-
+    <PaymentTableNew 
+			v-if="hasRole(rolesEnum.BetaUser)"
+			:quoteType="quoteType"
+			:payments="payments"
+			:paymentDocument="page.props.documentTypes.filter(item => item.code === 'LPD' || item.code === 'LPDR')"
+			:quoteRequest="quote"
+			:paymentStatusEnum="paymentStatusEnum"
+			:paymentTooltipEnum="paymentTooltipEnum"
+			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name, tooltip: pm.tool_tip } })"
+			:storageUrl="storageUrl"
+		/>
     <EmbeddedProducts
       :data="embeddedProducts"
       :link="quote.uuid"
@@ -1232,6 +1249,6 @@ const linkEntity = () => {
         :hide-footer="historyData.length < 15"
       />
     </div>
-    <AuditLogs :type="'App\\Models\\LifeQuote'" :id="$page.props.quote.id" />
+    <AuditLogs :type="'App\\Models\\LifeQuote'" :id="$page.props.quote.id" :quoteCode="$page.props.quote.code" />
   </div>
 </template>

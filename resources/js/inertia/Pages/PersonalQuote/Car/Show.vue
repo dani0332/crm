@@ -1,4 +1,5 @@
 <script setup>
+import PaymentTableNew from './../../../Components/PaymentTableNew.vue';
 import PaymentTable from './Partials/PaymentTable.vue';
 import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 import LazyCreatePlan from './Partials/CreatePlan.vue';
@@ -81,6 +82,7 @@ defineProps({
   UBOsDetails: Array,
   isCommercialVehicles: Boolean,
   carInsuranceProviders: Array,
+  paymentTooltipEnum: Object,
 });
 
 const page = usePage();
@@ -255,9 +257,9 @@ const availablePlansTable = reactive({
     { text: 'PAB cover', value: 'addons' },
     { text: 'Roadside assistance', value: 'roadSideAssistance' },
     { text: 'Oman cover TPL', value: 'omanCoverTPL' },
-    { text: 'Actual Price', value: 'actualPremium' },
+    { text: 'Price', value: 'actualPremium' },
     { text: 'Discounted Price', value: 'discountPremium' },
-    { text: 'Price with VAT.', value: 'premiumWithVat' },
+    { text: 'Total Price', value: 'premiumWithVat' },
     { text: 'Excess', value: 'excess' },
     { text: 'Action', value: 'action' },
   ],
@@ -2426,19 +2428,7 @@ const handleChildUpdate = planId => {
 			:quoteType="quoteType"
 			:quote="record"
 		/> -->
-
-    <PaymentTable
-      :payments="payments"
-      :quoteRequest="paymentEntityModel"
-      :paymentStatusEnum="paymentStatusEnum"
-      :isCommercialVehicles="isCommercialVehicles"
-      :carInsuranceProviders="carInsuranceProviders"
-      :paymentMethods="
-        paymentMethods.map(pm => {
-          return { value: pm.code, label: pm.name };
-        })
-      "
-    />
+	
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div>
         <h3 class="font-semibold text-primary-800 text-lg">Assumptions</h3>
@@ -2897,8 +2887,7 @@ const handleChildUpdate = planId => {
               </x-button>
             </template>
 
-            <!-- v-if="hasRole(rolesEnum.CarAdvisor)" , hide it temp -->
-            <span v-if="true == false">
+            <span v-if="hasRole(rolesEnum.CarAdvisor)">
               <SelectPlan
                 v-if="prefillPlanId != item.id"
                 @update:updatePlanId="handleChildUpdate"
@@ -3015,6 +3004,31 @@ const handleChildUpdate = planId => {
          missing @error="onPlanError" -->
       </x-modal>
     </div>
+
+    <PaymentTableNew 
+			v-if="hasRole(rolesEnum.BetaUser)"
+			quoteType="Car"
+			:payments="payments"
+			:paymentDocument="page.props.documentTypes.filter(item => item.code === 'CPD' || item.code === 'CPDR')"
+			:quoteRequest="paymentEntityModel"
+			:paymentStatusEnum="paymentStatusEnum"
+			:paymentTooltipEnum="paymentTooltipEnum"
+			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name, tooltip: pm.tool_tip } })"
+			:storageUrl="storageUrl"
+		/>
+    <PaymentTable
+		v-else
+      :payments="payments"
+      :quoteRequest="paymentEntityModel"
+      :paymentStatusEnum="paymentStatusEnum"
+      :isCommercialVehicles="isCommercialVehicles"
+      :carInsuranceProviders="carInsuranceProviders"
+      :paymentMethods="
+        paymentMethods.map(pm => {
+          return { value: pm.code, label: pm.name };
+        })
+      "
+    />
 
     <div
       class="p-4 rounded shadow mb-6 bg-white"
@@ -3648,7 +3662,7 @@ const handleChildUpdate = planId => {
       />
     </div>
   </div>
-  <AuditLogs :type="'App\\Models\\CarQuote'" :id="$page.props.record.id" />
+  <AuditLogs :type="'App\\Models\\CarQuote'" :id="$page.props.record.id" :quoteCode="$page.props.record.code"/>
   <ApiLogs
     v-if="can(permissionEnum.API_LOG_VIEW)"
     :type="'App\\Models\\CarQuote'"

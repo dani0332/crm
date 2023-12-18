@@ -32,6 +32,7 @@ class InsuranceProviderRepository extends BaseRepository
             ->where('insurance_provider.is_active', 1)
             ->where('insurance_provider.is_deleted', 0)
             ->join('insurance_provider', 'insurance_provider.id', '=', 'insurance_provider_quote_type.insurance_provider_id')
+            ->orderBy('text')
             ->get();
     }
 

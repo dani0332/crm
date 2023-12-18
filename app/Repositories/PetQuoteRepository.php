@@ -124,11 +124,12 @@ class PetQuoteRepository extends BaseRepository
                 'quoteDetail.lostReason',
                 'quoteDetail.previousAdvisor',
                 'payments' => function ($q) {
-                    $q->with(['paymentStatus', 'personalPlan', 'paymentMethod', 'paymentStatusLogs', 'insuranceProvider']);
+                    $q->with(['paymentStatus', 'personalPlan', 'paymentMethod', 'paymentStatusLogs', 'insuranceProvider', 'paymentSplits.paymentStatus', 'paymentSplits.paymentMethod', 'paymentSplits.documents']);
                 },
                 'createdBy',
                 'updatedBy',
                 'customer.additionalContactInfo',
+                'insuranceProviderDetails',
                 'documents' => function ($q) {
                     $q->with('createdBy')->orderBy('created_at', 'desc');
                 },

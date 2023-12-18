@@ -4,6 +4,8 @@ namespace App\Http\Controllers\V2;
 
 use App\Enums\CustomerTypeEnum;
 use App\Enums\LookupsEnum;
+use App\Enums\PaymentStatusEnum;
+use App\Enums\PaymentTooltip;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
@@ -141,6 +143,8 @@ class PetQuoteController extends Controller
             'emirates' => $emirates,
             'UBOsDetails' => $uboDetails,
             'UBORelations' => $uboRelations,
+            'paymentStatusEnum' => PaymentStatusEnum::asArray(),
+            'paymentTooltipEnum' => PaymentTooltip::asArray(),
         ]);
     }
 

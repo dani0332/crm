@@ -46,4 +46,9 @@ class QuoteDocument extends Model
     {
         return $this->morphTo();
     }
+
+    public function paymentDocuments()
+    {
+        return $this->belongsTo(PaymentSplits::class, 'payment_split_id', 'id');
+    }
 }
