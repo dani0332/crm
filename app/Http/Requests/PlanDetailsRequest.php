@@ -24,7 +24,7 @@ class PlanDetailsRequest extends FormRequest
     {
         $rules = [
             'insurance_provider_id' => 'required|integer',
-            'price_with_vat' => 'required|numeric',
+            'price_with_vat' => 'required',
             'insurer_quote_number' => 'nullable',
         ];
 

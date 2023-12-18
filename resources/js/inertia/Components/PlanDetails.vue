@@ -1,4 +1,6 @@
 <script setup>
+import { useFormatPrice } from "../Composables/utilities";
+
 const page = usePage();
 const notification = useToast();
 
@@ -110,17 +112,18 @@ const updatePriceWithVat = () => {
       priceVatApp + priceVatNotApp + (priceVatApp / 100) * 5,
     );
 
-    planDetailsForm.price_with_vat = totalPrice.toFixed(2);
+    planDetailsForm.price_with_vat = useFormatPrice(totalPrice, true);
   } else {
 
     if (priceVatApp) {
       let price = parseFloat(planDetailsForm.price_vat_applicable);
-      planDetailsForm.price_with_vat = ((price / 100) * 5 + price).toFixed(2);
+      let priceWithVAT = ((price / 100) * 5 + price);
+      planDetailsForm.price_with_vat = useFormatPrice(priceWithVAT, true);
     }
 
     if (priceVatNotApp) {
-      let price = parseFloat(planDetailsForm.price_vat_not_applicable);
-      planDetailsForm.price_with_vat = price.toFixed(2);
+      let priceWithVAT = parseFloat(planDetailsForm.price_vat_not_applicable);
+      planDetailsForm.price_with_vat = useFormatPrice(priceWithVAT, true);
     }
   }
 };
@@ -194,7 +197,7 @@ const rolesEnum = page.props.rolesEnum;
             :disabled="true"
             v-model="planDetailsForm.price_with_vat"
             :error="planDetailsForm.errors.price_with_vat"
-            type="number"
+            type="text"
             label="Total Price"
             class="w-full"
           />

@@ -88,6 +88,5 @@ export const useConvertDate = date => {
 };
 
 export const useFormatPrice = (price, thousandSeparator = false) => {
-  price = price.toFixed(2);
-  return (thousandSeparator ? parseFloat(price).toLocaleString() : price);
+  return (thousandSeparator ? parseFloat(price).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}) : parseFloat(price).toFixed(2));
 }
