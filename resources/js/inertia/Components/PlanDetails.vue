@@ -19,7 +19,7 @@ const planDetailsForm = useForm({
   insurance_provider_id: props.quote?.insurance_provider_id ?? null,
   price_vat_applicable: props.quote?.price_vat_applicable ?? null, // price vat applicable
   price_vat_not_applicable: props.quote?.price_vat_not_applicable ?? null, //price vat not applicable
-  price_with_vat: props.quote?.price_with_vat ?? null,
+  price_with_vat: props.quote.price_with_vat ? useFormatPrice(props.quote.price_with_vat, true) : null,
   insurer_quote_number: props.quote?.insurer_quote_number ?? null,
 });
 
