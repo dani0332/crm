@@ -86,3 +86,8 @@ export const useConvertDate = date => {
   const [day, month, year] = date.split('-');
   return `${year}-${month}-${day}`;
 };
+
+export const useFormatPrice = (price, thousandSeparator = false) => {
+  price = price.toFixed(2);
+  return (thousandSeparator ? parseFloat(price).toLocaleString() : price);
+}
