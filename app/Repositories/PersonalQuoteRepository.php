@@ -10,6 +10,7 @@ use App\Facades\Capi;
 use App\Models\PersonalQuote;
 use App\Models\QuoteDocument;
 use App\Models\QuoteStatusLog;
+use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
@@ -17,6 +18,8 @@ use Illuminate\Support\Facades\DB;
 
 class PersonalQuoteRepository extends BaseRepository
 {
+    use GenericQueriesAllLobs;
+
     public function model()
     {
         return PersonalQuote::class;
@@ -63,8 +66,12 @@ class PersonalQuoteRepository extends BaseRepository
      */
     public function fetchUploadDocument($id, $file, $data)
     {
-        $documentType = DocumentTypeRepository::where('code', $data['document_type_code'])->first();
-        $quote = $this->whereId($id)->first();
+        $query = DocumentTypeRepository::where('code', $data['document_type_code']);
+        if (request()->quote_type_id) {
+            $query->where('quote_type_id', request()->quote_type_id);
+        }
+        $documentType = $query->first();
+        $quote = $this->getQuoteObject(request()->folder_path ?? '', $id);
 
         $originalName = $file->getClientOriginalName();
         $docName = preg_replace('/\s+/', '', uniqid().'_'.$originalName);
