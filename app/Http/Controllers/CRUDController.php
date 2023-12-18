@@ -659,8 +659,8 @@ class CRUDController extends Controller
             $docUploadURL = config('constants.ECOM_CAR_INSURANCE_QUOTE_URL') . $record->uuid . '/thankyou';
             $documentTypes = $this->quoteDocumentService->getQuoteDocumentsForUpload(QuoteTypeId::Car);
 
-            $documentTypes = collect($documentTypes)->groupBy('category');
-            $documentTypes->all();
+            $documentTypesByCategory = collect($documentTypes)->groupBy('category');
+            $documentTypesByCategory->all();
             $quoteDocuments = array_values($quoteDocuments->toArray());
             $planURL = $ecomCarInsuranceQuoteUrl . $record->uuid;
             $storageUrl = storageUrl();
@@ -718,7 +718,7 @@ class CRUDController extends Controller
                 'paymentEntityModel', 'payments', 'paymentMethods', 'isQuoteDocumentEnabled', 'quoteDocuments', 'displaySendPolicyButton', 'customerAdditionalContacts', 'lostApproveReasons', 'lostRejectReasons', 'allowQuoteLogAction', 'carLostChangeStatus',
                 'carMakeText', 'carModelText', 'advisor', 'tiers', 'daysAfterCapturedPayment', 'access', 'carPlanFeaturesCodeEnum', 'carPlanExclusionsCodeEnum', 'documentTypes', 'planURL', 'storageUrl', 'kyoEndPoint',
                 'carPlanTypeEnum', 'UBORelations', 'UBOsDetails', 'emirates', 'customerTypeEnum', 'memberRelations', 'membersDetails', 'industryType', 'nationalities',
-                'isCommercialVehicles', 'carInsuranceProviders', 'policyIssuanceStatus', 'bPDetails',
+                'isCommercialVehicles', 'carInsuranceProviders', 'policyIssuanceStatus', 'bPDetails', 'documentTypesByCategory'
             ]));
         }
 
