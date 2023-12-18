@@ -724,7 +724,7 @@ class CRUDController extends Controller
                 'paymentEntityModel', 'payments', 'paymentMethods', 'isQuoteDocumentEnabled', 'quoteDocuments', 'displaySendPolicyButton', 'customerAdditionalContacts', 'lostApproveReasons', 'lostRejectReasons', 'allowQuoteLogAction', 'carLostChangeStatus',
                 'carMakeText', 'carModelText', 'advisor', 'tiers', 'daysAfterCapturedPayment', 'access', 'carPlanFeaturesCodeEnum', 'carPlanExclusionsCodeEnum', 'documentTypes', 'planURL', 'storageUrl', 'kyoEndPoint',
                 'carPlanTypeEnum', 'UBORelations', 'UBOsDetails', 'emirates', 'customerTypeEnum', 'memberRelations', 'membersDetails', 'industryType', 'nationalities',
-                'isCommercialVehicles', 'carInsuranceProviders', 'policyIssuanceStatus', 'bPDetails', 'documentTypesByCategory'
+                'isCommercialVehicles', 'carInsuranceProviders', 'policyIssuanceStatus', 'bPDetails', 'documentTypesByCategory', 'paymentTooltipEnum'
             ]));
         }
 
@@ -919,7 +919,7 @@ class CRUDController extends Controller
                     ];
                 })->values();
             }
-            if (! empty($insuranceProviders)) {
+            if (!empty($insuranceProviders)) {
 
                 $insuranceProviders = $insuranceProviders?->map(function ($paymentMethod) {
                     return [
@@ -1201,9 +1201,9 @@ class CRUDController extends Controller
             $modelType = $request->get('modelType');
         }
         $ignoreModelTypes = ['Bike', 'Cycle', 'Yacht'];
-        if (! in_array($modelType, $ignoreModelTypes) && $modelType != null) {
+        if (!in_array($modelType, $ignoreModelTypes) && $modelType != null) {
             $quoteTypes = 'Health,Car,Travel,Life,Home,Business,Pet';
-            $serviceType = str_contains($quoteTypes, ucwords($modelType)) ? strtolower($modelType).'QuoteService' : lcfirst(ucwords($modelType)).'Service';
+            $serviceType = str_contains($quoteTypes, ucwords($modelType)) ? strtolower($modelType) . 'QuoteService' : lcfirst(ucwords($modelType)) . 'Service';
             $this->genericModel->properties = $this->{$serviceType}->fillModelProperties();
             $this->genericModel->skipProperties = $this->{$serviceType}->fillModelSkipProperties();
             $this->genericModel->searchProperties = $this->{$serviceType}->fillModelSearchProperties();
@@ -1733,7 +1733,7 @@ class CRUDController extends Controller
         }
         if (auth()->user()->hasRole(RolesEnum::BetaUser)) {
 
-            if (! (Auth::user()->hasRole(RolesEnum::CarAdvisor))) {
+            if (!(Auth::user()->hasRole(RolesEnum::CarAdvisor))) {
                 return;
             }
 
@@ -1743,8 +1743,8 @@ class CRUDController extends Controller
             }
             $paymentInformation = [
                 'total_price' => $request->total_price,
-                'notes' => ! empty($request->notes) ? $request->notes : null,
-                'custom_reason' => ! empty($request->custom_reason) ? $request->custom_reason : null,
+                'notes' => !empty($request->notes) ? $request->notes : null,
+                'custom_reason' => !empty($request->custom_reason) ? $request->custom_reason : null,
                 'discount_reason' => $request->discount_reason,
                 'discount_custom_reason' => $request->discount_custom_reason,
                 'discount_type' => $request->discount,
@@ -1758,14 +1758,14 @@ class CRUDController extends Controller
                 'discount_value' => $request->discount_value,
                 'payment_methods_code' => $request->payment_methods,
                 'payment_status_id' => $masterPaymentStatus,
-                'plan_id' => ! empty($request->plan_id) ? $request->plan_id : null,
-                'insurance_provider_id' => ! empty($request->insurance_provider_id) ? $request->insurance_provider_id : null,
+                'plan_id' => !empty($request->plan_id) ? $request->plan_id : null,
+                'insurance_provider_id' => !empty($request->insurance_provider_id) ? $request->insurance_provider_id : null,
                 'created_by' => $request->user()->id,
                 'updated_by' => $request->user()->id,
             ];
 
             $count = $quoteModel->payments->count();
-            $paymentInformation['code'] = ($count > 0) ? $quoteModel->code.'-'.$count : $quoteModel->code;
+            $paymentInformation['code'] = ($count > 0) ? $quoteModel->code . '-' . $count : $quoteModel->code;
 
             if ($request->reference) {
                 $paymentInformation['reference'] = $request->reference;
@@ -1797,14 +1797,14 @@ class CRUDController extends Controller
                 'captured_amount' => $request->captured_amount,
                 'payment_methods_code' => $request->payment_methods,
                 'payment_status_id' => PaymentStatusEnum::DRAFT,
-                'plan_id' => ! empty($request->plan_id) ? $request->plan_id : null,
-                'insurance_provider_id' => ! empty($request->insurance_provider_id) ? $request->insurance_provider_id : null,
+                'plan_id' => !empty($request->plan_id) ? $request->plan_id : null,
+                'insurance_provider_id' => !empty($request->insurance_provider_id) ? $request->insurance_provider_id : null,
                 'created_by' => $request->user()->id,
                 'updated_by' => $request->user()->id,
             ];
 
             $count = $quoteModel->payments->count();
-            $paymentInformation['code'] = ($count > 0) ? $quoteModel->code.'-'.$count : $quoteModel->code;
+            $paymentInformation['code'] = ($count > 0) ? $quoteModel->code . '-' . $count : $quoteModel->code;
 
             if ($request->reference) {
                 $paymentInformation['reference'] = $request->reference;
@@ -1854,13 +1854,13 @@ class CRUDController extends Controller
     {
 
         if (auth()->user()->hasRole(RolesEnum::BetaUser)) {
-            if (! (Auth::user()->hasRole(RolesEnum::CarAdvisor))) {
+            if (!(Auth::user()->hasRole(RolesEnum::CarAdvisor))) {
                 return;
             }
             $paymentInformation = [
                 'total_price' => $request->total_price,
-                'notes' => ! empty($request->notes) ? $request->notes : null,
-                'custom_reason' => ! empty($request->custom_reason) ? $request->custom_reason : null,
+                'notes' => !empty($request->notes) ? $request->notes : null,
+                'custom_reason' => !empty($request->custom_reason) ? $request->custom_reason : null,
                 'discount_reason' => $request->discount_reason,
                 'discount_custom_reason' => $request->discount_custom_reason,
                 'discount_type' => $request->discount,
@@ -1873,7 +1873,7 @@ class CRUDController extends Controller
                 'collection_date' => $request->collection_date,
                 'discount_value' => $request->discount_value,
                 'payment_methods_code' => $request->payment_methods,
-                'insurance_provider_id' => ! empty($request->insurance_provider_id) ? $request->insurance_provider_id : null,
+                'insurance_provider_id' => !empty($request->insurance_provider_id) ? $request->insurance_provider_id : null,
                 'updated_by' => $request->user()->id,
             ];
 
@@ -1881,7 +1881,7 @@ class CRUDController extends Controller
                 $paymentInformation['reference'] = $request->reference;
             }
             $payment = Payment::where('code', $request->paymentCode)->first();
-            if (! $payment) {
+            if (!$payment) {
                 return back()->with('message', 'Payment record not found');
             }
 
@@ -1908,7 +1908,7 @@ class CRUDController extends Controller
                 $paymentInformation['reference'] = $request->reference;
             }
             $payment = Payment::where('code', $request->paymentCode)->first();
-            if (! $payment) {
+            if (!$payment) {
                 return back()->with('message', 'Payment record not found');
             }
             $payment->update($paymentInformation);
