@@ -75,6 +75,11 @@ class QuoteSyncUpdateCommand extends Command
                             $quote->$column = $value;
                         }
 
+                        if(! $quoteDetail) {
+                            info('Entry for quote : '.$entry->quote_uuid.' not found in personal quotes details table');
+                            $quoteDetail = $this->createOrUpdatePersonalQuoteDetail($quote, $newValues);
+                        }
+
                         if (Schema::hasColumn('personal_quote_details', $column)) {
                             $columnType = DB::getSchemaBuilder()->getColumnType('personal_quote_details', $column);
                             // Surround the value with quotes if it's a string, date, or datetime
@@ -116,31 +121,12 @@ class QuoteSyncUpdateCommand extends Command
                     DB::beginTransaction();
                     try {
                         $newValues = json_decode($entry->updated_fields, true);
-                        $personalQuote = new PersonalQuote();
-                        $personalQuote->uuid = $entry->quote_uuid;
-                        $personalQuote->quote_type_id = $entry->quote_type_id;
-                        $personalQuoteDetail = new PersonalQuoteDetail();
-                        foreach ($newValues as $column => $value) {
-                            if ($column === 'id') {
-                                continue;
-                            }
-
-                            if (Schema::hasColumn('personal_quotes', $column)) {
-                                $personalQuote->$column = $value;
-                            }
-                            if (Schema::hasColumn('personal_quote_details', $column)) {
-                                $personalQuoteDetail->$column = $value;
-                            }
-                        }
-                        info('Saving entry for quote : '.$entry->quote_uuid.' in personal quotes table');
-                        $personalQuote->save();
-
-                        info('Saving entry for quote : '.$entry->quote_uuid.' in personal quote details table');
-                        $personalQuoteDetail->personal_quote_id = $personalQuote->id;
-                        $personalQuoteDetail->save();
+                        $personalQuote = $this->createOrUpdatePersonalQuote($sourceQuote, $newValues, $entry);
+                        $personalQuoteDetail = $this->createOrUpdatePersonalQuoteDetail($personalQuote, $newValues, $entry);
 
                         $entry->update(['is_synced' => true, 'synced_at' => now()]);
-                        info('Entry for quote : '.$entry->quote_uuid.' saved in personal quotes table');
+                        info('Entry for quote : '.$personalQuote->id.' saved in personal quotes table');
+                        info('Entry for quote : '.$personalQuoteDetail->personal_quote_id.' saved in personal quotes details table');
                         DB::commit();
                     } catch (Exception $e) {
                         DB::rollBack();
@@ -152,4 +138,68 @@ class QuoteSyncUpdateCommand extends Command
         }
     }
 
+    private function createOrUpdatePersonalQuote($sourceQuote, $newValues, $entry)
+    {
+        $personalQuote = PersonalQuote::where('uuid', $sourceQuote->uuid)->first();
+        if ($personalQuote) {
+            foreach ($newValues as $column => $value) {
+                if ($column === 'id') {
+                    continue;
+                }
+
+                if (Schema::hasColumn('personal_quotes', $column)) {
+                    $personalQuote->$column = $value;
+                }
+            }
+            $personalQuote->uuid = $entry->quote_uuid;
+            $personalQuote->quote_type_id = $entry->quote_type_id;
+            $personalQuote->save();
+        } else {
+            $personalQuote = new PersonalQuote();
+            foreach ($newValues as $column => $value) {
+                if ($column === 'id') {
+                    continue;
+                }
+
+                if (Schema::hasColumn('personal_quotes', $column)) {
+                    $personalQuote->$column = $value;
+                }
+            }
+            $personalQuote->save();
+        }
+
+        return $personalQuote;
+    }
+
+    private function createOrUpdatePersonalQuoteDetail($personalQuote, $newValues)
+    {
+
+        $personalQuoteDetail = PersonalQuoteDetail::where('personal_quote_id', $personalQuote->id)->first();
+        if ($personalQuoteDetail) {
+            foreach ($newValues as $column => $value) {
+                if ($column === 'id') {
+                    continue;
+                }
+
+                if (Schema::hasColumn('personal_quote_details', $column)) {
+                    $personalQuoteDetail->$column = $value;
+                }
+            }
+            $personalQuoteDetail->save();
+        } else {
+            $personalQuoteDetail = new PersonalQuoteDetail();
+            foreach ($newValues as $column => $value) {
+                if ($column === 'id') {
+                    continue;
+                }
+
+                if (Schema::hasColumn('personal_quote_details', $column)) {
+                    $personalQuoteDetail->$column = $value;
+                }
+            }
+            $personalQuoteDetail->personal_quote_id = $personalQuote->id;
+            $personalQuoteDetail->save();
+        }
+        return $personalQuoteDetail;
+    }
 }
