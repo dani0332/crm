@@ -63,6 +63,8 @@ class PaymentSplitsRepository
 
                 $paymentSplitRecord = PaymentSplits::create($splitPaymentInformation);
                 if ($paymentSplitRecord) {
+                    //Update parent payment status
+                    $this->setMasterPaymentStatus($paymentSplitRecord->id);
                     /*
                     if ($paymentSplitRecord->payment_method == 'CC') {
                         $this->generateSplitPaymentLink($quoteID, $paymentSplitRecord->id, $request->modelType, $request->quote_id);
