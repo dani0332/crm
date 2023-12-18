@@ -92,7 +92,10 @@ class QuoteSyncUpdateCommand extends Command
 
                     $quote->save();
                     $quoteDetail->save();
+                    info('Entry for quote : '.$entry->quote_uuid.' updated in personal quotes table');
+                    info('Entry for quote : '.$quoteDetail->personal_quote_id.' updated in personal quotes details table');
                     $entry->update(['is_synced' => true, 'synced_at' => now()]);
+                    info('Entry for quote : '.$entry->quote_uuid.' updated in quote sync table');
                     DB::commit();
                 } catch (Exception $e) {
                     info('Error while updating entry for quote : '.$entry->quote_uuid.' in personal quotes table');
