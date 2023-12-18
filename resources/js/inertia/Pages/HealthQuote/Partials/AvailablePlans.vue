@@ -10,7 +10,8 @@ const emit = defineEmits([
   'copayUpdate',
   'update:modelValue',
   'membersDetailsReviewed',
-  'onLoadAvailablePlansData'
+  'onLoadAvailablePlansData',
+  'markPlanAsManual'
 ]);
 
 const showModal = computed({
@@ -171,9 +172,6 @@ const onCoPaySelect = copayId => {
         });
     }
 
-    console.log("selected copay");
-    console.log(selectedCopay.value);
-
     emit('copayUpdate', selectedCopay.value);
 };
 
@@ -213,8 +211,6 @@ const getDefaultVaues = () => {
   let smallestCopayValue = 0;
   if (defaultCopayId.value != undefined || defaultCopayId != null)
   {
-    console.log("default copay is not null");
-    console.log(defaultCopayId.value);
     props.plan?.ratesPerCopay?.forEach(function callback(element, index) {
         if (element.healthPlanCoPaymentId == defaultCopayId.value) {
             smallestCopayValue = element.premium;
@@ -224,8 +220,6 @@ const getDefaultVaues = () => {
   } else if ( (defaultCopayId.value == undefined || defaultCopayId == null)
    && (selectedCopay.value === undefined || selectedCopay.value.length == 0)) {
     props.plan?.ratesPerCopay?.forEach(function callback(element, index) {
-        console.log("default copay is null");
-
       if (index == 0) {
         smallestCopayValue = element.premium;
         defaultCopayId.value = element.healthPlanCoPaymentId;
@@ -327,6 +321,7 @@ const onLoadingPricesUpdate = member => {
         .finally(() => {
             memberFormLoader.value = false;
             isManual.value = false;
+            emit('markPlanAsManual', props.plan);
         });
 };
 

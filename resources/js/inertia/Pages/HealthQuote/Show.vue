@@ -820,7 +820,6 @@ const getSmallestCopayRateAsDefaultValue = () => {
   let smallestCopayVAT = 0;
   let smallestCopayLoadingPrice = 0;
   plansTable.data.forEach(element => {
-    console.log(element.selectedCopayId );
     defaultCopayId = element.selectedCopayId;
     element.ratesPerCopay?.forEach(function callback(value, index) {
 
@@ -857,11 +856,6 @@ const getSmallestCopayRateAsDefaultValue = () => {
       element.loadingPrice = smallestCopayLoadingPrice;
 
     }
-
-    console.log(element.providerName);
-    console.log(defaultCopayId);
-    console.log(element.actualPremium);
-    console.log(element.vat);
   });
 };
 
@@ -872,6 +866,16 @@ const onSelectedCopay = data => {
   selectedCoPay.planId = data.planId;
   getSmallestCopayRateAsDefaultValue();
 };
+
+const onMarkPlanAsManual = plan => {
+
+    listQuotePlansFiltered.value = listQuotePlansFiltered.value.map(element => {
+        if (element.id == plan.id) {
+            element.isManualPlan = true;
+        }
+        return element;
+    });
+}
 
 // quoteDocuments
 
@@ -2641,8 +2645,9 @@ const handleChildUpdate = planId => {
         :genders="genderOptions"
         :memebersDetailsChanged="membersDetailsUpdated"
         @copay-update="onSelectedCopay"
-          @onLoadAvailablePlansData="onLoadAvailablePlansData"
+        @onLoadAvailablePlansData="onLoadAvailablePlansData"
         @membersDetailsReviewed="onRecieveMembersDetailsReview"
+        @markPlanAsManual="onMarkPlanAsManual"
       />
 
       <x-modal v-model="modals.createPlan" size="xl" show-close backdrop>
