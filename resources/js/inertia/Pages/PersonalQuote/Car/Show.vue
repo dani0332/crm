@@ -2257,9 +2257,8 @@ const loadEmailEvents = email => {
             </x-tag>
 
             <x-tag
-                v-if="isBetaUser && puaPremium && puaPremium !=null"
+                v-if="puaPremium && puaPremium != null"
                 size="xs"
-                color="error"
                 class="mt-0.5 text-[10px] pua-tag"
             >
                 <x-tooltip  position="right">
@@ -3158,7 +3157,7 @@ const loadEmailEvents = email => {
 
 <style>
     .pua-tag{
-        color:white;
-        background-color: #E00000;
+        color:white !important;
+        background-color: #E00000 !important;
     }
 </style>
