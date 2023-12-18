@@ -3295,7 +3295,7 @@ const handleChildUpdate = planId => {
 
     <BookPolicy
       v-if="
-        !hasAnyRole([rolesEnum.PRODUCTION, rolesEnum.NRA, rolesEnum.FINANCE])
+        hasAnyRole([rolesEnum.PRODUCTION, rolesEnum.NRA, rolesEnum.FINANCE])
       "
       :quote="record"
       :quoteType="quoteType"
