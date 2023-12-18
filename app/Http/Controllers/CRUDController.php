@@ -705,7 +705,10 @@ class CRUDController extends Controller
                     $bPDetails['text'] = 'Send Policy To Customer';
                     $bPDetails['sendPolicyType'] = 'customer';
                 }
-                if ($bPDetails['sendButton'] && in_array(QuoteDocumentsEnum::CAR_TAX_INVOICE, $document_type_codes) && in_array(QuoteDocumentsEnum::CAR_TAX_INVOICE_RAISE_BY_BUYER, $document_type_codes)) {
+                $taxDocuments = (in_array(QuoteDocumentsEnum::CAR_TAX_INVOICE, $document_type_codes) && in_array(QuoteDocumentsEnum::CAR_TAX_INVOICE_RAISE_BY_BUYER, $document_type_codes));
+                $requiredRole = auth()->user()->hasAnyRole([RolesEnum::NRA, RolesEnum::FINANCE, RolesEnum::PRODUCTION]);
+
+                if ($bPDetails['sendButton'] && $taxDocuments) {
                     $bPDetails['text'] = 'Send Policy';
                     $bPDetails['editButton'] = true;
                     $bPDetails['sendPolicyType'] = 'sage';

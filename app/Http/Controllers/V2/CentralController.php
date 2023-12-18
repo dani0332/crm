@@ -14,6 +14,7 @@ use App\Exports\LifeQuotesExport;
 use App\Exports\PersonalQuotesExport;
 use App\Exports\TravelQuoteExport;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\BookPolicyRequest;
 use App\Http\Requests\CustomerProfileRequest;
 use App\Http\Requests\DuplicateLobRequest;
 use App\Http\Requests\LeadAssignRequest;
@@ -155,20 +156,22 @@ class CentralController extends Controller
         return redirect()->back()->with('success', 'Last Year Policy Detail has been updated.');
     }
 
-    public function updateBookingPolicy(Request $request)
+    public function updateBookingPolicy(BookPolicyRequest $bookPolicyRequest)
     {
+        $validatedData =  $bookPolicyRequest->validated();
+        dd($validatedData);
         $paymentInformation = [
-            'insurer_invoice_date' => $request->invoice_date,
-            'tax_invoice_number' => $request->insurer_tax_invoice_number,
+            'insurer_invoice_date' => $validatedData['invoice_date'],
+            'tax_invoice_number' => $validatedData['insurer_tax_invoice_number'],
             // 'captured_amount' => $request->insurer_commmission_invoice_number,
             // 'captured_amount' => $request->broker_invoice_number,
-            'commission_vat_not_applicable' => $request->commission_vat_not_applicable,
-            'commission_vat_applicable' => $request->commission_vat_applicable,
+            'commission_vat_not_applicable' => $validatedData['commission_vat_not_applicable'],
+            'commission_vat_applicable' => $validatedData['commission_vat_applicable'],
             // 'insurance_provider_id' => $request->commission_percentage,
-            'commission_vat' => $request->vat_on_commission,
-            'commission' => $request->total_commission,
+            'commission_vat' =>  $validatedData['vat_on_commission'],
+            'commission' => $validatedData['total_commission'],
         ];
-        $payment = Payment::where('code', $request->payment_code)->first();
+        $payment = Payment::where('code', $validatedData['payment_code'])->first();
         if (!$payment) {
             return back()->with('message', 'Payment record not found');
         }
@@ -177,9 +180,13 @@ class CentralController extends Controller
         return redirect()->back()->with('success', 'Booking Status has been updated.');
     }
 
-    public function sendBookingPolicy(Request $request)
+    public function sendBookingPolicy(BookPolicyRequest $bookPolicyRequest)
     {
-        $quote = $this->getQuoteObject($request->model_type, $request->quote_id);
+        $validatedData = $bookPolicyRequest->validated();
+
+
+        dd($validatedData);
+        $quote = $this->getQuoteObject($validatedData['model_type'], $validatedData['quote_id']);
 
         if (!$quote) {
             return redirect()->back()->with('error', 'Error in Sending Policy.');
