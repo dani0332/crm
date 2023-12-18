@@ -75,7 +75,7 @@ class QuoteSyncUpdateCommand extends Command
                             $quote->$column = $value;
                         }
 
-                        if(! $quoteDetail) {
+                        if (! $quoteDetail) {
                             info('Entry for quote : '.$entry->quote_uuid.' not found in personal quotes details table');
                             $quoteDetail = $this->createOrUpdatePersonalQuoteDetail($quote, $newValues);
                         }
@@ -200,6 +200,7 @@ class QuoteSyncUpdateCommand extends Command
             $personalQuoteDetail->personal_quote_id = $personalQuote->id;
             $personalQuoteDetail->save();
         }
+
         return $personalQuoteDetail;
     }
 }
