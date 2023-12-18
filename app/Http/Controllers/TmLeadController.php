@@ -176,7 +176,6 @@ class TmLeadController extends Controller
             'tmLeadTypes' => $tmLeadTypes,
             'isUserTmAdvisor' => $isUserTmAdvisor,
         ]);
-
     }
 
     /**
@@ -236,7 +235,6 @@ class TmLeadController extends Controller
             'isLeadEditable' => $isLeadEditable,
             'customerCorrectPhoneNo' => $customerCorrectPhoneNo,
         ]);
-
     }
 
     /**
@@ -283,7 +281,6 @@ class TmLeadController extends Controller
             'tmLeadTypes' => $tmLeadTypes,
             'isUserTmAdvisor' => $isUserTmAdvisor,
         ]);
-
     }
 
     /**

@@ -512,10 +512,6 @@ const quoteDocumentsTable = reactive({
       text: 'Created By',
       value: 'created_by_name',
     },
-    {
-      text: 'Action',
-      value: 'action',
-    },
   ],
 });
 
@@ -2153,10 +2149,7 @@ const sectionExpanded = computed(() => !policyIssued.value);
       </Collapsible>
     </div>
 
-    <div
-      class="p-4 rounded shadow mb-6 bg-white"
-      v-if="permissions.isQuoteDocumentEnabled"
-    >
+    <div class="p-4 rounded shadow mb-6 bg-white">
       <Collapsible :expanded="sectionExpanded">
         <template #header>
           <div class="flex justify-between items-center">
@@ -2184,7 +2177,7 @@ const sectionExpanded = computed(() => !policyIssued.value);
               size="sm"
               color="red"
               v-if="
-                displaySendPolicyButton && permissions.notProductionApproval
+                displaySendPolicyButton && permissions.notProductionApproval && permissions.isQuoteDocumentEnabled
               "
               @click="sendPolicyToClient"
             >
@@ -2235,6 +2228,7 @@ const sectionExpanded = computed(() => !policyIssued.value);
           :cdn="cdnPath"
         />
       </x-modal>
+      
       <x-modal v-model="modals.docConfirm" show-close backdrop>
         <template #header> Delete Document </template>
         <p>Are you sure you want to delete this document?</p>

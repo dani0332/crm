@@ -42,4 +42,9 @@ class DocumentType extends Model implements AuditableContract
 
         return $obj ?: new static;
     }
+
+    public function scopeActive($query)
+    {
+        $query->where('is_active', 1);
+    }
 }

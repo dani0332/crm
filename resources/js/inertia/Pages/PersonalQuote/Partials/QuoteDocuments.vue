@@ -32,10 +32,6 @@ const quoteDocumentsTable = reactive({
       text: 'Created By',
       value: 'created_by.email',
     },
-    {
-      text: 'Action',
-      value: 'action',
-    },
   ],
 });
 
@@ -91,8 +87,13 @@ const docForm = useForm({
 
 const uploadFile = (doc, files) => {
   let url = '/personal-quotes/' + docForm.quote_id + '/documents';
-
-  if (files.length == 0) return;
+  if (files.length == 0) {
+    notification.error({
+      title: 'Incorrect file type\nPlease upload a ' + doc.accepted_files + ' file',
+      position: 'top',
+    });
+    return false
+  };
   isUploading.value = true;
   docForm
     .transform(data => ({
@@ -110,12 +111,6 @@ const uploadFile = (doc, files) => {
         console.log(errors);
         notification.error({
           title: 'File upload failed',
-          position: 'top',
-        });
-      },
-      onSuccess: () => {
-        notification.success({
-          title: 'File Uploaded',
           position: 'top',
         });
       },

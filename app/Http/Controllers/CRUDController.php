@@ -766,6 +766,7 @@ class CRUDController extends Controller
                     ];
                 })->sortBy('label')->values();
             }
+            $documentTypes = $this->quoteDocumentService->getQuoteDocumentsForUpload(QuoteTypeId::Home);
 
             return inertia('HomeQuote/Show', [
                 'storageUrl' => storageUrl(),
@@ -813,6 +814,7 @@ class CRUDController extends Controller
                 'quoteType' => QuoteTypes::HOME,
                 'sendUpdateEnum' => $sendUpdateEnum,
                 'hasPolicyIssuedStatus' => $hasPolicyIssuedStatus,
+                'documentTypes' => $documentTypes,
             ]);
         }
 

@@ -49,7 +49,7 @@ const UBORelationOptions = computed(() => {
 
 const uboMembers = ref(props.UBOsDetails);
 const computedUboMembers = computed(() => {
-    return uboMembers.value.filter(x => !x.is_third_party_payer);
+    return uboMembers && uboMembers.value && uboMembers.value.filter(x => !x.is_third_party_payer);
 });
 
 const isLoading = ref(false);
@@ -191,7 +191,7 @@ const UBODeleteConfirmed = () => {
         <div class="flex justify-between items-center">
           <h3 class="font-semibold text-primary-800 text-lg">
             UBO Details
-            <x-tag size="sm">{{ computedUboMembers.length || 0 }}</x-tag>
+            <x-tag size="sm">{{ computedUboMembers && computedUboMembers.length || 0 }}</x-tag>
           </h3>
         </div>
       </template>

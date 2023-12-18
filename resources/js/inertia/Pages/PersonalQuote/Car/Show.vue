@@ -271,7 +271,6 @@ const documentsTable = reactive({
     { text: 'Document Name', value: 'document_name_text' },
     { text: 'Created At', value: 'created_at' },
     { text: 'Created By', value: 'created_by' },
-    { text: 'Action', value: 'action' },
   ],
 });
 
@@ -949,7 +948,13 @@ const docForm = useForm({
 const uploadFile = (doc, files) => {
   let url = '/quotes/car/documents/store';
 
-  if (files.length == 0) return;
+  if (files.length == 0) {
+    notification.error({
+      title: 'Incorrect file type\nPlease upload a ' + doc.accepted_files + ' file',
+      position: 'top',
+    });
+    return false;
+  };
   isUploading.value = true;
   docForm
     .transform(data => ({
@@ -968,12 +973,6 @@ const uploadFile = (doc, files) => {
         console.log(errors);
         notification.error({
           title: 'File upload failed',
-          position: 'top',
-        });
-      },
-      onSuccess: () => {
-        notification.success({
-          title: 'File Uploaded',
           position: 'top',
         });
       },
