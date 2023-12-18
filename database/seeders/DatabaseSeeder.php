@@ -16,7 +16,7 @@ class DatabaseSeeder extends Seeder
         $this->call([
             // RenewalsPermissionSeeder::class,
             // addCarQuoteSearchPermission::class,
-            // QuoteStatusTableSeeder::class,
+            QuoteStatusTableSeeder::class,
             // UtmLeadsSalesReportSeeder::class,
             // CarLostStorageSeeder::class,
             // AddPersonalLobsProducts::class,
@@ -41,6 +41,7 @@ class DatabaseSeeder extends Seeder
             //            EmbeddedProductRoleAndPermissionSeeder::class,
             //            addDubaiNowLeadSourceExemptionInAppStorage::class,
             LookupSeeder::class,
+            PolicyIssuanceStatusSeeder::class,
             //            AddNewDocumentTypesSeeder::class,
             // UpdateCustomerToHealthAndTravelMemberDetails::class,
             PaymentMethodsAddSeeder::class,

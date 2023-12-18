@@ -74,6 +74,8 @@ defineProps({
   tiersExceptTierR: Array,
   leadSourceEnum: Object,
   carPlanTypeEnum: Object,
+  policyIssuanceStatus: Array,
+  bPDetails: Array,
   customerTypeEnum: Object,
   memberRelations: Array,
   membersDetails: Array,
@@ -88,6 +90,8 @@ defineProps({
 const page = usePage();
 const notification = useNotifications('toast');
 const showfollowup = ref(false);
+
+console.log(page.props);
 
 const permissionEnum = page.props.permissionsEnum;
 const rolesEnum = page.props.rolesEnum;
@@ -517,15 +521,46 @@ const currentInsuranceOptions = computed(() => {
   ];
 });
 
+const dateToYMD = date => {
+  if (date) {
+    const [day, month, year] = date.split('-');
+    return `${year}-${month}-${day}`;
+  }
+  return '';
+};
+
 const policyDetailsState = reactive({
   isEditing: false,
 });
+
+const planQuoteInsurerNumber = computed(() => {
+  let obj = page.props?.listQuotePlans?.filter(
+    item => item.id == page.props.record.plan_id,
+  );
+  return obj === undefined ? null : obj[0]?.insurerQuoteNo || null;
+});
+const vatAmount = computed(() => {
+  return (page.props.record.premium * 0.05).toFixed(2);
+});
+
+const priceWithoutVat = computed(() => {
+  return page.props.record.premium - vatAmount.value;
+});
+
 const policyDetailsForm = useForm({
   quote_policy_number: page.props.record.policy_number || null,
-  quote_policy_issuance_date: page.props.record.policy_issuance_date || null,
-  quote_policy_start_date: page.props.record.policy_start_date || null,
-  quote_policy_expiry_date: page.props.record.renewal_expiry_date || null,
+
+  quote_policy_issuance_date:
+    dateToYMD(page.props.record.policy_issuance_date) || '',
+  quote_policy_price_vat_notapplicable: null,
+  quote_policy_price_vat_applicable: priceWithoutVat || '',
+  quote_policy_vat_total_amount: vatAmount.value || null,
+  quote_policy_start_date: dateToYMD(page.props.record.policy_start_date) || '',
+  quote_policy_expiry_date:
+    dateToYMD(page.props.record.renewal_expiry_date) || '',
   quote_premium: page.props.record.premium || null,
+  quote_plan_insurer_quote_number: planQuoteInsurerNumber.value || null,
+  quote_policy_issuance_status: null,
   modelType: 'Car',
   quote_id: page.props.record.id,
 });
@@ -3103,106 +3138,12 @@ const handleChildUpdate = planId => {
       :modelType="quoteType"
     />
 
-    <div class="p-4 rounded shadow mb-6 bg-white" v-if="isQuoteDocumentEnabled">
-      <div>
-        <h3 class="font-semibold text-primary-800 text-lg">Policy Details</h3>
-        <x-divider class="mb-4 mt-1" />
-      </div>
-      <div class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5">
-        <div class="w-full md:w-1/2">
-          <x-textarea
-            v-model="policyDetailsForm.quote_policy_number"
-            type="text"
-            label="Policy Number"
-            placeholder="Policy Number"
-            class="w-full"
-            :disabled="!policyDetailsState.isEditing"
-          />
-        </div>
-        <div class="w-full md:w-1/2">
-          <DatePicker
-            v-model="policyDetailsForm.quote_policy_issuance_date"
-            name="quote_policy_issuance_date"
-            label="Issuance Date"
-            placeholder="Issuance Date"
-            class="w-full"
-            :disabled="!policyDetailsState.isEditing"
-          />
-        </div>
-      </div>
-      <div class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5">
-        <div class="w-full md:w-1/2">
-          <DatePicker
-            v-model="policyDetailsForm.quote_policy_start_date"
-            type="text"
-            label="Policy Start Date"
-            placeholder="Policy Start Date"
-            class="w-full"
-            :disabled="!policyDetailsState.isEditing"
-          />
-        </div>
-        <div class="w-full md:w-1/2">
-          <DatePicker
-            v-model="policyDetailsForm.quote_policy_expiry_date"
-            type="text"
-            label="Expiry Date"
-            placeholder="Expiry Date"
-            class="w-full"
-            :disabled="!policyDetailsState.isEditing"
-          />
-        </div>
-      </div>
-      <div class="flex flex-wrap md:flex-nowrap gap-6 w-full">
-        <div class="w-full md:w-1/2">
-          <x-input
-            v-model="policyDetailsForm.quote_premium"
-            type="number"
-            label="Price"
-            placeholder="Price"
-            class="w-full"
-            :disabled="!policyDetailsState.isEditing"
-          />
-        </div>
-        <div class="w-full md:w-1/2" />
-      </div>
-      <div
-        class="flex justify-end"
-        v-if="
-          !hasRole(rolesEnum.PA) &&
-          record.quote_status_id == quoteStatusEnum.TransactionApproved
-        "
-      >
-        <x-button
-          v-if="policyDetailsState.isEditing"
-          class="mt-4 mr-2"
-          color="emerald"
-          size="sm"
-          :loading="policyDetailsForm.processing"
-          @click.prevent="policyDetailsState.isEditing = false"
-        >
-          Cancel
-        </x-button>
-        <x-button
-          v-if="policyDetailsState.isEditing"
-          class="mt-4"
-          color="emerald"
-          size="sm"
-          :loading="policyDetailsForm.processing"
-          @click.prevent="onUpdatePolicyDetails"
-        >
-          Update
-        </x-button>
-        <x-button
-          v-if="!policyDetailsState.isEditing"
-          class="mt-4"
-          color="emerald"
-          size="sm"
-          @click.prevent="policyDetailsState.isEditing = true"
-        >
-          Edit
-        </x-button>
-      </div>
-    </div>
+    <PolicyDetail
+      v-if="isQuoteDocumentEnabled"
+      :record="record"
+      :quoteStatusEnum="quoteStatusEnum"
+      :policyIssuanceStatus="policyIssuanceStatus"
+    />
 
     <div class="p-4 rounded shadow mb-6 bg-white" v-if="isQuoteDocumentEnabled">
       <div class="flex justify-between items-center mb-4">
@@ -3313,43 +3254,63 @@ const handleChildUpdate = planId => {
           </ul>
         </x-alert>
 
-        <div
-          v-for="documentType in documentTypes"
-          :key="documentType.id"
-          class="grid md:grid-cols-2 gap-2 my-4 border-b"
-        >
-          <div class="flex flex-col gap-1">
-            <h5 class="text-sm font-semibold">
-              {{ documentType.text }}
-            </h5>
-            <p class="text-xs">Max files: {{ documentType.max_files }}</p>
-            <p class="text-xs">Supported: {{ documentType.accepted_files }}</p>
-            <p class="text-xs">Max file size: {{ documentType.max_size }} MB</p>
-          </div>
-          <div class="pb-4">
-            <Dropzone
-              :id="documentType.id"
-              :accept="documentType.accepted_files"
-              :max-files="documentType.max_files"
-              :max-size="documentType.max_size"
-              :loading="docForm.processing"
-              @change="uploadFile(documentType, $event)"
-            />
-            <a
-              v-for="quoteDocument in page.props.quoteDocuments.filter(
-                d => d.document_type_code == documentType.code,
-              )"
-              :key="quoteDocument.id"
-              :href="storageUrl + quoteDocument.doc_url"
-              target="_blank"
-              class="block px-2 py-1 border rounded mt-1 text-xs hover:text-primary-600 truncate"
+        <div v-for="(value, key, index) in documentTypes" :key="index">
+          <strong>{{ key + ' Dcouments' }}</strong>
+
+          <div v-if="Array.isArray(value)">
+            <div
+              v-for="(documentType, name, index) in value"
+              :key="documentType.id"
+              class="grid md:grid-cols-2 gap-2 my-4 border-b"
             >
-              {{ quoteDocument.original_name || quoteDocument.doc_name }}
-            </a>
+              <div class="flex flex-col gap-1">
+                <h5 class="text-sm font-semibold">
+                  {{ documentType.text }}
+                </h5>
+                <p class="text-xs">Max files: {{ documentType.max_files }}</p>
+                <p class="text-xs">
+                  Supported: {{ documentType.accepted_files }}
+                </p>
+                <p class="text-xs">
+                  Max file size: {{ documentType.max_size }} MB
+                </p>
+              </div>
+              <div class="pb-4">
+                <Dropzone
+                  :id="documentType.id"
+                  :accept="documentType.accepted_files"
+                  :max-files="documentType.max_files"
+                  :max-size="documentType.max_size"
+                  :loading="docForm.processing"
+                  @change="uploadFile(documentType, $event)"
+                />
+                <a
+                  v-for="quoteDocument in page.props.quoteDocuments.filter(
+                    d => d.document_type_code == documentType.code,
+                  )"
+                  :key="quoteDocument.id"
+                  :href="storageUrl + quoteDocument.doc_url"
+                  target="_blank"
+                  class="block px-2 py-1 border rounded mt-1 text-xs hover:text-primary-600 truncate"
+                >
+                  {{ quoteDocument.original_name || quoteDocument.doc_name }}
+                </a>
+              </div>
+            </div>
           </div>
         </div>
       </x-modal>
     </div>
+
+    <BookPolicy
+      v-if="
+        !hasAnyRole([rolesEnum.PRODUCTION, rolesEnum.NRA, rolesEnum.FINANCE])
+      "
+      :quote="record"
+      :quoteType="quoteType"
+      :bPDetails="bPDetails"
+      :payments="payments"
+    />
 
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div class="flex justify-between items-center mb-4">

@@ -237,5 +237,6 @@ final class PermissionsEnum extends Enum
     public const RENEWAL_BATCHES_EDIT = 'renewal-batches-edit';
     public const RENEWAL_BATCH_REPORT = 'renewal-batch-report';
     public const PAUSE_AUTO_FOLLOWUPS = 'pause-auto-followups';
+    public const BOOK_POLICY_EDIT = 'book-policy-edit';
     const EmbeddedProductView = 'embedded-product-view';
 }

@@ -1,0 +1,277 @@
+<script setup>
+const page = usePage();
+
+const props = defineProps({
+  record: {
+    type: Object,
+    default: {},
+  },
+  quoteStatusEnum: {
+    type: Object,
+    default: {},
+  },
+  policyIssuanceStatus: {
+    type: Array,
+    default: [],
+  },
+});
+
+const hasRole = role => useHasRole(role);
+const rolesEnum = page.props.rolesEnum;
+const dateToYMD = date => {
+  if (date) {
+    const [day, month, year] = date.split('-');
+    return `${year}-${month}-${day}`;
+  }
+  return '';
+};
+
+const quoteIssuanceStatusEnum = page.props.quoteIssuanceStatusEnum;
+const policyIssuanceStatusOptions = computed(() => {
+  return page.props.policyIssuanceStatus.map(item => {
+    return {
+      value: item.id,
+      label: item.text,
+    };
+  });
+});
+
+const planQuoteInsurerNumber = computed(() => {
+  let obj = page.props?.listQuotePlans?.filter(
+    item => item.id == page.props.record.plan_id,
+  );
+
+  return obj === undefined ? null : obj[0]?.insurerQuoteNo || null;
+});
+
+const policyDetailsState = reactive({
+  isEditing: false,
+});
+const policyDetailsForm = useForm({
+  quote_policy_number: page.props.record.policy_number || null,
+
+  quote_policy_issuance_date:
+    dateToYMD(page.props.record.policy_issuance_date) || '',
+  price_vat_notapplicable: page.props.record.price_vat_not_applicable || '',
+  amount: page.props.record.price_without_vat || '',
+  vat: page.props.record.vat || '',
+  quote_policy_start_date: dateToYMD(page.props.record.policy_start_date) || '',
+  quote_policy_expiry_date:
+    dateToYMD(page.props.record.renewal_expiry_date) || '',
+  amount_with_vat: page.props.record.price_with_vat || '',
+  quote_plan_insurer_quote_number: planQuoteInsurerNumber.value || null,
+  quote_policy_issuance_status: page.props.record.policy_issuance_status_id,
+  quote_policy_issuance_status_other:
+    page.props.record.policy_issuance_status_other || '',
+  modelType: 'Car',
+  quote_id: page.props.record.id,
+});
+
+const caculateVatAmount = () => {
+  if (policyDetailsForm.amount > 0) {
+    let vat = policyDetailsForm.amount * (0.05).toFixed(2);
+    policyDetailsForm.vat = vat.toFixed(2);
+    policyDetailsForm.amount_with_vat =
+      Number(vat) + Number(policyDetailsForm.amount);
+  } else {
+    policyDetailsForm.vat = '';
+    policyDetailsForm.amount_with_vat = '';
+  }
+};
+
+const onUpdatePolicyDetails = () => {
+  policyDetailsForm.post('/quotes/Car/update-quote-policy', {
+    preserveScroll: true,
+    onSuccess: () => {
+      policyDetailsState.isEditing = false;
+    },
+  });
+};
+</script>
+
+<template>
+  <div class="p-4 rounded shadow mb-6 bg-white">
+    <div>
+      <h3 class="font-semibold text-primary-800 text-lg">Policy Details</h3>
+      <x-divider class="mb-4 mt-1" />
+    </div>
+    <div class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5">
+      <div class="w-full md:w-1/2">
+        <x-textarea
+          v-model="policyDetailsForm.quote_policy_number"
+          type="text"
+          label="Policy Number"
+          placeholder="Policy Number"
+          class="w-full"
+          :disabled="!policyDetailsState.isEditing"
+        />
+      </div>
+      <div class="w-full md:w-1/2">
+        <DatePicker
+          v-model="policyDetailsForm.quote_policy_issuance_date"
+          :disabled="!policyDetailsState.isEditing"
+          :rules="[isRequired]"
+          type="date"
+          label="ISSUANCE DATE"
+          class="w-full"
+        />
+      </div>
+    </div>
+
+    <div class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5">
+      <div class="w-full md:w-1/2">
+        <x-textarea
+          v-model="policyDetailsForm.price_vat_notapplicable"
+          type="number"
+          label="Price (VAT NOT APPLICABLE)"
+          placeholder="Price (VAT NOT APPLICABLE)"
+          class="w-full"
+          :disabled="
+            !policyDetailsState.isEditing || policyDetailsForm.amount > 0
+          "
+        />
+      </div>
+      <div class="w-full md:w-1/2">
+        <DatePicker
+          v-model="policyDetailsForm.quote_policy_start_date"
+          type="date"
+          label="Start Date"
+          placeholder="Start Date"
+          class="w-full"
+          :disabled="!policyDetailsState.isEditing"
+        />
+      </div>
+    </div>
+
+    <div class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5">
+      <div class="w-full md:w-1/2">
+        <x-textarea
+          v-model="policyDetailsForm.amount"
+          @change="caculateVatAmount"
+          type="number"
+          label="Price (VAT APPLICABLE)"
+          placeholder="Price (VAT APPLICABLE)"
+          class="w-full"
+          :disabled="
+            !policyDetailsState.isEditing ||
+            policyDetailsForm.price_vat_notapplicable > 0
+          "
+        />
+      </div>
+      <div class="w-full md:w-1/2">
+        <DatePicker
+          v-model="policyDetailsForm.quote_policy_expiry_date"
+          type="date"
+          label="Expiry Date"
+          placeholder="Expiry Date"
+          class="w-full"
+          :disabled="!policyDetailsState.isEditing"
+        />
+      </div>
+    </div>
+
+    <div class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5">
+      <div class="w-full md:w-1/2">
+        <x-input
+          v-model="policyDetailsForm.vat"
+          type="text"
+          label="Total VAT Amount"
+          placeholder="Total VAT Amount"
+          class="w-full"
+          :disabled="!policyDetailsState.isEditing"
+          readonly
+        />
+      </div>
+      <div class="w-full md:w-1/2">
+        <x-input
+          v-model="policyDetailsForm.amount_with_vat"
+          type="number"
+          label="Price with VAT"
+          placeholder="Price"
+          class="w-full"
+          readonly
+          :disabled="!policyDetailsState.isEditing"
+        />
+      </div>
+    </div>
+    <div class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5">
+      <div class="w-full md:w-1/2">
+        <x-input
+          v-model="policyDetailsForm.quote_plan_insurer_quote_number"
+          type="text"
+          label="Insurer Quote Number"
+          placeholder="Insurer Quote Number"
+          class="w-full"
+          :disabled="!policyDetailsState.isEditing"
+        />
+      </div>
+      <div class="w-full md:w-1/2">
+        <x-select
+          v-model="policyDetailsForm.quote_policy_issuance_status"
+          class="w-full"
+          label="Issuance Status"
+          placeholder="Select any option"
+          :disabled="!policyDetailsState.isEditing"
+          :options="policyIssuanceStatusOptions"
+        />
+      </div>
+    </div>
+    <div class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5">
+      <div class="w-full md:w-1/2">
+        <x-input
+          v-if="
+            policyDetailsForm.quote_policy_issuance_status ==
+            quoteIssuanceStatusEnum.Other
+          "
+          v-model="policyDetailsForm.quote_policy_issuance_status_other"
+          type="text"
+          label="Additionl Info"
+          placeholder="Additionl Info"
+          class="w-full"
+          :disabled="!policyDetailsState.isEditing"
+        />
+      </div>
+    </div>
+    <div class="flex flex-wrap md:flex-nowrap gap-6 w-full">
+      <div class="w-full md:w-1/2"></div>
+      <div class="w-full md:w-1/2" />
+    </div>
+    <div
+      class="flex justify-end"
+      v-if="
+        !hasRole(rolesEnum.PA) &&
+        record.quote_status_id == quoteStatusEnum.TransactionApproved
+      "
+    >
+      <x-button
+        v-if="policyDetailsState.isEditing"
+        class="mt-4 mr-2"
+        color="emerald"
+        size="sm"
+        :loading="policyDetailsForm.processing"
+        @click.prevent="policyDetailsState.isEditing = false"
+      >
+        Cancel
+      </x-button>
+      <x-button
+        v-if="policyDetailsState.isEditing"
+        class="mt-4"
+        color="emerald"
+        size="sm"
+        :loading="policyDetailsForm.processing"
+        @click.prevent="onUpdatePolicyDetails"
+      >
+        Update
+      </x-button>
+      <x-button
+        v-if="!policyDetailsState.isEditing"
+        class="mt-4"
+        color="emerald"
+        size="sm"
+        @click.prevent="policyDetailsState.isEditing = true"
+      >
+        Edit
+      </x-button>
+    </div>
+  </div>
+</template>
