@@ -159,7 +159,7 @@ class HealthQuoteController extends Controller
         // return;
 
         foreach ($listQuotePlans as $key => $quotePlan) {
-            if (! isset($quotePlan->id) ) {
+            if (! isset($quotePlan->id)) {
                 continue;
             }
             // dd($quotePlan->eligibilityName);
@@ -180,7 +180,7 @@ class HealthQuoteController extends Controller
         // dd($healthPlans);
 
         // if ($insuranceProviderId){
-            $healthPlans = $this->healthQuoteService->getNonQuotedHealthPlans($insuranceProviderId, $quotePlanId);
+        $healthPlans = $this->healthQuoteService->getNonQuotedHealthPlans($insuranceProviderId, $quotePlanId);
         // }else {
         //     return response()->json(['message' => 'Insurnace provider not found.']);
         // }
@@ -192,6 +192,7 @@ class HealthQuoteController extends Controller
             // 'networks' => $networks->toArray(),
             // 'copays' => $copays,
         ];
+
         // dump($insuranceProviderId);
         // dd($data);
         return response()->json($data);
