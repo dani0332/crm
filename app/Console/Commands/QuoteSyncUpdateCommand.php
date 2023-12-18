@@ -159,6 +159,8 @@ class QuoteSyncUpdateCommand extends Command
                     $personalQuote->$column = $value;
                 }
             }
+            $personalQuote->uuid = $entry->quote_uuid;
+            $personalQuote->quote_type_id = $entry->quote_type_id;
             $personalQuote->save();
         }
 
