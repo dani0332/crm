@@ -116,7 +116,7 @@ class ReportsController extends Controller
 
         $usersReportToLoggedInUser = $this->walkTree(auth()->user()->id);
 
-        $advisorIdsByTeam = array_intersect($teamUsers, $usersReportToLoggedInUser);
+        $advisorIdsByTeam = array_unique(array_merge($teamUsers, $usersReportToLoggedInUser));
 
         // subteams
 
@@ -158,9 +158,21 @@ class ReportsController extends Controller
      */
     public function renderRenewalReport(Request $request, RenewalBatchReportService $renewalBatchReportService)
     {
-        $renewalBatches = RenewalBatch::with(['slabs', 'teams' => function ($qry) {
+        $renewalBatches = RenewalBatch::with(['slabs' => function ($qry) {
+            $qry->orderBy('id', 'desc');
+        }, 'teams' => function ($qry) {
             $qry->whereIn('name', RenewalBatch::RENEWAL_BATCH_TEAMS_LIST);
         }])->get();
+
+        $renewalBatches = $renewalBatches->map(function ($renewalBatch) {
+            $renewalBatch->slabs = $renewalBatch->slabs->map(function ($slab) {
+                $slab->team_name = $slab->pivot->team->name;
+
+                return $slab;
+            });
+
+            return $renewalBatch;
+        });
 
         return inertia('Reports/RenewalBatch', [
             'reportData' => $renewalBatchReportService->getReportData($request),
