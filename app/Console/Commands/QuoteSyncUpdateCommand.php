@@ -77,21 +77,12 @@ class QuoteSyncUpdateCommand extends Command
 
                         if (! $quoteDetail) {
                             info('Entry for quote : '.$entry->quote_uuid.' not found in personal quotes details table');
-                            $quoteDetail = $this->createOrUpdatePersonalQuoteDetail($quote, $newValues);
                         }
+                        $quoteDetail = $this->createOrUpdatePersonalQuoteDetail($quote, $newValues);
 
-                        if (Schema::hasColumn('personal_quote_details', $column)) {
-                            $columnType = DB::getSchemaBuilder()->getColumnType('personal_quote_details', $column);
-                            // Surround the value with quotes if it's a string, date, or datetime
-                            if (in_array($columnType, ['string', 'date', 'datetime'])) {
-                                $value = "'$value'";
-                            }
-                            $quoteDetail->$column = $value;
-                        }
                     }
 
                     $quote->save();
-                    $quoteDetail->save();
                     info('Entry for quote : '.$entry->quote_uuid.' updated in personal quotes table');
                     info('Entry for quote : '.$quoteDetail->personal_quote_id.' updated in personal quotes details table');
                     $entry->update(['is_synced' => true, 'synced_at' => now()]);
@@ -185,6 +176,11 @@ class QuoteSyncUpdateCommand extends Command
                 }
 
                 if (Schema::hasColumn('personal_quote_details', $column)) {
+                    $columnType = DB::getSchemaBuilder()->getColumnType('personal_quote_details', $column);
+                    // Surround the value with quotes if it's a string, date, or datetime
+                    if (in_array($columnType, ['string', 'date', 'datetime'])) {
+                        $value = "'$value'";
+                    }
                     $personalQuoteDetail->$column = $value;
                 }
             }
@@ -197,6 +193,11 @@ class QuoteSyncUpdateCommand extends Command
                 }
 
                 if (Schema::hasColumn('personal_quote_details', $column)) {
+                    $columnType = DB::getSchemaBuilder()->getColumnType('personal_quote_details', $column);
+                    // Surround the value with quotes if it's a string, date, or datetime
+                    if (in_array($columnType, ['string', 'date', 'datetime'])) {
+                        $value = "'$value'";
+                    }
                     $personalQuoteDetail->$column = $value;
                 }
             }
