@@ -12,6 +12,7 @@ use App\Models\HomeQuote;
 use App\Models\JetskiQuote;
 use App\Models\LifeQuote;
 use App\Models\PersonalQuote;
+use App\Models\PersonalQuoteDetail;
 use App\Models\PetQuote;
 use App\Models\QuoteSync;
 use App\Models\TravelQuote;
@@ -54,6 +55,7 @@ class QuoteSyncUpdateCommand extends Command
         foreach ($entries as $entry) {
             info('Syncing entry: '.$entry->quote_uuid);
             $quote = PersonalQuote::where('uuid', $entry->quote_uuid)->first();
+            $quoteDetail = PersonalQuoteDetail::where('personal_quote_id', $quote->id)->first();
             if ($quote) {
                 DB::beginTransaction();
                 try {
@@ -72,9 +74,19 @@ class QuoteSyncUpdateCommand extends Command
                             }
                             $quote->$column = $value;
                         }
+
+                        if (Schema::hasColumn('personal_quote_details', $column)) {
+                            $columnType = DB::getSchemaBuilder()->getColumnType('personal_quote_details', $column);
+                            // Surround the value with quotes if it's a string, date, or datetime
+                            if (in_array($columnType, ['string', 'date', 'datetime'])) {
+                                $value = "'$value'";
+                            }
+                            $quoteDetail->$column = $value;
+                        }
                     }
 
                     $quote->save();
+                    $quoteDetail->save();
                     $entry->update(['is_synced' => true, 'synced_at' => now()]);
                     DB::commit();
                 } catch (Exception $e) {
@@ -107,6 +119,7 @@ class QuoteSyncUpdateCommand extends Command
                         $personalQuote = new PersonalQuote();
                         $personalQuote->uuid = $entry->quote_uuid;
                         $personalQuote->quote_type_id = $entry->quote_type_id;
+                        $personalQuoteDetail = new PersonalQuoteDetail();
                         foreach ($newValues as $column => $value) {
                             if ($column === 'id') {
                                 continue;
@@ -115,9 +128,17 @@ class QuoteSyncUpdateCommand extends Command
                             if (Schema::hasColumn('personal_quotes', $column)) {
                                 $personalQuote->$column = $value;
                             }
+                            if (Schema::hasColumn('personal_quote_details', $column)) {
+                                $personalQuoteDetail->$column = $value;
+                            }
                         }
                         info('Saving entry for quote : '.$entry->quote_uuid.' in personal quotes table');
                         $personalQuote->save();
+
+                        info('Saving entry for quote : '.$entry->quote_uuid.' in personal quote details table');
+                        $personalQuoteDetail->personal_quote_id = $personalQuote->id;
+                        $personalQuoteDetail->save();
+
                         $entry->update(['is_synced' => true, 'synced_at' => now()]);
                         info('Entry for quote : '.$entry->quote_uuid.' saved in personal quotes table');
                         DB::commit();
