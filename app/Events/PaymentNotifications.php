@@ -11,24 +11,19 @@ class PaymentNotifications implements ShouldBroadcastNow
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
-    public int $userId;
-    public $status;
-    public $userName;
-    public $message;
+    private string $uuid;
+    private string $clientName;
+    private int $advisorId;
+    private string $message;
+    private string $url;
 
-    public function __construct($userId)
+    public function __construct($model, $url)
     {
-        $this->userId = $userId;
-        $this->status = 1;
-        $this->userName = 'Mirza SB';
-
-        /*UserStatusAuditLog::create([
-            'user_id' => $userId,
-            'status' => $status,
-            'status_changed_at' => now()->toDateTimeString(),
-        ]);*/
-
-        $this->message = ' Payment successfully done.';
+        $this->uuid = $model->uuid;
+        $this->clientName = "$model->first_name $model->last_name";
+        $this->advisorId = $model->advisor_id;
+        $this->message = "$this->clientName has authorized the payment for ";
+        $this->url = $url;
     }
 
     public function broadcastOn()
@@ -44,10 +39,10 @@ class PaymentNotifications implements ShouldBroadcastNow
     public function broadcastWith()
     {
         return [
-            'userId' => $this->userId,
-            'status' => $this->status,
+            'uuid' => $this->uuid,
+            'advisorId' => $this->advisorId,
             'message' => $this->message,
-            'userName' => $this->userName,
+            'url' => $this->url,
         ];
     }
 }

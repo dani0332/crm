@@ -2,14 +2,20 @@
 
 namespace App\Http\Controllers\API;
 
+use App\Enums\quoteBusinessTypeCode;
+use App\Enums\quoteTypeCode;
+use App\Events\PaymentNotifications;
 use App\Factories\AllocationFactory;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\APiFetchUrl;
 use App\Services\ApiService;
+use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Http\Request;
 
 class ApiController extends Controller
 {
+    use GenericQueriesAllLobs;
+
     private $apiService;
 
     public function __construct(ApiService $service)
@@ -65,6 +71,32 @@ class ApiController extends Controller
 
             return response()->json(['error' => 'An error occurred', 'message' => $e->getMessage(), 'stackTrace' => $e->getTraceAsString()], 500);
         }
+    }
+
+    public function quotePaymentStatusUpdated(Request $request)
+    {
+        $model = $this->getModelObject(strtolower($request->quoteType));
+        $url = url('/');
+
+        if (is_numeric($request->quoteId)) {
+            $model = $model::find($request->quoteId);
+        } else {
+            $model = $model::where('uuid', $request->quoteId)->first();
+        }
+
+        if ($request->quoteType == quoteTypeCode::Business) {
+            if ($model->business_type_of_insurance_id == quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical)) {
+                $url .= "/medical/amt/$model->uuid";
+            } else {
+                $url .= "/quotes/business/$model->uuid";
+            }
+        } else {
+            $url .= '/quotes/'.strtolower($request->quoteType).'/'.$model->uuid;
+        }
+
+        event(new PaymentNotifications($model, $url));
+
+        return response()->json(['message' => 'Payment notification successfully send to advisor!'], 200);
     }
 
 }

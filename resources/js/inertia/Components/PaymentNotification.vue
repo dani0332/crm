@@ -1,9 +1,6 @@
 <script setup>
 import Pusher from 'pusher-js';
 const page = usePage();
-const status = computed(() => page.props.auth.user.status);
-
-const currentStatus = ref(status.value || 1);
 
 const notification = useNotifications('toast');
 
@@ -19,17 +16,18 @@ const channel = pusher.subscribe(
 
 const listen = () => {
   channel.bind('payment.notification', function (e) {
-    currentStatus.value = e.status;
-    if (e.userId === page.props.auth.user.id) {
-      notification.success({
-        title: e.userName + e.message + ' the user id is: ' + e.userId,
+    if (e.advisorId === page.props.auth.user.id) {
+      notification.info({
+        title: 'Payment',
+        iconColor: 'success',
+        message: e.message,
         action: {
           label: 'REF#',
           onClick: () => {
-            window. open('https://www.google.com', '_blank')
+            window.open(e.url, '_self');
           },
         },
-        timeout: 3500
+        timeout: 10000
       });
     }
   });
@@ -46,36 +44,5 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div>
-    <!--  <x-badge
-      :color="
-        {
-          1: 'success',
-          2: 'gray',
-          3: 'error',
-        }[currentStatus]
-      "
-      outlined
-    >
-      <x-tag class="gap-2">
-        <x-icon
-          :icon="
-            {
-              1: 'online',
-              2: 'offline',
-              3: 'offline',
-            }[currentStatus]
-          "
-          :class="
-            {
-              1: 'text-success-400',
-              2: 'text-gray-400',
-              3: 'text-red-500',
-            }[currentStatus]
-          "
-        />
-        <span class="text-sm font-medium">{{ statusText(currentStatus) }}</span>
-      </x-tag>
-    </x-badge> -->
-  </div>
+  <div></div>
 </template>
