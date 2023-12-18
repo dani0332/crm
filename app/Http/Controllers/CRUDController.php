@@ -495,9 +495,9 @@ class CRUDController extends Controller
 
         $insuranceProviderLeadCount = $insuranceProviderCode = '';
         if (!empty($payments)) {
-            $insurance_provider_id = $payments[0]['insurance_provider_id'];
-            $insuranceProviderCode = InsuranceProviderRepository::where('id', $insurance_provider_id)->value('code');
-            $insuranceProviderLeadCount = Payment::where('insurance_provider_id', '=', $insurance_provider_id)->count();
+            // $insurance_provider_id = $payments[0]['insurance_provider_id'];
+            // $insuranceProviderCode = InsuranceProviderRepository::where('id', $insurance_provider_id)->value('code');
+            // $insuranceProviderLeadCount = Payment::where('insurance_provider_id', '=', $insurance_provider_id)->count();
         }
         $mainPayment = $paymentEntityModel->payments()->where('code', '=', $paymentEntityModel->code)->first();
         $paymentLink = config('constants.PAYMENT_REDIRECT_LINK');
