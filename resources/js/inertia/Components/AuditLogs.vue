@@ -78,7 +78,7 @@ const onLoadAuditLogData = async () => {
         </div>
       </template>
       <template #body>
-        <x-divider class="my-4" v-if="!collapsed" />
+        <x-divider class="my-4" />
         <div class="text-center py-3" v-if="auditLogs.data === null">
           <x-button
             size="sm"

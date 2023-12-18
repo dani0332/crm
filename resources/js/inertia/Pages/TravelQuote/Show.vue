@@ -47,7 +47,8 @@ defineProps({
   UBOsDetails: Array,
   canAddBatchNumber: Boolean,
   sendUpdateOptions: Array,
-  sendUpdateLogs: Array
+  sendUpdateLogs: Array,
+  hasPolicyIssuedStatus: Boolean
 });
 
 
@@ -1112,14 +1113,7 @@ const genderList = [
   { value: 'M', label: 'Male' },
   { value: 'F', label: 'Female' },
 ];
-
-const policyIssued = computed(() => {
-  return (
-    page.props.quote.quote_status_id === page.props.enums.quoteStatusEnum.PolicyIssued
-  );
-});
-
-const sectionExpanded = computed(() => !policyIssued.value);
+const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
 </script>
 
 <template>
@@ -2228,7 +2222,7 @@ const sectionExpanded = computed(() => !policyIssued.value);
           :cdn="cdnPath"
         />
       </x-modal>
-      
+
       <x-modal v-model="modals.docConfirm" show-close backdrop>
         <template #header> Delete Document </template>
         <p>Are you sure you want to delete this document?</p>
@@ -2255,7 +2249,7 @@ const sectionExpanded = computed(() => !policyIssued.value);
     </div>
 
     <SendUpdates
-      v-if="policyIssued"
+      v-if="hasPolicyIssuedStatus"
       reportableType="TravelQuote"
       :reportableId="quote.id"
       :quote_type_id="$page.props.quoteTypeId"
@@ -2419,7 +2413,7 @@ const sectionExpanded = computed(() => !policyIssued.value);
       :link="ecomTravelInsuranceQuoteUrl + quote.uuid"
       :code="quote.code"
       :quote="quote"
-      :modelType="quoteType"
+      :modelType="modelType"
       :expanded="sectionExpanded"
     />
 

@@ -341,9 +341,10 @@ class CRUDService extends BaseService
                     CammyJob::dispatch($entity, 'unsub');
                 }
             }
-
+            $quoteTypeId = constant(QuoteTypeId::class . '::' . $request->modelType);
+            
             QuoteStatusLog::create([
-                'quote_type_id' => QuoteTypeId::Car,
+                'quote_type_id' => $quoteTypeId,
                 'quote_request_id' => $entity->id,
                 'current_quote_status_id' => $request->leadStatus,
                 'previous_quote_status_id' => $previousQuoteStatus,
