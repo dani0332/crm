@@ -147,7 +147,7 @@ const onUpdateLog = () => {
               </dd>
             </template>
             <template v-else-if="selectedType.slug !== 'CPU' && selectedType.slug !== 'CPD'">
-              <dt class="font-bold text-right mr-10">Reason</dt>
+              <!-- <dt class="font-bold text-right mr-10">Reason</dt>
               <dd>
                 <x-select
                   size="xs"
@@ -155,7 +155,7 @@ const onUpdateLog = () => {
                   v-model="sendUpdateForm.change_reason"
                   :options="changeReasonOptions"
                 />
-              </dd>
+              </dd> -->
             </template>
           </div>
         </dl>

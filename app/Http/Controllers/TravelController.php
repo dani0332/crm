@@ -184,7 +184,8 @@ class TravelController extends Controller
         $sendUpdateOptions = [];
         $sendUpdateLogs = [];
         $sendUpdateEnum = (object) [];
-        if ($record->quote_status_id == QuoteStatusEnum::PolicyIssued) {
+        $hasPolicyIssuedStatus = $this->crudService->hasAtleastOneStatusPolicyIssued(QuoteTypes::TRAVEL->id(), $record->id);
+        if ($hasPolicyIssuedStatus) {
             $sendUpdateOptions = $this->lookupService->getSendUpdateOptions(QuoteTypeId::Travel);
             $sendUpdateLogs = $paymentEntityModel->sendUpdateLogs;
             $sendUpdateEnum = SendUpdateLogStatusEnum::asArray();
@@ -253,7 +254,8 @@ class TravelController extends Controller
             'UBORelations' => $uboRelations,
             'emirates' => $emirates,
             'sendUpdateOptions' => $sendUpdateOptions,
-            'sendUpdateLogs' => $sendUpdateLogs
+            'sendUpdateLogs' => $sendUpdateLogs,
+            'hasPolicyIssuedStatus' => $hasPolicyIssuedStatus
         ]);
     }
 

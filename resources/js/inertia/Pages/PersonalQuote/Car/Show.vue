@@ -82,7 +82,8 @@ defineProps({
   isCommercialVehicles: Boolean,
   carInsuranceProviders: Array,
   sendUpdateOptions: Array,
-  sendUpdateLogs: Array
+  sendUpdateLogs: Array,
+  hasPolicyIssuedStatus: Boolean
 });
 const page = usePage();
 const notification = useNotifications('toast');
@@ -1456,14 +1457,7 @@ const handleChildUpdate = planId => {
   prefillPlanId.value = planId;
 };
 
-const policyIssued = computed(() => {
-  return (
-    page.props.record.quote_status_id ===
-    page.props.quoteStatusEnum.PolicyIssued
-  );
-});
-
-const sectionExpanded = computed(() => !policyIssued.value);
+const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
 </script>
 
 <template>
@@ -3281,8 +3275,7 @@ const sectionExpanded = computed(() => !policyIssued.value);
     </div>
 
     <SendUpdates
-      v-if="policyIssued"
-      :showAddButton="true"
+      v-if="hasPolicyIssuedStatus"
       reportableType="CarQuote"
       :reportableId="record.id"
       :quote_type_id="$page.props.quoteTypeId"

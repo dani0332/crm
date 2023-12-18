@@ -27,6 +27,7 @@ use App\Repositories\SendUpdateLogRepository;
 use App\Repositories\UserRepository;
 use App\Services\AMLService;
 use App\Services\CentralService;
+use App\Services\CRUDService;
 use App\Services\LookupService;
 
 class CycleQuoteController extends Controller
@@ -141,7 +142,8 @@ class CycleQuoteController extends Controller
         $sendUpdateOptions = [];
         $sendUpdateLogs = [];
         $sendUpdateEnum = (object) [];
-        if ($quote->quote_status_id == QuoteStatusEnum::PolicyIssued) {
+        $hasPolicyIssuedStatus = app(CRUDService::class)->hasAtleastOneStatusPolicyIssued(QuoteTypes::CYCLE->id(), $quote->id);
+        if ($hasPolicyIssuedStatus) {
             $sendUpdateOptions = (new LookupService)->getSendUpdateOptions(QuoteTypes::CYCLE->id());
             $sendUpdateLogs = SendUpdateLogRepository::findByQuoteId('CycleQuote', $quote->id);
             $sendUpdateEnum = SendUpdateLogStatusEnum::asArray();
@@ -175,7 +177,8 @@ class CycleQuoteController extends Controller
             'UBORelations' => $uboRelations,
             'sendUpdateOptions' => $sendUpdateOptions,
             'sendUpdateLogs' => $sendUpdateLogs,
-            'sendUpdateEnum' => $sendUpdateEnum
+            'sendUpdateEnum' => $sendUpdateEnum,
+            'hasPolicyIssuedStatus' => $hasPolicyIssuedStatus
         ]);
     }
 }

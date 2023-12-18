@@ -28,6 +28,7 @@ use App\Repositories\SendUpdateLogRepository;
 use App\Repositories\UserRepository;
 use App\Services\AMLService;
 use App\Services\CentralService;
+use App\Services\CRUDService;
 use App\Services\LookupService;
 use Illuminate\Http\Request;
 
@@ -116,7 +117,8 @@ class LifeQuoteController extends Controller
         $sendUpdateOptions = [];
         $sendUpdateLogs = [];
         $sendUpdateEnum = (object) [];
-        if ($quote->quote_status_id == QuoteStatusEnum::PolicyIssued) {
+        $hasPolicyIssuedStatus = app(CRUDService::class)->hasAtleastOneStatusPolicyIssued(QuoteTypes::LIFE->id(), $quote->id);
+        if ($hasPolicyIssuedStatus) {
             $sendUpdateOptions = (new LookupService)->getSendUpdateOptions(QuoteTypes::LIFE->id());
             $sendUpdateLogs = SendUpdateLogRepository::findByQuoteId('LifeQuote', $quote->id);
             $sendUpdateEnum = SendUpdateLogStatusEnum::asArray();
@@ -169,6 +171,7 @@ class LifeQuoteController extends Controller
             'sendUpdateEnum' => $sendUpdateEnum,
             'sendUpdateOptions' => $sendUpdateOptions,
             'sendUpdateLogs' => $sendUpdateLogs,
+            'hasPolicyIssuedStatus' => $hasPolicyIssuedStatus
         ]);
     }
 

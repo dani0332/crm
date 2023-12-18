@@ -18,6 +18,7 @@ use App\Repositories\PaymentMethodRepository;
 use App\Repositories\PersonalPlanRepository;
 use App\Repositories\QuoteStatusRepository;
 use App\Repositories\UserRepository;
+use App\Services\CRUDService;
 use App\Services\LookupService;
 
 class JetskiQuoteController extends Controller
@@ -111,8 +112,8 @@ class JetskiQuoteController extends Controller
 
         $sendUpdateOptions = [];
         $sendUpdateLogs = [];
-
-        if ($quote->quote_status_id == QuoteStatusEnum::PolicyIssued) {
+        $hasPolicyIssuedStatus = app(CRUDService::class)->hasAtleastOneStatusPolicyIssued(QuoteTypes::YACHT->id(), $quote->id);
+        if ($hasPolicyIssuedStatus) {
             $sendUpdateOptions = (new LookupService)->getSendUpdateOptions(QuoteTypes::YACHT->id());
             $sendUpdateLogs = $quote->load('sendUpdateLogs');
         }
@@ -137,6 +138,7 @@ class JetskiQuoteController extends Controller
             'canAddBatchNumber' => auth()->user()->hasRole(RolesEnum::JetskiManager),
             'sendUpdateOptions' => $sendUpdateOptions,
             'sendUpdateLogs' => $sendUpdateLogs,
+            'hasPolicyIssuedStatus' => $hasPolicyIssuedStatus
         ]);
     }
 

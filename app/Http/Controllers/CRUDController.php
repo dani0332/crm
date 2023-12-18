@@ -505,7 +505,8 @@ class CRUDController extends Controller
         $sendUpdateOptions = [];
         $sendUpdateLogs = [];
         $sendUpdateEnum = (object) [];
-        if ($record->quote_status_id == QuoteStatusEnum::PolicyIssued) {
+        $hasPolicyIssuedStatus = $this->crudService->hasAtleastOneStatusPolicyIssued($quoteTypeId, $record->id);
+        if ($hasPolicyIssuedStatus) {
             $sendUpdateOptions = $this->lookupService->getSendUpdateOptions($quoteTypeId);
             $sendUpdateLogs = $paymentEntityModel->sendUpdateLogs;
             $sendUpdateEnum = SendUpdateLogStatusEnum::asArray();
@@ -690,7 +691,7 @@ class CRUDController extends Controller
                 'paymentEntityModel', 'payments', 'paymentMethods', 'isQuoteDocumentEnabled', 'quoteDocuments', 'displaySendPolicyButton', 'customerAdditionalContacts', 'lostApproveReasons', 'lostRejectReasons', 'allowQuoteLogAction', 'carLostChangeStatus',
                 'carMakeText', 'carModelText', 'advisor', 'tiers', 'daysAfterCapturedPayment', 'access', 'carPlanFeaturesCodeEnum', 'carPlanExclusionsCodeEnum', 'documentTypes', 'planURL', 'storageUrl', 'kyoEndPoint',
                 'carPlanTypeEnum', 'UBORelations', 'UBOsDetails', 'emirates', 'customerTypeEnum', 'memberRelations', 'membersDetails', 'industryType', 'nationalities',
-                'isCommercialVehicles', 'carInsuranceProviders',
+                'isCommercialVehicles', 'carInsuranceProviders', 'hasPolicyIssuedStatus'
             ]));
         }
 
@@ -717,7 +718,7 @@ class CRUDController extends Controller
                 'isNewBusinessUser', 'ecomTravelInsuranceQuoteUrl', 'quoteType', 'autoAllocationDisabled',
                 'paymentEntityModel', 'payments', 'mainPayment', 'paymentMethods', 'insuranceProviders', 'emailStatuses',
                 'isQuoteDocumentEnabled', 'quoteDocuments', 'displaySendPolicyButton', 'customerAdditionalContacts',
-                'quoteTypeId', 'tiers', 'access',
+                'quoteTypeId', 'tiers', 'access', 'hasPolicyIssuedStatus'
             ]));
         }
 
@@ -810,7 +811,8 @@ class CRUDController extends Controller
                 'UBORelations' => $uboRelations,
                 'emirates' => $emirates,
                 'quoteType' => QuoteTypes::HOME,
-                'sendUpdateEnum' => $sendUpdateEnum
+                'sendUpdateEnum' => $sendUpdateEnum,
+                'hasPolicyIssuedStatus' => $hasPolicyIssuedStatus,
             ]);
         }
 
@@ -944,7 +946,8 @@ class CRUDController extends Controller
                 'industryType' => $industryType,
                 'UBOsDetails' => $uboDetails,
                 'UBORelations' => $uboRelations,
-                'sendUpdateEnum' => $sendUpdateEnum
+                'sendUpdateEnum' => $sendUpdateEnum,
+                'hasPolicyIssuedStatus' => $hasPolicyIssuedStatus,
             ]);
         } else {
             return view('shared.show', compact([

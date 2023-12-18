@@ -26,6 +26,7 @@ use App\Repositories\QuoteStatusRepository;
 use App\Repositories\SendUpdateLogRepository;
 use App\Repositories\UserRepository;
 use App\Services\AMLService;
+use App\Services\CRUDService;
 use App\Services\LookupService;
 use App\Traits\GenericQueriesAllLobs;
 
@@ -128,7 +129,8 @@ class BikeQuoteController extends Controller
         $sendUpdateOptions = [];
         $sendUpdateLogs = [];
         $sendUpdateEnum = (object) [];
-        if ($quote->quote_status_id == QuoteStatusEnum::PolicyIssued) {
+        $hasPolicyIssuedStatus = app(CRUDService::class)->hasAtleastOneStatusPolicyIssued(QuoteTypes::BIKE->id(), $quote->id);
+        if ($hasPolicyIssuedStatus) {
             $sendUpdateOptions = (new LookupService)->getSendUpdateOptions(QuoteTypes::BIKE->id());
             $sendUpdateLogs = SendUpdateLogRepository::findByQuoteId('BikeQuote', $quote->id);
             $sendUpdateEnum = SendUpdateLogStatusEnum::asArray();
@@ -161,7 +163,8 @@ class BikeQuoteController extends Controller
             'UBORelations' => $uboRelations,
             'sendUpdateOptions' => $sendUpdateOptions,
             'sendUpdateLogs' => $sendUpdateLogs,
-            'sendUpdateEnum' => $sendUpdateEnum
+            'sendUpdateEnum' => $sendUpdateEnum,
+            'hasPolicyIssuedStatus' => $hasPolicyIssuedStatus
         ]);
     }
 

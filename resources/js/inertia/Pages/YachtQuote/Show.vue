@@ -732,7 +732,6 @@ const sectionExpanded = computed(() => !policyIssued.value);
 
     <SendUpdates
       v-if="policyIssued"
-      :showAddButton="true"
       reportableType="YachtQuote"
       :reportableId="quote.id"
       :quote_type_id="$page.props.quoteTypeId"

@@ -738,4 +738,15 @@ class CRUDService extends BaseService
             }
         }
     }
+
+    public function hasAtleastOneStatusPolicyIssued($quoteTypeId, $recordId)
+    {
+        return QuoteStatusLog::where('quote_type_id', $quoteTypeId)
+            ->where('quote_request_id', $recordId)
+            ->where(function ($query) {
+                $query->where('current_quote_status_id', QuoteStatusEnum::PolicyIssued)
+                        ->orWhere('previous_quote_status_id', QuoteStatusEnum::PolicyIssued);
+            })
+            ->first() !== null;
+    }
 }

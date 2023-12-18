@@ -1,11 +1,6 @@
 <script setup>
 
 const props = defineProps({
-  showAddButton: {
-    type: Boolean,
-    required: true,
-    default: false
-  },
   reportableType: {
     type: String,
     required: true,
@@ -35,6 +30,8 @@ const props = defineProps({
 })
 
 const page = usePage();
+const can = permission => useCan(permission);
+const permissionsEnum = page.props.permissionsEnum;
 const dateFormat = date => date ? useDateFormat(date, 'DD-MM-YYYY').value : '-';
 
 const optionError = ref(false);
@@ -194,7 +191,7 @@ const findOption = (item, key) => {
       <template #body>
         <div class="my-4 flex justify-end">
           <x-button
-            v-if="showAddButton"
+            v-if="can(permissionsEnum.SEND_UPDATE_CREATE)"
             size="sm"
             color="orange"
             @click="modals.show = true"
@@ -215,52 +212,52 @@ const findOption = (item, key) => {
             <x-tooltip position="right">
               <span class="underline decoration-dotted">{{ text }}</span>
               <template #tooltip>
-                <span class="capitalize whitespace-break-spaces">
+                <span class="whitespace-break-spaces !normal-case">
                   {{ tooltip }}
                 </span>
               </template>
             </x-tooltip>
           </template>
           <template #header-type="{ text, tooltip }">
-            <x-tooltip position="bottom" block>
+            <x-tooltip position="bottom">
               <span class="underline decoration-dotted">{{ text }}</span>
               <template #tooltip>
-                <span class="capitalize whitespace-break-spaces">
+                <span class="whitespace-break-spaces !normal-case">
                   {{ tooltip }}
                 </span>
               </template>
             </x-tooltip>
           </template>
           <template #header-sub_type="{ text, tooltip }">
-            <x-tooltip position="bottom" block>
+            <x-tooltip position="bottom">
               <span class="underline decoration-dotted">{{ text }}</span>
               <template #tooltip>
-                <span class="capitalize whitespace-break-spaces">
+                <span class="whitespace-break-spaces !normal-case">
                   {{ tooltip }}
                 </span>
               </template>
             </x-tooltip>
           </template>
-          <!-- <template #header-status="{ text, tooltip }">
+          <template #header-status="{ text, tooltip }">
             <x-tooltip position="bottom">
               <span class="underline decoration-dotted">{{ text }}</span>
               <template #tooltip>
-                <span class="capitalize whitespace-break-spaces">
+                <span class="whitespace-break-spaces !normal-case">
                   {{ tooltip }}
                 </span>
               </template>
             </x-tooltip>
-          </template> -->
-          <!-- <template #header-created_at="{ text, tooltip }">
-            <x-tooltip position="bottom">
+          </template>
+          <template #header-created_at="{ text, tooltip }">
+            <x-tooltip position="left">
               <span class="underline decoration-dotted">{{ text }}</span>
               <template #tooltip>
-                <span class="capitalize whitespace-break-spaces">
+                <span class="whitespace-break-spaces !normal-case">
                   {{ tooltip }}
                 </span>
               </template>
             </x-tooltip>
-          </template> -->
+          </template>
           <template #item-code="{ code, uuid }">
             <Link :href="route('quotes.car.view-update-log', {id: reportableUuid, uuid: uuid})" class="text-primary-800 underline">{{ code }}</Link>
           </template>

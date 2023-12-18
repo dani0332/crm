@@ -25,6 +25,7 @@ use App\Repositories\QuoteStatusRepository;
 use App\Repositories\UserRepository;
 use App\Repositories\YachtQuoteRepository;
 use App\Services\AMLService;
+use App\Services\CRUDService;
 use App\Services\LookupService;
 
 class YachtQuoteController extends Controller
@@ -117,8 +118,8 @@ class YachtQuoteController extends Controller
 
         $sendUpdateOptions = [];
         $sendUpdateLogs = [];
-
-        if ($quote->quote_status_id == QuoteStatusEnum::PolicyIssued) {
+        $hasPolicyIssuedStatus = app(CRUDService::class)->hasAtleastOneStatusPolicyIssued(QuoteTypes::YACHT->id(), $quote->id);
+        if ($hasPolicyIssuedStatus) {
             $sendUpdateOptions = $lookupService->getSendUpdateOptions(QuoteTypes::YACHT->id());
             $sendUpdateLogs = $quote->load('sendUpdateLogs');
         }
@@ -148,6 +149,7 @@ class YachtQuoteController extends Controller
             'emirates' => $emirates,
             'sendUpdateOptions' => $sendUpdateOptions,
             'sendUpdateLogs' => $sendUpdateLogs,
+            'hasPolicyIssuedStatus' => $hasPolicyIssuedStatus
         ]);
     }
 

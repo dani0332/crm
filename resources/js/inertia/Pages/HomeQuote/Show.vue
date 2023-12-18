@@ -36,7 +36,8 @@ defineProps({
   documentTypes: Object,
   storageUrl: String,
   sendUpdateOptions: Array,
-  sendUpdateLogs: Array
+  sendUpdateLogs: Array,
+  hasPolicyIssuedStatus: Boolean
 });
 
 const page = usePage();
@@ -447,13 +448,7 @@ const linkEntity = () => {
     });
 };
 
-const policyIssued = computed(() => {
-  return (
-    page.props.quote.quote_status_id === page.props.quoteStatusEnum.PolicyIssued
-  );
-});
-
-const sectionExpanded = computed(() => !policyIssued.value);
+const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
 </script>
 
 <template>
@@ -995,8 +990,7 @@ const sectionExpanded = computed(() => !policyIssued.value);
     />
 
     <SendUpdates
-      v-if="policyIssued"
-      :showAddButton="true"
+      v-if="hasPolicyIssuedStatus"
       reportableType="HomeQuote"
       :reportableId="quote.id"
       :quote_type_id="$page.props.quoteTypeId"

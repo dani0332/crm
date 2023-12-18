@@ -217,7 +217,8 @@ class BusinessQuoteController extends Controller
         $sendUpdateOptions = [];
         $sendUpdateLogs = [];
         $sendUpdateEnum = (object) [];
-        if ($record->quote_status_id == QuoteStatusEnum::PolicyIssued) {
+        $hasPolicyIssuedStatus = $this->crudService->hasAtleastOneStatusPolicyIssued(QuoteTypes::BUSINESS->id(), $record->id);
+        if ($hasPolicyIssuedStatus) {
             $sendUpdateOptions = (new LookupService)->getSendUpdateOptions(QuoteTypes::BUSINESS->id());
             $sendUpdateLogs = SendUpdateLogRepository::findByQuoteId('BusinessQuote', $record->id);
             $sendUpdateEnum = SendUpdateLogStatusEnum::asArray();
@@ -289,7 +290,8 @@ class BusinessQuoteController extends Controller
             'canAddBatchNumber' => auth()->user()->hasRole(RolesEnum::CorplineManager),
             'sendUpdateOptions' => $sendUpdateOptions,
             'sendUpdateLogs' => $sendUpdateLogs,
-            'sendUpdateEnum' => $sendUpdateEnum
+            'sendUpdateEnum' => $sendUpdateEnum,
+            'hasPolicyIssuedStatus' => $hasPolicyIssuedStatus
         ]);
     }
 

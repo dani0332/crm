@@ -28,6 +28,7 @@ use App\Repositories\SendUpdateLogRepository;
 use App\Repositories\UserRepository;
 use App\Services\AMLService;
 use App\Services\CentralService;
+use App\Services\CRUDService;
 use App\Services\LookupService;
 
 class PetQuoteController extends Controller
@@ -111,7 +112,8 @@ class PetQuoteController extends Controller
         $sendUpdateOptions = [];
         $sendUpdateLogs = [];
         $sendUpdateEnum = (object) [];
-        if ($quote->quote_status_id == QuoteStatusEnum::PolicyIssued) {
+        $hasPolicyIssuedStatus = app(CRUDService::class)->hasAtleastOneStatusPolicyIssued(QuoteTypes::PET->id(), $quote->id);
+        if ($hasPolicyIssuedStatus) {
             $sendUpdateOptions = (new LookupService)->getSendUpdateOptions(QuoteTypes::PET->id());
             $sendUpdateLogs = SendUpdateLogRepository::findByQuoteId('PetQuote', $quote->id);
             $sendUpdateEnum = SendUpdateLogStatusEnum::asArray();
@@ -155,7 +157,8 @@ class PetQuoteController extends Controller
             'UBORelations' => $uboRelations,
             'sendUpdateOptions' => $sendUpdateOptions,
             'sendUpdateLogs' => $sendUpdateLogs,
-            'sendUpdateEnum' => $sendUpdateEnum
+            'sendUpdateEnum' => $sendUpdateEnum,
+            'hasPolicyIssuedStatus' => $hasPolicyIssuedStatus
         ]);
     }
 
