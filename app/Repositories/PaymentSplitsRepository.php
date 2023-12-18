@@ -151,23 +151,25 @@ class PaymentSplitsRepository
         //dd($paymentSplits->count());
         $paymentPaidSerialNo = [];
         $splitPaymentDocumentIds = [];
+        $splitPaymentDetails = $request->split_payment_details['split_amount'];
         if ($paymentSplits) {
             foreach ($paymentSplits as $paymentSplit) {
-                if ($paymentSplit->payment_status_id == PaymentStatusEnum::PAID) {
+                if ($paymentSplit->payment_status_id == PaymentStatusEnum::PAID ||
+                    $paymentSplit->payment_status_id == PaymentStatusEnum::AUTHORISED ) {
                     $paymentPaidSerialNo[] = $paymentSplit->sr_no;
-
                     continue;
                 }
                 if (($request->payment_no < $paymentSplits->count()) && $paymentSplit->sr_no > $request->payment_no) {
                     QuoteDocument::where('payment_split_id', $paymentSplit->id)->delete();
                     $paymentSplit->delete();
-
+                    unset($splitPaymentDetails[$paymentSplit->sr_no]);
                     continue;
                 }
             }
         }
 
-        $totalSplitPayments = (count($request->split_payment_details['split_amount']) - 1);
+        $totalSplitPayments = (count($splitPaymentDetails) - 1);
+ //dd($request->split_payment_details['split_amount']);       
         $discount = 0;
         if (isset($request->discount_value) && $request->discount_value > 0 && count($paymentPaidSerialNo) == 0) {
             $discount = $this->calculateDiscount($totalSplitPayments, $request->discount_value);

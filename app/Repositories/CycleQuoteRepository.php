@@ -125,6 +125,9 @@ class CycleQuoteRepository extends BaseRepository
                 'insuranceProviderDetails',
                 'payments' => function ($q) {
                     $q->with([
+                        'paymentSplits' => function ($query) {
+                            $query->orderBy('sr_no', 'asc');
+                        },
                         'paymentStatus', 'personalPlan', 'paymentMethod', 'paymentStatusLogs', 'insuranceProvider',
                         'paymentSplits.paymentStatus',
                         'paymentSplits.paymentMethod',

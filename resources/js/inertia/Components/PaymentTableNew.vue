@@ -76,6 +76,7 @@ const filesTest = ref([]);
 const isCreditPaymentInvalid = ref([]);
 const isCreditPaymentInvalidError = ref([]);
 const currentFileIndex = ref(0);
+const oldTotalPayments = ref(0);
 const zoomLevel = ref(1);
 const isGalleryModelOpen = ref(false);
 const isDiscountReasonError = ref(false);
@@ -514,6 +515,9 @@ const handleApprovalReasonChange = () => {
       }    
     } 
     for (let i = 1; i <= paymentMethodsForm.payment_no; i++) {
+      if ( readOnlyPayments.value[i] === true ) {
+        continue;
+      }
       paymentMethodsModels.value[i] = 'CA';
     }
   } else {
@@ -591,18 +595,23 @@ const handleDiscountChange = () => {
   calculateTotalAmount();
 };
 
+const notPaidDates = (serialNo) => {
+  if(readOnlyPayments.value[serialNo]!=undefined && readOnlyPayments.value[serialNo]===true) {
+    return  false;
+  }
+  return true;
+}
+
 const calculateDueDates = () => {
-  dueDateModels.value[1] = paymentMethodsForm.collection_date;
+  if ( notPaidDates(1) ) {
+    dueDateModels.value[1] = paymentMethodsForm.collection_date;
+  }
   if(paymentMethodsForm.frequency === 'split_payments' || paymentMethodsForm.frequency === 'upfront'){
      //dueDateModels.value[1] = new Date();
-    for (let i = 1; i <= paymentMethodsForm.payment_no; i++) { 
-      
-      if(readOnlyPayments.value[i]!=undefined && readOnlyPayments.value[i]===true) {
-        continue;
-      }      
-      dueDateModels.value[i] = paymentMethodsForm.collection_date;
-    
-    
+    for (let i = 1; i <= paymentMethodsForm.payment_no; i++) {       
+      if ( notPaidDates(i) ) {
+        dueDateModels.value[i] = paymentMethodsForm.collection_date;
+      }    
     }
   } else if(paymentMethodsForm.frequency === 'custom'){
     for (let i = 2; i <= paymentMethodsForm.payment_no; i++) { 
@@ -611,7 +620,9 @@ const calculateDueDates = () => {
         // Set the month to the next month
         nextDueDate.setMonth(nextDueDate.getMonth() + 1);
         // Update the due date model
-        dueDateModels.value[i] = nextDueDate;
+        if ( notPaidDates(i) ) {
+          dueDateModels.value[i] = nextDueDate;
+        }
     }
   } else if(paymentMethodsForm.frequency === 'monthly'){
     dueDateModels.value[1] = paymentMethodsForm.collection_date;
@@ -619,11 +630,15 @@ const calculateDueDates = () => {
       const nextDueDate = new Date(dueDateModels.value[i - 1]);
       nextDueDate.setMonth(nextDueDate.getMonth() + 1);
       nextDueDate.setDate(1);  // Set the day to 1st of the month
-      dueDateModels.value[i] = nextDueDate;     
+      if ( notPaidDates(i) ) {
+        dueDateModels.value[i] = nextDueDate;
+      }    
     }
   } else if(paymentMethodsForm.frequency === 'quarterly'){
-    dueDateModels.value[1] = paymentMethodsForm.collection_date;
     
+    if ( notPaidDates(1) ) {
+      dueDateModels.value[1] = paymentMethodsForm.collection_date;
+    }
     for (let i = 2; i <= paymentMethodsForm.payment_no; i++) {
       const nextDueDate = new Date(paymentMethodsForm.collection_date);
       if (i === 2) {
@@ -633,16 +648,21 @@ const calculateDueDates = () => {
       } else if (i === 4) {
         nextDueDate.setDate(nextDueDate.getDate() + 270);
       }
-      dueDateModels.value[i] = nextDueDate;
+      if ( notPaidDates(i) ) {
+          dueDateModels.value[i] = nextDueDate;
+      }      
     }
 
   } else if(paymentMethodsForm.frequency === 'semi_annual'){
-    dueDateModels.value[1] = paymentMethodsForm.collection_date;
+    if ( notPaidDates(1) ) {
+      dueDateModels.value[1] = paymentMethodsForm.collection_date;
+    }    
     const nextDueDate = new Date(dueDateModels.value[1]);
     nextDueDate.setDate(nextDueDate.getDate() + 180);
-    dueDateModels.value[2] = nextDueDate;
+    if ( notPaidDates(2) ) {
+      dueDateModels.value[2] = nextDueDate;
+    }    
   }
-
 }
 
 const calculatePaymentBreakup = (changeMethod = true) => {  
@@ -650,7 +670,17 @@ const calculatePaymentBreakup = (changeMethod = true) => {
   var perInstallmentPrice = parseFloat(((totalAmount.value-paidAmountSum.value)/(paymentMethodsForm.payment_no-totalPaidAmount.value)).toFixed(2));
   console.log('azhar9991='+JSON.stringify(paymentMethodsModels.value));
   if ( paymentMethodsForm.status === 'edit') {
-    splitAmountModels.value = [];
+    var trueValuesArray = readOnlyPayments.value.filter(function(value) {
+      return value === true;
+    });
+    // Get the count of true values
+    var trueValuesCount = trueValuesArray.length;
+    console.log('READONLY='+paymentMethodsForm.payment_no);
+    console.log('READONLY1='+trueValuesCount);
+    if(paymentMethodsForm.payment_no <= trueValuesCount){ 
+      paymentMethodsForm.payment_no = oldTotalPayments.value;
+      return;
+    }    
   }
 
   for (let i = 1; i <= paymentMethodsForm.payment_no; i++) { 
@@ -906,6 +936,7 @@ const editPaymentModal = (payment,split_payment_id,sr_no,capture_approval) => {
   isCreditPaymentInvalid.value = [];
   isCreditPaymentInvalidError.value = [];
   paymentMethodsForm.declined_custom_reason = '';
+  paidAmountSum.value = 0;
   if(sr_no>0){
     splitPaymentNo.value = sr_no;
     isFieldReadonly.value = true;
@@ -919,11 +950,12 @@ const editPaymentModal = (payment,split_payment_id,sr_no,capture_approval) => {
 
   //paymentMethodsForm.masterPaymentStatus = payment.
   masterPaymentStatus.value = payment.payment_status.text;
-
+  
   paymentMethodsForm.paymentCode = payment.code;
   paymentMethodsForm.insurance_provider_id= payment.insurance_provider_id;
   paymentMethodsForm.collection_type= payment.collection_type;  
   paymentMethodsForm.payment_no= payment.total_payments;
+  oldTotalPayments.value = payment.total_payments;
   paymentMethodsForm.frequency= payment.frequency;
   showDiscountOptions.value = true;
   paymentMethodsForm.discount_reason = payment.discount_reason !== null ? payment.discount_reason : '';
@@ -969,7 +1001,10 @@ const editPaymentModal = (payment,split_payment_id,sr_no,capture_approval) => {
 
   var isAnyPaid = false;
   for(let i=1; i<=payment.total_payments; i++){
-    if(payment.payment_splits[i-1].payment_status_id===props.paymentStatusEnum.PAID) { 
+    if(
+      payment.payment_splits[i-1].payment_status_id===props.paymentStatusEnum.PAID ||
+      payment.payment_splits[i-1].payment_status_id===props.paymentStatusEnum.AUTHORISED    
+    ) { 
       readOnlyPayments.value[i] = true;
       totalPaidAmount.value++;
       paidAmountSum.value = parseFloat(paidAmountSum.value) + parseFloat(payment.payment_splits[i-1].payment_amount);
@@ -977,7 +1012,7 @@ const editPaymentModal = (payment,split_payment_id,sr_no,capture_approval) => {
     } else {
       readOnlyPayments.value[i] = false;
     } 
-   
+    console.log('paidAmountSum='+paidAmountSum.value);
     fileUploadModels.value[i] = [];
     paymentMethodsModels.value[i] = payment.payment_splits[i-1].payment_method.code;
     splitAmountModels.value[i] = payment.payment_splits[i-1].payment_amount;
@@ -1000,11 +1035,13 @@ const editPaymentModal = (payment,split_payment_id,sr_no,capture_approval) => {
   }
   
   if (paymentMethodsForm.status == 'edit') {
-    if ( isAnyPaid ) {
+    console.log('TOTALPRICE='+totalPrice.value);
+    console.log('TOTALPRICEDB='+payment.total_price);
+    if ( isAnyPaid && (totalPrice.value <= payment.total_price) ) {
       isFieldReadonly.value = true;    
     } else {
       isFieldReadonly.value = false;      
-    }
+    }    
   } 
 
   if(capture_approval>0) {
