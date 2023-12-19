@@ -1821,7 +1821,6 @@ class CRUDController extends Controller
                 'credit_approval' => $request->credit_approval,
                 'total_payments' => $request->payment_no,
                 'collection_type' => $request->collection_type,
-                'captured_amount' => $request->captured_amount,
                 'total_amount' => $request->total_amount, //amount after discount
                 'collection_date' => $request->collection_date,
                 'discount_value' => $request->discount_value,

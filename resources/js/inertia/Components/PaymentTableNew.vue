@@ -1457,7 +1457,7 @@ const getCaptureValidation = computed(() => {
           return true;
         } else if (paymentSplitRec.payment_method.code==='IP' &&  paymentSplitRec.payment_status_id===props.paymentStatusEnum.PENDING) {
           return true;
-        } else if (paymentSplitRec.payment_method.code==='CA' &&  paymentSplitRec.payment_status_id===props.paymentStatusEnum.CREDIT_APPROVAL) {
+        } else if (paymentSplitRec.payment_method.code==='CA' &&  paymentSplitRec.payment_status_id===props.paymentStatusEnum.CREDIT_APPROVED) {
           return true;
         } else if (paymentSplitRec.payment_status_id===props.paymentStatusEnum.PAID) {
           return true;
@@ -1486,7 +1486,7 @@ const getCaptureValidation = computed(() => {
         } else {
           let caPaymentStatus = paymentRecord.payment_splits.filter(item => item.payment_method.code === "CA");
           if (caPaymentStatus.length > 0) {
-            let caApproved = caPaymentStatus.filter(item => item.payment_status_id===props.paymentStatusEnum.CREDIT_APPROVAL);
+            let caApproved = caPaymentStatus.filter(item => item.payment_status_id===props.paymentStatusEnum.CREDIT_APPROVED);
             if( caApproved.length===caPaymentStatus.length ) {
               return true;
             } 
@@ -1744,11 +1744,11 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
                         Edit
                     </x-button>
                     <template v-if="can(permissionEnum.ApprovePayments)">
-                      <x-button v-if="getCaptureOption==='capture'" size="xs" color="orange" outlined 
+                      <x-button v-if="getCaptureOption==='capture' && getCaptureValidation" size="xs" color="orange" outlined 
                       @click="getCaptureValidation ? editPaymentModal(item, 0, 0, 1) : alertCapture()">
                           Capture
                       </x-button>
-                      <x-button v-if="getCaptureOption==='approve'" size="xs" color="orange" outlined 
+                      <x-button v-if="getCaptureOption==='approve' && getCaptureValidation" size="xs" color="orange" outlined 
                       @click="getCaptureValidation ? editPaymentModal(item, 0, 0, 2) : alertCapture()">
                           Approve
                       </x-button>
@@ -2192,7 +2192,8 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
                   <span class="border-b-2 border-dotted border-black text-sm">COLLECTED AMOUNT</span> 
                 </span>
                 <template #tooltip>
-                  <span>{{ paymentTooltipEnum.CAPTURE_AMOUNT }}</span>                  
+                  <span v-if="isCreditCardView">{{ paymentTooltipEnum.CAPTURE_AMOUNT }}</span>
+                  <span v-else >{{ paymentTooltipEnum.PAYMENT_VIEW_COLLECTED_TEXT }}</span>                                 
                 </template>
               </x-tooltip>
               
@@ -2412,18 +2413,18 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
                       />
                     </template> 
                   </div>
-                  
-                  
                   <div class="w-1/5 px-2" v-if="isCreditApprovalView">
                     <template v-if="readOnlyPayments[count] && !isCreditCardView">
                       {{ formatAmount(collectionAmountModels[count]) }}
                     </template>
                     <template v-else >                      
                       <x-input
+                        v-if="paymentMethodsModels[count]==='CC'"
                         v-model="collectionAmountModels[count]"
                         class="w-full"
                         :class="{'custom-select-error': isCreditPaymentInvalid[count]}"                                           
                       />
+                      <span v-else >{{ formatAmount(collectionAmountModels[count]) }}</span>
                       <p v-if="isCreditPaymentInvalid[count]" class="text-sm text-red-500 dark:text-red-400">{{  isCreditPaymentInvalidError[count] }}</p>
                     </template> 
                   </div>

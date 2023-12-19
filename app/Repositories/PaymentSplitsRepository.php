@@ -169,7 +169,6 @@ class PaymentSplitsRepository
         }
 
         $totalSplitPayments = (count($splitPaymentDetails) - 1);
- //dd($request->split_payment_details['split_amount']);       
         $discount = 0;
         if (isset($request->discount_value) && $request->discount_value > 0 && count($paymentPaidSerialNo) == 0) {
             $discount = $this->calculateDiscount($totalSplitPayments, $request->discount_value);
@@ -272,18 +271,28 @@ class PaymentSplitsRepository
                 foreach ($request->collection_amount as $key => $splitAmount) {
                     $paymentSplit = PaymentSplits::where(['code' => $quoteModel->code, 'sr_no' => $key])->first();
                     if ($paymentSplit) {
-                        $paymentSplit->collection_amount = $splitAmount;
-                        $paymentSplit->payment_status_id = PaymentStatusEnum::PAID;
+                        if($paymentSplit->payment_method == PaymentMethodsEnum::CreditCard) {
+                            $paymentSplit->payment_status_id = PaymentStatusEnum::PAID;
+                        }
+                        $paymentSplit->collection_amount = $splitAmount;                        
                         $paymentSplit->save();
                     }
                     $totalCapturedPayment += $splitAmount;
                 }
             }
             $firstPayment = $quoteModel->payments()->first();
+            $masterPaymentStatus = $firstPayment->payment_status_id;
+            $totalPaidPayments = PaymentSplits::where([
+                'payment_status_id' => PaymentStatusEnum::PAID,
+                'code' => $firstPayment->code,
+            ])->count();
+            if ($totalPaidPayments == $firstPayment->total_payments) {
+                $masterPaymentStatus = PaymentStatusEnum::PAID;
+            }
             $firstPayment->update([
                 'is_approved' => 1,
                 'captured_amount' => ($firstPayment->captured_amount + $totalCapturedPayment),
-                'payment_status_id' => PaymentStatusEnum::PAID,
+                'payment_status_id' => $masterPaymentStatus,
                 'updated_by' => Auth::user()->id,
             ]);
 
