@@ -55,6 +55,7 @@ const tableHeader = [
   { text: 'Date of Birth', value: 'date_of_birth' },
   { text: 'Screening Date', value: 'created_at' },
   { text: 'Status', value: 'status' },
+  { text: 'Notes', value: 'notes' },
 ];
 
 const payersTableHeader = [
