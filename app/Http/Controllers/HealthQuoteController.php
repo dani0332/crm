@@ -2,11 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use App\Enums\GenericRequestEnum;
-use App\Http\Requests\InsurerProviderNetworkRequest;
-use App\Repositories\InsuranceProviderRepository;
-use App\Services\HealthQuoteService;
 use Illuminate\Http\Request;
+use App\Enums\GenericRequestEnum;
+use App\Services\HealthQuoteService;
+use App\Http\Requests\MemberDetailRequest;
+use App\Repositories\InsuranceProviderRepository;
+use App\Http\Requests\InsurerProviderNetworkRequest;
 
 class HealthQuoteController extends Controller
 {
@@ -70,6 +71,48 @@ class HealthQuoteController extends Controller
                 $responseMessage = $response;
             }
             $message = 'Plan has not been updated '.$responseMessage;
+        }
+
+        return $message;
+    }
+
+    public function healthQuoteAddMember(MemberDetailRequest $request)
+    {
+        $request->validated();
+
+        $response = $this->healthQuoteService->healthQuoteAddMember($request);
+
+        $message = '';
+        if (gettype($response) == GenericRequestEnum::INTEGER && ($response == 200 || $response == 201)) {
+            $message = 'Member Added.';
+        } else {
+            if (isset($response->message)) {
+                $responseMessage = $response->message;
+            } else {
+                $responseMessage = $response;
+            }
+            $message = 'Request not processed. '.$responseMessage;
+        }
+
+        return $message;
+    }
+
+    public function healthQuoteUpdateMember(MemberDetailRequest $request)
+    {
+        $request->validated();
+
+        $response = $this->healthQuoteService->healthQuoteUpdateMember($request);
+
+        $message = '';
+        if (gettype($response) == GenericRequestEnum::INTEGER && ($response == 200 || $response == 201)) {
+            $message = 'Member Updated.';
+        } else {
+            if (isset($response->message)) {
+                $responseMessage = $response->message;
+            } else {
+                $responseMessage = $response;
+            }
+            $message = 'Request not processed. '.$responseMessage;
         }
 
         return $message;

@@ -1423,6 +1423,106 @@ class HealthQuoteService extends BaseService
         }
     }
 
+    public function healthQuoteAddMember($request)
+    {
+        $quoteId = $request->quoteId;
+
+        if ($quoteId){
+
+            $apiEndPoint = config('constants.KEN_API_ENDPOINT').'/add-health-quote-members';
+            $apiToken = config('constants.KEN_API_TOKEN');
+            $apiTimeout = config('constants.KEN_API_TIMEOUT');
+            $apiUserName = config('constants.KEN_API_USER');
+            $apiPassword = config('constants.KEN_API_PWD');
+
+            $memberDetails = [
+                'firstName' => $request->first_name,
+                'lastName' => $request->last_name,
+                'emirateOfYourVisaId' => $request->emirate_of_your_visa_id,
+                'gender' => $request->gender,
+                'nationalityId' => $request->nationality_id,
+                'memberCategoryId' => $request->member_category_id,
+                'salaryBandId' => $request->salary_band_id,
+                'dob' => $request->dob,
+                'relationCode' => $request->relation_code,
+            ];
+
+            $dataArray = [
+                'quoteUID' => $quoteId,
+                'memberDetails' => [$memberDetails],
+            ];
+
+            $apiCreds = [
+                'apiEndPoint' => $apiEndPoint,
+                'apiToken' => $apiToken,
+                'apiTimeout' => $apiTimeout,
+                'apiUserName' => $apiUserName,
+                'apiPassword' => $apiPassword,
+            ];
+
+            $response = $this->httpService->processRequest($dataArray, $apiCreds);
+        } else {
+            $response = [
+                'status' => false,
+                'message' => 'Quote Id not found',
+            ];
+        }
+
+        return $response;
+
+    }
+
+    public function healthQuoteUpdateMember($request)
+    {
+        $quoteId = $request->quoteId ?? null;
+        $memberId = $request->id ?? null;
+
+        if ($quoteId && $memberId){
+
+            $apiEndPoint = config('constants.KEN_API_ENDPOINT').'/update-health-quote-members';
+            $apiToken = config('constants.KEN_API_TOKEN');
+            $apiTimeout = config('constants.KEN_API_TIMEOUT');
+            $apiUserName = config('constants.KEN_API_USER');
+            $apiPassword = config('constants.KEN_API_PWD');
+
+            $memberDetails = [
+                'id' => $memberId,
+                'firstName' => $request->first_name,
+                'lastName' => $request->last_name,
+                'emirateOfYourVisaId' => $request->emirate_of_your_visa_id,
+                'gender' => $request->gender,
+                'nationalityId' => $request->nationality_id,
+                'memberCategoryId' => $request->member_category_id,
+                'salaryBandId' => $request->salary_band_id,
+                'dob' => $request->dob,
+                'relationCode' => $request->relation_code,
+            ];
+
+            $dataArray = [
+                'quoteUID' => $quoteId,
+                'memberDetails' => [$memberDetails],
+            ];
+
+            $apiCreds = [
+                'apiEndPoint' => $apiEndPoint,
+                'apiToken' => $apiToken,
+                'apiTimeout' => $apiTimeout,
+                'apiUserName' => $apiUserName,
+                'apiPassword' => $apiPassword,
+            ];
+
+            $response = $this->httpService->processRequest($dataArray, $apiCreds);
+        } else {
+            $response = [
+                'status' => false,
+                'message' => 'Quote Id not found',
+            ];
+        }
+
+        return $response;
+
+    }
+
     /**
      * create health plan for upload & create process.
      *
