@@ -1035,9 +1035,8 @@ const editPaymentModal = (payment,split_payment_id,sr_no,capture_approval) => {
   }
   
   if (paymentMethodsForm.status == 'edit') {
-    console.log('TOTALPRICE='+totalPrice.value);
-    console.log('TOTALPRICEDB='+payment.total_price);
-    if ( isAnyPaid && (totalPrice.value <= payment.total_price) ) {
+    //if ( isAnyPaid && (totalPrice.value <= payment.total_price) ) { //FOR EDIT
+    if ( isAnyPaid ) {
       isFieldReadonly.value = true;    
     } else {
       isFieldReadonly.value = false;      

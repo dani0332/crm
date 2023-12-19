@@ -158,15 +158,12 @@ class CentralController extends Controller
         return (new CentralService())->loadAvailablePlans($type, $id);
     }
 
+    /**
+     * @return \Illuminate\Http\RedirectResponse
+     */
     public function savePlanDetails($quoteType, $code, PlanDetailsRequest $request)
     {
-        $repository = getRepositoryObject($quoteType);
-
-        $data = $request->safe();
-        $data->price_with_vat = $data->price_vat_applicable ? ($data->price_vat_applicable + (($data->price_vat_applicable / 100) * 5)) : $data->price_vat_not_applicable;
-
-        $quote = $repository::where('code', $code)->firstOrFail();
-        $quote->update($data->toArray());
+        $response = (new CentralService())->savePlanDetails($quoteType, $code, $request->safe());
 
         return redirect()->back();
     }

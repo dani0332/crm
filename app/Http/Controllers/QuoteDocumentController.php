@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
+use App\Http\Requests\QuotesDocumentRequest;
 use App\Models\DocumentType;
 use App\Models\QuoteDocument;
 use App\Services\ActivitiesService;
@@ -96,7 +97,7 @@ class QuoteDocumentController extends Controller
         ));
     }
 
-    public function store(Request $request, $quoteType)
+    public function store($quoteType, QuotesDocumentRequest $request)
     {
         if (! $request->hasFile('file') ||
             ! ($quote = $this->getQuoteObject($quoteType, $request->quote_id))
@@ -106,7 +107,7 @@ class QuoteDocumentController extends Controller
 
         $this->quoteDocumentService->uploadQuoteDocument($request->file('file'), $request->all(), $quote);
 
-        return redirect()->back()->with('success', 'Document Uploaded Successfully');
+        return redirect()->back()->with('success', 'File Uploaded');
     }
 
     public function storeMultiple(Request $request, $quoteType)

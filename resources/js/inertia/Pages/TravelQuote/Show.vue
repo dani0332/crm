@@ -516,10 +516,6 @@ const quoteDocumentsTable = reactive({
       text: 'Created By',
       value: 'created_by_name',
     },
-    {
-      text: 'Action',
-      value: 'action',
-    },
   ],
 });
 
@@ -2082,7 +2078,7 @@ const genderList = [
 
     <div
       class="p-4 rounded shadow mb-6 bg-white"
-      v-if="permissions.isQuoteDocumentEnabled"
+
     >
       <div class="flex justify-between items-center mb-4">
         <h3 class="font-semibold text-primary-800 text-lg">
@@ -2094,17 +2090,13 @@ const genderList = [
             @click.prevent="modals.doc = true"
             size="sm"
             color="orange"
-            v-if="
-              permissions.canNotEditPayments &&
-              permissions.notProductionApproval
-            "
           >
             Upload Documents
           </x-button>
           <x-button
             size="sm"
             color="red"
-            v-if="displaySendPolicyButton && permissions.notProductionApproval"
+            v-if="displaySendPolicyButton && permissions.notProductionApproval && permissions.isQuoteDocumentEnabled"
             @click="sendPolicyToClient"
           >
             Send Policy

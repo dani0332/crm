@@ -109,7 +109,7 @@ class CycleQuoteController extends Controller
 
         $quoteStatuses = QuoteStatusRepository::byQuoteTypeId(QuoteTypes::CYCLE->id())->get();
 
-        $quote->load('documents.createdBy');
+        $quote->load('documents.createdBy:id,name,email');
 
         $documentTypes = DocumentTypeRepository::byQuoteTypeId(QuoteTypes::CYCLE->id())->get();
         $paymentMethods = PaymentMethodRepository::orderBy('name')->get();

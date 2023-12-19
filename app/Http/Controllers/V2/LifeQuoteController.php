@@ -102,6 +102,7 @@ class LifeQuoteController extends Controller
         $nationalities = NationalityRepository::withActive()->get();
         $embeddedProducts = EmbeddedProductRepository::byQuoteType(QuoteTypes::LIFE->id(), $quote->id);
         $industryType = LookupRepository::where('key', LookupsEnum::COMPANY_TYPE)->get();
+        $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypes::LIFE->id());
         $activities = ActivityRepository::where([
             'quote_type_id' => QuoteTypes::LIFE->id(),
             'quote_request_id' => $quote->id,
