@@ -984,11 +984,12 @@ const uploadFile = (doc, files) => {
 
   if (files.length == 0) {
     notification.error({
-      title: 'Incorrect file type\nPlease upload a ' + doc.accepted_files + ' file',
+      title:
+        'Incorrect file type\nPlease upload a ' + doc.accepted_files + ' file',
       position: 'top',
     });
     return false;
-  };
+  }
   isUploading.value = true;
   docForm
     .transform(data => ({
@@ -3130,6 +3131,7 @@ const handleChildUpdate = planId => {
       :record="record"
       :quoteStatusEnum="quoteStatusEnum"
       :policyIssuanceStatus="policyIssuanceStatus"
+      :modelType="quoteType"
     />
 
     <div class="p-4 rounded shadow mb-6 bg-white" v-if="isQuoteDocumentEnabled">
@@ -3294,7 +3296,7 @@ const handleChildUpdate = planId => {
 
     <BookPolicy
       v-if="
-        hasAnyRole([rolesEnum.PRODUCTION, rolesEnum.NRA, rolesEnum.FINANCE])
+        !hasAnyRole([rolesEnum.PRODUCTION, rolesEnum.NRA, rolesEnum.FINANCE])
       "
       :quote="record"
       :quoteType="quoteType"

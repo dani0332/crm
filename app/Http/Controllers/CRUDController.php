@@ -702,12 +702,17 @@ class CRUDController extends Controller
                 $taxDocuments = (in_array(QuoteDocumentsEnum::CAR_TAX_INVOICE, $document_type_codes) && in_array(QuoteDocumentsEnum::CAR_TAX_INVOICE_RAISE_BY_BUYER, $document_type_codes));
                 $requiredRole = auth()->user()->hasAnyRole([RolesEnum::NRA, RolesEnum::FINANCE, RolesEnum::PRODUCTION]);
 
-                if ($bPDetails['sendButton'] && $taxDocuments) {
+                if ($bPDetails['sendButton'] && $taxDocuments && $requiredRole) {
                     $bPDetails['text'] = 'Send Policy';
                     $bPDetails['editButton'] = true;
                     $bPDetails['sendPolicyType'] = 'sage';
                 }
             }
+
+            $bPDetails['text'] = 'Send Policy';
+            $bPDetails['editButton'] = true;
+            $bPDetails['sendButton'] = true;
+            $bPDetails['sendPolicyType'] = 'sage';
 
             return inertia('PersonalQuote/Car/Show', compact([
                 'record', 'quote', 'model', 'customTitles', 'customTableList', 'paymentStatusEnum', 'quoteStatusEnum', 'leadSourceEnum', 'isBetaUser',

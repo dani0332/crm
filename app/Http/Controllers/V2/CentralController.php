@@ -159,17 +159,20 @@ class CentralController extends Controller
     public function updateBookingPolicy(BookPolicyRequest $bookPolicyRequest)
     {
         $validatedData =  $bookPolicyRequest->validated();
-        dd($validatedData);
+
+
         $paymentInformation = [
-            'insurer_invoice_date' => $validatedData['invoice_date'],
             'tax_invoice_number' => $validatedData['insurer_tax_invoice_number'],
-            // 'captured_amount' => $request->insurer_commmission_invoice_number,
-            // 'captured_amount' => $request->broker_invoice_number,
+            'transaction_payment_status' => $validatedData['transaction_payment_status'],
+            'insurer_commmission_invoice_number' => $validatedData['insurer_commmission_invoice_number'],
+            'broker_invoice_number' => $validatedData['broker_invoice_number'],
+            'insurer_invoice_date' => $validatedData['invoice_date'],
             'commission_vat_not_applicable' => $validatedData['commission_vat_not_applicable'],
             'commission_vat_applicable' => $validatedData['commission_vat_applicable'],
-            // 'insurance_provider_id' => $request->commission_percentage,
+            'commmission_percentage' => $validatedData['commission_percentage'],
             'commission_vat' =>  $validatedData['vat_on_commission'],
             'commission' => $validatedData['total_commission'],
+            'invoice_description' => $validatedData['invoice_description'],
         ];
         $payment = Payment::where('code', $validatedData['payment_code'])->first();
         if (!$payment) {
@@ -177,17 +180,20 @@ class CentralController extends Controller
         }
         $payment->update($paymentInformation);
 
+        $quote = $this->getQuoteObject($validatedData['model_type'], $validatedData['quote_id']);
+        $quote->update(['policy_booking_date' => $validatedData['booking_date']]);
+
         return redirect()->back()->with('success', 'Booking Status has been updated.');
     }
 
-    public function sendBookingPolicy(BookPolicyRequest $bookPolicyRequest)
+
+    public function sendBookingPolicy(Request $request)
     {
-        $validatedData = $bookPolicyRequest->validated();
+        dd($request->all());
 
+        $quote = $this->getQuoteObject($request->model_type, $request->quote_id);
 
-        dd($validatedData);
-        $quote = $this->getQuoteObject($validatedData['model_type'], $validatedData['quote_id']);
-
+        dd($quote);
         if (!$quote) {
             return redirect()->back()->with('error', 'Error in Sending Policy.');
         }
@@ -205,6 +211,8 @@ class CentralController extends Controller
         }
         return response()->json(['message' => 'policy send successfully'], 200);
     }
+
+
 
     public function loadAvailablePlans($type, $id)
     {

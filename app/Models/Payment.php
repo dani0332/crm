@@ -16,7 +16,7 @@ class Payment extends Model
     protected $keyType = 'string';
     protected $fillable = [
         'code', 'payment_status_id', 'plan_id', 'captured_amount', 'captured_at', 'authorized_at', 'payment_methods_code', 'insurance_provider_id', 'created_by', 'updated_by', 'is_approved', 'reference', 'collection_type', 'payment_link', 'payer_name', 'paid_by',
-        'commission_vat', 'commission_without_vat', 'commission_vat_applicable', 'commission_vat_not_applicable', 'commission', 'tax_invoice_number', 'broker_invoice_number', 'insurer_invoice_date',
+        'commission_vat', 'commission_without_vat', 'commission_vat_applicable', 'commission_vat_not_applicable', 'commission', 'tax_invoice_number', 'broker_invoice_number', 'insurer_invoice_date', 'invoice_description', 'transaction_payment_status', 'insurer_commmission_invoice_number', 'commmission_percentage',
     ];
     protected $forceDeleting = true;
 
@@ -25,7 +25,7 @@ class Payment extends Model
      */
     public function getAllowAttribute()
     {
-        return $this->attributes['allow'] = ($this->payment_status_id != PaymentStatusEnum::CAPTURED && $this->payment_status_id != PaymentStatusEnum::AUTHORISED && ! auth()->user()->hasRole(RolesEnum::PA));
+        return $this->attributes['allow'] = ($this->payment_status_id != PaymentStatusEnum::CAPTURED && $this->payment_status_id != PaymentStatusEnum::AUTHORISED && !auth()->user()->hasRole(RolesEnum::PA));
     }
 
     /**
@@ -42,7 +42,7 @@ class Payment extends Model
     public function getApproveButtonAttribute()
     {
         return $this->attributes['approve_button'] = (optional($this->paymentMethod)->code != PaymentMethodsEnum::CreditCard && $this->payment_status_id != PaymentStatusEnum::PAID && $this->payment_status_id != PaymentStatusEnum::CAPTURED
-            && ! auth()->user()->hasRole(RolesEnum::PA));
+            && !auth()->user()->hasRole(RolesEnum::PA));
     }
 
     /**
@@ -117,17 +117,17 @@ class Payment extends Model
 
     public function getCreatedAtAttribute($date)
     {
-        return (! empty($date)) ? Carbon::parse($date)->format(config('constants.DATETIME_DISPLAY_FORMAT')) : '';
+        return (!empty($date)) ? Carbon::parse($date)->format(config('constants.DATETIME_DISPLAY_FORMAT')) : '';
     }
 
     public function getAuthorizedAtAttribute($date)
     {
-        return (! empty($date)) ? Carbon::parse($date)->format(config('constants.DATETIME_DISPLAY_FORMAT')) : '';
+        return (!empty($date)) ? Carbon::parse($date)->format(config('constants.DATETIME_DISPLAY_FORMAT')) : '';
     }
 
     public function getCapturedAtAttribute($date)
     {
-        return (! empty($date)) ? Carbon::parse($date)->format(config('constants.DATETIME_DISPLAY_FORMAT')) : '';
+        return (!empty($date)) ? Carbon::parse($date)->format(config('constants.DATETIME_DISPLAY_FORMAT')) : '';
     }
 
     /**
