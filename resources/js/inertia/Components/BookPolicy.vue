@@ -51,22 +51,27 @@ const transactionPaymentStatus = computed(() => {
   }
 });
 const bpForm = useForm({
-  booking_date: new Date().toJSON().slice(0, 10),
+  booking_date:
+    dateToYMD(page.props.record?.policy_booking_date) ||
+    new Date().toJSON().slice(0, 10),
   transaction_payment_status: transactionPaymentStatus.value,
   invoice_date: dateToYMD(page.props.payments[0]?.insurer_invoice_date) || '',
   invoice_description: page.props.bPDetails.invoiceDescription || '',
   broker_invoice_number: page.props.bPDetails.brokerInvoiceNo || '',
   insurer_tax_invoice_number: page.props?.payments[0]?.tax_invoice_number || '',
-  insurer_commmission_invoice_number: '',
+  insurer_commmission_invoice_number:
+    page.props?.payments[0]?.insurer_commmission_invoice_number || '',
   commission_vat_not_applicable:
     page.props?.payments[0]?.commission_vat_not_applicable || '',
   commission_vat_applicable:
     page.props?.payments[0]?.commission_vat_applicable || '',
-  commission_percentage: '',
+  commission_percentage: page.props?.payments[0]?.commmission_percentage || '',
   vat_on_commission: page.props?.payments[0]?.commission_vat || '',
   total_commission: page.props?.payments[0]?.commission || '',
   payment_code: page.props?.payments[0]?.code,
   discount: page.props?.payments[0]?.discount_value || '',
+  model_type: props.quoteType,
+  quote_id: page.props.record.id,
 });
 
 const onUpdateBpDetails = isValid => {
@@ -78,6 +83,8 @@ const onUpdateBpDetails = isValid => {
           title: 'Book policy details update Successfully',
           position: 'top',
         });
+
+        bp.isEditing = false;
       },
       onError: errors => {
         console.log(errors);
@@ -134,7 +141,7 @@ const caculateCommission = () => {
       100
     ).toFixed(2);
 
-    bpForm.vat_on_commission = bpForm.commission_percentage * (0.05).toFixed(2);
+    bpForm.vat_on_commission = (bpForm.commission_percentage * 0.05).toFixed(2);
     bpForm.total_commission =
       Number(bpForm.vat_on_commission) +
       Number(bpForm.commission_vat_applicable);

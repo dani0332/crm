@@ -500,10 +500,10 @@ class CRUDController extends Controller
         $payments = $paymentEntityModel->payments;
 
         $insuranceProviderLeadCount = $insuranceProviderCode = '';
-        if (!empty($payments)) {
-            // $insurance_provider_id = $payments[0]['insurance_provider_id'];
-            // $insuranceProviderCode = InsuranceProviderRepository::where('id', $insurance_provider_id)->value('code');
-            // $insuranceProviderLeadCount = Payment::where('insurance_provider_id', '=', $insurance_provider_id)->count();
+        if ($payments->first()) {
+            $insurance_provider_id = $payments[0]['insurance_provider_id'];
+            $insuranceProviderCode = InsuranceProviderRepository::where('id', $insurance_provider_id)->value('code');
+            $insuranceProviderLeadCount = Payment::where('insurance_provider_id', '=', $insurance_provider_id)->count();
         }
         $mainPayment = $paymentEntityModel->payments()->where('code', '=', $paymentEntityModel->code)->first();
         $paymentLink = config('constants.PAYMENT_REDIRECT_LINK');
@@ -708,12 +708,17 @@ class CRUDController extends Controller
                 $taxDocuments = (in_array(QuoteDocumentsEnum::CAR_TAX_INVOICE, $document_type_codes) && in_array(QuoteDocumentsEnum::CAR_TAX_INVOICE_RAISE_BY_BUYER, $document_type_codes));
                 $requiredRole = auth()->user()->hasAnyRole([RolesEnum::NRA, RolesEnum::FINANCE, RolesEnum::PRODUCTION]);
 
-                if ($bPDetails['sendButton'] && $taxDocuments) {
+                if ($bPDetails['sendButton'] && $taxDocuments && $requiredRole) {
                     $bPDetails['text'] = 'Send Policy';
                     $bPDetails['editButton'] = true;
                     $bPDetails['sendPolicyType'] = 'sage';
                 }
             }
+
+            $bPDetails['text'] = 'Send Policy';
+            $bPDetails['editButton'] = true;
+            $bPDetails['sendButton'] = true;
+            $bPDetails['sendPolicyType'] = 'sage';
 
             return inertia('PersonalQuote/Car/Show', compact([
                 'record', 'quote', 'model', 'customTitles', 'customTableList', 'paymentStatusEnum', 'quoteStatusEnum', 'leadSourceEnum', 'isBetaUser',

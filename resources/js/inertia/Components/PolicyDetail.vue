@@ -14,6 +14,10 @@ const props = defineProps({
     type: Array,
     default: [],
   },
+  modelType: {
+    type: String,
+    default: '',
+  },
 });
 
 const hasRole = role => useHasRole(role);
@@ -63,7 +67,7 @@ const policyDetailsForm = useForm({
   quote_policy_issuance_status: page.props.record.policy_issuance_status_id,
   quote_policy_issuance_status_other:
     page.props.record.policy_issuance_status_other || '',
-  modelType: 'Car',
+  modelType: props.modelType,
   quote_id: page.props.record.id,
 });
 
@@ -80,7 +84,7 @@ const caculateVatAmount = () => {
 };
 
 const onUpdatePolicyDetails = () => {
-  policyDetailsForm.post('/quotes/Car/update-quote-policy', {
+  policyDetailsForm.post(`/quotes/${props.modelType}/update-quote-policy`, {
     preserveScroll: true,
     onSuccess: () => {
       policyDetailsState.isEditing = false;

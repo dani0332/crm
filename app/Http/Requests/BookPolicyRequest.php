@@ -23,14 +23,22 @@ class BookPolicyRequest extends FormRequest
     {
         return [
             'invoice_date' => 'required',
+            'booking_date' => 'required',
             'insurer_tax_invoice_number' => 'required',
             'insurer_commmission_invoice_number' => 'required',
-            'discount' => 'required',
-            'commission_percentage' => 'required',
-            'broker_invoice_number' => 'required',
+            'discount' => 'nullable',
+            'transaction_payment_status' => 'nullable',
+            'commission_percentage' => 'nullable',
+            'broker_invoice_number' => 'nullable',
             'commission_vat_not_applicable' => 'required_without:commission_vat_applicable',
             'commission_vat_applicable' => 'required_without:commission_vat_not_applicable',
-            'total_commission' => 'required',
+            'total_commission' => 'nullable',
+            'invoice_description' => 'nullable',
+            'vat_on_commission' => 'nullable',
+            'commission_percentage' => 'nullable',
+            'payment_code' => 'required',
+            'model_type' => 'required',
+            'quote_id' => 'required',
         ];
     }
 
