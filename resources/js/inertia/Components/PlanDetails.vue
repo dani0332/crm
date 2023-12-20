@@ -37,7 +37,7 @@ const insuranceProviderOptions = computed(() => {
 const isProviderEmpty = ref(false);
 
 const rules = {
-  isNumber: v => !isNaN(Number(v)) || 'Field must be a number',
+  isNumber: v => !isNaN(Number(v)) || 'Amount must be a valid number',
   conditionalRequired: v => {
     const vatApplicable = planDetailsForm.price_vat_applicable;
     const vatNotApplicable = planDetailsForm.price_vat_not_applicable;
@@ -55,7 +55,10 @@ const rules = {
 };
 
 const submitPlanDetailsForm = isValid => {
-  if (!planDetailsForm.insurance_provider_id) isProviderEmpty.value = true;
+  if (!planDetailsForm.insurance_provider_id) {
+    isProviderEmpty.value = true; 
+    return;
+  }
   else isProviderEmpty.value = false;
 
   if (!isValid) return;
