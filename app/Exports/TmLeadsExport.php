@@ -54,25 +54,6 @@ class TmLeadsExport implements FromQuery, ShouldAutoSize, WithHeadings, WithMapp
             $tmlead->handlers_name,
             $tmlead->tm_created_at,
             $tmlead->tm_updated_at,
-
-            // $quote->code,
-            // $quote->first_name,
-            // $quote->last_name,
-            // optional($quote->quoteStatus)->text,
-            // optional($quote->advisor)->name,
-            // date(config('constants.datetime_format'), strtotime($quote->created_at)),
-            // date(config('constants.datetime_format'), strtotime($quote->updated_at)),
-            // $quote->dob,
-            // optional($quote->travelQuoteRequestDetail)->transapp_code,
-            // optional($quote->travelQuoteRequestDetail)->lostReason?->text,
-            // $quote->source,
-            // $quote->premium,
-            // $quote->policy_number,
-            // optional($quote->destination)->text,
-            // optional($quote->currentlyLocatedIn)->text,
-            // $quote->expiry_date,
-            // $quote->is_ecommerce ? 'Yes' : 'No',
-            // optional($quote->paymentStatus)->text,
         ];
     }
 }

@@ -235,8 +235,8 @@ watch(
           <div>
             <x-button
               v-if="canExport"
-              size="sm"
               color="emerald"
+              size="sm"
               :href="`/telemarketing/tmleads/export?${objToUrl(filters)}`"
               class="justify-self-start"
             >
