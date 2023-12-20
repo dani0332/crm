@@ -297,7 +297,7 @@
                 tmuploadlead_datatable_route: "{{ route('tmuploadlead-list') }}",
                 age_discount_datatable_route: "{{ route('age.index') }}",
                 renewals_leads_datatable_route: "{{ route('renewals-uploaded-leads-list') }}",
-                sanction_list_downloads_datatable_route: "{{ url('kyc/aml/download/history') }}",
+                // sanction_list_downloads_datatable_route: "{{ url('kyc/aml/download/history') }}",
                 leadassignmentDataTable: "{{ route('leadassignment.index') }}",
                 amtDataTable: "{{ route('amt.index') }}",
                 activitiesDataTable: "{{ route('activities.index') }}",
