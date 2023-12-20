@@ -869,21 +869,12 @@ class TravelQuoteService extends BaseService
 
     public function sortedPlansList($id): array
     {
-        $result = $seniorPlans = $normalPlans = [];
+        $result = [];
         $plans = $this->listQuotePlans($id);
         $collection = collect($plans);
 
-        $seniorPlans = $collection->filter(function ($plan) {
-            $maxAgeValue = collect($plan->memberPremiumBreakdown)->max('ageValue');
-
-            return $maxAgeValue > 64;
-        })->values();
-
-        $normalPlans = $collection->filter(function ($plan) {
-            $maxAgeValue = collect($plan->memberPremiumBreakdown)->max('ageValue');
-
-            return ! ($maxAgeValue > 64);
-        })->values();
+        $seniorPlans = $collection->where('isSeniorPlan', true);
+        $normalPlans = $collection->where('isSeniorPlan', false);
 
         $result['normalPlans'] = $normalPlans->toArray();
         $result['seniorPlans'] = $seniorPlans->toArray();
