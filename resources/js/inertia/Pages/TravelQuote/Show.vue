@@ -2111,10 +2111,7 @@ const genderList = [
       <div class="flex flex-wrap gap-4 justify-between items-center mb-4">
         <h3 class="font-semibold text-primary-800 text-lg">Available Plans</h3>
         <x-button
-          v-if="
-            availablePlansTable.data.length > 0 &&
-            permissions.canNotApprovePayments
-          "
+          v-if="availablePlansTable.data.length > 0"
           size="sm"
           color="orange"
           @click.prevent="onCopyText(ecomTravelInsuranceQuoteUrl + quote.uuid)"
