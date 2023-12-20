@@ -21,6 +21,7 @@ const rolesEnum = page.props.rolesEnum;
 
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
+const objToUrl = obj => useObjToUrl(obj);
 
 const handlersOptions = ref([
   ...[
@@ -79,6 +80,8 @@ const onReset = () => {
 
 function onSubmit(isValid) {
   if (isValid) {
+    filters.tmLeadsStartDate = filters.tmLeadsStartDate.split('T')[0];
+    filters.tmLeadsEndDate = filters.tmLeadsEndDate.split('T')[0];
     filters.page = 1;
 
     router.visit(route('tmleads-list'), {
@@ -97,6 +100,23 @@ function onSubmit(isValid) {
 const onLeadAssigned = () => {
   itemsSelected.value = [];
 };
+
+const canExport = ref(false);
+
+watch(
+  () => filters,
+  () => {
+    const { tmLeadsStartDate, tmLeadsEndDate } = filters;
+
+    canExport.value =
+      tmLeadsStartDate &&
+      tmLeadsEndDate &&
+      (new Date(tmLeadsEndDate) - new Date(tmLeadsStartDate)) /
+        (1000 * 60 * 60 * 24) <=
+        30;
+  },
+  { deep: true, immediate: true },
+);
 </script>
 <template>
   <div>
@@ -198,18 +218,41 @@ const onLeadAssigned = () => {
             name="created_at_start"
             class="w-full"
             v-model="filters.tmLeadsStartDate"
+            :rules="[isRequired]"
           />
         </x-field>
         <x-field label="End Date" v-if="showdates">
           <DatePicker
-            name="created_at_start"
+            name="created_at_end"
             class="w-full"
             v-model="filters.tmLeadsEndDate"
+            :rules="[isRequired]"
           />
         </x-field>
       </div>
-      <div class="flex justify-end gap-3 mb-4 mt-1">
-        <div class="flex justify-self-end gap-3">
+      <div class="flex justify-between gap-3 mb-4 mt-1">
+        <div class="flex justify-between gap-3">
+          <div>
+            <x-button
+              v-if="canExport"
+              size="sm"
+              color="emerald"
+              :href="`/telemarketing/tmleads/export?${objToUrl(filters)}`"
+              class="justify-self-start"
+            >
+              Export
+            </x-button>
+            <x-tooltip v-else position="right">
+              <x-button tag="div" size="sm" color="emerald"> Export </x-button>
+              <template #tooltip>
+                <span class="font-medium">
+                  Export data requires created dates within the last 30 days.
+                </span>
+              </template>
+            </x-tooltip>
+          </div>
+        </div>
+        <div class="flex gap-3">
           <x-button size="sm" color="#ff5e00" type="submit">Search</x-button>
           <x-button size="sm" color="primary" @click.prevent="onReset">
             Reset
