@@ -201,8 +201,8 @@ class CentralService
 
         $priceVatApp = $data->price_vat_applicable ?? 0;
         $priceVatNotApp = $data->price_vat_not_applicable ?? 0;
-
-        if ($quoteType == QuoteTypes::BUSINESS) {
+        
+        if ($quoteType == QuoteTypes::BUSINESS->value) {
             $data->price_with_vat = ($priceVatApp + $priceVatNotApp) + (($priceVatApp / 100) * 5);
         } else {
             $data->price_with_vat = $priceVatApp ? ($priceVatApp + (($priceVatApp / 100) * 5)) : $priceVatNotApp;
