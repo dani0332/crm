@@ -678,7 +678,7 @@ onUpdated(() => {
                 </template>
 
                 <template #header-loadingPrice="header">
-                    <div class="customize-header">
+                    <div class="customize-header large-tip">
                         <x-tooltip position="bottom" class="arrow-t">
                         <span
                             class="font-semibold tracking-widest uppercase text-xs underline decoration-dotted decoration-primary-600 cursor-help"

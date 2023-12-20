@@ -465,3 +465,11 @@ border-primary animate-spin;
 .plain .vue3-easy-data-table__body tr td{
     @apply font-normal;
 }
+
+.large-tip .x-popover-container {
+    @apply max-w-[420px];
+}
+
+.large-tip .arrow-t .x-popover-container::after {
+    left: 63%;
+}

@@ -117,17 +117,9 @@ watch(
           `/insurance-provider-plans-health?insuranceProviderId=${value}&quoteUuId=${props.uuid}`,
         )
         .then(res => {
-            console.log(value);
-        //   if (res.data.healthPlans?.length > 0) {
-        //     options.insurancePlans = res.data.healthPlans;
-        //   }
           if (res.data.networks?.length > 0) {
             options.networks = res.data.networks;
           }
-        //   console.log(res.data.copays);
-        //   if (res.data.copays) {
-        //     options.coPayments = res.data.copays;
-        //   }
         })
         .catch(err => {
             emit('error');
@@ -166,13 +158,6 @@ watch(
           }else{
             options.insurancePlans = [];
         }
-        //   if (res.data.networks?.length > 0) {
-        //     options.networks = res.data.networks;
-        //   }
-        //   console.log(res.data.copays);
-        //   if (res.data.copays) {
-        //     options.coPayments = res.data.copays;
-        //   }
         })
         .catch(err => {
             emit('error');
@@ -196,7 +181,6 @@ watch(
           `/health-plan-copays?planId=${value}`,
         )
         .then(res => {
-          console.log(res.data.copays?.length > 0);
           if (res.data.copays) {
             options.coPayments = res.data.copays;
           }else{
