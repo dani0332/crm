@@ -102,6 +102,7 @@ const onLeadAssigned = () => {
 };
 
 const canExport = ref(false);
+const params = useUrlSearchParams('history');
 
 watch(
   () => filters,
@@ -117,6 +118,19 @@ watch(
   },
   { deep: true, immediate: true },
 );
+
+function setQueryStringFilters() {
+  for (const [key] of Object.entries(params)) {
+    if (key.includes('[]')) {
+      filters[key.replace('[]', '')] = params[key];
+    } else {
+      filters[key] = params[key];
+    }
+  }
+}
+onMounted(() => {
+  setQueryStringFilters();
+});
 </script>
 <template>
   <div>
