@@ -1427,7 +1427,7 @@ class HealthQuoteService extends BaseService
     {
         $quoteId = $request->quoteId;
 
-        if ($quoteId){
+        if ($quoteId) {
 
             $apiEndPoint = config('constants.KEN_API_ENDPOINT').'/add-health-quote-members';
             $apiToken = config('constants.KEN_API_TOKEN');
@@ -1477,7 +1477,7 @@ class HealthQuoteService extends BaseService
         $quoteId = $request->quoteId ?? null;
         $memberId = $request->id ?? null;
 
-        if ($quoteId && $memberId){
+        if ($quoteId && $memberId) {
 
             $apiEndPoint = config('constants.KEN_API_ENDPOINT').'/update-health-quote-members';
             $apiToken = config('constants.KEN_API_TOKEN');

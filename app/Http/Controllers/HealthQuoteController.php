@@ -2,12 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Enums\GenericRequestEnum;
-use App\Services\HealthQuoteService;
+use App\Http\Requests\InsurerProviderNetworkRequest;
 use App\Http\Requests\MemberDetailRequest;
 use App\Repositories\InsuranceProviderRepository;
-use App\Http\Requests\InsurerProviderNetworkRequest;
+use App\Services\HealthQuoteService;
+use Illuminate\Http\Request;
 
 class HealthQuoteController extends Controller
 {
@@ -26,8 +26,7 @@ class HealthQuoteController extends Controller
 
         $membersBreakDown = [];
 
-        foreach ($request->membersPrice as $member)
-        {
+        foreach ($request->membersPrice as $member) {
             $array = [
                 'healthPlanCoPaymentId' => $copayId,
                 'basePrice' => $member['base_price'],
@@ -43,7 +42,7 @@ class HealthQuoteController extends Controller
         $planData = [
             'quoteUID' => $quoteUID,
             'update' => false,
-            'healthBusinessType' => "RM"
+            'healthBusinessType' => 'RM',
         ];
 
         $planData['plans'][] = [
@@ -190,6 +189,7 @@ class HealthQuoteController extends Controller
         $data = [
             'healthPlans' => $healthPlans,
         ];
+
         return response()->json($data);
     }
 
