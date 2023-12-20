@@ -3,6 +3,7 @@ import LazyDocumentUploader from './Partials/DocumentUploader.vue';
 import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue';
 
+const page = usePage();
 defineProps({
   quote: Object,
   allowedDuplicateLOB: Array,
@@ -48,22 +49,45 @@ defineProps({
   aboveAgeMembers: Number,
 });
 
-const page = usePage();
+
 const hasAnyRole = roles => useHasAnyRole(roles);
+const checkedItems = ref([]);
+const checkCheckedPlans = computed(() => {
+    return true;
+});
+const checkedCount = computed(() => {
+    return checkedItems.value.length;
+});
+const updateCheckedCount = (id, event) => {
+    if (event.target.checked) {
+        if(checkedItems.value.length < 6) {
+            checkedItems.value.push(id);
+        }else{
+            return false;
+        }
+    } else {
+        var index =  checkedItems.value.indexOf(id);
+        if (index != -1) {
+            checkedItems.value.splice(id, 1);
+        }
+    }
+};
+
+
 
 const dateFormat = date => {
   if (!date) return '';
   return useDateFormat(date, 'DD-MM-YYYY');
 };
-
 const dateTimeFormat = date => {
   if (!date) return '';
   return useDateFormat(date, 'DD-MM-YYYY HH:mm:ss');
 };
-
 const notification = useNotifications('toast');
+
 const rolesEnum = page.props.rolesEnum;
 const hasRole = role => useHasRole(role);
+
 
 const {
   isRequired,
@@ -74,25 +98,25 @@ const {
   isEmail,
   isMobileNo,
 } = useRules();
-
 const confirmDeleteData = reactive({
   docs: null,
   member: null,
   activity: null,
   contact: null,
 });
-
 const memberActionEdit = ref(false),
-    activityActionEdit = ref(false),
-    selectedPlan = ref(null),
-    selectedPlansPdf = ref([]),
-    exportLoader = ref(false),
-    historyLoading = ref(false),
-    lostReasonId = ref(
-        page.props.lostReasons.find(
-            reason => reason.text === page.props.quote.lost_reason,
-        )?.id || null,
-    );
+  activityActionEdit = ref(false),
+  selectedPlan = ref(null),
+  selectedPlans = ref([]),
+  toggleLoader = ref(false),
+  selectedPlansPdf = ref([]),
+  exportLoader = ref(false),
+  historyLoading = ref(false),
+  lostReasonId = ref(
+    page.props.lostReasons.find(
+      reason => reason.text === page.props.quote.lost_reason,
+    )?.id || null,
+  );
 
 const leadDuplicateForm = useForm({
   modelType: 'travel',
@@ -103,7 +127,6 @@ const leadDuplicateForm = useForm({
   lob_team: [],
   lob_team_sub_selection: null,
 });
-
 const openDuplicate = () => {
   modals.duplicate = true;
   leadDuplicateForm.reset();
@@ -491,10 +514,6 @@ const quoteDocumentsTable = reactive({
       text: 'Created By',
       value: 'created_by_name',
     },
-    {
-      text: 'Action',
-      value: 'action',
-    },
   ],
 });
 
@@ -518,6 +537,92 @@ const sendPolicyToClient = () => {
       }
     });
   }
+};
+
+
+const onTogglePlans = toggle => {
+    toggleLoader.value = true;
+
+    const planIds = useArrayUnique(
+        selectedPlans.value.map(p => {
+            return p.id;
+        }),
+    ).value;
+
+    axios
+        .post(route('manualPlanToggle', { quoteType: 'travel' }), {
+            modelType: 'Travel',
+            planIds: planIds,
+            quote_uuid: page.props.quote.uuid,
+            toggle: toggle,
+        })
+        .then(response => {
+            notification.success({
+                title: 'Plans has been updated',
+                position: 'top',
+            });
+            router.reload({
+                preserveScroll: true,
+            });
+        })
+        .catch(error => {
+            notification.error({
+                title: error,
+                position: 'top',
+            });
+        })
+        .finally(() => {
+            toggleLoader.value = false;
+            selectedPlans.value = [];
+        });
+};
+
+
+const onExportPlans = () => {
+
+    if (selectedPlans.value.length < 2 || selectedPlans.value.length > 5) {
+        notification.error({
+            title: 'Please select 2 to 5 plans to download PDF.',
+            position: 'top',
+        });
+        return;
+    }
+    exportLoader.value = true;
+    const planIds = selectedPlans.value.map(p => {
+        return p.id;
+    });
+
+    axios
+        .post(
+            '/api/v1/quotes/travel/export-plans-pdf',
+            {
+                plan_ids: planIds,
+                quote_uuid: page.props.quote.uuid,
+                modelType: 'travel',
+                quoteType:'travel'
+            },
+            {
+                responseType: 'json',
+            },
+        )
+        .then(response => {
+            const link = document.createElement('a');
+            let fileName = response.data.name;
+            link.href = response.data.data;
+            link.setAttribute('download', fileName);
+            document.body.appendChild(link);
+            link.click();
+            notification.success({
+                title: 'Plans Exported',
+                position: 'top',
+            });
+        })
+        .catch(error => {
+            console.log(error);
+        })
+        .finally(() => {
+            exportLoader.value = false;
+        });
 };
 
 const onDocDelete = name => {
@@ -2002,7 +2107,7 @@ const genderList = [
 
     <div
       class="p-4 rounded shadow mb-6 bg-white"
-      v-if="permissions.isQuoteDocumentEnabled"
+
     >
       <div class="flex justify-between items-center mb-4">
         <h3 class="font-semibold text-primary-800 text-lg">
@@ -2014,17 +2119,13 @@ const genderList = [
             @click.prevent="modals.doc = true"
             size="sm"
             color="orange"
-            v-if="
-              permissions.canNotEditPayments &&
-              permissions.notProductionApproval
-            "
           >
             Upload Documents
           </x-button>
           <x-button
             size="sm"
             color="red"
-            v-if="displaySendPolicyButton && permissions.notProductionApproval"
+            v-if="displaySendPolicyButton && permissions.notProductionApproval && permissions.isQuoteDocumentEnabled"
             @click="sendPolicyToClient"
           >
             Send Policy
@@ -2114,6 +2215,7 @@ const genderList = [
           v-if="availablePlansTable.data.length > 0"
           size="sm"
           color="orange"
+          class="mr-2"
           @click.prevent="onCopyText(ecomTravelInsuranceQuoteUrl + quote.uuid)"
         >
           Copy Link
@@ -2137,7 +2239,9 @@ const genderList = [
         </p>
       </div>
       <div v-else>
+        <!-- for future use  v-model:items-selected="selectedPlans" -->
         <DataTable
+
           table-class-name="tablefixed compact"
           :headers="availablePlansTable.columns"
           :items="availablePlansTable.data || []"

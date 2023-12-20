@@ -36,10 +36,18 @@ const assignForm = useForm({
 });
 
 function onAssignLead(isValid) {
+  // const postUrl =
+  //   props.quoteType.toLowerCase() == 'car'
+  //     ? `/quotes/car/manualLeadAssign`
+  //     : `/quotes/${props.quoteType}/leadAssign`;
+
   const postUrl =
-    props.quoteType.toLowerCase() == 'car'
-      ? `/quotes/car/manualLeadAssign`
+    props.quoteType.toLowerCase() === 'car'
+      ? '/quotes/car/manualLeadAssign'
+      : props.quoteType === 'tmlead'
+      ? '/telemarketing/tmLeadsAssign'
       : `/quotes/${props.quoteType}/leadAssign`;
+
   if (isValid) {
     assignForm
       .transform(data => ({
