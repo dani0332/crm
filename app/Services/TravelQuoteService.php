@@ -876,8 +876,8 @@ class TravelQuoteService extends BaseService
         $seniorPlans = $collection->where('isSeniorPlan', true);
         $normalPlans = $collection->where('isSeniorPlan', false);
 
-        $result['normalPlans'] = $normalPlans->toArray();
-        $result['seniorPlans'] = $seniorPlans->toArray();
+        $result['normalPlans'] = array_values($normalPlans->toArray());
+        $result['seniorPlans'] = array_values($seniorPlans->toArray());
 
         return $result;
     }
