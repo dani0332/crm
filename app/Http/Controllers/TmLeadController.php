@@ -317,6 +317,19 @@ class TmLeadController extends Controller
         return redirect('telemarketing/tmleads')->with('success', 'TM Leads has been Assigned To '.$assignedUserName);
     }
 
+    public function exportTMLead(Request $request, TmLead $tmLead){
+        $created_at_end = Carbon::parse($request->tmLeadsEndDate)->format('Y-m-d');
+        
+        $diff = Carbon::parse($request->tmLeadsStartDate)->diffInDays(Carbon::parse($created_at_end));
+
+        if ($diff > 30) {
+            return back()->with('error', 'Maximum of 120 days (created date) are allowed to be exported.');
+        }
+        
+        $queryTmLeads = $this->getTMLeadData($request, $tmLead);
+        return (new TmLeadsExport($queryTmLeads))->download('tm_leads.xlsx');
+    }
+
     public function getTMLeadData($request, $tmlead){
         $queryTmLeads = $tmlead::select(
             'tm_leads.id as id',
@@ -393,17 +406,4 @@ class TmLeadController extends Controller
 
             return $queryTmLeads;
     }   
-
-    public function exportTMLead(Request $request, TmLead $tmLead){
-        $created_at_end = Carbon::parse($request->tmLeadsEndDate)->format('Y-m-d');
-        
-        $diff = Carbon::parse($request->tmLeadsStartDate)->diffInDays(Carbon::parse($created_at_end));
-
-        if ($diff > 30) {
-            return back()->with('error', 'Maximum of 120 days (created date) are allowed to be exported.');
-        }
-        
-        $queryTmLeads = $this->getTMLeadData($request, $tmLead);
-        return (new TmLeadsExport($queryTmLeads))->download('tm_leads.xlsx');
-    }
 }
