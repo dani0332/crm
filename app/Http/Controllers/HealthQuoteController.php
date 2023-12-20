@@ -20,17 +20,37 @@ class HealthQuoteController extends Controller
 
     public function healthPlanCreateQuote(Request $request)
     {
+        $quoteUID = $request->quoteUID;
+        $planId = $request->formData['plan_id'];
+        $copayId = $request->formData['deductibles'];
+
+        $membersBreakDown = [];
+
+        foreach ($request->membersPrice as $member)
+        {
+            $array = [
+                'healthPlanCoPaymentId' => $copayId,
+                'basePrice' => $member['base_price'],
+                'loadingPrice' => $member['loading_price'],
+            ];
+
+            $membersBreakDown[] = [
+                'memberId' => $member['member_id'],
+                'ratesPerCopay' => [$array],
+            ];
+        }
+
         $planData = [
-            'quoteUID' => $request->quoteUID,
+            'quoteUID' => $quoteUID,
             'update' => false,
+            'healthBusinessType' => "RM"
         ];
 
         $planData['plans'][] = [
-            'planId' => $request->planId,
-            'actualPremium' => (float) $request->actualPremium,
-            'discountPremium' => 0,
-            'isManualUpdate' => false,
-            'isManualPremium' => true,
+            'planId' => $planId,
+            'isManualUpdate' => true,
+            'isHidden' => false,
+            'membersBreakDown' => $membersBreakDown,
         ];
 
         $response = $this->healthQuoteService->renewalCreatePlan($planData);
@@ -127,48 +147,10 @@ class HealthQuoteController extends Controller
             'insuranceProviderId' => $insuranceProviderId,
         ]);
 
-        // dd($networks);
-
-        // $quotePlans = $this->healthQuoteService->getQuotePlans($quoteUuId);
-        // dd($quotePlans);
-
-        // $quotePlanId = [];
-        // $healthPlans = [];
-        // $listQuotePlans = [];
-        // $copays = [];
-
-        // if (isset($quotePlans->quote->plans)) {
-        //     $listQuotePlans = $quotePlans->quote->plans;
-        // }
-
-        // dd($listQuotePlans);
-        // return;
-
-        // foreach ($listQuotePlans as $key => $quotePlan) {
-        //     if (! isset($quotePlan->id)) {
-        //         continue;
-        //     }
-
-        //     // dd($quotePlan);
-
-        //     $quotePlanId[] = $quotePlan->id;
-
-        //     $copays[$quotePlan->id] = $quotePlan->coPayments;
-        // }
-
-        // dd($healthPlans);
-
-        // $healthPlans = $this->healthQuoteService->getNonQuotedHealthPlans($insuranceProviderId, $quotePlanId);
-
-        // dd($healthPlans->toArray());
-
         $data = [
-            // 'healthPlans' => $healthPlans,
             'networks' => $networks->toArray(),
-            // 'copays' => $copays,
         ];
 
-        // dd($data);
         return response()->json($data);
     }
 
@@ -178,34 +160,20 @@ class HealthQuoteController extends Controller
         $quoteUuId = $request->quoteUuId;
         $insuranceProviderId = $request->insuranceProviderId;
 
-        // dd($request->toArray());
-
-        // $networks = InsuranceProviderRepository::networksByInsuranceProviders([
-        //     'insuranceProviderId' => $insuranceProviderId,
-        // ]);
-
-        // dd($networks);
-
         $quotePlans = $this->healthQuoteService->getQuotePlans($quoteUuId);
-        // dd($quotePlans);
 
         $quotePlanId = [];
         $healthPlans = [];
         $listQuotePlans = [];
-        // $copays = [];
 
         if (isset($quotePlans->quote->plans)) {
             $listQuotePlans = $quotePlans->quote->plans;
         }
 
-        // dd($listQuotePlans);
-        // return;
-
         foreach ($listQuotePlans as $key => $quotePlan) {
             if (! isset($quotePlan->id)) {
                 continue;
             }
-            // dd($quotePlan->eligibilityName);
 
             if (isset($quotePlan->eligibilityName) && $quotePlan->eligibilityName === $network
             && $quotePlan->providerId == $insuranceProviderId) {
@@ -215,29 +183,13 @@ class HealthQuoteController extends Controller
                     'text' => $quotePlan->name,
                 ];
             }
-
-            // $quotePlanId[] = $quotePlan->id;
-
         }
 
-        // dd($healthPlans);
-
-        // if ($insuranceProviderId){
         $healthPlans = $this->healthQuoteService->getNonQuotedHealthPlans($insuranceProviderId, $quotePlanId);
-        // }else {
-        //     return response()->json(['message' => 'Insurnace provider not found.']);
-        // }
-
-        // dd($healthPlans->toArray());
 
         $data = [
             'healthPlans' => $healthPlans,
-            // 'networks' => $networks->toArray(),
-            // 'copays' => $copays,
         ];
-
-        // dump($insuranceProviderId);
-        // dd($data);
         return response()->json($data);
     }
 

@@ -68,10 +68,6 @@ const isEmptyField = ref(false);
 
 const onSubmit = isValid => {
 
-    console.log(createForm);
-    console.log(props.members);
-    console.log(membersPrice);
-    return;
   if (createForm.provider_id == null) {
     isEmptyField.value = true;
   } else {
@@ -85,8 +81,11 @@ const onSubmit = isValid => {
   axios
     .post('/health-plan-manual-create', {
       quoteUID: props.uuid,
-      planId: createForm.plan_id,
-      actualPremium: createForm.premium,
+    //   planId: createForm.plan_id,
+    //   actualPremium: createForm.premium,
+    formData: createForm,
+    // members: props.members,
+    membersPrice: membersPrice,
     })
     .then(res => {
       if (res.data == 200) {
