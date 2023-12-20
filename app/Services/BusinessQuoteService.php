@@ -2,10 +2,12 @@
 
 namespace App\Services;
 
+use App\Enums\CustomerTypeEnum;
 use App\Enums\DatabaseColumnsString;
 use App\Enums\GenericRequestEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypeId;
 use App\Models\BusinessQuote;
 use App\Models\BusinessQuoteRequestDetail;
 use App\Traits\AddPremiumAllLobs;
@@ -47,6 +49,8 @@ class BusinessQuoteService extends BaseService
                 'bti.TEXT AS business_type_of_insurance_id_text',
                 'bqr.advisor_id',
                 'u.name as advisor_id_text',
+                'bqr.previous_advisor_id',
+                'uadv.name AS previous_advisor_id_text',
                 'bqr.quote_status_id',
                 'qs.text as quote_status_id_text',
                 'bqr.premium',
@@ -66,13 +70,34 @@ class BusinessQuoteService extends BaseService
                 'bqr.device',
                 'bqr.customer_id',
                 'bqr.parent_duplicate_quote_id',
-                'bqr.renewal_import_code'
+                'bqr.renewal_import_code',
+                'bqr.kyc_decision',
+                DB::raw('("'.CustomerTypeEnum::Entity.'") as customer_type'),
+                'c.insured_first_name',
+                'c.insured_last_name',
+                'c.emirates_id_number',
+                'c.emirates_id_expiry_date',
+                'qrem.entity_id',
+                'ent.code as entity_code',
+                'ent.trade_license_no',
+                'ent.company_name',
+                'ent.company_address',
+                'qrem.entity_type_code',
+                'ent.industry_type_code',
+                'ent.emirate_of_registration_id',
             )
             ->leftJoin('business_type_of_insurance as bti', 'bti.id', '=', 'bqr.business_type_of_insurance_id')
             ->leftJoin('business_quote_request_detail as bqrd', 'bqrd.business_quote_request_id', '=', 'bqr.id')
             ->leftJoin('lost_reasons as ls', 'ls.id', '=', 'bqrd.lost_reason_id')
             ->leftJoin('users as u', 'u.id', '=', 'bqr.advisor_id')
-            ->leftJoin('quote_status as qs', 'qs.id', '=', 'bqr.quote_status_id');
+            ->leftJoin('users as uadv', 'uadv.id', '=', 'bqr.previous_advisor_id')
+            ->leftJoin('quote_status as qs', 'qs.id', '=', 'bqr.quote_status_id')
+            ->leftJoin('customer as c', 'bqr.customer_id', 'c.id')
+            ->leftJoin('quote_request_entity_mapping as qrem', function ($entityMappingJoin) {
+                $entityMappingJoin->on('qrem.quote_type_id', '=', DB::raw(QuoteTypeId::Business));
+                $entityMappingJoin->on('qrem.quote_request_id', '=', 'bqr.id');
+            })
+            ->leftJoin('entities as ent', 'qrem.entity_id', '=', 'ent.id');
     }
 
     public function getEntity($id)
@@ -216,17 +241,17 @@ class BusinessQuoteService extends BaseService
         if (isset($request->assigned_to_date_start) && $request->assigned_to_date_start != '') {
             $dateFrom = $this->parseDate($request['assigned_to_date_start'], true);
             $dateTo = $this->parseDate($request['assigned_to_date_end'], false);
-            $this->query->whereBetween(DB::raw('DATE(bqrd.advisor_assigned_date)'), [$dateFrom, $dateTo]);
+            $this->query->whereBetween('bqrd.advisor_assigned_date', [$dateFrom, $dateTo]);
         }
         if (isset($request->next_followup_date) && $request->next_followup_date != '') {
             $dateFrom = $this->parseDate($request['next_followup_date'], true);
             $dateTo = $this->parseDate($request['next_followup_date_end'], true);
-            $this->query->whereBetween(DB::raw('DATE(bqrd.next_followup_date)'), [$dateFrom, $dateTo]);
+            $this->query->whereBetween('bqrd.next_followup_date', [$dateFrom, $dateTo]);
         }
         if (in_array('created_at', $searchProperties) && isset($request->created_at) && $request->created_at != '') {
             $dateFrom = $request['created_at'];
             $dateTo = $request['created_at_end'];
-            $this->query->whereBetween(DB::raw('DATE(bqr.created_at)'), [$dateFrom, $dateTo]);
+            $this->query->whereBetween('bqr.created_at', [$dateFrom, $dateTo]);
         }
         if (Auth::user()->isSpecificTeamAdvisor(quoteTypeCode::CORPLINE) || Auth::user()->isSpecificTeamAdvisor(quoteTypeCode::Business) || Auth::user()->isSpecificTeamAdvisor(quoteTypeCode::Amt) || Auth::user()->isSpecificTeamAdvisor(quoteTypeCode::GM)) {
             // if user has advisor Role then fetch leads assigned to the user only

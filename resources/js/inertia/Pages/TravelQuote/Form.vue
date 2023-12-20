@@ -68,6 +68,7 @@ const quoteForm = useForm({
     props.quote?.ilivein_accommodation_type_id || null,
   days_cover_for: props.quote?.days_cover_for || null,
   members: [{ value: 'male', label: 'Male', primary: true }],
+  edit_mode: editMode.value,
 });
 
 const rules = {
@@ -118,7 +119,11 @@ const outboundRegions = [
 ];
 
 function addTravler() {
-  quoteForm.members.push({ dob: '', gender: '' });
+    if(quoteForm.members.length == 0){
+        quoteForm.members.push({dob: '', gender: '', primary:true});
+    }else {
+        quoteForm.members.push({dob: '', gender: ''});
+    }
 }
 function removeMember(index) {
   quoteForm.members.splice(index, 1);
@@ -129,10 +134,8 @@ function onSubmit(isValid) {
 
   quoteForm.clearErrors();
 
-  const method = editMode.value ? 'put' : 'post';
-  const url = editMode.value
-    ? route('travel.update', props.quote.uuid)
-    : route('travel.store');
+  const method =  'post';
+  const url =  route('travel.store');
 
   const options = {
     onError: errors => {
@@ -163,6 +166,32 @@ function addUpdatedTraveller() {
 onMounted(() => {
   addUpdatedTraveller();
 });
+
+watch(() => quoteForm.direction_code, (newValue, oldValue) => {
+    if (newValue == travelQuoteEnum.TRAVEL_UAE_INBOUND) {
+        quoteForm.has_arrived_uae = '1';
+        quoteForm.has_arrived_destination = null;
+    } else {
+        quoteForm.has_arrived_uae = null;
+        quoteForm.has_arrived_destination = '0';
+    }
+});
+
+watch(() => quoteForm.has_arrived_uae, (newValue, oldValue) => {
+    resetTravelInfo(newValue);
+});
+
+watch(() => quoteForm.has_arrived_destination, (newValue, oldValue) => {
+    resetTravelInfo(newValue);
+});
+
+function resetTravelInfo(value) {
+    if (value == 1) {
+        quoteForm.start_date = null;
+        quoteForm.end_date = null;
+        quoteForm.coverage_code = null;
+    }
+}
 </script>
 
 <template>
@@ -203,7 +232,6 @@ onMounted(() => {
             v-model="quoteForm.has_arrived_uae"
             :options="alreadylived"
             class="w-full"
-            :disabled="editMode"
             :rules="[isRequired]"
           />
         </x-field>
@@ -216,7 +244,6 @@ onMounted(() => {
             v-model="quoteForm.has_arrived_destination"
             :options="alreadylived"
             class="w-full"
-            :disabled="editMode"
             :rules="[isRequired]"
           />
         </x-field>
@@ -224,8 +251,8 @@ onMounted(() => {
       <div
         class="grid sm:grid-cols-2 gap-4"
         v-if="
-          quoteForm.has_arrived_uae == '0' ||
-          quoteForm.has_arrived_destination == '0'
+          !(quoteForm.has_arrived_uae == 1 ||
+          quoteForm.has_arrived_destination == 1)
         "
       >
         <x-field label="Travel Coverage" required>
@@ -330,8 +357,8 @@ onMounted(() => {
 
       <template
         v-if="
-          quoteForm.has_arrived_uae == '0' ||
-          quoteForm.has_arrived_destination == '0'
+          !editMode && (quoteForm.has_arrived_uae == '0' ||
+          quoteForm.has_arrived_destination == '0')
         "
       >
         <div
@@ -378,8 +405,9 @@ onMounted(() => {
 
       <x-button
         v-if="
+          !editMode && (
           quoteForm.has_arrived_uae == '0' ||
-          quoteForm.has_arrived_destination == '0'
+          quoteForm.has_arrived_destination == '0' )
         "
         size="md"
         color="emerald"
@@ -394,11 +422,6 @@ onMounted(() => {
           size="md"
           color="emerald"
           type="submit"
-          :disabled="
-            editMode &&
-            (quoteForm.has_arrived_destination == '1' ||
-              quoteForm.has_arrived_uae == '1')
-          "
           :loading="quoteForm.processing"
         >
           {{ editMode ? 'Update' : 'Create' }}

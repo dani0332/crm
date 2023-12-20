@@ -30,6 +30,7 @@ use App\Services\QuoteStatusService;
 use App\Services\SanctionListService;
 use App\Traits\GenericQueriesAllLobs;
 use Auth;
+use Carbon\Carbon;
 use DataTables;
 use Illuminate\Http\Request;
 
@@ -64,7 +65,6 @@ class AMLController extends Controller
         $quoteStatuses = QuoteStatus::withActive()->orderBy('sort_order')->get();
 
         if ($request->ajax()) {
-
             if (isset($request->quoteType) && ! empty($request->quoteType)) {
                 $quoteTypeCode = QuoteType::where('id', $request->quoteType)->value('code');
                 $quoteRequestTable = strtolower($quoteTypeCode).'_quote_request';
@@ -73,6 +73,8 @@ class AMLController extends Controller
                     QuoteTypes::BIKE->id(),
                     QuoteTypes::YACHT->id(),
                     QuoteTypes::PET->id(),
+                    QuoteTypes::CYCLE->id(),
+                    QuoteTypes::JETSKI->id(),
                 ])) {
                     if (isset($request->amlCreatedStartDate) && ! empty($request->amlCreatedStartDate)) {
                         $quoteRequestTable = $this->checkAmlService->isDataMigrated($request->quoteType, '', $request->amlCreatedStartDate) ? 'personal_quotes' : $quoteRequestTable;
@@ -93,7 +95,7 @@ class AMLController extends Controller
                     }
                 }
 
-                $dataAml = AML::select('kyc_logs.*', 'quote_type.text as quote_type_text', $quoteRequestTable.'.code as cdb_id')
+                $dataAml = AML::select('kyc_logs.id', 'kyc_logs.input', 'kyc_logs.screenshot', 'kyc_logs.created_at', 'kyc_logs.updated_at', 'kyc_logs.quote_request_id', 'kyc_logs.quote_type_id', 'quote_type.text as quote_type_text', $quoteRequestTable.'.code as cdb_id')
                     ->leftjoin('quote_type', 'quote_type.id', 'kyc_logs.quote_type_id')
                     ->leftjoin($quoteRequestTable, $quoteRequestTable.'.id', 'kyc_logs.quote_request_id')
                     ->where('kyc_logs.quote_type_id', $request->quoteType)
@@ -128,8 +130,18 @@ class AMLController extends Controller
                     isset($request->amlCreatedStartDate) && ! empty($request->amlCreatedStartDate) &&
                     isset($request->amlCreatedEndDate) && ! empty($request->amlCreatedEndDate)
                 ) {
-                    $dataAml->whereRaw('DATE(kyc_logs.created_at) BETWEEN "'.$request->amlCreatedStartDate.'" AND "'.$request->amlCreatedEndDate.'"');
+                    $amlCreatedStartDate = Carbon::parse($request->amlCreatedStartDate)->startOfDay();
+                    $amlCreatedEndDate = Carbon::parse($request->amlCreatedEndDate)->endOfDay();
+
+                    $dataAml->whereBetween('kyc_logs.created_at', [$amlCreatedStartDate, $amlCreatedEndDate]);
                     $searchCriteriaSet = true;
+                }
+
+                $searchTypeIsValid = ($request->searchType == 'cdbId' || $request->searchType == 'customerEmail');
+                $amlDateRangeNotProvided = isset($request->amlCreatedStartDate) && isset($request->amlCreatedEndDate);
+
+                if (! $searchTypeIsValid && ! $amlDateRangeNotProvided) {
+                    $dataAml->whereBetween('kyc_logs.created_at', [Carbon::today()->startOfDay(), Carbon::today()->endOfDay()]);
                 }
 
                 if ($searchCriteriaSet) {
@@ -174,7 +186,6 @@ class AMLController extends Controller
         $quoteTypeText = $quoteType[0]->text;
         $isCompanySearchEnabled = ApplicationStorage::where('key_name', '=', 'IS_AML_ENTITY_SEARCH_ENABLED')->value('value');
         if ($quoteTypeCode != '') {
-
             if ($quoteTypeCode == quoteTypeCode::Car) {
                 $quoteRequest = CarQuote::select(
                     'car_quote_request.*',
@@ -358,7 +369,6 @@ class AMLController extends Controller
                         ->leftjoin('payment_status', 'personal_quotes.payment_status_id', 'payment_status.id')
                         ->where('personal_quotes.id', $quoteRequestId)
                         ->first();
-
                 } else {
                     $quoteRequest = PetQuote::select([
                         'pet_quote_request.*',
@@ -373,6 +383,53 @@ class AMLController extends Controller
                         ->where('pet_quote_request.id', $quoteRequestId)->first();
                 }
                 $auditLogLine = 'PetQuote';
+            } elseif ($quoteTypeCode == quoteTypeCode::Cycle) {
+                $quoteRequest = PersonalQuote::byQuoteTypeId(QuoteTypes::CYCLE->id())
+                    ->select([
+                        'personal_quotes.*',
+                        'cycle_quote_request.cycle_make',
+                        'cycle_quote_request.cycle_model',
+                        'cycle_quote_request.year_of_manufacture_id',
+                        'cycle_quote_request.accessories',
+                        'cycle_quote_request.has_accident',
+                        'cycle_quote_request.has_good_condition',
+                        'payment_status.text as payment_status_text',
+                        'quote_status.text as quote_status_text',
+                        'customer.first_name as cust_f_name',
+                        'customer.last_name as cust_l_name',
+                    ])
+                    ->leftJoin('cycle_quote_request', 'cycle_quote_request.personal_quote_id', 'personal_quotes.id')
+                    ->leftjoin('customer', 'customer.id', 'personal_quotes.customer_id')
+                    ->leftjoin('quote_status', 'personal_quotes.quote_status_id', 'quote_status.id')
+                    ->leftjoin('payment_status', 'personal_quotes.payment_status_id', 'payment_status.id')
+                    ->where('personal_quotes.id', $quoteRequestId)
+                    ->first();
+                $auditLogLine = 'CycleQuote';
+            } elseif ($quoteTypeCode == quoteTypeCode::Jetski) {
+                $quoteRequest = PersonalQuote::byQuoteTypeId(QuoteTypes::JETSKI->id())
+                    ->select([
+                        'personal_quotes.*',
+                        'jetski_quote_request.jetski_make',
+                        'jetski_quote_request.jetski_model',
+                        'jetski_quote_request.year_of_manufacture_id',
+                        'jetski_quote_request.max_speed',
+                        'jetski_quote_request.seat_capacity',
+                        'jetski_quote_request.engine_power',
+                        'jetski_quote_request.jetski_material_id',
+                        'jetski_quote_request.jetski_use_id',
+                        'jetski_quote_request.claim_history',
+                        'payment_status.text as payment_status_text',
+                        'quote_status.text as quote_status_text',
+                        'customer.first_name as cust_f_name',
+                        'customer.last_name as cust_l_name',
+                    ])
+                    ->leftJoin('jetski_quote_request', 'jetski_quote_request.personal_quote_id', 'personal_quotes.id')
+                    ->leftjoin('customer', 'customer.id', 'personal_quotes.customer_id')
+                    ->leftjoin('quote_status', 'personal_quotes.quote_status_id', 'quote_status.id')
+                    ->leftjoin('payment_status', 'personal_quotes.payment_status_id', 'payment_status.id')
+                    ->where('personal_quotes.id', $quoteRequestId)
+                    ->first();
+                $auditLogLine = 'JetskiQuote';
             } else {
                 $quoteRequest = '';
             }
@@ -463,7 +520,6 @@ class AMLController extends Controller
 
     public function kycLogsRecords(Request $request)
     {
-
         $kycLogs = AML::where([
             'quote_request_id' => $request->quote_request_id,
             'quote_type_id' => $request->quote_type_id,
@@ -472,8 +528,8 @@ class AMLController extends Controller
         return DataTables::of($kycLogs)
             ->addIndexColumn()
             ->make(true);
-
     }
+
     public function quoteStatusUpdate($quoteTypeId, $quoteRequestId, $quoteStatusType)
     {
         $updateQuoteStatusResp = $this->quoteStatusService->updateQuoteStatus($quoteTypeId, $quoteRequestId, $quoteStatusType);

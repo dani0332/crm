@@ -11,6 +11,30 @@ use App\Enums\RolesEnum;
 <script src="{{ asset('js/bootstrap-toggle.min.js') }}"></script>
 
 <script>
+    function getStatusText(statusId){
+        var statusText = '';
+        switch(parseInt(statusId)){
+            case 1:
+                statusText = 'Online';
+                break;
+            case 2:
+                statusText = 'Offline';
+                break;
+            case 3:
+                statusText = 'Unavailable';
+                break;
+            case 4:
+                statusText = 'Sick';
+                break;
+            case 5:
+                statusText = 'On leave';
+                break;
+            default:
+                statusText = 'Unavailable'
+                break;
+        }
+        return statusText;
+    }
     const dateOptions = {
         year: 'numeric',
         month: '2-digit',
@@ -19,12 +43,7 @@ use App\Enums\RolesEnum;
         minute: '2-digit',
         hour12: true
     };
-    let columns = [{
-        data: 'userId',
-        name: 'userId',
-        orderable: false,
-        searchable: false
-    },
+    let columns = [
         {
             data: 'userName',
             name: 'userName',
@@ -62,12 +81,6 @@ use App\Enums\RolesEnum;
             searchable: false
         },
         {
-            data: 'lastAllocation',
-            name: 'lastAllocation',
-            orderable: false,
-            searchable: false,
-        },
-        {
             class: 'td-max-cap',
             data: 'maxCapacity',
             name: 'maxCapacity',
@@ -83,17 +96,18 @@ use App\Enums\RolesEnum;
             orderable: false,
             searchable: false,
             render: function(data, type, row) {
+                var statusText = getStatusText(data);
                 if (data == 1) {
                     var html = `
-                    <span class="status-text">Available</span><label class="switch" style="margin-left: 20px;">
-                                <input data-toggle="toggle"  data-size="lg" type="checkbox" data-id="${row.id}" data-aid="${row.userId}" checked="checked" class="chk success" id="is_active" name="is_active">
+                    <span class="status-text">${statusText}</span><label class="switch">
+                                <input data-toggle="toggle"  data-size="lg" type="checkbox" data-id="${row.id}" data-userId="${row.userId}" checked="checked" class="chk success" id="is_active" name="is_active">
                                 <span class="slider round"></span>
                             </label>`;
 
                     return html;
                 } else {
-                    var html = `<span class="status-text">UnAvailable</span><label class="switch " style="margin-left: 20px;">
-                                                <input type="checkbox" data-id="${row.id}" data-aid="${row.userId}" class="chk danger" id="is_active" name="is_active">
+                    var html = `<span class="status-text">${statusText}</span><label class="switch ">
+                                                <input type="checkbox" data-id="${row.id}" data-userId="${row.userId}" class="chk danger" id="is_active" name="is_active">
                                                 <span class="slider round"></span>
                                             </label>`;
                     return html;
@@ -107,7 +121,8 @@ use App\Enums\RolesEnum;
             orderable: false,
             searchable: false,
             render: function(data, type, row) {
-                return '<span class="status-text">'+ ((data == 1) ? 'Available' : 'Unavailable') + '</span>';
+                var statusText = getStatusText(data);
+                return '<span class="status-text">'+ statusText + '</span>';
             },
         });
     @endif
@@ -119,11 +134,32 @@ use App\Enums\RolesEnum;
         orderable: false,
         searchable: false,
     })
+    columns.push({
+        data: 'reset_cap',
+        name: 'reset_cap',
+        orderable: false,
+        searchable: false,
+        render: function(data, type, row) {
+            var statusText = getStatusText(data);
+            if (data == 1) {
+                var html = `
+                <label class="switch">
+                    <input data-toggle="toggle"  data-size="lg" type="checkbox" data-id="${row.id}" data-userId="${row.userId}" checked="checked" class="success reset_cap_toggle">
+                    <span class="slider round"></span>
+                </label>`;
+
+                return html;
+            } else {
+                var html = `<label class="switch ">
+                                <input type="checkbox" data-id="${row.id}" data-userId="${row.userId}" class="danger reset_cap_toggle">
+                                <span class="slider round"></span>
+                            </label>`;
+                return html;
+            }
+        },
+    })
     @endif
 
-</script>
-
-<script>
     var leadAllocationDataTable = null;
         var maxCapKeyValue = [];
         var userOriginalCaps = [];
@@ -175,16 +211,37 @@ use App\Enums\RolesEnum;
         $(document).ready(function() {
 
             const refreshSwitch = document.getElementById('refresh-switch');
+            if(refreshSwitch &&  refreshSwitch.length > 0){
+                refreshSwitch.addEventListener('change', function() {
+                    if (refreshSwitch.checked) {
+                        enableRefresh();
+                    } else {
+                        disableRefresh();
+                    }
+                });
 
-            refreshSwitch.addEventListener('change', function() {
-                if (refreshSwitch.checked) {
-                    enableRefresh();
-                } else {
-                    disableRefresh();
-                }
+                enableRefresh();
+            }
+
+            $(document).on("change", "input:checkbox.reset_cap_toggle", function() {
+                debugger;
+                var ischecked = $(this).is(':checked');
+                var self = $(this);
+                $.ajax({
+                    url: '/lead-allocation/toggle-reset-cap',
+                    type: 'POST',
+                    data: {
+                        'userId': $(this).data('userid'),
+                        '_token': $('meta[name="csrf-token"]').attr('content'),
+                        'resetCap': ischecked ? 1 : 0
+                    },
+                    success: function(data) {
+                        console.log('cap reset changed to '+ ischecked);
+                        $('.loading').hide();
+                    }
+                });
             });
 
-            enableRefresh();
 
             var isAutoAllocationWorking = JSON.parse('<?php echo json_encode($isAutoAllocationWorking); ?>');
             var indexLastColumn = $(".car_lead_allocation_table").find('tr')[0].cells.length-1;
@@ -234,7 +291,7 @@ use App\Enums\RolesEnum;
                             });
                     }
                 });
-
+                @if(auth()->user()->hasAnyRole([RolesEnum::LeadPool]))
                 $('body').on('dblclick', 'table:first td.td-max-cap', function() {
                         var maxCapValue = parseInt($(this).text());
                         if(maxCapValue !== NaN){
@@ -257,12 +314,12 @@ use App\Enums\RolesEnum;
                                 }
                                 return false;
                             } else {
-                                var userId = $(this).next().find('input').attr('data-aid');
+                                var userId = $(this).next().find('input').attr('data-userId');
                                 var id = $(this).next().find('input').attr('data-id');
                                 var originalMaxCap = fetchOriginalCap(userId);
                                 if(originalMaxCap != maxCap){
                                     maxCapKeyValue.push({
-                                        'userId' : $(this).next().find('input').attr('data-aid'),
+                                        'userId' : $(this).next().find('input').attr('data-userId'),
                                         'maxCap' : maxCap
                                     });
                                     disableRefresh();
@@ -277,6 +334,8 @@ use App\Enums\RolesEnum;
                             }
                         });
                     });
+                @endif
+
         });
         function changeAvailabilityInputs(ischecked){
             $inputs = $('.chk');
@@ -286,34 +345,64 @@ use App\Enums\RolesEnum;
         }
         $(document).on("change", "input:checkbox.chk", function() {
             var ischecked = $(this).is(':checked');
-            if(ischecked){
+            var self = $(this);
+            if(ischecked) {
                 $('#availableUsers').text(parseInt($('#availableUsers').text())+1);
                 $('#UnavailableUsers').text(parseInt($('#UnavailableUsers').text())-1);
-                $(this).closest('tr').find('.status-text').text('Available');
+                $(this).closest('tr').find('.status-text').text('Online');
                 $(this).removeClass('danger');
                 $(this).addClass('success');
+                var userId = $(self).data('userid');
+                var allocationId = $(self).data('id');
+                $.ajax({
+                        url: '/lead-allocation/update-availability',
+                        type: 'POST',
+                        data: {
+                            'userId': userId,
+                            'id': allocationId,
+                            'reason': 1,
+                            '_token': $('meta[name="csrf-token"]').attr('content')
+                        },
+                        success: function(data) {
+                            console.log('availiblity changed');
+                            $('.loading').hide();
+                        }
+                    });
             }
             else{
-                $('#availableUsers').text(parseInt($('#availableUsers').text()) - 1);
-                $('#UnavailableUsers').text(parseInt($('#UnavailableUsers').text()) +  1);
-                $(this).closest('tr').find('.status-text').text('UnAvailable');
-                $(this).removeClass('success');
-                $(this).addClass('danger');
+                $('#unavailableModal').modal('show'); // Show the modal
+                $('#doneButton').click(function() {
+                    var selectedReasonId = $('#unavailabilityReason').val();
+                    var selectedReasonText = $('#unavailabilityReason').find(':selected').data('text');
+                    $('#availableUsers').text(parseInt($('#availableUsers').text()) - 1);
+                    $('#UnavailableUsers').text(parseInt($('#UnavailableUsers').text()) +  1);
+                    $(self).closest('tr').find('.status-text').text(selectedReasonText);
+                    $(this).removeClass('success');
+                    $(this).addClass('danger');
+                    var userId = $(self).data('userid');
+                    var allocationId = $(self).data('id');
+                    debugger;
+                    $.ajax({
+                        url: '/lead-allocation/update-availability',
+                        type: 'POST',
+                        data: {
+                            'userId': userId,
+                            'id': allocationId,
+                            'reason': selectedReasonId,
+                            '_token': $('meta[name="csrf-token"]').attr('content')
+                        },
+                        success: function(data) {
+                            $('.loading').hide();
+                        }
+                    });
+                    $('#unavailableModal').modal('hide');
+                });
+                $('#closeButton').click(function() {
+                    $(self).prop('checked', true);
+                    $('#unavailableModal').modal('hide');
+                });
+
             }
-            $.ajax({
-                url: '/lead-allocation/update-availability',
-                type: 'POST',
-                data: {
-                    'aid': $(this).data('aid'),
-                    'id': $(this).data('id'),
-                    'is_available': ischecked ? 1 : 0,
-                    '_token': $('meta[name="csrf-token"]').attr('content')
-                },
-                success: function(data) {
-                    console.log(data);
-                    $('.loading').hide();
-                }
-            });
         });
         $(document).on("change", "input:checkbox.carLeadSwitch", function() {
             if(confirm("Are you sure you want to change Car Lead Allocation Status?")){
@@ -443,25 +532,24 @@ use App\Enums\RolesEnum;
                         class="btn btn-success">Submit
                         Cap Changes</button>
                 </div>
-                <table class="table table-striped jambo_table car_lead_allocation_table" style="width:100%">
+                <table class="table table-striped table-sm jambo_table car_lead_allocation_table" style="width:100%">
                     <thead>
                         <tr>
-                            <th style="width: 15px;">ID</th>
-                            <th style="width: 90px;">Name</th>
+                            <th>Name</th>
                             <th style="width: 200px;">Tiers</th>
-                            <th style="width: 55px;">Quads</th>
-                            <th style="width: 50px;">Total Assigned</th>
-                            <th style="width: 50px;">Manual Assigned</th>
-                            <th style="width: 50px;">Auto Assigned</th>
-                            <th style="width: 130px;">Last Allocation</th>
-                            <th style="width: 115px;">Max Cap Limit <i class="fa fa-info-circle" id="tooltip"
+                            <th>Quads</th>
+                            <th>Total Assigned</th>
+                            <th>Manual Assigned</th>
+                            <th >Auto Assigned</th>
+                            <th >Max Cap Limit <i class="fa fa-info-circle" id="tooltip"
                                     data-toggle="tooltip" data-placement="top"
                                     title="For Unlimited Capactiy Add ( -1 )"></i>
                             </th>
-                            <th style="width: 150px;">Status</th>
+                            <th>Status</th>
                             @if(auth()->user()->hasAnyRole([RolesEnum::CarManager, RolesEnum::CarDeputyManager,
                             RolesEnum::LeadPool]))
-                            <th style="width: 130px;">Last Login</th>
+                            <th>Last Login</th>
+                            <th >Reset Cap</th>
                             @endif
                         </tr>
                     </thead>
@@ -472,5 +560,31 @@ use App\Enums\RolesEnum;
             </div>
         </div>
     </div>
+    <!-- Modal -->
+<div class="modal fade" id="unavailableModal" tabindex="-1" role="dialog" aria-labelledby="unavailableModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="unavailableModalLabel">Select Reason of Unavailability</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <select id="unavailabilityReason" class="form-control">
+                    <option value="3" data-text="Unavailable">Temp. Unavailable</option>
+                    <option value="4" data-text="Sick">Sick</option>
+                    <option value="5" data-text="On Leave">On Leave</option>
+                    <!-- Add more options as needed -->
+                </select>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" id="closeButton" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="doneButton">Done</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 </div>
 @endsection

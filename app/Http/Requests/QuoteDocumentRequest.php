@@ -2,9 +2,11 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Models\DocumentType;
+use App\Rules\ValidateBase64;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -36,13 +38,23 @@ class QuoteDocumentRequest extends FormRequest
             'document_type_code' => 'required|exists:document_types,code,is_active,1',
             'quote_uuid' => 'required',
             'member_detail_id' => 'nullable',
+            'is_base_64' => 'nullable',
         ];
 
         if (! empty(request()->document_type_code) && ($this->documentType = DocumentType::where('code', request()->document_type_code)->first())) {
-            $rules['file'] .= '|mimes:'.(str_replace('.', '', $this->documentType->accepted_files)).'|max:'.($this->documentType->max_size * 1024);
+            if (! (request()->is_base_64)) {
+                $rules['file'] = 'mimes:'.(str_replace('.', '', $this->documentType->accepted_files)).'|max:'.($this->documentType->max_size * 1024);
+            }
+        }
+
+        if (request()->is_base_64) {
+            $rules['file'] = ['required', new ValidateBase64($this->documentType)];
+        } else {
+            $rules['file'] .= '|required|file';
         }
 
         return $rules;
+
     }
 
     /**
@@ -70,9 +82,17 @@ class QuoteDocumentRequest extends FormRequest
                 $validator->errors()->add('member_detail_id', 'Member can be attached only for Health Insurance type');
             }
 
-            //validate if payment is authorized
-            if (isset($quote->payment_status_id) && $quote->payment_status_id != PaymentStatusEnum::AUTHORISED) {
-                $validator->errors()->add('type', 'Documents can be uploaded once payment is authorized.');
+            $quote_source = data_get($quote, 'source', '');
+            if ($quote_source == LeadSourceEnum::DUBAI_NOW) {
+                //validate if payment is authorized capture or partial capture
+                if (isset($quote->payment_status_id) && ! in_array($quote->payment_status_id, [PaymentStatusEnum::AUTHORISED, PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PARTIAL_CAPTURED])) {
+                    $validator->errors()->add('type', 'Documents can be uploaded once payment is authorized, captured or partial captured.');
+                }
+            } else {
+                //validate if payment is authorized
+                if (isset($quote->payment_status_id) && $quote->payment_status_id != PaymentStatusEnum::AUTHORISED) {
+                    $validator->errors()->add('type', 'Documents can be uploaded once payment is authorized.');
+                }
             }
 
             //check for maximum number of files uploaded against selected quote and document type

@@ -7,7 +7,8 @@ use App\Enums\PermissionsEnum;
     <div class="left_col scroll-view" style="border: 0;backgroundlinear-gradient(0deg,#69d0fe,#4183bd);">
         <div class="navbar nav_title" style="border: 0;background:#eef1f4;">
             <a href="/" class="site_title">
-                <img src='{{ asset("image/new_logo.png") }}' style="width:200px;" alt="IMCRM logo" />
+                <img src='{{ asset("image/new_logo.png") }}' alt="IMCRM logo" class="sidebar-expand-logo" />
+                <img src='{{ asset("image/alfred-theme.png") }}' alt="IMCRM logo" class="sidebar-collapse-logo d-none" />
             </a>
         </div>
         <div class="clearfix"></div>
@@ -322,11 +323,11 @@ use App\Enums\PermissionsEnum;
                     </li>
                 </ul>
                 @endcan
-                @hasanyrole(RolesEnum::BetaUser.'|'.RolesEnum::Admin.'|'.RolesEnum::Engineering)
+                @can(PermissionsEnum::EmbeddedProductView)
                 <ul class="nav side-menu">
                     <li><a href="{{ url('embedded-products') }}"><i></i> Embedded Products </a>
                 </ul>
-                @endhasanyrole
+                @endcan
 
                 @if(auth()->user()->hasRole(RolesEnum::BetaUser))
                 <ul class="nav side-menu">
@@ -340,7 +341,7 @@ use App\Enums\PermissionsEnum;
                 </ul>
                 @endif --}}
                 @can(PermissionsEnum::TeleMarketingList)
-                <ul class="nav side-menu">
+                <!-- <ul class="nav side-menu">
                     <li><a><i class="fa fa-quote-left"></i> Telemarketing <span class="fa fa-chevron-down"></span></a>
                         <ul class="nav child_menu">
                             <li><a href="{{ url('telemarketing/tmleads') }}">TM Leads</a></li>
@@ -362,7 +363,7 @@ use App\Enums\PermissionsEnum;
                             @endcan
                         </ul>
                     </li>
-                </ul>
+                </ul> -->
                 @endcan
                 @canany([PermissionsEnum::UsersList, PermissionsEnum::RoleList, PermissionsEnum::TeamsList,
                 PermissionsEnum::InsuranceProviderList, PermissionsEnum::ApplicationStorageList,PermissionsEnum::RULE_CONFIG_LIST, PermissionsEnum::QUAD_CONFIG_LIST , PermissionsEnum::TIER_CONFIG_LIST, PermissionsEnum::TeamThresholdView,

@@ -28,8 +28,8 @@ class AdvisorPerformanceReportService extends BaseService
                 'users.name as advisor_name',
                 DB::raw('count(DISTINCT car_quote_request.id) as total_leads'),
                 DB::raw('CAST(SUM(CASE WHEN car_quote_request.quote_status_id = '.QuoteStatusEnum::NewLead.' THEN 1 ELSE 0 END) / COUNT(DISTINCT(user_team.team_id)) AS UNSIGNED) as new_leads'),
-                DB::raw('CAST(SUM(CASE WHEN car_quote_request.auto_assigned = 1 THEN 1 ELSE 0 END) / COUNT(DISTINCT(user_team.team_id)) AS UNSIGNED) as auto_assigned'),
-                DB::raw('CAST(SUM(CASE WHEN (car_quote_request.auto_assigned = 0 and source != "'.LeadSourceEnum::IMCRM.'" ) THEN 1 ELSE 0 END) / COUNT(DISTINCT(user_team.team_id)) AS UNSIGNED) as manually_assigned'),
+                DB::raw('CAST(SUM(CASE WHEN car_quote_request.assignment_type in (1,2) THEN 1 ELSE 0 END) / COUNT(DISTINCT(user_team.team_id)) AS UNSIGNED) as auto_assigned'),
+                DB::raw('CAST(SUM(CASE WHEN (car_quote_request.assignment_type in (3,4) and source != "'.LeadSourceEnum::IMCRM.'" ) THEN 1 ELSE 0 END) / COUNT(DISTINCT(user_team.team_id)) AS UNSIGNED) as manually_assigned'),
                 DB::raw('CAST(SUM(CASE WHEN car_quote_request.quote_status_id in ('.QuoteStatusEnum::PriceTooHigh.', '.QuoteStatusEnum::PolicyPurchasedBeforeFirstCall.', '.QuoteStatusEnum::NotInterested.', '.QuoteStatusEnum::NotEligibleForInsurance.', '.QuoteStatusEnum::NotLookingForMotorInsurance.', '.QuoteStatusEnum::NonGccSpec.','.QuoteStatusEnum::AMLScreeningFailed.') THEN 1 ELSE 0 END) / COUNT(DISTINCT(user_team.team_id)) AS UNSIGNED) as not_interested'),
                 DB::raw('CAST(SUM(CASE WHEN car_quote_request.quote_status_id in ('.QuoteStatusEnum::NotContactablePe.', '.QuoteStatusEnum::FollowupCall.', '.QuoteStatusEnum::Interested.', '.QuoteStatusEnum::NoAnswer.', '.QuoteStatusEnum::Quoted.', '.QuoteStatusEnum::PaymentPending.','.QuoteStatusEnum::AMLScreeningCleared.','.QuoteStatusEnum::PendingQuote.') THEN 1 ELSE 0 END) / COUNT(DISTINCT(user_team.team_id)) AS UNSIGNED) as in_progress'),
                 DB::raw('CAST(SUM(CASE WHEN car_quote_request.source = "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END) / COUNT(DISTINCT(user_team.team_id)) AS UNSIGNED) as manual_created'),
@@ -51,7 +51,6 @@ class AdvisorPerformanceReportService extends BaseService
 
         if (! auth()->user()->hasRole(RolesEnum::LeadPool)) {
             $userIds = $this->walkTree(auth()->user()->id);
-            info('user ids for advisor performance report are : '.json_encode($userIds));
             $query = $query->whereIn('car_quote_request.advisor_id', $userIds);
         }
 
@@ -131,11 +130,12 @@ class AdvisorPerformanceReportService extends BaseService
         $query->whereBetween('car_quote_request_detail.advisor_assigned_date', [$startDate, $endDate]);
 
         if (isset($filters->tiers) && count($filters->tiers) > 0) {
-            info('tiersFilter are : '.json_encode($filters->tiers));
             $query->whereIn('car_quote_request.tier_id', $filters->tiers);
         }
+        if (isset($filters->assignmentTypes) && $filters->assignmentTypes != 'All') {
+            $query->where('car_quote_request.assignment_type', $filters->assignmentTypes);
+        }
         if (isset($filters->teams) && count($filters->teams) > 0) {
-            info('teamsFilter are : '.json_encode($filters->teams));
             $value = $filters->teams;
             $query->whereIn('users.id', function ($query) use ($value) {
                 $query->distinct()
@@ -148,7 +148,6 @@ class AdvisorPerformanceReportService extends BaseService
         }
 
         if (isset($filters->leadSourceFilter) && count($filters->leadSourceFilter) > 0) {
-            info('leadSourceFilter are : '.json_encode($filters->leadSourceFilter));
             $query->whereIn('car_quote_request.source', $filters->leadSourceFilter);
         }
 

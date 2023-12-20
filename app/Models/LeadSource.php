@@ -12,4 +12,9 @@ class LeadSource extends Model implements AuditableContract
     use Auditable, HasFactory;
 
     protected $table = 'lead_sources';
+
+    public function ruleDetails()
+    {
+        return $this->hasMany(RuleDetail::class, 'lead_source_id');
+    }
 }

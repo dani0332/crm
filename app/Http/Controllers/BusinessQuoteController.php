@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\CustomerTypeEnum;
 use App\Enums\GenericRequestEnum;
+use App\Enums\LookupsEnum;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
@@ -10,11 +12,18 @@ use App\Enums\quoteStatusCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
+use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Http\Requests\StoreBusinessQuoteRequest;
 use App\Http\Requests\UpdateBusinessQuoteRequest;
 use App\Models\BusinessQuote;
+use App\Models\Emirate;
+use App\Models\Entity;
+use App\Models\Nationality;
+use App\Repositories\CustomerMembersRepository;
 use App\Repositories\InsuranceProviderRepository;
+use App\Repositories\LookupRepository;
+use App\Services\AMLService;
 use App\Services\BusinessQuoteService;
 use App\Services\CRUDService;
 use App\Services\DropdownSourceService;
@@ -141,7 +150,6 @@ class BusinessQuoteController extends Controller
         $quoteDocuments = $this->businessQuoteService->getQuoteDocuments($this->genericModel->modelType, $record->id);
         $displaySendPolicyButton = $this->businessQuoteService->displaySendPolicyButton($record, $quoteDocuments, self::TYPE_ID);
         $documentTypes = $this->businessQuoteService->getQuoteDocumentsForUpload(self::TYPE_ID);
-        $documentTypes = collect($documentTypes)->groupBy('category');
 
         $activities = $this->businessQuoteService->getActivityByLeadId($record->id, strtolower($this->genericModel->modelType));
         $customerAdditionalContacts = $this->businessQuoteService->getAdditionalContacts($record->customer_id, $record->mobile_no);
@@ -158,7 +166,19 @@ class BusinessQuoteController extends Controller
             ];
         })->values();
 
+        if (AMLService::checkAMLStatusFailed(self::TYPE_ID, $record->id)) {
+            $dropdownSource['quote_status_id'] = collect($dropdownSource['quote_status_id'])->filter(function ($value) {
+                return $value['id'] != QuoteStatusEnum::TransactionApproved;
+            })->values();
+        }
+
         $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypeId::Corpline);
+        $companyType = LookupRepository::where('key', LookupsEnum::COMPANY_TYPE)->get();
+        $UBODetails = CustomerMembersRepository::getBy($record->id, QuoteTypes::BUSINESS->name, CustomerTypeEnum::Entity);
+        $nationalities = Nationality::where('is_active', 1)->select('id', 'text')->get();
+        $UBORelations = LookupRepository::where('key', LookupsEnum::UBO_RELATION)->get();
+        $emirates = Emirate::where('is_active', 1)->select('id', 'text')->get();
+
         $filteredInsuranceProviders = [];
         if (! empty($insuranceProviders)) {
 
@@ -183,10 +203,28 @@ class BusinessQuoteController extends Controller
 
         $cdnPath = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
 
+        $countries = Nationality::all();
+        $amlQuoteStatus = $this->crudService->checkAmlQuoteStatus($record->quote_status_id);
+        $entities = Entity::all();
+        $legalStructure = $this->lookupService->getLegalStructure();
+        $idDocumentType = $this->lookupService->getEntityDocumentTypes();
+        $issuancePlace = $this->lookupService->getIssuancePlaces();
+        $issuanceAuthorities = $this->lookupService->getIssuanceAuthorities();
+
         return inertia('CorpLineQuote/Show', [
+            'storageUrl' => storageUrl(),
+            'amlQuoteStatus' => $amlQuoteStatus,
+            'countryList' => $countries,
+            'entities' => $entities,
+            'legalStructure' => $legalStructure,
+            'idDocumentType' => $idDocumentType,
+            'issuancePlace' => $issuancePlace,
+            'issuanceAuthorities' => $issuanceAuthorities,
+            'quoteType' => quoteTypeCode::Business,
             'quote' => $record,
             'quoteDetails' => $quoteDetails,
             'modelType' => $this->genericModel->modelType,
+            'quoteTypeId' => QuoteTypeId::Business,
             'dropdownSource' => $dropdownSource,
             'leadStatuses' => $dropdownSource['quote_status_id'],
             'advisors' => $advisors,
@@ -195,7 +233,7 @@ class BusinessQuoteController extends Controller
             'assignmentTypes' => $assignmentTypes,
             'genderOptions' => $this->crudService->getGenderOptions(),
             'lostReasons' => $this->lookupService->getLostReasons(),
-            'quoteDocuments' => $quoteDocuments,
+            'quoteDocuments' => array_values($quoteDocuments->toArray()),
             'documentTypes' => $documentTypes,
             'cdnPath' => $cdnPath,
             'memberCategories' => $this->lookupService->getMemberCategories(),
@@ -208,6 +246,7 @@ class BusinessQuoteController extends Controller
             'isBetaUser' => auth()->user()->hasRole(RolesEnum::BetaUser),
             'paymentMethods' => $filteredPaymentMethods,
             'insuranceProviders' => $filteredInsuranceProviders,
+            'insuranceProvidersAll' => $insuranceProviders,
             'permissions' => [
                 'admin' => auth()->user()->hasAnyRole([RolesEnum::Admin]),
                 'isManualAllocationAllowed' => auth()->user()->isAdmin() || auth()->user()->hasRole(RolesEnum::LeadPool) ? true : false,
@@ -229,6 +268,13 @@ class BusinessQuoteController extends Controller
                 'paymentStatusEnum' => PaymentStatusEnum::asArray(),
             ],
             'typeCode' => quoteTypeCode::CORPLINE,
+            'customerTypeEnum' => CustomerTypeEnum::asArray(),
+            'companyTypes' => $companyType,
+            'UBOsDetails' => $UBODetails,
+            'UBORelations' => $UBORelations,
+            'nationalities' => $nationalities,
+            'emirates' => $emirates,
+            'canAddBatchNumber' => auth()->user()->hasRole(RolesEnum::CorplineManager),
         ]);
     }
 

@@ -2,23 +2,34 @@
 
 namespace App\Http\Controllers\V2;
 
+use App\Enums\CustomerTypeEnum;
 use App\Enums\QuoteTypes;
 use App\Exports\AmtQuoteExport;
 use App\Exports\BusinessQuoteExport;
+use App\Exports\CarQuoteExport;
+use App\Exports\HealthQuotesExport;
 use App\Exports\HomeQuoteExport;
 use App\Exports\LifeQuotesExport;
 use App\Exports\PersonalQuotesExport;
 use App\Exports\TravelQuoteExport;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\CustomerProfileRequest;
 use App\Http\Requests\DuplicateLobRequest;
 use App\Http\Requests\LeadAssignRequest;
+use App\Http\Requests\PlanDetailsRequest;
+use App\Http\Requests\UpdateLastYearPolicyRequest;
+use App\Models\Customer;
+use App\Models\Entity;
+use App\Models\QuoteRequestEntityMapping;
 use App\Services\CentralService;
+use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Maatwebsite\Excel\Facades\Excel;
 
 class CentralController extends Controller
 {
+    use GenericQueriesAllLobs;
     public function createDuplicate(DuplicateLobRequest $request)
     {
         $response = (new CentralService())->saveDuplicateLeads($request->validated());
@@ -82,9 +93,14 @@ class CentralController extends Controller
             case QuoteTypes::TRAVEL->value:
                 return Excel::download(new TravelQuoteExport, 'travel_leads.xlsx');
 
+            case QuoteTypes::CAR->value:
+                return Excel::download(new CarQuoteExport, 'Car-List.xlsx');
+
+            case QuoteTypes::HEALTH->value:
+                return Excel::download(new HealthQuotesExport, 'Health-List.xlsx');
+
             default:
                 return false;
-
         }
     }
 
@@ -94,4 +110,73 @@ class CentralController extends Controller
 
         return redirect()->back()->with('success', ucfirst($leadAssignRequest->modelType).' Leads has been Assigned');
     }
+
+    public function updateCustomerProfileDetails(CustomerProfileRequest $customerProfileRequest)
+    {
+        if ($customerProfileRequest->customer_type == CustomerTypeEnum::Individual) {
+            $customer = Customer::where('id', $customerProfileRequest->customer_id)->firstOrFail();
+
+            $customer->update($customerProfileRequest->only([
+                'insured_first_name', 'insured_last_name', 'emirates_id_number', 'emirates_id_expiry_date',
+            ]));
+        }
+
+        if ($customerProfileRequest->customer_type == CustomerTypeEnum::Entity) {
+            $entity = Entity::updateOrCreate(['trade_license_no' => $customerProfileRequest->trade_license_no], $customerProfileRequest->validated());
+            $entity->update(['code' => CustomerTypeEnum::EntityShort.'-'.$entity->id]);
+
+            QuoteRequestEntityMapping::updateOrCreate([
+                'quote_type_id' => $customerProfileRequest->quote_type_id,
+                'quote_request_id' => $customerProfileRequest->quote_request_id,
+            ], ['entity_id' => $entity->id, 'entity_type_code' => $customerProfileRequest->entity_type_code]);
+
+        }
+
+        return redirect()->back();
+    }
+
+    /**
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function updateLastYearPolicy(UpdateLastYearPolicyRequest $request)
+    {
+        $quote = $this->getQuoteObject($request->model_type, $request->quote_id);
+
+        if (! $quote) {
+            return redirect()->back()->with('error', 'Error Updating Policy Details.');
+        }
+
+        $quote->update([
+            'renewal_batch' => $request->renewal_batch,
+        ]);
+
+        return redirect()->back()->with('success', 'Last Year Policy Detail has been updated.');
+    }
+
+    public function loadAvailablePlans($type, $id)
+    {
+        return (new CentralService())->loadAvailablePlans($type, $id);
+    }
+
+    public function savePlanDetails($quoteType, $code, PlanDetailsRequest $request)
+    {
+        $repository = getRepositoryObject($quoteType);
+
+        $quote = $repository::where('code', $code)->firstOrFail();
+        $quote->update($request->validated());
+
+        return redirect()->back()->with('success', 'updated successfully');
+    }
+
+    public function updateSelectedPlan($quoteType, $uuid, $planId)
+    {
+        $repository = getRepositoryObject($quoteType);
+
+        $quote = $repository::where('uuid', $uuid)->firstOrFail();
+
+        $quote->update(['prefill_plan_id' => $planId]);
+
+        return redirect()->back()->with('success', 'updated successfully');
+    }
+
 }

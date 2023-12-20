@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\FilterTypes;
+use App\Enums\QuoteTypeId;
 use App\Traits\FilterCriteria;
 use App\Traits\QuoteModelTrait;
 use Auth;
@@ -29,6 +30,7 @@ class CarQuote extends BaseModel
         'renewal_expiry_date' => FilterTypes::DATE_BETWEEN,
         'renewal_batch' => FilterTypes::EXACT,
         'mobile_no' => FilterTypes::EXACT,
+        'quote_batch_id' => FilterTypes::IN,
     ];
     protected $guarded = [];
 
@@ -44,52 +46,52 @@ class CarQuote extends BaseModel
 
     public function uaeLicenseHeldFor()
     {
-        return $this->hasOne(UAELicenseHeldFor::class, 'id', 'uae_license_held_for_id');
+        return $this->belongsTo(UAELicenseHeldFor::class, 'uae_license_held_for_id');
     }
 
     public function carMake()
     {
-        return $this->hasOne(CarMake::class, 'id', 'car_make_id')->select(['id', 'code', 'text']);
+        return $this->belongsTo(CarMake::class, 'car_make_id')->select(['id', 'code', 'text']);
     }
 
     public function carModel()
     {
-        return $this->hasOne(CarModel::class, 'id', 'car_model_id')->select(['id', 'code', 'text']);
+        return $this->belongsTo(CarModel::class, 'car_model_id')->select(['id', 'code', 'text']);
     }
 
     public function emirate()
     {
-        return $this->hasOne(Emirate::class, 'id', 'emirate_of_registration_id');
+        return $this->belongsTo(Emirate::class, 'emirate_of_registration_id');
     }
 
     public function claimHistory()
     {
-        return $this->hasOne(ClaimHistory::class, 'id', 'claim_history_id');
+        return $this->belongsTo(ClaimHistory::class, 'claim_history_id');
     }
 
     public function carTypeInsurance()
     {
-        return $this->hasOne(CarTypeInsurance::class, 'id', 'car_type_insurance_id');
+        return $this->belongsTo(CarTypeInsurance::class, 'car_type_insurance_id');
     }
 
     public function customer()
     {
-        return $this->hasOne(Customer::class, 'id', 'customer_id');
+        return $this->belongsTo(Customer::class);
     }
 
     public function nationality()
     {
-        return $this->hasOne(Nationality::class, 'id', 'nationality_id')->select(['id', 'code', 'text']);
+        return $this->belongsTo(Nationality::class, 'nationality_id')->select(['id', 'code', 'text']);
     }
 
     public function paymentStatus()
     {
-        return $this->hasOne(PaymentStatus::class, 'id', 'payment_status_id');
+        return $this->belongsTo(PaymentStatus::class, 'payment_status_id');
     }
 
     public function quoteStatus()
     {
-        return $this->hasOne(QuoteStatus::class, 'id', 'quote_status_id');
+        return $this->belongsTo(QuoteStatus::class, 'quote_status_id');
     }
 
     public function getCreatedAtAttribute($value)
@@ -150,7 +152,7 @@ class CarQuote extends BaseModel
 
     public function customer_id()
     {
-        return $this->hasOne(Customer::class, 'id', 'customer_id');
+        return $this->belongsTo(Customer::class);
     }
 
     public function nationality_id()
@@ -230,7 +232,7 @@ class CarQuote extends BaseModel
 
     public function advisor()
     {
-        return $this->hasOne(User::class, 'id', 'advisor_id')->select(['id', 'email', 'name']);
+        return $this->hasOne(User::class, 'id', 'advisor_id')->select(['id', 'email', 'name', 'mobile_no', 'landline_no']);
     }
 
     public function batch()
@@ -261,6 +263,11 @@ class CarQuote extends BaseModel
     public function previousAdvisor()
     {
         return $this->hasOne(User::class, 'id', 'previous_advisor_id')->select(['id', 'email', 'name']);
+    }
+
+    public function customerMembers()
+    {
+        return $this->morphMany(CustomerMembers::class, 'quote');
     }
 
     public function scopeRelationWhere($query, $isGetList, $filters)
@@ -434,5 +441,11 @@ class CarQuote extends BaseModel
     public function carLostQuoteLog()
     {
         return $this->hasOne(CarLostQuoteLog::class, 'car_quote_request_id')->latestOfMany();
+    }
+
+    public function quoteRequestEntityMapping()
+    {
+        return $this->hasOne(QuoteRequestEntityMapping::class, 'quote_request_id')
+            ->where('quote_type_id', QuoteTypeId::Car);
     }
 }

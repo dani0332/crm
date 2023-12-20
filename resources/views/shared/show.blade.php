@@ -10,6 +10,7 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\DatabaseColumnsString;
 use App\Enums\GenericRequestEnum;
+use App\Enums\LeadSourceEnum;
 @endphp
 
 <script src="{{ asset('vendors/jquery/dist/jquery.min.js') }}"></script>
@@ -339,7 +340,7 @@ use App\Enums\GenericRequestEnum;
                                             style="text-overflow: ellipsis;overflow: auto;white-space: nowrap;width: 495px;">
                                             <p class="label-align-center">
                                                 @if(str_contains($value, 'checkbox') || (str_contains($value, 'static') && str_contains(strtolower($value), 'yes')))
-                                                {{ $record->$property ? 'Yes' : 'No' }}
+                                                {{ isset($record->$property) ? 'Yes' : 'No' }}
                                                 @elseif( (str_contains($value, 'static') && !str_contains(strtolower($value), 'yes')))
                                                     @if($record->$property == GenericRequestEnum::MALE_SINGLE_VALUE) {{GenericRequestEnum::MALE_SINGLE}}
                                                     @elseif($record->$property == GenericRequestEnum::FEMALE_SINGLE_VALUE) {{GenericRequestEnum::FEMALE_SINGLE}}
@@ -401,8 +402,9 @@ use App\Enums\GenericRequestEnum;
     @endif
 
     @if (strtolower($model->modelType) != 'team' && strtolower($model->modelType) != 'leadstatus')
-        @if ($model->modelType == quoteTypeCode::Car)
-            <x-quote-renewal-card :record="$record" />
+        @if ($model->modelType == quoteTypeCode::Car && ($record->source == LeadSourceEnum::RENEWAL_UPLOAD ||  $record->source == LeadSourceEnum::INSLY))
+        
+            <x-quote-renewal-card :record="$record" :modeltype="$model->modelType" />
         @endif
         <x-lead-status-update :lead="$record" :modeltype="$model->modelType" :status="$record->quote_status_id" :statuses="$leadStatuses" :lostreasons="$lostReasons"
             :selectedlostreason="$selectedLostReasonId" :activityassignees="$advisors" :isQuoteDocumentEnabled="$isQuoteDocumentEnabled"
@@ -478,14 +480,13 @@ use App\Enums\GenericRequestEnum;
             </div>
         </div>
 
-        @if(auth()->user()->hasRole(RolesEnum::BetaUser))
         <x-payments-table :payments="$payments" :paymentMethods="$paymentMethods" :paymentPlainModel="$paymentEntityModel" :modeltype="$model->modelType" />
-        @endif
+
         <x-car-quote-assumptions :record="$record" :vehicleTypes="$vehicleTypes" :access="$access" :yearsOfManufacture="$yearsOfManufacture" :trimList="$trimList" />
 
         <x-car-quote-plans :record="$record" :listQuotePlans="$listQuotePlans" :access="$access" :ecomUrl="$ecomCarInsuranceQuoteUrl . $record->uuid" :quoteType="$quoteType" :quoteTypeId="$quoteTypeId" :carMakeText="$carMakeText" :carModelText="$carModelText" :advisor="$advisor" :daysAfterCapturedPayment="$daysAfterCapturedPayment" />
 
-        <x-car-quote-ep :transactions="$embeddedProducts" :quoteCode="$record->code" />
+        <x-car-quote-ep :transactions="$embeddedProducts" :quoteCode="$record->code" :record="$record"/>
 
         @if (isset($isQuoteDocumentEnabled) && $isQuoteDocumentEnabled)
             <x-quote-policy :record="$record" :quoteType="$quoteType" />

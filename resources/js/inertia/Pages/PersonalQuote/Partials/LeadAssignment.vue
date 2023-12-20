@@ -31,15 +31,23 @@ const { isRequired } = useRules();
 const assignForm = useForm({
   assigned_advisor_id: null,
   assigned_lead_id: '',
-  manual_assignment_email_flag: '1',
+  manual_assignment_email_flag: '2',
   modelType: props.quoteType,
 });
 
 function onAssignLead(isValid) {
+  // const postUrl =
+  //   props.quoteType.toLowerCase() == 'car'
+  //     ? `/quotes/car/manualLeadAssign`
+  //     : `/quotes/${props.quoteType}/leadAssign`;
+
   const postUrl =
-    props.quoteType.toLowerCase() == 'car'
-      ? `/quotes/car/manualLeadAssign`
+    props.quoteType.toLowerCase() === 'car'
+      ? '/quotes/car/manualLeadAssign'
+      : props.quoteType === 'tmlead'
+      ? '/telemarketing/tmLeadsAssign'
       : `/quotes/${props.quoteType}/leadAssign`;
+
   if (isValid) {
     assignForm
       .transform(data => ({
@@ -47,7 +55,7 @@ function onAssignLead(isValid) {
         selectTmLeadId: `${props.selected}`,
         assigned_lead_id: `${props.selected}`,
         assigned_to_id_new: assignForm.assigned_advisor_id,
-        assignment_type: assignForm.manual_assignment_email_flag,
+        assignment_type: 2,
       }))
       .post(postUrl, {
         preserveScroll: true,
@@ -77,17 +85,6 @@ function onAssignLead(isValid) {
             placeholder="Select Advisor"
             class="flex-1 w-auto"
             single
-          />
-          <x-select
-            v-model="assignForm.manual_assignment_email_flag"
-            label="Assignment Type"
-            :options="[
-              { value: '1', label: 'Without Email' },
-              { value: '2', label: 'With Email' },
-            ]"
-            placeholder="Select Type"
-            class="flex-1 w-auto"
-            :rules="[isRequired]"
           />
           <div class="mb-3 md:pt-6">
             <x-button

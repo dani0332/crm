@@ -46,7 +46,6 @@ class LeadDistributionReportService extends BaseService
         } else {
             if (! auth()->user()->hasRole(RolesEnum::LeadPool)) {
                 $userIds = $this->walkTree(auth()->user()->id);
-                info('user ids for advisor conversion report are : '.json_encode($userIds));
                 $query = $query->whereIn('car_quote_request.advisor_id', $userIds);
             }
         }
@@ -108,8 +107,11 @@ class LeadDistributionReportService extends BaseService
         $query->whereBetween('car_quote_request.created_at', [$startDate, $endDate]);
 
         if (isset($filters->tiers) && count($filters->tiers) > 0) {
-            info('tiersFilter are : '.json_encode($filters->tiers));
             $query->whereIn('car_quote_request.tier_id', $filters->tiers);
+        }
+
+        if (isset($filters->assignmentTypes) && $filters->assignmentTypes != 'All') {
+            $query->where('car_quote_request.assignment_type', $filters->assignmentTypes);
         }
 
         if (isset($filters->isCommercial) && $filters->isCommercial != 'All') {

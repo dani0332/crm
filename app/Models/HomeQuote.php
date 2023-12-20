@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\FilterTypes;
+use App\Enums\QuoteTypeId;
 use App\Traits\FilterCriteria;
 use App\Traits\QuoteModelTrait;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -36,6 +37,11 @@ class HomeQuote extends Model implements AuditableContract
         return $this->belongsTo(QuoteStatus::class);
     }
 
+    public function paymentStatus()
+    {
+        return $this->belongsTo(PaymentStatus::class, 'payment_status_id');
+    }
+
     public function homeQuoteRequestDetail()
     {
         return $this->hasOne(HomeQuoteRequestDetail::class, 'home_quote_request_id', 'id');
@@ -65,8 +71,24 @@ class HomeQuote extends Model implements AuditableContract
         return $this->belongsTo(User::class, 'advisor_id')->select(['id', 'email', 'name']);
     }
 
+    public function customer()
+    {
+        return $this->belongsTo(Customer::class);
+    }
+
     public function payments()
     {
         return $this->morphMany(Payment::class, 'paymentable');
+    }
+
+    public function quoteRequestEntityMapping()
+    {
+        return $this->hasOne(QuoteRequestEntityMapping::class, 'quote_request_id')
+            ->where('quote_type_id', QuoteTypeId::Home);
+    }
+
+    public function documents()
+    {
+        return $this->morphMany(QuoteDocument::class, 'quote_documentable');
     }
 }

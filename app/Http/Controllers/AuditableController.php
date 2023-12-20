@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\CarQuote;
+use App\Models\InsurerRequestResponse;
 use App\Repositories\AuditRepository;
 use App\Services\BaseService;
 use App\Traits\GenericQueriesAllLobs;
@@ -43,7 +45,22 @@ class AuditableController extends Controller
             ->where('auditable_type', $request->auditableType)
             ->orderBy('created_at', 'desc')
             ->get();
+    }
 
+    public function loadApiLogs(Request $request)
+    {
+        if ($request->auditableType == CarQuote::class) {
+            $query = InsurerRequestResponse::with('insuranceProvider')
+                ->select('*')
+                ->where('insurer_request_response.quote_uuid', CarQuote::where('id', $request->auditableId)->value('uuid'))
+                ->orderByDesc('insurer_request_response.created_at');
+
+            if ($request->insurance_provider) {
+                $query->where('insurer_request_response.provider_id', $request->insurance_provider);
+            }
+
+            return $query->get();
+        }
     }
 
     /**

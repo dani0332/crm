@@ -30,6 +30,7 @@ const tableHeader = [
     { text: 'Batch', value: 'batch' },
     { text: 'Total Leads', value: 'total_leads' },
     { text: 'Total Sent', value: 'total_sent' },
+    { text: 'Total Failed', value: 'total_failed' },
     { text: 'Status', value: 'status' },
     { text: 'User', value: 'createdby.email' },
     { text: 'Created At', value: 'created_at' },
@@ -48,12 +49,15 @@ const permissionsEnum = page.props.permissionsEnum;
             <h2 class="text-xl font-semibold">Email Batch Details</h2>
             <div class="space-x-3">
                 <x-button color="#ff5e00" href="/renewals/batches" class="btn-2">Batches List</x-button>
-                <x-button color="primary" onclick="return confirm('Do you want to send emails?');" :href="`/renewals/batches/${batch}/batch-process`">Send Emails</x-button>
+                <x-button color="primary" onclick="return confirm('Do you want to send emails?');" :href="`/renewals/batches/${batch}/schedule-renewals-ocb`">Send Emails</x-button>
 
             </div>
         </div>
         <x-divider class="my-4" />
 
+        <x-alert color="error" class="mb-5" v-if="$page.props?.errors.error">
+            {{$page.props?.errors.error}}
+        </x-alert>
 
         <DataTable
             table-class-name="tablefixed"

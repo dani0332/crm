@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+
 use App\Enums\FilterTypes;
 use App\Traits\FilterCriteria;
+use App\Enums\QuoteTypeId;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
@@ -29,6 +32,22 @@ class PetQuote extends Model implements AuditableContract
     public function quoteStatus()
     {
         return $this->hasOne(QuoteStatus::class, 'id', 'quote_status_id');
+    }
+
+    /**
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     */
+    public function paymentStatus()
+    {
+        return $this->belongsTo(PaymentStatus::class);
+    }
+
+    /**
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     */
+    public function customer()
+    {
+        return $this->belongsTo(Customer::class);
     }
 
     public function petQuoteRequestDetail()
@@ -84,5 +103,21 @@ class PetQuote extends Model implements AuditableContract
                 ['auditable_type' => self::class, 'key' => 'personal_quote_id'],
             ],
         ];
+    }
+
+    public function quoteRequestEntityMapping()
+    {
+        return $this->hasOne(QuoteRequestEntityMapping::class, 'quote_request_id')
+            ->where('quote_type_id', QuoteTypeId::Pet);
+    }
+
+    public function documents()
+    {
+        return $this->morphMany(QuoteDocument::class, 'quote_documentable');
+    }
+
+    public function payments(): MorphMany
+    {
+        return $this->morphMany(Payment::class, 'paymentable');
     }
 }

@@ -1,6 +1,6 @@
 <script setup>
 import LeadAssignment from '../PersonalQuote/Partials/LeadAssignment';
-import * as dayjs from 'dayjs';
+import dayjs from 'dayjs/esm/index.js';
 
 defineProps({
   aml: Object,
@@ -8,6 +8,7 @@ defineProps({
 });
 
 const page = usePage();
+const notification = useToast();
 const loader = reactive({
   table: false,
   export: false,
@@ -15,16 +16,15 @@ const loader = reactive({
 
 const { isRequired } = useRules();
 
-const amlCreatedStartDate = ref(
-  dayjs().subtract(30, 'day').format('YYYY-MM-DD'),
-);
-const amlCreatedEndDate = ref(dayjs().format('YYYY-MM-DD'));
+const tableHeader = [
+    { text: 'Quote Type', value: 'quote_type_text' },
+    { text: 'Ref-ID', value: 'cdb_id' },
+  //  { text: 'Input', value: 'input' },
+    { text: 'Created At', value: 'created_at' },
+    { text: 'Updated At', value: 'updated_at' },
+];
 
 const dateFormat = date => useDateFormat(date, 'DD-MM-YYYY h:mm:ss');
-
-const rules = {
-  isRequired,
-};
 
 let availableFilters = {
   quoteType: null,
@@ -36,6 +36,8 @@ let availableFilters = {
   page: 1,
 };
 
+const isDateMandatory = ref(true);
+const isSearchValueRequired = ref(false);
 const filtersForm = useForm({
   quoteType: null,
   searchType: '',
@@ -49,26 +51,28 @@ const filtersForm = useForm({
 function onReset() {
   router.visit('/kyc/aml', {
     method: 'get',
-    data: { page: 1 },
     preserveScroll: true,
     onBefore: () => (loader.table = true),
     onSuccess: () => (loader.table = false),
   });
 }
 
+function checkDateValidation() {
+    isDateMandatory.value = filtersForm.searchType === '';
+    isSearchValueRequired.value = filtersForm.searchType !== '';
+}
+
 function onSubmit(isValid) {
-  if (isValid) {
+    if (!isValid) return;
+
     //remove empty fields
     Object.keys(filtersForm).forEach(
-      key => filtersForm[key] == '' && delete filtersForm[key],
+      key => filtersForm[key] === '' && delete filtersForm[key],
     );
-
-    console.log(dayjs().diff(dayjs(filtersForm.amlCreatedStartDate), 'day'));
-
     filtersForm.get(`/kyc/aml`, {
       preserveScroll: true,
       onBefore: () => {
-        if (dayjs().diff(dayjs(filtersForm.amlCreatedStartDate), 'day') > 30) {
+        if (dayjs(filtersForm.amlCreatedEndDate).diff(dayjs(filtersForm.amlCreatedStartDate), 'day') > 30) {
           filtersForm.setError(
             'amlCreatedStartDate',
             'Allowed no. of days between start & end dates are 30 days.',
@@ -78,8 +82,16 @@ function onSubmit(isValid) {
         loader.table = true;
       },
       onSuccess: () => (loader.table = false),
+        onError: (errors) => {
+            Object.keys(errors).forEach(function(key) {
+                notification.error({
+                    title: errors[key],
+                    position: 'top',
+                });
+            });
+            return false;
+        }
     });
-  }
 }
 
 function setQueryStringFilters() {
@@ -93,6 +105,15 @@ function setQueryStringFilters() {
   }
 }
 
+
+watch(() => filtersForm, () => {
+    let queryString = window.location.search;
+    let urlParams = new URLSearchParams(queryString);
+
+    isDateMandatory.value = !((urlParams.get('searchType') !== null && urlParams.get('searchField') !== null) ||
+        filtersForm.searchType !== '' && filtersForm.searchField !== '');
+}, { deep: true, immediate: true });
+
 const quoteTypeOptions = computed(() =>
   ref(
     [{ value: '', label: 'Select' }].concat(
@@ -103,18 +124,11 @@ const quoteTypeOptions = computed(() =>
     ),
   ),
 );
+
 onMounted(() => {
   setQueryStringFilters();
 });
-const tableHeader = [
-  { text: 'AML Id', value: 'id' },
-  { text: 'Quote Type', value: 'quote_type_text' },
-  { text: 'CDB Id', value: 'cdb_id' },
-  { text: 'Input', value: 'input' },
-  { text: 'Screenshot', value: 'screenshot' },
-  { text: 'Created At', value: 'created_at' },
-  { text: 'Updated At', value: 'updated_at' },
-];
+
 </script>
 
 <template>
@@ -124,9 +138,10 @@ const tableHeader = [
     <x-divider class="my-4" />
     <!--   filters     -->
     <x-form @submit="onSubmit" :auto-focus="false">
-      <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
+      <div class="grid sm:grid-cols-2 md:grid-cols-3 gap-3">
         <x-select
           v-model="filtersForm.quoteType"
+          :rules="[isRequired]"
           label="Quote Type"
           placeholder=""
           :options="quoteTypeOptions.value"
@@ -138,11 +153,11 @@ const tableHeader = [
           label="Search By"
           placeholder=""
           :options="[
-            { value: 'cdbId', label: 'CDB ID' },
+            { value: 'cdbId', label: 'Ref-ID' },
             { value: 'customerEmail', label: 'Customer Email' },
-            { value: 'id', label: 'AML ID' },
           ]"
           class="w-full"
+          @update:model-value="checkDateValidation"
         />
         <x-input
           v-model="filtersForm.searchField"
@@ -150,26 +165,17 @@ const tableHeader = [
           name="code"
           label="Search Value"
           class="w-full"
+          :rules="isSearchValueRequired ? [isRequired] : []"
           placeholder="Search Value"
         />
 
-        <x-select
-          v-model="filtersForm.matchFound"
-          label="Match found"
-          placeholder=""
-          :options="[
-            { value: 0, label: 'False' },
-            { value: 1, label: 'True' },
-          ]"
-          class="w-full"
-        />
 
         <DatePicker
           v-model="filtersForm.amlCreatedStartDate"
           name="created_at_end"
           label="Created Date Start"
           class="w-full"
-          :rules="[isRequired]"
+          :rules="isDateMandatory ? [isRequired] : []"
           :customError="filtersForm.errors.amlCreatedStartDate"
         />
         <DatePicker
@@ -177,7 +183,7 @@ const tableHeader = [
           name="created_at_end"
           label="Created Date End"
           class="w-full"
-          :rules="[isRequired]"
+          :rules="isDateMandatory ? [isRequired] : []"
           :customError="filtersForm.errors.amlCreatedEndDate"
         />
       </div>
@@ -206,16 +212,11 @@ const tableHeader = [
       </template>
       <template #item-cdb_id="item">
         <Link
-          :href="`/kyc/aml/${item.quote_type_id}/details/${item.quote_request_id}`"
+          :href="`/kyc/aml/${item.quote_type_id}/details/${item.id}`"
           class="text-primary-500 hover:underline"
         >
           {{ item.cdb_id }}
         </Link>
-      </template>
-      <template #item-screenshot="{ screenshot }">
-        <a :href="screenshot" download>
-          <img :src="screenshot" alt="IMCRM" class="w-10 h-10" />
-        </a>
       </template>
     </DataTable>
 

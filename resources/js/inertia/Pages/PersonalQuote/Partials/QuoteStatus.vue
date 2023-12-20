@@ -1,5 +1,5 @@
 <script setup>
-defineProps({
+const props = defineProps({
   quote: Object,
   documentTypes: Object,
   quoteStatuses: Object,
@@ -11,31 +11,28 @@ defineProps({
 
 const notification = useNotifications('toast');
 
-const page = usePage();
-
 const quoteStatusOptions = computed(() => {
-  return page.props.quoteStatuses.map(status => ({
+  return props.quoteStatuses.map(status => ({
     value: status.id,
     label: status.text,
   }));
 });
-
 const quoteStatusForm = useForm({
-  quote_uuid: page.props.quote.uuid,
-  quote_status_id: page.props.quote.quote_status_id,
-  notes: page.props.quote.notes || null,
-  transapp_code: page.props.quote?.quote_detail?.transapp_code || null,
-  lost_reason_id: page.props.quote?.quote_detail?.lost_reason_id || null,
+  quote_uuid: props.quote.uuid,
+  quote_status_id: props.quote.quote_status_id,
+  notes: props.quote.notes || null,
+  transapp_code: props.quote?.quote_detail?.transapp_code || null,
+  lost_reason_id: props.quote?.quote_detail?.lost_reason_id || null,
 });
 
 const onLeadStatus = () => {
   quoteStatusForm.patch(
-    `/personal-quotes/${page.props.quoteType}/${page.props.quote.id}/update-status`,
+    `/personal-quotes/${props.quoteType}/${props.quote.id}/update-status`,
     {
       preserveScroll: true,
 
       onError: errors => {
-        console.log(errors);
+          notification.error({ title: errors.value, position: 'top' });
       },
       onSuccess: () => {
         notification.success({
@@ -53,8 +50,8 @@ const rules = {
 
 const allowStatusUpdate = computed(() => {
   return (
-    page.props.quote.quote_status_id ==
-    page.props.quoteStatusEnum.TransactionApproved
+    props.quote.quote_status_id ==
+    props.quoteStatusEnum.TransactionApproved
   );
 });
 </script>
@@ -90,34 +87,29 @@ const allowStatusUpdate = computed(() => {
         </div>
       </div>
       <div class="w-full md:w-2/3">
-        <x-input
-          v-if="
-            quoteStatusForm.quote_status_id ==
-            page.props.quoteStatusEnum.TransactionApproved
-          "
-          v-model="quoteStatusForm.transapp_code"
-          label="TransApp Code"
-          placeholder="TransApp Code is required"
-          class="w-full"
-          :disabled="allowStatusUpdate"
-          :error="quoteStatusForm.errors.transapp_code"
-        />
-        <x-select
-          v-if="
-            quoteStatusForm.quote_status_id == page.props.quoteStatusEnum.Lost
-          "
-          v-model="quoteStatusForm.lost_reason_id"
-          label="Lost Reason"
-          :options="
-            lostReasons?.map(item => ({
-              value: item.id,
-              label: item.text,
-            }))
-          "
-          placeholder="Lost Reason is required"
-          class="w-full"
-          :error="quoteStatusForm.errors.lost_reason_id"
-        />
+        <x-field label="TransApp Code" required v-if="quoteStatusForm.quote_status_id == props.quoteStatusEnum.TransactionApproved">
+          <x-input
+            v-model="quoteStatusForm.transapp_code"
+            placeholder="TransApp Code is required"
+            class="w-full"
+            :disabled="allowStatusUpdate"
+            :error="quoteStatusForm.errors.transapp_code"
+          />
+        </x-field>
+        <x-field label="Lost Reason" required v-if="quoteStatusForm.quote_status_id == props.quoteStatusEnum.Lost">
+          <x-select            
+            v-model="quoteStatusForm.lost_reason_id"            
+            :options="
+              lostReasons?.map(item => ({
+                value: item.id,
+                label: item.text,
+              }))
+            "
+            placeholder="Lost Reason is required"
+            class="w-full"
+            :error="quoteStatusForm.errors.lost_reason_id"
+          />
+        </x-field>
       </div>
     </div>
     <div class="flex justify-end">

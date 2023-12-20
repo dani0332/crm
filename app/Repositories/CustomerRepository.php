@@ -2,8 +2,27 @@
 
 namespace App\Repositories;
 
+use App\Enums\GenericRequestEnum;
+use App\Enums\QuoteStatusEnum;
+use App\Enums\QuoteTypeId;
+use App\Http\Requests\CustomerUploadRequest;
+use App\Imports\CustomersImport;
+use App\Models\BusinessQuote;
+use App\Models\CarQuote;
 use App\Models\Customer;
 use App\Models\CustomerAdditionalContact;
+use App\Models\Entity;
+use App\Models\HealthQuote;
+use App\Models\HomeQuote;
+use App\Models\LifeQuote;
+use App\Models\PersonalQuote;
+use App\Models\TravelQuote;
+use App\Services\BerlinService;
+use App\Services\CustomerService;
+use App\Services\SendEmailCustomerService;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Maatwebsite\Excel\Facades\Excel;
 
 class CustomerRepository extends BaseRepository
 {
@@ -13,6 +32,163 @@ class CustomerRepository extends BaseRepository
     public function model()
     {
         return Customer::class;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function fetchGetData()
+    {
+        $allQuotes =
+        $customerIds =
+        $entitiesIds = [];
+        $filterValue = request()->get('search_value');
+        $filterType = request()->get('search_type');
+        $filterColumns = ['email', 'first_name', 'entity_name', 'insured_first_name', 'mobile_no', 'uuid'];
+
+        if (in_array($filterType, $filterColumns) && (! empty($filterType) && ! empty($filterValue))) {
+
+            if ($filterType == 'entity_name') {
+                $entitiesIds = Entity::where('company_name', $filterValue)->pluck('id');
+                if ($entitiesIds->isEmpty()) {
+                    return $allQuotes;
+                }
+            } else {
+                $customerIds = Customer::where($filterType, $filterValue)->pluck('id');
+                if ($customerIds->isEmpty()) {
+                    return $allQuotes;
+                }
+            }
+
+            $carQuotes = CarQuote::with(['advisor', 'customer'])
+                ->when(! empty($customerIds), function ($customer) use ($customerIds) {
+                    $customer->whereIn('customer_id', $customerIds);
+                })
+                ->when(! empty($entitiesIds), function ($entity) use ($entitiesIds) {
+                    $entity->whereHas('quoteRequestEntityMapping', function ($healthEntityMapping) use ($entitiesIds) {
+                        $healthEntityMapping->whereIn('entity_id', $entitiesIds);
+                    });
+                })
+                ->where('quote_status_id', QuoteStatusEnum::TransactionApproved)
+                ->select(['uuid', 'code', 'customer_id', 'policy_number', 'advisor_id', 'policy_start_date', 'renewal_expiry_date',
+                    \DB::raw('"'.QuoteTypeId::Car.'" as quote_type_id'),
+                    \DB::raw("'' as business_type_of_insurance_id"),
+                ])
+                ->orderBy('created_at', 'desc');
+
+            $homeQuotes = HomeQuote::with(['advisor', 'customer'])
+                ->when(! empty($customerIds), function ($customer) use ($customerIds) {
+                    $customer->whereIn('customer_id', $customerIds);
+                })
+                ->when(! empty($entitiesIds), function ($entity) use ($entitiesIds) {
+                    $entity->whereHas('quoteRequestEntityMapping', function ($healthEntityMapping) use ($entitiesIds) {
+                        $healthEntityMapping->whereIn('entity_id', $entitiesIds);
+                    });
+                })
+                ->where('quote_status_id', QuoteStatusEnum::TransactionApproved)
+                ->select(['uuid', 'code', 'customer_id', 'policy_number', 'advisor_id', 'policy_start_date', 'renewal_expiry_date',
+                    \DB::raw('"'.QuoteTypeId::Home.'" as quote_type_id'),
+                    \DB::raw("'' as business_type_of_insurance_id"),
+                ])
+                ->orderBy('created_at', 'desc');
+
+            $healthQuotes = HealthQuote::with(['advisor', 'customer'])
+                ->when(! empty($customerIds), function ($customer) use ($customerIds) {
+                    $customer->whereIn('customer_id', $customerIds);
+                })
+                ->when(! empty($entitiesIds), function ($entity) use ($entitiesIds) {
+                    $entity->whereHas('quoteRequestEntityMapping', function ($healthEntityMapping) use ($entitiesIds) {
+                        $healthEntityMapping->whereIn('entity_id', $entitiesIds);
+                    });
+                })
+                ->where('quote_status_id', QuoteStatusEnum::TransactionApproved)
+                ->select(['uuid', 'code', 'customer_id', 'policy_number', 'advisor_id', 'policy_start_date', 'renewal_expiry_date',
+                    \DB::raw('"'.QuoteTypeId::Health.'" as quote_type_id'),
+                    \DB::raw("'' as business_type_of_insurance_id"),
+                ])
+                ->orderBy('created_at', 'desc');
+
+            $lifeQuotes = LifeQuote::with(['advisor', 'customer'])
+                ->when(! empty($customerIds), function ($customer) use ($customerIds) {
+                    $customer->whereIn('customer_id', $customerIds);
+                })
+                ->when(! empty($entitiesIds), function ($entity) use ($entitiesIds) {
+                    $entity->whereHas('quoteRequestEntityMapping', function ($healthEntityMapping) use ($entitiesIds) {
+                        $healthEntityMapping->whereIn('entity_id', $entitiesIds);
+                    });
+                })
+                ->where('quote_status_id', QuoteStatusEnum::TransactionApproved)
+                ->select(['uuid', 'code', 'customer_id', 'policy_number', 'advisor_id', 'policy_start_date', 'renewal_expiry_date',
+                    \DB::raw('"'.QuoteTypeId::Life.'" as quote_type_id'),
+                    \DB::raw("'' as business_type_of_insurance_id"),
+                ])
+                ->orderBy('created_at', 'desc');
+
+            $businessQuotes = BusinessQuote::with(['advisor', 'customer'])
+                ->when(! empty($customerIds), function ($customer) use ($customerIds) {
+                    $customer->whereIn('customer_id', $customerIds);
+                })
+                ->when(! empty($entitiesIds), function ($entity) use ($entitiesIds) {
+                    $entity->whereHas('quoteRequestEntityMapping', function ($healthEntityMapping) use ($entitiesIds) {
+                        $healthEntityMapping->whereIn('entity_id', $entitiesIds);
+                    });
+                })
+                ->where('quote_status_id', QuoteStatusEnum::TransactionApproved)
+                ->select(['uuid', 'code', 'customer_id', 'policy_number', 'advisor_id', 'policy_start_date', 'renewal_expiry_date',
+                    \DB::raw('"'.QuoteTypeId::Business.'" as quote_type_id'),
+                    'business_type_of_insurance_id'])
+                ->orderBy('created_at', 'desc');
+
+            $travelQuotes = TravelQuote::with(['advisor', 'customer'])
+                ->when(! empty($customerIds), function ($customer) use ($customerIds) {
+                    $customer->whereIn('customer_id', $customerIds);
+                })
+                ->when(! empty($entitiesIds), function ($entity) use ($entitiesIds) {
+                    $entity->whereHas('quoteRequestEntityMapping', function ($healthEntityMapping) use ($entitiesIds) {
+                        $healthEntityMapping->whereIn('entity_id', $entitiesIds);
+                    });
+                })
+                ->where('quote_status_id', QuoteStatusEnum::TransactionApproved)
+                ->select(['uuid', 'code', 'customer_id', 'policy_number', 'advisor_id', 'policy_start_date', 'renewal_expiry_date',
+                    \DB::raw('"'.QuoteTypeId::Travel.'" as quote_type_id'),
+                    \DB::raw("'' as business_type_of_insurance_id"),
+                ])
+                ->orderBy('created_at', 'desc');
+
+            $personalQuotes = PersonalQuote::with(['advisor', 'customer'])
+                ->when(! empty($customerIds), function ($customer) use ($customerIds) {
+                    $customer->whereIn('customer_id', $customerIds);
+                })
+                ->when(! empty($entitiesIds), function ($entity) use ($entitiesIds) {
+                    $entity->whereHas('quoteRequestEntityMapping', function ($healthEntityMapping) use ($entitiesIds) {
+                        $healthEntityMapping->whereIn('entity_id', $entitiesIds);
+                    });
+                })
+                ->where('quote_status_id', QuoteStatusEnum::TransactionApproved)
+                ->select(['uuid', 'code', 'customer_id', 'policy_number', 'advisor_id', 'policy_start_date', 'renewal_expiry_date', 'quote_type_id',
+                    \DB::raw("'' as business_type_of_insurance_id"),
+                ])
+                ->orderBy('created_at', 'desc');
+
+            return $personalQuotes
+                ->union($healthQuotes)
+                ->union($lifeQuotes)
+                ->union($travelQuotes)
+                ->union($homeQuotes)
+                ->union($businessQuotes)
+                ->union($carQuotes)->simplePaginate()->withQueryString();
+        }
+
+        return $allQuotes;
+
+    }
+
+    /**
+     * @return mixed
+     */
+    public function fetchGetBy($column, $value)
+    {
+        return $this->with(['nationality'])->where($column, $value)->firstOrFail();
     }
 
     /**
@@ -42,4 +218,126 @@ class CustomerRepository extends BaseRepository
 
         return $additionalContacts;
     }
+
+    public function fetchCustomerUploadRecordsCreate(CustomerUploadRequest $customerUploadRequest, SendEmailCustomerService $sendEmailCustomerService, BerlinService $berlinService)
+    {
+        if ($customerUploadRequest->hasFile('file_name')) {
+            return Excel::import(new CustomersImport(
+                $customerUploadRequest->myalfred_expiry_date,
+                $customerUploadRequest->cdb_id,
+                $customerUploadRequest->inviatation_email,
+                $sendEmailCustomerService,
+                $berlinService
+            ), $customerUploadRequest->file('file_name'));
+        }
+
+        vAbort('Something went wrong while uploading');
+    }
+
+    public function fetchReplicatePreviousAdditionalContacts($old_customer_id, $new_customer_id)
+    {
+        $customerPreviousContactInfo = CustomerAdditionalContact::where('customer_id', $old_customer_id)->get();
+        foreach ($customerPreviousContactInfo as $customerPreInfo) {
+            CustomerAdditionalContact::updateOrCreate([
+                'customer_id' => $new_customer_id,
+                'key' => $customerPreInfo->key,
+                'value' => $customerPreInfo->value,
+            ]);
+        }
+    }
+
+    public function fetchMakeAdditionalContactPrimary($quoteObject, $request)
+    {
+        $_return = true;
+        try {
+            DB::beginTransaction();
+            if ($request['key'] == GenericRequestEnum::EMAIL) {
+                Log::info('Customer additional contact primary email updated. Previous Email: '.$quoteObject->email.' New Email: '.$request['value']);
+                $quoteObject->email = $request['value'];
+                $customerService = new CustomerService();
+                $customer = $customerService::getCustomerByEmail($request['value']);
+                if ($customer) {
+                    $quoteObject->customer_id = $customer->id;
+                    if (isset($request['quote_primary_email_address']) && isset($request['quote_customer_id'])) {
+                        CustomerAdditionalContact::updateOrCreate([
+                            'customer_id' => $request['quote_customer_id'],
+                            'key' => GenericRequestEnum::EMAIL,
+                            'value' => strtolower($request['quote_primary_email_address']),
+                        ]);
+
+                        // Replicate Old additional contact info with new customer
+                        $this->fetchReplicatePreviousAdditionalContacts($request['quote_customer_id'], $customer->id);
+                    }
+                } else {
+                    // Move current customer to additional contacts if not exists
+                    CustomerAdditionalContact::updateOrCreate([
+                        'customer_id' => $request['quote_customer_id'],
+                        'key' => GenericRequestEnum::EMAIL,
+                        'value' => strtolower($request['quote_primary_email_address']),
+                    ]);
+
+                    $customer = Customer::create([
+                        'first_name' => $quoteObject->first_name,
+                        'last_name' => $quoteObject->last_name,
+                        'mobile_no' => $quoteObject->mobile_no,
+                        'email' => $request['value'],
+                    ]);
+
+                    $quoteObject->customer_id = $customer->id;
+
+                    // Replicate Old additional contact info with new customer
+                    $this->fetchReplicatePreviousAdditionalContacts($request['quote_customer_id'], $customer->id);
+                }
+            } elseif ($request['key'] == GenericRequestEnum::MOBILE_NO) {
+                Log::info('Customer additional contact primary mobile_no updated. Previous Mobile_No: '.$quoteObject->mobile_no.' New Mobile_No: '.$request['value']);
+                $quoteObject->mobile_no = $request['value'];
+                if (isset($request['quote_primary_mobile_no']) && isset($request['quote_customer_id'])) {
+                    CustomerAdditionalContact::updateOrCreate([
+                        'customer_id' => $request['quote_customer_id'],
+                        'key' => 'mobile_no',
+                        'value' => trim($request['quote_primary_mobile_no']),
+                    ]);
+                }
+            }
+
+            $quoteObject->save();
+            DB::commit();
+
+        } catch (\Exception $exception) {
+            Log::error($exception->getMessage());
+            DB::rollback();
+            $_return = false;
+        }
+
+        return $_return;
+    }
+
+    public function fetchUpdateCustomerDetails($customerId, $data)
+    {
+        info('before updating customer details');
+
+        $customer = Customer::with('nationality')->findOrFail($customerId);
+        $customer->update($data->only(['insured_first_name', 'insured_last_name', 'nationality_id', 'dob']));
+
+        $customer->detail()->updateOrCreate(['customer_id' => $customerId], $data->only([
+            'place_of_birth',
+            'country_of_residence',
+            'residential_address',
+            'residential_status',
+            'id_type',
+            'id_issuance_date',
+            'mode_of_contact',
+            //'transaction_value',
+            'mode_of_delivery',
+            'employment_sector',
+            'customer_tenure',
+        ]));
+
+        $customer->refresh();
+
+        info('customer detail updated');
+
+        return $customer;
+    }
+
 }

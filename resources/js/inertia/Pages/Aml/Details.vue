@@ -1,89 +1,120 @@
 <script setup>
-defineProps({
-  quoteTypeCode: Object,
-  quoteTypeText: Object,
-  quoteRequest: Array,
+import IndividualModel from './Partials/IndividualModel.vue';
+import EntityModel from './Partials/EntityModel.vue';
+import { onMounted, ref } from 'vue';
+
+const props = defineProps({
+  quoteType: Object,
+  quoteRequest: Object,
+  entityDetails: Object,
+  membersDetails: Object,
+  uboDetails: Object,
+  nationalities: Object,
+  emirates: Object,
+  customerTypeEnum: Object,
   businessTypeCode: Object,
   businessCoverTypeText: Array,
   businessCommuModeText: Array,
   kycLogs: Array,
-  quoteStatusCode: Array,
-  auditLogLine: Array,
-  isCurrentUserFromCompliance: Array,
-  isCurrentUserFromPaAml: Array,
-  firstAmlLogResults: Array,
-  latestAmlLogResults: Array,
-  quoteTypeId: Array,
-  getAMLNumRows: Array,
+  kycStatus: String,
+  quoteStatusCode: { type: [Object, String] },
+  isCurrentUserFromCompliance: { type: [Array, Number] },
+  isCurrentUserFromPaAml: { type: [Array, Number] },
+  firstAmlLogResults: { type: [Array, Number] },
+  latestAmlLogResults: { type: [Array, Number] },
+  getAMLNumRows: { type: [Array, Number] },
   nationalityList: Array,
   yearsList: Array,
-  isCompanySearchEnabled: Array,
+  isCompanySearchEnabled: { type: [Array, String] },
+  customerDetails: Object,
+  amlDecisionStatusEnum: Object,
+  lookups: Object,
 });
-
-const notification = useNotifications('toast');
 const page = usePage();
+const rolesEnum = page.props.rolesEnum;
+const paymentsRef = ref(page.props.quoteRequest.payments);
+const hasRole = role => useHasRole(role);
+const hasAnyRole = roles => useHasAnyRole(roles);
+const can = permission => useCan(permission);
+const permissionsEnum = page.props.permissionsEnum;
+
 const loader = reactive({
   table: false,
 });
+
+const modals = reactive({
+  insuranceForm: false,
+});
+
 const tableHeader = [
-  { text: 'AML Id', value: 'id' },
-  { text: 'Input', value: 'input' },
-  { text: 'Search Type', value: 'search_type' },
-  { text: 'Screenshot', value: 'screenshot' },
-  { text: 'Match Found', value: 'results_found' },
-  { text: 'Results Found', value: 'results_found' },
-  { text: 'Created At', value: 'created_at' },
-  { text: 'Updated At', value: 'updated_at' },
+  { text: 'Customer ID', value: 'customer_code' },
+  { text: 'Customer Type', value: 'search_type' },
+  { text: 'Insurance Type', value: 'insurance_type' },
+  { text: 'Full Name', value: 'input' },
+  { text: 'Nationality', value: 'nationality' },
+  { text: 'Date of Birth', value: 'date_of_birth' },
+  { text: 'Screening Date', value: 'created_at' },
+  { text: 'Status', value: 'status' },
+  { text: 'Notes', value: 'notes' },
 ];
+
+const payersTableHeader = [
+  { text: 'PAYMENT REF ID', value: 'code' },
+  { text: 'PAYMENT METHOD', value: 'payment_method.name' },
+  {
+    text: 'PAYER NAME',
+    value: 'get_customer_payment_instrument.card_holder_name',
+  },
+  { text: 'TOTAL AMOUNT', value: 'captured_amount' },
+  { text: 'PAID BY', value: 'paid_by' },
+];
+
+if (can(permissionsEnum.AMLDecisionUpdate)) {
+  tableHeader.push({ text: 'Action', value: 'action' });
+}
+
 const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
 const quoteBusinessTypeCode = page.props.quoteBusinessTypeCode;
 
-const yob = computed(() => {
-  return page.props.yearsList.map(year => ({
-    value: year,
-    label: year,
-  }));
-});
-
-const customer = useForm({
-  first_name: page.props.quoteRequest.first_name,
-  last_name: page.props.quoteRequest.last_name,
-  year_of_birth: page.props.quoteRequest.year_of_birth,
-});
-
-const updateCustomer = isValid => {
-  if (!isValid) {
-    return;
-  }
-  customer
-    .transform(data => {
-      return {
-        ...data,
-      };
-    })
-      .get(`${page.props.quoteRequest.id}/quoteUpdate`, {
-        preserveScroll: true,
-        onSuccess: () => {
-            const session = usePage().props.flash;
-            notification.success(session.success);
-        },
-      });
+const dateAndTimeFormat = date => {
+  return date ? useDateFormat(date, 'DD-MM-YYYY HH:mm:ss').value : '-';
 };
+
+const dateFormat = date =>
+  date ? useDateFormat(date, 'DD-MM-YYYY').value : '-';
+
+const dateToYear = date => {
+  if (date) {
+    const d = new Date(date);
+    const year = d.getFullYear();
+    return `${year}`;
+  }
+  return '';
+};
+
+const decisionStatus = {
+    [props.amlDecisionStatusEnum.PASS] : "Pass",
+    [props.amlDecisionStatusEnum.FALSE_POSITIVE] : "Pass",
+    [props.amlDecisionStatusEnum.TRUE_MATCH_ACCEPT_RISK] : "Pass",
+    [props.amlDecisionStatusEnum.ESCALATED] : "Escalated",
+    [props.amlDecisionStatusEnum.SENT_FOR_REVIEW] : "Sent For Review",
+    [props.amlDecisionStatusEnum.REJECTED] : "Rejected",
+    [props.amlDecisionStatusEnum.TRUE_MATCH_REJECT_RISK] : "Rejected",
+};
+
+onMounted(() => {
+  // paymentsRef.value = page.props.quoteRequest.payments;
+});
 </script>
 
 <template>
   <div>
     <Head title="AML" />
-
     <div class="flex justify-between items-center flex-wrap gap-2 mb-5">
-      <h2 class="text-xl font-semibold">{{ quoteTypeText }} Quote</h2>
+      <h2 class="text-xl font-semibold">{{ quoteType.text }} Quote</h2>
       <div class="flex gap-2">
-        <!-- <Link :href="`/personal-quotes/bike/${quote.uuid}/edit`">
-          <x-button size="sm" tag="div">Edit</x-button>
-        </Link> -->
-
         <Link href="/kyc/aml" preserve-scroll>
-          <x-button size="sm" color="primary" tag="div"> Aml </x-button>
+          <x-button size="sm" color="primary" tag="div"> AML List</x-button>
         </Link>
       </div>
     </div>
@@ -92,350 +123,375 @@ const updateCustomer = isValid => {
       <div class="text-sm">
         <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">{{ quoteTypeCode }} Quote ID</dt>
+            <dt class="font-medium">{{ quoteType.code }} QUOTE ID</dt>
             <dd>{{ quoteRequest.id }}</dd>
           </div>
-
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">CDB ID</dt>
-            <dd>{{ quoteRequest.code }}</dd>
+            <div>
+              <x-tooltip position="bottom">
+                <label
+                  class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
+                >
+                  Ref-ID
+                </label>
+                <template #tooltip> Reference ID</template>
+              </x-tooltip>
+            </div>
+            <div>{{ quoteRequest.code }}</div>
           </div>
-
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">Quote Status</dt>
-            <dd>{{ quoteRequest.quote_status_text }}</dd>
+            <dt class="font-medium">QUOTE STATUS</dt>
+            <dd>{{ quoteRequest?.quote_status?.text ?? '' }}</dd>
           </div>
-
-          <div class="grid sm:grid-cols-2"></div>
-
-          <div class="grid grid-cols-2 gap-4">
-            <x-form @submit="updateCustomer" :auto-focus="false">
-              <x-input
-                label="First Name"
-                :value="customer.first_name"
-                :auto-focus="true"
-              />
-
-              <x-input
-                label="Last Name"
-                :value="customer.last_name"
-                class="w-full"
-              />
-              <ComboBox
-                :single="true"
-                v-model="customer.year_of_birth"
-                label="Year of Birth"
-                :options="yob"
-                class="w-full"
-              />
-              <x-button
-                type="submit"
-                color="primary"
-                :loading="customer.processing"
-                >Update & Verify</x-button
-              >
-            </x-form>
-          </div>
-
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">Phone Number</dt>
+            <dt class="font-medium">PHONE NUMBER</dt>
             <dd>{{ quoteRequest.mobile_no }}</dd>
           </div>
-
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">Email Address</dt>
+            <dt class="font-medium">FIRST NAME</dt>
+            <dd>{{ quoteRequest.first_name }}</dd>
+          </div>
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">LAST NAME</dt>
+            <dd>{{ quoteRequest.last_name }}</dd>
+          </div>
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">YEAR OF BIRTH</dt>
+            <dd>{{ dateToYear(quoteRequest.dob) }}</dd>
+          </div>
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">EMAIL ADDRESS</dt>
             <dd>{{ quoteRequest.email }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">Lang</dt>
+            <dt class="font-medium">LANG</dt>
             <dd>{{ quoteRequest.lang }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">Source</dt>
+            <dt class="font-medium">SOURCE</dt>
             <dd>{{ quoteRequest.source }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">Reviver Name</dt>
+            <dt class="font-medium">REVIVER NAME</dt>
             <dd>{{ quoteRequest.reviver_name }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">Promo Code</dt>
+            <dt class="font-medium">PROMO CODE</dt>
             <dd>{{ quoteRequest.promo_code }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">Device</dt>
+            <dt class="font-medium">DEVICE</dt>
             <dd>{{ quoteRequest.device }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">Payment Status</dt>
-            <dd>{{ quoteRequest.payment_status_text }}</dd>
+            <dt class="font-medium">PAYMENT STATUS</dt>
+            <dd>{{ quoteRequest?.payment_status?.text ?? '' }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">Reference Url</dt>
+            <dt class="font-medium">REFERENCE URL</dt>
             <dd>{{ quoteRequest.reference_url }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">Additional Notes</dt>
+            <dt class="font-medium">ADDITIONAL NOTES</dt>
             <dd>{{ quoteRequest.additional_notes }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">Is Synced</dt>
-            <dd>{{ quoteRequest.is_synced }}</dd>
+            <dt class="font-medium">IS SYNCED</dt>
+            <dd>{{ quoteRequest.is_synced ? 'Yes' : 'No' }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">Customer Name</dt>
-            <dd>{{ quoteRequest.cust_f_name }}</dd>
-          </div>
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">Created At</dt>
-            <dd>{{ quoteRequest.created_at }}</dd>
-          </div>
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">Updated At</dt>
-            <dd>{{ quoteRequest.updated_at }}</dd>
+            <dt class="font-medium">CUSTOMER NAME</dt>
+            <dd>{{ quoteRequest?.customer.first_name }}</dd>
           </div>
 
-          <template v-if="quoteTypeCode == quoteTypeCodeEnum.Car">
+          <template v-if="quoteType.code == quoteTypeCodeEnum.Car">
             <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">Nationality</dt>
-              <dd>{{ quoteRequest.nationality_text }}</dd>
+              <dt class="font-medium">CREATED AT</dt>
+              <dd>{{ quoteRequest.created_at }}</dd>
             </div>
             <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">UAE licence held for</dt>
-              <dd>{{ quoteRequest.uae_license_text }}</dd>
+              <dt class="font-medium">UPDATED AT</dt>
+              <dd>{{ quoteRequest.updated_at }}</dd>
             </div>
             <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">Car Make</dt>
-              <dd>{{ quoteRequest.car_make_text }}</dd>
+              <dt class="font-medium">NATIONALITY</dt>
+              <dd>{{ quoteRequest?.nationality?.text ?? '' }}</dd>
             </div>
             <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">Car Model</dt>
-              <dd>{{ quoteRequest.car_model_text }}</dd>
+              <dt class="font-medium">UAE LICENCE HELD FOR</dt>
+              <dd>{{ quoteRequest?.uae_license_held_for?.text ?? '' }}</dd>
             </div>
             <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">Year of manufacture</dt>
+              <dt class="font-medium">CAR MAKE</dt>
+              <dd>{{ quoteRequest?.car_make?.text ?? '' }}</dd>
+            </div>
+            <div class="grid sm:grid-cols-2">
+              <dt class="font-medium">CAR MODEL</dt>
+              <dd>{{ quoteRequest?.car_model?.text ?? '' }}</dd>
+            </div>
+            <div class="grid sm:grid-cols-2">
+              <dt class="font-medium">YEAR OF MANUFACTURE</dt>
               <dd>{{ quoteRequest.year_of_manufacture }}</dd>
             </div>
             <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">Emirate Of Registration</dt>
-              <dd>{{ quoteRequest.emirates_text }}</dd>
+              <dt class="font-medium">EMIRATES OF REGISTRATION</dt>
+              <dd>{{ quoteRequest?.emirate?.text ?? '' }}</dd>
             </div>
             <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">Currently with</dt>
+              <dt class="font-medium">CURRENTLY INSURED WITH</dt>
               <dd>{{ quoteRequest.currently_insured_with }}</dd>
             </div>
             <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">Car value(AED)</dt>
+              <dt class="font-medium">CAR VALUE(AED)</dt>
               <dd>{{ quoteRequest.car_value }}</dd>
             </div>
             <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">Type Of Car Insurance</dt>
-              <dd>{{ quoteRequest.car_type_ins_text }}</dd>
+              <dt class="font-medium">TYPE OF CAR INSURANCE</dt>
+              <dd>{{ quoteRequest?.car_type_insurance?.text ?? '' }}</dd>
             </div>
             <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">Claim History</dt>
-              <dd>{{ quoteRequest.claim_history_text }}</dd>
+              <dt class="font-medium">CLAIM HISTORY</dt>
+              <dd>{{ quoteRequest?.claim_history?.text ?? '' }}</dd>
             </div>
             <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">Date of Birth</dt>
-              <dd>{{ quoteRequest.dob }}</dd>
+              <dt class="font-medium">DATE OF BIRTH</dt>
+              <dd>{{ dateFormat(quoteRequest.dob) }}</dd>
             </div>
           </template>
-          <template v-if="quoteTypeCode == quoteTypeCodeEnum.Health">
+          <template v-if="quoteType.code == quoteTypeCodeEnum.Health">
             <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">Cover for</dt>
-              <dd>{{ quoteRequest.health_cover_text }}</dd>
+              <dt class="font-medium">CREATED AT</dt>
+              <dd>{{ dateAndTimeFormat(quoteRequest.created_at) }}</dd>
             </div>
             <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">Marital status</dt>
-              <dd>{{ quoteRequest.marital_status_text }}</dd>
+              <dt class="font-medium">UPDATED AT</dt>
+              <dd>{{ dateAndTimeFormat(quoteRequest.updated_at) }}</dd>
             </div>
             <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">Emirate of visa</dt>
-              <dd>{{ quoteRequest.emirates_text }}</dd>
+              <dt class="font-medium">COVER FOR</dt>
+              <dd>{{ quoteRequest?.health_cover_for?.text ?? '' }}</dd>
             </div>
             <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">Date of Birth</dt>
-              <dd>{{ quoteRequest.dob }}</dd>
+              <dt class="font-medium">MARITAL STATUS</dt>
+              <dd>{{ quoteRequest?.marital_status?.text ?? '' }}</dd>
             </div>
             <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">Gender</dt>
+              <dt class="font-medium">EMIRATE OF VISA</dt>
+              <dd>{{ quoteRequest?.emirate?.text ?? '' }}</dd>
+            </div>
+            <div class="grid sm:grid-cols-2">
+              <dt class="font-medium">DATE OF BIRTH</dt>
+              <dd>{{ dateFormat(quoteRequest.dob) }}</dd>
+            </div>
+            <div class="grid sm:grid-cols-2">
+              <dt class="font-medium">GENDER</dt>
               <dd>{{ quoteRequest.gender }}</dd>
             </div>
             <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">Preferred hospitals/clinics</dt>
+              <dt class="font-medium">PREFERRED HOSPITALS/CLINICS</dt>
               <dd>{{ quoteRequest.preference }}</dd>
             </div>
             <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">Details</dt>
+              <dt class="font-medium">DETAILS</dt>
               <dd>{{ quoteRequest.details }}</dd>
             </div>
             <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">Optional covers required</dt>
-              <dd>{{ quoteRequest.mobile_no }}</dd>
-            </div>
-            <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">Nationality</dt>
-              <dd>{{ quoteRequest.nationality_text }}</dd>
-            </div>
-          </template>
-          <template v-if="quoteTypeCode == quoteTypeCodeEnum.Home">
-            <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">I am</dt>
-              <dd>{{ quoteRequest.home_possession_type_text }}</dd>
-            </div>
-            <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">I live in</dt>
-              <dd>{{ quoteRequest.home_accommodation_type_text }}</dd>
-            </div>
-            <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">Cover for</dt>
-              <dd>{{ quoteRequest.mobile_no }}</dd>
-            </div>
-            <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">Address</dt>
-              <dd>{{ quoteRequest.address }}</dd>
-            </div>
-          </template>
-          <template v-if="quoteTypeCode == quoteTypeCodeEnum.Travel">
-            <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">Days cover for</dt>
-              <dd>{{ quoteRequest.days_cover_for }}</dd>
-            </div>
-            <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">Regions cover</dt>
-              <dd>{{ quoteRequest.region_cover_text }}</dd>
-            </div>
-            <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">Cover for</dt>
-              <dd>{{ quoteRequest.cover_for_text }}</dd>
-            </div>
-            <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">Details</dt>
-              <dd>{{ quoteRequest.details }}</dd>
-            </div>
-            <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">Nationality</dt>
-              <dd>{{ quoteRequest.nationality_text }}</dd>
-            </div>
-            <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">Destination</dt>
-              <dd>{{ quoteRequest.destination }}</dd>
-            </div></template
-          >
-          <template v-if="quoteTypeCode == quoteTypeCodeEnum.Life">
-            <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">Purpose of Insurance</dt>
-              <dd>{{ quoteRequest.purpose_text }}</dd>
-            </div>
-            <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">Children</dt>
-              <dd>{{ quoteRequest.children_text }}</dd>
-            </div>
-            <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">Marital status</dt>
-              <dd>{{ quoteRequest.marital_text }}</dd>
-            </div>
-            <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">Tenure of Insurance</dt>
-              <dd>{{ quoteRequest.tenure_text }}</dd>
-            </div>
-            <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">Smoker</dt>
-              <dd>{{ quoteRequest.is_smoker }}</dd>
-            </div>
-            <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">No. of Years</dt>
-              <dd>{{ quoteRequest.number_of_year_text }}</dd>
-            </div>
-            <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">Sum Insured</dt>
-              <!-- quoteRequest.currency_text -->
+              <dt class="font-medium">OPTIONAL COVERS REQUIRED</dt>
               <dd>
-                {{ quoteRequest.currency_text }}
+                Dental Cover: {{ quoteRequest.has_dental }} <br />
+                Worldwide Cover: {{ quoteRequest.has_worldwide_cover }} <br />
+                Home Country Cover: {{ quoteRequest.has_home }} <br />
               </dd>
             </div>
             <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">Other Info</dt>
+              <dt class="font-medium">NATIONALITY</dt>
+              <dd>{{ quoteRequest?.nationality?.text ?? '' }}</dd>
+            </div>
+          </template>
+          <template v-if="quoteType.code == quoteTypeCodeEnum.Home">
+            <div class="grid sm:grid-cols-2">
+              <dt class="font-medium">CREATED AT</dt>
+              <dd>{{ quoteRequest.created_at }}</dd>
+            </div>
+            <div class="grid sm:grid-cols-2">
+              <dt class="font-medium">UPDATED AT</dt>
+              <dd>{{ quoteRequest.updated_at }}</dd>
+            </div>
+            <div class="grid sm:grid-cols-2">
+              <dt class="font-medium">I AM</dt>
+              <dd>{{ quoteRequest?.possession_type?.text ?? '' }}</dd>
+            </div>
+            <div class="grid sm:grid-cols-2">
+              <dt class="font-medium">I LIVE IN</dt>
+              <dd>{{ quoteRequest?.accommodation_type?.text ?? '' }}</dd>
+            </div>
+            <div class="grid sm:grid-cols-2">
+              <dt class="font-medium">ADDRESS</dt>
+              <dd>{{ quoteRequest.address }}</dd>
+            </div>
+          </template>
+          <template v-if="quoteType.code == quoteTypeCodeEnum.Travel">
+            <div class="grid sm:grid-cols-2">
+              <dt class="font-medium">DAYS COVER FOR</dt>
+              <dd>{{ quoteRequest.days_cover_for }}</dd>
+            </div>
+            <div class="grid sm:grid-cols-2">
+              <dt class="font-medium">REGIONS COVER</dt>
+              <dd>{{ quoteRequest?.regionCoverFor?.text ?? '' }}</dd>
+            </div>
+            <div class="grid sm:grid-cols-2">
+              <dt class="font-medium">COVER FOR</dt>
+              <dd>{{ quoteRequest?.travelCoverFor?.text ?? '' }}</dd>
+            </div>
+            <div class="grid sm:grid-cols-2">
+              <dt class="font-medium">DETAILS</dt>
+              <dd>{{ quoteRequest.details }}</dd>
+            </div>
+            <div class="grid sm:grid-cols-2">
+              <dt class="font-medium">NATIONALITY</dt>
+              <dd>{{ quoteRequest?.nationality?.text ?? '' }}</dd>
+            </div>
+            <div class="grid sm:grid-cols-2">
+              <dt class="font-medium">DESTINATION</dt>
+              <dd>{{ quoteRequest.destination }}</dd>
+            </div>
+          </template>
+          <template v-if="quoteType.code == quoteTypeCodeEnum.Life">
+            <div class="grid sm:grid-cols-2">
+              <dt class="font-medium">CREATED AT</dt>
+              <dd>{{ quoteRequest.created_at }}</dd>
+            </div>
+            <div class="grid sm:grid-cols-2">
+              <dt class="font-medium">UPDATED AT</dt>
+              <dd>{{ quoteRequest.updated_at }}</dd>
+            </div>
+            <div class="grid sm:grid-cols-2">
+              <dt class="font-medium">PURPOSE OF INSURANCE</dt>
+              <dd>{{ quoteRequest?.purposeOfInsurance?.text ?? '' }}</dd>
+            </div>
+            <div class="grid sm:grid-cols-2">
+              <dt class="font-medium">CHILDREN</dt>
+              <dd>{{ quoteRequest?.children?.text ?? '' }}</dd>
+            </div>
+            <div class="grid sm:grid-cols-2">
+              <dt class="font-medium">MARITAL STATUS</dt>
+              <dd>{{ quoteRequest?.maritalStatus?.text ?? '' }}</dd>
+            </div>
+            <div class="grid sm:grid-cols-2">
+              <dt class="font-medium">TENURE OF INSURANCE</dt>
+              <dd>{{ quoteRequest?.insuranceTenure?.text ?? '' }}</dd>
+            </div>
+            <div class="grid sm:grid-cols-2">
+              <dt class="font-medium">SMOKER</dt>
+              <dd>{{ quoteRequest.is_smoker ? 'Yes' : 'No' }}</dd>
+            </div>
+            <div class="grid sm:grid-cols-2">
+              <dt class="font-medium">NO. OF YEARS</dt>
+              <dd>{{ quoteRequest?.numberOfYears?.text ?? '' }}</dd>
+            </div>
+            <div class="grid sm:grid-cols-2">
+              <dt class="font-medium">SUM INSURED</dt>
+              <dd>{{ quoteRequest?.currency?.text ?? '' }}</dd>
+            </div>
+            <div class="grid sm:grid-cols-2">
+              <dt class="font-medium">OTHER INFO</dt>
               <dd>{{ quoteRequest.others_info }}</dd>
             </div>
             <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">Date of Birth</dt>
-              <dd>{{ quoteRequest.dob }}</dd>
+              <dt class="font-medium">DATE OF BIRTH</dt>
+              <dd>{{ dateFormat(quoteRequest.dob) }}</dd>
             </div>
             <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">Gender</dt>
+              <dt class="font-medium">GENDER</dt>
               <dd>{{ quoteRequest.gender }}</dd>
             </div>
             <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">Nationality</dt>
-              <dd>{{ quoteRequest.nationality_text }}</dd>
+              <dt class="font-medium">NATIONALITY</dt>
+              <dd>{{ quoteRequest?.nationality?.text ?? '' }}</dd>
             </div>
           </template>
-          <template v-if="quoteTypeCode == quoteTypeCodeEnum.Bike">
+          <template v-if="quoteType.code == quoteTypeCodeEnum.Bike">
             <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">Nationality</dt>
+              <dt class="font-medium">NATIONALITY</dt>
               <dd>{{ quoteRequest.nationality_text }}</dd>
             </div>
             <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">Date of Birth</dt>
+              <dt class="font-medium">DATE OF BIRTH</dt>
               <dd>{{ quoteRequest.dob }}</dd>
             </div>
             <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">UAE licence held for</dt>
+              <dt class="font-medium">UAE LICENSE HELD FOR</dt>
               <dd>{{ quoteRequest.uae_license_text }}</dd>
             </div>
             <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">Bike(s) to insure</dt>
+              <dt class="font-medium">BIKE(S) TO INSURE</dt>
               <dd>{{ quoteRequest.bike_company_to_insure }}</dd>
             </div>
             <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">Bike value(AED)</dt>
+              <dt class="font-medium">BIKE VALUE(AED)</dt>
               <dd>{{ quoteRequest.bike_value }}</dd>
             </div>
             <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">Year of manufacture</dt>
+              <dt class="font-medium">YEAR OF MANUFACTURE</dt>
               <dd>{{ quoteRequest.year_of_manufacture }}</dd>
             </div>
             <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">Currently with</dt>
+              <dt class="font-medium">CURRENTLY INSURED WITH</dt>
               <dd>{{ quoteRequest.currently_insured_with }}</dd>
             </div>
           </template>
-          <template v-if="quoteTypeCode == quoteTypeCodeEnum.Yacht">
+          <template v-if="quoteType.code == quoteTypeCodeEnum.Pet">
             <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">Boat Details</dt>
+              <dt class="font-medium">CREATED AT</dt>
+              <dd>{{ quoteRequest.created_at }}</dd>
+            </div>
+            <div class="grid sm:grid-cols-2">
+              <dt class="font-medium">UPDATED AT</dt>
+              <dd>{{ quoteRequest.updated_at }}</dd>
+            </div>
+          </template>
+          <template v-if="quoteType.code == quoteTypeCodeEnum.Yacht">
+            <div class="grid sm:grid-cols-2">
+              <dt class="font-medium">BOAT DETAILS</dt>
               <dd>{{ quoteRequest.boat_details }}</dd>
             </div>
             <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">Engine Details</dt>
+              <dt class="font-medium">ENGINE DETAILS</dt>
               <dd>{{ quoteRequest.engine_details }}</dd>
             </div>
             <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">Claims Experience</dt>
+              <dt class="font-medium">CLAIMS EXPERIENCE</dt>
               <dd>{{ quoteRequest.claim_experience }}</dd>
             </div>
             <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">Sum Insured</dt>
+              <dt class="font-medium">SUM INSURED</dt>
               <dd>{{ quoteRequest.sum_insured_value }}</dd>
             </div>
             <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">Use</dt>
+              <dt class="font-medium">USER</dt>
               <dd>{{ quoteRequest.use }}</dd>
             </div>
             <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">Operator's Experience</dt>
+              <dt class="font-medium">OPERATOR'S EXPERIENCE</dt>
               <dd>{{ quoteRequest.operator_experience }}</dd>
             </div>
           </template>
-          <template v-if="quoteTypeCode == quoteTypeCodeEnum.Business">
+          <template v-if="quoteType.code == quoteTypeCodeEnum.Business">
             <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">Company Name</dt>
+              <dt class="font-medium">CREATED AT</dt>
+              <dd>{{ quoteRequest.created_at }}</dd>
+            </div>
+            <div class="grid sm:grid-cols-2">
+              <dt class="font-medium">UPDATED AT</dt>
+              <dd>{{ quoteRequest.updated_at }}</dd>
+            </div>
+            <div class="grid sm:grid-cols-2">
+              <dt class="font-medium">COMPANY NAME</dt>
               <dd>{{ quoteRequest.company_name }}</dd>
             </div>
             <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">Type of Business insurance</dt>
-              <dd>{{ quoteRequest.business_type_text }}</dd>
+              <dt class="font-medium">TYPE OF BUSINESS INSURANCE</dt>
+              <dd>{{ quoteRequest?.businessTypeOfInsurance?.text ?? '' }}</dd>
             </div>
             <template
               v-if="
@@ -444,7 +500,7 @@ const updateCustomer = isValid => {
               "
             >
               <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">Brief Details</dt>
+                <dt class="font-medium">BRIEF DETAILS</dt>
                 <dd>{{ quoteRequest.brief_details }}</dd>
               </div>
             </template>
@@ -455,7 +511,7 @@ const updateCustomer = isValid => {
               "
             >
               <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">Number of Members</dt>
+                <dt class="font-medium">NUMBER OF MEMBERS</dt>
                 <dd>{{ quoteRequest.number_of_employees }}</dd>
               </div>
             </template>
@@ -466,32 +522,33 @@ const updateCustomer = isValid => {
               "
             >
               <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">Interest</dt>
+                <dt class="font-medium">INTEREST</dt>
                 <dd>{{ quoteRequest.interest }}</dd>
               </div>
             </template>
+            <!-- Need to be fetch from env -->
             <template v-if="quoteRequest.reference_url == 'crm.afia.ae'">
               <template
                 v-if="businessTypeCode == quoteBusinessTypeCode.groupMedical"
               >
                 <div class="grid sm:grid-cols-2">
-                  <dt class="font-medium">Contact Person Designation</dt>
+                  <dt class="font-medium">CONTACT PERSON DESIGNATION</dt>
                   <dd>{{ quoteRequest.contact_person_designation }}</dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
-                  <dt class="font-medium">Renewal due date</dt>
+                  <dt class="font-medium">RENEWAL DUE DATE</dt>
                   <dd>{{ quoteRequest.renewal_due_date }}</dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
-                  <dt class="font-medium">Cover type</dt>
+                  <dt class="font-medium">COVER TYPE</dt>
                   <dd>{{ businessCoverTypeText }}</dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
-                  <dt class="font-medium">Time to contact</dt>
+                  <dt class="font-medium">TIME TO CONTACT</dt>
                   <dd>{{ quoteRequest.time_to_contact }}</dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
-                  <dt class="font-medium">Communication Mode preference</dt>
+                  <dt class="font-medium">COMMUNICATION MODE PREFERENCE</dt>
                   <dd>{{ businessCommuModeText }}</dd>
                 </div>
               </template>
@@ -499,46 +556,87 @@ const updateCustomer = isValid => {
                 v-if="businessTypeCode == quoteBusinessTypeCode.marineHull"
               >
                 <div class="grid sm:grid-cols-2">
-                  <dt class="font-medium">Boat Details</dt>
+                  <dt class="font-medium">BOAT DETAILS</dt>
                   <dd>{{ quoteRequest.boat_details }}</dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
-                  <dt class="font-medium">Engine details</dt>
+                  <dt class="font-medium">ENGINE DETAILS</dt>
                   <dd>{{ quoteRequest.engine_details }}</dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
-                  <dt class="font-medium">Claims experience</dt>
+                  <dt class="font-medium">CLAIM EXPERIENCE</dt>
                   <dd>{{ quoteRequest.claims_experience }}</dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
-                  <dt class="font-medium">Sum Insured</dt>
+                  <dt class="font-medium">SUM INSURED</dt>
                   <dd>{{ quoteRequest.sum_insured_value }}</dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
-                  <dt class="font-medium">Use</dt>
+                  <dt class="font-medium">USE</dt>
                   <dd>{{ quoteRequest.use }}</dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
-                  <dt class="font-medium">Operator's Experience</dt>
+                  <dt class="font-medium">OPERATOR'S EXPERIENCE</dt>
                   <dd>{{ quoteRequest.operators_experience }}</dd>
                 </div>
               </template>
             </template>
           </template>
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">Previous Quote Id</dt>
-            <dd>{{ quoteRequest.mobile_no }}</dd>
+            <dt class="font-medium">PREVIOUS QUOTE ID</dt>
+            <dd>{{ quoteRequest.previous_quote_id }}</dd>
           </div>
         </dl>
+        <div class="flex justify-end">
+          <x-button
+            class="mt-4"
+            color="#ff5e00"
+            size="sm"
+            @click.prevent="modals.insuranceForm = true"
+          >
+            Update & Verify
+          </x-button>
+        </div>
       </div>
     </div>
 
+    <!-- AML Screening Models Start -->
+    <EntityModel
+        v-if="props.kycStatus === 'ENT'"
+        v-model="modals.insuranceForm"
+        :quoteType="quoteType"
+        :quoteDetails="quoteRequest"
+        :entityDetails="entityDetails"
+        :nationalities="nationalities"
+        :membersDetails="membersDetails"
+        :uboDetails="uboDetails"
+        :customerTypeEnum="customerTypeEnum"
+        :lookups="lookups"
+        :quote-aml-status="page.props.quoteAmlStatus"
+    />
+
+    <IndividualModel
+      v-else
+      v-model="modals.insuranceForm"
+      :quoteType="quoteType"
+      :quoteDetails="quoteRequest"
+      :entityDetails="entityDetails"
+      :nationalities="nationalities"
+      :emirates="emirates"
+      :membersDetails="membersDetails"
+      :uboDetails="uboDetails"
+      :customerTypeEnum="customerTypeEnum"
+      :lookups="lookups"
+      :quote-aml-status="page.props.quoteAmlStatus"
+      :customer-details="props.customerDetails"
+    />
+
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div class="flex flex-wrap gap-3 justify-between items-center mb-4">
-        <h3 class="font-semibold text-primary-800 text-lg">KYC-AML Logs</h3>
+        <h3 class="font-semibold text-primary-800 text-lg">AML Status Logs</h3>
       </div>
+      <x-divider class="mb-4 mt-1" />
       <DataTable
-        v-model:items-selected="quotesSelected"
         table-class-name="tablefixed"
         :headers="tableHeader"
         :loading="loader.table"
@@ -548,20 +646,34 @@ const updateCustomer = isValid => {
         hide-footer
         fixed-checkbox
       >
-        <template #item-id="{ id }">
-          <Link
-            :href="`/kyc/aml/${id}`"
-            class="text-primary-500 hover:underline"
-          >
-            {{ id }}
-          </Link>
+        <template #item-insurance_type="{ quotetype }">
+          {{ quoteType.text }}
+        </template>
+        <template #item-full_name="{ EntityDetails }">
+          {{ EntityDetails.Name.Full ?? '' }}
         </template>
 
-        <template #item-screenshot="{ screenshot }">
-          <img :src="screenshot" alt="IMCRM" class="w-6" />
+        <template #item-status="{ match_found, decision }">
+         {{ match_found > 0 ? (decision !== null ? decisionStatus[decision] : amlDecisionStatusEnum.ESCALATED) : amlDecisionStatusEnum.PASS}}
+        </template>
+
+        <template v-if="can(permissionsEnum.AMLDecisionUpdate)" #item-action="{ id }">
+          <div class="space-x-4">
+            <x-button
+              size="xs"
+              color="orange"
+              outlined
+              :href="`/kyc/aml/${id}`"
+            >
+              View
+            </x-button>
+          </div>
         </template>
       </DataTable>
     </div>
-    <AuditLogs :type="`App\\Models\\${quoteTypeCode}Quote`" :id="quoteRequest.id" />
+    <AuditLogs
+      :type="`App\\Models\\${quoteType.code}Quote`"
+      :id="quoteRequest.id"
+    />
   </div>
 </template>

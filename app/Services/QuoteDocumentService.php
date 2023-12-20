@@ -8,6 +8,7 @@ use App\Models\DocumentType;
 use App\Models\QuoteDocument;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 
 class QuoteDocumentService extends BaseService
 {
@@ -31,7 +32,7 @@ class QuoteDocumentService extends BaseService
 
     public function isEnabled($quoteModelType)
     {
-        $enabledLOBs = [quoteTypeCode::Car, quoteTypeCode::Health];
+        $enabledLOBs = [quoteTypeCode::Car, quoteTypeCode::Health, quoteTypeCode::Travel, quoteTypeCode::Life, quoteTypeCode::Home];
         if (in_array($quoteModelType, $enabledLOBs)) {
             return true;
         }
@@ -80,22 +81,51 @@ class QuoteDocumentService extends BaseService
      * @param $uuid
      * @return \Illuminate\Http\JsonResponse
      */
-    public function uploadQuoteDocument($file, $data, $quote)
+    public function uploadQuoteDocument($fileOrBase64, $data, $quote, $isKyc = false)
     {
         if (! ($documentType = DocumentType::where('code', $data['document_type_code'])->first())) {
             return response()->json(['error' => 'Invalid document type code provided'], 500);
         }
-
         try {
-            $originalName = $file->getClientOriginalName();
-            $docName = preg_replace('/\s+/', '', uniqid().'_'.$originalName);
-            $fileMimeType = $file->getClientMimeType();
 
-            //upload file to azure
-            $fileNameAzure = uniqid().'_'.$data['quote_uuid'].'_'.$docName;
-            $filePathAzure = $file->storeAs('documents/'.$documentType->folder_path, $fileNameAzure, 'azureIM');
+            if (data_get($data, 'is_base_64', 0) == 1) {
+                $originalName = 'Base 64 file';
+                @[$extension, $fileMimeType, $file_data] = getBase64FileInfo($fileOrBase64);
 
-            //generate unique uuid
+                // Generate a unique filename
+                $docName = preg_replace('/\s+/', '', uniqid().'_'.$data['document_type_code'].'.'.$extension);
+                $fileNameAzure = uniqid().'_'.$data['quote_uuid'].'_'.$docName;
+
+                // Set the filename for Azure storage
+                $filePathAzure = 'documents/'.$documentType->folder_path.'/'.$fileNameAzure;
+                Storage::disk('azureIM')->put($filePathAzure, base64_decode($file_data));
+            } elseif ($isKyc) {
+                $originalName = 'SystemGeneratedKycDocument.pdf';
+
+                // Generate a unique filename
+                $docName = preg_replace('/\s+/', '', uniqid().'_'.$originalName);
+                $fileMimeType = $documentType->accepted_files;
+
+                // Set the filename for Azure storage
+                $fileNameAzure = uniqid().'_'.$data['quote_uuid'].'_'.$docName;
+                $filePathAzure = 'documents/'.$documentType->folder_path.'/'.$fileNameAzure;
+                $uploaded = Storage::disk('azureIM')->put($filePathAzure, $fileOrBase64);
+                if (! $uploaded) {
+                    return false;
+                }
+            } else {
+                $originalName = $fileOrBase64->getClientOriginalName();
+
+                // Generate a unique filename
+                $docName = preg_replace('/\s+/', '', uniqid().'_'.$originalName);
+                $fileMimeType = $fileOrBase64->getClientMimeType();
+
+                // Set the filename for Azure storage
+                $fileNameAzure = uniqid().'_'.$data['quote_uuid'].'_'.$docName;
+                $filePathAzure = $fileOrBase64->storeAs('documents/'.$documentType->folder_path, $fileNameAzure, 'azureIM');
+            }
+
+            // Generate a unique UUID
             $docUuid = uniqid();
             while (QuoteDocument::where('doc_uuid', $docUuid)->first()) {
                 $docUuid = uniqid().rand(1, 100);
@@ -113,7 +143,7 @@ class QuoteDocumentService extends BaseService
                 'created_by_id' => auth()->id(),
             ]);
         } catch (\Exception $exception) {
-            Log::info('CL: '.get_class().'FN: uploadQuoteDocument  UUID: '.$data['quote_uuid'].' Error Code/Message: '.$exception->getCode().'/'.$exception->getMessage());
+            Log::info('CL: '.get_class().' FN: uploadQuoteDocument  UUID: '.$data['quote_uuid'].' Error Code/Message: '.$exception->getCode().'/'.$exception->getMessage());
 
             return response()->json(['error' => 'Document upload failed, please try again'], 500);
         }
@@ -163,11 +193,9 @@ class QuoteDocumentService extends BaseService
 
     public function getQuoteDocuments($quoteType, $recordId)
     {
-        $quote = app()->make('App\\Models\\'.$quoteType.'Quote')::where('id', $recordId)->first();
-        if ($quote && $quote->documents) {
-            return $quote->documents->sortDesc();
-        } else {
-            return [];
-        }
+        $quote = $this->getQuoteObject($quoteType, $recordId);
+
+        return $quote ? $quote->documents()->with('createdBy:id,name,email')->latest()->get() : [];
     }
+
 }

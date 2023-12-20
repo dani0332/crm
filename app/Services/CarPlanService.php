@@ -2,10 +2,11 @@
 
 namespace App\Services;
 
+use App\Enums\CarPlanType;
 use App\Models\CarPlan;
 use Carbon\Carbon;
-use DB;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class CarPlanService extends BaseService
 {
@@ -207,7 +208,12 @@ class CarPlanService extends BaseService
 
     public function getNonQuotedCarPlans($insuranceProviderId, $quotePlanId)
     {
-        return CarPlan::select('id', 'text', 'repair_type')
+        return CarPlan::select([
+            'id',
+            'text',
+            'repair_type',
+            DB::raw('IF(repair_type = "'.CarPlanType::COMP.'", CONCAT(text, " (NON-AGENCY)"), CONCAT(text, " (", repair_type, ")")) as plan_name'),
+        ])
             ->where('provider_id', $insuranceProviderId)
             ->whereNotIn('id', $quotePlanId)
             ->get();
