@@ -206,10 +206,6 @@ const onCopyPaymentLink = (paymentLink,paymentStatus) => {
   });
 
 const discountError = computed(() => {
-  const regex = /^\d+(\.\d{1,2})?$/;
-  if (!regex.test(discountValue.value)) {
-    return 'Discount must be a valid number';
-  }    
   // Check if the discount exceeds 50 and return an error message
   if (discountValue.value > 50 && paymentMethodsForm.discount === 'refer_a_friend') {
     return 'Discount should not exceed 50 AED';
@@ -219,7 +215,6 @@ const discountError = computed(() => {
     calculatePaymentBreakup();
     return 'Discount should not exceed total amount';
   }
-
   return '';
 });
 
@@ -2099,7 +2094,7 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
                     :rules="[rules.isRequired,rules.amount]"
                     @keyup="calculateTotalAmount()"                   
                 />                
-                <p v-if="discountError" class="text-sm text-red-500 dark:text-red-400 mt-1">{{ discountError }}</p>
+                <sup v-if="discountError" class="text-sm text-red-500 dark:text-red-400">{{ discountError }}</sup>
               </x-field>
             </div>            
             
