@@ -24,6 +24,7 @@ use App\Repositories\PersonalPlanRepository;
 use App\Repositories\QuoteStatusRepository;
 use App\Repositories\UserRepository;
 use App\Repositories\YachtQuoteRepository;
+use App\Services\AMLService;
 use App\Services\LookupService;
 
 class YachtQuoteController extends Controller
@@ -86,8 +87,8 @@ class YachtQuoteController extends Controller
         $quote = YachtQuoteRepository::getBy('uuid', $uuid);
 
         $quoteStatuses = QuoteStatusRepository::byQuoteTypeId(QuoteTypes::YACHT->id())->get();
-        $membersDetail = CustomerMembersRepository::getBy('quote_id', $quote->id, QuoteTypes::YACHT->name);
-        $quote->load('documents.createdBy');
+        $membersDetail = CustomerMembersRepository::getBy($quote->id, QuoteTypes::YACHT->name);
+        $quote->load('documents.createdBy:id,name,email');
 
         $documentTypes = DocumentTypeRepository::byQuoteTypeId(QuoteTypes::YACHT->id())->get();
         $paymentMethods = PaymentMethodRepository::orderBy('name')->get();
@@ -102,7 +103,7 @@ class YachtQuoteController extends Controller
             'quote_request_id' => $quote->id,
         ])->with('assignee')->orderBy('created_at', 'desc')->get();
 
-        if ($quote->quote_status_id !== QuoteStatusEnum::AMLScreeningCleared) {
+        if (AMLService::checkAMLStatusFailed(QuoteTypes::YACHT->id(), $quote->id)) {
             $quoteStatuses = collect($quoteStatuses)->filter(function ($value) {
                 return $value['id'] != QuoteStatusEnum::TransactionApproved;
             })->values();

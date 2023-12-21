@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\TmInsuranceType;
-use DataTables;
 use Illuminate\Http\Request;
 
 class TmInsuranceTypeController extends Controller
@@ -23,19 +22,9 @@ class TmInsuranceTypeController extends Controller
      */
     public function index(Request $request)
     {
-        if ($request->ajax()) {
-            $data = TmInsuranceType::select('*')->where('is_deleted', 0)->orderBy('sort_order', 'asc');
+        $data = TmInsuranceType::orderBy('sort_order', 'asc')->paginate();
 
-            return Datatables::of($data)
-                ->addIndexColumn()
-                ->addColumn('action', function ($row) {
-                    return view('tminsurancetype.actions', compact('row'))->render();
-                })
-                ->rawColumns(['action'])
-                ->make(true);
-        }
-
-        return view('tminsurancetype.view');
+        return inertia('Telemarketing/TmInsuranceType/Index', ['tminsurancetype' => $data]);
     }
 
     /**
@@ -45,7 +34,8 @@ class TmInsuranceTypeController extends Controller
      */
     public function create()
     {
-        return view('tminsurancetype.add');
+        return inertia('Telemarketing/TmInsuranceType/Form', ['tminsurancetype' => null]);
+
     }
 
     /**
@@ -84,7 +74,8 @@ class TmInsuranceTypeController extends Controller
      */
     public function show(TmInsuranceType $tminsurancetype)
     {
-        return view('tminsurancetype.show', compact('tminsurancetype'));
+        return inertia('Telemarketing/TmInsuranceType/Show', ['tminsurancetype' => $tminsurancetype]);
+
     }
 
     /**
@@ -94,7 +85,8 @@ class TmInsuranceTypeController extends Controller
      */
     public function edit(TmInsuranceType $tminsurancetype)
     {
-        return view('tminsurancetype.edit', compact('tminsurancetype'));
+        return inertia('Telemarketing/TmInsuranceType/Form', ['tminsurancetype' => $tminsurancetype]);
+
     }
 
     /**

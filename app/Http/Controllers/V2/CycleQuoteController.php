@@ -23,6 +23,7 @@ use App\Repositories\PaymentMethodRepository;
 use App\Repositories\PersonalPlanRepository;
 use App\Repositories\QuoteStatusRepository;
 use App\Repositories\UserRepository;
+use App\Services\AMLService;
 use App\Services\CentralService;
 
 class CycleQuoteController extends Controller
@@ -106,11 +107,11 @@ class CycleQuoteController extends Controller
 
         $quoteStatuses = QuoteStatusRepository::byQuoteTypeId(QuoteTypes::CYCLE->id())->get();
 
-        $quote->load('documents.createdBy');
+        $quote->load('documents.createdBy:id,name,email');
 
         $documentTypes = DocumentTypeRepository::byQuoteTypeId(QuoteTypes::CYCLE->id())->get();
         $paymentMethods = PaymentMethodRepository::orderBy('name')->get();
-        $membersDetail = CustomerMembersRepository::getBy('quote_id', $quote->id, QuoteTypes::CYCLE->name);
+        $membersDetail = CustomerMembersRepository::getBy($quote->id, QuoteTypes::CYCLE->name);
         $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypes::CYCLE->id());
         $personalPlans = PersonalPlanRepository::get();
         $advisors = UserRepository::getPersonalQuoteAdvisors(QuoteTypes::CYCLE->value);
@@ -121,7 +122,7 @@ class CycleQuoteController extends Controller
             'quote_request_id' => $quote->id,
         ])->with('assignee')->orderBy('created_at', 'desc')->get();
 
-        if ($quote->quote_status_id !== QuoteStatusEnum::AMLScreeningCleared) {
+        if (AMLService::checkAMLStatusFailed(QuoteTypes::CYCLE->id(), $quote->id)) {
             $quoteStatuses = collect($quoteStatuses)->filter(function ($value) {
                 return $value['id'] != QuoteStatusEnum::TransactionApproved;
             })->values();
@@ -130,7 +131,7 @@ class CycleQuoteController extends Controller
         $lostReasons = LostReasonRepository::orderBy('text', 'asc')->get();
         $duplicateAllowedLobs = (new CentralService())->duplicateAllowedLobsList(QuoteTypes::CYCLE->value, $quote->code);
         $embeddedProducts = EmbeddedProductRepository::byQuoteType(QuoteTypes::CYCLE->id(), $quote->id);
-        $uboDetails = CustomerMembersRepository::getBy('quote_id', $quote->id, QuoteTypes::CYCLE->name, CustomerTypeEnum::Entity);
+        $uboDetails = CustomerMembersRepository::getBy($quote->id, QuoteTypes::CYCLE->name, CustomerTypeEnum::Entity);
         $uboRelations = LookupRepository::where('key', LookupsEnum::UBO_RELATION)->get();
         $emirates = Emirate::where('is_active', 1)->select('id', 'text')->get();
 
