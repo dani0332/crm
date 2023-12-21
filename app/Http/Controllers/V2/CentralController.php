@@ -86,7 +86,7 @@ class CentralController extends Controller
             return Excel::download(new PersonalQuotesExport, $quoteType.'_leads.xlsx');
         }
 
-        if (QuoteTypes::CAR->value == $quoteType) {
+        if (QuoteTypes::CAR->value == ucfirst($quoteType)) {
             if ($export_type == GenericRequestEnum::EXTRACT_LEADS_AND_PLAN_DETAIL) {
                 return Excel::download(new CarQuoteExportWithPlans, 'Extract leads and plan detail.xlsx');
             }

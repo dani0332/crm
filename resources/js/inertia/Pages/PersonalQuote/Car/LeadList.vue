@@ -538,6 +538,7 @@ onMounted(() => {
             <template #tooltip>
               <span class="font-medium">
                 Created dates are required to export data.
+                Created dates are required to export data.
               </span>
             </template>
           </x-tooltip>
