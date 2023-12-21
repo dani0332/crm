@@ -506,9 +506,9 @@ onMounted(() => {
         />
       </div>
       <div class="flex justify-between gap-3 mb-4 mt-1">
-        <div v-if="can(permissionsEnum.DATA_EXTRACTION)">
+        <div v-if="can(permissionsEnum.DATA_EXTRACTION) || can(permissionsEnum.EXTRACT_CAR_LEADS_AND_PLAN_DETAIL)">
           <x-button
-            v-if="canExport"
+            v-if="canExport && can(permissionsEnum.DATA_EXTRACTION)"
             size="sm"
             color="emerald"
             :href="`/car/leads-export?${objToUrl(filters)}`"
@@ -516,17 +516,25 @@ onMounted(() => {
           >
             Export
           </x-button>
-          <x-button
-            v-if="canExport"
-            size="sm"
-            color="emerald"
-            :href="`/car/leads-export?${objToUrl(filters)}&export_type=${genericRequestEnum.EXPORT_LEAD_WITH_PLAN}`"
-            class="justify-self-start ml-3"
-          >
-            Extract leads detail
-          </x-button>
           <x-tooltip v-else position="right">
             <x-button tag="div" size="sm" color="emerald"> Export </x-button>
+            <template #tooltip>
+              <span class="font-medium">
+                Created dates are required to export data.
+              </span>
+            </template>
+          </x-tooltip>
+          <x-button
+            v-if="canExport && can(permissionsEnum.EXTRACT_CAR_LEADS_AND_PLAN_DETAIL)"
+            size="sm"
+            color="emerald"
+            :href="`/car/leads-export?${objToUrl(filters)}&export_type=${genericRequestEnum.EXTRACT_LEADS_AND_PLAN_DETAIL}`"
+            class="justify-self-start ml-3"
+          >
+            Extract leads and plan detail
+          </x-button>
+          <x-tooltip v-else position="right">
+            <x-button tag="div" size="sm" class="ml-3" color="emerald"> Extract leads and plan detail</x-button>
             <template #tooltip>
               <span class="font-medium">
                 Created dates are required to export data.

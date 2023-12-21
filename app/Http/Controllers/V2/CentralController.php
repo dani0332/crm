@@ -57,7 +57,7 @@ class CentralController extends Controller
             request()->query->remove('created_at');
         }
 
-        if (request()->has('export_type') && in_array($export_type, [GenericRequestEnum::EXPORT_LEAD_WITH_PLAN])) {
+        if (request()->has('export_type') && in_array($export_type, [GenericRequestEnum::EXTRACT_LEADS_AND_PLAN_DETAIL])) {
             $diffInDays = 31;
         }
 
@@ -86,6 +86,12 @@ class CentralController extends Controller
             return Excel::download(new PersonalQuotesExport, $quoteType.'_leads.xlsx');
         }
 
+        if (QuoteTypes::CAR->value == $quoteType) {
+            if ($export_type == GenericRequestEnum::EXTRACT_LEADS_AND_PLAN_DETAIL) {
+                return Excel::download(new CarQuoteExportWithPlans, 'Extract leads and plan detail.xlsx');
+            }
+        }
+
         switch (ucfirst($quoteType)) {
             case QuoteTypes::LIFE->value:
                 return Excel::download(new LifeQuotesExport, 'life_leads.xlsx');
@@ -103,10 +109,6 @@ class CentralController extends Controller
                 return Excel::download(new TravelQuoteExport, 'travel_leads.xlsx');
 
             case QuoteTypes::CAR->value:
-                if ($export_type == GenericRequestEnum::EXPORT_LEAD_WITH_PLAN) {
-                    return Excel::download(new CarQuoteExportWithPlans, 'Car-Export-With-Plans.xlsx');
-                }
-
                 return Excel::download(new CarQuoteExport, 'Car-List.xlsx');
 
             case QuoteTypes::HEALTH->value:

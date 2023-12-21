@@ -22,7 +22,7 @@ class CarQuoteExportWithPlans implements FromCollection, ShouldAutoSize, WithHea
     public function headings(): array
     {
         return [
-            'Cdb Id',
+            'Ref ID',
             'First Name',
             'Last Name',
             'Date of Birth',
