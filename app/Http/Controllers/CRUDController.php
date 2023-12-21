@@ -754,6 +754,7 @@ class CRUDController extends Controller
                     ];
                 })->sortBy('label')->values();
             }
+            $documentTypes = $this->quoteDocumentService->getQuoteDocumentsForUpload(QuoteTypeId::Home);
 
             return inertia('HomeQuote/Show', [
                 'storageUrl' => storageUrl(),
@@ -797,6 +798,7 @@ class CRUDController extends Controller
                 'UBORelations' => $uboRelations,
                 'emirates' => $emirates,
                 'quoteType' => QuoteTypes::HOME,
+                'documentTypes' => $documentTypes,
             ]);
         }
 
