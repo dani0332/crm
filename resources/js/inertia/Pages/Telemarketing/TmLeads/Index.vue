@@ -159,8 +159,6 @@ onMounted(() => {
               { value: 'created_at', label: 'Created At' },
               { value: 'updated_at', label: 'Updated At' },
               { value: 'next_followup_date', label: 'Next Followup Date' },
-              { value: 'next_followup_date', label: 'Next Followup Date' },
-              { value: 'enquiry_date', label: 'Enquiry Date' },
               { value: 'enquiry_date', label: 'Enquiry Date' },
               { value: 'allocation_date', label: 'Allocation Date' },
             ]"
