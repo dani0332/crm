@@ -1,0 +1,41 @@
+<?php
+
+namespace Database\Seeders;
+
+use App\Enums\PermissionsEnum;
+use App\Models\Permission;
+use App\Models\Role;
+use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
+
+class AddCreateSendUpdatePermissionToAllRoles extends Seeder
+{
+    /**
+     * Run the database seeds.
+     */
+    public function run(): void
+    {
+        $customerShowPermission = Permission::where('name', PermissionsEnum::SEND_UPDATE_CREATE)->first();
+        if ($customerShowPermission == null) {
+            DB::table('permissions')->insert([
+                'name' => PermissionsEnum::SEND_UPDATE_CREATE,
+                'guard_name' => 'web',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+
+            $customerShowPermissionId = Permission::where('name', PermissionsEnum::SEND_UPDATE_CREATE)->first()->id;
+
+            if ($customerShowPermissionId) {
+                $adminRoleId = Role::where('name', 'ADMIN')->first()->id;
+                DB::table('role_has_permissions')->insert(
+                    [
+                        'role_id' => $adminRoleId,
+                        'permission_id' => $customerShowPermissionId,
+                    ]
+                );
+            }
+        }
+    }
+}

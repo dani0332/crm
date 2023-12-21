@@ -118,15 +118,19 @@ class SendUpdateLogController extends Controller
             switch ($selectedType) {
                 case 'EF':
                 case 'CI':
-                case 'CIR':
                     if ($data['status'] === SendUpdateLogStatusEnum::UPDATE_BOOKED) {
                         $model::where('id', $quoteId)->update([
                             'quote_status_id' => QuoteStatusEnum::PolicyCancelled
                         ]);
+                    }
+                    break;
+                case 'CIR':
+                    if ($data['status'] === SendUpdateLogStatusEnum::UPDATE_BOOKED) {
+                        $model::where('id', $quoteId)->update([
+                            'quote_status_id' => QuoteStatusEnum::PolicyBooked
+                        ]);
 
-                        if ($selectedType === 'CIR') {
-                            // TODO: send it to sage, need to confirm what the sage is.
-                        }
+                        // TODO: send it to sage, need to confirm what the sage is.
                     }
                     break;
             }
