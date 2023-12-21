@@ -82,6 +82,8 @@ const isGalleryModelOpen = ref(false);
 const isDiscountReasonError = ref(false);
 const isCreditApprovalView = ref(false);
 const isCreditCardView = ref(false);
+const isDiscountError = ref(false);
+const discountError = ref('');
 
 const modal2Ref = ref(null);
 
@@ -204,8 +206,13 @@ const onCopyPaymentLink = (paymentLink,paymentStatus) => {
   const hasPreviousFile = computed(() => {
     return currentFileIndex.value > 0;
   });
-
+/*
 const discountError = computed(() => {
+
+  const regex = /^\d+(\.\d{1,2})?$/;
+  if (!regex.test(discountValue.value)) {
+    return 'Discount must be a valid number';
+  }    
   // Check if the discount exceeds 50 and return an error message
   if (discountValue.value > 50 && paymentMethodsForm.discount === 'refer_a_friend') {
     return 'Discount should not exceed 50 AED';
@@ -216,7 +223,7 @@ const discountError = computed(() => {
     return 'Discount should not exceed total amount';
   }
   return '';
-});
+});*/
 
 const rules = {
   isRequired: v => !!v || 'This field is required',
@@ -318,21 +325,49 @@ const validatePaymentOption = () => {
       }
 
       console.log('DocError='+issueFound);
-      if(
-      paymentMethodsForm.discount === 'refer_a_friend' ||
-      paymentMethodsForm.discount === 'incentive_offset' ||
-      paymentMethodsForm.discount === 'managerial_approval_discount'      
-      ){
-        isDiscountReasonEnabled.value = true;
-        if(paymentMethodsForm.discount_reason === ''){          
-          issueFound = true;
-          isDiscountReasonError.value = true;
+      if(isDiscountEnabled.value === true) {
+        isDiscountError.value = false;
+        if (discountValue.value === '' || discountValue.value === 0) {
+          issueFound = true; 
+          isDiscountError.value = true;
+          discountError.value =  'This field is required';
+        }
+        const regex = /^\d+(\.\d{1,2})?$/;
+        if (!regex.test(discountValue.value)) {
+          issueFound = true; 
+          isDiscountError.value = true;
+          discountError.value =  'Discount must be a valid number';
+        }
+        if (parseFloat(discountValue.value) > parseFloat(totalPrice.value)) {
+          issueFound = true; 
+          isDiscountError.value = true;
+          totalAmount.value = totalPrice.value;
+          calculatePaymentBreakup();
+          discountError.value = 'Discount should not exceed total amount';
+        }
+        if(
+        paymentMethodsForm.discount === 'refer_a_friend' ||
+        paymentMethodsForm.discount === 'incentive_offset' ||
+        paymentMethodsForm.discount === 'managerial_approval_discount'      
+        ){
+          isDiscountReasonEnabled.value = true;
+          if(paymentMethodsForm.discount_reason === ''){          
+            issueFound = true;
+            isDiscountReasonError.value = true;
+          } else {
+            isDiscountReasonError.value = false;
+          }
+          
+          // Check if the discount exceeds 50 and return an error message
+          if (discountValue.value > 50 && paymentMethodsForm.discount === 'refer_a_friend') {
+            issueFound = true; 
+            isDiscountError.value = true;
+            discountError.value =  'Discount should not exceed 50 AED';
+          }
         } else {
+          isDiscountReasonEnabled.value = false;
           isDiscountReasonError.value = false;
-        }      
-      } else {
-        isDiscountReasonEnabled.value = false;
-        isDiscountReasonError.value = false;
+        }
       }
       console.log('DiscountError='+issueFound);   
     if(issueFound){
@@ -540,7 +575,8 @@ const resetDiscount = () => {
 };
 
 const handleDiscountChange = () => {
-
+  isDiscountError.value = false;
+  discountError.value = '';
   if( paymentMethodsForm.status === 'create' ){
     discountValue.value = 0;
     paymentMethodsForm.discount_reason = '';
@@ -854,6 +890,8 @@ const addPaymentModal = () => {
   isDiscountReasonError.value = false;
   isPaymentMetodNotSelected.value[1] = false;
   isDocumentNotUploaded.value = [];
+  isDiscountError.value = false;
+  discountError.value = '';
 
   if (totalPrice.value > 0 && planDetail) {
     totalAmount.value = totalPrice.value;
@@ -932,6 +970,8 @@ const editPaymentModal = (payment,split_payment_id,sr_no,capture_approval) => {
   isCreditPaymentInvalidError.value = [];
   paymentMethodsForm.declined_custom_reason = '';
   paidAmountSum.value = 0;
+  isDiscountError.value = false;
+  discountError.value = '';
   if(sr_no>0){
     splitPaymentNo.value = sr_no;
     isFieldReadonly.value = true;
@@ -2090,11 +2130,10 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
                     v-if="!isFieldReadonly"                  
                     class="w-full"
                     v-model="discountValue"
-                    name="discount_value"
-                    :rules="[rules.isRequired,rules.amount]"
+                    name="discount_value"                    
                     @keyup="calculateTotalAmount()"                   
                 />                
-                <sup v-if="discountError" class="text-sm text-red-500 dark:text-red-400">{{ discountError }}</sup>
+                <sup v-if="isDiscountError" class="text-sm text-red-500 dark:text-red-400">{{ discountError }}</sup>
               </x-field>
             </div>            
             
