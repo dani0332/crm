@@ -21,6 +21,7 @@ use App\Traits\GenericQueriesAllLobs;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
@@ -1733,5 +1734,69 @@ class CarQuoteService extends BaseService
                 $previousAdvisorAllocationRecord->save();
             }
         }
+    }
+
+    public function getExportDataWithPlans(): Collection
+    {
+        $request = request();
+        $results = [];
+        DB::table('car_quote_request as q')
+            ->leftJoin('nationality as n', 'q.nationality_id', '=', 'n.id')
+            ->leftJoin('car_make as cmk', 'q.car_make_id', '=', 'cmk.id')
+            ->leftJoin('car_model as cmd', 'q.car_model_id', '=', 'cmd.id')
+            ->leftJoin('vehicle_type as vt', 'q.vehicle_type_id', '=', 'vt.id')
+            ->leftJoin('quote_status as qs', 'qs.id', '=', 'q.quote_status_id')
+            ->leftJoin('payment_status as ps', 'ps.id', '=', 'q.payment_status_id')
+            ->leftJoin('emirates as e', 'q.emirate_of_registration_id', '=', 'e.id')
+            ->leftJoin('car_quote_plan_details as cqpd', function ($join) {
+                $join->on('q.uuid', '=', 'cqpd.quote_uuid')
+                    ->whereColumn('q.plan_id', '=', 'cqpd.plan_id');
+            })
+            ->leftJoin('car_plan as cp', 'cp.id', '=', 'q.plan_id')
+            ->leftJoin('insurance_provider as ip', 'ip.id', '=', 'cp.provider_id')
+            ->select(
+                'q.code',
+                'q.first_name',
+                'q.last_name',
+                'q.dob',
+                'n.text as nationality',
+                'cmk.text as car_make',
+                'cmd.text as car_model',
+                'q.year_of_manufacture',
+                'q.car_value',
+                'q.car_value_tier',
+                'vt.text as vehicle_type',
+                'e.text as emirate_of_registration',
+                'cqpd.repair_type',
+                'cqpd.addons',
+                'q.created_at',
+                'qs.text as lead_status',
+                'ps.text as payment_status',
+                'cp.text as plan_name',
+                'ip.text as provider_name'
+            )
+            ->whereBetween('q.created_at', [$request->created_at_start, $request->created_at_end])
+            ->where('q.quote_status_id', '=', QuoteStatusEnum::TransactionApproved)
+            ->where('q.payment_status_id', '=', PaymentStatusEnum::CAPTURED)
+            ->orderBy('q.created_at')
+            ->chunk(500, function ($carQuoteRequestData) use (&$results) {
+                foreach ($carQuoteRequestData as $row) {
+                    $addons = json_decode($row->addons, true);
+                    unset($row->addons);
+                    foreach ($addons as $addon) {
+                        $addonName = $addon['text'];
+                        foreach ($addon['carAddonOption'] as $option) {
+                            $addonValue = $option['value'];
+                            $newRow = clone $row;
+                            $newRow->add_on_name = $addonName;
+                            $newRow->add_on_value = $addonValue;
+                            $newRow->is_selected = $option['isSelected'] ? 'Yes' : 'No';
+                            $results[] = $newRow;
+                        }
+                    }
+                }
+            });
+
+        return collect($results);
     }
 }

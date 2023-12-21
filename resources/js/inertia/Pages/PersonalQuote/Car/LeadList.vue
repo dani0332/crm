@@ -11,6 +11,7 @@ defineProps({
   todayManualCount: Number,
   yesterdayAutoCount: Number,
   yesterdayManualCount: Number,
+  genericRequestEnum: Array
 });
 
 const page = usePage();
@@ -514,6 +515,15 @@ onMounted(() => {
             class="justify-self-start"
           >
             Export
+          </x-button>
+          <x-button
+            v-if="canExport"
+            size="sm"
+            color="emerald"
+            :href="`/car/leads-export?${objToUrl(filters)}&export_type=${genericRequestEnum.EXPORT_LEAD_WITH_PLAN}`"
+            class="justify-self-start ml-3"
+          >
+            Export Leads With Car Make Model
           </x-button>
           <x-tooltip v-else position="right">
             <x-button tag="div" size="sm" color="emerald"> Export </x-button>

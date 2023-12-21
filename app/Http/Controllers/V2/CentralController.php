@@ -3,10 +3,12 @@
 namespace App\Http\Controllers\V2;
 
 use App\Enums\CustomerTypeEnum;
+use App\Enums\GenericRequestEnum;
 use App\Enums\QuoteTypes;
 use App\Exports\AmtQuoteExport;
 use App\Exports\BusinessQuoteExport;
 use App\Exports\CarQuoteExport;
+use App\Exports\CarQuoteExportWithPlans;
 use App\Exports\HealthQuotesExport;
 use App\Exports\HomeQuoteExport;
 use App\Exports\LifeQuotesExport;
@@ -43,6 +45,9 @@ class CentralController extends Controller
 
     public function exportLeads(Request $request, $quoteType)
     {
+        $diffInDays = 120;
+        $export_type = request()->get('export_type');
+
         if (! $quoteType) {
             return abort(404);
         }
@@ -50,6 +55,10 @@ class CentralController extends Controller
         if (request()->has('created_at')) {
             request()->merge(['created_at_start' => request()->get('created_at')]);
             request()->query->remove('created_at');
+        }
+
+        if (request()->has('export_type') && in_array($export_type, [GenericRequestEnum::EXPORT_LEAD_WITH_PLAN])) {
+            $diffInDays = 31;
         }
 
         $request->validate([
@@ -62,8 +71,8 @@ class CentralController extends Controller
 
         $diff = Carbon::parse($created_at_start)->diffInDays(Carbon::parse($created_at_end));
 
-        if ($diff > 120) {
-            return back()->with('error', 'Maximum of 120 days (created date) are allowed to be exported.');
+        if ($diff > $diffInDays) {
+            return back()->with('error', 'Maximum of '.$diffInDays.' days (created date) are allowed to be exported.');
         }
 
         // For Personal Quotes
@@ -94,6 +103,10 @@ class CentralController extends Controller
                 return Excel::download(new TravelQuoteExport, 'travel_leads.xlsx');
 
             case QuoteTypes::CAR->value:
+                if ($export_type == GenericRequestEnum::EXPORT_LEAD_WITH_PLAN) {
+                    return Excel::download(new CarQuoteExportWithPlans, 'Car-Export-With-Plans.xlsx');
+                }
+
                 return Excel::download(new CarQuoteExport, 'Car-List.xlsx');
 
             case QuoteTypes::HEALTH->value:
