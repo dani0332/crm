@@ -52,7 +52,7 @@ const transactionPaymentStatus = computed(() => {
 });
 const bpForm = useForm({
   booking_date:
-    dateToYMD(page.props.record?.policy_booking_date) ||
+    dateToYMD(props.quote?.policy_booking_date) ||
     new Date().toJSON().slice(0, 10),
   transaction_payment_status: transactionPaymentStatus.value,
   invoice_date: dateToYMD(page.props.payments[0]?.insurer_invoice_date) || '',
@@ -71,7 +71,7 @@ const bpForm = useForm({
   payment_code: page.props?.payments[0]?.code,
   discount: page.props?.payments[0]?.discount_value || '',
   model_type: props.quoteType,
-  quote_id: page.props.record.id,
+  quote_id: page.props.quote.id,
 });
 
 const onUpdateBpDetails = isValid => {
@@ -279,45 +279,91 @@ const caculateCommission = () => {
           <div class="w-full md:w-1/2" />
         </div>
         <div class="flex justify-end">
-          <x-button
-            v-if="bp.isEditing"
-            class="mt-4 mr-2"
-            color="emerald"
-            size="sm"
-            :loading="bpForm.processing"
-            @click.prevent="bp.isEditing = false"
+          <template
+            v-if="
+              props.quote.quote_status_id ==
+              page.props.quoteStatusEnum.TransactionApproved
+            "
           >
-            Cancel
-          </x-button>
-          <x-button
-            v-if="bp.isEditing"
-            class="mt-4 mr-2"
-            color="emerald"
-            size="sm"
-            :loading="bpForm.processing"
-            type="submit"
+            <x-button
+              v-if="bp.isEditing"
+              class="mt-4 mr-2"
+              color="emerald"
+              size="sm"
+              :loading="bpForm.processing"
+              @click.prevent="bp.isEditing = false"
+            >
+              Cancel
+            </x-button>
+            <x-button
+              v-if="bp.isEditing"
+              class="mt-4 mr-2"
+              color="emerald"
+              size="sm"
+              :loading="bpForm.processing"
+              type="submit"
+            >
+              Update
+            </x-button>
+            <x-button
+              v-if="!bp.isEditing && props.bPDetails?.editButton"
+              class="mt-4 mr-2"
+              color="emerald"
+              size="sm"
+              @click.prevent="bp.isEditing = true"
+            >
+              Edit
+            </x-button>
+            <x-button
+              size="sm"
+              color="orange"
+              class="mt-4"
+              @click.prevent="confirmSendPolicy"
+              :disabled="bp.isEditing"
+              v-if="props.bPDetails?.sendButton"
+            >
+              {{ props.bPDetails?.text }}
+            </x-button></template
           >
-            Update
-          </x-button>
-          <x-button
-            v-if="!bp.isEditing && props.bPDetails?.editButton"
-            class="mt-4 mr-2"
-            color="emerald"
-            size="sm"
-            @click.prevent="bp.isEditing = true"
-          >
-            Edit
-          </x-button>
-          <x-button
-            size="sm"
-            color="orange"
-            class="mt-4"
-            @click.prevent="confirmSendPolicy"
-            :disabled="bp.isEditing"
-            v-if="props.bPDetails?.sendButton"
-          >
-            {{ props.bPDetails?.text }}
-          </x-button>
+
+          <template v-else>
+            <x-tooltip>
+              <x-button
+                v-if="
+                  props.quote.quote_status_id ==
+                  page.props.quoteStatusEnum.PolicyBooked
+                "
+                class="mt-4 mr-2"
+                size="sm"
+                color="emerald"
+                :disabled="true"
+                >Edit
+              </x-button>
+              <template #tooltip>
+                <span>{{
+                  'The Button is not accessable because policy has been booked'
+                }}</span>
+              </template>
+            </x-tooltip>
+            <x-tooltip>
+              <x-button
+                v-if="
+                  props.quote.quote_status_id ==
+                  page.props.quoteStatusEnum.PolicyBooked
+                "
+                size="sm"
+                class="mt-4 mr-2"
+                color="orange"
+                :disabled="true"
+                >Send Policy
+              </x-button>
+              <template #tooltip>
+                <span>{{
+                  'The Button is not accessable because policy has been booked'
+                }}</span>
+              </template>
+            </x-tooltip>
+          </template>
         </div>
       </div>
     </x-form>

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\V2;
 
 use App\Enums\CustomerTypeEnum;
+use App\Enums\quoteStatusCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Exports\AmtQuoteExport;
@@ -13,6 +14,7 @@ use App\Exports\HomeQuoteExport;
 use App\Exports\LifeQuotesExport;
 use App\Exports\PersonalQuotesExport;
 use App\Exports\TravelQuoteExport;
+use App\Factories\SagePayloadFactory;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\BookPolicyRequest;
 use App\Http\Requests\CustomerProfileRequest;
@@ -24,7 +26,10 @@ use App\Models\Customer;
 use App\Models\Entity;
 use App\Models\Payment;
 use App\Models\QuoteRequestEntityMapping;
+use App\Models\QuoteStatus;
+use App\Models\User;
 use App\Services\CentralService;
+use App\Services\SageApiService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -189,11 +194,65 @@ class CentralController extends Controller
 
     public function sendBookingPolicy(Request $request)
     {
-        dd($request->all());
+        // dd('m here');
 
         $quote = $this->getQuoteObject($request->model_type, $request->quote_id);
 
-        dd($quote);
+        $payment = Payment::where('code', $quote['code'])->first();
+
+
+        if ($payment->first()) {
+
+            $payment = $payment->toArray();
+            // STILL PARAMETERS REQUIRED FROM OTHER DEVELOPING
+            $sageRequest = new \stdClass();
+            // $sageRequest->discount =  $payment['discount_value'];
+            $sageRequest->discount =  22;
+            $sageRequest->customerId =  'IC008';
+            $sageRequest->invoiceDescription =  $payment['invoice_description'];
+            $sageRequest->bookingDate =  date('Y-m-d', strtotime($quote['policy_booking_date']));
+            $sageRequest->policyExpiryDate = date('Y-m-d', strtotime($quote['renewal_expiry_date']));
+            $sageRequest->mainClassInsurance =  $request->model_type;
+            $sageRequest->policyNumber =  $quote->policy_number;
+            $sageRequest->policyIssuer =  'demo';
+            $sageRequest->requestType =  'POST';
+            $advisorName = "";
+            if (!empty($quote->advisor_id)) {
+
+                $advisorName = User::where('id', $quote->advisor_id)->value('name');
+            }
+            $sageRequest->advisorName =  $advisorName;
+            $sageRequest->subClass =  'Motor';
+
+            $sageRequest->insurerInvoiceDate = $payment['insurer_invoice_date'];
+            $sageRequest->premiumWithoutTax =  $quote->price_without_vat;
+            $sageRequest->premiumWithTax = $quote->price_with_vat;
+            $sageRequest->vatOnCommission = $payment['commission_vat'];
+            $sageRequest->commission =  $payment['commission'];
+            $sageRequest->commissionIncludingVat =  $payment['commission_vat_applicable'];
+            $sageRequest->invoicePaymentStatus = $payment['transaction_payment_status'];
+            // $sageRequest->invoicePaymentStatus = 'paid';
+            // $sageRequest->insurerPremiumTaxInvoiceNumber =  $payment['tax_invoice_number'];
+            $sageRequest->insurerPremiumTaxInvoiceNumber =  1212;
+
+            $quoteStatusCode = QuoteStatus::where('id', '=', $quote->quote_status_id)->value('code');
+            $sageRequest->callExtra = false;
+            if (!($sageRequest->discount > 0) && $quoteStatusCode ==  quoteStatusCode::PolicyBooked  && strtolower($sageRequest->invoicePaymentStatus) != 'paid') {
+                $sageRequest->callExtra = true;
+            }
+
+            // dd($sageRequest);
+            // sage api service
+            $sageApiService = new SageApiService();
+            $payLoadOptions = SagePayloadFactory::createPayload($sageRequest, $quoteStatusCode);
+            // dd($payLoadOptions);
+            $endPoint = $payLoadOptions['endPoint'];
+            $payLoad = $payLoadOptions['payload'];
+            $sageResponse = $sageApiService->postToSage300($endPoint, $payLoad);
+
+            dd($sageResponse);
+        }
+
         if (!$quote) {
             return redirect()->back()->with('error', 'Error in Sending Policy.');
         }

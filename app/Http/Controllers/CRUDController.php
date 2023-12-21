@@ -499,12 +499,6 @@ class CRUDController extends Controller
         $paymentEntityModel = $this->{strtolower($this->genericModel->modelType) . 'QuoteService'}->getEntityPlain($record->id);
         $payments = $paymentEntityModel->payments;
 
-        $insuranceProviderLeadCount = $insuranceProviderCode = '';
-        if ($payments->first()) {
-            $insurance_provider_id = $payments[0]['insurance_provider_id'];
-            $insuranceProviderCode = InsuranceProviderRepository::where('id', $insurance_provider_id)->value('code');
-            $insuranceProviderLeadCount = Payment::where('insurance_provider_id', '=', $insurance_provider_id)->count();
-        }
         $mainPayment = $paymentEntityModel->payments()->where('code', '=', $paymentEntityModel->code)->first();
         $paymentLink = config('constants.PAYMENT_REDIRECT_LINK');
 
@@ -689,6 +683,12 @@ class CRUDController extends Controller
             $industryType = LookupRepository::where('key', LookupsEnum::COMPANY_TYPE)->get();
             $nationalities = NationalityRepository::withActive()->get();
 
+            $insuranceProviderLeadCount = $insuranceProviderCode = '';
+            if ($payments->first()) {
+                $insurance_provider_id = $payments[0]['insurance_provider_id'];
+                $insuranceProviderCode = InsuranceProviderRepository::where('id', $insurance_provider_id)->value('code');
+                $insuranceProviderLeadCount = Payment::where('insurance_provider_id', '=', $insurance_provider_id)->count();
+            }
             $bPDetails['brokerInvoiceNo'] = $insuranceProviderCode . $insuranceProviderLeadCount;
             $bPDetails['invoiceDescription'] = $insuranceProviderCode . '-' . $quoteType . '-' . $record->policy_number;
             $bPDetails['sendButton'] = false;

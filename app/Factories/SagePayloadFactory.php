@@ -2,6 +2,7 @@
 
 namespace App\Factories;
 
+use App\Enums\quoteStatusCode;
 use App\Services\SageApiService;
 
 class SagePayloadFactory
@@ -18,20 +19,21 @@ class SagePayloadFactory
         $request->commissionIncludingVat = floatval($request->commissionIncludingVat);
 
         // Logic to create different payloads based on request and leadStatus
-        if (strtolower($request->invoicePaymentStatus) == 'paid' &&
-                        $leadStatus == 'policy booked'
+        if (
+            strtolower($request->invoicePaymentStatus) == 'paid' &&
+            $leadStatus == quoteStatusCode::PolicyBooked
         ) {
             return self::createPaymontRecieptOneInvoice($request);
-        } elseif ($request->discount > 0 &&
-                    $leadStatus == 'policy booked' &&
-                    strtolower($request->invoicePaymentStatus) != 'paid'
+        } elseif (
+            $request->discount > 0 &&
+            $leadStatus == quoteStatusCode::PolicyBooked &&
+            strtolower($request->invoicePaymentStatus) != 'paid'
         ) {
             return self::createARInvoiceDis($request);
         } elseif ($request->callExtra) {
             return self::createAPInvoicePrem($request);
         } else {
             return self::createARInvoicePremAndComm($request);
-
         }
     }
 
@@ -77,7 +79,7 @@ class SagePayloadFactory
                         [
                             'BatchType' => 'CA',
                             'CustomerNumber' => 'IC008',
-                            'DocumentNumber' => $request->insurerPremiumTaxInvoiceNumber.'-PREM',
+                            'DocumentNumber' => $request->insurerPremiumTaxInvoiceNumber . '-PREM',
                             'ReceiptTransactionType' => 'ApplyDocument',
                         ],
                     ],
@@ -153,7 +155,6 @@ class SagePayloadFactory
             'endPoint' => 'AP/APInvoiceBatches',
             'payload' => $payLoad,
         ];
-
     }
 
     private static function createARInvoiceDis($request)
@@ -163,7 +164,7 @@ class SagePayloadFactory
             'Invoices' => [
                 [
                     'CustomerNumber' => $request->customerId,
-                    'DocumentNumber' => $request->insurerPremiumTaxInvoiceNumber.'-DIS',
+                    'DocumentNumber' => $request->insurerPremiumTaxInvoiceNumber . '-DIS',
                     'InvoiceDescription' => $request->invoiceDescription,
                     'DocumentDate' => '2023-05-16T00:00:00Z',
                     'DocumentType' => 'CreditNote',
@@ -207,7 +208,7 @@ class SagePayloadFactory
             'Invoices' => [
                 [
                     'CustomerNumber' => $request->customerId,
-                    'DocumentNumber' => $request->insurerPremiumTaxInvoiceNumber.'-PREM',
+                    'DocumentNumber' => $request->insurerPremiumTaxInvoiceNumber . '-PREM',
                     'InvoiceDescription' => $request->invoiceDescription,
                     'DocumentDate' => '2023-04-26T00:00:00Z',
                     'CurrencyCode' => 'AED',
@@ -236,7 +237,7 @@ class SagePayloadFactory
                 ],
                 [
                     'CustomerNumber' => $request->customerId,
-                    'DocumentNumber' => $request->insurerPremiumTaxInvoiceNumber.'-COM',
+                    'DocumentNumber' => $request->insurerPremiumTaxInvoiceNumber . '-COM',
                     'InvoiceDescription' => $request->invoiceDescription,
                     'DocumentDate' => $request->insurerInvoiceDate,
                     'CurrencyCode' => 'AED',
@@ -279,8 +280,8 @@ class SagePayloadFactory
         $customerNumber = self::customizeCustomerId($customer->id, $appendGroup);
         //dd($customerNumber);
         $payLoad = [
-            'CustomerNumber' => $customerNumber.'H',
-            'CustomerName' => $customer->first_name.' '.$customer->last_name,
+            'CustomerNumber' => $customerNumber . 'H',
+            'CustomerName' => $customer->first_name . ' ' . $customer->last_name,
             'GroupCode' => 'PHI',
         ];
 
@@ -327,7 +328,7 @@ class SagePayloadFactory
         if ($paddingLength < 0) {
             return $customerId;
         } else {
-            $paddedCustomerId = str_repeat('0', $paddingLength).$customerId;
+            $paddedCustomerId = str_repeat('0', $paddingLength) . $customerId;
             $paddedCustomerId[0] = $appendGroup;
 
             return $paddedCustomerId;

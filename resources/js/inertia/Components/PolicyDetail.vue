@@ -240,42 +240,62 @@ const onUpdatePolicyDetails = () => {
       <div class="w-full md:w-1/2"></div>
       <div class="w-full md:w-1/2" />
     </div>
-    <div
-      class="flex justify-end"
-      v-if="
-        !hasRole(rolesEnum.PA) &&
-        record.quote_status_id == quoteStatusEnum.TransactionApproved
-      "
-    >
-      <x-button
-        v-if="policyDetailsState.isEditing"
-        class="mt-4 mr-2"
-        color="emerald"
-        size="sm"
-        :loading="policyDetailsForm.processing"
-        @click.prevent="policyDetailsState.isEditing = false"
+
+    <div class="flex justify-end">
+      <template
+        class="flex justify-end"
+        v-if="
+          !hasRole(rolesEnum.PA) &&
+          record.quote_status_id == quoteStatusEnum.TransactionApproved
+        "
       >
-        Cancel
-      </x-button>
-      <x-button
-        v-if="policyDetailsState.isEditing"
-        class="mt-4"
-        color="emerald"
-        size="sm"
-        :loading="policyDetailsForm.processing"
-        @click.prevent="onUpdatePolicyDetails"
-      >
-        Update
-      </x-button>
-      <x-button
-        v-if="!policyDetailsState.isEditing"
-        class="mt-4"
-        color="emerald"
-        size="sm"
-        @click.prevent="policyDetailsState.isEditing = true"
-      >
-        Edit
-      </x-button>
+        <x-button
+          v-if="policyDetailsState.isEditing"
+          class="mt-4 mr-2"
+          color="emerald"
+          size="sm"
+          :loading="policyDetailsForm.processing"
+          @click.prevent="policyDetailsState.isEditing = false"
+        >
+          Cancel
+        </x-button>
+        <x-button
+          v-if="policyDetailsState.isEditing"
+          class="mt-4"
+          color="emerald"
+          size="sm"
+          :loading="policyDetailsForm.processing"
+          @click.prevent="onUpdatePolicyDetails"
+        >
+          Update
+        </x-button>
+        <x-button
+          v-if="!policyDetailsState.isEditing"
+          class="mt-4"
+          color="emerald"
+          size="sm"
+          @click.prevent="policyDetailsState.isEditing = true"
+        >
+          Edit
+        </x-button>
+      </template>
+      <template v-else>
+        <x-tooltip>
+          <x-button
+            v-if="
+              !hasRole(rolesEnum.PA) &&
+              record.quote_status_id == quoteStatusEnum.PolicyBooked
+            "
+            size="sm"
+            color="emerald"
+            :disabled="true"
+            >Edit
+          </x-button>
+          <template #tooltip>
+            <span>{{ 'The Button is not accessable because policy has been booked' }}</span>
+          </template>
+        </x-tooltip>
+      </template>
     </div>
   </div>
 </template>
