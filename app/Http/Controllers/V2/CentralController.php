@@ -174,7 +174,7 @@ class CentralController extends Controller
 
         $quote = $repository::where('uuid', $uuid)->firstOrFail();
 
-        $quote->update(['prefill_plan_id' => $planId]);
+        $quote->update(['prefill_plan_id' => $planId, 'prefill_plan_selected_at' => Carbon::now()]);
 
         return redirect()->back()->with('success', 'updated successfully');
     }
