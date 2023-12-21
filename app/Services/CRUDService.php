@@ -338,6 +338,7 @@ class CRUDService extends BaseService
                 if (
                     $previousQuoteStatus == QuoteStatusEnum::FollowedUp && $request->leadStatus != QuoteStatusEnum::FollowedUp
                     || $previousQuoteStatus == QuoteStatusEnum::ApplicationPending && $request->leadStatus != QuoteStatusEnum::ApplicationPending
+                    || $request->leadStatus == QuoteStatusEnum::TransactionApproved
                 ) {
                     CammyJob::dispatch($entity, 'unsub');
                 }
