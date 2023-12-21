@@ -944,7 +944,6 @@ class HealthQuoteService extends BaseService
     public function getCoPayment($id){
         $quoteUuId = HealthQuote::where('uuid', '=', $id)->first();
         $coPayment = DB::table('health_plan_co_payments as hpcp')->where('id',$quoteUuId->health_plan_co_payment_id)->first();
-        //dd($coPayment);
         return $coPayment;
 
     }
