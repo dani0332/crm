@@ -523,7 +523,7 @@ onMounted(() => {
             :href="`/car/leads-export?${objToUrl(filters)}&export_type=${genericRequestEnum.EXPORT_LEAD_WITH_PLAN}`"
             class="justify-self-start ml-3"
           >
-            Export Leads With Car Make Model
+            Extract leads detail
           </x-button>
           <x-tooltip v-else position="right">
             <x-button tag="div" size="sm" color="emerald"> Export </x-button>
