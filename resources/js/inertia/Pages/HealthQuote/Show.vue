@@ -9,6 +9,7 @@ defineProps({
   quote: Object,
   leadStatuses: Array,
   ecomDetails: Object,
+  coPayment: Object,
   membersDetail: Array,
   memberCategories: Array,
   memberRelations: Array,
@@ -531,6 +532,11 @@ const plansTable = reactive({
       value: 'eligibilityName',
     },
     {
+      text: 'CO-PAY/CO-INSURANCE',
+      value: 'copayName',
+      width: 100
+    },
+    {
       text: 'Base Price',
       value: 'actualPremium',
     },
@@ -826,6 +832,14 @@ const getSmallestCopayRateAsDefaultValue = () => {
       element.actualPremium = smallestCopayValue;
       element.vat = smallestCopayVAT;
     }
+      element.coPayments.forEach(function callback(value, index) {
+          if(value.id ==  element.selectedCopayId){
+              element.copayName = value.text;
+          }
+
+      });
+
+
   });
 };
 
@@ -2369,6 +2383,10 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">TOTAL PRICE (with VAT)</dt>
                 <dd>{{ fixedValue(ecomDetails.priceWithVAT) }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">CO-PAY / CO-INSURANCE</dt>
+                <dd>{{ (coPayment)?coPayment.text:'N/A' }}</dd>
               </div>
             </dl>
           </div>
