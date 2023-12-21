@@ -166,6 +166,9 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         });
     });
 
+    Route::get('{quoteType}/leads-export-plan', [CentralController::class, 'exportLeads'])
+        ->name('data-extraction-plans');
+
     Route::resource('embedded-products', EmbeddedProductController::class);
     Route::resource('legacy-policy', LegacyPolicyController::class);
     Route::post('legacy-policy/move-to-imcrm', [LegacyPolicyController::class, 'moveToImcrm']);
