@@ -1,4 +1,5 @@
 <script setup>
+
 const props = defineProps({
   quoteId: String,
   sendUpdateLog: Object,
@@ -10,12 +11,6 @@ const notification = useToast();
 
 const state = reactive({
   edit: false,
-});
-
-const sendUpdateForm = useForm({
-  notes: props.sendUpdateLog?.notes || '',
-  option_id: props.sendUpdateLog?.option_id || null,
-  change_reason: props.sendUpdateLog?.change_reason || ''
 });
 
 const currentOption = computed(() => {
@@ -51,6 +46,16 @@ const isEditDisabled = computed(() => {
 const changeReasonOptions = computed(() => {
   return [];
 }); 
+
+const sendUpdateForm = useForm({
+  notes: props.sendUpdateLog?.notes || '',
+  option: props.sendUpdateLog?.option_id || null,
+  change_reason: props.sendUpdateLog?.change_reason || '',
+  reportable_id: props.sendUpdateLog?.reportable_id || null,
+  childCategory: selectedType.value,
+  status: props.sendUpdateLog?.status || '',
+  reportable_type: props.sendUpdateLog?.reportable_type || '',
+});
 
 const redirectBack = () => {
   history.back();
@@ -131,7 +136,7 @@ const onUpdateLog = () => {
             </template>
           </div>
           <div class="grid sm:grid-cols-2 ml-[-250px]">
-            <dt class="font-bold text-right mr-10">STATUS</dt>
+            <dt class="font-bold text-right mr-10">Status</dt>
             <dd>{{ sendUpdateLog.status }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
@@ -141,7 +146,7 @@ const onUpdateLog = () => {
                 <x-select
                   size="xs"
                   :disabled="!state.edit"
-                  v-model="sendUpdateForm.option_id"
+                  v-model="sendUpdateForm.option"
                   :options="updateLogOptions"
                 />
               </dd>

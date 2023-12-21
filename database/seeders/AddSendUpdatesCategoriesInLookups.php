@@ -46,10 +46,15 @@ class AddSendUpdatesCategoriesInLookups extends Seeder
                     }
                     
                     foreach ($subTypes as $subType) {
+                        $words = explode(' ', ucwords($subType['name']));
+                        $code = '';
+                        collect($words)->each(function ($word) use (&$code) {
+                            $code .= substr($word, 0, 1);
+                        });
                         Lookup::create([
                             'quote_type_id' => $item['id'],
                             'key' => $subType['name'],
-                            'code' => Str::slug(Str::limit($subType['name'], 20)),
+                            'code' => $code,
                             'text' => $subType['tooltip'],
                             'parent_id' => $typeCategory->id
                         ]);

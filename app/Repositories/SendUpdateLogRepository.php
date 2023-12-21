@@ -65,7 +65,7 @@ class SendUpdateLogRepository extends BaseRepository
         try {
             $log = $this->where('id', $id)->update([
                 'notes' => $data['notes'],
-                'option_id' => $data['option_id'],
+                'option_id' => $data['option'],
             ]);
         } catch(\Exception $ex) {
             $log = (object) [

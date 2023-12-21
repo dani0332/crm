@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\V2;
 
+use App\Enums\QuoteStatusEnum;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Http\Controllers\Controller;
 use App\Repositories\SendUpdateLogRepository;
@@ -15,11 +16,14 @@ class SendUpdateLogController extends Controller
      */
     public function store(Request $request)
     {
-        $response = SendUpdateLogRepository::create($request->all());
+        $data = $request->all();
+        $response = SendUpdateLogRepository::create($data);
 
         if (! empty($response->message)) {
             vAbort($response->message);
         }
+
+        $this->updateQuoteLeadStatus($data, 'create');
 
         return redirect(route('quotes.car.view-update-log', ['id' => $request->reportable_uuid, 'uuid' => $response->uuid]));
     }
@@ -54,11 +58,15 @@ class SendUpdateLogController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        $log = SendUpdateLogRepository::updateLog($id, $request->all());
+        $data = $request->all();
+
+        $log = SendUpdateLogRepository::updateLog($id, $data);
 
         if (isset($log->message) && !empty($log->message)) {
             vAbort($log->message);
         }
+
+        $this->updateQuoteLeadStatus($data, 'update');
 
         return redirect()->back();
     }
@@ -76,5 +84,57 @@ class SendUpdateLogController extends Controller
         $logs = SendUpdateLogRepository::getLogsById($id);
 
         return response()->json(compact('logs'));
+    }
+
+    public function updateQuoteLeadStatus($data, $type)
+    {
+        $quoteId = $data['reportable_id'];
+        
+        $selectedType = $data['childCategory']['slug'];
+        
+        $subType = $this->getSubType($data['childCategory']['childs'], $data['option']);
+
+        $model = $data['reportable_type'];
+        
+        if ($type === 'create') {
+
+            switch ($selectedType) {
+                case 'EF':
+                    if ($subType['slug'] === 'MPC') {
+                        $model::where('id', $quoteId)->update([
+                            'quote_status_id' => QuoteStatusEnum::CancellationPending
+                        ]);
+                    }
+                    break;
+                case 'CI':
+                case 'CIR':
+                    $model::where('id', $quoteId)->update([
+                        'quote_status_id' => QuoteStatusEnum::CancellationPending
+                    ]);
+                    break;
+            }
+        } else {
+            
+            switch ($selectedType) {
+                case 'EF':
+                case 'CI':
+                case 'CIR':
+                    if ($data['status'] === SendUpdateLogStatusEnum::UPDATE_BOOKED) {
+                        $model::where('id', $quoteId)->update([
+                            'quote_status_id' => QuoteStatusEnum::PolicyCancelled
+                        ]);
+
+                        if ($selectedType === 'CIR') {
+                            // TODO: send it to sage, need to confirm what the sage is.
+                        }
+                    }
+                    break;
+            }
+        }
+    }
+
+    private function getSubType($list, $optionId) 
+    {
+        return collect($list)->where('id', $optionId)->first();
     }
 }
