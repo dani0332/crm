@@ -32,7 +32,9 @@ watch(flash, async () => {
       position: 'top',
     });
   }
-});
+},
+{ immediate: true },
+);
 </script>
 
 <template>

@@ -11,7 +11,7 @@ defineProps({
   todayManualCount: Number,
   yesterdayAutoCount: Number,
   yesterdayManualCount: Number,
-  genericRequestEnum: Array
+  genericRequestEnum: Array,
 });
 
 const page = usePage();
@@ -537,7 +537,6 @@ onMounted(() => {
             <x-button tag="div" size="sm" class="ml-3" color="emerald"> Extract leads and plan detail</x-button>
             <template #tooltip>
               <span class="font-medium">
-                Created dates are required to export data.
                 Created dates are required to export data.
               </span>
             </template>
