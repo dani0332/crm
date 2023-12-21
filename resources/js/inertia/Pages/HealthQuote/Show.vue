@@ -51,7 +51,7 @@ defineProps({
   quoteType: String,
   sendUpdateOptions: Array,
   sendUpdateLogs: Array,
-  hasPolicyIssuedStatus: Boolean
+  hasPolicyIssuedStatus: Boolean,
 });
 
 const page = usePage();
@@ -534,7 +534,7 @@ const plansTable = reactive({
     {
       text: 'CO-PAY/CO-INSURANCE',
       value: 'copayName',
-      width: 100
+      width: 100,
     },
     {
       text: 'Base Price',
@@ -832,14 +832,11 @@ const getSmallestCopayRateAsDefaultValue = () => {
       element.actualPremium = smallestCopayValue;
       element.vat = smallestCopayVAT;
     }
-      element.coPayments.forEach(function callback(value, index) {
-          if(value.id ==  element.selectedCopayId){
-              element.copayName = value.text;
-          }
-
-      });
-
-
+    element.coPayments.forEach(function callback(value, index) {
+      if (value.id == element.selectedCopayId) {
+        element.copayName = value.text;
+      }
+    });
   });
 };
 
@@ -1413,7 +1410,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
           </div>
         </template>
         <template #body>
-          <x-divider class="my-4"/>
+          <x-divider class="my-4" />
           <div class="flex flex-wrap md:flex-nowrap gap-6 w-full">
             <div class="w-full md:w-1/2 flex gap-2 items-end">
               <x-select
@@ -1465,7 +1462,9 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       <Collapsible :expanded="sectionExpanded">
         <template #header>
           <div class="flex justify-between items-center flex-wrap gap-2">
-            <h3 class="text-lg font-semibold text-primary-800">Health Detail</h3>
+            <h3 class="text-lg font-semibold text-primary-800">
+              Health Detail
+            </h3>
           </div>
         </template>
         <template #body>
@@ -1487,10 +1486,10 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
           </div>
           <div class="text-sm">
             <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
-          <div
-            v-if="hasAnyRole([rolesEnum.Admin, rolesEnum.Engineering])"
-            class="grid sm:grid-cols-2"
-          >
+              <div
+                v-if="hasAnyRole([rolesEnum.Admin, rolesEnum.Engineering])"
+                class="grid sm:grid-cols-2"
+              >
                 <dt class="font-medium">ID</dt>
                 <dd>{{ quote.id }}</dd>
               </div>
@@ -1623,8 +1622,10 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
         <template #body>
           <x-divider class="my-4" />
           <div class="flex mb-3 justify-end">
-            <x-tag color="success" v-if="quote.kyc_decision === 'Complete'"> KYC - Complete </x-tag>
-        <x-tag color="amber" v-else> KYC - Pending </x-tag>
+            <x-tag color="success" v-if="quote.kyc_decision === 'Complete'">
+              KYC - Complete
+            </x-tag>
+            <x-tag color="amber" v-else> KYC - Pending </x-tag>
           </div>
           <x-form @submit="updateProfileDetails" :auto-focus="false">
             <div class="text-sm">
@@ -1929,7 +1930,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
           <div class="flex justify-between items-center">
             <h3 class="font-semibold text-primary-800 text-lg">
               Member Details
-            <x-tag size="sm">{{ membersDetail.length || 0 }}</x-tag>
+              <x-tag size="sm">{{ membersDetail.length || 0 }}</x-tag>
             </h3>
           </div>
         </template>
@@ -1948,7 +1949,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
           <DataTable
             table-class-name="tablefixed compact"
             :headers="memberDetailsTable.columns"
-        :items="membersDetail || []"
+            :items="membersDetail || []"
             show-index
             border-cell
             hide-rows-per-page
@@ -2386,7 +2387,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">CO-PAY / CO-INSURANCE</dt>
-                <dd>{{ (coPayment)?coPayment.text:'N/A' }}</dd>
+                <dd>{{ coPayment ? coPayment.text : 'N/A' }}</dd>
               </div>
             </dl>
           </div>
@@ -2556,7 +2557,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
               >
                 Filters
               </x-button>
-              <template #body> {{ planFiltersCount }} </template>
+              <template #content> {{ planFiltersCount }} </template>
             </x-badge>
 
             <x-button
@@ -2577,8 +2578,12 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
             border-cell
             hide-rows-per-page
             :rows-per-page="15"
+            class="flex-wrap"
             :hide-footer="listQuotePlansFiltered.length < 15"
           >
+            <template #item-copayName="item">
+              <span class="copay-max">{{ item.copayName }}</span>
+            </template>
             <template
               #item-providerName="{ providerName, isManualPlan, isHidden }"
             >
@@ -2610,6 +2615,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
                 </x-tag>
               </div>
             </template>
+
             <template #item-total="{ actualPremium, policyFee, basmah, vat }">
               {{
                 fixedValue(
