@@ -22,7 +22,6 @@ use App\Models\BusinessCoverType;
 use App\Models\BusinessQuoteType;
 use App\Models\CommunicationMode;
 use App\Models\Customer;
-use App\Models\CustomerPaymentInstrument;
 use App\Models\Emirate;
 use App\Models\Entity;
 use App\Models\KycLog;
@@ -254,12 +253,13 @@ class AMLController extends Controller
 
         $kycStatus = AMLService::getKycType($quoteTypeId, $quoteRequestId);
 
-
-        $payment = Payment::where('code',$quoteRequest->code)
-            ->with(['getCustomerPaymentInstrument' => function ($query) { $query->whereNotNull ('card_holder_name'); }])
+        $payment = Payment::where('code', $quoteRequest->code)
+            ->with(['getCustomerPaymentInstrument' => function ($query) {
+                $query->whereNotNull('card_holder_name');
+            }])
             ->first();
         $cardHolderName = '';
-        if(isset($payment->getCustomerPaymentInstrument->card_holder_name)){
+        if (isset($payment->getCustomerPaymentInstrument->card_holder_name)) {
 
             $cardHolderName = $payment->getCustomerPaymentInstrument;
         }
@@ -296,6 +296,7 @@ class AMLController extends Controller
             $data['businessCoverTypeText'] = BusinessCoverType::where('id', $quoteRequest->business_cover_type_id)->value('text');
             $data['businessCommuModeText'] = CommunicationMode::where('id', $quoteRequest->business_communication_mode_id)->value('text');
         }
+
         return inertia('Aml/Details', $data);
     }
 
