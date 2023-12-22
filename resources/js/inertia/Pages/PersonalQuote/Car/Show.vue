@@ -115,24 +115,18 @@ const updateComputedPlanDetails = () => {
       computedPlanDetails.premium = page.props.record.premium,
       computedPlanDetails.planName = page.props.record.plan_id_text,
       computedPlanDetails.providerName = page.props.record.car_plan_provider_id_text
-    //};  
   } else
   {   
-    console.log('plan selected at is less than prefill plan selected at');   
-    //return {      
+      console.log('plan selected at is less than prefill plan selected at');
       computedPlanDetails.premium = '',
       computedPlanDetails.planName = page.props.record.prefill_plan_id_text,
-      computedPlanDetails.providerName = page.props.record.prefill_plan_provider_id_text
-    //};    
+      computedPlanDetails.providerName = page.props.record.prefill_plan_provider_id_text   
   }
-
 };
 
 onMounted(() => {
   updateComputedPlanDetails();
 });
-
-
 
 const permissionEnum = page.props.permissionsEnum;
 const rolesEnum = page.props.rolesEnum;
