@@ -60,6 +60,9 @@ const approveErrorMessage = ref('');
 
 const discountValue = ref(0); // Initial discount value
 
+const discountDocumentModel = ref([]);
+const isDiscountDocumentNotUploaded = ref(false);
+
 const paymentTypesFiltered = ref([]);
 const approvedDocumentModel = ref([]);
 const isPaymentMetodNotSelected = ref([]);
@@ -164,7 +167,8 @@ const onCopyPaymentLink = (paymentLink,paymentStatus) => {
     //filesTest.value = fileUploadModels.value.flat();
     filesTest.value = [
       ...fileUploadModels.value.flat(),
-      ...approvedDocumentModel.value.flat()
+      ...approvedDocumentModel.value.flat(),
+      ...discountDocumentModel.value.flat()
     ];
     currentFileIndex.value = filesTest.value.findIndex(item => item.id === fileId);
     isGalleryModelOpen.value = true;
@@ -310,8 +314,8 @@ const validatePaymentOption = () => {
           console.log('azharLEN='+fileUploadModels.value[i]);
           if ( (
             paymentMethodsModels.value[i]=='BT' || paymentMethodsModels.value[i]=='CHQ' 
-            || paymentMethodsModels.value[i]=='PDC' || paymentMethodsModels.value[i]=='IP' ||
-            ( paymentMethodsForm.discount !== '' && i===1 && (paymentMethodsModels.value[i]=='CC' || paymentMethodsModels.value[i]=='CSH') )   
+            || paymentMethodsModels.value[i]=='PDC' || paymentMethodsModels.value[i]=='IP' 
+            /*|| ( paymentMethodsForm.discount !== '' && i===1 && (paymentMethodsModels.value[i]=='CC' || paymentMethodsModels.value[i]=='CSH') )   */
             ) 
           && (fileUploadModels.value[i]===undefined || fileUploadModels.value[i].length===0)       
           ) {
@@ -327,6 +331,16 @@ const validatePaymentOption = () => {
       console.log('DocError='+issueFound);
       if(isDiscountEnabled.value === true) {
         isDiscountError.value = false;
+
+        // Check if discount document uploaded
+        if (discountDocumentModel.value[0]===undefined 
+          || discountDocumentModel.value[0].length===0 ) {
+          isDiscountDocumentNotUploaded.value = true;
+          issueFound = true; 
+        } else {        
+          isDiscountDocumentNotUploaded.value = false;
+        } 
+        
         if (discountValue.value === '' || discountValue.value === 0) {
           issueFound = true; 
           isDiscountError.value = true;
@@ -892,6 +906,8 @@ const addPaymentModal = () => {
   isDocumentNotUploaded.value = [];
   isDiscountError.value = false;
   discountError.value = '';
+  isDiscountDocumentNotUploaded.value = false;
+  discountDocumentModel.value = [];
 
   if (totalPrice.value > 0 && planDetail) {
     totalAmount.value = totalPrice.value;
@@ -972,6 +988,9 @@ const editPaymentModal = (payment,split_payment_id,sr_no,capture_approval) => {
   paidAmountSum.value = 0;
   isDiscountError.value = false;
   discountError.value = '';
+  isDiscountDocumentNotUploaded.value = false;
+  discountDocumentModel.value = [];
+
   if(sr_no>0){
     splitPaymentNo.value = sr_no;
     isFieldReadonly.value = true;
@@ -1059,11 +1078,28 @@ const editPaymentModal = (payment,split_payment_id,sr_no,capture_approval) => {
       checkDetailModels.value[i] = payment.payment_splits[i-1].check_detail;
     }
     if(payment.payment_splits[i-1].documents.length>0){
+
+        
       for(let doc in payment.payment_splits[i-1].documents){
-        if (!fileUploadModels.value[i]) {
-          fileUploadModels.value[i] = [];
-        }            
-        fileUploadModels.value[i].push(payment.payment_splits[i-1].documents[doc]); 
+
+        /*if (!fileUploadModels.value[i]) {
+            fileUploadModels.value[i] = [];
+          }
+        fileUploadModels.value[i].push(payment.payment_splits[i-1].documents[doc]); */
+        console.log('DOCUMENTS='+(payment.payment_splits[i-1].documents[doc].payment_split_type));
+        if(payment.payment_splits[i-1].documents[doc].payment_split_type === 'discount'){
+          if (!discountDocumentModel.value[0]) {
+            discountDocumentModel.value[0] = [];
+          }
+          discountDocumentModel.value[0].push(payment.payment_splits[i-1].documents[doc]);     
+        } else {
+          if (!fileUploadModels.value[i]) {
+            fileUploadModels.value[i] = [];
+          }
+          fileUploadModels.value[i].push(payment.payment_splits[i-1].documents[doc]); 
+        }
+        
+        
       }
     }
 
@@ -1226,8 +1262,8 @@ const addPayment = isValid => {
     due_date: dueDateModels.value,
     check_detail: checkDetailModels.value,
     document_detail: fileUploadModels.value,
+    discount_documents: discountDocumentModel.value,
   };
-
 
   let declinedCustomReason= paymentMethodsForm.declined_custom_reason;
   if (paymentMethodsForm.status === 'view' || isCreditApprovalView.value === true) { 
@@ -1392,6 +1428,7 @@ const deleteDocument = (docName,count) => {
       onFinish: () => {
         fileUploadModels.value[count] = fileUploadModels.value[count].filter(item => item.doc_name !== docName);
         approvedDocumentModel.value[count] = approvedDocumentModel.value[count].filter(item => item.doc_name !== docName);
+        discountDocumentModel.value[0] = discountDocumentModel.value[0].filter(item => item.doc_name !== docName);
         console.log('azhar19=deleted');
       },
     },
@@ -1399,9 +1436,16 @@ const deleteDocument = (docName,count) => {
 };
 
 const uploadDocument = (doc, files, count) => {
+  if (files.length == 0) return;  
   let url = '/quotes/'+props.quoteType+'/documents/store-multiple';
+  let splitPaymentDocType = null;  
+  if (count===0) { // documents for master discount
+    splitPaymentDocType = 'discount';
+  }  
 
-  if (files.length == 0) return;
+  if (!discountDocumentModel.value[0]) {
+    discountDocumentModel.value[0] = [];
+  }
 
   if (!fileUploadModels.value[count]) {
     fileUploadModels.value[count] = [];
@@ -1411,7 +1455,12 @@ const uploadDocument = (doc, files, count) => {
     approvedDocumentModel.value[count] = [];
   }
 
-  let allUploadedDocuments = fileUploadModels.value.flat();
+  //let allUploadedDocuments = fileUploadModels.value.flat();
+  let allUploadedDocuments = [
+      ...fileUploadModels.value.flat(),
+      ...discountDocumentModel.value.flat()
+    ];
+  
   let duplicateFileNames = files.map((file) => file.file.name);
   isFileError.value = false;
 
@@ -1431,6 +1480,7 @@ const uploadDocument = (doc, files, count) => {
         quote_type_id: doc.quote_type_id,
         document_type_code: doc.code,
         folder_path: doc.folder_path,
+        split_payment_doc_type: splitPaymentDocType,
         file: files,
       }))
       .post(url, {
@@ -1456,6 +1506,17 @@ const uploadDocument = (doc, files, count) => {
           // Sort the array by the "id" property in descending order
           quoteDocuments.sort((a, b) => b.id - a.id);
           console.log('quoteDocuments=' + JSON.stringify(quoteDocuments));
+          
+          if (count === 0) {
+            isDiscountDocumentNotUploaded.value = false;
+            for (let i = 0; i < files.length; i++) {
+              discountDocumentModel.value[count].push(quoteDocuments[i]);
+            }
+            console.log('discountdoc=' + JSON.stringify(discountDocumentModel.value));
+            resolve(data);
+            return;
+          }
+          
           if (paymentMethodsForm.status === 'view') {
             isApprovedDocumentNotUploaded.value = false;
             for (let i = 0; i < files.length; i++) {
@@ -2085,7 +2146,7 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
               :tooltip="(isFieldReadonly)? discountReasons.find(item => item.value === paymentMethodsForm.discount_reason).tooltip: paymentTooltipEnum.DISCOUNT_REASON"
               :required="!isFieldReadonly"
             />          
-          <x-field class="w-full">
+            <x-field class="w-full">
               <span v-if="isFieldReadonly">                 
                 {{ discountReasons.find(item => item.value === paymentMethodsForm.discount_reason).label }}
               </span>
@@ -2105,7 +2166,6 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
               <p v-if="isDiscountReasonError" class="text-sm text-red-500 dark:text-red-400 mt-1">This field is required</p>
             </x-field>
           </div>
-          
           <x-field v-if="isCustomDiscountReasonEnabled" label="CUSTOM DISCOUNT REASON" :required="!isFieldReadonly" class="w-full">
             <span v-if="isFieldReadonly">{{ paymentMethodsForm.discount_custom_reason }}</span>
             <x-input
@@ -2115,6 +2175,53 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
                 :rules="[rules.isRequired]"                
               />
           </x-field>
+          <div v-if="isDiscountReasonEnabled" class="">
+            <ToolTip
+               title="DISCOUNT PROOF"
+              :tooltip="(isFieldReadonly)? paymentTooltipEnum.PAYMENT_DISCOUNT_PROOF_VIEW: paymentTooltipEnum.PAYMENT_DISCOUNT_PROOF_TITLE"
+              :required="!isFieldReadonly"
+            />          
+            <x-field v-if="!isFieldReadonly" class="w-full">             
+              <x-tooltip>  
+                <Dropzone
+                    :id="paymentDocument[0].id"
+                    customDisplay="true"
+                    multiple="true"
+                    :accept="paymentDocument[0].accepted_files"
+                    :max-files="paymentDocument[0].max_files"
+                    :max-size="paymentDocument[0].max_size"
+                    :loading="documentForm.processing"
+                    @change="uploadDocument(paymentDocument[0], $event, 0)"                  
+                  />
+                  <template #tooltip>
+                      <span>{{ paymentTooltipEnum.DOCUMENTS_UPLOAD }}</span>
+                    </template>
+              </x-tooltip>
+                <p v-if="isDiscountDocumentNotUploaded" class="text-sm text-red-500 dark:text-red-400 mt-1">This field is required</p>
+            </x-field>
+            <div v-for="fileData in discountDocumentModel[0]" :key="fileData.id">
+              <span style="display: flex; align-items: center;">                        
+              <span 
+                  :key="fileData.id"
+                  class="block px-2 py-1 border rounded mt-1 text-xs hover:text-primary-600 truncate"
+                  style="flex: 1; text-decoration: none; cursor: pointer;"
+                  @click="openInnerModal(fileData.id)"
+                >
+                  {{ fileData.original_name }}
+              </span>
+                <span
+                  class="delete-pointer"
+                  @click="deleteDocument(fileData.doc_name, 0)"
+                  v-if="!isFieldReadonly" 
+                >
+                &#10006; 
+                </span>
+              </span>
+            </div>
+          </div>
+
+
+
             <div v-if="isDiscountEnabled && paymentMethodsForm.discount!='N/A'">             
               <ToolTip
                   title="DISCOUNT VALUE"

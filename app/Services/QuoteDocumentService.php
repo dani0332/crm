@@ -140,6 +140,7 @@ class QuoteDocumentService extends BaseService
                 'document_type_text' => $documentType->text,
                 'doc_uuid' => $docUuid,
                 'member_detail_id' => $data['member_detail_id'] ?? null,
+                'payment_split_type' => $data['split_payment_doc_type'] ?? null,
                 'created_by_id' => auth()->id(),
             ]);
         } catch (\Exception $exception) {

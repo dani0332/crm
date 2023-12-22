@@ -86,6 +86,7 @@ class PaymentSplitsRepository
                 }
             }
         }
+        $this->uploadDiscountDocuments($request->split_payment_details['discount_documents'],$quoteID);
     }
 
     public function generateSplitPaymentLink($code, $splitPaymentId, $modelType, $quoteId)
@@ -196,36 +197,35 @@ class PaymentSplitsRepository
                 if (! $paymentSplitRecord) {
                     $paymentSplitRecord = PaymentSplits::create($splitPaymentInformation);
                 } else {
-                    /*
-                    if ($paymentSplitRecord->payment_status_id == PaymentStatusEnum::CREDIT_APPROVED) {
-                        $childPaymentStatus = $this->getChildPaymentStatus($request->split_payment_details['payment_type'][$i]);
-                        $splitPaymentInformation['payment_status_id'] = $childPaymentStatus;
-                    }*/
                     $paymentSplitRecord->update($splitPaymentInformation);
                     $this->setMasterPaymentStatus($paymentSplitRecord->id);
-                }
+                }               
                 //add document references
                 if (isset($request->split_payment_details['document_detail'][$i])
                     && $paymentSplitRecord
                     && count($request->split_payment_details['document_detail'][$i])
                 ) {
                     foreach ($request->split_payment_details['document_detail'][$i] as $document) {
-                        /*
-                        if (isset($splitPaymentDocumentIds[$i]) && in_array($document['id'], $splitPaymentDocumentIds[$i])) {
-                            $quoteDocumentRec = QuoteDocument::withTrashed()->find($document['id']);
-                            if ($quoteDocumentRec) {
-                                $quoteDocumentRec->restore();
-                                $quoteDocumentRec->payment_split_id = $paymentSplitRecord->id;
-                                $quoteDocumentRec->save();
-                            }
-                            continue;
-                        }*/
                         $quoteDocumentRec = QuoteDocument::find($document['id']);
                         if ($quoteDocumentRec) {
                             $quoteDocumentRec->payment_split_id = $paymentSplitRecord->id;
                             $quoteDocumentRec->save();
                         }
                     }
+                }
+            }
+        }
+        $this->uploadDiscountDocuments($request->split_payment_details['discount_documents'],$request->paymentCode);
+    }
+
+    public function uploadDiscountDocuments ($discountDocuments, $code) {
+        if ( isset($discountDocuments)  && count($discountDocuments) ) {
+            $paymentSplitRecord = PaymentSplits::where(['code' => $code])->first();
+            foreach ($discountDocuments[0] as $document) { 
+                $quoteDocumentRec = QuoteDocument::find($document['id']);
+                if ($quoteDocumentRec) {
+                    $quoteDocumentRec->payment_split_id = $paymentSplitRecord->id;
+                    $quoteDocumentRec->save();
                 }
             }
         }

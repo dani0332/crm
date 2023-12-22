@@ -23,7 +23,8 @@ final class PaymentTooltip extends Enum
     const PAYMENT_MANAGEMENT_ADD_PAYMENT_DIS = 'Payment already added; click \'Edit\' for changes.';
     const PAYMENT_ADD_DUPLICATE_FILES = 'You are uploading a file with the same name as another one. To avoid confusion, please rename the file or ensure it\'s the correct one. This way, we\'ll maintain a tidy and efficient document management process.';
     const PAYMENT_ADD_DELETE_DOCUMENT = 'Any uploaded documents cannot be deleted once the payment status marks as \'Paid\'.';
-
+    const PAYMENT_DISCOUNT_PROOF_TITLE = 'Use this field to attach the approved discount proof. Ensure the proof includes approval from the Chief Marketing Officer, Chief Finance Officer, or General Manager. This document is crucial for verifying the discount and for record accuracy.';
+    const PAYMENT_DISCOUNT_PROOF_VIEW ='Review the proof of discount here. Ensure all relevant documents are present for complete transparency.';
     //Main section
     const COLLECTION_DATE = 'The date when the payment is due or when it was collected. Ensure to update this date accurately to maintain proper payment records.';
     const TOTAL_PRICE = 'The entire amount due before any potential discounts. Remember, VAT is exempt for Life Insurance policies.';
