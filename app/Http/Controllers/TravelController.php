@@ -392,56 +392,50 @@ class TravelController extends Controller
                 'message' => $quotePlans,
             ], 404);
         }
-        try {
-            $listQuotePlans = $quotePlans->quotes->plans;
-            foreach ($listQuotePlans as $listQuotePlan) {
-                if ($listQuotePlan->id == $planId) {
-                    $listQuotePlansMembers = $listQuotePlan->memberPremiumBreakdown;
-                    $listQuotePlanName = $listQuotePlan->name;
-                    $providerCode = $listQuotePlan->providerCode;
-                    $providerName = $listQuotePlan->providerName;
-                    $travelType = $listQuotePlan->travelType;
-                    $actualPremium = $listQuotePlan->actualPremium;
-                    $discountPremium = $listQuotePlan->discountPremium;
-                    $listQuotePlanBenefitsInclusions = $listQuotePlan->benefits->inclusion;
-                    $listQuotePlanBenefitstravelInconvenienceCover = $listQuotePlan->benefits->travelInconvenienceCover;
-                    $listQuotePlanBenefitsemergencyMedicalCover = $listQuotePlan->benefits->emergencyMedicalCover;
-                    $listQuotePlanBenefitsExclusions = $listQuotePlan->benefits->exclusion;
-                    $listQuotePlanBenefitsFeatures = $listQuotePlan->benefits->feature;
-                    $listQuotePlanBenefitsCovid19 = $listQuotePlan->benefits->covid19;
-                    $listQuotePlanBenefitsPolicyDetails = $listQuotePlan->policyWordings;
+        $listQuotePlans = $quotePlans->quotes->plans;
+        foreach ($listQuotePlans as $listQuotePlan) {
+            if ($listQuotePlan->id == $planId) {
+                $listQuotePlansMembers = $listQuotePlan->memberPremiumBreakdown;
+                $listQuotePlanName = $listQuotePlan->name;
+                $providerCode = $listQuotePlan->providerCode;
+                $providerName = $listQuotePlan->providerName;
+                $travelType = $listQuotePlan->travelType;
+                $actualPremium = $listQuotePlan->actualPremium;
+                $discountPremium = $listQuotePlan->discountPremium;
+                $listQuotePlanBenefitsInclusions = $listQuotePlan->benefits->inclusion;
+                $listQuotePlanBenefitstravelInconvenienceCover = $listQuotePlan->benefits->travelInconvenienceCover;
+                $listQuotePlanBenefitsemergencyMedicalCover = $listQuotePlan->benefits->emergencyMedicalCover;
+                $listQuotePlanBenefitsExclusions = $listQuotePlan->benefits->exclusion;
+                $listQuotePlanBenefitsFeatures = $listQuotePlan->benefits->feature;
+                $listQuotePlanBenefitsCovid19 = $listQuotePlan->benefits->covid19;
+                $listQuotePlanBenefitsPolicyDetails = $listQuotePlan->policyWordings;
 
-                    foreach ($listQuotePlanBenefitsPolicyDetails as $listQuotePlanBenefitsPolicyDetail) {
-                        $listQuotePlanBenefitsPolicyDetailLink = $listQuotePlanBenefitsPolicyDetail->link;
-                    }
+                foreach ($listQuotePlanBenefitsPolicyDetails as $listQuotePlanBenefitsPolicyDetail) {
+                    $listQuotePlanBenefitsPolicyDetailLink = $listQuotePlanBenefitsPolicyDetail->link;
                 }
             }
-
-            $data = [
-                'listQuotePlanName' => $listQuotePlanName,
-                'providerCode' => $providerCode,
-                'providerName' => $providerName,
-                'travelType' => $travelType,
-                'actualPremium' => $actualPremium,
-                'discountPremium' => $discountPremium,
-                'listQuotePlanBenefitsInclusions' => $listQuotePlanBenefitsInclusions,
-                'listQuotePlanBenefitsExclusions' => $listQuotePlanBenefitsExclusions,
-                'listQuotePlanBenefitsFeatures' => $listQuotePlanBenefitsFeatures,
-                'listQuotePlanBenefitsCovid19' => $listQuotePlanBenefitsCovid19,
-                'listQuotePlanBenefitsPolicyDetails' => $listQuotePlanBenefitsPolicyDetails,
-                'listQuotePlanBenefitsPolicyDetailLink' => $listQuotePlanBenefitsPolicyDetailLink ?? '',
-                'modelName' => self::TYPE,
-                'listQuotePlansMembers' => $listQuotePlansMembers,
-                'listQuotePlanBenefitstravelInconvenienceCover' => $listQuotePlanBenefitstravelInconvenienceCover,
-                'listQuotePlanBenefitsemergencyMedicalCover' => $listQuotePlanBenefitsemergencyMedicalCover,
-            ];
-
-            return response()->json($data, 200);
-        } catch (\Exception $ex) {
-            info("Travel Plan Detail $quoteId - ERROR: ".$ex->getMessage());
         }
 
-        return response()->json(null, 404);
+        $data = [
+            'listQuotePlanName' => $listQuotePlanName ?? '',
+            'providerCode' => $providerCode,
+            'providerName' => $providerName,
+            'travelType' => $travelType,
+            'actualPremium' => $actualPremium,
+            'discountPremium' => $discountPremium,
+            'listQuotePlanBenefitsInclusions' => $listQuotePlanBenefitsInclusions,
+            'listQuotePlanBenefitsExclusions' => $listQuotePlanBenefitsExclusions,
+            'listQuotePlanBenefitsFeatures' => $listQuotePlanBenefitsFeatures,
+            'listQuotePlanBenefitsCovid19' => $listQuotePlanBenefitsCovid19,
+            'listQuotePlanBenefitsPolicyDetails' => $listQuotePlanBenefitsPolicyDetails,
+            'listQuotePlanBenefitsPolicyDetailLink' => $listQuotePlanBenefitsPolicyDetailLink ?? '',
+            'modelName' => self::TYPE,
+            'listQuotePlansMembers' => $listQuotePlansMembers,
+            'listQuotePlanBenefitstravelInconvenienceCover' => $listQuotePlanBenefitstravelInconvenienceCover,
+            'listQuotePlanBenefitsemergencyMedicalCover' => $listQuotePlanBenefitsemergencyMedicalCover,
+        ];
+
+        return response()->json($data, 200);
     }
 
     public function cardsView(Request $request)
