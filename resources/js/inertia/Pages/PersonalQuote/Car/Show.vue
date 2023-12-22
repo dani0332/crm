@@ -5,6 +5,9 @@ import LazyCreatePlan from './Partials/CreatePlan.vue';
 import AssignTier from './Partials/AssignTier.vue';
 import FollowUpReasons from './Partials/FollowUpReasons.vue';
 import RiskRatingScoreDetails from '../../../Components/RiskRatingScoreDetails.vue';
+import { onMounted, watch } from 'vue';
+import { reactive } from 'vue';
+
 
 defineProps({
   quote: Object,
@@ -83,9 +86,53 @@ defineProps({
   carInsuranceProviders: Array,
 });
 
+
+
 const page = usePage();
 const notification = useNotifications('toast');
 const showfollowup = ref(false);
+
+const prefillPlanPremium = ref('');
+
+const computedPlanDetails = reactive({
+  premium: '',
+  planName: '',
+  providerName: ''
+});
+
+//compare plan selected at and prefill plan selected at
+const updateComputedPlanDetails = () => {
+
+  console.log('updateComputedPlanDetails called');
+
+  let planSelectedAt = page.props.record.plan_selected_at;
+  let prefillPlanSelectedAt = page.props.record.prefill_plan_selected_at;
+
+  console.log('plan selected at', planSelectedAt, prefillPlanSelectedAt);
+
+  if (planSelectedAt > prefillPlanSelectedAt) {
+      console.log('plan selected at is greater than prefill plan selected at');    
+      computedPlanDetails.premium = page.props.record.premium,
+      computedPlanDetails.planName = page.props.record.plan_id_text,
+      computedPlanDetails.providerName = page.props.record.car_plan_provider_id_text
+    //};  
+  } else
+  {   
+    console.log('plan selected at is less than prefill plan selected at');   
+    //return {      
+      computedPlanDetails.premium = '',
+      computedPlanDetails.planName = page.props.record.prefill_plan_id_text,
+      computedPlanDetails.providerName = page.props.record.prefill_plan_provider_id_text
+    //};    
+  }
+
+};
+
+onMounted(() => {
+  updateComputedPlanDetails();
+});
+
+
 
 const permissionEnum = page.props.permissionsEnum;
 const rolesEnum = page.props.rolesEnum;
@@ -261,6 +308,19 @@ const availablePlansTable = reactive({
     { text: 'Excess', value: 'excess' },
     { text: 'Action', value: 'action' },
   ],
+});
+
+watch(availablePlansTable, (newPlans) =>  {
+  //find selected plan from available plans and calculate prefilled plan premium
+  if(page.props.record.prefill_plan_id)
+  {
+    let selectedPlan = newPlans.data.find(
+        plan => plan.id === page.props.record.prefill_plan_id,
+      );
+
+    //prefillPlanPremium.value = selectedPlan.discountPremium + selectedPlan.vat + getAddonVat(selectedPlan);
+    computedPlanDetails.premium = (selectedPlan.discountPremium + selectedPlan.vat + getAddonVat(selectedPlan)).toFixed(2);
+  }  
 });
 
 const documentsTable = reactive({
@@ -1455,6 +1515,24 @@ const prefillPlanId = ref(page.props.quote.prefill_plan_id);
 const handleChildUpdate = planId => {
   prefillPlanId.value = planId;
 };
+
+watch(prefillPlanId, (newPlanId) =>  {
+  //find selected plan from available plans and calculate prefilled plan premium
+ 
+  if(newPlanId)
+  {
+    let selectedPlan = availablePlansTable.data.find(
+        plan => newPlanId === plan.id,
+      );
+
+      console.log(newPlanId,"NEW PLAN ID", JSON.stringify(selectedPlan));
+      prefillPlanPremium.value = selectedPlan.discountPremium + selectedPlan.vat + getAddonVat(selectedPlan);
+      computedPlanDetails.planName = selectedPlan.name;
+      computedPlanDetails.providerName = selectedPlan.providerName;
+      computedPlanDetails.premium = (selectedPlan.discountPremium + selectedPlan.vat + getAddonVat(selectedPlan)).toFixed(2);
+  }  
+});
+
 </script>
 
 <template>
@@ -1477,10 +1555,10 @@ const handleChildUpdate = planId => {
 
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div class="text-sm">
-        <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
+        <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">          
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">PRICE</dt>
-            <dd>{{ record.premium ?? '' }}</dd>
+            <dd>{{ computedPlanDetails.premium ?? '' }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">PAID AT</dt>
@@ -1492,7 +1570,7 @@ const handleChildUpdate = planId => {
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">PROVIDER NAME</dt>
-            <dd>{{ record.car_plan_provider_id_text ?? '' }}</dd>
+            <dd>{{ computedPlanDetails.providerName ?? '' }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">PAYMENT METHOD</dt>
@@ -1506,7 +1584,7 @@ const handleChildUpdate = planId => {
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">PLAN NAME</dt>
-            <dd>{{ record.plan_id_text }}</dd>
+            <dd>{{ computedPlanDetails.planName }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">ECOMMERCE</dt>
