@@ -65,7 +65,7 @@ class HandleInertiaRequests extends Middleware
             'leadSource' => LeadSourceEnum::asArray(),
             'flash' => fn () => $this->shareFlashData($request),
             'baseUrl' => url('/'),
-            'cdnPath' => config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/',
+            'cdnPath' => config('constants.AZURE_IM_STORAGE_URL') . config('constants.AZURE_IM_STORAGE_CONTAINER') . '/',
             'appEnv' => config('constants.APP_ENV'),
             'pusherKey' => config('constants.VITE_PUSHER_APP_KEY'),
             'epLink' => config('constants.AFIA_WEBSITE_DOMAIN'),
@@ -87,7 +87,7 @@ class HandleInertiaRequests extends Middleware
 
     protected function buildNavigation()
     {
-        if (! auth()->check()) {
+        if (!auth()->check()) {
             return redirect()->route('login');
         }
 
@@ -412,7 +412,7 @@ class HandleInertiaRequests extends Middleware
             $nav = $nav->add('Embedded Products', url('embedded-products'));
         }
 
-        $nav = $nav->addIf(auth()->user()->hasRole(RolesEnum::BetaUser), 'Legacy Policy', url('legacy-policy'));
+        $nav = $nav->addIf(auth()->user()->hasRole(RolesEnum::BetaUser), 'Legacy Policies', url('legacy-policy'));
 
         // if (auth()->user()->can(PermissionsEnum::TeleMarketingList)) {
         //     $nav = $nav->add('Telemarketing', '', function (Section $section) {

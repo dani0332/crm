@@ -17,7 +17,7 @@ class LegacyPolicyController extends Controller
     public function index(Request $request)
     {
         $policies = [];
-        if (! empty($request->all())) {
+        if ($request->hasAny(['policy_number', 'email', 'mobile_no'])) {
             $policies = InslyDetailRepository::getData();
         }
 

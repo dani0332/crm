@@ -292,7 +292,7 @@ const moveToImcrm = async (policyNumber, validateAll = true) => {
         <div class="text-sm">
           <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
             <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">Reference Id</dt>
+              <dt class="font-medium">Ref-ID</dt>
               <dd v-if="policy?.imcrm_link">
                 <a
                   :href="policy?.imcrm_link"
