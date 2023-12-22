@@ -92,7 +92,7 @@ const page = usePage();
 const notification = useNotifications('toast');
 const showfollowup = ref(false);
 
-const prefillPlanPremium = ref('');
+//const prefillPlanPremium = ref('');
 
 const computedPlanDetails = reactive({
   premium: '',
@@ -318,7 +318,6 @@ watch(availablePlansTable, (newPlans) =>  {
         plan => plan.id === page.props.record.prefill_plan_id,
       );
 
-    //prefillPlanPremium.value = selectedPlan.discountPremium + selectedPlan.vat + getAddonVat(selectedPlan);
     computedPlanDetails.premium = (selectedPlan.discountPremium + selectedPlan.vat + getAddonVat(selectedPlan)).toFixed(2);
   }  
 });
@@ -1526,7 +1525,7 @@ watch(prefillPlanId, (newPlanId) =>  {
       );
 
       console.log(newPlanId,"NEW PLAN ID", JSON.stringify(selectedPlan));
-      prefillPlanPremium.value = selectedPlan.discountPremium + selectedPlan.vat + getAddonVat(selectedPlan);
+      //prefillPlanPremium.value = selectedPlan.discountPremium + selectedPlan.vat + getAddonVat(selectedPlan);
       computedPlanDetails.planName = selectedPlan.name;
       computedPlanDetails.providerName = selectedPlan.providerName;
       computedPlanDetails.premium = (selectedPlan.discountPremium + selectedPlan.vat + getAddonVat(selectedPlan)).toFixed(2);
