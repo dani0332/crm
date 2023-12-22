@@ -63,61 +63,11 @@ class UserController extends Controller
             $query->where('u1.name', $request->name);
         }
 
-        $users = $query->simplePaginate();
+        $users = $query->groupBy('u1.id')->simplePaginate();
 
         return inertia('Admin/Users/Index', [
             'users' => $users,
         ]);
-        // if ($request->ajax()) {
-        //     $filteredData = [];
-        //     $users = DB::select('SELECT u1.id
-        //                                 ,u1.name
-        //                                 ,u1.email
-        //                                 ,u2.roles
-        //                                 ,teams.name as teamName
-        //                                 ,u1.created_at
-        //                                 ,u1.updated_at
-        //                                 ,u1.is_active
-        //                             FROM users u1
-        //                             JOIN (
-        //                                 SELECT users.id
-        //                                     ,GROUP_CONCAT(roles.name) AS roles
-        //                                 FROM users
-        //                                 INNER JOIN model_has_roles ON model_has_roles.model_id = users.id
-        //                                 INNER JOIN roles ON roles.id = model_has_roles.role_id
-        //                                 GROUP BY users.name, users.id
-        //                                 ) u2 ON u2.id = u1.id
-        //                             LEFT JOIN user_team ON user_team.user_id = u2.id
-        //                             LEFT JOIN teams ON teams.id = user_team.team_id
-        //                             GROUP BY u1.id
-        //                                     ,u1.name
-        //                                     ,u1.email
-        //                                     ,u2.roles
-        //                                     ,u1.created_at
-        //                                     ,u1.updated_at');
-        //     $filteredData = $users;
-
-        //     if (! empty($request->email)) {
-        //         $collection = collect($filteredData);
-        //         $filteredData = $collection->filter(function ($value, $key) use ($request) {
-        //             return $value->email == $request->email;
-        //         });
-        //     }
-        //     if (! empty($request->name)) {
-        //         $collection = collect($filteredData);
-        //         $filteredData = $collection->filter(function ($value, $key) use ($request) {
-        //             if (str_contains(strtoupper($value->name), strtoupper($request->name))) {
-        //                 return $value;
-        //             }
-        //         });
-        //     }
-
-        //     return Datatables::of($filteredData)
-        //         ->addIndexColumn()
-        //         ->make(true);
-        // }
-
-        // return view('user.view');
     }
 
     /**
