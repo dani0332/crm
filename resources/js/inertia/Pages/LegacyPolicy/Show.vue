@@ -6,6 +6,34 @@ const props = defineProps({
 const moveToImcrmModal = ref(false);
 const itemCount = ref(false);
 
+const maskedEmail = computed(() => {
+  let email = props.policy?.customer?.email;
+
+  // Split the email address into local part and domain part
+  const [localPart, domainPart] = email.split('@');
+
+  //   // Mask the local part (characters before '@')
+  let maskedLocalPart = localPart
+    .split('')
+    .map((char, index) => (index < localPart.length / 2 ? char : '*'))
+    .join('');
+
+  //   // Combine the masked local part with the domain part
+  let data = `${maskedLocalPart}` + '@' + `${domainPart}`;
+
+  return data;
+});
+const maskedMobileNumber = computed(() => {
+  let mobile_no = props.policy?.customer?.mobile_phone;
+
+  let masked = mobile_no
+    .split('')
+    .map((char, index) => (index < mobile_no.length / 2 ? char : '*'))
+    .join('');
+
+  return masked;
+});
+
 const getS3TempUrl = async file => {
   try {
     const response = await axios.post('/legacy-policy/get-s3-temp-url', {
@@ -370,11 +398,11 @@ const moveToImcrm = async (policyNumber, validateAll = true) => {
 
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">Email</dt>
-            <dd>{{ policy.customer?.email }}</dd>
+            <dd>{{ maskedEmail }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">Mobile Number</dt>
-            <dd>{{ policy.customer?.mobile_phone }}</dd>
+            <dd>{{ maskedMobileNumber }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">Phone Number</dt>
