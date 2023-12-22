@@ -8,30 +8,35 @@ const itemCount = ref(false);
 
 const maskedEmail = computed(() => {
   let email = props.policy?.customer?.email;
+  if (email) {
+    // Split the email address into local part and domain part
+    const [localPart, domainPart] = email.split('@');
 
-  // Split the email address into local part and domain part
-  const [localPart, domainPart] = email.split('@');
+    //   // Mask the local part (characters before '@')
+    let maskedLocalPart = localPart
+      .split('')
+      .map((char, index) => (index < localPart.length / 2 ? char : '*'))
+      .join('');
 
-  //   // Mask the local part (characters before '@')
-  let maskedLocalPart = localPart
-    .split('')
-    .map((char, index) => (index < localPart.length / 2 ? char : '*'))
-    .join('');
+    //   // Combine the masked local part with the domain part
+    let data = `${maskedLocalPart}` + '@' + `${domainPart}`;
 
-  //   // Combine the masked local part with the domain part
-  let data = `${maskedLocalPart}` + '@' + `${domainPart}`;
-
-  return data;
+    return data;
+  }
+  return '';
 });
 const maskedMobileNumber = computed(() => {
   let mobile_no = props.policy?.customer?.mobile_phone;
 
-  let masked = mobile_no
-    .split('')
-    .map((char, index) => (index < mobile_no.length / 2 ? char : '*'))
-    .join('');
+  if (mobile_no) {
+    let masked = mobile_no
+      .split('')
+      .map((char, index) => (index < mobile_no.length / 2 ? char : '*'))
+      .join('');
 
-  return masked;
+    return masked;
+  }
+  return '';
 });
 
 const getS3TempUrl = async file => {
