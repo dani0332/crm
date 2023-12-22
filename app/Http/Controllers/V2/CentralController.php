@@ -8,6 +8,8 @@ use App\Enums\QuoteTypes;
 use App\Exports\AmtQuoteExport;
 use App\Exports\BusinessQuoteExport;
 use App\Exports\CarQuoteExport;
+use App\Exports\CarQuoteExportWithEmailMobile;
+use App\Exports\CarQuoteExportWithMakeModelTrims;
 use App\Exports\CarQuoteExportWithPlans;
 use App\Exports\HealthQuotesExport;
 use App\Exports\HomeQuoteExport;
@@ -43,36 +45,38 @@ class CentralController extends Controller
         return back()->with('message', 'Quote is created successfully.');
     }
 
-    public function exportLeads(Request $request, $quoteType)
+    public function exportLeads(Request $request, $quoteType, $exportTye = null)
     {
-        $diffInDays = 120;
-        $export_type = request()->get('export_type');
 
         if (! $quoteType) {
             return abort(404);
         }
 
-        if (request()->has('created_at')) {
-            request()->merge(['created_at_start' => request()->get('created_at')]);
-            request()->query->remove('created_at');
-        }
+        if ($exportTye != GenericRequestEnum::EXPORT_MAKES_MODELS) {
+            $diffInDays = 120;
 
-        if (request()->has('export_type') && in_array($export_type, [GenericRequestEnum::EXTRACT_LEADS_AND_PLAN_DETAIL])) {
-            $diffInDays = 31;
-        }
+            if (request()->has('created_at')) {
+                request()->merge(['created_at_start' => request()->get('created_at')]);
+                request()->query->remove('created_at');
+            }
 
-        $request->validate([
-            'created_at_start' => 'required',
-            'created_at_end' => 'required',
-        ]);
+            if (in_array($exportTye, [GenericRequestEnum::EXPORT_PLAN_DETAIL])) {
+                $diffInDays = 31;
+            }
 
-        $created_at_start = Carbon::parse($request->created_at_start)->format('Y-m-d');
-        $created_at_end = Carbon::parse($request->created_at_end)->format('Y-m-d');
+            $request->validate([
+                'created_at_start' => 'required',
+                'created_at_end' => 'required',
+            ]);
 
-        $diff = Carbon::parse($created_at_start)->diffInDays(Carbon::parse($created_at_end));
+            $created_at_start = Carbon::parse($request->created_at_start)->format('Y-m-d');
+            $created_at_end = Carbon::parse($request->created_at_end)->format('Y-m-d');
 
-        if ($diff > $diffInDays) {
-            return back()->with('error', 'Maximum of '.$diffInDays.' days (created date) are allowed to be exported.');
+            $diff = Carbon::parse($created_at_start)->diffInDays(Carbon::parse($created_at_end));
+
+            if ($diff > $diffInDays) {
+                return back()->with('error', 'Maximum of '.$diffInDays.' days (created date) are allowed to be exported.');
+            }
         }
 
         // For Personal Quotes
@@ -87,8 +91,12 @@ class CentralController extends Controller
         }
 
         if (QuoteTypes::CAR->value == ucfirst($quoteType)) {
-            if ($export_type == GenericRequestEnum::EXTRACT_LEADS_AND_PLAN_DETAIL) {
+            if ($exportTye == GenericRequestEnum::EXPORT_PLAN_DETAIL) {
                 return Excel::download(new CarQuoteExportWithPlans, 'Extract leads and plan detail.xlsx');
+            } elseif ($exportTye == GenericRequestEnum::EXPORT_LEADS_DETAIL_WITH_EMAIL_MOBILE) {
+                return Excel::download(new CarQuoteExportWithEmailMobile, 'Car-Extract-With-Mobile-Email.xlsx');
+            } elseif ($exportTye == GenericRequestEnum::EXPORT_MAKES_MODELS) {
+                return Excel::download(new CarQuoteExportWithMakeModelTrims, 'Car-Extract-With-Make-Model-Trim.xlsx');
             }
         }
 

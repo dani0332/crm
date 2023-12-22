@@ -1799,4 +1799,69 @@ class CarQuoteService extends BaseService
 
         return collect($results);
     }
+
+    public function getExportDataWithMobileAndEmail()
+    {
+        $request = request();
+        $results = DB::table('car_quote_request AS cqr')
+            ->select('cqr.code', 'qb.name AS batch_no', 'cqr.first_name', 'cqr.last_name', 'cqr.email', 'cqr.mobile_no',
+                'cqr.created_at', 'qs.text AS status', 'tr.name AS tier', 'u.name AS assigned_to')
+            ->leftJoin('quote_status AS qs', 'qs.id', '=', 'cqr.quote_status_id')
+            ->leftJoin('users AS u', 'u.id', '=', 'cqr.advisor_id')
+            ->leftJoin('quote_batches AS qb', 'qb.id', '=', 'cqr.quote_batch_id')
+            ->leftJoin('tiers AS tr', 'tr.id', '=', 'cqr.tier_id')
+            ->whereBetween('cqr.created_at', [$request->created_at_start, $request->created_at_end])
+            ->orderBy('cqr.created_at', 'ASC')
+            ->get();
+
+        return collect($results);
+    }
+
+    public function getExportDataWithMakeModelTrim()
+    {
+        $request = request();
+        $results = DB::table('car_make AS cmk')
+            ->select(
+                'cmk.code AS MakeCode',
+                'cmk.text AS make_name',
+                'cmd.code',
+                'cmd.text AS model_name',
+                'cmdd.trim_id AS trim_id',
+                'cmdd.text AS trim_name',
+                'cmdd.default_trim_id',
+                'cmdd.current_value',
+                'cmk.axa_car_make',
+                'cmk.oman_car_make',
+                'cmk.tokio_car_make',
+                'cmk.qatar_car_make',
+                'cmk.rsa_car_make',
+                'cmd.axa_car_model',
+                'cmd.oman_car_model',
+                'cmd.tokio_car_model',
+                'cmd.qatar_car_model',
+                'cmd.rsa_car_model',
+                'cmdd.axa_model_detail',
+                'cmdd.oman_model_detail',
+                'cmdd.no_of_doors',
+                'cmdd.hp',
+                'cmdd.cubic_capacity',
+                'cmdd.transmission',
+                'cmdd.drive_type',
+                'cmdd.seating_capacity',
+                'cmdd.cylinder',
+                'vt.text AS body_type',
+                'cmk.is_active AS make_is_active',
+                'cmd.is_active AS mode_is_active',
+                'cmdd.is_active AS trim_is_active',
+                'cmk.is_deleted AS make_is_deleted',
+                'cmd.is_deleted AS model_is_deleted',
+                'cmdd.is_deleted AS trim_is_deleted'
+            )
+            ->leftJoin('car_model AS cmd', 'cmd.car_make_code', '=', 'cmk.code')
+            ->leftJoin('car_model_detail AS cmdd', 'cmdd.car_model_id', '=', 'cmd.id')
+            ->leftJoin('vehicle_type AS vt', 'vt.id', '=', 'cmdd.vehicle_type_id')
+            ->get();
+
+        return collect($results);
+    }
 }
