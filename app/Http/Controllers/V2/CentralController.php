@@ -47,7 +47,6 @@ class CentralController extends Controller
 
     public function exportLeads(Request $request, $quoteType, $exportTye = null)
     {
-
         if (! $quoteType) {
             return abort(404);
         }
@@ -60,7 +59,7 @@ class CentralController extends Controller
                 request()->query->remove('created_at');
             }
 
-            if (in_array($exportTye, [GenericRequestEnum::EXPORT_PLAN_DETAIL])) {
+            if (in_array($exportTye, [GenericRequestEnum::EXPORT_PLAN_DETAIL, GenericRequestEnum::EXPORT_LEADS_DETAIL_WITH_EMAIL_MOBILE])) {
                 $diffInDays = 31;
             }
 
@@ -92,11 +91,11 @@ class CentralController extends Controller
 
         if (QuoteTypes::CAR->value == ucfirst($quoteType)) {
             if ($exportTye == GenericRequestEnum::EXPORT_PLAN_DETAIL) {
-                return Excel::download(new CarQuoteExportWithPlans, 'Extract leads and plan detail.xlsx');
+                return Excel::download(new CarQuoteExportWithPlans, ucfirst(GenericRequestEnum::EXPORT_PLAN_DETAIL).'.xlsx');
             } elseif ($exportTye == GenericRequestEnum::EXPORT_LEADS_DETAIL_WITH_EMAIL_MOBILE) {
-                return Excel::download(new CarQuoteExportWithEmailMobile, 'Car-Extract-With-Mobile-Email.xlsx');
+                return Excel::download(new CarQuoteExportWithEmailMobile, ucfirst(GenericRequestEnum::EXPORT_LEADS_DETAIL_WITH_EMAIL_MOBILE).'.xlsx');
             } elseif ($exportTye == GenericRequestEnum::EXPORT_MAKES_MODELS) {
-                return Excel::download(new CarQuoteExportWithMakeModelTrims, 'Car-Extract-With-Make-Model-Trim.xlsx');
+                return Excel::download(new CarQuoteExportWithMakeModelTrims, ucfirst(GenericRequestEnum::EXPORT_MAKES_MODELS).'.xlsx');
             }
         }
 
