@@ -113,7 +113,7 @@ class HealthQuoteController extends Controller
             $message = 'Request not processed. '.$responseMessage;
         }
 
-        return $message;
+        return redirect()->back();
     }
 
     public function healthQuoteUpdateMember(MemberDetailRequest $request)
@@ -133,8 +133,7 @@ class HealthQuoteController extends Controller
             }
             $message = 'Request not processed. '.$responseMessage;
         }
-
-        return $message;
+        return redirect()->back();
     }
 
     public function plansByInsuranceProvider(Request $request)

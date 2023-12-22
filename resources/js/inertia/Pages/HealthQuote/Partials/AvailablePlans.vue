@@ -3,6 +3,8 @@ const props = defineProps({
   modelValue: Boolean,
   plan: Object,
   genders: Object,
+  members: Array,
+  memberCategories: Array,
   memebersDetailsChanged: Boolean,
 });
 
@@ -14,10 +16,36 @@ const emit = defineEmits([
   'markPlanAsManual'
 ]);
 
+const dateFormat = date => useDateFormat(date, 'DD-MM-YYYY').value;
+
+const membersDetailRef = ref(props.members);
+
 const showModal = computed({
   get: () => props.modelValue,
   set: val => emit('update:modelValue', val),
 });
+
+const memberCategoryText = memberId =>
+    computed(() => {
+        let memberCategoryId = null;
+        memberCategoryId = membersDetailRef.value.find(member => member.id === memberId)?.member_category_id;
+        return props.memberCategories.find(
+            category => category.id === memberCategoryId,
+        )?.text;
+    }).value;
+
+
+const memberDobText = memberId =>
+    computed(() => {
+        return dateFormat(membersDetailRef.value.find(member => member.id === memberId)?.dob);
+    }).value;
+
+const memberGenderText = memberId =>
+    computed(() => {
+        let gender = null
+        gender = membersDetailRef.value.find(member => member.id === memberId)?.gender;
+        return props.genders[gender]
+    }).value;
 
 const notification = useToast();
 
@@ -60,7 +88,6 @@ const canUpdate = computed(() => {
   );
 });
 
-const dateFormat = date => useDateFormat(date, 'DD-MM-YYYY').value;
 const tabs = ref([
   { index: 0, label: 'General Info' },
   // { index: 1, label: 'IPMI Benefits' },
@@ -414,7 +441,7 @@ onUpdated(() => {
             v-slot="{ selected }"
           >
           <!-- don't remove this commented part anyone please -->
-            <!-- <x-tooltip
+            <x-tooltip
               v-if="label == 'Members' && props.memebersDetailsChanged"
               position="bottom"
               class="arrow-t"
@@ -444,7 +471,7 @@ onUpdated(() => {
                 >Price outdated! <br />
                 Please update</template
               >
-            </x-tooltip> -->
+            </x-tooltip>
 
             <button
               @click="checkLoadingPriceUpdate"
@@ -648,9 +675,9 @@ onUpdated(() => {
             <div class="p-4">
               <DataTable
                 :headers="[
-                  { text: 'Relationship', value: 'memberCategoryText' },
-                  { text: 'DOB', value: 'dob' },
-                  { text: 'Gender', value: 'gender' },
+                  { text: 'Relationship', value: 'membercategory' },
+                  { text: 'DOB', value: 'dobText' },
+                  { text: 'Gender', value: 'genderText' },
                   { text: 'Base Price', value: 'premium'},
                   { text: 'Loading Price', value: 'loadingPrice' },
                   { text: 'Final Price', value: 'finalPrice' },
@@ -710,14 +737,20 @@ onUpdated(() => {
                     </div>
                 </template>
 
-                <template #item-dob="{ dob }">
+                <template #item-membercategory="{memberId}">
+                    {{ memberCategoryText(memberId)  }}
+                </template>
+
+                <template #item-dobText="{ memberId }">
                     <section class="w-28">
-                        {{ dateFormat(dob) }}
+                        {{ memberDobText(memberId) }}
                     </section>
                 </template>
-                <template #item-gender="{ gender }">
-                  {{ genderText(gender) }}
+
+                <template #item-genderText="{ memberId }">
+                  {{ memberGenderText(memberId) }}
                 </template>
+
                 <template #item-premium="item">
                   <section v-for="data in item.ratesPerCopay">
                         <x-input
