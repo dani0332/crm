@@ -437,8 +437,13 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::post('send-bridger-response', [V2AMLController::class, 'sendBridgerResponse'])->name('send-bridger-response');
     });
 
-    Route::resource('send-update-logs', SendUpdateLogController::class);
-    Route::get('send-update-log/{id}', [SendUpdateLogController::class, 'getLogsById'])->name('send-update-logs.get-by-id');
+    Route::controller(SendUpdateLogController::class)->prefix('send-update-logs')->name('send-update-logs.')->group(function () {
+        Route::get('/', 'index')->name('index');
+        Route::post('/', 'store')->name('store');
+        Route::get('/{uuid}', 'show')->name('show');
+        // Route::get('/{id}', 'show')->name('show');
+    });
+    // Route::get('send-update-log/{id}', [SendUpdateLogController::class, 'getLogsById'])->name('send-update-logs.get-by-id');
 
     Route::group(['prefix' => 'medical'], function () {
         if (in_array('Business', newUi())) {

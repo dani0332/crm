@@ -7,10 +7,12 @@ const props = defineProps({
   sendUpdateStatusEnum: Object
 });
 
+const page = usePage();
 const notification = useToast();
 
 const state = reactive({
   edit: false,
+  redirectURL: ''
 });
 
 const currentOption = computed(() => {
@@ -56,6 +58,11 @@ const sendUpdateForm = useForm({
   status: props.sendUpdateLog?.status || '',
   reportable_type: props.sendUpdateLog?.reportable_type || '',
 });
+
+onMounted(() => {
+  const params = new URLSearchParams(decodeURIComponent(page.url.split('?')[1]));
+  state.redirectURL = params.get('refURL');
+})
 
 const redirectBack = () => {
   history.back();
@@ -107,9 +114,10 @@ const onUpdateLog = () => {
         <x-button
           color="primary"
           size="sm"
-          @click="redirectBack"
           class="mr-5"
-          >Go back to lead</x-button
+          >
+          <Link :href="state.redirectURL" tag="div">Go back to lead</Link>
+          </x-button
         >
       </div>
       <x-divider class="my-4" />

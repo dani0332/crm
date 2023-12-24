@@ -143,9 +143,10 @@ const onAddUpdate = (autoSubmit) => {
     .transform(data => ({
       ...data,
       quote_type_id: props.quote_type_id,
-      reportable_type: `App\\Models\\${data.reportable_type}`
+      reportable_type: `App\\Models\\${data.reportable_type}`,
+      refURL: page.url,
     }))
-    .post(`/send-update-logs`, {
+    .post(route('send-update-logs.store'), {
       onSuccess: () => {
         modals.show = false
         resetForm()
@@ -259,7 +260,7 @@ const findOption = (item, key) => {
             </x-tooltip>
           </template>
           <template #item-code="{ code, uuid }">
-            <Link :href="route('quotes.car.view-update-log', {id: reportableUuid, uuid: uuid})" class="text-primary-800 underline">{{ code }}</Link>
+            <Link :href="route('send-update-logs.show', {uuid: uuid, refURL: $page.url})" replace class="text-primary-800 underline">{{ code }}</Link>
           </template>
 
           <template #item-type="item">
@@ -321,7 +322,7 @@ const findOption = (item, key) => {
               :hasError="optionError"
               :options="form.childCategory.childs.map(item => ({ label: item.title, value: item.id, tooltip: item.tooltip }))"
               :rules="[isRequired]"
-              :placeholder="['endorsement financial', 'endorsement non financial'].includes(form.childCategory.title.toLowerCase()) ? 'Select Subtype' : 'Select Reason'"
+              :placeholder="['EF', 'EN'].includes(form.childCategory.slug) ? 'Select Subtype' : 'Select Reason'"
               class="w-full"
             />
           </x-field>

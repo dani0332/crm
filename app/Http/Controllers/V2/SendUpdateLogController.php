@@ -25,20 +25,19 @@ class SendUpdateLogController extends Controller
 
         $this->updateQuoteLeadStatus($data, 'create');
 
-        return redirect(route('quotes.car.view-update-log', ['id' => $request->reportable_uuid, 'uuid' => $response->uuid]));
+        return redirect(route('send-update-logs.show', ['uuid' => $response->uuid, 'refURL' => $data['refURL']]));
     }
 
     /**
      * Display the specified resource.
      */
-    public function show($id, $uuid)
+    public function show($uuid)
     {
         $sendUpdateLog = SendUpdateLogRepository::getLogByUuid($uuid);
 
         $sendUpdateOptions = (new LookupService)->getSendUpdateOptions($sendUpdateLog->quote_type_id);
 
         return inertia('SendUpdateLog/Show', [
-            'quoteId' => $id,
             'sendUpdateLog' => $sendUpdateLog,
             'sendUpdateOptions' => $sendUpdateOptions,
             'sendUpdateStatusEnum' => SendUpdateLogStatusEnum::asArray()
