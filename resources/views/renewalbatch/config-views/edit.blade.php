@@ -1,6 +1,18 @@
 @extends('layouts.app')
 @section('title', 'Retention Configs | Edit')
 @section('content')
+    <script src="{{ asset('vendors/jquery/dist/jquery.min.js') }}"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            $('.date-search-field').datepicker({
+                dateFormat: "yy-mm-dd",
+                changeMonth: true,
+                changeYear: true,
+            });
+            $('.date-search-field').prop('readonly', true);
+        });
+    </script>
     <div class="row">
         <div class="col-md-12 col-sm-12">
             <div class="x_panel">
@@ -26,15 +38,15 @@
                                     <div class="col">
                                         <label for="formGroupExampleInput">Batch Start <span
                                                 class="required">*</span></label>
-                                        <input type="date" class="form-control" name="start_date"
+                                        <input type="text" class="form-control date-search-field" name="start_date"
                                             value="{{ $renewalBatch->start_date }}"
                                             placeholder="Batch Start Date">
                                     </div>
                                     <div class="col">
                                         <label for="formGroupExampleInput">Batch End <span class="required">*</span></label>
-                                        <input type="date" class="form-control" name="end_date"
+                                        <input type="text" class="form-control date-search-field" name="end_date"
                                             value="{{ $renewalBatch->end_date }}"
-                                            placeholder="Batch Start Date">
+                                            placeholder="Batch End Date">
                                     </div>
                                     <div class="col">
                                         <label for="formGroupExampleInput">Batch Month <span class="required">*</span></label>
@@ -68,17 +80,17 @@
                                     <div class="col">
                                         <label for="formGroupExampleInput"> <b> {{ \App\Enums\quoteStatusCode::CAR_SOLD}} Deadline </b> <span
                                                 class="required">*</span></label>
-                                        <input type="date" class="form-control" name="deadline_date[{{\App\Enums\QuoteStatusEnum::CarSold}}]"
+                                        <input type="text" class="form-control date-search-field" name="deadline_date[{{\App\Enums\QuoteStatusEnum::CarSold}}]"
                                             value="{{ $carSoldDeadline ?: old('deadline_date[]') }}"
-                                            placeholder="Batch Start Date">
+                                            placeholder="Car Sold Deadline">
                                         <input type="hidden" name="quote_status_id[]" value="{{ \App\Enums\QuoteStatusEnum::CarSold}}">
                                     </div>
                                     <div class="col">
                                         <label for="formGroupExampleInput"> <b>{{ \App\Enums\quoteStatusCode::UNCONTACTABLE}} Deadline </b> <span
                                                 class="required">*</span></label>
-                                        <input type="date" class="form-control" name="deadline_date[{{\App\Enums\QuoteStatusEnum::Uncontactable}}]"
+                                        <input type="text" class="form-control date-search-field" name="deadline_date[{{\App\Enums\QuoteStatusEnum::Uncontactable}}]"
                                             value="{{ $uncontactableDeadline ?: old('deadline_date[]') }}"
-                                            placeholder="Batch Start Date">
+                                            placeholder="Car Uncontactable Deadline">
                                         <input type="hidden" name="quote_status_id[]" value="{{ \App\Enums\QuoteStatusEnum::Uncontactable}}">
                                     </div>
                                 </div>

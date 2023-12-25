@@ -316,8 +316,8 @@ use App\Enums\PermissionsEnum;
                     <li><a><i class="fa fa-desktop"></i> AML <span class="fa fa-chevron-down"></span></a>
                         <ul class="nav child_menu">
                             <li><a href="{{ url('kyc/aml') }}">All Quotes</a></li>
-                            <li><a href="{{ url('kyc/aml/download/history') }}">Downloaded Sanction Lists</a></li>
-                            <li><a href="{{ url('kyc/aml/upload/uae') }}">Upload UAE List</a></li>
+                            <!-- <li><a href="{{ url('kyc/aml/download/history') }}">Downloaded Sanction Lists</a></li>
+                            <li><a href="{{ url('kyc/aml/upload/uae') }}">Upload UAE List</a></li> -->
                         </ul>
                     </li>
                 </ul>
@@ -340,7 +340,7 @@ use App\Enums\PermissionsEnum;
                 </ul>
                 @endif --}}
                 @can(PermissionsEnum::TeleMarketingList)
-                <!-- <ul class="nav side-menu">
+                <ul class="nav side-menu">
                     <li><a><i class="fa fa-quote-left"></i> Telemarketing <span class="fa fa-chevron-down"></span></a>
                         <ul class="nav child_menu">
                             <li><a href="{{ url('telemarketing/tmleads') }}">TM Leads</a></li>
@@ -362,7 +362,7 @@ use App\Enums\PermissionsEnum;
                             @endcan
                         </ul>
                     </li>
-                </ul> -->
+                </ul>
                 @endcan
                 @canany([PermissionsEnum::UsersList, PermissionsEnum::RoleList, PermissionsEnum::TeamsList,
                 PermissionsEnum::InsuranceProviderList, PermissionsEnum::ApplicationStorageList,PermissionsEnum::RULE_CONFIG_LIST, PermissionsEnum::QUAD_CONFIG_LIST , PermissionsEnum::TIER_CONFIG_LIST, PermissionsEnum::TeamThresholdView,
