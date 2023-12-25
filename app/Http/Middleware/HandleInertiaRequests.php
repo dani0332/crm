@@ -403,9 +403,9 @@ class HandleInertiaRequests extends Middleware
         if (auth()->user()->can(PermissionsEnum::AMLList)) {
             $nav = $nav->add('AML', '', function (Section $section) {
                 $section
-                    ->add('All Quotes', url('kyc/aml'), fn ($s) => $s->attributes(['icon' => 'box']))
-                    ->add('Downloaded Sanction Lists', url('kyc/aml/download/history'), fn ($s) => $s->attributes(['icon' => 'box']))
-                    ->add('Upload UAE List', url('kyc/aml/upload/uae'), fn ($s) => $s->attributes(['icon' => 'box']));
+                    ->add('All Quotes', url('kyc/aml'), fn ($s) => $s->attributes(['icon' => 'box']));
+                // ->add('Downloaded Sanction Lists', url('kyc/aml/download/history'), fn ($s) => $s->attributes(['icon' => 'box']))
+                // ->add('Upload UAE List', url('kyc/aml/upload/uae'), fn ($s) => $s->attributes(['icon' => 'box']));
             });
         }
 
@@ -415,30 +415,30 @@ class HandleInertiaRequests extends Middleware
 
         $nav = $nav->addIf(auth()->user()->hasRole(RolesEnum::BetaUser), 'Legacy Policy', url('legacy-policy'));
 
-        if (auth()->user()->can(PermissionsEnum::TeleMarketingList)) {
-            $nav = $nav->add('Telemarketing', '', function (Section $section) {
-                $section
-                    ->add('TM Leads', url('telemarketing/tmleads'), fn ($s) => $s->attributes(['icon' => 'box']))
-                    ->addIf(
-                        auth()->user()->can(PermissionsEnum::TMUploadLeadsList),
-                        'Upload TM Leads',
-                        url('telemarketing/tmuploadlead'),
-                        fn ($s) => $s->attributes(['icon' => 'box'])
-                    )
-                    ->addIf(
-                        auth()->user()->can(PermissionsEnum::CRMAdmin),
-                        'TM Type of Insurance',
-                        url('telemarketing/tminsurancetype'),
-                        fn ($s) => $s->attributes(['icon' => 'box'])
-                    )
-                    ->addIf(
-                        auth()->user()->can(PermissionsEnum::CRMAdmin),
-                        'TM Lead Status',
-                        url('telemarketing/tmleadstatus'),
-                        fn ($s) => $s->attributes(['icon' => 'box'])
-                    );
-            });
-        }
+        // if (auth()->user()->can(PermissionsEnum::TeleMarketingList)) {
+        //     $nav = $nav->add('Telemarketing', '', function (Section $section) {
+        //         $section
+        //             ->add('TM Leads', url('telemarketing/tmleads'), fn ($s) => $s->attributes(['icon' => 'box']))
+        //             ->addIf(
+        //                 auth()->user()->can(PermissionsEnum::TMUploadLeadsList),
+        //                 'Upload TM Leads',
+        //                 url('telemarketing/tmuploadlead'),
+        //                 fn ($s) => $s->attributes(['icon' => 'box'])
+        //             )
+        //             ->addIf(
+        //                 auth()->user()->can(PermissionsEnum::CRMAdmin),
+        //                 'TM Type of Insurance',
+        //                 url('telemarketing/tminsurancetype'),
+        //                 fn ($s) => $s->attributes(['icon' => 'box'])
+        //             )
+        //             ->addIf(
+        //                 auth()->user()->can(PermissionsEnum::CRMAdmin),
+        //                 'TM Lead Status',
+        //                 url('telemarketing/tmleadstatus'),
+        //                 fn ($s) => $s->attributes(['icon' => 'box'])
+        //             );
+        //     });
+        // }
         if (auth()->user()->hasAnyPermission([
             PermissionsEnum::UsersList, PermissionsEnum::RoleList,
             PermissionsEnum::TeamsList, PermissionsEnum::COMMERCIAL_KEYWORDS,
