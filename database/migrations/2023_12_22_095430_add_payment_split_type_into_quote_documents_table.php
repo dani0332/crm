@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::table('quote_documents', function (Blueprint $table) {
             if (! Schema::hasColumn('quote_documents', 'payment_split_type')) {
-                $table->string('payment_split_type',255)->nullable()->default(null);                
+                $table->string('payment_split_type', 255)->nullable()->default(null);
             }
         });
     }

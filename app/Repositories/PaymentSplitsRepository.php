@@ -86,7 +86,7 @@ class PaymentSplitsRepository
                 }
             }
         }
-        $this->uploadDiscountDocuments($request->split_payment_details['discount_documents'],$quoteID);
+        $this->uploadDiscountDocuments($request->split_payment_details['discount_documents'], $quoteID);
     }
 
     public function generateSplitPaymentLink($code, $splitPaymentId, $modelType, $quoteId)
@@ -156,14 +156,16 @@ class PaymentSplitsRepository
         if ($paymentSplits) {
             foreach ($paymentSplits as $paymentSplit) {
                 if ($paymentSplit->payment_status_id == PaymentStatusEnum::PAID ||
-                    $paymentSplit->payment_status_id == PaymentStatusEnum::AUTHORISED ) {
+                    $paymentSplit->payment_status_id == PaymentStatusEnum::AUTHORISED) {
                     $paymentPaidSerialNo[] = $paymentSplit->sr_no;
+
                     continue;
                 }
                 if (($request->payment_no < $paymentSplits->count()) && $paymentSplit->sr_no > $request->payment_no) {
                     QuoteDocument::where('payment_split_id', $paymentSplit->id)->delete();
                     $paymentSplit->delete();
                     unset($splitPaymentDetails[$paymentSplit->sr_no]);
+
                     continue;
                 }
             }
@@ -199,7 +201,7 @@ class PaymentSplitsRepository
                 } else {
                     $paymentSplitRecord->update($splitPaymentInformation);
                     $this->setMasterPaymentStatus($paymentSplitRecord->id);
-                }               
+                }
                 //add document references
                 if (isset($request->split_payment_details['document_detail'][$i])
                     && $paymentSplitRecord
@@ -215,13 +217,14 @@ class PaymentSplitsRepository
                 }
             }
         }
-        $this->uploadDiscountDocuments($request->split_payment_details['discount_documents'],$request->paymentCode);
+        $this->uploadDiscountDocuments($request->split_payment_details['discount_documents'], $request->paymentCode);
     }
 
-    public function uploadDiscountDocuments ($discountDocuments, $code) {
-        if ( isset($discountDocuments)  && count($discountDocuments) ) {
+    public function uploadDiscountDocuments($discountDocuments, $code)
+    {
+        if (isset($discountDocuments) && count($discountDocuments)) {
             $paymentSplitRecord = PaymentSplits::where(['code' => $code])->first();
-            foreach ($discountDocuments[0] as $document) { 
+            foreach ($discountDocuments[0] as $document) {
                 $quoteDocumentRec = QuoteDocument::find($document['id']);
                 if ($quoteDocumentRec) {
                     $quoteDocumentRec->payment_split_id = $paymentSplitRecord->id;
@@ -271,10 +274,10 @@ class PaymentSplitsRepository
                 foreach ($request->collection_amount as $key => $splitAmount) {
                     $paymentSplit = PaymentSplits::where(['code' => $quoteModel->code, 'sr_no' => $key])->first();
                     if ($paymentSplit) {
-                        if($paymentSplit->payment_method == PaymentMethodsEnum::CreditCard) {
+                        if ($paymentSplit->payment_method == PaymentMethodsEnum::CreditCard) {
                             $paymentSplit->payment_status_id = PaymentStatusEnum::PAID;
                         }
-                        $paymentSplit->collection_amount = $splitAmount;                        
+                        $paymentSplit->collection_amount = $splitAmount;
                         $paymentSplit->save();
                     }
                     $totalCapturedPayment += $splitAmount;
