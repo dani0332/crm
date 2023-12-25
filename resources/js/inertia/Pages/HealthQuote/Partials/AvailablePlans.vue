@@ -277,6 +277,7 @@ const handleLoadingPrice = (event, memberId) => {
       price: event.target.value,
     });
   }
+  console.log(loadingPrices.value);
 };
 
 const checkLoadingPriceUpdate = e => {
@@ -353,6 +354,7 @@ const onLoadingPricesUpdate = member => {
 };
 
 onUpdated(() => {
+    console.log(props.plan);
     defaultCopayId.value = props.plan?.selectedCopayId;
     loadingPrices.value = [];
     selectedCopay.value = [];
@@ -442,7 +444,7 @@ onUpdated(() => {
           >
           <!-- don't remove this commented part anyone please -->
             <x-tooltip
-              v-if="label == 'Members' && props.memebersDetailsChanged"
+              v-if="label == 'Members' && (props.memebersDetailsChanged || (props.plan.isManualPlan && props.plan.needPriceUpdate))"
               position="bottom"
               class="arrow-t"
             >
@@ -473,7 +475,7 @@ onUpdated(() => {
               >
             </x-tooltip>
 
-            <button
+            <button v-else
               @click="checkLoadingPriceUpdate"
               :class="[
                 'rounded-lg px-3 py-2 md:min-w-[15%] text-sm font-medium text-gray-800 transition duration-200 ease-in-out uppercase',
@@ -756,7 +758,7 @@ onUpdated(() => {
                         <x-input
                         v-if="data.healthPlanCoPaymentId == selectedCopay.id"
                         :value="data.premium?.toLocaleString()"
-                        :disabled="data.premium != 0"
+                        :disabled="(data.premium > 0 || data.premium || !isManual)"
                         size="sm"
                         @update:modelValue="onMemberPremiumUpdate(item, $event)"
                         />
@@ -767,7 +769,7 @@ onUpdated(() => {
                             data.healthPlanCoPaymentId == defaultCopayId
                         "
                         :value="data.premium?.toLocaleString()"
-                        :disabled="data.premium != 0"
+                        :disabled="(data.premium > 0 || data.premium || !isManual)"
                         size="sm"
                         @update:modelValue="onMemberPremiumUpdate(item, $event)"
                         />
@@ -845,17 +847,17 @@ onUpdated(() => {
                 <template #item-finalPrice="item">
                   <section v-for="data in item.ratesPerCopay">
                     <x-input
-                      v-if="data.healthPlanCoPaymentId == selectedCopay.id && data.loadingPrice != undefined"
+                      v-if="data.healthPlanCoPaymentId == selectedCopay.id && data.loadingPrice != undefined && data.loadingPrice != 0"
                       :disabled="true"
                       size="sm"
                       :value="
                         (
-                          Number(data.loadingPrice) + Number(data.premium)
+                          Number(data.loadingPrice) + Number(data.premium || 0)
                         )?.toLocaleString()
                       "
                     />
                     <x-input
-                      v-else-if="data.healthPlanCoPaymentId == selectedCopay.id && data.loadingPrice == undefined"
+                      v-else-if="data.healthPlanCoPaymentId == selectedCopay.id && (data.loadingPrice == undefined || data.loadingPrice == 0)"
                       :disabled="true"
                       size="sm"
                       :value="
@@ -863,7 +865,7 @@ onUpdated(() => {
                           Number(
                             loadingPrices[memberIndexPerId(item.memberId)]
                               ?.price || 0,
-                          ) + Number(data.premium)
+                          ) + Number(data.premium || 0)
                         )?.toLocaleString()
                       "
                     />
@@ -872,13 +874,13 @@ onUpdated(() => {
                         (selectedCopay === undefined ||
                           selectedCopay.length == 0) &&
                         data.healthPlanCoPaymentId == defaultCopayId
-                        && data.loadingPrice != undefined
+                        && data.loadingPrice != undefined && data.loadingPrice != 0
                       "
                       :disabled="true"
                       size="sm"
                       :value="
                         (
-                          Number(data.loadingPrice) + Number(data.premium)
+                          Number(data.loadingPrice) + Number(data.premium || 0)
                         )?.toLocaleString()
                       "
                     />
@@ -887,7 +889,7 @@ onUpdated(() => {
                         (selectedCopay === undefined ||
                           selectedCopay.length == 0) &&
                         data.healthPlanCoPaymentId == defaultCopayId
-                        && data.loadingPrice == undefined
+                        && (data.loadingPrice == undefined || data.loadingPrice == 0)
                       "
                       :disabled="true"
                       size="sm"
@@ -896,7 +898,7 @@ onUpdated(() => {
                           Number(
                             loadingPrices[memberIndexPerId(item.memberId)]
                               ?.price || 0,
-                          ) + Number(data.premium)
+                          ) + Number(data.premium || 0)
                         )?.toLocaleString()
                       "
                     />

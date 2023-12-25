@@ -857,6 +857,14 @@ const getSmallestCopayRateAsDefaultValue = () => {
         }
     });
 
+    element.memberPremiumBreakdown?.forEach(function callback(breakDown, index){
+        breakDown.ratesPerCopay?.forEach(function callback(ratePerCopay){
+            if (!ratePerCopay.premium) {
+                element.needPriceUpdate = true;
+            }
+        });
+    });
+
     if (isMounted.value && selectedCoPay.planId == element.id) {
       element.actualPremium = selectedCoPay.premium;
       element.vat = selectedCoPay.vat;
@@ -2581,7 +2589,7 @@ const handleChildUpdate = planId => {
           <div class="flex gap-2 pr-2">
             <!-- put here -->
             <!-- don't remove this commented code anyone please -->
-            <template v-if="membersDetailsUpdated && item.isManualPlan && false"> <!-- always false temporarily -->
+            <template v-if="(item.isManualPlan || membersDetailsUpdated) && item.needPriceUpdate "> <!-- always false temporarily -->
             <x-tooltip position="top" class="arrow-b">
                 <x-badge
                     size="xs"
