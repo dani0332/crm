@@ -111,7 +111,7 @@ const updateComputedPlanDetails = () => {
   console.log('plan selected at', planSelectedAt, prefillPlanSelectedAt);
 
   if (planSelectedAt > prefillPlanSelectedAt) {
-      console.log('plan selected at is greater than prefill plan selected at');    
+      console.log('plan selected at is greater than prefill plan selected at :' , "PRICE", page.props.record.premium, "PLAN", page.props.record.plan_id_text, "PROVIDER",  page.props.record.car_plan_provider_id_text);    
       computedPlanDetails.premium = page.props.record.premium,
       computedPlanDetails.planName = page.props.record.plan_id_text,
       computedPlanDetails.providerName = page.props.record.car_plan_provider_id_text
@@ -305,8 +305,12 @@ const availablePlansTable = reactive({
 });
 
 watch(availablePlansTable, (newPlans) =>  {
+
+  let planSelectedAt = page.props.record.plan_selected_at;
+  let prefillPlanSelectedAt = page.props.record.prefill_plan_selected_at;
+  
   //find selected plan from available plans and calculate prefilled plan premium
-  if(page.props.record.prefill_plan_id)
+  if(page.props.record.prefill_plan_id && prefillPlanSelectedAt > planSelectedAt )
   {
     let selectedPlan = newPlans.data.find(
         plan => plan.id === page.props.record.prefill_plan_id,
@@ -314,6 +318,7 @@ watch(availablePlansTable, (newPlans) =>  {
 
     computedPlanDetails.premium = (selectedPlan.discountPremium + selectedPlan.vat + getAddonVat(selectedPlan)).toFixed(2);
   }  
+
 });
 
 const documentsTable = reactive({
