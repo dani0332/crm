@@ -23,4 +23,5 @@ final class DatabaseColumnsString extends Enum
     public const LOST_REASON = 'lost_reason';
     public const CAR_VALUE_TIER = 'car_value_tier';
     public const DATE_OF_BIRTH = 'dob';
+    public const CODE = 'code';
 }

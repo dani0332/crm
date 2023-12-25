@@ -577,3 +577,18 @@ if (! function_exists('checkModifiedRecord')) {
             Carbon::parse($secondDate)->format(config('constants.datetime_format'));
     }
 }
+
+if (! function_exists('dateQueryFilter')) {
+    function dateQueryFilter($firstDate, $secondDate, $clauseTypeBetween = true): array
+    {
+        $firstDate = date(config('constants.DATE_FORMAT_ONLY').' 00:00:00', strtotime($firstDate));
+        $secondDate = date(config('constants.DATE_FORMAT_ONLY').' 23:59:59', strtotime($secondDate));
+        $currentDate = Carbon::now()->format(config('constants.DB_DATE_FORMAT_MATCH'));
+
+        if ($clauseTypeBetween) {
+            return [$firstDate, $secondDate];
+        }
+
+        return [$currentDate, $currentDate];
+    }
+}
