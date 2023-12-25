@@ -255,7 +255,7 @@ class AMLController extends Controller
             'amlDecisionStatusEnum' => AMLDecisionStatusEnum::asArray(),
             'lookups' => $lookups,
             'quoteAmlStatus' => $checkScreeningStatus[$quoteRequest->quote_status_id] ?? null,
-            'cardHolderName' => $cardHolderName
+            'cardHolderName' => $cardHolderName,
         ];
 
         if ($quoteType->code == quoteTypeCode::Business) {
