@@ -119,7 +119,7 @@ const masterPaymentStatus = ref('NEW');
 const calculateTotalAmount = () => {
   const discount = discountValue.value;
   console.log('azharDISCOUNT='+paymentMethodsForm.discount+discount);
-  if (discount > 50 && paymentMethodsForm.discount === 'refer_a_friend') {
+  if (discount > 50 && paymentMethodsForm.discount_reason === 'refer_a_friend') {
     totalAmount.value = totalPrice.value;
   } else {
     totalAmount.value = totalPrice.value - discount;    
@@ -360,7 +360,7 @@ const validatePaymentOption = () => {
           discountError.value = 'Discount should not exceed total amount';
         }
         if(
-        paymentMethodsForm.discount === 'refer_a_friend' ||
+        paymentMethodsForm.discount_reason === 'refer_a_friend' ||
         paymentMethodsForm.discount === 'incentive_offset' ||
         paymentMethodsForm.discount === 'managerial_approval_discount'      
         ){
@@ -373,7 +373,7 @@ const validatePaymentOption = () => {
           }
           
           // Check if the discount exceeds 50 and return an error message
-          if (discountValue.value > 50 && paymentMethodsForm.discount === 'refer_a_friend') {
+          if (discountValue.value > 50 && paymentMethodsForm.discount_reason === 'refer_a_friend') {
             issueFound = true; 
             isDiscountError.value = true;
             discountError.value =  'Discount should not exceed 50 AED';
@@ -440,8 +440,6 @@ const creditApprovalReasons = [
 ];
 let discountTypes = [
       { value: '', label: 'Discount Type'},
-      { value: 'refer_a_friend', label: 'Refer a friend', tooltip: props.paymentTooltipEnum.DISCOUNT_TYPE_LIST_REFER },
-      { value: 'incentive_offset', label: 'Incentive offset', tooltip: props.paymentTooltipEnum.DISCOUNT_TYPE_LIST_INCENTIVE },
       { value: 'managerial_approval_discount', label: 'Managerial approval discount', tooltip: props.paymentTooltipEnum.DISCOUNT_TYPE_LIST_MANAGERIAL },
       { value: 'employee_discount', label: 'Employee discount', tooltip: props.paymentTooltipEnum.DISCOUNT_TYPE_LIST_EMPLOYEE },
       { value: 'family_employee_discount', label: 'Family employee discount', tooltip: props.paymentTooltipEnum.DISCOUNT_TYPE_LIST_FAMILY }, 
@@ -452,6 +450,7 @@ if (!(familyEmployeDiscount.includes(props.quoteType))) {
 
 const discountReasons = [
   { value: '', label: ''},
+  { value: 'refer_a_friend', label: 'Refer a friend', tooltip: props.paymentTooltipEnum.DISCOUNT_TYPE_LIST_REFER },
   { value: 'promotional_campaign_discount', label: 'Promotional campaign discount', tooltip: props.paymentTooltipEnum.DISCOUNT_REASON_LIST_PROMOTIONAL },
   { value: 'loyalty_reward_discount', label: 'Loyalty reward discount', tooltip: props.paymentTooltipEnum.DISCOUNT_REASON_LIST_LOYALTY },
   { value: 'competitive_pricing_discount', label: 'Competitive pricing discount', tooltip: props.paymentTooltipEnum.DISCOUNT_REASON_LIST_COMPETITIVE },
@@ -461,6 +460,9 @@ const discountReasons = [
 const handleDiscountReasonChange = () => {
   isDiscountReasonError.value=false
   isCustomDiscountReasonEnabled.value=false;
+  if (paymentMethodsForm.discount_reason === 'refer_a_friend') {
+    calculateTotalAmount();
+  }
   if (paymentMethodsForm.discount_reason === 'discount_custom_reason' ){
     paymentMethodsForm.discount_custom_reason = '';
     isCustomDiscountReasonEnabled.value=true;
@@ -607,11 +609,8 @@ const handleDiscountChange = () => {
     isDiscountEnabled.value = true; 
     isDiscountReasonEnabled.value = true;   
   }  
-  if(
-    paymentMethodsForm.discount === 'refer_a_friend' ||
-    paymentMethodsForm.discount === 'incentive_offset' ||
+  if(    
     paymentMethodsForm.discount === 'managerial_approval_discount'
-    
     ){
     isDiscountReasonEnabled.value = true;
   } else {
@@ -2175,15 +2174,16 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
                 :rules="[rules.isRequired]"                
               />
           </x-field>
-          <div v-if="isDiscountReasonEnabled" class="">
+          <div v-if="isDiscountEnabled && paymentMethodsForm.discount!='N/A'" class="">
             <ToolTip
                title="DISCOUNT PROOF"
               :tooltip="(isFieldReadonly)? paymentTooltipEnum.PAYMENT_DISCOUNT_PROOF_VIEW: paymentTooltipEnum.PAYMENT_DISCOUNT_PROOF_TITLE"
               :required="!isFieldReadonly"
             />          
             <x-field v-if="!isFieldReadonly" class="w-full">             
-              <x-tooltip>  
-                <Dropzone
+              <div class="relative group text-center">
+                <span>
+                  <Dropzone
                     :id="paymentDocument[0].id"
                     customDisplay="true"
                     multiple="true"
@@ -2193,10 +2193,17 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
                     :loading="documentForm.processing"
                     @change="uploadDocument(paymentDocument[0], $event, 0)"                  
                   />
-                  <template #tooltip>
-                      <span>{{ paymentTooltipEnum.DOCUMENTS_UPLOAD }}</span>
-                    </template>
-              </x-tooltip>
+                </span>
+                <div class="absolute text-left hidden group-hover:block transform transition-transform z-40 h-fit _popoverContent_1wc81_3 top-full bottom-0 _popoverBottom_1wc81_14 left-1/4 right-full -translate-x-1/2 max-w-xs">
+                  <div class="dark">
+                    <div class="x-popover-container block w-full bg-white dark:bg-gray-700 shadow-lg rounded-md border border-gray-200 dark:border-gray-800 p-2 text-white text-sm w-max max-w-xs">
+                      <span data-v-d0063695="" class="custom-tooltip-content">
+                        {{ paymentTooltipEnum.DOCUMENTS_UPLOAD }}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
                 <p v-if="isDiscountDocumentNotUploaded" class="text-sm text-red-500 dark:text-red-400 mt-1">This field is required</p>
             </x-field>
             <div v-for="fileData in discountDocumentModel[0]" :key="fileData.id">
@@ -2219,9 +2226,6 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
               </span>
             </div>
           </div>
-
-
-
             <div v-if="isDiscountEnabled && paymentMethodsForm.discount!='N/A'">             
               <ToolTip
                   title="DISCOUNT VALUE"
