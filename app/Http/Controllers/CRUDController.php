@@ -814,7 +814,7 @@ class CRUDController extends Controller
                     $listQuotePlans = [];
                 }
             }
-
+            $coPayment = $this->healthQuoteService->getCoPayment($id);
             $uboDetails = CustomerMembersRepository::getBy($record->id, QuoteTypes::HEALTH->name, CustomerTypeEnum::Entity);
             $membersDetail = CustomerMembersRepository::getBy($record->id, QuoteTypes::HEALTH->name);
             $memberCategories = $this->lookupService->getMemberCategories();
@@ -885,6 +885,7 @@ class CRUDController extends Controller
                 'allowedDuplicateLOB' => $allowedDuplicateLOB,
                 'leadStatuses' => array_values($leadStatuses->toArray()),
                 'ecomDetails' => $ecomDetails,
+                'coPayment' => $coPayment,
                 'membersDetail' => $membersDetail,
                 'memberCategories' => $memberCategories,
                 'memberRelations' => $memberRelations,
