@@ -111,10 +111,10 @@ const source_type_list = [
     { text: 'Renewal', value: 'Renewal_upload' },
 ];
 const tableHeader = [
-    { text: 'CDB ID', value: 'code' },
+    { text: 'Ref ID', value: 'code' },
     { text: 'FIRST NAME', value: 'first_name' },
     { text: 'LAST NAME', value: 'last_name' },
-    { text: 'Insurance provider', value: 'currently_insured_with' },
+    { text: 'CURRENTLY INSURED WITH', value: 'currently_insured_with' },
     { text: 'POLICY START DATE', value: 'policy_start_date' },
     { text: 'POLICY EXPIRY DATE', value: 'renewal_expiry_date' },
     { text: 'GROSS PREMIUM', value: 'premium' },
@@ -122,7 +122,7 @@ const tableHeader = [
     { text: 'ADVISOR', value: 'advisor' },
 ];
 const tableHeader2 = [
-  { text: 'CDB ID', value: 'code' },
+  { text: 'Ref ID', value: 'code' },
   { text: 'CURRENTLY INSURED WITH', value: 'currently_insured_with' },
   { text: 'POLICY START DATE', value: 'policy_start_date' },
   { text: 'POLICY EXPIRY DATE', value: 'renewal_expiry_date' },
@@ -180,9 +180,9 @@ const permissionsEnum = page.props.permissionsEnum;
                     v-model="filters.code"
                     type="search"
                     name="code"
-                    label="CDB ID"
+                    label="Ref ID"
                     class="w-full"
-                    placeholder="Search by CDB ID"
+                    placeholder="Search by Ref ID"
                 />
             </div>
             <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">

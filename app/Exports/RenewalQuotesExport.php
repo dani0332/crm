@@ -33,7 +33,7 @@ class RenewalQuotesExport implements FromQuery, WithHeadings, WithMapping, Shoul
     {
         return [
             'Ref-ID',
-            'Cusotmer Name',
+            'Customer Name',
             'Currently insured with',
             'Product',
             'Policy start date',
