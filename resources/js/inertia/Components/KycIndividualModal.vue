@@ -106,8 +106,6 @@ const onKycSubmit = isValid => {
             title: 'KYC Document uploaded.',
             position: 'top',
           });
-          // props.status(false);
-          // props.buttonStatus(true);
         } else {
           notification.error({
             title: 'Document not uploaded.',
@@ -192,11 +190,6 @@ const complianceDisable = reactive({
 });
 
 const complianceRules = computed(() => {
-  // return hasRole(props.roles.COMPLIANCE) ||
-  //   hasRole(props.roles.ComplianceSuperUser)
-  //   ? [rules.isRequired]
-  //   : [];
-
   return can(permissionsEnum.AMLDecisionUpdate) ||
     can(permissionsEnum.AMLDecisionUpdateTrueMatch)
     ? [rules.isRequired]
@@ -204,11 +197,6 @@ const complianceRules = computed(() => {
 });
 
 onMounted(() => {
-  // complianceDisable.isDisable = !(
-  //   hasRole(props.roles.COMPLIANCE) || hasRole(props.roles.ComplianceSuperUser)
-  // );
-
-  console.log(complianceDisable.isDisable);
   complianceDisable.isDisable = !(
     can(permissionsEnum.AMLDecisionUpdate) ||
     can(permissionsEnum.AMLDecisionUpdateTrueMatch)
@@ -516,10 +504,6 @@ onMounted(() => {
     </div>
 
     <div class="flex justify-center gap-3 mt-7">
-      <!-- <x-button size="sm" @click.prevent="status(false)">
-          Cancel
-        </x-button> -->
-
       <x-button
         :loading="isLoading"
         size="sm"
