@@ -33,10 +33,7 @@ const computedMembers = computed(() => {
 
 const addMember = ref(false);
 const editMemberDetails = ref(false);
-const addMemberToggle = (payload = false) => {
-  addMember.value = !addMember.value;
-  if (payload) memberForm.reset();
-};
+
 const memberDetailsTable = reactive({
   isLoading: false,
   columns: [

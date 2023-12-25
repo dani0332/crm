@@ -4,6 +4,7 @@ namespace App\Http\Controllers\V2;
 
 use App\Enums\AMLDecisionStatusEnum;
 use App\Enums\CustomerTypeEnum;
+use App\Enums\DatabaseColumnsString;
 use App\Enums\LookupsEnum;
 use App\Enums\quoteStatusCode;
 use App\Enums\QuoteStatusEnum;
@@ -17,7 +18,6 @@ use App\Http\Requests\UpdateAMLCustomerDetailRequest;
 use App\Http\Requests\UpdateAMLEntityDetailRequest;
 use App\Jobs\BridgerAMLJob;
 use App\Models\AML;
-use App\Models\ApplicationStorage;
 use App\Models\BusinessCoverType;
 use App\Models\BusinessQuoteType;
 use App\Models\CommunicationMode;
@@ -42,7 +42,6 @@ use App\Services\AMLService;
 use App\Services\BridgerInsightService;
 use App\Services\CheckAmlService;
 use App\Services\QuoteStatusService;
-use App\Services\SanctionListService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use DataTables;
@@ -91,8 +90,8 @@ class AMLController extends Controller
                     } else {
                         if (isset($request->searchType) && in_array($request->searchType, ['cdbId', 'customerEmail'])) {
                             $searchType = match ($request->searchType) {
-                                'cdbId' => 'code',
-                                'customerEmail' => 'email',
+                                'cdbId' => DatabaseColumnsString::CODE,
+                                'customerEmail' => DatabaseColumnsString::EMAIL,
                             };
 
                             $createdDate =
@@ -139,9 +138,7 @@ class AMLController extends Controller
                     isset($request->amlCreatedStartDate) && ! empty($request->amlCreatedStartDate) &&
                     isset($request->amlCreatedEndDate) && ! empty($request->amlCreatedEndDate)
                 ) {
-                    $amlCreatedDate = date(config('constants.DATE_FORMAT_ONLY').' 00:00:00', strtotime($request->amlCreatedStartDate));
-                    $amlEndDate = date(config('constants.DATE_FORMAT_ONLY').' 23:59:59', strtotime($request->amlCreatedEndDate));
-                    $dataAml->whereBetween($quoteRequestTable.'.created_at', [$amlCreatedDate, $amlEndDate]);
+                    $dataAml->whereBetween($quoteRequestTable.'.created_at', dateQueryFilter($request->amlCreatedStartDate, $request->amlCreatedEndDate));
                 }
 
                 $quotes = $dataAml->simplePaginate(10)->withQueryString();
@@ -162,19 +159,14 @@ class AMLController extends Controller
      */
     public function show(AML $aml)
     {
-        $responseFrom = 'RYU';
-        $amlResults = json_decode($aml->results);
+        $amlResults = collect(json_decode($aml->results))->first() ?? [];
+        $manualStatusUpdateIM = collect($amlResults->ManualStatusUpdateIM ?? []);
         $aml->quote_type_text = $aml->quotetype->text;
-        $quoteStatusCodes = quoteStatusCode::asArray();
-        $amlDecisionStatusCodes = AMLDecisionStatusEnum::asArray();
-        $manualStatusUpdateIM = collect($amlResults[0]->ManualStatusUpdateIM ?? []);
         $quoteType = QuoteType::where('id', $aml->quote_type_id)->first();
         $quoteObject = $this->getQuoteObject($quoteType->code, $aml->quote_request_id);
 
-        if (isset($amlResults[0]->Watchlist)) {
-            $responseFrom = 'Bridger';
-
-            $amlResults = collect($amlResults[0]->Watchlist->Matches)->filter(function ($value) use ($manualStatusUpdateIM) {
+        if (isset($amlResults->Watchlist)) {
+            $amlResults = collect($amlResults->Watchlist->Matches)->filter(function ($value) use ($manualStatusUpdateIM) {
                 $value->decision = (! $value->FalsePositive && ! $value->TrueMatch) ?
                     ($manualStatusUpdateIM->has($value->ID) ? $manualStatusUpdateIM->get($value->ID) : AMLDecisionStatusEnum::UNKNOWN) :
                     AMLDecisionStatusEnum::TRUE_MATCH;
@@ -186,18 +178,15 @@ class AMLController extends Controller
         return inertia('Aml/Show', [
             'aml' => $aml,
             'amlResults' => $amlResults,
-            'responseFrom' => $responseFrom,
-            'quoteStatusCode' => $quoteStatusCodes,
-            'amlDecisionStatusCode' => $amlDecisionStatusCodes,
+            'quoteStatusCode' => quoteStatusCode::asArray(),
+            'amlDecisionStatusCode' => AMLDecisionStatusEnum::asArray(),
             'quoteObject' => $quoteObject,
         ]);
     }
 
     public function amlQuoteDetails($quoteTypeId, $quoteRequestId)
     {
-        $quoteStatusCode = '';
         $quoteType = QuoteType::where('id', $quoteTypeId)->firstOrFail();
-        $isCompanySearchEnabled = ApplicationStorage::where('key_name', '=', 'IS_AML_ENTITY_SEARCH_ENABLED')->value('value');
         $amlRecordFetch = AML::with('quotetype')->where(['quote_request_id' => $quoteRequestId, 'quote_type_id' => $quoteTypeId])
             ->where(function ($aml) {
                 $aml->whereNotIn('decision', [AMLDecisionStatusEnum::RYU]);
@@ -214,19 +203,6 @@ class AMLController extends Controller
         $uboDetails = CustomerMembersRepository::getBy($quoteRequest->id, $quoteType->code, CustomerTypeEnum::Entity);
         $nationalities = NationalityRepository::withActive()->get();
         $emirates = Emirate::where('is_active', 1)->orderBy('sort_order')->get();
-        $isCurrentUserFromCompliance = auth()->user()->hasRole(RolesEnum::COMPLIANCE) ? 1 : 0;
-        $isCurrentUserFromPaAml = auth()->user()->hasAnyRole([RolesEnum::PA, RolesEnum::AML]) ? 1 : 0;
-        $sanctionListService = app(SanctionListService::class);
-        $nationalityList = $sanctionListService->fetchNationality();
-        $yearsList = $sanctionListService->years();
-        $firstAmlLogResults = $amlRecordFetch->first()->results_found ?? 0;
-        $latestAmlLogResults = $amlRecordFetch->latest()->first()->results_found ?? 0;
-        $getAMLNumRows = $amlRecordFetch->count();
-
-        if ($quoteRequest && $quoteRequest->quote_status_id && $quoteRequest->quote_status_id != '') {
-            $quoteStatus = QuoteStatus::where('id', '=', $quoteRequest->quote_status_id)->get(['code']);
-            $quoteStatusCode = $quoteStatus[0]->code;
-        }
 
         $lookups = Lookup::whereIn('key', [
             LookupsEnum::RESIDENT_STATUS,
@@ -249,8 +225,8 @@ class AMLController extends Controller
         $lookups = $lookups->mapWithKeys(function ($item, $key) {
             return [str_replace('-', '_', $key) => $item];
         });
-        $amlDecisionStatusEnum = AMLDecisionStatusEnum::asArray();
 
+        $checkScreeningStatus = [QuoteStatusEnum::AMLScreeningCleared => 2, QuoteStatusEnum::AMLScreeningFailed => 1];
         $kycStatus = AMLService::getKycType($quoteTypeId, $quoteRequestId);
 
         $payment = Payment::where('code', $quoteRequest->code)
@@ -275,20 +251,11 @@ class AMLController extends Controller
             'customerTypeEnum' => CustomerTypeEnum::asArray(),
             'kycLogs' => $kycLogs,
             'kycStatus' => $kycStatus,
-            'quoteStatusCode' => $quoteStatusCode,
-            'isCurrentUserFromCompliance' => $isCurrentUserFromCompliance,
-            'isCurrentUserFromPaAml' => $isCurrentUserFromPaAml,
-            'firstAmlLogResults' => $firstAmlLogResults,
-            'latestAmlLogResults' => $latestAmlLogResults,
-            'getAMLNumRows' => $getAMLNumRows,
-            'nationalityList' => $nationalityList,
-            'yearsList' => $yearsList,
-            'isCompanySearchEnabled' => $isCompanySearchEnabled,
             'customerDetails' => $customerDetails,
-            'amlDecisionStatusEnum' => $amlDecisionStatusEnum,
+            'amlDecisionStatusEnum' => AMLDecisionStatusEnum::asArray(),
             'lookups' => $lookups,
-            'quoteAmlStatus' => $this->checkAmlQuoteStatus($quoteRequest->quote_status_id),
-            'cardHolderName' => $cardHolderName,
+            'quoteAmlStatus' => $checkScreeningStatus[$quoteRequest->quote_status_id] ?? null,
+            'cardHolderName' => $cardHolderName
         ];
 
         if ($quoteType->code == quoteTypeCode::Business) {
@@ -619,17 +586,6 @@ class AMLController extends Controller
         }
 
         return response()->json($response);
-    }
-
-    private function checkAmlQuoteStatus($statusId)
-    {
-        if ($statusId == QuoteStatusEnum::AMLScreeningCleared) {
-            return 2;
-        } elseif ($statusId == QuoteStatusEnum::AMLScreeningFailed) {
-            return 1;
-        }
-
-        return null;
     }
 
     private function AMLJobDispatchForMembers($updateQuote, $membersDetails, $bridgerAPIToken, $quoteRequestId, $quoteTypeId, $customerType)
