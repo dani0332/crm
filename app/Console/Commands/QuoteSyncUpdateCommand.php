@@ -72,7 +72,11 @@ class QuoteSyncUpdateCommand extends Command
                             if (in_array($columnType, ['string', 'date', 'datetime'])) {
                                 $value = "'$value'";
                             }
+                            if($column == 'currently_insured_with'){
+                                $quote->currently_insured_with_id = $value;
+                            } else {
                             $quote->$column = $value;
+                            }
                         }
 
                         if (! $quoteDetail) {
@@ -142,7 +146,11 @@ class QuoteSyncUpdateCommand extends Command
                 }
 
                 if (Schema::hasColumn('personal_quotes', $column)) {
+                    if($column == 'currently_insured_with'){
+                        $personalQuote->currently_insured_with_id = $value;
+                    } else {
                     $personalQuote->$column = $value;
+                    }
                 }
             }
             $personalQuote->uuid = $entry->quote_uuid;
