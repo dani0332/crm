@@ -34,7 +34,7 @@ class RenewalQuotesExport implements FromQuery, WithHeadings, WithMapping, Shoul
         return [
             'Ref-ID',
             'Cusotmer Name',
-            'Insurance provider',
+            'Currently insured with',
             'Product',
             'Policy start date',
             'Policy expiry date',
@@ -46,7 +46,6 @@ class RenewalQuotesExport implements FromQuery, WithHeadings, WithMapping, Shoul
 
     public function map($quote): array
     {
-
         return [
             $quote->code,
             $quote->first_name.' '.$quote->last_name,
