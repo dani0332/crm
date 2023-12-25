@@ -2,7 +2,6 @@
 
 namespace App\Exports;
 
-use App\Repositories\TravelQuoteRepository;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\FromQuery;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
@@ -26,16 +25,16 @@ class TmLeadsExport implements FromQuery, ShouldAutoSize, WithHeadings, WithMapp
     public function headings(): array
     {
         return [
-            'TM ID', 
-            'CUSTOMER NAME', 
-            'INSURANCE TYPE', 
-            'LEAD STATUS', 
-            'NOTES', 
+            'TM ID',
+            'CUSTOMER NAME',
+            'INSURANCE TYPE',
+            'LEAD STATUS',
+            'NOTES',
             'ENQUIER DATE',
             'ALLOCATION DATE',
             'NEXT FOLLOW-UP DATE',
-            'ADVISOR', 
-            'CREATED AT', 
+            'ADVISOR',
+            'CREATED AT',
             'UPDATED AT',
         ];
     }

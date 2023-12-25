@@ -448,7 +448,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     });
 
     Route::group(['prefix' => 'telemarketing'], function () {
-        
+
         Route::get('/tmleads/export', [TmLeadController::class, 'exportTMLead'])->name('tmLead.export');
         Route::resource('tmleads', TmLeadController::class)->names(generateRouteNames('tmleads'));
         Route::resource('tminsurancetype', TmInsuranceTypeController::class);
