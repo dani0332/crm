@@ -10,6 +10,7 @@ defineProps({
   quote: Object,
   leadStatuses: Array,
   ecomDetails: Object,
+  coPayment: Object,
   membersDetail: Array,
   memberCategories: Array,
   memberRelations: Array,
@@ -531,7 +532,12 @@ const plansTable = reactive({
       value: 'eligibilityName',
     },
     {
-      text: 'Price',
+      text: 'CO-PAY/CO-INSURANCE',
+      value: 'copayName',
+      width: 100
+    },
+    {
+      text: 'Base Price',
       value: 'actualPremium',
     },
     {
@@ -826,6 +832,14 @@ const getSmallestCopayRateAsDefaultValue = () => {
       element.actualPremium = smallestCopayValue;
       element.vat = smallestCopayVAT;
     }
+      element.coPayments.forEach(function callback(value, index) {
+          if(value.id ==  element.selectedCopayId){
+              element.copayName = value.text;
+          }
+
+      });
+
+
   });
 };
 
@@ -2297,10 +2311,14 @@ const handleChildUpdate = planId => {
             <dt class="font-medium">TOTAL PRICE (with VAT)</dt>
             <dd>{{ fixedValue(ecomDetails.priceWithVAT) }}</dd>
           </div>
+            <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">CO-PAY / CO-INSURANCE</dt>
+                <dd>{{ (coPayment)?coPayment.text:'N/A' }}</dd>
+            </div>
         </dl>
       </div>
     </div>
-    
+
 
     <!-- <div class="p-4 rounded shadow mb-6 bg-white" v-if="isQuoteDocumentEnabled">
       <div>
@@ -2470,9 +2488,14 @@ const handleChildUpdate = planId => {
         border-cell
         hide-rows-per-page
         :rows-per-page="15"
+        class="flex-wrap"
         :hide-footer="listQuotePlansFiltered.length < 15"
       >
+          <template #item-copayName="item">
+              <span class="copay-max">{{item.copayName}}</span>
+          </template>
         <template #item-providerName="{ providerName, isManualPlan, isHidden }">
+
           <p>{{ providerName }}</p>
           <div class="flex gap-1">
             <x-tag
@@ -2501,11 +2524,12 @@ const handleChildUpdate = planId => {
             </x-tag>
           </div>
         </template>
-        <template #item-total="{ actualPremium, policyFee, basmah, vat }">
-          {{
-            fixedValue(actualPremium + (policyFee || 0) + (basmah || 0) + vat)
-          }}
-        </template>
+
+          <template #item-total="{ actualPremium, policyFee, basmah, vat }">
+              {{
+                  fixedValue(actualPremium + (policyFee || 0) + (basmah || 0) + vat)
+              }}
+          </template>
         <template #item-action="item">
           <div class="flex gap-2 pr-2">
             <x-button
@@ -2661,7 +2685,7 @@ const handleChildUpdate = planId => {
         </div>
       </x-modal>
     </div>
-    <PaymentTableNew 
+    <PaymentTableNew
 			v-if="hasRole(rolesEnum.BetaUser)"
 			quoteType="Health"
 			:payments="payments"
