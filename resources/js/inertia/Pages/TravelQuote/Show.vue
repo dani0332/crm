@@ -2300,7 +2300,7 @@ const genderList = [
 			v-if="hasRole(rolesEnum.BetaUser)"
 			quoteType="Travel"
 			:payments="payments"
-			:paymentDocument="documentTypes.QUOTE.filter(item => item.code === 'TPD' || item.code === 'TPDR')"
+			:paymentDocument="documentTypes.QUOTE.filter(item => item.code === 'TPD' || item.code === 'TPDR' || item.code === 'TDPDR')"
 			:quoteRequest="quoteRequest"
 			:paymentStatusEnum="enums.paymentStatusEnum"
 			:paymentTooltipEnum="paymentTooltipEnum"

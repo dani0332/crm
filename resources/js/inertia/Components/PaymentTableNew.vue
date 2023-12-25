@@ -1541,7 +1541,8 @@ const uploadDocument = (doc, files, count) => {
 };
 
 const getCaptureValidation = computed(() => {  
-  if ( props.payments.length>0 ) {
+  //6 =AML Screening Cleared
+  if ( props.payments.length>0 && props.quoteRequest.quote_status_id === 6  && props.quoteRequest.kyc_decision === 'Complete') {
     if(props.payments[0].is_approved===1){
       return false;
     }
@@ -2184,14 +2185,14 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
               <div class="relative group text-center">
                 <span>
                   <Dropzone
-                    :id="paymentDocument[0].id"
+                    :id="paymentDocument[2].id"
                     customDisplay="true"
                     multiple="true"
-                    :accept="paymentDocument[0].accepted_files"
-                    :max-files="paymentDocument[0].max_files"
-                    :max-size="paymentDocument[0].max_size"
+                    :accept="paymentDocument[2].accepted_files"
+                    :max-files="paymentDocument[2].max_files"
+                    :max-size="paymentDocument[2].max_size"
                     :loading="documentForm.processing"
-                    @change="uploadDocument(paymentDocument[0], $event, 0)"                  
+                    @change="uploadDocument(paymentDocument[2], $event, 0)"                  
                   />
                 </span>
                 <div class="absolute text-left hidden group-hover:block transform transition-transform z-40 h-fit _popoverContent_1wc81_3 top-full bottom-0 _popoverBottom_1wc81_14 left-1/4 right-full -translate-x-1/2 max-w-xs">

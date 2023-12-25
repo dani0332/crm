@@ -83,6 +83,10 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redirect;
+use App\Http\Requests\StorePaymentRequest;
+use App\Http\Requests\UpdatePaymentRequest;
+use App\Http\Requests\SplitPaymentUpdateRequest;
+use App\Http\Requests\SplitPaymentApproveRequest;
 
 class CRUDController extends Controller
 {
@@ -1679,7 +1683,7 @@ class CRUDController extends Controller
         return redirect()->back()->with('message', 'Document has been deleted.');
     }
 
-    public function storePayment(Request $request)
+    public function storePayment(StorePaymentRequest $request)
     {
         $quoteModel = $this->getQuoteObject($request->modelType, $request->quote_id);
         if (! $quoteModel) {
@@ -1782,7 +1786,7 @@ class CRUDController extends Controller
         }
     }
 
-    public function splitPaymentUpdate(Request $request)
+    public function splitPaymentUpdate(SplitPaymentUpdateRequest $request)
     {
         if (auth()->user()->can(PermissionsEnum::ApprovePayments)) {
             $successMessage = $this->paymentSplitsRepository->updatePaymentStatus($request);
@@ -1793,7 +1797,7 @@ class CRUDController extends Controller
         }
     }
 
-    public function splitPaymentsApprove(Request $request)
+    public function splitPaymentsApprove(SplitPaymentApproveRequest $request)
     {
         if (auth()->user()->can(PermissionsEnum::ApprovePayments)) {
             $successMessage = $this->paymentSplitsRepository->updateSplitPaymentsApprove($request);
@@ -1804,7 +1808,7 @@ class CRUDController extends Controller
         }
     }
 
-    public function updatePayment(Request $request)
+    public function updatePayment(UpdatePaymentRequest $request)
     {
 
         if (auth()->user()->hasRole(RolesEnum::BetaUser)) {
