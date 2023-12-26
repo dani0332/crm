@@ -2156,17 +2156,13 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
         <template #body>
           <x-divider class="my-4" />
           <div class="flex gap-2 mb-3 justify-end">
-            <x-button
-              @click.prevent="modals.doc = true"
-              size="sm"
-              color="orange"
-              v-if="
-                permissions.canNotEditPayments &&
-                permissions.notProductionApproval
-              "
-            >
-              Upload Documents
-            </x-button>
+          <x-button
+            @click.prevent="modals.doc = true"
+            size="sm"
+            color="orange"
+          >
+            Upload Documents
+          </x-button>
             <x-button
               size="sm"
               color="red"
@@ -2413,7 +2409,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       :link="ecomTravelInsuranceQuoteUrl + quote.uuid"
       :code="quote.code"
       :quote="quote"
-      :modelType="modelType"
+      :modelType="quoteType"
       :expanded="sectionExpanded"
     />
 
