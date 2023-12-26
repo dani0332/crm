@@ -102,6 +102,18 @@ function setExportStrings(){
       exportLink.href = '/renewals/search/export'+queryParams;
     }
 }
+
+function getProductName(id){
+    let businessName = '';
+    page.props.products.map((item)=>
+    {
+        if(item.id == id){
+            businessName = item.text;
+        }
+    });
+
+   return  businessName;
+}
 onMounted(() => {
     setQueryStringFilters();
     setExportStrings();
@@ -112,23 +124,32 @@ const source_type_list = [
 ];
 const tableHeader = [
     { text: 'Ref ID', value: 'code' },
-    { text: 'FIRST NAME', value: 'first_name' },
-    { text: 'LAST NAME', value: 'last_name' },
+    { text: 'PRODUCT', value: 'advisor' },
     { text: 'CURRENTLY INSURED WITH', value: 'currently_insured_with' },
     { text: 'POLICY START DATE', value: 'policy_start_date' },
     { text: 'POLICY EXPIRY DATE', value: 'renewal_expiry_date' },
     { text: 'GROSS PREMIUM', value: 'premium' },
-    { text: 'CREATED DATE', value: 'created_at' },
-    { text: 'ADVISOR', value: 'advisor' },
+
 ];
 const tableHeader2 = [
   { text: 'Ref ID', value: 'code' },
+    { text: 'PRODUCT', value: 'advisor' },
   { text: 'CURRENTLY INSURED WITH', value: 'currently_insured_with' },
   { text: 'POLICY START DATE', value: 'policy_start_date' },
   { text: 'POLICY EXPIRY DATE', value: 'renewal_expiry_date' },
   { text: 'GROSS PREMIUM', value: 'premium' },
-  { text: 'CREATED DATE', value: 'created_at' },
-  { text: 'ADVISOR', value: 'advisor' },
+
+];
+
+const businessHeaders = [
+    { text: 'Ref ID', value: 'code' },
+    { text: 'PRODUCT', value: 'advisor' },
+    { text: 'SUB TYPE', value: 'subtype' },
+    { text: 'CURRENTLY INSURED WITH', value: 'currently_insured_with' },
+    { text: 'POLICY START DATE', value: 'policy_start_date' },
+    { text: 'POLICY EXPIRY DATE', value: 'renewal_expiry_date' },
+    { text: 'GROSS PREMIUM', value: 'premium' },
+
 ];
 
 const can = permission => useCan(permission);
@@ -230,7 +251,7 @@ const permissionsEnum = page.props.permissionsEnum;
         <DataTable
             table-class-name="tablefixed"
             :loading="loader.table"
-            :headers="filters.product == 1?tableHeader2:tableHeader"
+            :headers="filters.product == 1?tableHeader2:(filters.product == 5?businessHeaders:tableHeader)"
             :items=" quotes.data || []"
             border-cell
             hide-rows-per-page
@@ -240,10 +261,13 @@ const permissionsEnum = page.props.permissionsEnum;
                     {{ code }}
             </template>
 
-            <template #item-advisor="{ advisor }">
-                {{ advisor?.name }}
+            <template #item-advisor="item">
+                {{ getProductName(filters.product)}}
             </template>
-
+            <template #item-subtype="item">
+                {{item.business_type_of_insurance?item.business_type_of_insurance.code:'N/A'}}
+            </template>
+            subtype
             <template #item-insurance_provider="{ insurance_provider }">
                 {{ insurance_provider?.text }}
             </template>
