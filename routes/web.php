@@ -442,7 +442,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::get('/', 'index')->name('index');
         Route::post('/', 'store')->name('store');
         Route::get('/{uuid}', 'show')->name('show');
-        // Route::get('/{id}', 'show')->name('show');
+        Route::patch('/update/{id}', 'update')->name('update');
     });
     // Route::get('send-update-log/{id}', [SendUpdateLogController::class, 'getLogsById'])->name('send-update-logs.get-by-id');
 
