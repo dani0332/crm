@@ -172,6 +172,7 @@ const onSearch = id => {
             v-for="{
               id,
               uuid,
+              code,
               first_name,
               last_name,
               premium,
@@ -185,7 +186,7 @@ const onSearch = id => {
             class="block p-3 mt-2 border bg-white border-gray-300 space-y-2 hover:transition hover:border-primary-500 rounded"
           >
             <div class="font-semibold text-sm">
-              {{ uuid }}
+              {{ code }}
             </div>
             <div class="flex items-center gap-2">
               <x-icon icon="person" size="sm" class="text-primary-400" />
