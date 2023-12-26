@@ -54,8 +54,18 @@ final class QuoteStatusEnum extends Enum
     const Stale = 54;
     const CarSold = 52;
     const Uncontactable = 53;
-//    IDs check karni hain
-    const ApplicationSubmitted = 54;
     const Allocated = 55;
-    const RenewwalTermsReceived = 56;
+    const RenewalTermsReceived = 56;
+    const ProposalFormRequested = 57;
+    const ProposalFormReceived = 58;
+    const PendingRenewalInformation = 59;
+    const AdditionalInformationRequested = 60;
+    const QuoteRequested = 61;
+    const FinalizingTerms = 62;
+    const QuotedByUW = 63;
+    const SentForTransactionApproval = 64;
+    const CancellationPending = 65;
+    const PolicySentToCustomer = 66;
+    const PolicyBooked = 67;
+    const PolicyCancelled = 68;
 }
