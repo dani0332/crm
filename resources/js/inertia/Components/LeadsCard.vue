@@ -111,7 +111,7 @@ const onSearch = id => {
     <div
       class="flex flex-col flex-shrink-0 gap-1.5 p-3 border-b border-gray-300 bg-white text-xs"
     >
-      <h4 class="font-semibold text-sm">{{ quote.text }}</h4>
+      <h4 class="font-semibold text-sm">{{ quote.text ?? quote.title }}</h4>
       <div class="flex justify-between gap-1">
         <span>Total Leads</span>
         <span>{{ quote.data.total_leads }}</span>
@@ -147,7 +147,7 @@ const onSearch = id => {
         <p>No Leads Found</p>
       </div>
       <leads-card-item
-        :id="quote.text.split(' ').join('')"
+        :id="quote.title.split(' ').join('')"
         :leads="quote.data.leads_list.data"
       />
       <div
