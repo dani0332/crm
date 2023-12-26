@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Enums\QuoteTypeId;
 use App\Models\QuoteStatus;
 use App\Models\QuoteStatusMap;
 use Illuminate\Database\Seeder;
@@ -3527,5 +3528,47 @@ class QuoteStatusTableSeeder extends Seeder
             ]);
         }
         // JETSKI - END
+
+        $newQuoteSortIter = 60;
+        $newMappingSortIter = 22;
+        $newQuoteStatuses = [
+            ['code' => 'Allocated', 'text' => 'Allocated', 'mapped_with' => [QuoteTypeId::Health, QuoteTypeId::GroupMedical, QuoteTypeId::Travel, QuoteTypeId::Home, QuoteTypeId::Pet, QuoteTypeId::Cycle, QuoteTypeId::Corpline]],
+            ['code' => 'RenewalTermsReceived', 'text' => 'Renewal Terms Received', 'mapped_with' => [QuoteTypeId::Health, QuoteTypeId::GroupMedical, QuoteTypeId::Home, QuoteTypeId::Pet, QuoteTypeId::Cycle, QuoteTypeId::Corpline]],
+            ['code' => 'ProposalFormRequested', 'text' => 'Proposal Form Requested', 'mapped_with' => [QuoteTypeId::Corpline]],
+            ['code' => 'ProposalFormReceived', 'text' => 'Proposal Form Received', 'mapped_with' => [QuoteTypeId::Corpline]],
+            ['code' => 'PendingRenewalInformation', 'text' => 'Pending Renewal Information', 'mapped_with' => [QuoteTypeId::Corpline]],
+            ['code' => 'AdditionalInformationRequested', 'text' => 'Additional Information Requested', 'mapped_with' => [QuoteTypeId::Corpline]],
+            ['code' => 'QuoteRequested', 'text' => 'Quote Requested', 'mapped_with' => [QuoteTypeId::Corpline]],
+            ['code' => 'FinalizingTerms', 'text' => 'Finalizing Terms', 'mapped_with' => [QuoteTypeId::Corpline]],
+            ['code' => 'QuotedByUW', 'text' => 'Quote by UW', 'mapped_with' => [QuoteTypeId::GroupMedical, QuoteTypeId::Travel, QuoteTypeId::Home, QuoteTypeId::Pet, QuoteTypeId::Cycle, QuoteTypeId::Corpline]],
+            ['code' => 'SentForTransactionApproval', 'text' => 'Sent for Transaction Approval', 'mapped_with' => [QuoteTypeId::Car, QuoteTypeId::Bike, QuoteTypeId::Health, QuoteTypeId::GroupMedical, QuoteTypeId::Travel, QuoteTypeId::Home, QuoteTypeId::Pet, QuoteTypeId::Cycle, QuoteTypeId::Corpline]],
+            ['code' => 'CancellationPending', 'text' => 'Cancellation Pending', 'mapped_with' => [QuoteTypeId::Car, QuoteTypeId::Bike, QuoteTypeId::Health, QuoteTypeId::GroupMedical, QuoteTypeId::Travel, QuoteTypeId::Home, QuoteTypeId::Pet, QuoteTypeId::Cycle, QuoteTypeId::Corpline]],
+            ['code' => 'PolicySentToCustomer', 'text' => 'Policy sent to customer', 'mapped_with' => [QuoteTypeId::Car, QuoteTypeId::Bike, QuoteTypeId::Health, QuoteTypeId::GroupMedical, QuoteTypeId::Travel, QuoteTypeId::Home, QuoteTypeId::Pet, QuoteTypeId::Cycle, QuoteTypeId::Corpline]],
+            ['code' => 'PolicyBooked', 'text' => 'Policy Booked', 'mapped_with' => [QuoteTypeId::Car, QuoteTypeId::Bike, QuoteTypeId::Health, QuoteTypeId::GroupMedical, QuoteTypeId::Travel, QuoteTypeId::Home, QuoteTypeId::Pet, QuoteTypeId::Cycle, QuoteTypeId::Corpline]],
+            ['code' => 'PolicyCancelled', 'text' => 'Policy Cancelled', 'mapped_with' => [QuoteTypeId::Car, QuoteTypeId::Bike, QuoteTypeId::Health, QuoteTypeId::GroupMedical, QuoteTypeId::Travel, QuoteTypeId::Home, QuoteTypeId::Pet, QuoteTypeId::Cycle, QuoteTypeId::Corpline]],
+        ];
+
+        foreach ($newQuoteStatuses as $quoteStatus) {
+            $quoteStatusDetails = QuoteStatus::firstOrCreate(['code' => $quoteStatus['code']], [
+                'text' => $quoteStatus['text'],
+                'text_ar' => $quoteStatus['text'],
+                'is_active' => 1,
+                'sort_order' => ++$newQuoteSortIter,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'created_by' => 'bilal.saeed@insurancemarket.ae',
+                'updated_by' => 'bilal.saeed@insurancemarket.ae',
+            ]);
+
+            foreach ($quoteStatus['mapped_with'] as $mapped) {
+                QuoteStatusMap::firstOrCreate(['quote_type_id' => $mapped, 'quote_status_id' => $quoteStatusDetails->id], [
+                    'sort_order' => ++$newMappingSortIter,
+                    'created_by' => 'bilal.saeed@insurancemarket.ae',
+                    'updated_by' => 'bilal.saeed@insurancemarket.ae',
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
+        }
     }
 }
