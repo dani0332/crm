@@ -1,4 +1,5 @@
 <script setup>
+import { useSortable } from '@vueuse/integrations/useSortable';
 const page = usePage();
 const dateFormat = date => {
   return useDateFormat(date, 'DD-MM-YYYY HH:mm:ss').value;
@@ -10,6 +11,14 @@ const quotes = reactive({
   searching: false,
   pages: {},
   queries: {},
+});
+
+const el = ref(null);
+useSortable(el.value, quotes?.data?.leads_list?.data, {
+  group: 'shared',
+  onUpdate: e => {
+    console.log(e);
+  },
 });
 
 const onLoadMore = id => {
@@ -95,7 +104,13 @@ const onSearch = id => {
   <div>
     <Head title="Health List ~ Card View" />
     <div class="flex justify-between items-center">
-      <h2 class="text-xl font-semibold">Health List</h2>
+      <div class="flex items-center gap-5">
+        <h2 class="text-xl font-semibold">Health List</h2>
+        <span class="border-2 rounded-lg px-3 bg-gray-200 text-sm font-medium"
+          >786</span
+        >
+      </div>
+
       <div class="space-x-2">
         <Link :href="route('health.index')">
           <x-button size="sm" color="#1d83bc"> List View </x-button>
@@ -176,26 +191,44 @@ const onSearch = id => {
             <p>No Leads Found</p>
           </div>
           <a
-            v-for="{
-              id,
-              uuid,
-              code,
-              first_name,
-              last_name,
-              premium,
-              updated_at,
-              company_name,
-            } in quote.data.leads_list.data"
+            v-for="(
+              {
+                id,
+                uuid,
+                code,
+                first_name,
+                last_name,
+                premium,
+                updated_at,
+                company_name,
+              },
+              index
+            ) in quote.data.leads_list.data"
             :key="id"
             :href="`/quotes/health/${uuid}`"
             target="_blank"
             title="View Lead"
-            class="block p-3 mt-2 border border-gray-300 bg-white space-y-2 hover:transition hover:border-primary-500 rounded"
+            class="block p-3 mt-2 border border-gray-300 space-y-2 hover:transition hover:border-primary-500 rounded"
+            :class="index == 2 ? 'bg-error-200' : 'bg-white'"
+            ref="el"
           >
-            <div class="font-semibold text-sm">{{ code }}</div>
+            <!-- <div class="font-semibold text-sm">{{ code }}</div> -->
+            <p class="font-semibold text-sm">
+              {{ first_name }} {{ last_name }}
+            </p>
             <div class="flex items-center gap-2">
-              <x-icon icon="person" size="sm" class="text-primary-400" />
-              <p class="text-xs">{{ first_name }} {{ last_name }}</p>
+              <x-tooltip>
+                <x-icon icon="person" size="sm" class="text-primary-400" />
+                <template #tooltip>
+                  <span class="text-xs"
+                    >This indicates the specific type of insurance
+                    coverage.</span
+                  >
+                </template>
+              </x-tooltip>
+
+              <!-- <p class="text-xs">{{ first_name }} {{ last_name }}</p> -->
+              <p class="text-xs">Individual</p>
             </div>
 
             <div v-if="company_name" class="flex items-center gap-2">
@@ -204,16 +237,32 @@ const onSearch = id => {
             </div>
 
             <div class="flex items-center gap-2">
-              <x-icon icon="money" size="sm" class="text-primary-400" />
+              <x-tooltip>
+                <x-icon icon="money" size="sm" class="text-primary-400" />
+                <template #tooltip>
+                  <span
+                    >The complete amount due including VAT and before any
+                    potential discounts. Remember, VAT is exempt for Life
+                    Insurance policies.</span
+                  >
+                </template>
+              </x-tooltip>
               <p class="text-xs">{{ Number(premium).toLocaleString() }}</p>
             </div>
 
             <div class="flex items-center gap-2">
-              <x-icon icon="calendar" size="sm" class="text-primary-400" />
+              <x-tooltip>
+                <x-icon icon="calendar" size="sm" class="text-primary-400" />
+                <template #tooltip>
+                  <span
+                    >The 'Last Modified Date' displays the most recent date and
+                    time when the lead was last worked on.</span
+                  >
+                </template>
+              </x-tooltip>
               <p class="text-xs">{{ dateFormat(updated_at) }}</p>
             </div>
           </a>
-
           <div
             class="mt-3"
             v-if="
