@@ -92,6 +92,63 @@ class HealthQuoteController extends Controller
     // TODO: Code Refactor
     public function cardsView(Request $request)
     {
+        //        $quotes = [];
+//        if (in_array(auth()->user()->sub_team_id, [8]) || auth()->user()->hasRole(RolesEnum::HealthManager) || true) {
+//
+//            $allowedQuoteStatuses =
+//            $commonStatuses = [
+//                ['sorting_order' => 1, 'quote_status' => QuoteStatusEnum::Quoted],
+//                ['sorting_order' => 1, 'quote_status' => QuoteStatusEnum::ApplicationPending],
+//                ['sorting_order' => 1, 'quote_status' => QuoteStatusEnum::InNegotiation],
+//                ['sorting_order' => 1, 'quote_status' => QuoteStatusEnum::PaymentPending],
+//                ['sorting_order' => 1, 'quote_status' => QuoteStatusEnum::PolicyIssued],
+//            ];
+//
+//            if (auth()->user()->sub_team_id == 8 || true) {
+//                $businessSubTeamStatus = [
+//                    ['sorting_order' => 1, 'quote_status' => QuoteStatusEnum::FollowedUp],
+//                    ['sorting_order' => 1, 'quote_status' => QuoteStatusEnum::ApplicationSubmitted],
+//                    ['sorting_order' => 1, 'quote_status' => QuoteStatusEnum::TransactionApproved],
+//                ];
+//
+//                $allowedQuoteStatuses = array_merge($commonStatuses, $businessSubTeamStatus);
+//            }
+//
+//            if (auth()->user()->sub_team_id == 9) {
+//                $renewalSubTeamStatus = [
+//                    ['sorting_order' => 1, 'quote_status' => QuoteStatusEnum::Lost],
+//                    ['sorting_order' => 1, 'quote_status' => QuoteStatusEnum::RenewwalTermsReceived],
+//                ];
+//
+//                $allowedQuoteStatuses = array_merge($commonStatuses, $renewalSubTeamStatus);
+//            }
+//
+//            if (auth()->user()->hasRole(RolesEnum::HealthManager)) {
+//                $unitManagerRoleStatus = [
+//                    ['sorting_order' => 1, 'quote_status' => QuoteStatusEnum::Lost],
+//                    ['sorting_order' => 1, 'quote_status' => QuoteStatusEnum::Allocated],
+//                    ['sorting_order' => 1, 'quote_status' => QuoteStatusEnum::RenewwalTermsReceived],
+//                    ['sorting_order' => 1, 'quote_status' => QuoteStatusEnum::ApplicationSubmitted],
+//                    ['sorting_order' => 1, 'quote_status' => QuoteStatusEnum::TransactionApproved],
+//                ];
+//
+//                $allowedQuoteStatuses = array_merge($commonStatuses, $unitManagerRoleStatus);
+//            }
+//
+//            dd($allowedQuoteStatuses);
+//            $quoteStatus = QuoteStatus::whereIn('id', $healthCommonStatuses)->get();
+//        }
+//
+//
+//        $quotes = [
+//            [
+//                'id' => QuoteStatusEnum::Quoted,
+//                'title' => quoteStatusCode::QUOTED,
+//                'data' => getDataAgainstStatus(QuoteTypes::HEALTH->name, QuoteStatusEnum::Quoted),
+//            ]
+//        ];
+
+
         $quotes = [];
         $quotes[] = [
             'id' => 8,
