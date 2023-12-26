@@ -400,7 +400,6 @@ class TravelController extends Controller
                 'message' => $quotePlans,
             ], 404);
         }
-
         $listQuotePlans = $quotePlans->quotes->plans;
         foreach ($listQuotePlans as $listQuotePlan) {
             if ($listQuotePlan->id == $planId) {
@@ -426,7 +425,7 @@ class TravelController extends Controller
         }
 
         $data = [
-            'listQuotePlanName' => $listQuotePlanName,
+            'listQuotePlanName' => $listQuotePlanName ?? '',
             'providerCode' => $providerCode,
             'providerName' => $providerName,
             'travelType' => $travelType,

@@ -52,7 +52,9 @@ class CentralController extends Controller
 
     public function exportLeads(Request $request, $quoteType)
     {
-        if (!$quoteType) {
+        $diffInDays = 120;
+
+        if (! $quoteType) {
             return abort(404);
         }
 
@@ -71,8 +73,12 @@ class CentralController extends Controller
 
         $diff = Carbon::parse($created_at_start)->diffInDays(Carbon::parse($created_at_end));
 
-        if ($diff > 120) {
-            return back()->with('error', 'Maximum of 120 days (created date) are allowed to be exported.');
+        if (! request()->latest_flow && ucfirst($quoteType) == QuoteTypes::CAR->value) {
+            $diffInDays = 31;
+        }
+
+        if ($diff > $diffInDays) {
+            return back()->with('error', 'Maximum of '.$diffInDays.' days (created date) are allowed to be exported.');
         }
 
         // For Personal Quotes
