@@ -136,6 +136,24 @@ class HealthQuoteController extends Controller
         return redirect()->back();
     }
 
+    public function healthQuoteDeleteMember(Request $request)
+    {
+        $response = $this->healthQuoteService->healthQuoteDeleteMember($request);
+
+        $message = '';
+        if (gettype($response) == GenericRequestEnum::INTEGER && ($response == 200 || $response == 201)) {
+            $message = 'Member Updated.';
+        } else {
+            if (isset($response->message)) {
+                $responseMessage = $response->message;
+            } else {
+                $responseMessage = $response;
+            }
+            $message = 'Request not processed. '.$responseMessage;
+        }
+        return redirect()->back();
+    }
+
     public function plansByInsuranceProvider(Request $request)
     {
         $insuranceProviderId = $request->insuranceProviderId;

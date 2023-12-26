@@ -393,6 +393,7 @@ const memberForm = useForm({
   quote_type: page.props.modelType,
   customer_id: page.props.quote.customer_id,
   customer_type: page.props.quote.customer_type,
+  customer_member_id: null,
   quoteId: page.props.quote.uuid,
 });
 
@@ -498,11 +499,12 @@ const onMemberSubmit = isValid => {
 const memberDelete = id => {
   modals.memberConfirm = true;
   confirmDeleteData.member = id;
+  memberForm.customer_member_id = id;
 };
 
 const memberDeleteConfirmed = () => {
-  memberForm.delete(
-    `/members/${page.props.quote.customer_type}-${page.props.modelType}-${confirmDeleteData.member}`,
+  memberForm.post(`/health-quote-delete-member`,
+    // `/members/${page.props.quote.customer_type}-${page.props.modelType}-${confirmDeleteData.member}`,
     {
       preserveScroll: true,
       onSuccess: () => {

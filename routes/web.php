@@ -502,7 +502,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     /** health quote members */
     Route::post('/health-quote-add-member', [HealthQuoteController::class, 'healthQuoteAddMember']);
     Route::put('/health-quote-update-member', [HealthQuoteController::class, 'healthQuoteUpdateMember']);
-
+    Route::post('/health-quote-delete-member', [HealthQuoteController::class, 'healthQuoteDeleteMember']);
 });
 
 Route::POST('/sendBulkWelcomeEmails', [BulkEmailProcessController::class, 'ProcessBulkWelcomeEmails'])

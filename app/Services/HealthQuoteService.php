@@ -1364,6 +1364,7 @@ class HealthQuoteService extends BaseService
     public function healthPlanModifyV2($request)
     {
         $loadingPrices = $request->get('loadingPrice');
+        $manualPremiumPrices = $request->get('manualPremiumPrice');
 
         if (empty($request->get('selectedCopay'))) {
             $copayId = $request->get('defaultCopayId');
@@ -1390,7 +1391,17 @@ class HealthQuoteService extends BaseService
                 if (isset($value['ratesPerCopay'])) {
                     foreach ($value['ratesPerCopay'] as $copay) {
                         if ((int) $copay['healthPlanCoPaymentId'] == (int) $copayId) {
-                            $copay['loadingPrice'] = (int) $loadingPrices[$key];
+
+                            if ((int) $loadingPrices[$key]['memberId'] == $value['memberId']
+                                && $loadingPrices[$key]['price'] != 0) {
+                                $copay['loadingPrice'] = (float) $loadingPrices[$key]['price'];
+                            }
+
+                            if ((int) $manualPremiumPrices[$key]['memberId'] == $value['memberId']
+                                && $manualPremiumPrices[$key]['premium'] != 0) {
+                                $copay['basePrice'] = (float) $manualPremiumPrices[$key]['premium'];
+                            }
+
                             array_push($toBeUpdatedCopay, $copay);
                         }
                     }
@@ -1398,7 +1409,6 @@ class HealthQuoteService extends BaseService
 
                 $array = [
                     'memberId' => (int) $value['memberId'],
-                    'memberCategoryText' => $value['memberCategoryText'],
                     'ratesPerCopay' => $toBeUpdatedCopay,
                 ];
                 array_push($membersBreakDown, $array);
@@ -1417,6 +1427,7 @@ class HealthQuoteService extends BaseService
                 'apiUserName' => $apiUserName,
                 'apiPassword' => $apiPassword,
             ];
+
             $response = $this->httpService->processRequest($dataArray, $apiCreds);
 
             return $response;
@@ -1437,13 +1448,13 @@ class HealthQuoteService extends BaseService
 
             $memberDetails = [
                 'firstName' => $request->first_name,
-                'lastName' => $request->last_name,
+                'lastName' => $request->last_name ?? "temp", //temp
                 'emirateOfYourVisaId' => $request->emirate_of_your_visa_id,
                 'gender' => $request->gender,
                 'nationalityId' => $request->nationality_id,
                 'memberCategoryId' => $request->member_category_id,
-                'salaryBandId' => $request->salary_band_id,
-                'dob' => $request->dob,
+                'salaryBandId' => (string)$request->salary_band_id, //temp parse to string
+                'dob' => Carbon::parse($request->dob)->toDateString(),
                 'relationCode' => $request->relation_code,
             ];
 
@@ -1516,6 +1527,48 @@ class HealthQuoteService extends BaseService
             $response = [
                 'status' => false,
                 'message' => 'Quote Id not found',
+            ];
+        }
+
+        return $response;
+
+    }
+
+    public function healthQuoteDeleteMember($request)
+    {
+        $quoteId = $request->quoteId ?? null;
+        $memberId = $request->customer_member_id ?? null;
+
+        if ($quoteId && $memberId) {
+
+            $apiEndPoint = config('constants.KEN_API_ENDPOINT').'/delete-health-quote-members';
+            $apiToken = config('constants.KEN_API_TOKEN');
+            $apiTimeout = config('constants.KEN_API_TIMEOUT');
+            $apiUserName = config('constants.KEN_API_USER');
+            $apiPassword = config('constants.KEN_API_PWD');
+
+            $memberDetails = [
+                'id' => $memberId,
+            ];
+
+            $dataArray = [
+                'quoteUID' => $quoteId,
+                'memberDetails' => [$memberDetails],
+            ];
+
+            $apiCreds = [
+                'apiEndPoint' => $apiEndPoint,
+                'apiToken' => $apiToken,
+                'apiTimeout' => $apiTimeout,
+                'apiUserName' => $apiUserName,
+                'apiPassword' => $apiPassword,
+            ];
+
+            $response = $this->httpService->processRequest($dataArray, $apiCreds);
+        } else {
+            $response = [
+                'status' => false,
+                'message' => 'Member not found',
             ];
         }
 
