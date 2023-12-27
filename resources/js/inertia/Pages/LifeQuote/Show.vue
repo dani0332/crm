@@ -461,6 +461,7 @@ const linkEntity = () => {
       console.log(err);
     });
 };
+const showTrue = ref(false);
 </script>
 
 <template>
@@ -470,6 +471,13 @@ const linkEntity = () => {
     <div class="flex justify-between items-center flex-wrap gap-2 mb-5">
       <h2 class="text-xl font-semibold">Life Detail</h2>
       <div class="flex gap-2">
+        <LeadNotes
+          :modelValue="showTrue"
+          @update:modelValue="showTrue = false"
+        />
+        <x-button size="sm" color="emerald" @click="showTrue = true">
+          Notes
+        </x-button>
         <x-button size="sm" color="#ff5e00" @click.prevent="openDuplicate">
           Duplicate Lead
         </x-button>
@@ -644,7 +652,9 @@ const linkEntity = () => {
           }}
           Profile
         </h3>
-        <x-tag color="success" v-if="quote.kyc_decision === 'Complete'"> KYC - Complete </x-tag>
+        <x-tag color="success" v-if="quote.kyc_decision === 'Complete'">
+          KYC - Complete
+        </x-tag>
         <x-tag color="amber" v-else> KYC - Pending </x-tag>
       </div>
       <x-divider class="mb-4 mt-1" />
