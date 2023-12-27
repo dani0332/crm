@@ -36,6 +36,7 @@ const closeModal = () => emit('update:modelValue', !props.backdropClose);
       class="fixed inset-0 bg-gray-500 dark:bg-black transition-opacity ease-out duration-200 opacity-30 dark:opacity-70"
     ></div>
     <div
+      v-bind="$attrs"
       class="relative flex flex-col z-10 bg-white dark:bg-gray-900 rounded-md shadow-lg transform transition-all overflow-hidden max-h-[80%] w-full w-max ease-out duration-200 opacity-100 translate-y-0 sm:scale-100"
     >
       <header
