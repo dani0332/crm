@@ -26,6 +26,7 @@ use App\Models\Emirate;
 use App\Models\Entity;
 use App\Models\KycLog;
 use App\Models\Lookup;
+use App\Models\Payment;
 use App\Models\PersonalQuote;
 use App\Models\QuoteRequestEntityMapping;
 use App\Models\QuoteStatus;
@@ -193,7 +194,6 @@ class AMLController extends Controller
             })->whereNull('screenshot');
         $kycLogs = $amlRecordFetch->orderBy('created_at', 'desc')->get();
         $quoteRequest = AMLService::getQuoteDetails($quoteTypeId, $quoteRequestId);
-
         $customerDetails = Customer::where('id', $quoteRequest->customer_id)->with('detail')->firstOrFail();
         $entityDetails = QuoteRequestEntityMapping::with(['entity', 'entity.quoteMember'])
             ->where(['quote_type_id' => $quoteTypeId, 'quote_request_id' => $quoteRequestId])
@@ -229,6 +229,17 @@ class AMLController extends Controller
         $checkScreeningStatus = [QuoteStatusEnum::AMLScreeningCleared => 2, QuoteStatusEnum::AMLScreeningFailed => 1];
         $kycStatus = AMLService::getKycType($quoteTypeId, $quoteRequestId);
 
+        $payment = Payment::where('code', $quoteRequest->code)
+            ->with(['getCustomerPaymentInstrument' => function ($query) {
+                $query->whereNotNull('card_holder_name');
+            }])
+            ->first();
+        $cardHolderName = '';
+        if (isset($payment->getCustomerPaymentInstrument->card_holder_name)) {
+
+            $cardHolderName = $payment->getCustomerPaymentInstrument;
+        }
+
         $data = [
             'quoteType' => $quoteType,
             'quoteRequest' => $quoteRequest,
@@ -244,6 +255,7 @@ class AMLController extends Controller
             'amlDecisionStatusEnum' => AMLDecisionStatusEnum::asArray(),
             'lookups' => $lookups,
             'quoteAmlStatus' => $checkScreeningStatus[$quoteRequest->quote_status_id] ?? null,
+            'cardHolderName' => $cardHolderName,
         ];
 
         if ($quoteType->code == quoteTypeCode::Business) {
@@ -267,7 +279,8 @@ class AMLController extends Controller
             $quoteTypeText = $updateQuoteStatusResp[2];
             $quotePaID = $updateQuoteStatusResp[3];
             $clientFullName = $updateQuoteStatusResp[4];
-            if (auth()->user()->hasRole(RolesEnum::ComplianceSuperUser) && in_array(request()->aml_decision, [AMLDecisionStatusEnum::TRUE_MATCH_REJECT_RISK, AMLDecisionStatusEnum::TRUE_MATCH_ACCEPT_RISK])) {
+            if ( auth()->user()->hasRole(RolesEnum::ComplianceSuperUser) ||
+                (auth()->user()->hasRole(RolesEnum::COMPLIANCE) && request()->aml_decision == AMLDecisionStatusEnum::FALSE_POSITIVE)) {
                 info('AML Screening Bridger - Decision update Email triggered to Compliance and Compliance Super Users. Quote Type:'.$quoteTypeId.' - Quote Request ID: '.$quoteRequestId.'. Triggered by:'.auth()->user()->email);
                 app(CheckAmlService::class)->sendAMLQuoteStatusChangeNotification($quoteTypeId, $quoteRequestId, $quoteStatusText, $quoteCdbId, $quoteTypeText, $quotePaID, $clientFullName);
             }
