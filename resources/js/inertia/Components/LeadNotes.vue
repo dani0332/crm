@@ -120,9 +120,19 @@ const notesLength = computed(() => {
         {{ notesLength }}/1000
       </p>
       <div>
-        <x-button size="sm" color="primary" icon="upload">
-          Upload Documents
-        </x-button>
+        <x-tooltip>
+          <x-button size="sm" color="primary" icon="upload">
+            Upload Documents
+          </x-button>
+          <template #tooltip>
+            <span class="text-sm"
+              >Use this button to attach and save documents that support your
+              notes. You can drag and drop files or browse to upload them into
+              the system, making it easy to store and access important
+              files</span
+            >
+          </template>
+        </x-tooltip>
       </div>
       <div class="mt-5 flex gap-2 justify-end">
         <x-button size="sm"> Cancel </x-button>
