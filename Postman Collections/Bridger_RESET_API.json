@@ -8392,7 +8392,7 @@
 									"}\r",
 									"\r",
 									"var response = pm.response.json();\r",
-									"var keys_to_update = [\"\"];\r",
+									"var keys_to_update = [\"FileDate\",\"PublishedDate\",\"SearchCriteria\"];\r",
 									"delete response.show_action_bar\r",
 									"delete response.show_categories\r",
 									"\r",
