@@ -1,24 +1,7 @@
 <script setup>
 import AppModal from './AppModal.vue';
 
-const props = defineProps({
-  modelValue: {
-    type: Boolean,
-    require: false,
-    default: () => false,
-  },
-});
-
-const emit = defineEmits(['update:modelValue']);
-
-const showModal = computed({
-  get() {
-    return props.modelValue;
-  },
-  set(newValue) {
-    emit('update:modelValue', newValue);
-  },
-});
+const showModal = ref(false);
 
 const showAddNotes = ref(false);
 
@@ -43,19 +26,25 @@ const data = reactive([
 const notesForm = useForm({
   notes: null,
 });
-const notesLength = computed(() => {
-  if (notesForm.notes) return notesForm.notes.length;
-  else return 0;
-});
+
+const notesLength = computed(() => notesForm.notes?.length ?? 0);
 </script>
 <template>
-  <AppModal
-    class="min-w-[700px]"
-    :actions="true"
-    v-model="showModal"
-    show-close
-    show-header
-  >
+  <div>
+    <x-tooltip>
+      <x-button size="sm" color="emerald" @click="showModal = true">
+        Notes
+      </x-button>
+      <template #tooltip>
+        <span
+          >Click this button to create or view notes related to this lead. It
+          allows you to make notes and access important information about this
+          item.
+        </span>
+      </template>
+    </x-tooltip>
+  </div>
+  <AppModal class="min-w-[700px]" v-model="showModal" show-close show-header>
     <template #header>
       <p class="font-bold m-0">Notes</p>
     </template>
@@ -101,6 +90,7 @@ const notesLength = computed(() => {
     </div>
   </AppModal>
 
+  <!-- Modal for add/Update notes related to Leads -->
   <AppModal class="min-w-[30%]" v-model="showAddNotes" show-header show-close>
     <template #header>
       <p class="font-bold m-0">Add Notes</p>

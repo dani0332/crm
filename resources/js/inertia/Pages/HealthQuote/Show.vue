@@ -1354,13 +1354,20 @@ const showTrue = ref(false);
     <div class="flex justify-between items-center flex-wrap gap-2">
       <h2 class="text-xl font-semibold">Health Detail</h2>
       <div class="flex gap-2">
-        <LeadNotes
-          :modelValue="showTrue"
-          @update:modelValue="showTrue = false"
-        />
-        <x-button size="sm" color="emerald" @click="showTrue = true">
-          Notes
-        </x-button>
+        <LeadNotes />
+        <!-- <x-tooltip>
+          <x-button size="sm" color="emerald" @click="showTrue = true">
+            Notes
+          </x-button>
+          <template #tooltip>
+            <span
+              >Click this button to create or view notes related to this lead.
+              It allows you to make notes and access important information about
+              this item.
+            </span>
+          </template>
+        </x-tooltip> -->
+
         <x-button size="sm" color="#ff5e00" @click.prevent="openDuplicate">
           Duplicate Lead
         </x-button>
