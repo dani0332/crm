@@ -23,6 +23,7 @@ class Kernel extends ConsoleKernel
         Commands\LeadsReassignment::class,
         Commands\ResetLeadAllocationCounts::class,
         Commands\UpdateHealthStatus::class,
+        Commands\QuoteSyncUpdateCommand::class,
     ];
 
     /**
@@ -60,6 +61,9 @@ class Kernel extends ConsoleKernel
             ->command('LeadsReassignment:cron')->everyFiveMinutes()->onOneServer()->withoutOverlapping(1);
 
         $schedule->command('ResetLeadAllocationCounts:cron')->timezone('Asia/Dubai')->dailyAt('23:59')->onOneServer()->withoutOverlapping(1);
+
+        $schedule->command('QuoteSyncUpdate:cron')->everyFiveMinutes()->onOneServer()->withoutOverlapping(1);
+
     }
 
     /**
