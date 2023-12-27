@@ -63,7 +63,11 @@ const tableHeader = reactive([
   { text: 'LAST NAME', value: 'last_name', is_active: true },
   { text: 'LEAD STATUS', value: 'quote_status', is_active: true },
   { text: 'ADVISOR', value: 'advisor', is_active: true },
-  { text: 'CREATED DATE', value: 'created_at', is_active: true },
+  {
+    text: 'CREATED DATE',
+    value: 'created_at',
+    is_active: true,
+  },
   { text: 'LAST MODIFIED DATE', value: 'updated_at', is_active: true },
   { text: 'NATIONALITY', value: 'nationality', is_active: true },
   { text: 'TRANSAPP CODE', value: 'transapp_code', is_active: true },
@@ -209,6 +213,7 @@ onMounted(() => {
     <div class="flex justify-between items-center">
       <h2 class="text-xl font-semibold">Lead List</h2>
       <div class="space-x-3 flex">
+        <FiltersButton />
         <Link href="/quotes/life/cards">
           <x-button size="sm" color="#1d83bc" tag="div"> Cards View </x-button>
         </Link>

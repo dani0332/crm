@@ -46,10 +46,14 @@ const selectedFiltersLength = computed(() => {
   // sum filters that are selected from both filters
   return 7;
 });
+
+const openState = e => {
+  console.log(e);
+};
 </script>
 <template>
   <div>
-    <x-popover align="left">
+    <x-popover align="left" @toggle="openState">
       <x-badge
         color="orange"
         class="mx-2"
@@ -100,19 +104,14 @@ const selectedFiltersLength = computed(() => {
                 :key="column.text"
                 :title="column.tooltip"
               >
-                <span
-                  @mouseenter="column.isHover = true"
-                  @mouseleave="column.isHover = false"
-                  >{{ column.text }}</span
-                >
-                <x-tooltip
-                  class="hidden"
-                  :class="{ 'hover:inline': column.isHover }"
-                >
-                  <template #tooltip>
-                    <span>{{ column.tooltip }}</span>
+                <span>{{ column.text }}</span>
+                <!-- <x-popover align="left" :hover="true">
+                  <template #content>
+                    <x-popover-container class="p-2">
+                      {{ column.tooltip }}
+                    </x-popover-container>
                   </template>
-                </x-tooltip>
+                </x-popover> -->
               </li>
             </ul>
           </div>
