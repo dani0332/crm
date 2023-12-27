@@ -55,7 +55,7 @@ class QuoteSyncUpdateCommand extends Command
             info('Syncing entry: '.$entry->quote_uuid);
             $quote = PersonalQuote::where('uuid', $entry->quote_uuid)->first();
             if ($quote) {
-                $quoteDetail = PersonalQuoteDetail::where('personal_quote_id', $quote->id)->first();
+                $quoteDetail = PersonalQuoteDetail::where('personal_quote_id', $quote->id)->where('quote_type_id', $quote->quote_type_id)->first();
                 DB::beginTransaction();
                 try {
                     $newValues = json_decode($entry->updated_fields, true);
