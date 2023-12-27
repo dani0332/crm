@@ -11,6 +11,7 @@ defineProps({
   todayManualCount: Number,
   yesterdayAutoCount: Number,
   yesterdayManualCount: Number,
+  isBetaUser: Boolean,
 });
 
 const page = usePage();
@@ -531,7 +532,7 @@ onMounted(() => {
             size="sm"
             color="emerald"
             :href="`/car/leads-export?${objToUrl(filters)}`"
-            class="justify-self-start"
+            class="justify-self-start mr-3"
           >
             Export
           </x-button>
@@ -543,6 +544,15 @@ onMounted(() => {
               </span>
             </template>
           </x-tooltip>
+          <x-button
+            v-if="canExport && isBetaUser"
+            size="sm"
+            color="emerald"
+            :href="`/car/leads-export?${objToUrl(filters)}&latest_flow=true`"
+            class="justify-self-start"
+            >
+            Export With Latest Flow
+          </x-button>
         </div>
         <div v-else />
         <div class="flex justify-self-end gap-3">

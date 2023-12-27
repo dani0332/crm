@@ -1425,9 +1425,16 @@ const deleteDocument = (docName,count) => {
     {
       preserveScroll: true,
       onFinish: () => {
-        fileUploadModels.value[count] = fileUploadModels.value[count].filter(item => item.doc_name !== docName);
-        approvedDocumentModel.value[count] = approvedDocumentModel.value[count].filter(item => item.doc_name !== docName);
-        discountDocumentModel.value[0] = discountDocumentModel.value[0].filter(item => item.doc_name !== docName);
+        if (fileUploadModels.value[count]){
+          fileUploadModels.value[count] = fileUploadModels.value[count].filter(item => item.doc_name !== docName);
+        }
+        if (approvedDocumentModel.value[count]){
+          approvedDocumentModel.value[count] = approvedDocumentModel.value[count].filter(item => item.doc_name !== docName);
+        }
+        if (discountDocumentModel.value[count]){
+          discountDocumentModel.value[0] = discountDocumentModel.value[0].filter(item => item.doc_name !== docName);
+        }
+        
         console.log('azhar19=deleted');
       },
     },

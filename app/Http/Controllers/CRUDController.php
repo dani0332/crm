@@ -26,7 +26,11 @@ use App\Enums\RolesEnum;
 use App\Enums\TiersEnum;
 use App\Facades\Capi;
 use App\Http\Requests\ExportPlansPdfRequest;
+use App\Http\Requests\SplitPaymentApproveRequest;
+use App\Http\Requests\SplitPaymentUpdateRequest;
+use App\Http\Requests\StorePaymentRequest;
 use App\Http\Requests\UpdateLeadStatusRequest;
+use App\Http\Requests\UpdatePaymentRequest;
 use App\Jobs\CarRenewalEmailJob;
 use App\Jobs\SyncSIBContactJob;
 use App\Models\CarMake;
@@ -83,10 +87,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redirect;
-use App\Http\Requests\StorePaymentRequest;
-use App\Http\Requests\UpdatePaymentRequest;
-use App\Http\Requests\SplitPaymentUpdateRequest;
-use App\Http\Requests\SplitPaymentApproveRequest;
 
 class CRUDController extends Controller
 {
@@ -303,6 +303,7 @@ class CRUDController extends Controller
             $dateFormat = config('constants.DATE_FORMAT_ONLY');
             $createdAtStart = Carbon::parse(now())->startOfDay()->format($dateFormat);
             $createdAtEnd = Carbon::parse(now())->endOfDay()->format($dateFormat);
+            $isBetaUser = auth()->user()->hasRole(RolesEnum::BetaUser);
 
             return inertia('PersonalQuote/Car/LeadList', [
                 'quotes' => $gridData,
@@ -316,6 +317,7 @@ class CRUDController extends Controller
                 'todayManualCount' => $todayManualCount,
                 'yesterdayAutoCount' => $yesterdayAutoCount,
                 'yesterdayManualCount' => $yesterdayManualCount,
+                'isBetaUser' => $isBetaUser,
             ]);
         }
 

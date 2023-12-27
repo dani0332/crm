@@ -134,7 +134,7 @@ class AddNewDocumentTypeSeeder extends Seeder
                 'sort_order' => 2,
                 'is_required' => 0,
             ]);
-        }        
+        }
         $documentTypesCount = DocumentType::get()->where('code', 'TDPDR')->count();
         if (! $documentTypesCount) {
             \DB::table('document_types')->insert([
@@ -180,7 +180,7 @@ class AddNewDocumentTypeSeeder extends Seeder
                 'sort_order' => 2,
                 'is_required' => 0,
             ]);
-        }        
+        }
         $documentTypesCount = DocumentType::get()->where('code', 'LDPDR')->count();
         if (! $documentTypesCount) {
             \DB::table('document_types')->insert([
@@ -272,7 +272,7 @@ class AddNewDocumentTypeSeeder extends Seeder
                 'sort_order' => 2,
                 'is_required' => 0,
             ]);
-        }        
+        }
         $documentTypesCount = DocumentType::get()->where('code', 'BDPDR')->count();
         if (! $documentTypesCount) {
             \DB::table('document_types')->insert([
@@ -319,7 +319,7 @@ class AddNewDocumentTypeSeeder extends Seeder
                 'is_required' => 0,
             ]);
         }
-        
+
         $documentTypesCount = DocumentType::get()->where('code', 'CYCDPDR')->count();
         if (! $documentTypesCount) {
             \DB::table('document_types')->insert([
@@ -380,7 +380,7 @@ class AddNewDocumentTypeSeeder extends Seeder
                 'sort_order' => 3,
                 'is_required' => 0,
             ]);
-        }        
+        }
 
         $documentTypesCount = DocumentType::get()->where('code', 'CLPD')->count();
         if (! $documentTypesCount) {
@@ -426,7 +426,7 @@ class AddNewDocumentTypeSeeder extends Seeder
                 'sort_order' => 3,
                 'is_required' => 0,
             ]);
-        }        
+        }
 
         $documentTypesCount = DocumentType::get()->where('code', 'HOMPD')->count();
         if (! $documentTypesCount) {
@@ -472,7 +472,7 @@ class AddNewDocumentTypeSeeder extends Seeder
                 'sort_order' => 3,
                 'is_required' => 0,
             ]);
-        }        
+        }
 
         $documentTypesCount = DocumentType::get()->where('code', 'GMQPD')->count();
         if (! $documentTypesCount) {
@@ -519,8 +519,6 @@ class AddNewDocumentTypeSeeder extends Seeder
                 'is_required' => 0,
             ]);
         }
-
-        
 
     }
 }

@@ -22,7 +22,7 @@ class SplitPaymentUpdateRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'splitPaymentId' => 'required|numeric',            
-        ];        
+            'splitPaymentId' => 'required|numeric',
+        ];
     }
 }

@@ -23,7 +23,7 @@ class SplitPaymentApproveRequest extends FormRequest
     {
         return [
             'modelType' => 'required',
-            'quote_id' => 'required|numeric',            
+            'quote_id' => 'required|numeric',
         ];
     }
 }
