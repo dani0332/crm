@@ -1503,8 +1503,14 @@ class RenewalsUploadService
                                     if (! $leadData->driver_cover) {
                                         $leadValidationErrors->push('PAB Driver is required with Renewal Premium & Excess');
                                     }
+                                    if ($leadData->driver_cover_amount == '') {
+                                        $leadValidationErrors->push('Amount - PAB Driver is required with Renewal Premium & Excess');
+                                    }
                                     if (! $leadData->passenger_cover) {
                                         $leadValidationErrors->push('PAB Passenger is required with Renewal Premium & Excess');
+                                    }
+                                    if ($leadData->driver_cover_amount == '') {
+                                        $leadValidationErrors->push('Amount - PAB Driver is required with Renewal Premium & Excess');
                                     }
                                     if ($leadData->plan_type != CarPlanType::TPL && $leadData->insurer != InsuranceProvidersEnum::TM && ! $leadData->car_hire) {
                                         $leadValidationErrors->push('Rent a car is required with TPL & TM');
@@ -1512,12 +1518,7 @@ class RenewalsUploadService
                                     if ($leadData->plan_type != CarPlanType::TPL && $leadData->insurer != 'TM' && $leadData->car_hire_amount == '') {
                                         $leadValidationErrors->push('Amount - Rent a Car is required with TPL & TM');
                                     }
-                                    if ($leadData->driver_cover_amount == '') {
-                                        $leadValidationErrors->push('Amount - PAB Driver is required with Renewal Premium & Excess');
-                                    }
-                                    if ($leadData->passenger_cover_amount == '') {
-                                        $leadValidationErrors->push('Amount- PAB Passenger is required with Renewal Premium & Excess');
-                                    }
+
                                     if ($leadData->plan_type != CarPlanType::TPL && $leadData->oman_cover_amount == '') {
                                         $leadValidationErrors->push('Amount- Oman Cover is required');
                                     }
@@ -1554,6 +1555,15 @@ class RenewalsUploadService
                                     ];
 
                                     foreach ($addons as $key => $addonCode) {
+
+                                        info("planType:" . $leadData->plan_type . " insurer:" . $leadData->insurer . " addonCode:" . $addonCode);
+
+                                        if ($leadData->plan_type == CarPlanType::TPL &&
+                                            $leadData->insurer == InsuranceProvidersEnum::TM &&
+                                            $addonCode == CarPlanAddonsCode::CAR_HIRE) {
+                                            continue;
+                                        }
+
                                         if (isset($planAddons[$addonCode])) {
                                             $addon = $planAddons[$addonCode];
 
