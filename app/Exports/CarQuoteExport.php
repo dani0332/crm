@@ -15,6 +15,10 @@ class CarQuoteExport implements FromCollection, ShouldAutoSize, WithHeadings, Wi
 
     public function collection()
     {
+        if (request()->latest_flow) {
+            return app(CarQuoteService::class)->getExportData()->get();
+        }
+
         return app(CarQuoteService::class)->getGridData()->get();
     }
 
@@ -104,5 +108,10 @@ class CarQuoteExport implements FromCollection, ShouldAutoSize, WithHeadings, Wi
             $quote->lost_reason,
             $quote->quote_link,
         ];
+    }
+
+    public function chunkSize(): int
+    {
+        return 500;
     }
 }

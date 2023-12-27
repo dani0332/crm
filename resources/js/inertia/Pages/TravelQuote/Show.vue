@@ -49,31 +49,28 @@ defineProps({
   aboveAgeMembers: Number,
 });
 
-
 const hasAnyRole = roles => useHasAnyRole(roles);
 const checkedItems = ref([]);
 const checkCheckedPlans = computed(() => {
-    return true;
+  return true;
 });
 const checkedCount = computed(() => {
-    return checkedItems.value.length;
+  return checkedItems.value.length;
 });
 const updateCheckedCount = (id, event) => {
-    if (event.target.checked) {
-        if(checkedItems.value.length < 6) {
-            checkedItems.value.push(id);
-        }else{
-            return false;
-        }
+  if (event.target.checked) {
+    if (checkedItems.value.length < 6) {
+      checkedItems.value.push(id);
     } else {
-        var index =  checkedItems.value.indexOf(id);
-        if (index != -1) {
-            checkedItems.value.splice(id, 1);
-        }
+      return false;
     }
+  } else {
+    var index = checkedItems.value.indexOf(id);
+    if (index != -1) {
+      checkedItems.value.splice(id, 1);
+    }
+  }
 };
-
-
 
 const dateFormat = date => {
   if (!date) return '';
@@ -87,7 +84,6 @@ const notification = useNotifications('toast');
 
 const rolesEnum = page.props.rolesEnum;
 const hasRole = role => useHasRole(role);
-
 
 const {
   isRequired,
@@ -539,90 +535,87 @@ const sendPolicyToClient = () => {
   }
 };
 
-
 const onTogglePlans = toggle => {
-    toggleLoader.value = true;
+  toggleLoader.value = true;
 
-    const planIds = useArrayUnique(
-        selectedPlans.value.map(p => {
-            return p.id;
-        }),
-    ).value;
+  const planIds = useArrayUnique(
+    selectedPlans.value.map(p => {
+      return p.id;
+    }),
+  ).value;
 
-    axios
-        .post(route('manualPlanToggle', { quoteType: 'travel' }), {
-            modelType: 'Travel',
-            planIds: planIds,
-            quote_uuid: page.props.quote.uuid,
-            toggle: toggle,
-        })
-        .then(response => {
-            notification.success({
-                title: 'Plans has been updated',
-                position: 'top',
-            });
-            router.reload({
-                preserveScroll: true,
-            });
-        })
-        .catch(error => {
-            notification.error({
-                title: error,
-                position: 'top',
-            });
-        })
-        .finally(() => {
-            toggleLoader.value = false;
-            selectedPlans.value = [];
-        });
+  axios
+    .post(route('manualPlanToggle', { quoteType: 'travel' }), {
+      modelType: 'Travel',
+      planIds: planIds,
+      quote_uuid: page.props.quote.uuid,
+      toggle: toggle,
+    })
+    .then(response => {
+      notification.success({
+        title: 'Plans has been updated',
+        position: 'top',
+      });
+      router.reload({
+        preserveScroll: true,
+      });
+    })
+    .catch(error => {
+      notification.error({
+        title: error,
+        position: 'top',
+      });
+    })
+    .finally(() => {
+      toggleLoader.value = false;
+      selectedPlans.value = [];
+    });
 };
 
-
 const onExportPlans = () => {
-
-    if (selectedPlans.value.length < 2 || selectedPlans.value.length > 5) {
-        notification.error({
-            title: 'Please select 2 to 5 plans to download PDF.',
-            position: 'top',
-        });
-        return;
-    }
-    exportLoader.value = true;
-    const planIds = selectedPlans.value.map(p => {
-        return p.id;
+  if (selectedPlans.value.length < 2 || selectedPlans.value.length > 5) {
+    notification.error({
+      title: 'Please select 2 to 5 plans to download PDF.',
+      position: 'top',
     });
+    return;
+  }
+  exportLoader.value = true;
+  const planIds = selectedPlans.value.map(p => {
+    return p.id;
+  });
 
-    axios
-        .post(
-            '/api/v1/quotes/travel/export-plans-pdf',
-            {
-                plan_ids: planIds,
-                quote_uuid: page.props.quote.uuid,
-                modelType: 'travel',
-                quoteType:'travel'
-            },
-            {
-                responseType: 'json',
-            },
-        )
-        .then(response => {
-            const link = document.createElement('a');
-            let fileName = response.data.name;
-            link.href = response.data.data;
-            link.setAttribute('download', fileName);
-            document.body.appendChild(link);
-            link.click();
-            notification.success({
-                title: 'Plans Exported',
-                position: 'top',
-            });
-        })
-        .catch(error => {
-            console.log(error);
-        })
-        .finally(() => {
-            exportLoader.value = false;
-        });
+  axios
+    .post(
+      '/api/v1/quotes/travel/export-plans-pdf',
+      {
+        plan_ids: planIds,
+        quote_uuid: page.props.quote.uuid,
+        modelType: 'travel',
+        quoteType: 'travel',
+      },
+      {
+        responseType: 'json',
+      },
+    )
+    .then(response => {
+      const link = document.createElement('a');
+      let fileName = response.data.name;
+      link.href = response.data.data;
+      link.setAttribute('download', fileName);
+      document.body.appendChild(link);
+      link.click();
+      notification.success({
+        title: 'Plans Exported',
+        position: 'top',
+      });
+    })
+    .catch(error => {
+      console.log(error);
+    })
+    .finally(() => {
+      exportLoader.value = false;
+    });
 };
 
 const onDocDelete = name => {
@@ -1145,10 +1138,9 @@ const handleChildUpdate = planId => {
 };
 
 const genderList = [
-  {value: 'M', label: 'Male'},
-  {value: 'F', label: 'Female'},
+  { value: 'M', label: 'Male' },
+  { value: 'F', label: 'Female' },
 ];
-
 </script>
 
 <template>
@@ -1431,7 +1423,9 @@ const genderList = [
           }}
           Profile
         </h3>
-        <x-tag color="success" v-if="quote.kyc_decision === 'Complete'"> KYC - Complete </x-tag>
+        <x-tag color="success" v-if="quote.kyc_decision === 'Complete'">
+          KYC - Complete
+        </x-tag>
         <x-tag color="amber" v-else> KYC - Pending </x-tag>
       </div>
       <x-divider class="mb-4 mt-1" />
@@ -1739,7 +1733,7 @@ const genderList = [
           {{ relation?.text }}
         </template>
         <template #item-gender="{ gender }">
-          {{ gender === 'M' ? 'Male' : gender === 'F' ? 'Female' : ''  }}
+          {{ gender === 'M' ? 'Male' : gender === 'F' ? 'Female' : '' }}
         </template>
         <template #item-nationality="{ nationality }">
           {{ nationality?.text }}
@@ -1807,13 +1801,13 @@ const genderList = [
               placeholder="Select Relation"
               class="w-full"
             />
-            <x-field label="Gender*" >
+            <x-field label="Gender*">
               <x-select
-                  v-model="travelerForm.gender"
-                  placeholder="Gender"
-                  :options="genderList"
-                  :rules="[isRequired]"
-                  class="w-full"
+                v-model="travelerForm.gender"
+                placeholder="Gender"
+                :options="genderList"
+                :rules="[isRequired]"
+                class="w-full"
               />
             </x-field>
           </div>
@@ -2241,7 +2235,6 @@ const genderList = [
       <div v-else>
         <!-- for future use  v-model:items-selected="selectedPlans" -->
         <DataTable
-
           table-class-name="tablefixed compact"
           :headers="availablePlansTable.columns"
           :items="availablePlansTable.data || []"
