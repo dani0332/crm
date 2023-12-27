@@ -334,7 +334,7 @@ const validatePaymentOption = () => {
       }
 
       console.log('DocError='+issueFound);
-      if(isDiscountEnabled.value === true) {
+      if(isDiscountEnabled.value === true && isCreditApprovalView.value === false) {
         isDiscountError.value = false;
 
         // Check if discount document uploaded
@@ -994,7 +994,7 @@ const editPaymentModal = (payment,split_payment_id,sr_no,capture_approval) => {
   discountError.value = '';
   isDiscountDocumentNotUploaded.value = false;
   discountDocumentModel.value = [];
-
+  isDiscountEnabled.value = false;
   if(sr_no>0){
     splitPaymentNo.value = sr_no;
     isFieldReadonly.value = true;
