@@ -40,12 +40,14 @@ class RenewalQuotesExport implements FromQuery, WithHeadings, WithMapping, Shoul
             'Policy expiry date',
             'Gross premium',
             'Previous advisor',
+            'Commission',
             $this->exportType=='BUSINESS'?'Business Type':'',
         ];
     }
 
     public function map($quote): array
     {
+        $payment = $quote->payments->first();
         return [
             $quote->code,
             $quote->first_name.' '.$quote->last_name,
@@ -55,6 +57,7 @@ class RenewalQuotesExport implements FromQuery, WithHeadings, WithMapping, Shoul
             $quote->previous_policy_expiry_date,
             $quote->premium,
             $quote->previousAdvisor != null ? $quote->previousAdvisor->name : '',
+            $payment !=null? $payment->commission:'N/A',
             $this->exportType=='BUSINESS'?($quote->business_type_of_insurance_id == quoteStatusCode::GROUP_MEDICAL_ID?quoteStatusCode::GROUP_MEDICAL:quoteTypeCode::CORPLINE):''
 
         ];
