@@ -22,7 +22,7 @@ class BusinessQuoteRepository extends BaseRepository
     public function fetchExport()
     {
         return $this->filter()->with(
-            ['advisor', 'nationality', 'insuranceProvider','businessTypeOfInsurance']
+            ['advisor', 'nationality', 'insuranceProvider', 'businessTypeOfInsurance']
         )->orderBy('created_at', 'desc');
     }
 
@@ -101,8 +101,7 @@ class BusinessQuoteRepository extends BaseRepository
     public function fetchGetDataOfBusiness()
     {
         return $this->filter()->with(
-            ['advisor', 'nationality', 'insuranceProvider','businessTypeOfInsurance'])->orderBy('created_at', 'desc')->Paginate();
+            ['advisor', 'nationality', 'insuranceProvider', 'businessTypeOfInsurance'])->orderBy('created_at', 'desc')->Paginate();
     }
-
 
 }

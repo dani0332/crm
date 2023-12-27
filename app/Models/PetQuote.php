@@ -2,10 +2,9 @@
 
 namespace App\Models;
 
-
 use App\Enums\FilterTypes;
-use App\Traits\FilterCriteria;
 use App\Enums\QuoteTypeId;
+use App\Traits\FilterCriteria;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
@@ -14,7 +13,7 @@ use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
 class PetQuote extends Model implements AuditableContract
 {
-    use HasFactory, Auditable, FilterCriteria;
+    use Auditable, FilterCriteria, HasFactory;
 
     protected $table = 'pet_quote_request';
     protected $guarded = [];
