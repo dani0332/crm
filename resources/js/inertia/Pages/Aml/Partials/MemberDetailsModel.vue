@@ -295,7 +295,7 @@ function onMemberSubmit(isValid) {
     <template #item-is_payer="{ is_payer }">
       <div class="flex gap-2">
         <x-checkbox
-          :modelValue="is_payer == 0 ? false : true"
+          :modelValue="is_payer!==0"
           color="primary"
         />
       </div>
