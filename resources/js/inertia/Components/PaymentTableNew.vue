@@ -30,6 +30,7 @@ const props = defineProps({
   },
 });
 console.log('QUOTEREQUEST='+JSON.stringify(props.quoteRequest));
+console.log('paymentDocument='+JSON.stringify(props.paymentDocument));
 const createPaymentModal = ref(false);
 const isPaymentNoEnabled = ref(false);
 const isCustomReasonEnabled = ref(false);
@@ -106,6 +107,10 @@ if (props.quoteType === 'Health') {
 }
 const totalPrice = ref(initialAmount); // Initial total price
 const totalAmount = ref(initialAmount); // Initial total price
+
+const discountProofDocument = props.paymentDocument.find(item => item.text === "Discount Proof");
+const paymentProofDocument  = props.paymentDocument.find(item => item.text === "Payment Proof");
+const approveProofDocument  = props.paymentDocument.find(item => item.text === "Receipt");
 
 const planDetail = quoteTypesToCheck.includes(props.quoteType)
 ? props.quoteRequest.plan
@@ -2192,14 +2197,14 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
               <div class="relative group text-center">
                 <span>
                   <Dropzone
-                    :id="paymentDocument[2].id"
+                    :id="discountProofDocument.id"
                     customDisplay="true"
                     multiple="true"
-                    :accept="paymentDocument[2].accepted_files"
-                    :max-files="paymentDocument[2].max_files"
-                    :max-size="paymentDocument[2].max_size"
+                    :accept="discountProofDocument.accepted_files"
+                    :max-files="discountProofDocument.max_files"
+                    :max-size="discountProofDocument.max_size"
                     :loading="documentForm.processing"
-                    @change="uploadDocument(paymentDocument[2], $event, 0)"                  
+                    @change="uploadDocument(discountProofDocument, $event, 0)"                  
                   />
                 </span>
                 <div class="absolute text-left hidden group-hover:block transform transition-transform z-40 h-fit _popoverContent_1wc81_3 top-full bottom-0 _popoverBottom_1wc81_14 left-1/4 right-full -translate-x-1/2 max-w-xs">
@@ -2596,14 +2601,14 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
                   <div class="w-1/5 px-2 mb-2">
                     <x-tooltip v-if="!readOnlyPayments[count]">
                           <Dropzone
-                          :id="paymentDocument[0].id"
+                          :id="paymentProofDocument.id"
                           multiple="true"
                           customDisplay="true"
-                          :accept="paymentDocument[0].accepted_files"
-                          :max-files="paymentDocument[0].max_files"
-                          :max-size="paymentDocument[0].max_size"
+                          :accept="paymentProofDocument.accepted_files"
+                          :max-files="paymentProofDocument.max_files"
+                          :max-size="paymentProofDocument.max_size"
                           :loading="documentForm.processing"
-                          @change="uploadDocument(paymentDocument[0], $event, count)"                          
+                          @change="uploadDocument(paymentProofDocument, $event, count)"                          
                         />
                       <template #tooltip>
                         <span>{{ paymentTooltipEnum.DOCUMENTS_UPLOAD }}</span>
@@ -2760,14 +2765,14 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
                 </x-tooltip>
                 <x-field>
                 <Dropzone
-                  :id="paymentDocument[1].id"
+                  :id="approveProofDocument.id"
                   customDisplay="true"
                   multiple="true"
-                  :accept="paymentDocument[1].accepted_files"
-                  :max-files="paymentDocument[1].max_files"
-                  :max-size="paymentDocument[1].max_size"
+                  :accept="approveProofDocument.accepted_files"
+                  :max-files="approveProofDocument.max_files"
+                  :max-size="approveProofDocument.max_size"
                   :loading="documentForm.processing"
-                  @change="uploadDocument(paymentDocument[1], $event, splitPaymentNo)"                  
+                  @change="uploadDocument(approveProofDocument, $event, splitPaymentNo)"                  
                 />
                 <p v-if="isApprovedDocumentNotUploaded" class="text-sm text-red-500 dark:text-red-400 mt-1">This field is required</p>
                 </x-field>
