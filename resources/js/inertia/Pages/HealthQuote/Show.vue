@@ -531,7 +531,7 @@ const plansTable = reactive({
     {
       text: 'CO-PAY/CO-INSURANCE',
       value: 'copayName',
-      width: 100
+      width: 100,
     },
     {
       text: 'Base Price',
@@ -829,14 +829,11 @@ const getSmallestCopayRateAsDefaultValue = () => {
       element.actualPremium = smallestCopayValue;
       element.vat = smallestCopayVAT;
     }
-      element.coPayments.forEach(function callback(value, index) {
-          if(value.id ==  element.selectedCopayId){
-              element.copayName = value.text;
-          }
-
-      });
-
-
+    element.coPayments.forEach(function callback(value, index) {
+      if (value.id == element.selectedCopayId) {
+        element.copayName = value.text;
+      }
+    });
   });
 };
 
@@ -1348,6 +1345,7 @@ const prefillPlanId = ref(page.props.quote.prefill_plan_id);
 const handleChildUpdate = planId => {
   prefillPlanId.value = planId;
 };
+const showTrue = ref(false);
 </script>
 
 <template>
@@ -1356,6 +1354,13 @@ const handleChildUpdate = planId => {
     <div class="flex justify-between items-center flex-wrap gap-2">
       <h2 class="text-xl font-semibold">Health Detail</h2>
       <div class="flex gap-2">
+        <LeadNotes
+          :modelValue="showTrue"
+          @update:modelValue="showTrue = false"
+        />
+        <x-button size="sm" color="emerald" @click="showTrue = true">
+          Notes
+        </x-button>
         <x-button size="sm" color="#ff5e00" @click.prevent="openDuplicate">
           Duplicate Lead
         </x-button>
@@ -1590,7 +1595,9 @@ const handleChildUpdate = planId => {
           }}
           Profile
         </h3>
-        <x-tag color="success" v-if="quote.kyc_decision === 'Complete'"> KYC - Complete </x-tag>
+        <x-tag color="success" v-if="quote.kyc_decision === 'Complete'">
+          KYC - Complete
+        </x-tag>
         <x-tag color="amber" v-else> KYC - Pending </x-tag>
       </div>
       <x-divider class="mb-4 mt-1" />
@@ -2308,10 +2315,10 @@ const handleChildUpdate = planId => {
             <dt class="font-medium">TOTAL PRICE (with VAT)</dt>
             <dd>{{ fixedValue(ecomDetails.priceWithVAT) }}</dd>
           </div>
-            <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">CO-PAY / CO-INSURANCE</dt>
-                <dd>{{ (coPayment)?coPayment.text:'N/A' }}</dd>
-            </div>
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">CO-PAY / CO-INSURANCE</dt>
+            <dd>{{ coPayment ? coPayment.text : 'N/A' }}</dd>
+          </div>
         </dl>
       </div>
     </div>
@@ -2497,11 +2504,10 @@ const handleChildUpdate = planId => {
         class="flex-wrap"
         :hide-footer="listQuotePlansFiltered.length < 15"
       >
-          <template #item-copayName="item">
-              <span class="copay-max">{{item.copayName}}</span>
-          </template>
+        <template #item-copayName="item">
+          <span class="copay-max">{{ item.copayName }}</span>
+        </template>
         <template #item-providerName="{ providerName, isManualPlan, isHidden }">
-
           <p>{{ providerName }}</p>
           <div class="flex gap-1">
             <x-tag
@@ -2531,11 +2537,11 @@ const handleChildUpdate = planId => {
           </div>
         </template>
 
-          <template #item-total="{ actualPremium, policyFee, basmah, vat }">
-              {{
-                  fixedValue(actualPremium + (policyFee || 0) + (basmah || 0) + vat)
-              }}
-          </template>
+        <template #item-total="{ actualPremium, policyFee, basmah, vat }">
+          {{
+            fixedValue(actualPremium + (policyFee || 0) + (basmah || 0) + vat)
+          }}
+        </template>
         <template #item-action="item">
           <div class="flex gap-2 pr-2">
             <x-button
