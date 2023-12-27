@@ -27,7 +27,8 @@ defineProps({
   embeddedProducts: Array,
   canAddBatchNumber: Boolean,
   sendUpdateOptions: Array,
-  sendUpdateLogs: Array
+  sendUpdateLogs: Array,
+  hasPolicyIssuedStatus: Boolean
 });
 
 const page = usePage();
@@ -35,13 +36,7 @@ const page = usePage();
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
 
-const policyIssued = computed(() => {
-  return (
-    page.props.quote.quote_status_id === page.props.quoteStatusEnum.PolicyIssued
-  );
-});
-
-const sectionExpanded = computed(() => !policyIssued.value);
+const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
 </script>
 
 <template>
@@ -276,7 +271,7 @@ const sectionExpanded = computed(() => !policyIssued.value);
     />
 
     <SendUpdates
-      v-if="policyIssued"
+      v-if="hasPolicyIssuedStatus"
       reportableType="JetskiQuote"
       :reportableId="record.id"
       :quote_type_id="$page.props.quoteTypeId"
