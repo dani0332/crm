@@ -381,7 +381,7 @@ onMounted(() => {
       v-model:items-selected="quotesSelected"
       table-class-name="tablefixed"
       :loading="loader.table"
-      :headers="filteredHeaders"
+      :headers="tableHeader"
       :items="quotes.data || []"
       border-cell
       hide-rows-per-page
