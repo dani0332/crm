@@ -89,6 +89,15 @@ const notesLength = computed(() => {
           </x-collapse>
         </template>
       </DataTable>
+      <Pagination
+        :links="{
+          next: data.next_page_url,
+          prev: data.prev_page_url,
+          current: data.current_page,
+          from: data.from,
+          to: data.to,
+        }"
+      />
     </div>
   </AppModal>
 
