@@ -1447,6 +1447,7 @@ const deleteDocument = (docName,count) => {
 };
 
 const uploadDocument = (doc, files, count) => {
+  files = files.files;
   if (files.length == 0) return;  
   let url = '/quotes/'+props.quoteType+'/documents/store-multiple';
   let splitPaymentDocType = null;  
