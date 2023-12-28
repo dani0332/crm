@@ -1180,6 +1180,7 @@ const validateViewPayment = (isValid) => {
 const validateCapturePayment = (isValid) => {
   if(isApproveConfirm.value === false && isValid) {    
     let noError = true;
+    let regex = /^\d+(\.\d{1,2})?$/;
     isCreditPaymentInvalid.value = [];
     if (isCreditCardView.value === true) {
       for (let i = 1; i <= paymentMethodsForm.payment_no; i++) { 
@@ -1191,6 +1192,12 @@ const validateCapturePayment = (isValid) => {
             isCreditPaymentInvalid.value[i] = true;
             isCreditPaymentInvalidError.value[i] = "This field is required";
           }
+          
+          if (!(regex.test(collectionAmountModels.value[i]))) {
+            isCreditPaymentInvalid.value[i] = true;
+            isCreditPaymentInvalidError.value[i] = "Amount must be a valid number";
+          }
+
           if (parseFloat(collectionAmountModels.value[i]) > parseFloat(splitAmountModels.value[i])) {          
             isCreditPaymentInvalid.value[i] = true;
             isCreditPaymentInvalidError.value[i] = "Capture amount should not exceed total amount";                
@@ -1603,21 +1610,24 @@ const getCaptureValidation = computed(() => {
         }
       }
     } else {
+      console.log('PAYMENTSPLIT='+(paymentRecord.payment_splits[0].payment_status_id));
       if (
         (paymentRecord.payment_splits[0].payment_method.code==='IP' ||
         paymentRecord.payment_splits[0].payment_method.code==='PDC'
         ) &&
         paymentRecord.payment_splits[0].payment_status.code===props.paymentStatusEnum.PENDING) {
         return true;
-      } else if(paymentRecord.payment_splits[0].payment_status.code===props.paymentStatusEnum.PAID){
+      } else if(
+          paymentRecord.payment_splits[0].payment_status_id===props.paymentStatusEnum.PAID ||
+          paymentRecord.payment_splits[0].payment_status_id===props.paymentStatusEnum.AUTHORISED        
+        ){
         return true;
       }
       /*
       let paidPaymentStatus = paymentRecord.payment_splits.filter(item => item.payment_status.code===props.paymentStatusEnum.PAID);
       if( paidPaymentStatus.length===paymentRecord.payment_splits.length ) {
         return true;
-      }*/
-      return true;
+      }*/      
     }
   }
   return false;
@@ -2579,7 +2589,7 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
                         :class="{'custom-select-error': isCreditPaymentInvalid[count]}"                                           
                       />
                       <span v-else >{{ formatAmount(collectionAmountModels[count]) }}</span>
-                      <p v-if="isCreditPaymentInvalid[count]" class="text-sm text-red-500 dark:text-red-400">{{  isCreditPaymentInvalidError[count] }}</p>
+                      <sup v-if="isCreditPaymentInvalid[count]" class="text-sm text-red-500 dark:text-red-400">{{  isCreditPaymentInvalidError[count] }}</sup>
                     </template> 
                   </div>
                   <div class="w-1/5 px-2" v-else>
