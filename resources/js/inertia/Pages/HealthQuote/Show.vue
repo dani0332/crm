@@ -461,6 +461,7 @@ const onMemberSubmit = isValid => {
         memberForm.reset();
         onLoadAvailablePlansData();
         membersDetailsUpdated.value = true;
+        location.reload();
       },
       onError: errors => {
         notification.error({
@@ -482,6 +483,7 @@ const onMemberSubmit = isValid => {
         });
         onLoadAvailablePlansData();
         membersDetailsUpdated.value = true;
+        location.reload();
       },
         onError: errors => {
             notification.error({
@@ -514,6 +516,7 @@ const memberDeleteConfirmed = () => {
         });
         onLoadAvailablePlansData();
         membersDetailsUpdated.value = true;
+        location.reload();
       },
       onFinish: () => {
         modals.memberConfirm = false;

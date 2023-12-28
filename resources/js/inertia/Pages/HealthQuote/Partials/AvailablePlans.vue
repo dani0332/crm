@@ -277,25 +277,10 @@ const handleLoadingPrice = (event, memberId) => {
       price: event.target.value,
     });
   }
-  console.log(loadingPrices.value);
 };
 
 const manualPlansMembersPremium = ref([]);
 const handleManualBasePrice = (event, memberId) => {
-    console.log("before");
-    console.log(manualPlansMembersPremium.value);
-
-//   loadingPriceBeingUpdated.value = true;
-//   const index = loadingPrices.value.findIndex(m => m.memberId == memberId);
-//   if (index > -1) {
-//     loadingPrices.value[index].price = event.target.value;
-//   } else {
-//     loadingPrices.value.push({
-//       memberId: memberId,
-//       price: event.target.value,
-//     });
-//   }
-
   const index = manualPlansMembersPremium.value.findIndex(m => m.memberId == memberId);
   if (index > -1) {
     manualPlansMembersPremium.value[index].premium = event.target.value;
@@ -305,8 +290,6 @@ const handleManualBasePrice = (event, memberId) => {
       premium: event.target.value,
     });
   }
-  console.log("after");
-  console.log(manualPlansMembersPremium.value);
 };
 
 const checkLoadingPriceUpdate = e => {
@@ -390,7 +373,6 @@ const onLoadingPricesUpdate = member => {
 };
 
 onUpdated(() => {
-    console.log(props.plan);
     defaultCopayId.value = props.plan?.selectedCopayId;
     loadingPrices.value = [];
     manualPlansMembersPremium.value = [];
@@ -468,8 +450,6 @@ onUpdated(() => {
     loadingPrices.value.forEach(data => {
         totalLoadingPrice.value = Number(totalLoadingPrice.value) + Number(data.price);
     });
-
-    console.log(manualPlansMembersPremium.value);
 });
 
 </script>

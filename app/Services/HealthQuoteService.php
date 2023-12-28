@@ -1448,12 +1448,12 @@ class HealthQuoteService extends BaseService
 
             $memberDetails = [
                 'firstName' => $request->first_name,
-                'lastName' => $request->last_name ?? "temp", //temp
+                'lastName' => $request->last_name ?? null,
                 'emirateOfYourVisaId' => $request->emirate_of_your_visa_id,
                 'gender' => $request->gender,
                 'nationalityId' => $request->nationality_id,
                 'memberCategoryId' => $request->member_category_id,
-                'salaryBandId' => (string)$request->salary_band_id, //temp parse to string
+                'salaryBandId' => $request->salary_band_id,
                 'dob' => Carbon::parse($request->dob)->toDateString(),
                 'relationCode' => $request->relation_code,
             ];
@@ -1499,13 +1499,13 @@ class HealthQuoteService extends BaseService
             $memberDetails = [
                 'id' => $memberId,
                 'firstName' => $request->first_name,
-                'lastName' => $request->last_name,
+                'lastName' => $request->last_name ?? null,
                 'emirateOfYourVisaId' => $request->emirate_of_your_visa_id,
                 'gender' => $request->gender,
                 'nationalityId' => $request->nationality_id,
                 'memberCategoryId' => $request->member_category_id,
                 'salaryBandId' => $request->salary_band_id,
-                'dob' => $request->dob,
+                'dob' => Carbon::parse($request->dob)->toDateString(),
                 'relationCode' => $request->relation_code,
             ];
 
