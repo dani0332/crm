@@ -7,25 +7,18 @@ use Illuminate\Support\Str;
 
 class SendUpdateLogRepository extends BaseRepository
 {
-    /**
-     * 
-     * 
-     */
+
     public function model()
     {
         return SendUpdateLog::class;
     }
 
-    /**
-     * 
-     * 
-     */
     public function fetchCreate($data) 
     {
         try {
             $code = $data['childCategory']['slug'];
 
-            $count = $this->fetchGetCount($data['reportable_id'], $data['childCategory']['id']);
+            $count = $this->fetchGetCount($data['reportable_id']);
 
             $code = $code . '-' . date('m') . date('y') . '-' . ($count + 1);
 
@@ -76,12 +69,9 @@ class SendUpdateLogRepository extends BaseRepository
         return $log;
     }
 
-    public function fetchGetCount($id, $categoryId) 
+    public function fetchGetCount($id) 
     {
-        return $this->where([
-            'reportable_id' => $id,
-            'category_id' => $categoryId
-        ])->count();
+        return $this->where(['reportable_id' => $id])->count();
     }
 
     public function fetchFindByQuoteId($reportableTye, $reportableId) 
