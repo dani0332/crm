@@ -60,17 +60,8 @@ use App\Models\Tier;
 use App\Models\TravelQuote;
 use App\Models\UAELicenseHeldFor;
 use App\Models\User;
-use App\Repositories\BikeQuoteRepository;
 use App\Repositories\BusinessQuoteRepository;
 use App\Repositories\CarQuoteRepository;
-use App\Repositories\CycleQuoteRepository;
-use App\Repositories\HealthQuoteRepository;
-use App\Repositories\HomeQuoteRepository;
-use App\Repositories\JetskiQuoteRepository;
-use App\Repositories\LifeQuoteRepository;
-use App\Repositories\PetQuoteRepository;
-use App\Repositories\TravelQuoteRepository;
-use App\Repositories\YachtQuoteRepository;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use DateTime;
@@ -1314,7 +1305,7 @@ class RenewalsUploadService
                     Log::info('Renewals OCB Email sent to uuid: '.$carQuote->uuid.' ResponseCode: '.$responseCode);
                     RenewalsBatchEmails::where('id', $renewalsBatchEmail->id)->update(['total_sent' => DB::raw('total_sent+1')]);
                     RenewalQuoteProcess::where('id', $renewalQuoteProcess->id)->update(['email_sent' => 1]);
-                //$this->updateRenewalQuoteEmailSent($batch, $carQuote->id);
+                    //$this->updateRenewalQuoteEmailSent($batch, $carQuote->id);
                 } else {
                     Log::error('Renewals OCB Email failed for uuid: '.$carQuote->uuid.' ResponseCode: '.$responseCode.' batchEmailId:'.$renewalsBatchEmail->id.' Customer EmailAddress:'.$carQuote->email);
                     RenewalsBatchEmails::where('id', $renewalsBatchEmail->id)->update(['total_failed' => DB::raw('total_failed+1')]);
@@ -1950,9 +1941,9 @@ class RenewalsUploadService
     {
         $quotes = [];
         $product = $data->product;
-        if($product == QuoteTypeId::Business){
+        if ($product == QuoteTypeId::Business) {
             $quotes = BusinessQuoteRepository::getDataOfBusiness()->withQueryString();
-        }else {
+        } else {
             $quoteType = QuoteTypes::getName($product);
             $repository = '\\App\\Repositories\\'.ucwords($quoteType->value).'QuoteRepository';
             $quotes = $repository::getData()->withQueryString();
@@ -1968,6 +1959,7 @@ class RenewalsUploadService
         $quoteType = QuoteTypes::getName($product);
         $repository = '\\App\\Repositories\\'.ucwords($quoteType->value).'QuoteRepository';
         $quotes = $repository::export();
+
         return (new RenewalQuotesExport($quotes, $quoteType->name))->download('Renewal.xlsx');
     }
 

@@ -45,21 +45,22 @@ enum QuoteTypes: string
     }
     public static function getName($value)
     {
-        $types =  [
-            1=>QuoteTypes::CAR,
-            2=>QuoteTypes::HOME,
-            3=>QuoteTypes::HEALTH,
-            4=>QuoteTypes::LIFE,
-            5=>QuoteTypes::BUSINESS,
-            6=>QuoteTypes::BIKE,
-            7=>QuoteTypes::YACHT,
-            8=>QuoteTypes::TRAVEL,
-            9=>QuoteTypes::PET,
-            10=>QuoteTypes::CYCLE,
-            11=>QuoteTypes::JETSKI,
-            101=>QuoteTypes::CORPLINE,
-            102=>QuoteTypes::GROUP_MEDICAL,
+        $types = [
+            1 => QuoteTypes::CAR,
+            2 => QuoteTypes::HOME,
+            3 => QuoteTypes::HEALTH,
+            4 => QuoteTypes::LIFE,
+            5 => QuoteTypes::BUSINESS,
+            6 => QuoteTypes::BIKE,
+            7 => QuoteTypes::YACHT,
+            8 => QuoteTypes::TRAVEL,
+            9 => QuoteTypes::PET,
+            10 => QuoteTypes::CYCLE,
+            11 => QuoteTypes::JETSKI,
+            101 => QuoteTypes::CORPLINE,
+            102 => QuoteTypes::GROUP_MEDICAL,
         ];
+
         return $types[$value];
     }
 }
