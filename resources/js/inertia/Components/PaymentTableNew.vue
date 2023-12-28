@@ -1573,18 +1573,12 @@ const getCaptureValidation = computed(() => {
           return true;
         }
     } else if ( paymentRecord.frequency==='split_payments' ){
-      const paymentMethodCC = paymentRecord.payment_splits.filter(item => item.payment_method.code === "CC");
+      const paymentMethodCC = paymentRecord.payment_splits.filter(item => item.payment_method.code === "CC");      
       if (paymentMethodCC.length > 0) {
-        let ccPaymentStatus = paymentMethodCC.filter(item => item.payment_status_id===props.paymentStatusEnum.AUTHORIZED);
+        let ccPaymentStatus = paymentMethodCC.filter(item => item.payment_status_id===props.paymentStatusEnum.AUTHORISED);
         if( ccPaymentStatus.length===paymentMethodCC.length ) {
           return true;
-        }        
-        /*paymentMethodCC.forEach(element => {
-          if (element.payment_status.code===props.paymentStatusEnum.AUTHORIZED) {
-            return true;
-          }
-        });*/
-        
+        }
       } else {
         let ipPaymentStatus = paymentRecord.payment_splits.filter(item => item.payment_method.code === "IP");
         if (ipPaymentStatus.length > 0) {
