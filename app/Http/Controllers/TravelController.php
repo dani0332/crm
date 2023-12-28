@@ -195,6 +195,7 @@ class TravelController extends Controller
             'genderOptions' => $this->crudService->getGenderOptions(),
             'lostReasons' => $this->lookupService->getLostReasons(),
             'travelers' => CustomerMembersRepository::getBy($record->id, QuoteTypes::TRAVEL->name),
+            'aboveAgeMembers' => $this->travelQuoteService->getAboveAgeMembers($record->id),
             'ecomDetails' => $ecomDetails,
             'quoteDocuments' => array_values($quoteDocuments->toArray()),
             'documentTypes' => $documentTypes,
@@ -392,7 +393,6 @@ class TravelController extends Controller
                 'message' => $quotePlans,
             ], 404);
         }
-
         $listQuotePlans = $quotePlans->quotes->plans;
         foreach ($listQuotePlans as $listQuotePlan) {
             if ($listQuotePlan->id == $planId) {
@@ -418,7 +418,7 @@ class TravelController extends Controller
         }
 
         $data = [
-            'listQuotePlanName' => $listQuotePlanName,
+            'listQuotePlanName' => $listQuotePlanName ?? '',
             'providerCode' => $providerCode,
             'providerName' => $providerName,
             'travelType' => $travelType,

@@ -336,7 +336,7 @@ onMounted(() => {
           </x-tooltip>
         </div>
         <div v-else />
-        <div class="flex justify-self-end gap-3">
+        <div class="flex gap-3 justify-self-end">
           <x-button size="sm" color="#ff5e00" type="submit">Search</x-button>
           <x-button size="sm" color="primary" @click.prevent="resetFilters">
             Reset

@@ -9,6 +9,7 @@ defineProps({
   quote: Object,
   leadStatuses: Array,
   ecomDetails: Object,
+  coPayment: Object,
   membersDetail: Array,
   memberCategories: Array,
   memberRelations: Array,
@@ -558,6 +559,11 @@ const plansTable = reactive({
       value: 'eligibilityName',
     },
     {
+      text: 'CO-PAY/CO-INSURANCE',
+      value: 'copayName',
+      width: 100
+    },
+    {
       text: 'Base Price',
       value: 'actualPremium',
     },
@@ -882,6 +888,14 @@ const getSmallestCopayRateAsDefaultValue = () => {
       element.loadingPrice = smallestCopayLoadingPrice;
 
     }
+      element.coPayments.forEach(function callback(value, index) {
+          if(value.id ==  element.selectedCopayId){
+              element.copayName = value.text;
+          }
+
+      });
+
+
   });
 };
 
@@ -2372,6 +2386,10 @@ const handleChildUpdate = planId => {
             <dt class="font-medium">TOTAL PRICE (with VAT)</dt>
             <dd>{{ fixedValue(ecomDetails.priceWithVAT) }}</dd>
           </div>
+            <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">CO-PAY / CO-INSURANCE</dt>
+                <dd>{{ (coPayment)?coPayment.text:'N/A' }}</dd>
+            </div>
         </dl>
       </div>
     </div>
@@ -2554,9 +2572,14 @@ const handleChildUpdate = planId => {
         border-cell
         hide-rows-per-page
         :rows-per-page="15"
+        class="flex-wrap"
         :hide-footer="listQuotePlansFiltered.length < 15"
       >
+          <template #item-copayName="item">
+              <span class="copay-max">{{item.copayName}}</span>
+          </template>
         <template #item-providerName="{ providerName, isManualPlan, isHidden }">
+
           <p>{{ providerName }}</p>
           <div class="flex gap-1">
             <x-tag
