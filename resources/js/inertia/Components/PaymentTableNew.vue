@@ -1553,8 +1553,9 @@ const uploadDocument = (doc, files, count) => {
 };
 
 const getCaptureValidation = computed(() => {  
-  //6 =AML Screening Cleared
-  if ( props.payments.length>0 && props.quoteRequest.quote_status_id === 6  && props.quoteRequest.kyc_decision === 'Complete') {
+  //6 =AML Screening Cleared , 32 = Transaction Declined
+  if ( props.payments.length>0 && (props.quoteRequest.quote_status_id === 6 || props.quoteRequest.quote_status_id === 32) 
+  && props.quoteRequest.kyc_decision === 'Complete') {
     if(props.payments[0].is_approved===1){
       return false;
     }
