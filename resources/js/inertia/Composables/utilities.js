@@ -87,6 +87,18 @@ export const useConvertDate = date => {
   return `${year}-${month}-${day}`;
 };
 
+export const fileUploadErrorMessage = (doc, rejectReason) => {
+  let errorMessage = "";
+  if (rejectReason.code == "file-too-large") {
+    errorMessage = "File size must be less than " + doc.max_size + " MB for " + doc.text;
+  } else if (rejectReason.code == "file-invalid-type") {
+    errorMessage = "You can only upload a " + doc.accepted_files + " for " + doc.text;
+  } else {
+    errorMessage= "You can only upload a " + doc.accepted_files + " or File size must be less than " + doc.max_size + " MB for " + doc.text;
+  }
+  return errorMessage;
+};
+
 export const useFormatPrice = (price, thousandSeparator = false) => {
   return (thousandSeparator ? parseFloat(price).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}) : parseFloat(price).toFixed(2));
 }

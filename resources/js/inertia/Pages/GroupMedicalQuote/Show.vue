@@ -601,7 +601,9 @@ const linkEntity = () => {
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div class="flex justify-between items-center mb-4">
         <h3 class="font-semibold text-primary-800 text-lg">Entity Profile</h3>
-        <x-tag color="success" v-if="quote.kyc_decision === 'Complete'"> KYC - Complete </x-tag>
+        <x-tag color="success" v-if="quote.kyc_decision === 'Complete'">
+          KYC - Complete
+        </x-tag>
         <x-tag color="amber" v-else> KYC - Pending </x-tag>
       </div>
       <x-divider class="mb-4 mt-1" />
@@ -952,5 +954,10 @@ const linkEntity = () => {
         :hide-footer="historyData.length < 15"
       />
     </div>
+
+    <AuditLogs
+      :type="'App\\Models\\BusinessQuote'"
+      :id="$page.props.quote.id"
+    />
   </div>
 </template>
