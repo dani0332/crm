@@ -58,7 +58,7 @@ class RenewalQuotesExport implements FromQuery, ShouldAutoSize, WithHeadings, Wi
             $quote->premium,
             $quote->previousAdvisor != null ? $quote->previousAdvisor->name : '',
             $payment != null ? $payment->commission : 'N/A',
-            $this->exportType == 'BUSINESS' ? ($quote->business_type_of_insurance_id == quoteStatusCode::GROUP_MEDICAL_ID ? quoteStatusCode::GROUP_MEDICAL : quoteTypeCode::CORPLINE) : '',
+            $this->exportType == 'BUSINESS' ? ($quote->business_type_of_insurance_id == 5 ? quoteStatusCode::GROUP_MEDICAL : quoteTypeCode::CORPLINE) : '',
 
         ];
     }

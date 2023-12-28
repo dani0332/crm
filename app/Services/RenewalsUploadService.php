@@ -1950,40 +1950,12 @@ class RenewalsUploadService
     {
         $quotes = [];
         $product = $data->product;
-        switch ($product) {
-            case QuoteTypeId::Car:
-                $quotes = CarQuoteRepository::getData()->withQueryString();
-                break;
-            case QuoteTypeId::Home:
-                $quotes = HomeQuoteRepository::getData()->withQueryString();
-                break;
-            case QuoteTypeId::Health:
-                $quotes = HealthQuoteRepository::getData()->withQueryString();
-                break;
-            case QuoteTypeId::Life:
-                $quotes = LifeQuoteRepository::getData()->withQueryString();
-                break;
-            case QuoteTypeId::Business:
-                $quotes = BusinessQuoteRepository::getDataOfBusiness()->withQueryString();
-                break;
-            case QuoteTypeId::Bike:  // can
-                $quotes = BikeQuoteRepository::getData()->withQueryString();
-                break;
-            case QuoteTypeId::Yacht:
-                $quotes = YachtQuoteRepository::getData()->withQueryString();
-                break;
-            case QuoteTypeId::Travel:
-                $quotes = TravelQuoteRepository::getData()->withQueryString();
-                break;
-            case QuoteTypeId::Pet:
-                $quotes = PetQuoteRepository::getData()->withQueryString();
-                break;
-            case QuoteTypeId::Cycle:
-                $quotes = CycleQuoteRepository::getData()->withQueryString();
-                break;
-            case QuoteTypeId::Jetski:
-                $quotes = JetskiQuoteRepository::getData()->withQueryString();
-                break;
+        if($product == QuoteTypeId::Business){
+            $quotes = BusinessQuoteRepository::getDataOfBusiness()->withQueryString();
+        }else {
+            $quoteType = QuoteTypes::getName($product);
+            $repository = '\\App\\Repositories\\'.ucwords($quoteType->value).'QuoteRepository';
+            $quotes = $repository::getData()->withQueryString();
         }
 
         return $quotes;
@@ -1991,56 +1963,11 @@ class RenewalsUploadService
 
     public function getExport($data)
     {
-        $product = $data->product;
         $quotes = [];
-        $quoteType = '';
-        switch ($product) {
-            case QuoteTypeId::Car:
-                $quotes = CarQuoteRepository::export();
-                $quoteType = QuoteTypes::CAR;
-                break;
-            case QuoteTypeId::Home:
-                $quotes = HomeQuoteRepository::export();
-                $quoteType = QuoteTypes::HOME;
-                break;
-            case QuoteTypeId::Health:
-                $quotes = HealthQuoteRepository::export();
-                $quoteType = QuoteTypes::HEALTH;
-                break;
-            case QuoteTypeId::Life:
-                $quotes = LifeQuoteRepository::export();
-                $quoteType = QuoteTypes::LIFE;
-                break;
-            case QuoteTypeId::Business:
-                $quotes = BusinessQuoteRepository::export();
-                $quoteType = QuoteTypes::BUSINESS;
-                break;
-            case QuoteTypeId::Bike:  // can
-                $quotes = BikeQuoteRepository::export();
-                $quoteType = QuoteTypes::BIKE;
-                break;
-            case QuoteTypeId::Yacht:
-                $quotes = YachtQuoteRepository::export();
-                $quoteType = QuoteTypes::YACHT;
-                break;
-            case QuoteTypeId::Travel:
-                $quotes = TravelQuoteRepository::export();
-                $quoteType = QuoteTypes::TRAVEL;
-                break;
-            case QuoteTypeId::Pet:
-                $quotes = PetQuoteRepository::export();
-                $quoteType = QuoteTypes::PET;
-                break;
-            case QuoteTypeId::Cycle:
-                $quotes = CycleQuoteRepository::export();
-                $quoteType = QuoteTypes::CYCLE;
-                break;
-            case QuoteTypeId::Jetski:
-                $quotes = JetskiQuoteRepository::export();
-                $quoteType = QuoteTypes::JETSKI;
-                break;
-        }
-
+        $product = $data->product;
+        $quoteType = QuoteTypes::getName($product);
+        $repository = '\\App\\Repositories\\'.ucwords($quoteType->value).'QuoteRepository';
+        $quotes = $repository::export();
         return (new RenewalQuotesExport($quotes, $quoteType->name))->download('Renewal.xlsx');
     }
 
