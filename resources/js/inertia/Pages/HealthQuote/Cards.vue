@@ -157,7 +157,7 @@ const onSearch = id => {
               </template>
             </x-popover>
             <span>
-              {{ Number(quote.data.total_opportunity).toLocaleString() }}</span
+              {{ Number(quote.data.total_opportunity).toLocaleString() ?? 0}}</span
             >
           </div>
           <div class="flex justify-between gap-1">
@@ -201,6 +201,7 @@ const onSearch = id => {
                 premium,
                 updated_at,
                 company_name,
+                health_cover_for
               },
               index
             ) in quote.data.leads_list.data"
@@ -212,7 +213,6 @@ const onSearch = id => {
             :class="index == 2 ? 'bg-error-200' : 'bg-white'"
             ref="el"
           >
-            <!-- <div class="font-semibold text-sm">{{ code }}</div> -->
             <p class="font-semibold text-sm">
               {{ first_name }} {{ last_name }}
             </p>
@@ -227,8 +227,7 @@ const onSearch = id => {
                 </template>
               </x-tooltip>
 
-              <!-- <p class="text-xs">{{ first_name }} {{ last_name }}</p> -->
-              <p class="text-xs">Individual</p>
+              <p class="text-xs">{{ health_cover_for?.text }}</p>
             </div>
 
             <div v-if="company_name" class="flex items-center gap-2">

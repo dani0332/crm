@@ -27,12 +27,17 @@ class UpdateStaleLeads extends Command
     {
         // This is not applied once the lead status reach 'Transaction approved, Policy Documents Pending, Policy issued, Policy sent to customer and Policy booked.
 //        Additionally, this condition should not be applied when the status is "Lost", "Fake", "Duplicate", "Cancellation Pending", "Policy Cancelled
+
 //        Health
-//Corpline
-//Home
-//Pet
-//Cycle
-//Yacht
+        //Corpline
+        //Home
+        //Pet
+        //Cycle
+        //Yacht
+
+
+
+
     }
 
 }

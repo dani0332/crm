@@ -3,6 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Enums\GenericRequestEnum;
+use App\Enums\quoteStatusCode;
+use App\Enums\QuoteStatusEnum;
+use App\Enums\QuoteTypes;
+use App\Enums\RolesEnum;
 use App\Http\Requests\InsurerProviderNetworkRequest;
 use App\Repositories\InsuranceProviderRepository;
 use App\Services\HealthQuoteService;
@@ -89,112 +93,41 @@ class HealthQuoteController extends Controller
         return $networks;
     }
 
-    // TODO: Code Refactor
     public function cardsView(Request $request)
     {
-        //        $quotes = [];
-//        if (in_array(auth()->user()->sub_team_id, [8]) || auth()->user()->hasRole(RolesEnum::HealthManager) || true) {
-//
-//            $allowedQuoteStatuses =
-//            $commonStatuses = [
-//                ['sorting_order' => 1, 'quote_status' => QuoteStatusEnum::Quoted],
-//                ['sorting_order' => 1, 'quote_status' => QuoteStatusEnum::ApplicationPending],
-//                ['sorting_order' => 1, 'quote_status' => QuoteStatusEnum::InNegotiation],
-//                ['sorting_order' => 1, 'quote_status' => QuoteStatusEnum::PaymentPending],
-//                ['sorting_order' => 1, 'quote_status' => QuoteStatusEnum::PolicyIssued],
-//            ];
-//
-//            if (auth()->user()->sub_team_id == 8 || true) {
-//                $businessSubTeamStatus = [
-//                    ['sorting_order' => 1, 'quote_status' => QuoteStatusEnum::FollowedUp],
-//                    ['sorting_order' => 1, 'quote_status' => QuoteStatusEnum::ApplicationSubmitted],
-//                    ['sorting_order' => 1, 'quote_status' => QuoteStatusEnum::TransactionApproved],
-//                ];
-//
-//                $allowedQuoteStatuses = array_merge($commonStatuses, $businessSubTeamStatus);
-//            }
-//
-//            if (auth()->user()->sub_team_id == 9) {
-//                $renewalSubTeamStatus = [
-//                    ['sorting_order' => 1, 'quote_status' => QuoteStatusEnum::Lost],
-//                    ['sorting_order' => 1, 'quote_status' => QuoteStatusEnum::RenewwalTermsReceived],
-//                ];
-//
-//                $allowedQuoteStatuses = array_merge($commonStatuses, $renewalSubTeamStatus);
-//            }
-//
-//            if (auth()->user()->hasRole(RolesEnum::HealthManager)) {
-//                $unitManagerRoleStatus = [
-//                    ['sorting_order' => 1, 'quote_status' => QuoteStatusEnum::Lost],
-//                    ['sorting_order' => 1, 'quote_status' => QuoteStatusEnum::Allocated],
-//                    ['sorting_order' => 1, 'quote_status' => QuoteStatusEnum::RenewwalTermsReceived],
-//                    ['sorting_order' => 1, 'quote_status' => QuoteStatusEnum::ApplicationSubmitted],
-//                    ['sorting_order' => 1, 'quote_status' => QuoteStatusEnum::TransactionApproved],
-//                ];
-//
-//                $allowedQuoteStatuses = array_merge($commonStatuses, $unitManagerRoleStatus);
-//            }
-//
-//            dd($allowedQuoteStatuses);
-//            $quoteStatus = QuoteStatus::whereIn('id', $healthCommonStatuses)->get();
-//        }
-//
-//
-//        $quotes = [
-//            [
-//                'id' => QuoteStatusEnum::Quoted,
-//                'title' => quoteStatusCode::QUOTED,
-//                'data' => getDataAgainstStatus(QuoteTypes::HEALTH->name, QuoteStatusEnum::Quoted),
-//            ]
-//        ];
+        $quotes = [
+            ['id' => QuoteStatusEnum::Lost, 'title' => quoteStatusCode::LOST, 'data' => getDataAgainstStatus(QuoteTypes::HEALTH->value, QuoteStatusEnum::Lost)],
+            ['id' => QuoteStatusEnum::Allocated, 'title' => quoteStatusCode::ALLOCATED, 'data' => getDataAgainstStatus(QuoteTypes::HEALTH->value, QuoteStatusEnum::Allocated)],
+            ['id' => QuoteStatusEnum::RenewalTermsReceived, 'title' => quoteStatusCode::RENEWAL_TERMS_RECEIVED, 'data' => getDataAgainstStatus(QuoteTypes::HEALTH->value, QuoteStatusEnum::RenewalTermsReceived)],
+            ['id' => QuoteStatusEnum::Quoted, 'title' => quoteStatusCode::QUOTED, 'data' => getDataAgainstStatus(QuoteTypes::HEALTH->value, QuoteStatusEnum::Quoted)],
+            ['id' => QuoteStatusEnum::FollowedUp, 'title' => quoteStatusCode::FOLLOWEDUP, 'data' => getDataAgainstStatus(QuoteTypes::HEALTH->value, QuoteStatusEnum::FollowedUp)],
+            ['id' => QuoteStatusEnum::ApplicationPending, 'title' => quoteStatusCode::APPLICATION_PENDING, 'data' => getDataAgainstStatus(QuoteTypes::HEALTH->value, QuoteStatusEnum::ApplicationPending)],
+            ['id' => QuoteStatusEnum::ApplicationSubmitted, 'title' => quoteStatusCode::APPLICATION_SUBMITTED, 'data' => getDataAgainstStatus(QuoteTypes::HEALTH->value, QuoteStatusEnum::ApplicationSubmitted)],
+            ['id' => QuoteStatusEnum::InNegotiation, 'title' => quoteStatusCode::NEGOTIATION, 'data' => getDataAgainstStatus(QuoteTypes::HEALTH->value, QuoteStatusEnum::InNegotiation)],
+            ['id' => QuoteStatusEnum::PaymentPending, 'title' => quoteStatusCode::PAYMENTPENDING, 'data' => getDataAgainstStatus(QuoteTypes::HEALTH->value, QuoteStatusEnum::PaymentPending)],
+            ['id' => QuoteStatusEnum::TransactionApproved, 'title' => quoteStatusCode::TRANSACTIONAPPROVED, 'data' => getDataAgainstStatus(QuoteTypes::HEALTH->value, QuoteStatusEnum::TransactionApproved)],
+            ['id' => QuoteStatusEnum::PolicyIssued, 'title' => quoteStatusCode::POLICY_ISSUED, 'data' => getDataAgainstStatus(QuoteTypes::HEALTH->value, QuoteStatusEnum::PolicyIssued)],
+        ];
 
+        $isManagerOrAdminAccess = auth()->user()->hasAnyRole([RolesEnum::HealthManager, RolesEnum::Admin]);
 
-        $quotes = [];
-        $quotes[] = [
-            'id' => 8,
-            'title' => 'New Lead',
-            'data' => getDataAgainstStatus('Health', 8),
-        ];
-        $quotes[] = [
-            'id' => 2,
-            'title' => 'Quoted',
-            'data' => getDataAgainstStatus('Health', 2),
-        ];
-        $quotes[] = [
-            'id' => 31,
-            'title' => 'Qualified',
-            'data' => getDataAgainstStatus('Health', 31),
-        ];
-        $quotes[] = [
-            'id' => 25,
-            'title' => 'In Negotiation',
-            'data' => getDataAgainstStatus('Health', 25),
-        ];
-        $quotes[] = [
-            'id' => 26,
-            'title' => 'Application Pending',
-            'data' => getDataAgainstStatus('Health', 26),
-        ];
-        $quotes[] = [
-            'id' => 28,
-            'title' => 'Payment Pending',
-            'data' => getDataAgainstStatus('Health', 28),
-        ];
-        $quotes[] = [
-            'id' => 36,
-            'title' => 'Application Submitted',
-            'data' => getDataAgainstStatus('Health', 36),
-        ];
-        $quotes[] = [
-            'id' => 15,
-            'title' => 'Transaction Approved',
-            'data' => getDataAgainstStatus('Health', 15),
-        ];
-        $quotes[] = [
-            'id' => 29,
-            'title' => 'Policy Documents Pending',
-            'data' => getDataAgainstStatus('Health', 29),
-        ];
+        if (!$isManagerOrAdminAccess) {
+            if (auth()->user()->hasAnyRole([RolesEnum::HealthNewBusinessAdvisor, RolesEnum::HealthNewBusinessManager])) {
+                $quotes = collect($quotes)->whereNotIn('id', [
+                    QuoteStatusEnum::Lost,
+                    QuoteStatusEnum::Allocated,
+                    QuoteStatusEnum::RenewalTermsReceived
+                ])->values()->toArray();
+
+            } elseif (auth()->user()->hasAnyRole([RolesEnum::HealthRenewalAdvisor, RolesEnum::HealthRenewalManager])) {
+                $quotes = collect($quotes)->whereNotIn('id', [
+                    QuoteStatusEnum::FollowedUp,
+                    QuoteStatusEnum::ApplicationSubmitted,
+                    QuoteStatusEnum::TransactionApproved])->values()->toArray();
+            } else {
+                $quotes = [];
+            }
+        }
 
         return inertia('HealthQuote/Cards', [
             'quotes' => $quotes,

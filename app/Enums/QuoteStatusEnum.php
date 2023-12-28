@@ -30,6 +30,7 @@ final class QuoteStatusEnum extends Enum
     const FollowedUp = 24;
     const InNegotiation = 25;
     const ApplicationPending = 26;
+    const ApplicationSubmitted = 36;
     const PendingwithUW = 27;
     const PaymentPending = 28;
     const PolicyDocumentsPending = 29;

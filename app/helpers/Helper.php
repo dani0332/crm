@@ -140,79 +140,32 @@ function getDataAgainstStatus($modelType, $statusId, $myleads = null)
     $nameSpace = 'App\\Models\\';
     $modelType = $nameSpace.$modelType.'Quote';
 
-    if ($myleads) {
-        if (Auth::user()->isRenewalAdvisor()) {
-            $result['total_leads'] = $modelType::where('quote_status_id', $statusId)
-                ->where('advisor_id', \Auth::user()->id)
-                ->whereNotNull('previous_quote_id')
-                ->count();
-            $result['total_premium'] = $modelType::where('quote_status_id', $statusId)
-                ->where('advisor_id', \Auth::user()->id)
-                ->whereNotNull('previous_quote_id')
-                ->sum('premium');
+    $modelQueryWithOutAdvisor = $modelType::where('quote_status_id', $statusId);
+    $modelQuery = $modelType::where('quote_status_id', $statusId)->where('advisor_id', auth()->user()->id);
 
-            $result['leads_list'] = $modelType::where('quote_status_id', $statusId)
-                ->where('advisor_id', \Auth::user()->id)
-                ->whereNotNull('previous_quote_id')
-                ->paginate(10);
-        } elseif (Auth::user()->isNewBusinessAdvisor()) {
-            $result['total_leads'] = $modelType::where('quote_status_id', $statusId)
-                ->where('advisor_id', \Auth::user()->id)
-                ->whereNull('previous_quote_id')
-                ->count();
-            $result['total_premium'] = $modelType::where('quote_status_id', $statusId)
-                ->where('advisor_id', \Auth::user()->id)
-                ->whereNull('previous_quote_id')
-                ->sum('premium');
+    if ($modelType == HealthQuote::class) {
+        $modelQueryWithOutAdvisor = $modelQueryWithOutAdvisor->with('healthCoverFor');
+        $modelQuery = $modelQuery->with('healthCoverFor');
+    }
 
-            $result['leads_list'] = $modelType::where('quote_status_id', $statusId)
-                ->where('advisor_id', \Auth::user()->id)
-                ->whereNull('previous_quote_id')
-                ->paginate(10);
-        } else {
-            $result['total_leads'] = $modelType::where('quote_status_id', $statusId)
-                ->count();
-            $result['total_premium'] = $modelType::where('quote_status_id', $statusId)
-                ->sum('premium');
-            if ($modelType == HealthQuote::class) {
-                $result['total_opportunity'] = $modelType::where('quote_status_id', $statusId)->sum('price_starting_from');
-            }
-            $result['leads_list'] = $modelType::where('quote_status_id', $statusId)
-                ->paginate(10);
-        }
+    if (auth()->user()->isRenewalAdvisor()) {
+        $result['total_leads'] = $modelQuery->whereNotNull('previous_quote_id')->count();
+        $result['total_premium'] = $modelQuery->whereNotNull('previous_quote_id')->sum('premium');
+        $result['leads_list'] = $modelQuery->whereNotNull('previous_quote_id')->paginate(10);
+
+    } elseif (auth()->user()->isNewBusinessAdvisor()) {
+        $result['total_leads'] = $modelQuery->whereNull('previous_quote_id')->count();
+        $result['total_premium'] = $modelQuery->whereNull('previous_quote_id')->sum('premium');
+        $result['leads_list'] = $modelQuery->whereNull('previous_quote_id')->paginate(10);
+
     } else {
-        if (Auth::user()->isRenewalAdvisor()) {
-            $result['total_leads'] = $modelType::where('quote_status_id', $statusId)
-                ->where('advisor_id', \Auth::user()->id)
-                ->whereNotNull('previous_quote_id')->count();
-
-            $result['total_premium'] = $modelType::where('quote_status_id', $statusId)
-                ->where('advisor_id', \Auth::user()->id)
-                ->whereNotNull('previous_quote_id')->sum('premium');
-
-            $result['leads_list'] = $modelType::where('quote_status_id', $statusId)
-                ->where('advisor_id', \Auth::user()->id)
-                ->whereNotNull('previous_quote_id')->paginate(10);
-        } elseif (Auth::user()->isNewBusinessAdvisor()) {
-            $result['total_leads'] = $modelType::where('quote_status_id', $statusId)
-                ->where('advisor_id', \Auth::user()->id)
-                ->whereNull('previous_quote_id')->count();
-
-            $result['total_premium'] = $modelType::where('quote_status_id', $statusId)
-                ->where('advisor_id', \Auth::user()->id)
-                ->whereNull('previous_quote_id')->sum('premium');
-
-            $result['leads_list'] = $modelType::where('quote_status_id', $statusId)
-                ->where('advisor_id', \Auth::user()->id)
-                ->whereNull('previous_quote_id')->paginate(10);
-        } else {
-            $result['total_leads'] = $modelType::where('quote_status_id', $statusId)->count();
-            $result['total_premium'] = $modelType::where('quote_status_id', $statusId)->sum('premium');
-            if ($modelType == HealthQuote::class) {
-                $result['total_opportunity'] = $modelType::where('quote_status_id', $statusId)->sum('price_starting_from');
-            }
-            $result['leads_list'] = $modelType::where('quote_status_id', $statusId)->paginate(10);
+        $result['total_leads'] = $modelQueryWithOutAdvisor->count();
+        $result['total_premium'] = $modelQueryWithOutAdvisor->sum('premium');
+        if ($modelType == HealthQuote::class) {
+            $result['total_opportunity'] = $modelQueryWithOutAdvisor->sum('price_starting_from');
         }
+        $result['leads_list'] = $modelQueryWithOutAdvisor->paginate(10);
+
     }
 
     return $result;
