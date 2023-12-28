@@ -28,6 +28,7 @@ final class quoteStatusCode extends Enum
     const PENDINGUW = 'Pending with UW';
     const PLOICY_DOCUMENTS_PENDING = 'Policy Documents Pending';
     const APPLICATION_PENDING = 'Application Pending';
+    const APPLICATION_SUBMITTED = 'Application Submitted';
     const MISSING_DOCUMENTS = 'Missing Documents Requested';
     const QUALIFIED = 'Qualified';
     const TRANSACTIONAPPROVED = 'Transaction Approved';
@@ -36,6 +37,7 @@ final class quoteStatusCode extends Enum
     const QualificationPending = 'Qualification Pending';
     const CAR_SOLD = 'Car Sold';
     const UNCONTACTABLE = 'Uncontactable';
+    const LOST = 'Lost';
     const ALLOCATED = 'Allocated';
     const RENEWAL_TERMS_RECEIVED = 'Renewal Terms Received';
     const PROPOSAL_FORM_REQUESTED = 'Proposal Form Requested';
@@ -50,4 +52,5 @@ final class quoteStatusCode extends Enum
     const POLICY_SENT_TO_CUSTOMER = 'Policy Sent To Customer';
     const POLICY_BOOKED = 'Policy Booked';
     const POLICY_CANCELLED = 'Policy Cancelled';
+    const POLICY_ISSUED = 'Policy Issued';
 }
