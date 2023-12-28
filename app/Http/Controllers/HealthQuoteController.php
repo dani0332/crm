@@ -133,6 +133,7 @@ class HealthQuoteController extends Controller
             }
             $message = 'Request not processed. '.$responseMessage;
         }
+
         return redirect()->back();
     }
 
@@ -151,6 +152,7 @@ class HealthQuoteController extends Controller
             }
             $message = 'Request not processed. '.$responseMessage;
         }
+
         return redirect()->back();
     }
 
