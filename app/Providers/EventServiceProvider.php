@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Events\CarQuoteAdvisorUpdated;
+use App\Events\LatestLeadsCount;
 use App\Listeners\HandleCarAdvisorUpdated;
 use App\Listeners\LoginListener;
 use App\Listeners\LogoutListener;
@@ -34,6 +35,7 @@ class EventServiceProvider extends ServiceProvider
         Logout::class => [
             LogoutListener::class,
         ],
+        LatestLeadsCount::class => []
     ];
 
     /**

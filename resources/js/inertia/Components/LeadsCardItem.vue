@@ -56,15 +56,17 @@ const showModal = ref(false);
           updated_at,
           company_name,
           leadName,
+          health_cover_for,
+          is_stale
         },
         index
       ) in leads"
       :key="id"
-      :href="route('life-quotes-show', uuid)"
+      :href="`/quotes/health/${uuid}`"
       target="_blank"
       title="View Lead"
       class="block p-3 mt-2 border border-gray-300 space-y-2 hover:transition hover:border-primary-500 rounded"
-      :class="index == 2 ? 'bg-error-300' : 'bg-white'"
+      :class="is_stale ? 'bg-error-200' : 'bg-white'"
     >
       <div class="font-semibold text-sm">{{ first_name }} {{ last_name }}</div>
       <div class="flex items-center gap-2">
@@ -76,7 +78,7 @@ const showModal = ref(false);
             >
           </template>
         </x-tooltip>
-        <p class="text-xs">Individual</p>
+        <p class="text-xs">{{ health_cover_for?.text }}</p>
       </div>
 
       <div v-if="company_name" class="flex items-center gap-2">
