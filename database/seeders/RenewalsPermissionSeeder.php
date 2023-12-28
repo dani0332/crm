@@ -19,6 +19,7 @@ class RenewalsPermissionSeeder extends Seeder
     {
         $permissions[] = Permission::findOrCreate(PermissionsEnum::RenewalsUpload, 'web')->id;
         $permissions[] = Permission::findOrCreate(PermissionsEnum::RenewalsUploadedLeadList, 'web')->id;
+        $permissions[] = Permission::findOrCreate(PermissionsEnum::EXPORT_NO_CONTACTINFO, 'web')->id;
 
         $marketingOperationRole = Role::findOrCreate(RolesEnum::MarketingOperations, 'web');
         foreach ($permissions as $permission) {
