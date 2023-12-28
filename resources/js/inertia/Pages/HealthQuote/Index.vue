@@ -37,39 +37,68 @@ const assignForm = useForm({
   isManualAllocationAllowed: 1,
 });
 
-const tableHeader = [
-  { text: 'Ref-ID', value: 'code' },
-  { text: 'FIRST NAME', value: 'first_name' },
-  { text: 'LAST NAME', value: 'last_name' },
-  { text: 'LEAD STATUS', value: 'quote_status_id_text' },
-  { text: 'ADVISOR', value: 'advisor_id_text' },
-  { text: 'ASSIGNMENT TYPE', value: 'assignment_type' },
-  { text: 'CREATED DATE', value: 'created_at' },
-  { text: 'LAST MODIFIED DATE', value: 'updated_at' },
-  { text: 'HEALTH TEAM TYPE', value: 'health_team_type' },
-  { text: 'TRANSAPP CODE', value: 'transapp_code' },
-  { text: 'LOST REASON', value: 'lost_reason' },
-  { text: 'STARTING FROM', value: 'price_starting_from' },
-  { text: 'PRICE', value: 'premium' },
-  { text: 'POLICY NUMBER', value: 'policy_number' },
-  { text: 'SOURCE', value: 'source' },
-  { text: 'LEAD TYPE', value: 'lead_type_id_text' },
-  { text: 'SALARY BAND', value: 'salary_band_id_text' },
-  { text: 'MEMBER CATEGORY', value: 'member_category_id_text' },
-  { text: 'CURRENTLY INSURED WITH', value: 'currently_insured_with_id_text' },
-  { text: 'IS ECOMMERCE', value: 'is_ecommerce' },
-  { text: 'Previous Policy Number', value: 'previous_quote_policy_number' },
-  { text: 'Renewal Batch', value: 'renewal_batch' },
-];
+const tableHeader = reactive([
+  { text: 'Ref-ID', value: 'code', is_active: true },
+  { text: 'FIRST NAME', value: 'first_name', is_active: true },
+  { text: 'LAST NAME', value: 'last_name', is_active: true },
+  { text: 'LEAD STATUS', value: 'quote_status_id_text', is_active: true },
+  { text: 'ADVISOR', value: 'advisor_id_text', is_active: true },
+  { text: 'ASSIGNMENT TYPE', value: 'assignment_type', is_active: true },
+  {
+    text: 'CREATED DATE',
+    value: 'created_at',
+    is_active: true,
+    sortable: true,
+  },
+  {
+    text: 'LAST MODIFIED DATE',
+    value: 'updated_at',
+    is_active: true,
+    sortable: true,
+  },
+  { text: 'HEALTH TEAM TYPE', value: 'health_team_type', is_active: true },
+  { text: 'TRANSAPP CODE', value: 'transapp_code', is_active: true },
+  { text: 'LOST REASON', value: 'lost_reason', is_active: true },
+  {
+    text: 'STARTING FROM',
+    value: 'price_starting_from',
+    is_active: true,
+    sortable: true,
+  },
+  { text: 'PRICE', value: 'premium', is_active: true, sortable: true },
+  { text: 'POLICY NUMBER', value: 'policy_number', is_active: true },
+  { text: 'SOURCE', value: 'source', is_active: true },
+  { text: 'LEAD TYPE', value: 'lead_type_id_text', is_active: true },
+  { text: 'SALARY BAND', value: 'salary_band_id_text', is_active: true },
+  {
+    text: 'MEMBER CATEGORY',
+    value: 'member_category_id_text',
+    is_active: true,
+  },
+  {
+    text: 'CURRENTLY INSURED WITH',
+    value: 'currently_insured_with_id_text',
+    is_active: true,
+  },
+  { text: 'IS ECOMMERCE', value: 'is_ecommerce', is_active: true },
+  {
+    text: 'Previous Policy Number',
+    value: 'previous_quote_policy_number',
+    is_active: true,
+  },
+  { text: 'Renewal Batch', value: 'renewal_batch', is_active: true },
+]);
 
 const filteredTableHeader = computed(() => {
+  let headers = [];
   if (!hasAnyRole([rolesEnum.RMAdvisor, rolesEnum.EBPAdvisor])) {
-    return tableHeader;
+    headers = tableHeader;
   } else {
-    return tableHeader.filter(
+    headers = tableHeader.filter(
       column => column.value !== 'source' && column.value !== 'assignment_type',
     );
   }
+  return headers.filter(x => x.is_active);
 });
 
 const filters = reactive({
@@ -239,6 +268,7 @@ onMounted(() => {
         :userMaxCap="userMaxCap"
       />
       <div class="space-x-3">
+        <column-selection :columns="tableHeader"></column-selection>
         <Link :href="route('health.cards')">
           <x-button size="sm" color="#1d83bc" tag="div"> Cards View </x-button>
         </Link>
@@ -378,7 +408,7 @@ onMounted(() => {
           label="Renewal Batch"
           class="w-full"
           placeholder="Search by Renewal Batch"
-      />
+        />
       </div>
       <div class="flex justify-between gap-3 mb-4 mt-1">
         <div v-if="can(permissionsEnum.DATA_EXTRACTION)">

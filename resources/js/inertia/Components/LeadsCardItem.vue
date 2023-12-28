@@ -29,6 +29,10 @@ const isAllowed = computed(() => {
   );
 });
 
+const dateFormat = date => {
+  return useDateFormat(date, 'DD-MM-YYYY HH:mm:ss').value;
+};
+
 // const lostReasonsOptions = computed(() => {
 //   return page.props.lostReasons.map(reason => ({
 //     value: reason.id,
@@ -109,7 +113,7 @@ const showModal = ref(false);
             >
           </template>
         </x-tooltip>
-        <p class="text-xs">{{ updated_at }}</p>
+        <p class="text-xs">{{ dateFormat(updated_at) }}</p>
       </div>
     </a>
   </div>
