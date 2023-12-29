@@ -120,17 +120,17 @@ const onLoadMore = id => {
         <span>Total Premium</span>
         <span>{{ Number(quote.data.total_premium).toLocaleString() }}</span>
       </div>
-<!--      <div>-->
-<!--        <x-input-->
-<!--          v-model="quotes.queries[quote.id]"-->
-<!--          type="search"-->
-<!--          size="xs"-->
-<!--          class="w-full"-->
-<!--          placeholder="Search"-->
-<!--          @change.prevent="onSearch(quote.id)"-->
-<!--          :disabled="quotes.searching"-->
-<!--        />-->
-<!--      </div>-->
+      <!--      <div>-->
+      <!--        <x-input-->
+      <!--          v-model="quotes.queries[quote.id]"-->
+      <!--          type="search"-->
+      <!--          size="xs"-->
+      <!--          class="w-full"-->
+      <!--          placeholder="Search"-->
+      <!--          @change.prevent="onSearch(quote.id)"-->
+      <!--          :disabled="quotes.searching"-->
+      <!--        />-->
+      <!--      </div>-->
     </div>
     <div class="flex flex-col px-2 pb-2 overflow-auto">
       <div
@@ -149,6 +149,7 @@ const onLoadMore = id => {
       <leads-card-item
         :id="quote.title.split(' ').join('')"
         :leads="quote.data.leads_list.data"
+        :url="quote.text ?? quote.title"
       />
       <div
         class="mt-3"
