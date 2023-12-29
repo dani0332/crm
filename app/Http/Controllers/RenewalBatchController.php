@@ -161,7 +161,7 @@ class RenewalBatchController extends Controller
     /**
      * get required batch data with preprocessing function
      */
-    public function getProcessedBatchData(?RenewalBatch $renewalBatch = null): array
+    public function getProcessedBatchData(RenewalBatch $renewalBatch = null): array
     {
         $volumeSegmentAdvisorsId = [];
         $valueSegmentAdvisorsId = [];
