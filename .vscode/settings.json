@@ -10,5 +10,5 @@
         "leftjoin",
         "Queueable"
     ],
-    "editor.inlineSuggest.showToolbar": "onHover"
+    "editor.inlineSuggest.showToolbar": "always"
 }

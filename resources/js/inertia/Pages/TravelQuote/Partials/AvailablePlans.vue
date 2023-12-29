@@ -62,11 +62,11 @@ const tabs = ref([
               <dd>{{ props.plan.travelType }}</dd>
             </div>
             <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">Actual Premium</dt>
+              <dt class="font-medium">Actual Price</dt>
               <dd>{{ props.plan.actualPremium }}</dd>
             </div>
             <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">Discount Premium</dt>
+              <dt class="font-medium">Discount Price</dt>
               <dd>{{ props.plan.discountPremium }}</dd>
             </div>
           </dl>
@@ -78,7 +78,7 @@ const tabs = ref([
               :headers="[
                 { text: 'Member ', value: 'member' },
                 { text: 'DOB', value: 'dob' },
-                { text: 'Premium', value: 'premium' },
+                { text: 'Price', value: 'premium' },
               ]"
               :items="listQuotePlansMembers || []"
             >

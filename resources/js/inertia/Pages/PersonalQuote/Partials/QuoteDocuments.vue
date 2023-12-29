@@ -1,4 +1,6 @@
 <script setup>
+import {fileUploadErrorMessage} from "@/inertia/Composables/utilities.js";
+
 defineProps({
   quote: Object,
   quoteDocuments: Object,
@@ -80,15 +82,17 @@ const docForm = useForm({
   file: null,
 });
 
-const uploadFile = (doc, files) => {
-  let url = '/personal-quotes/' + docForm.quote_id + '/documents';
-  if (files.length == 0) {
-    notification.error({
-      title: 'Incorrect file type\nPlease upload a ' + doc.accepted_files + ' file',
-      position: 'top',
-    });
-    return false
-  };
+const uploadFile = (doc, filesWithInfo) => {
+    let url = '/personal-quotes/' + docForm.quote_id + '/documents';
+    const { files, rejectReason} = filesWithInfo;
+    if (files.length == 0) {
+        notification.error({
+            title: 'File upload failed',
+            position: 'top',
+        });
+        docForm.setError({error: fileUploadErrorMessage(doc, rejectReason)});
+        return false
+    };
   isUploading.value = true;
   docForm
     .transform(data => ({
