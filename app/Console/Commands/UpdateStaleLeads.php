@@ -9,6 +9,7 @@ use App\Models\BusinessQuote;
 use App\Models\HealthQuote;
 use App\Models\HomeQuote;
 use App\Models\PersonalQuote;
+use Carbon\Carbon;
 use Illuminate\Console\Command;
 
 class UpdateStaleLeads extends Command
@@ -53,30 +54,91 @@ class UpdateStaleLeads extends Command
             QuoteStatusEnum::PolicyCancelled
         ];
 
-        info("------------------- Update Stale Leads Command Started At: ".now()." -------------------");
+        info("------------------- Update Stale Leads Command Started At: " . now() . " -------------------");
 
         foreach ($eligibleQuoteTypes as $eligibleQuoteType) {
-            info("------------------- Updating : ".$eligibleQuoteType." -------------------");
+
+            info("------------------- Updating : " . $eligibleQuoteType . " -------------------");
             $eligibleQuoteType::whereNotIn('quote_status_id', $skipStatus)
                 ->where('updated_at', '<', date(config('constants.DATE_FORMAT_ONLY'), strtotime('-30 days')))
-                ->when($eligibleQuoteType == BusinessQuote::class, function ($businessQuote){
+                ->when($eligibleQuoteType == BusinessQuote::class, function ($businessQuote) {
                     $businessQuote->whereNot('business_type_of_insurance_id', quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical));
                 })
-                ->when($eligibleQuoteType == PersonalQuote::class, function ($personalQuote){
+                ->when($eligibleQuoteType == PersonalQuote::class, function ($personalQuote) {
                     $personalQuote->whereIn('quote_type_id', [QuoteTypeId::Yacht, QuoteTypeId::Pet, QuoteTypeId::Cycle]);
-                })->chunkById(100, function ($quoteDetails){
+                })->chunkById(100, function ($quoteDetails) {
                     foreach ($quoteDetails as $quoteDetail) {
                         $quoteDetail->update([
-                            'is_stale' => true,
                             'stale_at' => now()
                         ]);
                     }
                 });
-            info("------------------- Updated : ".$eligibleQuoteType." -------------------");
+            info("------------------- Updated : " . $eligibleQuoteType . " -------------------");
+
+            info("------------------- Updating Lost Status on Stale Leads for: " . $eligibleQuoteType . " -------------------");
+            $eligibleQuoteType::with('activities')
+                ->when($eligibleQuoteType == HealthQuote::class, function ($healthQuote) {
+                    $healthQuote->with('healthQuoteRequestDetail');
+                })
+                ->when($eligibleQuoteType == BusinessQuote::class, function ($businessQuote) {
+                    $businessQuote->with('businessQuoteRequestDetail');
+                })
+                ->when($eligibleQuoteType == HomeQuote::class, function ($homeQuote) {
+                    $homeQuote->with('homeQuoteRequestDetail');
+                })
+                ->when($eligibleQuoteType == PersonalQuote::class, function ($personalQuote) {
+                    $personalQuote->with('quoteDetail');
+                })
+                ->whereNotNull('stale_at')
+                ->where('stale_at', '<', date(config('constants.DATE_FORMAT_ONLY'), strtotime('-90 days')))
+                ->chunkById(100, function ($staleLeads) use ($eligibleQuoteType) {
+                    foreach ($staleLeads as $staleLead) {
+
+                        $activityDateCheck = $staleLead->activities->pluck('due_date')->contains(function ($value) {
+                            return Carbon::createFromFormat(config('constants.DATE_FORMAT_ONLY'), Carbon::parse($value)->format(config('constants.DATE_FORMAT_ONLY')))->gt(Carbon::now());
+                        });
+
+                        // This check not included in FR but think should be included
+                        $activityStatusCheck = $staleLead->activities->pluck('status')->contains(function ($value) {
+                            return $value == 0;
+                        });
+
+                        if (!$activityDateCheck) {
+                            // Should be updated in History or Audit logs
+                            // Need to make hardcode id into constant
+                            $staleLead->update([
+                                'quote_status_id' => QuoteStatusEnum::Lost
+                            ]);
+
+                            if($eligibleQuoteType == HealthQuote::class) {
+                                $staleLead->healthQuoteRequestDetail->update([
+                                    'lost_reason_id' => 34
+                                ]);
+                            }
+
+                            if($eligibleQuoteType == BusinessQuote::class) {
+                                $staleLead->businessQuoteRequestDetail->update([
+                                    'lost_reason_id' => 34
+                                ]);
+                            }
+
+                            if($eligibleQuoteType == HomeQuote::class) {
+                                $staleLead->homeQuoteRequestDetail->update([
+                                    'lost_reason_id' => 34
+                                ]);
+                            }
+
+                            if($eligibleQuoteType == PersonalQuote::class) {
+                                $staleLead->quoteDetail->update([
+                                    'lost_reason_id' => 34
+                                ]);
+                            }
+                        }
+                    }
+                });
+            info("------------------- Updated Lost Status on Stale Leads for: " . $eligibleQuoteType . " -------------------");
         }
 
-        info("------------------- Update Stale Leads Command Finished for ".now()." -------------------");
-
+        info("------------------- Update Stale Leads Command Finished for " . now() . " -------------------");
     }
-
 }

@@ -57,7 +57,7 @@ const showModal = ref(false);
           company_name,
           leadName,
           health_cover_for,
-          is_stale
+          stale_at
         },
         index
       ) in leads"
@@ -66,7 +66,7 @@ const showModal = ref(false);
       target="_blank"
       title="View Lead"
       class="block p-3 mt-2 border border-gray-300 space-y-2 hover:transition hover:border-primary-500 rounded"
-      :class="is_stale ? 'bg-error-200' : 'bg-white'"
+      :class="stale_at ? 'bg-error-200' : 'bg-white'"
     >
       <div class="font-semibold text-sm">{{ first_name }} {{ last_name }}</div>
       <div class="flex items-center gap-2">

@@ -45,64 +45,64 @@ const onLoadMore = id => {
     });
 };
 
-// const onSearch = id => {
-//   quotes.value.searching = true;
-//   if (
-//     !quotes.value.queries[id] ||
-//     quotes.value.queries[id] === '' ||
-//     quotes.value.queries[id] === null
-//   ) {
-//     axios
-//       .post(
-//         route('loadMoreRecords', {
-//           page: quotes.value.pages[id],
-//           modelType: 'Life',
-//           status: id,
-//         }),
-//       )
-//       .then(({ data }) => {
-//         quotes.value.data = quotes.value.data.map(quote => {
-//           if (quote.id === id) {
-//             quote.data.leads_list = data.leads_list;
-//           }
-//           return quote;
-//         });
-//       })
-//       .catch(err => {
-//         console.log(err);
-//       })
-//       .finally(() => {
-//         quotes.value.searching = false;
-//       });
-//     return;
-//   }
-//   axios
-//     .post(
-//       route('searchLead', {
-//         term: quotes.value.queries[id],
-//         modelType: 'Life',
-//         status: id,
-//       }),
-//     )
-//     .then(({ data }) => {
-//       quotes.value.data = quotes.value.data.map(quote => {
-//         if (quote.id === id) {
-//           quote.data.leads_list = {
-//             ...data.leads_list,
-//             next_page_url: null,
-//             data: data.leads_list,
-//           };
-//         }
-//         return quote;
-//       });
-//     })
-//     .catch(err => {
-//       console.log(err);
-//     })
-//     .finally(() => {
-//       quotes.value.searching = false;
-//     });
-// };
+const onSearch = id => {
+  quotes.value.searching = true;
+  if (
+    !quotes.value.queries[id] ||
+    quotes.value.queries[id] === '' ||
+    quotes.value.queries[id] === null
+  ) {
+    axios
+      .post(
+        route('loadMoreRecords', {
+          page: quotes.value.pages[id],
+          modelType: 'Life',
+          status: id,
+        }),
+      )
+      .then(({ data }) => {
+        quotes.value.data = quotes.value.data.map(quote => {
+          if (quote.id === id) {
+            quote.data.leads_list = data.leads_list;
+          }
+          return quote;
+        });
+      })
+      .catch(err => {
+        console.log(err);
+      })
+      .finally(() => {
+        quotes.value.searching = false;
+      });
+    return;
+  }
+  axios
+    .post(
+      route('searchLead', {
+        term: quotes.value.queries[id],
+        modelType: 'Life',
+        status: id,
+      }),
+    )
+    .then(({ data }) => {
+      quotes.value.data = quotes.value.data.map(quote => {
+        if (quote.id === id) {
+          quote.data.leads_list = {
+            ...data.leads_list,
+            next_page_url: null,
+            data: data.leads_list,
+          };
+        }
+        return quote;
+      });
+    })
+    .catch(err => {
+      console.log(err);
+    })
+    .finally(() => {
+      quotes.value.searching = false;
+    });
+};
 </script>
 <template>
   <div
@@ -120,17 +120,17 @@ const onLoadMore = id => {
         <span>Total Premium</span>
         <span>{{ Number(quote.data.total_premium).toLocaleString() }}</span>
       </div>
-<!--      <div>-->
-<!--        <x-input-->
-<!--          v-model="quotes.queries[quote.id]"-->
-<!--          type="search"-->
-<!--          size="xs"-->
-<!--          class="w-full"-->
-<!--          placeholder="Search"-->
-<!--          @change.prevent="onSearch(quote.id)"-->
-<!--          :disabled="quotes.searching"-->
-<!--        />-->
-<!--      </div>-->
+     <div>
+        <x-input
+          v-model="quotes.queries[quote.id]"
+          type="search"
+          size="xs"
+          class="w-full"
+          placeholder="Search"
+          @change.prevent="onSearch(quote.id)"
+          :disabled="quotes.searching"
+        />
+      </div>
     </div>
     <div class="flex flex-col px-2 pb-2 overflow-auto">
       <div
