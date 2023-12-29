@@ -48,8 +48,7 @@ defineProps({
   UBORelations: Array,
   UBOsDetails: Array,
   canAddBatchNumber: Boolean,
-  paymentTooltipEnum: Object,
-  storageUrl: String,
+  aboveAgeMembers: Number,
 });
 
 const hasAnyRole = roles => useHasAnyRole(roles);
@@ -117,6 +116,7 @@ const memberActionEdit = ref(false),
       reason => reason.text === page.props.quote.lost_reason,
     )?.id || null,
   );
+
 const leadDuplicateForm = useForm({
   modelType: 'travel',
   parentType: 'travel',
@@ -634,7 +634,8 @@ const onLoadAvailablePlansData = async () => {
   axios
     .post(url, data)
     .then(res => {
-      availablePlansTable.data = res.data;
+      availablePlansTable.data = res.data.normalPlans;
+      availableSeniorPlansTable.data = res.data.seniorPlans;
     })
     .catch(err => {
       console.log(err);
@@ -735,6 +736,36 @@ const availablePlansTable = reactive({
     },
     {
       text: 'Total Price',
+      value: 'discountPremium',
+    },
+    {
+      text: 'Action',
+      value: 'action',
+    },
+  ],
+});
+
+const availableSeniorPlansTable = reactive({
+  data: [],
+  columns: [
+    {
+      text: 'Provider Name',
+      value: 'providerName',
+    },
+    {
+      text: 'Plan Name',
+      value: 'name',
+    },
+    {
+      text: 'Travel Type',
+      value: 'travelType',
+    },
+    {
+      text: 'Actual Price',
+      value: 'actualPremium',
+    },
+    {
+      text: 'Price with VAT',
       value: 'discountPremium',
     },
     {
@@ -2164,51 +2195,23 @@ const genderList = [
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div class="flex flex-wrap gap-4 justify-between items-center mb-4">
         <h3 class="font-semibold text-primary-800 text-lg">Available Plans</h3>
-        <div>
-          <x-button-group
-            v-if="selectedPlans.length > 0"
-            size="sm"
-            class="mr-2"
-          >
-            <!--  <x-button
-                      @click.prevent="onTogglePlans(false)"
-                      :loading="toggleLoader"
-                  >
-                      Show
-                  </x-button>
-                  <x-button
-                      @click.prevent="onTogglePlans(true)"
-                      :loading="toggleLoader"
-                  >
-                      Hide
-                  </x-button>-->
-          </x-button-group>
-          <x-button
-            v-if="
-              availablePlansTable.data.length > 0 &&
-              permissions.canNotApprovePayments
-            "
-            size="sm"
-            color="orange"
-            class="mr-2"
-            @click.prevent="
-              onCopyText(ecomTravelInsuranceQuoteUrl + quote.uuid)
-            "
-          >
-            Copy Link
-          </x-button>
-
-          <!-- <x-button
-              v-if="selectedPlans.length > 0"
-              size="sm"
-              color="emerald"
-              @click.prevent="onExportPlans"
-              :loading="exportLoader"
-          >
-              Download PDF
-          </x-button>-->
-        </div>
+        <x-button
+          v-if="availablePlansTable.data.length > 0"
+          size="sm"
+          color="orange"
+          class="mr-2"
+          @click.prevent="onCopyText(ecomTravelInsuranceQuoteUrl + quote.uuid)"
+        >
+          Copy Link
+        </x-button>
       </div>
+      <h6
+        v-if="aboveAgeMembers > 0"
+        class="font-semibold text-primary-600 text-ms mb-1"
+      >
+        Travel plans for {{ travelers.length - aboveAgeMembers }} member age
+        18-64
+      </h6>
 
       <div
         v-if="
@@ -2282,6 +2285,49 @@ const genderList = [
             </div>
           </template>
         </DataTable>
+      </div>
+
+      <div v-if="aboveAgeMembers > 0" class="mt-5">
+        <h6 class="font-semibold text-primary-600 text-ms mb-1">
+          Travel plans for {{ aboveAgeMembers }} member age above 65
+        </h6>
+        <div>
+          <DataTable
+            table-class-name="tablefixed compact"
+            :headers="availableSeniorPlansTable.columns"
+            :items="availableSeniorPlansTable.data || []"
+            border-cell
+            hide-rows-per-page
+            :rows-per-page="15"
+            :hide-footer="availableSeniorPlansTable.data.length < 15"
+          >
+            <template #item-providerName="item">
+              <span class="text-primary-600 uppercase">{{
+                item.providerName
+              }}</span>
+            </template>
+            <template #item-name="item">
+              <span class="text-primary-600 uppercase">{{ item.name }}</span>
+            </template>
+            <template #item-discountPremium="item">
+              <span class="text-primary-600">{{
+                item.discountPremium + item.vat
+              }}</span>
+            </template>
+            <template #item-action="item">
+              <div>
+                <x-button
+                  size="xs"
+                  color="error"
+                  outlined
+                  @click.prevent="getPlanDetails(item.id)"
+                >
+                  View
+                </x-button>
+              </div>
+            </template>
+          </DataTable>
+        </div>
       </div>
 
       <x-modal v-model="modals.planDetails" size="xl" show-close backdrop>

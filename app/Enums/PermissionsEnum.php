@@ -220,6 +220,7 @@ final class PermissionsEnum extends Enum
     public const TeamThresholdView = 'team-allocation-threshold-view';
     public const CarRevivalQuoteList = 'carrevival-quotes-list';
     public const ViewTeamsFilters = 'view-teams-filters';
+    public const EXPORT_NO_CONTACTINFO = 'export-no-contactinfo';
     public const COMMERCIAL_KEYWORDS = 'admin-commercial-keywords';
     public const COMMERCIAL_KEYWORDS_SHOW = 'admin-commercial-keywords-show';
     public const COMMERCIAL_KEYWORDS_CREATE = 'admin-commercial-keywords-create';

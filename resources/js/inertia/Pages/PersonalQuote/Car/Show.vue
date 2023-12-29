@@ -6,6 +6,7 @@ import LazyCreatePlan from './Partials/CreatePlan.vue';
 import AssignTier from './Partials/AssignTier.vue';
 import FollowUpReasons from './Partials/FollowUpReasons.vue';
 import RiskRatingScoreDetails from '../../../Components/RiskRatingScoreDetails.vue';
+import { fileUploadErrorMessage } from '@/inertia/Composables/utilities.js';
 
 defineProps({
   quote: Object,
@@ -981,15 +982,15 @@ const docForm = useForm({
   file: null,
 });
 
-const uploadFile = (doc, files) => {
+const uploadFile = (doc, filesWithInfo) => {
   let url = '/quotes/car/documents/store';
-
+  const { files, rejectReason } = filesWithInfo;
   if (files.length == 0) {
     notification.error({
-      title:
-        'Incorrect file type\nPlease upload a ' + doc.accepted_files + ' file',
+      title: 'File upload failed',
       position: 'top',
     });
+    docForm.setError({ error: fileUploadErrorMessage(doc, rejectReason) });
     return false;
   }
   isUploading.value = true;
@@ -2465,7 +2466,7 @@ const handleChildUpdate = planId => {
 			:quoteType="quoteType"
 			:quote="record"
 		/> -->
-	
+
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div>
         <h3 class="font-semibold text-primary-800 text-lg">Assumptions</h3>
@@ -3042,19 +3043,27 @@ const handleChildUpdate = planId => {
       </x-modal>
     </div>
 
-    <PaymentTableNew 
-			v-if="hasRole(rolesEnum.BetaUser)"
-			quoteType="Car"
-			:payments="payments"
-			:paymentDocument="page.props.documentTypes.filter(item => item.code === 'CPD' || item.code === 'CPDR')"
-			:quoteRequest="paymentEntityModel"
-			:paymentStatusEnum="paymentStatusEnum"
-			:paymentTooltipEnum="paymentTooltipEnum"
-			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name, tooltip: pm.tool_tip } })"
-			:storageUrl="storageUrl"
-		/>
+    <PaymentTableNew
+      v-if="hasRole(rolesEnum.BetaUser)"
+      quoteType="Car"
+      :payments="payments"
+      :paymentDocument="
+        page.props.documentTypes.filter(
+          item => item.code === 'CPD' || item.code === 'CPDR',
+        )
+      "
+      :quoteRequest="paymentEntityModel"
+      :paymentStatusEnum="paymentStatusEnum"
+      :paymentTooltipEnum="paymentTooltipEnum"
+      :paymentMethods="
+        paymentMethods.map(pm => {
+          return { value: pm.code, label: pm.name, tooltip: pm.tool_tip };
+        })
+      "
+      :storageUrl="storageUrl"
+    />
     <PaymentTable
-		v-else
+      v-else
       :payments="payments"
       :quoteRequest="paymentEntityModel"
       :paymentStatusEnum="paymentStatusEnum"
@@ -3629,7 +3638,11 @@ const handleChildUpdate = planId => {
       />
     </div>
   </div>
-  <AuditLogs :type="'App\\Models\\CarQuote'" :id="$page.props.record.id" :quoteCode="$page.props.record.code"/>
+  <AuditLogs
+    :type="'App\\Models\\CarQuote'"
+    :id="$page.props.record.id"
+    :quoteCode="$page.props.record.code"
+  />
   <ApiLogs
     v-if="can(permissionEnum.API_LOG_VIEW)"
     :type="'App\\Models\\CarQuote'"

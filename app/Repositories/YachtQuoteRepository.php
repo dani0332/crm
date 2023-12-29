@@ -140,4 +140,24 @@ class YachtQuoteRepository extends BaseRepository
 
         return ($forExport) ? $query->get() : $query->simplePaginate();
     }
+
+    public function fetchExport()
+    {
+        return $this->byQuoteTypeCode(QuoteTypes::YACHT)->with(['quoteStatus', 'currentlyInsuredWith', 'advisor'])
+            ->filter()
+            ->withFakeLeadCriteria()
+            ->orderBy('created_at', 'desc');
+    }
+
+    /**
+     * get data by  yacht type.
+     *
+     * @return mixed
+     */
+    public function scopeByQuoteTypeCode($query, $quoteTypeCode)
+    {
+        return $query->whereHas('quoteType', function ($q) use ($quoteTypeCode) {
+            $q->where('code', ($quoteTypeCode));
+        });
+    }
 }

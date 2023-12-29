@@ -11,6 +11,7 @@ use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Enums\TravelQuoteEnum;
 use App\Facades\Ken;
+use App\Models\CustomerMembers;
 use App\Models\InsuranceProvider;
 use App\Models\TravelMemberDetail;
 use App\Models\TravelQuote;
@@ -785,6 +786,13 @@ class TravelQuoteService extends BaseService
         return TravelMemberDetail::where('travel_quote_request_id', $id)->with('nationality', 'relation')->get();
     }
 
+    public function getAboveAgeMembers($id)
+    {
+        return CustomerMembers::where('quote_id', $id)
+            ->where('quote_type', 'App\Models\TravelQuote')
+            ->whereDate('dob', '<=', now()->subYears(65))->count();
+    }
+
     public function getDuplicateEntityByCode($code)
     {
         return TravelQuote::where('parent_duplicate_quote_id', $code)->first();
@@ -860,6 +868,22 @@ class TravelQuoteService extends BaseService
 
         return $listQuotePlans;
     }
+
+    public function sortedPlansList($id): array
+    {
+        $result = [];
+        $plans = $this->listQuotePlans($id);
+        $collection = collect($plans);
+
+        $seniorPlans = $collection->where('isSeniorPlan', true);
+        $normalPlans = $collection->where('isSeniorPlan', false);
+
+        $result['normalPlans'] = array_values($normalPlans->toArray());
+        $result['seniorPlans'] = array_values($seniorPlans->toArray());
+
+        return $result;
+    }
+
     public function listTravelQuotePlans($id)
     {
         $travelQuotePlans = TravelQuotePlan::where('travel_quote_request_id', $id)->first();
