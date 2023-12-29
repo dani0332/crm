@@ -93,7 +93,7 @@ class SendOCBIntroEmailJob implements ShouldQueue
 
         // Prepare email body
         $body = json_encode([
-            'From' => "no-reply@alert.insurancemarket.email",
+            'From' => 'no-reply@alert.insurancemarket.email',
             'To' => $advisor->email,
             'TemplateAlias' => 'payment-internal-notification-car-dubai-now',
             'TemplateModel' => [
@@ -103,7 +103,7 @@ class SendOCBIntroEmailJob implements ShouldQueue
                     'providerName' => $insuranceProviderName,
                     'totalPremium' => $amountPaid,
                 ],
-                'subject' => (config('constants.APP_ENV') != 'production' ? config('constants.APP_ENV'). ' - ' : '') . 'DubaiNow || '.$advisor->name.' has paid for '.$lead->code,
+                'subject' => (config('constants.APP_ENV') != 'production' ? config('constants.APP_ENV').' - ' : '').'DubaiNow || '.$advisor->name.' has paid for '.$lead->code,
             ],
             'MessageStream' => config('constants.MA_POSTMARK_STREAM'),
         ], JSON_UNESCAPED_SLASHES);
