@@ -71,10 +71,6 @@ class CentralController extends Controller
             $diffInDays = 31;
         }
 
-        if (auth()->user()->hasRole(RolesEnum::BetaUser) && $latest_flow){
-            $diffInDays = 365;
-        }
-
         if ($diff > $diffInDays) {
             return back()->with('error', 'Maximum of '.$diffInDays.' days (created date) are allowed to be exported.');
         }
