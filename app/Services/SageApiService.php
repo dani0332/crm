@@ -16,18 +16,19 @@ class SageApiService
         //Guzzle was not working for post request
         $this->sageLogin = env('SAGE_300_LOGIN');
         $this->sagePassword = env('SAGE_300_PASSWORD');
-        $this->sageRequestUrl = env('SAGE_300_BASE_URL').env('SAGE_300_VERSION');
+        $this->sageRequestUrl = env('SAGE_300_BASE_URL') . env('SAGE_300_VERSION');
     }
 
-    public function verifySageCustomer($customerId)
+    public function verifySageCustomer($customerId, $data = NULL)
     {
         $customer = Customer::find($customerId);
+        $customer->data = !empty($data) ? $data : [];
         if ($customer) {
+
             $payLoadOptions = SagePayloadFactory::createCustomerPayload($customer);
             $jsonResponse = $this->postToSage300($payLoadOptions['endPoint'], $payLoadOptions['payload']);
 
             $response = json_decode($jsonResponse, true);
-            //dd($response);
             if (isset($response['error']['code']) && $response['error']['code'] == 'RecordDuplicate') {
                 return $payLoadOptions['customerNumber'];
             } elseif (isset($response['CustomerNumber'])) {
@@ -41,7 +42,7 @@ class SageApiService
     public function postToSage300($endPoint, $payLoad)
     {
         // Create the payload data for the POST request
-        $sageEndPoint = $this->sageRequestUrl.$endPoint;
+        $sageEndPoint = $this->sageRequestUrl . $endPoint;
 
         $ch = curl_init($sageEndPoint);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
@@ -70,7 +71,6 @@ class SageApiService
                 $httpCode = 401;
                 $response = response()->json(['error' => 'Verify sage api credentials', 'code' => $httpCode], $httpCode);
             }
-
         }
         curl_close($ch);
 

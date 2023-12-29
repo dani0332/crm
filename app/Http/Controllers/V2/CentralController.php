@@ -25,9 +25,11 @@ use App\Http\Requests\UpdateLastYearPolicyRequest;
 use App\Models\Customer;
 use App\Models\Entity;
 use App\Models\Payment;
+use App\Models\PaymentSplits;
 use App\Models\QuoteRequestEntityMapping;
 use App\Models\QuoteStatus;
 use App\Models\User;
+use App\Services\ActivitiesService;
 use App\Services\CentralService;
 use App\Services\SageApiService;
 use App\Traits\GenericQueriesAllLobs;
@@ -54,7 +56,7 @@ class CentralController extends Controller
     {
         $diffInDays = 120;
 
-        if (! $quoteType) {
+        if (!$quoteType) {
             return abort(404);
         }
 
@@ -73,12 +75,12 @@ class CentralController extends Controller
 
         $diff = Carbon::parse($created_at_start)->diffInDays(Carbon::parse($created_at_end));
 
-        if (! request()->latest_flow && ucfirst($quoteType) == QuoteTypes::CAR->value) {
+        if (!request()->latest_flow && ucfirst($quoteType) == QuoteTypes::CAR->value) {
             $diffInDays = 31;
         }
 
         if ($diff > $diffInDays) {
-            return back()->with('error', 'Maximum of '.$diffInDays.' days (created date) are allowed to be exported.');
+            return back()->with('error', 'Maximum of ' . $diffInDays . ' days (created date) are allowed to be exported.');
         }
 
         // For Personal Quotes
@@ -200,81 +202,125 @@ class CentralController extends Controller
 
     public function sendBookingPolicy(Request $request)
     {
-        // dd('m here');
 
         $quote = $this->getQuoteObject($request->model_type, $request->quote_id);
 
         $payment = Payment::where('code', $quote['code'])->first();
+        $paymentSplits = PaymentSplits::where('code', $quote['code'])->first();
 
 
+        $quoteTypeId = app(ActivitiesService::class)->getQuoteTypeId(strtolower($request->model_type));
+
+        $data['quoteTypeId'] = $quoteTypeId;
+        $data['id'] =  $quote->id;
         if ($payment->first()) {
-
-            $payment = $payment->toArray();
-            // STILL PARAMETERS REQUIRED FROM OTHER DEVELOPING
             $sageRequest = new \stdClass();
-            // $sageRequest->discount =  $payment['discount_value'];
+
             $sageRequest->discount =  22;
-            $sageRequest->customerId =  'IC008';
-            $sageRequest->invoiceDescription =  $payment['invoice_description'];
+            // $sageRequest->discount =  floatval($payment->discount_value);
+
+            $sageRequest->invoiceDescription =  $payment->invoice_description;
             $sageRequest->bookingDate =  date('Y-m-d', strtotime($quote['policy_booking_date']));
-            $sageRequest->policyExpiryDate = date('Y-m-d', strtotime($quote['renewal_expiry_date']));
+            $sageRequest->policyExpiryDate = date('Ymd', strtotime($quote['renewal_expiry_date']));
+            $sageRequest->insurerInvoiceDate = date('Y-m-d', strtotime($payment->insurer_invoice_date));
+            $sageRequest->paymentDueDate = date('Y-m-d', strtotime($payment->payment_due_date));
+
             $sageRequest->mainClassInsurance =  $request->model_type;
             $sageRequest->policyNumber =  $quote->policy_number;
+
             $sageRequest->policyIssuer =  'demo';
             $sageRequest->requestType =  'POST';
+            $sageRequest->subClass =  'Motor';
+
+            // $sageRequest->invoicePaymentStatus = $payment->transaction_payment_status;
+            $sageRequest->invoicePaymentStatus = 'paid';
             $advisorName = "";
             if (!empty($quote->advisor_id)) {
 
                 $advisorName = User::where('id', $quote->advisor_id)->value('name');
             }
             $sageRequest->advisorName =  $advisorName;
-            $sageRequest->subClass =  'Motor';
 
-            $sageRequest->insurerInvoiceDate = $payment['insurer_invoice_date'];
-            $sageRequest->premiumWithoutTax =  $quote->price_without_vat;
-            $sageRequest->premiumWithTax = $quote->price_with_vat;
-            $sageRequest->vatOnCommission = $payment['commission_vat'];
-            $sageRequest->commission =  $payment['commission'];
-            $sageRequest->commissionIncludingVat =  $payment['commission_vat_applicable'];
-            $sageRequest->invoicePaymentStatus = $payment['transaction_payment_status'];
-            // $sageRequest->invoicePaymentStatus = 'paid';
-            // $sageRequest->insurerPremiumTaxInvoiceNumber =  $payment['tax_invoice_number'];
-            $sageRequest->insurerPremiumTaxInvoiceNumber =  1212;
 
-            $quoteStatusCode = QuoteStatus::where('id', '=', $quote->quote_status_id)->value('code');
-            $sageRequest->callExtra = false;
-            if (!($sageRequest->discount > 0) && $quoteStatusCode ==  quoteStatusCode::PolicyBooked  && strtolower($sageRequest->invoicePaymentStatus) != 'paid') {
-                $sageRequest->callExtra = true;
+
+
+            $sageRequest->premiumWithoutTax = floatval($quote->price_without_vat);
+            $sageRequest->premiumWithTax =  floatval($quote->price_with_vat);
+            $sageRequest->vatOnCommission = floatval($payment->commission_vat);
+            $sageRequest->commission =  floatval($payment->commission);
+            $sageRequest->commissionIncludingVat = floatval($payment->commission_vat_applicable);
+            $sageRequest->commissionWithOutVat =  $payment->commission_vat_not_applicable;
+
+
+            // $sageRequest->insurerTaxInvoiceNumber =  $payment['tax_invoice_number'];
+            // $sageRequest->insurerPremiumTaxInvoiceNumber = (string) $payment['insurer_commmission_invoice_number'];
+            $sageRequest->insurerTaxInvoiceNumber =  1555;
+            $sageRequest->insurerPremiumTaxInvoiceNumber = (string)  16666;
+            if ($paymentSplits->first()) {
+                $sageRequest->sage_reciept_id =  $paymentSplits['sage_reciept_id'];
             }
+
+
+            // $quoteStatusCode = QuoteStatus::where('id', '=', $quote->quote_status_id)->value('code');
+
 
             // dd($sageRequest);
             // sage api service
             $sageApiService = new SageApiService();
-            $payLoadOptions = SagePayloadFactory::createPayload($sageRequest, $quoteStatusCode);
-            // dd($payLoadOptions);
-            $endPoint = $payLoadOptions['endPoint'];
-            $payLoad = $payLoadOptions['payload'];
-            $sageResponse = $sageApiService->postToSage300($endPoint, $payLoad);
+            // sape customer number generation
+            $sageCustomerNumber = $sageApiService->verifySageCustomer($quote->customer_id, $data);
 
-            dd($sageResponse);
+            $sageRequest->customerId =  $sageCustomerNumber;
+
+            $createARInvoicePremAndCommPayload =  SagePayloadFactory::createARInvoicePremAndComm($sageRequest);
+            $endPoint = $createARInvoicePremAndCommPayload['endPoint'];
+            $payLoad = $createARInvoicePremAndCommPayload['payload'];
+            $resp = $sageApiService->postToSage300($endPoint, $payLoad);
+            info('createARInvoicePremAndComm---------' . json_encode($resp));
+            // dd($sageRequest);
+            $createAPInvoicePremPayload =  SagePayloadFactory::createAPInvoicePrem($sageRequest);
+            $endPoint = $createAPInvoicePremPayload['endPoint'];
+            $payLoad = $createAPInvoicePremPayload['payload'];
+            $response = $sageApiService->postToSage300($endPoint, $payLoad);
+
+            info('createAPInvoicePrem---------' . json_encode($response));
+
+            if ($sageRequest->discount > 0) {
+                $payLoadOptions =  SagePayloadFactory::createARInvoiceDis($sageRequest);
+                $endPoint = $payLoadOptions['endPoint'];
+                $payLoad = $payLoadOptions['payload'];
+                $sageResponse = $sageApiService->postToSage300($endPoint, $payLoad);
+
+                info('createARInvoiceDis---------' . json_encode($response));
+            }
+
+            if (strtolower($sageRequest->invoicePaymentStatus) == 'paid') {
+                $payLoadOptions =  SagePayloadFactory::createPaymontRecieptOneInvoice($sageRequest);
+
+                $endPoint = $payLoadOptions['endPoint'];
+                $payLoad = $payLoadOptions['payload'];
+                $sageResponse = $sageApiService->postToSage300($endPoint, $payLoad);
+                info('createPaymontRecieptOneInvoice---------' . json_encode($sageResponse));
+            }
         }
 
         if (!$quote) {
-            return redirect()->back()->with('error', 'Error in Sending Policy.');
+            return redirect()->back()->with('error', 'Quote not found.');
         }
 
         if ($request->send_policy_type == 'customer') {
 
-            $quote->update([
-                'quote_status_id' => QuoteStatusEnum::PolicySentToCustomer,
-            ]);
+            // $quote->update([
+            //     'quote_status_id' => QuoteStatusEnum::PolicySentToCustomer,
+            // ]);
+            return response()->json(['message' => 'policy sent successfully'], 200);
         } elseif ($request->send_policy_type == 'sage') {
 
-            $quote->update([
-                'quote_status_id' => QuoteStatusEnum::PolicyBooked,
-            ]);
+            // $quote->update([
+            //     'quote_status_id' => QuoteStatusEnum::PolicyBooked,
+            // ]);
+            return response()->json(['message' => 'policy booked successfully'], 200);
         }
-        return response()->json(['message' => 'policy send successfully'], 200);
     }
 
 
