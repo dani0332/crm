@@ -8,6 +8,10 @@ const props = defineProps({
     require: true,
   },
   id: String,
+  url: {
+    type: String,
+    require: true,
+  },
 });
 
 useSortable(`#${props.id}`, props.leads, {
@@ -62,7 +66,7 @@ const showModal = ref(false);
         index
       ) in leads"
       :key="id"
-      :href="`/quotes/health/${uuid}`"
+      :href="`/quotes/${url.toLowerCase()}/${uuid}`"
       target="_blank"
       title="View Lead"
       class="block p-3 mt-2 border border-gray-300 space-y-2 hover:transition hover:border-primary-500 rounded"
