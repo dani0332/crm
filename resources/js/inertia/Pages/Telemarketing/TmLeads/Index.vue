@@ -45,13 +45,16 @@ const filters = reactive({
 
 const showdates = computed(() => {
   return filters.searchType == 'created_at' ||
-    filters.searchType == 'updated_at'
+    filters.searchType == 'updated_at' ||
+    filters.searchType == 'enquiry_date' ||
+    filters.searchType == 'allocation_date' ||
+    filters.searchType == 'next_followup_date'
     ? true
     : false;
 });
 
 const canAssignLead = computed(() => {
-  return props.isCurrentUserIsAdvisor == '0' ? true : false;
+  return props.isCurrentUserIsAdvisor == '1' ? true : false;
 });
 
 const tableHeader = ref([

@@ -46,10 +46,10 @@ class TmLeadController extends Controller
         $tmLeadTypes = $this->getLeadTypes();
         $tmLeadStatuses = $this->getLeadStatuses();
 
-        if (Auth::user()->hasAnyRole(['TM_ADVISOR', 'TM_AUDIT'])) {
-            $isCurrentUserIsAdvisor = '1';
-        } else {
+        if (Auth::user()->hasAnyRole(['TM_ADVISOR'])) {
             $isCurrentUserIsAdvisor = '0';
+        } else {
+            $isCurrentUserIsAdvisor = '1';
         }
 
         $queryTmLeads = $this->getTMLeadData($request, $tmLead);
