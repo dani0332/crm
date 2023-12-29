@@ -4,6 +4,7 @@ namespace App\Http\Controllers\V2;
 
 use App\Enums\CustomerTypeEnum;
 use App\Enums\QuoteTypes;
+use App\Enums\RolesEnum;
 use App\Exports\AmtQuoteExport;
 use App\Exports\BusinessQuoteExport;
 use App\Exports\CarQuoteExport;
@@ -45,6 +46,8 @@ class CentralController extends Controller
     {
         $diffInDays = 120;
 
+        $latest_flow = $request->latest_flow ?? false;
+
         if (! $quoteType) {
             return abort(404);
         }
@@ -64,8 +67,12 @@ class CentralController extends Controller
 
         $diff = Carbon::parse($created_at_start)->diffInDays(Carbon::parse($created_at_end));
 
-        if (! request()->latest_flow && ucfirst($quoteType) == QuoteTypes::CAR->value) {
+        if (!$latest_flow && ucfirst($quoteType) == QuoteTypes::CAR->value) {
             $diffInDays = 31;
+        }
+
+        if (auth()->user()->hasRole(RolesEnum::BetaUser) && $latest_flow){
+            $diffInDays = 365;
         }
 
         if ($diff > $diffInDays) {
@@ -100,6 +107,9 @@ class CentralController extends Controller
                 return Excel::download(new TravelQuoteExport, 'travel_leads.xlsx');
 
             case QuoteTypes::CAR->value:
+                if ($latest_flow) {
+                    return app(CarQuoteExport::class)->carQuoteExport();
+                }
                 return Excel::download(new CarQuoteExport, 'Car-List.xlsx');
 
             case QuoteTypes::HEALTH->value:
