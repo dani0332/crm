@@ -61,7 +61,7 @@ const showModal = ref(false);
           company_name,
           leadName,
           health_cover_for,
-          stale_at
+          stale_at,
         },
         index
       ) in leads"
