@@ -39,6 +39,9 @@ class PetQuoteController extends Controller
         $personalQuotes = PetQuoteRepository::getData();
         $advisors = UserRepository::getPersonalQuoteAdvisors(QuoteTypes::PET->value);
         $quoteStatuses = QuoteStatusRepository::byQuoteTypeId(QuoteTypes::PET->id())->get();
+        $quoteStatuses = collect($quoteStatuses)->filter(function ($value) {
+            return $value['id'] != QuoteStatusEnum::Lost;
+        })->values();
 
         return inertia('PetQuote/Index', [
             'quotes' => $personalQuotes,
