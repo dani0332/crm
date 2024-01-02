@@ -299,6 +299,14 @@ const onLogout = () => {
           </div>
         </header>
         <div class="flex-1 w-full p-4 mx-auto md:px-6 lg:px-8 max-w-full">
+          <div
+            class="w-full h-10 rounded bg-error-300 mb-3 flex items-center justify-center text-sm"
+          >
+            <span class="text-red-600"
+              >You have <Link class="underline">9</Link> stale leads, follow up
+              with client and update the lead status accordingly</span
+            >
+          </div>
           <slot />
         </div>
       </article>

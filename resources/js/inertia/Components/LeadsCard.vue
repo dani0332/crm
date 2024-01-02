@@ -16,12 +16,20 @@ const page = usePage();
 const hasAnyRole = role => useHasAnyRole(role);
 const rolesEnum = page.props.rolesEnum;
 
+const unitManager = computed(() => {
+  return `${props.quote?.quoteType}Manager`;
+});
+
+const advisor = computed(() => {
+  return `${props.quote?.quoteType}Advisor`;
+});
+
 const isAllowed = computed(() => {
   return (
     hasAnyRole([
-      rolesEnum.Advisor,
+      advisor.value,
       rolesEnum.OperationAssistant,
-      rolesEnum.UnitManager,
+      unitManager.value,
       rolesEnum.UnitHead,
     ]) ?? false
   );

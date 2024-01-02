@@ -1,6 +1,10 @@
 <script setup>
+defineProps({
+  totalLeads: Number,
+});
 import { useSortable } from '@vueuse/integrations/useSortable';
 const page = usePage();
+
 const dateFormat = date => {
   return useDateFormat(date, 'DD-MM-YYYY HH:mm:ss').value;
 };
@@ -20,84 +24,6 @@ useSortable(el.value, quotes?.data?.leads_list?.data, {
     console.log(e);
   },
 });
-
-const onLoadMore = id => {
-  quotes.loader = true;
-  quotes.pages = {
-    ...quotes.pages,
-    [id]: quotes.pages[id] ? Number(quotes.pages[id]) + 1 : 2,
-  };
-  axios
-    .post(
-      `/quotes/records?page=${quotes.pages[id]}&modelType=Health&status=${id}`,
-    )
-    .then(({ data }) => {
-      quotes.data = quotes.data.map(quote => {
-        if (quote.id === id) {
-          quote.data.leads_list = {
-            ...data.leads_list,
-            data: quote.data.leads_list.data.concat(data.leads_list.data),
-          };
-        }
-        return quote;
-      });
-    })
-    .catch(err => {
-      console.log(err);
-    })
-    .finally(() => {
-      quotes.loader = false;
-    });
-};
-
-const onSearch = id => {
-  quotes.searching = true;
-  if (
-    !quotes.queries[id] ||
-    quotes.queries[id] === '' ||
-    quotes.queries[id] === null
-  ) {
-    axios
-      .post(`/quotes/records?page=1&modelType=Health&status=${id}`)
-      .then(({ data }) => {
-        quotes.data = quotes.data.map(quote => {
-          if (quote.id === id) {
-            quote.data.leads_list = data.leads_list;
-          }
-          return quote;
-        });
-      })
-      .catch(err => {
-        console.log(err);
-      })
-      .finally(() => {
-        quotes.searching = false;
-      });
-    return;
-  }
-  axios
-    .post(
-      `/quotes/records/search?term=${quotes.queries[id]}&status=${id}&modelType=Health`,
-    )
-    .then(({ data }) => {
-      quotes.data = quotes.data.map(quote => {
-        if (quote.id === id) {
-          quote.data.leads_list = {
-            ...data.leads_list,
-            next_page_url: null,
-            data: data.leads_list,
-          };
-        }
-        return quote;
-      });
-    })
-    .catch(err => {
-      console.log(err);
-    })
-    .finally(() => {
-      quotes.searching = false;
-    });
-};
 </script>
 
 <template>
@@ -106,9 +32,9 @@ const onSearch = id => {
     <div class="flex justify-between items-center">
       <div class="flex items-center gap-5">
         <h2 class="text-xl font-semibold">Health List</h2>
-        <span class="border-2 rounded-lg px-3 bg-gray-200 text-sm font-medium"
-          >786</span
-        >
+        <span class="border-2 rounded px-3 bg-gray-200 text-sm font-medium">{{
+          totalLeads ?? 0
+        }}</span>
       </div>
 
       <div class="space-x-2">

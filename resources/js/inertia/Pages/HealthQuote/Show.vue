@@ -1345,7 +1345,6 @@ const prefillPlanId = ref(page.props.quote.prefill_plan_id);
 const handleChildUpdate = planId => {
   prefillPlanId.value = planId;
 };
-const showTrue = ref(false);
 </script>
 
 <template>
@@ -1356,16 +1355,9 @@ const showTrue = ref(false);
         <h2 class="text-xl font-semibold">Health Detail</h2>
         <p
           class="bg-red-600 px-2 py-1 rounded text-sm text-white"
-          v-if="quoteRequest?.stale_at"
+          v-if="daysSinceStale(props.quoteRequest?.stale_at)"
         >
-          Stale for
-          {{
-            Math.floor(
-              (new Date() - new Date(quoteRequest.stale_at)) /
-                (1000 * 60 * 60 * 24),
-            )
-          }}
-          days
+          Stale for {{ daysSinceStale(props.quoteRequest?.stale_at) }} days
         </p>
       </div>
       <div class="flex gap-2">

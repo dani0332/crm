@@ -40,26 +40,27 @@ export const useObjToUrl = obj =>
     .join('&');
 };
 
-export const useGetShowPageRoute = (uuid, quoteTypeId, business_type_of_insurance_id) => {
+export const useGetShowPageRoute = (uuid, quoteTypeId, business_type_of_insurance_id) =>
+{
 
-    let business_route = (business_type_of_insurance_id == 5) ? route('amt.show', uuid) : route('business.show', uuid);
+  let business_route = (business_type_of_insurance_id == 5) ? route('amt.show', uuid) : route('business.show', uuid);
 
-    const routesObj = {
-        1: route('car.show', uuid),
-        2: route('home.show', uuid),
-        3: route('health.show', uuid),
-        4: route('life-quotes-show', uuid),
-        5: business_route,
-        6: route('bike-quotes-show', uuid),
-        7: route('yacht-quotes-show', uuid),
-        8: route('travel.show', uuid),
-        9: route('pet-quotes-show', uuid),
-        10: route('cycle-quotes-show', uuid),
-    };
+  const routesObj = {
+    1: route('car.show', uuid),
+    2: route('home.show', uuid),
+    3: route('health.show', uuid),
+    4: route('life-quotes-show', uuid),
+    5: business_route,
+    6: route('bike-quotes-show', uuid),
+    7: route('yacht-quotes-show', uuid),
+    8: route('travel.show', uuid),
+    9: route('pet-quotes-show', uuid),
+    10: route('cycle-quotes-show', uuid),
+  };
 
-    return routesObj[quoteTypeId];
-  }
-  
+  return routesObj[quoteTypeId];
+}
+
 export const useGenerateQueryString = filters =>
 {
   const query = {};
@@ -73,16 +74,27 @@ export const useGenerateQueryString = filters =>
   return query;
 };
 
-export const useConvertDate = date => {
-  if (date == null) {
+export const useConvertDate = date =>
+{
+  if (date == null)
+  {
     return null;
   }
 
   const splitedDate = date.split('-');
-  if (splitedDate[0].length === 4) {
+  if (splitedDate[0].length === 4)
+  {
     return date;
   }
 
   const [day, month, year] = date.split('-');
   return `${year}-${month}-${day}`;
 };
+
+export const daysSinceStale = payload =>
+{
+  const quoteRequest = payload;
+  const stale_days = quoteRequest ? Math.floor((new Date() - new Date(quoteRequest)) / (1000 * 60 * 60 * 24)) : false;
+
+  return stale_days && stale_days <= 90 ? stale_days : false;
+}
