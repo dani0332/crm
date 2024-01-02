@@ -279,7 +279,7 @@ class AMLController extends Controller
             $quoteTypeText = $updateQuoteStatusResp[2];
             $quotePaID = $updateQuoteStatusResp[3];
             $clientFullName = $updateQuoteStatusResp[4];
-            if ( auth()->user()->hasRole(RolesEnum::ComplianceSuperUser) ||
+            if (auth()->user()->hasRole(RolesEnum::ComplianceSuperUser) ||
                 (auth()->user()->hasRole(RolesEnum::COMPLIANCE) && request()->aml_decision == AMLDecisionStatusEnum::FALSE_POSITIVE)) {
                 info('AML Screening Bridger - Decision update Email triggered to Compliance and Compliance Super Users. Quote Type:'.$quoteTypeId.' - Quote Request ID: '.$quoteRequestId.'. Triggered by:'.auth()->user()->email);
                 app(CheckAmlService::class)->sendAMLQuoteStatusChangeNotification($quoteTypeId, $quoteRequestId, $quoteStatusText, $quoteCdbId, $quoteTypeText, $quotePaID, $clientFullName);

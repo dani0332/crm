@@ -986,5 +986,10 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
         </template>
       </Collapsible>
     </div>
+
+    <AuditLogs
+      :type="'App\\Models\\BusinessQuote'"
+      :id="$page.props.quote.id"
+    />
   </div>
 </template>
