@@ -3,6 +3,7 @@ defineProps({
   reportData: Object,
   filterOptions: Object,
   defaultFilters: Object,
+  isBetaUser: Boolean,
 });
 const loaders = reactive({
   table: false,
@@ -201,6 +202,21 @@ const calculateTotalSum = (data, key) => {
             { value: true, label: 'Yes' },
             { value: false, label: 'No' },
           ]"
+        />
+
+        <ComboBox
+          v-if="isBetaUser"
+          v-model="filters.leadSources"
+          label="Lead Source"
+          placeholder="Search by Lead Source"
+          :options="
+          Object.keys(filterOptions.leadSources).map(key => ({
+          value: key,
+          label: filterOptions.leadSources[key],
+          }))
+        "
+          :max-limit="3"
+          deselect-all
         />
       </div>
       <div class="flex justify-end gap-3 mb-4">
