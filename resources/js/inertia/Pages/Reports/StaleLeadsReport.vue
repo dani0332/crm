@@ -19,58 +19,53 @@ const filters = reactive({
 
 const tableHeaders = ref([
   {
-    text: 'LEAD CODE',
-    value: 'uuid',
+    text: 'TEAM',
+    value: 'team',
     is_active: true,
   },
   {
-    text: 'Name',
-    value: 'first_name',
+    text: 'ALLOCATED',
+    value: 'allocated',
     is_active: true,
   },
   {
-    text: 'Lead Source',
-    value: 'source',
+    text: 'RENEWAL TERMS RECEIVED',
+    value: 'renewal_terms_recevied',
     is_active: true,
   },
   {
-    text: 'Lead Status',
-    value: 'quoteStatus',
+    text: 'QUOTED',
+    value: 'quoted',
     is_active: true,
   },
   {
-    text: 'Payment Status',
-    value: 'payment_status_id',
+    text: 'FOLLOW UP',
+    value: 'follow_up',
     is_active: true,
   },
   {
-    text: 'IS ECOMMERCE',
-    value: 'is_ecommerce',
+    text: 'IN NEGOTIATION',
+    value: 'in_negotiation',
     is_active: true,
   },
   {
-    text: 'ASSIGNED TO',
-    value: 'advisor',
+    text: 'APPLICATION PENDING',
+    value: 'application_pending',
     is_active: true,
   },
   {
-    text: 'CREATED AT',
-    value: 'created_at',
+    text: 'APPLICATION SUBMITTED',
+    value: 'application_submitted',
     is_active: true,
   },
   {
-    text: 'LAST MODIFIED',
-    value: 'updated_at',
+    text: 'PAYMENT PENDING',
+    value: 'payment_pending',
     is_active: true,
   },
   {
-    text: 'TIER',
-    value: 'tier',
-    is_active: true,
-  },
-  {
-    text: 'RECEIVED FROM DEVICE',
-    value: 'device',
+    text: 'TOTAL',
+    value: 'total',
     is_active: true,
   },
 ]);
@@ -170,7 +165,7 @@ function onReset() {
       </x-field>
     </div>
     <div class="flex gap-3 justify-end items-center">
-      <column-selection v-model:columns="tableHeaders"></column-selection>
+      <!-- <column-selection v-model:columns="tableHeaders"></column-selection> -->
       <x-button size="sm" color="#ff5e00" type="submit">Search</x-button>
       <x-button size="sm" color="primary" @click.prevent="onReset">
         Reset
