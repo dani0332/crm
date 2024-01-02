@@ -41,7 +41,8 @@ class DatabaseSeeder extends Seeder
             //            EmbeddedProductRoleAndPermissionSeeder::class,
             //            addDubaiNowLeadSourceExemptionInAppStorage::class,
             LookupSeeder::class,
-            //            AddNewDocumentTypesSeeder::class,
+            addDubaiNowEmailGroup::class,
+            // AddNewDocumentTypesSeeder::class,
             // UpdateCustomerToHealthAndTravelMemberDetails::class,
         ]);
     }
