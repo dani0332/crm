@@ -326,13 +326,14 @@ const caculateCommission = () => {
             </x-button></template
           >
 
-          <template v-else>
+          <template
+            v-else-if="
+              props.quote.quote_status_id ==
+              page.props.quoteStatusEnum.PolicyBooked
+            "
+          >
             <x-tooltip>
               <x-button
-                v-if="
-                  props.quote.quote_status_id ==
-                  page.props.quoteStatusEnum.PolicyBooked
-                "
                 class="mt-4 mr-2"
                 size="sm"
                 color="emerald"
@@ -355,7 +356,8 @@ const caculateCommission = () => {
                 class="mt-4 mr-2"
                 color="orange"
                 :disabled="true"
-                >Send Policy
+              >
+                {{ props.bPDetails?.text }}
               </x-button>
               <template #tooltip>
                 <span>{{
@@ -363,6 +365,77 @@ const caculateCommission = () => {
                 }}</span>
               </template>
             </x-tooltip>
+          </template>
+          <template v-else>
+            <template
+              v-if="
+                props.quote.quote_status_id ==
+                  page.props.quoteStatusEnum.PolicySentToCustomer &&
+                props.bPDetails?.editButton
+              "
+            >
+              <x-button
+                v-if="bp.isEditing"
+                class="mt-4 mr-2"
+                color="emerald"
+                size="sm"
+                :loading="bpForm.processing"
+                @click.prevent="bp.isEditing = false"
+              >
+                Cancel
+              </x-button>
+              <x-button
+                v-if="bp.isEditing"
+                class="mt-4 mr-2"
+                color="emerald"
+                size="sm"
+                :loading="bpForm.processing"
+                type="submit"
+              >
+                Update
+              </x-button>
+              <x-button
+                v-if="!bp.isEditing && props.bPDetails?.editButton"
+                class="mt-4 mr-2"
+                color="emerald"
+                size="sm"
+                @click.prevent="bp.isEditing = true"
+              >
+                Edit
+              </x-button>
+              <x-button
+                size="sm"
+                color="orange"
+                class="mt-4"
+                @click.prevent="confirmSendPolicy"
+                :disabled="bp.isEditing"
+                v-if="props.bPDetails?.sendButton"
+              >
+                {{ props.bPDetails?.text }}
+              </x-button>
+            </template>
+            <template v-else
+              ><x-tooltip>
+                <x-button
+                  v-if="
+                    props.quote.quote_status_id ==
+                      page.props.quoteStatusEnum.PolicySentToCustomer &&
+                    !props.bPDetails?.editButton
+                  "
+                  size="sm"
+                  class="mt-4 mr-2"
+                  color="orange"
+                  :disabled="true"
+                >
+                  {{ props.bPDetails?.text }}
+                </x-button>
+                <template #tooltip>
+                  <span>{{
+                    'The Button is not accessable because policy has been sent to customer'
+                  }}</span>
+                </template>
+              </x-tooltip></template
+            >
           </template>
         </div>
       </div>

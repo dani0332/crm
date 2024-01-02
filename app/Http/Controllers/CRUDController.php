@@ -698,10 +698,12 @@ class CRUDController extends Controller
             $bPDetails['sendPolicyType'] = null;
             $bPDetails['text'] = '';
 
+            // dd($quoteDocuments)
             if (!empty($quoteDocuments)) {
                 $document_type_codes = collect($quoteDocuments)->pluck('document_type_code')->toArray();
 
-                if (in_array(QuoteDocumentsEnum::CAR_POLICY_CERTIFICATE, $document_type_codes) && in_array(QuoteDocumentsEnum::POLICY_SCHEDULE, $document_type_codes) && in_array(QuoteDocumentsEnum::POLICY_HANDBOOK, $document_type_codes)) {
+                // if (in_array(QuoteDocumentsEnum::CAR_POLICY_CERTIFICATE, $document_type_codes) && in_array(QuoteDocumentsEnum::POLICY_SCHEDULE, $document_type_codes) && in_array(QuoteDocumentsEnum::POLICY_HANDBOOK, $document_type_codes)) {
+                if (1) {
 
                     $bPDetails['sendButton'] = true;
                     $bPDetails['text'] = 'Send Policy To Customer';
@@ -710,17 +712,13 @@ class CRUDController extends Controller
                 $taxDocuments = (in_array(QuoteDocumentsEnum::CAR_TAX_INVOICE, $document_type_codes) && in_array(QuoteDocumentsEnum::CAR_TAX_INVOICE_RAISE_BY_BUYER, $document_type_codes));
                 $requiredRole = auth()->user()->hasAnyRole([RolesEnum::NRA, RolesEnum::FINANCE, RolesEnum::PRODUCTION]);
 
-                if ($bPDetails['sendButton'] && $taxDocuments && $requiredRole) {
+                // if ($bPDetails['sendButton'] && $taxDocuments && $requiredRole) {
+                if (1) {
                     $bPDetails['text'] = 'Send Policy';
                     $bPDetails['editButton'] = true;
                     $bPDetails['sendPolicyType'] = 'sage';
                 }
             }
-
-            $bPDetails['text'] = 'Send Policy';
-            $bPDetails['editButton'] = true;
-            $bPDetails['sendButton'] = true;
-            $bPDetails['sendPolicyType'] = 'sage';
 
             return inertia('PersonalQuote/Car/Show', compact([
                 'record', 'quote', 'model', 'customTitles', 'customTableList', 'paymentStatusEnum', 'quoteStatusEnum', 'leadSourceEnum', 'isBetaUser',

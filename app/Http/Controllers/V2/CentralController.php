@@ -205,12 +205,21 @@ class CentralController extends Controller
 
         $quote = $this->getQuoteObject($request->model_type, $request->quote_id);
 
-        $payment = Payment::where('code', $quote['code'])->first();
-        $paymentSplits = PaymentSplits::where('code', $quote['code'])->first();
+
+
+        if ($request->send_policy_type == 'customer') {
+
+            $quote->update([
+                'quote_status_id' => QuoteStatusEnum::PolicySentToCustomer,
+            ]);
+            return response()->json(['message' => 'policy sent successfully'], 200);
+        }
+
 
 
         $quoteTypeId = app(ActivitiesService::class)->getQuoteTypeId(strtolower($request->model_type));
-
+        $payment = Payment::where('code', $quote['code'])->first();
+        $paymentSplits = PaymentSplits::where('code', $quote['code'])->first();
         $data['quoteTypeId'] = $quoteTypeId;
         $data['id'] =  $quote->id;
         if ($payment->first()) {
@@ -254,8 +263,8 @@ class CentralController extends Controller
 
             // $sageRequest->insurerTaxInvoiceNumber =  $payment['tax_invoice_number'];
             // $sageRequest->insurerPremiumTaxInvoiceNumber = (string) $payment['insurer_commmission_invoice_number'];
-            $sageRequest->insurerTaxInvoiceNumber =  1555;
-            $sageRequest->insurerPremiumTaxInvoiceNumber = (string)  16666;
+            $sageRequest->insurerTaxInvoiceNumber =  15556;
+            $sageRequest->insurerPremiumTaxInvoiceNumber = (string)  166665;
             if ($paymentSplits->first()) {
                 $sageRequest->sage_reciept_id =  $paymentSplits['sage_reciept_id'];
             }
@@ -308,13 +317,7 @@ class CentralController extends Controller
             return redirect()->back()->with('error', 'Quote not found.');
         }
 
-        if ($request->send_policy_type == 'customer') {
-
-            // $quote->update([
-            //     'quote_status_id' => QuoteStatusEnum::PolicySentToCustomer,
-            // ]);
-            return response()->json(['message' => 'policy sent successfully'], 200);
-        } elseif ($request->send_policy_type == 'sage') {
+        if ($request->send_policy_type == 'sage') {
 
             // $quote->update([
             //     'quote_status_id' => QuoteStatusEnum::PolicyBooked,
