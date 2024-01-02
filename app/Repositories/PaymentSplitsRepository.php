@@ -18,6 +18,7 @@ use App\Services\SageApiService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
+use App\Services\CRUDService;
 
 class PaymentSplitsRepository
 {
@@ -87,63 +88,7 @@ class PaymentSplitsRepository
             }
         }
         $this->uploadDiscountDocuments($request->split_payment_details['discount_documents'], $quoteID);
-    }
-
-    public function generateSplitPaymentLink($code, $splitPaymentId, $modelType, $quoteId)
-    {
-        $splitPayment = PaymentSplits::where(['code' => $code, 'id' => $splitPaymentId])->first();
-        $payment = $splitPayment->payment;
-
-        if (! $payment) {
-            return false;
-        }
-        if ($splitPayment->payment_link != null && now() < Carbon::parse($splitPayment->payment_link_created_at)->addDays(3)) {
-            return;
-        } else {
-            $quoteModel = $this->getQuoteObject($modelType, $quoteId);
-            $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
-
-            $description = (get_class($quoteModel) == PersonalQuote::class) ? ($payment->personalPlan->text ?? '') : ($quoteModel->plan->text ?? '');
-
-            $paymentLink = config('constants.PAYMENT_REDIRECT_LINK');
-
-            $paymentLink = $splitPayment->payment_method == PaymentMethodsEnum::InsureNowPayLater ? $paymentLink.'tabby' : $paymentLink.'checkout';
-
-            $paymentParams = [
-                'code' => $payment->code.'-'.$splitPayment->sr_no,
-                'quoteTypeId' => $quoteTypeId,
-            ];
-            $paymentLinkURL = $paymentLink.'?'.http_build_query($paymentParams);
-
-            $invoiceRequestData = [
-                'firstName' => $quoteModel->first_name,
-                'lastName' => $quoteModel->last_name,
-                'email' => $quoteModel->email,
-                'emailSubject' => 'Payment Request',
-                'items' => [
-                    [
-                        'description' => $description,
-                        'totalPrice' => [
-                            'currencyCode' => 'AED',
-                            'value' => ceil($splitPayment->payment_amount * 100),
-                        ],
-                        'quantity' => 1,
-                    ],
-                ],
-                'total' => [
-                    'currencyCode' => 'AED',
-                    'value' => ceil($splitPayment->payment_amount * 100),
-                ],
-                'merchantOrderReference' => strtoupper($payment->code.'-'.$splitPayment->sr_no),
-            ];
-
-            $splitPayment->payment_link = $paymentLinkURL;
-            $splitPayment->payment_link_created_at = now();
-            $splitPayment->save();
-
-            return;
-        }
-    }
+    }    
 
     public function updatePaymentSplits($request)
     {
@@ -269,12 +214,20 @@ class PaymentSplitsRepository
             $quoteModel->save();
             $successMessage = 'Transaction declined';
         } else {
+            
             $totalCapturedPayment = 0;
             if ($request->is_capture) { //update collected amount in childs
+                $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($request->modelType));
                 foreach ($request->collection_amount as $key => $splitAmount) {
                     $paymentSplit = PaymentSplits::where(['code' => $quoteModel->code, 'sr_no' => $key])->first();
                     if ($paymentSplit) {
                         if ($paymentSplit->payment_method == PaymentMethodsEnum::CreditCard) {
+                            //Marshal Service to capture split payment
+                            $captureApi = [];
+                            $captureApi['uuid']  = $quoteModel->uuid;  
+                            $captureApi['type_id'] = $quoteTypeId;
+                            $captureApi['code'] = $quoteModel->code.'-'.$paymentSplit->sr_no;
+                            ////$response = app(CRUDService::class)->processCapturePayment($captureApi);
                             $paymentSplit->payment_status_id = PaymentStatusEnum::PAID;
                         }
                         $paymentSplit->collection_amount = $splitAmount;
@@ -376,10 +329,15 @@ class PaymentSplitsRepository
             $payLoadOptions = SagePayloadFactory::createPrepaymentPayload($request);
             $message = $sageApiService->postToSage300($payLoadOptions['endPoint'], $payLoadOptions['payload']);
             $sageResponse = json_decode($message, true);
-            $documentNumberForReciept = $sageResponse['ReceiptsAdjustments'][0]['DocumentNumber'];
-            $paymentInformation['sage_reciept_id'] = $documentNumberForReciept;
-            $splitPayment->update($paymentInformation);
-        //dd($documentNumberForReciept);
+            
+            if(isset($sageResponse['ReceiptsAdjustments'][0]['DocumentNumber'])){
+                $documentNumberForReciept = $sageResponse['ReceiptsAdjustments'][0]['DocumentNumber'];
+                $paymentInformation['sage_reciept_id'] = $documentNumberForReciept;
+                $splitPayment->update($paymentInformation);
+            } else {
+                $successMessage = 'Sage Error: Reciept not generated';
+                return $successMessage;
+            }
 
         } elseif ($request->is_declined) {
             $splitPayment = PaymentSplits::find($request->splitPaymentId);
@@ -449,5 +407,61 @@ class PaymentSplitsRepository
             'updated_at' => now(),
         ]);
         $paymentLog->save();
+    }
+
+    public function generateSplitPaymentLink($code, $splitPaymentId, $modelType, $quoteId)
+    {
+        $splitPayment = PaymentSplits::where(['code' => $code, 'id' => $splitPaymentId])->first();
+        $payment = $splitPayment->payment;
+
+        if (! $payment) {
+            return false;
+        }
+        if ($splitPayment->payment_link != null && now() < Carbon::parse($splitPayment->payment_link_created_at)->addDays(3)) {
+            return;
+        } else {
+            $quoteModel = $this->getQuoteObject($modelType, $quoteId);
+            $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
+
+            $description = (get_class($quoteModel) == PersonalQuote::class) ? ($payment->personalPlan->text ?? '') : ($quoteModel->plan->text ?? '');
+
+            $paymentLink = config('constants.PAYMENT_REDIRECT_LINK');
+
+            $paymentLink = $splitPayment->payment_method == PaymentMethodsEnum::InsureNowPayLater ? $paymentLink.'tabby' : $paymentLink.'checkout';
+
+            $paymentParams = [
+                'code' => $payment->code.'-'.$splitPayment->sr_no,
+                'quoteTypeId' => $quoteTypeId,
+            ];
+            $paymentLinkURL = $paymentLink.'?'.http_build_query($paymentParams);
+
+            $invoiceRequestData = [
+                'firstName' => $quoteModel->first_name,
+                'lastName' => $quoteModel->last_name,
+                'email' => $quoteModel->email,
+                'emailSubject' => 'Payment Request',
+                'items' => [
+                    [
+                        'description' => $description,
+                        'totalPrice' => [
+                            'currencyCode' => 'AED',
+                            'value' => ceil($splitPayment->payment_amount * 100),
+                        ],
+                        'quantity' => 1,
+                    ],
+                ],
+                'total' => [
+                    'currencyCode' => 'AED',
+                    'value' => ceil($splitPayment->payment_amount * 100),
+                ],
+                'merchantOrderReference' => strtoupper($payment->code.'-'.$splitPayment->sr_no),
+            ];
+
+            $splitPayment->payment_link = $paymentLinkURL;
+            $splitPayment->payment_link_created_at = now();
+            $splitPayment->save();
+
+            return;
+        }
     }
 }
