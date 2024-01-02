@@ -11,6 +11,21 @@ const props = defineProps({
 });
 
 const quotes = ref({ ...props.quotes });
+const page = usePage();
+
+const hasAnyRole = role => useHasAnyRole(role);
+const rolesEnum = page.props.rolesEnum;
+
+const isAllowed = computed(() => {
+  return (
+    hasAnyRole([
+      rolesEnum.Advisor,
+      rolesEnum.OperationAssistant,
+      rolesEnum.UnitManager,
+      rolesEnum.UnitHead,
+    ]) ?? false
+  );
+});
 
 const onLoadMore = id => {
   quotes.value.loader = true;
@@ -120,17 +135,17 @@ const onSearch = id => {
         <span>Total Premium</span>
         <span>{{ Number(quote.data.total_premium).toLocaleString() }}</span>
       </div>
-      <!--      <div>-->
-      <!--        <x-input-->
-      <!--          v-model="quotes.queries[quote.id]"-->
-      <!--          type="search"-->
-      <!--          size="xs"-->
-      <!--          class="w-full"-->
-      <!--          placeholder="Search"-->
-      <!--          @change.prevent="onSearch(quote.id)"-->
-      <!--          :disabled="quotes.searching"-->
-      <!--        />-->
-      <!--      </div>-->
+      <div v-if="isAllowed">
+        <x-input
+          v-model="quotes.queries[quote.id]"
+          type="search"
+          size="xs"
+          class="w-full"
+          placeholder="Search"
+          @change.prevent="onSearch(quote.id)"
+          :disabled="quotes.searching"
+        />
+      </div>
     </div>
     <div class="flex flex-col px-2 pb-2 overflow-auto">
       <div

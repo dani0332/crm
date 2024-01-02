@@ -50,29 +50,48 @@ const showModal = ref(false);
   <!-- :class="{ 'h-screen': props.leads.length == 0 }" -->
   <div :id="props.id" class="shared">
     <a
-      v-for="(
-        {
-          id,
-          uuid,
-          first_name,
-          last_name,
-          premium,
-          updated_at,
-          company_name,
-          leadName,
-          health_cover_for,
-          stale_at,
-        },
-        index
-      ) in leads"
+      v-for="{
+        id,
+        uuid,
+        first_name,
+        last_name,
+        premium,
+        updated_at,
+        company_name,
+        leadName,
+        health_cover_for,
+        stale_at,
+      } in leads"
       :key="id"
-      :href="`/quotes/${url.toLowerCase()}/${uuid}`"
+      :href="`/quotes/health/${uuid}`"
       target="_blank"
       title="View Lead"
       class="block p-3 mt-2 border border-gray-300 space-y-2 hover:transition hover:border-primary-500 rounded"
       :class="stale_at ? 'bg-error-200' : 'bg-white'"
     >
-      <div class="font-semibold text-sm">{{ first_name }} {{ last_name }}</div>
+      <div class="flex items-center space-x-1">
+        <span class="font-semibold text-sm"
+          >{{ first_name }} {{ last_name }}</span
+        >
+
+        <x-tooltip>
+          <p
+            class="bg-red-600 px-1 rounded text-[9px] text-white"
+            v-if="stale_at"
+          >
+            {{
+              Math.floor(
+                (new Date() - new Date(stale_at)) / (1000 * 60 * 60 * 24),
+              )
+            }}
+            days
+          </p>
+          <template #tooltip>
+            <span>Days elapsed since the lead was flagged as stale</span>
+          </template>
+        </x-tooltip>
+      </div>
+
       <div class="flex items-center gap-2">
         <x-tooltip>
           <x-icon icon="person" size="sm" class="text-primary-400" />

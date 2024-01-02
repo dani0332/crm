@@ -1352,7 +1352,22 @@ const showTrue = ref(false);
   <div>
     <Head title="Health Detail" />
     <div class="flex justify-between items-center flex-wrap gap-2">
-      <h2 class="text-xl font-semibold">Health Detail</h2>
+      <div class="flex items-center space-x-2">
+        <h2 class="text-xl font-semibold">Health Detail</h2>
+        <p
+          class="bg-red-600 px-2 py-1 rounded text-sm text-white"
+          v-if="quoteRequest?.stale_at"
+        >
+          Stale for
+          {{
+            Math.floor(
+              (new Date() - new Date(quoteRequest.stale_at)) /
+                (1000 * 60 * 60 * 24),
+            )
+          }}
+          days
+        </p>
+      </div>
       <div class="flex gap-2">
         <LeadNotes />
         <x-button size="sm" color="#ff5e00" @click.prevent="openDuplicate">
