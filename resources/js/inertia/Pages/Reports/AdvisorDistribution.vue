@@ -3,7 +3,6 @@ defineProps({
   reportData: Object,
   filterOptions: Object,
   defaultFilters: Object,
-  isBetaUser: Boolean,
 });
 const loaders = reactive({
   table: false,
@@ -205,7 +204,6 @@ const calculateTotalSum = (data, key) => {
         />
 
         <ComboBox
-          v-if="isBetaUser"
           v-model="filters.leadSources"
           label="Lead Source"
           placeholder="Search by Lead Source"
