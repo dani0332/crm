@@ -820,7 +820,7 @@ class CRUDController extends Controller
                     $listQuotePlans = [];
                 }
             }
-              $coPayment = $this->healthQuoteService->getCoPayment($id);
+            $coPayment = $this->healthQuoteService->getCoPayment($id);
             $uboDetails = CustomerMembersRepository::getBy($record->id, QuoteTypes::HEALTH->name, CustomerTypeEnum::Entity);
             $membersDetail = CustomerMembersRepository::getBy($record->id, QuoteTypes::HEALTH->name);
             $memberCategories = $this->lookupService->getMemberCategories();
