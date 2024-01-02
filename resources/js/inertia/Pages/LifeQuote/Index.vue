@@ -397,7 +397,7 @@ onMounted(() => {
           :href="route('life-quotes-show', uuid)"
           class="text-primary-500 hover:underline"
         >
-          {{ code }}
+          <span>{{ code }}</span>
         </Link>
       </template>
       <template #item-advisor="{ advisor }">

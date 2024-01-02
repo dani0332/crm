@@ -494,12 +494,13 @@ onMounted(() => {
       hide-footer
       fixed-checkbox
     >
-      <template #item-code="{ code, uuid }">
+      <template #item-code="item">
         <Link
-          :href="route('health.show', uuid)"
-          class="text-primary-500 hover:underline"
+          :href="route('health.show', item.uuid)"
+          class="text-primary-500 hover:underline flex items-center space-x-1"
         >
-          {{ code }}
+          <span>{{ item.code }}</span>
+          <stale-leads-badge :date="item.stale_at"></stale-leads-badge>
         </Link>
       </template>
       <template #item-is_ecommerce="{ is_ecommerce }">

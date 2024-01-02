@@ -4,6 +4,7 @@ import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 import LazyCreatePlan from './Partials/CreatePlan.vue';
 import { computed } from 'vue';
 import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue';
+import { daysSinceStale } from '../../Composables/utilities';
 
 defineProps({
   quote: Object,
@@ -1355,9 +1356,9 @@ const handleChildUpdate = planId => {
         <h2 class="text-xl font-semibold">Health Detail</h2>
         <p
           class="bg-red-600 px-2 py-1 rounded text-sm text-white"
-          v-if="daysSinceStale(props.quoteRequest?.stale_at)"
+          v-if="daysSinceStale(quoteRequest?.stale_at)"
         >
-          Stale for {{ daysSinceStale(props.quoteRequest?.stale_at) }} days
+          Stale for {{ daysSinceStale(quoteRequest?.stale_at) }} days
         </p>
       </div>
       <div class="flex gap-2">

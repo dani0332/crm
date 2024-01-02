@@ -78,19 +78,7 @@ const showModal = ref(false);
         <span class="font-semibold text-sm"
           >{{ first_name }} {{ last_name }}</span
         >
-
-        <x-tooltip>
-          <p
-            class="bg-red-600 px-1 rounded text-[9px] text-white"
-            v-if="daysSinceStale(stale_at)"
-          >
-            {{ daysSinceStale(stale_at) }}
-            days
-          </p>
-          <template #tooltip>
-            <span>Days elapsed since the lead was flagged as stale</span>
-          </template>
-        </x-tooltip>
+        <stale-leads-badge :date="stale_at"></stale-leads-badge>
       </div>
 
       <div class="flex items-center gap-2">

@@ -303,8 +303,8 @@ const onLogout = () => {
             class="w-full h-10 rounded bg-error-300 mb-3 flex items-center justify-center text-sm"
           >
             <span class="text-red-600"
-              >You have <Link class="underline">9</Link> stale leads, follow up
-              with client and update the lead status accordingly</span
+              >You have <Link href="" class="underline">9</Link> stale leads,
+              follow up with client and update the lead status accordingly</span
             >
           </div>
           <slot />
