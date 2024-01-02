@@ -7,6 +7,7 @@ use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\RolesEnum;
 use App\Models\CarQuote;
+use App\Models\LeadSource;
 use App\Models\Team;
 use App\Models\Tier;
 use App\Traits\GetUserTreeTrait;
@@ -80,6 +81,7 @@ class AdvisorDistributionReportService extends BaseService
             ->keyBy('id')
             ->map(fn ($users) => $users->name)
             ->toArray();
+
         $tiers = Tier::query()
             ->select('name', 'id')
             ->orderBy('name')
@@ -89,10 +91,25 @@ class AdvisorDistributionReportService extends BaseService
             ->map(fn ($users) => $users->name)
             ->toArray();
 
+        $leadSources = LeadSource::query()
+            ->select('name')
+            ->where('is_active', 1)->where('is_applicable_for_rules', 0)
+            ->whereNotNull('name')
+            ->orderBy('name')
+            ->get()
+            ->keyBy('name')
+            ->map(fn ($users) => $users->name)
+            ->toArray();
+
+        if (! auth()->user()->hasRole(RolesEnum::BetaUser)) {
+            unset($leadSources['DUBAI_NOW']);
+        }
+
         return [
             'maxDays' => $maxDays,
             'tiers' => $tiers,
             'teams' => $teams,
+            'leadSources' => $leadSources,
         ];
     }
 
@@ -144,6 +161,10 @@ class AdvisorDistributionReportService extends BaseService
         if (isset($filters->isCommercial) && $filters->isCommercial != 'All') {
             $filters->isCommercial = $filters->isCommercial == 'true' ? true : false;
             $query->where('car_model.is_commercial', '=', $filters->isCommercial);
+        }
+
+        if (isset($filters->leadSources) && count($filters->leadSources) > 0) {
+            $query->whereIn('car_quote_request.source', $filters->leadSources);
         }
 
         return $query;
