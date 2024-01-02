@@ -43,8 +43,9 @@ class DatabaseSeeder extends Seeder
             LookupSeeder::class,
             //            AddNewDocumentTypesSeeder::class,
             // UpdateCustomerToHealthAndTravelMemberDetails::class,
-            AddSendUpdatesCategoriesInLookups::class,
-            AddNewQuoteStatues::class
+            // AddSendUpdatesCategoriesInLookups::class,
+            AddNewQuoteStatues::class,
+            AddCreateSendUpdatePermissionToAllRoles::class
         ]);
     }
 }

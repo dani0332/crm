@@ -28,13 +28,15 @@ class AddCreateSendUpdatePermissionToAllRoles extends Seeder
             $customerShowPermissionId = Permission::where('name', PermissionsEnum::SEND_UPDATE_CREATE)->first()->id;
 
             if ($customerShowPermissionId) {
-                $adminRoleId = Role::where('name', 'ADMIN')->first()->id;
-                DB::table('role_has_permissions')->insert(
-                    [
-                        'role_id' => $adminRoleId,
-                        'permission_id' => $customerShowPermissionId,
-                    ]
-                );
+                $roles = Role::all();
+                foreach ($roles as $role) {
+                    DB::table('role_has_permissions')->insert(
+                        [
+                            'role_id' => $role->id,
+                            'permission_id' => $customerShowPermissionId,
+                        ]
+                    );
+                }
             }
         }
     }
