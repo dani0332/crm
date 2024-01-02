@@ -56,6 +56,7 @@ class UpdateStaleLeads extends Command
 
         info("------------------- Update Stale Leads Command Started At: " . now() . " -------------------");
 
+        $lostReasonId = 34; //Stale for more than 90 days
         foreach ($eligibleQuoteTypes as $eligibleQuoteType) {
 
             info("------------------- Updating : " . $eligibleQuoteType . " -------------------");
@@ -91,7 +92,7 @@ class UpdateStaleLeads extends Command
                 })
                 ->whereNotNull('stale_at')
                 ->where('stale_at', '<', date(config('constants.DATE_FORMAT_ONLY'), strtotime('-90 days')))
-                ->chunkById(100, function ($staleLeads) use ($eligibleQuoteType) {
+                ->chunkById(100, function ($staleLeads) use ($eligibleQuoteType, $lostReasonId) {
                     foreach ($staleLeads as $staleLead) {
 
                         $activityDateCheck = $staleLead->activities->pluck('due_date')->contains(function ($value) {
@@ -112,25 +113,25 @@ class UpdateStaleLeads extends Command
 
                             if($eligibleQuoteType == HealthQuote::class) {
                                 $staleLead->healthQuoteRequestDetail->update([
-                                    'lost_reason_id' => 34
+                                    'lost_reason_id' => $lostReasonId
                                 ]);
                             }
 
                             if($eligibleQuoteType == BusinessQuote::class) {
                                 $staleLead->businessQuoteRequestDetail->update([
-                                    'lost_reason_id' => 34
+                                    'lost_reason_id' => $lostReasonId
                                 ]);
                             }
 
                             if($eligibleQuoteType == HomeQuote::class) {
                                 $staleLead->homeQuoteRequestDetail->update([
-                                    'lost_reason_id' => 34
+                                    'lost_reason_id' => $lostReasonId
                                 ]);
                             }
 
                             if($eligibleQuoteType == PersonalQuote::class) {
                                 $staleLead->quoteDetail->update([
-                                    'lost_reason_id' => 34
+                                    'lost_reason_id' => $lostReasonId
                                 ]);
                             }
                         }

@@ -820,7 +820,7 @@ class CRUDController extends Controller
                     $listQuotePlans = [];
                 }
             }
-            $coPayment = $this->healthQuoteService->getCoPayment($id);
+              $coPayment = $this->healthQuoteService->getCoPayment($id);
             $uboDetails = CustomerMembersRepository::getBy($record->id, QuoteTypes::HEALTH->name, CustomerTypeEnum::Entity);
             $membersDetail = CustomerMembersRepository::getBy($record->id, QuoteTypes::HEALTH->name);
             $memberCategories = $this->lookupService->getMemberCategories();
@@ -883,7 +883,7 @@ class CRUDController extends Controller
             $embeddedProducts = EmbeddedProductRepository::byQuoteType(QuoteTypes::HEALTH->id(), $record->id);
 
             $healthPlanTypes = HealthPlanType::where('is_active', 1)->select('id', 'text')->get();
-
+            
             return inertia('HealthQuote/Show', [
                 'paymentLink' => $paymentLink,
                 'quote' => $record,
@@ -937,6 +937,7 @@ class CRUDController extends Controller
                 'industryType' => $industryType,
                 'UBOsDetails' => $uboDetails,
                 'UBORelations' => $uboRelations,
+                'staleDays' => $record->stale_at, now()->diffInDays(Carbon::parse("$record->stale_at"))
             ]);
         } else {
             return view('shared.show', compact([
