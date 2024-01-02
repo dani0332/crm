@@ -36,6 +36,9 @@ class CycleQuoteController extends Controller
         $personalQuotes = CycleQuoteRepository::getData();
         $advisors = UserRepository::getPersonalQuoteAdvisors(QuoteTypes::CYCLE->value);
         $quoteStatuses = QuoteStatusRepository::byQuoteTypeId(QuoteTypes::CYCLE->id())->get();
+        $quoteStatuses = collect($quoteStatuses)->filter(function ($value) {
+            return $value['id'] != QuoteStatusEnum::Lost;
+        })->values();
 
         return inertia('CycleQuote/Index', [
             'quotes' => $personalQuotes,

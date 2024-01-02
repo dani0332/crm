@@ -37,6 +37,9 @@ class YachtQuoteController extends Controller
         $personalQuotes = YachtQuoteRepository::getData();
         $advisors = UserRepository::getPersonalQuoteAdvisors(QuoteTypes::YACHT->value);
         $quoteStatuses = QuoteStatusRepository::byQuoteTypeId(QuoteTypes::YACHT->id())->get();
+        $quoteStatuses = collect($quoteStatuses)->filter(function ($value) {
+            return $value['id'] != QuoteStatusEnum::Lost;
+        })->values();
 
         return inertia('YachtQuote/Index', [
             'quotes' => $personalQuotes,

@@ -66,6 +66,10 @@ class BusinessQuoteController extends Controller
     public function index(Request $request)
     {
         $dropdownSource = $this->businessQuoteService->dropdownSource($this->genericModel->properties, self::TYPE_ID);
+        $dropdownSource['quote_status_id'] = collect($dropdownSource['quote_status_id'])->filter(function ($value) {
+            return $value['id'] != QuoteStatusEnum::Lost;
+        })->values();
+
         $gridData = $this->businessQuoteService->getGridData($this->genericModel, $request);
         $quotes = $gridData->simplePaginate(10)->withQueryString();
         $isManagerORDeputy = auth()->user()->isManagerORDeputy();
