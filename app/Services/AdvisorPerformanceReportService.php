@@ -91,6 +91,10 @@ class AdvisorPerformanceReportService extends BaseService
             ->map(fn ($users) => $users->name)
             ->toArray();
 
+        if (! auth()->user()->hasRole(RolesEnum::BetaUser)) {
+            unset($leadSources['DUBAI_NOW']);
+        }
+
         return [
             'maxDays' => $maxDays,
             'tiers' => $tiers,
@@ -154,6 +158,10 @@ class AdvisorPerformanceReportService extends BaseService
         if (isset($filters->isCommercial) && $filters->isCommercial != 'All') {
             $filters->isCommercial = $filters->isCommercial == 'true' ? true : false;
             $query->where('car_model.is_commercial', '=', $filters->isCommercial);
+        }
+
+        if (isset($filters->leadSources) && count($filters->leadSources) > 0) {
+            $query->whereIn('car_quote_request.source', $filters->leadSources);
         }
 
         return $query;
