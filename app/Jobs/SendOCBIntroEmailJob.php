@@ -2,10 +2,12 @@
 
 namespace App\Jobs;
 
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\AssignmentTypeEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\TiersEnum;
 use App\Facades\PostMark;
+use App\Models\ApplicationStorage;
 use App\Models\CarQuote;
 use App\Models\InsuranceProvider;
 use App\Models\Payment;
@@ -91,10 +93,13 @@ class SendOCBIntroEmailJob implements ShouldQueue
             $insuranceProviderName = $insuranceProvider ? $insuranceProvider->text : '';
         }
 
+        $dubaiNowCcEmailGroup = ApplicationStorage::where('key_name', ApplicationStorageEnums::DUBAI_NOW_CC_GROUP)->first();
+
         // Prepare email body
         $body = json_encode([
             'From' => 'no-reply@alert.insurancemarket.email',
             'To' => $advisor->email,
+            'Cc' => $dubaiNowCcEmailGroup ? $dubaiNowCcEmailGroup->value : '',
             'TemplateAlias' => 'payment-internal-notification-car-dubai-now',
             'TemplateModel' => [
                 'params' => [
