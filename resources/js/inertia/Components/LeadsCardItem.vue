@@ -49,6 +49,7 @@ const dateFormat = date => {
 const showModal = ref(false);
 </script>
 <template>
+  <!--  -->
   <div
     :id="props.id"
     class="shared"
@@ -72,9 +73,9 @@ const showModal = ref(false);
       target="_blank"
       title="View Lead"
       class="block p-3 mt-2 border border-gray-300 space-y-2 hover:transition hover:border-primary-500 rounded"
-      :class="daysSinceStale(stale_at) ? 'bg-error-200' : 'bg-white'"
+      :class="daysSinceStale(stale_at) === false ? 'bg-white' : 'bg-error-200'"
     >
-      <div class="flex items-center space-x-1">
+      <div class="flex items-center space-x-1 overflow-hidden">
         <span class="font-semibold text-sm"
           >{{ first_name }} {{ last_name }}</span
         >

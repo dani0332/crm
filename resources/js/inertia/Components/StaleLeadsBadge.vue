@@ -8,11 +8,8 @@ const props = defineProps({
 });
 </script>
 <template>
-  <x-tooltip>
-    <p
-      v-if="daysSinceStale(date)"
-      class="bg-red-600 px-1 rounded text-[9px] text-white"
-    >
+  <x-tooltip v-if="daysSinceStale(date) !== false">
+    <p class="bg-red-600 px-1 rounded text-[9px] text-white">
       {{ daysSinceStale(date) }}
       days
     </p>
