@@ -1356,7 +1356,7 @@ const handleChildUpdate = planId => {
         <h2 class="text-xl font-semibold">Health Detail</h2>
         <p
           class="bg-red-600 px-2 py-1 rounded text-sm text-white"
-          v-if="daysSinceStale(quoteRequest?.stale_at)"
+          v-if="daysSinceStale(quoteRequest?.stale_at) !== false"
         >
           Stale for {{ daysSinceStale(quoteRequest?.stale_at) }} days
         </p>
