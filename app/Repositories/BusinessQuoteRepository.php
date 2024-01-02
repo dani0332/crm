@@ -36,9 +36,6 @@ class BusinessQuoteRepository extends BaseRepository
             'quoteStatus',
             'advisor',
             'businessTypeOfInsurance',
-            'nationality',
-            'insuranceProvider',
-            'typeOfInsurance',
         ])->whereHas('businessTypeOfInsurance', function ($businessTypeOfInsurance) use ($quoteType) {
             $businessTypeOfInsurance->when($quoteType == quoteTypeCode::GroupMedical, function ($groupMedical) {
                 $groupMedical->where('text', quoteStatusCode::GROUP_MEDICAL);
