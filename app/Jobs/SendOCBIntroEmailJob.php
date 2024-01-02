@@ -103,7 +103,7 @@ class SendOCBIntroEmailJob implements ShouldQueue
                     'providerName' => $insuranceProviderName,
                     'totalPremium' => $amountPaid,
                 ],
-                'subject' => (config('constants.APP_ENV') != 'production' ? config('constants.APP_ENV').' - ' : '').'DubaiNow || '.$advisor->name.' has paid for '.$lead->code,
+                'subject' => (config('constants.APP_ENV') != 'production' ? config('constants.APP_ENV').' - ' : '').'DubaiNow || '.$lead->first_name.' has paid for '.$lead->code,
             ],
             'MessageStream' => config('constants.MA_POSTMARK_STREAM'),
         ], JSON_UNESCAPED_SLASHES);
