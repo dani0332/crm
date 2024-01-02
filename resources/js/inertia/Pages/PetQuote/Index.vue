@@ -154,14 +154,18 @@ watch(
     <Head title="Pet Quotes" />
     <div class="flex justify-between items-center">
       <h2 class="text-xl font-semibold">Pet Quotes List</h2>
-      <x-button
-        v-if="can(permissionsEnum.PetQuotesCreate)"
-        size="sm"
-        color="#ff5e00"
-        :href="route('pet-quotes-create')"
-      >
-        Create Lead
-      </x-button>
+      <div class="flex items-center space-x-2">
+        <column-selection :columns="tableHeader"></column-selection>
+        <FiltersButton />
+        <x-button
+          v-if="can(permissionsEnum.PetQuotesCreate)"
+          size="sm"
+          color="#ff5e00"
+          :href="route('pet-quotes-create')"
+        >
+          Create Lead
+        </x-button>
+      </div>
     </div>
     <x-divider class="my-4" />
 

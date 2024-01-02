@@ -31,7 +31,7 @@ let availableFilters = {
   is_ecommerce: '',
   quote_status_id: '',
   page: 1,
-  previous_quote_policy_number_text:''
+  previous_quote_policy_number_text: '',
 };
 
 const filters = reactive(availableFilters);
@@ -157,14 +157,18 @@ watch(
     <div class="flex justify-between items-center">
       <h2 class="text-xl font-semibold">Yacht Quotes List</h2>
 
-      <x-button
-        v-if="can(permissionsEnum.YachtQuotesCreate)"
-        size="sm"
-        color="#ff5e00"
-        :href="route('yacht-quotes-create')"
-      >
-        Create Lead
-      </x-button>
+      <div class="flex items-center space-x-2">
+        <column-selection :columns="tableHeader"></column-selection>
+        <FiltersButton />
+        <x-button
+          v-if="can(permissionsEnum.YachtQuotesCreate)"
+          size="sm"
+          color="#ff5e00"
+          :href="route('yacht-quotes-create')"
+        >
+          Create Lead
+        </x-button>
+      </div>
     </div>
     <x-divider class="my-4" />
 

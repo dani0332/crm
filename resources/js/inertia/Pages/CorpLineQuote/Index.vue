@@ -223,7 +223,9 @@ onMounted(() => {
     <Head title="Business Quote List" />
     <div class="flex justify-between items-center">
       <h2 class="text-xl font-semibold">Lead List</h2>
-      <div class="space-x-3">
+      <div class="flex items-center space-x-2">
+        <column-selection :columns="tableHeader"></column-selection>
+        <FiltersButton />
         <Link :href="route('business.cards')">
           <x-button size="sm" color="#1d83bc" tag="div"> Cards View</x-button>
         </Link>
@@ -352,7 +354,6 @@ onMounted(() => {
           class="w-full"
           placeholder="Search by Renewal Batch"
         />
-
       </div>
       <div class="flex justify-between gap-3 mb-4 mt-1">
         <div v-if="can(permissionsEnum.DATA_EXTRACTION)">
