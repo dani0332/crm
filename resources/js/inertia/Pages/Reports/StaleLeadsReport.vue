@@ -1,4 +1,6 @@
 <script setup>
+import { watchEffect } from 'vue';
+
 const props = defineProps({
   reportData: Object,
   defaultFilters: Object,
@@ -12,47 +14,17 @@ const advisorOptions = ref([]);
 
 const filters = reactive({
   date: null,
-  line_of_bussiness: null,
+  line_of_bussiness: 'health',
   teams: null,
   advisors: null,
   filter_by: null,
   page: 1,
 });
 
-const tableHeaders = ref([
-  {
-    text: 'TEAM',
-    value: 'team',
-    is_active: true,
-    sortable: true,
-  },
-  {
-    text: 'ALLOCATED',
-    value: 'allocated',
-    is_active: true,
-    sortable: true,
-  },
+const healthHeaders = reactive([
   {
     text: 'RENEWAL TERMS RECEIVED',
     value: 'renewal_terms_recevied',
-    is_active: true,
-    sortable: true,
-  },
-  {
-    text: 'QUOTED',
-    value: 'quoted',
-    is_active: true,
-    sortable: true,
-  },
-  {
-    text: 'FOLLOW UP',
-    value: 'follow_up',
-    is_active: true,
-    sortable: true,
-  },
-  {
-    text: 'IN NEGOTIATION',
-    value: 'in_negotiation',
     is_active: true,
     sortable: true,
   },
@@ -63,8 +35,80 @@ const tableHeaders = ref([
     sortable: true,
   },
   {
+    text: 'MISSING DOCUMENTS',
+    value: 'missing_documents',
+    is_active: true,
+    sortable: true,
+  },
+  {
     text: 'APPLICATION SUBMITTED',
     value: 'application_submitted',
+    is_active: true,
+    sortable: true,
+  },
+]);
+
+const corplineHeaders = reactive([
+  {
+    text: 'RENEWAL TERMS RECEIVED',
+    value: 'renewal_terms_recevied',
+    is_active: true,
+    sortable: true,
+  },
+  {
+    text: 'APPLICATION PENDING',
+    value: 'application_pending',
+    is_active: true,
+    sortable: true,
+  },
+  {
+    text: 'MISSING DOCUMENTS',
+    value: 'missing_documents',
+    is_active: true,
+    sortable: true,
+  },
+  {
+    text: 'APPLICATION SUBMITTED',
+    value: 'application_submitted',
+    is_active: true,
+    sortable: true,
+  },
+]);
+
+const commonHeaders = reactive([
+  {
+    text: 'TEAM',
+    value: 'team',
+    is_active: true,
+    sortable: true,
+  },
+  {
+    text: 'NEW LEAD',
+    value: 'new_lead',
+    is_active: true,
+    sortable: true,
+  },
+  {
+    text: 'ALLOCATED',
+    value: 'allocated',
+    is_active: true,
+    sortable: true,
+  },
+  {
+    text: 'QUOTED',
+    value: 'quoted',
+    is_active: true,
+    sortable: true,
+  },
+  {
+    text: 'FOLLOWED UP',
+    value: 'follow_up',
+    is_active: true,
+    sortable: true,
+  },
+  {
+    text: 'IN NEGOTIATION',
+    value: 'in_negotiation',
     is_active: true,
     sortable: true,
   },
@@ -81,6 +125,21 @@ const tableHeaders = ref([
     sortable: true,
   },
 ]);
+
+let computedHeaders = ref([...healthHeaders, ...commonHeaders]);
+
+watch(
+  () => filters.line_of_bussiness,
+  () => {
+    let specificHeaders =
+      filters.line_of_bussiness === 'health'
+        ? healthHeaders
+        : filters.line_of_bussiness === 'corpline'
+        ? corplineHeaders
+        : [];
+    computedHeaders = [...specificHeaders, ...commonHeaders];
+  },
+);
 
 const teams = ref([
   { value: 'renewal', label: 'Renewal' },
@@ -229,7 +288,7 @@ const onTeamChange = e => {
       </x-field>
     </div>
     <div class="flex gap-3 justify-end items-center">
-      <column-selection v-model:columns="tableHeaders"></column-selection>
+      <column-selection v-model:columns="computedHeaders"></column-selection>
       <x-button size="sm" color="#ff5e00" type="submit">Search</x-button>
       <x-button size="sm" color="primary" @click.prevent="onReset">
         Reset
@@ -240,7 +299,7 @@ const onTeamChange = e => {
     class="mt-4"
     table-class-name=""
     :loading="loaders.table"
-    :headers="tableHeaders"
+    :headers="computedHeaders"
     :items="[]"
     border-cell
     :empty-message="'No Records Available'"

@@ -16,8 +16,21 @@ const props = defineProps({
   },
 });
 
+const quoteStatusEnum = inject('quoteStatusEnum');
+
+const canDrag = computed(() => {
+  return props.id == 'Lost' ||
+    props.id == 'TransactionApproved' ||
+    props.id == 'PolicyIssued'
+    ? false
+    : true;
+});
 useSortable(`#${props.id}`, props.leads, {
-  group: { name: 'shared', put: true },
+  group: {
+    name: 'shared',
+    put: true,
+    pull: canDrag.value,
+  },
   animation: 500,
 });
 
@@ -73,12 +86,16 @@ const showModal = ref(false);
       target="_blank"
       title="View Lead"
       class="block p-3 mt-2 border border-gray-300 space-y-2 hover:transition hover:border-primary-500 rounded"
-      :class="daysSinceStale(stale_at) === false ? 'bg-white' : 'bg-error-200'"
+      :class="[
+        daysSinceStale(stale_at) === false ? 'bg-white' : 'bg-error-200',
+        { 'cursor-not-allowed': !canDrag },
+      ]"
+      @drag.prevent="false"
     >
       <div class="flex items-center space-x-1 overflow-hidden">
         <span class="font-semibold text-sm"
-          >{{ first_name }} {{ last_name }}</span
-        >
+          >{{ first_name }} {{ last_name }}
+        </span>
         <stale-leads-badge :date="stale_at"></stale-leads-badge>
       </div>
 
@@ -128,7 +145,7 @@ const showModal = ref(false);
             >
           </template>
         </x-tooltip>
-        <p class="text-xs">{{ dateFormat(updated_at) }}</p>
+        <p class="text-xs">{{ updated_at }}</p>
       </div>
     </a>
   </div>

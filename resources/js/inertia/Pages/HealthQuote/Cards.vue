@@ -1,29 +1,21 @@
 <script setup>
-defineProps({
+const props = defineProps({
   totalLeads: Number,
   quoteStatusEnums: Object,
 });
-import { useSortable } from '@vueuse/integrations/useSortable';
 const page = usePage();
 
 const dateFormat = date => {
   return useDateFormat(date, 'DD-MM-YYYY HH:mm:ss').value;
 };
 
+provide('quoteStatusEnum', 'e status enum');
 const quotes = reactive({
   data: page.props.quotes || [],
   loader: false,
   searching: false,
   pages: {},
   queries: {},
-});
-
-const el = ref(null);
-useSortable(el.value, quotes?.data?.leads_list?.data, {
-  group: 'shared',
-  onUpdate: e => {
-    console.log(e);
-  },
 });
 </script>
 
