@@ -6,7 +6,7 @@ import { computed } from 'vue';
 import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue';
 import { daysSinceStale } from '../../Composables/utilities';
 
-defineProps({
+const props = defineProps({
   quote: Object,
   leadStatuses: Array,
   ecomDetails: Object,
@@ -73,6 +73,14 @@ const fixedValue = number => {
     });
   }
 };
+
+const allowStatusUpdate = computed(() => {
+  return (
+    (props.quote.quote_status_id == props.quoteStatusEnum.TransactionApproved ||
+      props.quote.quote_status_id == props.quoteStatusEnum.Lost) ??
+    false
+  );
+});
 
 const checkPlanType = id => {
   return page.props.healthPlanTypes.find(type => type.id === id)?.text;
@@ -2225,7 +2233,7 @@ const handleChildUpdate = planId => {
             label="Notes"
             placeholder="Lead Notes"
             class="w-full"
-            :disabled="quote.quote_status_id == 15"
+            :disabled="allowStatusUpdate"
           />
         </div>
         <div class="w-full md:w-1/3">
@@ -2234,7 +2242,7 @@ const handleChildUpdate = planId => {
               v-model="leadStatusForm.leadStatus"
               label="Status"
               :options="leadStatusOptions"
-              :disabled="quote.quote_status_id == 15"
+              :disabled="allowStatusUpdate"
               placeholder="Lead Status"
               class="w-full"
             />
@@ -2245,8 +2253,10 @@ const handleChildUpdate = planId => {
               placeholder="TransApp Code is required"
               class="w-full"
               :error="leadStatusForm.errors.trans_code"
+              :disabled="allowStatusUpdate"
             />
             <x-select
+              :disabled="allowStatusUpdate"
               v-if="leadStatusForm.leadStatus == 17"
               v-model="leadStatusForm.lostReason"
               label="Lost Reason"
@@ -2269,6 +2279,7 @@ const handleChildUpdate = planId => {
               size="sm"
               :loading="leadStatusForm.processing"
               @click.prevent="onLeadStatus"
+              :disabled="allowStatusUpdate"
             >
               Change Status
             </x-button>

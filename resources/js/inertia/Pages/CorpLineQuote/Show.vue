@@ -1,7 +1,7 @@
 <script setup>
 import QuoteDocuments from '@/inertia/Pages/PersonalQuote/Partials/QuoteDocuments.vue';
 
-defineProps({
+const props = defineProps({
   quote: Object,
   genderOptions: Object,
   assignedGMType: String,
@@ -41,6 +41,14 @@ const { copy, copied } = useClipboard();
 const rules = {
   isRequired: v => !!v || 'This field is required',
 };
+
+const disableStatusSection = computed(() => {
+  return props.quote?.quote_status_id == props.enums?.quoteStatusEnum?.Lost ||
+    props.quote?.quote_status_id ==
+      props.enums?.quoteStatusEnum?.TransactionApproved
+    ? true
+    : false;
+});
 
 const dateToYMD = date => {
   if (date) {
@@ -729,7 +737,9 @@ const linkEntity = () => {
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div class="flex justify-between items-center mb-4">
         <h3 class="font-semibold text-primary-800 text-lg">Entity Profile</h3>
-        <x-tag color="success" v-if="quote.kyc_decision === 'Complete'"> KYC - Complete </x-tag>
+        <x-tag color="success" v-if="quote.kyc_decision === 'Complete'">
+          KYC - Complete
+        </x-tag>
         <x-tag color="amber" v-else> KYC - Pending </x-tag>
       </div>
       <x-divider class="mb-4 mt-1" />
@@ -955,10 +965,7 @@ const linkEntity = () => {
               v-model="leadStatusForm.leadStatus"
               label="STATUS"
               :options="leadStatusOptions"
-              :disabled="
-                quote.quote_status_id ==
-                enums.quoteStatusEnum.TransactionApproved
-              "
+              :disabled="disableStatusSection"
               placeholder="Lead Status"
               class="w-full"
             />
@@ -968,10 +975,7 @@ const linkEntity = () => {
               label="NOTES"
               placeholder="Lead Notes"
               class="w-full"
-              :disabled="
-                quote.quote_status_id ==
-                enums.quoteStatusEnum.TransactionApproved
-              "
+              :disabled="disableStatusSection"
             />
           </div>
         </div>
@@ -981,9 +985,7 @@ const linkEntity = () => {
               leadStatusForm.leadStatus ==
               enums.quoteStatusEnum.TransactionApproved
             "
-            :disabled="
-              quote.quote_status_id == enums.quoteStatusEnum.TransactionApproved
-            "
+            :disabled="disableStatusSection"
             v-model="leadStatusForm.trans_code"
             label="TRANSAPP CODE"
             placeholder="TransApp Code is required"
@@ -1013,9 +1015,7 @@ const linkEntity = () => {
           size="sm"
           :loading="leadStatusForm.processing"
           @click.prevent="onLeadStatus"
-          :disabled="
-            quote.quote_status_id == enums.quoteStatusEnum.TransactionApproved
-          "
+          :disabled="disableStatusSection"
         >
           Change Status
         </x-button>
