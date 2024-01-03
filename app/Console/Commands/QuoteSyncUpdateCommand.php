@@ -53,7 +53,7 @@ class QuoteSyncUpdateCommand extends Command
 
         foreach ($entries as $entry) {
             info('Syncing entry: '.$entry->quote_uuid);
-            $quote = PersonalQuote::where('uuid', $entry->quote_uuid)->where('quote_type_id', $quote->quote_type_id)->first();
+            $quote = PersonalQuote::where('uuid', $entry->quote_uuid)->where('quote_type_id', $entry->quote_type_id)->first();
             if ($quote) {
                 $quoteDetail = PersonalQuoteDetail::where('personal_quote_id', $quote->id)->first();
                 DB::beginTransaction();
