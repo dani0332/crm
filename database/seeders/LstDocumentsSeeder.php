@@ -2375,29 +2375,29 @@ class LstDocumentsSeeder extends Seeder
 
         // HTC	Home test code	Home test code	6	home	.pdf,.xlsx,.xls,.docx,.doc,.jpeg,.jpg,.png	25	25	1	0	0		0	QUOTE
 
-        DocumentType::updateOrCreate([
-            'code' => 'HTC',
-            'quote_type_id' => QuoteTypes::HOME->id()
-        ], [
-            'code' => 'HTC',
-            'text' => "Home test code",
-            'description' => "Home test code",
+        // DocumentType::updateOrCreate([
+        //     'code' => 'HTC',
+        //     'quote_type_id' => QuoteTypes::HOME->id()
+        // ], [
+        //     'code' => 'HTC',
+        //     'text' => "Home test code",
+        //     'description' => "Home test code",
 
-            'quote_type_id' => QuoteTypes::HOME->id(),
-            'folder_path' => 'home',
-            'accepted_files' => '.pdf,.xlsx,.xls,.docx,.doc,.jpeg,.jpg,.png',
+        //     'quote_type_id' => QuoteTypes::HOME->id(),
+        //     'folder_path' => 'home',
+        //     'accepted_files' => '.pdf,.xlsx,.xls,.docx,.doc,.jpeg,.jpg,.png',
 
-            'max_files' => 25,
-            'max_size' => 25,
-            'is_active' => 1,
+        //     'max_files' => 25,
+        //     'max_size' => 25,
+        //     'is_active' => 1,
 
-            'is_required' => 0,
-            'send_to_customer' => 0,
-            'sort_order' => "",
+        //     'is_required' => 0,
+        //     'send_to_customer' => 0,
+        //     'sort_order' => "",
 
-            'receive_from_customer' => 0,
-            'category' => 'QUOTE',
-        ]);
+        //     'receive_from_customer' => 0,
+        //     'category' => 'QUOTE',
+        // ]);
 
         // CMEM_EID	Emirates ID (both sides)	Please share a copy of your valid Emirates ID with us. Awaiting receipt of your first or renewed ID? Please share a copy of your Emirates ID application form to enable us to proceed.	1	car	.pdf,.xlsx,.xls,.docx,.doc,.jpeg,.jpg,.png	10	25	1	1	0		1	MEMBER
 
