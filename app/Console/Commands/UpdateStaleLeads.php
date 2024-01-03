@@ -11,6 +11,7 @@ use App\Models\HomeQuote;
 use App\Models\PersonalQuote;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
+use OwenIt\Auditing\Models\Audit;
 
 class UpdateStaleLeads extends Command
 {
@@ -59,6 +60,17 @@ class UpdateStaleLeads extends Command
         $lostReasonId = 34; //Stale for more than 90 days
         foreach ($eligibleQuoteTypes as $eligibleQuoteType) {
 
+            // info("------------------- Updating Revert: " . $eligibleQuoteType . " -------------------");
+            // $eligibleQuoteType::whereNotNull('stale_at')->chunkById(1000, function($quoteDetailsForUpdate){
+            //     foreach($quoteDetailsForUpdate as $quoteDetailForUpdate){
+            //         $quoteDetailForUpdate->update([
+            //             'stale_at' => null,
+            //             'updated_at' => '2023-05-01 14:00:00'
+            //         ]);
+            //     }
+            // });
+            // info("------------------- Revert Updated : " . $eligibleQuoteType . " -------------------");
+
             info("------------------- Updating : " . $eligibleQuoteType . " -------------------");
             $eligibleQuoteType::whereNotIn('quote_status_id', $skipStatus)
                 ->where('updated_at', '<', date(config('constants.DATE_FORMAT_ONLY'), strtotime('-30 days')))
@@ -105,8 +117,17 @@ class UpdateStaleLeads extends Command
                         });
 
                         if (!$activityDateCheck) {
-                            // Should be updated in History or Audit logs
-                            // Need to make hardcode id into constant
+                            info("Quote Found - " . $eligibleQuoteType. " - Quote ID: $staleLead->id - Old Status: $staleLead->quote_status_id");
+                            Audit::create([
+                                'event' => 'updated',
+                                'auditable_type' => $eligibleQuoteType,
+                                'auditable_id' => $staleLead->id,
+                                'old_values' => ['quote_status_id' => $staleLead->quote_status_id],
+                                'new_values' => ['quote_status_id' => QuoteStatusEnum::Lost, 'notes' => 'Stale for more than 90 days'],
+                                'created_at' => now(),
+                                'updated_at' => now()
+                            ]);
+
                             $staleLead->update([
                                 'quote_status_id' => QuoteStatusEnum::Lost
                             ]);
