@@ -16,7 +16,7 @@ class AddNewDocumentTypeSeeder extends Seeder
         if (! $documentTypesCount) {
             \DB::table('document_types')->insert([
                 'code' => 'CPD',
-                'text' => 'Payment Document',
+                'text' => 'Payment Proof',
                 'max_files' => 15,
                 'max_size' => 30,
                 'folder_path' => 'car',
