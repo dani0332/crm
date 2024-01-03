@@ -18,6 +18,7 @@ const props = defineProps({
   lookups: Object,
   quoteAmlStatus: Number,
   customerDetails: Object,
+    cardHolderName:Object,
 });
 
 const loader = ref({
@@ -398,6 +399,7 @@ watch(
           :membersDetails="membersDetails"
           :memberRelations="props.lookups.member_relation"
           :customerType="props.customerTypeEnum.Individual"
+          :cardHolderName="cardHolderName"
         />
         <div class="my-5 flex justify-center">
           <x-button
