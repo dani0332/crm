@@ -72,33 +72,37 @@ function onReset() {
 
 onMounted(() => {});
 
-const tableHeader = [
-  { text: 'Ref-ID', value: 'uuid' },
-  { text: 'FIRST NAME', value: 'first_name' },
-  { text: 'LAST NAME', value: 'last_name' },
-  { text: 'LEAD STATUS', value: 'quote_status' },
-  { text: 'ADVISOR', value: 'advisor' },
-  { text: 'CREATED DATE', value: 'created_at' },
-  { text: 'LAST MODIFIED DATE', value: 'updated_at' },
-  { text: 'TRANSAPP CODE', value: 'transapp_code' },
-  { text: 'SOURCE', value: 'source' },
-  { text: 'LOST REASON', value: 'lost_reason' },
-  { text: 'PRICE', value: 'premium' },
-  { text: 'POLICY NUMBER', value: 'policy_number' },
-  { text: 'TYPE OF PET', value: 'type_of_pet' },
-  { text: 'BREED OF PET', value: 'breed_of_pet1' },
-  { text: 'AGE OF PET', value: 'age_of_pet' },
-  { text: 'IS NEUTERED', value: 'is_neutered' },
-  { text: 'IS MICROCHIPPED', value: 'is_microchipped' },
-  { text: 'MICROCHIP NO', value: 'microchip_no' },
-  { text: 'IS MIXED BREED', value: 'is_mixed_breed' },
-  { text: 'HAS INJURY', value: 'has_injury' },
-  { text: 'ACCOMMODATION TYPE', value: 'accommodation_type' },
-  { text: 'POSSESION TYPE', value: 'possesion_type' },
-  { text: 'IS ECOMMERCE', value: 'is_ecommerce' },
-  { text: 'Previous Policy Number', value: 'previous_quote_policy_number' },
-  { text: 'Renewal Batch', value: 'renewal_batch' },
-];
+const tableHeader = ref([
+  { text: 'Ref-ID', value: 'uuid', is_active: true },
+  { text: 'FIRST NAME', value: 'first_name', is_active: true },
+  { text: 'LAST NAME', value: 'last_name', is_active: true },
+  { text: 'LEAD STATUS', value: 'quote_status', is_active: true },
+  { text: 'ADVISOR', value: 'advisor', is_active: true },
+  { text: 'CREATED DATE', value: 'created_at', is_active: true },
+  { text: 'LAST MODIFIED DATE', value: 'updated_at', is_active: true },
+  { text: 'TRANSAPP CODE', value: 'transapp_code', is_active: true },
+  { text: 'SOURCE', value: 'source', is_active: true },
+  { text: 'LOST REASON', value: 'lost_reason', is_active: true },
+  { text: 'PRICE', value: 'premium', is_active: true },
+  { text: 'POLICY NUMBER', value: 'policy_number', is_active: true },
+  { text: 'TYPE OF PET', value: 'type_of_pet', is_active: true },
+  { text: 'BREED OF PET', value: 'breed_of_pet1', is_active: true },
+  { text: 'AGE OF PET', value: 'age_of_pet', is_active: true },
+  { text: 'IS NEUTERED', value: 'is_neutered', is_active: true },
+  { text: 'IS MICROCHIPPED', value: 'is_microchipped', is_active: true },
+  { text: 'MICROCHIP NO', value: 'microchip_no', is_active: true },
+  { text: 'IS MIXED BREED', value: 'is_mixed_breed', is_active: true },
+  { text: 'HAS INJURY', value: 'has_injury', is_active: true },
+  { text: 'ACCOMMODATION TYPE', value: 'accommodation_type', is_active: true },
+  { text: 'POSSESION TYPE', value: 'possesion_type', is_active: true },
+  { text: 'IS ECOMMERCE', value: 'is_ecommerce', is_active: true },
+  {
+    text: 'Previous Policy Number',
+    value: 'previous_quote_policy_number',
+    is_active: true,
+  },
+  { text: 'Renewal Batch', value: 'renewal_batch', is_active: true },
+]);
 
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
@@ -155,7 +159,7 @@ watch(
     <div class="flex justify-between items-center">
       <h2 class="text-xl font-semibold">Pet Quotes List</h2>
       <div class="flex items-center space-x-2">
-        <column-selection :columns="tableHeader"></column-selection>
+        <column-selection v-model:columns="tableHeader"></column-selection>
         <FiltersButton />
         <x-button
           v-if="can(permissionsEnum.PetQuotesCreate)"

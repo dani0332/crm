@@ -25,22 +25,26 @@ const quotesSelected = ref([]),
   assignmentType = ref(null),
   isDisabled = ref(false);
 
-const tableHeader = [
-  { text: 'Ref-ID', value: 'code' },
-  { text: 'FIRST NAME', value: 'first_name' },
-  { text: 'LAST NAME', value: 'last_name' },
-  { text: 'LEAD STATUS', value: 'quote_status_id_text' },
-  { text: 'ADVISOR', value: 'advisor_id_text' },
-  { text: 'CREATED DATE', value: 'created_at' },
-  { text: 'LAST MODIFIED DATE', value: 'updated_at' },
-  { text: 'TRANSAPP CODE', value: 'transapp_code' },
-  { text: 'SOURCE', value: 'source' },
-  { text: 'LOST REASON', value: 'lost_reason' },
-  { text: 'PRICE', value: 'premium' },
-  { text: 'POLICY NUMBER', value: 'policy_number' },
-  { text: 'Previous Policy Number', value: 'previous_quote_policy_number' },
-  { text: 'Renewal Batch', value: 'renewal_batch' },
-];
+const tableHeader = ref([
+  { text: 'Ref-ID', value: 'code', is_active: true },
+  { text: 'FIRST NAME', value: 'first_name', is_active: true },
+  { text: 'LAST NAME', value: 'last_name', is_active: true },
+  { text: 'LEAD STATUS', value: 'quote_status_id_text', is_active: true },
+  { text: 'ADVISOR', value: 'advisor_id_text', is_active: true },
+  { text: 'CREATED DATE', value: 'created_at', is_active: true },
+  { text: 'LAST MODIFIED DATE', value: 'updated_at', is_active: true },
+  { text: 'TRANSAPP CODE', value: 'transapp_code', is_active: true },
+  { text: 'SOURCE', value: 'source', is_active: true },
+  { text: 'LOST REASON', value: 'lost_reason', is_active: true },
+  { text: 'PRICE', value: 'premium', is_active: true },
+  { text: 'POLICY NUMBER', value: 'policy_number', is_active: true },
+  {
+    text: 'Previous Policy Number',
+    value: 'previous_quote_policy_number',
+    is_active: true,
+  },
+  { text: 'Renewal Batch', value: 'renewal_batch', is_active: true },
+]);
 
 const filters = reactive({
   code: '',
@@ -204,7 +208,7 @@ const permissionsEnum = page.props.permissionsEnum;
     <div class="flex justify-between items-center">
       <h2 class="text-xl font-semibold">Home List</h2>
       <div class="flex space-x-2 items-center">
-        <column-selection :columns="tableHeader"></column-selection>
+        <column-selection v-model:columns="tableHeader"></column-selection>
         <FiltersButton />
         <Link :href="route('home-cardView')">
           <x-button size="sm" color="#1d83bc" tag="div"> Cards View </x-button>

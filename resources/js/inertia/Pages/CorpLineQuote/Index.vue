@@ -72,29 +72,38 @@ const insuranceTypeOptions = computed(() => {
   );
 });
 
-const tableHeader = [
-  { text: 'Ref-ID', value: 'code' },
-  { text: 'FIRST NAME', value: 'first_name' },
-  { text: 'LAST NAME', value: 'last_name' },
-  { text: 'Company Name', value: 'company_name' },
-  { text: 'TRANSAPP CODE', value: 'transapp_code' },
-  { text: 'SOURCE', value: 'source' },
-  { text: 'POLICY NUMBER', value: 'policy_number' },
-  { text: 'LOST REASON', value: 'lost_reason' },
-  { text: 'ADVISOR', value: 'advisor_id_text' },
-  { text: 'LEAD STATUS', value: 'quote_status_id_text' },
-  { text: 'CREATED DATE', value: 'created_at' },
-  { text: 'LAST MODIFIED DATE', value: 'updated_at' },
-  { text: 'PRICE', value: 'premium' },
-  { text: 'NUMBER OF EMPLOYEES', value: 'number_of_employees' },
+const tableHeader = ref([
+  { text: 'Ref-ID', value: 'code', is_active: true },
+  { text: 'FIRST NAME', value: 'first_name', is_active: true },
+  { text: 'LAST NAME', value: 'last_name', is_active: true },
+  { text: 'Company Name', value: 'company_name', is_active: true },
+  { text: 'TRANSAPP CODE', value: 'transapp_code', is_active: true },
+  { text: 'SOURCE', value: 'source', is_active: true },
+  { text: 'POLICY NUMBER', value: 'policy_number', is_active: true },
+  { text: 'LOST REASON', value: 'lost_reason', is_active: true },
+  { text: 'ADVISOR', value: 'advisor_id_text', is_active: true },
+  { text: 'LEAD STATUS', value: 'quote_status_id_text', is_active: true },
+  { text: 'CREATED DATE', value: 'created_at', is_active: true },
+  { text: 'LAST MODIFIED DATE', value: 'updated_at', is_active: true },
+  { text: 'PRICE', value: 'premium', is_active: true },
+  {
+    text: 'NUMBER OF EMPLOYEES',
+    value: 'number_of_employees',
+    is_active: true,
+  },
   {
     text: 'BUSINESS INSURANCE TYPE',
     value: 'business_type_of_insurance_id_text',
+    is_active: true,
   },
-  { text: 'GENDER', value: 'gender' },
-  { text: 'Previous Policy Number', value: 'previous_quote_policy_number' },
-  { text: 'Renewal Batch', value: 'renewal_batch' },
-];
+  { text: 'GENDER', value: 'gender', is_active: true },
+  {
+    text: 'Previous Policy Number',
+    value: 'previous_quote_policy_number',
+    is_active: true,
+  },
+  { text: 'Renewal Batch', value: 'renewal_batch', is_active: true },
+]);
 
 function resetFilters() {
   for (const key in filters) {
@@ -224,7 +233,7 @@ onMounted(() => {
     <div class="flex justify-between items-center">
       <h2 class="text-xl font-semibold">Lead List</h2>
       <div class="flex items-center space-x-2">
-        <column-selection :columns="tableHeader"></column-selection>
+        <column-selection v-model:columns="tableHeader"></column-selection>
         <FiltersButton />
         <Link :href="route('business.cards')">
           <x-button size="sm" color="#1d83bc" tag="div"> Cards View</x-button>
