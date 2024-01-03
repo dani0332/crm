@@ -2275,7 +2275,7 @@ class LstDocumentsSeeder extends Seeder
             'code' => 'HOMPD',
             'quote_type_id' => QuoteTypes::HOME->id()
         ], [
-            'code' => 'CKYCD',
+            'code' => 'HOMPD',
             'text' => "Payment Proof",
             'description' => "",
 
