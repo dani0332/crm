@@ -1,5 +1,9 @@
 <script setup>
-import { useSortable } from '@vueuse/integrations/useSortable';
+import {
+  useSortable,
+  moveArrayElement,
+} from '@vueuse/integrations/useSortable';
+import { nextTick } from 'vue';
 import { daysSinceStale } from '../Composables/utilities';
 
 const page = usePage();
@@ -9,7 +13,8 @@ const props = defineProps({
     type: Array,
     require: true,
   },
-  id: String,
+  id: Number,
+  title: String,
   url: {
     type: String,
     require: true,
@@ -18,20 +23,48 @@ const props = defineProps({
 
 const quoteStatusEnum = inject('quoteStatusEnum');
 
+const leads = ref(props.leads);
 const canDrag = computed(() => {
-  return props.id == 'Lost' ||
-    props.id == 'TransactionApproved' ||
-    props.id == 'PolicyIssued'
+  return props.id == quoteStatusEnum?.Lost ||
+    props.id == quoteStatusEnum?.TransactionApproved ||
+    props.id == quoteStatusEnum?.PolicyIssued
     ? false
     : true;
 });
-useSortable(`#${props.id}`, props.leads, {
+
+useSortable(`#${props.title}`, props.leads, {
   group: {
     name: 'shared',
     put: true,
     pull: canDrag.value,
   },
   animation: 500,
+  onAdd: function (e) {
+    let quote_status_id = e.to.getAttribute('quote_status_id');
+    console.log(quote_status_id);
+    // setTimeout(() => {
+    //   const ids = orderedList.value.map(item => item.id);
+    //   axios
+    //     .post(route('reward-sliders.update-order'), {
+    //       ids,
+    //     })
+    //     .then(({ data }) => {
+    //       router.get(
+    //         route('reward-sliders.index'),
+    //         {},
+    //         { preserveScroll: true },
+    //       );
+    //       toast.success({
+    //         title: data.data,
+    //         position: 'top',
+    //       });
+    //     });
+    // }, 1000);
+  },
+  onRemove: function (e) {
+    // quote_type_id is missing
+    let { id, quote_type_id, quote_status_id } = leads.value[e.oldIndex];
+  },
 });
 
 const hasAnyRole = role => useHasAnyRole(role);
@@ -64,7 +97,8 @@ const showModal = ref(false);
 <template>
   <!--  -->
   <div
-    :id="props.id"
+    :id="title"
+    :quote_status_id="id"
     class="shared"
     :class="{ 'h-screen': props.leads.length == 0 }"
   >
@@ -90,7 +124,6 @@ const showModal = ref(false);
         daysSinceStale(stale_at) === false ? 'bg-white' : 'bg-error-200',
         { 'cursor-not-allowed': !canDrag },
       ]"
-      @drag.prevent="false"
     >
       <div class="flex items-center space-x-1 overflow-hidden">
         <span class="font-semibold text-sm"

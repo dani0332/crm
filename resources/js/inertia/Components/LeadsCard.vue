@@ -170,7 +170,8 @@ const onSearch = id => {
         <p>No Leads Found</p>
       </div>
       <leads-card-item
-        :id="quote.title.split(' ').join('')"
+        :title="quote.title.split(' ').join('')"
+        :id="quote.id"
         :leads="quote.data.leads_list.data"
         :url="quote.text ?? quote.title"
       />

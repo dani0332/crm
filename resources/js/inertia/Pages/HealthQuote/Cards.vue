@@ -1,6 +1,5 @@
 <script setup>
 const props = defineProps({
-  totalLeads: Number,
   quoteStatusEnum: Array,
 });
 const page = usePage();
@@ -9,7 +8,7 @@ const dateFormat = date => {
   return useDateFormat(date, 'DD-MM-YYYY HH:mm:ss').value;
 };
 
-provide('quoteStatusEnum', 'e status enum');
+provide('quoteStatusEnum', props.quoteStatusEnum);
 const quotes = reactive({
   data: page.props.quotes || [],
   loader: false,
@@ -26,7 +25,7 @@ const quotes = reactive({
       <div class="flex items-center gap-5">
         <h2 class="text-xl font-semibold">Health List</h2>
         <span class="border-2 rounded px-3 bg-gray-200 text-sm font-medium">{{
-          totalLeads ?? 0
+          0
         }}</span>
       </div>
 
