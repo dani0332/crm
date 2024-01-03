@@ -17,6 +17,7 @@ const quoteStatusOptions = computed(() => {
     label: status.text,
   }));
 });
+
 const quoteStatusForm = useForm({
   quote_uuid: props.quote.uuid,
   quote_status_id: props.quote.quote_status_id,
@@ -32,7 +33,7 @@ const onLeadStatus = () => {
       preserveScroll: true,
 
       onError: errors => {
-          notification.error({ title: errors.value, position: 'top' });
+        notification.error({ title: errors.value, position: 'top' });
       },
       onSuccess: () => {
         notification.success({
@@ -50,8 +51,9 @@ const rules = {
 
 const allowStatusUpdate = computed(() => {
   return (
-    props.quote.quote_status_id ==
-    props.quoteStatusEnum.TransactionApproved
+    (props.quote.quote_status_id == props.quoteStatusEnum.TransactionApproved ||
+      props.quote.quote_status_id == props.quoteStatusEnum.Lost) ??
+    false
   );
 });
 </script>
@@ -87,7 +89,14 @@ const allowStatusUpdate = computed(() => {
         </div>
       </div>
       <div class="w-full md:w-2/3">
-        <x-field label="TransApp Code" required v-if="quoteStatusForm.quote_status_id == props.quoteStatusEnum.TransactionApproved">
+        <x-field
+          label="TransApp Code"
+          required
+          v-if="
+            quoteStatusForm.quote_status_id ==
+            props.quoteStatusEnum.TransactionApproved
+          "
+        >
           <x-input
             v-model="quoteStatusForm.transapp_code"
             placeholder="TransApp Code is required"
@@ -96,9 +105,13 @@ const allowStatusUpdate = computed(() => {
             :error="quoteStatusForm.errors.transapp_code"
           />
         </x-field>
-        <x-field label="Lost Reason" required v-if="quoteStatusForm.quote_status_id == props.quoteStatusEnum.Lost">
-          <x-select            
-            v-model="quoteStatusForm.lost_reason_id"            
+        <x-field
+          label="Lost Reason"
+          required
+          v-if="quoteStatusForm.quote_status_id == props.quoteStatusEnum.Lost"
+        >
+          <x-select
+            v-model="quoteStatusForm.lost_reason_id"
             :options="
               lostReasons?.map(item => ({
                 value: item.id,

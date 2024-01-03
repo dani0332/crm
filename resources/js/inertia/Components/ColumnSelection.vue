@@ -1,4 +1,6 @@
 <script setup>
+const emit = defineEmits(['update:columns']);
+
 const props = defineProps({
   columns: {
     type: Array,
@@ -6,14 +8,13 @@ const props = defineProps({
   },
 });
 
-const columns = ref(props.columns);
-
+const headers = ref([...props.columns]);
 const columnShown = computed(() => {
-  return columns.value.filter(column => column.is_active);
+  return headers.value.filter(column => column.is_active);
 });
 
 const inactiveColumns = computed(() => {
-  return columns.value.filter(column => !column.is_active);
+  return headers.value.filter(column => !column.is_active);
 });
 
 const showList = ref(false);
@@ -22,10 +23,21 @@ const list = ref(null);
 onClickOutside(list, event => {
   if (showList.value) showList.value = false;
 });
+
+const updateColumns = () => {
+  emit(
+    'update:columns',
+    headers.value.filter(x => x.is_active),
+  );
+};
 </script>
 <template>
   <div class="inline relative" ref="list" id="list">
-    <x-icon icon="settings" class="relative" @click="showList = !showList">
+    <x-icon
+      icon="settings"
+      class="relative cursor-pointer"
+      @click="showList = !showList"
+    >
     </x-icon>
     <div
       v-if="showList"
@@ -41,7 +53,10 @@ onClickOutside(list, event => {
               v-for="column in columnShown"
               :key="column.text"
             >
-              <x-checkbox size="sm" v-model="column.is_active"
+              <x-checkbox
+                @change="updateColumns"
+                size="sm"
+                v-model="column.is_active"
                 >{{ column.text }}
               </x-checkbox>
             </li>
@@ -59,7 +74,10 @@ onClickOutside(list, event => {
             v-for="column in inactiveColumns"
             :key="column.text"
           >
-            <x-checkbox size="sm" v-model="column.is_active"
+            <x-checkbox
+              @change="updateColumns"
+              size="sm"
+              v-model="column.is_active"
               >{{ column.text }}
             </x-checkbox>
           </li>

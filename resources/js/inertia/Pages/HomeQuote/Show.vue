@@ -3,7 +3,7 @@ import MemberDetails from '../../Components/MemberDetails.vue';
 import QuoteDocuments from '@/inertia/Pages/PersonalQuote/Partials/QuoteDocuments.vue';
 import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue';
 
-defineProps({
+const props = defineProps({
   quote: Object,
   quoteType: String,
   quoteTypeId: Number,
@@ -47,6 +47,14 @@ const modals = reactive({
   duplicate: false,
   activity: false,
   activityConfirm: false,
+});
+
+const allowStatusUpdate = computed(() => {
+  return (
+    (props.quote.quote_status_id == props.quoteStatusEnum.TransactionApproved ||
+      props.quote.quote_status_id == props.quoteStatusEnum.Lost) ??
+    false
+  );
 });
 
 const leadDuplicateForm = useForm({
@@ -648,7 +656,9 @@ const linkEntity = () => {
           }}
           Profile
         </h3>
-        <x-tag color="success" v-if="quote.kyc_decision === 'Complete'"> KYC - Complete </x-tag>
+        <x-tag color="success" v-if="quote.kyc_decision === 'Complete'">
+          KYC - Complete
+        </x-tag>
         <x-tag color="amber" v-else> KYC - Pending </x-tag>
       </div>
       <x-divider class="mb-4 mt-1" />
@@ -975,14 +985,16 @@ const linkEntity = () => {
               <x-select
                 v-model="leadStatusForm.leadStatus"
                 :options="leadStatusOptions"
-                :disabled="quote.quote_status_id == 15"
+                :disabled="allowStatusUpdate"
                 placeholder="Lead Status"
                 class="w-full"
               />
             </x-field>
             <x-field
               label="TransApp Code"
-              v-if="leadStatusForm.leadStatus == 15"
+              v-if="
+                leadStatusForm.leadStatus == quoteStatusEnum.TransactionApproved
+              "
             >
               <x-input
                 v-model="leadStatusForm.trans_code"
@@ -991,7 +1003,10 @@ const linkEntity = () => {
                 :error="leadStatusForm.errors.trans_code"
               />
             </x-field>
-            <x-field label="Lost Reason" v-if="leadStatusForm.leadStatus == 17">
+            <x-field
+              label="Lost Reason"
+              v-if="leadStatusForm.leadStatus == quoteStatusEnum.Lost"
+            >
               <x-select
                 v-model="leadStatusForm.lostReason"
                 :options="
@@ -1003,6 +1018,7 @@ const linkEntity = () => {
                 placeholder="Lost Reason is required"
                 class="w-full"
                 :error="leadStatusForm.errors.lostReason"
+                :disabled="allowStatusUpdate"
               />
             </x-field>
           </div>
@@ -1016,7 +1032,7 @@ const linkEntity = () => {
             label="Notes"
             placeholder="Lead Notes"
             class="w-full"
-            :disabled="quote.quote_status_id == 15"
+            :disabled="allowStatusUpdate"
           />
         </div>
       </div>
@@ -1027,6 +1043,7 @@ const linkEntity = () => {
           size="sm"
           :loading="leadStatusForm.processing"
           @click.prevent="onLeadStatus"
+          :disabled="allowStatusUpdate"
         >
           Change Status
         </x-button>
