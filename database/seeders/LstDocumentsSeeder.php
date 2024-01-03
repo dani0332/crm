@@ -1368,7 +1368,7 @@ class LstDocumentsSeeder extends Seeder
             'text' => "Census List",
             'description' => "",
 
-            'quote_type_id' => QuoteTypes::CAR->id(),
+            'quote_type_id' => QuoteTypes::BUSINESS->id(),
             'folder_path' => 'business',
             'accepted_files' => '.xlsm,.xlsx',
 
@@ -1388,7 +1388,7 @@ class LstDocumentsSeeder extends Seeder
 
         DocumentType::updateOrCreate([
             'code' => 'CPD',
-            'quote_type_id' => QuoteTypes::BUSINESS->id()
+            'quote_type_id' => QuoteTypes::CAR->id()
         ], [
             'code' => 'CPD',
             'text' => "Payment Proof",
