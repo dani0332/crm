@@ -1,5 +1,7 @@
 <script setup>
 
+import LazyIndicativeAdditionalPrice from './Partials/IndicativeAdditionPrice.vue';
+
 const props = defineProps({
   quoteId: String,
   sendUpdateLog: Object,
@@ -35,6 +37,7 @@ const updateLogOptions = computed(() => {
   return selectedType.value?.childs.map(child => ({
     value: child.id,
     label: child.title,
+    slug: child.slug
   }));
 });
 
@@ -44,6 +47,19 @@ const isEditDisabled = computed(() => {
     ['EF', 'CI', 'CIR', 'CPD'].includes(selectedType.value?.slug)
   );
 })
+
+const showIndicativeAdditionalPrice = computed(() => {
+  let hasRestrictedSubType = false;
+
+  updateLogOptions?.value.forEach(option => {
+    if (['MDOM', 'MDOV', 'MPC'].includes(option.slug) && props.sendUpdateLog.option_id === option.value) {
+      hasRestrictedSubType = true;
+    }
+  })
+  return (
+    selectedType?.value.slug === 'EF' && !hasRestrictedSubType
+  );
+});
 
 const changeReasonOptions = computed(() => {
   return [];
@@ -63,10 +79,6 @@ onMounted(() => {
   const params = new URLSearchParams(decodeURIComponent(page.url.split('?')[1]));
   state.redirectURL = params.get('refURL');
 })
-
-const redirectBack = () => {
-  history.back();
-};
 
 const onEdit = () => {
   if (isEditDisabled.value) {
@@ -105,6 +117,9 @@ const onUpdateLog = () => {
 </script>
 
 <template>
+  <Head>
+    <title>Send Update {{ selectedType.title }} </title>
+  </Head>
   <div>
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div class="flex gap-2 w-100 flex-grow justify-between">
@@ -203,6 +218,15 @@ const onUpdateLog = () => {
         </template>
       </div>
     </div>
+
+    <!-- Indicative additional price comp -->
+    <LazyIndicativeAdditionalPrice
+      v-if="showIndicativeAdditionalPrice"
+    />
+    <!-- 
+      will b displayed for all lobs except sub type MDOM, MDOV, MPC
+
+     -->
 
     <AuditLogs
       :type="'App\\Models\\SendUpdateLog'"

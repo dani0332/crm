@@ -213,7 +213,7 @@ const findOption = (item, key) => {
             <x-tooltip position="right">
               <span class="underline decoration-dotted">{{ text }}</span>
               <template #tooltip>
-                <span class="whitespace-break-spaces !normal-case">
+                <span class="whitespace-break-spaces !normal-case" style="margin-top: 50px;">
                   {{ tooltip }}
                 </span>
               </template>
@@ -292,7 +292,7 @@ const findOption = (item, key) => {
       <div class="w-full flex gap-5 justify-center text-center my-10 mb-20 items-stretch" v-if="modals.step === 'step1'">
         <template v-for="option in options" :key="option.title">
           <x-tooltip position="bottom" class="arrow-t">
-            <x-button color="primary" class="py-8 px-6 rounded-xl w-[200px] whitespace-break-spaces" @click="setOption('step2', option)">
+            <x-button color="primary" class="py-8 px-6 rounded-xl w-[200px] whitespace-break-spaces underline decoration-dotted" @click="setOption('step2', option)">
               {{ option.title }}
             </x-button>
             <template #tooltip> <div class="truncate w-40">{{ option.description }}</div> </template>
@@ -304,7 +304,7 @@ const findOption = (item, key) => {
       <div class="w-full flex gap-5 justify-center text-center py-5 items-stretch" v-else-if="modals.step === 'step2'">
         <template v-for="category in form.parentCategory?.childs" :key="category.title">
           <x-tooltip position="bottom" class="arrow-t">
-            <x-button color="primary" class="py-8 px-6 rounded-xl w-[200px] whitespace-break-spaces" @click="setOption('step3', category)">
+            <x-button color="primary" class="py-8 px-6 rounded-xl w-[200px] whitespace-break-spaces underline decoration-dotted" @click="setOption('step3', category)">
               {{ category.title }}
             </x-button>
             <template #tooltip> <div>{{ category.description }}</div> </template>
