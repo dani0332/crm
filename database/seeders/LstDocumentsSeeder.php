@@ -3035,7 +3035,7 @@ class LstDocumentsSeeder extends Seeder
             'quote_type_id' => QuoteTypes::CAR->id()
         ], [
             'code' => 'END_TI',
-            'text' => "E-Card",
+            'text' => "Tax Invoice",
             'description' => "",
 
             'quote_type_id' => QuoteTypes::CAR->id(),
@@ -3061,7 +3061,7 @@ class LstDocumentsSeeder extends Seeder
             'quote_type_id' => QuoteTypes::CAR->id()
         ], [
             'code' => 'END_RCPT',
-            'text' => "E-Card",
+            'text' => "Receipt",
             'description' => "",
 
             'quote_type_id' => QuoteTypes::CAR->id(),
