@@ -64,10 +64,11 @@ const openState = e => {
         <template #content> {{ selectedFiltersLength }} </template>
       </x-badge>
       <div class="flex gap-[1px]">
-        <x-button color="#38bdf8" class="rounded-none rounded-l-lg"
+        <x-button size="sm" color="#38bdf8" class="rounded-none rounded-l-lg"
           >Filters
         </x-button>
         <x-button
+          size="sm"
           color="#38bdf8"
           icon-right="chevronDown"
           class="rounded-none rounded-r-lg"

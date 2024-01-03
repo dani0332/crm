@@ -89,6 +89,11 @@ class ReportsController extends Controller
         return inertia('Reports/StaleLeadsReport', []);
     }
 
+    public function renderPipelineReport(Request $request, ReportService $reportService)
+    {
+        return inertia('Reports/PipelineReport', []);
+    }
+
     public function fetchAdvisorListByTeam(Request $request)
     {
         $teamUsers = $this->getUsersByTeamIds($request->teamIds)->pluck('id')->toArray();

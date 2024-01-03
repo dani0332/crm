@@ -69,19 +69,27 @@ const updateColumns = () => {
           Fields in the list
         </header>
         <ul class="px-2">
-          <li
-            class="capitalize text-xs my-1"
-            v-for="column in inactiveColumns"
-            :key="column.text"
-          >
-            <x-checkbox
-              @change="updateColumns"
-              size="sm"
-              v-model="column.is_active"
-              >{{ column.text }}
-            </x-checkbox>
+          <template v-if="inactiveColumns.length > 0">
+            <li
+              class="capitalize text-xs my-1"
+              v-for="column in inactiveColumns"
+              :key="column.text"
+            >
+              <x-checkbox
+                @change="updateColumns"
+                size="sm"
+                v-model="column.is_active"
+                >{{ column.text }}
+              </x-checkbox>
+            </li>
+          </template>
+          <li v-else class="font-bold text-sm text-center py-3">
+            No Fields Found
           </li>
         </ul>
+
+        <!-- <x-divider class="my-2"></x-divider>
+        <x-button size="sm"> Default </x-button> -->
       </div>
     </div>
   </div>
