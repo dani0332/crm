@@ -55,7 +55,7 @@ defineProps({
 });
 
 const page = usePage();
-console.log("haf"+JSON.stringify(page.props.documentTypes));
+
 const notification = useToast();
 const hasRole = role => useHasRole(role);
 const hasAnyRole = roles => useHasAnyRole(roles);
@@ -2320,6 +2320,7 @@ const handleChildUpdate = planId => {
     </div>
 
 
+
     <!-- <div class="p-4 rounded shadow mb-6 bg-white" v-if="isQuoteDocumentEnabled">
       <div>
         <h3 class="font-semibold text-primary-800 text-lg">Policy Details</h3>
@@ -2555,7 +2556,8 @@ const handleChildUpdate = planId => {
               Copy
             </x-button>
 
-            <span v-if="hasRole(page.props.rolesEnum.HealthAdvisor)">
+            <!-- v-if="hasRole(page.props.rolesEnum.HealthAdvisor)", hide it for now -->
+            <span v-if="true == false">
               <SelectPlan
                 v-if="prefillPlanId != item.id"
                 @update:updatePlanId="handleChildUpdate"
@@ -2689,7 +2691,7 @@ const handleChildUpdate = planId => {
 			v-if="hasRole(rolesEnum.BetaUser)"
 			quoteType="Health"
 			:payments="payments"
-			:paymentDocument="documentTypes.QUOTE.filter(item => item.code === 'HPD' || item.code === 'HPDR')"
+			:paymentDocument="documentTypes.QUOTE.filter(item => item.code === 'HPD' || item.code === 'HPDR' || item.code === 'HDPDR')"
 			:quoteRequest="quoteRequest"
 			:paymentStatusEnum="paymentStatusEnum"
 			:paymentTooltipEnum="paymentTooltipEnum"

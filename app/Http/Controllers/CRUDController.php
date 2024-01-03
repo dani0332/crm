@@ -27,7 +27,11 @@ use App\Enums\RolesEnum;
 use App\Enums\TiersEnum;
 use App\Facades\Capi;
 use App\Http\Requests\ExportPlansPdfRequest;
+use App\Http\Requests\SplitPaymentApproveRequest;
+use App\Http\Requests\SplitPaymentUpdateRequest;
+use App\Http\Requests\StorePaymentRequest;
 use App\Http\Requests\UpdateLeadStatusRequest;
+use App\Http\Requests\UpdatePaymentRequest;
 use App\Jobs\CarRenewalEmailJob;
 use App\Jobs\SyncSIBContactJob;
 use App\Models\CarMake;
@@ -807,7 +811,6 @@ class CRUDController extends Controller
                     ];
                 })->sortBy('label')->values();
             }
-            $documentTypes = $this->quoteDocumentService->getQuoteDocumentsForUpload(QuoteTypeId::Home);
 
             $documentTypes = $this->quoteDocumentService->getQuoteDocumentsForUpload(QuoteTypeId::Home);
 
@@ -1731,7 +1734,7 @@ class CRUDController extends Controller
         return redirect()->back()->with('message', 'Document has been deleted.');
     }
 
-    public function storePayment(Request $request)
+    public function storePayment(StorePaymentRequest $request)
     {
         $quoteModel = $this->getQuoteObject($request->modelType, $request->quote_id);
         if (!$quoteModel) {
@@ -1834,7 +1837,7 @@ class CRUDController extends Controller
         }
     }
 
-    public function splitPaymentUpdate(Request $request)
+    public function splitPaymentUpdate(SplitPaymentUpdateRequest $request)
     {
         if (auth()->user()->can(PermissionsEnum::ApprovePayments)) {
             $successMessage = $this->paymentSplitsRepository->updatePaymentStatus($request);
@@ -1845,7 +1848,7 @@ class CRUDController extends Controller
         }
     }
 
-    public function splitPaymentsApprove(Request $request)
+    public function splitPaymentsApprove(SplitPaymentApproveRequest $request)
     {
         if (auth()->user()->can(PermissionsEnum::ApprovePayments)) {
             $successMessage = $this->paymentSplitsRepository->updateSplitPaymentsApprove($request);
@@ -1856,7 +1859,7 @@ class CRUDController extends Controller
         }
     }
 
-    public function updatePayment(Request $request)
+    public function updatePayment(UpdatePaymentRequest $request)
     {
 
         if (auth()->user()->hasRole(RolesEnum::BetaUser)) {
@@ -1874,7 +1877,6 @@ class CRUDController extends Controller
                 'credit_approval' => $request->credit_approval,
                 'total_payments' => $request->payment_no,
                 'collection_type' => $request->collection_type,
-                'captured_amount' => $request->captured_amount,
                 'total_amount' => $request->total_amount, //amount after discount
                 'collection_date' => $request->collection_date,
                 'discount_value' => $request->discount_value,

@@ -616,6 +616,23 @@ class CRUDService extends BaseService
         return $response;
     }
 
+    public function processCapturePayment($data)
+    {
+        $planData = [
+            'quoteUID' => $data['uuid'],
+            'quoteTypeId' => $data['type_id'],
+            'payments' => [
+                [
+                    'codeRef' => $data['code'],
+                ],
+            ],
+        ];
+
+        $response = Marshall::request('/payment/checkout/capture', 'post', $planData);
+
+        return $response;
+    }
+
     /*
      * This function is just for checking AML Status.
      */

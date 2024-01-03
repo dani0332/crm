@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\GenericRequestEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
+use App\Enums\QuoteTypes;
 use App\Facades\Capi;
 use App\Models\PersonalQuote;
 use App\Models\PersonalQuoteDetail;
@@ -194,9 +195,23 @@ class CentralService
         }
     }
 
-    public function savePlanDetails()
+    public function savePlanDetails($quoteType, $code, $data)
     {
+        $repository = getRepositoryObject($quoteType);
 
+        $priceVatApp = $data->price_vat_applicable ?? 0;
+        $priceVatNotApp = $data->price_vat_not_applicable ?? 0;
+
+        if ($quoteType == QuoteTypes::BUSINESS) {
+            $data->price_with_vat = ($priceVatApp + $priceVatNotApp) + (($priceVatApp / 100) * 5);
+        } else {
+            $data->price_with_vat = $priceVatApp ? ($priceVatApp + (($priceVatApp / 100) * 5)) : $priceVatNotApp;
+        }
+
+        $quote = $repository::where('code', $code)->firstOrFail();
+        $quote->update($data->toArray());
+
+        return true;
     }
 
 }

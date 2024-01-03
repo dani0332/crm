@@ -59,7 +59,7 @@ export const useGetShowPageRoute = (uuid, quoteTypeId, business_type_of_insuranc
 
     return routesObj[quoteTypeId];
   }
-
+  
 export const useGenerateQueryString = filters =>
 {
   const query = {};
@@ -98,3 +98,7 @@ export const fileUploadErrorMessage = (doc, rejectReason) => {
   }
   return errorMessage;
 };
+
+export const useFormatPrice = (price, thousandSeparator = false) => {
+  return (thousandSeparator ? parseFloat(price).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}) : parseFloat(price).toFixed(2));
+}

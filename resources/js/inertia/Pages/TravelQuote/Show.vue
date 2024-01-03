@@ -48,31 +48,35 @@ defineProps({
   UBORelations: Array,
   UBOsDetails: Array,
   canAddBatchNumber: Boolean,
-  aboveAgeMembers: Number,
+  paymentTooltipEnum: Object,
+  storageUrl: String,
 });
+
 
 const hasAnyRole = roles => useHasAnyRole(roles);
 const checkedItems = ref([]);
 const checkCheckedPlans = computed(() => {
-  return true;
+    return true;
 });
 const checkedCount = computed(() => {
-  return checkedItems.value.length;
+    return checkedItems.value.length;
 });
 const updateCheckedCount = (id, event) => {
-  if (event.target.checked) {
-    if (checkedItems.value.length < 6) {
-      checkedItems.value.push(id);
+    if (event.target.checked) {
+        if(checkedItems.value.length < 6) {
+            checkedItems.value.push(id);
+        }else{
+            return false;
+        }
     } else {
-      return false;
+        var index =  checkedItems.value.indexOf(id);
+        if (index != -1) {
+            checkedItems.value.splice(id, 1);
+        }
     }
-  } else {
-    var index = checkedItems.value.indexOf(id);
-    if (index != -1) {
-      checkedItems.value.splice(id, 1);
-    }
-  }
 };
+
+
 
 const dateFormat = date => {
   if (!date) return '';
@@ -106,8 +110,8 @@ const confirmDeleteData = reactive({
 const memberActionEdit = ref(false),
   activityActionEdit = ref(false),
   selectedPlan = ref(null),
-  selectedPlans = ref([]),
-  toggleLoader = ref(false),
+    selectedPlans = ref([]),
+    toggleLoader = ref(false),
   selectedPlansPdf = ref([]),
   exportLoader = ref(false),
   historyLoading = ref(false),
@@ -116,7 +120,6 @@ const memberActionEdit = ref(false),
       reason => reason.text === page.props.quote.lost_reason,
     )?.id || null,
   );
-
 const leadDuplicateForm = useForm({
   modelType: 'travel',
   parentType: 'travel',
@@ -538,87 +541,90 @@ const sendPolicyToClient = () => {
   }
 };
 
+
 const onTogglePlans = toggle => {
-  toggleLoader.value = true;
+    toggleLoader.value = true;
 
-  const planIds = useArrayUnique(
-    selectedPlans.value.map(p => {
-      return p.id;
-    }),
-  ).value;
+    const planIds = useArrayUnique(
+        selectedPlans.value.map(p => {
+            return p.id;
+        }),
+    ).value;
 
-  axios
-    .post(route('manualPlanToggle', { quoteType: 'travel' }), {
-      modelType: 'Travel',
-      planIds: planIds,
-      quote_uuid: page.props.quote.uuid,
-      toggle: toggle,
-    })
-    .then(response => {
-      notification.success({
-        title: 'Plans has been updated',
-        position: 'top',
-      });
-      router.reload({
-        preserveScroll: true,
-      });
-    })
-    .catch(error => {
-      notification.error({
-        title: error,
-        position: 'top',
-      });
-    })
-    .finally(() => {
-      toggleLoader.value = false;
-      selectedPlans.value = [];
-    });
+    axios
+        .post(route('manualPlanToggle', { quoteType: 'travel' }), {
+            modelType: 'Travel',
+            planIds: planIds,
+            quote_uuid: page.props.quote.uuid,
+            toggle: toggle,
+        })
+        .then(response => {
+            notification.success({
+                title: 'Plans has been updated',
+                position: 'top',
+            });
+            router.reload({
+                preserveScroll: true,
+            });
+        })
+        .catch(error => {
+            notification.error({
+                title: error,
+                position: 'top',
+            });
+        })
+        .finally(() => {
+            toggleLoader.value = false;
+            selectedPlans.value = [];
+        });
 };
 
-const onExportPlans = () => {
-  if (selectedPlans.value.length < 2 || selectedPlans.value.length > 5) {
-    notification.error({
-      title: 'Please select 2 to 5 plans to download PDF.',
-      position: 'top',
-    });
-    return;
-  }
-  exportLoader.value = true;
-  const planIds = selectedPlans.value.map(p => {
-    return p.id;
-  });
 
-  axios
-    .post(
-      '/api/v1/quotes/travel/export-plans-pdf',
-      {
-        plan_ids: planIds,
-        quote_uuid: page.props.quote.uuid,
-        modelType: 'travel',
-        quoteType: 'travel',
-      },
-      {
-        responseType: 'json',
-      },
-    )
-    .then(response => {
-      const link = document.createElement('a');
-      let fileName = response.data.name;
-      link.href = response.data.data;
-      link.setAttribute('download', fileName);
-      document.body.appendChild(link);
-      link.click();
-      notification.success({
-        title: 'Plans Exported',
-        position: 'top',
-      });
-    })
-    .catch(error => {
-      console.log(error);
-    })
-    .finally(() => {
-      exportLoader.value = false;
+const onExportPlans = () => {
+
+    if (selectedPlans.value.length < 2 || selectedPlans.value.length > 5) {
+        notification.error({
+            title: 'Please select 2 to 5 plans to download PDF.',
+            position: 'top',
+        });
+        return;
+    }
+    exportLoader.value = true;
+    const planIds = selectedPlans.value.map(p => {
+        return p.id;
     });
+
+    axios
+        .post(
+            '/api/v1/quotes/travel/export-plans-pdf',
+            {
+                plan_ids: planIds,
+                quote_uuid: page.props.quote.uuid,
+                modelType: 'travel',
+                quoteType:'travel'
+            },
+            {
+                responseType: 'json',
+            },
+        )
+        .then(response => {
+            const link = document.createElement('a');
+            let fileName = response.data.name;
+            link.href = response.data.data;
+            link.setAttribute('download', fileName);
+            document.body.appendChild(link);
+            link.click();
+            notification.success({
+                title: 'Plans Exported',
+                position: 'top',
+            });
+        })
+        .catch(error => {
+            console.log(error);
+        })
+        .finally(() => {
+            exportLoader.value = false;
+        });
 };
 
 const onDocDelete = name => {
@@ -634,8 +640,7 @@ const onLoadAvailablePlansData = async () => {
   axios
     .post(url, data)
     .then(res => {
-      availablePlansTable.data = res.data.normalPlans;
-      availableSeniorPlansTable.data = res.data.seniorPlans;
+      availablePlansTable.data = res.data;
     })
     .catch(err => {
       console.log(err);
@@ -736,36 +741,6 @@ const availablePlansTable = reactive({
     },
     {
       text: 'Total Price',
-      value: 'discountPremium',
-    },
-    {
-      text: 'Action',
-      value: 'action',
-    },
-  ],
-});
-
-const availableSeniorPlansTable = reactive({
-  data: [],
-  columns: [
-    {
-      text: 'Provider Name',
-      value: 'providerName',
-    },
-    {
-      text: 'Plan Name',
-      value: 'name',
-    },
-    {
-      text: 'Travel Type',
-      value: 'travelType',
-    },
-    {
-      text: 'Actual Price',
-      value: 'actualPremium',
-    },
-    {
-      text: 'Price with VAT',
       value: 'discountPremium',
     },
     {
@@ -1141,9 +1116,10 @@ const handleChildUpdate = planId => {
 };
 
 const genderList = [
-  { value: 'M', label: 'Male' },
-  { value: 'F', label: 'Female' },
+    { value: 'M', label: 'Male' },
+    { value: 'F', label: 'Female' },
 ];
+
 </script>
 
 <template>
@@ -1426,9 +1402,7 @@ const genderList = [
           }}
           Profile
         </h3>
-        <x-tag color="success" v-if="quote.kyc_decision === 'Complete'">
-          KYC - Complete
-        </x-tag>
+        <x-tag color="success" v-if="quote.kyc_decision === 'Complete'"> KYC - Complete </x-tag>
         <x-tag color="amber" v-else> KYC - Pending </x-tag>
       </div>
       <x-divider class="mb-4 mt-1" />
@@ -1736,7 +1710,7 @@ const genderList = [
           {{ relation?.text }}
         </template>
         <template #item-gender="{ gender }">
-          {{ gender === 'M' ? 'Male' : gender === 'F' ? 'Female' : '' }}
+          {{ gender === 'M' ? 'Male' : gender === 'F' ? 'Female' : ''  }}
         </template>
         <template #item-nationality="{ nationality }">
           {{ nationality?.text }}
@@ -1804,13 +1778,13 @@ const genderList = [
               placeholder="Select Relation"
               class="w-full"
             />
-            <x-field label="Gender*">
+            <x-field label="Gender*" >
               <x-select
-                v-model="travelerForm.gender"
-                placeholder="Gender"
-                :options="genderList"
-                :rules="[isRequired]"
-                class="w-full"
+                  v-model="travelerForm.gender"
+                  placeholder="Gender"
+                  :options="genderList"
+                  :rules="[isRequired]"
+                  class="w-full"
               />
             </x-field>
           </div>
@@ -2194,9 +2168,29 @@ const genderList = [
 
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div class="flex flex-wrap gap-4 justify-between items-center mb-4">
-        <h3 class="font-semibold text-primary-800 text-lg">Available Plans</h3>
+        <h3 class="font-semibold text-primary-800 text-lg">
+            Available Plans
+        </h3>
+          <div>
+              <x-button-group v-if="selectedPlans.length > 0" size="sm" class="mr-2">
+                <!--  <x-button
+                      @click.prevent="onTogglePlans(false)"
+                      :loading="toggleLoader"
+                  >
+                      Show
+                  </x-button>
+                  <x-button
+                      @click.prevent="onTogglePlans(true)"
+                      :loading="toggleLoader"
+                  >
+                      Hide
+                  </x-button>-->
+              </x-button-group>
         <x-button
-          v-if="availablePlansTable.data.length > 0"
+          v-if="
+            availablePlansTable.data.length > 0 &&
+            permissions.canNotApprovePayments
+          "
           size="sm"
           color="orange"
           class="mr-2"
@@ -2204,14 +2198,19 @@ const genderList = [
         >
           Copy Link
         </x-button>
+
+
+         <!-- <x-button
+              v-if="selectedPlans.length > 0"
+              size="sm"
+              color="emerald"
+              @click.prevent="onExportPlans"
+              :loading="exportLoader"
+          >
+              Download PDF
+          </x-button>-->
+          </div>
       </div>
-      <h6
-        v-if="aboveAgeMembers > 0"
-        class="font-semibold text-primary-600 text-ms mb-1"
-      >
-        Travel plans for {{ travelers.length - aboveAgeMembers }} member age
-        18-64
-      </h6>
 
       <div
         v-if="
@@ -2229,6 +2228,7 @@ const genderList = [
       <div v-else>
         <!-- for future use  v-model:items-selected="selectedPlans" -->
         <DataTable
+
           table-class-name="tablefixed compact"
           :headers="availablePlansTable.columns"
           :items="availablePlansTable.data || []"
@@ -2287,49 +2287,6 @@ const genderList = [
         </DataTable>
       </div>
 
-      <div v-if="aboveAgeMembers > 0" class="mt-5">
-        <h6 class="font-semibold text-primary-600 text-ms mb-1">
-          Travel plans for {{ aboveAgeMembers }} member age above 65
-        </h6>
-        <div>
-          <DataTable
-            table-class-name="tablefixed compact"
-            :headers="availableSeniorPlansTable.columns"
-            :items="availableSeniorPlansTable.data || []"
-            border-cell
-            hide-rows-per-page
-            :rows-per-page="15"
-            :hide-footer="availableSeniorPlansTable.data.length < 15"
-          >
-            <template #item-providerName="item">
-              <span class="text-primary-600 uppercase">{{
-                item.providerName
-              }}</span>
-            </template>
-            <template #item-name="item">
-              <span class="text-primary-600 uppercase">{{ item.name }}</span>
-            </template>
-            <template #item-discountPremium="item">
-              <span class="text-primary-600">{{
-                item.discountPremium + item.vat
-              }}</span>
-            </template>
-            <template #item-action="item">
-              <div>
-                <x-button
-                  size="xs"
-                  color="error"
-                  outlined
-                  @click.prevent="getPlanDetails(item.id)"
-                >
-                  View
-                </x-button>
-              </div>
-            </template>
-          </DataTable>
-        </div>
-      </div>
-
       <x-modal v-model="modals.planDetails" size="xl" show-close backdrop>
         <template #header> {{ planDetails.providerName }} </template>
         <LazyAvailablePlan :plan="planDetails" />
@@ -2337,24 +2294,16 @@ const genderList = [
     </div>
 
     <PaymentTableNew
-      v-if="hasRole(rolesEnum.BetaUser)"
-      quoteType="Travel"
-      :payments="payments"
-      :paymentDocument="
-        documentTypes.QUOTE.filter(
-          item => item.code === 'TPD' || item.code === 'TPDR',
-        )
-      "
-      :quoteRequest="quoteRequest"
-      :paymentStatusEnum="enums.paymentStatusEnum"
-      :paymentTooltipEnum="paymentTooltipEnum"
-      :paymentMethods="
-        paymentMethods.map(pm => {
-          return { value: pm.code, label: pm.name, tooltip: pm.tool_tip };
-        })
-      "
-      :storageUrl="storageUrl"
-    />
+			v-if="hasRole(rolesEnum.BetaUser)"
+			quoteType="Travel"
+			:payments="payments"
+			:paymentDocument="documentTypes.QUOTE.filter(item => item.code === 'TPD' || item.code === 'TPDR' || item.code === 'TDPDR')"
+			:quoteRequest="quoteRequest"
+			:paymentStatusEnum="enums.paymentStatusEnum"
+			:paymentTooltipEnum="paymentTooltipEnum"
+			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name, tooltip: pm.tool_tip } })"
+			:storageUrl="storageUrl"
+		/>
     <PaymentTable
       v-else
       :payments="payments"

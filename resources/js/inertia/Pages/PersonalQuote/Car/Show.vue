@@ -1491,6 +1491,7 @@ const linkEntity = () => {
 };
 
 const prefillPlanId = ref(page.props.quote.prefill_plan_id);
+
 const handleChildUpdate = planId => {
   prefillPlanId.value = planId;
 };
@@ -3044,24 +3045,16 @@ const handleChildUpdate = planId => {
     </div>
 
     <PaymentTableNew
-      v-if="hasRole(rolesEnum.BetaUser)"
-      quoteType="Car"
-      :payments="payments"
-      :paymentDocument="
-        page.props.documentTypes.filter(
-          item => item.code === 'CPD' || item.code === 'CPDR',
-        )
-      "
-      :quoteRequest="paymentEntityModel"
-      :paymentStatusEnum="paymentStatusEnum"
-      :paymentTooltipEnum="paymentTooltipEnum"
-      :paymentMethods="
-        paymentMethods.map(pm => {
-          return { value: pm.code, label: pm.name, tooltip: pm.tool_tip };
-        })
-      "
-      :storageUrl="storageUrl"
-    />
+			v-if="hasRole(rolesEnum.BetaUser)"
+			quoteType="Car"
+			:payments="payments"
+			:paymentDocument="page.props.documentTypes.filter(item => item.code === 'CPD' || item.code === 'CPDR' || item.code === 'CDPDR')"
+			:quoteRequest="paymentEntityModel"
+			:paymentStatusEnum="paymentStatusEnum"
+			:paymentTooltipEnum="paymentTooltipEnum"
+			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name, tooltip: pm.tool_tip } })"
+			:storageUrl="storageUrl"
+		/>
     <PaymentTable
       v-else
       :payments="payments"

@@ -793,7 +793,7 @@ const linkEntity = () => {
 			v-if="hasRole(rolesEnum.BetaUser)"
 			:quoteType="quoteType"
 			:payments="quote.payments"
-			:paymentDocument="documentTypes.filter(item => item.code === 'CYCPD' || item.code === 'CYCPDR')"
+			:paymentDocument="documentTypes.filter(item => item.code === 'CYCPD' || item.code === 'CYCPDR' || item.code === 'CYCDPDR')"
 			:quoteRequest="quote"
 			:paymentStatusEnum="paymentStatusEnum"
 			:paymentTooltipEnum="paymentTooltipEnum"

@@ -104,6 +104,7 @@ class TravelQuoteService extends BaseService
             'tqr.primary_member_id',
             'tqr.risk_score',
             'tqr.kyc_decision',
+            'tqr.prefill_plan_id',
             DB::raw('IF(EXISTS (
                 SELECT *
                 FROM quote_request_entity_mapping

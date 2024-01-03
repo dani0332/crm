@@ -158,7 +158,7 @@ class BusinessQuoteController extends Controller
         $paymentEntityModel = $this->{strtolower($this->genericModel->modelType).'QuoteService'}->getEntityPlain($record->id);
         $payments = $paymentEntityModel->payments;
         $paymentMethods = $this->lookupService->getPaymentMethods();
-        
+
         if (auth()->user()->hasRole(RolesEnum::BetaUser)) {
             $filteredPaymentMethods = $this->lookupService->getPaymentMethods();
         } else {

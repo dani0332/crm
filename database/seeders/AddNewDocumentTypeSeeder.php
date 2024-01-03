@@ -43,6 +43,22 @@ class AddNewDocumentTypeSeeder extends Seeder
             ]);
         }
 
+        $documentTypesCount = DocumentType::get()->where('code', 'CDPDR')->count();
+        if (! $documentTypesCount) {
+            \DB::table('document_types')->insert([
+                'code' => 'CDPDR',
+                'text' => 'Discount Proof',
+                'max_files' => 15,
+                'max_size' => 30,
+                'folder_path' => 'car',
+                'accepted_files' => '.png,.pdf,.jpeg,.jpg',
+                'quote_type_id' => 1,
+                'send_to_customer' => true,
+                'sort_order' => 3,
+                'is_required' => 0,
+            ]);
+        }
+
         $documentTypesCount = DocumentType::get()->where('code', 'HPD')->count();
         if (! $documentTypesCount) {
             \DB::table('document_types')->insert([
@@ -70,6 +86,21 @@ class AddNewDocumentTypeSeeder extends Seeder
                 'quote_type_id' => 3,
                 'send_to_customer' => true,
                 'sort_order' => 2,
+                'is_required' => 0,
+            ]);
+        }
+        $documentTypesCount = DocumentType::get()->where('code', 'HDPDR')->count();
+        if (! $documentTypesCount) {
+            \DB::table('document_types')->insert([
+                'code' => 'HDPDR',
+                'text' => 'Discount Proof',
+                'max_files' => 15,
+                'max_size' => 30,
+                'folder_path' => 'health',
+                'accepted_files' => '.png,.pdf,.jpeg,.jpg',
+                'quote_type_id' => 3,
+                'send_to_customer' => true,
+                'sort_order' => 3,
                 'is_required' => 0,
             ]);
         }
@@ -104,6 +135,21 @@ class AddNewDocumentTypeSeeder extends Seeder
                 'is_required' => 0,
             ]);
         }
+        $documentTypesCount = DocumentType::get()->where('code', 'TDPDR')->count();
+        if (! $documentTypesCount) {
+            \DB::table('document_types')->insert([
+                'code' => 'TDPDR',
+                'text' => 'Discount Proof',
+                'max_files' => 15,
+                'max_size' => 30,
+                'folder_path' => 'travel',
+                'accepted_files' => '.png,.pdf,.jpeg,.jpg',
+                'quote_type_id' => 8,
+                'send_to_customer' => true,
+                'sort_order' => 3,
+                'is_required' => 0,
+            ]);
+        }
 
         $documentTypesCount = DocumentType::get()->where('code', 'LPD')->count();
         if (! $documentTypesCount) {
@@ -132,6 +178,21 @@ class AddNewDocumentTypeSeeder extends Seeder
                 'quote_type_id' => 4,
                 'send_to_customer' => true,
                 'sort_order' => 2,
+                'is_required' => 0,
+            ]);
+        }
+        $documentTypesCount = DocumentType::get()->where('code', 'LDPDR')->count();
+        if (! $documentTypesCount) {
+            \DB::table('document_types')->insert([
+                'code' => 'LDPDR',
+                'text' => 'Discount Proof',
+                'max_files' => 15,
+                'max_size' => 30,
+                'folder_path' => 'life',
+                'accepted_files' => '.png,.pdf,.jpeg,.jpg',
+                'quote_type_id' => 4,
+                'send_to_customer' => true,
+                'sort_order' => 3,
                 'is_required' => 0,
             ]);
         }
@@ -166,6 +227,21 @@ class AddNewDocumentTypeSeeder extends Seeder
                 'is_required' => 0,
             ]);
         }
+        $documentTypesCount = DocumentType::get()->where('code', 'PDPDR')->count();
+        if (! $documentTypesCount) {
+            \DB::table('document_types')->insert([
+                'code' => 'PDPDR',
+                'text' => 'Discount Proof',
+                'max_files' => 15,
+                'max_size' => 30,
+                'folder_path' => 'pet',
+                'accepted_files' => '.png,.pdf,.jpeg,.jpg',
+                'quote_type_id' => 9,
+                'send_to_customer' => true,
+                'sort_order' => 3,
+                'is_required' => 0,
+            ]);
+        }
 
         $documentTypesCount = DocumentType::get()->where('code', 'BPD')->count();
         if (! $documentTypesCount) {
@@ -194,6 +270,21 @@ class AddNewDocumentTypeSeeder extends Seeder
                 'quote_type_id' => 6,
                 'send_to_customer' => true,
                 'sort_order' => 2,
+                'is_required' => 0,
+            ]);
+        }
+        $documentTypesCount = DocumentType::get()->where('code', 'BDPDR')->count();
+        if (! $documentTypesCount) {
+            \DB::table('document_types')->insert([
+                'code' => 'BDPDR',
+                'text' => 'Discount Proof',
+                'max_files' => 15,
+                'max_size' => 30,
+                'folder_path' => 'bike',
+                'accepted_files' => '.png,.pdf,.jpeg,.jpg',
+                'quote_type_id' => 6,
+                'send_to_customer' => true,
+                'sort_order' => 3,
                 'is_required' => 0,
             ]);
         }
@@ -229,6 +320,22 @@ class AddNewDocumentTypeSeeder extends Seeder
             ]);
         }
 
+        $documentTypesCount = DocumentType::get()->where('code', 'CYCDPDR')->count();
+        if (! $documentTypesCount) {
+            \DB::table('document_types')->insert([
+                'code' => 'CYCDPDR',
+                'text' => 'Discount Proof',
+                'max_files' => 15,
+                'max_size' => 30,
+                'folder_path' => 'cycle',
+                'accepted_files' => '.png,.pdf,.jpeg,.jpg',
+                'quote_type_id' => 10,
+                'send_to_customer' => true,
+                'sort_order' => 3,
+                'is_required' => 0,
+            ]);
+        }
+
         $documentTypesCount = DocumentType::get()->where('code', 'YPD')->count();
         if (! $documentTypesCount) {
             \DB::table('document_types')->insert([
@@ -256,6 +363,21 @@ class AddNewDocumentTypeSeeder extends Seeder
                 'quote_type_id' => 7,
                 'send_to_customer' => true,
                 'sort_order' => 2,
+                'is_required' => 0,
+            ]);
+        }
+        $documentTypesCount = DocumentType::get()->where('code', 'YDPDR')->count();
+        if (! $documentTypesCount) {
+            \DB::table('document_types')->insert([
+                'code' => 'YDPDR',
+                'text' => 'Discount Proof',
+                'max_files' => 15,
+                'max_size' => 30,
+                'folder_path' => 'yacht',
+                'accepted_files' => '.png,.pdf,.jpeg,.jpg',
+                'quote_type_id' => 7,
+                'send_to_customer' => true,
+                'sort_order' => 3,
                 'is_required' => 0,
             ]);
         }
@@ -290,6 +412,21 @@ class AddNewDocumentTypeSeeder extends Seeder
                 'is_required' => 0,
             ]);
         }
+        $documentTypesCount = DocumentType::get()->where('code', 'CLDPDR')->count();
+        if (! $documentTypesCount) {
+            \DB::table('document_types')->insert([
+                'code' => 'CLDPDR',
+                'text' => 'Discount Proof',
+                'max_files' => 15,
+                'max_size' => 30,
+                'folder_path' => 'business',
+                'accepted_files' => '.png,.pdf,.jpeg,.jpg',
+                'quote_type_id' => 5,
+                'send_to_customer' => true,
+                'sort_order' => 3,
+                'is_required' => 0,
+            ]);
+        }
 
         $documentTypesCount = DocumentType::get()->where('code', 'HOMPD')->count();
         if (! $documentTypesCount) {
@@ -321,6 +458,21 @@ class AddNewDocumentTypeSeeder extends Seeder
                 'is_required' => 0,
             ]);
         }
+        $documentTypesCount = DocumentType::get()->where('code', 'HOMDPDR')->count();
+        if (! $documentTypesCount) {
+            \DB::table('document_types')->insert([
+                'code' => 'HOMDPDR',
+                'text' => 'Discount Proof',
+                'max_files' => 15,
+                'max_size' => 30,
+                'folder_path' => 'home',
+                'accepted_files' => '.png,.pdf,.jpeg,.jpg',
+                'quote_type_id' => 2,
+                'send_to_customer' => true,
+                'sort_order' => 3,
+                'is_required' => 0,
+            ]);
+        }
 
         $documentTypesCount = DocumentType::get()->where('code', 'GMQPD')->count();
         if (! $documentTypesCount) {
@@ -349,6 +501,21 @@ class AddNewDocumentTypeSeeder extends Seeder
                 'quote_type_id' => 5,
                 'send_to_customer' => true,
                 'sort_order' => 2,
+                'is_required' => 0,
+            ]);
+        }
+        $documentTypesCount = DocumentType::get()->where('code', 'GMQDPDR')->count();
+        if (! $documentTypesCount) {
+            \DB::table('document_types')->insert([
+                'code' => 'GMQDPDR',
+                'text' => 'Discount Proof',
+                'max_files' => 15,
+                'max_size' => 30,
+                'folder_path' => 'business',
+                'accepted_files' => '.png,.pdf,.jpeg,.jpg',
+                'quote_type_id' => 5,
+                'send_to_customer' => true,
+                'sort_order' => 3,
                 'is_required' => 0,
             ]);
         }
