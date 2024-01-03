@@ -202,6 +202,68 @@ class CarQuoteService extends BaseService
                 $join->where('qvc.quote_type_id', QuoteTypeId::Car);
                 $join->on('qvc.user_id', 'cqr.advisor_id');
             });
+
+        $this->exportQuery = DB::table('car_quote_request as cqr')
+            ->select(
+                'cqr.first_name',
+                'cqr.last_name',
+                'cqr.dob as dob',
+                'cqr.car_value',
+                'cqr.additional_notes',
+                'cqr.year_of_manufacture',
+                'cqr.code',
+                'cqr.is_ecommerce',
+                'cqr.premium',
+                'cqr.source',
+                'cqr.created_at as created_at',
+                'cqr.updated_at as updated_at',
+                'n.TEXT AS nationality_id_text',
+                'cqr.policy_number',
+                'cqr.renewal_expiry_date',
+                'cqr.created_by',
+                'cqr.updated_by',
+                'ulhf.TEXT AS uae_license_held_for_id_text',
+                'cmake.TEXT AS car_make_id_text',
+                'cmodel.TEXT AS car_model_id_text',
+                'ch.TEXT AS claim_history_id_text',
+                'u.name AS advisor_id_text',
+                'ps.text AS payment_status_id_text',
+                'qs.text AS quote_status_id_text',
+                'cqrd.next_followup_date as next_followup_date',
+                'vt.text as vehicle_type_id_text',
+                'cqr.currently_insured_with as currently_insured_with_text',
+                'ls.text as lost_reason',
+                'cqr.is_modified',
+                'cqr.is_gcc_standard',
+                'cqr.current_insurance_status',
+                'cqr.year_of_first_registration',
+                'cqr.quote_link',
+                'cqrd.advisor_assigned_date as advisor_assigned_date',
+                'cqr.dob AS customer_age',
+                't.name as tier_id_text',
+                'qvc.visit_count as visit_count',
+                't.cost_per_lead as cost_per_lead',
+                'qb.name as quote_batch_id_text',
+                'cqr.car_value_tier',
+            )
+            ->leftJoin('nationality as n', 'n.id', '=', 'cqr.nationality_id')
+            ->leftJoin('car_quote_request_detail as cqrd', 'cqrd.car_quote_request_id', '=', 'cqr.id')
+            ->leftJoin('lost_reasons as ls', 'ls.id', '=', 'cqrd.lost_reason_id')
+            ->leftJoin('car_make as cmake', 'cmake.id', '=', 'cqr.car_make_id')
+            ->leftJoin('uae_license_held_for as ulhf', 'ulhf.id', '=', 'cqr.uae_license_held_for_id')
+            ->leftJoin('car_model as cmodel', 'cmodel.id', '=', 'cqr.car_model_id')
+            ->leftJoin('claim_history as ch', 'ch.id', '=', 'cqr.claim_history_id')
+            ->leftJoin('users as u', 'u.id', '=', 'cqr.advisor_id')
+            ->leftJoin('payment_status as ps', 'ps.id', '=', 'cqr.payment_status_id')
+            ->leftJoin('quote_status as qs', 'qs.id', '=', 'cqr.quote_status_id')
+            ->leftJoin('vehicle_type as vt', 'vt.id', '=', 'cqr.vehicle_type_id')
+            ->leftJoin('tiers as t', 't.id', '=', 'cqr.tier_id')
+            ->leftJoin('quote_batches as qb', 'qb.id', '=', 'cqr.quote_batch_id')
+            ->leftJoin('quote_view_count as qvc', function ($join) {
+                $join->on('qvc.quote_id', 'cqr.id');
+                $join->where('qvc.quote_type_id', QuoteTypeId::Car);
+                $join->on('qvc.user_id', 'cqr.advisor_id');
+            });
     }
 
     public function saveCarQuote(Request $request)
@@ -1863,5 +1925,37 @@ class CarQuoteService extends BaseService
             ->get();
 
         return collect($results);
+    }
+
+    public function getExportData()
+    {
+        $request = request();
+        if (isset($request->created_at_start)) {
+            $request['created_at'] = $request->created_at_start;
+        }
+
+        $this->addLeadViewEligibilityCheckExport();
+
+        $dateFrom = $this->parseDate($request['created_at'], true);
+        $dateTo = $this->parseDate($request['created_at_end'], false);
+        $this->exportQuery->whereBetween('cqr.created_at', [$dateFrom, $dateTo]);
+        $this->exportQuery->whereNotIn('cqr.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate]);
+
+        return $this->exportQuery->orderBy('cqr.created_at', 'DESC');
+    }
+
+    private function addLeadViewEligibilityCheckExport()
+    {
+        if (Auth::user()->hasRole(RolesEnum::CarManager) || Auth::user()->hasRole(RolesEnum::CarDeputyManager)) {
+            $this->walkTree(Auth::user()->id);
+            $this->exportQuery->whereIn('cqr.advisor_id', $this->childUserIds);
+        } elseif (Auth::user()->hasRole(RolesEnum::LeadPool)) {
+            $this->walkTree(Auth::user()->id);
+            $this->exportQuery->where(function ($query) {
+                return $query->whereIn('cqr.advisor_id', $this->childUserIds)->OrWhereNull('cqr.advisor_id');
+            });
+        } elseif (Auth::user()->hasRole(RolesEnum::CarAdvisor)) {
+            $this->exportQuery->where('cqr.advisor_id', Auth::user()->id);
+        }
     }
 }

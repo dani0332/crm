@@ -47,6 +47,10 @@ class CentralController extends Controller
 
     public function exportLeads(Request $request, $quoteType, $exportTye = null)
     {
+        $diffInDays = 120;
+
+        $latest_flow = $request->latest_flow ?? false;
+
         if (! $quoteType) {
             return abort(404);
         }
@@ -73,9 +77,14 @@ class CentralController extends Controller
 
             $diff = Carbon::parse($created_at_start)->diffInDays(Carbon::parse($created_at_end));
 
+            if (! $latest_flow && ucfirst($quoteType) == QuoteTypes::CAR->value) {
+                $diffInDays = 31;
+            }
+
             if ($diff > $diffInDays) {
                 return back()->with('error', 'Maximum of '.$diffInDays.' days (created date) are allowed to be exported.');
             }
+
         }
 
         // For Personal Quotes
@@ -116,6 +125,10 @@ class CentralController extends Controller
                 return Excel::download(new TravelQuoteExport, 'travel_leads.xlsx');
 
             case QuoteTypes::CAR->value:
+                if ($latest_flow) {
+                    return app(CarQuoteExport::class)->carQuoteExport();
+                }
+
                 return Excel::download(new CarQuoteExport, 'Car-List.xlsx');
 
             case QuoteTypes::HEALTH->value:

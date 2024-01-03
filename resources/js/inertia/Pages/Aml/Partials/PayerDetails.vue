@@ -7,6 +7,7 @@ const props = defineProps({
   memberRelations: Object,
   customerType: String,
   entity_id: Number,
+    cardHolderName:Object,
 });
 
 const { isRequired } = useRules();
@@ -32,10 +33,7 @@ const computedMembers = computed(() => {
 
 const addMember = ref(false);
 const editMemberDetails = ref(false);
-const addMemberToggle = (payload = false) => {
-  addMember.value = !addMember.value;
-  if (payload) memberForm.reset();
-};
+
 const memberDetailsTable = reactive({
   isLoading: false,
   columns: [
@@ -79,12 +77,12 @@ const memberForm = useForm({
   customer_id: props.quoteDetails.customer_id,
   entity_id: props.entity_id ?? null,
   id: null,
-  first_name: null,
+  first_name: props.cardHolderName?props.cardHolderName.card_holder_name:'',
   dob: null,
   relation_code: null,
   nationality_id: null,
   is_third_party_payer: true,
-  from_aml_model: true
+  from_aml_model: true,
 });
 
 function onMemberSubmit(isValid) {

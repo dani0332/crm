@@ -12,6 +12,7 @@ defineProps({
   yesterdayAutoCount: Number,
   yesterdayManualCount: Number,
   genericRequestEnum: Array,
+  isBetaUser: Boolean,
 });
 
 const page = usePage();
@@ -568,7 +569,15 @@ onMounted(() => {
             >
                 Extract makes models trims
             </x-button>
-
+            <x-button
+              v-if="canExport && isBetaUser"
+              size="sm"
+              color="emerald"
+              :href="`/car/leads-export?${objToUrl(filters)}&latest_flow=true`"
+              class="justify-self-start"
+              >
+            Export With Latest Flow
+          </x-button>
         </div>
         <div class="flex justify-self-end gap-3">
           <x-button type="submit" size="sm" color="#ff5e00">Search</x-button>
