@@ -1,6 +1,7 @@
 <script setup>
 defineProps({
   totalLeads: Number,
+  quoteStatusEnums: Object,
 });
 import { useSortable } from '@vueuse/integrations/useSortable';
 const page = usePage();

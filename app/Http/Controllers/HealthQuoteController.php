@@ -109,6 +109,7 @@ class HealthQuoteController extends Controller
             ['id' => QuoteStatusEnum::PolicyIssued, 'title' => quoteStatusCode::POLICY_ISSUED, 'data' => getDataAgainstStatus(QuoteTypes::HEALTH->value, QuoteStatusEnum::PolicyIssued)],
         ];
 
+        $quoteStatusEnums = QuoteStatusEnum::asArray();
         $isManagerOrAdminAccess = auth()->user()->hasAnyRole([RolesEnum::HealthManager, RolesEnum::Admin]);
 
         if (!$isManagerOrAdminAccess) {
@@ -131,6 +132,7 @@ class HealthQuoteController extends Controller
 
         return inertia('HealthQuote/Cards', [
             'quotes' => $quotes,
+            'quoteStatusEnums' => $quoteStatusEnums
         ]);
     }
 }
