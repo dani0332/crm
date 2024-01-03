@@ -2432,7 +2432,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
 
       <div v-if="aboveAgeMembers > 0" class="mt-5">
         <h6 class="font-semibold text-primary-600 text-ms mb-1">
-          Travel plans for {{ aboveAgeMembers }} member age above 65
+          Travel plans for {{ aboveAgeMembers }} member age 65 and above
         </h6>
         <div>
           <DataTable
