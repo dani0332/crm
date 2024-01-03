@@ -300,6 +300,7 @@ class CRUDController extends Controller
             $dateFormat = config('constants.DATE_FORMAT_ONLY');
             $createdAtStart = Carbon::parse(now())->startOfDay()->format($dateFormat);
             $createdAtEnd = Carbon::parse(now())->endOfDay()->format($dateFormat);
+            $isBetaUser = auth()->user()->hasRole(RolesEnum::BetaUser);
 
             return inertia('PersonalQuote/Car/LeadList', [
                 'quotes' => $gridData,
@@ -313,6 +314,7 @@ class CRUDController extends Controller
                 'todayManualCount' => $todayManualCount,
                 'yesterdayAutoCount' => $yesterdayAutoCount,
                 'yesterdayManualCount' => $yesterdayManualCount,
+                'isBetaUser' => $isBetaUser,
             ]);
         }
 

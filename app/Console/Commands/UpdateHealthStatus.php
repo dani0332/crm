@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Enums\QuoteStatusEnum;
+use App\Jobs\CammyJob;
 use App\Models\HealthQuote;
 use Illuminate\Console\Command;
 
@@ -39,15 +40,16 @@ class UpdateHealthStatus extends Command
      */
     public function handle()
     {
-        info('UpdateHealthStatus Command Started');
-        HealthQuote::where('quote_status_id', QuoteStatusEnum::FollowedUp)
-            ->where('updated_at', '<', date('Y-m-d', strtotime('-29 days')))->chunkById(20, function ($leads) {
-                foreach ($leads as $lead) {
-                    $lead->update(['quote_status_id' => QuoteStatusEnum::Lost]);
-                    info('UpdateHealthStatus - Updated Lead Status to Lost - Ref-ID: '.$lead->uuid.' - Last Modified: '.$lead->updated_at);
-                }
-            });
-        info('UpdateHealthStatus Command Completed');
+        info('UpdateHealthStatus Command Commented as per new FR');
+        // info('UpdateHealthStatus Command Started');
+        // HealthQuote::where('quote_status_id', QuoteStatusEnum::FollowedUp)
+        //     ->where('updated_at', '<', date('Y-m-d', strtotime('-29 days')))->chunkById(20, function ($leads) {
+        //         foreach ($leads as $lead) {
+        //             $lead->update(['quote_status_id' => QuoteStatusEnum::Lost]);
+        //             info('UpdateHealthStatus - Updated Lead Status to Lost - Ref-ID: '.$lead->uuid.' - Last Modified: '.$lead->updated_at);
+        //         }
+        //     });
+        // info('UpdateHealthStatus Command Completed');
 
         return 0;
     }

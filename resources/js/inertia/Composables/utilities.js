@@ -97,3 +97,15 @@ export const daysSinceStale = payload =>
   const stale_days = quoteRequest ? Math.floor((new Date() - new Date(quoteRequest)) / (1000 * 60 * 60 * 24)) : false;
   return stale_days !== false && stale_days <= 90 ? stale_days : false
 }
+
+export const fileUploadErrorMessage = (doc, rejectReason) => {
+  let errorMessage = "";
+  if (rejectReason.code == "file-too-large") {
+    errorMessage = "File size must be less than " + doc.max_size + " MB for " + doc.text;
+  } else if (rejectReason.code == "file-invalid-type") {
+    errorMessage = "You can only upload a " + doc.accepted_files + " for " + doc.text;
+  } else {
+    errorMessage= "You can only upload a " + doc.accepted_files + " or File size must be less than " + doc.max_size + " MB for " + doc.text;
+  }
+  return errorMessage;
+};
