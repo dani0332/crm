@@ -155,7 +155,6 @@ class UpdateStaleLeads extends Command
                                     ]);
                                     break;
                                 default:
-                                    continue;
                                     break;
                             }
                         }

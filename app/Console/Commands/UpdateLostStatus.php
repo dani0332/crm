@@ -11,6 +11,7 @@ use App\Models\LifeQuote;
 use App\Models\PersonalQuote;
 use App\Models\TravelQuote;
 use Illuminate\Console\Command;
+use OwenIt\Auditing\Models\Audit;
 
 class UpdateLostStatus extends Command
 {
@@ -137,13 +138,11 @@ class UpdateLostStatus extends Command
                                 ]);
                                 break;
                             default:
-                                continue;
                                 break;
                         }
                     }
                 });
             info("------------------- Updated : " . $eligibleQuoteType . " -------------------");
-
-
+        }
     }
 }
