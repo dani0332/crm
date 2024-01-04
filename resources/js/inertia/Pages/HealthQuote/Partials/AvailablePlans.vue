@@ -369,7 +369,10 @@ const onLoadingPricesUpdate = (member, updateManual=1) => {
         .finally(() => {
             memberFormLoader.value = false;
             isManual.value = false;
-            emit('markPlanAsManual', props.plan);
+            if (updateManual)
+            {
+                emit('markPlanAsManual', props.plan);
+            }
         });
 };
 
