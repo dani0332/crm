@@ -161,7 +161,7 @@ watch(
       <div class="flex items-center space-x-2">
         <column-selection v-model:columns="tableHeader"></column-selection>
         <FiltersButton />
-        <Link>
+        <Link href="">
           <x-button size="sm" color="#1d83bc" tag="div"> Cards View </x-button>
         </Link>
         <x-button
