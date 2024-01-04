@@ -191,4 +191,4 @@ class CentralController extends Controller
         return redirect()->back()->with('success', 'updated successfully');
     }
 
-}
+    }
