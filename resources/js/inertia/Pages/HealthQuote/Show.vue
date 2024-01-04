@@ -3860,7 +3860,7 @@ const handleChildUpdate = planId => {
 
     <x-collapse class="p-4 rounded shadow mb-6 bg-white" show-icon>
       <h3 class="font-semibold text-primary-800 text-lg">
-        Lead Activities
+        Lead History
         <x-tag size="sm">{{ activities.length || 0 }}</x-tag>
       </h3>
       <template #content>

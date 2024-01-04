@@ -59,7 +59,86 @@ const allowStatusUpdate = computed(() => {
 </script>
 
 <template>
-  <div class="p-4 rounded shadow mb-6 bg-primary-50/25">
+  <x-collapse show-icon class="p-4 rounded shadow mb-6 bg-white">
+    <h3 class="font-semibold text-primary-800 text-lg">Lead Status</h3>
+    <template #content>
+      <x-divider class="mb-4 mt-1" />
+      <div class="flex flex-wrap md:flex-nowrap gap-6 w-full">
+        <div class="w-full md:w-1/2">
+          <div class="flex flex-col gap-4">
+            <x-select
+              v-model="quoteStatusForm.quote_status_id"
+              label="Status"
+              :error="quoteStatusForm.errors.quote_status_id"
+              :options="quoteStatusOptions"
+              :disabled="allowStatusUpdate"
+              :rules="[rules.isRequired]"
+              placeholder="Lead Status"
+              class="w-full"
+            />
+            <x-textarea
+              v-model="quoteStatusForm.notes"
+              type="text"
+              label="Notes"
+              placeholder="Lead Notes"
+              class="w-full"
+              :error="quoteStatusForm.errors.notes"
+              :disabled="allowStatusUpdate"
+            />
+          </div>
+        </div>
+        <div class="w-full md:w-2/3">
+          <x-field
+            label="TransApp Code"
+            required
+            v-if="
+              quoteStatusForm.quote_status_id ==
+              props.quoteStatusEnum.TransactionApproved
+            "
+          >
+            <x-input
+              v-model="quoteStatusForm.transapp_code"
+              placeholder="TransApp Code is required"
+              class="w-full"
+              :disabled="allowStatusUpdate"
+              :error="quoteStatusForm.errors.transapp_code"
+            />
+          </x-field>
+          <x-field
+            label="Lost Reason"
+            required
+            v-if="quoteStatusForm.quote_status_id == props.quoteStatusEnum.Lost"
+          >
+            <x-select
+              v-model="quoteStatusForm.lost_reason_id"
+              :options="
+                lostReasons?.map(item => ({
+                  value: item.id,
+                  label: item.text,
+                }))
+              "
+              placeholder="Lost Reason is required"
+              class="w-full"
+              :error="quoteStatusForm.errors.lost_reason_id"
+            />
+          </x-field>
+        </div>
+      </div>
+      <div class="flex justify-end">
+        <x-button
+          class="mt-4"
+          color="emerald"
+          size="sm"
+          :loading="quoteStatusForm.processing"
+          @click.prevent="onLeadStatus"
+          :disabled="allowStatusUpdate"
+        >
+          Change Status
+        </x-button>
+      </div>
+    </template>
+  </x-collapse>
+  <!-- <div class="p-4 rounded shadow mb-6 bg-primary-50/25">
     <div>
       <h3 class="font-semibold text-primary-800 text-lg">Lead Status</h3>
       <x-divider class="mb-4 mt-1" />
@@ -137,5 +216,5 @@ const allowStatusUpdate = computed(() => {
         Change Status
       </x-button>
     </div>
-  </div>
+  </div> -->
 </template>
