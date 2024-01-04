@@ -1388,7 +1388,7 @@ class HealthQuoteService extends BaseService
             $membersBreakDown = [];
             $plansArray = [
                 'planId' => (int) $request->planId,
-                'isManualUpdate' => true,
+                'isManualUpdate' => (bool) $request->tagAsManual,
                 'selectedCopayId' => (int) $copayId,
                 'memberPremiumBreakdown' => '',
             ];

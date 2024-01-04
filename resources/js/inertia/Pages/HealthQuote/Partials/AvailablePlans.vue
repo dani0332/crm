@@ -324,7 +324,7 @@ const updateGeneralInfo = () => {
 //   }
 };
 
-const onLoadingPricesUpdate = member => {
+const onLoadingPricesUpdate = (member, updateManual=1) => {
     updateGeneralInfo();
     const memberData = {
         quoteUID: usePage().props.quote.uuid,
@@ -342,7 +342,8 @@ const onLoadingPricesUpdate = member => {
         manualPremiumPrice: manualPlansMembersPremium.value.map(m => ({
             memberId: m.memberId,
             premium: m.premium,
-        }))
+        })),
+        tagAsManual: updateManual,
     };
 
     memberFormLoader.value = true;
@@ -1148,7 +1149,7 @@ onUpdated(() => {
                   :disabled="!isManual"
                   color="primary"
                   size="sm"
-                  @click="onLoadingPricesUpdate(props.plan.memberPremiumBreakdown)"
+                  @click="onLoadingPricesUpdate(props.plan.memberPremiumBreakdown, 0)"
                 >
                   Update & Save
                 </x-button>

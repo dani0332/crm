@@ -461,8 +461,7 @@ const onMemberSubmit = isValid => {
         });
         memberForm.reset();
         onLoadAvailablePlansData();
-        membersDetailsUpdated.value = true;
-        location.reload();
+        // location.reload();
       },
       onError: errors => {
         notification.error({
@@ -472,6 +471,7 @@ const onMemberSubmit = isValid => {
       },
       onFinish: () => {
         modals.member = false;
+        membersDetailsUpdated.value = true;
       },
     });
   } else {
@@ -483,8 +483,7 @@ const onMemberSubmit = isValid => {
           position: 'top',
         });
         onLoadAvailablePlansData();
-        membersDetailsUpdated.value = true;
-        location.reload();
+        // location.reload();
       },
         onError: errors => {
             notification.error({
@@ -494,6 +493,8 @@ const onMemberSubmit = isValid => {
         },
       onFinish: () => {
         modals.member = false;
+        membersDetailsUpdated.value = true;
+
       },
     });
   }
@@ -516,11 +517,12 @@ const memberDeleteConfirmed = () => {
           position: 'top',
         });
         onLoadAvailablePlansData();
-        membersDetailsUpdated.value = true;
-        location.reload();
+        // location.reload();
       },
       onFinish: () => {
         modals.memberConfirm = false;
+        membersDetailsUpdated.value = true;
+
       },
     },
   );
@@ -1410,6 +1412,8 @@ onMounted(() => {
   ) || { id: null };
   if (isHealthAdvisor) assignLead.value = isHealthAdvisor.id;
   isMounted.value = true;
+  console.log("testing");
+  console.log(membersDetailsUpdated);
 });
 
 const prefillPlanId = ref(page.props.quote.prefill_plan_id);
@@ -1417,6 +1421,8 @@ const prefillPlanId = ref(page.props.quote.prefill_plan_id);
 const handleChildUpdate = planId => {
   prefillPlanId.value = planId;
 };
+
+    console.log(listQuotePlansFiltered);
 </script>
 
 <template>
@@ -2078,7 +2084,8 @@ const handleChildUpdate = planId => {
             />
             <DatePicker
               v-model="memberForm.dob"
-              label="DOB"
+              label="DOB*"
+              :rules="[isRequired]"
               :hasError="memberFieldReq.dob"
             />
             <x-select
@@ -2617,7 +2624,7 @@ const handleChildUpdate = planId => {
           <div class="flex gap-2 pr-2">
             <!-- put here -->
             <!-- don't remove this commented code anyone please -->
-            <template v-if="(item.isManualPlan || membersDetailsUpdated) && item.needPriceUpdate "> <!-- always false temporarily -->
+            <template v-if="(item.isManualPlan && membersDetailsUpdated) || item.needPriceUpdate "> <!-- always false temporarily -->
             <x-tooltip position="top" class="arrow-b">
                 <x-badge
                     size="xs"
