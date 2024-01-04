@@ -1559,7 +1559,7 @@ class RenewalsUploadService
 
                                     foreach ($addons as $key => $addonCode) {
 
-                                        info("planType:" . $leadData->plan_type . " insurer:" . $leadData->insurer . " addonCode:" . $addonCode);
+                                        info('planType:'.$leadData->plan_type.' insurer:'.$leadData->insurer.' addonCode:'.$addonCode);
 
                                         if ($leadData->plan_type == CarPlanType::TPL &&
                                             $leadData->insurer == InsuranceProvidersEnum::TM &&
