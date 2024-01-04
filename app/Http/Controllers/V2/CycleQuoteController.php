@@ -5,6 +5,7 @@ namespace App\Http\Controllers\V2;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Http\Controllers\Controller;
@@ -21,6 +22,7 @@ use App\Repositories\LookupRepository;
 use App\Repositories\LostReasonRepository;
 use App\Repositories\PaymentMethodRepository;
 use App\Repositories\PersonalPlanRepository;
+use App\Repositories\QuoteNoteRepository;
 use App\Repositories\QuoteStatusRepository;
 use App\Repositories\UserRepository;
 use App\Services\AMLService;
@@ -137,6 +139,7 @@ class CycleQuoteController extends Controller
         $uboDetails = CustomerMembersRepository::getBy($quote->id, QuoteTypes::CYCLE->name, CustomerTypeEnum::Entity);
         $uboRelations = LookupRepository::where('key', LookupsEnum::UBO_RELATION)->get();
         $emirates = Emirate::where('is_active', 1)->select('id', 'text')->get();
+        $quoteNotes = QuoteNoteRepository::getBy($quote->id, quoteTypeCode::Cycle);
 
         return inertia('CycleQuote/Show', [
             'quoteType' => QuoteTypes::CYCLE,
@@ -163,6 +166,7 @@ class CycleQuoteController extends Controller
             'emirates' => $emirates,
             'UBOsDetails' => $uboDetails,
             'UBORelations' => $uboRelations,
+            'quoteNotes' => $quoteNotes,
         ]);
     }
 }

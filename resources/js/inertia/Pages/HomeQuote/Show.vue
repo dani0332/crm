@@ -35,6 +35,7 @@ const props = defineProps({
   quoteDocuments: Object,
   documentTypes: Object,
   storageUrl: String,
+  quoteNotes: Object,
 });
 
 const page = usePage();
@@ -470,7 +471,7 @@ const linkEntity = () => {
         </p>
       </div>
       <div class="flex gap-2">
-        <LeadNotes />
+        <LeadNotes :notes="quoteNotes" :modelType="modelType" :quote="quote"/>
         <x-button size="sm" color="#ff5e00" @click.prevent="openDuplicate">
           Duplicate Lead
         </x-button>

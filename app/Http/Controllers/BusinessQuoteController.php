@@ -23,6 +23,7 @@ use App\Models\Nationality;
 use App\Repositories\CustomerMembersRepository;
 use App\Repositories\InsuranceProviderRepository;
 use App\Repositories\LookupRepository;
+use App\Repositories\QuoteNoteRepository;
 use App\Services\AMLService;
 use App\Services\BusinessQuoteService;
 use App\Services\CRUDService;
@@ -214,6 +215,7 @@ class BusinessQuoteController extends Controller
         $idDocumentType = $this->lookupService->getEntityDocumentTypes();
         $issuancePlace = $this->lookupService->getIssuancePlaces();
         $issuanceAuthorities = $this->lookupService->getIssuanceAuthorities();
+        $quoteNotes = QuoteNoteRepository::getBy($record->id, QuoteTypes::BUSINESS->name);
 
         return inertia('CorpLineQuote/Show', [
             'storageUrl' => storageUrl(),
@@ -279,6 +281,7 @@ class BusinessQuoteController extends Controller
             'nationalities' => $nationalities,
             'emirates' => $emirates,
             'canAddBatchNumber' => auth()->user()->hasRole(RolesEnum::CorplineManager),
+            'quoteNotes' => $quoteNotes,
         ]);
     }
 
