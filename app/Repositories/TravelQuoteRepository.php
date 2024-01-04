@@ -29,12 +29,18 @@ class TravelQuoteRepository extends BaseRepository
             'nationality',
             'destination',
             'paymentStatus',
+            'insuranceProvider',
         ])
             ->filter(! $forExport)
             ->withFakeLeadCriteria()
             ->orderBy('created_at', 'desc');
 
         return ($forExport) ? $query->get() : $query->simplePaginate();
+    }
+    public function fetchExport()
+    {
+        return $this->filter()->with(
+            ['advisor', 'nationality', 'insuranceProvider'])->orderBy('created_at', 'desc');
     }
 
     public function fetchCreateDuplicate(array $dataArr): object

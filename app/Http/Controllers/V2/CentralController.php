@@ -3,10 +3,14 @@
 namespace App\Http\Controllers\V2;
 
 use App\Enums\CustomerTypeEnum;
+use App\Enums\GenericRequestEnum;
 use App\Enums\QuoteTypes;
 use App\Exports\AmtQuoteExport;
 use App\Exports\BusinessQuoteExport;
 use App\Exports\CarQuoteExport;
+use App\Exports\CarQuoteExportWithEmailMobile;
+use App\Exports\CarQuoteExportWithMakeModelTrims;
+use App\Exports\CarQuoteExportWithPlans;
 use App\Exports\HealthQuotesExport;
 use App\Exports\HomeQuoteExport;
 use App\Exports\LifeQuotesExport;
@@ -41,35 +45,46 @@ class CentralController extends Controller
         return back()->with('message', 'Quote is created successfully.');
     }
 
-    public function exportLeads(Request $request, $quoteType)
+    public function exportLeads(Request $request, $quoteType, $exportTye = null)
     {
         $diffInDays = 120;
+
+        $latest_flow = $request->latest_flow ?? false;
 
         if (! $quoteType) {
             return abort(404);
         }
 
-        if (request()->has('created_at')) {
-            request()->merge(['created_at_start' => request()->get('created_at')]);
-            request()->query->remove('created_at');
-        }
+        if ($exportTye != GenericRequestEnum::EXPORT_MAKES_MODELS) {
+            $diffInDays = 120;
 
-        $request->validate([
-            'created_at_start' => 'required',
-            'created_at_end' => 'required',
-        ]);
+            if (request()->has('created_at')) {
+                request()->merge(['created_at_start' => request()->get('created_at')]);
+                request()->query->remove('created_at');
+            }
 
-        $created_at_start = Carbon::parse($request->created_at_start)->format('Y-m-d');
-        $created_at_end = Carbon::parse($request->created_at_end)->format('Y-m-d');
+            if (in_array($exportTye, [GenericRequestEnum::EXPORT_PLAN_DETAIL, GenericRequestEnum::EXPORT_LEADS_DETAIL_WITH_EMAIL_MOBILE])) {
+                $diffInDays = 31;
+            }
 
-        $diff = Carbon::parse($created_at_start)->diffInDays(Carbon::parse($created_at_end));
+            $request->validate([
+                'created_at_start' => 'required',
+                'created_at_end' => 'required',
+            ]);
 
-        if (! request()->latest_flow && ucfirst($quoteType) == QuoteTypes::CAR->value) {
-            $diffInDays = 31;
-        }
+            $created_at_start = Carbon::parse($request->created_at_start)->format('Y-m-d');
+            $created_at_end = Carbon::parse($request->created_at_end)->format('Y-m-d');
 
-        if ($diff > $diffInDays) {
-            return back()->with('error', 'Maximum of '.$diffInDays.' days (created date) are allowed to be exported.');
+            $diff = Carbon::parse($created_at_start)->diffInDays(Carbon::parse($created_at_end));
+
+            if (! $latest_flow && ucfirst($quoteType) == QuoteTypes::CAR->value) {
+                $diffInDays = 31;
+            }
+
+            if ($diff > $diffInDays) {
+                return back()->with('error', 'Maximum of '.$diffInDays.' days (created date) are allowed to be exported.');
+            }
+
         }
 
         // For Personal Quotes
@@ -81,6 +96,16 @@ class CentralController extends Controller
             QuoteTypes::JETSKI->value,
         ])) {
             return Excel::download(new PersonalQuotesExport, $quoteType.'_leads.xlsx');
+        }
+
+        if (QuoteTypes::CAR->value == ucfirst($quoteType)) {
+            if ($exportTye == GenericRequestEnum::EXPORT_PLAN_DETAIL) {
+                return Excel::download(new CarQuoteExportWithPlans, ucfirst(GenericRequestEnum::EXPORT_PLAN_DETAIL).'.xlsx');
+            } elseif ($exportTye == GenericRequestEnum::EXPORT_LEADS_DETAIL_WITH_EMAIL_MOBILE) {
+                return Excel::download(new CarQuoteExportWithEmailMobile, ucfirst(GenericRequestEnum::EXPORT_LEADS_DETAIL_WITH_EMAIL_MOBILE).'.xlsx');
+            } elseif ($exportTye == GenericRequestEnum::EXPORT_MAKES_MODELS) {
+                return Excel::download(new CarQuoteExportWithMakeModelTrims, ucfirst(GenericRequestEnum::EXPORT_MAKES_MODELS).'.xlsx');
+            }
         }
 
         switch (ucfirst($quoteType)) {
@@ -100,6 +125,10 @@ class CentralController extends Controller
                 return Excel::download(new TravelQuoteExport, 'travel_leads.xlsx');
 
             case QuoteTypes::CAR->value:
+                if ($latest_flow) {
+                    return app(CarQuoteExport::class)->carQuoteExport();
+                }
+
                 return Excel::download(new CarQuoteExport, 'Car-List.xlsx');
 
             case QuoteTypes::HEALTH->value:
