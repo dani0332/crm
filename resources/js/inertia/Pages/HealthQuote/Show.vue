@@ -1900,7 +1900,196 @@ const handleChildUpdate = planId => {
       </dl>
     </x-modal>
 
-    <div
+    <x-collapse
+      show-icon
+      class="p-4 rounded shadow mb-6 bg-white"
+      v-if="quote.customer_type == page.props.customerTypeEnum.Individual"
+    >
+      <h3 class="font-semibold text-primary-800 text-lg">
+        Member Details
+        <x-tag size="sm">{{ membersDetail.length || 0 }}</x-tag>
+      </h3>
+      <template #content>
+        <x-divider class="mb-4 mt-1" />
+        <div class="w-full flex flex-wrap gap-3 justify-end items-center mb-4">
+          <x-button @click.prevent="onAddMemberModal" size="sm" color="orange">
+            Add Member
+          </x-button>
+        </div>
+        <DataTable
+          table-class-name="tablefixed compact"
+          :headers="memberDetailsTable.columns"
+          :items="membersDetail || []"
+          show-index
+          border-cell
+          hide-rows-per-page
+          hide-footer
+        >
+          <template #item-index="{ index, code }">
+            <div>{{ code ?? 'Member ' + index }}</div>
+          </template>
+          <template #item-gender="{ gender }">
+            {{ genderText(gender).value }}
+          </template>
+          <template #item-dob="{ dob }">
+            {{ dateFormat(dob) }}
+          </template>
+          <template #item-relation="{ relation }">
+            {{ relation?.text }}
+          </template>
+          <template #item-nationality="{ nationality }">
+            {{ nationality?.text }}
+          </template>
+          <template #item-emirate="{ emirate }">
+            {{ emirate?.text }}
+          </template>
+          <template #item-member_category_id="{ member_category_id }">
+            {{ memberCategoryText(member_category_id).value }}
+          </template>
+          <template #item-action="item">
+            <div class="flex gap-2">
+              <x-button
+                size="xs"
+                color="primary"
+                outlined
+                @click.prevent="onEditMember(item)"
+              >
+                Edit
+              </x-button>
+              <x-button
+                size="xs"
+                color="error"
+                outlined
+                @click.prevent="memberDelete(item.id)"
+              >
+                Delete
+              </x-button>
+            </div>
+          </template>
+        </DataTable>
+
+        <x-modal v-model="modals.member" size="lg" show-close backdrop>
+          <template #header>
+            {{ memberActionEdit ? 'Edit' : 'Add' }} Member
+          </template>
+
+          <x-form @submit="onMemberSubmit" :auto-focus="false">
+            <div class="grid md:grid-cols-2 gap-4 md:pb-16">
+              <input type="hidden" :value="memberForm.id" />
+              <x-input
+                v-model="memberForm.first_name"
+                label="Member Name*"
+                placeholder="Member Name"
+                :rules="[isRequired]"
+              />
+              <ComboBox
+                v-model="memberForm.nationality_id"
+                label="Nationality"
+                :options="nationalityOptions"
+                placeholder="Select Nationality"
+                :single="true"
+                :hasError="memberFieldReq.nationality"
+              />
+
+              <x-select
+                v-model="memberForm.emirate_of_your_visa_id"
+                label="Emirate of Visa*"
+                :options="emiratesOptions"
+                :rules="[isRequired]"
+                placeholder="Select Emirate of Visa"
+                class="w-full"
+              />
+
+              <x-select
+                v-model="memberForm.member_category_id"
+                label="Member Category*"
+                :options="memberCategoriesOptions"
+                :rules="[isRequired]"
+                placeholder="Select Member Category"
+                class="w-full"
+              />
+
+              <x-select
+                v-model="memberForm.gender"
+                label="Gender*"
+                :options="genderSelect"
+                :rules="[isRequired]"
+                placeholder="Select Gender"
+                class="w-full"
+              />
+              <DatePicker
+                v-model="memberForm.dob"
+                label="DOB"
+                :hasError="memberFieldReq.dob"
+              />
+              <x-select
+                v-model="memberForm.member_category_id"
+                label="Member Category*"
+                :options="memberCategoriesOptions"
+                :rules="[isRequired]"
+                placeholder="Select Member Category"
+                class="w-full"
+              />
+              <x-select
+                v-model="memberForm.relation_code"
+                label="Relation"
+                :options="memberRelationOptions"
+                placeholder="Select Relation"
+                class="w-full"
+              />
+              <x-select
+                v-model="memberForm.salary_band_id"
+                label="Salary Band"
+                :options="salaryBandsOptions"
+                placeholder="Select Salary Band"
+                class="w-full"
+              />
+            </div>
+
+            <div class="flex justify-end gap-3">
+              <x-button size="sm" @click.prevent="modals.member = false">
+                Cancel
+              </x-button>
+
+              <x-button
+                size="sm"
+                color="emerald"
+                :loading="memberForm.processing"
+                type="submit"
+                class="px-6"
+              >
+                {{ memberActionEdit ? 'Update' : 'Save' }}
+              </x-button>
+            </div>
+          </x-form>
+        </x-modal>
+
+        <x-modal v-model="modals.memberConfirm" show-close backdrop>
+          <template #header> Delete Member Detail </template>
+          <p>Are you sure you want to delete this?</p>
+          <template #actions>
+            <div class="text-right space-x-4">
+              <x-button
+                size="sm"
+                ghost
+                @click.prevent="modals.memberConfirm = false"
+              >
+                Cancel
+              </x-button>
+              <x-button
+                size="sm"
+                color="error"
+                @click.prevent="memberDeleteConfirmed"
+                :loading="memberForm.processing"
+              >
+                Delete
+              </x-button>
+            </div>
+          </template>
+        </x-modal>
+      </template>
+    </x-collapse>
+    <!-- <div
       v-if="quote.customer_type == page.props.customerTypeEnum.Individual"
       class="p-4 rounded shadow mb-6 bg-white"
     >
@@ -2085,7 +2274,7 @@ const handleChildUpdate = planId => {
           </div>
         </template>
       </x-modal>
-    </div>
+    </div> -->
 
     <UBODetails
       v-if="quote.customer_type == page.props.customerTypeEnum.Entity"
