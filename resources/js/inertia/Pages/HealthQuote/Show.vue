@@ -1901,7 +1901,196 @@ const handleChildUpdate = planId => {
       </dl>
     </x-modal>
 
-    <div
+    <x-collapse
+      show-icon
+      class="p-4 rounded shadow mb-6 bg-white"
+      v-if="quote.customer_type == page.props.customerTypeEnum.Individual"
+    >
+      <h3 class="font-semibold text-primary-800 text-lg">
+        Member Details
+        <x-tag size="sm">{{ membersDetail.length || 0 }}</x-tag>
+      </h3>
+      <template #content>
+        <x-divider class="mb-4 mt-1" />
+        <div class="w-full flex flex-wrap gap-3 justify-end items-center mb-4">
+          <x-button @click.prevent="onAddMemberModal" size="sm" color="orange">
+            Add Member
+          </x-button>
+        </div>
+        <DataTable
+          table-class-name="tablefixed compact"
+          :headers="memberDetailsTable.columns"
+          :items="membersDetail || []"
+          show-index
+          border-cell
+          hide-rows-per-page
+          hide-footer
+        >
+          <template #item-index="{ index, code }">
+            <div>{{ code ?? 'Member ' + index }}</div>
+          </template>
+          <template #item-gender="{ gender }">
+            {{ genderText(gender).value }}
+          </template>
+          <template #item-dob="{ dob }">
+            {{ dateFormat(dob) }}
+          </template>
+          <template #item-relation="{ relation }">
+            {{ relation?.text }}
+          </template>
+          <template #item-nationality="{ nationality }">
+            {{ nationality?.text }}
+          </template>
+          <template #item-emirate="{ emirate }">
+            {{ emirate?.text }}
+          </template>
+          <template #item-member_category_id="{ member_category_id }">
+            {{ memberCategoryText(member_category_id).value }}
+          </template>
+          <template #item-action="item">
+            <div class="flex gap-2">
+              <x-button
+                size="xs"
+                color="primary"
+                outlined
+                @click.prevent="onEditMember(item)"
+              >
+                Edit
+              </x-button>
+              <x-button
+                size="xs"
+                color="error"
+                outlined
+                @click.prevent="memberDelete(item.id)"
+              >
+                Delete
+              </x-button>
+            </div>
+          </template>
+        </DataTable>
+
+        <x-modal v-model="modals.member" size="lg" show-close backdrop>
+          <template #header>
+            {{ memberActionEdit ? 'Edit' : 'Add' }} Member
+          </template>
+
+          <x-form @submit="onMemberSubmit" :auto-focus="false">
+            <div class="grid md:grid-cols-2 gap-4 md:pb-16">
+              <input type="hidden" :value="memberForm.id" />
+              <x-input
+                v-model="memberForm.first_name"
+                label="Member Name*"
+                placeholder="Member Name"
+                :rules="[isRequired]"
+              />
+              <ComboBox
+                v-model="memberForm.nationality_id"
+                label="Nationality"
+                :options="nationalityOptions"
+                placeholder="Select Nationality"
+                :single="true"
+                :hasError="memberFieldReq.nationality"
+              />
+
+              <x-select
+                v-model="memberForm.emirate_of_your_visa_id"
+                label="Emirate of Visa*"
+                :options="emiratesOptions"
+                :rules="[isRequired]"
+                placeholder="Select Emirate of Visa"
+                class="w-full"
+              />
+
+              <x-select
+                v-model="memberForm.member_category_id"
+                label="Member Category*"
+                :options="memberCategoriesOptions"
+                :rules="[isRequired]"
+                placeholder="Select Member Category"
+                class="w-full"
+              />
+
+              <x-select
+                v-model="memberForm.gender"
+                label="Gender*"
+                :options="genderSelect"
+                :rules="[isRequired]"
+                placeholder="Select Gender"
+                class="w-full"
+              />
+              <DatePicker
+                v-model="memberForm.dob"
+                label="DOB"
+                :hasError="memberFieldReq.dob"
+              />
+              <x-select
+                v-model="memberForm.member_category_id"
+                label="Member Category*"
+                :options="memberCategoriesOptions"
+                :rules="[isRequired]"
+                placeholder="Select Member Category"
+                class="w-full"
+              />
+              <x-select
+                v-model="memberForm.relation_code"
+                label="Relation"
+                :options="memberRelationOptions"
+                placeholder="Select Relation"
+                class="w-full"
+              />
+              <x-select
+                v-model="memberForm.salary_band_id"
+                label="Salary Band"
+                :options="salaryBandsOptions"
+                placeholder="Select Salary Band"
+                class="w-full"
+              />
+            </div>
+
+            <div class="flex justify-end gap-3">
+              <x-button size="sm" @click.prevent="modals.member = false">
+                Cancel
+              </x-button>
+
+              <x-button
+                size="sm"
+                color="emerald"
+                :loading="memberForm.processing"
+                type="submit"
+                class="px-6"
+              >
+                {{ memberActionEdit ? 'Update' : 'Save' }}
+              </x-button>
+            </div>
+          </x-form>
+        </x-modal>
+
+        <x-modal v-model="modals.memberConfirm" show-close backdrop>
+          <template #header> Delete Member Detail </template>
+          <p>Are you sure you want to delete this?</p>
+          <template #actions>
+            <div class="text-right space-x-4">
+              <x-button
+                size="sm"
+                ghost
+                @click.prevent="modals.memberConfirm = false"
+              >
+                Cancel
+              </x-button>
+              <x-button
+                size="sm"
+                color="error"
+                @click.prevent="memberDeleteConfirmed"
+                :loading="memberForm.processing"
+              >
+                Delete
+              </x-button>
+            </div>
+          </template>
+        </x-modal>
+      </template>
+    </x-collapse>
+    <!-- <div
       v-if="quote.customer_type == page.props.customerTypeEnum.Individual"
       class="p-4 rounded shadow mb-6 bg-white"
     >
@@ -2086,7 +2275,7 @@ const handleChildUpdate = planId => {
           </div>
         </template>
       </x-modal>
-    </div>
+    </div> -->
 
     <UBODetails
       v-if="quote.customer_type == page.props.customerTypeEnum.Entity"
@@ -2097,7 +2286,121 @@ const handleChildUpdate = planId => {
       :quote_type="page.props.modelType"
     />
 
-    <div class="p-4 rounded shadow mb-6 bg-white">
+    <x-collapse show-icon class="p-4 rounded shadow mb-6 bg-white">
+      <h3 class="font-semibold text-primary-800 text-lg">
+        Customer Additional Contacts
+        <x-tag size="sm">{{ customerAdditionalContacts.length || 0 }}</x-tag>
+      </h3>
+      <template #content>
+        <x-divider class="mb-4 mt-1" />
+        <div class="w-full flex flex-wrap gap-3 justify-end items-center mb-4">
+          <x-button
+            size="sm"
+            color="orange"
+            @click.prevent="
+              additionalContact.reset();
+              modals.addContact = true;
+            "
+          >
+            Add Additional Contacts
+          </x-button>
+        </div>
+        <DataTable
+          table-class-name="compact"
+          :headers="additionalContactTable"
+          :items="customerAdditionalContacts || []"
+          border-cell
+          hide-rows-per-page
+          hide-footer
+        >
+          <template #item-key="{ key }">
+            <span v-if="key === 'email'"> Email Address </span>
+            <span v-else> Mobile Number </span>
+          </template>
+          <template #item-action="item">
+            <x-button
+              size="xs"
+              color="emerald"
+              outlined
+              @click.prevent="additionalContactPrimary(item)"
+            >
+              Make Primary
+            </x-button>
+          </template>
+        </DataTable>
+        <x-modal v-model="modals.addContact" size="lg" show-close backdrop>
+          <template #header> Add Additional Contacts </template>
+
+          <x-form @submit="onAdditionalContactSubmit" :auto-focus="false">
+            <div class="grid gap-4">
+              <x-select
+                v-model="additionalContact.additional_contact_type"
+                label="Type"
+                :options="[
+                  { value: 'email', label: 'Email' },
+                  { value: 'mobile_no', label: 'Mobile Number' },
+                ]"
+                :rules="[isRequired]"
+                placeholder="Select Type"
+                class="w-full"
+              />
+
+              <x-input
+                v-model="additionalContact.additional_contact_val"
+                label="Value"
+                :rules="[
+                  isRequired,
+                  additionalContact.additional_contact_type === 'email'
+                    ? isEmail
+                    : isNumber,
+                ]"
+                class="w-full"
+              />
+            </div>
+
+            <div class="text-right space-x-4 mt-12">
+              <x-button size="sm" @click.prevent="modals.addContact = false">
+                Cancel
+              </x-button>
+
+              <x-button
+                size="sm"
+                color="emerald"
+                :loading="additionalContact.processing"
+                type="submit"
+              >
+                Save
+              </x-button>
+            </div>
+          </x-form>
+        </x-modal>
+
+        <x-modal v-model="modals.contactPrimaryConfirm" show-close backdrop>
+          <template #header> Primary Additional Contact </template>
+          <p>Are you sure you want to make this information as Primary?</p>
+          <template #actions>
+            <div class="text-right space-x-4">
+              <x-button
+                size="sm"
+                ghost
+                @click.prevent="modals.contactPrimaryConfirm = false"
+              >
+                Cancel
+              </x-button>
+              <x-button
+                size="sm"
+                color="emerald"
+                @click.prevent="additionalContactPrimaryConfirmed"
+                :loading="contactLoader"
+              >
+                Confirm
+              </x-button>
+            </div>
+          </template>
+        </x-modal>
+      </template>
+    </x-collapse>
+    <!-- <div class="p-4 rounded shadow mb-6 bg-white">
       <div class="flex flex-wrap gap-3 justify-between items-center mb-4">
         <h3 class="font-semibold text-primary-800 text-lg">
           Customer Additional Contacts
@@ -2209,7 +2512,7 @@ const handleChildUpdate = planId => {
           </div>
         </template>
       </x-modal>
-    </div>
+    </div> -->
 
     <LastYearPolicyDetail
       v-if="
@@ -2221,7 +2524,76 @@ const handleChildUpdate = planId => {
       :canAddBatchNumber="canAddBatchNumber"
     />
 
-    <div class="p-4 rounded shadow mb-6 bg-primary-50/25">
+    <x-collapse show-icon class="p-4 rounded shadow mb-6 bg-white">
+      <div>
+        <h3 class="font-semibold text-primary-800 text-lg">Lead Status</h3>
+      </div>
+      <template #content>
+        <x-divider class="mb-4 mt-1" />
+        <div class="flex flex-wrap md:flex-nowrap gap-6 w-full">
+          <div class="w-full md:w-2/3">
+            <x-textarea
+              v-model="leadStatusForm.notes"
+              type="text"
+              label="Notes"
+              placeholder="Lead Notes"
+              class="w-full"
+              :disabled="allowStatusUpdate"
+            />
+          </div>
+          <div class="w-full md:w-1/3">
+            <div class="flex flex-col gap-4">
+              <x-select
+                v-model="leadStatusForm.leadStatus"
+                label="Status"
+                :options="leadStatusOptions"
+                :disabled="allowStatusUpdate"
+                placeholder="Lead Status"
+                class="w-full"
+              />
+              <x-input
+                v-if="leadStatusForm.leadStatus == 15"
+                v-model="leadStatusForm.trans_code"
+                label="TransApp Code"
+                placeholder="TransApp Code is required"
+                class="w-full"
+                :error="leadStatusForm.errors.trans_code"
+                :disabled="allowStatusUpdate"
+              />
+              <x-select
+                :disabled="allowStatusUpdate"
+                v-if="leadStatusForm.leadStatus == 17"
+                v-model="leadStatusForm.lostReason"
+                label="Lost Reason"
+                :options="
+                  lostReasons?.map(item => ({
+                    value: item.id,
+                    label: item.text,
+                  }))
+                "
+                placeholder="Lost Reason is required"
+                class="w-full"
+                :error="leadStatusForm.errors.lostReason"
+              />
+            </div>
+
+            <div class="flex justify-end">
+              <x-button
+                class="mt-4"
+                color="emerald"
+                size="sm"
+                :loading="leadStatusForm.processing"
+                @click.prevent="onLeadStatus"
+                :disabled="allowStatusUpdate"
+              >
+                Change Status
+              </x-button>
+            </div>
+          </div>
+        </div>
+      </template>
+    </x-collapse>
+    <!-- <div class="p-4 rounded shadow mb-6 bg-primary-50/25">
       <div>
         <h3 class="font-semibold text-primary-800 text-lg">Lead Status</h3>
         <x-divider class="mb-4 mt-1" />
@@ -2287,9 +2659,56 @@ const handleChildUpdate = planId => {
           </div>
         </div>
       </div>
-    </div>
+    </div> -->
 
-    <div class="p-4 rounded shadow mb-6 bg-white">
+    <x-collapse show-icon class="p-4 rounded shadow mb-6 bg-white">
+      <h3 class="font-semibold text-primary-800 text-lg">E-COM Details</h3>
+      <template #content>
+        <x-divider class="mb-4 mt-1" />
+        <div class="text-sm">
+          <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
+            <div class="grid sm:grid-cols-2">
+              <dt class="font-medium">PLAN NAME</dt>
+              <dd>{{ ecomDetails.planName }}</dd>
+            </div>
+            <div class="grid sm:grid-cols-2">
+              <dt class="font-medium">PROVIDER NAME</dt>
+              <dd>{{ ecomDetails.providerName }}</dd>
+            </div>
+            <div class="grid sm:grid-cols-2">
+              <dt class="font-medium">PAYMENT STATUS</dt>
+              <dd>{{ quote.payment_status_text }}</dd>
+            </div>
+            <div
+              class="grid sm:grid-cols-2"
+              v-if="
+                page.props.quote.payment_status_id == paymentStatusEnum.DECLINED
+              "
+            >
+              <dt class="font-medium">REASON</dt>
+              <dd>{{ mainPayment?.payment_status_message }}</dd>
+            </div>
+            <div class="grid sm:grid-cols-2">
+              <dt class="font-medium">PAID AT</dt>
+              <dd>{{ ecomDetails.paidAt }}</dd>
+            </div>
+            <div class="grid sm:grid-cols-2">
+              <dt class="font-medium">NETWORK</dt>
+              <dd>{{ ecomDetails.network }}</dd>
+            </div>
+            <div class="grid sm:grid-cols-2">
+              <dt class="font-medium">TOTAL PRICE (with VAT)</dt>
+              <dd>{{ fixedValue(ecomDetails.priceWithVAT) }}</dd>
+            </div>
+            <div class="grid sm:grid-cols-2">
+              <dt class="font-medium">CO-PAY / CO-INSURANCE</dt>
+              <dd>{{ coPayment ? coPayment.text : 'N/A' }}</dd>
+            </div>
+          </dl>
+        </div>
+      </template>
+    </x-collapse>
+    <!-- <div class="p-4 rounded shadow mb-6 bg-white">
       <div>
         <h3 class="font-semibold text-primary-800 text-lg">E-COM Details</h3>
         <x-divider class="mb-4 mt-1" />
@@ -2335,7 +2754,7 @@ const handleChildUpdate = planId => {
           </div>
         </dl>
       </div>
-    </div>
+    </div> -->
 
     <PaymentTable
       :payments="payments"
@@ -2436,7 +2855,286 @@ const handleChildUpdate = planId => {
       </x-form>
     </div> -->
 
-    <div class="p-4 rounded shadow mb-6 bg-white">
+    <x-collapse class="p-4 rounded shadow mb-6 bg-white" show-icon>
+      <h3 class="font-semibold text-primary-800 text-lg">
+        Available Plans
+        <x-tag size="sm">{{ listQuotePlansFiltered.length || 0 }}</x-tag>
+      </h3>
+      <template #content>
+        <x-divider class="mb-4 mt-1" />
+        <div class="mb-4 flex flex-wrap gap-3 justify-end">
+          <x-button-group v-if="selectedPlans.length > 0" size="sm">
+            <x-button
+              @click.prevent="onTogglePlans(false)"
+              :loading="toggleLoader"
+            >
+              Show
+            </x-button>
+            <x-button
+              @click.prevent="onTogglePlans(true)"
+              :loading="toggleLoader"
+            >
+              Hide
+            </x-button>
+          </x-button-group>
+
+          <x-button
+            v-if="selectedPlans.length > 0"
+            size="sm"
+            color="emerald"
+            @click.prevent="onExportPlans"
+            :loading="exportLoader"
+          >
+            Download PDF
+          </x-button>
+
+          <x-button
+            v-if="plansTable.data.length > 0"
+            size="sm"
+            color="orange"
+            @click.prevent="
+              onCopyText(ecomHealthInsuranceQuoteUrl + quote.uuid)
+            "
+          >
+            Copy Link
+          </x-button>
+          <x-badge
+            size="sm"
+            color="error"
+            outlined
+            animated
+            :show="planFiltersCount > 0"
+          >
+            <x-button
+              v-if="plansTable.data.length > 0"
+              size="sm"
+              color="primary"
+              @click.prevent="modals.planFilters = true"
+            >
+              Filters
+            </x-button>
+            <template #content> {{ planFiltersCount }} </template>
+          </x-badge>
+
+          <x-button
+            v-if="isBetaUser"
+            size="sm"
+            color="emerald"
+            @click.prevent="modals.createPlan = true"
+          >
+            Add Plan
+          </x-button>
+        </div>
+        <DataTable
+          ref="planDataTable"
+          v-model:items-selected="selectedPlans"
+          table-class-name="tablefixed compact"
+          :headers="plansTable.columns"
+          :items="listQuotePlansFiltered || []"
+          border-cell
+          hide-rows-per-page
+          :rows-per-page="15"
+          class="flex-wrap"
+          :hide-footer="listQuotePlansFiltered.length < 15"
+        >
+          <template #item-copayName="item">
+            <span class="copay-max">{{ item.copayName }}</span>
+          </template>
+          <template
+            #item-providerName="{ providerName, isManualPlan, isHidden }"
+          >
+            <p>{{ providerName }}</p>
+            <div class="flex gap-1">
+              <x-tag
+                v-if="isManualPlan"
+                size="xs"
+                color="primary"
+                class="mt-0.5 text-[10px]"
+              >
+                Manual Plan
+              </x-tag>
+              <x-tag
+                v-if="isHidden"
+                size="xs"
+                color="error"
+                class="mt-0.5 text-[10px]"
+              >
+                Hidden
+              </x-tag>
+              <x-tag
+                v-if="!isHidden"
+                size="xs"
+                color="success"
+                class="mt-0.5 text-[10px]"
+              >
+                Currently Online
+              </x-tag>
+            </div>
+          </template>
+
+          <template #item-total="{ actualPremium, policyFee, basmah, vat }">
+            {{
+              fixedValue(actualPremium + (policyFee || 0) + (basmah || 0) + vat)
+            }}
+          </template>
+          <template #item-action="item">
+            <div class="flex gap-2 pr-2">
+              <x-button
+                size="xs"
+                color="primary"
+                outlined
+                @click.prevent="planClicked(item)"
+              >
+                View
+              </x-button>
+              <x-button
+                size="xs"
+                color="emerald"
+                outlined
+                @click.prevent="
+                  onCopyText(
+                    ecomHealthInsuranceQuoteUrl +
+                      quote.uuid +
+                      `/payment/?providerCode=${item.providerCode}&planId=${item.id}&selectedCopayId=${item.selectedCopayId}`,
+                  )
+                "
+              >
+                Copy
+              </x-button>
+
+              <!-- v-if="hasRole(page.props.rolesEnum.HealthAdvisor)", hide it for now -->
+              <span v-if="true == false">
+                <SelectPlan
+                  v-if="prefillPlanId != item.id"
+                  @update:updatePlanId="handleChildUpdate"
+                  :plan="item"
+                  :quoteType="quoteType"
+                  :uuid="quote.uuid"
+                />
+
+                <x-button
+                  v-else
+                  size="xs"
+                  color="orange"
+                  outlined
+                  :disabled="true"
+                >
+                  Selected
+                </x-button>
+              </span>
+            </div>
+          </template>
+        </DataTable>
+
+        <x-modal v-model="modals.plan" size="xl" show-close backdrop>
+          <template #header>
+            {{ selectedPlan.providerName }} - {{ selectedPlan.name }}
+          </template>
+          <LazyAvailablePlan
+            :plan="selectedPlan"
+            :genders="genderOptions"
+            @copay-update="onSelectedCopay"
+            @onLoadAvailablePlansData="onLoadAvailablePlansData"
+          />
+        </x-modal>
+
+        <x-modal v-model="modals.createPlan" size="xl" show-close backdrop>
+          <template #header> Create Heath Quote </template>
+          <LazyCreatePlan
+            :uuid="quote.uuid"
+            :members="membersDetail"
+            :genders="genderOptions"
+            @success="onCreatePlan"
+            @error="onPlanError"
+          />
+        </x-modal>
+
+        <x-modal v-model="modals.planFilters" size="lg" show-close backdrop>
+          <template #header> Filters </template>
+
+          <div class="grid sm:grid-cols-2 gap-4 py-8 min-h-[18rem]">
+            <ComboBox
+              v-model="planFilters.insurer"
+              label="Insurer"
+              :options="insuranceProviders"
+              :loading="planFilters.processing"
+              select-all
+              deselect-all
+            />
+            <ComboBox
+              v-model="planFilters.network"
+              :label="
+                planFilters.insurer?.length == 0
+                  ? 'Network (please select insurer first)'
+                  : 'Network'
+              "
+              :options="options.network"
+              :disabled="planFilters.insurer?.length == 0"
+              select-all
+              deselect-all
+            />
+            <div>
+              <x-tooltip position="right" class="arrow-l">
+                <label
+                  class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600 mb-0.5"
+                >
+                  Manual Plan
+                </label>
+                <template #tooltip>Manually Added Plans</template>
+              </x-tooltip>
+              <x-select
+                v-model="planFilters.manual_plan"
+                :options="[
+                  { value: '', label: 'All' },
+                  { value: '1', label: 'Yes' },
+                  { value: '0', label: 'No' },
+                ]"
+                class="w-full"
+              />
+            </div>
+
+            <div>
+              <x-tooltip position="right" class="arrow-l">
+                <label
+                  class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600 mb-0.5"
+                >
+                  Currently Online
+                </label>
+                <template #tooltip> Plans that are Currently Online </template>
+              </x-tooltip>
+              <x-select
+                v-model="planFilters.current_online"
+                :options="[
+                  { value: '', label: 'All' },
+                  { value: '1', label: 'Yes' },
+                  { value: '0', label: 'No' },
+                ]"
+                class="w-full"
+              />
+            </div>
+          </div>
+
+          <div class="flex justify-end gap-3 mb-4">
+            <x-button
+              size="sm"
+              color="#ff5e00"
+              type="submit"
+              @click="onPlanFiltersSubmit"
+            >
+              Apply
+            </x-button>
+            <x-button
+              size="sm"
+              color="primary"
+              @click.prevent="onPlanFiltersReset"
+            >
+              Reset
+            </x-button>
+          </div>
+        </x-modal>
+      </template>
+    </x-collapse>
+    <!-- <div class="p-4 rounded shadow mb-6 bg-white">
       <div class="flex flex-wrap gap-4 justify-between items-center mb-4">
         <h3 class="font-semibold text-primary-800 text-lg">
           Available Plans
@@ -2581,7 +3279,6 @@ const handleChildUpdate = planId => {
               Copy
             </x-button>
 
-            <!-- v-if="hasRole(page.props.rolesEnum.HealthAdvisor)", hide it for now -->
             <span v-if="true == false">
               <SelectPlan
                 v-if="prefillPlanId != item.id"
@@ -2711,7 +3408,8 @@ const handleChildUpdate = planId => {
           </x-button>
         </div>
       </x-modal>
-    </div>
+    </div> -->
+
     <EmbeddedProducts
       :data="embeddedProducts"
       :link="quote.uuid"
@@ -2721,7 +3419,93 @@ const handleChildUpdate = planId => {
       :paymentLink="paymentLink"
     />
 
-    <div class="p-4 rounded shadow mb-6 bg-white">
+    <x-collapse class="p-4 rounded shadow mb-6 bg-white" show-icon>
+      <h3 class="font-semibold text-primary-800 text-lg">
+        Documents
+        <x-tag size="sm">{{ quoteDocuments.length || 0 }}</x-tag>
+      </h3>
+      <template #content>
+        <x-divider class="mb-4 mt-1" />
+        <div class="flex justify-end gap-4 items-center mb-4">
+          <x-button @click.prevent="modals.doc = true" size="sm" color="orange">
+            Upload Documents
+          </x-button>
+          <x-button
+            size="sm"
+            color="red"
+            v-if="sendPolicy"
+            @click="sendPolicyToClient"
+          >
+            Send Policy
+          </x-button>
+        </div>
+        <DataTable
+          table-class-name="compact"
+          :headers="quoteDocumentsTable.columns"
+          :items="quoteDocuments || []"
+          border-cell
+          hide-rows-per-page
+          :rows-per-page="15"
+          :hide-footer="quoteDocuments.length < 15"
+        >
+          <template #item-original_name="item">
+            <a
+              :href="cdnPath + item.doc_url"
+              target="_blank"
+              class="text-primary-600"
+            >
+              {{ item.original_name }}
+            </a>
+          </template>
+          <template #item-action="{ doc_name }">
+            <div>
+              <x-button
+                size="xs"
+                color="error"
+                outlined
+                @click.prevent="onDocDelete(doc_name)"
+              >
+                Delete
+              </x-button>
+            </div>
+          </template>
+        </DataTable>
+
+        <x-modal v-model="modals.doc" size="xl" show-close backdrop>
+          <template #header> Upload Documents </template>
+          <LazyDocumentUploader
+            :members="memberDataDocs(membersDetail)"
+            :doc-types="documentTypes"
+            :docs="quoteDocuments || []"
+            :cdn="cdnPath"
+          />
+        </x-modal>
+        <x-modal v-model="modals.docConfirm" show-close backdrop>
+          <template #header> Delete Document </template>
+          <p>Are you sure you want to delete this document?</p>
+          <template #actions>
+            <div class="text-right space-x-4">
+              <x-button
+                size="sm"
+                ghost
+                @click.prevent="modals.docConfirm = false"
+              >
+                Cancel
+              </x-button>
+              <x-button
+                size="sm"
+                color="error"
+                @click.prevent="confirmDeleteDoc"
+                :loading="quoteDocumentsTable.isLoading"
+              >
+                Delete
+              </x-button>
+            </div>
+          </template>
+        </x-modal>
+      </template>
+    </x-collapse>
+    <!-- <div class="p-4 rounded shadow mb-6 bg-white" v-if="false">
       <div class="flex justify-between items-center mb-4">
         <h3 class="font-semibold text-primary-800 text-lg">
           Documents
@@ -2805,9 +3589,143 @@ const handleChildUpdate = planId => {
           </div>
         </template>
       </x-modal>
-    </div>
+    </div> -->
 
-    <div class="p-4 rounded shadow mb-6 bg-white">
+    <x-collapse class="p-4 rounded shadow mb-6 bg-white" show-icon>
+      <h3 class="font-semibold text-primary-800 text-lg">
+        Lead Activities
+        <x-tag size="sm">{{ activities.length || 0 }}</x-tag>
+      </h3>
+      <template #content>
+        <x-divider class="mb-4 mt-1" />
+        <div class="flex justify-end gap-4 items-center mb-4">
+          <x-button size="sm" color="orange" @click.prevent="addActivity">
+            Add Activity
+          </x-button>
+        </div>
+        <DataTable
+          table-class-name="compact"
+          :headers="activityTable"
+          :items="activities"
+          border-cell
+          hide-rows-per-page
+          :rows-per-page="15"
+          :hide-footer="activities.length < 15"
+        >
+          <template #item-status="{ status, id }">
+            <x-checkbox
+              color="emerald"
+              size="xl"
+              :modelValue="status === 1"
+              :disabled="status === 1"
+              @change="onActivityStatusUpdate(id)"
+            />
+          </template>
+          <template #item-action="item">
+            <div class="space-x-4">
+              <x-button
+                size="xs"
+                color="primary"
+                outlined
+                :disabled="item.status === 1"
+                @click.prevent="activityEdit(item)"
+              >
+                Edit
+              </x-button>
+              <x-button
+                size="xs"
+                color="error"
+                :disabled="item.status === 1"
+                outlined
+                @click.prevent="activityDelete(item.id)"
+              >
+                Delete
+              </x-button>
+            </div>
+          </template>
+        </DataTable>
+        <x-modal v-model="modals.activity" size="lg" show-close backdrop>
+          <template #header>
+            {{ activityActionEdit ? 'Edit' : 'Add' }} Lead Activity
+          </template>
+
+          <x-form @submit="onActivitySubmit" :auto-focus="false">
+            <div class="grid gap-4">
+              <x-input
+                v-model="activityForm.title"
+                label="Title"
+                :rules="[isRequired]"
+                class="w-full"
+              />
+
+              <x-textarea
+                v-model="activityForm.description"
+                label="Description"
+                :adjust-to-text="false"
+                class="w-full"
+              />
+
+              <x-select
+                v-model="activityForm.assignee_id"
+                label="Assignee"
+                :options="advisorOptions"
+                :rules="[isRequired]"
+                placeholder="Select Assignee"
+                class="w-full"
+              />
+
+              <date-picker
+                v-model="activityForm.due_date"
+                label="Due Date"
+                :rules="[isRequired]"
+                class="w-full"
+                withTime
+                :timezone="'UTC'"
+              />
+            </div>
+
+            <div class="text-right space-x-4 mt-12">
+              <x-button size="sm" @click.prevent="modals.activity = false">
+                Cancel
+              </x-button>
+
+              <x-button
+                size="sm"
+                color="emerald"
+                :loading="activityForm.processing"
+                type="submit"
+              >
+                {{ activityActionEdit ? 'Update' : 'Save' }}
+              </x-button>
+            </div>
+          </x-form>
+        </x-modal>
+        <x-modal v-model="modals.activityConfirm" show-close backdrop>
+          <template #header> Delete Activity </template>
+          <p>Are you sure you want to delete this activity?</p>
+          <template #actions>
+            <div class="text-right space-x-4">
+              <x-button
+                size="sm"
+                ghost
+                @click.prevent="modals.activityConfirm = false"
+              >
+                Cancel
+              </x-button>
+              <x-button
+                size="sm"
+                color="error"
+                :loading="activityForm.processing"
+                @click.prevent="activityDeleteConfirmed"
+              >
+                Delete
+              </x-button>
+            </div>
+          </template>
+        </x-modal>
+      </template>
+    </x-collapse>
+    <!-- <div class="p-4 rounded shadow mb-6 bg-white">
       <div class="flex justify-between items-center mb-4">
         <h3 class="font-semibold text-primary-800 text-lg">
           Lead Activities
@@ -2939,9 +3857,39 @@ const handleChildUpdate = planId => {
           </div>
         </template>
       </x-modal>
-    </div>
+    </div> -->
 
-    <div class="p-4 rounded shadow mb-6 bg-white">
+    <x-collapse class="p-4 rounded shadow mb-6 bg-white" show-icon>
+      <h3 class="font-semibold text-primary-800 text-lg">
+        Lead History
+        <x-tag size="sm">{{ activities.length || 0 }}</x-tag>
+      </h3>
+      <template #content>
+        <x-divider class="mb-4 mt-1" />
+        <div v-if="historyData === null" class="text-center py-3">
+          <x-button
+            size="sm"
+            color="primary"
+            outlined
+            @click.prevent="onLoadHistoryData"
+            :loading="historyLoading"
+          >
+            Load History Data
+          </x-button>
+        </div>
+        <DataTable
+          v-else
+          table-class-name="compact"
+          :headers="historyDataTable"
+          :items="historyData || []"
+          border-cell
+          hide-rows-per-page
+          :rows-per-page="15"
+          :hide-footer="historyData.length < 15"
+        />
+      </template>
+    </x-collapse>
+    <!-- <div class="p-4 rounded shadow mb-6 bg-white">
       <div>
         <h3 class="font-semibold text-primary-800 text-lg">Lead History</h3>
         <x-divider class="mb-4 mt-1" />
@@ -2957,6 +3905,7 @@ const handleChildUpdate = planId => {
           Load History Data
         </x-button>
       </div>
+      
       <DataTable
         v-else
         table-class-name="compact"
@@ -2967,7 +3916,7 @@ const handleChildUpdate = planId => {
         :rows-per-page="15"
         :hide-footer="historyData.length < 15"
       />
-    </div>
+    </div> -->
 
     <AuditLogs :type="'App\\Models\\HealthQuote'" :id="$page.props.quote.id" />
   </div>

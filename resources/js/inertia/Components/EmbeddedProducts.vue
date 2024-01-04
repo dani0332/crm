@@ -28,10 +28,10 @@ const props = defineProps({
     type: Object,
     default: {},
   },
-    paymentStatusEnum: {
-        type: Array,
-        default: () => [],
-    },
+  paymentStatusEnum: {
+    type: Array,
+    default: () => [],
+  },
 });
 
 const modals = reactive({
@@ -164,7 +164,11 @@ const checkTransactionExist = item => {
       var timeStart = new Date(transaction.created_at);
       var timeEnd = new Date();
       var hourDiff = timeEnd - timeStart;
-      if ((transaction.payment_status_id == 6 || transaction.payment_status_id == 4) && hourDiff <= 172800000) {
+      if (
+        (transaction.payment_status_id == 6 ||
+          transaction.payment_status_id == 4) &&
+        hourDiff <= 172800000
+      ) {
         return false;
       }
     }
@@ -175,8 +179,14 @@ const checkTransactionExist = item => {
 const { copy, copied } = useClipboard();
 
 const onCopyText = () => {
-
-let paymentLink = page.props.epLink + '/car-insurance/quote/'+props.quote.uuid+'/payment?planId='+props.quote.plan_id+'&providerCode='+props.quote.plan_provider_code;
+  let paymentLink =
+    page.props.epLink +
+    '/car-insurance/quote/' +
+    props.quote.uuid +
+    '/payment?planId=' +
+    props.quote.plan_id +
+    '&providerCode=' +
+    props.quote.plan_provider_code;
   copy(paymentLink);
   if (copied)
     notification.success({
@@ -196,17 +206,21 @@ const toggleProduct = (ep, event) => {
   if (event.target.checked) {
     selectedEp.value.push(id);
   } else {
-    var index =  selectedEp.value.indexOf(id);
+    var index = selectedEp.value.indexOf(id);
     if (index !== -1) {
       selectedEp.value.splice(id, 1);
     }
   }
-  let data = { quote_uuid: props.quote.uuid, id: id,modelType:props.modelType };
+  let data = {
+    quote_uuid: props.quote.uuid,
+    id: id,
+    modelType: props.modelType,
+  };
   let requestUrl = '/quotes/' + props.modelType + '/toggle-product';
   axios
     .post(requestUrl, data)
     .then(res => {
-        console.log('res',res);
+      console.log('res', res);
       notification.success('Updated');
     })
     .catch(err => {
@@ -220,7 +234,7 @@ const onActivitySubmit = isValid => {
   axios
     .post(url, paymentForm)
     .then(res => {
-        modals.cancelPayment = false;
+      modals.cancelPayment = false;
       notification.success('Processed');
     })
     .catch(err => {
@@ -235,7 +249,170 @@ const hasAnyRole = roles => useHasAnyRole(roles);
 </script>
 
 <template>
-  <div
+  <x-collapse
+    v-if="
+      hasAnyRole([
+        $page.props.rolesEnum.Engineering,
+        $page.props.rolesEnum.BetaUser,
+      ])
+    "
+    class="p-4 rounded shadow mb-6 bg-white"
+    show-icon
+  >
+    <h3 class="font-semibold text-primary-800 text-lg">
+      Embedded Products <x-tag size="sm">{{ props.data.length || 0 }}</x-tag>
+    </h3>
+    <template #content>
+      <x-divider class="mb-4 mt-1" />
+      <div class="flex justify-end gap-4 items-center mb-4">
+        <x-button
+          v-if="selectedEp.length > 0"
+          size="sm"
+          @click.prevent="onCopyText()"
+        >
+          Copy Payment Link
+        </x-button>
+      </div>
+      <DataTable
+        table-class-name="tablefixed"
+        :headers="epTable.columns"
+        :items="props.data || []"
+        border-cell
+        hide-rows-per-page
+        hide-footer
+      >
+        <template #item-code="{ short_code }">
+          {{ short_code + '-' + props.code }}
+        </template>
+
+        <template #item-prices="{ prices }">
+          <div v-if="prices.length > 0" class="flex gap-3">
+            <x-tag
+              color="primary"
+              v-for="(priceItem, index) in prices"
+              :key="index"
+            >
+              <x-checkbox
+                v-if="priceItem.transactions[0]?.is_selected == '1'"
+                @change="toggleProduct(priceItem, $event)"
+                :model-value="true"
+                color="primary"
+                :disabled="
+                  priceItem.transactions[0]?.payment_status_id == 4 ||
+                  priceItem.transactions[0]?.payment_status_id == 6 ||
+                  priceItem.transactions[0]?.payment_status_id == 12
+                "
+              />
+              <x-checkbox
+                v-else
+                @change="toggleProduct(priceItem, $event)"
+                color="primary"
+                :disabled="
+                  priceItem.transactions[0]?.payment_status_id == 4 ||
+                  priceItem.transactions[0]?.payment_status_id == 6 ||
+                  priceItem.transactions[0]?.payment_status_id == 12
+                "
+              />
+              {{
+                (
+                  parseFloat(priceItem.price) +
+                  (priceItem.price * 5) / 100
+                ).toFixed(2)
+              }}
+            </x-tag>
+          </div>
+        </template>
+
+        <template #item-ep_status="{ ep_status }"> N/A </template>
+
+        <template #item-payment_status="{ prices }">
+          {{ paymentStatus(prices[0]?.transactions[0]?.payment_status_id) }}
+        </template>
+
+        <template #item-updated_at="{ updated_at }">
+          {{ dateFormat(updated_at) }}
+        </template>
+
+        <template #item-actions="item">
+          <div class="flex flex-col gap-1">
+            <x-button
+              size="xs"
+              color="emerald"
+              :disabled="!item.send_document_button"
+              :loading="sendDocumentLoader"
+              @click.prevent="sendDcoument(item.id)"
+            >
+              Send Documents
+            </x-button>
+            <x-button
+              size="xs"
+              color="#ff5e00"
+              :disabled="!item.send_document_button"
+              :loading="downloadLoader"
+              @click.prevent="downloadDcoument(item.id)"
+            >
+              Download Certificate
+            </x-button>
+            <x-button
+              size="xs"
+              color="primary"
+              :href="ppDoc(item.company_documents)"
+              target="_blank"
+              :disabled="ppDoc(item.company_documents) === ''"
+            >
+              Download Product Wordings
+            </x-button>
+            <x-button
+              size="xs"
+              color="#ff5e00"
+              :disabled="checkTransactionExist(item)"
+              @click.prevent="cancelPaymentForm(item)"
+            >
+              Cancel Payments
+            </x-button>
+          </div>
+        </template>
+      </DataTable>
+      <x-modal v-model="modals.cancelPayment" size="lg" show-close backdrop>
+        <template #header> Cancel Payment </template>
+
+        <x-form @submit="onActivitySubmit" :auto-focus="false">
+          <div class="grid gap-4">
+            <x-input
+              v-model="paymentForm.amount"
+              label="Amount"
+              :rules="[isRequired, isNumber]"
+              class="w-full"
+            />
+
+            <x-textarea
+              v-model="paymentForm.reason"
+              label="Reason"
+              maxlength="250"
+              :adjust-to-text="false"
+              class="w-full"
+            />
+          </div>
+
+          <div class="text-right space-x-4 mt-12">
+            <x-button size="sm" @click.prevent="modals.cancelPayment = false">
+              Cancel
+            </x-button>
+
+            <x-button
+              size="sm"
+              color="emerald"
+              :loading="paymentForm.processing"
+              type="submit"
+            >
+              Cancel Payment
+            </x-button>
+          </div>
+        </x-form>
+      </x-modal>
+    </template>
+  </x-collapse>
+  <!-- <div
     v-if="
       hasAnyRole([
         $page.props.rolesEnum.Engineering,
@@ -270,33 +447,38 @@ const hasAnyRole = roles => useHasAnyRole(roles);
         {{ short_code + '-' + props.code }}
       </template>
 
-      <template #item-prices="{prices}">
-
+      <template #item-prices="{ prices }">
         <div v-if="prices.length > 0" class="flex gap-3">
-
-
-            <x-tag color="primary" v-for="priceItem  in prices">
-                <x-checkbox
-
-                    v-if="priceItem.transactions[0]?.is_selected == '1'"
-                    @change="toggleProduct(priceItem, $event)"
-                    :model-value="true"
-                    color="primary"
-                    :disabled="priceItem.transactions[0]?.payment_status_id == 4 || priceItem.transactions[0]?.payment_status_id == 6 || priceItem.transactions[0]?.payment_status_id == 12"
-
-                />
-                <x-checkbox
-
-                    v-else
-                    @change="toggleProduct(priceItem, $event)"
-                    color="primary"
-                    :disabled="priceItem.transactions[0]?.payment_status_id == 4 || priceItem.transactions[0]?.payment_status_id == 6 || priceItem.transactions[0]?.payment_status_id == 12"
-                />
-              {{ (parseFloat(priceItem.price) + (priceItem.price * 5) / 100).toFixed(2) }}
-            </x-tag>
-
+          <x-tag color="primary" v-for="priceItem in prices">
+            <x-checkbox
+              v-if="priceItem.transactions[0]?.is_selected == '1'"
+              @change="toggleProduct(priceItem, $event)"
+              :model-value="true"
+              color="primary"
+              :disabled="
+                priceItem.transactions[0]?.payment_status_id == 4 ||
+                priceItem.transactions[0]?.payment_status_id == 6 ||
+                priceItem.transactions[0]?.payment_status_id == 12
+              "
+            />
+            <x-checkbox
+              v-else
+              @change="toggleProduct(priceItem, $event)"
+              color="primary"
+              :disabled="
+                priceItem.transactions[0]?.payment_status_id == 4 ||
+                priceItem.transactions[0]?.payment_status_id == 6 ||
+                priceItem.transactions[0]?.payment_status_id == 12
+              "
+            />
+            {{
+              (
+                parseFloat(priceItem.price) +
+                (priceItem.price * 5) / 100
+              ).toFixed(2)
+            }}
+          </x-tag>
         </div>
-
       </template>
 
       <template #item-ep_status="{ ep_status }"> N/A </template>
@@ -386,5 +568,5 @@ const hasAnyRole = roles => useHasAnyRole(roles);
         </div>
       </x-form>
     </x-modal>
-  </div>
+  </div> -->
 </template>

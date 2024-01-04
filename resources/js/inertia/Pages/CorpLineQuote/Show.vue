@@ -965,7 +965,77 @@ const linkEntity = () => {
       :canAddBatchNumber="canAddBatchNumber"
     />
 
-    <div class="p-4 rounded shadow mb-6 bg-white">
+    <x-collapse show-icon class="p-4 rounded shadow mb-6 bg-white">
+      <div>
+        <h3 class="font-semibold text-primary-800 text-lg">Lead Status</h3>
+      </div>
+      <template #content>
+        <x-divider class="mb-4 mt-1" />
+        <div class="flex flex-wrap md:flex-nowrap gap-6 w-full">
+          <div class="w-full md:w-1/2">
+            <div class="flex flex-col gap-4">
+              <x-select
+                v-model="leadStatusForm.leadStatus"
+                label="STATUS"
+                :options="leadStatusOptions"
+                :disabled="disableStatusSection"
+                placeholder="Lead Status"
+                class="w-full"
+              />
+              <x-textarea
+                v-model="leadStatusForm.notes"
+                type="text"
+                label="NOTES"
+                placeholder="Lead Notes"
+                class="w-full"
+                :disabled="disableStatusSection"
+              />
+            </div>
+          </div>
+          <div class="w-full md:w-2/3">
+            <x-input
+              v-if="
+                leadStatusForm.leadStatus ==
+                enums.quoteStatusEnum.TransactionApproved
+              "
+              :disabled="disableStatusSection"
+              v-model="leadStatusForm.trans_code"
+              label="TRANSAPP CODE"
+              placeholder="TransApp Code is required"
+              class="w-full"
+              :error="leadStatusForm.errors.trans_code"
+            />
+            <x-select
+              v-if="leadStatusForm.leadStatus == enums.quoteStatusEnum.Lost"
+              v-model="leadStatusForm.lostReason"
+              label="LOST REASON"
+              :options="
+                lostReasons?.map(item => ({
+                  value: item.id,
+                  label: item.text,
+                }))
+              "
+              placeholder="Lost Reason is required"
+              class="w-full"
+              :error="leadStatusForm.errors.lostReason"
+            />
+          </div>
+        </div>
+        <div class="flex justify-end">
+          <x-button
+            class="mt-4"
+            color="emerald"
+            size="sm"
+            :loading="leadStatusForm.processing"
+            @click.prevent="onLeadStatus"
+            :disabled="disableStatusSection"
+          >
+            Change Status
+          </x-button>
+        </div>
+      </template>
+    </x-collapse>
+    <!-- <div class="p-4 rounded shadow mb-6 bg-white">
       <div>
         <h3 class="font-semibold text-primary-800 text-lg">Lead Status</h3>
         <x-divider class="mb-4 mt-1" />
@@ -1032,7 +1102,7 @@ const linkEntity = () => {
           Change Status
         </x-button>
       </div>
-    </div>
+    </div> -->
 
     <QuoteDocuments
       :document-types="documentTypes"
@@ -1041,7 +1111,142 @@ const linkEntity = () => {
       :quote="quote"
     />
 
-    <div class="p-4 rounded shadow mb-6 bg-white">
+    <x-collapse show-icon class="p-4 rounded shadow mb-6 bg-white">
+      <h3 class="font-semibold text-primary-800 text-lg">
+        Lead Activities
+        <x-tag size="sm">{{ activities.length || 0 }}</x-tag>
+      </h3>
+      <template #content>
+        <x-divider class="my-4" />
+        <div class="flex justify-end items-center mb-4">
+          <x-button size="sm" color="orange" @click.prevent="addActivity">
+            Add Activity
+          </x-button>
+        </div>
+        <DataTable
+          table-class-name="compact"
+          :headers="activityTable"
+          :items="activities"
+          border-cell
+          hide-rows-per-page
+          :rows-per-page="15"
+          :hide-footer="activities.length < 15"
+        >
+          <template #item-status="{ status, id }">
+            <x-checkbox
+              color="emerald"
+              size="xl"
+              :modelValue="status === 1"
+              :disabled="status === 1"
+              @change="onActivityStatusUpdate(id)"
+            />
+          </template>
+          <template #item-action="item">
+            <div class="space-x-4">
+              <x-button
+                size="xs"
+                color="primary"
+                outlined
+                :disabled="item.status === 1"
+                @click.prevent="activityEdit(item)"
+              >
+                Edit
+              </x-button>
+              <x-button
+                size="xs"
+                color="error"
+                :disabled="item.status === 1"
+                outlined
+                @click.prevent="activityDelete(item.id)"
+              >
+                Delete
+              </x-button>
+            </div>
+          </template>
+        </DataTable>
+        <x-modal v-model="modals.activity" size="lg" show-close backdrop>
+          <template #header>
+            {{ activityActionEdit ? 'Edit' : 'Add' }} Lead Activity
+          </template>
+
+          <x-form @submit="onActivitySubmit" :auto-focus="false">
+            <div class="grid gap-4">
+              <x-input
+                v-model="activityForm.title"
+                label="Title"
+                :rules="[isRequired]"
+                class="w-full"
+              />
+
+              <x-textarea
+                v-model="activityForm.description"
+                label="Description"
+                :adjust-to-text="false"
+                class="w-full"
+              />
+
+              <x-select
+                v-model="activityForm.assignee_id"
+                label="Assignee"
+                :options="advisorOptions"
+                :rules="[isRequired]"
+                placeholder="Select Assignee"
+                class="w-full"
+              />
+
+              <DatePicker
+                :format="format"
+                v-model="activityForm.due_date"
+                label="Due Date"
+                :rules="[isRequired]"
+                class="w-full"
+                withTime
+                :min-date="new Date()"
+              />
+            </div>
+
+            <div class="text-right space-x-4 mt-12">
+              <x-button size="sm" @click.prevent="modals.activity = false">
+                Cancel
+              </x-button>
+
+              <x-button
+                size="sm"
+                color="emerald"
+                :loading="activityForm.processing"
+                type="submit"
+              >
+                {{ activityActionEdit ? 'Update' : 'Save' }}
+              </x-button>
+            </div>
+          </x-form>
+        </x-modal>
+        <x-modal v-model="modals.activityConfirm" show-close backdrop>
+          <template #header> Delete Activity </template>
+          <p>Are you sure you want to delete this activity?</p>
+          <template #actions>
+            <div class="text-right space-x-4">
+              <x-button
+                size="sm"
+                ghost
+                @click.prevent="modals.activityConfirm = false"
+              >
+                Cancel
+              </x-button>
+              <x-button
+                size="sm"
+                color="error"
+                :loading="activityForm.processing"
+                @click.prevent="activityDeleteConfirmed"
+              >
+                Delete
+              </x-button>
+            </div>
+          </template>
+        </x-modal>
+      </template>
+    </x-collapse>
+    <!-- <div class="p-4 rounded shadow mb-6 bg-white">
       <div class="flex justify-between items-center mb-4">
         <h3 class="font-semibold text-primary-800 text-lg">
           Lead Activities
@@ -1174,7 +1379,7 @@ const linkEntity = () => {
           </div>
         </template>
       </x-modal>
-    </div>
+    </div> -->
 
     <PlanDetails
       :insuranceProviders="insuranceProvidersAll"
@@ -1192,7 +1397,36 @@ const linkEntity = () => {
       :insuranceProviders="insuranceProviders"
       :quote="quote"
     />
-    <div class="p-4 rounded shadow mb-6 bg-white">
+
+    <x-collapse show-icon class="p-4 rounded shadow mb-6 bg-white">
+      <h3 class="font-semibold text-primary-800 text-lg">Lead History</h3>
+      <template #content>
+        <x-divider class="mb-4 mt-1" />
+        <div v-if="historyData === null" class="text-center py-3">
+          <x-button
+            size="sm"
+            color="primary"
+            outlined
+            @click.prevent="onLoadHistoryData"
+            :loading="historyLoading"
+          >
+            Load History Data
+          </x-button>
+        </div>
+
+        <DataTable
+          v-else
+          table-class-name="compact"
+          :headers="historyDataTable"
+          :items="historyData || []"
+          border-cell
+          hide-rows-per-page
+          :rows-per-page="15"
+          :hide-footer="historyData.length < 15"
+        />
+      </template>
+    </x-collapse>
+    <!-- <div class="p-4 rounded shadow mb-6 bg-white">
       <div>
         <h3 class="font-semibold text-primary-800 text-lg">Lead History</h3>
         <x-divider class="mb-4 mt-1" />
@@ -1218,7 +1452,7 @@ const linkEntity = () => {
         :rows-per-page="15"
         :hide-footer="historyData.length < 15"
       />
-    </div>
+    </div> -->
 
     <AuditLogs
       :type="'App\\Models\\BusinessQuote'"
