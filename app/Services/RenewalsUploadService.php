@@ -15,11 +15,13 @@ use App\Enums\quoteStatusCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
+use App\Enums\QuoteTypes;
 use App\Enums\QuoteTypeShortCode;
 use App\Enums\RenewalProcessStatuses;
 use App\Enums\RenewalsUploadType;
 use App\Enums\TiersEnum;
 use App\Enums\TravelQuoteEnum;
+use App\Exports\RenewalQuotesExport;
 use App\Imports\TravelUploadAndCreateImport;
 use App\Imports\UploadAndCreateImport;
 use App\Imports\UploadAndUpdateImport;
@@ -58,6 +60,7 @@ use App\Models\Tier;
 use App\Models\TravelQuote;
 use App\Models\UAELicenseHeldFor;
 use App\Models\User;
+use App\Repositories\BusinessQuoteRepository;
 use App\Repositories\CarQuoteRepository;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
@@ -1944,4 +1947,30 @@ class RenewalsUploadService
             ->orWhere(DB::raw('LOWER(text)'), strtolower($currently_located_in))
             ->value('id');
     }
+    public function getSearch($data)
+    {
+        $quotes = [];
+        $product = $data->product;
+        if ($product == QuoteTypeId::Business) {
+            $quotes = BusinessQuoteRepository::getDataOfBusiness()->withQueryString();
+        } else {
+            $quoteType = QuoteTypes::getName($product);
+            $repository = '\\App\\Repositories\\'.ucwords($quoteType->value).'QuoteRepository';
+            $quotes = $repository::getData()->withQueryString();
+        }
+
+        return $quotes;
+    }
+
+    public function getExport($data)
+    {
+        $quotes = [];
+        $product = $data->product;
+        $quoteType = QuoteTypes::getName($product);
+        $repository = '\\App\\Repositories\\'.ucwords($quoteType->value).'QuoteRepository';
+        $quotes = $repository::export();
+
+        return (new RenewalQuotesExport($quotes, $quoteType->name))->download('Renewal.xlsx');
+    }
+
 }

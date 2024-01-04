@@ -1,5 +1,7 @@
 <script setup>
 // const emit = defineEmits(["update:uploadedFiles"]);
+import {fileUploadErrorMessage} from "@/inertia/Composables/utilities.js";
+
 defineProps({
   members: Array,
   docTypes: Object,
@@ -20,14 +22,16 @@ const docForm = useForm({
   file: null,
 });
 
-const uploadFile = (doc, memberId, files) => {
+const uploadFile = (doc, memberId, filesWithInfo) => {
+  const { files, rejectReason} = filesWithInfo;
   if (files.length == 0) {
     notification.error({
-      title: 'Incorrect file type\nPlease upload a ' + doc.accepted_files + ' file',
+      title: 'File upload failed',
       position: 'top',
     });
-    return false;
-  }
+    docForm.setError({error: fileUploadErrorMessage(doc, rejectReason)});
+    return false
+  };
   isUploading.value = true;
   docForm
     .transform(data => ({

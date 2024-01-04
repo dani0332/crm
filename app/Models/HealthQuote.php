@@ -2,7 +2,10 @@
 
 namespace App\Models;
 
+use App\Enums\FilterTypes;
 use App\Enums\QuoteTypeId;
+use App\Traits\FilterCriteria;
+use App\Traits\QuoteModelTrait;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use OwenIt\Auditing\Auditable;
@@ -10,9 +13,19 @@ use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
 class HealthQuote extends Model implements AuditableContract
 {
-    use Auditable, HasFactory;
+    use Auditable, FilterCriteria, HasFactory, QuoteModelTrait;
 
     protected $table = 'health_quote_request';
+    public $filterables = [
+        'first_name' => FilterTypes::FREE,
+        'last_name' => FilterTypes::FREE,
+        'previous_quote_policy_number' => FilterTypes::EXACT,
+        'code' => FilterTypes::EXACT,
+        'email' => FilterTypes::EXACT,
+        'source' => FilterTypes::EXACT,
+        'renewal_expiry_date' => FilterTypes::DATE_BETWEEN,
+        'mobile_no' => FilterTypes::EXACT,
+    ];
     protected $guarded = [];
 
     public function emirate()
@@ -83,6 +96,11 @@ class HealthQuote extends Model implements AuditableContract
     public function advisor()
     {
         return $this->hasOne(User::class, 'id', 'advisor_id');
+    }
+
+    public function insuranceProvider()
+    {
+        return $this->hasOne(InsuranceProvider::class, 'text', 'currently_insured_with')->select(['id', 'text']);
     }
 
     public function wcAdvisor()
