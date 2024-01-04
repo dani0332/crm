@@ -543,6 +543,7 @@ const linkEntity = () => {
     <div class="flex justify-between items-center flex-wrap gap-2">
       <h2 class="text-xl font-semibold">Business Quote Detail</h2>
       <div class="flex gap-2">
+        <LeadNotes />
         <x-button
           v-if="isDuplicateAllowed"
           size="sm"

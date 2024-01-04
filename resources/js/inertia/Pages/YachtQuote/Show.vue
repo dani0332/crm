@@ -209,6 +209,7 @@ const linkEntity = () => {
     <div class="flex justify-between items-center flex-wrap gap-2 mb-5">
       <h2 class="text-xl font-semibold">Yacht Detail</h2>
       <div class="flex gap-2">
+        <LeadNotes />
         <Link
           v-if="can(permissionsEnum.YachtQuotesEdit)"
           :href="route('yacht-quotes-edit', quote.uuid)"
@@ -366,7 +367,9 @@ const linkEntity = () => {
           }}
           Profile
         </h3>
-        <x-tag color="success" v-if="quote.kyc_decision === 'Complete'"> KYC - Complete </x-tag>
+        <x-tag color="success" v-if="quote.kyc_decision === 'Complete'">
+          KYC - Complete
+        </x-tag>
         <x-tag color="amber" v-else> KYC - Pending </x-tag>
       </div>
       <x-divider class="mb-4 mt-1" />
