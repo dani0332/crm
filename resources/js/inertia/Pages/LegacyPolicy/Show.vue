@@ -386,7 +386,7 @@ const moveToImcrm = async (policyNumber, validateAll = true) => {
           </div> -->
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">Sales Person</dt>
-                <dd>{{ policy.policy?.coverage }}</dd>
+                <dd>{{ policy.policy?.renewer_person }}</dd>
           </div>
         </dl>
       </div>
