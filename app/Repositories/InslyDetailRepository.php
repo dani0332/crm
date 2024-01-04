@@ -244,6 +244,7 @@ class InslyDetailRepository extends BaseRepository
                     }
                     $policy->moved_to_imcrm_date = date('Y-m-d H:i:s');
                     $policy->moved_to_imcrm_by = auth()->user()->name;
+                    $policy->code = $obj->code;
                     $policy->save();
                 }
                 $data[] = $this->where('policy_no', $policyNumber)->first()->toArray();

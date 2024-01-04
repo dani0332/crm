@@ -333,8 +333,9 @@ const moveToImcrm = async (policyNumber, validateAll = true) => {
                   target="_blank"
                   rel="noopener noreferrer"
                 >
-                  REF-{{ policy?.imcrm_link.match(/\/([^/]+)$/)?.[1] }}</a
-                >
+                    {{ policy?.code || `REF-${policy?.imcrm_link?.match(/\/([^/]+)$/)?.[1]}` }}
+
+                </a>
               </dd>
             </div>
             <div class="grid sm:grid-cols-2">
@@ -385,7 +386,7 @@ const moveToImcrm = async (policyNumber, validateAll = true) => {
           </div> -->
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">Sales Person</dt>
-            <dd>{{ policy.policy?.coverage }}</dd>
+                <dd>{{ policy.policy?.coverage }}</dd>
           </div>
         </dl>
       </div>
