@@ -11,7 +11,7 @@ import KycForm from '@/inertia/Components/KycForm.vue';
 import PlanDetails from '../../Components/PlanDetails.vue';
 import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue';
 
-defineProps({
+const props = defineProps({
   quote: Object,
   documentTypes: Object,
   quoteStatuses: Object,
@@ -37,6 +37,7 @@ defineProps({
   UBORelations: Array,
   UBOsDetails: Array,
   canAddBatchNumber: Boolean,
+  quoteRequest: Object,
 });
 
 const page = usePage();
@@ -46,6 +47,8 @@ const rolesEnum = page.props.rolesEnum;
 const modals = reactive({
   duplicate: false,
 });
+
+const countDays = daysSinceStale(props.quoteRequest?.stale_at);
 
 const leadDuplicateForm = useForm({
   modelType: 'cycle',
@@ -268,8 +271,17 @@ const linkEntity = () => {
   <div>
     <Head title="Cycle Quotes" />
     <div class="flex justify-between items-center flex-wrap gap-2 mb-5">
-      <h2 class="text-xl font-semibold">Cycle Detail</h2>
+      <div class="flex items-center space-x-2">
+        <h2 class="text-xl font-semibold">Cycle Detail</h2>
+        <p
+          class="bg-red-600 px-2 py-1 rounded text-sm text-white"
+          v-if="countDays !== false"
+        >
+          Stale for {{ countDays }} days
+        </p>
+      </div>
       <div class="flex gap-2">
+        <LeadNotes />
         <x-button size="sm" color="#ff5e00" @click.prevent="openDuplicate">
           Duplicate Lead
         </x-button>
@@ -470,7 +482,9 @@ const linkEntity = () => {
           }}
           Profile
         </h3>
-        <x-tag color="success" v-if="quote.kyc_decision === 'Complete'"> KYC - Complete </x-tag>
+        <x-tag color="success" v-if="quote.kyc_decision === 'Complete'">
+          KYC - Complete
+        </x-tag>
         <x-tag color="amber" v-else> KYC - Pending </x-tag>
       </div>
       <x-divider class="mb-4 mt-1" />

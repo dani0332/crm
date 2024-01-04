@@ -43,6 +43,8 @@ const notification = useNotifications('toast');
 const hasAnyRole = roles => useHasAnyRole(roles);
 const rolesEnum = page.props.rolesEnum;
 
+const countDays = daysSinceStale(props.quoteRequest?.stale_at);
+
 const modals = reactive({
   duplicate: false,
   activity: false,
@@ -458,8 +460,17 @@ const linkEntity = () => {
   <div>
     <Head title="Home Detail" />
     <div class="flex justify-between items-center flex-wrap gap-2">
-      <h2 class="text-xl font-semibold">Home Detail</h2>
+      <div class="flex items-center space-x-2">
+        <h2 class="text-xl font-semibold">Home Detail</h2>
+        <p
+          class="bg-red-600 px-2 py-1 rounded text-sm text-white"
+          v-if="countDays !== false"
+        >
+          Stale for {{ countDays }} days
+        </p>
+      </div>
       <div class="flex gap-2">
+        <LeadNotes />
         <x-button size="sm" color="#ff5e00" @click.prevent="openDuplicate">
           Duplicate Lead
         </x-button>

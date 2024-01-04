@@ -36,6 +36,7 @@ const props = defineProps({
   UBORelations: Array,
   UBOsDetails: Array,
   canAddBatchNumber: Boolean,
+  quoteRequest: Object,
 });
 
 const page = usePage();
@@ -43,6 +44,8 @@ const hasAnyRole = roles => useHasAnyRole(roles);
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
 const rolesEnum = page.props.rolesEnum;
+
+const countDays = daysSinceStale(props.quoteRequest?.stale_at);
 
 const historyLoading = ref(false);
 
@@ -248,8 +251,17 @@ const linkEntity = () => {
   <div>
     <Head title="Pet Quotes" />
     <div class="flex justify-between items-center flex-wrap gap-2 mb-5">
-      <h2 class="text-xl font-semibold">Pet Detail</h2>
+      <div class="flex items-center space-x-2">
+        <h2 class="text-xl font-semibold">Pet Detail</h2>
+        <p
+          class="bg-red-600 px-2 py-1 rounded text-sm text-white"
+          v-if="countDays !== false"
+        >
+          Stale for {{ countDays }} days
+        </p>
+      </div>
       <div class="flex gap-2">
+        <LeadNotes />
         <x-button size="sm" color="#ff5e00" @click.prevent="openDuplicate">
           Duplicate Lead
         </x-button>

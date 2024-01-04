@@ -36,6 +36,8 @@ const hasAnyRole = roles => useHasAnyRole(roles);
 const rolesEnum = page.props.rolesEnum;
 const notification = useNotifications('toast');
 
+const countDays = daysSinceStale(props.quoteRequest?.stale_at);
+
 const { copy, copied } = useClipboard();
 
 const rules = {
@@ -541,8 +543,17 @@ const linkEntity = () => {
   <div>
     <Head title="Business Quote Detail" />
     <div class="flex justify-between items-center flex-wrap gap-2">
-      <h2 class="text-xl font-semibold">Business Quote Detail</h2>
+      <div class="flex items-center space-x-2">
+        <h2 class="text-xl font-semibold">Business Quote Detail</h2>
+        <p
+          class="bg-red-600 px-2 py-1 rounded text-sm text-white"
+          v-if="countDays !== false"
+        >
+          Stale for {{ countDays }} days
+        </p>
+      </div>
       <div class="flex gap-2">
+        <LeadNotes />
         <x-button
           v-if="isDuplicateAllowed"
           size="sm"

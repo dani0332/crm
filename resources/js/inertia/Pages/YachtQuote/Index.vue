@@ -89,21 +89,29 @@ onMounted(() => {
   }
 });
 
-const tableHeader = [
-  { text: 'Ref-ID', value: 'uuid' },
-  { text: 'FIRST NAME', value: 'first_name' },
-  { text: 'LAST NAME', value: 'last_name' },
-  { text: 'LEAD STATUS', value: 'quote_status' },
-  { text: 'ADVISOR', value: 'advisor' },
-  { text: 'CREATED DATE', value: 'created_at' },
-  { text: 'LAST MODIFIED DATE', value: 'updated_at' },
-  { text: 'PRICE', value: 'premium' },
-  { text: 'POLICY NO', value: 'policy_no' },
-  { text: 'SOURCE', value: 'source' },
-  { text: 'CURRENTLY INSURED WITH', value: 'currently_insured_with' },
-  { text: 'IS ECOMMERCE', value: 'is_ecommerce' },
-  { text: 'Previous Policy Number', value: 'previous_quote_policy_number' },
-];
+const tableHeader = ref([
+  { text: 'Ref-ID', value: 'uuid', is_active: true },
+  { text: 'FIRST NAME', value: 'first_name', is_active: true },
+  { text: 'LAST NAME', value: 'last_name', is_active: true },
+  { text: 'LEAD STATUS', value: 'quote_status', is_active: true },
+  { text: 'ADVISOR', value: 'advisor', is_active: true },
+  { text: 'CREATED DATE', value: 'created_at', is_active: true },
+  { text: 'LAST MODIFIED DATE', value: 'updated_at', is_active: true },
+  { text: 'PRICE', value: 'premium', is_active: true },
+  { text: 'POLICY NO', value: 'policy_no', is_active: true },
+  { text: 'SOURCE', value: 'source', is_active: true },
+  {
+    text: 'CURRENTLY INSURED WITH',
+    value: 'currently_insured_with',
+    is_active: true,
+  },
+  { text: 'IS ECOMMERCE', value: 'is_ecommerce', is_active: true },
+  {
+    text: 'Previous Policy Number',
+    value: 'previous_quote_policy_number',
+    is_active: true,
+  },
+]);
 
 const quotesSelected = ref([]);
 const permissionAssignLeads = ref(false);
@@ -158,8 +166,11 @@ watch(
       <h2 class="text-xl font-semibold">Yacht Quotes List</h2>
 
       <div class="flex items-center space-x-2">
-        <column-selection :columns="tableHeader"></column-selection>
+        <column-selection v-model:columns="tableHeader"></column-selection>
         <FiltersButton />
+        <Link href="">
+          <x-button size="sm" color="#1d83bc" tag="div"> Cards View </x-button>
+        </Link>
         <x-button
           v-if="can(permissionsEnum.YachtQuotesCreate)"
           size="sm"

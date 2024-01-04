@@ -125,7 +125,9 @@ const notesLength = computed(() => notesForm.notes?.length ?? 0);
         </x-tooltip>
       </div>
       <div class="mt-5 flex gap-2 justify-end">
-        <x-button size="sm"> Cancel </x-button>
+        <x-button size="sm" @click.prevent="showAddNotes = false">
+          Cancel
+        </x-button>
         <x-button size="sm" color="emerald"> Save </x-button>
       </div>
     </form>
