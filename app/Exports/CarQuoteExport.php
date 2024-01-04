@@ -8,6 +8,7 @@ use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class CarQuoteExport implements FromCollection, ShouldAutoSize, WithHeadings, WithMapping
 {
@@ -15,10 +16,6 @@ class CarQuoteExport implements FromCollection, ShouldAutoSize, WithHeadings, Wi
 
     public function collection()
     {
-        if (request()->latest_flow) {
-            return app(CarQuoteService::class)->getExportData()->get();
-        }
-
         return app(CarQuoteService::class)->getGridData()->get();
     }
 
@@ -110,8 +107,19 @@ class CarQuoteExport implements FromCollection, ShouldAutoSize, WithHeadings, Wi
         ];
     }
 
-    public function chunkSize(): int
+    public function carQuoteExport()
     {
-        return 500;
+        return new StreamedResponse(function () {
+            $handle = fopen('php://output', 'w');
+            fputcsv($handle, $this->headings());
+            $carQuotes = app(CarQuoteService::class)->getExportData()->get();
+            foreach ($carQuotes as $quote) {
+                fputcsv($handle, $this->map($quote));
+            }
+            fclose($handle);
+        }, 200, [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => 'attachment; filename="Car-List.csv"',
+        ]);
     }
 }
