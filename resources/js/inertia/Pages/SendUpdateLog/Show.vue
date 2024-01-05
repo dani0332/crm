@@ -219,14 +219,14 @@ const onUpdateLog = () => {
       </div>
     </div>
 
-    <!-- Indicative additional price comp -->
+    <!-- Indicative additional price comp will b displayed for all lobs except sub type MDOM, MDOV, MPC -->
     <LazyIndicativeAdditionalPrice
       v-if="showIndicativeAdditionalPrice"
     />
-    <!-- 
-      will b displayed for all lobs except sub type MDOM, MDOV, MPC
 
-     -->
+    <PlanDetails
+      v-if="(selectedType.slug === 'CFIAR' || selectedType.slug === 'COPD') && false"
+    />
 
     <AuditLogs
       :type="'App\\Models\\SendUpdateLog'"
