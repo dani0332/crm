@@ -36,7 +36,7 @@ class Kernel extends ConsoleKernel
         $schedule
             ->command('UpdateUserStatus:cron')->everyMinute()->onOneServer()->withoutOverlapping(1);
 
-        $schedule->job(new UnconSubmissionReminder)
+        /*$schedule->job(new UnconSubmissionReminder)
             ->tuesdays()
             ->fridays()
             ->withoutOverlapping(1)->onOneServer()
@@ -46,7 +46,7 @@ class Kernel extends ConsoleKernel
         $schedule->job((new CarSoldResubmissions))
             ->daily()
             ->withoutOverlapping(1)->onOneServer()
-            ->at('9:00');
+            ->at('9:00');*/
 
         $schedule
             ->command('AddBatchNumber:cron')->timezone('Asia/Dubai')->weeklyOn(1, '0:00')->onOneServer()->withoutOverlapping(1);
