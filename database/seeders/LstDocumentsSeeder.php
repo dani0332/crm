@@ -1400,7 +1400,7 @@ class LstDocumentsSeeder extends Seeder
 
             'max_files' => 15,
             'max_size' => 30,
-            'is_active' => 0,
+            'is_active' => 1,
 
             'is_required' => 0,
             'send_to_customer' => 0,
