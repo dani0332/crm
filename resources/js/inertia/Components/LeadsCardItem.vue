@@ -15,10 +15,7 @@ const props = defineProps({
   },
   id: Number,
   title: String,
-  url: {
-    type: String,
-    require: true,
-  },
+  quote_type_id: Number,
 });
 
 const quoteStatusEnum = inject('quoteStatusEnum');

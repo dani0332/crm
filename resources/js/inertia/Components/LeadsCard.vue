@@ -8,6 +8,10 @@ const props = defineProps({
     type: Object,
     require: true,
   },
+  quoteTypeId: {
+    type: Number,
+    require: true
+  }
 });
 
 const quotes = ref({ ...props.quotes });
@@ -173,7 +177,7 @@ const onSearch = id => {
         :title="quote.title.split(' ').join('')"
         :id="quote.id"
         :leads="quote.data.leads_list.data"
-        :url="quote.text ?? quote.title"
+        :quote_type_id="quoteTypeId"
       />
       <div
         class="mt-3"

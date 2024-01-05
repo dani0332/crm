@@ -331,20 +331,45 @@ class BusinessQuoteController extends Controller
 
     public function cardsView(Request $request)
     {
-        $quotes = [];
-        $leadStatuses = $this->dropdownSourceService->getDropdownSource('quote_status_id', QuoteTypeId::Business);
-        $leadStatuses = $leadStatuses->filter(function ($item) {
-            return $item->text == quoteStatusCode::NEWLEAD || $item->text == quoteStatusCode::QUOTED || $item->text == quoteStatusCode::PAYMENTPENDING || $item->text == quoteStatusCode::QUALIFIED || $item->text == quoteStatusCode::APPLICATION_PENDING || $item->text == quoteStatusCode::MISSING_DOCUMENTS || $item->text == quoteStatusCode::PENDINGUW || $item->text == quoteStatusCode::PLOICY_DOCUMENTS_PENDING;
-        })->toArray();
+        $quotes = [
+            ['id' => QuoteStatusEnum::NewLead, 'title' => quoteStatusCode::NEW_LEAD, 'data' => getDataAgainstStatus(QuoteTypes::BUSINESS->value, QuoteStatusEnum::NewLead)],
+            ['id' => QuoteStatusEnum::Allocated, 'title' => quoteStatusCode::ALLOCATED, 'data' => getDataAgainstStatus(QuoteTypes::BUSINESS->value, QuoteStatusEnum::Allocated)],
+            ['id' => QuoteStatusEnum::ProposalFormRequested, 'title' => quoteStatusCode::PROPOSAL_FORM_REQUESTED, 'data' => getDataAgainstStatus(QuoteTypes::BUSINESS->value, QuoteStatusEnum::ProposalFormRequested)],
+            ['id' => QuoteStatusEnum::ProposalFormReceived, 'title' => quoteStatusCode::PROPOSAL_FORM_RECEIVED, 'data' => getDataAgainstStatus(QuoteTypes::BUSINESS->value, QuoteStatusEnum::ProposalFormReceived)],
+            ['id' => QuoteStatusEnum::PendingRenewalInformation, 'title' => quoteStatusCode::PENDING_RENEWAL_INFORMATION, 'data' => getDataAgainstStatus(QuoteTypes::BUSINESS->value, QuoteStatusEnum::PendingRenewalInformation)],
+            ['id' => QuoteStatusEnum::AdditionalInformationRequested, 'title' => quoteStatusCode::ADDITIONAL_INFORMATION_REQUESTED, 'data' => getDataAgainstStatus(QuoteTypes::BUSINESS->value, QuoteStatusEnum::AdditionalInformationRequested)],
+            ['id' => QuoteStatusEnum::QuoteRequested, 'title' => quoteStatusCode::QUOTE_REQUESTED, 'data' => getDataAgainstStatus(QuoteTypes::BUSINESS->value, QuoteStatusEnum::QuoteRequested)],
+            ['id' => QuoteStatusEnum::Quoted, 'title' => quoteStatusCode::QUOTED, 'data' => getDataAgainstStatus(QuoteTypes::BUSINESS->value, QuoteStatusEnum::Quoted)],
+            ['id' => QuoteStatusEnum::FinalizingTerms, 'title' => quoteStatusCode::FINALIZING_TERMS, 'data' => getDataAgainstStatus(QuoteTypes::BUSINESS->value, QuoteStatusEnum::FinalizingTerms)],
+            ['id' => QuoteStatusEnum::PolicyIssued, 'title' => quoteStatusCode::POLICY_ISSUED, 'data' => getDataAgainstStatus(QuoteTypes::BUSINESS->value, QuoteStatusEnum::PolicyIssued)],
+        ];
 
-        $leadStatuses = array_map(function ($item) {
-            $item['data'] = getDataAgainstStatus('Business', $item['id']);
+        $quoteStatusEnums = QuoteStatusEnum::asArray();
+        $isManagerOrAdminAccess = auth()->user()->hasAnyRole([RolesEnum::CorplineManager, RolesEnum::Admin]);
 
-            return $item;
-        }, $leadStatuses);
+        if (!$isManagerOrAdminAccess) {
+            if (auth()->user()->hasAnyRole([RolesEnum::CorpLineNewBusinessAdvisor, RolesEnum::CorpLineNewBusinessManager])) {
+                $quotes = collect($quotes)->whereNotIn('id', [
+                    QuoteStatusEnum::Allocated,
+                    QuoteStatusEnum::PendingRenewalInformation,
+                ])->values()->toArray();
+
+            } elseif (auth()->user()->hasAnyRole([RolesEnum::CorpLineRenewalAdvisor, RolesEnum::CorpLineRenewalManager])) {
+                $quotes = collect($quotes)->whereNotIn('id', [
+                    QuoteStatusEnum::NewLead,
+                    QuoteStatusEnum::ProposalFormRequested,
+                    QuoteStatusEnum::ProposalFormReceived,
+                    QuoteStatusEnum::AdditionalInformationRequested,
+                ])->values()->toArray();
+            } else {
+                $quotes = [];
+            }
+        }
 
         return inertia('CorpLineQuote/Cards', [
-            'quotes' => array_values($leadStatuses),
+            'quotes' => $quotes,
+            'quoteStatusEnums' => $quoteStatusEnums,
+            'quoteTypeId' => QuoteTypes::BUSINESS->id(),
         ]);
     }
 }

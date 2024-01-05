@@ -1,12 +1,15 @@
 <script setup>
 const props = defineProps({
   quoteStatusEnum: Array,
+  quoteTypeId: Number,
 });
-const page = usePage();
 
+const page = usePage();
 const dateFormat = date => {
   return useDateFormat(date, 'DD-MM-YYYY HH:mm:ss').value;
 };
+
+console.log(props.quoteTypeId);
 
 provide('quoteStatusEnum', props.quoteStatusEnum);
 const quotes = reactive({
@@ -50,6 +53,7 @@ const quotes = reactive({
         :key="quote.id"
         :quote="quote"
         :quotes="quotes"
+        :quoteTypeId="quoteTypeId"
       />
     </div>
   </div>
