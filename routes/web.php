@@ -127,6 +127,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::get('/personal-quotes/car/car-quotes-search', [\App\Http\Controllers\V2\CarQuoteController::class, 'index'])->name('car-quotes-search');
 
         if (in_array(quoteTypeCode::Pet, newUi())) {
+            Route::get('quotes/pet/cards', [PetQuoteController::class, 'cardsView'])->name('pet-quotes-card');
             Route::resource('personal-quotes/pet', PetQuoteController::class)->names(generateRouteNames('pet-quotes'));
         }
         if (in_array(quoteTypeCode::Bike, newUi())) {
@@ -134,9 +135,11 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         }
         if (in_array(quoteTypeCode::Cycle, newUi())) {
             Route::resource('personal-quotes/cycle', CycleQuoteController::class)->names(generateRouteNames('cycle-quotes'));
+            Route::get('quotes/cycle/cards', [CycleQuoteController::class, 'cardsView'])->name('cycle-quotes-card');
         }
         if (in_array(quoteTypeCode::Yacht, newUi())) {
             Route::resource('personal-quotes/yacht', YachtQuoteController::class)->names(generateRouteNames('yacht-quotes'));
+            Route::get('quotes/yacht/cards', [YachtQuoteController::class, 'cardsView'])->name('yacth-quotes-card');
         }
         if (in_array(quoteTypeCode::Jetski, newUi())) {
             Route::resource('personal-quotes/jetski', JetskiQuoteController::class)->names(generateRouteNames('jetski-quotes'));

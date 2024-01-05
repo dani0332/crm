@@ -4,6 +4,7 @@ namespace App\Http\Controllers\V2;
 
 use App\Enums\CustomerTypeEnum;
 use App\Enums\LookupsEnum;
+use App\Enums\quoteStatusCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
@@ -26,6 +27,7 @@ use App\Repositories\QuoteStatusRepository;
 use App\Repositories\UserRepository;
 use App\Services\AMLService;
 use App\Services\CentralService;
+use AWS\CRT\HTTP\Request;
 
 class PetQuoteController extends Controller
 {
@@ -175,5 +177,46 @@ class PetQuoteController extends Controller
         PetQuoteRepository::update($uuid, $request->validated());
 
         return redirect(route('pet-quotes-show', $uuid))->with('message', 'Quote is updated successfully.');
+    }
+
+    public function cardsView(Request $request)
+    {
+        dd("working");
+        $quotes = [
+            ['id' => QuoteStatusEnum::NewLead, 'title' => quoteStatusCode::NEW_LEAD, 'data' => getDataAgainstStatus(QuoteTypes::PET->value, QuoteStatusEnum::NewLead)],
+            ['id' => QuoteStatusEnum::Allocated, 'title' => quoteStatusCode::ALLOCATED, 'data' => getDataAgainstStatus(QuoteTypes::PET->value, QuoteStatusEnum::Allocated)],
+            ['id' => QuoteStatusEnum::Quoted, 'title' => quoteStatusCode::QUOTED, 'data' => getDataAgainstStatus(QuoteTypes::PET->value, QuoteStatusEnum::Quoted)],
+            ['id' => QuoteStatusEnum::FollowedUp, 'title' => quoteStatusCode::FOLLOWEDUP, 'data' => getDataAgainstStatus(QuoteTypes::PET->value, QuoteStatusEnum::FollowedUp)],
+            ['id' => QuoteStatusEnum::InNegotiation, 'title' => quoteStatusCode::NEGOTIATION, 'data' => getDataAgainstStatus(QuoteTypes::PET->value, QuoteStatusEnum::InNegotiation)],
+            ['id' => QuoteStatusEnum::PaymentPending, 'title' => quoteStatusCode::PAYMENTPENDING, 'data' => getDataAgainstStatus(QuoteTypes::PET->value, QuoteStatusEnum::PaymentPending)],
+            ['id' => QuoteStatusEnum::TransactionApproved, 'title' => quoteStatusCode::TRANSACTIONAPPROVED, 'data' => getDataAgainstStatus(QuoteTypes::PET->value, QuoteStatusEnum::TransactionApproved)],
+            ['id' => QuoteStatusEnum::PolicyIssued, 'title' => quoteStatusCode::POLICY_ISSUED, 'data' => getDataAgainstStatus(QuoteTypes::PET->value, QuoteStatusEnum::PolicyIssued)],
+        ];
+
+        $quoteStatusEnums = QuoteStatusEnum::asArray();
+        $isManagerOrAdminAccess = auth()->user()->hasAnyRole([RolesEnum::PetManager, RolesEnum::Admin]);
+
+        if (!$isManagerOrAdminAccess) {
+            if (auth()->user()->hasRole(RolesEnum::PetNewBusinessAdvisor)) {
+                $quotes = collect($quotes)->whereNotIn('id', [
+                    QuoteStatusEnum::Allocated,
+                    QuoteStatusEnum::InNegotiation
+                ])->values()->toArray();
+
+            } elseif (auth()->user()->hasRole(RolesEnum::PetRenewalAdvisor)) {
+                $quotes = collect($quotes)->whereNotIn('id', [
+                    QuoteStatusEnum::NewLead,
+                    QuoteStatusEnum::InNegotiation,
+                ])->values()->toArray();
+            } else {
+                $quotes = [];
+            }
+        }
+
+        return inertia('PetQuote/Cards', [
+            'quotes' => $quotes,
+            'quoteStatusEnums' => $quoteStatusEnums,
+            'quoteTypeId' => QuoteTypes::PET->id(),
+        ]);
     }
 }

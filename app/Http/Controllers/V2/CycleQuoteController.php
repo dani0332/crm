@@ -4,6 +4,7 @@ namespace App\Http\Controllers\V2;
 
 use App\Enums\CustomerTypeEnum;
 use App\Enums\LookupsEnum;
+use App\Enums\quoteStatusCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
@@ -25,6 +26,7 @@ use App\Repositories\QuoteStatusRepository;
 use App\Repositories\UserRepository;
 use App\Services\AMLService;
 use App\Services\CentralService;
+use AWS\CRT\HTTP\Request;
 
 class CycleQuoteController extends Controller
 {
@@ -163,6 +165,46 @@ class CycleQuoteController extends Controller
             'emirates' => $emirates,
             'UBOsDetails' => $uboDetails,
             'UBORelations' => $uboRelations,
+        ]);
+    }
+
+    public function cardsViewHome(Request $request)
+    {
+        $quotes = [
+            ['id' => QuoteStatusEnum::NewLead, 'title' => quoteStatusCode::NEW_LEAD, 'data' => getDataAgainstStatus(QuoteTypes::CYCLE->value, QuoteStatusEnum::NewLead)],
+            ['id' => QuoteStatusEnum::Allocated, 'title' => quoteStatusCode::ALLOCATED, 'data' => getDataAgainstStatus(QuoteTypes::CYCLE->value, QuoteStatusEnum::Allocated)],
+            ['id' => QuoteStatusEnum::Quoted, 'title' => quoteStatusCode::QUOTED, 'data' => getDataAgainstStatus(QuoteTypes::CYCLE->value, QuoteStatusEnum::Quoted)],
+            ['id' => QuoteStatusEnum::FollowedUp, 'title' => quoteStatusCode::FOLLOWEDUP, 'data' => getDataAgainstStatus(QuoteTypes::CYCLE->value, QuoteStatusEnum::FollowedUp)],
+            ['id' => QuoteStatusEnum::InNegotiation, 'title' => quoteStatusCode::NEGOTIATION, 'data' => getDataAgainstStatus(QuoteTypes::CYCLE->value, QuoteStatusEnum::InNegotiation)],
+            ['id' => QuoteStatusEnum::PaymentPending, 'title' => quoteStatusCode::PAYMENTPENDING, 'data' => getDataAgainstStatus(QuoteTypes::CYCLE->value, QuoteStatusEnum::PaymentPending)],
+            ['id' => QuoteStatusEnum::TransactionApproved, 'title' => quoteStatusCode::TRANSACTIONAPPROVED, 'data' => getDataAgainstStatus(QuoteTypes::CYCLE->value, QuoteStatusEnum::TransactionApproved)],
+            ['id' => QuoteStatusEnum::PolicyIssued, 'title' => quoteStatusCode::POLICY_ISSUED, 'data' => getDataAgainstStatus(QuoteTypes::CYCLE->value, QuoteStatusEnum::PolicyIssued)],
+        ];
+
+        $quoteStatusEnums = QuoteStatusEnum::asArray();
+        $isManagerOrAdminAccess = auth()->user()->hasAnyRole([RolesEnum::CycleManager, RolesEnum::Admin]);
+
+        if (!$isManagerOrAdminAccess) {
+            if (auth()->user()->hasRole(RolesEnum::CycleNewBusinessAdvisor)) {
+                $quotes = collect($quotes)->whereNotIn('id', [
+                    QuoteStatusEnum::Allocated,
+                    QuoteStatusEnum::InNegotiation
+                ])->values()->toArray();
+
+            } elseif (auth()->user()->hasRole(RolesEnum::CycleRenewalAdvisor)) {
+                $quotes = collect($quotes)->whereNotIn('id', [
+                    QuoteStatusEnum::NewLead,
+                    QuoteStatusEnum::InNegotiation,
+                ])->values()->toArray();
+            } else {
+                $quotes = [];
+            }
+        }
+
+        return inertia('CycleQuote/Cards', [
+            'quotes' => $quotes,
+            'quoteStatusEnums' => $quoteStatusEnums,
+            'quoteTypeId' => QuoteTypes::CYCLE->id(),
         ]);
     }
 }
