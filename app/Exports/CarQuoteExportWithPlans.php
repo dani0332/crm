@@ -3,16 +3,12 @@
 namespace App\Exports;
 
 use App\Services\CarQuoteService;
+use App\Traits\ExcelExportable;
 use Carbon\Carbon;
-use Maatwebsite\Excel\Concerns\Exportable;
-use Maatwebsite\Excel\Concerns\FromCollection;
-use Maatwebsite\Excel\Concerns\ShouldAutoSize;
-use Maatwebsite\Excel\Concerns\WithHeadings;
-use Maatwebsite\Excel\Concerns\WithMapping;
 
-class CarQuoteExportWithPlans implements FromCollection, ShouldAutoSize, WithHeadings, WithMapping
+class CarQuoteExportWithPlans
 {
-    use Exportable;
+    use ExcelExportable;
 
     public function collection()
     {
