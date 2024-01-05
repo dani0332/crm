@@ -19,6 +19,28 @@ class SageApiService
         $this->sageRequestUrl = env('SAGE_300_BASE_URL').env('SAGE_300_VERSION');
     }
 
+    
+    public function verifySageCustomer($customerId, $data = NULL)
+    {
+        $customer = Customer::find($customerId);
+        $customer->data = !empty($data) ? $data : [];
+        if ($customer) {
+
+            $payLoadOptions = SagePayloadFactory::createCustomerPayload($customer);
+            $jsonResponse = $this->postToSage300($payLoadOptions['endPoint'], $payLoadOptions['payload']);
+
+            $response = json_decode($jsonResponse, true);
+            if (isset($response['error']['code']) && $response['error']['code'] == 'RecordDuplicate') {
+                return $payLoadOptions['customerNumber'];
+            } elseif (isset($response['CustomerNumber'])) {
+                return $response['CustomerNumber'];
+            } else {
+                return false;
+            }
+        }
+    }    
+    
+    /*
     public function verifySageCustomer($customerId)
     {
         $customer = Customer::find($customerId);
@@ -36,7 +58,7 @@ class SageApiService
                 return false;
             }
         }
-    }
+    }*/
 
     public function postToSage300($endPoint, $payLoad)
     {

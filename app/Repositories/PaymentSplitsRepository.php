@@ -223,11 +223,7 @@ class PaymentSplitsRepository
                     if ($paymentSplit) {
                         if ($paymentSplit->payment_method == PaymentMethodsEnum::CreditCard) {
                             //Marshal Service to capture split payment
-                            $captureApi = [];
-                            $captureApi['uuid']  = $quoteModel->uuid;  
-                            $captureApi['type_id'] = $quoteTypeId;
-                            $captureApi['code'] = $quoteModel->code.'-'.$paymentSplit->sr_no;
-                            ////$response = app(CRUDService::class)->processCapturePayment($captureApi);
+                            $response = app(CRUDService::class)->capturePayment($quoteModel, $paymentSplit, $quoteTypeId, $splitAmount);
                             $paymentSplit->payment_status_id = PaymentStatusEnum::PAID;
                         }
                         $paymentSplit->collection_amount = $splitAmount;
@@ -321,11 +317,18 @@ class PaymentSplitsRepository
             */
 
             //$message = $sageApiService->postToSage300('AR/ARReceiptAndAdjustmentBatches', $createPrepaymentReciept);
-            /* NEW CUSTOMER CREATION
+            // NEW CUSTOMER CREATION
+            //dd($request->all());
+            $quote = $this->getQuoteObject($request->modelType, $request->quote_id);
+            $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($request->modelType));
+            $customerData = [];          
+            $customerData['quoteTypeId'] = $quoteTypeId;
+            $customerData['id'] =  $quote->id;            
             $sageApiService = new SageApiService();
-            $sageCustomerNumber = $sageApiService->verifySageCustomer($request->customer_id);
-            */
-            $sageApiService = new SageApiService();
+            $sageCustomerNumber = $sageApiService->verifySageCustomer($request->customer_id, $customerData);
+            //$sageCustomerNumber = 'IC008';
+            $request->merge(['sage_customer_number' => $sageCustomerNumber]);                    
+            // create prepayment reciept
             $payLoadOptions = SagePayloadFactory::createPrepaymentPayload($request);
             $message = $sageApiService->postToSage300($payLoadOptions['endPoint'], $payLoadOptions['payload']);
             $sageResponse = json_decode($message, true);

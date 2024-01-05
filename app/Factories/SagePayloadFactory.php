@@ -2,6 +2,8 @@
 
 namespace App\Factories;
 
+use App\Enums\quoteStatusCode;
+use App\Models\QuoteRequestEntityMapping;
 use App\Services\SageApiService;
 
 class SagePayloadFactory
@@ -273,6 +275,34 @@ class SagePayloadFactory
         ];
     }
 
+
+    public static function createCustomerPayload($customer)
+    {
+        $data = $customer->data;
+        $mapping = QuoteRequestEntityMapping::where([['quote_type_id', $data['quoteTypeId']], ['quote_request_id', $data['id']]])->first();
+        if ($mapping) {
+            $payLoad = [
+                'CustomerNumber' => 'C' . $customer->id,
+                'CustomerName' => $customer->first_name . ' ' . $customer->last_name,
+                'GroupCode' => 'PHC',
+            ];
+        } else {
+            $payLoad = [
+                'CustomerNumber' => 'P' . $customer->id,
+                'CustomerName' => $customer->first_name . ' ' . $customer->last_name,
+                'GroupCode' => 'PHI',
+            ];
+        }
+
+        return [
+            'endPoint' => 'AR/ARCustomers',
+            'payload' => $payLoad,
+            'customerNumber' => $payLoad['CustomerNumber'],
+        ];
+    }
+
+
+    /*
     public static function createCustomerPayload($customer)
     {
         $appendGroup = 'G';
@@ -290,7 +320,7 @@ class SagePayloadFactory
             'customerNumber' => $customerNumber,
         ];
     }
-
+*/
     public static function createPrepaymentPayload($request)
     {
         $payLoad = [
@@ -298,7 +328,7 @@ class SagePayloadFactory
             'ReceiptsAdjustments' => [
                 [
                     'BatchType' => 'CA',
-                    'CustomerNumber' => 'IC008',
+                    'CustomerNumber' => $request->sage_customer_number,
                     'BankReceiptAmount' => floatval($request->collection_amount),
                     'CheckReceiptNumber' => '123456',
                     'PaymentCode' => 'BT',
@@ -306,7 +336,7 @@ class SagePayloadFactory
                     'AppliedReceiptsAdjustments' => [
                         [
                             'BatchType' => 'CA',
-                            'CustomerNumber' => 'IC008',
+                            'CustomerNumber' => $request->sage_customer_number,
                             'ReceiptTransactionType' => 'Prepayment',
                         ],
                     ],

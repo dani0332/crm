@@ -616,6 +616,34 @@ class CRUDService extends BaseService
         return $response;
     }
 
+    public function capturePayment($quoteModel, $paymentSplit, $quoteTypeId, $amount)
+    {
+        if ($paymentSplit) {
+            if ($amount>0) {
+                    PaymentAction::create([
+                        'payment_code' => $paymentSplit->code,
+                        'is_fulfilled' => 0,
+                        'action_type' => 'CAPTURE',
+                        'amount' => $amount,
+                        'created_by' => auth()->user()->email,
+                        'is_manager_approved' => 1,
+                        'sr_no' => $paymentSplit->sr_no,
+
+                    ]);
+                    $data = [
+                        'uuid' => $quoteModel->uuid,
+                        'type_id' => $quoteTypeId,
+                        'code' => $quoteModel->code.'-'.$paymentSplit->sr_no,
+                    ];
+                    $processResponse = $this->processCapturePayment($data);
+                    return response($processResponse, 200);
+               
+            } else {
+                return response(['Payment not exist'], 403);
+            }
+        }
+        return response(['Transaction does not exist'], 403);
+    }
     public function processCapturePayment($data)
     {
         $planData = [
