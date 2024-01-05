@@ -103,7 +103,7 @@ class BridgerInsightService
                             'X-API-Key' => $this->bridgerAPIKey,
                         ],
                         'body' => json_encode($amlSearchData),
-                        'timeout' => 10,
+                        'timeout' => 30,
                     ]
                 );
                 $getStatusCode = $bridgerRequest->getStatusCode();
