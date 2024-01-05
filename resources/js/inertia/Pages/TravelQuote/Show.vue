@@ -2309,24 +2309,6 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
         <template #body>
           <x-divider class="my-4" />
           <div class="flex justify-end mb-4">
-            <x-button-group
-              v-if="selectedPlans.length > 0"
-              size="sm"
-              class="mr-2"
-            >
-              <!--  <x-button
-                      @click.prevent="onTogglePlans(false)"
-                      :loading="toggleLoader"
-                  >
-                      Show
-                  </x-button>
-                  <x-button
-                      @click.prevent="onTogglePlans(true)"
-                      :loading="toggleLoader"
-                  >
-                      Hide
-                  </x-button>-->
-            </x-button-group>
             <x-button
               v-if="availablePlansTable.data.length > 0"
               size="sm"
@@ -2339,18 +2321,9 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
               Copy Link
             </x-button>
             <h6 v-if="aboveAgeMembers > 0" class="font-semibold text-primary-600 text-ms mb-1">
-              Travel plans for {{ travelers.length - aboveAgeMembers }} member age 18-64
+              Travel plans for {{ travelers.length - aboveAgeMembers }} member age 0-64
             </h6>
 
-         <!-- <x-button
-              v-if="selectedPlans.length > 0"
-              size="sm"
-              color="emerald"
-              @click.prevent="onExportPlans"
-              :loading="exportLoader"
-            >
-              Download PDF
-          </x-button>-->
           </div>
           <div
             v-if="
@@ -2368,7 +2341,6 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
           <div v-else>
         <!-- for future use  v-model:items-selected="selectedPlans" -->
             <DataTable
-
               table-class-name="tablefixed compact"
               :headers="availablePlansTable.columns"
               :items="availablePlansTable.data || []"
