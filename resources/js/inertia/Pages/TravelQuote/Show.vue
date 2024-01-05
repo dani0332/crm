@@ -2205,6 +2205,21 @@ const genderList = [
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div class="flex flex-wrap gap-4 justify-between items-center mb-4">
         <h3 class="font-semibold text-primary-800 text-lg">Available Plans</h3>
+          <div>
+              <x-button-group v-if="selectedPlans.length > 0" size="sm" class="mr-2">
+                  <x-button
+                        @click.prevent="onTogglePlans(false)"
+                        :loading="toggleLoader"
+                    >
+                        Show
+                    </x-button>
+                    <x-button
+                        @click.prevent="onTogglePlans(true)"
+                        :loading="toggleLoader"
+                    >
+                        Hide
+                    </x-button>
+              </x-button-group>
         <x-button
           v-if="availablePlansTable.data.length > 0"
           size="sm"
@@ -2214,6 +2229,16 @@ const genderList = [
         >
           Copy Link
         </x-button>
+          <x-button
+              v-if="selectedPlans.length > 0"
+              size="sm"
+              color="emerald"
+              @click.prevent="onExportPlans"
+              :loading="exportLoader"
+          >
+              Download PDF
+          </x-button>
+          </div>
       </div>
       <h6 v-if="aboveAgeMembers > 0" class="font-semibold text-primary-600 text-ms mb-1">
         Travel plans for {{ travelers.length - aboveAgeMembers }} member age 18-64
@@ -2233,11 +2258,12 @@ const genderList = [
         </p>
       </div>
       <div v-else>
-        <!-- for future use  v-model:items-selected="selectedPlans" -->
+        <!-- for future use   -->
         <DataTable
           table-class-name="tablefixed compact"
           :headers="availablePlansTable.columns"
           :items="availablePlansTable.data || []"
+          v-model:items-selected="selectedPlans"
           border-cell
           hide-rows-per-page
           :rows-per-page="15"
@@ -2268,7 +2294,7 @@ const genderList = [
               </x-button>
 
               <!-- v-if="hasRole(rolesEnum.TravelAdvisor)" hide for now -->
-              <span v-if="true == false">
+              <span>
                 <SelectPlan
                   class="ml-1"
                   v-if="prefillPlanId != item.id"
