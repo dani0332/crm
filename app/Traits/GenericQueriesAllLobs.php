@@ -191,7 +191,7 @@ trait GenericQueriesAllLobs
             ],
             QuoteTypes::CAR->value => ['casco', 'motor insurance - Comprehensive', 'motor insurance - TPL'],
             QuoteTypes::LIFE->value => ['Critical illness', 'Individual life insurance'],
-            QuoteTypes::HOME->value => ['Home insurance', 'personal accident'],
+            QuoteTypes::HOME->value => ['Home insurance', 'personal accident', 'home insurance'],
             QuoteTypes::TRAVEL->value => ['Inbound travel insurance', 'Outbound travel insurance'],
             QuoteTypes::HEALTH->value => ['Individual or family medical'],
             QuoteTypes::CYCLE->value => ['Pedal cycle insurance'],

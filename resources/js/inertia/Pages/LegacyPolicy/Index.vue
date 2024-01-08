@@ -1,6 +1,7 @@
 <script setup>
 defineProps({
   policies: Array,
+  legacyPolicyEnums: Array
 });
 
 const { isRequired } = useRules();
@@ -53,7 +54,7 @@ const tableHeader = [
   { text: 'Policy Number', value: 'policy_no' },
   { text: 'Customer name', value: 'customer.name' },
   { text: 'Currently insured with', value: 'policy.insurer' },
-  { text: 'Product', value: 'product.product' },
+  { text: 'Product', value: 'product_name' },
   { text: 'Policy expiry date', value: 'policy.end_date' },
 ];
 </script>
@@ -118,6 +119,9 @@ const tableHeader = [
         >
           {{ item._id }}
         </Link>
+      </template>
+      <template #item-product_name="item">
+          {{legacyPolicyEnums[ item?.product?.product ] ?? ''}}
       </template>
     </DataTable>
 

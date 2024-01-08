@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\V2;
 
+use App\Enums\LegacyPolicyEnum;
 use App\Http\Controllers\Controller;
 use App\Repositories\InslyDetailRepository;
 use Illuminate\Http\Request;
@@ -20,8 +21,9 @@ class LegacyPolicyController extends Controller
         if ($request->hasAny(['policy_number', 'email', 'mobile_no'])) {
             $policies = InslyDetailRepository::getData();
         }
+        $legacyPolicyEnums = LegacyPolicyEnum::INSLY_PRODUCT_MAPPING;
 
-        return inertia('LegacyPolicy/Index', ['policies' => $policies]);
+        return inertia('LegacyPolicy/Index', ['policies' => $policies, 'legacyPolicyEnums' => $legacyPolicyEnums]);
     }
 
     /**

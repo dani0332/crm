@@ -265,6 +265,9 @@ class InslyDetailRepository extends BaseRepository
         $dataArr = [];
         $dataArr['previous_quote_policy_number'] = $policy['policy_no'] ?? null;
         $dataArr['email'] = $policy['customer']['email'] ?? null;
+        if ($dataArr['email'] == null) {
+            $dataArr['email'] = $policy['customer']['contact_person_email'] ?? null;
+        }
         $insurer = $policy['policy']['insurer'] ?? null;
         if ($insurer == 'Tokio Marine Nichido') {
             $insurer = 'Tokio Marine & Nichido Fire Insurance Co';
@@ -290,9 +293,12 @@ class InslyDetailRepository extends BaseRepository
             $premium = collect($data['installments'])->sum('gross_premium');
         }
         $quoteTypeData = QuoteType::where('code', $quoteType)->first();
-        $customer = $this->getCustomer($dataArr);
-
-        $dataArr['customer_id'] = $customer->id ?? '';
+        if ($dataArr['email'] != null) {
+            $customer = $this->getCustomer($dataArr);
+            $dataArr['customer_id'] = $customer->id ?? null;
+        } else {
+            $dataArr['customer_id'] = null;
+        }
         $capi = new CapiRequestService();
         $resp = $capi->getUUID($quoteTypeData->id);
         if ($resp) {
