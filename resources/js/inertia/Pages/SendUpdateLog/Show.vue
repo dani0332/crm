@@ -1,16 +1,21 @@
 <script setup>
 
 import LazyIndicativeAdditionalPrice from './Partials/IndicativeAdditionPrice.vue';
+import LazyPlanDetails from './Partials/PlanDetails.vue';
 
 const props = defineProps({
   quoteId: String,
+  quoteType: String,
   sendUpdateLog: Object,
   sendUpdateOptions: Array,
-  sendUpdateStatusEnum: Object
+  insuranceProviders: Object,
+  sendUpdateStatusEnum: Array,
 });
 
 const page = usePage();
 const notification = useToast();
+
+const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
 
 const state = reactive({
   edit: false,
@@ -60,6 +65,12 @@ const showIndicativeAdditionalPrice = computed(() => {
     selectedType?.value.slug === 'EF' && !hasRestrictedSubType
   );
 });
+
+const showPlanDetails = computed(() => {
+  return (selectedType.slug === 'CFIAR' || selectedType.slug === 'COPD') && (
+    ![quoteTypeCodeEnum.Car, quoteTypeCodeEnum.Travel, quoteTypeCodeEnum.Health].includes(props.quoteType) 
+  ) 
+})
 
 const changeReasonOptions = computed(() => {
   return [];
@@ -222,10 +233,16 @@ const onUpdateLog = () => {
     <!-- Indicative additional price comp will b displayed for all lobs except sub type MDOM, MDOV, MPC -->
     <LazyIndicativeAdditionalPrice
       v-if="showIndicativeAdditionalPrice"
+      :sendUpdateLog="sendUpdateLog"
+      :insuranceProviders="insuranceProviders"
+      :selectedType="selectedType"
     />
 
-    <PlanDetails
-      v-if="(selectedType.slug === 'CFIAR' || selectedType.slug === 'COPD') && false"
+    <LazyPlanDetails
+      v-if="showPlanDetails"
+      :sendUpdateLog="sendUpdateLog"
+      :insuranceProviders="insuranceProviders"
+      :selectedType="selectedType"
     />
 
     <AuditLogs

@@ -3,8 +3,11 @@
 namespace App\Http\Controllers\V2;
 
 use App\Enums\QuoteStatusEnum;
+use App\Enums\QuoteTypeId;
+use App\Enums\QuoteTypes;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Http\Controllers\Controller;
+use App\Repositories\InsuranceProviderRepository;
 use App\Repositories\SendUpdateLogRepository;
 use App\Services\LookupService;
 use Illuminate\Http\Request;
@@ -36,11 +39,17 @@ class SendUpdateLogController extends Controller
         $sendUpdateLog = SendUpdateLogRepository::getLogByUuid($uuid);
 
         $sendUpdateOptions = (new LookupService)->getSendUpdateOptions($sendUpdateLog->quote_type_id);
+        $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping($sendUpdateLog->quote_type_id);
+
+        $quoteTypes = QuoteTypeId::getOptions();
 
         return inertia('SendUpdateLog/Show', [
             'sendUpdateLog' => $sendUpdateLog,
             'sendUpdateOptions' => $sendUpdateOptions,
-            'sendUpdateStatusEnum' => SendUpdateLogStatusEnum::asArray()
+            'insuranceProviders' => $insuranceProviders,
+            'sendUpdateStatusEnum' => SendUpdateLogStatusEnum::asArray(),
+            'quoteType' => QuoteTypes::getName($sendUpdateLog->quote_type_id),
+            'quoteTypes' => QuoteTypes::asArray()
         ]);
     }
 
@@ -78,12 +87,12 @@ class SendUpdateLogController extends Controller
         //
     }
 
-    public function getLogsById($id)
-    {
-        $logs = SendUpdateLogRepository::getLogsById($id);
+    // public function getLogsById($id)
+    // {
+    //     $logs = SendUpdateLogRepository::getLogsById($id);
 
-        return response()->json(compact('logs'));
-    }
+    //     return response()->json(compact('logs'));
+    // }
 
     public function updateQuoteLeadStatus($data, $type)
     {

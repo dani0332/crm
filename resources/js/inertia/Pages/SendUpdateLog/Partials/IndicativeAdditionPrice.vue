@@ -1,24 +1,92 @@
 <script setup>
 const { isRequired } = useRules();
 
+const props = defineProps({
+  sendUpdateLog: {
+    type: Object,
+    required: true
+  },
+  insuranceProviders: {
+    type: Array,
+    required: true
+  },
+  selectedType: {
+    type: Object,
+    required: true
+  }
+})
+
 const state = reactive({
   isEdit: false,
 });
 
 const additionalPriceForm = useForm({
-  price_with_vat: '',
-  price_without_vat: '',
-  total_price: '0.0',
+  price_vat_applicable: 0,
+  price_vat_not_applicable: 0,
+  price_with_vat: 0,
 	provider_name: '',
-	insurer_quote_number: ''
+	insurer_quote_number: '',
+  insurance_provider_id: '',
+  send_update_log_id: props.sendUpdateLog.id,
 });
 
-const showProviderAndQuoteNumber = computed(() => {
-	return false;
-})
+const insuranceProviderOptions = computed(() => {
+  return props?.insuranceProviders?.map(provider => ({
+    value: provider.id,
+    label: provider.text,
+  }));
+});
+
+watch(
+  () => additionalPriceForm.price_vat_applicable,
+  (newValue) => {
+    let price = parseFloat(newValue);
+    additionalPriceForm.price_with_vat = ((price / 100) * 5) + price;
+  },
+  { deep: true }
+)
+
+watch(
+  () => additionalPriceForm.price_vat_not_applicable,
+  (newValue) => {
+    let price = parseFloat(newValue);
+    additionalPriceForm.price_with_vat = ((price / 100) * 5) + price;
+  },
+  { deep: true }
+)
+
+const updateTotalPrice = () => {
+  // if (additionalPriceForm.price_vat_applicable != "") {
+  //   let price = parseFloat(additionalPriceForm.price_vat_applicable);
+  //   additionalPriceForm.price_with_vat = ((price / 100) * 5) + price;
+  // } else if (additionalPriceForm.price_vat_not_applicable != "") {
+  //   let price = parseFloat(additionalPriceForm.price_vat_not_applicable);
+  //   additionalPriceForm.price_with_vat = ((price / 100) * 5) + price;
+  // }
+}
 
 const onUpdate = () => {
-
+  additionalPriceForm.post(
+    route('indicative-additional-price.store'),
+    {
+      preserverScroll: true,
+      onSuccess: ({ props }) => {
+        notification.success({
+          title: 'The request has been updated',
+          position: 'top',
+        });
+        state.edit = false;
+      },
+      onError: errors => {
+        Object.keys(errors).forEach(function (key) {
+          notification.error({
+            title: errors[key],
+            position: 'top',
+          });
+        });
+      },
+    },
+  );
 }
 </script>
 
@@ -44,7 +112,7 @@ const onUpdate = () => {
         <div class="text-sm">
           <dl class="grid md:grid-cols-2 gap-y-4">
 
-						<!-- price without VAT -->
+						<!-- price VAT not applicable -->
             <div class="grid sm:grid-cols-2">
               <dt class="font-bold text-right mr-10">
                 <x-tooltip position="left">
@@ -57,16 +125,16 @@ const onUpdate = () => {
               </dt>
               <dd>
                 <x-input
-                  v-model="additionalPriceForm.price_without_vat"
+                  v-model="additionalPriceForm.price_vat_not_applicable"
                   placeholder="Enter price (VAT not applicable)"
                   :disabled="!state.isEdit"
+                  type="number"
                 />
               </dd>
             </div>
 
-						<!-- provider name -->
             <div class="grid sm:grid-cols-2 ml-[-250px]">
-							<template v-if="showProviderAndQuoteNumber">
+							<!-- <template v-if="showProviderAndQuoteNumber">
 								<dt class="font-bold text-right mr-10">
 									<x-tooltip position="left">
 										<span>Provider name</span>
@@ -76,20 +144,22 @@ const onUpdate = () => {
 									</x-tooltip>
 								</dt>
 								<dd>
-									<x-input
-										v-model="additionalPriceForm.price_without_vat"
-										placeholder="Enter price (VAT not applicable)"
-										:disabled="!state.isEdit"
-									/>
+                  <ComboBox
+                    :single="true"
+                    v-model="additionalPriceForm.insurance_provider_id"                          
+                    placeholder="Insurance Provider"
+                    :options="insuranceProviderOptions"
+                    class="w-full"
+                  />
 								</dd>
 							</template>
 							<template v-else>	
-								<dt class="font-bold text-right mr-10"></dt>
-								<dd></dd>
-							</template>
+              </template> -->
+              <dt class="font-bold text-right mr-10"></dt>
+              <dd></dd>
             </div>
 
-						<!-- price with VAT -->
+						<!-- price VAT applicable -->
             <div class="grid sm:grid-cols-2">
               <dt class="font-bold text-right mr-10">
 								<x-tooltip position="left">
@@ -101,16 +171,18 @@ const onUpdate = () => {
 							</dt>
               <dd>
                 <x-input
-                  v-model="additionalPriceForm.price_with_vat"
+                  v-model="additionalPriceForm.price_vat_applicable"
                   placeholder="Enter price (VAT applicable)"
                   :disabled="!state.isEdit"
+                  type="number"
+                  @change="updateTotalPrice"
                 />
               </dd>
             </div>
 
 						<!-- Quote number -->
             <div class="grid sm:grid-cols-2 ml-[-250px]">
-							<template v-if="showProviderAndQuoteNumber">
+							<!-- <template v-if="selectedType.slug !== 'COPD' && selectedType.slug !== 'EF'">
 								<dt class="font-bold text-right mr-10">
 									<x-tooltip position="left">
 										<span>Quote number</span>
@@ -121,16 +193,18 @@ const onUpdate = () => {
 								</dt>
 								<dd>
 									<x-input
-										v-model="additionalPriceForm.price_with_vat"
-										placeholder="Enter price (VAT applicable)"
+										v-model="additionalPriceForm.insurer_quote_number"
+										placeholder="Enter Insurer Quote Number"
 										:disabled="!state.isEdit"
+                    type="number"
+                    :error="false"
 									/>
 								</dd>
 							</template>
 							<template v-else>	
-								<dt class="font-bold text-right mr-10"></dt>
-								<dd></dd>
-							</template>
+              </template> -->
+              <dt class="font-bold text-right mr-10"></dt>
+              <dd></dd>
 						</div>
 
 						<!-- Total price -->
@@ -143,7 +217,7 @@ const onUpdate = () => {
 									</template>
 								</x-tooltip>
 							</dt>
-              <dd>{{ additionalPriceForm.total_price }}</dd>
+              <dd>{{ additionalPriceForm.price_with_vat }}</dd>
             </div>
           </dl>
 					
