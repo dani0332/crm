@@ -26,7 +26,7 @@ use App\Repositories\QuoteStatusRepository;
 use App\Repositories\UserRepository;
 use App\Services\AMLService;
 use App\Services\CentralService;
-use AWS\CRT\HTTP\Request;
+use Illuminate\Http\Request;
 
 class CycleQuoteController extends Controller
 {
@@ -168,7 +168,7 @@ class CycleQuoteController extends Controller
         ]);
     }
 
-    public function cardsViewHome(Request $request)
+    public function cardsView(Request $request)
     {
         $quotes = [
             ['id' => QuoteStatusEnum::NewLead, 'title' => quoteStatusCode::NEW_LEAD, 'data' => getDataAgainstStatus(QuoteTypes::CYCLE->value, QuoteStatusEnum::NewLead)],
@@ -182,6 +182,7 @@ class CycleQuoteController extends Controller
         ];
 
         $quoteStatusEnums = QuoteStatusEnum::asArray();
+        $lostReasons = LostReasonRepository::orderBy('text', 'asc')->get();
         $isManagerOrAdminAccess = auth()->user()->hasAnyRole([RolesEnum::CycleManager, RolesEnum::Admin]);
 
         if (!$isManagerOrAdminAccess) {
@@ -204,6 +205,7 @@ class CycleQuoteController extends Controller
         return inertia('CycleQuote/Cards', [
             'quotes' => $quotes,
             'quoteStatusEnums' => $quoteStatusEnums,
+            'lostReasons' => $lostReasons,
             'quoteTypeId' => QuoteTypes::CYCLE->id(),
         ]);
     }

@@ -9,6 +9,7 @@ use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Http\Requests\InsurerProviderNetworkRequest;
 use App\Repositories\InsuranceProviderRepository;
+use App\Repositories\LostReasonRepository;
 use App\Services\HealthQuoteService;
 use Illuminate\Http\Request;
 
@@ -110,6 +111,7 @@ class HealthQuoteController extends Controller
         ];
 
         $quoteStatusEnums = QuoteStatusEnum::asArray();
+        $lostReasons = LostReasonRepository::orderBy('text', 'asc')->get();
         $isManagerOrAdminAccess = auth()->user()->hasAnyRole([RolesEnum::HealthManager, RolesEnum::Admin]);
 
         if (!$isManagerOrAdminAccess) {
@@ -133,6 +135,7 @@ class HealthQuoteController extends Controller
         return inertia('HealthQuote/Cards', [
             'quotes' => $quotes,
             'quoteStatusEnums' => $quoteStatusEnums,
+            'lostReasons' => $lostReasons,
             'quoteTypeId' => QuoteTypes::HEALTH->id(),
         ]);
     }

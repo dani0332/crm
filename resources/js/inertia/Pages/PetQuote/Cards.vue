@@ -1,6 +1,8 @@
 <script setup>
 const props = defineProps({
   quoteStatusEnum: Array,
+  quoteTypeId: Number,
+  lostReasons: Object,
 });
 
 const page = usePage();
@@ -32,7 +34,7 @@ const quotes = reactive({
       </div>
 
       <div class="space-x-2">
-        <Link :href="route('pet-quotes-index')">
+        <Link :href="route('pet-quotes-list')">
           <x-button size="sm" color="#1d83bc"> List View </x-button>
         </Link>
 
@@ -52,6 +54,9 @@ const quotes = reactive({
         :key="quote.id"
         :quote="quote"
         :quotes="quotes"
+        :quoteTypeId="quoteTypeId"
+        :lostReasons="props.lostReasons"
+        :quoteStatusEnum="props.quoteStatusEnum"
       />
     </div>
   </div>

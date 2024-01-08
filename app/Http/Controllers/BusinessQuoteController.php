@@ -23,6 +23,7 @@ use App\Models\Nationality;
 use App\Repositories\CustomerMembersRepository;
 use App\Repositories\InsuranceProviderRepository;
 use App\Repositories\LookupRepository;
+use App\Repositories\LostReasonRepository;
 use App\Services\AMLService;
 use App\Services\BusinessQuoteService;
 use App\Services\CRUDService;
@@ -345,6 +346,7 @@ class BusinessQuoteController extends Controller
         ];
 
         $quoteStatusEnums = QuoteStatusEnum::asArray();
+        $lostReasons = LostReasonRepository::orderBy('text', 'asc')->get();
         $isManagerOrAdminAccess = auth()->user()->hasAnyRole([RolesEnum::CorplineManager, RolesEnum::Admin]);
 
         if (!$isManagerOrAdminAccess) {
@@ -369,6 +371,7 @@ class BusinessQuoteController extends Controller
         return inertia('CorpLineQuote/Cards', [
             'quotes' => $quotes,
             'quoteStatusEnums' => $quoteStatusEnums,
+            'lostReasons' => $lostReasons,
             'quoteTypeId' => QuoteTypes::BUSINESS->id(),
         ]);
     }

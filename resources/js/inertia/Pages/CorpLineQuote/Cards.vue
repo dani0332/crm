@@ -1,4 +1,11 @@
 <script setup>
+
+const props = defineProps({
+  quoteStatusEnum: Array,
+  quoteTypeId: Number,
+  lostReasons: Object,
+});
+
 const page = usePage();
 const dateFormat = date => {
   return useDateFormat(date, 'DD-MM-YYYY HH:mm:ss').value;
