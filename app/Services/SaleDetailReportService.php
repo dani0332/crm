@@ -11,7 +11,6 @@ use App\Models\Team;
 use App\Strategies\ManagementReport;
 use App\Traits\TeamHierarchyTrait;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 
 class SaleDetailReportService implements ManagementReport
 {
@@ -19,12 +18,77 @@ class SaleDetailReportService implements ManagementReport
 
     public function getReportData(Request $request)
     {
-        $groupBy = $request->groupBy;
+        $filters = [
+            'reportCategory' => $request->reportCategory,
+            'reportType' => $request->reportType,
+            'policyIssuanceDate' => $request->policyIssuanceDate,
+            'paymentDueDate' => $request->paymentDueDate,
+            'policyExpiredDate' => $request->policyExpiredDate,
+            'createdAt' => $request->createdAt,
+            'transactionType' => $request->transactionType,
+            'teams' => $request->teams,
+            'subTeams' => $request->subTeams,
+            'leadSource' => $request->leadSource,
+            'includeCancelPolicies' => $request->includeCancelPolicies,
+            'groupBy' => $request->groupBy,
+            'utmGroupBy' => $request->utmGroupBy,
+            'page' => $request->page,
+        ];
+
         $query = PersonalQuote::query()
             ->select(
-                DB::raw('SUM(CASE WHEN COALESCE(policy_start_date, policy_number) IS NOT NULL THEN 1 ELSE 0 END) as total_policies'),
-                DB::raw('SUM(CASE WHEN send_update_ref_id is not null and send_update_type = "Financial" THEN 1 ELSE 0 END) as total_endorsements'),
-            )->get();
+                'policy_number',
+                'COALESCE(payments.insurer_tax_number,payments.notes,payments.reference) as transactions',
+                'policy_start_date',
+                'policy_due_date',
+                'source',
+                'dummyteam as team',
+                'price_vat_applicable',
+                'payments.discount_value as discount',
+                '((price_vat_applicable + price_vat_not_applicable + vat) - payments.discount_value) as total_price',
+                'payments.commission_vat_applicable',
+                'payments.commission_vat',
+                'payments.commission_vat_not_applicable',
+                '(commission_vat_applicable + commission_vat) as total_commission',
+                "'collects' as collects",
+                'tax_invoice_number as insurer_tax_invoice_number',
+                'insurer_invoice_date as insurer_tax_invoice_date',
+                'payment_status.text as transaction_payment_status',
+                'payments.captured_at as date_paid',
+                'premium_captured as collected_amount',
+                "first_name + ' ' + last_name as customer_name",
+                'customer_type as customer_type',
+                "'customer_type' as customer_type",
+                'quote_type.code as line_of_business',
+                "'sub_type_line_of_business' as sub_type_line_of_business",
+                'u.name as advisor_name',
+                "pi.name as policy_issuer",
+            )
+            ->join('payments', 'personal_quotes.code', '=', 'payments.code')
+            ->join('payment_status', 'payment_status.id', '=', 'payments.payment_status_id')
+            ->join('quote_type', 'quote_type.id', '=', 'quote_type_id')
+            ->join('users u', 'u.id', '=', 'advisor_id')
+            ->join('users pi', 'pi.id', '=', 'policy_issuer_id')
+            ->when($request->groupBy, function ($query, $groupBy) {
+                return $query->groupBy($this->resolveGroupByColumn($groupBy));
+            });
+
+        $this->applyFilters($query, $filters);
+
+        return $query->simplePaginate(10)->withQueryString();
+    }
+
+    private function resolveGroupByColumn($groupBy)
+    {
+        $mapping = [
+            'policy_issuer' => 'payments.policy_issuer_id',
+            'customer_group' => 'personal_quotes.customer_id',
+            'insurer' => 'payments.insurer_id',
+            'advisor' => 'users.name',
+            'line_of_business' => 'quote_type.code',
+        ];
+
+        return $mapping[$groupBy] ?? $groupBy;
     }
 
     public function getFilterOptions()
