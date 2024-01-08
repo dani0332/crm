@@ -1568,7 +1568,7 @@ watch(prefillPlanId, (newPlanId) =>  {
         <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">          
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">PRICE</dt>
-            <dd>{{ computedPlanDetails.premium ?? '' }}</dd>
+            <dd>{{ record.premium ?? '' }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">PAID AT</dt>
@@ -1580,7 +1580,7 @@ watch(prefillPlanId, (newPlanId) =>  {
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">PROVIDER NAME</dt>
-            <dd>{{ computedPlanDetails.providerName ?? '' }}</dd>
+            <dd>{{ record.car_plan_provider_id_text ?? '' }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">PAYMENT METHOD</dt>
@@ -1594,7 +1594,7 @@ watch(prefillPlanId, (newPlanId) =>  {
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">PLAN NAME</dt>
-            <dd>{{ computedPlanDetails.planName }}</dd>
+            <dd>{{ record.plan_id_text }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">ECOMMERCE</dt>
