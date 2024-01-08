@@ -54,28 +54,6 @@ const updateList = data => {
     .then(({ data }) => {});
 };
 
-const isLostReason = computed(() => {
-  return leadForm.isReason ? true : false;
-});
-
-const canDrop = async (e, callback) => {
-  showModal.value = true;
-
-  let response = await new Promise(resolve => {
-    const closeHandler = () => {
-      showModal.value = false;
-      resolve(true);
-    };
-
-    callback(closeHandler);
-    // setTimeout(() => {
-    //   // Simulating the modal close event after 2 seconds (replace with your actual logic)
-    //   closeHandler();
-    // }, 2000);
-  });
-  // return false;
-};
-
 let resolveConfirm;
 
 const moveTask = async () => {
@@ -98,7 +76,6 @@ useSortable(`#${props.title}`, props.leads, {
   },
   animation: 500,
   onAdd: async function (e) {
-    let node = e.item;
     let item = leads.value[e.oldIndex];
     let data = item
       ? {
