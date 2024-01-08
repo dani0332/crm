@@ -16,7 +16,9 @@ const props = defineProps({
   },
   id: Number,
   title: String,
-  quote_type_id: String,
+  quote_type_id: Number,
+  lost_reasons: Object,
+  quote_status_enum: Array
 });
 
 const quoteStatusEnum = inject('quoteStatusEnum');
@@ -129,6 +131,7 @@ let sortable = useSortable(`#${props.title}`, props.leads, {
         originalList.insertBefore(itemEl, referenceNode);
       }
     }
+    updateList(data);
   },
 });
 

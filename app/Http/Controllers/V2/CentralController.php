@@ -18,6 +18,7 @@ use App\Exports\PersonalQuotesExport;
 use App\Exports\TravelQuoteExport;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\CustomerProfileRequest;
+use App\Http\Requests\DragAndDropUpdateLeadStatusRequest;
 use App\Http\Requests\DuplicateLobRequest;
 use App\Http\Requests\LeadAssignRequest;
 use App\Http\Requests\PlanDetailsRequest;
@@ -197,9 +198,11 @@ class CentralController extends Controller
         return redirect()->back()->with('success', 'updated successfully');
     }
 
-    public function updateLeadStatusDragDrop(Request $request)
+    public function updateLeadStatusDragDrop(DragAndDropUpdateLeadStatusRequest $dragAndDropUpdateLeadStatusRequest)
     {
-        dd($request->all());
-    }
+        dd($dragAndDropUpdateLeadStatusRequest->validated());
+        (new CentralService())->updateLeadStatusDragDrop($dragAndDropUpdateLeadStatusRequest);
 
+        return redirect()->back()->with('success', 'Lead Status Updated Successfully');
+    }
 }

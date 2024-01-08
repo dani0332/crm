@@ -7,6 +7,7 @@ import axios from 'axios';
 const props = defineProps({
   quoteStatusEnum: Array,
   quoteTypeId: Number,
+  lostReasons: Object,
 });
 
 const page = usePage();

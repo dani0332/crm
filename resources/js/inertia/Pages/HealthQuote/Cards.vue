@@ -2,6 +2,7 @@
 const props = defineProps({
   quoteStatusEnum: Array,
   quoteTypeId: Number,
+  lostReasons: Object,
 });
 
 const page = usePage();
@@ -54,6 +55,8 @@ const quotes = reactive({
         :quote="quote"
         :quotes="quotes"
         :quoteTypeId="quoteTypeId"
+        :lostReasons="props.lostReasons"
+        :quoteStatusEnum="props.quoteStatusEnum"
       />
     </div>
   </div>

@@ -134,11 +134,17 @@ function cleanString($string)
 function getDataAgainstStatus($modelType, $statusId, $myleads = null)
 {
     $result = [];
+    
     if (! $modelType) {
         return $result;
     }
+
     $nameSpace = 'App\\Models\\';
-    $modelType = $nameSpace.$modelType.'Quote';
+    $modelType = (in_array(ucwords($modelType), newUi()) && checkPersonalQuotes(ucwords($modelType))) ? $nameSpace.'PersonalQuote' : $nameSpace.ucwords($modelType).'Quote';
+
+    if (! class_exists($modelType)) {
+        return false;
+    }
 
     $modelQueryWithOutAdvisor = $modelType::where('quote_status_id', $statusId);
     $modelQuery = $modelType::where('quote_status_id', $statusId)->where('advisor_id', auth()->user()->id);

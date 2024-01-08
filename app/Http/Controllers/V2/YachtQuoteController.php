@@ -27,7 +27,7 @@ use App\Repositories\UserRepository;
 use App\Repositories\YachtQuoteRepository;
 use App\Services\AMLService;
 use App\Services\LookupService;
-use AWS\CRT\HTTP\Request;
+use Illuminate\Http\Request;
 
 class YachtQuoteController extends Controller
 {
@@ -159,7 +159,7 @@ class YachtQuoteController extends Controller
         return redirect('personal-quotes/yacht/'.$uuid)->with('message', 'Quote updated successfully');
     }
 
-    public function cardsViewHome(Request $request)
+    public function cardsView(Request $request)
     {
         $quotes = [
             ['id' => QuoteStatusEnum::NewLead, 'title' => quoteStatusCode::NEW_LEAD, 'data' => getDataAgainstStatus(QuoteTypes::YACHT->value, QuoteStatusEnum::NewLead)],
@@ -173,6 +173,7 @@ class YachtQuoteController extends Controller
         ];
 
         $quoteStatusEnums = QuoteStatusEnum::asArray();
+        $lostReasons = LostReasonRepository::orderBy('text', 'asc')->get();
         $isManagerOrAdminAccess = auth()->user()->hasAnyRole([RolesEnum::YachtManager, RolesEnum::Admin]);
 
         if (!$isManagerOrAdminAccess) {
@@ -195,6 +196,7 @@ class YachtQuoteController extends Controller
         return inertia('YachtQuote/Cards', [
             'quotes' => $quotes,
             'quoteStatusEnums' => $quoteStatusEnums,
+            'lostReasons' => $lostReasons,
             'quoteTypeId' => QuoteTypes::YACHT->id(),
         ]);
     }
