@@ -92,7 +92,10 @@ const page = usePage();
 const notification = useNotifications('toast');
 const showfollowup = ref(false);
 
-//const prefillPlanPremium = ref('');
+/*
+* comment for now, will be used in later after confirmation
+
+const prefillPlanPremium = ref('');
 
 const computedPlanDetails = reactive({
   premium: '',
@@ -130,7 +133,7 @@ const updateComputedPlanDetails = () => {
 
 onMounted(() => {
   updateComputedPlanDetails();
-});
+});*/
 
 const permissionEnum = page.props.permissionsEnum;
 const rolesEnum = page.props.rolesEnum;
@@ -308,6 +311,8 @@ const availablePlansTable = reactive({
   ],
 });
 
+/*
+// comment for now, will be used in later after confirmation
 watch(availablePlansTable, (newPlans) =>  {
 
   console.log('plan selected at - inside watch availablePlans - ');
@@ -331,7 +336,7 @@ watch(availablePlansTable, (newPlans) =>  {
     console.log('plan selected at - prefillPlanSelectedAt is less than planSelectedAt' );
   }
 
-});
+}); */
 
 const documentsTable = reactive({
   columns: [
@@ -1526,7 +1531,7 @@ const handleChildUpdate = planId => {
   prefillPlanId.value = planId;
 };
 
-watch(prefillPlanId, (newPlanId) =>  {
+/*watch(prefillPlanId, (newPlanId) =>  {
   //find selected plan from available plans and calculate prefilled plan premium
  
   if(newPlanId)
@@ -1541,7 +1546,7 @@ watch(prefillPlanId, (newPlanId) =>  {
       computedPlanDetails.providerName = selectedPlan.providerName;
       computedPlanDetails.premium = (selectedPlan.discountPremium + selectedPlan.vat + getAddonVat(selectedPlan)).toFixed(2);
   }  
-});
+});*/
 
 </script>
 
