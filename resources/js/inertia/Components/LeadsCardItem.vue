@@ -80,16 +80,15 @@ useSortable(`#${props.title}`, props.leads, {
   animation: 500,
   onAdd: async function (e) {
     let item = leads.value[e.oldIndex];
-    let data = item
-      ? {
-          form: {
-            id: item.id,
-            quoteTypeId: quoteTypeId,
-            quote_status_id: item.quote_status_id,
-          },
-          to: { quote_status_id: e.to.getAttribute('quote_status_id') },
-        }
-      : null;
+
+    let data = {
+      form: {
+        id: e.from.children[e.oldIndex].id,
+        quoteTypeId: quoteTypeId,
+        quote_status_id: e.from.getAttribute('quote_status_id'),
+      },
+      to: { quote_status_id: e.to.getAttribute('quote_status_id') },
+    };
 
     if (data && data.to.quote_status_id == 17) {
       let response = await moveTask(e);
@@ -108,7 +107,8 @@ useSortable(`#${props.title}`, props.leads, {
         data.to['lost_reason'] = leadForm.lostreason;
       }
     }
-    updateList(data);
+    console.log(data);
+    // updateList(data);
     showModal.value = false;
   },
 });
@@ -172,6 +172,7 @@ const handleConfirmation = result => resolveConfirm(result);
       :href="`/quotes/health/${uuid}`"
       target="_blank"
       title="View Lead"
+      :id="id"
       class="block p-3 mt-2 border border-gray-300 space-y-2 hover:transition hover:border-primary-500 rounded"
       :class="[
         daysSinceStale(stale_at) === false ? 'bg-white' : 'bg-error-200',
