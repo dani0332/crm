@@ -20,7 +20,7 @@ const state = reactive({
   isEdit: false,
 });
 
-const additionalPriceForm = useForm({
+const planDetailsForm = useForm({
   price_vat_applicable: 0,
   price_vat_not_applicable: 0,
   price_with_vat: 0,
@@ -28,6 +28,8 @@ const additionalPriceForm = useForm({
 	insurer_quote_number: '',
   insurance_provider_id: '',
   send_update_log_id: props.sendUpdateLog.id,
+  id: props.sendUpdateLog.reportable_id,
+  quote_type_id: props.sendUpdateLog.quote_type_id
 });
 
 const insuranceProviderOptions = computed(() => {
@@ -42,36 +44,36 @@ const showProviderAndQuoteNumber = computed(() => {
 });
 
 watch(
-  () => additionalPriceForm.price_vat_applicable,
+  () => planDetailsForm.price_vat_applicable,
   (newValue) => {
     let price = parseFloat(newValue);
-    additionalPriceForm.price_with_vat = ((price / 100) * 5) + price;
+    planDetailsForm.price_with_vat = ((price / 100) * 5) + price;
   },
   { deep: true }
 )
 
 watch(
-  () => additionalPriceForm.price_vat_not_applicable,
+  () => planDetailsForm.price_vat_not_applicable,
   (newValue) => {
     let price = parseFloat(newValue);
-    additionalPriceForm.price_with_vat = ((price / 100) * 5) + price;
+    planDetailsForm.price_with_vat = ((price / 100) * 5) + price;
   },
   { deep: true }
 )
 
 const updateTotalPrice = () => {
-  // if (additionalPriceForm.price_vat_applicable != "") {
-  //   let price = parseFloat(additionalPriceForm.price_vat_applicable);
-  //   additionalPriceForm.price_with_vat = ((price / 100) * 5) + price;
-  // } else if (additionalPriceForm.price_vat_not_applicable != "") {
-  //   let price = parseFloat(additionalPriceForm.price_vat_not_applicable);
-  //   additionalPriceForm.price_with_vat = ((price / 100) * 5) + price;
+  // if (planDetailsForm.price_vat_applicable != "") {
+  //   let price = parseFloat(planDetailsForm.price_vat_applicable);
+  //   planDetailsForm.price_with_vat = ((price / 100) * 5) + price;
+  // } else if (planDetailsForm.price_vat_not_applicable != "") {
+  //   let price = parseFloat(planDetailsForm.price_vat_not_applicable);
+  //   planDetailsForm.price_with_vat = ((price / 100) * 5) + price;
   // }
 }
 
 const onUpdate = () => {
-  additionalPriceForm.post(
-    route('indicative-additional-price.store'),
+  planDetailsForm.post(
+    route('send-update-logs.save-plan-details'),
     {
       preserverScroll: true,
       onSuccess: ({ props }) => {
@@ -129,7 +131,7 @@ const onUpdate = () => {
               </dt>
               <dd>
                 <x-input
-                  v-model="additionalPriceForm.price_vat_not_applicable"
+                  v-model="planDetailsForm.price_vat_not_applicable"
                   placeholder="Enter price (VAT not applicable)"
                   :disabled="!state.isEdit"
                   type="number"
@@ -151,7 +153,7 @@ const onUpdate = () => {
 								<dd>
                   <ComboBox
                     :single="true"
-                    v-model="additionalPriceForm.insurance_provider_id"                          
+                    v-model="planDetailsForm.insurance_provider_id"                          
                     placeholder="Insurance Provider"
                     :options="insuranceProviderOptions"
                     class="w-full"
@@ -176,7 +178,7 @@ const onUpdate = () => {
 							</dt>
               <dd>
                 <x-input
-                  v-model="additionalPriceForm.price_vat_applicable"
+                  v-model="planDetailsForm.price_vat_applicable"
                   placeholder="Enter price (VAT applicable)"
                   :disabled="!state.isEdit"
                   type="number"
@@ -198,7 +200,7 @@ const onUpdate = () => {
 								</dt>
 								<dd>
 									<x-input
-										v-model="additionalPriceForm.insurer_quote_number"
+										v-model="planDetailsForm.insurer_quote_number"
 										placeholder="Enter Insurer Quote Number"
 										:disabled="!state.isEdit"
                     type="number"
@@ -222,7 +224,7 @@ const onUpdate = () => {
 									</template>
 								</x-tooltip>
 							</dt>
-              <dd>{{ additionalPriceForm.price_with_vat }}</dd>
+              <dd>{{ planDetailsForm.price_with_vat }}</dd>
             </div>
           </dl>
 					
@@ -236,16 +238,16 @@ const onUpdate = () => {
               size="sm"
               color="orange"
               @click="state.isEdit = false"
-              :loading="additionalPriceForm.processing"
-              :disabled="additionalPriceForm.processing"
+              :loading="planDetailsForm.processing"
+              :disabled="planDetailsForm.processing"
               >Cancel</x-button
             >
             <x-button
               size="sm"
               color="primary"
               @click="onUpdate"
-              :loading="additionalPriceForm.processing"
-              :disabled="additionalPriceForm.processing"
+              :loading="planDetailsForm.processing"
+              :disabled="planDetailsForm.processing"
               >Update</x-button
             >
           </template>

@@ -23,51 +23,51 @@ const state = reactive({
 const additionalPriceForm = useForm({
   price_vat_applicable: 0,
   price_vat_not_applicable: 0,
-  price_with_vat: 0,
-	provider_name: '',
-	insurer_quote_number: '',
-  insurance_provider_id: '',
+  total_price: 0,
+	// insurer_quote_number: '',
+  // insurance_provider_id: '',
   send_update_log_id: props.sendUpdateLog.id,
+  uuid: props.sendUpdateLog.uuid,
 });
 
-const insuranceProviderOptions = computed(() => {
-  return props?.insuranceProviders?.map(provider => ({
-    value: provider.id,
-    label: provider.text,
-  }));
-});
+// const insuranceProviderOptions = computed(() => {
+//   return props?.insuranceProviders?.map(provider => ({
+//     value: provider.id,
+//     label: provider.text,
+//   }));
+// });
 
-watch(
-  () => additionalPriceForm.price_vat_applicable,
-  (newValue) => {
-    let price = parseFloat(newValue);
-    additionalPriceForm.price_with_vat = ((price / 100) * 5) + price;
-  },
-  { deep: true }
-)
+// watch(
+//   () => additionalPriceForm.price_vat_applicable,
+//   (newValue) => {
+//     let price = parseFloat(newValue);
+//     additionalPriceForm.total_price = ((price / 100) * 5) + price;
+//   },
+//   { deep: true }
+// )
 
-watch(
-  () => additionalPriceForm.price_vat_not_applicable,
-  (newValue) => {
-    let price = parseFloat(newValue);
-    additionalPriceForm.price_with_vat = ((price / 100) * 5) + price;
-  },
-  { deep: true }
-)
+// watch(
+//   () => additionalPriceForm.price_vat_not_applicable,
+//   (newValue) => {
+//     let price = parseFloat(newValue);
+//     additionalPriceForm.total_price = ((price / 100) * 5) + price;
+//   },
+//   { deep: true }
+// )
 
 const updateTotalPrice = () => {
-  // if (additionalPriceForm.price_vat_applicable != "") {
-  //   let price = parseFloat(additionalPriceForm.price_vat_applicable);
-  //   additionalPriceForm.price_with_vat = ((price / 100) * 5) + price;
-  // } else if (additionalPriceForm.price_vat_not_applicable != "") {
-  //   let price = parseFloat(additionalPriceForm.price_vat_not_applicable);
-  //   additionalPriceForm.price_with_vat = ((price / 100) * 5) + price;
-  // }
+  if (additionalPriceForm.price_vat_applicable != "") {
+    let price = parseFloat(additionalPriceForm.price_vat_applicable);
+    additionalPriceForm.total_price = ((price / 100) * 5) + price;
+  } else if (additionalPriceForm.price_vat_not_applicable != "") {
+    let price = parseFloat(additionalPriceForm.price_vat_not_applicable);
+    additionalPriceForm.total_price = ((price / 100) * 5) + price;
+  }
 }
 
 const onUpdate = () => {
   additionalPriceForm.post(
-    route('indicative-additional-price.store'),
+    route('send-update-logs.save-indicative-price'),
     {
       preserverScroll: true,
       onSuccess: ({ props }) => {
@@ -75,7 +75,7 @@ const onUpdate = () => {
           title: 'The request has been updated',
           position: 'top',
         });
-        state.edit = false;
+        state.isEdit = false;
       },
       onError: errors => {
         Object.keys(errors).forEach(function (key) {
@@ -217,7 +217,7 @@ const onUpdate = () => {
 									</template>
 								</x-tooltip>
 							</dt>
-              <dd>{{ additionalPriceForm.price_with_vat }}</dd>
+              <dd>{{ additionalPriceForm.total_price }}</dd>
             </div>
           </dl>
 					

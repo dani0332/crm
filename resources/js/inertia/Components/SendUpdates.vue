@@ -260,7 +260,7 @@ const findOption = (item, key) => {
             </x-tooltip>
           </template>
           <template #item-code="{ code, uuid }">
-            <Link :href="route('send-update-logs.show', {uuid: uuid, refURL: $page.url})" replace class="text-primary-800 underline">{{ code }}</Link>
+            <Link :href="route('send-update-logs.show', {uuid: uuid, refURL: $page.url})" class="text-primary-800 underline">{{ code }}</Link>
           </template>
 
           <template #item-type="item">
