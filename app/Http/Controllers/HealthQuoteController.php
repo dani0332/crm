@@ -132,7 +132,8 @@ class HealthQuoteController extends Controller
 
         return inertia('HealthQuote/Cards', [
             'quotes' => $quotes,
-            'quoteStatusEnums' => $quoteStatusEnums
+            'quoteStatusEnums' => $quoteStatusEnums,
+            'quoteTypeId' => QuoteTypes::HEALTH->id(),
         ]);
     }
 }

@@ -17,6 +17,7 @@ use App\Enums\LookupsEnum;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
+use App\Enums\quoteStatusCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
@@ -301,6 +302,7 @@ class CRUDController extends Controller
             $dateFormat = config('constants.DATE_FORMAT_ONLY');
             $createdAtStart = Carbon::parse(now())->startOfDay()->format($dateFormat);
             $createdAtEnd = Carbon::parse(now())->endOfDay()->format($dateFormat);
+            $genericRequestEnum = GenericRequestEnum::asArray();
             $isBetaUser = auth()->user()->hasRole(RolesEnum::BetaUser);
 
             return inertia('PersonalQuote/Car/LeadList', [
@@ -315,6 +317,7 @@ class CRUDController extends Controller
                 'todayManualCount' => $todayManualCount,
                 'yesterdayAutoCount' => $yesterdayAutoCount,
                 'yesterdayManualCount' => $yesterdayManualCount,
+                'genericRequestEnum' => $genericRequestEnum,
                 'isBetaUser' => $isBetaUser,
             ]);
         }
@@ -1068,55 +1071,41 @@ class CRUDController extends Controller
 
     public function cardsViewHome(Request $request)
     {
-        $quotes = [];
-        $quotes[] = [
-            'id' => 8,
-            'title' => 'New Lead',
-            'data' => getDataAgainstStatus('Home', 8),
+        $quotes = [
+            ['id' => QuoteStatusEnum::NewLead, 'title' => quoteStatusCode::NEW_LEAD, 'data' => getDataAgainstStatus(QuoteTypes::HOME->value, QuoteStatusEnum::NewLead)],
+            ['id' => QuoteStatusEnum::Allocated, 'title' => quoteStatusCode::ALLOCATED, 'data' => getDataAgainstStatus(QuoteTypes::HOME->value, QuoteStatusEnum::Allocated)],
+            ['id' => QuoteStatusEnum::Quoted, 'title' => quoteStatusCode::QUOTED, 'data' => getDataAgainstStatus(QuoteTypes::HOME->value, QuoteStatusEnum::Quoted)],
+            ['id' => QuoteStatusEnum::FollowedUp, 'title' => quoteStatusCode::FOLLOWEDUP, 'data' => getDataAgainstStatus(QuoteTypes::HOME->value, QuoteStatusEnum::FollowedUp)],
+            ['id' => QuoteStatusEnum::InNegotiation, 'title' => quoteStatusCode::NEGOTIATION, 'data' => getDataAgainstStatus(QuoteTypes::HOME->value, QuoteStatusEnum::InNegotiation)],
+            ['id' => QuoteStatusEnum::PaymentPending, 'title' => quoteStatusCode::PAYMENTPENDING, 'data' => getDataAgainstStatus(QuoteTypes::HOME->value, QuoteStatusEnum::PaymentPending)],
+            ['id' => QuoteStatusEnum::TransactionApproved, 'title' => quoteStatusCode::TRANSACTIONAPPROVED, 'data' => getDataAgainstStatus(QuoteTypes::HOME->value, QuoteStatusEnum::TransactionApproved)],
+            ['id' => QuoteStatusEnum::PolicyIssued, 'title' => quoteStatusCode::POLICY_ISSUED, 'data' => getDataAgainstStatus(QuoteTypes::HOME->value, QuoteStatusEnum::PolicyIssued)],
         ];
-        $quotes[] = [
-            'id' => 2,
-            'title' => 'Quoted',
-            'data' => getDataAgainstStatus('Home', 2),
-        ];
-        $quotes[] = [
-            'id' => 31,
-            'title' => 'Qualified',
-            'data' => getDataAgainstStatus('Home', 31),
-        ];
-        $quotes[] = [
-            'id' => 25,
-            'title' => 'In Negotiation',
-            'data' => getDataAgainstStatus('Home', 25),
-        ];
-        $quotes[] = [
-            'id' => 26,
-            'title' => 'Application Pending',
-            'data' => getDataAgainstStatus('Home', 26),
-        ];
-        $quotes[] = [
-            'id' => 28,
-            'title' => 'Payment Pending',
-            'data' => getDataAgainstStatus('Home', 28),
-        ];
-        $quotes[] = [
-            'id' => 36,
-            'title' => 'Application Submitted',
-            'data' => getDataAgainstStatus('Home', 36),
-        ];
-        $quotes[] = [
-            'id' => 15,
-            'title' => 'Transaction Approved',
-            'data' => getDataAgainstStatus('Home', 15),
-        ];
-        $quotes[] = [
-            'id' => 29,
-            'title' => 'Policy Documents Pending',
-            'data' => getDataAgainstStatus('Home', 29),
-        ];
+
+        $quoteStatusEnums = QuoteStatusEnum::asArray();
+        $isManagerOrAdminAccess = auth()->user()->hasAnyRole([RolesEnum::HomeManager, RolesEnum::Admin]);
+
+        if (!$isManagerOrAdminAccess) {
+            if (auth()->user()->hasRole(RolesEnum::HomeNewBusinessAdvisor)) {
+                $quotes = collect($quotes)->whereNotIn('id', [
+                    QuoteStatusEnum::Allocated,
+                    QuoteStatusEnum::InNegotiation
+                ])->values()->toArray();
+
+            } elseif (auth()->user()->hasRole(RolesEnum::HomeRenewalAdvisor)) {
+                $quotes = collect($quotes)->whereNotIn('id', [
+                    QuoteStatusEnum::NewLead,
+                    QuoteStatusEnum::InNegotiation,
+                ])->values()->toArray();
+            } else {
+                $quotes = [];
+            }
+        }
 
         return inertia('HomeQuote/Cards', [
             'quotes' => $quotes,
+            'quoteStatusEnums' => $quoteStatusEnums,
+            'quoteTypeId' => QuoteTypes::HOME->id(),
         ]);
     }
 

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\V2;
 
 use App\Enums\CustomerTypeEnum;
 use App\Enums\LookupsEnum;
+use App\Enums\quoteStatusCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypes;
@@ -28,6 +29,7 @@ use App\Repositories\UserRepository;
 use App\Repositories\YachtQuoteRepository;
 use App\Services\AMLService;
 use App\Services\LookupService;
+use AWS\CRT\HTTP\Request;
 
 class YachtQuoteController extends Controller
 {
@@ -159,5 +161,45 @@ class YachtQuoteController extends Controller
         YachtQuoteRepository::update($uuid, $request->validated());
 
         return redirect('personal-quotes/yacht/'.$uuid)->with('message', 'Quote updated successfully');
+    }
+
+    public function cardsViewHome(Request $request)
+    {
+        $quotes = [
+            ['id' => QuoteStatusEnum::NewLead, 'title' => quoteStatusCode::NEW_LEAD, 'data' => getDataAgainstStatus(QuoteTypes::YACHT->value, QuoteStatusEnum::NewLead)],
+            ['id' => QuoteStatusEnum::Allocated, 'title' => quoteStatusCode::ALLOCATED, 'data' => getDataAgainstStatus(QuoteTypes::YACHT->value, QuoteStatusEnum::Allocated)],
+            ['id' => QuoteStatusEnum::Quoted, 'title' => quoteStatusCode::QUOTED, 'data' => getDataAgainstStatus(QuoteTypes::YACHT->value, QuoteStatusEnum::Quoted)],
+            ['id' => QuoteStatusEnum::FollowedUp, 'title' => quoteStatusCode::FOLLOWEDUP, 'data' => getDataAgainstStatus(QuoteTypes::YACHT->value, QuoteStatusEnum::FollowedUp)],
+            ['id' => QuoteStatusEnum::InNegotiation, 'title' => quoteStatusCode::NEGOTIATION, 'data' => getDataAgainstStatus(QuoteTypes::YACHT->value, QuoteStatusEnum::InNegotiation)],
+            ['id' => QuoteStatusEnum::PaymentPending, 'title' => quoteStatusCode::PAYMENTPENDING, 'data' => getDataAgainstStatus(QuoteTypes::YACHT->value, QuoteStatusEnum::PaymentPending)],
+            ['id' => QuoteStatusEnum::TransactionApproved, 'title' => quoteStatusCode::TRANSACTIONAPPROVED, 'data' => getDataAgainstStatus(QuoteTypes::YACHT->value, QuoteStatusEnum::TransactionApproved)],
+            ['id' => QuoteStatusEnum::PolicyIssued, 'title' => quoteStatusCode::POLICY_ISSUED, 'data' => getDataAgainstStatus(QuoteTypes::YACHT->value, QuoteStatusEnum::PolicyIssued)],
+        ];
+
+        $quoteStatusEnums = QuoteStatusEnum::asArray();
+        $isManagerOrAdminAccess = auth()->user()->hasAnyRole([RolesEnum::YachtManager, RolesEnum::Admin]);
+
+        if (!$isManagerOrAdminAccess) {
+            if (auth()->user()->hasRole(RolesEnum::YachtNewBusinessAdvisor)) {
+                $quotes = collect($quotes)->whereNotIn('id', [
+                    QuoteStatusEnum::Allocated,
+                    QuoteStatusEnum::InNegotiation
+                ])->values()->toArray();
+
+            } elseif (auth()->user()->hasRole(RolesEnum::YachtRenewalAdvisor)) {
+                $quotes = collect($quotes)->whereNotIn('id', [
+                    QuoteStatusEnum::NewLead,
+                    QuoteStatusEnum::InNegotiation,
+                ])->values()->toArray();
+            } else {
+                $quotes = [];
+            }
+        }
+
+        return inertia('YachtQuote/Cards', [
+            'quotes' => $quotes,
+            'quoteStatusEnums' => $quoteStatusEnums,
+            'quoteTypeId' => QuoteTypes::YACHT->id(),
+        ]);
     }
 }

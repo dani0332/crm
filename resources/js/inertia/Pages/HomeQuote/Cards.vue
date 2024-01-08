@@ -4,6 +4,11 @@ import { Head, usePage, Link } from '@inertiajs/vue3';
 import { useDateFormat } from '@vueuse/shared';
 import axios from 'axios';
 
+const props = defineProps({
+  quoteStatusEnum: Array,
+  quoteTypeId: Number,
+});
+
 const page = usePage();
 
 const quotes = reactive({
