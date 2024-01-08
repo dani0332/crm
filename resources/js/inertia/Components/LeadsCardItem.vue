@@ -1,10 +1,8 @@
 <script setup>
-import { useForm } from '@inertiajs/vue3';
 import {
   useSortable,
   moveArrayElement,
 } from '@vueuse/integrations/useSortable';
-import { inject } from 'vue';
 import { daysSinceStale } from '../Composables/utilities';
 
 const page = usePage();
@@ -148,7 +146,6 @@ const onSubmit = isValid => {
 const handleConfirmation = result => resolveConfirm(result);
 </script>
 <template>
-  <!--  -->
   <div
     :id="title"
     :quote_status_id="id"
@@ -179,19 +176,19 @@ const handleConfirmation = result => resolveConfirm(result);
       ]"
     >
       <div class="flex items-center space-x-1 overflow-hidden">
-        <span class="font-semibold text-sm"
-          >{{ first_name }} {{ last_name }}
+        <span class="font-semibold text-sm">
+          {{ first_name }} {{ last_name }}
         </span>
         <stale-leads-badge :date="stale_at"></stale-leads-badge>
       </div>
 
       <div class="flex items-center gap-2">
-        <x-tooltip>
+        <x-tooltip align="left">
           <x-icon icon="person" size="sm" class="text-primary-400" />
           <template #tooltip>
-            <span class="x-sm">
-              This indicates the specific type of insurance coverage.</span
-            >
+            <div class="max-w-[194px] text-xs">
+              This indicates the specific type of insurance coverage.
+            </div>
           </template>
         </x-tooltip>
         <p class="text-xs">{{ health_cover_for?.text }}</p>
@@ -203,32 +200,32 @@ const handleConfirmation = result => resolveConfirm(result);
       </div>
 
       <div class="flex items-center gap-2">
-        <x-tooltip>
+        <x-tooltip align="left">
           <x-icon icon="money" size="sm" class="text-primary-400" />
           <template #tooltip>
-            <span v-if="leadName == 'Health'" class="x-sm">
-              The complete amount due including VAT and before any potential
-              discounts. Remember, VAT is exempt for Life Insurance
-              policies.</span
-            >
-            <span v-else class="x-sm">
-              The complete amount due including VAT and before any potential
-              discounts. Remember, VAT is exempt for Life Insurance
-              policies.</span
-            >
+            <div class="max-w-[194px] text-xs">
+              <span v-if="leadName == 'Health'">
+                The complete amount due including VAT and before any potential
+                discounts. Remember, VAT is exempt for Life Insurance policies.
+              </span>
+              <span v-else>
+                The complete amount due including VAT and before any potential
+                discounts. Remember, VAT is exempt for Life Insurance policies.
+              </span>
+            </div>
           </template>
         </x-tooltip>
         <p class="text-xs">{{ Number(premium).toLocaleString() }}</p>
       </div>
 
       <div class="flex items-center gap-2">
-        <x-tooltip>
+        <x-tooltip align="left">
           <x-icon icon="calendar" size="sm" class="text-primary-400" />
           <template #tooltip>
-            <span
-              >The 'Last Modified Date' displays the most recent date and time
-              when the lead was last worked on.</span
-            >
+            <div class="max-w-[194px] text-xs">
+              The 'Last Modified Date' displays the most recent date and time
+              when the lead was last worked on.
+            </div>
           </template>
         </x-tooltip>
         <p class="text-xs">{{ updated_at }}</p>

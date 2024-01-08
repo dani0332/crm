@@ -1,38 +1,31 @@
-export const useRoundIt = (num, decimalPlaces = 2) =>
-{
+export const useRoundIt = (num, decimalPlaces = 2) => {
   const p = Math.pow(10, decimalPlaces);
   const n = num * p * (1 + Number.EPSILON);
   return Math.round(n) / p;
 };
 
-export const useCleanObj = reactive =>
-{
-  Object.keys(reactive).forEach(key =>
-  {
+export const useCleanObj = reactive => {
+  Object.keys(reactive).forEach(key => {
     if (
       reactive[key] === null ||
       reactive[key] === undefined ||
       reactive[key] === '' ||
       reactive[key] === false ||
       reactive[key].length === 0
-    )
-    {
+    ) {
       delete reactive[key];
     }
   });
   return reactive;
 };
 
-export const useObjToUrl = obj =>
-{
+export const useObjToUrl = obj => {
   Object.keys(obj).forEach(
     key => (obj[key] === '' || obj[key].length === 0) && delete obj[key],
   );
   return Object.keys(obj)
-    .map(key =>
-    {
-      if (Array.isArray(obj[key]))
-      {
+    .map(key => {
+      if (Array.isArray(obj[key])) {
         return obj[key].map(value => `${key}[]=${value}`).join('&');
       }
       return `${key}=${obj[key]}`;
@@ -40,10 +33,15 @@ export const useObjToUrl = obj =>
     .join('&');
 };
 
-export const useGetShowPageRoute = (uuid, quoteTypeId, business_type_of_insurance_id) =>
-{
-
-  let business_route = (business_type_of_insurance_id == 5) ? route('amt.show', uuid) : route('business.show', uuid);
+export const useGetShowPageRoute = (
+  uuid,
+  quoteTypeId,
+  business_type_of_insurance_id,
+) => {
+  let business_route =
+    business_type_of_insurance_id == 5
+      ? route('amt.show', uuid)
+      : route('business.show', uuid);
 
   const routesObj = {
     1: route('car.show', uuid),
@@ -59,31 +57,25 @@ export const useGetShowPageRoute = (uuid, quoteTypeId, business_type_of_insuranc
   };
 
   return routesObj[quoteTypeId];
-}
+};
 
-export const useGenerateQueryString = filters =>
-{
+export const useGenerateQueryString = filters => {
   const query = {};
-  Object.keys(filters).forEach(key =>
-  {
-    if (filters[key] !== '' && filters[key] != null)
-    {
+  Object.keys(filters).forEach(key => {
+    if (filters[key] !== '' && filters[key] != null) {
       query[key] = filters[key];
     }
   });
   return query;
 };
 
-export const useConvertDate = date =>
-{
-  if (date == null)
-  {
+export const useConvertDate = date => {
+  if (date == null) {
     return null;
   }
 
   const splitedDate = date.split('-');
-  if (splitedDate[0].length === 4)
-  {
+  if (splitedDate[0].length === 4) {
     return date;
   }
 
@@ -91,21 +83,30 @@ export const useConvertDate = date =>
   return `${year}-${month}-${day}`;
 };
 
-export const daysSinceStale = payload =>
-{
+export const daysSinceStale = payload => {
   const quoteRequest = payload;
-  const stale_days = quoteRequest ? Math.floor((new Date() - new Date(quoteRequest)) / (1000 * 60 * 60 * 24)) : false;
-  return stale_days !== false && stale_days <= 90 ? stale_days : false
-}
+  const stale_days = quoteRequest
+    ? Math.floor((new Date() - new Date(quoteRequest)) / (1000 * 60 * 60 * 24))
+    : false;
+  return stale_days !== false && stale_days <= 90 ? stale_days : false;
+};
 
 export const fileUploadErrorMessage = (doc, rejectReason) => {
-  let errorMessage = "";
-  if (rejectReason.code == "file-too-large") {
-    errorMessage = "File size must be less than " + doc.max_size + " MB for " + doc.text;
-  } else if (rejectReason.code == "file-invalid-type") {
-    errorMessage = "You can only upload a " + doc.accepted_files + " for " + doc.text;
+  let errorMessage = '';
+  if (rejectReason.code == 'file-too-large') {
+    errorMessage =
+      'File size must be less than ' + doc.max_size + ' MB for ' + doc.text;
+  } else if (rejectReason.code == 'file-invalid-type') {
+    errorMessage =
+      'You can only upload a ' + doc.accepted_files + ' for ' + doc.text;
   } else {
-    errorMessage= "You can only upload a " + doc.accepted_files + " or File size must be less than " + doc.max_size + " MB for " + doc.text;
+    errorMessage =
+      'You can only upload a ' +
+      doc.accepted_files +
+      ' or File size must be less than ' +
+      doc.max_size +
+      ' MB for ' +
+      doc.text;
   }
   return errorMessage;
 };
