@@ -21,6 +21,7 @@ use App\Traits\GenericQueriesAllLobs;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
@@ -1797,6 +1798,135 @@ class CarQuoteService extends BaseService
                 $previousAdvisorAllocationRecord->save();
             }
         }
+    }
+
+    public function getExportDataWithPlans(): Collection
+    {
+        $request = request();
+        $results = [];
+        DB::table('car_quote_request as q')
+            ->leftJoin('nationality as n', 'q.nationality_id', '=', 'n.id')
+            ->leftJoin('car_make as cmk', 'q.car_make_id', '=', 'cmk.id')
+            ->leftJoin('car_model as cmd', 'q.car_model_id', '=', 'cmd.id')
+            ->leftJoin('vehicle_type as vt', 'q.vehicle_type_id', '=', 'vt.id')
+            ->leftJoin('quote_status as qs', 'qs.id', '=', 'q.quote_status_id')
+            ->leftJoin('payment_status as ps', 'ps.id', '=', 'q.payment_status_id')
+            ->leftJoin('emirates as e', 'q.emirate_of_registration_id', '=', 'e.id')
+            ->leftJoin('car_quote_plan_details as cqpd', function ($join) {
+                $join->on('q.uuid', '=', 'cqpd.quote_uuid')
+                    ->whereColumn('q.plan_id', '=', 'cqpd.plan_id');
+            })
+            ->leftJoin('car_plan as cp', 'cp.id', '=', 'q.plan_id')
+            ->leftJoin('insurance_provider as ip', 'ip.id', '=', 'cp.provider_id')
+            ->select(
+                'q.code',
+                'q.first_name',
+                'q.last_name',
+                'q.dob',
+                'n.text as nationality',
+                'cmk.text as car_make',
+                'cmd.text as car_model',
+                'q.year_of_manufacture',
+                'q.car_value',
+                'q.car_value_tier',
+                'vt.text as vehicle_type',
+                'e.text as emirate_of_registration',
+                'cqpd.repair_type',
+                'cqpd.addons',
+                'q.created_at',
+                'qs.text as lead_status',
+                'ps.text as payment_status',
+                'cp.text as plan_name',
+                'ip.text as provider_name'
+            )
+            ->whereBetween('q.created_at', [$request->created_at_start, $request->created_at_end])
+            ->where('q.quote_status_id', '=', QuoteStatusEnum::TransactionApproved)
+            ->where('q.payment_status_id', '=', PaymentStatusEnum::CAPTURED)
+            ->orderBy('q.created_at')
+            ->chunk(500, function ($carQuoteRequestData) use (&$results) {
+                foreach ($carQuoteRequestData as $row) {
+                    $addons = json_decode($row->addons, true);
+                    unset($row->addons);
+                    foreach ($addons as $addon) {
+                        $addonName = $addon['text'];
+                        foreach ($addon['carAddonOption'] as $option) {
+                            $addonValue = $option['value'];
+                            $newRow = clone $row;
+                            $newRow->add_on_name = $addonName;
+                            $newRow->add_on_value = $addonValue;
+                            $newRow->is_selected = $option['isSelected'] ? 'Yes' : 'No';
+                            $results[] = $newRow;
+                        }
+                    }
+                }
+            });
+
+        return collect($results);
+    }
+
+    public function getExportDataWithMobileAndEmail()
+    {
+        $request = request();
+        $results = DB::table('car_quote_request AS cqr')
+            ->select('cqr.code', 'qb.name AS batch_no', 'cqr.first_name', 'cqr.last_name', 'cqr.email', 'cqr.mobile_no',
+                'cqr.created_at', 'qs.text AS status', 'tr.name AS tier', 'u.name AS assigned_to')
+            ->leftJoin('quote_status AS qs', 'qs.id', '=', 'cqr.quote_status_id')
+            ->leftJoin('users AS u', 'u.id', '=', 'cqr.advisor_id')
+            ->leftJoin('quote_batches AS qb', 'qb.id', '=', 'cqr.quote_batch_id')
+            ->leftJoin('tiers AS tr', 'tr.id', '=', 'cqr.tier_id')
+            ->whereBetween('cqr.created_at', [$request->created_at_start, $request->created_at_end])
+            ->orderBy('cqr.created_at', 'ASC')
+            ->get();
+
+        return collect($results);
+    }
+
+    public function getExportDataWithMakeModelTrim()
+    {
+        $request = request();
+        $results = DB::table('car_make AS cmk')
+            ->select(
+                'cmk.code AS MakeCode',
+                'cmk.text AS make_name',
+                'cmd.code',
+                'cmd.text AS model_name',
+                'cmdd.trim_id AS trim_id',
+                'cmdd.text AS trim_name',
+                'cmdd.default_trim_id',
+                'cmdd.current_value',
+                'cmk.axa_car_make',
+                'cmk.oman_car_make',
+                'cmk.tokio_car_make',
+                'cmk.qatar_car_make',
+                'cmk.rsa_car_make',
+                'cmd.axa_car_model',
+                'cmd.oman_car_model',
+                'cmd.tokio_car_model',
+                'cmd.qatar_car_model',
+                'cmd.rsa_car_model',
+                'cmdd.axa_model_detail',
+                'cmdd.oman_model_detail',
+                'cmdd.no_of_doors',
+                'cmdd.hp',
+                'cmdd.cubic_capacity',
+                'cmdd.transmission',
+                'cmdd.drive_type',
+                'cmdd.seating_capacity',
+                'cmdd.cylinder',
+                'vt.text AS body_type',
+                'cmk.is_active AS make_is_active',
+                'cmd.is_active AS mode_is_active',
+                'cmdd.is_active AS trim_is_active',
+                'cmk.is_deleted AS make_is_deleted',
+                'cmd.is_deleted AS model_is_deleted',
+                'cmdd.is_deleted AS trim_is_deleted'
+            )
+            ->leftJoin('car_model AS cmd', 'cmd.car_make_code', '=', 'cmk.code')
+            ->leftJoin('car_model_detail AS cmdd', 'cmdd.car_model_id', '=', 'cmd.id')
+            ->leftJoin('vehicle_type AS vt', 'vt.id', '=', 'cmdd.vehicle_type_id')
+            ->get();
+
+        return collect($results);
     }
 
     public function getExportData()
