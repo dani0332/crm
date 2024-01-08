@@ -40,13 +40,13 @@ class Kernel extends ConsoleKernel
             ->tuesdays()
             ->fridays()
             ->withoutOverlapping(1)->onOneServer()
-            ->at('9:00');
+            ->at('9:00');*/
 
         //send leads which are resubmitted for car sold approval yesterday
         $schedule->job((new CarSoldResubmissions))
             ->daily()
             ->withoutOverlapping(1)->onOneServer()
-            ->at('9:00');*/
+            ->at('9:00');
 
         $schedule
             ->command('AddBatchNumber:cron')->timezone('Asia/Dubai')->weeklyOn(1, '0:00')->onOneServer()->withoutOverlapping(1);
