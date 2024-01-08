@@ -689,40 +689,8 @@ class CRUDController extends Controller
             $industryType = LookupRepository::where('key', LookupsEnum::COMPANY_TYPE)->get();
             $nationalities = NationalityRepository::withActive()->get();
 
-            $insuranceProviderLeadCount = $insuranceProviderCode = '';
-            if ($payments->first()) {
-                $insurance_provider_id = $payments[0]['insurance_provider_id'];
-                $insuranceProviderCode = InsuranceProviderRepository::where('id', $insurance_provider_id)->value('code');
-                $insuranceProviderLeadCount = Payment::where('insurance_provider_id', '=', $insurance_provider_id)->count();
-            }
-            $bPDetails['brokerInvoiceNo'] = $insuranceProviderCode . $insuranceProviderLeadCount;
-            $bPDetails['invoiceDescription'] = $insuranceProviderCode . '-' . $quoteType . '-' . $record->policy_number;
-            $bPDetails['sendButton'] = false;
-            $bPDetails['editButton'] = false;
-            $bPDetails['sendPolicyType'] = null;
-            $bPDetails['text'] = '';
-
-            // dd($quoteDocuments)
-            if (!empty($quoteDocuments)) {
-                $document_type_codes = collect($quoteDocuments)->pluck('document_type_code')->toArray();
-
-                // if (in_array(QuoteDocumentsEnum::CAR_POLICY_CERTIFICATE, $document_type_codes) && in_array(QuoteDocumentsEnum::POLICY_SCHEDULE, $document_type_codes) && in_array(QuoteDocumentsEnum::POLICY_HANDBOOK, $document_type_codes)) {
-                if (1) {
-
-                    $bPDetails['sendButton'] = true;
-                    $bPDetails['text'] = 'Send Policy To Customer';
-                    $bPDetails['sendPolicyType'] = 'customer';
-                }
-                $taxDocuments = (in_array(QuoteDocumentsEnum::CAR_TAX_INVOICE, $document_type_codes) && in_array(QuoteDocumentsEnum::CAR_TAX_INVOICE_RAISE_BY_BUYER, $document_type_codes));
-                $requiredRole = auth()->user()->hasAnyRole([RolesEnum::NRA, RolesEnum::FINANCE, RolesEnum::PRODUCTION]);
-
-                // if ($bPDetails['sendButton'] && $taxDocuments && $requiredRole) {
-                if (1) {
-                    $bPDetails['text'] = 'Send Policy';
-                    $bPDetails['editButton'] = true;
-                    $bPDetails['sendPolicyType'] = 'sage';
-                }
-            }
+            // book policy details
+            $bPDetails = $this->bookPolicyPayload($record, $quoteType, $payments, $quoteDocuments);
 
             return inertia('PersonalQuote/Car/Show', compact([
                 'record', 'quote', 'model', 'customTitles', 'customTableList', 'paymentStatusEnum', 'quoteStatusEnum', 'leadSourceEnum', 'isBetaUser',

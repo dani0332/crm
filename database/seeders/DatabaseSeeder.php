@@ -18,6 +18,7 @@ class DatabaseSeeder extends Seeder
             addDubaiNowEmailGroup::class,
             DubaiLeadSource::class,
             LstDocumentsSeeder::class,
+            SendPolicyApplicationStorageSeeder::class,
         ]);
     }
 }

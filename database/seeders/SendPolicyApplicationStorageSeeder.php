@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Enums\ApplicationStorageEnums;
 use App\Models\ApplicationStorage;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
@@ -16,7 +17,7 @@ class SendPolicyApplicationStorageSeeder extends Seeder
     public function run()
     {
         $sibCarTemplateId = ApplicationStorage::where('key_name', 'SIB_CAR_SEND_POLICY_TEMPLATE_ID')->first();
-        if (! $sibCarTemplateId) {
+        if (!$sibCarTemplateId) {
             DB::table('application_storage')->insert([
                 'key_name' => 'SIB_CAR_SEND_POLICY_TEMPLATE_ID',
                 'value' => '389',
@@ -27,7 +28,7 @@ class SendPolicyApplicationStorageSeeder extends Seeder
         }
 
         $dnircContactNumber = ApplicationStorage::where('key_name', 'DNIRC_CUSTOMER_SUPPORT_NUMBER')->first();
-        if (! $dnircContactNumber) {
+        if (!$dnircContactNumber) {
             DB::table('application_storage')->insert([
                 'key_name' => 'DNIRC_CUSTOMER_SUPPORT_NUMBER',
                 'value' => '800-4101',
@@ -38,7 +39,7 @@ class SendPolicyApplicationStorageSeeder extends Seeder
         }
 
         $axaContactNumber = ApplicationStorage::where('key_name', 'AXA_CUSTOMER_SUPPORT_NUMBER')->first();
-        if (! $axaContactNumber) {
+        if (!$axaContactNumber) {
             DB::table('application_storage')->insert([
                 'key_name' => 'AXA_CUSTOMER_SUPPORT_NUMBER',
                 'value' => '800 292',
@@ -49,7 +50,7 @@ class SendPolicyApplicationStorageSeeder extends Seeder
         }
 
         $ntContactNumber = ApplicationStorage::where('key_name', 'NT_CUSTOMER_SUPPORT_NUMBER')->first();
-        if (! $ntContactNumber) {
+        if (!$ntContactNumber) {
             DB::table('application_storage')->insert([
                 'key_name' => 'NT_CUSTOMER_SUPPORT_NUMBER',
                 'value' => '800 4101',
@@ -60,7 +61,7 @@ class SendPolicyApplicationStorageSeeder extends Seeder
         }
 
         $oicContactNumber = ApplicationStorage::where('key_name', 'OIC_CUSTOMER_SUPPORT_NUMBER')->first();
-        if (! $oicContactNumber) {
+        if (!$oicContactNumber) {
             DB::table('application_storage')->insert([
                 'key_name' => 'OIC_CUSTOMER_SUPPORT_NUMBER',
                 'value' => '800-6565',
@@ -71,7 +72,7 @@ class SendPolicyApplicationStorageSeeder extends Seeder
         }
 
         $qicContactNumber = ApplicationStorage::where('key_name', 'QIC_CUSTOMER_SUPPORT_NUMBER')->first();
-        if (! $qicContactNumber) {
+        if (!$qicContactNumber) {
             DB::table('application_storage')->insert([
                 'key_name' => 'QIC_CUSTOMER_SUPPORT_NUMBER',
                 'value' => '800 4900',
@@ -82,7 +83,7 @@ class SendPolicyApplicationStorageSeeder extends Seeder
         }
 
         $rsaContactNumber = ApplicationStorage::where('key_name', 'RSA_CUSTOMER_SUPPORT_NUMBER')->first();
-        if (! $rsaContactNumber) {
+        if (!$rsaContactNumber) {
             DB::table('application_storage')->insert([
                 'key_name' => 'RSA_CUSTOMER_SUPPORT_NUMBER',
                 'value' => '800 462 372',
@@ -93,10 +94,21 @@ class SendPolicyApplicationStorageSeeder extends Seeder
         }
 
         $tmContactNumber = ApplicationStorage::where('key_name', 'TM_CUSTOMER_SUPPORT_NUMBER')->first();
-        if (! $tmContactNumber) {
+        if (!$tmContactNumber) {
             DB::table('application_storage')->insert([
                 'key_name' => 'TM_CUSTOMER_SUPPORT_NUMBER',
                 'value' => '800 4900',
+                'is_active' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+
+        $carBookPolicy = ApplicationStorage::where('key_name', ApplicationStorageEnums::CAR_BOOK_POLICY_TEMPLATE)->first();
+        if (!$carBookPolicy) {
+            DB::table('application_storage')->insert([
+                'key_name' => ApplicationStorageEnums::CAR_BOOK_POLICY_TEMPLATE,
+                'value' => '591',
                 'is_active' => 1,
                 'created_at' => now(),
                 'updated_at' => now(),
