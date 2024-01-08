@@ -9,9 +9,9 @@ const props = defineProps({
     require: true,
   },
   quoteTypeId: {
-    type: Number,
-    require: true
-  }
+    type: String,
+    require: true,
+  },
 });
 
 const quotes = ref({ ...props.quotes });
