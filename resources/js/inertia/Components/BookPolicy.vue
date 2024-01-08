@@ -126,7 +126,11 @@ const submitPolicy = () => {
           position: 'top',
         });
 
-        location.reload();
+        router.reload({
+          only: ['data'],
+          preserveScroll: true,
+          preserveState: true,
+        });
         modals.sendPolicyConfirm = false;
       }
     })
