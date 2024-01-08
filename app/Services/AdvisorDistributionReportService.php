@@ -101,10 +101,6 @@ class AdvisorDistributionReportService extends BaseService
             ->map(fn ($users) => $users->name)
             ->toArray();
 
-        if (! auth()->user()->hasRole(RolesEnum::BetaUser)) {
-            unset($leadSources['DUBAI_NOW']);
-        }
-
         return [
             'maxDays' => $maxDays,
             'tiers' => $tiers,
