@@ -5,6 +5,7 @@ namespace App\Http\Controllers\V2;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\GenericRequestEnum;
+use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Exports\AmtQuoteExport;
 use App\Exports\BusinessQuoteExport;
@@ -33,6 +34,7 @@ use App\Models\Payment;
 use App\Models\PaymentSplits;
 use App\Models\QuoteRequestEntityMapping;
 use App\Models\QuoteStatus;
+use App\Models\QuoteSync;
 use App\Models\User;
 use App\Services\ActivitiesService;
 use App\Services\CentralService;
@@ -61,7 +63,7 @@ class CentralController extends Controller
     {
         $diffInDays = 120;
 
-        if (! $quoteType) {
+        if (!$quoteType) {
             return abort(404);
         }
 
@@ -82,7 +84,7 @@ class CentralController extends Controller
             $created_at_end = Carbon::parse($request->created_at_end)->format('Y-m-d');
             $diff = Carbon::parse($created_at_start)->diffInDays(Carbon::parse($created_at_end));
             if ($diff > $diffInDays) {
-                return back()->with('error', 'Maximum of '.$diffInDays.' days (created date) are allowed to be exported.');
+                return back()->with('error', 'Maximum of ' . $diffInDays . ' days (created date) are allowed to be exported.');
             }
         }
 
@@ -227,9 +229,9 @@ class CentralController extends Controller
         if ($request->send_policy_type == 'customer') {
 
             dispatch(new SendBookPolicyDocumentsJob($payLoad));
-            // $quote->update([
-            //     'quote_status_id' => QuoteStatusEnum::PolicySentToCustomer,
-            // ]);
+            $quote->update([
+                'quote_status_id' => QuoteStatusEnum::PolicySentToCustomer,
+            ]);
             return response()->json(['message' => 'policy sent successfully'], 200);
         }
 
