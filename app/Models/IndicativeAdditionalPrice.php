@@ -12,8 +12,8 @@ class IndicativeAdditionalPrice extends Model
     protected $table = 'indicative_additional_prices';
 
     protected $fillable = [
-        'price_vat_applicable',
-        'price_vat_not_applicable',
+        'price_with_vat',
+        'price_without_vat',
         'total_price',
         'send_update_log_id',
     ];
