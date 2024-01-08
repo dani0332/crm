@@ -116,22 +116,30 @@ const submitPolicy = () => {
     model_type: props?.quoteType,
     quote_id: props?.quote?.id,
   };
-  axios.post(url, data).then(response => {
-    console.log(response);
-    if (response.status == 200) {
-      notification.success({
-        title: 'Policy Sent Successfully',
-        position: 'top',
-      });
+  axios
+    .post(url, data)
+    .then(response => {
+      console.log(response);
+      if (response.status == 200) {
+        notification.success({
+          title: 'Policy Sent Successfully',
+          position: 'top',
+        });
 
+        router.reload({
+          only: ['data'],
+          preserveScroll: true,
+          preserveState: true,
+        });
+        modals.sendPolicyConfirm = false;
+      }
+    })
+    .catch(err => {
+      console.log(err);
+    })
+    .finally(() => {
       modals.sendPolicyConfirm = false;
-    } else {
-      notification.error({
-        title: 'Policy Sending Failed',
-        position: 'top',
-      });
-    }
-  });
+    });
 };
 
 const caculateCommission = () => {
