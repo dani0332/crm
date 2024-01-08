@@ -10,9 +10,9 @@ const dateFormat = date => {
   return useDateFormat(date, 'DD-MM-YYYY HH:mm:ss').value;
 };
 
-console.log(props.quoteTypeId);
-
 provide('quoteStatusEnum', props.quoteStatusEnum);
+provide('quoteTypeId', props.quoteTypeId);
+
 const quotes = reactive({
   data: page.props.quotes || [],
   loader: false,
