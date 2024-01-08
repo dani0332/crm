@@ -41,15 +41,12 @@ class SendUpdateLogController extends Controller
         $sendUpdateOptions = (new LookupService)->getSendUpdateOptions($sendUpdateLog->quote_type_id);
         $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping($sendUpdateLog->quote_type_id);
 
-        $quoteTypes = QuoteTypeId::getOptions();
-
         return inertia('SendUpdateLog/Show', [
             'sendUpdateLog' => $sendUpdateLog,
             'sendUpdateOptions' => $sendUpdateOptions,
             'insuranceProviders' => $insuranceProviders,
             'sendUpdateStatusEnum' => SendUpdateLogStatusEnum::asArray(),
-            'quoteType' => QuoteTypes::getName($sendUpdateLog->quote_type_id),
-            'quoteTypes' => QuoteTypes::asArray()
+            'quoteType' => QuoteTypes::getName($sendUpdateLog->quote_type_id)
         ]);
     }
 
