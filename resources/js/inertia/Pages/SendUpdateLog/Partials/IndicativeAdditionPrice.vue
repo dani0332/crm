@@ -21,8 +21,8 @@ const state = reactive({
 });
 
 const additionalPriceForm = useForm({
-  price_vat_applicable: 0,
-  price_vat_not_applicable: 0,
+  price_with_vat: 0,
+  price_without_vat: 0,
   total_price: 0,
 	// insurer_quote_number: '',
   // insurance_provider_id: '',
@@ -38,7 +38,7 @@ const additionalPriceForm = useForm({
 // });
 
 // watch(
-//   () => additionalPriceForm.price_vat_applicable,
+//   () => additionalPriceForm.price_with_vat,
 //   (newValue) => {
 //     let price = parseFloat(newValue);
 //     additionalPriceForm.total_price = ((price / 100) * 5) + price;
@@ -47,7 +47,7 @@ const additionalPriceForm = useForm({
 // )
 
 // watch(
-//   () => additionalPriceForm.price_vat_not_applicable,
+//   () => additionalPriceForm.price_without_vat,
 //   (newValue) => {
 //     let price = parseFloat(newValue);
 //     additionalPriceForm.total_price = ((price / 100) * 5) + price;
@@ -56,11 +56,11 @@ const additionalPriceForm = useForm({
 // )
 
 const updateTotalPrice = () => {
-  if (additionalPriceForm.price_vat_applicable != "") {
-    let price = parseFloat(additionalPriceForm.price_vat_applicable);
+  if (additionalPriceForm.price_with_vat != "") {
+    let price = parseFloat(additionalPriceForm.price_with_vat);
     additionalPriceForm.total_price = ((price / 100) * 5) + price;
-  } else if (additionalPriceForm.price_vat_not_applicable != "") {
-    let price = parseFloat(additionalPriceForm.price_vat_not_applicable);
+  } else if (additionalPriceForm.price_without_vat != "") {
+    let price = parseFloat(additionalPriceForm.price_without_vat);
     additionalPriceForm.total_price = ((price / 100) * 5) + price;
   }
 }
@@ -125,7 +125,7 @@ const onUpdate = () => {
               </dt>
               <dd>
                 <x-input
-                  v-model="additionalPriceForm.price_vat_not_applicable"
+                  v-model="additionalPriceForm.price_without_vat"
                   placeholder="Enter price (VAT not applicable)"
                   :disabled="!state.isEdit"
                   type="number"
@@ -171,7 +171,7 @@ const onUpdate = () => {
 							</dt>
               <dd>
                 <x-input
-                  v-model="additionalPriceForm.price_vat_applicable"
+                  v-model="additionalPriceForm.price_with_vat"
                   placeholder="Enter price (VAT applicable)"
                   :disabled="!state.isEdit"
                   type="number"
