@@ -239,7 +239,6 @@ class AjaxController extends Controller
 
             return response()->json(['success' => true, 'payment_link' => $paymentLinkURL]);
 
-            return;
         }
     }
 
