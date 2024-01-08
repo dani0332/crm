@@ -4,7 +4,7 @@ import {
   useSortable,
   moveArrayElement,
 } from '@vueuse/integrations/useSortable';
-import { nextTick } from 'vue';
+import { inject } from 'vue';
 import { daysSinceStale } from '../Composables/utilities';
 
 const page = usePage();
@@ -16,16 +16,18 @@ const props = defineProps({
   },
   id: Number,
   title: String,
-  quote_type_id: String,
 });
 
+const emit = defineEmits(['confirmation-result']);
+
 const quoteStatusEnum = inject('quoteStatusEnum');
+const quoteTypeId = inject('quoteTypeId');
+
 const { isRequired } = useRules();
 
 const leads = ref(props.leads);
 const leadForm = useForm({
   reason: null,
-  isReason: false,
 });
 
 const reasons = ref([
@@ -74,50 +76,43 @@ const canDrop = async (e, callback) => {
   // return false;
 };
 
+let resolveConfirm;
+
 const moveTask = async () => {
   // Show the confirmation modal
   showModal.value = true;
 
   // Wait for the confirmation result
   const confirmed = await new Promise(resolve => {
-    const confirmationHandler = result => {
-      resolve(result);
-    };
-    // Register the event listener for the confirmation
-    context.emit('confirmation-result', confirmationHandler);
+    resolveConfirm = resolve;
   });
 
-  // Hide the modal
-  showModal.value = false;
-
-  // Move the task if confirmed, otherwise do nothing
-  if (confirmed) {
-    // Move the task logic here
-    console.log('Task moved!');
-  } else {
-    console.log('Task not moved!');
-  }
+  return confirmed;
 };
 
-let sortable = useSortable(`#${props.title}`, props.leads, {
+useSortable(`#${props.title}`, props.leads, {
   group: {
     name: 'shared',
     put: true,
     pull: canDrag.value,
   },
   animation: 500,
-  onSort: async function (e) {
+  onAdd: async function (e) {
     let node = e.item;
     let item = leads.value[e.oldIndex];
     let data = item
       ? {
-          form: { id: item.id, quote_status_id: item.quote_status_id },
+          form: {
+            id: item.id,
+            quoteTypeId: quoteTypeId,
+            quote_status_id: item.quote_status_id,
+          },
           to: { quote_status_id: e.to.getAttribute('quote_status_id') },
         }
       : null;
 
     if (data && data.to.quote_status_id == 17) {
-      let response = await canDrop(e);
+      let response = await moveTask(e);
       if (!response) {
         var itemEl = e.item; // dragged HTMLElement
         let originalList = e.from; // previous list
@@ -129,6 +124,9 @@ let sortable = useSortable(`#${props.title}`, props.leads, {
         originalList.insertBefore(itemEl, referenceNode);
       }
     }
+
+    showModal.value = false;
+    // updateList();
   },
 });
 
@@ -160,9 +158,11 @@ const dateFormat = date => {
 const showModal = ref(false);
 
 const onSubmit = isValid => {
-  console.log(sortable);
-  // if (!isValid) return false;
+  if (!isValid) return false;
+  handleConfirmation(true);
 };
+
+const handleConfirmation = result => resolveConfirm(result);
 </script>
 <template>
   <!--  -->
@@ -252,7 +252,6 @@ const onSubmit = isValid => {
       </div>
     </a>
   </div>
-  <!-- <app-modal v-model="showModal"></app-modal> -->
   <x-modal v-model="showModal" show-close backdrop>
     <template #header>
       <span>Kinldy choose a reason for marking as 'Lost' </span>
@@ -270,9 +269,7 @@ const onSubmit = isValid => {
       </x-field>
       <div class="text-right space-x-4 mt-4">
         <x-button type="submit">Continue</x-button>
-        <x-button
-          color="orange"
-          @click.prevent="(showModal = false), (leadForm.isLostReason = false)"
+        <x-button color="orange" @click.prevent="handleConfirmation(false)"
           >Go Back</x-button
         >
       </div>
