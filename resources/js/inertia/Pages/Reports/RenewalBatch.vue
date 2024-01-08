@@ -755,10 +755,10 @@ watch(
                             </th>
                             <th
                                 class="py-2 font-semibold tracking-widest uppercase text-xs px-3 sticky top-0 text-left w-28">
-                                Avgerage IMRetention
+                                AVERAGE IM RETENTION
                             </th>
                             <th class="py-2 font-semibold tracking-widest uppercase text-xs px-3 sticky top-0 text-left">
-                                Avgerage RawRetention
+                                AVERAGE RAW RETENTION
                             </th>
                         </tr>
                     </thead>

@@ -77,7 +77,7 @@ const memberForm = useForm({
   customer_id: props.quoteDetails.customer_id,
   entity_id: props.entity_id ?? null,
   id: null,
-  first_name: props.cardHolderName.card_holder_name,
+  first_name: props.cardHolderName?props.cardHolderName.card_holder_name:'',
   dob: null,
   relation_code: null,
   nationality_id: null,

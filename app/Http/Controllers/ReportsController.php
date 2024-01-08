@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Enums\RolesEnum;
 use App\Models\RenewalBatch;
 use App\Models\User;
 use App\Services\AdvisorConversionReportService;
@@ -65,7 +64,6 @@ class ReportsController extends Controller
             'reportData' => $advisorDistributionReportService->getReportData($request),
             'filterOptions' => $advisorDistributionReportService->getFilterOptions(),
             'defaultFilters' => $advisorDistributionReportService->getDefaultFilters(),
-            'isBetaUser' => auth()->user()->hasRole(RolesEnum::BetaUser),
         ]);
     }
 

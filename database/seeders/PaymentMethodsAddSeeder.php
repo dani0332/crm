@@ -82,8 +82,8 @@ class PaymentMethodsAddSeeder extends Seeder
         if (! $recordExists) {
             PaymentMethod::create([
                 'code' => 'PP',
-                'name' => 'Parttial Payment',
-                'description' => 'Parttial Payment',
+                'name' => 'Partial Payment',
+                'description' => 'Partial Payment',
                 'tool_tip' => 'This payment method is used when the total amount is divided into multiple payments over a set period. It\'s typically chosen for semi-annual, quarterly, or monthly payment frequencies.',
                 'is_active' => true,
             ]);

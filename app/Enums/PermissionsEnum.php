@@ -240,4 +240,7 @@ final class PermissionsEnum extends Enum
     public const PAUSE_AUTO_FOLLOWUPS = 'pause-auto-followups';
     public const BOOK_POLICY_EDIT = 'book-policy-edit';
     const EmbeddedProductView = 'embedded-product-view';
+    public const EXPORT_PLAN_DETAIL = 'export-plan-detail';
+    public const EXPORT_LEADS_DETAIL_WITH_EMAIL_MOBILE = 'export-leads-detail-with-email-mobile';
+    public const EXPORT_MAKES_MODELS = 'export-makes-models';
 }
