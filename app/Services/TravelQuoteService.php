@@ -7,20 +7,26 @@ use App\Enums\DatabaseColumnsString;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
+use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Enums\TravelQuoteEnum;
 use App\Facades\Ken;
+use App\Models\CustomerMembers;
+use App\Models\InsuranceProvider;
 use App\Models\TravelMemberDetail;
 use App\Models\TravelQuote;
 use App\Models\TravelQuotePlan;
 use App\Models\TravelQuoteRequestDetail;
+use App\Repositories\CustomerMembersRepository;
 use App\Traits\AddPremiumAllLobs;
+use App\Traits\GenericQueriesAllLobs;
 use App\Traits\RolePermissionConditions;
 use Auth;
 use Carbon\Carbon;
 use DB;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use PDF;
 
 class TravelQuoteService extends BaseService
 {
@@ -28,6 +34,7 @@ class TravelQuoteService extends BaseService
     protected $leadAllocationService;
 
     use AddPremiumAllLobs;
+    use GenericQueriesAllLobs;
     use RolePermissionConditions;
 
     public function __construct(LeadAllocationService $leadAllocationService)
@@ -190,6 +197,11 @@ class TravelQuoteService extends BaseService
 
         if ($request->uuid != null) {
             $travelQuote['quoteUID'] = $request->uuid;
+            $travelQuoteData = TravelQuote::where('uuid', $travelQuote['quoteUID'])->first();
+            $selectedColumns = ['id', 'gender', 'dob'];
+            $travelersMembers = CustomerMembersRepository::getMemberInfo('quote_id', $travelQuoteData->id, QuoteTypes::TRAVEL->name, CustomerTypeEnum::Individual, $selectedColumns);
+            $travelQuote['members'] = $travelersMembers;
+            $this->setQuoteUpdatedAt($travelQuoteData->id);
             $response = Ken::request('/get-revised-travel-quote-plans', 'post', $travelQuote);
 
             return $response;
@@ -772,6 +784,13 @@ class TravelQuoteService extends BaseService
         return TravelMemberDetail::where('travel_quote_request_id', $id)->with('nationality', 'relation')->get();
     }
 
+    public function getAboveAgeMembers($id)
+    {
+        return CustomerMembers::where('quote_id', $id)
+            ->where('quote_type', 'App\Models\TravelQuote')
+            ->whereDate('dob', '<=', now()->subYears(65))->count();
+    }
+
     public function getDuplicateEntityByCode($code)
     {
         return TravelQuote::where('parent_duplicate_quote_id', $code)->first();
@@ -847,10 +866,64 @@ class TravelQuoteService extends BaseService
 
         return $listQuotePlans;
     }
+
+    public function sortedPlansList($id): array
+    {
+        $result = [];
+        $plans = $this->listQuotePlans($id);
+        $collection = collect($plans);
+
+        $seniorPlans = $collection->where('isSeniorPlan', true);
+        $normalPlans = $collection->where('isSeniorPlan', false);
+
+        $result['normalPlans'] = array_values($normalPlans->toArray());
+        $result['seniorPlans'] = array_values($seniorPlans->toArray());
+
+        return $result;
+    }
+
     public function listTravelQuotePlans($id)
     {
         $travelQuotePlans = TravelQuotePlan::where('travel_quote_request_id', $id)->first();
 
         return $travelQuotePlans;
+    }
+
+    public function updateManualPlansBulk($request)
+    {
+        // api not available for now
+
+    }
+    public function exportPlansPdf($quoteType, $data, $quotePlans = null)
+    {
+        $planIds = $data['plan_ids'];
+        $addons = (isset($data['addons'])) ? $data['addons'] : null;
+
+        $quotePlans = $this->getQuotePlans($data['quote_uuid']);
+        if (! isset($quotePlans->quotes->plans)) {
+            return ['error' => 'Quote plans not available'];
+        }
+
+        $providerIds = collect($quotePlans->quotes->plans)->pluck('providerId')->toArray();
+        $providers = InsuranceProvider::whereIn('id', $providerIds)->get()->keyBy('id')->toArray();
+
+        $quote = $this->getQuoteObject($quoteType, $data['quote_uuid']);
+        $quote->load(['advisor' => function ($q) {
+            $q->select('id', 'email', 'mobile_no', 'name', 'landline_no', 'profile_photo_path');
+        }, 'customer']);
+        $pdf = PDF::setOption(['isHtml5ParserEnabled' => true, 'dpi' => 150])
+            ->loadView('pdf.travel_quote_plans', compact('quotePlans', 'planIds', 'quote', 'addons', 'providers'));
+
+        // generate pdf with file name e.g. InsuranceMarket.ae™ Motor Insurance Comparison for Rahul.pdf
+        $pdfName = 'InsuranceMarket.ae™ Travel Insurance Comparison for '.$quote->first_name.' '.$quote->last_name.'.pdf';
+
+        return ['pdf' => $pdf, 'name' => $pdfName];
+
+    }
+    public function setQuoteUpdatedAt($id)
+    {
+        $travelQuote = TravelQuote::find($id);
+        $travelQuote->quote_updated_at = Carbon::now();
+        $travelQuote->save();
     }
 }

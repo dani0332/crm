@@ -359,7 +359,8 @@ class HandleInertiaRequests extends Middleware
                     ->addIf(auth()->user()->can(PermissionsEnum::RenewalsUpload), 'Upload & Create', route('renewals-upload-create'), fn ($s) => $s->attributes(['icon' => 'box']))
                     ->addIf(auth()->user()->can(PermissionsEnum::RenewalsUploadedLeadList), 'Uploaded Leads', route('renewals-uploaded-leads-list'), fn ($s) => $s->attributes(['icon' => 'box']))
                     ->addIf(auth()->user()->can(PermissionsEnum::RenewalsUploadUpdate), 'Upload & Update', route('renewals-upload-update'), fn ($s) => $s->attributes(['icon' => 'box']))
-                    ->addIf(auth()->user()->can(PermissionsEnum::RenewalsBatches), 'Batches', route('renewals-batches'), fn ($s) => $s->attributes(['icon' => 'box']));
+                    ->addIf(auth()->user()->can(PermissionsEnum::RenewalsBatches), 'Batches', route('renewals-batches'), fn ($s) => $s->attributes(['icon' => 'box']))
+                    ->addIf(PermissionsEnum::RenewalsBatches || PermissionsEnum::RenewalsUploadUpdate || PermissionsEnum::RenewalsUploadedLeadList || PermissionsEnum::RenewalsUpload, 'Search', route('renewals-batches-search'), fn ($s) => $s->attributes(['icon' => 'box']));
             });
         }
 
@@ -403,9 +404,9 @@ class HandleInertiaRequests extends Middleware
         if (auth()->user()->can(PermissionsEnum::AMLList)) {
             $nav = $nav->add('AML', '', function (Section $section) {
                 $section
-                    ->add('All Quotes', url('kyc/aml'), fn ($s) => $s->attributes(['icon' => 'box']))
-                    ->add('Downloaded Sanction Lists', url('kyc/aml/download/history'), fn ($s) => $s->attributes(['icon' => 'box']))
-                    ->add('Upload UAE List', url('kyc/aml/upload/uae'), fn ($s) => $s->attributes(['icon' => 'box']));
+                    ->add('All Quotes', url('kyc/aml'), fn ($s) => $s->attributes(['icon' => 'box']));
+                // ->add('Downloaded Sanction Lists', url('kyc/aml/download/history'), fn ($s) => $s->attributes(['icon' => 'box']))
+                // ->add('Upload UAE List', url('kyc/aml/upload/uae'), fn ($s) => $s->attributes(['icon' => 'box']));
             });
         }
 

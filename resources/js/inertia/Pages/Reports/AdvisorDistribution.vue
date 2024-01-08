@@ -202,6 +202,20 @@ const calculateTotalSum = (data, key) => {
             { value: false, label: 'No' },
           ]"
         />
+
+        <ComboBox
+          v-model="filters.leadSources"
+          label="Lead Source"
+          placeholder="Search by Lead Source"
+          :options="
+          Object.keys(filterOptions.leadSources).map(key => ({
+          value: key,
+          label: filterOptions.leadSources[key],
+          }))
+        "
+          :max-limit="3"
+          deselect-all
+        />
       </div>
       <div class="flex justify-end gap-3 mb-4">
         <x-button size="sm" color="#ff5e00" type="submit">Search</x-button>

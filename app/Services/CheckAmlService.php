@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\QuoteTypes;
+use App\Enums\RolesEnum;
 use App\Models\AML;
 use App\Models\BikeQuote;
 use App\Models\CycleQuote;
@@ -199,12 +200,13 @@ class CheckAmlService
         );
     }
 
-    public function sendAMLQuoteStatusChangeNotification($quoteTypeId, $quoteRequestId, $quoteStatusText, $quoteCdbId, $quoteTypeText, $quotePaID, $clientFullName)
+    public function sendAMLQuoteStatusChangeNotification($quoteTypeId, $quoteRequestId, $quoteStatusText, $quoteCdbId, $quoteTypeText, $quotePaID, $clientFullName, $forComplianceSuperUser = false)
     {
+        $complianceRole = $forComplianceSuperUser ? [RolesEnum::ComplianceSuperUser] : [RolesEnum::COMPLIANCE, RolesEnum::ComplianceSuperUser];
         $complianceUsersEmails = User::select('users.email as user_email')
             ->leftjoin('model_has_roles', 'users.id', 'model_has_roles.model_id')
             ->leftjoin('roles', 'model_has_roles.role_id', 'roles.id')
-            ->whereIn('roles.name', ['COMPLIANCE'])->get();
+            ->whereIn('roles.name', $complianceRole)->get();
 
         $complianceEmailRecipients = [];
         foreach ($complianceUsersEmails as $complianceUsersEmail) {
@@ -285,7 +287,12 @@ class CheckAmlService
     {
         $createdDate = $parseDate;
         if (empty($parseDate)) {
-            $createdDate = AML::where(['quote_request_id' => $quoteRequestId, 'quote_type_id' => $quoteTypeId])->firstOrFail()->created_at;
+            $record = AML::where(['quote_request_id' => $quoteRequestId, 'quote_type_id' => $quoteTypeId])->first(); //OrFail()->created_at;
+            if ($record) {
+                $createdDate = $record->created_at;
+            } else {
+                $createdDate = Carbon::createFromFormat('Y-m-d', '2023-11-30');
+            }
         }
 
         $escapeMigrateDate = Carbon::createFromFormat('Y-m-d', Carbon::parse($createdDate)->format('Y-m-d'));

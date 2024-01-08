@@ -1,4 +1,6 @@
 <script setup>
+import {fileUploadErrorMessage} from "@/inertia/Composables/utilities.js";
+
 defineProps({
   quote: Object,
   quoteDocuments: Object,
@@ -26,10 +28,6 @@ const quoteDocumentsTable = reactive({
     {
       text: 'Created By',
       value: 'created_by.email',
-    },
-    {
-      text: 'Action',
-      value: 'action',
     },
   ],
 });
@@ -84,10 +82,17 @@ const docForm = useForm({
   file: null,
 });
 
-const uploadFile = (doc, files) => {
-  let url = '/personal-quotes/' + docForm.quote_id + '/documents';
-
-  if (files.length == 0) return;
+const uploadFile = (doc, filesWithInfo) => {
+    let url = '/personal-quotes/' + docForm.quote_id + '/documents';
+    const { files, rejectReason} = filesWithInfo;
+    if (files.length == 0) {
+        notification.error({
+            title: 'File upload failed',
+            position: 'top',
+        });
+        docForm.setError({error: fileUploadErrorMessage(doc, rejectReason)});
+        return false
+    };
   isUploading.value = true;
   docForm
     .transform(data => ({
@@ -105,12 +110,6 @@ const uploadFile = (doc, files) => {
         console.log(errors);
         notification.error({
           title: 'File upload failed',
-          position: 'top',
-        });
-      },
-      onSuccess: () => {
-        notification.success({
-          title: 'File Uploaded',
           position: 'top',
         });
       },

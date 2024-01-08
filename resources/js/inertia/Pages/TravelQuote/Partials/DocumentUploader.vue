@@ -1,5 +1,7 @@
 <script setup>
 // const emit = defineEmits(["update:uploadedFiles"]);
+import {fileUploadErrorMessage} from "@/inertia/Composables/utilities.js";
+
 defineProps({
   members: Array,
   docTypes: Object,
@@ -20,8 +22,17 @@ const docForm = useForm({
   file: null,
 });
 
-const uploadFile = (doc, memberId, files) => {
-  if (files.length == 0) return;
+
+const uploadFile = (doc, memberId, filesWithInfo) => {
+    const { files, rejectReason} = filesWithInfo;
+    if (files.length == 0) {
+        notification.error({
+            title: 'File upload failed',
+            position: 'top',
+        });
+        docForm.setError({error: fileUploadErrorMessage(doc, rejectReason)});
+        return false
+    };
   isUploading.value = true;
   docForm
     .transform(data => ({
@@ -32,16 +43,19 @@ const uploadFile = (doc, memberId, files) => {
       member_detail_id: memberId || null,
       file: files[0].file,
     }))
-    .post('/quotes/health/documents/store', {
+    .post('/quotes/travel/documents/store', {
       preserveScroll: true,
       preserveState: true,
-      only: ['quoteDocuments'],
-      onFinish: () => {
-        isUploading.value = false;
-        notification.success({
-          title: 'File Uploaded',
+      onError: errors => {
+        docForm.setError(errors.error);
+        notification.error({
+          title: 'File upload failed',
           position: 'top',
         });
+      },
+
+      onFinish: () => {
+        isUploading.value = false;
       },
     });
 };
@@ -50,6 +64,11 @@ const uploadFile = (doc, memberId, files) => {
 <template>
   <div>
     <div>
+      <x-alert color="error" class="mb-5" v-if="Object.keys(docForm.errors).length">
+        <ul>
+          <li v-for="error in docForm?.errors">{{ error }}</li>
+        </ul>
+      </x-alert>
       <x-tab-group v-model="memberTabs" class="pb-10" variant="block">
         <x-tab value="quote-documents" label="Documents">
           <div

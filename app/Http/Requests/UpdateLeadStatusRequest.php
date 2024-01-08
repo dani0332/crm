@@ -2,13 +2,18 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\AMLDecisionStatusEnum;
+use App\Enums\CustomerTypeEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\quoteStatusCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypeId;
 use App\Enums\RolesEnum;
 use App\Models\Customer;
+use App\Models\KycLog;
 use App\Models\RenewalBatch;
+use App\Services\AMLService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -39,7 +44,7 @@ class UpdateLeadStatusRequest extends FormRequest
             'quote_uuid' => 'required',
             'leadStatus' => 'required',
             'notes' => 'nullable',
-            'lost_notes' => 'nullable|max:100',
+            'lost_notes' => 'nullable|max:500',
             'approve_reason_id' => 'nullable',
             'reject_reason_id' => 'nullable',
         ];
@@ -121,24 +126,36 @@ class UpdateLeadStatusRequest extends FormRequest
     {
         $validator->after(function ($validator) {
 
+            $quoteTypesIds = QuoteTypeId::asArray();
             $quoteObject = $this->getQuoteObject(strtolower(request()->modelType), request()->leadId);
 
             if (! $quoteObject) {
                 $validator->errors()->add('value', 'Lead not found please try again.');
             }
 
-            $customerProfileDetails = Customer::where('id', $quoteObject->customer_id)->first([
-                'insured_first_name',
-                'insured_last_name',
-                'emirates_id_number',
-                'emirates_id_expiry_date',
-            ])->toArray();
+            $fetchLastAMLCheck = KycLog::withTrashed()->where([
+                'quote_request_id' => request()->leadId,
+                'quote_type_id' => $quoteTypesIds[request()->modelType] ?? '',
+            ])->where(function ($ryuFilter) {
+                $ryuFilter->whereNotIn('decision', [AMLDecisionStatusEnum::RYU]);
+                $ryuFilter->orWhereNull('decision');
+            })->whereNull('screenshot')->latest()->first();
 
-            if (in_array(null, $customerProfileDetails) && request()->leadStatus == QuoteStatusEnum::TransactionApproved) {
-                $validator->errors()->add('value', 'Please update customer profile information before moving to '.quoteStatusCode::TRANSACTIONAPPROVED.' status');
+            if (isset($fetchLastAMLCheck->search_type) && substr($fetchLastAMLCheck->customer_code, 0, 3) == CustomerTypeEnum::IndividualShort) {
+
+                $customerProfileDetails = Customer::where('id', $quoteObject->customer_id)->first([
+                    'insured_first_name',
+                    'insured_last_name',
+                    'emirates_id_number',
+                    'emirates_id_expiry_date',
+                ])->toArray();
+
+                if (in_array(null, $customerProfileDetails) && request()->leadStatus == QuoteStatusEnum::TransactionApproved) {
+                    $validator->errors()->add('value', 'Please update customer profile information before moving to '.quoteStatusCode::TRANSACTIONAPPROVED.' status');
+                }
             }
 
-            if ($quoteObject->quote_status_id != QuoteStatusEnum::AMLScreeningCleared && request()->leadStatus == QuoteStatusEnum::TransactionApproved) {
+            if (AMLService::checkAMLStatusFailed($quoteTypesIds[request()->modelType], request()->leadId) && request()->leadStatus == QuoteStatusEnum::TransactionApproved) {
                 $validator->errors()->add('value', 'Error Approving, AML Status is not Passed');
             }
 

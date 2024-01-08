@@ -17,10 +17,8 @@ const loader = reactive({
 const { isRequired } = useRules();
 
 const tableHeader = [
-    { text: 'AML Id', value: 'id' },
     { text: 'Quote Type', value: 'quote_type_text' },
     { text: 'Ref-ID', value: 'cdb_id' },
-    { text: 'Input', value: 'input' },
     { text: 'Created At', value: 'created_at' },
     { text: 'Updated At', value: 'updated_at' },
 ];
@@ -106,7 +104,6 @@ function setQueryStringFilters() {
   }
 }
 
-
 watch(() => filtersForm, () => {
     let queryString = window.location.search;
     let urlParams = new URLSearchParams(queryString);
@@ -139,7 +136,7 @@ onMounted(() => {
     <x-divider class="my-4" />
     <!--   filters     -->
     <x-form @submit="onSubmit" :auto-focus="false">
-      <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
+      <div class="grid sm:grid-cols-2 md:grid-cols-3 gap-3">
         <x-select
           v-model="filtersForm.quoteType"
           :rules="[isRequired]"
@@ -156,7 +153,6 @@ onMounted(() => {
           :options="[
             { value: 'cdbId', label: 'Ref-ID' },
             { value: 'customerEmail', label: 'Customer Email' },
-            { value: 'id', label: 'AML ID' },
           ]"
           class="w-full"
           @update:model-value="checkDateValidation"
@@ -170,18 +166,6 @@ onMounted(() => {
           :rules="isSearchValueRequired ? [isRequired] : []"
           placeholder="Search Value"
         />
-
-        <x-select
-          v-model="filtersForm.matchFound"
-          label="Match found"
-          placeholder=""
-          :options="[
-            { value: 0, label: 'False' },
-            { value: 1, label: 'True' },
-          ]"
-          class="w-full"
-        />
-
         <DatePicker
           v-model="filtersForm.amlCreatedStartDate"
           name="created_at_end"
@@ -224,7 +208,7 @@ onMounted(() => {
       </template>
       <template #item-cdb_id="item">
         <Link
-          :href="`/kyc/aml/${item.quote_type_id}/details/${item.quote_request_id}`"
+          :href="`/kyc/aml/${item.quote_type_id}/details/${item.id}`"
           class="text-primary-500 hover:underline"
         >
           {{ item.cdb_id }}

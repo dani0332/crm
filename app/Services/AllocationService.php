@@ -304,11 +304,6 @@ class AllocationService
             ->whereHas('leadAllocationUser', function ($query) {
                 $query->whereIn('status', [UserStatusEnum::UNAVAILABLE, UserStatusEnum::LEAVE, UserStatusEnum::SICK]);
             })
-            ->where(function ($query) {
-                // Filter by allocation count and max capacity
-                $query->whereRaw('allocation_count < max_capacity')
-                    ->orWhere('max_capacity', -1);
-            })
             ->orderBy('last_allocated');
 
         return $query->get();

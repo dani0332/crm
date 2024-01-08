@@ -63,7 +63,7 @@ const quoteForm = useForm({
 	trim: props.quote?.trim || null,
 	additional_notes: props.quote?.additional_notes || '',
 	car_model_id: props.quote?.car_model_id || null,
-	year_of_manufacture: parseInt(props.quote?.year_of_manufacture) || null,
+	year_of_manufacture: props.quote?.year_of_manufacture || null,
 	emirate_of_registration_id: props.quote?.emirate_of_registration_id || null,
 	car_type_insurance_id: props.quote?.car_type_insurance_id || null,
 	claim_history_id: props.quote?.claim_history_id || null,
@@ -114,7 +114,7 @@ const getModelDetails = (onchange) => {
 				isError.value = false;
 				return;
 			}
-			
+
 			if (item) {
 				notification.success({
 					title: 'Vehicle Assumptions Data Found',
@@ -180,7 +180,7 @@ onMounted(() => {
 })
 
 const setCarMakeAndModalValues = () => {
-	if (quoteForm.car_make_id !== null) {	
+	if (quoteForm.car_make_id !== null) {
 		setCarMake(quoteForm.car_make_id);
 		axios
 			.get(`/car-model-by-id?id=${quoteForm.car_make_id}`)
@@ -196,7 +196,7 @@ const setCarMake = (id) => {
 		.get(`/car-make?id=${id}`)
 		.then(({ data }) => {
 			props.dropdownSource.car_make_id = data;
-		});	
+		});
 }
 </script>
 
@@ -229,8 +229,8 @@ const setCarMake = (id) => {
 				</x-alert>
 
 				<!-- <x-field label="RENEWAL BATCH" v-if="isEdit" :required="isDisbaled ? false : hasRole(rolesEnum.CarManager)">
-					<x-input 
-						v-model="quoteForm.renewal_batch" 
+					<x-input
+						v-model="quoteForm.renewal_batch"
 						:rules="isDisbaled ? [] : (hasRole(rolesEnum.CarManager) ? [isRequired] : [])"
 						class="w-full"
 						:error="quoteForm.errors.renewal_batch"
@@ -263,10 +263,10 @@ const setCarMake = (id) => {
 					<ComboBox v-model="quoteForm.nationality_id" :single="true" :options="dropdownSource.nationality_id.map(item => ({
 						value: item.id,
 						label: item.text,
-					}))" 
-					:hasError="quoteForm.errors.nationality_id" 
-					:error="quoteForm.errors.nationality_id" 
-					:rules="[isRequired]" 
+					}))"
+					:hasError="quoteForm.errors.nationality_id"
+					:error="quoteForm.errors.nationality_id"
+					:rules="[isRequired]"
 					/>
 				</x-field>
 
@@ -276,7 +276,7 @@ const setCarMake = (id) => {
 						label: item.text,
 					}))
 						" class="w-full"
-						:rules="[isRequired]" 
+						:rules="[isRequired]"
 						:error="quoteForm.errors.uae_license_held_for_id"
 						:hasError="quoteForm.errors.uae_license_held_for_id" />
 				</x-field>
@@ -290,25 +290,25 @@ const setCarMake = (id) => {
 				</x-field>
 
 				<x-field label="CAR MAKE" required>
-					<ComboBox 
-						v-model="quoteForm.car_make_id" 
+					<ComboBox
+						v-model="quoteForm.car_make_id"
 						:single="true"
 						:options="carMakeOptions"
 						@update:modelValue="getCarModel(true)"
-						class="w-full" 
-						:rules="[isRequired]" 
+						class="w-full"
+						:rules="[isRequired]"
 						:hasError="quoteForm.errors.car_make_id"
 						:error="quoteForm.errors.car_make_id"
 					/>
 				</x-field>
 
 				<x-field label="CAR MODEL" required>
-					<ComboBox v-model="quoteForm.car_model_id" 
-						:single="true" 
-						:options="carModelOptions"					
+					<ComboBox v-model="quoteForm.car_model_id"
+						:single="true"
+						:options="carModelOptions"
 						@update:modelValue="getModelDetails(true)"
 						class="w-full"
-						:rules="[isRequired]" 
+						:rules="[isRequired]"
 						:error="quoteForm.errors.car_model_id"
 						:hasError="quoteForm.errors.car_model_id" />
 				</x-field>
@@ -323,12 +323,12 @@ const setCarMake = (id) => {
 
 				<x-field label="CAR MODEL YEAR" required>
 					<ComboBox v-model="quoteForm.year_of_manufacture" :single="true" :options="dropdownSource.year_of_manufacture.map(item => ({
-						value: item.id,
+						value: item.text,
 						label: item.text,
 					}))
 						" class="w-full"
 						:error="quoteForm.errors.year_of_manufacture"
-						:rules="[isRequired]" 
+						:rules="[isRequired]"
 						:hasError="quoteForm.errors.year_of_manufacture" />
 				</x-field>
 
@@ -346,7 +346,7 @@ const setCarMake = (id) => {
 						label: item.text,
 					}))
 						" class="w-full"
-						:rules="[isRequired]" 
+						:rules="[isRequired]"
 						:error="quoteForm.errors.vehicle_type_id"
 						:hasError="quoteForm.errors.vehicle_type_id" />
 				</x-field>
@@ -377,7 +377,7 @@ const setCarMake = (id) => {
 						label: item.text,
 					}))
 						" class="w-full"
-						:rules="[isRequired]" 
+						:rules="[isRequired]"
 						:error="quoteForm.errors.currently_insured_with"
 						:hasError="quoteForm.errors.currently_insured_with" />
 				</x-field>

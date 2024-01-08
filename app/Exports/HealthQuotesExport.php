@@ -2,24 +2,29 @@
 
 namespace App\Exports;
 
+use App\Services\CRUDService;
+use App\Services\HealthQuoteService;
+use Carbon\Carbon;
 use Maatwebsite\Excel\Concerns\Exportable;
-use Maatwebsite\Excel\Concerns\FromQuery;
+use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
 
-class HealthQuotesExport implements FromQuery, ShouldAutoSize, WithHeadings, WithMapping
+class HealthQuotesExport implements FromCollection, ShouldAutoSize, WithHeadings, WithMapping
 {
     use Exportable;
 
-    public function __construct($query)
+    private $genderOptions;
+
+    public function __construct()
     {
-        $this->query = $query;
+        $this->genderOptions = app(CRUDService::class)->getGenderOptions();
     }
 
-    public function query()
+    public function collection()
     {
-        return $this->query;
+        return app(HealthQuoteService::class)->getGridData()->get();
     }
 
     public function headings(): array
@@ -45,6 +50,14 @@ class HealthQuotesExport implements FromQuery, ShouldAutoSize, WithHeadings, Wit
             'MEMBER CATEGORY',
             'CURRENTLY INSURED WITH',
             'IS ECOMMERCE',
+            'Device',
+            'Gender',
+            'Nationality',
+            'Age Bands',
+            'Emirates of Visa',
+            'FOR WHOM DO YOU REQUIRE HEALTH INSURANCE?',
+            'TYPE OF PLAN',
+            'Provider Name',
         ];
     }
 
@@ -71,6 +84,14 @@ class HealthQuotesExport implements FromQuery, ShouldAutoSize, WithHeadings, Wit
             $quote->member_category_id_text,
             $quote->currently_insured_with_id_text,
             $quote->is_ecommerce ? 'Yes' : 'No',
+            $quote->device,
+            $this->genderOptions[$quote->gender] ?? '',
+            $quote->nationality_id_text,
+            Carbon::parse($quote->dob)->age,
+            $quote->emirate_of_your_visa_id_text,
+            $quote->customer_type,
+            $quote->health_plan_name_text,
+            $quote->plan_provider_name_text,
         ];
     }
 }
