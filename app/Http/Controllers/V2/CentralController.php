@@ -344,11 +344,6 @@ class CentralController extends Controller
         }
     }
 
-
-    private function sendBookingPolicyDocuments()
-    {
-    }
-
     public function loadAvailablePlans($type, $id)
     {
         return (new CentralService())->loadAvailablePlans($type, $id);
