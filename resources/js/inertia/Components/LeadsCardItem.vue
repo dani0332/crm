@@ -16,30 +16,20 @@ const props = defineProps({
   },
   id: Number,
   title: String,
-  quote_type_id: Number,
-  lost_reasons: Object,
-  quote_status_enum: Array
 });
 
 const emit = defineEmits(['confirmation-result']);
 
 const quoteStatusEnum = inject('quoteStatusEnum');
 const quoteTypeId = inject('quoteTypeId');
+const lostReasons = inject('lostReasons');
 
 const { isRequired } = useRules();
 
 const leads = ref(props.leads);
 const leadForm = useForm({
-  reason: null,
+  lostreason: null,
 });
-
-const reasons = ref([
-  { value: 1, label: 'reason one' },
-  { value: 2, label: 'reason two' },
-  { value: 3, label: 'reason three' },
-  { value: 4, label: 'reason four' },
-  { value: 4, label: 'reason five' },
-]);
 
 const canDrag = computed(() => {
   return props.id == quoteStatusEnum?.Lost ||
@@ -49,12 +39,22 @@ const canDrag = computed(() => {
     : true;
 });
 
+const notification = useToast();
+
 const updateList = data => {
   axios
     .post(route('update-lead-status-drag-drop'), {
       data,
     })
-    .then(({ data }) => {});
+    .then(response => {
+      // console.log(response);
+    })
+    .catch(({ response }) => {
+      notification.error({
+        title: response.data.message,
+        position: 'top',
+      });
+    });
 };
 
 let resolveConfirm;
@@ -102,6 +102,10 @@ useSortable(`#${props.title}`, props.leads, {
 
         // Insert the dragged element back to its original position
         originalList.insertBefore(itemEl, referenceNode);
+        showModal.value = false;
+        return;
+      } else {
+        data.to['lost_reason'] = leadForm.lostreason;
       }
     }
     updateList(data);
@@ -127,12 +131,12 @@ const dateFormat = date => {
   return useDateFormat(date, 'DD-MM-YYYY HH:mm:ss').value;
 };
 
-// const lostReasonsOptions = computed(() => {
-//   return page.props.lostReasons.map(reason => ({
-//     value: reason.id,
-//     label: reason.text,
-//   }));
-// });
+const lostReasonsOptions = computed(() => {
+  return lostReasons.map(reason => ({
+    value: reason.id,
+    label: reason.text,
+  }));
+});
 
 const showModal = ref(false);
 
@@ -231,7 +235,13 @@ const handleConfirmation = result => resolveConfirm(result);
       </div>
     </a>
   </div>
-  <x-modal v-model="showModal" show-close backdrop>
+
+  <!-- <AppModal
+    class="min-w-[30%] overflow-hidden"
+    v-model="showModal"
+    show-header
+    show-close
+  >
     <template #header>
       <span>Kinldy choose a reason for marking as 'Lost' </span>
     </template>
@@ -240,7 +250,36 @@ const handleConfirmation = result => resolveConfirm(result);
       <x-field label="Lost Reason" required>
         <x-select
           v-model="leadForm.lostreason"
-          :options="reasons"
+          :options="lostReasonsOptions"
+          placeholder="Lost Reason is required"
+          class="w-full"
+          :rules="[isRequired]"
+        />
+      </x-field>
+      <div class="text-right space-x-4 mt-4">
+        <x-button type="submit">Continue</x-button>
+        <x-button color="orange" @click.prevent="handleConfirmation(false)"
+          >Go Back</x-button
+        >
+      </div>
+    </x-form>
+  </AppModal> -->
+
+  <x-modal
+    v-model="showModal"
+    showClose
+    backdrop
+    @update:modelValue="handleConfirmation(false)"
+  >
+    <template #header>
+      <span>Kinldy choose a reason for marking as 'Lost' </span>
+    </template>
+
+    <x-form @submit="onSubmit" :auto-focus="false">
+      <x-field label="Lost Reason" required>
+        <x-select
+          v-model="leadForm.lostreason"
+          :options="lostReasonsOptions"
           placeholder="Lost Reason is required"
           class="w-full"
           :rules="[isRequired]"

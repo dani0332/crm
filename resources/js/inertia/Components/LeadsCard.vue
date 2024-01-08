@@ -8,12 +8,6 @@ const props = defineProps({
     type: Object,
     require: true,
   },
-  quoteTypeId: {
-    type: String,
-    require: true,
-  },
-  lostReasons: Object,
-  quoteStatusEnum: Array
 });
 
 const quotes = ref({ ...props.quotes });
@@ -179,9 +173,6 @@ const onSearch = id => {
         :title="quote.title.split(' ').join('')"
         :id="quote.id"
         :leads="quote.data.leads_list.data"
-        :quote_type_id="quoteTypeId"
-        :lost_reasons="lostReasons"
-        :quote_status_enum="quoteStatusEnum"
       />
       <div
         class="mt-3"
