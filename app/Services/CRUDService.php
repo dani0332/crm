@@ -619,16 +619,15 @@ class CRUDService extends BaseService
     public function capturePayment($quoteModel, $paymentSplit, $quoteTypeId, $amount)
     {
         if ($paymentSplit) {
-            if ($amount>0) {
-                    PaymentAction::create([
-                        'payment_code' => $paymentSplit->code,
+            if ($amount > 0) {
+                PaymentAction::updateOrInsert(
+                    ['payment_code' => $paymentSplit->code, 'sr_no' => $paymentSplit->sr_no],
+                    [
                         'is_fulfilled' => 0,
                         'action_type' => 'CAPTURE',
                         'amount' => $amount,
                         'created_by' => auth()->user()->email,
                         'is_manager_approved' => 1,
-                        'sr_no' => $paymentSplit->sr_no,
-
                     ]);
                     $data = [
                         'uuid' => $quoteModel->uuid,
