@@ -3,16 +3,11 @@
 namespace App\Exports;
 
 use App\Services\CarQuoteService;
-use Maatwebsite\Excel\Concerns\Exportable;
-use Maatwebsite\Excel\Concerns\FromCollection;
-use Maatwebsite\Excel\Concerns\ShouldAutoSize;
-use Maatwebsite\Excel\Concerns\WithHeadings;
-use Maatwebsite\Excel\Concerns\WithMapping;
-use Symfony\Component\HttpFoundation\StreamedResponse;
+use App\Traits\ExcelExportable;
 
-class CarQuoteExport implements FromCollection, ShouldAutoSize, WithHeadings, WithMapping
+class CarQuoteExport
 {
-    use Exportable;
+    use ExcelExportable;
 
     public function collection()
     {
@@ -107,19 +102,4 @@ class CarQuoteExport implements FromCollection, ShouldAutoSize, WithHeadings, Wi
         ];
     }
 
-    public function carQuoteExport()
-    {
-        return new StreamedResponse(function () {
-            $handle = fopen('php://output', 'w');
-            fputcsv($handle, $this->headings());
-            $carQuotes = app(CarQuoteService::class)->getExportData()->get();
-            foreach ($carQuotes as $quote) {
-                fputcsv($handle, $this->map($quote));
-            }
-            fclose($handle);
-        }, 200, [
-            'Content-Type' => 'text/csv',
-            'Content-Disposition' => 'attachment; filename="Car-List.csv"',
-        ]);
-    }
 }
