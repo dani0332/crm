@@ -25,6 +25,7 @@ use App\Http\Requests\CustomerProfileRequest;
 use App\Http\Requests\DuplicateLobRequest;
 use App\Http\Requests\LeadAssignRequest;
 use App\Http\Requests\PlanDetailsRequest;
+use App\Http\Requests\SendBookPolicyRequest;
 use App\Http\Requests\UpdateLastYearPolicyRequest;
 use App\Jobs\SendBookPolicyDocumentsJob;
 use App\Models\ApplicationStorage;
@@ -215,13 +216,16 @@ class CentralController extends Controller
     }
 
 
-    public function sendBookingPolicy(Request $request)
+    public function sendBookingPolicy(SendBookPolicyRequest $sendBookPolicyRequest)
     {
 
+        $request =  (object)$sendBookPolicyRequest->validated();
 
-        // dd($request->all());
         $quote = $this->getQuoteObject($request->model_type, $request->quote_id);
 
+        if (!$quote) {
+            return redirect()->back()->with('error', 'Quote not found.');
+        }
 
         $payLoad = new \stdClass();
         $payLoad->model_type = $request->model_type;
@@ -288,8 +292,8 @@ class CentralController extends Controller
 
                 // $sageRequest->insurerTaxInvoiceNumber =  $payment['tax_invoice_number'];
                 // $sageRequest->insurerPremiumTaxInvoiceNumber = (string) $payment['insurer_commmission_invoice_number'];
-                $sageRequest->insurerTaxInvoiceNumber =  15556;
-                $sageRequest->insurerPremiumTaxInvoiceNumber = (string)  166665;
+                $sageRequest->insurerTaxInvoiceNumber =  545454;
+                $sageRequest->insurerPremiumTaxInvoiceNumber = (string)  545454;
                 if ($paymentSplits->first()) {
                     $sageRequest->sage_reciept_id =  $paymentSplits['sage_reciept_id'];
                 }
@@ -306,41 +310,43 @@ class CentralController extends Controller
 
                 $sageRequest->customerId =  $sageCustomerNumber;
 
-                $createARInvoicePremAndCommPayload =  SagePayloadFactory::createARInvoicePremAndComm($sageRequest);
-                $endPoint = $createARInvoicePremAndCommPayload['endPoint'];
-                $payLoad = $createARInvoicePremAndCommPayload['payload'];
-                $resp = $sageApiService->postToSage300($endPoint, $payLoad);
-                info('createARInvoicePremAndComm---------' . json_encode($resp));
-                // dd($sageRequest);
-                $createAPInvoicePremPayload =  SagePayloadFactory::createAPInvoicePrem($sageRequest);
-                $endPoint = $createAPInvoicePremPayload['endPoint'];
-                $payLoad = $createAPInvoicePremPayload['payload'];
-                $response = $sageApiService->postToSage300($endPoint, $payLoad);
 
-                info('createAPInvoicePrem---------' . json_encode($response));
+                info('------sageRequestData ------' . json_encode($sageRequest));
 
-                if ($sageRequest->discount > 0) {
-                    $payLoadOptions =  SagePayloadFactory::createARInvoiceDis($sageRequest);
-                    $endPoint = $payLoadOptions['endPoint'];
-                    $payLoad = $payLoadOptions['payload'];
-                    $sageResponse = $sageApiService->postToSage300($endPoint, $payLoad);
+                // $createARInvoicePremAndCommPayload =  SagePayloadFactory::createARInvoicePremAndComm($sageRequest);
+                // $endPoint = $createARInvoicePremAndCommPayload['endPoint'];
+                // $payLoad = $createARInvoicePremAndCommPayload['payload'];
+                // $resp = $sageApiService->postToSage300($endPoint, $payLoad);
+                // info('createARInvoicePremAndComm---------' . json_encode($resp));
+                // // dd($sageRequest);
+                // $createAPInvoicePremPayload =  SagePayloadFactory::createAPInvoicePrem($sageRequest);
+                // $endPoint = $createAPInvoicePremPayload['endPoint'];
+                // $payLoad = $createAPInvoicePremPayload['payload'];
+                // $response = $sageApiService->postToSage300($endPoint, $payLoad);
 
-                    info('createARInvoiceDis---------' . json_encode($response));
-                }
+                // info('createAPInvoicePrem---------' . json_encode($response));
+
+                // if ($sageRequest->discount > 0) {
+                //     $payLoadOptions =  SagePayloadFactory::createARInvoiceDis($sageRequest);
+                //     $endPoint = $payLoadOptions['endPoint'];
+                //     $payLoad = $payLoadOptions['payload'];
+                //     $sageResponse = $sageApiService->postToSage300($endPoint, $payLoad);
+
+                //     info('createARInvoiceDis---------' . json_encode($response));
+                // }
 
                 if (strtolower($sageRequest->invoicePaymentStatus) == 'paid') {
                     $payLoadOptions =  SagePayloadFactory::createPaymontRecieptOneInvoice($sageRequest);
-
+                    info('------sageRequestPayload ------' . json_encode($payLoadOptions));
                     $endPoint = $payLoadOptions['endPoint'];
                     $payLoad = $payLoadOptions['payload'];
                     $sageResponse = $sageApiService->postToSage300($endPoint, $payLoad);
                     info('createPaymontRecieptOneInvoice---------' . json_encode($sageResponse));
                 }
+                // dd('m here');
             }
 
-            if (!$quote) {
-                return redirect()->back()->with('error', 'Quote not found.');
-            }
+
 
             return response()->json(['message' => 'policy booked successfully'], 200);
         }
