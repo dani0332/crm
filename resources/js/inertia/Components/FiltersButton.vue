@@ -1,5 +1,8 @@
 <script setup>
-const emit = defineEmits(['open']);
+const props = defineProps({
+  filters: Object,
+});
+const emit = defineEmits(['open', 'handleSelectedFilters']);
 
 const today = new Date();
 
@@ -33,6 +36,8 @@ const dates = ref([
   { text: 'This month', value: thisMonth },
   { text: 'Next month', value: nextMonth },
 ]);
+
+const selectedDate = ref(null);
 
 const status = ref([
   {
@@ -72,9 +77,11 @@ const selectedFiltersLength = computed(() => {
   return 7;
 });
 
-const openState = e => {
-  console.log(e);
+const handleDateFilter = date => {
+  props.filters.date = date.toString();
 };
+
+const openState = e => {};
 </script>
 <template>
   <div>
@@ -112,6 +119,7 @@ const openState = e => {
                 class="px-3 capitalize my-1 text-sm cursor-pointer hover:bg-primary hover:text-white"
                 v-for="column in dates"
                 :key="column.text"
+                @click="handleDateFilter(column.value)"
               >
                 {{ column.text }}
               </li>
@@ -129,6 +137,7 @@ const openState = e => {
                 v-for="column in status"
                 :key="column.text"
                 :title="column.tooltip"
+                @click="filters.status_filters = column.value"
               >
                 <span>{{ column.text }}</span>
                 <!-- <x-popover align="left" :hover="true">

@@ -117,6 +117,8 @@ const filters = reactive({
   page: 1,
   previous_quote_policy_number: '',
   renewal_batch: '',
+  date: null,
+  status_filters: null,
 });
 
 const subTeamOptions = [
@@ -269,7 +271,7 @@ onMounted(() => {
       />
       <div class="flex space-x-2 items-center">
         <column-selection :columns="tableHeader"></column-selection>
-        <FiltersButton />
+        <FiltersButton :filters="filters" />
         <Link :href="route('health.cards')">
           <x-button size="sm" color="#1d83bc" tag="div"> Cards View </x-button>
         </Link>
