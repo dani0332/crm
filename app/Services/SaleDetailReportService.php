@@ -62,7 +62,7 @@ class SaleDetailReportService implements ManagementReport
                 'quote_type.code as line_of_business',
                 "'sub_type_line_of_business' as sub_type_line_of_business",
                 'u.name as advisor_name',
-                "pi.name as policy_issuer",
+                'pi.name as policy_issuer',
             )
             ->join('payments', 'personal_quotes.code', '=', 'payments.code')
             ->join('payment_status', 'payment_status.id', '=', 'payments.payment_status_id')
