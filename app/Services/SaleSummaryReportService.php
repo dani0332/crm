@@ -47,6 +47,7 @@ class SaleSummaryReportService implements ManagementReport
             ->leftJoin('users', 'personal_quotes.advisor_id', '=', 'users.id')
             ->leftJoin('user_team', 'users.id', '=', 'user_team.user_id')
             ->leftJoin('teams', 'user_team.team_id', '=', 'teams.id')
+            ->leftJoin('customer', 'personal_quotes.customer_id', '=', 'customer.id')
             ->join('quote_type', 'personal_quotes.quote_type_id', '=', 'quote_type.id')
             ->join('payments', 'personal_quotes.code', '=', 'payments.code')
             ->select(
@@ -63,9 +64,27 @@ class SaleSummaryReportService implements ManagementReport
             ->when($request->groupBy, function ($query, $groupBy) {
                 return $query->groupBy($this->resolveGroupByColumn($groupBy));
             });
+        // add users.name as advisor only if group by is advisor
+        if($request->groupBy == 'advisor'){
+            $query->addSelect('users.name as advisor');
+            $query->whereNotNull('advisor_id');
+        }
+
+        // add customers.name as customer only if group by is customer
+        if ($request->groupBy == 'customer_group') {
+            $query->addSelect(DB::raw("CONCAT(customer.first_name, ' ', customer.last_name) as customer_group"));
+            $query->whereNotNull('customer_id');
+        }
+
+        // add insurer.name as insurer only if group by is insurer
+        if ($request->groupBy == 'insurer') {
+            $query->addSelect('insurer.name as insurer');
+            $query->whereNotNull('insurer_id');
+        }
+
 
         $this->applyFilters($query, $filters);
-
+        //dd($query->toSql(),  $query->getBindings());
         return $query->simplePaginate(10)->withQueryString();
     }
 
@@ -161,11 +180,11 @@ class SaleSummaryReportService implements ManagementReport
         switch ($filters['reportCategory']) {
             case ManagementReportCategoriesEnum::SALE_SUMMARY:
             case ManagementReportCategoriesEnum::SALE_DETAIL:
-                if ($filters['reportType'] == ManagementReportTypeEnum::ISSUED_POLICIES) {
-                    $dateFilter('personal_quotes.policy_issuance_date', 'policyIssuanceDate');
-                } elseif ($filters['reportType'] == ManagementReportTypeEnum::TRANSACTION_PAYMENTS) {
-                    $dateFilter('payments.payment_due_date', 'paymentDueDate');
-                }
+                // if ($filters['reportType'] == ManagementReportTypeEnum::ISSUED_POLICIES) {
+                //     $dateFilter('personal_quotes.policy_issuance_date', 'policyIssuanceDate');
+                // } elseif ($filters['reportType'] == ManagementReportTypeEnum::TRANSACTION_PAYMENTS) {
+                //     $dateFilter('payments.payment_due_date', 'paymentDueDate');
+                // }
                 break;
 
             case ManagementReportCategoriesEnum::ENDING_POLICIES:
