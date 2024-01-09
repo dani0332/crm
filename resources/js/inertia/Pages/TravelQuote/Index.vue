@@ -246,7 +246,7 @@ onMounted(() => {
       <h2 class="text-xl font-semibold">Lead List</h2>
       <div class="flex space-x-2 items-center">
         <column-selection :columns="tableHeader"></column-selection>
-        <FiltersButton />
+
         <Link :href="route('travel.expired.upload')" v-if="permissions.admin">
           <x-button size="sm" color="#1d83bc" tag="div">
             Upload Expired Leads

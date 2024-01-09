@@ -269,7 +269,6 @@ onMounted(() => {
       />
       <div class="flex space-x-2 items-center">
         <column-selection :columns="tableHeader"></column-selection>
-        <FiltersButton />
         <Link :href="route('health.cards')">
           <x-button size="sm" color="#1d83bc" tag="div"> Cards View </x-button>
         </Link>
