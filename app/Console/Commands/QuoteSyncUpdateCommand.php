@@ -115,8 +115,7 @@ class QuoteSyncUpdateCommand extends Command
                     try {
                         $newValues = json_decode($entry->updated_fields, true);
                         $personalQuote = $this->createOrUpdatePersonalQuote($sourceQuote, $newValues, $entry);
-                        $personalQuoteDetail = $this->createOrUpdatePersonalQuoteDetail($personalQuote, $newValues, $entry);
-
+                        $this->createOrUpdatePersonalQuoteDetail($personalQuote, $newValues, $entry);
                         $entry->update(['is_synced' => true, 'synced_at' => now()]);
                         info('Entry for quote : '.$personalQuote->id.' saved in personal quotes table');
                         DB::commit();
@@ -139,6 +138,11 @@ class QuoteSyncUpdateCommand extends Command
                 }
 
                 if (Schema::hasColumn('personal_quotes', $column)) {
+                    $columnType = DB::getSchemaBuilder()->getColumnType('personal_quotes', $column);
+                    // Surround the value with quotes if it's a string, date, or datetime
+                    if (in_array($columnType, ['string', 'date', 'datetime'])) {
+                        $value = "'$value'";
+                    }
                     if ($column == 'currently_insured_with') {
                         $personalQuote->currently_insured_with_id = $value;
                     } else {
