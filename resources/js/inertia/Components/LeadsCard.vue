@@ -1,6 +1,4 @@
 <script setup>
-import { onMounted } from 'vue';
-
 const props = defineProps({
   quote: {
     type: Object,
@@ -37,6 +35,9 @@ const isAllowed = computed(() => {
   );
 });
 
+const quoteTitle = computed(() => {
+  return props.quote?.text ?? props.quote?.title;
+});
 const onLoadMore = id => {
   quotes.value.loader = true;
   quotes.value.pages = {
@@ -172,7 +173,7 @@ const onSearch = id => {
         <p>No Leads Found</p>
       </div>
       <leads-card-item
-        :title="quote.title.split(' ').join('')"
+        :title="quoteTitle.split(' ').join('')"
         :id="quote.id"
         :leads="quote.data.leads_list.data"
       />
