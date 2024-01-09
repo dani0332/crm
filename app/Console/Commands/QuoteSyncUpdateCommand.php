@@ -17,6 +17,7 @@ use App\Models\PetQuote;
 use App\Models\QuoteSync;
 use App\Models\TravelQuote;
 use App\Models\YachtQuote;
+use Carbon\Carbon;
 use Exception;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
@@ -43,14 +44,15 @@ class QuoteSyncUpdateCommand extends Command
     {
 
         $isQuoteSyncEnabled = ApplicationStorage::where('key_name', 'quote_sync_enabled')->first();
-
+        // add date in this format yyyy-mm-dd hh:mm:ss
+        $startDate = Carbon::parse('2021-01-05 00:00:00')->toDateTimeString();
         if (! $isQuoteSyncEnabled || $isQuoteSyncEnabled->value == 0) {
             info('----------- QuoteSync is disabled -----------');
 
             return;
         }
 
-        $entries = QuoteSync::where('is_synced', false)->take(30)->get();
+        $entries = QuoteSync::where('is_synced', false)->whereBetween('created_at', [$startDate, now()->endOfDay()])->take(30)->get();
 
         foreach ($entries as $entry) {
             info('Syncing entry: '.$entry->quote_uuid);
