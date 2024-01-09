@@ -2216,7 +2216,7 @@ const genderList = [
         </x-button>
       </div>
       <h6 v-if="aboveAgeMembers > 0" class="font-semibold text-primary-600 text-ms mb-1">
-        Travel plans for {{ travelers.length - aboveAgeMembers }} member age 18-64
+        Travel plans for {{ travelers.length - aboveAgeMembers }} member age 0-64
       </h6>
 
       <div

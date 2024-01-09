@@ -1,10 +1,9 @@
 name: Postmman API Test
 
 on:
-  pull_request:
+  push:
     branches:
-      - main
-    types: [opened, reopened]
+      - pause_bridger_API_test
 
 jobs:
   automated-api-tests:
