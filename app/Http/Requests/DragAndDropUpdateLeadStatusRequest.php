@@ -23,12 +23,14 @@ class DragAndDropUpdateLeadStatusRequest extends FormRequest
     public function rules(): array
     {
         $rules = [
-            'data.form' => 'required',
             'data.form.id' => 'required',
             'data.form.quote_status_id'  => 'required',
-            'data.to' => 'required',
             'data.to.quote_status_id'  => 'required',
         ];
+
+        if (request()->get('data')['to']['quote_status_id'] == QuoteStatusEnum::Lost) {
+            $rules['data.to.lost_reason'] = 'required';
+        }
 
         return $rules;
     }
@@ -38,20 +40,15 @@ class DragAndDropUpdateLeadStatusRequest extends FormRequest
      */
     public function withValidator($validator)
     {
-        // Lost reason required if quote status is lost
         $validator->after(function ($validator) {
-            $data = $this->all();
-            $form = $data['data']['form'];
-            $to = $data['data']['to'];
 
-            if ($form['quote_status_id'] == $to['quote_status_id']) {
-                $validator->errors()->add('value', 'Quote status is same as previous status.');
-            }
-
-            if(in_array($to['quote_status_id'], [QuoteStatusEnum::TransactionApproved, quoteStatusEnum::PolicyIssued])) {
+            if(in_array(request()->get('data')['to']['quote_status_id'], [QuoteStatusEnum::TransactionApproved, quoteStatusEnum::PolicyIssued])) {
                 $validator->errors()->add('value', 'Transaction approval required to verify that all necessary information and documentation are in place');
             }
 
+            // if(request()->get('data.to.quote_status_id') == request()->get('data.form.quote_status_id')) {
+            //     $validator->errors()->add('value', 'Quote status is same as previous status.');
+            // }
 
         });
     }

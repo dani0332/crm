@@ -201,8 +201,6 @@ class CentralController extends Controller
     public function updateLeadStatusDragDrop(DragAndDropUpdateLeadStatusRequest $dragAndDropUpdateLeadStatusRequest)
     {
         dd($dragAndDropUpdateLeadStatusRequest->validated());
-        (new CentralService())->updateLeadStatusDragDrop($dragAndDropUpdateLeadStatusRequest);
-
-        return redirect()->back()->with('success', 'Lead Status Updated Successfully');
+        
     }
 }
