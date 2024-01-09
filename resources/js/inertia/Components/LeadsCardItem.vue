@@ -106,7 +106,7 @@ useSortable(`#${props.title}`, props.leads, {
       }
     }
     console.log(data);
-    // updateList(data);
+    updateList(data);
     showModal.value = false;
   },
 });
