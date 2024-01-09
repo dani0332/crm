@@ -123,10 +123,8 @@ const tableHeader = [
   { text: 'ADVISOR', value: 'advisor' },
 ];
 
-
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
-
 
 const quotesSelected = ref([]),
   assignAdvisor = ref(null),
@@ -269,7 +267,10 @@ const openFollowUpModal = () => {
 
       <div
         class="flex justify-end gap-3 mb-4 mt-4"
-        v-show="hasRole(rolesEnum.CarManager) && can(permissionsEnum.PAUSE_AUTO_FOLLOWUPS)"
+        v-show="
+          hasRole(rolesEnum.CarManager) &&
+          can(permissionsEnum.PAUSE_AUTO_FOLLOWUPS)
+        "
       >
         <x-button
           size="sm"
@@ -340,6 +341,10 @@ const openFollowUpModal = () => {
 
       <template #item-car_model="{ car_model }">
         {{ car_model?.text }}
+      </template>
+
+      <template #item-created_at="{ created_at }">
+        {{ dateFormat(created_at) }}
       </template>
 
       <template #item-nationality="{ nationality }">
