@@ -65,7 +65,7 @@ class SaleSummaryReportService implements ManagementReport
                 return $query->groupBy($this->resolveGroupByColumn($groupBy));
             });
         // add users.name as advisor only if group by is advisor
-        if($request->groupBy == 'advisor'){
+        if ($request->groupBy == 'advisor') {
             $query->addSelect('users.name as advisor');
             $query->whereNotNull('advisor_id');
         }
@@ -82,8 +82,8 @@ class SaleSummaryReportService implements ManagementReport
             $query->whereNotNull('insurer_id');
         }
 
-
         $this->applyFilters($query, $filters);
+
         //dd($query->toSql(),  $query->getBindings());
         return $query->simplePaginate(10)->withQueryString();
     }

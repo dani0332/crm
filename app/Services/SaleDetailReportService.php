@@ -43,40 +43,39 @@ class SaleDetailReportService implements ManagementReport
         ];
 
         $query = PersonalQuote::query()
-                ->select(
-                    'policy_number',
-                    'policy_start_date',
-                    'policy_due_date',
-                    'source',
-                    'personal_quotes.price_vat_applicable',
-                    'payments.discount_value as discount',
-                    DB::raw('((price_vat_applicable + price_vat_not_applicable + vat) - payments.discount_value) as total_price'),
-                    'payments.commission_vat_applicable',
-                    'payments.commission_vat',
-                    'payments.commission_vat_not_applicable',
-                    DB::raw('(commission_vat_applicable + commission_vat) as total_commission'),
-                    DB::raw("'collects' as collects"),
-                    'tax_invoice_number as insurer_tax_invoice_number',
-                    'insurer_invoice_date as insurer_tax_invoice_date',
-                    'payment_status.text as transaction_payment_status',
-                    'payments.captured_at as date_paid',
-                    'personal_quotes.premium_captured as collected_amount',
-                    DB::raw("CONCAT(first_name, ' ', last_name) as customer_name"),
-                    DB::raw("'customer_type' as customer_type"),
-                    'quote_type.code as line_of_business',
-                    DB::raw("'sub_type_line_of_business' as sub_type_line_of_business"),
-                    'u.name as advisor_name',
-                    'pi.name as policy_issuer',
-                )
-                ->leftJoin('payments', 'personal_quotes.code', '=', 'payments.code')
-                ->leftJoin('payment_status', 'payment_status.id', '=', 'payments.payment_status_id')
-                ->leftJoin('quote_type', 'quote_type.id', '=', 'quote_type_id')
-                ->leftJoin('users as u', 'u.id', '=', 'advisor_id')
-                ->leftJoin('users as pi', 'pi.id', '=', 'policy_issuer_id')
-                ->when($request->groupBy, function ($query, $groupBy) {
-                    return $query->groupBy($this->resolveGroupByColumn($groupBy));
-                });
-
+            ->select(
+                'policy_number',
+                'policy_start_date',
+                'policy_due_date',
+                'source',
+                'personal_quotes.price_vat_applicable',
+                'payments.discount_value as discount',
+                DB::raw('((price_vat_applicable + price_vat_not_applicable + vat) - payments.discount_value) as total_price'),
+                'payments.commission_vat_applicable',
+                'payments.commission_vat',
+                'payments.commission_vat_not_applicable',
+                DB::raw('(commission_vat_applicable + commission_vat) as total_commission'),
+                DB::raw("'collects' as collects"),
+                'tax_invoice_number as insurer_tax_invoice_number',
+                'insurer_invoice_date as insurer_tax_invoice_date',
+                'payment_status.text as transaction_payment_status',
+                'payments.captured_at as date_paid',
+                'personal_quotes.premium_captured as collected_amount',
+                DB::raw("CONCAT(first_name, ' ', last_name) as customer_name"),
+                DB::raw("'customer_type' as customer_type"),
+                'quote_type.code as line_of_business',
+                DB::raw("'sub_type_line_of_business' as sub_type_line_of_business"),
+                'u.name as advisor_name',
+                'pi.name as policy_issuer',
+            )
+            ->leftJoin('payments', 'personal_quotes.code', '=', 'payments.code')
+            ->leftJoin('payment_status', 'payment_status.id', '=', 'payments.payment_status_id')
+            ->leftJoin('quote_type', 'quote_type.id', '=', 'quote_type_id')
+            ->leftJoin('users as u', 'u.id', '=', 'advisor_id')
+            ->leftJoin('users as pi', 'pi.id', '=', 'policy_issuer_id')
+            ->when($request->groupBy, function ($query, $groupBy) {
+                return $query->groupBy($this->resolveGroupByColumn($groupBy));
+            });
 
         $this->applyFilters($query, $filters);
 
