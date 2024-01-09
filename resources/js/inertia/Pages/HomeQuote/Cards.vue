@@ -5,7 +5,7 @@ import { useDateFormat } from '@vueuse/shared';
 import axios from 'axios';
 
 const props = defineProps({
-  quoteStatusEnum: Array,
+  quoteStatusEnum: Object,
   quoteTypeId: Number,
   lostReasons: Object,
 });

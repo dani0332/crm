@@ -25,6 +25,7 @@ class DragAndDropUpdateLeadStatusRequest extends FormRequest
         $rules = [
             'data.form.id' => 'required',
             'data.form.quote_status_id'  => 'required',
+            'data.form.quoteTypeId' => 'required',
             'data.to.quote_status_id'  => 'required',
         ];
 
@@ -43,7 +44,7 @@ class DragAndDropUpdateLeadStatusRequest extends FormRequest
         $validator->after(function ($validator) {
 
             if(in_array(request()->get('data')['to']['quote_status_id'], [QuoteStatusEnum::TransactionApproved, quoteStatusEnum::PolicyIssued])) {
-                $validator->errors()->add('value', 'Transaction approval required to verify that all necessary information and documentation are in place');
+                $validator->errors()->add('value', 'Transaction approval is required');
             }
 
             // if(request()->get('data.to.quote_status_id') == request()->get('data.form.quote_status_id')) {

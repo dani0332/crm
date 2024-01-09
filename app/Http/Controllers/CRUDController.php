@@ -1101,7 +1101,7 @@ class CRUDController extends Controller
 
         return inertia('HomeQuote/Cards', [
             'quotes' => $quotes,
-            'quoteStatusEnums' => $quoteStatusEnums,
+            'quoteStatusEnum' => $quoteStatusEnums,
             'lostReasons' => $lostReasons,
             'quoteTypeId' => QuoteTypes::HOME->id(),
         ]);

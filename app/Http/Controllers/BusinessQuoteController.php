@@ -370,7 +370,7 @@ class BusinessQuoteController extends Controller
 
         return inertia('CorpLineQuote/Cards', [
             'quotes' => $quotes,
-            'quoteStatusEnums' => $quoteStatusEnums,
+            'quoteStatusEnum' => $quoteStatusEnums,
             'lostReasons' => $lostReasons,
             'quoteTypeId' => QuoteTypes::BUSINESS->id(),
         ]);

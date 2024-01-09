@@ -4,6 +4,7 @@ namespace App\Http\Controllers\V2;
 
 use App\Enums\CustomerTypeEnum;
 use App\Enums\GenericRequestEnum;
+use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Exports\AmtQuoteExport;
 use App\Exports\BusinessQuoteExport;
@@ -200,7 +201,27 @@ class CentralController extends Controller
 
     public function updateLeadStatusDragDrop(DragAndDropUpdateLeadStatusRequest $dragAndDropUpdateLeadStatusRequest)
     {
-        dd($dragAndDropUpdateLeadStatusRequest->validated());
-        
+        $dataFrom = $dragAndDropUpdateLeadStatusRequest->get('data')['form'];
+        $dataTo = $dragAndDropUpdateLeadStatusRequest->get('data')['to'];
+
+        if ($dataTo['quote_status_id'] == QuoteStatusEnum::Lost) {
+            $dataTo['lost_reason'] = $dragAndDropUpdateLeadStatusRequest->get('data')['to']['lost_reason'];
+        }
+
+        $modelObject = $this->getModelObject(QuoteTypes::getName($dataFrom['quoteTypeId'])->value);
+        $repository = $modelObject::where('id', $dataFrom['id'])->firstOrFail();
+
+        $repository->update([
+            'quote_status_id' => $dataTo['quote_status_id'],
+        ]);
+
+        // if ($dataTo['quote_status_id'] == QuoteStatusEnum::Lost) {
+        //     $repository->lostReason()->update([
+        //         'lost_reason_id' => $dataTo['lost_reason'],
+        //     ]);
+        // }
+
+        return response()->json(['message' => 'Lead Status Updated Successfully.']);
+
     }
 }
