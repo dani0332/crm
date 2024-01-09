@@ -20,6 +20,7 @@ use App\Models\YachtQuote;
 use Exception;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 
 class QuoteSyncUpdateCommand extends Command
@@ -90,7 +91,7 @@ class QuoteSyncUpdateCommand extends Command
                     DB::commit();
                 } catch (Exception $e) {
                     DB::rollBack();
-                    info('QuoteSyncJob Error: '.$e->getMessage());
+                    Log::error('QuoteSyncJob Error: '.$e->getMessage());
                 }
             } else {
                 info('Entry for quote : '.$entry->quote_uuid.' not found in personal quotes table');
@@ -121,7 +122,7 @@ class QuoteSyncUpdateCommand extends Command
                         DB::commit();
                     } catch (Exception $e) {
                         DB::rollBack();
-                        info(' QuoteSyncJob Error: '.$e->getMessage());
+                        Log::error(' QuoteSyncJob Error: '.$e->getMessage());
                     }
                 }
             }
