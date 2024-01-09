@@ -201,6 +201,8 @@ class CentralController extends Controller
 
     public function updateLeadStatusDragDrop(DragAndDropUpdateLeadStatusRequest $dragAndDropUpdateLeadStatusRequest)
     {
+
+        // When moving to the another status any incomplete activity from current status should be automatically marked as done.
         $dataFrom = $dragAndDropUpdateLeadStatusRequest->get('data')['form'];
         $dataTo = $dragAndDropUpdateLeadStatusRequest->get('data')['to'];
 
@@ -221,7 +223,9 @@ class CentralController extends Controller
         //     ]);
         // }
 
-        return response()->json(['message' => 'Lead Status Updated Successfully.']);
+        // TODO:: Need to add Transaction for this section
+    
+        return response()->json(['message' => 'Lead status has been updated']);
 
     }
 }

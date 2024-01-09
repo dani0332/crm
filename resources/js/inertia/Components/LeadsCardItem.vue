@@ -40,7 +40,7 @@ const canDrag = computed(() => {
 const notification = useToast();
 
 const canDrop = computed(() => {
-  if (props.id == quoteStatusEnum?.TransactionApproved) {
+  if (props.id == quoteStatusEnum?.TransactionApproved || props.id == quoteStatusEnum?.PolicyIssued) {
     notification.error({
       title: 'Transaction approval is required',
       position: 'top',
