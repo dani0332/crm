@@ -1,42 +1,67 @@
 <script setup>
 const emit = defineEmits(['open']);
+
+const today = new Date();
+
+// Last 7 days
+const last7Days = new Date(today);
+last7Days.setDate(today.getDate() - 7);
+
+// Last 30 days
+const last30Days = new Date(today);
+last30Days.setDate(today.getDate() - 30);
+
+// Last month
+const lastMonth = new Date(today);
+lastMonth.setMonth(today.getMonth() - 1);
+lastMonth.setDate(1);
+
+// This month
+const thisMonth = new Date(today);
+thisMonth.setDate(1);
+
+// Next month
+const nextMonth = new Date(today);
+nextMonth.setMonth(today.getMonth() + 1);
+nextMonth.setDate(1);
+
 const dates = ref([
-  { text: 'Today', value: '' },
-  { text: 'Last 7 days', value: '' },
-  { text: 'Last 30 days', value: '' },
-  { text: 'Last month', value: '' },
-  { text: 'This month', value: '' },
-  { text: 'Next month', value: '' },
+  { text: 'Today', value: today },
+  { text: 'Last 7 days', value: last7Days },
+  { text: 'Last 30 days', value: last30Days },
+  { text: 'Last month', value: lastMonth },
+  { text: 'This month', value: thisMonth },
+  { text: 'Next month', value: nextMonth },
 ]);
 
 const status = ref([
   {
-    text: 'Sales oppertunity',
-    value: '',
+    text: 'Sales Opportunity',
+    value: 'sales_opportunity',
     tooltip:
       'This will be the sum of all potential sales we can achieve by closing these leads',
   },
   {
-    text: 'Paid awaiting documents',
-    value: '',
+    text: 'Paid Awaiting Documents',
+    value: 'paid_awaiting_documents',
     tooltip:
       'This means that we have received a payment for this lead however we require additional documents from clients to proceed futher.',
   },
   {
-    text: 'Secured deal',
-    value: '',
+    text: 'Secured Deal',
+    value: 'secured_deal',
     tooltip:
       'Shows leads that have successfully concluded deals with clients. This means that we acquired the complete payment and documents required.',
   },
   {
     text: 'Cold',
-    value: '',
+    value: 'cold',
     tooltip:
       'Typically, leads which are overdue on the follow ups will automatically change to Cold as no further action has taken place on them. You can still work on these leads.',
   },
   {
     text: 'Stale',
-    value: '',
+    value: 'stale',
     tooltip:
       'Typically, these are the leads where the status has not changed for the last 30 days.',
   },
