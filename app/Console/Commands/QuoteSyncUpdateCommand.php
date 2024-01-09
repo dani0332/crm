@@ -50,7 +50,7 @@ class QuoteSyncUpdateCommand extends Command
             return;
         }
 
-        $entries = QuoteSync::where('is_synced', false)->take(20)->get();
+        $entries = QuoteSync::where('is_synced', false)->take(30)->get();
 
         foreach ($entries as $entry) {
             info('Syncing entry: '.$entry->quote_uuid);
