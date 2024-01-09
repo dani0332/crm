@@ -45,7 +45,10 @@ const updateList = data => {
       data,
     })
     .then(response => {
-      // console.log(response);
+      notification.success({
+        title: response.data.message,
+        position: 'top',
+      });
     })
     .catch(({ response }) => {
       notification.error({
@@ -88,6 +91,7 @@ useSortable(`#${props.title}`, props.leads, {
       to: { quote_status_id: e.to.getAttribute('quote_status_id') },
     };
 
+    // Todo: Need to update with Enum
     if (data && data.to.quote_status_id == 17) {
       let response = await moveTask(e);
       if (!response) {

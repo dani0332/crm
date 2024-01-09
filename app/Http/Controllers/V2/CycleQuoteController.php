@@ -204,7 +204,7 @@ class CycleQuoteController extends Controller
 
         return inertia('CycleQuote/Cards', [
             'quotes' => $quotes,
-            'quoteStatusEnums' => $quoteStatusEnums,
+            'quoteStatusEnum' => $quoteStatusEnums,
             'lostReasons' => $lostReasons,
             'quoteTypeId' => QuoteTypes::CYCLE->id(),
         ]);

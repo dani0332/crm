@@ -138,7 +138,7 @@ class HealthQuote extends Model implements AuditableContract
 
     public function lostReason()
     {
-        return $this->belongsTo(LostReason::class, 'lost_reason_id');
+        return $this->belongsTo(LostReasons::class, 'lost_reason_id');
     }
 
     public function healthLeadType()

@@ -215,7 +215,7 @@ class PetQuoteController extends Controller
 
         return inertia('PetQuote/Cards', [
             'quotes' => $quotes,
-            'quoteStatusEnums' => $quoteStatusEnums,
+            'quoteStatusEnum' => $quoteStatusEnums,
             'lostReasons' => $lostReasons,
             'quoteTypeId' => QuoteTypes::PET->id(),
         ]);

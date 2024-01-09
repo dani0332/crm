@@ -1,6 +1,6 @@
 <script setup>
 const props = defineProps({
-  quoteStatusEnum: Array,
+  quoteStatusEnum: Object,
   lostReasons: Object,
   quoteTypeId: Number,
 });
