@@ -1,4 +1,6 @@
 <script setup>
+import { onMounted } from 'vue';
+
 const props = defineProps({
   quote: {
     type: Object,
@@ -136,7 +138,7 @@ const onSearch = id => {
     >
       <h4 class="font-semibold text-sm">{{ quote.text ?? quote.title }}</h4>
       <div class="flex justify-between gap-1">
-        <span>Total Leads</span>
+        <span>Total Leads </span>
         <span>{{ quote.data.total_leads }}</span>
       </div>
       <div class="flex justify-between gap-1">

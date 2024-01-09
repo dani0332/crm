@@ -1,10 +1,8 @@
 <script setup>
-import { useForm } from '@inertiajs/vue3';
 import {
   useSortable,
   moveArrayElement,
 } from '@vueuse/integrations/useSortable';
-import { inject } from 'vue';
 import { daysSinceStale } from '../Composables/utilities';
 
 const page = usePage();
@@ -80,16 +78,15 @@ useSortable(`#${props.title}`, props.leads, {
   animation: 500,
   onAdd: async function (e) {
     let item = leads.value[e.oldIndex];
-    let data = item
-      ? {
-          form: {
-            id: item.id,
-            quoteTypeId: quoteTypeId,
-            quote_status_id: item.quote_status_id,
-          },
-          to: { quote_status_id: e.to.getAttribute('quote_status_id') },
-        }
-      : null;
+
+    let data = {
+      form: {
+        id: e.from.children[e.oldIndex].id,
+        quoteTypeId: quoteTypeId,
+        quote_status_id: e.from.getAttribute('quote_status_id'),
+      },
+      to: { quote_status_id: e.to.getAttribute('quote_status_id') },
+    };
 
     if (data && data.to.quote_status_id == 17) {
       let response = await moveTask(e);
@@ -108,7 +105,8 @@ useSortable(`#${props.title}`, props.leads, {
         data.to['lost_reason'] = leadForm.lostreason;
       }
     }
-    updateList(data);
+    console.log(data);
+    // updateList(data);
     showModal.value = false;
   },
 });
@@ -148,7 +146,6 @@ const onSubmit = isValid => {
 const handleConfirmation = result => resolveConfirm(result);
 </script>
 <template>
-  <!--  -->
   <div
     :id="title"
     :quote_status_id="id"
@@ -172,6 +169,7 @@ const handleConfirmation = result => resolveConfirm(result);
       :href="`/quotes/health/${uuid}`"
       target="_blank"
       title="View Lead"
+      :id="id"
       class="block p-3 mt-2 border border-gray-300 space-y-2 hover:transition hover:border-primary-500 rounded"
       :class="[
         daysSinceStale(stale_at) === false ? 'bg-white' : 'bg-error-200',
@@ -179,19 +177,19 @@ const handleConfirmation = result => resolveConfirm(result);
       ]"
     >
       <div class="flex items-center space-x-1 overflow-hidden">
-        <span class="font-semibold text-sm"
-          >{{ first_name }} {{ last_name }}
+        <span class="font-semibold text-sm">
+          {{ first_name }} {{ last_name }}
         </span>
         <stale-leads-badge :date="stale_at"></stale-leads-badge>
       </div>
 
       <div class="flex items-center gap-2">
-        <x-tooltip>
+        <x-tooltip align="left">
           <x-icon icon="person" size="sm" class="text-primary-400" />
           <template #tooltip>
-            <span class="x-sm">
-              This indicates the specific type of insurance coverage.</span
-            >
+            <div class="max-w-[194px] text-xs">
+              This indicates the specific type of insurance coverage.
+            </div>
           </template>
         </x-tooltip>
         <p class="text-xs">{{ health_cover_for?.text }}</p>
@@ -203,32 +201,32 @@ const handleConfirmation = result => resolveConfirm(result);
       </div>
 
       <div class="flex items-center gap-2">
-        <x-tooltip>
+        <x-tooltip align="left">
           <x-icon icon="money" size="sm" class="text-primary-400" />
           <template #tooltip>
-            <span v-if="leadName == 'Health'" class="x-sm">
-              The complete amount due including VAT and before any potential
-              discounts. Remember, VAT is exempt for Life Insurance
-              policies.</span
-            >
-            <span v-else class="x-sm">
-              The complete amount due including VAT and before any potential
-              discounts. Remember, VAT is exempt for Life Insurance
-              policies.</span
-            >
+            <div class="max-w-[194px] text-xs">
+              <span v-if="leadName == 'Health'">
+                The complete amount due including VAT and before any potential
+                discounts. Remember, VAT is exempt for Life Insurance policies.
+              </span>
+              <span v-else>
+                The complete amount due including VAT and before any potential
+                discounts. Remember, VAT is exempt for Life Insurance policies.
+              </span>
+            </div>
           </template>
         </x-tooltip>
         <p class="text-xs">{{ Number(premium).toLocaleString() }}</p>
       </div>
 
       <div class="flex items-center gap-2">
-        <x-tooltip>
+        <x-tooltip align="left">
           <x-icon icon="calendar" size="sm" class="text-primary-400" />
           <template #tooltip>
-            <span
-              >The 'Last Modified Date' displays the most recent date and time
-              when the lead was last worked on.</span
-            >
+            <div class="max-w-[194px] text-xs">
+              The 'Last Modified Date' displays the most recent date and time
+              when the lead was last worked on.
+            </div>
           </template>
         </x-tooltip>
         <p class="text-xs">{{ updated_at }}</p>
