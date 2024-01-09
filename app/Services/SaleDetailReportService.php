@@ -48,19 +48,19 @@ class SaleDetailReportService implements ManagementReport
                 'policy_start_date',
                 'policy_due_date',
                 'source',
-                'personal_quotes.price_vat_applicable',
-                'payments.discount_value as discount',
-                DB::raw('((price_vat_applicable + price_vat_not_applicable + vat) - payments.discount_value) as total_price'),
-                'payments.commission_vat_applicable',
-                'payments.commission_vat',
-                'payments.commission_vat_not_applicable',
+                DB::raw('FORMAT(personal_quotes.price_vat_applicable, 2) as price_vat_applicable'),
+                DB::raw('FORMAT(payments.discount_value,2) as discount'),
+                DB::raw('FORMAT(((price_vat_applicable + price_vat_not_applicable + vat) - payments.discount_value),2) as total_price'),
+                DB::raw('FORMAT(payments.commission_vat_applicable,2) as commission_vat_applicable'),
+                DB::raw('FORMAT(payments.commission_vat,2) as commission_vat'),
+                DB::raw('FORMAT(payments.commission_vat_not_applicable,2) as commission_vat_not_applicable'),
                 DB::raw('(commission_vat_applicable + commission_vat) as total_commission'),
                 DB::raw("'collects' as collects"),
                 'tax_invoice_number as insurer_tax_invoice_number',
                 'insurer_invoice_date as insurer_tax_invoice_date',
                 'payment_status.text as transaction_payment_status',
                 'payments.captured_at as date_paid',
-                'personal_quotes.premium_captured as collected_amount',
+                DB::raw('FORMAT(personal_quotes.premium_captured,2) as collected_amount'),
                 DB::raw("CONCAT(first_name, ' ', last_name) as customer_name"),
                 DB::raw("'customer_type' as customer_type"),
                 'quote_type.code as line_of_business',
@@ -79,7 +79,6 @@ class SaleDetailReportService implements ManagementReport
 
         $this->applyFilters($query, $filters);
 
-        //dd($query->toSql(), $query->getBindings());
         return $query->simplePaginate(10)->withQueryString();
     }
 
@@ -98,21 +97,25 @@ class SaleDetailReportService implements ManagementReport
 
     public function getFilterOptions()
     {
+
         $maxDays = ApplicationStorageService::getValueByKeyName(GenericRequestEnum::MAX_DAYS);
-
-        $managementReportCategories = [];
-        foreach (ManagementReportCategoriesEnum::asArray() as $value) {
-            $managementReportCategories[] = ['label' => $value, 'value' => $value];
-        }
-
-        $managementReportGroupBy = [];
-        foreach (ManagementReportGroupByEnum::asArray() as $value) {
-            $managementReportGroupBy[] = ['label' => $value, 'value' => $value];
-        }
 
         $loginUserId = auth()->user()->id;
 
         $teamIds = $this->getUserTeams($loginUserId);
+
+        $reportCategories = [];
+        foreach (ManagementReportCategoriesEnum::asArray() as $value) {
+            $reportCategories[] = ['label' => $value, 'value' => $value];
+        }
+
+        $transactionTypes = Lookup::where('key', LookupsEnum::TRANSACTION_TYPES)
+            ->get()
+            ->map(fn ($item) => ['label' => $item->text, 'value' => $item->id])
+            ->prepend(['label' => 'All', 'value' => ''], 'value')
+            ->sortBy('label')
+            ->values()
+            ->toArray();
 
         $teams = Team::whereIn('id', $teamIds->pluck('id'))
             ->select('name', 'id')
@@ -136,8 +139,8 @@ class SaleDetailReportService implements ManagementReport
             'maxDays' => $maxDays,
             'leadSources' => $leadSources,
             'teams' => $teams,
-            'managementReportCategories' => $managementReportCategories,
-            'managementReportGroupBy' => $managementReportGroupBy,
+            'reportCategories' => $reportCategories,
+            'transactionTypes' => $transactionTypes,
         ];
     }
 
@@ -165,11 +168,11 @@ class SaleDetailReportService implements ManagementReport
         switch ($filters['reportCategory']) {
             case ManagementReportCategoriesEnum::SALE_SUMMARY:
             case ManagementReportCategoriesEnum::SALE_DETAIL:
-                // if ($filters['reportType'] == ManagementReportTypeEnum::ISSUED_POLICIES) {
-                //     $dateFilter('personal_quotes.policy_issuance_date', 'policyIssuanceDate');
-                // } elseif ($filters['reportType'] == ManagementReportTypeEnum::TRANSACTION_PAYMENTS) {
-                //     $dateFilter('payments.payment_due_date', 'paymentDueDate');
-                // }
+                if ($filters['reportType'] == ManagementReportTypeEnum::ISSUED_POLICIES) {
+                    $dateFilter('personal_quotes.policy_issuance_date', 'policyIssuanceDate');
+                } elseif ($filters['reportType'] == ManagementReportTypeEnum::TRANSACTION_PAYMENTS) {
+                    $dateFilter('payments.payment_due_date', 'paymentDueDate');
+                }
                 break;
 
             case ManagementReportCategoriesEnum::ENDING_POLICIES:
