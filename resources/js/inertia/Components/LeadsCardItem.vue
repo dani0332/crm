@@ -39,6 +39,17 @@ const canDrag = computed(() => {
 
 const notification = useToast();
 
+const canDrop = computed(() => {
+  if (props.id == quoteStatusEnum?.TransactionApproved) {
+    notification.error({
+      title: 'Transaction approval is required',
+      position: 'top',
+    });
+    return false;
+  }
+  return true;
+});
+
 const updateList = data => {
   axios
     .post(route('update-lead-status-drag-drop'), {
@@ -80,19 +91,19 @@ useSortable(`#${props.title}`, props.leads, {
   },
   animation: 500,
   onAdd: async function (e) {
-    let item = leads.value[e.oldIndex];
-
     let data = {
       form: {
-        id: e.from.children[e.oldIndex].id,
+        id: e.item.getAttribute('id') ?? e.from.children[e.oldIndex].id,
         quoteTypeId: quoteTypeId,
         quote_status_id: e.from.getAttribute('quote_status_id'),
       },
       to: { quote_status_id: e.to.getAttribute('quote_status_id') },
     };
 
+    console.log(data.to.quote_status_id, quoteStatusEnum?.TransactionApproved);
+
     // Todo: Need to update with Enum
-    if (data && data.to.quote_status_id == 17) {
+    if (data && data.to.quote_status_id == quoteStatusEnum?.Lost) {
       let response = await moveTask(e);
       if (!response) {
         var itemEl = e.item; // dragged HTMLElement
@@ -108,25 +119,27 @@ useSortable(`#${props.title}`, props.leads, {
       } else {
         data.to['lost_reason'] = leadForm.lostreason;
       }
+    } else if (
+      data &&
+      data.to.quote_status_id == quoteStatusEnum?.TransactionApproved
+    ) {
+      notification.error({
+        title: 'Transaction approval is required',
+        position: 'top',
+      });
+      var itemEl = e.item; // dragged HTMLElement
+      let originalList = e.from; // previous list
+      var newIndex = e.oldIndex;
+
+      var referenceNode = originalList.children[newIndex];
+
+      // Insert the dragged element back to its original position
+      originalList.insertBefore(itemEl, referenceNode);
+      return;
     }
-    console.log(data);
     updateList(data);
     showModal.value = false;
   },
-});
-
-const hasAnyRole = role => useHasAnyRole(role);
-const rolesEnum = page.props.rolesEnum;
-
-const isAllowed = computed(() => {
-  return (
-    hasAnyRole([
-      rolesEnum.Advisor,
-      rolesEnum.OperationAssistant,
-      rolesEnum.UnitManager,
-      rolesEnum.UnitHead,
-    ]) ?? false
-  );
 });
 
 const dateFormat = date => {
@@ -148,12 +161,14 @@ const onSubmit = isValid => {
 };
 
 const handleConfirmation = result => resolveConfirm(result);
+
+const getUrl = (url, quoteTypeId) => useGetShowPageRoute(url, quoteTypeId);
 </script>
 <template>
   <div
     :id="title"
     :quote_status_id="id"
-    class="shared"
+    class="shared h-full"
     :class="{ 'h-screen': props.leads.length == 0 }"
   >
     <a
@@ -170,7 +185,7 @@ const handleConfirmation = result => resolveConfirm(result);
         stale_at,
       } in leads"
       :key="id"
-      :href="`/quotes/health/${uuid}`"
+      :href="getUrl(uuid, quoteTypeId)"
       target="_blank"
       title="View Lead"
       :id="id"
@@ -237,35 +252,6 @@ const handleConfirmation = result => resolveConfirm(result);
       </div>
     </a>
   </div>
-
-  <!-- <AppModal
-    class="min-w-[30%] overflow-hidden"
-    v-model="showModal"
-    show-header
-    show-close
-  >
-    <template #header>
-      <span>Kinldy choose a reason for marking as 'Lost' </span>
-    </template>
-
-    <x-form @submit="onSubmit" :auto-focus="false">
-      <x-field label="Lost Reason" required>
-        <x-select
-          v-model="leadForm.lostreason"
-          :options="lostReasonsOptions"
-          placeholder="Lost Reason is required"
-          class="w-full"
-          :rules="[isRequired]"
-        />
-      </x-field>
-      <div class="text-right space-x-4 mt-4">
-        <x-button type="submit">Continue</x-button>
-        <x-button color="orange" @click.prevent="handleConfirmation(false)"
-          >Go Back</x-button
-        >
-      </div>
-    </x-form>
-  </AppModal> -->
 
   <x-modal
     v-model="showModal"

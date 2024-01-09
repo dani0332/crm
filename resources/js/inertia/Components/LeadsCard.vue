@@ -157,7 +157,7 @@ const onSearch = id => {
         />
       </div>
     </div>
-    <div class="flex flex-col px-2 pb-2 overflow-auto">
+    <div class="flex flex-col px-2 pb-2 overflow-auto h-screen">
       <div
         v-if="quotes.queries[quote.id] && quotes.searching"
         class="text-center p-4"
