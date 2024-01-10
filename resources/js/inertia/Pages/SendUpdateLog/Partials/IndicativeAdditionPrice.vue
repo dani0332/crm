@@ -10,7 +10,7 @@ const props = defineProps({
     type: Array,
     required: true
   },
-  selectedType: {
+  selectedCategory: {
     type: Object,
     required: true
   }
@@ -182,7 +182,7 @@ const onUpdate = () => {
 
 						<!-- Quote number -->
             <div class="grid sm:grid-cols-2 ml-[-250px]">
-							<!-- <template v-if="selectedType.slug !== 'COPD' && selectedType.slug !== 'EF'">
+							<!-- <template v-if="selectedCategory.slug !== 'COPD' && selectedCategory.slug !== 'EF'">
 								<dt class="font-bold text-right mr-10">
 									<x-tooltip position="left">
 										<span>Quote number</span>

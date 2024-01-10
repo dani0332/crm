@@ -1,7 +1,7 @@
 <script setup>
-
-import LazyIndicativeAdditionalPrice from './Partials/IndicativeAdditionPrice.vue';
 import LazyPlanDetails from './Partials/PlanDetails.vue';
+import LazyPolicyDetails from './Partials/PolicyDetails.vue';
+import LazyIndicativeAdditionalPrice from './Partials/IndicativeAdditionPrice.vue';
 
 const props = defineProps({
   quoteId: String,
@@ -9,7 +9,7 @@ const props = defineProps({
   sendUpdateLog: Object,
   sendUpdateOptions: Array,
   insuranceProviders: Object,
-  sendUpdateStatusEnum: Array,
+  sendUpdateStatusEnum: Object,
 });
 
 const page = usePage();
@@ -22,24 +22,33 @@ const state = reactive({
   redirectURL: ''
 });
 
-const currentOption = computed(() => {
-  let cat = null;
-  props.sendUpdateOptions.forEach(option => {
-    if (option.childs.find(op => op.id === props.sendUpdateLog.category_id)) {
-      cat = option;
-    }
-  });
-  return cat;
-});
+const selectedCategory = computed(() => {
+  let category = null;
+  for (let mainCategory of props.sendUpdateOptions) {
+    for (let subCategory of mainCategory.childs || []) {
+      if (subCategory.id === props.sendUpdateLog.category_id) {
+        category = {...mainCategory};
+        delete category.childs;
 
-const selectedType = computed(() => {
-  return currentOption?.value?.childs.find(
-    child => child.id === props.sendUpdateLog.category_id,
-  );
-});
+        category.subCategory = {...subCategory};
+        delete category.subCategory.childs;
+
+        for (let option of subCategory.childs || []) {
+          if (option.id === props.sendUpdateLog.option_id) {
+            category.subCategory.option = {...option};
+          }
+        }
+
+        category.subCategory.options = [...subCategory.childs];
+      }
+    }
+  }
+
+  return category;
+})
 
 const updateLogOptions = computed(() => {
-  return selectedType.value?.childs.map(child => ({
+  return selectedCategory?.value?.subCategory.options.map(child => ({
     value: child.id,
     label: child.title,
     slug: child.slug
@@ -49,7 +58,7 @@ const updateLogOptions = computed(() => {
 const isEditDisabled = computed(() => {
   return (
     props.sendUpdateLog.status === props.sendUpdateStatusEnum.UPDATE_BOOKED &&
-    ['EF', 'CI', 'CIR', 'CPD'].includes(selectedType.value?.slug)
+    ['EF', 'CI', 'CIR', 'CPD'].includes(selectedCategory?.value?.subCategory.slug)
   );
 })
 
@@ -62,14 +71,14 @@ const showIndicativeAdditionalPrice = computed(() => {
     }
   })
   return (
-    selectedType?.value.slug === 'EF' && !hasRestrictedSubType
+    selectedCategory?.value?.subCategory.slug === 'EF' && !hasRestrictedSubType
   );
 });
 
 const showPlanDetails = computed(() => {
-  return (selectedType.slug === 'CFIAR' || selectedType.slug === 'COPD') && (
+  return (selectedCategory?.value?.subCategory.slug === 'CPD' || (selectedCategory?.value?.subCategory.slug === 'CIR' && 
     ![quoteTypeCodeEnum.Car, quoteTypeCodeEnum.Travel, quoteTypeCodeEnum.Health].includes(props.quoteType) 
-  ) 
+  )) 
 })
 
 const changeReasonOptions = computed(() => {
@@ -81,7 +90,7 @@ const sendUpdateForm = useForm({
   option: props.sendUpdateLog?.option_id || null,
   change_reason: props.sendUpdateLog?.change_reason || '',
   reportable_id: props.sendUpdateLog?.reportable_id || null,
-  childCategory: selectedType.value,
+  childCategory: selectedCategory?.value?.subCategory,
   status: props.sendUpdateLog?.status || '',
   reportable_type: props.sendUpdateLog?.reportable_type || '',
 });
@@ -129,22 +138,17 @@ const onUpdateLog = () => {
 
 <template>
   <Head>
-    <title>Send Update {{ selectedType.title }} </title>
+    <title>Send Update {{ selectedCategory.subCategory.title }} </title>
   </Head>
   <div>
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div class="flex gap-2 w-100 flex-grow justify-between">
         <h3 class="text-lg font-semibold text-primary-800 capitalize">
-          {{ selectedType.title }}
+          {{ selectedCategory.subCategory.title }}
         </h3>
-        <x-button
-          color="primary"
-          size="sm"
-          class="mr-5"
-          >
-          <Link :href="state.redirectURL" tag="div">Go back to lead</Link>
-          </x-button
-        >
+        <Link :href="state.redirectURL">
+          <x-button color="primary" size="sm" class="mr-5">Go back to lead</x-button>
+        </Link>
       </div>
       <x-divider class="my-4" />
       <div class="text-sm">
@@ -164,9 +168,9 @@ const onUpdateLog = () => {
             </dd>
           </div>
           <div class="grid sm:grid-cols-2">
-            <template v-if="selectedType.slug !== 'EN' && selectedType.slug !== 'CPU'">
+            <template v-if="selectedCategory.subCategory.slug !== 'EN' && selectedCategory.subCategory.slug !== 'CPU'">
               <dt class="font-bold text-right mr-10">Transaction Type</dt>
-              <dd>{{ currentOption.title }}</dd>
+              <dd>{{ selectedCategory.title }}</dd> 
             </template>
           </div>
           <div class="grid sm:grid-cols-2 ml-[-250px]">
@@ -174,7 +178,7 @@ const onUpdateLog = () => {
             <dd>{{ sendUpdateLog.status }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
-            <template v-if="selectedType.slug !== 'CI' && selectedType.slug !== 'CIR' && selectedType.slug !== 'CPU' && selectedType.slug !== 'CPD'">
+            <template v-if="selectedCategory.subCategory.slug !== 'CI' && selectedCategory.subCategory.slug !== 'CIR' && selectedCategory.subCategory.slug !== 'CPU' && selectedCategory.subCategory.slug !== 'CPD'">
               <dt class="font-bold text-right mr-10">Sub Type</dt>
               <dd>
                 <x-select
@@ -185,7 +189,7 @@ const onUpdateLog = () => {
                 />
               </dd>
             </template>
-            <template v-else-if="selectedType.slug !== 'CPU' && selectedType.slug !== 'CPD'">
+            <template v-else-if="selectedCategory.subCategory.slug !== 'CPU' && selectedCategory.subCategory.slug !== 'CPD'">
               <!-- <dt class="font-bold text-right mr-10">Reason</dt>
               <dd>
                 <x-select
@@ -235,15 +239,41 @@ const onUpdateLog = () => {
       v-if="showIndicativeAdditionalPrice"
       :sendUpdateLog="sendUpdateLog"
       :insuranceProviders="insuranceProviders"
-      :selectedType="selectedType"
+      :selectedCategory="selectedCategory"
     />
 
-    <LazyPlanDetails
+    <!-- <LazyPlanDetails
       v-if="showPlanDetails"
       :sendUpdateLog="sendUpdateLog"
       :insuranceProviders="insuranceProviders"
       :selectedType="selectedType"
+    /> -->
+
+    <!-- show against (EF -> PPE) || (CIR) || (CPD) -->
+    <LazyPolicyDetails
+      :sendUpdateLog="sendUpdateLog"
+      :insuranceProviders="insuranceProviders"
+      :selectedCategory="selectedCategory"
     />
+
+    <!-- Documents Component goes here -->
+
+
+    <!-- EF || CI || CIR, it will show 2 sections for booking details with diff titles || 
+      CPD, it will show 2 sections for booking details with diff titles 
+    -->
+
+
+    <!-- CIR titles 
+    1. Booking Details - New Policy
+    2. Booking Details - Previous Policy
+    -->
+
+    <!-- CPD titles 
+    1. Booking Details - Reversal Entry 
+    2. Booking Details - New Entry
+    -->
+    <!-- <LazyBookingDetails /> -->
 
     <AuditLogs
       :type="'App\\Models\\SendUpdateLog'"
