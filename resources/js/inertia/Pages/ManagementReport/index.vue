@@ -201,10 +201,6 @@ function onReset() {
     onSuccess: () => (loaders.table = false),
   });
 }
-
-onMounted(() => {
-  console.log(props.reportName);
-});
 </script>
 <template>
   <Head title="Management Reports" />
