@@ -1,7 +1,8 @@
 <script setup>
 const props = defineProps({
-  quoteStatusEnum: Array,
-  quoteTypeId: Number,
+  quoteStatusEnum: Object,
+  quoteTypeId: String,
+  lostReasons: Object,
 });
 
 const page = usePage();
@@ -9,9 +10,10 @@ const dateFormat = date => {
   return useDateFormat(date, 'DD-MM-YYYY HH:mm:ss').value;
 };
 
-console.log(props.quoteTypeId);
-
 provide('quoteStatusEnum', props.quoteStatusEnum);
+provide('quoteTypeId', props.quoteTypeId);
+provide('lostReasons', props.lostReasons);
+
 const quotes = reactive({
   data: page.props.quotes || [],
   loader: false,
@@ -54,6 +56,8 @@ const quotes = reactive({
         :quote="quote"
         :quotes="quotes"
         :quoteTypeId="quoteTypeId"
+        :lostReasons="props.lostReasons"
+        :quoteStatusEnum="props.quoteStatusEnum"
       />
     </div>
   </div>

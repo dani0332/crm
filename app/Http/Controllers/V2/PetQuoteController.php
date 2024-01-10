@@ -29,7 +29,7 @@ use App\Repositories\QuoteStatusRepository;
 use App\Repositories\UserRepository;
 use App\Services\AMLService;
 use App\Services\CentralService;
-use AWS\CRT\HTTP\Request;
+use Illuminate\Http\Request;
 
 class PetQuoteController extends Controller
 {
@@ -186,7 +186,6 @@ class PetQuoteController extends Controller
 
     public function cardsView(Request $request)
     {
-        dd("working");
         $quotes = [
             ['id' => QuoteStatusEnum::NewLead, 'title' => quoteStatusCode::NEW_LEAD, 'data' => getDataAgainstStatus(QuoteTypes::PET->value, QuoteStatusEnum::NewLead)],
             ['id' => QuoteStatusEnum::Allocated, 'title' => quoteStatusCode::ALLOCATED, 'data' => getDataAgainstStatus(QuoteTypes::PET->value, QuoteStatusEnum::Allocated)],
@@ -199,6 +198,7 @@ class PetQuoteController extends Controller
         ];
 
         $quoteStatusEnums = QuoteStatusEnum::asArray();
+        $lostReasons = LostReasonRepository::orderBy('text', 'asc')->get();
         $isManagerOrAdminAccess = auth()->user()->hasAnyRole([RolesEnum::PetManager, RolesEnum::Admin]);
 
         if (!$isManagerOrAdminAccess) {
@@ -220,7 +220,8 @@ class PetQuoteController extends Controller
 
         return inertia('PetQuote/Cards', [
             'quotes' => $quotes,
-            'quoteStatusEnums' => $quoteStatusEnums,
+            'quoteStatusEnum' => $quoteStatusEnums,
+            'lostReasons' => $lostReasons,
             'quoteTypeId' => QuoteTypes::PET->id(),
         ]);
     }

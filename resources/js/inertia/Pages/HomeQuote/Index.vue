@@ -209,7 +209,7 @@ const permissionsEnum = page.props.permissionsEnum;
       <h2 class="text-xl font-semibold">Home List</h2>
       <div class="flex space-x-2 items-center">
         <column-selection v-model:columns="tableHeader"></column-selection>
-        <FiltersButton />
+
         <Link :href="route('home-cardView')">
           <x-button size="sm" color="#1d83bc" tag="div"> Cards View </x-button>
         </Link>

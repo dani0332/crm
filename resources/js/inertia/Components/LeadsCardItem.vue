@@ -14,12 +14,21 @@ const props = defineProps({
   },
   id: Number,
   title: String,
-  quote_type_id: Number,
 });
 
+const emit = defineEmits(['confirmation-result']);
+
 const quoteStatusEnum = inject('quoteStatusEnum');
+const quoteTypeId = inject('quoteTypeId');
+const lostReasons = inject('lostReasons');
+
+const { isRequired } = useRules();
 
 const leads = ref(props.leads);
+const leadForm = useForm({
+  lostreason: null,
+});
+
 const canDrag = computed(() => {
   return props.id == quoteStatusEnum?.Lost ||
     props.id == quoteStatusEnum?.TransactionApproved ||
@@ -28,6 +37,52 @@ const canDrag = computed(() => {
     : true;
 });
 
+const notification = useToast();
+
+const canDrop = computed(() => {
+  if (props.id == quoteStatusEnum?.TransactionApproved || props.id == quoteStatusEnum?.PolicyIssued) {
+    notification.error({
+      title: 'Transaction approval is required',
+      position: 'top',
+    });
+    return false;
+  }
+  return true;
+});
+
+const updateList = data => {
+  axios
+    .post(route('update-lead-status-drag-drop'), {
+      data,
+    })
+    .then(response => {
+      notification.success({
+        title: response.data.message,
+        position: 'top',
+      });
+    })
+    .catch(({ response }) => {
+      notification.error({
+        title: response.data.message,
+        position: 'top',
+      });
+    });
+};
+
+let resolveConfirm;
+
+const moveTask = async () => {
+  // Show the confirmation modal
+  showModal.value = true;
+
+  // Wait for the confirmation result
+  const confirmed = await new Promise(resolve => {
+    resolveConfirm = resolve;
+  });
+
+  return confirmed;
+};
+
 useSortable(`#${props.title}`, props.leads, {
   group: {
     name: 'shared',
@@ -35,67 +90,85 @@ useSortable(`#${props.title}`, props.leads, {
     pull: canDrag.value,
   },
   animation: 500,
-  onAdd: function (e) {
-    let quote_status_id = e.to.getAttribute('quote_status_id');
-    console.log(quote_status_id);
-    // setTimeout(() => {
-    //   const ids = orderedList.value.map(item => item.id);
-    //   axios
-    //     .post(route('reward-sliders.update-order'), {
-    //       ids,
-    //     })
-    //     .then(({ data }) => {
-    //       router.get(
-    //         route('reward-sliders.index'),
-    //         {},
-    //         { preserveScroll: true },
-    //       );
-    //       toast.success({
-    //         title: data.data,
-    //         position: 'top',
-    //       });
-    //     });
-    // }, 1000);
-  },
-  onRemove: function (e) {
-    // quote_type_id is missing
-    let { id, quote_type_id, quote_status_id } = leads.value[e.oldIndex];
-  },
-});
+  onAdd: async function (e) {
+    let data = {
+      form: {
+        id: e.item.getAttribute('id') ?? e.from.children[e.oldIndex].id,
+        quoteTypeId: quoteTypeId,
+        quote_status_id: e.from.getAttribute('quote_status_id'),
+      },
+      to: { quote_status_id: e.to.getAttribute('quote_status_id') },
+    };
 
-const hasAnyRole = role => useHasAnyRole(role);
-const rolesEnum = page.props.rolesEnum;
+    console.log(data.to.quote_status_id, quoteStatusEnum?.TransactionApproved);
 
-const isAllowed = computed(() => {
-  return (
-    hasAnyRole([
-      rolesEnum.Advisor,
-      rolesEnum.OperationAssistant,
-      rolesEnum.UnitManager,
-      rolesEnum.UnitHead,
-    ]) ?? false
-  );
+    // Todo: Need to update with Enum
+    if (data && data.to.quote_status_id == quoteStatusEnum?.Lost) {
+      let response = await moveTask(e);
+      if (!response) {
+        var itemEl = e.item; // dragged HTMLElement
+        let originalList = e.from; // previous list
+        var newIndex = e.oldIndex;
+
+        var referenceNode = originalList.children[newIndex];
+
+        // Insert the dragged element back to its original position
+        originalList.insertBefore(itemEl, referenceNode);
+        showModal.value = false;
+        return;
+      } else {
+        data.to['lost_reason'] = leadForm.lostreason;
+      }
+    } else if (
+      data &&
+      data.to.quote_status_id == quoteStatusEnum?.TransactionApproved
+    ) {
+      notification.error({
+        title: 'Transaction approval is required',
+        position: 'top',
+      });
+      var itemEl = e.item; // dragged HTMLElement
+      let originalList = e.from; // previous list
+      var newIndex = e.oldIndex;
+
+      var referenceNode = originalList.children[newIndex];
+
+      // Insert the dragged element back to its original position
+      originalList.insertBefore(itemEl, referenceNode);
+      return;
+    }
+    updateList(data);
+    showModal.value = false;
+  },
 });
 
 const dateFormat = date => {
   return useDateFormat(date, 'DD-MM-YYYY HH:mm:ss').value;
 };
 
-// const lostReasonsOptions = computed(() => {
-//   return page.props.lostReasons.map(reason => ({
-//     value: reason.id,
-//     label: reason.text,
-//   }));
-// });
+const lostReasonsOptions = computed(() => {
+  return lostReasons.map(reason => ({
+    value: reason.id,
+    label: reason.text,
+  }));
+});
 
 const showModal = ref(false);
+
+const onSubmit = isValid => {
+  if (!isValid) return false;
+  handleConfirmation(true);
+};
+
+const handleConfirmation = result => resolveConfirm(result);
+
+const getUrl = (url, quoteTypeId) => useGetShowPageRoute(url, quoteTypeId);
 </script>
 <template>
-  <!--  -->
   <div
     :id="title"
     :quote_status_id="id"
-    class="shared"
+    class="shared h-full"
     :class="{ 'h-screen': props.leads.length == 0 }"
   >
     <a
@@ -112,9 +185,10 @@ const showModal = ref(false);
         stale_at,
       } in leads"
       :key="id"
-      :href="`/quotes/health/${uuid}`"
+      :href="getUrl(uuid, quoteTypeId)"
       target="_blank"
       title="View Lead"
+      :id="id"
       class="block p-3 mt-2 border border-gray-300 space-y-2 hover:transition hover:border-primary-500 rounded"
       :class="[
         daysSinceStale(stale_at) === false ? 'bg-white' : 'bg-error-200',
@@ -122,19 +196,19 @@ const showModal = ref(false);
       ]"
     >
       <div class="flex items-center space-x-1 overflow-hidden">
-        <span class="font-semibold text-sm"
-          >{{ first_name }} {{ last_name }}
+        <span class="font-semibold text-sm">
+          {{ first_name }} {{ last_name }}
         </span>
         <stale-leads-badge :date="stale_at"></stale-leads-badge>
       </div>
 
       <div class="flex items-center gap-2">
-        <x-tooltip>
+        <x-tooltip align="left">
           <x-icon icon="person" size="sm" class="text-primary-400" />
           <template #tooltip>
-            <span class="x-sm">
-              This indicates the specific type of insurance coverage.</span
-            >
+            <div class="max-w-[194px] text-xs">
+              This indicates the specific type of insurance coverage.
+            </div>
           </template>
         </x-tooltip>
         <p class="text-xs">{{ health_cover_for?.text }}</p>
@@ -146,59 +220,65 @@ const showModal = ref(false);
       </div>
 
       <div class="flex items-center gap-2">
-        <x-tooltip>
+        <x-tooltip align="left">
           <x-icon icon="money" size="sm" class="text-primary-400" />
           <template #tooltip>
-            <span v-if="leadName == 'Health'" class="x-sm">
-              The complete amount due including VAT and before any potential
-              discounts. Remember, VAT is exempt for Life Insurance
-              policies.</span
-            >
-            <span v-else class="x-sm">
-              The complete amount due including VAT and before any potential
-              discounts. Remember, VAT is exempt for Life Insurance
-              policies.</span
-            >
+            <div class="max-w-[194px] text-xs">
+              <span v-if="leadName == 'Health'">
+                The complete amount due including VAT and before any potential
+                discounts. Remember, VAT is exempt for Life Insurance policies.
+              </span>
+              <span v-else>
+                The complete amount due including VAT and before any potential
+                discounts. Remember, VAT is exempt for Life Insurance policies.
+              </span>
+            </div>
           </template>
         </x-tooltip>
         <p class="text-xs">{{ Number(premium).toLocaleString() }}</p>
       </div>
 
       <div class="flex items-center gap-2">
-        <x-tooltip>
+        <x-tooltip align="left">
           <x-icon icon="calendar" size="sm" class="text-primary-400" />
           <template #tooltip>
-            <span
-              >The 'Last Modified Date' displays the most recent date and time
-              when the lead was last worked on.</span
-            >
+            <div class="max-w-[194px] text-xs">
+              The 'Last Modified Date' displays the most recent date and time
+              when the lead was last worked on.
+            </div>
           </template>
         </x-tooltip>
         <p class="text-xs">{{ updated_at }}</p>
       </div>
     </a>
   </div>
-  <!-- <app-modal v-model="showModal"></app-modal> -->
-  <x-modal v-model="showModal" show-close backdrop>
+
+  <x-modal
+    v-model="showModal"
+    showClose
+    backdrop
+    @update:modelValue="handleConfirmation(false)"
+  >
     <template #header>
-      <span>Lead Lost Reason </span>
+      <span>Kinldy choose a reason for marking as 'Lost' </span>
     </template>
 
-    <x-form>
-      <x-field label="Lost Reason">
+    <x-form @submit="onSubmit" :auto-focus="false">
+      <x-field label="Lost Reason" required>
         <x-select
-          :options="[]"
+          v-model="leadForm.lostreason"
+          :options="lostReasonsOptions"
           placeholder="Lost Reason is required"
           class="w-full"
+          :rules="[isRequired]"
         />
       </x-field>
-    </x-form>
-
-    <template #actions>
-      <div class="text-right space-x-4">
-        <x-button>Continue</x-button>
-        <x-button color="orange">Go Back</x-button>
+      <div class="text-right space-x-4 mt-4">
+        <x-button type="submit">Continue</x-button>
+        <x-button color="orange" @click.prevent="handleConfirmation(false)"
+          >Go Back</x-button
+        >
       </div>
-    </template>
+    </x-form>
   </x-modal>
 </template>

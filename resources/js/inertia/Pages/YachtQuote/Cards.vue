@@ -1,6 +1,8 @@
 <script setup>
 const props = defineProps({
-  quoteStatusEnum: Array,
+  quoteStatusEnum: Object,
+  quoteTypeId: String,
+  lostReasons: Object,
 });
 
 const page = usePage();
@@ -10,6 +12,8 @@ const dateFormat = date => {
 };
 
 provide('quoteStatusEnum', props.quoteStatusEnum);
+provide('quoteTypeId', props.quoteTypeId);
+provide('lostReasons', props.lostReasons);
 
 const quotes = reactive({
   data: page.props.quotes || [],
@@ -32,7 +36,7 @@ const quotes = reactive({
       </div>
 
       <div class="space-x-2">
-        <Link :href="route('yacht-quotes-index')">
+        <Link :href="route('yacht-quotes-list')">
           <x-button size="sm" color="#1d83bc"> List View </x-button>
         </Link>
 
@@ -52,6 +56,9 @@ const quotes = reactive({
         :key="quote.id"
         :quote="quote"
         :quotes="quotes"
+        :quoteTypeId="quoteTypeId"
+        :lostReasons="props.lostReasons"
+        :quoteStatusEnum="props.quoteStatusEnum"
       />
     </div>
   </div>

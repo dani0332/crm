@@ -4,6 +4,7 @@ namespace App\Http\Controllers\V2;
 
 use App\Enums\CustomerTypeEnum;
 use App\Enums\GenericRequestEnum;
+use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Exports\AmtQuoteExport;
 use App\Exports\BusinessQuoteExport;
@@ -18,6 +19,7 @@ use App\Exports\PersonalQuotesExport;
 use App\Exports\TravelQuoteExport;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\CustomerProfileRequest;
+use App\Http\Requests\DragAndDropUpdateLeadStatusRequest;
 use App\Http\Requests\DuplicateLobRequest;
 use App\Http\Requests\LeadAssignRequest;
 use App\Http\Requests\PlanDetailsRequest;
@@ -213,9 +215,33 @@ class CentralController extends Controller
         return redirect()->back()->with('success', 'Note has been added successfully.');
     }
     
-    public function updateLeadStatusDragDrop(Request $request)
+    public function updateLeadStatusDragDrop(DragAndDropUpdateLeadStatusRequest $dragAndDropUpdateLeadStatusRequest)
     {
-        dd($request->all());
-    }
 
+        // When moving to the another status any incomplete activity from current status should be automatically marked as done.
+        $dataFrom = $dragAndDropUpdateLeadStatusRequest->get('data')['form'];
+        $dataTo = $dragAndDropUpdateLeadStatusRequest->get('data')['to'];
+
+        if ($dataTo['quote_status_id'] == QuoteStatusEnum::Lost) {
+            $dataTo['lost_reason'] = $dragAndDropUpdateLeadStatusRequest->get('data')['to']['lost_reason'];
+        }
+
+        $modelObject = $this->getModelObject(QuoteTypes::getName($dataFrom['quoteTypeId'])->value);
+        $repository = $modelObject::where('id', $dataFrom['id'])->firstOrFail();
+
+        $repository->update([
+            'quote_status_id' => $dataTo['quote_status_id'],
+        ]);
+
+        // if ($dataTo['quote_status_id'] == QuoteStatusEnum::Lost) {
+        //     $repository->lostReason()->update([
+        //         'lost_reason_id' => $dataTo['lost_reason'],
+        //     ]);
+        // }
+
+        // TODO:: Need to add Transaction for this section
+    
+        return response()->json(['message' => 'Lead status has been updated']);
+
+    }
 }

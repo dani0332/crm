@@ -1,6 +1,14 @@
 <x-guest-layout>
     <div class="min-h-screen flex flex-col sm:justify-center items-center pt-6 sm:pt-0 bg-gray-100">
-        <img src='{{ asset("image/new_logo.png") }}' />
+     
+
+        <img
+            src="{{ asset('images/im_logo_21k.png') }}"
+            alt="IMCRM"
+            width="439"
+            height="66"
+            style="max-width: 300px;"
+        />
 
 
         <div class="w-full sm:max-w-md mt-6 px-6 py-4 bg-white shadow-md overflow-hidden sm:rounded-lg">

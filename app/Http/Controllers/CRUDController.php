@@ -47,6 +47,7 @@ use App\Repositories\CustomerMembersRepository;
 use App\Repositories\EmbeddedProductRepository;
 use App\Repositories\InsuranceProviderRepository;
 use App\Repositories\LookupRepository;
+use App\Repositories\LostReasonRepository;
 use App\Repositories\NationalityRepository;
 use App\Repositories\QuoteNoteRepository;
 use App\Repositories\RenewalBatchRepository;
@@ -1083,6 +1084,7 @@ class CRUDController extends Controller
         ];
 
         $quoteStatusEnums = QuoteStatusEnum::asArray();
+        $lostReasons = LostReasonRepository::orderBy('text', 'asc')->get();
         $isManagerOrAdminAccess = auth()->user()->hasAnyRole([RolesEnum::HomeManager, RolesEnum::Admin]);
 
         if (!$isManagerOrAdminAccess) {
@@ -1104,7 +1106,8 @@ class CRUDController extends Controller
 
         return inertia('HomeQuote/Cards', [
             'quotes' => $quotes,
-            'quoteStatusEnums' => $quoteStatusEnums,
+            'quoteStatusEnum' => $quoteStatusEnums,
+            'lostReasons' => $lostReasons,
             'quoteTypeId' => QuoteTypes::HOME->id(),
         ]);
     }
