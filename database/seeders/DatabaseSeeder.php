@@ -49,6 +49,7 @@ class DatabaseSeeder extends Seeder
             AddNewDocumentTypeSeeder::class,
             PaymentStatusAddSeeder::class,
             updateDocTypePayment::class,
+            PaymentsMoveInNewTableStructure::class,
         ]);
     }
 }
