@@ -478,7 +478,14 @@
                     @foreach($planIds as $planId)
                         <th rowspan="4">
                             <p class="text-center">
-                                    <a target="_blank" class="btn-buy" href="{{($buyNowLink.$planId)}}" >{{in_array($planId, $selectedPlanIds)?'Selected':$buyNow}}</a>
+                                <?php if(in_array($planId, $selectedPlanIds)){
+                                    $buyNowfullLink = '#';
+                                    $buyNowText =  'Selected';
+                                }else{
+                                    $buyNowfullLink = $buyNowLink.$planId;
+                                    $buyNowText =  $buyNow;
+                                } ?>
+                                    <a target="_blank" class="btn-buy" href="{{$buyNowfullLink}}" >{{$buyNowText}}</a>
                                 @if($plans[$planId]->discountPremium)
                                 @else
                                 @endif
@@ -547,8 +554,14 @@
                         @elseif($feature['type'] == 'buy')
 
                                 @php
-                                    $buyNowText =  in_array($planId, $selectedPlanIds)?'Selected':$buyNow;
-                                    $return_value = `<a target="_blank" class="btn-buy" href="{{($buyNowLink.$planId)}}" >'.$buyNowText.'</a>`; @endphp
+                                   if(in_array($planId, $selectedPlanIds)){
+                                   $buyNowfullLink = '#';
+                                   $buyNowText =  'Selected';
+                                    }else{
+                                   $buyNowfullLink = $buyNowLink.$planId;
+                                   $buyNowText =  $buyNow;
+                                    }
+                                   $return_value = `<a target="_blank" class="btn-buy" href="{{$buyNowfullLink}}" >'.$buyNowText.'</a>`; @endphp
 
                         @elseif(is_array($feature['type']))
                             @php $value = "Excluded";  @endphp
