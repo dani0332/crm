@@ -9,6 +9,7 @@ const props = defineProps({
 
 const showModal = ref(false);
 const showAddNotes = ref(false);
+const isEdit = ref(false);
 
 const tableHeader = reactive([
   { text: 'MODIFIED BY', value: 'created_by' },
@@ -26,7 +27,6 @@ const notesForm = reactive({
 });
 
 const onNoteSubmit = () => {
-
   let notesData = {
     quoteType: notesForm.quote_type,
     quoteRequestId: notesForm.quote_request_id,
@@ -34,29 +34,40 @@ const onNoteSubmit = () => {
     quoteStatusId: notesForm.quote_status_id,
   };
 
-  axios.post('/save-quote-notes', notesData).then(response => {
-    
-    if (response.status == 200) {
-      notification.success({
-        title: 'Note has been added successfully',
-        position: 'top',
+  if (isEdit.value) {
+    // Note: Endpoint for edit notes
+  } else {
+    axios
+      .post('/save-quote-notes', notesData)
+      .then(response => {
+        if (response.status == 200) {
+          notification.success({
+            title: 'Note has been added successfully',
+            position: 'top',
+          });
+        } else {
+          notification.error({
+            title: 'Note has not been added successfully',
+            position: 'top',
+          });
+        }
+      })
+      .catch(err => {
+        notification.error({
+          title: 'Something went wrong',
+          position: 'top',
+        });
       });
-    } else {
-      notification.error({
-        title: 'Note has not been added successfully',
-        position: 'top',
-      });
-    }
-  }).catch(err => {
-      notification.error({
-        title: 'Something went wrong',
-        position: 'top',
-      });
-    });
+  }
 };
 
-
 const notesLength = computed(() => notesForm.notes?.length ?? 0);
+
+const onEditNote = data => {
+  notesForm.notes = data.note;
+  showAddNotes.value = true;
+  isEdit.value = true;
+};
 </script>
 <template>
   <div>
@@ -102,7 +113,10 @@ const notesLength = computed(() => notesForm.notes?.length ?? 0);
           {{ quote_status.text }}
         </template>
         <template #item-note="{ note }">
-          <x-collapse icon="chevronDown" show-icon>
+          <template v-if="note.length < 40">
+            {{ note }}
+          </template>
+          <x-collapse v-else icon="chevronDown" show-icon>
             <div class="bg-gray-10 w-80">
               {{ note.slice(0, 40) }}
             </div>
@@ -141,7 +155,7 @@ const notesLength = computed(() => notesForm.notes?.length ?? 0);
   <!-- Modal for add/Update notes related to Leads -->
   <AppModal class="min-w-[30%]" v-model="showAddNotes" show-header show-close>
     <template #header>
-      <p class="font-bold m-0">Add Notes</p>
+      <p class="font-bold m-0">{{ isEdit ? 'Update' : 'Add' }} Notes</p>
     </template>
 
     <div class="w-full">
@@ -176,7 +190,9 @@ const notesLength = computed(() => notesForm.notes?.length ?? 0);
         <x-button size="sm" @click.prevent="showAddNotes = false">
           Cancel
         </x-button>
-        <x-button @click="onNoteSubmit" size="sm" color="emerald"> Save </x-button>
+        <x-button @click="onNoteSubmit" size="sm" color="emerald">
+          {{ isEdit ? 'Update' : 'Save' }}
+        </x-button>
       </div>
     </div>
   </AppModal>

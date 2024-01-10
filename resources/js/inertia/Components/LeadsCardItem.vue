@@ -3,7 +3,6 @@ import {
   useSortable,
   moveArrayElement,
 } from '@vueuse/integrations/useSortable';
-import { nextTick } from 'vue';
 import { daysSinceStale } from '../Composables/utilities';
 
 const page = usePage();
