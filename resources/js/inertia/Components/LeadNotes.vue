@@ -86,6 +86,7 @@ const notesLength = computed(() => notesForm.notes?.length ?? 0);
 
 const onEditNote = data => {
   notesForm.notes = data.note;
+  notesForm.id = data.id;
   showAddNotes.value = true;
   isEdit.value = true;
 };
