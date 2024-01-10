@@ -81,6 +81,15 @@ function onReset() {
   });
 }
 
+const handleSelectedFilters = async selectedFilters => {
+  if (selectedFilters.created_at_start && selectedFilters.created_at_end) {
+    filters.created_at_start = selectedFilters.created_at_start;
+    filters.created_at_end = selectedFilters.created_at_end;
+
+    onSubmit(true);
+  }
+};
+
 function setQueryStringFilters() {
   let queryString = window.location.search;
   let urlParams = new URLSearchParams(queryString);
@@ -91,13 +100,6 @@ function setQueryStringFilters() {
     }
   }
 }
-
-onMounted(() => {
-  setQueryStringFilters();
-  if (hasRole(rolesEnum.CycleAdvisor)) {
-    quotesSelected.value = null;
-  }
-});
 
 const tableHeader = ref([
   { text: 'Ref-ID', value: 'uuid', is_active: true },
@@ -131,6 +133,13 @@ const onDataExport = () => {
   window.open(url + '?' + new URLSearchParams(data).toString());
 };
 
+onMounted(() => {
+  setQueryStringFilters();
+  if (hasRole(rolesEnum.CycleAdvisor)) {
+    quotesSelected.value = null;
+  }
+});
+
 watch(
   () => filters,
   () => {
@@ -151,7 +160,10 @@ watch(
       <h2 class="text-xl font-semibold">Cycle Quotes List</h2>
       <div class="flex items-center space-x-2">
         <column-selection v-model:columns="tableHeader"></column-selection>
-
+        <FiltersButton
+          :filters="filters"
+          @selected-filters="handleSelectedFilters"
+        />
         <Link :href="route('cycle-quotes-card')">
           <x-button size="sm" color="#1d83bc" tag="div"> Cards View </x-button>
         </Link>

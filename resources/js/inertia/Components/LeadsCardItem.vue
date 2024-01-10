@@ -40,7 +40,10 @@ const canDrag = computed(() => {
 const notification = useToast();
 
 const canDrop = computed(() => {
-  if (props.id == quoteStatusEnum?.TransactionApproved || props.id == quoteStatusEnum?.PolicyIssued) {
+  if (
+    props.id == quoteStatusEnum?.TransactionApproved ||
+    props.id == quoteStatusEnum?.PolicyIssued
+  ) {
     notification.error({
       title: 'Transaction approval is required',
       position: 'top',
@@ -187,19 +190,20 @@ const getUrl = (url, quoteTypeId) => useGetShowPageRoute(url, quoteTypeId);
       :key="id"
       :href="getUrl(uuid, quoteTypeId)"
       target="_blank"
-      title="View Lead"
       :id="id"
-      class="block p-3 mt-2 border border-gray-300 space-y-2 hover:transition hover:border-primary-500 rounded"
+      class="block p-3 mt-2 border space-y-2 hover:transition hover:border-primary-500 rounded"
       :class="[
-        daysSinceStale(stale_at) === false ? 'bg-white' : 'bg-error-200',
+        daysSinceStale(stale_at) === false
+          ? 'bg-white border-gray-300'
+          : 'bg-error-50 border-error-500',
         { 'cursor-not-allowed': !canDrag },
       ]"
     >
-      <div class="flex items-center space-x-1 overflow-hidden">
+      <div class="flex flex-col">
+        <stale-leads-badge :date="stale_at" />
         <span class="font-semibold text-sm">
           {{ first_name }} {{ last_name }}
         </span>
-        <stale-leads-badge :date="stale_at"></stale-leads-badge>
       </div>
 
       <div class="flex items-center gap-2">
@@ -275,9 +279,9 @@ const getUrl = (url, quoteTypeId) => useGetShowPageRoute(url, quoteTypeId);
       </x-field>
       <div class="text-right space-x-4 mt-4">
         <x-button type="submit">Continue</x-button>
-        <x-button color="orange" @click.prevent="handleConfirmation(false)"
-          >Go Back</x-button
-        >
+        <x-button color="orange" @click.prevent="handleConfirmation(false)">
+          Go Back
+        </x-button>
       </div>
     </x-form>
   </x-modal>

@@ -117,6 +117,8 @@ const filters = reactive({
   page: 1,
   previous_quote_policy_number: '',
   renewal_batch: '',
+  date: null,
+  status_filters: null,
 });
 
 const subTeamOptions = [
@@ -170,6 +172,15 @@ function onSubmit(isValid) {
     console.log('Invalid');
   }
 }
+
+const handleSelectedFilters = async selectedFilters => {
+  if (selectedFilters.created_at_start && selectedFilters.created_at_end) {
+    filters.created_at_start = selectedFilters.created_at_start;
+    filters.created_at_end = selectedFilters.created_at_end;
+
+    onSubmit(true);
+  }
+};
 
 function onReset() {
   router.visit(route('health.index'), {
@@ -269,6 +280,10 @@ onMounted(() => {
       />
       <div class="flex space-x-2 items-center">
         <column-selection :columns="tableHeader"></column-selection>
+        <FiltersButton
+          :filters="filters"
+          @selected-filters="handleSelectedFilters"
+        />
         <Link :href="route('health.cards')">
           <x-button size="sm" color="#1d83bc" tag="div"> Cards View </x-button>
         </Link>

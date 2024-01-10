@@ -123,7 +123,7 @@ function resetFilters() {
   });
 }
 
-function filterQuotes(isValid) {
+function onSubmit(isValid) {
   if (!isValid) {
     return;
   }
@@ -152,6 +152,15 @@ function filterQuotes(isValid) {
     },
   });
 }
+
+const handleSelectedFilters = async selectedFilters => {
+  if (selectedFilters.created_at_start && selectedFilters.created_at_end) {
+    filters.created_at_start = selectedFilters.created_at_start;
+    filters.created_at_end = selectedFilters.created_at_end;
+
+    onSubmit(true);
+  }
+};
 
 const assignForm = useForm({
   assigned_to_id_new: null,
@@ -234,7 +243,10 @@ onMounted(() => {
       <h2 class="text-xl font-semibold">Lead List</h2>
       <div class="flex items-center space-x-2">
         <column-selection v-model:columns="tableHeader"></column-selection>
-
+        <FiltersButton
+          :filters="filters"
+          @selected-filters="handleSelectedFilters"
+        />
         <Link :href="route('business.cards')">
           <x-button size="sm" color="#1d83bc" tag="div"> Cards View</x-button>
         </Link>
@@ -244,7 +256,7 @@ onMounted(() => {
       </div>
     </div>
     <x-divider class="my-4" />
-    <x-form @submit="filterQuotes" :auto-focus="false">
+    <x-form @submit="onSubmit" :auto-focus="false">
       <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
         <div>
           <x-tooltip position="bottom">
