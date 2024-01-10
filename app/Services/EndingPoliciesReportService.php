@@ -51,9 +51,8 @@ class EndingPoliciesReportService implements ManagementReport
                 return $query->groupBy($this->resolveGroupByColumn($groupBy));
             });
 
-
         $this->applyFilters($query, $request);
-        dd($query->toSql(),$query->getBindings());
+
         return $query->simplePaginate(10)->withQueryString();
     }
 
