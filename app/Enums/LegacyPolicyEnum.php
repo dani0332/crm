@@ -48,4 +48,9 @@ final class LegacyPolicyEnum extends Enum
         'Workmens Compensation Insurance' => 'Business Insurance',
         'Yacht Insurance' => 'Yacht Insurance',
     ];
+    const INSLY_COVERAGE_MAPPING = [
+        'motor fleet' => 'Business Insurance',
+        'casco' => 'Motor Insurance',
+        'group medical insurance' => 'Group Medical Insurance',
+    ];
 }

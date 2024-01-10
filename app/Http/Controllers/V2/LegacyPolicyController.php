@@ -21,9 +21,10 @@ class LegacyPolicyController extends Controller
         if ($request->hasAny(['policy_number', 'email', 'mobile_no'])) {
             $policies = InslyDetailRepository::getData();
         }
-        $legacyPolicyEnums = LegacyPolicyEnum::INSLY_PRODUCT_MAPPING;
+        $legacyPolicyMapping = LegacyPolicyEnum::INSLY_PRODUCT_MAPPING;
+        $coveragePolicyMapping = LegacyPolicyEnum::INSLY_COVERAGE_MAPPING;
 
-        return inertia('LegacyPolicy/Index', ['policies' => $policies, 'legacyPolicyEnums' => $legacyPolicyEnums]);
+        return inertia('LegacyPolicy/Index', ['policies' => $policies, 'legacyPolicyMapping' => $legacyPolicyMapping, 'coveragePolicyMapping' => $coveragePolicyMapping]);
     }
 
     /**

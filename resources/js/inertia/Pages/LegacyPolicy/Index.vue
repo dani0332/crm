@@ -1,7 +1,8 @@
 <script setup>
 defineProps({
   policies: Array,
-  legacyPolicyEnums: Array
+  legacyPolicyMapping: Array,
+  coveragePolicyMapping: Array
 });
 
 const { isRequired } = useRules();
@@ -121,7 +122,7 @@ const tableHeader = [
         </Link>
       </template>
       <template #item-product_name="item">
-          {{legacyPolicyEnums[ item?.product?.product ] ?? ''}}
+          {{legacyPolicyMapping[ item?.product?.product ] ?? coveragePolicyMapping [item?.policy?.coverage] ?? ''}}
       </template>
     </DataTable>
 
