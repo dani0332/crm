@@ -37,31 +37,31 @@ const dateOptions = ref([
 const status = ref([
   {
     text: 'Sales Opportunity',
-    value: 'sales_opportunity',
+    value: 1,
     tooltip:
       'This will be the sum of all potential sales we can achieve by closing these leads',
   },
   {
     text: 'Paid Awaiting Documents',
-    value: 'paid_awaiting_documents',
+    value: 2,
     tooltip:
       'This means that we have received a payment for this lead however we require additional documents from clients to proceed futher.',
   },
   {
     text: 'Secured Deal',
-    value: 'secured_deal',
+    value: 3,
     tooltip:
       'Shows leads that have successfully concluded deals with clients. This means that we acquired the complete payment and documents required.',
   },
   {
     text: 'Cold',
-    value: 'cold',
+    value: 4,
     tooltip:
       'Typically, leads which are overdue on the follow ups will automatically change to Cold as no further action has taken place on them. You can still work on these leads.',
   },
   {
     text: 'Stale',
-    value: 'stale',
+    value: 5,
     tooltip:
       'Typically, these are the leads where the status has not changed for the last 30 days.',
   },
@@ -69,7 +69,11 @@ const status = ref([
 
 const selectedFiltersLength = computed(() => {
   // sum filters that are selected from both filters
-  return 7;
+
+  return (
+    (selectedOptions.value.date !== 0 ? 1 : 0) +
+    selectedOptions.value.status.length
+  );
 });
 
 const handleDateFilter = dateId => {
@@ -100,6 +104,20 @@ const handleDateFilter = dateId => {
   });
 };
 
+const handleStatusFilter = status => {
+  if (selectedOptions.value.status.includes(status)) {
+    selectedOptions.value.status = selectedOptions.value.status.filter(
+      item => item !== status,
+    );
+  } else {
+    selectedOptions.value.status.push(status);
+  }
+
+  emit('selectedFilters', {
+    status: selectedOptions.value.status,
+  });
+};
+
 const openState = e => {};
 </script>
 <template>
@@ -127,11 +145,11 @@ const openState = e => {};
       </div>
 
       <template #content>
-        <div class="w-80 bg-white border z-40 rounded">
+        <div class="w-72 bg-white shadow-lg border z-20 rounded">
           <p class="bg-gray-200 w-full text-xs p-1 font-bold">CHOOSE FILTERS</p>
           <div class="p-2 overflow-x-auto max-h-80">
-            <div class="text-gray-400 text-sm font-bold">FILTER BY DATE</div>
-            <ul>
+            <div class="text-gray-400 text-xs font-bold">FILTER BY DATE</div>
+            <ul class="space-y-0.5">
               <li
                 v-for="option in dateOptions"
                 :key="option.text"
@@ -148,15 +166,20 @@ const openState = e => {};
           </div>
           <x-divider></x-divider>
           <div class="p-2 max-h-80">
-            <div class="text-gray-400 text-sm font-bold">FILTER BY STATUS</div>
+            <div class="text-gray-400 text-xs font-bold">FILTER BY STATUS</div>
 
-            <ul>
+            <ul class="space-y-0.5">
               <li
                 v-for="option in status"
                 :key="option.text"
+                :class="{
+                  'bg-primary text-white': selectedOptions.status.includes(
+                    option.value,
+                  ),
+                }"
                 class="px-3 py-1 capitalize text-sm cursor-pointer rounded-sm transition hover:bg-primary hover:text-white"
                 :title="option.tooltip"
-                @click="filters.status_filters = option.value"
+                @click="handleStatusFilter(option.value)"
               >
                 <span>{{ option.text }}</span>
               </li>
