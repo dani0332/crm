@@ -724,10 +724,10 @@ const onCreatePlan = () => {
   });
 };
 
-const onPlanError = () => {
+const onPlanError = (data) => {
   modals.createPlan = false;
   notification.error({
-    title: 'Plan Creation Failed',
+    title: data ?? 'Plan Creation Failed',
     position: 'top',
   });
 };

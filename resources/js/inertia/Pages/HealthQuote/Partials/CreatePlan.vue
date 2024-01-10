@@ -91,7 +91,7 @@ const onSubmit = isValid => {
       if (res.data == 200) {
         emit('success');
       } else {
-        emit('error');
+        emit('error', res.data);
       }
     })
     .catch(err => {

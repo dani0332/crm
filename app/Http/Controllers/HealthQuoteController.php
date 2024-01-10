@@ -28,9 +28,9 @@ class HealthQuoteController extends Controller
 
         foreach ($request->membersPrice as $member) {
             $array = [
-                'healthPlanCoPaymentId' => $copayId,
-                'basePrice' => $member['base_price'],
-                'loadingPrice' => $member['loading_price'],
+                'healthPlanCoPaymentId' => (int) $copayId,
+                'basePrice' => (float) $member['base_price'],
+                'loadingPrice' => (float) $member['loading_price'],
             ];
 
             $membersBreakDown[] = [
@@ -49,7 +49,7 @@ class HealthQuoteController extends Controller
             'planId' => $planId,
             'isManualUpdate' => true,
             'isHidden' => false,
-            'membersBreakDown' => $membersBreakDown,
+            'memberPremiumBreakdown' => $membersBreakDown,
         ];
 
         $response = $this->healthQuoteService->renewalCreatePlan($planData);
@@ -193,17 +193,16 @@ class HealthQuoteController extends Controller
                 continue;
             }
 
-            if (isset($quotePlan->eligibilityName) && $quotePlan->eligibilityName === $network
-            && $quotePlan->providerId == $insuranceProviderId) {
+            if ($quotePlan->providerId == $insuranceProviderId) {
 
-                $healthPlans[] = [
-                    'id' => $quotePlan->id,
-                    'text' => $quotePlan->name,
-                ];
+                $quotePlanId[] = $quotePlan->id;
+                
             }
         }
 
-        $healthPlans = $this->healthQuoteService->getNonQuotedHealthPlans($insuranceProviderId, $quotePlanId);
+        $networkId = InsuranceProviderRepository::networksIdByInsuranceProvider($insuranceProviderId, $network);
+
+        $healthPlans = $this->healthQuoteService->getNonQuotedHealthPlans($insuranceProviderId, $quotePlanId, $networkId);
 
         $data = [
             'healthPlans' => $healthPlans,
