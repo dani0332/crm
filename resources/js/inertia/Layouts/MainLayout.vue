@@ -206,7 +206,7 @@ const onLogout = () => {
         class="flex-col gap-y-6 w-screen flex-1 h-full transition-all lg:pl-[var(--sidebar-width)]"
       >
         <header
-          class="sticky top-0 z-20 flex h-16 w-full shrink-0 items-center border-b bg-white"
+          class="sticky top-0 z-[9999] flex h-16 w-full shrink-0 items-center border-b bg-white"
         >
           <div
             class="flex items-center justify-between w-full px-2 sm:px-4 md:px-6 lg:px-8"
@@ -299,14 +299,17 @@ const onLogout = () => {
           </div>
         </header>
         <div class="flex-1 w-full p-4 mx-auto md:px-6 lg:px-8 max-w-full">
-          <div
-            class="w-full h-10 rounded bg-error-300 mb-3 flex items-center justify-center text-sm"
+          <x-alert
+            color="error"
+            class="mb-3 text-center text-sm justify-center"
+            light
+            outlined
           >
-            <span class="text-red-600"
-              >You have <Link href="" class="underline">9</Link> stale leads,
-              follow up with client and update the lead status accordingly</span
-            >
-          </div>
+            <span>
+              You have <Link href="#" class="underline">9</Link> stale leads,
+              follow up with client and update the lead status accordingly
+            </span>
+          </x-alert>
           <slot />
         </div>
       </article>
