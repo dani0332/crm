@@ -36,6 +36,27 @@ const onNoteSubmit = () => {
 
   if (isEdit.value) {
     // Note: Endpoint for edit notes
+    axios
+      .put('/save-quote-notes', notesData)
+      .then(response => {
+        if (response.status == 200) {
+          notification.success({
+            title: 'Note has been successfully Updated',
+            position: 'top',
+          });
+        } else {
+          notification.error({
+            title: 'Note has not been updated',
+            position: 'top',
+          });
+        }
+      })
+      .catch(err => {
+        notification.error({
+          title: 'Something went wrong',
+          position: 'top',
+        });
+      });
   } else {
     axios
       .post('/save-quote-notes', notesData)
