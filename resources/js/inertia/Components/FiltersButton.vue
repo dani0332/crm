@@ -2,42 +2,37 @@
 const props = defineProps({
   filters: Object,
 });
-const emit = defineEmits(['open', 'handleSelectedFilters']);
+
+const emit = defineEmits(['open', 'selectedFilters']);
+
+const selectedOptions = ref({
+  date: 0,
+  status: [],
+});
+
+function getAdjustedDate(date, { days = 0, months = 0, setDate = null }) {
+  const newDate = new Date(date);
+  if (days) newDate.setDate(date.getDate() - days);
+  if (months) newDate.setMonth(date.getMonth() + months);
+  if (setDate !== null) newDate.setDate(setDate);
+  return newDate;
+}
 
 const today = new Date();
+const last7Days = getAdjustedDate(today, { days: 7 });
+const last30Days = getAdjustedDate(today, { days: 30 });
+const lastMonthStart = getAdjustedDate(today, { months: -1, setDate: 1 });
+const lastMonthEnd = getAdjustedDate(today, { setDate: 0 });
+const thisMonthStart = getAdjustedDate(today, { setDate: 1 });
+const thisMonthEnd = getAdjustedDate(today, { months: 1, setDate: 0 });
 
-// Last 7 days
-const last7Days = new Date(today);
-last7Days.setDate(today.getDate() - 7);
-
-// Last 30 days
-const last30Days = new Date(today);
-last30Days.setDate(today.getDate() - 30);
-
-// Last month
-const lastMonth = new Date(today);
-lastMonth.setMonth(today.getMonth() - 1);
-lastMonth.setDate(1);
-
-// This month
-const thisMonth = new Date(today);
-thisMonth.setDate(1);
-
-// Next month
-const nextMonth = new Date(today);
-nextMonth.setMonth(today.getMonth() + 1);
-nextMonth.setDate(1);
-
-const dates = ref([
-  { text: 'Today', value: today },
-  { text: 'Last 7 days', value: last7Days },
-  { text: 'Last 30 days', value: last30Days },
-  { text: 'Last month', value: lastMonth },
-  { text: 'This month', value: thisMonth },
-  { text: 'Next month', value: nextMonth },
+const dateOptions = ref([
+  { text: 'Today', value: 1 },
+  { text: 'Last 7 days', value: 2 },
+  { text: 'Last 30 days', value: 3 },
+  { text: 'Last month', value: 4 },
+  { text: 'This month', value: 5 },
 ]);
-
-const selectedDate = ref(null);
 
 const status = ref([
   {
@@ -77,15 +72,39 @@ const selectedFiltersLength = computed(() => {
   return 7;
 });
 
-const handleDateFilter = date => {
-  props.filters.date = date.toString();
+const handleDateFilter = dateId => {
+  let range = [];
+  switch (dateId) {
+    case 1:
+      range = [today, today];
+      break;
+    case 2:
+      range = [last7Days, today];
+      break;
+    case 3:
+      range = [last30Days, today];
+      break;
+    case 4:
+      range = [lastMonthStart, lastMonthEnd];
+      break;
+    case 5:
+      range = [thisMonthStart, thisMonthEnd];
+      break;
+  }
+
+  selectedOptions.value.date = dateId;
+
+  emit('selectedFilters', {
+    created_at_start: range[0],
+    created_at_end: range[1],
+  });
 };
 
 const openState = e => {};
 </script>
 <template>
   <div>
-    <x-popover align="left" @toggle="openState">
+    <x-popover align="left" position="bottom" @toggle="openState">
       <x-badge
         color="orange"
         class="mx-2"
@@ -95,9 +114,9 @@ const openState = e => {};
       >
         <template #content> {{ selectedFiltersLength }} </template>
       </x-badge>
-      <div class="flex gap-[1px]">
-        <x-button size="sm" color="#38bdf8" class="rounded-none rounded-l-lg"
-          >Filters
+      <div class="flex gap-px">
+        <x-button size="sm" color="#38bdf8" class="rounded-none rounded-l-lg">
+          Filters
         </x-button>
         <x-button
           size="sm"
@@ -111,42 +130,35 @@ const openState = e => {};
         <div class="w-80 bg-white border z-40 rounded">
           <p class="bg-gray-200 w-full text-xs p-1 font-bold">CHOOSE FILTERS</p>
           <div class="p-2 overflow-x-auto max-h-80">
-            <header class="uppercase text-gray-400 text-sm font-bold">
-              FILTER BY DATE
-            </header>
-            <ul class="">
+            <div class="text-gray-400 text-sm font-bold">FILTER BY DATE</div>
+            <ul>
               <li
-                class="px-3 capitalize my-1 text-sm cursor-pointer hover:bg-primary hover:text-white"
-                v-for="column in dates"
-                :key="column.text"
-                @click="handleDateFilter(column.value)"
+                v-for="option in dateOptions"
+                :key="option.text"
+                :class="{
+                  'bg-primary text-white':
+                    selectedOptions.date === option.value,
+                }"
+                class="px-3 py-1 capitalize text-sm cursor-pointer rounded-sm transition hover:bg-primary hover:text-white"
+                @click="handleDateFilter(option.value)"
               >
-                {{ column.text }}
+                {{ option.text }}
               </li>
             </ul>
           </div>
           <x-divider></x-divider>
           <div class="p-2 max-h-80">
-            <header class="uppercase text-gray-400 text-sm font-bold">
-              FILTER BY STATUS
-            </header>
+            <div class="text-gray-400 text-sm font-bold">FILTER BY STATUS</div>
 
-            <ul class="">
+            <ul>
               <li
-                class="px-3 capitalize my-1 text-sm cursor-pointer hover:bg-primary hover:text-white"
-                v-for="column in status"
-                :key="column.text"
-                :title="column.tooltip"
-                @click="filters.status_filters = column.value"
+                v-for="option in status"
+                :key="option.text"
+                class="px-3 py-1 capitalize text-sm cursor-pointer rounded-sm transition hover:bg-primary hover:text-white"
+                :title="option.tooltip"
+                @click="filters.status_filters = option.value"
               >
-                <span>{{ column.text }}</span>
-                <!-- <x-popover align="left" :hover="true">
-                  <template #content>
-                    <x-popover-container class="p-2">
-                      {{ column.tooltip }}
-                    </x-popover-container>
-                  </template>
-                </x-popover> -->
+                <span>{{ option.text }}</span>
               </li>
             </ul>
           </div>
