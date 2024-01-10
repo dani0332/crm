@@ -31,6 +31,7 @@ use App\Jobs\SendBookPolicyDocumentsJob;
 use App\Models\ApplicationStorage;
 use App\Models\Customer;
 use App\Models\Entity;
+use App\Models\Lookup;
 use App\Models\Payment;
 use App\Models\PaymentSplits;
 use App\Models\QuoteRequestEntityMapping;
@@ -43,6 +44,7 @@ use App\Services\SageApiService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Auth;
 use League\CommonMark\Extension\SmartPunct\Quote;
 use Maatwebsite\Excel\Facades\Excel;
 
@@ -242,9 +244,11 @@ class CentralController extends Controller
         if ($request->send_policy_type == 'sage') {
 
 
-            // $quote->update([
-            //     'quote_status_id' => QuoteStatusEnum::PolicyBooked,
-            // ]);
+            dispatch(new SendBookPolicyDocumentsJob($payLoad));
+
+            $quote->update([
+                'quote_status_id' => QuoteStatusEnum::PolicyBooked,
+            ]);
 
             $quoteTypeId = app(ActivitiesService::class)->getQuoteTypeId(strtolower($request->model_type));
             $payment = Payment::where('code', $quote['code'])->first();
@@ -254,9 +258,8 @@ class CentralController extends Controller
             if ($payment->first()) {
                 $sageRequest = new \stdClass();
 
-                $sageRequest->discount =  22;
-                // $sageRequest->discount =  floatval($payment->discount_value);
-
+                // $sageRequest->discount =  22;
+                $sageRequest->discount =  floatval($payment->discount_value);
                 $sageRequest->invoiceDescription =  $payment->invoice_description;
                 $sageRequest->bookingDate =  date('Y-m-d', strtotime($quote['policy_booking_date']));
                 $sageRequest->policyExpiryDate = date('Ymd', strtotime($quote['renewal_expiry_date']));
@@ -266,12 +269,11 @@ class CentralController extends Controller
                 $sageRequest->mainClassInsurance =  $request->model_type;
                 $sageRequest->policyNumber =  $quote->policy_number;
 
-                $sageRequest->policyIssuer =  'demo';
-                $sageRequest->requestType =  'POST';
-                $sageRequest->subClass =  'Motor';
+                $sageRequest->policyIssuer = Auth::user()->name;
+                $sageRequest->requestType = Lookup::where('id', $quote->transaction_type_id)->first()->text;
+                $sageRequest->subClass =  '';
 
-                // $sageRequest->invoicePaymentStatus = $payment->transaction_payment_status;
-                $sageRequest->invoicePaymentStatus = 'paid';
+                $sageRequest->invoicePaymentStatus = $payment->transaction_payment_status;
                 $advisorName = "";
                 if (!empty($quote->advisor_id)) {
 
@@ -290,19 +292,17 @@ class CentralController extends Controller
                 $sageRequest->commissionWithOutVat =  $payment->commission_vat_not_applicable;
 
 
-                // $sageRequest->insurerTaxInvoiceNumber =  $payment['tax_invoice_number'];
-                // $sageRequest->insurerPremiumTaxInvoiceNumber = (string) $payment['insurer_commmission_invoice_number'];
-                $sageRequest->insurerTaxInvoiceNumber =  545454;
-                $sageRequest->insurerPremiumTaxInvoiceNumber = (string)  545454;
+                $sageRequest->insurerTaxInvoiceNumber =  $payment['tax_invoice_number'];
+                $sageRequest->insurerPremiumTaxInvoiceNumber = (string) $payment['insurer_commmission_invoice_number'];
+                // $sageRequest->insurerTaxInvoiceNumber =  545454;
+                // $sageRequest->insurerPremiumTaxInvoiceNumber = (string)  545454;
                 if ($paymentSplits->first()) {
                     $sageRequest->sage_reciept_id =  $paymentSplits['sage_reciept_id'];
                 }
 
 
-                // $quoteStatusCode = QuoteStatus::where('id', '=', $quote->quote_status_id)->value('code');
 
 
-                // dd($sageRequest);
                 // sage api service
                 $sageApiService = new SageApiService();
                 // sape customer number generation
@@ -310,40 +310,53 @@ class CentralController extends Controller
 
                 $sageRequest->customerId =  $sageCustomerNumber;
 
+                info('==========sageRequestDataStart ===========');
+                info(json_encode($sageRequest));
+                info('==========sageRequestDataEnd ===========');
 
-                info('------sageRequestData ------' . json_encode($sageRequest));
+                dd('m here');
+                $createARInvoicePremAndCommPayload =  SagePayloadFactory::createARInvoicePremAndComm($sageRequest);
+                $endPoint = $createARInvoicePremAndCommPayload['endPoint'];
+                $payLoad = $createARInvoicePremAndCommPayload['payload'];
+                $resp = $sageApiService->postToSage300($endPoint, $payLoad);
 
-                // $createARInvoicePremAndCommPayload =  SagePayloadFactory::createARInvoicePremAndComm($sageRequest);
-                // $endPoint = $createARInvoicePremAndCommPayload['endPoint'];
-                // $payLoad = $createARInvoicePremAndCommPayload['payload'];
-                // $resp = $sageApiService->postToSage300($endPoint, $payLoad);
-                // info('createARInvoicePremAndComm---------' . json_encode($resp));
-                // // dd($sageRequest);
-                // $createAPInvoicePremPayload =  SagePayloadFactory::createAPInvoicePrem($sageRequest);
-                // $endPoint = $createAPInvoicePremPayload['endPoint'];
-                // $payLoad = $createAPInvoicePremPayload['payload'];
-                // $response = $sageApiService->postToSage300($endPoint, $payLoad);
+                info('==========createARInvoicePremAndComm ===========');
+                info('payLoad' . json_encode($payLoad));
+                info('resp' . json_encode($resp));
+                info('==========createARInvoicePremAndComm ===========');
+                $createAPInvoicePremPayload =  SagePayloadFactory::createAPInvoicePrem($sageRequest);
+                $endPoint = $createAPInvoicePremPayload['endPoint'];
+                $payLoad = $createAPInvoicePremPayload['payload'];
+                $response = $sageApiService->postToSage300($endPoint, $payLoad);
 
-                // info('createAPInvoicePrem---------' . json_encode($response));
+                info('==========createAPInvoicePrem ===========');
+                info('payLoad' . json_encode($payLoad));
+                info('resp' . json_encode($response));
+                info('==========createAPInvoicePrem ===========');
 
-                // if ($sageRequest->discount > 0) {
-                //     $payLoadOptions =  SagePayloadFactory::createARInvoiceDis($sageRequest);
-                //     $endPoint = $payLoadOptions['endPoint'];
-                //     $payLoad = $payLoadOptions['payload'];
-                //     $sageResponse = $sageApiService->postToSage300($endPoint, $payLoad);
-
-                //     info('createARInvoiceDis---------' . json_encode($response));
-                // }
-
-                if (strtolower($sageRequest->invoicePaymentStatus) == 'paid') {
-                    $payLoadOptions =  SagePayloadFactory::createPaymontRecieptOneInvoice($sageRequest);
-                    info('------sageRequestPayload ------' . json_encode($payLoadOptions));
+                if ($sageRequest->discount > 0) {
+                    $payLoadOptions =  SagePayloadFactory::createARInvoiceDis($sageRequest);
                     $endPoint = $payLoadOptions['endPoint'];
                     $payLoad = $payLoadOptions['payload'];
                     $sageResponse = $sageApiService->postToSage300($endPoint, $payLoad);
-                    info('createPaymontRecieptOneInvoice---------' . json_encode($sageResponse));
+
+                    info('==========createARInvoiceDis ===========');
+                    info('payLoad' . json_encode($payLoad));
+                    info('resp' . json_encode($sageResponse));
+                    info('==========createARInvoiceDis ===========');
                 }
-                // dd('m here');
+
+
+                if (strtolower($sageRequest->invoicePaymentStatus) == 'paid') {
+                    $payLoadOptions =  SagePayloadFactory::createPaymontRecieptOneInvoice($sageRequest);
+                    $endPoint = $payLoadOptions['endPoint'];
+                    $payLoad = $payLoadOptions['payload'];
+                    $sageResponse = $sageApiService->postToSage300($endPoint, $payLoad);
+                    info('==========createPaymontRecieptOneInvoice ===========');
+                    info('payLoad' . json_encode($payLoad));
+                    info('resp' . json_encode($sageResponse));
+                    info('==========createPaymontRecieptOneInvoice ===========');
+                }
             }
 
 

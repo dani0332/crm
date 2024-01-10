@@ -2815,7 +2815,7 @@ class LstDocumentsSeeder extends Seeder
             'sort_order' => "",
 
             'receive_from_customer' => 0,
-            'category' => 'ISSUING_DOCUMENTS',
+            'category' => 'ENDORSEMENT_DOCUMENTS',
         ]);
 
         // CUW_ECOR	Underwriter Email Correspondence		1	car	.pdf,.xlsx,.xls,.docx,.doc,.jpeg,.jpg,.png	10	25	1	1	0		0	ENDORSEMENT_DOCUMENTS
@@ -2842,7 +2842,7 @@ class LstDocumentsSeeder extends Seeder
             'sort_order' => "",
 
             'receive_from_customer' => 0,
-            'category' => 'ISSUING_DOCUMENTS',
+            'category' => 'ENDORSEMENT_DOCUMENTS',
         ]);
 
         // CAR_PS_NCC	Payment Slip (Non CC)		1	car	.pdf,.xlsx,.xls,.docx,.doc,.jpeg,.jpg,.png	10	25	1	1	0		0	ENDORSEMENT_DOCUMENTS
@@ -2868,7 +2868,7 @@ class LstDocumentsSeeder extends Seeder
             'sort_order' => "",
 
             'receive_from_customer' => 0,
-            'category' => 'ISSUING_DOCUMENTS',
+            'category' => 'ENDORSEMENT_DOCUMENTS',
         ]);
 
         // CAR_IRCPT	Receipt (Insurer)		1	car	.pdf,.xlsx,.xls,.docx,.doc,.jpeg,.jpg,.png	10	25	1	0	0		0	ENDORSEMENT_DOCUMENTS
@@ -2894,7 +2894,7 @@ class LstDocumentsSeeder extends Seeder
             'sort_order' => "",
 
             'receive_from_customer' => 0,
-            'category' => 'ISSUING_DOCUMENTS',
+            'category' => 'ENDORSEMENT_DOCUMENTS',
         ]);
 
         // CAR_PP	Payment Proof (Insurer Collects)		1	car	.pdf,.xlsx,.xls,.docx,.doc,.jpeg,.jpg,.png	10	25	1	0	0		0	ENDORSEMENT_DOCUMENTS
@@ -2920,7 +2920,7 @@ class LstDocumentsSeeder extends Seeder
             'sort_order' => "",
 
             'receive_from_customer' => 0,
-            'category' => 'ISSUING_DOCUMENTS',
+            'category' => 'ENDORSEMENT_DOCUMENTS',
         ]);
 
         // CAR_PA	Payment Approval		1	car	.pdf,.xlsx,.xls,.docx,.doc,.jpeg,.jpg,.png	10	25	1	0	0		0	ENDORSEMENT_DOCUMENTS
@@ -2946,7 +2946,7 @@ class LstDocumentsSeeder extends Seeder
             'sort_order' => "",
 
             'receive_from_customer' => 0,
-            'category' => 'ISSUING_DOCUMENTS',
+            'category' => 'ENDORSEMENT_DOCUMENTS',
         ]);
 
         // END_SCHED	Endorsed Schedule		1	car	.pdf,.xlsx,.xls,.docx,.doc,.jpeg,.jpg,.png	10	25	1	1	1		0	ENDORSEMENT_DOCUMENTS
@@ -2972,7 +2972,7 @@ class LstDocumentsSeeder extends Seeder
             'sort_order' => "",
 
             'receive_from_customer' => 0,
-            'category' => 'ISSUING_DOCUMENTS',
+            'category' => 'ENDORSEMENT_DOCUMENTS',
         ]);
 
         // END_CERT	Endorsed Certificate		1	car	.pdf,.xlsx,.xls,.docx,.doc,.jpeg,.jpg,.png	10	25	1	0	1		0	ENDORSEMENT_DOCUMENTS
@@ -2998,7 +2998,7 @@ class LstDocumentsSeeder extends Seeder
             'sort_order' => "",
 
             'receive_from_customer' => 0,
-            'category' => 'ISSUING_DOCUMENTS',
+            'category' => 'ENDORSEMENT_DOCUMENTS',
         ]);
 
         // END_ECARD	E-Card		1	car	.pdf,.xlsx,.xls,.docx,.doc,.jpeg,.jpg,.png	10	25	1	0	1		0	ENDORSEMENT_DOCUMENTS
@@ -3024,7 +3024,7 @@ class LstDocumentsSeeder extends Seeder
             'sort_order' => "",
 
             'receive_from_customer' => 0,
-            'category' => 'ISSUING_DOCUMENTS',
+            'category' => 'ENDORSEMENT_DOCUMENTS',
         ]);
 
         // END_TI	Tax Invoice		1	car	.pdf,.xlsx,.xls,.docx,.doc,.jpeg,.jpg,.png	10	25	1	0	1		0	ENDORSEMENT_DOCUMENTS
@@ -3051,7 +3051,7 @@ class LstDocumentsSeeder extends Seeder
             'sort_order' => "",
 
             'receive_from_customer' => 0,
-            'category' => 'ISSUING_DOCUMENTS',
+            'category' => 'ENDORSEMENT_DOCUMENTS',
         ]);
 
         // END_RCPT	Receipt		1	car	.pdf,.xlsx,.xls,.docx,.doc,.jpeg,.jpg,.png	10	25	1	0	1		0	ENDORSEMENT_DOCUMENTS
@@ -3077,7 +3077,7 @@ class LstDocumentsSeeder extends Seeder
             'sort_order' => "",
 
             'receive_from_customer' => 0,
-            'category' => 'ISSUING_DOCUMENTS',
+            'category' => 'ENDORSEMENT_DOCUMENTS',
         ]);
     }
 }

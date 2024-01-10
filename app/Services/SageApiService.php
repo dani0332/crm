@@ -27,9 +27,18 @@ class SageApiService
         if ($customer) {
 
             $payLoadOptions = SagePayloadFactory::createCustomerPayload($customer);
+
+            info('==========sageCustomerPayloadStart ===========');
+            info(json_encode($payLoadOptions['payload']));
+            info('==========sageCustomerPayloadEnd ===========');
             $jsonResponse = $this->postToSage300($payLoadOptions['endPoint'], $payLoadOptions['payload']);
 
+
             $response = json_decode($jsonResponse, true);
+
+            info('==========sageCustomerResponseStart ===========');
+            info(json_encode($response));
+            info('==========sageCustomerResponseEnd  ===========');
             if (isset($response['error']['code']) && $response['error']['code'] == 'RecordDuplicate') {
                 return $payLoadOptions['customerNumber'];
             } elseif (isset($response['CustomerNumber'])) {

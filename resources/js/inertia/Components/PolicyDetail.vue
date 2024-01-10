@@ -75,8 +75,10 @@ const caculateVatAmount = () => {
   if (policyDetailsForm.amount > 0) {
     let vat = policyDetailsForm.amount * (0.05).toFixed(2);
     policyDetailsForm.vat = vat.toFixed(2);
-    policyDetailsForm.amount_with_vat =
-      Number(vat) + Number(policyDetailsForm.amount);
+    policyDetailsForm.amount_with_vat = (
+      Number(vat) + Number(policyDetailsForm.amount)
+    ).toFixed(2);
+    Number(vat) + Number(policyDetailsForm.amount);
   } else {
     policyDetailsForm.vat = '';
     policyDetailsForm.amount_with_vat = '';

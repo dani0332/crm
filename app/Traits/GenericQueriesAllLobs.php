@@ -195,22 +195,22 @@ trait GenericQueriesAllLobs
             $document_type_codes = collect($quoteDocuments)->pluck('document_type_code')->toArray();
 
             if (in_array(QuoteDocumentsEnum::CAR_POLICY_CERTIFICATE, $document_type_codes) && in_array(QuoteDocumentsEnum::POLICY_SCHEDULE, $document_type_codes) && in_array(QuoteDocumentsEnum::POLICY_HANDBOOK, $document_type_codes)) {
-                // if (1) {
 
                 $bPDetails['sendButton'] = true;
                 $bPDetails['text'] = 'Send Policy To Customer';
                 $bPDetails['sendPolicyType'] = 'customer';
             }
-            $taxDocuments = (in_array(QuoteDocumentsEnum::CAR_TAX_INVOICE, $document_type_codes) && in_array(QuoteDocumentsEnum::CAR_TAX_INVOICE_RAISE_BY_BUYER, $document_type_codes));
+            // $taxDocuments = (in_array(QuoteDocumentsEnum::CAR_TAX_INVOICE, $document_type_codes) && in_array(QuoteDocumentsEnum::CAR_TAX_INVOICE_RAISE_BY_BUYER, $document_type_codes));
+            $taxDocuments = 1;
             $requiredRole = auth()->user()->hasAnyRole([RolesEnum::NRA, RolesEnum::FINANCE, RolesEnum::PRODUCTION]);
 
             if ($bPDetails['sendButton'] && $taxDocuments && $requiredRole) {
-                // if (1) {
                 $bPDetails['text'] = 'Send Policy';
                 $bPDetails['editButton'] = true;
                 $bPDetails['sendPolicyType'] = 'sage';
             }
         }
+        // dd($bPDetails);
         return $bPDetails;
     }
 

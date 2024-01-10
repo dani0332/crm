@@ -34,19 +34,13 @@ const bp = reactive({
 });
 
 const transactionPaymentStatus = computed(() => {
-  if (page.props?.payments[0]?.captured_amount === 0) {
+  if (Number(props?.quote?.price_with_vat) === 0) {
     return 'Not Paid';
   }
-  if (
-    page.props?.payments[0]?.total_amount >
-    page.props?.payments[0]?.captured_amount
-  ) {
+  if (Number(props?.quote?.premium) > Number(props?.quote?.price_with_vat)) {
     return 'Partially Paid';
   }
-  if (
-    page.props?.payments[0]?.total_amount ===
-    page.props?.payments[0]?.captured_amount
-  ) {
+  if (Number(props?.quote?.premium) === Number(props?.quote?.price_with_vat)) {
     return 'Paid';
   }
 });

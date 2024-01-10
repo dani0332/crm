@@ -3045,16 +3045,27 @@ const handleChildUpdate = planId => {
     </div>
 
     <PaymentTableNew
-			v-if="hasRole(rolesEnum.BetaUser)"
-			quoteType="Car"
-			:payments="payments"
-			:paymentDocument="page.props.documentTypes.filter(item => item.code === 'CPD' || item.code === 'CPDR' || item.code === 'CDPDR')"
-			:quoteRequest="paymentEntityModel"
-			:paymentStatusEnum="paymentStatusEnum"
-			:paymentTooltipEnum="paymentTooltipEnum"
-			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name, tooltip: pm.tool_tip } })"
-			:storageUrl="storageUrl"
-		/>
+      v-if="hasRole(rolesEnum.BetaUser)"
+      quoteType="Car"
+      :payments="payments"
+      :paymentDocument="
+        page.props.documentTypes.filter(
+          item =>
+            item.code === 'CPD' ||
+            item.code === 'CPDR' ||
+            item.code === 'CDPDR',
+        )
+      "
+      :quoteRequest="paymentEntityModel"
+      :paymentStatusEnum="paymentStatusEnum"
+      :paymentTooltipEnum="paymentTooltipEnum"
+      :paymentMethods="
+        paymentMethods.map(pm => {
+          return { value: pm.code, label: pm.name, tooltip: pm.tool_tip };
+        })
+      "
+      :storageUrl="storageUrl"
+    />
     <PaymentTable
       v-else
       :payments="payments"
@@ -3312,7 +3323,7 @@ const handleChildUpdate = planId => {
 
     <BookPolicy
       v-if="
-        !hasAnyRole([rolesEnum.PRODUCTION, rolesEnum.NRA, rolesEnum.FINANCE])
+        hasAnyRole([rolesEnum.PRODUCTION, rolesEnum.NRA, rolesEnum.FINANCE])
       "
       :quote="record"
       :quoteType="quoteType"
