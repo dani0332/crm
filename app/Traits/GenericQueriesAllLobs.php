@@ -200,8 +200,8 @@ trait GenericQueriesAllLobs
                 $bPDetails['text'] = 'Send Policy To Customer';
                 $bPDetails['sendPolicyType'] = 'customer';
             }
-            // $taxDocuments = (in_array(QuoteDocumentsEnum::CAR_TAX_INVOICE, $document_type_codes) && in_array(QuoteDocumentsEnum::CAR_TAX_INVOICE_RAISE_BY_BUYER, $document_type_codes));
-            $taxDocuments = 1;
+            $taxDocuments = (in_array(QuoteDocumentsEnum::CAR_TAX_INVOICE, $document_type_codes) && in_array(QuoteDocumentsEnum::CAR_TAX_INVOICE_RAISE_BY_BUYER, $document_type_codes));
+            // $taxDocuments = 1;
             $requiredRole = auth()->user()->hasAnyRole([RolesEnum::NRA, RolesEnum::FINANCE, RolesEnum::PRODUCTION]);
 
             if ($bPDetails['sendButton'] && $taxDocuments && $requiredRole) {
