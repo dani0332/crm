@@ -2431,17 +2431,7 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
                     <span>{{ paymentTooltipEnum.PAYMENT_VIEW_CC_PAYMENT_STATUS }}</span>
                   </template>
                 </x-tooltip>
-              </div>
-              <div class="w-1/5 px-2">
-                <x-tooltip>
-                  <span class="text-sm  ">
-                    <span class="border-b-2 border-dotted border-black text-sm">CC PAYMENT ID</span>
-                  </span>
-                  <template #tooltip>
-                    <span>{{ paymentTooltipEnum.PAYMENT_VIEW_CC_ID }}</span>
-                  </template>
-                </x-tooltip>
-              </div>
+              </div>              
               <div class="w-1/5 px-2">
                 <x-tooltip>
                   <span class="text-sm  ">
@@ -2462,18 +2452,6 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
                   </template>
                 </x-tooltip>
               </div>
-            </div>
-
-            <div class="flex w-full custombreak pt-1 pb-5" >
-              <div class="w-1/6 px-2 text-center"></div>
-              <div class="w-1/5 px-2">{{ (splitPaymentRecord.cc_payment_status_info !== null) ? splitPaymentRecord.cc_payment_status_info : 'N/A' }}</div>
-              <div class="w-1/5 px-2">{{ splitPaymentRecord.cc_payment_id !== null ? splitPaymentRecord.cc_payment_id : 'N/A' }}</div>
-              <div class="w-1/5 px-2">{{ splitPaymentRecord.cc_payment_gateway !== null ? splitPaymentRecord.cc_payment_gateway : 'N/A' }}</div>
-              <div class="w-1/5 px-2">{{ splitPaymentRecord.digital_wallet !== null ? splitPaymentRecord.digital_wallet : 'N/A' }}</div>
-            </div> 
-
-            <div class="flex w-full custombreak" >
-              <div class="w-1/6 px-2 text-center"></div>
               <div class="w-1/5 px-2">
                 <x-tooltip>
                   <span class="text-sm  ">
@@ -2484,6 +2462,33 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
                   </template>
                 </x-tooltip>                
               </div>
+            </div>
+            <div class="flex w-full custombreak pt-1 pb-5" >
+              <div class="w-1/6 px-2 text-center"></div>
+              <div class="w-1/5 px-2">{{ (splitPaymentRecord.cc_payment_status_info !== null) ? splitPaymentRecord.cc_payment_status_info : 'N/A' }}</div>
+              <div class="w-1/5 px-2">{{ splitPaymentRecord.cc_payment_gateway !== null ? splitPaymentRecord.cc_payment_gateway : 'N/A' }}</div>
+              <div class="w-1/5 px-2">{{ splitPaymentRecord.digital_wallet !== null ? splitPaymentRecord.digital_wallet : 'N/A' }}</div>
+              <div class="w-1/5 px-2">{{ splitPaymentRecord.sage_reciept_id !== null ? splitPaymentRecord.sage_reciept_id : 'N/A' }}</div>
+            </div> 
+            <div class="flex w-full custombreak" >
+              <div class="w-1/6 px-2 text-center"></div>              
+              <div class="w-1/5 px-2">
+                <x-tooltip>
+                  <span class="text-sm  ">
+                    <span class="border-b-2 border-dotted border-black text-sm">CC PAYMENT ID</span>
+                  </span>
+                  <template #tooltip>
+                    <span>{{ paymentTooltipEnum.PAYMENT_VIEW_CC_ID }}</span>
+                  </template>
+                </x-tooltip>
+              </div>
+            </div>
+            <div class="flex w-full custombreak pb-5" >
+              <div class="w-1/6 px-2 text-center"></div>
+              <div class="w-1/5 px-2">{{ splitPaymentRecord.cc_payment_id !== null ? splitPaymentRecord.cc_payment_id : 'N/A' }}</div>              
+            </div> 
+            <div class="flex w-full custombreak" >
+              <div class="w-1/6 px-2 text-center"></div>              
               <div class="w-1/5 px-2">
                 <x-tooltip>
                   <span class="text-sm  ">
@@ -2518,7 +2523,6 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
 
             <div class="flex w-full custombreak pb-5" >
               <div class="w-1/6 px-2 text-center"></div>
-              <div class="w-1/5 px-2">{{ splitPaymentRecord.sage_reciept_id !== null ? splitPaymentRecord.sage_reciept_id : 'N/A' }}</div>
               <div class="w-1/5 px-2">{{ formatString(splitPaymentRecord.payment_status.text) }}</div>
               <div class="w-1/5 px-2">{{ splitPaymentRecord.payment_allocation_status !== null ? formatString(splitPaymentRecord.payment_allocation_status) : 'N/A' }}</div>
               <div class="w-1/5 px-2">{{ splitPaymentRecord.collection_amount !== null ? formatAmount(splitPaymentRecord.collection_amount) : '0.00' }}</div>

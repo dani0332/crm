@@ -20,6 +20,7 @@ use App\Models\YachtQuote;
 use Exception;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 
 class QuoteSyncUpdateCommand extends Command
@@ -49,7 +50,7 @@ class QuoteSyncUpdateCommand extends Command
             return;
         }
 
-        $entries = QuoteSync::where('is_synced', false)->take(20)->get();
+        $entries = QuoteSync::where('is_synced', false)->take(30)->get();
 
         foreach ($entries as $entry) {
             info('Syncing entry: '.$entry->quote_uuid);
@@ -90,7 +91,7 @@ class QuoteSyncUpdateCommand extends Command
                     DB::commit();
                 } catch (Exception $e) {
                     DB::rollBack();
-                    info('QuoteSyncJob Error: '.$e->getMessage());
+                    Log::error('QuoteSyncJob Error: '.$e->getMessage());
                 }
             } else {
                 info('Entry for quote : '.$entry->quote_uuid.' not found in personal quotes table');
@@ -115,14 +116,13 @@ class QuoteSyncUpdateCommand extends Command
                     try {
                         $newValues = json_decode($entry->updated_fields, true);
                         $personalQuote = $this->createOrUpdatePersonalQuote($sourceQuote, $newValues, $entry);
-                        $personalQuoteDetail = $this->createOrUpdatePersonalQuoteDetail($personalQuote, $newValues, $entry);
-
+                        $this->createOrUpdatePersonalQuoteDetail($personalQuote, $newValues, $entry);
                         $entry->update(['is_synced' => true, 'synced_at' => now()]);
                         info('Entry for quote : '.$personalQuote->id.' saved in personal quotes table');
                         DB::commit();
                     } catch (Exception $e) {
                         DB::rollBack();
-                        info(' QuoteSyncJob Error: '.$e->getMessage());
+                        Log::error(' QuoteSyncJob Error: '.$e->getMessage());
                     }
                 }
             }
@@ -139,6 +139,11 @@ class QuoteSyncUpdateCommand extends Command
                 }
 
                 if (Schema::hasColumn('personal_quotes', $column)) {
+                    $columnType = DB::getSchemaBuilder()->getColumnType('personal_quotes', $column);
+                    // Surround the value with quotes if it's a string, date, or datetime
+                    if (in_array($columnType, ['string', 'date', 'datetime'])) {
+                        $value = "'$value'";
+                    }
                     if ($column == 'currently_insured_with') {
                         $personalQuote->currently_insured_with_id = $value;
                     } else {
