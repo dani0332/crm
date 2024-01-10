@@ -199,4 +199,9 @@ class CentralService
 
     }
 
+    public function saveAndAssignActivitesToAdvisor($quoteDetails, $quoteTypeId)
+    {
+        dd($quoteDetails->toArray(), $quoteTypeId);
+    }
+
 }
