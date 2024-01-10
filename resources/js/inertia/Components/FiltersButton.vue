@@ -68,8 +68,6 @@ const status = ref([
 ]);
 
 const selectedFiltersLength = computed(() => {
-  // sum filters that are selected from both filters
-
   return (
     (selectedOptions.value.date !== 0 ? 1 : 0) +
     selectedOptions.value.status.length

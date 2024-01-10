@@ -152,12 +152,12 @@ function resetFilters() {
 }
 
 const handleSelectedFilters = async selectedFilters => {
-  if (selectedFilters.created_at_start)
+  if (selectedFilters.created_at_start && selectedFilters.created_at_end) {
     filters.created_at_start = selectedFilters.created_at_start;
-  if (selectedFilters.created_at_end)
     filters.created_at_end = selectedFilters.created_at_end;
 
-  onSubmit(true);
+    onSubmit(true);
+  }
 };
 
 const advisorOptions = computed(() => {
