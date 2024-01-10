@@ -56,8 +56,13 @@ const tableHeader = [
   { text: 'Customer name', value: 'customer.name' },
   { text: 'Currently insured with', value: 'policy.insurer' },
   { text: 'Product', value: 'product_name' },
-  { text: 'Policy expiry date', value: 'policy.end_date' },
+  { text: 'Policy expiry date', value: 'policy_end_date' },
 ];
+
+const dateFormat = date => {
+    return useDateFormat(date, 'DD-MM-YYYY').value;
+};
+
 </script>
 
 <template>
@@ -123,6 +128,9 @@ const tableHeader = [
       </template>
       <template #item-product_name="item">
           {{legacyPolicyMapping[ item?.product?.product ] ?? coveragePolicyMapping [item?.policy?.coverage] ?? ''}}
+      </template>
+      <template #item-policy_end_date="item">
+          {{ dateFormat(item?.policy?.end_date) ?? ''}}
       </template>
     </DataTable>
 

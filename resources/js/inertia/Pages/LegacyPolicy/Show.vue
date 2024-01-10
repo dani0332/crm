@@ -27,7 +27,6 @@ const maskedEmail = computed(() => {
 });
 const maskedMobileNumber = computed(() => {
   let mobile_no = props.policy?.customer?.mobile_phone;
-
   if (mobile_no) {
     let masked = mobile_no
       .split('')
@@ -37,6 +36,18 @@ const maskedMobileNumber = computed(() => {
     return masked;
   }
   return '';
+});
+
+const maskedPhoneNumber = computed(() => {
+    let mobile_no = props.policy?.customer?.phone;
+    if (mobile_no) {
+        let masked = mobile_no
+            .split('')
+            .map((char, index) => (index < mobile_no.length / 2 ? char : '*'))
+            .join('');
+        return masked;
+    }
+    return '';
 });
 
 const getS3TempUrl = async file => {
@@ -274,6 +285,13 @@ const moveToImcrm = async (policyNumber, validateAll = true) => {
     }
   } catch (err) {}
 };
+
+
+const dateFormat = date => {
+    return useDateFormat(date, 'DD-MM-YYYY').value;
+};
+
+
 </script>
 
 <template>
@@ -344,7 +362,7 @@ const moveToImcrm = async (policyNumber, validateAll = true) => {
             </div>
             <div class="grid sm:grid-cols-2">
               <dt class="font-medium">Created Date</dt>
-              <dd>{{ policy?.moved_to_imcrm_date }}</dd>
+              <dd>{{ dateFormat(policy?.moved_to_imcrm_date) }}</dd>
             </div>
           </dl>
         </div>
@@ -369,11 +387,11 @@ const moveToImcrm = async (policyNumber, validateAll = true) => {
 
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">Policy Start Date</dt>
-            <dd>{{ policy.policy?.start_date }}</dd>
+            <dd>{{ dateFormat(policy.policy?.start_date) }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">Policy End Date</dt>
-            <dd>{{ policy.policy?.end_date }}</dd>
+            <dd>{{ dateFormat(policy.policy?.end_date) }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">Premium</dt>
@@ -412,7 +430,7 @@ const moveToImcrm = async (policyNumber, validateAll = true) => {
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">Phone Number</dt>
-            <dd>{{ policy.customer?.phone }}</dd>
+            <dd>{{ maskedPhoneNumber }}</dd>
           </div>
           <div v-for="profile_data in kycDetails">
             <div class="grid sm:grid-cols-2">
