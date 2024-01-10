@@ -1,5 +1,5 @@
 <script setup>
-import { watchEffect } from 'vue';
+import { onMounted, watchEffect } from 'vue';
 import ActivePolicies from './Partials/ActivePolicies.vue';
 import EndingPolicies from './Partials/EndingPolicies.vue';
 import SalesDetail from './Partials/SalesDetail.vue';
@@ -18,6 +18,7 @@ const reportComponents = {
   'Ending Policies ': EndingPolicies,
   'Sales Detail': SalesDetail,
   'Transaction ': Transaction,
+  'Sales Summary': SalesSummary,
 };
 
 const subTeams = ref([]);
@@ -200,6 +201,10 @@ function onReset() {
     onSuccess: () => (loaders.table = false),
   });
 }
+
+onMounted(() => {
+  console.log(props.reportName);
+});
 </script>
 <template>
   <Head title="Management Reports" />
