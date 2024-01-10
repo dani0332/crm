@@ -71,6 +71,15 @@ function onReset() {
   });
 }
 
+const handleSelectedFilters = async selectedFilters => {
+  if (selectedFilters.created_at_start && selectedFilters.created_at_end) {
+    filters.created_at_start = selectedFilters.created_at_start;
+    filters.created_at_end = selectedFilters.created_at_end;
+
+    onSubmit(true);
+  }
+};
+
 function setQueryStringFilters() {
   let queryString = window.location.search;
   let urlParams = new URLSearchParams(queryString);
@@ -167,7 +176,10 @@ watch(
 
       <div class="flex items-center space-x-2">
         <column-selection v-model:columns="tableHeader"></column-selection>
-        <FiltersButton />
+        <FiltersButton
+          :filters="filters"
+          @selected-filters="handleSelectedFilters"
+        />
         <Link :href="route('yacht-quotes-card')">
           <x-button size="sm" color="#1d83bc" tag="div"> Cards View </x-button>
         </Link>
