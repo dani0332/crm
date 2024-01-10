@@ -66,7 +66,7 @@ class SaleDetailReportService implements ManagementReport
             });
 
         $this->applyFilters($query, $request);
-        
+
         return $query->simplePaginate(10)->withQueryString();
     }
 
