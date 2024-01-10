@@ -1,7 +1,7 @@
 <script setup>
 const props = defineProps({
   quoteStatusEnum: Object,
-  quoteTypeId: Number,
+  quoteTypeId: String,
   lostReasons: Object,
 });
 
@@ -12,6 +12,8 @@ const dateFormat = date => {
 };
 
 provide('quoteStatusEnum', props.quoteStatusEnum);
+provide('quoteTypeId', props.quoteTypeId);
+provide('lostReasons', props.lostReasons);
 
 const quotes = reactive({
   data: page.props.quotes || [],

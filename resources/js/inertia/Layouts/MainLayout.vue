@@ -54,7 +54,13 @@ const onLogout = () => {
             </button>
 
             <a href="/" class="block w-full">
-              <img src="/image/new_logo.png" alt="IMCRM" class="w-full" />
+              <img
+                src="/images/im_logo_21k-hi.png"
+                alt="IMCRM"
+                class="w-full"
+                width="439"
+                height="66"
+              />
             </a>
           </div>
         </header>
