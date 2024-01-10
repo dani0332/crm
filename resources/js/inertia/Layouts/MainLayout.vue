@@ -301,7 +301,8 @@ const onLogout = () => {
         <div class="flex-1 w-full p-4 mx-auto md:px-6 lg:px-8 max-w-full">
           <x-alert
             color="error"
-            class="mb-3 text-center text-sm justify-center"
+            type="info"
+            class="mb-4 text-center text-sm justify-center"
             light
             outlined
           >
