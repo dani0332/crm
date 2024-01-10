@@ -70,7 +70,7 @@ class LstDocumentsSeeder extends Seeder
             'quote_type_id' => QuoteTypes::CAR->id()
         ], [
             'code' => 'CTIRBB',
-            'text' => 'Tax Invoice',
+            'text' => 'Tax Invoice Raised By Buyer',
             'description' => '',
 
             'quote_type_id' => QuoteTypes::CAR->id(),
