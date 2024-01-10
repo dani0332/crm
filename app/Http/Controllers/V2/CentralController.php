@@ -31,6 +31,7 @@ use App\Services\CentralService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Facades\Excel;
 
 class CentralController extends Controller
@@ -213,18 +214,29 @@ class CentralController extends Controller
         $modelObject = $this->getModelObject(QuoteTypes::getName($dataFrom['quoteTypeId'])->value);
         $repository = $modelObject::where('id', $dataFrom['id'])->firstOrFail();
 
-        $repository->update([
-            'quote_status_id' => $dataTo['quote_status_id'],
-        ]);
+        try {
+            DB::beginTransaction();
 
-        // if ($dataTo['quote_status_id'] == QuoteStatusEnum::Lost) {
-        //     $repository->lostReason()->update([
-        //         'lost_reason_id' => $dataTo['lost_reason'],
-        //     ]);
-        // }
+            // $repository->activities()->where('status', 0)->update(['status' => 1]);
+            // $repository->update(['quote_status_id' => $dataTo['quote_status_id']]);
 
-        // TODO:: Need to add Transaction for this section
-    
+            // if ($dataTo['quote_status_id'] == QuoteStatusEnum::Lost) {
+            //     $repository->lostReason()->update([
+            //         'lost_reason_id' => $dataTo['lost_reason'],
+            //     ]);
+            // }
+
+            $repository->refresh();
+
+            // (new CentralService())->saveAndAssignActivitesToAdvisor($repository, $dataFrom['quoteTypeId']);
+
+            DB::commit();
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['message' => 'Something went wrong. Please try again later.'], 500);
+        }
+
         return response()->json(['message' => 'Lead status has been updated']);
 
     }
