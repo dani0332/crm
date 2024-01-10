@@ -314,7 +314,6 @@ class CentralController extends Controller
                 info(json_encode($sageRequest));
                 info('==========sageRequestDataEnd ===========');
 
-                dd('m here');
                 $createARInvoicePremAndCommPayload =  SagePayloadFactory::createARInvoicePremAndComm($sageRequest);
                 $endPoint = $createARInvoicePremAndCommPayload['endPoint'];
                 $payLoad = $createARInvoicePremAndCommPayload['payload'];
