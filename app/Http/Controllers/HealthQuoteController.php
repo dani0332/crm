@@ -196,7 +196,7 @@ class HealthQuoteController extends Controller
             if ($quotePlan->providerId == $insuranceProviderId) {
 
                 $quotePlanId[] = $quotePlan->id;
-                
+
             }
         }
 

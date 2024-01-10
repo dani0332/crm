@@ -1658,7 +1658,7 @@ class HealthQuoteService extends BaseService
         return $leadStatuses->whereNotIn('id', $statusesToRemove);
     }
 
-    public function getNonQuotedHealthPlans($insuranceProviderId, $quotePlanId, $networkId=null)
+    public function getNonQuotedHealthPlans($insuranceProviderId, $quotePlanId, $networkId = null)
     {
         return HealthPlan::select('id', 'text')
             ->where('provider_id', $insuranceProviderId)
