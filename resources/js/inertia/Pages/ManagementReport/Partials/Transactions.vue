@@ -104,7 +104,7 @@ const tableHeader = reactive([
   },
   {
     text: 'Payment Gateway',
-    value: 'payment_dateway',
+    value: 'payment_gateway',
   },
 
   {
@@ -134,8 +134,95 @@ const tableHeader = reactive([
     :sort-type="'desc'"
     hide-footer
   >
+    <template #item-policy_number="{ policy_number }">
+      {{ policy_number ?? 'N/A' }}
+    </template>
+    <template #item-transactions="{ transactions }">
+      {{ transactions ?? 0 }}
+    </template>
+    <template #item-policy_start_date="{ policy_start_date }">
+      {{ policy_start_date ?? 'N/A' }}
+    </template>
+    <template #item-payment_due_date="{ payment_due_date }">
+      {{ payment_due_date ?? 'N/A' }}
+    </template>
+    <template #item-price_with_vat="{ price_with_vat }">
+      {{ price_with_vat ?? 0 }}
+    </template>
+    <template #item-total_vat="{ total_vat }">
+      {{ total_vat ?? 0 }}
+    </template>
+    <template #item-price_without_vat="{ price_without_vat }">
+      {{ price_without_vat ?? 0 }}
+    </template>
+    <template #item-discount="{ discount }">
+      {{ discount ?? 0 }}
+    </template>
+    <template #item-total_price="{ total_price }">
+      {{ total_price ?? 0 }}
+    </template>
+    <template #item-commission="{ commission }">
+      {{ commission ?? 0 }}
+    </template>
+    <template #item-commission_with_vat="{ commission_with_vat }">
+      {{ commission_with_vat ?? 0 }}
+    </template>
+    <template #item-vat_on_commission="{ vat_on_commission }">
+      {{ vat_on_commission ?? 0 }}
+    </template>
+    <template #item-commission_without_vat="{ commission_without_vat }">
+      {{ commission_without_vat ?? 0 }}
+    </template>
+    <template #item-collected_amount="{ collected_amount }">
+      {{ collected_amount ?? 0 }}
+    </template>
+    <template #item-payment_date="{ payment_date }">
+      {{ payment_date ?? 'N/A' }}
+    </template>
+    <template #item-unpaid="{ unpaid }">
+      {{ unpaid ?? 'N/A' }}
+    </template>
+    <template #item-collects="{ collects }">
+      {{ collects ?? 'N/A' }}
+    </template>
+    <template #item-insurer="{ insurer }">
+      {{ insurer ?? 'N/A' }}
+    </template>
+    <template #item-line_of_bussiness="{ line_of_bussiness }">
+      {{ line_of_bussiness ?? 'N/A' }}
+    </template>
+    <template #item-sub_type="{ sub_type }">
+      {{ sub_type ?? 'N/A' }}
+    </template>
+    <template #item-customer_name="{ customer_name }">
+      {{ customer_name ?? 'N/A' }}
+    </template>
+    <template #item-advisor="{ advisor }">
+      {{ advisor ?? 'N/A' }}
+    </template>
+    <template #item-policy_issuer="{ policy_issuer }">
+      {{ policy_issuer ?? 'N/A' }}
+    </template>
+    <template #item-invoice_description="{ invoice_description }">
+      {{ invoice_description ?? 'N/A' }}
+    </template>
+    <template #item-payment_method="{ payment_method }">
+      {{ payment_method ?? 'N/A' }}
+    </template>
+    <template #item-payment_gateway="{ payment_gateway }">
+      {{ payment_gateway ?? 'N/A' }}
+    </template>
+    <template #item-insurer_invoice_no="{ insurer_invoice_no }">
+      {{ insurer_invoice_no ?? 'N/A' }}
+    </template>
+    <template #item-insurer_invoice_date="{ insurer_invoice_date }">
+      {{ insurer_invoice_date ?? 'N/A' }}
+    </template>
+    <template #item-borker_invoice_no="{ borker_invoice_no }">
+      {{ borker_invoice_no ?? 'N/A' }}
+    </template>
   </DataTable>
-  <!-- <Pagination
+  <Pagination
     :links="{
       next: props.reportData.next_page_url,
       prev: props.reportData.prev_page_url,
@@ -143,5 +230,5 @@ const tableHeader = reactive([
       from: props.reportData.from,
       to: props.reportData.to,
     }"
-  /> -->
+  />
 </template>
