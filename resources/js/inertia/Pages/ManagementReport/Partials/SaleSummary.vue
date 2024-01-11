@@ -61,7 +61,7 @@ watchEffect(() => {
   const headerText = headerMap[props.groupBy] || null;
 
   if (headerText) {
-    tableHeader.splice(0, 1, { text: headerText, value: props.groupBy });
+    tableHeader.splice(0, 0, { text: headerText, value: props.groupBy });
   }
 });
 </script>
