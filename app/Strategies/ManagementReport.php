@@ -14,7 +14,6 @@ use App\Models\Team;
 use App\Services\ApplicationStorageService;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
-use Illuminate\Http\Request;
 
 class ManagementReport
 {

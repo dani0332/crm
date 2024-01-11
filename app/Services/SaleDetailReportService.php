@@ -2,19 +2,11 @@
 
 namespace App\Services;
 
-use App\Enums\GenericRequestEnum;
-use App\Enums\LookupsEnum;
 use App\Enums\ManagementReportCategoriesEnum;
 use App\Enums\ManagementReportTypeEnum;
-use App\Enums\QuoteStatusEnum;
-use App\Enums\TransactionTypeEnum;
-use App\Models\LeadSource;
-use App\Models\Lookup;
 use App\Models\PersonalQuote;
-use App\Models\Team;
 use App\Strategies\ManagementReport;
 use App\Traits\TeamHierarchyTrait;
-use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
