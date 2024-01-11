@@ -105,25 +105,25 @@ const tableHeader = reactive([
     hide-footer
   >
     <template #item-customer_name="{ customer_name }">
-      {{ customer_name ?? 'N/A' }}
+      {{ customer_name }}
     </template>
     <template #item-customer_id="{ customer_id }">
-      {{ customer_id ?? 'N/A' }}
+      {{ customer_id }}
     </template>
     <template #item-policy_number="{ policy_number }">
-      {{ policy_number ?? 'N/A' }}
+      {{ policy_number }}
     </template>
     <template #item-insurer="{ insurer }">
-      {{ insurer ?? 'N/A' }}
+      {{ insurer }}
     </template>
     <template #item-line_of_bussiness="{ line_of_bussiness }">
-      {{ line_of_bussiness ?? 'N/A' }}
+      {{ line_of_bussiness }}
     </template>
     <template #item-policy_start_date="{ policy_start_date }">
-      {{ policy_start_date ?? 'N/A' }}
+      {{ policy_start_date }}
     </template>
     <template #item-policy_expiry_date="{ policy_expiry_date }">
-      {{ policy_expiry_date ?? 'N/A' }}
+      {{ policy_expiry_date }}
     </template>
     <template #item-collected_amount="{ collected_amount }">
       {{ collected_amount ?? 0 }}
@@ -156,16 +156,16 @@ const tableHeader = reactive([
       {{ commission_without_vat ?? 0 }}
     </template>
     <template #item-policy_issuer="{ policy_issuer }">
-      {{ policy_issuer ?? 'N/A' }}
+      {{ policy_issuer }}
     </template>
     <template #item-advisor="{ advisor }">
-      {{ advisor ?? 'N/A' }}
+      {{ advisor }}
     </template>
     <template #item-lead_source="{ lead_source }">
-      {{ lead_source ?? 'N/A' }}
+      {{ lead_source }}
     </template>
     <template #item-notes="{ notes }">
-      {{ notes ?? 'N/A' }}
+      {{ notes }}
     </template>
   </DataTable>
   <Pagination

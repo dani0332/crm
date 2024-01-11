@@ -137,22 +137,22 @@ const tableHeader = reactive([
     hide-footer
   >
     <template #item-policy_number="{ policy_number }">
-      {{ policy_number ?? 'N/A' }}
+      {{ policy_number  }}
     </template>
     <template #item-transactions="{ transactions }">
       {{ transactions ?? 0 }}
     </template>
     <template #item-policy_start_date="{ policy_start_date }">
-      {{ policy_start_date ?? 'N/A' }}
+      {{ policy_start_date  }}
     </template>
     <template #item-payment_due_date="{ payment_due_date }">
-      {{ payment_due_date ?? 'N/A' }}
+      {{ payment_due_date  }}
     </template>
     <template #item-lead_source="{ lead_source }">
-      {{ lead_source ?? 'N/A' }}
+      {{ lead_source  }}
     </template>
     <template #item-team="{ team }">
-      {{ team ?? 'N/A' }}
+      {{ team  }}
     </template>
     <template #item-price_with_vat="{ price_with_vat }">
       {{ price_with_vat ?? 0 }}
@@ -182,46 +182,46 @@ const tableHeader = reactive([
       {{ total_commission ?? 0 }}
     </template>
     <template #item-collects="{ collects }">
-      {{ collects ?? 'N/A' }}
+      {{ collects  }}
     </template>
     <template #item-inurer_tax_invoice_number="{ inurer_tax_invoice_number }">
       {{ inurer_tax_invoice_number ?? 0 }}
     </template>
     <template #item-tax_invoice_date="{ tax_invoice_date }">
-      {{ tax_invoice_date ?? 'N/A' }}
+      {{ tax_invoice_date  }}
     </template>
     <template #item-transaction_payment_status="{ transaction_payment_status }">
-      {{ transaction_payment_status ?? 'N/A' }}
+      {{ transaction_payment_status  }}
     </template>
     <template #item-date_paid="{ date_paid }">
-      {{ date_paid ?? 'N/A' }}
+      {{ date_paid  }}
     </template>
     <template #item-collected_amount="{ collected_amount }">
       {{ collected_amount ?? 0 }}
     </template>
     <template #item-customer_name="{ customer_name }">
-      {{ customer_name ?? 'N/A' }}
+      {{ customer_name  }}
     </template>
     <template #item-customer_id="{ customer_id }">
-      {{ customer_id ?? 'N/A' }}
+      {{ customer_id  }}
     </template>
     <template #item-customer_type="{ customer_type }">
-      {{ customer_type ?? 'N/A' }}
+      {{ customer_type  }}
     </template>
     <template #item-insurer="{ insurer }">
-      {{ insurer ?? 'N/A' }}
+      {{ insurer  }}
     </template>
     <template #item-line_of_business="{ line_of_business }">
-      {{ line_of_business ?? 'N/A' }}
+      {{ line_of_business  }}
     </template>
     <template #item-sub_type="{ sub_type }">
-      {{ sub_type ?? 'N/A' }}
+      {{ sub_type  }}
     </template>
     <template #item-advisor="{ advisor }">
-      {{ advisor ?? 'N/A' }}
+      {{ advisor  }}
     </template>
     <template #item-policy_issuer="{ policy_issuer }">
-      {{ policy_issuer ?? 'N/A' }}
+      {{ policy_issuer  }}
     </template>
   </DataTable>
   <Pagination
