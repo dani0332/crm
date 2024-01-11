@@ -23,6 +23,7 @@ const advisorOptions = computed(() => {
 });
 
 const dateFormat = date => {
+  console.log(date);
   return date ? useDateFormat(date, 'DD-MM-YYYY').value : '-';
 };
 
@@ -341,10 +342,6 @@ const openFollowUpModal = () => {
 
       <template #item-car_model="{ car_model }">
         {{ car_model?.text }}
-      </template>
-
-      <template #item-created_at="{ created_at }">
-        {{ dateFormat(created_at) }}
       </template>
 
       <template #item-nationality="{ nationality }">
