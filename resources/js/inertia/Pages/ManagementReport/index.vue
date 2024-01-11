@@ -206,7 +206,6 @@ const onTeamChange = e => {
     })
     .then(res => {
       if (res.data.length > 0) {
-        console.log(res.data);
         subTeams.value = Object.keys(res.data).map(key => ({
           value: res.data[key].id,
           label: res.data[key].name,
