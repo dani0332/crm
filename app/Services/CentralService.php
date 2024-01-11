@@ -3,10 +3,12 @@
 namespace App\Services;
 
 use App\Enums\GenericRequestEnum;
+use App\Enums\LeadSourceEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Facades\Capi;
+use App\Facades\Ken;
 use App\Models\PersonalQuote;
 use App\Models\PersonalQuoteDetail;
 use App\Repositories\PersonalQuoteRepository;
@@ -195,6 +197,12 @@ class CentralService
         }
     }
 
+    /**
+     * @param $quoteType
+     * @param $code
+     * @param $data
+     * @return true
+     */
     public function savePlanDetails($quoteType, $code, $data)
     {
         $repository = getRepositoryObject($quoteType);
@@ -212,6 +220,27 @@ class CentralService
         $quote->update($data->toArray());
 
         return true;
+    }
+
+    public function updateSelectedPlan($quoteType, $uuid, $planId)
+    {
+        //switch for quote type
+        switch (ucfirst($quoteType)) {
+            case QuoteTypes::CAR->value:
+                $endpoint = '/process-car-quote-plan';
+                $data = [
+                    'planId' => ($planId),
+                    'quoteTypeId' => QuoteTypeId::Car,
+                    'quoteUID' => $uuid,
+                    'callSource' => LeadSourceEnum::IMCRM
+                ];
+                break;
+        }
+
+        info('fn: updateSelectedPlan quoteType: ' . $quoteType . ' uuid: ' . $uuid . ' data: ' . json_encode($data));
+
+        $response = Ken::request($endpoint, 'post', $data);
+        return $response;
     }
 
 }
