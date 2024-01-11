@@ -1,6 +1,4 @@
 <script setup>
-import { watchEffect } from 'vue';
-
 const props = defineProps({
   reportData: Object,
   defaultFilters: Object,
