@@ -2,6 +2,9 @@
 const props = defineProps({
   reportData: Object,
   loader: Boolean,
+  groupBy: {
+    type: String || null,
+  },
 });
 
 const tableHeader = reactive([
