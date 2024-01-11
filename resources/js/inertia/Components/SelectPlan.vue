@@ -24,10 +24,10 @@ const updateSelectedPlan = () => {
                     position: 'top',
             });
         })
-        .catch(err => {
+        .catch(err => {           
             isLoading.value = false;
             notification.error({
-                title:  "Something went wrong",
+                title:  err.response.data.message ?? 'something went wrong',
                 position: 'top',
             });
         });

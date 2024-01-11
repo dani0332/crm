@@ -2993,7 +2993,7 @@ const handleChildUpdate = planId => {
 
             <span v-if="hasRole(rolesEnum.CarAdvisor)">
               <SelectPlan
-                v-if="prefillPlanId != item.id"
+                v-if="quote.plan_id != item.id"
                 @update:updatePlanId="handleChildUpdate"
                 :plan="item"
                 :quoteType="quoteType"
