@@ -229,8 +229,29 @@ class CentralService
             case QuoteTypes::CAR->value:
                 $endpoint = '/process-car-quote-plan';
                 $data = [
-                    'planId' => ($planId),
+                    'planId' => intval($planId),
                     'quoteTypeId' => QuoteTypeId::Car,
+                    'quoteUID' => $uuid,
+                    'callSource' => LeadSourceEnum::IMCRM
+                ];
+                break;
+            case QuoteTypes::TRAVEL->value:
+                $endpoint = '/process-travel-quote-plan';
+                $data = [
+                    'quoteTypeId' => QuoteTypeId::Car,
+                    'quoteUID' => $uuid,
+                    'plans' => [
+                        ['id' => intval($planId), 'addonOptionIds' => []]
+                    ]
+                ];
+                break;
+            case QuoteTypes::HEALTH->value:
+                $endpoint = '/v1-process-booking';
+                $data = [
+                    'planId' => intval($planId),
+                    'quoteTypeId' => QuoteTypeId::Health,
+                    'addonOptionIds' => [],
+                    'healthPlanCoPaymentId' => null,
                     'quoteUID' => $uuid,
                     'callSource' => LeadSourceEnum::IMCRM
                 ];
@@ -240,6 +261,7 @@ class CentralService
         info('fn: updateSelectedPlan quoteType: ' . $quoteType . ' uuid: ' . $uuid . ' data: ' . json_encode($data));
 
         $response = Ken::request($endpoint, 'post', $data);
+
         return $response;
     }
 

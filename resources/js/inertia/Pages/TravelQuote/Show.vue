@@ -2273,7 +2273,7 @@ const genderList = [
               <span v-if="hasRole(rolesEnum.TravelAdvisor)">
                 <SelectPlan
                   class="ml-1"
-                  v-if="prefillPlanId != item.id"
+                  v-if="quote.plan_id != item.id"
                   @update:updatePlanId="handleChildUpdate"
                   :plan="item"
                   :quoteType="modelType"
