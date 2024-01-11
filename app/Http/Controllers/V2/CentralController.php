@@ -243,28 +243,30 @@ class CentralController extends Controller
 
         if ($request->send_policy_type == 'sage') {
 
-
-            dispatch(new SendBookPolicyDocumentsJob($payLoad));
-
-            $quote->update([
-                'quote_status_id' => QuoteStatusEnum::PolicyBooked,
-            ]);
-
             $quoteTypeId = app(ActivitiesService::class)->getQuoteTypeId(strtolower($request->model_type));
             $payment = Payment::where('code', $quote['code'])->first();
             $paymentSplits = PaymentSplits::where('code', $quote['code'])->first();
             $data['quoteTypeId'] = $quoteTypeId;
             $data['id'] =  $quote->id;
-            if ($payment->first()) {
+            if ($payment->first() && $paymentSplits->first()) {
+
+                dispatch(new SendBookPolicyDocumentsJob($payLoad));
+
+                $quote->update([
+                    'quote_status_id' => QuoteStatusEnum::PolicyBooked,
+                ]);
+
+
                 $sageRequest = new \stdClass();
 
+                // dd($payment);
                 // $sageRequest->discount =  22;
                 $sageRequest->discount =  floatval($payment->discount_value);
                 $sageRequest->invoiceDescription =  $payment->invoice_description;
                 $sageRequest->bookingDate =  date('Y-m-d', strtotime($quote['policy_booking_date']));
                 $sageRequest->policyExpiryDate = date('Ymd', strtotime($quote['renewal_expiry_date']));
                 $sageRequest->insurerInvoiceDate = date('Y-m-d', strtotime($payment->insurer_invoice_date));
-                $sageRequest->paymentDueDate = date('Y-m-d', strtotime($payment->payment_due_date));
+                $sageRequest->paymentDueDate = date('Y-m-d', strtotime($paymentSplits->due_date));
 
                 $sageRequest->mainClassInsurance =  $request->model_type;
                 $sageRequest->policyNumber =  $quote->policy_number;
@@ -325,6 +327,7 @@ class CentralController extends Controller
                     info('payLoad' . json_encode($payLoad));
                     info('resp' . json_encode($resp));
                     info('==========createARInvoicePremAndComm ===========');
+
                     $createAPInvoicePremPayload =  SagePayloadFactory::createAPInvoicePrem($sageRequest);
                     $endPoint = $createAPInvoicePremPayload['endPoint'];
                     $payLoad = $createAPInvoicePremPayload['payload'];

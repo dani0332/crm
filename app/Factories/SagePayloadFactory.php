@@ -170,8 +170,8 @@ class SagePayloadFactory
             'Invoices' => [
                 [
                     'CustomerNumber' => $request->customerId,
-                    'DocumentNumber' => $request->insurerPremiumTaxInvoiceNumber . '-PREM',
-                    'InvoiceDescription' => $request->invoiceDescription,
+                    'DocumentNumber' => $request->insurerPremiumTaxInvoiceNumber,
+                    'InvoiceDescription' => $request->invoiceDescription . '-PREM',
                     'DocumentDate' => '2023-04-26T00:00:00Z',
                     'CurrencyCode' => 'AED',
                     'DueDate' => $request->paymentDueDate,
@@ -199,8 +199,8 @@ class SagePayloadFactory
                 ],
                 [
                     'CustomerNumber' => $request->customerId,
-                    'DocumentNumber' => $request->insurerTaxInvoiceNumber . '-COM',
-                    'InvoiceDescription' => $request->invoiceDescription,
+                    'DocumentNumber' => $request->insurerTaxInvoiceNumber,
+                    'InvoiceDescription' => $request->invoiceDescription . '-COM',
                     'DocumentDate' => $request->insurerInvoiceDate,
                     'CurrencyCode' => 'AED',
                     'DueDate' => $request->paymentDueDate,
