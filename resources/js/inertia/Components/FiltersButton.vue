@@ -69,8 +69,8 @@ const status = ref([
 
 const selectedFiltersLength = computed(() => {
   return (
-    (selectedOptions.value.date !== 0 ? 1 : 0) +
-    selectedOptions.value.status.length
+    (selectedOptions.value?.date !== 0 ? 1 : 0) +
+    selectedOptions.value?.status?.length
   );
 });
 

@@ -157,7 +157,7 @@ function onSubmit(isValid) {
     filters.page = 1;
     Object.keys(filters).forEach(
       key =>
-        (filters[key] === '' || filters[key].length === 0) &&
+        (filters[key] === '' || filters[key]?.length === 0) &&
         delete filters[key],
     );
     router.visit(route('health.index'), {
@@ -173,7 +173,7 @@ function onSubmit(isValid) {
   }
 }
 
-const handleSelectedFilters = async selectedFilters => {
+const handleSelectedFilters = selectedFilters => {
   if (selectedFilters.created_at_start && selectedFilters.created_at_end) {
     filters.created_at_start = selectedFilters.created_at_start;
     filters.created_at_end = selectedFilters.created_at_end;
