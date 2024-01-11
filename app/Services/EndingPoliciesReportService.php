@@ -2,16 +2,16 @@
 
 namespace App\Services;
 
-use App\Enums\GenericRequestEnum;
-use App\Models\LeadSource;
+use App\Enums\ManagementReportCategoriesEnum;
+use App\Enums\ManagementReportTypeEnum;
 use App\Models\PersonalQuote;
-use App\Models\Team;
 use App\Strategies\ManagementReport;
 use App\Traits\TeamHierarchyTrait;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
-class EndingPoliciesReportService implements ManagementReport
+class EndingPoliciesReportService extends ManagementReport
 {
     use TeamHierarchyTrait;
 
@@ -69,47 +69,18 @@ class EndingPoliciesReportService implements ManagementReport
         return $mapping[$groupBy] ?? $groupBy;
     }
 
-    public function getFilterOptions()
-    {
-
-        $maxDays = ApplicationStorageService::getValueByKeyName(GenericRequestEnum::MAX_DAYS);
-
-        $loginUserId = auth()->user()->id;
-
-        $teamIds = $this->getUserTeams($loginUserId);
-
-        $teams = Team::whereIn('id', $teamIds->pluck('id'))
-            ->select('name', 'id')
-            ->orderBy('name')
-            ->where('is_active', 1)
-            ->get()
-            ->keyBy('id')
-            ->map(fn ($users) => $users->name)
-            ->toArray();
-        $leadSources = LeadSource::query()
-            ->select('name')
-            ->where('is_active', 1)->where('is_applicable_for_rules', 0)
-            ->whereNotNull('name')
-            ->orderBy('name')
-            ->get()
-            ->keyBy('name')
-            ->map(fn ($users) => $users->name)
-            ->toArray();
-
-        return [
-            'maxDays' => $maxDays,
-            'leadSources' => $leadSources,
-            'teams' => $teams,
-        ];
-    }
-
     public function getDefaultFilters()
     {
-        // implementation goes here
-    }
+        $dateFormat = config('constants.DATE_FORMAT_ONLY');
+        $defaultDate = [
+            Carbon::parse(now())->startOfDay()->format($dateFormat),
+            Carbon::parse(now())->endOfDay()->format($dateFormat),
+        ];
 
-    public function applyFilters($query, $request)
-    {
-        // implementation goes here
+        return [
+            'policyIssuanceDate' => $defaultDate,
+            'reportCategory' => ManagementReportCategoriesEnum::SALE_SUMMARY,
+            'reportType' => ManagementReportTypeEnum::ISSUED_POLICIES,
+        ];
     }
 }

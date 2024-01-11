@@ -12,15 +12,15 @@ const props = defineProps({
 
 const tableHeader = reactive([
   {
-    text: 'Total Policies',
+    text: 'T. Policies',
     value: 'total_policies',
   },
   {
-    text: 'Total Endorsements',
+    text: 'T. Endorsements',
     value: 'total_endorsements',
   },
   {
-    text: 'Total Transactions',
+    text: 'T. Transactions',
     value: 'total_transaction',
   },
   {
@@ -28,7 +28,7 @@ const tableHeader = reactive([
     value: 'price_vat_applicable',
   },
   {
-    text: 'Total VAT',
+    text: 'T. VAT',
     value: 'total_vat',
   },
   {
@@ -44,7 +44,7 @@ const tableHeader = reactive([
     value: 'commission',
   },
   {
-    text: 'Total Price',
+    text: 'T. Price',
     value: 'total_price',
   },
 ]);
