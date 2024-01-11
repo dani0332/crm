@@ -212,7 +212,7 @@ const onLogout = () => {
         class="flex-col gap-y-6 w-screen flex-1 h-full transition-all lg:pl-[var(--sidebar-width)]"
       >
         <header
-          class="sticky top-0 z-[9999] flex h-16 w-full shrink-0 items-center border-b bg-white"
+          class="sticky top-0 z-40 flex h-16 w-full shrink-0 items-center border-b bg-white"
         >
           <div
             class="flex items-center justify-between w-full px-2 sm:px-4 md:px-6 lg:px-8"
