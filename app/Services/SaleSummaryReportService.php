@@ -176,11 +176,11 @@ class SaleSummaryReportService implements ManagementReport
         switch ($request['reportCategory']) {
             case ManagementReportCategoriesEnum::SALE_SUMMARY:
             case ManagementReportCategoriesEnum::SALE_DETAIL:
-                if ($request['reportType'] == ManagementReportTypeEnum::ISSUED_POLICIES) {
-                    $dateFilter('personal_quotes.policy_issuance_date', 'policyIssuanceDate');
-                } elseif ($request['reportType'] == ManagementReportTypeEnum::TRANSACTION_PAYMENTS) {
-                    $dateFilter('payments.payment_due_date', 'paymentDueDate');
-                }
+                // if ($request['reportType'] == ManagementReportTypeEnum::ISSUED_POLICIES) {
+                //     $dateFilter('personal_quotes.policy_issuance_date', 'policyIssuanceDate');
+                // } elseif ($request['reportType'] == ManagementReportTypeEnum::TRANSACTION_PAYMENTS) {
+                //     $dateFilter('payments.payment_due_date', 'paymentDueDate');
+                // }
                 break;
 
             case ManagementReportCategoriesEnum::ENDING_POLICIES:
