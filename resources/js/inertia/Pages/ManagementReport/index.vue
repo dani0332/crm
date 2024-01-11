@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, watchEffect } from 'vue';
+import { onMounted, watch, watchEffect } from 'vue';
 import ActivePolicies from './Partials/ActivePolicies.vue';
 import EndingPolicies from './Partials/EndingPolicies.vue';
 import SalesDetail from './Partials/SalesDetail.vue';
@@ -14,8 +14,8 @@ const props = defineProps({
 });
 
 const reportComponents = {
-  'Active Policies ': ActivePolicies,
-  'Ending Policies ': EndingPolicies,
+  'Active Policies': ActivePolicies,
+  'Ending Policies': EndingPolicies,
   'Sales Detail': SalesDetail,
   'Transaction ': Transaction,
   'Sales Summary': SalesSummary,
@@ -24,6 +24,38 @@ const reportComponents = {
 const subTeams = ref([]);
 
 const { isRequired } = useRules();
+
+const filterkeys = () => {
+  if (filters.reportCategory != 'Ending Policies')
+    delete filters.policyExpiredDate;
+  if (
+    filters.reportCategory != 'Sales Summary' &&
+    filters.reportCategory != 'Sales Detail' &&
+    filters.reportCategory != 'Transaction'
+  ) {
+    delete filters.policyIssuanceDate;
+    delete filters.paymentDueDate;
+  }
+  if (filters.reportCategory == 'Active Policies') {
+    delete filters.policyIssuanceDate;
+    delete filters.paymentDueDate;
+    delete filters.policyExpiredDate;
+  }
+  if (
+    (filters.reportCategory == 'Sales Summary' ||
+      filters.reportCategory == 'Sales Detail') &&
+    filters.reportType == 'Issued Policies'
+  ) {
+    delete filters.paymentDueDate;
+  }
+  if (
+    (filters.reportCategory == 'Sales Summary' ||
+      filters.reportCategory == 'Sales Detail') &&
+    filters.reportType == 'Transaction Payments'
+  ) {
+    delete filters.policyIssuanceDate;
+  }
+};
 
 let filters = reactive({
   reportCategory: props.defaultFilters.reportCategory,
@@ -44,6 +76,13 @@ let filters = reactive({
   utmGroupBy: [],
   page: 1,
 });
+
+watch(
+  () => filters.reportCategory,
+  () => {
+    console.log(filters.reportCategory);
+  },
+);
 
 const loaders = reactive({
   table: false,
@@ -180,6 +219,7 @@ const onTeamChange = e => {
 };
 
 const onSubmit = isValid => {
+  filterkeys();
   if (!isValid) return;
   filters.page = 1;
   router.visit(route('report-management'), {

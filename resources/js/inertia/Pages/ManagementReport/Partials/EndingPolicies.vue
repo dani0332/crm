@@ -78,12 +78,12 @@ const tableHeader = reactive([
     value: 'policy_issuer',
   },
   {
-    text: 'Lead Source',
-    value: 'lead_source',
-  },
-  {
     text: 'Advisor',
     value: 'advisor',
+  },
+  {
+    text: 'Lead Source',
+    value: 'lead_source',
   },
   {
     text: 'Notes ',
