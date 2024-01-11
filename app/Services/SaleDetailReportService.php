@@ -26,16 +26,19 @@ class SaleDetailReportService implements ManagementReport
     {
         $request['reportCategory'] = $request->reportCategory ?? ManagementReportCategoriesEnum::SALE_DETAIL;
         $request['reportType'] = $request->reportType ?? ManagementReportTypeEnum::ISSUED_POLICIES;
-        $request['policyIssuanceDate'] = $request->policyIssuanceDate ?? [
-            Carbon::parse(now())->startOfDay()->format(config('constants.DATE_FORMAT_ONLY')),
-            Carbon::parse(now())->endOfDay()->format(config('constants.DATE_FORMAT_ONLY')),
-        ];
         $query = PersonalQuote::query()
             ->select(
                 'policy_number',
                 'policy_start_date',
                 'policy_due_date',
                 'source',
+                'quote_type.code as line_of_business',
+                'u.name as advisor_name',
+                'pi.name as policy_issuer',
+                'tax_invoice_number as insurer_tax_invoice_number',
+                'insurer_invoice_date as insurer_tax_invoice_date',
+                'payment_status.text as transaction_payment_status',
+                'payments.captured_at as date_paid',
                 DB::raw('FORMAT(personal_quotes.price_vat_applicable, 2) as price_vat_applicable'),
                 DB::raw('FORMAT(payments.discount_value,2) as discount'),
                 DB::raw('FORMAT(((price_vat_applicable + price_vat_not_applicable + vat) - payments.discount_value),2) as total_price'),
@@ -44,17 +47,10 @@ class SaleDetailReportService implements ManagementReport
                 DB::raw('FORMAT(payments.commission_vat_not_applicable,2) as commission_vat_not_applicable'),
                 DB::raw('(commission_vat_applicable + commission_vat) as total_commission'),
                 DB::raw("'collects' as collects"),
-                'tax_invoice_number as insurer_tax_invoice_number',
-                'insurer_invoice_date as insurer_tax_invoice_date',
-                'payment_status.text as transaction_payment_status',
-                'payments.captured_at as date_paid',
                 DB::raw('FORMAT(personal_quotes.premium_captured,2) as collected_amount'),
                 DB::raw("CONCAT(first_name, ' ', last_name) as customer_name"),
                 DB::raw("'customer_type' as customer_type"),
-                'quote_type.code as line_of_business',
                 DB::raw("'sub_type_line_of_business' as sub_type_line_of_business"),
-                'u.name as advisor_name',
-                'pi.name as policy_issuer',
             )
             ->leftJoin('payments', 'personal_quotes.code', '=', 'payments.code')
             ->leftJoin('payment_status', 'payment_status.id', '=', 'payments.payment_status_id')

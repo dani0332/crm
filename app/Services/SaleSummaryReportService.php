@@ -26,10 +26,6 @@ class SaleSummaryReportService implements ManagementReport
     {
         $request['reportCategory'] = $request->reportCategory ?? ManagementReportCategoriesEnum::SALE_SUMMARY;
         $request['reportType'] = $request->reportType ?? ManagementReportTypeEnum::ISSUED_POLICIES;
-        $request['policyIssuanceDate'] = $request->policyIssuanceDate ?? [
-            Carbon::parse(now())->startOfDay()->format(config('constants.DATE_FORMAT_ONLY')),
-            Carbon::parse(now())->endOfDay()->format(config('constants.DATE_FORMAT_ONLY')),
-        ];
         $request['groupBy'] = $request->groupBy ?? 'advisor';
 
         $query = PersonalQuote::query()
