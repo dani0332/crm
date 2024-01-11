@@ -170,11 +170,11 @@ class CentralController extends Controller
 
     public function updateSelectedPlan($quoteType, $uuid, $planId)
     {
-        $repository = getRepositoryObject($quoteType);
+        $response = (new CentralService())->updateSelectedPlan($quoteType, $uuid, $planId);
 
-        $quote = $repository::where('uuid', $uuid)->firstOrFail();
-
-        $quote->update(['prefill_plan_id' => $planId, 'prefill_plan_selected_at' => Carbon::now()]);
+        if(!empty($response->message)) {
+            return redirect()->back()->with('error', $response->message);
+        }
 
         return redirect()->back()->with('success', 'updated successfully');
     }
