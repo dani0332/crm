@@ -64,7 +64,7 @@ onMounted(() => {
         outlined
         size="sm"
       >
-        <x-button icon="settings" square ghost />
+        <x-button v-if="headers.length > 0" icon="settings" square ghost />
       </x-badge>
       <template #content>
         <x-popover-container>
@@ -75,7 +75,7 @@ onMounted(() => {
             <div class="p-2 overflow-x-auto max-h-72">
               <header class="text-gray-500 text-xs">SHOW FIELDS</header>
               <ul class="px-2">
-                <template v-if="headers.length > 0">
+                <template v-if="headers.filter(c => c.is_active).length > 0">
                   <li
                     v-for="column in headers.filter(c => c.is_active)"
                     :key="column.text"
@@ -85,22 +85,24 @@ onMounted(() => {
                       size="sm"
                       @update:model-value="onChange"
                     >
-                      <span class="text-sm uppercase"> {{ column.text }}</span>
+                      <span class="text-sm uppercase hover:text-primary-800">
+                        {{ column.text }}
+                      </span>
                     </x-checkbox>
                   </li>
                 </template>
                 <li
                   v-else
-                  class="text-sm text-gray-400 italic text-center py-1.5"
+                  class="text-xs text-gray-400 italic text-center py-1.5"
                 >
-                  No Fields Found
+                  All fields are hidden
                 </li>
               </ul>
               <header class="text-gray-500 text-xs pt-1">
                 FIELDS IN THE LIST
               </header>
               <ul class="px-2">
-                <template v-if="headers.length > 0">
+                <template v-if="headers.filter(c => !c.is_active).length > 0">
                   <li
                     v-for="column in headers.filter(c => !c.is_active)"
                     :key="column.text"
@@ -110,13 +112,15 @@ onMounted(() => {
                       size="sm"
                       @update:model-value="onChange"
                     >
-                      <span class="text-sm uppercase"> {{ column.text }}</span>
+                      <span class="text-sm uppercase hover:text-primary-800">
+                        {{ column.text }}
+                      </span>
                     </x-checkbox>
                   </li>
                 </template>
                 <li
                   v-else
-                  class="text-sm text-center text-gray-400 py-1.5 italic"
+                  class="text-xs text-center text-gray-400 py-1.5 italic"
                 >
                   No fields are hidden
                 </li>
