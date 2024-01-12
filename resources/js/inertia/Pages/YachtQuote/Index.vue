@@ -175,7 +175,11 @@ watch(
       <h2 class="text-xl font-semibold">Yacht Quotes List</h2>
 
       <div class="flex items-center space-x-2">
-        <column-selection v-model:columns="tableHeader"></column-selection>
+        <ColumnSelection
+          v-model:columns="tableHeader"
+          storage-key="yacht-list"
+        />
+
         <FiltersButton
           :filters="filters"
           @selected-filters="handleSelectedFilters"

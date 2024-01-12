@@ -217,7 +217,11 @@ const permissionsEnum = page.props.permissionsEnum;
     <div class="flex justify-between items-center">
       <h2 class="text-xl font-semibold">Home List</h2>
       <div class="flex space-x-2 items-center">
-        <column-selection v-model:columns="tableHeader"></column-selection>
+        <ColumnSelection
+          v-model:columns="tableHeader"
+          storage-key="home-list"
+        />
+
         <FiltersButton
           :filters="filters"
           @selected-filters="handleSelectedFilters"

@@ -279,7 +279,11 @@ onMounted(() => {
         :userMaxCap="userMaxCap"
       />
       <div class="flex space-x-2 items-center">
-        <column-selection :columns="tableHeader"></column-selection>
+        <ColumnSelection
+          v-model:columns="tableHeader"
+          storage-key="health-list"
+        />
+
         <FiltersButton
           :filters="filters"
           @selected-filters="handleSelectedFilters"
