@@ -3,6 +3,7 @@
 namespace App\Traits;
 
 use App\Enums\GenericRequestEnum;
+use App\Enums\PermissionsEnum;
 use App\Enums\QuoteDocumentsEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypes;
@@ -189,8 +190,6 @@ trait GenericQueriesAllLobs
         $bPDetails['editButton'] = false;
         $bPDetails['sendPolicyType'] = null;
         $bPDetails['text'] = '';
-
-        // dd($quoteDocuments)
         if (!empty($quoteDocuments)) {
             $document_type_codes = collect($quoteDocuments)->pluck('document_type_code')->toArray();
 
@@ -201,16 +200,13 @@ trait GenericQueriesAllLobs
                 $bPDetails['sendPolicyType'] = 'customer';
             }
             $taxDocuments = (in_array(QuoteDocumentsEnum::CAR_TAX_INVOICE, $document_type_codes) && in_array(QuoteDocumentsEnum::CAR_TAX_INVOICE_RAISE_BY_BUYER, $document_type_codes));
-            // $taxDocuments = 1;
-            $requiredRole = auth()->user()->hasAnyRole([RolesEnum::NRA, RolesEnum::FINANCE, RolesEnum::PRODUCTION]);
 
-            if ($bPDetails['sendButton'] && $taxDocuments && $requiredRole) {
+            if ($bPDetails['sendButton'] && $taxDocuments) {
                 $bPDetails['text'] = 'Send Policy';
                 $bPDetails['editButton'] = true;
                 $bPDetails['sendPolicyType'] = 'sage';
             }
         }
-        // dd($bPDetails);
         return $bPDetails;
     }
 

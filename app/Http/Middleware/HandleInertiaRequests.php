@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
@@ -71,6 +72,7 @@ class HandleInertiaRequests extends Middleware
             'appEnv' => config('constants.APP_ENV'),
             'pusherKey' => config('constants.VITE_PUSHER_APP_KEY'),
             'epLink' => config('constants.AFIA_WEBSITE_DOMAIN'),
+            'vat' => ApplicationStorageEnums::VAT,
         ];
     }
 

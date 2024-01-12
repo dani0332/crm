@@ -45,6 +45,7 @@ class DatabaseSeeder extends Seeder
             DubaiLeadSource::class,
             LstDocumentsSeeder::class,
             SendPolicyApplicationStorageSeeder::class,
+            BookPolicyPermissionSeeder::class,
             //            AddNewDocumentTypesSeeder::class,
             // UpdateCustomerToHealthAndTravelMemberDetails::class,
             PaymentMethodsAddSeeder::class,

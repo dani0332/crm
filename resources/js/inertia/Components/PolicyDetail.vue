@@ -73,7 +73,7 @@ const policyDetailsForm = useForm({
 
 const caculateVatAmount = () => {
   if (policyDetailsForm.amount > 0) {
-    let vat = policyDetailsForm.amount * (0.05).toFixed(2);
+    let vat = policyDetailsForm.amount * page.props.vat.toFixed(2);
     policyDetailsForm.vat = vat.toFixed(2);
     policyDetailsForm.amount_with_vat = (
       Number(vat) + Number(policyDetailsForm.amount)
@@ -294,7 +294,9 @@ const onUpdatePolicyDetails = () => {
             >Edit
           </x-button>
           <template #tooltip>
-            <span>{{ 'The Button is not accessable because policy has been booked' }}</span>
+            <span>{{
+              'The Button is not accessable because policy has been booked'
+            }}</span>
           </template>
         </x-tooltip>
       </template>

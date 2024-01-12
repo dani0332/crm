@@ -243,4 +243,6 @@ final class PermissionsEnum extends Enum
     public const EXPORT_PLAN_DETAIL = 'export-plan-detail';
     public const EXPORT_LEADS_DETAIL_WITH_EMAIL_MOBILE = 'export-leads-detail-with-email-mobile';
     public const EXPORT_MAKES_MODELS = 'export-makes-models';
+    public const VIEW_INSLY_BOOK_POLICY = 'view-insly-book-policy';
+    public const SEND_INSLY_BOOK_POLICY = 'send-insly-book-policy';
 }

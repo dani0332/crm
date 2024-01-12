@@ -20,6 +20,7 @@ const props = defineProps({
     default: [],
   },
 });
+
 const isLoading = ref(false);
 
 const dateToYMD = date => {
@@ -142,7 +143,9 @@ const caculateCommission = () => {
       100
     ).toFixed(2);
 
-    bpForm.vat_on_commission = (bpForm.commission_percentage * 0.05).toFixed(2);
+    bpForm.vat_on_commission = (
+      bpForm.commission_percentage * page.props.vat
+    ).toFixed(2);
     bpForm.total_commission =
       Number(bpForm.vat_on_commission) +
       Number(bpForm.commission_vat_applicable);

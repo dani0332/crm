@@ -95,6 +95,7 @@ const showfollowup = ref(false);
 
 console.log(page.props);
 
+const canAny = permissions => useCanAny(permissions);
 const permissionEnum = page.props.permissionsEnum;
 const rolesEnum = page.props.rolesEnum;
 
@@ -3323,7 +3324,10 @@ const handleChildUpdate = planId => {
 
     <BookPolicy
       v-if="
-        hasAnyRole([rolesEnum.PRODUCTION, rolesEnum.NRA, rolesEnum.FINANCE])
+        canAny([
+          permissionsEnum.VIEW_INSLY_BOOK_POLICY,
+          permissionsEnum.SEND_INSLY_BOOK_POLICY,
+        ])
       "
       :quote="record"
       :quoteType="quoteType"
