@@ -19,13 +19,26 @@ const updateSelectedPlan = () => {
     isLoading.value = true;
     axios.post(`/personal-quotes/${props.quoteType}/${props.uuid}/update-selected-plan/${props.plan.id}`)
         .then(res => {
-            console.log('ken:',res.data.plan.planProcessValue.totalPremium);
+            console.log('ken:',res.data.plan.planProcessValue[0].totalPremium);
             isLoading.value = false;
+            let premium = 0;
+            switch (quoteType.toLowerCase()) {
+                case 'travel':
+                    premium = res.data.plan.planProcessValue[0].totalPremium
+                    break;
+                case 'car':
+                    premium = res.data.plan.planProcessValue.totalPremium
+                    break;
+            
+                default:
+                    break;
+            }    
+            
             emit('update:selectedPlanChanged', {
                 id: props.plan.id,
                 providerName: props.plan.providerName,
                 planName: props.plan.name,
-                premium: res.data.plan.planProcessValue.totalPremium.toFixed(2)
+                premium: res.data.plan.planProcessValue[0].totalPremium.toFixed(2)
             });            
             notification.success({
                     title: "Selected plan updated",
