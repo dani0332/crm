@@ -58,11 +58,13 @@ watchEffect(() => {
     line_of_business: 'Line of Business',
   };
 
+  console.log(tableHeader);
   const headerText = headerMap[props.groupBy] || null;
 
-  if (headerText) {
-    tableHeader.splice(0, 0, { text: headerText, value: props.groupBy });
-  }
+  const newItem = { text: headerText, value: props.groupBy };
+  headerText && tableHeader[0].text === 'T. Policies'
+    ? tableHeader.unshift(newItem)
+    : tableHeader.splice(0, 1, newItem);
 });
 </script>
 <template>
