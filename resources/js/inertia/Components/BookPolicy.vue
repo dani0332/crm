@@ -20,6 +20,7 @@ const props = defineProps({
     default: [],
   },
 });
+const isLoading = ref(false);
 
 const dateToYMD = date => {
   if (date) {
@@ -104,6 +105,7 @@ const confirmSendPolicy = () => {
 };
 
 const submitPolicy = () => {
+  isLoading.value = true;
   let url = '/quotes/send-booking-policy';
   let data = {
     send_policy_type: props.bPDetails.sendPolicyType,
@@ -129,6 +131,7 @@ const submitPolicy = () => {
     })
     .finally(() => {
       modals.sendPolicyConfirm = false;
+      isLoading.value = false;
     });
 };
 
@@ -460,6 +463,7 @@ const caculateCommission = () => {
             color="error"
             :disabled="!modals.isConfirmed"
             @click.prevent="submitPolicy"
+            :loading="isLoading"
           >
             Confirm
           </x-button>
