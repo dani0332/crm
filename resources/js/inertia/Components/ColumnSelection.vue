@@ -49,8 +49,23 @@ onMounted(() => {
 </script>
 <template>
   <div class="select-none">
-    <x-popover align="right" position="bottom" :dismissOnClick="false">
-      <x-button icon="settings" square ghost />
+    <x-popover
+      align="right"
+      position="bottom"
+      :dismissOnClick="false"
+      :autoAlign="false"
+    >
+      <x-badge
+        :show="
+          headers.length > 0 &&
+          headers.length !== headers.filter(c => c.is_active).length
+        "
+        color="red"
+        outlined
+        size="sm"
+      >
+        <x-button icon="settings" square ghost />
+      </x-badge>
       <template #content>
         <x-popover-container>
           <div class="w-72 bg-white border rounded shadow">
@@ -58,9 +73,7 @@ onMounted(() => {
               CHOOSE COLUMNS
             </p>
             <div class="p-2 overflow-x-auto max-h-72">
-              <header class="uppercase text-gray-500 text-xs">
-                Show Fields
-              </header>
+              <header class="text-gray-500 text-xs">SHOW FIELDS</header>
               <ul class="px-2">
                 <template v-if="headers.length > 0">
                   <li
@@ -83,8 +96,8 @@ onMounted(() => {
                   No Fields Found
                 </li>
               </ul>
-              <header class="uppercase text-gray-500 text-xs pt-1">
-                Fields in the list
+              <header class="text-gray-500 text-xs pt-1">
+                FIELDS IN THE LIST
               </header>
               <ul class="px-2">
                 <template v-if="headers.length > 0">

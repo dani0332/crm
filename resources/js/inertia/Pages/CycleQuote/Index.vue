@@ -159,7 +159,11 @@ watch(
     <div class="flex justify-between items-center">
       <h2 class="text-xl font-semibold">Cycle Quotes List</h2>
       <div class="flex items-center space-x-2">
-        <column-selection v-model:columns="tableHeader"></column-selection>
+        <ColumnSelection
+          v-model:columns="tableHeader"
+          storage-key="cycle-list"
+        />
+
         <FiltersButton
           :filters="filters"
           @selected-filters="handleSelectedFilters"
