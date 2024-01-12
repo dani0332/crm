@@ -92,6 +92,14 @@ const page = usePage();
 const notification = useNotifications('toast');
 const showfollowup = ref(false);
 
+const selectedProviderPlan = ref({
+  id: page.props.record.plan_id,
+  planName: page.props.record.plan_id_text,
+  providerName: page.props.record.car_plan_provider_id_text,
+  premium: page.props.record.premium
+
+});
+
 /*
 * comment for now, will be used in later after confirmation
 
@@ -1527,8 +1535,13 @@ const linkEntity = () => {
 
 
 
-const handleChildUpdate = planId => {
-  prefillPlanId.value = planId;
+const handlePlanSelected = plan => {
+  console.log("HHH", plan);
+  //se.value = plan.id;
+  selectedProviderPlan.value.id = plan.id
+  selectedProviderPlan.value.planName = plan.planName
+  selectedProviderPlan.value.providerName = plan.providerName
+  selectedProviderPlan.value.premium = plan.premium
 };
 
 /*watch(prefillPlanId, (newPlanId) =>  {
@@ -1573,7 +1586,7 @@ const handleChildUpdate = planId => {
         <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">          
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">PRICE</dt>
-            <dd>{{ record.premium ?? '' }}</dd>
+            <dd>{{ selectedProviderPlan.premium ?? '' }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">PAID AT</dt>
@@ -1585,7 +1598,7 @@ const handleChildUpdate = planId => {
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">PROVIDER NAME</dt>
-            <dd>{{ record.car_plan_provider_id_text ?? '' }}</dd>
+            <dd>{{ selectedProviderPlan.providerName ?? '' }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">PAYMENT METHOD</dt>
@@ -1599,7 +1612,7 @@ const handleChildUpdate = planId => {
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">PLAN NAME</dt>
-            <dd>{{ record.plan_id_text }}</dd>
+            <dd>{{ selectedProviderPlan.planName }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">ECOMMERCE</dt>
@@ -2993,8 +3006,8 @@ const handleChildUpdate = planId => {
 
             <span v-if="hasRole(rolesEnum.CarAdvisor)">
               <SelectPlan
-                v-if="quote.plan_id != item.id"
-                @update:updatePlanId="handleChildUpdate"
+                v-if="selectedProviderPlan.id != item.id"
+                @update:selectedPlanChanged="handlePlanSelected"
                 :plan="item"
                 :quoteType="quoteType"
                 :uuid="quote.uuid"

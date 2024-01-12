@@ -101,7 +101,7 @@ class CarQuoteService extends BaseService
                 'cqr.plan_id',
                 'cp.text AS plan_id_text',
                 'cp.provider_id AS car_plan_provider_id',
-                //'cpip.text AS car_plan_provider_id_text',
+                'cpip.text AS car_plan_provider_id_text',
                 //'ppip.text AS prefill_plan_provider_id_text',
                 //'prefill_plan.text AS prefill_plan_id_text',
                 'cqr.quote_status_id',
