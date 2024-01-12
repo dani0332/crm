@@ -779,6 +779,48 @@ watch(
                         </tr>
                     </tbody>
                 </table>
+
+                <!-- ======================= supper Retention table ==================== -->
+                <table class="x-table relative w-50 mt-10">
+                    <thead class="align-bottom bg-primary-700">
+                        <tr class="text-sm text-gray-600 border-b">
+                            <th class="py-2 font-semibold tracking-widest uppercase text-xs px-3 sticky top-0 text-left">
+                                Batch No.
+                            </th>
+                            <th
+                                class="py-2 font-semibold tracking-widest uppercase text-xs px-3 sticky top-0 text-left w-28">
+                                Week Ending
+                            </th>
+                            <th class="py-2 font-semibold tracking-widest uppercase text-xs px-3 sticky top-0 text-left">
+                                Converted (Health)
+                            </th>
+                            <th class="py-2 font-semibold tracking-widest uppercase text-xs px-3 sticky top-0 text-left">
+                                Monthly Super Retention
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="(item, index) in reportDataRef" :key="index"
+                            class="border-b border-gray-200 align-top">
+
+                            <td class="x-table-cell px-3 py-4 align-middle">
+                                {{ item.name }}
+                            </td>
+                            <td class="x-table-cell px-3 py-4 align-middle">
+                                {{ useDateFormat(item.end_date, 'MMM DD').value }}
+                            </td>
+                            <td class="x-table-cell px-3 py-4 align-middle">
+                                {{ item.health_converted}}
+                            </td>
+                            <td class="x-table-cell px-3 py-4 align-middle">
+                                {{ (item.renewed + item.health_converted ) /
+                                        parseInt(item.total_allocated_leads) - (parseInt(item.car_sold)).toLocaleString
+                                }} %
+                            </td>
+
+                        </tr>
+                    </tbody>
+                </table>
             </div>
         </div>
 

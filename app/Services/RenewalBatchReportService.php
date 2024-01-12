@@ -49,6 +49,7 @@ class RenewalBatchReportService extends BaseService
                 $qry->on('payments.paymentable_id', '=', 'car_quote_request.id')
                     ->whereIn('payments.payment_status_id', [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PARTIAL_CAPTURED]);
             })
+            ->leftJoin('health_quote_request', 'health_quote_request.advisor_id', '=', 'car_quote_request.advisor_id')
             ->join('renewal_batches', 'renewal_batches.name', '=', 'car_quote_request.renewal_batch')
             ->where('car_quote_request.source', LeadSourceEnum::RENEWAL_UPLOAD)
             ->groupBy('car_quote_request.renewal_batch')
@@ -56,6 +57,7 @@ class RenewalBatchReportService extends BaseService
 
         $query = $this->applyFilters($query, $request->all());
 
+        // dd($query->get()->toArray());
         return $query->paginate(15)
             ->withQueryString();
     }
@@ -288,6 +290,10 @@ class RenewalBatchReportService extends BaseService
                     and car_lost_quote_logs.status = "Approved"
                     and car_lost_quote_logs.updated_at <="'.$reportDateEnd.'"
                     THEN 1 ELSE 0 END) as uncontactable'),
+
+                DB::raw('SUM(CASE WHEN health_quote_request.source = "'.LeadSourceEnum::IMCRM.'"
+                    and health_quote_request.quote_status_id = '.QuoteStatusEnum::TransactionApproved.'
+                    and payments.captured_at <= "'.$reportDateEnd.'" THEN 1 ELSE 0 END) as health_converted'),
             );
         } elseif ($authUserIsAdvisor) {
             $query->addSelect(
@@ -328,6 +334,11 @@ class RenewalBatchReportService extends BaseService
                     and car_lost_quote_logs.updated_at <="'.$reportDateEnd.'"
                     and car_quote_request.advisor_id in ('.$teamUsersIdsString.')
                     THEN 1 ELSE 0 END) as uncontactable_by_all_advisors'),
+
+                DB::raw('SUM(CASE WHEN health_quote_request.source = "'.LeadSourceEnum::IMCRM.'"
+                    and health_quote_request.quote_status_id = '.QuoteStatusEnum::TransactionApproved.'
+                    and health_quote_request.advisor_id = '.$authUserId.'
+                    and payments.captured_at <= "'.$reportDateEnd.'" THEN 1 ELSE 0 END) as health_converted'),
             );
         }
 
