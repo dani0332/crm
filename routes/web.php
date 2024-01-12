@@ -490,8 +490,8 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::get('/insurance-provider-plans', [ClaimController::class, 'carPlansByInsuranceProvider']);
     Route::get('/insurance-provider-plans-health', [HealthQuoteController::class, 'plansByInsuranceProvider']);
     //health plan manual add routes
-     Route::get('/network-plans-health', [HealthQuoteController::class, 'plansByNetwork']);
-     Route::get('/health-plan-copays', [HealthQuoteController::class, 'copaysByPlan']);
+    Route::get('/network-plans-health', [HealthQuoteController::class, 'plansByNetwork']);
+    Route::get('/health-plan-copays', [HealthQuoteController::class, 'copaysByPlan']);
 
     Route::get('/insurance-provider-networks', [HealthQuoteController::class, 'networksByInsuranceProvider']);
     Route::post('/car-plan-manual-update-process', [ClaimController::class, 'carPlanUpdateManualProcess']);

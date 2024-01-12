@@ -3,8 +3,6 @@
 namespace Database\Seeders;
 
 use App\Models\HealthPlan;
-use App\Models\HealthRatingEligibility;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
