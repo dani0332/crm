@@ -34,7 +34,7 @@ class SaleSummaryReportService extends ManagementReport
                 DB::raw('SUM(CASE WHEN send_updates.id IS NOT NULL AND lookups.code = "Financial" THEN 1 ELSE 0 END) as total_endorsements'),
                 DB::raw('SUM(CASE WHEN COALESCE(policy_issuance_date, policy_number) IS NOT NULL THEN 1 ELSE 0 END) + SUM(CASE WHEN send_updates.id IS NOT NULL AND lookups.code = "Financial" THEN 1 ELSE 0 END) as total_transaction'),
                 DB::raw('SUM(price_vat_applicable) as price_vat_applicable'),
-                DB::raw('(SUM(price_vat_applicable)* 0.05)  as total_vat'),
+                DB::raw('(SUM(price_vat_applicable) * 0.05)  as total_vat'),
                 DB::raw('SUM(price_vat_not_applicable) as price_vat_not_applicable'),
                 DB::raw('SUM(payments.discount_value) as discount'),
                 DB::raw('(SUM(payments.commission_vat_applicable) ) as commission_vat_applicable'),
