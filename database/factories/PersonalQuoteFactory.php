@@ -15,6 +15,7 @@ class PersonalQuoteFactory extends Factory
     {
         $priceType = $this->faker->randomElement(['price_vat_applicable', 'price_vat_not_applicable']);
         $commissionType = $this->faker->randomElement(['commission_vat_applicable', 'commission_vat_not_applicable']);
+
         return [
             'uuid' => $this->faker->uuid,
             'advisor_id' => User::all()->random()->id,
