@@ -56,11 +56,7 @@ const form = useForm({
   parentCategory: null,
   childCategory: null,
   option: null,
-  quote_type_id: null,
-  reportable_type: props.reportableType,
-  reportable_uuid: props.reportableUuid,
-  reportable_id: props.reportableId,
-  status: page.props.sendUpdateEnum.NEW_REQUEST
+  quote_type_id: null,  
 })
 
 const resetForm = () => {
@@ -140,16 +136,27 @@ const onAddUpdate = (autoSubmit) => {
   optionError.value = false;
 
   form
-    .transform(data => ({
-      ...data,
-      quote_type_id: props.quote_type_id,
-      reportable_type: `App\\Models\\${data.reportable_type}`,
-      refURL: page.url,
-    }))
+    .transform(data => {
+      let childCatgeory = data.childCategory;
+      let option = childCatgeory.childs.find(item => item.id === data.option);
+      childCatgeory.option = option || null;
+      delete childCatgeory.childs;
+      
+      return {
+        quote_type_id: props.quote_type_id,
+        reportable_type: `App\\Models\\${props.reportableType}`,
+        refURL: page.url,
+        childCategory: childCatgeory,
+        option_id: option?.id || null,
+        reportable_uuid: props.reportableUuid,
+        reportable_id: props.reportableId,
+        status: page.props.sendUpdateEnum.NEW_REQUEST
+      }
+    })
     .post(route('send-update-logs.store'), {
       onSuccess: () => {
         modals.show = false
-        resetForm()
+        // resetForm()
         // sendUpdatesTable.data = [...sendUpdatesTable.data, form.data]
       }    
     })
@@ -161,11 +168,11 @@ const findOption = (item, key) => {
     if (option.id === item[key]) {
       title = option.title;
     } else {
-      option.childs.forEach(child => {
+      option?.childs?.forEach(child => {
         if (child.id === item[key]) {
           title = child.title;
         } else {
-          child.childs.forEach(grandChild => {
+          child?.childs?.forEach(grandChild => {
             if (grandChild.id === item[key]) {
               title = grandChild.title;
             }
@@ -313,7 +320,7 @@ const findOption = (item, key) => {
       </div>
 
       <!-- modal 3 -->
-      <div class="w-full flex gap-5 mb-10" v-else-if="modals.step === 'step3' && form.childCategory.childs.length > 0">
+      <div class="w-full flex gap-5 mb-10" v-else-if="modals.step === 'step3' && form.childCategory?.childs?.length > 0">
         <div class="flex flex-col gap-2 flex-grow w-75">
           <x-field :label="form.childCategory.title" required>
             <ComboBox

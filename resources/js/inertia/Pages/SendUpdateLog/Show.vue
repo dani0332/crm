@@ -10,6 +10,8 @@ const props = defineProps({
   sendUpdateOptions: Array,
   insuranceProviders: Object,
   sendUpdateStatusEnum: Object,
+  quote: Object,
+  indicativePrice: Object
 });
 
 const page = usePage();
@@ -33,13 +35,17 @@ const selectedCategory = computed(() => {
         category.subCategory = {...subCategory};
         delete category.subCategory.childs;
 
-        for (let option of subCategory.childs || []) {
-          if (option.id === props.sendUpdateLog.option_id) {
-            category.subCategory.option = {...option};
+        if (subCategory.childs?.length) {
+          for (let option of subCategory.childs || []) {
+            if (option.id === props.sendUpdateLog.option_id) {
+              category.subCategory.option = {...option};
+            }
           }
-        }
-
-        category.subCategory.options = [...subCategory.childs];
+          category.subCategory.options = [...subCategory.childs];
+        } else {
+          category.subCategory.option = null;
+          category.subCategory.options = [];
+        }        
       }
     }
   }
@@ -85,9 +91,17 @@ const changeReasonOptions = computed(() => {
   return [];
 }); 
 
+const showPolicyDetails = computed(() => {
+  return (
+    (selectedCategory?.value?.subCategory.slug === 'EF' && selectedCategory?.value?.subCategory.option.slug === 'PPE') ||
+    selectedCategory?.value?.subCategory.slug === 'CIR' ||
+    selectedCategory?.value?.subCategory.slug === 'CPD'
+  );
+})
+
 const sendUpdateForm = useForm({
   notes: props.sendUpdateLog?.notes || '',
-  option: props.sendUpdateLog?.option_id || null,
+  option_id: props.sendUpdateLog?.option_id || null,
   change_reason: props.sendUpdateLog?.change_reason || '',
   reportable_id: props.sendUpdateLog?.reportable_id || null,
   childCategory: selectedCategory?.value?.subCategory,
@@ -184,7 +198,7 @@ const onUpdateLog = () => {
                 <x-select
                   size="xs"
                   :disabled="!state.edit"
-                  v-model="sendUpdateForm.option"
+                  v-model="sendUpdateForm.option_id"
                   :options="updateLogOptions"
                 />
               </dd>
@@ -240,6 +254,7 @@ const onUpdateLog = () => {
       :sendUpdateLog="sendUpdateLog"
       :insuranceProviders="insuranceProviders"
       :selectedCategory="selectedCategory"
+      :indicativePrice="indicativePrice"
     />
 
     <!-- <LazyPlanDetails
@@ -249,11 +264,12 @@ const onUpdateLog = () => {
       :selectedType="selectedType"
     /> -->
 
-    <!-- show against (EF -> PPE) || (CIR) || (CPD) -->
     <LazyPolicyDetails
+      v-if="showPolicyDetails"
       :sendUpdateLog="sendUpdateLog"
       :insuranceProviders="insuranceProviders"
       :selectedCategory="selectedCategory"
+      :quote="quote"
     />
 
     <!-- Documents Component goes here -->

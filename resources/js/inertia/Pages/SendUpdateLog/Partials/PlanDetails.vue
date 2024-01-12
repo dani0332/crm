@@ -103,7 +103,7 @@ const onUpdate = () => {
         <div class="flex justify-between gap-4 items-center">
           <x-tooltip position="right">
             <h3 class="font-semibold text-primary-800 text-lg">
-              Indicative Additional Price
+              Plan Details
             </h3>
             <template #tooltip>
               Refers to an estimated cost that may be added to the policy.

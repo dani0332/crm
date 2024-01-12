@@ -29,7 +29,7 @@ class SendUpdateLogRepository extends BaseRepository
                 'reportable_id' => $data['reportable_id'],
                 'quote_type_id' => $data['quote_type_id'],
                 'category_id' => $data['childCategory']['id'],
-                'option_id' => $data['option'],
+                'option_id' => $data['option_id'],
                 'status' => $data['status'],
                 'uuid' => $uuid,
                 'code' => $code
@@ -58,7 +58,7 @@ class SendUpdateLogRepository extends BaseRepository
         try {
             $log = $this->where('id', $id)->update([
                 'notes' => $data['notes'],
-                'option_id' => $data['option'],
+                'option_id' => $data['option_id'],
             ]);
         } catch(\Exception $ex) {
             $log = (object) [

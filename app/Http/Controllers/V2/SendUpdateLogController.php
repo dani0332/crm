@@ -3,12 +3,12 @@
 namespace App\Http\Controllers\V2;
 
 use App\Enums\QuoteStatusEnum;
-use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\PlanDetailsRequest;
 use App\Models\IndicativeAdditionalPrice;
+use App\Repositories\IndicativeAdditionalPriceRepository;
 use App\Repositories\InsuranceProviderRepository;
 use App\Repositories\SendUpdateLogRepository;
 use App\Services\LookupService;
@@ -40,15 +40,25 @@ class SendUpdateLogController extends Controller
     {
         $sendUpdateLog = SendUpdateLogRepository::getLogByUuid($uuid);
 
-        $sendUpdateOptions = (new LookupService)->getSendUpdateOptions($sendUpdateLog->quote_type_id);
-        $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping($sendUpdateLog->quote_type_id);
+        $quoteTypeId = $sendUpdateLog->quote_type_id;
+
+        $sendUpdateOptions = (new LookupService)->getSendUpdateOptions($quoteTypeId);
+        $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping($quoteTypeId);
+
+        $indicativePrice = IndicativeAdditionalPriceRepository::getBySendUpdateLogId($sendUpdateLog->id);
+
+        $quoteType = QuoteTypes::getName($sendUpdateLog->quote_type_id)->value;
+
+        $quote = $this->getQuote($sendUpdateLog->reportable_id, $quoteType);
 
         return inertia('SendUpdateLog/Show', [
+            'quote' => $quote,
+            'quoteType' => $quoteType,
             'sendUpdateLog' => $sendUpdateLog,
+            'indicativePrice' => $indicativePrice,
             'sendUpdateOptions' => $sendUpdateOptions,
             'insuranceProviders' => $insuranceProviders,
             'sendUpdateStatusEnum' => SendUpdateLogStatusEnum::asArray(),
-            'quoteType' => QuoteTypes::getName($sendUpdateLog->quote_type_id)
         ]);
     }
 
@@ -78,28 +88,13 @@ class SendUpdateLogController extends Controller
         return redirect()->back();
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
-    {
-        //
-    }
-
-    // public function getLogsById($id)
-    // {
-    //     $logs = SendUpdateLogRepository::getLogsById($id);
-
-    //     return response()->json(compact('logs'));
-    // }
-
     public function updateQuoteLeadStatus($data, $type)
     {
         $quoteId = $data['reportable_id'];
         
         $selectedType = $data['childCategory']['slug'];
         
-        $subType = $this->getSubType($data['childCategory']['childs'], $data['option']);
+        $subType = $data['childCategory']['option'];
 
         $model = $data['reportable_type'];
         
@@ -107,7 +102,7 @@ class SendUpdateLogController extends Controller
 
             switch ($selectedType) {
                 case 'EF':
-                    if ($subType['slug'] === 'MPC') {
+                    if ($subType && $subType['slug'] === 'MPC') {
                         $model::where('id', $quoteId)->update([
                             'quote_status_id' => QuoteStatusEnum::CancellationPending
                         ]);
@@ -144,16 +139,11 @@ class SendUpdateLogController extends Controller
         }
     }
 
-    private function getSubType($list, $optionId) 
-    {
-        return collect($list)->where('id', $optionId)->first();
-    }
-
     public function saveIndicativePrices(Request $request)
     {
         $data = $request->all();
 
-        $response = IndicativeAdditionalPrice::firstOrCreate([
+        $response = IndicativeAdditionalPrice::updateOrCreate([
             'send_update_log_id' => $data['send_update_log_id'],
         ], $data);
 
@@ -161,7 +151,7 @@ class SendUpdateLogController extends Controller
 
         $sendUpdateLog->update(['status' => SendUpdateLogStatusEnum::REQUEST_IN_PROGRESS]);
 
-        return redirect()->back()->with('success', 'updated successfully');
+        return redirect()->back();
     }
 
     public function savePlanDetails(PlanDetailsRequest $request)
@@ -169,7 +159,7 @@ class SendUpdateLogController extends Controller
         $id = $request->id;
         $quoteTypeId = $request->quote_type_id;
         
-        $quoteType = QuoteTypes::getName($quoteTypeId);
+        $quoteType = QuoteTypes::getName($quoteTypeId)->value;
 
         $repository = getRepositoryObject($quoteType);
 
@@ -177,5 +167,12 @@ class SendUpdateLogController extends Controller
         $quote->update($request->validated());
 
         return redirect()->back()->with('success', 'updated successfully');
+    }
+
+    private function getQuote($quoteId, $quoteType)
+    {
+        $repository = getRepositoryObject($quoteType);
+
+        return $repository::where('id', $quoteId)->first();
     }
 }

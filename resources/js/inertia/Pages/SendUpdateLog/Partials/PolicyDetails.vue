@@ -14,11 +14,31 @@ const props = defineProps({
     type: Object,
     required: true,
   },
+	quote: {
+    type: Object,
+    required: true,
+  },
 });
 
 const state = reactive({
   isEdit: false,
 });
+
+const policyDetailsForm = useForm({
+	first_name: props.quote?.first_name || '',
+	last_name: props.quote?.last_name || '',
+	provider_name: '',
+	plan_name: '',
+	policy_number: props.quote?.policy_number || '',
+	issuance_date: props.quote.policy_issuance_date || '',
+	start_date: props.quote?.policy_start_date || '',
+	expiry_date: props.quote?.renewal_expiry_date || '',
+	insurer_quote_number: '',
+	issuance_status: '',
+	insurance_provider_id: '',
+	send_update_log_id: props.sendUpdateLog.id,
+	uuid: props.sendUpdateLog.uuid,
+})
 
 // const onUpdate = () => {
 //   planDetailsForm.post(
@@ -69,8 +89,10 @@ const state = reactive({
               </dt>
               <dd>
 								<x-input
+									v-if="selectedCategory.subCategory.slug === 'CPD'"
+									:disabled="!state.isEdit"
 								/>
-								<!-- My first name -->
+								<span v-else>{{ policyDetailsForm.first_name }}</span>
 							</dd>
             </div>
 
@@ -86,8 +108,10 @@ const state = reactive({
 							</dt>
 							<dd>
 								<x-input
+									v-if="selectedCategory.subCategory.slug === 'CPD'"
+									:disabled="!state.isEdit"
 								/>
-								<!-- My last name -->
+								<span v-else>{{ policyDetailsForm.last_name }}</span>
 							</dd>
             </div>
 
@@ -103,7 +127,10 @@ const state = reactive({
               </dt>
               <dd>
 								<x-input
+									v-if="selectedCategory.subCategory.slug === 'CPD'"
+									:disabled="!state.isEdit"
 								/>
+								<span v-else>{{ 'in' }}</span>
 								<!-- Provider Name -->
 							</dd>
             </div>
@@ -120,7 +147,10 @@ const state = reactive({
 							</dt>
 							<dd>
 								<x-input
+									v-if="selectedCategory.subCategory.slug === 'CPD'"
+									:disabled="!state.isEdit"
 								/>
+								<span v-else>{{ 'in' }}</span>
 								<!-- Plan Name -->
 							</dd>
             </div>
@@ -137,8 +167,12 @@ const state = reactive({
               </dt>
               <dd>
 								<x-input
+									v-if="selectedCategory.subCategory.slug === 'CPD'"
+									:disabled="!state.isEdit"
+									v-model="policyDetailsForm.policy_number"
+									type="number"
 								/>
-								<!-- Policy Number -->
+								<span v-else>{{ policyDetailsForm.policy_number }}</span>
 							</dd>
             </div>
 
@@ -154,7 +188,10 @@ const state = reactive({
               </dt>
               <dd>
 								<x-input
+									v-if="selectedCategory.subCategory.slug === 'CPD'"
+									:disabled="!state.isEdit"
 								/>
+								<span v-else>{{ 'in' }}</span>
 								<!-- Issuance Date -->
 							</dd>
             </div>
@@ -171,7 +208,10 @@ const state = reactive({
               </dt>
               <dd>
 								<x-input
+									v-if="selectedCategory.subCategory.slug === 'CPD'"
+									:disabled="!state.isEdit"
 								/>
+								<span v-else>{{ 'in' }}</span>
 								<!-- Start Date -->
 							</dd>
             </div>
@@ -188,7 +228,10 @@ const state = reactive({
               </dt>
               <dd>
 								<x-input
+									v-if="selectedCategory.subCategory.slug === 'CPD'"
+									:disabled="!state.isEdit"
 								/>
+								<span v-else>{{ 'in' }}</span>
 								<!-- Expiry Date -->
 							</dd>
             </div>
@@ -204,8 +247,11 @@ const state = reactive({
                 </x-tooltip>
               </dt>
               <dd>
-								<x-input
+								<x-select
+									v-if="selectedCategory.subCategory.slug !== 'CPD'"
+									:disabled="!state.isEdit"
 								/>
+								<span v-else>{{ 'in' }}</span>
 								<!-- Insurer Quote Number -->
 							</dd>
             </div>

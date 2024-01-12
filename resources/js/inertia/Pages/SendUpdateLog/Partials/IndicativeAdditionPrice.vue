@@ -13,47 +13,28 @@ const props = defineProps({
   selectedCategory: {
     type: Object,
     required: true
+  },
+  indicativePrice: {
+    type: Object,
+    required: true
   }
 })
+
+const notification = useToast();
 
 const state = reactive({
   isEdit: false,
 });
 
 const additionalPriceForm = useForm({
-  price_with_vat: 0,
-  price_without_vat: 0,
-  total_price: 0,
+  price_with_vat: props.indicativePrice?.price_with_vat || 0,
+  price_without_vat: props.indicativePrice?.price_without_vat || 0,
+  total_price: props.indicativePrice?.total_price || 0,
 	// insurer_quote_number: '',
   // insurance_provider_id: '',
   send_update_log_id: props.sendUpdateLog.id,
   uuid: props.sendUpdateLog.uuid,
 });
-
-// const insuranceProviderOptions = computed(() => {
-//   return props?.insuranceProviders?.map(provider => ({
-//     value: provider.id,
-//     label: provider.text,
-//   }));
-// });
-
-// watch(
-//   () => additionalPriceForm.price_with_vat,
-//   (newValue) => {
-//     let price = parseFloat(newValue);
-//     additionalPriceForm.total_price = ((price / 100) * 5) + price;
-//   },
-//   { deep: true }
-// )
-
-// watch(
-//   () => additionalPriceForm.price_without_vat,
-//   (newValue) => {
-//     let price = parseFloat(newValue);
-//     additionalPriceForm.total_price = ((price / 100) * 5) + price;
-//   },
-//   { deep: true }
-// )
 
 const updateTotalPrice = () => {
   if (additionalPriceForm.price_with_vat != "") {
