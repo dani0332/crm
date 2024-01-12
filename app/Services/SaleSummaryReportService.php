@@ -2,7 +2,8 @@
 
 namespace App\Services;
 
-use App\Enums\{ManagementReportCategoriesEnum, ManagementReportTypeEnum};
+use App\Enums\ManagementReportCategoriesEnum;
+use App\Enums\ManagementReportTypeEnum;
 use App\Models\PersonalQuote;
 use App\Strategies\ManagementReport;
 use App\Traits\TeamHierarchyTrait;
