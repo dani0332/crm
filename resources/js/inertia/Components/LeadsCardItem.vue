@@ -6,6 +6,8 @@ import {
 import { daysSinceStale } from '../Composables/utilities';
 
 const page = usePage();
+const can = permission => useCan(permission);
+const permissionsEnum = page.props.permissionsEnum;
 
 const props = defineProps({
   leads: {
@@ -30,11 +32,12 @@ const leadForm = useForm({
 });
 
 const canDrag = computed(() => {
-  return props.id == quoteStatusEnum?.Lost ||
-    props.id == quoteStatusEnum?.TransactionApproved ||
-    props.id == quoteStatusEnum?.PolicyIssued
-    ? false
-    : true;
+  return can(permissionsEnum.LEAD_CARD_SEARCH) ?? false;
+  // props.id == quoteStatusEnum?.Lost ||
+  //   props.id == quoteStatusEnum?.TransactionApproved ||
+  //   props.id == quoteStatusEnum?.PolicyIssued
+  //   ? false
+  //   : true;
 });
 
 const notification = useToast();
@@ -103,10 +106,12 @@ useSortable(`#${props.title}`, props.leads, {
       to: { quote_status_id: e.to.getAttribute('quote_status_id') },
     };
 
-    console.log(data.to.quote_status_id, quoteStatusEnum?.TransactionApproved);
-
     // Todo: Need to update with Enum
-    if (data && data.to.quote_status_id == quoteStatusEnum?.Lost) {
+    if (
+      data &&
+      data.to.quote_status_id == quoteStatusEnum?.Lost &&
+      quoteTypeId == '3'
+    ) {
       let response = await moveTask(e);
       if (!response) {
         var itemEl = e.item; // dragged HTMLElement
