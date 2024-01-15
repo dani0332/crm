@@ -233,7 +233,10 @@ onMounted(() => {
     <div class="flex justify-between items-center">
       <h2 class="text-xl font-semibold">Lead List</h2>
       <div class="flex items-center space-x-2">
-        <column-selection v-model:columns="tableHeader"></column-selection>
+        <column-selection
+          :storageKey="'corpline'"
+          v-model:columns="tableHeader"
+        ></column-selection>
 
         <Link :href="route('business.cards')">
           <x-button size="sm" color="#1d83bc" tag="div"> Cards View</x-button>

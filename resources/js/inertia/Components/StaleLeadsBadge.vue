@@ -8,13 +8,17 @@ const props = defineProps({
 });
 </script>
 <template>
-  <x-tooltip v-if="daysSinceStale(date) !== false">
-    <p class="bg-red-600 px-1 rounded text-[9px] text-white">
-      {{ daysSinceStale(date) }}
-      days
-    </p>
-    <template #tooltip>
-      <span>Days elapsed since the lead was flagged as stale</span>
-    </template>
-  </x-tooltip>
+  <div v-if="daysSinceStale(date) !== false" class="relative self-end -mt-2">
+    <x-tooltip align="right" position="bottom">
+      <p class="bg-red-600 px-1 rounded text-[10px] text-white">
+        {{ daysSinceStale(date) }}
+        days
+      </p>
+      <template #tooltip>
+        <div class="max-w-[160px] text-xs">
+          <span>Days elapsed since the lead was flagged as stale</span>
+        </div>
+      </template>
+    </x-tooltip>
+  </div>
 </template>

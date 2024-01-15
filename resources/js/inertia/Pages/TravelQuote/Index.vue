@@ -58,6 +58,7 @@ const outboundCoverageCode = [
   { value: 'singleTrip', label: 'Single Trip' },
   { value: 'annualTrip', label: 'Annual Trip' },
 ];
+
 const tableHeader = [
   { text: 'Ref-ID', value: 'code' },
   { text: 'FIRST NAME', value: 'first_name' },
@@ -245,7 +246,10 @@ onMounted(() => {
     <div class="flex justify-between items-center">
       <h2 class="text-xl font-semibold">Lead List</h2>
       <div class="flex space-x-2 items-center">
-        <column-selection :columns="tableHeader"></column-selection>
+        <!-- <column-selection
+          :storageKey="quoteType"
+          v-model:columns="tableHeader"
+        ></column-selection> -->
 
         <Link :href="route('travel.expired.upload')" v-if="permissions.admin">
           <x-button size="sm" color="#1d83bc" tag="div">
