@@ -3325,8 +3325,8 @@ const handleChildUpdate = planId => {
     <BookPolicy
       v-if="
         canAny([
-          permissionsEnum.VIEW_INSLY_BOOK_POLICY,
-          permissionsEnum.SEND_INSLY_BOOK_POLICY,
+          permissionEnum.VIEW_INSLY_BOOK_POLICY,
+          permissionEnum.SEND_INSLY_BOOK_POLICY,
         ])
       "
       :quote="record"
