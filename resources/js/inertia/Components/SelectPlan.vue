@@ -13,11 +13,7 @@ const isLoading = ref(false);
 const emit = defineEmits(['update:selectedPlanChanged']);
 
 const updateSelectedPlan = () => {
-
-
-    //console.log("PLANN", props.plan, " TOTALL", (props.plan.actualPremium + (props.plan.policyFee || 0) + (props.plan.basmah || 0) + props.plan.vat))
-    //console.log('COOOO', props.plan.selectedCopayId);
-    //console.log('full plan:' , props.plan);
+    
     isLoading.value = true;
 
     let data = {
@@ -31,7 +27,6 @@ const updateSelectedPlan = () => {
 
     axios.post(`/personal-quotes/${props.quoteType}/${props.uuid}/update-selected-plan`, data)
         .then(res => {
-           // console.log('ken:',res.data.plan.planProcessValue[0].totalPremium);
             isLoading.value = false;
             let premium = 0;
             console.log(props.quoteType.toLowerCase())

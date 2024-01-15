@@ -825,13 +825,6 @@ const getSmallestCopayRateAsDefaultValue = () => {
     }
   });
 
-  console.log('cop planId:' , "HERE:" , plansTable.data);
-  plansTable.data.forEach(element => {
-    console.log('cop planId: klkjlklkkl');
-    console.log('cop planId:', element.id, ' : selectedCoPayId:' . element.selectedCopayId);
-  });
-  console.log('COPAYPY:', plansTable.data)
-
 };
 
 const onSelectedCopay = data => {
@@ -839,7 +832,6 @@ const onSelectedCopay = data => {
   selectedCoPay.premium = Number(data.premium);
   selectedCoPay.vat = Number(data.vat);
   selectedCoPay.planId = data.planId;
-  console.log('PlanId::', data.planId, 'premiumd:' , data.premium)
   getSmallestCopayRateAsDefaultValue();
 };
 
