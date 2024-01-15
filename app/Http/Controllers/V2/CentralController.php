@@ -172,8 +172,7 @@ class CentralController extends Controller
     {
         $response = (new CentralService())->updateSelectedPlan($quoteType, $uuid, $planId);
 
-
-        if(!empty($response->message)) {
+        if (! empty($response->message)) {
             return redirect()->back()->with('error', $response->message);
         }
 

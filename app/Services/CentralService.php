@@ -198,9 +198,6 @@ class CentralService
     }
 
     /**
-     * @param $quoteType
-     * @param $code
-     * @param $data
      * @return true
      */
     public function savePlanDetails($quoteType, $code, $data)
@@ -232,7 +229,7 @@ class CentralService
                     'planId' => intval($planId),
                     'quoteTypeId' => QuoteTypeId::Car,
                     'quoteUID' => $uuid,
-                    'callSource' => LeadSourceEnum::IMCRM
+                    'callSource' => LeadSourceEnum::IMCRM,
                 ];
                 break;
             case QuoteTypes::TRAVEL->value:
@@ -241,8 +238,8 @@ class CentralService
                     'quoteTypeId' => QuoteTypeId::Car,
                     'quoteUID' => $uuid,
                     'plans' => [
-                        ['id' => intval($planId), 'addonOptionIds' => []]
-                    ]
+                        ['id' => intval($planId), 'addonOptionIds' => []],
+                    ],
                 ];
                 break;
             case QuoteTypes::HEALTH->value:
@@ -253,15 +250,16 @@ class CentralService
                     'addonOptionIds' => [],
                     'healthPlanCoPaymentId' => null,
                     'quoteUID' => $uuid,
-                    'callSource' => LeadSourceEnum::IMCRM
+                    'callSource' => LeadSourceEnum::IMCRM,
                 ];
                 break;
         }
 
-        info('fn: updateSelectedPlan quoteType: ' . $quoteType . ' uuid: ' . $uuid . ' data: ' . json_encode($data));
+        info('fn: updateSelectedPlan quoteType: '.$quoteType.' uuid: '.$uuid.' data: '.json_encode($data));
 
         $response = Ken::request($endpoint, 'post', $data);
 
+        //dd(json_encode($response));
         return $response;
     }
 
