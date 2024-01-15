@@ -1954,7 +1954,7 @@ const genderList = [
         <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">PRICE</dt>
-            <dd>{{ ecomDetails.premium }}</dd>
+            <dd>{{ selectedProviderPlan.premium }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">PAID AT</dt>
