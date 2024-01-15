@@ -166,7 +166,10 @@ watch(
       <h2 class="text-xl font-semibold">Yacht Quotes List</h2>
 
       <div class="flex items-center space-x-2">
-        <column-selection v-model:columns="tableHeader"></column-selection>
+        <column-selection
+          :storageKey="quoteType"
+          v-model:columns="tableHeader"
+        ></column-selection>
 
         <Link :href="route('yacht-quotes-card')">
           <x-button size="sm" color="#1d83bc" tag="div"> Cards View </x-button>

@@ -6,9 +6,17 @@ const props = defineProps({
     type: Array,
     required: true,
   },
+  storageKey: {
+    type: String,
+    required: true,
+  },
 });
 
 const headers = ref([...props.columns]);
+// Unique key for storing the state
+const storedState = useStorage(props.storageKey, {});
+const storedColumns = storedState.value.columns || props.columns;
+
 const columnShown = computed(() => {
   return headers.value.filter(column => column.is_active);
 });
@@ -29,7 +37,17 @@ const updateColumns = () => {
     'update:columns',
     headers.value.filter(x => x.is_active),
   );
+  storedState.value.columns = headers.value;
 };
+
+onMounted(() => {
+  // Set the initial state using stored columns
+  headers.value = storedColumns;
+  emit(
+    'update:columns',
+    headers.value.filter(x => x.is_active),
+  );
+});
 </script>
 <template>
   <div class="inline relative" ref="list" id="list">

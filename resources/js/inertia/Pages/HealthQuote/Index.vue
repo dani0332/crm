@@ -268,7 +268,10 @@ onMounted(() => {
         :userMaxCap="userMaxCap"
       />
       <div class="flex space-x-2 items-center">
-        <column-selection :columns="tableHeader"></column-selection>
+        <column-selection
+          :storageKey="'health'"
+          v-model:columns="tableHeader"
+        ></column-selection>
         <Link :href="route('health.cards')">
           <x-button size="sm" color="#1d83bc" tag="div"> Cards View </x-button>
         </Link>
