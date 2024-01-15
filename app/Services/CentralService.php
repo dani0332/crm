@@ -6,11 +6,14 @@ use App\Enums\GenericRequestEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Facades\Capi;
+use App\Models\Activities;
+use App\Models\ActivitySchedule;
 use App\Models\PersonalQuote;
 use App\Models\PersonalQuoteDetail;
 use App\Repositories\PersonalQuoteRepository;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
+use Hidehalo\Nanoid\Client;
 use Illuminate\Support\Facades\DB;
 use Log;
 
@@ -201,7 +204,34 @@ class CentralService
 
     public function saveAndAssignActivitesToAdvisor($quoteDetails, $quoteTypeId)
     {
-        dd($quoteDetails->toArray(), $quoteTypeId);
+        $getActivitySchedule = ActivitySchedule::where([
+            'quote_type_id' => $quoteTypeId,
+            'quote_status_id' => $quoteDetails->quote_status_id,
+        ])->whereIn('role_id', auth()->user()->roles->pluck('id')->toArray())
+        ->orderBy('sorting_order')->first();
+
+        if($getActivitySchedule && $quoteDetails->advisor_id) {
+
+            $activity = Activities::create([
+                'title' => $getActivitySchedule->name,
+                'description' => $getActivitySchedule->description,
+                'quote_request_id' => $quoteDetails->id,
+                'quote_type_id' => $quoteTypeId,
+                'status' => 0,
+                'created_at' => Carbon::now(),
+                'updated_at' => Carbon::now(),
+                'assignee_id' => $quoteDetails->advisor_id ?? auth()->user()->id,
+                'uuid' => generateUuid(),
+                'due_date' => addDaysExcludeWeekend($getActivitySchedule->due_days),
+                'client_name' => $quoteDetails->first_name.' '.$quoteDetails->last_name,
+                'client_email' => $quoteDetails->email,
+                'quote_uuid' => $quoteDetails->uuid,
+            ]);
+
+            return $activity;
+        }
+
+        return false;
     }
 
 }

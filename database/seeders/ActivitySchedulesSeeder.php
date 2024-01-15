@@ -19,6 +19,7 @@ class ActivitySchedulesSeeder extends Seeder
     public function run(): void
     {
 
+        // Todo:: Need to confirm roles and SubTeams as per production
         $rolesArray = [];
         $rolesUsedInActivities = [
             RolesEnum::HealthNewBusinessAdvisor,
@@ -469,7 +470,7 @@ class ActivitySchedulesSeeder extends Seeder
             foreach ($schedule['roles'] as $roleKey => $role) {
                 foreach ($role['teams'] as $teamKey => $team) {
                     foreach ($team['quote_status'] as $quoteStatusKey => $quoteStatus) {
-                        foreach ($quoteStatus['activities'] as $activity) {
+                        foreach ($quoteStatus['activities'] as $key => $activity) {
                             $finalSchedules[] = [
                                 'quote_type_id' => $schedule['quote_type_id'],
                                 'role_id' => $rolesArray[$roleKey],
@@ -477,6 +478,7 @@ class ActivitySchedulesSeeder extends Seeder
                                 'quote_status_id' => $quoteStatusKey,
                                 'name' => $activity['name'],
                                 'description' => $activity['name'],
+                                'sorting_order' => ++$key,
                                 'due_days' => $activity['due_days'],
                             ];
                         }

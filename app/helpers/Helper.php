@@ -551,3 +551,17 @@ if (! function_exists('dateQueryFilter')) {
         return [$currentDate, $currentDate];
     }
 }
+
+if (! function_exists('addDaysExcludeWeekend')) {
+    function addDaysExcludeWeekend($daysToAdd, $date = null)
+    {
+        $date = $date ?? Carbon::now();
+        $date = $date->addDays($daysToAdd);
+
+        if ($date->isWeekend()) {
+            $date = $date->addDays(2);
+        }
+
+        return $date;
+    }
+}

@@ -59,15 +59,21 @@ const updateList = data => {
       data,
     })
     .then(response => {
-      notification.success({
-        title: response.data.message,
-        position: 'top',
+      const success_messages = response.data.message;
+      Object.keys(success_messages).forEach(function (key) {
+        notification.success({
+          title: success_messages[key],
+          position: 'top',
+        }); 
       });
     })
     .catch(({ response }) => {
-      notification.error({
-        title: response.data.message,
-        position: 'top',
+      const error_messages = response.data.message;
+      Object.keys(error_messages).forEach(function (key) {
+        notification.error({
+          title: error_messages[key],
+          position: 'top',
+        }); 
       });
     });
 };
