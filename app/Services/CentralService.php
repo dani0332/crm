@@ -219,18 +219,19 @@ class CentralService
         return true;
     }
 
-    public function updateSelectedPlan($quoteType, $uuid, $planId)
+    public function updateSelectedPlan($quoteType, $uuid, $data)
     {
         //switch for quote type
         switch (ucfirst($quoteType)) {
             case QuoteTypes::CAR->value:
                 $endpoint = '/process-car-quote-plan';
                 $data = [
-                    'planId' => intval($planId),
+                    'planId' => intval($data->plan_id),
                     'quoteTypeId' => QuoteTypeId::Car,
                     'quoteUID' => $uuid,
                     'callSource' => LeadSourceEnum::IMCRM,
                 ];
+                return  Ken::request($endpoint, 'post', $data);
                 break;
             case QuoteTypes::TRAVEL->value:
                 $endpoint = '/process-travel-quote-plan';
@@ -238,29 +239,32 @@ class CentralService
                     'quoteTypeId' => QuoteTypeId::Car,
                     'quoteUID' => $uuid,
                     'plans' => [
-                        ['id' => intval($planId), 'addonOptionIds' => []],
+                        ['id' => intval($data->plan_id), 'addonOptionIds' => []],
                     ],
                 ];
+                return  Ken::request($endpoint, 'post', $data);
                 break;
             case QuoteTypes::HEALTH->value:
                 $endpoint = '/v1-process-booking';
                 $data = [
-                    'planId' => intval($planId),
+                    'planId' => intval($data->plan_id),
                     'quoteTypeId' => QuoteTypeId::Health,
                     'addonOptionIds' => [],
-                    'healthPlanCoPaymentId' => null,
+                    'healthPlanCoPaymentId' => intval($data->copay_id),
                     'quoteUID' => $uuid,
                     'callSource' => LeadSourceEnum::IMCRM,
                 ];
+                return Capi::request($endpoint, 'post', $data);
                 break;
         }
 
-        info('fn: updateSelectedPlan quoteType: '.$quoteType.' uuid: '.$uuid.' data: '.json_encode($data));
 
-        $response = Ken::request($endpoint, 'post', $data);
+        //info('fn: updateSelectedPlan quoteType: '.$quoteType.' uuid: '.$uuid.' data: '.json_encode($data));
+
+
 
         //dd(json_encode($response));
-        return $response;
+        //return $response;
     }
 
 }

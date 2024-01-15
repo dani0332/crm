@@ -14,22 +14,37 @@ const emit = defineEmits(['update:selectedPlanChanged']);
 
 const updateSelectedPlan = () => {
 
-    console.log('COOOO', props.plan.selectedCopayId);
-    console.log('full plan:' , props.plan);
+
+    //console.log("PLANN", props.plan, " TOTALL", (props.plan.actualPremium + (props.plan.policyFee || 0) + (props.plan.basmah || 0) + props.plan.vat))
+    //console.log('COOOO', props.plan.selectedCopayId);
+    //console.log('full plan:' , props.plan);
     isLoading.value = true;
-    axios.post(`/personal-quotes/${props.quoteType}/${props.uuid}/update-selected-plan/${props.plan.id}`)
+
+    let data = {
+        'plan_id' : props.plan.id
+    }
+
+    if(props.quoteType.toLocaleLowerCase() == 'health') {
+        data.copay_id = props.plan.selectedCopayId;
+    }
+
+
+    axios.post(`/personal-quotes/${props.quoteType}/${props.uuid}/update-selected-plan`, data)
         .then(res => {
-            console.log('ken:',res.data.plan.planProcessValue[0].totalPremium);
+           // console.log('ken:',res.data.plan.planProcessValue[0].totalPremium);
             isLoading.value = false;
             let premium = 0;
-            switch (quoteType.toLowerCase()) {
+            console.log(props.quoteType.toLowerCase())
+            switch (props.quoteType.toLowerCase()) {
                 case 'travel':
                     premium = res.data.plan.planProcessValue[0].totalPremium
                     break;
                 case 'car':
                     premium = res.data.plan.planProcessValue.totalPremium
                     break;
-            
+                case 'health' :                    
+                    premium = (props.plan?.actualPremium + (props.plan?.policyFee || 0) + (props.plan?.basmah || 0) + props.plan?.vat)
+                    break;
                 default:
                     break;
             }    
@@ -38,7 +53,7 @@ const updateSelectedPlan = () => {
                 id: props.plan.id,
                 providerName: props.plan.providerName,
                 planName: props.plan.name,
-                premium: res.data.plan.planProcessValue[0].totalPremium.toFixed(2)
+                premium: premium.toFixed(2)
             });            
             notification.success({
                     title: "Selected plan updated",
@@ -46,6 +61,7 @@ const updateSelectedPlan = () => {
             });
         })
         .catch(err => {           
+            console.log(err)
             isLoading.value = false;
             notification.error({
                 title:  err?.response?.data?.message ?? 'something went wrong',

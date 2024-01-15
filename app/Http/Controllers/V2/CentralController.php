@@ -18,6 +18,7 @@ use App\Http\Requests\DuplicateLobRequest;
 use App\Http\Requests\LeadAssignRequest;
 use App\Http\Requests\PlanDetailsRequest;
 use App\Http\Requests\UpdateLastYearPolicyRequest;
+use App\Http\Requests\UpdateSelectedPlanRequest;
 use App\Models\Customer;
 use App\Models\Entity;
 use App\Models\QuoteRequestEntityMapping;
@@ -168,13 +169,16 @@ class CentralController extends Controller
         return redirect()->back();
     }
 
-    public function updateSelectedPlan($quoteType, $uuid, $planId)
+    public function updateSelectedPlan(UpdateSelectedPlanRequest $request, $quoteType, $uuid)
     {
-        $response = (new CentralService())->updateSelectedPlan($quoteType, $uuid, $planId);
+        $response = (new CentralService())->updateSelectedPlan($quoteType, $uuid, $request->safe());
 
-        if (! empty($response->message)) {
-            return redirect()->back()->with('error', $response->message);
-        }
+//        dd(json_encode($response));
+//
+//        if (! empty($response->message)) {
+//            return redirect()->back()->with('error', $response->message);
+//        }
+
 
         return response()->json(['plan' => $response]);
     }

@@ -824,6 +824,14 @@ const getSmallestCopayRateAsDefaultValue = () => {
       element.vat = smallestCopayVAT;
     }
   });
+
+  console.log('cop planId:' , "HERE:" , plansTable.data);
+  plansTable.data.forEach(element => {
+    console.log('cop planId: klkjlklkkl');
+    console.log('cop planId:', element.id, ' : selectedCoPayId:' . element.selectedCopayId);
+  });
+  console.log('COPAYPY:', plansTable.data)
+
 };
 
 const onSelectedCopay = data => {
@@ -831,6 +839,7 @@ const onSelectedCopay = data => {
   selectedCoPay.premium = Number(data.premium);
   selectedCoPay.vat = Number(data.vat);
   selectedCoPay.planId = data.planId;
+  console.log('PlanId::', data.planId, 'premiumd:' , data.premium)
   getSmallestCopayRateAsDefaultValue();
 };
 
@@ -1334,6 +1343,24 @@ const prefillPlanId = ref(page.props.quote.prefill_plan_id);
 const handleChildUpdate = planId => {
   prefillPlanId.value = planId;
 };
+
+const selectedProviderPlan = ref({
+  id: page.props.quote.plan_id,
+  planName: page.props.quote.plan_id_text,
+  providerName: page.props.quote.car_plan_provider_id_text,
+  premium: page.props.ecomDetails.priceWithVAT
+
+});
+
+const handlePlanSelected = plan => {
+  console.log("HHH", plan);
+  //se.value = plan.id;
+  selectedProviderPlan.value.id = plan.id
+  selectedProviderPlan.value.planName = plan.planName
+  selectedProviderPlan.value.providerName = plan.providerName
+  selectedProviderPlan.value.premium = plan.premium
+};
+
 </script>
 
 <template>
@@ -2263,11 +2290,11 @@ const handleChildUpdate = planId => {
         <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">PLAN NAME</dt>
-            <dd>{{ ecomDetails.planName }}</dd>
+            <dd>{{ selectedProviderPlan.planName }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">PROVIDER NAME</dt>
-            <dd>{{ ecomDetails.providerName }}</dd>
+            <dd>{{ selectedProviderPlan.providerName }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">PAYMENT STATUS</dt>
@@ -2292,7 +2319,7 @@ const handleChildUpdate = planId => {
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">TOTAL PRICE (with VAT)</dt>
-            <dd>{{ fixedValue(ecomDetails.priceWithVAT) }}</dd>
+            <dd>{{ (selectedProviderPlan.premium) }}</dd>
           </div>
         </dl>
       </div>
@@ -2539,8 +2566,8 @@ const handleChildUpdate = planId => {
 
             <span v-if="hasRole(page.props.rolesEnum.HealthAdvisor)">
               <SelectPlan
-                v-if="prefillPlanId != item.id"
-                @update:updatePlanId="handleChildUpdate"
+                v-if="selectedProviderPlan.id != item.id"
+                @update:selectedPlanChanged="handlePlanSelected"
                 :plan="item"
                 :quoteType="quoteType"
                 :uuid="quote.uuid"
@@ -2564,6 +2591,7 @@ const handleChildUpdate = planId => {
         <template #header>
           {{ selectedPlan.providerName }} - {{ selectedPlan.name }}
         </template>
+        <!-- bookmark -->
         <LazyAvailablePlan
           :plan="selectedPlan"
           :genders="genderOptions"
