@@ -58,6 +58,7 @@ const outboundCoverageCode = [
   { value: 'singleTrip', label: 'Single Trip' },
   { value: 'annualTrip', label: 'Annual Trip' },
 ];
+
 const tableHeader = [
   { text: 'Ref-ID', value: 'code' },
   { text: 'FIRST NAME', value: 'first_name' },
