@@ -1,4 +1,6 @@
 <script setup>
+import { onMounted } from 'vue';
+
 const props = defineProps({
   users: Object,
 });
@@ -57,6 +59,18 @@ const onSubmit = isValid => {
     });
   }
 };
+
+onMounted(() => {
+  const urlParams = new URLSearchParams(window.location.search);
+  // Update filters based on URL parameters
+  Object.keys(filters).forEach(key => {
+    const paramValue = urlParams.get(key);
+
+    if (paramValue !== null) {
+      filters[key] = paramValue;
+    }
+  });
+});
 </script>
 <template>
   <Head title="Users List" />
