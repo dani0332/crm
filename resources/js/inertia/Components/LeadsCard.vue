@@ -15,6 +15,8 @@ const page = usePage();
 
 const hasAnyRole = role => useHasAnyRole(role);
 const rolesEnum = page.props.rolesEnum;
+const can = permission => useCan(permission);
+const permissionsEnum = page.props.permissionsEnum;
 
 const unitManager = computed(() => {
   return `${props.quote?.quoteType}Manager`;
@@ -25,19 +27,21 @@ const advisor = computed(() => {
 });
 
 const isAllowed = computed(() => {
-  return (
-    hasAnyRole([
-      advisor.value,
-      rolesEnum.OperationAssistant,
-      unitManager.value,
-      rolesEnum.UnitHead,
-    ]) ?? false
-  );
+  return can(permissionsEnum.LEAD_CARD_SEARCH) ?? false;
+  // return (
+  //   hasAnyRole([
+  //     advisor.value,
+  //     rolesEnum.OperationAssistant,
+  //     unitManager.value,
+  //     rolesEnum.UnitHead,
+  //   ]) ?? false
+  // );
 });
 
 const quoteTitle = computed(() => {
   return props.quote?.text ?? props.quote?.title;
 });
+
 const onLoadMore = id => {
   quotes.value.loader = true;
   quotes.value.pages = {
@@ -129,6 +133,12 @@ const onSearch = id => {
       quotes.value.searching = false;
     });
 };
+
+const UpdateLeadsCount = data => {
+  if (data.to.quote_status_id == props.quote.id) {
+    props.quote.data.total_leads += 1;
+  }
+};
 </script>
 <template>
   <div
@@ -176,6 +186,7 @@ const onSearch = id => {
         :title="quoteTitle.split(' ').join('')"
         :id="quote.id"
         :leads="quote.data.leads_list.data"
+        @UpdateLeadsCount="data => UpdateLeadsCount(data)"
       />
       <div
         class="mt-3"

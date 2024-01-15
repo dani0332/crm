@@ -18,7 +18,7 @@ const props = defineProps({
   title: String,
 });
 
-const emit = defineEmits(['confirmation-result']);
+const emit = defineEmits(['UpdateLeadsCount']);
 
 const quoteStatusEnum = inject('quoteStatusEnum');
 const quoteTypeId = inject('quoteTypeId');
@@ -32,12 +32,11 @@ const leadForm = useForm({
 });
 
 const canDrag = computed(() => {
-  return can(permissionsEnum.LEAD_CARD_SEARCH) ?? false;
-  // props.id == quoteStatusEnum?.Lost ||
-  //   props.id == quoteStatusEnum?.TransactionApproved ||
-  //   props.id == quoteStatusEnum?.PolicyIssued
-  //   ? false
-  //   : true;
+  return props.id == quoteStatusEnum?.Lost ||
+    props.id == quoteStatusEnum?.TransactionApproved ||
+    props.id == quoteStatusEnum?.PolicyIssued
+    ? false
+    : true;
 });
 
 const notification = useToast();
@@ -56,23 +55,23 @@ const canDrop = computed(() => {
   return true;
 });
 
-const updateList = data => {
-  axios
-    .post(route('update-lead-status-drag-drop'), {
+const updateList = async data => {
+  try {
+    let response = await axios.post(route('update-lead-status-drag-drop'), {
       data,
-    })
-    .then(response => {
-      notification.success({
-        title: response.data.message,
-        position: 'top',
-      });
-    })
-    .catch(({ response }) => {
-      notification.error({
-        title: response.data.message,
-        position: 'top',
-      });
     });
+    emit('UpdateLeadsCount', data);
+    notification.success({
+      title: response.data.message,
+      position: 'top',
+    });
+  } catch (e) {
+    console.log(e);
+    notification.error({
+      title: '!Error',
+      position: 'top',
+    });
+  }
 };
 
 let resolveConfirm;
