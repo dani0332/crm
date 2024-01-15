@@ -1,10 +1,19 @@
 <script setup>
 const props = defineProps({
+  isShown: {
+    type: Boolean,
+    default: true,
+  },
   filters: Object,
+  filtersCount: {
+    type: Number,
+    default: 0,
+  },
 });
 
-const emit = defineEmits(['open', 'selectedFilters']);
+const emit = defineEmits(['toggleFilters', 'selectedFilters']);
 
+const toggle = ref(props.isShown);
 const selectedOptions = ref({
   date: 0,
   status: [],
@@ -67,13 +76,6 @@ const status = ref([
   },
 ]);
 
-const selectedFiltersLength = computed(() => {
-  return (
-    (selectedOptions.value?.date !== 0 ? 1 : 0) +
-    selectedOptions.value?.status?.length
-  );
-});
-
 const handleDateFilter = dateId => {
   let range = [];
   switch (dateId) {
@@ -116,31 +118,20 @@ const handleStatusFilter = status => {
   });
 };
 
-const openState = e => {};
+const toggleFilter = () => {
+  toggle.value = !toggle.value;
+  emit('toggleFilters', toggle.value);
+};
 </script>
 <template>
-  <div>
-    <x-popover align="left" position="bottom" @toggle="openState">
-      <x-badge
-        color="orange"
-        class="mx-2"
-        position="top"
-        align="top"
-        offset-y="-25"
-      >
-        <template #content> {{ selectedFiltersLength }} </template>
-      </x-badge>
-      <div class="flex gap-px">
-        <x-button size="sm" color="#38bdf8" class="rounded-none rounded-l-lg">
+  <div class="flex gap-px">
+    <x-popover align="left" position="bottom">
+      <x-badge color="orange" align="left" size="sm">
+        <x-button size="sm" color="sky" class="rounded-none rounded-l-lg">
           Filters
         </x-button>
-        <x-button
-          size="sm"
-          color="#38bdf8"
-          icon-right="chevronDown"
-          class="rounded-none rounded-r-lg"
-        ></x-button>
-      </div>
+        <template #content> {{ filtersCount }} </template>
+      </x-badge>
 
       <template #content>
         <div class="w-72 bg-white shadow-lg border z-20 rounded">
@@ -186,5 +177,20 @@ const openState = e => {};
         </div>
       </template>
     </x-popover>
+
+    <x-button
+      size="xs"
+      color="sky"
+      class="rounded-l-none rounded-r-lg"
+      square
+      @click="toggleFilter"
+    >
+      <x-icon
+        icon="chevronDown"
+        size="sm"
+        class="transition transform duration-300"
+        :class="isShown ? '' : 'rotate-180'"
+      />
+    </x-button>
   </div>
 </template>

@@ -444,6 +444,7 @@ class HealthQuoteService extends BaseService
             $isEcommerce = $request->is_ecommerce == 'Yes' ? 1 : 0;
             $this->query->where('hqr.is_ecommerce', $isEcommerce);
         }
+
         foreach ($searchProperties as $item) {
             if (! empty($request[$item]) && $item != 'created_at') {
                 if ($request[$item] == 'null') {
@@ -466,34 +467,41 @@ class HealthQuoteService extends BaseService
             }
         }
 
-        $column = $request->get('order') != null ? $request->get('order')[0]['column'] : '';
-        $direction = $request->get('order') != null ? $request->get('order')[0]['dir'] : '';
-        if ($column != '' && $column != 0 && $direction != '') {
-            $isManagerORDeputy = Auth::user()->isManagerOrDeputy();
-            $isAdmin = Auth::user()->hasRole('ADMIN');
-            if ($isAdmin || $isManagerORDeputy == '1') {
-                if ($column == 6) {
-                    $column = 'hqr.created_at';
-                }
-                if ($column == 7) {
-                    $column = 'hqr.updated_at';
-                }
-                if ($column == 9) {
-                    $column = 'hqrd.next_followup_date';
-                }
-            } else {
-                if ($column == 5) {
-                    $column = 'hqr.created_at';
-                }
-                if ($column == 6) {
-                    $column = 'hqr.updated_at';
-                }
-                if ($column == 8) {
-                    $column = 'hqrd.next_followup_date';
-                }
-            }
+        // $column = $request->get('order') != null ? $request->get('order')[0]['column'] : '';
+        // $direction = $request->get('order') != null ? $request->get('order')[0]['dir'] : '';
+        // if ($column != '' && $column != 0 && $direction != '') {
+        //     $isManagerORDeputy = Auth::user()->isManagerOrDeputy();
+        //     $isAdmin = Auth::user()->hasRole('ADMIN');
+        //     if ($isAdmin || $isManagerORDeputy == '1') {
+        //         if ($column == 6) {
+        //             $column = 'hqr.created_at';
+        //         }
+        //         if ($column == 7) {
+        //             $column = 'hqr.updated_at';
+        //         }
+        //         if ($column == 9) {
+        //             $column = 'hqrd.next_followup_date';
+        //         }
+        //     } else {
+        //         if ($column == 5) {
+        //             $column = 'hqr.created_at';
+        //         }
+        //         if ($column == 6) {
+        //             $column = 'hqr.updated_at';
+        //         }
+        //         if ($column == 8) {
+        //             $column = 'hqrd.next_followup_date';
+        //         }
+        //     }
 
-            return $this->query->orderBy($column, $direction);
+        //     return $this->query->orderBy($column, $direction);
+        // } else {
+        //     return $this->query->orderBy('hqr.created_at', 'DESC');
+        // }
+
+        // sortBy filter
+        if (isset($request->sortBy) && $request->sortBy != '') {
+            return $this->query->orderBy($request->sortBy, $request->sortType);
         } else {
             return $this->query->orderBy('hqr.created_at', 'DESC');
         }
@@ -940,13 +948,13 @@ class HealthQuoteService extends BaseService
             return $responseBodyAsString;
         }
     }
+
     public function getCoPayment($id)
     {
         $quoteUuId = HealthQuote::where('uuid', '=', $id)->first();
         $coPayment = DB::table('health_plan_co_payments as hpcp')->where('id', $quoteUuId->health_plan_co_payment_id)->first();
 
         return $coPayment;
-
     }
 
     public function getQuotePlansPriority($id)

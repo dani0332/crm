@@ -12,6 +12,7 @@ defineProps({
 
 const page = usePage();
 const notification = useToast();
+const cleanObj = obj => useCleanObj(obj);
 const params = useUrlSearchParams('history');
 const hasRole = role => useHasRole(role);
 const hasAnyRole = role => useHasAnyRole(role);
@@ -23,6 +24,7 @@ const loader = reactive({
 });
 
 const canExport = ref(false);
+const showFilters = ref(true);
 const objToUrl = obj => useObjToUrl(obj);
 const quotesSelected = ref([]);
 
@@ -101,6 +103,14 @@ const filteredTableHeader = computed(() => {
   return headers.filter(x => x.is_active);
 });
 
+const serverOptions = ref({
+  page: 1,
+  sortBy: 'created_at',
+  sortType: 'desc',
+});
+
+const filtersCount = ref(0);
+
 const filters = reactive({
   code: '',
   first_name: '',
@@ -114,7 +124,6 @@ const filters = reactive({
   advisors: [],
   is_ecommerce: '',
   is_renewal: '',
-  page: 1,
   previous_quote_policy_number: '',
   renewal_batch: '',
   date: null,
@@ -154,15 +163,17 @@ const advisorOptions = computed(() => {
 
 function onSubmit(isValid) {
   if (isValid) {
-    filters.page = 1;
-    Object.keys(filters).forEach(
-      key =>
-        (filters[key] === '' || filters[key]?.length === 0) &&
-        delete filters[key],
-    );
+    serverOptions.value.page = 1;
+    const filtersCleaned = cleanObj(filters);
+
+    filtersCount.value = Object.keys(filtersCleaned).length;
+
     router.visit(route('health.index'), {
       method: 'get',
-      data: filters,
+      data: {
+        ...filtersCleaned,
+        ...serverOptions.value,
+      },
       preserveState: true,
       preserveScroll: true,
       onBefore: () => (loader.table = true),
@@ -260,8 +271,35 @@ watch(
   { deep: true, immediate: true },
 );
 
+watch(
+  () => serverOptions.value,
+  () => {
+    onSubmit(true);
+  },
+  { deep: true },
+);
+
 onMounted(() => {
   setQueryStringFilters();
+
+  let filtersCleaned = cleanObj(filters);
+
+  if (filtersCleaned.sortBy) {
+    serverOptions.value.sortBy = filtersCleaned.sortBy;
+    delete filtersCleaned.sortBy;
+  }
+
+  if (filtersCleaned.sortType) {
+    serverOptions.value.sortType = filtersCleaned.sortType;
+    delete filtersCleaned.sortType;
+  }
+
+  if (filtersCleaned.page) {
+    serverOptions.value.page = filtersCleaned.page;
+    delete filtersCleaned.page;
+  }
+
+  filtersCount.value = Object.keys(filtersCleaned).length;
 });
 </script>
 
@@ -285,8 +323,11 @@ onMounted(() => {
         />
 
         <FiltersButton
+          :is-shown="showFilters"
           :filters="filters"
+          :filters-count="filtersCount"
           @selected-filters="handleSelectedFilters"
+          @toggleFilters="showFilters = !showFilters"
         />
         <Link :href="route('health.cards')">
           <x-button size="sm" color="#1d83bc" tag="div"> Cards View </x-button>
@@ -298,7 +339,7 @@ onMounted(() => {
       </div>
     </div>
     <x-divider class="my-4" />
-    <x-form @submit="onSubmit" :auto-focus="false">
+    <x-form v-show="showFilters" @submit="onSubmit" :auto-focus="false">
       <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
         <div>
           <x-tooltip position="bottom">
@@ -503,6 +544,7 @@ onMounted(() => {
     </Transition>
     <DataTable
       v-model:items-selected="quotesSelected"
+      v-model:server-options="serverOptions"
       table-class-name="tablefixed"
       :loading="loader.table"
       :headers="filteredTableHeader"
