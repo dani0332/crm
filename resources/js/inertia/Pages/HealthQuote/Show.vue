@@ -86,6 +86,19 @@ const checkPlanType = id => {
   return page.props.healthPlanTypes.find(type => type.id === id)?.text;
 };
 
+function compareDueDate(dueDateString) {
+  const currentDate = new Date();
+
+  const [day, month, year, hour, minute, second] = dueDateString.split(/[- :]/);
+  const dueDate = new Date(year, month - 1, day, hour, minute, second);
+
+  // Set time component to midnight for both dates
+  currentDate.setHours(0, 0, 0, 0);
+  dueDate.setHours(0, 0, 0, 0);
+
+  return currentDate > dueDate;
+}
+
 const modals = reactive({
   duplicate: false,
   member: false,
@@ -3616,13 +3629,11 @@ const handleChildUpdate = planId => {
             {{ code }}
           </template>
           <template #item-due_date="{ due_date }">
-            <template v-if="dateFormat(new Date()) > dateFormat(due_date)">
+            <template v-if="compareDueDate(due_date)">
               <x-tooltip>
                 <p
                   :class="
-                    dateFormat(new Date()) > dateFormat(due_date)
-                      ? 'bg-error-300 rounded p-1'
-                      : ''
+                    compareDueDate(due_date) ? 'bg-error-300 rounded p-1' : ''
                   "
                 >
                   {{ due_date }}
