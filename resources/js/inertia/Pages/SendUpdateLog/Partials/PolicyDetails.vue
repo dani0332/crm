@@ -24,15 +24,29 @@ const state = reactive({
   isEdit: false,
 });
 
+const issuanceStatusOptions = computed(() => {
+  return [
+    { label: 'Portal Down', value: 'Portal Down' },
+    { label: 'Waiting for client confirmation', value: 'client confirmation' },
+    { label: 'Issue found', value: 'Issue found' },
+    { label: 'Underwriter Issuance', value: 'Underwriter Issuance' },
+    { label: 'Portal Issuance', value: 'Portal Issuance' },
+    { label: 'Policy already issued by the underwriter', value: 'Policy already issued by the underwriter' },
+    { label: 'Renewal, Direct to Underwriter', value: 'Renewal, Direct to Underwriter' },
+    { label: 'Policy Issued', value: 'Policy Issued' },
+    { label: 'Other', value: 'Other' },
+  ];
+})
+
 const policyDetailsForm = useForm({
 	first_name: props.quote?.first_name || '',
 	last_name: props.quote?.last_name || '',
 	provider_name: '',
 	plan_name: '',
 	policy_number: props.quote?.policy_number || '',
-	issuance_date: props.quote.policy_issuance_date || '',
-	start_date: props.quote?.policy_start_date || '',
-	expiry_date: props.quote?.renewal_expiry_date || '',
+	policy_issuance_date: props.quote.policy_issuance_date || '',
+	policy_start_date: props.quote?.policy_start_date || '',
+	renewal_expiry_date: props.quote?.renewal_expiry_date || '',
 	insurer_quote_number: '',
 	issuance_status: '',
 	insurance_provider_id: '',
@@ -151,7 +165,6 @@ const policyDetailsForm = useForm({
 									:disabled="!state.isEdit"
 								/>
 								<span v-else>{{ 'in' }}</span>
-								<!-- Plan Name -->
 							</dd>
             </div>
 
@@ -190,9 +203,9 @@ const policyDetailsForm = useForm({
 								<x-input
 									v-if="selectedCategory.subCategory.slug === 'CPD'"
 									:disabled="!state.isEdit"
+                  v-model="policyDetailsForm.policy_issuance_date"
 								/>
-								<span v-else>{{ 'in' }}</span>
-								<!-- Issuance Date -->
+								<span v-else>{{ policyDetailsForm.policy_issuance_date }}</span>
 							</dd>
             </div>
 
@@ -210,9 +223,9 @@ const policyDetailsForm = useForm({
 								<x-input
 									v-if="selectedCategory.subCategory.slug === 'CPD'"
 									:disabled="!state.isEdit"
+                  v-model="policyDetailsForm.policy_start_date"
 								/>
-								<span v-else>{{ 'in' }}</span>
-								<!-- Start Date -->
+								<span v-else>{{ policyDetailsForm.policy_start_date }}</span>
 							</dd>
             </div>
 
@@ -230,9 +243,9 @@ const policyDetailsForm = useForm({
 								<x-input
 									v-if="selectedCategory.subCategory.slug === 'CPD'"
 									:disabled="!state.isEdit"
+                  v-model="policyDetailsForm.renewal_expiry_date"
 								/>
-								<span v-else>{{ 'in' }}</span>
-								<!-- Expiry Date -->
+								<span v-else>{{ policyDetailsForm.renewal_expiry_date }}</span>
 							</dd>
             </div>
 
@@ -247,12 +260,10 @@ const policyDetailsForm = useForm({
                 </x-tooltip>
               </dt>
               <dd>
-								<x-select
-									v-if="selectedCategory.subCategory.slug !== 'CPD'"
-									:disabled="!state.isEdit"
+                <x-input
+                  v-if="selectedCategory.subCategory.slug === 'CPD'"
 								/>
 								<span v-else>{{ 'in' }}</span>
-								<!-- Insurer Quote Number -->
 							</dd>
             </div>
 
@@ -267,9 +278,14 @@ const policyDetailsForm = useForm({
                 </x-tooltip>
               </dt>
               <dd>
-								<x-input
+								<x-select
+									v-if="selectedCategory.subCategory.slug !== 'CPD'"
+									:disabled="!state.isEdit"
+                  :options="issuanceStatusOptions"
+                  v-model="policyDetailsForm.issuance_status"
+                  size="sm"
 								/>
-								<!-- Issuance Status -->
+                <span v-else>{{ 'in' }}</span>
 							</dd>
             </div>
           </dl>

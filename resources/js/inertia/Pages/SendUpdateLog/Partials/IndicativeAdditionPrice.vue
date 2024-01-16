@@ -17,10 +17,17 @@ const props = defineProps({
   indicativePrice: {
     type: Object,
     required: true
+  },
+  quoteType: {
+    type: String,
+    required: true
   }
 })
 
+const page = usePage();
 const notification = useToast();
+
+const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
 
 const state = reactive({
   isEdit: false,
@@ -36,7 +43,7 @@ const additionalPriceForm = useForm({
   uuid: props.sendUpdateLog.uuid,
 });
 
-const updateTotalPrice = () => {
+const updatePriceWithVat = () => {
   if (additionalPriceForm.price_with_vat != "") {
     let price = parseFloat(additionalPriceForm.price_with_vat);
     additionalPriceForm.total_price = ((price / 100) * 5) + price;
@@ -107,9 +114,11 @@ const onUpdate = () => {
               <dd>
                 <x-input
                   v-model="additionalPriceForm.price_without_vat"
+                  :disabled="!state.isEdit || quoteType != quoteTypeCodeEnum.Life && quoteType != quoteTypeCodeEnum.Business"
+                  :error="additionalPriceForm.errors.price_without_vat"
                   placeholder="Enter price (VAT not applicable)"
-                  :disabled="!state.isEdit"
                   type="number"
+                  min="0"
                 />
               </dd>
             </div>
@@ -153,10 +162,13 @@ const onUpdate = () => {
               <dd>
                 <x-input
                   v-model="additionalPriceForm.price_with_vat"
+                  :rules="quoteType == quoteTypeCodeEnum.Life ? [] : [isRequired]"
+                  :disabled="!state.isEdit || quoteType == quoteTypeCodeEnum.Life && quoteType != quoteTypeCodeEnum.Business"
+                  :error="additionalPriceForm.errors.price_with_vat"
                   placeholder="Enter price (VAT applicable)"
-                  :disabled="!state.isEdit"
                   type="number"
-                  @change="updateTotalPrice"
+                  min="0"
+                  @change="updatePriceWithVat"
                 />
               </dd>
             </div>

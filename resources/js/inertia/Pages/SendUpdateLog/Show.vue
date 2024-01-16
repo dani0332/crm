@@ -255,14 +255,16 @@ const onUpdateLog = () => {
       :insuranceProviders="insuranceProviders"
       :selectedCategory="selectedCategory"
       :indicativePrice="indicativePrice"
+      :quoteType="quoteType"
     />
 
-    <!-- <LazyPlanDetails
+    <LazyPlanDetails
       v-if="showPlanDetails"
       :sendUpdateLog="sendUpdateLog"
       :insuranceProviders="insuranceProviders"
-      :selectedType="selectedType"
-    /> -->
+      :selectedCategory="selectedCategory"
+      :quoteType="quoteType"
+    />
 
     <LazyPolicyDetails
       v-if="showPolicyDetails"

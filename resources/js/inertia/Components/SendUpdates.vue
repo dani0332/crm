@@ -156,7 +156,7 @@ const onAddUpdate = (autoSubmit) => {
     .post(route('send-update-logs.store'), {
       onSuccess: () => {
         modals.show = false
-        // resetForm()
+        resetForm()
         // sendUpdatesTable.data = [...sendUpdatesTable.data, form.data]
       }    
     })
@@ -267,7 +267,7 @@ const findOption = (item, key) => {
             </x-tooltip>
           </template>
           <template #item-code="{ code, uuid }">
-            <Link :href="route('send-update-logs.show', {uuid: uuid, refURL: $page.url})" class="text-primary-800 underline">{{ code }}</Link>
+            <Link :href="route('send-update-logs.show', { uuid: uuid, refURL: $page.url })" class="text-primary-800 underline">{{ code }}</Link>
           </template>
 
           <template #item-type="item">
@@ -285,7 +285,7 @@ const findOption = (item, key) => {
       </template>
     </Collapsible>
 
-    <x-modal v-model="modals.show" size="lg" show-close backdrop @update:modelValue="resetForm">
+    <x-modal v-model="modals.show" size="lg" show-close backdrop>
       <template #header>
         <div class="flex gap-3">
           <x-icon icon="prev" size="md" class="text-primary-800 mt-1 cursor-pointer" @click="goBack" v-if="modals.step !== 'step1'"/>

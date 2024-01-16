@@ -93,7 +93,7 @@ const rolesEnum = page.props.rolesEnum;
 </script>
 
 <template>
-  <div class="p-4 rounded shadow mb-6 bg-white" v-show="false">
+  <div class="p-4 rounded shadow mb-6 bg-white" >
     <div>
       <h3 class="font-semibold text-primary-800 text-lg">Plan Details</h3>
       <x-divider class="mb-4 mt-1" />
