@@ -58,14 +58,32 @@ watchEffect(() => {
     line_of_business: 'Line of Business',
   };
 
-  console.log(tableHeader);
-  const headerText = headerMap[props.groupBy] || null;
+  const headerText =
+    props.groupBy != null ? headerMap[props.groupBy] : headerMap['advisor'];
 
   const newItem = { text: headerText, value: props.groupBy };
   headerText && tableHeader[0].text === 'T. Policies'
     ? tableHeader.unshift(newItem)
     : tableHeader.splice(0, 1, newItem);
 });
+
+const calculateTotalSum = useCalculateTotalSum;
+
+const isIntegerColumn = key => {
+  // Add logic to determine if the column contains an integer
+  // For example, check if the key corresponds to an integer column
+  return [
+    'total_policies',
+    'total_endorsements',
+    'total_transaction',
+    'price_vat_applicable',
+    'total_vat',
+    'price_vat_not_applicable',
+    'discount',
+    'commission_vat_applicable',
+    'total_price',
+  ].includes(key);
+};
 </script>
 <template>
   <DataTable
@@ -103,6 +121,22 @@ watchEffect(() => {
     </template>
     <template #item-total_price="{ total_price }">
       {{ total_price ?? 0 }}
+    </template>
+    <template #body-append>
+      <tr v-if="reportData.data.length > 0" class="total-row">
+        <td class="direction-left">Total</td>
+        <td
+          v-for="header in tableHeader.slice(1, tableHeader.length)"
+          :key="header.value"
+          class="direction-center"
+        >
+          {{
+            isIntegerColumn(header.value)
+              ? calculateTotalSum(reportData.data, header.value)
+              : 'N/A'
+          }}
+        </td>
+      </tr>
     </template>
   </DataTable>
   <Pagination

@@ -93,6 +93,25 @@ const tableHeader = reactive([
     value: 'notes',
   },
 ]);
+
+const calculateTotalSum = useCalculateTotalSum;
+
+const isIntegerColumn = key => {
+  // Add logic to determine if the column contains an integer
+  // For example, check if the key corresponds to an integer column
+  return [
+    'collected_amount',
+    'price_with_vat',
+    'total_vat',
+    'price_without_vat',
+    'discount',
+    'total_price',
+    'pending_balance',
+    'commission_with_vat',
+    'vat_on_commission',
+    'commission_without_vat',
+  ].includes(key);
+};
 </script>
 <template>
   <DataTable
@@ -169,6 +188,22 @@ const tableHeader = reactive([
     </template>
     <template #item-notes="{ notes }">
       {{ notes }}
+    </template>
+    <template #body-append>
+      <tr v-if="reportData.data.length > 0" class="total-row">
+        <td class="direction-left">Total</td>
+        <td
+          v-for="header in tableHeader.slice(1, tableHeader.length)"
+          :key="header.value"
+          class="direction-center"
+        >
+          {{
+            isIntegerColumn(header.value)
+              ? calculateTotalSum(reportData.data, header.value)
+              : 'N/A'
+          }}
+        </td>
+      </tr>
     </template>
   </DataTable>
   <Pagination

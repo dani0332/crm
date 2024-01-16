@@ -125,6 +125,26 @@ const tableHeader = reactive([
     value: 'policy_issuer',
   },
 ]);
+
+const calculateTotalSum = useCalculateTotalSum;
+
+const isIntegerColumn = key => {
+  // Add logic to determine if the column contains an integer
+  // For example, check if the key corresponds to an integer column
+  return [
+    'transactions',
+    'price_with_vat',
+    'total_vat',
+    'price_without_vat',
+    'discount',
+    'total_price',
+    'commission',
+    'vat_on_commission',
+    'commission_without_vat',
+    'total_commission',
+    'collected_amount',
+  ].includes(key);
+};
 </script>
 <template>
   <DataTable
@@ -140,22 +160,22 @@ const tableHeader = reactive([
     hide-footer
   >
     <template #item-policy_number="{ policy_number }">
-      {{ policy_number  }}
+      {{ policy_number }}
     </template>
     <template #item-transactions="{ transactions }">
       {{ transactions ?? 0 }}
     </template>
     <template #item-policy_start_date="{ policy_start_date }">
-      {{ policy_start_date  }}
+      {{ policy_start_date }}
     </template>
     <template #item-payment_due_date="{ payment_due_date }">
-      {{ payment_due_date  }}
+      {{ payment_due_date }}
     </template>
     <template #item-lead_source="{ lead_source }">
-      {{ lead_source  }}
+      {{ lead_source }}
     </template>
     <template #item-team="{ team }">
-      {{ team  }}
+      {{ team }}
     </template>
     <template #item-price_with_vat="{ price_with_vat }">
       {{ price_with_vat ?? 0 }}
@@ -185,46 +205,62 @@ const tableHeader = reactive([
       {{ total_commission ?? 0 }}
     </template>
     <template #item-collects="{ collects }">
-      {{ collects  }}
+      {{ collects }}
     </template>
     <template #item-inurer_tax_invoice_number="{ inurer_tax_invoice_number }">
       {{ inurer_tax_invoice_number ?? 0 }}
     </template>
     <template #item-tax_invoice_date="{ tax_invoice_date }">
-      {{ tax_invoice_date  }}
+      {{ tax_invoice_date }}
     </template>
     <template #item-transaction_payment_status="{ transaction_payment_status }">
-      {{ transaction_payment_status  }}
+      {{ transaction_payment_status }}
     </template>
     <template #item-date_paid="{ date_paid }">
-      {{ date_paid  }}
+      {{ date_paid }}
     </template>
     <template #item-collected_amount="{ collected_amount }">
       {{ collected_amount ?? 0 }}
     </template>
     <template #item-customer_name="{ customer_name }">
-      {{ customer_name  }}
+      {{ customer_name }}
     </template>
     <template #item-customer_id="{ customer_id }">
-      {{ customer_id  }}
+      {{ customer_id }}
     </template>
     <template #item-customer_type="{ customer_type }">
-      {{ customer_type  }}
+      {{ customer_type }}
     </template>
     <template #item-insurer="{ insurer }">
-      {{ insurer  }}
+      {{ insurer }}
     </template>
     <template #item-line_of_business="{ line_of_business }">
-      {{ line_of_business  }}
+      {{ line_of_business }}
     </template>
     <template #item-sub_type="{ sub_type }">
-      {{ sub_type  }}
+      {{ sub_type }}
     </template>
     <template #item-advisor="{ advisor }">
-      {{ advisor  }}
+      {{ advisor }}
     </template>
     <template #item-policy_issuer="{ policy_issuer }">
-      {{ policy_issuer  }}
+      {{ policy_issuer }}
+    </template>
+    <template #body-append>
+      <tr v-if="reportData.data.length > 0" class="total-row">
+        <td class="direction-left">Total</td>
+        <td
+          v-for="header in tableHeader.slice(1, tableHeader.length)"
+          :key="header.value"
+          class="direction-center"
+        >
+          {{
+            isIntegerColumn(header.value)
+              ? calculateTotalSum(reportData.data, header.value)
+              : 'N/A'
+          }}
+        </td>
+      </tr>
     </template>
   </DataTable>
   <Pagination

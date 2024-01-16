@@ -72,7 +72,7 @@ let filters = reactive({
   subTeams: [],
   leadSources: [],
   includeCancelledPolicies: null,
-  groupBy: 'advisor',
+  groupBy: route().params.groupBy ?? 'advisor',
   utmGroupBy: [],
   page: 1,
 });
@@ -387,7 +387,7 @@ function onReset() {
     </div>
   </x-form>
   <component
-    :groupBy="filters.groupBy"
+    :groupBy="route().params.groupBy ?? 'advisor'"
     :reportData="props.reportData"
     :is="selectedReport"
   ></component>
