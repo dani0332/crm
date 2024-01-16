@@ -8,6 +8,7 @@ import RiskRatingScoreDetails from '../../../Components/RiskRatingScoreDetails.v
 import { onMounted, watch } from 'vue';
 import { reactive } from 'vue';
 
+import {fileUploadErrorMessage} from "@/inertia/Composables/utilities.js";
 
 defineProps({
   quote: Object,
@@ -1026,15 +1027,16 @@ const docForm = useForm({
   file: null,
 });
 
-const uploadFile = (doc, files) => {
+const uploadFile = (doc, filesWithInfo) => {
   let url = '/quotes/car/documents/store';
-
+  const { files, rejectReason} = filesWithInfo;
   if (files.length == 0) {
     notification.error({
-      title: 'Incorrect file type\nPlease upload a ' + doc.accepted_files + ' file',
+      title: 'File upload failed',
       position: 'top',
     });
-    return false;
+    docForm.setError({error: fileUploadErrorMessage(doc, rejectReason)});
+    return false
   };
   isUploading.value = true;
   docForm

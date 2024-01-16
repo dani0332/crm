@@ -20,12 +20,20 @@ const props = defineProps({
   },
 });
 
-const emit = defineEmits(['update:modelValue', 'change']);
-
-const onDrop = f => {
+const emit = defineEmits(['update:modelValue', 'change', 'changeMethod']);
+const onDrop = (f,rejectReasons) => {
   const files = f.map(file => ({ file }));
+  let rejectReason = null;
+  if (rejectReasons.length > 0) {
+    rejectReason = rejectReasons[0]['errors'][0] ?? null;
+  }
+  const filesWithInfo = {
+    files,
+    rejectReason
+  };
   emit('update:modelValue', files);
-  emit('change', files);
+  emit('changeMethod', files);
+  emit('change', filesWithInfo);
 };
 
 const { getRootProps, getInputProps, open, isDragActive } = useDropzone({
