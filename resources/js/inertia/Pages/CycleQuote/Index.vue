@@ -87,7 +87,10 @@ function onSubmit(isValid) {
 
     router.visit(route('cycle-quotes-list'), {
       method: 'get',
-      data: filters,
+      data: {
+        ...filtersCleaned,
+        ...serverOptions.value,
+      },
       preserveState: true,
       preserveScroll: true,
       onBefore: () => (loader.table = true),
@@ -151,26 +154,6 @@ function setQueryStringFilters() {
   }
 }
 
-watch(
-  () => serverOptions.value,
-  () => {
-    onSubmit(true);
-  },
-  { deep: true },
-);
-
-watch(
-  () => filters,
-  () => {
-    if (filters.created_at_start && filters.created_at_end) {
-      canExport.value = true;
-    } else {
-      canExport.value = false;
-    }
-  },
-  { deep: true, immediate: true },
-);
-
 onMounted(() => {
   setQueryStringFilters();
 
@@ -197,6 +180,25 @@ onMounted(() => {
 
   filtersCount.value = Object.keys(filtersCleaned).length;
 });
+
+watch(
+  () => filters,
+  () => {
+    if (filters.created_at_start && filters.created_at_end) {
+      canExport.value = true;
+    } else {
+      canExport.value = false;
+    }
+  },
+  { deep: true, immediate: true },
+);
+
+watch(
+  () => serverOptions.value,
+  (newValue, oldValue) => {
+    if (oldValue !== newValue) onSubmit(true);
+  },
+);
 </script>
 
 <template>
@@ -380,7 +382,14 @@ onMounted(() => {
         </div>
         <div v-else />
         <div class="flex justify-self-end gap-3">
-          <x-button size="sm" color="#ff5e00" type="submit">Search</x-button>
+          <x-button
+            size="sm"
+            color="#ff5e00"
+            type="submit"
+            :loading="loader.table"
+          >
+            Search
+          </x-button>
           <x-button size="sm" color="primary" @click.prevent="onReset">
             Reset
           </x-button>
@@ -400,6 +409,7 @@ onMounted(() => {
     </Transition>
     <DataTable
       v-model:items-selected="quotesSelected"
+      v-model:server-options="serverOptions"
       table-class-name="tablefixed"
       :headers="tableHeader"
       :loading="loader.table"

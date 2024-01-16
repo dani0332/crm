@@ -19,7 +19,7 @@ const created_at_rule = v => {
 };
 
 const created_at_end_rule = v => {
-  if (filters.created_at) {
+  if (filters.created_at_start) {
     return isRequired(v);
   }
   return true;
@@ -32,13 +32,23 @@ const loader = reactive({
   export: false,
 });
 
+const params = useUrlSearchParams('history');
+const cleanObj = obj => useCleanObj(obj);
+const showFilters = ref(true);
+const filtersCount = ref(0);
+const serverOptions = ref({
+  page: 1,
+  sortBy: 'created_at',
+  sortType: 'desc',
+});
+
 const filters = reactive({
   code: '',
   first_name: '',
   last_name: '',
   email: '',
   mobile_no: '',
-  created_at: '',
+  created_at_start: '',
   created_at_end: '',
   quote_status_id: '',
   advisor_id: '',
@@ -83,9 +93,19 @@ const tableHeader = ref([
   { text: 'LOST REASON', value: 'lost_reason', is_active: true },
   { text: 'ADVISOR', value: 'advisor_id_text', is_active: true },
   { text: 'LEAD STATUS', value: 'quote_status_id_text', is_active: true },
-  { text: 'CREATED DATE', value: 'created_at', is_active: true },
-  { text: 'LAST MODIFIED DATE', value: 'updated_at', is_active: true },
-  { text: 'PRICE', value: 'premium', is_active: true },
+  {
+    text: 'CREATED DATE',
+    value: 'created_at',
+    is_active: true,
+    sortable: true,
+  },
+  {
+    text: 'LAST MODIFIED DATE',
+    value: 'updated_at',
+    is_active: true,
+    sortable: true,
+  },
+  { text: 'PRICE', value: 'premium', is_active: true, sortable: true },
   {
     text: 'NUMBER OF EMPLOYEES',
     value: 'number_of_employees',
@@ -106,9 +126,6 @@ const tableHeader = ref([
 ]);
 
 function resetFilters() {
-  for (const key in filters) {
-    filters[key] = '';
-  }
   router.visit(route('business.index'), {
     method: 'get',
     preserveState: true,
@@ -124,33 +141,27 @@ function resetFilters() {
 }
 
 function onSubmit(isValid) {
-  if (!isValid) {
-    return;
+  if (isValid) {
+    serverOptions.value.page = 1;
+
+    const filtersCleaned = cleanObj(filters);
+
+    filtersCount.value = Object.keys(filtersCleaned).length;
+
+    router.visit(route('business.index'), {
+      method: 'get',
+      data: filters,
+      preserveState: true,
+      preserveScroll: true,
+      onFinish: () => {
+        loader.table = false;
+      },
+      onBefore: () => {
+        filters.page = 1;
+        loader.table = true;
+      },
+    });
   }
-  for (const key in filters) {
-    if (filters[key] === '') {
-      delete filters[key];
-    }
-  }
-  if (filters.created_at) {
-    filters.created_at = filters.created_at.split('T')[0];
-  }
-  if (filters.created_at_end) {
-    filters.created_at_end = filters.created_at_end.split('T')[0];
-  }
-  router.visit(route('business.index'), {
-    method: 'get',
-    data: filters,
-    preserveState: true,
-    preserveScroll: true,
-    onFinish: () => {
-      loader.table = false;
-    },
-    onBefore: () => {
-      filters.page = 1;
-      loader.table = true;
-    },
-  });
 }
 
 const handleSelectedFilters = async selectedFilters => {
@@ -198,18 +209,6 @@ function displayNotification() {
   }
 }
 
-function setQueryFilters() {
-  let urlParams = new URLSearchParams(window.location.search);
-  for (const [key, value] of urlParams) {
-    if (key.includes('[')) {
-      let index = key.replace('[]', '');
-      filters[index] = urlParams.getAll(key).map(item => parseInt(item));
-    } else {
-      filters[key] = value.match(/^\d+$/) ? parseInt(value) : value;
-    }
-  }
-}
-
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
 
@@ -219,10 +218,43 @@ const onDataExport = () => {
   window.open(url + '?' + new URLSearchParams(data).toString());
 };
 
+function setQueryStringFilters() {
+  for (const [key] of Object.entries(params)) {
+    if (key.includes('[]')) {
+      filters[key.substring(0, key.length - 2)] = params[key];
+    } else {
+      filters[key] = params[key];
+    }
+  }
+}
+
+onMounted(() => {
+  setQueryStringFilters();
+
+  let filtersCleaned = cleanObj(filters);
+
+  if (filtersCleaned.sortBy) {
+    serverOptions.value.sortBy = filtersCleaned.sortBy;
+    delete filtersCleaned.sortBy;
+  }
+
+  if (filtersCleaned.sortType) {
+    serverOptions.value.sortType = filtersCleaned.sortType;
+    delete filtersCleaned.sortType;
+  }
+
+  if (filtersCleaned.page) {
+    serverOptions.value.page = filtersCleaned.page;
+    delete filtersCleaned.page;
+  }
+
+  filtersCount.value = Object.keys(filtersCleaned).length;
+});
+
 watch(
   () => filters,
   () => {
-    if (filters.created_at && filters.created_at_end) {
+    if (filters.created_at_start && filters.created_at_end) {
       canExport.value = true;
     } else {
       canExport.value = false;
@@ -231,9 +263,12 @@ watch(
   { deep: true, immediate: true },
 );
 
-onMounted(() => {
-  setQueryFilters();
-});
+watch(
+  () => serverOptions.value,
+  (newValue, oldValue) => {
+    if (oldValue !== newValue) onSubmit(true);
+  },
+);
 </script>
 
 <template>
@@ -248,8 +283,11 @@ onMounted(() => {
         />
 
         <FiltersButton
+          :is-shown="showFilters"
           :filters="filters"
+          :filters-count="filtersCount"
           @selected-filters="handleSelectedFilters"
+          @toggleFilters="showFilters = !showFilters"
         />
         <Link :href="route('business.cards')">
           <x-button size="sm" color="#1d83bc" tag="div"> Cards View</x-button>
@@ -260,7 +298,7 @@ onMounted(() => {
       </div>
     </div>
     <x-divider class="my-4" />
-    <x-form @submit="onSubmit" :auto-focus="false">
+    <x-form v-show="showFilters" @submit="onSubmit" :auto-focus="false">
       <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
         <div>
           <x-tooltip position="bottom">
@@ -326,8 +364,8 @@ onMounted(() => {
         </x-field>
         <x-field label="Created Date Start">
           <DatePicker
-            v-model="filters.created_at"
-            name="created_at"
+            v-model="filters.created_at_start"
+            name="created_at_start"
             :rules="[created_at_rule]"
           />
         </x-field>
@@ -402,7 +440,14 @@ onMounted(() => {
         </div>
         <div v-else />
         <div class="flex justify-self-end gap-3">
-          <x-button size="sm" color="#ff5e00" type="submit">Search</x-button>
+          <x-button
+            size="sm"
+            color="#ff5e00"
+            type="submit"
+            :loading="loader.table"
+          >
+            Search
+          </x-button>
           <x-button size="sm" color="primary" @click.prevent="resetFilters">
             Reset
           </x-button>
@@ -444,6 +489,7 @@ onMounted(() => {
 
     <DataTable
       v-model:items-selected="quotesSelected"
+      v-model:server-options="serverOptions"
       :loading="loader.table"
       :headers="tableHeader"
       :items="quotes.data || []"

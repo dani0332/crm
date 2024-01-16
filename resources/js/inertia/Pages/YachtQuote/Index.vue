@@ -209,10 +209,9 @@ watch(
 
 watch(
   () => serverOptions.value,
-  () => {
-    onSubmit(true);
+  (newValue, oldValue) => {
+    if (oldValue !== newValue) onSubmit(true);
   },
-  { deep: true },
 );
 </script>
 
@@ -438,6 +437,7 @@ watch(
 
     <DataTable
       v-model:items-selected="quotesSelected"
+      v-model:server-options="serverOptions"
       table-class-name="tablefixed"
       :headers="tableHeader"
       :loading="loader.table"

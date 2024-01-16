@@ -259,26 +259,6 @@ const fixedValue = numberString => {
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
 
-watch(
-  () => filters,
-  () => {
-    if (filters.created_at_start && filters.created_at_end) {
-      canExport.value = true;
-    } else {
-      canExport.value = false;
-    }
-  },
-  { deep: true, immediate: true },
-);
-
-watch(
-  () => serverOptions.value,
-  () => {
-    onSubmit(true);
-  },
-  { deep: true },
-);
-
 onMounted(() => {
   setQueryStringFilters();
 
@@ -301,6 +281,25 @@ onMounted(() => {
 
   filtersCount.value = Object.keys(filtersCleaned).length;
 });
+
+watch(
+  () => filters,
+  () => {
+    if (filters.created_at_start && filters.created_at_end) {
+      canExport.value = true;
+    } else {
+      canExport.value = false;
+    }
+  },
+  { deep: true, immediate: true },
+);
+
+watch(
+  () => serverOptions.value,
+  (newValue, oldValue) => {
+    if (oldValue !== newValue) onSubmit(true);
+  },
+);
 </script>
 
 <template>
@@ -492,7 +491,14 @@ onMounted(() => {
         </div>
         <div v-else />
         <div class="flex justify-self-end gap-3">
-          <x-button size="sm" color="#ff5e00" type="submit">Search</x-button>
+          <x-button
+            size="sm"
+            color="#ff5e00"
+            type="submit"
+            :loading="loader.table"
+          >
+            Search
+          </x-button>
           <x-button size="sm" color="primary" @click.prevent="onReset">
             Reset
           </x-button>
