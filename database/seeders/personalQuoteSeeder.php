@@ -1,0 +1,22 @@
+<?php
+
+namespace Database\Seeders;
+
+use App\Models\CarQuote;
+use App\Models\PersonalQuote;
+use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use Illuminate\Database\Seeder;
+use Illuminate\Database\Eloquent\Factories\Factory;
+
+
+class personalQuoteSeeder extends Seeder
+{
+    /**
+     * Run the database seeds.
+     */
+    public function run()
+    {
+        //PersonalQuote::factory(50)->create();
+        //CarQuote::factory(5)->create();
+    }
+}

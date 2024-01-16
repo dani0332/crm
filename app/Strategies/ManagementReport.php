@@ -26,7 +26,18 @@ class ManagementReport
 
         $loginUserId = auth()->user()->id;
 
+        $advisors = [];
+
         $teamIds = $this->getUserTeams($loginUserId);
+
+        $teams = Team::whereIn('id', $teamIds->pluck('id'))
+            ->select('name', 'id')
+            ->orderBy('name')
+            ->where('is_active', 1)
+            ->get()
+            ->keyBy('id')
+            ->map(fn ($users) => $users->name)
+            ->toArray();
 
         $reportCategories = [];
         foreach (ManagementReportCategoriesEnum::asArray() as $value) {
@@ -41,14 +52,6 @@ class ManagementReport
             ->values()
             ->toArray();
 
-        $teams = Team::whereIn('id', $teamIds->pluck('id'))
-            ->select('name', 'id')
-            ->orderBy('name')
-            ->where('is_active', 1)
-            ->get()
-            ->keyBy('id')
-            ->map(fn ($users) => $users->name)
-            ->toArray();
         $leadSources = LeadSource::query()
             ->select('name')
             ->where('is_active', 1)->where('is_applicable_for_rules', 0)
@@ -135,8 +138,16 @@ class ManagementReport
             }
         }
 
-        if (isset($request['teams']) && ! empty($request['teams'])) {
-            $query->whereIn('teams.id', $request['teams']);
+        if (isset($request['teams']) && count($request['teams']) > 0) {
+            $value = $request['teams'];
+            $query->whereIn('users.id', function ($query) use ($value) {
+                $query->distinct()
+                    ->select('users.id')
+                    ->from('users')
+                    ->join('user_team', 'user_team.user_id', 'users.id')
+                    ->join('teams', 'teams.id', 'user_team.team_id')
+                    ->whereIn('teams.id', $value);
+            });
         }
 
         if (isset($request['subTeams']) && ! empty($request['subTeams'])) {

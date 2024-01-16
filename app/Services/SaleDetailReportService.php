@@ -37,7 +37,7 @@ class SaleDetailReportService extends ManagementReport
                 DB::raw('FORMAT(payments.commission_vat_applicable,2) as commission_vat_applicable'),
                 DB::raw('FORMAT(payments.commission_vat,2) as commission_vat'),
                 DB::raw('FORMAT(payments.commission_vat_not_applicable,2) as commission_vat_not_applicable'),
-                DB::raw('(commission_vat_applicable + commission_vat) as total_commission'),
+                DB::raw('FORMAT((commission_vat_applicable + commission_vat),2) as total_commission'),
                 DB::raw("'collects' as collects"),
                 DB::raw('FORMAT(personal_quotes.premium_captured,2) as collected_amount'),
                 DB::raw("CONCAT(first_name, ' ', last_name) as customer_name"),

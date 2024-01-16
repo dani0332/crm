@@ -21,9 +21,9 @@ class EndingPoliciesReportService extends ManagementReport
         $query = PersonalQuote::query()
             ->leftJoin('users as u', 'u.id', '=', 'advisor_id')
             ->leftJoin('quote_type as qt', 'qt.id', '=', 'quote_type_id')
-            ->leftJoin('insurance_provider as ip', 'ip.id', '=', 'insurance_provider_id')
-            ->leftJoin('payments as p', 'personal_quotes.code', '=', 'p.code')
-            ->leftJoin('payment_status as ps', 'ps.id', '=', 'p.payment_status_id')
+            ->join('insurance_provider as ip', 'ip.id', '=', 'insurance_provider_id')
+            ->join('payments as p', 'personal_quotes.code', '=', 'p.code')
+            ->join('payment_status as ps', 'ps.id', '=', 'p.payment_status_id')
             ->leftJoin('customer as c', 'c.id', '=', 'customer_id')
             ->leftJoin('users as pi', 'pi.id', '=', 'p.policy_issuer_id')
             ->select(
@@ -33,16 +33,16 @@ class EndingPoliciesReportService extends ManagementReport
                 'qt.code as line_of_business',
                 'policy_start_date',
                 'p.policy_expiry_date as policy_end_date',
-                DB::raw('SUM(premium) as collected_amount'),
-                DB::raw('SUM(price_vat_applicable) as price_vat_applicable'),
-                DB::raw('SUM(vat) as total_vat'),
-                DB::raw('SUM(price_vat_not_applicable) as price_vat_not_applicable'),
-                DB::raw('SUM(p.discount_value) as discount'),
-                DB::raw('SUM(price_vat_applicable) + SUM(price_vat_not_applicable) + SUM(vat) - SUM(p.discount_value) as total_price'),
-                DB::raw('(SUM(price_vat_applicable) + SUM(price_vat_not_applicable) + SUM(vat) - SUM(p.discount_value)) - SUM(premium) as pending_balance'),
-                DB::raw('SUM(commission_vat_applicable) as commission_vat_applicable'),
-                DB::raw('SUM(commission_vat) as commission_vat'),
-                DB::raw('SUM(commission_vat_not_applicable) as commission_vat_not_applicable'),
+                DB::raw('FORMAT(SUM(premium),2) as collected_amount'),
+                DB::raw('FORMAT(SUM(price_vat_applicable),2)as price_vat_applicable'),
+                DB::raw('FORMAT(SUM(vat),2) as total_vat'),
+                DB::raw('FORMAT(SUM(price_vat_not_applicable),2) as price_vat_not_applicable'),
+                DB::raw('FORMAT(SUM(p.discount_value),2) as discount'),
+                DB::raw('FORMAT(SUM(price_vat_applicable) + SUM(price_vat_not_applicable) + SUM(vat) - SUM(p.discount_value),2) as total_price'),
+                DB::raw('FORMAT((SUM(price_vat_applicable) + SUM(price_vat_not_applicable) + SUM(vat) - SUM(p.discount_value)) - SUM(premium),2) as pending_balance'),
+                DB::raw('FORMAT(SUM(commission_vat_applicable),2) as commission_vat_applicable'),
+                DB::raw('FORMAT(SUM(commission_vat),2) as commission_vat'),
+                DB::raw('FORMAT(SUM(commission_vat_not_applicable),2) as commission_vat_not_applicable'),
                 'pi.name as policy_issuer',
                 'u.name as advisor',
                 'personal_quotes.source',
