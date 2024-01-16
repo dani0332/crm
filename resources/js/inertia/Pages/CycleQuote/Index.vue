@@ -38,26 +38,53 @@ const filters = reactive(availableFilters);
 const quotesSelected = ref([]);
 const canExport = ref(false);
 
-const onLeadAssigned = () => {
-  quotesSelected.value = [];
-};
-
-const advisorOptions = computed(() => {
-  return page.props.advisors.map(advisor => ({
-    value: advisor.id,
-    label: advisor.name,
-  }));
+const params = useUrlSearchParams('history');
+const cleanObj = obj => useCleanObj(obj);
+const showFilters = ref(true);
+const filtersCount = ref(0);
+const serverOptions = ref({
+  page: 1,
+  sortBy: 'created_at',
+  sortType: 'desc',
 });
+
+const tableHeader = ref([
+  { text: 'Ref-ID', value: 'uuid', is_active: true },
+  { text: 'FIRST NAME', value: 'first_name', is_active: true },
+  { text: 'LAST NAME', value: 'last_name', is_active: true },
+  { text: 'LEAD STATUS', value: 'quote_status', is_active: true },
+  { text: 'ADVISOR', value: 'advisor', is_active: true },
+  {
+    text: 'CREATED DATE',
+    value: 'created_at',
+    is_active: true,
+    sortable: true,
+  },
+  {
+    text: 'LAST MODIFIED DATE',
+    value: 'updated_at',
+    is_active: true,
+    sortable: true,
+  },
+  { text: 'PRICE', value: 'premium', is_active: true, sortable: true },
+  { text: 'POLICY NO', value: 'policy_no', is_active: true },
+  { text: 'SOURCE', value: 'source', is_active: true },
+  { text: 'IS ECOMMERCE', value: 'is_ecommerce', is_active: true },
+  {
+    text: 'Previous Policy Number',
+    value: 'previous_quote_policy_number',
+    is_active: true,
+  },
+]);
 
 function onSubmit(isValid) {
   if (isValid) {
-    filters.page = 1;
+    serverOptions.value.page = 1;
 
-    Object.keys(filters).forEach(
-      key =>
-        (filters[key] === '' || filters[key].length === 0) &&
-        delete filters[key],
-    );
+    const filtersCleaned = cleanObj(filters);
+
+    filtersCount.value = Object.keys(filtersCleaned).length;
+
     router.visit(route('cycle-quotes-list'), {
       method: 'get',
       data: filters,
@@ -81,6 +108,17 @@ function onReset() {
   });
 }
 
+const onLeadAssigned = () => {
+  quotesSelected.value = [];
+};
+
+const advisorOptions = computed(() => {
+  return page.props.advisors.map(advisor => ({
+    value: advisor.id,
+    label: advisor.name,
+  }));
+});
+
 const handleSelectedFilters = async selectedFilters => {
   if (selectedFilters.created_at_start && selectedFilters.created_at_end) {
     filters.created_at_start = selectedFilters.created_at_start;
@@ -89,36 +127,6 @@ const handleSelectedFilters = async selectedFilters => {
     onSubmit(true);
   }
 };
-
-function setQueryStringFilters() {
-  let queryString = window.location.search;
-  let urlParams = new URLSearchParams(queryString);
-
-  for (const [key] of Object.entries(availableFilters)) {
-    if (urlParams.has(key)) {
-      filters[key] = urlParams.get(key);
-    }
-  }
-}
-
-const tableHeader = ref([
-  { text: 'Ref-ID', value: 'uuid', is_active: true },
-  { text: 'FIRST NAME', value: 'first_name', is_active: true },
-  { text: 'LAST NAME', value: 'last_name', is_active: true },
-  { text: 'LEAD STATUS', value: 'quote_status', is_active: true },
-  { text: 'ADVISOR', value: 'advisor', is_active: true },
-  { text: 'CREATED DATE', value: 'created_at', is_active: true },
-  { text: 'LAST MODIFIED DATE', value: 'updated_at', is_active: true },
-  { text: 'PRICE', value: 'premium', is_active: true },
-  { text: 'POLICY NO', value: 'policy_no', is_active: true },
-  { text: 'SOURCE', value: 'source', is_active: true },
-  { text: 'IS ECOMMERCE', value: 'is_ecommerce', is_active: true },
-  {
-    text: 'Previous Policy Number',
-    value: 'previous_quote_policy_number',
-    is_active: true,
-  },
-]);
 
 const can = permission => useCan(permission);
 const canAny = permissions => useCanAny(permissions);
@@ -133,12 +141,23 @@ const onDataExport = () => {
   window.open(url + '?' + new URLSearchParams(data).toString());
 };
 
-onMounted(() => {
-  setQueryStringFilters();
-  if (hasRole(rolesEnum.CycleAdvisor)) {
-    quotesSelected.value = null;
+function setQueryStringFilters() {
+  for (const [key] of Object.entries(params)) {
+    if (key.includes('[]')) {
+      filters[key.substring(0, key.length - 2)] = params[key];
+    } else {
+      filters[key] = params[key];
+    }
   }
-});
+}
+
+watch(
+  () => serverOptions.value,
+  () => {
+    onSubmit(true);
+  },
+  { deep: true },
+);
 
 watch(
   () => filters,
@@ -151,6 +170,33 @@ watch(
   },
   { deep: true, immediate: true },
 );
+
+onMounted(() => {
+  setQueryStringFilters();
+
+  if (hasRole(rolesEnum.CycleAdvisor)) {
+    quotesSelected.value = null;
+  }
+
+  let filtersCleaned = cleanObj(filters);
+
+  if (filtersCleaned.sortBy) {
+    serverOptions.value.sortBy = filtersCleaned.sortBy;
+    delete filtersCleaned.sortBy;
+  }
+
+  if (filtersCleaned.sortType) {
+    serverOptions.value.sortType = filtersCleaned.sortType;
+    delete filtersCleaned.sortType;
+  }
+
+  if (filtersCleaned.page) {
+    serverOptions.value.page = filtersCleaned.page;
+    delete filtersCleaned.page;
+  }
+
+  filtersCount.value = Object.keys(filtersCleaned).length;
+});
 </script>
 
 <template>
@@ -165,9 +211,13 @@ watch(
         />
 
         <FiltersButton
+          :is-shown="showFilters"
           :filters="filters"
+          :filters-count="filtersCount"
           @selected-filters="handleSelectedFilters"
+          @toggleFilters="showFilters = !showFilters"
         />
+
         <Link :href="route('cycle-quotes-card')">
           <x-button size="sm" color="#1d83bc" tag="div"> Cards View </x-button>
         </Link>
@@ -181,10 +231,10 @@ watch(
         </x-button>
       </div>
     </div>
+
     <x-divider class="my-4" />
 
-    <!--   filters     -->
-    <x-form @submit="onSubmit" :auto-focus="false">
+    <x-form v-show="showFilters" @submit="onSubmit" :auto-focus="false">
       <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
         <div>
           <x-tooltip position="bottom">

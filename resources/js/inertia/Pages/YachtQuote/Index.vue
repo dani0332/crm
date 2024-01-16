@@ -38,19 +38,71 @@ const filters = reactive(availableFilters);
 const canExport = ref(false);
 const hasRole = role => useHasRole(role);
 
+const params = useUrlSearchParams('history');
+const cleanObj = obj => useCleanObj(obj);
+const showFilters = ref(true);
+const filtersCount = ref(0);
+const serverOptions = ref({
+  page: 1,
+  sortBy: 'created_at',
+  sortType: 'desc',
+});
+
+const tableHeader = ref([
+  { text: 'Ref-ID', value: 'uuid', is_active: true },
+  { text: 'FIRST NAME', value: 'first_name', is_active: true },
+  { text: 'LAST NAME', value: 'last_name', is_active: true },
+  { text: 'LEAD STATUS', value: 'quote_status', is_active: true },
+  { text: 'ADVISOR', value: 'advisor', is_active: true },
+  {
+    text: 'CREATED DATE',
+    value: 'created_at',
+    is_active: true,
+    sortable: true,
+  },
+  {
+    text: 'LAST MODIFIED DATE',
+    value: 'updated_at',
+    is_active: true,
+    sortable: true,
+  },
+  { text: 'PRICE', value: 'premium', is_active: true, sortable: true },
+  { text: 'POLICY NO', value: 'policy_no', is_active: true },
+  { text: 'SOURCE', value: 'source', is_active: true },
+  {
+    text: 'CURRENTLY INSURED WITH',
+    value: 'currently_insured_with',
+    is_active: true,
+  },
+  { text: 'IS ECOMMERCE', value: 'is_ecommerce', is_active: true },
+  {
+    text: 'Previous Policy Number',
+    value: 'previous_quote_policy_number',
+    is_active: true,
+  },
+]);
+
+const quotesSelected = ref([]);
+const permissionAssignLeads = ref(false);
+
+const can = permission => useCan(permission);
+const permissionsEnum = page.props.permissionsEnum;
+const rolesEnum = page.props.rolesEnum;
+
 function onSubmit(isValid) {
   if (isValid) {
-    filters.page = 1;
+    serverOptions.value.page = 1;
 
-    Object.keys(filters).forEach(
-      key =>
-        (filters[key] === '' || filters[key].length === 0) &&
-        delete filters[key],
-    );
+    const filtersCleaned = cleanObj(filters);
+
+    filtersCount.value = Object.keys(filtersCleaned).length;
 
     router.visit(route('yacht-quotes-list'), {
       method: 'get',
-      data: filters,
+      data: {
+        ...filtersCleaned,
+        ...serverOptions.value,
+      },
       preserveState: true,
       preserveScroll: true,
       onBefore: () => (loader.table = true),
@@ -80,55 +132,6 @@ const handleSelectedFilters = async selectedFilters => {
   }
 };
 
-function setQueryStringFilters() {
-  let queryString = window.location.search;
-  let urlParams = new URLSearchParams(queryString);
-
-  for (const [key] of Object.entries(availableFilters)) {
-    if (urlParams.has(key)) {
-      filters[key] = urlParams.get(key);
-    }
-  }
-}
-
-onMounted(() => {
-  setQueryStringFilters();
-  if (hasRole(rolesEnum.YachtManager) || hasRole(rolesEnum.Admin)) {
-    permissionAssignLeads.value = true;
-  }
-});
-
-const tableHeader = ref([
-  { text: 'Ref-ID', value: 'uuid', is_active: true },
-  { text: 'FIRST NAME', value: 'first_name', is_active: true },
-  { text: 'LAST NAME', value: 'last_name', is_active: true },
-  { text: 'LEAD STATUS', value: 'quote_status', is_active: true },
-  { text: 'ADVISOR', value: 'advisor', is_active: true },
-  { text: 'CREATED DATE', value: 'created_at', is_active: true },
-  { text: 'LAST MODIFIED DATE', value: 'updated_at', is_active: true },
-  { text: 'PRICE', value: 'premium', is_active: true },
-  { text: 'POLICY NO', value: 'policy_no', is_active: true },
-  { text: 'SOURCE', value: 'source', is_active: true },
-  {
-    text: 'CURRENTLY INSURED WITH',
-    value: 'currently_insured_with',
-    is_active: true,
-  },
-  { text: 'IS ECOMMERCE', value: 'is_ecommerce', is_active: true },
-  {
-    text: 'Previous Policy Number',
-    value: 'previous_quote_policy_number',
-    is_active: true,
-  },
-]);
-
-const quotesSelected = ref([]);
-const permissionAssignLeads = ref(false);
-
-const can = permission => useCan(permission);
-const permissionsEnum = page.props.permissionsEnum;
-const rolesEnum = page.props.rolesEnum;
-
 const onDataExport = () => {
   const data = useObjToUrl(filters);
   const url = route('data-extraction', 'yacht');
@@ -155,6 +158,43 @@ const onLeadAssigned = () => {
   quotesSelected.value = [];
 };
 
+function setQueryStringFilters() {
+  for (const [key] of Object.entries(params)) {
+    if (key.includes('[]')) {
+      filters[key.substring(0, key.length - 2)] = params[key];
+    } else {
+      filters[key] = params[key];
+    }
+  }
+}
+
+onMounted(() => {
+  setQueryStringFilters();
+
+  if (hasRole(rolesEnum.YachtManager) || hasRole(rolesEnum.Admin)) {
+    permissionAssignLeads.value = true;
+  }
+
+  let filtersCleaned = cleanObj(filters);
+
+  if (filtersCleaned.sortBy) {
+    serverOptions.value.sortBy = filtersCleaned.sortBy;
+    delete filtersCleaned.sortBy;
+  }
+
+  if (filtersCleaned.sortType) {
+    serverOptions.value.sortType = filtersCleaned.sortType;
+    delete filtersCleaned.sortType;
+  }
+
+  if (filtersCleaned.page) {
+    serverOptions.value.page = filtersCleaned.page;
+    delete filtersCleaned.page;
+  }
+
+  filtersCount.value = Object.keys(filtersCleaned).length;
+});
+
 watch(
   () => filters,
   () => {
@@ -165,6 +205,14 @@ watch(
     }
   },
   { deep: true, immediate: true },
+);
+
+watch(
+  () => serverOptions.value,
+  () => {
+    onSubmit(true);
+  },
+  { deep: true },
 );
 </script>
 
@@ -181,9 +229,13 @@ watch(
         />
 
         <FiltersButton
+          :is-shown="showFilters"
           :filters="filters"
+          :filters-count="filtersCount"
           @selected-filters="handleSelectedFilters"
+          @toggleFilters="showFilters = !showFilters"
         />
+
         <Link :href="route('yacht-quotes-card')">
           <x-button size="sm" color="#1d83bc" tag="div"> Cards View </x-button>
         </Link>
@@ -199,7 +251,7 @@ watch(
     </div>
     <x-divider class="my-4" />
 
-    <x-form @submit="onSubmit" :auto-focus="false">
+    <x-form v-show="showFilters" @submit="onSubmit" :auto-focus="false">
       <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
         <div>
           <x-tooltip position="bottom">
@@ -355,7 +407,14 @@ watch(
         </div>
         <div v-else />
         <div class="flex justify-self-end gap-3">
-          <x-button size="sm" color="#ff5e00" type="submit">Search</x-button>
+          <x-button
+            size="sm"
+            color="#ff5e00"
+            type="submit"
+            :loading="loader.table"
+          >
+            Search
+          </x-button>
           <x-button size="sm" color="primary" @click.prevent="onReset">
             Reset
           </x-button>

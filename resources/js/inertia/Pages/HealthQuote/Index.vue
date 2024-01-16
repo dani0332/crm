@@ -12,8 +12,7 @@ defineProps({
 
 const page = usePage();
 const notification = useToast();
-const cleanObj = obj => useCleanObj(obj);
-const params = useUrlSearchParams('history');
+
 const hasRole = role => useHasRole(role);
 const hasAnyRole = role => useHasAnyRole(role);
 const rolesEnum = page.props.rolesEnum;
@@ -24,9 +23,21 @@ const loader = reactive({
 });
 
 const canExport = ref(false);
-const showFilters = ref(true);
+
+const { isRequired } = useRules();
+
 const objToUrl = obj => useObjToUrl(obj);
 const quotesSelected = ref([]);
+
+const params = useUrlSearchParams('history');
+const cleanObj = obj => useCleanObj(obj);
+const showFilters = ref(true);
+const filtersCount = ref(0);
+const serverOptions = ref({
+  page: 1,
+  sortBy: 'created_at',
+  sortType: 'desc',
+});
 
 const assignForm = useForm({
   assign_team: null,
@@ -103,14 +114,6 @@ const filteredTableHeader = computed(() => {
   return headers.filter(x => x.is_active);
 });
 
-const serverOptions = ref({
-  page: 1,
-  sortBy: 'created_at',
-  sortType: 'desc',
-});
-
-const filtersCount = ref(0);
-
 const filters = reactive({
   code: '',
   first_name: '',
@@ -164,6 +167,7 @@ const advisorOptions = computed(() => {
 function onSubmit(isValid) {
   if (isValid) {
     serverOptions.value.page = 1;
+
     const filtersCleaned = cleanObj(filters);
 
     filtersCount.value = Object.keys(filtersCleaned).length;
@@ -202,10 +206,6 @@ function onReset() {
     onSuccess: () => (loader.table = false),
   });
 }
-
-const rules = {
-  isRequired: v => !!v || 'Please select this option',
-};
 
 function onAssignLead(isValid) {
   if (isValid) {
@@ -516,7 +516,7 @@ onMounted(() => {
                 ]"
                 placeholder="Select Subteam"
                 class="flex-1 w-auto"
-                :rules="[rules.isRequired]"
+                :rules="[isRequired]"
               />
               <x-select
                 v-model="assignForm.assigned_to_id_new"
@@ -524,7 +524,7 @@ onMounted(() => {
                 :options="advisorOptions"
                 placeholder="Select Advisor"
                 class="flex-1 w-auto"
-                :rules="[rules.isRequired]"
+                :rules="[isRequired]"
               />
 
               <div class="mb-3 md:pt-6">
