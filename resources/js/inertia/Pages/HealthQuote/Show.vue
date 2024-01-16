@@ -1352,11 +1352,13 @@ const handleChildUpdate = planId => {
 
 const selectedProviderPlan = ref({
   id: page.props.quote.plan_id,
-  planName: page.props.quote.plan_id_text,
-  providerName: page.props.quote.car_plan_provider_id_text,
+  planName: page.props.quote.health_plan_name_text,
+  providerName: page.props.quote.plan_provider_name_text,
   premium: page.props.ecomDetails.priceWithVAT
 
 });
+
+console.log(selectedProviderPlan, "LLLKKKKJ", page.props.quote)
 
 const handlePlanSelected = plan => {
   console.log("HHH", plan);
