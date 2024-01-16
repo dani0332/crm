@@ -4,10 +4,8 @@ namespace Database\Seeders;
 
 use App\Models\CarQuote;
 use App\Models\PersonalQuote;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
-use Illuminate\Database\Seeder;
 use Illuminate\Database\Eloquent\Factories\Factory;
-
+use Illuminate\Database\Seeder;
 
 class personalQuoteSeeder extends Seeder
 {

@@ -2,7 +2,6 @@
 
 namespace Database\Factories;
 
-use App\Models\Customer;
 use App\Models\PersonalQuote;
 use App\Models\QuoteType;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -20,13 +19,13 @@ class PersonalQuoteFactory extends Factory
         var_dump($table);
 
         $record = DB::table($table)
-            ->join('payments', $table . '.id', '=', 'payments.paymentable_id')
+            ->join('payments', $table.'.id', '=', 'payments.paymentable_id')
             ->whereNotExists(function ($query) use ($table) {
                 $query->select(DB::raw(1))
                     ->from('personal_quotes')
-                    ->whereRaw($table . '.code = personal_quotes.code');
+                    ->whereRaw($table.'.code = personal_quotes.code');
             })
-            ->select($table . '.*')
+            ->select($table.'.*')
             ->inRandomOrder()
             ->first();
 
@@ -41,7 +40,7 @@ class PersonalQuoteFactory extends Factory
                 var_dump($record->code);
                 // Check if a record with the same code already exists in personal_quotes
                 $personalQuote = PersonalQuote::where('code', $record->code)->first();
-                if ( $personalQuote === null) {
+                if ($personalQuote === null) {
                     return [
                         'uuid' => ''.$record->uuid.'',
                         'advisor_id' => $record->advisor_id,

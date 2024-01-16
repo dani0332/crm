@@ -33,8 +33,8 @@ class PaymentFactory extends Factory
     public function configure()
     {
         return $this->afterCreating(function (Payment $payment) {
-            if (!Payment::where('uuid', $personalQuote->uuid)->exists()) {
-                $personalQuote->payment()->save(Payment::factory()->create([ 'code' => $personalQuote->code]));
+            if (! Payment::where('uuid', $personalQuote->uuid)->exists()) {
+                $personalQuote->payment()->save(Payment::factory()->create(['code' => $personalQuote->code]));
             }
         });
     }
