@@ -94,7 +94,7 @@ class LifeQuoteRepository extends BaseRepository
 
         $quote = $this->where($column, $value)->with(['advisor', 'quoteStatus', 'nationality', 'previousAdvisor', 'lifeQuoteRequestDetail.lostReason',
             'purposeOfInsurance', 'children', 'currency', 'insuranceTenure', 'numberOfYears', 'maritalStatus',
-            'paymentStatus', 'customer.additionalContactInfo', 'insuranceProviderDetails',
+            'paymentStatus', 'customer.additionalContactInfo', 'insuranceProvider',
             'payments.paymentMethod', 'payments.paymentStatus', 'payments.paymentSplits.paymentStatus', 'payments.paymentSplits.paymentMethod', 'payments.paymentSplits.documents',
             'quoteRequestEntityMapping' => function ($entityMapping) {
                 $entityMapping->with('entity');

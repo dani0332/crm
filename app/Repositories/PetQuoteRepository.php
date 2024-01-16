@@ -130,7 +130,7 @@ class PetQuoteRepository extends BaseRepository
                 'createdBy',
                 'updatedBy',
                 'customer.additionalContactInfo',
-                'insuranceProviderDetails',
+                'insuranceProvider',
                 'documents' => function ($q) {
                     $q->with('createdBy')->orderBy('created_at', 'desc');
                 },
