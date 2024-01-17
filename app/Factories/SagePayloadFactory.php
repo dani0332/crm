@@ -2,7 +2,6 @@
 
 namespace App\Factories;
 
-use App\Enums\quoteStatusCode;
 use App\Models\QuoteRequestEntityMapping;
 
 class SagePayloadFactory
@@ -263,43 +262,19 @@ class SagePayloadFactory
     /*
     public static function createCustomerPayload($customer)
     {
-        // $appendGroup = 'G';
-        // $customerNumber = self::customizeCustomerId($customer->id, $appendGroup);
-        // //dd($customerNumber);
-        // $payLoad = [
-        //     'CustomerNumber' => $customerNumber . 'H',
-        //     'CustomerName' => $customer->first_name . ' ' . $customer->last_name,
-        //     'GroupCode' => 'PHI',
-        // ];
-
-        // return [
-        //     'endPoint' => 'AR/ARCustomers',
-        //     'payload' => $payLoad,
-        //     'customerNumber' => $customerNumber,
-        // ];
-
-
-        $data = $customer->data;
-
-        $mapping = QuoteRequestEntityMapping::where([['quote_type_id', $data['quoteTypeId']], ['quote_request_id', $data['id']]])->first();
-        if ($mapping) {
-            $payLoad = [
-                'CustomerNumber' => 'C' . $customer->id,
-                'CustomerName' => $customer->first_name . ' ' . $customer->last_name,
-                'GroupCode' => 'PHC',
-            ];
-        } else {
-            $payLoad = [
-                'CustomerNumber' => 'P' . $customer->id,
-                'CustomerName' => $customer->first_name . ' ' . $customer->last_name,
-                'GroupCode' => 'PHI',
-            ];
-        }
+        $appendGroup = 'G';
+        $customerNumber = self::customizeCustomerId($customer->id, $appendGroup);
+        //dd($customerNumber);
+        $payLoad = [
+            'CustomerNumber' => $customerNumber.'H',
+            'CustomerName' => $customer->first_name.' '.$customer->last_name,
+            'GroupCode' => 'PHI',
+        ];
 
         return [
             'endPoint' => 'AR/ARCustomers',
             'payload' => $payLoad,
-            'customerNumber' => $payLoad['CustomerNumber'],
+            'customerNumber' => $customerNumber,
         ];
     }
 */

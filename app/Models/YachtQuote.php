@@ -48,8 +48,8 @@ class YachtQuote extends Model implements AuditableContract
         return $this->morphMany(QuoteDocument::class, 'quote_documentable');
     }
 
-    public function insuranceProviderDetails()
+    public function insuranceProvider()
     {
-        return $this->hasOne(InsuranceProvider::class, 'id', 'insurance_provider_id');
+        return $this->belongsTo(InsuranceProvider::class, 'insurance_provider_id', 'id');
     }
 }

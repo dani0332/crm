@@ -29,8 +29,6 @@ const props = defineProps({
     default: '',
   },
 });
-console.log('QUOTEREQUEST='+JSON.stringify(props.quoteRequest));
-console.log('paymentDocument='+JSON.stringify(props.paymentDocument));
 const createPaymentModal = ref(false);
 const isPaymentNoEnabled = ref(false);
 const isCustomReasonEnabled = ref(false);
@@ -112,18 +110,21 @@ const discountProofDocument = props.paymentDocument.find(item => item.text === "
 const paymentProofDocument  = props.paymentDocument.find(item => item.text === "Payment Proof");
 const approveProofDocument  = props.paymentDocument.find(item => item.text === "Receipt");
 
-const planDetail = quoteTypesToCheck.includes(props.quoteType)
-? props.quoteRequest.plan
-: props.quoteRequest.insurance_provider_details
-
-console.log('azharPLAN='+props.quoteRequest.quoteType);
+let initalPlanDetails = [];
+if (quoteTypesToCheck.includes(props.quoteType)) {
+  initalPlanDetails = props.quoteRequest.plan;
+} else if(props.quoteType=='Business' || props.quoteType=='Home'){
+  initalPlanDetails = props.quoteRequest.insurance_provider_details;
+} else {
+  initalPlanDetails = props.quoteRequest.insurance_provider;
+}
+const planDetail = initalPlanDetails;
 const paidAmountSum = ref(0);
 const totalPaidAmount = ref(0);
 const masterPaymentStatus = ref('NEW');
 
 const calculateTotalAmount = () => {
   const discount = discountValue.value;
-  console.log('azharDISCOUNT='+paymentMethodsForm.discount+discount);
   if (discount > 50 && paymentMethodsForm.discount_reason === 'refer_a_friend') {
     totalAmount.value = totalPrice.value;
   } else {
@@ -296,13 +297,12 @@ const validatePaymentOption = () => {
           issueFound = true;
         }
       }
-      console.log('paymentMethod='+issueFound);
+      
       if(totalSplitAmount.toFixed(2) !== parseFloat(totalAmount.value).toFixed(2)){
         isPaymentCalculationError.value = true;
         issueFound = true;
       }
-      console.log('paymentCalc='+issueFound);
-      
+            
       if(
         (paymentMethodsForm.frequency === 'monthly' || paymentMethodsForm.frequency === 'quarterly' 
         || paymentMethodsForm.frequency === 'semi_annual' || paymentMethodsForm.frequency === 'custom')
@@ -315,8 +315,6 @@ const validatePaymentOption = () => {
       } else {
         for (let i = 1; i <= paymentMethodsForm.payment_no; i++) { 
           isDocumentNotUploaded.value[i] = false;
-
-          console.log('azharLEN='+fileUploadModels.value[i]);
           if ( (
             paymentMethodsModels.value[i]=='BT' || paymentMethodsModels.value[i]=='CHQ' 
             || paymentMethodsModels.value[i]=='PDC' || paymentMethodsModels.value[i]=='IP' 
@@ -332,11 +330,8 @@ const validatePaymentOption = () => {
           }
         }
       }
-
-      console.log('DocError='+issueFound);
       if(isDiscountEnabled.value === true && isCreditApprovalView.value === false) {
         isDiscountError.value = false;
-
         // Check if discount document uploaded
         if (discountDocumentModel.value[0]===undefined 
           || discountDocumentModel.value[0].length===0 ) {
@@ -387,8 +382,7 @@ const validatePaymentOption = () => {
           isDiscountReasonEnabled.value = false;
           isDiscountReasonError.value = false;
         }
-      }
-      console.log('DiscountError='+issueFound);   
+      }      
     if(issueFound){
       return true;
     }
@@ -607,7 +601,6 @@ const handleDiscountChange = () => {
   }
 
   isDiscountReasonEnabled.value = false;
-  console.log('HAFDISC='+paymentMethodsForm.discount);
   if(paymentMethodsForm.discount === '' || paymentMethodsForm.discount === undefined ){
     isDiscountEnabled.value = false;    
   }else{
@@ -717,15 +710,12 @@ const calculateDueDates = () => {
 const calculatePaymentBreakup = (changeMethod = true) => {  
   isDocumentNotUploaded.value = [];
   var perInstallmentPrice = parseFloat(((totalAmount.value-paidAmountSum.value)/(paymentMethodsForm.payment_no-totalPaidAmount.value)).toFixed(2));
-  console.log('azhar9991='+JSON.stringify(paymentMethodsModels.value));
   if ( paymentMethodsForm.status === 'edit') {
     var trueValuesArray = readOnlyPayments.value.filter(function(value) {
       return value === true;
     });
     // Get the count of true values
     var trueValuesCount = trueValuesArray.length;
-    console.log('READONLY='+paymentMethodsForm.payment_no);
-    console.log('READONLY1='+trueValuesCount);
     if(paymentMethodsForm.payment_no <= trueValuesCount){ 
       paymentMethodsForm.payment_no = oldTotalPayments.value;
       return;
@@ -1036,8 +1026,7 @@ const editPaymentModal = (payment,split_payment_id,sr_no,capture_approval) => {
   paymentMethodsForm.total_price= payment.total_price;
   paymentMethodsForm.collection_date= payment.collection_date;
   discountValue.value = payment.discount_value; // discount amount
-  //console.log('azhar20='+payment.total_payments);
-
+  
   if (paymentMethodsForm.status === 'view' || capture_approval>0 ) {
     paymentMethodsForm.credit_approval= payment.credit_approval !== null ? payment.credit_approval : 'N/A';  
     paymentMethodsForm.discount = payment.discount_type !== null ? payment.discount_type : 'N/A';     
@@ -1045,17 +1034,13 @@ const editPaymentModal = (payment,split_payment_id,sr_no,capture_approval) => {
     paymentMethodsForm.credit_approval= payment.credit_approval !== null ? payment.credit_approval : '';  
     paymentMethodsForm.discount = payment.discount_type !== null ? payment.discount_type : '';  
   }   
-  console.log('AZZZ='+paymentMethodsForm.discount);
-  
+    
   handleCollectionTypeChange();
   handleFrequencyChange(false);
   handleApprovalReasonChange();
   handleDiscountChange();
   handleDeclinedReasonChange();
   calculateTotalAmount();
-
-  console.log('azha221='+JSON.stringify(paymentMethodsModels.value));
-  console.log('azhar200='+JSON.stringify(payment.payment_splits));
 
   var isAnyPaid = false;
   for(let i=1; i<=payment.total_payments; i++){
@@ -1070,8 +1055,7 @@ const editPaymentModal = (payment,split_payment_id,sr_no,capture_approval) => {
       isAnyPaid = true;
     } else {
       readOnlyPayments.value[i] = false;
-    } 
-    console.log('paidAmountSum='+paidAmountSum.value);
+    }     
     fileUploadModels.value[i] = [];
     paymentMethodsModels.value[i] = payment.payment_splits[i-1].payment_method.code;
     splitAmountModels.value[i] = payment.payment_splits[i-1].payment_amount;
@@ -1083,15 +1067,12 @@ const editPaymentModal = (payment,split_payment_id,sr_no,capture_approval) => {
       checkDetailModels.value[i] = payment.payment_splits[i-1].check_detail;
     }
     if(payment.payment_splits[i-1].documents.length>0){
-
-        
+       
       for(let doc in payment.payment_splits[i-1].documents){
-
         /*if (!fileUploadModels.value[i]) {
             fileUploadModels.value[i] = [];
           }
         fileUploadModels.value[i].push(payment.payment_splits[i-1].documents[doc]); */
-        console.log('DOCUMENTS='+(payment.payment_splits[i-1].documents[doc].payment_split_type));
         if(payment.payment_splits[i-1].documents[doc].payment_split_type === 'discount'){
           if (!discountDocumentModel.value[0]) {
             discountDocumentModel.value[0] = [];
@@ -1103,11 +1084,8 @@ const editPaymentModal = (payment,split_payment_id,sr_no,capture_approval) => {
           }
           fileUploadModels.value[i].push(payment.payment_splits[i-1].documents[doc]); 
         }
-        
-        
       }
-    }
-
+     }
   }
   
   if (paymentMethodsForm.status == 'edit') {
@@ -1130,7 +1108,6 @@ const editPaymentModal = (payment,split_payment_id,sr_no,capture_approval) => {
     isFieldReadonly.value = true;    
     isCreditApprovalView.value = true;
   }
-  console.log('azhar523='+paymentMethodsModels.value);
   createPaymentModal.value = true;
 };
 
@@ -1186,8 +1163,6 @@ const validateCapturePayment = (isValid) => {
     if (isCreditCardView.value === true) {
       for (let i = 1; i <= paymentMethodsForm.payment_no; i++) { 
         //isCreditPaymentInvalid.value[i] = false;
-        console.log('INNN11'+JSON.stringify(collectionAmountModels.value[i]));
-        
         if (paymentMethodsModels.value[i] === 'CC'){
           if (collectionAmountModels.value[i]===null || collectionAmountModels.value[i]===undefined){
             isCreditPaymentInvalid.value[i] = true;
@@ -1222,11 +1197,9 @@ const addPayment = isValid => {
   } else if (paymentMethodsForm.status === 'view' && isApproveClicked.value) {
     if (validateViewPayment(isValid)) return;    
   } else if (paymentMethodsForm.status !== 'view') {
-    console.log('INNN22');
     if (validatePaymentOption()) return;  
   }  
   if (!isValid) return;  
-
   //define main payment method
   let mainPaymentMethod = 'CR';
   if(paymentMethodsForm.credit_approval!=='' && paymentMethodsForm.credit_approval!==null){
@@ -1446,9 +1419,7 @@ const deleteDocument = (docName,count) => {
         }
         if (discountDocumentModel.value[count]){
           discountDocumentModel.value[0] = discountDocumentModel.value[0].filter(item => item.doc_name !== docName);
-        }
-        
-        console.log('azhar19=deleted');
+        }        
       },
     },
   );
@@ -1487,7 +1458,6 @@ const uploadDocument = (doc, files, count) => {
   if (allUploadedDocuments && allUploadedDocuments.some((uploadedFile) => duplicateFileNames.includes(uploadedFile.original_name))) {
     isFileError.value = true;
     fileErrorMessage.value = props.paymentTooltipEnum.PAYMENT_ADD_DUPLICATE_FILES;
-    console.log('File already exists');
     return false;
   }
 
@@ -1525,14 +1495,11 @@ const uploadDocument = (doc, files, count) => {
           //quoteDocuments = [...quoteDocuments].reverse();
           // Sort the array by the "id" property in descending order
           quoteDocuments.sort((a, b) => b.id - a.id);
-          console.log('quoteDocuments=' + JSON.stringify(quoteDocuments));
-          
           if (count === 0) {
             isDiscountDocumentNotUploaded.value = false;
             for (let i = 0; i < files.length; i++) {
               discountDocumentModel.value[count].push(quoteDocuments[i]);
-            }
-            console.log('discountdoc=' + JSON.stringify(discountDocumentModel.value));
+            }          
             resolve(data);
             return;
           }
@@ -1542,7 +1509,6 @@ const uploadDocument = (doc, files, count) => {
             for (let i = 0; i < files.length; i++) {
               approvedDocumentModel.value[count].push(quoteDocuments[i]);
             }
-            console.log('approveddoc=' + JSON.stringify(approvedDocumentModel.value));
             resolve(data);
             return;
           }
@@ -1611,7 +1577,6 @@ const getCaptureValidation = computed(() => {
         }
       }
     } else {
-      console.log('PAYMENTSPLIT='+(paymentRecord.payment_splits[0].payment_status_id));
       if (
         (paymentRecord.payment_splits[0].payment_method.code==='IP' ||
         paymentRecord.payment_splits[0].payment_method.code==='PDC'
@@ -1675,8 +1640,7 @@ const providerName = computed(() => {
 });
 
 const providerId = computed(() => {
-  const plan = planDetail;
-  console.log('TRAVELPLAN='+JSON.stringify(props.quoteRequest));
+  const plan = planDetail;  
   if (plan && plan.insurance_provider) {
     return plan.insurance_provider.id;
   } else if (plan && plan.provider_id) {
@@ -1966,8 +1930,7 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
             <select
                 v-if="!isFieldReadonly"
                 class="custom-select"
-                v-model="paymentMethodsForm.collection_type"
-                :options="collectionTypes"
+                v-model="paymentMethodsForm.collection_type"                
                 :rules="[rules.isRequired]"
                 @change="handleCollectionTypeChange"
                 >
@@ -2012,7 +1975,6 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
                   v-if="!isFieldReadonly"
                   class="custom-select"
                   v-model="paymentMethodsForm.frequency"
-                  :options="frequencyTypes"
                   :rules="[rules.isRequired]"
                   @change="handleFrequencyChange"
                   >
@@ -2058,7 +2020,6 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
                   v-if="!isFieldReadonly"
                   class="custom-select"
                   v-model="paymentMethodsForm.payment_no"
-                  :options="totalPayments"
                   :rules="[rules.isRequired]"
                   :disabled="!isPaymentNoEnabled"
                   @change="calculatePaymentBreakup()"
@@ -2105,7 +2066,6 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
               <select
                   class="custom-select"
                   v-model="paymentMethodsForm.credit_approval"
-                  :options="creditApprovalReasons"
                   @change="handleApprovalReasonChange"
                   >
                   <template v-for="option in creditApprovalReasons" :key="option.value">
@@ -2146,7 +2106,6 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
               <select
                   class="custom-select"
                   v-model="paymentMethodsForm.discount"
-                  :options="discountTypes"
                   @change="handleDiscountChange"
                   >
                   <template v-for="option in discountTypes" :key="option.value">
@@ -2174,7 +2133,6 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
                   :class="{'custom-select-error': isDiscountReasonError}"
                   class="custom-select"
                   v-model="paymentMethodsForm.discount_reason"
-                  :options="discountReasons"
                   :rules="[rules.isRequired]"
                   @change="handleDiscountReasonChange"                  
                   >
@@ -2205,8 +2163,8 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
                 <span>
                   <Dropzone
                     :id="discountProofDocument.id"
-                    customDisplay="true"
-                    multiple="true"
+                    :customDisplay="true"
+                    :multiple="true"
                     :accept="discountProofDocument.accepted_files"
                     :max-files="discountProofDocument.max_files"
                     :max-size="discountProofDocument.max_size"
@@ -2543,7 +2501,6 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
                         :class="{'custom-select-error': isPaymentMetodNotSelected[count]}"
                         class="w-full custom-select"
                         v-model="paymentMethodsModels[count]"
-                        :options="handlePaymentTypes(count)"
                         @change="handlePaymentOptions(count)"
                       >
                         <!-- Use the title attribute to set the tooltip text -->
@@ -2613,8 +2570,8 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
                     <x-tooltip v-if="!readOnlyPayments[count]">
                           <Dropzone
                           :id="paymentProofDocument.id"
-                          multiple="true"
-                          customDisplay="true"
+                          :multiple="true"
+                          :customDisplay="true"
                           :accept="paymentProofDocument.accepted_files"
                           :max-files="paymentProofDocument.max_files"
                           :max-size="paymentProofDocument.max_size"
@@ -2686,7 +2643,6 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
                       :class="{'custom-select-error': isDeclinedReasonError}"                  
                       class="custom-select"
                       v-model="paymentMethodsForm.declined_reason"
-                      :options="declinedReasons"
                       :rules="[rules.isRequired]"
                       @change="handleDeclinedReasonChange"
                       >
@@ -2777,8 +2733,8 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
                 <x-field>
                 <Dropzone
                   :id="approveProofDocument.id"
-                  customDisplay="true"
-                  multiple="true"
+                  :customDisplay="true"
+                  :multiple="true"
                   :accept="approveProofDocument.accepted_files"
                   :max-files="approveProofDocument.max_files"
                   :max-size="approveProofDocument.max_size"

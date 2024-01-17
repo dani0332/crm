@@ -94,6 +94,6 @@ class HomeQuote extends Model implements AuditableContract
 
     public function insuranceProviderDetails()
     {
-        return $this->hasOne(InsuranceProvider::class, 'id', 'insurance_provider_id');
+        return $this->belongsTo(InsuranceProvider::class, 'insurance_provider_id', 'id');
     }
 }
