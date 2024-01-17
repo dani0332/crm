@@ -41,7 +41,7 @@ const kycForm = reactive({
   customer_id: props.quote.customer_id,
   first_name: props.entityDetails?.entity?.kyc_first_name ?? props.quote.first_name,
   last_name: props.entityDetails?.entity?.kyc_last_name ?? props.quote.last_name,
-  company_name: props.quote.company_name,
+  company_name: props.entityDetails?.entity?.company_name ?? props.quote.company_name ?? null,
   legal_structure: props.entityDetails?.entity?.legal_structure ?? null,
   industry_type: props.entityDetails?.entity?.industry_type_code ?? null,
   country_of_corporation: props.entityDetails?.entity?.country_of_corporation ?? 56, //Default UAE

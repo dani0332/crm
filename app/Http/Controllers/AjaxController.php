@@ -308,6 +308,7 @@ class AjaxController extends Controller
             $quoteTypeId = app(ActivitiesService::class)->getQuoteTypeId(strtolower($quoteType));
             if ($document) {
                 Entity::where('id', $quote->quoteRequestEntityMapping->entity->id)->update([
+                    'company_name' => $data['company_name'],
                     'mobile_no' => $data['mobile_number'],
                     'email' => $data['email'],
                     'website' => $data['website'],
