@@ -2,8 +2,10 @@
 
 namespace App\Repositories;
 
+use App\Enums\CustomerTypeEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Facades\Capi;
@@ -85,6 +87,7 @@ class PetQuoteRepository extends BaseRepository
 
     public function fetchGetData($forExport = false)
     {
+
         $query = $this->byQuoteTypeCode(QuoteTypes::PET)->with([
             'quoteStatus',
             'quoteDetail',
@@ -118,7 +121,9 @@ class PetQuoteRepository extends BaseRepository
                 'petQuote.petType:id,text',
                 'plans:id,text',
                 'advisor',
+                'nationality',
                 'quoteDetail.lostReason',
+                'quoteDetail.previousAdvisor',
                 'payments' => function ($q) {
                     $q->with(['paymentStatus', 'personalPlan', 'paymentMethod', 'paymentStatusLogs', 'insuranceProvider']);
                 },
@@ -128,8 +133,25 @@ class PetQuoteRepository extends BaseRepository
                 'documents' => function ($q) {
                     $q->with('createdBy')->orderBy('created_at', 'desc');
                 },
-            ])->firstOrFail();
+                'quoteRequestEntityMapping' => function ($entityMapping) {
+                    $entityMapping->with('entity');
+                },
+            ])
+            ->select([
+                $this->getTable().'.*',
+                \DB::raw('IF(EXISTS (
+                    SELECT *
+                    FROM quote_request_entity_mapping
+                    WHERE quote_type_id = '.QuoteTypeId::Pet.' AND quote_request_id = '.$this->getTable().'.id),
+                    "'.CustomerTypeEnum::Entity.'", "'.CustomerTypeEnum::Individual.'")
+                as customer_type'),
+            ])
+            ->firstOrFail();
         $quote->payments->each->setAppends(['allow', 'copy_link_button', 'edit_button', 'approve_button', 'approved_button']);
+
+        $data = ! empty($quote) ? $quote->toArray() : [];
+        $quote->lost_reason = $data['quote_detail']['lost_reason']['text'] ?? null;
+        $quote->previous_advisor_id_text = $data['quote_detail']['previous_advisor']['name'] ?? null;
 
         return $quote;
 
@@ -155,6 +177,12 @@ class PetQuoteRepository extends BaseRepository
         $dataArr['quoteTypeId'] = intval(QuoteTypes::PET->id());
 
         return Capi::request('/api/v1-save-personal-quote', 'post', $dataArr);
+    }
+
+    public function fetchExport()
+    {
+        return $this->filter()->with(
+            ['advisor', 'nationality', 'insuranceProvider'])->orderBy('created_at', 'desc');
     }
 
 }

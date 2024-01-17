@@ -7,6 +7,7 @@ import QuoteActivities from '../PersonalQuote/Partials/QuoteActivities';
 import QuotePolicy from '../PersonalQuote/Partials/QuotePolicy';
 import LeadHistory from '../PersonalQuote/Partials/LeadHistory';
 import AdditionalContacts from '../PersonalQuote/Partials/AdditionalContacts';
+import PlanDetails from '../../Components/PlanDetails.vue';
 
 defineProps({
   quote: Object,
@@ -24,6 +25,7 @@ defineProps({
   lostReasons: Object,
   quoteStatusEnum: Object,
   embeddedProducts: Array,
+  canAddBatchNumber: Boolean,
 });
 
 const page = usePage();
@@ -204,73 +206,21 @@ const permissionsEnum = page.props.permissionsEnum;
 
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">DATE OF BIRTH</dt>
-            <dd>{{ quote.dob_formatted }}</dd>
-          </div>
-        </dl>
-      </div>
-
-      <div class="mt-6">
-        <h3 class="font-semibold text-primary-800">
-          Last Year's Policy Details
-        </h3>
-        <x-divider class="mb-4 mt-1" />
-      </div>
-
-      <div class="text-sm">
-        <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">PREVIOUS POLICY NUMBER</dt>
-            <dd>{{ quote.previous_quote_policy_number }}</dd>
-          </div>
-
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">PREVIOUS POLICY EXPIRY DATE</dt>
-            <dd>{{ quote.previous_policy_expiry_date }}</dd>
-          </div>
-
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">PREVIOUS POLICY PRICE</dt>
-            <dd>{{ quote.previous_quote_policy_premium }}</dd>
-          </div>
-
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">RENEWAL BATCH</dt>
-            <dd>{{ quote.renewal_batch }}</dd>
-          </div>
-        </dl>
-      </div>
-
-      <div class="mt-6">
-        <h3 class="font-semibold text-primary-800">Policy Details</h3>
-        <x-divider class="mb-4 mt-1" />
-      </div>
-
-      <div class="text-sm">
-        <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">POLICY NUMBER</dt>
-            <dd>{{ quote.policy_number }}</dd>
-          </div>
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">POLICY START DATE</dt>
-            <dd>{{ quote.policy_start_date }}</dd>
-          </div>
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">POLICY END DATE</dt>
-            <dd>{{ quote.policy_issuance_date }}</dd>
-          </div>
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">PREMIUM</dt>
-            <dd>{{ quote.premium }}</dd>
-          </div>
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">TRANSAPP CODE</dt>
-            <dd>{{ quote?.quote_detail?.transapp_code }}</dd>
+            <dd>{{ quote.dob }}</dd>
           </div>
         </dl>
       </div>
     </div>
 
+    <LastYearPolicyDetail
+      v-if="
+        quote.source == $page.props.leadSource.RENEWAL_UPLOAD ||
+        quote.source == $page.props.leadSource.INSLY
+      "
+      modelType="Jetski"
+      :quote="quote"
+      :canAddBatchNumber="canAddBatchNumber"
+    />
     <QuoteActivities
       :can="can"
       :quote="quote"
@@ -311,6 +261,12 @@ const permissionsEnum = page.props.permissionsEnum;
       :can="can"
       :quoteStatusEnum="quoteStatusesEnum"
     />
+
+    <PlanDetails
+    :insuranceProviders="insuranceProviders"
+    :quote="quote"
+    :quoteType="quoteType"
+     />
 
     <EmbeddedProducts
       :data="embeddedProducts"

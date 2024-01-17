@@ -76,7 +76,8 @@ class PetQuoteService extends BaseService
                 'pqr.has_injury',
                 'pqr.customer_id',
                 'pqr.parent_duplicate_quote_id',
-                'pqr.renewal_import_code'
+                'pqr.renewal_import_code',
+                'prq.risk_score',
             )
             ->leftJoin('pet_quote_request_detail as pqrd', 'pqrd.pet_quote_request_id', 'pqr.id')
             ->leftJoin('lost_reasons as ls', 'ls.id', '=', 'pqrd.lost_reason_id')
@@ -196,12 +197,12 @@ class PetQuoteService extends BaseService
             if (isset($request->assigned_to_date_start) && $request->assigned_to_date_start != '') {
                 $dateFrom = $this->parseDate($request['assigned_to_date_start'], true);
                 $dateTo = $this->parseDate($request['assigned_to_date_end'], false);
-                $this->query->whereBetween(DB::raw('DATE(pqrd.advisor_assigned_date)'), [$dateFrom, $dateTo]);
+                $this->query->whereBetween('pqrd.advisor_assigned_date', [$dateFrom, $dateTo]);
             }
             if (in_array('created_at', $searchProperties) && isset($request->created_at) && $request->created_at != '') {
                 $dateFrom = $this->parseDate($request['created_at'], true);
                 $dateTo = $this->parseDate($request['created_at_end'], true);
-                $this->query->whereBetween(DB::raw('DATE(pqr.created_at)'), [$dateFrom, $dateTo]);
+                $this->query->whereBetween('pqr.created_at', [$dateFrom, $dateTo]);
             }
 
             if (Auth::user()->isSpecificTeamAdvisor('Pet')) {

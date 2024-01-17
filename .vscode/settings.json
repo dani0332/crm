@@ -9,5 +9,6 @@
         "IMCRM",
         "leftjoin",
         "Queueable"
-    ]
+    ],
+    "editor.inlineSuggest.showToolbar": "always"
 }

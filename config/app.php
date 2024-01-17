@@ -247,6 +247,7 @@ return [
         'KenService' => \App\Services\KenService::class,
         'MarshallService' => \App\Services\MarshallService::class,
         'CapiService' => \App\Services\CapiService::class,
+        'KyoService' => \App\Services\KyoService::class,
         'PostMark' => \App\Facades\PostMark::class,
     ],
 

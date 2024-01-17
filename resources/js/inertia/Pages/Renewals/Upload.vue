@@ -96,7 +96,7 @@ const can = permission => useCan(permission);
             </div>
 
                     <Dropzone  v-model="uploadForm.csvFile"
-                               @change="handleFileUpload( $event )"
+                               @changeMethod="handleFileUpload( $event )"
                                :error="uploadForm.errors.type"
                     ></Dropzone>
                         <a

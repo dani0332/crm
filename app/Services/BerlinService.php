@@ -22,14 +22,12 @@ class BerlinService extends BaseService
 
     public function getCustomerInviteCode()
     {
-        $this->berlinEndpoint .= '/auth/generate-code';
-
         $inviteCodeGeneratauthBasic = base64_encode($this->berlinUserName.':'.$this->berlinAuthPassword);
         $clientBerlin = new \GuzzleHttp\Client();
 
         try {
             $berlinRequest = $clientBerlin->post(
-                $this->berlinEndpoint,
+                $this->berlinEndpoint.'/auth/generate-code',
                 [
                     'headers' => [
                         'Content-Type' => 'application/json',
@@ -102,8 +100,6 @@ class BerlinService extends BaseService
 
     public function extendCustomerSubscription($customerId, $customerEmail)
     {
-        $this->berlinEndpoint .= '/internal/extend-subscription';
-
         $customer = MyAlFredUser::select('signup_url', 'code')->where('customer_id', $customerId)->latest()->first();
 
         if (! $customer) {
@@ -123,12 +119,11 @@ class BerlinService extends BaseService
 
         if ($hasToken) {
             $customerDataArr[$isToken ? 'token' : 'otp'] = $customer->code;
-        } else {
-            $customerDataArr['email'] = $customerEmail;
         }
 
+        $customerDataArr['email'] = $customerEmail;
+
         $customerDataJson = json_encode($customerDataArr);
-        info('customerDataArr: ', $customerDataArr);
 
         $magicUrlGeneratauthBasic = base64_encode($this->berlinUserName.':'.$this->berlinAuthPassword);
 
@@ -136,7 +131,7 @@ class BerlinService extends BaseService
 
         try {
             $requestExtendSubscription = $clientExtendSubscription->post(
-                $this->berlinEndpoint,
+                $this->berlinEndpoint.'/internal/extend-subscription',
                 [
                     'headers' => [
                         'Content-Type' => 'application/json',

@@ -2,6 +2,8 @@
 
 namespace App\Repositories;
 
+use App\Enums\CustomerTypeEnum;
+use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Facades\Capi;
@@ -102,6 +104,7 @@ class BikeQuoteRepository extends BaseRepository
                 'advisor',
                 'nationality',
                 'quoteDetail.lostReason',
+                'quoteDetail.previousAdvisor',
                 'currentlyInsuredWith',
                 'payments' => function ($q) {
                     $q->with([
@@ -118,9 +121,26 @@ class BikeQuoteRepository extends BaseRepository
                 'documents' => function ($q) {
                     $q->with('createdBy')->orderBy('created_at', 'desc');
                 },
-            ])->firstOrFail();
+                'quoteRequestEntityMapping' => function ($entityMapping) {
+                    $entityMapping->with('entity');
+                },
+            ])
+            ->select([
+                $this->getTable().'.*',
+                \DB::raw('IF(EXISTS (
+                    SELECT *
+                    FROM quote_request_entity_mapping
+                    WHERE quote_type_id = '.QuoteTypeId::Bike.' AND quote_request_id = '.$this->getTable().'.id),
+                    "'.CustomerTypeEnum::Entity.'", "'.CustomerTypeEnum::Individual.'")
+                as customer_type'),
+            ])
+            ->firstOrFail();
 
         $quote->payments->each->setAppends(['allow', 'copy_link_button', 'edit_button', 'approve_button', 'approved_button']);
+
+        $data = ! empty($quote) ? $quote->toArray() : [];
+        $quote->lost_reason = $data['quote_detail']['lost_reason']['text'] ?? null;
+        $quote->previous_advisor_id_text = $data['quote_detail']['previous_advisor']['name'] ?? null;
 
         return $quote;
     }
@@ -143,6 +163,14 @@ class BikeQuoteRepository extends BaseRepository
             ->orderBy('created_at', 'desc');
 
         return ($forExport) ? $query->get() : $query->simplePaginate();
+    }
+
+    public function fetchExport()
+    {
+        return $this->byQuoteTypeCode(QuoteTypes::BIKE)->with(['quoteStatus', 'currentlyInsuredWith', 'advisor'])
+            ->filter()
+            ->withFakeLeadCriteria()
+            ->orderBy('created_at', 'desc');
     }
 
 }

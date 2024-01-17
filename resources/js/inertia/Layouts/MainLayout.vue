@@ -54,7 +54,13 @@ const onLogout = () => {
             </button>
 
             <a href="/" class="block w-full">
-              <img src="/image/new_logo.png" alt="IMCRM" class="w-full" />
+              <img
+                src="/images/im_logo_21k-hi.png"
+                alt="IMCRM"
+                class="w-full"
+                width="439"
+                height="66"
+              />
             </a>
           </div>
         </header>
@@ -65,6 +71,7 @@ const onLogout = () => {
           <template v-for="link in navLinks">
             <template v-if="link.children.length > 0">
               <x-collapse
+                :key="link.children"
                 show-icon
                 :expanded="
                   link.children.some(child =>
@@ -101,6 +108,7 @@ const onLogout = () => {
                   <template v-for="child in link.children">
                     <template v-if="child.children.length > 0">
                       <x-collapse
+                        :key="child.children"
                         show-icon
                         :expanded="
                           child.children.some(grandchild =>
@@ -130,7 +138,10 @@ const onLogout = () => {
                         </template>
 
                         <template #content>
-                          <template v-for="grandchild in child.children">
+                          <template
+                            v-for="(grandchild, index) in child.children"
+                            :key="index"
+                          >
                             <a
                               :href="grandchild.url"
                               class="pl-10 py-2 flex gap-2 items-center hover:bg-black/10"
@@ -155,6 +166,7 @@ const onLogout = () => {
                           '!bg-primary-800':
                             $page.url.startsWith(child.url) || child.active,
                         }"
+                        :key="child.url"
                       >
                         <x-icon
                           :icon="
@@ -170,13 +182,15 @@ const onLogout = () => {
                 </template>
               </x-collapse>
             </template>
-            <template v-else>
+
+            <template v-else-if="link.url != '' || link.children.length != 0">
               <a
                 :href="link.url"
                 class="pl-3 py-2.5 flex gap-2 items-center hover:bg-black/10"
                 :class="{
                   '!bg-primary-800': $page.url.startsWith(link.url),
                 }"
+                :key="link.url"
               >
                 <x-icon
                   v-if="link.attributes.icon"

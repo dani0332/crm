@@ -2,6 +2,8 @@
 
 namespace App\Repositories;
 
+use App\Enums\CustomerTypeEnum;
+use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Facades\Capi;
@@ -75,12 +77,14 @@ class YachtQuoteRepository extends BaseRepository
      */
     public function fetchGetBy($column, $value)
     {
-        return $this->byQuoteTypeId(QuoteTypes::YACHT->id())
+        $quote = $this->byQuoteTypeId(QuoteTypes::YACHT->id())
             ->where($column, $value)
             ->with([
                 'yachtQuote',
                 'advisor',
+                'nationality',
                 'quoteDetail.lostReason',
+                'quoteDetail.previousAdvisor',
                 'payments' => function ($q) {
                     $q->with(['paymentStatus', 'personalPlan', 'paymentMethod']);
                 },
@@ -90,7 +94,26 @@ class YachtQuoteRepository extends BaseRepository
                 'documents' => function ($q) {
                     $q->with('createdBy')->orderBy('created_at', 'desc');
                 },
-            ])->firstOrFail();
+                'quoteRequestEntityMapping' => function ($entityMapping) {
+                    $entityMapping->with('entity');
+                },
+            ])
+            ->select([
+                $this->getTable().'.*',
+                \DB::raw('IF(EXISTS (
+                    SELECT *
+                    FROM quote_request_entity_mapping
+                    WHERE quote_type_id = '.QuoteTypeId::Yacht.' AND quote_request_id = '.$this->getTable().'.id),
+                    "'.CustomerTypeEnum::Entity.'", "'.CustomerTypeEnum::Individual.'")
+                as customer_type'),
+            ])
+            ->firstOrFail();
+
+        $data = ! empty($quote) ? $quote->toArray() : [];
+        $quote->lost_reason = $data['quote_detail']['lost_reason']['text'] ?? null;
+        $quote->previous_advisor_id_text = $data['quote_detail']['previous_advisor']['name'] ?? null;
+
+        return $quote;
     }
 
     /**
@@ -111,5 +134,25 @@ class YachtQuoteRepository extends BaseRepository
             ->orderBy('created_at', 'desc');
 
         return ($forExport) ? $query->get() : $query->simplePaginate();
+    }
+
+    public function fetchExport()
+    {
+        return $this->byQuoteTypeCode(QuoteTypes::YACHT)->with(['quoteStatus', 'currentlyInsuredWith', 'advisor'])
+            ->filter()
+            ->withFakeLeadCriteria()
+            ->orderBy('created_at', 'desc');
+    }
+
+    /**
+     * get data by  yacht type.
+     *
+     * @return mixed
+     */
+    public function scopeByQuoteTypeCode($query, $quoteTypeCode)
+    {
+        return $query->whereHas('quoteType', function ($q) use ($quoteTypeCode) {
+            $q->where('code', ($quoteTypeCode));
+        });
     }
 }

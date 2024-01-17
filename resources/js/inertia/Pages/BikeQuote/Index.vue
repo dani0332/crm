@@ -32,6 +32,7 @@ let availableFilters = {
   quote_status_id: '',
   advisor_id: [],
   page: 1,
+  previous_quote_policy_number_text: '',
 };
 const canExport = ref(false);
 const permissionAssignLeads = ref(false);
@@ -99,7 +100,7 @@ const tableHeader = [
   { text: 'Ref-ID', value: 'uuid' },
   { text: 'FIRST NAME', value: 'first_name' },
   { text: 'LAST NAME', value: 'last_name' },
-  { text: 'DOB', value: 'dob_formatted' },
+  { text: 'DOB', value: 'dob' },
   { text: 'LEAD STATUS', value: 'quote_status' },
   { text: 'ADVISOR', value: 'advisor' },
   { text: 'CREATED DATE', value: 'created_at' },
@@ -109,6 +110,7 @@ const tableHeader = [
   { text: 'SOURCE', value: 'source' },
   { text: 'CURRENTLY INSURED WITH', value: 'currently_insured_with' },
   { text: 'IS ECOMMERCE', value: 'is_ecommerce' },
+  { text: 'Previous Policy Number', value: 'previous_quote_policy_number' },
 ];
 
 const can = permission => useCan(permission);
@@ -293,6 +295,14 @@ watch(
             class="w-full"
           />
         </x-field>
+        <x-input
+          v-model="filters.previous_quote_policy_number_text"
+          type="text"
+          name="previous_quote_policy_number"
+          label="Previous Policy Number"
+          class="w-full"
+          placeholder="Search by Previous Policy Number"
+        />
       </div>
       <div class="flex justify-between gap-3 mb-4 mt-1">
         <div v-if="can(permissionsEnum.DATA_EXTRACTION)">

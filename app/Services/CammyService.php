@@ -2,7 +2,9 @@
 
 namespace App\Services;
 
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\QuoteTypeId;
+use App\Models\ApplicationStorage;
 use Exception;
 
 class CammyService
@@ -20,6 +22,13 @@ class CammyService
 
     public function sync($lead, $trigger)
     {
+        $isCammyFollowupEnabled = ApplicationStorage::where('key_name', ApplicationStorageEnums::ENABLE_CAMMY_FOLLOWUP)->first();
+        if ($isCammyFollowupEnabled && $isCammyFollowupEnabled->value == 0 || ! $isCammyFollowupEnabled) {
+            info('Cammy Service Disabled');
+
+            return false;
+        }
+
         if (! $lead || ! $trigger) {
             info('Cammy Service - Failed - Lead or Trigger not provided');
 
@@ -53,9 +62,9 @@ class CammyService
                     $plans->push([
                         'name' => $plan->name,
                         'provider' => $plan->providerName,
-                        'premium' => '',
+                        'premium' => $plan->premium ?? '',
                         'features' => $features->toArray(),
-                        'logo' => $plan->logo,
+                        'logo' => $plan->logo ?? '',
                         'planLink' => $plan->planLink ?? '',
                     ]);
                 }
@@ -77,9 +86,7 @@ class CammyService
                     'fromEmail' => isset($lead->advisor) ? $lead->advisor->email : 'no-reply@alert.insurancemarket.email',
                     'toEmail' => $lead->email,
                     'cc' => '',
-                    // 'cc' => 'afiaretailmedical@insurancemarket.ae',
                     'bcc' => optional($lead->advisor)->email,
-                    // 'bcc' => 'newleadpool@insurancemarket.ae,'.optional($lead->advisor)->email,
                     'advisor' => ['name' => optional($lead->advisor)->name, 'email' => optional($lead->advisor)->email, 'phone' => optional($lead->advisor)->mobile_no],
                     'comparePlansLink' => config('constants.AFIA_WEBSITE_DOMAIN').'/health-insurance/quote/'.$lead->uuid.'/compare',
                     'plans' => $plans->toArray(),

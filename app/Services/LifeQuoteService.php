@@ -78,7 +78,9 @@ class LifeQuoteService extends BaseService
                 DB::raw('DATE_FORMAT(lqr.policy_start_date, "%d-%m-%Y") as policy_start_date'),
                 'lqr.previous_quote_policy_premium',
                 'lqr.customer_id',
-                'lqr.parent_duplicate_quote_id'
+                'lqr.parent_duplicate_quote_id',
+                'lqr.risk_score',
+                'lqr.kyc_decision',
             )
             ->leftJoin('life_quote_request_detail as lqrd', 'lqrd.life_quote_request_id', 'lqr.id')
             ->leftJoin('currency_type as ct', 'ct.id', '=', 'lqr.sum_insured_currency_id')
@@ -198,17 +200,17 @@ class LifeQuoteService extends BaseService
         if (isset($request->assigned_to_date_start) && $request->assigned_to_date_start != '') {
             $dateFrom = $this->parseDate($request['assigned_to_date_start'], true);
             $dateTo = $this->parseDate($request['assigned_to_date_end'], false);
-            $this->query->whereBetween(DB::raw('DATE(lqrd.advisor_assigned_date)'), [$dateFrom, $dateTo]);
+            $this->query->whereBetween('lqrd.advisor_assigned_date', [$dateFrom, $dateTo]);
         }
         if (! empty($request->created_at) && ! empty($request->created_at_end)) {
             $dateFrom = date('Y-m-d 00:00:00', strtotime($request['created_at']));
             $dateTo = date('Y-m-d 23:59:59', strtotime($request['created_at_end']));
-            $this->query->whereBetween(DB::raw('DATE(lqr.created_at)'), [$dateFrom, $dateTo]);
+            $this->query->whereBetween('lqr.created_at', [$dateFrom, $dateTo]);
         }
         if (isset($request->next_followup_date) && $request->next_followup_date != '') {
             $dateFrom = $this->parseDate($request['next_followup_date'], true);
             $dateTo = $this->parseDate($request['next_followup_date_end'], true);
-            $this->query->whereBetween(DB::raw('DATE(lqrd.next_followup_date)'), [$dateFrom, $dateTo]);
+            $this->query->whereBetween('lqrd.next_followup_date', [$dateFrom, $dateTo]);
         }
         if (Auth::user()->isSpecificTeamAdvisor('Life')) {
             // if user has advisor Role then fetch leads assigned to the user only

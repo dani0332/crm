@@ -6,6 +6,8 @@ import QuoteActivities from '../PersonalQuote/Partials/QuoteActivities';
 import QuotePolicy from '../PersonalQuote/Partials/QuotePolicy';
 import LeadHistory from '../PersonalQuote/Partials/LeadHistory';
 import AdditionalContacts from '../PersonalQuote/Partials/AdditionalContacts.vue';
+import PlanDetails from '../../Components/PlanDetails.vue';
+import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue';
 
 defineProps({
   quote: Object,
@@ -17,18 +19,187 @@ defineProps({
   isBetaUser: Boolean,
   storageUrl: String,
   quoteType: String,
+  quoteTypeId: Number,
   can: Object,
   activities: Object,
   advisors: Object,
   lostReasons: Object,
   quoteStatusEnum: Object,
   embeddedProducts: Array,
+  customerTypeEnum: Object,
+  nationalities: Array,
+  memberRelations: Array,
+  membersDetails: Array,
+  industryType: Object,
+  UBORelations: Array,
+  UBOsDetails: Array,
+  canAddBatchNumber: Boolean,
 });
 
 const page = usePage();
-
+const notification = useToast();
+const { isRequired } = useRules();
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
+const hasAnyRole = roles => useHasAnyRole(roles);
+const rolesEnum = page.props.rolesEnum;
+
+const industryTypeOptions = computed(() => {
+  return page.props.industryType.map(indType => ({
+    value: indType.code,
+    label: indType.text,
+  }));
+});
+const emiratesOptions = computed(() => {
+  return page.props.emirates.map(em => ({
+    value: em.id,
+    label: em.text,
+  }));
+});
+const isProfileUpdateAllow = computed(() => {
+  return hasAnyRole([
+    page.props.rolesEnum.PA,
+    page.props.rolesEnum.OE,
+    page.props.rolesEnum.NRA,
+  ]);
+});
+
+const customerProfileForm = useForm({
+  customer_id: page.props.quote.customer_id,
+  customer_type: page.props.quote.customer_type,
+  quote_type: page.props.modelType,
+  quote_type_id: page.props.quoteTypeId,
+  quote_request_id: page.props.quote.id,
+
+  insured_first_name: page.props.quote?.customer.insured_first_name || '',
+  insured_last_name: page.props.quote?.customer.insured_last_name || '',
+  emirates_id_number: page.props.quote?.customer.emirates_id_number || null,
+  emirates_id_expiry_date:
+    page.props.quote?.customer.emirates_id_expiry_date || null,
+
+  entity_id: page.props.quote?.quote_request_entity_mapping?.entity_id ?? null,
+  trade_license_no:
+    page.props.quote?.quote_request_entity_mapping?.entity?.trade_license_no ??
+    null,
+  company_name:
+    page.props.quote?.quote_request_entity_mapping?.entity?.company_name ??
+    null,
+  company_address:
+    page.props.quote?.quote_request_entity_mapping?.entity?.company_address ??
+    null,
+  entity_type_code:
+    page.props.quote?.quote_request_entity_mapping?.entity_type_code ??
+    'Parent',
+  industry_type_code:
+    page.props.quote?.quote_request_entity_mapping?.entity
+      ?.industry_type_code ?? null,
+  emirate_of_registration_id:
+    page.props.quote?.quote_request_entity_mapping?.entity
+      ?.emirate_of_registration_id ?? null,
+});
+
+const updateProfileDetails = isValid => {
+  if (!isValid) return;
+
+  customerProfileForm.post(route('update-customer-profile'), {
+    preserveScroll: true,
+    onSuccess: () => {
+      notification.success({
+        title: 'Customer profile details update Successfully',
+        position: 'top',
+      });
+    },
+    onError: errors => {
+      Object.keys(errors).forEach(function (key) {
+        notification.error({
+          title: errors[key],
+          position: 'top',
+        });
+      });
+    },
+  });
+};
+
+const entityDetailsFound = ref(false);
+const getParentEntityModel = ref(false);
+const tradeLicenseEntity = reactive({
+  entity_id: null,
+  trade_license: null,
+  company_name: null,
+  company_address: null,
+  triggeredFrom: false,
+});
+
+const entityTypeChange = event => {
+  if (event === 'SubEntity') {
+    getParentEntityModel.value = true;
+  }
+};
+
+const searchByTradeLicense = trigger => {
+  let url = `/kyc/aml-fetch-entity?trade_license=${customerProfileForm.trade_license_no}`;
+  axios
+    .get(url)
+    .then(res => {
+      if (res.data.status) {
+        let response = res.data.response;
+        entityDetailsFound.value = true;
+        tradeLicenseEntity.entity_id = response.id;
+        tradeLicenseEntity.trade_license = response.trade_license_no;
+        tradeLicenseEntity.company_name = response.company_name;
+        tradeLicenseEntity.company_address = response.company_address;
+        tradeLicenseEntity.triggeredFrom = trigger === 'SubEntity';
+
+        notification.success({
+          title: res.data.message,
+          position: 'top',
+        });
+      } else {
+        notification.error({
+          title: res.data.message,
+          position: 'top',
+        });
+      }
+    })
+    .catch(err => {
+      console.log(err);
+    });
+};
+
+const linkEntity = () => {
+  let entityDetails = {
+    quote_type_id: page.props.quoteTypeId,
+    quote_request_id: page.props.quote.id,
+    entity_id: tradeLicenseEntity.entity_id,
+    triggeredFrom: tradeLicenseEntity.triggeredFrom,
+  };
+  axios
+    .post(route('link-entity-details'), entityDetails)
+    .then(res => {
+      if (res.data.status) {
+        let response = res.data.response;
+
+        // Append Entity data in fields
+        customerProfileForm.trade_license_no = response.trade_license_no;
+        customerProfileForm.company_name = response.company_name;
+        customerProfileForm.company_address = response.company_address;
+        customerProfileForm.entity_type_code =
+          response?.quote_request_entity_mapping[0]?.entity_type_code ?? '';
+        customerProfileForm.industry_type_code = response.industry_type_code;
+        customerProfileForm.emirate_of_registration_id =
+          response.emirate_of_registration_id;
+
+        notification.success({
+          title: res.data.message,
+          position: 'top',
+        });
+        entityDetailsFound.value = false;
+      }
+    })
+    .catch(err => {
+      console.log(err);
+    });
+};
 </script>
 
 <template>
@@ -61,6 +232,13 @@ const permissionsEnum = page.props.permissionsEnum;
       <div class="text-sm">
         <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
           <div class="grid sm:grid-cols-2">
+            <div
+              class="grid sm:grid-cols-2"
+              v-if="hasAnyRole([rolesEnum.Admin, rolesEnum.Engineering])"
+            >
+              <dt class="font-medium">ID</dt>
+              <dd>{{ quote.id }}</dd>
+            </div>
             <div>
               <x-tooltip position="bottom">
                 <label
@@ -73,7 +251,10 @@ const permissionsEnum = page.props.permissionsEnum;
             </div>
             <div>{{ quote.code }}</div>
           </div>
-
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">CUSTOMER TYPE</dt>
+            <dd>{{ quote.customer_type }}</dd>
+          </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">ADVISOR</dt>
             <dd>{{ quote.advisor?.name }}</dd>
@@ -143,126 +324,343 @@ const permissionsEnum = page.props.permissionsEnum;
       <div class="text-sm">
         <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">Boat Details</dt>
+            <dt class="font-medium">BOAT DETAILS</dt>
             <dd>{{ quote?.yacht_quote?.boat_details }}</dd>
           </div>
 
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">Engine Details</dt>
+            <dt class="font-medium">ENGINE DETAILS</dt>
             <dd>{{ quote?.yacht_quote?.engine_details }}</dd>
           </div>
 
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">Claim Experience</dt>
+            <dt class="font-medium">CLAIM EXPERIENCE</dt>
             <dd>{{ quote?.yacht_quote?.claim_experience }}</dd>
           </div>
 
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">Sum Insured</dt>
+            <dt class="font-medium">SUM INSURED</dt>
             <dd>{{ quote.asset_value }}</dd>
           </div>
 
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">Use</dt>
+            <dt class="font-medium">USE</dt>
             <dd>{{ quote?.yacht_quote?.use }}</dd>
           </div>
 
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">Operator Experience</dt>
+            <dt class="font-medium">OPERATOR EXPERIENCE</dt>
             <dd>{{ quote?.yacht_quote?.operator_experience }}</dd>
           </div>
         </dl>
       </div>
-
-      <div class="mt-6">
-        <h3 class="font-semibold text-primary-800">Customer Profile</h3>
-        <x-divider class="mb-4 mt-1" />
-      </div>
-
-      <div class="text-sm">
-        <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">FIRST NAME</dt>
-            <dd>{{ quote.first_name }}</dd>
-          </div>
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">LAST NAME</dt>
-            <dd>{{ quote.last_name }}</dd>
-          </div>
-
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">MOBILE NUMBER</dt>
-            <dd>{{ quote.mobile_no }}</dd>
-          </div>
-
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">EMAIL</dt>
-            <dd>{{ quote.email }}</dd>
-          </div>
-        </dl>
-      </div>
-
-      <div class="mt-6">
-        <h3 class="font-semibold text-primary-800">
-          Last Year's Policy Details
-        </h3>
-        <x-divider class="mb-4 mt-1" />
-      </div>
-
-      <div class="text-sm">
-        <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">PREVIOUS POLICY NUMBER</dt>
-            <dd>{{ quote.previous_quote_policy_number }}</dd>
-          </div>
-
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">PREVIOUS POLICY EXPIRY DATE</dt>
-            <dd>{{ quote.previous_policy_expiry_date }}</dd>
-          </div>
-
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">PREVIOUS POLICY PRICE</dt>
-            <dd>{{ quote.previous_quote_policy_premium }}</dd>
-          </div>
-
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">RENEWAL BATCH</dt>
-            <dd>{{ quote.renewal_batch }}</dd>
-          </div>
-        </dl>
-      </div>
-
-      <div class="mt-6">
-        <h3 class="font-semibold text-primary-800">Policy Details</h3>
-        <x-divider class="mb-4 mt-1" />
-      </div>
-
-      <div class="text-sm">
-        <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">POLICY NUMBER</dt>
-            <dd>{{ quote.policy_number }}</dd>
-          </div>
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">POLICY START DATE</dt>
-            <dd>{{ quote.policy_start_date }}</dd>
-          </div>
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">POLICY END DATE</dt>
-            <dd>{{ quote.policy_issuance_date }}</dd>
-          </div>
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">PRICE</dt>
-            <dd>{{ quote.premium }}</dd>
-          </div>
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">TRANSAPP CODE</dt>
-            <dd>{{ quote?.quote_detail?.transapp_code }}</dd>
-          </div>
-        </dl>
-      </div>
     </div>
+
+    <div class="p-4 rounded shadow mb-6 bg-white">
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="font-semibold text-primary-800 text-lg">
+          {{
+            quote.customer_type == page.props.customerTypeEnum.Individual
+              ? 'Customer '
+              : 'Entity '
+          }}
+          Profile
+        </h3>
+        <x-tag color="success" v-if="quote.kyc_decision === 'Complete'"> KYC - Complete </x-tag>
+        <x-tag color="amber" v-else> KYC - Pending </x-tag>
+      </div>
+      <x-divider class="mb-4 mt-1" />
+      <x-form @submit="updateProfileDetails" :auto-focus="false">
+        <div class="text-sm">
+          <dl
+            v-if="
+              quote.customer_type === page.props.customerTypeEnum.Individual
+            "
+            class="grid md:grid-cols-2 gap-x-6 gap-y-4"
+          >
+            <div class="grid sm:grid-cols-2">
+              <dt class="font-medium">FIRST NAME</dt>
+              <dd>{{ quote.first_name }}</dd>
+            </div>
+            <div class="grid sm:grid-cols-2">
+              <dt class="font-medium">LAST NAME</dt>
+              <dd>{{ quote.last_name }}</dd>
+            </div>
+            <div class="grid sm:grid-cols-2">
+              <dt class="font-medium">INSURED FIRST NAME</dt>
+              <dd>
+                <x-input
+                  v-model="customerProfileForm.insured_first_name"
+                  :rules="[isRequired]"
+                  placeholder="INSURED FIRST NAME"
+                  class="w-full"
+                  :disabled="!isProfileUpdateAllow"
+                />
+              </dd>
+            </div>
+            <div class="grid sm:grid-cols-2">
+              <dt class="font-medium">INSURED LAST NAME</dt>
+              <dd>
+                <x-input
+                  v-model="customerProfileForm.insured_last_name"
+                  :rules="[isRequired]"
+                  placeholder="INSURED LAST NAME"
+                  class="w-full"
+                  :disabled="!isProfileUpdateAllow"
+                />
+              </dd>
+            </div>
+            <div class="grid sm:grid-cols-2">
+              <dt class="font-medium">MOBILE NUMBER</dt>
+              <dd>{{ quote.mobile_no }}</dd>
+            </div>
+            <div class="grid sm:grid-cols-2">
+              <dt class="font-medium">EMAIL</dt>
+              <dd>{{ quote.email }}</dd>
+            </div>
+            <div class="grid sm:grid-cols-2">
+              <dt class="font-medium">NATIONALITY</dt>
+              <dd>{{ quote.nationality?.text }}</dd>
+            </div>
+            <div class="grid sm:grid-cols-2">
+              <dt class="font-medium">DATE OF BIRTH</dt>
+              <dd>{{ quote.dob }}</dd>
+            </div>
+            <div class="grid sm:grid-cols-2">
+              <dt class="font-medium">EMIRATES ID NUMBER</dt>
+              <dd>
+                <x-input
+                  v-model="customerProfileForm.emirates_id_number"
+                  :rules="[isRequired]"
+                  placeholder="EMIRATES ID NUMBER"
+                  class="w-full"
+                  :disabled="!isProfileUpdateAllow"
+                />
+              </dd>
+            </div>
+            <div class="grid sm:grid-cols-2">
+              <dt class="font-medium">EMIRATES ID EXPIRY DATE</dt>
+              <dd>
+                <DatePicker
+                  v-model="customerProfileForm.emirates_id_expiry_date"
+                  :rules="[isRequired]"
+                  placeholder="EMIRATES ID EXPIRY DATE"
+                  :disabled="!isProfileUpdateAllow"
+                  :min-date="new Date()"
+                />
+              </dd>
+            </div>
+
+            <RiskRatingScoreDetails
+              :quote="quote.yacht_quote"
+              :modelType="quoteType"
+            />
+          </dl>
+          <dl
+            v-if="quote.customer_type === page.props.customerTypeEnum.Entity"
+            class="grid md:grid-cols-2 gap-x-6 gap-y-4"
+          >
+            <div class="grid sm:grid-cols-2">
+              <dt class="font-medium">FIRST NAME</dt>
+              <dd>{{ quote.first_name }}</dd>
+            </div>
+            <div class="grid sm:grid-cols-2">
+              <dt class="font-medium">LAST NAME</dt>
+              <dd>{{ quote.last_name }}</dd>
+            </div>
+            <div class="grid sm:grid-cols-2">
+              <dt class="font-medium">MOBILE NUMBER</dt>
+              <dd>{{ quote.mobile_no }}</dd>
+            </div>
+            <div class="grid sm:grid-cols-2">
+              <dt class="font-medium">EMAIL</dt>
+              <dd>{{ quote.email }}</dd>
+            </div>
+            <div class="grid sm:grid-cols-2">
+              <dt class="font-medium">COMPANY NAME</dt>
+              <dd>{{ customerProfileForm.company_name }}</dd>
+            </div>
+            <div class="grid sm:grid-cols-2">
+              <dt class="font-medium">TRADE LICENSE NO</dt>
+              <dd>
+                <x-input
+                  v-model="customerProfileForm.trade_license_no"
+                  placeholder="TRADE LICENSE NO"
+                  type="text"
+                  class="w-full"
+                />
+                <x-button
+                  @click.prevent="searchByTradeLicense"
+                  size="xs"
+                  color="primary"
+                >
+                  Search
+                </x-button>
+              </dd>
+            </div>
+            <div class="grid sm:grid-cols-2">
+              <dt class="font-medium">EMIRATES OF REGISTRATION</dt>
+              <dd>
+                <ComboBox
+                  v-model="customerProfileForm.emirate_of_registration_id"
+                  :single="true"
+                  placeholder="SELECT EMIRATES OF REGISTRATION"
+                  :options="emiratesOptions"
+                  class="w-full"
+                />
+              </dd>
+            </div>
+            <div class="grid sm:grid-cols-2">
+              <dt class="font-medium">COMPANY ADDRESS</dt>
+              <dd>
+                <x-input
+                  v-model="customerProfileForm.company_address"
+                  placeholder="COMPANY ADDRESS"
+                  type="text"
+                  class="w-full"
+                />
+              </dd>
+            </div>
+            <div class="grid sm:grid-cols-2">
+              <dt class="font-medium">INDUSTRY TYPE</dt>
+              <dd>
+                <ComboBox
+                  :single="true"
+                  v-model="customerProfileForm.industry_type_code"
+                  placeholder="SELECT INDUSTRY TYPE"
+                  :options="industryTypeOptions"
+                  class="w-full"
+                />
+              </dd>
+            </div>
+            <div class="grid sm:grid-cols-2">
+              <dt class="font-medium">ENTITY TYPE</dt>
+              <dd>
+                <ComboBox
+                  @update:modelValue="entityTypeChange($event)"
+                  :single="true"
+                  v-model:modelValue="customerProfileForm.entity_type_code"
+                  placeholder="SELECT ENTITY TYPE"
+                  :options="[
+                    { label: 'Parent', value: 'Parent' },
+                    { label: 'Sub Entity', value: 'SubEntity' },
+                  ]"
+                  class="w-full"
+                />
+              </dd>
+            </div>
+          </dl>
+          <div class="flex justify-end">
+            <x-button
+              v-if="isProfileUpdateAllow"
+              class="mt-4"
+              color="emerald"
+              size="sm"
+              :loading="customerProfileForm.processing"
+              type="submit"
+            >
+              Update Profile
+            </x-button>
+          </div>
+        </div>
+      </x-form>
+    </div>
+    <x-modal v-model="getParentEntityModel" size="lg" show-close backdrop>
+      <h3 class="font-semibold text-center text-lg mb-10">
+        Search Entity by Parent Entity Trade License No
+      </h3>
+      <dl class="grid md:grid-cols-1 gap-x-6 gap-y-4">
+        <div class="grid sm:grid-cols-2">
+          <dt class="font-medium">Parent Entity Trade License No</dt>
+          <dd>
+            <x-input
+              v-model="customerProfileForm.trade_license_no"
+              placeholder="TRADE LICENSE NO"
+              type="text"
+              class="w-full"
+            />
+          </dd>
+        </div>
+      </dl>
+      <div class="flex justify-end">
+        <x-button
+          class="mt-4"
+          color="primary"
+          size="sm"
+          :loading="customerProfileForm.processing"
+          @click.prevent="searchByTradeLicense('SubEntity')"
+        >
+          Search
+        </x-button>
+      </div>
+    </x-modal>
+    <x-modal v-model="entityDetailsFound" size="lg" show-close backdrop>
+      <h3 class="font-semibold text-center text-lg mb-10">
+        Entity found with the entered Trade License number
+      </h3>
+      <dl class="grid md:grid-cols-1 gap-x-6 gap-y-4">
+        <div class="grid sm:grid-cols-2">
+          <dt class="font-medium">Trade License No</dt>
+          <dd>
+            <x-input
+              v-model="tradeLicenseEntity.trade_license"
+              placeholder="TRADE LICENSE NO"
+              type="text"
+              class="w-full"
+              disabled
+            />
+          </dd>
+        </div>
+        <div class="grid sm:grid-cols-2">
+          <dt class="font-medium">Company Name</dt>
+          <dd>
+            <x-input
+              v-model="tradeLicenseEntity.company_name"
+              placeholder="Company Name"
+              type="text"
+              class="w-full"
+              disabled
+            />
+          </dd>
+        </div>
+        <div class="grid sm:grid-cols-2">
+          <dt class="font-medium">Company Address</dt>
+          <dd>
+            <x-input
+              v-model="tradeLicenseEntity.company_address"
+              placeholder="Company Address"
+              type="text"
+              class="w-full"
+              disabled
+            />
+          </dd>
+        </div>
+        <div class="text-left space-x-4">
+          <x-button size="sm" color="orange" @click.prevent="linkEntity">
+            Link
+          </x-button>
+        </div>
+      </dl>
+    </x-modal>
+
+    <MemberDetails
+      :quote="quote"
+      :membersDetails="membersDetails"
+      :nationalities="nationalities"
+      :memberRelations="memberRelations"
+      :quote_type="quoteType"
+    />
+
+    <AdditionalContacts :quote="quote" :quote-type="quoteType" />
+    <LastYearPolicyDetail
+      v-if="
+        quote.source == $page.props.leadSource.RENEWAL_UPLOAD ||
+        quote.source == $page.props.leadSource.INSLY
+      "
+      modelType="Yacht"
+      :quote="quote"
+      :canAddBatchNumber="canAddBatchNumber"
+    />
 
     <QuoteActivities
       :can="can"
@@ -281,8 +679,6 @@ const permissionsEnum = page.props.permissionsEnum;
       :is-beta-user="isBetaUser"
       :personal-plans="personalPlans"
     />
-
-    <AdditionalContacts :quote="quote" :quote-type="quoteType" />
 
     <QuoteStatus
       :quote="quote"
@@ -303,6 +699,12 @@ const permissionsEnum = page.props.permissionsEnum;
       :quote="quote"
       :can="can"
       :quoteStatusEnum="quoteStatusesEnum"
+    />
+
+    <PlanDetails
+      :insuranceProviders="insuranceProviders"
+      :quote="quote"
+      :quoteType="quoteType"
     />
 
     <EmbeddedProducts

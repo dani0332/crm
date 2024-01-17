@@ -344,9 +344,9 @@ function getUniqueCode($limit)
 {
     return strtoupper(substr(base_convert(sha1(uniqid(mt_rand())), 16, 36), 0, $limit));
 }
-function get_dob_date_format()
+function dateFormat($date): string
 {
-    return 'Y-m-d';
+    return date(env('DATE_DISPLAY_FORMAT'), strtotime($date));
 }
 
 /**
@@ -436,6 +436,7 @@ if (! function_exists('newUi')) {
             quoteTypeCode::Cycle,
             quoteTypeCode::Bike,
             quoteTypeCode::Yacht,
+            quoteTypeCode::Aml,
         ];
     }
 }
@@ -515,5 +516,79 @@ if (! function_exists('getQueryForLogWithBindings')) {
         $addSlashes = str_replace('?', "'?'", $builder->toSql());
 
         return vsprintf(str_replace('?', '%s', $addSlashes), $builder->getBindings());
+    }
+}
+
+if (! function_exists('formatMobileNo')) {
+    function formatMobileNo($mobile)
+    {
+        return preg_replace('/^(?:\+?971|0)?/', '+971', str_replace(' ', '', $mobile));
+    }
+}
+
+if (! function_exists('removeCountryCode')) {
+    function removeCountryCode($mobile)
+    {
+        $mobile = preg_replace('/^\+971|0(?=\d{9})/', '', $mobile);
+
+        if (substr($mobile, 0, 1) !== '0') {
+            return '0'.$mobile;
+        }
+
+        return $mobile;
+    }
+}
+
+if (! function_exists('formatMobileNoDisplay')) {
+    function formatMobileNoDisplay($mobile)
+    {
+        $mobile = removeCountryCode($mobile);
+
+        return preg_replace('/^(\d{3})(\d{3})(\d{4})$/', '$1 $2 $3', $mobile);
+    }
+}
+
+if (! function_exists('formatLandlineDisplay')) {
+    function formatLandlineDisplay($landline)
+    {
+        $landline = removeCountryCode($landline);
+
+        return preg_replace('/^(\d{2})(\d{3})(\d{4})$/', '$1 $2 $3', $landline);
+    }
+}
+
+if (! function_exists('getRepositoryObject')) {
+    function getRepositoryObject($quoteType)
+    {
+        if (checkPersonalQuotes($quoteType)) {
+            $quoteType = QuoteTypes::PERSONAL->value;
+        }
+
+        $quoteType = ucfirst($quoteType);
+
+        return 'App\\Repositories\\'.$quoteType.'QuoteRepository';
+    }
+}
+
+if (! function_exists('checkModifiedRecord')) {
+    function checkModifiedRecord($firstDate, $secondDate): bool
+    {
+        return Carbon::parse($firstDate)->format(config('constants.datetime_format')) !==
+            Carbon::parse($secondDate)->format(config('constants.datetime_format'));
+    }
+}
+
+if (! function_exists('dateQueryFilter')) {
+    function dateQueryFilter($firstDate, $secondDate, $clauseTypeBetween = true): array
+    {
+        $firstDate = date(config('constants.DATE_FORMAT_ONLY').' 00:00:00', strtotime($firstDate));
+        $secondDate = date(config('constants.DATE_FORMAT_ONLY').' 23:59:59', strtotime($secondDate));
+        $currentDate = Carbon::now()->format(config('constants.DB_DATE_FORMAT_MATCH'));
+
+        if ($clauseTypeBetween) {
+            return [$firstDate, $secondDate];
+        }
+
+        return [$currentDate, $currentDate];
     }
 }

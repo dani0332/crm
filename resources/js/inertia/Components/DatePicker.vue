@@ -37,6 +37,10 @@ const props = defineProps({
     type: String,
     default: '',
   },
+  minDate: {
+    type: Date,
+    default: null,
+  },
 });
 
 const selectedData = computed({
@@ -59,6 +63,7 @@ const selectedData = computed({
     :month-change-on-scroll="false"
     :clearable="false"
     :disabled="props.disabled"
+    :min-date="props.minDate"
     utc="preserve"
     :is-24="false"
     text-input

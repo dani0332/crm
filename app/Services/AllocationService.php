@@ -76,8 +76,6 @@ class AllocationService
 
             return $getdecodeContents;
         } else {
-            info(' call to ken api failed for getting car valuation ');
-
             return 'API failed';
         }
     }
@@ -109,8 +107,6 @@ class AllocationService
         $quoteDetail->advisor_assigned_date = now();
         $quoteDetail->advisor_assigned_by_id = auth()->id();
         $quoteDetail->save();
-
-        info('Quote detail update for lead : '.$uuid);
     }
 
     public function createNewQuoteDetail($leadId, $quoteModel, $keyColumn): void
@@ -122,8 +118,6 @@ class AllocationService
             'created_at' => now(),
             'updated_at' => now(),
         ]);
-
-        info('Quote request detail record not found, creating new entry');
     }
 
     public function getAssignmentTypeText($assignmentType)
@@ -209,8 +203,6 @@ class AllocationService
 
                 // Determine if the previous assignment was system-assigned
                 $isSystemAssigned = in_array($previousAssignmentType, $systemAssignedTypes);
-
-                info('Previous assignment type was either system assigned or system reassigned : '.$isSystemAssigned);
 
                 // Update allocation counts based on assignment type (if applicable)
                 if ($isSystemAssigned && $previousAdvisorAllocationRecord->auto_assignment_count > 0) {
@@ -311,11 +303,6 @@ class AllocationService
         $query = LeadAllocation::with('leadAllocationUser')
             ->whereHas('leadAllocationUser', function ($query) {
                 $query->whereIn('status', [UserStatusEnum::UNAVAILABLE, UserStatusEnum::LEAVE, UserStatusEnum::SICK]);
-            })
-            ->where(function ($query) {
-                // Filter by allocation count and max capacity
-                $query->whereRaw('allocation_count < max_capacity')
-                    ->orWhere('max_capacity', -1);
             })
             ->orderBy('last_allocated');
 
