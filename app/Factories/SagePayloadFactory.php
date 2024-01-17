@@ -2,7 +2,6 @@
 
 namespace App\Factories;
 
-use App\Enums\quoteStatusCode;
 use App\Models\QuoteRequestEntityMapping;
 use App\Services\SageApiService;
 
@@ -275,21 +274,20 @@ class SagePayloadFactory
         ];
     }
 
-
     public static function createCustomerPayload($customer)
     {
         $data = $customer->data;
         $mapping = QuoteRequestEntityMapping::where([['quote_type_id', $data['quoteTypeId']], ['quote_request_id', $data['id']]])->first();
         if ($mapping) {
             $payLoad = [
-                'CustomerNumber' => 'C' . $customer->id,
-                'CustomerName' => $customer->first_name . ' ' . $customer->last_name,
+                'CustomerNumber' => 'C'.$customer->id,
+                'CustomerName' => $customer->first_name.' '.$customer->last_name,
                 'GroupCode' => 'PHC',
             ];
         } else {
             $payLoad = [
-                'CustomerNumber' => 'P' . $customer->id,
-                'CustomerName' => $customer->first_name . ' ' . $customer->last_name,
+                'CustomerNumber' => 'P'.$customer->id,
+                'CustomerName' => $customer->first_name.' '.$customer->last_name,
                 'GroupCode' => 'PHI',
             ];
         }
@@ -300,7 +298,6 @@ class SagePayloadFactory
             'customerNumber' => $payLoad['CustomerNumber'],
         ];
     }
-
 
     /*
     public static function createCustomerPayload($customer)

@@ -76,5 +76,5 @@ class BikeQuote extends Model implements AuditableContract
     public function insuranceProvider()
     {
         return $this->belongsTo(InsuranceProvider::class, 'insurance_provider_id', 'id');
-    }    
+    }
 }

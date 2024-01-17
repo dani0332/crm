@@ -629,18 +629,20 @@ class CRUDService extends BaseService
                         'created_by' => auth()->user()->email,
                         'is_manager_approved' => 1,
                     ]);
-                    $data = [
-                        'uuid' => $quoteModel->uuid,
-                        'type_id' => $quoteTypeId,
-                        'code' => $quoteModel->code.'-'.$paymentSplit->sr_no,
-                    ];
-                    $processResponse = $this->processCapturePayment($data);
-                    return response($processResponse, 200);
-               
+                $data = [
+                    'uuid' => $quoteModel->uuid,
+                    'type_id' => $quoteTypeId,
+                    'code' => $quoteModel->code.'-'.$paymentSplit->sr_no,
+                ];
+                $processResponse = $this->processCapturePayment($data);
+
+                return response($processResponse, 200);
+
             } else {
                 return response(['Payment not exist'], 403);
             }
         }
+
         return response(['Transaction does not exist'], 403);
     }
     public function processCapturePayment($data)

@@ -14,11 +14,11 @@ use App\Models\PaymentSplits;
 use App\Models\PaymentStatusLog;
 use App\Models\PersonalQuote;
 use App\Models\QuoteDocument;
+use App\Services\CRUDService;
 use App\Services\SageApiService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
-use App\Services\CRUDService;
 
 class PaymentSplitsRepository
 {
@@ -88,7 +88,7 @@ class PaymentSplitsRepository
             }
         }
         $this->uploadDiscountDocuments($request->split_payment_details['discount_documents'], $quoteID);
-    }    
+    }
 
     public function updatePaymentSplits($request)
     {
@@ -214,7 +214,7 @@ class PaymentSplitsRepository
             $quoteModel->save();
             $successMessage = 'Transaction declined';
         } else {
-            
+
             $totalCapturedPayment = 0;
             if ($request->is_capture) { //update collected amount in childs
                 $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($request->modelType));
@@ -321,24 +321,25 @@ class PaymentSplitsRepository
             //dd($request->all());
             $quote = $this->getQuoteObject($request->modelType, $request->quote_id);
             $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($request->modelType));
-            $customerData = [];          
+            $customerData = [];
             $customerData['quoteTypeId'] = $quoteTypeId;
-            $customerData['id'] =  $quote->id;            
+            $customerData['id'] = $quote->id;
             $sageApiService = new SageApiService();
             $sageCustomerNumber = $sageApiService->verifySageCustomer($request->customer_id, $customerData);
             //$sageCustomerNumber = 'IC008';
-            $request->merge(['sage_customer_number' => $sageCustomerNumber]);                    
+            $request->merge(['sage_customer_number' => $sageCustomerNumber]);
             // create prepayment reciept
             $payLoadOptions = SagePayloadFactory::createPrepaymentPayload($request);
             $message = $sageApiService->postToSage300($payLoadOptions['endPoint'], $payLoadOptions['payload']);
             $sageResponse = json_decode($message, true);
-            
-            if(isset($sageResponse['ReceiptsAdjustments'][0]['DocumentNumber'])){
+
+            if (isset($sageResponse['ReceiptsAdjustments'][0]['DocumentNumber'])) {
                 $documentNumberForReciept = $sageResponse['ReceiptsAdjustments'][0]['DocumentNumber'];
                 $paymentInformation['sage_reciept_id'] = $documentNumberForReciept;
                 $splitPayment->update($paymentInformation);
             } else {
                 $successMessage = 'Sage Error: Reciept not generated';
+
                 return $successMessage;
             }
 

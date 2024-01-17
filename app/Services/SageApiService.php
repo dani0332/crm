@@ -19,11 +19,10 @@ class SageApiService
         $this->sageRequestUrl = env('SAGE_300_BASE_URL').env('SAGE_300_VERSION');
     }
 
-    
-    public function verifySageCustomer($customerId, $data = NULL)
+    public function verifySageCustomer($customerId, $data = null)
     {
         $customer = Customer::find($customerId);
-        $customer->data = !empty($data) ? $data : [];
+        $customer->data = ! empty($data) ? $data : [];
         if ($customer) {
 
             $payLoadOptions = SagePayloadFactory::createCustomerPayload($customer);
@@ -38,8 +37,8 @@ class SageApiService
                 return false;
             }
         }
-    }    
-    
+    }
+
     /*
     public function verifySageCustomer($customerId)
     {
