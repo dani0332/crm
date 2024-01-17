@@ -456,6 +456,7 @@ const caculateCommission = () => {
           <x-button
             size="sm"
             ghost
+            :disabled="isLoading"
             @click.prevent="modals.sendPolicyConfirm = false"
           >
             Cancel

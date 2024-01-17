@@ -4,7 +4,6 @@ namespace App\Factories;
 
 use App\Enums\quoteStatusCode;
 use App\Models\QuoteRequestEntityMapping;
-use App\Services\SageApiService;
 
 class SagePayloadFactory
 {
@@ -48,13 +47,13 @@ class SagePayloadFactory
             'ReceiptsAdjustments' => [
                 [
                     'BatchType' => 'CA',
-                    'CustomerNumber' =>  $request->customerId,
+                    'CustomerNumber' => $request->customerId,
                     'ReceiptTransactionType' => 'Prepayment',
-                    'DocumentNumber' =>   $request->sage_reciept_id,
+                    'DocumentNumber' => $request->sage_reciept_id,
                     'AppliedReceiptsAdjustments' => [
                         [
                             'BatchType' => 'CA',
-                            'CustomerNumber' =>  $request->customerId,
+                            'CustomerNumber' => $request->customerId,
                             'DocumentNumber' => $request->insurerPremiumTaxInvoiceNumber,
                             'ReceiptTransactionType' => 'Prepayment',
                         ],
@@ -99,7 +98,7 @@ class SagePayloadFactory
                     ],
                     'InvoicePaymentSchedules' => [
                         [
-                            'DueDate' => $request->paymentDueDate
+                            'DueDate' => $request->paymentDueDate,
                         ],
                     ],
                     'InvoiceOptionalFields' => self::createOptionalFields($request),
@@ -113,7 +112,7 @@ class SagePayloadFactory
         ];
     }
 
-    public  static function createARInvoiceDis($request)
+    public static function createARInvoiceDis($request)
     {
         // Payload creation logic for CreditNote scenario
         $payLoad = [
@@ -125,7 +124,7 @@ class SagePayloadFactory
                     'DocumentDate' => $request->insurerInvoiceDate,
                     'DocumentType' => 'CreditNote',
                     'CurrencyCode' => 'AED',
-                    'DueDate' =>  $request->paymentDueDate,
+                    'DueDate' => $request->paymentDueDate,
                     'ApplytoDocument' => '',
                     'TaxGroup' => 'VAT',
                     'TaxClass1' => 5,
@@ -143,7 +142,7 @@ class SagePayloadFactory
                     ],
                     'InvoicePaymentSchedules' => [
                         [
-                            'DueDate' => $request->paymentDueDate
+                            'DueDate' => $request->paymentDueDate,
                         ],
                     ],
                     'InvoiceOptionalFields' => self::createOptionalFields($request),
@@ -161,7 +160,7 @@ class SagePayloadFactory
     {
         // Payload creation logic for default scenario
         $taxClass = 1;
-        if ($request->commissionIncludingVat  > 0) {
+        if ($request->commissionIncludingVat > 0) {
             $taxClass = 1;
         } else {
             $taxClass = 2;
@@ -213,7 +212,7 @@ class SagePayloadFactory
                     'InvoiceDetails' => [
                         [
                             'Description' => $request->invoiceDescription,
-                            'TaxClass1' =>  $taxClass,
+                            'TaxClass1' => $taxClass,
                             'TaxAmount1' => $request->vatOnCommission,
                             'RevenueAccount' => '60010',
                             'ExtendedAmountWithTIP' => $request->commissionIncludingVat,
@@ -235,7 +234,6 @@ class SagePayloadFactory
             'payload' => $payLoad,
         ];
     }
-
 
     public static function createCustomerPayload($customer)
     {
@@ -261,7 +259,6 @@ class SagePayloadFactory
             'customerNumber' => $payLoad['CustomerNumber'],
         ];
     }
-
 
     /*
     public static function createCustomerPayload($customer)
@@ -306,6 +303,7 @@ class SagePayloadFactory
         ];
     }
 */
+
     public static function createPrepaymentPayload($request)
     {
         $payLoad = [
@@ -331,6 +329,104 @@ class SagePayloadFactory
 
         return [
             'endPoint' => 'AR/ARReceiptAndAdjustmentBatches',
+            'payload' => $payLoad,
+        ];
+    }
+
+    public static function readyToPostReceiptAr($batchNumber)
+    {
+        $payLoad = [
+            'BatchStatus' => 'ReadyToPost',
+
+        ];
+
+        return [
+            'endPoint' => 'AR/ARReceiptAndAdjustmentBatches' . '(BatchRecordType=CA,BatchNumber=' . $batchNumber . ')',
+            'payload' => $payLoad,
+        ];
+    }
+
+
+    public static function aRPostReceipts($batchNumber)
+    {
+        $payLoad = [
+            'BatchType' => 'CA',
+            'PostAllBatches' => 'Donotpostallbatches',
+            'PostBatchFrom' => $batchNumber,
+            'PostBatchTo' => $batchNumber,
+            'ActionSelector' => 'string',
+            'UpdateOperation' => 'Unspecified',
+
+        ];
+
+        $sign = '$process';
+        $val = "('" . $sign . "')";
+        return [
+            'endPoint' => 'AR/ARReceiptAndAdjustmentBatches' . $val,
+            'payload' => $payLoad,
+        ];
+    }
+    public static function readyToPostInvoiceAr($batchNumber)
+    {
+        $payLoad = [
+            'BatchStatus' => 'ReadyToPost',
+
+        ];
+
+        return [
+            'endPoint' => 'AR/ARInvoiceBatches' . '(' . $batchNumber . ')',
+            'payload' => $payLoad,
+        ];
+    }
+
+    public static function readyToPostInvoiceAP($batchNumber)
+    {
+        $payLoad = [
+            'BatchStatus' => 'ReadyToPost',
+
+        ];
+
+        return [
+            'endPoint' => 'AP/APInvoiceBatches' . '(' . $batchNumber . ')',
+            'payload' => $payLoad,
+        ];
+    }
+
+    public static function aPPostInvoices($batchNumber)
+    {
+        $payLoad = [
+            'ProcessAllBatches' => 'Donotpostallbatches',
+            'FromBatch' => $batchNumber,
+            'ToBatch' => $batchNumber,
+            'ActionSelector' => 'string',
+            'UpdateOperation' => 'Unspecified',
+
+        ];
+
+        $sign = '$process';
+        $val = "('" . $sign . "')";
+        return [
+            'endPoint' => 'AP/APPostInvoices' . $val,
+            'payload' => $payLoad,
+        ];
+    }
+
+
+    public static function aRPostInvoices($batchNumber)
+    {
+        $payLoad = [
+            'PostAllBatches' => 'Donotpostallbatches',
+            'PostBatchFrom' => $batchNumber,
+            'PostBatchTo' => $batchNumber,
+            'ActionSelector' => 'string',
+            'UpdateOperation' => 'Unspecified',
+
+        ];
+
+        $sign = '$process';
+        $val = "('" . $sign . "')";
+        return [
+            'endPoint' => 'AR/ARPostInvoices' . $val,
             'payload' => $payLoad,
         ];
     }
