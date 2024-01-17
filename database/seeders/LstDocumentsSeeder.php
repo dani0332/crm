@@ -4,9 +4,7 @@ namespace Database\Seeders;
 
 use App\Enums\QuoteTypes;
 use App\Models\DocumentType;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
 
 class LstDocumentsSeeder extends Seeder
 {
@@ -16,10 +14,9 @@ class LstDocumentsSeeder extends Seeder
     public function run(): void
     {
 
-
         DocumentType::updateOrCreate([
             'code' => 'CPC',
-            'quote_type_id' => QuoteTypes::CAR->id()
+            'quote_type_id' => QuoteTypes::CAR->id(),
         ], [
             'code' => 'CPC',
             'text' => 'Policy Certificate',
@@ -43,7 +40,7 @@ class LstDocumentsSeeder extends Seeder
 
         DocumentType::updateOrCreate([
             'code' => 'CTI',
-            'quote_type_id' => QuoteTypes::CAR->id()
+            'quote_type_id' => QuoteTypes::CAR->id(),
         ], [
             'code' => 'CTI',
             'text' => 'Tax Invoice',
@@ -67,7 +64,7 @@ class LstDocumentsSeeder extends Seeder
 
         DocumentType::updateOrCreate([
             'code' => 'CTIRBB',
-            'quote_type_id' => QuoteTypes::CAR->id()
+            'quote_type_id' => QuoteTypes::CAR->id(),
         ], [
             'code' => 'CTIRBB',
             'text' => 'Tax Invoice Raised By Buyer',
@@ -91,7 +88,7 @@ class LstDocumentsSeeder extends Seeder
 
         DocumentType::updateOrCreate([
             'code' => 'EID_CAR',
-            'quote_type_id' => QuoteTypes::CAR->id()
+            'quote_type_id' => QuoteTypes::CAR->id(),
         ], [
             'code' => 'EID_CAR',
             'text' => 'Emirates ID (both sides)',
@@ -115,7 +112,7 @@ class LstDocumentsSeeder extends Seeder
 
         DocumentType::updateOrCreate([
             'code' => 'TR',
-            'quote_type_id' => QuoteTypes::CAR->id()
+            'quote_type_id' => QuoteTypes::CAR->id(),
         ], [
             'code' => 'TR',
             'text' => 'Receipt',
@@ -139,7 +136,7 @@ class LstDocumentsSeeder extends Seeder
 
         DocumentType::updateOrCreate([
             'code' => 'TAD',
-            'quote_type_id' => QuoteTypes::CAR->id()
+            'quote_type_id' => QuoteTypes::CAR->id(),
         ], [
             'code' => 'TAD',
             'text' => 'Passing certificate (less than 30 days old)',
@@ -163,11 +160,11 @@ class LstDocumentsSeeder extends Seeder
 
         DocumentType::updateOrCreate([
             'code' => 'TAEA',
-            'quote_type_id' => QuoteTypes::CAR->id()
+            'quote_type_id' => QuoteTypes::CAR->id(),
         ], [
             'code' => 'TAEA',
             'text' => 'Additional Email Attachments',
-            'description' => "",
+            'description' => '',
 
             'quote_type_id' => QuoteTypes::CAR->id(),
             'folder_path' => 'car',
@@ -187,11 +184,11 @@ class LstDocumentsSeeder extends Seeder
 
         DocumentType::updateOrCreate([
             'code' => 'PP_CAR',
-            'quote_type_id' => QuoteTypes::CAR->id()
+            'quote_type_id' => QuoteTypes::CAR->id(),
         ], [
             'code' => 'PP_CAR',
             'text' => 'Passport',
-            'description' => "",
+            'description' => '',
 
             'quote_type_id' => QuoteTypes::CAR->id(),
             'folder_path' => 'car',
@@ -211,11 +208,11 @@ class LstDocumentsSeeder extends Seeder
 
         DocumentType::updateOrCreate([
             'code' => 'VISA_CAR',
-            'quote_type_id' => QuoteTypes::CAR->id()
+            'quote_type_id' => QuoteTypes::CAR->id(),
         ], [
             'code' => 'VISA_CAR',
             'text' => 'Visa',
-            'description' => "",
+            'description' => '',
 
             'quote_type_id' => QuoteTypes::CAR->id(),
             'folder_path' => 'car',
@@ -235,17 +232,17 @@ class LstDocumentsSeeder extends Seeder
         // CMUL	Vehicle license (both sides) or Dealer invoice copy or VCC		"ee"	1	car	.xlsx,.pdf,.jpeg,.jpg,.docx,.png	20	25	0	0	0	4	0	ISSUING_DOCUMENTS
         DocumentType::updateOrCreate([
             'code' => 'CMUL',
-            'quote_type_id' => QuoteTypes::CAR->id()
+            'quote_type_id' => QuoteTypes::CAR->id(),
         ], [
             'code' => 'CMUL',
             'text' => 'Vehicle license (both sides) or Dealer invoice copy or VCC',
-            'description' => "Please share a copy of the current vehicle registration document for the vehicle you are insuring with us.
+            'description' => 'Please share a copy of the current vehicle registration document for the vehicle you are insuring with us.
             If you are purchasing a vehicle please provide a copy of any of the following documents:
             Purchase Invoice
             Possession Certificate
             Hazaya / Vehicle Clearance Certificate (VCC)
 
-            Any questions? Please contact your personal shopper for advice and assistance.",
+            Any questions? Please contact your personal shopper for advice and assistance.',
 
             'quote_type_id' => QuoteTypes::CAR->id(),
             'folder_path' => 'car',
@@ -266,11 +263,11 @@ class LstDocumentsSeeder extends Seeder
 
         DocumentType::updateOrCreate([
             'code' => 'CTL',
-            'quote_type_id' => QuoteTypes::CAR->id()
+            'quote_type_id' => QuoteTypes::CAR->id(),
         ], [
             'code' => 'CTL',
             'text' => 'Trade License',
-            'description' => "",
+            'description' => '',
 
             'quote_type_id' => QuoteTypes::CAR->id(),
             'folder_path' => 'car',
@@ -292,11 +289,11 @@ class LstDocumentsSeeder extends Seeder
 
         DocumentType::updateOrCreate([
             'code' => 'CCL',
-            'quote_type_id' => QuoteTypes::CAR->id()
+            'quote_type_id' => QuoteTypes::CAR->id(),
         ], [
             'code' => 'CCL',
             'text' => 'Company Letter',
-            'description' => "",
+            'description' => '',
 
             'quote_type_id' => QuoteTypes::CAR->id(),
             'folder_path' => 'car',
@@ -318,11 +315,11 @@ class LstDocumentsSeeder extends Seeder
 
         DocumentType::updateOrCreate([
             'code' => 'CAF',
-            'quote_type_id' => QuoteTypes::CAR->id()
+            'quote_type_id' => QuoteTypes::CAR->id(),
         ], [
             'code' => 'CAF',
             'text' => 'Application Form',
-            'description' => "",
+            'description' => '',
 
             'quote_type_id' => QuoteTypes::CAR->id(),
             'folder_path' => 'car',
@@ -344,11 +341,11 @@ class LstDocumentsSeeder extends Seeder
 
         DocumentType::updateOrCreate([
             'code' => 'CTC',
-            'quote_type_id' => QuoteTypes::CAR->id()
+            'quote_type_id' => QuoteTypes::CAR->id(),
         ], [
             'code' => 'CTC',
             'text' => 'Final Terms & Conditions',
-            'description' => "",
+            'description' => '',
 
             'quote_type_id' => QuoteTypes::CAR->id(),
             'folder_path' => 'car',
@@ -370,11 +367,11 @@ class LstDocumentsSeeder extends Seeder
 
         DocumentType::updateOrCreate([
             'code' => 'CCL',
-            'quote_type_id' => QuoteTypes::HEALTH->id()
+            'quote_type_id' => QuoteTypes::HEALTH->id(),
         ], [
             'code' => 'CCL',
             'text' => 'Census List',
-            'description' => "",
+            'description' => '',
 
             'quote_type_id' => QuoteTypes::HEALTH->id(),
             'folder_path' => 'health',
@@ -394,14 +391,13 @@ class LstDocumentsSeeder extends Seeder
 
         // CPS	Policy Schedule			1	car	.pdf,.xlsx,.xls,.docx,.doc,.jpeg,.jpg,.png	5	25	1	1	1	11	0	ISSUING_DOCUMENTS
 
-
         DocumentType::updateOrCreate([
             'code' => 'CPS',
-            'quote_type_id' => QuoteTypes::CAR->id()
+            'quote_type_id' => QuoteTypes::CAR->id(),
         ], [
             'code' => 'CPS',
             'text' => 'Policy Schedule',
-            'description' => "",
+            'description' => '',
 
             'quote_type_id' => QuoteTypes::CAR->id(),
             'folder_path' => 'car',
@@ -424,7 +420,7 @@ class LstDocumentsSeeder extends Seeder
 
         DocumentType::updateOrCreate([
             'code' => 'DL_CAR',
-            'quote_type_id' => QuoteTypes::CAR->id()
+            'quote_type_id' => QuoteTypes::CAR->id(),
         ], [
             'code' => 'DL_CAR',
             'text' => 'Driver’s license (both sides)',
@@ -448,14 +444,13 @@ class LstDocumentsSeeder extends Seeder
 
         // BAL	Broker Appointment letter		1	car	.pdf,.xlsx,.xls,.docx,.doc,.jpeg,.jpg,.png	10	25	1	0	0	11	1	QUOTE
 
-
         DocumentType::updateOrCreate([
             'code' => 'BAL',
-            'quote_type_id' => QuoteTypes::CAR->id()
+            'quote_type_id' => QuoteTypes::CAR->id(),
         ], [
             'code' => 'BAL',
             'text' => 'Broker Appointment letter',
-            'description' => "",
+            'description' => '',
 
             'quote_type_id' => QuoteTypes::CAR->id(),
             'folder_path' => 'car',
@@ -477,11 +472,11 @@ class LstDocumentsSeeder extends Seeder
 
         DocumentType::updateOrCreate([
             'code' => 'PHB',
-            'quote_type_id' => QuoteTypes::CAR->id()
+            'quote_type_id' => QuoteTypes::CAR->id(),
         ], [
             'code' => 'PHB',
             'text' => 'Policy Handbook',
-            'description' => "",
+            'description' => '',
 
             'quote_type_id' => QuoteTypes::CAR->id(),
             'folder_path' => 'car',
@@ -493,7 +488,7 @@ class LstDocumentsSeeder extends Seeder
 
             'is_required' => 1,
             'send_to_customer' => 1,
-            'sort_order' => "",
+            'sort_order' => '',
 
             'receive_from_customer' => 0,
             'category' => 'ISSUING_DOCUMENTS',
@@ -501,14 +496,13 @@ class LstDocumentsSeeder extends Seeder
 
         // SOLDUNCON	Internal Proof		1	car	.pdf,.xlsx,.xls,.docx,.doc,.jpeg,.jpg,.png	20	25	0	0	0		0	ISSUING_DOCUMENTS
 
-
         DocumentType::updateOrCreate([
             'code' => 'SOLDUNCON',
-            'quote_type_id' => QuoteTypes::CAR->id()
+            'quote_type_id' => QuoteTypes::CAR->id(),
         ], [
             'code' => 'SOLDUNCON',
             'text' => 'Internal Proof',
-            'description' => "",
+            'description' => '',
 
             'quote_type_id' => QuoteTypes::CAR->id(),
             'folder_path' => 'car',
@@ -520,7 +514,7 @@ class LstDocumentsSeeder extends Seeder
 
             'is_required' => 1,
             'send_to_customer' => 1,
-            'sort_order' => "",
+            'sort_order' => '',
 
             'receive_from_customer' => 0,
             'category' => 'ISSUING_DOCUMENTS',
@@ -530,11 +524,11 @@ class LstDocumentsSeeder extends Seeder
 
         DocumentType::updateOrCreate([
             'code' => 'PS',
-            'quote_type_id' => QuoteTypes::LIFE->id()
+            'quote_type_id' => QuoteTypes::LIFE->id(),
         ], [
             'code' => 'PS',
             'text' => 'Passport',
-            'description' => "",
+            'description' => '',
 
             'quote_type_id' => QuoteTypes::LIFE->id(),
             'folder_path' => 'life',
@@ -546,7 +540,7 @@ class LstDocumentsSeeder extends Seeder
 
             'is_required' => 1,
             'send_to_customer' => 0,
-            'sort_order' => "",
+            'sort_order' => '',
 
             'receive_from_customer' => 1,
             'category' => 'QUOTE',
@@ -556,11 +550,11 @@ class LstDocumentsSeeder extends Seeder
 
         DocumentType::updateOrCreate([
             'code' => 'MEPP',
-            'quote_type_id' => QuoteTypes::HEALTH->id()
+            'quote_type_id' => QuoteTypes::HEALTH->id(),
         ], [
             'code' => 'MEPP',
             'text' => "Member's Passport Copy",
-            'description' => "Please upload the passport copy of the member to be insured.",
+            'description' => 'Please upload the passport copy of the member to be insured.',
 
             'quote_type_id' => QuoteTypes::HEALTH->id(),
             'folder_path' => 'health',
@@ -572,7 +566,7 @@ class LstDocumentsSeeder extends Seeder
 
             'is_required' => 0,
             'send_to_customer' => 0,
-            'sort_order' => "",
+            'sort_order' => '',
 
             'receive_from_customer' => 1,
             'category' => 'MEMBER',
@@ -584,11 +578,11 @@ class LstDocumentsSeeder extends Seeder
 
         DocumentType::updateOrCreate([
             'code' => 'MEV',
-            'quote_type_id' => QuoteTypes::HEALTH->id()
+            'quote_type_id' => QuoteTypes::HEALTH->id(),
         ], [
             'code' => 'MEV',
             'text' => "Member's Visa Copy",
-            'description' => "Please upload the visa copy of the member to be insured.",
+            'description' => 'Please upload the visa copy of the member to be insured.',
 
             'quote_type_id' => QuoteTypes::HEALTH->id(),
             'folder_path' => 'health',
@@ -600,7 +594,7 @@ class LstDocumentsSeeder extends Seeder
 
             'is_required' => 0,
             'send_to_customer' => 0,
-            'sort_order' => "",
+            'sort_order' => '',
 
             'receive_from_customer' => 1,
             'category' => 'MEMBER',
@@ -610,14 +604,13 @@ class LstDocumentsSeeder extends Seeder
 
         // *Max size 25mb per file"	3	health	.pdf,.xlsx,.xls,.docx,.doc,.jpeg,.jpg,.png	40	25	1	0	0		1	MEMBER
 
-
         DocumentType::updateOrCreate([
             'code' => 'MEEID',
-            'quote_type_id' => QuoteTypes::HEALTH->id()
+            'quote_type_id' => QuoteTypes::HEALTH->id(),
         ], [
             'code' => 'MEEID',
             'text' => "Member's Emirates ID Copy",
-            'description' => "Please upload the Emirates ID (front & back side) or Emirates ID Application Form copy of the member to be insured.",
+            'description' => 'Please upload the Emirates ID (front & back side) or Emirates ID Application Form copy of the member to be insured.',
 
             'quote_type_id' => QuoteTypes::HEALTH->id(),
             'folder_path' => 'health',
@@ -629,7 +622,7 @@ class LstDocumentsSeeder extends Seeder
 
             'is_required' => 0,
             'send_to_customer' => 0,
-            'sort_order' => "",
+            'sort_order' => '',
 
             'receive_from_customer' => 1,
             'category' => 'MEMBER',
@@ -637,16 +630,15 @@ class LstDocumentsSeeder extends Seeder
 
         //         MEBC	UAE Birth Certificate (for Newborn)	"Please upload the UAE birth certificate for the newborn member up to 2 months old.
 
-
         // *Max size 25mb per file"	3	health	.pdf,.xlsx,.xls,.docx,.doc,.jpeg,.jpg,.png	20	25	1	0	0		1	MEMBER
 
         DocumentType::updateOrCreate([
             'code' => 'MEBC',
-            'quote_type_id' => QuoteTypes::HEALTH->id()
+            'quote_type_id' => QuoteTypes::HEALTH->id(),
         ], [
             'code' => 'MEBC',
-            'text' => "UAE Birth Certificate (for Newborn)",
-            'description' => "Please upload the UAE birth certificate for the newborn member up to 2 months old.",
+            'text' => 'UAE Birth Certificate (for Newborn)',
+            'description' => 'Please upload the UAE birth certificate for the newborn member up to 2 months old.',
 
             'quote_type_id' => QuoteTypes::HEALTH->id(),
             'folder_path' => 'health',
@@ -658,7 +650,7 @@ class LstDocumentsSeeder extends Seeder
 
             'is_required' => 0,
             'send_to_customer' => 0,
-            'sort_order' => "",
+            'sort_order' => '',
 
             'receive_from_customer' => 1,
             'category' => 'MEMBER',
@@ -670,11 +662,11 @@ class LstDocumentsSeeder extends Seeder
 
         DocumentType::updateOrCreate([
             'code' => 'MEDS',
-            'quote_type_id' => QuoteTypes::HEALTH->id()
+            'quote_type_id' => QuoteTypes::HEALTH->id(),
         ], [
             'code' => 'MEDS',
-            'text' => "Discharge Summary (for Newborn)",
-            'description' => "Please upload the discharge summary for members up to 6 months old.",
+            'text' => 'Discharge Summary (for Newborn)',
+            'description' => 'Please upload the discharge summary for members up to 6 months old.',
 
             'quote_type_id' => QuoteTypes::HEALTH->id(),
             'folder_path' => 'health',
@@ -686,7 +678,7 @@ class LstDocumentsSeeder extends Seeder
 
             'is_required' => 0,
             'send_to_customer' => 0,
-            'sort_order' => "",
+            'sort_order' => '',
 
             'receive_from_customer' => 1,
             'category' => 'MEMBER',
@@ -695,10 +687,9 @@ class LstDocumentsSeeder extends Seeder
 
         // *Max size 25mb per file"	3	health	.pdf,.xlsx,.xls,.docx,.doc,.jpeg,.jpg,.png	10	25	1	0	0		1	QUOTE
 
-
         DocumentType::updateOrCreate([
             'code' => 'SDI',
-            'quote_type_id' => QuoteTypes::HEALTH->id()
+            'quote_type_id' => QuoteTypes::HEALTH->id(),
         ], [
             'code' => 'SDI',
             'text' => "Sponsor's Documents - Individual",
@@ -714,7 +705,7 @@ class LstDocumentsSeeder extends Seeder
 
             'is_required' => 0,
             'send_to_customer' => 0,
-            'sort_order' => "",
+            'sort_order' => '',
 
             'receive_from_customer' => 1,
             'category' => 'QUOTE',
@@ -726,11 +717,11 @@ class LstDocumentsSeeder extends Seeder
 
         DocumentType::updateOrCreate([
             'code' => 'SDC',
-            'quote_type_id' => QuoteTypes::HEALTH->id()
+            'quote_type_id' => QuoteTypes::HEALTH->id(),
         ], [
             'code' => 'SDC',
             'text' => "Sponsor's Documents - Company",
-            'description' => "Please upload a copy of the Trade License, VAT certificate & Establishment Card",
+            'description' => 'Please upload a copy of the Trade License, VAT certificate & Establishment Card',
 
             'quote_type_id' => QuoteTypes::HEALTH->id(),
             'folder_path' => 'health',
@@ -742,7 +733,7 @@ class LstDocumentsSeeder extends Seeder
 
             'is_required' => 0,
             'send_to_customer' => 0,
-            'sort_order' => "",
+            'sort_order' => '',
 
             'receive_from_customer' => 1,
             'category' => 'QUOTE',
@@ -752,14 +743,13 @@ class LstDocumentsSeeder extends Seeder
 
         // *Max size 25mb per file"	3	health	.pdf,.xlsx,.xls,.docx,.doc,.jpeg,.jpg,.png	20	25	1	0	0		1	QUOTE
 
-
         DocumentType::updateOrCreate([
             'code' => 'OAPPD',
-            'quote_type_id' => QuoteTypes::HEALTH->id()
+            'quote_type_id' => QuoteTypes::HEALTH->id(),
         ], [
             'code' => 'OAPPD',
-            'text' => "Other Application Documents",
-            'description' => "Please note that insurers may request further documentation as part of the underwriting process and we will let you know if this applies to your application",
+            'text' => 'Other Application Documents',
+            'description' => 'Please note that insurers may request further documentation as part of the underwriting process and we will let you know if this applies to your application',
 
             'quote_type_id' => QuoteTypes::HEALTH->id(),
             'folder_path' => 'health',
@@ -771,7 +761,7 @@ class LstDocumentsSeeder extends Seeder
 
             'is_required' => 0,
             'send_to_customer' => 0,
-            'sort_order' => "",
+            'sort_order' => '',
 
             'receive_from_customer' => 1,
             'category' => 'QUOTE',
@@ -785,12 +775,12 @@ class LstDocumentsSeeder extends Seeder
 
         DocumentType::updateOrCreate([
             'code' => 'CD',
-            'quote_type_id' => QuoteTypes::HEALTH->id()
+            'quote_type_id' => QuoteTypes::HEALTH->id(),
         ], [
             'code' => 'CD',
-            'text' => "Confirmation Documents",
-            'description' => "Please upload your signed benefit table, proof of payment, signed policy wordings here.
-            These documents will be provided once application documents have been validated and final premium has been released",
+            'text' => 'Confirmation Documents',
+            'description' => 'Please upload your signed benefit table, proof of payment, signed policy wordings here.
+            These documents will be provided once application documents have been validated and final premium has been released',
 
             'quote_type_id' => QuoteTypes::HEALTH->id(),
             'folder_path' => 'health',
@@ -802,7 +792,7 @@ class LstDocumentsSeeder extends Seeder
 
             'is_required' => 0,
             'send_to_customer' => 0,
-            'sort_order' => "",
+            'sort_order' => '',
 
             'receive_from_customer' => 0,
             'category' => 'QUOTE',
@@ -814,11 +804,11 @@ class LstDocumentsSeeder extends Seeder
 
         DocumentType::updateOrCreate([
             'code' => 'MEMR',
-            'quote_type_id' => QuoteTypes::HEALTH->id()
+            'quote_type_id' => QuoteTypes::HEALTH->id(),
         ], [
             'code' => 'MEMR',
-            'text' => "Medical Report (if applicable)",
-            'description' => "Please upload the medical report/s of the member to be insured",
+            'text' => 'Medical Report (if applicable)',
+            'description' => 'Please upload the medical report/s of the member to be insured',
 
             'quote_type_id' => QuoteTypes::HEALTH->id(),
             'folder_path' => 'health',
@@ -830,7 +820,7 @@ class LstDocumentsSeeder extends Seeder
 
             'is_required' => 0,
             'send_to_customer' => 0,
-            'sort_order' => "",
+            'sort_order' => '',
 
             'receive_from_customer' => 1,
             'category' => 'MEMBER',
@@ -840,11 +830,11 @@ class LstDocumentsSeeder extends Seeder
 
         DocumentType::updateOrCreate([
             'code' => 'ECARD',
-            'quote_type_id' => QuoteTypes::HEALTH->id()
+            'quote_type_id' => QuoteTypes::HEALTH->id(),
         ], [
             'code' => 'ECARD',
-            'text' => "E-card",
-            'description' => "",
+            'text' => 'E-card',
+            'description' => '',
 
             'quote_type_id' => QuoteTypes::HEALTH->id(),
             'folder_path' => 'health',
@@ -856,7 +846,7 @@ class LstDocumentsSeeder extends Seeder
 
             'is_required' => 1,
             'send_to_customer' => 1,
-            'sort_order' => "",
+            'sort_order' => '',
 
             'receive_from_customer' => 0,
             'category' => 'QUOTE',
@@ -866,11 +856,11 @@ class LstDocumentsSeeder extends Seeder
 
         DocumentType::updateOrCreate([
             'code' => 'POLC',
-            'quote_type_id' => QuoteTypes::HEALTH->id()
+            'quote_type_id' => QuoteTypes::HEALTH->id(),
         ], [
             'code' => 'POLC',
-            'text' => "Policy Certificate",
-            'description' => "",
+            'text' => 'Policy Certificate',
+            'description' => '',
 
             'quote_type_id' => QuoteTypes::HEALTH->id(),
             'folder_path' => 'health',
@@ -882,7 +872,7 @@ class LstDocumentsSeeder extends Seeder
 
             'is_required' => 1,
             'send_to_customer' => 1,
-            'sort_order' => "",
+            'sort_order' => '',
 
             'receive_from_customer' => 0,
             'category' => 'QUOTE',
@@ -892,11 +882,11 @@ class LstDocumentsSeeder extends Seeder
 
         DocumentType::updateOrCreate([
             'code' => 'POLW',
-            'quote_type_id' => QuoteTypes::HEALTH->id()
+            'quote_type_id' => QuoteTypes::HEALTH->id(),
         ], [
             'code' => 'POLW',
-            'text' => "Policy Wordings/Bond",
-            'description' => "",
+            'text' => 'Policy Wordings/Bond',
+            'description' => '',
 
             'quote_type_id' => QuoteTypes::HEALTH->id(),
             'folder_path' => 'health',
@@ -908,7 +898,7 @@ class LstDocumentsSeeder extends Seeder
 
             'is_required' => 1,
             'send_to_customer' => 1,
-            'sort_order' => "",
+            'sort_order' => '',
 
             'receive_from_customer' => 0,
             'category' => 'QUOTE',
@@ -918,11 +908,11 @@ class LstDocumentsSeeder extends Seeder
 
         DocumentType::updateOrCreate([
             'code' => 'RV',
-            'quote_type_id' => QuoteTypes::HEALTH->id()
+            'quote_type_id' => QuoteTypes::HEALTH->id(),
         ], [
             'code' => 'RV',
-            'text' => "Receipt",
-            'description' => "",
+            'text' => 'Receipt',
+            'description' => '',
 
             'quote_type_id' => QuoteTypes::HEALTH->id(),
             'folder_path' => 'health',
@@ -934,7 +924,7 @@ class LstDocumentsSeeder extends Seeder
 
             'is_required' => 1,
             'send_to_customer' => 1,
-            'sort_order' => "",
+            'sort_order' => '',
 
             'receive_from_customer' => 0,
             'category' => 'QUOTE',
@@ -944,11 +934,11 @@ class LstDocumentsSeeder extends Seeder
 
         DocumentType::updateOrCreate([
             'code' => 'TI',
-            'quote_type_id' => QuoteTypes::HEALTH->id()
+            'quote_type_id' => QuoteTypes::HEALTH->id(),
         ], [
             'code' => 'TI',
-            'text' => "Tax Invoice",
-            'description' => "Tax Invoice or Debit Note (without the commission)",
+            'text' => 'Tax Invoice',
+            'description' => 'Tax Invoice or Debit Note (without the commission)',
 
             'quote_type_id' => QuoteTypes::HEALTH->id(),
             'folder_path' => 'health',
@@ -960,7 +950,7 @@ class LstDocumentsSeeder extends Seeder
 
             'is_required' => 1,
             'send_to_customer' => 1,
-            'sort_order' => "",
+            'sort_order' => '',
 
             'receive_from_customer' => 0,
             'category' => 'QUOTE',
@@ -970,11 +960,11 @@ class LstDocumentsSeeder extends Seeder
 
         DocumentType::updateOrCreate([
             'code' => 'TIRBB',
-            'quote_type_id' => QuoteTypes::HEALTH->id()
+            'quote_type_id' => QuoteTypes::HEALTH->id(),
         ], [
             'code' => 'TIRBB',
-            'text' => "TIRBB/Credit Note",
-            'description' => "Tax Invoice Raised by Buyer or Credit Note (document where commission is stated)",
+            'text' => 'TIRBB/Credit Note',
+            'description' => 'Tax Invoice Raised by Buyer or Credit Note (document where commission is stated)',
 
             'quote_type_id' => QuoteTypes::HEALTH->id(),
             'folder_path' => 'health',
@@ -986,7 +976,7 @@ class LstDocumentsSeeder extends Seeder
 
             'is_required' => 1,
             'send_to_customer' => 0,
-            'sort_order' => "",
+            'sort_order' => '',
 
             'receive_from_customer' => 0,
             'category' => 'QUOTE',
@@ -996,11 +986,11 @@ class LstDocumentsSeeder extends Seeder
 
         DocumentType::updateOrCreate([
             'code' => 'TRAEID',
-            'quote_type_id' => QuoteTypes::TRAVEL->id()
+            'quote_type_id' => QuoteTypes::TRAVEL->id(),
         ], [
             'code' => 'TRAEID',
-            'text' => "Emirates ID (Front side & Back side)",
-            'description' => "Please share a copy of your Emirates ID application form to enable us to proceed",
+            'text' => 'Emirates ID (Front side & Back side)',
+            'description' => 'Please share a copy of your Emirates ID application form to enable us to proceed',
 
             'quote_type_id' => QuoteTypes::TRAVEL->id(),
             'folder_path' => 'travel',
@@ -1020,14 +1010,13 @@ class LstDocumentsSeeder extends Seeder
 
         // BUSEID	Emirates ID (Front side & Back side)	Please share a copy of your Emirates ID application form to enable us to proceed.	5	business	.pdf,.xlsx,.docx,.jpeg,.jpg,.png	5	20	1	1	0	1	1	QUOTE
 
-
         DocumentType::updateOrCreate([
             'code' => 'BUSEID',
-            'quote_type_id' => QuoteTypes::BUSINESS->id()
+            'quote_type_id' => QuoteTypes::BUSINESS->id(),
         ], [
             'code' => 'BUSEID',
-            'text' => "Emirates ID (Front side & Back side)",
-            'description' => "Please share a copy of your Emirates ID application form to enable us to proceed",
+            'text' => 'Emirates ID (Front side & Back side)',
+            'description' => 'Please share a copy of your Emirates ID application form to enable us to proceed',
 
             'quote_type_id' => QuoteTypes::BUSINESS->id(),
             'folder_path' => 'business',
@@ -1049,11 +1038,11 @@ class LstDocumentsSeeder extends Seeder
 
         DocumentType::updateOrCreate([
             'code' => 'HOMEID',
-            'quote_type_id' => QuoteTypes::HOME->id()
+            'quote_type_id' => QuoteTypes::HOME->id(),
         ], [
             'code' => 'HOMEID',
-            'text' => "Emirates ID (Front side & Back side)",
-            'description' => "Please share a copy of your Emirates ID application form to enable us to proceed",
+            'text' => 'Emirates ID (Front side & Back side)',
+            'description' => 'Please share a copy of your Emirates ID application form to enable us to proceed',
 
             'quote_type_id' => QuoteTypes::HOME->id(),
             'folder_path' => 'home',
@@ -1075,11 +1064,11 @@ class LstDocumentsSeeder extends Seeder
 
         DocumentType::updateOrCreate([
             'code' => 'HEAEID',
-            'quote_type_id' => QuoteTypes::HEALTH->id()
+            'quote_type_id' => QuoteTypes::HEALTH->id(),
         ], [
             'code' => 'HEAEID',
-            'text' => "Emirates ID (Front side & Back side)",
-            'description' => "Please share a copy of your Emirates ID application form to enable us to proceed",
+            'text' => 'Emirates ID (Front side & Back side)',
+            'description' => 'Please share a copy of your Emirates ID application form to enable us to proceed',
 
             'quote_type_id' => QuoteTypes::HEALTH->id(),
             'folder_path' => 'home',
@@ -1101,11 +1090,11 @@ class LstDocumentsSeeder extends Seeder
 
         DocumentType::updateOrCreate([
             'code' => 'LIFEID',
-            'quote_type_id' => QuoteTypes::LIFE->id()
+            'quote_type_id' => QuoteTypes::LIFE->id(),
         ], [
             'code' => 'LIFEID',
-            'text' => "Emirates ID (Front side & Back side)",
-            'description' => "Please share a copy of your Emirates ID application form to enable us to proceed",
+            'text' => 'Emirates ID (Front side & Back side)',
+            'description' => 'Please share a copy of your Emirates ID application form to enable us to proceed',
 
             'quote_type_id' => QuoteTypes::LIFE->id(),
             'folder_path' => 'life',
@@ -1125,14 +1114,13 @@ class LstDocumentsSeeder extends Seeder
 
         // PETEID	Emirates ID (Front side & Back side)	Please share a copy of your Emirates ID application form to enable us to proceed.	9	pet	.pdf,.xlsx,.docx,.jpeg,.jpg,.png	5	20	1	1	0	1	1	QUOTE
 
-
         DocumentType::updateOrCreate([
             'code' => 'PETEID',
-            'quote_type_id' => QuoteTypes::PET->id()
+            'quote_type_id' => QuoteTypes::PET->id(),
         ], [
             'code' => 'PETEID',
-            'text' => "Emirates ID (Front side & Back side)",
-            'description' => "Please share a copy of your Emirates ID application form to enable us to proceed",
+            'text' => 'Emirates ID (Front side & Back side)',
+            'description' => 'Please share a copy of your Emirates ID application form to enable us to proceed',
 
             'quote_type_id' => QuoteTypes::PET->id(),
             'folder_path' => 'pet',
@@ -1152,14 +1140,13 @@ class LstDocumentsSeeder extends Seeder
 
         // CTI	Tax Invoice		6	bike	.pdf,.xlsx,.docx,.jpeg,.jpg,.png	1	25	1	1	0	13	0	QUOTE
 
-
         DocumentType::updateOrCreate([
             'code' => 'CTI',
-            'quote_type_id' => QuoteTypes::BIKE->id()
+            'quote_type_id' => QuoteTypes::BIKE->id(),
         ], [
             'code' => 'CTI',
-            'text' => "Tax Invoice",
-            'description' => "",
+            'text' => 'Tax Invoice',
+            'description' => '',
 
             'quote_type_id' => QuoteTypes::BIKE->id(),
             'folder_path' => 'bike',
@@ -1181,11 +1168,11 @@ class LstDocumentsSeeder extends Seeder
 
         DocumentType::updateOrCreate([
             'code' => 'CTIRBB',
-            'quote_type_id' => QuoteTypes::BIKE->id()
+            'quote_type_id' => QuoteTypes::BIKE->id(),
         ], [
             'code' => 'CTIRBB',
-            'text' => "Tax Invoice Raise by Buyer",
-            'description' => "",
+            'text' => 'Tax Invoice Raise by Buyer',
+            'description' => '',
 
             'quote_type_id' => QuoteTypes::BIKE->id(),
             'folder_path' => 'bike',
@@ -1207,11 +1194,11 @@ class LstDocumentsSeeder extends Seeder
 
         DocumentType::updateOrCreate([
             'code' => 'CEID',
-            'quote_type_id' => QuoteTypes::BIKE->id()
+            'quote_type_id' => QuoteTypes::BIKE->id(),
         ], [
             'code' => 'CEID',
-            'text' => "Emirates ID (Front side & Back side)",
-            'description' => "Please share a copy of your valid Emirates ID with us. Awaiting receipt of your first or renewed ID? Please share a copy of your Emirates ID application form to enable us to proceed.",
+            'text' => 'Emirates ID (Front side & Back side)',
+            'description' => 'Please share a copy of your valid Emirates ID with us. Awaiting receipt of your first or renewed ID? Please share a copy of your Emirates ID application form to enable us to proceed.',
 
             'quote_type_id' => QuoteTypes::BIKE->id(),
             'folder_path' => 'bike',
@@ -1233,11 +1220,11 @@ class LstDocumentsSeeder extends Seeder
 
         DocumentType::updateOrCreate([
             'code' => 'TR',
-            'quote_type_id' => QuoteTypes::BIKE->id()
+            'quote_type_id' => QuoteTypes::BIKE->id(),
         ], [
             'code' => 'TR',
-            'text' => "Receipt",
-            'description' => "",
+            'text' => 'Receipt',
+            'description' => '',
 
             'quote_type_id' => QuoteTypes::BIKE->id(),
             'folder_path' => 'bike',
@@ -1259,11 +1246,11 @@ class LstDocumentsSeeder extends Seeder
 
         DocumentType::updateOrCreate([
             'code' => 'CCL',
-            'quote_type_id' => QuoteTypes::BIKE->id()
+            'quote_type_id' => QuoteTypes::BIKE->id(),
         ], [
             'code' => 'CCL',
-            'text' => "Company Letter",
-            'description' => "",
+            'text' => 'Company Letter',
+            'description' => '',
 
             'quote_type_id' => QuoteTypes::BIKE->id(),
             'folder_path' => 'bike',
@@ -1284,11 +1271,11 @@ class LstDocumentsSeeder extends Seeder
 
         DocumentType::updateOrCreate([
             'code' => 'CAF',
-            'quote_type_id' => QuoteTypes::BIKE->id()
+            'quote_type_id' => QuoteTypes::BIKE->id(),
         ], [
             'code' => 'CAF',
-            'text' => "Application Form",
-            'description' => "",
+            'text' => 'Application Form',
+            'description' => '',
 
             'quote_type_id' => QuoteTypes::BIKE->id(),
             'folder_path' => 'bike',
@@ -1310,11 +1297,11 @@ class LstDocumentsSeeder extends Seeder
 
         DocumentType::updateOrCreate([
             'code' => 'VCP',
-            'quote_type_id' => QuoteTypes::CAR->id()
+            'quote_type_id' => QuoteTypes::CAR->id(),
         ], [
             'code' => 'VCP',
-            'text' => "Vehicle photos (as per format shared by the advisor)",
-            'description' => "",
+            'text' => 'Vehicle photos (as per format shared by the advisor)',
+            'description' => '',
 
             'quote_type_id' => QuoteTypes::CAR->id(),
             'folder_path' => 'car',
@@ -1336,11 +1323,11 @@ class LstDocumentsSeeder extends Seeder
 
         DocumentType::updateOrCreate([
             'code' => 'OCD',
-            'quote_type_id' => QuoteTypes::CAR->id()
+            'quote_type_id' => QuoteTypes::CAR->id(),
         ], [
             'code' => 'OCD',
-            'text' => "Other documents",
-            'description' => "",
+            'text' => 'Other documents',
+            'description' => '',
 
             'quote_type_id' => QuoteTypes::CAR->id(),
             'folder_path' => 'car',
@@ -1362,11 +1349,11 @@ class LstDocumentsSeeder extends Seeder
 
         DocumentType::updateOrCreate([
             'code' => 'CCL',
-            'quote_type_id' => QuoteTypes::BUSINESS->id()
+            'quote_type_id' => QuoteTypes::BUSINESS->id(),
         ], [
             'code' => 'CCL',
-            'text' => "Census List",
-            'description' => "",
+            'text' => 'Census List',
+            'description' => '',
 
             'quote_type_id' => QuoteTypes::BUSINESS->id(),
             'folder_path' => 'business',
@@ -1388,11 +1375,11 @@ class LstDocumentsSeeder extends Seeder
 
         DocumentType::updateOrCreate([
             'code' => 'CPD',
-            'quote_type_id' => QuoteTypes::CAR->id()
+            'quote_type_id' => QuoteTypes::CAR->id(),
         ], [
             'code' => 'CPD',
-            'text' => "Payment Proof",
-            'description' => "",
+            'text' => 'Payment Proof',
+            'description' => '',
 
             'quote_type_id' => QuoteTypes::CAR->id(),
             'folder_path' => 'car',
@@ -1412,14 +1399,13 @@ class LstDocumentsSeeder extends Seeder
 
         //  HPD	Payment Proof		3	health	.png,.pdf,.jpeg,.jpg	15	30	1	0	1	4	0	QUOTE
 
-
         DocumentType::updateOrCreate([
             'code' => 'HPD',
-            'quote_type_id' => QuoteTypes::HEALTH->id()
+            'quote_type_id' => QuoteTypes::HEALTH->id(),
         ], [
             'code' => 'HPD',
-            'text' => "Payment Proof",
-            'description' => "",
+            'text' => 'Payment Proof',
+            'description' => '',
 
             'quote_type_id' => QuoteTypes::HEALTH->id(),
             'folder_path' => 'health',
@@ -1441,11 +1427,11 @@ class LstDocumentsSeeder extends Seeder
 
         DocumentType::updateOrCreate([
             'code' => 'FTC_CAR',
-            'quote_type_id' => QuoteTypes::CAR->id()
+            'quote_type_id' => QuoteTypes::CAR->id(),
         ], [
             'code' => 'FTC_CAR',
-            'text' => "Final terms and conditions",
-            'description' => "sample description",
+            'text' => 'Final terms and conditions',
+            'description' => 'sample description',
 
             'quote_type_id' => QuoteTypes::CAR->id(),
             'folder_path' => 'car',
@@ -1457,7 +1443,7 @@ class LstDocumentsSeeder extends Seeder
 
             'is_required' => 0,
             'send_to_customer' => 0,
-            'sort_order' => "",
+            'sort_order' => '',
 
             'receive_from_customer' => 0,
             'category' => 'MEMBER',
@@ -1467,11 +1453,11 @@ class LstDocumentsSeeder extends Seeder
 
         DocumentType::updateOrCreate([
             'code' => 'TPD',
-            'quote_type_id' => QuoteTypes::TRAVEL->id()
+            'quote_type_id' => QuoteTypes::TRAVEL->id(),
         ], [
             'code' => 'TPD',
-            'text' => "Payment Proof",
-            'description' => "",
+            'text' => 'Payment Proof',
+            'description' => '',
 
             'quote_type_id' => QuoteTypes::TRAVEL->id(),
             'folder_path' => 'car',
@@ -1491,14 +1477,13 @@ class LstDocumentsSeeder extends Seeder
 
         // CPDR	Receipt		1	car	.pdf,.xlsx,.xls,.docx,.doc,.jpeg,.jpg,.png	5	25	1	0	1	4	0	ISSUING_DOCUMENTS
 
-
         DocumentType::updateOrCreate([
             'code' => 'CPDR',
-            'quote_type_id' => QuoteTypes::CAR->id()
+            'quote_type_id' => QuoteTypes::CAR->id(),
         ], [
             'code' => 'CPDR',
-            'text' => "Receipt",
-            'description' => "",
+            'text' => 'Receipt',
+            'description' => '',
 
             'quote_type_id' => QuoteTypes::CAR->id(),
             'folder_path' => 'car',
@@ -1520,11 +1505,11 @@ class LstDocumentsSeeder extends Seeder
 
         DocumentType::updateOrCreate([
             'code' => 'HPDR',
-            'quote_type_id' => QuoteTypes::HEALTH->id()
+            'quote_type_id' => QuoteTypes::HEALTH->id(),
         ], [
             'code' => 'HPDR',
-            'text' => "Receipt",
-            'description' => "",
+            'text' => 'Receipt',
+            'description' => '',
 
             'quote_type_id' => QuoteTypes::HEALTH->id(),
             'folder_path' => 'health',
@@ -1546,11 +1531,11 @@ class LstDocumentsSeeder extends Seeder
 
         DocumentType::updateOrCreate([
             'code' => 'TPDR',
-            'quote_type_id' => QuoteTypes::TRAVEL->id()
+            'quote_type_id' => QuoteTypes::TRAVEL->id(),
         ], [
             'code' => 'TPDR',
-            'text' => "Receipt",
-            'description' => "",
+            'text' => 'Receipt',
+            'description' => '',
 
             'quote_type_id' => QuoteTypes::TRAVEL->id(),
             'folder_path' => 'travel',
@@ -1572,11 +1557,11 @@ class LstDocumentsSeeder extends Seeder
 
         DocumentType::updateOrCreate([
             'code' => 'CYCEDD',
-            'quote_type_id' => QuoteTypes::CYCLE->id()
+            'quote_type_id' => QuoteTypes::CYCLE->id(),
         ], [
             'code' => 'CYCEDD',
-            'text' => "Enhanced Due Diligence Form",
-            'description' => "For compliance use only",
+            'text' => 'Enhanced Due Diligence Form',
+            'description' => 'For compliance use only',
 
             'quote_type_id' => QuoteTypes::CYCLE->id(),
             'folder_path' => 'cycle',
@@ -1588,7 +1573,7 @@ class LstDocumentsSeeder extends Seeder
 
             'is_required' => 0,
             'send_to_customer' => 0,
-            'sort_order' => "",
+            'sort_order' => '',
 
             'receive_from_customer' => 0,
             'category' => 'QUOTE',
@@ -1598,11 +1583,11 @@ class LstDocumentsSeeder extends Seeder
 
         DocumentType::updateOrCreate([
             'code' => 'YACEDD',
-            'quote_type_id' => QuoteTypes::YACHT->id()
+            'quote_type_id' => QuoteTypes::YACHT->id(),
         ], [
             'code' => 'YACEDD',
-            'text' => "Enhanced Due Diligence Form",
-            'description' => "For compliance use only",
+            'text' => 'Enhanced Due Diligence Form',
+            'description' => 'For compliance use only',
 
             'quote_type_id' => QuoteTypes::YACHT->id(),
             'folder_path' => 'yacht',
@@ -1614,7 +1599,7 @@ class LstDocumentsSeeder extends Seeder
 
             'is_required' => 0,
             'send_to_customer' => 0,
-            'sort_order' => "",
+            'sort_order' => '',
 
             'receive_from_customer' => 0,
             'category' => 'QUOTE',
@@ -1624,11 +1609,11 @@ class LstDocumentsSeeder extends Seeder
 
         DocumentType::updateOrCreate([
             'code' => 'LPD',
-            'quote_type_id' => QuoteTypes::LIFE->id()
+            'quote_type_id' => QuoteTypes::LIFE->id(),
         ], [
             'code' => 'LPD',
-            'text' => "Payment Proof",
-            'description' => "",
+            'text' => 'Payment Proof',
+            'description' => '',
 
             'quote_type_id' => QuoteTypes::LIFE->id(),
             'folder_path' => 'life',
@@ -1650,11 +1635,11 @@ class LstDocumentsSeeder extends Seeder
 
         DocumentType::updateOrCreate([
             'code' => 'KYCDOC',
-            'quote_type_id' => QuoteTypes::HEALTH->id()
+            'quote_type_id' => QuoteTypes::HEALTH->id(),
         ], [
             'code' => 'KYCDOC',
-            'text' => "Payment Proof",
-            'description' => "",
+            'text' => 'Payment Proof',
+            'description' => '',
 
             'quote_type_id' => QuoteTypes::HEALTH->id(),
             'folder_path' => 'kyc',
@@ -1666,7 +1651,7 @@ class LstDocumentsSeeder extends Seeder
 
             'is_required' => 0,
             'send_to_customer' => 0,
-            'sort_order' => "",
+            'sort_order' => '',
 
             'receive_from_customer' => 0,
             'category' => 'QUOTE',
@@ -1676,11 +1661,11 @@ class LstDocumentsSeeder extends Seeder
 
         DocumentType::updateOrCreate([
             'code' => 'PPD',
-            'quote_type_id' => QuoteTypes::PET->id()
+            'quote_type_id' => QuoteTypes::PET->id(),
         ], [
             'code' => 'PPD',
-            'text' => "Payment Proof",
-            'description' => "",
+            'text' => 'Payment Proof',
+            'description' => '',
 
             'quote_type_id' => QuoteTypes::PET->id(),
             'folder_path' => 'pet',
@@ -1701,11 +1686,11 @@ class LstDocumentsSeeder extends Seeder
 
         DocumentType::updateOrCreate([
             'code' => 'PPDR',
-            'quote_type_id' => QuoteTypes::PET->id()
+            'quote_type_id' => QuoteTypes::PET->id(),
         ], [
             'code' => 'PPDR',
-            'text' => "Receipt",
-            'description' => "",
+            'text' => 'Receipt',
+            'description' => '',
 
             'quote_type_id' => QuoteTypes::PET->id(),
             'folder_path' => 'pet',
@@ -1727,11 +1712,11 @@ class LstDocumentsSeeder extends Seeder
 
         DocumentType::updateOrCreate([
             'code' => 'BPD',
-            'quote_type_id' => QuoteTypes::BIKE->id()
+            'quote_type_id' => QuoteTypes::BIKE->id(),
         ], [
             'code' => 'BPD',
-            'text' => "Payment Proof",
-            'description' => "",
+            'text' => 'Payment Proof',
+            'description' => '',
 
             'quote_type_id' => QuoteTypes::BIKE->id(),
             'folder_path' => 'bike',
@@ -1753,11 +1738,11 @@ class LstDocumentsSeeder extends Seeder
 
         DocumentType::updateOrCreate([
             'code' => 'BPDR',
-            'quote_type_id' => QuoteTypes::BIKE->id()
+            'quote_type_id' => QuoteTypes::BIKE->id(),
         ], [
             'code' => 'BPDR',
-            'text' => "Receipt",
-            'description' => "",
+            'text' => 'Receipt',
+            'description' => '',
 
             'quote_type_id' => QuoteTypes::BIKE->id(),
             'folder_path' => 'bike',
@@ -1778,11 +1763,11 @@ class LstDocumentsSeeder extends Seeder
 
         DocumentType::updateOrCreate([
             'code' => 'CYCPD',
-            'quote_type_id' => QuoteTypes::CYCLE->id()
+            'quote_type_id' => QuoteTypes::CYCLE->id(),
         ], [
             'code' => 'CYCPD',
-            'text' => "Payment Proof",
-            'description' => "",
+            'text' => 'Payment Proof',
+            'description' => '',
 
             'quote_type_id' => QuoteTypes::CYCLE->id(),
             'folder_path' => 'bike',
@@ -1804,11 +1789,11 @@ class LstDocumentsSeeder extends Seeder
 
         DocumentType::updateOrCreate([
             'code' => 'CYCPDR',
-            'quote_type_id' => QuoteTypes::CYCLE->id()
+            'quote_type_id' => QuoteTypes::CYCLE->id(),
         ], [
             'code' => 'CYCPDR',
-            'text' => "Receipt",
-            'description' => "",
+            'text' => 'Receipt',
+            'description' => '',
 
             'quote_type_id' => QuoteTypes::CYCLE->id(),
             'folder_path' => 'cycle',
@@ -1830,11 +1815,11 @@ class LstDocumentsSeeder extends Seeder
 
         DocumentType::updateOrCreate([
             'code' => 'YPD',
-            'quote_type_id' => QuoteTypes::YACHT->id()
+            'quote_type_id' => QuoteTypes::YACHT->id(),
         ], [
             'code' => 'YPD',
-            'text' => "Payment Proof",
-            'description' => "",
+            'text' => 'Payment Proof',
+            'description' => '',
 
             'quote_type_id' => QuoteTypes::YACHT->id(),
             'folder_path' => 'yacht',
@@ -1856,11 +1841,11 @@ class LstDocumentsSeeder extends Seeder
 
         DocumentType::updateOrCreate([
             'code' => 'YPDR',
-            'quote_type_id' => QuoteTypes::YACHT->id()
+            'quote_type_id' => QuoteTypes::YACHT->id(),
         ], [
             'code' => 'YPDR',
-            'text' => "Receipt",
-            'description' => "",
+            'text' => 'Receipt',
+            'description' => '',
 
             'quote_type_id' => QuoteTypes::YACHT->id(),
             'folder_path' => 'yacht',
@@ -1882,11 +1867,11 @@ class LstDocumentsSeeder extends Seeder
 
         DocumentType::updateOrCreate([
             'code' => 'CLPD',
-            'quote_type_id' => QuoteTypes::BUSINESS->id()
+            'quote_type_id' => QuoteTypes::BUSINESS->id(),
         ], [
             'code' => 'CLPD',
-            'text' => "Payment Proof",
-            'description' => "",
+            'text' => 'Payment Proof',
+            'description' => '',
 
             'quote_type_id' => QuoteTypes::BUSINESS->id(),
             'folder_path' => 'business',
@@ -1908,11 +1893,11 @@ class LstDocumentsSeeder extends Seeder
 
         DocumentType::updateOrCreate([
             'code' => 'CLPDR',
-            'quote_type_id' => QuoteTypes::BUSINESS->id()
+            'quote_type_id' => QuoteTypes::BUSINESS->id(),
         ], [
             'code' => 'CLPDR',
-            'text' => "Receipt",
-            'description' => "",
+            'text' => 'Receipt',
+            'description' => '',
 
             'quote_type_id' => QuoteTypes::BUSINESS->id(),
             'folder_path' => 'business',
@@ -1934,11 +1919,11 @@ class LstDocumentsSeeder extends Seeder
 
         DocumentType::updateOrCreate([
             'code' => 'TRAEDD',
-            'quote_type_id' => QuoteTypes::TRAVEL->id()
+            'quote_type_id' => QuoteTypes::TRAVEL->id(),
         ], [
             'code' => 'TRAEDD',
-            'text' => "Enhanced Due Diligence Form",
-            'description' => "",
+            'text' => 'Enhanced Due Diligence Form',
+            'description' => '',
 
             'quote_type_id' => QuoteTypes::TRAVEL->id(),
             'folder_path' => 'travel',
@@ -1950,7 +1935,7 @@ class LstDocumentsSeeder extends Seeder
 
             'is_required' => 0,
             'send_to_customer' => 0,
-            'sort_order' => "",
+            'sort_order' => '',
 
             'receive_from_customer' => 0,
             'category' => 'QUOTE',
@@ -1960,11 +1945,11 @@ class LstDocumentsSeeder extends Seeder
 
         DocumentType::updateOrCreate([
             'code' => 'CAREDD',
-            'quote_type_id' => QuoteTypes::CAR->id()
+            'quote_type_id' => QuoteTypes::CAR->id(),
         ], [
             'code' => 'CAREDD',
-            'text' => "Enhanced Due Diligence Form",
-            'description' => "",
+            'text' => 'Enhanced Due Diligence Form',
+            'description' => '',
 
             'quote_type_id' => QuoteTypes::CAR->id(),
             'folder_path' => 'car',
@@ -1976,7 +1961,7 @@ class LstDocumentsSeeder extends Seeder
 
             'is_required' => 0,
             'send_to_customer' => 0,
-            'sort_order' => "",
+            'sort_order' => '',
 
             'receive_from_customer' => 0,
             'category' => 'ISSUING_DOCUMENTS',
@@ -1984,14 +1969,13 @@ class LstDocumentsSeeder extends Seeder
 
         // HEAEDD	Enhanced Due Diligence Form		3	health	.pdf,.xlsx,.xls,.docx,.doc,.jpeg,.jpg,.png	10	25	1	0	0		0	QUOTE
 
-
         DocumentType::updateOrCreate([
             'code' => 'HEAEDD',
-            'quote_type_id' => QuoteTypes::HEALTH->id()
+            'quote_type_id' => QuoteTypes::HEALTH->id(),
         ], [
             'code' => 'HEAEDD',
-            'text' => "Enhanced Due Diligence Form",
-            'description' => "",
+            'text' => 'Enhanced Due Diligence Form',
+            'description' => '',
 
             'quote_type_id' => QuoteTypes::HEALTH->id(),
             'folder_path' => 'health',
@@ -2003,7 +1987,7 @@ class LstDocumentsSeeder extends Seeder
 
             'is_required' => 0,
             'send_to_customer' => 0,
-            'sort_order' => "",
+            'sort_order' => '',
 
             'receive_from_customer' => 0,
             'category' => 'QUOTE',
@@ -2013,11 +1997,11 @@ class LstDocumentsSeeder extends Seeder
 
         DocumentType::updateOrCreate([
             'code' => 'LIFEDD',
-            'quote_type_id' => QuoteTypes::TRAVEL->id()
+            'quote_type_id' => QuoteTypes::TRAVEL->id(),
         ], [
             'code' => 'LIFEDD',
-            'text' => "Enhanced Due Diligence Form",
-            'description' => "",
+            'text' => 'Enhanced Due Diligence Form',
+            'description' => '',
 
             'quote_type_id' => QuoteTypes::TRAVEL->id(),
             'folder_path' => 'travel',
@@ -2029,7 +2013,7 @@ class LstDocumentsSeeder extends Seeder
 
             'is_required' => 0,
             'send_to_customer' => 0,
-            'sort_order' => "",
+            'sort_order' => '',
 
             'receive_from_customer' => 0,
             'category' => 'QUOTE',
@@ -2039,11 +2023,11 @@ class LstDocumentsSeeder extends Seeder
 
         DocumentType::updateOrCreate([
             'code' => 'HOMEDD',
-            'quote_type_id' => QuoteTypes::HOME->id()
+            'quote_type_id' => QuoteTypes::HOME->id(),
         ], [
             'code' => 'HOMEDD',
-            'text' => "Enhanced Due Diligence Form",
-            'description' => "",
+            'text' => 'Enhanced Due Diligence Form',
+            'description' => '',
 
             'quote_type_id' => QuoteTypes::HOME->id(),
             'folder_path' => 'home',
@@ -2055,7 +2039,7 @@ class LstDocumentsSeeder extends Seeder
 
             'is_required' => 0,
             'send_to_customer' => 0,
-            'sort_order' => "",
+            'sort_order' => '',
 
             'receive_from_customer' => 0,
             'category' => 'QUOTE',
@@ -2065,11 +2049,11 @@ class LstDocumentsSeeder extends Seeder
 
         DocumentType::updateOrCreate([
             'code' => 'PETEDD',
-            'quote_type_id' => QuoteTypes::PET->id()
+            'quote_type_id' => QuoteTypes::PET->id(),
         ], [
             'code' => 'PETEDD',
-            'text' => "Enhanced Due Diligence Form",
-            'description' => "",
+            'text' => 'Enhanced Due Diligence Form',
+            'description' => '',
 
             'quote_type_id' => QuoteTypes::PET->id(),
             'folder_path' => 'pet',
@@ -2081,7 +2065,7 @@ class LstDocumentsSeeder extends Seeder
 
             'is_required' => 0,
             'send_to_customer' => 0,
-            'sort_order' => "",
+            'sort_order' => '',
 
             'receive_from_customer' => 0,
             'category' => 'QUOTE',
@@ -2091,11 +2075,11 @@ class LstDocumentsSeeder extends Seeder
 
         DocumentType::updateOrCreate([
             'code' => 'BIKEDD',
-            'quote_type_id' => QuoteTypes::BIKE->id()
+            'quote_type_id' => QuoteTypes::BIKE->id(),
         ], [
             'code' => 'BIKEDD',
-            'text' => "Enhanced Due Diligence Form",
-            'description' => "",
+            'text' => 'Enhanced Due Diligence Form',
+            'description' => '',
 
             'quote_type_id' => QuoteTypes::BIKE->id(),
             'folder_path' => 'bike',
@@ -2107,7 +2091,7 @@ class LstDocumentsSeeder extends Seeder
 
             'is_required' => 0,
             'send_to_customer' => 0,
-            'sort_order' => "",
+            'sort_order' => '',
 
             'receive_from_customer' => 0,
             'category' => 'QUOTE',
@@ -2117,11 +2101,11 @@ class LstDocumentsSeeder extends Seeder
 
         DocumentType::updateOrCreate([
             'code' => 'BUSEDD',
-            'quote_type_id' => QuoteTypes::BUSINESS->id()
+            'quote_type_id' => QuoteTypes::BUSINESS->id(),
         ], [
             'code' => 'BUSEDD',
-            'text' => "Enhanced Due Diligence Form",
-            'description' => "",
+            'text' => 'Enhanced Due Diligence Form',
+            'description' => '',
 
             'quote_type_id' => QuoteTypes::BUSINESS->id(),
             'folder_path' => 'business',
@@ -2133,7 +2117,7 @@ class LstDocumentsSeeder extends Seeder
 
             'is_required' => 0,
             'send_to_customer' => 0,
-            'sort_order' => "",
+            'sort_order' => '',
 
             'receive_from_customer' => 0,
             'category' => 'QUOTE',
@@ -2143,11 +2127,11 @@ class LstDocumentsSeeder extends Seeder
 
         DocumentType::updateOrCreate([
             'code' => 'JETEDD',
-            'quote_type_id' => QuoteTypes::JETSKI->id()
+            'quote_type_id' => QuoteTypes::JETSKI->id(),
         ], [
             'code' => 'JETEDD',
-            'text' => "Enhanced Due Diligence Form",
-            'description' => "",
+            'text' => 'Enhanced Due Diligence Form',
+            'description' => '',
 
             'quote_type_id' => QuoteTypes::JETSKI->id(),
             'folder_path' => 'jetski',
@@ -2159,7 +2143,7 @@ class LstDocumentsSeeder extends Seeder
 
             'is_required' => 0,
             'send_to_customer' => 0,
-            'sort_order' => "",
+            'sort_order' => '',
 
             'receive_from_customer' => 0,
             'category' => 'QUOTE',
@@ -2169,11 +2153,11 @@ class LstDocumentsSeeder extends Seeder
 
         DocumentType::updateOrCreate([
             'code' => 'CAR_MULKIY',
-            'quote_type_id' => QuoteTypes::CAR->id()
+            'quote_type_id' => QuoteTypes::CAR->id(),
         ], [
             'code' => 'CAR_MULKIY',
-            'text' => "Registration card (Mulkiya)",
-            'description' => "",
+            'text' => 'Registration card (Mulkiya)',
+            'description' => '',
 
             'quote_type_id' => QuoteTypes::CAR->id(),
             'folder_path' => 'car',
@@ -2195,11 +2179,11 @@ class LstDocumentsSeeder extends Seeder
 
         DocumentType::updateOrCreate([
             'code' => 'CEC',
-            'quote_type_id' => QuoteTypes::CAR->id()
+            'quote_type_id' => QuoteTypes::CAR->id(),
         ], [
             'code' => 'CEC',
-            'text' => "Establishment Card",
-            'description' => "",
+            'text' => 'Establishment Card',
+            'description' => '',
 
             'quote_type_id' => QuoteTypes::CAR->id(),
             'folder_path' => 'car',
@@ -2221,11 +2205,11 @@ class LstDocumentsSeeder extends Seeder
 
         DocumentType::updateOrCreate([
             'code' => 'CVAT',
-            'quote_type_id' => QuoteTypes::CAR->id()
+            'quote_type_id' => QuoteTypes::CAR->id(),
         ], [
             'code' => 'CVAT',
-            'text' => "VAT Certificate or Undertaking letter for non-VAT",
-            'description' => "",
+            'text' => 'VAT Certificate or Undertaking letter for non-VAT',
+            'description' => '',
 
             'quote_type_id' => QuoteTypes::CAR->id(),
             'folder_path' => 'car',
@@ -2247,11 +2231,11 @@ class LstDocumentsSeeder extends Seeder
 
         DocumentType::updateOrCreate([
             'code' => 'CKYCD',
-            'quote_type_id' => QuoteTypes::CAR->id()
+            'quote_type_id' => QuoteTypes::CAR->id(),
         ], [
             'code' => 'CKYCD',
-            'text' => "KYC (Know-Your-Customer) Documents",
-            'description' => "",
+            'text' => 'KYC (Know-Your-Customer) Documents',
+            'description' => '',
 
             'quote_type_id' => QuoteTypes::CAR->id(),
             'folder_path' => 'car',
@@ -2273,11 +2257,11 @@ class LstDocumentsSeeder extends Seeder
 
         DocumentType::updateOrCreate([
             'code' => 'HOMPD',
-            'quote_type_id' => QuoteTypes::HOME->id()
+            'quote_type_id' => QuoteTypes::HOME->id(),
         ], [
             'code' => 'HOMPD',
-            'text' => "Payment Proof",
-            'description' => "",
+            'text' => 'Payment Proof',
+            'description' => '',
 
             'quote_type_id' => QuoteTypes::HOME->id(),
             'folder_path' => 'home',
@@ -2299,11 +2283,11 @@ class LstDocumentsSeeder extends Seeder
 
         DocumentType::updateOrCreate([
             'code' => 'HOMPDR',
-            'quote_type_id' => QuoteTypes::HOME->id()
+            'quote_type_id' => QuoteTypes::HOME->id(),
         ], [
             'code' => 'HOMPDR',
-            'text' => "Receipt",
-            'description' => "",
+            'text' => 'Receipt',
+            'description' => '',
 
             'quote_type_id' => QuoteTypes::HOME->id(),
             'folder_path' => 'home',
@@ -2325,11 +2309,11 @@ class LstDocumentsSeeder extends Seeder
 
         DocumentType::updateOrCreate([
             'code' => 'GMQPD',
-            'quote_type_id' => QuoteTypes::BUSINESS->id()
+            'quote_type_id' => QuoteTypes::BUSINESS->id(),
         ], [
             'code' => 'GMQPD',
-            'text' => "Payment Proof",
-            'description' => "",
+            'text' => 'Payment Proof',
+            'description' => '',
 
             'quote_type_id' => QuoteTypes::BUSINESS->id(),
             'folder_path' => 'business',
@@ -2351,11 +2335,11 @@ class LstDocumentsSeeder extends Seeder
 
         DocumentType::updateOrCreate([
             'code' => 'GMQPDR',
-            'quote_type_id' => QuoteTypes::BUSINESS->id()
+            'quote_type_id' => QuoteTypes::BUSINESS->id(),
         ], [
             'code' => 'GMQPDR',
-            'text' => "Receipt",
-            'description' => "",
+            'text' => 'Receipt',
+            'description' => '',
 
             'quote_type_id' => QuoteTypes::BUSINESS->id(),
             'folder_path' => 'business',
@@ -2401,14 +2385,13 @@ class LstDocumentsSeeder extends Seeder
 
         // CMEM_EID	Emirates ID (both sides)	Please share a copy of your valid Emirates ID with us. Awaiting receipt of your first or renewed ID? Please share a copy of your Emirates ID application form to enable us to proceed.	1	car	.pdf,.xlsx,.xls,.docx,.doc,.jpeg,.jpg,.png	10	25	1	1	0		1	MEMBER
 
-
         DocumentType::updateOrCreate([
             'code' => 'CMEM_EID',
-            'quote_type_id' => QuoteTypes::CAR->id()
+            'quote_type_id' => QuoteTypes::CAR->id(),
         ], [
             'code' => 'CMEM_EID',
-            'text' => "Emirates ID (both sides)",
-            'description' => "Please share a copy of your valid Emirates ID with us. Awaiting receipt of your first or renewed ID? Please share a copy of your Emirates ID application form to enable us to proceed.",
+            'text' => 'Emirates ID (both sides)',
+            'description' => 'Please share a copy of your valid Emirates ID with us. Awaiting receipt of your first or renewed ID? Please share a copy of your Emirates ID application form to enable us to proceed.',
 
             'quote_type_id' => QuoteTypes::CAR->id(),
             'folder_path' => 'car',
@@ -2420,7 +2403,7 @@ class LstDocumentsSeeder extends Seeder
 
             'is_required' => 1,
             'send_to_customer' => 0,
-            'sort_order' => "",
+            'sort_order' => '',
 
             'receive_from_customer' => 1,
             'category' => 'MEMBER',
@@ -2428,14 +2411,13 @@ class LstDocumentsSeeder extends Seeder
 
         // CMEM_PP	Passport		1	car	.pdf,.xlsx,.xls,.docx,.doc,.jpeg,.jpg,.png	10	25	1	0	0		1	MEMBER
 
-
         DocumentType::updateOrCreate([
             'code' => 'CMEM_PP',
-            'quote_type_id' => QuoteTypes::CAR->id()
+            'quote_type_id' => QuoteTypes::CAR->id(),
         ], [
             'code' => 'CMEM_PP',
-            'text' => "Passport",
-            'description' => "",
+            'text' => 'Passport',
+            'description' => '',
 
             'quote_type_id' => QuoteTypes::CAR->id(),
             'folder_path' => 'car',
@@ -2447,7 +2429,7 @@ class LstDocumentsSeeder extends Seeder
 
             'is_required' => 0,
             'send_to_customer' => 0,
-            'sort_order' => "",
+            'sort_order' => '',
 
             'receive_from_customer' => 1,
             'category' => 'MEMBER',
@@ -2457,11 +2439,11 @@ class LstDocumentsSeeder extends Seeder
 
         DocumentType::updateOrCreate([
             'code' => 'CMEM_VISA',
-            'quote_type_id' => QuoteTypes::CAR->id()
+            'quote_type_id' => QuoteTypes::CAR->id(),
         ], [
             'code' => 'CMEM_VISA',
-            'text' => "Visa",
-            'description' => "",
+            'text' => 'Visa',
+            'description' => '',
 
             'quote_type_id' => QuoteTypes::CAR->id(),
             'folder_path' => 'car',
@@ -2473,7 +2455,7 @@ class LstDocumentsSeeder extends Seeder
 
             'is_required' => 0,
             'send_to_customer' => 0,
-            'sort_order' => "",
+            'sort_order' => '',
 
             'receive_from_customer' => 1,
             'category' => 'MEMBER',
@@ -2483,11 +2465,11 @@ class LstDocumentsSeeder extends Seeder
 
         DocumentType::updateOrCreate([
             'code' => 'CMEM_CTL',
-            'quote_type_id' => QuoteTypes::CAR->id()
+            'quote_type_id' => QuoteTypes::CAR->id(),
         ], [
             'code' => 'CMEM_CTL',
-            'text' => "Trade License",
-            'description' => "",
+            'text' => 'Trade License',
+            'description' => '',
 
             'quote_type_id' => QuoteTypes::CAR->id(),
             'folder_path' => 'car',
@@ -2499,7 +2481,7 @@ class LstDocumentsSeeder extends Seeder
 
             'is_required' => 0,
             'send_to_customer' => 0,
-            'sort_order' => "",
+            'sort_order' => '',
 
             'receive_from_customer' => 1,
             'category' => 'MEMBER',
@@ -2509,11 +2491,11 @@ class LstDocumentsSeeder extends Seeder
 
         DocumentType::updateOrCreate([
             'code' => 'CMEM_CCL',
-            'quote_type_id' => QuoteTypes::CAR->id()
+            'quote_type_id' => QuoteTypes::CAR->id(),
         ], [
             'code' => 'CMEM_CCL',
-            'text' => "Company Letter",
-            'description' => "",
+            'text' => 'Company Letter',
+            'description' => '',
 
             'quote_type_id' => QuoteTypes::CAR->id(),
             'folder_path' => 'car',
@@ -2525,7 +2507,7 @@ class LstDocumentsSeeder extends Seeder
 
             'is_required' => 0,
             'send_to_customer' => 0,
-            'sort_order' => "",
+            'sort_order' => '',
 
             'receive_from_customer' => 1,
             'category' => 'MEMBER',
@@ -2535,11 +2517,11 @@ class LstDocumentsSeeder extends Seeder
 
         DocumentType::updateOrCreate([
             'code' => 'CMEM_DL',
-            'quote_type_id' => QuoteTypes::CAR->id()
+            'quote_type_id' => QuoteTypes::CAR->id(),
         ], [
             'code' => 'CMEM_DL',
             'text' => "Please share a copy of your valid driving license with us. Don't have a valid one? Please contact your personal shopper for advice on how to proceed.",
-            'description' => "",
+            'description' => '',
 
             'quote_type_id' => QuoteTypes::CAR->id(),
             'folder_path' => 'car',
@@ -2551,7 +2533,7 @@ class LstDocumentsSeeder extends Seeder
 
             'is_required' => 1,
             'send_to_customer' => 0,
-            'sort_order' => "",
+            'sort_order' => '',
 
             'receive_from_customer' => 1,
             'category' => 'MEMBER',
@@ -2561,11 +2543,11 @@ class LstDocumentsSeeder extends Seeder
 
         DocumentType::updateOrCreate([
             'code' => 'CMEM_BAL',
-            'quote_type_id' => QuoteTypes::CAR->id()
+            'quote_type_id' => QuoteTypes::CAR->id(),
         ], [
             'code' => 'CMEM_BAL',
-            'text' => "Broker Appointment letter",
-            'description' => "",
+            'text' => 'Broker Appointment letter',
+            'description' => '',
 
             'quote_type_id' => QuoteTypes::CAR->id(),
             'folder_path' => 'car',
@@ -2577,7 +2559,7 @@ class LstDocumentsSeeder extends Seeder
 
             'is_required' => 1,
             'send_to_customer' => 0,
-            'sort_order' => "",
+            'sort_order' => '',
 
             'receive_from_customer' => 1,
             'category' => 'MEMBER',
@@ -2587,11 +2569,11 @@ class LstDocumentsSeeder extends Seeder
 
         DocumentType::updateOrCreate([
             'code' => 'CMEM_OCD',
-            'quote_type_id' => QuoteTypes::CAR->id()
+            'quote_type_id' => QuoteTypes::CAR->id(),
         ], [
             'code' => 'CMEM_OCD',
-            'text' => "Other documents",
-            'description' => "",
+            'text' => 'Other documents',
+            'description' => '',
 
             'quote_type_id' => QuoteTypes::CAR->id(),
             'folder_path' => 'car',
@@ -2603,7 +2585,7 @@ class LstDocumentsSeeder extends Seeder
 
             'is_required' => 0,
             'send_to_customer' => 0,
-            'sort_order' => "",
+            'sort_order' => '',
 
             'receive_from_customer' => 1,
             'category' => 'MEMBER',
@@ -2613,11 +2595,11 @@ class LstDocumentsSeeder extends Seeder
 
         DocumentType::updateOrCreate([
             'code' => 'CMEM_MULK',
-            'quote_type_id' => QuoteTypes::CAR->id()
+            'quote_type_id' => QuoteTypes::CAR->id(),
         ], [
             'code' => 'CMEM_MULK',
-            'text' => "Registration card (Mulkiya)	",
-            'description' => "",
+            'text' => 'Registration card (Mulkiya)	',
+            'description' => '',
 
             'quote_type_id' => QuoteTypes::CAR->id(),
             'folder_path' => 'car',
@@ -2629,7 +2611,7 @@ class LstDocumentsSeeder extends Seeder
 
             'is_required' => 1,
             'send_to_customer' => 0,
-            'sort_order' => "",
+            'sort_order' => '',
 
             'receive_from_customer' => 1,
             'category' => 'MEMBER',
@@ -2639,11 +2621,11 @@ class LstDocumentsSeeder extends Seeder
 
         DocumentType::updateOrCreate([
             'code' => 'CMEM_CEC',
-            'quote_type_id' => QuoteTypes::CAR->id()
+            'quote_type_id' => QuoteTypes::CAR->id(),
         ], [
             'code' => 'CMEM_CEC',
-            'text' => "Establishment Card",
-            'description' => "",
+            'text' => 'Establishment Card',
+            'description' => '',
 
             'quote_type_id' => QuoteTypes::CAR->id(),
             'folder_path' => 'car',
@@ -2655,7 +2637,7 @@ class LstDocumentsSeeder extends Seeder
 
             'is_required' => 0,
             'send_to_customer' => 0,
-            'sort_order' => "",
+            'sort_order' => '',
 
             'receive_from_customer' => 1,
             'category' => 'MEMBER',
@@ -2665,11 +2647,11 @@ class LstDocumentsSeeder extends Seeder
 
         DocumentType::updateOrCreate([
             'code' => 'CMEM_CVAT',
-            'quote_type_id' => QuoteTypes::CAR->id()
+            'quote_type_id' => QuoteTypes::CAR->id(),
         ], [
             'code' => 'CMEM_CVAT',
-            'text' => "VAT Certificate or Undertaking letter for non-VAT	",
-            'description' => "",
+            'text' => 'VAT Certificate or Undertaking letter for non-VAT	',
+            'description' => '',
 
             'quote_type_id' => QuoteTypes::CAR->id(),
             'folder_path' => 'car',
@@ -2681,7 +2663,7 @@ class LstDocumentsSeeder extends Seeder
 
             'is_required' => 0,
             'send_to_customer' => 0,
-            'sort_order' => "",
+            'sort_order' => '',
 
             'receive_from_customer' => 1,
             'category' => 'MEMBER',
@@ -2691,11 +2673,11 @@ class LstDocumentsSeeder extends Seeder
 
         DocumentType::updateOrCreate([
             'code' => 'CMEM_CKYCD',
-            'quote_type_id' => QuoteTypes::CAR->id()
+            'quote_type_id' => QuoteTypes::CAR->id(),
         ], [
             'code' => 'CMEM_CKYCD',
-            'text' => "KYC (Know-Your-Customer) Documents",
-            'description' => "",
+            'text' => 'KYC (Know-Your-Customer) Documents',
+            'description' => '',
 
             'quote_type_id' => QuoteTypes::CAR->id(),
             'folder_path' => 'car',
@@ -2707,7 +2689,7 @@ class LstDocumentsSeeder extends Seeder
 
             'is_required' => 0,
             'send_to_customer' => 0,
-            'sort_order' => "",
+            'sort_order' => '',
 
             'receive_from_customer' => 1,
             'category' => 'MEMBER',
@@ -2717,11 +2699,11 @@ class LstDocumentsSeeder extends Seeder
 
         DocumentType::updateOrCreate([
             'code' => 'CAR_ECARD',
-            'quote_type_id' => QuoteTypes::CAR->id()
+            'quote_type_id' => QuoteTypes::CAR->id(),
         ], [
             'code' => 'CAR_ECARD',
-            'text' => "E-card",
-            'description' => "E-card",
+            'text' => 'E-card',
+            'description' => 'E-card',
 
             'quote_type_id' => QuoteTypes::CAR->id(),
             'folder_path' => 'car',
@@ -2733,7 +2715,7 @@ class LstDocumentsSeeder extends Seeder
 
             'is_required' => 0,
             'send_to_customer' => 1,
-            'sort_order' => "",
+            'sort_order' => '',
 
             'receive_from_customer' => 0,
             'category' => 'ISSUING_DOCUMENTS',
@@ -2741,14 +2723,13 @@ class LstDocumentsSeeder extends Seeder
 
         // CAR_GL	Garage List	Garage List	1	car	.pdf,.xlsx,.xls,.docx,.doc,.jpeg,.jpg,.png	5	25	1	0	1		0	ISSUING_DOCUMENTS
 
-
         DocumentType::updateOrCreate([
             'code' => 'CAR_GL',
-            'quote_type_id' => QuoteTypes::CAR->id()
+            'quote_type_id' => QuoteTypes::CAR->id(),
         ], [
             'code' => 'CAR_GL',
-            'text' => "Garage List",
-            'description' => "Garage List",
+            'text' => 'Garage List',
+            'description' => 'Garage List',
 
             'quote_type_id' => QuoteTypes::CAR->id(),
             'folder_path' => 'car',
@@ -2760,7 +2741,7 @@ class LstDocumentsSeeder extends Seeder
 
             'is_required' => 0,
             'send_to_customer' => 1,
-            'sort_order' => "",
+            'sort_order' => '',
 
             'receive_from_customer' => 0,
             'category' => 'ISSUING_DOCUMENTS',
@@ -2770,11 +2751,11 @@ class LstDocumentsSeeder extends Seeder
 
         DocumentType::updateOrCreate([
             'code' => 'MY_AF',
-            'quote_type_id' => QuoteTypes::CAR->id()
+            'quote_type_id' => QuoteTypes::CAR->id(),
         ], [
             'code' => 'MY_AF',
-            'text' => "myAlfred",
-            'description' => "myAlfred",
+            'text' => 'myAlfred',
+            'description' => 'myAlfred',
 
             'quote_type_id' => QuoteTypes::CAR->id(),
             'folder_path' => 'car',
@@ -2786,7 +2767,7 @@ class LstDocumentsSeeder extends Seeder
 
             'is_required' => 1,
             'send_to_customer' => 1,
-            'sort_order' => "",
+            'sort_order' => '',
 
             'receive_from_customer' => 0,
             'category' => 'ISSUING_DOCUMENTS',
@@ -2796,11 +2777,11 @@ class LstDocumentsSeeder extends Seeder
 
         DocumentType::updateOrCreate([
             'code' => 'CAR_CDOCS',
-            'quote_type_id' => QuoteTypes::CAR->id()
+            'quote_type_id' => QuoteTypes::CAR->id(),
         ], [
             'code' => 'CAR_CDOCS',
-            'text' => "Customer Documents (Endorsement)",
-            'description' => "Customer Documents (Endorsement)",
+            'text' => 'Customer Documents (Endorsement)',
+            'description' => 'Customer Documents (Endorsement)',
 
             'quote_type_id' => QuoteTypes::CAR->id(),
             'folder_path' => 'car',
@@ -2812,7 +2793,7 @@ class LstDocumentsSeeder extends Seeder
 
             'is_required' => 1,
             'send_to_customer' => 0,
-            'sort_order' => "",
+            'sort_order' => '',
 
             'receive_from_customer' => 0,
             'category' => 'ENDORSEMENT_DOCUMENTS',
@@ -2820,14 +2801,13 @@ class LstDocumentsSeeder extends Seeder
 
         // CUW_ECOR	Underwriter Email Correspondence		1	car	.pdf,.xlsx,.xls,.docx,.doc,.jpeg,.jpg,.png	10	25	1	1	0		0	ENDORSEMENT_DOCUMENTS
 
-
         DocumentType::updateOrCreate([
             'code' => 'CUW_ECOR',
-            'quote_type_id' => QuoteTypes::CAR->id()
+            'quote_type_id' => QuoteTypes::CAR->id(),
         ], [
             'code' => 'CUW_ECOR',
-            'text' => "Underwriter Email Correspondence",
-            'description' => "",
+            'text' => 'Underwriter Email Correspondence',
+            'description' => '',
 
             'quote_type_id' => QuoteTypes::CAR->id(),
             'folder_path' => 'car',
@@ -2839,7 +2819,7 @@ class LstDocumentsSeeder extends Seeder
 
             'is_required' => 1,
             'send_to_customer' => 0,
-            'sort_order' => "",
+            'sort_order' => '',
 
             'receive_from_customer' => 0,
             'category' => 'ENDORSEMENT_DOCUMENTS',
@@ -2849,11 +2829,11 @@ class LstDocumentsSeeder extends Seeder
 
         DocumentType::updateOrCreate([
             'code' => 'CAR_PS_NCC',
-            'quote_type_id' => QuoteTypes::CAR->id()
+            'quote_type_id' => QuoteTypes::CAR->id(),
         ], [
             'code' => 'CAR_PS_NCC',
-            'text' => "Payment Slip (Non CC)",
-            'description' => "",
+            'text' => 'Payment Slip (Non CC)',
+            'description' => '',
 
             'quote_type_id' => QuoteTypes::CAR->id(),
             'folder_path' => 'car',
@@ -2865,7 +2845,7 @@ class LstDocumentsSeeder extends Seeder
 
             'is_required' => 1,
             'send_to_customer' => 0,
-            'sort_order' => "",
+            'sort_order' => '',
 
             'receive_from_customer' => 0,
             'category' => 'ENDORSEMENT_DOCUMENTS',
@@ -2875,11 +2855,11 @@ class LstDocumentsSeeder extends Seeder
 
         DocumentType::updateOrCreate([
             'code' => 'CAR_IRCPT',
-            'quote_type_id' => QuoteTypes::CAR->id()
+            'quote_type_id' => QuoteTypes::CAR->id(),
         ], [
             'code' => 'CAR_IRCPT',
-            'text' => "Receipt (Insurer)",
-            'description' => "",
+            'text' => 'Receipt (Insurer)',
+            'description' => '',
 
             'quote_type_id' => QuoteTypes::CAR->id(),
             'folder_path' => 'car',
@@ -2891,7 +2871,7 @@ class LstDocumentsSeeder extends Seeder
 
             'is_required' => 0,
             'send_to_customer' => 0,
-            'sort_order' => "",
+            'sort_order' => '',
 
             'receive_from_customer' => 0,
             'category' => 'ENDORSEMENT_DOCUMENTS',
@@ -2901,11 +2881,11 @@ class LstDocumentsSeeder extends Seeder
 
         DocumentType::updateOrCreate([
             'code' => 'CAR_PP',
-            'quote_type_id' => QuoteTypes::CAR->id()
+            'quote_type_id' => QuoteTypes::CAR->id(),
         ], [
             'code' => 'CAR_PP',
-            'text' => "Payment Proof (Insurer Collects)",
-            'description' => "",
+            'text' => 'Payment Proof (Insurer Collects)',
+            'description' => '',
 
             'quote_type_id' => QuoteTypes::CAR->id(),
             'folder_path' => 'car',
@@ -2917,7 +2897,7 @@ class LstDocumentsSeeder extends Seeder
 
             'is_required' => 0,
             'send_to_customer' => 0,
-            'sort_order' => "",
+            'sort_order' => '',
 
             'receive_from_customer' => 0,
             'category' => 'ENDORSEMENT_DOCUMENTS',
@@ -2927,11 +2907,11 @@ class LstDocumentsSeeder extends Seeder
 
         DocumentType::updateOrCreate([
             'code' => 'CAR_PA',
-            'quote_type_id' => QuoteTypes::CAR->id()
+            'quote_type_id' => QuoteTypes::CAR->id(),
         ], [
             'code' => 'CAR_PA',
-            'text' => "Payment Approval",
-            'description' => "",
+            'text' => 'Payment Approval',
+            'description' => '',
 
             'quote_type_id' => QuoteTypes::CAR->id(),
             'folder_path' => 'car',
@@ -2943,7 +2923,7 @@ class LstDocumentsSeeder extends Seeder
 
             'is_required' => 0,
             'send_to_customer' => 0,
-            'sort_order' => "",
+            'sort_order' => '',
 
             'receive_from_customer' => 0,
             'category' => 'ENDORSEMENT_DOCUMENTS',
@@ -2953,11 +2933,11 @@ class LstDocumentsSeeder extends Seeder
 
         DocumentType::updateOrCreate([
             'code' => 'END_SCHED',
-            'quote_type_id' => QuoteTypes::CAR->id()
+            'quote_type_id' => QuoteTypes::CAR->id(),
         ], [
             'code' => 'END_SCHED',
-            'text' => "Endorsed Schedule",
-            'description' => "",
+            'text' => 'Endorsed Schedule',
+            'description' => '',
 
             'quote_type_id' => QuoteTypes::CAR->id(),
             'folder_path' => 'car',
@@ -2969,7 +2949,7 @@ class LstDocumentsSeeder extends Seeder
 
             'is_required' => 1,
             'send_to_customer' => 1,
-            'sort_order' => "",
+            'sort_order' => '',
 
             'receive_from_customer' => 0,
             'category' => 'ENDORSEMENT_DOCUMENTS',
@@ -2979,11 +2959,11 @@ class LstDocumentsSeeder extends Seeder
 
         DocumentType::updateOrCreate([
             'code' => 'END_CERT',
-            'quote_type_id' => QuoteTypes::CAR->id()
+            'quote_type_id' => QuoteTypes::CAR->id(),
         ], [
             'code' => 'END_CERT',
-            'text' => "Endorsed Certificate",
-            'description' => "",
+            'text' => 'Endorsed Certificate',
+            'description' => '',
 
             'quote_type_id' => QuoteTypes::CAR->id(),
             'folder_path' => 'car',
@@ -2995,7 +2975,7 @@ class LstDocumentsSeeder extends Seeder
 
             'is_required' => 0,
             'send_to_customer' => 1,
-            'sort_order' => "",
+            'sort_order' => '',
 
             'receive_from_customer' => 0,
             'category' => 'ENDORSEMENT_DOCUMENTS',
@@ -3005,11 +2985,11 @@ class LstDocumentsSeeder extends Seeder
 
         DocumentType::updateOrCreate([
             'code' => 'END_ECARD',
-            'quote_type_id' => QuoteTypes::CAR->id()
+            'quote_type_id' => QuoteTypes::CAR->id(),
         ], [
             'code' => 'END_ECARD',
-            'text' => "E-Card",
-            'description' => "",
+            'text' => 'E-Card',
+            'description' => '',
 
             'quote_type_id' => QuoteTypes::CAR->id(),
             'folder_path' => 'car',
@@ -3021,7 +3001,7 @@ class LstDocumentsSeeder extends Seeder
 
             'is_required' => 0,
             'send_to_customer' => 1,
-            'sort_order' => "",
+            'sort_order' => '',
 
             'receive_from_customer' => 0,
             'category' => 'ENDORSEMENT_DOCUMENTS',
@@ -3029,14 +3009,13 @@ class LstDocumentsSeeder extends Seeder
 
         // END_TI	Tax Invoice		1	car	.pdf,.xlsx,.xls,.docx,.doc,.jpeg,.jpg,.png	10	25	1	0	1		0	ENDORSEMENT_DOCUMENTS
 
-
         DocumentType::updateOrCreate([
             'code' => 'END_TI',
-            'quote_type_id' => QuoteTypes::CAR->id()
+            'quote_type_id' => QuoteTypes::CAR->id(),
         ], [
             'code' => 'END_TI',
-            'text' => "Tax Invoice",
-            'description' => "",
+            'text' => 'Tax Invoice',
+            'description' => '',
 
             'quote_type_id' => QuoteTypes::CAR->id(),
             'folder_path' => 'car',
@@ -3048,7 +3027,7 @@ class LstDocumentsSeeder extends Seeder
 
             'is_required' => 0,
             'send_to_customer' => 1,
-            'sort_order' => "",
+            'sort_order' => '',
 
             'receive_from_customer' => 0,
             'category' => 'ENDORSEMENT_DOCUMENTS',
@@ -3058,11 +3037,11 @@ class LstDocumentsSeeder extends Seeder
 
         DocumentType::updateOrCreate([
             'code' => 'END_RCPT',
-            'quote_type_id' => QuoteTypes::CAR->id()
+            'quote_type_id' => QuoteTypes::CAR->id(),
         ], [
             'code' => 'END_RCPT',
-            'text' => "Receipt",
-            'description' => "",
+            'text' => 'Receipt',
+            'description' => '',
 
             'quote_type_id' => QuoteTypes::CAR->id(),
             'folder_path' => 'car',
@@ -3074,7 +3053,7 @@ class LstDocumentsSeeder extends Seeder
 
             'is_required' => 0,
             'send_to_customer' => 1,
-            'sort_order' => "",
+            'sort_order' => '',
 
             'receive_from_customer' => 0,
             'category' => 'ENDORSEMENT_DOCUMENTS',

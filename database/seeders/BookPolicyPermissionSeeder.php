@@ -6,7 +6,6 @@ use App\Enums\PermissionsEnum;
 use App\Enums\RolesEnum;
 use App\Models\Permission;
 use App\Models\Role;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class BookPolicyPermissionSeeder extends Seeder
@@ -25,7 +24,7 @@ class BookPolicyPermissionSeeder extends Seeder
 
             foreach ($permissions as $permission) {
                 $perm = Permission::findOrCreate($permission, 'web');
-                if (!$role->hasPermissionTo($perm)) {
+                if (! $role->hasPermissionTo($perm)) {
                     $role->givePermissionTo($perm);
                 }
             }
