@@ -2755,6 +2755,7 @@ const handleChildUpdate = planId => {
                 v-if="puaPremium && puaPremium != null"
                 size="xs"
                 class="mt-0.5 text-[10px] pua-tag"
+                color="red"
             >
                 <x-tooltip  position="right">
                     <template #tooltip>
@@ -3673,10 +3674,3 @@ const handleChildUpdate = planId => {
     :id="$page.props.record.id"
   />
 </template>
-
-<style>
-    .pua-tag{
-        color:white !important;
-        background-color: #E00000 !important;
-    }
-</style>
