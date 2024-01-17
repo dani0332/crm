@@ -196,8 +196,8 @@ class QuoteSyncUpdateCommand extends Command
                 continue;
             }
 
-            if ($column === 'currently_insured_with_id') {
-                $quote->currently_insured_with = $value;
+            if ($column === 'currently_insured_with') {
+                $quote->currently_insured_with_id = $value;
 
                 continue;
             }
