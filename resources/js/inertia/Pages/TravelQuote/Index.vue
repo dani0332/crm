@@ -129,7 +129,6 @@ function onSubmit(isValid) {
   router.visit(route('travel.index'), {
     method: 'get',
     data: filters,
-
     preserveState: true,
     preserveScroll: true,
     onFinish: () => {
@@ -151,15 +150,6 @@ function resetFilters() {
     onSuccess: () => (loader.table = false),
   });
 }
-
-const handleSelectedFilters = async selectedFilters => {
-  if (selectedFilters.created_at_start && selectedFilters.created_at_end) {
-    filters.created_at_start = selectedFilters.created_at_start;
-    filters.created_at_end = selectedFilters.created_at_end;
-
-    onSubmit(true);
-  }
-};
 
 const advisorOptions = computed(() => {
   return page.props.advisors.map(advisor => ({
@@ -255,15 +245,6 @@ onMounted(() => {
     <div class="flex justify-between items-center">
       <h2 class="text-xl font-semibold">Lead List</h2>
       <div class="flex space-x-2 items-center">
-        <ColumnSelection
-          v-model:columns="tableHeader"
-          storage-key="travel-list"
-        />
-
-        <FiltersButton
-          :filters="filters"
-          @selected-filters="handleSelectedFilters"
-        />
         <Link :href="route('travel.expired.upload')" v-if="permissions.admin">
           <x-button size="sm" color="#1d83bc" tag="div">
             Upload Expired Leads

@@ -61,6 +61,7 @@ onMounted(() => {
           headers.length !== headers.filter(c => c.is_active).length
         "
         color="red"
+        align="left"
         outlined
         size="sm"
       >

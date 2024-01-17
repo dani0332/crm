@@ -12,7 +12,7 @@ defineProps({
 
 const page = usePage();
 const notification = useToast();
-const params = useUrlSearchParams('history');
+
 const hasRole = role => useHasRole(role);
 const hasAnyRole = role => useHasAnyRole(role);
 const rolesEnum = page.props.rolesEnum;
@@ -23,8 +23,21 @@ const loader = reactive({
 });
 
 const canExport = ref(false);
+
+const { isRequired } = useRules();
+
 const objToUrl = obj => useObjToUrl(obj);
 const quotesSelected = ref([]);
+
+const params = useUrlSearchParams('history');
+const cleanObj = obj => useCleanObj(obj);
+const showFilters = ref(true);
+const filtersCount = ref(0);
+const serverOptions = ref({
+  page: 1,
+  sortBy: 'created_at',
+  sortType: 'desc',
+});
 
 const assignForm = useForm({
   assign_team: null,
@@ -114,7 +127,6 @@ const filters = reactive({
   advisors: [],
   is_ecommerce: '',
   is_renewal: '',
-  page: 1,
   previous_quote_policy_number: '',
   renewal_batch: '',
   date: null,
@@ -154,15 +166,18 @@ const advisorOptions = computed(() => {
 
 function onSubmit(isValid) {
   if (isValid) {
-    filters.page = 1;
-    Object.keys(filters).forEach(
-      key =>
-        (filters[key] === '' || filters[key]?.length === 0) &&
-        delete filters[key],
-    );
+    serverOptions.value.page = 1;
+
+    const filtersCleaned = cleanObj(filters);
+
+    filtersCount.value = Object.keys(filtersCleaned).length;
+
     router.visit(route('health.index'), {
       method: 'get',
-      data: filters,
+      data: {
+        ...filtersCleaned,
+        ...serverOptions.value,
+      },
       preserveState: true,
       preserveScroll: true,
       onBefore: () => (loader.table = true),
@@ -191,10 +206,6 @@ function onReset() {
     onSuccess: () => (loader.table = false),
   });
 }
-
-const rules = {
-  isRequired: v => !!v || 'Please select this option',
-};
 
 function onAssignLead(isValid) {
   if (isValid) {
@@ -248,6 +259,29 @@ const fixedValue = numberString => {
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
 
+onMounted(() => {
+  setQueryStringFilters();
+
+  let filtersCleaned = cleanObj(filters);
+
+  if (filtersCleaned.sortBy) {
+    serverOptions.value.sortBy = filtersCleaned.sortBy;
+    delete filtersCleaned.sortBy;
+  }
+
+  if (filtersCleaned.sortType) {
+    serverOptions.value.sortType = filtersCleaned.sortType;
+    delete filtersCleaned.sortType;
+  }
+
+  if (filtersCleaned.page) {
+    serverOptions.value.page = filtersCleaned.page;
+    delete filtersCleaned.page;
+  }
+
+  filtersCount.value = Object.keys(filtersCleaned).length;
+});
+
 watch(
   () => filters,
   () => {
@@ -260,9 +294,12 @@ watch(
   { deep: true, immediate: true },
 );
 
-onMounted(() => {
-  setQueryStringFilters();
-});
+watch(
+  () => serverOptions.value,
+  (newValue, oldValue) => {
+    if (oldValue !== newValue) onSubmit(true);
+  },
+);
 </script>
 
 <template>
@@ -285,8 +322,11 @@ onMounted(() => {
         />
 
         <FiltersButton
+          :is-shown="showFilters"
           :filters="filters"
+          :filters-count="filtersCount"
           @selected-filters="handleSelectedFilters"
+          @toggleFilters="showFilters = !showFilters"
         />
         <Link :href="route('health.cards')">
           <x-button size="sm" color="#1d83bc" tag="div"> Cards View </x-button>
@@ -298,7 +338,7 @@ onMounted(() => {
       </div>
     </div>
     <x-divider class="my-4" />
-    <x-form @submit="onSubmit" :auto-focus="false">
+    <x-form v-show="showFilters" @submit="onSubmit" :auto-focus="false">
       <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
         <div>
           <x-tooltip position="bottom">
@@ -451,7 +491,14 @@ onMounted(() => {
         </div>
         <div v-else />
         <div class="flex justify-self-end gap-3">
-          <x-button size="sm" color="#ff5e00" type="submit">Search</x-button>
+          <x-button
+            size="sm"
+            color="#ff5e00"
+            type="submit"
+            :loading="loader.table"
+          >
+            Search
+          </x-button>
           <x-button size="sm" color="primary" @click.prevent="onReset">
             Reset
           </x-button>
@@ -475,7 +522,7 @@ onMounted(() => {
                 ]"
                 placeholder="Select Subteam"
                 class="flex-1 w-auto"
-                :rules="[rules.isRequired]"
+                :rules="[isRequired]"
               />
               <x-select
                 v-model="assignForm.assigned_to_id_new"
@@ -483,7 +530,7 @@ onMounted(() => {
                 :options="advisorOptions"
                 placeholder="Select Advisor"
                 class="flex-1 w-auto"
-                :rules="[rules.isRequired]"
+                :rules="[isRequired]"
               />
 
               <div class="mb-3 md:pt-6">
@@ -503,6 +550,7 @@ onMounted(() => {
     </Transition>
     <DataTable
       v-model:items-selected="quotesSelected"
+      v-model:server-options="serverOptions"
       table-class-name="tablefixed"
       :loading="loader.table"
       :headers="filteredTableHeader"

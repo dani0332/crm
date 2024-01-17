@@ -1,9 +1,4 @@
 <script setup>
-import { reactive, computed, onMounted, ref } from 'vue';
-import { Head, router, usePage, Link, useForm } from '@inertiajs/vue3';
-import { useNotifications } from '@indielayer/ui';
-import { useHasRole } from '../../Composables/can';
-
 defineProps({
   quotes: Object,
   leadStatuses: Array,
@@ -12,7 +7,12 @@ defineProps({
 });
 
 const page = usePage();
-const notification = useNotifications('toast');
+const hasRole = role => useHasRole(role);
+const rolesEnum = page.props.rolesEnum;
+const can = permission => useCan(permission);
+const permissionsEnum = page.props.permissionsEnum;
+
+const { isRequired } = useRules();
 
 const loader = reactive({
   table: false,
@@ -20,10 +20,17 @@ const loader = reactive({
 });
 
 const canExport = ref(false);
-const quotesSelected = ref([]),
-  assignAdvisor = ref(null),
-  assignmentType = ref(null),
-  isDisabled = ref(false);
+const quotesSelected = ref([]);
+
+const params = useUrlSearchParams('history');
+const cleanObj = obj => useCleanObj(obj);
+const showFilters = ref(true);
+const filtersCount = ref(0);
+const serverOptions = ref({
+  page: 1,
+  sortBy: 'created_at',
+  sortType: 'desc',
+});
 
 const tableHeader = ref([
   { text: 'Ref-ID', value: 'code', is_active: true },
@@ -31,12 +38,22 @@ const tableHeader = ref([
   { text: 'LAST NAME', value: 'last_name', is_active: true },
   { text: 'LEAD STATUS', value: 'quote_status_id_text', is_active: true },
   { text: 'ADVISOR', value: 'advisor_id_text', is_active: true },
-  { text: 'CREATED DATE', value: 'created_at', is_active: true },
-  { text: 'LAST MODIFIED DATE', value: 'updated_at', is_active: true },
+  {
+    text: 'CREATED DATE',
+    value: 'created_at',
+    is_active: true,
+    sortable: true,
+  },
+  {
+    text: 'LAST MODIFIED DATE',
+    value: 'updated_at',
+    is_active: true,
+    sortable: true,
+  },
   { text: 'TRANSAPP CODE', value: 'transapp_code', is_active: true },
   { text: 'SOURCE', value: 'source', is_active: true },
   { text: 'LOST REASON', value: 'lost_reason', is_active: true },
-  { text: 'PRICE', value: 'premium', is_active: true },
+  { text: 'PRICE', value: 'premium', is_active: true, sortable: true },
   { text: 'POLICY NUMBER', value: 'policy_number', is_active: true },
   {
     text: 'Previous Policy Number',
@@ -57,7 +74,6 @@ const filters = reactive({
   quote_status_id: [],
   advisors: [],
   is_renewal: '',
-  page: 1,
   previous_quote_policy_number: '',
   renewal_batch: '',
 });
@@ -75,22 +91,27 @@ const advisorOptions = computed(() => {
     label: advisor.name,
   }));
 });
+
 const onDataExport = () => {
   const data = useObjToUrl(filters);
   const url = route('data-extraction', 'home');
   window.open(url + '?' + new URLSearchParams(data).toString());
 };
+
 function onSubmit(isValid) {
   if (isValid) {
-    filters.page = 1;
-    Object.keys(filters).forEach(
-      key =>
-        (filters[key] === '' || filters[key].length === 0) &&
-        delete filters[key],
-    );
+    serverOptions.value.page = 1;
+
+    const filtersCleaned = cleanObj(filters);
+
+    filtersCount.value = Object.keys(filtersCleaned).length;
+
     router.visit(route('home.index'), {
       method: 'get',
-      data: filters,
+      data: {
+        ...filtersCleaned,
+        ...serverOptions.value,
+      },
       preserveState: true,
       preserveScroll: true,
       onBefore: () => (loader.table = true),
@@ -121,48 +142,14 @@ const handleSelectedFilters = async selectedFilters => {
 };
 
 function setQueryStringFilters() {
-  let queryString = window.location.search;
-  let urlParams = new URLSearchParams(queryString);
-
-  if (urlParams.has('code')) {
-    filters.code = urlParams.get('code');
-  }
-  if (urlParams.has('first_name')) {
-    filters.first_name = urlParams.get('first_name');
-  }
-  if (urlParams.has('last_name')) {
-    filters.last_name = urlParams.get('last_name');
-  }
-  if (urlParams.has('email')) {
-    filters.email = urlParams.get('email');
-  }
-  if (urlParams.has('mobile_no')) {
-    filters.mobile_no = urlParams.get('mobile_no');
-  }
-  if (urlParams.has('created_at_start')) {
-    filters.created_at_start = urlParams.get('created_at_start');
-  }
-  if (urlParams.has('created_at_end')) {
-    filters.created_at_end = urlParams.get('created_at_end');
-  }
-  if (urlParams.has('quote_status_id[]')) {
-    filters.quote_status_id = urlParams
-      .getAll('quote_status_id[]')
-      .map(status => parseInt(status));
-  }
-  if (urlParams.has('advisors[]')) {
-    filters.advisors = urlParams
-      .getAll('advisors[]')
-      .map(status => parseInt(status));
-  }
-  if (urlParams.has('is_renewal')) {
-    filters.is_renewal = urlParams.get('is_renewal');
+  for (const [key] of Object.entries(params)) {
+    if (key.includes('[]')) {
+      filters[key.substring(0, key.length - 2)] = params[key];
+    } else {
+      filters[key] = params[key];
+    }
   }
 }
-
-const rules = {
-  isRequired: v => !!v || 'Please select this option',
-};
 
 const assignForm = useForm({
   assigned_to_id_new: null,
@@ -189,10 +176,27 @@ function onAssignLead(isValid) {
   }
 }
 
-const hasRole = role => useHasRole(role);
-const rolesEnum = page.props.rolesEnum;
 onMounted(() => {
   setQueryStringFilters();
+
+  let filtersCleaned = cleanObj(filters);
+
+  if (filtersCleaned.sortBy) {
+    serverOptions.value.sortBy = filtersCleaned.sortBy;
+    delete filtersCleaned.sortBy;
+  }
+
+  if (filtersCleaned.sortType) {
+    serverOptions.value.sortType = filtersCleaned.sortType;
+    delete filtersCleaned.sortType;
+  }
+
+  if (filtersCleaned.page) {
+    serverOptions.value.page = filtersCleaned.page;
+    delete filtersCleaned.page;
+  }
+
+  filtersCount.value = Object.keys(filtersCleaned).length;
 });
 
 watch(
@@ -207,8 +211,12 @@ watch(
   { deep: true, immediate: true },
 );
 
-const can = permission => useCan(permission);
-const permissionsEnum = page.props.permissionsEnum;
+watch(
+  () => serverOptions.value,
+  (newValue, oldValue) => {
+    if (oldValue !== newValue) onSubmit(true);
+  },
+);
 </script>
 
 <template>
@@ -223,9 +231,13 @@ const permissionsEnum = page.props.permissionsEnum;
         />
 
         <FiltersButton
+          :is-shown="showFilters"
           :filters="filters"
+          :filters-count="filtersCount"
           @selected-filters="handleSelectedFilters"
+          @toggleFilters="showFilters = !showFilters"
         />
+
         <Link :href="route('home-cardView')">
           <x-button size="sm" color="#1d83bc" tag="div"> Cards View </x-button>
         </Link>
@@ -236,7 +248,7 @@ const permissionsEnum = page.props.permissionsEnum;
       </div>
     </div>
     <x-divider class="my-4" />
-    <x-form @submit="onSubmit" :auto-focus="false">
+    <x-form v-show="showFilters" @submit="onSubmit" :auto-focus="false">
       <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
         <div>
           <x-tooltip position="bottom">
@@ -367,7 +379,14 @@ const permissionsEnum = page.props.permissionsEnum;
         </div>
         <div v-else />
         <div class="flex justify-self-end gap-3">
-          <x-button size="sm" color="#ff5e00" type="submit">Search</x-button>
+          <x-button
+            size="sm"
+            color="#ff5e00"
+            type="submit"
+            :loading="loader.table"
+          >
+            Search
+          </x-button>
           <x-button size="sm" color="primary" @click.prevent="onReset">
             Reset
           </x-button>
@@ -389,7 +408,7 @@ const permissionsEnum = page.props.permissionsEnum;
               :options="advisorOptions"
               placeholder="Select Advisor"
               class="flex-1 w-full"
-              :rules="[rules.isRequired]"
+              :rules="[isRequired]"
               label="Assign Advisor"
             />
             <div class="mb-3 md:pt-6">
@@ -408,6 +427,7 @@ const permissionsEnum = page.props.permissionsEnum;
     </section>
     <DataTable
       v-model:items-selected="quotesSelected"
+      v-model:server-options="serverOptions"
       table-class-name="tablefixed"
       :loading="loader.table"
       :headers="tableHeader"

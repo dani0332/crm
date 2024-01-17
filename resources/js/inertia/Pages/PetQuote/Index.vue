@@ -37,19 +37,72 @@ let availableFilters = {
 const canExport = ref(false);
 const filters = reactive(availableFilters);
 
+const params = useUrlSearchParams('history');
+const cleanObj = obj => useCleanObj(obj);
+const showFilters = ref(true);
+const filtersCount = ref(0);
+const serverOptions = ref({
+  page: 1,
+  sortBy: 'created_at',
+  sortType: 'desc',
+});
+
+const tableHeader = ref([
+  { text: 'Ref-ID', value: 'uuid', is_active: true },
+  { text: 'FIRST NAME', value: 'first_name', is_active: true },
+  { text: 'LAST NAME', value: 'last_name', is_active: true },
+  { text: 'LEAD STATUS', value: 'quote_status', is_active: true },
+  { text: 'ADVISOR', value: 'advisor', is_active: true },
+  {
+    text: 'CREATED DATE',
+    value: 'created_at',
+    is_active: true,
+    sortable: true,
+  },
+  {
+    text: 'LAST MODIFIED DATE',
+    value: 'updated_at',
+    is_active: true,
+    sortable: true,
+  },
+  { text: 'TRANSAPP CODE', value: 'transapp_code', is_active: true },
+  { text: 'SOURCE', value: 'source', is_active: true },
+  { text: 'LOST REASON', value: 'lost_reason', is_active: true },
+  { text: 'PRICE', value: 'premium', is_active: true },
+  { text: 'POLICY NUMBER', value: 'policy_number', is_active: true },
+  { text: 'TYPE OF PET', value: 'type_of_pet', is_active: true },
+  { text: 'BREED OF PET', value: 'breed_of_pet1', is_active: true },
+  { text: 'AGE OF PET', value: 'age_of_pet', is_active: true },
+  { text: 'IS NEUTERED', value: 'is_neutered', is_active: true },
+  { text: 'IS MICROCHIPPED', value: 'is_microchipped', is_active: true },
+  { text: 'MICROCHIP NO', value: 'microchip_no', is_active: true },
+  { text: 'IS MIXED BREED', value: 'is_mixed_breed', is_active: true },
+  { text: 'HAS INJURY', value: 'has_injury', is_active: true },
+  { text: 'ACCOMMODATION TYPE', value: 'accommodation_type', is_active: true },
+  { text: 'POSSESION TYPE', value: 'possesion_type', is_active: true },
+  { text: 'IS ECOMMERCE', value: 'is_ecommerce', is_active: true },
+  {
+    text: 'Previous Policy Number',
+    value: 'previous_quote_policy_number',
+    is_active: true,
+  },
+  { text: 'Renewal Batch', value: 'renewal_batch', is_active: true },
+]);
+
 function onSubmit(isValid) {
   if (isValid) {
-    filters.page = 1;
+    serverOptions.value.page = 1;
 
-    Object.keys(filters).forEach(
-      key =>
-        (filters[key] === '' || filters[key].length === 0) &&
-        delete filters[key],
-    );
+    const filtersCleaned = cleanObj(filters);
+
+    filtersCount.value = Object.keys(filtersCleaned).length;
 
     router.visit(route('pet-quotes-list'), {
       method: 'get',
-      data: filters,
+      data: {
+        ...filtersCleaned,
+        ...serverOptions.value,
+      },
       preserveState: true,
       preserveScroll: true,
       onBefore: () => (loader.table = true),
@@ -78,40 +131,6 @@ const handleSelectedFilters = async selectedFilters => {
     onSubmit(true);
   }
 };
-
-onMounted(() => {});
-
-const tableHeader = ref([
-  { text: 'Ref-ID', value: 'uuid', is_active: true },
-  { text: 'FIRST NAME', value: 'first_name', is_active: true },
-  { text: 'LAST NAME', value: 'last_name', is_active: true },
-  { text: 'LEAD STATUS', value: 'quote_status', is_active: true },
-  { text: 'ADVISOR', value: 'advisor', is_active: true },
-  { text: 'CREATED DATE', value: 'created_at', is_active: true },
-  { text: 'LAST MODIFIED DATE', value: 'updated_at', is_active: true },
-  { text: 'TRANSAPP CODE', value: 'transapp_code', is_active: true },
-  { text: 'SOURCE', value: 'source', is_active: true },
-  { text: 'LOST REASON', value: 'lost_reason', is_active: true },
-  { text: 'PRICE', value: 'premium', is_active: true },
-  { text: 'POLICY NUMBER', value: 'policy_number', is_active: true },
-  { text: 'TYPE OF PET', value: 'type_of_pet', is_active: true },
-  { text: 'BREED OF PET', value: 'breed_of_pet1', is_active: true },
-  { text: 'AGE OF PET', value: 'age_of_pet', is_active: true },
-  { text: 'IS NEUTERED', value: 'is_neutered', is_active: true },
-  { text: 'IS MICROCHIPPED', value: 'is_microchipped', is_active: true },
-  { text: 'MICROCHIP NO', value: 'microchip_no', is_active: true },
-  { text: 'IS MIXED BREED', value: 'is_mixed_breed', is_active: true },
-  { text: 'HAS INJURY', value: 'has_injury', is_active: true },
-  { text: 'ACCOMMODATION TYPE', value: 'accommodation_type', is_active: true },
-  { text: 'POSSESION TYPE', value: 'possesion_type', is_active: true },
-  { text: 'IS ECOMMERCE', value: 'is_ecommerce', is_active: true },
-  {
-    text: 'Previous Policy Number',
-    value: 'previous_quote_policy_number',
-    is_active: true,
-  },
-  { text: 'Renewal Batch', value: 'renewal_batch', is_active: true },
-]);
 
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
@@ -149,6 +168,39 @@ const onLeadAssigned = () => {
   quotesSelected.value = [];
 };
 
+function setQueryStringFilters() {
+  for (const [key] of Object.entries(params)) {
+    if (key.includes('[]')) {
+      filters[key.substring(0, key.length - 2)] = params[key];
+    } else {
+      filters[key] = params[key];
+    }
+  }
+}
+
+onMounted(() => {
+  setQueryStringFilters();
+
+  let filtersCleaned = cleanObj(filters);
+
+  if (filtersCleaned.sortBy) {
+    serverOptions.value.sortBy = filtersCleaned.sortBy;
+    delete filtersCleaned.sortBy;
+  }
+
+  if (filtersCleaned.sortType) {
+    serverOptions.value.sortType = filtersCleaned.sortType;
+    delete filtersCleaned.sortType;
+  }
+
+  if (filtersCleaned.page) {
+    serverOptions.value.page = filtersCleaned.page;
+    delete filtersCleaned.page;
+  }
+
+  filtersCount.value = Object.keys(filtersCleaned).length;
+});
+
 watch(
   () => filters,
   () => {
@@ -159,6 +211,13 @@ watch(
     }
   },
   { deep: true, immediate: true },
+);
+
+watch(
+  () => serverOptions.value,
+  (newValue, oldValue) => {
+    if (oldValue !== newValue) onSubmit(true);
+  },
 );
 </script>
 
@@ -171,8 +230,11 @@ watch(
         <ColumnSelection v-model:columns="tableHeader" storage-key="pet-list" />
 
         <FiltersButton
+          :is-shown="showFilters"
           :filters="filters"
+          :filters-count="filtersCount"
           @selected-filters="handleSelectedFilters"
+          @toggleFilters="showFilters = !showFilters"
         />
         <Link :href="route('pet-quotes-card')">
           <x-button size="sm" color="#1d83bc" tag="div"> Cards View </x-button>
@@ -189,8 +251,7 @@ watch(
     </div>
     <x-divider class="my-4" />
 
-    <!--   filters     -->
-    <x-form @submit="onSubmit" :auto-focus="false">
+    <x-form v-show="showFilters" @submit="onSubmit" :auto-focus="false">
       <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
         <div>
           <x-tooltip position="bottom">
@@ -330,7 +391,14 @@ watch(
         </div>
         <div v-else />
         <div class="flex justify-self-end gap-3">
-          <x-button size="sm" color="#ff5e00" type="submit">Search</x-button>
+          <x-button
+            size="sm"
+            color="#ff5e00"
+            type="submit"
+            :loading="loader.table"
+          >
+            Search
+          </x-button>
           <x-button size="sm" color="primary" @click.prevent="onReset">
             Reset
           </x-button>
@@ -354,6 +422,7 @@ watch(
 
     <DataTable
       v-model:items-selected="quotesSelected"
+      v-model:server-options="serverOptions"
       table-class-name="tablefixed"
       :headers="tableHeader"
       :loading="loader.table"
