@@ -1,13 +1,8 @@
 <script setup>
-import {
-  useSortable,
-  moveArrayElement,
-} from '@vueuse/integrations/useSortable';
+import { useSortable } from '@vueuse/integrations/useSortable';
 import { daysSinceStale } from '../Composables/utilities';
 
 const page = usePage();
-const can = permission => useCan(permission);
-const permissionsEnum = page.props.permissionsEnum;
 
 const props = defineProps({
   leads: {
@@ -41,20 +36,6 @@ const canDrag = computed(() => {
 
 const notification = useToast();
 
-const canDrop = computed(() => {
-  if (
-    props.id == quoteStatusEnum?.TransactionApproved ||
-    props.id == quoteStatusEnum?.PolicyIssued
-  ) {
-    notification.error({
-      title: 'Transaction approval is required',
-      position: 'top',
-    });
-    return false;
-  }
-  return true;
-});
-
 const updateList = async data => {
   try {
     let response = await axios.post(route('update-lead-status-drag-drop'), {
@@ -66,7 +47,6 @@ const updateList = async data => {
       position: 'top',
     });
   } catch (e) {
-    console.log(e);
     notification.error({
       title: '!Error',
       position: 'top',
@@ -113,14 +93,7 @@ useSortable(`#${props.title}`, props.leads, {
     ) {
       let response = await moveTask(e);
       if (!response) {
-        var itemEl = e.item; // dragged HTMLElement
-        let originalList = e.from; // previous list
-        var newIndex = e.oldIndex;
-
-        var referenceNode = originalList.children[newIndex];
-
-        // Insert the dragged element back to its original position
-        originalList.insertBefore(itemEl, referenceNode);
+        moveElemToOriginalList(e);
         showModal.value = false;
         return;
       } else {
@@ -134,14 +107,7 @@ useSortable(`#${props.title}`, props.leads, {
         title: 'Transaction approval is required',
         position: 'top',
       });
-      var itemEl = e.item; // dragged HTMLElement
-      let originalList = e.from; // previous list
-      var newIndex = e.oldIndex;
-
-      var referenceNode = originalList.children[newIndex];
-
-      // Insert the dragged element back to its original position
-      originalList.insertBefore(itemEl, referenceNode);
+      moveElemToOriginalList(e);
       return;
     }
     updateList(data);
@@ -149,10 +115,16 @@ useSortable(`#${props.title}`, props.leads, {
   },
 });
 
-const dateFormat = date => {
-  return useDateFormat(date, 'DD-MM-YYYY HH:mm:ss').value;
-};
+const moveElemToOriginalList = e => {
+  var itemEl = e.item; // dragged HTMLElement
+  let originalList = e.from; // previous list
+  var newIndex = e.oldIndex;
 
+  var referenceNode = originalList.children[newIndex];
+
+  // Insert the dragged element back to its original position
+  originalList.insertBefore(itemEl, referenceNode);
+};
 const lostReasonsOptions = computed(() => {
   return lostReasons.map(reason => ({
     value: reason.id,
@@ -175,8 +147,8 @@ const getUrl = (url, quoteTypeId) => useGetShowPageRoute(url, quoteTypeId);
   <div
     :id="title"
     :quote_status_id="id"
-    class="shared h-full"
-    :class="{ 'h-screen': props.leads.length == 0 }"
+    class="shared"
+    :class="{ 'h-full': props.leads.length == 0 }"
   >
     <a
       v-for="{

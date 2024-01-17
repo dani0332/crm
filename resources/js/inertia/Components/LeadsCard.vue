@@ -12,23 +12,13 @@ const props = defineProps({
 
 const quotes = ref({ ...props.quotes });
 const page = usePage();
+const quoteType = inject('quoteType');
 
-const hasAnyRole = role => useHasAnyRole(role);
-const rolesEnum = page.props.rolesEnum;
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
 
-const unitManager = computed(() => {
-  return `${props.quote?.quoteType}Manager`;
-});
-
-const advisor = computed(() => {
-  return `${props.quote?.quoteType}Advisor`;
-});
-
 const isAllowed = computed(() => {
   return can(permissionsEnum.LEAD_CARD_SEARCH) ?? false;
-  // return (
   //   hasAnyRole([
   //     advisor.value,
   //     rolesEnum.OperationAssistant,
@@ -52,7 +42,7 @@ const onLoadMore = id => {
     .post(
       route('loadMoreRecords', {
         page: quotes.value.pages[id],
-        modelType: 'Life',
+        modelType: quoteType,
         status: id,
       }),
     )
@@ -135,9 +125,29 @@ const onSearch = id => {
 };
 
 const UpdateLeadsCount = data => {
-  if (data.to.quote_status_id == props.quote.id) {
-    props.quote.data.total_leads += 1;
-  }
+  let draggedItem = null;
+  props.quotes.data = props.quotes.data.map(lead => {
+    if (lead.id == data.form.quote_status_id) {
+      lead.data.total_leads -= 1;
+      let index = lead.data.leads_list.data.findIndex(
+        item => item.id == data.form.id,
+      );
+      if (lead.data.leads_list.data[index]) {
+        draggedItem = { ...lead.data.leads_list.data[index] };
+      }
+      lead.data.leads_list.data.splice(index, 1);
+    }
+    return lead;
+  });
+
+  props.quotes.data = props.quotes.data.map(lead => {
+    if (lead.id == data.to.quote_status_id) {
+      if (draggedItem) lead.data.leads_list.data.push(draggedItem);
+
+      lead.data.total_leads += 1;
+    }
+    return lead;
+  });
 };
 </script>
 <template>
@@ -176,7 +186,7 @@ const UpdateLeadsCount = data => {
         <x-spinner class="text-primary-500" />
       </div>
       <div
-        v-if="quote.data.leads_list.data == 0 && quote.data.total_leads > 0"
+        v-if="quote.data.leads_list.data == 0 && quote.data.total_leads == 0"
         class="text-center text-xs text-gray-800 p-4"
       >
         <x-icon icon="box" class="text-secondary-600 mb-2" />
