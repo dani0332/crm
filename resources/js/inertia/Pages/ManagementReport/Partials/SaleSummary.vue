@@ -41,7 +41,7 @@ const tableHeader = reactive([
   },
   {
     text: 'Commission (VAT applicable)',
-    value: 'commission',
+    value: 'commission_vat_applicable',
   },
   {
     text: 'T. Price',
