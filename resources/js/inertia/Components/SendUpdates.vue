@@ -1,17 +1,8 @@
 <script setup>
 
 const props = defineProps({
-  reportableType: {
-    type: String,
-    required: true,
-    default: ''
-  },
-  reportableUuid: {
-    type: String,
-    required: true
-  },
-  reportableId: {
-    type: Number,
+  reportable: {
+    type: Object,
     required: true
   },
   data: {
@@ -144,12 +135,12 @@ const onAddUpdate = (autoSubmit) => {
       
       return {
         quote_type_id: props.quote_type_id,
-        reportable_type: `App\\Models\\${props.reportableType}`,
         refURL: page.url,
         childCategory: childCatgeory,
         option_id: option?.id || null,
-        reportable_uuid: props.reportableUuid,
-        reportable_id: props.reportableId,
+        personal_quote_id: props.reportable.personalQuoteId,
+        reportable_uuid: props.reportable.uuid,
+        reportable_id: props.reportable.id,
         status: page.props.sendUpdateEnum.NEW_REQUEST
       }
     })

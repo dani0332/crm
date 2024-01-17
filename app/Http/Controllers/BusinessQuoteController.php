@@ -21,6 +21,7 @@ use App\Models\BusinessQuote;
 use App\Models\Emirate;
 use App\Models\Entity;
 use App\Models\Nationality;
+use App\Models\PersonalQuote;
 use App\Repositories\CustomerMembersRepository;
 use App\Repositories\InsuranceProviderRepository;
 use App\Repositories\LookupRepository;
@@ -217,6 +218,8 @@ class BusinessQuoteController extends Controller
         $sendUpdateLogs = [];
         $sendUpdateEnum = (object) [];
         $hasPolicyIssuedStatus = $this->crudService->hasAtleastOneStatusPolicyIssued(QuoteTypes::BUSINESS->id(), $record->id);
+        $record->personalQuoteId = PersonalQuote::where(['uuid' => $record->uuid, 'quote_type_id' => QuoteTypes::BUSINESS->id()])->first()->id;
+
         if ($hasPolicyIssuedStatus) {
             $sendUpdateOptions = (new LookupService)->getSendUpdateOptions(QuoteTypes::BUSINESS->id());
             $sendUpdateLogs = SendUpdateLogRepository::findByQuoteId('BusinessQuote', $record->id);

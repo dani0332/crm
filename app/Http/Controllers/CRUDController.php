@@ -39,6 +39,7 @@ use App\Models\HealthPlanType;
 use App\Models\Nationality;
 use App\Models\Payment;
 use App\Models\PaymentStatusLog;
+use App\Models\PersonalQuote;
 use App\Models\QuoteDocument;
 use App\Models\Tier;
 use App\Models\User;
@@ -510,6 +511,8 @@ class CRUDController extends Controller
         $sendUpdateLogs = [];
         $sendUpdateEnum = (object) [];
         $hasPolicyIssuedStatus = $this->crudService->hasAtleastOneStatusPolicyIssued($quoteTypeId, $record->id);
+        $record->personalQuoteId = PersonalQuote::where(['uuid' => $record->uuid, 'quote_type_id' => $quoteTypeId])->first()->id;
+        
         if ($hasPolicyIssuedStatus) {
             $sendUpdateOptions = $this->lookupService->getSendUpdateOptions($quoteTypeId);
             $sendUpdateLogs = $paymentEntityModel->sendUpdateLogs;

@@ -20,6 +20,7 @@ use App\Http\Requests\StoreTravelRequest;
 use App\Http\Requests\TravelRenewalsUploadRequest;
 use App\Http\Requests\UpdateTravelRequest;
 use App\Models\Emirate;
+use App\Models\PersonalQuote;
 use App\Repositories\CustomerMembersRepository;
 use App\Repositories\EmbeddedProductRepository;
 use App\Repositories\InsuranceProviderRepository;
@@ -186,6 +187,8 @@ class TravelController extends Controller
         $sendUpdateLogs = [];
         $sendUpdateEnum = (object) [];
         $hasPolicyIssuedStatus = $this->crudService->hasAtleastOneStatusPolicyIssued(QuoteTypes::TRAVEL->id(), $record->id);
+        $record->personalQuoteId = PersonalQuote::where(['uuid' => $record->uuid, 'quote_type_id' => QuoteTypes::TRAVEL->id()])->first()->id;
+        
         if ($hasPolicyIssuedStatus) {
             $sendUpdateOptions = $this->lookupService->getSendUpdateOptions(QuoteTypeId::Travel);
             $sendUpdateLogs = $paymentEntityModel->sendUpdateLogs;

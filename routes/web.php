@@ -449,8 +449,8 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::post('/', 'store')->name('store');
         Route::get('/{uuid}', 'show')->name('show');
         Route::patch('/update/{id}', 'update')->name('update');
-        Route::post('/save-plan-details', 'savePlanDetails')->name('save-plan-details');
-        Route::post('/save-indicative-price', 'saveIndicativePrices')->name('save-indicative-price');
+        Route::post('/save-details', 'savePriceDetails')->name('save-price-details');
+        Route::post('/save-indicative-price', 'savePriceDetails')->name('save-indicative-price');
     });
     // Route::get('send-update-log/{id}', [SendUpdateLogController::class, 'getLogsById'])->name('send-update-logs.get-by-id');
 

@@ -55,7 +55,7 @@ const updatePriceWithVat = () => {
 
 const onUpdate = () => {
   additionalPriceForm.post(
-    route('send-update-logs.save-indicative-price'),
+    route('send-update-logs.save-price-details'),
     {
       preserverScroll: true,
       onSuccess: ({ props }) => {

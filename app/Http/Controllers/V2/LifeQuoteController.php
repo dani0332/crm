@@ -13,6 +13,7 @@ use App\Enums\SendUpdateLogStatusEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\LifeQuoteRequest;
 use App\Models\Emirate;
+use App\Models\PersonalQuote;
 use App\Models\SendUpdateLog;
 use App\Repositories\ActivityRepository;
 use App\Repositories\CustomerMembersRepository;
@@ -118,6 +119,8 @@ class LifeQuoteController extends Controller
         $sendUpdateLogs = [];
         $sendUpdateEnum = (object) [];
         $hasPolicyIssuedStatus = app(CRUDService::class)->hasAtleastOneStatusPolicyIssued(QuoteTypes::LIFE->id(), $quote->id);
+        $quote->personalQuoteId = PersonalQuote::where(['uuid' => $quote->uuid, 'quote_type_id' => QuoteTypes::LIFE->id()])->first()->id;
+        
         if ($hasPolicyIssuedStatus) {
             $sendUpdateOptions = (new LookupService)->getSendUpdateOptions(QuoteTypes::LIFE->id());
             $sendUpdateLogs = SendUpdateLogRepository::findByQuoteId('LifeQuote', $quote->id);

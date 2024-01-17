@@ -25,8 +25,9 @@ class SendUpdateLogRepository extends BaseRepository
             $uuid = strtoupper(Str::random(6));
 
             $res = $this->create([
-                'reportable_type' => $data['reportable_type'],
+                'personal_quote_id' => $data['personal_quote_id'],
                 'reportable_id' => $data['reportable_id'],
+                'reportable_uuid' => $data['reportable_uuid'],
                 'quote_type_id' => $data['quote_type_id'],
                 'category_id' => $data['childCategory']['id'],
                 'option_id' => $data['option_id'],
@@ -76,9 +77,6 @@ class SendUpdateLogRepository extends BaseRepository
 
     public function fetchFindByQuoteId($reportableTye, $reportableId) 
     {   
-        return $this->where([
-            'reportable_type' => "App\\Models\\$reportableTye",
-            'reportable_id' => $reportableId
-        ])->get();
+        return $this->where(['reportable_id' => $reportableId])->get();
     }
 }

@@ -156,9 +156,4 @@ class HealthQuote extends Model implements AuditableContract
     {
         return $this->morphMany(CustomerMembers::class, 'quote');
     }
-
-    public function sendUpdateLogs()
-    {
-        return $this->morphMany(SendUpdateLog::class, 'reportable');
-    }
 }

@@ -13,6 +13,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\PetQuoteRequest;
 use App\Models\Emirate;
 use App\Models\Nationality;
+use App\Models\PersonalQuote;
 use App\Repositories\ActivityRepository;
 use App\Repositories\CustomerMembersRepository;
 use App\Repositories\DocumentTypeRepository;
@@ -113,6 +114,8 @@ class PetQuoteController extends Controller
         $sendUpdateLogs = [];
         $sendUpdateEnum = (object) [];
         $hasPolicyIssuedStatus = app(CRUDService::class)->hasAtleastOneStatusPolicyIssued(QuoteTypes::PET->id(), $quote->id);
+        $quote->personalQuoteId = PersonalQuote::where(['uuid' => $uuid, 'quote_type_id' => QuoteTypes::PET->id()])->first()->id;
+
         if ($hasPolicyIssuedStatus) {
             $sendUpdateOptions = (new LookupService)->getSendUpdateOptions(QuoteTypes::PET->id());
             $sendUpdateLogs = SendUpdateLogRepository::findByQuoteId('PetQuote', $quote->id);

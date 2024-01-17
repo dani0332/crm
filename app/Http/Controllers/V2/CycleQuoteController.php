@@ -12,6 +12,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\CycleQuoteRequest;
 use App\Models\Emirate;
 use App\Models\Nationality;
+use App\Models\PersonalQuote;
 use App\Repositories\ActivityRepository;
 use App\Repositories\CustomerMembersRepository;
 use App\Repositories\CycleQuoteRepository;
@@ -143,6 +144,8 @@ class CycleQuoteController extends Controller
         $sendUpdateLogs = [];
         $sendUpdateEnum = (object) [];
         $hasPolicyIssuedStatus = app(CRUDService::class)->hasAtleastOneStatusPolicyIssued(QuoteTypes::CYCLE->id(), $quote->id);
+        $quote->personalQuoteId = PersonalQuote::where(['uuid' => $quote->uuid, 'quote_type_id' => QuoteTypes::CYCLE->id()])->first()->id;
+
         if ($hasPolicyIssuedStatus) {
             $sendUpdateOptions = (new LookupService)->getSendUpdateOptions(QuoteTypes::CYCLE->id());
             $sendUpdateLogs = SendUpdateLogRepository::findByQuoteId('CycleQuote', $quote->id);

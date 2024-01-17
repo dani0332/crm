@@ -26,15 +26,15 @@ const state = reactive({
 
 const issuanceStatusOptions = computed(() => {
   return [
-    { label: 'Portal Down', value: 'Portal Down' },
-    { label: 'Waiting for client confirmation', value: 'client confirmation' },
-    { label: 'Issue found', value: 'Issue found' },
-    { label: 'Underwriter Issuance', value: 'Underwriter Issuance' },
-    { label: 'Portal Issuance', value: 'Portal Issuance' },
-    { label: 'Policy already issued by the underwriter', value: 'Policy already issued by the underwriter' },
-    { label: 'Renewal, Direct to Underwriter', value: 'Renewal, Direct to Underwriter' },
-    { label: 'Policy Issued', value: 'Policy Issued' },
-    { label: 'Other', value: 'Other' },
+    { label: 'Portal Down', value: 'portal_down' },
+    { label: 'Waiting for client confirmation', value: 'waiting_for_client_confirmation' },
+    { label: 'Issue found', value: 'issue_found' },
+    { label: 'Underwriter Issuance', value: 'underwriter_issuance' },
+    { label: 'Portal Issuance', value: 'portal_issuance' },
+    { label: 'Policy already issued by the underwriter', value: 'policy_already_issued_by_the_underwriter' },
+    { label: 'Renewal, Direct to Underwriter', value: 'renewal_direct_to_underwriter' },
+    { label: 'Policy Issued', value: 'policy_issued' },
+    { label: 'Other', value: 'other' },
   ];
 })
 
@@ -44,39 +44,38 @@ const policyDetailsForm = useForm({
 	provider_name: '',
 	plan_name: '',
 	policy_number: props.quote?.policy_number || '',
-	policy_issuance_date: props.quote.policy_issuance_date || '',
-	policy_start_date: props.quote?.policy_start_date || '',
-	renewal_expiry_date: props.quote?.renewal_expiry_date || '',
+	issuance_date: props.quote.policy_issuance_date || '',
+	start_date: props.quote?.policy_start_date || '',
+	expiry_date: props.quote?.renewal_expiry_date || '',
 	insurer_quote_number: '',
 	issuance_status: '',
-	insurance_provider_id: '',
 	send_update_log_id: props.sendUpdateLog.id,
 	uuid: props.sendUpdateLog.uuid,
 })
 
-// const onUpdate = () => {
-//   planDetailsForm.post(
-//     route('send-update-logs.save-plan-details'),
-//     {
-//       preserverScroll: true,
-//       onSuccess: ({ props }) => {
-//         notification.success({
-//           title: 'The request has been updated',
-//           position: 'top',
-//         });
-//         state.edit = false;
-//       },
-//       onError: errors => {
-//         Object.keys(errors).forEach(function (key) {
-//           notification.error({
-//             title: errors[key],
-//             position: 'top',
-//           });
-//         });
-//       },
-//     },
-//   );
-// }
+const onUpdate = () => {
+  policyDetailsForm.post(
+    route('send-update-logs.save-plan-details'),
+    {
+      preserverScroll: true,
+      onSuccess: ({ props }) => {
+        notification.success({
+          title: 'The request has been updated',
+          position: 'top',
+        });
+        state.edit = false;
+      },
+      onError: errors => {
+        Object.keys(errors).forEach(function (key) {
+          notification.error({
+            title: errors[key],
+            position: 'top',
+          });
+        });
+      },
+    },
+  );
+}
 </script>
 
 <template>
@@ -295,24 +294,24 @@ const policyDetailsForm = useForm({
           <x-button size="sm" @click="state.isEdit = true" v-if="!state.isEdit">
             Edit
           </x-button>
-          <!-- <template v-else>
+          <template v-else>
             <x-button
               size="sm"
               color="orange"
               @click="state.isEdit = false"
-              :loading="planDetailsForm.processing"
-              :disabled="planDetailsForm.processing"
+              :loading="policyDetailsForm.processing"
+              :disabled="policyDetailsForm.processing"
               >Cancel</x-button
             >
             <x-button
               size="sm"
               color="primary"
               @click="onUpdate"
-              :loading="planDetailsForm.processing"
-              :disabled="planDetailsForm.processing"
+              :loading="policyDetailsForm.processing"
+              :disabled="policyDetailsForm.processing"
               >Update</x-button
             >
-          </template> -->
+          </template>
         </div>
       </template>
     </Collapsible>

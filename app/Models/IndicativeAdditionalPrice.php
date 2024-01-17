@@ -16,5 +16,7 @@ class IndicativeAdditionalPrice extends Model
         'price_without_vat',
         'total_price',
         'send_update_log_id',
+        'insurance_provider_id',
+        'insurer_quote_number'
     ];
 }

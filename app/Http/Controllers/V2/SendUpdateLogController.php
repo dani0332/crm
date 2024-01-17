@@ -8,6 +8,7 @@ use App\Enums\SendUpdateLogStatusEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\PlanDetailsRequest;
 use App\Models\IndicativeAdditionalPrice;
+use App\Models\PersonalQuote;
 use App\Repositories\IndicativeAdditionalPriceRepository;
 use App\Repositories\InsuranceProviderRepository;
 use App\Repositories\SendUpdateLogRepository;
@@ -47,14 +48,17 @@ class SendUpdateLogController extends Controller
 
         $indicativePrice = IndicativeAdditionalPriceRepository::getBySendUpdateLogId($sendUpdateLog->id);
 
-        $quoteType = QuoteTypes::getName($sendUpdateLog->quote_type_id)->value;
+        $policyDetails = $this->getPolicyDetails($sendUpdateLog->id);
 
-        $quote = $this->getQuote($sendUpdateLog->reportable_id, $quoteType);
+        $quoteType = QuoteTypes::getName($quoteTypeId)->value;
+
+        $quote = $this->getQuote($sendUpdateLog->personal_quote_id, $quoteType);
 
         return inertia('SendUpdateLog/Show', [
             'quote' => $quote,
             'quoteType' => $quoteType,
             'sendUpdateLog' => $sendUpdateLog,
+            'policyDetails' => $policyDetails,
             'indicativePrice' => $indicativePrice,
             'sendUpdateOptions' => $sendUpdateOptions,
             'insuranceProviders' => $insuranceProviders,
@@ -90,27 +94,29 @@ class SendUpdateLogController extends Controller
 
     public function updateQuoteLeadStatus($data, $type)
     {
-        $quoteId = $data['reportable_id'];
+        $quoteUuid = $data['reportable_uuid'];
+
+        $quoteTypeId = $data['quote_type_id'];
         
         $selectedType = $data['childCategory']['slug'];
         
         $subType = $data['childCategory']['option'];
 
-        $model = $data['reportable_type'];
+        $model = PersonalQuote::class;
         
         if ($type === 'create') {
 
             switch ($selectedType) {
                 case 'EF':
                     if ($subType && $subType['slug'] === 'MPC') {
-                        $model::where('id', $quoteId)->update([
+                        $model::where(['id' => $quoteUuid, 'quote_type_id' => $quoteTypeId])->update([
                             'quote_status_id' => QuoteStatusEnum::CancellationPending
                         ]);
                     }
                     break;
                 case 'CI':
                 case 'CIR':
-                    $model::where('id', $quoteId)->update([
+                    $model::where(['id' => $quoteUuid, 'quote_type_id' => $quoteTypeId])->update([
                         'quote_status_id' => QuoteStatusEnum::CancellationPending
                     ]);
                     break;
@@ -121,14 +127,14 @@ class SendUpdateLogController extends Controller
                 case 'EF':
                 case 'CI':
                     if ($data['status'] === SendUpdateLogStatusEnum::UPDATE_BOOKED) {
-                        $model::where('id', $quoteId)->update([
+                        $model::where(['id' => $quoteUuid, 'quote_type_id' => $quoteTypeId])->update([
                             'quote_status_id' => QuoteStatusEnum::PolicyCancelled
                         ]);
                     }
                     break;
                 case 'CIR':
                     if ($data['status'] === SendUpdateLogStatusEnum::UPDATE_BOOKED) {
-                        $model::where('id', $quoteId)->update([
+                        $model::where(['id' => $quoteUuid, 'quote_type_id' => $quoteTypeId])->update([
                             'quote_status_id' => QuoteStatusEnum::PolicyBooked
                         ]);
 
@@ -139,7 +145,7 @@ class SendUpdateLogController extends Controller
         }
     }
 
-    public function saveIndicativePrices(Request $request)
+    public function savePriceDetails(Request $request)
     {
         $data = $request->all();
 
@@ -174,5 +180,10 @@ class SendUpdateLogController extends Controller
         $repository = getRepositoryObject($quoteType);
 
         return $repository::where('id', $quoteId)->first();
+    }
+
+    private function getPolicyDetails($sendUpdateLogId)
+    {
+        return null;//SUPolicyDetail::where('send_update_log_id', $sendUpdateLogId)->first();
     }
 }

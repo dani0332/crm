@@ -1,10 +1,10 @@
 <script setup>
 import LazyPlanDetails from './Partials/PlanDetails.vue';
 import LazyPolicyDetails from './Partials/PolicyDetails.vue';
+import LazyBookingDetails from './Partials/BookingDetails.vue';
 import LazyIndicativeAdditionalPrice from './Partials/IndicativeAdditionPrice.vue';
 
 const props = defineProps({
-  quoteId: String,
   quoteType: String,
   sendUpdateLog: Object,
   sendUpdateOptions: Array,
@@ -104,9 +104,11 @@ const sendUpdateForm = useForm({
   option_id: props.sendUpdateLog?.option_id || null,
   change_reason: props.sendUpdateLog?.change_reason || '',
   reportable_id: props.sendUpdateLog?.reportable_id || null,
+  quote_type_id: props.sendUpdateLog?.quote_type_id || null,
+  reportable_uuid: props.sendUpdateLog?.reportable_uuid || null,
+  personal_quote_id: props.sendUpdateLog?.personal_quote_id || null,
   childCategory: selectedCategory?.value?.subCategory,
   status: props.sendUpdateLog?.status || '',
-  reportable_type: props.sendUpdateLog?.reportable_type || '',
 });
 
 onMounted(() => {
@@ -252,7 +254,6 @@ const onUpdateLog = () => {
     <LazyIndicativeAdditionalPrice
       v-if="showIndicativeAdditionalPrice"
       :sendUpdateLog="sendUpdateLog"
-      :insuranceProviders="insuranceProviders"
       :selectedCategory="selectedCategory"
       :indicativePrice="indicativePrice"
       :quoteType="quoteType"
@@ -261,6 +262,7 @@ const onUpdateLog = () => {
     <LazyPlanDetails
       v-if="showPlanDetails"
       :sendUpdateLog="sendUpdateLog"
+      :indicativePrice="indicativePrice"
       :insuranceProviders="insuranceProviders"
       :selectedCategory="selectedCategory"
       :quoteType="quoteType"
@@ -291,7 +293,12 @@ const onUpdateLog = () => {
     1. Booking Details - Reversal Entry 
     2. Booking Details - New Entry
     -->
-    <!-- <LazyBookingDetails /> -->
+    <LazyBookingDetails
+      :sendUpdateLog="sendUpdateLog"
+      :insuranceProviders="insuranceProviders"
+      :selectedCategory="selectedCategory"
+      :quote="quote"
+    />
 
     <AuditLogs
       :type="'App\\Models\\SendUpdateLog'"

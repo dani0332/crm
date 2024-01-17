@@ -25,9 +25,4 @@ class JetskiQuote extends Model
             ],
         ];
     }
-
-    public function sendUpdateLogs()
-    {
-        return $this->morphMany(SendUpdateLog::class, 'reportable');
-    }
 }
