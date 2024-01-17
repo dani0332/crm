@@ -5,6 +5,7 @@ import LazyCreatePlan from './Partials/CreatePlan.vue';
 import AssignTier from './Partials/AssignTier.vue';
 import FollowUpReasons from './Partials/FollowUpReasons.vue';
 import RiskRatingScoreDetails from '../../../Components/RiskRatingScoreDetails.vue';
+import {fileUploadErrorMessage} from "@/inertia/Composables/utilities.js";
 
 defineProps({
   quote: Object,
@@ -943,15 +944,16 @@ const docForm = useForm({
   file: null,
 });
 
-const uploadFile = (doc, files) => {
+const uploadFile = (doc, filesWithInfo) => {
   let url = '/quotes/car/documents/store';
-
+  const { files, rejectReason} = filesWithInfo;
   if (files.length == 0) {
     notification.error({
-      title: 'Incorrect file type\nPlease upload a ' + doc.accepted_files + ' file',
+      title: 'File upload failed',
       position: 'top',
     });
-    return false;
+    docForm.setError({error: fileUploadErrorMessage(doc, rejectReason)});
+    return false
   };
   isUploading.value = true;
   docForm
@@ -1104,9 +1106,9 @@ const onTogglePlans = toggle => {
 };
 const exportLoader = ref(false);
 const onExportPlans = () => {
-  if (selectedPlans.value.length < 3 || selectedPlans.value.length > 5) {
+  if (selectedPlans.value.length < 1 || selectedPlans.value.length > 5) {
     notification.error({
-      title: 'Please select 3 to 5 plans to download PDF.',
+      title: 'Please select 1 to 5 plans to download PDF.',
       position: 'top',
     });
     return;
