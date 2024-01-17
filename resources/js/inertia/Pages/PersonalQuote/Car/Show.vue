@@ -2764,24 +2764,8 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
                 availablePlansTable.data.length > 0
               "
             >
-              Hidden
-            </x-tag>
-
-            <x-tag
-                v-if="puaPremium && puaPremium != null"
-                size="xs"
-                class="mt-0.5 text-[10px]"
-                color="red"
-            >
-                <x-tooltip  position="right">
-                    <template #tooltip>
-                      <span class="font-medium">
-                          Pending Underwriter Approval (PUA) indicates that this quote is prepared using our internal rating calculator. Please contact the client to get the required documents, to proceed with generating a quote on the insurer portal and connect with the underwriter to obtain their approval.
-                       </span>
-                    </template>
-                    PUA
-                </x-tooltip>
-            </x-tag>
+              Copy Link
+            </x-button>
           </div>
           <DataTable
             table-class-name="compact"
