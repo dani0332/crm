@@ -119,9 +119,13 @@ export const useCalculateTotalSum = (data, key) =>
     if (key in currentItem)
     {
       // Parse the value to a number and add it to the accumulator
-      accumulator += parseFloat(currentItem[key]) || 0;
+      let value = currentItem[key] != null ? currentItem[key] : 0
+      accumulator += +parseFloat((value.toString()).replace(/,/g, '')) || 0;
+
     }
     return accumulator;
   }, 0);
-  return totalSum;
+
+
+  return totalSum.toFixed(2);
 };
