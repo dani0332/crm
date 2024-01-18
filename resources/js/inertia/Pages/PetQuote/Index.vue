@@ -157,7 +157,12 @@ watch(
   <div>
     <Head title="Pet Quotes" />
     <div class="flex justify-between items-center">
-      <h2 class="text-xl font-semibold">Pet Quotes List</h2>
+      <div class="flex items-center gap-5">
+        <h2 class="text-xl font-semibold">Pet Quotes List</h2>
+        <span class="border-2 rounded px-3 bg-gray-200 text-sm font-medium">{{
+          quotes?.leadsCount ?? 0
+        }}</span>
+      </div>
       <div class="flex items-center space-x-2">
         <column-selection
           :storageKey="quoteType"
