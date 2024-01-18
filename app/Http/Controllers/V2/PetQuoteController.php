@@ -216,12 +216,15 @@ class PetQuoteController extends Controller
             }
         }
 
+        // Todo:: Need to send total Counts and Oppurtunity Counts
+
         return inertia('PetQuote/Cards', [
             'quotes' => $quotes,
             'quoteStatusEnum' => $quoteStatusEnums,
             'lostReasons' => $lostReasons,
             'quoteTypeId' => QuoteTypes::PET->id(),
             'quoteType' => QuoteTypes::PET->value,
+            // 'totalCount' => PetQuoteRepository::getTotalCount(),
         ]);
     }
 }
