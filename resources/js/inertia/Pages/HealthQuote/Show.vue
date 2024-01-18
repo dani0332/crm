@@ -86,18 +86,7 @@ const checkPlanType = id => {
   return page.props.healthPlanTypes.find(type => type.id === id)?.text;
 };
 
-function compareDueDate(dueDateString) {
-  const currentDate = new Date();
-
-  const [day, month, year, hour, minute, second] = dueDateString.split(/[- :]/);
-  const dueDate = new Date(year, month - 1, day, hour, minute, second);
-
-  // Set time component to midnight for both dates
-  currentDate.setHours(0, 0, 0, 0);
-  dueDate.setHours(0, 0, 0, 0);
-
-  return currentDate > dueDate;
-}
+const compareDueDate = useCompareDueDate;
 
 const modals = reactive({
   duplicate: false,
