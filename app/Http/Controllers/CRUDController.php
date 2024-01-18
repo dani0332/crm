@@ -417,7 +417,7 @@ class CRUDController extends Controller
                 'modelClass' => HomeQuote::class,
                 'quoteTypeId' => QuoteTypeId::Home,
             ],
-        ]
+        ];
 
         if ($modelType !== quoteTypeCode::Health && $modelType !== quoteTypeCode::Home && $modelType !== quoteTypeCode::Car) {
             foreach ($modelPropertiesList as $property => $value) {
@@ -486,7 +486,7 @@ class CRUDController extends Controller
             return Redirect::back()->with('message', $record->message)->withInput();
         } else {
             event(new LeadsCount($modelDetails[$modelType]['modelClass'], $modelDetails[$modelType]['quoteTypeId']));
-            
+
             if (! isset($record->quoteUID)) {
                 return redirect('/quotes/'.strtolower($modelType))->with('success', ((str_contains(strtolower($modelType), 'team') ? 'Team' : (str_contains(strtolower($modelType), 'leadstatus') ? 'Lead Status' : $modelType))).' has been stored');
             } else {
