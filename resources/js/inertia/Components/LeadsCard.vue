@@ -77,7 +77,7 @@ const onSearch = id => {
       .post(
         route('loadMoreRecords', {
           page: quotes.value.pages[id],
-          modelType: 'Life',
+          modelType: quoteType,
           status: id,
         }),
       )
@@ -101,7 +101,7 @@ const onSearch = id => {
     .post(
       route('searchLead', {
         term: quotes.value.queries[id],
-        modelType: 'Life',
+        modelType: quoteType,
         status: id,
       }),
     )
