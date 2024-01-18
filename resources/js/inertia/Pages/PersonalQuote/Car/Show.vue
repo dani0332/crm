@@ -2754,8 +2754,7 @@ const handleChildUpdate = planId => {
             <x-tag
                 v-if="puaPremium && puaPremium != null"
                 size="xs"
-                class="mt-0.5 text-[10px]"
-                color="red"
+                class="mt-0.5 text-[10px] text-white bg-[#E00000]"
             >
                 <x-tooltip  position="right">
                     <template #tooltip>
