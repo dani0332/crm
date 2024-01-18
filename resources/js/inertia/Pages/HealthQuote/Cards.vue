@@ -1,4 +1,6 @@
 <script setup>
+
+import Pusher from 'pusher-js';
 const props = defineProps({
   quoteStatusEnum: Object,
   quoteTypeId: String,
@@ -23,6 +25,32 @@ const quotes = reactive({
   pages: {},
   queries: {},
 });
+
+const options = {
+  cluster: 'ap1',
+  forceTLS: false,
+};
+
+const pusher = new Pusher(page.props.pusherKey, options);
+const channel = pusher.subscribe(
+  'public.' + page.props.appEnv + '.total-leads-count',
+);
+
+const listen = () => {
+  channel.bind('leads.count', function (e) {
+    console.log(e);
+  });
+};
+
+onMounted(() => {
+  listen();
+});
+
+onUnmounted(() => {
+  channel.unbind('leads.count');
+  channel.unsubscribe('public.' + page.props.appEnv + '.total-leads-count');
+});
+
 </script>
 
 <template>
@@ -58,6 +86,7 @@ const quotes = reactive({
         :quote="quote"
         :quotes="quotes"
         :quoteTypeId="quoteTypeId"
+        :quoteType="quoteType"
         :lostReasons="props.lostReasons"
         :quoteStatusEnum="props.quoteStatusEnum"
       />

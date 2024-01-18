@@ -373,6 +373,7 @@ class BusinessQuoteController extends Controller
             'quoteStatusEnum' => $quoteStatusEnums,
             'lostReasons' => $lostReasons,
             'quoteTypeId' => QuoteTypes::BUSINESS->id(),
+            'quoteType' => QuoteTypes::BUSINESS->value,
         ]);
     }
 }

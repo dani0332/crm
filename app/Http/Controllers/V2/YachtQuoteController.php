@@ -198,6 +198,7 @@ class YachtQuoteController extends Controller
             'quoteStatusEnum' => $quoteStatusEnums,
             'lostReasons' => $lostReasons,
             'quoteTypeId' => QuoteTypes::YACHT->id(),
+            'quoteType' => QuoteTypes::YACHT->value,
         ]);
     }
 }

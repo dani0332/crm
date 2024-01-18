@@ -137,6 +137,7 @@ class HealthQuoteController extends Controller
             'quoteStatusEnum' => $quoteStatusEnums,
             'lostReasons' => $lostReasons,
             'quoteTypeId' => QuoteTypes::HEALTH->id(),
+            'quoteType' => QuoteTypes::HEALTH->value,
         ]);
     }
 }

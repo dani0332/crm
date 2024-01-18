@@ -1104,6 +1104,7 @@ class CRUDController extends Controller
             'quoteStatusEnum' => $quoteStatusEnums,
             'lostReasons' => $lostReasons,
             'quoteTypeId' => QuoteTypes::HOME->id(),
+            'quoteType' => QuoteTypes::HOME->value,
         ]);
     }
 

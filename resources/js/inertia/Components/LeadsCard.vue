@@ -8,6 +8,7 @@ const props = defineProps({
     type: Object,
     require: true,
   },
+  quoteType: String,
 });
 
 const quotes = ref({ ...props.quotes });

@@ -9,10 +9,12 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
+use App\Events\LeadsCount;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\PetQuoteRequest;
 use App\Models\Emirate;
 use App\Models\Nationality;
+use App\Models\PersonalQuote;
 use App\Repositories\ActivityRepository;
 use App\Repositories\CustomerMembersRepository;
 use App\Repositories\DocumentTypeRepository;
@@ -73,10 +75,11 @@ class PetQuoteController extends Controller
     public function store(PetQuoteRequest $request)
     {
         $response = PetQuoteRepository::create($request->validated());
-
+        
         if (! empty($response->errors) || ! empty($response->msg)) {
             vAbort($response->msg);
         }
+        event(new LeadsCount(PersonalQuote::class, QuoteTypes::PET->id()));
 
         return redirect(route('pet-quotes-show', $response->quoteUID))->with('message', 'Quote is created successfully.');
     }
@@ -218,6 +221,7 @@ class PetQuoteController extends Controller
             'quoteStatusEnum' => $quoteStatusEnums,
             'lostReasons' => $lostReasons,
             'quoteTypeId' => QuoteTypes::PET->id(),
+            'quoteType' => QuoteTypes::PET->value,
         ]);
     }
 }

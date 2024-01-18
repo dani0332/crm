@@ -207,6 +207,7 @@ class CycleQuoteController extends Controller
             'quoteStatusEnum' => $quoteStatusEnums,
             'lostReasons' => $lostReasons,
             'quoteTypeId' => QuoteTypes::CYCLE->id(),
+            'quoteType' => QuoteTypes::CYCLE->value,
         ]);
     }
 }

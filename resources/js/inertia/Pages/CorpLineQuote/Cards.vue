@@ -3,6 +3,7 @@ const props = defineProps({
   quoteStatusEnum: Object,
   quoteTypeId: String,
   lostReasons: Object,
+  quoteType: String,
 });
 
 const page = usePage();
@@ -143,6 +144,7 @@ const onSearch = id => {
         :quote="quote"
         :quotes="quotes"
         :quoteTypeId="quoteTypeId"
+        :quoteType="quoteType"
         :lostReasons="props.lostReasons"
         :quoteStatusEnum="props.quoteStatusEnum"
       />
