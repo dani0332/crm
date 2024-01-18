@@ -204,11 +204,15 @@ class CentralService
 
     public function saveAndAssignActivitesToAdvisor($quoteDetails, $quoteTypeId)
     {
+        $roles = auth()->user()->roles->pluck('id')->toArray();
+        
         $getActivitySchedule = ActivitySchedule::where([
             'quote_type_id' => $quoteTypeId,
             'quote_status_id' => $quoteDetails->quote_status_id,
-        ])->whereIn('role_id', auth()->user()->roles->pluck('id')->toArray())
-        ->orderBy('sorting_order')->first();
+        ])
+        ->whereIn('role_id', $roles)
+        ->orderBy('sorting_order')
+        ->first();
 
         if($getActivitySchedule && $quoteDetails->advisor_id) {
 
