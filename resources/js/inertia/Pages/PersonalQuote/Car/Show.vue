@@ -1145,9 +1145,9 @@ const onTogglePlans = toggle => {
 };
 const exportLoader = ref(false);
 const onExportPlans = () => {
-  if (selectedPlans.value.length < 3 || selectedPlans.value.length > 5) {
+  if (selectedPlans.value.length < 1 || selectedPlans.value.length > 5) {
     notification.error({
-      title: 'Please select 3 to 5 plans to download PDF.',
+      title: 'Please select 1 to 5 plans to download PDF.',
       position: 'top',
     });
     return;

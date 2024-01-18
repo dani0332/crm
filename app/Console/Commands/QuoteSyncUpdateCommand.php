@@ -192,16 +192,9 @@ class QuoteSyncUpdateCommand extends Command
     private function syncQuote($quote, $updatedFields, $quoteTable)
     {
         foreach ($updatedFields as $column => $value) {
-            if ($column === 'id') {
+            if ($column === 'id' || $column === 'currently_insured_with') {
                 continue;
             }
-
-            if ($column === 'currently_insured_with_id') {
-                $quote->currently_insured_with = $value;
-
-                continue;
-            }
-
             if (Schema::hasColumn($quoteTable, $column)) {
                 $columnType = DB::getSchemaBuilder()->getColumnType($quoteTable, $column);
                 $value = $this->formatColumnValue($columnType, $value);
