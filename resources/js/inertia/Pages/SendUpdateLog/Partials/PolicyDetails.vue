@@ -24,6 +24,7 @@ const state = reactive({
   isEdit: false,
 });
 
+console.log('quote', props.quote);
 const issuanceStatusOptions = computed(() => {
   return [
     { label: 'Portal Down', value: 'portal_down' },
@@ -55,7 +56,7 @@ const policyDetailsForm = useForm({
 
 const onUpdate = () => {
   policyDetailsForm.post(
-    route('send-update-logs.save-plan-details'),
+    route('send-update-logs.save-policy-details'),
     {
       preserverScroll: true,
       onSuccess: ({ props }) => {
@@ -103,6 +104,7 @@ const onUpdate = () => {
               <dd>
 								<x-input
 									v-if="selectedCategory.subCategory.slug === 'CPD'"
+                  v-model="policyDetailsForm.first_name"
 									:disabled="!state.isEdit"
 								/>
 								<span v-else>{{ policyDetailsForm.first_name }}</span>
@@ -122,6 +124,7 @@ const onUpdate = () => {
 							<dd>
 								<x-input
 									v-if="selectedCategory.subCategory.slug === 'CPD'"
+                  v-model="policyDetailsForm.last_name"
 									:disabled="!state.isEdit"
 								/>
 								<span v-else>{{ policyDetailsForm.last_name }}</span>
@@ -261,8 +264,10 @@ const onUpdate = () => {
               <dd>
                 <x-input
                   v-if="selectedCategory.subCategory.slug === 'CPD'"
+                  :disabled="!state.isEdit"
+                  v-model="policyDetailsForm.insurer_quote_number"
 								/>
-								<span v-else>{{ 'in' }}</span>
+								<span v-else>{{ policyDetailsForm.insurer_quote_number }}</span>
 							</dd>
             </div>
 
@@ -284,7 +289,7 @@ const onUpdate = () => {
                   v-model="policyDetailsForm.issuance_status"
                   size="sm"
 								/>
-                <span v-else>{{ 'in' }}</span>
+                <span v-else>{{ policyDetailsForm.issuance_status }}</span>
 							</dd>
             </div>
           </dl>

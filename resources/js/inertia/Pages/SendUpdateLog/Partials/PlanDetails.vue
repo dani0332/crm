@@ -124,7 +124,7 @@ const onUpdate = () => {
             </div>
 
             <div class="grid sm:grid-cols-2 ml-[-250px]">
-							<template v-if="true || selectedCategory.subCategory.slug !== 'CPD'">
+							<template v-if="selectedCategory.subCategory.slug !== 'CPD'">
 								<dt class="font-bold text-right mr-10">
 									<x-tooltip position="left">
 										<span>Provider name</span>
@@ -133,9 +133,8 @@ const onUpdate = () => {
 										</template>
 									</x-tooltip>
 								</dt>
-								<dd class="w-25">
-                  <ComboBox
-                    :single="true"
+								<dd>
+                  <x-select
                     v-model="planDetailsForm.insurance_provider_id"                          
                     placeholder="Insurance Provider"
                     :options="insuranceProvidersOptions"
@@ -176,7 +175,7 @@ const onUpdate = () => {
 
 						<!-- Quote number -->
             <div class="grid sm:grid-cols-2 ml-[-250px]">
-							<template v-if="true || selectedCategory.subCategory.slug !== 'CPD'">
+							<template v-if="selectedCategory.subCategory.slug !== 'CPD'">
 								<dt class="font-bold text-right mr-10">
 									<x-tooltip position="left">
 										<span>Quote number</span>

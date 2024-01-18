@@ -149,7 +149,7 @@ class SendUpdateLogController extends Controller
     {
         $data = $request->all();
 
-        $response = IndicativeAdditionalPrice::updateOrCreate([
+        IndicativeAdditionalPrice::updateOrCreate([
             'send_update_log_id' => $data['send_update_log_id'],
         ], $data);
 
@@ -173,6 +173,11 @@ class SendUpdateLogController extends Controller
         $quote->update($request->validated());
 
         return redirect()->back()->with('success', 'updated successfully');
+    }
+
+    public function savePolicyDetails(Request $request) 
+    {
+        
     }
 
     private function getQuote($quoteId, $quoteType)

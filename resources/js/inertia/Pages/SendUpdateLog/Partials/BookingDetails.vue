@@ -81,18 +81,11 @@ const bookingDetailsForm = useForm({
             <!-- First name -->
             <div class="grid sm:grid-cols-2">
               <dt class="font-bold text-right mr-10">
-                <x-tooltip position="left">
-                  <span>First Name</span>
-                  <template #tooltip>
-                    This field captures the policyholder's first name,
-                    representing the primary contact person associated with the
-                    policy.
-                  </template>
-                </x-tooltip>
+                <span>INVOICE DESCRIPTION</span>
               </dt>
               <dd>
                 <x-input
-                  v-if="selectedCategory.subCategory.slug === 'CPD'"
+                  v-if="false && selectedCategory.subCategory.slug === 'CPD'"
                   :disabled="!state.isEdit"
                 />
                 <span v-else>{{ bookingDetailsForm.first_name }}</span>
@@ -102,16 +95,11 @@ const bookingDetailsForm = useForm({
             <!-- Last name -->
             <div class="grid sm:grid-cols-2 ml-[-250px]">
               <dt class="font-bold text-right mr-10">
-                <x-tooltip position="left">
-                  <span>Last Name</span>
-                  <template #tooltip>
-                    Records the policyholder's surname or family name.
-                  </template>
-                </x-tooltip>
+                <span>MAIN CLASS OF INSURANCE</span>
               </dt>
               <dd>
                 <x-input
-                  v-if="selectedCategory.subCategory.slug === 'CPD'"
+                  v-if="false && selectedCategory.subCategory.slug === 'CPD'"
                   :disabled="!state.isEdit"
                 />
                 <span v-else>{{ bookingDetailsForm.last_name }}</span>
@@ -122,7 +110,7 @@ const bookingDetailsForm = useForm({
             <div class="grid sm:grid-cols-2">
               <dt class="font-bold text-right mr-10">
                 <x-tooltip position="left">
-                  <span>Provider Name</span>
+                  <span>TRANSACTION PAYMENT STATUS</span>
                   <template #tooltip>
                     Name of the insurance company responsible for the coverage.
                   </template>
@@ -130,10 +118,10 @@ const bookingDetailsForm = useForm({
               </dt>
               <dd>
                 <x-input
-                  v-if="selectedCategory.subCategory.slug === 'CPD'"
+                  v-if="false && selectedCategory.subCategory.slug === 'CPD'"
                   :disabled="!state.isEdit"
                 />
-                <span v-else>{{ 'in' }}</span>
+                <span v-else>{{ 'Test' }}</span>
                 <!-- Provider Name -->
               </dd>
             </div>
@@ -142,7 +130,7 @@ const bookingDetailsForm = useForm({
             <div class="grid sm:grid-cols-2 ml-[-250px]">
               <dt class="font-bold text-right mr-10">
                 <x-tooltip position="left">
-                  <span>Plan Name</span>
+                  <span>SUB CLASS</span>
                   <template #tooltip>
                     Identifies the specific coverage or insurance plan offered
                     by the provider.
@@ -151,10 +139,10 @@ const bookingDetailsForm = useForm({
               </dt>
               <dd>
                 <x-input
-                  v-if="selectedCategory.subCategory.slug === 'CPD'"
+                  v-if="false && selectedCategory.subCategory.slug === 'CPD'"
                   :disabled="!state.isEdit"
                 />
-                <span v-else>{{ 'in' }}</span>
+                <span v-else>{{ 'Test' }}</span>
               </dd>
             </div>
 
@@ -162,7 +150,7 @@ const bookingDetailsForm = useForm({
             <div class="grid sm:grid-cols-2">
               <dt class="font-bold text-right mr-10">
                 <x-tooltip position="left">
-                  <span>Policy Number</span>
+                  <span>INSURER INVOICE DATE</span>
                   <template #tooltip>
                     The unique Insurance policy number for the chosen insurance
                     plan offered by the provider.
@@ -171,7 +159,7 @@ const bookingDetailsForm = useForm({
               </dt>
               <dd>
                 <x-input
-                  v-if="selectedCategory.subCategory.slug === 'CPD'"
+                  v-if="false && selectedCategory.subCategory.slug === 'CPD'"
                   :disabled="!state.isEdit"
                   v-model="bookingDetailsForm.policy_number"
                   type="number"
@@ -184,7 +172,7 @@ const bookingDetailsForm = useForm({
             <div class="grid sm:grid-cols-2 ml-[-250px]">
               <dt class="font-bold text-right mr-10">
                 <x-tooltip position="left">
-                  <span>Issuance Date</span>
+                  <span>BROKER INVOICE NUMBER</span>
                   <template #tooltip>
                     Signifies the date when the insurance policy was officially
                     issued.
@@ -193,7 +181,7 @@ const bookingDetailsForm = useForm({
               </dt>
               <dd>
                 <x-input
-                  v-if="selectedCategory.subCategory.slug === 'CPD'"
+                  v-if="false && selectedCategory.subCategory.slug === 'CPD'"
                   :disabled="!state.isEdit"
                   v-model="bookingDetailsForm.policy_issuance_date"
                 />
@@ -205,7 +193,7 @@ const bookingDetailsForm = useForm({
             <div class="grid sm:grid-cols-2">
               <dt class="font-bold text-right mr-10">
                 <x-tooltip position="left">
-                  <span>Start Date</span>
+                  <span>INSURER TAX INVOICE NUMBER</span>
                   <template #tooltip>
                     Signifies the date when the insurance policy was officially
                     issued.
@@ -214,7 +202,7 @@ const bookingDetailsForm = useForm({
               </dt>
               <dd>
                 <x-input
-                  v-if="selectedCategory.subCategory.slug === 'CPD'"
+                  v-if="false && selectedCategory.subCategory.slug === 'CPD'"
                   :disabled="!state.isEdit"
                   v-model="bookingDetailsForm.policy_start_date"
                 />
@@ -226,7 +214,7 @@ const bookingDetailsForm = useForm({
             <div class="grid sm:grid-cols-2 ml-[-250px]">
               <dt class="font-bold text-right mr-10">
                 <x-tooltip position="left">
-                  <span>Expiry Date</span>
+                  <span>DISCOUNT</span>
                   <template #tooltip>
                     Signifies the date when the insurance policy was officially
                     issued.
@@ -235,7 +223,7 @@ const bookingDetailsForm = useForm({
               </dt>
               <dd>
                 <x-input
-                  v-if="selectedCategory.subCategory.slug === 'CPD'"
+                  v-if="false && selectedCategory.subCategory.slug === 'CPD'"
                   :disabled="!state.isEdit"
                   v-model="bookingDetailsForm.renewal_expiry_date"
                 />
@@ -247,7 +235,7 @@ const bookingDetailsForm = useForm({
             <div class="grid sm:grid-cols-2">
               <dt class="font-bold text-right mr-10">
                 <x-tooltip position="left">
-                  <span>Insurer Quote Number</span>
+                  <span>INSURER COMMISSION INVOICE NUMBER</span>
                   <template #tooltip>
                     Signifies the date when the insurance policy was officially
                     issued.
@@ -255,8 +243,8 @@ const bookingDetailsForm = useForm({
                 </x-tooltip>
               </dt>
               <dd>
-                <x-input v-if="selectedCategory.subCategory.slug === 'CPD'" />
-                <span v-else>{{ 'in' }}</span>
+                <x-input v-if="false && selectedCategory.subCategory.slug === 'CPD'" />
+                <span v-else>{{ 'Test' }}</span>
               </dd>
             </div>
 
@@ -264,7 +252,7 @@ const bookingDetailsForm = useForm({
             <div class="grid sm:grid-cols-2 ml-[-250px]">
               <dt class="font-bold text-right mr-10">
                 <x-tooltip position="left">
-                  <span>Issuance Status</span>
+                  <span>COMMISSION (%)</span>
                   <template #tooltip>
                     Signifies the date when the insurance policy was officially
                     issued.
@@ -273,13 +261,13 @@ const bookingDetailsForm = useForm({
               </dt>
               <dd>
                 <x-select
-                  v-if="selectedCategory.subCategory.slug !== 'CPD'"
+                  v-if="false && selectedCategory.subCategory.slug !== 'CPD'"
                   :disabled="!state.isEdit"
                   :options="issuanceStatusOptions"
                   v-model="bookingDetailsForm.issuance_status"
                   size="sm"
                 />
-                <span v-else>{{ 'in' }}</span>
+                <span v-else>{{ 'Test' }}</span>
               </dd>
             </div>
           </dl>
