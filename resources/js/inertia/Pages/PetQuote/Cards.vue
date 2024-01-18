@@ -17,6 +17,7 @@ const page = usePage();
 provide('quoteStatusEnum', props.quoteStatusEnum);
 provide('quoteTypeId', props.quoteTypeId);
 provide('lostReasons', props.lostReasons);
+provide('quoteType', props.quoteType);
 
 const quotes = reactive({
   data: page.props.quotes || [],
@@ -39,7 +40,7 @@ const channel = pusher.subscribe(
 
 const listen = () => {
   channel.bind('leads.count', function (e) {
-    leadsCount.value = e;
+    leadsCount.value = e.totalLeadsCount;
   });
 };
 
