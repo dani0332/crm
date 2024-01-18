@@ -163,7 +163,11 @@ const UpdateLeadsCount = data => {
         <span>{{ quote.data.total_leads }}</span>
       </div>
       <div class="flex justify-between gap-1">
-        <span>Total Premium</span>
+        <span>Total Opportunity</span>
+        <span>{{ Number(quote.data.total_opportunity).toLocaleString() }}</span>
+      </div>
+      <div class="flex justify-between gap-1">
+        <span>Total Price </span>
         <span>{{ Number(quote.data.total_premium).toLocaleString() }}</span>
       </div>
       <div v-if="isAllowed">
