@@ -1191,7 +1191,6 @@ const validateCapturePayment = (isValid) => {
 }
 
 const addPayment = isValid => {  
-  
   if(isCreditApprovalView.value === true && isDeclineClicked.value === false){
     if (validateCapturePayment(isValid)) return;
   } else if (paymentMethodsForm.status === 'view' && isApproveClicked.value) {
@@ -2778,7 +2777,9 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
                 </x-button>
               </div>
               <div>
-                <x-button class="mr-2 focus:outline-black" size="sm" color="#ff5e00" type="submit" tabindex="0">
+                <x-button class="mr-2 focus:outline-black" size="sm" color="#ff5e00" type="submit" tabindex="0"
+                :loading = "paymentMethodsForm.processing"
+                >
                   Yes
                 </x-button>
               </div>
@@ -2805,7 +2806,9 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
                 <x-button v-if="!isApproveClicked && isViewEnabled" class="mr-2 focus:outline-black" size="sm" color="#ff5e00" @click="isApproveClicked = !isApproveClicked" tabindex="0">
                   Approve
                 </x-button>
-                <x-button v-if="isApproveClicked || (isCreditApprovalView && !isDeclineClicked)" class="mr-2 focus:outline-black" size="sm" color="#ff5e00" type="submit" tabindex="0">
+                <x-button v-if="isApproveClicked || (isCreditApprovalView && !isDeclineClicked)" class="mr-2 focus:outline-black" size="sm" color="#ff5e00" type="submit" tabindex="0"
+                :loading = "paymentMethodsForm.processing"
+                >
                   <template v-if="isCreditApprovalView && isCreditCardView">
                   Capture
                   </template>

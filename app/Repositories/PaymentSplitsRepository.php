@@ -326,7 +326,7 @@ class PaymentSplitsRepository
             $customerData['id'] = $quote->id;
             $sageApiService = new SageApiService();
             $sageCustomerNumber = $sageApiService->verifySageCustomer($request->customer_id, $customerData);
-            //$sageCustomerNumber = 'IC008';
+            $sageCustomerNumber = 'IC008';
             $request->merge(['sage_customer_number' => $sageCustomerNumber]);
             // create prepayment reciept
             $payLoadOptions = SagePayloadFactory::createPrepaymentPayload($request);
@@ -334,12 +334,15 @@ class PaymentSplitsRepository
             $sageResponse = json_decode($message, true);
 
             if (isset($sageResponse['ReceiptsAdjustments'][0]['DocumentNumber'])) {
+                $readyToPostReceiptAr = SagePayloadFactory::readyToPostReceiptArPayment($sageResponse['BatchNumber']);
+                $resp = $sageApiService->postToSage300($readyToPostReceiptAr['endPoint'], $readyToPostReceiptAr['payload'], 'PATCH');
+                $aRPostReceipts = SagePayloadFactory::aRPostReceiptsPayment($sageResponse['BatchNumber']);
+                $resp = $sageApiService->postToSage300($aRPostReceipts['endPoint'], $aRPostReceipts['payload']);
                 $documentNumberForReciept = $sageResponse['ReceiptsAdjustments'][0]['DocumentNumber'];
                 $paymentInformation['sage_reciept_id'] = $documentNumberForReciept;
                 $splitPayment->update($paymentInformation);
             } else {
                 $successMessage = 'Sage Error: Reciept not generated';
-
                 return $successMessage;
             }
 
