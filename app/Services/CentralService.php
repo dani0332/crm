@@ -245,7 +245,7 @@ class CentralService
                 return  Ken::request($endpoint, 'post', $data);
                 break;
             case QuoteTypes::HEALTH->value:
-                $endpoint = '/v1-process-booking';
+                $endpoint = '/api/v1-process-booking';
                 $data = [
                     'planId' => intval($data->plan_id),
                     'quoteTypeId' => QuoteTypeId::Health,
