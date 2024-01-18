@@ -129,12 +129,14 @@ const UpdateLeadsCount = data => {
   let draggedItem = null;
   props.quotes.data = props.quotes.data.map(lead => {
     if (lead.id == data.form.quote_status_id) {
-      lead.data.total_leads -= 1;
       let index = lead.data.leads_list.data.findIndex(
         item => item.id == data.form.id,
       );
       if (lead.data.leads_list.data[index]) {
         draggedItem = { ...lead.data.leads_list.data[index] };
+        lead.data.total_leads -= 1;
+        lead.data.total_opportunity -= 1;
+        lead.data.total_premium -= draggedItem.premium ?? 0;
       }
       lead.data.leads_list.data.splice(index, 1);
     }
@@ -143,9 +145,12 @@ const UpdateLeadsCount = data => {
 
   props.quotes.data = props.quotes.data.map(lead => {
     if (lead.id == data.to.quote_status_id) {
-      if (draggedItem) lead.data.leads_list.data.push(draggedItem);
-
-      lead.data.total_leads += 1;
+      if (draggedItem) {
+        lead.data.leads_list.data.push(draggedItem);
+        lead.data.total_leads += 1;
+        lead.data.total_opportunity += 1;
+        lead.data.total_premium += draggedItem.premium ?? 0;
+      }
     }
     return lead;
   });
@@ -165,7 +170,11 @@ const UpdateLeadsCount = data => {
       </div>
       <div class="flex justify-between gap-1">
         <span>Total Opportunity</span>
-        <span>{{ Number(quote.data.total_opportunity).toLocaleString() }}</span>
+        <span>{{
+          Number(quote.data.total_opportunity) > -1
+            ? Number(quote.data.total_opportunity).toLocaleString()
+            : 0
+        }}</span>
       </div>
       <div class="flex justify-between gap-1">
         <span>Total Price </span>

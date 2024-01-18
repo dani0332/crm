@@ -6,13 +6,13 @@ const props = defineProps({
   quoteTypeId: String,
   lostReasons: Object,
   quoteType: String,
+  totalCount: {
+    type: Number,
+    default: 0,
+  },
 });
 
 const page = usePage();
-
-const dateFormat = date => {
-  return useDateFormat(date, 'DD-MM-YYYY HH:mm:ss').value;
-};
 
 provide('quoteStatusEnum', props.quoteStatusEnum);
 provide('quoteTypeId', props.quoteTypeId);
@@ -31,6 +31,7 @@ const options = {
   forceTLS: false,
 };
 
+const leadsCount = ref(props.totalCount);
 const pusher = new Pusher(page.props.pusherKey, options);
 const channel = pusher.subscribe(
   'public.' + page.props.appEnv + '.total-leads-count',
@@ -38,8 +39,7 @@ const channel = pusher.subscribe(
 
 const listen = () => {
   channel.bind('leads.count', function (e) {
-    console.log(e);
-    // {totalLeadsCount: 1366}
+    leadsCount.value = e;
   });
 };
 
@@ -51,7 +51,6 @@ onUnmounted(() => {
   channel.unbind('leads.count');
   channel.unsubscribe('public.' + page.props.appEnv + '.total-leads-count');
 });
-
 </script>
 
 <template>
@@ -61,7 +60,7 @@ onUnmounted(() => {
       <div class="flex items-center gap-5">
         <h2 class="text-xl font-semibold">Pet List</h2>
         <span class="border-2 rounded px-3 bg-gray-200 text-sm font-medium">{{
-          0
+          leadsCount
         }}</span>
       </div>
 
