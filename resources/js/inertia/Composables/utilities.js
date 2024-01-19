@@ -148,3 +148,14 @@ export const useCalculateTotalSum = (data, key) =>
 
   return totalSum.toFixed(2);
 };
+
+export const getPreviousDate = (days = 30, format = 'DD-MMM-YYYY') =>
+{
+  // Get the current date
+  let currentDate = new Date();
+
+  // Calculate the previous day
+  let previousDate = new Date(currentDate);
+  previousDate.setDate(currentDate.getDate() - days);
+  return useDateFormat(previousDate, format).value;
+};
