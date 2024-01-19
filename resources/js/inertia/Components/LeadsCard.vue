@@ -49,6 +49,11 @@ const onLoadMore = id => {
       quote.value.data.total_premium =
         Number(quote.value.data.total_premium) +
         Number(useCalculateTotalSum(data.leads_list.data, 'premium'));
+      quote.value.data.total_opportunity =
+        Number(quote.value.data.total_opportunity) +
+        Number(
+          useCalculateTotalSum(data.leads_list.data, 'price_starting_from '),
+        );
       quote.value.data.total_leads = data.leads_list.total;
       quote.value.data.leads_list.next_page_url = data.leads_list.next_page_url;
       quote.value.data.leads_list.data =
@@ -131,7 +136,9 @@ const UpdateLeadsCount = data => {
       if (lead.data.leads_list.data[index]) {
         draggedItem = { ...lead.data.leads_list.data[index] };
         lead.data.total_leads -= 1;
-        lead.data.total_opportunity -= 1;
+        lead.data.total_opportunity -= draggedItem.price_starting_from
+          ? draggedItem.price_starting_from
+          : 0;
         lead.data.total_premium -= draggedItem.premium ?? 0;
       }
       lead.data.leads_list.data.splice(index, 1);
@@ -144,7 +151,7 @@ const UpdateLeadsCount = data => {
       if (draggedItem) {
         lead.data.leads_list.data.push(draggedItem);
         lead.data.total_leads += 1;
-        lead.data.total_opportunity += 1;
+        lead.data.total_opportunity += draggedItem.price_starting_from ?? 0;
         lead.data.total_premium += draggedItem.premium ?? 0;
       }
     }
@@ -164,7 +171,7 @@ const UpdateLeadsCount = data => {
         <span>Total Leads </span>
         <span>{{ quote.data.total_leads }} </span>
       </div>
-      <div class="flex justify-between gap-1">
+      <div class="flex justify-between gap-1" v-show="quoteType == 'Health'">
         <span>Total Opportunity</span>
         <span>{{
           Number(quote.data.total_opportunity) > 0
