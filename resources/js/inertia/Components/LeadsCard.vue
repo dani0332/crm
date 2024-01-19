@@ -46,17 +46,9 @@ const onLoadMore = id => {
       }),
     )
     .then(({ data }) => {
-      // let { data } = quote.value.data;
-      // console.log(data);
-      // data = data.map(quote => {
-      //   if (quote.id === id) {
-      //     quote.data.leads_list = {
-      //       ...item.leads_list,
-      //       data: quote.data.leads_list.data.concat(item.leads_list.data),
-      //     };
-      //   }
-      //   return quote;
-      // });
+      quote.value.data.total_premium =
+        Number(quote.value.data.total_premium) +
+        Number(useCalculateTotalSum(data.leads_list.data, 'premium'));
       quote.value.data.total_leads = data.leads_list.total;
       quote.value.data.leads_list.next_page_url = data.leads_list.next_page_url;
       quote.value.data.leads_list.data =
