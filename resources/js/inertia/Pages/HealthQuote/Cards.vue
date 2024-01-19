@@ -1,5 +1,4 @@
 <script setup>
-import { formatTimeAgo } from '@vueuse/core';
 import Pusher from 'pusher-js';
 const props = defineProps({
   quoteStatusEnum: Object,

@@ -25,6 +25,11 @@ const quotes = reactive({
   queries: {},
 });
 
+const options = {
+  cluster: 'ap1',
+  forceTLS: false,
+};
+
 const leadsCount = ref(props.totalCount);
 const previousDate = getPreviousDate;
 const pusher = new Pusher(page.props.pusherKey, options);
