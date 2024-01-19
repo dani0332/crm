@@ -18,7 +18,7 @@ class HomeQuoteRepository extends BaseRepository
             ['advisor', 'nationality', 'insuranceProvider'])->orderBy('created_at', 'desc');
     }
 
-    public function fetchGetData($forExport = false)
+    public function fetchGetData($forExport = false, $forTotalLeadsCount = false)
     {
         $query = $this->with([
             'quoteStatus',
@@ -29,9 +29,13 @@ class HomeQuoteRepository extends BaseRepository
             'nationality',
             'insuranceProvider',
         ])
-            ->filter(! $forExport)
-            ->withFakeLeadCriteria()
+            ->filter(! $forExport, $forTotalLeadsCount)
+            ->withFakeLeadCriteria($forTotalLeadsCount)
             ->orderBy('created_at', 'desc');
+
+        if ($forTotalLeadsCount) {
+            return $query->count();
+        }
 
         return ($forExport) ? $query->get() : $query->simplePaginate();
 

@@ -72,7 +72,8 @@ class YachtQuoteController extends Controller
         if (! empty($response->errors) || ! empty($response->msg)) {
             vAbort($response->msg);
         }
-        event(new LeadsCount(PersonalQuote::class, QuoteTypes::YACHT->id()));
+
+        event(new LeadsCount(YachtQuoteRepository::getData(true, true)));
 
         return redirect('personal-quotes/yacht/'.$response->quoteUID)->with('message', 'Quote created successfully');
     }
@@ -202,6 +203,7 @@ class YachtQuoteController extends Controller
             'lostReasons' => $lostReasons,
             'quoteTypeId' => QuoteTypes::YACHT->id(),
             'quoteType' => QuoteTypes::YACHT->value,
+            'totalCount' => YachtQuoteRepository::getData(true, true),
         ]);
     }
 }
