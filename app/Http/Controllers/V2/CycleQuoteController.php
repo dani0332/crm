@@ -72,7 +72,8 @@ class CycleQuoteController extends Controller
         if (! empty($response->errors) || ! empty($response->msg)) {
             vAbort($response->msg);
         }
-        event(new LeadsCount(PersonalQuote::class, QuoteTypes::CYCLE->id()));
+
+        event(new LeadsCount(CycleQuoteRepository::getData(true, true)));
 
         return redirect('personal-quotes/cycle/'.$response->quoteUID)->with('message', 'Quote created successfully');
     }
@@ -211,6 +212,7 @@ class CycleQuoteController extends Controller
             'lostReasons' => $lostReasons,
             'quoteTypeId' => QuoteTypes::CYCLE->id(),
             'quoteType' => QuoteTypes::CYCLE->value,
+            'totalCount' => CycleQuoteRepository::getData(true, true),
         ]);
     }
 }

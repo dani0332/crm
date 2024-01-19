@@ -42,6 +42,7 @@ const channel = pusher.subscribe(
 const listen = () => {
   channel.bind('leads.count', function (e) {
     leadsCount.value = e.totalLeadsCount;
+    console.log('leads.count', e.totalLeadsCount);
   });
 };
 

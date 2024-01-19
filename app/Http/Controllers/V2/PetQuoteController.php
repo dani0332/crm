@@ -14,7 +14,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\PetQuoteRequest;
 use App\Models\Emirate;
 use App\Models\Nationality;
-use App\Models\PersonalQuote;
+use App\Models\PetQuote;
 use App\Repositories\ActivityRepository;
 use App\Repositories\CustomerMembersRepository;
 use App\Repositories\DocumentTypeRepository;
@@ -79,7 +79,8 @@ class PetQuoteController extends Controller
         if (! empty($response->errors) || ! empty($response->msg)) {
             vAbort($response->msg);
         }
-        event(new LeadsCount(PersonalQuote::class, QuoteTypes::PET->id()));
+
+        event(new LeadsCount(PetQuoteRepository::getData(true, true)));
 
         return redirect(route('pet-quotes-show', $response->quoteUID))->with('message', 'Quote is created successfully.');
     }
@@ -224,7 +225,7 @@ class PetQuoteController extends Controller
             'lostReasons' => $lostReasons,
             'quoteTypeId' => QuoteTypes::PET->id(),
             'quoteType' => QuoteTypes::PET->value,
-            // 'totalCount' => PetQuoteRepository::getTotalCount(),
+            'totalCount' => PetQuoteRepository::getData(true, true),
         ]);
     }
 }

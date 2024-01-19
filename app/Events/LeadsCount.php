@@ -2,15 +2,6 @@
 
 namespace App\Events;
 
-use App\Enums\quoteBusinessTypeCode;
-use App\Enums\quoteTypeCode;
-use App\Enums\QuoteTypeId;
-use App\Enums\RolesEnum;
-use App\Models\BusinessQuote;
-use App\Models\HealthQuote;
-use App\Models\HomeQuote;
-use App\Models\PersonalQuote;
-use Faker\Provider\ar_EG\Person;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
@@ -22,14 +13,14 @@ class LeadsCount implements ShouldBroadcast
 
     private $modelObject;
     private $quoteType;
+    private $leadCount;
 
     /**
      * Create a new event instance.
      */
-    public function __construct($modelObject, $quoteType)
+    public function __construct($leadCount)
     {
-        $this->modelObject = $modelObject;
-        $this->quoteType = $quoteType;
+        $this->leadCount = $leadCount;
     }
     
     /**
@@ -50,63 +41,8 @@ class LeadsCount implements ShouldBroadcast
     public function broadcastWith(): array
     {
         return [
-            'totalLeadsCount' => $this->getTotalLeadsCount($this->modelObject, $this->quoteType),
+            'totalLeadsCount' => $this->leadCount,
         ];
     }
-
-    private function getTotalLeadsCount($modelObject, $quoteTypeId)
-    {
-        $totalLeadsCount = 0;
-        $getRoleByQuoteTypeId = [
-            QuoteTypeId::Pet => RolesEnum::PetAdvisor,
-            QuoteTypeId::Cycle => RolesEnum::CycleAdvisor,
-            QuoteTypeId::Yacht => RolesEnum::YachtAdvisor,
-            QuoteTypeId::Home => RolesEnum::HomeAdvisor,
-            QuoteTypeId::Health => RolesEnum::HealthAdvisor,
-            QuoteTypeId::Business => RolesEnum::BusinessAdvisor,
-        ];
-
-        $checkCorplineAdvisor = [
-            auth()->user()->isSpecificTeamAdvisor(quoteTypeCode::CORPLINE),
-            auth()->user()->isSpecificTeamAdvisor(quoteTypeCode::Business),
-            auth()->user()->isSpecificTeamAdvisor(quoteTypeCode::Amt),
-            auth()->user()->isSpecificTeamAdvisor(quoteTypeCode::GM),
-        ];
-
-        // Todo:: Need to update query as per list view
-        switch ($modelObject) {
-            case PersonalQuote::class:
-                $totalLeadsCount = $modelObject::where('quote_type_id', $quoteTypeId)
-                ->withFakeLeadCriteria()
-                ->when(\auth()->user()->hasRole($getRoleByQuoteTypeId[$quoteTypeId]), function ($query) {
-                    $query->where('advisor_id', \auth()->user()->id);
-                })
-                ->count();
-                break;
-
-            case HomeQuote::class:
-            case HealthQuote::class:
-                $totalLeadsCount = $modelObject::withFakeLeadCriteria()
-                ->when(\auth()->user()->hasRole($getRoleByQuoteTypeId[$quoteTypeId]), function ($query) {
-                    $query->where('advisor_id', \auth()->user()->id);
-                })
-                ->count();
-                break;
-
-            case BusinessQuote::class:
-                $totalLeadsCount = $modelObject::withFakeLeadCriteria()
-                ->whereNot('business_type_of_insurance_id', quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical))
-                ->when(in_array(true, $checkCorplineAdvisor), function ($query) {
-                    $query->where('advisor_id', auth()->user()->id);
-                })
-                ->count();
-                break;
-            
-            default:
-                $totalLeadsCount = $totalLeadsCount;
-                break;
-        }
-
-        return $totalLeadsCount;
-    }
+    
 }

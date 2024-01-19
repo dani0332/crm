@@ -57,7 +57,7 @@ class CycleQuoteRepository extends BaseRepository
     /**
      * @return mixed
      */
-    public function fetchGetData($forExport = false)
+    public function fetchGetData($forExport = false, $forTotalLeadsCount = false)
     {
         $query = $this->byQuoteTypeCode(QuoteTypes::CYCLE)->with([
             'quoteStatus',
@@ -67,9 +67,13 @@ class CycleQuoteRepository extends BaseRepository
             ->when(\auth()->user()->hasRole(RolesEnum::CycleAdvisor), function ($query) {
                 $query->where('advisor_id', \auth()->user()->id);
             })
-            ->filter(! $forExport)
-            ->withFakeLeadCriteria()
+            ->filter(! $forExport, $forTotalLeadsCount)
+            ->withFakeLeadCriteria($forTotalLeadsCount)
             ->orderBy('created_at', 'desc');
+
+        if ($forTotalLeadsCount) {
+            return $query->count();
+        }
 
         return ($forExport) ? $query->get() : $query->simplePaginate();
     }
