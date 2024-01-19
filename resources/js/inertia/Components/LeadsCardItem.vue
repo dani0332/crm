@@ -21,7 +21,10 @@ const lostReasons = inject('lostReasons');
 
 const { isRequired } = useRules();
 
-const leads = ref(props.leads);
+const leads = computed(() => {
+  return props.leads;
+});
+
 const leadForm = useForm({
   lostreason: null,
 });
@@ -68,7 +71,7 @@ const moveTask = async () => {
   return confirmed;
 };
 
-useSortable(`#${props.title}`, props.leads, {
+useSortable(`#${props.title}`, leads.value, {
   group: {
     name: 'shared',
     put: true,
@@ -148,7 +151,7 @@ const getUrl = (url, quoteTypeId) => useGetShowPageRoute(url, quoteTypeId);
     :id="title"
     :quote_status_id="id"
     class="shared"
-    :class="{ 'h-full': props.leads.length == 0 }"
+    :class="{ 'h-full': leads.length == 0 }"
   >
     <a
       v-for="{

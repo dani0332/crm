@@ -17,6 +17,7 @@ const page = usePage();
 provide('quoteStatusEnum', props.quoteStatusEnum);
 provide('quoteTypeId', props.quoteTypeId);
 provide('lostReasons', props.lostReasons);
+provide('quoteType', props.quoteType);
 
 const quotes = reactive({
   data: page.props.quotes || [],
@@ -32,6 +33,7 @@ const options = {
 };
 
 const leadsCount = ref(props.totalCount);
+const previousDate = getPreviousDate;
 const pusher = new Pusher(page.props.pusherKey, options);
 const channel = pusher.subscribe(
   'public.' + page.props.appEnv + '.total-leads-count',
@@ -60,9 +62,14 @@ onUnmounted(() => {
     <div class="flex justify-between items-center">
       <div class="flex items-center gap-5">
         <h2 class="text-xl font-semibold">Pet List</h2>
-        <span class="border-2 rounded px-3 bg-gray-200 text-sm font-medium">{{
-          leadsCount
-        }}</span>
+        <x-tooltip>
+          <span class="border-2 rounded px-3 bg-gray-200 text-sm font-medium"
+            >{{ leadsCount }}
+          </span>
+          <template #tooltip>
+            <span>Total Leads received since {{ previousDate() }}</span>
+          </template>
+        </x-tooltip>
       </div>
 
       <div class="space-x-2">

@@ -12,21 +12,19 @@ const props = defineProps({
 });
 
 const quotes = ref({ ...props.quotes });
+const quote = ref({ ...props.quote });
 const page = usePage();
 const quoteType = inject('quoteType');
+
+const computedLeads = computed(() => {
+  return quote.value.data.leads_list.data;
+});
 
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
 
 const isAllowed = computed(() => {
   return can(permissionsEnum.LEAD_CARD_SEARCH) ?? false;
-  //   hasAnyRole([
-  //     advisor.value,
-  //     rolesEnum.OperationAssistant,
-  //     unitManager.value,
-  //     rolesEnum.UnitHead,
-  //   ]) ?? false
-  // );
 });
 
 const quoteTitle = computed(() => {
@@ -48,15 +46,13 @@ const onLoadMore = id => {
       }),
     )
     .then(({ data }) => {
-      quotes.value.data = quotes.value.data.map(quote => {
-        if (quote.id === id) {
-          quote.data.leads_list = {
-            ...data.leads_list,
-            data: quote.data.leads_list.data.concat(data.leads_list.data),
-          };
-        }
-        return quote;
-      });
+      quote.value.data.total_premium =
+        Number(quote.value.data.total_premium) +
+        Number(useCalculateTotalSum(data.leads_list.data, 'premium'));
+      quote.value.data.total_leads = data.leads_list.total;
+      quote.value.data.leads_list.next_page_url = data.leads_list.next_page_url;
+      quote.value.data.leads_list.data =
+        quote.value.data.leads_list.data.concat(data.leads_list.data);
     })
     .catch(err => {
       console.log(err);
@@ -166,19 +162,23 @@ const UpdateLeadsCount = data => {
       <h4 class="font-semibold text-sm">{{ quote.text ?? quote.title }}</h4>
       <div class="flex justify-between gap-1">
         <span>Total Leads </span>
-        <span>{{ quote.data.total_leads }}</span>
+        <span>{{ quote.data.total_leads }} </span>
       </div>
       <div class="flex justify-between gap-1">
         <span>Total Opportunity</span>
         <span>{{
-          Number(quote.data.total_opportunity) > -1
+          Number(quote.data.total_opportunity) > 0
             ? Number(quote.data.total_opportunity).toLocaleString()
-            : 0
+            : '0.00'
         }}</span>
       </div>
       <div class="flex justify-between gap-1">
         <span>Total Price </span>
-        <span>{{ Number(quote.data.total_premium).toLocaleString() }}</span>
+        <span>{{
+          Number(quote.data.total_premium) > 0
+            ? Number(quote.data.total_premium).toLocaleString()
+            : '0.00'
+        }}</span>
       </div>
       <div v-if="isAllowed">
         <x-input
@@ -209,7 +209,7 @@ const UpdateLeadsCount = data => {
       <leads-card-item
         :title="quoteTitle.split(' ').join('')"
         :id="quote.id"
-        :leads="quote.data.leads_list.data"
+        :leads="computedLeads"
         @UpdateLeadsCount="data => UpdateLeadsCount(data)"
       />
       <div
