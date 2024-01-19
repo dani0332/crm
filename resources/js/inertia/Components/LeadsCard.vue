@@ -175,14 +175,18 @@ const UpdateLeadsCount = data => {
       <div class="flex justify-between gap-1">
         <span>Total Opportunity</span>
         <span>{{
-          Number(quote.data.total_opportunity) > -1
+          Number(quote.data.total_opportunity) > 0
             ? Number(quote.data.total_opportunity).toLocaleString()
-            : 0
+            : '0.00'
         }}</span>
       </div>
       <div class="flex justify-between gap-1">
         <span>Total Price </span>
-        <span>{{ Number(quote.data.total_premium).toLocaleString() }}</span>
+        <span>{{
+          Number(quote.data.total_premium) > 0
+            ? Number(quote.data.total_premium).toLocaleString()
+            : '0.00'
+        }}</span>
       </div>
       <div v-if="isAllowed">
         <x-input
