@@ -82,6 +82,7 @@ const isCreditApprovalView = ref(false);
 const isCreditCardView = ref(false);
 const isDiscountError = ref(false);
 const discountError = ref('');
+const isTotalPriceUpdated = ref(false);
 
 const modal2Ref = ref(null);
 
@@ -562,7 +563,9 @@ const handleApprovalReasonChange = () => {
       paymentMethodsModels.value[i] = 'CA';
     }
   } else {
-    handleCollectionTypeChange();
+    if (isTotalPriceUpdated.value === false) {
+      handleCollectionTypeChange();
+    }    
   }
 };
 
@@ -717,7 +720,6 @@ const calculatePaymentBreakup = (changeMethod = true) => {
       return;
     }    
   }
-
   for (let i = 1; i <= paymentMethodsForm.payment_no; i++) { 
     if(readOnlyPayments.value[i]!=undefined && readOnlyPayments.value[i]===true) {
       continue;
@@ -940,14 +942,14 @@ const addPaymentModal = () => {
 };
 
 const editPaymentModal = (payment,split_payment_id,sr_no,capture_approval) => {
-
+  /*
   if( sr_no===0 && (payment.payment_status.id === props.paymentStatusEnum.PAID || payment.payment_status.id === props.paymentStatusEnum.CAPTURED) && capture_approval===0 ) {
     notification.error({
           title: 'No further actions allowed to paid payments',
           position: 'top',
         });
     return false;
-  };
+  };*/
   paymentMethodsForm.reset();
   splitPaymentNo.value = 0;
   isFieldReadonly.value = false;
@@ -981,6 +983,7 @@ const editPaymentModal = (payment,split_payment_id,sr_no,capture_approval) => {
   isDiscountDocumentNotUploaded.value = false;
   discountDocumentModel.value = [];
   isDiscountEnabled.value = false;
+  isTotalPriceUpdated.value = false;
   if(sr_no>0){
     splitPaymentNo.value = sr_no;
     isFieldReadonly.value = true;
@@ -1039,7 +1042,7 @@ const editPaymentModal = (payment,split_payment_id,sr_no,capture_approval) => {
   calculateTotalAmount();
 
   var isAnyPaid = false;
-  for(let i=1; i<=payment.total_payments; i++){
+  for(let i=1; i<=payment.total_payments; i++){ 
     if(
       payment.payment_splits[i-1].payment_status_id===props.paymentStatusEnum.PAID ||
       payment.payment_splits[i-1].payment_status_id===props.paymentStatusEnum.AUTHORISED ||      
@@ -1051,7 +1054,7 @@ const editPaymentModal = (payment,split_payment_id,sr_no,capture_approval) => {
       isAnyPaid = true;
     } else {
       readOnlyPayments.value[i] = false;
-    }     
+    }
     fileUploadModels.value[i] = [];
     paymentMethodsModels.value[i] = payment.payment_splits[i-1].payment_method.code;
     splitAmountModels.value[i] = payment.payment_splits[i-1].payment_amount;
@@ -1083,16 +1086,20 @@ const editPaymentModal = (payment,split_payment_id,sr_no,capture_approval) => {
       }
      }
   }
-  
+
   if (paymentMethodsForm.status == 'edit') {
     //if ( isAnyPaid && (totalPrice.value <= payment.total_price) ) { //FOR EDIT
-    if ( isAnyPaid ) {
+    ////if ( isAnyPaid ) {
+    totalPrice.value = payment.total_price;
+    totalAmount.value = payment.total_price-payment.discount_value;
+    if ( isAnyPaid && (payment.total_price===(payment.total_amount+payment.discount_value)) ) { //FOR EDIT
       isFieldReadonly.value = true;    
-    } else {
+    } else {      
       isFieldReadonly.value = false;      
+      isTotalPriceUpdated.value = true;
     }    
-  } 
-
+  }
+  
   if(capture_approval>0) {
     isApproveClicked.value = true;
     if(capture_approval==1) {
@@ -1926,6 +1933,7 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
                 v-model="paymentMethodsForm.collection_type"                
                 :rules="[rules.isRequired]"
                 @change="handleCollectionTypeChange"
+                :disabled="isTotalPriceUpdated"
                 >
                 <template v-for="option in collectionTypes" :key="option.value">
                     <option :value="option.value" :title="option.tooltip" >{{ option.label }}</option>                
@@ -2060,6 +2068,7 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
                   class="custom-select"
                   v-model="paymentMethodsForm.credit_approval"
                   @change="handleApprovalReasonChange"
+                  :disabled="isTotalPriceUpdated"
                   >
                   <template v-for="option in creditApprovalReasons" :key="option.value">
                       <option :value="option.value" :title="option.tooltip">
@@ -2827,7 +2836,7 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
                 paymentMethodsForm.status == 'edit'
               "
             >
-              <x-button color="emerald" type="submit" tabindex="0" class="focus:outline-black">
+              <x-button color="emerald" type="submit" tabindex="0" class="focus:outline-black" :loading = "paymentMethodsForm.processing">
                 {{ paymentMethodsForm.status == 'create' ? 'Add Manual Payment' : 'Update' }}          
               </x-button>
             </div>          
