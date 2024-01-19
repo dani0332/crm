@@ -4,11 +4,7 @@ const notification = useNotifications('toast');
 const page = usePage();
 
 const permissionEnum = page.props.permissionsEnum;
-const rolesEnum = page.props.rolesEnum;
-
-const hasRole = role => useHasRole(role);
 const can = permission => useCan(permission);
-const hasAnyRole = roles => useHasAnyRole(roles);
 
 const props = defineProps({
   payments: Array,
@@ -1662,7 +1658,7 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
       <h3 class="font-semibold text-primary-800 text-lg">Manage Payments</h3>
       <template v-if="payments.length>0">
         <x-button
-            v-if="hasRole(rolesEnum.CarAdvisor)"
+            v-if="can(permissionEnum.PaymentsCreate)"
             size="sm"
             color="emerald"
             @click="addPaymentModal"          
@@ -1673,7 +1669,7 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
       <template v-else>
         <x-tooltip>
           <x-button
-            v-if="hasRole(rolesEnum.CarAdvisor)"
+            v-if="can(permissionEnum.PaymentsCreate)"
             size="sm"
             color="emerald"
             @click="addPaymentModal"          
@@ -1816,9 +1812,8 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
               <td>{{ formatString(item.payment_status.text) }}</td>
               <td>{{ item.payment_allocation_status !== null ? formatString(item.payment_allocation_status) : '' }}</td>             
               <td>
-                <div class="flex gap-2">
-                <template v-if="hasRole(rolesEnum.CarAdvisor)">                    
-                    <x-button size="xs" color="primary" outlined @click="editPaymentModal(item,0,0,0)">
+                <div class="flex gap-2">                                
+                    <x-button v-if="can(permissionEnum.PaymentsEdit)" size="xs" color="primary" outlined @click="editPaymentModal(item,0,0,0)">
                         Edit
                     </x-button>
                     <template v-if="can(permissionEnum.ApprovePayments)">
@@ -1830,8 +1825,7 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
                       @click="getCaptureValidation ? editPaymentModal(item, 0, 0, 2) : alertCapture()">
                           Approve
                       </x-button>
-                    </template>
-                </template>
+                    </template>               
             </div>
               </td>
             </template>           
