@@ -104,9 +104,6 @@ class RenewalBatchReportService extends BaseService
             ->withQueryString();
     }
 
-
-
-
     /**
      * get all available filters options function
      *
@@ -837,7 +834,7 @@ class RenewalBatchReportService extends BaseService
             $userIds = [];
             $userIds = $this->walkTree($authUserId);
             $query = $query->whereIn('health_quote_request.advisor_id', $userIds);
-            // ->whereIn('health_quote_request.advisor_id', $userIds);
+        // ->whereIn('health_quote_request.advisor_id', $userIds);
         } elseif (! isset($filters->advisors) && $authUserIsAdvisor && ! $authUserIsManager && ! $authUserIsRenewalsManager) {
             $query->whereIn('health_quote_request.advisor_id', array_merge([$authUserId], $teamUsersIds));
         }
@@ -846,7 +843,7 @@ class RenewalBatchReportService extends BaseService
         $batchNo = isset($filters->batchNo) ? $filters->batchNo : null;
         if ($batchNo) {
             $query->whereIn('health_quote_request.renewal_batch', $batchNo);
-            // $query->whereIn('health_quote_request.renewal_batch', $batchNo);
+        // $query->whereIn('health_quote_request.renewal_batch', $batchNo);
         } else {
             // $renewalBatches = $renewalBatches->pluck('name')->toArray();
             $query->whereIn('health_quote_request.renewal_batch', $renewalBatches);
@@ -869,7 +866,6 @@ class RenewalBatchReportService extends BaseService
 
         //         DB::raw('SUM(CASE WHEN car_quote_request.advisor_id in ('.$valueSegmentAdvisorsIdString.')
         //         THEN 1 ELSE 0 END) as total_by_value_segment_advisors')
-
 
         //     );
         // }
@@ -908,6 +904,7 @@ class RenewalBatchReportService extends BaseService
         // );
 
         $query->where('health_quote_request.created_at', '<=', $reportDateEnd);
+
         // $query->where('health_quote_request.created_at', '<=', $reportDateEnd);
         // dd($query->toSql());
         return $query;
