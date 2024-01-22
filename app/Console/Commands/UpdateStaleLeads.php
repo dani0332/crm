@@ -27,9 +27,9 @@ class UpdateStaleLeads extends Command
      *
      * @var string
      */
-    protected $description = 'Updates the leads with flag Stale when last modified date is greater than 30 days. This should not be applied on leads which having
-    status "Transaction approved", "Policy Documents Pending", "Policy issued", "Policy sent to customer", "Policy booked", "LOST", "FAKE", "Duplicate", "Cancellation Pending", "Policy Cancelled"';
-
+    protected $description = 'Update status Stale on leads which quote status are not updated from last 30 days. It should not apply on leads which having status 
+        Transaction Approved, Policy Documents Pending, Policy Issued, Policy sent to Customer, Policy Booked, Lost, Fake, Duplicate, Cancellation Pending, Policy Cancelled.';
+    
     /**
      * Execute the console command.
      */

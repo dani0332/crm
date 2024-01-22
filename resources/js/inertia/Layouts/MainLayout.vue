@@ -321,7 +321,7 @@ const onLogout = () => {
           >
             <span class="text-red-600"
               >You have
-              <Link :href="route(bannerInfo.quote_route)" class="underline">{{
+              <Link :href="bannerInfo.quote_route" class="underline">{{
                 bannerInfo.total_count
               }}</Link>
               stale leads, follow up with client and update the lead status
