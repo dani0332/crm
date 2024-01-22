@@ -326,7 +326,7 @@ class PaymentSplitsRepository
             $customerData['id'] = $quote->id;
             $sageApiService = new SageApiService();
             $sageCustomerNumber = $sageApiService->verifySageCustomer($request->customer_id, $customerData);
-            $sageCustomerNumber = 'IC008';
+            //$sageCustomerNumber = 'IC008';
             $request->merge(['sage_customer_number' => $sageCustomerNumber]);
             // create prepayment reciept
             $payLoadOptions = SagePayloadFactory::createPrepaymentPayload($request);
