@@ -124,20 +124,7 @@ const commonHeaders = reactive([
   },
 ]);
 
-let computedHeaders = ref([...healthHeaders, ...commonHeaders]);
-
-watch(
-  () => filters.line_of_bussiness,
-  () => {
-    let specificHeaders =
-      filters.line_of_bussiness === 'health'
-        ? healthHeaders
-        : filters.line_of_bussiness === 'corpline'
-        ? corplineHeaders
-        : [];
-    computedHeaders = [...specificHeaders, ...commonHeaders];
-  },
-);
+const computedHeaders = ref([...healthHeaders, ...commonHeaders]);
 
 const teams = ref([
   { value: 'renewal', label: 'Renewal' },
@@ -173,6 +160,52 @@ function onReset() {
     onSuccess: () => (loaders.table = false),
   });
 }
+
+const [
+  today,
+  last7Days,
+  last30Days,
+  lastMonthStart,
+  lastMonthEnd,
+  thisMonthStart,
+  thisMonthEnd,
+] = useDateRange();
+
+const presetDates = [
+  {
+    label: 'Today',
+    value: [today, today],
+  },
+  {
+    label: 'Last 7 days',
+    value: [last7Days, today],
+  },
+  {
+    label: 'Last 30 days',
+    value: [last30Days, today],
+  },
+  {
+    label: 'Last month',
+    value: [lastMonthStart, lastMonthEnd],
+  },
+  {
+    label: 'This month',
+    value: [thisMonthStart, thisMonthEnd],
+  },
+];
+
+watch(
+  () => filters.line_of_bussiness,
+  () => {
+    let specificHeaders = [];
+    if (filters.line_of_bussiness === 'health') {
+      specificHeaders = healthHeaders;
+    } else if (filters.line_of_bussiness === 'corpline') {
+      specificHeaders = corplineHeaders;
+    }
+    computedHeaders.value = [...specificHeaders, ...commonHeaders];
+  },
+);
 </script>
 <template>
   <Head title="Pipeline Report" />
@@ -190,6 +223,7 @@ function onReset() {
           size="sm"
           placeholder="Select Date"
           model-type="yyyy-MM-dd"
+          :preset-dates="presetDates"
         />
       </x-field>
       <x-field label="Line Of Bussiness">
@@ -237,7 +271,7 @@ function onReset() {
           placeholder="Search by Ecommerce"
           :options="[
             { value: 'total_leads', label: 'Total Leads' },
-            { value: 'total_oppertunity', label: 'Total Oppertunity' },
+            { value: 'total_opportunity', label: 'Total Opportunity' },
           ]"
           class="w-full"
         />
@@ -253,7 +287,10 @@ function onReset() {
       </x-field>
     </div>
     <div class="flex gap-3 justify-end items-center">
-      <column-selection v-model:columns="computedHeaders"></column-selection>
+      <ColumnSelection
+        v-model:columns="computedHeaders"
+        storage-key="pipeline-report"
+      />
       <x-button size="sm" color="#ff5e00" type="submit">Search</x-button>
       <x-button size="sm" color="primary" @click.prevent="onReset">
         Reset
@@ -268,8 +305,6 @@ function onReset() {
     :items="[]"
     border-cell
     :empty-message="'No Records Available'"
-    :sort-by="'net_conversion'"
-    :sort-type="'desc'"
     hide-footer
   >
   </DataTable>

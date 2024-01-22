@@ -10,16 +10,23 @@ const loaders = reactive({
 
 const advisorOptions = ref([]);
 
+const params = useUrlSearchParams('history');
+const cleanObj = obj => useCleanObj(obj);
+const serverOptions = ref({
+  page: 1,
+  sortBy: 'created_at',
+  sortType: 'desc',
+});
+
 const filters = reactive({
   date: null,
   line_of_bussiness: 'health',
   teams: null,
   advisors: null,
   filter_by: null,
-  page: 1,
 });
 
-const healthHeaders = reactive([
+const healthHeaders = ref([
   {
     text: 'RENEWAL TERMS RECEIVED',
     value: 'renewal_terms_recevied',
@@ -46,7 +53,7 @@ const healthHeaders = reactive([
   },
 ]);
 
-const corplineHeaders = reactive([
+const corplineHeaders = ref([
   {
     text: 'RENEWAL TERMS RECEIVED',
     value: 'renewal_terms_recevied',
@@ -73,7 +80,7 @@ const corplineHeaders = reactive([
   },
 ]);
 
-const commonHeaders = reactive([
+const commonHeaders = ref([
   {
     text: 'TEAM',
     value: 'team',
@@ -124,20 +131,7 @@ const commonHeaders = reactive([
   },
 ]);
 
-let computedHeaders = ref([...healthHeaders, ...commonHeaders]);
-
-watch(
-  () => filters.line_of_bussiness,
-  () => {
-    let specificHeaders =
-      filters.line_of_bussiness === 'health'
-        ? healthHeaders
-        : filters.line_of_bussiness === 'corpline'
-        ? corplineHeaders
-        : [];
-    computedHeaders = [...specificHeaders, ...commonHeaders];
-  },
-);
+const tableHeader = ref([...healthHeaders.value, ...commonHeaders.value]);
 
 const teams = ref([
   { value: 'renewal', label: 'Renewal' },
@@ -153,13 +147,20 @@ const filteredTeams = computed(() => {
 
 const onSubmit = isValid => {
   if (!isValid) return;
-  filters.page = 1;
+  serverOptions.value.page = 1;
+
+  const filtersCleaned = cleanObj(filters);
+
   router.visit(route('stale-leads-report'), {
     method: 'get',
-    data: useGenerateQueryString(filters),
+    data: {
+      ...filtersCleaned,
+      ...serverOptions.value,
+    },
     preserveState: true,
     preserveScroll: true,
     onBefore: () => (loaders.table = true),
+    onSuccess: () => changeLob(),
     onFinish: () => (loaders.table = false),
   });
 };
@@ -206,6 +207,64 @@ const onTeamChange = e => {
   //   loaders.advisorOptions = false;
   // });
 };
+
+const [
+  today,
+  last7Days,
+  last30Days,
+  lastMonthStart,
+  lastMonthEnd,
+  thisMonthStart,
+  thisMonthEnd,
+] = useDateRange();
+
+const presetDates = [
+  {
+    label: 'Today',
+    value: [today, today],
+  },
+  {
+    label: 'Last 7 days',
+    value: [last7Days, today],
+  },
+  {
+    label: 'Last 30 days',
+    value: [last30Days, today],
+  },
+  {
+    label: 'Last month',
+    value: [lastMonthStart, lastMonthEnd],
+  },
+  {
+    label: 'This month',
+    value: [thisMonthStart, thisMonthEnd],
+  },
+];
+
+function changeLob() {
+  let specificHeaders = [];
+  if (filters.line_of_bussiness === 'health') {
+    specificHeaders = healthHeaders.value;
+  } else if (filters.line_of_bussiness === 'corpline') {
+    specificHeaders = corplineHeaders.value;
+  }
+  tableHeader.value = [...specificHeaders, ...commonHeaders.value];
+}
+
+function setQueryStringFilters() {
+  for (const [key] of Object.entries(params)) {
+    if (key.includes('[]')) {
+      filters[key.substring(0, key.length - 2)] = params[key];
+    } else {
+      filters[key] = params[key];
+    }
+  }
+}
+
+onMounted(() => {
+  setQueryStringFilters();
+  changeLob();
+});
 </script>
 <template>
   <Head title="Stale Leads Report" />
@@ -214,7 +273,7 @@ const onTeamChange = e => {
   </h1>
   <x-divider class="my-4" />
   <x-form @submit="onSubmit" :auto-focus="false">
-    <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
+    <div class="grid sm:grid-cols-2 md:grid-cols-3 gap-4">
       <x-field label="Date Range" required>
         <DatePicker
           v-model="filters.date"
@@ -223,6 +282,7 @@ const onTeamChange = e => {
           size="sm"
           placeholder="Select Date"
           model-type="yyyy-MM-dd"
+          :preset-dates="presetDates"
         />
       </x-field>
       <x-field label="Line Of Bussiness">
@@ -267,17 +327,17 @@ const onTeamChange = e => {
       <x-field label="Filter By">
         <x-select
           v-model="filters.filter_by"
-          placeholder="Search by Ecommerce"
+          placeholder="Filter By"
           :options="[
             { value: 'total_leads', label: 'Total Leads' },
-            { value: 'total_oppertunity', label: 'Total Oppertunity' },
+            { value: 'total_opportunity', label: 'Total Opportunity' },
           ]"
           class="w-full"
         />
       </x-field>
       <x-field
-        label="Bussiness Insurance Type"
         v-if="filters.line_of_bussiness == 'corpline'"
+        label="Bussiness Insurance Type"
       >
         <ComboBox
           placeholder="Search by Bussiness Insurance Type"
@@ -286,7 +346,10 @@ const onTeamChange = e => {
       </x-field>
     </div>
     <div class="flex gap-3 justify-end items-center">
-      <column-selection v-model:columns="computedHeaders"></column-selection>
+      <ColumnSelection
+        v-model:columns="tableHeader"
+        :storage-key="`staleleads-report-${filters.line_of_bussiness}`"
+      />
       <x-button size="sm" color="#ff5e00" type="submit">Search</x-button>
       <x-button size="sm" color="primary" @click.prevent="onReset">
         Reset
@@ -297,7 +360,7 @@ const onTeamChange = e => {
     class="mt-4"
     table-class-name=""
     :loading="loaders.table"
-    :headers="computedHeaders"
+    :headers="tableHeader"
     :items="[]"
     border-cell
     :empty-message="'No Records Available'"
