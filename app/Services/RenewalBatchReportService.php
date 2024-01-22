@@ -288,6 +288,13 @@ class RenewalBatchReportService extends BaseService
             $teamUsersIdsString = ! empty($teamUsersIds) ? implode(',', $teamUsersIds) : '0';
         }
 
+        $sbdmTeamId = Team::where('name', TeamNameEnum::SBDM)->select('id')->first();
+        if ($sbdmTeamId && in_array($sbdmTeamId->id, $authUserTeamsIds)) {
+            $sbdmTeamId = $sbdmTeamId->id;
+            $teamUsersIds = $this->getUsersByTeamIds([$sbdmTeamId])->pluck('id')->toArray();
+            $teamUsersIdsString = !empty($teamUsersIds) ? implode(',', $teamUsersIds) : '0';
+        }
+
         $corpTeamId = Team::where('name', TeamNameEnum::MOTOR_COOPERATE_RENEWALS)->select('id')->first();
         if ($corpTeamId) {
             $corpTeamId = $corpTeamId->id;

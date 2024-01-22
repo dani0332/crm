@@ -62,12 +62,12 @@ const tableHeader = [
         text: 'Car Sold/Cancelled',
         value: 'car_sold',
     },
+    // {
+    //     text: 'Uncontactable',
+    //     value: 'uncontactable',
+    // },
     {
-        text: 'Uncontactable',
-        value: 'uncontactable',
-    },
-    {
-        text: 'Total Allocated (excluding cancelled and uncontactable)',
+        text: 'Total Allocated (excluding approved car sold)',
         value: 'total_allocate_minus_cancelled_uncontactable',
     },
     {
@@ -270,12 +270,12 @@ function calculateValuesAndHighlight() {
             item.total_allocated_leads = item.total_by_volume_segment_advisors
             item.renewed = item.renewed_by_volume_segment_advisors
             item.car_sold = item.car_sold_by_volume_segment
-            item.uncontactable = item.uncontactable_by_volume_segment
+            // item.uncontactable = item.uncontactable_by_volume_segment
         } else if (segmentFilter == 'value') {
             item.total_allocated_leads = item.total_by_value_segment_advisors
             item.renewed = item.renewed_by_value_segment_advisors
             item.car_sold = item.car_sold_by_value_segment
-            item.uncontactable = item.uncontactable_by_value_segment
+            // item.uncontactable = item.uncontactable_by_value_segment
         }
     });
 
@@ -295,7 +295,8 @@ function calculateValuesAndHighlight() {
                     parseInt(item.renewed) /
                     (
                         parseInt(item.total_allocated_leads) -
-                        parseInt(item.car_sold) - parseInt(item.uncontactable)
+                        parseInt(item.car_sold)
+                        // - parseInt(item.uncontactable)
                     )) * 100
 
             ).toFixed(2);
@@ -311,7 +312,8 @@ function calculateValuesAndHighlight() {
                     parseInt(item.renewed_by_all_advisors) /
                     (
                         parseInt(item.total_allocated_leads_by_all_advisors) -
-                        parseInt(item.car_sold_by_all_advisors) - parseInt(item.uncontactable_by_all_advisors)
+                        parseInt(item.car_sold_by_all_advisors)
+                        // - parseInt(item.uncontactable_by_all_advisors)
                     )) * 100
 
             ).toFixed(2);
@@ -325,7 +327,8 @@ function calculateValuesAndHighlight() {
                     parseInt(item.renewed) /
                     (
                         parseInt(item.total_allocated_leads) -
-                        parseInt(item.car_sold) - parseInt(item.uncontactable)
+                        parseInt(item.car_sold)
+                        // - parseInt(item.uncontactable)
                     )) * 100
 
             ).toFixed(2);
@@ -340,7 +343,8 @@ function calculateValuesAndHighlight() {
                 parseInt(item.renewed_by_value_segment_advisors) /
                 (
                     parseInt(item.total_by_value_segment_advisors) -
-                    parseInt(item.car_sold_by_value_segment) - parseInt(item.uncontactable_by_value_segment)
+                    parseInt(item.car_sold_by_value_segment)
+                    // - parseInt(item.uncontactable_by_value_segment)
                 )) * 100
         ).toFixed(2);
         valueSegmentConversion = valueSegmentConversion == 'NaN' ? '0.00' : valueSegmentConversion;
@@ -350,7 +354,8 @@ function calculateValuesAndHighlight() {
                 parseInt(item.renewed_by_volume_segment_advisors) /
                 (
                     parseInt(item.total_by_volume_segment_advisors) -
-                    parseInt(item.car_sold_by_volume_segment) - parseInt(item.uncontactable_by_volume_segment)
+                    parseInt(item.car_sold_by_volume_segment)
+                    // - parseInt(item.uncontactable_by_volume_segment)
                 )) * 100
         ).toFixed(2);
         volumeSegmentConversion = volumeSegmentConversion == 'NaN' ? '0.00' : volumeSegmentConversion;
@@ -360,7 +365,9 @@ function calculateValuesAndHighlight() {
         let ratioCarSoldUncontactable = (
             (
                 (
-                    parseInt(item.car_sold) + parseInt(item.uncontactable)) /
+                    parseInt(item.car_sold)
+                    // + parseInt(item.uncontactable)
+                    ) /
                 parseInt(item.total_allocated_leads)
             ) * 100
         ).toFixed(2);
@@ -489,7 +496,7 @@ const calculateMonthlySum = (data, index) => {
     var totalRenewed = 0;
     var totalAllocated = 0;
     var totalCarSold = 0;
-    var totalCarUncontactable = 0;
+    // var totalCarUncontactable = 0;
     currentRowSpan = 0;
 
     var currentMonthValue = data[index].month;
@@ -500,13 +507,15 @@ const calculateMonthlySum = (data, index) => {
             totalRenewed = parseInt(totalRenewed) + parseInt(data[index].renewed);
             totalAllocated = parseInt(totalAllocated) + parseInt(data[index].total_allocated_leads);
             totalCarSold = parseInt(totalCarSold) + parseInt(data[index].car_sold);
-            totalCarUncontactable = parseInt(totalCarUncontactable) + parseInt(data[index].uncontactable);
+            // totalCarUncontactable = parseInt(totalCarUncontactable) + parseInt(data[index].uncontactable);
             index++;
             lastMonthSummedIndex = index;
             currentRowSpan++;
         }
 
-        var result = totalRenewed / (totalAllocated - totalCarSold - totalCarUncontactable) * 100;
+        var result = totalRenewed / (totalAllocated - totalCarSold
+        // - totalCarUncontactable
+        ) * 100;
 
         return (result).toFixed(2);
     }
@@ -626,17 +635,18 @@ watch(
                                     Approved Car Sold
                                 </th>
 
-                                <th class="py-2 font-semibold tracking-widest uppercase text-xs px-3 sticky top-0 text-left">
+                                <!-- <th class="py-2 font-semibold tracking-widest uppercase text-xs px-3 sticky top-0 text-left">
                                     Approved Uncontactable
-                                </th>
+                                </th> -->
 
                                 <th v-if="hasAnyRole([rolesEnum.CarManager, rolesEnum.RenewalsManager, rolesEnum.SeniorManagement, rolesEnum.Accounts])"
                                     class="py-2 font-semibold tracking-widest uppercase text-xs px-3 sticky top-0 text-left">
-                                    Ratio - Approved Car Sold and Uncontactable
+                                    Ratio - Approved Car Sold
+                                    <!-- and Uncontactable -->
                                 </th>
 
                                 <th class="py-2 font-semibold tracking-widest uppercase text-xs px-3 sticky top-0 text-left">
-                                    Total Allocations (excluding cancelled and uncontactable)
+                                    Total Allocations (excluding approved car sold)
                                 </th>
 
                                 <th class="py-2 font-semibold tracking-widest uppercase text-xs px-3 sticky top-0 text-left">
@@ -667,9 +677,9 @@ watch(
                                 <td class="x-table-cell px-3 py-4 align-middle">
                                     {{ item.car_sold.toLocaleString() }}
                                 </td>
-                                <td class="x-table-cell px-3 py-4 align-middle">
+                                <!-- <td class="x-table-cell px-3 py-4 align-middle">
                                     {{ item.uncontactable.toLocaleString() }}
-                                </td>
+                                </td> -->
                                 <td v-if="hasAnyRole([rolesEnum.CarManager, rolesEnum.RenewalsManager, rolesEnum.SeniorManagement, rolesEnum.Accounts])"
                                     class="x-table-cell px-3 py-4 align-middle">
                                     {{ item.ratioCarSoldUncontactable }} %
@@ -677,8 +687,9 @@ watch(
                                 <td class="x-table-cell px-3 py-4 align-middle">
                                     <!-- Sum of allocations per batch  - (Approved Car Sold + Approved Uncontactable) -->
                                     <p v-if="item.total_allocated_leads == 0"> 0 </p>
-                                    <p v-else>{{ totalAllocationList[item.name] =  (parseInt(item.total_allocated_leads) - (parseInt(item.car_sold) +
-                                        parseInt(item.uncontactable))).toLocaleString() }} </p>
+                                    <p v-else>{{ totalAllocationList[item.name] =  (parseInt(item.total_allocated_leads) - (parseInt(item.car_sold)
+                                        // + parseInt(item.uncontactable)
+                                        )).toLocaleString() }} </p>
                                 </td>
                                 <td :class="item.advisorRetentionClass" class="x-table-cell px-3 py-4 align-middle">
                                     {{ item.advisorRetention }} %
