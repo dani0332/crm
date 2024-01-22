@@ -16,6 +16,7 @@ class RenewalBatch extends Model implements AuditableContract
      * @var mixed
      */
     const RENEWALS_VOLUME = 'Renewals Volume';
+
     const RENEWALS_VALUE = 'Renewals Value';
     const BDM = 'BDM';
     const SBDM = 'SBDM';
@@ -24,6 +25,7 @@ class RenewalBatch extends Model implements AuditableContract
      * @var mixed
      */
     const SEGMENT_TYPE_VOLUME = 'volume';
+
     const SEGMENT_TYPE_VALUE = 'value';
 
     /**
