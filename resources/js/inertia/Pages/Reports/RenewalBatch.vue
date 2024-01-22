@@ -3,6 +3,7 @@ import { useDateFormat } from '@vueuse/shared';
 
 defineProps({
     reportData: Object,
+    superRetentionData: Object,
     filterOptions: Object,
     defaultFilters: Object,
     renewalBatchesList: Object
@@ -243,8 +244,11 @@ let avgRawRetentionArr = {};
 
 let monthlyIMAverages = {};
 let monthlyRawAverages = {};
+let totalAllocationList = [];
+let renewedCountsList = [];
 
 const reportDataRef = reactive(page.props.reportData.data);
+const superRetentionDataRef = reactive(page.props.superRetentionData.data);
 
 function getMonthName(monthNumber) {
     const date = new Date();
@@ -272,6 +276,14 @@ function calculateValuesAndHighlight() {
             item.renewed = item.renewed_by_value_segment_advisors
             item.car_sold = item.car_sold_by_value_segment
             item.uncontactable = item.uncontactable_by_value_segment
+        }
+    });
+
+    superRetentionDataRef.forEach((superItem, superIndex) => {
+        if (segmentFilter == 'volume') {
+            superItem.health_converted = superItem.health_converted_by_volume_segment_advisors
+        } else if (segmentFilter == 'value') {
+            superItem.health_converted = superItem.health_converted_by_value_segment_advisors
         }
     });
 
@@ -647,7 +659,7 @@ watch(
                                     {{ useDateFormat(item.end_date, 'MMM DD').value }}
                                 </td>
                                 <td class="x-table-cell px-3 py-4 align-middle">
-                                    {{ item.renewed.toLocaleString() }}
+                                    {{ renewedCountsList[item.name] = item.renewed.toLocaleString() }}
                                 </td>
                                 <td class="x-table-cell px-3 py-4 align-middle">
                                     {{ item.total_allocated_leads.toLocaleString() }}
@@ -665,7 +677,7 @@ watch(
                                 <td class="x-table-cell px-3 py-4 align-middle">
                                     <!-- Sum of allocations per batch  - (Approved Car Sold + Approved Uncontactable) -->
                                     <p v-if="item.total_allocated_leads == 0"> 0 </p>
-                                    <p v-else>{{ (parseInt(item.total_allocated_leads) - (parseInt(item.car_sold) +
+                                    <p v-else>{{ totalAllocationList[item.name] =  (parseInt(item.total_allocated_leads) - (parseInt(item.car_sold) +
                                         parseInt(item.uncontactable))).toLocaleString() }} </p>
                                 </td>
                                 <td :class="item.advisorRetentionClass" class="x-table-cell px-3 py-4 align-middle">
@@ -754,7 +766,7 @@ watch(
                                 Month
                             </th>
                             <th
-                                class="py-2 font-semibold tracking-widest uppercase text-xs px-3 sticky top-0 text-left w-28">
+                                class="py-2 font-semibold tracking-widest uppercase text-xs px-3 sticky top-0 text-left">
                                 AVERAGE IM RETENTION
                             </th>
                             <th class="py-2 font-semibold tracking-widest uppercase text-xs px-3 sticky top-0 text-left">
@@ -788,7 +800,7 @@ watch(
                                 Batch No.
                             </th>
                             <th
-                                class="py-2 font-semibold tracking-widest uppercase text-xs px-3 sticky top-0 text-left w-28">
+                                class="py-2 font-semibold tracking-widest uppercase text-xs px-3 sticky top-0 text-left">
                                 Week Ending
                             </th>
                             <th class="py-2 font-semibold tracking-widest uppercase text-xs px-3 sticky top-0 text-left">
@@ -800,7 +812,7 @@ watch(
                         </tr>
                     </thead>
                     <tbody>
-                        <tr v-for="(item, index) in reportDataRef" :key="index"
+                        <tr v-for="(item, index) in superRetentionDataRef" :key="index"
                             class="border-b border-gray-200 align-top">
 
                             <td class="x-table-cell px-3 py-4 align-middle">
@@ -813,11 +825,9 @@ watch(
                                 {{ item.health_converted}}
                             </td>
                             <td class="x-table-cell px-3 py-4 align-middle">
-                                {{ (item.renewed + item.health_converted ) /
-                                        parseInt(item.total_allocated_leads) - (parseInt(item.car_sold)).toLocaleString
-                                }} %
+                                <p v-if="totalAllocationList[item.name] == 0 || totalAllocationList[item.name] == undefined"> 0 % </p>
+                                <p v-else>{{ ((Number(item.health_converted) + Number (renewedCountsList[item.name])) / Number(totalAllocationList[item.name]))}} %</p>
                             </td>
-
                         </tr>
                     </tbody>
                 </table>

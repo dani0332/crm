@@ -344,6 +344,14 @@ class CRUDService extends BaseService
                 }
             }
 
+            // ========= assign renewal batch to HEALTH LOB leads upon transaction approved =========
+
+            if (strtolower($request->modelType) == strtolower(quoteTypeCode::Health) && $request->leadStatus == QuoteStatusEnum::TransactionApproved) {
+                $this->healthQuoteService->assignRenewalBatch($entity);
+            }
+
+            // ========= END =========
+
             QuoteStatusLog::create([
                 'quote_type_id' => QuoteTypeId::Car,
                 'quote_request_id' => $entity->id,
