@@ -251,4 +251,9 @@ class PersonalQuote extends Model implements AuditableContract
         return $this->hasMany(Activities::class, 'quote_request_id')
         ->whereIn('quote_type_id', [QuoteTypeId::Yacht, QuoteTypeId::Jetski, QuoteTypeId::Cycle, QuoteTypeId::Bike, QuoteTypeId::Pet]);
     }
+
+    public function notes()
+    {
+        return $this->morphMany(QuoteNote::class, 'quote_noteable');
+    }
 }

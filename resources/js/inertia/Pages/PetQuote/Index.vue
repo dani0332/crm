@@ -37,40 +37,15 @@ let availableFilters = {
 const canExport = ref(false);
 const filters = reactive(availableFilters);
 
-function onSubmit(isValid) {
-  if (isValid) {
-    filters.page = 1;
-
-    Object.keys(filters).forEach(
-      key =>
-        (filters[key] === '' || filters[key].length === 0) &&
-        delete filters[key],
-    );
-
-    router.visit(route('pet-quotes-list'), {
-      method: 'get',
-      data: filters,
-      preserveState: true,
-      preserveScroll: true,
-      onBefore: () => (loader.table = true),
-      onSuccess: () => (loader.table = false),
-    });
-  } else {
-    console.log('Invalid');
-  }
-}
-
-function onReset() {
-  router.visit(route('pet-quotes-list'), {
-    method: 'get',
-    data: { page: 1 },
-    preserveScroll: true,
-    onBefore: () => (loader.table = true),
-    onSuccess: () => (loader.table = false),
-  });
-}
-
-onMounted(() => {});
+const params = useUrlSearchParams('history');
+const cleanObj = obj => useCleanObj(obj);
+const showFilters = ref(true);
+const filtersCount = ref(0);
+const serverOptions = ref({
+  page: 1,
+  sortBy: 'created_at',
+  sortType: 'desc',
+});
 
 const tableHeader = ref([
   { text: 'Ref-ID', value: 'uuid', is_active: true },
@@ -78,8 +53,18 @@ const tableHeader = ref([
   { text: 'LAST NAME', value: 'last_name', is_active: true },
   { text: 'LEAD STATUS', value: 'quote_status', is_active: true },
   { text: 'ADVISOR', value: 'advisor', is_active: true },
-  { text: 'CREATED DATE', value: 'created_at', is_active: true },
-  { text: 'LAST MODIFIED DATE', value: 'updated_at', is_active: true },
+  {
+    text: 'CREATED DATE',
+    value: 'created_at',
+    is_active: true,
+    sortable: true,
+  },
+  {
+    text: 'LAST MODIFIED DATE',
+    value: 'updated_at',
+    is_active: true,
+    sortable: true,
+  },
   { text: 'TRANSAPP CODE', value: 'transapp_code', is_active: true },
   { text: 'SOURCE', value: 'source', is_active: true },
   { text: 'LOST REASON', value: 'lost_reason', is_active: true },
@@ -103,6 +88,49 @@ const tableHeader = ref([
   },
   { text: 'Renewal Batch', value: 'renewal_batch', is_active: true },
 ]);
+
+function onSubmit(isValid) {
+  if (isValid) {
+    serverOptions.value.page = 1;
+
+    const filtersCleaned = cleanObj(filters);
+
+    filtersCount.value = Object.keys(filtersCleaned).length;
+
+    router.visit(route('pet-quotes-list'), {
+      method: 'get',
+      data: {
+        ...filtersCleaned,
+        ...serverOptions.value,
+      },
+      preserveState: true,
+      preserveScroll: true,
+      onBefore: () => (loader.table = true),
+      onSuccess: () => (loader.table = false),
+    });
+  } else {
+    console.log('Invalid');
+  }
+}
+
+function onReset() {
+  router.visit(route('pet-quotes-list'), {
+    method: 'get',
+    data: { page: 1 },
+    preserveScroll: true,
+    onBefore: () => (loader.table = true),
+    onSuccess: () => (loader.table = false),
+  });
+}
+
+const handleSelectedFilters = async selectedFilters => {
+  if (selectedFilters.created_at_start && selectedFilters.created_at_end) {
+    filters.created_at_start = selectedFilters.created_at_start;
+    filters.created_at_end = selectedFilters.created_at_end;
+
+    onSubmit(true);
+  }
+};
 
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
@@ -140,6 +168,39 @@ const onLeadAssigned = () => {
   quotesSelected.value = [];
 };
 
+function setQueryStringFilters() {
+  for (const [key] of Object.entries(params)) {
+    if (key.includes('[]')) {
+      filters[key.substring(0, key.length - 2)] = params[key];
+    } else {
+      filters[key] = params[key];
+    }
+  }
+}
+
+onMounted(() => {
+  setQueryStringFilters();
+
+  let filtersCleaned = cleanObj(filters);
+
+  if (filtersCleaned.sortBy) {
+    serverOptions.value.sortBy = filtersCleaned.sortBy;
+    delete filtersCleaned.sortBy;
+  }
+
+  if (filtersCleaned.sortType) {
+    serverOptions.value.sortType = filtersCleaned.sortType;
+    delete filtersCleaned.sortType;
+  }
+
+  if (filtersCleaned.page) {
+    serverOptions.value.page = filtersCleaned.page;
+    delete filtersCleaned.page;
+  }
+
+  filtersCount.value = Object.keys(filtersCleaned).length;
+});
+
 watch(
   () => filters,
   () => {
@@ -151,6 +212,13 @@ watch(
   },
   { deep: true, immediate: true },
 );
+
+watch(
+  () => serverOptions.value,
+  (newValue, oldValue) => {
+    if (oldValue !== newValue) onSubmit(true);
+  },
+);
 </script>
 
 <template>
@@ -159,11 +227,15 @@ watch(
     <div class="flex justify-between items-center">
       <h2 class="text-xl font-semibold">Pet Quotes List</h2>
       <div class="flex items-center space-x-2">
-        <column-selection
-          :storageKey="quoteType"
-          v-model:columns="tableHeader"
-        ></column-selection>
+        <ColumnSelection v-model:columns="tableHeader" storage-key="pet-list" />
 
+        <FiltersButton
+          :is-shown="showFilters"
+          :filters="filters"
+          :filters-count="filtersCount"
+          @selected-filters="handleSelectedFilters"
+          @toggleFilters="showFilters = !showFilters"
+        />
         <Link :href="route('pet-quotes-card')">
           <x-button size="sm" color="#1d83bc" tag="div"> Cards View </x-button>
         </Link>
@@ -179,8 +251,7 @@ watch(
     </div>
     <x-divider class="my-4" />
 
-    <!--   filters     -->
-    <x-form @submit="onSubmit" :auto-focus="false">
+    <x-form v-show="showFilters" @submit="onSubmit" :auto-focus="false">
       <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
         <div>
           <x-tooltip position="bottom">
@@ -320,7 +391,14 @@ watch(
         </div>
         <div v-else />
         <div class="flex justify-self-end gap-3">
-          <x-button size="sm" color="#ff5e00" type="submit">Search</x-button>
+          <x-button
+            size="sm"
+            color="#ff5e00"
+            type="submit"
+            :loading="loader.table"
+          >
+            Search
+          </x-button>
           <x-button size="sm" color="primary" @click.prevent="onReset">
             Reset
           </x-button>
@@ -344,6 +422,7 @@ watch(
 
     <DataTable
       v-model:items-selected="quotesSelected"
+      v-model:server-options="serverOptions"
       table-class-name="tablefixed"
       :headers="tableHeader"
       :loading="loader.table"

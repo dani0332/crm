@@ -6,6 +6,7 @@ use App\Enums\CustomerTypeEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\quoteStatusCode;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
@@ -23,6 +24,7 @@ use App\Repositories\LostReasonRepository;
 use App\Repositories\PaymentMethodRepository;
 use App\Repositories\PersonalPlanRepository;
 use App\Repositories\PetQuoteRepository;
+use App\Repositories\QuoteNoteRepository;
 use App\Repositories\QuoteStatusRepository;
 use App\Repositories\UserRepository;
 use App\Services\AMLService;
@@ -119,6 +121,8 @@ class PetQuoteController extends Controller
             })->values();
         }
 
+        $quoteNotes = QuoteNoteRepository::getBy($quote->id, quoteTypeCode::Pet);
+
         return inertia('PetQuote/Show', [
             'quoteType' => QuoteTypes::PET,
             'quote' => $quote,
@@ -146,6 +150,7 @@ class PetQuoteController extends Controller
             'emirates' => $emirates,
             'UBOsDetails' => $uboDetails,
             'UBORelations' => $uboRelations,
+            'quoteNotes' => $quoteNotes,
         ]);
     }
 

@@ -110,4 +110,9 @@ class BusinessQuote extends Model implements AuditableContract
         return $this->hasMany(Activities::class, 'quote_request_id')
         ->where('quote_type_id', QuoteTypeId::Business);
     }
+
+    public function notes()
+    {
+        return $this->morphMany(QuoteNote::class, 'quote_noteable');
+    }
 }

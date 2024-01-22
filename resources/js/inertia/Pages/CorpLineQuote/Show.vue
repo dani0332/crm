@@ -28,6 +28,7 @@ const props = defineProps({
   canAddBatchNumber: Boolean,
   documentTypes: Object,
   storageUrl: String,
+  quoteNotes: Object,
 });
 
 const page = usePage();
@@ -555,7 +556,7 @@ const linkEntity = () => {
         </p>
       </div>
       <div class="flex gap-2">
-        <LeadNotes />
+        <LeadNotes :notes="quoteNotes" modelType="Business" :quote="quote"/>
         <x-button
           v-if="isDuplicateAllowed"
           size="sm"

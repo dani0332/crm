@@ -24,12 +24,13 @@ use App\Http\Requests\DragAndDropUpdateLeadStatusRequest;
 use App\Http\Requests\DuplicateLobRequest;
 use App\Http\Requests\LeadAssignRequest;
 use App\Http\Requests\PlanDetailsRequest;
+use App\Http\Requests\QuoteNotesRequest;
 use App\Http\Requests\UpdateLastYearPolicyRequest;
 use App\Models\Customer;
 use App\Models\Entity;
 use App\Models\HealthQuoteRequestDetail;
+use App\Models\QuoteNote;
 use App\Models\QuoteRequestEntityMapping;
-use App\Models\Teams;
 use App\Services\CentralService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Http\Request;
@@ -203,6 +204,20 @@ class CentralController extends Controller
         return redirect()->back()->with('success', 'updated successfully');
     }
 
+    public function saveQuoteNotes(QuoteNotesRequest $quoteNotesRequest)
+    {
+        $notes = new QuoteNote([
+            'quote_status_id' => $quoteNotesRequest->quoteStatusId,
+            'note' => $quoteNotesRequest->notes,
+            'created_by' => auth()->id(),
+        ]);
+
+        $quote = $this->getQuoteObject($quoteNotesRequest->quoteType, $quoteNotesRequest->quoteRequestId);
+        $quote->notes()->save($notes);
+
+        return redirect()->back()->with('success', 'Note has been added successfully.');
+    }
+    
     public function updateLeadStatusDragDrop(DragAndDropUpdateLeadStatusRequest $dragAndDropUpdateLeadStatusRequest)
     {
 

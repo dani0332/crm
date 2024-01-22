@@ -8,6 +8,10 @@ const props = defineProps({
     type: Object,
     require: true,
   },
+  quoteTypeId: {
+    type: Number,
+    require: true,
+  },
 });
 
 const quotes = ref({ ...props.quotes });
@@ -173,9 +177,10 @@ const onSearch = id => {
         <p>No Leads Found</p>
       </div>
       <leads-card-item
-        :title="quoteTitle.split(' ').join('')"
+        :title="quote.title.split(' ').join('')"
         :id="quote.id"
         :leads="quote.data.leads_list.data"
+        :quote_type_id="quoteTypeId"
       />
       <div
         class="mt-3"

@@ -162,4 +162,9 @@ class HealthQuote extends Model implements AuditableContract
         return $this->hasMany(Activities::class, 'quote_request_id')
             ->where('quote_type_id', QuoteTypeId::Health);
     }
+
+    public function notes()
+    {
+        return $this->morphMany(QuoteNote::class, 'quote_noteable');
+    }
 }

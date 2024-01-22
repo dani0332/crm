@@ -49,6 +49,7 @@ use App\Repositories\InsuranceProviderRepository;
 use App\Repositories\LookupRepository;
 use App\Repositories\LostReasonRepository;
 use App\Repositories\NationalityRepository;
+use App\Repositories\QuoteNoteRepository;
 use App\Repositories\RenewalBatchRepository;
 use App\Repositories\UserRepository;
 use App\Services\ActivitiesService;
@@ -767,6 +768,7 @@ class CRUDController extends Controller
                 })->sortBy('label')->values();
             }
             $documentTypes = $this->quoteDocumentService->getQuoteDocumentsForUpload(QuoteTypeId::Home);
+            $quoteNotes = QuoteNoteRepository::getBy($record->id, QuoteTypes::HOME->name);
 
             return inertia('HomeQuote/Show', [
                 'storageUrl' => storageUrl(),
@@ -811,6 +813,7 @@ class CRUDController extends Controller
                 'emirates' => $emirates,
                 'quoteType' => QuoteTypes::HOME,
                 'documentTypes' => $documentTypes,
+                'quoteNotes' => $quoteNotes,
             ]);
         }
 
@@ -889,6 +892,7 @@ class CRUDController extends Controller
             $embeddedProducts = EmbeddedProductRepository::byQuoteType(QuoteTypes::HEALTH->id(), $record->id);
 
             $healthPlanTypes = HealthPlanType::where('is_active', 1)->select('id', 'text')->get();
+            $quoteNotes = QuoteNoteRepository::getBy($record->id, QuoteTypes::HEALTH->name);
             
             return inertia('HealthQuote/Show', [
                 'paymentLink' => $paymentLink,
@@ -943,7 +947,8 @@ class CRUDController extends Controller
                 'industryType' => $industryType,
                 'UBOsDetails' => $uboDetails,
                 'UBORelations' => $uboRelations,
-                'staleDays' => $record->stale_at, now()->diffInDays(Carbon::parse("$record->stale_at"))
+                'staleDays' => $record->stale_at, now()->diffInDays(Carbon::parse("$record->stale_at")),
+                'quoteNotes' => $quoteNotes
             ]);
         } else {
             return view('shared.show', compact([

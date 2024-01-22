@@ -116,7 +116,7 @@ const subTeamOptions = [
   { value: 'travelUaeOutbound', label: 'Outside UAE (OutBound)' },
 ];
 
-function filterQuotes(isValid) {
+function onSubmit(isValid) {
   if (!isValid) {
     return;
   }
@@ -129,7 +129,6 @@ function filterQuotes(isValid) {
   router.visit(route('travel.index'), {
     method: 'get',
     data: filters,
-
     preserveState: true,
     preserveScroll: true,
     onFinish: () => {
@@ -246,11 +245,6 @@ onMounted(() => {
     <div class="flex justify-between items-center">
       <h2 class="text-xl font-semibold">Lead List</h2>
       <div class="flex space-x-2 items-center">
-        <!-- <column-selection
-          :storageKey="quoteType"
-          v-model:columns="tableHeader"
-        ></column-selection> -->
-
         <Link :href="route('travel.expired.upload')" v-if="permissions.admin">
           <x-button size="sm" color="#1d83bc" tag="div">
             Upload Expired Leads
@@ -265,7 +259,7 @@ onMounted(() => {
       </div>
     </div>
     <x-divider class="my-4" />
-    <x-form @submit="filterQuotes" :auto-focus="false">
+    <x-form @submit="onSubmit" :auto-focus="false">
       <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
         <div>
           <x-tooltip position="bottom">

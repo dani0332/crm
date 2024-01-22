@@ -35,6 +35,7 @@ const props = defineProps({
   UBOsDetails: Array,
   canAddBatchNumber: Boolean,
   quoteRequest: Object,
+  quoteNotes: Object,
 });
 
 const page = usePage();
@@ -220,7 +221,7 @@ const linkEntity = () => {
         </p>
       </div>
       <div class="flex gap-2">
-        <LeadNotes />
+        <LeadNotes :notes="quoteNotes" :modelType="quoteType" :quote="quote"/>
         <Link
           v-if="can(permissionsEnum.YachtQuotesEdit)"
           :href="route('yacht-quotes-edit', quote.uuid)"

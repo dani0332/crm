@@ -142,6 +142,16 @@ class ReportsController extends Controller
         ]);
     }
 
+    public function renderStaleLeadsReport(Request $request, ReportService $reportService)
+    {
+        return inertia('Reports/StaleLeadsReport', []);
+    }
+
+    public function renderPipelineReport(Request $request, ReportService $reportService)
+    {
+        return inertia('Reports/PipelineReport', []);
+    }
+    
     /**
      * generate renewal reports function
      *

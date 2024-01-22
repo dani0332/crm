@@ -38,6 +38,7 @@ const props = defineProps({
   UBOsDetails: Array,
   canAddBatchNumber: Boolean,
   quoteRequest: Object,
+  quoteNotes: Object,
 });
 
 const page = usePage();
@@ -281,7 +282,7 @@ const linkEntity = () => {
         </p>
       </div>
       <div class="flex gap-2">
-        <LeadNotes />
+        <LeadNotes :notes="quoteNotes" :modelType="quoteType" :quote="quote"/>
         <x-button size="sm" color="#ff5e00" @click.prevent="openDuplicate">
           Duplicate Lead
         </x-button>

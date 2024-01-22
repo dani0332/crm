@@ -1,33 +1,95 @@
 <script setup>
 import AppModal from './AppModal.vue';
 
-const showModal = ref(false);
-
-const showAddNotes = ref(false);
-
-const tableHeader = reactive([
-  { text: 'MODIFIED BY', value: 'modified_by', is_active: true },
-  { text: 'MODIFIED DATE', value: 'modified_date', is_active: true },
-  { text: 'NOTES', value: 'notes', is_active: true },
-  { text: 'LEAD STATUS', value: 'lead_status', is_active: true },
-  { text: 'ACTIONS', value: 'actions', is_active: true },
-]);
-
-const data = reactive([
-  {
-    modified_by: 'MODIFIED BY',
-    modified_date: 'code',
-    notes:
-      "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum",
-    lead_status: 'pending',
-  },
-]);
-
-const notesForm = useForm({
-  notes: null,
+const props = defineProps({
+  notes: Object,
+  modelType: String,
+  quote: Object,
 });
 
+const showModal = ref(false);
+const showAddNotes = ref(false);
+const isEdit = ref(false);
+
+const tableHeader = reactive([
+  { text: 'MODIFIED BY', value: 'created_by' },
+  { text: 'MODIFIED DATE', value: 'created_at' },
+  { text: 'NOTES', value: 'note' },
+  { text: 'LEAD STATUS', value: 'quote_status' },
+  { text: 'ACTIONS', value: 'action' },
+]);
+
+const notesForm = reactive({
+  notes: null,
+  quote_request_id: props.quote?.id,
+  quote_type: props.modelType,
+  quote_status_id: props.quote?.quote_status_id,
+});
+
+const onNoteSubmit = () => {
+  let notesData = {
+    quoteType: notesForm.quote_type,
+    quoteRequestId: notesForm.quote_request_id,
+    notes: notesForm.notes,
+    quoteStatusId: notesForm.quote_status_id,
+  };
+
+  if (isEdit.value) {
+    // Note: Endpoint for edit notes
+    axios
+      .put('/save-quote-notes', notesData)
+      .then(response => {
+        if (response.status == 200) {
+          notification.success({
+            title: 'Note has been successfully Updated',
+            position: 'top',
+          });
+        } else {
+          notification.error({
+            title: 'Note has not been updated',
+            position: 'top',
+          });
+        }
+      })
+      .catch(err => {
+        notification.error({
+          title: 'Something went wrong',
+          position: 'top',
+        });
+      });
+  } else {
+    axios
+      .post('/save-quote-notes', notesData)
+      .then(response => {
+        if (response.status == 200) {
+          notification.success({
+            title: 'Note has been added successfully',
+            position: 'top',
+          });
+        } else {
+          notification.error({
+            title: 'Note has not been added successfully',
+            position: 'top',
+          });
+        }
+      })
+      .catch(err => {
+        notification.error({
+          title: 'Something went wrong',
+          position: 'top',
+        });
+      });
+  }
+};
+
 const notesLength = computed(() => notesForm.notes?.length ?? 0);
+
+const onEditNote = data => {
+  notesForm.notes = data.note;
+  notesForm.id = data.id;
+  showAddNotes.value = true;
+  isEdit.value = true;
+};
 </script>
 <template>
   <div>
@@ -58,33 +120,55 @@ const notesLength = computed(() => notesForm.notes?.length ?? 0);
       <DataTable
         table-class-name=""
         :headers="tableHeader"
-        :items="data || []"
+        :items="notes.data || []"
         border-cell
         hide-rows-per-page
         hide-footer
         fixed-checkbox
         class="mt-5"
       >
-        <template #item-notes="{ notes }">
-          <x-collapse icon="chevronDown" show-icon>
+        <template #item-created_by="{ created_by }">
+          {{ created_by.name }}
+        </template>
+
+        <template #item-quote_status="{ quote_status }">
+          {{ quote_status.text }}
+        </template>
+        <template #item-note="{ note }">
+          <template v-if="note.length < 40">
+            {{ note }}
+          </template>
+          <x-collapse v-else icon="chevronDown" show-icon>
             <div class="bg-gray-10 w-80">
-              {{ notes.slice(0, 40) }}
+              {{ note.slice(0, 40) }}
             </div>
             <template #content>
               <div>
-                {{ notes.slice(40, notes.length) }}
+                {{ note.slice(40, note.length) }}
               </div>
             </template>
           </x-collapse>
         </template>
+        <template #item-action="item">
+          <div class="flex gap-2">
+            <x-button
+              size="xs"
+              color="primary"
+              outlined
+              @click.prevent="onEditNote(item)"
+            >
+              Edit
+            </x-button>
+          </div>
+        </template>
       </DataTable>
       <Pagination
         :links="{
-          next: data.next_page_url,
-          prev: data.prev_page_url,
-          current: data.current_page,
-          from: data.from,
-          to: data.to,
+          next: notes.next_page_url,
+          prev: notes.prev_page_url,
+          current: notes.current_page,
+          from: notes.from,
+          to: notes.to,
         }"
       />
     </div>
@@ -93,10 +177,10 @@ const notesLength = computed(() => notesForm.notes?.length ?? 0);
   <!-- Modal for add/Update notes related to Leads -->
   <AppModal class="min-w-[30%]" v-model="showAddNotes" show-header show-close>
     <template #header>
-      <p class="font-bold m-0">Add Notes</p>
+      <p class="font-bold m-0">{{ isEdit ? 'Update' : 'Add' }} Notes</p>
     </template>
 
-    <form class="w-full">
+    <div class="w-full">
       <x-field label="Notes" class="w-full">
         <x-textarea
           :adjustToText="false"
@@ -128,8 +212,10 @@ const notesLength = computed(() => notesForm.notes?.length ?? 0);
         <x-button size="sm" @click.prevent="showAddNotes = false">
           Cancel
         </x-button>
-        <x-button size="sm" color="emerald"> Save </x-button>
+        <x-button @click="onNoteSubmit" size="sm" color="emerald">
+          {{ isEdit ? 'Update' : 'Save' }}
+        </x-button>
       </div>
-    </form>
+    </div>
   </AppModal>
 </template>

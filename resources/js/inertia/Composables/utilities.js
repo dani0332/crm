@@ -14,9 +14,8 @@ export const useCleanObj = reactive =>
       reactive[key] === undefined ||
       reactive[key] === '' ||
       reactive[key] === false ||
-      reactive[key].length === 0
-    )
-    {
+      reactive[key]?.length === 0
+    ) {
       delete reactive[key];
     }
   });
@@ -26,7 +25,7 @@ export const useCleanObj = reactive =>
 export const useObjToUrl = obj =>
 {
   Object.keys(obj).forEach(
-    key => (obj[key] === '' || obj[key].length === 0) && delete obj[key],
+    key => (obj[key] === '' || obj[key]?.length === 0) && delete obj[key],
   );
   return Object.keys(obj)
     .map(key =>

@@ -6,6 +6,7 @@ use App\Enums\CustomerTypeEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\quoteStatusCode;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Http\Controllers\Controller;
@@ -22,6 +23,7 @@ use App\Repositories\LookupRepository;
 use App\Repositories\LostReasonRepository;
 use App\Repositories\PaymentMethodRepository;
 use App\Repositories\PersonalPlanRepository;
+use App\Repositories\QuoteNoteRepository;
 use App\Repositories\QuoteStatusRepository;
 use App\Repositories\UserRepository;
 use App\Repositories\YachtQuoteRepository;
@@ -119,6 +121,7 @@ class YachtQuoteController extends Controller
         $embeddedProducts = EmbeddedProductRepository::byQuoteType(QuoteTypes::YACHT->id(), $quote->id);
         $lookupService = app(LookupService::class);
         $industryType = $lookupService->getCompanyTypes();
+        $quoteNotes = QuoteNoteRepository::getBy($quote->id, quoteTypeCode::Yacht);
 
         return inertia('YachtQuote/Show', [
             'quoteType' => QuoteTypes::YACHT,
@@ -143,6 +146,7 @@ class YachtQuoteController extends Controller
             'nationalities' => $nationalities,
             'industryType' => $industryType,
             'emirates' => $emirates,
+            'quoteNotes' => $quoteNotes,
         ]);
     }
 
