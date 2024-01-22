@@ -2,12 +2,9 @@
 
 namespace App\Services;
 
-use App\Enums\GenericRequestEnum;
 use App\Enums\ManagementReportCategoriesEnum;
 use App\Enums\ManagementReportTypeEnum;
-use App\Models\LeadSource;
 use App\Models\PersonalQuote;
-use App\Models\Team;
 use App\Strategies\ManagementReport;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
