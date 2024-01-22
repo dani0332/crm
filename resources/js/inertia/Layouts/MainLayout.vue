@@ -4,12 +4,11 @@ const user = computed(() => page.props.auth.user);
 const navLinks = computed(() => page.props.sidebar);
 const openSidebar = ref(false);
 const bannerInfo = computed(() => {
-  let { is_multiple_lobs_allowed, route, total_count, quotes_count } =
-    page.props.totalQuotesCount;
+  let { quote_route, total_count } = page.props.totalQuotesCount;
 
   return {
     total_count: total_count,
-    report_route: is_multiple_lobs_allowed ? route : quotes_count.route,
+    quote_route: quote_route,
   };
 });
 
@@ -322,7 +321,7 @@ const onLogout = () => {
           >
             <span class="text-red-600"
               >You have
-              <Link :href="route(bannerInfo.report_route)" class="underline">{{
+              <Link :href="route(bannerInfo.quote_route)" class="underline">{{
                 bannerInfo.total_count
               }}</Link>
               stale leads, follow up with client and update the lead status
