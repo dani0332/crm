@@ -6,8 +6,10 @@ use App\Enums\CustomerTypeEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
+use App\Enums\SendUpdateLogStatusEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\JetskiQuoteRequest;
+use App\Models\PersonalQuote;
 use App\Repositories\ActivityRepository;
 use App\Repositories\DocumentTypeRepository;
 use App\Repositories\EmbeddedProductRepository;
@@ -17,6 +19,7 @@ use App\Repositories\LostReasonRepository;
 use App\Repositories\PaymentMethodRepository;
 use App\Repositories\PersonalPlanRepository;
 use App\Repositories\QuoteStatusRepository;
+use App\Repositories\SendUpdateLogRepository;
 use App\Repositories\UserRepository;
 use App\Services\CRUDService;
 use App\Services\LookupService;
@@ -112,10 +115,14 @@ class JetskiQuoteController extends Controller
 
         $sendUpdateOptions = [];
         $sendUpdateLogs = [];
-        $hasPolicyIssuedStatus = app(CRUDService::class)->hasAtleastOneStatusPolicyIssued(QuoteTypes::YACHT->id(), $quote->id);
+        $sendUpdateEnum = (object) [];
+        $hasPolicyIssuedStatus = app(CRUDService::class)->hasAtleastOneStatusPolicyIssued(QuoteTypes::JETSKI->id(), $quote->id);
+        $quote->personalQuoteId = PersonalQuote::where(['uuid' => $quote->uuid, 'quote_type_id' => QuoteTypes::JETSKI->id()])->first()->id;
+        
         if ($hasPolicyIssuedStatus) {
-            $sendUpdateOptions = (new LookupService)->getSendUpdateOptions(QuoteTypes::YACHT->id());
-            $sendUpdateLogs = $quote->load('sendUpdateLogs');
+            $sendUpdateOptions = (new LookupService)->getSendUpdateOptions(QuoteTypes::JETSKI->id());
+            $sendUpdateLogs = SendUpdateLogRepository::findByQuoteId($quote->id);
+            $sendUpdateEnum = SendUpdateLogStatusEnum::asArray();
         }
 
         return inertia('JetskiQuote/Show', [
@@ -138,7 +145,8 @@ class JetskiQuoteController extends Controller
             'canAddBatchNumber' => auth()->user()->hasRole(RolesEnum::JetskiManager),
             'sendUpdateOptions' => $sendUpdateOptions,
             'sendUpdateLogs' => $sendUpdateLogs,
-            'hasPolicyIssuedStatus' => $hasPolicyIssuedStatus
+            'hasPolicyIssuedStatus' => $hasPolicyIssuedStatus,
+            'sendUpdateEnum' => $sendUpdateEnum
         ]);
     }
 

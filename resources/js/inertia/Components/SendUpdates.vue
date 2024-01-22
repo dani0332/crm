@@ -147,7 +147,7 @@ const onAddUpdate = (autoSubmit) => {
     .post(route('send-update-logs.store'), {
       onSuccess: () => {
         modals.show = false
-        resetForm()
+        // resetForm()
         // sendUpdatesTable.data = [...sendUpdatesTable.data, form.data]
       }    
     })

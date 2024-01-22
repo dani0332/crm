@@ -148,7 +148,7 @@ class CycleQuoteController extends Controller
 
         if ($hasPolicyIssuedStatus) {
             $sendUpdateOptions = (new LookupService)->getSendUpdateOptions(QuoteTypes::CYCLE->id());
-            $sendUpdateLogs = SendUpdateLogRepository::findByQuoteId('CycleQuote', $quote->id);
+            $sendUpdateLogs = SendUpdateLogRepository::findByQuoteId($quote->id);
             $sendUpdateEnum = SendUpdateLogStatusEnum::asArray();
         }
 

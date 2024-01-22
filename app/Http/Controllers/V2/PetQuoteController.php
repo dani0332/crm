@@ -118,7 +118,7 @@ class PetQuoteController extends Controller
 
         if ($hasPolicyIssuedStatus) {
             $sendUpdateOptions = (new LookupService)->getSendUpdateOptions(QuoteTypes::PET->id());
-            $sendUpdateLogs = SendUpdateLogRepository::findByQuoteId('PetQuote', $quote->id);
+            $sendUpdateLogs = SendUpdateLogRepository::findByQuoteId($quote->id);
             $sendUpdateEnum = SendUpdateLogStatusEnum::asArray();
         }
 

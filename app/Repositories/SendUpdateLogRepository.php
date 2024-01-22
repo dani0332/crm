@@ -49,11 +49,6 @@ class SendUpdateLogRepository extends BaseRepository
         return $this->where('uuid', $uuid)->firstOrFail();
     }
 
-    // public function fetchGetLogsById($id)
-    // {
-    //     return $this->where('id', $id)->get();
-    // }
-
     public function fetchUpdateLog($id, $data)
     {
         try {
@@ -72,11 +67,30 @@ class SendUpdateLogRepository extends BaseRepository
 
     public function fetchGetCount($id) 
     {
-        return $this->where(['reportable_id' => $id])->count();
+        return $this->fetchFindByQuoteId($id)->count();
     }
 
-    public function fetchFindByQuoteId($reportableTye, $reportableId) 
+    public function fetchFindByQuoteId($reportableId) 
     {   
         return $this->where(['reportable_id' => $reportableId])->get();
+    }
+
+    public function fetchUpdateLogPriceDetails($data) 
+    {
+        try {
+            $result = $this->where('id', $data['id'])->update([
+                'total_price' => $data['total_price'],
+                'price_with_vat' => $data['price_with_vat'],
+                'price_without_vat' => $data['price_without_vat'],
+                'insurer_quote_number' => $data['insurer_quote_number'],
+                'insurance_provider_id' => $data['insurance_provider_id'],
+            ]);
+        } catch(\Exception $ex) {
+            $result = (object) [
+                'message' => $ex->getMessage()
+            ];
+        }
+
+        return $result;
     }
 }

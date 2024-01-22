@@ -50,6 +50,7 @@ use App\Repositories\InsuranceProviderRepository;
 use App\Repositories\LookupRepository;
 use App\Repositories\NationalityRepository;
 use App\Repositories\RenewalBatchRepository;
+use App\Repositories\SendUpdateLogRepository;
 use App\Repositories\UserRepository;
 use App\Services\ActivitiesService;
 use App\Services\AllocationService;
@@ -515,7 +516,7 @@ class CRUDController extends Controller
         
         if ($hasPolicyIssuedStatus) {
             $sendUpdateOptions = $this->lookupService->getSendUpdateOptions($quoteTypeId);
-            $sendUpdateLogs = $paymentEntityModel->sendUpdateLogs;
+            $sendUpdateLogs = SendUpdateLogRepository::findByQuoteId($record->id);
             $sendUpdateEnum = SendUpdateLogStatusEnum::asArray();
         }
 

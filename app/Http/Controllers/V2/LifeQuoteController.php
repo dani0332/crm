@@ -123,7 +123,7 @@ class LifeQuoteController extends Controller
         
         if ($hasPolicyIssuedStatus) {
             $sendUpdateOptions = (new LookupService)->getSendUpdateOptions(QuoteTypes::LIFE->id());
-            $sendUpdateLogs = SendUpdateLogRepository::findByQuoteId('LifeQuote', $quote->id);
+            $sendUpdateLogs = SendUpdateLogRepository::findByQuoteId($quote->id);
             $sendUpdateEnum = SendUpdateLogStatusEnum::asArray();
         }
 

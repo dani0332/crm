@@ -24,9 +24,9 @@ const state = reactive({
   isEdit: false,
 });
 
-console.log('quote', props.quote);
 const issuanceStatusOptions = computed(() => {
   return [
+    { label: 'Select Status', value: '' },
     { label: 'Portal Down', value: 'portal_down' },
     { label: 'Waiting for client confirmation', value: 'waiting_for_client_confirmation' },
     { label: 'Issue found', value: 'issue_found' },
@@ -39,6 +39,18 @@ const issuanceStatusOptions = computed(() => {
   ];
 })
 
+const isEndorsementFinancial = computed(() => {
+  return props.selectedCategory.subCategory.slug === 'EF' && props.selectedCategory.subCategory.option.slug === 'PPE'
+});
+
+const isCIR = computed(() => {
+  return props.selectedCategory?.subCategory.slug === 'CIR';
+});
+
+const isCPD = computed(() => {
+  return props.selectedCategory?.subCategory.slug === 'CPD';
+});
+
 const policyDetailsForm = useForm({
 	first_name: props.quote?.first_name || '',
 	last_name: props.quote?.last_name || '',
@@ -50,8 +62,7 @@ const policyDetailsForm = useForm({
 	expiry_date: props.quote?.renewal_expiry_date || '',
 	insurer_quote_number: '',
 	issuance_status: '',
-	send_update_log_id: props.sendUpdateLog.id,
-	uuid: props.sendUpdateLog.uuid,
+	id: props.sendUpdateLog.id,
 })
 
 const onUpdate = () => {
@@ -103,7 +114,7 @@ const onUpdate = () => {
               </dt>
               <dd>
 								<x-input
-									v-if="selectedCategory.subCategory.slug === 'CPD'"
+									v-if="isCPD"
                   v-model="policyDetailsForm.first_name"
 									:disabled="!state.isEdit"
 								/>
@@ -123,7 +134,7 @@ const onUpdate = () => {
 							</dt>
 							<dd>
 								<x-input
-									v-if="selectedCategory.subCategory.slug === 'CPD'"
+									v-if="isCPD"
                   v-model="policyDetailsForm.last_name"
 									:disabled="!state.isEdit"
 								/>
@@ -143,7 +154,7 @@ const onUpdate = () => {
               </dt>
               <dd>
 								<x-input
-									v-if="selectedCategory.subCategory.slug === 'CPD'"
+									v-if="isCPD"
 									:disabled="!state.isEdit"
 								/>
 								<span v-else>{{ 'in' }}</span>
@@ -163,7 +174,7 @@ const onUpdate = () => {
 							</dt>
 							<dd>
 								<x-input
-									v-if="selectedCategory.subCategory.slug === 'CPD'"
+									v-if="isCPD"
 									:disabled="!state.isEdit"
 								/>
 								<span v-else>{{ 'in' }}</span>
@@ -182,10 +193,11 @@ const onUpdate = () => {
               </dt>
               <dd>
 								<x-input
-									v-if="selectedCategory.subCategory.slug === 'CPD'"
+									v-if="isCPD || isCIR"
 									:disabled="!state.isEdit"
 									v-model="policyDetailsForm.policy_number"
 									type="number"
+                  placeholder="Enter policy number"
 								/>
 								<span v-else>{{ policyDetailsForm.policy_number }}</span>
 							</dd>
@@ -202,11 +214,12 @@ const onUpdate = () => {
                 </x-tooltip>
               </dt>
               <dd>
-								<x-input
-									v-if="selectedCategory.subCategory.slug === 'CPD'"
-									:disabled="!state.isEdit"
+                <DatePicker
+                  v-if="isCPD"
                   v-model="policyDetailsForm.policy_issuance_date"
-								/>
+                  name="policy_issuance_date"
+                  :disabled="!state.isEdit"
+                />
 								<span v-else>{{ policyDetailsForm.policy_issuance_date }}</span>
 							</dd>
             </div>
@@ -222,11 +235,14 @@ const onUpdate = () => {
                 </x-tooltip>
               </dt>
               <dd>
-								<x-input
-									v-if="selectedCategory.subCategory.slug === 'CPD'"
-									:disabled="!state.isEdit"
+                <DatePicker
+                  v-if="isCPD || isCIR"
                   v-model="policyDetailsForm.policy_start_date"
-								/>
+                  name="policy_start_date"
+                  :disabled="!state.isEdit"
+                  placeholder="dd-mm-yyyy"
+                  class="w-[69%]"
+                />
 								<span v-else>{{ policyDetailsForm.policy_start_date }}</span>
 							</dd>
             </div>
@@ -242,12 +258,13 @@ const onUpdate = () => {
                 </x-tooltip>
               </dt>
               <dd>
-								<x-input
-									v-if="selectedCategory.subCategory.slug === 'CPD'"
-									:disabled="!state.isEdit"
+                <DatePicker
                   v-model="policyDetailsForm.renewal_expiry_date"
-								/>
-								<span v-else>{{ policyDetailsForm.renewal_expiry_date }}</span>
+                  name="renewal_expiry_date"
+                  :disabled="!state.isEdit"
+                  placeholder="dd-mm-yyyy"
+                  class="w-1/2"
+                />
 							</dd>
             </div>
 
@@ -262,12 +279,7 @@ const onUpdate = () => {
                 </x-tooltip>
               </dt>
               <dd>
-                <x-input
-                  v-if="selectedCategory.subCategory.slug === 'CPD'"
-                  :disabled="!state.isEdit"
-                  v-model="policyDetailsForm.insurer_quote_number"
-								/>
-								<span v-else>{{ policyDetailsForm.insurer_quote_number }}</span>
+								<span>{{ policyDetailsForm.insurer_quote_number }}</span>
 							</dd>
             </div>
 
@@ -283,11 +295,12 @@ const onUpdate = () => {
               </dt>
               <dd>
 								<x-select
-									v-if="selectedCategory.subCategory.slug !== 'CPD'"
+									v-if="!isCPD"
 									:disabled="!state.isEdit"
                   :options="issuanceStatusOptions"
                   v-model="policyDetailsForm.issuance_status"
-                  size="sm"
+                  placeholder="Select Status"
+                  class="w-1/2"
 								/>
                 <span v-else>{{ policyDetailsForm.issuance_status }}</span>
 							</dd>

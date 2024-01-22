@@ -46,8 +46,6 @@ class SendUpdateLogController extends Controller
         $sendUpdateOptions = (new LookupService)->getSendUpdateOptions($quoteTypeId);
         $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping($quoteTypeId);
 
-        $indicativePrice = IndicativeAdditionalPriceRepository::getBySendUpdateLogId($sendUpdateLog->id);
-
         $policyDetails = $this->getPolicyDetails($sendUpdateLog->id);
 
         $quoteType = QuoteTypes::getName($quoteTypeId)->value;
@@ -59,7 +57,6 @@ class SendUpdateLogController extends Controller
             'quoteType' => $quoteType,
             'sendUpdateLog' => $sendUpdateLog,
             'policyDetails' => $policyDetails,
-            'indicativePrice' => $indicativePrice,
             'sendUpdateOptions' => $sendUpdateOptions,
             'insuranceProviders' => $insuranceProviders,
             'sendUpdateStatusEnum' => SendUpdateLogStatusEnum::asArray(),
@@ -149,13 +146,11 @@ class SendUpdateLogController extends Controller
     {
         $data = $request->all();
 
-        IndicativeAdditionalPrice::updateOrCreate([
-            'send_update_log_id' => $data['send_update_log_id'],
-        ], $data);
+        SendUpdateLogRepository::updateLogPriceDetails($data);
 
-        $sendUpdateLog = SendUpdateLogRepository::getLogByUuid($data['uuid']);
+        // $sendUpdateLog = SendUpdateLogRepository::getLogByUuid($data['uuid']);
 
-        $sendUpdateLog->update(['status' => SendUpdateLogStatusEnum::REQUEST_IN_PROGRESS]);
+        // $sendUpdateLog->update(['status' => SendUpdateLogStatusEnum::REQUEST_IN_PROGRESS]);
 
         return redirect()->back();
     }

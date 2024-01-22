@@ -26,6 +26,7 @@ use App\Repositories\EmbeddedProductRepository;
 use App\Repositories\InsuranceProviderRepository;
 use App\Repositories\LookupRepository;
 use App\Repositories\NationalityRepository;
+use App\Repositories\SendUpdateLogRepository;
 use App\Services\AMLService;
 use App\Services\CRUDService;
 use App\Services\DropdownSourceService;
@@ -191,7 +192,7 @@ class TravelController extends Controller
         
         if ($hasPolicyIssuedStatus) {
             $sendUpdateOptions = $this->lookupService->getSendUpdateOptions(QuoteTypeId::Travel);
-            $sendUpdateLogs = $paymentEntityModel->sendUpdateLogs;
+            $sendUpdateLogs = SendUpdateLogRepository::findByQuoteId($record->id);
             $sendUpdateEnum = SendUpdateLogStatusEnum::asArray();
         }
 

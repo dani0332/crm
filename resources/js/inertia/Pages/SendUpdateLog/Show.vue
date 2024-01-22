@@ -2,7 +2,6 @@
 import LazyPlanDetails from './Partials/PlanDetails.vue';
 import LazyPolicyDetails from './Partials/PolicyDetails.vue';
 import LazyBookingDetails from './Partials/BookingDetails.vue';
-import LazyIndicativeAdditionalPrice from './Partials/IndicativeAdditionPrice.vue';
 
 const props = defineProps({
   quoteType: String,
@@ -68,30 +67,11 @@ const isEditDisabled = computed(() => {
   );
 })
 
-const showIndicativeAdditionalPrice = computed(() => {
-  let hasRestrictedSubType = false;
-
-  updateLogOptions?.value.forEach(option => {
-    if (['MDOM', 'MDOV', 'MPC'].includes(option.slug) && props.sendUpdateLog.option_id === option.value) {
-      hasRestrictedSubType = true;
-    }
-  })
-  return (
-    selectedCategory?.value?.subCategory.slug === 'EF' && !hasRestrictedSubType
-  );
-});
-
-const showPlanDetails = computed(() => {
-  return (selectedCategory?.value?.subCategory.slug === 'CPD' || (selectedCategory?.value?.subCategory.slug === 'CIR' && 
-    ![quoteTypeCodeEnum.Car, quoteTypeCodeEnum.Travel, quoteTypeCodeEnum.Health].includes(props.quoteType) 
-  )) 
-})
-
 const changeReasonOptions = computed(() => {
   return [];
 }); 
 
-const showPolicyDetails = computed(() => {
+const isPolicyDetailsEnabled = computed(() => {
   return (
     (selectedCategory?.value?.subCategory.slug === 'EF' && selectedCategory?.value?.subCategory.option.slug === 'PPE') ||
     selectedCategory?.value?.subCategory.slug === 'CIR' ||
@@ -250,26 +230,17 @@ const onUpdateLog = () => {
       </div>
     </div>
 
-    <!-- Indicative additional price comp will b displayed for all lobs except sub type MDOM, MDOV, MPC -->
-    <LazyIndicativeAdditionalPrice
-      v-if="showIndicativeAdditionalPrice"
-      :sendUpdateLog="sendUpdateLog"
-      :selectedCategory="selectedCategory"
-      :indicativePrice="indicativePrice"
-      :quoteType="quoteType"
-    />
-
+    <!-- Indicative additional price & Plan details comp -->
     <LazyPlanDetails
-      v-if="showPlanDetails"
       :sendUpdateLog="sendUpdateLog"
-      :indicativePrice="indicativePrice"
-      :insuranceProviders="insuranceProviders"
+      :updateLogOptions="updateLogOptions"
       :selectedCategory="selectedCategory"
+      :insuranceProviders="insuranceProviders"
       :quoteType="quoteType"
     />
 
     <LazyPolicyDetails
-      v-if="showPolicyDetails"
+      v-if="isPolicyDetailsEnabled"
       :sendUpdateLog="sendUpdateLog"
       :insuranceProviders="insuranceProviders"
       :selectedCategory="selectedCategory"

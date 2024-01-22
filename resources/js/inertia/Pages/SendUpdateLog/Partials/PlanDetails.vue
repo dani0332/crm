@@ -2,6 +2,10 @@
 const { isRequired } = useRules();
 
 const props = defineProps({
+  updateLogOptions: {
+    type: Object,
+    required: true
+  },
   sendUpdateLog: {
     type: Object,
     required: true
@@ -11,10 +15,6 @@ const props = defineProps({
     required: true
   },
   selectedCategory: {
-    type: Object,
-    required: true
-  },
-  indicativePrice: {
     type: Object,
     required: true
   },
@@ -34,14 +34,31 @@ const state = reactive({
 });
 
 const planDetailsForm = useForm({
-  price_with_vat: props.indicativePrice?.price_with_vat || 0,
-  price_without_vat: props.indicativePrice?.price_without_vat || 0,
-  total_price: props.indicativePrice?.total_price || 0,
-	insurer_quote_number: props.indicativePrice?.insurer_quote_number || '',
-  insurance_provider_id: props.indicativePrice?.insurance_provider_id || '',
-  send_update_log_id: props.sendUpdateLog.id,
-  uuid: props.sendUpdateLog.uuid,
+  price_with_vat: props.sendUpdateLog?.price_with_vat || null,
+  price_without_vat: props.sendUpdateLog?.price_without_vat || null,
+  total_price: props.sendUpdateLog?.total_price || null,
+	insurer_quote_number: props.sendUpdateLog?.insurer_quote_number || null,
+  insurance_provider_id: props.sendUpdateLog?.insurance_provider_id || null,
+  id: props.sendUpdateLog?.id,
 });
+
+const isIndicativeAdditionalPrice = computed(() => {
+  let hasRestrictedSubType = false;
+  props.updateLogOptions?.forEach(option => {
+    if (['MDOM', 'MDOV', 'MPC'].includes(option.slug) && props.sendUpdateLog.option_id === option.value) {
+      hasRestrictedSubType = true;
+    }
+  })
+  return (
+    props.selectedCategory?.subCategory.slug === 'EF' && !hasRestrictedSubType
+  );
+});
+
+const isPlanDetails = computed(() => {
+  return (props.selectedCategory?.subCategory.slug === 'CPD' || (props.selectedCategory?.subCategory.slug === 'CIR' && 
+    ![quoteTypeCodeEnum.Car, quoteTypeCodeEnum.Travel, quoteTypeCodeEnum.Health].includes(props.quoteType) 
+  )) 
+})
 
 const insuranceProvidersOptions = computed(() => {
   return props?.insuranceProviders?.map(provider => ({
@@ -86,12 +103,12 @@ const onUpdate = () => {
 </script>
 
 <template>
-  <div class="p-4 rounded shadow mb-6 bg-white">
+  <div class="p-4 rounded shadow mb-6 bg-white" v-if="isPlanDetails || isIndicativeAdditionalPrice">
     <Collapsible expanded>
       <template #header>
         <div class="flex justify-between gap-4 items-center">
           <h3 class="font-semibold text-primary-800 text-lg">
-            Plan Details
+            {{ isPlanDetails ? 'Plan Details' : 'Indicative Additional Price' }}
           </h3>
         </div>
       </template>
@@ -124,7 +141,7 @@ const onUpdate = () => {
             </div>
 
             <div class="grid sm:grid-cols-2 ml-[-250px]">
-							<template v-if="selectedCategory.subCategory.slug !== 'CPD'">
+							<template v-if="isPlanDetails && selectedCategory.subCategory.slug !== 'CPD'">
 								<dt class="font-bold text-right mr-10">
 									<x-tooltip position="left">
 										<span>Provider name</span>
@@ -175,7 +192,7 @@ const onUpdate = () => {
 
 						<!-- Quote number -->
             <div class="grid sm:grid-cols-2 ml-[-250px]">
-							<template v-if="selectedCategory.subCategory.slug !== 'CPD'">
+							<template v-if="isPlanDetails && selectedCategory.subCategory.slug !== 'CPD'">
 								<dt class="font-bold text-right mr-10">
 									<x-tooltip position="left">
 										<span>Quote number</span>
