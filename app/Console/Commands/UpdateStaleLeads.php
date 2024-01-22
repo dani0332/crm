@@ -58,6 +58,7 @@ class UpdateStaleLeads extends Command
 
         info("------------------- Update Stale Leads Command Started At: " . now() . " -------------------");
 
+        // Todo:: Lost reason id should be consider as per production DB
         $lostReasonId = 34; //Stale for more than 90 days
         foreach ($eligibleQuoteTypes as $eligibleQuoteType) {
 
@@ -74,7 +75,7 @@ class UpdateStaleLeads extends Command
 
             info("------------------- Updating : " . $eligibleQuoteType . " -------------------");
             $eligibleQuoteType::whereNotIn('quote_status_id', $skipStatus)
-                ->where('updated_at', '<', date(config('constants.DATE_FORMAT_ONLY'), strtotime('-30 days')))
+                ->where('quote_status_date', '<', date(config('constants.DATE_FORMAT_ONLY'), strtotime('-30 days')))
                 ->when($eligibleQuoteType == BusinessQuote::class, function ($businessQuote) {
                     $businessQuote->whereNot('business_type_of_insurance_id', quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical));
                 })
@@ -119,10 +120,11 @@ class UpdateStaleLeads extends Command
 
                         if (!$activityDateCheck) {
                             $staleLead->update([
-                                'quote_status_id' => QuoteStatusEnum::Lost
+                                'quote_status_id' => QuoteStatusEnum::Lost,
+                                'quote_status_date' => now(),
                             ]);
 
-                            info("Quote Found-" . $eligibleQuoteType. " - Quote ID: $staleLead->id - Quote Ref-ID: $staleLead->code - Old Status: $staleLead->quote_status_id - New Status: " . QuoteStatusEnum::Lost . " - Updated At: $staleLead->updated_at");
+                            info("Quote Found - " . $eligibleQuoteType. " - Quote ID: $staleLead->id - Quote Ref-ID: $staleLead->code - Old Status: $staleLead->quote_status_id - New Status: " . QuoteStatusEnum::Lost . " - Updated At: $staleLead->updated_at");
                             Audit::create([
                                 'event' => 'updated',
                                 'auditable_type' => $eligibleQuoteType,

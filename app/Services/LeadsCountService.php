@@ -13,7 +13,7 @@ class LeadsCountService
         $allowedLOBs = $totalCount = 0;
         $nameSpace = '\\App\\Models\\';
         $allowedQuoteTypes = [];
-        $response = ['is_multiple_lobs_allowed' => false, 'total_count' => 0, 'quote_route' => 'javascript:void(0)'];
+        $response = ['is_multiple_lobs_allowed' => false, 'total_count' => 0, 'quote_route' => ''];
         $userRoles = auth()->user()?->getRoleNames()->toArray() ?? [];
         $quoteTypes = [
             QuoteTypes::HOME,
@@ -25,12 +25,12 @@ class LeadsCountService
         ];
 
         $cardViewRoute = [
-            QuoteTypes::HEALTH->name => Route::hasMacro('health.cards') ? route('health.cards') : 'javascript:void(0)',
-            QuoteTypes::HOME->name => Route::hasMacro('home-cardView') ? route('home-cardView') : 'javascript:void(0)',
-            QuoteTypes::PET->name => Route::hasMacro('pet-quotes-card') ? route('pet-quotes-card') : 'javascript:void(0)',
-            QuoteTypes::YACHT->name => Route::hasMacro('yacht-quotes-card') ? route('yacht-quotes-card') : 'javascript:void(0)',
-            QuoteTypes::CYCLE->name => Route::hasMacro('cycle-quotes-card') ? route('cycle-quotes-card') : 'javascript:void(0)',
-            QuoteTypes::CORPLINE->name => Route::hasMacro('business.cards') ? route('business.cards') : 'javascript:void(0)',
+            QuoteTypes::HEALTH->name => Route::hasMacro('health.cards') ? route('health.cards') : '',
+            QuoteTypes::HOME->name => Route::hasMacro('home-cardView') ? route('home-cardView') : '',
+            QuoteTypes::PET->name => Route::hasMacro('pet-quotes-card') ? route('pet-quotes-card') : '',
+            QuoteTypes::YACHT->name => Route::hasMacro('yacht-quotes-card') ? route('yacht-quotes-card') : '',
+            QuoteTypes::CYCLE->name => Route::hasMacro('cycle-quotes-card') ? route('cycle-quotes-card') : '',
+            QuoteTypes::CORPLINE->name => Route::hasMacro('business.cards') ? route('business.cards') : '',
         ];
 
         foreach($quoteTypes as $quoteType) {
@@ -49,9 +49,10 @@ class LeadsCountService
                 return false;
             }
 
+            // Need to verify the stale_at where check it should be fetch only 90 days old leads.
             $quoteCount = checkPersonalQuotes(ucwords($allowedQuoteType)) ? 
-                $modelType::whereNotNull('stale_at')->where('quote_type_id', $quoteTypeEnum->id())->count() : 
-                $modelType::whereNotNull('stale_at')->count();
+                $modelType::whereNotNull('stale_at')->where('quote_type_id', $quoteTypeEnum->id())->where('stale_at', '<=', date(config('constants.DATE_FORMAT_ONLY'), strtotime('-90 days')))->count() : 
+                $modelType::whereNotNull('stale_at')->where('stale_at', '<=', date(config('constants.DATE_FORMAT_ONLY'), strtotime('-90 days')))->count();
 
             $response['quotes_count'][$allowedQuoteType]['count'] = $quoteCount;
             $response['quotes_count'][$allowedQuoteType]['quote_route'] = $cardViewRoute[strtoupper($allowedQuoteType)];
@@ -71,7 +72,6 @@ class LeadsCountService
 
         }
 
-        // dd($response);
         return $response;
     }
 }
