@@ -66,9 +66,9 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
             // payload
             $dataArr = new \stdClass();
             $dataArr->code = $quote->code;
-            // $dataArr->customerEmail = 'nouman.hussain@insurancemarket.ae';
-            // $dataArr->customerEmail = 'nouman.hussain@myalfred.com';
-            $dataArr->customerEmail = $quote->email;
+            // $dataArr->customerEmail = 'wasim.abbas@myalfred.com';
+            $dataArr->customerEmail = 'nouman.hussain@myalfred.com';
+            // $dataArr->customerEmail = $quote->email;
             $dataArr->clientFullName = $quote->first_name.' '.$quote->last_name;
             $dataArr->policy_number = $quote->policy_number;
             $dataArr->renewalDueDate = date('Y-m-d', strtotime($quote['renewal_expiry_date']));
@@ -80,6 +80,7 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
                 $dataArr->advisorEmail = $quote->advisor->email;
             }
 
+            $dataArr->currentInsurer = 'Insurance market';
             $dataArr->emailTemplateId = $templateId;
 
             info('SendBookPolicyDocumentsJobEmailData '.json_encode($dataArr));

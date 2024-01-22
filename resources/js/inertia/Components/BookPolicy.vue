@@ -54,7 +54,7 @@ const bpForm = useForm({
   invoice_date: dateToYMD(page.props.payments[0]?.insurer_invoice_date) || '',
   invoice_description: page.props.bPDetails.invoiceDescription || '',
   broker_invoice_number: page.props.bPDetails.brokerInvoiceNo || '',
-  insurer_tax_invoice_number: page.props?.payments[0]?.tax_invoice_number || '',
+  insurer_tax_invoice_number: page.props?.payments[0]?.insurer_tax_number || '',
   insurer_commmission_invoice_number:
     page.props?.payments[0]?.insurer_commmission_invoice_number || '',
   commission_vat_not_applicable:
@@ -128,7 +128,13 @@ const submitPolicy = () => {
       }
     })
     .catch(err => {
-      console.log(err);
+      const flash_messages = err.response.data.errors.value;
+      Object.keys(flash_messages).forEach(function (key) {
+        notification.error({
+          title: flash_messages[key],
+          position: 'top',
+        });
+      });
     })
     .finally(() => {
       modals.sendPolicyConfirm = false;
@@ -138,23 +144,38 @@ const submitPolicy = () => {
 
 const caculateCommission = () => {
   if (bpForm.commission_vat_applicable > 0) {
-    bpForm.commission_percentage = (
-      (bpForm.commission_vat_applicable / props.quote?.price_without_vat) *
-      100
-    ).toFixed(2);
+    if (Number(props.quote?.price_with_vat > 0)) {
+      bpForm.commission_percentage = (
+        (bpForm.commission_vat_applicable / props.quote?.price_with_vat) *
+        100
+      ).toFixed(2);
 
-    bpForm.vat_on_commission = (
-      bpForm.commission_percentage * page.props.vat
-    ).toFixed(2);
-    bpForm.total_commission =
-      Number(bpForm.vat_on_commission) +
-      Number(bpForm.commission_vat_applicable);
+      bpForm.vat_on_commission = (
+        bpForm.commission_percentage * page.props.vat
+      ).toFixed(2);
+      bpForm.total_commission =
+        Number(bpForm.vat_on_commission) +
+        Number(bpForm.commission_vat_applicable);
+    } else {
+      notification.error({
+        title: 'Please add Policy Detail Price (VAT APPLICABLE)',
+        position: 'top',
+      });
+    }
   } else if (bpForm.commission_vat_not_applicable > 0) {
-    bpForm.commission_percentage = (
-      (bpForm.commission_vat_not_applicable / props.quote?.price_without_vat) *
-      100
-    ).toFixed(2);
     bpForm.total_commission = bpForm.commission_vat_not_applicable;
+    if (Number(props.quote?.price_without_vat) > 0) {
+      bpForm.commission_percentage = (
+        (bpForm.commission_vat_not_applicable /
+          props.quote?.price_without_vat) *
+        100
+      ).toFixed(2);
+    } else {
+      notification.error({
+        title: 'Please add Policy Detail Price (VAT NOT APPLICABLE)',
+        position: 'top',
+      });
+    }
   } else {
     bpForm.commission_percentage = '';
     bpForm.vat_on_commission = '';

@@ -185,7 +185,7 @@ class CentralController extends Controller
         $validatedData = $bookPolicyRequest->validated();
 
         $paymentInformation = [
-            'tax_invoice_number' => $validatedData['insurer_tax_invoice_number'],
+            'insurer_tax_number' => $validatedData['insurer_tax_invoice_number'],
             'transaction_payment_status' => $validatedData['transaction_payment_status'],
             'insurer_commmission_invoice_number' => $validatedData['insurer_commmission_invoice_number'],
             'broker_invoice_number' => $validatedData['broker_invoice_number'],
@@ -209,9 +209,11 @@ class CentralController extends Controller
         return redirect()->back()->with('success', 'Booking Status has been updated.');
     }
 
+
+
+
     public function sendBookingPolicy(SendBookPolicyRequest $sendBookPolicyRequest)
     {
-
         $request = (object) $sendBookPolicyRequest->validated();
         $quote = $this->getQuoteObject($request->model_type, $request->quote_id);
 
@@ -237,11 +239,13 @@ class CentralController extends Controller
             $data['id'] = $quote->id;
             if ($payment->first() && $paymentSplits->first()) {
 
-                dispatch(new SendBookPolicyDocumentsJob($request));
+                // dispatch(new SendBookPolicyDocumentsJob($request));
 
-                $quote->update([
-                    'quote_status_id' => QuoteStatusEnum::PolicyBooked,
-                ]);
+                // return response()->json(['message' => 'policy booked successfully'], 200);
+
+                // $quote->update([
+                //     'quote_status_id' => QuoteStatusEnum::PolicyBooked,
+                // ]);
 
                 // sage api service
                 $sageApiService = new SageApiService();
@@ -349,35 +353,35 @@ class CentralController extends Controller
                         }
                     }
 
-                    // if (strtolower($sageRequest->invoicePaymentStatus) == 'paid') {
-                    //     /* createPaymontRecieptOneInvoice */
-                    //     $createPaymontRecieptOneInvoice = SagePayloadFactory::createPaymontRecieptOneInvoice($sageRequest);
-                    //     info('createPaymontRecieptOneInvoice===payload===' . json_encode($createPaymontRecieptOneInvoice));
-                    //     $resp = $sageApiService->postToSage300($createPaymontRecieptOneInvoice['endPoint'], $createPaymontRecieptOneInvoice['payload']);
+                    if (strtolower($sageRequest->invoicePaymentStatus) == 'paid') {
+                        /* createPaymontRecieptOneInvoice */
+                        $createPaymontRecieptOneInvoice = SagePayloadFactory::createPaymontRecieptOneInvoice($sageRequest);
+                        info('createPaymontRecieptOneInvoice===payload===' . json_encode($createPaymontRecieptOneInvoice));
+                        $resp = $sageApiService->postToSage300($createPaymontRecieptOneInvoice['endPoint'], $createPaymontRecieptOneInvoice['payload']);
 
-                    //     info('createPaymontRecieptOneInvoice===resp===' . $resp);
+                        info('createPaymontRecieptOneInvoice===resp===' . $resp);
 
-                    //     $response = json_decode($resp, true);
-                    //     if (!empty($response['BatchNumber'])) {
-                    //         /* readyToPostReceiptAr */
-                    //         $readyToPostReceiptAr = SagePayloadFactory::readyToPostReceiptAr($response['BatchNumber']);
+                        $response = json_decode($resp, true);
+                        if (!empty($response['BatchNumber'])) {
+                            /* readyToPostReceiptAr */
+                            $readyToPostReceiptAr = SagePayloadFactory::readyToPostReceiptAr($response['BatchNumber']);
 
-                    //         info('readyToPostReceiptAr===payload===' . json_encode($readyToPostReceiptAr));
+                            info('readyToPostReceiptAr===payload===' . json_encode($readyToPostReceiptAr));
 
-                    //         $resp = $sageApiService->postToSage300($readyToPostReceiptAr['endPoint'], $readyToPostReceiptAr['payload'], 'PATCH');
+                            $resp = $sageApiService->postToSage300($readyToPostReceiptAr['endPoint'], $readyToPostReceiptAr['payload'], 'PATCH');
 
-                    //         info('readyToPostReceiptAr===resp===' . $resp);
+                            info('readyToPostReceiptAr===resp===' . $resp);
 
-                    //         /* aRPostInvoices */
-                    //         $aRPostReceipts = SagePayloadFactory::aRPostReceipts($response['BatchNumber']);
+                            /* aRPostInvoices */
+                            $aRPostReceipts = SagePayloadFactory::aRPostReceipts($response['BatchNumber']);
 
-                    //         info('aRPostReceipts===payload===' . json_encode($aRPostReceipts));
+                            info('aRPostReceipts===payload===' . json_encode($aRPostReceipts));
 
-                    //         $resp = $sageApiService->postToSage300($aRPostReceipts['endPoint'], $aRPostReceipts['payload']);
+                            $resp = $sageApiService->postToSage300($aRPostReceipts['endPoint'], $aRPostReceipts['payload']);
 
-                    //         info('aRPostReceipts===resp===' . $resp);
-                    //     }
-                    // }
+                            info('aRPostReceipts===resp===' . $resp);
+                        }
+                    }
                 }
             }
 
