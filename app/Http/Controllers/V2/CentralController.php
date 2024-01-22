@@ -240,13 +240,11 @@ class CentralController extends Controller
             $data['id'] = $quote->id;
             if ($payment->first() && $paymentSplits->first()) {
 
-                // dispatch(new SendBookPolicyDocumentsJob($request));
+                dispatch(new SendBookPolicyDocumentsJob($request));
 
-                // return response()->json(['message' => 'policy booked successfully'], 200);
-
-                // $quote->update([
-                //     'quote_status_id' => QuoteStatusEnum::PolicyBooked,
-                // ]);
+                $quote->update([
+                    'quote_status_id' => QuoteStatusEnum::PolicyBooked,
+                ]);
 
                 // sage api service
                 $sageApiService = new SageApiService();
