@@ -3,6 +3,9 @@ const page = usePage();
 const user = computed(() => page.props.auth.user);
 const navLinks = computed(() => page.props.sidebar);
 const openSidebar = ref(false);
+const quotesCount = computed(() => page.props.totalQuotesCount);
+
+console.log(quotesCount.value);
 
 router.on('navigate', () => {
   openSidebar.value = false;
