@@ -28,7 +28,7 @@ class SaleSummaryReportService extends ManagementReport
             ->leftJoin('user_team', 'users.id', '=', 'user_team.user_id')
             ->leftJoin('teams', 'user_team.team_id', '=', 'teams.id')
             ->join('quote_type', 'personal_quotes.quote_type_id', '=', 'quote_type.id')
-            ->join('payments', 'personal_quotes.code', '=', 'payments.code')
+            ->join('payments as p', 'personal_quotes.code', '=', 'p.code')
             ->select(
                 DB::raw('FORMAT(SUM(CASE WHEN COALESCE(policy_issuance_date, policy_number) IS NOT NULL THEN 1 ELSE 0 END),2) as total_policies'),
                 DB::raw('FORMAT(SUM(CASE WHEN send_updates.id IS NOT NULL AND lookups.code = "Financial" THEN 1 ELSE 0 END),2) as total_endorsements'),
@@ -36,9 +36,9 @@ class SaleSummaryReportService extends ManagementReport
                 DB::raw('FORMAT(SUM(price_vat_applicable),2) as price_vat_applicable'),
                 DB::raw('FORMAT((SUM(price_vat_applicable) * 0.05),2)  as total_vat'),
                 DB::raw('FORMAT(SUM(price_vat_not_applicable),2) as price_vat_not_applicable'),
-                DB::raw('FORMAT(SUM(payments.discount_value),2) as discount'),
-                DB::raw('FORMAT((SUM(payments.commission_vat_applicable) ),2) as commission_vat_applicable'),
-                DB::raw('FORMAT((SUM(price_vat_applicable) + SUM(price_vat_not_applicable) + (SUM(price_vat_applicable)* 0.05))  - SUM(payments.discount_value),2) as total_price'),
+                DB::raw('FORMAT(SUM(p.discount_value),2) as discount'),
+                DB::raw('FORMAT((SUM(p.commission_vat_applicable) ),2) as commission_vat_applicable'),
+                DB::raw('FORMAT((SUM(price_vat_applicable) + SUM(price_vat_not_applicable) + (SUM(price_vat_applicable)* 0.05))  - SUM(p.discount_value),2) as total_price'),
             )
             ->when($request->groupBy, function ($query, $groupBy) {
                 return $query->groupBy($this->resolveGroupByColumn($groupBy));

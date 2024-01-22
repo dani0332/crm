@@ -47,28 +47,12 @@ class EndingPoliciesReportService extends ManagementReport
                 'u.name as advisor',
                 'personal_quotes.source',
                 'personal_quotes.notes',
-            )->when($request->groupBy, function ($query, $groupBy) {
-                return $query->groupBy($this->resolveGroupByColumn($groupBy));
-            });
+            );
 
         $this->applyFilters($query, $request);
 
         return $query->simplePaginate(10)->withQueryString();
     }
-
-    private function resolveGroupByColumn($groupBy)
-    {
-        $mapping = [
-            'policy_issuer' => 'p.policy_issuer_id',
-            'customer_group' => 'personal_quotes.customer_id',
-            'insurer' => 'p.insurance_provider_id',
-            'advisor' => 'u.name',
-            'line_of_business' => 'qt.code',
-        ];
-
-        return $mapping[$groupBy] ?? $groupBy;
-    }
-
     public function getDefaultFilters()
     {
         $dateFormat = config('constants.DATE_FORMAT_ONLY');
@@ -78,9 +62,9 @@ class EndingPoliciesReportService extends ManagementReport
         ];
 
         return [
-            'policyIssuanceDate' => $defaultDate,
-            'reportCategory' => ManagementReportCategoriesEnum::SALE_SUMMARY,
-            'reportType' => ManagementReportTypeEnum::ISSUED_POLICIES,
+            'policyExpiredDate' => $defaultDate,
+            'reportCategory' => ManagementReportCategoriesEnum::ENDING_POLICIES,
+            'reportType' => ManagementReportTypeEnum::EXPIRING_POLICIES,
         ];
     }
 }
