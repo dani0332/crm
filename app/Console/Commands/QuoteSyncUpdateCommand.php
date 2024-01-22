@@ -155,11 +155,19 @@ class QuoteSyncUpdateCommand extends Command
 
     private function createPersonalQuoteFromSource($sourceQuote, $entry)
     {
-        $personalQuote = new PersonalQuote();
-        $sourceAttributes = $sourceQuote->getAttributes();
-        $this->syncQuote($personalQuote, $sourceAttributes, 'personal_quotes');
-        $personalQuote->quote_type_id = $entry->quote_type_id;
-        $personalQuote->save();
+        $personalQuote = PersonalQuote::updateOrCreate(
+            [
+                'uuid' => $entry->quote_uuid,
+                'quote_type_id' => $entry->quote_type_id,
+            ],
+            function ($existingPersonalQuote) use ($entry) {
+                $sourceQuote = $this->getQuoteRecord($entry->quote_type_id, $entry->quote_uuid);
+                $sourceAttributes = $sourceQuote->getAttributes();
+                $this->syncQuote($existingPersonalQuote, $sourceAttributes, 'personal_quotes');
+                $existingPersonalQuote->quote_type_id = $entry->quote_type_id;
+                $existingPersonalQuote->save();
+            }
+        );
 
         return $personalQuote;
     }
