@@ -47,14 +47,15 @@ class SagePayloadFactory
                 [
                     'BatchType' => 'CA',
                     'CustomerNumber' => $request->customerId,
-                    'ReceiptTransactionType' => 'Prepayment',
+                    'ReceiptTransactionType' => 'ApplyDocument',
+                    'DocumentType' => 'Prepayment',
                     'DocumentNumber' => $request->sage_reciept_id,
                     'AppliedReceiptsAdjustments' => [
                         [
                             'BatchType' => 'CA',
                             'CustomerNumber' => $request->customerId,
-                            'DocumentNumber' => $request->insurerPremiumTaxInvoiceNumber,
-                            'ReceiptTransactionType' => 'Prepayment',
+                            'DocumentNumber' => (string)$request->insurerPremiumTaxInvoiceNumber,
+                            'ReceiptTransactionType' => 'ApplyDocument',
                         ],
                     ],
                 ],
@@ -118,7 +119,7 @@ class SagePayloadFactory
             'Invoices' => [
                 [
                     'CustomerNumber' => $request->customerId,
-                    'DocumentNumber' => $request->insurerPremiumTaxInvoiceNumber.'-DIS',
+                    'DocumentNumber' => $request->insurerPremiumTaxInvoiceNumber . '-DIS',
                     'InvoiceDescription' => $request->invoiceDescription,
                     'DocumentDate' => $request->insurerInvoiceDate,
                     'DocumentType' => 'CreditNote',
@@ -169,7 +170,7 @@ class SagePayloadFactory
                 [
                     'CustomerNumber' => $request->customerId,
                     'DocumentNumber' => $request->insurerPremiumTaxInvoiceNumber,
-                    'InvoiceDescription' => $request->invoiceDescription.'-PREM',
+                    'InvoiceDescription' => $request->invoiceDescription . '-PREM',
                     'DocumentDate' => '2023-04-26T00:00:00Z',
                     'CurrencyCode' => 'AED',
                     'DueDate' => $request->paymentDueDate,
@@ -198,7 +199,7 @@ class SagePayloadFactory
                 [
                     'CustomerNumber' => $request->customerId,
                     'DocumentNumber' => $request->insurerTaxInvoiceNumber,
-                    'InvoiceDescription' => $request->invoiceDescription.'-COM',
+                    'InvoiceDescription' => $request->invoiceDescription . '-COM',
                     'DocumentDate' => $request->insurerInvoiceDate,
                     'CurrencyCode' => 'AED',
                     'DueDate' => $request->paymentDueDate,
@@ -240,14 +241,14 @@ class SagePayloadFactory
         $mapping = QuoteRequestEntityMapping::where([['quote_type_id', $data['quoteTypeId']], ['quote_request_id', $data['id']]])->first();
         if ($mapping) {
             $payLoad = [
-                'CustomerNumber' => 'C'.$customer->id,
-                'CustomerName' => $customer->first_name.' '.$customer->last_name,
+                'CustomerNumber' => 'C' . $customer->id,
+                'CustomerName' => $customer->first_name . ' ' . $customer->last_name,
                 'GroupCode' => 'PHC',
             ];
         } else {
             $payLoad = [
-                'CustomerNumber' => 'P'.$customer->id,
-                'CustomerName' => $customer->first_name.' '.$customer->last_name,
+                'CustomerNumber' => 'P' . $customer->id,
+                'CustomerName' => $customer->first_name . ' ' . $customer->last_name,
                 'GroupCode' => 'PHI',
             ];
         }
@@ -316,7 +317,7 @@ class SagePayloadFactory
         ];
 
         return [
-            'endPoint' => 'AR/ARReceiptAndAdjustmentBatches'.'(BatchRecordType=\'CA\',BatchNumber='.$batchNumber.')',
+            'endPoint' => 'AR/ARReceiptAndAdjustmentBatches' . '(BatchRecordType=\'CA\',BatchNumber=' . $batchNumber . ')',
             'payload' => $payLoad,
         ];
     }
@@ -333,9 +334,9 @@ class SagePayloadFactory
         ];
 
         $sign = '$process';
-        $val = "('".$sign."')";
+        $val = "('" . $sign . "')";
         return [
-            'endPoint' => 'AR/ARPostReceiptsAndAdjustments'.$val,
+            'endPoint' => 'AR/ARPostReceiptsAndAdjustments' . $val,
             'payload' => $payLoad,
         ];
     }
@@ -349,7 +350,7 @@ class SagePayloadFactory
         ];
 
         return [
-            'endPoint' => 'AR/ARReceiptAndAdjustmentBatches'.'(BatchRecordType=CA,BatchNumber='.$batchNumber.')',
+            'endPoint' => 'AR/ARReceiptAndAdjustmentBatches' . '(BatchRecordType=CA,BatchNumber=' . $batchNumber . ')',
             'payload' => $payLoad,
         ];
     }
@@ -367,10 +368,10 @@ class SagePayloadFactory
         ];
 
         $sign = '$process';
-        $val = "('".$sign."')";
+        $val = "('" . $sign . "')";
 
         return [
-            'endPoint' => 'AR/ARReceiptAndAdjustmentBatches'.$val,
+            'endPoint' => 'AR/ARReceiptAndAdjustmentBatches' . $val,
             'payload' => $payLoad,
         ];
     }
@@ -382,7 +383,7 @@ class SagePayloadFactory
         ];
 
         return [
-            'endPoint' => 'AR/ARInvoiceBatches'.'('.$batchNumber.')',
+            'endPoint' => 'AR/ARInvoiceBatches' . '(' . $batchNumber . ')',
             'payload' => $payLoad,
         ];
     }
@@ -395,7 +396,7 @@ class SagePayloadFactory
         ];
 
         return [
-            'endPoint' => 'AP/APInvoiceBatches'.'('.$batchNumber.')',
+            'endPoint' => 'AP/APInvoiceBatches' . '(' . $batchNumber . ')',
             'payload' => $payLoad,
         ];
     }
@@ -412,10 +413,10 @@ class SagePayloadFactory
         ];
 
         $sign = '$process';
-        $val = "('".$sign."')";
+        $val = "('" . $sign . "')";
 
         return [
-            'endPoint' => 'AP/APPostInvoices'.$val,
+            'endPoint' => 'AP/APPostInvoices' . $val,
             'payload' => $payLoad,
         ];
     }
@@ -432,10 +433,10 @@ class SagePayloadFactory
         ];
 
         $sign = '$process';
-        $val = "('".$sign."')";
+        $val = "('" . $sign . "')";
 
         return [
-            'endPoint' => 'AR/ARPostInvoices'.$val,
+            'endPoint' => 'AR/ARPostInvoices' . $val,
             'payload' => $payLoad,
         ];
     }
@@ -447,7 +448,7 @@ class SagePayloadFactory
         if ($paddingLength < 0) {
             return $customerId;
         } else {
-            $paddedCustomerId = str_repeat('0', $paddingLength).$customerId;
+            $paddedCustomerId = str_repeat('0', $paddingLength) . $customerId;
             $paddedCustomerId[0] = $appendGroup;
 
             return $paddedCustomerId;

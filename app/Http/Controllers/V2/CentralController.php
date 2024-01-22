@@ -409,11 +409,11 @@ class CentralController extends Controller
     {
         $response = (new CentralService())->updateSelectedPlan($quoteType, $uuid, $request->safe());
 
-//        dd(json_encode($response));
-//
-//        if (! empty($response->message)) {
-//            return redirect()->back()->with('error', $response->message);
-//        }
+        //        dd(json_encode($response));
+        //
+        //        if (! empty($response->message)) {
+        //            return redirect()->back()->with('error', $response->message);
+        //        }
 
 
         return response()->json(['plan' => $response]);

@@ -67,51 +67,6 @@ class SageApiService
         return $sageRequest;
     }
 
-    public static function sagePayLoad($modelType, $payment, $quote, $paymentSplits)
-    {
-        $sageRequest = new \stdClass();
-
-        // $sageRequest->discount = 22;
-        $sageRequest->discount =  floatval($payment->discount_value);
-        $sageRequest->invoiceDescription = $payment->invoice_description;
-        $sageRequest->bookingDate = date('Y-m-d', strtotime($quote['policy_booking_date']));
-        $sageRequest->policyExpiryDate = date('Ymd', strtotime($quote['renewal_expiry_date']));
-        $sageRequest->insurerInvoiceDate = date('Y-m-d', strtotime($payment->insurer_invoice_date));
-        $sageRequest->paymentDueDate = date('Y-m-d', strtotime($paymentSplits->due_date));
-
-        $sageRequest->mainClassInsurance = $modelType;
-        $sageRequest->policyNumber = $quote->policy_number;
-
-        $sageRequest->policyIssuer = Auth::user()->name;
-        $sageRequest->requestType = Lookup::where('id', $quote->transaction_type_id)->first()->text;
-        $sageRequest->subClass = '';
-
-        $sageRequest->invoicePaymentStatus = $payment->transaction_payment_status;
-        // $sageRequest->invoicePaymentStatus = 'paid';
-        $advisorName = '';
-        if (!empty($quote->advisor_id)) {
-
-            $advisorName = User::where('id', $quote->advisor_id)->value('name');
-        }
-        $sageRequest->advisorName = $advisorName;
-        $sageRequest->premiumWithoutTax = floatval($quote->price_without_vat);
-        $sageRequest->premiumWithTax = floatval($quote->price_with_vat);
-        $sageRequest->vatOnCommission = floatval($payment->commission_vat);
-        $sageRequest->commission = floatval($payment->commission);
-        $sageRequest->commissionIncludingVat = floatval($payment->commission_vat_applicable);
-        $sageRequest->commissionWithOutVat = $payment->commission_vat_not_applicable;
-
-        $sageRequest->insurerTaxInvoiceNumber = (string) $payment['tax_invoice_number'];
-        $sageRequest->insurerPremiumTaxInvoiceNumber = (string) $payment['insurer_commmission_invoice_number'];
-        // $sageRequest->insurerTaxInvoiceNumber = (string) rand(1000, 9999);
-        // $sageRequest->insurerPremiumTaxInvoiceNumber = (string) rand(1000, 9999);
-        if ($paymentSplits->first()) {
-            $sageRequest->sage_reciept_id = $paymentSplits['sage_reciept_id'];
-        }
-
-        return $sageRequest;
-    }
-
     public function verifySageCustomer($customerId, $data = null)
     {
         $customer = Customer::find($customerId);
@@ -157,6 +112,7 @@ class SageApiService
     {
         // Create the payload data for the POST request
         $sageEndPoint = $this->sageRequestUrl . $endPoint;
+        info('endpoint-----------' . json_encode($sageEndPoint));
         $ch = curl_init($sageEndPoint);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 
