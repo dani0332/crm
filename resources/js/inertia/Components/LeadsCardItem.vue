@@ -165,7 +165,6 @@ const getUrl = (url, quoteTypeId) => useGetShowPageRoute(url, quoteTypeId);
         leadName,
         health_cover_for,
         stale_at,
-        quote_status_date,
       } in leads"
       :key="id"
       :href="getUrl(uuid, quoteTypeId)"
@@ -173,14 +172,14 @@ const getUrl = (url, quoteTypeId) => useGetShowPageRoute(url, quoteTypeId);
       :id="id"
       class="block p-3 mt-2 border space-y-2 hover:transition hover:border-primary-500 rounded"
       :class="[
-        daysSinceStale(quote_status_date) === false
+        daysSinceStale(stale_at) === false
           ? 'bg-white border-gray-300'
           : 'bg-error-50 border-error-500',
         { 'cursor-not-allowed': !canDrag },
       ]"
     >
       <div class="flex flex-col">
-        <stale-leads-badge :date="quote_status_date" />
+        <stale-leads-badge :date="stale_at" />
         <span class="font-semibold text-sm">
           {{ first_name }} {{ last_name }}
         </span>
