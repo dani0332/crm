@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use App\Models\Payment;
+use App\Models\PaymentSplits;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -51,6 +52,13 @@ class SendBookPolicyRequest extends FormRequest
                     }
                     if (empty($payment->commission_vat_not_applicable) && empty($payment->commission_vat_applicable)) {
                         $validator->errors()->add('value', 'Commmission (VAT NOT APPLICABLE) OR Commmission (VAT APPLICABLE) is required');
+                    }
+                    $paymentSplit = PaymentSplits::where('code', $quote->code)->first();
+                    if (!empty($paymentSplit)) {
+
+                        if ($payment->insurer_invoice_date > $paymentSplit->due_date) {
+                            $validator->errors()->add('value', 'Payment Due date cannot be earlier than Insurer Invoice date');
+                        }
                     }
                 } else {
                     $validator->errors()->add('value', 'Payment Not found');
