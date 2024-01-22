@@ -3,10 +3,12 @@
 namespace App\Services;
 
 use App\Enums\GenericRequestEnum;
+use App\Enums\LeadSourceEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Facades\Capi;
+use App\Facades\Ken;
 use App\Models\PersonalQuote;
 use App\Models\PersonalQuoteDetail;
 use App\Repositories\PersonalQuoteRepository;
@@ -195,6 +197,9 @@ class CentralService
         }
     }
 
+    /**
+     * @return true
+     */
     public function savePlanDetails($quoteType, $code, $data)
     {
         $repository = getRepositoryObject($quoteType);
@@ -202,7 +207,7 @@ class CentralService
         $priceVatApp = $data->price_vat_applicable ?? 0;
         $priceVatNotApp = $data->price_vat_not_applicable ?? 0;
 
-        if ($quoteType == QuoteTypes::BUSINESS) {
+        if ($quoteType == QuoteTypes::BUSINESS->value) {
             $data->price_with_vat = ($priceVatApp + $priceVatNotApp) + (($priceVatApp / 100) * 5);
         } else {
             $data->price_with_vat = $priceVatApp ? ($priceVatApp + (($priceVatApp / 100) * 5)) : $priceVatNotApp;
@@ -212,6 +217,54 @@ class CentralService
         $quote->update($data->toArray());
 
         return true;
+    }
+
+    public function updateSelectedPlan($quoteType, $uuid, $data)
+    {
+        //switch for quote type
+        switch (ucfirst($quoteType)) {
+            case QuoteTypes::CAR->value:
+                $endpoint = '/process-car-quote-plan';
+                $data = [
+                    'planId' => intval($data->plan_id),
+                    'quoteTypeId' => QuoteTypeId::Car,
+                    'quoteUID' => $uuid,
+                    'callSource' => LeadSourceEnum::IMCRM,
+                ];
+                return  Ken::request($endpoint, 'post', $data);
+                break;
+            case QuoteTypes::TRAVEL->value:
+                $endpoint = '/process-travel-quote-plan';
+                $data = [
+                    'quoteTypeId' => QuoteTypeId::Car,
+                    'quoteUID' => $uuid,
+                    'plans' => [
+                        ['id' => intval($data->plan_id), 'addonOptionIds' => []],
+                    ],
+                ];
+                return  Ken::request($endpoint, 'post', $data);
+                break;
+            case QuoteTypes::HEALTH->value:
+                $endpoint = '/api/v1-process-booking';
+                $data = [
+                    'planId' => intval($data->plan_id),
+                    'quoteTypeId' => QuoteTypeId::Health,
+                    'addonOptionIds' => [],
+                    'healthPlanCoPaymentId' => intval($data->copay_id),
+                    'quoteUID' => $uuid,
+                    'callSource' => LeadSourceEnum::IMCRM,
+                ];
+                return Capi::request($endpoint, 'post', $data);
+                break;
+        }
+
+
+        //info('fn: updateSelectedPlan quoteType: '.$quoteType.' uuid: '.$uuid.' data: '.json_encode($data));
+
+
+
+        //dd(json_encode($response));
+        //return $response;
     }
 
 }
