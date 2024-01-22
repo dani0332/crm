@@ -27,6 +27,7 @@ use App\Http\Requests\PlanDetailsRequest;
 use App\Http\Requests\SendBookPolicyRequest;
 use App\Http\Requests\UpdateLastYearPolicyRequest;
 use App\Jobs\SendBookPolicyDocumentsJob;
+use App\Http\Requests\UpdateSelectedPlanRequest;
 use App\Models\Customer;
 use App\Models\Entity;
 use App\Models\Payment;
@@ -404,14 +405,17 @@ class CentralController extends Controller
         return redirect()->back();
     }
 
-    public function updateSelectedPlan($quoteType, $uuid, $planId)
+    public function updateSelectedPlan(UpdateSelectedPlanRequest $request, $quoteType, $uuid)
     {
-        $repository = getRepositoryObject($quoteType);
+        $response = (new CentralService())->updateSelectedPlan($quoteType, $uuid, $request->safe());
 
-        $quote = $repository::where('uuid', $uuid)->firstOrFail();
+//        dd(json_encode($response));
+//
+//        if (! empty($response->message)) {
+//            return redirect()->back()->with('error', $response->message);
+//        }
 
-        $quote->update(['prefill_plan_id' => $planId]);
 
-        return redirect()->back()->with('success', 'updated successfully');
+        return response()->json(['plan' => $response]);
     }
 }

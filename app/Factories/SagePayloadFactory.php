@@ -308,6 +308,39 @@ class SagePayloadFactory
         ];
     }
 
+    public static function readyToPostReceiptArPayment($batchNumber)
+    {
+        $payLoad = [
+            'BatchStatus' => 'ReadyToPost',
+
+        ];
+
+        return [
+            'endPoint' => 'AR/ARReceiptAndAdjustmentBatches'.'(BatchRecordType=\'CA\',BatchNumber='.$batchNumber.')',
+            'payload' => $payLoad,
+        ];
+    }
+    public static function aRPostReceiptsPayment($batchNumber)
+    {
+        $payLoad = [
+            'BatchType' => 'CA',
+            'PostAllBatches' => 'Donotpostallbatches',
+            'PostBatchFrom' => $batchNumber,
+            'PostBatchTo' => $batchNumber,
+            'ActionSelector' => 'string',
+            'UpdateOperation' => 'Unspecified',
+
+        ];
+
+        $sign = '$process';
+        $val = "('".$sign."')";
+        return [
+            'endPoint' => 'AR/ARPostReceiptsAndAdjustments'.$val,
+            'payload' => $payLoad,
+        ];
+    }
+
+
     public static function readyToPostReceiptAr($batchNumber)
     {
         $payLoad = [

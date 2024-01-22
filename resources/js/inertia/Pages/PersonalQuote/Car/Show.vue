@@ -6,6 +6,9 @@ import LazyCreatePlan from './Partials/CreatePlan.vue';
 import AssignTier from './Partials/AssignTier.vue';
 import FollowUpReasons from './Partials/FollowUpReasons.vue';
 import RiskRatingScoreDetails from '../../../Components/RiskRatingScoreDetails.vue';
+import { onMounted, watch } from 'vue';
+import { reactive } from 'vue';
+
 import { fileUploadErrorMessage } from '@/inertia/Composables/utilities.js';
 
 defineProps({
@@ -96,6 +99,56 @@ const showfollowup = ref(false);
 console.log(page.props);
 
 const canAny = permissions => useCanAny(permissions);
+const selectedProviderPlan = ref({
+  id: page.props.record.plan_id,
+  planName: page.props.record.plan_id_text,
+  providerName: page.props.record.car_plan_provider_id_text,
+  premium: page.props.record.premium,
+});
+
+/*
+* comment for now, will be used in later after confirmation
+
+const prefillPlanPremium = ref('');
+
+const computedPlanDetails = reactive({
+  premium: '',
+  planName: '',
+  providerName: ''
+});
+
+const prefillPlanId = ref(page.props.quote.prefill_plan_id);
+
+//compare plan selected at and prefill plan selected at
+const updateComputedPlanDetails = () => {
+
+  console.log('updateComputedPlanDetails called');
+
+  let planSelectedAt = new Date(page.props.record.plan_selected_at);
+  let prefillPlanSelectedAt = new Date(page.props.record.prefill_plan_selected_at);
+
+  console.log('plan selected at', planSelectedAt, prefillPlanSelectedAt);
+  console.log('plan selected at', ' PlanId:', page.props.record.plan_id, " : PREFILL PLAN ID", page.props.record.prefill_plan_id);
+
+  if ( (page.props.record.plan_id && !page.props.record.prefill_plan_id) ||  (planSelectedAt > prefillPlanSelectedAt) ) {
+
+      console.log('plan selected at is greater than prefill plan selected at :' , "PRICE", page.props.record.premium, "PLAN", page.props.record.plan_id_text, "PROVIDER",  page.props.record.car_plan_provider_id_text);
+      computedPlanDetails.premium = page.props.record.premium,
+      computedPlanDetails.planName = page.props.record.plan_id_text,
+      computedPlanDetails.providerName = page.props.record.car_plan_provider_id_text
+  } else
+  {
+      console.log('plan selected at is less than prefill plan selected at');
+      computedPlanDetails.premium = '',
+      computedPlanDetails.planName = page.props.record.prefill_plan_id_text,
+      computedPlanDetails.providerName = page.props.record.prefill_plan_provider_id_text
+  }
+};
+
+onMounted(() => {
+  updateComputedPlanDetails();
+});*/
+
 const permissionEnum = page.props.permissionsEnum;
 const rolesEnum = page.props.rolesEnum;
 
@@ -271,6 +324,33 @@ const availablePlansTable = reactive({
     { text: 'Action', value: 'action' },
   ],
 });
+
+/*
+// comment for now, will be used in later after confirmation
+watch(availablePlansTable, (newPlans) =>  {
+
+  console.log('plan selected at - inside watch availablePlans - ');
+  let planSelectedAt = new Date(page.props.record.plan_selected_at);
+  let prefillPlanSelectedAt = new Date(page.props.record.prefill_plan_selected_at);
+
+  console.log('plan selected at - prefillPlanId - ' , prefillPlanId.value, " : plan SelectedAT: ", planSelectedAt, " : prefillPlanSelectedAt ", prefillPlanSelectedAt);
+
+  //find selected plan from available plans and calculate prefilled plan premium
+  if(prefillPlanId.value && prefillPlanSelectedAt > planSelectedAt )
+  {
+    console.log('plan selected at updating premium of prefill plan')
+    let selectedPlan = newPlans.data.find(
+        plan => plan.id === page.props.record.prefill_plan_id,
+      );
+
+    computedPlanDetails.premium = (selectedPlan.discountPremium + selectedPlan.vat + getAddonVat(selectedPlan)).toFixed(2);
+  }
+  else
+  {
+    console.log('plan selected at - prefillPlanSelectedAt is less than planSelectedAt' );
+  }
+
+}); */
 
 const documentsTable = reactive({
   columns: [
@@ -1491,11 +1571,31 @@ const linkEntity = () => {
     });
 };
 
-const prefillPlanId = ref(page.props.quote.prefill_plan_id);
-
-const handleChildUpdate = planId => {
-  prefillPlanId.value = planId;
+const handlePlanSelected = plan => {
+  console.log('HHH', plan);
+  //se.value = plan.id;
+  selectedProviderPlan.value.id = plan.id;
+  selectedProviderPlan.value.planName = plan.planName;
+  selectedProviderPlan.value.providerName = plan.providerName;
+  selectedProviderPlan.value.premium = plan.premium;
 };
+
+/*watch(prefillPlanId, (newPlanId) =>  {
+  //find selected plan from available plans and calculate prefilled plan premium
+
+  if(newPlanId)
+  {
+    let selectedPlan = availablePlansTable.data.find(
+        plan => newPlanId === plan.id,
+      );
+
+      console.log(newPlanId,"NEW PLAN ID", JSON.stringify(selectedPlan));
+      //prefillPlanPremium.value = selectedPlan.discountPremium + selectedPlan.vat + getAddonVat(selectedPlan);
+      computedPlanDetails.planName = selectedPlan.name;
+      computedPlanDetails.providerName = selectedPlan.providerName;
+      computedPlanDetails.premium = (selectedPlan.discountPremium + selectedPlan.vat + getAddonVat(selectedPlan)).toFixed(2);
+  }
+});*/
 </script>
 
 <template>
@@ -1521,7 +1621,7 @@ const handleChildUpdate = planId => {
         <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">PRICE</dt>
-            <dd>{{ record.premium ?? '' }}</dd>
+            <dd>{{ selectedProviderPlan.premium ?? '' }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">PAID AT</dt>
@@ -1533,7 +1633,7 @@ const handleChildUpdate = planId => {
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">PROVIDER NAME</dt>
-            <dd>{{ record.car_plan_provider_id_text ?? '' }}</dd>
+            <dd>{{ selectedProviderPlan.providerName ?? '' }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">PAYMENT METHOD</dt>
@@ -1547,7 +1647,7 @@ const handleChildUpdate = planId => {
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">PLAN NAME</dt>
-            <dd>{{ record.plan_id_text }}</dd>
+            <dd>{{ selectedProviderPlan.planName }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">ECOMMERCE</dt>
@@ -2749,6 +2849,7 @@ const handleChildUpdate = planId => {
             isManualUpdate,
             isRenewal,
             isDisabled,
+            puaPremium,
           }"
         >
           <p>{{ providerName }}</p>
@@ -2776,6 +2877,25 @@ const handleChildUpdate = planId => {
               class="mt-0.5 text-[10px]"
             >
               Hidden
+            </x-tag>
+
+            <x-tag
+              v-if="puaPremium && puaPremium != null"
+              size="xs"
+              class="mt-0.5 text-[10px] text-white bg-[#E00000]"
+            >
+              <x-tooltip position="right">
+                <template #tooltip>
+                  <span class="font-medium">
+                    Pending Underwriter Approval (PUA) indicates that this quote
+                    is prepared using our internal rating calculator. Please
+                    contact the client to get the required documents, to proceed
+                    with generating a quote on the insurer portal and connect
+                    with the underwriter to obtain their approval.
+                  </span>
+                </template>
+                PUA
+              </x-tooltip>
             </x-tag>
           </div>
         </template>
@@ -2929,8 +3049,8 @@ const handleChildUpdate = planId => {
 
             <span v-if="hasRole(rolesEnum.CarAdvisor)">
               <SelectPlan
-                v-if="prefillPlanId != item.id"
-                @update:updatePlanId="handleChildUpdate"
+                v-if="selectedProviderPlan.id != item.id"
+                @update:selectedPlanChanged="handlePlanSelected"
                 :plan="item"
                 :quoteType="quoteType"
                 :uuid="quote.uuid"

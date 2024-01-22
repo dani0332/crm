@@ -1111,8 +1111,21 @@ onMounted(() => {
 
 const prefillPlanId = ref(page.props.quote.prefill_plan_id);
 
-const handleChildUpdate = planId => {
-  prefillPlanId.value = planId;
+console.log("ECOM", page.props.ecomDetails)
+
+const selectedProviderPlan = ref({
+  id: page.props.quote.plan_id,
+  planName: page.props.ecomDetails.planName,
+  providerName: page.props.ecomDetails.providerName,
+  premium: page.props.ecomDetails.premium
+});
+
+const handlePlanSelected = plan => {
+
+  selectedProviderPlan.value.id = plan.id
+  selectedProviderPlan.value.planName = plan.planName
+  selectedProviderPlan.value.providerName = plan.providerName
+  selectedProviderPlan.value.premium = plan.premium
 };
 
 const genderList = [
@@ -1945,7 +1958,7 @@ const genderList = [
         <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">PRICE</dt>
-            <dd>{{ ecomDetails.premium }}</dd>
+            <dd>{{ selectedProviderPlan.premium }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">PAID AT</dt>
@@ -1957,7 +1970,11 @@ const genderList = [
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">PROVIDER NAME</dt>
-            <dd>{{ ecomDetails.planName }}</dd>
+            <dd>{{ selectedProviderPlan.providerName ?? '' }}</dd>
+          </div>
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">PLAN NAME</dt>
+            <dd>{{ selectedProviderPlan.planName ?? '' }}</dd>
           </div>
         </dl>
       </div>
@@ -2264,8 +2281,8 @@ const genderList = [
               <span v-if="hasRole(rolesEnum.TravelAdvisor)">
                 <SelectPlan
                   class="ml-1"
-                  v-if="prefillPlanId != item.id"
-                  @update:updatePlanId="handleChildUpdate"
+                  v-if="selectedProviderPlan.id != item.id"
+                  @update:selectedPlanChanged="handlePlanSelected"
                   :plan="item"
                   :quoteType="modelType"
                   :uuid="quote.uuid"

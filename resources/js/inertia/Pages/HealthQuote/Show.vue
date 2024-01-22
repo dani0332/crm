@@ -537,7 +537,7 @@ const plansTable = reactive({
       width: 100
     },
     {
-      text: 'Base Price',
+      text: 'Price',
       value: 'actualPremium',
     },
     {
@@ -1351,6 +1351,26 @@ const prefillPlanId = ref(page.props.quote.prefill_plan_id);
 const handleChildUpdate = planId => {
   prefillPlanId.value = planId;
 };
+
+const selectedProviderPlan = ref({
+  id: page.props.quote.plan_id,
+  planName: page.props.quote.health_plan_name_text,
+  providerName: page.props.quote.plan_provider_name_text,
+  premium: page.props.ecomDetails.priceWithVAT
+
+});
+
+console.log(selectedProviderPlan, "LLLKKKKJ", page.props.quote)
+
+const handlePlanSelected = plan => {
+  console.log("HHH", plan);
+  //se.value = plan.id;
+  selectedProviderPlan.value.id = plan.id
+  selectedProviderPlan.value.planName = plan.planName
+  selectedProviderPlan.value.providerName = plan.providerName
+  selectedProviderPlan.value.premium = plan.premium
+};
+
 </script>
 
 <template>
@@ -2280,11 +2300,11 @@ const handleChildUpdate = planId => {
         <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">PLAN NAME</dt>
-            <dd>{{ ecomDetails.planName }}</dd>
+            <dd>{{ selectedProviderPlan.planName }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">PROVIDER NAME</dt>
-            <dd>{{ ecomDetails.providerName }}</dd>
+            <dd>{{ selectedProviderPlan.providerName }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">PAYMENT STATUS</dt>
@@ -2309,7 +2329,7 @@ const handleChildUpdate = planId => {
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">TOTAL PRICE (with VAT)</dt>
-            <dd>{{ fixedValue(ecomDetails.priceWithVAT) }}</dd>
+            <dd>{{ (selectedProviderPlan.premium) }}</dd>
           </div>
             <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">CO-PAY / CO-INSURANCE</dt>
@@ -2556,11 +2576,10 @@ const handleChildUpdate = planId => {
               Copy
             </x-button>
 
-            <!-- v-if="hasRole(page.props.rolesEnum.HealthAdvisor)", hide it for now -->
-            <span v-if="true == false">
+            <span v-if="hasRole(page.props.rolesEnum.HealthAdvisor)">
               <SelectPlan
-                v-if="prefillPlanId != item.id"
-                @update:updatePlanId="handleChildUpdate"
+                v-if="selectedProviderPlan.id != item.id"
+                @update:selectedPlanChanged="handlePlanSelected"
                 :plan="item"
                 :quoteType="quoteType"
                 :uuid="quote.uuid"

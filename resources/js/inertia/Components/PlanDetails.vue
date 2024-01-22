@@ -35,9 +35,10 @@ const insuranceProviderOptions = computed(() => {
 });
 
 const isProviderEmpty = ref(false);
+const formProcessing = ref(false);
 
 const rules = {
-  isNumber: v => !isNaN(Number(v)) || 'Field must be a number',
+  isNumber: v => !isNaN(Number(v)) || 'Amount must be a valid number',
   conditionalRequired: v => {
     const vatApplicable = planDetailsForm.price_vat_applicable;
     const vatNotApplicable = planDetailsForm.price_vat_not_applicable;
@@ -55,17 +56,23 @@ const rules = {
 };
 
 const submitPlanDetailsForm = isValid => {
-  if (!planDetailsForm.insurance_provider_id) isProviderEmpty.value = true;
+
+  if (!planDetailsForm.insurance_provider_id) {
+    isProviderEmpty.value = true; 
+    return;
+  }
   else isProviderEmpty.value = false;
 
   if (!isValid) return;
 
   let url = `/personal-quotes/${props.quoteType}/${props.quote?.code}/save-plan-details`;
 
+  formProcessing.value = true;
+
   planDetailsForm.post(url, {
     preserveScroll: true,
     onError: errors => {
-      //planDetailsForm.errors = errors;
+      formProcessing.value = false;
       planDetailsForm.setError(errors);
 
       notification.error({
@@ -74,6 +81,7 @@ const submitPlanDetailsForm = isValid => {
       });
     },
     onSuccess: () => {
+      formProcessing.value = false;
       notification.success({
         title: 'Plan details saved',
         position: 'top',
@@ -215,7 +223,7 @@ const rolesEnum = page.props.rolesEnum;
       </div>
 
       <div class="text-right space-x-4 mt-12">
-        <x-button color="#26B99A" type="submit" size="sm">Save</x-button>
+        <x-button color="#26B99A" type="submit" size="sm" :loading="formProcessing">Save</x-button>
       </div>
     </x-form>
   </div>

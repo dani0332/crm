@@ -4,11 +4,7 @@ const notification = useNotifications('toast');
 const page = usePage();
 
 const permissionEnum = page.props.permissionsEnum;
-const rolesEnum = page.props.rolesEnum;
-
-const hasRole = role => useHasRole(role);
 const can = permission => useCan(permission);
-const hasAnyRole = roles => useHasAnyRole(roles);
 
 const props = defineProps({
   payments: Array,
@@ -86,6 +82,7 @@ const isCreditApprovalView = ref(false);
 const isCreditCardView = ref(false);
 const isDiscountError = ref(false);
 const discountError = ref('');
+const isTotalPriceUpdated = ref(false);
 
 const modal2Ref = ref(null);
 
@@ -566,7 +563,9 @@ const handleApprovalReasonChange = () => {
       paymentMethodsModels.value[i] = 'CA';
     }
   } else {
-    handleCollectionTypeChange();
+    if (isTotalPriceUpdated.value === false) {
+      handleCollectionTypeChange();
+    }    
   }
 };
 
@@ -721,7 +720,6 @@ const calculatePaymentBreakup = (changeMethod = true) => {
       return;
     }    
   }
-
   for (let i = 1; i <= paymentMethodsForm.payment_no; i++) { 
     if(readOnlyPayments.value[i]!=undefined && readOnlyPayments.value[i]===true) {
       continue;
@@ -944,14 +942,14 @@ const addPaymentModal = () => {
 };
 
 const editPaymentModal = (payment,split_payment_id,sr_no,capture_approval) => {
-
+  /*
   if( sr_no===0 && (payment.payment_status.id === props.paymentStatusEnum.PAID || payment.payment_status.id === props.paymentStatusEnum.CAPTURED) && capture_approval===0 ) {
     notification.error({
           title: 'No further actions allowed to paid payments',
           position: 'top',
         });
     return false;
-  };
+  };*/
   paymentMethodsForm.reset();
   splitPaymentNo.value = 0;
   isFieldReadonly.value = false;
@@ -985,6 +983,7 @@ const editPaymentModal = (payment,split_payment_id,sr_no,capture_approval) => {
   isDiscountDocumentNotUploaded.value = false;
   discountDocumentModel.value = [];
   isDiscountEnabled.value = false;
+  isTotalPriceUpdated.value = false;
   if(sr_no>0){
     splitPaymentNo.value = sr_no;
     isFieldReadonly.value = true;
@@ -1043,7 +1042,7 @@ const editPaymentModal = (payment,split_payment_id,sr_no,capture_approval) => {
   calculateTotalAmount();
 
   var isAnyPaid = false;
-  for(let i=1; i<=payment.total_payments; i++){
+  for(let i=1; i<=payment.total_payments; i++){ 
     if(
       payment.payment_splits[i-1].payment_status_id===props.paymentStatusEnum.PAID ||
       payment.payment_splits[i-1].payment_status_id===props.paymentStatusEnum.AUTHORISED ||      
@@ -1055,7 +1054,7 @@ const editPaymentModal = (payment,split_payment_id,sr_no,capture_approval) => {
       isAnyPaid = true;
     } else {
       readOnlyPayments.value[i] = false;
-    }     
+    }
     fileUploadModels.value[i] = [];
     paymentMethodsModels.value[i] = payment.payment_splits[i-1].payment_method.code;
     splitAmountModels.value[i] = payment.payment_splits[i-1].payment_amount;
@@ -1087,16 +1086,20 @@ const editPaymentModal = (payment,split_payment_id,sr_no,capture_approval) => {
       }
      }
   }
-  
+
   if (paymentMethodsForm.status == 'edit') {
     //if ( isAnyPaid && (totalPrice.value <= payment.total_price) ) { //FOR EDIT
-    if ( isAnyPaid ) {
+    ////if ( isAnyPaid ) {
+    totalPrice.value = payment.total_price;
+    totalAmount.value = payment.total_price-payment.discount_value;
+    if ( isAnyPaid && (payment.total_price===(payment.total_amount+payment.discount_value)) ) { //FOR EDIT
       isFieldReadonly.value = true;    
-    } else {
+    } else {      
       isFieldReadonly.value = false;      
+      isTotalPriceUpdated.value = true;
     }    
-  } 
-
+  }
+  
   if(capture_approval>0) {
     isApproveClicked.value = true;
     if(capture_approval==1) {
@@ -1191,7 +1194,6 @@ const validateCapturePayment = (isValid) => {
 }
 
 const addPayment = isValid => {  
-  
   if(isCreditApprovalView.value === true && isDeclineClicked.value === false){
     if (validateCapturePayment(isValid)) return;
   } else if (paymentMethodsForm.status === 'view' && isApproveClicked.value) {
@@ -1663,7 +1665,7 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
       <h3 class="font-semibold text-primary-800 text-lg">Manage Payments</h3>
       <template v-if="payments.length>0">
         <x-button
-            v-if="hasRole(rolesEnum.CarAdvisor)"
+            v-if="can(permissionEnum.PaymentsCreate)"
             size="sm"
             color="emerald"
             @click="addPaymentModal"          
@@ -1674,7 +1676,7 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
       <template v-else>
         <x-tooltip>
           <x-button
-            v-if="hasRole(rolesEnum.CarAdvisor)"
+            v-if="can(permissionEnum.PaymentsCreate)"
             size="sm"
             color="emerald"
             @click="addPaymentModal"          
@@ -1817,9 +1819,8 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
               <td>{{ formatString(item.payment_status.text) }}</td>
               <td>{{ item.payment_allocation_status !== null ? formatString(item.payment_allocation_status) : '' }}</td>             
               <td>
-                <div class="flex gap-2">
-                <template v-if="hasRole(rolesEnum.CarAdvisor)">                    
-                    <x-button size="xs" color="primary" outlined @click="editPaymentModal(item,0,0,0)">
+                <div class="flex gap-2">                                
+                    <x-button v-if="can(permissionEnum.PaymentsEdit)" size="xs" color="primary" outlined @click="editPaymentModal(item,0,0,0)">
                         Edit
                     </x-button>
                     <template v-if="can(permissionEnum.ApprovePayments)">
@@ -1831,8 +1832,7 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
                       @click="getCaptureValidation ? editPaymentModal(item, 0, 0, 2) : alertCapture()">
                           Approve
                       </x-button>
-                    </template>
-                </template>
+                    </template>               
             </div>
               </td>
             </template>           
@@ -1933,6 +1933,7 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
                 v-model="paymentMethodsForm.collection_type"                
                 :rules="[rules.isRequired]"
                 @change="handleCollectionTypeChange"
+                :disabled="isTotalPriceUpdated"
                 >
                 <template v-for="option in collectionTypes" :key="option.value">
                     <option :value="option.value" :title="option.tooltip" >{{ option.label }}</option>                
@@ -2067,6 +2068,7 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
                   class="custom-select"
                   v-model="paymentMethodsForm.credit_approval"
                   @change="handleApprovalReasonChange"
+                  :disabled="isTotalPriceUpdated"
                   >
                   <template v-for="option in creditApprovalReasons" :key="option.value">
                       <option :value="option.value" :title="option.tooltip">
@@ -2778,7 +2780,9 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
                 </x-button>
               </div>
               <div>
-                <x-button class="mr-2 focus:outline-black" size="sm" color="#ff5e00" type="submit" tabindex="0">
+                <x-button class="mr-2 focus:outline-black" size="sm" color="#ff5e00" type="submit" tabindex="0"
+                :loading = "paymentMethodsForm.processing"
+                >
                   Yes
                 </x-button>
               </div>
@@ -2805,7 +2809,9 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
                 <x-button v-if="!isApproveClicked && isViewEnabled" class="mr-2 focus:outline-black" size="sm" color="#ff5e00" @click="isApproveClicked = !isApproveClicked" tabindex="0">
                   Approve
                 </x-button>
-                <x-button v-if="isApproveClicked || (isCreditApprovalView && !isDeclineClicked)" class="mr-2 focus:outline-black" size="sm" color="#ff5e00" type="submit" tabindex="0">
+                <x-button v-if="isApproveClicked || (isCreditApprovalView && !isDeclineClicked)" class="mr-2 focus:outline-black" size="sm" color="#ff5e00" type="submit" tabindex="0"
+                :loading = "paymentMethodsForm.processing"
+                >
                   <template v-if="isCreditApprovalView && isCreditCardView">
                   Capture
                   </template>
@@ -2830,7 +2836,7 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
                 paymentMethodsForm.status == 'edit'
               "
             >
-              <x-button color="emerald" type="submit" tabindex="0" class="focus:outline-black">
+              <x-button color="emerald" type="submit" tabindex="0" class="focus:outline-black" :loading = "paymentMethodsForm.processing">
                 {{ paymentMethodsForm.status == 'create' ? 'Add Manual Payment' : 'Update' }}          
               </x-button>
             </div>          
