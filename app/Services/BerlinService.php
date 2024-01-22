@@ -146,7 +146,11 @@ class BerlinService extends BaseService
             $apiResponse = $requestExtendSubscription->getStatusCode();
         } catch (\GuzzleHttp\Exception\BadResponseException $e) {
             $apiResponse = $e->getResponse()->getStatusCode();
-            Log::error('Berlin Service - extendCustomerSubscription - Customer ID: '.$customerId.' - Error: '.$apiResponse.' - '.$e->getMessage());
+            if ($apiResponse == '422') {
+                info('extendCustomerSubscription Customer ID: '.$customerId.' Response: '.$apiResponse.' Customer not exist so cannot proceed to extend subscription');
+            } else {
+                Log::error('Berlin Service - extendCustomerSubscription - Customer ID: '.$customerId.' - Response: '.$apiResponse.' - '.$e->getMessage());
+            }
         }
 
         return $apiResponse;
