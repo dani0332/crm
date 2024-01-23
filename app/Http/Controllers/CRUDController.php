@@ -1711,7 +1711,7 @@ class CRUDController extends Controller
         }
         if (auth()->user()->hasRole(RolesEnum::BetaUser)) {
 
-            if (!(Auth::user()->hasRole(RolesEnum::CarAdvisor))) {
+            if (! (auth()->user()->can(PermissionsEnum::PaymentsCreate))) {
                 return;
             }
 
@@ -1832,7 +1832,7 @@ class CRUDController extends Controller
     {
 
         if (auth()->user()->hasRole(RolesEnum::BetaUser)) {
-            if (!(Auth::user()->hasRole(RolesEnum::CarAdvisor))) {
+            if (! (auth()->user()->can(PermissionsEnum::PaymentsEdit))) {
                 return;
             }
             $paymentInformation = [
