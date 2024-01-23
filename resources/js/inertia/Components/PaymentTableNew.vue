@@ -1100,9 +1100,11 @@ const editPaymentModal = (payment,split_payment_id,sr_no,capture_approval) => {
           && (payment.total_price<=(payment.total_amount+payment.discount_value)) 
         ) { //FOR EDIT
       isFieldReadonly.value = true;    
-    } else {      
+    } else if(payment.total_price>(payment.total_amount+payment.discount_value)) {    
       isFieldReadonly.value = false;      
       isTotalPriceUpdated.value = true;
+    } else {
+      isFieldReadonly.value = false;
     }    
   }
   

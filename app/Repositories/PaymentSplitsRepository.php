@@ -339,14 +339,11 @@ class PaymentSplitsRepository
                 $aRPostReceipts = SagePayloadFactory::aRPostReceiptsPayment($sageResponse['BatchNumber']);
                 $resp = $sageApiService->postToSage300($aRPostReceipts['endPoint'], $aRPostReceipts['payload']);
                 $documentNumberForReciept = $sageResponse['ReceiptsAdjustments'][0]['DocumentNumber'];
-                $paymentInformation['sage_reciept_id'] = $documentNumberForReciept;
-                $splitPayment->update($paymentInformation);
+                $paymentInformation['sage_reciept_id'] = $documentNumberForReciept;               
             } else {
-                $successMessage = 'Sage Error: Reciept not generated';
-
-                return $successMessage;
+                $successMessage .= ' Sage Error: Reciept not generated';                
             }
-
+            $splitPayment->update($paymentInformation);            
         } elseif ($request->is_declined) {
             $splitPayment = PaymentSplits::find($request->splitPaymentId);
             $paymentInformation = [
