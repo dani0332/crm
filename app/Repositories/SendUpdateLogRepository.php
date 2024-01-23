@@ -2,6 +2,7 @@
 
 namespace App\Repositories;
 
+use App\Enums\SendUpdateLogStatusEnum;
 use App\Models\SendUpdateLog;
 use Illuminate\Support\Str;
 
@@ -84,6 +85,7 @@ class SendUpdateLogRepository extends BaseRepository
                 'price_without_vat' => $data['price_without_vat'],
                 'insurer_quote_number' => $data['insurer_quote_number'],
                 'insurance_provider_id' => $data['insurance_provider_id'],
+                'status' => SendUpdateLogStatusEnum::REQUEST_IN_PROGRESS
             ]);
         } catch(\Exception $ex) {
             $result = (object) [

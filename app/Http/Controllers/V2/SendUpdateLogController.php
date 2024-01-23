@@ -46,8 +46,6 @@ class SendUpdateLogController extends Controller
         $sendUpdateOptions = (new LookupService)->getSendUpdateOptions($quoteTypeId);
         $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping($quoteTypeId);
 
-        $policyDetails = $this->getPolicyDetails($sendUpdateLog->id);
-
         $quoteType = QuoteTypes::getName($quoteTypeId)->value;
 
         $quote = $this->getQuote($sendUpdateLog->personal_quote_id, $quoteType);
@@ -56,7 +54,6 @@ class SendUpdateLogController extends Controller
             'quote' => $quote,
             'quoteType' => $quoteType,
             'sendUpdateLog' => $sendUpdateLog,
-            'policyDetails' => $policyDetails,
             'sendUpdateOptions' => $sendUpdateOptions,
             'insuranceProviders' => $insuranceProviders,
             'sendUpdateStatusEnum' => SendUpdateLogStatusEnum::asArray(),
@@ -147,32 +144,8 @@ class SendUpdateLogController extends Controller
         $data = $request->all();
 
         SendUpdateLogRepository::updateLogPriceDetails($data);
-
-        // $sendUpdateLog = SendUpdateLogRepository::getLogByUuid($data['uuid']);
-
-        // $sendUpdateLog->update(['status' => SendUpdateLogStatusEnum::REQUEST_IN_PROGRESS]);
-
+        
         return redirect()->back();
-    }
-
-    public function savePlanDetails(PlanDetailsRequest $request)
-    {
-        $id = $request->id;
-        $quoteTypeId = $request->quote_type_id;
-        
-        $quoteType = QuoteTypes::getName($quoteTypeId)->value;
-
-        $repository = getRepositoryObject($quoteType);
-
-        $quote = $repository::where('id', $id)->firstOrFail();
-        $quote->update($request->validated());
-
-        return redirect()->back()->with('success', 'updated successfully');
-    }
-
-    public function savePolicyDetails(Request $request) 
-    {
-        
     }
 
     private function getQuote($quoteId, $quoteType)
@@ -180,10 +153,5 @@ class SendUpdateLogController extends Controller
         $repository = getRepositoryObject($quoteType);
 
         return $repository::where('id', $quoteId)->first();
-    }
-
-    private function getPolicyDetails($sendUpdateLogId)
-    {
-        return null;//SUPolicyDetail::where('send_update_log_id', $sendUpdateLogId)->first();
     }
 }

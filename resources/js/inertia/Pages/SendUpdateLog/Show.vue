@@ -60,7 +60,7 @@ const updateLogOptions = computed(() => {
   }));
 });
 
-const isEditDisabled = computed(() => {
+const isUpdateBooked = computed(() => {
   return (
     props.sendUpdateLog.status === props.sendUpdateStatusEnum.UPDATE_BOOKED &&
     ['EF', 'CI', 'CIR', 'CPD'].includes(selectedCategory?.value?.subCategory.slug)
@@ -97,7 +97,7 @@ onMounted(() => {
 })
 
 const onEdit = () => {
-  if (isEditDisabled.value) {
+  if (isUpdateBooked.value) {
     notification.error({
       title: 'Update already booked',
       position: 'top',
@@ -237,6 +237,7 @@ const onUpdateLog = () => {
       :selectedCategory="selectedCategory"
       :insuranceProviders="insuranceProviders"
       :quoteType="quoteType"
+      :isUpdateBooked="isUpdateBooked"
     />
 
     <LazyPolicyDetails
@@ -245,6 +246,7 @@ const onUpdateLog = () => {
       :insuranceProviders="insuranceProviders"
       :selectedCategory="selectedCategory"
       :quote="quote"
+      :isUpdateBooked="isUpdateBooked"
     />
 
     <!-- Documents Component goes here -->
@@ -269,6 +271,7 @@ const onUpdateLog = () => {
       :insuranceProviders="insuranceProviders"
       :selectedCategory="selectedCategory"
       :quote="quote"
+      :isUpdateBooked="isUpdateBooked"
     />
 
     <AuditLogs

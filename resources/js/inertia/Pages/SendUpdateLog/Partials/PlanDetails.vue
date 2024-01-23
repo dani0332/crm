@@ -21,6 +21,10 @@ const props = defineProps({
   quoteType: {
     type: String,
     required: true
+  },
+  isUpdateBooked: {
+    type: Boolean,
+    required: true
   }
 })
 

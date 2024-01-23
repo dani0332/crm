@@ -57,11 +57,11 @@ const policyDetailsForm = useForm({
 	provider_name: '',
 	plan_name: '',
 	policy_number: props.quote?.policy_number || '',
-	issuance_date: props.quote.policy_issuance_date || '',
+	issuance_date: props.quote?.policy_issuance_date || '',
 	start_date: props.quote?.policy_start_date || '',
 	expiry_date: props.quote?.renewal_expiry_date || '',
 	insurer_quote_number: '',
-	issuance_status: '',
+	issuance_status_id: '',
 	id: props.sendUpdateLog.id,
 })
 
