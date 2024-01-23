@@ -49,11 +49,13 @@ const updateList = async data => {
       title: response.data.message,
       position: 'top',
     });
-  } catch (e) {
+  } catch ({ response }) {
+    console.log(response);
     notification.error({
-      title: '!Error',
+      title: response.data.message,
       position: 'top',
     });
+    return false;
   }
 };
 
@@ -102,18 +104,10 @@ useSortable(`#${props.title}`, leads.value, {
       } else {
         data.to['lost_reason'] = leadForm.lostreason;
       }
-    } else if (
-      data &&
-      data.to.quote_status_id == quoteStatusEnum?.TransactionApproved
-    ) {
-      notification.error({
-        title: 'Transaction approval is required',
-        position: 'top',
-      });
-      moveElemToOriginalList(e);
-      return;
     }
-    updateList(data);
+    let listResponse = await updateList(data);
+    if (!listResponse) moveElemToOriginalList(e);
+
     showModal.value = false;
   },
 });
@@ -128,6 +122,7 @@ const moveElemToOriginalList = e => {
   // Insert the dragged element back to its original position
   originalList.insertBefore(itemEl, referenceNode);
 };
+
 const lostReasonsOptions = computed(() => {
   return lostReasons.map(reason => ({
     value: reason.id,
