@@ -67,7 +67,7 @@ class TransAppService extends BaseService
         $customer->myalfred_expiry_date = $expiryDate;
         $customer->save();
 
-        $responseExtend = $this->berlinService->extendCustomerSubscription($customerId, $request->email);
+        $responseExtend = $this->berlinService->extendCustomerSubscription($customerId, $request->email, 'TRANSAPP', 'transapp-myalfred-we');
         info('createTransaction responseExtend: '.$responseExtend);
 
         if ($responseExtend != 201) {

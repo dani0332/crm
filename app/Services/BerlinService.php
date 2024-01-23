@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Jobs\MAWelcomeJob;
 use App\Models\MyAlFredUser;
 use Illuminate\Support\Facades\Log;
 
@@ -98,7 +99,7 @@ class BerlinService extends BaseService
         return $apiResponse;
     }
 
-    public function extendCustomerSubscription($customerId, $customerEmail)
+    public function extendCustomerSubscription($customerId, $customerEmail, $source, $tag)
     {
         $customer = MyAlFredUser::select('signup_url', 'code')->where('customer_id', $customerId)->latest()->first();
 
@@ -122,11 +123,8 @@ class BerlinService extends BaseService
         }
 
         $customerDataArr['email'] = $customerEmail;
-
         $customerDataJson = json_encode($customerDataArr);
-
         $magicUrlGeneratauthBasic = base64_encode($this->berlinUserName.':'.$this->berlinAuthPassword);
-
         $clientExtendSubscription = new \GuzzleHttp\Client();
 
         try {
@@ -143,16 +141,21 @@ class BerlinService extends BaseService
                 ]
             );
 
-            $apiResponse = $requestExtendSubscription->getStatusCode();
+            $statusCode = $requestExtendSubscription->getStatusCode();
         } catch (\GuzzleHttp\Exception\BadResponseException $e) {
-            $apiResponse = $e->getResponse()->getStatusCode();
-            if ($apiResponse == '422') {
-                info('Berlin Service - extendCustomerSubscription - Customer ID: '.$customerId.' - Response: '.$apiResponse.' - Customer does not exist, cannot extend subscription');
+            $statusCode = $e->getResponse()->getStatusCode();
+
+            $errorData = json_decode($e->getResponse()->getBody()->getContents(), true);
+
+            if ($errorData['code'] == 'CUSTOMER_NOT_FOUND') {
+                $customer = $this->customerService->getCustomerByEmail($customerEmail);
+                Log::warning('extendCustomerSubscription Customer Id: '.$customerId.' Customer Email: '.$customerEmail.' Error Code: '.$errorData['code'].' Customer not exist so cannot proceed to extend subscription, sending signup email to customer. API Message: '.$errorData['message']);
+                dispatch(new MAWelcomeJob($customer->first_name, $customer->last_name, $customer->email, $customer->mobile_no, $source, $tag));
             } else {
-                Log::error('Berlin Service - extendCustomerSubscription - Customer ID: '.$customerId.' - Response: '.$apiResponse.' - '.$e->getMessage());
+                Log::error('Berlin Service - extendCustomerSubscription - Customer ID: '.$customerId.' - Status Code: '.$statusCode.' - '.$e->getMessage());
             }
         }
 
-        return $apiResponse;
+        return $statusCode;
     }
 }
