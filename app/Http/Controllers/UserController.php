@@ -119,9 +119,8 @@ class UserController extends Controller
         $this->leadAllocationService->createLeadAllocationRecord($user->id);
 
         $user->assignRole($request->input('roles'));
-        if (isset($request->return_to_view)) {
-            return redirect('admin/users/'.$user->id)->with('success', 'User has been stored');
-        }
+       
+        return redirect(route('users.show', $user->id))->with('success', 'User has been store');
     }
 
     /**
