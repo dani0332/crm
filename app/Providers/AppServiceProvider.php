@@ -6,6 +6,7 @@ use App\Models\CarQuote;
 use App\Observers\CarQuoteObserver;
 use App\Services\CarAllocationService;
 use App\Services\HealthAllocationService;
+use App\Services\LeadsCountService;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -23,6 +24,10 @@ class AppServiceProvider extends ServiceProvider
 
         $this->app->bind(HealthAllocationService::class, function ($app) {
             return new HealthAllocationService();
+        });
+
+        $this->app->singletonIf(LeadsCountService::class, function ($app) {
+            return new LeadsCountService();
         });
     }
 

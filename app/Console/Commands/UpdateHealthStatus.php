@@ -41,6 +41,7 @@ class UpdateHealthStatus extends Command
     public function handle()
     {
         info('UpdateHealthStatus Command Commented as per new FR');
+        // FR Link : https://app.clickup.com/2197982/docs/232ey-34604/232ey-103444
         // info('UpdateHealthStatus Command Started');
         // HealthQuote::where('quote_status_id', QuoteStatusEnum::FollowedUp)
         //     ->where('updated_at', '<', date('Y-m-d', strtotime('-29 days')))->chunkById(20, function ($leads) {

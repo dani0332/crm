@@ -14,10 +14,21 @@ class HealthQuoteRepository extends BaseRepository
     {
         return HealthQuote::class;
     }
-    public function fetchGetData()
+    public function fetchGetData($forExport = false, $forTotalLeadsCount = false)
     {
-        return $this->filter()->with(
-            ['advisor', 'nationality', 'insuranceProvider'])->orderBy('created_at', 'desc')->Paginate();
+        $query = $this->with([
+            'advisor', 
+            'nationality', 
+            'insuranceProvider'
+        ])
+        ->filter(! $forExport, $forTotalLeadsCount)
+        ->orderBy('created_at', 'desc');
+
+        if ($forTotalLeadsCount) {
+            return $query->count();
+        }
+
+        return ($forExport) ? $query->get() : $query->Paginate();
     }
 
     public function fetchExport()

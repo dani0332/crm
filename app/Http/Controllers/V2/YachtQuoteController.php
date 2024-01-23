@@ -9,11 +9,13 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
+use App\Events\LeadsCount;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\BikeQuoteRequest;
 use App\Http\Requests\YachtQuoteRequest;
 use App\Models\Emirate;
 use App\Models\Nationality;
+use App\Models\PersonalQuote;
 use App\Repositories\ActivityRepository;
 use App\Repositories\CustomerMembersRepository;
 use App\Repositories\DocumentTypeRepository;
@@ -72,6 +74,8 @@ class YachtQuoteController extends Controller
         if (! empty($response->errors) || ! empty($response->msg)) {
             vAbort($response->msg);
         }
+
+        event(new LeadsCount(YachtQuoteRepository::getData(true, true)));
 
         return redirect('personal-quotes/yacht/'.$response->quoteUID)->with('message', 'Quote created successfully');
     }
@@ -202,6 +206,8 @@ class YachtQuoteController extends Controller
             'quoteStatusEnum' => $quoteStatusEnums,
             'lostReasons' => $lostReasons,
             'quoteTypeId' => QuoteTypes::YACHT->id(),
+            'quoteType' => QuoteTypes::YACHT->value,
+            'totalCount' => YachtQuoteRepository::getData(true, true),
         ]);
     }
 }

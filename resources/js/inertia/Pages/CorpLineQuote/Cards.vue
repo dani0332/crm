@@ -3,16 +3,19 @@ const props = defineProps({
   quoteStatusEnum: Object,
   quoteTypeId: String,
   lostReasons: Object,
+  quoteType: String,
+  totalCount: {
+    type: Number,
+    default: 0,
+  },
 });
 
 const page = usePage();
-const dateFormat = date => {
-  return useDateFormat(date, 'DD-MM-YYYY HH:mm:ss').value;
-};
 
 provide('quoteStatusEnum', props.quoteStatusEnum);
 provide('quoteTypeId', props.quoteTypeId);
 provide('lostReasons', props.lostReasons);
+provide('quoteType', props.quoteType);
 
 const quotes = reactive({
   data: page.props.quotes || [],
@@ -22,105 +25,49 @@ const quotes = reactive({
   queries: {},
 });
 
-const onLoadMore = id => {
-  quotes.loader = true;
-  quotes.pages = {
-    ...quotes.pages,
-    [id]: quotes.pages[id] ? Number(quotes.pages[id]) + 1 : 2,
-  };
-  axios
-    .post(
-      route('loadMoreRecords', {
-        page: quotes.pages[id],
-        modelType: 'Business',
-        status: id,
-      }),
-    )
-    .then(({ data }) => {
-      console.log(data);
-      quotes.data = quotes.data.map(quote => {
-        if (quote.id === id) {
-          quote.data.leads_list = {
-            ...data.leads_list,
-            data: quote.data.leads_list.data.concat(data.leads_list.data),
-          };
-        }
-        return quote;
-      });
-    })
-    .catch(err => {
-      console.log(err);
-    })
-    .finally(() => {
-      quotes.loader = false;
-    });
+const options = {
+  cluster: 'ap1',
+  forceTLS: false,
 };
 
-const onSearch = id => {
-  quotes.searching = true;
-  if (
-    !quotes.queries[id] ||
-    quotes.queries[id] === '' ||
-    quotes.queries[id] === null
-  ) {
-    axios
-      .post(
-        route('loadMoreRecords', {
-          page: 1,
-          modelType: 'Business',
-          status: id,
-        }),
-      )
-      .then(({ data }) => {
-        quotes.data = quotes.data.map(quote => {
-          if (quote.id === id) {
-            quote.data.leads_list = data.leads_list;
-          }
-          return quote;
-        });
-      })
-      .catch(err => {
-        console.log(err);
-      })
-      .finally(() => {
-        quotes.searching = false;
-      });
-    return;
-  }
-  axios
-    .post(
-      route('searchLead', {
-        term: quotes.queries[id],
-        modelType: 'Business',
-        status: id,
-      }),
-    )
-    .then(({ data }) => {
-      quotes.data = quotes.data.map(quote => {
-        if (quote.id === id) {
-          quote.data.leads_list = {
-            ...data.leads_list,
-            next_page_url: null,
-            data: data.leads_list,
-          };
-        }
-        return quote;
-      });
-    })
-    .catch(err => {
-      console.log(err);
-    })
-    .finally(() => {
-      quotes.searching = false;
-    });
+const leadsCount = ref(props.totalCount);
+const previousDate = getPreviousDate;
+const pusher = new Pusher(page.props.pusherKey, options);
+const channel = pusher.subscribe(
+  'public.' + page.props.appEnv + '.total-leads-count',
+);
+
+const listen = () => {
+  channel.bind('leads.count', function (e) {
+    leadsCount.value = e.totalLeadsCount;
+  });
 };
+
+onMounted(() => {
+  listen();
+});
+
+onUnmounted(() => {
+  channel.unbind('leads.count');
+  channel.unsubscribe('public.' + page.props.appEnv + '.total-leads-count');
+});
 </script>
 
 <template>
   <div>
     <Head title="Business Quote ~ Card View" />
     <div class="flex justify-between items-center">
-      <h2 class="text-xl font-semibold">Lead List</h2>
+      <div class="flex items-center gap-5">
+        <h2 class="text-xl font-semibold">Lead List</h2>
+        <x-tooltip>
+          <span class="border-2 rounded px-3 bg-gray-200 text-sm font-medium"
+            >{{ leadsCount }}
+          </span>
+          <template #tooltip>
+            <span>Total Leads received since {{ previousDate() }}</span>
+          </template>
+        </x-tooltip>
+      </div>
       <div class="space-x-3">
         <Link :href="route('business.index')">
           <x-button size="sm" color="#1d83bc"> List View </x-button>
@@ -143,6 +90,7 @@ const onSearch = id => {
         :quote="quote"
         :quotes="quotes"
         :quoteTypeId="quoteTypeId"
+        :quoteType="quoteType"
         :lostReasons="props.lostReasons"
         :quoteStatusEnum="props.quoteStatusEnum"
       />

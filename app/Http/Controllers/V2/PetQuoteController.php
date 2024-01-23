@@ -10,10 +10,12 @@ use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
+use App\Events\LeadsCount;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\PetQuoteRequest;
 use App\Models\Emirate;
 use App\Models\Nationality;
+use App\Models\PetQuote;
 use App\Repositories\ActivityRepository;
 use App\Repositories\CustomerMembersRepository;
 use App\Repositories\DocumentTypeRepository;
@@ -75,10 +77,12 @@ class PetQuoteController extends Controller
     public function store(PetQuoteRequest $request)
     {
         $response = PetQuoteRepository::create($request->validated());
-
+        
         if (! empty($response->errors) || ! empty($response->msg)) {
             vAbort($response->msg);
         }
+
+        event(new LeadsCount(PetQuoteRepository::getData(true, true)));
 
         return redirect(route('pet-quotes-show', $response->quoteUID))->with('message', 'Quote is created successfully.');
     }
@@ -218,11 +222,15 @@ class PetQuoteController extends Controller
             }
         }
 
+        // Todo:: Need to send total Counts and Oppurtunity Counts
+
         return inertia('PetQuote/Cards', [
             'quotes' => $quotes,
             'quoteStatusEnum' => $quoteStatusEnums,
             'lostReasons' => $lostReasons,
             'quoteTypeId' => QuoteTypes::PET->id(),
+            'quoteType' => QuoteTypes::PET->value,
+            'totalCount' => PetQuoteRepository::getData(true, true),
         ]);
     }
 }

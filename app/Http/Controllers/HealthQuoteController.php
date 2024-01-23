@@ -8,6 +8,7 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Http\Requests\InsurerProviderNetworkRequest;
+use App\Repositories\HealthQuoteRepository;
 use App\Repositories\InsuranceProviderRepository;
 use App\Repositories\LostReasonRepository;
 use App\Services\HealthQuoteService;
@@ -137,6 +138,8 @@ class HealthQuoteController extends Controller
             'quoteStatusEnum' => $quoteStatusEnums,
             'lostReasons' => $lostReasons,
             'quoteTypeId' => QuoteTypes::HEALTH->id(),
+            'quoteType' => QuoteTypes::HEALTH->value,
+            'totalCount' => HealthQuoteRepository::getData(true, true),
         ]);
     }
 }

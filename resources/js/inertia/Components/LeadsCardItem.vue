@@ -1,8 +1,5 @@
 <script setup>
-import {
-  useSortable,
-  moveArrayElement,
-} from '@vueuse/integrations/useSortable';
+import { useSortable } from '@vueuse/integrations/useSortable';
 import { daysSinceStale } from '../Composables/utilities';
 
 const page = usePage();
@@ -16,7 +13,7 @@ const props = defineProps({
   title: String,
 });
 
-const emit = defineEmits(['confirmation-result']);
+const emit = defineEmits(['UpdateLeadsCount']);
 
 const quoteStatusEnum = inject('quoteStatusEnum');
 const quoteTypeId = inject('quoteTypeId');
@@ -24,7 +21,10 @@ const lostReasons = inject('lostReasons');
 
 const { isRequired } = useRules();
 
-const leads = ref(props.leads);
+const leads = computed(() => {
+  return props.leads;
+});
+
 const leadForm = useForm({
   lostreason: null,
 });
@@ -39,43 +39,24 @@ const canDrag = computed(() => {
 
 const notification = useToast();
 
-const canDrop = computed(() => {
-  if (
-    props.id == quoteStatusEnum?.TransactionApproved ||
-    props.id == quoteStatusEnum?.PolicyIssued
-  ) {
+const updateList = async data => {
+  try {
+    let response = await axios.post(route('update-lead-status-drag-drop'), {
+      data,
+    });
+    emit('UpdateLeadsCount', data);
+    notification.success({
+      title: response.data.message,
+      position: 'top',
+    });
+  } catch ({ response }) {
+    console.log(response);
     notification.error({
-      title: 'Transaction approval is required',
+      title: response.data.message,
       position: 'top',
     });
     return false;
   }
-  return true;
-});
-
-const updateList = data => {
-  axios
-    .post(route('update-lead-status-drag-drop'), {
-      data,
-    })
-    .then(response => {
-      const success_messages = response.data.message;
-      Object.keys(success_messages).forEach(function (key) {
-        notification.success({
-          title: success_messages[key],
-          position: 'top',
-        }); 
-      });
-    })
-    .catch(({ response }) => {
-      const error_messages = response.data.message;
-      Object.keys(error_messages).forEach(function (key) {
-        notification.error({
-          title: error_messages[key],
-          position: 'top',
-        }); 
-      });
-    });
 };
 
 let resolveConfirm;
@@ -92,7 +73,7 @@ const moveTask = async () => {
   return confirmed;
 };
 
-useSortable(`#${props.title}`, props.leads, {
+useSortable(`#${props.title}`, leads.value, {
   group: {
     name: 'shared',
     put: true,
@@ -109,50 +90,37 @@ useSortable(`#${props.title}`, props.leads, {
       to: { quote_status_id: e.to.getAttribute('quote_status_id') },
     };
 
-    console.log(data.to.quote_status_id, quoteStatusEnum?.TransactionApproved);
-
     // Todo: Need to update with Enum
-    if (data && data.to.quote_status_id == quoteStatusEnum?.Lost) {
+    if (
+      data &&
+      data.to.quote_status_id == quoteStatusEnum?.Lost &&
+      quoteTypeId == '3'
+    ) {
       let response = await moveTask(e);
       if (!response) {
-        var itemEl = e.item; // dragged HTMLElement
-        let originalList = e.from; // previous list
-        var newIndex = e.oldIndex;
-
-        var referenceNode = originalList.children[newIndex];
-
-        // Insert the dragged element back to its original position
-        originalList.insertBefore(itemEl, referenceNode);
+        moveElemToOriginalList(e);
         showModal.value = false;
         return;
       } else {
         data.to['lost_reason'] = leadForm.lostreason;
       }
-    } else if (
-      data &&
-      data.to.quote_status_id == quoteStatusEnum?.TransactionApproved
-    ) {
-      notification.error({
-        title: 'Transaction approval is required',
-        position: 'top',
-      });
-      var itemEl = e.item; // dragged HTMLElement
-      let originalList = e.from; // previous list
-      var newIndex = e.oldIndex;
-
-      var referenceNode = originalList.children[newIndex];
-
-      // Insert the dragged element back to its original position
-      originalList.insertBefore(itemEl, referenceNode);
-      return;
     }
-    updateList(data);
+    let listResponse = await updateList(data);
+    if (!listResponse) moveElemToOriginalList(e);
+
     showModal.value = false;
   },
 });
 
-const dateFormat = date => {
-  return useDateFormat(date, 'DD-MM-YYYY HH:mm:ss').value;
+const moveElemToOriginalList = e => {
+  var itemEl = e.item; // dragged HTMLElement
+  let originalList = e.from; // previous list
+  var newIndex = e.oldIndex;
+
+  var referenceNode = originalList.children[newIndex];
+
+  // Insert the dragged element back to its original position
+  originalList.insertBefore(itemEl, referenceNode);
 };
 
 const lostReasonsOptions = computed(() => {
@@ -177,8 +145,8 @@ const getUrl = (url, quoteTypeId) => useGetShowPageRoute(url, quoteTypeId);
   <div
     :id="title"
     :quote_status_id="id"
-    class="shared h-full"
-    :class="{ 'h-screen': props.leads.length == 0 }"
+    class="shared"
+    :class="{ 'h-full': leads.length == 0 }"
   >
     <a
       v-for="{

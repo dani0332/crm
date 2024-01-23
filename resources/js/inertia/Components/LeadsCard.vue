@@ -12,36 +12,29 @@ const props = defineProps({
     type: Number,
     require: true,
   },
+  quoteType: String,
 });
 
 const quotes = ref({ ...props.quotes });
+const quote = ref({ ...props.quote });
 const page = usePage();
+const quoteType = inject('quoteType');
 
-const hasAnyRole = role => useHasAnyRole(role);
-const rolesEnum = page.props.rolesEnum;
-
-const unitManager = computed(() => {
-  return `${props.quote?.quoteType}Manager`;
+const computedLeads = computed(() => {
+  return quote.value.data.leads_list.data;
 });
 
-const advisor = computed(() => {
-  return `${props.quote?.quoteType}Advisor`;
-});
+const can = permission => useCan(permission);
+const permissionsEnum = page.props.permissionsEnum;
 
 const isAllowed = computed(() => {
-  return (
-    hasAnyRole([
-      advisor.value,
-      rolesEnum.OperationAssistant,
-      unitManager.value,
-      rolesEnum.UnitHead,
-    ]) ?? false
-  );
+  return can(permissionsEnum.LEAD_CARD_SEARCH) ?? false;
 });
 
 const quoteTitle = computed(() => {
   return props.quote?.text ?? props.quote?.title;
 });
+
 const onLoadMore = id => {
   quotes.value.loader = true;
   quotes.value.pages = {
@@ -52,20 +45,23 @@ const onLoadMore = id => {
     .post(
       route('loadMoreRecords', {
         page: quotes.value.pages[id],
-        modelType: 'Life',
+        modelType: quoteType,
         status: id,
       }),
     )
     .then(({ data }) => {
-      quotes.value.data = quotes.value.data.map(quote => {
-        if (quote.id === id) {
-          quote.data.leads_list = {
-            ...data.leads_list,
-            data: quote.data.leads_list.data.concat(data.leads_list.data),
-          };
-        }
-        return quote;
-      });
+      quote.value.data.total_premium =
+        Number(quote.value.data.total_premium) +
+        Number(useCalculateTotalSum(data.leads_list.data, 'premium'));
+      quote.value.data.total_opportunity =
+        Number(quote.value.data.total_opportunity) +
+        Number(
+          useCalculateTotalSum(data.leads_list.data, 'price_starting_from '),
+        );
+      quote.value.data.total_leads = data.leads_list.total;
+      quote.value.data.leads_list.next_page_url = data.leads_list.next_page_url;
+      quote.value.data.leads_list.data =
+        quote.value.data.leads_list.data.concat(data.leads_list.data);
     })
     .catch(err => {
       console.log(err);
@@ -86,7 +82,7 @@ const onSearch = id => {
       .post(
         route('loadMoreRecords', {
           page: quotes.value.pages[id],
-          modelType: 'Life',
+          modelType: quoteType,
           status: id,
         }),
       )
@@ -110,7 +106,7 @@ const onSearch = id => {
     .post(
       route('searchLead', {
         term: quotes.value.queries[id],
-        modelType: 'Life',
+        modelType: quoteType,
         status: id,
       }),
     )
@@ -133,6 +129,39 @@ const onSearch = id => {
       quotes.value.searching = false;
     });
 };
+
+const UpdateLeadsCount = data => {
+  let draggedItem = null;
+  props.quotes.data = props.quotes.data.map(lead => {
+    if (lead.id == data.form.quote_status_id) {
+      let index = lead.data.leads_list.data.findIndex(
+        item => item.id == data.form.id,
+      );
+      if (lead.data.leads_list.data[index]) {
+        draggedItem = { ...lead.data.leads_list.data[index] };
+        lead.data.total_leads -= 1;
+        lead.data.total_opportunity -= draggedItem.price_starting_from
+          ? draggedItem.price_starting_from
+          : 0;
+        lead.data.total_premium -= draggedItem.premium ?? 0;
+      }
+      lead.data.leads_list.data.splice(index, 1);
+    }
+    return lead;
+  });
+
+  props.quotes.data = props.quotes.data.map(lead => {
+    if (lead.id == data.to.quote_status_id) {
+      if (draggedItem) {
+        lead.data.leads_list.data.push(draggedItem);
+        lead.data.total_leads += 1;
+        lead.data.total_opportunity += draggedItem.price_starting_from ?? 0;
+        lead.data.total_premium += draggedItem.premium ?? 0;
+      }
+    }
+    return lead;
+  });
+};
 </script>
 <template>
   <div
@@ -144,11 +173,23 @@ const onSearch = id => {
       <h4 class="font-semibold text-sm">{{ quote.text ?? quote.title }}</h4>
       <div class="flex justify-between gap-1">
         <span>Total Leads </span>
-        <span>{{ quote.data.total_leads }}</span>
+        <span>{{ quote.data.total_leads }} </span>
+      </div>
+      <div class="flex justify-between gap-1" v-show="quoteType == 'Health'">
+        <span>Total Opportunity</span>
+        <span>{{
+          Number(quote.data.total_opportunity) > 0
+            ? Number(quote.data.total_opportunity).toLocaleString()
+            : '0.00'
+        }}</span>
       </div>
       <div class="flex justify-between gap-1">
-        <span>Total Premium</span>
-        <span>{{ Number(quote.data.total_premium).toLocaleString() }}</span>
+        <span>Total Price </span>
+        <span>{{
+          Number(quote.data.total_premium) > 0
+            ? Number(quote.data.total_premium).toLocaleString()
+            : '0.00'
+        }}</span>
       </div>
       <div v-if="isAllowed">
         <x-input
@@ -170,7 +211,7 @@ const onSearch = id => {
         <x-spinner class="text-primary-500" />
       </div>
       <div
-        v-if="quote.data.leads_list.data == 0 && quote.data.total_leads > 0"
+        v-if="quote.data.leads_list.data == 0 && quote.data.total_leads == 0"
         class="text-center text-xs text-gray-800 p-4"
       >
         <x-icon icon="box" class="text-secondary-600 mb-2" />
@@ -179,8 +220,9 @@ const onSearch = id => {
       <leads-card-item
         :title="quote.title.split(' ').join('')"
         :id="quote.id"
-        :leads="quote.data.leads_list.data"
         :quote_type_id="quoteTypeId"
+        :leads="computedLeads"
+        @UpdateLeadsCount="data => UpdateLeadsCount(data)"
       />
       <div
         class="mt-3"

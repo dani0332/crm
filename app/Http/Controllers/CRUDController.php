@@ -24,6 +24,7 @@ use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Enums\TiersEnum;
+use App\Events\LeadsCount;
 use App\Facades\Capi;
 use App\Http\Requests\ExportPlansPdfRequest;
 use App\Http\Requests\UpdateLeadStatusRequest;
@@ -36,15 +37,20 @@ use App\Models\EmbeddedTransaction;
 use App\Models\Emirate;
 use App\Models\GenericModel;
 use App\Models\HealthPlanType;
+use App\Models\HealthQuote;
+use App\Models\HomeQuote;
 use App\Models\Nationality;
 use App\Models\Payment;
 use App\Models\PaymentStatusLog;
 use App\Models\QuoteDocument;
+use App\Models\QuoteType;
 use App\Models\Tier;
 use App\Models\User;
 use App\Repositories\AuditRepository;
 use App\Repositories\CustomerMembersRepository;
 use App\Repositories\EmbeddedProductRepository;
+use App\Repositories\HealthQuoteRepository;
+use App\Repositories\HomeQuoteRepository;
 use App\Repositories\InsuranceProviderRepository;
 use App\Repositories\LookupRepository;
 use App\Repositories\LostReasonRepository;
@@ -404,7 +410,8 @@ class CRUDController extends Controller
         $modelPropertiesList = json_decode($request->get('model'), true);
         $modelSkipPropertiesList = json_decode($request->get('modelSkipProperties'), true);
         $modelType = json_decode($request->get('modelType'), true);
-        $validateArray = [];
+        $validateArray = $modelDetails = [];
+
         if ($modelType !== quoteTypeCode::Health && $modelType !== quoteTypeCode::Home && $modelType !== quoteTypeCode::Car) {
             foreach ($modelPropertiesList as $property => $value) {
                 if (strpos($value, 'required') && $property != 'id' && ! strpos($modelSkipPropertiesList['create'], $property)) {
@@ -414,9 +421,15 @@ class CRUDController extends Controller
         }
         $request->dob = isset($request->dob) ? Carbon::parse($request->dob)->format('Y-m-d') : null;
 
+        if($modelType == quoteTypeCode::Health && in_array($modelType, newUi())) {
+            $modelDetails[quoteTypeCode::Health]['totalLeadsCount'] = HealthQuoteRepository::getData(true, true);
+        }
+
         // new ui enabled
         if ($modelType == quoteTypeCode::Home && in_array($modelType, newUi())) {
             $validateArray = [];
+            $modelDetails[quoteTypeCode::Home]['totalLeadsCount'] = HomeQuoteRepository::getData(true, true);
+
             if ($request->has('first_name')) {
                 $this->validate($request, [
                     'first_name' => 'required|max:255',
@@ -471,6 +484,11 @@ class CRUDController extends Controller
         if (isset($record->message) && str_contains($record->message, 'Error')) {
             return Redirect::back()->with('message', $record->message)->withInput();
         } else {
+
+            if(in_array($modelType, [quoteTypeCode::Health, quoteTypeCode::Home])) {
+                event(new LeadsCount($modelDetails[$modelType]['totalLeadsCount']));
+            }
+
             if (! isset($record->quoteUID)) {
                 return redirect('/quotes/'.strtolower($modelType))->with('success', ((str_contains(strtolower($modelType), 'team') ? 'Team' : (str_contains(strtolower($modelType), 'leadstatus') ? 'Lead Status' : $modelType))).' has been stored');
             } else {
@@ -1109,6 +1127,8 @@ class CRUDController extends Controller
             'quoteStatusEnum' => $quoteStatusEnums,
             'lostReasons' => $lostReasons,
             'quoteTypeId' => QuoteTypes::HOME->id(),
+            'quoteType' => QuoteTypes::HOME->value,
+            'totalCount' => HomeQuoteRepository::getData(true, true),
         ]);
     }
 
