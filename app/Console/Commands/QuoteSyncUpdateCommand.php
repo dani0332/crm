@@ -131,7 +131,31 @@ class QuoteSyncUpdateCommand extends Command
 
     private function getQuoteRecord($quote_type_id, $quote_uuid)
     {
-        // Define quote type models
+        $modelClassName = $this->getQuoteType($quote_type_id);
+        $sourceQuote = $modelClassName::where('uuid', $quote_uuid)->first();
+
+        return $sourceQuote;
+    }
+
+    private function createPersonalQuoteFromSource($sourceQuote, $entry)
+    {
+        $personalQuote = new PersonalQuote();
+        $sourceAttributes = $sourceQuote->getAttributes();
+        $this->syncQuote($personalQuote, $sourceAttributes, 'personal_quotes');
+        $personalQuote->quote_type_id = $entry->quote_type_id;
+        $existingQuote = PersonalQuote::where('uuid', $entry->quote_uuid)->where('quote_type_id', $entry->quote_type_id)->first();
+        if ($existingQuote) {
+            $existingQuote = $personalQuote;
+            $existingQuote->save();
+            return $existingQuote;
+        } else {
+            $personalQuote->save();
+            return $personalQuote;
+        }
+    }
+
+    public function getQuoteType($quoteTypeId)
+    {
         $quoteTypeModels = [
             1 => CarQuote::class,
             2 => HomeQuote::class,
@@ -147,29 +171,8 @@ class QuoteSyncUpdateCommand extends Command
         ];
 
         // Retrieve the source quote based on quote type and UUID
-        $modelClassName = $quoteTypeModels[$quote_type_id];
-        $sourceQuote = $modelClassName::where('uuid', $quote_uuid)->first();
-
-        return $sourceQuote;
-    }
-
-    private function createPersonalQuoteFromSource($sourceQuote, $entry)
-    {
-        $personalQuote = PersonalQuote::updateOrCreate(
-            [
-                'uuid' => $entry->quote_uuid,
-                'quote_type_id' => $entry->quote_type_id,
-            ],
-            function ($existingPersonalQuote) use ($entry) {
-                $sourceQuote = $this->getQuoteRecord($entry->quote_type_id, $entry->quote_uuid);
-                $sourceAttributes = $sourceQuote->getAttributes();
-                $this->syncQuote($existingPersonalQuote, $sourceAttributes, 'personal_quotes');
-                $existingPersonalQuote->quote_type_id = $entry->quote_type_id;
-                $existingPersonalQuote->save();
-            }
-        );
-
-        return $personalQuote;
+        $modelClassName = $quoteTypeModels[$quoteTypeId];
+        return $modelClassName;
     }
 
     private function createPersonalQuoteDetail($personalQuote, $newValues)
