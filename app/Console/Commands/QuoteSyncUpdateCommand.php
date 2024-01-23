@@ -147,9 +147,11 @@ class QuoteSyncUpdateCommand extends Command
         if ($existingQuote) {
             $existingQuote = $personalQuote;
             $existingQuote->save();
+
             return $existingQuote;
         } else {
             $personalQuote->save();
+
             return $personalQuote;
         }
     }
@@ -172,6 +174,7 @@ class QuoteSyncUpdateCommand extends Command
 
         // Retrieve the source quote based on quote type and UUID
         $modelClassName = $quoteTypeModels[$quoteTypeId];
+
         return $modelClassName;
     }
 
