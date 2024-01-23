@@ -331,6 +331,7 @@ class PaymentSplitsRepository
             // create prepayment reciept
             $payLoadOptions = SagePayloadFactory::createPrepaymentPayload($request);
             $message = $sageApiService->postToSage300($payLoadOptions['endPoint'], $payLoadOptions['payload']);
+            info('createPrepaymentPayload===resp===' . $message);
             $sageResponse = json_decode($message, true);
 
             if (isset($sageResponse['ReceiptsAdjustments'][0]['DocumentNumber'])) {

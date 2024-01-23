@@ -56,8 +56,8 @@ class SageApiService
         $sageRequest->commissionIncludingVat = floatval($payment->commission_vat_applicable);
         $sageRequest->commissionWithOutVat = $payment->commission_vat_not_applicable;
 
-        $sageRequest->insurerTaxInvoiceNumber = (string) $payment['tax_invoice_number'];
-        $sageRequest->insurerPremiumTaxInvoiceNumber = (string) $payment['insurer_commmission_invoice_number'];
+        $sageRequest->insurerPremiumNumber = (string) $payment['insurer_tax_number'];
+        $sageRequest->insurerCommissionNumber = (string) $payment['insurer_commmission_invoice_number'];
         // $sageRequest->insurerTaxInvoiceNumber = (string) rand(1000, 9999);
         // $sageRequest->insurerPremiumTaxInvoiceNumber = (string) rand(1000, 9999);
         if ($paymentSplits->first()) {

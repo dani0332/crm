@@ -260,11 +260,11 @@ class CentralController extends Controller
 
                     $sageRequest->customerId = $sageCustomerNumber;
 
+
                     /* createARInvoicePremAndComm */
                     $createARInvoicePremAndCommPayload = SagePayloadFactory::createARInvoicePremAndComm($sageRequest);
 
                     info('createARInvoicePremAndComm===payload===' . json_encode($createARInvoicePremAndCommPayload));
-
                     $resp = $sageApiService->postToSage300($createARInvoicePremAndCommPayload['endPoint'], $createARInvoicePremAndCommPayload['payload']);
 
                     info('createARInvoicePremAndComm===resp===' . $resp);

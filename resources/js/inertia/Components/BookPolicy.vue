@@ -163,13 +163,14 @@ const caculateCommission = () => {
       });
     }
   } else if (bpForm.commission_vat_not_applicable > 0) {
-    bpForm.total_commission = bpForm.commission_vat_not_applicable;
-    if (Number(props.quote?.price_without_vat) > 0) {
+    if (Number(props.quote?.price_vat_not_applicable) > 0) {
       bpForm.commission_percentage = (
         (bpForm.commission_vat_not_applicable /
-          props.quote?.price_without_vat) *
+          props.quote?.price_vat_not_applicable) *
         100
       ).toFixed(2);
+
+      bpForm.total_commission = bpForm.commission_vat_not_applicable;
     } else {
       notification.error({
         title: 'Please add Policy Detail Price (VAT NOT APPLICABLE)',
