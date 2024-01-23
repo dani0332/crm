@@ -12,6 +12,7 @@ defineProps({
 });
 
 const page = usePage();
+const previousDate = getPreviousDate;
 const notification = useNotifications('toast');
 
 const loader = reactive({
@@ -206,7 +207,17 @@ const permissionsEnum = page.props.permissionsEnum;
   <div>
     <Head title="Home List" />
     <div class="flex justify-between items-center">
-      <h2 class="text-xl font-semibold">Home List</h2>
+      <div class="flex items-center gap-5">
+        <h2 class="text-xl font-semibold">Home List</h2>
+        <x-tooltip>
+          <span class="border-2 rounded px-3 bg-gray-200 text-sm font-medium">{{
+            quotes?.leadsCount ?? 0
+          }}</span>
+          <template #tooltip>
+            <span>Total Leads received since {{ previousDate() }}</span>
+          </template>
+        </x-tooltip>
+      </div>
       <div class="flex space-x-2 items-center">
         <column-selection
           :storageKey="'home'"

@@ -3,6 +3,16 @@ const page = usePage();
 const user = computed(() => page.props.auth.user);
 const navLinks = computed(() => page.props.sidebar);
 const openSidebar = ref(false);
+const bannerInfo = computed(() => {
+  let { quote_route, total_count } = page.props.totalQuotesCount;
+
+  return {
+    total_count: total_count,
+    quote_route: quote_route,
+  };
+});
+
+console.log(bannerInfo.value);
 
 router.on('navigate', () => {
   openSidebar.value = false;
@@ -306,11 +316,16 @@ const onLogout = () => {
         </header>
         <div class="flex-1 w-full p-4 mx-auto md:px-6 lg:px-8 max-w-full">
           <div
+            v-if="bannerInfo.total_count > 0"
             class="w-full h-10 rounded bg-error-300 mb-3 flex items-center justify-center text-sm"
           >
             <span class="text-red-600"
-              >You have <Link href="" class="underline">9</Link> stale leads,
-              follow up with client and update the lead status accordingly</span
+              >You have
+              <Link :href="bannerInfo.quote_route" class="underline">{{
+                bannerInfo.total_count
+              }}</Link>
+              stale leads, follow up with client and update the lead status
+              accordingly</span
             >
           </div>
           <slot />

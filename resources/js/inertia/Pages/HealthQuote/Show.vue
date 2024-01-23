@@ -1438,12 +1438,13 @@ const handleChildUpdate = planId => {
             label="Assign Subteam"
             :options="subTeamOptions"
             placeholder="Select Subteam"
-            class="w-auto flex-1"
+            class="w-auto flex-1 mb-2"
           />
           <div>
             <x-button
               color="orange"
               size="sm"
+              class="mb-2"
               @click.prevent="onTeamAssign"
               :loading="isDisabled"
             >
@@ -1455,17 +1456,19 @@ const handleChildUpdate = planId => {
           v-if="!hasRole($page.props.rolesEnum.HealthWCUAdvisor)"
           class="w-full md:w-1/2 flex gap-2 items-end"
         >
-          <x-select
-            v-model="assignLead"
-            label="Assign Lead"
-            :options="advisorOptions"
-            placeholder="Select Lead"
-            class="w-auto flex-1"
-          />
+            <ComboBox
+                v-model="assignLead"
+                label="Assign Lead"
+                :options="advisorOptions"
+                placeholder="Select Lead"
+                class="w-auto flex-1 mt-1"
+                :single="true"
+            />
           <div>
             <x-button
               color="orange"
               size="sm"
+              class="mb-2"
               @click.prevent="onAssignLead"
               :loading="isDisabled"
             >

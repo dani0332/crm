@@ -42,179 +42,175 @@ class QuoteSyncUpdateCommand extends Command
 
     public function handle()
     {
-
+        info('----------- QuoteSyncJob Started -----------');
         $isQuoteSyncEnabled = ApplicationStorage::where('key_name', 'quote_sync_enabled')->first();
-        // add date in this format yyyy-mm-dd hh:mm:ss
         $startDate = Carbon::parse('2021-01-05 00:00:00')->toDateTimeString();
+
         if (! $isQuoteSyncEnabled || $isQuoteSyncEnabled->value == 0) {
             info('----------- QuoteSync is disabled -----------');
 
             return;
         }
 
-        $entries = QuoteSync::where('is_synced', false)->whereBetween('created_at', [$startDate, now()->endOfDay()])->take(30)->get();
+        $entries = QuoteSync::where('is_synced', false)->take(100)->get();
+
+        if ($entries->isEmpty()) {
+            info('----------- No entries found to be processed in quote sync table -----------');
+
+            return;
+        }
 
         foreach ($entries as $entry) {
+
             info('Syncing entry: '.$entry->quote_uuid);
+
             $quote = PersonalQuote::where('uuid', $entry->quote_uuid)->where('quote_type_id', $entry->quote_type_id)->first();
+
             if ($quote) {
-                $quoteDetail = PersonalQuoteDetail::where('personal_quote_id', $quote->id)->first();
-                DB::beginTransaction();
-                try {
-                    $newValues = json_decode($entry->updated_fields, true);
-                    foreach ($newValues as $column => $value) {
-                        if ($column === 'id') {
-                            continue;
-                        }
-
-                        if (Schema::hasColumn('personal_quotes', $column)) {
-                            $columnType = DB::getSchemaBuilder()->getColumnType('personal_quotes', $column);
-                            // Surround the value with quotes if it's a string, date, or datetime
-                            if (in_array($columnType, ['string', 'date', 'datetime'])) {
-                                $value = "'$value'";
-                            }
-                            if ($column == 'currently_insured_with') {
-                                $quote->currently_insured_with_id = $value;
-                            } else {
-                                $quote->$column = $value;
-                            }
-                        }
-
-                        if (! $quoteDetail) {
-                            info('Entry for quote : '.$entry->quote_uuid.' not found in personal quotes details table');
-                        }
-                        $quoteDetail = $this->createOrUpdatePersonalQuoteDetail($quote, $newValues);
-
-                    }
-
-                    $quote->save();
-                    $entry->update(['is_synced' => true, 'synced_at' => now()]);
-                    info('Entry for quote : '.$entry->quote_uuid.' updated in quote sync table');
-                    DB::commit();
-                } catch (Exception $e) {
-                    DB::rollBack();
-                    Log::error('QuoteSyncJob Error: '.$e->getMessage());
-                }
+                // Existing quote
+                $this->processExistingQuote($quote, $entry);
             } else {
-                info('Entry for quote : '.$entry->quote_uuid.' not found in personal quotes table');
-                $quoteTypeModels = [
-                    1 => CarQuote::class,
-                    2 => HomeQuote::class,
-                    3 => HealthQuote::class,
-                    4 => LifeQuote::class,
-                    5 => BusinessQuote::class,
-                    6 => BikeQuote::class,
-                    7 => YachtQuote::class,
-                    8 => TravelQuote::class,
-                    9 => PetQuote::class,
-                    10 => CycleQuote::class,
-                    11 => JetskiQuote::class,
-                ];
-
-                $modelClassName = $quoteTypeModels[$entry->quote_type_id];
-                $sourceQuote = $modelClassName::where('uuid', $entry->quote_uuid)->first();
-                if ($sourceQuote) {
-                    DB::beginTransaction();
-                    try {
-                        $newValues = json_decode($entry->updated_fields, true);
-                        $personalQuote = $this->createOrUpdatePersonalQuote($sourceQuote, $newValues, $entry);
-                        $this->createOrUpdatePersonalQuoteDetail($personalQuote, $newValues, $entry);
-                        $entry->update(['is_synced' => true, 'synced_at' => now()]);
-                        info('Entry for quote : '.$personalQuote->id.' saved in personal quotes table');
-                        DB::commit();
-                    } catch (Exception $e) {
-                        DB::rollBack();
-                        Log::error(' QuoteSyncJob Error: '.$e->getMessage());
-                    }
-                }
+                // Quote not found
+                $this->processQuoteNotFound($entry);
             }
         }
     }
 
-    private function createOrUpdatePersonalQuote($sourceQuote, $newValues, $entry)
+    private function processExistingQuote($quote, $entry)
     {
-        $personalQuote = PersonalQuote::where('uuid', $sourceQuote->uuid)->first();
-        if ($personalQuote) {
-            foreach ($newValues as $column => $value) {
-                if ($column === 'id') {
-                    continue;
-                }
-
-                if (Schema::hasColumn('personal_quotes', $column)) {
-                    $columnType = DB::getSchemaBuilder()->getColumnType('personal_quotes', $column);
-                    // Surround the value with quotes if it's a string, date, or datetime
-                    if (in_array($columnType, ['string', 'date', 'datetime'])) {
-                        $value = "'$value'";
-                    }
-                    if ($column == 'currently_insured_with') {
-                        $personalQuote->currently_insured_with_id = $value;
-                    } else {
-                        $personalQuote->$column = $value;
-                    }
-                }
+        if ($entry->quote_type_id) {
+            info('Entry for quote: '.$entry->quote_uuid.' found in personal quotes table');
+            try {
+                $newValues = json_decode($entry->updated_fields, true);
+                $this->syncQuote($quote, $newValues, 'personal_quotes');
+                $quote->quote_type_id = $entry->quote_type_id;
+                $quote->save();
+                $entry->update(['is_synced' => true, 'synced_at' => now()]);
+                info('Entry for quote: '.$entry->quote_uuid.' updated in quote sync table');
+            } catch (Exception $e) {
+                Log::error('QuoteSyncJob Error: '.$e->getMessage());
             }
-            $personalQuote->uuid = $entry->quote_uuid;
-            $personalQuote->quote_type_id = $entry->quote_type_id;
-            $personalQuote->save();
         } else {
-            $personalQuote = new PersonalQuote();
-            foreach ($newValues as $column => $value) {
-                if ($column === 'id') {
-                    continue;
-                }
-
-                if (Schema::hasColumn('personal_quotes', $column)) {
-                    $personalQuote->$column = $value;
-                }
+            info('Entry for quote: '.$entry->quote_uuid.' found in personal quotes table but missing required fields');
+            $sourceQuote = $this->getQuoteRecord($entry->quote_type_id, $entry->quote_uuid);
+            if ($sourceQuote) {
+                $this->syncQuote($quote, $sourceQuote->getAttributes(), 'personal_quotes');
+                $quote->quote_type_id = $entry->quote_type_id;
+                $quote->save();
+                $this->syncQuote($quote, json_decode($entry->updated_fields, true), 'personal_quotes');
+                $quote->quote_type_id = $entry->quote_type_id;
+                $quote->save();
             }
-            $personalQuote->uuid = $entry->quote_uuid;
-            $personalQuote->quote_type_id = $entry->quote_type_id;
-            $personalQuote->save();
         }
-
-        return $personalQuote;
     }
 
-    private function createOrUpdatePersonalQuoteDetail($personalQuote, $newValues)
+    private function processQuoteNotFound($entry)
     {
+        info('Entry for quote: '.$entry->quote_uuid.' not found in personal quotes table');
+        $sourceQuote = $this->getQuoteRecord($entry->quote_type_id, $entry->quote_uuid);
 
+        if ($sourceQuote) {
+            try {
+                $newValues = json_decode($entry->updated_fields, true);
+                $personalQuote = $this->createPersonalQuoteFromSource($sourceQuote, $entry);
+                $this->syncQuote($personalQuote, $newValues, 'personal_quotes');
+                $this->createPersonalQuoteDetail($personalQuote, $newValues);
+                $entry->update(['is_synced' => true, 'synced_at' => now()]);
+                info('Entry for quote: '.$personalQuote->id.' saved in personal quotes table');
+            } catch (Exception $e) {
+                Log::error('QuoteSyncJob Error: '.$e->getMessage().$e->getTraceAsString());
+            }
+        }
+    }
+
+    private function getQuoteRecord($quote_type_id, $quote_uuid)
+    {
+        $modelClassName = $this->getQuoteType($quote_type_id);
+        $sourceQuote = $modelClassName::where('uuid', $quote_uuid)->first();
+
+        return $sourceQuote;
+    }
+
+    private function createPersonalQuoteFromSource($sourceQuote, $entry)
+    {
+        $personalQuote = new PersonalQuote();
+        $sourceAttributes = $sourceQuote->getAttributes();
+        $this->syncQuote($personalQuote, $sourceAttributes, 'personal_quotes');
+        $personalQuote->quote_type_id = $entry->quote_type_id;
+        $existingQuote = PersonalQuote::where('uuid', $entry->quote_uuid)->where('quote_type_id', $entry->quote_type_id)->first();
+        if ($existingQuote) {
+            $existingQuote = $personalQuote;
+            $existingQuote->save();
+
+            return $existingQuote;
+        } else {
+            $personalQuote->save();
+
+            return $personalQuote;
+        }
+    }
+
+    public function getQuoteType($quoteTypeId)
+    {
+        $quoteTypeModels = [
+            1 => CarQuote::class,
+            2 => HomeQuote::class,
+            3 => HealthQuote::class,
+            4 => LifeQuote::class,
+            5 => BusinessQuote::class,
+            6 => BikeQuote::class,
+            7 => YachtQuote::class,
+            8 => TravelQuote::class,
+            9 => PetQuote::class,
+            10 => CycleQuote::class,
+            11 => JetskiQuote::class,
+        ];
+
+        // Retrieve the source quote based on quote type and UUID
+        $modelClassName = $quoteTypeModels[$quoteTypeId];
+
+        return $modelClassName;
+    }
+
+    private function createPersonalQuoteDetail($personalQuote, $newValues)
+    {
         $personalQuoteDetail = PersonalQuoteDetail::where('personal_quote_id', $personalQuote->id)->first();
-        if ($personalQuoteDetail) {
-            foreach ($newValues as $column => $value) {
-                if ($column === 'id') {
-                    continue;
-                }
 
-                if (Schema::hasColumn('personal_quote_details', $column)) {
-                    $columnType = DB::getSchemaBuilder()->getColumnType('personal_quote_details', $column);
-                    // Surround the value with quotes if it's a string, date, or datetime
-                    if (in_array($columnType, ['string', 'date', 'datetime'])) {
-                        $value = "'$value'";
-                    }
-                    $personalQuoteDetail->$column = $value;
-                }
-            }
-            $personalQuoteDetail->save();
-        } else {
+        if (! $personalQuoteDetail) {
             $personalQuoteDetail = new PersonalQuoteDetail();
-            foreach ($newValues as $column => $value) {
-                if ($column === 'id') {
-                    continue;
-                }
-
-                if (Schema::hasColumn('personal_quote_details', $column)) {
-                    $columnType = DB::getSchemaBuilder()->getColumnType('personal_quote_details', $column);
-                    // Surround the value with quotes if it's a string, date, or datetime
-                    if (in_array($columnType, ['string', 'date', 'datetime'])) {
-                        $value = "'$value'";
-                    }
-                    $personalQuoteDetail->$column = $value;
-                }
-            }
-            $personalQuoteDetail->personal_quote_id = $personalQuote->id;
-            $personalQuoteDetail->save();
         }
+
+        $this->syncQuote($personalQuoteDetail, $newValues, 'personal_quote_details');
+
+        $personalQuoteDetail->personal_quote_id = $personalQuote->id;
+        $personalQuoteDetail->save();
 
         return $personalQuoteDetail;
     }
+
+    private function formatColumnValue($columnType, $value)
+    {
+        if (in_array($columnType, ['date', 'datetime'])) {
+            return Carbon::parse($value)->toDateTimeString();
+        }
+
+        return $value;
+    }
+
+    private function syncQuote($quote, $updatedFields, $quoteTable)
+    {
+        foreach ($updatedFields as $column => $value) {
+            if ($column === 'id' || $column === 'currently_insured_with') {
+                continue;
+            }
+            if (Schema::hasColumn($quoteTable, $column)) {
+                $columnType = DB::getSchemaBuilder()->getColumnType($quoteTable, $column);
+                $value = $this->formatColumnValue($columnType, $value);
+                if ($value !== null || $value !== '' || $value !== 'NULL') {
+                    $quote->$column = $value;
+                }
+            }
+        }
+    }
+
 }

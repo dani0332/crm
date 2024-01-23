@@ -12,6 +12,7 @@ defineProps({
 });
 
 const page = usePage();
+const previousDate = getPreviousDate;
 
 const loader = reactive({
   table: false,
@@ -148,7 +149,17 @@ watch(
   <div>
     <Head title="Cycle Quotes" />
     <div class="flex justify-between items-center">
-      <h2 class="text-xl font-semibold">Cycle Quotes List</h2>
+      <div class="flex items-center gap-5">
+        <h2 class="text-xl font-semibold">Cycle Quotes List</h2>
+        <x-tooltip>
+          <span class="border-2 rounded px-3 bg-gray-200 text-sm font-medium">{{
+            quotes?.leadsCount ?? 0
+          }}</span>
+          <template #tooltip>
+            <span>Total Leads received since {{ previousDate() }}</span>
+          </template>
+        </x-tooltip>
+      </div>
       <div class="flex items-center space-x-2">
         <column-selection
           :storageKey="quoteType"
