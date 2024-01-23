@@ -2861,8 +2861,8 @@ const handlePlanSelected = plan => {
             <x-tag
                 v-if="puaPremium && puaPremium != null"
                 size="xs"
-                class="mt-0.5 text-[10px]"
-                color="red"
+                class="mt-0.5 text-[10px] text-white"
+                style="background-color: #E00000"
             >
                 <x-tooltip  position="right">
                     <template #tooltip>
