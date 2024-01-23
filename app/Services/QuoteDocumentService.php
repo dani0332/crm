@@ -193,13 +193,9 @@ class QuoteDocumentService extends BaseService
 
     public function getQuoteDocuments($quoteType, $recordId)
     {
-        $quote = app()->make('App\\Models\\'.$quoteType.'Quote')::where('id', $recordId)->first();
-        if ($quote && $quote->documents) {
-            $quote->documents->load('createdBy:id,name');
+        $quote = $this->getQuoteObject($quoteType, $recordId);
 
-            return $quote->documents->sortDesc();
-        } else {
-            return [];
-        }
+        return $quote ? $quote->documents()->with('createdBy:id,name,email')->latest()->get() : [];
     }
+
 }
