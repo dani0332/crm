@@ -60,14 +60,16 @@ class CentralController extends Controller
         }
 
         if ($exportTye != GenericRequestEnum::EXPORT_MAKES_MODELS) {
-            $request->validate([
-                'created_at_start' => 'required',
-                'created_at_end' => 'required',
-            ]);
             if (request()->has('created_at')) {
                 request()->merge(['created_at_start' => request()->get('created_at')]);
                 request()->query->remove('created_at');
             }
+
+            $request->validate([
+                'created_at_start' => 'required',
+                'created_at_end' => 'required',
+            ]);
+
             if (ucfirst($quoteType) == QuoteTypes::CAR->value) {
                 $diffInDays = 31;
             }
