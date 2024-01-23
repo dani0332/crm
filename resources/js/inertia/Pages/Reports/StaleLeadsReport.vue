@@ -39,15 +39,16 @@ const healthHeaders = ref([
     is_active: true,
     sortable: true,
   },
+
   {
-    text: 'MISSING DOCUMENTS',
-    value: 'missing_documents',
+    text: 'APPLICATION SUBMITTED',
+    value: 'application_submitted',
     is_active: true,
     sortable: true,
   },
   {
-    text: 'APPLICATION SUBMITTED',
-    value: 'application_submitted',
+    text: 'MISSING DOCUMENTS',
+    value: 'missing_documents',
     is_active: true,
     sortable: true,
   },
@@ -66,15 +67,16 @@ const corplineHeaders = ref([
     is_active: true,
     sortable: true,
   },
+
   {
-    text: 'MISSING DOCUMENTS',
-    value: 'missing_documents',
+    text: 'APPLICATION SUBMITTED',
+    value: 'application_submitted',
     is_active: true,
     sortable: true,
   },
   {
-    text: 'APPLICATION SUBMITTED',
-    value: 'application_submitted',
+    text: 'MISSING DOCUMENTS',
+    value: 'missing_documents',
     is_active: true,
     sortable: true,
   },
@@ -84,6 +86,7 @@ const commonHeaders = ref([
   {
     text: 'TEAM',
     value: 'team',
+    width: 160,
     is_active: true,
     sortable: true,
   },
@@ -107,7 +110,7 @@ const commonHeaders = ref([
   },
   {
     text: 'FOLLOWED UP',
-    value: 'follow_up',
+    value: 'followed_up',
     is_active: true,
     sortable: true,
   },
@@ -123,15 +126,9 @@ const commonHeaders = ref([
     is_active: true,
     sortable: true,
   },
-  {
-    text: 'TOTAL',
-    value: 'total',
-    is_active: true,
-    sortable: true,
-  },
 ]);
 
-const tableHeader = ref([...healthHeaders.value, ...commonHeaders.value]);
+const tableHeader = ref(commonHeaders.value);
 
 const teams = ref([
   { value: 'renewal', label: 'Renewal' },
@@ -248,7 +245,7 @@ function changeLob() {
   } else if (filters.line_of_bussiness === 'corpline') {
     specificHeaders = corplineHeaders.value;
   }
-  tableHeader.value = [...specificHeaders, ...commonHeaders.value];
+  tableHeader.value = [...commonHeaders.value, ...specificHeaders];
 }
 
 function setQueryStringFilters() {
@@ -360,8 +357,14 @@ onMounted(() => {
     class="mt-4"
     table-class-name=""
     :loading="loaders.table"
-    :headers="tableHeader"
-    :items="[]"
+    :headers="[
+      ...tableHeader,
+      {
+        text: 'TOTAL',
+        value: 'total',
+      },
+    ]"
+    :items="props.reportData || []"
     border-cell
     :empty-message="'No Records Available'"
     :sort-by="'net_conversion'"

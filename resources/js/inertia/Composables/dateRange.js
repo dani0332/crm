@@ -14,6 +14,8 @@ export const useDateRange = () => {
   const lastMonthEnd = getAdjustedDate(today, { setDate: 0 });
   const thisMonthStart = getAdjustedDate(today, { setDate: 1 });
   const thisMonthEnd = getAdjustedDate(today, { months: 1, setDate: 0 });
+  const nextMonthStart = getAdjustedDate(today, { months: 1, setDate: 1 });
+  const nextMonthEnd = getAdjustedDate(today, { months: 2, setDate: 0 });
 
   return [
     today,
@@ -23,5 +25,7 @@ export const useDateRange = () => {
     lastMonthEnd,
     thisMonthStart,
     thisMonthEnd,
+    nextMonthStart,
+    nextMonthEnd,
   ];
 };

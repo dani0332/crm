@@ -48,7 +48,6 @@ class ReportService extends BaseService
     {
         $records = [];
         if ($request->has('quote_type_id') && $request->has('group_by_one')) {
-
             $isGroupMedical = false;
             if ($request->quote_type_id == 999) {
                 $request->quote_type_id = QuoteTypeId::Business; // group medical and business quote table is same
@@ -74,7 +73,6 @@ class ReportService extends BaseService
                 DB::raw('COUNT('.$quoteRequestTable.'_detail.id) as leads_count'),
                 DB::raw('COUNT(CASE  WHEN payment_status_id = '.PaymentStatusEnum::AUTHORISED.' THEN 1 ELSE NULL END) as authorized'),
                 DB::raw('COUNT(CASE  WHEN payment_status_id = '.PaymentStatusEnum::CAPTURED.' THEN 1 ELSE NULL END) as captured'),
-
                 DB::raw('sum(CASE WHEN payment_status_id = '.PaymentStatusEnum::AUTHORISED.' THEN premium  ELSE 0 END) as authorized_sum'),
                 DB::raw('sum(CASE WHEN payment_status_id = '.PaymentStatusEnum::CAPTURED.' THEN premium  ELSE 0 END) as captured_sum'),
             )
@@ -83,9 +81,11 @@ class ReportService extends BaseService
 
             if ($isGroupMedical) {
                 $query->where('business_type_of_insurance_id', QuoteTypeId::Business);
-            }if (! empty($groupByOne)) {
+            }
+            if (! empty($groupByOne)) {
                 $query->where($groupByOne, '<>', '');
-            }if (! empty($groupByTwo)) {
+            }
+            if (! empty($groupByTwo)) {
                 $query->where($groupByTwo, '<>', '');
             }
             if (! empty($dateRange)) {
@@ -97,7 +97,6 @@ class ReportService extends BaseService
             $records = $query->get();
 
             $records->map(function ($item) use ($groupBy) {
-
                 $item['utm_source'] = in_array('utm_source', $groupBy) ? $item['utm_source'] : '';
                 $item['utm_medium'] = in_array('utm_medium', $groupBy) ? $item['utm_medium'] : '';
                 $item['utm_campaign'] = in_array('utm_campaign', $groupBy) ? $item['utm_campaign'] : '';
@@ -117,7 +116,6 @@ class ReportService extends BaseService
         $resp['lobs'] = $lobs;
 
         return $resp;
-
     }
 
     public function getLeadsListReport($request)
@@ -168,8 +166,7 @@ class ReportService extends BaseService
         $freshLoad = ! isset($filters->page);
 
         $startDate = isset($filters->advisorAssignedDates) ?
-            Carbon::parse($filters->advisorAssignedDates[0])->startOfDay()->format($dateFormat) :
-                ($freshLoad ? Carbon::parse(now())->startOfDay()->format($dateFormat) : Carbon::parse(now()->subDays($maxDays))->startOfDay()->format($dateFormat));
+            Carbon::parse($filters->advisorAssignedDates[0])->startOfDay()->format($dateFormat) : ($freshLoad ? Carbon::parse(now())->startOfDay()->format($dateFormat) : Carbon::parse(now()->subDays($maxDays))->startOfDay()->format($dateFormat));
 
         $endDate = isset($filters->advisorAssignedDates) ?
             Carbon::parse($filters->advisorAssignedDates[1])->endOfDay()->format($dateFormat) : Carbon::parse(now())->endOfDay()->format($dateFormat);
@@ -223,7 +220,6 @@ class ReportService extends BaseService
 
     public function getDefaultFiltersForLeadsList()
     {
-
         $loginUserId = auth()->user()->id;
         $teamIds = $this->getUserTeams($loginUserId);
         $teams = Team::whereIn('id', $teamIds->pluck('id'))
@@ -272,4 +268,43 @@ class ReportService extends BaseService
         ];
     }
 
+    public function getStaleLeadsReport($start = '2023-12-01T17:11:00.000Z', $end = '2024-01-23T17:11:00.000Z', $type = 'health')
+    {
+        $tableName = $type.'_quote_request';
+        $stats = DB::table($tableName.' AS q')
+            ->leftJoin('users AS u', 'u.id', '=', 'q.advisor_id')
+            ->select(
+                'q.health_team_type AS team',
+                DB::raw(
+                    '
+                    SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::NewLead.' THEN 1 ELSE 0 END) AS new_lead,
+                    SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::Allocated.' THEN 1 ELSE 0 END) AS allocated,
+                    SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::Quoted.' THEN 1 ELSE 0 END) AS quoted,
+                    SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::FollowedUp.' THEN 1 ELSE 0 END) AS followed_up,
+                    SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::InNegotiation.' THEN 1 ELSE 0 END) AS in_negotiation,
+                    SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::PaymentPending.' THEN 1 ELSE 0 END) AS payment_pending,
+                    SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::RenewalTermsReceived.' THEN 1 ELSE 0 END) AS renewal_terms_recevied,
+                    SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::ApplicationPending.' THEN 1 ELSE 0 END) AS application_pending,
+                    SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::ApplicationSubmitted.' THEN 1 ELSE 0 END) AS application_submitted,
+                    SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::MissingDocumentsRequested.' THEN 1 ELSE 0 END) AS missing_documents
+                    '
+                )
+            )
+            ->whereNotIn('q.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
+            ->whereBetween('q.created_at', [$start, $end])
+            ->whereNull('q.renewal_import_code')
+            // export const useDaysSinceStale = payload => {
+            //   const quoteRequest = payload;
+            //   const stale_days = quoteRequest
+            //     ? Math.floor((new Date() - new Date(quoteRequest)) / (1000 * 60 * 60 * 24))
+            //     : false;
+            //   return stale_days !== false && stale_days <= 90 ? stale_days : false;
+            // };
+            ->whereNotNull('q.stale_at')
+            ->whereNotNull('q.health_team_type')
+            ->groupBy('q.health_team_type')
+            ->get();
+
+        return $stats;
+    }
 }

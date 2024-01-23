@@ -84,7 +84,6 @@ class ReportsController extends Controller
         ]);
     }
 
-
     public function fetchAdvisorListByTeam(Request $request)
     {
         $teamUsers = $this->getUsersByTeamIds($request->teamIds)->pluck('id')->toArray();
@@ -144,16 +143,20 @@ class ReportsController extends Controller
 
     public function renderStaleLeadsReport(Request $request, ReportService $reportService)
     {
-        return inertia('Reports/StaleLeadsReport', []);
+        $data = $reportService->getStaleLeadsReport($request);
+
+        return inertia('Reports/StaleLeadsReport', [
+            'reportData' => $data,
+        ]);
     }
 
     public function renderPipelineReport(Request $request, ReportService $reportService)
     {
         return inertia('Reports/PipelineReport', []);
     }
-    
+
     /**
-     * generate renewal reports function
+     * generate renewal reports function.
      *
      * @return void
      */
