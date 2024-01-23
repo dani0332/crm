@@ -235,6 +235,7 @@ const hasRole = role => useHasRole(role);
 const hasAnyRole = role => useHasAnyRole(role);
 
 let lastMonthSummedIndex = 0;
+let lastMonthSummedIndexForSuperRetention = 0;
 let currentRowSpan = 0;
 
 const rolesEnum = page.props.rolesEnum;
@@ -259,6 +260,7 @@ function getMonthName(monthNumber) {
 
 function calculateValuesAndHighlight() {
     lastMonthSummedIndex = 0;
+    lastMonthSummedIndexForSuperRetention = 0;
     currentRowSpan = 0;
 
 
@@ -285,6 +287,8 @@ function calculateValuesAndHighlight() {
         } else if (segmentFilter == 'value') {
             superItem.health_converted = superItem.health_converted_by_value_segment_advisors
         }
+
+        superItem.monthlyHealthRenewed = calculateMonthlyHealthRenewed(superRetentionDataRef, superIndex);
     });
 
     reportDataRef.forEach((item, index) => {
@@ -474,6 +478,23 @@ function calculateValuesAndHighlight() {
 
 }
 
+const calculateMonthlyHealthRenewed = (data, index) =>{
+
+    var totalRenewed = 0;
+    var currentMonthValue = data[index].month;
+
+    if (lastMonthSummedIndexForSuperRetention <= index) {
+        while (index <= (data.length - 1) && currentMonthValue == data[index].month) {
+
+            totalRenewed = parseInt(totalRenewed) + parseInt(data[index].health_converted);
+            index++;
+            lastMonthSummedIndexForSuperRetention = index;
+        }
+
+        return Number(totalRenewed);
+    }
+
+}
 
 onMounted(() => {
     if (page.props.defaultFilters && !params['page']) {
@@ -489,6 +510,11 @@ onMounted(() => {
 
     calculateValuesAndHighlight();
     isMounted.value = true;
+
+    console.log("super retention data")
+    console.log(superRetentionDataRef)
+    console.log(renewedCountsList)
+    console.log(totalAllocationList)
 });
 
 const calculateMonthlySum = (data, index) => {
@@ -512,6 +538,9 @@ const calculateMonthlySum = (data, index) => {
             lastMonthSummedIndex = index;
             currentRowSpan++;
         }
+
+        renewedCountsList[currentMonthValue] = totalRenewed;
+        totalAllocationList[currentMonthValue] = totalAllocated;
 
         var result = totalRenewed / (totalAllocated - totalCarSold
         // - totalCarUncontactable
@@ -669,7 +698,7 @@ watch(
                                     {{ useDateFormat(item.end_date, 'MMM DD').value }}
                                 </td>
                                 <td class="x-table-cell px-3 py-4 align-middle">
-                                    {{ renewedCountsList[item.name] = item.renewed.toLocaleString() }}
+                                    {{ item.renewed.toLocaleString() }}
                                 </td>
                                 <td class="x-table-cell px-3 py-4 align-middle">
                                     {{ item.total_allocated_leads.toLocaleString() }}
@@ -687,7 +716,7 @@ watch(
                                 <td class="x-table-cell px-3 py-4 align-middle">
                                     <!-- Sum of allocations per batch  - (Approved Car Sold + Approved Uncontactable) -->
                                     <p v-if="item.total_allocated_leads == 0"> 0 </p>
-                                    <p v-else>{{ totalAllocationList[item.name] =  (parseInt(item.total_allocated_leads) - (parseInt(item.car_sold)
+                                    <p v-else>{{ (parseInt(item.total_allocated_leads) - (parseInt(item.car_sold)
                                         // + parseInt(item.uncontactable)
                                         )).toLocaleString() }} </p>
                                 </td>
@@ -836,8 +865,8 @@ watch(
                                 {{ item.health_converted}}
                             </td>
                             <td class="x-table-cell px-3 py-4 align-middle">
-                                <p v-if="totalAllocationList[item.name] == 0 || totalAllocationList[item.name] == undefined"> 0 % </p>
-                                <p v-else>{{ ((Number(item.health_converted) + Number (renewedCountsList[item.name])) / Number(totalAllocationList[item.name]))}} %</p>
+                                <p v-if="totalAllocationList[item.month] == 0 || totalAllocationList[item.month] == undefined"> 0 % </p>
+                                <p v-else>{{ ((Number(item.monthlyHealthRenewed) + Number (renewedCountsList[item.month])) / Number(totalAllocationList[item.month])).toFixed(2)}} %</p>
                             </td>
                         </tr>
                     </tbody>
