@@ -15,7 +15,6 @@ const permissionsEnum = page.props.permissionsEnum;
 
 const userRoles = computed(() => {
   if (props.user && props.user?.roles.length > 0) {
-    console.log(props.user?.roles.map(x => x.name));
     return props.user.roles.map(x => x.name).toString();
   } else return null;
 });

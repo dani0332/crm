@@ -37,6 +37,8 @@ watch(
 function onSubmit(isValid) {
   if (roleForm.permission == null) {
     isError.value = true;
+  } else {
+    isError.value = false;
   }
   if (isValid && !isError.value) {
     let method = isEdit.value ? 'put' : 'post';

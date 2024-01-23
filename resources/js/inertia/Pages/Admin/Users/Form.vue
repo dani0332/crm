@@ -1,4 +1,6 @@
 <script setup>
+import { isAxiosError } from 'axios';
+
 const props = defineProps({
   roles: Object,
   products: Array,
@@ -83,7 +85,7 @@ const validRole = computed(() => {
 });
 
 const validProducts = computed(() => {
-  return (userForm.products == null && isError.value) ?? false;
+  return (userForm.products.length == 0 && isError.value) ?? false;
 });
 
 const validTeams = computed(() => {
@@ -135,8 +137,10 @@ const loadSubTeams = async () => {
 };
 
 function onSubmit(isValid) {
-  if (!userForm.roles || !userForm.teams || !userForm.products) {
+  if (!userForm.roles || !userForm.teams || userForm.products.length == 0) {
     isError.value = true;
+  } else {
+    isError.value = false;
   }
 
   if (isValid && !isError.value) {
@@ -147,7 +151,6 @@ function onSubmit(isValid) {
 
     userForm.submit(method, url, {
       onError: errors => {
-        console.log(errors);
         userForm.setError(errors);
       },
       onSuccess: () => {},
@@ -230,8 +233,13 @@ onMounted(() => setInitialState());
           class="w-full"
         />
       </x-field>
-      <x-field label="PASSWORD">
-        <x-input v-model="userForm.password" class="w-full" type="password" />
+      <x-field label="PASSWORD" required>
+        <x-input
+          :rules="!isEdit ? [isRequired] : []"
+          v-model="userForm.password"
+          class="w-full"
+          type="password"
+        />
       </x-field>
       <x-field label="ROLE" required>
         <ComboBox
