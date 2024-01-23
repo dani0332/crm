@@ -341,7 +341,6 @@ class SagePayloadFactory
         ];
     }
 
-
     public static function readyToPostReceiptAr($batchNumber)
     {
         $payLoad = [

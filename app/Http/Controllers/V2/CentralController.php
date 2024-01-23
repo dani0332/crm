@@ -413,7 +413,6 @@ class CentralController extends Controller
         //            return redirect()->back()->with('error', $response->message);
         //        }
 
-
         return response()->json(['plan' => $response]);
     }
 }

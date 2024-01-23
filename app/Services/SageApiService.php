@@ -27,7 +27,7 @@ class SageApiService
         $sageRequest = new \stdClass();
 
         // $sageRequest->discount = 22;
-        $sageRequest->discount =  floatval($payment->discount_value);
+        $sageRequest->discount = floatval($payment->discount_value);
         $sageRequest->invoiceDescription = $payment->invoice_description;
         $sageRequest->bookingDate = date('Y-m-d', strtotime($quote['policy_booking_date']));
         $sageRequest->policyExpiryDate = date('Ymd', strtotime($quote['renewal_expiry_date']));
@@ -44,7 +44,7 @@ class SageApiService
         $sageRequest->invoicePaymentStatus = $payment->transaction_payment_status;
         // $sageRequest->invoicePaymentStatus = 'paid';
         $advisorName = '';
-        if (!empty($quote->advisor_id)) {
+        if (! empty($quote->advisor_id)) {
 
             $advisorName = User::where('id', $quote->advisor_id)->value('name');
         }
@@ -70,7 +70,7 @@ class SageApiService
     public function verifySageCustomer($customerId, $data = null)
     {
         $customer = Customer::find($customerId);
-        $customer->data = !empty($data) ? $data : [];
+        $customer->data = ! empty($data) ? $data : [];
         if ($customer) {
 
             $payLoadOptions = SagePayloadFactory::createCustomerPayload($customer);
@@ -129,7 +129,7 @@ class SageApiService
         // Add basic authentication
         curl_setopt($ch, CURLOPT_USERPWD, "$this->sageLogin:$this->sagePassword");
         $response = curl_exec($ch);
-        info('response-----------' . json_encode($response));
+        info('response-----------'.json_encode($response));
         if ($response === false || $response == '') {
             $errorResponse = curl_error($ch);
             $errorResponse = json_decode($errorResponse, true);

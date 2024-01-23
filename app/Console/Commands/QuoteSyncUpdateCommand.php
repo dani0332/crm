@@ -198,7 +198,9 @@ class QuoteSyncUpdateCommand extends Command
             if (Schema::hasColumn($quoteTable, $column)) {
                 $columnType = DB::getSchemaBuilder()->getColumnType($quoteTable, $column);
                 $value = $this->formatColumnValue($columnType, $value);
-                $quote->$column = $value;
+                if ($value !== null || $value !== '' || $value !== 'NULL') {
+                    $quote->$column = $value;
+                }
             }
         }
     }

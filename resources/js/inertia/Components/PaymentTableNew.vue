@@ -34,6 +34,7 @@ const isDiscountReasonEnabled = ref(false);
 const isCheckDetailsEnabled = ref([]);
 const isExpandedSplitPayments = ref(false);
 const isPaymentCalculationError = ref(false);
+const isDowngradeFrequencyError = ref(false);
 const isFieldReadonly = ref(false);
 const isUploading = ref(false);
 const isFileError = ref(false);
@@ -708,6 +709,7 @@ const calculateDueDates = () => {
 
 const calculatePaymentBreakup = (changeMethod = true) => {  
   isDocumentNotUploaded.value = [];
+  isDowngradeFrequencyError.value = false;
   var perInstallmentPrice = parseFloat(((totalAmount.value-paidAmountSum.value)/(paymentMethodsForm.payment_no-totalPaidAmount.value)).toFixed(2));
   if ( paymentMethodsForm.status === 'edit') {
     var trueValuesArray = readOnlyPayments.value.filter(function(value) {
@@ -717,6 +719,7 @@ const calculatePaymentBreakup = (changeMethod = true) => {
     var trueValuesCount = trueValuesArray.length;
     if(paymentMethodsForm.payment_no <= trueValuesCount){ 
       paymentMethodsForm.payment_no = oldTotalPayments.value;
+      isDowngradeFrequencyError.value = true;      
       return;
     }    
   }
@@ -958,6 +961,7 @@ const editPaymentModal = (payment,split_payment_id,sr_no,capture_approval) => {
   paymentMethodsForm.status = 'edit';
   paymentMethodsForm.declined_reason = '1';
   isPaymentCalculationError.value = false;
+  isDowngradeFrequencyError.value = false;
   isApproveClicked.value = false;
   isFileError.value = false;
   isApprovePaymentError.value = false;
@@ -1092,11 +1096,15 @@ const editPaymentModal = (payment,split_payment_id,sr_no,capture_approval) => {
     ////if ( isAnyPaid ) {
     totalPrice.value = payment.total_price;
     totalAmount.value = payment.total_price-payment.discount_value;
-    if ( isAnyPaid && (payment.total_price===(payment.total_amount+payment.discount_value)) ) { //FOR EDIT
+    if  ( isAnyPaid 
+          && (payment.total_price<=(payment.total_amount+payment.discount_value)) 
+        ) { //FOR EDIT
       isFieldReadonly.value = true;    
-    } else {      
+    } else if(payment.total_price>(payment.total_amount+payment.discount_value)) {    
       isFieldReadonly.value = false;      
       isTotalPriceUpdated.value = true;
+    } else {
+      isFieldReadonly.value = false;
     }    
   }
   
@@ -2248,6 +2256,16 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
         </div>
         <x-divider class="mb-4 mt-10" />
         
+        <div v-if="isDowngradeFrequencyError" class="flex items-center p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50 dark:bg-gray-800 dark:text-red-400 border border-red-500" role="alert">
+          <svg class="flex-shrink-0 inline w-4 h-4 mr-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+            <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM9.5 4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM12 15H8a1 1 0 0 1 0-2h1v-3H8a1 1 0 0 1 0-2h2a1 1 0 0 1 1 1v4h1a1 1 0 0 1 0 2Z"/>
+          </svg>
+          <div>
+            The system has detected a discrepancy. You cannot downgrade the frequency of the payment. Some payments are already paid.
+          </div>
+        </div>
+        
+
         <div v-if="isPaymentCalculationError" class="flex items-center p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50 dark:bg-gray-800 dark:text-red-400 border border-red-500" role="alert">
           <svg class="flex-shrink-0 inline w-4 h-4 mr-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
             <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM9.5 4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM12 15H8a1 1 0 0 1 0-2h1v-3H8a1 1 0 0 1 0-2h2a1 1 0 0 1 1 1v4h1a1 1 0 0 1 0 2Z"/>

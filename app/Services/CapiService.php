@@ -42,7 +42,7 @@ class CapiService
             } else {
                 vAbort('Capi Service Exception');
             }
-        });;
+        });
 
         return (object) $response->json();
     }
