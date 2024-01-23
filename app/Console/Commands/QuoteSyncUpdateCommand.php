@@ -80,7 +80,6 @@ class QuoteSyncUpdateCommand extends Command
     {
         if ($entry->quote_type_id) {
             info('Entry for quote: '.$entry->quote_uuid.' found in personal quotes table');
-            DB::beginTransaction();
             try {
                 $newValues = json_decode($entry->updated_fields, true);
                 $this->syncQuote($quote, $newValues, 'personal_quotes');
@@ -88,9 +87,7 @@ class QuoteSyncUpdateCommand extends Command
                 $quote->save();
                 $entry->update(['is_synced' => true, 'synced_at' => now()]);
                 info('Entry for quote: '.$entry->quote_uuid.' updated in quote sync table');
-                DB::commit();
             } catch (Exception $e) {
-                DB::rollBack();
                 Log::error('QuoteSyncJob Error: '.$e->getMessage());
             }
         } else {
@@ -113,7 +110,6 @@ class QuoteSyncUpdateCommand extends Command
         $sourceQuote = $this->getQuoteRecord($entry->quote_type_id, $entry->quote_uuid);
 
         if ($sourceQuote) {
-            DB::beginTransaction();
             try {
                 $newValues = json_decode($entry->updated_fields, true);
                 $personalQuote = $this->createPersonalQuoteFromSource($sourceQuote, $entry);
@@ -121,9 +117,7 @@ class QuoteSyncUpdateCommand extends Command
                 $this->createPersonalQuoteDetail($personalQuote, $newValues);
                 $entry->update(['is_synced' => true, 'synced_at' => now()]);
                 info('Entry for quote: '.$personalQuote->id.' saved in personal quotes table');
-                DB::commit();
             } catch (Exception $e) {
-                DB::rollBack();
                 Log::error('QuoteSyncJob Error: '.$e->getMessage().$e->getTraceAsString());
             }
         }
