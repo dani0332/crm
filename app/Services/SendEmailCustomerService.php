@@ -413,7 +413,7 @@ class SendEmailCustomerService extends BaseService
                 $emailTemplateId = (int) config('constants.SIB_MYALFRED_CUSTOMER_WE_TEMPLATE_ID');
             }
 
-            info('sendMyAlfredWelcomeEmail  , emailTemplateId:'.$emailTemplateId);
+            info('sendMyAlfredWelcomeEmail  , emailTemplateId: '.$emailTemplateId);
             $tag = $appEnv == EnvEnum::PRODUCTION ? $tag : $appEnv.'-'.$tag;
 
             $headers = [
