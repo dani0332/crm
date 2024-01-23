@@ -139,13 +139,12 @@ class QuoteSyncUpdateCommand extends Command
         $personalQuote->quote_type_id = $entry->quote_type_id;
         $existingQuote = PersonalQuote::where('uuid', $entry->quote_uuid)->where('quote_type_id', $entry->quote_type_id)->first();
         if ($existingQuote) {
-            $existingQuote = $personalQuote;
+            $this->syncQuote($existingQuote, $sourceAttributes, 'personal_quotes');
+            $existingQuote->quote_type_id = $entry->quote_type_id;
             $existingQuote->save();
-
             return $existingQuote;
         } else {
             $personalQuote->save();
-
             return $personalQuote;
         }
     }
