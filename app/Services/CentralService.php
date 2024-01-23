@@ -203,7 +203,7 @@ class CentralService
      */
     public function savePlanDetails($quoteType, $code, $data)
     {
-        return DB::transaction(function() use($quoteType, $code, $data) {
+        return DB::transaction(function () use ($quoteType, $code, $data) {
 
             $repository = getRepositoryObject($quoteType);
 
@@ -218,13 +218,13 @@ class CentralService
 
             $quote = $repository::where('code', $code)->firstOrFail();
 
-            if($quote->payments()->count() > 0) {
+            if ($quote->payments()->count() > 0) {
 
                 $payment = $quote->payments->first();
 
                 $paymentData = ['total_price' => $data->price_with_vat];
 
-                if($data->price_with_vat > $payment->total_price && $payment->payment_status_id == PaymentStatusEnum::PAID) {
+                if ($data->price_with_vat > $payment->total_price && $payment->payment_status_id == PaymentStatusEnum::PAID) {
                     $paymentData['payment_status_id'] = PaymentStatusEnum::PARTIALLY_PAID;
                 }
 
@@ -250,7 +250,8 @@ class CentralService
                     'quoteUID' => $uuid,
                     'callSource' => LeadSourceEnum::IMCRM,
                 ];
-                return  Ken::request($endpoint, 'post', $data);
+
+                return Ken::request($endpoint, 'post', $data);
                 break;
             case QuoteTypes::TRAVEL->value:
                 $endpoint = '/process-travel-quote-plan';
@@ -261,7 +262,8 @@ class CentralService
                         ['id' => intval($data->plan_id), 'addonOptionIds' => []],
                     ],
                 ];
-                return  Ken::request($endpoint, 'post', $data);
+
+                return Ken::request($endpoint, 'post', $data);
                 break;
             case QuoteTypes::HEALTH->value:
                 $endpoint = '/api/v1-process-booking';
@@ -273,14 +275,12 @@ class CentralService
                     'quoteUID' => $uuid,
                     'callSource' => LeadSourceEnum::IMCRM,
                 ];
+
                 return Capi::request($endpoint, 'post', $data);
                 break;
         }
 
-
         //info('fn: updateSelectedPlan quoteType: '.$quoteType.' uuid: '.$uuid.' data: '.json_encode($data));
-
-
 
         //dd(json_encode($response));
         //return $response;

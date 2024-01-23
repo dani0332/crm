@@ -23,10 +23,10 @@ class UpdateSelectedPlanRequest extends FormRequest
     public function rules(): array
     {
         $rules = [
-            'plan_id' => 'required'
+            'plan_id' => 'required',
         ];
 
-        if(strtolower(request()->quoteType) == strtolower(QuoteTypes::HEALTH->value)) {
+        if (strtolower(request()->quoteType) == strtolower(QuoteTypes::HEALTH->value)) {
             $rules['copay_id'] = 'required';
         }
 
