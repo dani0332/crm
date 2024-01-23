@@ -44,7 +44,7 @@ class SageApiService
         $sageRequest->invoicePaymentStatus = $payment->transaction_payment_status;
         // $sageRequest->invoicePaymentStatus = 'paid';
         $advisorName = '';
-        if (! empty($quote->advisor_id)) {
+        if (!empty($quote->advisor_id)) {
 
             $advisorName = User::where('id', $quote->advisor_id)->value('name');
         }
@@ -62,6 +62,7 @@ class SageApiService
         // $sageRequest->insurerPremiumTaxInvoiceNumber = (string) rand(1000, 9999);
         if ($paymentSplits->first()) {
             $sageRequest->sage_reciept_id = $paymentSplits['sage_reciept_id'];
+            $sageRequest->collection_amount = $paymentSplits['collection_amount'];
         }
 
         return $sageRequest;
@@ -70,12 +71,13 @@ class SageApiService
     public function verifySageCustomer($customerId, $data = null)
     {
         $customer = Customer::find($customerId);
-        $customer->data = ! empty($data) ? $data : [];
+        $customer->data = !empty($data) ? $data : [];
         if ($customer) {
 
             $payLoadOptions = SagePayloadFactory::createCustomerPayload($customer);
+            info('custimerApi===payload===' . json_encode($payLoadOptions['payload']));
             $jsonResponse = $this->postToSage300($payLoadOptions['endPoint'], $payLoadOptions['payload']);
-
+            info('custimerApi===resp===' . $jsonResponse);
             $response = json_decode($jsonResponse, true);
 
             if (isset($response['error']['code']) && $response['error']['code'] == 'RecordDuplicate') {
@@ -129,7 +131,7 @@ class SageApiService
         // Add basic authentication
         curl_setopt($ch, CURLOPT_USERPWD, "$this->sageLogin:$this->sagePassword");
         $response = curl_exec($ch);
-        info('response-----------'.json_encode($response));
+        info('response-----------' . json_encode($response));
         if ($response === false || $response == '') {
             $errorResponse = curl_error($ch);
             $errorResponse = json_decode($errorResponse, true);

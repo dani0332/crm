@@ -238,6 +238,7 @@ class CentralController extends Controller
             $paymentSplits = PaymentSplits::where('code', $quote['code'])->first();
             $data['quoteTypeId'] = $quoteTypeId;
             $data['id'] = $quote->id;
+
             if ($payment->first() && $paymentSplits->first()) {
 
                 dispatch(new SendBookPolicyDocumentsJob($request));
@@ -255,16 +256,19 @@ class CentralController extends Controller
                 // sape customer number generation
                 // $sageCustomerNumber = $sageApiService->verifySageCustomer(57, $data);
                 $sageCustomerNumber = $sageApiService->verifySageCustomer($quote->customer_id, $data);
+                // $sageCustomerNumber = "P30581";
+
 
                 if ($sageCustomerNumber) {
 
                     $sageRequest->customerId = $sageCustomerNumber;
 
 
-                    /* createARInvoicePremAndComm */
+                    // /* createARInvoicePremAndComm */
                     $createARInvoicePremAndCommPayload = SagePayloadFactory::createARInvoicePremAndComm($sageRequest);
 
                     info('createARInvoicePremAndComm===payload===' . json_encode($createARInvoicePremAndCommPayload));
+
                     $resp = $sageApiService->postToSage300($createARInvoicePremAndCommPayload['endPoint'], $createARInvoicePremAndCommPayload['payload']);
 
                     info('createARInvoicePremAndComm===resp===' . $resp);
@@ -356,6 +360,7 @@ class CentralController extends Controller
                         /* createPaymontRecieptOneInvoice */
                         $createPaymontRecieptOneInvoice = SagePayloadFactory::createPaymontRecieptOneInvoice($sageRequest);
                         info('createPaymontRecieptOneInvoice===payload===' . json_encode($createPaymontRecieptOneInvoice));
+
                         $resp = $sageApiService->postToSage300($createPaymontRecieptOneInvoice['endPoint'], $createPaymontRecieptOneInvoice['payload']);
 
                         info('createPaymontRecieptOneInvoice===resp===' . $resp);

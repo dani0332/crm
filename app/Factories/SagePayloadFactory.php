@@ -54,8 +54,9 @@ class SagePayloadFactory
                         [
                             'BatchType' => 'CA',
                             'CustomerNumber' => $request->customerId,
-                            'DocumentNumber' => (string)$request->insurerPremiumTaxInvoiceNumber,
+                            'DocumentNumber' => (string)$request->insurerPremiumNumber,
                             'ReceiptTransactionType' => 'ApplyDocument',
+                            'CustomerReceiptAmount' => $request->premiumWithTax
                         ],
                     ],
                 ],
@@ -76,7 +77,7 @@ class SagePayloadFactory
                 [
                     'VendorNumber' => 'IP002', // use vender api to create vender in sage
 
-                    'DocumentNumber' => $request->insurerPremiumTaxInvoiceNumber,
+                    'DocumentNumber' => $request->insurerPremiumNumber,
                     'InvoiceDescription' => $request->invoiceDescription,
                     'DocumentDate' => $request->insurerInvoiceDate,
                     'CurrencyCode' => 'AED', // alway will be AED discussed with denber
@@ -86,11 +87,11 @@ class SagePayloadFactory
                     'TaxAmount1' => 0.000,
                     'DocumentTotalBeforeTaxes' => $request->premiumWithoutTax,
                     'DocumentTotalIncludingTax' => $request->premiumWithTax,
-                    'PostingDate' => '2023-05-04T00:00:00Z',
+                    'PostingDate' => $request->bookingDate,
                     'InvoiceDetails' => [
                         [
                             'DistributionDescription' => $request->invoiceDescription,
-                            'TaxClass1' => 1,
+                            'TaxClass1' => 5,
                             'GLAccount' => '55020',
                             'DistributedAmount' => $request->premiumWithoutTax,
                             'DistributedAmountBeforeTaxes' => $request->premiumWithTax,
@@ -171,7 +172,7 @@ class SagePayloadFactory
                     'CustomerNumber' => $request->customerId,
                     'DocumentNumber' => $request->insurerPremiumNumber,
                     'InvoiceDescription' => $request->invoiceDescription . '-PREM',
-                    'DocumentDate' => '2023-04-26T00:00:00Z',
+                    'DocumentDate' => $request->insurerInvoiceDate,
                     'CurrencyCode' => 'AED',
                     'DueDate' => $request->paymentDueDate,
                     'TaxGroup' => 'VAT',
@@ -349,7 +350,7 @@ class SagePayloadFactory
         ];
 
         return [
-            'endPoint' => 'AR/ARReceiptAndAdjustmentBatches' . '(BatchRecordType=CA,BatchNumber=' . $batchNumber . ')',
+            'endPoint' => 'AR/ARReceiptAndAdjustmentBatches' .  '(BatchRecordType=\'CA\',BatchNumber=' . $batchNumber . ')',
             'payload' => $payLoad,
         ];
     }
