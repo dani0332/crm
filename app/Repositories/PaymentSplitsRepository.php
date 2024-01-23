@@ -343,6 +343,7 @@ class PaymentSplitsRepository
                 $splitPayment->update($paymentInformation);
             } else {
                 $successMessage = 'Sage Error: Reciept not generated';
+
                 return $successMessage;
             }
 

@@ -231,7 +231,8 @@ class CentralService
                     'quoteUID' => $uuid,
                     'callSource' => LeadSourceEnum::IMCRM,
                 ];
-                return  Ken::request($endpoint, 'post', $data);
+
+                return Ken::request($endpoint, 'post', $data);
                 break;
             case QuoteTypes::TRAVEL->value:
                 $endpoint = '/process-travel-quote-plan';
@@ -242,7 +243,8 @@ class CentralService
                         ['id' => intval($data->plan_id), 'addonOptionIds' => []],
                     ],
                 ];
-                return  Ken::request($endpoint, 'post', $data);
+
+                return Ken::request($endpoint, 'post', $data);
                 break;
             case QuoteTypes::HEALTH->value:
                 $endpoint = '/api/v1-process-booking';
@@ -254,14 +256,12 @@ class CentralService
                     'quoteUID' => $uuid,
                     'callSource' => LeadSourceEnum::IMCRM,
                 ];
+
                 return Capi::request($endpoint, 'post', $data);
                 break;
         }
 
-
         //info('fn: updateSelectedPlan quoteType: '.$quoteType.' uuid: '.$uuid.' data: '.json_encode($data));
-
-
 
         //dd(json_encode($response));
         //return $response;

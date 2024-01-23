@@ -334,12 +334,12 @@ class SagePayloadFactory
 
         $sign = '$process';
         $val = "('".$sign."')";
+
         return [
             'endPoint' => 'AR/ARPostReceiptsAndAdjustments'.$val,
             'payload' => $payLoad,
         ];
     }
-
 
     public static function readyToPostReceiptAr($batchNumber)
     {
