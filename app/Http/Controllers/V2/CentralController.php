@@ -225,10 +225,6 @@ class CentralController extends Controller
         $dataFrom = $dragAndDropUpdateLeadStatusRequest->get('data')['form'];
         $dataTo = $dragAndDropUpdateLeadStatusRequest->get('data')['to'];
 
-        if ($dataTo['quote_status_id'] == QuoteStatusEnum::Lost) {
-            $dataTo['lost_reason'] = $dragAndDropUpdateLeadStatusRequest->get('data')['to']['lost_reason'];
-        }
-
         $modelObject = $this->getModelObject(QuoteTypes::getName($dataFrom['quoteTypeId'])->value);
         $repository = $modelObject::where('id', $dataFrom['id'])->firstOrFail();
 
@@ -236,10 +232,10 @@ class CentralController extends Controller
             DB::beginTransaction();
 
             $repository->activities()->where('status', 0)->update(['status' => 1]);
-            $repository->update(['quote_status_id' => $dataTo['quote_status_id']]);
+            $repository->update(['quote_status_id' => $dataTo['quote_status_id'], 'quote_status_date' => now()]);
 
             if ($dataTo['quote_status_id'] == QuoteStatusEnum::Lost && $dataFrom['quoteTypeId'] == QuoteTypeId::Health) {
-                HealthQuoteRequestDetail::updateOrCreate(['health_quote_request_id' => $repository->id], ['lost_reason_id' => $dataTo['lost_reason']]);
+                HealthQuoteRequestDetail::updateOrCreate(['health_quote_request_id' => $repository->id], ['lost_reason_id' => $dragAndDropUpdateLeadStatusRequest->get('data')['to']['lost_reason']]);
             }
 
             $repository->refresh();

@@ -34,6 +34,7 @@ class QuoteStatusTableSeeder extends Seeder
             ['code' => 'PolicySentToCustomer', 'text' => 'Policy sent to customer', 'mapped_with' => [QuoteTypeId::Car, QuoteTypeId::Bike, QuoteTypeId::Health, QuoteTypeId::Business, QuoteTypeId::Travel, QuoteTypeId::Home, QuoteTypeId::Pet, QuoteTypeId::Cycle]],
             ['code' => 'PolicyBooked', 'text' => 'Policy Booked', 'mapped_with' => [QuoteTypeId::Car, QuoteTypeId::Bike, QuoteTypeId::Health, QuoteTypeId::Business, QuoteTypeId::Travel, QuoteTypeId::Home, QuoteTypeId::Pet, QuoteTypeId::Cycle]],
             ['code' => 'PolicyCancelled', 'text' => 'Policy Cancelled', 'mapped_with' => [QuoteTypeId::Car, QuoteTypeId::Bike, QuoteTypeId::Health, QuoteTypeId::Business, QuoteTypeId::Travel, QuoteTypeId::Home, QuoteTypeId::Pet, QuoteTypeId::Cycle]],
+            ['code' => 'RenewalTermsSent', 'text' => 'Renewal Terms Sent', 'mapped_with' => [QuoteTypeId::Home, QuoteTypeId::Pet, QuoteTypeId::Cycle, QuoteTypeId::Yacht]],
         ];
 
         foreach ($newQuoteStatuses as $quoteStatus) {

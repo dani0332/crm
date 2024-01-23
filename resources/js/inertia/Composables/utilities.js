@@ -130,7 +130,7 @@ export const fileUploadErrorMessage = (doc, rejectReason) =>
 };
 
 
-function useCompareDueDate(dueDateString)
+export const useCompareDueDate = (dueDateString) =>
 {
   const currentDate = new Date();
 

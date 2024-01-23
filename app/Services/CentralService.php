@@ -12,14 +12,14 @@ use App\Models\PersonalQuote;
 use App\Models\PersonalQuoteDetail;
 use App\Repositories\PersonalQuoteRepository;
 use App\Traits\GenericQueriesAllLobs;
+use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
-use Hidehalo\Nanoid\Client;
 use Illuminate\Support\Facades\DB;
 use Log;
 
 class CentralService
 {
-    use GenericQueriesAllLobs;
+    use GenericQueriesAllLobs, TeamHierarchyTrait;
 
     public function duplicateAllowedLobsList($quoteType, $leadCode)
     {
@@ -205,12 +205,13 @@ class CentralService
     public function saveAndAssignActivitesToAdvisor($quoteDetails, $quoteTypeId)
     {
         $roles = auth()->user()->roles->pluck('id')->toArray();
-        
+
         $getActivitySchedule = ActivitySchedule::where([
             'quote_type_id' => $quoteTypeId,
             'quote_status_id' => $quoteDetails->quote_status_id,
         ])
         ->whereIn('role_id', $roles)
+        ->whereIn('team_id', $this->getUserTeams(auth()->user()->id)->pluck('id')->toArray())
         ->orderBy('sorting_order')
         ->first();
 
