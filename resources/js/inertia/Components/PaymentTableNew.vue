@@ -1291,6 +1291,9 @@ const addPayment = isValid => {
         preserveScroll: true,
         onSuccess: () => {
           createPaymentModal.value = false;
+          setTimeout(() => {
+            location.reload();
+          }, 500);
         },
         onError: () => {
           notification.error({
