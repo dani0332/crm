@@ -47,12 +47,13 @@ onMounted(() => {
   }
 });
 
-watch(
-  () => props.storageKey,
-  () => {
-    headers.value = props.columns;
-  },
-);
+// watch(
+//   () => props.storageKey,
+//   () => {
+//     headers.value = props.columns;
+//   },
+//   { immediate: true },
+// );
 </script>
 <template>
   <div class="select-none">

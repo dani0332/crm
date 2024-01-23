@@ -248,6 +248,18 @@ function changeLob() {
   tableHeader.value = [...commonHeaders.value, ...specificHeaders];
 }
 
+const getTotal = item => {
+  let sum = 0;
+
+  Object.values(item).forEach(value => {
+    value = parseFloat(value);
+    if (!isNaN(value) && value > 0) {
+      sum += value;
+    }
+  });
+  return sum;
+};
+
 function setQueryStringFilters() {
   for (const [key] of Object.entries(params)) {
     if (key.includes('[]')) {
@@ -343,10 +355,10 @@ onMounted(() => {
       </x-field>
     </div>
     <div class="flex gap-3 justify-end items-center">
-      <ColumnSelection
+      <!-- <ColumnSelection
         v-model:columns="tableHeader"
         :storage-key="`staleleads-report-${filters.line_of_bussiness}`"
-      />
+      /> -->
       <x-button size="sm" color="#ff5e00" type="submit">Search</x-button>
       <x-button size="sm" color="primary" @click.prevent="onReset">
         Reset
@@ -355,7 +367,7 @@ onMounted(() => {
   </x-form>
   <DataTable
     class="mt-4"
-    table-class-name=""
+    table-class-name="lining-nums"
     :loading="loaders.table"
     :headers="[
       ...tableHeader,
@@ -371,6 +383,9 @@ onMounted(() => {
     :sort-type="'desc'"
     hide-footer
   >
+    <template #item-total="item">
+      <strong>{{ getTotal(item) }}</strong>
+    </template>
   </DataTable>
   <!-- <Pagination
     :links="{
