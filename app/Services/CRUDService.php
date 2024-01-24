@@ -743,11 +743,13 @@ class CRUDService extends BaseService
         }
     }
 
-    public function getInquiryLogs($modelType, $id)
+    public function getInquiryLogs($modelType, $uuid)
     {
-        $lowerCaseModelType = strtolower($modelType);
+        $model = 'App\\Models\\'.$modelType.'Quote';
+        $quote = $model::where('uuid', $uuid)->with('duplicateInquiryLog')
+            ->whereHas('duplicateInquiryLog')
+            ->first();
 
-        return $this->{in_array($lowerCaseModelType, $this->quoteTypes) ? $lowerCaseModelType.'QuoteService' : $lowerCaseModelType.'Service'}
-            ->getInquiryLogs($id);
+        return optional($quote)->duplicateInquiryLog;
     }
 }
