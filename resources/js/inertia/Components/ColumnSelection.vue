@@ -46,14 +46,6 @@ onMounted(() => {
     );
   }
 });
-
-watch(
-  () => props.storageKey,
-  () => {
-    headers.value = storedState.value.headers;
-  },
-  { immediate: true },
-);
 </script>
 <template>
   <div class="select-none">
