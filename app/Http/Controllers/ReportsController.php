@@ -143,7 +143,7 @@ class ReportsController extends Controller
 
     public function renderStaleLeadsReport(Request $request, ReportService $reportService)
     {
-        $data = $reportService->getStaleLeadsReport($request);
+        $data = $reportService->getStaleLeadsReport($request)->simplePaginate(15);
 
         return inertia('Reports/StaleLeadsReport', [
             'reportData' => $data,

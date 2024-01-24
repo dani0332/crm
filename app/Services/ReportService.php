@@ -273,37 +273,27 @@ class ReportService extends BaseService
         $tableName = $type.'_quote_request';
         $stats = DB::table($tableName.' AS q')
             ->leftJoin('users AS u', 'u.id', '=', 'q.advisor_id')
-            ->select(
-                'q.health_team_type AS team',
-                DB::raw(
-                    '
-                    SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::NewLead.' THEN 1 ELSE 0 END) AS new_lead,
-                    SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::Allocated.' THEN 1 ELSE 0 END) AS allocated,
-                    SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::Quoted.' THEN 1 ELSE 0 END) AS quoted,
-                    SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::FollowedUp.' THEN 1 ELSE 0 END) AS followed_up,
-                    SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::InNegotiation.' THEN 1 ELSE 0 END) AS in_negotiation,
-                    SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::PaymentPending.' THEN 1 ELSE 0 END) AS payment_pending,
-                    SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::RenewalTermsReceived.' THEN 1 ELSE 0 END) AS renewal_terms_recevied,
-                    SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::ApplicationPending.' THEN 1 ELSE 0 END) AS application_pending,
-                    SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::ApplicationSubmitted.' THEN 1 ELSE 0 END) AS application_submitted,
-                    SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::MissingDocumentsRequested.' THEN 1 ELSE 0 END) AS missing_documents
-                    '
-                )
+            ->selectRaw(
+                '
+                q.health_team_type AS team,
+                SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::NewLead.' THEN 1 ELSE 0 END) AS new_lead,
+                SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::Allocated.' THEN 1 ELSE 0 END) AS allocated,
+                SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::Quoted.' THEN 1 ELSE 0 END) AS quoted,
+                SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::FollowedUp.' THEN 1 ELSE 0 END) AS followed_up,
+                SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::InNegotiation.' THEN 1 ELSE 0 END) AS in_negotiation,
+                SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::PaymentPending.' THEN 1 ELSE 0 END) AS payment_pending,
+                SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::RenewalTermsReceived.' THEN 1 ELSE 0 END) AS renewal_terms_recevied,
+                SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::ApplicationPending.' THEN 1 ELSE 0 END) AS application_pending,
+                SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::ApplicationSubmitted.' THEN 1 ELSE 0 END) AS application_submitted,
+                SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::MissingDocumentsRequested.' THEN 1 ELSE 0 END) AS missing_documents
+                '
             )
             ->whereNotIn('q.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
             ->whereBetween('q.created_at', [$start, $end])
             ->whereNull('q.renewal_import_code')
-            // export const useDaysSinceStale = payload => {
-            //   const quoteRequest = payload;
-            //   const stale_days = quoteRequest
-            //     ? Math.floor((new Date() - new Date(quoteRequest)) / (1000 * 60 * 60 * 24))
-            //     : false;
-            //   return stale_days !== false && stale_days <= 90 ? stale_days : false;
-            // };
             ->whereNotNull('q.stale_at')
             ->whereNotNull('q.health_team_type')
-            ->groupBy('q.health_team_type')
-            ->get();
+            ->groupBy('q.health_team_type');
 
         return $stats;
     }

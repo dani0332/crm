@@ -376,7 +376,7 @@ onMounted(() => {
         value: 'total',
       },
     ]"
-    :items="props.reportData || []"
+    :items="props.reportData.data || []"
     border-cell
     :empty-message="'No Records Available'"
     :sort-by="'net_conversion'"
