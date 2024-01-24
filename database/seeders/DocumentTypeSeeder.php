@@ -16,7 +16,7 @@ class DocumentTypeSeeder extends Seeder
     {
 
         $newDocumentTypes = [
-            ['code' => 'OD', 'text' => 'Other Documents', 'folder_path' => 'quote_notes', 'accepted_files' => '.xlsm,.xlsx,.pdf,.jpeg,.jpg,.png', 'max_files' => 20, 'max_size' => 10]
+            ['code' => 'OD', 'text' => 'Other Documents', 'folder_path' => 'quote_notes', 'accepted_files' => '.pdf,.xlsm,.xlsx,.xls,.docx,.doc,.jpeg,.jpg,.png', 'max_files' => 20, 'max_size' => 10]
         ];
 
         foreach ($newDocumentTypes as $newDocumentType) {
