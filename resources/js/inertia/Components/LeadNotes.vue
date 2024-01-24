@@ -22,7 +22,7 @@ const docForm = useForm({
   file: null,
 });
 
-const dateFormat = date => useDateFormat(date, 'DD-MM-YYYY h:mm:ss a');
+const dateFormat = date => useDateFormat(date, 'DD-MMM-YYYY h:mm:ss a').value;
 
 const tableHeader = reactive([
   { text: 'MODIFIED BY', value: 'created_by' },
@@ -104,6 +104,13 @@ const onEditNote = data => {
   isEdit.value = true;
 };
 
+const showAddNotesModal = () => {
+  notesForm.notes = null;
+  notesForm.id = null;
+  showAddNotes.value = true;
+  isEdit.value = false;
+};
+
 const uploadFile = (doc, filesWithInfo) => {
   let url = `/quotes/${props.modelType}/documents/store`;
   const { files, rejectReason } = filesWithInfo;
@@ -162,7 +169,7 @@ const uploadFile = (doc, filesWithInfo) => {
     </template>
     <div>
       <div class="flex justify-end">
-        <x-button size="sm" color="orange" @click="showAddNotes = true">
+        <x-button size="sm" color="orange" @click="showAddNotesModal()">
           Add Notes
         </x-button>
       </div>
