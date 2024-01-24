@@ -866,7 +866,7 @@ watch(
                             </td>
                             <td class="x-table-cell px-3 py-4 align-middle">
                                 <p v-if="totalAllocationList[item.month] == 0 || totalAllocationList[item.month] == undefined"> 0 % </p>
-                                <p v-else>{{ ((Number(item.monthlyHealthRenewed) + Number (renewedCountsList[item.month])) / Number(totalAllocationList[item.month])).toFixed(2)}} %</p>
+                                <p v-else>{{ (((Number(item.monthlyHealthRenewed) + Number (renewedCountsList[item.month])) / Number(totalAllocationList[item.month])) * 100).toFixed(2)}} %</p>
                             </td>
                         </tr>
                     </tbody>
