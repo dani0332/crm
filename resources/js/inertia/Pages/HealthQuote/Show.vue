@@ -51,6 +51,7 @@ const props = defineProps({
   paymentLink: String,
   quoteType: String,
   quoteNotes: Object,
+  noteDocumentType: Object,
 });
 
 const page = usePage();
@@ -1372,7 +1373,7 @@ const handleChildUpdate = planId => {
       </div>
       <div class="flex gap-2">
         <LeadNotes
-          :documentType="documentTypes"
+          :documentType="noteDocumentType"
           :notes="quoteNotes"
           :modelType="modelType"
           :quote="quote"

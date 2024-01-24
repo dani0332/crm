@@ -35,6 +35,7 @@ const props = defineProps({
   canAddBatchNumber: Boolean,
   quoteDocuments: Object,
   documentTypes: Object,
+  noteDocumentType: Object,
   storageUrl: String,
   quoteNotes: Object,
 });
@@ -473,7 +474,7 @@ const linkEntity = () => {
       </div>
       <div class="flex gap-2">
         <LeadNotes
-          :documentType="documentTypes"
+          :documentType="noteDocumentType"
           :notes="quoteNotes"
           :modelType="modelType"
           :quote="quote"

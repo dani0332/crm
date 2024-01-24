@@ -11,6 +11,7 @@ const props = defineProps({
 const showModal = ref(false);
 const showAddNotes = ref(false);
 const isEdit = ref(false);
+const isUploading = ref(false);
 
 const docForm = useForm({
   quote_id: props.quote?.id || null,
@@ -254,7 +255,7 @@ const uploadFile = (doc, filesWithInfo) => {
           :accept="documentType?.accepted_files"
           :max-files="documentType?.max_files"
           :max-size="documentType?.max_size"
-          :loading="docForm.processing"
+          :loading="isUploading"
           @change="uploadFile(documentType, $event)"
         />
         <!-- <x-tooltip align="top">

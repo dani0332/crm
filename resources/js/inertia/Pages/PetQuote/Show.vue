@@ -13,6 +13,7 @@ import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue'
 const props = defineProps({
   quote: Object,
   documentTypes: Object,
+  noteDocumentType: Object,
   quoteStatuses: Object,
   paymentMethods: Object,
   insuranceProviders: Object,
@@ -263,7 +264,7 @@ const linkEntity = () => {
       </div>
       <div class="flex gap-2">
         <LeadNotes
-          :documentType="documentTypes"
+          :documentType="noteDocumentType"
           :notes="quoteNotes"
           :modelType="quoteType"
           :quote="quote"
