@@ -289,7 +289,6 @@ onMounted(() => {
         v-model="kycForm.mobile_number"
         label="Mobile number"
         placeholder="Mobile number"
-        type="number"
         :rules="[isRequired]"
       />
 
