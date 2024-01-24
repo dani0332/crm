@@ -79,6 +79,10 @@ const caculateVatAmount = () => {
       Number(vat) + Number(policyDetailsForm.amount)
     ).toFixed(2);
     Number(vat) + Number(policyDetailsForm.amount);
+  } else if (policyDetailsForm.price_vat_notapplicable > 0) {
+    policyDetailsForm.amount_with_vat = Number(
+      policyDetailsForm.price_vat_notapplicable,
+    ).toFixed(2);
   } else {
     policyDetailsForm.vat = '';
     policyDetailsForm.amount_with_vat = '';
@@ -135,6 +139,7 @@ const onUpdatePolicyDetails = () => {
       <div class="w-full md:w-1/2">
         <x-textarea
           v-model="policyDetailsForm.price_vat_notapplicable"
+          @change="caculateVatAmount"
           type="number"
           label="Price (VAT NOT APPLICABLE)"
           placeholder="Price (VAT NOT APPLICABLE)"
@@ -199,7 +204,7 @@ const onUpdatePolicyDetails = () => {
         <x-input
           v-model="policyDetailsForm.amount_with_vat"
           type="number"
-          label="Price with VAT"
+          label="Total Price"
           placeholder="Price"
           class="w-full"
           readonly
