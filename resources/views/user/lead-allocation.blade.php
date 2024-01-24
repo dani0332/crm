@@ -111,6 +111,32 @@
                             }
                         },
                     },
+                    {
+                        data: 'reset_cap',
+                        name: 'reset_cap',
+                        orderable: false,
+                        searchable: false,
+                        render: function(data, type, row) {
+                            console.log('row data------',row);
+                            console.log('data------',data);
+
+                            if (data == 1) {
+                                var html = `
+                                <label class="switch" style="margin-left: 20px;">
+                                            <input data-toggle="toggle"  data-size="lg" type="checkbox" data-id="${row.id}" data-userId="${row.userId}" checked="checked" class="reset-cap success" id="is_active" name="is_active">
+                                            <span class="slider round"></span>
+                                        </label>`;
+
+                                return html;
+                            } else {
+                                var html = `<label class="switch " style="margin-left: 20px;">
+                                                            <input type="checkbox" data-id="${row.id}" data-userId="${row.userId}" class="reset-cap danger" id="is_active" name="is_active">
+                                                            <span class="slider round"></span>
+                                                        </label>`;
+                                return html;
+                            }
+                        },
+                    },
                 ],
                 drawCallback: function (settings) {
                     $('.lead_allocation_table tr').each(function(){
@@ -237,6 +263,38 @@
             }
         });
 
+
+    $(document).on("change", "input:checkbox.reset-cap", function() {
+        var ischecked = $(this).is(':checked');
+        var self = $(this);
+        if(ischecked) {
+
+
+            $(this).removeClass('danger');
+            $(this).addClass('success');
+        }
+        else{
+                $(this).removeClass('success');
+                $(this).addClass('danger');
+        }
+        var userId = $(self).data('userid');
+                $.ajax({
+                    url: '/lead-allocation/toggle-reset-cap',
+                    type: 'POST',
+                    data: {
+                        'userId': userId,
+                        'resetCap': ischecked==true?1:0,
+                        '_token': $('meta[name="csrf-token"]').attr('content')
+                    },
+                    success: function(data) {
+                        console.log('scheduler update');
+                        $('.loading').hide();
+                    }
+                });
+
+
+    });
+
         $(document).on("change", "input:checkbox.leadSwitch", function() {
 
             if(confirm("Are you sure you want to change Leads Assignment Status ?")){
@@ -266,10 +324,12 @@
             <div class="x_title">
                 <h2>Lead Allocation Management</h2>
                @if(Auth::user()->isAdmin())
-               <span class="status-text"></span><label class="switch " style="margin-left: 20px;float: left;margin-top: 5px;">
+               <span class="status-text"></span>
+                    <label class="switch " style="margin-left: 20px;float: left;margin-top: 5px;">
                 <input type="checkbox" @if($isAutoAllocationWorking == '1')  checked="checked" @endif class="leadSwitch success" id="jobSwitch" name="jobSwitch">
                 <span class="slider round"></span>
-            </label>
+                 </label>
+
                @endif
                 <div class="clearfix"></div>
             </div>
@@ -302,7 +362,7 @@
                     </div>
                     <div class="col-md-3"
                         style="border-radius: 10px;float: left;border-left: 3px solid #facb19; margin-left: 70px;margin-bottom: 50px;font-size: 26px;background: whitesmoke;width: 250px;height: 120px;padding-left: 15px;padding-top: 18px;">
-                        <span style="font-size: 21px">Availabe / UnAvailable</span>
+                        <span style="font-size: 21px">Available / UnAvailable</span>
                         <br />
                         <b><span style="color: black;"><label id="availableUsers">{{$availableUsers}} </label> /
                                 <label id="UnavailableUsers">{{$unAvailableUsers}}</label></span></b>
@@ -321,6 +381,7 @@
                                     title="For Unlimited Capactiy Add ( -1 )"></i>
                             </th>
                             <th style="width: 12% !important;">Status</th>
+                            <th style="width: 12% !important;">Reset Cap</th>
                         </tr>
                     </thead>
                     <tbody>
