@@ -5,11 +5,21 @@ const props = defineProps({
   notes: Object,
   modelType: String,
   quote: Object,
+  documentTypes: Object,
 });
 
 const showModal = ref(false);
 const showAddNotes = ref(false);
 const isEdit = ref(false);
+
+const docForm = useForm({
+  quote_id: props.quote?.id || null,
+  quote_uuid: props.quote?.code || null,
+  quote_type: props.modelType,
+  quote_type_id: null,
+  document_type_code: null,
+  file: null,
+});
 
 const dateFormat = date => useDateFormat(date, 'DD-MM-YYYY h:mm:ss a');
 
@@ -91,6 +101,42 @@ const onEditNote = data => {
   notesForm.id = data.id;
   showAddNotes.value = true;
   isEdit.value = true;
+};
+
+const uploadFile = (doc, filesWithInfo) => {
+  let url = `/quotes/${props.modelType}/documents/store`;
+  const { files, rejectReason } = filesWithInfo;
+  if (files.length == 0) {
+    notification.error({
+      title: 'File upload failed',
+      position: 'top',
+    });
+    docForm.setError({ error: fileUploadErrorMessage(doc, rejectReason) });
+    return false;
+  }
+  isUploading.value = true;
+  docForm
+    .transform(data => ({
+      ...data,
+      quote_type_id: doc.quote_type_id,
+      document_type_code: doc.code,
+      folder_path: doc.folder_path,
+      file: files[0].file,
+    }))
+    .post(url, {
+      preserveScroll: true,
+      preserveState: true,
+      onError: errors => {
+        docForm.setError(errors.error);
+        notification.error({
+          title: 'File upload failed',
+          position: 'top',
+        });
+      },
+      onFinish: () => {
+        isUploading.value = false;
+      },
+    });
 };
 </script>
 <template>
@@ -202,8 +248,16 @@ const onEditNote = data => {
       <p class="text-xs ml-auto flex justify-end mt-2">
         {{ notesLength }}/1000
       </p>
-      <div>
-        <x-tooltip align="top">
+      <div class="mt-2">
+        <Dropzone
+          :id="documentType.id"
+          :accept="documentType.accepted_files"
+          :max-files="documentType.max_files"
+          :max-size="documentType.max_size"
+          :loading="docForm.processing"
+          @change="uploadFile(documentType, $event)"
+        />
+        <!-- <x-tooltip align="top">
           <x-button size="sm" color="primary" icon="upload">
             Upload Documents
           </x-button>
@@ -215,7 +269,7 @@ const onEditNote = data => {
               files</span
             >
           </template>
-        </x-tooltip>
+        </x-tooltip> -->
       </div>
       <div class="mt-5 flex gap-2 justify-end">
         <x-button size="sm" @click.prevent="showAddNotes = false">
