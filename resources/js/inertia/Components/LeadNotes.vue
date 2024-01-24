@@ -35,6 +35,7 @@ const tableHeader = reactive([
   { text: 'ACTIONS', value: 'action' },
 ]);
 
+const loader = ref(false);
 const notesForm = reactive({
   notes: null,
   quote_request_id: props.quote?.id,
@@ -49,9 +50,10 @@ const onNoteSubmit = () => {
     notes: notesForm.notes,
     quoteStatusId: notesForm.quote_status_id,
   };
-
+  loader.value = true;
   if (isEdit.value) {
     // Note: Endpoint for edit notes
+    notesData['id'] = notesForm.id;
     axios
       .put('/update-quote-notes', notesData)
       .then(response => {
@@ -76,6 +78,9 @@ const onNoteSubmit = () => {
           title: 'Something went wrong',
           position: 'top',
         });
+      })
+      .finally(() => {
+        loader.value = false;
       });
   } else {
     axios
@@ -99,6 +104,9 @@ const onNoteSubmit = () => {
           title: 'Something went wrong',
           position: 'top',
         });
+      })
+      .finally(() => {
+        loader.value = false;
       });
   }
 };
@@ -292,7 +300,12 @@ const uploadFile = (doc, filesWithInfo) => {
         <x-button size="sm" @click.prevent="showAddNotes = false">
           Cancel
         </x-button>
-        <x-button @click="onNoteSubmit" size="sm" color="emerald">
+        <x-button
+          @click="onNoteSubmit"
+          size="sm"
+          color="emerald"
+          :loading="loader"
+        >
           {{ isEdit ? 'Update' : 'Save' }}
         </x-button>
       </div>
