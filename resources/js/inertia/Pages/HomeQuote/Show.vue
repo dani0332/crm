@@ -472,7 +472,12 @@ const linkEntity = () => {
         </p>
       </div>
       <div class="flex gap-2">
-        <LeadNotes :notes="quoteNotes" :modelType="modelType" :quote="quote"/>
+        <LeadNotes
+          :documentTypes="documentTypes"
+          :notes="quoteNotes"
+          :modelType="modelType"
+          :quote="quote"
+        />
         <x-button size="sm" color="#ff5e00" @click.prevent="openDuplicate">
           Duplicate Lead
         </x-button>

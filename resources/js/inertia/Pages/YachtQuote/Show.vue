@@ -221,7 +221,12 @@ const linkEntity = () => {
         </p>
       </div>
       <div class="flex gap-2">
-        <LeadNotes :notes="quoteNotes" :modelType="quoteType" :quote="quote"/>
+        <LeadNotes
+          :documentTypes="documentTypes"
+          :notes="quoteNotes"
+          :modelType="quoteType"
+          :quote="quote"
+        />
         <Link
           v-if="can(permissionsEnum.YachtQuotesEdit)"
           :href="route('yacht-quotes-edit', quote.uuid)"

@@ -554,7 +554,12 @@ const linkEntity = () => {
         </p>
       </div>
       <div class="flex gap-2">
-        <LeadNotes :notes="quoteNotes" modelType="Business" :quote="quote"/>
+        <LeadNotes
+          :documentTypes="documentTypes"
+          :notes="quoteNotes"
+          modelType="Business"
+          :quote="quote"
+        />
         <x-button
           v-if="isDuplicateAllowed"
           size="sm"
