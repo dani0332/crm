@@ -81,6 +81,7 @@ const onNoteSubmit = () => {
       })
       .finally(() => {
         loader.value = false;
+        showAddNotes.value = false;
       });
   } else {
     axios
@@ -107,6 +108,7 @@ const onNoteSubmit = () => {
       })
       .finally(() => {
         loader.value = false;
+        showAddNotes.value = false;
       });
   }
 };
@@ -128,6 +130,7 @@ const showAddNotesModal = () => {
 };
 
 const onDeleteNote = item => {
+  loader.value = true;
   axios
     .delete('/delete-quote-notes', item.id)
     .then(response => {
@@ -145,6 +148,9 @@ const onDeleteNote = item => {
         title: 'Something went wrong',
         position: 'top',
       });
+    })
+    .finally(() => {
+      loader.value = false;
     });
 };
 
@@ -257,8 +263,9 @@ const uploadFile = (doc, filesWithInfo) => {
             </x-button>
             <x-button
               size="xs"
-              color="danger"
+              color="red"
               outlined
+              :loading="loader"
               @click.prevent="onDeleteNote(item)"
             >
               Delete
