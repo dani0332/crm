@@ -392,11 +392,6 @@ class CRUDController extends Controller
      */
     public function store(Request $request)
     {
-        $isDuplicate = $this->healthQuoteService->checkDuplicateLead($request);
-        if ($isDuplicate) {
-            return redirect()->back()->with('error', 'Duplicate Lead found.');
-        }
-
         $modelPropertiesList = json_decode($request->get('model'), true);
         $modelSkipPropertiesList = json_decode($request->get('modelSkipProperties'), true);
         $modelType = json_decode($request->get('modelType'), true);
@@ -583,6 +578,10 @@ class CRUDController extends Controller
 
         $access = $this->carQuoteService->updatedAccessAgainstPaymentStatus($paymentEntityModel, $record);
 
+        if (in_array($this->genericModel->modelType, [quoteTypeCode::Health, quoteTypeCode::Car])) {
+            $clientInquiryLogs = $this->crudService->getInquiryLogs($this->genericModel->modelType, $record->uuid) ?? [];
+        }
+
         if ($this->genericModel->modelType == quoteTypeCode::Car) { // Car plans to display on detail view
             $quote = $record;
             $isCommercialVehicles = false;
@@ -688,7 +687,7 @@ class CRUDController extends Controller
                 'paymentEntityModel', 'payments', 'paymentMethods', 'isQuoteDocumentEnabled', 'quoteDocuments', 'displaySendPolicyButton', 'customerAdditionalContacts', 'lostApproveReasons', 'lostRejectReasons', 'allowQuoteLogAction', 'carLostChangeStatus',
                 'carMakeText', 'carModelText', 'advisor', 'tiers', 'daysAfterCapturedPayment', 'access', 'carPlanFeaturesCodeEnum', 'carPlanExclusionsCodeEnum', 'documentTypes', 'planURL', 'storageUrl', 'kyoEndPoint',
                 'carPlanTypeEnum', 'UBORelations', 'UBOsDetails', 'emirates', 'customerTypeEnum', 'memberRelations', 'membersDetails', 'industryType', 'nationalities',
-                'isCommercialVehicles', 'carInsuranceProviders',
+                'isCommercialVehicles', 'carInsuranceProviders', 'clientInquiryLogs'
             ]));
         }
 
@@ -886,8 +885,6 @@ class CRUDController extends Controller
             $embeddedProducts = EmbeddedProductRepository::byQuoteType(QuoteTypes::HEALTH->id(), $record->id);
 
             $healthPlanTypes = HealthPlanType::where('is_active', 1)->select('id', 'text')->get();
-
-            $clientInquiryLogs = $this->crudService->getInquiryLogs($this->genericModel->modelType, $id);
 
             return inertia('HealthQuote/Show', [
                 'paymentLink' => $paymentLink,
