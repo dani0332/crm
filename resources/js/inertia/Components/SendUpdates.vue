@@ -128,7 +128,7 @@ const onAddUpdate = (autoSubmit) => {
 
   form
     .transform(data => {
-      let childCatgeory = data.childCategory;
+      let childCatgeory = {...data.childCategory};
       let option = childCatgeory.childs.find(item => item.id === data.option);
       childCatgeory.option = option || null;
       delete childCatgeory.childs;
@@ -138,7 +138,6 @@ const onAddUpdate = (autoSubmit) => {
         refURL: page.url,
         childCategory: childCatgeory,
         option_id: option?.id || null,
-        personal_quote_id: props.reportable.personalQuoteId,
         reportable_uuid: props.reportable.uuid,
         reportable_id: props.reportable.id,
         status: page.props.sendUpdateEnum.NEW_REQUEST

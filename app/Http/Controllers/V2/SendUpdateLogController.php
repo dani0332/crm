@@ -6,14 +6,12 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Http\Controllers\Controller;
-use App\Http\Requests\PlanDetailsRequest;
-use App\Models\IndicativeAdditionalPrice;
 use App\Models\PersonalQuote;
-use App\Repositories\IndicativeAdditionalPriceRepository;
 use App\Repositories\InsuranceProviderRepository;
 use App\Repositories\SendUpdateLogRepository;
 use App\Services\LookupService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class SendUpdateLogController extends Controller
 {
@@ -48,12 +46,19 @@ class SendUpdateLogController extends Controller
 
         $quoteType = QuoteTypes::getName($quoteTypeId)->value;
 
-        $quote = $this->getQuote($sendUpdateLog->personal_quote_id, $quoteType);
+        $quote = $this->getQuote($sendUpdateLog->personal_quote_id);
+
+        if (in_array($quoteType, [QuoteTypes::CAR, QuoteTypes::HEALTH, QuoteTypes::TRAVEL])) {
+            $quote->load('plan.insuranceProvider');
+        }
+
+        $issuanceStatuses = DB::table('policy_issuance_status')->select('id', 'text')->get();
 
         return inertia('SendUpdateLog/Show', [
             'quote' => $quote,
             'quoteType' => $quoteType,
             'sendUpdateLog' => $sendUpdateLog,
+            'issuanceStatuses' => $issuanceStatuses,
             'sendUpdateOptions' => $sendUpdateOptions,
             'insuranceProviders' => $insuranceProviders,
             'sendUpdateStatusEnum' => SendUpdateLogStatusEnum::asArray(),
@@ -101,16 +106,16 @@ class SendUpdateLogController extends Controller
         if ($type === 'create') {
 
             switch ($selectedType) {
-                case 'EF':
+                case SendUpdateLogStatusEnum::EF:
                     if ($subType && $subType['slug'] === 'MPC') {
-                        $model::where(['id' => $quoteUuid, 'quote_type_id' => $quoteTypeId])->update([
+                        $model::where(['uuid' => $quoteUuid, 'quote_type_id' => $quoteTypeId])->update([
                             'quote_status_id' => QuoteStatusEnum::CancellationPending
                         ]);
                     }
                     break;
-                case 'CI':
-                case 'CIR':
-                    $model::where(['id' => $quoteUuid, 'quote_type_id' => $quoteTypeId])->update([
+                case SendUpdateLogStatusEnum::CI:
+                case SendUpdateLogStatusEnum::CIR:
+                    $model::where(['uuid' => $quoteUuid, 'quote_type_id' => $quoteTypeId])->update([
                         'quote_status_id' => QuoteStatusEnum::CancellationPending
                     ]);
                     break;
@@ -118,17 +123,17 @@ class SendUpdateLogController extends Controller
         } else {
             
             switch ($selectedType) {
-                case 'EF':
-                case 'CI':
+                case SendUpdateLogStatusEnum::EF:
+                case SendUpdateLogStatusEnum::CI:
                     if ($data['status'] === SendUpdateLogStatusEnum::UPDATE_BOOKED) {
-                        $model::where(['id' => $quoteUuid, 'quote_type_id' => $quoteTypeId])->update([
+                        $model::where(['uuid' => $quoteUuid, 'quote_type_id' => $quoteTypeId])->update([
                             'quote_status_id' => QuoteStatusEnum::PolicyCancelled
                         ]);
                     }
                     break;
-                case 'CIR':
+                case SendUpdateLogStatusEnum::CIR:
                     if ($data['status'] === SendUpdateLogStatusEnum::UPDATE_BOOKED) {
-                        $model::where(['id' => $quoteUuid, 'quote_type_id' => $quoteTypeId])->update([
+                        $model::where(['uuid' => $quoteUuid, 'quote_type_id' => $quoteTypeId])->update([
                             'quote_status_id' => QuoteStatusEnum::PolicyBooked
                         ]);
 
@@ -148,10 +153,19 @@ class SendUpdateLogController extends Controller
         return redirect()->back();
     }
 
-    private function getQuote($quoteId, $quoteType)
+    public function savePolicyDetails(Request $request)
     {
-        $repository = getRepositoryObject($quoteType);
+        $data = $request->all();
 
-        return $repository::where('id', $quoteId)->first();
+        SendUpdateLogRepository::savePolicyDetails($data);
+        
+        return redirect()->back();
+    }
+
+    private function getQuote($personalQuoteId)
+    {
+        $repository = 'App\\Repositories\\PersonalQuoteRepository';
+
+        return $repository::where('id', $personalQuoteId)->first();
     }
 }

@@ -25,6 +25,13 @@ class SendUpdateLogRepository extends BaseRepository
 
             $uuid = strtoupper(Str::random(6));
 
+            $personalQuote = PersonalQuoteRepository::where([
+                'quote_type_id' => $data['quote_type_id'],
+                'uuid' => $data['reportable_uuid']
+            ])->first();
+
+            $data['personal_quote_id'] = $personalQuote?->id ?? null;
+
             $res = $this->create([
                 'personal_quote_id' => $data['personal_quote_id'],
                 'reportable_id' => $data['reportable_id'],
@@ -85,6 +92,31 @@ class SendUpdateLogRepository extends BaseRepository
                 'price_without_vat' => $data['price_without_vat'],
                 'insurer_quote_number' => $data['insurer_quote_number'],
                 'insurance_provider_id' => $data['insurance_provider_id'],
+                'status' => SendUpdateLogStatusEnum::REQUEST_IN_PROGRESS
+            ]);
+        } catch(\Exception $ex) {
+            $result = (object) [
+                'message' => $ex->getMessage()
+            ];
+        }
+
+        return $result;
+    }
+
+    public function fetchSavePolicyDetails($data) 
+    {
+        try {
+            $result = $this->where('id', $data['id'])->update([
+                'first_name' => $data['first_name'],
+                'last_name' => $data['last_name'],
+                'provider_name' => $data['provider_name'],
+                'plan_name' => $data['plan_name'],
+                'policy_number' => $data['policy_number'],
+                'issuance_date' => $data['issuance_date'],
+                'start_date' => $data['start_date'],
+                'expiry_date' => $data['expiry_date'],
+                'insurer_quote_number' => $data['insurer_quote_number'],
+                'issuance_status_id' => $data['issuance_status_id'],
                 'status' => SendUpdateLogStatusEnum::REQUEST_IN_PROGRESS
             ]);
         } catch(\Exception $ex) {

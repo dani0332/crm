@@ -24,19 +24,13 @@ const state = reactive({
   isEdit: false,
 });
 
+const page = usePage();
+const notification = useToast();
+
 const issuanceStatusOptions = computed(() => {
-  return [
-    { label: 'Select Status', value: '' },
-    { label: 'Portal Down', value: 'portal_down' },
-    { label: 'Waiting for client confirmation', value: 'waiting_for_client_confirmation' },
-    { label: 'Issue found', value: 'issue_found' },
-    { label: 'Underwriter Issuance', value: 'underwriter_issuance' },
-    { label: 'Portal Issuance', value: 'portal_issuance' },
-    { label: 'Policy already issued by the underwriter', value: 'policy_already_issued_by_the_underwriter' },
-    { label: 'Renewal, Direct to Underwriter', value: 'renewal_direct_to_underwriter' },
-    { label: 'Policy Issued', value: 'policy_issued' },
-    { label: 'Other', value: 'other' },
-  ];
+  return page.props.issuanceStatuses.map(status => {
+    return { label: status.text, value: status.id };
+  })
 })
 
 const isEndorsementFinancial = computed(() => {
@@ -51,17 +45,19 @@ const isCPD = computed(() => {
   return props.selectedCategory?.subCategory.slug === 'CPD';
 });
 
+const dateFormat = date => useDateFormat(date, 'DD-MM-YYYY');
+
 const policyDetailsForm = useForm({
-	first_name: props.quote?.first_name || '',
-	last_name: props.quote?.last_name || '',
-	provider_name: '',
-	plan_name: '',
-	policy_number: props.quote?.policy_number || '',
-	issuance_date: props.quote?.policy_issuance_date || '',
-	start_date: props.quote?.policy_start_date || '',
-	expiry_date: props.quote?.renewal_expiry_date || '',
-	insurer_quote_number: '',
-	issuance_status_id: '',
+	first_name: props.sendUpdateLog?.first_name || props.quote?.first_name || null,
+	last_name: props.sendUpdateLog?.last_name || props.quote?.last_name || null,
+	provider_name: props.sendUpdateLog?.provider_name || props.quote?.plan?.insurance_provider?.name || null,
+	plan_name: props.sendUpdateLog?.plan_name || props.quote?.plan?.name || null,
+	policy_number: props.sendUpdateLog?.policy_number || props.quote?.policy_number || null,
+	issuance_date: props.sendUpdateLog?.issuance_date || props.quote?.policy_issuance_date || null,
+	start_date: props.sendUpdateLog?.start_date || props.quote?.policy_start_date || null,
+	expiry_date: props.sendUpdateLog?.expiry_date || props.quote?.renewal_expiry_date || null,
+	insurer_quote_number: props.sendUpdateLog?.insurer_quote_number || props.quote?.insurer_quote_number || null,
+	issuance_status_id: props.sendUpdateLog?.issuance_status_id || props.quote?.policy_issuance_status_id || null,
 	id: props.sendUpdateLog.id,
 })
 
@@ -75,7 +71,7 @@ const onUpdate = () => {
           title: 'The request has been updated',
           position: 'top',
         });
-        state.edit = false;
+        state.isEdit = false;
       },
       onError: errors => {
         Object.keys(errors).forEach(function (key) {
@@ -157,8 +153,7 @@ const onUpdate = () => {
 									v-if="isCPD"
 									:disabled="!state.isEdit"
 								/>
-								<span v-else>{{ 'in' }}</span>
-								<!-- Provider Name -->
+								<span v-else>{{ policyDetailsForm.provider_name }}</span>
 							</dd>
             </div>
 
@@ -177,7 +172,7 @@ const onUpdate = () => {
 									v-if="isCPD"
 									:disabled="!state.isEdit"
 								/>
-								<span v-else>{{ 'in' }}</span>
+								<span v-else>{{ policyDetailsForm.plan_name }}</span>
 							</dd>
             </div>
 
@@ -216,11 +211,13 @@ const onUpdate = () => {
               <dd>
                 <DatePicker
                   v-if="isCPD"
-                  v-model="policyDetailsForm.policy_issuance_date"
-                  name="policy_issuance_date"
+                  v-model="policyDetailsForm.issuance_date"
+                  name="issuance_date"
                   :disabled="!state.isEdit"
+                  placeholder="dd-mm-yyyy"
+                  class="w-1/2"
                 />
-								<span v-else>{{ policyDetailsForm.policy_issuance_date }}</span>
+								<span v-else>{{ policyDetailsForm.issuance_date }}</span>
 							</dd>
             </div>
 
@@ -237,13 +234,13 @@ const onUpdate = () => {
               <dd>
                 <DatePicker
                   v-if="isCPD || isCIR"
-                  v-model="policyDetailsForm.policy_start_date"
-                  name="policy_start_date"
+                  v-model="policyDetailsForm.start_date"
+                  name="start_date"
                   :disabled="!state.isEdit"
                   placeholder="dd-mm-yyyy"
                   class="w-[69%]"
                 />
-								<span v-else>{{ policyDetailsForm.policy_start_date }}</span>
+								<span v-else>{{ policyDetailsForm.start_date }}</span>
 							</dd>
             </div>
 
@@ -259,8 +256,8 @@ const onUpdate = () => {
               </dt>
               <dd>
                 <DatePicker
-                  v-model="policyDetailsForm.renewal_expiry_date"
-                  name="renewal_expiry_date"
+                  v-model="policyDetailsForm.expiry_date"
+                  name="expiry_date"
                   :disabled="!state.isEdit"
                   placeholder="dd-mm-yyyy"
                   class="w-1/2"
@@ -298,11 +295,11 @@ const onUpdate = () => {
 									v-if="!isCPD"
 									:disabled="!state.isEdit"
                   :options="issuanceStatusOptions"
-                  v-model="policyDetailsForm.issuance_status"
+                  v-model="policyDetailsForm.issuance_status_id"
                   placeholder="Select Status"
                   class="w-1/2"
 								/>
-                <span v-else>{{ policyDetailsForm.issuance_status }}</span>
+                <span v-else>{{ policyDetailsForm.issuance_status_id }}</span>
 							</dd>
             </div>
           </dl>
