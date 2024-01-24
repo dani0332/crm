@@ -1617,25 +1617,4 @@ class HealthQuoteService extends BaseService
 
         return [$result, $skipLead];
     }
-
-    public function checkDuplicateLead($quoteRequest)
-    {
-        $quote = HealthQuote::where('email', $quoteRequest->email)
-            ->first();
-
-        if ($quote) {
-            $quote->duplicateInquiryLog()->create([
-                'created_at' => now(),
-            ]);
-        }
-
-        return $quote;
-    }
-
-    public function getInquiryLogs($uuid)
-    {
-        $quote = HealthQuote::where('uuid', $uuid)->with('duplicateInquiryLog')->first();
-
-        return $quote->duplicateInquiryLog;
-    }
 }
