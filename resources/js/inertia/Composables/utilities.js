@@ -110,11 +110,3 @@ export const fileUploadErrorMessage = (doc, rejectReason) => {
   }
   return errorMessage;
 };
-
-export const useDaysSinceStale = payload => {
-  const quoteRequest = payload;
-  const stale_days = quoteRequest
-    ? Math.floor((new Date() - new Date(quoteRequest)) / (1000 * 60 * 60 * 24))
-    : false;
-  return stale_days !== false && stale_days <= 90 ? stale_days : false;
-};
