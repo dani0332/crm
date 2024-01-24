@@ -54,7 +54,7 @@ const onNoteSubmit = () => {
       .then(response => {
         if (response.status == 200) {
           notification.success({
-            title: 'Note has been successfully Updated',
+            title: 'Notes has been Updated',
             position: 'top',
           });
         } else {
@@ -76,7 +76,7 @@ const onNoteSubmit = () => {
       .then(response => {
         if (response.status == 200) {
           notification.success({
-            title: 'Note has been added successfully',
+            title: 'Notes has been saved',
             position: 'top',
           });
         } else {
@@ -127,6 +127,7 @@ const uploadFile = (doc, filesWithInfo) => {
     .post(url, {
       preserveScroll: true,
       preserveState: true,
+
       onError: errors => {
         docForm.setError(errors.error);
         notification.error({
