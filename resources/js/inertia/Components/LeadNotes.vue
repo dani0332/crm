@@ -56,8 +56,10 @@ const onNoteSubmit = () => {
       .put('/save-quote-notes', notesData)
       .then(response => {
         if (response.status == 200) {
-          console.log(response);
-          notes.value.push(response.data.data);
+          let index = notes.value.findIndex(response.data.id);
+          if (index != -1) {
+            notes.value.splice(index, 1, response.data);
+          }
           notification.success({
             title: 'Notes has been Updated',
             position: 'top',
@@ -80,6 +82,7 @@ const onNoteSubmit = () => {
       .post('/save-quote-notes', notesData)
       .then(response => {
         if (response.status == 200) {
+          notes.value.push(response.data.data);
           notification.success({
             title: 'Notes has been saved',
             position: 'top',
