@@ -56,15 +56,15 @@ class SaleSummaryReportService extends ManagementReport
         }
 
         if ($request->groupBy == 'insurer') {
-            $query->join('insurance_provider', 'insurance_provider.id', '=', 'payments.insurance_provider_id')
+            $query->join('insurance_provider', 'insurance_provider.id', '=', 'p.insurance_provider_id')
                 ->addSelect('insurance_provider.text as insurer');
-            $query->whereNotNull('payments.insurance_provider_id');
+            $query->whereNotNull('p.insurance_provider_id');
         }
 
         if ($request->groupBy == 'policy_issuer') {
-            $query->leftJoin('users as pi', 'pi.id', '=', 'payments.policy_issuer_id')
+            $query->leftJoin('users as pi', 'pi.id', '=', 'p.policy_issuer_id')
                 ->addSelect('pi.name as policy_issuer');
-            $query->whereNotNull('payments.policy_issuer_id');
+            $query->whereNotNull('p.policy_issuer_id');
         }
 
         if ($request->groupBy == 'line_of_business') {
@@ -80,9 +80,9 @@ class SaleSummaryReportService extends ManagementReport
     private function resolveGroupByColumn($groupBy)
     {
         $mapping = [
-            'policy_issuer' => 'payments.policy_issuer_id',
+            'policy_issuer' => 'p.policy_issuer_id',
             'customer_group' => 'personal_quotes.customer_id',
-            'insurer' => 'payments.insurance_provider_id',
+            'insurer' => 'p.insurance_provider_id',
             'advisor' => 'users.name',
             'line_of_business' => 'quote_type.code',
         ];
