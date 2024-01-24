@@ -220,6 +220,15 @@ class CentralController extends Controller
 
         return redirect()->back()->with('success', 'Note has been added successfully.');
     }
+
+    public function updateQuoteNotes(QuoteNotesRequest $quoteNotesRequest)
+    {
+
+        $quote = $this->getQuoteObject($quoteNotesRequest->quoteType, $quoteNotesRequest->quoteRequestId);
+        $quote->notes()->update(['note' => $quoteNotesRequest->notes]);
+
+        return redirect()->back()->with('success', 'Note has been added successfully.');
+    }
     
     public function updateLeadStatusDragDrop(DragAndDropUpdateLeadStatusRequest $dragAndDropUpdateLeadStatusRequest)
     {

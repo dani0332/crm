@@ -53,7 +53,7 @@ const onNoteSubmit = () => {
   if (isEdit.value) {
     // Note: Endpoint for edit notes
     axios
-      .put('/save-quote-notes', notesData)
+      .put('/update-quote-notes', notesData)
       .then(response => {
         if (response.status == 200) {
           let index = notes.value.findIndex(response.data.id);
@@ -66,7 +66,7 @@ const onNoteSubmit = () => {
           });
         } else {
           notification.error({
-            title: 'Note has not been updated',
+            title: 'Notes has not been updated.',
             position: 'top',
           });
         }
@@ -89,7 +89,7 @@ const onNoteSubmit = () => {
           });
         } else {
           notification.error({
-            title: 'Note has not been added successfully',
+            title: 'Notes has not been saved. ',
             position: 'top',
           });
         }
