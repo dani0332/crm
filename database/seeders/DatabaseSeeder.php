@@ -22,6 +22,7 @@ class DatabaseSeeder extends Seeder
             AddCreateSendUpdatePermissionToAllRoles::class,
             addDubaiNowEmailGroup::class,
             DubaiLeadSource::class,
+            AddPolicyIssuanceStatuses::class
         ]);
     }
 }
