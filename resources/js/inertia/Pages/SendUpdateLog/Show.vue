@@ -271,6 +271,7 @@ const onUpdateLog = () => {
       :insuranceProviders="insuranceProviders"
       :selectedCategory="selectedCategory"
       :quote="quote"
+      :quoteType="quoteType"
       :isUpdateBooked="isUpdateBooked"
     />
 
