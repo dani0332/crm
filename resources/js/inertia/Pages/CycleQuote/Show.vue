@@ -14,6 +14,7 @@ import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue'
 const props = defineProps({
   quote: Object,
   documentTypes: Object,
+  noteDocumentType: Object,
   quoteStatuses: Object,
   paymentMethods: Object,
   insuranceProviders: Object,
@@ -282,7 +283,12 @@ const linkEntity = () => {
         </p>
       </div>
       <div class="flex gap-2">
-        <LeadNotes :notes="quoteNotes" :modelType="quoteType" :quote="quote"/>
+        <LeadNotes
+          :documentType="noteDocumentType"
+          :notes="quoteNotes"
+          :modelType="quoteType"
+          :quote="quote"
+        />
         <x-button size="sm" color="#ff5e00" @click.prevent="openDuplicate">
           Duplicate Lead
         </x-button>

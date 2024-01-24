@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\V2;
 
 use App\Enums\CustomerTypeEnum;
+use App\Enums\DocumentTypeCode;
 use App\Enums\LookupsEnum;
 use App\Enums\quoteStatusCode;
 use App\Enums\QuoteStatusEnum;
@@ -102,6 +103,7 @@ class YachtQuoteController extends Controller
         $quote->load('documents.createdBy:id,name,email');
 
         $documentTypes = DocumentTypeRepository::byQuoteTypeId(QuoteTypes::YACHT->id())->get();
+        $noteDocumentType = DocumentTypeRepository::where('code', DocumentTypeCode::OD)->first();
         $paymentMethods = PaymentMethodRepository::orderBy('name')->get();
         $nationalities = Nationality::where('is_active', 1)->select('id', 'text')->get();
         $memberRelations = LookupRepository::where('key', LookupsEnum::MEMBER_RELATION)->get();
@@ -150,6 +152,7 @@ class YachtQuoteController extends Controller
             'nationalities' => $nationalities,
             'industryType' => $industryType,
             'emirates' => $emirates,
+            'noteDocumentType' => $noteDocumentType,
             'quoteNotes' => $quoteNotes,
         ]);
     }

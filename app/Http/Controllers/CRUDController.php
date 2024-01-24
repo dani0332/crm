@@ -9,6 +9,7 @@ use App\Enums\CarPlanFeaturesCode;
 use App\Enums\CarPlanType;
 use App\Enums\CarTeamType;
 use App\Enums\CustomerTypeEnum;
+use App\Enums\DocumentTypeCode;
 use App\Enums\GenericRequestEnum;
 use App\Enums\HealthTeamType;
 use App\Enums\HomePossessionType;
@@ -32,6 +33,7 @@ use App\Jobs\CarRenewalEmailJob;
 use App\Jobs\SyncSIBContactJob;
 use App\Models\CarMake;
 use App\Models\CarQuote;
+use App\Models\DocumentType;
 use App\Models\EmbeddedProductOption;
 use App\Models\EmbeddedTransaction;
 use App\Models\Emirate;
@@ -786,6 +788,7 @@ class CRUDController extends Controller
                 })->sortBy('label')->values();
             }
             $documentTypes = $this->quoteDocumentService->getQuoteDocumentsForUpload(QuoteTypeId::Home);
+            $noteDocumentType = DocumentType::where('code', DocumentTypeCode::OD)->first();
             $quoteNotes = QuoteNoteRepository::getBy($record->id, QuoteTypes::HOME->name);
 
             return inertia('HomeQuote/Show', [
@@ -831,7 +834,8 @@ class CRUDController extends Controller
                 'emirates' => $emirates,
                 'quoteType' => QuoteTypes::HOME,
                 'documentTypes' => $documentTypes,
-                'quoteNotes' => $quoteNotes,
+                'noteDocumentType' => $noteDocumentType,
+                'quoteNotes' => $quoteNotes
             ]);
         }
 
@@ -860,6 +864,7 @@ class CRUDController extends Controller
             $emirates = Emirate::where('is_active', 1)->select('id', 'text')->get();
             $industryType = LookupRepository::where('key', LookupsEnum::COMPANY_TYPE)->get();
             $documentTypes = $this->quoteDocumentService->getQuoteDocumentsForUpload(QuoteTypeId::Health);
+            $noteDocumentType = DocumentType::where('code', DocumentTypeCode::OD)->first();
             $uboRelations = LookupRepository::where('key', LookupsEnum::UBO_RELATION)->get();
             $documentTypes = collect($documentTypes)->groupBy('category');
 
@@ -966,7 +971,8 @@ class CRUDController extends Controller
                 'UBOsDetails' => $uboDetails,
                 'UBORelations' => $uboRelations,
                 'staleDays' => $record->stale_at, now()->diffInDays(Carbon::parse("$record->stale_at")),
-                'quoteNotes' => $quoteNotes
+                'noteDocumentType' => $noteDocumentType,
+                'quoteNotes' => $quoteNotes,
             ]);
         } else {
             return view('shared.show', compact([

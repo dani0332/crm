@@ -36,6 +36,7 @@ use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Laravel\Prompts\Note;
 use Maatwebsite\Excel\Facades\Excel;
 
 class CentralController extends Controller
@@ -217,7 +218,27 @@ class CentralController extends Controller
         $quote = $this->getQuoteObject($quoteNotesRequest->quoteType, $quoteNotesRequest->quoteRequestId);
         $quote->notes()->save($notes);
 
-        return redirect()->back()->with('success', 'Note has been added successfully.');
+        $notes = $quote->notes()->with('createdBy:id,name', 'quoteStatus:id,text')->where('id', $notes->id)->firstOrFail();
+
+        return response()->json(['response' => $notes]);
+    }
+
+    public function updateQuoteNotes(QuoteNotesRequest $quoteNotesRequest)
+    {
+        $quote = $this->getQuoteObject($quoteNotesRequest->quoteType, $quoteNotesRequest->quoteRequestId);
+        $quote->notes()->where('id', $quoteNotesRequest->id)->update(['note' => $quoteNotesRequest->notes, 'updated_by' => auth()->id()]);
+
+        $notes = $quote->notes()->with('createdBy:id,name', 'quoteStatus:id,text')->where('id', $quoteNotesRequest->id)->firstOrFail();
+
+        return response()->json(['response' => $notes]);
+    }
+
+    public function deleteQuoteNotes($id)
+    {
+        $quoteNote = QuoteNote::where('id', $id)->firstOrFail();
+        $quoteNote->delete();
+
+        return response()->json(['response' => 'Note has been deleted']);
     }
     
     public function updateLeadStatusDragDrop(DragAndDropUpdateLeadStatusRequest $dragAndDropUpdateLeadStatusRequest)

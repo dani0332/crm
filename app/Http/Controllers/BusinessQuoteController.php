@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Enums\CustomerTypeEnum;
+use App\Enums\DocumentTypeCode;
 use App\Enums\GenericRequestEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\PaymentMethodsEnum;
@@ -18,6 +19,7 @@ use App\Events\LeadsCount;
 use App\Http\Requests\StoreBusinessQuoteRequest;
 use App\Http\Requests\UpdateBusinessQuoteRequest;
 use App\Models\BusinessQuote;
+use App\Models\DocumentType;
 use App\Models\Emirate;
 use App\Models\Entity;
 use App\Models\Nationality;
@@ -222,6 +224,7 @@ class BusinessQuoteController extends Controller
         $issuancePlace = $this->lookupService->getIssuancePlaces();
         $issuanceAuthorities = $this->lookupService->getIssuanceAuthorities();
         $quoteNotes = QuoteNoteRepository::getBy($record->id, QuoteTypes::BUSINESS->name);
+        $noteDocumentType = DocumentType::where('code', DocumentTypeCode::OD)->first();
 
         return inertia('CorpLineQuote/Show', [
             'storageUrl' => storageUrl(),
@@ -287,6 +290,7 @@ class BusinessQuoteController extends Controller
             'nationalities' => $nationalities,
             'emirates' => $emirates,
             'canAddBatchNumber' => auth()->user()->hasRole(RolesEnum::CorplineManager),
+            'noteDocumentType' => $noteDocumentType,
             'quoteNotes' => $quoteNotes,
         ]);
     }

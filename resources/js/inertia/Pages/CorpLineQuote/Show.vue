@@ -27,6 +27,7 @@ const props = defineProps({
   UBOsDetails: Array,
   canAddBatchNumber: Boolean,
   documentTypes: Object,
+  noteDocumentType: Object,
   storageUrl: String,
   quoteNotes: Object,
 });
@@ -556,7 +557,12 @@ const linkEntity = () => {
         </p>
       </div>
       <div class="flex gap-2">
-        <LeadNotes :notes="quoteNotes" modelType="Business" :quote="quote"/>
+        <LeadNotes
+          :documentType="noteDocumentType"
+          :notes="quoteNotes"
+          modelType="Business"
+          :quote="quote"
+        />
         <x-button
           v-if="isDuplicateAllowed"
           size="sm"

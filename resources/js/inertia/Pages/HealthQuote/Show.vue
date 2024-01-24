@@ -51,6 +51,7 @@ const props = defineProps({
   paymentLink: String,
   quoteType: String,
   quoteNotes: Object,
+  noteDocumentType: Object,
 });
 
 const page = usePage();
@@ -1374,7 +1375,12 @@ const handleChildUpdate = planId => {
         </p>
       </div>
       <div class="flex gap-2">
-        <LeadNotes :notes="quoteNotes" :modelType="modelType" :quote="quote"/>
+        <LeadNotes
+          :documentType="noteDocumentType"
+          :notes="quoteNotes"
+          :modelType="modelType"
+          :quote="quote"
+        />
         <x-button size="sm" color="#ff5e00" @click.prevent="openDuplicate">
           Duplicate Lead
         </x-button>
@@ -1459,14 +1465,14 @@ const handleChildUpdate = planId => {
           v-if="!hasRole($page.props.rolesEnum.HealthWCUAdvisor)"
           class="w-full md:w-1/2 flex gap-2 items-end"
         >
-            <ComboBox
-                v-model="assignLead"
-                label="Assign Lead"
-                :options="advisorOptions"
-                placeholder="Select Lead"
-                class="w-auto flex-1 mt-1"
-                :single="true"
-            />
+          <ComboBox
+            v-model="assignLead"
+            label="Assign Lead"
+            :options="advisorOptions"
+            placeholder="Select Lead"
+            class="w-auto flex-1 mt-1"
+            :single="true"
+          />
           <div>
             <x-button
               color="orange"
