@@ -1,14 +1,11 @@
-export const useRoundIt = (num, decimalPlaces = 2) =>
-{
+export const useRoundIt = (num, decimalPlaces = 2) => {
   const p = Math.pow(10, decimalPlaces);
   const n = num * p * (1 + Number.EPSILON);
   return Math.round(n) / p;
 };
 
-export const useCleanObj = reactive =>
-{
-  Object.keys(reactive).forEach(key =>
-  {
+export const useCleanObj = reactive => {
+  Object.keys(reactive).forEach(key => {
     if (
       reactive[key] === null ||
       reactive[key] === undefined ||
@@ -22,16 +19,13 @@ export const useCleanObj = reactive =>
   return reactive;
 };
 
-export const useObjToUrl = obj =>
-{
+export const useObjToUrl = obj => {
   Object.keys(obj).forEach(
     key => (obj[key] === '' || obj[key]?.length === 0) && delete obj[key],
   );
   return Object.keys(obj)
-    .map(key =>
-    {
-      if (Array.isArray(obj[key]))
-      {
+    .map(key => {
+      if (Array.isArray(obj[key])) {
         return obj[key].map(value => `${key}[]=${value}`).join('&');
       }
       return `${key}=${obj[key]}`;
@@ -43,8 +37,7 @@ export const useGetShowPageRoute = (
   uuid,
   quoteTypeId,
   business_type_of_insurance_id,
-) =>
-{
+) => {
   let business_route =
     business_type_of_insurance_id == 5
       ? route('amt.show', uuid)
@@ -66,29 +59,23 @@ export const useGetShowPageRoute = (
   return routesObj[quoteTypeId];
 };
 
-export const useGenerateQueryString = filters =>
-{
+export const useGenerateQueryString = filters => {
   const query = {};
-  Object.keys(filters).forEach(key =>
-  {
-    if (filters[key] !== '' && filters[key] != null)
-    {
+  Object.keys(filters).forEach(key => {
+    if (filters[key] !== '' && filters[key] != null) {
       query[key] = filters[key];
     }
   });
   return query;
 };
 
-export const useConvertDate = date =>
-{
-  if (date == null)
-  {
+export const useConvertDate = date => {
+  if (date == null) {
     return null;
   }
 
   const splitedDate = date.split('-');
-  if (splitedDate[0].length === 4)
-  {
+  if (splitedDate[0].length === 4) {
     return date;
   }
 
@@ -96,8 +83,7 @@ export const useConvertDate = date =>
   return `${year}-${month}-${day}`;
 };
 
-export const daysSinceStale = payload =>
-{
+export const daysSinceStale = payload => {
   const quoteRequest = payload;
   const stale_days = quoteRequest
     ? Math.floor((new Date() - new Date(quoteRequest)) / (1000 * 60 * 60 * 24))
@@ -105,19 +91,15 @@ export const daysSinceStale = payload =>
   return stale_days !== false && stale_days <= 90 ? stale_days : false;
 };
 
-export const fileUploadErrorMessage = (doc, rejectReason) =>
-{
+export const fileUploadErrorMessage = (doc, rejectReason) => {
   let errorMessage = '';
-  if (rejectReason.code == 'file-too-large')
-  {
+  if (rejectReason.code == 'file-too-large') {
     errorMessage =
       'File size must be less than ' + doc.max_size + ' MB for ' + doc.text;
-  } else if (rejectReason.code == 'file-invalid-type')
-  {
+  } else if (rejectReason.code == 'file-invalid-type') {
     errorMessage =
       'You can only upload a ' + doc.accepted_files + ' for ' + doc.text;
-  } else
-  {
+  } else {
     errorMessage =
       'You can only upload a ' +
       doc.accepted_files +
@@ -129,27 +111,34 @@ export const fileUploadErrorMessage = (doc, rejectReason) =>
   return errorMessage;
 };
 
-export const useCalculateTotalSum = (data, key) =>
-{
-  const totalSum = data.reduce((accumulator, currentItem) =>
-  {
-    // Ensure the current item has the specified key
-    if (key in currentItem)
-    {
-      // Parse the value to a number and add it to the accumulator
-      let value = currentItem[key] != null ? currentItem[key] : 0
-      accumulator += +parseFloat((value.toString()).replace(/,/g, '')) || 0;
+export const useCompareDueDate = dueDateString => {
+  const currentDate = new Date();
 
+  const [day, month, year, hour, minute, second] = dueDateString.split(/[- :]/);
+  const dueDate = new Date(year, month - 1, day, hour, minute, second);
+
+  // Set time component to midnight for both dates
+  currentDate.setHours(0, 0, 0, 0);
+  dueDate.setHours(0, 0, 0, 0);
+
+  return currentDate > dueDate;
+};
+
+export const useCalculateTotalSum = (data, key) => {
+  const totalSum = data.reduce((accumulator, currentItem) => {
+    // Ensure the current item has the specified key
+    if (key in currentItem) {
+      // Parse the value to a number and add it to the accumulator
+      let value = currentItem[key] != null ? currentItem[key] : 0;
+      accumulator += +parseFloat(value.toString().replace(/,/g, '')) || 0;
     }
     return accumulator;
   }, 0);
 
-
   return totalSum.toFixed(2);
 };
 
-export const getPreviousDate = (days = 30, format = 'DD-MMM-YYYY') =>
-{
+export const getPreviousDate = (days = 30, format = 'DD-MMM-YYYY') => {
   // Get the current date
   let currentDate = new Date();
 

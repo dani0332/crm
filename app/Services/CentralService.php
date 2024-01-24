@@ -6,17 +6,20 @@ use App\Enums\GenericRequestEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Facades\Capi;
+use App\Models\Activities;
+use App\Models\ActivitySchedule;
 use App\Models\PersonalQuote;
 use App\Models\PersonalQuoteDetail;
 use App\Repositories\PersonalQuoteRepository;
 use App\Traits\GenericQueriesAllLobs;
+use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Log;
 
 class CentralService
 {
-    use GenericQueriesAllLobs;
+    use GenericQueriesAllLobs, TeamHierarchyTrait;
 
     public function duplicateAllowedLobsList($quoteType, $leadCode)
     {
@@ -201,7 +204,39 @@ class CentralService
 
     public function saveAndAssignActivitesToAdvisor($quoteDetails, $quoteTypeId)
     {
-        dd($quoteDetails->toArray(), $quoteTypeId);
+        $roles = auth()->user()->roles->pluck('id')->toArray();
+
+        $getActivitySchedule = ActivitySchedule::where([
+            'quote_type_id' => $quoteTypeId,
+            'quote_status_id' => $quoteDetails->quote_status_id,
+        ])
+        ->whereIn('role_id', $roles)
+        ->whereIn('team_id', $this->getUserTeams(auth()->user()->id)->pluck('id')->toArray())
+        ->orderBy('sorting_order')
+        ->first();
+
+        if($getActivitySchedule && $quoteDetails->advisor_id) {
+
+            $activity = Activities::create([
+                'title' => $getActivitySchedule->name,
+                'description' => $getActivitySchedule->description,
+                'quote_request_id' => $quoteDetails->id,
+                'quote_type_id' => $quoteTypeId,
+                'status' => 0,
+                'created_at' => Carbon::now(),
+                'updated_at' => Carbon::now(),
+                'assignee_id' => $quoteDetails->advisor_id ?? auth()->user()->id,
+                'uuid' => generateUuid(),
+                'due_date' => addDaysExcludeWeekend($getActivitySchedule->due_days),
+                'client_name' => $quoteDetails->first_name.' '.$quoteDetails->last_name,
+                'client_email' => $quoteDetails->email,
+                'quote_uuid' => $quoteDetails->uuid,
+            ]);
+
+            return $activity;
+        }
+
+        return false;
     }
 
 }

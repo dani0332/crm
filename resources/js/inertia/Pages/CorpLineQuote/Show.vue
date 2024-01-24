@@ -38,6 +38,7 @@ const rolesEnum = page.props.rolesEnum;
 const notification = useNotifications('toast');
 
 const countDays = daysSinceStale(props.quoteRequest?.stale_at);
+const compareDueDate = useCompareDueDate;
 
 const { copy, copied } = useClipboard();
 
@@ -209,6 +210,7 @@ const advisorOptions = computed(() => {
 
 const activityTable = [
   { text: 'Done', value: 'status', width: 60, align: 'center' },
+  { text: 'Ref-ID', value: 'code' },
   { text: 'Title', value: 'title' },
   { text: 'Client Name', value: 'client_name' },
   { text: 'Followup Date', value: 'due_date' },
@@ -1132,6 +1134,26 @@ const linkEntity = () => {
           :rows-per-page="15"
           :hide-footer="activities.length < 15"
         >
+          <template #item-code="{ code }">
+            {{ code }}
+          </template>
+          <template #item-due_date="{ due_date }">
+            <template v-if="compareDueDate(due_date)">
+              <x-tooltip>
+                <p
+                  :class="
+                    compareDueDate(due_date) ? 'bg-error-300 rounded p-1' : ''
+                  "
+                >
+                  {{ due_date }}
+                </p>
+                <template #tooltip>
+                  <span>Pending overdue Task, please complete immediately</span>
+                </template>
+              </x-tooltip>
+            </template>
+            <span v-else>{{ due_date }}</span>
+          </template>
           <template #item-status="{ status, id }">
             <x-checkbox
               color="emerald"

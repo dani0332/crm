@@ -244,6 +244,7 @@ class CRUDService extends BaseService
             $quoteDetailEntity->save();
 
             $entity = $this->{strtolower($request->modelType).'QuoteService'}->getEntityPlain($request->leadId);
+
             $previousQuoteStatus = $entity->quote_status_id;
             //if model is health ,team is ebp ,previous status is quoted and wants to update qualified then restrict advisor
             if (strtolower($request->modelType) == strtolower(quoteTypeCode::Health) && $entity->health_team_type == HealthTeamType::EBP && $previousQuoteStatus == QuoteStatusEnum::Quoted && $request->leadStatus == QuoteStatusEnum::Qualified) {
@@ -257,6 +258,8 @@ class CRUDService extends BaseService
             if (isset($request->tier_id) && $request->tier_id != '' && strtolower($request->modelType) == strtolower(quoteTypeCode::Car)) {
                 $entity->tier_id = $request->tier_id;
             }
+
+            $entity->activities()->where('status', 0)->update(['status' => 1]);
             $entity->save();
 
             if (
@@ -342,6 +345,11 @@ class CRUDService extends BaseService
                 ) {
                     CammyJob::dispatch($entity, 'unsub');
                 }
+            }
+
+            if(in_array(strtolower($request->modelType), [strtolower(quoteTypeCode::Health), strtolower(quoteTypeCode::Home)])) {
+                $quoteTypeId = [strtolower(quoteTypeCode::Home) => QuoteTypeId::Home, strtolower(quoteTypeCode::Health) => QuoteTypeId::Health];
+                (new CentralService())->saveAndAssignActivitesToAdvisor($entity, $quoteTypeId[strtolower($request->modelType)]);
             }
 
             QuoteStatusLog::create([

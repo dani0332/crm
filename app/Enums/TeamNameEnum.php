@@ -17,4 +17,7 @@ final class TeamNameEnum extends Enum
     public const MOTOR_CORPORATE_NB_COMMERCIAL = 'Motor Corporate - NB Commercial';
     public const BDM = 'BDM';
     public const MOTOR_COOPERATE_RENEWALS = 'Motor cooperate Renewals';
+    public const RM_RENEWALS = 'RM - Renewals';
+    public const CORPLINE_TEAM = 'Corpline - Team';
+    public const NO_TEAM = 'No Team';
 }
