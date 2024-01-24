@@ -152,7 +152,11 @@ class ReportsController extends Controller
 
     public function renderPipelineReport(Request $request, ReportService $reportService)
     {
-        return inertia('Reports/PipelineReport', []);
+        $data = $reportService->getPipelineReport($request)->simplePaginate(15);
+
+        return inertia('Reports/PipelineReport', [
+            'reportData' => $data,
+        ]);
     }
 
     /**

@@ -306,12 +306,13 @@ onMounted(() => {
             { value: 'corpline', label: 'Corpline' },
           ]"
           class="w-full"
+          @update:modelValue="filters.teams = null"
         />
       </x-field>
       <x-field label="Teams">
         <x-select
-          :modelValue="filters.teams"
-          placeholder="Search by Ecommerce"
+          v-model="filters.teams"
+          placeholder="Select Team"
           :options="filteredTeams"
           class="w-full"
           @update:modelValue="onTeamChange($event)"
@@ -325,8 +326,8 @@ onMounted(() => {
         "
       >
         <ComboBox
-          placeholder="Search by Advisor Name"
           v-model="filters.advisors"
+          placeholder="Search by Advisor Name"
           :options="advisorOptions"
           :select-all="filters.advisors?.length > 0"
           :deselect-all="filters.advisors?.length > 0"
@@ -387,7 +388,7 @@ onMounted(() => {
       <strong>{{ getTotal(item) }}</strong>
     </template>
   </DataTable>
-  <!-- <Pagination
+  <Pagination
     :links="{
       next: props.reportData.next_page_url,
       prev: props.reportData.prev_page_url,
@@ -395,5 +396,5 @@ onMounted(() => {
       from: props.reportData.from,
       to: props.reportData.to,
     }"
-  /> -->
+  />
 </template>
