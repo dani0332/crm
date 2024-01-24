@@ -52,7 +52,7 @@ class QuoteSyncUpdateCommand extends Command
             return;
         }
 
-        $entries = QuoteSync::where('is_synced', false)->take(30)->get();
+        $entries = QuoteSync::where('is_synced', false)->take(100)->get();
 
         if ($entries->isEmpty()) {
             info('----------- No entries found to be processed in quote sync table -----------');
@@ -80,7 +80,6 @@ class QuoteSyncUpdateCommand extends Command
     {
         if ($entry->quote_type_id) {
             info('Entry for quote: '.$entry->quote_uuid.' found in personal quotes table');
-            DB::beginTransaction();
             try {
                 $newValues = json_decode($entry->updated_fields, true);
                 $this->syncQuote($quote, $newValues, 'personal_quotes');
@@ -88,9 +87,7 @@ class QuoteSyncUpdateCommand extends Command
                 $quote->save();
                 $entry->update(['is_synced' => true, 'synced_at' => now()]);
                 info('Entry for quote: '.$entry->quote_uuid.' updated in quote sync table');
-                DB::commit();
             } catch (Exception $e) {
-                DB::rollBack();
                 Log::error('QuoteSyncJob Error: '.$e->getMessage());
             }
         } else {
@@ -113,7 +110,6 @@ class QuoteSyncUpdateCommand extends Command
         $sourceQuote = $this->getQuoteRecord($entry->quote_type_id, $entry->quote_uuid);
 
         if ($sourceQuote) {
-            DB::beginTransaction();
             try {
                 $newValues = json_decode($entry->updated_fields, true);
                 $personalQuote = $this->createPersonalQuoteFromSource($sourceQuote, $entry);
@@ -121,9 +117,7 @@ class QuoteSyncUpdateCommand extends Command
                 $this->createPersonalQuoteDetail($personalQuote, $newValues);
                 $entry->update(['is_synced' => true, 'synced_at' => now()]);
                 info('Entry for quote: '.$personalQuote->id.' saved in personal quotes table');
-                DB::commit();
             } catch (Exception $e) {
-                DB::rollBack();
                 Log::error('QuoteSyncJob Error: '.$e->getMessage().$e->getTraceAsString());
             }
         }
@@ -131,7 +125,33 @@ class QuoteSyncUpdateCommand extends Command
 
     private function getQuoteRecord($quote_type_id, $quote_uuid)
     {
-        // Define quote type models
+        $modelClassName = $this->getQuoteType($quote_type_id);
+        $sourceQuote = $modelClassName::where('uuid', $quote_uuid)->first();
+
+        return $sourceQuote;
+    }
+
+    private function createPersonalQuoteFromSource($sourceQuote, $entry)
+    {
+        $personalQuote = new PersonalQuote();
+        $sourceAttributes = $sourceQuote->getAttributes();
+        $this->syncQuote($personalQuote, $sourceAttributes, 'personal_quotes');
+        $personalQuote->quote_type_id = $entry->quote_type_id;
+        $existingQuote = PersonalQuote::where('uuid', $entry->quote_uuid)->where('quote_type_id', $entry->quote_type_id)->first();
+        if ($existingQuote) {
+            $existingQuote = $personalQuote;
+            $existingQuote->save();
+
+            return $existingQuote;
+        } else {
+            $personalQuote->save();
+
+            return $personalQuote;
+        }
+    }
+
+    public function getQuoteType($quoteTypeId)
+    {
         $quoteTypeModels = [
             1 => CarQuote::class,
             2 => HomeQuote::class,
@@ -147,21 +167,9 @@ class QuoteSyncUpdateCommand extends Command
         ];
 
         // Retrieve the source quote based on quote type and UUID
-        $modelClassName = $quoteTypeModels[$quote_type_id];
-        $sourceQuote = $modelClassName::where('uuid', $quote_uuid)->first();
+        $modelClassName = $quoteTypeModels[$quoteTypeId];
 
-        return $sourceQuote;
-    }
-
-    private function createPersonalQuoteFromSource($sourceQuote, $entry)
-    {
-        $personalQuote = new PersonalQuote();
-        $sourceAttributes = $sourceQuote->getAttributes();
-        $this->syncQuote($personalQuote, $sourceAttributes, 'personal_quotes');
-        $personalQuote->quote_type_id = $entry->quote_type_id;
-        $personalQuote->save();
-
-        return $personalQuote;
+        return $modelClassName;
     }
 
     private function createPersonalQuoteDetail($personalQuote, $newValues)
@@ -198,7 +206,7 @@ class QuoteSyncUpdateCommand extends Command
             if (Schema::hasColumn($quoteTable, $column)) {
                 $columnType = DB::getSchemaBuilder()->getColumnType($quoteTable, $column);
                 $value = $this->formatColumnValue($columnType, $value);
-                if($value !== null || $value !== '' || $value !== 'NULL'){
+                if ($value !== null || $value !== '' || $value !== 'NULL') {
                     $quote->$column = $value;
                 }
             }
