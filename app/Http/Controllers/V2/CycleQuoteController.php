@@ -9,10 +9,12 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
+use App\Events\LeadsCount;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\CycleQuoteRequest;
 use App\Models\Emirate;
 use App\Models\Nationality;
+use App\Models\PersonalQuote;
 use App\Repositories\ActivityRepository;
 use App\Repositories\CustomerMembersRepository;
 use App\Repositories\CycleQuoteRepository;
@@ -72,6 +74,8 @@ class CycleQuoteController extends Controller
         if (! empty($response->errors) || ! empty($response->msg)) {
             vAbort($response->msg);
         }
+
+        event(new LeadsCount(CycleQuoteRepository::getData(true, true)));
 
         return redirect('personal-quotes/cycle/'.$response->quoteUID)->with('message', 'Quote created successfully');
     }
@@ -211,6 +215,8 @@ class CycleQuoteController extends Controller
             'quoteStatusEnum' => $quoteStatusEnums,
             'lostReasons' => $lostReasons,
             'quoteTypeId' => QuoteTypes::CYCLE->id(),
+            'quoteType' => QuoteTypes::CYCLE->value,
+            'totalCount' => CycleQuoteRepository::getData(true, true),
         ]);
     }
 }

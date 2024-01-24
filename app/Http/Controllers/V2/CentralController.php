@@ -5,6 +5,7 @@ namespace App\Http\Controllers\V2;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Exports\AmtQuoteExport;
 use App\Exports\BusinessQuoteExport;
@@ -25,9 +26,11 @@ use App\Http\Requests\LeadAssignRequest;
 use App\Http\Requests\PlanDetailsRequest;
 use App\Http\Requests\QuoteNotesRequest;
 use App\Http\Requests\UpdateLastYearPolicyRequest;
+use App\Models\Activities;
 use App\Models\Customer;
 use App\Models\Entity;
 use App\Models\QuoteNote;
+use App\Models\HealthQuoteRequestDetail;
 use App\Models\QuoteRequestEntityMapping;
 use App\Services\CentralService;
 use App\Traits\GenericQueriesAllLobs;
@@ -59,14 +62,16 @@ class CentralController extends Controller
         }
 
         if ($exportTye != GenericRequestEnum::EXPORT_MAKES_MODELS) {
-            $request->validate([
-                'created_at_start' => 'required',
-                'created_at_end' => 'required',
-            ]);
             if (request()->has('created_at')) {
                 request()->merge(['created_at_start' => request()->get('created_at')]);
                 request()->query->remove('created_at');
             }
+
+            $request->validate([
+                'created_at_start' => 'required',
+                'created_at_end' => 'required',
+            ]);
+
             if (ucfirst($quoteType) == QuoteTypes::CAR->value) {
                 $diffInDays = 31;
             }
@@ -219,41 +224,41 @@ class CentralController extends Controller
     public function updateLeadStatusDragDrop(DragAndDropUpdateLeadStatusRequest $dragAndDropUpdateLeadStatusRequest)
     {
 
-        // When moving to the another status any incomplete activity from current status should be automatically marked as done.
-        $dataFrom = $dragAndDropUpdateLeadStatusRequest->get('data')['form'];
-        $dataTo = $dragAndDropUpdateLeadStatusRequest->get('data')['to'];
-
-        if ($dataTo['quote_status_id'] == QuoteStatusEnum::Lost) {
-            $dataTo['lost_reason'] = $dragAndDropUpdateLeadStatusRequest->get('data')['to']['lost_reason'];
-        }
-
-        $modelObject = $this->getModelObject(QuoteTypes::getName($dataFrom['quoteTypeId'])->value);
-        $repository = $modelObject::where('id', $dataFrom['id'])->firstOrFail();
-
         try {
-            DB::beginTransaction();
 
-            // $repository->activities()->where('status', 0)->update(['status' => 1]);
-            // $repository->update(['quote_status_id' => $dataTo['quote_status_id']]);
+            DB::transaction(function () use ($dragAndDropUpdateLeadStatusRequest) {
+                $dataFrom = $dragAndDropUpdateLeadStatusRequest->get('data')['form'];
+                $dataTo = $dragAndDropUpdateLeadStatusRequest->get('data')['to'];
 
-            // if ($dataTo['quote_status_id'] == QuoteStatusEnum::Lost) {
-            //     $repository->lostReason()->update([
-            //         'lost_reason_id' => $dataTo['lost_reason'],
-            //     ]);
-            // }
+                $modelObject = $this->getModelObject(QuoteTypes::getName($dataFrom['quoteTypeId'])->value);
+                $repository = $modelObject::where('id', $dataFrom['id'])->firstOrFail();
 
-            $repository->refresh();
+                // Incomplete Activities from current status marked as Done.
+                Activities::where([
+                    'quote_type_id' => $dataFrom['quoteTypeId'],
+                    'quote_request_id' => $dataFrom['id'],
+                    'status' => 0 // Incomplete Activities
+                ])->update(['status' => 1]);
 
-            // (new CentralService())->saveAndAssignActivitesToAdvisor($repository, $dataFrom['quoteTypeId']);
+                if (QuoteTypeId::Health == $dataFrom['quoteTypeId'] && $dataTo['quote_status_id'] == QuoteStatusEnum::Lost) {
+                    HealthQuoteRequestDetail::where('health_quote_request_id', $dataFrom['id'])->update([
+                        'lost_reason_id' => $dragAndDropUpdateLeadStatusRequest->get('data')['to']['lost_reason']
+                    ]);
+                }
 
-            DB::commit();
+                $repository->update([
+                    'quote_status_id' => $dataTo['quote_status_id'],
+                    'quote_status_date' => now()
+                ]);
+
+            });
+
+            return response()->json(['message' => 'Lead status has been updated']);
 
         } catch (\Exception $e) {
-            DB::rollBack();
+            info('Update Lead Status Failed. Error: '.$e->getMessage());
             return response()->json(['message' => 'Something went wrong. Please try again later.'], 500);
         }
-
-        return response()->json(['message' => 'Lead status has been updated']);
 
     }
 }

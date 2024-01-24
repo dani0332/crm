@@ -1,18 +1,22 @@
 <script setup>
+import Pusher from 'pusher-js';
 const props = defineProps({
   quoteStatusEnum: Object,
   quoteTypeId: String,
   lostReasons: Object,
+  quoteType: String,
+  totalCount: {
+    type: Number,
+    default: 0,
+  },
 });
 
 const page = usePage();
-const dateFormat = date => {
-  return useDateFormat(date, 'DD-MM-YYYY HH:mm:ss').value;
-};
 
 provide('quoteStatusEnum', props.quoteStatusEnum);
 provide('quoteTypeId', props.quoteTypeId);
 provide('lostReasons', props.lostReasons);
+provide('quoteType', props.quoteType);
 
 const quotes = reactive({
   data: page.props.quotes || [],
@@ -20,6 +24,33 @@ const quotes = reactive({
   searching: false,
   pages: {},
   queries: {},
+});
+
+const options = {
+  cluster: 'ap1',
+  forceTLS: false,
+};
+
+const previousDate = getPreviousDate;
+const leadsCount = ref(props.totalCount);
+const pusher = new Pusher(page.props.pusherKey, options);
+const channel = pusher.subscribe(
+  'public.' + page.props.appEnv + '.total-leads-count',
+);
+
+const listen = () => {
+  channel.bind('leads.count', function (e) {
+    leadsCount.value = e.totalLeadsCount;
+  });
+};
+
+onMounted(() => {
+  listen();
+});
+
+onUnmounted(() => {
+  channel.unbind('leads.count');
+  channel.unsubscribe('public.' + page.props.appEnv + '.total-leads-count');
 });
 </script>
 
@@ -29,9 +60,14 @@ const quotes = reactive({
     <div class="flex justify-between items-center">
       <div class="flex items-center gap-5">
         <h2 class="text-xl font-semibold">Health List</h2>
-        <span class="border-2 rounded px-3 bg-gray-200 text-sm font-medium">{{
-          0
-        }}</span>
+        <x-tooltip>
+          <span class="border-2 rounded px-3 bg-gray-200 text-sm font-medium"
+            >{{ leadsCount }}
+          </span>
+          <template #tooltip>
+            <span>Total Leads received since {{ previousDate() }}</span>
+          </template>
+        </x-tooltip>
       </div>
 
       <div class="space-x-2">
@@ -56,6 +92,7 @@ const quotes = reactive({
         :quote="quote"
         :quotes="quotes"
         :quoteTypeId="quoteTypeId"
+        :quoteType="quoteType"
         :lostReasons="props.lostReasons"
         :quoteStatusEnum="props.quoteStatusEnum"
       />
