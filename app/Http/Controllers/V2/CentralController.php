@@ -219,15 +219,17 @@ class CentralController extends Controller
         $quote = $this->getQuoteObject($quoteNotesRequest->quoteType, $quoteNotesRequest->quoteRequestId);
         $quote->notes()->save($notes);
 
+        $notes = $quote->notes()->with('createdBy:id,name', 'quoteStatus:id,text')->where('id', $notes->id)->firstOrFail();
+
         return response()->json(['response' => $notes]);
     }
 
     public function updateQuoteNotes(QuoteNotesRequest $quoteNotesRequest)
     {
         $quote = $this->getQuoteObject($quoteNotesRequest->quoteType, $quoteNotesRequest->quoteRequestId);
-        $quote->notes()->where('id', $quoteNotesRequest->id)->update(['note' => $quoteNotesRequest->notes]);
+        $quote->notes()->where('id', $quoteNotesRequest->id)->update(['note' => $quoteNotesRequest->notes, 'updated_by' => auth()->id()]);
 
-        $notes = $quote->notes()->where('id', $quoteNotesRequest->id)->firstOrFail();
+        $notes = $quote->notes()->with('createdBy:id,name', 'quoteStatus:id,text')->where('id', $quoteNotesRequest->id)->firstOrFail();
 
         return response()->json(['response' => $notes]);
     }
