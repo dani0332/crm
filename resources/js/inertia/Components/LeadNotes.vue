@@ -35,7 +35,10 @@ const tableHeader = reactive([
   { text: 'ACTIONS', value: 'action' },
 ]);
 
-const loader = ref(false);
+const loader = ref({
+  button: false,
+  tableButton: false,
+});
 const notesForm = reactive({
   notes: null,
   quote_request_id: props.quote?.id,
@@ -50,16 +53,23 @@ const onNoteSubmit = () => {
     notes: notesForm.notes,
     quoteStatusId: notesForm.quote_status_id,
   };
-  loader.value = true;
+  loader.value.button = true;
   if (isEdit.value) {
     notesData['id'] = notesForm.id;
     axios
       .put('/update-quote-notes', notesData)
       .then(response => {
-        console.log(response);
-        let index = notes.value.findIndex(response.data.response.id);
+        // console.log(response);
+        // let index = notes.value.findIndex(response.data.response.id);
+        // if (index != -1) {
+        //   notes.value.splice(index, 1, response.data.response);
+        // }
+
+        let index = notes.value.data.findIndex(
+          note => note.id == response.data.response.id,
+        );
         if (index != -1) {
-          notes.value.splice(index, 1, response.data.response);
+          notes.value.data.splice(index, 1, response.data.response);
         }
         notification.success({
           title: 'Notes has been Updated',
@@ -73,15 +83,14 @@ const onNoteSubmit = () => {
         });
       })
       .finally(() => {
-        loader.value = false;
+        loader.value.button = false;
         showAddNotes.value = false;
       });
   } else {
     axios
       .post('/save-quote-notes', notesData)
       .then(response => {
-        console.log(response);
-        notes.value.push(response);
+        notes.value.data.push(response.data.response);
         notification.success({
           title: 'Notes has been saved',
           position: 'top',
@@ -94,7 +103,7 @@ const onNoteSubmit = () => {
         });
       })
       .finally(() => {
-        loader.value = false;
+        loader.value.button = false;
         showAddNotes.value = false;
       });
   }
@@ -117,13 +126,13 @@ const showAddNotesModal = () => {
 };
 
 const onDeleteNote = item => {
-  loader.value = true;
+  loader.value.tableButton = true;
   axios
     .delete(`/delete-quote-notes/${item.id}`)
     .then(response => {
-      let index = notes.value.findIndex(item.id);
+      let index = notes.value.data.findIndex(note => note.id == item.id);
       if (index != -1) {
-        notes.value.splice(index, 1);
+        notes.value.data.splice(index, 1);
       }
       notification.success({
         title: 'Notes has been deleted',
@@ -137,7 +146,7 @@ const onDeleteNote = item => {
       });
     })
     .finally(() => {
-      loader.value = false;
+      loader.value.tableButton = false;
     });
 };
 
@@ -252,7 +261,7 @@ const uploadFile = (doc, filesWithInfo) => {
               size="xs"
               color="red"
               outlined
-              :loading="loader"
+              :loading="loader.tableButton"
               @click.prevent="onDeleteNote(item)"
             >
               Delete
@@ -327,7 +336,7 @@ const uploadFile = (doc, filesWithInfo) => {
           @click="onNoteSubmit"
           size="sm"
           color="emerald"
-          :loading="loader"
+          :loading="loader.button"
         >
           {{ isEdit ? 'Update' : 'Save' }}
         </x-button>
