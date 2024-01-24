@@ -1444,7 +1444,7 @@ const handleChildUpdate = planId => {
             label="Assign Subteam"
             :options="subTeamOptions"
             placeholder="Select Subteam"
-            class="w-auto flex-1 mb-2"
+            class="w-auto flex-1 !mb-2"
           />
           <div>
             <x-button
@@ -1467,7 +1467,7 @@ const handleChildUpdate = planId => {
             label="Assign Lead"
             :options="advisorOptions"
             placeholder="Select Lead"
-            class="w-auto flex-1 mt-1"
+            class="w-auto flex-1 !mb-2"
             :single="true"
           />
           <div>

@@ -51,8 +51,8 @@ class LeadsCountService
 
             // Need to verify the stale_at where check it should be fetch only 90 days old leads.
             $quoteCount = checkPersonalQuotes(ucwords($allowedQuoteType)) ? 
-                $modelType::whereNotNull('stale_at')->where('quote_type_id', $quoteTypeEnum->id())->where('stale_at', '<=', date(config('constants.DATE_FORMAT_ONLY'), strtotime('-90 days')))->count() : 
-                $modelType::whereNotNull('stale_at')->where('stale_at', '<=', date(config('constants.DATE_FORMAT_ONLY'), strtotime('-90 days')))->count();
+                $modelType::whereNotNull('stale_at')->where('quote_type_id', $quoteTypeEnum->id())->where('stale_at', '>=', date(config('constants.DATE_FORMAT_ONLY'), strtotime('-90 days')))->count() : 
+                $modelType::whereNotNull('stale_at')->where('stale_at', '>=', date(config('constants.DATE_FORMAT_ONLY'), strtotime('-90 days')))->count();
 
             $response['quotes_count'][$allowedQuoteType]['count'] = $quoteCount;
             $response['quotes_count'][$allowedQuoteType]['quote_route'] = $cardViewRoute[strtoupper($allowedQuoteType)];

@@ -9,7 +9,7 @@ defineProps({
     advisors: Array,
     products: Array
 });
-
+const { isRequired } = useRules();
 const quoteType = 'car';
 
 const advisorOptions = computed(() => {
@@ -196,6 +196,7 @@ const permissionsEnum = page.props.permissionsEnum;
           " placeholder="Select Product"
                     required
                     class="w-full"
+                    :rules="[isRequired]"
                 />
                 <x-input
                     v-model="filters.code"
