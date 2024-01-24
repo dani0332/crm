@@ -887,7 +887,7 @@ class CRUDController extends Controller
 
             $healthPlanTypes = HealthPlanType::where('is_active', 1)->select('id', 'text')->get();
 
-            $inquiryCounts = $this->crudService->getInquiryLogs($this->genericModel->modelType, $id);
+            $clientInquiryLogs = $this->crudService->getInquiryLogs($this->genericModel->modelType, $id);
 
             return inertia('HealthQuote/Show', [
                 'paymentLink' => $paymentLink,
@@ -942,6 +942,7 @@ class CRUDController extends Controller
                 'industryType' => $industryType,
                 'UBOsDetails' => $uboDetails,
                 'UBORelations' => $uboRelations,
+                'clientInquiryLogs' => $clientInquiryLogs,
             ]);
         } else {
             return view('shared.show', compact([
