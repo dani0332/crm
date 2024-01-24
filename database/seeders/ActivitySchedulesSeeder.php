@@ -1022,6 +1022,7 @@ class ActivitySchedulesSeeder extends Seeder
         }
 
         // Inserting all the schedules
-        ActivitySchedule::insert($finalSchedules);
+        // Need to check if the schedule already exists
+        // ActivitySchedule::insert($finalSchedules);
     }
 }
