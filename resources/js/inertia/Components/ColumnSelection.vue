@@ -46,6 +46,14 @@ onMounted(() => {
     );
   }
 });
+
+watch(
+  () => props.storageKey,
+  () => {
+    headers.value = storedState.value.headers;
+  },
+  { immediate: true },
+);
 </script>
 <template>
   <div class="select-none">
@@ -84,6 +92,7 @@ onMounted(() => {
                     <x-checkbox
                       v-model="column.is_active"
                       size="sm"
+                      class="!mb-0"
                       @update:model-value="onChange"
                     >
                       <span class="text-sm uppercase hover:text-primary-800">
@@ -111,6 +120,7 @@ onMounted(() => {
                     <x-checkbox
                       v-model="column.is_active"
                       size="sm"
+                      class="!mb-0"
                       @update:model-value="onChange"
                     >
                       <span class="text-sm uppercase hover:text-primary-800">

@@ -19,21 +19,15 @@ const selectedOptions = ref({
   status: [],
 });
 
-function getAdjustedDate(date, { days = 0, months = 0, setDate = null }) {
-  const newDate = new Date(date);
-  if (days) newDate.setDate(date.getDate() - days);
-  if (months) newDate.setMonth(date.getMonth() + months);
-  if (setDate !== null) newDate.setDate(setDate);
-  return newDate;
-}
-
-const today = new Date();
-const last7Days = getAdjustedDate(today, { days: 7 });
-const last30Days = getAdjustedDate(today, { days: 30 });
-const lastMonthStart = getAdjustedDate(today, { months: -1, setDate: 1 });
-const lastMonthEnd = getAdjustedDate(today, { setDate: 0 });
-const thisMonthStart = getAdjustedDate(today, { setDate: 1 });
-const thisMonthEnd = getAdjustedDate(today, { months: 1, setDate: 0 });
+const [
+  today,
+  last7Days,
+  last30Days,
+  lastMonthStart,
+  lastMonthEnd,
+  thisMonthStart,
+  thisMonthEnd,
+] = useDateRange();
 
 const dateOptions = ref([
   { text: 'Today', value: 1 },
