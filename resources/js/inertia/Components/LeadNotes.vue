@@ -127,6 +127,27 @@ const showAddNotesModal = () => {
   isEdit.value = false;
 };
 
+const onDeleteNote = item => {
+  axios
+    .delete('/delete-quote-notes', item.id)
+    .then(response => {
+      let index = notes.value.findIndex(item.id);
+      if (index != -1) {
+        notes.value.splice(index, 1);
+      }
+      notification.success({
+        title: 'Notes has been deleted',
+        position: 'top',
+      });
+    })
+    .catch(err => {
+      notification.error({
+        title: 'Something went wrong',
+        position: 'top',
+      });
+    });
+};
+
 const uploadFile = (doc, filesWithInfo) => {
   let url = `/quotes/${props.modelType}/documents/store`;
   const { files, rejectReason } = filesWithInfo;
@@ -233,6 +254,14 @@ const uploadFile = (doc, filesWithInfo) => {
               @click.prevent="onEditNote(item)"
             >
               Edit
+            </x-button>
+            <x-button
+              size="xs"
+              color="danger"
+              outlined
+              @click.prevent="onDeleteNote(item)"
+            >
+              Delete
             </x-button>
           </div>
         </template>
