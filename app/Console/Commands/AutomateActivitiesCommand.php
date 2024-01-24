@@ -30,14 +30,12 @@ class AutomateActivitiesCommand extends Command
     public function handle()
     {
 
+        return true;
         // When create activities automatic we have 2 cases
         // Case 1 : Previously created activity marked as done, and no change in Status
         // Case 2 : Previously created activity not done
 
         // First fetch records which have activities 
-
-
-
         // If any already created activities done and quote_status_modified date is greater than due_date then assign new activities to the same lead.
 
         $eligibleQuoteTypes = [
@@ -60,10 +58,7 @@ class AutomateActivitiesCommand extends Command
             // ->where('quote_status_date', '<', 'due_date')
             ->limit(2)->get();
             dd($getRecords->toArray());
-            
-            
-            
-            
+
             // whereNotIn('quote_status_id', $skipStatus)
             //     ->where('updated_at', '<', date(config('constants.DATE_FORMAT_ONLY'), strtotime('-30 days')))
             //     ->when($eligibleQuoteType == BusinessQuote::class, function ($businessQuote) {
