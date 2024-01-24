@@ -742,4 +742,12 @@ class CRUDService extends BaseService
             }
         }
     }
+
+    public function getInquiryLogs($modelType, $id)
+    {
+        $lowerCaseModelType = strtolower($modelType);
+
+        return $this->{in_array($lowerCaseModelType, $this->quoteTypes) ? $lowerCaseModelType.'QuoteService' : $lowerCaseModelType.'Service'}
+            ->getInquiryLogs($id);
+    }
 }
