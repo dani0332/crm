@@ -117,8 +117,6 @@
                         orderable: false,
                         searchable: false,
                         render: function(data, type, row) {
-                            console.log('row data------',row);
-                            console.log('data------',data);
 
                             if (data == 1) {
                                 var html = `
