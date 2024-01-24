@@ -317,7 +317,7 @@ const onLogout = () => {
         <div class="flex-1 w-full p-4 mx-auto md:px-6 lg:px-8 max-w-full">
           <div
             v-if="bannerInfo.total_count > 0"
-            class="w-full h-10 rounded bg-error-300 mb-3 flex items-center justify-center text-sm"
+            class="w-full h-10 rounded bg-error-50 border border-error-500 mb-3 flex items-center justify-center text-sm"
           >
             <span class="text-red-600"
               >You have
