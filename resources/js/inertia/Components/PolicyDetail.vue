@@ -91,6 +91,13 @@ const onUpdatePolicyDetails = () => {
     onSuccess: () => {
       policyDetailsState.isEditing = false;
     },
+    onFinish: () => {
+      policyDetailsState.isEditing = false;
+      router.visit(route(route().current(), props?.record.uuid), {
+        method: 'get',
+        preserveScroll: true,
+      });
+    },
   });
 };
 </script>
