@@ -37,6 +37,7 @@ use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Laravel\Prompts\Note;
 use Maatwebsite\Excel\Facades\Excel;
 
 class CentralController extends Controller
@@ -229,6 +230,14 @@ class CentralController extends Controller
         $notes = $quote->notes()->where('id', $quoteNotesRequest->id)->firstOrFail();
 
         return response()->json(['response' => $notes]);
+    }
+
+    public function deleteQuoteNotes($id)
+    {
+        $quoteNote = QuoteNote::where('id', $id)->firstOrFail();
+        $quoteNote->delete();
+
+        return response()->json(['response' => 'Note has been deleted']);
     }
     
     public function updateLeadStatusDragDrop(DragAndDropUpdateLeadStatusRequest $dragAndDropUpdateLeadStatusRequest)

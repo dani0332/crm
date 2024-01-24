@@ -116,7 +116,7 @@ const showAddNotesModal = () => {
 
 const onDeleteNote = item => {
   axios
-    .delete('/delete-quote-notes', item.id)
+    .delete(`/delete-quote-notes/${item.id}`)
     .then(response => {
       let index = notes.value.findIndex(item.id);
       if (index != -1) {
