@@ -2,11 +2,13 @@
 
 namespace App\Services;
 
-use App\Models\GenericModel;
 use App\Models\User;
 use Illuminate\Support\Arr;
-use Illuminate\Support\Facades\Auth;
+use App\Models\GenericModel;
+use App\Enums\QuoteStatusEnum;
+use App\Enums\PaymentStatusEnum;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 
 class BaseService
 {
@@ -284,5 +286,19 @@ class BaseService
         }
 
         return $result;
+    }
+
+
+    public function updatePaymentStatus($quote)
+    {
+        if (
+            $quote->quote_status_id == QuoteStatusEnum::TransactionApproved &&
+            ($quote->payment_status_id == PaymentStatusEnum::DRAFT || $quote->payment_status_id == null)
+        ) {
+
+            $quote->payment_status_id = PaymentStatusEnum::CAPTURED;
+            $quote->save();
+        }
+
     }
 }

@@ -348,10 +348,16 @@ class CRUDService extends BaseService
 
             if (strtolower($request->modelType) == strtolower(quoteTypeCode::Health) && $request->leadStatus == QuoteStatusEnum::TransactionApproved) {
                 $this->healthQuoteService->assignRenewalBatch($entity);
-                $this->healthQuoteService->updatePaymentStatus($entity);
+                $this->updatePaymentStatus($entity);
             }
 
             // ========= END =========
+
+            if (strtolower($request->modelType) == strtolower(quoteTypeCode::Car)
+            && $request->leadStatus == QuoteStatusEnum::TransactionApproved) {
+                $this->updatePaymentStatus($entity);
+            }
+
 
             QuoteStatusLog::create([
                 'quote_type_id' => QuoteTypeId::Car,

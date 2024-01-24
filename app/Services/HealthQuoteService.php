@@ -1633,18 +1633,4 @@ class HealthQuoteService extends BaseService
             $quote->save();
         }
     }
-
-    public function updatePaymentStatus(HealthQuote $quote)
-    {
-
-        if (
-            $quote->quote_status_id == QuoteStatusEnum::TransactionApproved &&
-            ($quote->payment_status_id == PaymentStatusEnum::DRAFT || $quote->payment_status_id == null)
-        ) {
-
-            $quote->payment_status_id = PaymentStatusEnum::CAPTURED;
-            $quote->save();
-        }
-
-    }
 }
