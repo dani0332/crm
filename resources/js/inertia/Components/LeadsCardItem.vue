@@ -180,7 +180,7 @@ const getUrl = (url, quoteTypeId) => useGetShowPageRoute(url, quoteTypeId);
         </span>
       </div>
 
-      <div class="flex items-center gap-2">
+      <div class="flex items-center gap-2" v-if="quoteTypeId == 3">
         <x-tooltip align="left">
           <x-icon icon="person" size="sm" class="text-primary-400" />
           <template #tooltip>
