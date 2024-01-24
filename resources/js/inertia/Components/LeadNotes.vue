@@ -8,10 +8,13 @@ const props = defineProps({
   documentType: Object,
 });
 
+const notification = useNotifications('toast');
+
 const showModal = ref(false);
 const showAddNotes = ref(false);
 const isEdit = ref(false);
 const isUploading = ref(false);
+const notes = ref(props.notes);
 
 const docForm = useForm({
   quote_id: props.quote?.id || null,
@@ -53,6 +56,8 @@ const onNoteSubmit = () => {
       .put('/save-quote-notes', notesData)
       .then(response => {
         if (response.status == 200) {
+          console.log(response);
+          notes.value.push(response.data.data);
           notification.success({
             title: 'Notes has been Updated',
             position: 'top',
