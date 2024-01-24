@@ -8,10 +8,13 @@ const props = defineProps({
   documentType: Object,
 });
 
+const notification = useNotifications('toast');
+
 const showModal = ref(false);
 const showAddNotes = ref(false);
 const isEdit = ref(false);
 const isUploading = ref(false);
+const notes = ref(props.notes);
 
 const docForm = useForm({
   quote_id: props.quote?.id || null,
@@ -22,7 +25,7 @@ const docForm = useForm({
   file: null,
 });
 
-const dateFormat = date => useDateFormat(date, 'DD-MM-YYYY h:mm:ss a');
+const dateFormat = date => useDateFormat(date, 'DD-MMM-YYYY h:mm:ss a').value;
 
 const tableHeader = reactive([
   { text: 'MODIFIED BY', value: 'created_by' },
@@ -53,8 +56,10 @@ const onNoteSubmit = () => {
       .put('/update-quote-notes', notesData)
       .then(response => {
         if (response.status == 200) {
+          console.log(response);
+          notes.value.push(response.data.data);
           notification.success({
-            title: 'Notes has been updated.',
+            title: 'Notes has been Updated',
             position: 'top',
           });
         } else {
@@ -76,7 +81,7 @@ const onNoteSubmit = () => {
       .then(response => {
         if (response.status == 200) {
           notification.success({
-            title: 'Notes has been saved.',
+            title: 'Notes has been saved',
             position: 'top',
           });
         } else {
@@ -104,6 +109,13 @@ const onEditNote = data => {
   isEdit.value = true;
 };
 
+const showAddNotesModal = () => {
+  notesForm.notes = null;
+  notesForm.id = null;
+  showAddNotes.value = true;
+  isEdit.value = false;
+};
+
 const uploadFile = (doc, filesWithInfo) => {
   let url = `/quotes/${props.modelType}/documents/store`;
   const { files, rejectReason } = filesWithInfo;
@@ -127,6 +139,7 @@ const uploadFile = (doc, filesWithInfo) => {
     .post(url, {
       preserveScroll: true,
       preserveState: true,
+
       onError: errors => {
         docForm.setError(errors.error);
         notification.error({
@@ -161,7 +174,7 @@ const uploadFile = (doc, filesWithInfo) => {
     </template>
     <div>
       <div class="flex justify-end">
-        <x-button size="sm" color="orange" @click="showAddNotes = true">
+        <x-button size="sm" color="orange" @click="showAddNotesModal()">
           Add Notes
         </x-button>
       </div>
