@@ -1372,7 +1372,7 @@ const handleChildUpdate = planId => {
       </div>
       <div class="flex gap-2">
         <LeadNotes
-          :documentTypes="documentTypes"
+          :documentType="documentTypes"
           :notes="quoteNotes"
           :modelType="modelType"
           :quote="quote"

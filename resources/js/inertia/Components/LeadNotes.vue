@@ -5,7 +5,7 @@ const props = defineProps({
   notes: Object,
   modelType: String,
   quote: Object,
-  documentTypes: Object,
+  documentType: Object,
 });
 
 const showModal = ref(false);
@@ -250,10 +250,10 @@ const uploadFile = (doc, filesWithInfo) => {
       </p>
       <div class="mt-2">
         <Dropzone
-          :id="documentType.id"
-          :accept="documentType.accepted_files"
-          :max-files="documentType.max_files"
-          :max-size="documentType.max_size"
+          :id="documentType?.id"
+          :accept="documentType?.accepted_files"
+          :max-files="documentType?.max_files"
+          :max-size="documentType?.max_size"
           :loading="docForm.processing"
           @change="uploadFile(documentType, $event)"
         />

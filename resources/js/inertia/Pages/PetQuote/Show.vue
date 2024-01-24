@@ -263,7 +263,7 @@ const linkEntity = () => {
       </div>
       <div class="flex gap-2">
         <LeadNotes
-          :documentTypes="documentTypes"
+          :documentType="documentTypes"
           :notes="quoteNotes"
           :modelType="quoteType"
           :quote="quote"
