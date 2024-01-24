@@ -52,30 +52,23 @@ const onNoteSubmit = () => {
   };
   loader.value = true;
   if (isEdit.value) {
-    // Note: Endpoint for edit notes
     notesData['id'] = notesForm.id;
     axios
       .put('/update-quote-notes', notesData)
       .then(response => {
-        if (response.status == 200) {
-          let index = notes.value.findIndex(response.data.id);
-          if (index != -1) {
-            notes.value.splice(index, 1, response.data);
-          }
-          notification.success({
-            title: 'Notes has been Updated',
-            position: 'top',
-          });
-        } else {
-          notification.error({
-            title: 'Notes has not been updated.',
-            position: 'top',
-          });
+        console.log(response);
+        let index = notes.value.findIndex(response.data.response.id);
+        if (index != -1) {
+          notes.value.splice(index, 1, response.data.response);
         }
+        notification.success({
+          title: 'Notes has been Updated',
+          position: 'top',
+        });
       })
       .catch(err => {
         notification.error({
-          title: 'Something went wrong',
+          title: 'Notes has not been updated',
           position: 'top',
         });
       })
@@ -86,22 +79,16 @@ const onNoteSubmit = () => {
     axios
       .post('/save-quote-notes', notesData)
       .then(response => {
-        if (response.status == 200) {
-          notes.value.push(response.data.data);
-          notification.success({
-            title: 'Notes has been saved',
-            position: 'top',
-          });
-        } else {
-          notification.error({
-            title: 'Notes has not been saved. ',
-            position: 'top',
-          });
-        }
+        console.log(response);
+        notes.value.push(response);
+        notification.success({
+          title: 'Notes has been saved',
+          position: 'top',
+        });
       })
       .catch(err => {
         notification.error({
-          title: 'Something went wrong',
+          title: 'Notes has not been saved',
           position: 'top',
         });
       })

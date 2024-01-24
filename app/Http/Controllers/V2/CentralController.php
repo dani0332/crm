@@ -218,23 +218,22 @@ class CentralController extends Controller
         $quote = $this->getQuoteObject($quoteNotesRequest->quoteType, $quoteNotesRequest->quoteRequestId);
         $quote->notes()->save($notes);
 
-        return redirect()->back()->with('success', 'Note has been added successfully.');
+        return response()->json(['response' => $notes]);
     }
 
     public function updateQuoteNotes(QuoteNotesRequest $quoteNotesRequest)
     {
-
         $quote = $this->getQuoteObject($quoteNotesRequest->quoteType, $quoteNotesRequest->quoteRequestId);
-        $quote->notes()->update(['note' => $quoteNotesRequest->notes]);
+        $quote->notes()->where('id', $quoteNotesRequest->id)->update(['note' => $quoteNotesRequest->notes]);
 
-        return redirect()->back()->with('success', 'Note has been added successfully.');
+        $notes = $quote->notes()->where('id', $quoteNotesRequest->id)->firstOrFail();
+
+        return response()->json(['response' => $notes]);
     }
     
     public function updateLeadStatusDragDrop(DragAndDropUpdateLeadStatusRequest $dragAndDropUpdateLeadStatusRequest)
     {
-
         try {
-
             DB::transaction(function () use ($dragAndDropUpdateLeadStatusRequest) {
                 $dataFrom = $dragAndDropUpdateLeadStatusRequest->get('data')['form'];
                 $dataTo = $dragAndDropUpdateLeadStatusRequest->get('data')['to'];
