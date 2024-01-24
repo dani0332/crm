@@ -11,9 +11,11 @@ const showModal = ref(false);
 const showAddNotes = ref(false);
 const isEdit = ref(false);
 
+const dateFormat = date => useDateFormat(date, 'DD-MM-YYYY h:mm:ss a');
+
 const tableHeader = reactive([
   { text: 'MODIFIED BY', value: 'created_by' },
-  { text: 'MODIFIED DATE', value: 'created_at' },
+  { text: 'MODIFIED DATE', value: 'updated_at' },
   { text: 'NOTES', value: 'note' },
   { text: 'LEAD STATUS', value: 'quote_status' },
   { text: 'ACTIONS', value: 'action' },
@@ -106,11 +108,10 @@ const onEditNote = data => {
       </template>
     </x-tooltip>
   </div>
-  <AppModal class="min-w-[700px]" v-model="showModal" show-close show-header>
+  <AppModal class="md:min-w-[900px]" v-model="showModal" show-close show-header>
     <template #header>
       <p class="font-bold m-0">Notes</p>
     </template>
-    <template #content> </template>
     <div>
       <div class="flex justify-end">
         <x-button size="sm" color="orange" @click="showAddNotes = true">
@@ -129,6 +130,9 @@ const onEditNote = data => {
       >
         <template #item-created_by="{ created_by }">
           {{ created_by.name }}
+        </template>
+        <template #item-updated_at="{ updated_at }">
+          {{ dateFormat(updated_at) }}
         </template>
 
         <template #item-quote_status="{ quote_status }">
@@ -175,7 +179,12 @@ const onEditNote = data => {
   </AppModal>
 
   <!-- Modal for add/Update notes related to Leads -->
-  <AppModal class="min-w-[30%]" v-model="showAddNotes" show-header show-close>
+  <AppModal
+    class="min-w-[30%] overflow-hidden"
+    v-model="showAddNotes"
+    show-header
+    show-close
+  >
     <template #header>
       <p class="font-bold m-0">{{ isEdit ? 'Update' : 'Add' }} Notes</p>
     </template>
@@ -194,7 +203,7 @@ const onEditNote = data => {
         {{ notesLength }}/1000
       </p>
       <div>
-        <x-tooltip>
+        <x-tooltip align="top">
           <x-button size="sm" color="primary" icon="upload">
             Upload Documents
           </x-button>
