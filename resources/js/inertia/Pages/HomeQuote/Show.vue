@@ -35,6 +35,7 @@ const props = defineProps({
   canAddBatchNumber: Boolean,
   quoteDocuments: Object,
   documentTypes: Object,
+  noteDocumentType: Object,
   storageUrl: String,
   quoteNotes: Object,
 });
@@ -46,6 +47,7 @@ const hasAnyRole = roles => useHasAnyRole(roles);
 const rolesEnum = page.props.rolesEnum;
 
 const countDays = daysSinceStale(props.quoteRequest?.stale_at);
+const compareDueDate = useCompareDueDate;
 
 const modals = reactive({
   duplicate: false,
@@ -162,6 +164,7 @@ const onLeadStatus = () => {
 //activities
 const activityTable = [
   { text: 'Done', value: 'status', width: 60, align: 'center' },
+  { text: 'Ref-ID', value: 'code' },
   { text: 'Title', value: 'title' },
   { text: 'Client Name', value: 'client_name' },
   { text: 'Followup Date', value: 'due_date' },
@@ -472,7 +475,12 @@ const linkEntity = () => {
         </p>
       </div>
       <div class="flex gap-2">
-        <LeadNotes :notes="quoteNotes" :modelType="modelType" :quote="quote"/>
+        <LeadNotes
+          :documentType="noteDocumentType"
+          :notes="quoteNotes"
+          :modelType="modelType"
+          :quote="quote"
+        />
         <x-button size="sm" color="#ff5e00" @click.prevent="openDuplicate">
           Duplicate Lead
         </x-button>
@@ -1176,6 +1184,26 @@ const linkEntity = () => {
           :rows-per-page="15"
           :hide-footer="activities.length < 15"
         >
+          <template #item-code="{ code }">
+            {{ code }}
+          </template>
+          <template #item-due_date="{ due_date }">
+            <template v-if="compareDueDate(due_date)">
+              <x-tooltip>
+                <p
+                  :class="
+                    compareDueDate(due_date) ? 'bg-error-300 rounded p-1' : ''
+                  "
+                >
+                  {{ due_date }}
+                </p>
+                <template #tooltip>
+                  <span>Pending overdue Task, please complete immediately</span>
+                </template>
+              </x-tooltip>
+            </template>
+            <span v-else>{{ due_date }}</span>
+          </template>
           <template #item-status="{ status, id }">
             <x-checkbox
               color="emerald"

@@ -19,7 +19,7 @@ class PersonalQuoteController extends Controller
     {
         PersonalQuoteRepository::updateStatus($quoteType, $quoteId, $request->validated());
 
-        return back()->with('message', 'Status updated successfully');
+        return back()->with('message', 'Status updated successfully & Activity has been created');
     }
 
     public function uploadDocument($quoteId, QuotesDocumentRequest $request)

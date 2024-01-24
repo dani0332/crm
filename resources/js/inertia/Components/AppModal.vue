@@ -37,7 +37,7 @@ const closeModal = () => emit('update:modelValue', !props.backdropClose);
     ></div>
     <div
       v-bind="$attrs"
-      class="relative flex flex-col z-10 bg-white dark:bg-gray-900 rounded-md shadow-lg transform transition-all overflow-hidden max-h-[80%] w-full w-max ease-out duration-200 opacity-100 translate-y-0 sm:scale-100"
+      class="relative flex flex-col z-10 bg-white dark:bg-gray-900 rounded-md shadow-lg transform transition-all overflow-hidden max-h-[80%] w-max ease-out duration-200 opacity-100 translate-y-0 sm:scale-100"
     >
       <header
         class="text-lg font-semibold px-6 py-4 border-b"

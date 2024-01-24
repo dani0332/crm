@@ -9,6 +9,7 @@ use App\Enums\quoteBusinessTypeCode;
 use App\Enums\quoteTypeCode;
 use App\Enums\RolesEnum;
 use App\Enums\TravelQuoteEnum;
+use App\Services\LeadsCountService;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 use Spatie\Navigation\Navigation;
@@ -69,6 +70,7 @@ class HandleInertiaRequests extends Middleware
             'appEnv' => config('constants.APP_ENV'),
             'pusherKey' => config('constants.VITE_PUSHER_APP_KEY'),
             'epLink' => config('constants.AFIA_WEBSITE_DOMAIN'),
+            'totalQuotesCount' => LeadsCountService::getLeadCount(),
         ];
     }
 

@@ -51,6 +51,7 @@ const props = defineProps({
   paymentLink: String,
   quoteType: String,
   quoteNotes: Object,
+  noteDocumentType: Object,
 });
 
 const page = usePage();
@@ -86,6 +87,8 @@ const allowStatusUpdate = computed(() => {
 const checkPlanType = id => {
   return page.props.healthPlanTypes.find(type => type.id === id)?.text;
 };
+
+const compareDueDate = useCompareDueDate;
 
 const modals = reactive({
   duplicate: false,
@@ -909,6 +912,7 @@ const confirmDeleteDoc = () => {
 //activities
 const activityTable = [
   { text: 'Done', value: 'status', width: 60, align: 'center' },
+  { text: 'Ref-ID', value: 'code' },
   { text: 'Title', value: 'title' },
   { text: 'Client Name', value: 'client_name' },
   { text: 'Followup Date', value: 'due_date' },
@@ -1371,7 +1375,12 @@ const handleChildUpdate = planId => {
         </p>
       </div>
       <div class="flex gap-2">
-        <LeadNotes :notes="quoteNotes" :modelType="modelType" :quote="quote"/>
+        <LeadNotes
+          :documentType="noteDocumentType"
+          :notes="quoteNotes"
+          :modelType="modelType"
+          :quote="quote"
+        />
         <x-button size="sm" color="#ff5e00" @click.prevent="openDuplicate">
           Duplicate Lead
         </x-button>
@@ -1438,12 +1447,13 @@ const handleChildUpdate = planId => {
             label="Assign Subteam"
             :options="subTeamOptions"
             placeholder="Select Subteam"
-            class="w-auto flex-1"
+            class="w-auto flex-1 !mb-2"
           />
           <div>
             <x-button
               color="orange"
               size="sm"
+              class="mb-2"
               @click.prevent="onTeamAssign"
               :loading="isDisabled"
             >
@@ -1455,17 +1465,19 @@ const handleChildUpdate = planId => {
           v-if="!hasRole($page.props.rolesEnum.HealthWCUAdvisor)"
           class="w-full md:w-1/2 flex gap-2 items-end"
         >
-          <x-select
+          <ComboBox
             v-model="assignLead"
             label="Assign Lead"
             :options="advisorOptions"
             placeholder="Select Lead"
-            class="w-auto flex-1"
+            class="w-auto flex-1 !mb-2"
+            :single="true"
           />
           <div>
             <x-button
               color="orange"
               size="sm"
+              class="mb-2"
               @click.prevent="onAssignLead"
               :loading="isDisabled"
             >
@@ -3612,6 +3624,26 @@ const handleChildUpdate = planId => {
           :rows-per-page="15"
           :hide-footer="activities.length < 15"
         >
+          <template #item-code="{ code }">
+            {{ code }}
+          </template>
+          <template #item-due_date="{ due_date }">
+            <template v-if="compareDueDate(due_date)">
+              <x-tooltip>
+                <p
+                  :class="
+                    compareDueDate(due_date) ? 'bg-error-300 rounded p-1' : ''
+                  "
+                >
+                  {{ due_date }}
+                </p>
+                <template #tooltip>
+                  <span>Pending overdue Task, please complete immediately</span>
+                </template>
+              </x-tooltip>
+            </template>
+            <span v-else>{{ due_date }}</span>
+          </template>
           <template #item-status="{ status, id }">
             <x-checkbox
               color="emerald"

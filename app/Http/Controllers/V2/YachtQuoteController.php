@@ -3,17 +3,20 @@
 namespace App\Http\Controllers\V2;
 
 use App\Enums\CustomerTypeEnum;
+use App\Enums\DocumentTypeCode;
 use App\Enums\LookupsEnum;
 use App\Enums\quoteStatusCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
+use App\Events\LeadsCount;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\BikeQuoteRequest;
 use App\Http\Requests\YachtQuoteRequest;
 use App\Models\Emirate;
 use App\Models\Nationality;
+use App\Models\PersonalQuote;
 use App\Repositories\ActivityRepository;
 use App\Repositories\CustomerMembersRepository;
 use App\Repositories\DocumentTypeRepository;
@@ -73,6 +76,8 @@ class YachtQuoteController extends Controller
             vAbort($response->msg);
         }
 
+        event(new LeadsCount(YachtQuoteRepository::getData(true, true)));
+
         return redirect('personal-quotes/yacht/'.$response->quoteUID)->with('message', 'Quote created successfully');
     }
 
@@ -98,6 +103,7 @@ class YachtQuoteController extends Controller
         $quote->load('documents.createdBy:id,name,email');
 
         $documentTypes = DocumentTypeRepository::byQuoteTypeId(QuoteTypes::YACHT->id())->get();
+        $noteDocumentType = DocumentTypeRepository::where('code', DocumentTypeCode::OD)->first();
         $paymentMethods = PaymentMethodRepository::orderBy('name')->get();
         $nationalities = Nationality::where('is_active', 1)->select('id', 'text')->get();
         $memberRelations = LookupRepository::where('key', LookupsEnum::MEMBER_RELATION)->get();
@@ -146,6 +152,7 @@ class YachtQuoteController extends Controller
             'nationalities' => $nationalities,
             'industryType' => $industryType,
             'emirates' => $emirates,
+            'noteDocumentType' => $noteDocumentType,
             'quoteNotes' => $quoteNotes,
         ]);
     }
@@ -202,6 +209,8 @@ class YachtQuoteController extends Controller
             'quoteStatusEnum' => $quoteStatusEnums,
             'lostReasons' => $lostReasons,
             'quoteTypeId' => QuoteTypes::YACHT->id(),
+            'quoteType' => QuoteTypes::YACHT->value,
+            'totalCount' => YachtQuoteRepository::getData(true, true),
         ]);
     }
 }

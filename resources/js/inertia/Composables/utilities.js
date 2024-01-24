@@ -110,3 +110,40 @@ export const fileUploadErrorMessage = (doc, rejectReason) => {
   }
   return errorMessage;
 };
+
+export const useCompareDueDate = dueDateString => {
+  const currentDate = new Date();
+
+  const [day, month, year, hour, minute, second] = dueDateString.split(/[- :]/);
+  const dueDate = new Date(year, month - 1, day, hour, minute, second);
+
+  // Set time component to midnight for both dates
+  currentDate.setHours(0, 0, 0, 0);
+  dueDate.setHours(0, 0, 0, 0);
+
+  return currentDate > dueDate;
+};
+
+export const useCalculateTotalSum = (data, key) => {
+  const totalSum = data.reduce((accumulator, currentItem) => {
+    // Ensure the current item has the specified key
+    if (key in currentItem) {
+      // Parse the value to a number and add it to the accumulator
+      let value = currentItem[key] != null ? currentItem[key] : 0;
+      accumulator += +parseFloat(value.toString().replace(/,/g, '')) || 0;
+    }
+    return accumulator;
+  }, 0);
+
+  return totalSum.toFixed(2);
+};
+
+export const getPreviousDate = (days = 30, format = 'DD-MMM-YYYY') => {
+  // Get the current date
+  let currentDate = new Date();
+
+  // Calculate the previous day
+  let previousDate = new Date(currentDate);
+  previousDate.setDate(currentDate.getDate() - days);
+  return useDateFormat(previousDate, format).value;
+};

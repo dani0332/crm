@@ -5,6 +5,7 @@ namespace App\Http\Controllers\V2;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Exports\AmtQuoteExport;
 use App\Exports\BusinessQuoteExport;
@@ -27,6 +28,7 @@ use App\Http\Requests\QuoteNotesRequest;
 use App\Http\Requests\UpdateLastYearPolicyRequest;
 use App\Models\Customer;
 use App\Models\Entity;
+use App\Models\HealthQuoteRequestDetail;
 use App\Models\QuoteNote;
 use App\Models\QuoteRequestEntityMapping;
 use App\Services\CentralService;
@@ -34,6 +36,7 @@ use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Laravel\Prompts\Note;
 use Maatwebsite\Excel\Facades\Excel;
 
 class CentralController extends Controller
@@ -59,14 +62,16 @@ class CentralController extends Controller
         }
 
         if ($exportTye != GenericRequestEnum::EXPORT_MAKES_MODELS) {
-            $request->validate([
-                'created_at_start' => 'required',
-                'created_at_end' => 'required',
-            ]);
             if (request()->has('created_at')) {
                 request()->merge(['created_at_start' => request()->get('created_at')]);
                 request()->query->remove('created_at');
             }
+
+            $request->validate([
+                'created_at_start' => 'required',
+                'created_at_end' => 'required',
+            ]);
+
             if (ucfirst($quoteType) == QuoteTypes::CAR->value) {
                 $diffInDays = 31;
             }
@@ -213,19 +218,35 @@ class CentralController extends Controller
         $quote = $this->getQuoteObject($quoteNotesRequest->quoteType, $quoteNotesRequest->quoteRequestId);
         $quote->notes()->save($notes);
 
-        return redirect()->back()->with('success', 'Note has been added successfully.');
+        $notes = $quote->notes()->with('createdBy:id,name', 'quoteStatus:id,text')->where('id', $notes->id)->firstOrFail();
+
+        return response()->json(['response' => $notes]);
+    }
+
+    public function updateQuoteNotes(QuoteNotesRequest $quoteNotesRequest)
+    {
+        $quote = $this->getQuoteObject($quoteNotesRequest->quoteType, $quoteNotesRequest->quoteRequestId);
+        $quote->notes()->where('id', $quoteNotesRequest->id)->update(['note' => $quoteNotesRequest->notes, 'updated_by' => auth()->id()]);
+
+        $notes = $quote->notes()->with('createdBy:id,name', 'quoteStatus:id,text')->where('id', $quoteNotesRequest->id)->firstOrFail();
+
+        return response()->json(['response' => $notes]);
+    }
+
+    public function deleteQuoteNotes($id)
+    {
+        $quoteNote = QuoteNote::where('id', $id)->firstOrFail();
+        $quoteNote->delete();
+
+        return response()->json(['response' => 'Note has been deleted']);
     }
     
     public function updateLeadStatusDragDrop(DragAndDropUpdateLeadStatusRequest $dragAndDropUpdateLeadStatusRequest)
     {
 
-        // When moving to the another status any incomplete activity from current status should be automatically marked as done.
+        $responseMessage = ['Lead status has been updated'];
         $dataFrom = $dragAndDropUpdateLeadStatusRequest->get('data')['form'];
         $dataTo = $dragAndDropUpdateLeadStatusRequest->get('data')['to'];
-
-        if ($dataTo['quote_status_id'] == QuoteStatusEnum::Lost) {
-            $dataTo['lost_reason'] = $dragAndDropUpdateLeadStatusRequest->get('data')['to']['lost_reason'];
-        }
 
         $modelObject = $this->getModelObject(QuoteTypes::getName($dataFrom['quoteTypeId'])->value);
         $repository = $modelObject::where('id', $dataFrom['id'])->firstOrFail();
@@ -233,27 +254,28 @@ class CentralController extends Controller
         try {
             DB::beginTransaction();
 
-            // $repository->activities()->where('status', 0)->update(['status' => 1]);
-            // $repository->update(['quote_status_id' => $dataTo['quote_status_id']]);
+            $repository->activities()->where('status', 0)->update(['status' => 1]);
+            $repository->update(['quote_status_id' => $dataTo['quote_status_id'], 'quote_status_date' => now()]);
 
-            // if ($dataTo['quote_status_id'] == QuoteStatusEnum::Lost) {
-            //     $repository->lostReason()->update([
-            //         'lost_reason_id' => $dataTo['lost_reason'],
-            //     ]);
-            // }
+            if ($dataTo['quote_status_id'] == QuoteStatusEnum::Lost && $dataFrom['quoteTypeId'] == QuoteTypeId::Health) {
+                HealthQuoteRequestDetail::updateOrCreate(['health_quote_request_id' => $repository->id], ['lost_reason_id' => $dragAndDropUpdateLeadStatusRequest->get('data')['to']['lost_reason']]);
+            }
 
             $repository->refresh();
 
-            // (new CentralService())->saveAndAssignActivitesToAdvisor($repository, $dataFrom['quoteTypeId']);
+            $activity = (new CentralService())->saveAndAssignActivitesToAdvisor($repository, $dataFrom['quoteTypeId']);
+            if ($activity) {
+                $responseMessage[] = 'Activity has been created';
+            }
 
             DB::commit();
 
         } catch (\Exception $e) {
             DB::rollBack();
-            return response()->json(['message' => 'Something went wrong. Please try again later.'], 500);
+            return response()->json(['message' => ['Something went wrong. Please try again later.']], 500);
         }
 
-        return response()->json(['message' => 'Lead status has been updated']);
+        return response()->json(['message' => $responseMessage]);
 
     }
 }

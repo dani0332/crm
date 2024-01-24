@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\V2;
 
 use App\Enums\CustomerTypeEnum;
+use App\Enums\DocumentTypeCode;
 use App\Enums\LookupsEnum;
 use App\Enums\quoteStatusCode;
 use App\Enums\QuoteStatusEnum;
@@ -10,10 +11,12 @@ use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
+use App\Events\LeadsCount;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\PetQuoteRequest;
 use App\Models\Emirate;
 use App\Models\Nationality;
+use App\Models\PetQuote;
 use App\Repositories\ActivityRepository;
 use App\Repositories\CustomerMembersRepository;
 use App\Repositories\DocumentTypeRepository;
@@ -75,10 +78,12 @@ class PetQuoteController extends Controller
     public function store(PetQuoteRequest $request)
     {
         $response = PetQuoteRepository::create($request->validated());
-
+        
         if (! empty($response->errors) || ! empty($response->msg)) {
             vAbort($response->msg);
         }
+
+        event(new LeadsCount(PetQuoteRepository::getData(true, true)));
 
         return redirect(route('pet-quotes-show', $response->quoteUID))->with('message', 'Quote is created successfully.');
     }
@@ -95,6 +100,7 @@ class PetQuoteController extends Controller
         $quoteStatuses = QuoteStatusRepository::byQuoteTypeId(QuoteTypes::PET->id())->get();
 
         $documentTypes = DocumentTypeRepository::byQuoteTypeId(QuoteTypes::PET->id())->get();
+        $noteDocumentType = DocumentTypeRepository::where('code', DocumentTypeCode::OD)->first();
         $membersDetail = CustomerMembersRepository::getBy($quote->id, QuoteTypes::PET->name);
         $paymentMethods = PaymentMethodRepository::orderBy('name')->get();
         $nationalities = Nationality::where('is_active', 1)->select('id', 'text')->get();
@@ -150,6 +156,7 @@ class PetQuoteController extends Controller
             'emirates' => $emirates,
             'UBOsDetails' => $uboDetails,
             'UBORelations' => $uboRelations,
+            'noteDocumentType' => $noteDocumentType,
             'quoteNotes' => $quoteNotes,
         ]);
     }
@@ -218,11 +225,15 @@ class PetQuoteController extends Controller
             }
         }
 
+        // Todo:: Need to send total Counts and Oppurtunity Counts
+
         return inertia('PetQuote/Cards', [
             'quotes' => $quotes,
             'quoteStatusEnum' => $quoteStatusEnums,
             'lostReasons' => $lostReasons,
             'quoteTypeId' => QuoteTypes::PET->id(),
+            'quoteType' => QuoteTypes::PET->value,
+            'totalCount' => PetQuoteRepository::getData(true, true),
         ]);
     }
 }

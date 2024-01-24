@@ -1,13 +1,13 @@
 <script setup>
-import { reactive } from 'vue';
-import { Head, usePage, Link } from '@inertiajs/vue3';
-import { useDateFormat } from '@vueuse/shared';
-import axios from 'axios';
-
 const props = defineProps({
   quoteStatusEnum: Object,
   quoteTypeId: String,
   lostReasons: Object,
+  quoteType: String,
+  totalCount: {
+    type: Number,
+    default: 0,
+  },
 });
 
 const page = usePage();
@@ -15,6 +15,7 @@ const page = usePage();
 provide('quoteStatusEnum', props.quoteStatusEnum);
 provide('quoteTypeId', props.quoteTypeId);
 provide('lostReasons', props.lostReasons);
+provide('quoteType', props.quoteType);
 
 const quotes = reactive({
   data: page.props.quotes || [],
@@ -24,127 +25,49 @@ const quotes = reactive({
   queries: {},
 });
 
-const dateFormat = date => {
-  const parts = date.split(/-|\s/);
-
-  const dateParts = [parts[0], parts[1], parts[2]];
-  const timeParts = parts[3].match(/(\d{2}):(\d{2})(\w{2})/);
-
-  const ampm = timeParts[3].toLowerCase();
-
-  const isoDate = new Date(
-    Date.parse(
-      dateParts[1] +
-        ' ' +
-        dateParts[0] +
-        ' ' +
-        dateParts[2] +
-        ' ' +
-        timeParts[1] +
-        ':' +
-        timeParts[2] +
-        ' ' +
-        ampm,
-    ),
-  ).toISOString();
-
-  return useDateFormat(isoDate, 'DD-MM-YYYY HH:mm:ss').value;
+const options = {
+  cluster: 'ap1',
+  forceTLS: false,
 };
 
-const onLoadMore = id => {
-  quotes.loader = true;
-  quotes.pages = {
-    ...quotes.pages,
-    [id]: quotes.pages[id] ? Number(quotes.pages[id]) + 1 : 2,
-  };
-  axios
-    .post(
-      route('loadMoreRecords', {
-        page: quotes.pages[id],
-        modelType: 'Home',
-        status: id,
-      }),
-    )
-    .then(({ data }) => {
-      quotes.data = quotes.data.map(quote => {
-        if (quote.id === id) {
-          quote.data.leads_list = {
-            ...data.leads_list,
-            data: quote.data.leads_list.data.concat(data.leads_list.data),
-          };
-        }
-        return quote;
-      });
-    })
-    .catch(err => {
-      console.log(err);
-    })
-    .finally(() => {
-      quotes.loader = false;
-    });
+const leadsCount = ref(props.totalCount);
+const previousDate = getPreviousDate;
+const pusher = new Pusher(page.props.pusherKey, options);
+const channel = pusher.subscribe(
+  'public.' + page.props.appEnv + '.total-leads-count',
+);
+
+const listen = () => {
+  channel.bind('leads.count', function (e) {
+    leadsCount.value = e.totalLeadsCount;
+  });
 };
 
-const onSearch = id => {
-  quotes.searching = true;
-  if (!quotes.queries[id]) {
-    axios
-      .post(
-        route('loadMoreRecords', {
-          page: 1,
-          modelType: 'Home',
-          status: id,
-        }),
-      )
-      .then(({ data }) => {
-        quotes.data = quotes.data.map(quote => {
-          if (quote.id === id) {
-            quote.data.leads_list = data.leads_list;
-          }
-          return quote;
-        });
-      })
-      .catch(err => {
-        console.log(err);
-      })
-      .finally(() => {
-        quotes.searching = false;
-      });
-    return;
-  }
-  axios
-    .post(
-      route('searchLead', {
-        term: 1,
-        modelType: 'Home',
-        status: id,
-      }),
-    )
-    .then(({ data }) => {
-      quotes.data = quotes.data.map(quote => {
-        if (quote.id === id) {
-          quote.data.leads_list = {
-            ...data.leads_list,
-            next_page_url: null,
-            data: data.leads_list,
-          };
-        }
-        return quote;
-      });
-    })
-    .catch(err => {
-      console.log(err);
-    })
-    .finally(() => {
-      quotes.searching = false;
-    });
-};
+onMounted(() => {
+  listen();
+});
+
+onUnmounted(() => {
+  channel.unbind('leads.count');
+  channel.unsubscribe('public.' + page.props.appEnv + '.total-leads-count');
+});
 </script>
 
 <template>
   <div>
     <Head title="Home List ~ Card View" />
     <div class="flex justify-between items-center">
-      <h2 class="text-xl font-semibold">Home List</h2>
+      <div class="flex items-center gap-5">
+        <h2 class="text-xl font-semibold">Home List</h2>
+        <x-tooltip align="right">
+          <span class="border-2 rounded px-3 bg-gray-200 text-sm font-medium"
+            >{{ leadsCount }}
+          </span>
+          <template #tooltip>
+            <span>Total Leads received since {{ previousDate() }}</span>
+          </template>
+        </x-tooltip>
+      </div>
       <div class="space-x-3">
         <Link :href="route('home.index')">
           <x-button size="sm" color="#1d83bc"> List View </x-button>
@@ -167,6 +90,7 @@ const onSearch = id => {
         :quote="quote"
         :quotes="quotes"
         :quoteTypeId="quoteTypeId"
+        :quoteType="quoteType"
         :lostReasons="props.lostReasons"
         :quoteStatusEnum="props.quoteStatusEnum"
       />

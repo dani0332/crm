@@ -10,6 +10,7 @@ use App\Facades\Capi;
 use App\Models\PersonalQuote;
 use App\Models\QuoteDocument;
 use App\Models\QuoteStatusLog;
+use App\Services\CentralService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use Illuminate\Support\Arr;
@@ -36,17 +37,21 @@ class PersonalQuoteRepository extends BaseRepository
             $previousStatusId = $quote->quote_status_id;
 
             $quoteData['quote_status_id'] = $data['quote_status_id'];
+            $quoteData['quote_status_date'] = now();
 
             if (! empty($data['notes'])) {
                 $quoteData['notes'] = $data['notes'];
             }
 
+            $quote->activities()->where('status', 0)->update(['status' => 1]);
             $quote->update($quoteData);
 
             $detailData = array_filter(Arr::only($data, ['lost_reason_id', 'transapp_code']));
             if (count($detailData)) {
                 $quote->quoteDetail()->updateOrCreate(['personal_quote_id' => $quote->id], $detailData);
             }
+
+            (new CentralService())->saveAndAssignActivitesToAdvisor($quote, $quote->quote_type_id);
 
             QuoteStatusLog::create([
                 'quote_type_id' => $quote->quote_type_id,

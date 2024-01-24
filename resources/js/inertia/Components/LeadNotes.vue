@@ -5,20 +5,40 @@ const props = defineProps({
   notes: Object,
   modelType: String,
   quote: Object,
+  documentType: Object,
 });
+
+const notification = useNotifications('toast');
 
 const showModal = ref(false);
 const showAddNotes = ref(false);
 const isEdit = ref(false);
+const isUploading = ref(false);
+const notes = ref(props.notes);
+
+const docForm = useForm({
+  quote_id: props.quote?.id || null,
+  quote_uuid: props.quote?.code || null,
+  quote_type: props.modelType,
+  quote_type_id: null,
+  document_type_code: null,
+  file: null,
+});
+
+const dateFormat = date => useDateFormat(date, 'DD-MMM-YYYY h:mm:ss a').value;
 
 const tableHeader = reactive([
   { text: 'MODIFIED BY', value: 'created_by' },
-  { text: 'MODIFIED DATE', value: 'created_at' },
+  { text: 'MODIFIED DATE', value: 'updated_at' },
   { text: 'NOTES', value: 'note' },
   { text: 'LEAD STATUS', value: 'quote_status' },
   { text: 'ACTIONS', value: 'action' },
 ]);
 
+const loader = ref({
+  button: false,
+  tableButton: false,
+});
 const notesForm = reactive({
   notes: null,
   quote_request_id: props.quote?.id,
@@ -33,51 +53,58 @@ const onNoteSubmit = () => {
     notes: notesForm.notes,
     quoteStatusId: notesForm.quote_status_id,
   };
-
+  loader.value.button = true;
   if (isEdit.value) {
-    // Note: Endpoint for edit notes
+    notesData['id'] = notesForm.id;
     axios
-      .put('/save-quote-notes', notesData)
+      .put('/update-quote-notes', notesData)
       .then(response => {
-        if (response.status == 200) {
-          notification.success({
-            title: 'Note has been successfully Updated',
-            position: 'top',
-          });
-        } else {
-          notification.error({
-            title: 'Note has not been updated',
-            position: 'top',
-          });
+        // console.log(response);
+        // let index = notes.value.findIndex(response.data.response.id);
+        // if (index != -1) {
+        //   notes.value.splice(index, 1, response.data.response);
+        // }
+
+        let index = notes.value.data.findIndex(
+          note => note.id == response.data.response.id,
+        );
+        if (index != -1) {
+          notes.value.data.splice(index, 1, response.data.response);
         }
+        notification.success({
+          title: 'Notes has been Updated',
+          position: 'top',
+        });
       })
       .catch(err => {
         notification.error({
-          title: 'Something went wrong',
+          title: 'Notes has not been updated',
           position: 'top',
         });
+      })
+      .finally(() => {
+        loader.value.button = false;
+        showAddNotes.value = false;
       });
   } else {
     axios
       .post('/save-quote-notes', notesData)
       .then(response => {
-        if (response.status == 200) {
-          notification.success({
-            title: 'Note has been added successfully',
-            position: 'top',
-          });
-        } else {
-          notification.error({
-            title: 'Note has not been added successfully',
-            position: 'top',
-          });
-        }
+        notes.value.data.push(response.data.response);
+        notification.success({
+          title: 'Notes has been saved',
+          position: 'top',
+        });
       })
       .catch(err => {
         notification.error({
-          title: 'Something went wrong',
+          title: 'Notes has not been saved',
           position: 'top',
         });
+      })
+      .finally(() => {
+        loader.value.button = false;
+        showAddNotes.value = false;
       });
   }
 };
@@ -89,6 +116,75 @@ const onEditNote = data => {
   notesForm.id = data.id;
   showAddNotes.value = true;
   isEdit.value = true;
+};
+
+const showAddNotesModal = () => {
+  notesForm.notes = null;
+  notesForm.id = null;
+  showAddNotes.value = true;
+  isEdit.value = false;
+};
+
+const onDeleteNote = item => {
+  loader.value.tableButton = true;
+  axios
+    .delete(`/delete-quote-notes/${item.id}`)
+    .then(response => {
+      let index = notes.value.data.findIndex(note => note.id == item.id);
+      if (index != -1) {
+        notes.value.data.splice(index, 1);
+      }
+      notification.success({
+        title: 'Notes has been deleted',
+        position: 'top',
+      });
+    })
+    .catch(err => {
+      notification.error({
+        title: 'Something went wrong',
+        position: 'top',
+      });
+    })
+    .finally(() => {
+      loader.value.tableButton = false;
+    });
+};
+
+const uploadFile = (doc, filesWithInfo) => {
+  let url = `/quotes/${props.modelType}/documents/store`;
+  const { files, rejectReason } = filesWithInfo;
+  if (files.length == 0) {
+    notification.error({
+      title: 'File upload failed',
+      position: 'top',
+    });
+    docForm.setError({ error: fileUploadErrorMessage(doc, rejectReason) });
+    return false;
+  }
+  isUploading.value = true;
+  docForm
+    .transform(data => ({
+      ...data,
+      quote_type_id: doc.quote_type_id,
+      document_type_code: doc.code,
+      folder_path: doc.folder_path,
+      file: files[0].file,
+    }))
+    .post(url, {
+      preserveScroll: true,
+      preserveState: true,
+
+      onError: errors => {
+        docForm.setError(errors.error);
+        notification.error({
+          title: 'File upload failed',
+          position: 'top',
+        });
+      },
+      onFinish: () => {
+        isUploading.value = false;
+      },
+    });
 };
 </script>
 <template>
@@ -106,14 +202,13 @@ const onEditNote = data => {
       </template>
     </x-tooltip>
   </div>
-  <AppModal class="min-w-[700px]" v-model="showModal" show-close show-header>
+  <AppModal class="md:min-w-[900px]" v-model="showModal" show-close show-header>
     <template #header>
       <p class="font-bold m-0">Notes</p>
     </template>
-    <template #content> </template>
     <div>
       <div class="flex justify-end">
-        <x-button size="sm" color="orange" @click="showAddNotes = true">
+        <x-button size="sm" color="orange" @click="showAddNotesModal()">
           Add Notes
         </x-button>
       </div>
@@ -129,6 +224,9 @@ const onEditNote = data => {
       >
         <template #item-created_by="{ created_by }">
           {{ created_by.name }}
+        </template>
+        <template #item-updated_at="{ updated_at }">
+          {{ dateFormat(updated_at) }}
         </template>
 
         <template #item-quote_status="{ quote_status }">
@@ -159,6 +257,15 @@ const onEditNote = data => {
             >
               Edit
             </x-button>
+            <x-button
+              size="xs"
+              color="red"
+              outlined
+              :loading="loader.tableButton"
+              @click.prevent="onDeleteNote(item)"
+            >
+              Delete
+            </x-button>
           </div>
         </template>
       </DataTable>
@@ -175,7 +282,12 @@ const onEditNote = data => {
   </AppModal>
 
   <!-- Modal for add/Update notes related to Leads -->
-  <AppModal class="min-w-[30%]" v-model="showAddNotes" show-header show-close>
+  <AppModal
+    class="min-w-[30%] overflow-hidden"
+    v-model="showAddNotes"
+    show-header
+    show-close
+  >
     <template #header>
       <p class="font-bold m-0">{{ isEdit ? 'Update' : 'Add' }} Notes</p>
     </template>
@@ -193,8 +305,16 @@ const onEditNote = data => {
       <p class="text-xs ml-auto flex justify-end mt-2">
         {{ notesLength }}/1000
       </p>
-      <div>
-        <x-tooltip>
+      <div class="mt-2">
+        <Dropzone
+          :id="documentType?.id"
+          :accept="documentType?.accepted_files"
+          :max-files="documentType?.max_files"
+          :max-size="documentType?.max_size"
+          :loading="isUploading"
+          @change="uploadFile(documentType, $event)"
+        />
+        <!-- <x-tooltip align="top">
           <x-button size="sm" color="primary" icon="upload">
             Upload Documents
           </x-button>
@@ -206,13 +326,18 @@ const onEditNote = data => {
               files</span
             >
           </template>
-        </x-tooltip>
+        </x-tooltip> -->
       </div>
       <div class="mt-5 flex gap-2 justify-end">
         <x-button size="sm" @click.prevent="showAddNotes = false">
           Cancel
         </x-button>
-        <x-button @click="onNoteSubmit" size="sm" color="emerald">
+        <x-button
+          @click="onNoteSubmit"
+          size="sm"
+          color="emerald"
+          :loading="loader.button"
+        >
           {{ isEdit ? 'Update' : 'Save' }}
         </x-button>
       </div>

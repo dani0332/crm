@@ -13,6 +13,7 @@ const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
 
 const { isRequired } = useRules();
+const previousDate = getPreviousDate;
 
 const loader = reactive({
   table: false,
@@ -223,7 +224,17 @@ watch(
   <div>
     <Head title="Home List" />
     <div class="flex justify-between items-center">
-      <h2 class="text-xl font-semibold">Home List</h2>
+      <div class="flex items-center gap-5">
+        <h2 class="text-xl font-semibold">Home List</h2>
+        <x-tooltip>
+          <span class="border-2 rounded px-3 bg-gray-200 text-sm font-medium">{{
+            quotes?.leadsCount ?? 0
+          }}</span>
+          <template #tooltip>
+            <span>Total Leads received since {{ previousDate() }}</span>
+          </template>
+        </x-tooltip>
+      </div>
       <div class="flex space-x-2 items-center">
         <ColumnSelection
           v-model:columns="tableHeader"

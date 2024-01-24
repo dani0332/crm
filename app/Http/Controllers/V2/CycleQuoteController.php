@@ -3,16 +3,19 @@
 namespace App\Http\Controllers\V2;
 
 use App\Enums\CustomerTypeEnum;
+use App\Enums\DocumentTypeCode;
 use App\Enums\LookupsEnum;
 use App\Enums\quoteStatusCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
+use App\Events\LeadsCount;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\CycleQuoteRequest;
 use App\Models\Emirate;
 use App\Models\Nationality;
+use App\Models\PersonalQuote;
 use App\Repositories\ActivityRepository;
 use App\Repositories\CustomerMembersRepository;
 use App\Repositories\CycleQuoteRepository;
@@ -73,6 +76,8 @@ class CycleQuoteController extends Controller
             vAbort($response->msg);
         }
 
+        event(new LeadsCount(CycleQuoteRepository::getData(true, true)));
+
         return redirect('personal-quotes/cycle/'.$response->quoteUID)->with('message', 'Quote created successfully');
     }
 
@@ -117,6 +122,7 @@ class CycleQuoteController extends Controller
         $quote->load('documents.createdBy:id,name,email');
 
         $documentTypes = DocumentTypeRepository::byQuoteTypeId(QuoteTypes::CYCLE->id())->get();
+        $noteDocumentType = DocumentTypeRepository::where('code', DocumentTypeCode::OD)->first();
         $paymentMethods = PaymentMethodRepository::orderBy('name')->get();
         $membersDetail = CustomerMembersRepository::getBy($quote->id, QuoteTypes::CYCLE->name);
         $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypes::CYCLE->id());
@@ -168,6 +174,7 @@ class CycleQuoteController extends Controller
             'emirates' => $emirates,
             'UBOsDetails' => $uboDetails,
             'UBORelations' => $uboRelations,
+            'noteDocumentType' => $noteDocumentType,
             'quoteNotes' => $quoteNotes,
         ]);
     }
@@ -211,6 +218,8 @@ class CycleQuoteController extends Controller
             'quoteStatusEnum' => $quoteStatusEnums,
             'lostReasons' => $lostReasons,
             'quoteTypeId' => QuoteTypes::CYCLE->id(),
+            'quoteType' => QuoteTypes::CYCLE->value,
+            'totalCount' => CycleQuoteRepository::getData(true, true),
         ]);
     }
 }

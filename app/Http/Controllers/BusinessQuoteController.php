@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Enums\CustomerTypeEnum;
+use App\Enums\DocumentTypeCode;
 use App\Enums\GenericRequestEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\PaymentMethodsEnum;
@@ -14,12 +15,15 @@ use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
+use App\Events\LeadsCount;
 use App\Http\Requests\StoreBusinessQuoteRequest;
 use App\Http\Requests\UpdateBusinessQuoteRequest;
 use App\Models\BusinessQuote;
+use App\Models\DocumentType;
 use App\Models\Emirate;
 use App\Models\Entity;
 use App\Models\Nationality;
+use App\Repositories\BusinessQuoteRepository;
 use App\Repositories\CustomerMembersRepository;
 use App\Repositories\InsuranceProviderRepository;
 use App\Repositories\LookupRepository;
@@ -123,9 +127,12 @@ class BusinessQuoteController extends Controller
     public function store(StoreBusinessQuoteRequest $request)
     {
         $record = $this->businessQuoteService->saveBusinessQuote($request);
+
         if (isset($record->message) && str_contains($record->message, 'Error')) {
             return redirect()->back()->with('message', $record->message)->withInput();
         } else {
+
+            event(new LeadsCount(BusinessQuoteRepository::getData(quoteTypeCode::CORPLINE, true, true)));
             if (! isset($record->quoteUID)) {
                 return redirect('quotes/business')->with('success', 'Lead has been stored');
             } else {
@@ -217,6 +224,7 @@ class BusinessQuoteController extends Controller
         $issuancePlace = $this->lookupService->getIssuancePlaces();
         $issuanceAuthorities = $this->lookupService->getIssuanceAuthorities();
         $quoteNotes = QuoteNoteRepository::getBy($record->id, QuoteTypes::BUSINESS->name);
+        $noteDocumentType = DocumentType::where('code', DocumentTypeCode::OD)->first();
 
         return inertia('CorpLineQuote/Show', [
             'storageUrl' => storageUrl(),
@@ -282,6 +290,7 @@ class BusinessQuoteController extends Controller
             'nationalities' => $nationalities,
             'emirates' => $emirates,
             'canAddBatchNumber' => auth()->user()->hasRole(RolesEnum::CorplineManager),
+            'noteDocumentType' => $noteDocumentType,
             'quoteNotes' => $quoteNotes,
         ]);
     }
@@ -376,6 +385,8 @@ class BusinessQuoteController extends Controller
             'quoteStatusEnum' => $quoteStatusEnums,
             'lostReasons' => $lostReasons,
             'quoteTypeId' => QuoteTypes::BUSINESS->id(),
+            'quoteType' => QuoteTypes::BUSINESS->value,
+            'totalCount' => BusinessQuoteRepository::getData(quoteTypeCode::CORPLINE, true, true),
         ]);
     }
 }

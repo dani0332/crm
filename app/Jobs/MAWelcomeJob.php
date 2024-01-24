@@ -54,7 +54,7 @@ class MAWelcomeJob implements ShouldQueue
             $statusCode = $sendEmailCustomerService->sendMyAlfredWelcomeEmail($data, $this->tag, $this->source);
 
             if ($statusCode == 201) {
-                info('MAWelcomeJob - Email Sent to customer '.$this->email);
+                info('MAWelcomeJob - Email Sent to customer: '.$this->email);
                 $customer = CustomerService::getCustomerByEmail($this->email);
                 if ($customer) {
                     $customer->is_we_sent = true;
@@ -70,7 +70,7 @@ class MAWelcomeJob implements ShouldQueue
                     }
                 }
             } else {
-                info('MAWelcomeJob - Email not sent to customer '.$this->email.' getStatusCode: '.$statusCode);
+                info('MAWelcomeJob - Email not sent to customer: '.$this->email.' getStatusCode: '.$statusCode);
             }
         } catch (Exception $e) {
             Log::error('MAWelcomeJob - Error - Customer Email: '.$this->email.' Message: '.$e->getMessage());

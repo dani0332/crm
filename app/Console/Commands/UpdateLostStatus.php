@@ -27,7 +27,7 @@ class UpdateLostStatus extends Command
      *
      * @var string
      */
-    protected $description = 'Command to update the lost status of the leads which are not modified for more than 120 days';
+    protected $description = 'Update Lost status on leads which quote status are not updated from last 120 days.';
 
     /**
      * Execute the console command.
@@ -62,7 +62,7 @@ class UpdateLostStatus extends Command
 
             info("------------------- Updating : " . $eligibleQuoteType . " -------------------");
             $eligibleQuoteType::whereNotIn('quote_status_id', $skipStatus)
-                ->where('updated_at', '<', date(config('constants.DATE_FORMAT_ONLY'), strtotime('-120 days')))
+                ->where('quote_status_date', '<', date(config('constants.DATE_FORMAT_ONLY'), strtotime('-120 days')))
                 ->when($eligibleQuoteType == CarQuote::class, function ($carQuote) {
                     $carQuote->with('carQuoteRequestDetail');
                 })
