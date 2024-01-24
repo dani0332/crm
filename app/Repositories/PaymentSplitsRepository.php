@@ -65,11 +65,7 @@ class PaymentSplitsRepository
                 $paymentSplitRecord = PaymentSplits::create($splitPaymentInformation);
                 if ($paymentSplitRecord) {
                     //Update parent payment status
-                    $this->setMasterPaymentStatus($paymentSplitRecord->id);
-                    /*
-                    if ($paymentSplitRecord->payment_method == 'CC') {
-                        $this->generateSplitPaymentLink($quoteID, $paymentSplitRecord->id, $request->modelType, $request->quote_id);
-                    }*/
+                    $this->setMasterPaymentStatus($paymentSplitRecord->id);                   
                     //add document references
                     if (isset($request->split_payment_details['document_detail'][$i])
                         && $paymentSplitRecord
@@ -93,8 +89,6 @@ class PaymentSplitsRepository
     public function updatePaymentSplits($request)
     {
         $paymentSplits = PaymentSplits::with('documents')->where(['code' => $request->paymentCode])->get();
-        //dd($request->all()); //payment_no
-        //dd($paymentSplits->count());
         $paymentPaidSerialNo = [];
         $splitPaymentDocumentIds = [];
         $splitPaymentDetails = $request->split_payment_details['split_amount'];
@@ -287,61 +281,12 @@ class PaymentSplitsRepository
                     }
                 }
             }
-
-            /* STILL PARAMETERS REQUIRED FROM OTHER DEVELOPING
-            $sageRequest = new \stdClass();
-            $sageRequest->discount = 0.00;
-            $sageRequest->insurerInvoiceDate = $splitPayment->due_date;
-            $sageRequest->policyExpiryDate   = $splitPayment->due_date;
-            $sageRequest->premiumWithoutTax = $request->collection_amount;
-            $sageRequest->premiumWithTax = $request->collection_amount;
-            $sageRequest->vatOnCommission = 0;
-            $sageRequest->commission = 0;
-            $sageRequest->commissionIncludingVat = 0;
-            $sageRequest->invoicePaymentStatus = 'paid';
-            $sageRequest->insurerPremiumTaxInvoiceNumber='';
-            $sageApiService = new SageApiService();
-            $payLoadOptions = SagePayloadFactory::createPayload($sageRequest, $leadStatus);
-            $endPoint = $payLoadOptions['endPoint'];
-            $payLoad = $payLoadOptions['payload'];
-            $sageResponse = $sageApiService->postToSage300($endPoint, $payLoad);
-            //$sageApi = new SageApi(new SageApiService());
-            //$sageResponse = $sageApi->processSagePost($sageRequest);
-            */
-
-            /* CUSTOMER PAYLOAD
-            $payLoadOptions = SagePayloadFactory::createCustomerPayload($successMessage);
-            $jsonResponse = $sageApiService->postToSage300($payLoadOptions['endPoint'], $payLoadOptions['payload']);
-            dd($jsonResponse);
-            $leadStatus = 'policy booked';
-            */
-
-            //$message = $sageApiService->postToSage300('AR/ARReceiptAndAdjustmentBatches', $createPrepaymentReciept);
-            // NEW CUSTOMER CREATION
-            //dd($request->all());
-            $quote = $this->getQuoteObject($request->modelType, $request->quote_id);
-            $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($request->modelType));
-            $customerData = [];
-            $customerData['quoteTypeId'] = $quoteTypeId;
-            $customerData['id'] = $quote->id;
-            $sageApiService = new SageApiService();
-            $sageCustomerNumber = $sageApiService->verifySageCustomer($request->customer_id, $customerData);
-            //$sageCustomerNumber = 'IC008';
-            $request->merge(['sage_customer_number' => $sageCustomerNumber]);
-            // create prepayment reciept
-            $payLoadOptions = SagePayloadFactory::createPrepaymentPayload($request);
-            $message = $sageApiService->postToSage300($payLoadOptions['endPoint'], $payLoadOptions['payload']);
-            $sageResponse = json_decode($message, true);
-
-            if (isset($sageResponse['ReceiptsAdjustments'][0]['DocumentNumber'])) {
-                $readyToPostReceiptAr = SagePayloadFactory::readyToPostReceiptArPayment($sageResponse['BatchNumber']);
-                $resp = $sageApiService->postToSage300($readyToPostReceiptAr['endPoint'], $readyToPostReceiptAr['payload'], 'PATCH');
-                $aRPostReceipts = SagePayloadFactory::aRPostReceiptsPayment($sageResponse['BatchNumber']);
-                $resp = $sageApiService->postToSage300($aRPostReceipts['endPoint'], $aRPostReceipts['payload']);
-                $documentNumberForReciept = $sageResponse['ReceiptsAdjustments'][0]['DocumentNumber'];
-                $paymentInformation['sage_reciept_id'] = $documentNumberForReciept;               
-            } else {
+            //create sage reciept            
+            $sageResponse = $this->createSageRecipt($request);
+            if ($sageResponse == '0'){
                 $successMessage .= ' Sage Error: Reciept not generated';                
+            } else {
+                $paymentInformation['sage_reciept_id'] = $sageResponse;
             }
             $splitPayment->update($paymentInformation);            
         } elseif ($request->is_declined) {
@@ -355,21 +300,37 @@ class PaymentSplitsRepository
             $splitPayment->update($paymentInformation);
             $successMessage = 'Payment Declined';
         }
-
         //Update parent payment status
         $this->setMasterPaymentStatus($request->splitPaymentId);
-
-        /*
-        $totalPaidPayments = PaymentSplits::where('payment_status_id', PaymentStatusEnum::PAID)->count();
-        if ($totalPaidPayments == $paymentSplitRecord->payment->total_payments) {
-            Payment::where('code', $paymentSplitRecord->code)->update(['payment_status_id' => PaymentStatusEnum::PAID]);
-        } elseif ($request->is_declined) {
-            Payment::where('code', $paymentSplitRecord->code)->update(['payment_status_id' => PaymentStatusEnum::NEW]);
-        } else {
-            Payment::where('code', $paymentSplitRecord->code)->update(['payment_status_id' => PaymentStatusEnum::PARTIALLY_PAID]);
-        }*/
-
         return $successMessage;
+    }
+
+    public function createSageRecipt($request)
+    {
+        $returnMessage = '0';
+        $quote = $this->getQuoteObject($request->modelType, $request->quote_id);
+        $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($request->modelType));
+        $customerData = [];
+        $customerData['quoteTypeId'] = $quoteTypeId;
+        $customerData['id'] = $quote->id;
+        $sageApiService = new SageApiService();
+        $sageCustomerNumber = $sageApiService->verifySageCustomer($request->customer_id, $customerData);
+        //$sageCustomerNumber = 'IC008';
+        $request->merge(['sage_customer_number' => $sageCustomerNumber]);
+        // create prepayment reciept
+        $payLoadOptions = SagePayloadFactory::createPrepaymentPayload($request);
+        $message = $sageApiService->postToSage300($payLoadOptions['endPoint'], $payLoadOptions['payload']);
+        $sageResponse = json_decode($message, true);
+
+        if (isset($sageResponse['ReceiptsAdjustments'][0]['DocumentNumber'])) {
+            $readyToPostReceiptAr = SagePayloadFactory::readyToPostReceiptArPayment($sageResponse['BatchNumber']);
+            $resp = $sageApiService->postToSage300($readyToPostReceiptAr['endPoint'], $readyToPostReceiptAr['payload'], 'PATCH');
+            $aRPostReceipts = SagePayloadFactory::aRPostReceiptsPayment($sageResponse['BatchNumber']);
+            $resp = $sageApiService->postToSage300($aRPostReceipts['endPoint'], $aRPostReceipts['payload']);
+            $documentNumberForReciept = $sageResponse['ReceiptsAdjustments'][0]['DocumentNumber'];
+            return $documentNumberForReciept;               
+        }
+        return $returnMessage;
     }
 
     public function setMasterPaymentStatus($splitPaymentId)
@@ -412,61 +373,5 @@ class PaymentSplitsRepository
             'updated_at' => now(),
         ]);
         $paymentLog->save();
-    }
-
-    public function generateSplitPaymentLink($code, $splitPaymentId, $modelType, $quoteId)
-    {
-        $splitPayment = PaymentSplits::where(['code' => $code, 'id' => $splitPaymentId])->first();
-        $payment = $splitPayment->payment;
-
-        if (! $payment) {
-            return false;
-        }
-        if ($splitPayment->payment_link != null && now() < Carbon::parse($splitPayment->payment_link_created_at)->addDays(3)) {
-            return;
-        } else {
-            $quoteModel = $this->getQuoteObject($modelType, $quoteId);
-            $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
-
-            $description = (get_class($quoteModel) == PersonalQuote::class) ? ($payment->personalPlan->text ?? '') : ($quoteModel->plan->text ?? '');
-
-            $paymentLink = config('constants.PAYMENT_REDIRECT_LINK');
-
-            $paymentLink = $splitPayment->payment_method == PaymentMethodsEnum::InsureNowPayLater ? $paymentLink.'tabby' : $paymentLink.'checkout';
-
-            $paymentParams = [
-                'code' => $payment->code.'-'.$splitPayment->sr_no,
-                'quoteTypeId' => $quoteTypeId,
-            ];
-            $paymentLinkURL = $paymentLink.'?'.http_build_query($paymentParams);
-
-            $invoiceRequestData = [
-                'firstName' => $quoteModel->first_name,
-                'lastName' => $quoteModel->last_name,
-                'email' => $quoteModel->email,
-                'emailSubject' => 'Payment Request',
-                'items' => [
-                    [
-                        'description' => $description,
-                        'totalPrice' => [
-                            'currencyCode' => 'AED',
-                            'value' => ceil($splitPayment->payment_amount * 100),
-                        ],
-                        'quantity' => 1,
-                    ],
-                ],
-                'total' => [
-                    'currencyCode' => 'AED',
-                    'value' => ceil($splitPayment->payment_amount * 100),
-                ],
-                'merchantOrderReference' => strtoupper($payment->code.'-'.$splitPayment->sr_no),
-            ];
-
-            $splitPayment->payment_link = $paymentLinkURL;
-            $splitPayment->payment_link_created_at = now();
-            $splitPayment->save();
-
-            return;
-        }
-    }
+    }    
 }
