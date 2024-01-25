@@ -83,7 +83,6 @@ const onUpdateBpDetails = isValid => {
         bp.isEditing = false;
       },
       onError: errors => {
-        console.log(errors);
         Object.keys(errors).forEach(function (key) {
           notification.error({
             title: errors[key],
@@ -116,19 +115,17 @@ const submitPolicy = () => {
   axios
     .post(url, data)
     .then(response => {
-      console.log(response);
       if (response.status == 200) {
         notification.success({
           title: 'Policy Sent Successfully',
           position: 'top',
         });
-
         location.reload();
         modals.sendPolicyConfirm = false;
       }
     })
     .catch(err => {
-      const flash_messages = err.response.data.errors.value;
+      const flash_messages = err.response.data.errors;
       Object.keys(flash_messages).forEach(function (key) {
         notification.error({
           title: flash_messages[key],

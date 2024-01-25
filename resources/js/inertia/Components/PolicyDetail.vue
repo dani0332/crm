@@ -55,7 +55,8 @@ const policyDetailsForm = useForm({
   quote_policy_number: page.props.record.policy_number || null,
 
   quote_policy_issuance_date:
-    dateToYMD(page.props.record.policy_issuance_date) || '',
+    dateToYMD(page.props.record.policy_issuance_date) ||
+    new Date().toJSON().slice(0, 10),
   price_vat_notapplicable: page.props.record.price_vat_not_applicable || '',
   amount: page.props.record.price_without_vat || '',
   vat: page.props.record.vat || '',

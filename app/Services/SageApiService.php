@@ -156,4 +156,149 @@ class SageApiService
         // Return response or handle errors
         return $response;
     }
+
+
+    public function postBookPolicyToSage($request, $payment, $quote, $paymentSplits, $data)
+    {
+
+        // payload
+        $sageRequest = $this->sagePayLoad($request->model_type, $payment, $quote, $paymentSplits);
+
+        // sape customer number generation
+        // $sageCustomerNumber = $this->verifySageCustomer(57, $data);
+        $sageCustomerNumber = $this->verifySageCustomer($quote->customer_id, $data);
+        // $sageCustomerNumber = "P30581";
+
+
+        if ($sageCustomerNumber) {
+
+            $sageRequest->customerId = $sageCustomerNumber;
+
+            // /* createARInvoicePremAndComm */
+            $createARInvoicePremAndCommPayload = SagePayloadFactory::createARInvoicePremAndComm($sageRequest);
+
+            info('createARInvoicePremAndComm===payload===' . json_encode($createARInvoicePremAndCommPayload));
+
+            $resp = $this->postToSage300($createARInvoicePremAndCommPayload['endPoint'], $createARInvoicePremAndCommPayload['payload']);
+
+            info('createARInvoicePremAndComm===resp===' . $resp);
+
+            $response = json_decode($resp, true);
+
+            if (!empty($response['BatchNumber'])) {
+                /* readyToPostInvoiceAr */
+                $readyToPostInvoiceAr = SagePayloadFactory::readyToPostInvoiceAr($response['BatchNumber']);
+
+                info('readyToPostInvoiceAr===payload===' . json_encode($readyToPostInvoiceAr));
+
+                $resp = $this->postToSage300($readyToPostInvoiceAr['endPoint'], $readyToPostInvoiceAr['payload'], 'PATCH');
+
+                info('readyToPostInvoiceAr===resp===' . $resp);
+
+                /* aRPostInvoices */
+                $aRPostInvoices = SagePayloadFactory::aRPostInvoices($response['BatchNumber']);
+
+                info('aRPostInvoices===payload===' . json_encode($aRPostInvoices));
+
+                $resp = $this->postToSage300($aRPostInvoices['endPoint'], $aRPostInvoices['payload']);
+
+                info('aRPostInvoices===resp===' . $resp);
+            }
+
+            /* createAPInvoicePrem */
+            $createAPInvoicePrem = SagePayloadFactory::createAPInvoicePrem($sageRequest);
+
+            info('createAPInvoicePrem===payload===' . json_encode($createAPInvoicePrem));
+
+            $resp = $this->postToSage300($createAPInvoicePrem['endPoint'], $createAPInvoicePrem['payload']);
+
+            info('createAPInvoicePrem===resp===' . $resp);
+
+            $response = json_decode($resp, true);
+
+            if (!empty($response['BatchNumber'])) {
+
+                /* readyToPostInvoiceAP */
+                $readyToPostInvoiceAP = SagePayloadFactory::readyToPostInvoiceAP($response['BatchNumber']);
+
+                info('readyToPostInvoiceAP===payload===' . json_encode($readyToPostInvoiceAP));
+
+                $resp = $this->postToSage300($readyToPostInvoiceAP['endPoint'], $readyToPostInvoiceAP['payload'], 'PATCH');
+
+                info('readyToPostInvoiceAP===resp===' . $resp);
+
+                /* aPPostInvoices */
+                $aPPostInvoices = SagePayloadFactory::aPPostInvoices($response['BatchNumber']);
+
+                info('aPPostInvoices===payload===' . json_encode($aPPostInvoices));
+                $resp = $this->postToSage300($aPPostInvoices['endPoint'], $aPPostInvoices['payload']);
+
+                info('aPPostInvoices===resp===' . $resp);
+            }
+
+            if ($sageRequest->discount > 0) {
+                /* createARInvoiceDis */
+                $createARInvoiceDis = SagePayloadFactory::createARInvoiceDis($sageRequest);
+                info('createARInvoiceDis===payload===' . json_encode($createARInvoiceDis));
+                $resp = $this->postToSage300($createARInvoiceDis['endPoint'], $createARInvoiceDis['payload']);
+                info('createARInvoiceDis===resp===' . $resp);
+
+                $response = json_decode($resp, true);
+
+                if (!empty($response['BatchNumber'])) {
+                    /* readyToPostInvoiceAr */
+                    $readyToPostInvoiceAr = SagePayloadFactory::readyToPostInvoiceAr($response['BatchNumber']);
+
+                    info('readyToPostInvoiceAr===disc===payload===' . json_encode($readyToPostInvoiceAr));
+
+                    $resp = $this->postToSage300($readyToPostInvoiceAr['endPoint'], $readyToPostInvoiceAr['payload'], 'PATCH');
+
+                    info('readyToPostInvoiceAr===disc====resp===' . $resp);
+
+                    /* aRPostInvoices */
+                    $aRPostInvoices = SagePayloadFactory::aRPostInvoices($response['BatchNumber']);
+
+                    info('aRPostInvoices===disc===payload===' . json_encode($aRPostInvoices));
+
+                    $resp = $this->postToSage300($aRPostInvoices['endPoint'], $aRPostInvoices['payload']);
+
+                    info('aRPostInvoices===disc===resp===' . $resp);
+                }
+            }
+
+            if (strtolower($sageRequest->invoicePaymentStatus) == 'paid') {
+                /* createPaymontRecieptOneInvoice */
+                $createPaymontRecieptOneInvoice = SagePayloadFactory::createPaymontRecieptOneInvoice($sageRequest);
+                info('createPaymontRecieptOneInvoice===payload===' . json_encode($createPaymontRecieptOneInvoice));
+
+                $resp = $this->postToSage300($createPaymontRecieptOneInvoice['endPoint'], $createPaymontRecieptOneInvoice['payload']);
+
+                info('createPaymontRecieptOneInvoice===resp===' . $resp);
+
+                $response = json_decode($resp, true);
+                if (!empty($response['BatchNumber'])) {
+                    /* readyToPostReceiptAr */
+                    $readyToPostReceiptAr = SagePayloadFactory::readyToPostReceiptAr($response['BatchNumber']);
+
+                    info('readyToPostReceiptAr===payload===' . json_encode($readyToPostReceiptAr));
+
+                    $resp = $this->postToSage300($readyToPostReceiptAr['endPoint'], $readyToPostReceiptAr['payload'], 'PATCH');
+
+                    info('readyToPostReceiptAr===resp===' . $resp);
+
+                    /* aRPostInvoices */
+                    $aRPostReceipts = SagePayloadFactory::aRPostReceipts($response['BatchNumber']);
+
+                    info('aRPostReceipts===payload===' . json_encode($aRPostReceipts));
+
+                    $resp = $this->postToSage300($aRPostReceipts['endPoint'], $aRPostReceipts['payload']);
+
+                    info('aRPostReceipts===resp===' . $resp);
+                }
+            }
+            return ['status' => true, 'message' => 'posted to sage'];
+        } else {
+            return ['status' => false, 'message' => 'Customer not found in sage'];
+        }
+    }
 }
