@@ -592,3 +592,10 @@ if (! function_exists('dateQueryFilter')) {
         return [$currentDate, $currentDate];
     }
 }
+
+if (! function_exists('getIMLogo')) {
+    function getIMLogo()
+    {
+        return asset('images/im_logo_21k-hi.png');
+    }
+}
