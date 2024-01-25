@@ -286,6 +286,7 @@ class AMLController extends Controller
             }
             // Update Decision on Lexis Nexis Portal
             if (isset(request()->decisonsForUpdatePortal)) {
+                info('AML Screening Bridger - Lexis Nexis Decision update API Quote Details. Quote Type:'.$quoteTypeId.' - Quote Request ID: '.$quoteRequestId.'. Triggered by:'.auth()->user()->email);
                 AMLService::updateAMLDecisionLexisNexis(request());
             }
 
