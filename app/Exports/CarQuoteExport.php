@@ -3,15 +3,11 @@
 namespace App\Exports;
 
 use App\Services\CarQuoteService;
-use Maatwebsite\Excel\Concerns\Exportable;
-use Maatwebsite\Excel\Concerns\FromCollection;
-use Maatwebsite\Excel\Concerns\ShouldAutoSize;
-use Maatwebsite\Excel\Concerns\WithHeadings;
-use Maatwebsite\Excel\Concerns\WithMapping;
+use App\Traits\ExcelExportable;
 
-class CarQuoteExport implements FromCollection, ShouldAutoSize, WithHeadings, WithMapping
+class CarQuoteExport
 {
-    use Exportable;
+    use ExcelExportable;
 
     public function collection()
     {
@@ -105,4 +101,5 @@ class CarQuoteExport implements FromCollection, ShouldAutoSize, WithHeadings, Wi
             $quote->quote_link,
         ];
     }
+
 }

@@ -1,11 +1,13 @@
 <script setup>
+
 const props = defineProps({
   aml: Object,
   amlResults: Array,
-  responseFrom: String,
   quoteStatusCode: Object,
   amlDecisionStatusCode: Object,
+  quoteObject: Object,
 });
+
 const page = usePage();
 const notification = useToast();
 const rolesEnum = page.props.rolesEnum;
@@ -36,7 +38,6 @@ const submitDecisionLoading = ref(false);
 const decisionModalHeading = ref('');
 const amlDecision = ref('');
 const decisionSelected = ref({});
-const decisionResultIds = ref({});
 const passingDecisions = [
   props.amlDecisionStatusCode.FALSE_POSITIVE,
   props.amlDecisionStatusCode.TRUE_MATCH_ACCEPT_RISK,
@@ -46,15 +47,6 @@ const decisionTitles = {
   TrueMatchAcceptRisk: 'True Match - Accept Risk',
   TrueMatchRejectRisk: 'True Match - Reject Risk',
 };
-
-const decisionOptions = [
-  { value: props.amlDecisionStatusCode.UNKNOWN, label: 'Unknown' },
-  {
-    value: props.amlDecisionStatusCode.FALSE_POSITIVE,
-    label: 'False Positive',
-  },
-  { value: props.amlDecisionStatusCode.TRUE_MATCH, label: 'True Match' },
-];
 
 function submitDecision(decision) {
   if (complianceRules()) {
@@ -109,7 +101,8 @@ const setSelectedOption = (e, item) => {
   let data = {
       aml_id : props.aml.id,
       aml_quote_url : `/kyc/aml/${props.aml.quote_type_id}/details/${props.aml.quote_request_id}`,
-      quote_ref_id : props.aml.quote_request_id,
+      quote_id : props.aml.quote_request_id,
+      quote_ref_id : props.quoteObject.code,
       customer_entity_name : props.aml.input,
       quote_type_text : props.aml.quote_type_text,
       bridger_response: props.aml.results_found,
@@ -260,88 +253,43 @@ function complianceRules () {
           </div>
         </template>
 
-        <template
-          v-if="responseFrom === 'Bridger'"
-          #item-full_name="{ EntityDetails }"
-        >
+        <template #item-full_name="{ EntityDetails }">
           {{ EntityDetails.Name.Full ?? '' }}
         </template>
-        <template
-          v-if="responseFrom === 'RYU'"
-          #item-full_name="{ firstName, lastName }"
-        >
-          {{ firstName + ' ' + lastName }}
+
+        <template #item-date_of_birth="{ EntityDetails }">
+          {{ EntityDetails.AdditionalInfo.filter(x => x.Type === "DOB").map( dob => dob.Value).toString() ?? "" }}
         </template>
 
-          <template
-              v-if="responseFrom === 'Bridger'"
-              #item-date_of_birth="{ EntityDetails }"
-          >
-              {{ EntityDetails.AdditionalInfo.filter(x => x.Type === "DOB").map( dob => dob.Value).toString() ?? "" }}
-          </template>
-
-        <template v-if="responseFrom === 'RYU'" #item-date_of_birth="{ dob }">
-          {{ dob }}
-        </template>
-
-        <template
-          v-if="responseFrom === 'Bridger'"
-          #item-gender="{ EntityDetails }"
-        >
+        <template #item-gender="{ EntityDetails }">
           {{ EntityDetails.Gender ?? '' }}
         </template>
-        <template v-if="responseFrom === 'RYU'" #item-gender="{ gender }">
-          {{ gender ?? '' }}
+
+        <template #item-customer_id="{ EntityDetails }">
+          {{ EntityDetails.IDs.filter(x => x.Type === "ProprietaryUID").map( ProprietaryUID => ProprietaryUID.Number).toString() ?? "" }}
         </template>
 
-        <template v-if="responseFrom === 'RYU'" #item-customer_id="{ id }">
-          {{ id ?? '' }}
+        <template #item-address="{ EntityDetails }">
+          {{
+              EntityDetails.Addresses ? EntityDetails.Addresses.map(
+                  address => (address.City ?? '') +' '+ (address.StateProvinceDistrict ?? '') +' '+ (address.Country ?? ''),
+              ).toString() : ''
+          }}
         </template>
 
-          <template
-              v-if="responseFrom === 'Bridger'"
-              #item-customer_id="{ EntityDetails }"
-          >
-              {{ EntityDetails.IDs.filter(x => x.Type === "ProprietaryUID").map( ProprietaryUID => ProprietaryUID.Number).toString() ?? "" }}
-          </template>
-
-          <template
-              v-if="responseFrom === 'Bridger'"
-              #item-address="{ EntityDetails }"
-          >
-              {{
-                  EntityDetails.Addresses ? EntityDetails.Addresses.map(
-                      address => (address.City ?? '') +' '+ (address.StateProvinceDistrict ?? '') +' '+ (address.Country ?? ''),
-                  ).toString() : ''
-              }}
-          </template>
-
-        <template
-          v-if="responseFrom === 'Bridger'"
-          #item-country="{ EntityDetails }"
-        >
+        <template #item-country="{ EntityDetails }">
           {{
             EntityDetails.Addresses ? EntityDetails.Addresses.map(
               nationality => nationality.Country,
             ).toString() : ''
           }}
         </template>
-        <template v-if="responseFrom === 'RYU'" #item-country="{ pob }">
-          {{ pob ?? '' }}
-        </template>
-
-        <template
-          v-if="responseFrom === 'RYU'"
-          #item-citizenship="{ nationality }"
-        >
-          {{ nationality ?? '' }}
-        </template>
 
         <template #item-customer_type>
           {{ aml.search_type }}
         </template>
       </DataTable>
-      <div v-if="responseFrom === 'Bridger' && amlResults.length" class="flex justify-end">
+      <div v-if="amlResults.length" class="flex justify-end">
         <x-button
           class="mt-2 ml-2"
           color="emerald"

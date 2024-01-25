@@ -17,19 +17,12 @@ const props = defineProps({
   businessCommuModeText: Array,
   kycLogs: Array,
   kycStatus: String,
-  quoteStatusCode: { type: [Object, String] },
-  isCurrentUserFromCompliance: { type: [Array, Number] },
-  isCurrentUserFromPaAml: { type: [Array, Number] },
-  firstAmlLogResults: { type: [Array, Number] },
-  latestAmlLogResults: { type: [Array, Number] },
-  getAMLNumRows: { type: [Array, Number] },
-  nationalityList: Array,
-  yearsList: Array,
-  isCompanySearchEnabled: { type: [Array, String] },
   customerDetails: Object,
   amlDecisionStatusEnum: Object,
   lookups: Object,
+    cardHolderName:Object,
 });
+
 const page = usePage();
 const rolesEnum = page.props.rolesEnum;
 const paymentsRef = ref(page.props.quoteRequest.payments);
@@ -55,17 +48,7 @@ const tableHeader = [
   { text: 'Date of Birth', value: 'date_of_birth' },
   { text: 'Screening Date', value: 'created_at' },
   { text: 'Status', value: 'status' },
-];
-
-const payersTableHeader = [
-  { text: 'PAYMENT REF ID', value: 'code' },
-  { text: 'PAYMENT METHOD', value: 'payment_method.name' },
-  {
-    text: 'PAYER NAME',
-    value: 'get_customer_payment_instrument.card_holder_name',
-  },
-  { text: 'TOTAL AMOUNT', value: 'captured_amount' },
-  { text: 'PAID BY', value: 'paid_by' },
+  { text: 'Notes', value: 'notes' },
 ];
 
 if (can(permissionsEnum.AMLDecisionUpdate)) {
@@ -101,9 +84,6 @@ const decisionStatus = {
     [props.amlDecisionStatusEnum.TRUE_MATCH_REJECT_RISK] : "Rejected",
 };
 
-onMounted(() => {
-  // paymentsRef.value = page.props.quoteRequest.payments;
-});
 </script>
 
 <template>
@@ -601,7 +581,7 @@ onMounted(() => {
 
     <!-- AML Screening Models Start -->
     <EntityModel
-        v-if="props.kycStatus === 'ENT'"
+        v-if="props.kycStatus === customerTypeEnum.EntityShort"
         v-model="modals.insuranceForm"
         :quoteType="quoteType"
         :quoteDetails="quoteRequest"
@@ -628,6 +608,7 @@ onMounted(() => {
       :lookups="lookups"
       :quote-aml-status="page.props.quoteAmlStatus"
       :customer-details="props.customerDetails"
+      :cardHolderName="cardHolderName"
     />
 
     <div class="p-4 rounded shadow mb-6 bg-white">

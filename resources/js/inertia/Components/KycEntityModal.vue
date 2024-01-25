@@ -39,9 +39,9 @@ const rules = {
 const kycForm = reactive({
   quote_uuid: props.quote.uuid,
   customer_id: props.quote.customer_id,
-  first_name: props.quote.first_name,
-  last_name: props.quote.last_name,
-  company_name: props.quote.company_name,
+  first_name: props.entityDetails?.entity?.kyc_first_name ?? props.quote.first_name,
+  last_name: props.entityDetails?.entity?.kyc_last_name ?? props.quote.last_name,
+  company_name: props.entityDetails?.entity?.company_name ?? props.quote.company_name ?? null,
   legal_structure: props.entityDetails?.entity?.legal_structure ?? null,
   industry_type: props.entityDetails?.entity?.industry_type_code ?? null,
   country_of_corporation: props.entityDetails?.entity?.country_of_corporation ?? 56, //Default UAE
@@ -91,8 +91,6 @@ const onKycSubmit = isValid => {
             title: 'KYC Document uploaded.',
             position: 'top',
           });
-          // props.status(false);
-          // props.buttonStatus(true);
         } else {
           notification.error({
             title: response.data.message,
@@ -168,11 +166,6 @@ const complianceDisable = reactive({
 });
 
 const complianceRules = computed(() => {
-  // return hasRole(props.roles.COMPLIANCE) ||
-  //   hasRole(props.roles.ComplianceSuperUser)
-  //   ? [rules.isRequired]
-  //   : [];
-
   return can(permissionsEnum.AMLDecisionUpdate) ||
     can(permissionsEnum.AMLDecisionUpdateTrueMatch)
     ? [rules.isRequired]
@@ -180,9 +173,6 @@ const complianceRules = computed(() => {
 });
 
 onMounted(() => {
-  // complianceDisable.isDisable = !(
-  //   hasRole(props.roles.COMPLIANCE) || hasRole(props.roles.ComplianceSuperUser)
-  // );
   complianceDisable.isDisable = !(
     can(permissionsEnum.AMLDecisionUpdate) ||
     can(permissionsEnum.AMLDecisionUpdateTrueMatch)
@@ -203,7 +193,7 @@ onMounted(() => {
       />
 
       <x-input
-        v-model="quote.first_name"
+        v-model="kycForm.first_name"
         label="First Name"
         placeholder="First Name"
         class="w-full"
@@ -211,7 +201,7 @@ onMounted(() => {
       />
 
       <x-input
-        v-model="quote.last_name"
+        v-model="kycForm.last_name"
         label="Last Name"
         placeholder="Last Name"
         class="w-full"
@@ -535,10 +525,6 @@ onMounted(() => {
     </div>
 
     <div class="flex justify-center gap-3 mt-7">
-      <!-- <x-button size="sm" @click.prevent="status(false)">
-        Cancel
-      </x-button> -->
-
       <x-button
         :loading="isLoading"
         size="sm"

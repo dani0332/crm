@@ -294,6 +294,8 @@ class CRUDController extends Controller
             $dateFormat = config('constants.DATE_FORMAT_ONLY');
             $createdAtStart = Carbon::parse(now())->startOfDay()->format($dateFormat);
             $createdAtEnd = Carbon::parse(now())->endOfDay()->format($dateFormat);
+            $genericRequestEnum = GenericRequestEnum::asArray();
+            $isBetaUser = auth()->user()->hasRole(RolesEnum::BetaUser);
 
             return inertia('PersonalQuote/Car/LeadList', [
                 'quotes' => $gridData,
@@ -307,6 +309,8 @@ class CRUDController extends Controller
                 'todayManualCount' => $todayManualCount,
                 'yesterdayAutoCount' => $yesterdayAutoCount,
                 'yesterdayManualCount' => $yesterdayManualCount,
+                'genericRequestEnum' => $genericRequestEnum,
+                'isBetaUser' => $isBetaUser,
             ]);
         }
 
@@ -754,6 +758,7 @@ class CRUDController extends Controller
                     ];
                 })->sortBy('label')->values();
             }
+            $documentTypes = $this->quoteDocumentService->getQuoteDocumentsForUpload(QuoteTypeId::Home);
 
             return inertia('HomeQuote/Show', [
                 'storageUrl' => storageUrl(),
@@ -797,6 +802,7 @@ class CRUDController extends Controller
                 'UBORelations' => $uboRelations,
                 'emirates' => $emirates,
                 'quoteType' => QuoteTypes::HOME,
+                'documentTypes' => $documentTypes,
             ]);
         }
 
@@ -812,7 +818,7 @@ class CRUDController extends Controller
                     $listQuotePlans = [];
                 }
             }
-
+            $coPayment = $this->healthQuoteService->getCoPayment($id);
             $uboDetails = CustomerMembersRepository::getBy($record->id, QuoteTypes::HEALTH->name, CustomerTypeEnum::Entity);
             $membersDetail = CustomerMembersRepository::getBy($record->id, QuoteTypes::HEALTH->name);
             $memberCategories = $this->lookupService->getMemberCategories();
@@ -883,6 +889,7 @@ class CRUDController extends Controller
                 'allowedDuplicateLOB' => $allowedDuplicateLOB,
                 'leadStatuses' => array_values($leadStatuses->toArray()),
                 'ecomDetails' => $ecomDetails,
+                'coPayment' => $coPayment,
                 'membersDetail' => $membersDetail,
                 'memberCategories' => $memberCategories,
                 'memberRelations' => $memberRelations,

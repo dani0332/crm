@@ -28,6 +28,7 @@ use App\Services\AMLService;
 use App\Services\CRUDService;
 use App\Services\DropdownSourceService;
 use App\Services\LookupService;
+use App\Services\QuoteDocumentService;
 use App\Services\RenewalsUploadService;
 use App\Services\TravelQuoteService;
 use Illuminate\Http\Request;
@@ -157,7 +158,7 @@ class TravelController extends Controller
         ];
         $assignmentTypes = [GenericRequestEnum::ASSIGN_WITHOUT_EMAIL => 'Without Email', GenericRequestEnum::ASSIGN_WITH_EMAIL => 'With Email'];
         $isQuoteDocumentEnabled = $this->travelQuoteService->quoteDocumentEnabled($this->genericModel->modelType);
-        $quoteDocuments = $this->travelQuoteService->getQuoteDocuments($this->genericModel->modelType, $record->id);
+        $quoteDocuments = (new QuoteDocumentService())->getQuoteDocuments($this->genericModel->modelType, $record->id);
         $displaySendPolicyButton = $this->travelQuoteService->displaySendPolicyButton($record, $quoteDocuments, self::TYPE_ID);
         $documentTypes = $this->travelQuoteService->getQuoteDocumentsForUpload(self::TYPE_ID);
         $documentTypes = collect($documentTypes)->groupBy('category');
@@ -194,6 +195,7 @@ class TravelController extends Controller
             'genderOptions' => $this->crudService->getGenderOptions(),
             'lostReasons' => $this->lookupService->getLostReasons(),
             'travelers' => CustomerMembersRepository::getBy($record->id, QuoteTypes::TRAVEL->name),
+            'aboveAgeMembers' => $this->travelQuoteService->getAboveAgeMembers($record->id),
             'ecomDetails' => $ecomDetails,
             'quoteDocuments' => array_values($quoteDocuments->toArray()),
             'documentTypes' => $documentTypes,
@@ -391,7 +393,6 @@ class TravelController extends Controller
                 'message' => $quotePlans,
             ], 404);
         }
-
         $listQuotePlans = $quotePlans->quotes->plans;
         foreach ($listQuotePlans as $listQuotePlan) {
             if ($listQuotePlan->id == $planId) {
@@ -417,7 +418,7 @@ class TravelController extends Controller
         }
 
         $data = [
-            'listQuotePlanName' => $listQuotePlanName,
+            'listQuotePlanName' => $listQuotePlanName ?? '',
             'providerCode' => $providerCode,
             'providerName' => $providerName,
             'travelType' => $travelType,

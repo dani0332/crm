@@ -276,7 +276,6 @@ class HealthQuoteService extends BaseService
 
     public function getGridData($model = null, $request = null)
     {
-
         $searchProperties = [];
         $isRenewalUser = Auth::user()->isRenewalUser();
         $isRenewalAdvisor = Auth::user()->isRenewalAdvisor();
@@ -893,7 +892,6 @@ class HealthQuoteService extends BaseService
 
     public function getQuotePlans($id)
     {
-
         $quoteUuId = HealthQuote::where('uuid', '=', $id)->value('uuid');
         $plansApiEndPoint = config('constants.KEN_API_ENDPOINT').'/get-health-quote-plans';
         $plansApiToken = config('constants.KEN_API_TOKEN');
@@ -948,6 +946,14 @@ class HealthQuoteService extends BaseService
 
             return $responseBodyAsString;
         }
+    }
+    public function getCoPayment($id)
+    {
+        $quoteUuId = HealthQuote::where('uuid', '=', $id)->first();
+        $coPayment = DB::table('health_plan_co_payments as hpcp')->where('id', $quoteUuId->health_plan_co_payment_id)->first();
+
+        return $coPayment;
+
     }
 
     public function getQuotePlansPriority($id)
@@ -1158,7 +1164,9 @@ class HealthQuoteService extends BaseService
                 ->addJob(new GetQuotePlansJob($lead))
                 ->then(function () use ($lead, $isReassignment, $previousAdvisorId) {
                     if (in_array($lead->health_team_type, [HealthTeamType::EBP, HealthTeamType::RM_NB, HealthTeamType::RM_SPEED])) {
-                        CammyJob::dispatch($lead, 'intro')->delay(now()->addSeconds(15));
+                        if ($lead->quote_status_id == QuoteStatusEnum::FollowedUp) {
+                            CammyJob::dispatch($lead, 'intro')->delay(now()->addSeconds(15));
+                        }
                         IntroEmailJob::dispatch(quoteTypeCode::Health, 'Capi', $lead->uuid, 'send-rm-intro-email', $previousAdvisorId, $isReassignment)->delay(now()->addSeconds(15));
                     }
                 })->dispatch();
@@ -1224,7 +1232,6 @@ class HealthQuoteService extends BaseService
         // Check if there is a previous advisor and the lead assignment date is today
         if ($previousAdvisorId !== null && Carbon::parse($oldAdvisorAssignedDate)->startOfDay() == now()->startOfDay()) {
             if ($previousAdvisorAllocationRecord !== null) {
-
                 // Determine if the previous assignment was system-assigned
                 $isSystemAssigned = in_array($previousAssignmentType, $systemAssignedTypes);
 
@@ -1333,10 +1340,17 @@ class HealthQuoteService extends BaseService
                     'dob' => $value['dob'],
                     'gender' => $value['gender'],
                     'memberCategoryText' => $value['memberCategoryText'],
-                    'premium' => (float) $value['premium'],
-                    'basmah' => (int) $value['basmah'],
-                    'vat' => (int) $value['vat'],
                 ];
+                if (isset($value['premium'])) {
+                    $array['premium'] = (float) $value['premium'];
+                }
+                if (isset($value['basmah'])) {
+                    $array['basmah'] = (int) $value['basmah'];
+                }
+                if (isset($value['vat'])) {
+                    $array['vat'] = (int) $value['vat'];
+                }
+
                 array_push($membersBreakDown, $array);
             }
             $plansArray['memberPremiumBreakdown'] = $membersBreakDown;
@@ -1518,8 +1532,8 @@ class HealthQuoteService extends BaseService
         }
 
         return response(['Payment not exist'], 403);
-
     }
+
     public function toggleSelection($data, $quoteTypeId)
     {
         $apiEndPoint = config('constants.KEN_API_ENDPOINT').'/toggle-embedded-product';
@@ -1546,6 +1560,7 @@ class HealthQuoteService extends BaseService
 
         return $response;
     }
+
     public function processCancelPayment($data)
     {
         $apiEndPoint = config('constants.MARSHALL_API_ENDPOINT').'/payment/checkout/cancel';
@@ -1585,8 +1600,10 @@ class HealthQuoteService extends BaseService
         $lead->save();
 
         if ($lead->quote_status_id == QuoteStatusEnum::Qualified) {
-            CammyJob::dispatch($lead, 'intro')->delay(now()->addSeconds(3));
             IntroEmailJob::dispatch(quoteTypeCode::Health, 'Capi', $lead->uuid, 'send-rm-intro-email', null, false)->delay(now()->addSeconds(3));
+        }
+        if ($lead->quote_status_id == QuoteStatusEnum::FollowedUp) {
+            CammyJob::dispatch($lead, 'intro')->delay(now()->addSeconds(3));
         }
     }
 

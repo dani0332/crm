@@ -5,6 +5,7 @@ import LazyCreatePlan from './Partials/CreatePlan.vue';
 import AssignTier from './Partials/AssignTier.vue';
 import FollowUpReasons from './Partials/FollowUpReasons.vue';
 import RiskRatingScoreDetails from '../../../Components/RiskRatingScoreDetails.vue';
+import {fileUploadErrorMessage} from "@/inertia/Composables/utilities.js";
 
 defineProps({
   quote: Object,
@@ -269,7 +270,6 @@ const documentsTable = reactive({
     { text: 'Document Name', value: 'document_name_text' },
     { text: 'Created At', value: 'created_at' },
     { text: 'Created By', value: 'created_by' },
-    { text: 'Action', value: 'action' },
   ],
 });
 
@@ -944,10 +944,17 @@ const docForm = useForm({
   file: null,
 });
 
-const uploadFile = (doc, files) => {
+const uploadFile = (doc, filesWithInfo) => {
   let url = '/quotes/car/documents/store';
-
-  if (files.length == 0) return;
+  const { files, rejectReason} = filesWithInfo;
+  if (files.length == 0) {
+    notification.error({
+      title: 'File upload failed',
+      position: 'top',
+    });
+    docForm.setError({error: fileUploadErrorMessage(doc, rejectReason)});
+    return false
+  };
   isUploading.value = true;
   docForm
     .transform(data => ({
@@ -966,12 +973,6 @@ const uploadFile = (doc, files) => {
         console.log(errors);
         notification.error({
           title: 'File upload failed',
-          position: 'top',
-        });
-      },
-      onSuccess: () => {
-        notification.success({
-          title: 'File Uploaded',
           position: 'top',
         });
       },
@@ -1105,9 +1106,9 @@ const onTogglePlans = toggle => {
 };
 const exportLoader = ref(false);
 const onExportPlans = () => {
-  if (selectedPlans.value.length < 3 || selectedPlans.value.length > 5) {
+  if (selectedPlans.value.length < 1 || selectedPlans.value.length > 5) {
     notification.error({
-      title: 'Please select 3 to 5 plans to download PDF.',
+      title: 'Please select 1 to 5 plans to download PDF.',
       position: 'top',
     });
     return;
@@ -2720,6 +2721,7 @@ const handleChildUpdate = planId => {
             isManualUpdate,
             isRenewal,
             isDisabled,
+            puaPremium
           }"
         >
           <p>{{ providerName }}</p>
@@ -2747,6 +2749,22 @@ const handleChildUpdate = planId => {
               class="mt-0.5 text-[10px]"
             >
               Hidden
+            </x-tag>
+
+            <x-tag
+                v-if="puaPremium && puaPremium != null"
+                size="xs"
+                class="mt-0.5 text-[10px] text-white"
+                style="background-color: #E00000"
+            >
+                <x-tooltip  position="right">
+                    <template #tooltip>
+                      <span class="font-medium">
+                          Pending Underwriter Approval (PUA) indicates that this quote is prepared using our internal rating calculator. Please contact the client to get the required documents, to proceed with generating a quote on the insurer portal and connect with the underwriter to obtain their approval.
+                       </span>
+                    </template>
+                    PUA
+                </x-tooltip>
             </x-tag>
           </div>
         </template>
