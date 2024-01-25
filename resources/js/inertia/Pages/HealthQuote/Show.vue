@@ -1733,9 +1733,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
                 <RiskRatingScoreDetails :quote="quote" :modelType="quoteType" />
               </dl>
               <dl
-                v-if="
-                  quote.customer_type === page.props.customerTypeEnum.Entity
-                "
+                v-if="quote.customer_type === page.props.customerTypeEnum.Entity"
                 class="grid md:grid-cols-2 gap-x-6 gap-y-4"
               >
                 <div class="grid sm:grid-cols-2">
