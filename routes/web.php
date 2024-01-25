@@ -104,6 +104,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
 
     Route::get('home', function () {
         $im_logo = getIMLogo();
+
         return inertia('Home/Home', compact('im_logo'));
     });
 

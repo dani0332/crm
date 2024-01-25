@@ -594,8 +594,10 @@ if (! function_exists('dateQueryFilter')) {
 }
 
 if (! function_exists('getIMLogo')) {
-    function getIMLogo()
+    function getIMLogo($isPDF = false)
     {
-        return asset('images/im_logo_21k-hi.png');
+        $imLogo = 'images/im_logo_21k-hi.png';
+
+        return $isPDF ? public_path($imLogo) : asset($imLogo);
     }
 }
