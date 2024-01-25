@@ -15,6 +15,7 @@ const showAddNotes = ref(false);
 const isEdit = ref(false);
 const isUploading = ref(false);
 const notes = ref(props.notes);
+const expandNotes = ref(false);
 
 const docForm = useForm({
   quote_id: props.quote?.id || null,
@@ -33,6 +34,24 @@ const tableHeader = reactive([
   { text: 'NOTES', value: 'note' },
   { text: 'LEAD STATUS', value: 'quote_status' },
   { text: 'ACTIONS', value: 'action' },
+]);
+
+const sampleData = reactive([
+  {
+    created_by: 'John Doe',
+    updated_at: '2022-01-25',
+    note: 'Lorem ipsum dolor sit amet,',
+    quote_status: 'Pending',
+    action: 'Edit',
+  },
+  {
+    created_by: 'Jane Smith',
+    updated_at: '2022-01-26',
+    note: 'Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. In hac habitasse platea dictumst. Vestibulum non augue eu sem laoreet bibendum. Mauris id turpis id ligula efficitur gravida nec in purus. Sed ut justo eu tellus tincidunt consectetur. Suspendisse potenti.',
+    quote_status: 'Approved',
+    action: 'Delete',
+  },
+  // Add more sample data as needed
 ]);
 
 const loader = ref({
@@ -212,16 +231,23 @@ const uploadFile = (doc, filesWithInfo) => {
           Add Notes
         </x-button>
       </div>
+      <!-- :items="notes.data || []" -->
       <DataTable
         table-class-name=""
         :headers="tableHeader"
-        :items="notes.data || []"
+        :items="sampleData"
         border-cell
         hide-rows-per-page
         hide-footer
         fixed-checkbox
         class="mt-5"
       >
+        <template #header-note="note">
+          <div class="flex gap-3 items-center">
+            {{ note.text }}
+            <x-icon @click="expandNotes = !expandNotes" icon="chevronDown" />
+          </div>
+        </template>
         <template #item-created_by="{ created_by }">
           {{ created_by.name }}
         </template>
@@ -236,7 +262,12 @@ const uploadFile = (doc, filesWithInfo) => {
           <template v-if="note.length < 40">
             {{ note }}
           </template>
-          <x-collapse v-else icon="chevronDown" show-icon>
+          <x-collapse
+            :expanded="expandNotes"
+            v-else
+            icon="chevronDown"
+            show-icon
+          >
             <div class="bg-gray-10 w-80">
               {{ note.slice(0, 40) }}
             </div>
