@@ -14,6 +14,7 @@ const props = defineProps({
 });
 
 const emit = defineEmits(['UpdateLeadsCount']);
+const loader = ref(false);
 
 const quoteStatusEnum = inject('quoteStatusEnum');
 const quoteTypeId = inject('quoteTypeId');
@@ -49,8 +50,8 @@ const updateList = async data => {
       title: response.data.message,
       position: 'top',
     });
+    return true;
   } catch ({ response }) {
-    console.log(response);
     notification.error({
       title: response.data.message,
       position: 'top',
@@ -68,6 +69,7 @@ const moveTask = async () => {
   // Wait for the confirmation result
   const confirmed = await new Promise(resolve => {
     resolveConfirm = resolve;
+    loader.value = false;
   });
 
   return confirmed;
@@ -106,6 +108,7 @@ useSortable(`#${props.title}`, leads.value, {
       }
     }
     let listResponse = await updateList(data);
+
     if (!listResponse) moveElemToOriginalList(e);
 
     showModal.value = false;
@@ -134,10 +137,13 @@ const showModal = ref(false);
 
 const onSubmit = isValid => {
   if (!isValid) return false;
+  loader.value = true;
   handleConfirmation(true);
 };
 
-const handleConfirmation = result => resolveConfirm(result);
+const handleConfirmation = result => {
+  resolveConfirm(result);
+};
 
 const getUrl = (url, quoteTypeId) => useGetShowPageRoute(url, quoteTypeId);
 </script>
@@ -252,7 +258,7 @@ const getUrl = (url, quoteTypeId) => useGetShowPageRoute(url, quoteTypeId);
         />
       </x-field>
       <div class="text-right space-x-4 mt-4">
-        <x-button type="submit">Continue</x-button>
+        <x-button type="submit" :loading="loader">Continue</x-button>
         <x-button color="orange" @click.prevent="handleConfirmation(false)">
           Go Back
         </x-button>
