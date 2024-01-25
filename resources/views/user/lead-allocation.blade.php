@@ -296,7 +296,7 @@
         </div>
         <div class="col-md-12 col-lg-12">
             <span style="font-size: 18px;">Unassigned leads count</span>
-        </div>
+        </div> 
         <div class="col-md-3 col-lg-2" style="margin-top: 10px; border-radius: 10px; border-left: 3px solid #e46122;margin-bottom: 20px;font-size: 26px;background: whitesmoke;height: 120px;padding-top: 10px;">
             <span style="font-size: 18px">Good </span>
             <br/>
