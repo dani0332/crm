@@ -3629,7 +3629,7 @@ const handleChildUpdate = planId => {
           </template>
           <template #item-due_date="{ due_date }">
             <template v-if="compareDueDate(due_date)">
-              <x-tooltip>
+              <x-tooltip align="right" position="top">
                 <p
                   :class="
                     compareDueDate(due_date) ? 'bg-error-300 rounded p-1' : ''
