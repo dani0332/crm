@@ -199,7 +199,14 @@ const bookingDetailsForm = useForm({
                   </x-tooltip>
                 </dt>
                 <dd>
-                  <span>{{ bookingDetailsForm.invoice_date }}</span>
+                  <DatePicker
+                    v-model="bookingDetailsForm.invoice_date"
+                    name="issuance_date"
+                    :disabled="!state.isEdit"
+                    placeholder="Enter insurer invoice date"
+                    :rules="[isRequired]"
+                  />
+                  <!-- <span>{{ bookingDetailsForm.invoice_date }}</span> -->
                 </dd>
               </div>
               
@@ -229,7 +236,14 @@ const bookingDetailsForm = useForm({
                   </x-tooltip>
                 </dt>
                 <dd>
-                  <span>{{ bookingDetailsForm.insurer_tax_invoice_number }}</span>
+                  <x-input
+                    type="number"
+                    v-model="bookingDetailsForm.insurer_tax_invoice_number"
+                    class="w-full"
+                    :disabled="!state.isEdit"
+                    placeholder="Enter insurer Tax Invoice Number"
+                  />
+                  <!-- <span>{{ bookingDetailsForm.insurer_tax_invoice_number }}</span> -->
                 </dd>
               </div>
               
@@ -319,7 +333,14 @@ const bookingDetailsForm = useForm({
                   </x-tooltip>
                 </dt>
                 <dd>
-                  <span>{{ bookingDetailsForm.commission_vat_applicable }}</span>
+                  <x-input
+                    type="number"
+                    v-model="bookingDetailsForm.commission_vat_applicable"
+                    class="w-full"
+                    :disabled="!state.isEdit"
+                    placeholder="Enter Commission Amount"
+                  />
+                  <!-- <span>{{ bookingDetailsForm.commission_vat_applicable }}</span> -->
                 </dd>
               </div>
               
@@ -379,7 +400,14 @@ const bookingDetailsForm = useForm({
                   </x-tooltip>
                 </dt>
                 <dd>
-                  <span>{{ bookingDetailsForm.price_vat_applicable }}</span>
+                  <x-input
+                    type="number"
+                    v-model="bookingDetailsForm.price_vat_applicable"
+                    class="w-full"
+                    :disabled="!state.isEdit"
+                    placeholder="Enter Price"
+                  />
+                  <!-- <span>{{ bookingDetailsForm.price_vat_applicable }}</span> -->
                 </dd>
               </div>
               
