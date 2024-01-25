@@ -1417,8 +1417,8 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
                 v-model="assignSubteam"
                 label="Assign Subteam"
                 :options="subTeamOptions"
-                placeholder="Select Subteam mb-2"
-                class="w-auto flex-1"
+                placeholder="Select Subteam"
+                class="w-auto flex-1 !mb-2"
               />
               <div>
                 <x-button
@@ -1441,7 +1441,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
                 label="Assign Lead"
                 :options="advisorOptions"
                 placeholder="Select Lead"
-                class="w-auto flex-1 mt-1"
+                class="w-auto flex-1 !mb-2"
                 :single="true"
               />
               <div>
@@ -2584,48 +2584,44 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
             class="flex-wrap"
             :hide-footer="listQuotePlansFiltered.length < 15"
           >
-            <template #item-copayName="item">
-              <span class="copay-max">{{ item.copayName }}</span>
-            </template>
-            <template
-              #item-providerName="{ providerName, isManualPlan, isHidden }"
-            >
-              <p>{{ providerName }}</p>
-              <div class="flex gap-1">
-                <x-tag
-                  v-if="isManualPlan"
-                  size="xs"
-                  color="primary"
-                  class="mt-0.5 text-[10px]"
-                >
-                  Manual Plan
-                </x-tag>
-                <x-tag
-                  v-if="isHidden"
-                  size="xs"
-                  color="error"
-                  class="mt-0.5 text-[10px]"
-                >
-                  Hidden
-                </x-tag>
-                <x-tag
-                  v-if="!isHidden"
-                  size="xs"
-                  color="success"
-                  class="mt-0.5 text-[10px]"
-                >
-                  Currently Online
-                </x-tag>
-              </div>
-            </template>
+          <template #item-copayName="item">
+            <span class="copay-max">{{ item.copayName }}</span>
+          </template>
+          <template #item-providerName="{ providerName, isManualPlan, isHidden }">
+            <p>{{ providerName }}</p>
+            <div class="flex gap-1">
+              <x-tag
+                v-if="isManualPlan"
+                size="xs"
+                color="primary"
+                class="mt-0.5 text-[10px]"
+              >
+                Manual Plan
+              </x-tag>
+              <x-tag
+                v-if="isHidden"
+                size="xs"
+                color="error"
+                class="mt-0.5 text-[10px]"
+              >
+                Hidden
+              </x-tag>
+              <x-tag
+                v-if="!isHidden"
+                size="xs"
+                color="success"
+                class="mt-0.5 text-[10px]"
+              >
+                Currently Online
+              </x-tag>
+            </div>
+          </template>
 
-            <template #item-total="{ actualPremium, policyFee, basmah, vat }">
-              {{
-                fixedValue(
-                  actualPremium + (policyFee || 0) + (basmah || 0) + vat,
-                )
-              }}
-            </template>
+          <template #item-total="{ actualPremium, policyFee, basmah, vat }">
+            {{
+              fixedValue(actualPremium + (policyFee || 0) + (basmah || 0) + vat)
+            }}
+          </template>
             <template #item-action="item">
               <div class="flex gap-2 pr-2">
                 <x-button
