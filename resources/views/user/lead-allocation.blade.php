@@ -148,7 +148,7 @@
             });
 
 
-            $('body').on('dblclick', 'table:first td:nth-last-child(2)', function() {
+            $('body').on('dblclick', 'table:first td:nth-last-child(3)', function() {
                 var maxCapValue = parseInt($(this).text());
                 if(maxCapValue !== NaN){
                     $(this).html(`<input type="text" class="form-control" value="${maxCapValue}" />`);
