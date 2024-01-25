@@ -51,7 +51,7 @@ const assignForm = useForm({
   isManualAllocationAllowed: 1,
 });
 
-const tableHeader = reactive([
+const tableHeader = ref([
   { text: 'Ref-ID', value: 'code', is_active: true },
   { text: 'FIRST NAME', value: 'first_name', is_active: true },
   { text: 'LAST NAME', value: 'last_name', is_active: true },
@@ -106,9 +106,9 @@ const tableHeader = reactive([
 const filteredTableHeader = computed(() => {
   let headers = [];
   if (!hasAnyRole([rolesEnum.RMAdvisor, rolesEnum.EBPAdvisor])) {
-    headers = tableHeader;
+    headers = tableHeader.value;
   } else {
-    headers = tableHeader.filter(
+    headers = tableHeader.value.filter(
       column => column.value !== 'source' && column.value !== 'assignment_type',
     );
   }

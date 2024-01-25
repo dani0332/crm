@@ -19,22 +19,30 @@ const storedState = useStorage(props.storageKey, {
 });
 
 function onChange() {
-  emit(
-    'update:columns',
-    headers.value.filter(c => c.is_active),
-  );
-  storedState.value.headers = headers.value;
+  try {
+    emit(
+      'update:columns',
+      headers.value.filter(c => c.is_active),
+    );
+    storedState.value.headers = headers.value;
+  } catch (error) {
+    console.error('Error in onChange:', error);
+  }
 }
 
 function onReset() {
-  headers.value = storedState.value.headers;
-  emit(
-    'update:columns',
-    headers.value.map(c => {
-      c.is_active = true;
-      return c;
-    }),
-  );
+  try {
+    headers.value = storedState.value.headers;
+    emit(
+      'update:columns',
+      headers.value.map(c => {
+        c.is_active = true;
+        return c;
+      }),
+    );
+  } catch (error) {
+    console.error('Error in onReset:', error);
+  }
 }
 
 onMounted(() => {
@@ -83,6 +91,7 @@ onMounted(() => {
                   >
                     <x-checkbox
                       v-model="column.is_active"
+                      :name="column.text"
                       size="sm"
                       class="!mb-0"
                       @update:model-value="onChange"
@@ -111,6 +120,7 @@ onMounted(() => {
                   >
                     <x-checkbox
                       v-model="column.is_active"
+                      :name="column.text"
                       size="sm"
                       class="!mb-0"
                       @update:model-value="onChange"
