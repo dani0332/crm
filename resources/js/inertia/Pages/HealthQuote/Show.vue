@@ -531,7 +531,7 @@ const plansTable = reactive({
     {
       text: 'CO-PAY/CO-INSURANCE',
       value: 'copayName',
-      width: 100
+      width: 100,
     },
     {
       text: 'Price',
@@ -829,14 +829,11 @@ const getSmallestCopayRateAsDefaultValue = () => {
       element.actualPremium = smallestCopayValue;
       element.vat = smallestCopayVAT;
     }
-      element.coPayments.forEach(function callback(value, index) {
-          if(value.id ==  element.selectedCopayId){
-              element.copayName = value.text;
-          }
-
-      });
-
-
+    element.coPayments.forEach(function callback(value, index) {
+      if (value.id == element.selectedCopayId) {
+        element.copayName = value.text;
+      }
+    });
   });
 
 };
@@ -1443,7 +1440,7 @@ const handlePlanSelected = plan => {
             label="Assign Subteam"
             :options="subTeamOptions"
             placeholder="Select Subteam"
-            class="w-auto flex-1 mb-2"
+            class="w-auto flex-1 !mb-2"
           />
           <div>
             <x-button
@@ -1461,14 +1458,14 @@ const handlePlanSelected = plan => {
           v-if="!hasRole($page.props.rolesEnum.HealthWCUAdvisor)"
           class="w-full md:w-1/2 flex gap-2 items-end"
         >
-            <ComboBox
-                v-model="assignLead"
-                label="Assign Lead"
-                :options="advisorOptions"
-                placeholder="Select Lead"
-                class="w-auto flex-1 mt-1"
-                :single="true"
-            />
+          <ComboBox
+            v-model="assignLead"
+            label="Assign Lead"
+            :options="advisorOptions"
+            placeholder="Select Lead"
+            class="w-auto flex-1 !mb-2"
+            :single="true"
+          />
           <div>
             <x-button
               color="orange"
@@ -1614,7 +1611,9 @@ const handlePlanSelected = plan => {
           }}
           Profile
         </h3>
-        <x-tag color="success" v-if="quote.kyc_decision === 'Complete'"> KYC - Complete </x-tag>
+        <x-tag color="success" v-if="quote.kyc_decision === 'Complete'">
+          KYC - Complete
+        </x-tag>
         <x-tag color="amber" v-else> KYC - Pending </x-tag>
       </div>
       <x-divider class="mb-4 mt-1" />
@@ -2332,10 +2331,10 @@ const handlePlanSelected = plan => {
             <dt class="font-medium">TOTAL PRICE (with VAT)</dt>
             <dd>{{ (selectedProviderPlan.premium) }}</dd>
           </div>
-            <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">CO-PAY / CO-INSURANCE</dt>
-                <dd>{{ (coPayment)?coPayment.text:'N/A' }}</dd>
-            </div>
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">CO-PAY / CO-INSURANCE</dt>
+            <dd>{{ coPayment ? coPayment.text : 'N/A' }}</dd>
+          </div>
         </dl>
       </div>
     </div>
@@ -2521,11 +2520,10 @@ const handlePlanSelected = plan => {
         class="flex-wrap"
         :hide-footer="listQuotePlansFiltered.length < 15"
       >
-          <template #item-copayName="item">
-              <span class="copay-max">{{item.copayName}}</span>
-          </template>
+        <template #item-copayName="item">
+          <span class="copay-max">{{ item.copayName }}</span>
+        </template>
         <template #item-providerName="{ providerName, isManualPlan, isHidden }">
-
           <p>{{ providerName }}</p>
           <div class="flex gap-1">
             <x-tag
@@ -2555,11 +2553,11 @@ const handlePlanSelected = plan => {
           </div>
         </template>
 
-          <template #item-total="{ actualPremium, policyFee, basmah, vat }">
-              {{
-                  fixedValue(actualPremium + (policyFee || 0) + (basmah || 0) + vat)
-              }}
-          </template>
+        <template #item-total="{ actualPremium, policyFee, basmah, vat }">
+          {{
+            fixedValue(actualPremium + (policyFee || 0) + (basmah || 0) + vat)
+          }}
+        </template>
         <template #item-action="item">
           <div class="flex gap-2 pr-2">
             <x-button
