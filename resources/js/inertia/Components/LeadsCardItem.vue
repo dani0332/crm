@@ -174,7 +174,7 @@ const getUrl = (url, quoteTypeId) => useGetShowPageRoute(url, quoteTypeId);
       ]"
     >
       <div class="flex flex-col">
-        <stale-leads-badge :date="stale_at" />
+        <stale-leads-badge :date="stale_at" :position="'bottom'" />
         <span class="font-semibold text-sm">
           {{ first_name }} {{ last_name }}
         </span>
