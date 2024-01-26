@@ -20,7 +20,7 @@ const serverOptions = ref({
 
 const filters = reactive({
   date: null,
-  line_of_bussiness: 'health',
+  lob: 'health',
   teams: null,
   advisors: null,
   filter_by: null,
@@ -138,7 +138,7 @@ const teams = ref([
 ]);
 
 const filteredTeams = computed(() => {
-  if (filters.line_of_bussiness != 'health') return teams.value.slice(0, 2);
+  if (filters.lob != 'health') return teams.value.slice(0, 2);
   else return teams.value.filter(team => team.value !== 'All');
 });
 
@@ -240,9 +240,9 @@ const presetDates = [
 
 function changeLob() {
   let specificHeaders = [];
-  if (filters.line_of_bussiness === 'health') {
+  if (filters.lob === 'health') {
     specificHeaders = healthHeaders.value;
-  } else if (filters.line_of_bussiness === 'corpline') {
+  } else if (filters.lob === 'corpline') {
     specificHeaders = corplineHeaders.value;
   }
   tableHeader.value = [...commonHeaders.value, ...specificHeaders];
@@ -287,7 +287,7 @@ onMounted(() => {
         <DatePicker
           v-model="filters.date"
           range
-          :max-range="92"
+          :max-range="365"
           size="sm"
           placeholder="Select Date"
           model-type="yyyy-MM-dd"
@@ -296,7 +296,7 @@ onMounted(() => {
       </x-field>
       <x-field label="Line Of Bussiness">
         <x-select
-          v-model="filters.line_of_bussiness"
+          v-model="filters.lob"
           placeholder="Search by Bussiness"
           :options="[
             { value: 'health', label: 'Health' },
@@ -346,7 +346,7 @@ onMounted(() => {
         />
       </x-field>
       <x-field
-        v-if="filters.line_of_bussiness == 'corpline'"
+        v-if="filters.lob == 'corpline'"
         label="Bussiness Insurance Type"
       >
         <ComboBox
@@ -358,7 +358,7 @@ onMounted(() => {
     <div class="flex gap-3 justify-end items-center">
       <!-- <ColumnSelection
         v-model:columns="tableHeader"
-        :storage-key="`staleleads-report-${filters.line_of_bussiness}`"
+        :storage-key="`staleleads-report-${filters.lob}`"
       /> -->
       <x-button size="sm" color="#ff5e00" type="submit">Search</x-button>
       <x-button size="sm" color="primary" @click.prevent="onReset">
