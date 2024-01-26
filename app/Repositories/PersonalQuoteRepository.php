@@ -130,7 +130,10 @@ class PersonalQuoteRepository extends BaseRepository
                 'payment_code' => $paymentData['code'],
             ]);
 
-            $quote->update(['quote_status_id' => QuoteStatusEnum::PaymentPending]);
+            $quote->update([
+                'quote_status_id' => QuoteStatusEnum::PaymentPending,
+                'quote_status_date' => now(),
+            ]);
 
             return $quote;
         });

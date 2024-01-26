@@ -279,6 +279,7 @@ class BridgerInsightService
             'AddedtoAcceptedList' => false,
             'AlertState' => 'Open',
             'Division' => 'Default Division',
+            'AssignmentType' => 'Role',
             'AssignedTo' => ['Administrator'],
             'Note' => $notes,
 
