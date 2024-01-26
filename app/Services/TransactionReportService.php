@@ -62,6 +62,7 @@ class TransactionReportService extends ManagementReport
             ->join('payment_gateway as pg', 'pg.id', '=', 'p.payment_gateway_id');
 
         $this->applyFilters($query, $request);
+
         return $query->simplePaginate(10)->withQueryString();
     }
 
