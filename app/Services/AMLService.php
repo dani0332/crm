@@ -272,7 +272,7 @@ class AMLService
             return false;
         }
         info('AML Screening Bridger - Lexis Nexis Decision update API Call. Quote Ref ID: '.$request->ref_id.' - AML ID: '.($request->aml_id ?? '-').' - Lexis Nexis Alert ID: '.($request->result_id ?? '-').'. Triggered by:'.auth()->user()->email);
-        
+
         $bridgerInsightService = new BridgerInsightService();
         $bridgerAPIToken = $bridgerInsightService->getJWTToken();
 
