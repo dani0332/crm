@@ -87,7 +87,8 @@ class UpdateLostStatus extends Command
                 ->chunkById(1000, function ($quoteDetails) use ($eligibleQuoteType, $lostReasonId){
                     foreach ($quoteDetails as $quoteDetail) {
                         $quoteDetail->update([
-                            'quote_status_id' => QuoteStatusEnum::Lost
+                            'quote_status_id' => QuoteStatusEnum::Lost,
+                            'quote_status_date' => now(),
                         ]);
 
                         info("Quote Found-" . $eligibleQuoteType. " - Quote ID: $quoteDetail->id - Quote Ref-ID: $quoteDetail->code - Old Status: $quoteDetail->quote_status_id - New Status: " . QuoteStatusEnum::Lost . " - Updated At: $quoteDetail->updated_at");
