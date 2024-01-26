@@ -999,30 +999,26 @@ class ActivitySchedulesSeeder extends Seeder
             ]
         ];
 
-        $finalSchedules = [];
         foreach ($schedules as $schedule) {
             foreach ($schedule['roles'] as $roleKey => $role) {
                 foreach ($role['teams'] as $teamKey => $team) {
                     foreach ($team['quote_status'] as $quoteStatusKey => $quoteStatus) {
                         foreach ($quoteStatus['activities'] as $key => $activity) {
-                            $finalSchedules[] = [
+                            ActivitySchedule::firstOrCreate([
                                 'quote_type_id' => $schedule['quote_type_id'],
+                                'quote_status_id' => $quoteStatusKey,
                                 'role_id' => $rolesArray[$roleKey],
                                 'team_id' => $teamsArray[$teamKey],
-                                'quote_status_id' => $quoteStatusKey,
                                 'name' => $activity['name'],
+                                'sorting_order' => ++$key
+                            ], [
                                 'description' => $activity['name'],
-                                'sorting_order' => ++$key,
                                 'due_days' => $activity['due_days'],
-                            ];
+                            ]);
                         }
                     }
                 }
             }
         }
-
-        // Inserting all the schedules
-        // Need to check if the schedule already exists
-        // ActivitySchedule::insert($finalSchedules);
     }
 }
