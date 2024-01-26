@@ -21,7 +21,7 @@ class SaleDetailReportService extends ManagementReport
         $query = PersonalQuote::query()
             ->select(
                 'policy_number',
-                DB::raw('COLLASCE(p.reference, p.tax_invoice_number) as transactions'),
+                DB::raw("CONCAT(p.reference, ' ', p.tax_invoice_number) as transactions"),
                 'policy_start_date',
                 'p.policy_due_date',
                 'source',
@@ -40,14 +40,14 @@ class SaleDetailReportService extends ManagementReport
                 'insurer_invoice_date as insurer_tax_invoice_date',
                 'payment_status.text as transaction_payment_status',
                 'p.captured_at as date_paid',
-                DB::raw('FORMAT(premium_captured,2) as collected_amount'),
+                DB::raw('FORMAT(personal_quotes.premium_captured,2) as collected_amount'),
                 'insurer_invoice_date as insurer_tax_invoice_date',
                 'payment_status.text as transaction_payment_status',
                 'p.captured_at as date_paid',
                 DB::raw('FORMAT(personal_quotes.premium_captured,2) as collected_amount'),
                 DB::raw("CONCAT(first_name, ' ', last_name) as customer_name"),
                 DB::raw("'customer_type' as customer_type"),
-                'ip.text as insurer',
+                'ip.code as insurer',
                 'quote_type.text as line_of_business',
                 DB::raw("'sub_type_line_of_business' as sub_type_line_of_business"),
                 'u.name as advisor',
@@ -59,7 +59,7 @@ class SaleDetailReportService extends ManagementReport
             ->leftJoin('users as u', 'u.id', '=', 'advisor_id')
             ->leftJoin('users as pi', 'pi.id', '=', 'p.policy_issuer_id')
             ->join('insurance_provider as ip', 'ip.id', '=', 'p.insurance_provider_id')
-            ->join('user_teams as ut', 'ut.user_id', '=', 'u.id')
+            ->join('user_team as ut', 'ut.user_id', '=', 'u.id')
             ->join('teams as t', 't.id', '=', 'ut.team_id');
 
         $this->applyFilters($query, $request);

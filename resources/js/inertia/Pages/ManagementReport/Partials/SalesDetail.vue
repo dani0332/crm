@@ -9,7 +9,7 @@ const props = defineProps({
 
 const tableHeader = reactive([
   {
-    text: 'Policy Number',
+    text: 'Policy No.',
     value: 'policy_number',
   },
   {
@@ -25,7 +25,7 @@ const tableHeader = reactive([
     value: 'payment_due_date',
   },
   {
-    text: 'Lead Source',
+    text: 'Source',
     value: 'lead_source',
   },
   {
@@ -37,7 +37,7 @@ const tableHeader = reactive([
     value: 'price_with_vat',
   },
   {
-    text: 'Total VAT',
+    text: 'T. VAT',
     value: 'total_vat',
   },
   {
@@ -49,7 +49,7 @@ const tableHeader = reactive([
     value: 'discount',
   },
   {
-    text: 'Total Price',
+    text: 'T. Price',
     value: 'total_price',
   },
   {
@@ -65,7 +65,7 @@ const tableHeader = reactive([
     value: 'commission_without_vat',
   },
   {
-    text: 'Total Commission',
+    text: 'T. Commission',
     value: 'total_commission',
   },
   {
@@ -73,7 +73,7 @@ const tableHeader = reactive([
     value: 'collects',
   },
   {
-    text: 'Insurer Tax Invoice Number',
+    text: 'Insurer Tax Inv No.',
     value: 'inurer_tax_invoice_number',
   },
   {
@@ -81,7 +81,7 @@ const tableHeader = reactive([
     value: 'tax_invoice_date',
   },
   {
-    text: 'Transaction Payment Status',
+    text: 'Payment Status',
     value: 'transaction_payment_status',
   },
   {

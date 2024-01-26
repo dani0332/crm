@@ -77,9 +77,7 @@ class ManagementReport
                 Carbon::parse(now())->startOfDay()->format(config('constants.DATE_FORMAT_ONLY')),
                 Carbon::parse(now())->endOfDay()->format(config('constants.DATE_FORMAT_ONLY')),
             ];
-            if (isset($request[$filterKey])) {
-                $query->whereBetween($fieldName, $dateRange);
-            }
+            $query->whereBetween($fieldName, $dateRange);
         };
 
         switch ($request['reportCategory']) {
@@ -140,18 +138,11 @@ class ManagementReport
 
         if (isset($request['teams']) && count($request['teams']) > 0) {
             $value = $request['teams'];
-            $query->whereIn('users.id', function ($query) use ($value) {
-                $query->distinct()
-                    ->select('users.id')
-                    ->from('users')
-                    ->join('user_team', 'user_team.user_id', 'users.id')
-                    ->join('teams', 'teams.id', 'user_team.team_id')
-                    ->whereIn('teams.id', $value);
-            });
+            $query->whereIn('t.id', $value);
         }
 
         if (isset($request['subTeams']) && ! empty($request['subTeams'])) {
-            $query->whereIn('users.sub_team_id', $request['subTeams']);
+            $query->whereIn('u.sub_team_id', $request['subTeams']);
         }
 
         if (isset($request['leadSource']) && ! empty($request['leadSource'])) {
