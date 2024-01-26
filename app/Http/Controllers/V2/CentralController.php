@@ -223,10 +223,15 @@ class CentralController extends Controller
         }
         if ($request->send_policy_type == 'customer') {
 
+
+            // dispath job to send email
+            dispatch(new SendBookPolicyDocumentsJob($request));
+
             $quote->update([
                 'quote_status_id' => QuoteStatusEnum::PolicySentToCustomer,
             ]);
-            $msg = 'policy sent successfully';
+
+            return response()->json(['message' => 'policy sent successfully'], 200);
         }
         if ($request->send_policy_type == 'sage') {
 
@@ -238,11 +243,7 @@ class CentralController extends Controller
 
             if ($payment->first() && $paymentSplits->first()) {
 
-                $quote->update([
-                    'quote_status_id' => QuoteStatusEnum::PolicyBooked,
-                ]);
 
-                $msg = 'policy booked successfully';
                 $sageService = new SageApiService();
                 $response = $sageService->postBookPolicyToSage($request, $payment, $quote, $paymentSplits, $data);
 
@@ -252,17 +253,22 @@ class CentralController extends Controller
                         'message' => $response['message'],
                     ]], 500);
                 }
+
+
+                // dispath job to send email
+                dispatch(new SendBookPolicyDocumentsJob($request));
+
+                $quote->update([
+                    'quote_status_id' => QuoteStatusEnum::PolicyBooked,
+                ]);
+
+                return response()->json(['message' => 'policy booked successfully'], 200);
             } else {
                 return response()->json(['errors' => [
                     'message' => 'Payment record not found',
                 ]], 500);
             }
         }
-
-        // dispath job to send email
-        dispatch(new SendBookPolicyDocumentsJob($request));
-
-        return response()->json(['message' => $msg], 200);
     }
     public function loadAvailablePlans($type, $id)
     {
