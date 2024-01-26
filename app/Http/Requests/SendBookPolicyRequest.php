@@ -56,11 +56,10 @@ class SendBookPolicyRequest extends FormRequest
                     }
                     $paymentSplit = PaymentSplits::where('code', $quote->code)->first();
                     if (!empty($paymentSplit)) {
+                        $invoiceDate = Carbon::parse($payment->insurer_invoice_date);
+                        $paymentDueDate = Carbon::parse($paymentSplit->due_date);
 
-                        $invoiceDate = Carbon::parse($payment->insurer_invoice_date)->format('Y-m-d');
-                        $paymentDueDate = Carbon::parse($paymentSplit->due_date)->format('Y-m-d');
-
-                        if ($paymentDueDate > $invoiceDate) {
+                        if ($invoiceDate->gt($paymentDueDate)) {
                             $validator->errors()->add('value', 'Payment Due date cannot be earlier than Insurer Invoice date');
                         }
                     }
