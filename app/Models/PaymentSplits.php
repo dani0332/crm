@@ -46,4 +46,9 @@ class PaymentSplits extends Model implements Auditable
 
         return $data;
     }
+
+    public function sageLog()
+    {
+        return $this->morphMany(SageApiLog::class, 'section');
+    }
 }
