@@ -20,7 +20,7 @@ class DatabaseSeeder extends Seeder
             AddGenericRolePermissionSeeder::class,
             addDubaiNowEmailGroup::class,
             DubaiLeadSource::class,
-            // ActivitySchedulesSeeder::class,
+            ActivitySchedulesSeeder::class,
             DocumentTypeSeeder::class,
         ]);
     }
