@@ -107,7 +107,7 @@ class ManagementReport
                 if ($request['reportType'] == ManagementReportTypeEnum::ACTIVE_POLICIES) {
                     $dateFilter = $request['createdAt'] ?? now()->startOfDay()->format(config('constants.DATE_FORMAT_ONLY'));
                     $query->where('policy_start_date', '>=', $dateFilter)
-                    ->where('p.policy_expiry_date', '<=', $dateFilter);
+                        ->where('p.policy_expiry_date', '<=', $dateFilter);
                 }
                 break;
         }

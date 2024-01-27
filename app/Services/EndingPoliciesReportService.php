@@ -55,7 +55,6 @@ class EndingPoliciesReportService extends ManagementReport
 
         $this->applyFilters($query, $request);
 
-        //dd($query->toSql(), $query->getBindings());
         return $query->simplePaginate(10)->withQueryString();
     }
     public function getDefaultFilters()

@@ -63,7 +63,8 @@ class TransactionReportService extends ManagementReport
             ->groupBy('personal_quotes.code');
 
         $this->applyFilters($query, $request);
-                //dd($query->toSql(), $query->getBindings());
+
+        //dd($query->toSql(), $query->getBindings());
         return $query->simplePaginate(10)->withQueryString();
     }
 
