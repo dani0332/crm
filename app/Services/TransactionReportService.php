@@ -51,18 +51,19 @@ class TransactionReportService extends ManagementReport
                 'insurer_invoice_date as insurer_tax_invoice_date',
                 'p.broker_invoice_number',
             )
-            ->leftJoin('payments as p', 'personal_quotes.code', '=', 'p.code')
-            ->leftJoin('quote_type', 'quote_type.id', '=', 'quote_type_id')
-            ->leftJoin('users as u', 'u.id', '=', 'advisor_id')
+            ->join('payments as p', 'personal_quotes.code', '=', 'p.code')
+            ->join('quote_type', 'quote_type.id', '=', 'quote_type_id')
+            ->join('users as u', 'u.id', '=', 'advisor_id')
             ->leftJoin('users as pi', 'pi.id', '=', 'p.policy_issuer_id')
             ->join('user_team as ut', 'ut.user_id', '=', 'u.id')
             ->join('teams as t', 't.id', '=', 'ut.team_id')
-            ->join('insurance_provider as ip', 'ip.id', '=', 'p.insurance_provider_id')
-            ->join('payment_methods as pm', 'pm.code', '=', 'p.payment_methods_code')
-            ->join('payment_gateway as pg', 'pg.id', '=', 'p.payment_gateway_id');
+            ->leftJoin('insurance_provider as ip', 'ip.id', '=', 'p.insurance_provider_id')
+            ->leftJoin('payment_methods as pm', 'pm.code', '=', 'p.payment_methods_code')
+            ->leftJoin('payment_gateway as pg', 'pg.id', '=', 'p.payment_gateway_id')
+            ->groupBy('personal_quotes.code');
 
         $this->applyFilters($query, $request);
-
+                //dd($query->toSql(), $query->getBindings());
         return $query->simplePaginate(10)->withQueryString();
     }
 

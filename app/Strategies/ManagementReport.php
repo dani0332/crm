@@ -78,6 +78,7 @@ class ManagementReport
                 Carbon::parse(now())->endOfDay()->format(config('constants.DATE_FORMAT_ONLY')),
             ];
             $query->whereBetween($fieldName, $dateRange);
+
         };
 
         switch ($request['reportCategory']) {
@@ -104,7 +105,9 @@ class ManagementReport
 
             case ManagementReportCategoriesEnum::ACTIVE_POLICIES:
                 if ($request['reportType'] == ManagementReportTypeEnum::ACTIVE_POLICIES) {
-                    $dateFilter('personal_quotes.policy_start_date', 'createdAt');
+                    $dateFilter = $request['createdAt'] ?? now()->startOfDay()->format(config('constants.DATE_FORMAT_ONLY'));
+                    $query->where('policy_start_date', '>=', $dateFilter)
+                    ->where('p.policy_expiry_date', '<=', $dateFilter);
                 }
                 break;
         }
@@ -131,8 +134,8 @@ class ManagementReport
             }
 
             if ($typeCode !== null) {
-                $typeId = $transactionTypes->where('code', $typeCode)->first()->id;
-                $query->where('p.type_id', $typeId);
+                $typeId = $transactionTypes->where('text', $typeCode)->first()->id;
+                $query->where('transaction_type_id', $typeId);
             }
         }
 

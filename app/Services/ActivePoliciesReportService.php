@@ -3,6 +3,8 @@
 namespace App\Services;
 
 use App\Enums\GenericRequestEnum;
+use App\Enums\ManagementReportCategoriesEnum;
+use App\Enums\ManagementReportTypeEnum;
 use App\Models\LeadSource;
 use App\Models\PersonalQuote;
 use App\Models\Team;
@@ -11,18 +13,32 @@ use App\Traits\TeamHierarchyTrait;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
-class ActivePoliciesReportService implements ManagementReport
+class ActivePoliciesReportService extends ManagementReport
 {
     use TeamHierarchyTrait;
 
     public function getReportData(Request $request)
     {
-        $groupBy = $request->groupBy;
+        $request['reportCategory'] = $request->reportCategory ?? ManagementReportCategoriesEnum::ACTIVE_POLICIES;
+        $request['reportType'] = $request->reportType ?? ManagementReportTypeEnum::ACTIVE_POLICIES;
+
         $query = PersonalQuote::query()
             ->select(
-                DB::raw('SUM(CASE WHEN COALESCE(policy_start_date, policy_number) IS NOT NULL THEN 1 ELSE 0 END) as total_policies'),
-                DB::raw('SUM(CASE WHEN send_update_ref_id is not null and send_update_type = "Financial" THEN 1 ELSE 0 END) as total_endorsements'),
-            )->get();
+                'ip.text as insurer',
+                'quote_type.text as line_of_business',
+                DB::raw('SUM(*) as active_policies'),
+                DB::raw('FORMAT(SUM(price_vat_applicable), 2) as price_vat_applicable'),
+                DB::raw('FORMAT(SUM(price_vat_not_applicable), 2) as price_vat_not_applicable'),
+            )
+            ->leftJoin('payments as p', 'personal_quotes.code', '=', 'p.code')
+            ->join('quote_type', 'quote_type.id', '=', 'quote_type_id')
+            ->leftJoin('insurance_provider as ip', 'ip.id', '=', 'p.insurance_provider_id')
+            ->groupBy('personal_quotes.code');
+
+        $this->applyFilters($query, $request);
+
+        dd($query->toSql(), $query->getBindings());
+        return $query->simplePaginate(10)->withQueryString();
     }
 
     public function getFilterOptions()
@@ -59,11 +75,6 @@ class ActivePoliciesReportService implements ManagementReport
     }
 
     public function getDefaultFilters()
-    {
-        // implementation goes here
-    }
-
-    public function applyFilters($query, $filters)
     {
         // implementation goes here
     }
