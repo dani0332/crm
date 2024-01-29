@@ -237,6 +237,7 @@ const hasAnyRole = role => useHasAnyRole(role);
 let lastMonthSummedIndex = 0;
 let lastMonthSummedIndexForSuperRetention = 0;
 let currentRowSpan = 0;
+let currentRowSpanForSuperRetention = 0;
 
 const rolesEnum = page.props.rolesEnum;
 
@@ -289,6 +290,8 @@ function calculateValuesAndHighlight() {
         }
 
         superItem.monthlyHealthRenewed = calculateMonthlyHealthRenewed(superRetentionDataRef, superIndex);
+        superItem.rowSpan = currentRowSpanForSuperRetention;
+
     });
 
     reportDataRef.forEach((item, index) => {
@@ -483,12 +486,15 @@ const calculateMonthlyHealthRenewed = (data, index) =>{
     var totalRenewed = 0;
     var currentMonthValue = data[index].month;
 
+    currentRowSpanForSuperRetention = 0;
+
     if (lastMonthSummedIndexForSuperRetention <= index) {
         while (index <= (data.length - 1) && currentMonthValue == data[index].month) {
 
             totalRenewed = parseInt(totalRenewed) + parseInt(data[index].health_converted);
             index++;
             lastMonthSummedIndexForSuperRetention = index;
+            currentRowSpanForSuperRetention++;
         }
 
         return Number(totalRenewed);
@@ -864,7 +870,7 @@ watch(
                             <td class="x-table-cell px-3 py-4 align-middle">
                                 {{ item.health_converted}}
                             </td>
-                            <td class="x-table-cell px-3 py-4 align-middle">
+                            <td v-if="item.rowSpan > 0" class="x-table-cell px-3 py-4 align-middle" :rowspan="item.rowSpan">
                                 <p v-if="totalAllocationList[item.month] == 0 || totalAllocationList[item.month] == undefined"> 0 % </p>
                                 <p v-else>{{ (((Number(item.monthlyHealthRenewed) + Number (renewedCountsList[item.month])) / Number(totalAllocationList[item.month])) * 100).toFixed(2)}} %</p>
                             </td>
