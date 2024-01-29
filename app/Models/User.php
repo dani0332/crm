@@ -165,7 +165,7 @@ class User extends Authenticatable implements AuditableContract
     {
         return Auth::user()->hasRole(RolesEnum::CarManager);
     }
-    
+
     public function isCarAdvisor()
     {
         return Auth::user()->hasRole(RolesEnum::CarAdvisor);

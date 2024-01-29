@@ -1,15 +1,15 @@
 <?php
 
-use Carbon\Carbon;
-use App\Enums\QuoteTypes;
-use App\Models\HealthQuote;
-use App\Enums\quoteTypeCode;
-use App\Enums\PermissionsEnum;
-use Illuminate\Support\Facades\DB;
 use App\Enums\IMCRMSearchTypesEnum;
+use App\Enums\PermissionsEnum;
+use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypes;
 use App\Models\CustomerAdditionalInfo;
+use App\Models\HealthQuote;
 use App\Services\HealthQuoteService;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\DB;
 
 if (! function_exists('generate_code')) {
     /**
@@ -207,7 +207,7 @@ function getDataAgainstStatus($modelType, $statusId, $myleads = null)
             $result['leads_list'] = $modelType::where('quote_status_id', $statusId)
                 ->where('advisor_id', \Auth::user()->id)
                 ->whereNull('previous_quote_id')->paginate(10);
-        } elseif( $modelType == HealthQuote::class && Auth::user()->isCarAdvisor() && Auth::user()->can(PermissionsEnum::HEALTH_QUOTES_ACCESS)) {
+        } elseif ($modelType == HealthQuote::class && Auth::user()->isCarAdvisor() && Auth::user()->can(PermissionsEnum::HEALTH_QUOTES_ACCESS)) {
             $result['total_leads'] = $modelType::where('quote_status_id', $statusId)
                 ->where('advisor_id', \Auth::user()->id)
                 ->whereNull('previous_quote_id')
@@ -224,7 +224,7 @@ function getDataAgainstStatus($modelType, $statusId, $myleads = null)
                 ->where('advisor_id', \Auth::user()->id)
                 ->whereNull('previous_quote_id')
                 ->paginate(10);
-        } elseif ($modelType == HealthQuote::class && Auth::user()->isCarManager() && Auth::user()->can(PermissionsEnum::HEALTH_QUOTES_MANAGER_ACCESS)){
+        } elseif ($modelType == HealthQuote::class && Auth::user()->isCarManager() && Auth::user()->can(PermissionsEnum::HEALTH_QUOTES_MANAGER_ACCESS)) {
 
             $ids = app(HealthQuoteService::class)->walkTree(Auth::user()->id);
 

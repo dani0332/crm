@@ -36,10 +36,10 @@ trait RolePermissionConditions
             $query->whereIn($prefix.'.'.'advisor_id', $ids);
             $query->whereNull($prefix.'.'.'previous_quote_policy_number');
         }
-        if($isCarManager && Auth::user()->can(PermissionsEnum::HEALTH_QUOTES_MANAGER_ACCESS)){
+        if ($isCarManager && Auth::user()->can(PermissionsEnum::HEALTH_QUOTES_MANAGER_ACCESS)) {
             $query->whereIn($prefix.'.'.'advisor_id', $ids);
         }
-        if($isCarAdvisor && Auth::user()->can(PermissionsEnum::HEALTH_QUOTES_ACCESS)){
+        if ($isCarAdvisor && Auth::user()->can(PermissionsEnum::HEALTH_QUOTES_ACCESS)) {
             $query->where($prefix.'.'.'advisor_id', Auth::user()->id);
         }
     }

@@ -2,13 +2,13 @@
 
 namespace App\Services;
 
+use App\Enums\PaymentStatusEnum;
+use App\Enums\QuoteStatusEnum;
+use App\Models\GenericModel;
 use App\Models\User;
 use Illuminate\Support\Arr;
-use App\Models\GenericModel;
-use App\Enums\QuoteStatusEnum;
-use App\Enums\PaymentStatusEnum;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class BaseService
 {
@@ -287,7 +287,6 @@ class BaseService
 
         return $result;
     }
-
 
     public function updatePaymentStatus($quote)
     {
