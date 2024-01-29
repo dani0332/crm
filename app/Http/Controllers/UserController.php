@@ -5,12 +5,14 @@ namespace App\Http\Controllers;
 use App\Enums\quoteTypeCode;
 use App\Enums\RolesEnum;
 use App\Enums\TeamTypeEnum;
+use App\Enums\UserStatusEnum;
 use App\Models\Team;
 use App\Models\User;
 use App\Services\LeadAllocationService;
 use App\Services\UserService;
 use App\Traits\TeamHierarchyTrait;
 use Auth;
+use Carbon\Carbon;
 use DataTables;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -363,5 +365,26 @@ class UserController extends Controller
                 'users.id',
                 DB::raw('CONCAT(users.name, " - ", roles.name) as name')
             )->get();
+    }
+    public function updateUserStatus(Request $request){
+        $currentDateTime = Carbon::now();
+        $startDateTime = Carbon::parse('18:30:00'); // 6:30 PM
+        $endDateTime = Carbon::parse('08:59:00')->addDay(); // 8:59 AM of the next day
+        $user = User::find(auth()->user()->id);
+        $user->status = $request->user_status == true?UserStatusEnum::ONLINE:UserStatusEnum::MANUAL_OFFLINE;
+        $user->update();
+       // dd($currentDateTime);
+        if (
+            ($currentDateTime->isWeekday() && $currentDateTime->between($startDateTime, $endDateTime))
+            || ($currentDateTime->isWeekend())
+        ) {
+
+
+            // Current time is within the specified range on weekdays or any time on Saturday and Sunday
+            echo "Current time is between 6:30 PM and 8:59 AM of the next day, and it's a weekday or weekend.";
+        } else {
+            // Current time is outside the specified range or it's not a weekday or weekend
+            echo "Current time is outside the specified range or it's not a weekday or weekend.";
+        }
     }
 }

@@ -40,7 +40,7 @@ class LeadAllocationController extends Controller
      */
     public function index(Request $request)
     {
-        if (Gate::allows('view-lead-allocation', auth()->user())) {
+        // if (Gate::allows('view-lead-allocation', auth()->user())) {
             $totalAssignedLeadCount = 0;
             $availableUsers = 0;
             $unAvailableUsers = 0;
@@ -61,9 +61,9 @@ class LeadAllocationController extends Controller
             }
 
             return view('user.lead-allocation', compact(['totalAssignedLeadCount', 'availableUsers', 'unAvailableUsers', 'isAutoAllocationWorking']));
-        } else {
+      /*  } else {
             abort(403, 'Unauthorized action.');
-        }
+        } */
     }
 
     /**

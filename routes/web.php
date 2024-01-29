@@ -527,6 +527,6 @@ Route::group(['middleware' => ['auth.rest']], function () {
         Route::POST('/store', [UploadResourceController::class, 'store']);
     });
 });
-
+Route::post('/update-user-status', [UserController::class, 'updateUserStatus'])->name('update-user-status');
 Route::POST('/processInslyRenewalData', [RenewalDataProcessingController::class, 'FetchAndProcessInslyData'])
     ->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class]);

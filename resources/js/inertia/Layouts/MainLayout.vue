@@ -1,4 +1,6 @@
 <script setup>
+import {XToggle} from "@indielayer/ui";
+
 const page = usePage();
 const user = computed(() => page.props.auth.user);
 const navLinks = computed(() => page.props.sidebar);
@@ -13,6 +15,74 @@ const onLogout = () => {
     window.location.href = '/login';
   });
 };
+const userStatus = ref(false);
+const onStatusChange = async () => {
+    console.log('yeeee status',userStatus.value);
+    await axios
+        .post('/update-user-status', {
+            user_status: userStatus.value,
+        })
+        .then(res => {
+
+        })
+        .finally(() => {
+
+           // statusModal.show = false;
+        });
+};
+
+
+const isButtonVisible = ref(false);
+
+const shouldShowButton = () => {
+    console.log('current day ----------');
+    const currentTime = new Date().toLocaleString('en-US', { timeZone: 'Asia/Dubai' });
+    const currentDay = new Date(currentTime).getDay();
+    const currentHour = new Date(currentTime).getHours();
+
+    // Show the button all day on Saturday and Sunday
+    console.log('current day',currentDay);
+    if (currentDay === 6 || currentDay === 0 || currentDay === 1) {
+        return true;
+    }
+
+    // Show the button outside the range 9:00 AM to 6:30 PM on other days
+    return !(currentHour >= 9 && currentHour < 18 && new Date(currentTime).getMinutes() >= 0);
+};
+
+const scheduleUpdate = () => {
+    const now = new Date().toLocaleString('en-US', { timeZone: 'Asia/Dubai' });
+    let nextUpdate = new Date(now);
+    isButtonVisible.value = shouldShowButton();
+
+    // Calculate the time until the next scheduled update
+    if (nextUpdate.getHours() < 9 || (nextUpdate.getHours() === 9 && nextUpdate.getMinutes() <= 1)) {
+        nextUpdate.setHours(9, 0, 1);
+    } else if (nextUpdate.getHours() >= 18 || (nextUpdate.getHours() === 18 && nextUpdate.getMinutes() >= 30)) {
+        // If it's past 6:30 PM, schedule the next update for the next day at 9:00 AM
+        nextUpdate.setDate(nextUpdate.getDate() + 1);
+        nextUpdate.setHours(9, 0, 1);
+    } else {
+        // Schedule the next update for the same day at 6:30 PM
+        nextUpdate.setHours(18, 30, 1);
+    }
+
+    // Schedule the next check after the calculated time difference
+    setTimeout(() => {
+        isButtonVisible.value = shouldShowButton();
+        scheduleUpdate();
+    }, nextUpdate - new Date());
+};
+
+onMounted(() => {
+    // Schedule the first check
+    scheduleUpdate();
+    userStatus.value = (user.status ==1)?true:false;
+});
+
+
+
+
 </script>
 
 <template>
@@ -244,6 +314,7 @@ const onLogout = () => {
             </div>
 
             <div class="flex gap-3 items-center">
+                <x-toggle v-model="userStatus"  v-if="isButtonVisible" @change="onStatusChange"  ></x-toggle>
               <!-- <UserStatus /> -->
               <x-popover align="right" block>
                 <x-button size="sm" ghost>
