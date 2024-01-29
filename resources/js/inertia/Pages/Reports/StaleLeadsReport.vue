@@ -131,9 +131,9 @@ const commonHeaders = ref([
 const tableHeader = ref(commonHeaders.value);
 
 const teams = ref([
-  { value: 'renewal', label: 'Renewal' },
-  { value: 'new_bussiness', label: 'New Bussiness' },
-  { value: 'ebp', label: 'EBP' },
+  { value: 8, label: 'Renewal' },
+  { value: 19, label: 'New Bussiness' },
+  { value: 21, label: 'EBP' },
   { value: 'speed', label: 'Speed' },
 ]);
 
@@ -185,24 +185,23 @@ const onTeamChange = e => {
   //   isDirty.value = true;
   // }
 
-  // loaders.advisorOptions = true;
-
-  console.log(e);
+  loaders.advisorOptions = true;
   axios
-    .post(`/reports/fetch-advisor-by-team`, {
+    .post(route('fetch-advisors-by-team'), {
       teamIds: Array.isArray(e) ? e : [e],
     })
     .then(res => {
-      if (res.data.length > 0) {
-        advisorOptions.value = Object.keys(res.data).map(key => ({
-          value: res.data[key].id,
-          label: res.data[key].name,
+      console.log(res);
+      if (res.data.advisors.length > 0) {
+        advisorOptions.value = Object.keys(res.data.advisors).map(key => ({
+          value: res.data.advisors[key].id,
+          label: res.data.advisors[key].name,
         }));
       }
+    })
+    .finally(() => {
+      loaders.advisorOptions = false;
     });
-  // .finally(() => {
-  //   loaders.advisorOptions = false;
-  // });
 };
 
 const [
@@ -314,6 +313,7 @@ onMounted(() => {
           v-model="filters.teams"
           placeholder="Select Team"
           :options="filteredTeams"
+          :loading="loaders.advisorOptions"
           class="w-full"
           @update:modelValue="onTeamChange($event)"
         />
