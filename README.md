@@ -43,7 +43,7 @@ This repository use Laravel Vite to build assets like CSS and JavaScript, use th
 
 Make sure to run `yarn prod` before every push so the assets are compiled with the updates.
 
-**Assets Configuration**
+**Code Formatting**
 
 This project has pint configured, make sure to run `yarn pint:fix` before every push to the code repo.
 
