@@ -22,6 +22,7 @@ class HealthQuoteRepository extends BaseRepository
             'insuranceProvider'
         ])
         ->filter(! $forExport, $forTotalLeadsCount)
+        ->withFakeLeadCriteria($forTotalLeadsCount)
         ->orderBy('created_at', 'desc');
 
         if ($forTotalLeadsCount) {

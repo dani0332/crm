@@ -283,6 +283,7 @@ class CRUDController extends Controller
                 'todayManualCount' => $todayManualCount,
                 'yesterdayAutoCount' => $yesterdayAutoCount,
                 'yesterdayManualCount' => $yesterdayManualCount,
+                'totalCount' => HealthQuoteRepository::getData(true, true)
             ]);
         }
 
@@ -300,6 +301,7 @@ class CRUDController extends Controller
                 'leadStatuses' => $quote_status,
                 'advisors' => $advisors,
                 'isManualAllocationAllowed' => $isManualAllocationAllowed,
+                'totalCount' => HomeQuoteRepository::getData(true, true)
             ]);
         }
 

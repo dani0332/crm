@@ -14,7 +14,6 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\CycleQuoteRequest;
 use App\Models\Emirate;
 use App\Models\Nationality;
-use App\Models\PersonalQuote;
 use App\Repositories\ActivityRepository;
 use App\Repositories\CustomerMembersRepository;
 use App\Repositories\CycleQuoteRepository;
@@ -50,6 +49,7 @@ class CycleQuoteController extends Controller
             'quotes' => $personalQuotes,
             'quoteStatuses' => $quoteStatuses,
             'advisors' => $advisors,
+            'totalCount' => CycleQuoteRepository::getData(true, true)
         ]);
     }
 
