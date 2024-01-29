@@ -4,6 +4,10 @@ defineProps({
   leadStatuses: Array,
   advisors: Array,
   isManualAllocationAllowed: Boolean,
+  totalCount: {
+    type: Number,
+    default: 0,
+  },
 });
 
 const page = usePage();
@@ -32,6 +36,8 @@ const serverOptions = ref({
   sortBy: 'created_at',
   sortType: 'desc',
 });
+
+const leadsCount = ref(page.props.totalCount);
 
 const tableHeader = ref([
   { text: 'Ref-ID', value: 'code', is_active: true },
@@ -177,8 +183,25 @@ function onAssignLead(isValid) {
   }
 }
 
+const options = {
+  cluster: 'ap1',
+  forceTLS: false,
+};
+
+const pusher = new Pusher(page.props.pusherKey, options);
+const channel = pusher.subscribe(
+  'public.' + page.props.appEnv + '.total-leads-count',
+);
+
+const listen = () => {
+  channel.bind('leads.count', function (e) {
+    leadsCount.value = e.totalLeadsCount;
+  });
+};
+
 onMounted(() => {
   setQueryStringFilters();
+  listen();
 
   let filtersCleaned = cleanObj(filters);
 
@@ -200,17 +223,11 @@ onMounted(() => {
   filtersCount.value = Object.keys(filtersCleaned).length;
 });
 
-watch(
-  () => filters,
-  () => {
-    if (filters.created_at_start && filters.created_at_end) {
-      canExport.value = true;
-    } else {
-      canExport.value = false;
-    }
-  },
-  { deep: true, immediate: true },
-);
+onUnmounted(() => {
+  channel.unbind('leads.count');
+  channel.unsubscribe('public.' + page.props.appEnv + '.total-leads-count');
+});
+
 
 watch(
   () => serverOptions.value,
@@ -227,9 +244,7 @@ watch(
       <div class="flex items-center gap-5">
         <h2 class="text-xl font-semibold">Home List</h2>
         <x-tooltip>
-          <span class="border-2 rounded px-3 bg-gray-200 text-sm font-medium">{{
-            quotes?.leadsCount ?? 0
-          }}</span>
+          <span class="border-2 rounded px-3 bg-gray-200 text-sm font-medium">{{ leadsCount }}</span>
           <template #tooltip>
             <span>Total Leads received since {{ previousDate() }}</span>
           </template>

@@ -9,6 +9,10 @@ defineProps({
     type: String,
     default: 'yacht',
   },
+  totalCount: {
+    type: Number,
+    default: 0,
+  },
 });
 
 const page = usePage();
@@ -38,6 +42,7 @@ let availableFilters = {
 const filters = reactive(availableFilters);
 const canExport = ref(false);
 const hasRole = role => useHasRole(role);
+const leadsCount = ref(page.props.totalCount);
 
 const params = useUrlSearchParams('history');
 const cleanObj = obj => useCleanObj(obj);
@@ -169,8 +174,25 @@ function setQueryStringFilters() {
   }
 }
 
+const options = {
+  cluster: 'ap1',
+  forceTLS: false,
+};
+
+const pusher = new Pusher(page.props.pusherKey, options);
+const channel = pusher.subscribe(
+  'public.' + page.props.appEnv + '.total-leads-count',
+);
+
+const listen = () => {
+  channel.bind('leads.count', function (e) {
+    leadsCount.value = e.totalLeadsCount;
+  });
+};
+
 onMounted(() => {
   setQueryStringFilters();
+  listen();
 
   if (hasRole(rolesEnum.YachtManager) || hasRole(rolesEnum.Admin)) {
     permissionAssignLeads.value = true;
@@ -194,19 +216,13 @@ onMounted(() => {
   }
 
   filtersCount.value = Object.keys(filtersCleaned).length;
+  
 });
 
-watch(
-  () => filters,
-  () => {
-    if (filters.created_at_start && filters.created_at_end) {
-      canExport.value = true;
-    } else {
-      canExport.value = false;
-    }
-  },
-  { deep: true, immediate: true },
-);
+onUnmounted(() => {
+  channel.unbind('leads.count');
+  channel.unsubscribe('public.' + page.props.appEnv + '.total-leads-count');
+});
 
 watch(
   () => serverOptions.value,
@@ -223,9 +239,7 @@ watch(
       <div class="flex items-center gap-5">
         <h2 class="text-xl font-semibold">Yacht Quotes List</h2>
         <x-tooltip>
-          <span class="border-2 rounded px-3 bg-gray-200 text-sm font-medium">{{
-            quotes?.leadsCount ?? 0
-          }}</span>
+          <span class="border-2 rounded px-3 bg-gray-200 text-sm font-medium">{{ leadsCount }}</span>
           <template #tooltip>
             <span>Total Leads received since {{ previousDate() }}</span>
           </template>

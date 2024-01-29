@@ -186,7 +186,7 @@ const getUrl = (url, quoteTypeId) => useGetShowPageRoute(url, quoteTypeId);
         </span>
       </div>
 
-      <div class="flex items-center gap-2" v-if="quoteTypeId == 3">
+      <div class="flex items-center gap-2">
         <x-tooltip align="left">
           <x-icon icon="person" size="sm" class="text-primary-400" />
           <template #tooltip>
@@ -195,7 +195,7 @@ const getUrl = (url, quoteTypeId) => useGetShowPageRoute(url, quoteTypeId);
             </div>
           </template>
         </x-tooltip>
-        <p class="text-xs">{{ health_cover_for?.text }}</p>
+        <p class="text-xs">{{ quoteTypeId == 3 ? health_cover_for?.text : 'Dummy Data' }}</p>
       </div>
 
       <div v-if="company_name" class="flex items-center gap-2">
