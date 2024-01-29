@@ -14,8 +14,8 @@ const params = useUrlSearchParams('history');
 const cleanObj = obj => useCleanObj(obj);
 const serverOptions = ref({
   page: 1,
-  sortBy: 'created_at',
-  sortType: 'desc',
+  sortBy: 'team',
+  sortType: 'asc',
 });
 
 const filters = reactive({
@@ -269,6 +269,13 @@ onMounted(() => {
   setQueryStringFilters();
   changeLob();
 });
+
+watch(
+  () => serverOptions.value,
+  (newValue, oldValue) => {
+    if (oldValue !== newValue) onSubmit(true);
+  },
+);
 </script>
 <template>
   <Head title="Pipeline Report" />
@@ -284,7 +291,7 @@ onMounted(() => {
           range
           :max-range="365"
           size="sm"
-          placeholder="Select Date"
+          placeholder="Select Date (default last 30 days)"
           model-type="yyyy-MM-dd"
           :preset-dates="presetDates"
         />
@@ -360,8 +367,8 @@ onMounted(() => {
     </div>
   </x-form>
   <DataTable
-    class="mt-4"
-    table-class-name="lining-nums"
+    v-model:server-options="serverOptions"
+    table-class-name="lining-nums mt-4"
     :loading="loaders.table"
     :headers="[
       ...tableHeader,
