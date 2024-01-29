@@ -34,11 +34,18 @@ Once you have doppler CLI installed on your local machine, run the following com
 - ```doppler run -- php artisan <any command>``` will run the laravel commands using your doppler configured profile.
 
 **Assets Configuration**
+
 This repository use Laravel Vite to build assets like CSS and JavaScript, use the following commands once modifying these files. Yarn will be our default package manager.
 
 - Run ```yarn``` so all the necassary packages are installed 
 - Run ```yarn prod``` to generate a production build
 - Run ```yarn dev``` to hot load the changes as you make them while development.
+
+Make sure to run `yarn prod` before every push so the assets are compiled with the updates.
+
+**Assets Configuration**
+
+This project has pint configured, make sure to run `yarn pint:fix` before every push to the code repo.
 
 **Redis Allocated DBs**
 - Prod - 15
