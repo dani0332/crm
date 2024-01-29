@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\AssignmentTypeEnum;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\DatabaseColumnsString;
+use App\Enums\DefaultAdvisorEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\HealthTeamType;
 use App\Enums\LeadSourceTypes;
@@ -301,10 +302,12 @@ class HealthQuoteService extends BaseService
         ) {
             $this->query->where('hqr.quote_status_id', '!=', QuoteStatusEnum::Fake);
         }
-        if (isset($request->assigned_to_date_start) && $request->assigned_to_date_start != '') {
-            $dateFrom = $this->parseDate($request['assigned_to_date_start'], true);
-            $dateTo = $this->parseDate($request['assigned_to_date_end'], false);
+        if (! empty($request->assigned_to_date_start) && ! empty($request->assigned_to_date_end)) {
+            $dateFrom = date('Y-m-d 00:00:00', strtotime($request['assigned_to_date_start']));
+            $dateTo = date('Y-m-d 23:59:59', strtotime($request['assigned_to_date_end']));
+
             $this->query->whereBetween('hqrd.advisor_assigned_date', [$dateFrom, $dateTo]);
+            $this->query->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate]);
         }
         if (isset($request->next_followup_date) && $request->next_followup_date != '') {
             $dateFrom = $this->parseDate($request['next_followup_date'], true);
@@ -363,11 +366,11 @@ class HealthQuoteService extends BaseService
         if (! isset($request->email) && $request->email == '') {
             $this->query->where('hqr.quote_status_id', '!=', 9);
         }
-        if (isset($request->assigned_to_date_start) && $request->assigned_to_date_start != '') {
+        /*if (isset($request->assigned_to_date_start) && $request->assigned_to_date_start != '') {
             $dateFrom = $this->parseDate($request['assigned_to_date_start'], true);
             $dateTo = $this->parseDate($request['assigned_to_date_end'], false);
             $this->query->whereBetween('hqrd.advisor_assigned_date', [$dateFrom, $dateTo]);
-        }
+        }*/
         if (isset($request->next_followup_date) && $request->next_followup_date != '') {
             $dateFrom = $this->parseDate($request['next_followup_date'], true);
             $dateTo = $this->parseDate($request['next_followup_date_end'], true);
@@ -381,8 +384,13 @@ class HealthQuoteService extends BaseService
         if (isset($request->quote_status) && is_array($request->quote_status) && count($request->quote_status) > 0) {
             $this->query->whereIn('quote_status_id', $request->quote_status);
         }
+
+        if (isset($request->advisors) && in_array(DefaultAdvisorEnum::UNASSIGNED, $request->advisors)) {
+            $this->query->whereNull('hqr.advisor_id');
+        }
+
         // advisors filter
-        if (isset($request->advisors) && is_array($request->advisors) && count($request->advisors) > 0) {
+        if (isset($request->advisors) && is_array($request->advisors) && count($request->advisors) > 0 && ! in_array(DefaultAdvisorEnum::UNASSIGNED, $request->advisors)) {
             $this->query->whereIn('advisor_id', $request->advisors)->orWhereIn('wcu_id', $request->advisors);
         }
         // is_renewal filter
