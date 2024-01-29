@@ -20,7 +20,7 @@ const serverOptions = ref({
 
 const filters = reactive({
   date: null,
-  lob: 'health',
+  lob: 'Health',
   teams: null,
   advisors: null,
   filter_by: null,
@@ -138,7 +138,7 @@ const teams = ref([
 ]);
 
 const filteredTeams = computed(() => {
-  if (filters.lob != 'health') return teams.value.slice(0, 2);
+  if (filters.lob != 'Health') return teams.value.slice(0, 2);
   else return teams.value.filter(team => team.value !== 'All');
 });
 
@@ -240,9 +240,9 @@ const presetDates = [
 
 function changeLob() {
   let specificHeaders = [];
-  if (filters.lob === 'health') {
+  if (filters.lob === 'Health') {
     specificHeaders = healthHeaders.value;
-  } else if (filters.lob === 'corpline') {
+  } else if (filters.lob === 'Corpline') {
     specificHeaders = corplineHeaders.value;
   }
   tableHeader.value = [...commonHeaders.value, ...specificHeaders];
@@ -299,11 +299,11 @@ onMounted(() => {
           v-model="filters.lob"
           placeholder="Search by Bussiness"
           :options="[
-            { value: 'health', label: 'Health' },
-            { value: 'pet', label: 'Pet' },
-            { value: 'cycle', label: 'Cycle' },
-            { value: 'home', label: 'Home' },
-            { value: 'corpline', label: 'Corpline' },
+            { value: 'Health', label: 'Health' },
+            { value: 'Pet', label: 'Pet' },
+            { value: 'Cycle', label: 'Cycle' },
+            { value: 'Home', label: 'Home' },
+            { value: 'Corpline', label: 'Corpline' },
           ]"
           class="w-full"
           @update:modelValue="filters.teams = null"

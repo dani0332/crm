@@ -20,7 +20,7 @@ const serverOptions = ref({
 
 const filters = reactive({
   date: null,
-  lob: 'health',
+  lob: 'Health',
   teams: null,
   advisors: null,
   filter_by: null,
@@ -138,7 +138,7 @@ const teams = ref([
 ]);
 
 const filteredTeams = computed(() => {
-  if (filters.lob != 'health') return teams.value.slice(0, 2);
+  if (filters.lob != 'Health') return teams.value.slice(0, 2);
   else return teams.value.filter(team => team.value !== 'All');
 });
 
@@ -240,9 +240,9 @@ const presetDates = [
 
 function changeLob() {
   let specificHeaders = [];
-  if (filters.lob === 'health') {
+  if (filters.lob === 'Health') {
     specificHeaders = healthHeaders.value;
-  } else if (filters.lob === 'corpline') {
+  } else if (filters.lob === 'Corpline') {
     specificHeaders = corplineHeaders.value;
   }
   tableHeader.value = [...commonHeaders.value, ...specificHeaders];
@@ -299,11 +299,11 @@ onMounted(() => {
           v-model="filters.lob"
           placeholder="Search by Bussiness"
           :options="[
-            { value: 'health', label: 'Health' },
-            { value: 'pet', label: 'Pet' },
-            { value: 'cycle', label: 'Cycle' },
-            { value: 'home', label: 'Home' },
-            { value: 'corpline', label: 'Corpline' },
+            { value: 'Health', label: 'Health' },
+            { value: 'Pet', label: 'Pet' },
+            { value: 'Cycle', label: 'Cycle' },
+            { value: 'Home', label: 'Home' },
+            { value: 'Corpline', label: 'Corpline' },
           ]"
           class="w-full"
           @update:modelValue="filters.teams = null"
@@ -346,7 +346,7 @@ onMounted(() => {
         />
       </x-field>
       <x-field
-        v-if="filters.lob == 'corpline'"
+        v-if="filters.lob == 'Corpline'"
         label="Bussiness Insurance Type"
       >
         <ComboBox
@@ -356,10 +356,6 @@ onMounted(() => {
       </x-field>
     </div>
     <div class="flex gap-3 justify-end items-center">
-      <!-- <ColumnSelection
-        v-model:columns="tableHeader"
-        :storage-key="`staleleads-report-${filters.lob}`"
-      /> -->
       <x-button size="sm" color="#ff5e00" type="submit">Search</x-button>
       <x-button size="sm" color="primary" @click.prevent="onReset">
         Reset

@@ -7,6 +7,7 @@ use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
+use App\Enums\QuoteTypes;
 use App\Models\CarQuote;
 use App\Models\LeadSource;
 use App\Models\PaymentStatus;
@@ -270,15 +271,15 @@ class ReportService extends BaseService
 
     public function getStaleLeadsReport($request)
     {
-        $lob = $request->lob ?? 'health';
+        $lob = $request->lob ?? QuoteTypes::HEALTH->value;
         $start = $request->date[0] ?? Carbon::now()->subDays(30)->format('Y-m-d H:i:s');
         $end = $request->date[1] ?? Carbon::now()->format('Y-m-d H:i:s');
 
-        if ($lob == 'pet' || $lob == 'cycle' || $lob == 'yacht') {
+        if ($lob == QuoteTypes::PET->value || $lob == QuoteTypes::CYCLE->value || $lob == QuoteTypes::YACHT->value) {
             $pqs = [
-                'pet' => QuoteTypeId::Pet,
-                'cycle' => QuoteTypeId::Cycle,
-                'yacht' => QuoteTypeId::Yacht,
+                QuoteTypes::PET->value => QuoteTypeId::Pet,
+                QuoteTypes::CYCLE->value => QuoteTypeId::Cycle,
+                QuoteTypes::YACHT->value => QuoteTypeId::Yacht,
             ];
 
             $tableName = 'personal_quotes';
@@ -305,7 +306,7 @@ class ReportService extends BaseService
                 ->whereBetween('q.created_at', [$start, $end])
                 ->groupBy('q.advisor_id');
         } else {
-            $tableName = $lob.'_quote_request';
+            $tableName = strtolower($lob).'_quote_request';
 
             $query = DB::table($tableName.' AS q')
                 ->leftJoin('users AS u', 'u.id', '=', 'q.advisor_id')
@@ -314,7 +315,7 @@ class ReportService extends BaseService
                 ->whereNull('q.renewal_import_code');
             // ->whereNotNull('q.stale_at')
 
-            if ($lob == 'health') {
+            if ($lob == QuoteTypes::HEALTH->value) {
                 $query->select(
                     'q.health_team_type AS team',
                     DB::raw(
@@ -334,7 +335,7 @@ class ReportService extends BaseService
                 )
                 ->whereNotNull('q.health_team_type')
                 ->groupBy('q.health_team_type');
-            } elseif ($lob == 'home') {
+            } elseif ($lob == QuoteTypes::HOME->value) {
                 $query->select(
                     'u.name AS team',
                     DB::raw(
@@ -358,15 +359,15 @@ class ReportService extends BaseService
 
     public function getPipelineReport($request)
     {
-        $lob = $request->lob ?? 'health';
+        $lob = $request->lob ?? QuoteTypes::HEALTH->value;
         $start = $request->date[0] ?? Carbon::now()->subDays(30)->format('Y-m-d H:i:s');
         $end = $request->date[1] ?? Carbon::now()->format('Y-m-d H:i:s');
 
-        if ($lob == 'pet' || $lob == 'cycle' || $lob == 'yacht') {
+        if ($lob == QuoteTypes::PET->value || $lob == QuoteTypes::CYCLE->value || $lob == QuoteTypes::YACHT->value) {
             $pqs = [
-                'pet' => QuoteTypeId::Pet,
-                'cycle' => QuoteTypeId::Cycle,
-                'yacht' => QuoteTypeId::Yacht,
+                QuoteTypes::PET->value => QuoteTypeId::Pet,
+                QuoteTypes::CYCLE->value => QuoteTypeId::Cycle,
+                QuoteTypes::YACHT->value => QuoteTypeId::Yacht,
             ];
 
             $tableName = 'personal_quotes';
@@ -393,7 +394,7 @@ class ReportService extends BaseService
                 ->whereBetween('q.created_at', [$start, $end])
                 ->groupBy('q.advisor_id');
         } else {
-            $tableName = $lob.'_quote_request';
+            $tableName = strtolower($lob).'_quote_request';
 
             $query = DB::table($tableName.' AS q')
                 ->leftJoin('users AS u', 'u.id', '=', 'q.advisor_id')
@@ -401,7 +402,7 @@ class ReportService extends BaseService
                 ->whereBetween('q.created_at', [$start, $end])
                 ->whereNull('q.renewal_import_code');
 
-            if ($lob == 'health') {
+            if ($lob == QuoteTypes::HEALTH->value) {
                 $query->select(
                     'q.health_team_type AS team',
                     DB::raw(
@@ -421,7 +422,7 @@ class ReportService extends BaseService
                 )
                 ->whereNotNull('q.health_team_type')
                 ->groupBy('q.health_team_type');
-            } elseif ($lob == 'home') {
+            } elseif ($lob == QuoteTypes::HOME->value) {
                 $query->select(
                     'u.name AS team',
                     DB::raw(
