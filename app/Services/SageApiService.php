@@ -7,9 +7,12 @@ use App\Models\Customer;
 use App\Models\Lookup;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
+use App\Traits\SageLoggable;
 
 class SageApiService
 {
+    use SageLoggable;
+
     protected $sageLogin;
     protected $sagePassword;
     protected $sageRequestUrl;
@@ -68,47 +71,47 @@ class SageApiService
         return $sageRequest;
     }
 
-    public function verifySageCustomer($customerId, $data = null)
+    public function verifySageCustomer($customerId, $data = null, $logModal = null, $sageLogArray = [], $totalSteps = 4)
     {
         $customer = Customer::find($customerId);
-        $customer->data = !empty($data) ? $data : [];
+        $customer->data = ! empty($data) ? $data : [];
+        $sageCustomerNumber = false;
+        $payLoadOptions['endPoint'] = 'AR/ARCustomers';
+        $payLoadOptions['payload'] = [];
+        $response = '';
         if ($customer) {
-
-            $payLoadOptions = SagePayloadFactory::createCustomerPayload($customer);
-            info('custimerApi===payload===' . json_encode($payLoadOptions['payload']));
-            $jsonResponse = $this->postToSage300($payLoadOptions['endPoint'], $payLoadOptions['payload']);
-            info('custimerApi===resp===' . $jsonResponse);
-            $response = json_decode($jsonResponse, true);
-
-            if (isset($response['error']['code']) && $response['error']['code'] == 'RecordDuplicate') {
-                return $payLoadOptions['customerNumber'];
-            } elseif (isset($response['CustomerNumber'])) {
-                return $response['CustomerNumber'];
+            if( $customer->sage_customer_number ) {
+                $this->logSageApiCall($payLoadOptions, $response, $logModal, 1, $totalSteps);
+                $sageCustomerNumber = $customer->sage_customer_number;
             } else {
-                return false;
+                $isLiveApiCallStep1 = true;
+                if (isset($sageLogArray[1]) && $sageLogArray[1]['status'] == 'success') {
+                    $isLiveApiCallStep1 = false;
+                    $response = json_decode($sageLogArray[1]['response'], true);
+                } else {
+                    $payLoadOptions = SagePayloadFactory::createCustomerPayload($customer);
+                    $jsonResponse = $this->postToSage300($payLoadOptions['endPoint'], $payLoadOptions['payload']);
+                    $response = json_decode($jsonResponse, true);
+                }
+                if (isset($response['error']['code']) && $response['error']['code'] == 'RecordDuplicate') {
+                    $sageCustomerNumber = $payLoadOptions['customerNumber'];
+                } elseif (isset($response['CustomerNumber'])) {
+                    $sageCustomerNumber = $response['CustomerNumber'];
+                }
+                if ($sageCustomerNumber) {
+                    if ($isLiveApiCallStep1) {
+                        $this->logSageApiCall($payLoadOptions, $response, $logModal, 1, $totalSteps);
+                    }
+                    unset($customer->data);
+                    $customer->sage_customer_number = $sageCustomerNumber;
+                    $customer->save();
+                } else {
+                    $this->logSageApiCall($payLoadOptions, $response, $logModal, 1, $totalSteps, 'fail');
+                }
             }
         }
+        return $sageCustomerNumber;
     }
-
-    /*
-    public function verifySageCustomer($customerId)
-    {
-        $customer = Customer::find($customerId);
-        if ($customer) {
-            $payLoadOptions = SagePayloadFactory::createCustomerPayload($customer);
-            $jsonResponse = $this->postToSage300($payLoadOptions['endPoint'], $payLoadOptions['payload']);
-
-            $response = json_decode($jsonResponse, true);
-            //dd($response);
-            if (isset($response['error']['code']) && $response['error']['code'] == 'RecordDuplicate') {
-                return $payLoadOptions['customerNumber'];
-            } elseif (isset($response['CustomerNumber'])) {
-                return $response['CustomerNumber'];
-            } else {
-                return false;
-            }
-        }
-    }*/
 
     public function postToSage300($endPoint, $payLoad, $verb = 'POST')
     {

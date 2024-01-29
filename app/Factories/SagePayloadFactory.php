@@ -314,7 +314,6 @@ class SagePayloadFactory
     {
         $payLoad = [
             'BatchStatus' => 'ReadyToPost',
-
         ];
 
         return [

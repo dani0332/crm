@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\GenericRequestEnum;
 use App\Enums\LeadSourceEnum;
+use App\Enums\PaymentStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
@@ -202,21 +203,39 @@ class CentralService
      */
     public function savePlanDetails($quoteType, $code, $data)
     {
-        $repository = getRepositoryObject($quoteType);
+        return DB::transaction(function () use ($quoteType, $code, $data) {
 
-        $priceVatApp = $data->price_vat_applicable ?? 0;
-        $priceVatNotApp = $data->price_vat_not_applicable ?? 0;
+            $repository = getRepositoryObject($quoteType);
 
-        if ($quoteType == QuoteTypes::BUSINESS->value) {
-            $data->price_with_vat = ($priceVatApp + $priceVatNotApp) + (($priceVatApp / 100) * 5);
-        } else {
-            $data->price_with_vat = $priceVatApp ? ($priceVatApp + (($priceVatApp / 100) * 5)) : $priceVatNotApp;
-        }
+            $priceVatApp = $data->price_vat_applicable ?? 0;
+            $priceVatNotApp = $data->price_vat_not_applicable ?? 0;
 
-        $quote = $repository::where('code', $code)->firstOrFail();
-        $quote->update($data->toArray());
+            if ($quoteType == QuoteTypes::BUSINESS->value) {
+                $data->price_with_vat = ($priceVatApp + $priceVatNotApp) + (($priceVatApp / 100) * 5);
+            } else {
+                $data->price_with_vat = $priceVatApp ? ($priceVatApp + (($priceVatApp / 100) * 5)) : $priceVatNotApp;
+            }
 
-        return true;
+            $quote = $repository::where('code', $code)->firstOrFail();
+
+            if ($quote->payments()->count() > 0) {
+
+                $payment = $quote->payments->first();
+
+                $paymentData = ['total_price' => $data->price_with_vat];
+
+                if ($data->price_with_vat > $payment->total_price && $payment->payment_status_id == PaymentStatusEnum::PAID) {
+                    $paymentData['payment_status_id'] = PaymentStatusEnum::PARTIALLY_PAID;
+                }
+
+                $payment->update($paymentData);
+            }
+
+            $quote->update($data->toArray());
+
+            return true;
+
+        });
     }
 
     public function updateSelectedPlan($quoteType, $uuid, $data)
