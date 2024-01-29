@@ -20,7 +20,7 @@ const serverOptions = ref({
 
 const filters = reactive({
   date: null,
-  line_of_bussiness: 'health',
+  lob: 'Health',
   teams: null,
   advisors: null,
   filter_by: null,
@@ -131,14 +131,14 @@ const commonHeaders = ref([
 const tableHeader = ref(commonHeaders.value);
 
 const teams = ref([
-  { value: 'renewal', label: 'Renewal' },
-  { value: 'new_bussiness', label: 'New Bussiness' },
-  { value: 'ebp', label: 'EBP' },
-  { value: 'speed', label: 'Speed' },
+  { value: 47, label: 'Renewal' },
+  { value: 42, label: 'New Bussiness' },
+  { value: 21, label: 'EBP' },
+  { value: 19, label: 'Speed' },
 ]);
 
 const filteredTeams = computed(() => {
-  if (filters.line_of_bussiness != 'health') return teams.value.slice(0, 2);
+  if (filters.lob != 'Health') return teams.value.slice(0, 2);
   else return teams.value.filter(team => team.value !== 'All');
 });
 
@@ -173,36 +173,31 @@ function onReset() {
 }
 
 const onTeamChange = e => {
-  // if (e.length == 0) {
-  //   filters.teams = [];
-  //   filters.advisors = [];
-  //   advisorOptions.value = [];
+  if (e.length == 0) {
+    filters.teams = [];
+    filters.advisors = [];
+    advisorOptions.value = [];
 
-  //   return;
-  // }
+    return;
+  }
 
-  // if (isMounted.value) {
-  //   isDirty.value = true;
-  // }
+  loaders.advisorOptions = true;
 
-  // loaders.advisorOptions = true;
-
-  console.log(e);
   axios
-    .post(`/reports/fetch-advisor-by-team`, {
+    .post(route('fetch-advisors-by-team'), {
       teamIds: Array.isArray(e) ? e : [e],
     })
     .then(res => {
-      if (res.data.length > 0) {
-        advisorOptions.value = Object.keys(res.data).map(key => ({
-          value: res.data[key].id,
-          label: res.data[key].name,
+      if (res.data.advisors.length > 0) {
+        advisorOptions.value = Object.keys(res.data.advisors).map(key => ({
+          value: res.data.advisors[key].id,
+          label: res.data.advisors[key].name,
         }));
       }
+    })
+    .finally(() => {
+      loaders.advisorOptions = false;
     });
-  // .finally(() => {
-  //   loaders.advisorOptions = false;
-  // });
 };
 
 const [
@@ -240,9 +235,9 @@ const presetDates = [
 
 function changeLob() {
   let specificHeaders = [];
-  if (filters.line_of_bussiness === 'health') {
+  if (filters.lob === 'Health') {
     specificHeaders = healthHeaders.value;
-  } else if (filters.line_of_bussiness === 'corpline') {
+  } else if (filters.lob === 'Corpline') {
     specificHeaders = corplineHeaders.value;
   }
   tableHeader.value = [...commonHeaders.value, ...specificHeaders];
@@ -287,7 +282,7 @@ onMounted(() => {
         <DatePicker
           v-model="filters.date"
           range
-          :max-range="92"
+          :max-range="365"
           size="sm"
           placeholder="Select Date"
           model-type="yyyy-MM-dd"
@@ -296,14 +291,14 @@ onMounted(() => {
       </x-field>
       <x-field label="Line Of Bussiness">
         <x-select
-          v-model="filters.line_of_bussiness"
+          v-model="filters.lob"
           placeholder="Search by Bussiness"
           :options="[
-            { value: 'health', label: 'Health' },
-            { value: 'pet', label: 'Pet' },
-            { value: 'cycle', label: 'Cycle' },
-            { value: 'home', label: 'Home' },
-            { value: 'corpline', label: 'Corpline' },
+            { value: 'Health', label: 'Health' },
+            { value: 'Pet', label: 'Pet' },
+            { value: 'Cycle', label: 'Cycle' },
+            { value: 'Home', label: 'Home' },
+            { value: 'Corpline', label: 'Corpline' },
           ]"
           class="w-full"
           @update:modelValue="filters.teams = null"
@@ -314,6 +309,7 @@ onMounted(() => {
           v-model="filters.teams"
           placeholder="Select Team"
           :options="filteredTeams"
+          :loading="loaders.advisorOptions"
           class="w-full"
           @update:modelValue="onTeamChange($event)"
         />
@@ -332,6 +328,7 @@ onMounted(() => {
           :select-all="filters.advisors?.length > 0"
           :deselect-all="filters.advisors?.length > 0"
           class="w-full"
+          :loading="loaders.advisorOptions"
         />
       </x-field>
       <x-field label="Filter By">
@@ -346,7 +343,7 @@ onMounted(() => {
         />
       </x-field>
       <x-field
-        v-if="filters.line_of_bussiness == 'corpline'"
+        v-if="filters.lob == 'corpline'"
         label="Bussiness Insurance Type"
       >
         <ComboBox
@@ -358,7 +355,7 @@ onMounted(() => {
     <div class="flex gap-3 justify-end items-center">
       <!-- <ColumnSelection
         v-model:columns="tableHeader"
-        :storage-key="`staleleads-report-${filters.line_of_bussiness}`"
+        :storage-key="`staleleads-report-${filters.lob}`"
       /> -->
       <x-button size="sm" color="#ff5e00" type="submit">Search</x-button>
       <x-button size="sm" color="primary" @click.prevent="onReset">

@@ -147,6 +147,7 @@ class ReportsController extends Controller
 
         return inertia('Reports/StaleLeadsReport', [
             'reportData' => $data,
+
         ]);
     }
 
@@ -156,6 +157,20 @@ class ReportsController extends Controller
 
         return inertia('Reports/PipelineReport', [
             'reportData' => $data,
+        ]);
+    }
+
+    public function fetchAdvisorsByTeam(Request $request)
+    {
+        $advisors = $this->getUsersByTeamIds($request->teamIds)->pluck('id')->toArray();
+
+        return response()->json([
+            'advisors' => User::whereIn('id', $advisors)
+                ->select('name', 'id')
+                ->orderBy('name')
+                ->where('is_active', 1)
+                ->get()
+                ->toArray(),
         ]);
     }
 
