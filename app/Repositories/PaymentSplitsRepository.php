@@ -221,17 +221,17 @@ class PaymentSplitsRepository
                     if ($paymentSplit) {
 
                         //create sage reciept
-                        /*if ($paymentSplit->sage_reciept_id==null || $paymentSplit->sage_reciept_id=='' ) {
+                        if ($paymentSplit->sage_reciept_id==null || $paymentSplit->sage_reciept_id=='' ) {
                             $request->collection_amount = $splitAmount;
                             $sageResponse = $this->createSageRecipt($request,$paymentSplit);
                             if ($sageResponse['status'] == 'success'){
-                                $paymentSplit->sage_reciept_id = $sageResponse['response'];                                
+                                $paymentSplit->sage_reciept_id = $sageResponse['response'];
                             } else {
                                 $sageMessage = $sageResponse['response'];
-                                return $sageMessage;
+                                vAbort($sageMessage);                                  
                             }
-                        }*/
-
+                        }
+                        
                         if ($paymentSplit->payment_method == PaymentMethodsEnum::CreditCard) {
                             //Marshal Service to capture split payment
                             $response = app(CRUDService::class)->capturePayment($quoteModel, $paymentSplit, $quoteTypeId, $splitAmount);
@@ -268,7 +268,7 @@ class PaymentSplitsRepository
     }
 
     public function updatePaymentStatus($request)
-    {
+    { 
         $successMessage = 'Payment Verified';
         if ($request->is_approved) {
             $paymentInformation = [
@@ -304,7 +304,8 @@ class PaymentSplitsRepository
                 $paymentInformation['sage_reciept_id'] = $sageResponse['response'];
                 $splitPayment->update($paymentInformation);               
             } else {
-                $successMessage = $sageResponse['response'];
+                $failMessage = $sageResponse['response'];
+                vAbort($failMessage);                
             }
         } elseif ($request->is_declined) {
             $splitPayment = PaymentSplits::find($request->splitPaymentId);
@@ -337,11 +338,8 @@ class PaymentSplitsRepository
             $returnMessage['response'] = 'Customer not found in sage';
             return $returnMessage;
         }
-        //$sageCustomerNumber = 'IC008';
         $request->merge(['sage_customer_number' => $sageCustomerNumber]);
         // create prepayment reciept        
-       
-        //dd($sageLogArray[2]);
         $isLiveApiCallStep2 = true;
         if (isset($sageLogArray[2]) && $sageLogArray[2]['status'] == 'success') {
             $isLiveApiCallStep2 = false;

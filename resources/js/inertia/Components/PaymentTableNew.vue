@@ -719,7 +719,7 @@ const calculatePaymentBreakup = (changeMethod = true) => {
     var trueValuesCount = trueValuesArray.length;
     if(paymentMethodsForm.payment_no <= trueValuesCount){ 
       paymentMethodsForm.payment_no = oldTotalPayments.value;
-      isDowngradeFrequencyError.value = true;      
+      isDowngradeFrequencyError.value = true; 
       return;
     }    
   }
@@ -1295,11 +1295,11 @@ const addPayment = isValid => {
             location.reload();
           }, 500);
         },
-        onError: () => {
+        onError: (res) => {
           notification.error({
-            title: 'Payment Update Failed',
+            title: res.error,
             position: 'top',
-          });
+          });         
         },
       });
     return;
@@ -1327,9 +1327,9 @@ const addPayment = isValid => {
         onSuccess: () => {
           createPaymentModal.value = false;
         },
-        onError: () => {
+        onError: (res) => {          
           notification.error({
-            title: 'Payment Update Failed',
+            title: res.error,
             position: 'top',
           });
         },
