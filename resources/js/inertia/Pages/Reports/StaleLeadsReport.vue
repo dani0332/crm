@@ -173,25 +173,21 @@ function onReset() {
 }
 
 const onTeamChange = e => {
-  // if (e.length == 0) {
-  //   filters.teams = [];
-  //   filters.advisors = [];
-  //   advisorOptions.value = [];
+  if (e.length == 0) {
+    filters.teams = [];
+    filters.advisors = [];
+    advisorOptions.value = [];
 
-  //   return;
-  // }
-
-  // if (isMounted.value) {
-  //   isDirty.value = true;
-  // }
+    return;
+  }
 
   loaders.advisorOptions = true;
+
   axios
     .post(route('fetch-advisors-by-team'), {
       teamIds: Array.isArray(e) ? e : [e],
     })
     .then(res => {
-      console.log(res);
       if (res.data.advisors.length > 0) {
         advisorOptions.value = Object.keys(res.data.advisors).map(key => ({
           value: res.data.advisors[key].id,
@@ -332,6 +328,7 @@ onMounted(() => {
           :select-all="filters.advisors?.length > 0"
           :deselect-all="filters.advisors?.length > 0"
           class="w-full"
+          :loading="loaders.advisorOptions"
         />
       </x-field>
       <x-field label="Filter By">

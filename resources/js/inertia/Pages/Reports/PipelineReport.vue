@@ -131,10 +131,10 @@ const commonHeaders = ref([
 const tableHeader = ref(commonHeaders.value);
 
 const teams = ref([
-  { value: 'renewal', label: 'Renewal' },
-  { value: 'new_bussiness', label: 'New Bussiness' },
-  { value: 'ebp', label: 'EBP' },
-  { value: 'speed', label: 'Speed' },
+  { value: 47, label: 'Renewal' },
+  { value: 42, label: 'New Bussiness' },
+  { value: 21, label: 'EBP' },
+  { value: 19, label: 'Speed' },
 ]);
 
 const filteredTeams = computed(() => {
@@ -148,7 +148,7 @@ const onSubmit = isValid => {
 
   const filtersCleaned = cleanObj(filters);
 
-  router.visit(route('pipeline-report'), {
+  router.visit(route('stale-leads-report'), {
     method: 'get',
     data: {
       ...filtersCleaned,
@@ -163,7 +163,7 @@ const onSubmit = isValid => {
 };
 
 function onReset() {
-  router.visit(route('pipeline-report'), {
+  router.visit(route('stale-leads-report'), {
     method: 'get',
     data: { page: 1 },
     preserveScroll: true,
@@ -173,36 +173,31 @@ function onReset() {
 }
 
 const onTeamChange = e => {
-  // if (e.length == 0) {
-  //   filters.teams = [];
-  //   filters.advisors = [];
-  //   advisorOptions.value = [];
+  if (e.length == 0) {
+    filters.teams = [];
+    filters.advisors = [];
+    advisorOptions.value = [];
 
-  //   return;
-  // }
+    return;
+  }
 
-  // if (isMounted.value) {
-  //   isDirty.value = true;
-  // }
+  loaders.advisorOptions = true;
 
-  // loaders.advisorOptions = true;
-
-  console.log(e);
   axios
-    .post(`/reports/fetch-advisor-by-team`, {
+    .post(route('fetch-advisors-by-team'), {
       teamIds: Array.isArray(e) ? e : [e],
     })
     .then(res => {
-      if (res.data.length > 0) {
-        advisorOptions.value = Object.keys(res.data).map(key => ({
-          value: res.data[key].id,
-          label: res.data[key].name,
+      if (res.data.advisors.length > 0) {
+        advisorOptions.value = Object.keys(res.data.advisors).map(key => ({
+          value: res.data.advisors[key].id,
+          label: res.data.advisors[key].name,
         }));
       }
+    })
+    .finally(() => {
+      loaders.advisorOptions = false;
     });
-  // .finally(() => {
-  //   loaders.advisorOptions = false;
-  // });
 };
 
 const [
@@ -287,7 +282,7 @@ onMounted(() => {
         <DatePicker
           v-model="filters.date"
           range
-          :max-range="92"
+          :max-range="365"
           size="sm"
           placeholder="Select Date"
           model-type="yyyy-MM-dd"
@@ -314,6 +309,7 @@ onMounted(() => {
           v-model="filters.teams"
           placeholder="Select Team"
           :options="filteredTeams"
+          :loading="loaders.advisorOptions"
           class="w-full"
           @update:modelValue="onTeamChange($event)"
         />
@@ -332,6 +328,7 @@ onMounted(() => {
           :select-all="filters.advisors?.length > 0"
           :deselect-all="filters.advisors?.length > 0"
           class="w-full"
+          :loading="loaders.advisorOptions"
         />
       </x-field>
       <x-field label="Filter By">
@@ -346,7 +343,7 @@ onMounted(() => {
         />
       </x-field>
       <x-field
-        v-if="filters.lob == 'Corpline'"
+        v-if="filters.lob == 'corpline'"
         label="Bussiness Insurance Type"
       >
         <ComboBox
