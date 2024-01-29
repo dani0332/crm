@@ -148,7 +148,7 @@ const onSubmit = isValid => {
 
   const filtersCleaned = cleanObj(filters);
 
-  router.visit(route('stale-leads-report'), {
+  router.visit(route('pipeline-report'), {
     method: 'get',
     data: {
       ...filtersCleaned,
@@ -163,7 +163,7 @@ const onSubmit = isValid => {
 };
 
 function onReset() {
-  router.visit(route('stale-leads-report'), {
+  router.visit(route('pipeline-report'), {
     method: 'get',
     data: { page: 1 },
     preserveScroll: true,
