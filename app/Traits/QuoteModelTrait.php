@@ -16,7 +16,11 @@ trait QuoteModelTrait
             return;
         }
 
-        if (! request()->hasAny(['code', 'mobile_no', 'email', 'first_name', 'last_name', 'previous_quote_policy_number', 'renewal_batch', 'previous_quote_policy_number_text']) || $totalLeadsCount) {
+        if($totalLeadsCount) {
+            return $query->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate]);
+        }
+
+        if (! request()->hasAny(['code', 'mobile_no', 'email', 'first_name', 'last_name', 'previous_quote_policy_number', 'renewal_batch', 'previous_quote_policy_number_text'])) {
             return $query->where('quote_status_id', '<>', QuoteStatusEnum::Fake);
         }
     }
