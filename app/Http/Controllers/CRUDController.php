@@ -230,6 +230,8 @@ class CRUDController extends Controller
         $gridData = $this->crudService->getGridData($this->genericModel, $request);
         // Getting the data for the advisor dropdown based on the model type
         $advisors = $this->crudService->getAdvisorsByModelType($this->genericModel->modelType);
+        // Get user teams
+        $teams = $this->crudService->getUserTeams(Auth::user()->id);
         // Checking if the loggedIn user has Manager or Deputy Role
         $isManagerORDeputy = Auth::user()->isManagerOrDeputy();
         $isLeadPool = Auth::user()->isLeadPool();
@@ -266,6 +268,7 @@ class CRUDController extends Controller
                 'quotes' => $gridData,
                 'leadStatuses' => $quote_status,
                 'advisors' => $advisors,
+                'teams' => $teams,
                 'userMaxCap' => $userMaxCap,
                 'todayAutoCount' => $todayAutoCount,
                 'todayManualCount' => $todayManualCount,
@@ -882,6 +885,9 @@ class CRUDController extends Controller
 
             $healthPlanTypes = HealthPlanType::where('is_active', 1)->select('id', 'text')->get();
 
+            // Get user teams
+            $teams = $this->crudService->getUserTeams(Auth::user()->id);
+
             return inertia('HealthQuote/Show', [
                 'paymentLink' => $paymentLink,
                 'quote' => $record,
@@ -898,6 +904,7 @@ class CRUDController extends Controller
                 'nationalities' => $nationalities,
                 'emirates' => $emirates,
                 'advisors' => $advisors,
+                'teams' => $teams,
                 'quoteDocuments' => array_values($quoteDocuments->toArray()),
                 'documentTypes' => $documentTypes,
                 'cdnPath' => $cdnPath,

@@ -1,13 +1,15 @@
 <?php
 
-use App\Enums\IMCRMSearchTypesEnum;
-use App\Enums\quoteTypeCode;
-use App\Enums\QuoteTypes;
-use App\Models\CustomerAdditionalInfo;
-use App\Models\HealthQuote;
 use Carbon\Carbon;
-use Illuminate\Database\Eloquent\Builder;
+use App\Enums\QuoteTypes;
+use App\Models\HealthQuote;
+use App\Enums\quoteTypeCode;
+use App\Enums\PermissionsEnum;
 use Illuminate\Support\Facades\DB;
+use App\Enums\IMCRMSearchTypesEnum;
+use App\Models\CustomerAdditionalInfo;
+use App\Services\HealthQuoteService;
+use Illuminate\Database\Eloquent\Builder;
 
 if (! function_exists('generate_code')) {
     /**
@@ -205,6 +207,43 @@ function getDataAgainstStatus($modelType, $statusId, $myleads = null)
             $result['leads_list'] = $modelType::where('quote_status_id', $statusId)
                 ->where('advisor_id', \Auth::user()->id)
                 ->whereNull('previous_quote_id')->paginate(10);
+        } elseif( $modelType == HealthQuote::class && Auth::user()->isCarAdvisor() && Auth::user()->can(PermissionsEnum::HEALTH_QUOTES_ACCESS)) {
+            $result['total_leads'] = $modelType::where('quote_status_id', $statusId)
+                ->where('advisor_id', \Auth::user()->id)
+                ->whereNull('previous_quote_id')
+                ->count();
+
+            $result['total_premium'] = $modelType::where('quote_status_id', $statusId)
+                ->where('advisor_id', \Auth::user()->id)
+                ->whereNull('previous_quote_id')
+                ->sum('premium');
+
+            $result['total_opportunity'] = $modelType::where('quote_status_id', $statusId)->sum('price_starting_from');
+
+            $result['leads_list'] = $modelType::where('quote_status_id', $statusId)
+                ->where('advisor_id', \Auth::user()->id)
+                ->whereNull('previous_quote_id')
+                ->paginate(10);
+        } elseif ($modelType == HealthQuote::class && Auth::user()->isCarManager() && Auth::user()->can(PermissionsEnum::HEALTH_QUOTES_MANAGER_ACCESS)){
+
+            $ids = app(HealthQuoteService::class)->walkTree(Auth::user()->id);
+
+            $result['total_leads'] = $modelType::where('quote_status_id', $statusId)
+                ->whereIn('advisor_id', $ids)
+                ->whereNull('previous_quote_id')
+                ->count();
+
+            $result['total_premium'] = $modelType::where('quote_status_id', $statusId)
+                ->whereIn('advisor_id', $ids)
+                ->whereNull('previous_quote_id')
+                ->sum('premium');
+
+            $result['total_opportunity'] = $modelType::where('quote_status_id', $statusId)->sum('price_starting_from');
+
+            $result['leads_list'] = $modelType::where('quote_status_id', $statusId)
+                ->whereIn('advisor_id', $ids)
+                ->whereNull('previous_quote_id')
+                ->paginate(10);
         } else {
             $result['total_leads'] = $modelType::where('quote_status_id', $statusId)->count();
             $result['total_premium'] = $modelType::where('quote_status_id', $statusId)->sum('premium');

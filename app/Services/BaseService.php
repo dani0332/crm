@@ -297,6 +297,8 @@ class BaseService
         ) {
 
             $quote->payment_status_id = PaymentStatusEnum::CAPTURED;
+            $quote->payment_status_date = now();
+            $quote->paid_at = now();
             $quote->save();
         }
 

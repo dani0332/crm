@@ -3,6 +3,7 @@ defineProps({
   quotes: Object,
   leadStatuses: Array,
   advisors: Array,
+  teams: Object,
   userMaxCap: Number,
   todayAutoCount: Number,
   todayManualCount: Number,
@@ -119,6 +120,19 @@ const advisorOptions = computed(() => {
     value: advisor.id,
     label: advisor.name,
   }));
+});
+
+const subTeamsOptions = computed(() => {
+
+    let subteamArray = page.props.teams?.map(team => ({
+        value: team.name,
+        label: team.name,
+    }));
+
+    subteamArray.push({ value: 'No-Type', label: 'No-Type' });
+
+    return subteamArray;
+
 });
 
 function onSubmit(isValid) {
@@ -417,13 +431,7 @@ onMounted(() => {
               <x-select
                 v-model="assignForm.assign_team"
                 label="Assign Subteam"
-                :options="[
-                  { value: 'Wow-Call', label: 'Wow-Call' },
-                  { value: 'RM-NB', label: 'RM-NB' },
-                  { value: 'RM-SPEED', label: 'RM-SPEED' },
-                  { value: 'EBP', label: 'EBP' },
-                  { value: 'No-Type', label: 'No-Type' },
-                ]"
+                :options="subTeamsOptions"
                 placeholder="Select Subteam"
                 class="flex-1 w-auto"
                 :rules="[rules.isRequired]"

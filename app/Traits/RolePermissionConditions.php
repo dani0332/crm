@@ -2,6 +2,7 @@
 
 namespace App\Traits;
 
+use App\Enums\PermissionsEnum;
 use Auth;
 
 trait RolePermissionConditions
@@ -14,6 +15,8 @@ trait RolePermissionConditions
         $isRenewalManager = Auth::user()->isRenewalManager();
         $isNewManager = Auth::user()->isNewBusinessManager();
         $isNewAdvisor = Auth::user()->isNewBusinessAdvisor();
+        $isCarManager = Auth::user()->isCarManager();
+        $isCarAdvisor = Auth::user()->isCarAdvisor();
         $isAdvisor = Auth::user()->isAdvisor();
         $ids = $this->walkTree(Auth::user()->id);
 
@@ -32,6 +35,12 @@ trait RolePermissionConditions
         if ($isNewManager) {
             $query->whereIn($prefix.'.'.'advisor_id', $ids);
             $query->whereNull($prefix.'.'.'previous_quote_policy_number');
+        }
+        if($isCarManager && Auth::user()->can(PermissionsEnum::HEALTH_QUOTES_MANAGER_ACCESS)){
+            $query->whereIn($prefix.'.'.'advisor_id', $ids);
+        }
+        if($isCarAdvisor && Auth::user()->can(PermissionsEnum::HEALTH_QUOTES_ACCESS)){
+            $query->where($prefix.'.'.'advisor_id', Auth::user()->id);
         }
     }
 }

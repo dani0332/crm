@@ -17,6 +17,7 @@ defineProps({
   nationalities: Array,
   emirates: Array,
   advisors: Array,
+  teams: Object,
   quoteDocuments: Object,
   documentTypes: Object,
   cdnPath: String,
@@ -166,13 +167,25 @@ const memberCategoryText = memberCategoryId =>
     )?.text;
   });
 
-const subTeamOptions = [
-  { value: 'RM-NB', label: 'RM-NB' },
-  { value: 'RM-SPEED', label: 'RM-SPEED' },
-  { value: 'EBP', label: 'EBP' },
-  { value: 'Wow-Call', label: 'Wow-Call' },
-  { value: 'No-Type', label: 'No-Type' },
-];
+
+const subTeamOptions = computed(() => {
+    let subteamArray = page.props.teams?.map(team => ({
+        value: team.name,
+        label: team.name,
+    }));
+
+    subteamArray.push({ value: 'No-Type', label: 'No-Type' });
+
+    return subteamArray;
+});
+
+// const subTeamOptions = [
+//   { value: 'RM-NB', label: 'RM-NB' },
+//   { value: 'RM-SPEED', label: 'RM-SPEED' },
+//   { value: 'EBP', label: 'EBP' },
+//   { value: 'Wow-Call', label: 'Wow-Call' },
+//   { value: 'No-Type', label: 'No-Type' },
+// ];
 
 const advisorOptions = computed(() => {
   return page.props.advisors.map(advisor => ({

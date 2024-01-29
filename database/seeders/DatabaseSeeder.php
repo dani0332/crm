@@ -17,6 +17,7 @@ class DatabaseSeeder extends Seeder
             LookupSeeder::class,
             addDubaiNowEmailGroup::class,
             DubaiLeadSource::class,
+            HealthQuoteAccessPermissionsSeeder::class,
         ]);
     }
 }

@@ -46,10 +46,10 @@ class RenewalBatchReportService extends BaseService
                     ->whereRaw('car_lost_quote_logs.id IN (select MAX(clql.id) from car_lost_quote_logs as clql
                     join car_quote_request as cqr on cqr.id = clql.car_quote_request_id group by cqr.id)');
             })
-            ->leftJoin('payments', function ($qry) {
-                $qry->on('payments.paymentable_id', '=', 'car_quote_request.id')
-                    ->whereIn('payments.payment_status_id', [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PARTIAL_CAPTURED]);
-            })
+            // ->leftJoin('payments', function ($qry) {
+            //     $qry->on('payments.paymentable_id', '=', 'car_quote_request.id')
+            //         ->whereIn('payments.payment_status_id', [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PARTIAL_CAPTURED]);
+            // })
             ->join('renewal_batches', 'renewal_batches.name', '=', 'car_quote_request.renewal_batch')
             ->where('car_quote_request.source', LeadSourceEnum::RENEWAL_UPLOAD)
             ->groupBy('car_quote_request.renewal_batch')
@@ -326,7 +326,7 @@ class RenewalBatchReportService extends BaseService
             $query->addSelect(
                 DB::raw('count(DISTINCT car_quote_request.id) as total_allocated_leads'),
                 DB::raw('SUM(CASE WHEN car_quote_request.payment_status_id in ('.PaymentStatusEnum::CAPTURED.', '.PaymentStatusEnum::PARTIAL_CAPTURED.')
-                    and payments.captured_at <= "'.$reportDateEnd.'" THEN 1 ELSE 0 END) as renewed'),
+                    and car_quote_request.payment_status_date <= "'.$reportDateEnd.'" THEN 1 ELSE 0 END) as renewed'),
 
                 DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id = '.QuoteStatusEnum::CarSold.'
                     and car_lost_quote_logs.quote_status_id = '.QuoteStatusEnum::CarSold.'
@@ -348,10 +348,10 @@ class RenewalBatchReportService extends BaseService
                 DB::raw('SUM(IF(car_quote_request.advisor_id in ('.$teamUsersIdsString.'), 1, 0)) as total_allocated_leads_by_all_advisors'),
 
                 DB::raw('SUM(CASE WHEN car_quote_request.payment_status_id in ('.PaymentStatusEnum::CAPTURED.', '.PaymentStatusEnum::PARTIAL_CAPTURED.')
-                    and payments.captured_at <= "'.$reportDateEnd.'" and car_quote_request.advisor_id = "'.$authUserId.'" THEN 1 ELSE 0 END) as renewed'),
+                    and car_quote_request.payment_status_date <= "'.$reportDateEnd.'" and car_quote_request.advisor_id = "'.$authUserId.'" THEN 1 ELSE 0 END) as renewed'),
 
                 DB::raw('SUM(CASE WHEN car_quote_request.payment_status_id in ('.PaymentStatusEnum::CAPTURED.', '.PaymentStatusEnum::PARTIAL_CAPTURED.')
-                    and payments.captured_at <= "'.$reportDateEnd.'" and car_quote_request.advisor_id in ('.$teamUsersIdsString.') THEN 1 ELSE 0 END) as renewed_by_all_advisors'),
+                    and car_quote_request.payment_status_date <= "'.$reportDateEnd.'" and car_quote_request.advisor_id in ('.$teamUsersIdsString.') THEN 1 ELSE 0 END) as renewed_by_all_advisors'),
 
                 DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id = '.QuoteStatusEnum::CarSold.'
                     and car_lost_quote_logs.quote_status_id = '.QuoteStatusEnum::CarSold.'
@@ -421,7 +421,7 @@ class RenewalBatchReportService extends BaseService
                 $query->addSelect(
                     DB::raw('SUM(CASE WHEN car_quote_request.payment_status_id in ('.PaymentStatusEnum::CAPTURED.', '.PaymentStatusEnum::PARTIAL_CAPTURED.')
                     and car_quote_request.advisor_id in ('.$volumeSegmentAdvisorsIdString.')
-                    and payments.captured_at <= "'.$reportDateEnd.'"  THEN 1 ELSE 0 END) as renewed_by_volume_segment_advisors'),
+                    and car_quote_request.payment_status_date <= "'.$reportDateEnd.'"  THEN 1 ELSE 0 END) as renewed_by_volume_segment_advisors'),
 
                     DB::raw('SUM(CASE WHEN car_quote_request.advisor_id in ('.$volumeSegmentAdvisorsIdString.')
                     THEN 1 ELSE 0 END) as total_by_volume_segment_advisors'),
@@ -430,7 +430,7 @@ class RenewalBatchReportService extends BaseService
                 $query->addSelect(
                     DB::raw('SUM(CASE WHEN car_quote_request.payment_status_id in ('.PaymentStatusEnum::CAPTURED.', '.PaymentStatusEnum::PARTIAL_CAPTURED.')
                     and car_quote_request.advisor_id in ('.$valueSegmentAdvisorsIdString.')
-                    and payments.captured_at <= "'.$reportDateEnd.'" THEN 1 ELSE 0 END) as renewed_by_value_segment_advisors'),
+                    and car_quote_request.payment_status_date <= "'.$reportDateEnd.'" THEN 1 ELSE 0 END) as renewed_by_value_segment_advisors'),
 
                     DB::raw('SUM(CASE WHEN car_quote_request.advisor_id in ('.$valueSegmentAdvisorsIdString.')
                     THEN 1 ELSE 0 END) as total_by_value_segment_advisors'),
@@ -447,10 +447,10 @@ class RenewalBatchReportService extends BaseService
                 DB::raw('SUM(IF(car_quote_request.advisor_id in ('.$userIdsString.'), 1, 0)) as total_allocated_leads_by_all_advisors'),
 
                 DB::raw('SUM(CASE WHEN car_quote_request.payment_status_id in ('.PaymentStatusEnum::CAPTURED.', '.PaymentStatusEnum::PARTIAL_CAPTURED.')
-                        and payments.captured_at <= "'.$reportDateEnd.'" and car_quote_request.advisor_id in ('.$advisors.') THEN 1 ELSE 0 END) as renewed'),
+                        and car_quote_request.payment_status_date <= "'.$reportDateEnd.'" and car_quote_request.advisor_id in ('.$advisors.') THEN 1 ELSE 0 END) as renewed'),
 
                 DB::raw('SUM(CASE WHEN car_quote_request.payment_status_id in ('.PaymentStatusEnum::CAPTURED.', '.PaymentStatusEnum::PARTIAL_CAPTURED.')
-                        and payments.captured_at <= "'.$reportDateEnd.'" and car_quote_request.advisor_id in ('.$userIdsString.') THEN 1 ELSE 0 END) as renewed_by_all_advisors'),
+                        and car_quote_request.payment_status_date <= "'.$reportDateEnd.'" and car_quote_request.advisor_id in ('.$userIdsString.') THEN 1 ELSE 0 END) as renewed_by_all_advisors'),
 
                 DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id = '.QuoteStatusEnum::CarSold.'
                         and car_lost_quote_logs.quote_status_id = '.QuoteStatusEnum::CarSold.'
@@ -504,14 +504,14 @@ class RenewalBatchReportService extends BaseService
             $query->addSelect(
                 DB::raw('SUM(CASE WHEN car_quote_request.payment_status_id in ('.PaymentStatusEnum::CAPTURED.', '.PaymentStatusEnum::PARTIAL_CAPTURED.')
                 and car_quote_request.advisor_id in ('.$volumeSegmentAdvisorsIdString.')
-                and payments.captured_at <= "'.$reportDateEnd.'" THEN 1 ELSE 0 END) as renewed_by_volume_segment_advisors'),
+                and car_quote_request.payment_status_date <= "'.$reportDateEnd.'" THEN 1 ELSE 0 END) as renewed_by_volume_segment_advisors'),
 
                 DB::raw('SUM(CASE WHEN car_quote_request.advisor_id in ('.$volumeSegmentAdvisorsIdString.')
                 THEN 1 ELSE 0 END) as total_by_volume_segment_advisors'),
 
                 DB::raw('SUM(CASE WHEN car_quote_request.payment_status_id in ('.PaymentStatusEnum::CAPTURED.', '.PaymentStatusEnum::PARTIAL_CAPTURED.')
                 and car_quote_request.advisor_id in ('.$valueSegmentAdvisorsIdString.')
-                and payments.captured_at <= "'.$reportDateEnd.'" THEN 1 ELSE 0 END) as renewed_by_value_segment_advisors'),
+                and car_quote_request.payment_status_date <= "'.$reportDateEnd.'" THEN 1 ELSE 0 END) as renewed_by_value_segment_advisors'),
 
                 DB::raw('SUM(CASE WHEN car_quote_request.advisor_id in ('.$valueSegmentAdvisorsIdString.')
                 THEN 1 ELSE 0 END) as total_by_value_segment_advisors')
@@ -660,7 +660,7 @@ class RenewalBatchReportService extends BaseService
             $query->addSelect(
                 // DB::raw('count(DISTINCT car_quote_request.id) as total_allocated_leads'),
                 // DB::raw('SUM(CASE WHEN car_quote_request.payment_status_id in ('.PaymentStatusEnum::CAPTURED.', '.PaymentStatusEnum::PARTIAL_CAPTURED.')
-                //     and payments.captured_at <= "'.$reportDateEnd.'" THEN 1 ELSE 0 END) as renewed'),
+                //     and car_quote_request.payment_status_date <= "'.$reportDateEnd.'" THEN 1 ELSE 0 END) as renewed'),
 
                 // DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id = '.QuoteStatusEnum::CarSold.'
                 //     and car_lost_quote_logs.quote_status_id = '.QuoteStatusEnum::CarSold.'
@@ -684,10 +684,10 @@ class RenewalBatchReportService extends BaseService
                 // DB::raw('SUM(IF(car_quote_request.advisor_id in ('.$teamUsersIdsString.'), 1, 0)) as total_allocated_leads_by_all_advisors'),
 
                 // DB::raw('SUM(CASE WHEN car_quote_request.payment_status_id in ('.PaymentStatusEnum::CAPTURED.', '.PaymentStatusEnum::PARTIAL_CAPTURED.')
-                //     and payments.captured_at <= "'.$reportDateEnd.'" and car_quote_request.advisor_id = "'.$authUserId.'" THEN 1 ELSE 0 END) as renewed'),
+                //     and car_quote_request.payment_status_date <= "'.$reportDateEnd.'" and car_quote_request.advisor_id = "'.$authUserId.'" THEN 1 ELSE 0 END) as renewed'),
 
                 // DB::raw('SUM(CASE WHEN car_quote_request.payment_status_id in ('.PaymentStatusEnum::CAPTURED.', '.PaymentStatusEnum::PARTIAL_CAPTURED.')
-                //     and payments.captured_at <= "'.$reportDateEnd.'" and car_quote_request.advisor_id in ('.$teamUsersIdsString.') THEN 1 ELSE 0 END) as renewed_by_all_advisors'),
+                //     and car_quote_request.payment_status_date <= "'.$reportDateEnd.'" and car_quote_request.advisor_id in ('.$teamUsersIdsString.') THEN 1 ELSE 0 END) as renewed_by_all_advisors'),
 
                 // DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id = '.QuoteStatusEnum::CarSold.'
                 //     and car_lost_quote_logs.quote_status_id = '.QuoteStatusEnum::CarSold.'
@@ -762,7 +762,7 @@ class RenewalBatchReportService extends BaseService
                 $query->addSelect(
                     // DB::raw('SUM(CASE WHEN car_quote_request.payment_status_id in ('.PaymentStatusEnum::CAPTURED.', '.PaymentStatusEnum::PARTIAL_CAPTURED.')
                     // and car_quote_request.advisor_id in ('.$volumeSegmentAdvisorsIdString.')
-                    // and payments.captured_at <= "'.$reportDateEnd.'"  THEN 1 ELSE 0 END) as renewed_by_volume_segment_advisors'),
+                    // and car_quote_request.payment_status_date <= "'.$reportDateEnd.'"  THEN 1 ELSE 0 END) as renewed_by_volume_segment_advisors'),
 
                     // DB::raw('SUM(CASE WHEN car_quote_request.advisor_id in ('.$volumeSegmentAdvisorsIdString.')
                     // THEN 1 ELSE 0 END) as total_by_volume_segment_advisors'),
@@ -777,7 +777,7 @@ class RenewalBatchReportService extends BaseService
                 $query->addSelect(
                     // DB::raw('SUM(CASE WHEN car_quote_request.payment_status_id in ('.PaymentStatusEnum::CAPTURED.', '.PaymentStatusEnum::PARTIAL_CAPTURED.')
                     // and car_quote_request.advisor_id in ('.$valueSegmentAdvisorsIdString.')
-                    // and payments.captured_at <= "'.$reportDateEnd.'" THEN 1 ELSE 0 END) as renewed_by_value_segment_advisors'),
+                    // and car_quote_request.payment_status_date <= "'.$reportDateEnd.'" THEN 1 ELSE 0 END) as renewed_by_value_segment_advisors'),
 
                     // DB::raw('SUM(CASE WHEN car_quote_request.advisor_id in ('.$valueSegmentAdvisorsIdString.')
                     // THEN 1 ELSE 0 END) as total_by_value_segment_advisors'),
@@ -802,10 +802,10 @@ class RenewalBatchReportService extends BaseService
                 // DB::raw('SUM(IF(car_quote_request.advisor_id in ('.$userIdsString.'), 1, 0)) as total_allocated_leads_by_all_advisors'),
 
                 // DB::raw('SUM(CASE WHEN car_quote_request.payment_status_id in ('.PaymentStatusEnum::CAPTURED.', '.PaymentStatusEnum::PARTIAL_CAPTURED.')
-                //         and payments.captured_at <= "'.$reportDateEnd.'" and car_quote_request.advisor_id in ('.$advisors.') THEN 1 ELSE 0 END) as renewed'),
+                //         and car_quote_request.payment_status_date <= "'.$reportDateEnd.'" and car_quote_request.advisor_id in ('.$advisors.') THEN 1 ELSE 0 END) as renewed'),
 
                 // DB::raw('SUM(CASE WHEN car_quote_request.payment_status_id in ('.PaymentStatusEnum::CAPTURED.', '.PaymentStatusEnum::PARTIAL_CAPTURED.')
-                //         and payments.captured_at <= "'.$reportDateEnd.'" and car_quote_request.advisor_id in ('.$userIdsString.') THEN 1 ELSE 0 END) as renewed_by_all_advisors'),
+                //         and car_quote_request.payment_status_date <= "'.$reportDateEnd.'" and car_quote_request.advisor_id in ('.$userIdsString.') THEN 1 ELSE 0 END) as renewed_by_all_advisors'),
 
                 // DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id = '.QuoteStatusEnum::CarSold.'
                 //         and car_lost_quote_logs.quote_status_id = '.QuoteStatusEnum::CarSold.'
@@ -862,14 +862,14 @@ class RenewalBatchReportService extends BaseService
         //     $query->addSelect(
         //         DB::raw('SUM(CASE WHEN car_quote_request.payment_status_id in ('.PaymentStatusEnum::CAPTURED.', '.PaymentStatusEnum::PARTIAL_CAPTURED.')
         //         and car_quote_request.advisor_id in ('.$volumeSegmentAdvisorsIdString.')
-        //         and payments.captured_at <= "'.$reportDateEnd.'" THEN 1 ELSE 0 END) as renewed_by_volume_segment_advisors'),
+        //         and car_quote_request.payment_status_date <= "'.$reportDateEnd.'" THEN 1 ELSE 0 END) as renewed_by_volume_segment_advisors'),
 
         //         DB::raw('SUM(CASE WHEN car_quote_request.advisor_id in ('.$volumeSegmentAdvisorsIdString.')
         //         THEN 1 ELSE 0 END) as total_by_volume_segment_advisors'),
 
         //         DB::raw('SUM(CASE WHEN car_quote_request.payment_status_id in ('.PaymentStatusEnum::CAPTURED.', '.PaymentStatusEnum::PARTIAL_CAPTURED.')
         //         and car_quote_request.advisor_id in ('.$valueSegmentAdvisorsIdString.')
-        //         and payments.captured_at <= "'.$reportDateEnd.'" THEN 1 ELSE 0 END) as renewed_by_value_segment_advisors'),
+        //         and car_quote_request.payment_status_date <= "'.$reportDateEnd.'" THEN 1 ELSE 0 END) as renewed_by_value_segment_advisors'),
 
         //         DB::raw('SUM(CASE WHEN car_quote_request.advisor_id in ('.$valueSegmentAdvisorsIdString.')
         //         THEN 1 ELSE 0 END) as total_by_value_segment_advisors')
