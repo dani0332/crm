@@ -106,8 +106,10 @@ class ManagementReport
             case ManagementReportCategoriesEnum::ACTIVE_POLICIES:
                 if ($request['reportType'] == ManagementReportTypeEnum::ACTIVE_POLICIES) {
                     $dateFilter = $request['createdAt'] ?? now()->startOfDay()->format(config('constants.DATE_FORMAT_ONLY'));
-                    $query->where('policy_start_date', '>=', $dateFilter)
-                        ->where('p.policy_expiry_date', '<=', $dateFilter);
+                    $query->where(function ($query) use ($dateFilter) {
+                        $query->where('policy_start_date', '>=', $dateFilter)
+                            ->orWhere('p.policy_expiry_date', '<=', $dateFilter);
+                    });
                 }
                 break;
         }
@@ -148,12 +150,12 @@ class ManagementReport
             $query->whereIn('u.sub_team_id', $request['subTeams']);
         }
 
-        if (isset($request['leadSource']) && ! empty($request['leadSource'])) {
-            $query->whereIn('personal_quotes.source', $request['leadSource']);
+        if (isset($request['leadSources']) && ! empty($request['leadSources'])) {
+            $query->whereIn('personal_quotes.source', $request['leadSources']);
         }
 
-        if (isset($request['includeCancelPolicies']) && ! empty($request['includeCancelPolicies'])) {
-            if ($request['includeCancelPolicies'] == 'Yes') {
+        if (isset($request['includeCancelledPolicies']) && ! empty($request['includeCancelledPolicies'])) {
+            if ($request['includeCancelledPolicies'] == 'Yes') {
                 $query->where('personal_quotes.quote_status_id', QuoteStatusEnum::PolicyCancelled);
             } else {
                 $query->where('personal_quotes.quote_status_id', QuoteStatusEnum::PolicyBooked);
