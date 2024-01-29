@@ -2203,21 +2203,21 @@ const genderList = [
     />
 
     <div class="p-4 rounded shadow mb-6 bg-white">
-      <h3 class="font-semibold text-primary-800 text-lg">Available Plans</h3>
       <div class="flex flex-wrap gap-4 justify-between items-center mb-4">
-        <h6 v-if="aboveAgeMembers > 0" class="font-semibold text-primary-600 text-ms mb-1">
-          Travel plans for {{ travelers.length - aboveAgeMembers }} member age 0-64
-        </h6>
+        <h3 class="font-semibold text-primary-800 text-lg">Available Plans</h3>
         <x-button
-          v-if="availablePlansTable.data.length > 0"
-          size="sm"
-          color="orange"
-          class="mr-2"
-          @click.prevent="onCopyText(ecomTravelInsuranceQuoteUrl + quote.uuid)"
+            v-if="availablePlansTable.data.length > 0 || availableSeniorPlansTable.data.length > 0"
+            size="sm"
+            color="orange"
+            class="mr-2"
+            @click.prevent="onCopyText(ecomTravelInsuranceQuoteUrl + quote.uuid)"
         >
           Copy Link
         </x-button>
       </div>
+      <h6 v-if="aboveAgeMembers > 0" class="font-semibold text-primary-600 text-ms mb-1">
+        Travel plans for {{ travelers.length - aboveAgeMembers }} member age 0-64
+      </h6>
 
       <div
         v-if="
@@ -2297,15 +2297,6 @@ const genderList = [
       <div v-if="aboveAgeMembers > 0" class="mt-5">
         <div class="flex flex-wrap gap-4 justify-between items-center mb-4">
           <h6 class="font-semibold text-primary-600 text-ms mb-1">Travel plans for {{ aboveAgeMembers }} member age 65 and above</h6>
-          <x-button
-              v-if="availableSeniorPlansTable.data.length > 0"
-              size="sm"
-              color="orange"
-              class="mr-2"
-              @click.prevent="onCopyText(ecomTravelInsuranceQuoteUrl + quote.uuid)"
-          >
-            Copy Link
-          </x-button>
         </div>
         <div>
           <DataTable
