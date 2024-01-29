@@ -275,11 +275,12 @@ class ReportService extends BaseService
         $start = $request->date[0] ?? Carbon::now()->subDays(30)->format('Y-m-d H:i:s');
         $end = $request->date[1] ?? Carbon::now()->format('Y-m-d H:i:s');
 
-        if ($lob == QuoteTypes::PET->value || $lob == QuoteTypes::CYCLE->value || $lob == QuoteTypes::YACHT->value) {
+        if ($lob == QuoteTypes::PET->value || $lob == QuoteTypes::CYCLE->value || $lob == QuoteTypes::YACHT->value || $lob == QuoteTypes::CORPLINE->value) {
             $pqs = [
                 QuoteTypes::PET->value => QuoteTypeId::Pet,
                 QuoteTypes::CYCLE->value => QuoteTypeId::Cycle,
                 QuoteTypes::YACHT->value => QuoteTypeId::Yacht,
+                QuoteTypes::CORPLINE->value => QuoteTypeId::Business,
             ];
 
             $tableName = 'personal_quotes';
@@ -302,6 +303,7 @@ class ReportService extends BaseService
                 ->leftJoin('users AS u', 'u.id', '=', 'q.advisor_id')
                 ->where('q.quote_type_id', $personalQuoteType)
                 ->whereNotNull('q.advisor_id')
+                ->whereNotNull('q.stale_at')
                 ->whereNotIn('q.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
                 ->whereBetween('q.created_at', [$start, $end])
                 ->groupBy('q.advisor_id');
@@ -311,9 +313,9 @@ class ReportService extends BaseService
             $query = DB::table($tableName.' AS q')
                 ->leftJoin('users AS u', 'u.id', '=', 'q.advisor_id')
                 ->whereNotIn('q.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
-                ->whereBetween('q.created_at', [$start, $end])
-                ->whereNull('q.renewal_import_code');
-            // ->whereNotNull('q.stale_at')
+                ->whereNull('q.renewal_import_code')
+                ->whereNotNull('q.stale_at')
+                ->whereBetween('q.created_at', [$start, $end]);
 
             if ($lob == QuoteTypes::HEALTH->value) {
                 $query->select(
@@ -354,6 +356,12 @@ class ReportService extends BaseService
             }
         }
 
+        if (isset($request->sortBy) && $request->sortBy !== '' && isset($request->sortType) && $request->sortType !== '') {
+            $query->orderBy($request->sortBy, $request->sortType);
+        } else {
+            $query->orderBy('team', 'asc');
+        }
+
         return $query;
     }
 
@@ -363,11 +371,12 @@ class ReportService extends BaseService
         $start = $request->date[0] ?? Carbon::now()->subDays(30)->format('Y-m-d H:i:s');
         $end = $request->date[1] ?? Carbon::now()->format('Y-m-d H:i:s');
 
-        if ($lob == QuoteTypes::PET->value || $lob == QuoteTypes::CYCLE->value || $lob == QuoteTypes::YACHT->value) {
+        if ($lob == QuoteTypes::PET->value || $lob == QuoteTypes::CYCLE->value || $lob == QuoteTypes::YACHT->value || $lob == QuoteTypes::CORPLINE->value) {
             $pqs = [
                 QuoteTypes::PET->value => QuoteTypeId::Pet,
                 QuoteTypes::CYCLE->value => QuoteTypeId::Cycle,
                 QuoteTypes::YACHT->value => QuoteTypeId::Yacht,
+                QuoteTypes::CORPLINE->value => QuoteTypeId::Business,
             ];
 
             $tableName = 'personal_quotes';
@@ -399,8 +408,8 @@ class ReportService extends BaseService
             $query = DB::table($tableName.' AS q')
                 ->leftJoin('users AS u', 'u.id', '=', 'q.advisor_id')
                 ->whereNotIn('q.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
-                ->whereBetween('q.created_at', [$start, $end])
-                ->whereNull('q.renewal_import_code');
+                ->whereNull('q.renewal_import_code')
+                ->whereBetween('q.created_at', [$start, $end]);
 
             if ($lob == QuoteTypes::HEALTH->value) {
                 $query->select(
@@ -439,6 +448,12 @@ class ReportService extends BaseService
                 ->whereNotNull('q.advisor_id')
                 ->groupBy('q.advisor_id');
             }
+        }
+
+        if (isset($request->sortBy) && $request->sortBy !== '' && isset($request->sortType) && $request->sortType !== '') {
+            $query->orderBy($request->sortBy, $request->sortType);
+        } else {
+            $query->orderBy('team', 'asc');
         }
 
         return $query;
