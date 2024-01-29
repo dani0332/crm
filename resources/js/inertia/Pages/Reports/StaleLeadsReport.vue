@@ -131,10 +131,10 @@ const commonHeaders = ref([
 const tableHeader = ref(commonHeaders.value);
 
 const teams = ref([
-  { value: 8, label: 'Renewal' },
-  { value: 19, label: 'New Bussiness' },
+  { value: 47, label: 'Renewal' },
+  { value: 42, label: 'New Bussiness' },
   { value: 21, label: 'EBP' },
-  { value: 'speed', label: 'Speed' },
+  { value: 19, label: 'Speed' },
 ]);
 
 const filteredTeams = computed(() => {
