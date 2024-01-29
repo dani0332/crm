@@ -45,7 +45,7 @@ Make sure to run `yarn prod` before every push so the assets are compiled with t
 
 **Code Formatting**
 
-This project has pint configured, make sure to run `yarn pint:fix` before every push to the code repo.
+This project has pint configured, make sure to run `composer pint:fix` before every push to the code repo.
 
 **Redis Allocated DBs**
 - Prod - 15
