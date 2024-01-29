@@ -218,11 +218,7 @@ class CentralController extends Controller
         $request = (object) $sendBookPolicyRequest->validated();
         $quote = $this->getQuoteObject($request->model_type, $request->quote_id);
 
-        if (!$quote) {
-            return redirect()->back()->with('error', 'Quote not found.');
-        }
         if ($request->send_policy_type == 'customer') {
-
 
             // dispath job to send email
             dispatch(new SendBookPolicyDocumentsJob($request));
@@ -241,33 +237,27 @@ class CentralController extends Controller
             $data['quoteTypeId'] = $quoteTypeId;
             $data['id'] = $quote->id;
 
-            if ($payment->first() && $paymentSplits->first()) {
 
 
-                $sageService = new SageApiService();
-                $response = $sageService->postBookPolicyToSage($request, $payment, $quote, $paymentSplits, $data);
+            $sageService = new SageApiService();
+            $response = $sageService->postBookPolicyToSage($request, $payment, $quote, $paymentSplits, $data);
 
 
-                if ($response['status'] === false) {
-                    return response()->json(['errors' => [
-                        'message' => $response['message'],
-                    ]], 500);
-                }
-
-
-                // dispath job to send email
-                dispatch(new SendBookPolicyDocumentsJob($request));
-
-                $quote->update([
-                    'quote_status_id' => QuoteStatusEnum::PolicyBooked,
-                ]);
-
-                return response()->json(['message' => 'policy booked successfully'], 200);
-            } else {
+            if ($response['status'] === false) {
                 return response()->json(['errors' => [
-                    'message' => 'Payment record not found',
+                    'message' => $response['message'],
                 ]], 500);
             }
+
+
+            // dispath job to send email
+            dispatch(new SendBookPolicyDocumentsJob($request));
+
+            $quote->update([
+                'quote_status_id' => QuoteStatusEnum::PolicyBooked,
+            ]);
+
+            return response()->json(['message' => 'policy booked successfully'], 200);
         }
     }
     public function loadAvailablePlans($type, $id)
