@@ -239,8 +239,6 @@ class CentralController extends Controller
             $data['quoteTypeId'] = $quoteTypeId;
             $data['id'] = $quote->id;
 
-
-
             $sageService = new SageApiService();
             $response = $sageService->postBookPolicyToSage($request, $payment, $quote, $paymentSplits, $data);
 
@@ -251,7 +249,6 @@ class CentralController extends Controller
                 ]], 500);
             }
 
-
             // dispath job to send email
             dispatch(new SendBookPolicyDocumentsJob($request));
 
@@ -259,7 +256,7 @@ class CentralController extends Controller
                 'quote_status_id' => QuoteStatusEnum::PolicyBooked,
             ]);
 
-            return response()->json(['message' => 'policy booked successfully'], 200);
+            return response()->json(['message' =>  $response['message']], 200);
         }
     }
     public function loadAvailablePlans($type, $id)

@@ -115,9 +115,10 @@ const submitPolicy = () => {
   axios
     .post(url, data)
     .then(response => {
+      console.log(response);
       if (response.status == 200) {
         notification.success({
-          title: 'Policy Sent Successfully',
+          title: response.data.message,
           position: 'top',
         });
         location.reload();

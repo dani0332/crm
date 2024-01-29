@@ -36,12 +36,12 @@ class CarQuote extends BaseModel
 
     public function getFullNameAttribute()
     {
-        return $this->first_name.' '.$this->last_name;
+        return $this->first_name . ' ' . $this->last_name;
     }
 
     public function fullName()
     {
-        return $this->first_name.' '.$this->last_name;
+        return $this->first_name . ' ' . $this->last_name;
     }
 
     public function uaeLicenseHeldFor()
@@ -270,6 +270,11 @@ class CarQuote extends BaseModel
         return $this->morphMany(CustomerMembers::class, 'quote');
     }
 
+    public function sageLog()
+    {
+        return $this->morphMany(SageApiLog::class, 'section');
+    }
+
     public function scopeRelationWhere($query, $isGetList, $filters)
     {
         if (Auth::user()->hasRole('pa') && $isGetList) {
@@ -351,7 +356,7 @@ class CarQuote extends BaseModel
             }
 
             if (Auth::user()->hasRole('pa')) {
-                if (! array_key_exists('pa_id', $filters)) {
+                if (!array_key_exists('pa_id', $filters)) {
                     return [];
                 } else {
                     $valuesIn = [];
@@ -370,7 +375,7 @@ class CarQuote extends BaseModel
             }
 
             if (Auth::user()->hasRole('payment')) {
-                if (! array_key_exists('pa_id', $filters)) {
+                if (!array_key_exists('pa_id', $filters)) {
                     return [];
                 } else {
                     $valuesIn = [];
@@ -386,7 +391,7 @@ class CarQuote extends BaseModel
             } //invoicing
 
             if (Auth::user()->hasRole('invoicing')) {
-                if (! array_key_exists('pa_id', $filters)) {
+                if (!array_key_exists('pa_id', $filters)) {
                     return [];
                 } else {
                     $valuesIn = [];

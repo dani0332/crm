@@ -120,7 +120,7 @@ class SagePayloadFactory
             'Invoices' => [
                 [
                     'CustomerNumber' => $request->customerId,
-                    'DocumentNumber' => $request->insurerPremiumTaxInvoiceNumber . '-DIS',
+                    'DocumentNumber' => $request->insurerPremiumNumber . '-DIS',
                     'InvoiceDescription' => $request->invoiceDescription,
                     'DocumentDate' => $request->insurerInvoiceDate,
                     'DocumentType' => 'CreditNote',
@@ -370,7 +370,7 @@ class SagePayloadFactory
         $val = "('" . $sign . "')";
 
         return [
-            'endPoint' => 'AR/ARReceiptAndAdjustmentBatches' . $val,
+            'endPoint' => 'AR/ARPostReceiptsAndAdjustments' . $val,
             'payload' => $payLoad,
         ];
     }
