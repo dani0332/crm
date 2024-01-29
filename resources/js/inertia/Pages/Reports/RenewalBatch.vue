@@ -546,7 +546,7 @@ const calculateMonthlySum = (data, index) => {
         }
 
         renewedCountsList[currentMonthValue] = totalRenewed;
-        totalAllocationList[currentMonthValue] = totalAllocated;
+        totalAllocationList[currentMonthValue] = ( totalAllocated - totalCarSold );
 
         var result = totalRenewed / (totalAllocated - totalCarSold
         // - totalCarUncontactable
