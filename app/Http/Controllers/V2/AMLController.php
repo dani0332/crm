@@ -292,7 +292,7 @@ class AMLController extends Controller
                 $response = AMLService::updateAMLDecisionLexisNexis(request());
 
                 if ($response['status'] == 'success') {
-                    $response = ['status' => $response['status'], 'message' => $response['message'] . ' and '.$responseMessage['message']];
+                    $response = ['status' => $response['status'], 'message' => $response['message'].' and '.$responseMessage['message']];
                 } else {
                     $response = ['status' => $response['status'], 'message' => $response['message']];
                 }
@@ -590,7 +590,7 @@ class AMLController extends Controller
             $response['status'] = 'success';
             $response['message'] = 'Email Triggered to Compliance Super User';
         }
-        info($infoLog . ' - Triggered By: '.auth()->user()->email);
+        info($infoLog.' - Triggered By: '.auth()->user()->email);
 
         return response()->json($response);
     }

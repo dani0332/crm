@@ -43,10 +43,10 @@ class QuoteStatusService
 
             return [
                 'quote_status_text' => $quoteStatus->text,
-                'quote_ref_id' => $updateQuote->code, 
-                'quote_type_text' => $quoteType->text, 
-                'pa_id' => $updateQuote->pa_id, 
-                'client_name' => $clientFullName
+                'quote_ref_id' => $updateQuote->code,
+                'quote_type_text' => $quoteType->text,
+                'pa_id' => $updateQuote->pa_id,
+                'client_name' => $clientFullName,
             ];
         } else {
             return 'false';

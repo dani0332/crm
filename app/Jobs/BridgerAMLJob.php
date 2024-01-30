@@ -43,14 +43,14 @@ class BridgerAMLJob implements ShouldQueue
     {
         try {
             $bridgerInsightService->searchAMLResult(
-                $this->bridgerAPIToken, 
-                $this->payload, 
-                $this->quoteDetails, 
-                $this->quoteTypeID, 
-                $this->customerType, 
+                $this->bridgerAPIToken,
+                $this->payload,
+                $this->quoteDetails,
+                $this->quoteTypeID,
+                $this->customerType,
                 $this->loginCustomerEmail
             );
-            
+
         } catch (\Exception $exception) {
             logger()->error('AML Screening Bridger Job Exception: '.$exception->getMessage());
         }

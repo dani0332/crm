@@ -89,7 +89,7 @@ class BridgerInsightService
                     $customerOrEntityName = '';
             }
 
-            info('Bridger Insight Service - Quote Ref-ID: '.$quoteDetails->code.' - Customer Type: '.$customerType.' - Code: ' .$memberUboDetails['code'].' - AML Search API Payload : '.json_encode($amlSearchData).'. Triggered By: '.$loginCustomerEmail);
+            info('Bridger Insight Service - Quote Ref-ID: '.$quoteDetails->code.' - Customer Type: '.$customerType.' - Code: '.$memberUboDetails['code'].' - AML Search API Payload : '.json_encode($amlSearchData).'. Triggered By: '.$loginCustomerEmail);
 
             try {
                 $bridgerRequest = $bridgerClient->post(
@@ -311,8 +311,8 @@ class BridgerInsightService
             logger()->error('Bridger Insight Service - Failed - Error : '.$exception->getMessage());
             $response['status'] = 'error';
             $response['message'] = 'Bridger Decision Update Failed';
-            
-            if(str_contains($exception->getMessage(), 'The record was locked')){
+
+            if (str_contains($exception->getMessage(), 'The record was locked')) {
                 $response['message'] = str_replace(['}', '"', ']', '\n'], '', explode('{"Message":', $exception->getMessage())[1]) ?? 'The record was locked';
             }
         }
