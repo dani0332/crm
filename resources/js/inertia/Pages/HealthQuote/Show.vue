@@ -2,9 +2,6 @@
 import LazyDocumentUploader from './Partials/DocumentUploader.vue';
 import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 import LazyCreatePlan from './Partials/CreatePlan.vue';
-import { computed } from 'vue';
-import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue';
-import { daysSinceStale } from '../../Composables/utilities';
 
 const props = defineProps({
   quote: Object,
@@ -64,6 +61,8 @@ const rolesEnum = page.props.rolesEnum;
 const paymentStatusEnum = page.props.paymentStatusEnum;
 const dateFormat = date =>
   date ? useDateFormat(date, 'DD-MM-YYYY').value : '-';
+
+const daysSinceStale = date => useDaysSinceStale(date);
 
 const fixedValue = number => {
   if (number == Math.floor(number)) {

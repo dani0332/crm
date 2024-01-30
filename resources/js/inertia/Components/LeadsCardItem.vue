@@ -1,6 +1,5 @@
 <script setup>
 import { useSortable } from '@vueuse/integrations/useSortable';
-import { daysSinceStale } from '../Composables/utilities';
 
 const page = usePage();
 
@@ -21,6 +20,8 @@ const quoteTypeId = inject('quoteTypeId');
 const lostReasons = inject('lostReasons');
 
 const { isRequired } = useRules();
+
+const daysSinceStale = date => useDaysSinceStale(date);
 
 const leads = computed(() => {
   return props.leads;
@@ -195,7 +196,9 @@ const getUrl = (url, quoteTypeId) => useGetShowPageRoute(url, quoteTypeId);
             </div>
           </template>
         </x-tooltip>
-        <p class="text-xs">{{ quoteTypeId == 3 ? health_cover_for?.text : 'Dummy Data' }}</p>
+        <p class="text-xs">
+          {{ quoteTypeId == 3 ? health_cover_for?.text : 'Dummy Data' }}
+        </p>
       </div>
 
       <div v-if="company_name" class="flex items-center gap-2">

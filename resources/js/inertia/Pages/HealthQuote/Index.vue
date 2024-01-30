@@ -198,9 +198,13 @@ const handleSelectedFilters = selectedFilters => {
   if (selectedFilters.created_at_start && selectedFilters.created_at_end) {
     filters.created_at_start = selectedFilters.created_at_start;
     filters.created_at_end = selectedFilters.created_at_end;
-
-    onSubmit(true);
   }
+
+  if (selectedFilters.quote_status) {
+    filters.quote_status = selectedFilters.quote_status;
+  }
+
+  onSubmit(true);
 };
 
 function onReset() {
@@ -316,7 +320,6 @@ watch(
     if (oldValue !== newValue) onSubmit(true);
   },
 );
-
 </script>
 
 <template>
@@ -326,7 +329,9 @@ watch(
       <div class="flex items-center gap-5">
         <h2 class="text-xl font-semibold">Health List</h2>
         <x-tooltip>
-          <span class="border-2 rounded px-3 bg-gray-200 text-sm font-medium">{{ leadsCount }}</span>
+          <span class="border-2 rounded px-3 bg-gray-200 text-sm font-medium">{{
+            leadsCount
+          }}</span>
           <template #tooltip>
             <span>Total Leads received since {{ previousDate() }}</span>
           </template>
@@ -591,7 +596,7 @@ watch(
           class="text-primary-500 hover:underline flex items-center space-x-1"
         >
           <span>{{ item.code }}</span>
-          <stale-leads-badge :date="item.stale_at"></stale-leads-badge>
+          <StaleLeadsBadge :date="item.stale_at" :align="`left`" />
         </Link>
       </template>
       <template #item-is_ecommerce="{ is_ecommerce }">
