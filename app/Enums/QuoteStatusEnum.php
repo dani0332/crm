@@ -69,4 +69,5 @@ final class QuoteStatusEnum extends Enum
     const FinalizingTerms = 66;
     const QuotedByUW = 67;
     const SentForTransactionApproval = 68;
+    const RenewalTermsSent = 69;
 }
