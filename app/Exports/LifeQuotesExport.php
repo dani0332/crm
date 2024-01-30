@@ -3,15 +3,11 @@
 namespace App\Exports;
 
 use App\Repositories\LifeQuoteRepository;
-use Maatwebsite\Excel\Concerns\Exportable;
-use Maatwebsite\Excel\Concerns\FromCollection;
-use Maatwebsite\Excel\Concerns\ShouldAutoSize;
-use Maatwebsite\Excel\Concerns\WithHeadings;
-use Maatwebsite\Excel\Concerns\WithMapping;
+use App\Traits\ExcelExportable;
 
-class LifeQuotesExport implements FromCollection, ShouldAutoSize, WithHeadings, WithMapping
+class LifeQuotesExport
 {
-    use Exportable;
+    use ExcelExportable;
 
     public function collection()
     {
