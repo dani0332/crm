@@ -55,6 +55,8 @@ class CentralController extends Controller
 
         if ($exportTye != GenericRequestEnum::EXPORT_MAKES_MODELS) {
             if ($exportTye == GenericRequestEnum::EXPORT_PLAN_DETAIL) {
+                $error_fields = 'paid at';
+
                 $request->validate([
                     'paid_at_start' => 'required',
                     'paid_at_end' => 'required',
@@ -62,6 +64,8 @@ class CentralController extends Controller
                 $created_at_start = Carbon::parse($request->paid_at_start)->format('Y-m-d');
                 $created_at_end = Carbon::parse($request->paid_at_end)->format('Y-m-d');
             } else {
+                $error_fields = 'created date';
+
                 if (request()->has('created_at')) {
                     request()->merge(['created_at_start' => request()->get('created_at')]);
                     request()->query->remove('created_at');
@@ -83,7 +87,7 @@ class CentralController extends Controller
             $diff = Carbon::parse($created_at_start)->diffInDays(Carbon::parse($created_at_end));
 
             if ($diff > $diffInDays) {
-                return back()->with('error', 'Maximum of '.$diffInDays.' days (created date) are allowed to be exported.');
+                return back()->with('error', 'Maximum of '.$diffInDays.' days ('.$error_fields.') are allowed to be exported.');
             }
         }
 
