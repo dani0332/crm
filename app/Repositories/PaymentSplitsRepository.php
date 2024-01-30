@@ -216,21 +216,21 @@ class PaymentSplitsRepository
                 $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($request->modelType));
                 foreach ($request->collection_amount as $key => $splitAmount) {
                     $paymentSplit = PaymentSplits::where(['code' => $quoteModel->code, 'sr_no' => $key])->first();
-                    if ($paymentSplit) {
-
-                        //create sage reciept
-                        if ($paymentSplit->sage_reciept_id==null || $paymentSplit->sage_reciept_id=='' ) {
-                            $request->collection_amount = $splitAmount;
-                            $sageResponse = $this->createSageRecipt($request,$paymentSplit);
-                            if ($sageResponse['status'] == 'success'){
-                                $paymentSplit->sage_reciept_id = $sageResponse['response'];
-                            } else {
-                                $sageMessage = $sageResponse['response'];
-                                vAbort($sageMessage);                                  
-                            }
-                        }
+                    if ($paymentSplit) {                       
                         
                         if ($paymentSplit->payment_method == PaymentMethodsEnum::CreditCard) {
+                            
+                            //create sage reciept
+                            if ($paymentSplit->sage_reciept_id==null || $paymentSplit->sage_reciept_id=='' ) {
+                                $request->collection_amount = $splitAmount;
+                                $sageResponse = $this->createSageRecipt($request,$paymentSplit);
+                                if ($sageResponse['status'] == 'success'){
+                                    $paymentSplit->sage_reciept_id = $sageResponse['response'];
+                                } else {
+                                    $sageMessage = $sageResponse['response'];
+                                    vAbort($sageMessage);                                  
+                                }
+                            }                                                        
                             //Marshal Service to capture split payment
                             $response = app(CRUDService::class)->capturePayment($quoteModel, $paymentSplit, $quoteTypeId, $splitAmount);
                             $paymentSplit->payment_status_id = PaymentStatusEnum::PAID;
