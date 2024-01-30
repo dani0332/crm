@@ -39,7 +39,12 @@ class AddSendUpdatesCategoriesInLookups extends Seeder
                 ]);
 
                 foreach ($type['subTypes'] as $lob => $subTypes) {
-                    $item = $allLOBs->where('name', '=', $lob)->first();
+
+                    if ($lob === 'Corpline' || $lob === 'GroupMedical') {
+                        $item = $allLOBs->where('name', '=', 'Business')->first();
+                    } else {
+                        $item = $allLOBs->where('name', '=', $lob)->first();
+                    }
 
                     if (! $item) {
                         continue;

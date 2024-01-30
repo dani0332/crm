@@ -18,7 +18,7 @@ class DatabaseSeeder extends Seeder
             //            AddNewDocumentTypesSeeder::class,
             // UpdateCustomerToHealthAndTravelMemberDetails::class,
             AddSendUpdatesCategoriesInLookups::class,
-            AddNewQuoteStatues::class,
+            // AddNewQuoteStatues::class,
             AddCreateSendUpdatePermissionToAllRoles::class,
             addDubaiNowEmailGroup::class,
             DubaiLeadSource::class,
