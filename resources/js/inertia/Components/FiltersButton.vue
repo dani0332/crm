@@ -44,6 +44,11 @@ const statuses = ref([
     text: 'Sales Opportunity',
     value: 1,
     quoteCodes: ['Application Pending'],
+    paymentIds: [
+      page.props.paymentStatusEnum?.NEW,
+      page.props.paymentStatusEnum?.CREDIT_APPROVED,
+      page.props.paymentStatusEnum?.DECLINED,
+    ],
     tooltip:
       'This will be the sum of all potential sales we can achieve by closing these leads',
   },
@@ -51,6 +56,10 @@ const statuses = ref([
     text: 'Paid Awaiting Documents',
     value: 2,
     quoteCodes: ['Missing Documents Requested'],
+    paymentIds: [
+      page.props.paymentStatusEnum?.PENDING,
+      page.props.paymentStatusEnum?.PAID,
+    ],
     tooltip:
       'This means that we have received a payment for this lead however we require additional documents from clients to proceed futher.',
   },

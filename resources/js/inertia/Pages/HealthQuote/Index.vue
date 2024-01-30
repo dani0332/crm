@@ -137,6 +137,7 @@ const filters = reactive({
   renewal_batch: '',
   date: null,
   status_filters: null,
+  payment_status: [],
 });
 
 const subTeamOptions = [
