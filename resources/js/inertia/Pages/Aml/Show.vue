@@ -63,15 +63,15 @@ function submitDecision(decision) {
         .then(response => {
           submitDecisionLoading.value = false;
           decisionNotesModal.value = false;
-          if (response.status) {
+          if (response.data.status === 'success') {
             notification.success({
-              title: 'Quote Status Updated',
+              title: response.data.message,
               position: 'top',
             });
             window.location = `/kyc/aml/${props.aml.quote_type_id}/details/${props.aml.quote_request_id}`;
           } else {
             notification.error({
-              title: 'Quote Status not Updated',
+              title: response.data.message,
               position: 'top',
             });
           }

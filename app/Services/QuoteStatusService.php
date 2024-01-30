@@ -41,7 +41,13 @@ class QuoteStatusService
         if ($updateQuote->save()) {
             $clientFullName = $updateQuote->first_name.' '.$updateQuote->last_name;
 
-            return [$quoteStatus->text, $updateQuote->code, $quoteType->text, $updateQuote->pa_id, $clientFullName];
+            return [
+                'quote_status_text' => $quoteStatus->text,
+                'quote_ref_id' => $updateQuote->code, 
+                'quote_type_text' => $quoteType->text, 
+                'pa_id' => $updateQuote->pa_id, 
+                'client_name' => $clientFullName
+            ];
         } else {
             return 'false';
         }
