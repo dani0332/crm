@@ -221,17 +221,12 @@ onMounted(() => setInitialState());
       <x-field label="MOBILE NUMBER" required>
         <x-input
           v-model="userForm.mobile_no"
-          :rules="[isRequired, isMobileNo]"
+          :rules="[isMobileNo]"
           class="w-full"
         />
       </x-field>
       <x-field label="LANDLINE NUMBER" required>
-        <x-input
-          type="tel"
-          v-model="userForm.landline_no"
-          :rules="[isRequired]"
-          class="w-full"
-        />
+        <x-input type="tel" v-model="userForm.landline_no" class="w-full" />
       </x-field>
       <x-field label="PASSWORD" required>
         <x-input

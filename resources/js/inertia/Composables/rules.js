@@ -78,6 +78,7 @@ export const useRules = () =>
 
   const isMobileNo = v =>
   {
+    if (!v) return v
     const regex = /^[0-9+\-\s]+$/;
     if (v.length < 10)
     {
