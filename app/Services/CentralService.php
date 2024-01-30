@@ -250,6 +250,8 @@ class CentralService
 
     public function updateSelectedPlan($quoteType, $uuid, $data)
     {
+        $response = [];
+
         //switch for quote type
         switch (ucfirst($quoteType)) {
             case QuoteTypes::CAR->value:
@@ -268,8 +270,6 @@ class CentralService
                     $quote = CarQuote::where('uuid', $uuid)->first();
                     $this->updateQuotePayment($quote, $response->planProcessValue->totalPremium);
                 }
-
-                return $response;
                 break;
             case QuoteTypes::TRAVEL->value:
                 $endpoint = '/process-travel-quote-plan';
@@ -283,7 +283,6 @@ class CentralService
 
                 $response = Ken::request($endpoint, 'post', $data);
                 info('travel plan update response: ' . json_encode($response));
-                return $response;
                 break;
             case QuoteTypes::HEALTH->value:
                 $endpoint = '/api/v1-process-booking';
@@ -298,14 +297,11 @@ class CentralService
 
                 $response = Capi::request($endpoint, 'post', $data);
                 info('health plan update response: ' . json_encode($response));
-                return $response;
+
                 break;
         }
 
-        //info('fn: updateSelectedPlan quoteType: '.$quoteType.' uuid: '.$uuid.' data: '.json_encode($data));
-
-        //dd(json_encode($response));
-        //return $response;
+        return $response;
     }
 
 }
