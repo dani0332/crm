@@ -218,6 +218,8 @@ class HealthQuoteService extends BaseService
             'health_quote_request_id' => $id,
             'created_at' => now(),
             'updated_at' => now(),
+            'advisor_assigned_date' => now(),
+            'advisor_assigned_by_id' => auth()->user()->id,
         ]);
     }
 
@@ -640,7 +642,7 @@ class HealthQuoteService extends BaseService
         }
         $oldAdvisorAssignedDate = $childRecord->advisor_assigned_date;
         if ($childRecord->advisor_id != null) {
-            $childRecord->advisor_assigned_by_id = Auth::user()->id;
+            $childRecord->advisor_assigned_by_id = auth()->user()->id;
             $childRecord->advisor_assigned_date = now();
             $childRecord->save();
         }
