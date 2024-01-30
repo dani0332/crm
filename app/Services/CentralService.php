@@ -201,6 +201,8 @@ class CentralService
 
     public function updateQuotePayment($quote, $priceWithVat)
     {
+        info('fn: updateQuotePayment called');
+
         if($quote->payments()->count() > 0)
         {
             info('fn: updateQuotePayment payment found to be updated for quote uuid: '.$quote->uuid);
@@ -266,9 +268,9 @@ class CentralService
                 $response = Ken::request($endpoint, 'post', $data);
                 info('car plan update response: ' . json_encode($response));
 
-                if(isset($response->planProcessValue->totalPremium)) {
+                if(isset($response['planProcessValue']['totalPremium'])) {
                     $quote = CarQuote::where('uuid', $uuid)->first();
-                    $this->updateQuotePayment($quote, $response->planProcessValue->totalPremium);
+                    $this->updateQuotePayment($quote, $response['planProcessValue']['totalPremium']);
                 }
                 break;
             case QuoteTypes::TRAVEL->value:
