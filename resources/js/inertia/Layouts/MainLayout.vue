@@ -17,7 +17,6 @@ const onLogout = () => {
 };
 const userStatus = ref(false);
 const onStatusChange = async () => {
-    console.log('yeeee status',userStatus.value);
     await axios
         .post('/update-user-status', {
             user_status: userStatus.value,
@@ -33,24 +32,32 @@ const onStatusChange = async () => {
 
 
 const isButtonVisible = ref(false);
+const allowedRoles = ['ADMIN','ENGINEERING','CAR_ADVISOR', 'HEALTH_ADVISOR', 'BETA_USER'];
+
+const sameRoles = allowedRoles.filter(element => page.props.auth.roles.includes(element));
+
+const hasAllowedRoles = sameRoles.length > 0;
 
 const shouldShowButton = () => {
-    console.log('current day ----------');
-    const currentTime = new Date().toLocaleString('en-US', { timeZone: 'Asia/Dubai' });
-    const currentDay = new Date(currentTime).getDay();
-    const currentHour = new Date(currentTime).getHours();
+    if(hasAllowedRoles) {
+        const currentTime = new Date().toLocaleString('en-US', {timeZone: 'Asia/Dubai'});
+        const currentDay = new Date(currentTime).getDay();
+        const currentHour = new Date(currentTime).getHours();
 
-    // Show the button all day on Saturday and Sunday
-    console.log('current day',currentDay);
-    if (currentDay === 6 || currentDay === 0 || currentDay === 1) {
-        return true;
+        // Show the button all day on Saturday and Sunday
+        console.log('current day', currentDay);
+        if (currentDay === 6 || currentDay === 0 || currentDay === 2) {
+            return true;
+        }
+
+        // Show the button outside the range 9:00 AM to 6:30 PM on other days
+        return !(currentHour >= 9 && currentHour < 18 && new Date(currentTime).getMinutes() >= 0);
     }
-
-    // Show the button outside the range 9:00 AM to 6:30 PM on other days
-    return !(currentHour >= 9 && currentHour < 18 && new Date(currentTime).getMinutes() >= 0);
+    return false;
 };
 
 const scheduleUpdate = () => {
+    if(hasAllowedRoles) {
     const now = new Date().toLocaleString('en-US', { timeZone: 'Asia/Dubai' });
     let nextUpdate = new Date(now);
     isButtonVisible.value = shouldShowButton();
@@ -72,6 +79,7 @@ const scheduleUpdate = () => {
         isButtonVisible.value = shouldShowButton();
         scheduleUpdate();
     }, nextUpdate - new Date());
+    }
 };
 
 onMounted(() => {
@@ -314,6 +322,7 @@ onMounted(() => {
             </div>
 
             <div class="flex gap-3 items-center">
+                {{page.props.auth.roles}}
                 <x-toggle v-model="userStatus"  v-if="isButtonVisible" @change="onStatusChange"  ></x-toggle>
               <!-- <UserStatus /> -->
               <x-popover align="right" block>
