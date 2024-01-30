@@ -133,18 +133,26 @@ modifiedAdvisorOptions.value.push({
   label: 'Unassigned',
 });
 
-const subTeamsOptions = computed(() => {
+// const subTeamsOptions = computed(() => {
 
-    let subteamArray = page.props.teams?.map(team => ({
-        value: team.name,
-        label: team.name,
-    }));
+//     let subteamArray = page.props.teams?.map(team => ({
+//         value: team.name,
+//         label: team.name,
+//     }));
 
-    subteamArray.push({ value: 'No-Type', label: 'No-Type' });
+//     subteamArray.push({ value: 'No-Type', label: 'No-Type' });
 
-    return subteamArray;
+//     return subteamArray;
 
-});
+// });
+
+const subTeamsOptions = [
+  { value: 'RM-NB', label: 'RM-NB' },
+  { value: 'RM-SPEED', label: 'RM-SPEED' },
+  { value: 'EBP', label: 'EBP' },
+  { value: 'Wow-Call', label: 'Wow-Call' },
+  { value: 'No-Type', label: 'No-Type' },
+];
 
 function onSubmit(isValid) {
   if (isValid) {

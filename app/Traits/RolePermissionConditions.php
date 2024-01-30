@@ -2,8 +2,9 @@
 
 namespace App\Traits;
 
-use App\Enums\PermissionsEnum;
 use Auth;
+use App\Enums\quoteTypeCode;
+use App\Enums\PermissionsEnum;
 
 trait RolePermissionConditions
 {
@@ -15,16 +16,17 @@ trait RolePermissionConditions
         $isRenewalManager = Auth::user()->isRenewalManager();
         $isNewManager = Auth::user()->isNewBusinessManager();
         $isNewAdvisor = Auth::user()->isNewBusinessAdvisor();
+        $isHealthManager = Auth::user()->isHealthManager();
         $isCarManager = Auth::user()->isCarManager();
         $isCarAdvisor = Auth::user()->isCarAdvisor();
         $isAdvisor = Auth::user()->isAdvisor();
-        $ids = $this->walkTree(Auth::user()->id);
 
         if ($isRenewalAdvisor) {
             $query->whereNotNull($prefix.'.'.'previous_quote_policy_number');
             $query->where($prefix.'.'.'advisor_id', Auth::user()->id);
         }
         if ($isRenewalManager) {
+            $ids = $this->walkTree(Auth::user()->id, quoteTypeCode::Health);
             $query->whereNotNull($prefix.'.'.'previous_quote_policy_number');
             $query->whereIn($prefix.'.'.'advisor_id', $ids);
         }
@@ -33,10 +35,16 @@ trait RolePermissionConditions
             $query->whereNull($prefix.'.'.'previous_quote_policy_number');
         }
         if ($isNewManager) {
+            $ids = $this->walkTree(Auth::user()->id, quoteTypeCode::Health);
             $query->whereIn($prefix.'.'.'advisor_id', $ids);
             $query->whereNull($prefix.'.'.'previous_quote_policy_number');
         }
+        if ($isHealthManager) {
+            $ids = $this->walkTree(Auth::user()->id, quoteTypeCode::Health);
+            $query->whereIn($prefix.'.'.'advisor_id', $ids);
+        }
         if ($isCarManager && Auth::user()->can(PermissionsEnum::HEALTH_QUOTES_MANAGER_ACCESS)) {
+            $ids = $this->walkTree(Auth::user()->id, quoteTypeCode::Car);
             $query->whereIn($prefix.'.'.'advisor_id', $ids);
         }
         if ($isCarAdvisor && Auth::user()->can(PermissionsEnum::HEALTH_QUOTES_ACCESS)) {
