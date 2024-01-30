@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Enums\quoteTypeCode;
+use App\Enums\TeamNameEnum;
 use App\Enums\TeamTypeEnum;
 use App\Enums\UserStatusEnum;
 use App\Events\UserStatusChanged;
@@ -54,13 +55,26 @@ class LeadAllocationController extends Controller
                     $unAvailableUsers++;
                 }
             }
+
+            $unAssignedGood = $this->leadAllocationService->getUnAssignedHealthQuotes(TeamNameEnum::RM_SPEED);
+            $unAssignedBest = $this->leadAllocationService->getUnAssignedHealthQuotes(TeamNameEnum::RM_NB);
+            $unAssignedEntryLevel = $this->leadAllocationService->getUnAssignedHealthQuotes(TeamNameEnum::EBP);
+
             if ($request->ajax()) {
                 return Datatables::of($data)
                     ->addIndexColumn()
                     ->make(true);
             }
 
-            return view('user.lead-allocation', compact(['totalAssignedLeadCount', 'availableUsers', 'unAvailableUsers', 'isAutoAllocationWorking']));
+            return view('user.lead-allocation', compact([
+                'totalAssignedLeadCount',
+                'availableUsers',
+                'unAvailableUsers',
+                'isAutoAllocationWorking',
+                'unAssignedGood',
+                'unAssignedBest',
+                'unAssignedEntryLevel',
+            ]));
         } else {
             abort(403, 'Unauthorized action.');
         }
