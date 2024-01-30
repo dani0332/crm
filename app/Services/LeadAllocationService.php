@@ -77,7 +77,7 @@ class LeadAllocationService extends BaseService
                 ->whereIn('r.name', [RolesEnum::EBPAdvisor, RolesEnum::RMAdvisor]);
 
             if (! auth()->user()->hasRole(RolesEnum::SuperManagerLeadAllocation)) {
-              //  $query = $query->where('u.manager_id', auth()->user()->id);
+                $query = $query->where('u.manager_id', auth()->user()->id);
             }
             //dd($query->toSql());
 

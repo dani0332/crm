@@ -13,7 +13,7 @@ class UpdateManualOffline extends Command
      *
      * @var string
      */
-    protected $signature = 'ResetLeadAllocationCounts:cron';
+    protected $signature = 'ResetManualOfflineUpdate:cron';
 
     /**
      * The console command description.

@@ -322,7 +322,6 @@ onMounted(() => {
             </div>
 
             <div class="flex gap-3 items-center">
-                {{page.props.auth.roles}}
                 <x-toggle v-model="userStatus"  v-if="isButtonVisible" @change="onStatusChange"  ></x-toggle>
               <!-- <UserStatus /> -->
               <x-popover align="right" block>
