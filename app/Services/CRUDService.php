@@ -385,7 +385,10 @@ class CRUDService extends BaseService
             $query->whereIn('r.name', [RolesEnum::CarAdvisor, RolesEnum::CarDeputyManager]);
         } elseif (strtolower($modelType) == strtolower(quoteTypeCode::Health)) {
 
-            if (auth()->user()->hasAnyPermission(PermissionsEnum::HEALTH_QUOTES_ACCESS, PermissionsEnum::HEALTH_QUOTES_MANAGER_ACCESS)) {
+            if ((auth()->user()->hasAnyRole([RolesEnum::CarManager, RolesEnum::CarAdvisor])) &&
+                auth()->user()->hasAnyPermission(PermissionsEnum::HEALTH_QUOTES_ACCESS,
+                PermissionsEnum::HEALTH_QUOTES_MANAGER_ACCESS)
+                ) {
                 $authUserTeamsId = $this->getUserTeams(auth()->id())->pluck('id')->toArray();
                 $query->whereIn('ut.team_id', $authUserTeamsId);
                 $query->whereIn('r.name', [RolesEnum::CarAdvisor, RolesEnum::CarDeputyManager]);
