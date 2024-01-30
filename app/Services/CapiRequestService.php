@@ -40,11 +40,10 @@ class CapiRequestService
                 case HealthQuote::class:
                     self::handleHealthResponse($getdecodeContents);
                     break;
-                // TODO : implement other LOBs
+                    // TODO : implement other LOBs
                 default:
                     break;
             }
-
 
             return $getdecodeContents;
         } else {
@@ -91,7 +90,7 @@ class CapiRequestService
 
     private function handleHealthResponse($requestContent)
     {
-        if(isset($requestContent->quoteUID)){
+        if (isset($requestContent->quoteUID)) {
             $healthQuote = HealthQuote::where('uuid', $requestContent->quoteUID)->first();
             $healthQuoteDetail = HealthQuoteRequestDetail::where('health_quote_request_id', $healthQuote->id)->first();
             if ($healthQuoteDetail) {
