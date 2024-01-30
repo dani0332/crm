@@ -120,7 +120,7 @@ class JetskiQuoteController extends Controller
         
         if ($hasPolicyIssuedStatus) {
             $sendUpdateOptions = (new LookupService)->getSendUpdateOptions(QuoteTypes::JETSKI->id());
-            $sendUpdateLogs = SendUpdateLogRepository::findByQuoteId($quote->id);
+            $sendUpdateLogs = SendUpdateLogRepository::findByQuoteUuid($quote->uuid);
             $sendUpdateEnum = SendUpdateLogStatusEnum::asArray();
         }
 

@@ -41,6 +41,7 @@ const state = reactive({
 });
 
 const page = usePage();
+const notification = useToast();
 const sendUpdateStatusEnum = page.props.sendUpdateStatusEnum;
 
 const dateToYMD = date => {
@@ -110,7 +111,51 @@ const bookingDetailsForm = useForm({
   commission_percentage: props?.payments[0]?.commmission_percentage || '',
   commission_vat_not_applicable: props?.payments[0]?.commission_vat_not_applicable || '',
   vat_on_commission: props?.payments[0]?.commission_vat || '',
+  commission_vat_applicable: props?.payments[0]?.commission_vat_applicable || '',
+  total_commission: props?.payments[0]?.commission || '',
 });
+
+const caculateCommission = () => {
+  if (bookingDetailsForm.commission_vat_applicable > 0) {
+    if (Number(props.quote?.price_with_vat > 0)) {
+      bookingDetailsForm.commission_percentage = (
+        (bookingDetailsForm.commission_vat_applicable / props.quote?.price_with_vat) *
+        100
+      ).toFixed(2);
+
+      bookingDetailsForm.vat_on_commission = (
+        bookingDetailsForm.commission_percentage * props.vat
+      ).toFixed(2);
+      bookingDetailsForm.total_commission =
+        Number(bookingDetailsForm.vat_on_commission) +
+        Number(bookingDetailsForm.commission_vat_applicable);
+    } else {
+      notification.error({
+        title: 'Please add Policy Detail Price (VAT APPLICABLE)',
+        position: 'top',
+      });
+    }
+  } else if (bookingDetailsForm.commission_vat_not_applicable > 0) {
+    if (Number(props.quote?.price_vat_not_applicable) > 0) {
+      bookingDetailsForm.commission_percentage = (
+        (bookingDetailsForm.commission_vat_not_applicable /
+          props.quote?.price_vat_not_applicable) *
+        100
+      ).toFixed(2);
+
+      bookingDetailsForm.total_commission = bookingDetailsForm.commission_vat_not_applicable;
+    } else {
+      notification.error({
+        title: 'Please add Policy Detail Price (VAT NOT APPLICABLE)',
+        position: 'top',
+      });
+    }
+  } else {
+    bookingDetailsForm.commission_percentage = '';
+    bookingDetailsForm.vat_on_commission = '';
+    bookingDetailsForm.total_commission = '';
+  }
+};
 </script>
 
 <template>
@@ -336,6 +381,7 @@ const bookingDetailsForm = useForm({
                   <x-input
                     type="number"
                     v-model="bookingDetailsForm.commission_vat_applicable"
+                    @change="caculateCommission"
                     class="w-full"
                     :disabled="!state.isEdit"
                     placeholder="Enter Commission Amount"

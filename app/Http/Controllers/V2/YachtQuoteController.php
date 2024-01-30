@@ -126,7 +126,7 @@ class YachtQuoteController extends Controller
 
         if ($hasPolicyIssuedStatus) {
             $sendUpdateOptions = $lookupService->getSendUpdateOptions(QuoteTypes::YACHT->id());
-            $sendUpdateLogs = SendUpdateLogRepository::findByQuoteId($quote->id);
+            $sendUpdateLogs = SendUpdateLogRepository::findByQuoteUuid($quote->uuid);
             $sendUpdateEnum = SendUpdateLogStatusEnum::asArray();
         }
 

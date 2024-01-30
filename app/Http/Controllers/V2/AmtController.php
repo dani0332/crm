@@ -267,7 +267,7 @@ class AmtController extends Controller
         
         if ($hasPolicyIssuedStatus) {
             $sendUpdateOptions = (new LookupService)->getSendUpdateOptions(QuoteTypes::BUSINESS->id());
-            $sendUpdateLogs = SendUpdateLogRepository::findByQuoteId($record->id);
+            $sendUpdateLogs = SendUpdateLogRepository::findByQuoteUuid($record->uuid);
             $sendUpdateEnum = SendUpdateLogStatusEnum::asArray();
         }
 

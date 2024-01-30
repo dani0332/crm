@@ -191,7 +191,7 @@ class TravelController extends Controller
         
         if ($hasPolicyIssuedStatus) {
             $sendUpdateOptions = $this->lookupService->getSendUpdateOptions(QuoteTypeId::Travel);
-            $sendUpdateLogs = SendUpdateLogRepository::findByQuoteId($record->id);
+            $sendUpdateLogs = SendUpdateLogRepository::findByQuoteUuid($record->uuid);
             $sendUpdateEnum = SendUpdateLogStatusEnum::asArray();
         }
 

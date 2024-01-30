@@ -86,8 +86,6 @@ class AddSendUpdatesCategoriesInLookups extends Seeder
                 'id' => $key,
                 'name' => $value
             ];
-        })->filter(function ($item) {
-            return $item['id'] <= 11;
         });
     }
 
@@ -426,175 +424,175 @@ class AddSendUpdatesCategoriesInLookups extends Seeder
             'Car' => [
                 [
                     'name' => 'Change in seating capacity (with no financial impact)',
-                    'tooltip' => ''
+                    'tooltip' => "Indicates that you can modify the seating capacity of the insured vehicle without any financial impact. This change is typically made to ensure that the policy accurately reflects the vehicle's specifications. Please update the seating capacity information accurately to maintain policy accuracy."
                 ],
                 [
                     'name' => 'Change of Emirates (with no financial impact)',
-                    'tooltip' => ''
+                    'tooltip' => 'Refers to the process of updating or modifying the geographical location or emirates associated with an insurance policy with no financial impact.'
                 ],
                 [
                     'name' => 'Correction and amendments',
-                    'tooltip' => ''
+                    'tooltip' => 'To modify particular details or correct any inaccuracies within the policy records, these are the fields that can be updated without any financial implications. If there is a requirement to change customer name, policy number, start date, or end date in IMCRM, kindly reach out to the production team to rectify these policy details in the IMCRM system after sending the update to the customer.'
                 ],
             ],
             'Bike' => [
                 [
                     'name' => 'Change in seating capacity (with no financial impact)',
-                    'tooltip' => ''
+                    'tooltip' => "Indicates that you can modify the seating capacity of the insured vehicle without any financial impact. This change is typically made to ensure that the policy accurately reflects the vehicle's specifications. Please update the seating capacity information accurately to maintain policy accuracy"
                 ],
                 [
                     'name' => 'Change of Emirates (with no financial impact)',
-                    'tooltip' => ''
+                    'tooltip' => 'Refers to the process of updating or modifying the geographical location or emirates associated with an insurance policy with no financial impact'
                 ],
                 [
                     'name' => 'Correction and amendments',
-                    'tooltip' => ''
+                    'tooltip' => "To modify particular details or correct any inaccuracies within the policy records, these are the fields that can be updated without any financial implications. If there is a requirement to change customer name, policy number, start date, or end date in IMCRM, kindly reach out to the production team to rectify these policy details in the IMCRM system after sending the update to the customer."
                 ],
             ],
             'Health' => [
                 [
                     'name' => 'Correction and amendments',
-                    'tooltip' => ''
+                    'tooltip' => "To modify particular details or correct any inaccuracies within the policy records supplied by the insurer, these are the fields that can be updated without any financial implications. If there is a requirement to change customer name, policy number, start date, or end date in IMCRM, kindly reach out to the finance team to rectify these policy details in the IMCRM system after sending the update to the customer."
                 ],
                 [
                     'name' => 'Emirates ID update',
-                    'tooltip' => ''
+                    'tooltip' => "To update member's Emirates ID and link it to their Health Insurance."
                 ],
                 [
                     'name' => 'Marital status change (with no financial impact)',
-                    'tooltip' => ''
+                    'tooltip' => "To update their marital status within the policy records. This change does not affect the policy's financial aspects."
                 ],
                 [
                     'name' => 'Quote request',
-                    'tooltip' => ''
+                    'tooltip' => 'To request a quotation or estimate for insurance coverage and associated costs.'
                 ],
                 [
                     'name' => 'Request for active member list',
-                    'tooltip' => ''
+                    'tooltip' => 'To request details of all currently active members under the policy'
                 ],
                 [
                     'name' => 'Request for certificate of continuity',
-                    'tooltip' => ''
+                    'tooltip' => 'To obtain a document that verifies the continuous coverage of your insurance policy'
                 ],
                 [
                     'name' => 'Request for certificate of insurance',
-                    'tooltip' => ''
+                    'tooltip' => "To obtain a document that provides proof of member's insurance coverage."
                 ],
                 [
                     'name' => 'Request for ecard copy',
-                    'tooltip' => ''
+                    'tooltip' => "To obtain a digital copy of member's health insurance card."
                 ],
                 [
                     'name' => 'Waive off waiting period applied',
-                    'tooltip' => ''
+                    'tooltip' => "To request from the Insurer to have the waiting period cancelled, allowing the member's immediate access to their insurance benefits."
                 ],
             ],
             'Travel' => [
                 [
                     'name' => 'Change travel dates (with no financial impact)',
-                    'tooltip' => ''
+                    'tooltip' => "This enables policyholders to make adjustments to the originally specified travel dates in their insurance policy. It offers flexibility for travelers in case their plans change."
                 ],
                 [
                     'name' => 'Correction and amendments',
-                    'tooltip' => ''
+                    'tooltip' => "To modify particular details or correct any inaccuracies within the policy records supplied by the insurer, these are the fields that can be updated without any financial implications. If there is a requirement to change customer name, policy number, start date, or end date in IMCRM, kindly reach out to the finance team to rectify these policy details in the IMCRM system after sending the update to the customer."
                 ],
             ],
             'Life' => [
                 [
                     'name' => 'Correction and amendments',
-                    'tooltip' => ''
+                    'tooltip' => "To modify particular details or correct any inaccuracies within the policy records supplied by the insurer, these are the fields that can be updated without any financial implications. If there is a requirement to change customer name, policy number, start date, or end date in IMCRM, kindly reach out to the finance team to rectify these policy details in the IMCRM system after sending the update to the customer."
                 ],
             ],
             'Home' => [
                 [
                     'name' => 'Change of address',
-                    'tooltip' => ''
+                    'tooltip' => 'Use this feature to request a change of address within the policy records'
                 ],
                 [
                     'name' => 'Correction and amendments',
-                    'tooltip' => ''
+                    'tooltip' => "To modify particular details or correct any inaccuracies within the policy records supplied by the insurer, these are the fields that can be updated without any financial implications. If there is a requirement to change customer name, policy number, start date, or end date in IMCRM, kindly reach out to the finance team to rectify these policy details in the IMCRM system after sending the update to the customer."
                 ],
             ],
             'Pet' => [
                 [
                     'name' => 'Correction and amendments',
-                    'tooltip' => ''
+                    'tooltip' => 'To make changes to specific information or rectify any inaccuracies in the policy records provided by the insurer. These are the details to be changed with no financial impact'
                 ],
             ],
             'Cycle' => [
                 [
                     'name' => 'Correction and amendments',
-                    'tooltip' => ''
+                    'tooltip' => "To modify particular details or correct any inaccuracies within the policy records supplied by the insurer, these are the fields that can be updated without any financial implications. If there is a requirement to change customer name, policy number, start date, or end date in IMCRM, kindly reach out to the finance team to rectify these policy details in the IMCRM system after sending the update to the customer."
                 ],
             ],
             'Yacht' => [
                 [
                     'name' => 'Correction and amendments',
-                    'tooltip' => ''
+                    'tooltip' => "To modify particular details or correct any inaccuracies within the policy records supplied by the insurer, these are the fields that can be updated without any financial implications. If there is a requirement to change customer name, policy number, start date, or end date in IMCRM, kindly reach out to the finance team to rectify these policy details in the IMCRM system after sending the update to the customer."
                 ],
             ],
             'MotorFleet' => [
                 [
                     'name' => 'Change in seating capacity (with no financial impact)',
-                    'tooltip' => ''
+                    'tooltip' => "Indicates that you can modify the seating capacity of the insured vehicle without any financial impact. This change is typically made to ensure that the policy accurately reflects the vehicle's specifications. Please update the seating capacity information accurately to maintain policy accuracy"
                 ],
                 [
                     'name' => 'Change of Emirates (with no financial impact)',
-                    'tooltip' => ''
+                    'tooltip' => "Refers to the process of updating or modifying the geographical location or emirates associated with an insurance policy with no financial impact"
                 ],
                 [
                     'name' => 'Correction and amendments',
-                    'tooltip' => ''
+                    'tooltip' => "To modify particular details or correct any inaccuracies within the policy records supplied by the insurer, these are the fields that can be updated without any financial implications. If there is a requirement to change customer name, policy number, start date, or end date in IMCRM, kindly reach out to the non retail accounts team to rectify these policy details in the IMCRM system after sending the update to the customer."
                 ],
             ],
             'GroupMedical' => [
                 [
                     'name' => 'Correction and amendments',
-                    'tooltip' => ''
+                    'tooltip' => "To modify particular details or correct any inaccuracies within the policy records supplied by the insurer, these are the fields that can be updated without any financial implications. If there is a requirement to change customer name, policy number, start date, or end date in IMCRM, kindly reach out to the non retail accounts team to rectify these policy details in the IMCRM system after sending the update to the customer."
                 ],
                 [
                     'name' => 'Emirates ID update',
-                    'tooltip' => ''
+                    'tooltip' => "To update member's Emirates ID and link it to their Health Insurance"
                 ],
                 [
                     'name' => 'Marital status change (with no financial impact)',
-                    'tooltip' => ''
+                    'tooltip' => "To update their marital status within the policy records. This change does not affect the policy's financial aspects."
                 ],
                 [
                     'name' => 'Quote request',
-                    'tooltip' => ''
+                    'tooltip' => "To request a quotation or estimate for insurance coverage and associated costs."
                 ],
                 [
                     'name' => 'Request for active member list',
-                    'tooltip' => ''
+                    'tooltip' => "To request details of all currently active members under the policy."
                 ],
                 [
                     'name' => 'Request for certificate of continuity',
-                    'tooltip' => ''
+                    'tooltip' => "To obtain a document that verifies the continuous coverage of your insurance policy."
                 ],
                 [
                     'name' => 'Request for certificate of insurance',
-                    'tooltip' => ''
+                    'tooltip' => "To obtain a document that provides proof of member's insurance coverage"
                 ],
                 [
                     'name' => 'Request for ecard copy',
-                    'tooltip' => ''
+                    'tooltip' => "To obtain a digital copy of member's health insurance card"
                 ],
                 [
                     'name' => 'Request for statement of account (SOA)',
-                    'tooltip' => ''
+                    'tooltip' => "To request a Statement of Account (SOA) for customer policy"
                 ],
                 [
                     'name' => 'Request for tax invoice',
-                    'tooltip' => ''
+                    'tooltip' => "To request for a tax invoice related to customer's policy"
                 ],
                 [
                     'name' => 'Request for travel certificate',
-                    'tooltip' => ''
+                    'tooltip' => "To request for a travel certificate associated withh the policy"
                 ],
                 [
                     'name' => 'Waive off waiting period applied',
-                    'tooltip' => ''
+                    'tooltip' => "To request from the Insurer to have the waiting period cancelled, allowing the member's immediate access to their insurance benefits"
                 ],
             ],
             'Corpline' => [

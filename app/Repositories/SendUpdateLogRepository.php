@@ -19,7 +19,7 @@ class SendUpdateLogRepository extends BaseRepository
         try {
             $code = $data['childCategory']['slug'];
 
-            $count = $this->fetchGetCount($data['reportable_id']);
+            $count = $this->fetchGetCount($data['quote_uuid'], $data['quote_type_id']);
 
             $code = $code . '-' . date('m') . date('y') . '-' . ($count + 1);
 
@@ -27,15 +27,14 @@ class SendUpdateLogRepository extends BaseRepository
 
             $personalQuote = PersonalQuoteRepository::where([
                 'quote_type_id' => $data['quote_type_id'],
-                'uuid' => $data['reportable_uuid']
+                'uuid' => $data['quote_uuid']
             ])->first();
 
             $data['personal_quote_id'] = $personalQuote?->id ?? null;
 
             $res = $this->create([
                 'personal_quote_id' => $data['personal_quote_id'],
-                'reportable_id' => $data['reportable_id'],
-                'reportable_uuid' => $data['reportable_uuid'],
+                'quote_uuid' => $data['quote_uuid'],
                 'quote_type_id' => $data['quote_type_id'],
                 'category_id' => $data['childCategory']['id'],
                 'option_id' => $data['option_id'],
@@ -73,14 +72,17 @@ class SendUpdateLogRepository extends BaseRepository
         return $log;
     }
 
-    public function fetchGetCount($id) 
+    public function fetchGetCount($uuid, $quoteTypeId) 
     {
-        return $this->fetchFindByQuoteId($id)->count();
+        return $this->where([
+            'quote_uuid' => $uuid, 
+            'quote_type_id' => $quoteTypeId
+        ])->count();
     }
 
-    public function fetchFindByQuoteId($reportableId) 
+    public function fetchFindByQuoteUuid($uuid) 
     {   
-        return $this->where(['reportable_id' => $reportableId])->get();
+        return $this->where(['quote_uuid' => $uuid])->get();
     }
 
     public function fetchUpdateLogPriceDetails($data) 

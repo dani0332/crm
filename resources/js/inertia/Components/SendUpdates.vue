@@ -21,6 +21,7 @@ const props = defineProps({
 })
 
 const page = usePage();
+const { isRequired } = useRules();
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
 const dateFormat = date => date ? useDateFormat(date, 'DD-MM-YYYY').value : '-';
@@ -113,6 +114,8 @@ const goBack = () => {
   } else if (modals.step === 'step3') {
     modals.step = 'step2'
     form.childCategory = null;
+    form.option = null;
+    optionError.value = false;
   }
 }
 
@@ -138,8 +141,7 @@ const onAddUpdate = (autoSubmit) => {
         refURL: page.url,
         childCategory: childCatgeory,
         option_id: option?.id || null,
-        reportable_uuid: props.reportable.uuid,
-        reportable_id: props.reportable.id,
+        quote_uuid: props.reportable.uuid,
         status: page.props.sendUpdateEnum.NEW_REQUEST
       }
     })
@@ -286,10 +288,10 @@ const findOption = (item, key) => {
       </template>
 
       <!-- modal 1 -->
-      <div class="w-full flex gap-5 justify-center text-center my-10 mb-20 items-stretch" v-if="modals.step === 'step1'">
+      <div class="w-full flex gap-5 justify-center text-center my-10 mb-20 items-stretch !h-100" v-if="modals.step === 'step1'">
         <template v-for="option in options" :key="option.title">
           <x-tooltip position="bottom" class="arrow-t">
-            <x-button color="primary" class="py-8 px-6 rounded-xl w-[200px] whitespace-break-spaces underline decoration-dotted" @click="setOption('step2', option)">
+            <x-button color="primary" class="py-8 px-6 rounded-xl w-[200px] whitespace-break-spaces underline decoration-dotted !h-100" @click="setOption('step2', option)">
               {{ option.title }}
             </x-button>
             <template #tooltip> <div class="truncate w-40">{{ option.description }}</div> </template>
@@ -322,6 +324,13 @@ const findOption = (item, key) => {
               :placeholder="['EF', 'EN'].includes(form.childCategory.slug) ? 'Select Subtype' : 'Select Reason'"
               class="w-full"
             />
+            <!-- <x-select
+              class="w-full"
+              v-model="form.option"
+              :options="form.childCategory.childs.map(item => ({ label: item.title, value: item.id, tooltip: item.tooltip }))"
+              :placeholder="['EF', 'EN'].includes(form.childCategory.slug) ? 'Select Subtype' : 'Select Reason'"
+              :rules="[isRequired]"
+            /> -->
           </x-field>
           <div class="flex justify-end mt-2">
             <x-button 

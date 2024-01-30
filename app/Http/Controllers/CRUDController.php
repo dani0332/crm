@@ -515,7 +515,7 @@ class CRUDController extends Controller
         
         if ($hasPolicyIssuedStatus) {
             $sendUpdateOptions = $this->lookupService->getSendUpdateOptions($quoteTypeId);
-            $sendUpdateLogs = SendUpdateLogRepository::findByQuoteId($record->id);
+            $sendUpdateLogs = SendUpdateLogRepository::findByQuoteUuid($record->uuid);
             $sendUpdateEnum = SendUpdateLogStatusEnum::asArray();
         }
 

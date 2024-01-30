@@ -221,7 +221,7 @@ class BusinessQuoteController extends Controller
 
         if ($hasPolicyIssuedStatus) {
             $sendUpdateOptions = (new LookupService)->getSendUpdateOptions(QuoteTypes::BUSINESS->id());
-            $sendUpdateLogs = SendUpdateLogRepository::findByQuoteId($record->uuid);
+            $sendUpdateLogs = SendUpdateLogRepository::findByQuoteUuid($record->uuid);
             $sendUpdateEnum = SendUpdateLogStatusEnum::asArray();
         }
 

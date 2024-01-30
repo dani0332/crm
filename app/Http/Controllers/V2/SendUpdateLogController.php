@@ -93,7 +93,7 @@ class SendUpdateLogController extends Controller
 
     public function updateQuoteLeadStatus($data, $type)
     {
-        $quoteUuid = $data['reportable_uuid'];
+        $quoteUuid = $data['quote_uuid'];
 
         $quoteTypeId = $data['quote_type_id'];
         
