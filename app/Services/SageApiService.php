@@ -240,6 +240,7 @@ class SageApiService
                 $this->logSageApiCall($payLoadOptions, $sageResponse, $quote, 2, 13, 'fail');
                 $returnMessage['message'] = 'Ar invoice & prem failed from sage';
                 $returnMessage['status'] = false;
+                return $returnMessage;
             }
 
 
@@ -307,6 +308,7 @@ class SageApiService
                 $this->logSageApiCall($createAPInvoicePrem, $postedResponse, $quote, 5, 13, 'fail');
                 $returnMessage['message'] = 'Ap invoice prem failed from sage';
                 $returnMessage['status'] = false;
+                return $returnMessage;
             }
 
 
@@ -379,6 +381,7 @@ class SageApiService
                     $this->logSageApiCall($createARInvoiceDis, $postedResponse, $quote, 8, 13, 'fail');
                     $returnMessage['message'] = 'Ar discount invoice failed from sage';
                     $returnMessage['status'] = false;
+                    return $returnMessage;
                 }
             }
 
@@ -394,7 +397,6 @@ class SageApiService
                     $resp = $this->postToSage300($createPaymontRecieptOneInvoice['endPoint'], $createPaymontRecieptOneInvoice['payload']);
                     $postedResponse = json_decode($resp, true);
                 }
-
                 if (!empty($postedResponse['BatchNumber'])) {
 
                     if ($isLiveApiCallStep11) {
@@ -448,6 +450,7 @@ class SageApiService
                     $this->logSageApiCall($createPaymontRecieptOneInvoice, $postedResponse, $quote, 11, 13, 'fail');
                     $returnMessage['message'] = 'Apply payment failed from sage';
                     $returnMessage['status'] = false;
+                    return $returnMessage;
                 }
             }
 
