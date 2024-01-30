@@ -71,5 +71,6 @@ class Kernel extends HttpKernel
         'CheckRole' => \App\Http\Middleware\CheckRole::class,
         'basicAuth' => \App\Http\Middleware\BasicAuth::class,
         'check_route_access' => \App\Http\Middleware\CheckRouteAccess::class,
+        'check_lead_report_access' => \App\Http\Middleware\CheckLeadListReportPermission::class,
     ];
 }
