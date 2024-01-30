@@ -87,6 +87,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redirect;
+use Illuminate\Support\Facades\DB;
 
 class CRUDController extends Controller
 {
@@ -1169,7 +1170,7 @@ class CRUDController extends Controller
         if ($modelType == null) {
             $modelType = $request->get('modelType');
         }
-        $ignoreModelTypes = ['Bike', 'Cycle', 'Yacht'];
+        $ignoreModelTypes = [quoteTypeCode::Bike, quoteTypeCode::Cycle, quoteTypeCode::Yacht];
         if (! in_array($modelType, $ignoreModelTypes) && $modelType != null) {
             $quoteTypes = 'Health,Car,Travel,Life,Home,Business,Pet';
             $serviceType = str_contains($quoteTypes, ucwords($modelType)) ? strtolower($modelType).'QuoteService' : lcfirst(ucwords($modelType)).'Service';
@@ -1699,60 +1700,70 @@ class CRUDController extends Controller
                 return;
             }
 
-            $masterPaymentStatus = PaymentStatusEnum::NEW;
-            if ($request->payment_methods == PaymentMethodsEnum::CreditApproval) {
-                $masterPaymentStatus = PaymentStatusEnum::CREDIT_APPROVED;
+            DB::beginTransaction();
+
+            try {
+            
+                $masterPaymentStatus = PaymentStatusEnum::NEW;
+                if ($request->payment_methods == PaymentMethodsEnum::CreditApproval) {
+                    $masterPaymentStatus = PaymentStatusEnum::CREDIT_APPROVED;
+                }
+                $paymentInformation = [
+                    'total_price' => $request->total_price,
+                    'notes' => ! empty($request->notes) ? $request->notes : null,
+                    'custom_reason' => ! empty($request->custom_reason) ? $request->custom_reason : null,
+                    'discount_reason' => $request->discount_reason,
+                    'discount_custom_reason' => $request->discount_custom_reason,
+                    'discount_type' => $request->discount,
+                    'frequency' => $request->frequency,
+                    'credit_approval' => $request->credit_approval,
+                    'total_payments' => $request->payment_no,
+                    'collection_type' => $request->collection_type,
+                    'captured_amount' => 0,
+                    'total_amount' => $request->total_amount, //amount after discount
+                    'collection_date' => $request->collection_date,
+                    'discount_value' => $request->discount_value,
+                    'payment_methods_code' => $request->payment_methods,
+                    'payment_status_id' => $masterPaymentStatus,
+                    'plan_id' => ! empty($request->plan_id) ? $request->plan_id : null,
+                    'insurance_provider_id' => ! empty($request->insurance_provider_id) ? $request->insurance_provider_id : null,
+                    'created_by' => $request->user()->id,
+                    'updated_by' => $request->user()->id,
+                ];
+
+                $count = $quoteModel->payments->count();
+                $paymentInformation['code'] = ($count > 0) ? $quoteModel->code.'-'.$count : $quoteModel->code;
+
+                if ($request->reference) {
+                    $paymentInformation['reference'] = $request->reference;
+                }
+                if ($request->payment_methods != PaymentMethodsEnum::CreditCard && $request->payment_methods != PaymentMethodsEnum::InsureNowPayLater) {
+                    $paymentInformation['authorized_at'] = now();
+                }
+                $payment = Payment::create($paymentInformation);
+
+                //Add split payments start
+                $this->paymentSplitsRepository->addPaymentSplits($request, $paymentInformation['code']);
+                //Add split payments ends
+
+                $quoteModel->payments()->save($payment);
+                $paymentLog = new PaymentStatusLog([
+                    'current_payment_status_id' => PaymentStatusEnum::NEW,
+                    'payment_code' => $paymentInformation['code'],
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+                $paymentLog->save();
+                $quoteModel->quote_status_id = QuoteStatusEnum::PaymentPending;
+                $quoteModel->save();
+                DB::commit(); 
+                return back()->with('success', 'Payment Added');
+            } catch (Exception $exception) {
+                DB::rollBack(); // Rollback changes if any error occurred
+        
+                return back()->with('error', $exception->getMessage());
             }
-            $paymentInformation = [
-                'total_price' => $request->total_price,
-                'notes' => ! empty($request->notes) ? $request->notes : null,
-                'custom_reason' => ! empty($request->custom_reason) ? $request->custom_reason : null,
-                'discount_reason' => $request->discount_reason,
-                'discount_custom_reason' => $request->discount_custom_reason,
-                'discount_type' => $request->discount,
-                'frequency' => $request->frequency,
-                'credit_approval' => $request->credit_approval,
-                'total_payments' => $request->payment_no,
-                'collection_type' => $request->collection_type,
-                'captured_amount' => 0,
-                'total_amount' => $request->total_amount, //amount after discount
-                'collection_date' => $request->collection_date,
-                'discount_value' => $request->discount_value,
-                'payment_methods_code' => $request->payment_methods,
-                'payment_status_id' => $masterPaymentStatus,
-                'plan_id' => ! empty($request->plan_id) ? $request->plan_id : null,
-                'insurance_provider_id' => ! empty($request->insurance_provider_id) ? $request->insurance_provider_id : null,
-                'created_by' => $request->user()->id,
-                'updated_by' => $request->user()->id,
-            ];
 
-            $count = $quoteModel->payments->count();
-            $paymentInformation['code'] = ($count > 0) ? $quoteModel->code.'-'.$count : $quoteModel->code;
-
-            if ($request->reference) {
-                $paymentInformation['reference'] = $request->reference;
-            }
-            if ($request->payment_methods != PaymentMethodsEnum::CreditCard && $request->payment_methods != PaymentMethodsEnum::InsureNowPayLater) {
-                $paymentInformation['authorized_at'] = now();
-            }
-            $payment = Payment::create($paymentInformation);
-
-            //Add split payments start
-            $this->paymentSplitsRepository->addPaymentSplits($request, $paymentInformation['code']);
-            //Add split payments ends
-
-            $quoteModel->payments()->save($payment);
-            $paymentLog = new PaymentStatusLog([
-                'current_payment_status_id' => PaymentStatusEnum::NEW,
-                'payment_code' => $paymentInformation['code'],
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
-            $paymentLog->save();
-            $quoteModel->quote_status_id = QuoteStatusEnum::PaymentPending;
-            $quoteModel->save();
-
-            return back()->with('success', 'Payment Added');
         } else {
             $paymentInformation = [
                 'collection_type' => $request->collection_type,
@@ -1814,49 +1825,55 @@ class CRUDController extends Controller
 
     public function updatePayment(UpdatePaymentRequest $request)
     {
-
         if (auth()->user()->hasRole(RolesEnum::BetaUser)) {
             if (! (auth()->user()->can(PermissionsEnum::PaymentsEdit))) {
                 return;
             }
-            $paymentInformation = [
-                'total_price' => $request->total_price,
-                'notes' => ! empty($request->notes) ? $request->notes : null,
-                'custom_reason' => ! empty($request->custom_reason) ? $request->custom_reason : null,
-                'discount_reason' => $request->discount_reason,
-                'discount_custom_reason' => $request->discount_custom_reason,
-                'discount_type' => $request->discount,
-                'frequency' => $request->frequency,
-                'credit_approval' => $request->credit_approval,
-                'total_payments' => $request->payment_no,
-                'collection_type' => $request->collection_type,
-                'total_amount' => $request->total_amount, //amount after discount
-                'collection_date' => $request->collection_date,
-                'discount_value' => $request->discount_value,
-                'payment_methods_code' => $request->payment_methods,
-                'insurance_provider_id' => ! empty($request->insurance_provider_id) ? $request->insurance_provider_id : null,
-                'updated_by' => $request->user()->id,
-            ];
+            DB::beginTransaction();
+            try {
+                $paymentInformation = [
+                    'total_price' => $request->total_price,
+                    'notes' => ! empty($request->notes) ? $request->notes : null,
+                    'custom_reason' => ! empty($request->custom_reason) ? $request->custom_reason : null,
+                    'discount_reason' => $request->discount_reason,
+                    'discount_custom_reason' => $request->discount_custom_reason,
+                    'discount_type' => $request->discount,
+                    'frequency' => $request->frequency,
+                    'credit_approval' => $request->credit_approval,
+                    'total_payments' => $request->payment_no,
+                    'collection_type' => $request->collection_type,
+                    'total_amount' => $request->total_amount, //amount after discount
+                    'collection_date' => $request->collection_date,
+                    'discount_value' => $request->discount_value,
+                    'payment_methods_code' => $request->payment_methods,
+                    'insurance_provider_id' => ! empty($request->insurance_provider_id) ? $request->insurance_provider_id : null,
+                    'updated_by' => $request->user()->id,
+                ];
 
-            if ($request->reference) {
-                $paymentInformation['reference'] = $request->reference;
+                if ($request->reference) {
+                    $paymentInformation['reference'] = $request->reference;
+                }
+                $payment = Payment::where('code', $request->paymentCode)->first();
+                if (! $payment) {
+                    return back()->with('message', 'Payment record not found');
+                }
+
+                if ($request->payment_methods == PaymentMethodsEnum::CreditApproval) {
+                    $paymentInformation['payment_status_id'] = PaymentStatusEnum::CREDIT_APPROVED;
+                } elseif ($payment->payment_status_id == PaymentStatusEnum::CREDIT_APPROVED) {
+                    $paymentInformation['payment_status_id'] = PaymentStatusEnum::NEW;
+                }
+                $payment->update($paymentInformation);
+
+                //Update split payments start
+                $this->paymentSplitsRepository->updatePaymentSplits($request);
+                DB::commit(); // Commit changes if everything went well
+                return back()->with('success', 'Payment Updated');
+            } catch (Exception $exception) {
+                DB::rollBack(); // Rollback changes if any error occurred        
+                return back()->with('error', $exception->getMessage());
             }
-            $payment = Payment::where('code', $request->paymentCode)->first();
-            if (! $payment) {
-                return back()->with('message', 'Payment record not found');
-            }
 
-            if ($request->payment_methods == PaymentMethodsEnum::CreditApproval) {
-                $paymentInformation['payment_status_id'] = PaymentStatusEnum::CREDIT_APPROVED;
-            } elseif ($payment->payment_status_id == PaymentStatusEnum::CREDIT_APPROVED) {
-                $paymentInformation['payment_status_id'] = PaymentStatusEnum::NEW;
-            }
-            $payment->update($paymentInformation);
-
-            //Update split payments start
-            $this->paymentSplitsRepository->updatePaymentSplits($request);
-
-            return back()->with('success', 'Payment Updated');
         } else {
             $paymentInformation = [
                 'collection_type' => $request->collection_type,

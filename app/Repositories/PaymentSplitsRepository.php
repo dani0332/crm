@@ -67,9 +67,7 @@ class PaymentSplitsRepository
                 ];
 
                 $paymentSplitRecord = PaymentSplits::create($splitPaymentInformation);
-                if ($paymentSplitRecord) {
-                    //Update parent payment status
-                    $this->setMasterPaymentStatus($paymentSplitRecord->id);                   
+                if ($paymentSplitRecord) {                                     
                     //add document references
                     if (isset($request->split_payment_details['document_detail'][$i])
                         && $paymentSplitRecord
@@ -87,6 +85,8 @@ class PaymentSplitsRepository
                 }
             }
         }
+        //Update parent payment status        
+        $this->setMasterPaymentStatus($request->modelType, $request->quote_id);
         $this->uploadDiscountDocuments($request->split_payment_details['discount_documents'], $quoteID);
     }
 
@@ -101,14 +101,12 @@ class PaymentSplitsRepository
                 if ($paymentSplit->payment_status_id == PaymentStatusEnum::PAID ||
                     $paymentSplit->payment_status_id == PaymentStatusEnum::AUTHORISED) {
                     $paymentPaidSerialNo[] = $paymentSplit->sr_no;
-
                     continue;
                 }
                 if (($request->payment_no < $paymentSplits->count()) && $paymentSplit->sr_no > $request->payment_no) {
                     QuoteDocument::where('payment_split_id', $paymentSplit->id)->delete();
                     $paymentSplit->delete();
                     unset($splitPaymentDetails[$paymentSplit->sr_no]);
-
                     continue;
                 }
             }
@@ -142,8 +140,7 @@ class PaymentSplitsRepository
                 if (! $paymentSplitRecord) {
                     $paymentSplitRecord = PaymentSplits::create($splitPaymentInformation);
                 } else {
-                    $paymentSplitRecord->update($splitPaymentInformation);
-                    $this->setMasterPaymentStatus($paymentSplitRecord->id);
+                    $paymentSplitRecord->update($splitPaymentInformation);                    
                 }
                 //add document references
                 if (isset($request->split_payment_details['document_detail'][$i])
@@ -159,7 +156,8 @@ class PaymentSplitsRepository
                     }
                 }
             }
-        }
+        }        
+        $this->setMasterPaymentStatus($request->modelType, $request->quote_id);
         $this->uploadDiscountDocuments($request->split_payment_details['discount_documents'], $request->paymentCode);
     }
 
@@ -268,7 +266,7 @@ class PaymentSplitsRepository
     }
 
     public function updatePaymentStatus($request)
-    { 
+    {   
         $successMessage = 'Payment Verified';
         if ($request->is_approved) {
             $paymentInformation = [
@@ -318,8 +316,8 @@ class PaymentSplitsRepository
             $splitPayment->update($paymentInformation);
             $successMessage = 'Payment Declined';
         }
-        //Update parent payment status
-        $this->setMasterPaymentStatus($request->splitPaymentId);
+        //Update parent payment status        
+        $this->setMasterPaymentStatus($request->modelType, $request->quote_id);
         return $successMessage;
     }
 
@@ -401,19 +399,19 @@ class PaymentSplitsRepository
         return $returnMessage;
     }
 
-    public function setMasterPaymentStatus($splitPaymentId)
+    public function setMasterPaymentStatus($modelType, $quote_id)
     {
-        $splitPayment = PaymentSplits::with('payment')->find($splitPaymentId);
-        $payment = $splitPayment->payment;
+        $quoteModel = $this->getQuoteObject($modelType, $quote_id);
+        $payment = $quoteModel->payments()->first();
         if ($payment) {
             if ($payment->frequency == 'upfront') {
                 $payment->update(
-                    ['payment_status_id' => $splitPayment->payment_status_id]
+                    ['payment_status_id' => $payment->paymentSplits[0]->payment_status_id]
                 );
             } else {
                 $totalPaidPayments = PaymentSplits::where([
                     'payment_status_id' => PaymentStatusEnum::PAID,
-                    'code' => $splitPayment->code,
+                    'code' => $payment->code,
                 ])->count();
                 if ($totalPaidPayments == $payment->total_payments) {
                     $payment->update(
