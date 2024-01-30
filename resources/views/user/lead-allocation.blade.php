@@ -113,6 +113,30 @@
                             }
                         },
                     },
+                    {
+                        data: 'reset_cap',
+                        name: 'reset_cap',
+                        orderable: false,
+                        searchable: false,
+                        render: function(data, type, row) {
+
+                            if (data == 1) {
+                                var html = `
+                                <label class="switch" style="margin-left: 20px;">
+                                            <input data-toggle="toggle"  data-size="lg" type="checkbox" data-id="${row.id}" data-userId="${row.userId}" checked="checked" class="reset-cap success" id="is_active" name="is_active">
+                                            <span class="slider round"></span>
+                                        </label>`;
+
+                                return html;
+                            } else {
+                                var html = `<label class="switch " style="margin-left: 20px;">
+                                                            <input type="checkbox" data-id="${row.id}" data-userId="${row.userId}" class="reset-cap danger" id="is_active" name="is_active">
+                                                            <span class="slider round"></span>
+                                                        </label>`;
+                                return html;
+                            }
+                        },
+                    },
                 ],
                 drawCallback: function (settings) {
                     $('.lead_allocation_table tr').each(function(){
@@ -126,7 +150,7 @@
             });
 
 
-            $('body').on('dblclick', 'table:first td:nth-last-child(2)', function() {
+            $('body').on('dblclick', 'table:first td:nth-last-child(3)', function() {
                 var maxCapValue = parseInt($(this).text());
                 if(maxCapValue !== NaN){
                     $(this).html(`<input type="text" class="form-control" value="${maxCapValue}" />`);
@@ -239,6 +263,38 @@
             }
         });
 
+
+    $(document).on("change", "input:checkbox.reset-cap", function() {
+        var ischecked = $(this).is(':checked');
+        var self = $(this);
+        if(ischecked) {
+
+
+            $(this).removeClass('danger');
+            $(this).addClass('success');
+        }
+        else{
+                $(this).removeClass('success');
+                $(this).addClass('danger');
+        }
+        var userId = $(self).data('userid');
+                $.ajax({
+                    url: '/lead-allocation/toggle-reset-cap',
+                    type: 'POST',
+                    data: {
+                        'userId': userId,
+                        'resetCap': ischecked==true?1:0,
+                        '_token': $('meta[name="csrf-token"]').attr('content')
+                    },
+                    success: function(data) {
+                        console.log('scheduler update');
+                        $('.loading').hide();
+                    }
+                });
+
+
+    });
+
         $(document).on("change", "input:checkbox.leadSwitch", function() {
 
             if(confirm("Are you sure you want to change Leads Assignment Status ?")){
@@ -262,6 +318,7 @@
 </script>
 
 <div class="row">
+
     <div class="x_panel">
         <div class="x_title">
             <h2>Lead Allocation Management</h2>
@@ -296,7 +353,7 @@
         </div>
         <div class="col-md-12 col-lg-12">
             <span style="font-size: 18px;">Unassigned leads count</span>
-        </div> 
+        </div>
         <div class="col-md-3 col-lg-2" style="margin-top: 10px; border-radius: 10px; border-left: 3px solid #e46122;margin-bottom: 20px;font-size: 26px;background: whitesmoke;height: 120px;padding-top: 10px;">
             <span style="font-size: 18px">Good </span>
             <br/>
@@ -322,6 +379,8 @@
                     <div class="alert alert-success">{{ session()->get('success') }}</div>
                 @endif
 
+
+
                 <table class="table table-striped jambo_table  lead_allocation_table" style="width:100%">
                     <thead>
                         <tr>
@@ -336,6 +395,7 @@
                                    title="For Unlimited Capactiy Add ( -1 )"></i>
                             </th>
                             <th style="width: 12% !important;">Status</th>
+                            <th style="width: 12% !important;">Reset Cap</th>
                         </tr>
                     </thead>
                     <tbody>
