@@ -17,9 +17,10 @@ class QuoteStatusTableSeeder extends Seeder
      */
     public function run()
     {
-        $newQuoteSortIter = 60;
-        $newMappingSortIter = 22;
+        $newQuoteSortIter = 70;
         $newQuoteStatuses = [
+            ['code' => 'CancellationPending', 'text' => 'Cancellation Pending', 'mapped_with' => [QuoteTypeId::Car, QuoteTypeId::Bike, QuoteTypeId::Health, QuoteTypeId::Business, QuoteTypeId::Travel, QuoteTypeId::Home, QuoteTypeId::Pet, QuoteTypeId::Cycle]],
+            ['code' => 'PolicyCancelled', 'text' => 'Policy Cancelled', 'mapped_with' => [QuoteTypeId::Car, QuoteTypeId::Bike, QuoteTypeId::Health, QuoteTypeId::Business, QuoteTypeId::Travel, QuoteTypeId::Home, QuoteTypeId::Pet, QuoteTypeId::Cycle]],
             ['code' => 'Allocated', 'text' => 'Allocated', 'mapped_with' => [QuoteTypeId::Health, QuoteTypeId::Business, QuoteTypeId::Travel, QuoteTypeId::Home, QuoteTypeId::Pet, QuoteTypeId::Cycle]],
             ['code' => 'RenewalTermsReceived', 'text' => 'Renewal Terms Received', 'mapped_with' => [QuoteTypeId::Health, QuoteTypeId::Business, QuoteTypeId::Home, QuoteTypeId::Pet, QuoteTypeId::Cycle]],
             ['code' => 'ProposalFormRequested', 'text' => 'Proposal Form Requested', 'mapped_with' => [QuoteTypeId::Business]],
@@ -30,10 +31,6 @@ class QuoteStatusTableSeeder extends Seeder
             ['code' => 'FinalizingTerms', 'text' => 'Finalizing Terms', 'mapped_with' => [QuoteTypeId::Business]],
             ['code' => 'QuotedByUW', 'text' => 'Quote by UW', 'mapped_with' => [QuoteTypeId::Business, QuoteTypeId::Travel, QuoteTypeId::Home, QuoteTypeId::Pet, QuoteTypeId::Cycle]],
             ['code' => 'SentForTransactionApproval', 'text' => 'Sent for Transaction Approval', 'mapped_with' => [QuoteTypeId::Car, QuoteTypeId::Bike, QuoteTypeId::Health, QuoteTypeId::Business, QuoteTypeId::Travel, QuoteTypeId::Home, QuoteTypeId::Pet, QuoteTypeId::Cycle]],
-            ['code' => 'CancellationPending', 'text' => 'Cancellation Pending', 'mapped_with' => [QuoteTypeId::Car, QuoteTypeId::Bike, QuoteTypeId::Health, QuoteTypeId::Business, QuoteTypeId::Travel, QuoteTypeId::Home, QuoteTypeId::Pet, QuoteTypeId::Cycle]],
-            ['code' => 'PolicySentToCustomer', 'text' => 'Policy sent to customer', 'mapped_with' => [QuoteTypeId::Car, QuoteTypeId::Bike, QuoteTypeId::Health, QuoteTypeId::Business, QuoteTypeId::Travel, QuoteTypeId::Home, QuoteTypeId::Pet, QuoteTypeId::Cycle]],
-            ['code' => 'PolicyBooked', 'text' => 'Policy Booked', 'mapped_with' => [QuoteTypeId::Car, QuoteTypeId::Bike, QuoteTypeId::Health, QuoteTypeId::Business, QuoteTypeId::Travel, QuoteTypeId::Home, QuoteTypeId::Pet, QuoteTypeId::Cycle]],
-            ['code' => 'PolicyCancelled', 'text' => 'Policy Cancelled', 'mapped_with' => [QuoteTypeId::Car, QuoteTypeId::Bike, QuoteTypeId::Health, QuoteTypeId::Business, QuoteTypeId::Travel, QuoteTypeId::Home, QuoteTypeId::Pet, QuoteTypeId::Cycle]],
         ];
 
         foreach ($newQuoteStatuses as $quoteStatus) {
@@ -48,9 +45,9 @@ class QuoteStatusTableSeeder extends Seeder
                 'updated_by' => 'bilal.saeed@insurancemarket.ae',
             ]);
 
-            foreach ($quoteStatus['mapped_with'] as $mapped) {
+            foreach ($quoteStatus['mapped_with'] as $mapSortingOrder => $mapped) {
                 QuoteStatusMap::firstOrCreate(['quote_type_id' => $mapped, 'quote_status_id' => $quoteStatusDetails->id], [
-                    'sort_order' => ++$newMappingSortIter,
+                    'sort_order' => ++$mapSortingOrder,
                     'created_by' => 'bilal.saeed@insurancemarket.ae',
                     'updated_by' => 'bilal.saeed@insurancemarket.ae',
                     'created_at' => now(),
