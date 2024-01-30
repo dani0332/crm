@@ -36,6 +36,8 @@ class RenewalBatchRequest extends FormRequest
 
         $slabIndex = count($slabArray);
 
+
+
         // Define the validation rules
         if ($slabIndex > 0) {
             $i = $slabIndex;
@@ -121,8 +123,8 @@ class RenewalBatchRequest extends FormRequest
             'deadline_date' => [
                 'required',
                 'array',
-                'min:2',
-                'max:2',
+                'min:1',
+                'max:1',
             ],
             'deadline_date.*' => [
                 'required',
@@ -131,8 +133,8 @@ class RenewalBatchRequest extends FormRequest
             'quote_status_id' => [
                 'required',
                 'array',
-                'min:2',
-                'max:2',
+                'min:1',
+                'max:1',
             ],
             'quote_status_id.*' => [
                 'required',
