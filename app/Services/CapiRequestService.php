@@ -73,6 +73,7 @@ class CapiRequestService
                     if ($carQuoteDetail) {
                         $carQuoteDetail->advisor_assigned_date = now();
                         $carQuoteDetail->advisor_assigned_by_id = auth()->id();
+                        $carQuoteDetail->updated_at = now();
                         $carQuoteDetail->save();
                     } else {
                         CarQuoteRequestDetail::create([
