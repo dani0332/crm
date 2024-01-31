@@ -465,8 +465,7 @@ class HandleInertiaRequests extends Middleware
                         fn ($s) => $s->attributes(['icon' => 'box'])
                     )
                     ->addIf(
-                        auth()->user(),
-                        // ->can(PermissionsEnum::RENEWAL_BATCHES_LIST),
+                        auth()->user()->can(PermissionsEnum::RENEWAL_BATCHES_LIST),
                         'Renewal Batches',
                         route('renewal-batches-list'),
                         fn ($s) => $s->attributes(['icon' => 'box'])
