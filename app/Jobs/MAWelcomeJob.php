@@ -60,8 +60,8 @@ class MAWelcomeJob implements ShouldQueue
                     $customer->is_we_sent = true;
                     $customer->save();
 
-                    $myAlfredUser = MyAlFredUser::where('customer_id', $customer->id)->get();
-                    if ($myAlfredUser->isEmpty()) {
+                    $myAlfredUser = MyAlFredUser::where('customer_id', $customer->id)->first();
+                    if (! $myAlfredUser) {
                         $newMyAlfredUser = new MyAlFredUser;
                         $newMyAlfredUser->signup_url = null;
                         $newMyAlfredUser->customer_id = $customer->id;
