@@ -81,11 +81,14 @@ const scheduleUpdate = () => {
     }, nextUpdate - new Date());
     }
 };
+const intializData = ()=>{
+    userStatus.value = (user.value.status =='1')?true:false;
+}
 
 onMounted(() => {
-    // Schedule the first check
     scheduleUpdate();
-    userStatus.value = (user.status ==1)?true:false;
+    intializData();
+
 });
 
 

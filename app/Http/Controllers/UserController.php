@@ -366,20 +366,19 @@ class UserController extends Controller
                 DB::raw('CONCAT(users.name, " - ", roles.name) as name')
             )->get();
     }
-    public function updateUserStatus(Request $request){
+    public function updateUserStatus(Request $request)
+    {
         $currentDateTime = Carbon::now();
         $startDateTime = Carbon::parse('18:30:00'); // 6:30 PM
         $endDateTime = Carbon::parse('08:59:00')->addDay(); // 8:59 AM of the next day
         $user = User::find(auth()->user()->id);
-        $user->status = $request->user_status == true?UserStatusEnum::ONLINE:UserStatusEnum::MANUAL_OFFLINE;
-        $user->update();
-       // dd($currentDateTime);
         if (
             ($currentDateTime->isWeekday() && $currentDateTime->between($startDateTime, $endDateTime))
             || ($currentDateTime->isWeekend())
         ) {
 
-
+            $user->status = $request->user_status == true ? UserStatusEnum::ONLINE : UserStatusEnum::MANUAL_OFFLINE;
+            $user->update();
             // Current time is within the specified range on weekdays or any time on Saturday and Sunday
             echo "Current time is between 6:30 PM and 8:59 AM of the next day, and it's a weekday or weekend.";
         } else {
