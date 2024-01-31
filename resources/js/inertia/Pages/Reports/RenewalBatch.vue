@@ -483,8 +483,8 @@ function calculateValuesAndHighlight() {
 
 const calculateMonthlyHealthRenewed = (data, index) =>{
 
-    var totalRenewed = 0;
-    var currentMonthValue = data[index].month;
+    let totalRenewed = 0;
+    let currentMonthValue = data[index].month;
 
     currentRowSpanForSuperRetention = 0;
 
@@ -520,13 +520,13 @@ onMounted(() => {
 
 const calculateMonthlySum = (data, index) => {
 
-    var totalRenewed = 0;
-    var totalAllocated = 0;
-    var totalCarSold = 0;
-    // var totalCarUncontactable = 0;
+    let totalRenewed = 0;
+    let totalAllocated = 0;
+    let totalCarSold = 0;
+    // let totalCarUncontactable = 0;
     currentRowSpan = 0;
 
-    var currentMonthValue = data[index].month;
+    let currentMonthValue = data[index].month;
 
     if (lastMonthSummedIndex <= index) {
         while (index <= (data.length - 1) && currentMonthValue == data[index].month) {
@@ -543,7 +543,7 @@ const calculateMonthlySum = (data, index) => {
         renewedCountsList[currentMonthValue] = totalRenewed;
         totalAllocationList[currentMonthValue] = ( totalAllocated - totalCarSold );
 
-        var result = totalRenewed / (totalAllocated - totalCarSold
+        let result = totalRenewed / (totalAllocated - totalCarSold
         // - totalCarUncontactable
         ) * 100;
 
