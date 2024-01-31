@@ -160,10 +160,6 @@ const onUpdatePlan = () => {
       preserveScroll: true,
       preserveState: true,
       onSuccess: () => {
-        notification.success({
-          title: 'Plan updated successfully',
-          position: 'top',
-        });
         emit("onLoadAvailablePlansData")
       },
     });

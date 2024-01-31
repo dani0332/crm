@@ -4,16 +4,12 @@ namespace App\Exports;
 
 use App\Services\CRUDService;
 use App\Services\HealthQuoteService;
+use App\Traits\ExcelExportable;
 use Carbon\Carbon;
-use Maatwebsite\Excel\Concerns\Exportable;
-use Maatwebsite\Excel\Concerns\FromCollection;
-use Maatwebsite\Excel\Concerns\ShouldAutoSize;
-use Maatwebsite\Excel\Concerns\WithHeadings;
-use Maatwebsite\Excel\Concerns\WithMapping;
 
-class HealthQuotesExport implements FromCollection, ShouldAutoSize, WithHeadings, WithMapping
+class HealthQuotesExport
 {
-    use Exportable;
+    use ExcelExportable;
 
     private $genderOptions;
 
