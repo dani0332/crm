@@ -51,7 +51,7 @@ class CapiRequestService
         }
     }
 
-    private function handleCarResponse($requestContent)
+    private static function handleCarResponse($requestContent)
     {
         if (isset($data['carTypeInsuranceId']) && $data['carTypeInsuranceId'] != '') {
             $carQuote = CarQuote::where('uuid', $requestContent->quoteUID)->first();
@@ -89,7 +89,7 @@ class CapiRequestService
         }
     }
 
-    private function handleHealthResponse($requestContent)
+    private static function handleHealthResponse($requestContent)
     {
         if (isset($requestContent->quoteUID)) {
             $healthQuote = HealthQuote::where('uuid', $requestContent->quoteUID)->first();
