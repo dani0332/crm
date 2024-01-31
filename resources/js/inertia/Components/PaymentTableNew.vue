@@ -1248,6 +1248,7 @@ const addPayment = isValid => {
     collection_date: paymentMethodsForm.collection_date,
     discount_value: discountValue.value, // discount amount
     isInertia: true,
+    new_payment_structure: true,
   };
 
   // Combine split_amount and payment_type into a single object
