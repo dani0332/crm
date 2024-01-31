@@ -1839,8 +1839,7 @@ class CarQuoteService extends BaseService
                 'q.paid_at'
             )
             ->whereBetween('q.paid_at', [$request->paid_at_start, $request->paid_at_end])
-            ->where('q.quote_status_id', '=', QuoteStatusEnum::TransactionApproved)
-            ->where('q.payment_status_id', '=', PaymentStatusEnum::CAPTURED)
+            ->whereIn('q.payment_status_id', [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PARTIAL_CAPTURED, PaymentStatusEnum::AUTHORISED])
             ->orderBy('q.created_at')
             ->chunk(500, function ($carQuoteRequestData) use (&$results) {
                 foreach ($carQuoteRequestData as $row) {
