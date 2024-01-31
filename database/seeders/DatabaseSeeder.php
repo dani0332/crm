@@ -15,9 +15,7 @@ class DatabaseSeeder extends Seeder
     {
         $this->call([
             LookupSeeder::class,
-            addDubaiNowEmailGroup::class,
-            DubaiLeadSource::class,
-            HealthQuoteAccessPermissionsSeeder::class,
+            GenericPermissionSeeder::class,
         ]);
     }
 }

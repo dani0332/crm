@@ -17,70 +17,18 @@ class GenericPermissionSeeder extends Seeder
      */
     public function run()
     {
-        $permissions = [
-            ['name' => PermissionsEnum::PAUSE_AUTO_FOLLOWUPS],
-            ['name' => PermissionsEnum::DATA_EXTRACTION],
-            ['name' => PermissionsEnum::CAR_SOLD_LIST,            'role' => RolesEnum::MarketingOperations],
-            ['name' => PermissionsEnum::CAR_UNCONTACTABLE_LIST,   'role' => RolesEnum::MarketingOperations],
-            ['name' => PermissionsEnum::AMLDecisionUpdate,        'role' => RolesEnum::COMPLIANCE],
-            ['name' => PermissionsEnum::AMLDecisionUpdateTrueMatch, 'role' => RolesEnum::ComplianceSuperUser],
-        ];
-
-        foreach ($permissions as $permission) {
-            $permissionRecord = Permission::where('name', $permission['name'])->first();
-
-            if (! $permissionRecord) {
-                $permissionRecord = Permission::create([
-                    'name' => $permission['name'],
-                    'guard_name' => 'web',
-                ]);
-            }
-
-            if (! empty($permission['role'])) {
-                $role = Role::where('name', $permission['role'])->first();
-
-                if (! $role) {
-                    $role = Role::create([
-                        'name' => $permission['role'],
-                        'guard_name' => 'web',
-                    ]);
-                }
-
-                if (! $role->hasPermissionTo($permissionRecord->id)) {
-                    $role->givePermissionTo($permissionRecord->id);
-                }
-            }
-        }
-
-        $roles = [
-            RolesEnum::CarAdvisor, RolesEnum::CarManager, RolesEnum::CarDeputyManager,
-            RolesEnum::TravelAdvisor, RolesEnum::TravelManager,
-            RolesEnum::HomeAdvisor, RolesEnum::HomeManager,
-            RolesEnum::PetAdvisor, RolesEnum::PetManager,
-            RolesEnum::CycleAdvisor, RolesEnum::CycleManager,
-            RolesEnum::BikeAdvisor, RolesEnum::BikeManager,
-            RolesEnum::CorpLineAdvisor, RolesEnum::CorplineManager,
-        ];
-
-        foreach ($roles as $item) {
-            $role = Role::where('name', $item)->first();
-            if (! $role->hasPermissionTo(PermissionsEnum::PaymentsCreate)) {
-                $role->givePermissionTo(PermissionsEnum::PaymentsCreate);
-            }
-            if (! $role->hasPermissionTo(PermissionsEnum::PaymentsEdit)) {
-                $role->givePermissionTo(PermissionsEnum::PaymentsEdit);
-            }
-        }
+        Permission::findOrCreate(PermissionsEnum::HEALTH_QUOTES_MANAGER_ACCESS, 'web');
+        Permission::findOrCreate(PermissionsEnum::HEALTH_QUOTES_ACCESS, 'web');
 
         // Add Compliance Permission to Admin
         $role = Role::where('name', RolesEnum::Admin)->first();
 
-        if (! $role->hasPermissionTo(PermissionsEnum::AMLDecisionUpdate)) {
-            $role->givePermissionTo(PermissionsEnum::AMLDecisionUpdate);
+        if (! $role->hasPermissionTo(PermissionsEnum::HEALTH_QUOTES_MANAGER_ACCESS)) {
+            $role->givePermissionTo(PermissionsEnum::HEALTH_QUOTES_MANAGER_ACCESS);
         }
 
-        if (! $role->hasPermissionTo(PermissionsEnum::AMLDecisionUpdateTrueMatch)) {
-            $role->givePermissionTo(PermissionsEnum::AMLDecisionUpdateTrueMatch);
+        if (! $role->hasPermissionTo(PermissionsEnum::HEALTH_QUOTES_ACCESS)) {
+            $role->givePermissionTo(PermissionsEnum::HEALTH_QUOTES_ACCESS);
         }
     }
 }
