@@ -336,4 +336,5 @@ class User extends Authenticatable implements AuditableContract
         return $this->hasMany(UserProducts::class);
 
     }
+
 }
