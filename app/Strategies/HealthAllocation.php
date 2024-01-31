@@ -18,9 +18,9 @@ class HealthAllocation implements Allocation
         $this->allocationId = $allocationId;
     }
 
-    public function executeSteps()
+    public function executeSteps($overrideAdvisorId = false)
     {
-        $lead = $this->fetchLead();
+        $lead = $this->fetchLead($overrideAdvisorId);
 
         if (! $lead) {
 
@@ -46,9 +46,9 @@ class HealthAllocation implements Allocation
         $this->assignLead($lead, $advisor); // Assign the lead to the advisor
     }
 
-    private function fetchLead()
+    private function fetchLead($overrideAdvisorId)
     {
-        return $this->healthAllocationService->fetchLead($this->allocationId);
+        return $this->healthAllocationService->fetchLead($this->allocationId, $overrideAdvisorId);
     }
 
     private function assignTeamBasedOnPrice($lead)

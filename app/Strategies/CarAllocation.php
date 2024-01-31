@@ -18,11 +18,11 @@ class CarAllocation implements Allocation
         $this->allocationId = $allocationId;
     }
 
-    public function executeSteps()
+    public function executeSteps($overrideAdvisorId = false)
     {
         try {
             // Fetch the lead to process
-            $lead = $this->fetchLead();
+            $lead = $this->fetchLead($overrideAdvisorId);
 
             if (! $lead) {
 
@@ -68,9 +68,9 @@ class CarAllocation implements Allocation
         }
     }
 
-    protected function fetchLead(): mixed
+    protected function fetchLead($overrideAdvisorId): mixed
     {
-        return $this->carAllocationService->fetchLead($this->allocationId);
+        return $this->carAllocationService->fetchLead($this->allocationId, $overrideAdvisorId);
     }
 
     protected function getTier($tierId)
