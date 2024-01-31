@@ -359,7 +359,7 @@ onMounted(() => {
           :options="leadStatusOptions"
         />
         <ComboBox
-          v-if="!hasAnyRole([rolesEnum.RMAdvisor, rolesEnum.EBPAdvisor])"
+          v-if="!hasAnyRole([rolesEnum.RMAdvisor, rolesEnum.EBPAdvisor, rolesEnum.CarAdvisor])"
           v-model="filters.advisors"
           label="Advisor"
           placeholder="Search by Advisor"
@@ -388,7 +388,7 @@ onMounted(() => {
           class="w-full"
         />
         <x-select
-          v-if="!hasAnyRole([rolesEnum.RMAdvisor, rolesEnum.EBPAdvisor])"
+          v-if="!hasAnyRole([rolesEnum.RMAdvisor, rolesEnum.EBPAdvisor, rolesEnum.CarAdvisor])"
           v-model="filters.assignment_type"
           label="Assignment Type"
           name="assignment_type"
@@ -413,11 +413,13 @@ onMounted(() => {
           placeholder="Search by Renewal Batch"
         />
         <DatePicker
+            v-if="!hasAnyRole([rolesEnum.CarAdvisor])"
             v-model="filters.assigned_to_date_start"
             name="assigned_to_date_start"
             label="Advisor Assigned Date Start"
         />
         <DatePicker
+            v-if="!hasAnyRole([rolesEnum.CarAdvisor])"
             v-model="filters.assigned_to_date_end"
             name="assigned_to_date_end"
             label="Advisor Assigned Date End"
