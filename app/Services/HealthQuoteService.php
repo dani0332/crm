@@ -219,6 +219,8 @@ class HealthQuoteService extends BaseService
             'health_quote_request_id' => $id,
             'created_at' => now(),
             'updated_at' => now(),
+            'advisor_assigned_date' => now(),
+            'advisor_assigned_by_id' => auth()->user()->id,
         ]);
     }
 
@@ -261,7 +263,7 @@ class HealthQuoteService extends BaseService
             $dataArr['advisorId'] = Auth::user()->id;
         }
 
-        $response = CapiRequestService::sendCAPIRequest('/api/v1-save-health-quote', $dataArr);
+        $response = CapiRequestService::sendCAPIRequest('/api/v1-save-health-quote', $dataArr, HealthQuote::class);
 
         if (isset($response->quoteUID)) {
             $this->savePremium(quoteTypeCode::HealthQuote, $request, $response);
@@ -633,15 +635,15 @@ class HealthQuoteService extends BaseService
         return $query;
     }
 
-    public function updateChildRecord($id)
+    public function updateChildRecord($id, $advisorId)
     {
         $childRecord = HealthQuoteRequestDetail::where('health_quote_request_id', $id)->first();
         if (empty($childRecord)) {
             $childRecord = $this->createDetailEntity($id);
         }
         $oldAdvisorAssignedDate = $childRecord->advisor_assigned_date;
-        if ($childRecord->advisor_id != null) {
-            $childRecord->advisor_assigned_by_id = Auth::user()->id;
+        if ($advisorId != null) {
+            $childRecord->advisor_assigned_by_id = auth()->user()->id;
             $childRecord->advisor_assigned_date = now();
             $childRecord->save();
         }
@@ -1149,7 +1151,7 @@ class HealthQuoteService extends BaseService
 
             $lead->assignment_type = $isReassignment ? AssignmentTypeEnum::MANUAL_REASSIGNED : AssignmentTypeEnum::MANUAL_ASSIGNED;
 
-            $oldAdvisorAssignedDate = $this->updateChildRecord($lead->id); // will update the car quote request detail entity about assignment
+            $oldAdvisorAssignedDate = $this->updateChildRecord($lead->id, $userId); // will update the car quote request detail entity about assignment
 
             info('Manual assignment done and details table updated for lead : '.$lead->uuid.'and old advisor assigned date is : '.$oldAdvisorAssignedDate);
 
