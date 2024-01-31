@@ -712,7 +712,7 @@ watch(
                                 </td> -->
                                 <td v-if="hasAnyRole([rolesEnum.CarManager, rolesEnum.RenewalsManager, rolesEnum.SeniorManagement, rolesEnum.Accounts])"
                                     class="x-table-cell px-3 py-4 align-middle">
-                                    {{ item.ratioCarSoldUncontactable }} %
+                                    {{ item.ratioCarSoldUncontactable }}%
                                 </td>
                                 <td class="x-table-cell px-3 py-4 align-middle">
                                     <!-- Sum of allocations per batch  - (Approved Car Sold + Approved Uncontactable) -->
@@ -722,11 +722,11 @@ watch(
                                         )).toLocaleString() }} </p>
                                 </td>
                                 <td :class="item.advisorRetentionClass" class="x-table-cell px-3 py-4 align-middle">
-                                    {{ item.advisorRetention }} %
+                                    {{ item.advisorRetention }}%
                                 </td>
                                 <td v-if="item.rowSpan > 0" class="x-table-cell px-3 py-4 align-middle text-center"
                                     :rowspan="item.rowSpan">
-                                    <b> {{ item.monthlySum }} %</b>
+                                    <b> {{ item.monthlySum }}%</b>
                                 </td>
                             </tr>
                         </tbody>
@@ -770,28 +770,28 @@ watch(
                             <tr :class="{ 'bg-[#ffff00]': item.highlight }" v-for="(item, index) in reportDataRef" :key="index"
                                 class="border-b border-gray-200 align-top">
                                 <td class="x-table-cell px-3 py-4 align-middle">
-                                    {{ item.valueSegmentConversion == '0.00' ? 'N/A' : item.valueSegmentConversion + '%' }}
+                                    {{ item.valueSegmentConversion == '0.00' ? 'N/A' : item.valueSegmentConversion +'%' }}
                                 </td>
                                 <td class="x-table-cell px-3 py-4 align-middle">
-                                    {{ item.volumeSegmentConversion == '0.00' ? 'N/A' : item.volumeSegmentConversion + '%' }}
+                                    {{ item.volumeSegmentConversion == '0.00' ? 'N/A' : item.volumeSegmentConversion +'%' }}
                                 </td>
                                 <td class="x-table-cell px-3 py-4 align-middle">
                                     <p>{{ parseFloat(item.valueSegmentConversion) > 0 ? (parseFloat(item.advisorRetention) -
-                                        parseFloat(item.valueSegmentConversion)).toFixed(2) + '%' : 'N/A' }}</p>
+                                        parseFloat(item.valueSegmentConversion)).toFixed(2) +'%' : 'N/A' }}</p>
                                 </td>
                                 <td class="x-table-cell px-3 py-4 align-middle">
                                     <p>{{ parseFloat(item.volumeSegmentConversion) > 0 ? (parseFloat(item.advisorRetention) -
-                                        parseFloat(item.volumeSegmentConversion)).toFixed(2) + '%' : 'N/A' }}</p>
+                                        parseFloat(item.volumeSegmentConversion)).toFixed(2) +'%' : 'N/A' }}</p>
                                 </td>
                                 <td class="x-table-cell px-3 py-4 align-middle">
-                                    {{ item.imRetention }} %
+                                    {{ item.imRetention }}%
                                 </td>
                                 <td class="x-table-cell px-3 py-4 align-middle">
-                                    <p>{{ (parseFloat(item.advisorRetention) - parseFloat(item.imRetention)).toFixed(2) }} %</p>
+                                    <p>{{ (parseFloat(item.advisorRetention) - parseFloat(item.imRetention)).toFixed(2) }}%</p>
                                 </td>
                                 <td v-if="hasRole(rolesEnum.CarAdvisor) != true"
                                     class="x-table-cell px-3 py-4 align-middle text-center">
-                                    <p> {{ item.rawRetention }} %</p>
+                                    <p> {{ item.rawRetention }}%</p>
                                 </td>
                             </tr>
                         </tbody>
@@ -823,10 +823,10 @@ watch(
                                 {{ index }}
                             </td>
                             <td class="x-table-cell px-3 py-4 align-middle">
-                                {{ monthlyIMAverages[index] ? monthlyIMAverages[index].toFixed(2) : 0 }} %
+                                {{ monthlyIMAverages[index] ? monthlyIMAverages[index].toFixed(2) : 0 }}%
                             </td>
                             <td class="x-table-cell px-3 py-4 align-middle">
-                                {{ monthlyRawAverages[index] ? monthlyRawAverages[index].toFixed(2) : 0 }} %
+                                {{ monthlyRawAverages[index] ? monthlyRawAverages[index].toFixed(2) : 0 }}%
                             </td>
 
                         </tr>
@@ -866,8 +866,8 @@ watch(
                                 {{ item.health_converted}}
                             </td>
                             <td v-if="item.rowSpan > 0" class="x-table-cell px-3 py-4 align-middle" :rowspan="item.rowSpan">
-                                <p v-if="totalAllocationList[item.month] == 0 || totalAllocationList[item.month] == undefined"> 0 % </p>
-                                <p v-else>{{ (((Number(item.monthlyHealthRenewed) + Number (renewedCountsList[item.month])) / Number(totalAllocationList[item.month])) * 100).toFixed(2)}} %</p>
+                                <p v-if="totalAllocationList[item.month] == 0 || totalAllocationList[item.month] == undefined"> 0% </p>
+                                <p v-else>{{ (((Number(item.monthlyHealthRenewed) + Number (renewedCountsList[item.month])) / Number(totalAllocationList[item.month])) * 100).toFixed(2)}}%</p>
                             </td>
                         </tr>
                     </tbody>
