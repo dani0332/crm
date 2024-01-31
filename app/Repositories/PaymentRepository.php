@@ -16,6 +16,7 @@ use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\PaymentAllocationStatus;
 use App\Enums\QuoteTypeId;
+use Illuminate\Support\Facades\Auth;
 
 
 class PaymentRepository extends BaseRepository implements PaymentRepositoryInterface

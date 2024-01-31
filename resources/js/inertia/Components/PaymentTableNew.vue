@@ -2823,7 +2823,9 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
                 </x-button>
               </div>
               <div v-if="!isApproveClicked && isDeclineClicked" class="mr-4">
-                <x-button size="sm"  type="submit" tabindex="0" class="focus:outline-black" >
+                <x-button size="sm"  type="submit" tabindex="0" class="focus:outline-black" 
+                :loading = "paymentMethodsForm.processing"
+                >
                   Decline
                 </x-button>
               </div>
