@@ -2,10 +2,17 @@
 
 namespace App\Console\Commands;
 
+use App\Enums\QuoteTypeId;
+use App\Models\Activities;
+use App\Models\ActivitySchedule;
 use App\Models\BusinessQuote;
+use App\Models\CarQuote;
 use App\Models\HealthQuote;
 use App\Models\HomeQuote;
+use App\Models\LifeQuote;
 use App\Models\PersonalQuote;
+use App\Models\TravelQuote;
+use App\Models\User;
 use Illuminate\Console\Command;
 
 class AutomateActivitiesCommand extends Command
@@ -22,21 +29,24 @@ class AutomateActivitiesCommand extends Command
      *
      * @var string
      */
-    protected $description = 'This runs to check if any done activities are available with no change in lead quote status then assign new activities accordingly';
+    protected $description = "Check if the follow-up activity's due date has passed, shall automatically classify as Cold Activity. Also, If any done activities with no changes in quote status then assign new follow-up activities to the relevent advisor";
 
     /**
      * Execute the console command.
      */
     public function handle()
     {
+        info("------------------- Automate Activities Command Started At: " . now() . " -------------------");
 
-        return true;
-        // When create activities automatic we have 2 cases
-        // Case 1 : Previously created activity marked as done, and no change in Status
-        // Case 2 : Previously created activity not done
-
-        // First fetch records which have activities 
-        // If any already created activities done and quote_status_modified date is greater than due_date then assign new activities to the same lead.
+        $allQuoteTypes = [
+            CarQuote::class,
+            HomeQuote::class,
+            HealthQuote::class,
+            LifeQuote::class,
+            BusinessQuote::class,
+            TravelQuote::class,
+            PersonalQuote::class
+        ];
 
         $eligibleQuoteTypes = [
             HealthQuote::class,
@@ -45,35 +55,93 @@ class AutomateActivitiesCommand extends Command
             PersonalQuote::class
         ];
 
-        info("------------------- Automate Activities Command Started At: " . now() . " -------------------");
+        $quoteTypeIDs = [
+            HealthQuote::class => QuoteTypeId::Health,
+            BusinessQuote::class => QuoteTypeId::Business,
+            HomeQuote::class => QuoteTypeId::Home
+        ];
 
-        foreach ($eligibleQuoteTypes as $eligibleQuoteType) {
+        foreach ($allQuoteTypes as $allQuoteType) {
 
-            info("------------------- Fetching : " . $eligibleQuoteType . " Records -------------------");
-            $getRecords = $eligibleQuoteType::whereHas('activities')
-            ->with('activities', function($activity){
-                $activity->orderBy('created_at', 'desc')->first();
-            })
-            ->where('id', '48')
-            // ->where('quote_status_date', '<', 'due_date')
-            ->limit(2)->get();
-            dd($getRecords->toArray());
+            info("------------------- Updating Cold Activities for : " . $allQuoteType . " -------------------");
+            $allQuoteType::whereHas('activities', function($activityQuery){
+                $activityQuery->where('due_date', '<', now());
+            })->with('activities')
+            ->chunkById(1000, function ($activities) {
+                foreach ($activities as $activity) {
+                    $activity->update([
+                        'is_cold' => true // Need to add this column in activity table
+                    ]);
+                }
+            });
+            info("------------------- Updated Cold Activities for : " . $allQuoteType . " -------------------");
 
-            // whereNotIn('quote_status_id', $skipStatus)
-            //     ->where('updated_at', '<', date(config('constants.DATE_FORMAT_ONLY'), strtotime('-30 days')))
-            //     ->when($eligibleQuoteType == BusinessQuote::class, function ($businessQuote) {
-            //         $businessQuote->whereNot('business_type_of_insurance_id', quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical));
-            //     })
-            //     ->when($eligibleQuoteType == PersonalQuote::class, function ($personalQuote) {
-            //         $personalQuote->whereIn('quote_type_id', [QuoteTypeId::Yacht, QuoteTypeId::Pet, QuoteTypeId::Cycle]);
-            //     })->chunkById(1000, function ($quoteDetails) {
-            //         foreach ($quoteDetails as $quoteDetail) {
-            //             $quoteDetail->update([
-            //                 'stale_at' => now()
-            //             ]);
-            //         }
-            //     });
-            info("------------------- Updated : " . $eligibleQuoteType . " -------------------");
         }
+
+        
+        foreach ($eligibleQuoteTypes as $eligibleQuoteType) {
+            info("------------------- Fetching : " . $eligibleQuoteType . " Quotes for create follow-up Activitiess -------------------");
+            $eligibleQuoteType::whereHas('activities', function($activityQuery){
+                $activityQuery->where('due_date', '<', now());
+            })
+            ->with(['activities' => function($activities){
+                $activities->orderBy('created_at', 'desc')->first();
+            }])
+            // Should be removed
+            ->where('id', 3027)
+            ->chunkById(1000, function($quotes) use ($eligibleQuoteType, $quoteTypeIDs) {
+                foreach ($quotes as $quote) {
+                    if(!empty($quote->advisor_id)) {
+                        $advisorDetails = User::with('usersroles', 'teams')->where('id', $quote->advisor_id)->first();
+                        // Should be remove this condition
+                        if($quote?->activities->value('status') == 1 || true) {
+                            // Should be introduce new column quote_status in activities table
+                            // Fetching Activity Schedules against Quote Status and Role and Team of Advisor
+                            $getQuoteType = (in_array($eligibleQuoteType, array_keys($quoteTypeIDs))) ? $quoteTypeIDs[$eligibleQuoteType] : $quote->quote_type_id;
+                            $fetchingActivitySchedules = ActivitySchedule::where([
+                                'quote_type_id' => $getQuoteType,
+                                'quote_status_id' => $quote->quote_status_id
+                            ])
+                            ->whereIn('role_id', $advisorDetails->usersroles->pluck('id'))
+                            ->whereIn('team_id', $advisorDetails->teams->pluck('id'))
+                            // Should be add link column in activities column because there is no refrenece which activity already created
+                            ->when(!empty($quote?->activities->value('activity_schedule_id')), function($previousSchedule) use ($quote) {
+                                $previousSchedule->where('id', $quote?->activities->value('activity_schedule_id'));
+                            })
+                            ->first();
+    
+                            // Follow up activites due date should be count last activity created date
+                            Activities::create([
+                                'title' => $fetchingActivitySchedules->name,
+                                'description' => $fetchingActivitySchedules->description,
+                                'quote_request_id' => $quote->id,
+                                'quote_type_id' => $getQuoteType,
+                                'status' => 0,
+                                'created_at' => now(),
+                                'updated_at' => now(),
+                                'assignee_id' => $quote->advisor_id,
+                                'uuid' => generateUuid(),
+                                'due_date' => addDaysExcludeWeekend($fetchingActivitySchedules->due_days),
+                                'client_name' => $quote->first_name.' '.$quote->last_name,
+                                'client_email' => $quote->email,
+                                'quote_uuid' => $quote->uuid,
+                            ]);
+                        }
+                    }
+                }
+            });
+
+            info("------------------- Follow-up Activities created for : " . $eligibleQuoteType . " -------------------");
+        }
+
+        info("------------------- Automate Activities Command Finished At: " . now() . " -------------------");
+
+        // When create activities automatic we have 2 cases
+        // Case 1 : Previously created activity marked as done, and no change in Status
+        // Case 2 : Previously created activity not done
+
+        // First fetch records which have activities 
+        // If any already created activities done and quote_status_modified date is greater than due_date then assign new activities to the same lead.
+        
     }
 }
