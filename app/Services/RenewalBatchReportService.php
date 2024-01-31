@@ -719,7 +719,7 @@ class RenewalBatchReportService extends BaseService
         }
 
         $query->where('health_quote_request.created_at', '<=', $reportDateEnd);
-        
+
         return $query;
     }
 
