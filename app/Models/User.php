@@ -337,12 +337,4 @@ class User extends Authenticatable implements AuditableContract
 
     }
 
-    public function isAssignUserToTeam($userId, $teamName)
-    {
-        if (in_array($teamName, $this->getUserTeams($userId)->toArray())) {
-            return true;
-        }
-
-        return false;
-    }
 }

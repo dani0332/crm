@@ -2,9 +2,12 @@
 
 namespace App\Services;
 
+use App\Enums\RolesEnum;
+use App\Enums\TeamNameEnum;
 use App\Models\User;
 use DB;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class UserService extends BaseService
 {
@@ -72,5 +75,26 @@ class UserService extends BaseService
     public function getUserById($userId)
     {
         return User::where('id', $userId)->first();
+    }
+
+    public function isAllowedToShowLeadListReport()
+    {
+
+        if (Auth::user()->hasRole(RolesEnum::CarAdvisor) || Auth::user()->hasRole(RolesEnum::CarManager)) {
+            if ($this->isAssignUserToTeam(Auth::user()->id, TeamNameEnum::ORGANIC)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public function isAssignUserToTeam($userId, $teamName)
+    {
+        if (in_array($teamName, app(User::class)->getUserTeams($userId)->toArray())) {
+            return true;
+        }
+
+        return false;
     }
 }
