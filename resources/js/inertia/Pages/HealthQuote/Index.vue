@@ -171,6 +171,13 @@ const advisorOptions = computed(() => {
   }));
 });
 
+const paymentStatusOptions = computed(() => {
+  return Object.entries(page.props.paymentStatusEnum).map(([key, value]) => ({
+    value: value,
+    label: key,
+  }));
+});
+
 function onSubmit(isValid) {
   if (isValid) {
     serverOptions.value.page = 1;
@@ -203,6 +210,10 @@ const handleSelectedFilters = selectedFilters => {
 
   if (selectedFilters.quote_status) {
     filters.quote_status = selectedFilters.quote_status;
+  }
+
+  if (selectedFilters.payment_status) {
+    filters.payment_status = selectedFilters.payment_status;
   }
 
   onSubmit(true);
@@ -452,6 +463,12 @@ watch(
           placeholder="Search by Advisor"
           :options="advisorOptions"
         />
+        <!-- <ComboBox
+          v-model="filters.payment_status"
+          label="Payment Status"
+          placeholder="Search by Payment Status"
+          :options="paymentStatusOptions"
+        /> -->
         <x-select
           v-model="filters.is_ecommerce"
           label="Is Ecommerce"

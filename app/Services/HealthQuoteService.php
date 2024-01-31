@@ -396,7 +396,7 @@ class HealthQuoteService extends BaseService
 
         // payment_status_id filter
         if (isset($request->payment_status) && is_array($request->payment_status) && count($request->payment_status) > 0) {
-            $this->query->whereIn('hqr.payment_status_id', $request->payment_status);
+            $this->query->whereIn('payment_status_id', $request->payment_status);
         }
 
         if (Auth::user()->isSpecificTeamAdvisor('Health') || Auth::user()->isSpecificTeamAdvisor('EBP') || Auth::user()->isSpecificTeamAdvisor('RM')) {

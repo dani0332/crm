@@ -137,9 +137,20 @@ const handleStatusFilter = status => {
   const quoteStatusCodes = filterQuoteStatuesByCodes(selectedQuoteStatusCodes);
 
   const quoteStatusIds = quoteStatusCodes.map(item => item.id);
+  const hasPaymentStatus = selectedOptions.value.status.some(
+    item => statuses.value[item - 1]?.paymentIds?.length > 0,
+  );
+
+  console.log('hasPaymentStatus', hasPaymentStatus);
 
   emit('selectedFilters', {
     quote_status: quoteStatusIds,
+    ...(hasPaymentStatus && {
+      payment_status: statuses.value
+        .filter(item => selectedOptions.value.status.includes(item.value))
+        .map(item => item.paymentIds)
+        .flat(),
+    }),
   });
 };
 
