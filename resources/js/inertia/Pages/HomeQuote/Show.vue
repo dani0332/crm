@@ -975,7 +975,7 @@ const linkEntity = () => {
       :quote_type="modelType"
     />
 
-    <customerAdditionalContacts
+    <CustomerAdditionalContacts
       quoteType="Home"
       :customerId="quote.customer_id"
       :quoteId="quote.id"
