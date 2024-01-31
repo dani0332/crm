@@ -29,7 +29,6 @@ use App\Services\CentralService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
-use Maatwebsite\Excel\Facades\Excel;
 
 class CentralController extends Controller
 {
@@ -99,7 +98,7 @@ class CentralController extends Controller
             QuoteTypes::CYCLE->value,
             QuoteTypes::JETSKI->value,
         ])) {
-            return Excel::download(new PersonalQuotesExport, $quoteType.'_leads.xlsx');
+            return app(PersonalQuotesExport::class)->download($quoteType.'_leads');
         }
 
         if (QuoteTypes::CAR->value == ucfirst($quoteType)) {
@@ -114,25 +113,25 @@ class CentralController extends Controller
 
         switch (ucfirst($quoteType)) {
             case QuoteTypes::LIFE->value:
-                return Excel::download(new LifeQuotesExport, 'life_leads.xlsx');
+                return app(LifeQuotesExport::class)->download('life_leads');
 
             case QuoteTypes::HOME->value:
-                return Excel::download(new HomeQuoteExport, 'home_leads.xlsx');
+                return app(HomeQuoteExport::class)->download('home_leads');
 
             case QuoteTypes::AMT->value:
-                return Excel::download(new AmtQuoteExport, 'amt_leads.xlsx');
+                return app(AmtQuoteExport::class)->download('amt_leads');
 
             case QuoteTypes::BUSINESS->value:
-                return Excel::download(new BusinessQuoteExport, 'business_leads.xlsx');
+                return app(BusinessQuoteExport::class)->download('business_leads');
 
             case QuoteTypes::TRAVEL->value:
-                return Excel::download(new TravelQuoteExport, 'travel_leads.xlsx');
+                return app(TravelQuoteExport::class)->download('travel_leads');
 
             case QuoteTypes::CAR->value:
                 return app(CarQuoteExport::class)->download('Car-List');
 
             case QuoteTypes::HEALTH->value:
-                return Excel::download(new HealthQuotesExport, 'Health-List.xlsx');
+                return app(HealthQuotesExport::class)->download('Health-List');
 
             default:
                 return false;
