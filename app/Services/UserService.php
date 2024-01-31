@@ -7,7 +7,6 @@ use App\Enums\TeamNameEnum;
 use App\Models\User;
 use DB;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 
 class UserService extends BaseService
 {
@@ -80,8 +79,9 @@ class UserService extends BaseService
     public function isAllowedToShowLeadListReport()
     {
 
-        if (Auth::user()->hasRole(RolesEnum::CarAdvisor) || Auth::user()->hasRole(RolesEnum::CarManager)) {
-            if ($this->isAssignUserToTeam(Auth::user()->id, TeamNameEnum::ORGANIC)) {
+        if (auth()->user()->hasRole(RolesEnum::CarAdvisor) || auth()->user()->hasRole(RolesEnum::CarManager)) {
+
+            if (in_array(TeamNameEnum::ORGANIC, app(User::class)->getUserTeams(auth()->user()->id)->toArray())) {
                 return true;
             }
         }
@@ -89,12 +89,4 @@ class UserService extends BaseService
         return false;
     }
 
-    public function isAssignUserToTeam($userId, $teamName)
-    {
-        if (in_array($teamName, app(User::class)->getUserTeams($userId)->toArray())) {
-            return true;
-        }
-
-        return false;
-    }
 }
