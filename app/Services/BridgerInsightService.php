@@ -284,7 +284,7 @@ class BridgerInsightService
 
         ];
 
-        info('Bridger Insight Service - Bridger Decision update API Call - Quote Ref-ID: '.$request->ref_id.' - AML ID: '.($request->aml_id ?? '-').' - Bridger Alert ID: '.($request->result_id ?? '-').'. Triggered by: '.auth()->user()->email);
+        info('Bridger Insight Service - Bridger Decision update API Call - Quote Ref-ID: '.$request->ref_id.' - AML ID: '.($request->aml_id ?? '-').' - Bridger Alert ID: '.($request->result_id ?? '-').' - Decision Update API Payload : '.json_encode($amlUpdateData).' - Triggered by: '.auth()->user()->email);
 
         try {
             $bridgerRequest = $bridgerClient->post(
