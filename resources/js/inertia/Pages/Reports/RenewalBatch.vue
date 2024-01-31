@@ -254,9 +254,10 @@ const superRetentionDataRef = reactive(page.props.superRetentionData.data);
 
 function getMonthName(monthNumber) {
     const date = new Date();
-    date.setMonth(monthNumber - 1);
+    let firstDate = new Date(date.getFullYear(), date.getMonth(), 1);
+    firstDate.setMonth(monthNumber - 1);
 
-    return date.toLocaleString('en-US', { month: 'short' });
+    return firstDate.toLocaleString('en-US', { month: 'short' });
 }
 
 function calculateValuesAndHighlight() {
