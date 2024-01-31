@@ -5,8 +5,10 @@ namespace App\Http\Controllers\API;
 use App\Factories\AllocationFactory;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\APiFetchUrl;
+use App\Http\Requests\AssignLeadRequest;
 use App\Services\ApiService;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 
 class ApiController extends Controller
 {
@@ -29,8 +31,13 @@ class ApiController extends Controller
         }
     }
 
-    public function assignLeads(Request $request)
+    public function assignLeads(AssignLeadRequest $request)
     {
+        try {
+            $data = $request->validated();
+        } catch (ValidationException $e) {
+            return apiResponse($e, 422);
+        }
         try {
 
             info('API assignLeads called with request params as : '.json_encode($request->all()));
@@ -57,7 +64,7 @@ class ApiController extends Controller
                 return response()->json(['message' => 'Quote allocation completed successfully!'], 200);
             } else {
                 info('------ Lead allocation ended for lead with Required parameters missing ------');
-
+                return apiResponse('Required parameters missing', 400);
                 return response()->json(['error' => 'Required parameters missing'], 400);
             }
         } catch (\Exception $e) {
