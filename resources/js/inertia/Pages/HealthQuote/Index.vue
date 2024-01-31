@@ -139,6 +139,7 @@ const filters = reactive({
   status_filters: null,
   assigned_to_date_start: '',
   assigned_to_date_end: '',
+  payment_status: [],
 });
 
 const subTeamOptions = [
@@ -209,9 +210,17 @@ const handleSelectedFilters = selectedFilters => {
   if (selectedFilters.created_at_start && selectedFilters.created_at_end) {
     filters.created_at_start = selectedFilters.created_at_start;
     filters.created_at_end = selectedFilters.created_at_end;
-
-    onSubmit(true);
   }
+
+  if (selectedFilters.quote_status) {
+    filters.quote_status = selectedFilters.quote_status;
+  }
+
+  if (selectedFilters.payment_status) {
+    filters.payment_status = selectedFilters.payment_status;
+  }
+
+  onSubmit(true);
 };
 
 function onReset() {
@@ -327,7 +336,6 @@ watch(
     if (oldValue !== newValue) onSubmit(true);
   },
 );
-
 </script>
 
 <template>
@@ -337,7 +345,9 @@ watch(
       <div class="flex items-center gap-5">
         <h2 class="text-xl font-semibold">Health List</h2>
         <x-tooltip>
-          <span class="border-2 rounded px-3 bg-gray-200 text-sm font-medium">{{ leadsCount }}</span>
+          <span class="border-2 rounded px-3 bg-gray-200 text-sm font-medium">{{
+            leadsCount
+          }}</span>
           <template #tooltip>
             <span>Total Leads received since {{ previousDate() }}</span>
           </template>
@@ -505,14 +515,14 @@ watch(
           placeholder="Search by Renewal Batch"
         />
         <DatePicker
-            v-model="filters.assigned_to_date_start"
-            name="assigned_to_date_start"
-            label="Advisor Assigned Date Start"
+          v-model="filters.assigned_to_date_start"
+          name="assigned_to_date_start"
+          label="Advisor Assigned Date Start"
         />
         <DatePicker
-            v-model="filters.assigned_to_date_end"
-            name="assigned_to_date_end"
-            label="Advisor Assigned Date End"
+          v-model="filters.assigned_to_date_end"
+          name="assigned_to_date_end"
+          label="Advisor Assigned Date End"
         />
       </div>
       <div class="flex justify-between gap-3 mb-4 mt-1">
@@ -612,7 +622,7 @@ watch(
           class="text-primary-500 hover:underline flex items-center space-x-1"
         >
           <span>{{ item.code }}</span>
-          <stale-leads-badge :date="item.stale_at"></stale-leads-badge>
+          <StaleLeadsBadge :date="item.stale_at" :align="`left`" />
         </Link>
       </template>
       <template #item-is_ecommerce="{ is_ecommerce }">

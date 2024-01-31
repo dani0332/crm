@@ -13,6 +13,8 @@ const props = defineProps({
 
 const emit = defineEmits(['toggleFilters', 'selectedFilters']);
 
+const page = usePage();
+
 const toggle = ref(props.isShown);
 const selectedOptions = ref({
   date: 0,
@@ -37,34 +39,54 @@ const dateOptions = ref([
   { text: 'This month', value: 5 },
 ]);
 
-const status = ref([
+const statuses = ref([
   {
     text: 'Sales Opportunity',
     value: 1,
+    quoteCodes: ['Application Pending'],
+    paymentIds: [
+      page.props.paymentStatusEnum?.NEW,
+      page.props.paymentStatusEnum?.CREDIT_APPROVED,
+      page.props.paymentStatusEnum?.DECLINED,
+    ],
     tooltip:
       'This will be the sum of all potential sales we can achieve by closing these leads',
   },
   {
     text: 'Paid Awaiting Documents',
     value: 2,
+    quoteCodes: ['Missing Documents Requested'],
+    paymentIds: [
+      page.props.paymentStatusEnum?.PENDING,
+      page.props.paymentStatusEnum?.PAID,
+    ],
     tooltip:
       'This means that we have received a payment for this lead however we require additional documents from clients to proceed futher.',
   },
   {
     text: 'Secured Deal',
     value: 3,
+    quoteCodes: [
+      'Transaction Approved',
+      'Policy Documents Pending',
+      'Policy Issued',
+      'Policy Booked',
+      'Policy Sent to Customer',
+    ],
     tooltip:
       'Shows leads that have successfully concluded deals with clients. This means that we acquired the complete payment and documents required.',
   },
   {
     text: 'Cold',
     value: 4,
+    quoteCodes: ['Cold'],
     tooltip:
       'Typically, leads which are overdue on the follow ups will automatically change to Cold as no further action has taken place on them. You can still work on these leads.',
   },
   {
     text: 'Stale',
     value: 5,
+    quoteCodes: ['Stale'],
     tooltip:
       'Typically, these are the leads where the status has not changed for the last 30 days.',
   },
@@ -107,14 +129,41 @@ const handleStatusFilter = status => {
     selectedOptions.value.status.push(status);
   }
 
+  const selectedQuoteStatusCodes = statuses.value
+    .filter(item => selectedOptions.value.status.includes(item.value))
+    .map(item => item.quoteCodes)
+    .flat();
+
+  const quoteStatusCodes = filterQuoteStatuesByCodes(selectedQuoteStatusCodes);
+
+  const quoteStatusIds = quoteStatusCodes.map(item => item.id);
+  const hasPaymentStatus = selectedOptions.value.status.some(
+    item => statuses.value[item - 1]?.paymentIds?.length > 0,
+  );
+
+  console.log('hasPaymentStatus', hasPaymentStatus);
+
   emit('selectedFilters', {
-    status: selectedOptions.value.status,
+    quote_status: quoteStatusIds,
+    ...(hasPaymentStatus && {
+      payment_status: statuses.value
+        .filter(item => selectedOptions.value.status.includes(item.value))
+        .map(item => item.paymentIds)
+        .flat(),
+    }),
   });
 };
 
 const toggleFilter = () => {
   toggle.value = !toggle.value;
   emit('toggleFilters', toggle.value);
+};
+
+const filterQuoteStatuesByCodes = codes => {
+  if (!codes.length || !page.props.leadStatuses) {
+    return [];
+  }
+  return page.props.leadStatuses.filter(status => codes.includes(status.text));
 };
 </script>
 <template>
@@ -153,7 +202,7 @@ const toggleFilter = () => {
 
             <ul class="space-y-0.5">
               <li
-                v-for="option in status"
+                v-for="option in statuses"
                 :key="option.text"
                 :class="{
                   'bg-primary text-white': selectedOptions.status.includes(

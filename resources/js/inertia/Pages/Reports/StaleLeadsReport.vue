@@ -56,27 +56,39 @@ const healthHeaders = ref([
 
 const corplineHeaders = ref([
   {
-    text: 'RENEWAL TERMS RECEIVED',
-    value: 'renewal_terms_recevied',
+    text: 'PROPOSAL FORM REQUESTED',
+    value: 'proposal_form_requested',
     is_active: true,
     sortable: true,
   },
   {
-    text: 'APPLICATION PENDING',
-    value: 'application_pending',
+    text: 'PROPOSAL FORM RECEIVED',
+    value: 'proposal_form_received',
     is_active: true,
     sortable: true,
   },
 
   {
-    text: 'APPLICATION SUBMITTED',
-    value: 'application_submitted',
+    text: 'PENDING RENEWAL INFORMATION',
+    value: 'pending_renewal_information',
     is_active: true,
     sortable: true,
   },
   {
-    text: 'MISSING DOCUMENTS',
-    value: 'missing_documents',
+    text: 'ADDITIONAL INFORMATION REQUESTED',
+    value: 'additional_information_requested',
+    is_active: true,
+    sortable: true,
+  },
+  {
+    text: 'QUOTES REQUESTED',
+    value: 'quotes_requested',
+    is_active: true,
+    sortable: true,
+  },
+  {
+    text: 'FINALIZING TERMS',
+    value: 'finalizing_terms',
     is_active: true,
     sortable: true,
   },
@@ -84,7 +96,7 @@ const corplineHeaders = ref([
 
 const commonHeaders = ref([
   {
-    text: 'TEAM',
+    text: 'TEAM OR ADVISOR',
     value: 'team',
     width: 160,
     is_active: true,
@@ -234,13 +246,18 @@ const presetDates = [
 ];
 
 function changeLob() {
-  let specificHeaders = [];
   if (filters.lob === 'Health') {
-    specificHeaders = healthHeaders.value;
+    tableHeader.value = [...commonHeaders.value, ...healthHeaders.value];
   } else if (filters.lob === 'Corpline') {
-    specificHeaders = corplineHeaders.value;
+    const commons = commonHeaders.value.filter(
+      header =>
+        header.value !== 'in_negotiation' && header.value !== 'payment_pending',
+    );
+
+    tableHeader.value = [...commons, ...corplineHeaders.value];
+  } else {
+    tableHeader.value = commonHeaders.value;
   }
-  tableHeader.value = [...commonHeaders.value, ...specificHeaders];
 }
 
 const getTotal = item => {
