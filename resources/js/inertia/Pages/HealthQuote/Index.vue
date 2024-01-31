@@ -123,6 +123,8 @@ const filters = reactive({
   page: 1,
   previous_quote_policy_number: '',
   renewal_batch: '',
+  assigned_to_date_start: '',
+  assigned_to_date_end: '',
 });
 
 const subTeamOptions = [
@@ -154,6 +156,15 @@ const advisorOptions = computed(() => {
     value: advisor.id,
     label: advisor.name,
   }));
+});
+
+const modifiedAdvisorOptions = ref([]);
+
+modifiedAdvisorOptions.value = advisorOptions.value;
+
+modifiedAdvisorOptions.value.push({
+  value: 'unassigned',
+  label: 'Unassigned',
 });
 
 function onSubmit(isValid) {
@@ -400,7 +411,7 @@ onUnmounted(() => {
           v-model="filters.advisors"
           label="Advisor"
           placeholder="Search by Advisor"
-          :options="advisorOptions"
+          :options="modifiedAdvisorOptions"
         />
         <x-select
           v-model="filters.is_ecommerce"
@@ -448,6 +459,16 @@ onUnmounted(() => {
           label="Renewal Batch"
           class="w-full"
           placeholder="Search by Renewal Batch"
+        />
+        <DatePicker
+            v-model="filters.assigned_to_date_start"
+            name="assigned_to_date_start"
+            label="Advisor Assigned Date Start"
+        />
+        <DatePicker
+            v-model="filters.assigned_to_date_end"
+            name="assigned_to_date_end"
+            label="Advisor Assigned Date End"
         />
       </div>
       <div class="flex justify-between gap-3 mb-4 mt-1">
