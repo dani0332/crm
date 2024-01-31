@@ -47,6 +47,10 @@ Make sure to run `yarn prod` before every push so the assets are compiled with t
 
 This project has pint configured, make sure to run `composer pint:fix` before every push to the code repo.
 
+**Getting Deployment Logs**
+
+If any deployment fails on any environment, make sure to check the deployment logs. An email will be received in your inbox with the release ID of the deployment. Use that Release ID and go into postman collection `Logs -> Release Logs`, replace the release ID in the URL, click on the arrow next to Send button and click Send and Download.
+
 **Redis Allocated DBs**
 - Prod - 15
 - Stage - 2
