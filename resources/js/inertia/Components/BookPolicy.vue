@@ -155,6 +155,7 @@ const caculateCommission = () => {
         Number(bpForm.vat_on_commission) +
         Number(bpForm.commission_vat_applicable);
     } else {
+      bpForm.commission_vat_applicable = '';
       notification.error({
         title: 'Please add Policy Detail Price (VAT APPLICABLE)',
         position: 'top',
@@ -170,6 +171,7 @@ const caculateCommission = () => {
 
       bpForm.total_commission = bpForm.commission_vat_not_applicable;
     } else {
+      bpForm.commission_vat_not_applicable = '';
       notification.error({
         title: 'Please add Policy Detail Price (VAT NOT APPLICABLE)',
         position: 'top',
