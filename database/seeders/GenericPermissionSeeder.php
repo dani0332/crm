@@ -17,8 +17,21 @@ class GenericPermissionSeeder extends Seeder
      */
     public function run()
     {
-        Permission::findOrCreate(PermissionsEnum::HEALTH_QUOTES_MANAGER_ACCESS, 'web');
-        Permission::findOrCreate(PermissionsEnum::HEALTH_QUOTES_ACCESS, 'web');
+        $healthManagerAccess = Permission::where('name', PermissionsEnum::HEALTH_QUOTES_MANAGER_ACCESS)->first();
+        if (! $healthManagerAccess) {
+            Permission::create([
+                'name' => PermissionsEnum::HEALTH_QUOTES_MANAGER_ACCESS,
+                'guard_name' => 'web',
+            ]);
+        }
+
+        $healthQuoteAccess = Permission::where('name', PermissionsEnum::HEALTH_QUOTES_ACCESS)->first();
+        if (! $healthQuoteAccess) {
+            Permission::create([
+                'name' => PermissionsEnum::HEALTH_QUOTES_ACCESS,
+                'guard_name' => 'web',
+            ]);
+        }
 
         // Add Compliance Permission to Admin
         $role = Role::where('name', RolesEnum::Admin)->first();
