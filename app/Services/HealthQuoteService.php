@@ -634,14 +634,14 @@ class HealthQuoteService extends BaseService
         return $query;
     }
 
-    public function updateChildRecord($id)
+    public function updateChildRecord($id, $advisorId)
     {
         $childRecord = HealthQuoteRequestDetail::where('health_quote_request_id', $id)->first();
         if (empty($childRecord)) {
             $childRecord = $this->createDetailEntity($id);
         }
         $oldAdvisorAssignedDate = $childRecord->advisor_assigned_date;
-        if ($childRecord->advisor_id != null) {
+        if ($advisorId != null) {
             $childRecord->advisor_assigned_by_id = auth()->user()->id;
             $childRecord->advisor_assigned_date = now();
             $childRecord->save();
@@ -1150,7 +1150,7 @@ class HealthQuoteService extends BaseService
 
             $lead->assignment_type = $isReassignment ? AssignmentTypeEnum::MANUAL_REASSIGNED : AssignmentTypeEnum::MANUAL_ASSIGNED;
 
-            $oldAdvisorAssignedDate = $this->updateChildRecord($lead->id); // will update the car quote request detail entity about assignment
+            $oldAdvisorAssignedDate = $this->updateChildRecord($lead->id, $userId); // will update the car quote request detail entity about assignment
 
             info('Manual assignment done and details table updated for lead : '.$lead->uuid.'and old advisor assigned date is : '.$oldAdvisorAssignedDate);
 
