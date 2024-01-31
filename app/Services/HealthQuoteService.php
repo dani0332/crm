@@ -29,6 +29,7 @@ use App\Models\InsuranceProvider;
 use App\Models\PaymentAction;
 use App\Models\QuoteType;
 use App\Models\QuoteViewCount;
+use App\Models\RenewalBatch;
 use App\Models\Team;
 use App\Models\User;
 use App\Traits\AddPremiumAllLobs;
@@ -1626,5 +1627,19 @@ class HealthQuoteService extends BaseService
         }
 
         return [$result, $skipLead];
+    }
+
+    public function assignRenewalBatch(HealthQuote $quote)
+    {
+        $date = Carbon::today()->toDateString();
+
+        $renewalBatch = RenewalBatch::select('name')->whereDate('start_date', '<=', $date)
+            ->whereDate('end_date', '>=', $date)
+            ->first();
+
+        if ($renewalBatch) {
+            $quote->renewal_batch = $renewalBatch->name;
+            $quote->save();
+        }
     }
 }
