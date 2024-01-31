@@ -41,7 +41,7 @@ class ApiController extends Controller
 
             // Check if lead allocation endpoint is disabled
             if ($this->isLeadAllocationEndpointDisabled()) {
-                return response()->json(['error' => 'Lead allocation endpoint disabled'], 503);
+                return response()->json(['error' => 'Lead allocation endpoint disabled'], Response::HTTP_SERVICE_UNAVAILABLE);
             }
 
             // Validate the request
@@ -95,7 +95,7 @@ class ApiController extends Controller
         $allocationStrategy->executeSteps($overrideAdvisorId);
         info('------ Lead allocation request completed to assign advisor only for '.$allocationId.' ------');
 
-        return response()->json(['message' => 'Advisor ReAssigned successfully!'], 200);
+        return response()->json(['message' => 'Advisor ReAssigned successfully!'], Response::HTTP_OK);
     }
 
     private function triggerOCBOnly($allocationId)
@@ -104,7 +104,7 @@ class ApiController extends Controller
         SendOCBEmailJob::dispatch($allocationId);
         info('------ Lead allocation request completed to send OCB only for '.$allocationId.' ------');
 
-        return response()->json(['message' => 'OCB email triggered successfully!'], 200);
+        return response()->json(['message' => 'OCB email triggered successfully!'], Response::HTTP_OK);
     }
 
     private function performLeadAllocation($allocationType, $allocationId)
@@ -114,6 +114,6 @@ class ApiController extends Controller
         $allocationStrategy->executeSteps();
         info('------ Lead allocation ended for lead : '.$allocationId.' ------');
 
-        return response()->json(['message' => 'Quote allocation completed successfully!'], 200);
+        return response()->json(['message' => 'Quote allocation completed successfully!'], Response::HTTP_OK);
     }
 }
