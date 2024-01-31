@@ -516,11 +516,6 @@ onMounted(() => {
 
     calculateValuesAndHighlight();
     isMounted.value = true;
-
-    console.log("super retention data")
-    console.log(superRetentionDataRef)
-    console.log(renewedCountsList)
-    console.log(totalAllocationList)
 });
 
 const calculateMonthlySum = (data, index) => {

@@ -2,9 +2,9 @@
 
 namespace App\Traits;
 
-use Auth;
-use App\Enums\quoteTypeCode;
 use App\Enums\PermissionsEnum;
+use App\Enums\quoteTypeCode;
+use Auth;
 
 trait RolePermissionConditions
 {
@@ -34,14 +34,10 @@ trait RolePermissionConditions
             $query->where($prefix.'.'.'advisor_id', Auth::user()->id);
             $query->whereNull($prefix.'.'.'previous_quote_policy_number');
         }
-        if ($isNewManager) {
+        if ($isNewManager || $isHealthManager) {
             $ids = $this->walkTree(Auth::user()->id, quoteTypeCode::Health);
             $query->whereIn($prefix.'.'.'advisor_id', $ids);
             $query->whereNull($prefix.'.'.'previous_quote_policy_number');
-        }
-        if ($isHealthManager) {
-            $ids = $this->walkTree(Auth::user()->id, quoteTypeCode::Health);
-            $query->whereIn($prefix.'.'.'advisor_id', $ids);
         }
         if ($isCarManager && Auth::user()->can(PermissionsEnum::HEALTH_QUOTES_MANAGER_ACCESS)) {
             $ids = $this->walkTree(Auth::user()->id, quoteTypeCode::Car);

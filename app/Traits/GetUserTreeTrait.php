@@ -4,7 +4,6 @@ namespace App\Traits;
 
 use App\Enums\quoteTypeCode;
 use App\Enums\RolesEnum;
-use App\Models\User;
 use Illuminate\Support\Facades\DB;
 
 trait GetUserTreeTrait
@@ -12,7 +11,6 @@ trait GetUserTreeTrait
     use TeamHierarchyTrait;
 
     /**
-     *
      * NOTE: For future reference, this is how you use this trait:
      * Product Type should be passed for the relevant LOB type, default is set to car
      * And Update the required roles in the if condition
@@ -21,14 +19,12 @@ trait GetUserTreeTrait
      * @param [type] $productType
      * @return void
      */
-    public function walkTree($userId, $productType=null) // product
+    public function walkTree($userId, $productType = null) // product
     {
         $childUserIds = [$userId];
-        $productTeam = $this->getProductByName($productType??quoteTypeCode::Car);
+        $productTeam = $this->getProductByName($productType ?? quoteTypeCode::Car);
         $rolesArray = [
             RolesEnum::HealthManager,
-            RolesEnum::HealthNewBusinessManager,
-            RolesEnum::HealthRenewalManager,
             RolesEnum::CarManager,
             RolesEnum::LeadPool,
         ];
