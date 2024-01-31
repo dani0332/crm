@@ -617,7 +617,7 @@ if (! function_exists('apiResponse')) {
         return response()->json([
             'data' => $data,
             'message' => $message,
-            'status' => $statusCode
+            'status' => $statusCode,
         ], $statusCode);
     }
 }

@@ -64,7 +64,9 @@ class ApiController extends Controller
                 return response()->json(['message' => 'Quote allocation completed successfully!'], 200);
             } else {
                 info('------ Lead allocation ended for lead with Required parameters missing ------');
+
                 return apiResponse('Required parameters missing', 400);
+
                 return response()->json(['error' => 'Required parameters missing'], 400);
             }
         } catch (\Exception $e) {
