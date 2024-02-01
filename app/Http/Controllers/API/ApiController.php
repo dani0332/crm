@@ -68,7 +68,7 @@ class ApiController extends Controller
 
             info('------ Lead allocation ended for lead with Invalid request ------');
 
-            return response()->json(['error' => 'Invalid request'], Response::HTTP_NOT_ACCEPTABLE);
+            return apiResponse(null, Response::HTTP_INTERNAL_SERVER_ERROR, 'Invalid request');
         } catch (\Exception $e) {
             info('------ Lead allocation ended for lead with An error occurred ------');
 
@@ -95,7 +95,7 @@ class ApiController extends Controller
         $allocationStrategy->executeSteps($overrideAdvisorId);
         info('------ Lead allocation request completed to assign advisor only for '.$allocationId.' ------');
 
-        return response()->json(['message' => 'Advisor ReAssigned successfully!'], Response::HTTP_OK);
+        return apiResponse(null, Response::HTTP_OK, 'Advisor ReAssigned successfully!');
     }
 
     private function triggerOCBOnly($allocationId)
@@ -104,7 +104,7 @@ class ApiController extends Controller
         SendOCBEmailJob::dispatch($allocationId);
         info('------ Lead allocation request completed to send OCB only for '.$allocationId.' ------');
 
-        return response()->json(['message' => 'OCB email triggered successfully!'], Response::HTTP_OK);
+        return apiResponse(null, Response::HTTP_OK, 'OCB email triggered successfully!');
     }
 
     private function performLeadAllocation($allocationType, $allocationId)
@@ -114,6 +114,6 @@ class ApiController extends Controller
         $allocationStrategy->executeSteps();
         info('------ Lead allocation ended for lead : '.$allocationId.' ------');
 
-        return response()->json(['message' => 'Quote allocation completed successfully!'], Response::HTTP_OK);
+        return apiResponse(null, Response::HTTP_OK, 'Lead allocated successfully!');
     }
 }
