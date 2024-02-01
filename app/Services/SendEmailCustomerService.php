@@ -614,7 +614,7 @@ class SendEmailCustomerService extends BaseService
                 'params' => [
                     'clientFullName' => $emailData->clientFullName,
                     'carQuoteId' => $emailData->code,
-                    'currentInsurer' => '',
+                    'currentInsurer' => $emailData->currentInsurer,
                     'renewalDueDate' => $emailData->renewalDueDate,
                     'policyNumber' => $emailData->policy_number,
                     'advisor' => (object) [
