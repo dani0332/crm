@@ -3,6 +3,7 @@ defineProps({
   quotes: Object,
   leadStatuses: Array,
   advisors: Array,
+  teams: Object,
   userMaxCap: Number,
   todayAutoCount: Number,
   todayManualCount: Number,
@@ -166,6 +167,27 @@ modifiedAdvisorOptions.value.push({
   value: 'unassigned',
   label: 'Unassigned',
 });
+
+// const subTeamsOptions = computed(() => {
+
+//     let subteamArray = page.props.teams?.map(team => ({
+//         value: team.name,
+//         label: team.name,
+//     }));
+
+//     subteamArray.push({ value: 'No-Type', label: 'No-Type' });
+
+//     return subteamArray;
+
+// });
+
+const subTeamsOptions = [
+  { value: 'RM-NB', label: 'RM-NB' },
+  { value: 'RM-SPEED', label: 'RM-SPEED' },
+  { value: 'EBP', label: 'EBP' },
+  { value: 'Wow-Call', label: 'Wow-Call' },
+  { value: 'No-Type', label: 'No-Type' },
+];
 
 function onSubmit(isValid) {
   if (isValid) {
@@ -407,7 +429,7 @@ onUnmounted(() => {
           :options="leadStatusOptions"
         />
         <ComboBox
-          v-if="!hasAnyRole([rolesEnum.RMAdvisor, rolesEnum.EBPAdvisor])"
+          v-if="!hasAnyRole([rolesEnum.RMAdvisor, rolesEnum.EBPAdvisor, rolesEnum.CarAdvisor])"
           v-model="filters.advisors"
           label="Advisor"
           placeholder="Search by Advisor"
@@ -436,7 +458,7 @@ onUnmounted(() => {
           class="w-full"
         />
         <x-select
-          v-if="!hasAnyRole([rolesEnum.RMAdvisor, rolesEnum.EBPAdvisor])"
+          v-if="!hasAnyRole([rolesEnum.RMAdvisor, rolesEnum.EBPAdvisor, rolesEnum.CarAdvisor])"
           v-model="filters.assignment_type"
           label="Assignment Type"
           name="assignment_type"
@@ -460,16 +482,19 @@ onUnmounted(() => {
           class="w-full"
           placeholder="Search by Renewal Batch"
         />
-        <DatePicker
+
+        <!--<DatePicker
+            v-if="!hasAnyRole([rolesEnum.CarAdvisor])"
             v-model="filters.assigned_to_date_start"
             name="assigned_to_date_start"
             label="Advisor Assigned Date Start"
         />
         <DatePicker
+            v-if="!hasAnyRole([rolesEnum.CarAdvisor])"
             v-model="filters.assigned_to_date_end"
             name="assigned_to_date_end"
             label="Advisor Assigned Date End"
-        />
+        />-->
       </div>
       <div class="flex justify-between gap-3 mb-4 mt-1">
         <div v-if="can(permissionsEnum.DATA_EXTRACTION)">
@@ -508,13 +533,7 @@ onUnmounted(() => {
               <x-select
                 v-model="assignForm.assign_team"
                 label="Assign Subteam"
-                :options="[
-                  { value: 'Wow-Call', label: 'Wow-Call' },
-                  { value: 'RM-NB', label: 'RM-NB' },
-                  { value: 'RM-SPEED', label: 'RM-SPEED' },
-                  { value: 'EBP', label: 'EBP' },
-                  { value: 'No-Type', label: 'No-Type' },
-                ]"
+                :options="subTeamsOptions"
                 placeholder="Select Subteam"
                 class="flex-1 w-auto"
                 :rules="[rules.isRequired]"

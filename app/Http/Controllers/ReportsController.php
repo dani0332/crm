@@ -167,6 +167,7 @@ class ReportsController extends Controller
 
         return inertia('Reports/RenewalBatch', [
             'reportData' => $renewalBatchReportService->getReportData($request),
+            'superRetentionData' => $renewalBatchReportService->getSuperRetentinoData($request),
             'filterOptions' => $renewalBatchReportService->getFilterOptions(),
             'defaultFilters' => $renewalBatchReportService->getDefaultFilters(),
             'renewalBatchesList' => $renewalBatches,

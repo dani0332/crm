@@ -243,4 +243,6 @@ final class PermissionsEnum extends Enum
     public const EXPORT_LEADS_DETAIL_WITH_EMAIL_MOBILE = 'export-leads-detail-with-email-mobile';
     public const EXPORT_MAKES_MODELS = 'export-makes-models';
     public const LEAD_CARD_SEARCH = 'lead-card-search';
+    public const HEALTH_QUOTES_MANAGER_ACCESS = 'health-quotes-manager-access';
+    public const HEALTH_QUOTES_ACCESS = 'health-quotes-access';
 }

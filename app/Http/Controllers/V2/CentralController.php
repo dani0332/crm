@@ -59,26 +59,40 @@ class CentralController extends Controller
         }
 
         if ($exportTye != GenericRequestEnum::EXPORT_MAKES_MODELS) {
-            if (request()->has('created_at')) {
-                request()->merge(['created_at_start' => request()->get('created_at')]);
-                request()->query->remove('created_at');
-            }
+            if ($exportTye == GenericRequestEnum::EXPORT_PLAN_DETAIL) {
+                $error_fields = 'paid at';
 
-            $request->validate([
-                'created_at_start' => 'required',
-                'created_at_end' => 'required',
-            ]);
+                $request->validate([
+                    'paid_at_start' => 'required',
+                    'paid_at_end' => 'required',
+                ]);
+                $created_at_start = Carbon::parse($request->paid_at_start)->format('Y-m-d');
+                $created_at_end = Carbon::parse($request->paid_at_end)->format('Y-m-d');
+            } else {
+                $error_fields = 'created date';
+
+                if (request()->has('created_at')) {
+                    request()->merge(['created_at_start' => request()->get('created_at')]);
+                    request()->query->remove('created_at');
+                }
+
+                $request->validate([
+                    'created_at_start' => 'required',
+                    'created_at_end' => 'required',
+                ]);
+
+                $created_at_start = Carbon::parse($request->created_at_start)->format('Y-m-d');
+                $created_at_end = Carbon::parse($request->created_at_end)->format('Y-m-d');
+            }
 
             if (ucfirst($quoteType) == QuoteTypes::CAR->value) {
                 $diffInDays = 31;
             }
 
-            $created_at_start = Carbon::parse($request->created_at_start)->format('Y-m-d');
-            $created_at_end = Carbon::parse($request->created_at_end)->format('Y-m-d');
             $diff = Carbon::parse($created_at_start)->diffInDays(Carbon::parse($created_at_end));
 
             if ($diff > $diffInDays) {
-                return back()->with('error', 'Maximum of '.$diffInDays.' days (created date) are allowed to be exported.');
+                return back()->with('error', 'Maximum of '.$diffInDays.' days ('.$error_fields.') are allowed to be exported.');
             }
         }
 
