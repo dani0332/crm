@@ -556,6 +556,7 @@ const onTogglePlans = toggle => {
         title: 'Plans has been updated',
         position: 'top',
       });
+        onLoadAvailablePlansData();
       router.reload({
         preserveScroll: true,
       });
@@ -633,6 +634,12 @@ const onLoadAvailablePlansData = async () => {
       .then(res => {
         availablePlansTable.data = res.data.normalPlans
         availableSeniorPlansTable.data = res.data.seniorPlans
+          availablePlansTable.data =   availablePlansTable.data.filter(column => {
+              return column.isDisabled == false
+          });
+          availableSeniorPlansTable.data =   availableSeniorPlansTable.data.filter(column => {
+              return column.isDisabled == false
+          });
       })
       .catch(err => {
         console.log(err);
