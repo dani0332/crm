@@ -1539,31 +1539,12 @@ const linkEntity = () => {
 
 
 
-const handlePlanSelected = plan => {
-  console.log("HHH", plan);
-  //se.value = plan.id;
+const handlePlanSelected = plan => {  
   selectedProviderPlan.value.id = plan.id
   selectedProviderPlan.value.planName = plan.planName
   selectedProviderPlan.value.providerName = plan.providerName
   selectedProviderPlan.value.premium = plan.premium
 };
-
-/*watch(prefillPlanId, (newPlanId) =>  {
-  //find selected plan from available plans and calculate prefilled plan premium
- 
-  if(newPlanId)
-  {
-    let selectedPlan = availablePlansTable.data.find(
-        plan => newPlanId === plan.id,
-      );
-
-      console.log(newPlanId,"NEW PLAN ID", JSON.stringify(selectedPlan));
-      //prefillPlanPremium.value = selectedPlan.discountPremium + selectedPlan.vat + getAddonVat(selectedPlan);
-      computedPlanDetails.planName = selectedPlan.name;
-      computedPlanDetails.providerName = selectedPlan.providerName;
-      computedPlanDetails.premium = (selectedPlan.discountPremium + selectedPlan.vat + getAddonVat(selectedPlan)).toFixed(2);
-  }  
-});*/
 
 </script>
 
