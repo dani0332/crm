@@ -891,9 +891,29 @@ class TravelQuoteService extends BaseService
 
     public function updateManualPlansBulk($request)
     {
-        // api not available for now
+        if ($request->planIds) {
+            $data = $request->planIds;
+            $isDisabled = $request->toggle;
+            $plansArray = [];
+            for ($i = 0; $i < count($data); $i++) {
+                $apiArray = [
+                    'planId' => (int) $data[$i],
+                    'isDisabled' => filter_var($isDisabled, FILTER_VALIDATE_BOOLEAN),
+                ];
+                array_push($plansArray, $apiArray);
+            }
+
+            $dataArray = [
+                'quoteUID' => $request->quote_uuid,
+                'plans' => $plansArray,
+            ];
+            $response = Ken::request('/save-manual-travel-quote-plan', 'post', $dataArray);
+
+            return $response;
+        }
 
     }
+
     public function exportPlansPdf($quoteType, $data, $quotePlans = null)
     {
 
