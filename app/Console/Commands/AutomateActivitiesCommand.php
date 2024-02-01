@@ -66,26 +66,31 @@ class AutomateActivitiesCommand extends Command
             info("------------------- Updating Cold Activities for : " . $allQuoteType . " -------------------");
             $allQuoteType::whereHas('activities', function($activityQuery){
                 $activityQuery->where('due_date', '<', now());
-            })->with('activities')
-            ->chunkById(1000, function ($activities) {
-                foreach ($activities as $activity) {
-                    $activity->update([
-                        'is_cold' => true // Need to add this column in activity table
-                    ]);
+                $activityQuery->where('status', false);
+            })->with(['activities' => function($activities){
+                $activities->where('due_date', '<', now());
+                $activities->where('status', false);
+            }])
+            ->chunkById(1000, function ($quoteDetails) {
+                foreach ($quoteDetails as $quoteDetail) {
+                    $activitiesIDs = $quoteDetail->activities->pluck('id');
+                    Activities::whereIn('id', $activitiesIDs)->update(['is_cold' => true]);
                 }
             });
             info("------------------- Updated Cold Activities for : " . $allQuoteType . " -------------------");
 
         }
 
-        
         foreach ($eligibleQuoteTypes as $eligibleQuoteType) {
-            info("------------------- Fetching : " . $eligibleQuoteType . " Quotes for create follow-up Activitiess -------------------");
+            info("------------------- Fetching : " . $eligibleQuoteType . " Quotes for create follow-up Activities -------------------");
             $eligibleQuoteType::whereHas('activities', function($activityQuery){
                 $activityQuery->where('due_date', '<', now());
+                $activityQuery->where('status', true);
             })
             ->with(['activities' => function($activities){
-                $activities->orderBy('created_at', 'desc')->first();
+                $activities->where('due_date', '<', now());
+                $activities->where('status', true);
+                $activities->orderBy('created_at', 'desc')->get();
             }])
             // Should be removed
             ->where('id', 3027)
@@ -93,40 +98,42 @@ class AutomateActivitiesCommand extends Command
                 foreach ($quotes as $quote) {
                     if(!empty($quote->advisor_id)) {
                         $advisorDetails = User::with('usersroles', 'teams')->where('id', $quote->advisor_id)->first();
-                        // Should be remove this condition
-                        if($quote?->activities->value('status') == 1 || true) {
-                            // Should be introduce new column quote_status in activities table
-                            // Fetching Activity Schedules against Quote Status and Role and Team of Advisor
-                            $getQuoteType = (in_array($eligibleQuoteType, array_keys($quoteTypeIDs))) ? $quoteTypeIDs[$eligibleQuoteType] : $quote->quote_type_id;
-                            $fetchingActivitySchedules = ActivitySchedule::where([
-                                'quote_type_id' => $getQuoteType,
-                                'quote_status_id' => $quote->quote_status_id
-                            ])
-                            ->whereIn('role_id', $advisorDetails->usersroles->pluck('id'))
-                            ->whereIn('team_id', $advisorDetails->teams->pluck('id'))
-                            // Should be add link column in activities column because there is no refrenece which activity already created
-                            ->when(!empty($quote?->activities->value('activity_schedule_id')), function($previousSchedule) use ($quote) {
-                                $previousSchedule->where('id', $quote?->activities->value('activity_schedule_id'));
-                            })
-                            ->first();
-    
-                            // Follow up activites due date should be count last activity created date
-                            Activities::create([
-                                'title' => $fetchingActivitySchedules->name,
-                                'description' => $fetchingActivitySchedules->description,
-                                'quote_request_id' => $quote->id,
-                                'quote_type_id' => $getQuoteType,
-                                'status' => 0,
-                                'created_at' => now(),
-                                'updated_at' => now(),
-                                'assignee_id' => $quote->advisor_id,
-                                'uuid' => generateUuid(),
-                                'due_date' => addDaysExcludeWeekend($fetchingActivitySchedules->due_days),
-                                'client_name' => $quote->first_name.' '.$quote->last_name,
-                                'client_email' => $quote->email,
-                                'quote_uuid' => $quote->uuid,
-                            ]);
-                        }
+                        $getQuoteType = (in_array($eligibleQuoteType, array_keys($quoteTypeIDs))) ? $quoteTypeIDs[$eligibleQuoteType] : $quote->quote_type_id;
+                        $scheduledActivitiesCreatedIDs = collect($quote->activities->pluck('activity_schedule_id'))
+                        ->unique()->filter(function($filter){
+                            return !is_null($filter);
+                        })->toArray();
+
+                        // Should be fetch as sorting order
+                        $fetchingActivitySchedules = ActivitySchedule::where([
+                            'quote_type_id' => $getQuoteType,
+                            'quote_status_id' => $quote->quote_status_id
+                        ])
+                        ->whereIn('role_id', $advisorDetails->usersroles->pluck('id'))
+                        ->whereIn('team_id', $advisorDetails->teams->pluck('id'))
+                        ->when(!empty($scheduledActivitiesCreatedIDs), function($previousSchedule) use ($scheduledActivitiesCreatedIDs) {
+                            $previousSchedule->whereNotIn('id', $scheduledActivitiesCreatedIDs);
+                        })
+                        ->get();
+
+                        dd($fetchingActivitySchedules->toArray());
+
+                        // Follow up activites due date should be count last activity created date
+                        Activities::create([
+                            'title' => $fetchingActivitySchedules->name,
+                            'description' => $fetchingActivitySchedules->description,
+                            'quote_request_id' => $quote->id,
+                            'quote_type_id' => $getQuoteType,
+                            'status' => 0,
+                            'created_at' => now(),
+                            'updated_at' => now(),
+                            'assignee_id' => $quote->advisor_id,
+                            'uuid' => generateUuid(),
+                            'due_date' => addDaysExcludeWeekend($fetchingActivitySchedules->due_days),
+                            'client_name' => $quote->first_name.' '.$quote->last_name,
+                            'client_email' => $quote->email,
+                            'quote_uuid' => $quote->uuid,
+                        ]);
                     }
                 }
             });
