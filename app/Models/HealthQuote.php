@@ -25,6 +25,7 @@ class HealthQuote extends Model implements AuditableContract
         'source' => FilterTypes::EXACT,
         'renewal_expiry_date' => FilterTypes::DATE_BETWEEN,
         'mobile_no' => FilterTypes::EXACT,
+        'created_at' => FilterTypes::DATE_BETWEEN,
     ];
     protected $guarded = [];
 

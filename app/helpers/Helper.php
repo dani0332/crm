@@ -1,10 +1,12 @@
 <?php
 
 use App\Enums\IMCRMSearchTypesEnum;
+use App\Enums\PermissionsEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypes;
 use App\Models\CustomerAdditionalInfo;
 use App\Models\HealthQuote;
+use App\Services\HealthQuoteService;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
@@ -164,6 +166,39 @@ function getDataAgainstStatus($modelType, $statusId, $myleads = null)
         $result['total_premium'] = $modelQuery->whereNull('previous_quote_id')->sum('premium');
         $result['leads_list'] = $modelQuery->whereNull('previous_quote_id')->paginate(10);
 
+    }  elseif ($modelType == HealthQuote::class && Auth::user()->isCarAdvisor() && Auth::user()->can(PermissionsEnum::HEALTH_QUOTES_ACCESS)) {
+        $result['total_leads'] = $modelType::where('quote_status_id', $statusId)
+            ->where('advisor_id', \Auth::user()->id)
+            ->count();
+
+        $result['total_premium'] = $modelType::where('quote_status_id', $statusId)
+            ->where('advisor_id', \Auth::user()->id)
+            ->sum('premium');
+
+        $result['total_opportunity'] = $modelType::where('quote_status_id', $statusId)->sum('price_starting_from');
+
+        $result['leads_list'] = $modelType::where('quote_status_id', $statusId)
+            ->where('advisor_id', \Auth::user()->id)
+            ->paginate(10);
+
+    } elseif ($modelType == HealthQuote::class && Auth::user()->isCarManager() && Auth::user()->can(PermissionsEnum::HEALTH_QUOTES_MANAGER_ACCESS)) {
+
+        $ids = app(HealthQuoteService::class)->walkTree(Auth::user()->id);
+
+        $result['total_leads'] = $modelType::where('quote_status_id', $statusId)
+            ->whereIn('advisor_id', $ids)
+            ->count();
+
+        $result['total_premium'] = $modelType::where('quote_status_id', $statusId)
+            ->whereIn('advisor_id', $ids)
+            ->sum('premium');
+
+        $result['total_opportunity'] = $modelType::where('quote_status_id', $statusId)->sum('price_starting_from');
+
+        $result['leads_list'] = $modelType::where('quote_status_id', $statusId)
+            ->whereIn('advisor_id', $ids)
+            ->paginate(10);
+
     } else {
         $result['total_leads'] = $modelQueryWithOutAdvisor->count();
         $result['total_premium'] = $modelQueryWithOutAdvisor->sum('premium');
@@ -171,7 +206,6 @@ function getDataAgainstStatus($modelType, $statusId, $myleads = null)
             $result['total_opportunity'] = $modelQueryWithOutAdvisor->sum('price_starting_from');
         }
         $result['leads_list'] = $modelQueryWithOutAdvisor->paginate(10);
-
     }
 
     return $result;

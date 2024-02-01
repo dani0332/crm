@@ -64,6 +64,9 @@ class ApiService
 
     public function sibHealthQuoteCallBack($code)
     {
-        HealthQuote::where('code', $code)->update(['quote_status_id' => QuoteStatusEnum::InNegotiation]);
+        HealthQuote::where('code', $code)->update([
+            'quote_status_id' => QuoteStatusEnum::InNegotiation,
+            'quote_status_date' => now(),
+        ]);
     }
 }

@@ -80,8 +80,9 @@ class BusinessQuoteController extends Controller
         $quotes = $gridData->simplePaginate(10)->withQueryString();
         $isManagerORDeputy = auth()->user()->isManagerORDeputy();
         $isManualAllocationAllowed = auth()->user()->isAdmin() ? true : $isManagerORDeputy;
+        $totalCount = BusinessQuoteRepository::getData(quoteTypeCode::CORPLINE, true, true);
 
-        return inertia('CorpLineQuote/Index', compact('quotes', 'dropdownSource', 'isManualAllocationAllowed'));
+        return inertia('CorpLineQuote/Index', compact('quotes', 'dropdownSource', 'isManualAllocationAllowed', 'totalCount'));
     }
 
     private function parseDate($date, $isStartOfDay)

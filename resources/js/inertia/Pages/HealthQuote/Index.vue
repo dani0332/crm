@@ -3,11 +3,16 @@ defineProps({
   quotes: Object,
   leadStatuses: Array,
   advisors: Array,
+  teams: Object,
   userMaxCap: Number,
   todayAutoCount: Number,
   todayManualCount: Number,
   yesterdayAutoCount: Number,
   yesterdayManualCount: Number,
+  totalCount: {
+    type: Number,
+    default: 0,
+  },
 });
 
 const page = usePage();
@@ -26,6 +31,7 @@ const loader = reactive({
 const canExport = ref(false);
 const objToUrl = obj => useObjToUrl(obj);
 const quotesSelected = ref([]);
+const leadsCount = ref(page.props.totalCount);
 
 const assignForm = useForm({
   assign_team: null,
@@ -118,6 +124,8 @@ const filters = reactive({
   page: 1,
   previous_quote_policy_number: '',
   renewal_batch: '',
+  assigned_to_date_start: '',
+  assigned_to_date_end: '',
 });
 
 const subTeamOptions = [
@@ -150,6 +158,36 @@ const advisorOptions = computed(() => {
     label: advisor.name,
   }));
 });
+
+const modifiedAdvisorOptions = ref([]);
+
+modifiedAdvisorOptions.value = advisorOptions.value;
+
+modifiedAdvisorOptions.value.push({
+  value: 'unassigned',
+  label: 'Unassigned',
+});
+
+// const subTeamsOptions = computed(() => {
+
+//     let subteamArray = page.props.teams?.map(team => ({
+//         value: team.name,
+//         label: team.name,
+//     }));
+
+//     subteamArray.push({ value: 'No-Type', label: 'No-Type' });
+
+//     return subteamArray;
+
+// });
+
+const subTeamsOptions = [
+  { value: 'RM-NB', label: 'RM-NB' },
+  { value: 'RM-SPEED', label: 'RM-SPEED' },
+  { value: 'EBP', label: 'EBP' },
+  { value: 'Wow-Call', label: 'Wow-Call' },
+  { value: 'No-Type', label: 'No-Type' },
+];
 
 function onSubmit(isValid) {
   if (isValid) {
@@ -238,6 +276,22 @@ const fixedValue = numberString => {
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
 
+const options = {
+  cluster: 'ap1',
+  forceTLS: false,
+};
+
+const pusher = new Pusher(page.props.pusherKey, options);
+const channel = pusher.subscribe(
+  'public.' + page.props.appEnv + '.total-leads-count',
+);
+
+const listen = () => {
+  channel.bind('leads.count', function (e) {
+    leadsCount.value = e.totalLeadsCount;
+  });
+};
+
 watch(
   () => filters,
   () => {
@@ -252,7 +306,14 @@ watch(
 
 onMounted(() => {
   setQueryStringFilters();
+  listen();
 });
+
+onUnmounted(() => {
+  channel.unbind('leads.count');
+  channel.unsubscribe('public.' + page.props.appEnv + '.total-leads-count');
+});
+
 </script>
 
 <template>
@@ -262,9 +323,7 @@ onMounted(() => {
       <div class="flex items-center gap-5">
         <h2 class="text-xl font-semibold">Health List</h2>
         <x-tooltip>
-          <span class="border-2 rounded px-3 bg-gray-200 text-sm font-medium">{{
-            quotes?.leadsCount ?? 0
-          }}</span>
+          <span class="border-2 rounded px-3 bg-gray-200 text-sm font-medium">{{ leadsCount }}</span>
           <template #tooltip>
             <span>Total Leads received since {{ previousDate() }}</span>
           </template>
@@ -370,11 +429,11 @@ onMounted(() => {
           :options="leadStatusOptions"
         />
         <ComboBox
-          v-if="!hasAnyRole([rolesEnum.RMAdvisor, rolesEnum.EBPAdvisor])"
+          v-if="!hasAnyRole([rolesEnum.RMAdvisor, rolesEnum.EBPAdvisor, rolesEnum.CarAdvisor])"
           v-model="filters.advisors"
           label="Advisor"
           placeholder="Search by Advisor"
-          :options="advisorOptions"
+          :options="modifiedAdvisorOptions"
         />
         <x-select
           v-model="filters.is_ecommerce"
@@ -399,7 +458,7 @@ onMounted(() => {
           class="w-full"
         />
         <x-select
-          v-if="!hasAnyRole([rolesEnum.RMAdvisor, rolesEnum.EBPAdvisor])"
+          v-if="!hasAnyRole([rolesEnum.RMAdvisor, rolesEnum.EBPAdvisor, rolesEnum.CarAdvisor])"
           v-model="filters.assignment_type"
           label="Assignment Type"
           name="assignment_type"
@@ -423,6 +482,19 @@ onMounted(() => {
           class="w-full"
           placeholder="Search by Renewal Batch"
         />
+
+        <!--<DatePicker
+            v-if="!hasAnyRole([rolesEnum.CarAdvisor])"
+            v-model="filters.assigned_to_date_start"
+            name="assigned_to_date_start"
+            label="Advisor Assigned Date Start"
+        />
+        <DatePicker
+            v-if="!hasAnyRole([rolesEnum.CarAdvisor])"
+            v-model="filters.assigned_to_date_end"
+            name="assigned_to_date_end"
+            label="Advisor Assigned Date End"
+        />-->
       </div>
       <div class="flex justify-between gap-3 mb-4 mt-1">
         <div v-if="can(permissionsEnum.DATA_EXTRACTION)">
@@ -461,13 +533,7 @@ onMounted(() => {
               <x-select
                 v-model="assignForm.assign_team"
                 label="Assign Subteam"
-                :options="[
-                  { value: 'Wow-Call', label: 'Wow-Call' },
-                  { value: 'RM-NB', label: 'RM-NB' },
-                  { value: 'RM-SPEED', label: 'RM-SPEED' },
-                  { value: 'EBP', label: 'EBP' },
-                  { value: 'No-Type', label: 'No-Type' },
-                ]"
+                :options="subTeamsOptions"
                 placeholder="Select Subteam"
                 class="flex-1 w-auto"
                 :rules="[rules.isRequired]"

@@ -36,6 +36,7 @@ class PersonalQuoteRepository extends BaseRepository
             $previousStatusId = $quote->quote_status_id;
 
             $quoteData['quote_status_id'] = $data['quote_status_id'];
+            $quoteData['quote_status_date'] = now();
 
             if (! empty($data['notes'])) {
                 $quoteData['notes'] = $data['notes'];
@@ -125,7 +126,10 @@ class PersonalQuoteRepository extends BaseRepository
                 'payment_code' => $paymentData['code'],
             ]);
 
-            $quote->update(['quote_status_id' => QuoteStatusEnum::PaymentPending]);
+            $quote->update([
+                'quote_status_id' => QuoteStatusEnum::PaymentPending,
+                'quote_status_date' => now(),
+            ]);
 
             return $quote;
         });

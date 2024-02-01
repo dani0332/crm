@@ -37,8 +37,6 @@ use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
-use Laravel\Prompts\Note;
-use Maatwebsite\Excel\Facades\Excel;
 
 class CentralController extends Controller
 {
@@ -63,25 +61,40 @@ class CentralController extends Controller
         }
 
         if ($exportTye != GenericRequestEnum::EXPORT_MAKES_MODELS) {
-            if (request()->has('created_at')) {
-                request()->merge(['created_at_start' => request()->get('created_at')]);
-                request()->query->remove('created_at');
-            }
+            if ($exportTye == GenericRequestEnum::EXPORT_PLAN_DETAIL) {
+                $error_fields = 'paid at';
 
-            $request->validate([
-                'created_at_start' => 'required',
-                'created_at_end' => 'required',
-            ]);
+                $request->validate([
+                    'paid_at_start' => 'required',
+                    'paid_at_end' => 'required',
+                ]);
+                $created_at_start = Carbon::parse($request->paid_at_start)->format('Y-m-d');
+                $created_at_end = Carbon::parse($request->paid_at_end)->format('Y-m-d');
+            } else {
+                $error_fields = 'created date';
+
+                if (request()->has('created_at')) {
+                    request()->merge(['created_at_start' => request()->get('created_at')]);
+                    request()->query->remove('created_at');
+                }
+
+                $request->validate([
+                    'created_at_start' => 'required',
+                    'created_at_end' => 'required',
+                ]);
+
+                $created_at_start = Carbon::parse($request->created_at_start)->format('Y-m-d');
+                $created_at_end = Carbon::parse($request->created_at_end)->format('Y-m-d');
+            }
 
             if (ucfirst($quoteType) == QuoteTypes::CAR->value) {
                 $diffInDays = 31;
             }
 
-            $created_at_start = Carbon::parse($request->created_at_start)->format('Y-m-d');
-            $created_at_end = Carbon::parse($request->created_at_end)->format('Y-m-d');
             $diff = Carbon::parse($created_at_start)->diffInDays(Carbon::parse($created_at_end));
+
             if ($diff > $diffInDays) {
-                return back()->with('error', 'Maximum of '.$diffInDays.' days (created date) are allowed to be exported.');
+                return back()->with('error', 'Maximum of '.$diffInDays.' days ('.$error_fields.') are allowed to be exported.');
             }
         }
 
@@ -93,7 +106,7 @@ class CentralController extends Controller
             QuoteTypes::CYCLE->value,
             QuoteTypes::JETSKI->value,
         ])) {
-            return Excel::download(new PersonalQuotesExport, $quoteType.'_leads.xlsx');
+            return app(PersonalQuotesExport::class)->download($quoteType.'_leads');
         }
 
         if (QuoteTypes::CAR->value == ucfirst($quoteType)) {
@@ -108,25 +121,25 @@ class CentralController extends Controller
 
         switch (ucfirst($quoteType)) {
             case QuoteTypes::LIFE->value:
-                return Excel::download(new LifeQuotesExport, 'life_leads.xlsx');
+                return app(LifeQuotesExport::class)->download('life_leads');
 
             case QuoteTypes::HOME->value:
-                return Excel::download(new HomeQuoteExport, 'home_leads.xlsx');
+                return app(HomeQuoteExport::class)->download('home_leads');
 
             case QuoteTypes::AMT->value:
-                return Excel::download(new AmtQuoteExport, 'amt_leads.xlsx');
+                return app(AmtQuoteExport::class)->download('amt_leads');
 
             case QuoteTypes::BUSINESS->value:
-                return Excel::download(new BusinessQuoteExport, 'business_leads.xlsx');
+                return app(BusinessQuoteExport::class)->download('business_leads');
 
             case QuoteTypes::TRAVEL->value:
-                return Excel::download(new TravelQuoteExport, 'travel_leads.xlsx');
+                return app(TravelQuoteExport::class)->download('travel_leads');
 
             case QuoteTypes::CAR->value:
                 return app(CarQuoteExport::class)->download('Car-List');
 
             case QuoteTypes::HEALTH->value:
-                return Excel::download(new HealthQuotesExport, 'Health-List.xlsx');
+                return app(HealthQuotesExport::class)->download('Health-List');
 
             default:
                 return false;

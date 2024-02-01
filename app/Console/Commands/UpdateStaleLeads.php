@@ -113,11 +113,6 @@ class UpdateStaleLeads extends Command
                             return Carbon::createFromFormat(config('constants.DATE_FORMAT_ONLY'), Carbon::parse($value)->format(config('constants.DATE_FORMAT_ONLY')))->gt(Carbon::now());
                         });
 
-                        // This check not included in FR but think should be included
-                        $activityStatusCheck = $staleLead->activities->pluck('status')->contains(function ($value) {
-                            return $value == 0;
-                        });
-
                         if (!$activityDateCheck) {
                             $staleLead->update([
                                 'quote_status_id' => QuoteStatusEnum::Lost,
