@@ -51,7 +51,7 @@ const shouldShowButton = () => {
         }
 
         // Show the button outside the range 9:00 AM to 6:30 PM on other days
-        return !(currentHour >= 9 && currentHour < 18 && new Date(currentTime).getMinutes() >= 0);
+        return !(currentHour >= 9 && currentHour < 13 && new Date(currentTime).getMinutes() >= 0);
     }
     return false;
 };
@@ -325,7 +325,7 @@ onMounted(() => {
             </div>
 
             <div class="flex gap-3 items-center">
-                <x-toggle v-model="userStatus"  v-if="isButtonVisible" @change="onStatusChange"  ></x-toggle>
+             <small v-if="isButtonVisible">{{userStatus == true?'Online':'Offline'}}</small>   <x-toggle v-model="userStatus" v-if="isButtonVisible"   @change="onStatusChange"  ></x-toggle>
               <!-- <UserStatus /> -->
               <x-popover align="right" block>
                 <x-button size="sm" ghost>
