@@ -3,10 +3,14 @@
 namespace App\Services;
 
 use App\Enums\QuoteStatusEnum;
+use App\Factories\AllocationFactory;
+use App\Http\Requests\AssignLeadRequest;
+use App\Jobs\SendOCBEmailJob;
 use App\Models\Customer;
 use App\Models\HealthQuote;
 use App\Models\MyAlFredUser;
 use Exception;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
 
 class ApiService
@@ -65,5 +69,67 @@ class ApiService
     public function sibHealthQuoteCallBack($code)
     {
         HealthQuote::where('code', $code)->update(['quote_status_id' => QuoteStatusEnum::InNegotiation]);
+    }
+
+    public function isLeadAllocationEndpointDisabled()
+    {
+        return config('services.lead_allocation.disabled');
+    }
+
+    public function processAssignLead(AssignLeadRequest $request)
+    {
+        // Extract request parameters
+        $allocationType = $request->input('quoteTypeId');
+        $allocationId = $request->input('quoteUUID');
+        $assignAdvisor = $request->input('reAssignAdvisor', false);
+        $triggerOCB = $request->input('triggerOCB', false);
+
+        // Handle different scenarios based on request parameters
+        if ($assignAdvisor && ! $triggerOCB) {
+            return $this->assignAdvisorOnly($allocationType, $allocationId);
+        }
+
+        if (! $assignAdvisor && $triggerOCB) {
+            return $this->triggerOCBOnly($allocationId);
+        }
+
+        if (! $assignAdvisor && ! $triggerOCB) {
+            return $this->performLeadAllocation($allocationType, $allocationId);
+        }
+
+        return apiResponse(null, Response::HTTP_BAD_REQUEST, 'Invalid request');
+
+        info('------ Lead allocation ended for lead with Invalid request ------');
+    }
+
+    private function assignAdvisorOnly($allocationType, $allocationId)
+    {
+        info('------ Lead allocation request received to assign advisor only for '.$allocationId.' ------');
+        $allocationStrategy = AllocationFactory::createStrategy($allocationType, $allocationId);
+        $overrideAdvisorId = true;
+        $assignedAdvisorId = $allocationStrategy->executeSteps($overrideAdvisorId);
+        $responseData = ['assignedAdvisorId' => $assignedAdvisorId];
+        info('------ Lead allocation request completed to assign advisor only for '.$allocationId.' ------');
+        return apiResponse($responseData, Response::HTTP_OK, 'Advisor assigned successfully!');
+
+    }
+
+    private function triggerOCBOnly($allocationId)
+    {
+        info('------ Lead allocation request received to send OCB only for '.$allocationId.' ------');
+        SendOCBEmailJob::dispatch($allocationId);
+        info('------ Lead allocation request completed to send OCB only for '.$allocationId.' ------');
+
+        return apiResponse(null, Response::HTTP_OK, 'OCB email triggered successfully!');
+    }
+
+    private function performLeadAllocation($allocationType, $allocationId)
+    {
+        info('------ Lead allocation started for lead : '.$allocationId.' ------');
+        $allocationStrategy = AllocationFactory::createStrategy($allocationType, $allocationId);
+        $assignedAdvisorId = $allocationStrategy->executeSteps();
+        info('------ Lead allocation ended for lead : '.$allocationId.' ------');
+        $responseData = ['assignedAdvisorId' => $assignedAdvisorId];
+        return apiResponse(null, Response::HTTP_OK, 'Lead allocated successfully!');
     }
 }

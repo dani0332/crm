@@ -2,11 +2,9 @@
 
 namespace App\Http\Controllers\API;
 
-use App\Factories\AllocationFactory;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\APiFetchUrl;
 use App\Http\Requests\AssignLeadRequest;
-use App\Jobs\SendOCBEmailJob;
 use App\Services\ApiService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -36,39 +34,19 @@ class ApiController extends Controller
     public function assignLeads(AssignLeadRequest $request)
     {
         try {
+
             // Log the incoming request parameters
             info('API assignLeads called with request params as : '.json_encode($request->all()));
 
             // Check if lead allocation endpoint is disabled
-            if ($this->isLeadAllocationEndpointDisabled()) {
-                return response()->json(['error' => 'Lead allocation endpoint disabled'], Response::HTTP_SERVICE_UNAVAILABLE);
+            if ($this->apiService->isLeadAllocationEndpointDisabled()) {
+                return apiResponse(null, Response::HTTP_SERVICE_UNAVAILABLE, 'Lead allocation endpoint disabled');
             }
 
             // Validate the request
             $request->validated();
 
-            // Extract request parameters
-            $allocationType = $request->input('quoteTypeId');
-            $allocationId = $request->input('quoteUUID');
-            $assignAdvisor = $request->input('reAssignAdvisor', false);
-            $triggerOCB = $request->input('triggerOCB', false);
-
-            // Handle different scenarios based on request parameters
-            if ($assignAdvisor && ! $triggerOCB) {
-                return $this->assignAdvisorOnly($allocationType, $allocationId);
-            }
-
-            if (! $assignAdvisor && $triggerOCB) {
-                return $this->triggerOCBOnly($allocationId);
-            }
-
-            if (! $assignAdvisor && ! $triggerOCB) {
-                return $this->performLeadAllocation($allocationType, $allocationId);
-            }
-
-            info('------ Lead allocation ended for lead with Invalid request ------');
-
-            return apiResponse(null, Response::HTTP_INTERNAL_SERVER_ERROR, 'Invalid request');
+            return $this->apiService->processAssignLead($request);
         } catch (\Exception $e) {
             info('------ Lead allocation ended for lead with An error occurred ------');
 
@@ -78,42 +56,5 @@ class ApiController extends Controller
 
             return apiResponse($e, Response::HTTP_BAD_REQUEST);
         }
-    }
-
-    // Helper methods
-
-    private function isLeadAllocationEndpointDisabled()
-    {
-        return config('constants.DISABLE_LEAD_ALLOCATION_ENDPOINT') == 1;
-    }
-
-    private function assignAdvisorOnly($allocationType, $allocationId)
-    {
-        info('------ Lead allocation request received to assign advisor only for '.$allocationId.' ------');
-        $allocationStrategy = AllocationFactory::createStrategy($allocationType, $allocationId);
-        $overrideAdvisorId = true;
-        $allocationStrategy->executeSteps($overrideAdvisorId);
-        info('------ Lead allocation request completed to assign advisor only for '.$allocationId.' ------');
-
-        return apiResponse(null, Response::HTTP_OK, 'Advisor ReAssigned successfully!');
-    }
-
-    private function triggerOCBOnly($allocationId)
-    {
-        info('------ Lead allocation request received to send OCB only for '.$allocationId.' ------');
-        SendOCBEmailJob::dispatch($allocationId);
-        info('------ Lead allocation request completed to send OCB only for '.$allocationId.' ------');
-
-        return apiResponse(null, Response::HTTP_OK, 'OCB email triggered successfully!');
-    }
-
-    private function performLeadAllocation($allocationType, $allocationId)
-    {
-        info('------ Lead allocation started for lead : '.$allocationId.' ------');
-        $allocationStrategy = AllocationFactory::createStrategy($allocationType, $allocationId);
-        $allocationStrategy->executeSteps();
-        info('------ Lead allocation ended for lead : '.$allocationId.' ------');
-
-        return apiResponse(null, Response::HTTP_OK, 'Lead allocated successfully!');
     }
 }
