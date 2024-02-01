@@ -22,7 +22,18 @@ class SplitPaymentUpdateRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'splitPaymentId' => 'required|numeric',
+            'approved_document_model' => 'array',
+            'bank_reference_number' => 'nullable|string',
+            'collection_amount' => 'nullable|numeric',
+            'customer_id' => 'required|integer',
+            'declined_custom_reason' => 'nullable|string',
+            'declined_reason' => 'nullable|string', 
+            'is_approved' => 'required|boolean',
+            'is_declined' => 'required|boolean',
+            'modelType' => 'required|string',
+            'plan_id' => 'required|integer',
+            'quote_id' => 'required|integer',
+            'splitPaymentId' => 'required|integer',            
         ];
     }
 }

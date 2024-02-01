@@ -54,6 +54,10 @@ const updateSelectedPlan = () => {
                     title: "Selected plan updated",
                     position: 'top',
             });
+
+            setTimeout(() => { //Temporary solution to reload the page
+                location.reload();
+            }, 500);
         })
         .catch(err => {           
             console.log(err)
