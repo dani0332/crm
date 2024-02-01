@@ -30,7 +30,7 @@ defineProps({
   storageUrl: String,
   sendUpdateOptions: Array,
   sendUpdateLogs: Array,
-  hasPolicyIssuedStatus: Boolean
+  hasPolicyIssuedStatus: Boolean,
 });
 
 const page = usePage();
@@ -537,7 +537,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
 <template>
   <div>
     <Head title="Business Quote Detail" />
-    
+
     <x-modal v-model="modals.duplicate" size="lg" show-close backdrop>
       <template #header> Duplicate Lead </template>
       <x-form @submit="onCreateDuplicate" :auto-focus="false">
@@ -584,7 +584,9 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       <Collapsible :expanded="sectionExpanded">
         <template #header>
           <div class="flex justify-between items-center flex-wrap gap-2">
-            <h3 class="text-lg font-semibold text-primary-800">Business Quote Detail</h3>
+            <h3 class="text-lg font-semibold text-primary-800">
+              Business Quote Detail
+            </h3>
           </div>
         </template>
         <template #body>
@@ -598,13 +600,13 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
             >
               Duplicate Lead
             </x-button>
-  
+
             <Link :href="route('business.index')" preserve-scroll>
               <x-button size="sm" color="primary" tag="div">
                 Business Quote List
               </x-button>
             </Link>
-  
+
             <Link
               v-if="permissions.canEditQuote == true"
               :href="route('business.edit', quote.uuid)"
@@ -615,10 +617,10 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
 
           <div class="text-sm">
             <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
-          <div
-            class="grid sm:grid-cols-2"
-            v-if="hasAnyRole([rolesEnum.Admin, rolesEnum.Engineering])"
-          >
+              <div
+                class="grid sm:grid-cols-2"
+                v-if="hasAnyRole([rolesEnum.Admin, rolesEnum.Engineering])"
+              >
                 <dt class="font-medium">ID</dt>
                 <dd>{{ quote.id }}</dd>
               </div>
@@ -643,7 +645,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
                 <dt class="font-medium">NEXT FOLLOWUP DATE</dt>
                 <dd>{{ quote.next_followup_date }}</dd>
               </div>
-    
+
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">TRANSAPP CODE</dt>
                 <dd>{{ quote.transapp_code }}</dd>
@@ -652,62 +654,62 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
                 <dt class="font-medium">SOURCE</dt>
                 <dd>{{ quote.source }}</dd>
               </div>
-    
+
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">POLICY NUMBER</dt>
                 <dd>{{ quote.policy_number }}</dd>
               </div>
-    
+
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">LOST REASON</dt>
                 <dd>{{ quote?.lost_reason }}</dd>
               </div>
-    
+
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">ADVISOR</dt>
                 <dd>{{ quote.advisor_id_text }}</dd>
               </div>
-    
+
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">CREATED DATE</dt>
                 <dd>{{ quote.created_at }}</dd>
               </div>
-    
+
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">LAST MODIFIED DATE</dt>
                 <dd>{{ quote.updated_at }}</dd>
               </div>
-    
+
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">PRICE</dt>
                 <dd>{{ quote.premium }}</dd>
               </div>
-    
+
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">NUMBER OF EMPLOYEES</dt>
                 <dd>{{ quote.number_of_employees }}</dd>
               </div>
-    
+
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">BUSINESS INSURANCE TYPE</dt>
                 <dd>{{ quote.business_type_of_insurance_id_text }}</dd>
               </div>
-    
+
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">BRIEF DETAILS</dt>
                 <dd>{{ quote.brief_details }}</dd>
               </div>
-    
+
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">RENEWAL EXPIRY DATE</dt>
                 <dd>{{ quote.renewal_expiry_date }}</dd>
               </div>
-    
+
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">GENDER</dt>
                 <dd>{{ genderText(quote.gender).value }}</dd>
               </div>
-    
+
               <div class="grid sm:grid-cols-2">
                 <div>
                   <x-tooltip position="bottom">
@@ -721,12 +723,12 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
                 </div>
                 <div>{{ quote.parent_duplicate_quote_id }}</div>
               </div>
-    
+
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">RENEWAL IMPORT CODE</dt>
                 <dd>{{ quote.renewal_import_code }}</dd>
               </div>
-    
+
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">DEVICE</dt>
                 <dd>{{ quote.device }}</dd>
@@ -741,14 +743,18 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       <Collapsible :expanded="sectionExpanded">
         <template #header>
           <div class="flex justify-between items-center">
-            <h3 class="font-semibold text-primary-800 text-lg">Entity Profile</h3>
+            <h3 class="font-semibold text-primary-800 text-lg">
+              Entity Profile
+            </h3>
           </div>
         </template>
         <template #body>
           <x-divider class="my-4" />
           <div class="flex mb-4 justify-end">
-            <x-tag color="success" v-if="quote.kyc_decision === 'Complete'"> KYC - Complete </x-tag>
-        <x-tag color="amber" v-else> KYC - Pending </x-tag>
+            <x-tag color="success" v-if="quote.kyc_decision === 'Complete'">
+              KYC - Complete
+            </x-tag>
+            <x-tag color="amber" v-else> KYC - Pending </x-tag>
           </div>
 
           <x-form @submit="updateProfileDetails" :auto-focus="false">
@@ -816,7 +822,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
                     />
                   </dd>
                 </div>
-    
+
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">INDUSTRY TYPE</dt>
                   <dd>
@@ -889,7 +895,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
         </x-button>
       </div>
     </x-modal>
-    
+
     <x-modal v-model="entityDetailsFound" size="lg" show-close backdrop>
       <h3 class="font-semibold text-center text-lg mb-10">
         Entity found with the entered Trade License number

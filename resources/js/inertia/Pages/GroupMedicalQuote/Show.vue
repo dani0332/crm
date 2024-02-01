@@ -22,7 +22,7 @@ defineProps({
   insuranceProviders: Object,
   sendUpdateOptions: Array,
   sendUpdateLogs: Array,
-  hasPolicyIssuedStatus: Boolean
+  hasPolicyIssuedStatus: Boolean,
 });
 
 const page = usePage();
@@ -460,10 +460,10 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
           </div>
           <div class="text-sm">
             <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
-          <div
-            class="grid sm:grid-cols-2"
-            v-if="hasAnyRole([rolesEnum.Admin, rolesEnum.Engineering])"
-          >
+              <div
+                class="grid sm:grid-cols-2"
+                v-if="hasAnyRole([rolesEnum.Admin, rolesEnum.Engineering])"
+              >
                 <dt class="font-medium">ID</dt>
                 <dd>{{ quote.id }}</dd>
               </div>
@@ -500,7 +500,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
                 <dt class="font-medium">EMAIL</dt>
                 <dd>{{ quote.email }}</dd>
               </div>
-    
+
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">COMPANY NAME</dt>
                 <dd>{{ quote.company_name }}</dd>
@@ -509,7 +509,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
                 <dt class="font-medium">NEXT FOLLOWUP DATE</dt>
                 <dd>{{ quote.next_followup_date }}</dd>
               </div>
-    
+
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">TRANSAPP CODE</dt>
                 <dd>{{ quote.transapp_code }}</dd>
@@ -518,59 +518,59 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
                 <dt class="font-medium">SOURCE</dt>
                 <dd>{{ quote.source }}</dd>
               </div>
-    
+
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">LOST REASON</dt>
                 <dd>
                   {{ quote?.business_quote_request_detail?.lost_reason?.text }}
                 </dd>
               </div>
-    
+
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">ADVISOR</dt>
                 <dd>{{ quote?.advisor?.name }}</dd>
               </div>
-    
+
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">CREATED DATE</dt>
                 <dd>{{ quote.created_at }}</dd>
               </div>
-    
+
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">LAST MODIFIED DATE</dt>
                 <dd>{{ quote.updated_at }}</dd>
               </div>
-    
+
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">NUMBER OF EMPLOYEES</dt>
                 <dd>{{ quote.number_of_employees }}</dd>
               </div>
-    
+
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">BUSINESS INSURANCE TYPE</dt>
                 <dd>Group Medical</dd>
               </div>
-    
+
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">BRIEF DETAILS</dt>
                 <dd>{{ quote.brief_details }}</dd>
               </div>
-    
+
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">RENEWAL EXPIRY DATE</dt>
                 <dd>{{ quote.renewal_expiry_date }}</dd>
               </div>
-    
+
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">RENEWAL BATCH</dt>
                 <dd>{{ quote.renewal_batch }}</dd>
               </div>
-    
+
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">GENDER</dt>
                 <dd>{{ genderText(quote.gender).value }}</dd>
               </div>
-    
+
               <div class="grid sm:grid-cols-2">
                 <div>
                   <x-tooltip position="bottom">
@@ -584,17 +584,17 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
                 </div>
                 <div>{{ quote.parent_duplicate_quote_id }}</div>
               </div>
-    
+
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">RENEWAL IMPORT CODE</dt>
                 <dd>{{ quote.renewal_import_code }}</dd>
               </div>
-    
+
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">DEVICE</dt>
                 <dd>{{ quote.device }}</dd>
               </div>
-    
+
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">PRICE</dt>
                 <dd>{{ quote.premium }}</dd>
@@ -609,16 +609,20 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       <Collapsible :expanded="sectionExpanded">
         <template #header>
           <div class="flex justify-between items-center">
-            <h3 class="font-semibold text-primary-800 text-lg">Entity Profile</h3>
+            <h3 class="font-semibold text-primary-800 text-lg">
+              Entity Profile
+            </h3>
           </div>
         </template>
         <template #body>
           <x-divider class="my-4" />
           <div class="flex mb-3 justify-end">
-        <x-tag color="success" v-if="quote.kyc_decision === 'Complete'"> KYC - Complete </x-tag>
-        <x-tag color="amber" v-else> KYC - Pending </x-tag>
+            <x-tag color="success" v-if="quote.kyc_decision === 'Complete'">
+              KYC - Complete
+            </x-tag>
+            <x-tag color="amber" v-else> KYC - Pending </x-tag>
           </div>
-          
+
           <x-form @submit="updateProfileDetails" :auto-focus="false">
             <div class="text-sm">
               <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
@@ -685,7 +689,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
                     />
                   </dd>
                 </div>
-    
+
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">INDUSTRY TYPE</dt>
                   <dd>
@@ -758,7 +762,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
         </x-button>
       </div>
     </x-modal>
-    
+
     <x-modal v-model="entityDetailsFound" size="lg" show-close backdrop>
       <h3 class="font-semibold text-center text-lg mb-10">
         Entity found with the entered Trade License number
@@ -845,29 +849,6 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       :expanded="sectionExpanded"
     />
 
-    <QuoteDocuments
-      :document-types="documentTypes"
-      :quote-documents="quote.documents || []"
-      :storageUrl="storageUrl"
-      :quote="quote"
-      :expanded="sectionExpanded"
-    />
-
-    <SendUpdates
-      v-if="hasPolicyIssuedStatus"
-      :reportable="quote"
-      :quote_type_id="$page.props.quoteTypeId"
-      :options="sendUpdateOptions"
-      :data="sendUpdateLogs"
-    />
-
-    <PlanDetails
-      :insuranceProviders="insuranceProviders"
-      :quote="quote"
-      :quoteType="page.props.quoteType"
-      :expanded="sectionExpanded"
-    />
-
     <div class="p-4 rounded shadow mb-6 bg-primary-50/25">
       <Collapsible :expanded="sectionExpanded">
         <template #header>
@@ -950,6 +931,29 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
         </template>
       </Collapsible>
     </div>
+
+    <PlanDetails
+      :insuranceProviders="insuranceProviders"
+      :quote="quote"
+      :quoteType="page.props.quoteType"
+      :expanded="sectionExpanded"
+    />
+
+    <QuoteDocuments
+      :document-types="documentTypes"
+      :quote-documents="quote.documents || []"
+      :storageUrl="storageUrl"
+      :quote="quote"
+      :expanded="sectionExpanded"
+    />
+
+    <SendUpdates
+      v-if="hasPolicyIssuedStatus"
+      :reportable="quote"
+      :quote_type_id="$page.props.quoteTypeId"
+      :options="sendUpdateOptions"
+      :data="sendUpdateLogs"
+    />
 
     <div class="p-4 rounded shadow mb-6 bg-white">
       <Collapsible :expanded="sectionExpanded">

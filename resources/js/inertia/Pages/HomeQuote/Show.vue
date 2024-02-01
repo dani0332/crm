@@ -37,7 +37,7 @@ defineProps({
   storageUrl: String,
   sendUpdateOptions: Array,
   sendUpdateLogs: Array,
-  hasPolicyIssuedStatus: Boolean
+  hasPolicyIssuedStatus: Boolean,
 });
 
 const page = usePage();
@@ -453,7 +453,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
 
 <template>
   <div>
-    <Head title="Home Detail" />    
+    <Head title="Home Detail" />
 
     <x-modal v-model="modals.duplicate" size="lg" show-close backdrop>
       <template #header> Duplicate Lead </template>
@@ -493,7 +493,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
           </x-button>
         </div>
       </x-form>
-    </x-modal>    
+    </x-modal>
 
     <div class="p-4 rounded shadow mb-6 bg-white">
       <Collapsible :expanded="sectionExpanded">
@@ -501,7 +501,6 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
           <div class="flex justify-between items-center flex-wrap gap-2">
             <h3 class="text-xl font-semibold text-primary-800">Home Detail</h3>
           </div>
-          
         </template>
         <template #body>
           <x-divider class="my-4" />
@@ -509,11 +508,13 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
             <x-button size="sm" color="#ff5e00" @click.prevent="openDuplicate">
               Duplicate Lead
             </x-button>
-  
+
             <Link :href="route('home.index')" preserve-scroll>
-              <x-button size="sm" color="primary" tag="div"> Home List </x-button>
+              <x-button size="sm" color="primary" tag="div">
+                Home List
+              </x-button>
             </Link>
-  
+
             <Link :href="route('home.edit', quote.uuid)">
               <x-button size="sm" tag="div">Edit</x-button>
             </Link>
@@ -521,13 +522,13 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
           <div class="text-sm">
             <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
               <div class="grid sm:grid-cols-2">
-            <div
-              class="grid sm:grid-cols-2"
-              v-if="hasAnyRole([rolesEnum.Admin, rolesEnum.Engineering])"
-            >
-              <dt class="font-medium">ID</dt>
-              <dd>{{ quote.id }}</dd>
-            </div>
+                <div
+                  class="grid sm:grid-cols-2"
+                  v-if="hasAnyRole([rolesEnum.Admin, rolesEnum.Engineering])"
+                >
+                  <dt class="font-medium">ID</dt>
+                  <dd>{{ quote.id }}</dd>
+                </div>
                 <div>
                   <x-tooltip position="bottom">
                     <label
@@ -587,12 +588,12 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
               </div>
             </dl>
           </div>
-    
+
           <div class="mt-6">
             <h3 class="font-semibold text-primary-800">Quote Details</h3>
             <x-divider class="mb-4 mt-1" />
           </div>
-    
+
           <div class="text-sm">
             <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
               <div class="grid sm:grid-cols-2">
@@ -666,8 +667,10 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
         <template #body>
           <x-divider class="my-4" />
           <div class="flex mb-4 justify-end">
-            <x-tag color="success" v-if="quote.kyc_decision === 'Complete'"> KYC - Complete </x-tag>
-        <x-tag color="amber" v-else> KYC - Pending </x-tag>
+            <x-tag color="success" v-if="quote.kyc_decision === 'Complete'">
+              KYC - Complete
+            </x-tag>
+            <x-tag color="amber" v-else> KYC - Pending </x-tag>
           </div>
 
           <x-form @submit="updateProfileDetails" :auto-focus="false">
@@ -754,11 +757,13 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
                   <dt class="font-medium">ADDRESS</dt>
                   <dd>{{ quote.address }}</dd>
                 </div>
-    
+
                 <RiskRatingScoreDetails :quote="quote" :modelType="quoteType" />
               </dl>
               <dl
-                v-if="quote.customer_type === page.props.customerTypeEnum.Entity"
+                v-if="
+                  quote.customer_type === page.props.customerTypeEnum.Entity
+                "
                 class="grid md:grid-cols-2 gap-x-6 gap-y-4"
               >
                 <div class="grid sm:grid-cols-2">
@@ -898,7 +903,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
         </x-button>
       </div>
     </x-modal>
-    
+
     <x-modal v-model="entityDetailsFound" size="lg" show-close backdrop>
       <h3 class="font-semibold text-center text-lg mb-10">
         Entity found with the entered Trade License number
@@ -989,21 +994,11 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       :expanded="sectionExpanded"
     />
 
-    <SendUpdates
-      v-if="hasPolicyIssuedStatus"
-      :reportable="quote"
-      :quote_type_id="$page.props.quoteTypeId"
-      :options="sendUpdateOptions"
-      :data="sendUpdateLogs"
-    />
-
     <div class="p-4 rounded shadow mb-6 bg-primary-50/25">
       <Collapsible :expanded="sectionExpanded">
         <template #header>
           <div>
-            <h3 class="font-semibold text-primary-800 text-lg">
-              Lead Status
-            </h3>
+            <h3 class="font-semibold text-primary-800 text-lg">Lead Status</h3>
           </div>
         </template>
         <template #body>
@@ -1242,6 +1237,14 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       :paymentMethods="paymentMethods"
       :insuranceProviders="insuranceProviders"
       :quote="quote"
+    />
+
+    <SendUpdates
+      v-if="hasPolicyIssuedStatus"
+      :reportable="quote"
+      :quote_type_id="$page.props.quoteTypeId"
+      :options="sendUpdateOptions"
+      :data="sendUpdateLogs"
     />
 
     <div class="p-4 rounded shadow mb-6 bg-white">

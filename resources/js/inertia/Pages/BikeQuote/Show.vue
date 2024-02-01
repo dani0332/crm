@@ -37,7 +37,7 @@ defineProps({
   canAddBatchNumber: Boolean,
   sendUpdateOptions: Array,
   sendUpdateLogs: Array,
-  hasPolicyIssuedStatus: Boolean
+  hasPolicyIssuedStatus: Boolean,
 });
 
 const page = usePage();
@@ -242,13 +242,13 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
 
           <div class="text-sm">
             <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
-          <div
-            class="grid sm:grid-cols-2"
-            v-if="hasAnyRole([rolesEnum.Admin, rolesEnum.Engineering])"
-          >
-            <dt class="font-medium">ID</dt>
-            <dd>{{ quote.id }}</dd>
-          </div>
+              <div
+                class="grid sm:grid-cols-2"
+                v-if="hasAnyRole([rolesEnum.Admin, rolesEnum.Engineering])"
+              >
+                <dt class="font-medium">ID</dt>
+                <dd>{{ quote.id }}</dd>
+              </div>
               <div class="grid sm:grid-cols-2">
                 <div>
                   <x-tooltip position="bottom">
@@ -381,7 +381,9 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
         <template #body>
           <x-divider class="my-4" />
           <div class="flex justify-end">
-            <x-tag color="success" v-if="quote.kyc_decision === 'Complete'"> KYC - Complete </x-tag>
+            <x-tag color="success" v-if="quote.kyc_decision === 'Complete'">
+              KYC - Complete
+            </x-tag>
             <x-tag color="amber" v-else> KYC - Pending </x-tag>
           </div>
           <x-form @submit="updateProfileDetails" :auto-focus="false">
@@ -708,6 +710,22 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       :expanded="sectionExpanded"
     />
 
+    <QuoteStatus
+      :quote="quote"
+      :quote-type="quoteType"
+      :quote-statuses="quoteStatuses"
+      :lost-reasons="lostReasons"
+      :quote-status-enum="quoteStatusEnum"
+      :expanded="sectionExpanded"
+    />
+
+    <PlanDetails
+      :insuranceProviders="insuranceProviders"
+      :quote="quote"
+      :quoteType="quoteType"
+      :expanded="sectionExpanded"
+    />
+
     <QuotePayments
       :can="can"
       :payments="quote.payments"
@@ -718,13 +736,19 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       :personal-plans="personalPlans"
     />
 
-    <QuoteStatus
+    <EmbeddedProducts
+      :data="embeddedProducts"
+      :link="quote.uuid"
+      :code="quote.code"
       :quote="quote"
-      :quote-type="quoteType"
-      :quote-statuses="quoteStatuses"
-      :lost-reasons="lostReasons"
-      :quote-status-enum="quoteStatusEnum"
+      :modelType="quoteType"
       :expanded="sectionExpanded"
+    />
+
+    <QuotePolicy
+      :quote="quote"
+      :can="can"
+      :quoteStatusEnum="quoteStatusesEnum"
     />
 
     <QuoteDocuments
@@ -741,28 +765,6 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       :quote_type_id="$page.props.quoteTypeId"
       :options="sendUpdateOptions"
       :data="sendUpdateLogs"
-    />
-
-    <QuotePolicy
-      :quote="quote"
-      :can="can"
-      :quoteStatusEnum="quoteStatusesEnum"
-    />
-
-    <PlanDetails
-      :insuranceProviders="insuranceProviders"
-      :quote="quote"
-      :quoteType="quoteType"
-      :expanded="sectionExpanded"
-    />
-
-    <EmbeddedProducts
-      :data="embeddedProducts"
-      :link="quote.uuid"
-      :code="quote.code"
-      :quote="quote"
-      :modelType="quoteType"
-      :expanded="sectionExpanded"
     />
 
     <AuditLogs

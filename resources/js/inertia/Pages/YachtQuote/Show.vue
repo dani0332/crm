@@ -36,7 +36,7 @@ defineProps({
   canAddBatchNumber: Boolean,
   sendUpdateOptions: Array,
   sendUpdateLogs: Array,
-  hasPolicyIssuedStatus: Boolean
+  hasPolicyIssuedStatus: Boolean,
 });
 
 const page = usePage();
@@ -210,12 +210,12 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
 <template>
   <div>
     <Head title="Yacht Quotes" />
-    
+
     <div class="p-4 rounded shadow mb-6 bg-white">
       <Collapsible :expanded="sectionExpanded">
         <template #header>
           <div class="flex justify-between items-center flex-wrap gap-2">
-            <h2 class="text-xl font-semibold">Yacht Detail</h2>            
+            <h2 class="text-xl font-semibold">Yacht Detail</h2>
           </div>
         </template>
         <template #body>
@@ -227,7 +227,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
             >
               <x-button size="sm" tag="div">Edit</x-button>
             </Link>
-    
+
             <Link
               v-if="can(permissionsEnum.YachtQuotesList)"
               :href="route('yacht-quotes-list')"
@@ -268,42 +268,42 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
                 <dt class="font-medium">ADVISOR</dt>
                 <dd>{{ quote.advisor?.name }}</dd>
               </div>
-    
+
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">SOURCE</dt>
                 <dd>{{ quote.source }}</dd>
               </div>
-    
+
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">CREATED DATE</dt>
                 <dd>{{ quote.created_at }}</dd>
               </div>
-    
+
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">CREATED BY</dt>
                 <dd>{{ quote?.created_by?.email }}</dd>
               </div>
-    
+
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">UPDATED BY</dt>
                 <dd>{{ quote?.updated_by?.email }}</dd>
               </div>
-    
+
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">LAST MODIFIED DATE</dt>
                 <dd>{{ quote.updated_at }}</dd>
               </div>
-    
+
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">LOST REASON</dt>
                 <dd>{{ quote.quote_detail?.lost_reason?.text }}</dd>
               </div>
-    
+
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">IS ECOMMERCE</dt>
                 <dd>{{ quote.is_ecommerce ? 'Yes' : 'No' }}</dd>
               </div>
-    
+
               <div class="grid sm:grid-cols-2">
                 <div>
                   <x-tooltip position="bottom">
@@ -317,46 +317,46 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
                 </div>
                 <div>{{ quote.parent_duplicate_quote_id }}</div>
               </div>
-    
+
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">DEVICE</dt>
                 <dd>{{ quote.device }}</dd>
               </div>
             </dl>
           </div>
-    
+
           <div class="mt-6">
             <h3 class="font-semibold text-primary-800">Quote Details</h3>
             <x-divider class="mb-4 mt-1" />
           </div>
-    
+
           <div class="text-sm">
             <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">BOAT DETAILS</dt>
                 <dd>{{ quote?.yacht_quote?.boat_details }}</dd>
               </div>
-    
+
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">ENGINE DETAILS</dt>
                 <dd>{{ quote?.yacht_quote?.engine_details }}</dd>
               </div>
-    
+
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">CLAIM EXPERIENCE</dt>
                 <dd>{{ quote?.yacht_quote?.claim_experience }}</dd>
               </div>
-    
+
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">SUM INSURED</dt>
                 <dd>{{ quote.asset_value }}</dd>
               </div>
-    
+
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">USE</dt>
                 <dd>{{ quote?.yacht_quote?.use }}</dd>
               </div>
-    
+
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">OPERATOR EXPERIENCE</dt>
                 <dd>{{ quote?.yacht_quote?.operator_experience }}</dd>
@@ -384,7 +384,9 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
         <template #body>
           <x-divider class="my-4" />
           <div class="flex justify-end mb-4">
-            <x-tag color="success" v-if="quote.kyc_decision === 'Complete'"> KYC - Complete </x-tag>
+            <x-tag color="success" v-if="quote.kyc_decision === 'Complete'">
+              KYC - Complete
+            </x-tag>
             <x-tag color="amber" v-else> KYC - Pending </x-tag>
           </div>
           <x-form @submit="updateProfileDetails" :auto-focus="false">
@@ -467,14 +469,16 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
                     />
                   </dd>
                 </div>
-    
+
                 <RiskRatingScoreDetails
                   :quote="quote.yacht_quote"
                   :modelType="quoteType"
                 />
               </dl>
               <dl
-                v-if="quote.customer_type === page.props.customerTypeEnum.Entity"
+                v-if="
+                  quote.customer_type === page.props.customerTypeEnum.Entity
+                "
                 class="grid md:grid-cols-2 gap-x-6 gap-y-4"
               >
                 <div class="grid sm:grid-cols-2">
@@ -582,7 +586,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
             </div>
           </x-form>
         </template>
-      </Collapsible>      
+      </Collapsible>
     </div>
 
     <x-modal v-model="getParentEntityModel" size="lg" show-close backdrop>
@@ -698,6 +702,22 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       :expanded="sectionExpanded"
     />
 
+    <QuoteStatus
+      :quote="quote"
+      :quote-type="quoteType"
+      :quote-statuses="quoteStatuses"
+      :lost-reasons="lostReasons"
+      :quote-status-enum="quoteStatusEnum"
+      :expanded="sectionExpanded"
+    />
+
+    <PlanDetails
+      :insuranceProviders="insuranceProviders"
+      :quote="quote"
+      :quoteType="quoteType"
+      :expanded="sectionExpanded"
+    />
+
     <QuotePayments
       :can="can"
       :payments="quote.payments"
@@ -708,13 +728,19 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       :personal-plans="personalPlans"
     />
 
-    <QuoteStatus
+    <EmbeddedProducts
+      :data="embeddedProducts"
+      :link="quote.uuid"
+      :code="quote.code"
       :quote="quote"
-      :quote-type="quoteType"
-      :quote-statuses="quoteStatuses"
-      :lost-reasons="lostReasons"
-      :quote-status-enum="quoteStatusEnum"
+      :modelType="quoteType"
       :expanded="sectionExpanded"
+    />
+
+    <QuotePolicy
+      :quote="quote"
+      :can="can"
+      :quoteStatusEnum="quoteStatusesEnum"
     />
 
     <QuoteDocuments
@@ -732,29 +758,6 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       :options="sendUpdateOptions"
       :data="sendUpdateLogs"
     />
-
-    <QuotePolicy
-      :quote="quote"
-      :can="can"
-      :quoteStatusEnum="quoteStatusesEnum"
-    />
-
-    <PlanDetails
-      :insuranceProviders="insuranceProviders"
-      :quote="quote"
-      :quoteType="quoteType"
-      :expanded="sectionExpanded"
-    />
-
-    <EmbeddedProducts
-      :data="embeddedProducts"
-      :link="quote.uuid"
-      :code="quote.code"
-      :quote="quote"
-      :modelType="quoteType"
-      :expanded="sectionExpanded"
-    />
-
     <AuditLogs
       :quote-type="quoteType"
       :id="$page.props.quote.id"

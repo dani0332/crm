@@ -5,7 +5,7 @@ import LazyCreatePlan from './Partials/CreatePlan.vue';
 import AssignTier from './Partials/AssignTier.vue';
 import FollowUpReasons from './Partials/FollowUpReasons.vue';
 import RiskRatingScoreDetails from '../../../Components/RiskRatingScoreDetails.vue';
-import {fileUploadErrorMessage} from "@/inertia/Composables/utilities.js";
+import { fileUploadErrorMessage } from '@/inertia/Composables/utilities.js';
 
 defineProps({
   quote: Object,
@@ -84,7 +84,7 @@ defineProps({
   carInsuranceProviders: Array,
   sendUpdateOptions: Array,
   sendUpdateLogs: Array,
-  hasPolicyIssuedStatus: Boolean
+  hasPolicyIssuedStatus: Boolean,
 });
 const page = usePage();
 const notification = useNotifications('toast');
@@ -948,15 +948,15 @@ const docForm = useForm({
 
 const uploadFile = (doc, filesWithInfo) => {
   let url = '/quotes/car/documents/store';
-  const { files, rejectReason} = filesWithInfo;
+  const { files, rejectReason } = filesWithInfo;
   if (files.length == 0) {
     notification.error({
       title: 'File upload failed',
       position: 'top',
     });
-    docForm.setError({error: fileUploadErrorMessage(doc, rejectReason)});
-    return false
-  };
+    docForm.setError({ error: fileUploadErrorMessage(doc, rejectReason) });
+    return false;
+  }
   isUploading.value = true;
   docForm
     .transform(data => ({
@@ -1420,16 +1420,17 @@ const searchByTradeLicense = trigger => {
 };
 
 const linkEntity = () => {
-    let entityDetails = {
-        quote_type_id: page.props.quoteTypeId,
-        quote_request_id: page.props.record.id,
-        entity_id: tradeLicenseEntity.entity_id,
-        triggeredFrom: tradeLicenseEntity.triggeredFrom
-    };
-    axios.post(route('link-entity-details'), entityDetails)
-        .then(res => {
-            if(res.data.status) {
-                let response = res.data.response;
+  let entityDetails = {
+    quote_type_id: page.props.quoteTypeId,
+    quote_request_id: page.props.record.id,
+    entity_id: tradeLicenseEntity.entity_id,
+    triggeredFrom: tradeLicenseEntity.triggeredFrom,
+  };
+  axios
+    .post(route('link-entity-details'), entityDetails)
+    .then(res => {
+      if (res.data.status) {
+        let response = res.data.response;
 
         // Append Entity data in fields
         customerProfileForm.trade_license_no = response.trade_license_no;
@@ -1715,7 +1716,9 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
                 <dt class="font-medium">
                   CAN YOU PROVIDE NO-CLAIMS LETTER FROM YOUR PREVIOUS INSURERS?
                 </dt>
-                <dd>{{ record.has_ncd_supporting_documents ? 'Yes' : 'No' }}</dd>
+                <dd>
+                  {{ record.has_ncd_supporting_documents ? 'Yes' : 'No' }}
+                </dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">CREATED DATE</dt>
@@ -1778,13 +1781,13 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
                 </dt>
                 <dd>{{ record.parent_duplicate_quote_id ?? '' }}</dd>
               </div>
-          <div
-            class="grid sm:grid-cols-2"
-            v-if="hasAnyRole([rolesEnum.Admin, rolesEnum.Engineering])"
-          >
-            <dt class="font-medium">ID</dt>
-            <dd>{{ record.id }}</dd>
-          </div>
+              <div
+                class="grid sm:grid-cols-2"
+                v-if="hasAnyRole([rolesEnum.Admin, rolesEnum.Engineering])"
+              >
+                <dt class="font-medium">ID</dt>
+                <dd>{{ record.id }}</dd>
+              </div>
             </dl>
           </div>
           <x-divider class="mb-4 mt-4" />
@@ -1855,7 +1858,9 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
         <template #body>
           <x-divider class="my-4" />
           <div class="flex mb-3 justify-end">
-            <x-tag color="success" v-if="quote.kyc_decision === 'Complete'"> KYC - Complete </x-tag>
+            <x-tag color="success" v-if="quote.kyc_decision === 'Complete'">
+              KYC - Complete
+            </x-tag>
             <x-tag color="amber" v-else> KYC - Pending </x-tag>
           </div>
 
@@ -1863,7 +1868,8 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
             <div class="text-sm">
               <dl
                 v-if="
-                  record.customer_type === page.props.customerTypeEnum.Individual
+                  record.customer_type ===
+                  page.props.customerTypeEnum.Individual
                 "
                 class="grid md:grid-cols-2 gap-x-6 gap-y-4"
               >
@@ -1950,7 +1956,9 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
                 <RiskRatingScoreDetails :quote="quote" :modelType="quoteType" />
               </dl>
               <dl
-                v-if="record.customer_type === page.props.customerTypeEnum.Entity"
+                v-if="
+                  record.customer_type === page.props.customerTypeEnum.Entity
+                "
                 class="grid md:grid-cols-2 gap-x-6 gap-y-4"
               >
                 <div class="grid sm:grid-cols-2">
@@ -2175,9 +2183,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       <Collapsible :expanded="sectionExpanded">
         <template #header>
           <div>
-            <h3 class="font-semibold text-primary-800 text-lg">
-              Lead Status
-            </h3>
+            <h3 class="font-semibold text-primary-800 text-lg">Lead Status</h3>
           </div>
         </template>
         <template #body>
@@ -2494,9 +2500,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       <Collapsible :expanded="sectionExpanded">
         <template #header>
           <div>
-            <h3 class="font-semibold text-primary-800 text-lg">
-              Assumptions
-            </h3>
+            <h3 class="font-semibold text-primary-800 text-lg">Assumptions</h3>
           </div>
         </template>
         <template #body>
@@ -2730,7 +2734,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
             >
               Send OCB Email to Customer
             </x-button>
-  
+
             <x-button
               @click.prevent="modals.createPlan = true"
               size="sm"
@@ -2783,7 +2787,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
                 isManualUpdate,
                 isRenewal,
                 isDisabled,
-            puaPremium
+                puaPremium,
               }"
             >
               <p>{{ providerName }}</p>
@@ -2811,22 +2815,27 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
                   class="mt-0.5 text-[10px]"
                 >
                   Hidden
-            </x-tag>
+                </x-tag>
 
-            <x-tag
-                v-if="puaPremium && puaPremium != null"
-                size="xs"
-                class="mt-0.5 text-[10px] text-white"
-                style="background-color: #E00000"
-            >
-                <x-tooltip  position="right">
+                <x-tag
+                  v-if="puaPremium && puaPremium != null"
+                  size="xs"
+                  class="mt-0.5 text-[10px] text-white"
+                  style="background-color: #e00000"
+                >
+                  <x-tooltip position="right">
                     <template #tooltip>
                       <span class="font-medium">
-                          Pending Underwriter Approval (PUA) indicates that this quote is prepared using our internal rating calculator. Please contact the client to get the required documents, to proceed with generating a quote on the insurer portal and connect with the underwriter to obtain their approval.
-                       </span>
+                        Pending Underwriter Approval (PUA) indicates that this
+                        quote is prepared using our internal rating calculator.
+                        Please contact the client to get the required documents,
+                        to proceed with generating a quote on the insurer portal
+                        and connect with the underwriter to obtain their
+                        approval.
+                      </span>
                     </template>
                     PUA
-                </x-tooltip>
+                  </x-tooltip>
                 </x-tag>
               </div>
             </template>
@@ -2846,7 +2855,8 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
                 <template v-if="feature.code">
                   <span
                     v-if="
-                      feature.code === carPlanFeaturesCodeEnum.TPL_DAMAGE_LIMIT ||
+                      feature.code ===
+                        carPlanFeaturesCodeEnum.TPL_DAMAGE_LIMIT ||
                       feature.code === carPlanFeaturesCodeEnum.DAMAGE_LIMIT
                     "
                   >
@@ -2855,7 +2865,8 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
                 </template>
                 <span
                   v-else-if="
-                    feature.text === carPlanFeaturesCodeEnum.TPL_DAMAGE_LIMIT_TEXT
+                    feature.text ===
+                    carPlanFeaturesCodeEnum.TPL_DAMAGE_LIMIT_TEXT
                   "
                 >
                   {{ feature.value }}
@@ -2927,11 +2938,15 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
               </template>
             </template>
             <template #item-actualPremium="{ actualPremium }">
-              {{ actualPremium ? parseFloat(actualPremium).toFixed(2) : '0.00' }}
+              {{
+                actualPremium ? parseFloat(actualPremium).toFixed(2) : '0.00'
+              }}
             </template>
             <template #item-discountPremium="{ discountPremium }">
               {{
-                discountPremium ? parseFloat(discountPremium).toFixed(2) : '0.00'
+                discountPremium
+                  ? parseFloat(discountPremium).toFixed(2)
+                  : '0.00'
               }}
             </template>
             <template #item-premiumWithVat="item">
@@ -2977,9 +2992,9 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
                     Change Insurer
                   </x-button>
                 </template>
-    
+
                 <!-- v-if="hasRole(rolesEnum.CarAdvisor)" , hide it temp -->
-            <span v-if="true == false">
+                <span v-if="true == false">
                   <SelectPlan
                     v-if="prefillPlanId != item.id"
                     @update:updatePlanId="handleChildUpdate"
@@ -2987,7 +3002,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
                     :quoteType="quoteType"
                     :uuid="quote.uuid"
                   />
-    
+
                   <x-button
                     v-else
                     size="xs"
@@ -3001,11 +3016,9 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
               </div>
             </template>
           </DataTable>
-    
-
         </template>
       </Collapsible>
-      
+
       <x-modal v-model="modals.changeInsurer" show-close backdrop>
         <template #header> Change Insurer </template>
         <p>Are you sure to change insurer?</p>
@@ -3758,9 +3771,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       <Collapsible :expanded="sectionExpanded">
         <template #header>
           <div>
-            <h3 class="font-semibold text-primary-800 text-lg">
-              Lead History
-            </h3>
+            <h3 class="font-semibold text-primary-800 text-lg">Lead History</h3>
           </div>
         </template>
         <template #body>

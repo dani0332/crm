@@ -38,7 +38,7 @@ defineProps({
   canAddBatchNumber: Boolean,
   sendUpdateOptions: Array,
   sendUpdateLogs: Array,
-  hasPolicyIssuedStatus: Boolean
+  hasPolicyIssuedStatus: Boolean,
 });
 
 const page = usePage();
@@ -817,6 +817,22 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       :expanded="sectionExpanded"
     />
 
+    <QuoteStatus
+      :quote="quote"
+      :quote-type="quoteType"
+      :quote-statuses="quoteStatuses"
+      :lost-reasons="lostReasons"
+      :quoteStatusEnum="quoteStatusEnum"
+      :expanded="sectionExpanded"
+    />
+
+    <PlanDetails
+      :insuranceProviders="insuranceProviders"
+      :quote="quote"
+      :quoteType="quoteType"
+      :expanded="sectionExpanded"
+    />
+
     <QuotePayments
       :can="can"
       :payments="quote.payments"
@@ -827,14 +843,16 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       :personal-plans="personalPlans"
     />
 
-    <QuoteStatus
+    <EmbeddedProducts
+      :data="embeddedProducts"
+      :link="quote.uuid"
+      :code="quote.code"
       :quote="quote"
-      :quote-type="quoteType"
-      :quote-statuses="quoteStatuses"
-      :lost-reasons="lostReasons"
-      :quoteStatusEnum="quoteStatusEnum"
+      :modelType="quoteType"
       :expanded="sectionExpanded"
     />
+
+    <QuotePolicy :quote="quote" :can="can" :quoteStatusEnum="quoteStatusEnum" />
 
     <QuoteDocuments
       :document-types="documentTypes"
@@ -850,28 +868,6 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       :quote_type_id="$page.props.quoteTypeId"
       :options="sendUpdateOptions"
       :data="sendUpdateLogs"
-    />
-
-    <QuotePolicy
-      :quote="quote"
-      :can="can"
-      :quoteStatusEnum="quoteStatusEnum"
-    />
-
-    <PlanDetails
-      :insuranceProviders="insuranceProviders"
-      :quote="quote"
-      :quoteType="quoteType"
-      :expanded="sectionExpanded"
-    />
-
-    <EmbeddedProducts
-      :data="embeddedProducts"
-      :link="quote.uuid"
-      :code="quote.code"
-      :quote="quote"
-      :modelType="quoteType"
-      :expanded="sectionExpanded"
     />
 
     <LeadHistory :quote="quote" :expanded="sectionExpanded" />
