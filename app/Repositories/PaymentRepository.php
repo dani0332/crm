@@ -17,7 +17,7 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\PaymentAllocationStatus;
 use App\Enums\QuoteTypeId;
 use Illuminate\Support\Facades\Auth;
-
+use App\Services\CRUDService;
 
 class PaymentRepository extends BaseRepository implements PaymentRepositoryInterface
 {
@@ -298,9 +298,8 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
         if (! $quoteModel) {
             return response()->json(['success' => false]);
         }
-
-        if ($request->is_declined) {
-            $firstPayment = $quoteModel->payments()->first();
+        $firstPayment = $quoteModel->payments()->first();
+        if ($request->is_declined) {            
             $firstPayment->update([
                 'decline_reason_id' => $request->declined_reason,
                 'decline_custom_reason' => $request->declined_custom_reason,
@@ -318,12 +317,10 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                     $paymentSplit = PaymentSplits::where(['code' => $quoteModel->code, 'sr_no' => $key])->first();
                     if ($paymentSplit) {                       
                         
-                        if ($paymentSplit->payment_method == PaymentMethodsEnum::CreditCard) {
-                            
+                        if ($paymentSplit->payment_method == PaymentMethodsEnum::CreditCard) {                            
                             //create sage reciept
-                            if ($paymentSplit->sage_reciept_id==null || $paymentSplit->sage_reciept_id=='' ) {
-                                $request->collection_amount = $splitAmount;
-                                $sageResponse = app(SplitPaymentService::class)->createSageRecipt($request,$paymentSplit);
+                            if ($paymentSplit->sage_reciept_id==null || $paymentSplit->sage_reciept_id=='' ) {                                
+                                $sageResponse = app(SplitPaymentService::class)->createSageRecipt($request,$paymentSplit, $splitAmount);
                                 if ($sageResponse['status'] == 'success'){
                                     $paymentSplit->sage_reciept_id = $sageResponse['response'];
                                 } else {
@@ -335,13 +332,23 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                             $response = app(CRUDService::class)->capturePayment($quoteModel, $paymentSplit, $quoteTypeId, $splitAmount);
                             $paymentSplit->payment_status_id = PaymentStatusEnum::PAID;
                         }
-                        $paymentSplit->collection_amount = $splitAmount;
-                        $paymentSplit->save();
+                        DB::beginTransaction();
+                        try {
+                            $paymentSplit->collection_amount = $splitAmount;
+                            $paymentSplit->save();
+                            $parentPayment = $paymentSplit->payment;
+                            $parentPayment->captured_amount = ($parentPayment->captured_amount + $splitAmount);
+                            $parentPayment->save();
+                            DB::commit();
+                        } catch (Exception $exception) {
+                            DB::rollBack();                            
+                        }   
+
                     }
                     $totalCapturedPayment += $splitAmount;
                 }
             }
-            $firstPayment = $quoteModel->payments()->first();
+
             $masterPaymentStatus = $firstPayment->payment_status_id;
             $totalPaidPayments = PaymentSplits::where([
                 'payment_status_id' => PaymentStatusEnum::PAID,
@@ -352,16 +359,13 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
             }
             $firstPayment->update([
                 'is_approved' => 1,
-                'captured_amount' => ($firstPayment->captured_amount + $totalCapturedPayment),
                 'payment_status_id' => $masterPaymentStatus,
                 'updated_by' => Auth::user()->id,
             ]);
-
             $quoteModel->quote_status_id = QuoteStatusEnum::TransactionApproved;
             $quoteModel->save();
             $successMessage = 'Transaction approved';
         }
-
         return $successMessage;
     }
 

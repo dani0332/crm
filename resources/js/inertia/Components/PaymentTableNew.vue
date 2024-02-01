@@ -719,7 +719,9 @@ const calculatePaymentBreakup = (changeMethod = true) => {
     var trueValuesCount = trueValuesArray.length;
     if(paymentMethodsForm.payment_no <= trueValuesCount){ 
       paymentMethodsForm.payment_no = oldTotalPayments.value;
-      isDowngradeFrequencyError.value = true; 
+      if(paymentMethodsForm.payment_no < trueValuesCount){ 
+        isDowngradeFrequencyError.value = true; 
+      }
       return;
     }    
   }

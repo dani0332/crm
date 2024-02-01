@@ -59,8 +59,11 @@ class SplitPaymentService
         return $childPaymentStatus;
     }
 
-    public function createSageRecipt($request,$splitPayment)
+    public function createSageRecipt($request,$splitPayment, $splitAmount=NULL)
     {        
+        if ($splitAmount!=NULL) {
+            $request->collection_amount = $splitAmount; 
+        }
         $returnMessage = ['status' => 'error', 'response' => ''];
         $quote = $this->getQuoteObject($request->modelType, $request->quote_id);
         $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($request->modelType));
