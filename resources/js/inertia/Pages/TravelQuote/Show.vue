@@ -634,12 +634,6 @@ const onLoadAvailablePlansData = async () => {
       .then(res => {
         availablePlansTable.data = res.data.normalPlans
         availableSeniorPlansTable.data = res.data.seniorPlans
-          availablePlansTable.data =   availablePlansTable.data.filter(column => {
-              return column.isDisabled == false
-          });
-          availableSeniorPlansTable.data =   availableSeniorPlansTable.data.filter(column => {
-              return column.isDisabled == false
-          });
       })
       .catch(err => {
         console.log(err);
@@ -2277,9 +2271,19 @@ const genderList = [
           :hide-footer="availablePlansTable.data.length < 15"
         >
           <template #item-providerName="item">
-            <span class="text-primary-600 uppercase">{{
+            <p class="text-primary-600 uppercase">{{
               item.providerName
-            }}</span>
+            }}</p>
+              <div class="flex gap-1">
+              <x-tag
+                  v-if="item.isDisabled"
+                  size="xs"
+                  color="error"
+                  class="mt-0.5 text-[10px]"
+              >
+                  Hidden
+              </x-tag>
+              </div>
           </template>
           <template #item-name="item">
             <span class="text-primary-600 uppercase">{{ item.name }}</span>
