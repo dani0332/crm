@@ -303,7 +303,7 @@ class CarQuoteService extends BaseService
         }
         info('Create triggered from IMCRM for Car Quote request with email : '.$request->email.' and sending request to CAPI');
 
-        return CapiRequestService::sendCAPIRequest('/api/v1-save-car-quote', $dataArr);
+        return CapiRequestService::sendCAPIRequest('/api/v1-save-car-quote', $dataArr, CarQuote::class);
     }
 
     public function updateCarQuote(Request $request, $id)
@@ -1835,25 +1835,27 @@ class CarQuoteService extends BaseService
                 'qs.text as lead_status',
                 'ps.text as payment_status',
                 'cp.text as plan_name',
-                'ip.text as provider_name'
+                'ip.text as provider_name',
+                'q.paid_at'
             )
-            ->whereBetween('q.created_at', [$request->created_at_start, $request->created_at_end])
-            ->where('q.quote_status_id', '=', QuoteStatusEnum::TransactionApproved)
-            ->where('q.payment_status_id', '=', PaymentStatusEnum::CAPTURED)
+            ->whereBetween('q.paid_at', [$request->paid_at_start, $request->paid_at_end])
+            ->whereIn('q.payment_status_id', [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PARTIAL_CAPTURED, PaymentStatusEnum::AUTHORISED])
             ->orderBy('q.created_at')
             ->chunk(500, function ($carQuoteRequestData) use (&$results) {
                 foreach ($carQuoteRequestData as $row) {
                     $addons = json_decode($row->addons, true);
                     unset($row->addons);
-                    foreach ($addons as $addon) {
-                        $addonName = $addon['text'];
-                        foreach ($addon['carAddonOption'] as $option) {
-                            $addonValue = $option['value'];
-                            $newRow = clone $row;
-                            $newRow->add_on_name = $addonName;
-                            $newRow->add_on_value = $addonValue;
-                            $newRow->is_selected = $option['isSelected'] ? 'Yes' : 'No';
-                            $results[] = $newRow;
+                    if ($addons) {
+                        foreach ($addons as $addon) {
+                            $addonName = $addon['text'];
+                            foreach ($addon['carAddonOption'] as $option) {
+                                $addonValue = $option['value'];
+                                $newRow = clone $row;
+                                $newRow->add_on_name = $addonName;
+                                $newRow->add_on_value = $addonValue;
+                                $newRow->is_selected = $option['isSelected'] ? 'Yes' : 'No';
+                                $results[] = $newRow;
+                            }
                         }
                     }
                 }

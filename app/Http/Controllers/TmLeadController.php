@@ -324,7 +324,7 @@ class TmLeadController extends Controller
 
         $queryTmLeads = $this->getTMLeadData($request, $tmLead);
 
-        return (new TmLeadsExport($queryTmLeads))->download('tm_leads.xlsx');
+        return (new TmLeadsExport($queryTmLeads))->download('tm_leads');
     }
 
     public function getTMLeadData($request, $tmlead)

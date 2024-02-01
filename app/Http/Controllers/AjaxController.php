@@ -250,7 +250,8 @@ class AjaxController extends Controller
                         'pep' => $data['pep'] ?? null,
                         'financial_sanctions' => $data['financial_sanctions'] ?? null,
                         'dual_nationality' => $data['dual_nationality'] ?? null,
-                    ]);
+                    ]
+                );
 
                 $quote->first_name = $data['first_name'];
                 $quote->last_name = $data['last_name'];

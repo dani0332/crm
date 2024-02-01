@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use App\helpers\LookUpModelHelper;
-use App\Jobs\MAWelcomeJob;
 use App\Models\CarQuote;
 use App\Models\CarQuotePaymentHistory;
 use App\Models\CarQuotePolicy;
@@ -104,12 +103,6 @@ class TransAppService extends BaseService
                     $createPolicy->save();
                 }
             }
-        }
-
-        $isCustomerExisting = MyAlFredUser::where('customer_id', $customerId)->first();
-
-        if ($sendWelcomeEmail && config('constants.ENABLE_TRANSAPP_WE') == '1' && ! $isCustomerExisting) {
-            dispatch(new MAWelcomeJob($customer->first_name, $customer->last_name, $customer->email, $customer->mobile_no, 'TRANSAPP', 'transapp-myalfred-we'));
         }
 
         return $approvalCode;

@@ -286,6 +286,7 @@ class AMLController extends Controller
             }
             // Update Decision on Lexis Nexis Portal
             if (isset(request()->decisonsForUpdatePortal)) {
+                request()->merge(['ref_id' => $quoteCdbId]);
                 AMLService::updateAMLDecisionLexisNexis(request());
             }
 
