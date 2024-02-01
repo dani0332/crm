@@ -50,6 +50,8 @@ defineProps({
   canAddBatchNumber: Boolean,
   paymentTooltipEnum: Object,
   storageUrl: String,
+    policyIssuanceStatus: Array,
+    record: Object,
 });
 
 
@@ -2338,6 +2340,14 @@ const genderList = [
       :code="quote.code"
       :quote="quote"
       :modelType="quoteType"
+    />
+
+    <PolicyDetail
+        v-if="permissions.isQuoteDocumentEnabled"
+        :record="record"
+        :quoteStatusEnum="enums.quoteStatusEnum"
+        :policyIssuanceStatus="policyIssuanceStatus"
+        modelType="travel"
     />
 
     <div class="p-4 rounded shadow mb-6 bg-white">

@@ -1612,8 +1612,7 @@ class CRUDController extends Controller
 
     public function updateQuotePolicy(Request $request)
     {
-        $model = '\\App\\Models\\' . ucwords($request->modelType) . 'Quote';
-        $quoteModel = $model::where('id', $request->quote_id)->first();
+        $quoteModel = $this->getQuoteObject($request->modelType, $request->quote_id);
         if (!$quoteModel) {
             return redirect()->back()->with('success', 'Error Updating Policy Details.');
         }
