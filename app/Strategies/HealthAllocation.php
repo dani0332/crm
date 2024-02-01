@@ -44,6 +44,7 @@ class HealthAllocation implements Allocation
         }
 
         $this->assignLead($lead, $advisor); // Assign the lead to the advisor
+
         return $advisor->id;
     }
 

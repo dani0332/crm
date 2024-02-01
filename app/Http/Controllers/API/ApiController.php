@@ -45,15 +45,12 @@ class ApiController extends Controller
 
             // Validate the request
             $request->validated();
-
             return $this->apiService->processAssignLead($request);
         } catch (\Exception $e) {
             info('------ Lead allocation ended for lead with An error occurred ------');
-
             return apiResponse($e, Response::HTTP_INTERNAL_SERVER_ERROR);
         } catch (ValidationException $e) {
             info('------ Lead allocation ended for lead with Required parameters missing ------');
-
             return apiResponse($e, Response::HTTP_BAD_REQUEST);
         }
     }

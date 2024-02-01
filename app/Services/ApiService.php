@@ -110,6 +110,7 @@ class ApiService
         $assignedAdvisorId = $allocationStrategy->executeSteps($overrideAdvisorId);
         $responseData = ['assignedAdvisorId' => $assignedAdvisorId];
         info('------ Lead allocation request completed to assign advisor only for '.$allocationId.' ------');
+
         return apiResponse($responseData, Response::HTTP_OK, 'Advisor assigned successfully!');
 
     }
@@ -130,6 +131,7 @@ class ApiService
         $assignedAdvisorId = $allocationStrategy->executeSteps();
         info('------ Lead allocation ended for lead : '.$allocationId.' ------');
         $responseData = ['assignedAdvisorId' => $assignedAdvisorId];
+
         return apiResponse(null, Response::HTTP_OK, 'Lead allocated successfully!');
     }
 }

@@ -56,15 +56,18 @@ class CarAllocation implements Allocation
                     // Update the lead's tier information
                     $this->updateLeadTier($lead, $tier);
                 }
+
                 return $advisorId;
             } else {
                 // Log that tier was not found for the lead and skip processing
                 info('Tier not found for lead: '.$lead->uuid.'. Skipping for now.');
+
                 return 0;
             }
         } catch (\Throwable $th) {
             info('exception occurred in car lead allocation with error : '.$th->getMessage());
             info('exception occurred in car lead allocation with error stack as  : '.$th->getTraceAsString());
+
             return null;
         }
     }
