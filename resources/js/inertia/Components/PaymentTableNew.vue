@@ -1048,12 +1048,16 @@ const editPaymentModal = (payment,split_payment_id,sr_no,capture_approval) => {
   calculateTotalAmount();
 
   var isAnyPaid = false;
+
+  const paidStatusIds = [
+    props.paymentStatusEnum.PAID,
+    props.paymentStatusEnum.AUTHORISED,
+    props.paymentStatusEnum.CAPTURED,
+    props.paymentStatusEnum.PARTIAL_CAPTURED
+  ];
+
   for(let i=1; i<=payment.total_payments; i++){ 
-    if(
-      payment.payment_splits[i-1].payment_status_id===props.paymentStatusEnum.PAID ||
-      payment.payment_splits[i-1].payment_status_id===props.paymentStatusEnum.AUTHORISED ||      
-      payment.payment_splits[i-1].payment_status_id===props.paymentStatusEnum.CAPTURED   
-    ) { 
+    if (paidStatusIds.includes(payment.payment_splits[i-1].payment_status_id)) {
       readOnlyPayments.value[i] = true;
       totalPaidAmount.value++;
       paidAmountSum.value = parseFloat(paidAmountSum.value) + parseFloat(payment.payment_splits[i-1].payment_amount);
