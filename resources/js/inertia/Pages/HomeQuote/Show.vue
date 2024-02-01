@@ -973,7 +973,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       :expanded="sectionExpanded"
     />
 
-    <customerAdditionalContacts
+    <CustomerAdditionalContacts
       quoteType="Home"
       :customerId="quote.customer_id"
       :quoteId="quote.id"

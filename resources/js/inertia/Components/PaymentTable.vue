@@ -21,6 +21,7 @@ const createPaymentModal = ref(false);
 
 const can = permission => useCan(permission);
 const hasRole = role => useHasRole(role);
+const hasAnyRole = roles => useHasAnyRole(roles);
 const permissionsEnum = page.props.permissionsEnum;
 const rolesEnum = page.props.rolesEnum;
 
@@ -200,7 +201,7 @@ const approvePayment = payment => {
 
 <template>
   <div class="p-4 rounded shadow mb-6 bg-white">
-    <collapsible expanded>
+    <Collapsible expanded>
       <template #header>
         <div class="flex justify-between gap-4 items-center">
           <h3 class="font-semibold text-primary-800 text-lg">

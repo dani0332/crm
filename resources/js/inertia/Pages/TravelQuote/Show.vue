@@ -1896,7 +1896,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
           </x-button>
         </div>
       </template>
-    </x-modal>
+    </x-modal>2
 
     <CustomerAdditionalContacts
       quoteType="Travel"
@@ -2308,7 +2308,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
           <x-divider class="my-4" />
           <div class="flex justify-end mb-4">
             <x-button
-              v-if="availablePlansTable.data.length > 0"
+              v-if="availablePlansTable.data.length > 0 || availableSeniorPlansTable.data.length > 0"
               size="sm"
               color="orange"
               class="mr-2"
@@ -2404,9 +2404,9 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       </Collapsible>
 
       <div v-if="aboveAgeMembers > 0" class="mt-5">
-        <h6 class="font-semibold text-primary-600 text-ms mb-1">
-          Travel plans for {{ aboveAgeMembers }} member age 65 and above
-        </h6>
+        <div class="flex flex-wrap gap-4 justify-between items-center mb-4">
+          <h6 class="font-semibold text-primary-600 text-ms mb-1">Travel plans for {{ aboveAgeMembers }} member age 65 and above</h6>
+        </div>
         <div>
           <DataTable
             table-class-name="tablefixed compact"

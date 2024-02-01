@@ -3756,7 +3756,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       </x-modal>
     </div>
 
-    <customerAdditionalContacts
+    <CustomerAdditionalContacts
       quoteType="Car"
       :customerId="record.customer_id"
       :quoteId="record.id"
