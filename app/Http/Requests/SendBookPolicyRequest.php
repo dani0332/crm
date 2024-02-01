@@ -36,37 +36,40 @@ class SendBookPolicyRequest extends FormRequest
 
     public function withValidator($validator)
     {
-        $validator->after(function ($validator) {
-            //check for quote records if exists
-            $quote = $this->getQuoteObject(request()->model_type, request()->quote_id);
-            if ($quote) {
-                $payment = Payment::where('code', $quote->code)->first();
-                $paymentSplit = PaymentSplits::where('code', $quote->code)->first();
-                if ($payment->first() && $paymentSplit->first()) {
-                    if (empty($payment->insurer_invoice_date)) {
-                        $validator->errors()->add('value', 'Insurer Invoice date is required');
-                    }
-                    if (empty($payment->insurer_tax_number)) {
-                        $validator->errors()->add('value', 'Insurer tax invoice number is required');
-                    }
-                    if (empty($payment->insurer_commmission_invoice_number)) {
-                        $validator->errors()->add('value', 'Insurer Commmission Invoice Number is required');
-                    }
-                    if (empty($payment->commission_vat_not_applicable) && empty($payment->commission_vat_applicable)) {
-                        $validator->errors()->add('value', 'Commmission (VAT NOT APPLICABLE) OR Commmission (VAT APPLICABLE) is required');
-                    }
-                    $invoiceDate = Carbon::parse($payment->insurer_invoice_date)->startOfDay();
-                    $paymentDueDate = Carbon::parse($paymentSplit->due_date)->startOfDay();
 
-                    if ($invoiceDate->gt($paymentDueDate)) {
-                        $validator->errors()->add('value', 'Payment Due date cannot be earlier than Insurer Invoice date');
+        if (request()->send_policy_type == 'sage') {
+            $validator->after(function ($validator) {
+                //check for quote records if exists
+                $quote = $this->getQuoteObject(request()->model_type, request()->quote_id);
+                if ($quote) {
+                    $payment = Payment::where('code', $quote->code)->first();
+                    $paymentSplit = PaymentSplits::where('code', $quote->code)->first();
+                    if ($payment->first() && $paymentSplit->first()) {
+                        if (empty($payment->insurer_invoice_date)) {
+                            $validator->errors()->add('value', 'Insurer Invoice date is required');
+                        }
+                        if (empty($payment->insurer_tax_number)) {
+                            $validator->errors()->add('value', 'Insurer tax invoice number is required');
+                        }
+                        if (empty($payment->insurer_commmission_invoice_number)) {
+                            $validator->errors()->add('value', 'Insurer Commmission Invoice Number is required');
+                        }
+                        if (empty($payment->commission_vat_not_applicable) && empty($payment->commission_vat_applicable)) {
+                            $validator->errors()->add('value', 'Commmission (VAT NOT APPLICABLE) OR Commmission (VAT APPLICABLE) is required');
+                        }
+                        $invoiceDate = Carbon::parse($payment->insurer_invoice_date)->startOfDay();
+                        $paymentDueDate = Carbon::parse($paymentSplit->due_date)->startOfDay();
+
+                        if ($invoiceDate->gt($paymentDueDate)) {
+                            $validator->errors()->add('value', 'Payment Due date cannot be earlier than Insurer Invoice date');
+                        }
+                    } else {
+                        $validator->errors()->add('value', 'Payment Not found');
                     }
                 } else {
-                    $validator->errors()->add('value', 'Payment Not found');
+                    $validator->errors()->add('value', 'Quote Not found');
                 }
-            } else {
-                $validator->errors()->add('value', 'Quote Not found');
-            }
-        });
+            });
+        }
     }
 }
