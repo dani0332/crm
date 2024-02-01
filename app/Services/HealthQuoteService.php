@@ -29,6 +29,7 @@ use App\Models\InsuranceProvider;
 use App\Models\PaymentAction;
 use App\Models\QuoteType;
 use App\Models\QuoteViewCount;
+use App\Models\RenewalBatch;
 use App\Models\Team;
 use App\Models\User;
 use App\Traits\AddPremiumAllLobs;
@@ -218,6 +219,8 @@ class HealthQuoteService extends BaseService
             'health_quote_request_id' => $id,
             'created_at' => now(),
             'updated_at' => now(),
+            'advisor_assigned_date' => now(),
+            'advisor_assigned_by_id' => auth()->user()->id,
         ]);
     }
 
@@ -260,7 +263,7 @@ class HealthQuoteService extends BaseService
             $dataArr['advisorId'] = Auth::user()->id;
         }
 
-        $response = CapiRequestService::sendCAPIRequest('/api/v1-save-health-quote', $dataArr);
+        $response = CapiRequestService::sendCAPIRequest('/api/v1-save-health-quote', $dataArr, HealthQuote::class);
 
         if (isset($response->quoteUID)) {
             $this->savePremium(quoteTypeCode::HealthQuote, $request, $response);
@@ -632,15 +635,15 @@ class HealthQuoteService extends BaseService
         return $query;
     }
 
-    public function updateChildRecord($id)
+    public function updateChildRecord($id, $advisorId)
     {
         $childRecord = HealthQuoteRequestDetail::where('health_quote_request_id', $id)->first();
         if (empty($childRecord)) {
             $childRecord = $this->createDetailEntity($id);
         }
         $oldAdvisorAssignedDate = $childRecord->advisor_assigned_date;
-        if ($childRecord->advisor_id != null) {
-            $childRecord->advisor_assigned_by_id = Auth::user()->id;
+        if ($advisorId != null) {
+            $childRecord->advisor_assigned_by_id = auth()->user()->id;
             $childRecord->advisor_assigned_date = now();
             $childRecord->save();
         }
@@ -1148,7 +1151,7 @@ class HealthQuoteService extends BaseService
 
             $lead->assignment_type = $isReassignment ? AssignmentTypeEnum::MANUAL_REASSIGNED : AssignmentTypeEnum::MANUAL_ASSIGNED;
 
-            $oldAdvisorAssignedDate = $this->updateChildRecord($lead->id); // will update the car quote request detail entity about assignment
+            $oldAdvisorAssignedDate = $this->updateChildRecord($lead->id, $userId); // will update the car quote request detail entity about assignment
 
             info('Manual assignment done and details table updated for lead : '.$lead->uuid.'and old advisor assigned date is : '.$oldAdvisorAssignedDate);
 
@@ -1624,5 +1627,19 @@ class HealthQuoteService extends BaseService
         }
 
         return [$result, $skipLead];
+    }
+
+    public function assignRenewalBatch(HealthQuote $quote)
+    {
+        $date = Carbon::today()->toDateString();
+
+        $renewalBatch = RenewalBatch::select('name')->whereDate('start_date', '<=', $date)
+            ->whereDate('end_date', '>=', $date)
+            ->first();
+
+        if ($renewalBatch) {
+            $quote->renewal_batch = $renewalBatch->name;
+            $quote->save();
+        }
     }
 }
