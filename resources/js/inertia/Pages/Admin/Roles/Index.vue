@@ -85,10 +85,10 @@ watchDebounced(
       </Link>
     </template>
     <template #item-created_at="{ created_at }">
-      {{ created_at.split('T')[0] }}
+      {{ created_at ? created_at.split('T')[0] : 'N/A' }}
     </template>
     <template #item-updated_at="{ updated_at }">
-      {{ updated_at.split('T')[0] }}
+      {{ updated_at ? updated_at.split('T')[0] : 'N/A' }}
     </template>
   </DataTable>
   <Pagination
