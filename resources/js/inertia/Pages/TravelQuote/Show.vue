@@ -436,53 +436,6 @@ const dateToYMD = date => {
   return '';
 };
 
-const policyDetails = useForm({
-  premium: page.props.quote.premium,
-  policy_number: page.props.quote.policy_number || '',
-  policy_start_date: dateToYMD(page.props.quote.policy_start_date),
-  renewal_expiry_date: dateToYMD(page.props.quote.renewal_expiry_date) || '',
-  policy_issuance_date: dateToYMD(page.props.quote.policy_issuance_date) || '',
-  quote_status_id: page.props.quote.quote_status_id,
-  canEdit:
-    page.props.quote.quote_status_id ==
-      page.props.enums.quoteStatusEnum.TransactionApproved &&
-    page.props.permissions.notProductionApproval,
-  editMode: false,
-  modelType: page.props.modelType,
-  quote_id: page.props.quote.id,
-});
-
-const cancelPolicyFrom = () => {
-  policyDetails.editMode = false;
-};
-
-const submitPolicyDetails = isValid => {
-  if (!isValid) return;
-  policyDetails
-    .transform(data => ({
-      quote_policy_number: data.policy_number,
-      quote_policy_start_date: data.policy_start_date,
-      quote_policy_expiry_date: data.renewal_expiry_date,
-      quote_policy_issuance_date: data.policy_issuance_date,
-      quote_premium: data.premium,
-      modelType: data.modelType,
-      quote_id: data.quote_id,
-      isInertia: true,
-    }))
-    .post(`/quotes/${page.props.modelType}/update-quote-policy`, {
-      preserveScroll: true,
-      onSuccess: () => {
-        notification.success({
-          title: 'Policy Details Updated',
-          position: 'top',
-        });
-      },
-      onFinish: () => {
-        policyDetails.editMode = false;
-      },
-    });
-};
-
 const memberCategoryText = memberCategoryId =>
   computed(() => {
     return page.props.memberCategories.find(
@@ -1983,95 +1936,6 @@ const genderList = [
     </div>
 
     <div class="p-4 rounded shadow mb-6 bg-white">
-      <div>
-        <h3 class="font-semibold text-primary-800 text-lg">Policy Details</h3>
-        <x-divider class="mb-4 mt-1" />
-      </div>
-      <x-form @submit="submitPolicyDetails" :auto-focus="false">
-        <div class="flex gap-6 w-full">
-          <div class="w-full md:w-1/2">
-            <x-input
-              v-model="policyDetails.policy_number"
-              :disabled="!policyDetails.editMode"
-              label="POLICY NUMBER"
-              :rules="[isRequired, policy_number]"
-              class="w-full"
-            />
-          </div>
-          <div class="w-full md:w-1/2">
-            <DatePicker
-              v-model="policyDetails.policy_issuance_date"
-              :disabled="!policyDetails.editMode"
-              type="date"
-              label="ISSUANCE DATE"
-              :rules="[isRequired]"
-              class="w-full"
-            />
-          </div>
-        </div>
-        <div class="flex gap-6 w-full">
-          <div class="w-full md:w-1/2">
-            <DatePicker
-              v-model="policyDetails.policy_start_date"
-              :disabled="!policyDetails.editMode"
-              type="date"
-              label="START DATE"
-              :rules="[isRequired, policy_start_date]"
-              class="w-full"
-            />
-          </div>
-          <div class="w-full md:w-1/2">
-            <DatePicker
-              v-model="policyDetails.renewal_expiry_date"
-              :disabled="!policyDetails.editMode"
-              type="date"
-              label="EXPIRY DATE"
-              :rules="[isRequired, renewal_expiry_date]"
-              class="w-full"
-            />
-          </div>
-        </div>
-        <div class="flex gap-6 w-full">
-          <div class="w-full md:w-1/2">
-            <x-input
-              v-model="policyDetails.premium"
-              :disabled="!policyDetails.editMode"
-              label="PRICE"
-              :rules="[isRequired, premium]"
-              class="w-full"
-            />
-          </div>
-          <div class="w-full md:w-1/2"></div>
-        </div>
-
-        <div class="text-right space-x-4 mt-12" v-if="policyDetails.canEdit">
-          <x-button
-            color="#007bff"
-            size="sm"
-            v-show="policyDetails.editMode"
-            @click.prevent="cancelPolicyFrom"
-            >Cancel</x-button
-          >
-          <x-button
-            color="#26B99A"
-            type="submit"
-            size="sm"
-            v-show="policyDetails.editMode"
-            >Update</x-button
-          >
-          <x-button
-            color="#007bff"
-            size="sm"
-            type="submit"
-            v-show="!policyDetails.editMode"
-            @click.prevent="policyDetails.editMode = true"
-            >Edit</x-button
-          >
-        </div>
-      </x-form>
-    </div>
-
-    <div class="p-4 rounded shadow mb-6 bg-white">
       <div class="flex flex-wrap gap-4 justify-between items-center mb-4">
         <h3 class="font-semibold text-primary-800 text-lg">Email Status</h3>
       </div>
@@ -2344,10 +2208,10 @@ const genderList = [
 
     <PolicyDetail
         v-if="permissions.isQuoteDocumentEnabled"
-        :record="record"
-        :quoteStatusEnum="enums.quoteStatusEnum"
-        :policyIssuanceStatus="policyIssuanceStatus"
-        modelType="travel"
+      :record="record"
+      :quoteStatusEnum="enums.quoteStatusEnum"
+      :policyIssuanceStatus="policyIssuanceStatus"
+      modelType="travel"
     />
 
     <div class="p-4 rounded shadow mb-6 bg-white">
