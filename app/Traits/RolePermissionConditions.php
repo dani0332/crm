@@ -48,7 +48,7 @@ trait RolePermissionConditions
             foreach ($carTeams as $carTeam) {
                 if (empty($carUserIds)) {
                     $carUserIds = $this->getUsersByTeamId($carTeam)->pluck('id')->toArray();
-                }else{
+                } else {
                     $carUserIds = array_merge($carUserIds, $this->getUsersByTeamId($carTeam)->pluck('id')->toArray());
                 }
             }
