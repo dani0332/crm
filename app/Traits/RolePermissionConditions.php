@@ -10,7 +10,7 @@ trait RolePermissionConditions
 {
     use GetUserTreeTrait;
 
-    public function whereBasedOnRole($query, $prefix)
+    public function whereBasedOnRole($query, $prefix, $restrictedQuoteType = null)
     {
         $isRenewalAdvisor = Auth::user()->isRenewalAdvisor();
         $isRenewalManager = Auth::user()->isRenewalManager();
@@ -26,7 +26,7 @@ trait RolePermissionConditions
             $query->where($prefix.'.'.'advisor_id', Auth::user()->id);
         }
         if ($isRenewalManager) {
-            $ids = $this->walkTree(Auth::user()->id, quoteTypeCode::Health);
+            $ids = $this->walkTree(Auth::user()->id);
             $query->whereNotNull($prefix.'.'.'previous_quote_policy_number');
             $query->whereIn($prefix.'.'.'advisor_id', $ids);
         }
@@ -34,10 +34,26 @@ trait RolePermissionConditions
             $query->where($prefix.'.'.'advisor_id', Auth::user()->id);
             $query->whereNull($prefix.'.'.'previous_quote_policy_number');
         }
-        if ($isNewManager || $isHealthManager) {
-            $ids = $this->walkTree(Auth::user()->id, quoteTypeCode::Health);
+        if ($isNewManager) {
+            $ids = $this->walkTree(Auth::user()->id);
             $query->whereIn($prefix.'.'.'advisor_id', $ids);
             $query->whereNull($prefix.'.'.'previous_quote_policy_number');
+        }
+        if ($isHealthManager && $restrictedQuoteType == quoteTypeCode::Health) {
+
+            $productTeam = $this->getProductByName(quoteTypeCode::Car);
+            $carTeams = $this->getTeamsByProductId($productTeam->id)->pluck('id');
+            $carUserIds = [];
+
+            foreach ($carTeams as $carTeam) {
+                if (empty($carUserIds)) {
+                    $carUserIds = $this->getUsersByTeamId($carTeam)->pluck('id')->toArray();
+                }else{
+                    $carUserIds = array_merge($carUserIds, $this->getUsersByTeamId($carTeam)->pluck('id')->toArray());
+                }
+            }
+
+            $query->whereNotIn($prefix.'.'.'advisor_id', $carUserIds);
         }
         if ($isCarManager && Auth::user()->can(PermissionsEnum::HEALTH_QUOTES_MANAGER_ACCESS)) {
             $ids = $this->walkTree(Auth::user()->id, quoteTypeCode::Car);
