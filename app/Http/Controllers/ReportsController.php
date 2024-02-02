@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\RenewalBatch;
+use App\Models\Team;
 use App\Models\User;
 use App\Services\AdvisorConversionReportService;
 use App\Services\AdvisorDistributionReportService;
@@ -171,6 +172,23 @@ class ReportsController extends Controller
                 ->where('is_active', 1)
                 ->get()
                 ->toArray(),
+        ]);
+    }
+
+    public function fetchTeamsbyType(Request $request)
+    {
+        $parentId = Team::where('name', $request->lob)->first()->id;
+        $teams = Team::where('parent_team_id', $parentId)
+            ->select('name', 'id')
+            ->orderBy('name')
+            ->where('is_active', 1)
+            ->get()
+            ->keyBy('id')
+            ->map(fn ($users) => $users->name)
+            ->toArray();
+
+        return response()->json([
+            'teams' => $teams,
         ]);
     }
 
