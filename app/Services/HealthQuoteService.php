@@ -363,7 +363,7 @@ class HealthQuoteService extends BaseService
         if (isset($request->previous_quote_policy_premium) && $request->previous_quote_policy_premium != '') {
             $this->query->where('hqr.previous_quote_policy_premium', $request->previous_quote_policy_premium);
         }
-        $this->whereBasedOnRole($this->query, 'hqr');
+        $this->whereBasedOnRole($this->query, 'hqr', quoteTypeCode::Health);
 
         if (! isset($request->email) && $request->email == '') {
             $this->query->where('hqr.quote_status_id', '!=', 9);
@@ -440,7 +440,7 @@ class HealthQuoteService extends BaseService
         if (isset($request->previous_quote_policy_premium) && $request->previous_quote_policy_premium != '') {
             $this->query->where('hqr.previous_quote_policy_premium', $request->previous_quote_policy_premium);
         }
-        $this->whereBasedOnRole($this->query, 'hqr');
+        $this->whereBasedOnRole($this->query, 'hqr', quoteTypeCode::Health);
 
         if (isset($request->is_renewal) && $request->is_renewal != '') {
             if ($request->is_renewal == quoteTypeCode::yesText) {
