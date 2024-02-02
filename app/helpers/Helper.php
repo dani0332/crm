@@ -10,6 +10,7 @@ use App\Services\HealthQuoteService;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 if (! function_exists('generate_code')) {
     /**
@@ -623,5 +624,33 @@ if (! function_exists('dateQueryFilter')) {
         }
 
         return [$currentDate, $currentDate];
+    }
+}
+if (! function_exists('apiResponse')) {
+    function apiResponse($data, $statusCode = 200, $message = null)
+    {
+        // If the data is an instance of Exception, handle it separately
+        if ($data instanceof \Exception) {
+            $statusCode = 500;
+            $message = $data->getMessage();
+            $data = null;
+        }
+
+        if ($data instanceof ValidationException) {
+            $statusCode = 422;
+            $message = $data->errors();
+            $data = null;
+        }
+
+        // If the status code is 400, set a default error message if none is provided
+        if ($statusCode === 400 && $message === null) {
+            $message = 'Missing or invalid parameters.';
+        }
+
+        return response()->json([
+            'data' => $data,
+            'message' => $message,
+            'status' => $statusCode,
+        ], $statusCode);
     }
 }

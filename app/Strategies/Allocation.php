@@ -4,5 +4,5 @@ namespace App\Strategies;
 
 interface Allocation
 {
-    public function executeSteps();
+    public function executeSteps($overrideAdvisorId);
 }
