@@ -920,8 +920,8 @@ class TravelQuoteService extends BaseService
         $planIds = $data['plan_ids'];
         $addons = (isset($data['addons'])) ? $data['addons'] : null;
 
-        $selectedPlanIds = isset($data['selectedPlanIds'])?$data['selectedPlanIds']:[];
-        $hasAdultAndSeniorMember = isset($data['hasAdultAndSeniorMember'])?$data['hasAdultAndSeniorMember']:false;
+        $selectedPlanIds = isset($data['selectedPlanIds']) ? $data['selectedPlanIds'] : [];
+        $hasAdultAndSeniorMember = isset($data['hasAdultAndSeniorMember']) ? $data['hasAdultAndSeniorMember'] : false;
         $quotePlans = $this->getQuotePlans($data['quote_uuid']);
         if (! isset($quotePlans->quotes->plans)) {
             return ['error' => 'Quote plans not available'];
@@ -935,7 +935,7 @@ class TravelQuoteService extends BaseService
             $q->select('id', 'email', 'mobile_no', 'name', 'landline_no', 'profile_photo_path');
         }, 'customer']);
         $pdf = PDF::setOption(['isHtml5ParserEnabled' => true, 'dpi' => 150])
-            ->loadView('pdf.travel_quote_plans', compact('quotePlans', 'planIds', 'quote', 'addons', 'providers','selectedPlanIds','hasAdultAndSeniorMember'));
+            ->loadView('pdf.travel_quote_plans', compact('quotePlans', 'planIds', 'quote', 'addons', 'providers', 'selectedPlanIds', 'hasAdultAndSeniorMember'));
 
         // generate pdf with file name e.g. InsuranceMarket.ae™ Motor Insurance Comparison for Rahul.pdf
         $pdfName = 'InsuranceMarket.ae™ Travel Insurance Comparison for '.$quote->first_name.' '.$quote->last_name.'.pdf';
