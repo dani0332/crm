@@ -84,7 +84,6 @@ class ReportsController extends Controller
         ]);
     }
 
-
     public function fetchAdvisorListByTeam(Request $request)
     {
         $teamUsers = $this->getUsersByTeamIds($request->teamIds)->pluck('id')->toArray();

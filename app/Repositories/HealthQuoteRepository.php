@@ -17,13 +17,13 @@ class HealthQuoteRepository extends BaseRepository
     public function fetchGetData($forExport = false, $forTotalLeadsCount = false)
     {
         $query = $this->with([
-            'advisor', 
-            'nationality', 
-            'insuranceProvider'
+            'advisor',
+            'nationality',
+            'insuranceProvider',
         ])
-        ->filter(! $forExport, $forTotalLeadsCount)
-        ->withFakeLeadCriteria($forTotalLeadsCount)
-        ->orderBy('created_at', 'desc');
+            ->filter(! $forExport, $forTotalLeadsCount)
+            ->withFakeLeadCriteria($forTotalLeadsCount)
+            ->orderBy('created_at', 'desc');
 
         if ($forTotalLeadsCount) {
             return $query->count();

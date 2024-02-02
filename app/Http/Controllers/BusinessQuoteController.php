@@ -27,8 +27,8 @@ use App\Repositories\BusinessQuoteRepository;
 use App\Repositories\CustomerMembersRepository;
 use App\Repositories\InsuranceProviderRepository;
 use App\Repositories\LookupRepository;
-use App\Repositories\QuoteNoteRepository;
 use App\Repositories\LostReasonRepository;
+use App\Repositories\QuoteNoteRepository;
 use App\Services\AMLService;
 use App\Services\BusinessQuoteService;
 use App\Services\CRUDService;
@@ -362,7 +362,7 @@ class BusinessQuoteController extends Controller
         $lostReasons = LostReasonRepository::orderBy('text', 'asc')->get();
         $isManagerOrAdminAccess = auth()->user()->hasAnyRole([RolesEnum::CorplineManager, RolesEnum::Admin]);
 
-        if (!$isManagerOrAdminAccess) {
+        if (! $isManagerOrAdminAccess) {
             if (auth()->user()->hasAnyRole([RolesEnum::CorpLineNewBusinessAdvisor, RolesEnum::CorpLineNewBusinessManager])) {
                 $quotes = collect($quotes)->whereNotIn('id', [
                     QuoteStatusEnum::Allocated,

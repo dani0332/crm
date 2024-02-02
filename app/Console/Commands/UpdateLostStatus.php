@@ -43,7 +43,7 @@ class UpdateLostStatus extends Command
             LifeQuote::class,
             BusinessQuote::class,
             PersonalQuote::class,
-            TravelQuote::class
+            TravelQuote::class,
         ];
 
         $skipStatus = [
@@ -56,11 +56,11 @@ class UpdateLostStatus extends Command
             QuoteStatusEnum::CancellationPending,
         ];
 
-        info("------------------- Update Lost Status Command Started At: " . now() . " -------------------");
+        info('------------------- Update Lost Status Command Started At: '.now().' -------------------');
 
         foreach ($eligibleQuoteTypes as $eligibleQuoteType) {
 
-            info("------------------- Updating : " . $eligibleQuoteType . " -------------------");
+            info('------------------- Updating : '.$eligibleQuoteType.' -------------------');
             $eligibleQuoteType::whereNotIn('quote_status_id', $skipStatus)
                 ->where('quote_status_date', '<', date(config('constants.DATE_FORMAT_ONLY'), strtotime('-120 days')))
                 ->when($eligibleQuoteType == CarQuote::class, function ($carQuote) {
@@ -84,14 +84,14 @@ class UpdateLostStatus extends Command
                 ->when($eligibleQuoteType == TravelQuote::class, function ($travelQuote) {
                     $travelQuote->with('travelQuoteRequestDetail');
                 })
-                ->chunkById(1000, function ($quoteDetails) use ($eligibleQuoteType, $lostReasonId){
+                ->chunkById(1000, function ($quoteDetails) use ($eligibleQuoteType, $lostReasonId) {
                     foreach ($quoteDetails as $quoteDetail) {
                         $quoteDetail->update([
                             'quote_status_id' => QuoteStatusEnum::Lost,
                             'quote_status_date' => now(),
                         ]);
 
-                        info("Quote Found-" . $eligibleQuoteType. " - Quote ID: $quoteDetail->id - Quote Ref-ID: $quoteDetail->code - Old Status: $quoteDetail->quote_status_id - New Status: " . QuoteStatusEnum::Lost . " - Updated At: $quoteDetail->updated_at");
+                        info('Quote Found-'.$eligibleQuoteType." - Quote ID: $quoteDetail->id - Quote Ref-ID: $quoteDetail->code - Old Status: $quoteDetail->quote_status_id - New Status: ".QuoteStatusEnum::Lost." - Updated At: $quoteDetail->updated_at");
                         Audit::create([
                             'event' => 'updated',
                             'auditable_type' => $eligibleQuoteType,
@@ -99,43 +99,43 @@ class UpdateLostStatus extends Command
                             'old_values' => ['quote_status_id' => $quoteDetail->quote_status_id],
                             'new_values' => ['quote_status_id' => QuoteStatusEnum::Lost, 'notes' => 'Lead not modified for more than 120 days'],
                             'created_at' => now(),
-                            'updated_at' => now()
+                            'updated_at' => now(),
                         ]);
 
                         switch ($eligibleQuoteType) {
                             case CarQuote::class:
                                 $quoteDetail->carQuoteRequestDetail->update([
-                                    'lost_reason_id' => $lostReasonId
+                                    'lost_reason_id' => $lostReasonId,
                                 ]);
                                 break;
                             case HomeQuote::class:
                                 $quoteDetail->homeQuoteRequestDetail->update([
-                                    'lost_reason_id' => $lostReasonId
+                                    'lost_reason_id' => $lostReasonId,
                                 ]);
                                 break;
                             case HealthQuote::class:
                                 $quoteDetail->healthQuoteRequestDetail->update([
-                                    'lost_reason_id' => $lostReasonId
+                                    'lost_reason_id' => $lostReasonId,
                                 ]);
                                 break;
                             case LifeQuote::class:
                                 $quoteDetail->lifeQuoteRequestDetail->update([
-                                    'lost_reason_id' => $lostReasonId
+                                    'lost_reason_id' => $lostReasonId,
                                 ]);
                                 break;
                             case BusinessQuote::class:
                                 $quoteDetail->businessQuoteRequestDetail->update([
-                                    'lost_reason_id' => $lostReasonId
+                                    'lost_reason_id' => $lostReasonId,
                                 ]);
                                 break;
                             case PersonalQuote::class:
                                 $quoteDetail->quoteDetail->update([
-                                    'lost_reason_id' => $lostReasonId
+                                    'lost_reason_id' => $lostReasonId,
                                 ]);
                                 break;
                             case TravelQuote::class:
                                 $quoteDetail->travelQuoteRequestDetail->update([
-                                    'lost_reason_id' => $lostReasonId
+                                    'lost_reason_id' => $lostReasonId,
                                 ]);
                                 break;
                             default:
@@ -143,7 +143,7 @@ class UpdateLostStatus extends Command
                         }
                     }
                 });
-            info("------------------- Updated : " . $eligibleQuoteType . " -------------------");
+            info('------------------- Updated : '.$eligibleQuoteType.' -------------------');
         }
     }
 }

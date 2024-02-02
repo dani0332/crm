@@ -29,7 +29,7 @@ class UpdateStaleLeads extends Command
      */
     protected $description = 'Update status Stale on leads which quote status are not updated from last 30 days. It should not apply on leads which having status 
         Transaction Approved, Policy Documents Pending, Policy Issued, Policy sent to Customer, Policy Booked, Lost, Fake, Duplicate, Cancellation Pending, Policy Cancelled.';
-    
+
     /**
      * Execute the console command.
      */
@@ -40,7 +40,7 @@ class UpdateStaleLeads extends Command
             HealthQuote::class,
             BusinessQuote::class,
             HomeQuote::class,
-            PersonalQuote::class
+            PersonalQuote::class,
         ];
 
         $skipStatus = [
@@ -53,10 +53,10 @@ class UpdateStaleLeads extends Command
             QuoteStatusEnum::Fake,
             QuoteStatusEnum::Duplicate,
             QuoteStatusEnum::CancellationPending,
-            QuoteStatusEnum::PolicyCancelled
+            QuoteStatusEnum::PolicyCancelled,
         ];
 
-        info("------------------- Update Stale Leads Command Started At: " . now() . " -------------------");
+        info('------------------- Update Stale Leads Command Started At: '.now().' -------------------');
 
         // Todo:: Lost reason id should be consider as per production DB
         $lostReasonId = 34; //Stale for more than 90 days
@@ -73,7 +73,7 @@ class UpdateStaleLeads extends Command
             // });
             // info("------------------- Revert Updated : " . $eligibleQuoteType . " -------------------");
 
-            info("------------------- Updating : " . $eligibleQuoteType . " -------------------");
+            info('------------------- Updating : '.$eligibleQuoteType.' -------------------');
             $eligibleQuoteType::whereNotIn('quote_status_id', $skipStatus)
                 ->where('quote_status_date', '<', date(config('constants.DATE_FORMAT_ONLY'), strtotime('-30 days')))
                 ->when($eligibleQuoteType == BusinessQuote::class, function ($businessQuote) {
@@ -84,13 +84,13 @@ class UpdateStaleLeads extends Command
                 })->chunkById(1000, function ($quoteDetails) {
                     foreach ($quoteDetails as $quoteDetail) {
                         $quoteDetail->update([
-                            'stale_at' => now()
+                            'stale_at' => now(),
                         ]);
                     }
                 });
-            info("------------------- Updated : " . $eligibleQuoteType . " -------------------");
+            info('------------------- Updated : '.$eligibleQuoteType.' -------------------');
 
-            info("------------------- Updating Lost Status on Stale Leads for: " . $eligibleQuoteType . " -------------------");
+            info('------------------- Updating Lost Status on Stale Leads for: '.$eligibleQuoteType.' -------------------');
             $eligibleQuoteType::with('activities')
                 ->when($eligibleQuoteType == HealthQuote::class, function ($healthQuote) {
                     $healthQuote->with('healthQuoteRequestDetail');
@@ -113,13 +113,13 @@ class UpdateStaleLeads extends Command
                             return Carbon::createFromFormat(config('constants.DATE_FORMAT_ONLY'), Carbon::parse($value)->format(config('constants.DATE_FORMAT_ONLY')))->gt(Carbon::now());
                         });
 
-                        if (!$activityDateCheck) {
+                        if (! $activityDateCheck) {
                             $staleLead->update([
                                 'quote_status_id' => QuoteStatusEnum::Lost,
                                 'quote_status_date' => now(),
                             ]);
 
-                            info("Quote Found - " . $eligibleQuoteType. " - Quote ID: $staleLead->id - Quote Ref-ID: $staleLead->code - Old Status: $staleLead->quote_status_id - New Status: " . QuoteStatusEnum::Lost . " - Updated At: $staleLead->updated_at");
+                            info('Quote Found - '.$eligibleQuoteType." - Quote ID: $staleLead->id - Quote Ref-ID: $staleLead->code - Old Status: $staleLead->quote_status_id - New Status: ".QuoteStatusEnum::Lost." - Updated At: $staleLead->updated_at");
                             Audit::create([
                                 'event' => 'updated',
                                 'auditable_type' => $eligibleQuoteType,
@@ -127,28 +127,28 @@ class UpdateStaleLeads extends Command
                                 'old_values' => ['quote_status_id' => $staleLead->quote_status_id],
                                 'new_values' => ['quote_status_id' => QuoteStatusEnum::Lost, 'notes' => 'Stale for more than 90 days'],
                                 'created_at' => now(),
-                                'updated_at' => now()
+                                'updated_at' => now(),
                             ]);
 
                             switch ($eligibleQuoteType) {
                                 case HomeQuote::class:
                                     $staleLead->homeQuoteRequestDetail->update([
-                                        'lost_reason_id' => $lostReasonId
+                                        'lost_reason_id' => $lostReasonId,
                                     ]);
                                     break;
                                 case HealthQuote::class:
                                     $staleLead->healthQuoteRequestDetail->update([
-                                        'lost_reason_id' => $lostReasonId
+                                        'lost_reason_id' => $lostReasonId,
                                     ]);
                                     break;
                                 case BusinessQuote::class:
                                     $staleLead->businessQuoteRequestDetail->update([
-                                        'lost_reason_id' => $lostReasonId
+                                        'lost_reason_id' => $lostReasonId,
                                     ]);
                                     break;
                                 case PersonalQuote::class:
                                     $staleLead->quoteDetail->update([
-                                        'lost_reason_id' => $lostReasonId
+                                        'lost_reason_id' => $lostReasonId,
                                     ]);
                                     break;
                                 default:
@@ -157,9 +157,9 @@ class UpdateStaleLeads extends Command
                         }
                     }
                 });
-            info("------------------- Updated Lost Status on Stale Leads for: " . $eligibleQuoteType . " -------------------");
+            info('------------------- Updated Lost Status on Stale Leads for: '.$eligibleQuoteType.' -------------------');
         }
 
-        info("------------------- Update Stale Leads Command Finished for " . now() . " -------------------");
+        info('------------------- Update Stale Leads Command Finished for '.now().' -------------------');
     }
 }

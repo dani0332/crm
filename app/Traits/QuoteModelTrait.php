@@ -16,7 +16,7 @@ trait QuoteModelTrait
             return;
         }
 
-        if($totalLeadsCount) {
+        if ($totalLeadsCount) {
             return $query->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate]);
         }
 

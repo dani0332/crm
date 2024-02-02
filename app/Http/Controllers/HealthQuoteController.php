@@ -115,12 +115,12 @@ class HealthQuoteController extends Controller
         $lostReasons = LostReasonRepository::orderBy('text', 'asc')->get();
         $isManagerOrAdminAccess = auth()->user()->hasAnyRole([RolesEnum::HealthManager, RolesEnum::Admin]);
 
-        if (!$isManagerOrAdminAccess) {
+        if (! $isManagerOrAdminAccess) {
             if (auth()->user()->hasAnyRole([RolesEnum::HealthNewBusinessAdvisor, RolesEnum::HealthNewBusinessManager])) {
                 $quotes = collect($quotes)->whereNotIn('id', [
                     QuoteStatusEnum::Lost,
                     QuoteStatusEnum::Allocated,
-                    QuoteStatusEnum::RenewalTermsReceived
+                    QuoteStatusEnum::RenewalTermsReceived,
                 ])->values()->toArray();
 
             } elseif (auth()->user()->hasAnyRole([RolesEnum::HealthRenewalAdvisor, RolesEnum::HealthRenewalManager])) {

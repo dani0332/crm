@@ -78,7 +78,7 @@ class PetQuoteController extends Controller
     public function store(PetQuoteRequest $request)
     {
         $response = PetQuoteRepository::create($request->validated());
-        
+
         if (! empty($response->errors) || ! empty($response->msg)) {
             vAbort($response->msg);
         }
@@ -208,11 +208,11 @@ class PetQuoteController extends Controller
         $lostReasons = LostReasonRepository::orderBy('text', 'asc')->get();
         $isManagerOrAdminAccess = auth()->user()->hasAnyRole([RolesEnum::PetManager, RolesEnum::Admin]);
 
-        if (!$isManagerOrAdminAccess) {
+        if (! $isManagerOrAdminAccess) {
             if (auth()->user()->hasRole(RolesEnum::PetNewBusinessAdvisor)) {
                 $quotes = collect($quotes)->whereNotIn('id', [
                     QuoteStatusEnum::Allocated,
-                    QuoteStatusEnum::InNegotiation
+                    QuoteStatusEnum::InNegotiation,
                 ])->values()->toArray();
 
             } elseif (auth()->user()->hasRole(RolesEnum::PetRenewalAdvisor)) {

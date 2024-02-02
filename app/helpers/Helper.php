@@ -137,7 +137,7 @@ function cleanString($string)
 function getDataAgainstStatus($modelType, $statusId, $myleads = null)
 {
     $result = [];
-    
+
     if (! $modelType) {
         return $result;
     }
@@ -167,7 +167,7 @@ function getDataAgainstStatus($modelType, $statusId, $myleads = null)
         $result['total_premium'] = $modelQuery->whereNull('previous_quote_id')->sum('premium');
         $result['leads_list'] = $modelQuery->whereNull('previous_quote_id')->paginate(10);
 
-    }  elseif ($modelType == HealthQuote::class && Auth::user()->isCarAdvisor() && Auth::user()->can(PermissionsEnum::HEALTH_QUOTES_ACCESS)) {
+    } elseif ($modelType == HealthQuote::class && Auth::user()->isCarAdvisor() && Auth::user()->can(PermissionsEnum::HEALTH_QUOTES_ACCESS)) {
         $result['total_leads'] = $modelType::where('quote_status_id', $statusId)
             ->where('advisor_id', \Auth::user()->id)
             ->count();

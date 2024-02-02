@@ -6,7 +6,6 @@ use App\Enums\PermissionsEnum;
 use App\Enums\RolesEnum;
 use App\Models\Permission;
 use App\Models\Role;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class AddGenericRolePermissionSeeder extends Seeder
@@ -36,7 +35,7 @@ class AddGenericRolePermissionSeeder extends Seeder
         foreach ($permissions as $permission) {
             foreach ($permission['name'] as $quotePermission) {
                 $getPermission = Permission::firstOrCreate(['name' => $quotePermission], ['guard_name' => 'web']);
-                foreach($permission['role'] as $role) {
+                foreach ($permission['role'] as $role) {
                     $getRole = Role::firstOrCreate(['name' => $role], ['guard_name' => 'web']);
                     if (! $getRole->hasPermissionTo($getPermission->id)) {
                         $getRole->givePermissionTo($getPermission->id);

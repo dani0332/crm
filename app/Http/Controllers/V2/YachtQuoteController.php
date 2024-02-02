@@ -51,7 +51,7 @@ class YachtQuoteController extends Controller
             'quotes' => $personalQuotes,
             'quoteStatuses' => $quoteStatuses,
             'advisors' => $advisors,
-            'totalCount' => YachtQuoteRepository::getData(true, true)
+            'totalCount' => YachtQuoteRepository::getData(true, true),
         ]);
     }
 
@@ -187,11 +187,11 @@ class YachtQuoteController extends Controller
         $lostReasons = LostReasonRepository::orderBy('text', 'asc')->get();
         $isManagerOrAdminAccess = auth()->user()->hasAnyRole([RolesEnum::YachtManager, RolesEnum::Admin]);
 
-        if (!$isManagerOrAdminAccess) {
+        if (! $isManagerOrAdminAccess) {
             if (auth()->user()->hasRole(RolesEnum::YachtNewBusinessAdvisor)) {
                 $quotes = collect($quotes)->whereNotIn('id', [
                     QuoteStatusEnum::Allocated,
-                    QuoteStatusEnum::InNegotiation
+                    QuoteStatusEnum::InNegotiation,
                 ])->values()->toArray();
 
             } elseif (auth()->user()->hasRole(RolesEnum::YachtRenewalAdvisor)) {

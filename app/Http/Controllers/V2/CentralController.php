@@ -29,10 +29,11 @@ use App\Http\Requests\UpdateLastYearPolicyRequest;
 use App\Models\Activities;
 use App\Models\Customer;
 use App\Models\Entity;
-use App\Models\QuoteNote;
 use App\Models\HealthQuoteRequestDetail;
+use App\Models\QuoteNote;
 use App\Models\QuoteRequestEntityMapping;
 use App\Services\CentralService;
+use App\Services\QuoteDocumentService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -232,6 +233,16 @@ class CentralController extends Controller
         $quote = $this->getQuoteObject($quoteNotesRequest->quoteType, $quoteNotesRequest->quoteRequestId);
         $quote->notes()->save($notes);
 
+        if ($quoteNotesRequest->hasFile('files')) {
+            $quoteDocumentService = new QuoteDocumentService();
+
+            foreach ($quoteNotesRequest->file('files') as $file) {
+                $quoteDoument = $quoteDocumentService->uploadQuoteDocument($file, $quoteNotesRequest->all(), $quote);
+                $documentIDs[] = $quoteDoument->id;
+            }
+            $notes->documents()->sync($documentIDs);
+        }
+
         $notes = $quote->notes()->with('createdBy:id,name', 'quoteStatus:id,text')->where('id', $notes->id)->firstOrFail();
 
         return response()->json(['response' => $notes]);
@@ -254,7 +265,7 @@ class CentralController extends Controller
 
         return response()->json(['response' => 'Note has been deleted']);
     }
-    
+
     public function updateLeadStatusDragDrop(DragAndDropUpdateLeadStatusRequest $dragAndDropUpdateLeadStatusRequest)
     {
         try {
@@ -269,18 +280,18 @@ class CentralController extends Controller
                 Activities::where([
                     'quote_type_id' => $dataFrom['quoteTypeId'],
                     'quote_request_id' => $dataFrom['id'],
-                    'status' => 0 // Incomplete Activities
+                    'status' => 0, // Incomplete Activities
                 ])->update(['status' => 1]);
 
-                if (QuoteTypeId::Health == $dataFrom['quoteTypeId'] && $dataTo['quote_status_id'] == QuoteStatusEnum::Lost) {
+                if ($dataFrom['quoteTypeId'] == QuoteTypeId::Health && $dataTo['quote_status_id'] == QuoteStatusEnum::Lost) {
                     HealthQuoteRequestDetail::where('health_quote_request_id', $dataFrom['id'])->update([
-                        'lost_reason_id' => $dragAndDropUpdateLeadStatusRequest->get('data')['to']['lost_reason']
+                        'lost_reason_id' => $dragAndDropUpdateLeadStatusRequest->get('data')['to']['lost_reason'],
                     ]);
                 }
 
                 $repository->update([
                     'quote_status_id' => $dataTo['quote_status_id'],
-                    'quote_status_date' => now()
+                    'quote_status_date' => now(),
                 ]);
 
             });
@@ -289,6 +300,7 @@ class CentralController extends Controller
 
         } catch (\Exception $e) {
             info('Update Lead Status Failed. Error: '.$e->getMessage());
+
             return response()->json(['message' => 'Something went wrong. Please try again later.'], 500);
         }
 

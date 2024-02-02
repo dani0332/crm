@@ -30,4 +30,9 @@ class QuoteNote extends Model
     {
         return $this->morphTo();
     }
+
+    public function documents()
+    {
+        return $this->belongsToMany(QuoteDocument::class, 'document_note', 'note_id', 'document_id');
+    }
 }
