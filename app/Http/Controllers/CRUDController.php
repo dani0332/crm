@@ -39,8 +39,6 @@ use App\Models\EmbeddedTransaction;
 use App\Models\Emirate;
 use App\Models\GenericModel;
 use App\Models\HealthPlanType;
-use App\Models\HealthQuote;
-use App\Models\HomeQuote;
 use App\Models\Nationality;
 use App\Models\Payment;
 use App\Models\PaymentStatusLog;
@@ -288,7 +286,7 @@ class CRUDController extends Controller
                 'todayManualCount' => $todayManualCount,
                 'yesterdayAutoCount' => $yesterdayAutoCount,
                 'yesterdayManualCount' => $yesterdayManualCount,
-                'totalCount' => HealthQuoteRepository::getData(true, true)
+                'totalCount' => HealthQuoteRepository::getData(true, true),
             ]);
         }
 
@@ -306,7 +304,7 @@ class CRUDController extends Controller
                 'leadStatuses' => $quote_status,
                 'advisors' => $advisors,
                 'isManualAllocationAllowed' => $isManualAllocationAllowed,
-                'totalCount' => HomeQuoteRepository::getData(true, true)
+                'totalCount' => HomeQuoteRepository::getData(true, true),
             ]);
         }
 
@@ -428,7 +426,7 @@ class CRUDController extends Controller
         }
         $request->dob = isset($request->dob) ? Carbon::parse($request->dob)->format('Y-m-d') : null;
 
-        if($modelType == quoteTypeCode::Health && in_array($modelType, newUi())) {
+        if ($modelType == quoteTypeCode::Health && in_array($modelType, newUi())) {
             $modelDetails[quoteTypeCode::Health]['totalLeadsCount'] = HealthQuoteRepository::getData(true, true);
         }
 
@@ -492,7 +490,7 @@ class CRUDController extends Controller
             return Redirect::back()->with('message', $record->message)->withInput();
         } else {
 
-            if(in_array($modelType, [quoteTypeCode::Health, quoteTypeCode::Home])) {
+            if (in_array($modelType, [quoteTypeCode::Health, quoteTypeCode::Home])) {
                 event(new LeadsCount($modelDetails[$modelType]['totalLeadsCount']));
             }
 
@@ -841,7 +839,7 @@ class CRUDController extends Controller
                 'quoteType' => QuoteTypes::HOME,
                 'documentTypes' => $documentTypes,
                 'noteDocumentType' => $noteDocumentType,
-                'quoteNotes' => $quoteNotes
+                'quoteNotes' => $quoteNotes,
             ]);
         }
 
@@ -1118,11 +1116,11 @@ class CRUDController extends Controller
         $lostReasons = LostReasonRepository::orderBy('text', 'asc')->get();
         $isManagerOrAdminAccess = auth()->user()->hasAnyRole([RolesEnum::HomeManager, RolesEnum::Admin]);
 
-        if (!$isManagerOrAdminAccess) {
+        if (! $isManagerOrAdminAccess) {
             if (auth()->user()->hasRole(RolesEnum::HomeNewBusinessAdvisor)) {
                 $quotes = collect($quotes)->whereNotIn('id', [
                     QuoteStatusEnum::Allocated,
-                    QuoteStatusEnum::InNegotiation
+                    QuoteStatusEnum::InNegotiation,
                 ])->values()->toArray();
 
             } elseif (auth()->user()->hasRole(RolesEnum::HomeRenewalAdvisor)) {

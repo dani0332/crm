@@ -50,7 +50,7 @@ class CycleQuoteController extends Controller
             'quotes' => $personalQuotes,
             'quoteStatuses' => $quoteStatuses,
             'advisors' => $advisors,
-            'totalCount' => CycleQuoteRepository::getData(true, true)
+            'totalCount' => CycleQuoteRepository::getData(true, true),
         ]);
     }
 
@@ -196,11 +196,11 @@ class CycleQuoteController extends Controller
         $lostReasons = LostReasonRepository::orderBy('text', 'asc')->get();
         $isManagerOrAdminAccess = auth()->user()->hasAnyRole([RolesEnum::CycleManager, RolesEnum::Admin]);
 
-        if (!$isManagerOrAdminAccess) {
+        if (! $isManagerOrAdminAccess) {
             if (auth()->user()->hasRole(RolesEnum::CycleNewBusinessAdvisor)) {
                 $quotes = collect($quotes)->whereNotIn('id', [
                     QuoteStatusEnum::Allocated,
-                    QuoteStatusEnum::InNegotiation
+                    QuoteStatusEnum::InNegotiation,
                 ])->values()->toArray();
 
             } elseif (auth()->user()->hasRole(RolesEnum::CycleRenewalAdvisor)) {

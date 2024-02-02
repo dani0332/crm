@@ -35,28 +35,28 @@ class AutomateActivitiesCommand extends Command
         // Case 1 : Previously created activity marked as done, and no change in Status
         // Case 2 : Previously created activity not done
 
-        // First fetch records which have activities 
+        // First fetch records which have activities
         // If any already created activities done and quote_status_modified date is greater than due_date then assign new activities to the same lead.
 
         $eligibleQuoteTypes = [
             HealthQuote::class,
             BusinessQuote::class,
             HomeQuote::class,
-            PersonalQuote::class
+            PersonalQuote::class,
         ];
 
-        info("------------------- Automate Activities Command Started At: " . now() . " -------------------");
+        info('------------------- Automate Activities Command Started At: '.now().' -------------------');
 
         foreach ($eligibleQuoteTypes as $eligibleQuoteType) {
 
-            info("------------------- Fetching : " . $eligibleQuoteType . " Records -------------------");
+            info('------------------- Fetching : '.$eligibleQuoteType.' Records -------------------');
             $getRecords = $eligibleQuoteType::whereHas('activities')
-            ->with('activities', function($activity){
-                $activity->orderBy('created_at', 'desc')->first();
-            })
-            ->where('id', '48')
+                ->with('activities', function ($activity) {
+                    $activity->orderBy('created_at', 'desc')->first();
+                })
+                ->where('id', '48')
             // ->where('quote_status_date', '<', 'due_date')
-            ->limit(2)->get();
+                ->limit(2)->get();
             dd($getRecords->toArray());
 
             // whereNotIn('quote_status_id', $skipStatus)
@@ -73,7 +73,7 @@ class AutomateActivitiesCommand extends Command
             //             ]);
             //         }
             //     });
-            info("------------------- Updated : " . $eligibleQuoteType . " -------------------");
+            info('------------------- Updated : '.$eligibleQuoteType.' -------------------');
         }
     }
 }

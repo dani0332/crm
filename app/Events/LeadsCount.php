@@ -22,7 +22,7 @@ class LeadsCount implements ShouldBroadcast
     {
         $this->leadCount = $leadCount;
     }
-    
+
     /**
      * Get the channels the event should broadcast on.
      *
@@ -32,7 +32,7 @@ class LeadsCount implements ShouldBroadcast
     {
         return ['public.'.config('constants.APP_ENV').'.total-leads-count'];
     }
-    
+
     public function broadcastAs(): string
     {
         return 'leads.count';
@@ -44,5 +44,5 @@ class LeadsCount implements ShouldBroadcast
             'totalLeadsCount' => $this->leadCount,
         ];
     }
-    
+
 }

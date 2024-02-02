@@ -253,7 +253,7 @@ class CentralController extends Controller
 
         return response()->json(['response' => 'Note has been deleted']);
     }
-    
+
     public function updateLeadStatusDragDrop(DragAndDropUpdateLeadStatusRequest $dragAndDropUpdateLeadStatusRequest)
     {
 
@@ -285,6 +285,7 @@ class CentralController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
+
             return response()->json(['message' => ['Something went wrong. Please try again later.']], 500);
         }
 

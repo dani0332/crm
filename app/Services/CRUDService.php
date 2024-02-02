@@ -264,7 +264,7 @@ class CRUDService extends BaseService
             if (in_array(strtolower($request->modelType), [strtolower(quoteTypeCode::Health), strtolower(quoteTypeCode::Home)])) {
                 $entity->activities()->where('status', 0)->update(['status' => 1]);
             }
-            
+
             $entity->save();
 
             if (
@@ -352,11 +352,11 @@ class CRUDService extends BaseService
                 }
             }
 
-            if(in_array(strtolower($request->modelType), [strtolower(quoteTypeCode::Health), strtolower(quoteTypeCode::Home)])) {
+            if (in_array(strtolower($request->modelType), [strtolower(quoteTypeCode::Health), strtolower(quoteTypeCode::Home)])) {
                 $quoteTypeId = [strtolower(quoteTypeCode::Home) => QuoteTypeId::Home, strtolower(quoteTypeCode::Health) => QuoteTypeId::Health];
                 (new CentralService())->saveAndAssignActivitesToAdvisor($entity, $quoteTypeId[strtolower($request->modelType)]);
             }
-            
+
             // ========= assign renewal batch to HEALTH LOB leads upon transaction approved =========
 
             if (strtolower($request->modelType) == strtolower(quoteTypeCode::Health) && $request->leadStatus == QuoteStatusEnum::TransactionApproved) {

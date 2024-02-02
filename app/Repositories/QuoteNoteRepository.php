@@ -16,8 +16,8 @@ class QuoteNoteRepository extends BaseRepository
     public function fetchGetBy($quote_request_id, $quoteType)
     {
         $quote = $this->getQuoteObject($quoteType, $quote_request_id);
-        
+
         return $quote ? $quote->notes()->with('createdBy:id,name', 'quoteStatus:id,text')->orderBy('updated_at', 'desc')->simplePaginate(5) : [];
-        
+
     }
 }

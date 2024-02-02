@@ -210,12 +210,12 @@ class CentralService
             'quote_type_id' => $quoteTypeId,
             'quote_status_id' => $quoteDetails->quote_status_id,
         ])
-        ->whereIn('role_id', $roles)
-        ->whereIn('team_id', $this->getUserTeams(auth()->user()->id)->pluck('id')->toArray())
-        ->orderBy('sorting_order')
-        ->first();
+            ->whereIn('role_id', $roles)
+            ->whereIn('team_id', $this->getUserTeams(auth()->user()->id)->pluck('id')->toArray())
+            ->orderBy('sorting_order')
+            ->first();
 
-        if($getActivitySchedule && $quoteDetails->advisor_id) {
+        if ($getActivitySchedule && $quoteDetails->advisor_id) {
 
             $activity = Activities::create([
                 'title' => $getActivitySchedule->name,
