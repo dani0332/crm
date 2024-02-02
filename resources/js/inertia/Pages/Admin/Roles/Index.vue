@@ -11,17 +11,17 @@ const loader = reactive({
   table: false,
 });
 
-const filters = reactive({
-  name: '',
-  page: 1,
-});
-
 const tableHeader = ref([
   { text: 'Ref-ID', value: 'id' },
   { text: 'NAME', value: 'name' },
   { text: 'CREATED DATE', value: 'created_at' },
   { text: 'LAST MODIFIED DATE', value: 'updated_at' },
 ]);
+
+const filters = reactive({
+  name: '',
+  page: 1,
+});
 
 const getRoleByName = () => {
   filters.page = 1;
