@@ -380,7 +380,7 @@ const handleRemoveFile = file => {
           type="file"
           hidden
         />
-        <x-tooltip align="top" poition="top">
+        <x-tooltip position="right">
           <x-button
             size="sm"
             color="primary"
