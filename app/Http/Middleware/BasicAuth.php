@@ -3,7 +3,6 @@
 namespace App\Http\Middleware;
 
 use Closure;
-use Config;
 use Illuminate\Http\Request;
 
 class BasicAuth
@@ -15,8 +14,8 @@ class BasicAuth
      */
     public function handle(Request $request, Closure $next)
     {
-        $AUTH_USER = Config::get('constants.IMCRM_BASIC_AUTH_USER_NAME');
-        $AUTH_PASS = Config::get('constants.IMCRM_BASIC_AUTH_PASSWORD');
+        $AUTH_USER = config('constants.IMCRM_BASIC_AUTH_USER_NAME');
+        $AUTH_PASS = config('constants.IMCRM_BASIC_AUTH_PASSWORD');
         $has_supplied_credentials = ! (empty($request->getUser()) && empty($request->getPassword()));
         $is_not_authenticated = (
             ! $has_supplied_credentials ||
