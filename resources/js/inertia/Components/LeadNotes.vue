@@ -380,15 +380,25 @@ const handleRemoveFile = file => {
           type="file"
           hidden
         />
-        <x-button
-          size="sm"
-          color="primary"
-          :loading="loader.button"
-          icon="upload"
-          @click.prevent="openImageDialog"
-        >
-          Upload Documnets
-        </x-button>
+        <x-tooltip align="top" poition="top">
+          <x-button
+            size="sm"
+            color="primary"
+            :loading="loader.button"
+            icon="upload"
+            @click.prevent="openImageDialog"
+          >
+            Upload Documnets
+          </x-button>
+          <template #tooltip>
+            <span class="text-sm"
+              >Use this button to attach and save documents that support your
+              notes. You can drag and drop files or browse to upload them into
+              the system, making it easy to store and access important
+              files</span
+            >
+          </template>
+        </x-tooltip>
         <template v-if="uploadedFiles.length > 0">
           <div
             v-for="file of uploadedFiles"
@@ -417,19 +427,6 @@ const handleRemoveFile = file => {
           :loading="isUploading"
           @change="uploadFile(documentType, $event)"
         /> -->
-        <!-- <x-tooltip align="top">
-          <x-button size="sm" color="primary" icon="upload">
-            Upload Documents
-          </x-button>
-          <template #tooltip>
-            <span class="text-sm"
-              >Use this button to attach and save documents that support your
-              notes. You can drag and drop files or browse to upload them into
-              the system, making it easy to store and access important
-              files</span
-            >
-          </template>
-        </x-tooltip> -->
       </div>
       <div class="mt-5 flex gap-2 justify-end">
         <x-button size="sm" @click.prevent="showAddNotes = false">
