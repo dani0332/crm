@@ -22,6 +22,7 @@ class DatabaseSeeder extends Seeder
             DubaiLeadSource::class,
             ActivitySchedulesSeeder::class,
             DocumentTypeSeeder::class,
+            GenericPermissionSeeder::class,
         ]);
     }
 }

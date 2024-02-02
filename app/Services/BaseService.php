@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\Enums\PaymentStatusEnum;
+use App\Enums\QuoteStatusEnum;
 use App\Models\GenericModel;
 use App\Models\User;
 use Illuminate\Support\Arr;
@@ -284,5 +286,20 @@ class BaseService
         }
 
         return $result;
+    }
+
+    public function updatePaymentStatus($quote)
+    {
+        if (
+            $quote->quote_status_id == QuoteStatusEnum::TransactionApproved &&
+            ($quote->payment_status_id == PaymentStatusEnum::DRAFT || $quote->payment_status_id == null)
+        ) {
+
+            $quote->payment_status_id = PaymentStatusEnum::CAPTURED;
+            $quote->payment_status_date = now();
+            $quote->paid_at = now();
+            $quote->save();
+        }
+
     }
 }
