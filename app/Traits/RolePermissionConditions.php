@@ -53,7 +53,7 @@ trait RolePermissionConditions
                 }
             }
 
-            $query->where(function($qry) use ($prefix, $carUserIds){
+            $query->where(function ($qry) use ($prefix, $carUserIds) {
                 $qry->whereNotIn($prefix.'.'.'advisor_id', $carUserIds)
                     ->OrWhereNull($prefix.'.'.'advisor_id');
             });
