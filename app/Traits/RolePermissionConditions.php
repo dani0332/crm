@@ -53,13 +53,16 @@ trait RolePermissionConditions
                 }
             }
 
-            $query->whereNotIn($prefix.'.'.'advisor_id', $carUserIds);
+            $query->where(function($qry) use ($prefix, $carUserIds){
+                $qry->whereNotIn($prefix.'.'.'advisor_id', $carUserIds)
+                    ->OrWhereNull($prefix.'.'.'advisor_id');
+            });
         }
-        if ($isCarManager && Auth::user()->can(PermissionsEnum::HEALTH_QUOTES_MANAGER_ACCESS)) {
+        if ($isCarManager && $restrictedQuoteType == quoteTypeCode::Health && Auth::user()->can(PermissionsEnum::HEALTH_QUOTES_MANAGER_ACCESS)) {
             $ids = $this->walkTree(Auth::user()->id, quoteTypeCode::Car);
             $query->whereIn($prefix.'.'.'advisor_id', $ids);
         }
-        if ($isCarAdvisor && Auth::user()->can(PermissionsEnum::HEALTH_QUOTES_ACCESS)) {
+        if ($isCarAdvisor && $restrictedQuoteType == quoteTypeCode::Health && Auth::user()->can(PermissionsEnum::HEALTH_QUOTES_ACCESS)) {
             $query->where($prefix.'.'.'advisor_id', Auth::user()->id);
         }
     }
