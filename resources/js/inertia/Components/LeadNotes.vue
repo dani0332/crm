@@ -1,5 +1,5 @@
 <script setup>
-import AppModal from './AppModal.vue';
+import AppModal from "./AppModal.vue";
 
 const props = defineProps({
   notes: Object,
@@ -8,7 +8,7 @@ const props = defineProps({
   documentType: Object,
 });
 
-const notification = useNotifications('toast');
+const notification = useNotifications("toast");
 const { isRequired } = useRules();
 
 const showModal = ref(false);
@@ -19,6 +19,7 @@ const notes = ref(props.notes);
 const expandNotes = ref(false);
 const uploadedFiles = ref([]);
 
+
 const docForm = useForm({
   quote_id: props.quote?.id || null,
   quote_uuid: props.quote?.code || null,
@@ -28,30 +29,31 @@ const docForm = useForm({
   file: null,
 });
 
-const dateFormat = date => useDateFormat(date, 'DD-MMM-YYYY h:mm:ss a').value;
+const dateFormat = (date) => useDateFormat(date, "DD-MMM-YYYY h:mm:ss a").value;
 
 const tableHeader = reactive([
-  { text: 'MODIFIED BY', value: 'created_by' },
-  { text: 'MODIFIED DATE', value: 'updated_at' },
-  { text: 'NOTES', value: 'note' },
-  { text: 'LEAD STATUS', value: 'quote_status' },
-  { text: 'ACTIONS', value: 'action' },
+  { text: "MODIFIED BY", value: "created_by" },
+  { text: "MODIFIED DATE", value: "updated_at" },
+  { text: "NOTES", value: "note" },
+  { text: "LEAD STATUS", value: "quote_status" },
+  { text: "ACTIONS", value: "action" },
 ]);
 
 const sampleData = reactive([
   {
-    created_by: 'John Doe',
-    updated_at: '2022-01-25',
-    note: 'Lorem ipsum dolor sit amet,',
-    quote_status: 'Pending',
-    action: 'Edit',
+    created_by: "John Doe",
+    updated_at: "2022-01-25",
+    note: "Lorem ipsum dolor sit amet,",
+    quote_status: "Pending",
+    action: "Edit",
   },
   {
-    created_by: 'Jane Smith',
-    updated_at: '2022-01-26',
-    note: 'Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. In hac habitasse platea dictumst. Vestibulum non augue eu sem laoreet bibendum. Mauris id turpis id ligula efficitur gravida nec in purus. Sed ut justo eu tellus tincidunt consectetur. Suspendisse potenti.',
-    quote_status: 'Approved',
-    action: 'Delete',
+    created_by: "Jane Smith",
+    updated_at: "2022-01-26",
+    note:
+      "Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. In hac habitasse platea dictumst. Vestibulum non augue eu sem laoreet bibendum. Mauris id turpis id ligula efficitur gravida nec in purus. Sed ut justo eu tellus tincidunt consectetur. Suspendisse potenti.",
+    quote_status: "Approved",
+    action: "Delete",
   },
   // Add more sample data as needed
 ]);
@@ -68,42 +70,46 @@ const notesForm = reactive({
   quote_request_id: props.quote?.id,
   quote_type: props.modelType,
   quote_status_id: props.quote?.quote_status_id,
+  document_type_code: props.documentType?.code,
+  quote_uuid: props.quote?.code,
 });
 
-const onNoteSubmit = isValid => {
+const onNoteSubmit = (isValid) => {
   if (!isValid) return false;
 
   const formData = new FormData();
-  formData.append('quoteType', notesForm.quote_type);
-  formData.append('quoteRequestId', notesForm.quote_request_id);
-  formData.append('notes', notesForm.notes);
-  formData.append('quoteStatusId', notesForm.quote_status_id);
+  formData.append("quoteType", notesForm.quote_type);
+  formData.append("quoteRequestId", notesForm.quote_request_id);
+  formData.append("notes", notesForm.notes);
+  formData.append("quoteStatusId", notesForm.quote_status_id);
+  formData.append("document_type_code", notesForm.document_type_code);
+  formData.append("quote_uuid", notesForm.quote_uuid);
 
-  uploadedFiles.value.forEach(x => {
-    formData.append('files[]', x);
+  uploadedFiles.value.forEach((x) => {
+    formData.append("files[]", x);
   });
 
   loader.value.button = true;
   if (isEdit.value) {
-    notesData['id'] = notesForm.id;
+    notesData["id"] = notesForm.id;
     axios
-      .put('/update-quote-notes', notesData)
-      .then(response => {
+      .put("/update-quote-notes", notesData)
+      .then((response) => {
         let index = notes.value.data.findIndex(
-          note => note.id == response.data.response.id,
+          (note) => note.id == response.data.response.id
         );
         if (index != -1) {
           notes.value.data.splice(index, 1, response.data.response);
         }
         notification.success({
-          title: 'Notes has been Updated',
-          position: 'top',
+          title: "Notes has been Updated",
+          position: "top",
         });
       })
-      .catch(err => {
+      .catch((err) => {
         notification.error({
-          title: 'Notes has not been updated',
-          position: 'top',
+          title: "Notes has not been updated",
+          position: "top",
         });
       })
       .finally(() => {
@@ -112,18 +118,18 @@ const onNoteSubmit = isValid => {
       });
   } else {
     axios
-      .post('/save-quote-notes', formData)
-      .then(response => {
+      .post("/save-quote-notes", formData)
+      .then((response) => {
         notes.value.data.push(response.data.response);
         notification.success({
-          title: 'Notes has been saved',
-          position: 'top',
+          title: "Notes has been saved",
+          position: "top",
         });
       })
-      .catch(err => {
+      .catch((err) => {
         notification.error({
-          title: 'Notes has not been saved',
-          position: 'top',
+          title: "Notes has not been saved",
+          position: "top",
         });
       })
       .finally(() => {
@@ -135,7 +141,7 @@ const onNoteSubmit = isValid => {
 
 const notesLength = computed(() => notesForm.notes?.length ?? 0);
 
-const onEditNote = data => {
+const onEditNote = (data) => {
   notesForm.notes = data.note;
   notesForm.id = data.id;
   uploadedFiles.value = [...data.files];
@@ -150,24 +156,24 @@ const showAddNotesModal = () => {
   isEdit.value = false;
 };
 
-const onDeleteNote = item => {
+const onDeleteNote = (item) => {
   loader.value.tableButton = true;
   axios
     .delete(`/delete-quote-notes/${item.id}`)
-    .then(response => {
-      let index = notes.value.data.findIndex(note => note.id == item.id);
+    .then((response) => {
+      let index = notes.value.data.findIndex((note) => note.id == item.id);
       if (index != -1) {
         notes.value.data.splice(index, 1);
       }
       notification.success({
-        title: 'Notes has been deleted',
-        position: 'top',
+        title: "Notes has been deleted",
+        position: "top",
       });
     })
-    .catch(err => {
+    .catch((err) => {
       notification.error({
-        title: 'Something went wrong',
-        position: 'top',
+        title: "Something went wrong",
+        position: "top",
       });
     })
     .finally(() => {
@@ -179,19 +185,19 @@ const openImageDialog = () => {
   fileInput.value.click();
 };
 
-const url = file => {
+const url = (file) => {
   return URL.createObjectURL(file);
 };
 
-const uploadFile = event => {
+const uploadFile = (event) => {
   if (event) {
     uploadedFiles.value.push(event.target.files[0]);
   }
   return;
 };
 
-const handleRemoveFile = file => {
-  let index = uploadedFiles.value.findIndex(f => f.name == file.name);
+const handleRemoveFile = (file) => {
+  let index = uploadedFiles.value.findIndex((f) => f.name == file.name);
   if (index != -1) {
     uploadedFiles.value.splice(index, 1);
   }
@@ -245,14 +251,11 @@ const handleRemoveFile = file => {
 <template>
   <div>
     <x-tooltip>
-      <x-button size="sm" color="emerald" @click="showModal = true">
-        Notes
-      </x-button>
+      <x-button size="sm" color="emerald" @click="showModal = true"> Notes </x-button>
       <template #tooltip>
         <span
-          >Click this button to create or view notes related to this lead. It
-          allows you to make notes and access important information about this
-          item.
+          >Click this button to create or view notes related to this lead. It allows you
+          to make notes and access important information about this item.
         </span>
       </template>
     </x-tooltip>
@@ -298,12 +301,7 @@ const handleRemoveFile = file => {
           <template v-if="note.length < 40">
             {{ note }}
           </template>
-          <x-collapse
-            :expanded="expandNotes"
-            v-else
-            icon="chevronDown"
-            show-icon
-          >
+          <x-collapse :expanded="expandNotes" v-else icon="chevronDown" show-icon>
             <div class="bg-gray-10 w-80">
               {{ note.slice(0, 40) }}
             </div>
@@ -356,7 +354,7 @@ const handleRemoveFile = file => {
     show-close
   >
     <template #header>
-      <p class="font-bold m-0">{{ isEdit ? 'Update' : 'Add' }} Notes</p>
+      <p class="font-bold m-0">{{ isEdit ? "Update" : "Add" }} Notes</p>
     </template>
 
     <x-form class="w-full" @submit="onNoteSubmit" :auto-focus="false">
@@ -370,25 +368,27 @@ const handleRemoveFile = file => {
           :rules="[isRequired]"
         />
       </x-field>
-      <p class="text-xs ml-auto flex justify-end mt-2">
-        {{ notesLength }}/1000
-      </p>
+      <p class="text-xs ml-auto flex justify-end mt-2">{{ notesLength }}/1000</p>
       <div class="mt-2">
-        <input
-          @change.prevent="uploadFile"
-          ref="fileInput"
-          type="file"
-          hidden
-        />
-        <x-button
-          size="sm"
-          color="primary"
-          :loading="loader.button"
-          icon="upload"
-          @click.prevent="openImageDialog"
-        >
-          Upload Documnets
-        </x-button>
+        <input @change.prevent="uploadFile" ref="fileInput" type="file" hidden />
+        <x-tooltip position="right">
+          <x-button
+            size="sm"
+            color="primary"
+            :loading="loader.button"
+            icon="upload"
+            @click.prevent="openImageDialog"
+          >
+            Upload Documnets
+          </x-button>
+          <template #tooltip>
+            <span class="text-sm"
+              >Use this button to attach and save documents that support your notes. You
+              can drag and drop files or browse to upload them into the system, making it
+              easy to store and access important files</span
+            >
+          </template>
+        </x-tooltip>
         <template v-if="uploadedFiles.length > 0">
           <div
             v-for="file of uploadedFiles"
@@ -417,31 +417,11 @@ const handleRemoveFile = file => {
           :loading="isUploading"
           @change="uploadFile(documentType, $event)"
         /> -->
-        <!-- <x-tooltip align="top">
-          <x-button size="sm" color="primary" icon="upload">
-            Upload Documents
-          </x-button>
-          <template #tooltip>
-            <span class="text-sm"
-              >Use this button to attach and save documents that support your
-              notes. You can drag and drop files or browse to upload them into
-              the system, making it easy to store and access important
-              files</span
-            >
-          </template>
-        </x-tooltip> -->
       </div>
       <div class="mt-5 flex gap-2 justify-end">
-        <x-button size="sm" @click.prevent="showAddNotes = false">
-          Cancel
-        </x-button>
-        <x-button
-          type="submit"
-          size="sm"
-          color="emerald"
-          :loading="loader.button"
-        >
-          {{ isEdit ? 'Update' : 'Save' }}
+        <x-button size="sm" @click.prevent="showAddNotes = false"> Cancel </x-button>
+        <x-button type="submit" size="sm" color="emerald" :loading="loader.button">
+          {{ isEdit ? "Update" : "Save" }}
         </x-button>
       </div>
     </x-form>

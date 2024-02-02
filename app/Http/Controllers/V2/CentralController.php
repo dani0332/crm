@@ -32,6 +32,7 @@ use App\Models\HealthQuoteRequestDetail;
 use App\Models\QuoteNote;
 use App\Models\QuoteRequestEntityMapping;
 use App\Services\CentralService;
+use App\Services\QuoteDocumentService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -230,6 +231,16 @@ class CentralController extends Controller
 
         $quote = $this->getQuoteObject($quoteNotesRequest->quoteType, $quoteNotesRequest->quoteRequestId);
         $quote->notes()->save($notes);
+
+        if ($quoteNotesRequest->hasFile('files')) {
+            $quoteDocumentService = new QuoteDocumentService();
+
+            foreach ($quoteNotesRequest->file('files') as $file) {
+                $quoteDoument = $quoteDocumentService->uploadQuoteDocument($file, $quoteNotesRequest->all(), $quote);
+                $documentIDs[] = $quoteDoument->id;
+            }
+            $notes->documents()->sync($documentIDs);
+        }
 
         $notes = $quote->notes()->with('createdBy:id,name', 'quoteStatus:id,text')->where('id', $notes->id)->firstOrFail();
 
