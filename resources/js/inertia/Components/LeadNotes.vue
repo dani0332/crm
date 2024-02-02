@@ -9,6 +9,7 @@ const props = defineProps({
 });
 
 const notification = useNotifications('toast');
+const { isRequired } = useRules();
 
 const showModal = ref(false);
 const showAddNotes = ref(false);
@@ -16,6 +17,7 @@ const isEdit = ref(false);
 const isUploading = ref(false);
 const notes = ref(props.notes);
 const expandNotes = ref(false);
+const uploadedFiles = ref([]);
 
 const docForm = useForm({
   quote_id: props.quote?.id || null,
@@ -58,6 +60,9 @@ const loader = ref({
   button: false,
   tableButton: false,
 });
+
+const fileInput = ref();
+
 const notesForm = reactive({
   notes: null,
   quote_request_id: props.quote?.id,
@@ -65,25 +70,25 @@ const notesForm = reactive({
   quote_status_id: props.quote?.quote_status_id,
 });
 
-const onNoteSubmit = () => {
-  let notesData = {
-    quoteType: notesForm.quote_type,
-    quoteRequestId: notesForm.quote_request_id,
-    notes: notesForm.notes,
-    quoteStatusId: notesForm.quote_status_id,
-  };
+const onNoteSubmit = isValid => {
+  if (!isValid) return false;
+
+  const formData = new FormData();
+  formData.append('quoteType', notesForm.quote_type);
+  formData.append('quoteRequestId', notesForm.quote_request_id);
+  formData.append('notes', notesForm.notes);
+  formData.append('quoteStatusId', notesForm.quote_status_id);
+
+  uploadedFiles.value.forEach(x => {
+    formData.append('files[]', x);
+  });
+
   loader.value.button = true;
   if (isEdit.value) {
     notesData['id'] = notesForm.id;
     axios
       .put('/update-quote-notes', notesData)
       .then(response => {
-        // console.log(response);
-        // let index = notes.value.findIndex(response.data.response.id);
-        // if (index != -1) {
-        //   notes.value.splice(index, 1, response.data.response);
-        // }
-
         let index = notes.value.data.findIndex(
           note => note.id == response.data.response.id,
         );
@@ -107,7 +112,7 @@ const onNoteSubmit = () => {
       });
   } else {
     axios
-      .post('/save-quote-notes', notesData)
+      .post('/save-quote-notes', formData)
       .then(response => {
         notes.value.data.push(response.data.response);
         notification.success({
@@ -133,6 +138,7 @@ const notesLength = computed(() => notesForm.notes?.length ?? 0);
 const onEditNote = data => {
   notesForm.notes = data.note;
   notesForm.id = data.id;
+  uploadedFiles.value = [...data.files];
   showAddNotes.value = true;
   isEdit.value = true;
 };
@@ -169,42 +175,72 @@ const onDeleteNote = item => {
     });
 };
 
-const uploadFile = (doc, filesWithInfo) => {
-  let url = `/quotes/${props.modelType}/documents/store`;
-  const { files, rejectReason } = filesWithInfo;
-  if (files.length == 0) {
-    notification.error({
-      title: 'File upload failed',
-      position: 'top',
-    });
-    docForm.setError({ error: fileUploadErrorMessage(doc, rejectReason) });
-    return false;
-  }
-  isUploading.value = true;
-  docForm
-    .transform(data => ({
-      ...data,
-      quote_type_id: doc.quote_type_id,
-      document_type_code: doc.code,
-      folder_path: doc.folder_path,
-      file: files[0].file,
-    }))
-    .post(url, {
-      preserveScroll: true,
-      preserveState: true,
-
-      onError: errors => {
-        docForm.setError(errors.error);
-        notification.error({
-          title: 'File upload failed',
-          position: 'top',
-        });
-      },
-      onFinish: () => {
-        isUploading.value = false;
-      },
-    });
+const openImageDialog = () => {
+  fileInput.value.click();
 };
+
+const url = file => {
+  return URL.createObjectURL(file);
+};
+
+const uploadFile = event => {
+  if (event) {
+    uploadedFiles.value.push(event.target.files[0]);
+  }
+  return;
+};
+
+const handleRemoveFile = file => {
+  let index = uploadedFiles.value.findIndex(f => f.name == file.name);
+  if (index != -1) {
+    uploadedFiles.value.splice(index, 1);
+  }
+};
+
+// const uploadData = () => {
+//   let url = `/quotes/${props.modelType}/documents/store`;
+//   const { files, rejectReason } = filesWithInfo;
+//   if (files.length == 0) {
+//     notification.error({
+//       title: 'File upload failed',
+//       position: 'top',
+//     });
+//     docForm.setError({ error: fileUploadErrorMessage(doc, rejectReason) });
+//     return false;
+//   }
+//   isUploading.value = true;
+//   docForm
+//     .transform(data => ({
+//       ...data,
+//       quote_type_id: doc.quote_type_id,
+//       document_type_code: doc.code,
+//       folder_path: doc.folder_path,
+//       files: files,
+//     }))
+//     .post(url, {
+//       preserveScroll: true,
+//       preserveState: true,
+
+//       onError: errors => {
+//         docForm.setError(errors.error);
+//         notification.error({
+//           title: 'File upload failed',
+//           position: 'top',
+//         });
+//       },
+//       onFinish: () => {
+//         isUploading.value = false;
+//       },
+//     });
+// };
+// const { files, open, reset, onChange } = useFileDialog({
+//   accept: 'image/*', // Set to accept only image files
+//   directory: false, // Select directories instead of files if set true
+// });
+
+// onChange(files => {
+//   console.log(files);
+// });
 </script>
 <template>
   <div>
@@ -235,7 +271,7 @@ const uploadFile = (doc, filesWithInfo) => {
       <DataTable
         table-class-name=""
         :headers="tableHeader"
-        :items="sampleData"
+        :items="notes.data || []"
         border-cell
         hide-rows-per-page
         hide-footer
@@ -323,7 +359,7 @@ const uploadFile = (doc, filesWithInfo) => {
       <p class="font-bold m-0">{{ isEdit ? 'Update' : 'Add' }} Notes</p>
     </template>
 
-    <div class="w-full">
+    <x-form class="w-full" @submit="onNoteSubmit" :auto-focus="false">
       <x-field label="Notes" class="w-full">
         <x-textarea
           :adjustToText="false"
@@ -331,20 +367,56 @@ const uploadFile = (doc, filesWithInfo) => {
           class="w-full"
           v-model="notesForm.notes"
           rows="5"
+          :rules="[isRequired]"
         />
       </x-field>
       <p class="text-xs ml-auto flex justify-end mt-2">
         {{ notesLength }}/1000
       </p>
       <div class="mt-2">
-        <Dropzone
+        <input
+          @change.prevent="uploadFile"
+          ref="fileInput"
+          type="file"
+          hidden
+        />
+        <x-button
+          size="sm"
+          color="primary"
+          :loading="loader.button"
+          icon="upload"
+          @click.prevent="openImageDialog"
+        >
+          Upload Documnets
+        </x-button>
+        <template v-if="uploadedFiles.length > 0">
+          <div
+            v-for="file of uploadedFiles"
+            :key="file.name"
+            class="text-sm mt-2 flex gap-1 font-bold"
+          >
+            <p class="max-w-[200px] truncate">
+              <a :href="url(file)" target="_blank" class="text-primary">{{
+                file.name
+              }}</a>
+            </p>
+
+            <x-icon
+              icon="xmark"
+              class="text-red-700"
+              @click="handleRemoveFile(file)"
+            ></x-icon>
+          </div>
+        </template>
+
+        <!-- <Dropzone
           :id="documentType?.id"
           :accept="documentType?.accepted_files"
           :max-files="documentType?.max_files"
           :max-size="documentType?.max_size"
           :loading="isUploading"
           @change="uploadFile(documentType, $event)"
-        />
+        /> -->
         <!-- <x-tooltip align="top">
           <x-button size="sm" color="primary" icon="upload">
             Upload Documents
@@ -364,7 +436,7 @@ const uploadFile = (doc, filesWithInfo) => {
           Cancel
         </x-button>
         <x-button
-          @click="onNoteSubmit"
+          type="submit"
           size="sm"
           color="emerald"
           :loading="loader.button"
@@ -372,6 +444,6 @@ const uploadFile = (doc, filesWithInfo) => {
           {{ isEdit ? 'Update' : 'Save' }}
         </x-button>
       </div>
-    </div>
+    </x-form>
   </AppModal>
 </template>
