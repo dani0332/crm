@@ -63,30 +63,32 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
     }
 
     public function fetchCreateNewPayment($request, $quoteModel)
-    {   
+    {  
+       // echo $request->payment;
+        //dd($request->payment);  
         DB::beginTransaction();
         try {
-        
+            $masterPayment = (object)$request->payment;
             $masterPaymentStatus = PaymentStatusEnum::NEW;
-            if ($request->payment_methods == PaymentMethodsEnum::CreditApproval) {
+            if ($masterPayment->payment_methods == PaymentMethodsEnum::CreditApproval) {
                 $masterPaymentStatus = PaymentStatusEnum::CREDIT_APPROVED;
-            }
+            }           
             $paymentInformation = [
-                'total_price' => $request->total_price,
-                'notes' => ! empty($request->notes) ? $request->notes : null,
-                'custom_reason' => ! empty($request->custom_reason) ? $request->custom_reason : null,
-                'discount_reason' => $request->discount_reason,
-                'discount_custom_reason' => $request->discount_custom_reason,
-                'discount_type' => $request->discount,
-                'frequency' => $request->frequency,
-                'credit_approval' => $request->credit_approval,
-                'total_payments' => $request->payment_no,
-                'collection_type' => $request->collection_type,
+                'total_price' => $masterPayment->total_price,
+                'notes' => ! empty($masterPayment->notes) ? $masterPayment->notes : null,
+                'custom_reason' => ! empty($masterPayment->custom_reason) ? $masterPayment->custom_reason : null,
+                'discount_reason' => ! empty($masterPayment->discount_reason) ? $masterPayment->discount_reason : null,
+                'discount_custom_reason' => ! empty($masterPayment->discount_custom_reason) ? $masterPayment->discount_custom_reason : null,
+                'discount_type' => ! empty($masterPayment->discount) ? $masterPayment->discount : null,
+                'frequency' => $masterPayment->frequency,
+                'credit_approval' => $masterPayment->credit_approval,
+                'total_payments' => $masterPayment->payment_no,
+                'collection_type' => $masterPayment->collection_type,
                 'captured_amount' => 0,
-                'total_amount' => $request->total_amount, //amount after discount
-                'collection_date' => $request->collection_date,
-                'discount_value' => $request->discount_value,
-                'payment_methods_code' => $request->payment_methods,
+                'total_amount' => $masterPayment->total_amount, //amount after discount
+                'collection_date' => $masterPayment->collection_date,
+                'discount_value' => $masterPayment->discount_value,
+                'payment_methods_code' => $masterPayment->payment_methods,
                 'payment_status_id' => $masterPaymentStatus,
                 'plan_id' => ! empty($request->plan_id) ? $request->plan_id : null,
                 'insurance_provider_id' => ! empty($request->insurance_provider_id) ? $request->insurance_provider_id : null,
@@ -97,10 +99,10 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
             $count = $quoteModel->payments->count();
             $paymentInformation['code'] = ($count > 0) ? $quoteModel->code.'-'.$count : $quoteModel->code;
 
-            if ($request->reference) {
-                $paymentInformation['reference'] = $request->reference;
+            if ($masterPayment->reference) {
+                $paymentInformation['reference'] = $masterPayment->reference;
             }
-            if ($request->payment_methods != PaymentMethodsEnum::CreditCard && $request->payment_methods != PaymentMethodsEnum::InsureNowPayLater) {
+            if ($masterPayment->payment_methods != PaymentMethodsEnum::CreditCard && $masterPayment->payment_methods != PaymentMethodsEnum::InsureNowPayLater) {
                 $paymentInformation['authorized_at'] = now();
             }
             $payment = Payment::create($paymentInformation);
@@ -131,34 +133,35 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
     {   
         DB::beginTransaction();
         try {
+            $masterPayment = (object)$request->payment;
             $paymentInformation = [
-                'total_price' => $request->total_price,
-                'notes' => ! empty($request->notes) ? $request->notes : null,
-                'custom_reason' => ! empty($request->custom_reason) ? $request->custom_reason : null,
-                'discount_reason' => $request->discount_reason,
-                'discount_custom_reason' => $request->discount_custom_reason,
-                'discount_type' => $request->discount,
-                'frequency' => $request->frequency,
-                'credit_approval' => $request->credit_approval,
-                'total_payments' => $request->payment_no,
-                'collection_type' => $request->collection_type,
-                'total_amount' => $request->total_amount, //amount after discount
-                'collection_date' => $request->collection_date,
-                'discount_value' => $request->discount_value,
-                'payment_methods_code' => $request->payment_methods,
+                'total_price' => $masterPayment->total_price,
+                'notes' => ! empty($masterPayment->notes) ? $masterPayment->notes : null,
+                'custom_reason' => ! empty($masterPayment->custom_reason) ? $masterPayment->custom_reason : null,
+                'discount_reason' => $masterPayment->discount_reason,
+                'discount_custom_reason' => $masterPayment->discount_custom_reason,
+                'discount_type' => $masterPayment->discount,
+                'frequency' => $masterPayment->frequency,
+                'credit_approval' => $masterPayment->credit_approval,
+                'total_payments' => $masterPayment->payment_no,
+                'collection_type' => $masterPayment->collection_type,
+                'total_amount' => $masterPayment->total_amount, //amount after discount
+                'collection_date' => $masterPayment->collection_date,
+                'discount_value' => $masterPayment->discount_value,
+                'payment_methods_code' => $masterPayment->payment_methods,
                 'insurance_provider_id' => ! empty($request->insurance_provider_id) ? $request->insurance_provider_id : null,
                 'updated_by' => $request->user()->id,
             ];
 
-            if ($request->reference) {
-                $paymentInformation['reference'] = $request->reference;
+            if ($masterPayment->reference) {
+                $paymentInformation['reference'] = $masterPayment->reference;
             }
             $payment = Payment::where('code', $request->paymentCode)->first();
             if (! $payment) {
                 return back()->with('message', 'Payment record not found');
             }
 
-            if ($request->payment_methods == PaymentMethodsEnum::CreditApproval) {
+            if ($masterPayment->payment_methods == PaymentMethodsEnum::CreditApproval) {
                 $paymentInformation['payment_status_id'] = PaymentStatusEnum::CREDIT_APPROVED;
             } elseif ($payment->payment_status_id == PaymentStatusEnum::CREDIT_APPROVED) {
                 $paymentInformation['payment_status_id'] = PaymentStatusEnum::NEW;
@@ -177,35 +180,31 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
 
     public function addPaymentSplits($request, $quoteID)
     {
-        $totalSplitPayments = (count($request->split_payment_details['split_amount']) - 1);
+        $masterPayment = (object)$request->payment;
+        $totalSplitPayments = count($masterPayment->payment_splits);
         $discount = 0;
-        if (isset($request->discount_value) && $request->discount_value > 0) {
-            $discount = app(SplitPaymentService::class)->calculateDiscount($totalSplitPayments, $request->discount_value);
+        if (isset($masterPayment->discount_value) && $masterPayment->discount_value > 0) {
+            $discount = app(SplitPaymentService::class)->calculateDiscount($totalSplitPayments, $masterPayment->discount_value);
         }
 
-        for ($i = 1; $i <= $totalSplitPayments; $i++) {
-            if (isset($request->split_payment_details['payment_type'][$i]) && $request->split_payment_details['payment_type'][$i] != null) {
-                $childPaymentStatus = app(SplitPaymentService::class)->getChildPaymentStatus($request->split_payment_details['payment_type'][$i]);
+        foreach ($masterPayment->payment_splits as $splitPayment) {
+            if (isset($splitPayment['payment_method']) && $splitPayment['payment_method'] != null) {
+                $childPaymentStatus = app(SplitPaymentService::class)->getChildPaymentStatus($splitPayment['payment_method']);
                 $splitPaymentInformation = [
                     'code' => $quoteID,
-                    'sr_no' => $i,
-                    'payment_method' => $request->split_payment_details['payment_type'][$i],
-                    'check_detail' => isset($request->split_payment_details['check_detail'][$i]) ? $request->split_payment_details['check_detail'][$i] : null,
-                    'payment_amount' => $request->split_payment_details['split_amount'][$i],
-                    'due_date' => $request->split_payment_details['due_date'][$i],
+                    'sr_no' => $splitPayment['sr_no'],
+                    'payment_method' => $splitPayment['payment_method'],
+                    'check_detail' => isset($splitPayment['check_detail']) ? $splitPayment['check_detail'] : null,
+                    'payment_amount' => $splitPayment['payment_amount'],
+                    'due_date' => $splitPayment['due_date'],
                     'payment_status_id' => $childPaymentStatus,
                     'discount_value' => $discount,
                 ];
-
                 $paymentSplitRecord = PaymentSplits::create($splitPaymentInformation);
-                if ($paymentSplitRecord) {                                     
+                if ($paymentSplitRecord) {
                     //add document references
-                    if (isset($request->split_payment_details['document_detail'][$i])
-                        && $paymentSplitRecord
-                        && count($request->split_payment_details['document_detail'][$i])
-                    ) {
-                        foreach ($request->split_payment_details['document_detail'][$i] as $document) {
-                            $quoteDocumentRec = QuoteDocument::find($document['id']);
+                    if (isset($splitPayment['document_detail']) && count($splitPayment['document_detail'])) {
+                        foreach ($splitPayment['document_detail'] as $document) {
                             $quoteDocumentRec = QuoteDocument::find($document['id']);
                             if ($quoteDocumentRec) {
                                 $quoteDocumentRec->payment_split_id = $paymentSplitRecord->id;
@@ -216,17 +215,19 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                 }
             }
         }
+        
         //Update parent payment status        
         $this->setMasterPaymentStatus($request->modelType, $request->quote_id);
-        app(SplitPaymentService::class)->uploadDiscountDocuments($request->split_payment_details['discount_documents'], $quoteID);
+        app(SplitPaymentService::class)->uploadDiscountDocuments($masterPayment->payment_splits[0]['discount_documents'] , $quoteID);
     }
 
     public function updatePaymentSplits($request)
     {
+        $masterPayment = (object)$request->payment;       
         $paymentSplits = PaymentSplits::with('documents')->where(['code' => $request->paymentCode])->get();
         $paymentPaidSerialNo = [];
         $splitPaymentDocumentIds = [];
-        $splitPaymentDetails = $request->split_payment_details['split_amount'];
+        //Skipping paid payments and deleting extra payments
         if ($paymentSplits) {
             foreach ($paymentSplits as $paymentSplit) {
                 if ($paymentSplit->payment_status_id == PaymentStatusEnum::PAID ||
@@ -234,51 +235,54 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                     $paymentPaidSerialNo[] = $paymentSplit->sr_no;
                     continue;
                 }
-                if (($request->payment_no < $paymentSplits->count()) && $paymentSplit->sr_no > $request->payment_no) {
+                if (($masterPayment->payment_no < $paymentSplits->count()) && $paymentSplit->sr_no > $masterPayment->payment_no) {
                     QuoteDocument::where('payment_split_id', $paymentSplit->id)->delete();
                     $paymentSplit->delete();
-                    unset($splitPaymentDetails[$paymentSplit->sr_no]);
+                    //// Unset/remove the element with sr_no from the split payment object
+                    foreach ($masterPayment->payment_splits as $key => $payment_split) {
+                        if ($payment_split["sr_no"] === $paymentSplit->sr_no) { 
+                            unset($masterPayment->payment_splits[$key]);
+                        }
+                    }
                     continue;
                 }
             }
         }
-
-        $totalSplitPayments = (count($splitPaymentDetails) - 1);
+        $totalSplitPayments = count($masterPayment->payment_splits);
         $discount = 0;
-        if (isset($request->discount_value) && $request->discount_value > 0 && count($paymentPaidSerialNo) == 0) {
-            $discount = app(SplitPaymentService::class)->calculateDiscount($totalSplitPayments, $request->discount_value);
+        if (isset($masterPayment->discount_value) && $masterPayment->discount_value > 0 && count($paymentPaidSerialNo) == 0) {
+            $discount = app(SplitPaymentService::class)->calculateDiscount($totalSplitPayments, $masterPayment->discount_value);
         }
 
-        for ($i = 1; $i <= $totalSplitPayments; $i++) {
-            if (in_array($i, $paymentPaidSerialNo)) {
+        foreach ($masterPayment->payment_splits as $splitPayment) {
+            $serialNo = $splitPayment['sr_no'];
+            if (in_array($serialNo, $paymentPaidSerialNo)) {
                 continue;
             }
 
-            if (isset($request->split_payment_details['payment_type'][$i]) && $request->split_payment_details['payment_type'][$i] != null) {
-
+            if (isset($splitPayment['payment_method']) && $splitPayment['payment_method'] != null) {
                 $splitPaymentInformation = [
                     'code' => $request->paymentCode,
-                    'sr_no' => $i,
-                    'payment_method' => $request->split_payment_details['payment_type'][$i],
-                    'check_detail' => isset($request->split_payment_details['check_detail'][$i]) ? $request->split_payment_details['check_detail'][$i] : null,
-                    'payment_amount' => $request->split_payment_details['split_amount'][$i],
-                    'due_date' => $request->split_payment_details['due_date'][$i],
+                    'sr_no' => $serialNo,
+                    'payment_method' => $splitPayment['payment_method'],
+                    'check_detail' => isset($splitPayment['check_detail']) ? $splitPayment['check_detail'] : null,
+                    'payment_amount' => $splitPayment['payment_amount'],
+                    'due_date' => $splitPayment['due_date'],
                     'discount_value' => $discount,
                 ];
-                $childPaymentStatus = app(SplitPaymentService::class)->getChildPaymentStatus($request->split_payment_details['payment_type'][$i]);
-                $splitPaymentInformation['payment_status_id'] = $childPaymentStatus;
-                $paymentSplitRecord = PaymentSplits::where(['code' => $request->paymentCode, 'sr_no' => $i])->first();
+                $splitPaymentInformation['payment_status_id'] = app(SplitPaymentService::class)->getChildPaymentStatus($splitPayment['payment_method']);
+                $paymentSplitRecord = PaymentSplits::where(['code' => $request->paymentCode, 'sr_no' => $serialNo])->first();
                 if (! $paymentSplitRecord) {
                     $paymentSplitRecord = PaymentSplits::create($splitPaymentInformation);
                 } else {
                     $paymentSplitRecord->update($splitPaymentInformation);                    
                 }
                 //add document references
-                if (isset($request->split_payment_details['document_detail'][$i])
+                if (isset($splitPayment['document_detail'])
                     && $paymentSplitRecord
-                    && count($request->split_payment_details['document_detail'][$i])
+                    && count($splitPayment['document_detail'])
                 ) {
-                    foreach ($request->split_payment_details['document_detail'][$i] as $document) {
+                    foreach ($splitPayment['document_detail'] as $document) {
                         $quoteDocumentRec = QuoteDocument::find($document['id']);
                         if ($quoteDocumentRec) {
                             $quoteDocumentRec->payment_split_id = $paymentSplitRecord->id;
@@ -289,7 +293,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
             }
         }        
         $this->setMasterPaymentStatus($request->modelType, $request->quote_id);
-        app(SplitPaymentService::class)->uploadDiscountDocuments($request->split_payment_details['discount_documents'], $request->paymentCode);
+        app(SplitPaymentService::class)->uploadDiscountDocuments($masterPayment->payment_splits[0]['discount_documents'], $request->paymentCode);
     }
 
     public function fetchUpdateSplitPaymentsApprove($request)

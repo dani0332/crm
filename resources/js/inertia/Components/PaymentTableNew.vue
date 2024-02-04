@@ -990,6 +990,7 @@ const editPaymentModal = (payment,split_payment_id,sr_no,capture_approval) => {
   discountDocumentModel.value = [];
   isDiscountEnabled.value = false;
   isTotalPriceUpdated.value = false;
+  isGalleryModelOpen.value = false;    
   if(sr_no>0){
     splitPaymentNo.value = sr_no;
     isFieldReadonly.value = true;
@@ -1230,13 +1231,18 @@ const addPayment = isValid => {
     mainPaymentMethod = paymentMethodsModels.value[1];
   }
   
-  let data = {
-    captured_amount: paymentMethodsForm.amount,
+  let data = {    
     code: paymentMethodsForm.payment_method,
     modelType: props.quoteType,
     quote_id: props.quoteRequest.id,
     plan_id: planDetail.id,
+    captured_amount: paymentMethodsForm.amount,
     insurance_provider_id: providerId.value,
+    new_payment_structure: true,
+    isInertia: true,   
+  };
+
+  data.payment = {
     collection_type: paymentMethodsForm.collection_type,
     payment_methods: mainPaymentMethod,
     reference: paymentMethodsForm.payment_reference,
@@ -1252,20 +1258,37 @@ const addPayment = isValid => {
     total_amount: totalAmount.value, // after discount calculation
     total_price: totalPrice.value, 
     collection_date: paymentMethodsForm.collection_date,
-    discount_value: discountValue.value, // discount amount
-    isInertia: true,
-    new_payment_structure: true,
+    discount_value: discountValue.value, // discount amount     
   };
 
+  let splitPayments = [];
+  for (let i = 1; i < splitAmountModels.value.length; i++) {console.log('data',JSON.stringify(discountDocumentModel.value));
+    //if (i > 0) {
+      splitPayments[i] = {
+        sr_no: i,
+        payment_method: paymentMethodsModels.value[i],
+        payment_amount: splitAmountModels.value[i],
+        due_date: dueDateModels.value[i],
+        collection_amount: collectionAmountModels.value[i],
+        document_detail: fileUploadModels.value[i],
+        check_detail: checkDetailModels.value[i],        
+      };
+    //}
+    if (i === 1) {
+      splitPayments[i]['discount_documents'] = discountDocumentModel.value;
+    }
+  }
+  splitPayments = splitPayments.filter(item => item !== null);
+  data.payment.payment_splits = splitPayments;
   // Combine split_amount and payment_type into a single object
-  data.split_payment_details = {
+  /*data.payment.split_payments = {   
     split_amount: splitAmountModels.value,
     payment_type: paymentMethodsModels.value,
     due_date: dueDateModels.value,
     check_detail: checkDetailModels.value,
     document_detail: fileUploadModels.value,
     discount_documents: discountDocumentModel.value,
-  };
+  };*/
 
   let declinedCustomReason= paymentMethodsForm.declined_custom_reason;
   if (paymentMethodsForm.status === 'view' || isCreditApprovalView.value === true) { 
