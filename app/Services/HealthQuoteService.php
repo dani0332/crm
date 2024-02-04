@@ -29,6 +29,7 @@ use App\Models\InsuranceProvider;
 use App\Models\PaymentAction;
 use App\Models\QuoteType;
 use App\Models\QuoteViewCount;
+use App\Models\RenewalBatch;
 use App\Models\Team;
 use App\Models\User;
 use App\Traits\AddPremiumAllLobs;
@@ -364,7 +365,7 @@ class HealthQuoteService extends BaseService
         if (isset($request->previous_quote_policy_premium) && $request->previous_quote_policy_premium != '') {
             $this->query->where('hqr.previous_quote_policy_premium', $request->previous_quote_policy_premium);
         }
-        $this->whereBasedOnRole($this->query, 'hqr');
+        $this->whereBasedOnRole($this->query, 'hqr', quoteTypeCode::Health);
 
         if (! isset($request->email) && $request->email == '') {
             $this->query->where('hqr.quote_status_id', '!=', 9);
@@ -441,7 +442,7 @@ class HealthQuoteService extends BaseService
         if (isset($request->previous_quote_policy_premium) && $request->previous_quote_policy_premium != '') {
             $this->query->where('hqr.previous_quote_policy_premium', $request->previous_quote_policy_premium);
         }
-        $this->whereBasedOnRole($this->query, 'hqr');
+        $this->whereBasedOnRole($this->query, 'hqr', quoteTypeCode::Health);
 
         if (isset($request->is_renewal) && $request->is_renewal != '') {
             if ($request->is_renewal == quoteTypeCode::yesText) {
@@ -1628,5 +1629,19 @@ class HealthQuoteService extends BaseService
         }
 
         return [$result, $skipLead];
+    }
+
+    public function assignRenewalBatch(HealthQuote $quote)
+    {
+        $date = Carbon::today()->toDateString();
+
+        $renewalBatch = RenewalBatch::select('name')->whereDate('start_date', '<=', $date)
+            ->whereDate('end_date', '>=', $date)
+            ->first();
+
+        if ($renewalBatch) {
+            $quote->renewal_batch = $renewalBatch->name;
+            $quote->save();
+        }
     }
 }

@@ -1,13 +1,16 @@
 <?php
 
 use App\Enums\IMCRMSearchTypesEnum;
+use App\Enums\PermissionsEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypes;
 use App\Models\CustomerAdditionalInfo;
 use App\Models\HealthQuote;
+use App\Services\HealthQuoteService;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 if (! function_exists('generate_code')) {
     /**
@@ -205,6 +208,37 @@ function getDataAgainstStatus($modelType, $statusId, $myleads = null)
             $result['leads_list'] = $modelType::where('quote_status_id', $statusId)
                 ->where('advisor_id', \Auth::user()->id)
                 ->whereNull('previous_quote_id')->paginate(10);
+        } elseif ($modelType == HealthQuote::class && Auth::user()->isCarAdvisor() && Auth::user()->can(PermissionsEnum::HEALTH_QUOTES_ACCESS)) {
+            $result['total_leads'] = $modelType::where('quote_status_id', $statusId)
+                ->where('advisor_id', \Auth::user()->id)
+                ->count();
+
+            $result['total_premium'] = $modelType::where('quote_status_id', $statusId)
+                ->where('advisor_id', \Auth::user()->id)
+                ->sum('premium');
+
+            $result['total_opportunity'] = $modelType::where('quote_status_id', $statusId)->sum('price_starting_from');
+
+            $result['leads_list'] = $modelType::where('quote_status_id', $statusId)
+                ->where('advisor_id', \Auth::user()->id)
+                ->paginate(10);
+        } elseif ($modelType == HealthQuote::class && Auth::user()->isCarManager() && Auth::user()->can(PermissionsEnum::HEALTH_QUOTES_MANAGER_ACCESS)) {
+
+            $ids = app(HealthQuoteService::class)->walkTree(Auth::user()->id);
+
+            $result['total_leads'] = $modelType::where('quote_status_id', $statusId)
+                ->whereIn('advisor_id', $ids)
+                ->count();
+
+            $result['total_premium'] = $modelType::where('quote_status_id', $statusId)
+                ->whereIn('advisor_id', $ids)
+                ->sum('premium');
+
+            $result['total_opportunity'] = $modelType::where('quote_status_id', $statusId)->sum('price_starting_from');
+
+            $result['leads_list'] = $modelType::where('quote_status_id', $statusId)
+                ->whereIn('advisor_id', $ids)
+                ->paginate(10);
         } else {
             $result['total_leads'] = $modelType::where('quote_status_id', $statusId)->count();
             $result['total_premium'] = $modelType::where('quote_status_id', $statusId)->sum('premium');
@@ -590,5 +624,33 @@ if (! function_exists('dateQueryFilter')) {
         }
 
         return [$currentDate, $currentDate];
+    }
+}
+if (! function_exists('apiResponse')) {
+    function apiResponse($data, $statusCode = 200, $message = null)
+    {
+        // If the data is an instance of Exception, handle it separately
+        if ($data instanceof \Exception) {
+            $statusCode = 500;
+            $message = $data->getMessage();
+            $data = null;
+        }
+
+        if ($data instanceof ValidationException) {
+            $statusCode = 422;
+            $message = $data->errors();
+            $data = null;
+        }
+
+        // If the status code is 400, set a default error message if none is provided
+        if ($statusCode === 400 && $message === null) {
+            $message = 'Missing or invalid parameters.';
+        }
+
+        return response()->json([
+            'data' => $data,
+            'message' => $message,
+            'status' => $statusCode,
+        ], $statusCode);
     }
 }
