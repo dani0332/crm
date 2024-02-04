@@ -1262,8 +1262,8 @@ const addPayment = isValid => {
   };
 
   let splitPayments = [];
-  for (let i = 1; i < splitAmountModels.value.length; i++) {console.log('data',JSON.stringify(discountDocumentModel.value));
-    //if (i > 0) {
+  for (let i = 1; i < splitAmountModels.value.length; i++) {
+    if (i <= paymentMethodsForm.payment_no) {
       splitPayments[i] = {
         sr_no: i,
         payment_method: paymentMethodsModels.value[i],
@@ -1272,10 +1272,10 @@ const addPayment = isValid => {
         collection_amount: collectionAmountModels.value[i],
         document_detail: fileUploadModels.value[i],
         check_detail: checkDetailModels.value[i],        
-      };
-    //}
-    if (i === 1) {
-      splitPayments[i]['discount_documents'] = discountDocumentModel.value;
+      };    
+      if (i === 1) {
+        splitPayments[i]['discount_documents'] = discountDocumentModel.value;
+      }
     }
   }
   splitPayments = splitPayments.filter(item => item !== null);

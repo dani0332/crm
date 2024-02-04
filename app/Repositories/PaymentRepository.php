@@ -64,8 +64,6 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
 
     public function fetchCreateNewPayment($request, $quoteModel)
     {  
-       // echo $request->payment;
-        //dd($request->payment);  
         DB::beginTransaction();
         try {
             $masterPayment = (object)$request->payment;
