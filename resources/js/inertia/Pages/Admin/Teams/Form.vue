@@ -17,7 +17,13 @@ const teamForm = useForm({
   name: props.team?.name ?? null,
   type: props.team?.type ?? 1,
   slabs_count: props.team?.slabs_count ?? null,
-  is_active: Boolean(props.team?.is_active) ?? true,
+  is_active:
+    props.team?.is_active === 'True'
+      ? true
+      : props.team?.is_active === 'False'
+      ? false
+      : true,
+
   parent_team_id: props.team?.parent_team_id ?? null,
 });
 
@@ -115,7 +121,7 @@ onMounted(() => setInitialState());
       <x-field label="PARENT">
         <ComboBox
           :single="true"
-          :rules="[isRequired]"
+          :rules="teamForm.type != 1 ? [isRequired] : []"
           v-model="teamForm.parent_team_id"
           :options="computedParent"
           :disabled="teamForm.type == 1"

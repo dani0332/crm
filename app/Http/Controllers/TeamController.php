@@ -65,7 +65,7 @@ class TeamController extends Controller
             'type' => 'required',
             'slabs_count' => 'required|numeric',
         ];
-        if (isset($request->type) && TeamTypeEnum::TEAM || $request->type == TeamTypeEnum::SUB_TEAM) {
+        if (isset($request->type) && $request->type != 1 && TeamTypeEnum::TEAM || $request->type == TeamTypeEnum::SUB_TEAM) {
             $validateArray['parent_team_id'] = 'required';
         }
         $this->validate($request, $validateArray);
