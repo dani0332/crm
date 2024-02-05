@@ -577,14 +577,16 @@ const resetCreditApproval = () => {
   handleFrequencyChange(false);
 };
 
-const resetDiscount = () => {
+const resetDiscount = (callDiscountChang=true) => {
   isDiscountEnabled.value = false;
   isDiscountReasonEnabled.value = false;
   paymentMethodsForm.discount = '';
   totalAmount.value = totalPrice.value;
   discountValue.value = 0;
   paymentMethodsForm.discount_reason = '';
-  handleDiscountChange();
+  if (callDiscountChang) {
+    handleDiscountChange();
+  }  
   handleDiscountReasonChange();
   calculateTotalAmount();
 };
@@ -602,6 +604,7 @@ const handleDiscountChange = () => {
 
   isDiscountReasonEnabled.value = false;
   if(paymentMethodsForm.discount === '' || paymentMethodsForm.discount === undefined ){
+    resetDiscount(false);
     isDiscountEnabled.value = false;    
   }else{
     isDiscountEnabled.value = true; 
