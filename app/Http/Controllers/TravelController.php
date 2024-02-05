@@ -33,6 +33,7 @@ use App\Services\LookupService;
 use App\Services\QuoteDocumentService;
 use App\Services\RenewalsUploadService;
 use App\Services\TravelQuoteService;
+use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Inertia\Response;
@@ -41,6 +42,8 @@ use RuntimeException;
 
 class TravelController extends Controller
 {
+    use GenericQueriesAllLobs;
+
     protected $travelQuoteService;
     private $renewalQuoteService;
     protected $lookupService;
@@ -170,6 +173,7 @@ class TravelController extends Controller
         $displaySendPolicyButton = $this->travelQuoteService->displaySendPolicyButton($record, $quoteDocuments, self::TYPE_ID);
         $documentTypes = $this->travelQuoteService->getQuoteDocumentsForUpload(self::TYPE_ID);
         $documentTypes = collect($documentTypes)->groupBy('category');
+
         $memberRelations = LookupRepository::where('key', LookupsEnum::MEMBER_RELATION)->get();
         $activities = $this->travelQuoteService->getActivityByLeadId($record->id, strtolower($this->genericModel->modelType));
         $customerAdditionalContacts = $this->travelQuoteService->getAdditionalContacts($record->customer_id, $record->mobile_no);
@@ -189,6 +193,7 @@ class TravelController extends Controller
         $uboRelations = LookupRepository::where('key', LookupsEnum::UBO_RELATION)->get();
         $emirates = Emirate::where('is_active', 1)->select('id', 'text')->get();
         $policyIssuanceStatus = PolicyIssuanceStatus::active()->get();
+        $bPDetails = $this->bookPolicyPayload($record, $quoteType, $payments, $quoteDocuments);
 
         return inertia('TravelQuote/Show', [
             'record' => $record,
@@ -256,7 +261,9 @@ class TravelController extends Controller
             'UBOsDetails' => $uboDetails,
             'UBORelations' => $uboRelations,
             'emirates' => $emirates,
-            'policyIssuanceStatus' => $policyIssuanceStatus
+            'policyIssuanceStatus' => $policyIssuanceStatus,
+            'bPDetails' => $bPDetails,
+            'quoteStatusEnum' => QuoteStatusEnum::asArray(),
         ]);
     }
 

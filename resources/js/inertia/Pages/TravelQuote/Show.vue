@@ -50,11 +50,13 @@ defineProps({
   canAddBatchNumber: Boolean,
   paymentTooltipEnum: Object,
   storageUrl: String,
-    policyIssuanceStatus: Array,
-    record: Object,
+  policyIssuanceStatus: Array,
+  record: Object,
+  bPDetails: Array,
 });
 
-
+const permissionEnum = page.props.permissionsEnum;
+const canAny = permissions => useCanAny(permissions);
 const hasAnyRole = roles => useHasAnyRole(roles);
 const checkedItems = ref([]);
 const checkCheckedPlans = computed(() => {
@@ -2049,6 +2051,14 @@ const genderList = [
       </x-modal>
     </div>
 
+    <PolicyDetail
+      v-if="permissions.isQuoteDocumentEnabled"
+      :record="record"
+      :quoteStatusEnum="enums.quoteStatusEnum"
+      :policyIssuanceStatus="policyIssuanceStatus"
+      modelType="travel"
+    />
+
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div class="flex flex-wrap gap-4 justify-between items-center mb-4">
         <h3 class="font-semibold text-primary-800 text-lg">
@@ -2206,12 +2216,17 @@ const genderList = [
       :modelType="quoteType"
     />
 
-    <PolicyDetail
-        v-if="permissions.isQuoteDocumentEnabled"
-      :record="record"
-      :quoteStatusEnum="enums.quoteStatusEnum"
-      :policyIssuanceStatus="policyIssuanceStatus"
-      modelType="travel"
+    <BookPolicy
+      v-if="
+        canAny([
+          permissionEnum.VIEW_INSLY_BOOK_POLICY,
+          permissionEnum.SEND_INSLY_BOOK_POLICY,
+        ])
+      "
+      :quote="record"
+      quoteType="travel"
+      :bPDetails="bPDetails"
+      :payments="payments"
     />
 
     <div class="p-4 rounded shadow mb-6 bg-white">

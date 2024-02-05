@@ -44,6 +44,7 @@ class QuoteDocumentService extends BaseService
     {
         return DocumentType::where(['quote_type_id' => $quoteTypeId, 'is_active' => true])
             ->orderBy('sort_order', 'asc')
+            ->active()
             ->get();
     }
 

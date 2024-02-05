@@ -46,19 +46,25 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
 
         $quote->load('advisor');
 
-        $templateId = null;
-        switch (ucfirst($this->data->model_type)) {
-            case QuoteTypes::CAR->value:
-                $templateId = ApplicationStorage::where('key_name', ApplicationStorageEnums::CAR_BOOK_POLICY_TEMPLATE)->first()->value;
-                break;
+//        $templateId = null;
+        $templateId = ApplicationStorage::where('key_name', ApplicationStorageEnums::CAR_BOOK_POLICY_TEMPLATE)->first()->value;
 
-            case QuoteTypes::BIKE->value:
-                break;
-
-            default:
-                $templateId = null;
-                break;
-        }
+//        switch (ucfirst($this->data->model_type)) {
+//            case QuoteTypes::CAR->value:
+//                $templateId = ApplicationStorage::where('key_name', ApplicationStorageEnums::CAR_BOOK_POLICY_TEMPLATE)->first()->value;
+//                break;
+//
+//            case QuoteTypes::BIKE->value:
+//                break;
+//
+//            case QuoteTypes::TRAVEL->value:
+//                $templateId = ApplicationStorage::where('key_name', ApplicationStorageEnums::CAR_BOOK_POLICY_TEMPLATE)->first()->value;
+//                break;
+//
+//            default:
+//                $templateId = null;
+//                break;
+//        }
         info('SendBookPolicyDocumentsJobData ' . json_encode($quote));
 
         if (!empty($templateId)) {
