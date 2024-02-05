@@ -95,7 +95,7 @@ class ApiService
         }
 
         if (! $assignAdvisor && ! $triggerOCB) {
-            return $this->performLeadAllocation($allocationType, $allocationId);
+            return $this->performLeadAllocation($allocationType, $allocationId, $teamId);
         }
 
         return apiResponse(null, Response::HTTP_BAD_REQUEST, 'Invalid request');
@@ -125,10 +125,10 @@ class ApiService
         return apiResponse(null, Response::HTTP_OK, 'OCB email triggered successfully!');
     }
 
-    private function performLeadAllocation($allocationType, $allocationId)
+    private function performLeadAllocation($allocationType, $allocationId, $teamId)
     {
         info('------ Lead allocation started for lead : '.$allocationId.' ------');
-        $allocationStrategy = AllocationFactory::createStrategy($allocationType, $allocationId);
+        $allocationStrategy = AllocationFactory::createStrategy($allocationType, $allocationId, $teamId);
         $assignedAdvisorId = $allocationStrategy->executeSteps();
         info('------ Lead allocation ended for lead : '.$allocationId.' ------');
         $responseData = ['assignedAdvisorId' => $assignedAdvisorId];

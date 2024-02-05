@@ -11,11 +11,13 @@ class CarAllocation implements Allocation
 {
     private $carAllocationService;
     private $allocationId;
+    private $teamId;
 
-    public function __construct(CarAllocationService $carAllocationService, $allocationId)
+    public function __construct(CarAllocationService $carAllocationService, $allocationId, $teamId)
     {
         $this->carAllocationService = $carAllocationService;
         $this->allocationId = $allocationId;
+        $this->teamId = $teamId;
     }
 
     public function executeSteps($overrideAdvisorId = false, $teamId = false)
@@ -46,7 +48,7 @@ class CarAllocation implements Allocation
 
                 info('Tier finalized for lead : '.$lead->uuid.' is : '.$tier->name);
                 // Find available users for the tier
-                $availableUsers = $this->findAvailableUsers($tier->id, $lead->source, $teamId);
+                $availableUsers = $this->findAvailableUsers($tier->id, $lead->source);
 
                 // Find custom rules for the lead
                 $rules = $this->findRules($lead);
@@ -111,9 +113,9 @@ class CarAllocation implements Allocation
         return $this->carAllocationService->getTierById($lead->tier_id);
     }
 
-    protected function findAvailableUsers($tierId, $leadSource, $teamId): array|Collection
+    protected function findAvailableUsers($tierId, $leadSource): array|Collection
     {
-        return $this->carAllocationService->getEligibleUserForAllocation($tierId, null, false, $leadSource, $teamId);
+        return $this->carAllocationService->getEligibleUserForAllocation($tierId, null, false, $leadSource, $this->teamId);
     }
 
     protected function findRules($lead)
