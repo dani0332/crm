@@ -1,6 +1,4 @@
 <script setup>
-import { isAxiosError } from 'axios';
-
 const props = defineProps({
   roles: Object,
   products: Array,
@@ -20,8 +18,9 @@ const props = defineProps({
 const page = usePage();
 const hasRole = role => useHasRole(role);
 const rolesEnum = page.props.rolesEnum;
+const notification = useToast();
 
-const { isRequired, isMobileNo, isEmail } = useRules();
+const { isRequired, isMobileNo, isEmail, allowEmpty } = useRules();
 const subTeams = ref([]);
 const teams = ref([]);
 const managers = ref([]);
@@ -50,9 +49,9 @@ const userForm = useForm({
   teams: props.userTeamIds?.length > 0 ? props.userTeamIds : null,
   roles: selectedRoles.value?.length > 0 ? selectedRoles.value : null,
   manager: props.userManagerIds ?? null,
-  sub_team_id: null,
+  sub_team_id: props.user?.sub_team_id ?? null,
   additionalTeams: props?.selectedAdditionalTeams ?? [],
-  is_active: props.user?.is_active ? true : false,
+  is_active: props.user?.is_active == 1 ? true : false,
   primary_product: props.userProductIds ? props?.userProductIds[0] : null,
   permissions: props?.userPermissions ?? null,
 });
@@ -127,6 +126,7 @@ const loadSubTeams = async () => {
     let response = await axios.post('/get-sub-teams', {
       teamId: userForm.teams,
     });
+    console.log(response.data);
     if (response.data.length > 0) subTeams.value = [...response.data];
     else subTeams.value = [];
 
@@ -151,9 +151,21 @@ function onSubmit(isValid) {
 
     userForm.submit(method, url, {
       onError: errors => {
-        userForm.setError(errors);
+        Object.keys(errors).forEach(function (key) {
+          notification.error({
+            title: errors[key],
+            position: 'top',
+          });
+        });
       },
-      onSuccess: () => {},
+      onSuccess: response => {
+        console.log(response);
+        // notification.success({
+        //   title: response.message,
+        //   position: 'top',
+        // });
+        userForm.reset();
+      },
     });
   }
 }
@@ -216,16 +228,17 @@ onMounted(() => setInitialState());
           v-model="userForm.email"
           :rules="[isRequired, isEmail]"
           class="w-full"
+          name="email"
         />
       </x-field>
-      <x-field label="MOBILE NUMBER" required>
+      <x-field label="MOBILE NUMBER">
         <x-input
           v-model="userForm.mobile_no"
-          :rules="[isMobileNo]"
+          :rules="[allowEmpty]"
           class="w-full"
         />
       </x-field>
-      <x-field label="LANDLINE NUMBER" required>
+      <x-field label="LANDLINE NUMBER">
         <x-input type="tel" v-model="userForm.landline_no" class="w-full" />
       </x-field>
       <x-field label="PASSWORD" required>

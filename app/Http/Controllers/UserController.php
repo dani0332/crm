@@ -82,12 +82,14 @@ class UserController extends Controller
         $products = $this->getAllProducts(); // get all products
         $teams = [];
         $subTeams = [];
+        $permissions = Permission::orderBy('name')->get();
 
         return inertia('Admin/Users/Form', [
             'roles' => $roles,
             'products' => $products,
             'teams' => $teams,
             'subTeams' => $subTeams,
+            'permissions' => $permissions
         ]);
 
         // $roles = Role::pluck('name', 'name')->all(); // get all roles
@@ -120,7 +122,7 @@ class UserController extends Controller
 
         $user->assignRole($request->input('roles'));
        
-        return redirect(route('users.show', $user->id))->with('success', 'User has been store');
+        return redirect(route('users.show', $user->id))->with('success', $user->name . ' with a email '.$user->email. ' ' .'has been store');
     }
 
     /**

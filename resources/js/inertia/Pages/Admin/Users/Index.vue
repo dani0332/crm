@@ -8,6 +8,7 @@ const props = defineProps({
 const page = usePage();
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
+const dateFormat = date => useDateFormat(date, 'DD-MM-YYYY HH:mm:ss').value;
 
 const filters = reactive({
   email: '',
@@ -127,6 +128,16 @@ onMounted(() => {
       >
         {{ item.email }}
       </Link>
+    </template>
+    <template #item-created_at="{ created_at }">
+      <span>
+        {{ created_at ? dateFormat(created_at) : 'N/A' }}
+      </span>
+    </template>
+    <template #item-updated_at="{ updated_at }">
+      <span>
+        {{ updated_at ? dateFormat(updated_at) : 'N/A' }}
+      </span>
     </template>
     <template #item-is_active="{ is_active }">
       <div class="text-center">
