@@ -134,7 +134,6 @@ const filters = reactive({
   previous_quote_policy_number: '',
   renewal_batch: '',
   date: null,
-  status_filters: null,
   payment_status: [],
   is_cold: false,
   is_stale: false,

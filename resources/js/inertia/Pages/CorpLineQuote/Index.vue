@@ -61,6 +61,9 @@ const filters = reactive({
   page: 1,
   previous_quote_policy_number: '',
   renewal_batch: '',
+  payment_status: [],
+  is_cold: false,
+  is_stale: false,
 });
 
 const leadStatusOptions = computed(() => {
@@ -168,13 +171,24 @@ function onSubmit(isValid) {
   }
 }
 
-const handleSelectedFilters = async selectedFilters => {
+const handleSelectedFilters = selectedFilters => {
   if (selectedFilters.created_at_start && selectedFilters.created_at_end) {
     filters.created_at_start = selectedFilters.created_at_start;
     filters.created_at_end = selectedFilters.created_at_end;
-
-    onSubmit(true);
   }
+
+  if (selectedFilters.quote_status) {
+    filters.quote_status = selectedFilters.quote_status;
+  }
+
+  if (selectedFilters.payment_status) {
+    filters.payment_status = selectedFilters.payment_status;
+  }
+
+  filters.is_cold = selectedFilters.cold;
+  filters.is_stale = selectedFilters.stale;
+
+  onSubmit(true);
 };
 
 const assignForm = useForm({
