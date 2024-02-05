@@ -11,7 +11,9 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\RuleTypeEnum;
 use App\Enums\TeamNameEnum;
 use App\Enums\TiersEnum;
+use App\Enums\TiersIdEnum;
 use App\Enums\UserStatusEnum;
+use App\Jobs\SendOCBIntroEmailJob;
 use App\Models\CarMake;
 use App\Models\CarModel;
 use App\Models\CarQuote;
@@ -52,6 +54,7 @@ class CarAllocationService extends AllocationService
         $carQuoteQuery = CarQuote::where('uuid', $quoteId)
             ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
             ->whereNotIn('source', $exemptedLeadSources)
+            ->where('sic_flow_enabled', 0)
             ->where('is_renewal_tier_email_sent', 0);
 
         if (! $overrideAdvisorId) {
@@ -134,6 +137,24 @@ class CarAllocationService extends AllocationService
         return [$plans, $yearOfManufacture];
     }
 
+    public function shouldEnforceSICCheck($lead, $tier): bool
+    {
+        [$plans, $yearOfManufacture] = $this->getPlanAndYear($lead);
+        if ($tier->id == TiersIdEnum::TIER_5 && count($plans) > 0) {
+            return true;
+        }
+        return false;
+    }
+
+    public function processSICFlow($lead, $tier): void
+    {
+        $lead->sic_flow_enabled = 1;
+        $lead->tier_id = $tier->id;
+        $lead->save();
+        SendOCBIntroEmailJob::dispatch($lead->uuid, null);
+        info('SIC flow is email is dispatched for lead : '.$lead->uuid);
+    }
+
     /**
      * @return array|mixed
      */
@@ -200,11 +221,16 @@ class CarAllocationService extends AllocationService
         return null;
     }
 
-    public function getEligibleUserForAllocation($tierId, $advisorId, $isReassignmentJob, $leadSource)
+    public function getEligibleUserForAllocation($tierId, $advisorId, $isReassignmentJob, $leadSource, $teamId)
     {
         $tierUserIds = $this->getTierUserIds($tierId, $advisorId);
 
         $tierUserIds = $this->executeRevivalCheck($leadSource, $tierUserIds);
+
+        if($teamId) {
+            $teamUserIds = UserTeams::where('team_id', $teamId)->select('user_id')->get();
+            $tierUserIds = array_intersect($tierUserIds, $teamUserIds);
+        }
 
         // Define the order in which user statuses should be considered.
         $statusOrder = [
@@ -436,6 +462,7 @@ class CarAllocationService extends AllocationService
         $quoteBatch = QuoteBatches::latest()->first();
         $lead->quote_batch_id = $quoteBatch->id;
 
+
         // Log information about the quote batch assignment.
         info('About to assign Quote Batch with ID: '.$quoteBatch->id.' and Name: '.$quoteBatch->name.' to Quote with UUID: '.$lead->uuid);
 
@@ -474,8 +501,7 @@ class CarAllocationService extends AllocationService
     public function fetchLeadsForReAssignment($advisorId)
     {
         // Calculate the start date for lead retrieval
-        $from = now()->subDay()->setTime(12, 30)->format(config('constants.DB_DATE_FORMAT_MATCH'));
-        info('Leads will be picked up in reassignment from : '.$from.' until : '.now()->toDateTimeString());
+        $from = now()->subDay()->setTime(12, 30)->format(config('constants.DB_DATE_FORMAT_MATCH'));        info('Leads will be picked up in reassignment from : '.$from.' until : '.now()->toDateTimeString());
 
         // Check if Dubai Now exclusion should be applied
         $shouldIncludeDubaiNow = $this->getAppStorageValueByKey(ApplicationStorageEnums::APPLY_DUBAI_NOW_EXCLUSION) == 1;

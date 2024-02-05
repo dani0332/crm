@@ -2,7 +2,7 @@
 
 namespace App\Strategies;
 
-use App\Enums\AssignmentTypeEnum;
+ use App\Enums\AssignmentTypeEnum;
 use App\Models\Tier;
 use App\Services\CarAllocationService;
 use Illuminate\Database\Eloquent\Collection;
@@ -18,7 +18,7 @@ class CarAllocation implements Allocation
         $this->allocationId = $allocationId;
     }
 
-    public function executeSteps($overrideAdvisorId = false)
+    public function executeSteps($overrideAdvisorId = false, $teamId = false)
     {
         try {
             // Fetch the lead to process
@@ -34,9 +34,18 @@ class CarAllocation implements Allocation
 
             // If a valid tier is found
             if ($tier) {
+
+                $shouldEnforceSICCheck = $this->carAllocationService->shouldEnforceSICCheck($lead, $tier);
+
+                if ($shouldEnforceSICCheck) {
+                    info('SIC check enforced for lead : '.$lead->uuid. '. Skipping for now.');
+                    $this->processSICFlow($lead, $tier);
+                    return 0;
+                }
+
                 info('Tier finalized for lead : '.$lead->uuid.' is : '.$tier->name);
                 // Find available users for the tier
-                $availableUsers = $this->findAvailableUsers($tier->id, $lead->source);
+                $availableUsers = $this->findAvailableUsers($tier->id, $lead->source, $teamId);
 
                 // Find custom rules for the lead
                 $rules = $this->findRules($lead);
@@ -72,6 +81,16 @@ class CarAllocation implements Allocation
         }
     }
 
+    protected function processSICFlow($lead, $tier): void
+    {
+        $this->carAllocationService->processSICFlow($lead, $tier);
+    }
+
+    protected function shouldEnforceSICCheck($lead, $tier): bool
+    {
+        return $this->carAllocationService->shouldEnforceSICCheck($lead, $tier);
+    }
+
     protected function fetchLead($overrideAdvisorId): mixed
     {
         return $this->carAllocationService->fetchLead($this->allocationId, $overrideAdvisorId);
@@ -91,9 +110,9 @@ class CarAllocation implements Allocation
         return $this->carAllocationService->getTierById($lead->tier_id);
     }
 
-    protected function findAvailableUsers($tierId, $leadSource): array|Collection
+    protected function findAvailableUsers($tierId, $leadSource, $teamId): array|Collection
     {
-        return $this->carAllocationService->getEligibleUserForAllocation($tierId, null, false, $leadSource);
+        return $this->carAllocationService->getEligibleUserForAllocation($tierId, null, false, $leadSource, $teamId);
     }
 
     protected function findRules($lead)

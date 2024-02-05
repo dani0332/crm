@@ -83,6 +83,7 @@ class ApiService
         $allocationId = $request->input('quoteUUID');
         $assignAdvisor = $request->input('reAssignAdvisor', false);
         $triggerOCB = $request->input('triggerOCB', false);
+        $teamId = $request->input('teamId', false);
 
         // Handle different scenarios based on request parameters
         if ($assignAdvisor && ! $triggerOCB) {

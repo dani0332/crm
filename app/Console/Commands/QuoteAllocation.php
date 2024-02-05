@@ -7,6 +7,7 @@ use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\TiersEnum;
+use App\Enums\TiersIdEnum;
 use App\Factories\AllocationFactory;
 use App\Models\CarQuote;
 use App\Models\HealthQuote;
@@ -54,19 +55,19 @@ class QuoteAllocation extends Command
         $masterSwitchConfigValue = (int) config('constants.QUOTE_ALLOCATION_MASTER_SWITCH');
         $allocationStartDate = now()->subWeek()->startOfDay()->toDateTimeString();
         if ($quoteAllocationSwitch == 1 && $masterSwitchConfigValue == 1) {
-            $tierR = Tier::where('name', TiersEnum::TIER_R)->where('is_active', 1)->first();
             $to = now()->subMinutes(7)->toDateTimeString();
             $chunkSize = 200;
             $linesOfBusiness = [
                 QuoteTypeId::Car => [
                     'model' => CarQuote::class,
                     'allocationKey' => 'advisor_id',
-                    'conditions' => function ($lead) use ($tierR) {
+                    'conditions' => function ($lead) {
                         return $lead instanceof CarQuote
                             && ! in_array($lead->quote_status_id, [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
                             && ! in_array($lead->source, [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD])
-                            && ($lead->tier_id != $tierR->id) // exclude tier R
-                            && $lead->is_renewal_tier_email_sent === 0;
+                            && ($lead->tier_id != TiersIdEnum::TIER_R) // exclude tier R
+                            && $lead->is_renewal_tier_email_sent === 0
+                            && $lead->sic_flow_enabled === 0;
                     },
                 ],
                 QuoteTypeId::Health => [
