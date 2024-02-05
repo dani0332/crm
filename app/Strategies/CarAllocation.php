@@ -2,7 +2,7 @@
 
 namespace App\Strategies;
 
- use App\Enums\AssignmentTypeEnum;
+use App\Enums\AssignmentTypeEnum;
 use App\Models\Tier;
 use App\Services\CarAllocationService;
 use Illuminate\Database\Eloquent\Collection;
@@ -38,8 +38,9 @@ class CarAllocation implements Allocation
                 $shouldEnforceSICCheck = $this->carAllocationService->shouldEnforceSICCheck($lead, $tier);
 
                 if ($shouldEnforceSICCheck) {
-                    info('SIC check enforced for lead : '.$lead->uuid. '. Skipping for now.');
+                    info('SIC check enforced for lead : '.$lead->uuid.'. Skipping for now.');
                     $this->processSICFlow($lead, $tier);
+
                     return 0;
                 }
 

@@ -143,6 +143,7 @@ class CarAllocationService extends AllocationService
         if ($tier->id == TiersIdEnum::TIER_5 && count($plans) > 0) {
             return true;
         }
+
         return false;
     }
 
@@ -227,7 +228,7 @@ class CarAllocationService extends AllocationService
 
         $tierUserIds = $this->executeRevivalCheck($leadSource, $tierUserIds);
 
-        if($teamId) {
+        if ($teamId) {
             $teamUserIds = UserTeams::where('team_id', $teamId)->select('user_id')->get();
             $tierUserIds = array_intersect($tierUserIds, $teamUserIds);
         }
@@ -462,7 +463,6 @@ class CarAllocationService extends AllocationService
         $quoteBatch = QuoteBatches::latest()->first();
         $lead->quote_batch_id = $quoteBatch->id;
 
-
         // Log information about the quote batch assignment.
         info('About to assign Quote Batch with ID: '.$quoteBatch->id.' and Name: '.$quoteBatch->name.' to Quote with UUID: '.$lead->uuid);
 
@@ -501,7 +501,8 @@ class CarAllocationService extends AllocationService
     public function fetchLeadsForReAssignment($advisorId)
     {
         // Calculate the start date for lead retrieval
-        $from = now()->subDay()->setTime(12, 30)->format(config('constants.DB_DATE_FORMAT_MATCH'));        info('Leads will be picked up in reassignment from : '.$from.' until : '.now()->toDateTimeString());
+        $from = now()->subDay()->setTime(12, 30)->format(config('constants.DB_DATE_FORMAT_MATCH'));
+        info('Leads will be picked up in reassignment from : '.$from.' until : '.now()->toDateTimeString());
 
         // Check if Dubai Now exclusion should be applied
         $shouldIncludeDubaiNow = $this->getAppStorageValueByKey(ApplicationStorageEnums::APPLY_DUBAI_NOW_EXCLUSION) == 1;

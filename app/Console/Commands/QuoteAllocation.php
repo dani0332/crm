@@ -6,7 +6,6 @@ use App\Enums\ApplicationStorageEnums;
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
-use App\Enums\TiersEnum;
 use App\Enums\TiersIdEnum;
 use App\Factories\AllocationFactory;
 use App\Models\CarQuote;
