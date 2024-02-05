@@ -16,7 +16,6 @@ defineProps({
 });
 
 const page = usePage();
-const previousDate = getPreviousDate;
 const loader = reactive({
   table: false,
   export: false,
@@ -41,7 +40,6 @@ let availableFilters = {
 
 const canExport = ref(false);
 const filters = reactive(availableFilters);
-const leadsCount = ref(page.props.totalCount);
 
 const params = useUrlSearchParams('history');
 const cleanObj = obj => useCleanObj(obj);
@@ -184,25 +182,8 @@ function setQueryStringFilters() {
   }
 }
 
-const options = {
-  cluster: 'ap1',
-  forceTLS: false,
-};
-
-const pusher = new Pusher(page.props.pusherKey, options);
-const channel = pusher.subscribe(
-  'public.' + page.props.appEnv + '.total-leads-count',
-);
-
-const listen = () => {
-  channel.bind('leads.count', function (e) {
-    leadsCount.value = e.totalLeadsCount;
-  });
-};
-
 onMounted(() => {
   setQueryStringFilters();
-  listen();
 
   let filtersCleaned = cleanObj(filters);
 
@@ -224,11 +205,6 @@ onMounted(() => {
   filtersCount.value = Object.keys(filtersCleaned).length;
 });
 
-onUnmounted(() => {
-  channel.unbind('leads.count');
-  channel.unsubscribe('public.' + page.props.appEnv + '.total-leads-count');
-});
-
 watch(
   () => serverOptions.value,
   (newValue, oldValue) => {
@@ -243,12 +219,7 @@ watch(
     <div class="flex justify-between items-center">
       <div class="flex items-center gap-5">
         <h2 class="text-xl font-semibold">Pet Quotes List</h2>
-        <x-tooltip>
-          <span class="border-2 rounded px-3 bg-gray-200 text-sm font-medium">{{ leadsCount }}</span>
-          <template #tooltip>
-            <span>Total Leads received since {{ previousDate() }}</span>
-          </template>
-        </x-tooltip>
+        <LeadsCount :leadsCount="$page.props.totalCount" />
       </div>
       <div class="flex items-center space-x-2">
         <ColumnSelection v-model:columns="tableHeader" storage-key="pet-list" />

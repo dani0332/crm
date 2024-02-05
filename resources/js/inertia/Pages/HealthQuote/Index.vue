@@ -20,7 +20,6 @@ const notification = useToast();
 const hasRole = role => useHasRole(role);
 const hasAnyRole = role => useHasAnyRole(role);
 const rolesEnum = page.props.rolesEnum;
-const previousDate = getPreviousDate;
 
 const loader = reactive({
   table: false,
@@ -33,7 +32,6 @@ const { isRequired } = useRules();
 
 const objToUrl = obj => useObjToUrl(obj);
 const quotesSelected = ref([]);
-const leadsCount = ref(page.props.totalCount);
 
 const params = useUrlSearchParams('history');
 const cleanObj = obj => useCleanObj(obj);
@@ -138,6 +136,8 @@ const filters = reactive({
   date: null,
   status_filters: null,
   payment_status: [],
+  is_cold: false,
+  is_stale: false,
 });
 
 const subTeamOptions = [
@@ -209,6 +209,14 @@ const handleSelectedFilters = selectedFilters => {
     filters.payment_status = selectedFilters.payment_status;
   }
 
+  if (selectedFilters.cold) {
+    filters.is_cold = selectedFilters.cold;
+  }
+
+  if (selectedFilters.stale) {
+    filters.is_stale = selectedFilters.stale;
+  }
+
   onSubmit(true);
 };
 
@@ -274,25 +282,8 @@ const fixedValue = numberString => {
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
 
-const options = {
-  cluster: 'ap1',
-  forceTLS: false,
-};
-
-const pusher = new Pusher(page.props.pusherKey, options);
-const channel = pusher.subscribe(
-  'public.' + page.props.appEnv + '.total-leads-count',
-);
-
-const listen = () => {
-  channel.bind('leads.count', function (e) {
-    leadsCount.value = e.totalLeadsCount;
-  });
-};
-
 onMounted(() => {
   setQueryStringFilters();
-  listen();
 
   let filtersCleaned = cleanObj(filters);
 
@@ -314,11 +305,6 @@ onMounted(() => {
   filtersCount.value = Object.keys(filtersCleaned).length;
 });
 
-onUnmounted(() => {
-  channel.unbind('leads.count');
-  channel.unsubscribe('public.' + page.props.appEnv + '.total-leads-count');
-});
-
 watch(
   () => serverOptions.value,
   (newValue, oldValue) => {
@@ -333,14 +319,7 @@ watch(
     <div class="flex justify-between items-center">
       <div class="flex items-center gap-5">
         <h2 class="text-xl font-semibold">Health List</h2>
-        <x-tooltip>
-          <span class="border-2 rounded px-3 bg-gray-200 text-sm font-medium">{{
-            leadsCount
-          }}</span>
-          <template #tooltip>
-            <span>Total Leads received since {{ previousDate() }}</span>
-          </template>
-        </x-tooltip>
+        <LeadsCount :leadsCount="$page.props.totalCount" />
       </div>
       <LeadAssignedWidget
         v-if="hasAnyRole([rolesEnum.RMAdvisor, rolesEnum.EBPAdvisor])"

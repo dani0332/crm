@@ -141,8 +141,6 @@ const handleStatusFilter = status => {
     item => statuses.value[item - 1]?.paymentIds?.length > 0,
   );
 
-  console.log('hasPaymentStatus', hasPaymentStatus);
-
   emit('selectedFilters', {
     quote_status: quoteStatusIds,
     ...(hasPaymentStatus && {
@@ -150,6 +148,12 @@ const handleStatusFilter = status => {
         .filter(item => selectedOptions.value.status.includes(item.value))
         .map(item => item.paymentIds)
         .flat(),
+    }),
+    ...(status === 4 && {
+      cold: true,
+    }),
+    ...(status === 5 && {
+      stale: true,
     }),
   });
 };

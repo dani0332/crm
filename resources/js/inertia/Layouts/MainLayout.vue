@@ -12,8 +12,6 @@ const bannerInfo = computed(() => {
   };
 });
 
-console.log(bannerInfo.value);
-
 router.on('navigate', () => {
   openSidebar.value = false;
 });
