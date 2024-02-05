@@ -8,6 +8,8 @@ const props = defineProps({
   documentType: Object,
 });
 
+console.log(props.notes);
+
 const notification = useNotifications("toast");
 const { isRequired } = useRules();
 
