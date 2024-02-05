@@ -87,12 +87,14 @@ const onNoteSubmit = isValid => {
   formData.append('quote_uuid', notesForm.quote_uuid);
 
   uploadedFiles.value.forEach(x => {
-    formData.append('files[]', x);
+    if (x && x.id) formData.append('old_documents[]', x.id);
+    else formData.append('files[]', x);
   });
 
   loader.value.button = true;
   if (isEdit.value) {
     formData.append('id', notesForm.id);
+
     axios
       .post('/update-quote-notes', formData)
       .then(response => {

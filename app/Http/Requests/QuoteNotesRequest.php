@@ -37,7 +37,6 @@ class QuoteNotesRequest extends FormRequest
 
         if (request()->hasFile('files')) {
             // $rules['files'] = 'mimes:'.(str_replace('.', '', $this->documentType->accepted_files)).'|max:'.($this->documentType->max_size * 1024);
-            // $rules['files'] = 'mimes:image/png';
         }
 
         return $rules;

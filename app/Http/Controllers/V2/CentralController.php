@@ -250,15 +250,9 @@ class CentralController extends Controller
 
     public function updateQuoteNotes(QuoteNotesRequest $quoteNotesRequest)
     {
-        $documentIDs = [];
+        $documentIDs = !empty($quoteNotesRequest->get('old_documents')) ? $quoteNotesRequest->get('old_documents') : [];
         $quote = $this->getQuoteObject($quoteNotesRequest->quoteType, $quoteNotesRequest->quoteRequestId);
         $quote->notes()->where('id', $quoteNotesRequest->id)->update(['note' => $quoteNotesRequest->notes, 'updated_by' => auth()->id()]);
-
-        if($quoteNotesRequest->get('files') != null) {
-            foreach ($quoteNotesRequest->get('files') as $key => $oldFile) {
-                $documentIDs[] = $oldFile['id'];
-            }
-        }
 
         if ($quoteNotesRequest->hasFile('files')) {
             $quoteDocumentService = new QuoteDocumentService();
@@ -279,8 +273,8 @@ class CentralController extends Controller
 
     public function deleteQuoteNotes($id)
     {
-        dd($id);
         $quoteNote = QuoteNote::where('id', $id)->firstOrFail();
+        $quoteNote->documents()->detach();
         $quoteNote->delete();
 
         return response()->json(['response' => 'Note has been deleted']);
