@@ -239,6 +239,8 @@ class CRUDController extends Controller
         $gridData = $this->crudService->getGridData($this->genericModel, $request);
         // Getting the data for the advisor dropdown based on the model type
         $advisors = $this->crudService->getAdvisorsByModelType($this->genericModel->modelType);
+        // Get user teams
+        $teams = $this->crudService->getUserTeams(Auth::user()->id);
         // Checking if the loggedIn user has Manager or Deputy Role
         $isManagerORDeputy = Auth::user()->isManagerOrDeputy();
         $isLeadPool = Auth::user()->isLeadPool();
@@ -278,6 +280,7 @@ class CRUDController extends Controller
                 'quotes' => $gridData,
                 'leadStatuses' => $quote_status,
                 'advisors' => $advisors,
+                'teams' => $teams,
                 'userMaxCap' => $userMaxCap,
                 'todayAutoCount' => $todayAutoCount,
                 'todayManualCount' => $todayManualCount,
@@ -558,7 +561,8 @@ class CRUDController extends Controller
             $selectedLostReasonId = $this->crudService->getSelectedLostReason($this->genericModel->modelType, $record->id);
         }
         $advisors = [];
-        if (strtolower($this->genericModel->modelType) == strtolower(quoteTypeCode::Health) && ($record->health_team_type == HealthTeamType::EBP ||
+        if (! (auth()->user()->hasAnyRole([RolesEnum::CarManager, RolesEnum::CarAdvisor])) &&
+            strtolower($this->genericModel->modelType) == strtolower(quoteTypeCode::Health) && ($record->health_team_type == HealthTeamType::EBP ||
             $record->health_team_type == HealthTeamType::RM_NB || $record->health_team_type == HealthTeamType::RM_SPEED)) {
             $advisors = $this->crudService->getEBPAndRMAdvisors();
         } elseif (strtolower($this->genericModel->modelType) == 'business') {
@@ -910,10 +914,10 @@ class CRUDController extends Controller
             }
 
             $embeddedProducts = EmbeddedProductRepository::byQuoteType(QuoteTypes::HEALTH->id(), $record->id);
-
             $healthPlanTypes = HealthPlanType::where('is_active', 1)->select('id', 'text')->get();
             $quoteNotes = QuoteNoteRepository::getBy($record->id, QuoteTypes::HEALTH->name);
-            
+            $teams = $this->crudService->getUserTeams(Auth::user()->id);
+
             return inertia('HealthQuote/Show', [
                 'paymentLink' => $paymentLink,
                 'quote' => $record,
@@ -930,6 +934,7 @@ class CRUDController extends Controller
                 'nationalities' => $nationalities,
                 'emirates' => $emirates,
                 'advisors' => $advisors,
+                'teams' => $teams,
                 'quoteDocuments' => array_values($quoteDocuments->toArray()),
                 'documentTypes' => $documentTypes,
                 'cdnPath' => $cdnPath,
@@ -961,7 +966,7 @@ class CRUDController extends Controller
                     'edit_payments' => auth()->user()->can(PermissionsEnum::PaymentsEdit),
                     'create_payments' => auth()->user()->can(PermissionsEnum::PaymentsCreate) && $paymentEntityModel->plan && ! auth()->user()->hasRole(RolesEnum::PA),
                     'isPA' => auth()->user()->hasRole(RolesEnum::PA),
-                    'isAdvisor' => auth()->user()->hasRole(RolesEnum::EBPAdvisor) || auth()->user()->hasRole(RolesEnum::HealthAdvisor) || auth()->user()->hasRole(RolesEnum::RMAdvisor),
+                    'isAdvisor' => auth()->user()->hasRole(RolesEnum::EBPAdvisor) || auth()->user()->hasRole(RolesEnum::HealthAdvisor) || auth()->user()->hasRole(RolesEnum::RMAdvisor) || auth()->user()->hasRole(RolesEnum::CarAdvisor),
                 ],
                 'customerTypeEnum' => CustomerTypeEnum::asArray(),
                 'industryType' => $industryType,
@@ -1464,7 +1469,8 @@ class CRUDController extends Controller
     public function loadMoreRecords(Request $request)
     {
         if ($request->has('modelType') && $request->modelType && $request->status) {
-            $results = getDataAgainstEveryStatus($request->modelType, $request);
+            // $results = getDataAgainstEveryStatus($request->modelType, $request);
+            $results = getDataAgainstStatus($request->modelType, $request->status);
 
             // and newUi is true
             if (in_array($request->modelType, [quoteTypeCode::Health, quoteTypeCode::Business, quoteTypeCode::Travel, quoteTypeCode::Home, quoteTypeCode::Life]) && in_array($request->modelType, newUi())) {
