@@ -6,6 +6,7 @@ const props = defineProps({
   modelType: String,
   quote: Object,
   documentType: Object,
+  cdn: String
 });
 
 console.log(props.notes);
@@ -93,7 +94,7 @@ const onNoteSubmit = isValid => {
   if (isEdit.value) {
     formData.append('id', notesForm.id);
     axios
-      .put('/update-quote-notes', formData)
+      .post('/update-quote-notes', formData)
       .then(response => {
         let index = notes.value.data.findIndex(
           note => note.id == response.data.response.id,
@@ -106,11 +107,17 @@ const onNoteSubmit = isValid => {
           position: 'top',
         });
       })
-      .catch(err => {
-        notification.error({
-          title: 'Notes has not been updated',
-          position: 'top',
+      .catch(errors => {
+        Object.keys(errors.response.data.errors.files).forEach(function (key) {
+          notification.error({
+            title: errors.response.data.errors.files[key],
+            position: 'top',
+          });
         });
+        // notification.error({
+        //   title: 'Notes has not been updated',
+        //   position: 'top',
+        // });
       })
       .finally(() => {
         loader.value.button = false;
@@ -120,17 +127,24 @@ const onNoteSubmit = isValid => {
     axios
       .post('/save-quote-notes', formData)
       .then(response => {
-        notes.value.data.push(response.data.response);
+        notes.value.data.unshift(response.data.response);
         notification.success({
           title: 'Notes has been saved',
           position: 'top',
         });
       })
-      .catch(err => {
+      .catch(errors => {
+        Object.keys(errors.response.data.errors.files).forEach(function (key) {
         notification.error({
-          title: 'Notes has not been saved',
+          title: errors.response.data.errors.files[key],
           position: 'top',
         });
+      });
+        // console.log(err);
+        // notification.error({
+        //   title: 'Notes has not been saved',
+        //   position: 'top',
+        // });
       })
       .finally(() => {
         loader.value.button = false;
@@ -144,7 +158,6 @@ const notesLength = computed(() => notesForm.notes?.length ?? 0);
 const onEditNote = data => {
   notesForm.notes = data.note;
   notesForm.id = data.id;
-  console.log(data);
   uploadedFiles.value = data.documents.map(file => {
     return {
       name: file.original_name,
@@ -161,6 +174,7 @@ const showAddNotesModal = () => {
   notesForm.id = null;
   showAddNotes.value = true;
   isEdit.value = false;
+  uploadedFiles.value = [];
 };
 
 const onDeleteNote = item => {
@@ -420,7 +434,7 @@ const handleRemoveFile = file => {
           >
             <p v-if="file && file.id" class="max-w-[200px] truncate">
               <a
-                :href="$page.props.baseUrl + `/${file.url}`"
+                :href="cdn + `${file.url}`"
                 target="_blank"
                 class="text-primary"
                 >{{ file.name }}</a

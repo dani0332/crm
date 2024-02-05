@@ -243,23 +243,43 @@ class CentralController extends Controller
             $notes->documents()->sync($documentIDs);
         }
 
-        $notes = $quote->notes()->with('createdBy:id,name', 'quoteStatus:id,text')->where('id', $notes->id)->firstOrFail();
+        $notes = $quote->notes()->with('createdBy:id,name', 'quoteStatus:id,text', 'documents:doc_name,doc_url,original_name')->where('id', $notes->id)->firstOrFail();
 
         return response()->json(['response' => $notes]);
     }
 
     public function updateQuoteNotes(QuoteNotesRequest $quoteNotesRequest)
     {
+        $documentIDs = [];
         $quote = $this->getQuoteObject($quoteNotesRequest->quoteType, $quoteNotesRequest->quoteRequestId);
         $quote->notes()->where('id', $quoteNotesRequest->id)->update(['note' => $quoteNotesRequest->notes, 'updated_by' => auth()->id()]);
 
-        $notes = $quote->notes()->with('createdBy:id,name', 'quoteStatus:id,text')->where('id', $quoteNotesRequest->id)->firstOrFail();
+        if($quoteNotesRequest->get('files') != null) {
+            foreach ($quoteNotesRequest->get('files') as $key => $oldFile) {
+                $documentIDs[] = $oldFile['id'];
+            }
+        }
+
+        if ($quoteNotesRequest->hasFile('files')) {
+            $quoteDocumentService = new QuoteDocumentService();
+
+            foreach ($quoteNotesRequest->file('files') as $file) {
+                $quoteDoument = $quoteDocumentService->uploadQuoteDocument($file, $quoteNotesRequest->all(), $quote);
+                $documentIDs[] = $quoteDoument->id;
+            }
+        }
+
+        $note = $quote->notes()->where('id', $quoteNotesRequest->id)->firstOrFail();
+        $note->documents()->sync($documentIDs);
+
+        $notes = $quote->notes()->with('createdBy:id,name', 'quoteStatus:id,text', 'documents:doc_name,doc_url,original_name')->where('id', $quoteNotesRequest->id)->firstOrFail();
 
         return response()->json(['response' => $notes]);
     }
 
     public function deleteQuoteNotes($id)
     {
+        dd($id);
         $quoteNote = QuoteNote::where('id', $id)->firstOrFail();
         $quoteNote->delete();
 

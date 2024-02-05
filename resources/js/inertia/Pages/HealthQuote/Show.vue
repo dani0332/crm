@@ -1390,6 +1390,7 @@ const handleChildUpdate = planId => {
           :notes="quoteNotes"
           :modelType="modelType"
           :quote="quote"
+          :cdn="cdnPath"
         />
         <x-button size="sm" color="#ff5e00" @click.prevent="openDuplicate">
           Duplicate Lead
