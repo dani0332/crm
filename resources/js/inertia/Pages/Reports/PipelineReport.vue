@@ -10,6 +10,8 @@ const loaders = reactive({
 
 const advisorOptions = ref([]);
 
+const teamOptions = ref([]);
+
 const params = useUrlSearchParams('history');
 const cleanObj = obj => useCleanObj(obj);
 const serverOptions = ref({
@@ -142,18 +144,6 @@ const commonHeaders = ref([
 
 const tableHeader = ref(commonHeaders.value);
 
-const teams = ref([
-  { value: 47, label: 'Renewal' },
-  { value: 42, label: 'New Bussiness' },
-  { value: 21, label: 'EBP' },
-  { value: 19, label: 'Speed' },
-]);
-
-const filteredTeams = computed(() => {
-  if (filters.lob != 'Health') return teams.value.slice(0, 2);
-  else return teams.value.filter(team => team.value !== 'All');
-});
-
 const onSubmit = isValid => {
   if (!isValid) return;
   serverOptions.value.page = 1;
@@ -183,6 +173,34 @@ function onReset() {
     onSuccess: () => (loaders.table = false),
   });
 }
+
+const onLobChange = e => {
+  filters.teams = [];
+  filters.advisors = [];
+  advisorOptions.value = [];
+  fetchTeams();
+};
+
+const fetchTeams = async () => {
+  loaders.advisorOptions = true;
+  axios
+    .post(route('fetch-teams-by-type'), {
+      lob: filters.lob,
+    })
+    .then(res => {
+      if (res.data.teams) {
+        teamOptions.value = Object.entries(res.data.teams).map(
+          ([key, value]) => ({
+            value: key,
+            label: value,
+          }),
+        );
+      }
+    })
+    .finally(() => {
+      loaders.advisorOptions = false;
+    });
+};
 
 const onTeamChange = e => {
   if (e.length == 0) {
@@ -285,6 +303,7 @@ function setQueryStringFilters() {
 onMounted(() => {
   setQueryStringFilters();
   changeLob();
+  fetchTeams();
 });
 
 watch(
@@ -325,14 +344,14 @@ watch(
             { value: 'Corpline', label: 'Corpline' },
           ]"
           class="w-full"
-          @update:modelValue="filters.teams = null"
+          @update:modelValue="onLobChange"
         />
       </x-field>
       <x-field label="Teams">
         <x-select
           v-model="filters.teams"
           placeholder="Select Team"
-          :options="filteredTeams"
+          :options="teamOptions"
           :loading="loaders.advisorOptions"
           class="w-full"
           @update:modelValue="onTeamChange($event)"
@@ -377,6 +396,10 @@ watch(
       </x-field>
     </div>
     <div class="flex gap-3 justify-end items-center">
+      <!-- <ColumnSelection
+        v-model:columns="tableHeader"
+        :storage-key="`staleleads-report-${filters.lob}`"
+      /> -->
       <x-button size="sm" color="#ff5e00" type="submit">Search</x-button>
       <x-button size="sm" color="primary" @click.prevent="onReset">
         Reset

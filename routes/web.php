@@ -276,6 +276,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::get('/reports/pipeline-report', [ReportsController::class, 'renderPipelineReport'])->name('pipeline-report');
 
     Route::post('/reports/fetch-advisors-by-team', [ReportsController::class, 'fetchAdvisorsByTeam'])->name('fetch-advisors-by-team');
+    Route::post('/reports/fetch-teams-by-type', [ReportsController::class, 'fetchTeamsbyType'])->name('fetch-teams-by-type');
 
     Route::get('/reports/lead-list', [ReportsController::class, 'renderLeadListReport'])
         ->middleware('check_lead_report_access')

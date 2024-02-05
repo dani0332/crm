@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\RenewalBatch;
+use App\Models\Team;
 use App\Models\User;
 use App\Services\AdvisorConversionReportService;
 use App\Services\AdvisorDistributionReportService;
@@ -143,7 +144,7 @@ class ReportsController extends Controller
 
     public function renderStaleLeadsReport(Request $request, ReportService $reportService)
     {
-        $data = $reportService->getStaleLeadsReport($request)->simplePaginate(15);
+        $data = $reportService->getStaleLeadsReport($request)->simplePaginate(15)->appends(request()->query());
 
         return inertia('Reports/StaleLeadsReport', [
             'reportData' => $data,
@@ -153,7 +154,7 @@ class ReportsController extends Controller
 
     public function renderPipelineReport(Request $request, ReportService $reportService)
     {
-        $data = $reportService->getPipelineReport($request)->simplePaginate(15);
+        $data = $reportService->getPipelineReport($request)->simplePaginate(15)->appends(request()->query());
 
         return inertia('Reports/PipelineReport', [
             'reportData' => $data,
@@ -171,6 +172,23 @@ class ReportsController extends Controller
                 ->where('is_active', 1)
                 ->get()
                 ->toArray(),
+        ]);
+    }
+
+    public function fetchTeamsbyType(Request $request)
+    {
+        $parentId = Team::where('name', $request->lob)->first()->id;
+        $teams = Team::where('parent_team_id', $parentId)
+            ->select('name', 'id')
+            ->orderBy('name')
+            ->where('is_active', 1)
+            ->get()
+            ->keyBy('id')
+            ->map(fn ($users) => $users->name)
+            ->toArray();
+
+        return response()->json([
+            'teams' => $teams,
         ]);
     }
 

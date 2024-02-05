@@ -410,6 +410,16 @@ class HealthQuoteService extends BaseService
             $this->query->whereIn('payment_status_id', $request->payment_status);
         }
 
+        // is_cold filter
+        if (isset($request->is_cold) && $request->is_cold != '') {
+            $this->query->where('hqr.is_cold', 1);
+        }
+
+        // is_stale filter
+        if (isset($request->is_stale) && $request->is_stale != '') {
+            $this->query->whereNotNull('hqr.stale_at');
+        }
+
         if (Auth::user()->isSpecificTeamAdvisor('Health') || Auth::user()->isSpecificTeamAdvisor('EBP') || Auth::user()->isSpecificTeamAdvisor('RM')) {
             // if user has advisor Role then fetch leads assigned to the user only
             $this->query->where('hqr.advisor_id', Auth::user()->id);    // fetch leads assigned to the user

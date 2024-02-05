@@ -141,8 +141,6 @@ const handleStatusFilter = status => {
     item => statuses.value[item - 1]?.paymentIds?.length > 0,
   );
 
-  console.log('hasPaymentStatus', hasPaymentStatus);
-
   emit('selectedFilters', {
     quote_status: quoteStatusIds,
     ...(hasPaymentStatus && {
@@ -151,6 +149,8 @@ const handleStatusFilter = status => {
         .map(item => item.paymentIds)
         .flat(),
     }),
+    cold: selectedOptions.value.status.includes(4),
+    stale: selectedOptions.value.status.includes(5),
   });
 };
 
@@ -165,6 +165,21 @@ const filterQuoteStatuesByCodes = codes => {
   }
   return page.props.leadStatuses.filter(status => codes.includes(status.text));
 };
+
+onMounted(() => {
+  setTimeout(() => {
+    if (props.filters) {
+      Object.keys(props.filters).forEach(key => {
+        if (key === 'is_cold' && props.filters[key]) {
+          console.log('cold');
+          selectedOptions.value.status.push(4);
+        } else if (key === 'is_stale' && props.filters[key]) {
+          selectedOptions.value.status.push(5);
+        }
+      });
+    }
+  }, 1000);
+});
 </script>
 <template>
   <div class="flex gap-px">

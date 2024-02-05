@@ -14,8 +14,6 @@ const page = usePage();
 const canExport = ref(false);
 const notification = useNotifications('toast');
 const { isRequired } = useRules();
-const previousDate = getPreviousDate;
-const leadsCount = ref(page.props.totalCount);
 
 const created_at_rule = v => {
   if (filters.created_at_end) {
@@ -234,25 +232,8 @@ function setQueryStringFilters() {
   }
 }
 
-const options = {
-  cluster: 'ap1',
-  forceTLS: false,
-};
-
-const pusher = new Pusher(page.props.pusherKey, options);
-const channel = pusher.subscribe(
-  'public.' + page.props.appEnv + '.total-leads-count',
-);
-
-const listen = () => {
-  channel.bind('leads.count', function (e) {
-    leadsCount.value = e.totalLeadsCount;
-  });
-};
-
 onMounted(() => {
   setQueryStringFilters();
-  listen();
 
   let filtersCleaned = cleanObj(filters);
 
@@ -274,18 +255,12 @@ onMounted(() => {
   filtersCount.value = Object.keys(filtersCleaned).length;
 });
 
-onUnmounted(() => {
-  channel.unbind('leads.count');
-  channel.unsubscribe('public.' + page.props.appEnv + '.total-leads-count');
-});
-
 watch(
   () => serverOptions.value,
   (newValue, oldValue) => {
     if (oldValue !== newValue) onSubmit(true);
   },
 );
-
 </script>
 
 <template>
@@ -294,12 +269,7 @@ watch(
     <div class="flex justify-between items-center">
       <div class="flex items-center gap-5">
         <h2 class="text-xl font-semibold">Lead List</h2>
-        <x-tooltip>
-          <span class="border-2 rounded px-3 bg-gray-200 text-sm font-medium">{{ leadsCount }}</span>
-          <template #tooltip>
-            <span>Total Leads received since {{ previousDate() }}</span>
-          </template>
-        </x-tooltip>
+        <LeadsCount :leadsCount="$page.props.totalCount" />
       </div>
       <div class="flex items-center space-x-2">
         <ColumnSelection
