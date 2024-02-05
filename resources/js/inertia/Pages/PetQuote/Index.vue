@@ -37,8 +37,8 @@ let availableFilters = {
   previous_quote_policy_number_text: '',
   renewal_batch: '',
   payment_status: [],
-  is_cold: false,
-  is_stale: false,
+  is_cold: '',
+  stale_at: '',
 };
 
 const canExport = ref(false);
@@ -144,8 +144,8 @@ const handleSelectedFilters = selectedFilters => {
     filters.payment_status = selectedFilters.payment_status;
   }
 
-  filters.is_cold = selectedFilters.cold;
-  filters.is_stale = selectedFilters.stale;
+  filters.is_cold = selectedFilters.cold ? '1' : '';
+  filters.stale_at = selectedFilters.stale ? '0' : '';
 
   onSubmit(true);
 };
