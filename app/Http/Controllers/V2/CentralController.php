@@ -250,6 +250,7 @@ class CentralController extends Controller
 
     public function updateQuoteNotes(QuoteNotesRequest $quoteNotesRequest)
     {
+        dd($quoteNotesRequest->all());
         $quote = $this->getQuoteObject($quoteNotesRequest->quoteType, $quoteNotesRequest->quoteRequestId);
         $quote->notes()->where('id', $quoteNotesRequest->id)->update(['note' => $quoteNotesRequest->notes, 'updated_by' => auth()->id()]);
 
