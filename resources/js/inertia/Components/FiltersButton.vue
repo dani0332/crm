@@ -149,12 +149,8 @@ const handleStatusFilter = status => {
         .map(item => item.paymentIds)
         .flat(),
     }),
-    ...(status === 4 && {
-      cold: true,
-    }),
-    ...(status === 5 && {
-      stale: true,
-    }),
+    cold: selectedOptions.value.status.includes(4),
+    stale: selectedOptions.value.status.includes(5),
   });
 };
 
@@ -169,6 +165,21 @@ const filterQuoteStatuesByCodes = codes => {
   }
   return page.props.leadStatuses.filter(status => codes.includes(status.text));
 };
+
+onMounted(() => {
+  setTimeout(() => {
+    if (props.filters) {
+      Object.keys(props.filters).forEach(key => {
+        if (key === 'is_cold' && props.filters[key]) {
+          console.log('cold');
+          selectedOptions.value.status.push(4);
+        } else if (key === 'is_stale' && props.filters[key]) {
+          selectedOptions.value.status.push(5);
+        }
+      });
+    }
+  }, 1000);
+});
 </script>
 <template>
   <div class="flex gap-px">

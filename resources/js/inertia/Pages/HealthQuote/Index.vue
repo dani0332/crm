@@ -209,13 +209,8 @@ const handleSelectedFilters = selectedFilters => {
     filters.payment_status = selectedFilters.payment_status;
   }
 
-  if (selectedFilters.cold) {
-    filters.is_cold = selectedFilters.cold;
-  }
-
-  if (selectedFilters.stale) {
-    filters.is_stale = selectedFilters.stale;
-  }
+  filters.is_cold = selectedFilters.cold;
+  filters.is_stale = selectedFilters.stale;
 
   onSubmit(true);
 };
