@@ -135,7 +135,6 @@ const filters = reactive({
   previous_quote_policy_number: '',
   renewal_batch: '',
   date: null,
-  status_filters: null,
   assigned_to_date_start: '',
   assigned_to_date_end: '',
   payment_status: [],
@@ -457,7 +456,13 @@ watch(
           :options="leadStatusOptions"
         />
         <ComboBox
-          v-if="!hasAnyRole([rolesEnum.RMAdvisor, rolesEnum.EBPAdvisor, rolesEnum.CarAdvisor])"
+          v-if="
+            !hasAnyRole([
+              rolesEnum.RMAdvisor,
+              rolesEnum.EBPAdvisor,
+              rolesEnum.CarAdvisor,
+            ])
+          "
           v-model="filters.advisors"
           label="Advisor"
           placeholder="Search by Advisor"
@@ -486,7 +491,13 @@ watch(
           class="w-full"
         />
         <x-select
-          v-if="!hasAnyRole([rolesEnum.RMAdvisor, rolesEnum.EBPAdvisor, rolesEnum.CarAdvisor])"
+          v-if="
+            !hasAnyRole([
+              rolesEnum.RMAdvisor,
+              rolesEnum.EBPAdvisor,
+              rolesEnum.CarAdvisor,
+            ])
+          "
           v-model="filters.assignment_type"
           label="Assignment Type"
           name="assignment_type"
