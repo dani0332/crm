@@ -24,7 +24,7 @@ class TeamController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Team::with('parent')->whereNotNull('type');
+        $query = Team::with('parent')->whereNotNull('type')->orderBy('created_at', 'desc');
 
         if (isset($request->name) && ! empty($request->name)) {
             $name = $request->name;
@@ -49,6 +49,7 @@ class TeamController extends Controller
 
         return inertia('Admin/Teams/Form', [
             'products' => $products,
+          
         ]);
     }
 
@@ -81,11 +82,11 @@ class TeamController extends Controller
         $team->updated_at = now();
         $team->save();
 
-        if (isset($request->return_to_view)) {
-            return redirect('generic/team/'.$team->id)->with('success', 'Team has been stored');
-        }
+        // if (isset($request->return_to_view)) {
+        //     return redirect('generic/team/'.$team->id)->with('success', 'Team has been stored');
+        // }
 
-        return redirect(route('team.show', $team->id))->with('success', 'Team has been stored');
+        return redirect(route('team.show', $team->id))->with('success', $team->name . ' has been added');
     }
 
     /**

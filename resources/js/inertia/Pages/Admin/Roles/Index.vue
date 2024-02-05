@@ -6,6 +6,7 @@ const props = defineProps({
 const page = usePage();
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
+const dateFormat = date => useDateFormat(date, 'DD-MM-YYYY HH:mm:ss').value;
 
 const loader = reactive({
   table: false,
@@ -85,10 +86,10 @@ watchDebounced(
       </Link>
     </template>
     <template #item-created_at="{ created_at }">
-      {{ created_at ? created_at.split('T')[0] : 'N/A' }}
+      {{ created_at ? dateFormat(created_at) : 'N/A' }}
     </template>
     <template #item-updated_at="{ updated_at }">
-      {{ updated_at ? updated_at.split('T')[0] : 'N/A' }}
+      {{ updated_at ? dateFormat(updated_at) : 'N/A' }}
     </template>
   </DataTable>
   <Pagination

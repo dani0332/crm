@@ -5,6 +5,8 @@ const props = defineProps({
 });
 
 const { isRequired } = useRules();
+const isError = ref(false);
+const notification = useToast();
 
 const isEdit = computed(() => {
   return route().current().includes('edit');
@@ -15,8 +17,12 @@ const teamForm = useForm({
   name: props.team?.name ?? null,
   type: props.team?.type ?? 1,
   slabs_count: props.team?.slabs_count ?? null,
-  is_active: props.team?.is_active == 'True' ? true : false,
+  is_active: Boolean(props.team?.is_active) ?? true,
   parent_team_id: props.team?.parent_team_id ?? null,
+});
+
+const validParentId = computed(() => {
+  return (teamForm.parent_team_id == null && isError.value) ?? false;
 });
 
 const computedParent = computed(() => {
@@ -43,6 +49,11 @@ watch(
 );
 
 function onSubmit(isValid) {
+  if (teamForm.parent_team_id == 0) {
+    isError.value = true;
+  } else {
+    isError.value = false;
+  }
   if (isValid) {
     let method = isEdit.value ? 'put' : 'post';
     let url = isEdit.value
@@ -52,15 +63,22 @@ function onSubmit(isValid) {
     teamForm.submit(method, url, {
       onError: errors => {
         teamForm.setError(errors);
+        Object.keys(errors).forEach(function (key) {
+          notification.error({
+            title: errors[key],
+            position: 'top',
+          });
+        });
       },
     });
   }
 }
 
 const setInitialState = () => {
-  if (props.team.type == 'Product') teamForm.type = 1;
-  else if (props.team.type == 'Team') teamForm.type = 2;
-  else if (props.team.type == 'Subteam') teamForm.type = 3;
+  if (props.team)
+    if (props.team?.type == 'Product') teamForm.type = 1;
+    else if (props.team.type == 'Team') teamForm.type = 2;
+    else if (props.team.type == 'Subteam') teamForm.type = 3;
 };
 onMounted(() => setInitialState());
 </script>
@@ -97,9 +115,11 @@ onMounted(() => setInitialState());
       <x-field label="PARENT">
         <ComboBox
           :single="true"
+          :rules="[isRequired]"
           v-model="teamForm.parent_team_id"
           :options="computedParent"
           :disabled="teamForm.type == 1"
+          :hasError="validParentId"
         />
       </x-field>
       <x-field label="SLABS COUNT" required>
@@ -118,11 +138,11 @@ onMounted(() => setInitialState());
           :options="[
             {
               value: true,
-              label: 'Active',
+              label: 'Yes',
             },
             {
               value: false,
-              label: 'inActive',
+              label: 'No',
             },
           ]"
           class="w-full"

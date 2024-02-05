@@ -6,6 +6,7 @@ const props = defineProps({
 });
 
 const { isRequired } = useRules();
+const notification = useToast();
 
 const isError = ref(false);
 const isEdit = computed(() => {
@@ -19,11 +20,11 @@ const roleForm = useForm({
 });
 
 const validPermission = computed(() => {
-  return (roleForm.permission == null && isError.value) ?? false;
+  return (roleForm.permission.length == 0 && isError.value) ?? false;
 });
 
 watch(
-  props.rolePermissions,
+  () => props.rolePermissions,
   () => {
     if (props.rolePermissions) {
       for (let value in props.rolePermissions) {
@@ -35,7 +36,7 @@ watch(
 );
 
 function onSubmit(isValid) {
-  if (roleForm.permission == null) {
+  if (roleForm.permission.length == 0) {
     isError.value = true;
   } else {
     isError.value = false;
@@ -49,6 +50,12 @@ function onSubmit(isValid) {
     roleForm.submit(method, url, {
       onError: errors => {
         roleForm.setError(errors);
+        Object.keys(errors).forEach(function (key) {
+          notification.error({
+            title: errors[key],
+            position: 'top',
+          });
+        });
       },
     });
   }
@@ -70,7 +77,7 @@ function onSubmit(isValid) {
       <x-field label="NAME" required>
         <x-input v-model="roleForm.name" :rules="[isRequired]" class="w-full" />
       </x-field>
-      <x-field label="PERMISSIONS">
+      <x-field label="PERMISSIONS" required>
         <ComboBox
           v-model="roleForm.permission"
           :options="
@@ -79,6 +86,7 @@ function onSubmit(isValid) {
               label: x.name,
             }))
           "
+          :rules="[isRequired]"
           :hasError="validPermission"
         />
       </x-field>
