@@ -446,7 +446,7 @@ if (!(familyEmployeDiscount.includes(props.quoteType))) {
 }
 
 const discountReasons = [
-  { value: '', label: ''},
+  { value: '', label: 'Select a reason'},
   { value: 'refer_a_friend', label: 'Refer a friend', tooltip: props.paymentTooltipEnum.DISCOUNT_TYPE_LIST_REFER },
   { value: 'promotional_campaign_discount', label: 'Promotional campaign discount', tooltip: props.paymentTooltipEnum.DISCOUNT_REASON_LIST_PROMOTIONAL },
   { value: 'loyalty_reward_discount', label: 'Loyalty reward discount', tooltip: props.paymentTooltipEnum.DISCOUNT_REASON_LIST_LOYALTY },
