@@ -44,12 +44,7 @@ const updateSelectedPlan = () => {
                     break;
             }    
             
-            console.log('BEFORE OMMIT', {
-                id: props.plan.id,
-                providerName: props.plan.providerName,
-                planName: props.plan.name,
-                premium: premium.toFixed(2)
-            });
+            
             emit('update:selectedPlanChanged', {
                 id: props.plan.id,
                 providerName: props.plan.providerName,
