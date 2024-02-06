@@ -59,7 +59,7 @@ class ActivitySchedulesSeeder extends Seeder
             $rolesArray[$role] = Role::where('name', $role)->first()->id ?? null;
         }
 
-        foreach($teamsUsedInActivities as $team) {
+        foreach ($teamsUsedInActivities as $team) {
             $parentTeamId = Team::firstOrCreate(['name' => $team['parent_team'], 'type' => TeamTypeEnum::PRODUCT])->id ?? null;
             $teamsArray[$team['team']] = Team::firstOrCreate(['name' => $team['team'], 'type' => TeamTypeEnum::TEAM], ['parent_team_id' => $parentTeamId])->id ?? null;
         }
@@ -164,8 +164,8 @@ class ActivitySchedulesSeeder extends Seeder
                                 'quote_status' => [
                                     QuoteStatusEnum::RenewalTermsReceived => [
                                         'activities' => [
-                                            ['name' => 'Email Renewal Terms', 'due_days' => 2]
-                                        ]
+                                            ['name' => 'Email Renewal Terms', 'due_days' => 2],
+                                        ],
                                     ],
                                     QuoteStatusEnum::Quoted => [
                                         'activities' => [
@@ -382,8 +382,8 @@ class ActivitySchedulesSeeder extends Seeder
                                 'quote_status' => [
                                     QuoteStatusEnum::RenewalTermsReceived => [
                                         'activities' => [
-                                            ['name' => 'Email Renewal Terms', 'due_days' => 2]
-                                        ]
+                                            ['name' => 'Email Renewal Terms', 'due_days' => 2],
+                                        ],
                                     ],
                                     QuoteStatusEnum::Quoted => [
                                         'activities' => [
