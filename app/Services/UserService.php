@@ -78,9 +78,9 @@ class UserService extends BaseService
 
     public function isAllowedToShowLeadListReport()
     {
-
-        if (auth()->user()->hasRole(RolesEnum::CarAdvisor) || auth()->user()->hasRole(RolesEnum::CarManager)) {
-
+        if (auth()->user()->hasAnyRole([RolesEnum::Admin])) {
+            return true;
+        } elseif (auth()->user()->hasAnyRole([RolesEnum::CarAdvisor, RolesEnum::CarManager])) {
             if (in_array(TeamNameEnum::ORGANIC, app(User::class)->getUserTeams(auth()->user()->id)->toArray())) {
                 return true;
             }
@@ -88,5 +88,4 @@ class UserService extends BaseService
 
         return false;
     }
-
 }
