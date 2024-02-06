@@ -4,7 +4,6 @@ namespace App\Services;
 
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
-use App\Models\QuoteType;
 
 class LeadsCountService
 {
@@ -38,7 +37,7 @@ class LeadsCountService
             if (in_array($quoteType->name.'_ADVISOR', $userRoles) || in_array($quoteType->name.'_MANAGER', $userRoles)) {
                 $allowedLOBs = ++$allowedLOBs;
                 $allowedQuoteTypes[] = $quoteType;
-            } elseif(in_array(RolesEnum::Admin, $userRoles)) {
+            } elseif (in_array(RolesEnum::Admin, $userRoles)) {
                 $allowedLOBs = ++$allowedLOBs;
                 $allowedQuoteTypes[] = $quoteType;
             } else {
@@ -49,7 +48,7 @@ class LeadsCountService
         foreach ($allowedQuoteTypes as $allowedQuoteType) {
             $quoteTypeEnum = $allowedQuoteType;
             $allowedQuoteType = strtolower($allowedQuoteType->name);
-            $modelType = (in_array(ucfirst($allowedQuoteType), newUi()) && checkPersonalQuotes(ucfirst($allowedQuoteType))) ? $nameSpace.'PersonalQuote' : 
+            $modelType = (in_array(ucfirst($allowedQuoteType), newUi()) && checkPersonalQuotes(ucfirst($allowedQuoteType))) ? $nameSpace.'PersonalQuote' :
                 ((strtoupper($allowedQuoteType) == QuoteTypes::CORPLINE->name) ? $nameSpace.ucwords(QuoteTypes::BUSINESS->name).'Quote' : $nameSpace.ucwords($allowedQuoteType).'Quote');
 
             if (! class_exists($modelType)) {
