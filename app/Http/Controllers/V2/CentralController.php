@@ -235,7 +235,7 @@ class CentralController extends Controller
 
             $quoteTypeId = app(ActivitiesService::class)->getQuoteTypeId(strtolower($request->model_type));
             $payment = Payment::where('code', $quote['code'])->first();
-            $paymentSplits = PaymentSplits::where('code', $quote['code'])->first();
+            $paymentSplits = PaymentSplits::where('code', $quote['code'])->get();
             $data['quoteTypeId'] = $quoteTypeId;
             $data['id'] = $quote->id;
 

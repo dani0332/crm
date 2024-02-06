@@ -235,7 +235,94 @@ class SagePayloadFactory
             'payload' => $payLoad,
         ];
     }
+    public static function createARInvoiceSplitPayments($request, $splitPayments)
+    {
+        // Payload creation logic for default scenario
+        $taxClass = 1;
+        if ($request->commissionIncludingVat > 0) {
+            $taxClass = 1;
+        } else {
+            $taxClass = 2;
+        }
+        $payLoad = [
+            'Invoices' => [
+                [
+                    'CustomerNumber' => $request->customerId,
+                    'DocumentNumber' => $request->insurerPremiumNumber,
+                    'InvoiceDescription' => $request->invoiceDescription . '-PREM',
+                    'DocumentDate' => $request->insurerInvoiceDate,
+                    'CurrencyCode' => 'AED',
+                    'DueDate' => $request->paymentDueDate ?? null,
+                    'TaxGroup' => 'VAT',
+                    'TaxClass1' => 5,
+                    'TaxAmount1' => 0.000,
+                    'DocumentTotalBeforeTax' => $request->premiumWithoutTax,
+                    'DocumentTotalIncludingTax' => $request->premiumWithTax,
+                    'PostingDate' => $request->bookingDate,
+                    "Terms" => "SPLIT" . count($splitPayments),
+                    'InvoiceDetails' => [
+                        [
+                            'Description' => $request->invoiceDescription,
+                            'TaxClass1' => 5,
+                            'RevenueAccount' => '55020',
+                            'ExtendedAmountWithTIP' => $request->premiumWithTax,
+                            'ExtendedAmountWithoutTIP' => $request->premiumWithoutTax,
+                        ],
+                    ],
 
+                    'InvoicePaymentSchedules' => self::createPaymentSchedules($splitPayments),
+                    'InvoiceOptionalFields' => self::createOptionalFields($request),
+                ],
+                [
+                    'CustomerNumber' => $request->customerId,
+                    'DocumentNumber' => $request->insurerCommissionNumber,
+                    'InvoiceDescription' => $request->invoiceDescription . '-COM',
+                    'DocumentDate' => $request->insurerInvoiceDate,
+                    'CurrencyCode' => 'AED',
+                    'DueDate' => $request->paymentDueDate ?? null,
+                    'TaxGroup' => 'VAT',
+                    'TaxClass1' => $taxClass,
+                    'TaxAmount1' => $request->vatOnCommission,
+                    'DocumentTotalBeforeTax' => $request->commission,
+                    'DocumentTotalIncludingTax' => $request->commissionIncludingVat,
+                    'PostingDate' => $request->bookingDate,
+                    'InvoiceDetails' => [
+                        [
+                            'Description' => $request->invoiceDescription,
+                            'TaxClass1' => $taxClass,
+                            'TaxAmount1' => $request->vatOnCommission,
+                            'RevenueAccount' => '60010',
+                            'ExtendedAmountWithTIP' => $request->commissionIncludingVat,
+                            'ExtendedAmountWithoutTIP' => $request->commission,
+                        ],
+                    ],
+                    'InvoicePaymentSchedules' => [
+                        [
+                            'DueDate' => $request->paymentDueDate ?? null,
+                        ],
+                    ],
+                    'InvoiceOptionalFields' => self::createOptionalFields($request),
+                ],
+            ],
+        ];
+        return [
+            'endPoint' => 'AR/ARInvoiceBatches',
+            'payload' => $payLoad,
+        ];
+    }
+
+    public static function createPaymentSchedules($splitPayments)
+    {
+        $data = [];
+        foreach ($splitPayments as $key => $item) {
+            $temp['EntryNumber'] = 1;
+            $temp['PaymentNumber'] = $key + 1;
+            $temp['DueDate'] = date('Y-m-d', strtotime($item->due_date));;
+            $temp['AmountDue']  =  $item->collection_amount;
+            $data[] = $temp;
+        }
+        return $data;
+    }
     public static function createCustomerPayload($customer)
     {
         $data = $customer->data;
