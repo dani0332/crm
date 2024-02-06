@@ -40,6 +40,7 @@ const props = defineProps({
   canAddBatchNumber: Boolean,
   quoteRequest: Object,
   quoteNotes: Object,
+  cdnPath: String,
 });
 
 const page = usePage();
@@ -288,6 +289,7 @@ const linkEntity = () => {
           :notes="quoteNotes"
           :modelType="quoteType"
           :quote="quote"
+          :cdn="cdnPath"
         />
         <x-button size="sm" color="#ff5e00" @click.prevent="openDuplicate">
           Duplicate Lead

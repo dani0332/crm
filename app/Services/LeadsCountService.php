@@ -3,6 +3,8 @@
 namespace App\Services;
 
 use App\Enums\QuoteTypes;
+use App\Enums\RolesEnum;
+use App\Models\QuoteType;
 
 class LeadsCountService
 {
@@ -36,13 +38,19 @@ class LeadsCountService
             if (in_array($quoteType->name.'_ADVISOR', $userRoles) || in_array($quoteType->name.'_MANAGER', $userRoles)) {
                 $allowedLOBs = ++$allowedLOBs;
                 $allowedQuoteTypes[] = $quoteType;
+            } elseif(in_array(RolesEnum::Admin, $userRoles)) {
+                $allowedLOBs = ++$allowedLOBs;
+                $allowedQuoteTypes[] = $quoteType;
+            } else {
+                continue;
             }
         }
 
         foreach ($allowedQuoteTypes as $allowedQuoteType) {
             $quoteTypeEnum = $allowedQuoteType;
             $allowedQuoteType = strtolower($allowedQuoteType->name);
-            $modelType = (in_array(ucfirst($allowedQuoteType), newUi()) && checkPersonalQuotes(ucfirst($allowedQuoteType))) ? $nameSpace.'PersonalQuote' : $nameSpace.ucwords($allowedQuoteType).'Quote';
+            $modelType = (in_array(ucfirst($allowedQuoteType), newUi()) && checkPersonalQuotes(ucfirst($allowedQuoteType))) ? $nameSpace.'PersonalQuote' : 
+                ((strtoupper($allowedQuoteType) == QuoteTypes::CORPLINE->name) ? $nameSpace.ucwords(QuoteTypes::BUSINESS->name).'Quote' : $nameSpace.ucwords($allowedQuoteType).'Quote');
 
             if (! class_exists($modelType)) {
                 return false;
@@ -60,8 +68,7 @@ class LeadsCountService
             if ($allowedLOBs > 1) {
                 $response['is_multiple_lobs_allowed'] = true;
                 $response['total_count'] = $totalCount;
-                // Todo :: Report route need to be update, it should be stale lead report route.
-                $response['quote_route'] = route('advisor-conversion-report-view');
+                $response['quote_route'] = route('stale-leads-report');
 
             } else {
                 $response['is_multiple_lobs_allowed'] = false;

@@ -4,12 +4,19 @@ namespace App\Console\Commands;
 
 use App\Enums\QuoteStatusEnum;
 use App\Models\BusinessQuote;
+use App\Models\BusinessQuoteRequestDetail;
 use App\Models\CarQuote;
+use App\Models\CarQuoteRequestDetail;
 use App\Models\HealthQuote;
+use App\Models\HealthQuoteRequestDetail;
 use App\Models\HomeQuote;
+use App\Models\HomeQuoteRequestDetail;
 use App\Models\LifeQuote;
+use App\Models\LifeQuoteRequestDetail;
 use App\Models\PersonalQuote;
+use App\Models\PersonalQuoteDetail;
 use App\Models\TravelQuote;
+use App\Models\TravelQuoteRequestDetail;
 use Illuminate\Console\Command;
 use OwenIt\Auditing\Models\Audit;
 
@@ -62,27 +69,6 @@ class UpdateLostStatus extends Command
             info('------------------- Updating : '.$eligibleQuoteType.' -------------------');
             $eligibleQuoteType::whereNotIn('quote_status_id', $skipStatus)
                 ->where('quote_status_date', '<', date(config('constants.DATE_FORMAT_ONLY'), strtotime('-120 days')))
-                ->when($eligibleQuoteType == CarQuote::class, function ($carQuote) {
-                    $carQuote->with('carQuoteRequestDetail');
-                })
-                ->when($eligibleQuoteType == HomeQuote::class, function ($homeQuote) {
-                    $homeQuote->with('homeQuoteRequestDetail');
-                })
-                ->when($eligibleQuoteType == HealthQuote::class, function ($healthQuote) {
-                    $healthQuote->with('healthQuoteRequestDetail');
-                })
-                ->when($eligibleQuoteType == LifeQuote::class, function ($lifeQuote) {
-                    $lifeQuote->with('lifeQuoteRequestDetail');
-                })
-                ->when($eligibleQuoteType == BusinessQuote::class, function ($businessQuote) {
-                    $businessQuote->with('businessQuoteRequestDetail');
-                })
-                ->when($eligibleQuoteType == PersonalQuote::class, function ($personalQuote) {
-                    $personalQuote->with('quoteDetail');
-                })
-                ->when($eligibleQuoteType == TravelQuote::class, function ($travelQuote) {
-                    $travelQuote->with('travelQuoteRequestDetail');
-                })
                 ->chunkById(1000, function ($quoteDetails) use ($eligibleQuoteType, $lostReasonId) {
                     foreach ($quoteDetails as $quoteDetail) {
                         $quoteDetail->update([
@@ -90,7 +76,7 @@ class UpdateLostStatus extends Command
                             'quote_status_date' => now(),
                         ]);
 
-                        info('Quote Found-'.$eligibleQuoteType." - Quote ID: $quoteDetail->id - Quote Ref-ID: $quoteDetail->code - Old Status: $quoteDetail->quote_status_id - New Status: ".QuoteStatusEnum::Lost." - Updated At: $quoteDetail->updated_at");
+                        info('Quote Found-'.$eligibleQuoteType." - Quote Ref-ID: $quoteDetail->code - Old Status: $quoteDetail->quote_status_id - New Status: ".QuoteStatusEnum::Lost." - Updated At: $quoteDetail->updated_at");
                         Audit::create([
                             'event' => 'updated',
                             'auditable_type' => $eligibleQuoteType,
@@ -103,39 +89,31 @@ class UpdateLostStatus extends Command
 
                         switch ($eligibleQuoteType) {
                             case CarQuote::class:
-                                $quoteDetail->carQuoteRequestDetail->update([
-                                    'lost_reason_id' => $lostReasonId,
-                                ]);
+                                CarQuoteRequestDetail::updateOrCreate(['car_quote_request_id' => $quoteDetail->id], ['lost_reason_id' => $lostReasonId]);
                                 break;
+
                             case HomeQuote::class:
-                                $quoteDetail->homeQuoteRequestDetail->update([
-                                    'lost_reason_id' => $lostReasonId,
-                                ]);
+                                HomeQuoteRequestDetail::updateOrCreate(['home_quote_request_id' => $quoteDetail->id], ['lost_reason_id' => $lostReasonId]);
                                 break;
+
                             case HealthQuote::class:
-                                $quoteDetail->healthQuoteRequestDetail->update([
-                                    'lost_reason_id' => $lostReasonId,
-                                ]);
+                                HealthQuoteRequestDetail::updateOrCreate(['health_quote_request_id' => $quoteDetail->id], ['lost_reason_id' => $lostReasonId]);
                                 break;
+
                             case LifeQuote::class:
-                                $quoteDetail->lifeQuoteRequestDetail->update([
-                                    'lost_reason_id' => $lostReasonId,
-                                ]);
+                                LifeQuoteRequestDetail::updateOrCreate(['life_quote_request_id' => $quoteDetail->id], ['lost_reason_id' => $lostReasonId]);
                                 break;
+
                             case BusinessQuote::class:
-                                $quoteDetail->businessQuoteRequestDetail->update([
-                                    'lost_reason_id' => $lostReasonId,
-                                ]);
+                                BusinessQuoteRequestDetail::updateOrCreate(['business_quote_request_id' => $quoteDetail->id], ['lost_reason_id' => $lostReasonId]);
                                 break;
+
                             case PersonalQuote::class:
-                                $quoteDetail->quoteDetail->update([
-                                    'lost_reason_id' => $lostReasonId,
-                                ]);
+                                PersonalQuoteDetail::updateOrCreate(['personal_quote_id' => $quoteDetail->id], ['lost_reason_id' => $lostReasonId]);
                                 break;
+
                             case TravelQuote::class:
-                                $quoteDetail->travelQuoteRequestDetail->update([
-                                    'lost_reason_id' => $lostReasonId,
-                                ]);
+                                TravelQuoteRequestDetail::updateOrCreate(['travel_quote_request_id' => $quoteDetail->id], ['lost_reason_id' => $lostReasonId]);
                                 break;
                             default:
                                 break;

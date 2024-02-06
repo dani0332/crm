@@ -37,6 +37,7 @@ const props = defineProps({
   canAddBatchNumber: Boolean,
   quoteRequest: Object,
   quoteNotes: Object,
+  cdnPath: String,
 });
 
 const page = usePage();
@@ -227,6 +228,7 @@ const linkEntity = () => {
           :notes="quoteNotes"
           :modelType="quoteType"
           :quote="quote"
+          :cdn="cdnPath"
         />
         <Link
           v-if="can(permissionsEnum.YachtQuotesEdit)"

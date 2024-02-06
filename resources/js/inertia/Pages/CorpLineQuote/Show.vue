@@ -30,6 +30,7 @@ const props = defineProps({
   noteDocumentType: Object,
   storageUrl: String,
   quoteNotes: Object,
+  cdnPath: String,
 });
 
 const page = usePage();
@@ -562,6 +563,7 @@ const linkEntity = () => {
           :notes="quoteNotes"
           modelType="Business"
           :quote="quote"
+          :cdn="cdnPath"
         />
         <x-button
           v-if="isDuplicateAllowed"

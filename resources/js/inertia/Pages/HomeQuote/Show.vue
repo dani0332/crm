@@ -38,6 +38,7 @@ const props = defineProps({
   noteDocumentType: Object,
   storageUrl: String,
   quoteNotes: Object,
+  cdnPath: String,
 });
 
 const page = usePage();
@@ -480,6 +481,7 @@ const linkEntity = () => {
           :notes="quoteNotes"
           :modelType="modelType"
           :quote="quote"
+          :cdn="cdnPath"
         />
         <x-button size="sm" color="#ff5e00" @click.prevent="openDuplicate">
           Duplicate Lead

@@ -188,7 +188,6 @@ function setQueryStringFilters() {
 
 onMounted(() => {
   setQueryStringFilters();
-  listen();
 
   if (hasRole(rolesEnum.YachtManager) || hasRole(rolesEnum.Admin)) {
     permissionAssignLeads.value = true;

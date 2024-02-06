@@ -174,7 +174,6 @@ function setQueryStringFilters() {
 
 onMounted(() => {
   setQueryStringFilters();
-  listen();
 
   if (hasRole(rolesEnum.CycleAdvisor)) {
     quotesSelected.value = null;

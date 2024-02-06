@@ -148,6 +148,7 @@ class CycleQuoteController extends Controller
         $uboRelations = LookupRepository::where('key', LookupsEnum::UBO_RELATION)->get();
         $emirates = Emirate::where('is_active', 1)->select('id', 'text')->get();
         $quoteNotes = QuoteNoteRepository::getBy($quote->id, quoteTypeCode::Cycle);
+        $cdnPath = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
 
         return inertia('CycleQuote/Show', [
             'quoteType' => QuoteTypes::CYCLE,
@@ -176,6 +177,7 @@ class CycleQuoteController extends Controller
             'UBORelations' => $uboRelations,
             'noteDocumentType' => $noteDocumentType,
             'quoteNotes' => $quoteNotes,
+            'cdnPath' => $cdnPath,
         ]);
     }
 

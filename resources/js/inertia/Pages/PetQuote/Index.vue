@@ -198,7 +198,6 @@ function setQueryStringFilters() {
 
 onMounted(() => {
   setQueryStringFilters();
-  listen();
 
   let filtersCleaned = cleanObj(filters);
 

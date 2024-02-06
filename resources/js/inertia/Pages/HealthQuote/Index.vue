@@ -312,7 +312,6 @@ const permissionsEnum = page.props.permissionsEnum;
 
 onMounted(() => {
   setQueryStringFilters();
-  listen();
 
   let filtersCleaned = cleanObj(filters);
 

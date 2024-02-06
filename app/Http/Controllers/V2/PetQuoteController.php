@@ -127,6 +127,7 @@ class PetQuoteController extends Controller
             })->values();
         }
 
+        $cdnPath = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
         $quoteNotes = QuoteNoteRepository::getBy($quote->id, quoteTypeCode::Pet);
 
         return inertia('PetQuote/Show', [
@@ -158,6 +159,7 @@ class PetQuoteController extends Controller
             'UBORelations' => $uboRelations,
             'noteDocumentType' => $noteDocumentType,
             'quoteNotes' => $quoteNotes,
+            'cdnPath' => $cdnPath,
         ]);
     }
 

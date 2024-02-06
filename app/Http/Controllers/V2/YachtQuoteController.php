@@ -128,6 +128,7 @@ class YachtQuoteController extends Controller
         $lookupService = app(LookupService::class);
         $industryType = $lookupService->getCompanyTypes();
         $quoteNotes = QuoteNoteRepository::getBy($quote->id, quoteTypeCode::Yacht);
+        $cdnPath = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
 
         return inertia('YachtQuote/Show', [
             'quoteType' => QuoteTypes::YACHT,
@@ -154,6 +155,7 @@ class YachtQuoteController extends Controller
             'emirates' => $emirates,
             'noteDocumentType' => $noteDocumentType,
             'quoteNotes' => $quoteNotes,
+            'cdnPath' => $cdnPath,
         ]);
     }
 
