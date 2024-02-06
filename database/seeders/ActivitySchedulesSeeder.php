@@ -39,24 +39,29 @@ class ActivitySchedulesSeeder extends Seeder
         ];
 
         $teamsUsedInActivities = [
-            TeamNameEnum::RM_NB,
-            TeamNameEnum::RM_SPEED,
-            TeamNameEnum::EBP,
-            TeamNameEnum::RM_RENEWALS,
-            TeamNameEnum::CORPLINE_TEAM,
-            TeamNameEnum::RENEWALS, // it should be updated as per corpline renewals,
-            TeamNameEnum::NO_TEAM, // Add this for null team as per requirement
+            ['parent_team' => TeamNameEnum::HEALTH, 'team' => TeamNameEnum::RM_NB],
+            ['parent_team' => TeamNameEnum::HEALTH, 'team' => TeamNameEnum::RM_SPEED],
+            ['parent_team' => TeamNameEnum::HEALTH, 'team' => TeamNameEnum::EBP],
+            ['parent_team' => TeamNameEnum::HEALTH, 'team' => TeamNameEnum::RM_RENEWALS],
+            ['parent_team' => TeamNameEnum::CORPLINE, 'team' => TeamNameEnum::CORPLINE_TEAM],
+            ['parent_team' => TeamNameEnum::CORPLINE, 'team' => TeamNameEnum::CORPLINE_RENEWALS],
+            ['parent_team' => TeamNameEnum::HOME, 'team' => TeamNameEnum::HOME],
+            ['parent_team' => TeamNameEnum::HOME, 'team' => TeamNameEnum::HOME_RENEWALS],
+            ['parent_team' => TeamNameEnum::PET, 'team' => TeamNameEnum::PET_TEAM],
+            ['parent_team' => TeamNameEnum::PET, 'team' => TeamNameEnum::PET_RENEWALS],
+            ['parent_team' => TeamNameEnum::CYCLE, 'team' => TeamNameEnum::CYCLE],
+            ['parent_team' => TeamNameEnum::CYCLE, 'team' => TeamNameEnum::CYCLE_RENEWALS],
+            ['parent_team' => TeamNameEnum::YACHT, 'team' => TeamNameEnum::YACHT_TEAM],
+            ['parent_team' => TeamNameEnum::YACHT, 'team' => TeamNameEnum::YACHT_RENEWALS],
         ];
 
         foreach ($rolesUsedInActivities as $role) {
             $rolesArray[$role] = Role::where('name', $role)->first()->id ?? null;
         }
 
-        foreach ($teamsUsedInActivities as $team) {
-            $teamsArray[$team] = Team::where([
-                'name' => $team,
-                'type' => TeamTypeEnum::TEAM,
-            ])->first()->id ?? null;
+        foreach($teamsUsedInActivities as $team) {
+            $parentTeamId = Team::firstOrCreate(['name' => $team['parent_team'], 'type' => TeamTypeEnum::PRODUCT])->id ?? null;
+            $teamsArray[$team['team']] = Team::firstOrCreate(['name' => $team['team'], 'type' => TeamTypeEnum::TEAM], ['parent_team_id' => $parentTeamId])->id ?? null;
         }
 
         $schedules = [
@@ -159,8 +164,8 @@ class ActivitySchedulesSeeder extends Seeder
                                 'quote_status' => [
                                     QuoteStatusEnum::RenewalTermsReceived => [
                                         'activities' => [
-                                            ['name' => 'Email renewal terms', 'due_days' => 2],
-                                        ],
+                                            ['name' => 'Email Renewal Terms', 'due_days' => 2]
+                                        ]
                                     ],
                                     QuoteStatusEnum::Quoted => [
                                         'activities' => [
@@ -377,8 +382,8 @@ class ActivitySchedulesSeeder extends Seeder
                                 'quote_status' => [
                                     QuoteStatusEnum::RenewalTermsReceived => [
                                         'activities' => [
-                                            ['name' => 'Email renewal terms', 'due_days' => 2],
-                                        ],
+                                            ['name' => 'Email Renewal Terms', 'due_days' => 2]
+                                        ]
                                     ],
                                     QuoteStatusEnum::Quoted => [
                                         'activities' => [
@@ -448,7 +453,7 @@ class ActivitySchedulesSeeder extends Seeder
                                     ],
                                 ],
                             ],
-                            TeamNameEnum::RENEWALS => [
+                            TeamNameEnum::CORPLINE_RENEWALS => [
                                 'quote_status' => [
                                     QuoteStatusEnum::FollowedUp => [
                                         'activities' => [
@@ -514,7 +519,7 @@ class ActivitySchedulesSeeder extends Seeder
                                     ],
                                 ],
                             ],
-                            TeamNameEnum::RENEWALS => [
+                            TeamNameEnum::CORPLINE_RENEWALS => [
                                 'quote_status' => [
                                     QuoteStatusEnum::FollowedUp => [
                                         'activities' => [
@@ -562,7 +567,7 @@ class ActivitySchedulesSeeder extends Seeder
                 'roles' => [
                     RolesEnum::HomeManager => [
                         'teams' => [
-                            TeamNameEnum::NO_TEAM => [ // It should be Home New Business Sub Team
+                            TeamNameEnum::HOME => [
                                 'quote_status' => [
                                     QuoteStatusEnum::Allocated => [
                                         'activities' => [
@@ -592,7 +597,7 @@ class ActivitySchedulesSeeder extends Seeder
                                     ],
                                 ],
                             ],
-                            TeamNameEnum::RENEWALS => [ // It should be Home Renewals Sub Team
+                            TeamNameEnum::HOME_RENEWALS => [
                                 'quote_status' => [
                                     QuoteStatusEnum::Allocated => [
                                         'activities' => [
@@ -618,7 +623,7 @@ class ActivitySchedulesSeeder extends Seeder
                     ],
                     RolesEnum::HomeAdvisor => [
                         'teams' => [
-                            TeamNameEnum::NO_TEAM => [ // It should be Home New Business Sub Team
+                            TeamNameEnum::HOME => [
                                 'quote_status' => [
                                     QuoteStatusEnum::Quoted => [
                                         'activities' => [
@@ -641,7 +646,7 @@ class ActivitySchedulesSeeder extends Seeder
                                     ],
                                 ],
                             ],
-                            TeamNameEnum::RENEWALS => [ // It should be Home Renewals Sub Team
+                            TeamNameEnum::HOME_RENEWALS => [
                                 'quote_status' => [
                                     QuoteStatusEnum::Allocated => [
                                         'activities' => [
@@ -672,7 +677,7 @@ class ActivitySchedulesSeeder extends Seeder
                 'roles' => [
                     RolesEnum::PetManager => [
                         'teams' => [
-                            TeamNameEnum::NO_TEAM => [ // It should be Pet New Business Sub Team
+                            TeamNameEnum::PET_TEAM => [
                                 'quote_status' => [
                                     QuoteStatusEnum::Allocated => [
                                         'activities' => [
@@ -702,13 +707,8 @@ class ActivitySchedulesSeeder extends Seeder
                                     ],
                                 ],
                             ],
-                            TeamNameEnum::RENEWALS => [ // It should be Pet Renewals Sub Team
+                            TeamNameEnum::PET_RENEWALS => [
                                 'quote_status' => [
-                                    QuoteStatusEnum::Allocated => [
-                                        'activities' => [
-                                            ['name' => 'Follow-up', 'due_days' => 1],
-                                        ],
-                                    ],
                                     QuoteStatusEnum::RenewalTermsSent => [
                                         'activities' => [
                                             ['name' => '1st Follow-up', 'due_days' => 1],
@@ -728,7 +728,7 @@ class ActivitySchedulesSeeder extends Seeder
                     ],
                     RolesEnum::PetAdvisor => [
                         'teams' => [
-                            TeamNameEnum::NO_TEAM => [ // It should be Pet New Business Sub Team
+                            TeamNameEnum::PET_TEAM => [
                                 'quote_status' => [
                                     QuoteStatusEnum::Quoted => [
                                         'activities' => [
@@ -751,13 +751,8 @@ class ActivitySchedulesSeeder extends Seeder
                                     ],
                                 ],
                             ],
-                            TeamNameEnum::RENEWALS => [ // It should be Pet Renewals Sub Team
+                            TeamNameEnum::PET_RENEWALS => [
                                 'quote_status' => [
-                                    QuoteStatusEnum::Allocated => [
-                                        'activities' => [
-                                            ['name' => 'Follow-up', 'due_days' => 1],
-                                        ],
-                                    ],
                                     QuoteStatusEnum::RenewalTermsSent => [
                                         'activities' => [
                                             ['name' => '1st Follow-up', 'due_days' => 1],
@@ -782,7 +777,7 @@ class ActivitySchedulesSeeder extends Seeder
                 'roles' => [
                     RolesEnum::CycleManager => [
                         'teams' => [
-                            TeamNameEnum::NO_TEAM => [ // It should be Cycle New Business Sub Team
+                            TeamNameEnum::CYCLE => [
                                 'quote_status' => [
                                     QuoteStatusEnum::Allocated => [
                                         'activities' => [
@@ -812,13 +807,8 @@ class ActivitySchedulesSeeder extends Seeder
                                     ],
                                 ],
                             ],
-                            TeamNameEnum::RENEWALS => [ // It should be Cycle Renewals Sub Team
+                            TeamNameEnum::CYCLE_RENEWALS => [
                                 'quote_status' => [
-                                    QuoteStatusEnum::Allocated => [
-                                        'activities' => [
-                                            ['name' => 'Follow-up', 'due_days' => 1],
-                                        ],
-                                    ],
                                     QuoteStatusEnum::RenewalTermsSent => [
                                         'activities' => [
                                             ['name' => '1st Follow-up', 'due_days' => 1],
@@ -838,7 +828,7 @@ class ActivitySchedulesSeeder extends Seeder
                     ],
                     RolesEnum::CycleAdvisor => [
                         'teams' => [
-                            TeamNameEnum::NO_TEAM => [ // It should be Cycle New Business Sub Team
+                            TeamNameEnum::CYCLE => [
                                 'quote_status' => [
                                     QuoteStatusEnum::Quoted => [
                                         'activities' => [
@@ -861,13 +851,8 @@ class ActivitySchedulesSeeder extends Seeder
                                     ],
                                 ],
                             ],
-                            TeamNameEnum::RENEWALS => [ // It should be Cycle Renewals Sub Team
+                            TeamNameEnum::CYCLE_RENEWALS => [
                                 'quote_status' => [
-                                    QuoteStatusEnum::Allocated => [
-                                        'activities' => [
-                                            ['name' => 'Follow-up', 'due_days' => 1],
-                                        ],
-                                    ],
                                     QuoteStatusEnum::RenewalTermsSent => [
                                         'activities' => [
                                             ['name' => '1st Follow-up', 'due_days' => 1],
@@ -892,7 +877,7 @@ class ActivitySchedulesSeeder extends Seeder
                 'roles' => [
                     RolesEnum::YachtManager => [
                         'teams' => [
-                            TeamNameEnum::NO_TEAM => [ // It should be Yacht New Business Sub Team
+                            TeamNameEnum::YACHT_TEAM => [
                                 'quote_status' => [
                                     QuoteStatusEnum::Allocated => [
                                         'activities' => [
@@ -922,13 +907,8 @@ class ActivitySchedulesSeeder extends Seeder
                                     ],
                                 ],
                             ],
-                            TeamNameEnum::RENEWALS => [ // It should be Yacht Renewals Sub Team
+                            TeamNameEnum::YACHT_RENEWALS => [
                                 'quote_status' => [
-                                    QuoteStatusEnum::Allocated => [
-                                        'activities' => [
-                                            ['name' => 'Follow-up', 'due_days' => 1],
-                                        ],
-                                    ],
                                     QuoteStatusEnum::RenewalTermsSent => [
                                         'activities' => [
                                             ['name' => '1st Follow-up', 'due_days' => 1],
@@ -948,7 +928,7 @@ class ActivitySchedulesSeeder extends Seeder
                     ],
                     RolesEnum::YachtAdvisor => [
                         'teams' => [
-                            TeamNameEnum::NO_TEAM => [ // It should be Yacht New Business Sub Team
+                            TeamNameEnum::YACHT_TEAM => [
                                 'quote_status' => [
                                     QuoteStatusEnum::Quoted => [
                                         'activities' => [
@@ -971,13 +951,8 @@ class ActivitySchedulesSeeder extends Seeder
                                     ],
                                 ],
                             ],
-                            TeamNameEnum::RENEWALS => [ // It should be Yacht Renewals Sub Team
+                            TeamNameEnum::YACHT_RENEWALS => [
                                 'quote_status' => [
-                                    QuoteStatusEnum::Allocated => [
-                                        'activities' => [
-                                            ['name' => 'Follow-up', 'due_days' => 1],
-                                        ],
-                                    ],
                                     QuoteStatusEnum::RenewalTermsSent => [
                                         'activities' => [
                                             ['name' => '1st Follow-up', 'due_days' => 1],

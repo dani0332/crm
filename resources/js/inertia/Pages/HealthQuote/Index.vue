@@ -140,6 +140,7 @@ const filters = reactive({
   payment_status: [],
   is_cold: false,
   is_stale: false,
+  status_filters: null,
 });
 
 const subTeamOptions = [
@@ -311,6 +312,7 @@ const permissionsEnum = page.props.permissionsEnum;
 
 onMounted(() => {
   setQueryStringFilters();
+  listen();
 
   let filtersCleaned = cleanObj(filters);
 

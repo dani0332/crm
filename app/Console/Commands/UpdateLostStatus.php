@@ -34,7 +34,6 @@ class UpdateLostStatus extends Command
      */
     public function handle()
     {
-        // Need to verify status for all quote types which were included or excluded.
         $lostReasonId = 34; //Stale for more than 90 days
         $eligibleQuoteTypes = [
             CarQuote::class,
