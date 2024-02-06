@@ -128,6 +128,11 @@ function onSubmit(isValid) {
                         ? payLoad.advisors
                         : [payLoad.advisors],
                 }),
+                ...(payLoad.batchNo && {
+                    batchNo: Array.isArray(payLoad.batchNo)
+                        ? payLoad.batchNo
+                        : [payLoad.batchNo],
+                }),
                 ...(payLoad.subTeams && {
                     subTeams: Array.isArray(payLoad.subTeams) ? payLoad.subTeams : [payLoad.subTeams],
                 }),
