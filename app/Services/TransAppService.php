@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use App\helpers\LookUpModelHelper;
-use App\Jobs\MAWelcomeJob;
 use App\Models\CarQuote;
 use App\Models\CarQuotePaymentHistory;
 use App\Models\CarQuotePolicy;
@@ -67,7 +66,7 @@ class TransAppService extends BaseService
         $customer->myalfred_expiry_date = $expiryDate;
         $customer->save();
 
-        $responseExtend = $this->berlinService->extendCustomerSubscription($customerId, $request->email);
+        $responseExtend = $this->berlinService->extendCustomerSubscription($customerId, $request->email, 'TRANSAPP', 'transapp-myalfred-we');
         info('createTransaction responseExtend: '.$responseExtend);
 
         if ($responseExtend != 201) {
@@ -78,12 +77,7 @@ class TransAppService extends BaseService
 
         if ($existingCustomer) { // Existing customer
             if ($existingCustomer->is_we_sent == 1) { // is_we_sent is true
-                if ($responseExtend == 200) { // Send email/sms if customer not signup
-                    dispatch(new MAWelcomeJob($customer->first_name, $customer->last_name, $customer->email, $customer->mobile_no, 'TRANSAPP', 'transapp-myalfred-we'));
-                }
-
                 $responseContact = SIBService::contactCreateUpdate(config('constants.SIB_MYALFRED_CONTACTS_LIST_ID'), $request->first_name, $request->last_name, $request->email, '');
-
                 if ($responseContact != 201 && $responseContact != 204) {
                     $message = 'myAlfred signup link to issued - Customer Email: '.$request->email;
                     Log::info($message);
@@ -109,12 +103,6 @@ class TransAppService extends BaseService
                     $createPolicy->save();
                 }
             }
-        }
-
-        $isCustomerExisting = MyAlFredUser::where('customer_id', $customerId)->first();
-
-        if ($sendWelcomeEmail && config('constants.ENABLE_TRANSAPP_WE') == '1' && ! $isCustomerExisting) {
-            dispatch(new MAWelcomeJob($customer->first_name, $customer->last_name, $customer->email, $customer->mobile_no, 'TRANSAPP', 'transapp-myalfred-we'));
         }
 
         return $approvalCode;
