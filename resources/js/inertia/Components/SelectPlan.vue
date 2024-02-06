@@ -13,7 +13,7 @@ const isLoading = ref(false);
 const emit = defineEmits(['update:selectedPlanChanged']);
 
 const updateSelectedPlan = () => {
-    
+
     isLoading.value = true;
 
     let data = {
@@ -44,6 +44,12 @@ const updateSelectedPlan = () => {
                     break;
             }    
             
+            console.log('BEFORE OMMIT', {
+                id: props.plan.id,
+                providerName: props.plan.providerName,
+                planName: props.plan.name,
+                premium: premium.toFixed(2)
+            });
             emit('update:selectedPlanChanged', {
                 id: props.plan.id,
                 providerName: props.plan.providerName,
