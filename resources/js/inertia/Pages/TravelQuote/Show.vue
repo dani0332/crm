@@ -1881,7 +1881,7 @@ const handleSelectionChange = (tableType, selectedItems) => {
       </template>
     </x-modal>
 
-    <customerAdditionalContacts
+    <CustomerAdditionalContacts
       quoteType="Travel"
       :customerId="quote.customer_id"
       :quoteId="quote.id"
@@ -2244,11 +2244,11 @@ const handleSelectionChange = (tableType, selectedItems) => {
                     </x-button>
               </x-button-group>
         <x-button
-          v-if="availablePlansTable.data.length > 0"
-          size="sm"
-          color="orange"
-          class="mr-2"
-          @click.prevent="onCopyText(ecomTravelInsuranceQuoteUrl + quote.uuid)"
+            v-if="availablePlansTable.data.length > 0 || availableSeniorPlansTable.data.length > 0"
+            size="sm"
+            color="orange"
+            class="mr-2"
+            @click.prevent="onCopyText(ecomTravelInsuranceQuoteUrl + quote.uuid)"
         >
           Copy Link
         </x-button>

@@ -35,7 +35,7 @@ use Illuminate\Support\Facades\Log;
 
 class CarAllocationService extends AllocationService
 {
-    public function fetchLead($quoteId)
+    public function fetchLead($quoteId, $overrideAdvisorId)
     {
         // Check if Dubai Now exclusion should be applied
         $shouldIncludeDubaiNow = $this->getAppStorageValueByKey(ApplicationStorageEnums::APPLY_DUBAI_NOW_EXCLUSION) == 1;
@@ -49,11 +49,16 @@ class CarAllocationService extends AllocationService
         }
 
         // Create a query to retrieve a car lead based on the provided quote ID and filters.
-        return CarQuote::where('uuid', $quoteId)
+        $carQuoteQuery = CarQuote::where('uuid', $quoteId)
             ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
-            ->whereNull('advisor_id')
             ->whereNotIn('source', $exemptedLeadSources)
-            ->where('is_renewal_tier_email_sent', 0)->first();
+            ->where('is_renewal_tier_email_sent', 0);
+
+        if (! $overrideAdvisorId) {
+            $carQuoteQuery->whereNull('advisor_id');
+        }
+
+        return $carQuoteQuery->first();
     }
 
     public function getTier($tierId)
