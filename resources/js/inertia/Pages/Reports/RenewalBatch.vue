@@ -520,6 +520,10 @@ onMounted(() => {
         onTeamChange(params['teams[]']);
     }
 
+    if (params['batchNo[]'] && typeof filters.batchNo === 'string') {
+        filters.batchNo = [params['batchNo[]']];
+    }
+
     calculateValuesAndHighlight();
     isMounted.value = true;
 });
