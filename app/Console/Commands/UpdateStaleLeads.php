@@ -58,7 +58,6 @@ class UpdateStaleLeads extends Command
 
         info("------------------- Update Stale Leads Command Started At: " . now() . " -------------------");
 
-        // Todo:: Lost reason id should be consider as per production DB
         $lostReasonId = 34; //Stale for more than 90 days
         foreach ($eligibleQuoteTypes as $eligibleQuoteType) {
 

@@ -117,7 +117,6 @@ class AutomateActivitiesCommand extends Command
                     $activities->where('status', true);
                     $activities->orderBy('created_at', 'desc')->get();
                 }])
-                // ->where('id', 3027)
                 ->chunkById(1000, function($quoteDetails) use ($quoteTypeDetail) {
                     foreach ($quoteDetails as $quoteDetail) {
                         if(!empty($quoteDetail->advisor_id)) {
@@ -125,28 +124,27 @@ class AutomateActivitiesCommand extends Command
                             $getQuoteType = isset($quoteTypeDetail['multiple_lobs']) ? 
                                 $quoteTypeDetail['quote_type_details'][$quoteDetail->quote_type_id]['quote_type_id'] : $quoteTypeDetail['quote_type_id'];
                             
-                            $scheduledActivitiesIDs = collect($quoteDetails->activities->pluck('activity_schedule_id'))
+                            $scheduledActivitiesIDs = collect($quoteDetail->activities->pluck('activity_schedule_id'))
                             ->unique()->filter(function($filter){
                                 return !is_null($filter);
                             })->toArray();
 
                             $activitySchedules = ActivitySchedule::where([
                                 'quote_type_id' => $getQuoteType,
-                                'quote_status_id' => $quoteDetails->quote_status_id
+                                'quote_status_id' => $quoteDetail->quote_status_id
                             ])
                             ->whereIn('role_id', $advisorDetails->usersroles->pluck('id'))
                             ->whereIn('team_id', $advisorDetails->teams->pluck('id'))
                             ->when(!empty($scheduledActivitiesIDs), function($previousSchedule) use ($scheduledActivitiesIDs) {
                                 $previousSchedule->whereNotIn('id', $scheduledActivitiesIDs);
                             })
-                            ->when($quoteDetails->source == LeadSourceEnum::RENEWAL_UPLOAD, function($query) use ($quoteDetail, $quoteTypeDetail) {
+                            ->when($quoteDetail->source == LeadSourceEnum::RENEWAL_UPLOAD, function($query) use ($quoteDetail, $quoteTypeDetail) {
                                 $renewalTeamID = isset($quoteTypeDetail['multiple_lobs']) ? 
                                     $quoteTypeDetail['quote_type_details'][$quoteDetail->quote_type_id]['renewal_team'] : $quoteTypeDetail['renewal_team'];
 
                                 $query->where('team_id', $renewalTeamID ?? null);
                             })->first();
 
-                            // Follow up activites due date should be count last activity created date
                             Activities::create([
                                 'title' => $activitySchedules->name,
                                 'description' => $activitySchedules->description,
@@ -157,7 +155,7 @@ class AutomateActivitiesCommand extends Command
                                 'updated_at' => now(),
                                 'assignee_id' => $quoteDetail->advisor_id,
                                 'uuid' => generateUuid(),
-                                'due_date' => addDaysExcludeWeekend($activitySchedules->due_days),
+                                'due_date' => addDaysExcludeWeekend($activitySchedules->due_days, $quoteDetail->activities->first()->created_at ?? now()),
                                 'client_name' => $quoteDetail->first_name.' '.$quoteDetail->last_name,
                                 'client_email' => $quoteDetail->email,
                                 'quote_uuid' => $quoteDetail->uuid,
