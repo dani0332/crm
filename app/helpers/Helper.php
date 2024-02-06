@@ -9,6 +9,7 @@ use App\Models\HealthQuote;
 use App\Services\HealthQuoteService;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
