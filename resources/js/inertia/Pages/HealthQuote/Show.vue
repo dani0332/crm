@@ -521,7 +521,7 @@ const memberDeleteConfirmed = () => {
       },
       onFinish: () => {
         modals.memberConfirm = false;
-        membersDetailsUpdated.value = true;
+        // membersDetailsUpdated.value = true;
 
       },
     },
@@ -872,7 +872,7 @@ const getSmallestCopayRateAsDefaultValue = () => {
 
     element.memberPremiumBreakdown?.forEach(function callback(breakDown, index){
         breakDown.ratesPerCopay?.forEach(function callback(ratePerCopay){
-            if (!ratePerCopay.premium) {
+            if (ratePerCopay.notifyAgent) {
                 element.needPriceUpdate = true;
             }
         });

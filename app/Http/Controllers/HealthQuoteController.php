@@ -95,6 +95,25 @@ class HealthQuoteController extends Controller
         return $message;
     }
 
+    public function healthPlanNotifyAgent(Request $request)
+    {
+        $response = $this->healthQuoteService->updateNotifyAgentFlag($request);
+
+        $message = '';
+        if (gettype($response) == GenericRequestEnum::INTEGER && ($response == 200 || $response == 201)) {
+            $message = 'Base Price has been revised';
+        } else {
+            if (isset($response->message)) {
+                $responseMessage = $response->message;
+            } else {
+                $responseMessage = $response;
+            }
+            $message = 'Base price has not been updated '.$responseMessage;
+        }
+
+        return $message;
+    }
+
     public function healthQuoteAddMember(MemberDetailRequest $request)
     {
         $request->validated();

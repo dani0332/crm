@@ -376,6 +376,41 @@ const onLoadingPricesUpdate = (member, updateManual=1) => {
         });
 };
 
+const markMemberBasePriceRevise = (event, id) => {
+    if (event.target.checked){
+        const apiData = {
+            quoteUID: usePage().props.quote.uuid,
+            planId: props.plan.id,
+            memberId: id,
+            defaultCopayId: defaultCopayId.value,
+            selectedCopay: selectedCopay.value,
+            notifyAgent: false,
+        };
+
+        axios
+            .post('/health-plan-notify-agent', apiData)
+            .then(res => {
+                if (res.data == 'Member Base Price Revised') {
+                    notification.success({
+                        title: res.data,
+                        position: 'top',
+                    });
+                } else {
+                    notification.error({
+                        title: res.data,
+                        position: 'top',
+                    });
+                }
+            })
+            .catch(err => {
+                console.log(err);
+            })
+            .finally(() => {
+                // todo disable checkbox on success
+            });
+    }
+}
+
 onUpdated(() => {
     defaultCopayId.value = props.plan?.selectedCopayId;
     loadingPrices.value = [];
@@ -446,6 +481,13 @@ onUpdated(() => {
                     price: 0,
                 });
 
+            }
+
+            if (data.notifyAgent && data.notifyAgent === true)
+            {
+                members.priceIsRevised = false;
+            }else{
+                members.priceIsRevised = true;
             }
         });
 
@@ -726,6 +768,7 @@ onUpdated(() => {
             <div class="p-4">
               <DataTable
                 :headers="[
+                  { text: 'Revised', value: 'memberaction' },
                   { text: 'Relationship', value: 'membercategory' },
                   { text: 'DOB', value: 'dobText' },
                   { text: 'Gender', value: 'genderText' },
@@ -786,6 +829,16 @@ onUpdated(() => {
                         <template #tooltip> <div class="whitespace-normal normal-case text-[10px]">Total Price (exclusive of  VAT)</div> </template>
                         </x-tooltip>
                     </div>
+                </template>
+
+                <!-- Here we goo  -->
+                <template #item-memberaction="item">
+                    <x-checkbox
+                        :key="item.memberId"
+                        v-model="item.priceIsRevised"
+                        :disabled="!isManual"
+                        @change="markMemberBasePriceRevise($event, item.memberId)"
+                    />
                 </template>
 
                 <template #item-membercategory="{memberId}">
