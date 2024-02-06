@@ -388,7 +388,7 @@ class HealthQuoteService extends BaseService
             $this->query->whereIn('quote_status_id', $request->quote_status);
         }
 
-        if (isset($request->advisors) && in_array(DefaultAdvisorEnum::UNASSIGNED, $request->advisors)) {
+        if (isset($request->advisors) && is_array($request->advisors) && in_array(DefaultAdvisorEnum::UNASSIGNED, $request->advisors)) {
             $this->query->whereNull('hqr.advisor_id');
         }
 
