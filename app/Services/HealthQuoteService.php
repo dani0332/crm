@@ -388,7 +388,7 @@ class HealthQuoteService extends BaseService
             $this->query->whereIn('quote_status_id', $request->quote_status);
         }
 
-        if (isset($request->advisors) && in_array(DefaultAdvisorEnum::UNASSIGNED, $request->advisors)) {
+        if (isset($request->advisors) && is_array($request->advisors) && in_array(DefaultAdvisorEnum::UNASSIGNED, $request->advisors)) {
             $this->query->whereNull('hqr.advisor_id');
         }
 
@@ -951,13 +951,13 @@ class HealthQuoteService extends BaseService
             return $responseBodyAsString;
         }
     }
+
     public function getCoPayment($id)
     {
         $quoteUuId = HealthQuote::where('uuid', '=', $id)->first();
         $coPayment = DB::table('health_plan_co_payments as hpcp')->where('id', $quoteUuId->health_plan_co_payment_id)->first();
 
         return $coPayment;
-
     }
 
     public function getQuotePlansPriority($id)
