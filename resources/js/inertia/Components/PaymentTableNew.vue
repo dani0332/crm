@@ -116,7 +116,7 @@ if (quoteTypesToCheck.includes(props.quoteType)) {
 } else {
   initalPlanDetails = props.quoteRequest.insurance_provider;
 }
-const planDetail = initalPlanDetails;
+let planDetail = ref(initalPlanDetails);
 const paidAmountSum = ref(0);
 const totalPaidAmount = ref(0);
 const masterPaymentStatus = ref('NEW');
@@ -909,7 +909,7 @@ const addPaymentModal = () => {
   isDiscountDocumentNotUploaded.value = false;
   discountDocumentModel.value = [];
 
-  if (totalPrice.value > 0 && planDetail) {
+  if (totalPrice.value > 0 && planDetail.value) {
     totalAmount.value = totalPrice.value;
   } else {
     let errorMsg = 'Please update the Total Price in the Plan Details section.'; 
@@ -1238,7 +1238,7 @@ const addPayment = isValid => {
     code: paymentMethodsForm.payment_method,
     modelType: props.quoteType,
     quote_id: props.quoteRequest.id,
-    plan_id: planDetail.id,
+    plan_id: planDetail.value.id,
     captured_amount: paymentMethodsForm.amount,
     insurance_provider_id: providerId.value,
     new_payment_structure: true,
@@ -1309,7 +1309,7 @@ const addPayment = isValid => {
     let viewData = {
       modelType: props.quoteType,
       quote_id: props.quoteRequest.id,
-      plan_id: planDetail.id,
+      plan_id: planDetail.value.id,
       customer_id: props.quoteRequest.customer_id,      
       collection_amount: collectionAmountModels.value,      
       is_declined: isDeclineClicked.value,
@@ -1342,7 +1342,7 @@ const addPayment = isValid => {
     let viewData = {
       modelType: props.quoteType,
       quote_id: props.quoteRequest.id,
-      plan_id: planDetail.id,
+      plan_id: planDetail.value.id,
       customer_id: props.quoteRequest.customer_id,
       collection_amount: paymentMethodsForm.collection_amount,
       bank_reference_number: paymentMethodsForm.bank_reference_number,
@@ -1672,12 +1672,12 @@ const getPlanName = computed(() => {
   if (props.quoteType === 'Travel') {
     return 'Not Available';
   } 
-  const plan = planDetail;
+  const plan = planDetail.value;
   return (quoteTypesToCheck.includes(props.quoteType) && plan) ? plan.text : 'Not Available';
 });
 
 const providerName = computed(() => {
-  const plan = planDetail;
+  const plan = planDetail.value;
     if (quoteTypesToCheck.includes(props.quoteType) && plan.insurance_provider) {
       return plan ? plan.insurance_provider.text : 'Not Available';
     } else {
@@ -1686,7 +1686,7 @@ const providerName = computed(() => {
 });
 
 const providerId = computed(() => {
-  const plan = planDetail;  
+  const plan = planDetail.value;  
   if (plan && plan.insurance_provider) {
     return plan.insurance_provider.id;
   } else if (plan && plan.provider_id) {
@@ -1701,6 +1701,28 @@ const providerId = computed(() => {
 watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
   calculateDueDates();
 });
+
+watch(() => props.quoteRequest, (newValue, oldValue) => {
+  //refresh premium
+  if (props.quoteType === 'Health') {
+    initialAmount = props.eCommercePrice;
+  } else {
+    initialAmount = quoteTypesToCheck.includes(props.quoteType)
+      ? props.quoteRequest.premium
+      : props.quoteRequest.price_with_vat;
+  }
+  totalPrice.value = initialAmount;
+  //refresh plan
+  if (quoteTypesToCheck.includes(props.quoteType)) {
+    initalPlanDetails = props.quoteRequest.plan;
+  } else if(props.quoteType=='Business' || props.quoteType=='Home'){
+    initalPlanDetails = props.quoteRequest.insurance_provider_details;
+  } else {
+    initalPlanDetails = props.quoteRequest.insurance_provider;
+  }
+  planDetail.value = initalPlanDetails;
+});
+
 </script>
 
 <template>
