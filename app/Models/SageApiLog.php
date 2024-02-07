@@ -9,7 +9,7 @@ class SageApiLog extends Model
 {
     use HasFactory;
 
-     /**
+    /**
      * attributes those are mass assignable
      *
      * @var array

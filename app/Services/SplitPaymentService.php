@@ -6,19 +6,15 @@ use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Factories\SagePayloadFactory;
-use App\Http\Controllers\SageApi;
 use App\Models\PaymentSplits;
 use App\Models\QuoteDocument;
-use App\Services\SageApiService;
-use App\Traits\SageLoggable;
 use App\Traits\GenericQueriesAllLobs;
-
-use Illuminate\Support\Facades\Auth;
+use App\Traits\SageLoggable;
 
 class SplitPaymentService
 {
     use GenericQueriesAllLobs;
-    use SageLoggable;   
+    use SageLoggable;
 
     public function calculateDiscount($totalSplitPayments, $discountValue)
     {
@@ -56,29 +52,31 @@ class SplitPaymentService
         } elseif ($paymentType == PaymentMethodsEnum::CreditApproval) {
             $childPaymentStatus = PaymentStatusEnum::CREDIT_APPROVED;
         }
+
         return $childPaymentStatus;
     }
 
-    public function createSageRecipt($request,$splitPayment, $splitAmount=NULL)
-    {        
-        if ($splitAmount!=NULL) {
-            $request->collection_amount = $splitAmount; 
+    public function createSageRecipt($request, $splitPayment, $splitAmount = null)
+    {
+        if ($splitAmount != null) {
+            $request->collection_amount = $splitAmount;
         }
         $returnMessage = ['status' => 'error', 'response' => ''];
         $quote = $this->getQuoteObject($request->modelType, $request->quote_id);
         $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($request->modelType));
         $customerData = ['quoteTypeId' => $quoteTypeId, 'id' => $quote->id];
-        
+
         $sageLogArray = $splitPayment->sageLog->keyBy('step')->toArray();
 
         $sageApiService = new SageApiService();
         $sageCustomerNumber = $sageApiService->verifySageCustomer($request->customer_id, $customerData, $splitPayment, $sageLogArray);
         if ($sageCustomerNumber == '') {
             $returnMessage['response'] = 'Customer not found in sage';
+
             return $returnMessage;
         }
         $request->merge(['sage_customer_number' => $sageCustomerNumber]);
-        // create prepayment reciept        
+        // create prepayment reciept
         $isLiveApiCallStep2 = true;
         if (isset($sageLogArray[2]) && $sageLogArray[2]['status'] == 'success') {
             $isLiveApiCallStep2 = false;
@@ -101,15 +99,16 @@ class SplitPaymentService
                 $readyToPostReceiptAr = SagePayloadFactory::readyToPostReceiptArPayment($sageResponse['BatchNumber']);
                 $readyToPostResponse = $sageApiService->postToSage300($readyToPostReceiptAr['endPoint'], $readyToPostReceiptAr['payload'], 'PATCH');
             }
-            
-            if($readyToPostResponse !== ''){
+
+            if ($readyToPostResponse !== '') {
                 $this->logSageApiCall($readyToPostReceiptAr, $readyToPostResponse, $splitPayment, 3, 4, 'fail');
                 $returnMessage['response'] = 'Error while making ready to post to sage';
+
                 return $returnMessage;
             } else {
-                if($isLiveApiCallStep3){
+                if ($isLiveApiCallStep3) {
                     $this->logSageApiCall($readyToPostReceiptAr, $readyToPostResponse, $splitPayment, 3, 4);
-                }                
+                }
             }
 
             $isLiveApiCallStep4 = true;
@@ -122,21 +121,23 @@ class SplitPaymentService
                 $postedResponse = json_decode($postedResponse, true);
             }
 
-            if(isset($postedResponse['error'])){
+            if (isset($postedResponse['error'])) {
                 $returnMessage['response'] = 'Error while posting to sage';
                 $this->logSageApiCall($aRPostReceipts, $postedResponse, $splitPayment, 4, 4, 'fail');
+
                 return $returnMessage;
             } else {
-                if($isLiveApiCallStep4){
+                if ($isLiveApiCallStep4) {
                     $this->logSageApiCall($aRPostReceipts, $postedResponse, $splitPayment, 4, 4);
-                }                
+                }
             }
-            $documentNumberForReciept = $sageResponse['ReceiptsAdjustments'][0]['DocumentNumber'];  
-            $returnMessage = ['status' => 'success', 'response' => $documentNumberForReciept];                                  
+            $documentNumberForReciept = $sageResponse['ReceiptsAdjustments'][0]['DocumentNumber'];
+            $returnMessage = ['status' => 'success', 'response' => $documentNumberForReciept];
         } else {
             $this->logSageApiCall($payLoadOptions, $sageResponse, $splitPayment, 2, 4, 'fail');
             $returnMessage['response'] = 'Document number not generated from sage';
         }
+
         return $returnMessage;
-    }           
+    }
 }

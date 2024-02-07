@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Factories\SagePayloadFactory;
-use App\Http\Requests\SageRequest;
 use App\Services\SageApiService;
 use Inertia\Inertia; // Import Inertia class
 
@@ -16,7 +15,8 @@ class SageApi extends Controller
     }
 
     public function index()
-    {}    
+    {
+    }
 
     private function processRequest($request, $leadStatus)
     {
@@ -27,6 +27,7 @@ class SageApi extends Controller
         // Process the JSON response and handle messages
         $message = $this->processJsonResponse($jsonResponse);
         $message .= ' SAGE Endpoint= '.$endPoint;
+
         return $message;
     }
 

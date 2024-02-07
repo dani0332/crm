@@ -6,8 +6,8 @@ use App\Factories\SagePayloadFactory;
 use App\Models\Customer;
 use App\Models\Lookup;
 use App\Models\User;
-use Illuminate\Support\Facades\Auth;
 use App\Traits\SageLoggable;
+use Illuminate\Support\Facades\Auth;
 
 class SageApiService
 {
@@ -16,7 +16,7 @@ class SageApiService
     protected $sageLogin;
     protected $sagePassword;
     protected $sageRequestUrl;
-    
+
     public function __construct()
     {
         //Guzzle was not working for post request
@@ -79,7 +79,7 @@ class SageApiService
         $payLoadOptions['payload'] = [];
         $response = '';
         if ($customer) {
-            if( $customer->sage_customer_number ) {
+            if ($customer->sage_customer_number) {
                 $this->logSageApiCall($payLoadOptions, $response, $logModal, 1, $totalSteps);
                 $sageCustomerNumber = $customer->sage_customer_number;
             } else {
@@ -106,11 +106,12 @@ class SageApiService
                     $customer->save();
                 } else {
                     $this->logSageApiCall($payLoadOptions, $response, $logModal, 1, $totalSteps, 'fail');
-                }               
+                }
             }
         }
+
         return $sageCustomerNumber;
-    }    
+    }
 
     public function postToSage300($endPoint, $payLoad, $verb = 'POST')
     {

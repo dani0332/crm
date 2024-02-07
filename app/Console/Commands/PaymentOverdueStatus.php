@@ -2,10 +2,11 @@
 
 namespace App\Console\Commands;
 
-use Illuminate\Console\Command;
+use App\Enums\PaymentStatusEnum;
 use App\Models\Payment;
 use App\Models\PaymentSplits;
-use App\Enums\PaymentStatusEnum;
+use Illuminate\Console\Command;
+
 class PaymentOverdueStatus extends Command
 {
     /**
@@ -26,16 +27,16 @@ class PaymentOverdueStatus extends Command
      * Execute the console command.
      */
     public function handle()
-    {    
-        info('PaymentOverdueStatus Command Started');    
+    {
+        info('PaymentOverdueStatus Command Started');
         // get payments where payment status is not paid/captured and collection date is less than current date
-        $currentTime = now()->format('Y-m-d') . ' 00:00:00';
+        $currentTime = now()->format('Y-m-d').' 00:00:00';
         $overduePaymentStatuses = [PaymentStatusEnum::PAID, PaymentStatusEnum::CAPTURED, PaymentStatusEnum::OVERDUE];
         $payments = Payment::whereNotIn('payment_status_id', $overduePaymentStatuses)
             ->where('collection_date', '<', $currentTime)
             ->where('total_payments', '>', 0)
             ->get();
-        
+
         // update payment status to overdue
         $payments->each(function ($payment) {
             $payment->update(['payment_status_id' => PaymentStatusEnum::OVERDUE]);
@@ -45,17 +46,11 @@ class PaymentOverdueStatus extends Command
         $splitPayments = PaymentSplits::whereNotIn('payment_status_id', $overduePaymentStatuses)
             ->where('due_date', '<', $currentTime)
             ->get();
-        
-        
+
         // update payment status to overdue
         $splitPayments->each(function ($splitPayment) {
             $splitPayment->update(['payment_status_id' => PaymentStatusEnum::OVERDUE]);
-        }); 
-        info('PaymentOverdueStatus Command Ends');        
+        });
+        info('PaymentOverdueStatus Command Ends');
     }
 }
-        
-
-        
-
-      

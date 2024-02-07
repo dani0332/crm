@@ -203,8 +203,7 @@ class CentralService
     {
         info('fn: updateQuotePayment called');
 
-        if($quote->payments()->count() > 0)
-        {
+        if ($quote->payments()->count() > 0) {
             info('fn: updateQuotePayment payment found to be updated for quote uuid: '.$quote->uuid);
 
             $payment = $quote->payments->first();
@@ -266,9 +265,9 @@ class CentralService
                 ];
 
                 $response = Ken::request($endpoint, 'post', $data);
-                info('car plan update response: ' . json_encode($response));
+                info('car plan update response: '.json_encode($response));
 
-                if(isset($response['planProcessValue']['totalPremium'])) {
+                if (isset($response['planProcessValue']['totalPremium'])) {
                     $quote = CarQuote::where('uuid', $uuid)->first();
                     $this->updateQuotePayment($quote, $response['planProcessValue']['totalPremium']);
                 }
@@ -285,7 +284,7 @@ class CentralService
                 ];
 
                 $response = Ken::request($endpoint, 'post', $data);
-                info('travel plan update response: ' . json_encode($response));
+                info('travel plan update response: '.json_encode($response));
                 break;
             case QuoteTypes::HEALTH->value:
                 $endpoint = '/api/v1-process-booking';
@@ -299,7 +298,7 @@ class CentralService
                 ];
 
                 $response = Capi::request($endpoint, 'post', $data);
-                info('health plan update response: ' . json_encode($response));
+                info('health plan update response: '.json_encode($response));
 
                 break;
         }

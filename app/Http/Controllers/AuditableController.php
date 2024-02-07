@@ -42,7 +42,7 @@ class AuditableController extends Controller
         $auditableTypes = ['App\Models\Payment', 'App\Models\PaymentSplits'];
         $query = DB::table('audits')
             ->select('audits.*', 'users.name')
-            ->join('users', 'audits.user_id', 'users.id')
+            ->leftJoin('users', 'audits.user_id', 'users.id')
             ->where('auditable_id', $request->auditableId)
             ->where('auditable_type', $request->auditableType);
 

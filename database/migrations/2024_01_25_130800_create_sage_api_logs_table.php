@@ -11,7 +11,7 @@ class CreateSageApiLogsTable extends Migration
      *
      * @return void
      */
-    public function up()     
+    public function up()
     {
         Schema::create('sage_api_logs', function (Blueprint $table) {
             $table->id();
@@ -28,7 +28,7 @@ class CreateSageApiLogsTable extends Migration
 
             // Define indexes for optimization
             $table->index('user_id');
-            $table->index('status');            
+            $table->index('status');
         });
     }
 

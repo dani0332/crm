@@ -47,12 +47,12 @@ use App\Models\QuoteDocument;
 use App\Models\Tier;
 use App\Models\User;
 use App\Repositories\AuditRepository;
-use App\Repositories\PaymentRepository;
 use App\Repositories\CustomerMembersRepository;
 use App\Repositories\EmbeddedProductRepository;
 use App\Repositories\InsuranceProviderRepository;
 use App\Repositories\LookupRepository;
 use App\Repositories\NationalityRepository;
+use App\Repositories\PaymentRepository;
 use App\Repositories\RenewalBatchRepository;
 use App\Repositories\UserRepository;
 use App\Services\ActivitiesService;
@@ -87,7 +87,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redirect;
-use Illuminate\Support\Facades\DB;
 
 class CRUDController extends Controller
 {
@@ -113,7 +112,7 @@ class CRUDController extends Controller
     protected $sendEmailCustomerService;
     protected $quoteDocumentService;
     protected $emailDataService;
-    protected $allocationService;    
+    protected $allocationService;
 
     use GenericQueriesAllLobs;
 
@@ -140,7 +139,7 @@ class CRUDController extends Controller
         SendEmailCustomerService $sendEmailCustomerService,
         QuoteDocumentService $quoteDocumentService,
         EmailDataService $emailDataService,
-        AllocationService $allocationService,        
+        AllocationService $allocationService,
     ) {
         $this->genericModel = new GenericModel();
         $this->healthQuoteService = $healthService;
@@ -166,7 +165,7 @@ class CRUDController extends Controller
         $this->emailDataService = $emailDataService;
         $this->allocationService = $allocationService;
         $this->setModelType($request);
-        $this->fillModelByModelType(ucwords($this->genericModel->modelType), $request);        
+        $this->fillModelByModelType(ucwords($this->genericModel->modelType), $request);
     }
 
     /**
@@ -1746,6 +1745,7 @@ class CRUDController extends Controller
     {
         if (auth()->user()->can(PermissionsEnum::ApprovePayments)) {
             $successMessage = PaymentRepository::updatePaymentStatus($request);
+
             return back()->with('success', $successMessage);
         } else {
             return back()->with('error', 'You are not authorized');
@@ -1756,6 +1756,7 @@ class CRUDController extends Controller
     {
         if (auth()->user()->can(PermissionsEnum::ApprovePayments)) {
             $successMessage = PaymentRepository::updateSplitPaymentsApprove($request);
+
             return back()->with('success', $successMessage);
         } else {
             return back()->with('error', 'You are not authorized');
