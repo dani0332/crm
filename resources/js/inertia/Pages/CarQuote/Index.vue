@@ -23,7 +23,6 @@ const advisorOptions = computed(() => {
 });
 
 const dateFormat = date => {
-  console.log(date);
   return date ? useDateFormat(date, 'DD-MM-YYYY').value : '-';
 };
 
