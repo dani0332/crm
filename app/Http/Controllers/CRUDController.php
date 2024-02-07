@@ -1607,7 +1607,6 @@ class CRUDController extends Controller
     public function manualPlanToggle(Request $request)
     {
         $response = $this->{strtolower($request->modelType).'QuoteService'}->updateManualPlansBulk($request);
-
         if (gettype($response) == GenericRequestEnum::INTEGER && ($response == 200 || $response == 201)) {
             return redirect()->back()->with('success', 'Plan has been updated');
         } else {
