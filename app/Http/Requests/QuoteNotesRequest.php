@@ -36,9 +36,18 @@ class QuoteNotesRequest extends FormRequest
         ];
 
         if (request()->hasFile('files')) {
-            // $rules['files'] = 'mimes:'.(str_replace('.', '', $this->documentType->accepted_files)).'|max:'.($this->documentType->max_size * 1024);
+            foreach (request()->file('files') as $key => $file) {
+                $rules['files.'.$key] = 'mimes:'.(str_replace('.', '', $this->documentType->accepted_files)).'|max:'.($this->documentType->max_size * 1024);
+            }
         }
 
         return $rules;
+    }
+
+    public function messages()
+    {
+        return [
+            'files.*' => 'The file(s) must be a file of type:'.str_replace('.', '', $this->documentType->accepted_files).', allowed max size:'.$this->documentType->max_size.' MB',
+        ];
     }
 }
