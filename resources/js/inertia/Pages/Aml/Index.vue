@@ -19,7 +19,6 @@ const { isRequired } = useRules();
 const tableHeader = [
     { text: 'Quote Type', value: 'quote_type_text' },
     { text: 'Ref-ID', value: 'cdb_id' },
-  //  { text: 'Input', value: 'input' },
     { text: 'Created At', value: 'created_at' },
     { text: 'Updated At', value: 'updated_at' },
 ];
@@ -105,7 +104,6 @@ function setQueryStringFilters() {
   }
 }
 
-
 watch(() => filtersForm, () => {
     let queryString = window.location.search;
     let urlParams = new URLSearchParams(queryString);
@@ -168,8 +166,6 @@ onMounted(() => {
           :rules="isSearchValueRequired ? [isRequired] : []"
           placeholder="Search Value"
         />
-
-
         <DatePicker
           v-model="filtersForm.amlCreatedStartDate"
           name="created_at_end"

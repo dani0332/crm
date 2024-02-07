@@ -164,4 +164,13 @@ class BikeQuoteRepository extends BaseRepository
 
         return ($forExport) ? $query->get() : $query->simplePaginate();
     }
+
+    public function fetchExport()
+    {
+        return $this->byQuoteTypeCode(QuoteTypes::BIKE)->with(['quoteStatus', 'currentlyInsuredWith', 'advisor'])
+            ->filter()
+            ->withFakeLeadCriteria()
+            ->orderBy('created_at', 'desc');
+    }
+
 }
