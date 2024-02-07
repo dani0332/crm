@@ -269,11 +269,14 @@ class ReportService extends BaseService
         ];
     }
 
-    public function getStaleLeadsReport($request)
+    public function getStaleLeadsReport($request, $includeStale = false)
     {
         $lob = $request->lob ?? QuoteTypes::HEALTH->value;
         $start = $request->date[0] ?? Carbon::now()->subDays(30)->format('Y-m-d H:i:s');
         $end = $request->date[1] ?? Carbon::now()->format('Y-m-d H:i:s');
+
+        $hasTeam = $request->has('team') && $request->team !== '';
+        $hasAdvisors = $request->has('advisors') && count($request->advisors) > 0;
 
         if ($lob == QuoteTypes::PET->value || $lob == QuoteTypes::CYCLE->value || $lob == QuoteTypes::YACHT->value) {
             $pqs = [
@@ -300,9 +303,9 @@ class ReportService extends BaseService
                     ),
                 )
                 ->leftJoin('users AS u', 'u.id', '=', 'q.advisor_id')
+                ->leftJoin('user_team AS ut', 'ut.user_id', '=', 'u.id')
                 ->where('q.quote_type_id', $personalQuoteType)
                 ->whereNotNull('q.advisor_id')
-                // ->whereNotNull('q.stale_at')
                 ->whereNotIn('q.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
                 ->whereBetween('q.created_at', [$start, $end])
                 ->groupBy('q.advisor_id');
@@ -311,14 +314,14 @@ class ReportService extends BaseService
 
             $query = DB::table($tableName.' AS q')
                 ->leftJoin('users AS u', 'u.id', '=', 'q.advisor_id')
+                ->leftJoin('user_team AS ut', 'ut.user_id', '=', 'u.id')
                 ->whereNotIn('q.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
                 ->whereNull('q.renewal_import_code')
-                // ->whereNotNull('q.stale_at')
                 ->whereBetween('q.created_at', [$start, $end]);
 
             if ($lob == QuoteTypes::HEALTH->value) {
                 $query->select(
-                    'q.health_team_type AS team',
+                    $hasTeam ? 'u.name AS team' : 'q.health_team_type AS team',
                     DB::raw(
                         '
                             SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::NewLead.' THEN 1 ELSE 0 END) AS new_lead,
@@ -335,7 +338,7 @@ class ReportService extends BaseService
                     )
                 )
                     ->whereNotNull('q.health_team_type')
-                    ->groupBy('q.health_team_type');
+                    ->groupBy($hasTeam ? 'q.advisor_id' : 'q.health_team_type');
             } elseif ($lob == QuoteTypes::HOME->value) {
                 $query->select(
                     'u.name AS team',
@@ -375,117 +378,16 @@ class ReportService extends BaseService
             }
         }
 
-        if (isset($request->sortBy) && $request->sortBy !== '' && isset($request->sortType) && $request->sortType !== '') {
-            $query->orderBy($request->sortBy, $request->sortType);
-        } else {
-            $query->orderBy('team', 'asc');
+        if ($includeStale) {
+            $query->whereNotNull('q.stale_at');
         }
 
-        return $query;
-    }
+        if ($hasTeam) {
+            $query->where('ut.team_id', $request->team);
+        }
 
-    public function getPipelineReport($request)
-    {
-        $lob = $request->lob ?? QuoteTypes::HEALTH->value;
-        $start = $request->date[0] ?? Carbon::now()->subDays(30)->format('Y-m-d H:i:s');
-        $end = $request->date[1] ?? Carbon::now()->format('Y-m-d H:i:s');
-
-        if ($lob == QuoteTypes::PET->value || $lob == QuoteTypes::CYCLE->value || $lob == QuoteTypes::YACHT->value) {
-            $pqs = [
-                QuoteTypes::PET->value => QuoteTypeId::Pet,
-                QuoteTypes::CYCLE->value => QuoteTypeId::Cycle,
-                QuoteTypes::YACHT->value => QuoteTypeId::Yacht,
-            ];
-
-            $tableName = 'personal_quotes';
-            $personalQuoteType = $pqs[$lob];
-
-            $query = DB::table($tableName.' AS q')
-                ->select(
-                    'u.name AS team',
-                    DB::raw(
-                        '
-                            SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::NewLead.' THEN 1 ELSE 0 END) AS new_lead,
-                            SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::Allocated.' THEN 1 ELSE 0 END) AS allocated,
-                            SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::Quoted.' THEN 1 ELSE 0 END) AS quoted,
-                            SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::FollowedUp.' THEN 1 ELSE 0 END) AS followed_up,
-                            SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::InNegotiation.' THEN 1 ELSE 0 END) AS in_negotiation,
-                            SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::PaymentPending.' THEN 1 ELSE 0 END) AS payment_pending
-                        '
-                    ),
-                )
-                ->leftJoin('users AS u', 'u.id', '=', 'q.advisor_id')
-                ->where('q.quote_type_id', $personalQuoteType)
-                ->whereNotNull('q.advisor_id')
-                ->whereNotIn('q.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
-                ->whereBetween('q.created_at', [$start, $end])
-                ->groupBy('q.advisor_id');
-        } else {
-            $tableName = $lob === QuoteTypes::CORPLINE->value ? 'business_quote_request' : strtolower($lob).'_quote_request';
-
-            $query = DB::table($tableName.' AS q')
-                ->leftJoin('users AS u', 'u.id', '=', 'q.advisor_id')
-                ->whereNotIn('q.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
-                ->whereNull('q.renewal_import_code')
-                ->whereBetween('q.created_at', [$start, $end]);
-
-            if ($lob == QuoteTypes::HEALTH->value) {
-                $query->select(
-                    'q.health_team_type AS team',
-                    DB::raw(
-                        '
-                            SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::NewLead.' THEN 1 ELSE 0 END) AS new_lead,
-                            SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::Allocated.' THEN 1 ELSE 0 END) AS allocated,
-                            SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::Quoted.' THEN 1 ELSE 0 END) AS quoted,
-                            SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::FollowedUp.' THEN 1 ELSE 0 END) AS followed_up,
-                            SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::InNegotiation.' THEN 1 ELSE 0 END) AS in_negotiation,
-                            SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::PaymentPending.' THEN 1 ELSE 0 END) AS payment_pending,
-                            SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::RenewalTermsReceived.' THEN 1 ELSE 0 END) AS renewal_terms_recevied,
-                            SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::ApplicationPending.' THEN 1 ELSE 0 END) AS application_pending,
-                            SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::ApplicationSubmitted.' THEN 1 ELSE 0 END) AS application_submitted,
-                            SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::MissingDocumentsRequested.' THEN 1 ELSE 0 END) AS missing_documents
-                        '
-                    )
-                )
-                    ->whereNotNull('q.health_team_type')
-                    ->groupBy('q.health_team_type');
-            } elseif ($lob == QuoteTypes::HOME->value) {
-                $query->select(
-                    'u.name AS team',
-                    DB::raw(
-                        '
-                        SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::NewLead.' THEN 1 ELSE 0 END) AS new_lead,
-                        SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::Allocated.' THEN 1 ELSE 0 END) AS allocated,
-                        SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::Quoted.' THEN 1 ELSE 0 END) AS quoted,
-                        SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::FollowedUp.' THEN 1 ELSE 0 END) AS followed_up,
-                        SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::InNegotiation.' THEN 1 ELSE 0 END) AS in_negotiation,
-                        SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::PaymentPending.' THEN 1 ELSE 0 END) AS payment_pending
-                        '
-                    )
-                )
-                    ->whereNotNull('q.advisor_id')
-                    ->groupBy('q.advisor_id');
-            } elseif ($lob == QuoteTypes::CORPLINE->value) {
-                $query->select(
-                    'u.name AS team',
-                    DB::raw(
-                        '
-                        SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::NewLead.' THEN 1 ELSE 0 END) AS new_lead,
-                        SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::Allocated.' THEN 1 ELSE 0 END) AS allocated,
-                        SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::ProposalFormRequested.' THEN 1 ELSE 0 END) AS proposal_form_requested,
-                        SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::ProposalFormReceived.' THEN 1 ELSE 0 END) AS proposal_form_received,
-                        SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::PendingRenewalInformation.' THEN 1 ELSE 0 END) AS pending_renewal_information,
-                        SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::AdditionalInformationRequested.' THEN 1 ELSE 0 END) AS additional_information_requested,
-                        SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::QuoteRequested.' THEN 1 ELSE 0 END) AS quotes_requested,
-                        SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::Quoted.' THEN 1 ELSE 0 END) AS quoted,
-                        SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::FollowedUp.' THEN 1 ELSE 0 END) AS followed_up,
-                        SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::FinalizingTerms.' THEN 1 ELSE 0 END) AS finalizing_terms
-                        '
-                    )
-                )
-                    ->whereNotNull('q.advisor_id')
-                    ->groupBy('q.advisor_id');
-            }
+        if ($hasAdvisors) {
+            $query->whereIn('q.advisor_id', $request->advisors);
         }
 
         if (isset($request->sortBy) && $request->sortBy !== '' && isset($request->sortType) && $request->sortType !== '') {

@@ -5,7 +5,7 @@
     <h2>
     {{ $item->text ?? $item->name }}
     @php 
-    $result = getDataAgainstStatus($model, $item->id, "myleads");
+    $result = getDataAgainstStatus($model, $item->id);
     @endphp
     
     </h2>

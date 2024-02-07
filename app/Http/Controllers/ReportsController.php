@@ -144,7 +144,7 @@ class ReportsController extends Controller
 
     public function renderStaleLeadsReport(Request $request, ReportService $reportService)
     {
-        $data = $reportService->getStaleLeadsReport($request)->simplePaginate(15)->appends(request()->query());
+        $data = $reportService->getStaleLeadsReport($request, true)->simplePaginate(15)->appends(request()->query());
 
         return inertia('Reports/StaleLeadsReport', [
             'reportData' => $data,
@@ -154,7 +154,7 @@ class ReportsController extends Controller
 
     public function renderPipelineReport(Request $request, ReportService $reportService)
     {
-        $data = $reportService->getPipelineReport($request)->simplePaginate(15)->appends(request()->query());
+        $data = $reportService->getStaleLeadsReport($request)->simplePaginate(15)->appends(request()->query());
 
         return inertia('Reports/PipelineReport', [
             'reportData' => $data,
