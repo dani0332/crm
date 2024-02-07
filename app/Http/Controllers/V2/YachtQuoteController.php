@@ -132,7 +132,7 @@ class YachtQuoteController extends Controller
 
         return inertia('YachtQuote/Show', [
             'quoteType' => QuoteTypes::YACHT,
-            'quote' => fn()=>$quote,
+            'quote' => fn () => $quote,
             'activities' => $activities,
             'lostReasons' => $lostReasons,
             'advisors' => $advisors,
