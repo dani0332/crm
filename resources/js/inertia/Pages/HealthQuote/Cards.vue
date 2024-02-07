@@ -143,7 +143,7 @@ onUnmounted(() => {
       </div>
 
       <div class="flex space-x-2">
-        <SortButton :options="serverOptions" @handleSorting="onSubmit(true)" />
+        <!-- <SortButton :options="serverOptions" @handleSorting="onSubmit(true)" /> -->
         <FiltersButton
           :is-shown="showFilters"
           :filters="filters"
