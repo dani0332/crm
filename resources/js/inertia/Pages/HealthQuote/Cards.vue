@@ -1,5 +1,4 @@
 <script setup>
-import Pusher from 'pusher-js';
 const props = defineProps({
   quoteStatusEnum: Object,
   quoteTypeId: String,
@@ -26,23 +25,8 @@ const quotes = reactive({
   queries: {},
 });
 
-const options = {
-  cluster: 'ap1',
-  forceTLS: false,
-};
-
 const previousDate = getPreviousDate;
 const leadsCount = ref(props.totalCount);
-const pusher = new Pusher(page.props.pusherKey, options);
-const channel = pusher.subscribe(
-  'public.' + page.props.appEnv + '.total-leads-count',
-);
-
-const listen = () => {
-  channel.bind('leads.count', function (e) {
-    leadsCount.value = e.totalLeadsCount;
-  });
-};
 
 const loader = reactive({
   request: false,
@@ -110,8 +94,6 @@ function onSubmit(isValid) {
 }
 
 onMounted(() => {
-  listen();
-
   setQueryStringFilters(params, filters);
 
   let filtersCleaned = cleanObj(filters);
@@ -134,11 +116,6 @@ onMounted(() => {
   filtersCount.value = Object.keys(filtersCleaned).length;
 });
 
-onUnmounted(() => {
-  channel.unbind('leads.count');
-  channel.unsubscribe('public.' + page.props.appEnv + '.total-leads-count');
-});
-
 watch(
   () => page.props.quotes,
   () => {
@@ -154,14 +131,7 @@ watch(
     <div class="flex justify-between items-center">
       <div class="flex items-center gap-5">
         <h2 class="text-xl font-semibold">Health List</h2>
-        <x-tooltip>
-          <span class="border-2 rounded px-3 bg-gray-200 text-sm font-medium"
-            >{{ leadsCount }}
-          </span>
-          <template #tooltip>
-            <span>Total Leads received since {{ previousDate() }}</span>
-          </template>
-        </x-tooltip>
+        <LeadsCount :leadsCount="$page.props.totalCount" />
       </div>
 
       <div class="flex space-x-2">
