@@ -138,37 +138,37 @@ function cleanString($string)
 
 function getDataAgainstStatus($modelType, $statusId, Request $request)
 {
-    $result = [];    
+    $result = [];
 
-    if(!$modelType){
+    if (! $modelType) {
         return $result;
     }
 
     $nameSpace = 'App\\Models\\';
     $modelType = (in_array(ucwords($modelType), newUi()) && checkPersonalQuotes(ucwords($modelType))) ? $nameSpace.'PersonalQuote' : $nameSpace.ucwords($modelType).'Quote';
-    
+
     if (! class_exists($modelType)) {
         return false;
     }
 
-    $modelQueryWithOutAdvisor = $modelType::when($modelType == BusinessQuote::class, function($businessQuery){
+    $modelQueryWithOutAdvisor = $modelType::when($modelType == BusinessQuote::class, function ($businessQuery) {
         $businessQuery->with('businessTypeOfInsurance');
-    })->when($modelType == HealthQuote::class, function($healthQuery){
+    })->when($modelType == HealthQuote::class, function ($healthQuery) {
         $healthQuery->with('healthCoverFor');
     })->where('quote_status_id', $statusId)
-    ->where(function($query) use ($request) {
-        getCardViewRequestFilters($query, $request);
-    });
+        ->where(function ($query) use ($request) {
+            getCardViewRequestFilters($query, $request);
+        });
 
-    $modelQuery = $modelType::when($modelType == BusinessQuote::class, function($query){
+    $modelQuery = $modelType::when($modelType == BusinessQuote::class, function ($query) {
         $query->with('businessTypeOfInsurance');
-    })->when($modelType == HealthQuote::class, function($healthQuery){
+    })->when($modelType == HealthQuote::class, function ($healthQuery) {
         $healthQuery->with('healthCoverFor');
     })->where('quote_status_id', $statusId)->where('advisor_id', auth()->user()->id)
-    ->where(function($query) use ($request) {
-        getCardViewRequestFilters($query, $request);
-    });
-    
+        ->where(function ($query) use ($request) {
+            getCardViewRequestFilters($query, $request);
+        });
+
     if (auth()->user()->isRenewalAdvisor()) {
         $result['total_leads'] = $modelQuery->whereNotNull('previous_quote_id')->count();
         $result['total_premium'] = $modelQuery->whereNotNull('previous_quote_id')->sum('premium');
@@ -622,21 +622,21 @@ if (! function_exists('apiResponse')) {
     }
 }
 
-function getCardViewRequestFilters($partialQuery, Request $request) 
+function getCardViewRequestFilters($partialQuery, Request $request)
 {
-    if($request->hasAny(['created_at_start', 'created_at_end']) && $request->filled(['created_at_start', 'created_at_end'])) {
-       $partialQuery->whereBetween('created_at', dateQueryFilter($request->created_at_start, $request->created_at_end));
+    if ($request->hasAny(['created_at_start', 'created_at_end']) && $request->filled(['created_at_start', 'created_at_end'])) {
+        $partialQuery->whereBetween('created_at', dateQueryFilter($request->created_at_start, $request->created_at_end));
     }
 
-    if($request->has('is_cold') && $request->filled('is_cold')) {
+    if ($request->has('is_cold') && $request->filled('is_cold')) {
         $partialQuery->where('is_cold', true);
     }
 
-    if($request->has('is_stale') && $request->filled('is_stale')) {
+    if ($request->has('is_stale') && $request->filled('is_stale')) {
         $partialQuery->whereNotNull('stale_at');
     }
 
-    if($request->has('payment_status') && $request->filled('payment_status') && count($request->payment_status)) {
+    if ($request->has('payment_status') && $request->filled('payment_status') && count($request->payment_status)) {
         $partialQuery->whereIn('payment_status_id', $request->payment_status);
     }
 }
