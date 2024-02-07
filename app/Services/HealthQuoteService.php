@@ -1850,7 +1850,6 @@ class HealthQuoteService extends BaseService
 
     public function updateNotifyAgentFlag($request)
     {
-        dump($request->toArray());
         if (empty($request->get('selectedCopay'))) {
             $copayId = $request->get('defaultCopayId');
         } else {
@@ -1872,9 +1871,6 @@ class HealthQuoteService extends BaseService
             'healthPlanCoPaymentId' => $copayId,
             'notifyAgent' => $request->get('notifyAgent'),
         ];
-
-        dd($dataArray);
-
 
         $apiCreds = [
             'apiEndPoint' => $apiEndPoint,

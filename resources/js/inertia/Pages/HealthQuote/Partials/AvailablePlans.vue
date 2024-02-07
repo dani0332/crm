@@ -390,7 +390,7 @@ const markMemberBasePriceRevise = (event, id) => {
         axios
             .post('/health-plan-notify-agent', apiData)
             .then(res => {
-                if (res.data == 'Member Base Price Revised') {
+                if (res.status == 200) {
                     notification.success({
                         title: res.data,
                         position: 'top',
@@ -485,9 +485,9 @@ onUpdated(() => {
 
             if (data.notifyAgent && data.notifyAgent === true)
             {
-                members.priceIsRevised = false;
+                data.priceIsRevised = false;
             }else{
-                members.priceIsRevised = true;
+                data.priceIsRevised = true;
             }
         });
 
@@ -833,12 +833,21 @@ onUpdated(() => {
 
                 <!-- Here we goo  -->
                 <template #item-memberaction="item">
-                    <x-checkbox
-                        :key="item.memberId"
-                        v-model="item.priceIsRevised"
-                        :disabled="!isManual"
-                        @change="markMemberBasePriceRevise($event, item.memberId)"
-                    />
+                    <section v-for="data in item.ratesPerCopay">
+                        <x-checkbox v-if="data.healthPlanCoPaymentId == selectedCopay.id"
+                            v-model="data.priceIsRevised"
+                            :disabled="!isManual"
+                            @change="markMemberBasePriceRevise($event, item.memberId)"
+                        />
+                        <x-checkbox v-else-if="(selectedCopay === undefined ||
+                            selectedCopay.length == 0) &&
+                            data.healthPlanCoPaymentId == defaultCopayId"
+                            v-model="data.priceIsRevised"
+                            :disabled="!isManual"
+                            @change="markMemberBasePriceRevise($event, item.memberId)"
+                        />
+
+                    </section>
                 </template>
 
                 <template #item-membercategory="{memberId}">
