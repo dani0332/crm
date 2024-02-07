@@ -166,6 +166,7 @@ const getUrl = (url, quoteTypeId) => useGetShowPageRoute(url, quoteTypeId);
         company_name,
         leadName,
         health_cover_for,
+        business_type_of_insurance,
         stale_at,
       } in leads"
       :key="id"
@@ -197,7 +198,7 @@ const getUrl = (url, quoteTypeId) => useGetShowPageRoute(url, quoteTypeId);
           </template>
         </x-tooltip>
         <p class="text-xs">
-          {{ quoteTypeId == 3 ? health_cover_for?.text : 'Dummy Data' }}
+          {{ quoteTypeId == 3 ? health_cover_for?.text : (quoteTypeId == 5 ? business_type_of_insurance?.text : '-') }}
         </p>
       </div>
 

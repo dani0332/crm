@@ -4,6 +4,7 @@ use App\Enums\IMCRMSearchTypesEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypes;
+use App\Models\BusinessQuote;
 use App\Models\CustomerAdditionalInfo;
 use App\Models\HealthQuote;
 use App\Services\HealthQuoteService;
@@ -155,6 +156,11 @@ function getDataAgainstStatus($modelType, $statusId, $myleads = null)
     if ($modelType == HealthQuote::class) {
         $modelQueryWithOutAdvisor = $modelQueryWithOutAdvisor->with('healthCoverFor');
         $modelQuery = $modelQuery->with('healthCoverFor');
+    }
+
+    if ($modelType == BusinessQuote::class) {
+        $modelQueryWithOutAdvisor = $modelQueryWithOutAdvisor->with('businessTypeOfInsurance');
+        $modelQuery = $modelQuery->with('businessTypeOfInsurance');
     }
 
     if (auth()->user()->isRenewalAdvisor()) {
