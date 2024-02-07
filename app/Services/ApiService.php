@@ -5,7 +5,6 @@ namespace App\Services;
 use App\Enums\QuoteStatusEnum;
 use App\Factories\AllocationFactory;
 use App\Http\Requests\AssignLeadRequest;
-use App\Jobs\SendOCBEmailJob;
 use App\Jobs\SendOCBIntroEmailJob;
 use App\Models\Customer;
 use App\Models\HealthQuote;
