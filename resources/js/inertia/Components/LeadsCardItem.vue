@@ -48,7 +48,7 @@ const updateList = async data => {
     });
     emit('UpdateLeadsCount', data);
     notification.success({
-      title: response.data.message,
+      title: response.data.message[0],
       position: 'top',
     });
     return true;
@@ -198,7 +198,13 @@ const getUrl = (url, quoteTypeId) => useGetShowPageRoute(url, quoteTypeId);
           </template>
         </x-tooltip>
         <p class="text-xs">
-          {{ quoteTypeId == 3 ? health_cover_for?.text : (quoteTypeId == 5 ? business_type_of_insurance?.text : '-') }}
+          {{
+            quoteTypeId == 3
+              ? health_cover_for?.text
+              : quoteTypeId == 5
+              ? business_type_of_insurance?.text
+              : '-'
+          }}
         </p>
       </div>
 
