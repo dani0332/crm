@@ -48,7 +48,7 @@ const updateList = async data => {
     });
     emit('UpdateLeadsCount', data);
     notification.success({
-      title: response.data.message,
+      title: response.data.message[0],
       position: 'top',
     });
     return true;
