@@ -891,12 +891,12 @@ class TravelQuoteService extends BaseService
 
     public function updateManualPlansBulk($request)
     {
-        if ($request->planIds && isset($request->toggle)) {
+        if ($request->planIds && isset($request->toggle) && isset($request->quote_uuid)) {
             $isDisabled = $request->toggle;
             $plansArray = [];
-            foreach ($request->planIds as $plan) {
+            foreach ($request->planIds as $planId) {
                 $apiArray = [
-                    'planId' => (int) $plan,
+                    'planId' => (int) $planId,
                     'isDisabled' => filter_var($isDisabled, FILTER_VALIDATE_BOOLEAN),
                 ];
                 array_push($plansArray, $apiArray);
