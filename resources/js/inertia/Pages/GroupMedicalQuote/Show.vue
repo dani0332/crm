@@ -802,7 +802,7 @@ const linkEntity = () => {
     />
 
     <!-- Additional Contact -->
-    <customerAdditionalContacts
+    <CustomerAdditionalContacts
       quoteType="Business"
       :customerId="quote.customer_id"
       :quoteId="quote.id"

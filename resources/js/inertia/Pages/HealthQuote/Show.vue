@@ -17,6 +17,7 @@ defineProps({
   nationalities: Array,
   emirates: Array,
   advisors: Array,
+  teams: Object,
   quoteDocuments: Object,
   documentTypes: Object,
   cdnPath: String,
@@ -165,6 +166,18 @@ const memberCategoryText = memberCategoryId =>
       category => category.id === memberCategoryId,
     )?.text;
   });
+
+
+// const subTeamOptions = computed(() => {
+//     let subteamArray = page.props.teams?.map(team => ({
+//         value: team.name,
+//         label: team.name,
+//     }));
+
+//     subteamArray.push({ value: 'No-Type', label: 'No-Type' });
+
+//     return subteamArray;
+// });
 
 const subTeamOptions = [
   { value: 'RM-NB', label: 'RM-NB' },
@@ -2339,7 +2352,7 @@ const handlePlanSelected = plan => {
       </div>
     </div>
 
-    <PaymentTable
+    <!-- <PaymentTable
       :payments="payments"
       :can="can"
       :isBetaUser="isBetaUser"
@@ -2347,7 +2360,7 @@ const handlePlanSelected = plan => {
       :paymentMethods="paymentMethods"
       :insuranceProviders="insuranceProviders"
       :quote="quote"
-    />
+    /> -->
 
     <!-- <div class="p-4 rounded shadow mb-6 bg-white" v-if="isQuoteDocumentEnabled">
       <div>
