@@ -51,6 +51,9 @@ const listen = () => {
   });
 };
 
+const loader = reactive({
+  request: false,
+});
 const params = useUrlSearchParams('history');
 const cleanObj = obj => useCleanObj(obj);
 const showFilters = ref(true);

@@ -12,6 +12,7 @@ const props = defineProps({
   },
 });
 
+const page = usePage();
 watch(
   () => page.props.quotes,
   () => {
@@ -19,8 +20,6 @@ watch(
   },
   { deep: true },
 );
-
-const page = usePage();
 
 provide('quoteStatusEnum', props.quoteStatusEnum);
 provide('quoteTypeId', props.quoteTypeId);
@@ -54,6 +53,9 @@ const listen = () => {
   });
 };
 
+const loader = reactive({
+  request: false,
+});
 const params = useUrlSearchParams('history');
 const cleanObj = obj => useCleanObj(obj);
 const showFilters = ref(true);
