@@ -245,4 +245,7 @@ final class PermissionsEnum extends Enum
     public const LEAD_CARD_SEARCH = 'lead-card-search';
     public const HEALTH_QUOTES_MANAGER_ACCESS = 'health-quotes-manager-access';
     public const HEALTH_QUOTES_ACCESS = 'health-quotes-access';
+    public const STALE_LEADS_REPORT = 'stale-leads-report-view';
+    public const PIPELINE_REPORT = 'pipeline-report-view';
+
 }

@@ -30,6 +30,8 @@ class AddGenericRolePermissionSeeder extends Seeder
                 RolesEnum::CycleAdvisor, RolesEnum::CycleManager,
                 RolesEnum::YachtAdvisor, RolesEnum::YachtManager,
             ]],
+            ['name' => [PermissionsEnum::STALE_LEADS_REPORT], 'role' => []],
+            ['name' => [PermissionsEnum::PIPELINE_REPORT], 'role' => []]
         ];
 
         foreach ($permissions as $permission) {

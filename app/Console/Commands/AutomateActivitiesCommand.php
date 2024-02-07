@@ -17,6 +17,7 @@ use App\Models\PersonalQuote;
 use App\Models\Team;
 use App\Models\TravelQuote;
 use App\Models\User;
+use Faker\Provider\ar_EG\Person;
 use Illuminate\Console\Command;
 
 class AutomateActivitiesCommand extends Command
@@ -97,10 +98,14 @@ class AutomateActivitiesCommand extends Command
                 $activities->where('due_date', '<', now());
                 $activities->where('status', false);
             }])
-                ->chunkById(1000, function ($quoteDetails) {
+                ->chunkById(1000, function ($quoteDetails) use ($quoteClass) {
                     foreach ($quoteDetails as $quoteDetail) {
                         $activitiesIDs = $quoteDetail->activities->pluck('id');
                         Activities::whereIn('id', $activitiesIDs)->update(['is_cold' => true]);
+                        
+                        if(in_array($quoteClass, [HealthQuote::class, HomeQuote::class, BusinessQuote::class, PersonalQuote::class])) {
+                            $quoteDetail->update(['is_cold' => true]);
+                        }
                     }
                 });
             info('------------------- Updated Cold Activities for : '.$quoteClass.' -------------------');
