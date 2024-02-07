@@ -11,6 +11,7 @@ use App\Enums\QuoteTypes;
 use App\Facades\Capi;
 use App\Facades\Ken;
 use App\Models\CarQuote;
+use App\Models\HealthQuote;
 use App\Models\PersonalQuote;
 use App\Models\PersonalQuoteDetail;
 use App\Repositories\PersonalQuoteRepository;
@@ -299,7 +300,10 @@ class CentralService
 
                 $response = Capi::request($endpoint, 'post', $data);
                 info('health plan update response: '.json_encode($response));
-
+                if (isset($response->totalPremium)) {
+                    $quote = HealthQuote::where('uuid', $uuid)->first();
+                    $this->updateQuotePayment($quote, $response->totalPremium);
+                }
                 break;
         }
 
