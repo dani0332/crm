@@ -63,7 +63,6 @@ const serverOptions = ref({
 });
 
 const handleSelectedFilters = selectedFilters => {
-
   if (selectedFilters.created_at_start && selectedFilters.created_at_end) {
     filters.created_at_start = selectedFilters.created_at_start;
     filters.created_at_end = selectedFilters.created_at_end;
@@ -103,7 +102,10 @@ function onSubmit(isValid) {
       onFinish: () => (loader.request = false),
     });
   } else {
-    console.log('Invalid');
+    notification.error({
+      title: 'Error!',
+      position: 'top',
+    });
   }
 }
 
@@ -136,6 +138,14 @@ onUnmounted(() => {
   channel.unbind('leads.count');
   channel.unsubscribe('public.' + page.props.appEnv + '.total-leads-count');
 });
+
+watch(
+  () => page.props.quotes,
+  () => {
+    quotes.data = page.props.quotes;
+  },
+  { deep: true },
+);
 </script>
 
 <template>
@@ -183,7 +193,6 @@ onUnmounted(() => {
         :key="quote.id"
         :quote="quote"
         :quotes="quotes"
-        :quoteTypeId="quoteTypeId"
         :quoteType="quoteType"
         :lostReasons="props.lostReasons"
         :quoteStatusEnum="props.quoteStatusEnum"

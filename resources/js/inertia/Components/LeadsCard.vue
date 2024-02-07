@@ -9,18 +9,19 @@ const props = defineProps({
     require: true,
   },
   quoteTypeId: {
-    type: Number,
+    type: [Number, String],
     require: true,
   },
   quoteType: String,
 });
 
-const quotes = ref({ ...props.quotes });
-const quote = ref({ ...props.quote });
+const quotes = ref(props.quotes);
+const quote = ref(props.quote);
 const page = usePage();
 const quoteType = inject('quoteType');
 
 const computedLeads = computed(() => {
+  console.log();
   return quote.value.data.leads_list.data;
 });
 
@@ -64,7 +65,10 @@ const onLoadMore = id => {
         quote.value.data.leads_list.data.concat(data.leads_list.data);
     })
     .catch(err => {
-      console.log(err);
+      notification.error({
+        title: 'Error!',
+        position: 'top',
+      });
     })
     .finally(() => {
       quotes.value.loader = false;
@@ -95,7 +99,10 @@ const onSearch = id => {
         });
       })
       .catch(err => {
-        console.log(err);
+        notification.error({
+          title: 'Error!',
+          position: 'top',
+        });
       })
       .finally(() => {
         quotes.value.searching = false;
@@ -123,7 +130,10 @@ const onSearch = id => {
       });
     })
     .catch(err => {
-      console.log(err);
+      notification.error({
+        title: 'Error!',
+        position: 'top',
+      });
     })
     .finally(() => {
       quotes.value.searching = false;
@@ -162,6 +172,15 @@ const UpdateLeadsCount = data => {
     return lead;
   });
 };
+
+watch(
+  () => props.quote,
+  () => {
+    quote.value = props.quote;
+    quotes.value = props.quotes;
+  },
+  { deep: true },
+);
 </script>
 <template>
   <div
@@ -220,7 +239,6 @@ const UpdateLeadsCount = data => {
       <leads-card-item
         :title="quote.title.split(' ').join('')"
         :id="quote.id"
-        :quote_type_id="quoteTypeId"
         :leads="computedLeads"
         @UpdateLeadsCount="data => UpdateLeadsCount(data)"
       />
