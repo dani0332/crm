@@ -807,11 +807,11 @@ onUpdated(() => {
                             {{header.text}}
                         </span>
                         <template #tooltip>
-                            <div class="whitespace-normal normal-case text-[10px]">
-                                Additional cost or fee that is added to the base price. This extra charge is
-                                applied to cover specific risks or factors associated with the policyholder,
-                                such as pre-existing medical conditions or other higher-risk situations
-                                (exclusive of VAT)
+                            <div class="whitespace-normal text-wrap normal-case text-[10px]">
+                                <p>Additional cost or fee that is added to the base price. This extra charge is</p>
+                                <p>applied to cover specific risks or factors associated with the policyholder,</p>
+                                <p>such as pre-existing medical conditions or other higher-risk situations</p>
+                                <p>(exclusive of VAT)</p>
                             </div>
                         </template>
                         </x-tooltip>
