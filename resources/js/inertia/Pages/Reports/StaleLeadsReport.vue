@@ -23,8 +23,8 @@ const serverOptions = ref({
 const filters = reactive({
   date: null,
   lob: 'Health',
-  teams: null,
-  advisors: null,
+  team: '',
+  advisors: [],
   filter_by: null,
 });
 
@@ -175,7 +175,7 @@ function onReset() {
 }
 
 const onLobChange = e => {
-  filters.teams = [];
+  filters.team = '';
   filters.advisors = [];
   advisorOptions.value = [];
   fetchTeams();
@@ -204,7 +204,7 @@ const fetchTeams = async () => {
 
 const onTeamChange = e => {
   if (e.length == 0) {
-    filters.teams = [];
+    filters.team = '';
     filters.advisors = [];
     advisorOptions.value = [];
 
@@ -304,6 +304,7 @@ onMounted(() => {
   setQueryStringFilters();
   changeLob();
   fetchTeams();
+  onTeamChange(filters.team);
 });
 
 watch(
@@ -349,7 +350,7 @@ watch(
       </x-field>
       <x-field label="Teams">
         <x-select
-          v-model="filters.teams"
+          v-model="filters.team"
           placeholder="Select Team"
           :options="teamOptions"
           :loading="loaders.advisorOptions"
@@ -359,7 +360,7 @@ watch(
       </x-field>
       <x-field
         :label="
-          !filters.teams || filters.teams.length == 0
+          !filters.team || filters.team.length == 0
             ? `Advisors (select teams first)`
             : `Advisors`
         "
