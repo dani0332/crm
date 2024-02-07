@@ -98,17 +98,17 @@ class HealthQuoteController extends Controller
     public function cardsView(Request $request)
     {
         $quotes = [
-            ['id' => QuoteStatusEnum::Lost, 'title' => quoteStatusCode::LOST, 'data' => getDataAgainstStatus(QuoteTypes::HEALTH->value, QuoteStatusEnum::Lost)],
-            ['id' => QuoteStatusEnum::Allocated, 'title' => quoteStatusCode::ALLOCATED, 'data' => getDataAgainstStatus(QuoteTypes::HEALTH->value, QuoteStatusEnum::Allocated)],
-            ['id' => QuoteStatusEnum::RenewalTermsReceived, 'title' => quoteStatusCode::RENEWAL_TERMS_RECEIVED, 'data' => getDataAgainstStatus(QuoteTypes::HEALTH->value, QuoteStatusEnum::RenewalTermsReceived)],
-            ['id' => QuoteStatusEnum::Quoted, 'title' => quoteStatusCode::QUOTED, 'data' => getDataAgainstStatus(QuoteTypes::HEALTH->value, QuoteStatusEnum::Quoted)],
-            ['id' => QuoteStatusEnum::FollowedUp, 'title' => quoteStatusCode::FOLLOWEDUP, 'data' => getDataAgainstStatus(QuoteTypes::HEALTH->value, QuoteStatusEnum::FollowedUp)],
-            ['id' => QuoteStatusEnum::ApplicationPending, 'title' => quoteStatusCode::APPLICATION_PENDING, 'data' => getDataAgainstStatus(QuoteTypes::HEALTH->value, QuoteStatusEnum::ApplicationPending)],
-            ['id' => QuoteStatusEnum::ApplicationSubmitted, 'title' => quoteStatusCode::APPLICATION_SUBMITTED, 'data' => getDataAgainstStatus(QuoteTypes::HEALTH->value, QuoteStatusEnum::ApplicationSubmitted)],
-            ['id' => QuoteStatusEnum::InNegotiation, 'title' => quoteStatusCode::NEGOTIATION, 'data' => getDataAgainstStatus(QuoteTypes::HEALTH->value, QuoteStatusEnum::InNegotiation)],
-            ['id' => QuoteStatusEnum::PaymentPending, 'title' => quoteStatusCode::PAYMENTPENDING, 'data' => getDataAgainstStatus(QuoteTypes::HEALTH->value, QuoteStatusEnum::PaymentPending)],
-            ['id' => QuoteStatusEnum::TransactionApproved, 'title' => quoteStatusCode::TRANSACTIONAPPROVED, 'data' => getDataAgainstStatus(QuoteTypes::HEALTH->value, QuoteStatusEnum::TransactionApproved)],
-            ['id' => QuoteStatusEnum::PolicyIssued, 'title' => quoteStatusCode::POLICY_ISSUED, 'data' => getDataAgainstStatus(QuoteTypes::HEALTH->value, QuoteStatusEnum::PolicyIssued)],
+            ['id' => QuoteStatusEnum::Lost, 'title' => quoteStatusCode::LOST, 'data' => getDataAgainstStatus(QuoteTypes::HEALTH->value, QuoteStatusEnum::Lost, $request)],
+            ['id' => QuoteStatusEnum::Allocated, 'title' => quoteStatusCode::ALLOCATED, 'data' => getDataAgainstStatus(QuoteTypes::HEALTH->value, QuoteStatusEnum::Allocated, $request)],
+            ['id' => QuoteStatusEnum::RenewalTermsReceived, 'title' => quoteStatusCode::RENEWAL_TERMS_RECEIVED, 'data' => getDataAgainstStatus(QuoteTypes::HEALTH->value, QuoteStatusEnum::RenewalTermsReceived, $request)],
+            ['id' => QuoteStatusEnum::Quoted, 'title' => quoteStatusCode::QUOTED, 'data' => getDataAgainstStatus(QuoteTypes::HEALTH->value, QuoteStatusEnum::Quoted, $request)],
+            ['id' => QuoteStatusEnum::FollowedUp, 'title' => quoteStatusCode::FOLLOWEDUP, 'data' => getDataAgainstStatus(QuoteTypes::HEALTH->value, QuoteStatusEnum::FollowedUp, $request)],
+            ['id' => QuoteStatusEnum::ApplicationPending, 'title' => quoteStatusCode::APPLICATION_PENDING, 'data' => getDataAgainstStatus(QuoteTypes::HEALTH->value, QuoteStatusEnum::ApplicationPending, $request)],
+            ['id' => QuoteStatusEnum::ApplicationSubmitted, 'title' => quoteStatusCode::APPLICATION_SUBMITTED, 'data' => getDataAgainstStatus(QuoteTypes::HEALTH->value, QuoteStatusEnum::ApplicationSubmitted, $request)],
+            ['id' => QuoteStatusEnum::InNegotiation, 'title' => quoteStatusCode::NEGOTIATION, 'data' => getDataAgainstStatus(QuoteTypes::HEALTH->value, QuoteStatusEnum::InNegotiation, $request)],
+            ['id' => QuoteStatusEnum::PaymentPending, 'title' => quoteStatusCode::PAYMENTPENDING, 'data' => getDataAgainstStatus(QuoteTypes::HEALTH->value, QuoteStatusEnum::PaymentPending, $request)],
+            ['id' => QuoteStatusEnum::TransactionApproved, 'title' => quoteStatusCode::TRANSACTIONAPPROVED, 'data' => getDataAgainstStatus(QuoteTypes::HEALTH->value, QuoteStatusEnum::TransactionApproved, $request)],
+            ['id' => QuoteStatusEnum::PolicyIssued, 'title' => quoteStatusCode::POLICY_ISSUED, 'data' => getDataAgainstStatus(QuoteTypes::HEALTH->value, QuoteStatusEnum::PolicyIssued, $request)],
         ];
 
         $quoteStatusEnums = QuoteStatusEnum::asArray();

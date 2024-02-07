@@ -64,9 +64,20 @@ const handleSelectedFilters = selectedFilters => {
   if (selectedFilters.created_at_start && selectedFilters.created_at_end) {
     filters.created_at_start = selectedFilters.created_at_start;
     filters.created_at_end = selectedFilters.created_at_end;
-
-    onSubmit(true);
   }
+  
+  if (selectedFilters.quote_status) {
+    filters.quote_status = selectedFilters.quote_status;
+  }
+
+  if (selectedFilters.payment_status) {
+    filters.payment_status = selectedFilters.payment_status;
+  }
+
+  filters.is_cold = selectedFilters.cold;
+  filters.is_stale = selectedFilters.stale;
+
+  onSubmit(true);
 };
 
 function onSubmit(isValid) {

@@ -10,6 +10,7 @@ use App\Models\HealthQuote;
 use App\Services\HealthQuoteService;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -135,34 +136,39 @@ function cleanString($string)
     return preg_replace('/[^A-Za-z0-9\-]/', '', $string); // Removes special chars.
 }
 
-function getDataAgainstStatus($modelType, $statusId, $myleads = null)
+function getDataAgainstStatus($modelType, $statusId, Request $request)
 {
-    $result = [];
+    $result = [];    
 
-    if (! $modelType) {
+    if(!$modelType){
         return $result;
     }
 
     $nameSpace = 'App\\Models\\';
     $modelType = (in_array(ucwords($modelType), newUi()) && checkPersonalQuotes(ucwords($modelType))) ? $nameSpace.'PersonalQuote' : $nameSpace.ucwords($modelType).'Quote';
-
+    
     if (! class_exists($modelType)) {
         return false;
     }
 
-    $modelQueryWithOutAdvisor = $modelType::where('quote_status_id', $statusId);
-    $modelQuery = $modelType::where('quote_status_id', $statusId)->where('advisor_id', auth()->user()->id);
+    $modelQueryWithOutAdvisor = $modelType::when($modelType == BusinessQuote::class, function($businessQuery){
+        $businessQuery->with('businessTypeOfInsurance');
+    })->when($modelType == HealthQuote::class, function($healthQuery){
+        $healthQuery->with('healthCoverFor');
+    })->where('quote_status_id', $statusId)
+    ->where(function($query) use ($request) {
+        getCardViewRequestFilters($query, $request);
+    });
 
-    if ($modelType == HealthQuote::class) {
-        $modelQueryWithOutAdvisor = $modelQueryWithOutAdvisor->with('healthCoverFor');
-        $modelQuery = $modelQuery->with('healthCoverFor');
-    }
-
-    if ($modelType == BusinessQuote::class) {
-        $modelQueryWithOutAdvisor = $modelQueryWithOutAdvisor->with('businessTypeOfInsurance');
-        $modelQuery = $modelQuery->with('businessTypeOfInsurance');
-    }
-
+    $modelQuery = $modelType::when($modelType == BusinessQuote::class, function($query){
+        $query->with('businessTypeOfInsurance');
+    })->when($modelType == HealthQuote::class, function($healthQuery){
+        $healthQuery->with('healthCoverFor');
+    })->where('quote_status_id', $statusId)->where('advisor_id', auth()->user()->id)
+    ->where(function($query) use ($request) {
+        getCardViewRequestFilters($query, $request);
+    });
+    
     if (auth()->user()->isRenewalAdvisor()) {
         $result['total_leads'] = $modelQuery->whereNotNull('previous_quote_id')->count();
         $result['total_premium'] = $modelQuery->whereNotNull('previous_quote_id')->sum('premium');
@@ -173,46 +179,26 @@ function getDataAgainstStatus($modelType, $statusId, $myleads = null)
         $result['total_premium'] = $modelQuery->whereNull('previous_quote_id')->sum('premium');
         $result['leads_list'] = $modelQuery->whereNull('previous_quote_id')->paginate(10);
 
-    } elseif ($modelType == HealthQuote::class && Auth::user()->isCarAdvisor() && Auth::user()->can(PermissionsEnum::HEALTH_QUOTES_ACCESS)) {
-        $result['total_leads'] = $modelType::where('quote_status_id', $statusId)
-            ->where('advisor_id', \Auth::user()->id)
-            ->count();
+    } elseif ($modelType == HealthQuote::class && auth()->user()->isCarAdvisor() && auth()->user()->can(PermissionsEnum::HEALTH_QUOTES_ACCESS)) {
+        $result['total_leads'] = $modelQuery->count();
+        $result['total_premium'] = $modelQuery->sum('premium');
+        $result['leads_list'] = $modelQuery->paginate(10);
+        $result['total_opportunity'] = $modelQueryWithOutAdvisor->sum('price_starting_from');
 
-        $result['total_premium'] = $modelType::where('quote_status_id', $statusId)
-            ->where('advisor_id', \Auth::user()->id)
-            ->sum('premium');
-
-        $result['total_opportunity'] = $modelType::where('quote_status_id', $statusId)->sum('price_starting_from');
-
-        $result['leads_list'] = $modelType::where('quote_status_id', $statusId)
-            ->where('advisor_id', \Auth::user()->id)
-            ->paginate(10);
-
-    } elseif ($modelType == HealthQuote::class && Auth::user()->isCarManager() && Auth::user()->can(PermissionsEnum::HEALTH_QUOTES_MANAGER_ACCESS)) {
-
-        $ids = app(HealthQuoteService::class)->walkTree(Auth::user()->id);
-
-        $result['total_leads'] = $modelType::where('quote_status_id', $statusId)
-            ->whereIn('advisor_id', $ids)
-            ->count();
-
-        $result['total_premium'] = $modelType::where('quote_status_id', $statusId)
-            ->whereIn('advisor_id', $ids)
-            ->sum('premium');
-
-        $result['total_opportunity'] = $modelType::where('quote_status_id', $statusId)->sum('price_starting_from');
-
-        $result['leads_list'] = $modelType::where('quote_status_id', $statusId)
-            ->whereIn('advisor_id', $ids)
-            ->paginate(10);
+    } elseif ($modelType == HealthQuote::class && auth()->user()->isCarManager() && auth()->user()->can(PermissionsEnum::HEALTH_QUOTES_MANAGER_ACCESS)) {
+        $ids = app(HealthQuoteService::class)->walkTree(auth()->user()->id);
+        $result['total_leads'] = $modelQueryWithOutAdvisor->whereIn('advisor_id', $ids)->count();
+        $result['total_premium'] = $modelQueryWithOutAdvisor->whereIn('advisor_id', $ids)->sum('premium');
+        $result['leads_list'] = $modelQueryWithOutAdvisor->whereIn('advisor_id', $ids)->paginate(10);
+        $result['total_opportunity'] = $modelQueryWithOutAdvisor->sum('price_starting_from');
 
     } else {
         $result['total_leads'] = $modelQueryWithOutAdvisor->count();
         $result['total_premium'] = $modelQueryWithOutAdvisor->sum('premium');
+        $result['leads_list'] = $modelQueryWithOutAdvisor->paginate(10);
         if ($modelType == HealthQuote::class) {
             $result['total_opportunity'] = $modelQueryWithOutAdvisor->sum('price_starting_from');
         }
-        $result['leads_list'] = $modelQueryWithOutAdvisor->paginate(10);
     }
 
     return $result;
@@ -633,5 +619,24 @@ if (! function_exists('apiResponse')) {
             'message' => $message,
             'status' => $statusCode,
         ], $statusCode);
+    }
+}
+
+function getCardViewRequestFilters($partialQuery, Request $request) 
+{
+    if($request->hasAny(['created_at_start', 'created_at_end']) && $request->filled(['created_at_start', 'created_at_end'])) {
+       $partialQuery->whereBetween('created_at', dateQueryFilter($request->created_at_start, $request->created_at_end));
+    }
+
+    if($request->has('is_cold') && $request->filled('is_cold')) {
+        $partialQuery->where('is_cold', true);
+    }
+
+    if($request->has('is_stale') && $request->filled('is_stale')) {
+        $partialQuery->whereNotNull('stale_at');
+    }
+
+    if($request->has('payment_status') && $request->filled('payment_status') && count($request->payment_status)) {
+        $partialQuery->whereIn('payment_status_id', $request->payment_status);
     }
 }
