@@ -1,13 +1,9 @@
 {
-  "resources/js/inertia/inertia.css": {
-    "file": "assets/inertia-518a39c8.css",
-    "src": "resources/js/inertia/inertia.css"
-  },
   "resources/js/inertia/inertia.js": {
     "css": [
-      "assets/inertia-518a39c8.css"
+      "assets/inertia-U7nBO15u.css"
     ],
-    "file": "assets/inertia-191ff4f9.js",
+    "file": "assets/inertia-Lz1O3HoJ.js",
     "isEntry": true,
     "src": "resources/js/inertia/inertia.js"
   }

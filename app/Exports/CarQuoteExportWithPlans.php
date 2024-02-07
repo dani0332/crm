@@ -3,16 +3,12 @@
 namespace App\Exports;
 
 use App\Services\CarQuoteService;
+use App\Traits\ExcelExportable;
 use Carbon\Carbon;
-use Maatwebsite\Excel\Concerns\Exportable;
-use Maatwebsite\Excel\Concerns\FromCollection;
-use Maatwebsite\Excel\Concerns\ShouldAutoSize;
-use Maatwebsite\Excel\Concerns\WithHeadings;
-use Maatwebsite\Excel\Concerns\WithMapping;
 
-class CarQuoteExportWithPlans implements FromCollection, ShouldAutoSize, WithHeadings, WithMapping
+class CarQuoteExportWithPlans
 {
-    use Exportable;
+    use ExcelExportable;
 
     public function collection()
     {
@@ -37,6 +33,7 @@ class CarQuoteExportWithPlans implements FromCollection, ShouldAutoSize, WithHea
             'Emirate Of Registration',
             'Repair Type',
             'Created Date',
+            'Paid At',
             'Lead Status',
             'Payment Status',
             'Plan Name',
@@ -67,6 +64,7 @@ class CarQuoteExportWithPlans implements FromCollection, ShouldAutoSize, WithHea
             $quote->emirate_of_registration,
             $quote->repair_type,
             date('d-m-Y H:i:s', strtotime($quote->created_at)),
+            date('d-m-Y H:i:s', strtotime($quote->paid_at)),
             $quote->lead_status,
             $quote->payment_status,
             $quote->plan_name,

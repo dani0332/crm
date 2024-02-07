@@ -29,7 +29,6 @@ use App\Services\CentralService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
-use Maatwebsite\Excel\Facades\Excel;
 
 class CentralController extends Controller
 {
@@ -49,42 +48,46 @@ class CentralController extends Controller
     {
         $diffInDays = 120;
 
-        $latest_flow = $request->latest_flow ?? false;
-
         if (! $quoteType) {
             return abort(404);
         }
 
         if ($exportTye != GenericRequestEnum::EXPORT_MAKES_MODELS) {
-            $diffInDays = 120;
+            if ($exportTye == GenericRequestEnum::EXPORT_PLAN_DETAIL) {
+                $error_fields = 'paid at';
 
-            if (request()->has('created_at')) {
-                request()->merge(['created_at_start' => request()->get('created_at')]);
-                request()->query->remove('created_at');
+                $request->validate([
+                    'paid_at_start' => 'required',
+                    'paid_at_end' => 'required',
+                ]);
+                $created_at_start = Carbon::parse($request->paid_at_start)->format('Y-m-d');
+                $created_at_end = Carbon::parse($request->paid_at_end)->format('Y-m-d');
+            } else {
+                $error_fields = 'created date';
+
+                if (request()->has('created_at')) {
+                    request()->merge(['created_at_start' => request()->get('created_at')]);
+                    request()->query->remove('created_at');
+                }
+
+                $request->validate([
+                    'created_at_start' => 'required',
+                    'created_at_end' => 'required',
+                ]);
+
+                $created_at_start = Carbon::parse($request->created_at_start)->format('Y-m-d');
+                $created_at_end = Carbon::parse($request->created_at_end)->format('Y-m-d');
             }
 
-            if (in_array($exportTye, [GenericRequestEnum::EXPORT_PLAN_DETAIL, GenericRequestEnum::EXPORT_LEADS_DETAIL_WITH_EMAIL_MOBILE])) {
+            if (ucfirst($quoteType) == QuoteTypes::CAR->value) {
                 $diffInDays = 31;
             }
-
-            $request->validate([
-                'created_at_start' => 'required',
-                'created_at_end' => 'required',
-            ]);
-
-            $created_at_start = Carbon::parse($request->created_at_start)->format('Y-m-d');
-            $created_at_end = Carbon::parse($request->created_at_end)->format('Y-m-d');
 
             $diff = Carbon::parse($created_at_start)->diffInDays(Carbon::parse($created_at_end));
 
-            if (! $latest_flow && ucfirst($quoteType) == QuoteTypes::CAR->value) {
-                $diffInDays = 31;
-            }
-
             if ($diff > $diffInDays) {
-                return back()->with('error', 'Maximum of '.$diffInDays.' days (created date) are allowed to be exported.');
+                return back()->with('error', 'Maximum of '.$diffInDays.' days ('.$error_fields.') are allowed to be exported.');
             }
-
         }
 
         // For Personal Quotes
@@ -95,44 +98,40 @@ class CentralController extends Controller
             QuoteTypes::CYCLE->value,
             QuoteTypes::JETSKI->value,
         ])) {
-            return Excel::download(new PersonalQuotesExport, $quoteType.'_leads.xlsx');
+            return app(PersonalQuotesExport::class)->download($quoteType.'_leads');
         }
 
         if (QuoteTypes::CAR->value == ucfirst($quoteType)) {
             if ($exportTye == GenericRequestEnum::EXPORT_PLAN_DETAIL) {
-                return Excel::download(new CarQuoteExportWithPlans, ucfirst(GenericRequestEnum::EXPORT_PLAN_DETAIL).'.xlsx');
+                return app(CarQuoteExportWithPlans::class)->download(ucfirst(GenericRequestEnum::EXPORT_PLAN_DETAIL));
             } elseif ($exportTye == GenericRequestEnum::EXPORT_LEADS_DETAIL_WITH_EMAIL_MOBILE) {
-                return Excel::download(new CarQuoteExportWithEmailMobile, ucfirst(GenericRequestEnum::EXPORT_LEADS_DETAIL_WITH_EMAIL_MOBILE).'.xlsx');
+                return app(CarQuoteExportWithEmailMobile::class)->download(ucfirst(GenericRequestEnum::EXPORT_LEADS_DETAIL_WITH_EMAIL_MOBILE));
             } elseif ($exportTye == GenericRequestEnum::EXPORT_MAKES_MODELS) {
-                return Excel::download(new CarQuoteExportWithMakeModelTrims, ucfirst(GenericRequestEnum::EXPORT_MAKES_MODELS).'.xlsx');
+                return app(CarQuoteExportWithMakeModelTrims::class)->download(ucfirst(GenericRequestEnum::EXPORT_MAKES_MODELS));
             }
         }
 
         switch (ucfirst($quoteType)) {
             case QuoteTypes::LIFE->value:
-                return Excel::download(new LifeQuotesExport, 'life_leads.xlsx');
+                return app(LifeQuotesExport::class)->download('life_leads');
 
             case QuoteTypes::HOME->value:
-                return Excel::download(new HomeQuoteExport, 'home_leads.xlsx');
+                return app(HomeQuoteExport::class)->download('home_leads');
 
             case QuoteTypes::AMT->value:
-                return Excel::download(new AmtQuoteExport, 'amt_leads.xlsx');
+                return app(AmtQuoteExport::class)->download('amt_leads');
 
             case QuoteTypes::BUSINESS->value:
-                return Excel::download(new BusinessQuoteExport, 'business_leads.xlsx');
+                return app(BusinessQuoteExport::class)->download('business_leads');
 
             case QuoteTypes::TRAVEL->value:
-                return Excel::download(new TravelQuoteExport, 'travel_leads.xlsx');
+                return app(TravelQuoteExport::class)->download('travel_leads');
 
             case QuoteTypes::CAR->value:
-                if ($latest_flow) {
-                    return app(CarQuoteExport::class)->carQuoteExport();
-                }
-
-                return Excel::download(new CarQuoteExport, 'Car-List.xlsx');
+                return app(CarQuoteExport::class)->download('Car-List');
 
             case QuoteTypes::HEALTH->value:
-                return Excel::download(new HealthQuotesExport, 'Health-List.xlsx');
+                return app(HealthQuotesExport::class)->download('Health-List');
 
             default:
                 return false;
