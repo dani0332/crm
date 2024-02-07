@@ -116,7 +116,7 @@ class SageApiService
     {
         // Create the payload data for the POST request
         $sageEndPoint = $this->sageRequestUrl.$endPoint;
-
+        //Http facade not giving expected response,so have to use curl
         $ch = curl_init($sageEndPoint);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 

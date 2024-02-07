@@ -1537,15 +1537,17 @@ const linkEntity = () => {
     });
 };
 
-
-
 const handlePlanSelected = plan => {  
   selectedProviderPlan.value.id = plan.id
   selectedProviderPlan.value.planName = plan.planName
   selectedProviderPlan.value.providerName = plan.providerName
   selectedProviderPlan.value.premium = plan.premium
+  router.reload({
+    preserveState: true,
+    preserveScroll: true,
+    only: ['payments','paymentEntityModel'],        
+  });  
 };
-
 </script>
 
 <template>
