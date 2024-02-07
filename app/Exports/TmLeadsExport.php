@@ -2,24 +2,15 @@
 
 namespace App\Exports;
 
-use Maatwebsite\Excel\Concerns\Exportable;
-use Maatwebsite\Excel\Concerns\FromQuery;
-use Maatwebsite\Excel\Concerns\ShouldAutoSize;
-use Maatwebsite\Excel\Concerns\WithHeadings;
-use Maatwebsite\Excel\Concerns\WithMapping;
+use App\Traits\ExcelExportable;
 
-class TmLeadsExport implements FromQuery, ShouldAutoSize, WithHeadings, WithMapping
+class TmLeadsExport
 {
-    use Exportable;
+    use ExcelExportable;
 
     public function __construct($query)
     {
         $this->query = $query;
-    }
-
-    public function query()
-    {
-        return $this->query;
     }
 
     public function headings(): array
@@ -54,5 +45,10 @@ class TmLeadsExport implements FromQuery, ShouldAutoSize, WithHeadings, WithMapp
             $tmlead->tm_created_at,
             $tmlead->tm_updated_at,
         ];
+    }
+
+    public function collection()
+    {
+        return $this->query->get();
     }
 }

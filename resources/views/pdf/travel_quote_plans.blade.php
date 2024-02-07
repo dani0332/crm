@@ -288,6 +288,22 @@
         $benefits = ['feature', 'inpatient', 'outpatient', 'exclusion', 'coInsurance', 'regionCover', 'maternityCover', 'networkList'];
         $vatPercentage = \App\Models\ApplicationStorage::where('key_name', \App\Enums\ApplicationStorageEnums::VAT_VALUE)->first()->value ?? 0;
 
+        $buyNow = 'Buy Now';
+        $buyNowLink = $websitURL . '/travel-insurance/quote/' . $quote->uuid .  '/payment/?planId=';
+        if(isset($hasAdultAndSeniorMember)){
+            if($hasAdultAndSeniorMember == true){
+                $buyNow = 'Add to Cart';
+                $buyNowLink = $websitURL . '/travel-insurance/quote/' . $quote->uuid .  '/?planAddToCart=';
+
+            }
+        }
+        if(isset($selectedPlanIds)){
+
+        }else{
+            $selectedPlanIds = [];
+        }
+      //  'selectedPlanIds','hasAdultAndSeniorMember'
+
         foreach ($quotePlans->quotes->plans as &$quotePlan){
             $addonsPrice = $addonsVat =
             $quotePlan->discountPremium =
@@ -462,7 +478,14 @@
                     @foreach($planIds as $planId)
                         <th rowspan="4">
                             <p class="text-center">
-                                    <a target="_blank" class="btn-buy" href="{{($websitURL . '/travel-insurance/quote/' . $quote->uuid .  '/payment/?providerCode=' . $plans[$planId]->providerCode . '&planId=' . $planId . ( (isset($plans[$planId]->addons['coPayment']['id']) ? ('&selectedCopayId=' . $plans[$planId]->addons['coPayment']['id']) : '') ) )}}" >Buy Now</a>
+                                @php if(in_array($planId, $selectedPlanIds)){
+                                    $buyNowfullLink = '#';
+                                    $buyNowText =  'Selected';
+                                }else{
+                                    $buyNowfullLink = $buyNowLink.$planId;
+                                    $buyNowText =  $buyNow;
+                                } @endphp
+                                    <a target="_blank" class="btn-buy" href="{{$buyNowfullLink}}" >{{$buyNowText}}</a>
                                 @if($plans[$planId]->discountPremium)
                                 @else
                                 @endif
@@ -530,7 +553,15 @@
 
                         @elseif($feature['type'] == 'buy')
 
-                                @php  $return_value = `<a target="_blank" class="btn-buy" href="{{($websitURL . '/car-insurance/quote/' . $quote->uuid .  '/payment/?providerCode=' . $plans[$planId]->providerCode . '&planId=' . $planId)}}" >Buy Now</a>`; @endphp
+                                @php
+                                   if(in_array($planId, $selectedPlanIds)){
+                                   $buyNowfullLink = '#';
+                                   $buyNowText =  'Selected';
+                                    }else{
+                                   $buyNowfullLink = $buyNowLink.$planId;
+                                   $buyNowText =  $buyNow;
+                                    }
+                                   $return_value = `<a target="_blank" class="btn-buy" href="{{$buyNowfullLink}}" >'.$buyNowText.'</a>`; @endphp
 
                         @elseif(is_array($feature['type']))
                             @php $value = "Excluded";  @endphp
@@ -586,7 +617,7 @@
                     @foreach($planIds as $planId)
                         <td>
                             <p class="text-center">
-                                    <a target="_blank" class="btn-buy" href="{{($websitURL . '/travel-insurance/quote/' . $quote->uuid .  '/payment/?providerCode=' . $plans[$planId]->providerCode . '&planId=' . $planId . ( (isset($plans[$planId]->addons['coPayment']['id']) ? ('&selectedCopayId=' . $plans[$planId]->addons['coPayment']['id']) : '') ) )}}" >Buy Now</a>
+                                    <a target="_blank" class="btn-buy" href="{{($buyNowLink.$planId)}}" >{{in_array($planId, $selectedPlanIds)?'Selected':$buyNow}}</a>
                             </p>
                         </td>
                     @endforeach

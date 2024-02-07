@@ -82,14 +82,14 @@
                                             placeholder="Car Sold Deadline">
                                         <input type="hidden" name="quote_status_id[]" value="{{ \App\Enums\QuoteStatusEnum::CarSold}}">
                                     </div>
-                                    <div class="col">
+                                    {{-- <div class="col">
                                         <label for="formGroupExampleInput"> <b>{{ \App\Enums\quoteStatusCode::UNCONTACTABLE}} Deadline </b> <span
                                                 class="required">*</span></label>
                                         <input type="text" class="form-control date-search-field" name="deadline_date[{{\App\Enums\QuoteStatusEnum::Uncontactable}}]"
                                             value="{{ old('deadline_date[]') }}" min="{{ date('Y-m-d') }}"
                                             placeholder="Car Uncontactable Deadline">
                                         <input type="hidden" name="quote_status_id[]" value="{{ \App\Enums\QuoteStatusEnum::Uncontactable}}">
-                                    </div>
+                                    </div> --}}
                                 </div>
                             </div>
                         </div>
