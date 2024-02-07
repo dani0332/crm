@@ -478,13 +478,13 @@
                     @foreach($planIds as $planId)
                         <th rowspan="4">
                             <p class="text-center">
-                                <?php if(in_array($planId, $selectedPlanIds)){
+                                @php if(in_array($planId, $selectedPlanIds)){
                                     $buyNowfullLink = '#';
                                     $buyNowText =  'Selected';
                                 }else{
                                     $buyNowfullLink = $buyNowLink.$planId;
                                     $buyNowText =  $buyNow;
-                                } ?>
+                                } @endphp
                                     <a target="_blank" class="btn-buy" href="{{$buyNowfullLink}}" >{{$buyNowText}}</a>
                                 @if($plans[$planId]->discountPremium)
                                 @else
