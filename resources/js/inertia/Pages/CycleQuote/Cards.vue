@@ -43,8 +43,76 @@ const listen = () => {
   });
 };
 
+const params = useUrlSearchParams('history');
+const cleanObj = obj => useCleanObj(obj);
+const showFilters = ref(true);
+const filtersCount = ref(0);
+const filters = reactive({
+  date: null,
+  status_filters: null,
+});
+const serverOptions = ref({
+  page: 1,
+  sortBy: 'created_at',
+  sortType: 'desc',
+});
+
+const handleSelectedFilters = selectedFilters => {
+  if (selectedFilters.created_at_start && selectedFilters.created_at_end) {
+    filters.created_at_start = selectedFilters.created_at_start;
+    filters.created_at_end = selectedFilters.created_at_end;
+
+    onSubmit(true);
+  }
+};
+
+function onSubmit(isValid) {
+  if (isValid) {
+    serverOptions.value.page = 1;
+
+    const filtersCleaned = cleanObj(filters);
+
+    filtersCount.value = Object.keys(filtersCleaned).length;
+
+    router.visit(route('cycle-quotes-card'), {
+      method: 'get',
+      data: {
+        ...filtersCleaned,
+        ...serverOptions.value,
+      },
+      preserveState: true,
+      preserveScroll: true,
+      onBefore: () => (loader.request = true),
+      onFinish: () => (loader.request = false),
+    });
+  } else {
+    console.log('Invalid');
+  }
+}
+
 onMounted(() => {
   listen();
+
+  setQueryStringFilters(params, filters);
+
+  let filtersCleaned = cleanObj(filters);
+
+  if (filtersCleaned.sortBy) {
+    serverOptions.value.sortBy = filtersCleaned.sortBy;
+    delete filtersCleaned.sortBy;
+  }
+
+  if (filtersCleaned.sortType) {
+    serverOptions.value.sortType = filtersCleaned.sortType;
+    delete filtersCleaned.sortType;
+  }
+
+  if (filtersCleaned.page) {
+    serverOptions.value.page = filtersCleaned.page;
+    delete filtersCleaned.page;
+  }
+
+  filtersCount.value = Object.keys(filtersCleaned).length;
 });
 
 onUnmounted(() => {
@@ -69,7 +137,15 @@ onUnmounted(() => {
         </x-tooltip>
       </div>
 
-      <div class="space-x-2">
+      <div class="flex space-x-2">
+        <!-- <SortButton :options="serverOptions" @handleSorting="onSubmit(true)" /> -->
+        <FiltersButton
+          :is-shown="showFilters"
+          :filters="filters"
+          :filters-count="filtersCount"
+          @selected-filters="handleSelectedFilters"
+          @toggleFilters="showFilters = !showFilters"
+        />
         <Link :href="route('cycle-quotes-list')">
           <x-button size="sm" color="#1d83bc"> List View </x-button>
         </Link>

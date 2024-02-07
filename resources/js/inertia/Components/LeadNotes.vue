@@ -6,7 +6,7 @@ const props = defineProps({
   modelType: String,
   quote: Object,
   documentType: Object,
-  cdn: String
+  cdn: String,
 });
 
 console.log(props.notes);
@@ -137,11 +137,11 @@ const onNoteSubmit = isValid => {
       })
       .catch(errors => {
         Object.keys(errors.response.data.errors.files).forEach(function (key) {
-        notification.error({
-          title: errors.response.data.errors.files[key],
-          position: 'top',
+          notification.error({
+            title: errors.response.data.errors.files[key],
+            position: 'top',
+          });
         });
-      });
         // console.log(err);
         // notification.error({
         //   title: 'Notes has not been saved',
@@ -310,7 +310,11 @@ const handleRemoveFile = file => {
         <template #header-note="note">
           <div class="flex gap-3 items-center">
             {{ note.text }}
-            <x-icon @click="expandNotes = !expandNotes" icon="chevronDown" />
+            <x-icon
+              @click="expandNotes = !expandNotes"
+              icon="chevronDown"
+              :class="{ 'rotate-180': expandNotes }"
+            />
           </div>
         </template>
         <template #item-created_by="{ created_by }">
