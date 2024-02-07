@@ -25,6 +25,14 @@ const quotes = reactive({
   queries: {},
 });
 
+watch(
+  () => page.props.quotes,
+  () => {
+    quotes.data = page.props.quotes;
+  },
+  { deep: true },
+);
+
 const options = {
   cluster: 'ap1',
   forceTLS: false,
@@ -62,7 +70,7 @@ const handleSelectedFilters = selectedFilters => {
     filters.created_at_start = selectedFilters.created_at_start;
     filters.created_at_end = selectedFilters.created_at_end;
   }
-  
+
   if (selectedFilters.quote_status) {
     filters.quote_status = selectedFilters.quote_status;
   }

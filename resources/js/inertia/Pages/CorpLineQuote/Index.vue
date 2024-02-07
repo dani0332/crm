@@ -280,6 +280,33 @@ watch(
 <template>
   <div>
     <Head title="Business Quote List" />
+    <!-- <StickyHeader>
+      <template v-slot:header>
+        <h2 class="text-xl font-semibold">Lead List</h2>
+        <LeadsCount :leadsCount="$page.props.totalCount" />
+      </template>
+      <template #default>
+        <ColumnSelection
+          v-model:columns="tableHeader"
+          storage-key="corpline-list"
+        />
+
+        <FiltersButton
+          :is-shown="showFilters"
+          :filters="filters"
+          :filters-count="filtersCount"
+          @selected-filters="handleSelectedFilters"
+          @toggleFilters="showFilters = !showFilters"
+        />
+        <Link :href="route('business.cards')">
+          <x-button size="sm" color="#1d83bc" tag="div"> Cards View</x-button>
+        </Link>
+        <Link :href="route('business.create')">
+          <x-button size="sm" color="#ff5e00" tag="div"> Create Lead</x-button>
+        </Link>
+      </template>
+    </StickyHeader> -->
+
     <div class="flex justify-between items-center">
       <div class="flex items-center gap-5">
         <h2 class="text-xl font-semibold">Lead List</h2>
