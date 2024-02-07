@@ -134,6 +134,9 @@ const onNoteSubmit = isValid => {
           title: 'Notes has been saved',
           position: 'top',
         });
+        router.reload({
+          only: ['quoteDocuments', 'quote'],
+        });
       })
       .catch(errors => {
         Object.keys(errors.response.data.errors.files).forEach(function (key) {

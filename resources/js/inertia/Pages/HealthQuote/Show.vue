@@ -179,7 +179,6 @@ const memberCategoryText = memberCategoryId =>
     )?.text;
   });
 
-
 // const subTeamOptions = computed(() => {
 //     let subteamArray = page.props.teams?.map(team => ({
 //         value: team.name,

@@ -797,7 +797,7 @@ class CRUDController extends Controller
 
             return inertia('HomeQuote/Show', [
                 'storageUrl' => storageUrl(),
-                'quoteDocuments' => array_values($quoteDocuments->toArray()),
+                'quoteDocuments' => fn () => array_values($quoteDocuments->toArray()),
                 'quote' => $record,
                 'allowedDuplicateLOB' => $allowedDuplicateLOB,
                 'leadStatuses' => array_values($leadStatuses->toArray()),
@@ -938,7 +938,7 @@ class CRUDController extends Controller
                 'emirates' => $emirates,
                 'advisors' => $advisors,
                 'teams' => $teams,
-                'quoteDocuments' => array_values($quoteDocuments->toArray()),
+                'quoteDocuments' => fn () => array_values($quoteDocuments->toArray()),
                 'documentTypes' => $documentTypes,
                 'cdnPath' => $cdnPath,
                 'domainPath' => $domainPath,
