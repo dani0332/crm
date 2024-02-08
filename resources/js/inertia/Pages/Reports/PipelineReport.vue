@@ -12,6 +12,8 @@ const advisorOptions = ref([]);
 
 const teamOptions = ref([]);
 
+const selectedLob = ref('Health');
+
 const params = useUrlSearchParams('history');
 const cleanObj = obj => useCleanObj(obj);
 const serverOptions = ref({
@@ -142,7 +144,7 @@ const commonHeaders = ref([
   },
 ]);
 
-const tableHeader = ref(commonHeaders.value);
+const tableHeader = ref([]);
 
 const onSubmit = isValid => {
   if (!isValid) return;
@@ -276,6 +278,7 @@ function changeLob() {
   } else {
     tableHeader.value = commonHeaders.value;
   }
+  selectedLob.value = filters.lob;
 }
 
 const getTotal = item => {
@@ -397,10 +400,11 @@ watch(
       </x-field>
     </div>
     <div class="flex gap-3 justify-end items-center">
-      <!-- <ColumnSelection
+      <ColumnSelection
         v-model:columns="tableHeader"
-        :storage-key="`staleleads-report-${filters.lob}`"
-      /> -->
+        :storage-key="`pipeline-report-${selectedLob}`"
+        withoutStorage
+      />
       <x-button size="sm" color="#ff5e00" type="submit">Search</x-button>
       <x-button size="sm" color="primary" @click.prevent="onReset">
         Reset

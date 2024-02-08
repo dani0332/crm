@@ -10,13 +10,21 @@ const props = defineProps({
     type: String,
     required: true,
   },
+  withoutStorage: {
+    type: Boolean,
+    default: false,
+  },
 });
 
-const headers = ref(props.columns);
+const headers = ref([]);
 
-const storedState = useStorage(props.storageKey, {
-  headers: [],
-});
+let storedState = ref({ headers: [] });
+
+if (!props.withoutStorage) {
+  storedState = useStorage(props.storageKey, {
+    headers: [],
+  });
+}
 
 function onChange() {
   try {
@@ -24,7 +32,9 @@ function onChange() {
       'update:columns',
       headers.value.filter(c => c.is_active),
     );
-    storedState.value.headers = headers.value;
+    if (!props.withoutStorage) {
+      storedState.value.headers = headers.value;
+    }
   } catch (error) {
     console.error('Error in onChange:', error);
   }
@@ -32,7 +42,9 @@ function onChange() {
 
 function onReset() {
   try {
-    headers.value = storedState.value.headers;
+    if (!props.withoutStorage) {
+      headers.value = storedState.value.headers;
+    }
     emit(
       'update:columns',
       headers.value.map(c => {
@@ -54,6 +66,24 @@ onMounted(() => {
     );
   }
 });
+
+watch(
+  () => props.storageKey,
+  () => {
+    if (props.withoutStorage) {
+      headers.value = props.columns;
+    }
+  },
+);
+
+watchOnce(
+  () => props.columns,
+  () => {
+    if (props.withoutStorage) {
+      headers.value = props.columns;
+    }
+  },
+);
 </script>
 <template>
   <div class="select-none">
