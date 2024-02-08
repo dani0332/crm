@@ -132,7 +132,7 @@ class PetQuoteController extends Controller
 
         return inertia('PetQuote/Show', [
             'quoteType' => QuoteTypes::PET,
-            'quote' => fn() => $quote,
+            'quote' => fn () => $quote,
             'activities' => $activities,
             'lostReasons' => $lostReasons,
             'advisors' => $advisors,

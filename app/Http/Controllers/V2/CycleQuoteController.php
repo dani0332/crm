@@ -152,7 +152,7 @@ class CycleQuoteController extends Controller
 
         return inertia('CycleQuote/Show', [
             'quoteType' => QuoteTypes::CYCLE,
-            'quote' => fn() => $quote,
+            'quote' => fn () => $quote,
             'activities' => $activities,
             'lostReasons' => $lostReasons,
             'advisors' => $advisors,
