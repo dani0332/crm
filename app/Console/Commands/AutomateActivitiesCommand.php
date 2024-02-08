@@ -26,7 +26,7 @@ class AutomateActivitiesCommand extends Command
      *
      * @var string
      */
-    protected $signature = 'AutomateActivitiesCommand:cron';
+    protected $signature = 'ActivitiesAutomate:cron';
 
     /**
      * The console command description.

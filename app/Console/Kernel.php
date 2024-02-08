@@ -24,6 +24,9 @@ class Kernel extends ConsoleKernel
         Commands\ResetLeadAllocationCounts::class,
         Commands\UpdateHealthStatus::class,
         Commands\QuoteSyncUpdateCommand::class,
+        Commands\UpdateLostStatus::class,
+        Commands\UpdateStaleLeads::class,
+        Commands\AutomateActivitiesCommand::class,
     ];
 
     /**

@@ -27,7 +27,7 @@ class UpdateLostStatus extends Command
      *
      * @var string
      */
-    protected $signature = 'updateLostStatus:cron';
+    protected $signature = 'UpdateLostStatus:cron';
 
     /**
      * The console command description.
