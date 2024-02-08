@@ -387,6 +387,8 @@ const markMemberBasePriceRevise = (event, id) => {
             notifyAgent: false,
         };
 
+        memberFormLoader.value = true;
+
         axios
             .post('/health-plan-notify-agent', apiData)
             .then(res => {
@@ -406,6 +408,7 @@ const markMemberBasePriceRevise = (event, id) => {
                 console.log(err);
             })
             .finally(() => {
+                memberFormLoader.value = false;
                 // todo disable checkbox on success
             });
     }
@@ -765,7 +768,10 @@ onUpdated(() => {
         </TabPanel> -->
 
           <TabPanel>
-            <div class="p-4">
+            <div class="p-4 relative">
+                <div v-if="memberFormLoader" class="flex items-center justify-center absolute w-full h-[97%] rounded-md !bg-gray-800/20 z-20 inset-0">
+                    <x-button class="!p-4" color="gray" size="lg" loading rounded/>
+                </div>
               <DataTable
                 :headers="[
                   { text: 'Revised', value: 'memberaction' },
