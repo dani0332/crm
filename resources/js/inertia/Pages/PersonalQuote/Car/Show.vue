@@ -364,6 +364,7 @@ const documentsTableItems = computed(() => {
       document_type_text:
         doc.document_type_text.length > 0 ? doc.document_type_text : '',
       document_name_text: doc.doc_name,
+      document_original_name: doc.original_name,
       created_at: doc.created_at,
       doc_uuid: doc.doc_uuid,
       doc_url: doc.doc_url,
@@ -3367,7 +3368,7 @@ const handlePlanSelected = plan => {
       >
         <template #item-document_name_text="item">
           <a target="_blank" :href="storageUrl + item.doc_url">{{
-            item.document_name_text
+            item.document_original_name
           }}</a>
         </template>
         <template #item-action="item">
