@@ -2,6 +2,7 @@
 
 use App\Enums\IMCRMSearchTypesEnum;
 use App\Enums\PermissionsEnum;
+use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypes;
 use App\Models\CustomerAdditionalInfo;
@@ -478,7 +479,7 @@ if (! function_exists('newUi')) {
 if (! function_exists('isCarLostStatus')) {
     function isCarLostStatus($quoteStatus): bool
     {
-        return $quoteStatus == App\Enums\QuoteStatusEnum::CarSold || $quoteStatus == App\Enums\QuoteStatusEnum::Uncontactable;
+        return $quoteStatus == QuoteStatusEnum::CarSold || $quoteStatus == QuoteStatusEnum::Uncontactable;
     }
 }
 
