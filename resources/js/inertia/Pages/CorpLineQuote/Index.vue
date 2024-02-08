@@ -280,7 +280,7 @@ watch(
 <template>
   <div>
     <Head title="Business Quote List" />
-    <!-- <StickyHeader>
+    <StickyHeader>
       <template v-slot:header>
         <h2 class="text-xl font-semibold">Lead List</h2>
         <LeadsCount :leadsCount="$page.props.totalCount" />
@@ -305,9 +305,9 @@ watch(
           <x-button size="sm" color="#ff5e00" tag="div"> Create Lead</x-button>
         </Link>
       </template>
-    </StickyHeader> -->
+    </StickyHeader>
 
-    <div class="flex justify-between items-center">
+    <!-- <div class="flex justify-between items-center">
       <div class="flex items-center gap-5">
         <h2 class="text-xl font-semibold">Lead List</h2>
         <LeadsCount :leadsCount="$page.props.totalCount" />
@@ -332,7 +332,7 @@ watch(
           <x-button size="sm" color="#ff5e00" tag="div"> Create Lead</x-button>
         </Link>
       </div>
-    </div>
+    </div> -->
     <x-divider class="my-4" />
     <x-form v-show="showFilters" @submit="onSubmit" :auto-focus="false">
       <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">

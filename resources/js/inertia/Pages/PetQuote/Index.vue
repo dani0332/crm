@@ -230,7 +230,37 @@ watch(
 <template>
   <div>
     <Head title="Pet Quotes" />
-    <div class="flex justify-between items-center">
+
+    <StickyHeader>
+      <template v-slot:header>
+        <h2 class="text-xl font-semibold">Pet Quotes List</h2>
+        <LeadsCount :leadsCount="$page.props.totalCount" />
+      </template>
+      <template #default>
+        <ColumnSelection v-model:columns="tableHeader" storage-key="pet-list" />
+
+        <FiltersButton
+          :is-shown="showFilters"
+          :filters="filters"
+          :filters-count="filtersCount"
+          @selected-filters="handleSelectedFilters"
+          @toggleFilters="showFilters = !showFilters"
+        />
+        <Link :href="route('pet-quotes-card')">
+          <x-button size="sm" color="#1d83bc" tag="div"> Cards View </x-button>
+        </Link>
+        <x-button
+          v-if="can(permissionsEnum.PetQuotesCreate)"
+          size="sm"
+          color="#ff5e00"
+          :href="route('pet-quotes-create')"
+        >
+          Create Lead
+        </x-button>
+      </template>
+    </StickyHeader>
+
+    <!-- <div class="flex justify-between items-center">
       <div class="flex items-center gap-5">
         <h2 class="text-xl font-semibold">Pet Quotes List</h2>
         <LeadsCount :leadsCount="$page.props.totalCount" />
@@ -257,7 +287,7 @@ watch(
           Create Lead
         </x-button>
       </div>
-    </div>
+    </div> -->
     <x-divider class="my-4" />
 
     <x-form v-show="showFilters" @submit="onSubmit" :auto-focus="false">

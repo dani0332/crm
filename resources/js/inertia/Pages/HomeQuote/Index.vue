@@ -228,7 +228,35 @@ watch(
 <template>
   <div>
     <Head title="Home List" />
-    <div class="flex justify-between items-center">
+    <StickyHeader>
+      <template v-slot:header>
+        <h2 class="text-xl font-semibold">Home List</h2>
+        <LeadsCount :leadsCount="$page.props.totalCount" />
+      </template>
+      <template #default>
+        <ColumnSelection
+          v-model:columns="tableHeader"
+          storage-key="home-list"
+        />
+
+        <FiltersButton
+          :is-shown="showFilters"
+          :filters="filters"
+          :filters-count="filtersCount"
+          @selected-filters="handleSelectedFilters"
+          @toggleFilters="showFilters = !showFilters"
+        />
+
+        <Link :href="route('home-cardView')">
+          <x-button size="sm" color="#1d83bc" tag="div"> Cards View </x-button>
+        </Link>
+
+        <Link :href="route('home.create')">
+          <x-button size="sm" color="#ff5e00" tag="div"> Create Lead </x-button>
+        </Link>
+      </template>
+    </StickyHeader>
+    <!-- <div class="flex justify-between items-center">
       <div class="flex items-center gap-5">
         <h2 class="text-xl font-semibold">Home List</h2>
         <LeadsCount :leadsCount="$page.props.totalCount" />
@@ -255,7 +283,7 @@ watch(
           <x-button size="sm" color="#ff5e00" tag="div"> Create Lead </x-button>
         </Link>
       </div>
-    </div>
+    </div> -->
     <x-divider class="my-4" />
     <x-form v-show="showFilters" @submit="onSubmit" :auto-focus="false">
       <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">

@@ -273,7 +273,45 @@ const linkEntity = () => {
 <template>
   <div>
     <Head title="Cycle Quotes" />
-    <div class="flex justify-between items-center flex-wrap gap-2 mb-5">
+    <StickyHeader>
+      <template v-slot:header>
+        <h2 class="text-xl font-semibold">Cycle Detail</h2>
+        <p
+          class="bg-red-600 px-2 py-1 rounded text-sm text-white"
+          v-if="countDays !== false"
+        >
+          Stale for {{ countDays }} days
+        </p>
+      </template>
+      <template #default>
+        <LeadNotes
+          :documentType="noteDocumentType"
+          :notes="quoteNotes"
+          :modelType="quoteType"
+          :quote="quote"
+          :cdn="cdnPath"
+        />
+        <x-button size="sm" color="#ff5e00" @click.prevent="openDuplicate">
+          Duplicate Lead
+        </x-button>
+        <Link
+          v-if="can(permissionsEnum.CycleQuotesList)"
+          :href="route('cycle-quotes-list')"
+          preserve-scroll
+        >
+          <x-button size="sm" color="primary" tag="div">
+            Cycle Quotes
+          </x-button>
+        </Link>
+        <Link
+          v-if="can(permissionsEnum.CycleQuotesEdit)"
+          :href="route('cycle-quotes-edit', quote.uuid)"
+        >
+          <x-button size="sm" tag="div">Edit</x-button>
+        </Link>
+      </template>
+    </StickyHeader>
+    <!-- <div class="flex justify-between items-center flex-wrap gap-2 mb-5">
       <div class="flex items-center space-x-2">
         <h2 class="text-xl font-semibold">Cycle Detail</h2>
         <p
@@ -310,7 +348,7 @@ const linkEntity = () => {
           <x-button size="sm" tag="div">Edit</x-button>
         </Link>
       </div>
-    </div>
+    </div> -->
     <x-modal v-model="modals.duplicate" size="lg" show-close backdrop>
       <template #header> Duplicate Lead </template>
       <x-form @submit="onCreateDuplicate" :auto-focus="false">
@@ -352,7 +390,7 @@ const linkEntity = () => {
       </x-form>
     </x-modal>
 
-    <div class="p-4 rounded shadow mb-6 bg-white">
+    <div class="p-4 rounded shadow mb-6 bg-white mt-4">
       <div class="text-sm">
         <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
           <div class="grid sm:grid-cols-2">

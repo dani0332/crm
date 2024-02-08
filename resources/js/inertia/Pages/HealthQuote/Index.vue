@@ -344,20 +344,12 @@ watch(
 <template>
   <div>
     <Head title="Health List" />
-    <div class="flex justify-between items-center">
-      <div class="flex items-center gap-5">
+    <StickyHeader>
+      <template v-slot:header>
         <h2 class="text-xl font-semibold">Health List</h2>
         <LeadsCount :leadsCount="$page.props.totalCount" />
-      </div>
-      <LeadAssignedWidget
-        v-if="hasAnyRole([rolesEnum.RMAdvisor, rolesEnum.EBPAdvisor])"
-        :todayAutoCount="todayAutoCount"
-        :todayManualCount="todayManualCount"
-        :yesterdayAutoCount="yesterdayAutoCount"
-        :yesterdayManualCount="yesterdayManualCount"
-        :userMaxCap="userMaxCap"
-      />
-      <div class="flex space-x-2 items-center">
+      </template>
+      <template #default>
         <ColumnSelection
           v-model:columns="tableHeader"
           storage-key="health-list"
@@ -377,8 +369,18 @@ watch(
         <Link :href="route('health.create')">
           <x-button size="sm" color="#ff5e00" tag="div"> Create Lead </x-button>
         </Link>
-      </div>
-    </div>
+      </template>
+    </StickyHeader>
+
+    <LeadAssignedWidget
+      v-if="hasAnyRole([rolesEnum.RMAdvisor, rolesEnum.EBPAdvisor])"
+      :todayAutoCount="todayAutoCount"
+      :todayManualCount="todayManualCount"
+      :yesterdayAutoCount="yesterdayAutoCount"
+      :yesterdayManualCount="yesterdayManualCount"
+      :userMaxCap="userMaxCap"
+    />
+
     <x-divider class="my-4" />
     <x-form v-show="showFilters" @submit="onSubmit" :auto-focus="false">
       <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">

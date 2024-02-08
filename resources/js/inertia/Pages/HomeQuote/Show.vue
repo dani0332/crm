@@ -465,7 +465,38 @@ const linkEntity = () => {
 <template>
   <div>
     <Head title="Home Detail" />
-    <div class="flex justify-between items-center flex-wrap gap-2">
+    <StickyHeader>
+      <template v-slot:header>
+        <h2 class="text-xl font-semibold">Home Detail</h2>
+        <p
+          class="bg-red-600 px-2 py-1 rounded text-sm text-white"
+          v-if="countDays !== false"
+        >
+          Stale for {{ countDays }} days
+        </p>
+      </template>
+      <template #default>
+        <LeadNotes
+          :documentType="noteDocumentType"
+          :notes="quoteNotes"
+          :modelType="modelType"
+          :quote="quote"
+          :cdn="cdnPath"
+        />
+        <x-button size="sm" color="#ff5e00" @click.prevent="openDuplicate">
+          Duplicate Lead
+        </x-button>
+
+        <Link :href="route('home.index')" preserve-scroll>
+          <x-button size="sm" color="primary" tag="div"> Home List </x-button>
+        </Link>
+
+        <Link :href="route('home.edit', quote.uuid)">
+          <x-button size="sm" tag="div">Edit</x-button>
+        </Link>
+      </template>
+    </StickyHeader>
+    <!-- <div class="flex justify-between items-center flex-wrap gap-2">
       <div class="flex items-center space-x-2">
         <h2 class="text-xl font-semibold">Home Detail</h2>
         <p
@@ -495,7 +526,7 @@ const linkEntity = () => {
           <x-button size="sm" tag="div">Edit</x-button>
         </Link>
       </div>
-    </div>
+    </div> -->
 
     <x-modal v-model="modals.duplicate" size="lg" show-close backdrop>
       <template #header> Duplicate Lead </template>
