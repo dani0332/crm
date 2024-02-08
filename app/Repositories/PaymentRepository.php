@@ -446,11 +446,17 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                     ['payment_status_id' => $payment->paymentSplits[0]->payment_status_id]
                 );
             } else {
-                $totalPaidPayments = PaymentSplits::where([
-                    'payment_status_id' => PaymentStatusEnum::PAID,
-                    'code' => $payment->code,
-                ])->count();
-                if ($totalPaidPayments == $payment->total_payments) {
+
+                $totalPaidPayments = PaymentSplits::whereIn('payment_status_id', [
+                    PaymentStatusEnum::PAID,
+                    PaymentStatusEnum::CAPTURED,
+                    PaymentStatusEnum::PARTIAL_CAPTURED,
+                ])
+                ->where('code', $payment->code)
+                ->count();
+                
+                if ($totalPaidPayments == $payment->total_payments 
+                    && $payment->captured_amount >= ($payment->total_price-$payment->discount_value)) {
                     $payment->update(
                         ['payment_status_id' => PaymentStatusEnum::PAID]
                     );
