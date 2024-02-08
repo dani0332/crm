@@ -69,7 +69,7 @@ class MAWelcomeJob implements ShouldQueue
                                 'source' => $this->source,
                             ]);
                         }
-                    });
+                    }, 5);
                 }
             } else {
                 info('MAWelcomeJob - Email not sent to customer: '.$this->email.' getStatusCode: '.$statusCode);
