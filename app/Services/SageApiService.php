@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Factories\SagePayloadFactory;
 use App\Models\Customer;
 use App\Models\Lookup;
+use App\Models\PaymentSplits;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use App\Traits\SageLoggable;
@@ -170,7 +171,9 @@ class SageApiService
         // payload
         $sageRequest = $this->sagePayLoad($request->model_type, $payment, $quote, $paymentSplits);
 
+
         $sageLogArray =  $quote->sageLog->keyBy('step')->toArray();
+
         // sape customer number generation
         $sageCustomerNumber = $this->verifySageCustomer($quote->customer_id, $data, $quote, $sageLogArray, 13);
 
@@ -429,8 +432,6 @@ class SageApiService
                         };
 
                         if (!empty($postedResponse['BatchNumber'])) {
-
-
                             if ($isLiveApiCallStep111) {
                                 $this->logSageApiCall($createARInvoiceSplitPayments, $postedResponse, $quote, $currentStep,  $totalSteps);
                             }
@@ -467,61 +468,110 @@ class SageApiService
                     }
                 }
 
+                // Starting from Here 
 
-                // if (!empty($postedResponse['BatchNumber'])) {
+                if (!empty($postedResponse['BatchNumber'])) {
 
-                //     if ($isLiveApiCallStep11) {
-                //         $this->logSageApiCall($createPaymontRecieptOneInvoice, $postedResponse, $quote, $currentStep, $totalSteps);
-                //     }
+                    SagePayloadFactory::readyToPostReceiptArPayment($postedResponse['BatchNumber']);
+
+                    if ($isLiveApiCallStep11) {
+                        $this->logSageApiCall($createPaymontRecieptOneInvoice, $postedResponse, $quote, $currentStep, $totalSteps);
+                    }
+
+                    $currentStep= 12;
+                    
+                    $isLiveApiCallStep12 = true;
+                    if (isset($sageLogArray[$currentStep]) && $sageLogArray[$currentStep]['status'] == 'success') {
+                        $isLiveApiCallStep12 = false;
+                        $readyToPostResponse = json_decode($sageLogArray[$currentStep]['response'], true);
+                    } else {
+                        $readyToPostReceiptAr = SagePayloadFactory::readyToPostReceiptArPayment($sageCustomerNumber, $paymentSplits);
+                        $readyToPostResponse = $this->postToSage300($readyToPostReceiptAr['endPoint'], $readyToPostReceiptAr['payload'], 'POST');
+                    }
+
+                    if ($readyToPostResponse !== '') {
+                        $this->logSageApiCall($readyToPostReceiptAr, $readyToPostResponse, $quote, $currentStep, $totalSteps, 'fail');
+                        $returnMessage['status'] = false;
+                        $returnMessage['message'] = 'Error while posting to payment ';
+                        return $returnMessage;
+                    } else {
+                        if ($isLiveApiCallStep12) {
+                            $this->logSageApiCall($readyToPostReceiptAr, $readyToPostResponse, $quote, $currentStep, $totalSteps);
+                        }
+                    }
+
+            
+                    $currentStep= 13;
+
+                    $isLiveApiCallStep13 = true;
+                    if (isset($sageLogArray[$currentStep]) && $sageLogArray[$currentStep]['status'] == 'success') {
+                        $isLiveApiCallStep13 = false;
+                        $readyToPostResponse = json_decode($sageLogArray[$currentStep]['response'], true);
+                    } else {
+                        $readyToPostReceiptAr = SagePayloadFactory::arSplitPrepaymentPayload($quote, $sageCustomerNumber, $payment,$paymentSplits);
+                        $readyToPostResponse = $this->postToSage300($readyToPostReceiptAr['endPoint'], $readyToPostReceiptAr['payload'], 'POST');
+                        dd($readyToPostResponse);
+                    }
+
+                    if ($readyToPostResponse !== '') {
+                        $this->logSageApiCall($readyToPostReceiptAr, $readyToPostResponse, $quote, $currentStep, $totalSteps, 'fail');
+                        $returnMessage['status'] = false;
+                        $returnMessage['message'] = 'Error while making Apply payment ready to post to sage';
+                        return $returnMessage;
+                    } else {
+                        if ($isLiveApiCallStep13) {
+                            $this->logSageApiCall($readyToPostReceiptAr, $readyToPostResponse, $quote, $currentStep, $totalSteps);
+                        }
+                    }
+
+                    dd(526);
+                    $isLiveApiCallStep13 = true;
+                    if (isset($sageLogArray[$currentStep]) && $sageLogArray[$currentStep]['status'] == 'success') {
+                        $isLiveApiCallStep13 = false;
+                        $readyToPostResponse = json_decode($sageLogArray[$currentStep]['response'], true);
+                    } else {
+                        $readyToPostReceiptAr = SagePayloadFactory::readyToPostReceiptAr($postedResponse['BatchNumber']);
+                        $readyToPostResponse = $this->postToSage300($readyToPostReceiptAr['endPoint'], $readyToPostReceiptAr['payload'], 'PATCH');
+                    }
+
+                    if ($readyToPostResponse !== '') {
+                        $this->logSageApiCall($readyToPostReceiptAr, $readyToPostResponse, $quote, $currentStep, $totalSteps, 'fail');
+                        $returnMessage['status'] = false;
+                        $returnMessage['message'] = 'Error while making Apply payment ready to post to sage';
+                        return $returnMessage;
+                    } else {
+                        if ($isLiveApiCallStep13) {
+                            $this->logSageApiCall($readyToPostReceiptAr, $readyToPostResponse, $quote, $currentStep, $totalSteps);
+                        }
+                    }
+
+                    $isLiveApiCallStep14 = true;
+                    if (isset($sageLogArray[$currentStep]) && $sageLogArray[$currentStep]['status'] == 'success') {
+                        $isLiveApiCallStep14 = false;
+                        $postedResponse = json_decode($sageLogArray[$currentStep]['response'], true);
+                    } else {
+                        $aRPostReceipts = SagePayloadFactory::aRPostReceipts($postedResponse['BatchNumber']);
+                        $resp = $this->postToSage300($aRPostReceipts['endPoint'], $aRPostReceipts['payload']);
+                        $postedResponse = json_decode($resp, true);
+                    }
 
 
-                //     $isLiveApiCallStep12 = true;
-                //     if (isset($sageLogArray[$currentStep]) && $sageLogArray[$currentStep]['status'] == 'success') {
-                //         $isLiveApiCallStep12 = false;
-                //         $readyToPostResponse = json_decode($sageLogArray[$currentStep]['response'], true);
-                //     } else {
-                //         $readyToPostReceiptAr = SagePayloadFactory::readyToPostReceiptAr($postedResponse['BatchNumber']);
-                //         $readyToPostResponse = $this->postToSage300($readyToPostReceiptAr['endPoint'], $readyToPostReceiptAr['payload'], 'PATCH');
-                //     }
-
-                //     if ($readyToPostResponse !== '') {
-                //         $this->logSageApiCall($readyToPostReceiptAr, $readyToPostResponse, $quote, $currentStep, $totalSteps, 'fail');
-                //         $returnMessage['status'] = false;
-                //         $returnMessage['message'] = 'Error while making Apply payment ready to post to sage';
-                //         return $returnMessage;
-                //     } else {
-                //         if ($isLiveApiCallStep12) {
-                //             $this->logSageApiCall($readyToPostReceiptAr, $readyToPostResponse, $quote, $currentStep, $totalSteps);
-                //         }
-                //     }
-
-                //     $isLiveApiCallStep13 = true;
-                //     if (isset($sageLogArray[$currentStep]) && $sageLogArray[$currentStep]['status'] == 'success') {
-                //         $isLiveApiCallStep13 = false;
-                //         $postedResponse = json_decode($sageLogArray[$currentStep]['response'], true);
-                //     } else {
-                //         $aRPostReceipts = SagePayloadFactory::aRPostReceipts($postedResponse['BatchNumber']);
-                //         $resp = $this->postToSage300($aRPostReceipts['endPoint'], $aRPostReceipts['payload']);
-                //         $postedResponse = json_decode($resp, true);
-                //     }
-
-
-                //     if (isset($postedResponse['error'])) {
-                //         $returnMessage['status'] = false;
-                //         $returnMessage['message'] = 'Error while making Apply payment Posted to sage';
-                //         $this->logSageApiCall($aRPostReceipts, $postedResponse,  $quote, $currentStep, $totalSteps, 'fail');
-                //         return $returnMessage;
-                //     } else {
-                //         if ($isLiveApiCallStep13) {
-                //             $this->logSageApiCall($aRPostReceipts, $postedResponse,  $quote, $currentStep, $totalSteps);
-                //         }
-                //     }
-                // } else {
-                //     $this->logSageApiCall($createPaymontRecieptOneInvoice, $postedResponse, $quote, $currentStep, $totalSteps, 'fail');
-                //     $returnMessage['message'] = 'Apply payment failed from sage';
-                //     $returnMessage['status'] = false;
-                //     return $returnMessage;
-                // }
+                    if (isset($postedResponse['error'])) {
+                        $returnMessage['status'] = false;
+                        $returnMessage['message'] = 'Error while making Apply payment Posted to sage';
+                        $this->logSageApiCall($aRPostReceipts, $postedResponse,  $quote, $currentStep, $totalSteps, 'fail');
+                        return $returnMessage;
+                    } else {
+                        if ($isLiveApiCallStep14) {
+                            $this->logSageApiCall($aRPostReceipts, $postedResponse,  $quote, $currentStep, $totalSteps);
+                        }
+                    }
+                } else {
+                    $this->logSageApiCall($createPaymontRecieptOneInvoice, $postedResponse, $quote, $currentStep, $totalSteps, 'fail');
+                    $returnMessage['message'] = 'Apply payment failed from sage';
+                    $returnMessage['status'] = false;
+                    return $returnMessage;
+                }
             }
 
             return ['status' => true, 'message' => 'Policy Booked Successfully'];
