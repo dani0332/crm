@@ -1379,6 +1379,11 @@ const handlePlanSelected = plan => {
   selectedProviderPlan.value.planName = plan.planName
   selectedProviderPlan.value.providerName = plan.providerName
   selectedProviderPlan.value.premium = plan.premium
+  router.reload({
+    preserveState: true,
+    preserveScroll: true,
+    only: ['payments','quoteRequest'],        
+  });  
 };
 
 </script>
