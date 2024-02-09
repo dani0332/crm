@@ -1627,7 +1627,7 @@ const getCaptureValidation = computed(() => {
         (paymentRecord.payment_splits[0].payment_method.code==='IP' ||
         paymentRecord.payment_splits[0].payment_method.code==='PDC'
         ) &&
-        paymentRecord.payment_splits[0].payment_status.code===props.paymentStatusEnum.PENDING) {
+        paymentRecord.payment_splits[0].payment_status_id===props.paymentStatusEnum.PENDING) {
         return true;
       } else if(
           paymentRecord.payment_splits[0].payment_status_id===props.paymentStatusEnum.PAID ||
