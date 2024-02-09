@@ -16,7 +16,6 @@ const createPaymentModal = ref(false);
 
 const can = permission => useCan(permission);
 const hasRole = role => useHasRole(role);
-const hasAnyRole = roles => useHasAnyRole(roles);
 const permissionsEnum = page.props.permissionsEnum;
 const rolesEnum = page.props.rolesEnum;
 
@@ -342,7 +341,7 @@ const approvePayment = payment => {
         v-if="
           can(permissionsEnum.PaymentsCreate) &&
           !can(permissionsEnum.ApprovePayments) &&
-          !hasAnyRole([rolesEnum.PA, rolesEnum.CarManager, rolesEnum.CarAdvisor])
+          !hasRole(rolesEnum.PA)
         "
         size="sm"
         color="orange"

@@ -2,6 +2,7 @@
 
 use App\Enums\IMCRMSearchTypesEnum;
 use App\Enums\PermissionsEnum;
+use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypes;
 use App\Models\BusinessQuote;
@@ -11,6 +12,7 @@ use App\Services\HealthQuoteService;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -24,7 +26,7 @@ if (! function_exists('generate_code')) {
     function generate_code($prefix)
     {
         $transaction = DB::table('transactions')->count();
-        $now = \Carbon\Carbon::now();
+        $now = Carbon::now();
         $day = $now->day < 10 ? '0'.$now->day : $now->day;
         $month = $now->month < 10 ? '0'.$now->month : $now->month;
         $year = substr($now->year, 2);
@@ -39,14 +41,14 @@ if (! function_exists('vAbort')) {
      *
      * @param $messages message string or array of messages
      *
-     * @throws \Illuminate\Validation\ValidationException
+     * @throws ValidationException
      */
     function vAbort($messages, $field = 'error')
     {
         if (! is_array($messages)) {
             $messages = [$field => [$messages]];
         }
-        throw Illuminate\Validation\ValidationException::withMessages($messages);
+        throw ValidationException::withMessages($messages);
     }
 }
 
@@ -215,26 +217,26 @@ function getDataAgainstEveryStatus($modelType, $request)
     if ($request->has('myleads')) {
         if (Auth::user()->isRenewalAdvisor()) {
             $result['leads_list'] = $modelType::where('quote_status_id', $request->status)
-                ->where('advisor_id', \Auth::user()->id)
+                ->where('advisor_id', Auth::user()->id)
                 ->whereNotNull('previous_quote_id')
                 ->paginate(10);
         } elseif (Auth::user()->isNewBusinessAdvisor()) {
             $result['leads_list'] = $modelType::where('quote_status_id', $request->status)
-                ->where('advisor_id', \Auth::user()->id)
+                ->where('advisor_id', Auth::user()->id)
                 ->whereNull('previous_quote_id')
                 ->paginate(10);
         } else {
-            $result['leads_list'] = $modelType::where('quote_status_id', $request->status)->where('advisor_id', \Auth::user()->id)->paginate(10);
+            $result['leads_list'] = $modelType::where('quote_status_id', $request->status)->where('advisor_id', Auth::user()->id)->paginate(10);
         }
     } else {
         if (Auth::user()->isRenewalAdvisor()) {
             $result['leads_list'] = $modelType::where('quote_status_id', $request->status)
-                ->where('advisor_id', \Auth::user()->id)
+                ->where('advisor_id', Auth::user()->id)
                 ->whereNotNull('previous_quote_id')
                 ->paginate(10);
         } elseif (Auth::user()->isNewBusinessAdvisor()) {
             $result['leads_list'] = $modelType::where('quote_status_id', $request->status)
-                ->where('advisor_id', \Auth::user()->id)
+                ->where('advisor_id', Auth::user()->id)
                 ->whereNull('previous_quote_id')
                 ->paginate(10);
         } else {
@@ -258,19 +260,19 @@ function getDataAgainstSearchTerm($modelType, $request)
             if (Auth::user()->isRenewalAdvisor()) {
                 $result['leads_list'] = $modelType::where('quote_status_id', $request->status)
                     ->whereRaw('MATCH (company_name, first_name, last_name, code, mobile_no, email) AGAINST (?)', [$request->term.'*'])
-                    ->where('advisor_id', \Auth::user()->id)
+                    ->where('advisor_id', Auth::user()->id)
                     ->whereNotNull('previous_quote_id')
                     ->get();
             } elseif (Auth::user()->isNewBusinessAdvisor()) {
                 $result['leads_list'] = $modelType::where('quote_status_id', $request->status)
                     ->whereRaw('MATCH (company_name, first_name, last_name, code, mobile_no, email) AGAINST (?)', [$request->term.'*'])
-                    ->where('advisor_id', \Auth::user()->id)
+                    ->where('advisor_id', Auth::user()->id)
                     ->whereNull('previous_quote_id')
                     ->get();
             } else {
                 $result['leads_list'] = $modelType::where('quote_status_id', $request->status)
                     ->whereRaw('MATCH (company_name, first_name, last_name, code, mobile_no, email) AGAINST (? IN BOOLEAN MODE)', [$request->term.'*'])
-                    ->where('advisor_id', \Auth::user()->id)
+                    ->where('advisor_id', Auth::user()->id)
                     ->get();
             }
         } else {
@@ -278,13 +280,13 @@ function getDataAgainstSearchTerm($modelType, $request)
                 $result['leads_list'] = $modelType::where('quote_status_id', $request->status)
                     ->whereRaw('MATCH (company_name, first_name, last_name, code, mobile_no, email) AGAINST (? IN BOOLEAN MODE)', [$request->term.'*'])
                     ->whereNotNull('previous_quote_id')
-                    ->where('advisor_id', \Auth::user()->id)
+                    ->where('advisor_id', Auth::user()->id)
                     ->get();
             } elseif (Auth::user()->isNewBusinessAdvisor()) {
                 $result['leads_list'] = $modelType::where('quote_status_id', $request->status)
                     ->whereRaw('MATCH (company_name, first_name, last_name, code, mobile_no, email) AGAINST (? IN BOOLEAN MODE)', [$request->term.'*'])
                     ->whereNull('previous_quote_id')
-                    ->where('advisor_id', \Auth::user()->id)
+                    ->where('advisor_id', Auth::user()->id)
                     ->get();
             } else {
                 $result['leads_list'] = $modelType::where('quote_status_id', $request->status)
@@ -297,13 +299,13 @@ function getDataAgainstSearchTerm($modelType, $request)
             $result['leads_list'] = $modelType::where('quote_status_id', $request->status)
                 ->whereRaw('MATCH (first_name, last_name, code, mobile_no, email) AGAINST (? IN BOOLEAN MODE)', [$request->term.'*'])
                 ->whereNotNull('previous_quote_id')
-                ->where('advisor_id', \Auth::user()->id)
+                ->where('advisor_id', Auth::user()->id)
                 ->get();
         } elseif (Auth::user()->isNewBusinessAdvisor()) {
             $result['leads_list'] = $modelType::where('quote_status_id', $request->status)
                 ->whereRaw('MATCH (first_name, last_name, code, mobile_no, email) AGAINST (? IN BOOLEAN MODE)', [$request->term.'*'])
                 ->whereNull('previous_quote_id')
-                ->where('advisor_id', \Auth::user()->id)
+                ->where('advisor_id', Auth::user()->id)
                 ->get();
         } else {
             $result['leads_list'] = $modelType::where('quote_status_id', $request->status)
@@ -430,7 +432,7 @@ if (! function_exists('newUi')) {
 if (! function_exists('isCarLostStatus')) {
     function isCarLostStatus($quoteStatus): bool
     {
-        return $quoteStatus == \App\Enums\QuoteStatusEnum::CarSold || $quoteStatus == \App\Enums\QuoteStatusEnum::Uncontactable;
+        return $quoteStatus == QuoteStatusEnum::CarSold || $quoteStatus == QuoteStatusEnum::Uncontactable;
     }
 }
 
@@ -593,11 +595,20 @@ if (! function_exists('addDaysExcludeWeekend')) {
     }
 }
 
+if (! function_exists('getIMLogo')) {
+    function getIMLogo($isPDF = false)
+    {
+        $imLogo = 'images/im_logo_21k-hi.png';
+
+        return $isPDF ? public_path($imLogo) : asset($imLogo);
+    }
+}
+
 if (! function_exists('apiResponse')) {
     function apiResponse($data, $statusCode = 200, $message = null)
     {
         // If the data is an instance of Exception, handle it separately
-        if ($data instanceof \Exception) {
+        if ($data instanceof Exception) {
             $statusCode = 500;
             $message = $data->getMessage();
             $data = null;
