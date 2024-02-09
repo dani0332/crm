@@ -22,24 +22,24 @@ class SaleSummaryReportService extends ManagementReport
         $request['groupBy'] = $request->groupBy ?? 'advisor';
 
         $query = PersonalQuote::query()
-            ->leftJoin('send_updates', 'personal_quotes.uuid', '=', 'send_updates.quote_uuid')
-            ->leftJoin('lookups', 'send_updates.type_id', '=', 'lookups.id')
+            ->leftJoin('send_update_logs as sul', 'personal_quotes.id', '=', 'sul.personal_quote_id')
+            ->leftJoin('lookups as l', 'sul.category_id', '=', 'l.id')
             ->leftJoin('users', 'personal_quotes.advisor_id', '=', 'users.id')
             ->leftJoin('user_team', 'users.id', '=', 'user_team.user_id')
             ->leftJoin('teams', 'user_team.team_id', '=', 'teams.id')
             ->join('quote_type', 'personal_quotes.quote_type_id', '=', 'quote_type.id')
             ->join('payments as p', 'personal_quotes.code', '=', 'p.code')
-            ->select(
-                DB::raw('FORMAT(SUM(CASE WHEN COALESCE(policy_issuance_date, policy_number) IS NOT NULL THEN 1 ELSE 0 END),2) as total_policies'),
-                DB::raw('FORMAT(SUM(CASE WHEN send_updates.id IS NOT NULL AND lookups.code = "Financial" THEN 1 ELSE 0 END),2) as total_endorsements'),
-                DB::raw('FORMAT(SUM(CASE WHEN COALESCE(policy_issuance_date, policy_number) IS NOT NULL THEN 1 ELSE 0 END) + SUM(CASE WHEN send_updates.id IS NOT NULL AND lookups.code = "Financial" THEN 1 ELSE 0 END),2) as total_transaction'),
-                DB::raw('FORMAT(SUM(price_vat_applicable),2) as price_vat_applicable'),
-                DB::raw('FORMAT((SUM(price_vat_applicable) * 0.05),2)  as total_vat'),
-                DB::raw('FORMAT(SUM(price_vat_not_applicable),2) as price_vat_not_applicable'),
-                DB::raw('FORMAT(SUM(p.discount_value),2) as discount'),
-                DB::raw('FORMAT((SUM(p.commission_vat_applicable) ),2) as commission_vat_applicable'),
-                DB::raw('FORMAT((SUM(price_vat_applicable) + SUM(price_vat_not_applicable) + (SUM(price_vat_applicable)* 0.05))  - SUM(p.discount_value),2) as total_price'),
-            )
+            ->selectRaw("
+            FORMAT(SUM(CASE WHEN COALESCE(policy_issuance_date, personal_quotes.policy_number) IS NOT NULL THEN 1 ELSE 0 END), 2) as total_policies,
+            FORMAT(SUM(CASE WHEN sul.id IS NOT NULL AND l.code = 'EF' THEN 1 ELSE 0 END), 2) as total_endorsements,
+            FORMAT(SUM(CASE WHEN COALESCE(policy_issuance_date, personal_quotes.policy_number) IS NOT NULL THEN 1 ELSE 0 END) + SUM(CASE WHEN sul.id IS NOT NULL AND l.code = 'EF' THEN 1 ELSE 0 END), 2) as total_transaction,
+            FORMAT(IFNULL(SUM(price_vat_applicable),0), 2) as price_vat_applicable,
+            FORMAT(IFNULL(SUM(price_vat_applicable) * 0.05,0), 2) as total_vat,
+            FORMAT(IFNULL(SUM(price_vat_not_applicable), 0), 2) as price_vat_not_applicable,
+            FORMAT(IFNULL(SUM(p.discount_value), 0), 2) as discount,
+            FORMAT(IFNULL(SUM(p.commission_vat_applicable), 0), 2) as commission_vat_applicable,
+            FORMAT(IFNULL(SUM(price_vat_applicable), 0) + IFNULL(SUM(price_vat_not_applicable), 0) + IFNULL(SUM(price_vat_applicable) * 0.05, 0) - IFNULL(SUM(p.discount_value), 0), 2) as total_price
+            ")
             ->when($request->groupBy, function ($query, $groupBy) {
                 return $query->groupBy($this->resolveGroupByColumn($groupBy));
             });
@@ -73,7 +73,7 @@ class SaleSummaryReportService extends ManagementReport
         }
 
         $this->applyFilters($query, $request);
-
+        //dd($query->toSql(), $query->getBindings());
         return $query->simplePaginate(10)->withQueryString();
     }
 
