@@ -357,10 +357,12 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
             }
 
             $masterPaymentStatus = $firstPayment->payment_status_id;
-            $totalPaidPayments = PaymentSplits::where([
-                'payment_status_id' => PaymentStatusEnum::PAID,
-                'code' => $firstPayment->code,
-            ])->count();
+            $totalPaidPayments = PaymentSplits::whereIn('payment_status_id', [
+                PaymentStatusEnum::PAID,
+                PaymentStatusEnum::CAPTURED,
+            ])
+            ->where('code', $firstPayment->code)
+            ->count();
             if ($totalPaidPayments == $firstPayment->total_payments) {
                 $masterPaymentStatus = PaymentStatusEnum::PAID;
             }
