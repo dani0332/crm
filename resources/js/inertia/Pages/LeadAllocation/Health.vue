@@ -169,7 +169,7 @@ const tableHeader = ref([
   { text: 'Last Allocations', value: 'last_allocated', sortable: true },
   { text: 'Max Cap Limit', value: 'max_capacity', sortable: true },
   { text: 'Status', value: 'is_available', sortable: true, width: '100' },
-  { text: 'reset_cap', value: 'reset_cap', sortable: true, width: '100' },
+  { text: 'Reset Cap', value: 'reset_cap', sortable: true, width: '100' },
 ]);
 
 const onStatusSubmit = async () => {
