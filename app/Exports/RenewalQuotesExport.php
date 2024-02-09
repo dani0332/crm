@@ -4,15 +4,11 @@ namespace App\Exports;
 
 use App\Enums\quoteStatusCode;
 use App\Enums\quoteTypeCode;
-use Maatwebsite\Excel\Concerns\Exportable;
-use Maatwebsite\Excel\Concerns\FromQuery;
-use Maatwebsite\Excel\Concerns\ShouldAutoSize;
-use Maatwebsite\Excel\Concerns\WithHeadings;
-use Maatwebsite\Excel\Concerns\WithMapping;
+use App\Traits\ExcelExportable;
 
-class RenewalQuotesExport implements FromQuery, ShouldAutoSize, WithHeadings, WithMapping
+class RenewalQuotesExport
 {
-    use Exportable;
+    use ExcelExportable;
 
     public $exportType;
 
@@ -21,11 +17,6 @@ class RenewalQuotesExport implements FromQuery, ShouldAutoSize, WithHeadings, Wi
         $this->query = $query;
         $this->exportType = $exportType;
 
-    }
-
-    public function query()
-    {
-        return $this->query;
     }
 
     public function headings(): array
@@ -61,5 +52,10 @@ class RenewalQuotesExport implements FromQuery, ShouldAutoSize, WithHeadings, Wi
             $this->exportType == 'BUSINESS' ? ($quote->business_type_of_insurance_id == 5 ? quoteStatusCode::GROUP_MEDICAL : quoteTypeCode::CORPLINE) : '',
 
         ];
+    }
+
+    public function collection()
+    {
+        return $this->query->get();
     }
 }

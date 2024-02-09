@@ -17,6 +17,7 @@ defineProps({
   nationalities: Array,
   emirates: Array,
   advisors: Array,
+  teams: Object,
   quoteDocuments: Object,
   documentTypes: Object,
   cdnPath: String,
@@ -165,6 +166,18 @@ const memberCategoryText = memberCategoryId =>
       category => category.id === memberCategoryId,
     )?.text;
   });
+
+
+// const subTeamOptions = computed(() => {
+//     let subteamArray = page.props.teams?.map(team => ({
+//         value: team.name,
+//         label: team.name,
+//     }));
+
+//     subteamArray.push({ value: 'No-Type', label: 'No-Type' });
+
+//     return subteamArray;
+// });
 
 const subTeamOptions = [
   { value: 'RM-NB', label: 'RM-NB' },
@@ -531,7 +544,7 @@ const plansTable = reactive({
     {
       text: 'CO-PAY/CO-INSURANCE',
       value: 'copayName',
-      width: 100
+      width: 100,
     },
     {
       text: 'Base Price',
@@ -829,14 +842,11 @@ const getSmallestCopayRateAsDefaultValue = () => {
       element.actualPremium = smallestCopayValue;
       element.vat = smallestCopayVAT;
     }
-      element.coPayments.forEach(function callback(value, index) {
-          if(value.id ==  element.selectedCopayId){
-              element.copayName = value.text;
-          }
-
-      });
-
-
+    element.coPayments.forEach(function callback(value, index) {
+      if (value.id == element.selectedCopayId) {
+        element.copayName = value.text;
+      }
+    });
   });
 };
 
@@ -1422,7 +1432,7 @@ const handleChildUpdate = planId => {
             label="Assign Subteam"
             :options="subTeamOptions"
             placeholder="Select Subteam"
-            class="w-auto flex-1 mb-2"
+            class="w-auto flex-1 !mb-2"
           />
           <div>
             <x-button
@@ -1440,14 +1450,14 @@ const handleChildUpdate = planId => {
           v-if="!hasRole($page.props.rolesEnum.HealthWCUAdvisor)"
           class="w-full md:w-1/2 flex gap-2 items-end"
         >
-            <ComboBox
-                v-model="assignLead"
-                label="Assign Lead"
-                :options="advisorOptions"
-                placeholder="Select Lead"
-                class="w-auto flex-1 mt-1"
-                :single="true"
-            />
+          <ComboBox
+            v-model="assignLead"
+            label="Assign Lead"
+            :options="advisorOptions"
+            placeholder="Select Lead"
+            class="w-auto flex-1 !mb-2"
+            :single="true"
+          />
           <div>
             <x-button
               color="orange"
@@ -1593,7 +1603,9 @@ const handleChildUpdate = planId => {
           }}
           Profile
         </h3>
-        <x-tag color="success" v-if="quote.kyc_decision === 'Complete'"> KYC - Complete </x-tag>
+        <x-tag color="success" v-if="quote.kyc_decision === 'Complete'">
+          KYC - Complete
+        </x-tag>
         <x-tag color="amber" v-else> KYC - Pending </x-tag>
       </div>
       <x-divider class="mb-4 mt-1" />
@@ -2311,15 +2323,15 @@ const handleChildUpdate = planId => {
             <dt class="font-medium">TOTAL PRICE (with VAT)</dt>
             <dd>{{ fixedValue(ecomDetails.priceWithVAT) }}</dd>
           </div>
-            <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">CO-PAY / CO-INSURANCE</dt>
-                <dd>{{ (coPayment)?coPayment.text:'N/A' }}</dd>
-            </div>
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">CO-PAY / CO-INSURANCE</dt>
+            <dd>{{ coPayment ? coPayment.text : 'N/A' }}</dd>
+          </div>
         </dl>
       </div>
     </div>
 
-    <PaymentTable
+    <!-- <PaymentTable
       :payments="payments"
       :can="can"
       :isBetaUser="isBetaUser"
@@ -2327,7 +2339,7 @@ const handleChildUpdate = planId => {
       :paymentMethods="paymentMethods"
       :insuranceProviders="insuranceProviders"
       :quote="quote"
-    />
+    /> -->
 
     <!-- <div class="p-4 rounded shadow mb-6 bg-white" v-if="isQuoteDocumentEnabled">
       <div>
@@ -2500,11 +2512,10 @@ const handleChildUpdate = planId => {
         class="flex-wrap"
         :hide-footer="listQuotePlansFiltered.length < 15"
       >
-          <template #item-copayName="item">
-              <span class="copay-max">{{item.copayName}}</span>
-          </template>
+        <template #item-copayName="item">
+          <span class="copay-max">{{ item.copayName }}</span>
+        </template>
         <template #item-providerName="{ providerName, isManualPlan, isHidden }">
-
           <p>{{ providerName }}</p>
           <div class="flex gap-1">
             <x-tag
@@ -2534,11 +2545,11 @@ const handleChildUpdate = planId => {
           </div>
         </template>
 
-          <template #item-total="{ actualPremium, policyFee, basmah, vat }">
-              {{
-                  fixedValue(actualPremium + (policyFee || 0) + (basmah || 0) + vat)
-              }}
-          </template>
+        <template #item-total="{ actualPremium, policyFee, basmah, vat }">
+          {{
+            fixedValue(actualPremium + (policyFee || 0) + (basmah || 0) + vat)
+          }}
+        </template>
         <template #item-action="item">
           <div class="flex gap-2 pr-2">
             <x-button

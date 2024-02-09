@@ -3629,7 +3629,7 @@ const handleChildUpdate = planId => {
         </x-form>
       </x-modal>
     </div>
-    <customerAdditionalContacts
+    <CustomerAdditionalContacts
       quoteType="Car"
       :customerId="record.customer_id"
       :quoteId="record.id"

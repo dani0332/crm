@@ -103,7 +103,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     });
 
     Route::get('home', function () {
-        return inertia('Home/Home');
+        return inertia('Home/Home', ['im_logo' => getIMLogo()]);
     });
 
     Route::post('personal-quotes/{quoteType}/{code}/update-selected-plan/{planId}', [CentralController::class, 'updateSelectedPlan'])->name('update-selected-plan');
@@ -267,6 +267,9 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::get('/get-recent-daily-stats', [DashboardController::class, 'getRecentDailyStats']);
     Route::get('/reports/lead-list', [ReportsController::class, 'renderLeadListReport'])->name('lead-list-report');
     Route::get('/reports/report-management', [ReportsController::class, 'renderSaleManagementReport'])->name('report-management');
+    Route::get('/reports/lead-list', [ReportsController::class, 'renderLeadListReport'])
+        ->middleware('check_lead_report_access')
+        ->name('lead-list-report');
     Route::get('/dashboard/{quoteType}-conversion', [DashboardController::class, 'conversionStats']);
     Route::get('failed-jobs', [FailedJobsController::class, 'index'])->name('failed-jobs.index');
 
