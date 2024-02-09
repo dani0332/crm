@@ -20,6 +20,18 @@ const props = defineProps({
     type: Number,
     default: 0,
   },
+  unAssignedGood: {
+    type: Number,
+    default: 0,
+  },
+  unAssignedBest: {
+    type: Number,
+    default: 0,
+  },
+  unAssignedEntryLevel: {
+    type: Number,
+    default: 0,
+  },
 });
 
 const page = usePage();
@@ -157,6 +169,7 @@ const tableHeader = ref([
   { text: 'Last Allocations', value: 'last_allocated', sortable: true },
   { text: 'Max Cap Limit', value: 'max_capacity', sortable: true },
   { text: 'Status', value: 'is_available', sortable: true, width: '100' },
+  { text: 'reset_cap', value: 'reset_cap', sortable: true, width: '100' },
 ]);
 
 const onStatusSubmit = async () => {
@@ -220,6 +233,15 @@ const onSubmitChanges = async () => {
     });
 };
 
+const onToggleResetCap = async (active, userId) => {
+  loader.submit = true;
+  await axios
+    .post('/lead-allocation/toggle-reset-cap', { userId, resetCap: active })
+    .finally(() => {
+      loader.submit = false;
+    });
+};
+
 onMounted(() => {
   leadData.value = props.data.map(item => {
     return {
@@ -263,21 +285,38 @@ onMounted(() => {
       <h3>Total Advisors</h3>
       <p>{{ unAvailableUsers + availableUsers ?? 0 }}</p>
     </div>
-    <TransitionGroup name="fade">
-      <div v-if="isCapChanged" class="col-span-2">
-        <x-alert type="info" light>For Unlimited Capactiy Add ( -1 )</x-alert>
+  </div>
+  <div class="mt-5 mb-5">
+    <h2 class="text-lg font-semibold">Unassigned Leads Count</h2>
+    <div class="grid grid-cols-2 md:grid-cols-4 w-full gap-5">
+      <div class="labox border-yellow-500">
+        <h3>Good</h3>
+        <p>{{ unAssignedGood ?? 0 }}</p>
       </div>
-      <div v-if="isCapChanged" class="col-span-2">
-        <x-button
-          color="emerald"
-          :loading="loader.submit"
-          block
-          @click="onSubmitChanges"
-        >
-          Save Cap Changes
-        </x-button>
+      <div class="labox border-yellow-500">
+        <h3>Best</h3>
+        <p>{{ unAssignedBest ?? 0 }}</p>
       </div>
-    </TransitionGroup>
+      <div class="labox border-yellow-500">
+        <h3>Entry Level</h3>
+        <p>{{ unAssignedEntryLevel ?? 0 }}</p>
+      </div>
+      <TransitionGroup name="fade">
+        <div v-if="isCapChanged" class="col-span-2">
+          <x-alert type="info" light>For Unlimited Capactiy Add ( -1 )</x-alert>
+        </div>
+        <div v-if="isCapChanged" class="col-span-2">
+          <x-button
+            color="emerald"
+            :loading="loader.submit"
+            block
+            @click="onSubmitChanges"
+          >
+            Save Cap Changes
+          </x-button>
+        </div>
+      </TransitionGroup>
+    </div>
   </div>
   <DataTable
     id="car-lead-allocation"
@@ -344,6 +383,15 @@ onMounted(() => {
     <template #item-last_allocated="{ last_allocated }">
       <div class="text-center">
         {{ new Date(last_allocated * 1000).toLocaleString() }}
+      </div>
+    </template>
+    <template #item-reset_cap="{ reset_cap, userId, id }">
+      <div class="text-center">
+        <ItemToggler
+          :is-active="reset_cap"
+          :id="id"
+          @toggle="onToggleResetCap($event.active, userId)"
+        />
       </div>
     </template>
   </DataTable>

@@ -992,4 +992,9 @@ class LeadAllocationService extends BaseService
                 DB::raw('group_concat(rule_users.user_id) AS leadSourceUsers')
             );
     }
+
+    public function getUnAssignedHealthQuotes($teamType)
+    {
+        return HealthQuote::whereNull('advisor_id')->where('health_team_type', $teamType)->count() ?? 0;
+    }
 }
