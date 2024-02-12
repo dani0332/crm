@@ -63,6 +63,7 @@ class LeadAllocationService extends BaseService
                 'lead_allocation.allocation_count',
                 'lead_allocation.max_capacity',
                 'u.status as is_available',
+                'lead_allocation.reset_cap',
                 'lead_allocation.last_allocated',
                 't.name as teamName',
                 'u.name as userName',
@@ -996,5 +997,5 @@ class LeadAllocationService extends BaseService
     public function getUnAssignedHealthQuotes($teamType)
     {
         return HealthQuote::whereNull('advisor_id')->where('health_team_type', $teamType)->count() ?? 0;
-    }
+       }
 }
