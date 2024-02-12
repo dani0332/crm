@@ -40,39 +40,6 @@ class ActivePoliciesReportService extends ManagementReport
         return $query->simplePaginate(10)->withQueryString();
     }
 
-    public function getFilterOptions()
-    {
-        $maxDays = ApplicationStorageService::getValueByKeyName(GenericRequestEnum::MAX_DAYS);
-
-        $loginUserId = auth()->user()->id;
-
-        $teamIds = $this->getUserTeams($loginUserId);
-
-        $teams = Team::whereIn('id', $teamIds->pluck('id'))
-            ->select('name', 'id')
-            ->orderBy('name')
-            ->where('is_active', 1)
-            ->get()
-            ->keyBy('id')
-            ->map(fn ($users) => $users->name)
-            ->toArray();
-        $leadSources = LeadSource::query()
-            ->select('name')
-            ->where('is_active', 1)->where('is_applicable_for_rules', 0)
-            ->whereNotNull('name')
-            ->orderBy('name')
-            ->get()
-            ->keyBy('name')
-            ->map(fn ($users) => $users->name)
-            ->toArray();
-
-        return [
-            'maxDays' => $maxDays,
-            'leadSources' => $leadSources,
-            'teams' => $teams,
-        ];
-    }
-
     public function getDefaultFilters()
     {
         // implementation goes here

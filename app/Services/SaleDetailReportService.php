@@ -7,6 +7,7 @@ use App\Enums\ManagementReportTypeEnum;
 use App\Models\PersonalQuote;
 use App\Strategies\ManagementReport;
 use App\Traits\TeamHierarchyTrait;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -35,12 +36,8 @@ class SaleDetailReportService extends ManagementReport
                 DB::raw('FORMAT(p.commission_vat,2) as commission_vat'),
                 DB::raw('FORMAT(p.commission_vat_not_applicable,2) as commission_vat_not_applicable'),
                 DB::raw('FORMAT((commission_vat_applicable + commission_vat),2) as total_commission'),
-                DB::raw("'collects' as collects"),
+                DB::raw("UPPER(p.collection_type) as collects"),
                 'tax_invoice_number as insurer_tax_invoice_number',
-                'insurer_invoice_date as insurer_tax_invoice_date',
-                'payment_status.text as transaction_payment_status',
-                'p.captured_at as date_paid',
-                DB::raw('FORMAT(personal_quotes.premium_captured,2) as collected_amount'),
                 'insurer_invoice_date as insurer_tax_invoice_date',
                 'payment_status.text as transaction_payment_status',
                 'p.captured_at as date_paid',
@@ -53,14 +50,14 @@ class SaleDetailReportService extends ManagementReport
                 'u.name as advisor',
                 'pi.name as policy_issuer',
             )
-            ->leftJoin('payments as p', 'personal_quotes.code', '=', 'p.code')
-            ->leftJoin('payment_status', 'payment_status.id', '=', 'p.payment_status_id')
-            ->leftJoin('quote_type', 'quote_type.id', '=', 'quote_type_id')
+            ->join('payments as p', 'personal_quotes.code', '=', 'p.code')
+            ->join('payment_status', 'payment_status.id', '=', 'p.payment_status_id')
+            ->join('quote_type', 'quote_type.id', '=', 'quote_type_id')
+            ->join('insurance_provider as ip', 'ip.id', '=', 'p.insurance_provider_id')
             ->leftJoin('users as u', 'u.id', '=', 'advisor_id')
             ->leftJoin('users as pi', 'pi.id', '=', 'p.policy_issuer_id')
-            ->join('insurance_provider as ip', 'ip.id', '=', 'p.insurance_provider_id')
-            ->join('user_team as ut', 'ut.user_id', '=', 'u.id')
-            ->join('teams as t', 't.id', '=', 'ut.team_id');
+            ->leftJoin('user_team as ut', 'ut.user_id', '=', 'u.id')
+            ->leftJoin('teams as t', 't.id', '=', 'ut.team_id');
 
         $this->applyFilters($query, $request);
 
@@ -69,10 +66,16 @@ class SaleDetailReportService extends ManagementReport
 
     public function getDefaultFilters()
     {
-        $advisorAssignedDates = [ManagementReportCategoriesEnum::SALE_DETAIL];
+        $dateFormat = config('constants.DATE_FORMAT_ONLY');
+        $defaultDate = [
+            Carbon::parse(now())->startOfDay()->format($dateFormat),
+            Carbon::parse(now())->endOfDay()->format($dateFormat),
+        ];
 
         return [
-            'managementReportCategories' => $advisorAssignedDates,
+            'policyIssuanceDate' => $defaultDate,
+            'reportCategory' => ManagementReportCategoriesEnum::SALE_DETAIL,
+            'reportType' => ManagementReportTypeEnum::ISSUED_POLICIES,
         ];
     }
 }

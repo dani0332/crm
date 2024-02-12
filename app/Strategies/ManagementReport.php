@@ -46,7 +46,7 @@ class ManagementReport
 
         $transactionTypes = Lookup::where('key', LookupsEnum::TRANSACTION_TYPES)
             ->get()
-            ->map(fn ($item) => ['label' => $item->text, 'value' => $item->id])
+            ->map(fn ($item) => ['label' => $item->text, 'value' => $item->text])
             ->prepend(['label' => 'All', 'value' => ''], 'value')
             ->sortBy('label')
             ->values()
@@ -115,29 +115,14 @@ class ManagementReport
         }
 
         if (isset($request['transactionType'])) {
-            $transactionTypes = Lookup::where('key', LookupsEnum::TRANSACTION_TYPES)->get();
-
-            switch ($request['transactionType']) {
-                case TransactionTypeEnum::ENDORSEMENT:
-                    $typeCode = TransactionTypeEnum::ENDORSEMENT;
-                    break;
-                case TransactionTypeEnum::NEW_BUSINESS:
-                    $typeCode = TransactionTypeEnum::NEW_BUSINESS;
-                    break;
-                case TransactionTypeEnum::EXISTING_CUSTOMER_RENEWAL:
-                    $typeCode = TransactionTypeEnum::EXISTING_CUSTOMER_RENEWAL;
-                    break;
-                case TransactionTypeEnum::EXISTING_CUSTOMER_NEW_BUSINESS:
-                    $typeCode = TransactionTypeEnum::EXISTING_CUSTOMER_NEW_BUSINESS;
-                    break;
-                default:
-                    $typeCode = null;
-                    break;
-            }
-
+            $transactionTypes = Lookup::where('key', LookupsEnum::TRANSACTION_TYPES);
+            $typeCode = $request['transactionType'];
             if ($typeCode !== null) {
-                $typeId = $transactionTypes->where('text', $typeCode)->first()->id;
-                $query->where('transaction_type_id', $typeId);
+                $type = $transactionTypes->where('text', $typeCode)->first();
+                if ($type !== null) {
+                    $typeId = $type->id;
+                    $query->where('transaction_type_id', $typeId);
+                }
             }
         }
 

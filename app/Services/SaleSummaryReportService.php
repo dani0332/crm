@@ -28,6 +28,7 @@ class SaleSummaryReportService extends ManagementReport
             ->leftJoin('user_team', 'users.id', '=', 'user_team.user_id')
             ->leftJoin('teams', 'user_team.team_id', '=', 'teams.id')
             ->join('quote_type', 'personal_quotes.quote_type_id', '=', 'quote_type.id')
+            ->leftJoin('personal_quote_details as pqd', 'personal_quotes.id', '=', 'pqd.personal_quote_id')
             ->join('payments as p', 'personal_quotes.code', '=', 'p.code')
             ->selectRaw("
             FORMAT(SUM(CASE WHEN COALESCE(policy_issuance_date, personal_quotes.policy_number) IS NOT NULL THEN 1 ELSE 0 END), 2) as total_policies,
@@ -74,7 +75,6 @@ class SaleSummaryReportService extends ManagementReport
 
         $this->applyFilters($query, $request);
 
-        //dd($query->toSql(), $query->getBindings());
         return $query->simplePaginate(10)->withQueryString();
     }
 
