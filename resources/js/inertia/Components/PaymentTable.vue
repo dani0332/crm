@@ -21,7 +21,6 @@ const createPaymentModal = ref(false);
 
 const can = permission => useCan(permission);
 const hasRole = role => useHasRole(role);
-const hasAnyRole = roles => useHasAnyRole(roles);
 const permissionsEnum = page.props.permissionsEnum;
 const rolesEnum = page.props.rolesEnum;
 

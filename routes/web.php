@@ -107,7 +107,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     });
 
     Route::get('home', function () {
-        return inertia('Home/Home');
+        return inertia('Home/Home', ['im_logo' => getIMLogo()]);
     });
 
     Route::post('personal-quotes/{quoteType}/{code}/update-selected-plan/{planId}', [CentralController::class, 'updateSelectedPlan'])->name('update-selected-plan');

@@ -2409,7 +2409,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       </Collapsible>
     </div>
 
-    <PaymentTable
+    <!-- <PaymentTable
       :payments="payments"
       :can="can"
       :isBetaUser="isBetaUser"
@@ -2417,7 +2417,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       :paymentMethods="paymentMethods"
       :insuranceProviders="insuranceProviders"
       :quote="quote"
-    />
+    /> -->
 
     <!-- <div class="p-4 rounded shadow mb-6 bg-white" v-if="isQuoteDocumentEnabled">
       <div>
