@@ -3,6 +3,7 @@ import { useDateFormat } from '@vueuse/shared';
 
 defineProps({
     reportData: Object,
+    superRetentionData: Object,
     filterOptions: Object,
     defaultFilters: Object,
     renewalBatchesList: Object
@@ -61,12 +62,12 @@ const tableHeader = [
         text: 'Car Sold/Cancelled',
         value: 'car_sold',
     },
+    // {
+    //     text: 'Uncontactable',
+    //     value: 'uncontactable',
+    // },
     {
-        text: 'Uncontactable',
-        value: 'uncontactable',
-    },
-    {
-        text: 'Total Allocated (excluding cancelled and uncontactable)',
+        text: 'Total Allocated (excluding approved car sold)',
         value: 'total_allocate_minus_cancelled_uncontactable',
     },
     {
@@ -126,6 +127,11 @@ function onSubmit(isValid) {
                     advisors: Array.isArray(payLoad.advisors)
                         ? payLoad.advisors
                         : [payLoad.advisors],
+                }),
+                ...(payLoad.batchNo && {
+                    batchNo: Array.isArray(payLoad.batchNo)
+                        ? payLoad.batchNo
+                        : [payLoad.batchNo],
                 }),
                 ...(payLoad.subTeams && {
                     subTeams: Array.isArray(payLoad.subTeams) ? payLoad.subTeams : [payLoad.subTeams],
@@ -234,7 +240,9 @@ const hasRole = role => useHasRole(role);
 const hasAnyRole = role => useHasAnyRole(role);
 
 let lastMonthSummedIndex = 0;
+let lastMonthSummedIndexForSuperRetention = 0;
 let currentRowSpan = 0;
+let currentRowSpanForSuperRetention = 0;
 
 const rolesEnum = page.props.rolesEnum;
 
@@ -243,18 +251,23 @@ let avgRawRetentionArr = {};
 
 let monthlyIMAverages = {};
 let monthlyRawAverages = {};
+let totalAllocationList = [];
+let renewedCountsList = [];
 
 const reportDataRef = reactive(page.props.reportData.data);
+const superRetentionDataRef = reactive(page.props.superRetentionData.data);
 
 function getMonthName(monthNumber) {
     const date = new Date();
-    date.setMonth(monthNumber - 1);
+    let firstDate = new Date(date.getFullYear(), date.getMonth(), 1);
+    firstDate.setMonth(monthNumber - 1);
 
-    return date.toLocaleString('en-US', { month: 'short' });
+    return firstDate.toLocaleString('en-US', { month: 'short' });
 }
 
 function calculateValuesAndHighlight() {
     lastMonthSummedIndex = 0;
+    lastMonthSummedIndexForSuperRetention = 0;
     currentRowSpan = 0;
 
 
@@ -266,13 +279,25 @@ function calculateValuesAndHighlight() {
             item.total_allocated_leads = item.total_by_volume_segment_advisors
             item.renewed = item.renewed_by_volume_segment_advisors
             item.car_sold = item.car_sold_by_volume_segment
-            item.uncontactable = item.uncontactable_by_volume_segment
+            // item.uncontactable = item.uncontactable_by_volume_segment
         } else if (segmentFilter == 'value') {
             item.total_allocated_leads = item.total_by_value_segment_advisors
             item.renewed = item.renewed_by_value_segment_advisors
             item.car_sold = item.car_sold_by_value_segment
-            item.uncontactable = item.uncontactable_by_value_segment
+            // item.uncontactable = item.uncontactable_by_value_segment
         }
+    });
+
+    superRetentionDataRef.forEach((superItem, superIndex) => {
+        if (segmentFilter == 'volume') {
+            superItem.health_converted = superItem.health_converted_by_volume_segment_advisors
+        } else if (segmentFilter == 'value') {
+            superItem.health_converted = superItem.health_converted_by_value_segment_advisors
+        }
+
+        superItem.monthlyHealthRenewed = calculateMonthlyHealthRenewed(superRetentionDataRef, superIndex);
+        superItem.rowSpan = currentRowSpanForSuperRetention;
+
     });
 
     reportDataRef.forEach((item, index) => {
@@ -283,7 +308,8 @@ function calculateValuesAndHighlight() {
                     parseInt(item.renewed) /
                     (
                         parseInt(item.total_allocated_leads) -
-                        parseInt(item.car_sold) - parseInt(item.uncontactable)
+                        parseInt(item.car_sold)
+                        // - parseInt(item.uncontactable)
                     )) * 100
 
             ).toFixed(2);
@@ -299,7 +325,8 @@ function calculateValuesAndHighlight() {
                     parseInt(item.renewed_by_all_advisors) /
                     (
                         parseInt(item.total_allocated_leads_by_all_advisors) -
-                        parseInt(item.car_sold_by_all_advisors) - parseInt(item.uncontactable_by_all_advisors)
+                        parseInt(item.car_sold_by_all_advisors)
+                        // - parseInt(item.uncontactable_by_all_advisors)
                     )) * 100
 
             ).toFixed(2);
@@ -313,7 +340,8 @@ function calculateValuesAndHighlight() {
                     parseInt(item.renewed) /
                     (
                         parseInt(item.total_allocated_leads) -
-                        parseInt(item.car_sold) - parseInt(item.uncontactable)
+                        parseInt(item.car_sold)
+                        // - parseInt(item.uncontactable)
                     )) * 100
 
             ).toFixed(2);
@@ -328,7 +356,8 @@ function calculateValuesAndHighlight() {
                 parseInt(item.renewed_by_value_segment_advisors) /
                 (
                     parseInt(item.total_by_value_segment_advisors) -
-                    parseInt(item.car_sold_by_value_segment) - parseInt(item.uncontactable_by_value_segment)
+                    parseInt(item.car_sold_by_value_segment)
+                    // - parseInt(item.uncontactable_by_value_segment)
                 )) * 100
         ).toFixed(2);
         valueSegmentConversion = valueSegmentConversion == 'NaN' ? '0.00' : valueSegmentConversion;
@@ -338,7 +367,8 @@ function calculateValuesAndHighlight() {
                 parseInt(item.renewed_by_volume_segment_advisors) /
                 (
                     parseInt(item.total_by_volume_segment_advisors) -
-                    parseInt(item.car_sold_by_volume_segment) - parseInt(item.uncontactable_by_volume_segment)
+                    parseInt(item.car_sold_by_volume_segment)
+                    // - parseInt(item.uncontactable_by_volume_segment)
                 )) * 100
         ).toFixed(2);
         volumeSegmentConversion = volumeSegmentConversion == 'NaN' ? '0.00' : volumeSegmentConversion;
@@ -348,7 +378,9 @@ function calculateValuesAndHighlight() {
         let ratioCarSoldUncontactable = (
             (
                 (
-                    parseInt(item.car_sold) + parseInt(item.uncontactable)) /
+                    parseInt(item.car_sold)
+                    // + parseInt(item.uncontactable)
+                    ) /
                 parseInt(item.total_allocated_leads)
             ) * 100
         ).toFixed(2);
@@ -455,6 +487,26 @@ function calculateValuesAndHighlight() {
 
 }
 
+const calculateMonthlyHealthRenewed = (data, index) =>{
+
+    let totalRenewed = 0;
+    let currentMonthValue = data[index].month;
+
+    currentRowSpanForSuperRetention = 0;
+
+    if (lastMonthSummedIndexForSuperRetention <= index) {
+        while (index <= (data.length - 1) && currentMonthValue == data[index].month) {
+
+            totalRenewed = parseInt(totalRenewed) + parseInt(data[index].health_converted);
+            index++;
+            lastMonthSummedIndexForSuperRetention = index;
+            currentRowSpanForSuperRetention++;
+        }
+
+        return Number(totalRenewed);
+    }
+
+}
 
 onMounted(() => {
     if (page.props.defaultFilters && !params['page']) {
@@ -468,19 +520,23 @@ onMounted(() => {
         onTeamChange(params['teams[]']);
     }
 
+    if (params['batchNo[]'] && typeof filters.batchNo === 'string') {
+        filters.batchNo = [params['batchNo[]']];
+    }
+
     calculateValuesAndHighlight();
     isMounted.value = true;
 });
 
 const calculateMonthlySum = (data, index) => {
 
-    var totalRenewed = 0;
-    var totalAllocated = 0;
-    var totalCarSold = 0;
-    var totalCarUncontactable = 0;
+    let totalRenewed = 0;
+    let totalAllocated = 0;
+    let totalCarSold = 0;
+    // let totalCarUncontactable = 0;
     currentRowSpan = 0;
 
-    var currentMonthValue = data[index].month;
+    let currentMonthValue = data[index].month;
 
     if (lastMonthSummedIndex <= index) {
         while (index <= (data.length - 1) && currentMonthValue == data[index].month) {
@@ -488,13 +544,18 @@ const calculateMonthlySum = (data, index) => {
             totalRenewed = parseInt(totalRenewed) + parseInt(data[index].renewed);
             totalAllocated = parseInt(totalAllocated) + parseInt(data[index].total_allocated_leads);
             totalCarSold = parseInt(totalCarSold) + parseInt(data[index].car_sold);
-            totalCarUncontactable = parseInt(totalCarUncontactable) + parseInt(data[index].uncontactable);
+            // totalCarUncontactable = parseInt(totalCarUncontactable) + parseInt(data[index].uncontactable);
             index++;
             lastMonthSummedIndex = index;
             currentRowSpan++;
         }
 
-        var result = totalRenewed / (totalAllocated - totalCarSold - totalCarUncontactable) * 100;
+        renewedCountsList[currentMonthValue] = totalRenewed;
+        totalAllocationList[currentMonthValue] = ( totalAllocated - totalCarSold );
+
+        let result = totalRenewed / (totalAllocated - totalCarSold
+        // - totalCarUncontactable
+        ) * 100;
 
         return (result).toFixed(2);
     }
@@ -614,17 +675,18 @@ watch(
                                     Approved Car Sold
                                 </th>
 
-                                <th class="py-2 font-semibold tracking-widest uppercase text-xs px-3 sticky top-0 text-left">
+                                <!-- <th class="py-2 font-semibold tracking-widest uppercase text-xs px-3 sticky top-0 text-left">
                                     Approved Uncontactable
-                                </th>
+                                </th> -->
 
                                 <th v-if="hasAnyRole([rolesEnum.CarManager, rolesEnum.RenewalsManager, rolesEnum.SeniorManagement, rolesEnum.Accounts])"
                                     class="py-2 font-semibold tracking-widest uppercase text-xs px-3 sticky top-0 text-left">
-                                    Ratio - Approved Car Sold and Uncontactable
+                                    Ratio - Approved Car Sold
+                                    <!-- and Uncontactable -->
                                 </th>
 
                                 <th class="py-2 font-semibold tracking-widest uppercase text-xs px-3 sticky top-0 text-left">
-                                    Total Allocations (excluding cancelled and uncontactable)
+                                    Total Allocations (excluding approved car sold)
                                 </th>
 
                                 <th class="py-2 font-semibold tracking-widest uppercase text-xs px-3 sticky top-0 text-left">
@@ -655,25 +717,26 @@ watch(
                                 <td class="x-table-cell px-3 py-4 align-middle">
                                     {{ item.car_sold.toLocaleString() }}
                                 </td>
-                                <td class="x-table-cell px-3 py-4 align-middle">
+                                <!-- <td class="x-table-cell px-3 py-4 align-middle">
                                     {{ item.uncontactable.toLocaleString() }}
-                                </td>
+                                </td> -->
                                 <td v-if="hasAnyRole([rolesEnum.CarManager, rolesEnum.RenewalsManager, rolesEnum.SeniorManagement, rolesEnum.Accounts])"
                                     class="x-table-cell px-3 py-4 align-middle">
-                                    {{ item.ratioCarSoldUncontactable }} %
+                                    {{ item.ratioCarSoldUncontactable }}%
                                 </td>
                                 <td class="x-table-cell px-3 py-4 align-middle">
                                     <!-- Sum of allocations per batch  - (Approved Car Sold + Approved Uncontactable) -->
                                     <p v-if="item.total_allocated_leads == 0"> 0 </p>
-                                    <p v-else>{{ (parseInt(item.total_allocated_leads) - (parseInt(item.car_sold) +
-                                        parseInt(item.uncontactable))).toLocaleString() }} </p>
+                                    <p v-else>{{ (parseInt(item.total_allocated_leads) - (parseInt(item.car_sold)
+                                        // + parseInt(item.uncontactable)
+                                        )).toLocaleString() }} </p>
                                 </td>
                                 <td :class="item.advisorRetentionClass" class="x-table-cell px-3 py-4 align-middle">
-                                    {{ item.advisorRetention }} %
+                                    {{ item.advisorRetention }}%
                                 </td>
                                 <td v-if="item.rowSpan > 0" class="x-table-cell px-3 py-4 align-middle text-center"
                                     :rowspan="item.rowSpan">
-                                    <b> {{ item.monthlySum }} %</b>
+                                    <b> {{ item.monthlySum }}%</b>
                                 </td>
                             </tr>
                         </tbody>
@@ -717,28 +780,28 @@ watch(
                             <tr :class="{ 'bg-[#ffff00]': item.highlight }" v-for="(item, index) in reportDataRef" :key="index"
                                 class="border-b border-gray-200 align-top">
                                 <td class="x-table-cell px-3 py-4 align-middle">
-                                    {{ item.valueSegmentConversion == '0.00' ? 'N/A' : item.valueSegmentConversion + '%' }}
+                                    {{ item.valueSegmentConversion == '0.00' ? 'N/A' : item.valueSegmentConversion +'%' }}
                                 </td>
                                 <td class="x-table-cell px-3 py-4 align-middle">
-                                    {{ item.volumeSegmentConversion == '0.00' ? 'N/A' : item.volumeSegmentConversion + '%' }}
+                                    {{ item.volumeSegmentConversion == '0.00' ? 'N/A' : item.volumeSegmentConversion +'%' }}
                                 </td>
                                 <td class="x-table-cell px-3 py-4 align-middle">
                                     <p>{{ parseFloat(item.valueSegmentConversion) > 0 ? (parseFloat(item.advisorRetention) -
-                                        parseFloat(item.valueSegmentConversion)).toFixed(2) + '%' : 'N/A' }}</p>
+                                        parseFloat(item.valueSegmentConversion)).toFixed(2) +'%' : 'N/A' }}</p>
                                 </td>
                                 <td class="x-table-cell px-3 py-4 align-middle">
                                     <p>{{ parseFloat(item.volumeSegmentConversion) > 0 ? (parseFloat(item.advisorRetention) -
-                                        parseFloat(item.volumeSegmentConversion)).toFixed(2) + '%' : 'N/A' }}</p>
+                                        parseFloat(item.volumeSegmentConversion)).toFixed(2) +'%' : 'N/A' }}</p>
                                 </td>
                                 <td class="x-table-cell px-3 py-4 align-middle">
-                                    {{ item.imRetention }} %
+                                    {{ item.imRetention }}%
                                 </td>
                                 <td class="x-table-cell px-3 py-4 align-middle">
-                                    <p>{{ (parseFloat(item.advisorRetention) - parseFloat(item.imRetention)).toFixed(2) }} %</p>
+                                    <p>{{ (parseFloat(item.advisorRetention) - parseFloat(item.imRetention)).toFixed(2) }}%</p>
                                 </td>
                                 <td v-if="hasRole(rolesEnum.CarAdvisor) != true"
                                     class="x-table-cell px-3 py-4 align-middle text-center">
-                                    <p> {{ item.rawRetention }} %</p>
+                                    <p> {{ item.rawRetention }}%</p>
                                 </td>
                             </tr>
                         </tbody>
@@ -754,7 +817,7 @@ watch(
                                 Month
                             </th>
                             <th
-                                class="py-2 font-semibold tracking-widest uppercase text-xs px-3 sticky top-0 text-left w-28">
+                                class="py-2 font-semibold tracking-widest uppercase text-xs px-3 sticky top-0 text-left">
                                 AVERAGE IM RETENTION
                             </th>
                             <th class="py-2 font-semibold tracking-widest uppercase text-xs px-3 sticky top-0 text-left">
@@ -770,12 +833,52 @@ watch(
                                 {{ index }}
                             </td>
                             <td class="x-table-cell px-3 py-4 align-middle">
-                                {{ monthlyIMAverages[index] ? monthlyIMAverages[index].toFixed(2) : 0 }} %
+                                {{ monthlyIMAverages[index] ? monthlyIMAverages[index].toFixed(2) : 0 }}%
                             </td>
                             <td class="x-table-cell px-3 py-4 align-middle">
-                                {{ monthlyRawAverages[index] ? monthlyRawAverages[index].toFixed(2) : 0 }} %
+                                {{ monthlyRawAverages[index] ? monthlyRawAverages[index].toFixed(2) : 0 }}%
                             </td>
 
+                        </tr>
+                    </tbody>
+                </table>
+
+                <!-- ======================= supper Retention table ==================== -->
+                <table class="x-table relative w-50 mt-10">
+                    <thead class="align-bottom bg-primary-700">
+                        <tr class="text-sm text-gray-600 border-b">
+                            <th class="py-2 font-semibold tracking-widest uppercase text-xs px-3 sticky top-0 text-left">
+                                Batch No.
+                            </th>
+                            <th
+                                class="py-2 font-semibold tracking-widest uppercase text-xs px-3 sticky top-0 text-left">
+                                Week Ending
+                            </th>
+                            <th class="py-2 font-semibold tracking-widest uppercase text-xs px-3 sticky top-0 text-left">
+                                Converted (Health)
+                            </th>
+                            <th class="py-2 font-semibold tracking-widest uppercase text-xs px-3 sticky top-0 text-left">
+                                Monthly Super Retention
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="(item, index) in superRetentionDataRef" :key="index"
+                            class="border-b border-gray-200 align-top">
+
+                            <td class="x-table-cell px-3 py-4 align-middle">
+                                {{ item.name }}
+                            </td>
+                            <td class="x-table-cell px-3 py-4 align-middle">
+                                {{ useDateFormat(item.end_date, 'MMM DD').value }}
+                            </td>
+                            <td class="x-table-cell px-3 py-4 align-middle">
+                                {{ item.health_converted}}
+                            </td>
+                            <td v-if="item.rowSpan > 0" class="x-table-cell px-3 py-4 align-middle" :rowspan="item.rowSpan">
+                                <p v-if="totalAllocationList[item.month] == 0 || totalAllocationList[item.month] == undefined"> 0% </p>
+                                <p v-else>{{ (((Number(item.monthlyHealthRenewed) + Number (renewedCountsList[item.month])) / Number(totalAllocationList[item.month])) * 100).toFixed(2)}}%</p>
+                            </td>
                         </tr>
                     </tbody>
                 </table>

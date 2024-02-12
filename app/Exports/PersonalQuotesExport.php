@@ -8,15 +8,11 @@ use App\Repositories\CycleQuoteRepository;
 use App\Repositories\JetskiQuoteRepository;
 use App\Repositories\PetQuoteRepository;
 use App\Repositories\YachtQuoteRepository;
-use Maatwebsite\Excel\Concerns\Exportable;
-use Maatwebsite\Excel\Concerns\FromCollection;
-use Maatwebsite\Excel\Concerns\ShouldAutoSize;
-use Maatwebsite\Excel\Concerns\WithHeadings;
-use Maatwebsite\Excel\Concerns\WithMapping;
+use App\Traits\ExcelExportable;
 
-class PersonalQuotesExport implements FromCollection, ShouldAutoSize, WithHeadings, WithMapping
+class PersonalQuotesExport
 {
-    use Exportable;
+    use ExcelExportable;
 
     private $quoteType = '';
     private $quoteTypes = [];
