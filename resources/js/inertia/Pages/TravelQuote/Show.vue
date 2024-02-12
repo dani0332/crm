@@ -562,7 +562,7 @@ const onTogglePlans = toggle => {
         title: 'Plans has been updated',
         position: 'top',
       });
-        onLoadAvailablePlansData();
+      onLoadAvailablePlansData();
       router.reload({
         preserveScroll: true,
       });
@@ -600,7 +600,11 @@ const onExportPlans = () => {
         quote_uuid: page.props.quote.uuid,
         modelType: 'travel',
         quoteType: 'travel',
-        hasAdultAndSeniorMember: (availableSeniorPlansTable?.data?.length > 0 && availablePlansTable?.data?.length > 0 )? true : false
+        hasAdultAndSeniorMember:
+          availableSeniorPlansTable?.data?.length > 0 &&
+          availablePlansTable?.data?.length > 0
+            ? true
+            : false,
       },
       {
         responseType: 'json',
@@ -1153,19 +1157,19 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
 
 const handleSelectionChange = (tableType, selectedItems) => {
   if (tableType === 'adult' && selectedSeniorPlans.value.length > 0) {
-    modals.mixInquiryConfirm= true
+    modals.mixInquiryConfirm = true;
     selectedAdultPlans.value = [];
   } else if (tableType === 'senior' && selectedAdultPlans.value.length > 0) {
-    modals.mixInquiryConfirm= true
+    modals.mixInquiryConfirm = true;
     selectedSeniorPlans.value = [];
   } else {
-      if (tableType === 'adult') {
-        selectedAdultPlans.value = selectedItems;
-        selectedPlans.value = selectedItems;
-      } else if (tableType === 'senior') {
-        selectedSeniorPlans.value = selectedItems;
-        selectedPlans.value = selectedItems;
-      }
+    if (tableType === 'adult') {
+      selectedAdultPlans.value = selectedItems;
+      selectedPlans.value = selectedItems;
+    } else if (tableType === 'senior') {
+      selectedSeniorPlans.value = selectedItems;
+      selectedPlans.value = selectedItems;
+    }
   }
 };
 </script>
@@ -1918,8 +1922,8 @@ const handleSelectionChange = (tableType, selectedItems) => {
             Delete
           </x-button>
         </div>
-      </template>
-    </x-modal>2
+      </template> </x-modal
+    >2
 
     <CustomerAdditionalContacts
       quoteType="Travel"
@@ -2330,7 +2334,11 @@ const handleSelectionChange = (tableType, selectedItems) => {
         <template #body>
           <x-divider class="my-4" />
           <div class="flex justify-end mb-4">
-            <x-button-group v-if="selectedPlans.length > 0" size="sm" class="mr-2">
+            <x-button-group
+              v-if="selectedPlans.length > 0"
+              size="sm"
+              class="mr-2"
+            >
               <x-button
                 @click.prevent="onTogglePlans(false)"
                 :loading="toggleLoader"
@@ -2345,7 +2353,10 @@ const handleSelectionChange = (tableType, selectedItems) => {
               </x-button>
             </x-button-group>
             <x-button
-              v-if="availablePlansTable.data.length > 0 || availableSeniorPlansTable.data.length > 0"
+              v-if="
+                availablePlansTable.data.length > 0 ||
+                availableSeniorPlansTable.data.length > 0
+              "
               size="sm"
               color="orange"
               class="mr-2"
@@ -2364,8 +2375,12 @@ const handleSelectionChange = (tableType, selectedItems) => {
             >
               Download PDF
             </x-button>
-            <h6 v-if="aboveAgeMembers > 0 && availablePlansTable.data.length > 0" class="font-semibold text-primary-600 text-ms mb-1">
-              Travel plans for {{ travelers.length - aboveAgeMembers }} member age 0-64
+            <h6
+              v-if="aboveAgeMembers > 0 && availablePlansTable.data.length > 0"
+              class="font-semibold text-primary-600 text-ms mb-1"
+            >
+              Travel plans for {{ travelers.length - aboveAgeMembers }} member
+              age 0-64
             </h6>
           </div>
           <div
@@ -2393,17 +2408,17 @@ const handleSelectionChange = (tableType, selectedItems) => {
               :hide-footer="availablePlansTable.data.length < 15"
             >
               <template #item-providerName="item">
-                <p class="text-primary-600 uppercase">{{
-                  item.providerName
-                }}</p>
+                <p class="text-primary-600 uppercase">
+                  {{ item.providerName }}
+                </p>
                 <div class="flex gap-1">
                   <x-tag
-                      v-if="item.isDisabled"
-                      size="xs"
-                      color="error"
-                      class="mt-0.5 text-[10px]"
+                    v-if="item.isDisabled"
+                    size="xs"
+                    color="error"
+                    class="mt-0.5 text-[10px]"
                   >
-                      Hidden
+                    Hidden
                   </x-tag>
                 </div>
               </template>
@@ -2456,7 +2471,10 @@ const handleSelectionChange = (tableType, selectedItems) => {
       </Collapsible>
 
       <div v-if="aboveAgeMembers > 0" class="mt-5">
-        <h6 v-if="aboveAgeMembers > 0 && availablePlansTable.data.length > 0" class="font-semibold text-primary-600 text-ms mb-1">
+        <h6
+          v-if="aboveAgeMembers > 0 && availablePlansTable.data.length > 0"
+          class="font-semibold text-primary-600 text-ms mb-1"
+        >
           Travel plans for {{ aboveAgeMembers }} member age 65 and above
         </h6>
         <div>
@@ -2472,19 +2490,17 @@ const handleSelectionChange = (tableType, selectedItems) => {
             @update:items-selected="handleSelectionChange('senior', $event)"
           >
             <template #item-providerName="item">
-            <p class="text-primary-600 uppercase">{{
-                item.providerName
-              }}</p>
-                <div class="flex gap-1">
+              <p class="text-primary-600 uppercase">{{ item.providerName }}</p>
+              <div class="flex gap-1">
                 <x-tag
-                    v-if="item.isDisabled"
-                    size="xs"
-                    color="error"
-                    class="mt-0.5 text-[10px]"
+                  v-if="item.isDisabled"
+                  size="xs"
+                  color="error"
+                  class="mt-0.5 text-[10px]"
                 >
-                    Hidden
+                  Hidden
                 </x-tag>
-        </div>
+              </div>
             </template>
             <template #item-name="item">
               <span class="text-primary-600 uppercase">{{ item.name }}</span>
@@ -2708,26 +2724,27 @@ const handleSelectionChange = (tableType, selectedItems) => {
       :id="$page.props.quote.id"
       :expanded="sectionExpanded"
     />
-    
+
     <x-modal v-model="modals.mixInquiryConfirm" show-close backdrop>
-        <template #header> 
-          <div class="text-center">
-            SORRY!
-          </div>  
-        </template>
-        <p>Please choose quotes from the same age group for a correct comparison.</p>
-        <template #actions>
-          <div class="text-center space-x-4">
-            <x-button
-              size="sm"
-              color="emerald"
-              @click.prevent="modals.mixInquiryConfirm = false"
-            >
-              Okay, got it!
-            </x-button>
-          </div>
-        </template>
-      </x-modal>
+      <template #header>
+        <div class="text-center">SORRY!</div>
+      </template>
+      <p>
+        Please choose quotes from the same age group for a correct comparison.
+      </p>
+      <template #actions>
+        <div class="text-center space-x-4">
+          <x-button
+            size="sm"
+            color="emerald"
+            @click.prevent="modals.mixInquiryConfirm = false"
+          >
+            Okay, got it!
+          </x-button>
+        </div>
+      </template>
+    </x-modal>
+  </div>
 </template>
 <style>
 .border-inner tr td {
