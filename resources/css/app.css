@@ -40,12 +40,12 @@ label {
 }
 
 .vue3-easy-data-table {
-  @apply w-full overflow-x-auto rounded-lg bg-white ring-1 ring-primary-100;
+  @apply w-full overflow-x-auto relative rounded-lg bg-white ring-1 ring-primary-100;
 }
 
 /* Table container */
 .vue3-easy-data-table__main {
-  @apply overflow-x-auto relative;
+  @apply overflow-x-auto;
 }
 
 /* Scrollbar styles */
@@ -423,7 +423,7 @@ border-primary animate-spin;
   border-color: rgb(55 65 81) transparent transparent transparent;
   transform: rotate(360deg);
 }
-.x-notification{
+.x-notification {
   @apply z-50;
 }
 

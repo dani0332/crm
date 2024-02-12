@@ -1,9 +1,9 @@
 <x-guest-layout>
     <div class="min-h-screen flex flex-col sm:justify-center items-center pt-6 sm:pt-0 bg-gray-100">
-     
+
 
         <img
-            src="{{ asset('images/im_logo_21k.png') }}"
+            src="{{ getIMLogo() }}"
             alt="IMCRM"
             width="439"
             height="66"
