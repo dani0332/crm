@@ -1580,10 +1580,10 @@ const handleChildUpdate = planId => {
             <dt class="font-medium">ADDITIONAL NOTES</dt>
             <dd>{{ quote.additional_notes }}</dd>
           </div>
-          <div class="grid sm:grid-cols-2" v-if="clientInquiryLogs.length > 0">
+          <!--<div class="grid sm:grid-cols-2" v-if="clientInquiryLogs.length > 0">
             <dt class="font-medium">ENQUIRY COUNT</dt>
             <dd>{{ clientInquiryLogs.length }}</dd>
-          </div>
+          </div>-->
         </dl>
       </div>
     </div>
@@ -2959,9 +2959,9 @@ const handleChildUpdate = planId => {
 
     <AuditLogs :type="'App\\Models\\HealthQuote'" :id="$page.props.quote.id" />
 
-    <ClientInquiryLogs
+    <!--<ClientInquiryLogs
         v-if="clientInquiryLogs.length > 0"
         :logs="clientInquiryLogs"
-    />
+    />-->
   </div>
 </template>
