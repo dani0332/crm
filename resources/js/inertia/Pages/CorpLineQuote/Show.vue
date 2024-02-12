@@ -1070,6 +1070,14 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       :expanded="sectionExpanded"
     />
 
+    <SendUpdates
+      v-if="hasPolicyIssuedStatus"
+      :reportable="quote"
+      :quote_type_id="$page.props.quoteTypeId"
+      :options="sendUpdateOptions"
+      :data="sendUpdateLogs"
+    />
+
     <div class="p-4 rounded shadow mb-6 bg-white">
       <Collapsible :expanded="sectionExpanded">
         <template #header>
@@ -1229,14 +1237,6 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       :paymentMethods="paymentMethods"
       :insuranceProviders="insuranceProviders"
       :quote="quote"
-    />
-
-    <SendUpdates
-      v-if="hasPolicyIssuedStatus"
-      :reportable="quote"
-      :quote_type_id="$page.props.quoteTypeId"
-      :options="sendUpdateOptions"
-      :data="sendUpdateLogs"
     />
 
     <div class="p-4 rounded shadow mb-6 bg-white">
