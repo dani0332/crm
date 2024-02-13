@@ -170,6 +170,7 @@ class CarQuoteService extends BaseService
                 'qrem.entity_type_code',
                 'ent.industry_type_code',
                 'cqr.prefill_plan_id',
+                'cqr.enquiry_count',
             )
             ->leftJoin('nationality as n', 'n.id', '=', 'cqr.nationality_id')
             ->leftJoin('car_quote_request_detail as cqrd', 'cqrd.car_quote_request_id', '=', 'cqr.id')
