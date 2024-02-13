@@ -53,6 +53,7 @@ defineProps({
   quoteType: String,
   paymentTooltipEnum: Object,
   storageUrl: String,
+  isNewPaymentStructure: Boolean,
 });
 
 const page = usePage();
@@ -2726,7 +2727,7 @@ const handlePlanSelected = plan => {
       </x-modal>
     </div>
     <PaymentTableNew 
-			v-if="hasRole(rolesEnum.BetaUser)"
+			v-if="isNewPaymentStructure"
 			quoteType="Health"
 			:payments="payments"
 			:paymentDocument="documentTypes.QUOTE.filter(item => item.code === 'HPD' || item.code === 'HPDR' || item.code === 'HDPDR')"

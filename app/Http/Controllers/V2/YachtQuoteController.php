@@ -28,6 +28,7 @@ use App\Repositories\UserRepository;
 use App\Repositories\YachtQuoteRepository;
 use App\Services\AMLService;
 use App\Services\LookupService;
+use App\Services\SplitPaymentService;
 
 class YachtQuoteController extends Controller
 {
@@ -116,7 +117,7 @@ class YachtQuoteController extends Controller
         $embeddedProducts = EmbeddedProductRepository::byQuoteType(QuoteTypes::YACHT->id(), $quote->id);
         $lookupService = app(LookupService::class);
         $industryType = $lookupService->getCompanyTypes();
-
+        
         return inertia('YachtQuote/Show', [
             'quoteType' => QuoteTypes::YACHT,
             'quote' => $quote,
@@ -142,6 +143,7 @@ class YachtQuoteController extends Controller
             'emirates' => $emirates,
             'paymentTooltipEnum' => PaymentTooltip::asArray(),
             'paymentStatusEnum' => PaymentStatusEnum::asArray(),
+            'isNewPaymentStructure' => app(SplitPaymentService::class)-> isNewPaymentStructure($quote->payments),
         ]);
     }
 

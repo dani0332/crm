@@ -28,6 +28,7 @@ use App\Repositories\QuoteStatusRepository;
 use App\Repositories\UserRepository;
 use App\Services\AMLService;
 use App\Services\CentralService;
+use App\Services\SplitPaymentService;
 
 class PetQuoteController extends Controller
 {
@@ -145,6 +146,7 @@ class PetQuoteController extends Controller
             'UBORelations' => $uboRelations,
             'paymentStatusEnum' => PaymentStatusEnum::asArray(),
             'paymentTooltipEnum' => PaymentTooltip::asArray(),
+            'isNewPaymentStructure' => app(SplitPaymentService::class)-> isNewPaymentStructure($quote->payments),
         ]);
     }
 

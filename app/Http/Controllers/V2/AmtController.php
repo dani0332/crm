@@ -39,6 +39,7 @@ use Carbon\Carbon;
 use DB;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Redirect;
+use App\Services\SplitPaymentService;
 
 class AmtController extends Controller
 {
@@ -293,6 +294,8 @@ class AmtController extends Controller
             'paymentTooltipEnum' => PaymentTooltip::asArray(),
             'paymentStatusEnum' => PaymentStatusEnum::asArray(),
             'paymentMethods' => $paymentMethods,
+            'isNewPaymentStructure' => app(SplitPaymentService::class)-> isNewPaymentStructure($record->payments),
+
         ]);
     }
 

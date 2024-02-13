@@ -27,6 +27,7 @@ use App\Repositories\QuoteStatusRepository;
 use App\Repositories\UserRepository;
 use App\Services\AMLService;
 use App\Services\CentralService;
+use App\Services\SplitPaymentService;
 
 class CycleQuoteController extends Controller
 {
@@ -164,6 +165,7 @@ class CycleQuoteController extends Controller
             'UBORelations' => $uboRelations,
             'paymentTooltipEnum' => PaymentTooltip::asArray(),
             'paymentStatusEnum' => PaymentStatusEnum::asArray(),
+            'isNewPaymentStructure' => app(SplitPaymentService::class)-> isNewPaymentStructure($quote->payments),
         ]);
     }
 }

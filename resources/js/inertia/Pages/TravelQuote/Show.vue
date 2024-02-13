@@ -50,6 +50,7 @@ defineProps({
   canAddBatchNumber: Boolean,
   paymentTooltipEnum: Object,
   storageUrl: String,
+  isNewPaymentStructure: Boolean,
 });
 
 
@@ -2318,7 +2319,7 @@ const genderList = [
     </div>
 
     <PaymentTableNew 
-			v-if="hasRole(rolesEnum.BetaUser)"
+			v-if="isNewPaymentStructure"
 			quoteType="Travel"
 			:payments="payments"
 			:paymentDocument="documentTypes.QUOTE.filter(item => item.code === 'TPD' || item.code === 'TPDR' || item.code === 'TDPDR')"

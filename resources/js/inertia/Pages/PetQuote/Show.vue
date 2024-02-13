@@ -39,6 +39,7 @@ defineProps({
   canAddBatchNumber: Boolean,
   paymentStatusEnum: Object,
   paymentTooltipEnum: Object,
+  isNewPaymentStructure: Boolean,
 });
 
 const page = usePage();
@@ -795,7 +796,7 @@ const linkEntity = () => {
       :quoteType="quoteType"
     />
     <PaymentTableNew 
-			v-if="hasRole(rolesEnum.BetaUser)"
+			v-if="isNewPaymentStructure"
 			:quoteType="quoteType"
 			:payments="quote.payments"
 			:paymentDocument="documentTypes.filter(item => item.code === 'PPD' || item.code === 'PPDR' || item.code === 'PDPDR')"

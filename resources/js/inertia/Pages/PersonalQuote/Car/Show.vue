@@ -87,6 +87,7 @@ defineProps({
   isCommercialVehicles: Boolean,
   carInsuranceProviders: Array,
   paymentTooltipEnum: Object,
+  isNewPaymentStructure: Boolean,
 });
 
 
@@ -3116,7 +3117,7 @@ const handlePlanSelected = plan => {
     </div>
 
     <PaymentTableNew 
-			v-if="hasRole(rolesEnum.BetaUser)"
+			v-if="isNewPaymentStructure"
 			quoteType="Car"
 			:payments="payments"
 			:paymentDocument="page.props.documentTypes.filter(item => item.code === 'CPD' || item.code === 'CPDR' || item.code === 'CDPDR')"

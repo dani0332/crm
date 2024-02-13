@@ -30,6 +30,7 @@ use App\Services\AMLService;
 use App\Services\CentralService;
 use App\Services\LookupService;
 use Illuminate\Http\Request;
+use App\Services\SplitPaymentService;
 
 class LifeQuoteController extends Controller
 {
@@ -167,6 +168,7 @@ class LifeQuoteController extends Controller
             'paymentStatusEnum' => PaymentStatusEnum::asArray(),
             'payments' => $payments,
             'insuranceProviders' => $insuranceProviders,
+            'isNewPaymentStructure' => app(SplitPaymentService::class)-> isNewPaymentStructure($quote->payments),
         ]);
     }
 

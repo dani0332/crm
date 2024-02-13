@@ -31,6 +31,7 @@ defineProps({
   paymentTooltipEnum: Object,
   paymentMethods: Array,
   insuranceProviders: Array,
+  isNewPaymentStructure: Boolean,
 });
 
 const { isRequired } = useRules();
@@ -1059,7 +1060,7 @@ const linkEntity = () => {
       </div>
     </div>
     <PaymentTableNew 
-			v-if="hasRole(rolesEnum.BetaUser)"
+			v-if="isNewPaymentStructure"
 			:quoteType="quoteType"
 			:payments="payments"
 			:paymentDocument="page.props.documentTypes.filter(item => item.code === 'LPD' || item.code === 'LPDR' || item.code === 'LDPDR')"

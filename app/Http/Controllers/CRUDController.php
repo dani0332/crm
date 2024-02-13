@@ -80,6 +80,7 @@ use App\Services\TeamService;
 use App\Services\TierService;
 use App\Services\TravelQuoteService;
 use App\Services\UserService;
+use App\Services\SplitPaymentService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use DataTables;
@@ -588,7 +589,7 @@ class CRUDController extends Controller
         $tiers = $this->lookupService->getTierR();
 
         $access = $this->carQuoteService->updatedAccessAgainstPaymentStatus($paymentEntityModel, $record);
-
+        $isNewPaymentStructure = app(SplitPaymentService::class)-> isNewPaymentStructure($payments);
         if ($this->genericModel->modelType == quoteTypeCode::Car) { // Car plans to display on detail view
             $quote = $record;
             $isCommercialVehicles = false;
@@ -602,7 +603,7 @@ class CRUDController extends Controller
             $carMakeText = $record->car_make_id_text ?? '';
             $carModelText = $record->car_model_id_text ?? '';
             $this->carQuoteService->addOrUpdateQuoteViewCount($record);
-
+            
             foreach ($payments as $payment) {
                 $payment->payment_status_text = $payment->paymentStatus->text;
                 $payment->last_payment_status_created_at = $payment->paymentStatusLogs->last() != null ? $payment->paymentStatusLogs->last()->created_at : '';
@@ -683,7 +684,7 @@ class CRUDController extends Controller
             $membersDetails = CustomerMembersRepository::getBy($record->id, QuoteTypes::CAR->name);
             $customerTypeEnum = CustomerTypeEnum::asArray();
             $industryType = LookupRepository::where('key', LookupsEnum::COMPANY_TYPE)->get();
-            $nationalities = NationalityRepository::withActive()->get();
+            $nationalities = NationalityRepository::withActive()->get();            
 
             return inertia('PersonalQuote/Car/Show', compact([
                 'record', 'quote', 'model', 'customTitles', 'customTableList', 'paymentStatusEnum', 'quoteStatusEnum', 'leadSourceEnum', 'isBetaUser',
@@ -694,7 +695,7 @@ class CRUDController extends Controller
                 'paymentEntityModel', 'payments', 'paymentMethods', 'isQuoteDocumentEnabled', 'quoteDocuments', 'displaySendPolicyButton', 'customerAdditionalContacts', 'lostApproveReasons', 'lostRejectReasons', 'allowQuoteLogAction', 'carLostChangeStatus',
                 'carMakeText', 'carModelText', 'advisor', 'tiers', 'daysAfterCapturedPayment', 'access', 'carPlanFeaturesCodeEnum', 'carPlanExclusionsCodeEnum', 'documentTypes', 'planURL', 'storageUrl', 'kyoEndPoint',
                 'carPlanTypeEnum', 'UBORelations', 'UBOsDetails', 'emirates', 'customerTypeEnum', 'memberRelations', 'membersDetails', 'industryType', 'nationalities', 'paymentTooltipEnum',
-                'isCommercialVehicles', 'carInsuranceProviders',
+                'isCommercialVehicles', 'carInsuranceProviders', 'isNewPaymentStructure',
             ]));
         }
 
@@ -721,7 +722,7 @@ class CRUDController extends Controller
                 'isNewBusinessUser', 'ecomTravelInsuranceQuoteUrl', 'quoteType', 'autoAllocationDisabled',
                 'paymentEntityModel', 'payments', 'mainPayment', 'paymentMethods', 'insuranceProviders', 'emailStatuses',
                 'isQuoteDocumentEnabled', 'quoteDocuments', 'displaySendPolicyButton', 'customerAdditionalContacts',
-                'quoteTypeId', 'tiers', 'access',
+                'quoteTypeId', 'tiers', 'access', 'isNewPaymentStructure',
             ]));
         }
 
@@ -820,6 +821,7 @@ class CRUDController extends Controller
                 'paymentTooltipEnum' => PaymentTooltip::asArray(),
                 'paymentStatusEnum' => PaymentStatusEnum::asArray(),
                 'documentTypes' => $documentTypes,
+                'isNewPaymentStructure' => app(SplitPaymentService::class)-> isNewPaymentStructure($payments),
             ]);
         }
 
@@ -961,6 +963,7 @@ class CRUDController extends Controller
                 'industryType' => $industryType,
                 'UBOsDetails' => $uboDetails,
                 'UBORelations' => $uboRelations,
+                'isNewPaymentStructure' => app(SplitPaymentService::class)-> isNewPaymentStructure($payments),
             ]);
         } else {
             return view('shared.show', compact([

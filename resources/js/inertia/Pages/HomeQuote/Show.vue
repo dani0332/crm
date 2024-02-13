@@ -38,6 +38,7 @@ defineProps({
   storageUrl: String,
   paymentStatusEnum: Object,
   paymentTooltipEnum: Object,
+  isNewPaymentStructure: Boolean,
 });
 
 const page = usePage();
@@ -1043,7 +1044,7 @@ const linkEntity = () => {
     />
 
     <PaymentTableNew 
-			v-if="hasRole(rolesEnum.BetaUser)"
+			v-if="isNewPaymentStructure"
 			:quoteType="quoteType"
 			:payments="payments"
 			:paymentDocument="documentTypes.filter(item => item.code === 'HOMPD' || item.code === 'HOMPDR' || item.code === 'HOMDPDR')"
