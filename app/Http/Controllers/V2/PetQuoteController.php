@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\V2;
 
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\QuoteStatusEnum;
@@ -10,6 +11,7 @@ use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\PetQuoteRequest;
+use App\Models\ApplicationStorage;
 use App\Models\Emirate;
 use App\Models\Nationality;
 use App\Repositories\ActivityRepository;
@@ -113,6 +115,7 @@ class PetQuoteController extends Controller
                 return $value['id'] != QuoteStatusEnum::TransactionApproved;
             })->values();
         }
+        $vatPercentage = ApplicationStorage::where('key_name', ApplicationStorageEnums::VAT_VALUE)->first()->value ?? 0;
 
         return inertia('PetQuote/Show', [
             'quoteType' => QuoteTypes::PET,
@@ -141,6 +144,7 @@ class PetQuoteController extends Controller
             'emirates' => $emirates,
             'UBOsDetails' => $uboDetails,
             'UBORelations' => $uboRelations,
+            'vatPercentage' => $vatPercentage,
         ]);
     }
 

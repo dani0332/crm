@@ -28,6 +28,7 @@ defineProps({
   canAddBatchNumber: Boolean,
   documentTypes: Object,
   storageUrl: String,
+  vatPercentage: Number,
 });
 
 const page = usePage();
@@ -1167,6 +1168,7 @@ const linkEntity = () => {
       :insuranceProviders="insuranceProvidersAll"
       :quote="quote"
       :quoteType="page.props.quoteType"
+      :vatPrice="vatPercentage"
     />
    
 

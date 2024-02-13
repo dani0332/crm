@@ -20,6 +20,7 @@ defineProps({
   documentTypes: Object,
   storageUrl: String,
   insuranceProviders: Object,
+  vatPercentage: Number,
 });
 
 const page = usePage();
@@ -907,6 +908,7 @@ const linkEntity = () => {
       :insuranceProviders="insuranceProviders"
       :quote="quote"
       :quoteType="page.props.quoteType"
+      :vatPrice="vatPercentage"
     />
 
     <div class="p-4 rounded shadow mb-6 bg-white">

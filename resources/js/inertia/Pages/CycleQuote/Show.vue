@@ -37,6 +37,7 @@ defineProps({
   UBORelations: Array,
   UBOsDetails: Array,
   canAddBatchNumber: Boolean,
+  vatPercentage: Number,
 });
 
 const page = usePage();
@@ -806,6 +807,7 @@ const linkEntity = () => {
       :insuranceProviders="insuranceProviders"
       :quote="quote"
       :quoteType="quoteType"
+      :vatPrice="vatPercentage"
     />
 
     <EmbeddedProducts

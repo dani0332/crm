@@ -26,6 +26,7 @@ defineProps({
   documentTypes: Object,
   storageUrl: String,
   insuranceProviders: Object,
+  vatPercentage: Number,
 });
 
 const { isRequired } = useRules();
@@ -1053,6 +1054,8 @@ const linkEntity = () => {
       :insuranceProviders="insuranceProviders"
       :quote="quote"
       :quoteType="quoteType"
+      :vatPrice="vatPercentage"
+      
     />
 
     <EmbeddedProducts

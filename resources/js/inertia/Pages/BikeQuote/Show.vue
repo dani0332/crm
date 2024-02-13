@@ -35,6 +35,7 @@ defineProps({
   UBORelations: Array,
   UBOsDetails: Array,
   canAddBatchNumber: Boolean,
+  vatPercentage: Number,
 });
 
 const page = usePage();
@@ -361,7 +362,9 @@ const linkEntity = () => {
           }}
           Profile
         </h3>
-        <x-tag color="success" v-if="quote.kyc_decision === 'Complete'"> KYC - Complete </x-tag>
+        <x-tag color="success" v-if="quote.kyc_decision === 'Complete'">
+          KYC - Complete
+        </x-tag>
         <x-tag color="amber" v-else> KYC - Pending </x-tag>
       </div>
       <x-divider class="mb-4 mt-1" />
@@ -679,6 +682,7 @@ const linkEntity = () => {
       :insuranceProviders="insuranceProviders"
       :quote="quote"
       :quoteType="quoteType"
+      :vatPrice="vatPercentage"
     />
 
     <QuotePayments

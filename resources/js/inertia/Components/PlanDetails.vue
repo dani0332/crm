@@ -11,6 +11,10 @@ const props = defineProps({
   },
   quoteType: String,
   insuranceProviders: Object,
+  vatPrice: {
+    type: Number,
+    default: 0,
+  },
 });
 
 const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
@@ -117,7 +121,7 @@ const updatePriceWithVat = () => {
     //let priceVatNotApp = parseFloat(planDetailsForm.price_vat_not_applicable ?? 0.00);
     console.log('TOTAL', priceVatApp, priceVatNotApp);
     let totalPrice = parseFloat(
-      priceVatApp + priceVatNotApp + (priceVatApp / 100) * 5,
+      priceVatApp + priceVatNotApp + (priceVatApp / 100) * props.vatPrice,
     );
 
     planDetailsForm.price_with_vat = useFormatPrice(totalPrice, true);
@@ -125,7 +129,7 @@ const updatePriceWithVat = () => {
 
     if (priceVatApp) {
       let price = parseFloat(planDetailsForm.price_vat_applicable);
-      let priceWithVAT = ((price / 100) * 5 + price);
+      let priceWithVAT = ((price / 100) * props.vatPrice + price);
       planDetailsForm.price_with_vat = useFormatPrice(priceWithVAT, true);
     }
 

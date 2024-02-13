@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\V2;
 
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\quoteStatusCode;
@@ -11,6 +12,7 @@ use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\LifeQuoteRequest;
+use App\Models\ApplicationStorage;
 use App\Models\Emirate;
 use App\Repositories\ActivityRepository;
 use App\Repositories\CustomerMembersRepository;
@@ -131,6 +133,7 @@ class LifeQuoteController extends Controller
         }
 
         $documentTypes = DocumentTypeRepository::byQuoteTypeId(QuoteTypes::LIFE->id())->get();
+        $vatPercentage = ApplicationStorage::where('key_name', ApplicationStorageEnums::VAT_VALUE)->first()->value ?? 0;
 
         return inertia('LifeQuote/Show', [
             'documentTypes' => $documentTypes,
@@ -157,6 +160,7 @@ class LifeQuoteController extends Controller
             'UBOsDetails' => $uboDetails,
             'UBORelations' => $uboRelations,
             'insuranceProviders' => $insuranceProviders,
+            'vatPercentage' => $vatPercentage,
         ]);
     }
 
