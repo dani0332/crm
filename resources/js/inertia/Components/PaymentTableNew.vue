@@ -25,6 +25,7 @@ const props = defineProps({
     default: '',
   },
 });
+
 const createPaymentModal = ref(false);
 const isPaymentNoEnabled = ref(false);
 const isCustomReasonEnabled = ref(false);
@@ -32,7 +33,7 @@ const isCustomDiscountReasonEnabled = ref(false);
 const isDiscountEnabled = ref(false);
 const isDiscountReasonEnabled = ref(false);
 const isCheckDetailsEnabled = ref([]);
-const isExpandedSplitPayments = ref(false);
+const isExpandedSplitPayments = ref([]);
 const isPaymentCalculationError = ref(false);
 const isDowngradeFrequencyError = ref(false);
 const isFieldReadonly = ref(false);
@@ -53,7 +54,6 @@ const isMultipleDocumentEnabled = ref(true);
 const approvedDocument = ref('');
 const resetDiscountReason = ref('');
 const approveErrorMessage = ref('');
-
 const discountValue = ref(0); // Initial discount value
 
 const discountDocumentModel = ref([]);
@@ -1864,14 +1864,16 @@ watch(() => props.quoteRequest, (newValue, oldValue) => {
           </thead>         
           
           <tbody class="vue3-easy-data-table__body">
-             <tr v-for="(item,index) in payments" :key="item.code">  
-              <template v-if="index===0">
+
+            <template  v-for="(item,index) in payments" :key="item.code">
+             <tr>  
+              
               <td class="text-center">
                 <span
                   class="expand-pointer"
-                  @click="isExpandedSplitPayments=!isExpandedSplitPayments"
+                  @click="isExpandedSplitPayments[index]=!isExpandedSplitPayments[index]"
                 >
-                  {{ isExpandedSplitPayments ? '&and;' : '&or;' }}
+                  {{ isExpandedSplitPayments[index] ? '&and;' : '&or;' }}
                 </span>
               </td>
               <td>{{ item.code }}</td>             
@@ -1900,11 +1902,10 @@ watch(() => props.quoteRequest, (newValue, oldValue) => {
                       </x-button>
                     </template>               
             </div>
-              </td>
-            </template>           
+              </td>                   
             </tr>
-            <template v-if="isExpandedSplitPayments">
-            <tr v-for="splitPayment in payments[0].payment_splits" :key="splitPayment.id">
+            <template v-if="isExpandedSplitPayments[index]">
+            <tr v-for="splitPayment in item.payment_splits" :key="splitPayment.id">
               <td class="text-center">{{ splitPayment.sr_no }}</td>
               <td></td>
               <td>{{ formatDate(splitPayment.due_date) }}</td>
@@ -1917,11 +1918,14 @@ watch(() => props.quoteRequest, (newValue, oldValue) => {
               <td>{{ formatString(splitPayment.payment_status.text) }}</td>
               <td>{{ splitPayment.payment_allocation_status !== null ? formatString(splitPayment.payment_allocation_status) : ''}}</td>
               <td>
-                <x-button size="xs" color="primary" @click="editPaymentModal(payments[0],splitPayment.id,splitPayment.sr_no,0)" outlined >View</x-button>                
+                <x-button size="xs" color="primary" @click="editPaymentModal(item,splitPayment.id,splitPayment.sr_no,0)" outlined >View</x-button>                
                 <x-button v-if="splitPayment.payment_method.code=='CC'" class="ml-2" size="xs" color="emerald"  @click.prevent="generateCCLink(splitPayment.code,splitPayment.sr_no,splitPayment.payment_status_id);" outlined >Copy Payment Link</x-button>                
               </td>
             </tr>
           </template>
+
+        </template>
+
           </tbody>
         </table>
         <div v-if="!payments.length>0" data-v-32683533="" class="vue3-easy-data-table__message">No Available Data</div>
