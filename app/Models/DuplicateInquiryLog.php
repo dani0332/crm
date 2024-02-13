@@ -14,4 +14,22 @@ class DuplicateInquiryLog extends Model
     {
         return $this->morphTo();
     }
+
+    /**
+     * @return string
+     */
+    public function getCreatedAtAttribute($table)
+    {
+        return $this->asDateTime($table)->timezone(config('app.timezone'))
+            ->format(\Config::get('constants.datetime_format'));
+    }
+
+    /**
+     * @return string
+     */
+    public function getUpdatedAtAttribute($table)
+    {
+        return $this->asDateTime($table)->timezone(config('app.timezone'))
+            ->format(\Config::get('constants.datetime_format'));
+    }
 }
