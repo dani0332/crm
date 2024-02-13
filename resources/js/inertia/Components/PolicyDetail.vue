@@ -41,6 +41,8 @@ const policyIssuanceStatusOptions = computed(() => {
 });
 
 const planQuoteInsurerNumber = computed(() => {
+  console.log("page.props.record.plan_id", page.props.record.plan_id)
+  console.log(" page.props?.listQuotePlans",  page.props?.listQuotePlans)
   let obj = page.props?.listQuotePlans?.filter(
     item => item.id == page.props.record.plan_id,
   );

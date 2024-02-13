@@ -46,25 +46,29 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
 
         $quote->load('advisor');
 
-//        $templateId = null;
-        $templateId = ApplicationStorage::where('key_name', ApplicationStorageEnums::CAR_BOOK_POLICY_TEMPLATE)->first()->value;
+        $templateId = null;
 
-//        switch (ucfirst($this->data->model_type)) {
-//            case QuoteTypes::CAR->value:
-//                $templateId = ApplicationStorage::where('key_name', ApplicationStorageEnums::CAR_BOOK_POLICY_TEMPLATE)->first()->value;
-//                break;
-//
-//            case QuoteTypes::BIKE->value:
-//                break;
-//
-//            case QuoteTypes::TRAVEL->value:
-//                $templateId = ApplicationStorage::where('key_name', ApplicationStorageEnums::CAR_BOOK_POLICY_TEMPLATE)->first()->value;
-//                break;
-//
-//            default:
-//                $templateId = null;
-//                break;
-//        }
+        switch (ucfirst($this->data->model_type)) {
+           case QuoteTypes::CAR->value:
+               $templateId = ApplicationStorage::where('key_name', ApplicationStorageEnums::CAR_BOOK_POLICY_TEMPLATE)->first()->value;
+               break;
+
+           case QuoteTypes::BIKE->value:
+                $templateId = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIKE_BOOK_POLICY_TEMPLATE)->first()->value;
+                break;
+
+           case QuoteTypes::TRAVEL->value:
+               $templateId = ApplicationStorage::where('key_name', ApplicationStorageEnums::TRAVEL_BOOK_POLICY_TEMPLATE)->first()->value;
+               break;
+            
+            case QuoteTypes::HEALTH->value:
+                $templateId = ApplicationStorage::where('key_name', ApplicationStorageEnums::HEALTH_BOOK_POLICY_TEMPLATE)->first()->value;
+                break;
+        
+           default:
+               $templateId = null;
+               break;
+            }
         info('SendBookPolicyDocumentsJobData ' . json_encode($quote));
 
         if (!empty($templateId)) {

@@ -20,6 +20,7 @@ use App\Enums\PaymentTooltip;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteDocumentsEnum;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\TravelQuoteEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
@@ -910,10 +911,14 @@ class CRUDController extends Controller
             $embeddedProducts = EmbeddedProductRepository::byQuoteType(QuoteTypes::HEALTH->id(), $record->id);
 
             $healthPlanTypes = HealthPlanType::where('is_active', 1)->select('id', 'text')->get();
+            $policyIssuanceStatus = PolicyIssuanceStatus::active()->get();
+            $bPDetails = $this->bookPolicyPayload($record, $quoteType, $payments, $quoteDocuments);
 
+        
             return inertia('HealthQuote/Show', [
                 'paymentLink' => $paymentLink,
                 'quote' => $record,
+                'record' => $record,
                 'genderOptions' => $this->crudService->getGenderOptions(),
                 'allowedDuplicateLOB' => $allowedDuplicateLOB,
                 'leadStatuses' => array_values($leadStatuses->toArray()),
@@ -937,6 +942,7 @@ class CRUDController extends Controller
                 'lostReasons' => $lostReasons,
                 'permissions' => [
                     'pa' => auth()->user()->hasRole(RolesEnum::PA),
+                    'isQuoteDocumentEnabled' => $isQuoteDocumentEnabled,
                 ],
                 'quoteStatusEnum' => QuoteStatusEnum::asArray(),
                 'modelType' => $quoteType,
@@ -966,6 +972,14 @@ class CRUDController extends Controller
                 'industryType' => $industryType,
                 'UBOsDetails' => $uboDetails,
                 'UBORelations' => $uboRelations,
+                'enums' => [
+                    'quoteStatusEnum' => QuoteStatusEnum::asArray(),
+                    'paymentStatusEnum' => PaymentStatusEnum::asArray(),
+                    'travelQuoteEnum' => TravelQuoteEnum::asArray(),
+                ],
+                       'policyIssuanceStatus' => $policyIssuanceStatus,
+            'bPDetails' => $bPDetails,
+            'quoteStatusEnum' => QuoteStatusEnum::asArray(),
             ]);
         } else {
             return view('shared.show', compact([

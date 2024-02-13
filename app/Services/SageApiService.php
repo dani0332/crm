@@ -44,7 +44,7 @@ class SageApiService
         $sageRequest->policyNumber = $quote->policy_number;
 
         $sageRequest->policyIssuer = Auth::user()->name;
-        $sageRequest->requestType = Lookup::where('id', $quote->transaction_type_id)->first()->text;
+        $sageRequest->requestType = Lookup::where('id', $quote->transaction_type_id)->first()->text ?? '';
         $sageRequest->subClass = '';
 
         $sageRequest->invoicePaymentStatus = $payment->transaction_payment_status;
