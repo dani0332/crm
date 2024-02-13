@@ -99,6 +99,7 @@ const onSubmit = isValid => {
     })
     .finally(() => {
       createForm.loading = false;
+      location.reload();
     });
 };
 
@@ -263,7 +264,7 @@ watch(
         :loading="options.loading"
         :rules="[isRequired]"
       />
-      <div>
+      <!-- <div>
         <x-tooltip position="bottom" class="arrow-t">
           <label
             class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600 mb-0.5"
@@ -281,7 +282,7 @@ watch(
           class="w-full"
           :rules="[isRequired, isDecimal]"
         />
-      </div>
+      </div> -->
     </div>
 
     <div class="text-sm my-4">
@@ -311,7 +312,11 @@ watch(
                   >
                     Base Price
                   </span>
-                  <template #tooltip> Base Price (exclusive of VAT) </template>
+                  <template #tooltip>
+                    <div class="whitespace-normal normal-case text-[10px]">
+                                Base Price (exclusive of  VAT, Basmah & Policy Fee)
+                            </div>
+                  </template>
                 </x-tooltip>
               </th>
               <th class="py-2 px-3 sticky top-0 text-left w-40 z-10">
@@ -322,7 +327,12 @@ watch(
                     Loading Price
                   </span>
                   <template #tooltip>
-                    Loading Price (exclusive of VAT)
+                    <div class="whitespace-normal text-wrap normal-case text-[10px]">
+                                <p>Additional cost or fee that is added to the base price. This extra charge is
+                                applied to cover specific risks or factors associated with the policyholder,
+                                such as pre-existing medical conditions or other higher-risk situations
+                                (exclusive of VAT)</p>
+                            </div>
                   </template>
                 </x-tooltip>
               </th>
@@ -333,7 +343,9 @@ watch(
                   >
                     Final Price
                   </span>
-                  <template #tooltip> Final Price (exclusive of VAT) </template>
+                  <template #tooltip>
+                    <div class="whitespace-normal normal-case text-[10px]">Total Price (exclusive of  VAT)</div> 
+                  </template>
                 </x-tooltip>
               </th>
             </tr>
@@ -423,7 +435,7 @@ watch(
 
     <div class="flex justify-end">
       <x-button type="submit" color="emerald" :loading="createForm.loading">
-        Save Plan
+        Add Plan
       </x-button>
     </div>
   </x-form>

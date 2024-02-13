@@ -371,7 +371,7 @@ const onLoadingPricesUpdate = (member, updateManual=1) => {
             isManual.value = false;
             if (updateManual)
             {
-                emit('markPlanAsManual', props.plan);
+                emit('markPlanAsManual', props.plan, totalLoadingPrice.value);
             }
         });
 };
