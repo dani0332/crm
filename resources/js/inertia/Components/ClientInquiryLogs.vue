@@ -3,7 +3,6 @@ const props = defineProps({
   logs: Array,
 });
 
-const dateFormat = date => useDateFormat(date, 'DD-MM-YYYY h:mm:ss a');
 
 const clientInquiryLogs = reactive({
   data: props.logs,
@@ -37,8 +36,8 @@ const clientInquiryLogs = reactive({
       :rows-per-page="15"
       :hide-footer="clientInquiryLogs.data?.length < 15"
     >
-      <template #item-created_at="{ created_at }">
-        {{ dateFormat(created_at).value }}
+      <template #item-created_at="item">
+        {{ item.created_at }}
       </template>
     </DataTable>
   </div>

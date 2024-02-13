@@ -1765,9 +1765,9 @@ const handleChildUpdate = planId => {
             <dt class="font-medium">ID</dt>
             <dd>{{ record.id }}</dd>
           </div>
-          <div class="grid sm:grid-cols-2" v-if="clientInquiryLogs.length > 0">
+          <div class="grid sm:grid-cols-2">
             <dt class="font-medium">ENQUIRY COUNT</dt>
-            <dd>{{ clientInquiryLogs.length }}</dd>
+            <dd>{{ record.enquiry_count }}</dd>
           </div>
         </dl>
       </div>
