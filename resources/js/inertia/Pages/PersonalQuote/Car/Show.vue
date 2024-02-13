@@ -85,6 +85,7 @@ defineProps({
   UBOsDetails: Array,
   isCommercialVehicles: Boolean,
   carInsuranceProviders: Array,
+  clientInquiryLogs: Array,
 });
 
 
@@ -1851,6 +1852,10 @@ const handlePlanSelected = plan => {
           >
             <dt class="font-medium">ID</dt>
             <dd>{{ record.id }}</dd>
+          </div>
+          <div class="grid sm:grid-cols-2" v-if="clientInquiryLogs.length > 0">
+            <dt class="font-medium">ENQUIRY COUNT</dt>
+            <dd>{{ clientInquiryLogs.length }}</dd>
           </div>
         </dl>
       </div>
@@ -3759,5 +3764,10 @@ const handlePlanSelected = plan => {
     v-if="can(permissionEnum.API_LOG_VIEW)"
     :type="'App\\Models\\CarQuote'"
     :id="$page.props.record.id"
+  />
+
+  <ClientInquiryLogs
+      v-if="clientInquiryLogs.length > 0"
+      :logs="clientInquiryLogs"
   />
 </template>

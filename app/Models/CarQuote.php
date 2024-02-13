@@ -9,6 +9,7 @@ use App\Traits\QuoteModelTrait;
 use Auth;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use LookUpModel;
 use OwenIt\Auditing\Auditable;
 
@@ -447,5 +448,10 @@ class CarQuote extends BaseModel
     {
         return $this->hasOne(QuoteRequestEntityMapping::class, 'quote_request_id')
             ->where('quote_type_id', QuoteTypeId::Car);
+    }
+
+    public function duplicateInquiryLog(): MorphMany
+    {
+        return $this->morphMany(DuplicateInquiryLog::class, 'loggable');
     }
 }
