@@ -26,8 +26,8 @@ use App\Repositories\PersonalPlanRepository;
 use App\Repositories\QuoteStatusRepository;
 use App\Repositories\UserRepository;
 use App\Services\AMLService;
-use App\Traits\GenericQueriesAllLobs;
 use App\Services\SplitPaymentService;
+use App\Traits\GenericQueriesAllLobs;
 
 class BikeQuoteController extends Controller
 {
@@ -151,7 +151,7 @@ class BikeQuoteController extends Controller
             'UBORelations' => $uboRelations,
             'paymentTooltipEnum' => PaymentTooltip::asArray(),
             'paymentStatusEnum' => PaymentStatusEnum::asArray(),
-            'isNewPaymentStructure' => app(SplitPaymentService::class)-> isNewPaymentStructure($quote->payments),
+            'isNewPaymentStructure' => app(SplitPaymentService::class)->isNewPaymentStructure($quote->payments),
         ]);
     }
 

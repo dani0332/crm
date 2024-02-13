@@ -33,13 +33,13 @@ use App\Services\CRUDService;
 use App\Services\CustomerService;
 use App\Services\DropdownSourceService;
 use App\Services\LookupService;
+use App\Services\SplitPaymentService;
 use App\Traits\RolePermissionConditions;
 use Auth;
 use Carbon\Carbon;
 use DB;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Redirect;
-use App\Services\SplitPaymentService;
 
 class AmtController extends Controller
 {
@@ -200,7 +200,7 @@ class AmtController extends Controller
             'mobile_no' => 'required|regex:/(0)[0-9]/|not_regex:/[a-z]/|min:7|max:20',
             'business_type_of_insurance_id' => 'required',
             'company_name' => 'required|max:150',
-            'number_of_employees' => 'required',
+            'number_of_employees' => 'required|numeric|max:2147483645',
             'brief_details' => 'required',
         ]);
         $record = app(BusinessQuoteService::class)->saveBusinessQuote($request);
@@ -294,7 +294,7 @@ class AmtController extends Controller
             'paymentTooltipEnum' => PaymentTooltip::asArray(),
             'paymentStatusEnum' => PaymentStatusEnum::asArray(),
             'paymentMethods' => $paymentMethods,
-            'isNewPaymentStructure' => app(SplitPaymentService::class)-> isNewPaymentStructure($record->payments),
+            'isNewPaymentStructure' => app(SplitPaymentService::class)->isNewPaymentStructure($record->payments),
 
         ]);
     }
@@ -341,7 +341,7 @@ class AmtController extends Controller
             'last_name' => 'required|max:150',
             'business_type_of_insurance_id' => 'required',
             'company_name' => 'required|max:150',
-            'number_of_employees' => 'required',
+            'number_of_employees' => 'required|numeric|max:2147483645',
             'brief_details' => 'required',
             'group_medical_type_id' => 'required',
             'premium' => 'required',

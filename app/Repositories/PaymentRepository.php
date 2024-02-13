@@ -321,7 +321,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
 
             if ($request->is_capture) { //update collected amount in childs
                 $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($request->modelType));
-                
+
                 foreach ($request->collection_amount as $key => $splitAmount) {
                     $paymentSplit = PaymentSplits::where(['code' => $quoteModel->code, 'sr_no' => $key])->first();
                     if ($paymentSplit && $paymentSplit->payment_status_id != PaymentStatusEnum::PAID) {
@@ -352,7 +352,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                         } catch (Exception $exception) {
                             DB::rollBack();
                         }
-                    }                    
+                    }
                 }
             }
 
@@ -361,8 +361,8 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                 PaymentStatusEnum::PAID,
                 PaymentStatusEnum::CAPTURED,
             ])
-            ->where('code', $firstPayment->code)
-            ->count();
+                ->where('code', $firstPayment->code)
+                ->count();
             if ($totalPaidPayments == $firstPayment->total_payments) {
                 $masterPaymentStatus = PaymentStatusEnum::PAID;
             }
@@ -452,11 +452,11 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                     PaymentStatusEnum::CAPTURED,
                     PaymentStatusEnum::PARTIAL_CAPTURED,
                 ])
-                ->where('code', $payment->code)
-                ->count();
-                
-                if ($totalPaidPayments == $payment->total_payments 
-                    && $payment->captured_amount >= ($payment->total_price-$payment->discount_value)) {
+                    ->where('code', $payment->code)
+                    ->count();
+
+                if ($totalPaidPayments == $payment->total_payments
+                    && $payment->captured_amount >= ($payment->total_price - $payment->discount_value)) {
                     $payment->update(
                         ['payment_status_id' => PaymentStatusEnum::PAID]
                     );

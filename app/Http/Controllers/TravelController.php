@@ -31,13 +31,13 @@ use App\Services\DropdownSourceService;
 use App\Services\LookupService;
 use App\Services\QuoteDocumentService;
 use App\Services\RenewalsUploadService;
+use App\Services\SplitPaymentService;
 use App\Services\TravelQuoteService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Inertia\Response;
 use Inertia\ResponseFactory;
 use RuntimeException;
-use App\Services\SplitPaymentService;
 
 class TravelController extends Controller
 {
@@ -254,7 +254,7 @@ class TravelController extends Controller
             'UBOsDetails' => $uboDetails,
             'UBORelations' => $uboRelations,
             'emirates' => $emirates,
-            'isNewPaymentStructure' => app(SplitPaymentService::class)-> isNewPaymentStructure($payments),
+            'isNewPaymentStructure' => app(SplitPaymentService::class)->isNewPaymentStructure($payments),
         ]);
     }
 

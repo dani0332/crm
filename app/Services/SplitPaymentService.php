@@ -143,9 +143,10 @@ class SplitPaymentService
     // functon to check if the payment structure is new
     public function isNewPaymentStructure($payments)
     {
-       if ($payments->count()==0 || $payments[0]->total_payments>0) {
+        if ($payments->count() == 0 || $payments[0]->total_payments > 0) {
             return true;
-       }
-       return false;
+        }
+
+        return false;
     }
 }

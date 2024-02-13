@@ -29,10 +29,10 @@ use App\Services\BusinessQuoteService;
 use App\Services\CRUDService;
 use App\Services\DropdownSourceService;
 use App\Services\LookupService;
+use App\Services\SplitPaymentService;
 use App\Traits\RolePermissionConditions;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
-use App\Services\SplitPaymentService;
 
 class BusinessQuoteController extends Controller
 {
@@ -284,7 +284,7 @@ class BusinessQuoteController extends Controller
             'canAddBatchNumber' => auth()->user()->hasRole(RolesEnum::CorplineManager),
             'paymentTooltipEnum' => PaymentTooltip::asArray(),
             'paymentStatusEnum' => PaymentStatusEnum::asArray(),
-            'isNewPaymentStructure' => app(SplitPaymentService::class)-> isNewPaymentStructure($payments),
+            'isNewPaymentStructure' => app(SplitPaymentService::class)->isNewPaymentStructure($payments),
         ]);
     }
 

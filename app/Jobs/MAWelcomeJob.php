@@ -11,6 +11,7 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class MAWelcomeJob implements ShouldQueue
@@ -59,15 +60,16 @@ class MAWelcomeJob implements ShouldQueue
                 if ($customer) {
                     $customer->is_we_sent = true;
                     $customer->save();
-
-                    $myAlfredUser = MyAlFredUser::where('customer_id', $customer->id)->first();
-                    if (! $myAlfredUser) {
-                        $newMyAlfredUser = new MyAlFredUser;
-                        $newMyAlfredUser->signup_url = null;
-                        $newMyAlfredUser->customer_id = $customer->id;
-                        $newMyAlfredUser->source = $this->source;
-                        $newMyAlfredUser->save();
-                    }
+                    DB::transaction(function () use ($customer) {
+                        $myAlfredUser = MyAlFredUser::where('customer_id', $customer->id)->first();
+                        if (! $myAlfredUser) {
+                            MyAlFredUser::create([
+                                'signup_url' => null,
+                                'customer_id' => $customer->id,
+                                'source' => $this->source,
+                            ]);
+                        }
+                    }, 5);
                 }
             } else {
                 info('MAWelcomeJob - Email not sent to customer: '.$this->email.' getStatusCode: '.$statusCode);

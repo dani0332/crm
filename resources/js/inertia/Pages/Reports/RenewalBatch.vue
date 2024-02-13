@@ -128,6 +128,11 @@ function onSubmit(isValid) {
                         ? payLoad.advisors
                         : [payLoad.advisors],
                 }),
+                ...(payLoad.batchNo && {
+                    batchNo: Array.isArray(payLoad.batchNo)
+                        ? payLoad.batchNo
+                        : [payLoad.batchNo],
+                }),
                 ...(payLoad.subTeams && {
                     subTeams: Array.isArray(payLoad.subTeams) ? payLoad.subTeams : [payLoad.subTeams],
                 }),
@@ -513,6 +518,10 @@ onMounted(() => {
 
     if (params['teams[]'] && params['teams[]'].length > 0) {
         onTeamChange(params['teams[]']);
+    }
+
+    if (params['batchNo[]'] && typeof filters.batchNo === 'string') {
+        filters.batchNo = [params['batchNo[]']];
     }
 
     calculateValuesAndHighlight();
