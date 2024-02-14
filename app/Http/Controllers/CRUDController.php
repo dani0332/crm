@@ -751,7 +751,9 @@ class CRUDController extends Controller
                 $payment->approved_button = $payment->payment_status_id == PaymentStatusEnum::PAID;
             });
 
-            if (auth()->user()->hasRole(RolesEnum::BetaUser)) {
+
+            $isNewPaymentStructure = app(SplitPaymentService::class)->isNewPaymentStructure($payments);
+            if ($isNewPaymentStructure) {
                 $filteredPaymentMethods = $this->lookupService->getPaymentMethods();
             } else {
                 $filteredPaymentMethods = $paymentMethods->filter(function ($paymentMethod) {
@@ -821,7 +823,7 @@ class CRUDController extends Controller
                 'paymentTooltipEnum' => PaymentTooltip::asArray(),
                 'paymentStatusEnum' => PaymentStatusEnum::asArray(),
                 'documentTypes' => $documentTypes,
-                'isNewPaymentStructure' => app(SplitPaymentService::class)->isNewPaymentStructure($payments),
+                'isNewPaymentStructure' => $isNewPaymentStructure,
             ]);
         }
 
@@ -877,8 +879,8 @@ class CRUDController extends Controller
 
                 $payment->approved_button = $payment->payment_status_id == PaymentStatusEnum::PAID;
             });
-
-            if (auth()->user()->hasRole(RolesEnum::BetaUser)) {
+            $isNewPaymentStructure = app(SplitPaymentService::class)->isNewPaymentStructure($payments);
+            if ($isNewPaymentStructure) {
                 $paymentMethods = $this->lookupService->getPaymentMethods();
             } else {
                 $paymentMethods = $paymentMethods->filter(function ($paymentMethod) {
@@ -963,7 +965,7 @@ class CRUDController extends Controller
                 'industryType' => $industryType,
                 'UBOsDetails' => $uboDetails,
                 'UBORelations' => $uboRelations,
-                'isNewPaymentStructure' => app(SplitPaymentService::class)->isNewPaymentStructure($payments),
+                'isNewPaymentStructure' => $isNewPaymentStructure,
             ]);
         } else {
             return view('shared.show', compact([
@@ -1702,7 +1704,7 @@ class CRUDController extends Controller
         if (! $quoteModel) {
             return response()->json(['success' => false]);
         }
-        if (auth()->user()->hasRole(RolesEnum::BetaUser)) {
+        if ($request->new_payment_structure) {
             if (! (auth()->user()->can(PermissionsEnum::PaymentsCreate))) {
                 return;
             }
@@ -1768,7 +1770,7 @@ class CRUDController extends Controller
 
     public function updatePayment(UpdatePaymentRequest $request)
     {
-        if (auth()->user()->hasRole(RolesEnum::BetaUser)) {
+        if ($request->new_payment_structure) {
             if (! (auth()->user()->can(PermissionsEnum::PaymentsEdit))) {
                 return;
             }
