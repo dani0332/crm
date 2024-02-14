@@ -7,6 +7,8 @@ const props = defineProps({
   },
 });
 
+const priceFormat = (val) => useFormatPrice(val, true);
+
 const tableHeader = reactive([
   {
     text: 'Policy No.',
@@ -26,7 +28,7 @@ const tableHeader = reactive([
   },
   {
     text: 'Source',
-    value: 'lead_source',
+    value: 'source',
   },
   {
     text: 'Team',
@@ -133,14 +135,14 @@ const isIntegerColumn = key => {
   // For example, check if the key corresponds to an integer column
   return [
     'transactions',
-    'price_with_vat',
-    'total_vat',
-    'price_without_vat',
+    'price_vat_applicable',
+    'vat',
+    'price_vat_not_applicable',
     'discount',
     'total_price',
-    'commission',
-    'vat_on_commission',
-    'commission_without_vat',
+    'commission_vat',
+    'commission_vat_applicable',
+    'commission_vat_not_applicable',
     'total_commission',
     'collected_amount',
   ].includes(key);
@@ -171,20 +173,20 @@ const isIntegerColumn = key => {
     <template #item-payment_due_date="{ payment_due_date }">
       {{ payment_due_date }}
     </template>
-    <template #item-lead_source="{ lead_source }">
-      {{ lead_source }}
+    <template #item-source="{ source }">
+      {{ source }}
     </template>
     <template #item-team="{ team }">
       {{ team }}
     </template>
-    <template #item-price_with_vat="{ price_with_vat }">
-      {{ price_with_vat ?? 0 }}
+    <template #item-price_vat_applicable="{ price_vat_applicable }">
+      {{ priceFormat(price_vat_applicable) }}
     </template>
-    <template #item-total_vat="{ total_vat }">
-      {{ total_vat ?? 0 }}
+    <template #item-vat="{ vat }">
+      {{ vat }}
     </template>
-    <template #item-price_without_vat="{ price_without_vat }">
-      {{ price_without_vat ?? 0 }}
+    <template #item-price_vat_not_applicable="{ price_vat_not_applicable }">
+      {{ price_vat_not_applicable ?? 0 }}
     </template>
     <template #item-discount="{ discount }">
       {{ discount ?? 0 }}

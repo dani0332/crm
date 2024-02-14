@@ -21,7 +21,7 @@ class SaleDetailReportService extends ManagementReport
         $request['reportType'] = $request->reportType ?? ManagementReportTypeEnum::ISSUED_POLICIES;
         $query = PersonalQuote::query()
             ->select(
-                'personal_quotes.policy_number',
+                DB::raw('DISTINCT(personal_quotes.policy_number)'),
                 DB::raw("CONCAT(p.reference, ' ', p.tax_invoice_number) as transactions"),
                 'personal_quotes.policy_start_date',
                 'p.policy_due_date',

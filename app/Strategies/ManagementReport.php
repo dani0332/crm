@@ -72,21 +72,24 @@ class ManagementReport
     public function applyFilters($query, $request)
     {
         $dateFilter = function ($fieldName, $filterKey) use ($query, $request) {
-            if (is_array($request[$filterKey])) {
-                $dates = [];
-                foreach ($request[$filterKey] as $key => $dateString) {
-                    $carbonDate = Carbon::parse($dateString);
-                    if ($key == 0) {
-                        $dates[$key] = $carbonDate->startOfDay()->format(config('constants.DB_DATE_FORMAT_MATCH'));
-                    } else {
-                        $dates[$key] = $carbonDate->endOfDay()->format(config('constants.DB_DATE_FORMAT_MATCH'));
+
+            if($request[$filterKey] != null){
+                if (is_array($request[$filterKey])) {
+                    $dates = [];
+                    foreach ($request[$filterKey] as $key => $dateString) {
+                        $carbonDate = Carbon::parse($dateString);
+                        if ($key == 0) {
+                            $dates[$key] = $carbonDate->startOfDay()->format(config('constants.DB_DATE_FORMAT_MATCH'));
+                        } else {
+                            $dates[$key] = $carbonDate->endOfDay()->format(config('constants.DB_DATE_FORMAT_MATCH'));
+                        }
                     }
+                    $request[$filterKey] = $dates;
+                } else {
+                    $carbonDate = Carbon::parse($request[$filterKey]);
+                    $dates = $carbonDate->startOfDay();
+                    $request[$filterKey] = $dates;
                 }
-                $request[$filterKey] = $dates;
-            } else {
-                $carbonDate = Carbon::parse($request[$filterKey]);
-                $dates = $carbonDate->startOfDay();
-                $request[$filterKey] = $dates;
             }
             $dateRange = $request[$filterKey] ?? [
                 Carbon::parse(now())->startOfDay()->format(config('constants.DATE_FORMAT_ONLY')),
