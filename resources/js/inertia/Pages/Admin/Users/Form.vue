@@ -45,9 +45,9 @@ const userForm = useForm({
   mobile_no: props.user?.mobile_no ?? null,
   landline_no: props.user?.landline_no ?? null,
   password: null,
-  products: props?.userProductIds?.length > 0 ? props.userProductIds : null,
-  teams: props.userTeamIds?.length > 0 ? props.userTeamIds : null,
-  roles: selectedRoles.value?.length > 0 ? selectedRoles.value : null,
+  products: props?.userProductIds?.length > 0 ? props.userProductIds : [],
+  teams: props.userTeamIds?.length > 0 ? props.userTeamIds : [],
+  roles: selectedRoles.value?.length > 0 ? selectedRoles.value : [],
   manager: props.userManagerIds ?? null,
   sub_team_id: props.user?.sub_team_id ?? null,
   additionalTeams: props?.selectedAdditionalTeams ?? [],
@@ -83,7 +83,7 @@ const computedSubTeams = computed(() => {
 });
 
 const validRole = computed(() => {
-  return (userForm.roles == null && isError.value) ?? false;
+  return (userForm.roles.length == 0 && isError.value) ?? false;
 });
 
 const validProducts = computed(() => {
@@ -91,7 +91,7 @@ const validProducts = computed(() => {
 });
 
 const validTeams = computed(() => {
-  return (userForm.teams == null && isError.value) ?? false;
+  return (userForm.teams.length == 0 && isError.value) ?? false;
 });
 
 const loadTeamsByProduct = async e => {
@@ -140,13 +140,17 @@ const loadSubTeams = async () => {
 };
 
 function onSubmit(isValid) {
-  // if (!userForm.roles || !userForm.teams || userForm.products.length == 0) {
-  //   isError.value = true;
-  // } else {
-  //   isError.value = false;
-  // }
+  if (
+    userForm.roles.length == 0 ||
+    userForm.teams.length == 0 ||
+    userForm.products.length == 0
+  ) {
+    isError.value = true;
+  } else {
+    isError.value = false;
+  }
 
-  if (isValid) {
+  if (isValid && !isError.value) {
     let method = isEdit.value ? 'put' : 'post';
     let url = isEdit.value
       ? route('users.update', userForm.id)
@@ -232,18 +236,19 @@ onMounted(() => setInitialState());
           :rules="[isRequired, isEmail]"
           class="w-full"
           name="email"
+          :error="$page.props.errors.email"
         />
       </x-field>
-      <x-field label="MOBILE NUMBER" :required="isEdit">
+      <x-field label="MOBILE NUMBER" required>
         <x-input
           v-model="userForm.mobile_no"
           class="w-full"
-          :rules="isEdit ? [isRequired, isMobileNo] : [allowEmpty]"
+          :rules="[isRequired, isMobileNo]"
         />
       </x-field>
-      <x-field label="LANDLINE NUMBER" :required="isEdit">
+      <x-field label="LANDLINE NUMBER" required>
         <x-input
-          :rules="isEdit ? [isRequired] : []"
+          :rules="[isRequired]"
           type="tel"
           v-model="userForm.landline_no"
           class="w-full"
@@ -258,7 +263,7 @@ onMounted(() => setInitialState());
         />
       </x-field>
       <x-field label="ROLES" required>
-        <x-select
+        <!-- <x-select
           :multiple="true"
           :options="
             roles.map(item => ({
@@ -270,8 +275,8 @@ onMounted(() => setInitialState());
           :rules="[isRequired]"
           v-model="userForm.roles"
           placeholder="Select role"
-        />
-        <!-- <ComboBox
+        /> -->
+        <ComboBox
           v-model="userForm.roles"
           :options="
             roles.map(item => ({
@@ -281,10 +286,11 @@ onMounted(() => setInitialState());
           "
           :rules="[isRequired]"
           :hasError="validRole"
-        /> -->
+          autocomplete
+        />
       </x-field>
       <x-field label="PRODUCTS" required>
-        <!-- <ComboBox
+        <ComboBox
           v-model="userForm.products"
           :rules="[isRequired]"
           :hasError="validProducts"
@@ -295,9 +301,10 @@ onMounted(() => setInitialState());
             }))
           "
           @update:modelValue="loadTeamsByProduct($event), loadManagerByTeam()"
-        /> -->
+          autocomplete
+        />
 
-        <x-select
+        <!-- <x-select
           :multiple="true"
           :options="
             props.products.map(item => ({
@@ -310,19 +317,20 @@ onMounted(() => setInitialState());
           v-model="userForm.products"
           placeholder="Select products"
           @update:modelValue="loadTeamsByProduct($event), loadManagerByTeam()"
-        />
+        /> -->
       </x-field>
       <x-field label="TEAMS" required>
-        <!-- <ComboBox
+        <ComboBox
           v-model="userForm.teams"
           :options="computedTeams"
           :loading="loader.teamLoader"
           :rules="[isRequired]"
           :hasError="validTeams"
           @update:modelValue="loadSubTeams($event)"
-        /> -->
+          autocomplete
+        />
 
-        <x-select
+        <!-- <x-select
           :multiple="true"
           v-model="userForm.teams"
           :options="computedTeams"
@@ -331,7 +339,7 @@ onMounted(() => setInitialState());
           class="w-full"
           placeholder="Select teams for MyLeads Tab visiblity"
           @update:modelValue="loadSubTeams($event)"
-        />
+        /> -->
       </x-field>
       <x-field label="SUB TEAM">
         <x-select
@@ -357,7 +365,7 @@ onMounted(() => setInitialState());
         />
       </x-field>
       <x-field label="PERMISSIONS" v-if="hasRole(rolesEnum.Admin)">
-        <!-- <ComboBox
+        <ComboBox
           :multiple="true"
           v-model="userForm.permissions"
           :options="
@@ -367,9 +375,10 @@ onMounted(() => setInitialState());
             }))
           "
           class="w-full"
-        /> -->
+          autocomplete
+        />
 
-        <x-select
+        <!-- <x-select
           :multiple="true"
           v-model="userForm.permissions"
           :options="
@@ -380,7 +389,7 @@ onMounted(() => setInitialState());
           "
           class="w-full"
           placeholder="Select premissions"
-        />
+        /> -->
       </x-field>
       <x-field label="ACTIVE">
         <x-select
@@ -394,7 +403,7 @@ onMounted(() => setInitialState());
         </x-select>
       </x-field>
       <x-field label="MANAGER" v-if="hasRole(rolesEnum.Admin)">
-        <!-- <ComboBox
+        <ComboBox
           v-model="userForm.manager"
           :options="
             managers.map(x => ({
@@ -403,10 +412,12 @@ onMounted(() => setInitialState());
             }))
           "
           :loading="loader.managers"
-        /> -->
+          autocomplete
+        />
 
-        <x-select
+        <!-- <x-select
           :multiple="true"
+          v-model="userForm.manager"
           :options="
             managers.map(x => ({
               value: x.id,
@@ -416,7 +427,7 @@ onMounted(() => setInitialState());
           :loading="loader.managers"
           class="w-full"
           placeholder="Select manager"
-        />
+        /> -->
       </x-field>
     </div>
 

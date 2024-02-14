@@ -48,6 +48,10 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  autocomplete: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 const emit = defineEmits(['update:modelValue']);
@@ -100,6 +104,15 @@ const onSelectAll = () => {
 const onDeselectAll = () => {
   emit('update:modelValue', []);
 };
+
+const removeSelected = item => {
+  let index = props.modelValue.findIndex(x => {
+    return x == item.value || x == item.label;
+  });
+  if (index != -1) {
+    props.modelValue.splice(index, 1);
+  }
+};
 </script>
 
 <template>
@@ -116,7 +129,7 @@ const onDeselectAll = () => {
       class="relative"
       :disabled="props.disabled"
     >
-      <ComboboxInput
+      <!-- <ComboboxInput
         :displayValue="list => list?.label"
         :class="{
           'border-red-500': props.hasError,
@@ -127,15 +140,58 @@ const onDeselectAll = () => {
           props.single
             ? props.options.find(option => option.value === props.modelValue)
                 ?.label
-            : `${selectedValue.length} Selected ${
+            : `${selectedValue[0].label} Selected ${
                 props.maxLimit && !props.selectAll
                   ? '| max: ' + props.maxLimit
                   : ''
               }`
         "
         readonly
-      />
-      <ComboboxButton class="absolute bottom-0 right-0 w-full h-full" />
+      /> -->
+
+      <div>
+        <ul
+          class="flex flex-wrap gap-1 border p-2 rounded"
+          v-if="selectedValue.length > 0 && autocomplete"
+        >
+          <li
+            class="p-1 rounded bg-[#f3f4f6]"
+            v-for="item in selectedValue"
+            :key="item.label"
+          >
+            <span>{{ item.label.toUpperCase() }}</span>
+            <x-icon icon="xmark" @click="removeSelected(item)" />
+          </li>
+        </ul>
+        <ComboboxInput
+          v-else
+          as="input"
+          :displayValue="list => list?.label"
+          :class="{
+            'border-red-500': props.hasError,
+          }"
+          class="appearance-none block placeholder-gray-400 outline-transparent outline outline-2 outline-offset-[-1px] transition-all duration-150 ease-in-out border-gray-300 border shadow-sm rounded-md hover:border-gray-400 px-3 py-2 bg-white text-gray-700 focus:outline-sky-500 w-full"
+          :placeholder="props.placeholder"
+          :value="
+            props.single
+              ? props.options.find(option => option.value === props.modelValue)
+                  ?.label
+              : `${selectedValue.length} Selected ${
+                  props.maxLimit && !props.selectAll
+                    ? '| max: ' + props.maxLimit
+                    : ''
+                }`
+          "
+          readonly
+        />
+        <ComboboxButton
+          class="absolute right-0 w-full h-full"
+          :class="{
+            'bottom-0': selectedValue.length == 0 || !props.autocomplete,
+          }"
+        />
+      </div>
+
       <TransitionRoot
         leave="transition ease-in duration-100"
         leaveFrom="opacity-100"

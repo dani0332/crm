@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
+use Carbon\Carbon;
 
 class UserController extends Controller
 {
@@ -133,12 +134,21 @@ class UserController extends Controller
      */
     public function show(User $user)
     {
+
+        if($user->created_at){
+            $user["new_created_at"] = Carbon::createFromFormat('d-M-Y h:ia', $user->created_at)->format('Y-m-d H:i:s');
+        }
+        if($user->created_at){
+            $user["new_updated_at"] = Carbon::createFromFormat('d-M-Y h:ia', $user->created_at)->format('Y-m-d H:i:s');
+        }
+
         $subTeamName = '';
         $additionalTeamNames = '';
         $managerName = implode(',', $this->getUserManagers($user->id)->pluck('name')->toArray());
         $teamName = implode(',', $this->getUserTeams($user->id)->pluck('name')->toArray());
         $productName = implode(',', $this->getUserProducts($user->id)->pluck('name')->toArray());
         $user->roles = $user->roles->pluck('name')->toArray();
+        $user->permissions = $user->permissions->pluck('name')->toArray();
         if ($user->additional_team_ids != '') {
             $additionalTeamNamesArray = Team::whereIn('id', explode(',', $user->additional_team_ids))->where('type', TeamTypeEnum::PRODUCT)->pluck('name')->toArray();
             $additionalTeamNames = implode(', ', $additionalTeamNamesArray);
@@ -147,6 +157,9 @@ class UserController extends Controller
             $subTeamName = Team::find($user->sub_team_id)->name;
         }
 
+       
+
+        
         return inertia('Admin/Users/Show', [
             'user' => $user,
             'teamName' => $teamName,

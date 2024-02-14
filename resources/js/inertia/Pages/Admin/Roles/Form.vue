@@ -49,13 +49,15 @@ function onSubmit(isValid) {
 
     roleForm.submit(method, url, {
       onError: errors => {
-        roleForm.setError(errors);
+        console.log(roleForm);
         Object.keys(errors).forEach(function (key) {
+          roleForm.setError(key, errors[key]);
           notification.error({
             title: errors[key],
             position: 'top',
           });
         });
+        return false;
       },
     });
   }
@@ -75,7 +77,12 @@ function onSubmit(isValid) {
   <x-form @submit="onSubmit" :auto-focus="false">
     <div class="grid sm:grid-cols-2 gap-4">
       <x-field label="NAME" required>
-        <x-input v-model="roleForm.name" :rules="[isRequired]" class="w-full" />
+        <x-input
+          v-model="roleForm.name"
+          :rules="[isRequired]"
+          class="w-full"
+          :error="$page.props.errors.name"
+        />
       </x-field>
       <x-field label="PERMISSIONS" required>
         <ComboBox

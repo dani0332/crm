@@ -12,6 +12,10 @@ const user = ref(props.user);
 const page = usePage();
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
+const dateFormat = date => {
+  console.log(useDateFormat(date, 'DD-MM-YYYY HH:mm:ss'));
+  return useDateFormat(date, 'DD-MM-YYYY HH:mm:ss').value;
+};
 
 const userRoles = computed(() => {
   if (props.user && props.user?.roles.length > 0) {
@@ -106,13 +110,51 @@ const userRoles = computed(() => {
         </div>
 
         <div class="grid sm:grid-cols-2">
+          <dt class="font-medium">Managers Name</dt>
+          <dd class="break-words flex flex-wrap gap-1">
+            <template v-if="managerName">
+              <x-tag
+                v-for="role in managerName.split(',')"
+                size="sm"
+                color="success"
+                :key="role"
+                class="text-xs h-6"
+              >
+                {{ role }}
+              </x-tag>
+            </template>
+          </dd>
+        </div>
+
+        <div class="grid sm:grid-cols-2">
+          <dt class="font-medium">Permissions</dt>
+          <dd class="break-words flex flex-wrap gap-1">
+            <template v-if="user.permissions">
+              <x-tag
+                size="sm"
+                color="success"
+                v-for="permission in user.permissions"
+                :key="permission"
+                class="text-xs"
+              >
+                {{ permission.name }}
+              </x-tag>
+            </template>
+          </dd>
+        </div>
+
+        <div class="grid sm:grid-cols-2">
           <dt class="font-medium">CREATED AT</dt>
-          <dd>{{ user.created_at ?? 'N/A' }}</dd>
+          <dd>
+            {{ user.created_at ? dateFormat(user.new_created_at) : 'N/A' }}
+          </dd>
         </div>
 
         <div class="grid sm:grid-cols-2">
           <dt class="font-medium">UPDATED AT</dt>
-          <dd>{{ user.updated_at ?? 'N/A' }}</dd>
+          <dd>
+            {{ user.updated_at ? dateFormat(user.new_updated_at) : 'N/A' }}
+          </dd>
         </div>
       </dl>
     </div>
