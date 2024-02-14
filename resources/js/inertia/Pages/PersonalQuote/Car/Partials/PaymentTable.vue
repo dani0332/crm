@@ -268,8 +268,6 @@ const providerId = computed(() => {
         v-if="(can(permissionEnum.PaymentsCreate) &&
         !can(permissionEnum.ApprovePayments) &&
         !hasRole(rolesEnum.PA) && quoteRequest.plan) || isCommercialVehicles"
-      <x-button
-
         size="sm"
         color="orange"
         @click="addPaymentModal"
