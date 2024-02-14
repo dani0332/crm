@@ -37,7 +37,7 @@ const bp = reactive({
 
 const transactionPaymentStatus = computed(() => {
   console.clear()
-console.log("props?.quote?.price_with_vat", props?.quote?.price_with_vat, "props?.quote?.premium", props?.quote?.premium)
+  console.log("props?.quote?.price_with_vat", props?.quote?.price_with_vat, "props?.quote?.premium", props?.quote?.premium)
   if (Number(props?.quote?.price_with_vat) === 0) {
     return 'Not Paid';
   }

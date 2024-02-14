@@ -136,5 +136,17 @@ class SendPolicyApplicationStorageSeeder extends Seeder
                 'updated_at' => now(),
             ]);
         }
+
+        
+        $lifeBookPolicy = ApplicationStorage::where('key_name', ApplicationStorageEnums::LIFE_BOOK_POLICY_TEMPLATE)->first();
+        if (! $lifeBookPolicy) {
+            DB::table('application_storage')->insert([
+                'key_name' => ApplicationStorageEnums::LIFE_BOOK_POLICY_TEMPLATE,
+                'value' => '617',
+                'is_active' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
     }
 }

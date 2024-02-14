@@ -64,11 +64,15 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
             case QuoteTypes::HEALTH->value:
                 $templateId = ApplicationStorage::where('key_name', ApplicationStorageEnums::HEALTH_BOOK_POLICY_TEMPLATE)->first()->value;
                 break;
+            
+            case QuoteTypes::LIFE->value:
+                $templateId = ApplicationStorage::where('key_name', ApplicationStorageEnums::LIFE_BOOK_POLICY_TEMPLATE)->first()->value;
+                break;
         
            default:
-               $templateId = null;
-               break;
-            }
+                $templateId = null;
+                break;
+        }
         info('SendBookPolicyDocumentsJobData ' . json_encode($quote));
 
         if (!empty($templateId)) {
