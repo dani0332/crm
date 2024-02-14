@@ -25,8 +25,8 @@ const tableHeader = reactive([
     value: 'insurer',
   },
   {
-    text: 'Line Of Bussiness',
-    value: 'line_of_bussiness',
+    text: 'Line Of Business',
+    value: 'line_of_business',
   },
   {
     text: 'Policy Start Date',
@@ -34,7 +34,7 @@ const tableHeader = reactive([
   },
   {
     text: 'Policy Expiry Date',
-    value: 'policy_expiry_date',
+    value: 'policy_end_date',
   },
   {
     text: 'Collected Amount',
@@ -42,7 +42,7 @@ const tableHeader = reactive([
   },
   {
     text: 'Price (VAT applicable)',
-    value: 'price_with_vat',
+    value: 'price_vat_applicable',
   },
   {
     text: 'Total VAT',
@@ -50,7 +50,7 @@ const tableHeader = reactive([
   },
   {
     text: 'Price (VAT not applicable)',
-    value: 'price_without_vat',
+    value: 'price_vat_not_applicable',
   },
   {
     text: 'Discount',
@@ -66,15 +66,15 @@ const tableHeader = reactive([
   },
   {
     text: 'Commission (VAT applicable)',
-    value: 'commission_with_vat',
+    value: 'commission_vat_applicable',
   },
   {
     text: 'VAT on Commission',
-    value: 'vat_on_commission',
+    value: 'commission_vat',
   },
   {
     text: 'Commission (VAT not applicable)',
-    value: 'commission_without_vat',
+    value: 'commission_vat_not_applicable',
   },
   {
     text: 'Policy Issuer',
@@ -86,7 +86,7 @@ const tableHeader = reactive([
   },
   {
     text: 'Lead Source',
-    value: 'lead_source',
+    value: 'source',
   },
   {
     text: 'Notes ',

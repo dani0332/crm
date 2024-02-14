@@ -27,15 +27,15 @@ const tableHeader = reactive([
   },
   {
     text: 'Price (VAT applicable)',
-    value: 'price_with_vat',
+    value: 'price_vat_applicable',
   },
   {
     text: 'Total VAT',
-    value: 'total_vat',
+    value: 'vat',
   },
   {
     text: 'Price (VAT not applicable)',
-    value: 'price_without_vat',
+    value: 'price_vat_not_applicable',
   },
   {
     text: 'Discount',
@@ -47,15 +47,15 @@ const tableHeader = reactive([
   },
   {
     text: 'Commission (VAT applicable)',
-    value: 'commission',
+    value: 'commission_vat_applicable',
   },
   {
     text: 'VAT on Commission',
-    value: 'vat_on_commission',
+    value: 'commission_vat',
   },
   {
     text: 'Commission (VAT not applicable)',
-    value: 'commission_without_vat',
+    value: 'commission_vat_not_applicable',
   },
   {
     text: 'Collected Amount',
@@ -67,7 +67,7 @@ const tableHeader = reactive([
   },
   {
     text: 'Unpaid',
-    value: 'unpaid',
+    value: 'pending_balance',
   },
   {
     text: 'Collects',
@@ -79,11 +79,11 @@ const tableHeader = reactive([
   },
   {
     text: 'Line of Business',
-    value: 'line_of_bussiness',
+    value: 'line_of_business',
   },
   {
     text: 'Sub-Type',
-    value: 'sub_type',
+    value: 'sub_type_line_of_business',
   },
   {
     text: 'Customer Name',
@@ -112,15 +112,15 @@ const tableHeader = reactive([
 
   {
     text: 'Insurer Invoice No.',
-    value: 'insurer_invoice_no',
+    value: 'insurer_invoice_number',
   },
   {
     text: 'Insurer Invoice Date',
-    value: 'insurer_invoice_date',
+    value: 'insurer_tax_invoice_date',
   },
   {
     text: 'Broker Invoice No',
-    value: 'borker_invoice_no',
+    value: 'broker_invoice_number',
   },
 ]);
 </script>

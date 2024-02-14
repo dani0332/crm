@@ -21,15 +21,15 @@ class SaleDetailReportService extends ManagementReport
         $request['reportType'] = $request->reportType ?? ManagementReportTypeEnum::ISSUED_POLICIES;
         $query = PersonalQuote::query()
             ->select(
-                'policy_number',
+                'personal_quotes.policy_number',
                 DB::raw("CONCAT(p.reference, ' ', p.tax_invoice_number) as transactions"),
-                'policy_start_date',
+                'personal_quotes.policy_start_date',
                 'p.policy_due_date',
                 'source',
                 't.name as team',
-                'price_vat_applicable',
-                'vat',
-                'price_vat_not_applicable',
+                'personal_quotes.price_vat_applicable',
+                'personal_quotes.vat',
+                'personal_quotes.price_vat_not_applicable',
                 'p.discount_value as discount',
                 DB::raw('FORMAT(((price_vat_applicable + price_vat_not_applicable + vat) - p.discount_value),2) as total_price'),
                 DB::raw('FORMAT(p.commission_vat_applicable,2) as commission_vat_applicable'),

@@ -34,15 +34,15 @@ const tableHeader = reactive([
   },
   {
     text: 'Price (VAT applicable)',
-    value: 'price_with_vat',
+    value: 'price_vat_applicable',
   },
   {
     text: 'T. VAT',
-    value: 'total_vat',
+    value: 'vat',
   },
   {
     text: 'Price (VAT not applicable)',
-    value: 'price_without_vat',
+    value: 'price_vat_not_applicable',
   },
   {
     text: 'Discount',
@@ -54,15 +54,15 @@ const tableHeader = reactive([
   },
   {
     text: 'Commission (VAT applicable)',
-    value: 'commission',
+    value: 'commission_vat_applicable',
   },
   {
     text: 'VAT on Commission',
-    value: 'vat_on_commission',
+    value: 'commission_vat',
   },
   {
     text: 'Commission (VAT not applicable)',
-    value: 'commission_without_vat',
+    value: 'commission_vat_not_applicable',
   },
   {
     text: 'T. Commission',
@@ -74,11 +74,11 @@ const tableHeader = reactive([
   },
   {
     text: 'Insurer Tax Inv No.',
-    value: 'inurer_tax_invoice_number',
+    value: 'insurer_tax_invoice_number',
   },
   {
     text: 'Tax Invoice Date',
-    value: 'tax_invoice_date',
+    value: 'insurer_tax_invoice_date',
   },
   {
     text: 'Payment Status',
@@ -114,7 +114,7 @@ const tableHeader = reactive([
   },
   {
     text: 'Sub-Type',
-    value: 'sub_type',
+    value: 'sub_type_line_of_business',
   },
   {
     text: 'Advisor',

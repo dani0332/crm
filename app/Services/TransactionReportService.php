@@ -37,7 +37,7 @@ class TransactionReportService extends ManagementReport
                 DB::raw('FORMAT(p.premium_captured,2) as collected_amount'),
                 'p.captured_at as payment_date',
                 DB::raw('FORMAT(((price_vat_applicable + price_vat_not_applicable + vat) - p.discount_value) - SUM(p.premium_captured),2) as pending_balance'),
-                DB::raw("'collects' as collects"),
+                DB::raw("UPPER(p.collection_type) as collects"),
                 'ip.text as insurer',
                 'quote_type.text as line_of_business',
                 DB::raw("'sub_type_line_of_business' as sub_type_line_of_business"),
