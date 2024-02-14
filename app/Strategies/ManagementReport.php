@@ -76,7 +76,7 @@ class ManagementReport
                 $dates = [];
                 foreach ($request[$filterKey] as $key => $dateString) {
                     $carbonDate = Carbon::parse($dateString);
-                    if($key == 0){
+                    if ($key == 0) {
                         $dates[$key] = $carbonDate->startOfDay()->format(config('constants.DB_DATE_FORMAT_MATCH'));
                     } else {
                         $dates[$key] = $carbonDate->endOfDay()->format(config('constants.DB_DATE_FORMAT_MATCH'));
