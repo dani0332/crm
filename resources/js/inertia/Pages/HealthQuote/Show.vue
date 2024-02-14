@@ -927,7 +927,7 @@ const onMarkPlanAsManual = (plan, loadingPrice) => {
         if (element.id == plan.id) {
             element.isManualPlan = true;
             // LOADING PRICE UPDTAE
-            let vat = fixedValue((element.actualPremium + (element.policyFee || 0) + (element.basmah || 0) + (loadingPrice || 0)) * 0.05);
+            let vat = ((element.actualPremium + (element.policyFee || 0) + (element.basmah || 0) + (loadingPrice || 0)) * 0.05);
             element.loadingPrice = Number(loadingPrice);
             element.vat = Number(vat);
         }

@@ -1411,11 +1411,9 @@ class HealthQuoteService extends BaseService
 
                             if (
                                 (int) $loadingPrices[$key]['memberId'] == $value['memberId']
-                                && $loadingPrices[$key]['price'] != 0
                             ) {
                                 $copay['loadingPrice'] = (float) $loadingPrices[$key]['price'];
                             }
-
                             if (
                                 (int) $manualPremiumPrices[$key]['memberId'] == $value['memberId']
                                 && $manualPremiumPrices[$key]['premium'] != 0

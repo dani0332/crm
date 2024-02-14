@@ -337,7 +337,7 @@ const onLoadingPricesUpdate = (member, updateManual=1) => {
         selectedCopay: selectedCopay.value,
         loadingPrice: loadingPrices.value.map(m => ({
             memberId: m.memberId,
-            price: m.price,
+            price: m.price > 0 ? parseFloat( m.price ): parseFloat (0.00),
         })),
         manualPremiumPrice: manualPlansMembersPremium.value.map(m => ({
             memberId: m.memberId,
@@ -1025,7 +1025,8 @@ onUpdated(() => {
                       size="sm"
                       :value="
                         (
-                            Number(data.loadingPrice) + Number(
+                            Number( loadingPrices[memberIndexPerId(item.memberId)]
+                              ?.price || 0 ) + Number(
                                 manualPlansMembersPremium[memberIndexPerId(item.memberId)]
                               ?.premium || 0,
                           )
@@ -1041,7 +1042,8 @@ onUpdated(() => {
                       size="sm"
                       :value="
                         (
-                            Number(data.loadingPrice) + Number(
+                            Number( loadingPrices[memberIndexPerId(item.memberId)]
+                              ?.price || 0) + Number(
                                 manualPlansMembersPremium[memberIndexPerId(item.memberId)]
                               ?.premium || 0,
                           )
@@ -1055,7 +1057,8 @@ onUpdated(() => {
                       size="sm"
                       :value="
                         (
-                          Number(data.loadingPrice) + Number(data.premium || 0)
+                          Number(loadingPrices[memberIndexPerId(item.memberId)]
+                              ?.price || 0) + Number(data.premium || 0)
                         )?.toLocaleString()
                       "
                     />
@@ -1083,7 +1086,8 @@ onUpdated(() => {
                       size="sm"
                       :value="
                         (
-                          Number(data.loadingPrice) + Number(data.premium || 0)
+                          Number( loadingPrices[memberIndexPerId(item.memberId)]
+                              ?.price || 0) + Number(data.premium || 0)
                         )?.toLocaleString()
                       "
                     />
