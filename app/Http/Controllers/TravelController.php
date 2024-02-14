@@ -110,7 +110,9 @@ class TravelController extends Controller
         $paymentEntityModel = $this->{strtolower($this->genericModel->modelType).'QuoteService'}->getEntityPlain($record->id);
         $payments = $paymentEntityModel->payments;
         $paymentMethods = $this->lookupService->getPaymentMethods();
-        if (auth()->user()->hasRole(RolesEnum::BetaUser)) {
+
+        $isNewPaymentStructure = app(SplitPaymentService::class)->isNewPaymentStructure($payments);
+        if ($isNewPaymentStructure) {
             $filteredPaymentMethods = $paymentMethods;
         } else {
             $filteredPaymentMethods = $paymentMethods->filter(function ($paymentMethod) {
@@ -254,7 +256,7 @@ class TravelController extends Controller
             'UBOsDetails' => $uboDetails,
             'UBORelations' => $uboRelations,
             'emirates' => $emirates,
-            'isNewPaymentStructure' => app(SplitPaymentService::class)->isNewPaymentStructure($payments),
+            'isNewPaymentStructure' => $isNewPaymentStructure,
         ]);
     }
 

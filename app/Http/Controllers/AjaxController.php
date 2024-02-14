@@ -131,7 +131,7 @@ class AjaxController extends Controller
 
     public function generatePaymentLink(Request $request)
     {
-        if (auth()->user()->hasRole(RolesEnum::BetaUser)) {
+        if ($request->new_payment_structure === true) {
             return $this->generateSplitPaymentLink($request);
         } else {
             $payment = Payment::where('code', '=', $request->paymentCode)->first();
