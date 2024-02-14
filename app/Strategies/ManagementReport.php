@@ -73,7 +73,7 @@ class ManagementReport
     {
         $dateFilter = function ($fieldName, $filterKey) use ($query, $request) {
 
-            if($request[$filterKey] != null){
+            if ($request[$filterKey] != null) {
                 if (is_array($request[$filterKey])) {
                     $dates = [];
                     foreach ($request[$filterKey] as $key => $dateString) {
