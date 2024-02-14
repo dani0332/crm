@@ -99,7 +99,6 @@ const onSubmit = isValid => {
     })
     .finally(() => {
       createForm.loading = false;
-      location.reload();
     });
 };
 
@@ -344,7 +343,7 @@ watch(
                     Final Price
                   </span>
                   <template #tooltip>
-                    <div class="whitespace-normal normal-case text-[10px]">Total Price (exclusive of  VAT)</div> 
+                    <div class="whitespace-normal normal-case text-[10px]">Total Price (exclusive of  VAT)</div>
                   </template>
                 </x-tooltip>
               </th>

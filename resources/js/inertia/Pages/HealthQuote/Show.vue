@@ -734,6 +734,7 @@ const onCreatePlan = () => {
         title: 'Plan Created',
         position: 'top',
       });
+      location.reload();
     },
   });
 };

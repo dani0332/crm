@@ -1185,6 +1185,9 @@ onUpdated(() => {
           </TabPanel>
           <!-- I will work here -->
           <TabPanel>
+            <div v-if="memberFormLoader" class="flex items-center justify-center absolute w-full h-[97%] rounded-md !bg-gray-800/20 z-20 inset-0">
+                    <x-button class="!p-4" color="gray" size="lg" loading rounded/>
+                </div>
             <div class="grid md:grid-cols-1 gap-5 p-4 copay-select">
               <ComboBox
                 class="w-full"
