@@ -53,5 +53,6 @@ final class ApplicationStorageEnums extends Enum
     public const HEALTH_BOOK_POLICY_TEMPLATE = 'HEALTH_BOOK_POLICY_TEMPLATE';
     public const LIFE_BOOK_POLICY_TEMPLATE = 'LIFE_BOOK_POLICY_TEMPLATE';
     public const HOME_BOOK_POLICY_TEMPLATE = 'HOME_BOOK_POLICY_TEMPLATE';
+    public const PET_BOOK_POLICY_TEMPLATE = 'PET_BOOK_POLICY_TEMPLATE';
     public const VAT = 0.05;
 }

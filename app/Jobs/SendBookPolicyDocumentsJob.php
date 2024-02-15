@@ -60,19 +60,23 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
            case QuoteTypes::TRAVEL->value:
                $templateId = ApplicationStorage::where('key_name', ApplicationStorageEnums::TRAVEL_BOOK_POLICY_TEMPLATE)->first()->value;
                break;
-            
+
             case QuoteTypes::HEALTH->value:
                 $templateId = ApplicationStorage::where('key_name', ApplicationStorageEnums::HEALTH_BOOK_POLICY_TEMPLATE)->first()->value;
                 break;
-            
+
             case QuoteTypes::LIFE->value:
                 $templateId = ApplicationStorage::where('key_name', ApplicationStorageEnums::LIFE_BOOK_POLICY_TEMPLATE)->first()->value;
                 break;
-        
+
             case QuoteTypes::HOME->value:
                 $templateId = ApplicationStorage::where('key_name', ApplicationStorageEnums::HOME_BOOK_POLICY_TEMPLATE)->first()->value;
                 break;
-        
+
+            case QuoteTypes::PET->value:
+                $templateId = ApplicationStorage::where('key_name', ApplicationStorageEnums::PET_BOOK_POLICY_TEMPLATE)->first()->value;
+                break;
+
            default:
                 $templateId = null;
                 break;

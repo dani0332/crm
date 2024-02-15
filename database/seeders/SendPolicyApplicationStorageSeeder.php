@@ -137,7 +137,7 @@ class SendPolicyApplicationStorageSeeder extends Seeder
             ]);
         }
 
-        
+
         $lifeBookPolicy = ApplicationStorage::where('key_name', ApplicationStorageEnums::LIFE_BOOK_POLICY_TEMPLATE)->first();
         if (! $lifeBookPolicy) {
             DB::table('application_storage')->insert([
@@ -149,12 +149,23 @@ class SendPolicyApplicationStorageSeeder extends Seeder
             ]);
         }
 
-        
+
         $homeBookPolicy = ApplicationStorage::where('key_name', ApplicationStorageEnums::HOME_BOOK_POLICY_TEMPLATE)->first();
         if (! $homeBookPolicy) {
             DB::table('application_storage')->insert([
                 'key_name' => ApplicationStorageEnums::HOME_BOOK_POLICY_TEMPLATE,
                 'value' => '616',
+                'is_active' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+
+        $petBookPolicy = ApplicationStorage::where('key_name', ApplicationStorageEnums::PET_BOOK_POLICY_TEMPLATE)->first();
+        if (! $petBookPolicy) {
+            DB::table('application_storage')->insert([
+                'key_name' => ApplicationStorageEnums::PET_BOOK_POLICY_TEMPLATE,
+                'value' => '615',
                 'is_active' => 1,
                 'created_at' => now(),
                 'updated_at' => now(),

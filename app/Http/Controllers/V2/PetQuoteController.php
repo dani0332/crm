@@ -28,9 +28,14 @@ use App\Repositories\QuoteStatusRepository;
 use App\Repositories\UserRepository;
 use App\Services\AMLService;
 use App\Services\CentralService;
+use App\Models\PolicyIssuanceStatus;
+use App\Models\QuoteType;
+use App\Services\QuoteDocumentService;
+use App\Traits\GenericQueriesAllLobs;
 
 class PetQuoteController extends Controller
 {
+    use GenericQueriesAllLobs;
     /**
      * Display a listing of the resource.
      *
@@ -115,7 +120,12 @@ class PetQuoteController extends Controller
                 return $value['id'] != QuoteStatusEnum::TransactionApproved;
             })->values();
         }
+        $isQuoteDocumentEnabled = app(QuoteDocumentService::class)->isEnabled(QuoteTypes::PET->value);
+        $policyIssuanceStatus = PolicyIssuanceStatus::active()->get();
+        $quoteDocuments = (new QuoteDocumentService())->getQuoteDocuments(QuoteTypes::PET->value, $quote->id);
+        $bPDetails = $this->bookPolicyPayload($quote, QuoteTypes::PET->value, $quote->payments, $quoteDocuments);
 
+        
         return inertia('PetQuote/Show', [
             'quoteType' => QuoteTypes::PET,
             'quote' => $quote,
@@ -145,6 +155,16 @@ class PetQuoteController extends Controller
             'UBORelations' => $uboRelations,
             'paymentStatusEnum' => PaymentStatusEnum::asArray(),
             'paymentTooltipEnum' => PaymentTooltip::asArray(),
+            'record' => fn () => $quote,
+            'permissions' => [
+                'isQuoteDocumentEnabled' => $isQuoteDocumentEnabled,
+            ],
+            'enums' => [
+                'quoteStatusEnum' => QuoteStatusEnum::asArray(),
+            ],
+            'policyIssuanceStatus' => $policyIssuanceStatus,
+            'bPDetails' => $bPDetails,
+            'payments' => $quote->payments->toArray() ?? []
         ]);
     }
 
