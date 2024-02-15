@@ -43,7 +43,7 @@ class HandleCarAdvisorUpdated
 
         $lead = $event->lead;
 
-        if($lead->send_ocb == 1){
+        if ($lead->send_ocb == 1) {
             if ($lead->source == LeadSourceEnum::RENEWAL_UPLOAD) {
                 info('lead is source is renewal upload. Skipping intro email job');
 
@@ -60,9 +60,9 @@ class HandleCarAdvisorUpdated
 
             info('SMS sending code reached');
 
-            //buildSMS($lead);
-        }else{
-            info('Lead '. $lead->uuid .'advisor updated but send ocb is not 1. Skipping intro email job and sms sending code.');
+        //buildSMS($lead);
+        } else {
+            info('Lead '.$lead->uuid.'advisor updated but send ocb is not 1. Skipping intro email job and sms sending code.');
         }
 
     }
