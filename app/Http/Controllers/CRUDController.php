@@ -784,11 +784,16 @@ class CRUDController extends Controller
             }
 
             $documentTypes = $this->quoteDocumentService->getQuoteDocumentsForUpload(QuoteTypeId::Home);
+            $policyIssuanceStatus = PolicyIssuanceStatus::active()->get();
+            
+            $quoteDocument = (new QuoteDocumentService())->getQuoteDocuments(QuoteTypes::HOME->value, $record->id);
+            $bPDetails = $this->bookPolicyPayload($record, QuoteTypes::HOME->value, $payments, $quoteDocument);
 
             return inertia('HomeQuote/Show', [
                 'storageUrl' => storageUrl(),
                 'quoteDocuments' => array_values($quoteDocuments->toArray()),
                 'quote' => $record,
+                'record' => $record,
                 'allowedDuplicateLOB' => $allowedDuplicateLOB,
                 'leadStatuses' => array_values($leadStatuses->toArray()),
                 'advisors' => $advisors,
@@ -809,6 +814,7 @@ class CRUDController extends Controller
                     'create_payments' => auth()->user()->can(PermissionsEnum::PaymentsCreate) && $paymentEntityModel->plan && !auth()->user()->hasRole(RolesEnum::PA),
                     'isPA' => auth()->user()->hasRole(RolesEnum::PA),
                     'isAdvisor' => auth()->user()->hasRole(RolesEnum::EBPAdvisor) || auth()->user()->hasRole(RolesEnum::HealthAdvisor) || auth()->user()->hasRole(RolesEnum::RMAdvisor),
+                    'isQuoteDocumentEnabled' => $isQuoteDocumentEnabled,
                 ],
                 'quoteStatusEnum' => QuoteStatusEnum::asArray(),
                 'modelType' => $quoteType,
@@ -830,6 +836,11 @@ class CRUDController extends Controller
                 'paymentTooltipEnum' => PaymentTooltip::asArray(),
                 'paymentStatusEnum' => PaymentStatusEnum::asArray(),
                 'documentTypes' => $documentTypes,
+                'enums' => [
+                    'quoteStatusEnum' => QuoteStatusEnum::asArray(),
+                ],
+                'policyIssuanceStatus' => $policyIssuanceStatus,
+                'bPDetails' => $bPDetails
             ]);
         }
 

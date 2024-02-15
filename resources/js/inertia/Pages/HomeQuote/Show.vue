@@ -6,6 +6,7 @@ import PaymentTableNew from '../../Components/PaymentTableNew.vue';
 
 defineProps({
   quote: Object,
+  record: Object,
   quoteType: String,
   quoteTypeId: Number,
   leadStatuses: Array,
@@ -38,6 +39,9 @@ defineProps({
   storageUrl: String,
   paymentStatusEnum: Object,
   paymentTooltipEnum: Object,
+  enums: Object,
+  policyIssuanceStatus: Array,
+  bPDetails: Array,
 });
 
 const page = usePage();
@@ -46,6 +50,8 @@ const notification = useNotifications('toast');
 const hasAnyRole = roles => useHasAnyRole(roles);
 const rolesEnum = page.props.rolesEnum;
 const hasRole = role => useHasRole(role);
+const permissionEnum = page.props.permissionsEnum;
+const canAny = permissions => useCanAny(permissions);
 
 const modals = reactive({
   duplicate: false,
@@ -930,6 +936,14 @@ const linkEntity = () => {
       </dl>
     </x-modal>
 
+    <PolicyDetail
+      v-if="permissions.isQuoteDocumentEnabled"
+      :record="record"
+      :quoteStatusEnum="enums.quoteStatusEnum"
+      :policyIssuanceStatus="policyIssuanceStatus"
+      modelType="home"
+    />
+
     <MemberDetails
       v-if="quote.customer_type == page.props.customerTypeEnum.Individual"
       :quote="quote"
@@ -1063,7 +1077,19 @@ const linkEntity = () => {
       :insuranceProviders="insuranceProviders"
       :quote="quote"
     />
-    
+
+    <BookPolicy
+      v-if="
+        canAny([
+          permissionEnum.VIEW_INSLY_BOOK_POLICY,
+          permissionEnum.SEND_INSLY_BOOK_POLICY,
+        ])
+      "
+      :quote="record"
+      quoteType="home"
+      :bPDetails="bPDetails"
+      :payments="payments"
+    />
 
     <EmbeddedProducts
       :data="embeddedProducts"

@@ -148,5 +148,17 @@ class SendPolicyApplicationStorageSeeder extends Seeder
                 'updated_at' => now(),
             ]);
         }
+
+        
+        $homeBookPolicy = ApplicationStorage::where('key_name', ApplicationStorageEnums::HOME_BOOK_POLICY_TEMPLATE)->first();
+        if (! $homeBookPolicy) {
+            DB::table('application_storage')->insert([
+                'key_name' => ApplicationStorageEnums::HOME_BOOK_POLICY_TEMPLATE,
+                'value' => '616',
+                'is_active' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
     }
 }
