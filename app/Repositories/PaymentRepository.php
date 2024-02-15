@@ -345,6 +345,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                         try {
                             $paymentSplit->collection_amount = $splitAmount;
                             $paymentSplit->save();
+                            app(SplitPaymentService::class)->createReciept($quoteModel, $quoteTypeId, $paymentSplit);
                             $parentPayment = $paymentSplit->payment;
                             $parentPayment->captured_amount = ($parentPayment->captured_amount + $splitAmount);
                             $parentPayment->save();
@@ -411,14 +412,12 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                 }
             }
 
-            app(SplitPaymentService::class)->createReciept($request->modelType, $request->quote_id, $splitPayment);
-
             //create sage reciept
             $sageResponse = app(SplitPaymentService::class)->createSageRecipt($request, $splitPayment);
             if ($sageResponse['status'] == 'success') {
                 $paymentInformation['sage_reciept_id'] = $sageResponse['response'];
                 $splitPayment->update($paymentInformation);
-                
+                app(SplitPaymentService::class)->createReciept($request->modelType, $request->quote_id, $splitPayment);
             } else {
                 $failMessage = $sageResponse['response'];
                 vAbort($failMessage);

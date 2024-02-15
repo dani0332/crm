@@ -1,6 +1,3 @@
-<!DOCTYPE html>
-<html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -17,12 +14,23 @@
             font-family: 'DejaVu Sans', serif !important;
             padding: 0;
         }
-
-        #header {
-            margin-top: -34px;
-            text-align: center;
+       
+        table {
+            width: 100%;
+            border-collapse: collapse;            
         }
 
+        th, td {
+            border: 1px solid #1d83bc;
+            padding: 8px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #1d83bc;
+            color: white;
+        }
+       
         #footer {
             margin: 100px -50px 0 -45px !important;
             background-color: rgb(29 131 188);
@@ -36,24 +44,7 @@
             margin: 0;
             font-weight: 400;
             font-size: 9px;
-        }
-
-        .main-heading {
-            text-align: center !important;
-            color: #44475C;
-            font-size: 20px;
-            text-decoration: underline;
-            font-weight: 800;
-            margin: 0;
-        }
-
-        .sub-heading {
-            color: #44475C;
-            font-size: 14px;
-            text-decoration: underline;
-            font-weight: 700;
-            margin: 0;
-        }
+        }       
 
         .pl-6 {
             padding-left: 8px;
@@ -62,33 +53,7 @@
         .text-center {
             text-align: center;
         }
-
-        table {
-            border-spacing: 10px;
-        }
-
-        tr td {
-            font-size: 10px;
-            color: #44475C;
-        }
-
-        tr td:first-child {
-            padding-left: 10px;
-            font-weight: 500;
-            padding-right: 80px;
-        }
-
-        .custom-table tr td:nth-child(2) {
-            background: #ffffff;
-            border-style: solid;
-            border-color: #1d83bc;
-            border-width: 0.1px;
-            color: black;
-            font-weight: 500;
-            padding-left: 5px;
-            width: 420px;
-        }
-
+       
         .no-border {
             border-style: none !important;
         }
@@ -108,41 +73,75 @@
         }
     </style>
 </head>
-
-<body>
-    <div id="header">
-        <img src="{{'data:image/png;base64,'.base64_encode(file_get_contents(getIMLogo(true)))}}" alt="Insurance Market Logo" width="300">
-    </div>
+<body>    
+    <table class="header" style="border: none;">           
+        <tbody>
+            <tr style="border: none;">
+                <td style="width: 70%; border: none; vertical-align:top;">
+                <img src="{{'data:image/png;base64,'.base64_encode(file_get_contents(getIMLogo(true)))}}" alt="Insurance Market Logo">
+                </td>
+                <td style="vertical-align:middle; text-align:right; border: none; font-size:20px;">
+                <strong>Payment Receipt</strong>                
+                </td>
+            </tr>
+        </tbody>
+    </table>
     <hr>
     <div id="content">
-        <p class="main-heading">Payment Reciept</p>
-        <p class="sub-heading">Personal Information:</p>
-
-        <table class="custom-table">
+        <table style="border: none;">        
             <tbody>
-                <tr>
-                    <td>Account opening number:</td>
-                    <td>{{ $data['order_amount'] }}</td>
-                </tr>
-
-                <tr>
-                    <td>Date of birth:</td>
-                    <td>{{ dateFormat($data['payment_method']) }}</td>
-                </tr>
+                <tr style="border: none;">
+                    <td style="margin: 0; border: none;"><strong>Customer:</strong>{{ ucfirst($data['customer_name']) }}</td>
+                    <td style="margin: 0; border: none; text-align:right"><strong>Received Date:</strong>{{ date('d/m/y') }}</td>
                 
-                <tr>
-                    <td>Date of birth:</td>
-                    <td>{{ dateFormat($data['dob']) }}</td>
                 </tr>
-               
+                <tr style="border: none;">
+                    <td style="margin: 0; border: none;"><strong>Receipt Number:</strong>{{ $data['receipt_number'] }}</td>
+                    <td style="margin: 0; border: none; text-align:right"><strong>Paid By:</strong>{{ $data['payment_method'] }}</td>            
+                </tr>
             </tbody>
         </table>
+        <br>
+        <table>
+            <thead>
+                <tr>
+                    <th style="width: 70%;">Order Detail</th>
+                    <th style="text-align:right;">Amount</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>
+                        Order Number: {{ $data['order_number'] }}<br>
+                        Order Date And Time: {{ date('d/m/y') }} {{ date('H:i:s') }}<br>
+                        Insurance Company: {{ $data['insurance_company'] }}<br>
+                        Type of Insurance: {{ $data['type_of_insurance'] }}<br>
+                    </td>
+                    <td style="vertical-align:top; text-align:right;">{{ $data['order_amount'] }} AED</td>
+                </tr>
+            </tbody>
+        </table>      
         
+        <table style="border: none;">           
+            <tbody>
+                <tr style="border: none;">
+                    <td style="width: 65%; border: none; vertical-align:top;">
+                    <strong>Remarks:</strong> {{ $data['remarks'] }}
+                    </td>
+                    <td style="vertical-align:top; text-align:right; border: none;">
+                        <strong>Subtotal:</strong> {{ $data['order_amount'] }} AED <br>
+                        <strong>VAT:</strong> {{ $data['vat'] }} AED <br>
+                        <strong>Discount:</strong> {{ $data['discount'] }} AED <br>
+                        <hr style="margin: 5px 0;">
+                        <strong>Total: {{ $data['order_amount'] }} AED</strong>                    
+                    </td>
+                </tr>
+            </tbody>
+        </table>
     </div>
-
    
-    <p style="font-size: 11px;">
-        <i>This KYC was authorized on {{ date('d/m/y') }} at {{ date('H:i:s') }}.</i>
+    <p style="font-size: 11px; text-align: center;">
+        <i>***This is system generated receipt.Manual signature is not required***</i>
     </p>
 
     <div id="footer">
@@ -169,5 +168,4 @@
         </h6>
     </div>
 </body>
-
 </html>

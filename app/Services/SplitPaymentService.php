@@ -5,11 +5,15 @@ namespace App\Services;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteTypeId;
+use App\Enums\QuoteTypes;
+use App\Enums\DocumentTypeCode;
 use App\Factories\SagePayloadFactory;
 use App\Models\PaymentSplits;
 use App\Models\QuoteDocument;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\SageLoggable;
+use App\Services\QuoteDocumentService;
+use App\Repositories\CustomerRepository;
 use PDF;
 
 class SplitPaymentService
@@ -153,62 +157,77 @@ class SplitPaymentService
 
     public function createReciept($modelType, $quoteId, $splitPayment)
     {
-        $quote = $this->getQuoteObject($modelType, $quoteId);
-
-        dd($quote);
-        $data = [];
-        $data['customer_name'] = $splitPayment->customer->name;
-        
-        $data['sage_document_number'] = $splitPayment->customer->id;
-        $data['recieved_date'] = $splitPayment->customer->sage_customer_number;
-        $data['payment_method'] = $splitPayment->customer->sage_customer_number;
-        $data['order_number'] = $splitPayment->customer->sage_customer_number;
-        $data['order_date_time'] = $splitPayment->customer->sage_customer_number;
-        $data['order_amount'] = $splitPayment->customer->sage_customer_number;
-        $data['amount_recieved'] = $splitPayment->customer->sage_customer_number;
-        $data['discount'] = $splitPayment->customer->sage_customer_number;
-
-        $data['insurance_company'] = $splitPayment->customer->sage_customer_number;
-        $data['type_of_insurance'] = $splitPayment->customer->sage_customer_number;
-        $data['vat'] = 0;
-
-        $pdf = PDF::loadView('pdf.payment_receipt', compact('data'))->setOptions(['defaultFont' => 'DejaVu Sans']);
-        $pdf->setPaper('A4');
-        $pdfFile = $pdf->output();
-        $document = $this->quoteDocumentService->uploadQuoteDocument($pdfFile, $data, $quote, true);
-       
-
-
-        /*
         try {
-            $quote = $this->getQuoteObject($quoteType, $request->quote_uuid);
-            
-            $data['company_position_text'] = LookupRepository::where('code', $data['company_position'])->where('key', LookupsEnum::COMPANY_POSITION)->value('text');
-            $data['professional_title_text'] = LookupRepository::where('code', $data['professional_title'])->where('key', LookupsEnum::PROFESSIONAL_TITLE)->value('text');
-            $data['premium'] = $quote->premium;
-            $data['payment_method'] = isset($quote->payments[0]) ? $quote->payments[0]->paymentMethod->name : '';
-            
-            $data['product_type'] = ucfirst($quoteType).' Insurance';
-            $data['document_type_code'] = DocumentTypeCode::KYCDOC;
+            $quote = $this->getQuoteObject($modelType, $quoteId);
+            $quote->load(['customer']);               
+            $data = [];
+            $data['order_amount'] = number_format($splitPayment->collection_amount, 2, '.', ',');
+            $data['payment_split_id'] = $splitPayment->id;
 
+            $data['customer_name'] = $quote->customer->first_name.' '.$quote->customer->last_name;
+            $data['receipt_number'] = $splitPayment->code;
+            $data['order_number'] = $splitPayment->code.'-'.$splitPayment->sr_no;
+            $data['pdf_filename'] = $splitPayment->code.'-'.$splitPayment->sr_no;
+            
+            if($modelType == QuoteTypes::BUSINESS->value || $modelType == QuoteTypes::GROUP_MEDICAL->value
+            || $modelType == QuoteTypes::HOME->value){
+                $quote->load(['insuranceProviderDetails']);
+                $data['insurance_company'] = $quote->insuranceProviderDetails->text; 
+            } else if($modelType == QuoteTypes::CAR->value || $modelType == QuoteTypes::HEALTH->value
+            || $modelType == QuoteTypes::TRAVEL->value){
+                $quote->load(['plan']);
+                $data['insurance_company'] = $quote->plan->text; 
+            } else {
+                $quote->load(['insuranceProvider']);
+                $data['insurance_company'] = $quote->insuranceProvider->text;
+            }
+
+            $splitPayment->load(['payment','paymentMethod']);
+            $data['payment_method'] = $splitPayment->paymentMethod->name;
+            $data['remarks'] = $splitPayment->payment->notes;
+            $data['vat'] = 0.00;
+            $data['discount'] = 0.00;
+            
+            if($modelType == QuoteTypes::BUSINESS->value){
+                $quote->load(['businessTypeOfInsurance']);
+                $data['type_of_insurance'] = $quote->businessTypeOfInsurance->text;
+            } else {
+                $data['type_of_insurance'] =  $modelType.' Insurance';
+            }
+
+            $documentType = DocumentTypeCode::CPD; // default car
+            if($modelType == QuoteTypes::HOME->value){
+                $documentType = DocumentTypeCode::HOMPD;
+            }else if($modelType == QuoteTypes::HEALTH->value){
+                $documentType = DocumentTypeCode::HPD;
+            }else if($modelType == QuoteTypes::LIFE->value){
+                $documentType = DocumentTypeCode::LPD;
+            }else if($modelType == QuoteTypes::BUSINESS->value){
+                $documentType = DocumentTypeCode::CLPD;
+            }else if($modelType == QuoteTypes::BIKE->value){
+                $documentType = DocumentTypeCode::BPD;
+            }else if($modelType == QuoteTypes::YACHT->value){
+                $documentType = DocumentTypeCode::YPD;
+            }else if($modelType == QuoteTypes::TRAVEL->value){
+                $documentType = DocumentTypeCode::TPD;
+            }else if($modelType == QuoteTypes::PET->value){
+                $documentType = DocumentTypeCode::PPD;
+            }else if($modelType == QuoteTypes::CYCLE->value){
+                $documentType = DocumentTypeCode::CYCPD;
+            }else if($modelType == QuoteTypes::GROUP_MEDICAL->value){
+                $documentType = DocumentTypeCode::GMQPD;
+            }
+        
+            $data['document_type_code'] = $documentType;
+            $data['quote_uuid'] = $quote->uuid;
+        
             $pdf = PDF::loadView('pdf.payment_receipt', compact('data'))->setOptions(['defaultFont' => 'DejaVu Sans']);
             $pdf->setPaper('A4');
             $pdfFile = $pdf->output();
-            $document = $this->quoteDocumentService->uploadQuoteDocument($pdfFile, $data, $quote, true);
-
-            if ($document) {
-            }
+            $document = app(QuoteDocumentService::class)->uploadQuoteDocument($pdfFile, $data, $quote, false, true);
         } catch (\Exception $ex) {
-            info("Payment Reciept $request->quote_uuid - ERROR:".$ex->getMessage());
+            info("Payment Reciept - ERROR:".$ex->getMessage());
         }
-        return $quote;*/
+        return;       
     }
-
-
-
-
-
-
-
-
 }
