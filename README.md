@@ -12,7 +12,7 @@ URLs:
 - [UAT](https://imcrmuat.alfred.ae)
 - [DEV](https://imcrmdev.alfred.ae) [DEV1](https://imcrmdev01.alfred.ae) [DEV2](https://imcrmdev02.alfred.ae)
 - [TEST](https://imcrmtest.alfred.ae)
-- [Laravel Code Standard Guide Lines](https://xqsit.github.io/laravel-coding-guidelines/)
+- [Laravel Code Standard Guide Lines](https://xqsit94.github.io/laravel-coding-guidelines/)
 - [Team Engineering Guide](https://github.com/InsuranceMarket-ae/engineering/wiki)
 
 Please make sure to go through the last two lines to familiarize yourself with the code quality guide before you start contributing.

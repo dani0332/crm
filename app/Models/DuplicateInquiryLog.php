@@ -21,7 +21,7 @@ class DuplicateInquiryLog extends Model
     public function getCreatedAtAttribute($table)
     {
         return $this->asDateTime($table)->timezone(config('app.timezone'))
-            ->format(\Config::get('constants.datetime_format'));
+            ->format(config('constants.datetime_format'));
     }
 
     /**
@@ -30,6 +30,6 @@ class DuplicateInquiryLog extends Model
     public function getUpdatedAtAttribute($table)
     {
         return $this->asDateTime($table)->timezone(config('app.timezone'))
-            ->format(\Config::get('constants.datetime_format'));
+            ->format(config('constants.datetime_format'));
     }
 }
