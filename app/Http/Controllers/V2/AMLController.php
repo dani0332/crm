@@ -371,7 +371,6 @@ class AMLController extends Controller
                 }
 
                 if (empty($getMemberOrUBODetails->toArray())) {
-                    dd('--- success redirect');
                     return redirect()->back()->with('success', 'AML Screening Completed');
                 }
 
@@ -380,7 +379,6 @@ class AMLController extends Controller
 
                 // Job dispatch for all members including customer
                 $this->AMLJobDispatchForMembers($updateQuote, $getMemberOrUBODetails, $bridgerAPIToken, $quoteRequestId, $quoteTypeId, CustomerTypeEnum::Individual);
-                dd('--- dispatch');
             }
 
             if ($AMLCheckRequest->customer_type == CustomerTypeEnum::Entity) {
@@ -434,19 +432,15 @@ class AMLController extends Controller
                 }
 
                 if (empty($entityDetailsForApi) && empty($getMemberOrUBODetails->toArray())) {
-                    dd('--- comppppppppp');
                     return redirect()->back()->with('success', 'AML Screening Completed');
 
                 }
 
                 // Job dispatch for all UBO members
                 $this->AMLJobDispatchForMembers($updateQuote, $getMemberOrUBODetails, $bridgerAPIToken, $quoteRequestId, $quoteTypeId, CustomerTypeEnum::Individual);
-                dd('--- dispatch');
             }
-            dd('redirect back');
             return redirect()->back();
         }
-        dd('went wrong');
         return redirect()->back()->with('error', 'Something went wrong');
     }
 
