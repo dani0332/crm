@@ -138,7 +138,7 @@ class CentralService
         $leadsIds = $request->assigned_lead_id;
         $personalQuotes = [quoteTypeCode::Bike, quoteTypeCode::Cycle, quoteTypeCode::Pet, quoteTypeCode::Yacht, quoteTypeCode::Jetski];
         Log::info('Leads ids to assign: '.json_encode($leadsIds));
-      ;
+
         if (str_starts_with($leadsIds, ',')) {
             $leadsIds = substr($leadsIds, 1);
         }

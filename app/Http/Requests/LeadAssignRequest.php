@@ -38,10 +38,9 @@ class LeadAssignRequest extends FormRequest
         $validator->after(function ($validator) {
             $leadsIds = array_map('intval', explode(',', request()->assigned_lead_id));
             $personalQuotes = [quoteTypeCode::Bike, quoteTypeCode::Cycle, quoteTypeCode::Pet, quoteTypeCode::Yacht, quoteTypeCode::Jetski];
-       
+
             $model = (in_array(ucfirst(request()->modelType), $personalQuotes) && in_array(ucfirst(request()->modelType), newUi())) ?
                 PersonalQuote::class : (ucfirst(request()->modelType).'Quote');
-
 
             /**
              * check if the lead status is transaction approved.

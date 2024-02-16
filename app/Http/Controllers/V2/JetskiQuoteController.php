@@ -33,7 +33,7 @@ class JetskiQuoteController extends Controller
         return inertia('JetskiQuote/Index', [
             'quotes' => $quotes,
             'quoteStatuses' => $quoteStatuses,
-            'advisors'=>$advisors,
+            'advisors' => $advisors,
         ]);
     }
 
