@@ -1858,6 +1858,10 @@ const handlePlanSelected = plan => {
             <dt class="font-medium">ID</dt>
             <dd>{{ record.id }}</dd>
           </div>
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">ENQUIRY COUNT</dt>
+            <dd>{{ record.enquiry_count }}</dd>
+          </div>
         </dl>
       </div>
       <x-divider class="mb-4 mt-4" />
