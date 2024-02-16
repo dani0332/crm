@@ -1428,8 +1428,6 @@ onMounted(() => {
   ) || { id: null };
   if (isHealthAdvisor) assignLead.value = isHealthAdvisor.id;
   isMounted.value = true;
-//   console.log("testing");
-//   console.log(membersDetailsUpdated);
 });
 
 const prefillPlanId = ref(page.props.quote.prefill_plan_id);
@@ -1438,7 +1436,6 @@ const handleChildUpdate = planId => {
   prefillPlanId.value = planId;
 };
 
-    // console.log(listQuotePlansFiltered);
 </script>
 
 <template>
