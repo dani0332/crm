@@ -269,37 +269,32 @@ class AMLController extends Controller
 
     public function quoteStatusUpdate($quoteTypeId, $quoteRequestId, $quoteStatusType)
     {
-        $updateQuoteStatusResp = app(QuoteStatusService::class)->updateQuoteStatus($quoteTypeId, $quoteRequestId, $quoteStatusType, \request()->toArray());
+        $quoteType = QuoteType::where('id', $quoteTypeId)->first();
+        $quoteObject = $this->getQuoteObject($quoteType->code, $quoteRequestId);
+        if (isset(request()->decisonsForUpdatePortal)) {
+            request()->merge(['ref_id' => $quoteObject->code]);
+            $response = AMLService::updateAMLDecisionLexisNexis(request());
+            if ($response['status'] == 'success') {
+                $updateQuoteStatusResp = app(QuoteStatusService::class)->updateQuoteStatus($quoteTypeId, $quoteRequestId, $quoteStatusType, \request()->toArray());
 
-        if ($updateQuoteStatusResp == 'false') {
-            return response()->json(['status' => 'error', 'message' => 'Quote Status is not updated']);
-        } else {
+                $responseMessage = ['status' => 'success', 'message' => 'Quote Status Updated'];
+                $quoteStatusText = $updateQuoteStatusResp['quote_status_text'];
+                $quoteCdbId = $updateQuoteStatusResp['quote_ref_id'];
+                $quoteTypeText = $updateQuoteStatusResp['quote_type_text'];
+                $quotePaID = $updateQuoteStatusResp['pa_id'];
+                $clientFullName = $updateQuoteStatusResp['client_name'];
 
-            $responseMessage = ['status' => 'success', 'message' => 'Quote Status Updated'];
-            $quoteStatusText = $updateQuoteStatusResp['quote_status_text'];
-            $quoteCdbId = $updateQuoteStatusResp['quote_ref_id'];
-            $quoteTypeText = $updateQuoteStatusResp['quote_type_text'];
-            $quotePaID = $updateQuoteStatusResp['pa_id'];
-            $clientFullName = $updateQuoteStatusResp['client_name'];
-
-            if (auth()->user()->hasRole(RolesEnum::ComplianceSuperUser) ||
-                (auth()->user()->hasRole(RolesEnum::COMPLIANCE) && request()->aml_decision == AMLDecisionStatusEnum::FALSE_POSITIVE)) {
-                app(CheckAmlService::class)->sendAMLQuoteStatusChangeNotification($quoteTypeId, $quoteRequestId, $quoteStatusText, $quoteCdbId, $quoteTypeText, $quotePaID, $clientFullName);
-            }
-            // Update Decision on Lexis Nexis Portal
-            if (isset(request()->decisonsForUpdatePortal)) {
-                request()->merge(['ref_id' => $quoteCdbId]);
-                $response = AMLService::updateAMLDecisionLexisNexis(request());
-
-                if ($response['status'] == 'success') {
-                    $response = ['status' => $response['status'], 'message' => $response['message'].' and '.$responseMessage['message']];
-                } else {
-                    $response = ['status' => $response['status'], 'message' => $response['message']];
+                if (auth()->user()->hasRole(RolesEnum::ComplianceSuperUser) ||
+                    (auth()->user()->hasRole(RolesEnum::COMPLIANCE) && request()->aml_decision == AMLDecisionStatusEnum::FALSE_POSITIVE)) {
+                    app(CheckAmlService::class)->sendAMLQuoteStatusChangeNotification($quoteTypeId, $quoteRequestId, $quoteStatusText, $quoteCdbId, $quoteTypeText, $quotePaID, $clientFullName);
                 }
-            }
 
-            return response()->json($response);
+                $response = ['status' => $response['status'], 'message' => $response['message'].' and '.$responseMessage['message']];
+            } else {
+                $response = ['status' => $response['status'], 'message' => $response['message']];
+            }
         }
+        return response()->json($response);
     }
 
     public function updateCustomerDetails(UpdateAMLCustomerDetailRequest $request)
@@ -376,6 +371,7 @@ class AMLController extends Controller
                 }
 
                 if (empty($getMemberOrUBODetails->toArray())) {
+                    dd('--- success redirect');
                     return redirect()->back()->with('success', 'AML Screening Completed');
                 }
 
@@ -384,6 +380,7 @@ class AMLController extends Controller
 
                 // Job dispatch for all members including customer
                 $this->AMLJobDispatchForMembers($updateQuote, $getMemberOrUBODetails, $bridgerAPIToken, $quoteRequestId, $quoteTypeId, CustomerTypeEnum::Individual);
+                dd('--- dispatch');
             }
 
             if ($AMLCheckRequest->customer_type == CustomerTypeEnum::Entity) {
@@ -437,16 +434,19 @@ class AMLController extends Controller
                 }
 
                 if (empty($entityDetailsForApi) && empty($getMemberOrUBODetails->toArray())) {
+                    dd('--- comppppppppp');
                     return redirect()->back()->with('success', 'AML Screening Completed');
+
                 }
 
                 // Job dispatch for all UBO members
                 $this->AMLJobDispatchForMembers($updateQuote, $getMemberOrUBODetails, $bridgerAPIToken, $quoteRequestId, $quoteTypeId, CustomerTypeEnum::Individual);
+                dd('--- dispatch');
             }
-
+            dd('redirect back');
             return redirect()->back();
         }
-
+        dd('went wrong');
         return redirect()->back()->with('error', 'Something went wrong');
     }
 
