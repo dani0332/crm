@@ -22,6 +22,7 @@ use App\Http\Requests\DuplicateLobRequest;
 use App\Http\Requests\LeadAssignRequest;
 use App\Http\Requests\PlanDetailsRequest;
 use App\Http\Requests\UpdateLastYearPolicyRequest;
+use App\Http\Requests\UpdateSelectedPlanRequest;
 use App\Models\Customer;
 use App\Models\Entity;
 use App\Models\QuoteRequestEntityMapping;
@@ -192,25 +193,21 @@ class CentralController extends Controller
         return (new CentralService())->loadAvailablePlans($type, $id);
     }
 
+    /**
+     * @return \Illuminate\Http\RedirectResponse
+     */
     public function savePlanDetails($quoteType, $code, PlanDetailsRequest $request)
     {
-        $repository = getRepositoryObject($quoteType);
+        $response = (new CentralService())->savePlanDetails($quoteType, $code, $request->safe());
 
-        $quote = $repository::where('code', $code)->firstOrFail();
-        $quote->update($request->validated());
-
-        return redirect()->back()->with('success', 'updated successfully');
+        return redirect()->back();
     }
 
-    public function updateSelectedPlan($quoteType, $uuid, $planId)
+    public function updateSelectedPlan(UpdateSelectedPlanRequest $request, $quoteType, $uuid)
     {
-        $repository = getRepositoryObject($quoteType);
+        $response = (new CentralService())->updateSelectedPlan($quoteType, $uuid, $request->safe());
 
-        $quote = $repository::where('uuid', $uuid)->firstOrFail();
-
-        $quote->update(['prefill_plan_id' => $planId]);
-
-        return redirect()->back()->with('success', 'updated successfully');
+        return response()->json(['plan' => $response]);
     }
 
 }
