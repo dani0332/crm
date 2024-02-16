@@ -136,9 +136,9 @@ class CentralService
     public function assignLeadToAdvisor($request)
     {
         $leadsIds = $request->assigned_lead_id;
-        $personalQuotes = [quoteTypeCode::Bike, quoteTypeCode::Cycle, quoteTypeCode::Pet, quoteTypeCode::Yacht];
+        $personalQuotes = [quoteTypeCode::Bike, quoteTypeCode::Cycle, quoteTypeCode::Pet, quoteTypeCode::Yacht, quoteTypeCode::Jetski];
         Log::info('Leads ids to assign: '.json_encode($leadsIds));
-
+      ;
         if (str_starts_with($leadsIds, ',')) {
             $leadsIds = substr($leadsIds, 1);
         }
@@ -154,6 +154,7 @@ class CentralService
 
         return DB::transaction(function () use ($leadsIds, $model, $request, $personalQuotes) {
             foreach ($leadsIds as $leadId) {
+
                 $getQuoteLead = $model['parent']::findOrfail($leadId);
                 $getQuoteLead->advisor_id = (int) $request->assigned_advisor_id;
                 $getQuoteLead->save();

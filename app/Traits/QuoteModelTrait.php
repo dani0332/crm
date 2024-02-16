@@ -13,12 +13,15 @@ trait QuoteModelTrait
     public function scopeWithFakeLeadCriteria($query)
     {
         if ((! empty(request()->quote_status_id) && request()->quote_status_id != QuoteStatusEnum::Fake)) {
+
             return;
         }
 
-        if (! request()->hasAny(['code', 'mobile_no', 'email', 'first_name', 'last_name', 'previous_quote_policy_number', 'renewal_batch', 'previous_quote_policy_number_text'])) {
+        if (!request()->filled(['code', 'mobile_no', 'email', 'first_name', 'last_name', 'previous_quote_policy_number', 'renewal_batch', 'previous_quote_policy_number_text'])) {
+
             return $query->where('quote_status_id', '<>', QuoteStatusEnum::Fake);
         }
+
     }
 
     /**
