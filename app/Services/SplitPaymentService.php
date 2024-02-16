@@ -185,8 +185,8 @@ class SplitPaymentService
             $splitPayment->load(['payment','paymentMethod']);
             $data['payment_method'] = $splitPayment->paymentMethod->name;
             $data['remarks'] = $splitPayment->payment->notes;
-            $data['vat'] = 0.00;
-            $data['discount'] = 0.00;
+            $data['vat'] = number_format(0, 2, '.', ',');
+            $data['discount'] = number_format(0, 2, '.', ',');
             
             if($modelType == QuoteTypes::BUSINESS->value){
                 $quote->load(['businessTypeOfInsurance']);
