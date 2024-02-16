@@ -64,7 +64,7 @@ const rolesEnum = page.props.rolesEnum;
 
 const paymentStatusEnum = page.props.paymentStatusEnum;
 const dateFormat = date =>
-  date ? useDateFormat(date, 'DD-MM-YYYY').value : '-';
+  date ? useDateFormat(date, 'DD-MMM-YYYY').value : '-';
 
 const fixedValue = number => {
   if (number == Math.floor(number)) {
@@ -404,6 +404,7 @@ const memberForm = useForm({
   quote_request_id: page.props.quote.id,
   update_lead_against_member: null,
   first_name: null,
+  last_name: null,
   relation_code: null,
   quote_type: page.props.modelType,
   customer_id: page.props.quote.customer_id,
@@ -435,6 +436,7 @@ function onEditMember(data) {
   memberForm.member_category_id = data.member_category_id;
   memberForm.salary_band_id = data.salary_band_id;
   memberForm.first_name = data.first_name;
+  memberForm.last_name = data.last_name;
   memberForm.relation_code = data.relation_code;
   memberForm.update_lead_against_member = data.index === 1;
 }
@@ -1998,14 +2000,13 @@ const handleChildUpdate = planId => {
         table-class-name="tablefixed compact"
         :headers="memberDetailsTable.columns"
         :items="membersDetail || []"
-        show-index
         border-cell
         hide-rows-per-page
         hide-footer
       >
-        <template #item-index="{ index, code }">
-          <div>{{ code ?? 'Member ' + index }}</div>
-        </template>
+          <template #item-first_name="{ first_name, last_name }">
+              {{ first_name + ' ' + (last_name == null ? '' : last_name)}}
+          </template>
         <template #item-gender="{ gender }">
           {{ genderText(gender).value }}
         </template>
@@ -2062,12 +2063,18 @@ const handleChildUpdate = planId => {
                 </div>
             </div>
           <div class="grid md:grid-cols-2 gap-4 md:pb-16">
-            <input type="hidden" :value="memberForm.id" />
+          <input type="hidden" :value="memberForm.id" />
             <x-input
-              v-model="memberForm.first_name"
-              label="Member Name*"
-              placeholder="Member Name"
-              :rules="[isRequired]"
+                maxLength="60"
+                v-model="memberForm.first_name"
+                label="First Name"
+                placeholder="First Name"
+            />
+            <x-input
+                maxLength="60"
+                v-model="memberForm.last_name"
+                label="Last Name"
+                placeholder="Last Name"
             />
             <ComboBox
               v-model="memberForm.nationality_id"

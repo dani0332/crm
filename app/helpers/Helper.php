@@ -1,11 +1,13 @@
 <?php
 
+use App\Enums\GenericRequestEnum;
 use App\Enums\IMCRMSearchTypesEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypes;
 use App\Models\CustomerAdditionalInfo;
+use App\Models\CustomerMembers;
 use App\Models\HealthQuote;
 use App\Services\HealthQuoteService;
 use Carbon\Carbon;
@@ -663,5 +665,32 @@ if (! function_exists('apiResponse')) {
             'message' => $message,
             'status' => $statusCode,
         ], $statusCode);
+    }
+}
+
+if (! function_exists('getCustomerMemberName')) {
+    function getCustomerMemberName($id)
+    {
+        $customerMember = CustomerMembers::find($id);
+        if ($customerMember) {
+            if ($customerMember->first_name == null && $customerMember->last_name == null) {
+                $quoteMemberCount = CustomerMembers::where([
+                    'customer_type' => $customerMember->customer_type,
+                    'first_name' => GenericRequestEnum::MEMBER,
+                ])->count();
+                $customerMember->first_name = GenericRequestEnum::MEMBER;
+                $customerMember->last_name = (++$quoteMemberCount);
+                $customerMember->save();
+            }
+
+            return $customerMember->first_name.' '.$customerMember->last_name;
+        } else {
+            $healthQuote = HealthQuote::find($id);
+            if ($healthQuote) {
+                return $healthQuote->first_name.' '.$healthQuote->last_name;
+            }
+        }
+
+        return 'Price';
     }
 }
