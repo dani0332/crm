@@ -214,24 +214,6 @@ const onCopyPaymentLink = (paymentLink,paymentStatus) => {
   const hasPreviousFile = computed(() => {
     return currentFileIndex.value > 0;
   });
-/*
-const discountError = computed(() => {
-
-  const regex = /^\d+(\.\d{1,2})?$/;
-  if (!regex.test(discountValue.value)) {
-    return 'Discount must be a valid number';
-  }    
-  // Check if the discount exceeds 50 and return an error message
-  if (discountValue.value > 50 && paymentMethodsForm.discount === 'refer_a_friend') {
-    return 'Discount should not exceed 50 AED';
-  }
-  if (parseFloat(discountValue.value) > parseFloat(totalPrice.value)) {
-    totalAmount.value = totalPrice.value;
-    calculatePaymentBreakup();
-    return 'Discount should not exceed total amount';
-  }
-  return '';
-});*/
 
 const rules = {
   isRequired: v => !!v || 'This field is required',
@@ -1311,7 +1293,8 @@ const addPayment = isValid => {
       modelType: props.quoteType,
       quote_id: props.quoteRequest.id,
       plan_id: planDetail.value.id,
-      customer_id: props.quoteRequest.customer_id,      
+      customer_id: props.quoteRequest.customer_id,
+      payment_code: paymentMethodsForm.paymentCode,      
       collection_amount: collectionAmountModels.value,      
       is_declined: isDeclineClicked.value,
       is_capture: isCreditCardView.value,
@@ -1575,80 +1558,82 @@ const uploadDocument = (doc, files, count) => {
 };
 
 const getCaptureValidation = computed(() => {  
-  //6 =AML Screening Cleared , 32 = Transaction Declined
-  if ( props.payments.length>0 && (props.quoteRequest.quote_status_id === 6 || props.quoteRequest.quote_status_id === 32) 
-  && props.quoteRequest.kyc_decision === 'Complete') {
-    if(props.payments[0].is_approved===1){
-      return false;
-    }
-    let paymentRecord = props.payments[0]
-    if ( paymentRecord.frequency==='upfront' ){
-        let paymentSplitRec = paymentRecord.payment_splits[0];
-        if (paymentSplitRec.payment_method.code==='CC' &&  paymentSplitRec.payment_status_id===props.paymentStatusEnum.AUTHORISED) {
-          return true;
-        } else if (paymentSplitRec.payment_method.code==='IP' &&  paymentSplitRec.payment_status_id===props.paymentStatusEnum.PENDING) {
-          return true;
-        } else if (paymentSplitRec.payment_method.code==='CA' &&  paymentSplitRec.payment_status_id===props.paymentStatusEnum.CREDIT_APPROVED) {
-          return true;
-        } else if (paymentSplitRec.payment_status_id===props.paymentStatusEnum.PAID) {
-          return true;
-        }
-    } else if ( paymentRecord.frequency==='split_payments' ){
-      const paymentMethodCC = paymentRecord.payment_splits.filter(item => item.payment_method.code === "CC");      
-      if (paymentMethodCC.length > 0) {
-        let ccPaymentStatus = paymentMethodCC.filter(item => item.payment_status_id===props.paymentStatusEnum.AUTHORISED);
-        if( ccPaymentStatus.length===paymentMethodCC.length ) {
-          return true;
-        }
-      } else {
-        let ipPaymentStatus = paymentRecord.payment_splits.filter(item => item.payment_method.code === "IP");
-        if (ipPaymentStatus.length > 0) {
-          let ipPending = ipPaymentStatus.filter(item => item.payment_status_id===props.paymentStatusEnum.PENDING 
-            || item.payment_status_id===props.paymentStatusEnum.PAID);
-          if( ipPending.length===ipPaymentStatus.length ) {
+  return (payment) => {
+    //6 =AML Screening Cleared , 32 = Transaction Declined
+    if ( props.payments.length>0 && (props.quoteRequest.quote_status_id === 6 || props.quoteRequest.quote_status_id === 32) 
+    && props.quoteRequest.kyc_decision === 'Complete') {
+      if(payment.is_approved===1){
+        return false;
+      }
+      let paymentRecord = payment
+      if ( paymentRecord.frequency==='upfront' ){
+          let paymentSplitRec = paymentRecord.payment_splits[0];
+          if (paymentSplitRec.payment_method.code==='CC' &&  paymentSplitRec.payment_status_id===props.paymentStatusEnum.AUTHORISED) {
             return true;
-          } 
+          } else if (paymentSplitRec.payment_method.code==='IP' &&  paymentSplitRec.payment_status_id===props.paymentStatusEnum.PENDING) {
+            return true;
+          } else if (paymentSplitRec.payment_method.code==='CA' &&  paymentSplitRec.payment_status_id===props.paymentStatusEnum.CREDIT_APPROVED) {
+            return true;
+          } else if (paymentSplitRec.payment_status_id===props.paymentStatusEnum.PAID) {
+            return true;
+          }
+      } else if ( paymentRecord.frequency==='split_payments' ){
+        const paymentMethodCC = paymentRecord.payment_splits.filter(item => item.payment_method.code === "CC");      
+        if (paymentMethodCC.length > 0) {
+          let ccPaymentStatus = paymentMethodCC.filter(item => item.payment_status_id===props.paymentStatusEnum.AUTHORISED);
+          if( ccPaymentStatus.length===paymentMethodCC.length ) {
+            return true;
+          }
         } else {
-          let caPaymentStatus = paymentRecord.payment_splits.filter(item => item.payment_method.code === "CA");
-          if (caPaymentStatus.length > 0) {
-            let caApproved = caPaymentStatus.filter(item => item.payment_status_id===props.paymentStatusEnum.CREDIT_APPROVED);
-            if( caApproved.length===caPaymentStatus.length ) {
+          let ipPaymentStatus = paymentRecord.payment_splits.filter(item => item.payment_method.code === "IP");
+          if (ipPaymentStatus.length > 0) {
+            let ipPending = ipPaymentStatus.filter(item => item.payment_status_id===props.paymentStatusEnum.PENDING 
+              || item.payment_status_id===props.paymentStatusEnum.PAID);
+            if( ipPending.length===ipPaymentStatus.length ) {
               return true;
             } 
           } else {
-            let paidPaymentStatus = paymentRecord.payment_splits.filter(item => item.payment_status_id===props.paymentStatusEnum.PAID);
-            if( paidPaymentStatus.length===paymentRecord.payment_splits.length ) {
-              return true;
-            } 
+            let caPaymentStatus = paymentRecord.payment_splits.filter(item => item.payment_method.code === "CA");
+            if (caPaymentStatus.length > 0) {
+              let caApproved = caPaymentStatus.filter(item => item.payment_status_id===props.paymentStatusEnum.CREDIT_APPROVED);
+              if( caApproved.length===caPaymentStatus.length ) {
+                return true;
+              } 
+            } else {
+              let paidPaymentStatus = paymentRecord.payment_splits.filter(item => item.payment_status_id===props.paymentStatusEnum.PAID);
+              if( paidPaymentStatus.length===paymentRecord.payment_splits.length ) {
+                return true;
+              } 
+            }
           }
         }
+      } else {
+        if (
+          (paymentRecord.payment_splits[0].payment_method.code==='IP' ||
+          paymentRecord.payment_splits[0].payment_method.code==='PDC'
+          ) &&
+          paymentRecord.payment_splits[0].payment_status_id===props.paymentStatusEnum.PENDING) {
+          return true;
+        } else if(
+            paymentRecord.payment_splits[0].payment_status_id===props.paymentStatusEnum.PAID ||
+            paymentRecord.payment_splits[0].payment_status_id===props.paymentStatusEnum.AUTHORISED        
+          ){
+          return true;
+        }
+        /*
+        let paidPaymentStatus = paymentRecord.payment_splits.filter(item => item.payment_status.code===props.paymentStatusEnum.PAID);
+        if( paidPaymentStatus.length===paymentRecord.payment_splits.length ) {
+          return true;
+        }*/      
       }
-    } else {
-      if (
-        (paymentRecord.payment_splits[0].payment_method.code==='IP' ||
-        paymentRecord.payment_splits[0].payment_method.code==='PDC'
-        ) &&
-        paymentRecord.payment_splits[0].payment_status_id===props.paymentStatusEnum.PENDING) {
-        return true;
-      } else if(
-          paymentRecord.payment_splits[0].payment_status_id===props.paymentStatusEnum.PAID ||
-          paymentRecord.payment_splits[0].payment_status_id===props.paymentStatusEnum.AUTHORISED        
-        ){
-        return true;
-      }
-      /*
-      let paidPaymentStatus = paymentRecord.payment_splits.filter(item => item.payment_status.code===props.paymentStatusEnum.PAID);
-      if( paidPaymentStatus.length===paymentRecord.payment_splits.length ) {
-        return true;
-      }*/      
     }
-  }
-  return false;
+    return false;
+  };
 });
 
-const alertCapture = () => {  
+const alertCapture = (payment) => {  
   let errorMsg = 'Pending payment';
-  if(props.payments[0].is_approved===1){
+  if(payment.is_approved===1){
     errorMsg = 'Transaction already approved';   
   }
   notification.error({
@@ -1658,15 +1643,17 @@ const alertCapture = () => {
 };
 
 const getCaptureOption = computed(() => {  
-  if ( props.payments.length>0 ) {
-    const paymentMethodCC = props.payments[0].payment_splits.filter(item => item.payment_method.code === "CC");
-    if (paymentMethodCC.length > 0) {
-      return 'capture';
-    } else {
-      return 'approve';
+  return (payment) => {
+    if ( props.payments.length>0 ) {
+      const paymentMethodCC = payment.payment_splits.filter(item => item.payment_method.code === "CC");
+      if (paymentMethodCC.length > 0) {
+        return 'capture';
+      } else {
+        return 'approve';
+      }
     }
-  }
-  return;
+    return;
+  };
 });
 
 const getPlanName = computed(() => {
@@ -1893,12 +1880,12 @@ watch(() => props.quoteRequest, (newValue, oldValue) => {
                         Edit
                     </x-button>
                     <template v-if="can(permissionEnum.ApprovePayments)">
-                      <x-button v-if="getCaptureOption==='capture' && getCaptureValidation" size="xs" color="orange" outlined 
-                      @click="getCaptureValidation ? editPaymentModal(item, 0, 0, 1) : alertCapture()">
+                      <x-button v-if="getCaptureOption(item)==='capture' && getCaptureValidation(item)" size="xs" color="orange" outlined 
+                      @click="getCaptureValidation(item) ? editPaymentModal(item, 0, 0, 1) : alertCapture(item)">
                           Capture
                       </x-button>
-                      <x-button v-if="getCaptureOption==='approve' && getCaptureValidation" size="xs" color="orange" outlined 
-                      @click="getCaptureValidation ? editPaymentModal(item, 0, 0, 2) : alertCapture()">
+                      <x-button v-if="getCaptureOption(item)==='approve' && getCaptureValidation(item)" size="xs" color="orange" outlined 
+                      @click="getCaptureValidation(item) ? editPaymentModal(item, 0, 0, 2) : alertCapture(item)">
                           Approve
                       </x-button>
                     </template>               

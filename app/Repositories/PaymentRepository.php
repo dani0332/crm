@@ -220,7 +220,8 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
         }
 
         //Update parent payment status
-        $this->setMasterPaymentStatus($request->modelType, $request->quote_id);
+        $payment = Payment::where('code', $quoteID)->first();
+        $this->setMasterPaymentStatus($payment);
         app(SplitPaymentService::class)->uploadDiscountDocuments($masterPayment->payment_splits[0]['discount_documents'], $quoteID);
     }
 
@@ -297,7 +298,8 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                 }
             }
         }
-        $this->setMasterPaymentStatus($request->modelType, $request->quote_id);
+        $payment = Payment::where('code', $request->paymentCode)->first();
+        $this->setMasterPaymentStatus($payment);
         app(SplitPaymentService::class)->uploadDiscountDocuments($masterPayment->payment_splits[0]['discount_documents'], $request->paymentCode);
     }
 
@@ -307,7 +309,8 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
         if (! $quoteModel) {
             return response()->json(['success' => false]);
         }
-        $firstPayment = $quoteModel->payments()->first();
+
+        $firstPayment = $quoteModel->payments()->where('code',$request->payment_code)->first();
         if ($request->is_declined) {
             $firstPayment->update([
                 'decline_reason_id' => $request->declined_reason,
@@ -371,8 +374,12 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                 'payment_status_id' => $masterPaymentStatus,
                 'updated_by' => Auth::user()->id,
             ]);
-            $quoteModel->quote_status_id = QuoteStatusEnum::TransactionApproved;
-            $quoteModel->save();
+            
+            $totalApproved = $quoteModel->payments()->where('is_approved',1)->count();
+            if($totalApproved == $quoteModel->payments()->count()){
+                $quoteModel->quote_status_id = QuoteStatusEnum::TransactionApproved;
+                $quoteModel->save();  
+            }
             $successMessage = 'Transaction approved';
         }
 
@@ -382,6 +389,8 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
     public function fetchUpdatePaymentStatus($request)
     {
         $successMessage = 'Payment Verified';
+        $splitPayment = PaymentSplits::find($request->splitPaymentId);
+        $masterPayment = $splitPayment->payment;        
         if ($request->is_approved) {
             $paymentInformation = [
                 'collection_amount' => $request->collection_amount,
@@ -389,16 +398,8 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                 'payment_status_id' => PaymentStatusEnum::PAID,
                 'payment_allocation_status' => PaymentAllocationStatus::NOT_ALLOCATED,
                 'updated_by' => $request->user()->id,
-            ];
-            $splitPayment = PaymentSplits::find($request->splitPaymentId);
-            //$splitPayment = PaymentSplits::find($request->splitPaymentId)->update($paymentInformation);
-            $payment = Payment::where('code', $splitPayment->code)->first();
-            if ($payment) {
-                $payment->update(
-                    ['captured_amount' => ($payment->captured_amount + $request->collection_amount),
-                        'payment_allocation_status' => PaymentAllocationStatus::NOT_ALLOCATED]
-                );
-            }
+            ];            
+            
             //associate approved documents with payment split
             if (isset($request->approved_document_model[$splitPayment->sr_no])
                 && count($request->approved_document_model[$splitPayment->sr_no]) > 0) {
@@ -415,12 +416,17 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
             if ($sageResponse['status'] == 'success') {
                 $paymentInformation['sage_reciept_id'] = $sageResponse['response'];
                 $splitPayment->update($paymentInformation);
+                if ($masterPayment) {
+                    $masterPayment->update(
+                        ['captured_amount' => ($masterPayment->captured_amount + $request->collection_amount),
+                            'payment_allocation_status' => PaymentAllocationStatus::NOT_ALLOCATED]
+                    );
+                }
             } else {
                 $failMessage = $sageResponse['response'];
                 vAbort($failMessage);
             }
-        } elseif ($request->is_declined) {
-            $splitPayment = PaymentSplits::find($request->splitPaymentId);
+        } elseif ($request->is_declined) {            
             $paymentInformation = [
                 'decline_reason_id' => $request->declined_reason,
                 'decline_custom_reason' => $request->declined_custom_reason,
@@ -431,15 +437,13 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
             $successMessage = 'Payment Declined';
         }
         //Update parent payment status
-        $this->setMasterPaymentStatus($request->modelType, $request->quote_id);
+        $this->setMasterPaymentStatus($masterPayment);
 
         return $successMessage;
     }
 
-    public function setMasterPaymentStatus($modelType, $quote_id)
-    {
-        $quoteModel = $this->getQuoteObject($modelType, $quote_id);
-        $payment = $quoteModel->payments()->first();
+    public function setMasterPaymentStatus($payment)
+    {   
         if ($payment) {
             if ($payment->frequency == 'upfront') {
                 $payment->update(
