@@ -12,7 +12,7 @@ URLs:
 - [UAT](https://imcrmuat.alfred.ae)
 - [DEV](https://imcrmdev.alfred.ae) [DEV1](https://imcrmdev01.alfred.ae) [DEV2](https://imcrmdev02.alfred.ae)
 - [TEST](https://imcrmtest.alfred.ae)
-- [Laravel Code Standard Guide Lines](https://xqsit.github.io/laravel-coding-guidelines/)
+- [Laravel Code Standard Guide Lines](https://xqsit94.github.io/laravel-coding-guidelines/)
 - [Team Engineering Guide](https://github.com/InsuranceMarket-ae/engineering/wiki)
 
 Please make sure to go through the last two lines to familiarize yourself with the code quality guide before you start contributing.
@@ -25,7 +25,7 @@ Please make sure to go through the last two lines to familiarize yourself with t
 - Ask for a dump of stage DB which you will need to import.
 - Run ```composer install``` to install the laravel required files..
 
-**Doppler Configuration**
+**Doppler Configuration** 
 
 Once you have doppler CLI installed on your local machine, run the following command to initiate the login setup.
 - ```doppler setup``` This will initiate the login process, use Google login. Once logged in you will be prompted to select the profile you want to use the environment variables. You can run the command again to switch profile.
