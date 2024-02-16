@@ -416,6 +416,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
             $sageResponse = app(SplitPaymentService::class)->createSageRecipt($request, $splitPayment);
             if ($sageResponse['status'] == 'success') {
                 $paymentInformation['sage_reciept_id'] = $sageResponse['response'];
+                $paymentInformation['captured_at'] = now();
                 $splitPayment->update($paymentInformation);
                 app(SplitPaymentService::class)->createReciept($request->modelType, $request->quote_id, $splitPayment);
             } else {

@@ -92,7 +92,7 @@
             <tbody>
                 <tr style="border: none;">
                     <td style="margin: 0; border: none;"><strong>Customer:</strong>{{ ucfirst($data['customer_name']) }}</td>
-                    <td style="margin: 0; border: none; text-align:right"><strong>Received Date:</strong>{{ date('d/m/y') }}</td>
+                    <td style="margin: 0; border: none; text-align:right"><strong>Received Date:</strong>{{ $data['captured_at'] }}</td>
                 
                 </tr>
                 <tr style="border: none;">
@@ -102,7 +102,7 @@
             </tbody>
         </table>
         <br>
-        <table>
+        <table style="height:60%">
             <thead>
                 <tr>
                     <th style="width: 70%;">Order Detail</th>
@@ -111,13 +111,13 @@
             </thead>
             <tbody>
                 <tr>
-                    <td>
+                    <td style="vertical-align:top; height:60%">
                         Order Number: {{ $data['order_number'] }}<br>
-                        Order Date And Time: {{ date('d/m/y') }} {{ date('H:i:s') }}<br>
+                        Order Date And Time: {{ $data['order_at'] }}<br>
                         Insurance Company: {{ $data['insurance_company'] }}<br>
                         Type of Insurance: {{ $data['type_of_insurance'] }}<br>
                     </td>
-                    <td style="vertical-align:top; text-align:right;">{{ $data['order_amount'] }} AED</td>
+                    <td style="vertical-align:top; text-align:right; height:60%">{{ $data['order_amount'] }} AED</td>
                 </tr>
             </tbody>
         </table>      
@@ -125,15 +125,11 @@
         <table style="border: none;">           
             <tbody>
                 <tr style="border: none;">
-                    <td style="width: 65%; border: none; vertical-align:top;">
+                    <td style="width: 50%; border: none; vertical-align:top;">
                     <strong>Remarks:</strong> {{ $data['remarks'] }}
                     </td>
                     <td style="vertical-align:top; text-align:right; border: none;">
-                        <strong>Subtotal:</strong> {{ $data['order_amount'] }} AED <br>
-                        <strong>VAT:</strong> {{ $data['vat'] }} AED <br>
-                        <strong>Discount:</strong> {{ $data['discount'] }} AED <br>
-                        <hr style="margin: 5px 0;">
-                        <strong>Total: {{ $data['order_amount'] }} AED</strong>                    
+                        <strong>Total Amount(AED): {{ $data['order_amount'] }}</strong>                    
                     </td>
                 </tr>
             </tbody>
