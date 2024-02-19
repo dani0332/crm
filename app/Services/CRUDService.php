@@ -769,4 +769,14 @@ class CRUDService extends BaseService
             }
         }
     }
+
+    public function getInquiryLogs($modelType, $uuid)
+    {
+        $model = 'App\\Models\\'.$modelType.'Quote';
+        $quote = $model::where('uuid', $uuid)->with('duplicateInquiryLog')
+            ->whereHas('duplicateInquiryLog')
+            ->first();
+
+        return optional($quote)->duplicateInquiryLog;
+    }
 }

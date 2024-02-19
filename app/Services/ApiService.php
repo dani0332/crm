@@ -5,7 +5,7 @@ namespace App\Services;
 use App\Enums\QuoteStatusEnum;
 use App\Factories\AllocationFactory;
 use App\Http\Requests\AssignLeadRequest;
-use App\Jobs\SendOCBEmailJob;
+use App\Jobs\SendOCBIntroEmailJob;
 use App\Models\Customer;
 use App\Models\HealthQuote;
 use App\Models\MyAlFredUser;
@@ -119,7 +119,7 @@ class ApiService
     private function triggerOCBOnly($allocationId)
     {
         info('------ Lead allocation request received to send OCB only for '.$allocationId.' ------');
-        SendOCBEmailJob::dispatch($allocationId);
+        SendOCBIntroEmailJob::dispatch($allocationId, null);
         info('------ Lead allocation request completed to send OCB only for '.$allocationId.' ------');
 
         return apiResponse(null, Response::HTTP_OK, 'OCB email triggered successfully!');
@@ -133,6 +133,6 @@ class ApiService
         info('------ Lead allocation ended for lead : '.$allocationId.' ------');
         $responseData = ['assignedAdvisorId' => $assignedAdvisorId];
 
-        return apiResponse(null, Response::HTTP_OK, 'Lead allocated successfully!');
+        return apiResponse($responseData, Response::HTTP_OK, 'Lead allocated successfully!');
     }
 }

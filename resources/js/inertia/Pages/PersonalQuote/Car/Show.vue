@@ -82,6 +82,7 @@ defineProps({
   UBOsDetails: Array,
   isCommercialVehicles: Boolean,
   carInsuranceProviders: Array,
+  clientInquiryLogs: Array,
 });
 
 const page = usePage();
@@ -1763,6 +1764,10 @@ const handleChildUpdate = planId => {
           >
             <dt class="font-medium">ID</dt>
             <dd>{{ record.id }}</dd>
+          </div>
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">ENQUIRY COUNT</dt>
+            <dd>{{ record.enquiry_count }}</dd>
           </div>
         </dl>
       </div>
@@ -3672,5 +3677,10 @@ const handleChildUpdate = planId => {
     v-if="can(permissionEnum.API_LOG_VIEW)"
     :type="'App\\Models\\CarQuote'"
     :id="$page.props.record.id"
+  />
+
+  <ClientInquiryLogs
+      v-if="clientInquiryLogs.length > 0"
+      :logs="clientInquiryLogs"
   />
 </template>

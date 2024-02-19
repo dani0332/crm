@@ -24,7 +24,6 @@ trait GetUserTreeTrait
         $childUserIds = [$userId];
         $productTeam = $this->getProductByName($productType ?? quoteTypeCode::Car);
         $rolesArray = [
-            RolesEnum::HealthManager,
             RolesEnum::CarManager,
             RolesEnum::LeadPool,
         ];

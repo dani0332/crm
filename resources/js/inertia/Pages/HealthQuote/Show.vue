@@ -50,6 +50,7 @@ defineProps({
   canAddBatchNumber: Boolean,
   paymentLink: String,
   quoteType: String,
+  clientInquiryLogs: Array,
 });
 
 const page = usePage();
@@ -1589,6 +1590,10 @@ const handleChildUpdate = planId => {
             <dt class="font-medium">ADDITIONAL NOTES</dt>
             <dd>{{ quote.additional_notes }}</dd>
           </div>
+          <!--<div class="grid sm:grid-cols-2" v-if="clientInquiryLogs.length > 0">
+            <dt class="font-medium">ENQUIRY COUNT</dt>
+            <dd>{{ clientInquiryLogs.length }}</dd>
+          </div>-->
         </dl>
       </div>
     </div>
@@ -2331,7 +2336,7 @@ const handleChildUpdate = planId => {
       </div>
     </div>
 
-    <PaymentTable
+    <!-- <PaymentTable
       :payments="payments"
       :can="can"
       :isBetaUser="isBetaUser"
@@ -2339,7 +2344,7 @@ const handleChildUpdate = planId => {
       :paymentMethods="paymentMethods"
       :insuranceProviders="insuranceProviders"
       :quote="quote"
-    />
+    /> -->
 
     <!-- <div class="p-4 rounded shadow mb-6 bg-white" v-if="isQuoteDocumentEnabled">
       <div>
@@ -2964,5 +2969,10 @@ const handleChildUpdate = planId => {
     </div>
 
     <AuditLogs :type="'App\\Models\\HealthQuote'" :id="$page.props.quote.id" />
+
+    <!--<ClientInquiryLogs
+        v-if="clientInquiryLogs.length > 0"
+        :logs="clientInquiryLogs"
+    />-->
   </div>
 </template>
