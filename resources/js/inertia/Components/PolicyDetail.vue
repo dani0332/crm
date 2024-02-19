@@ -29,7 +29,7 @@ const dateToYMD = date => {
   }
   return '';
 };
-
+const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
 const quoteIssuanceStatusEnum = page.props.quoteIssuanceStatusEnum;
 const policyIssuanceStatusOptions = computed(() => {
   return page.props.policyIssuanceStatus.map(item => {
@@ -259,10 +259,7 @@ const onUpdatePolicyDetails = () => {
     <div class="flex justify-end">
       <template
         class="flex justify-end"
-        v-if="
-          !hasRole(rolesEnum.PA) &&
-          record.quote_status_id == quoteStatusEnum.TransactionApproved
-        "
+        v-if="record.quote_status_id == quoteStatusEnum.TransactionApproved"
       >
         <x-button
           v-if="policyDetailsState.isEditing"
@@ -284,23 +281,36 @@ const onUpdatePolicyDetails = () => {
         >
           Update
         </x-button>
-        <x-button
-          v-if="!policyDetailsState.isEditing"
-          class="mt-4"
-          color="emerald"
-          size="sm"
-          @click.prevent="policyDetailsState.isEditing = true"
+
+        <template
+          v-if="props.modelType === quoteTypeCodeEnum.Car.toLowerCase()"
         >
-          Edit
-        </x-button>
+          <x-button
+            v-if="1"
+            class="mt-4"
+            color="emerald"
+            size="sm"
+            @click.prevent="policyDetailsState.isEditing = true"
+          >
+            Edit
+          </x-button></template
+        >
+        <template v-else>
+          <x-button
+            v-if="hasRole(rolesEnum.NRA)"
+            class="mt-4"
+            color="emerald"
+            size="sm"
+            @click.prevent="policyDetailsState.isEditing = true"
+          >
+            Edit
+          </x-button></template
+        >
       </template>
       <template v-else>
         <x-tooltip>
           <x-button
-            v-if="
-              hasRole(rolesEnum.PA) &&
-              record.quote_status_id == quoteStatusEnum.PolicyBooked
-            "
+            v-if="record.quote_status_id == quoteStatusEnum.PolicyBooked"
             size="sm"
             color="emerald"
             :disabled="true"
