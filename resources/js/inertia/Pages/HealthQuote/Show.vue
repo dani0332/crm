@@ -477,7 +477,7 @@ const onMemberSubmit = isValid => {
         });
         memberForm.reset();
         onLoadAvailablePlansData();
-        location.reload();
+        // location.reload();
       },
       onError: errors => {
         notification.error({
@@ -499,7 +499,7 @@ const onMemberSubmit = isValid => {
           position: 'top',
         });
         onLoadAvailablePlansData();
-        location.reload();
+        // location.reload();
       },
         onError: errors => {
             notification.error({
@@ -533,7 +533,7 @@ const memberDeleteConfirmed = () => {
           position: 'top',
         });
         onLoadAvailablePlansData();
-        location.reload();
+        // location.reload();
       },
       onFinish: () => {
         modals.memberConfirm = false;
@@ -619,6 +619,9 @@ const onLoadAvailablePlansData = async () => {
                     isManualPlansCount.value++;
                 }
             });
+            setTimeout(() => {
+                onPlanFiltersSubmit();
+            }, 800);
         })
         .catch(err => {
             console.log(err);
@@ -897,9 +900,13 @@ const getSmallestCopayRateAsDefaultValue = () => {
 
     if (isMounted.value && selectedCoPay.planId == element.id) {
       element.actualPremium = selectedCoPay.premium;
-      element.vat = selectedCoPay.vat;
+      if (smallestCopayLoadingPrice > 0) {
+        element.vat = Number(( selectedCoPay.premium + smallestCopayLoadingPrice ) * 0.05);
+      } else {
+          element.vat = selectedCoPay.vat;
+      }
       element.selectedCopayId = selectedCoPay.id;
-      element.loadingPrice = selectedCoPay.loadingPrice;
+      element.loadingPrice = smallestCopayLoadingPrice;
     } else {
       element.selectedCopayId = defaultCopayId;
       element.actualPremium = smallestCopayValue;
@@ -935,6 +942,7 @@ const onMarkPlanAsManual = (plan, loadingPrice) => {
         }
         return element;
     });
+    onLoadAvailablePlansData();
 }
 
 // quoteDocuments
@@ -2069,12 +2077,14 @@ const handleChildUpdate = planId => {
                 v-model="memberForm.first_name"
                 label="First Name"
                 placeholder="First Name"
+                :rules="[isRequired]"
             />
             <x-input
                 maxLength="60"
                 v-model="memberForm.last_name"
                 label="Last Name"
                 placeholder="Last Name"
+                :rules="[isRequired]"
             />
             <ComboBox
               v-model="memberForm.nationality_id"

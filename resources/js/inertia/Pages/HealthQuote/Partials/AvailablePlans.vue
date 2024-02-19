@@ -199,7 +199,9 @@ const onCoPaySelect = copayId => {
         });
     }
 
-    emit('copayUpdate', selectedCopay.value);
+    // emit('copayUpdate', selectedCopay.value);
+    // emit("onLoadAvailablePlansData")
+
 };
 
 const onTogglePlans = () => {
@@ -369,10 +371,11 @@ const onLoadingPricesUpdate = (member, updateManual=1) => {
         .finally(() => {
             memberFormLoader.value = false;
             isManual.value = false;
-            if (updateManual)
-            {
-                emit('markPlanAsManual', props.plan, totalLoadingPrice.value);
-            }
+            // if (updateManual)
+            // {
+            //     emit('markPlanAsManual', props.plan, totalLoadingPrice.value);
+            // }
+            emit('onLoadAvailablePlansData');
         });
 };
 
@@ -409,7 +412,7 @@ const markMemberBasePriceRevise = (event, id) => {
             })
             .finally(() => {
                 memberFormLoader.value = false;
-                // todo disable checkbox on success
+                emit('onLoadAvailablePlansData');
             });
     }
 }
@@ -888,7 +891,7 @@ onUpdated(() => {
                         v-model="
                             manualPlansMembersPremium[memberIndexPerId(item.memberId)].premium
                             "
-                        :disabled="(data.premium > 0 || data.premium || !isManual)"
+                        :disabled="(!data.notifyAgent || !isManual)"
                         size="sm"
                         @keyup="handleManualBasePrice($event, item.memberId)"
                         />
@@ -896,7 +899,7 @@ onUpdated(() => {
                         <x-input
                         v-else-if="(data.premium != undefined && data.premium > 0) && data.healthPlanCoPaymentId == selectedCopay.id"
                         :value="data.premium?.toLocaleString()"
-                        :disabled="(data.premium > 0 || data.premium || !isManual)"
+                        :disabled="(!data.notifyAgent || !isManual)"
                         size="sm"
                         @update:modelValue="onMemberPremiumUpdate(item, $event)"
                         />
@@ -907,7 +910,7 @@ onUpdated(() => {
                             data.healthPlanCoPaymentId == defaultCopayId
                         "
                         :value="data.premium?.toLocaleString()"
-                        :disabled="(data.premium > 0 || data.premium || !isManual)"
+                        :disabled="(!data.notifyAgent|| !isManual)"
                         size="sm"
                         @update:modelValue="onMemberPremiumUpdate(item, $event)"
                         />
