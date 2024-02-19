@@ -101,6 +101,11 @@ class Payment extends Model implements Auditable
         return $this->belongsTo(PersonalPlan::class, 'plan_id');
     }
 
+    public function travelPlan()
+    {
+        return $this->belongsTo(TravelPlan::class, 'plan_id');
+    }
+
     public function plan()
     {
         return $this->belongsTo('App\Models\Plan', 'plan_id');

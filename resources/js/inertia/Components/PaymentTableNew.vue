@@ -1098,7 +1098,11 @@ const editPaymentModal = (payment,split_payment_id,sr_no,capture_approval) => {
       isTotalPriceUpdated.value = true;
     } else {
       isFieldReadonly.value = false;
-    }    
+    }
+    //Assign plan for Travel
+    if (props.quoteType === 'Travel') {      
+      planDetail.value =  payment.travel_plan;
+    }
   }
   
   if(capture_approval>0) {
