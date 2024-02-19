@@ -41,29 +41,29 @@ class LeadAllocationController extends Controller
     public function index(Request $request)
     {
         // if (Gate::allows('view-lead-allocation', auth()->user())) {
-            $totalAssignedLeadCount = 0;
-            $availableUsers = 0;
-            $unAvailableUsers = 0;
-            $isAutoAllocationWorking = $this->applicationStorageService->getValueByKey('LEAD_ALLOCATION_JOB_SWITCH');
-            $data = $this->leadAllocationService->getGridData();
-            foreach ($data as $key => $value) {
-                $totalAssignedLeadCount += $value->allocation_count;
-                if ($value->is_available == 1) {
-                    $availableUsers++;
-                } else {
-                    $unAvailableUsers++;
-                }
+        $totalAssignedLeadCount = 0;
+        $availableUsers = 0;
+        $unAvailableUsers = 0;
+        $isAutoAllocationWorking = $this->applicationStorageService->getValueByKey('LEAD_ALLOCATION_JOB_SWITCH');
+        $data = $this->leadAllocationService->getGridData();
+        foreach ($data as $key => $value) {
+            $totalAssignedLeadCount += $value->allocation_count;
+            if ($value->is_available == 1) {
+                $availableUsers++;
+            } else {
+                $unAvailableUsers++;
             }
-            if ($request->ajax()) {
-                return Datatables::of($data)
-                    ->addIndexColumn()
-                    ->make(true);
-            }
+        }
+        if ($request->ajax()) {
+            return Datatables::of($data)
+                ->addIndexColumn()
+                ->make(true);
+        }
 
-            return view('user.lead-allocation', compact(['totalAssignedLeadCount', 'availableUsers', 'unAvailableUsers', 'isAutoAllocationWorking']));
-      /*  } else {
-            abort(403, 'Unauthorized action.');
-        } */
+        return view('user.lead-allocation', compact(['totalAssignedLeadCount', 'availableUsers', 'unAvailableUsers', 'isAutoAllocationWorking']));
+        /*  } else {
+              abort(403, 'Unauthorized action.');
+          } */
     }
 
     /**

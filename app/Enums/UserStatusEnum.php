@@ -18,7 +18,7 @@ final class UserStatusEnum extends Enum
         self::UNAVAILABLE,
         self::SICK,
         self::LEAVE,
-        self::MANUAL_OFFLINE
+        self::MANUAL_OFFLINE,
     ];
 
     public static function getUserStatusText($status)
