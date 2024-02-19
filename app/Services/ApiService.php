@@ -132,6 +132,6 @@ class ApiService
         info('------ Lead allocation ended for lead : '.$allocationId.' ------');
         $responseData = ['assignedAdvisorId' => $assignedAdvisorId];
 
-        return apiResponse(null, Response::HTTP_OK, 'Lead allocated successfully!');
+        return apiResponse($responseData, Response::HTTP_OK, 'Lead allocated successfully!');
     }
 }
