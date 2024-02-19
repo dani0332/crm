@@ -218,7 +218,8 @@ const onSubmitChanges = async () => {
         id: item.id,
         team_type: 'health',
       };
-    })[0];
+    });
+
   await axios
     .post('/lead-allocation/update-availability', max_cap)
     .then(() => {
@@ -277,7 +278,7 @@ onMounted(() => {
       <h3>Assigned Lead Count</h3>
       <p>{{ totalAssignedLeadCount ?? 0 }}</p>
     </div>
-    <div class="labox border-yellow-500">
+    <div class="labox border-[#3015ca]">
       <h3>Available / UnAvailable</h3>
       <p>{{ availableUsers }} / {{ unAvailableUsers }}</p>
     </div>
@@ -289,15 +290,15 @@ onMounted(() => {
   <div class="mt-5 mb-5">
     <h2 class="text-lg font-semibold">Unassigned Leads Count</h2>
     <div class="grid grid-cols-2 md:grid-cols-4 w-full gap-5">
-      <div class="labox border-yellow-500">
+      <div class="labox border-[#e46122]">
         <h3>Good</h3>
         <p>{{ unAssignedGood ?? 0 }}</p>
       </div>
-      <div class="labox border-yellow-500">
+      <div class="labox border-[#db8b1d]">
         <h3>Best</h3>
         <p>{{ unAssignedBest ?? 0 }}</p>
       </div>
-      <div class="labox border-yellow-500">
+      <div class="labox border-[#d80ca8]">
         <h3>Entry Level</h3>
         <p>{{ unAssignedEntryLevel ?? 0 }}</p>
       </div>
