@@ -7,7 +7,14 @@ const props = defineProps({
   },
 });
 
-const priceFormat = (val) => useFormatPrice(val, true);
+const priceFormat = (price, thousandSeparator = false) => {
+  return thousandSeparator
+    ? parseFloat(price).toLocaleString('en-US', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      })
+    : parseFloat(price).toFixed(2);
+};
 
 const tableHeader = reactive([
   {
@@ -23,8 +30,8 @@ const tableHeader = reactive([
     value: 'policy_start_date',
   },
   {
-    text: 'Payment Due Date',
-    value: 'payment_due_date',
+    text: 'Policy Due Date',
+    value: 'policy_due_date',
   },
   {
     text: 'Source',
@@ -98,10 +105,7 @@ const tableHeader = reactive([
     text: 'Customer Name',
     value: 'customer_name',
   },
-  {
-    text: 'Customer Id',
-    value: 'customer_id',
-  },
+
   {
     text: 'Customer Type',
     value: 'customer_type',
@@ -140,8 +144,8 @@ const isIntegerColumn = key => {
     'price_vat_not_applicable',
     'discount',
     'total_price',
-    'commission_vat',
     'commission_vat_applicable',
+    'commission_vat',
     'commission_vat_not_applicable',
     'total_commission',
     'collected_amount',
@@ -168,10 +172,10 @@ const isIntegerColumn = key => {
       {{ transactions ?? 0 }}
     </template>
     <template #item-policy_start_date="{ policy_start_date }">
-      {{ policy_start_date }}
+      {{ policy_start_date ?? 'N/A' }}
     </template>
-    <template #item-payment_due_date="{ payment_due_date }">
-      {{ payment_due_date }}
+    <template #item-policy_due_date="{ policy_due_date }">
+      {{ policy_due_date ?? 'N/A' }}
     </template>
     <template #item-source="{ source }">
       {{ source }}
@@ -180,55 +184,60 @@ const isIntegerColumn = key => {
       {{ team }}
     </template>
     <template #item-price_vat_applicable="{ price_vat_applicable }">
-      {{ priceFormat(price_vat_applicable) }}
+      {{ price_vat_applicable ? priceFormat(price_vat_applicable) : 0 }}
     </template>
     <template #item-vat="{ vat }">
-      {{ vat }}
+      {{ vat ?? 0 }}
     </template>
     <template #item-price_vat_not_applicable="{ price_vat_not_applicable }">
-      {{ price_vat_not_applicable ?? 0 }}
+      {{ price_vat_not_applicable ? priceFormat(price_vat_not_applicable) : 0 }}
     </template>
     <template #item-discount="{ discount }">
-      {{ discount ?? 0 }}
+      {{ discount ? priceFormat(discount) : 0 }}
     </template>
     <template #item-total_price="{ total_price }">
-      {{ total_price ?? 0 }}
+      {{ total_price ? priceFormat(total_price) : 0 }}
     </template>
-    <template #item-commission="{ commission }">
-      {{ commission ?? 0 }}
+    <template #item-commission_vat_applicable="{ commission_vat_applicable }">
+      {{
+        commission_vat_applicable ? priceFormat(commission_vat_applicable) : 0
+      }}
     </template>
-    <template #item-vat_on_commission="{ vat_on_commission }">
-      {{ vat_on_commission ?? 0 }}
+    <template #item-commission_vat="{ commission_vat }">
+      {{ commission_vat ? priceFormat(commission_vat) : 0 }}
     </template>
-    <template #item-commission_without_vat="{ commission_without_vat }">
-      {{ commission_without_vat ?? 0 }}
+    <template
+      #item-commission_vat_not_applicable="{ commission_vat_not_applicable }"
+    >
+      {{
+        commission_vat_not_applicable
+          ? priceFormat(commission_vat_not_applicable)
+          : 0
+      }}
     </template>
     <template #item-total_commission="{ total_commission }">
-      {{ total_commission ?? 0 }}
+      {{ total_commission ? priceFormat(total_commission) : 0 }}
     </template>
     <template #item-collects="{ collects }">
       {{ collects }}
     </template>
-    <template #item-inurer_tax_invoice_number="{ inurer_tax_invoice_number }">
-      {{ inurer_tax_invoice_number ?? 0 }}
+    <template #item-insurer_tax_invoice_number="{ insurer_tax_invoice_number }">
+      {{ insurer_tax_invoice_number ?? 'N/A' }}
     </template>
-    <template #item-tax_invoice_date="{ tax_invoice_date }">
-      {{ tax_invoice_date }}
+    <template #item-insurer_tax_invoice_date="{ insurer_tax_invoice_date }">
+      {{ insurer_tax_invoice_date ?? 'N/A' }}
     </template>
     <template #item-transaction_payment_status="{ transaction_payment_status }">
       {{ transaction_payment_status }}
     </template>
     <template #item-date_paid="{ date_paid }">
-      {{ date_paid }}
+      {{ date_paid ?? 'N/A' }}
     </template>
     <template #item-collected_amount="{ collected_amount }">
       {{ collected_amount ?? 0 }}
     </template>
     <template #item-customer_name="{ customer_name }">
       {{ customer_name }}
-    </template>
-    <template #item-customer_id="{ customer_id }">
-      {{ customer_id }}
     </template>
     <template #item-customer_type="{ customer_type }">
       {{ customer_type }}
@@ -237,16 +246,16 @@ const isIntegerColumn = key => {
       {{ insurer }}
     </template>
     <template #item-line_of_business="{ line_of_business }">
-      {{ line_of_business }}
+      {{ line_of_business ?? 'N/A' }}
     </template>
-    <template #item-sub_type="{ sub_type }">
-      {{ sub_type }}
+    <template #item-sub_type_line_of_business="{ sub_type_line_of_business }">
+      {{ sub_type_line_of_business ?? 'N/A' }}
     </template>
     <template #item-advisor="{ advisor }">
       {{ advisor }}
     </template>
     <template #item-policy_issuer="{ policy_issuer }">
-      {{ policy_issuer }}
+      {{ policy_issuer ?? 'N/A' }}
     </template>
     <template #body-append>
       <tr v-if="reportData.data.length > 0" class="total-row">

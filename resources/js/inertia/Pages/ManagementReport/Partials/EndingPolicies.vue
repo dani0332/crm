@@ -7,14 +7,19 @@ const props = defineProps({
   },
 });
 
+const priceFormat = (price, thousandSeparator = false) => {
+  return thousandSeparator
+    ? parseFloat(price).toLocaleString('en-US', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      })
+    : parseFloat(price).toFixed(2);
+};
+
 const tableHeader = reactive([
   {
     text: 'Customer Name',
     value: 'customer_name',
-  },
-  {
-    text: 'Customer ID',
-    value: 'customer_id',
   },
   {
     text: 'Policy Number',
@@ -127,67 +132,64 @@ const isIntegerColumn = key => {
     hide-footer
   >
     <template #item-customer_name="{ customer_name }">
-      {{ customer_name }}
-    </template>
-    <template #item-customer_id="{ customer_id }">
-      {{ customer_id }}
+      {{ customer_name ?? 'N/A' }}
     </template>
     <template #item-policy_number="{ policy_number }">
-      {{ policy_number }}
+      {{ policy_number ?? 'N/A' }}
     </template>
     <template #item-insurer="{ insurer }">
-      {{ insurer }}
+      {{ insurer ?? 'N/A' }}
     </template>
     <template #item-line_of_bussiness="{ line_of_bussiness }">
-      {{ line_of_bussiness }}
+      {{ line_of_bussiness ?? 'N/A' }}
     </template>
     <template #item-policy_start_date="{ policy_start_date }">
-      {{ policy_start_date }}
+      {{ policy_start_date ?? 'N/A' }}
     </template>
     <template #item-policy_expiry_date="{ policy_expiry_date }">
-      {{ policy_expiry_date }}
+      {{ policy_expiry_date ?? 'N/A' }}
     </template>
     <template #item-collected_amount="{ collected_amount }">
-      {{ collected_amount ?? 0 }}
+      {{ collected_amount ? priceFormat(collected_amount) : 0 }}
     </template>
     <template #item-price_with_vat="{ price_with_vat }">
-      {{ price_with_vat ?? 0 }}
+      {{ price_with_vat ? priceFormat(price_with_vat) : 0 }}
     </template>
     <template #item-total_vat="{ total_vat }">
-      {{ total_vat ?? 0 }}
+      {{ total_vat ? priceFormat(total_vat) : 0 }}
     </template>
     <template #item-price_without_vat="{ price_without_vat }">
-      {{ price_without_vat ?? 0 }}
+      {{ price_without_vat ? priceFormat(price_without_vat) : 0 }}
     </template>
     <template #item-discount="{ discount }">
-      {{ discount ?? 0 }}
+      {{ discount ? priceFormat(discount) : 0 }}
     </template>
     <template #item-total_price="{ total_price }">
-      {{ total_price ?? 0 }}
+      {{ total_price ? priceFormat(total_price) : 0 }}
     </template>
     <template #item-pending_balance="{ pending_balance }">
-      {{ pending_balance ?? 0 }}
+      {{ pending_balance ? priceFormat(pending_balance) : 0 }}
     </template>
     <template #item-commission_with_vat="{ commission_with_vat }">
-      {{ commission_with_vat ?? 0 }}
+      {{ commission_with_vat ? priceFormat(commission_with_vat) : 0 }}
     </template>
     <template #item-vat_on_commission="{ vat_on_commission }">
-      {{ vat_on_commission ?? 0 }}
+      {{ vat_on_commission ? priceFormat(vat_on_commission) : 0 }}
     </template>
     <template #item-commission_without_vat="{ commission_without_vat }">
-      {{ commission_without_vat ?? 0 }}
+      {{ commission_without_vat ? priceFormat(commission_without_vat) : 0 }}
     </template>
     <template #item-policy_issuer="{ policy_issuer }">
-      {{ policy_issuer }}
+      {{ policy_issuer ?? 'N/A' }}
     </template>
     <template #item-advisor="{ advisor }">
-      {{ advisor }}
+      {{ advisor ?? 'N/A' }}
     </template>
     <template #item-lead_source="{ lead_source }">
-      {{ lead_source }}
+      {{ lead_source ?? 'N/A' }}
     </template>
     <template #item-notes="{ notes }">
-      {{ notes }}
+      {{ notes ?? 'N/A' }}
     </template>
     <template #body-append>
       <tr v-if="reportData.data.length > 0" class="total-row">

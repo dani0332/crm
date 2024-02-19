@@ -7,6 +7,17 @@ const props = defineProps({
   },
 });
 
+const calculateTotalSum = useCalculateTotalSum;
+
+const priceFormat = (price, thousandSeparator = false) => {
+  return thousandSeparator
+    ? parseFloat(price).toLocaleString('en-US', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      })
+    : parseFloat(price).toFixed(2);
+};
+
 const tableHeader = reactive([
   {
     text: 'Insurer',
@@ -29,6 +40,16 @@ const tableHeader = reactive([
     value: 'price_without_vat',
   },
 ]);
+
+const isIntegerColumn = key => {
+  // Add logic to determine if the column contains an integer
+  // For example, check if the key corresponds to an integer column
+  return [
+    'active_policy_count',
+    'price_with_vat',
+    'price_without_vat',
+  ].includes(key);
+};
 </script>
 <template>
   <DataTable
@@ -53,10 +74,26 @@ const tableHeader = reactive([
       {{ active_policy_count ?? 0 }}
     </template>
     <template #item-price_with_vat="{ price_with_vat }">
-      {{ price_with_vat ?? 0 }}
+      {{ price_with_vat ? priceFormat(price_with_vat) : 0 }}
     </template>
     <template #item-price_without_vat="{ price_without_vat }">
-      {{ price_without_vat ?? 0 }}
+      {{ price_without_vat ? priceFormat(price_without_vat) : 0 }}
+    </template>
+    <template #body-append>
+      <tr v-if="reportData.data.length > 0" class="total-row">
+        <td class="direction-left">Total</td>
+        <td
+          v-for="header in tableHeader.slice(1, tableHeader.length)"
+          :key="header.value"
+          class="direction-center"
+        >
+          {{
+            isIntegerColumn(header.value)
+              ? calculateTotalSum(reportData.data, header.value)
+              : 'N/A'
+          }}
+        </td>
+      </tr>
     </template>
   </DataTable>
   <Pagination

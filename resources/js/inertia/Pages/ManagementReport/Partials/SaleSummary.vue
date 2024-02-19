@@ -10,6 +10,15 @@ const props = defineProps({
   },
 });
 
+const priceFormat = (price, thousandSeparator = false) => {
+  return thousandSeparator
+    ? parseFloat(price).toLocaleString('en-US', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      })
+    : parseFloat(price).toFixed(2);
+};
+
 const tableHeader = reactive([
   {
     text: 'T. Policies',
@@ -105,22 +114,24 @@ const isIntegerColumn = key => {
       {{ total_transaction ?? 0 }}
     </template>
     <template #item-price_vat_applicable="{ price_vat_applicable }">
-      {{ price_vat_applicable ?? 0 }}
+      {{ price_vat_applicable ? priceFormat(price_vat_applicable) : 0 }}
     </template>
     <template #item-total_vat="{ total_vat }">
-      {{ total_vat ?? 0 }}
+      {{ total_vat ? priceFormat(total_vat) : 0 }}
     </template>
     <template #item-price_vat_not_applicable="{ price_vat_not_applicable }">
-      {{ price_vat_not_applicable ?? 0 }}
+      {{ price_vat_not_applicable ? priceFormat(price_vat_not_applicable) : 0 }}
     </template>
     <template #item-discount="{ discount }">
-      {{ discount ?? 0 }}
+      {{ discount ? priceFormat(discount) : 0 }}
     </template>
-    <template #item-commission="{ commission }">
-      {{ commission ?? 0 }}
+    <template #item-commission_vat_applicable="{ commission_vat_applicable }">
+      {{
+        commission_vat_applicable ? priceFormat(commission_vat_applicable) : 0
+      }}
     </template>
     <template #item-total_price="{ total_price }">
-      {{ total_price ?? 0 }}
+      {{ total_price ? priceFormat(total_price) : 0 }}
     </template>
     <template #body-append>
       <tr v-if="reportData.data.length > 0" class="total-row">
