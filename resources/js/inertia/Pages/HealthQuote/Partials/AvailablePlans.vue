@@ -25,32 +25,25 @@ const showModal = computed({
   set: val => emit('update:modelValue', val),
 });
 
-const memberCategoryText = memberId =>
-  computed(() => {
-    let memberCategoryId = null;
-    memberCategoryId = membersDetailRef.value.find(
-      member => member.id === memberId,
-    )?.member_category_id;
-    return props.memberCategories.find(
-      category => category.id === memberCategoryId,
-    )?.text;
-  }).value;
+const memberCategoryText = memberId => {
+  let memberCategoryId = null;
+  memberCategoryId = props.members.find(
+    member => member.id === memberId,
+  )?.member_category_id;
+  return props.memberCategories.find(
+    category => category.id === memberCategoryId,
+  )?.text;
+};
 
-const memberDobText = memberId =>
-  computed(() => {
-    return dateFormat(
-      membersDetailRef.value.find(member => member.id === memberId)?.dob,
-    );
-  }).value;
+const memberDobText = memberId => {
+  return dateFormat(props.members.find(member => member.id === memberId)?.dob);
+};
 
-const memberGenderText = memberId =>
-  computed(() => {
-    let gender = null;
-    gender = membersDetailRef.value.find(
-      member => member.id === memberId,
-    )?.gender;
-    return props.genders[gender];
-  }).value;
+const memberGenderText = memberId => {
+  let gender = null;
+  gender = props.members.find(member => member.id === memberId)?.gender;
+  return props.genders[gender];
+};
 
 const notification = useToast();
 
@@ -542,7 +535,6 @@ onUpdated(() => {
             v-model="isManual"
             color="success"
             label="Manual"
-            @change="onToggleManual"
             :loading="toggleLoader"
           />
           <x-toggle
