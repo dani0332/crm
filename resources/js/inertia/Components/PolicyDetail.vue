@@ -298,7 +298,7 @@ const onUpdatePolicyDetails = () => {
         <x-tooltip>
           <x-button
             v-if="
-              !hasRole(rolesEnum.PA) &&
+              hasRole(rolesEnum.PA) &&
               record.quote_status_id == quoteStatusEnum.PolicyBooked
             "
             size="sm"
