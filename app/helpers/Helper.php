@@ -665,3 +665,10 @@ if (! function_exists('apiResponse')) {
         ], $statusCode);
     }
 }
+
+if (! function_exists('strToFloat')) {
+    function strToFloat($value): float
+    {
+        return floatval(str_replace(',', '', $value));
+    }
+}
