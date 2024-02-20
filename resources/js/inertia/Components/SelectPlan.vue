@@ -54,7 +54,7 @@ const updateSelectedPlan = () => {
             notification.success({
                     title: "Selected plan updated",
                     position: 'top',
-            });
+            });            
         })
         .catch(err => {
             console.log(err)

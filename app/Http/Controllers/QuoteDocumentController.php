@@ -110,6 +110,20 @@ class QuoteDocumentController extends Controller
         return redirect()->back()->with('success', 'File Uploaded');
     }
 
+    public function storeMultiple(Request $request, $quoteType)
+    {
+        if (! count($request->file) ||
+            ! ($quote = $this->getQuoteObject($quoteType, $request->quote_id))
+        ) {
+            return false;
+        }
+        foreach ($request->file as $file) {
+            $this->quoteDocumentService->uploadQuoteDocument($file['file'], $request->all(), $quote);
+        }
+
+        return redirect()->back()->with('success', 'Document Uploaded Successfully');
+    }
+
     public function sendPolicyDocument($quoteType, $quoteUuId)
     {
         $quoteModel = $this->crudService->quoteModel($quoteType, $quoteUuId);

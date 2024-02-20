@@ -1,4 +1,5 @@
 <script setup>
+import PaymentTableNew from './../../../Components/PaymentTableNew.vue';
 import PaymentTable from './Partials/PaymentTable.vue';
 import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 import LazyCreatePlan from './Partials/CreatePlan.vue';
@@ -85,7 +86,8 @@ defineProps({
   UBOsDetails: Array,
   isCommercialVehicles: Boolean,
   carInsuranceProviders: Array,
-  clientInquiryLogs: Array,
+  paymentTooltipEnum: Object,
+  isNewPaymentStructure: Boolean,
 });
 
 
@@ -363,6 +365,7 @@ const documentsTableItems = computed(() => {
       document_type_text:
         doc.document_type_text.length > 0 ? doc.document_type_text : '',
       document_name_text: doc.doc_name,
+      document_original_name: doc.original_name,
       created_at: doc.created_at,
       doc_uuid: doc.doc_uuid,
       doc_url: doc.doc_url,
@@ -1536,15 +1539,17 @@ const linkEntity = () => {
     });
 };
 
-
-
 const handlePlanSelected = plan => {  
   selectedProviderPlan.value.id = plan.id
   selectedProviderPlan.value.planName = plan.planName
   selectedProviderPlan.value.providerName = plan.providerName
   selectedProviderPlan.value.premium = plan.premium
+  router.reload({
+    preserveState: true,
+    preserveScroll: true,
+    only: ['payments','paymentEntityModel'],        
+  });  
 };
-
 </script>
 
 <template>
@@ -2521,19 +2526,7 @@ const handlePlanSelected = plan => {
 			:quoteType="quoteType"
 			:quote="record"
 		/> -->
-
-    <PaymentTable
-      :payments="payments"
-      :quoteRequest="paymentEntityModel"
-      :paymentStatusEnum="paymentStatusEnum"
-      :isCommercialVehicles="isCommercialVehicles"
-      :carInsuranceProviders="carInsuranceProviders"
-      :paymentMethods="
-        paymentMethods.map(pm => {
-          return { value: pm.code, label: pm.name };
-        })
-      "
-    />
+	
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div>
         <h3 class="font-semibold text-primary-800 text-lg">Assumptions</h3>
@@ -3127,6 +3120,31 @@ const handlePlanSelected = plan => {
       </x-modal>
     </div>
 
+    <PaymentTableNew 
+			v-if="isNewPaymentStructure"
+			quoteType="Car"
+			:payments="payments"
+			:paymentDocument="page.props.documentTypes.filter(item => item.code === 'CPD' || item.code === 'CPDR' || item.code === 'CDPDR')"
+			:quoteRequest="paymentEntityModel"
+			:paymentStatusEnum="paymentStatusEnum"
+			:paymentTooltipEnum="paymentTooltipEnum"
+			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name, tooltip: pm.tool_tip } })"
+			:storageUrl="storageUrl"
+		/>
+    <PaymentTable
+		v-else
+      :payments="payments"
+      :quoteRequest="paymentEntityModel"
+      :paymentStatusEnum="paymentStatusEnum"
+      :isCommercialVehicles="isCommercialVehicles"
+      :carInsuranceProviders="carInsuranceProviders"
+      :paymentMethods="
+        paymentMethods.map(pm => {
+          return { value: pm.code, label: pm.name };
+        })
+      "
+    />
+
     <div
       class="p-4 rounded shadow mb-6 bg-white"
       v-if="can(permissionEnum.PAUSE_AUTO_FOLLOWUPS)"
@@ -3355,7 +3373,7 @@ const handlePlanSelected = plan => {
       >
         <template #item-document_name_text="item">
           <a target="_blank" :href="storageUrl + item.doc_url">{{
-            item.document_name_text
+            item.document_original_name
           }}</a>
         </template>
         <template #item-action="item">
@@ -3759,15 +3777,10 @@ const handlePlanSelected = plan => {
       />
     </div>
   </div>
-  <AuditLogs :type="'App\\Models\\CarQuote'" :id="$page.props.record.id" />
+  <AuditLogs :type="'App\\Models\\CarQuote'" :id="$page.props.record.id" :quoteCode="$page.props.record.code"/>
   <ApiLogs
     v-if="can(permissionEnum.API_LOG_VIEW)"
     :type="'App\\Models\\CarQuote'"
     :id="$page.props.record.id"
-  />
-
-  <ClientInquiryLogs
-      v-if="clientInquiryLogs.length > 0"
-      :logs="clientInquiryLogs"
   />
 </template>

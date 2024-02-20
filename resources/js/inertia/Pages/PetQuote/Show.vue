@@ -9,6 +9,7 @@ import LeadHistory from '../PersonalQuote/Partials/LeadHistory.vue';
 import MemberDetails from '../../Components/MemberDetails.vue';
 import PlanDetails from '../../Components/PlanDetails.vue';
 import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue';
+import PaymentTableNew from '../../Components/PaymentTableNew.vue'; 
 
 defineProps({
   quote: Object,
@@ -37,6 +38,9 @@ defineProps({
   UBOsDetails: Array,
   canAddBatchNumber: Boolean,
   vatPercentage: Number,
+  paymentStatusEnum: Object,
+  paymentTooltipEnum: Object,
+  isNewPaymentStructure: Boolean,
 });
 
 const page = usePage();
@@ -48,6 +52,7 @@ const rolesEnum = page.props.rolesEnum;
 const historyLoading = ref(false);
 
 const { isRequired } = useRules();
+const hasRole = role => useHasRole(role);
 const notification = useNotifications('toast');
 
 const modals = reactive({
@@ -777,24 +782,7 @@ const linkEntity = () => {
       :activities="activities"
       :advisors="advisors"
       :quote-type="quoteType"
-    />
-
-    <PlanDetails
-      :insuranceProviders="insuranceProviders"
-      :quote="quote"
-      :quoteType="quoteType"
-      :vatPrice="vatPercentage"
-    />
-
-    <QuotePayments
-      :can="can"
-      :payments="quote.payments"
-      :quote-type="quoteType"
-      :payment-methods="paymentMethods"
-      :insurance-providers="insuranceProviders"
-      :is-beta-user="isBetaUser"
-      :personal-plans="personalPlans"
-    />
+    />  
 
     <QuoteStatus
       :quote="quote"
@@ -802,6 +790,33 @@ const linkEntity = () => {
       :quote-statuses="quoteStatuses"
       :lost-reasons="lostReasons"
       :quoteStatusEnum="quoteStatusEnum"
+    />
+    <PlanDetails
+      :insuranceProviders="insuranceProviders"
+      :quote="quote"
+      :quoteType="quoteType"
+      :vatPrice="vatPercentage"
+    />
+    <PaymentTableNew 
+			v-if="isNewPaymentStructure"
+			:quoteType="quoteType"
+			:payments="quote.payments"
+			:paymentDocument="documentTypes.filter(item => item.code === 'PPD' || item.code === 'PPDR' || item.code === 'PDPDR')"
+			:quoteRequest="quote"
+			:paymentStatusEnum="paymentStatusEnum"
+			:paymentTooltipEnum="paymentTooltipEnum"
+			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name, tooltip: pm.tool_tip } })"
+			:storageUrl="storageUrl"
+		/>
+    <QuotePayments
+      v-else
+      :can="can"
+      :payments="quote.payments"
+      :quote-type="quoteType"
+      :payment-methods="paymentMethods"
+      :insurance-providers="insuranceProviders"
+      :is-beta-user="isBetaUser"
+      :personal-plans="personalPlans"
     />
 
     <QuoteDocuments
@@ -814,6 +829,7 @@ const linkEntity = () => {
     <QuotePolicy :quote="quote" :can="can" :quoteStatusEnum="quoteStatusEnum" />
 
     
+
     <EmbeddedProducts
       :data="embeddedProducts"
       :link="quote.uuid"
@@ -824,6 +840,6 @@ const linkEntity = () => {
 
     <LeadHistory :quote="quote" />
 
-    <AuditLogs :quote-type="quoteType" :id="$page.props.quote.id" />
+    <AuditLogs :quote-type="quoteType" :id="$page.props.quote.id" :quoteCode="$page.props.quote.code" />
   </div>
 </template>

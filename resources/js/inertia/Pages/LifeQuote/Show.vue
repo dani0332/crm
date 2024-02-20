@@ -1,5 +1,6 @@
 <script setup>
-import MemberDetails from '../../Components/MemberDetails.vue';
+import PaymentTableNew from '../../Components/PaymentTableNew.vue';
+import MemberDetails from "../../Components/MemberDetails.vue";
 import QuoteDocuments from '../PersonalQuote/Partials/QuoteDocuments';
 import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue';
 
@@ -27,12 +28,17 @@ defineProps({
   storageUrl: String,
   insuranceProviders: Object,
   vatPercentage: Number,
+  payments: Array,
+  paymentStatusEnum: Object,
+  paymentTooltipEnum: Object,
+  paymentMethods: Array,
+  insuranceProviders: Array,
+  isNewPaymentStructure: Boolean,
 });
 
 const { isRequired } = useRules();
 const notification = useNotifications('toast');
 const hasRole = role => useHasRole(role);
-
 
 const modals = reactive({
   duplicate: false,
@@ -973,7 +979,8 @@ const linkEntity = () => {
       :canAddBatchNumber="canAddBatchNumber"
     />
 
-    
+   
+
     <div class="p-4 rounded shadow mb-6 bg-primary-50/25">
       <div>
         <h3 class="font-semibold text-primary-800 text-lg">Lead Status</h3>
@@ -1058,6 +1065,17 @@ const linkEntity = () => {
       
     />
 
+    <PaymentTableNew 
+			v-if="isNewPaymentStructure"
+			:quoteType="quoteType"
+			:payments="payments"
+			:paymentDocument="page.props.documentTypes.filter(item => item.code === 'LPD' || item.code === 'LPDR' || item.code === 'LDPDR')"
+			:quoteRequest="quote"
+			:paymentStatusEnum="paymentStatusEnum"
+			:paymentTooltipEnum="paymentTooltipEnum"
+			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name, tooltip: pm.tool_tip } })"
+			:storageUrl="storageUrl"
+		/>
     <EmbeddedProducts
       :data="embeddedProducts"
       :link="quote.uuid"
@@ -1238,6 +1256,6 @@ const linkEntity = () => {
         :hide-footer="historyData.length < 15"
       />
     </div>
-    <AuditLogs :type="'App\\Models\\LifeQuote'" :id="$page.props.quote.id" />
+    <AuditLogs :type="'App\\Models\\LifeQuote'" :id="$page.props.quote.id" :quoteCode="$page.props.quote.code" />
   </div>
 </template>

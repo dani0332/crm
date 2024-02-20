@@ -156,11 +156,31 @@ const batchOptions = computed(() => {
   }));
 });
 
+function formatString(input) {
+  const lowercaseString = input.toLowerCase();
+  const words = lowercaseString.replace(/_/g, ' ').split(' ');
+  for (let i = 0; i < words.length; i++) {
+    words[i] = words[i][0].toUpperCase() + words[i].slice(1);
+  }
+  const formattedString = words.join(' ');
+  return formattedString;
+}
 const paymentStatusOptions = computed(() => {
-  return page.props.dropdownSource.payment_status_id.map(status => ({
-    value: status.id,
-    label: status.text,
-  }));
+  if ( hasRole(rolesEnum.BetaUser) ) { //FOR NEW PAYMENTS SECTION
+    return page.props.dropdownSource.payment_status_id.
+      filter(status => status.text !== "STARTED" && status.text !== "FAILED" 
+      && status.text !== "DRAFT" && status.text !== "CAPTURED" && status.text !== "PARTIAL CAPTURED").
+      sort((a, b) => a.text.localeCompare(b.text)).
+        map(status => ({
+        value: status.id,
+        label: formatString(status.text),
+      }));
+  } else {  
+    return page.props.dropdownSource.payment_status_id.map(status => ({
+      value: status.id,
+      label: status.text,
+    }));  
+  }
 });
 
 const filters = reactive({

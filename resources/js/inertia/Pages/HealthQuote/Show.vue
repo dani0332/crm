@@ -1,4 +1,5 @@
 <script setup>
+import PaymentTableNew from './../../Components/PaymentTableNew.vue';
 import LazyDocumentUploader from './Partials/DocumentUploader.vue';
 import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 import LazyCreatePlan from './Partials/CreatePlan.vue';
@@ -50,7 +51,9 @@ defineProps({
   canAddBatchNumber: Boolean,
   paymentLink: String,
   quoteType: String,
-  clientInquiryLogs: Array,
+  paymentTooltipEnum: Object,
+  storageUrl: String,
+  isNewPaymentStructure: Boolean,
 });
 
 const page = usePage();
@@ -849,7 +852,6 @@ const getSmallestCopayRateAsDefaultValue = () => {
       }
     });
   });
-
 };
 
 const onSelectedCopay = data => {
@@ -1378,6 +1380,11 @@ const handlePlanSelected = plan => {
   selectedProviderPlan.value.planName = plan.planName
   selectedProviderPlan.value.providerName = plan.providerName
   selectedProviderPlan.value.premium = plan.premium
+  router.reload({
+    preserveState: true,
+    preserveScroll: true,
+    only: ['payments','quoteRequest','ecomDetails'],        
+  });  
 };
 
 </script>
@@ -2357,15 +2364,7 @@ const handlePlanSelected = plan => {
       </div>
     </div>
 
-    <!-- <PaymentTable
-      :payments="payments"
-      :can="can"
-      :isBetaUser="isBetaUser"
-      :quoteRequest="quoteRequest"
-      :paymentMethods="paymentMethods"
-      :insuranceProviders="insuranceProviders"
-      :quote="quote"
-    /> -->
+    
 
     <!-- <div class="p-4 rounded shadow mb-6 bg-white" v-if="isQuoteDocumentEnabled">
       <div>
@@ -2628,7 +2627,6 @@ const handlePlanSelected = plan => {
         <template #header>
           {{ selectedPlan.providerName }} - {{ selectedPlan.name }}
         </template>
-        <!-- bookmark -->
         <LazyAvailablePlan
           :plan="selectedPlan"
           :genders="genderOptions"
@@ -2732,6 +2730,28 @@ const handlePlanSelected = plan => {
         </div>
       </x-modal>
     </div>
+    <PaymentTableNew 
+			v-if="isNewPaymentStructure"
+			quoteType="Health"
+			:payments="payments"
+			:paymentDocument="documentTypes.QUOTE.filter(item => item.code === 'HPD' || item.code === 'HPDR' || item.code === 'HDPDR')"
+			:quoteRequest="quoteRequest"
+			:paymentStatusEnum="paymentStatusEnum"
+			:paymentTooltipEnum="paymentTooltipEnum"
+			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name, tooltip: pm.tool_tip } })"
+			:storageUrl="storageUrl"
+      :eCommercePrice="ecomDetails.priceWithVAT?ecomDetails.priceWithVAT:0"
+		/>
+    <PaymentTable
+      v-else
+      :payments="payments"
+      :can="can"
+      :isBetaUser="isBetaUser"
+      :quoteRequest="quoteRequest"
+      :paymentMethods="paymentMethods"
+      :insuranceProviders="insuranceProviders"
+      :quote="quote"
+    />
     <EmbeddedProducts
       :data="embeddedProducts"
       :link="quote.uuid"
@@ -2989,7 +3009,8 @@ const handlePlanSelected = plan => {
       />
     </div>
 
-    <AuditLogs :type="'App\\Models\\HealthQuote'" :id="$page.props.quote.id" />
+    <AuditLogs :type="'App\\Models\\HealthQuote'" :id="$page.props.quote.id" :quoteCode="$page.props.quote.code"/>
+    
 
     <ClientInquiryLogs
         v-if="clientInquiryLogs.length > 0"
