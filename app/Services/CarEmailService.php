@@ -49,7 +49,7 @@ class CarEmailService extends BaseService
         }
 
         // trigger SIC workflow
-        if($triggerSICWorkFlow){
+        if ($triggerSICWorkFlow) {
             SIBService::createWorkflowEvent(config('constants.SIC_WORKFLOW_NAME'), $lead, [], $emailData);
         }
 
