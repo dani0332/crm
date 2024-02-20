@@ -772,6 +772,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       :quote="quote"
       :can="can"
       :quoteStatusEnum="quoteStatusesEnum"
+      :expanded="sectionExpanded"
     />
 
    <EmbeddedProducts

@@ -724,22 +724,6 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       :expanded="sectionExpanded"
     />
 
-    <QuoteStatus
-      :quote="quote"
-      :quote-type="quoteType"
-      :quote-statuses="quoteStatuses"
-      :lost-reasons="lostReasons"
-      :quote-status-enum="quoteStatusEnum"
-      :expanded="sectionExpanded"
-    />
-
-    <PlanDetails
-      :insuranceProviders="insuranceProviders"
-      :quote="quote"
-      :quoteType="quoteType"
-      :expanded="sectionExpanded"
-    />
-
     <PaymentTableNew 
 			v-if="isNewPaymentStructure"
 			:quoteType="quoteType"
@@ -762,10 +746,10 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       :personal-plans="personalPlans"
     />
 
-    <QuoteDocuments
-      :document-types="documentTypes"
-      :quote-documents="quote.documents || []"
-      :storageUrl="storageUrl"
+    <EmbeddedProducts
+      :data="embeddedProducts"
+      :link="quote.uuid"
+      :code="quote.code"
       :quote="quote"
       :modelType="quoteType"
       :expanded="sectionExpanded"

@@ -601,6 +601,11 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
             </dl>
           </div>
 
+          <div class="mt-6">
+            <h3 class="font-semibold text-primary-800">Quote Details</h3>
+            <x-divider class="mb-4 mt-1" />
+          </div>
+
           <div class="text-sm">
             <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
               <div class="grid sm:grid-cols-2">
@@ -1128,6 +1133,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       quoteType="home"
       :bPDetails="bPDetails"
       :payments="payments"
+      :expanded="sectionExpanded"
     />
 
     <EmbeddedProducts

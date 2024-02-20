@@ -119,11 +119,13 @@ const confirmDeleteData = reactive({
 const memberActionEdit = ref(false),
   activityActionEdit = ref(false),
   selectedPlan = ref(null),
-    selectedPlans = ref([]),
-    toggleLoader = ref(false),
+  selectedPlans = ref([]),
+  selectedAdultPlans = ref([]),
+  selectedSeniorPlans = ref([]),
   selectedPlansPdf = ref([]),
   exportLoader = ref(false),
   historyLoading = ref(false),
+  toggleLoader = ref(false),
   lostReasonId = ref(
     page.props.lostReasons.find(
       reason => reason.text === page.props.quote.lost_reason,
@@ -175,6 +177,7 @@ const modals = reactive({
   activity: false,
   activityConfirm: false,
   planDetails: false,
+  mixInquiryConfirm: false,
 });
 const travelFields = computed(() => {
   let skipFields = [
@@ -571,7 +574,8 @@ const onTogglePlans = toggle => {
             notification.success({
                 title: 'Plans has been updated',
                 position: 'top',
-            });
+      });
+      onLoadAvailablePlansData();
             router.reload({
                 preserveScroll: true,
             });
@@ -611,7 +615,12 @@ const onExportPlans = () => {
                 quote_uuid: page.props.quote.uuid,
                 modelType: 'travel',
                 quoteType:'travel'
-            },
+        hasAdultAndSeniorMember:
+          availableSeniorPlansTable?.data?.length > 0 &&
+          availablePlansTable?.data?.length > 0
+            ? true
+            : false,
+      },
             {
                 responseType: 'json',
             },
@@ -746,11 +755,41 @@ const availablePlansTable = reactive({
       value: 'travelType',
     },
     {
-      text: 'Price',
+      text: 'Actual Price',
       value: 'actualPremium',
     },
     {
-      text: 'Total Price',
+      text: 'Price with VAT',
+      value: 'discountPremium',
+    },
+    {
+      text: 'Action',
+      value: 'action',
+    },
+  ],
+});
+
+const availableSeniorPlansTable = reactive({
+  data: [],
+  columns: [
+    {
+      text: 'Provider Name',
+      value: 'providerName',
+    },
+    {
+      text: 'Plan Name',
+      value: 'name',
+    },
+    {
+      text: 'Travel Type',
+      value: 'travelType',
+    },
+    {
+      text: 'Actual Price',
+      value: 'actualPremium',
+    },
+    {
+      text: 'Price with VAT',
       value: 'discountPremium',
     },
     {
@@ -1239,35 +1278,12 @@ const handleSelectionChange = (tableType, selectedItems) => {
               </x-button>
             </Link>
 
-          <div class="grid sm:grid-cols-2">
-            <dt>
-              <x-tooltip position="bottom">
-                <label
-                  class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
-                >
-                  TRAVELING WHERE
-                </label>
-                <template #tooltip> Traveling Where</template>
-              </x-tooltip>
-            </dt>
-            <dt class="font-medium uppercase">
-              {{
-                quote.direction_code != null
-                  ? quote.direction_code
-                  : quote?.currently_located_in_id_text ==
-                        enums.travelQuoteEnum.LOCATION_UAE_TEXT &&
-                      quote?.region_cover_for_id !=
-                        enums.travelQuoteEnum.REGION_COVER_ID_UAE
-                    ? enums.travelQuoteEnum.TRAVEL_UAE_OUTBOUND
-                    : quote?.destination_id_text ==
-                          enums.travelQuoteEnum
-                            .LOCATION_UNITED_ARAB_EMIRATES_TEXT ||
-                        quote?.region_cover_for_id ==
-                          enums.travelQuoteEnum.REGION_COVER_ID_UAE
-                      ? enums.travelQuoteEnum.TRAVEL_UAE_INBOUND
-                      : ''
-              }}
-            </dt>
+            <Link
+              v-if="permissions.canEditQuote == true"
+              :href="route('travel.edit', quote.uuid)"
+            >
+              <x-button size="sm" tag="div">Edit</x-button>
+            </Link>
           </div>
 
           <div class="text-sm">
@@ -2343,6 +2359,7 @@ const handleSelectionChange = (tableType, selectedItems) => {
       :quoteStatusEnum="enums.quoteStatusEnum"
       :policyIssuanceStatus="policyIssuanceStatus"
       modelType="travel"
+      :expanded="sectionExpanded"
     />
 
     <div class="p-4 rounded shadow mb-6 bg-white">
@@ -2597,6 +2614,7 @@ const handleSelectionChange = (tableType, selectedItems) => {
       quoteType="travel"
       :bPDetails="bPDetails"
       :payments="payments"
+      :expanded="sectionExpanded"
     />
 
     <div class="p-4 rounded shadow mb-6 bg-white">

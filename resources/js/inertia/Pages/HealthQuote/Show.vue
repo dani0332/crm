@@ -2781,6 +2781,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       quoteType="health"
       :bPDetails="bPDetails"
       :payments="payments"
+      :expanded="sectionExpanded"
     />
 
     <div class="p-4 rounded shadow mb-6 bg-white">

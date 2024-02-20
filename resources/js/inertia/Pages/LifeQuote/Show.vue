@@ -995,6 +995,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       :quoteStatusEnum="enums.quoteStatusEnum"
       :policyIssuanceStatus="policyIssuanceStatus"
       modelType="life"
+      :expanded="sectionExpanded"
     />
 
     <UBODetails
