@@ -2945,7 +2945,8 @@ const handlePlanSelected = plan => {
       />
     </div>
 
-    <AuditLogs :type="'App\\Models\\HealthQuote'" :id="$page.props.quote.id" />
+    <AuditLogs :type="'App\\Models\\HealthQuote'" :id="$page.props.quote.id" :quoteCode="$page.props.quote.code"/>
+    
 
     <ClientInquiryLogs
         v-if="clientInquiryLogs.length > 0"
