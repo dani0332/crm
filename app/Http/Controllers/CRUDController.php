@@ -1773,7 +1773,7 @@ class CRUDController extends Controller
 
     public function sendOCBEmailNB(Request $request, $quoteType, $quoteUuId)
     {
-        if($quoteUuId){
+        if ($quoteUuId) {
             Log::info('sendOCBEmailNB OCB email sending started for quote uuid: '.$quoteUuId);
 
             SendOCBIntroEmailJob::dispatch($quoteUuId, null);
@@ -1781,13 +1781,11 @@ class CRUDController extends Controller
             info('sendOCBEmailNB OCB email Job dispatched for quote uuid: '.$quoteUuId);
 
             return response()->json(['success' => 'OCB NB email sent to customer !']);
-        }
-        else {
+        } else {
             Log::info('sendOCBEmailNB OCB email quote uuid not found');
 
             return response()->json(['error' => 'OCB email sending failed, please try again.'], 500);
         }
-
 
     }
 
