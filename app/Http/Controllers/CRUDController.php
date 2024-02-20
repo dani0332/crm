@@ -81,6 +81,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redirect;
+use App\Jobs\SendOCBIntroEmailJob;
 
 class CRUDController extends Controller
 {
@@ -1768,6 +1769,18 @@ class CRUDController extends Controller
 
             return response()->json(['error' => 'OCB email sending failed, please try again. Error Code: '.$responseCode], 500);
         }
+    }
+
+    public function sendOCBEmailNB(Request $request, $quoteType, $quoteUuId)
+    {
+        Log::info('sendOCBEmailNB OCB email sending started for quote uuid: '.$quoteUuId);
+
+        SendOCBIntroEmailJob::dispatch($quoteUuId, null);
+
+        info('sendOCBEmailNB OCB email Job dispatched for quote uuid: '.$quoteUuId);
+
+        return response()->json(['success' => 'OCB NB email sent to customer !']);
+
     }
 
     public function manualTierAssignment(Request $request)
