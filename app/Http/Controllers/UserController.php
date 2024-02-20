@@ -379,7 +379,6 @@ class UserController extends Controller
             || ($currentDateTime->isWeekend())
         ) {
 
-
             // Current time is within the specified range on weekdays or any time on Saturday and Sunday
             echo "Current time is between 6:30 PM and 8:59 AM of the next day, and it's a weekday or weekend.";
         } else {
