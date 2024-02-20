@@ -614,7 +614,7 @@ const onExportPlans = () => {
                 plan_ids: planIds,
                 quote_uuid: page.props.quote.uuid,
                 modelType: 'travel',
-                quoteType:'travel'
+                quoteType:'travel',
         hasAdultAndSeniorMember:
           availableSeniorPlansTable?.data?.length > 0 &&
           availablePlansTable?.data?.length > 0
