@@ -342,6 +342,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::post('{quoteType}/export-car-pdf', [CRUDController::class, 'exportCarPdf'])->name('exportCarPdf');
         Route::post('{quoteType}/export-health-pdf', [CRUDController::class, 'exportHealthPdf'])->name('exportHealthPdf');
         Route::post('{quoteType}/{quoteUuId}/send-email-one-click-buy', [CRUDController::class, 'sendEmailOneClickBuy'])->name('sendEmailOneClickBuy');
+        Route::post('{quoteType}/{quoteUuId}/send-email-ocb-nb', [CRUDController::class, 'sendOCBEmailNB'])->name('sendOCBEmailNB');
         Route::post('update-customer-profile', [CentralController::class, 'updateCustomerProfileDetails'])->name('update-customer-profile');
         Route::post('{quoteType}/toggle-product', [CRUDController::class, 'toggleEmbeddedProduct'])->name('toggleEmbeddedProduct');
         Route::get('{quoteType}/risk-rating-details/{quoteId}', [CRUDController::class, 'riskRatingDetails'])->name('risk-rating-details');
