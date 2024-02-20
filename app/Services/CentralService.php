@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\GenericRequestEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentStatusEnum;
@@ -10,7 +11,9 @@ use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Facades\Capi;
 use App\Facades\Ken;
+use App\Models\ApplicationStorage;
 use App\Models\CarQuote;
+use App\Models\HealthQuote;
 use App\Models\PersonalQuote;
 use App\Models\PersonalQuoteDetail;
 use App\Repositories\PersonalQuoteRepository;
@@ -227,15 +230,16 @@ class CentralService
     {
         return DB::transaction(function () use ($quoteType, $code, $data) {
 
+            $vatPercentage = ApplicationStorage::where('key_name', ApplicationStorageEnums::VAT_VALUE)->first()->value ?? 0;
             $repository = getRepositoryObject($quoteType);
 
             $priceVatApp = $data->price_vat_applicable ?? 0;
             $priceVatNotApp = $data->price_vat_not_applicable ?? 0;
 
             if ($quoteType == QuoteTypes::BUSINESS->value) {
-                $data->price_with_vat = ($priceVatApp + $priceVatNotApp) + (($priceVatApp / 100) * 5);
+                $data->price_with_vat = ($priceVatApp + $priceVatNotApp) + (($priceVatApp / 100) * $vatPercentage);
             } else {
-                $data->price_with_vat = $priceVatApp ? ($priceVatApp + (($priceVatApp / 100) * 5)) : $priceVatNotApp;
+                $data->price_with_vat = $priceVatApp ? ($priceVatApp + (($priceVatApp / 100) * $vatPercentage)) : $priceVatNotApp;
             }
 
             $quote = $repository::where('code', $code)->firstOrFail();
@@ -299,7 +303,10 @@ class CentralService
 
                 $response = Capi::request($endpoint, 'post', $data);
                 info('health plan update response: '.json_encode($response));
-
+                if (isset($response->totalPremium)) {
+                    $quote = HealthQuote::where('uuid', $uuid)->first();
+                    $this->updateQuotePayment($quote, $response->totalPremium);
+                }
                 break;
         }
 

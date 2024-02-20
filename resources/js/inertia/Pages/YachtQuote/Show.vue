@@ -35,6 +35,7 @@ defineProps({
   UBORelations: Array,
   UBOsDetails: Array,
   canAddBatchNumber: Boolean,
+  vatPercentage: Number,
   paymentStatusEnum: Object,
   paymentTooltipEnum: Object,
   isNewPaymentStructure: Boolean,
@@ -722,7 +723,14 @@ const linkEntity = () => {
       :quote="quote"
       :can="can"
       :quoteStatusEnum="quoteStatusesEnum"
-    />    
+    />
+
+    <PlanDetails
+      :insuranceProviders="insuranceProviders"
+      :quote="quote"
+      :quoteType="quoteType"
+      :vatPrice="vatPercentage"
+    />
 
     <EmbeddedProducts
       :data="embeddedProducts"
