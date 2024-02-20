@@ -325,7 +325,12 @@ onMounted(() => {
             </div>
 
             <div class="flex gap-3 items-center">
-             <small v-if="isButtonVisible">{{userStatus == true?'Online':'Offline'}}</small>   <x-toggle v-model="userStatus" v-if="isButtonVisible"   @change="onStatusChange"  ></x-toggle>
+             <small v-if="isButtonVisible">{{userStatus == true?'Online':'Offline'}}</small>
+                <x-tooltip position="bottom">
+                    <x-toggle v-model="userStatus" v-if="isButtonVisible"   @change="onStatusChange"  ></x-toggle>
+                    <template #tooltip>{{userStatus == true?'You can toggle this tooltip to go offline, this will temporarily stop new leads allocations':'You can toggle this tooltip to go online,this will start new lead allocation'}}</template>
+                </x-tooltip>
+
               <!-- <UserStatus /> -->
               <x-popover align="right" block>
                 <x-button size="sm" ghost>
