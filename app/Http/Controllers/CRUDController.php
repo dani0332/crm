@@ -27,6 +27,7 @@ use App\Facades\Capi;
 use App\Http\Requests\ExportPlansPdfRequest;
 use App\Http\Requests\UpdateLeadStatusRequest;
 use App\Jobs\CarRenewalEmailJob;
+use App\Jobs\SendOCBIntroEmailJob;
 use App\Jobs\SyncSIBContactJob;
 use App\Models\CarMake;
 use App\Models\CarQuote;
@@ -1768,6 +1769,24 @@ class CRUDController extends Controller
 
             return response()->json(['error' => 'OCB email sending failed, please try again. Error Code: '.$responseCode], 500);
         }
+    }
+
+    public function sendOCBEmailNB(Request $request, $quoteType, $quoteUuId)
+    {
+        if ($quoteUuId) {
+            Log::info('sendOCBEmailNB OCB email sending started for quote uuid: '.$quoteUuId);
+
+            SendOCBIntroEmailJob::dispatch($quoteUuId, null);
+
+            info('sendOCBEmailNB OCB email Job dispatched for quote uuid: '.$quoteUuId);
+
+            return response()->json(['success' => 'OCB NB email sent to customer !']);
+        } else {
+            Log::info('sendOCBEmailNB OCB email quote uuid not found');
+
+            return response()->json(['error' => 'OCB email sending failed, please try again.'], 500);
+        }
+
     }
 
     public function manualTierAssignment(Request $request)

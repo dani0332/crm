@@ -59,8 +59,6 @@ class HandleCarAdvisorUpdated
 
         info('SMS sending code reached');
 
-        //buildSMS($lead);
-
     }
     public function buildSMS($lead)
     {
