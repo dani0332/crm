@@ -21,6 +21,7 @@ defineProps({
   documentTypes: Object,
   storageUrl: String,
   insuranceProviders: Object,
+  vatPercentage: Number,
   paymentStatusEnum: Object,
   paymentTooltipEnum: Object,
   paymentMethods: Array,
@@ -913,6 +914,7 @@ const linkEntity = () => {
       :insuranceProviders="insuranceProviders"
       :quote="quote"
       :quoteType="page.props.quoteType"
+      :vatPrice="vatPercentage"
     />
 
     <PaymentTableNew 

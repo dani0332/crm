@@ -37,6 +37,7 @@ defineProps({
   UBORelations: Array,
   UBOsDetails: Array,
   canAddBatchNumber: Boolean,
+  vatPercentage: Number,
   paymentStatusEnum: Object,
   paymentTooltipEnum: Object,
   isNewPaymentStructure: Boolean,
@@ -794,6 +795,7 @@ const linkEntity = () => {
       :insuranceProviders="insuranceProviders"
       :quote="quote"
       :quoteType="quoteType"
+      :vatPrice="vatPercentage"
     />
     <PaymentTableNew 
 			v-if="isNewPaymentStructure"
