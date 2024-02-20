@@ -88,7 +88,7 @@ defineProps({
 const page = usePage();
 const notification = useNotifications('toast');
 const showfollowup = ref(false);
-let processingOCBEmailNB = ref(false);
+const processingOCBEmailNB = ref(false);
 const permissionEnum = page.props.permissionsEnum;
 const rolesEnum = page.props.rolesEnum;
 
