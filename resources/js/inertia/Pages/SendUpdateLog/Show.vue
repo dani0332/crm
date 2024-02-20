@@ -92,6 +92,7 @@ const sendUpdateForm = useForm({
   personal_quote_id: props.sendUpdateLog?.personal_quote_id || null,
   childCategory: selectedCategory?.value?.subCategory,
   status: props.sendUpdateLog?.status || '',
+  quote_uuid: props.realQuote.uuid,
 });
 
 onMounted(() => {
