@@ -2159,7 +2159,7 @@ const genderList = [
                 View
               </x-button>
 
-              <span v-if="hasRole(rolesEnum.TravelAdvisor)">
+              <span v-if="hasRole(rolesEnum.TravelAdvisor) && aboveAgeMembers == 0">
                 <SelectPlan
                   class="ml-1"
                   v-if="selectedProviderPlan.id != item.id"

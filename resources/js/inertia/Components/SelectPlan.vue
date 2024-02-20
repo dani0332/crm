@@ -13,7 +13,7 @@ const isLoading = ref(false);
 const emit = defineEmits(['update:selectedPlanChanged']);
 
 const updateSelectedPlan = () => {
-    
+
     isLoading.value = true;
 
     let data = {
@@ -37,25 +37,26 @@ const updateSelectedPlan = () => {
                 case 'car':
                     premium = res.data.plan.planProcessValue.totalPremium
                     break;
-                case 'health' :                    
+                case 'health' :
                     premium = (props.plan?.actualPremium + (props.plan?.policyFee || 0) + (props.plan?.basmah || 0) + props.plan?.vat)
                     break;
                 default:
                     break;
-            }    
-            
+            }
+
+
             emit('update:selectedPlanChanged', {
                 id: props.plan.id,
                 providerName: props.plan.providerName,
                 planName: props.plan.name,
                 premium: premium.toFixed(2)
-            });            
+            });
             notification.success({
                     title: "Selected plan updated",
                     position: 'top',
             });            
         })
-        .catch(err => {           
+        .catch(err => {
             console.log(err)
             isLoading.value = false;
             notification.error({

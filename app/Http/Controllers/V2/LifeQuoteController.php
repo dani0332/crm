@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\V2;
 
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\PaymentStatusEnum;
@@ -14,6 +15,7 @@ use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\LifeQuoteRequest;
+use App\Models\ApplicationStorage;
 use App\Models\Emirate;
 use App\Models\PolicyIssuanceStatus;
 use App\Repositories\ActivityRepository;
@@ -146,6 +148,7 @@ class LifeQuoteController extends Controller
         }
 
         $documentTypes = DocumentTypeRepository::byQuoteTypeId(QuoteTypes::LIFE->id())->get();
+        $vatPercentage = ApplicationStorage::where('key_name', ApplicationStorageEnums::VAT_VALUE)->first()->value ?? 0;
 
         $isQuoteDocumentEnabled = app(BaseService::class)->quoteDocumentEnabled(QuoteTypes::LIFE->value);
         $policyIssuanceStatus = PolicyIssuanceStatus::active()->get();
@@ -193,6 +196,7 @@ class LifeQuoteController extends Controller
             ],
             'policyIssuanceStatus' => $policyIssuanceStatus,
             'bPDetails' => $bPDetails,
+            'vatPercentage' => $vatPercentage,
             'isNewPaymentStructure' => app(SplitPaymentService::class)->isNewPaymentStructure($quote->payments),
         ]);
     }
