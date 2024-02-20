@@ -43,7 +43,6 @@ defineProps({
   sendUpdateLogs: Array,
   hasPolicyIssuedStatus: Boolean
 });
-
 const { isRequired } = useRules();
 const notification = useNotifications('toast');
 const hasRole = role => useHasRole(role);

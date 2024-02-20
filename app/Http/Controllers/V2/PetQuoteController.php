@@ -148,7 +148,7 @@ class PetQuoteController extends Controller
 
         return inertia('PetQuote/Show', [
             'quoteType' => QuoteTypes::PET,
-            'quote' => $quote,
+            'quote' => $quote,            
             'activities' => $activities,
             'lostReasons' => $lostReasons,
             'advisors' => $advisors,
@@ -187,7 +187,7 @@ class PetQuoteController extends Controller
             'bPDetails' => $bPDetails,
             'payments' => $quote->payments->toArray() ?? [],
             'isNewPaymentStructure' => app(SplitPaymentService::class)->isNewPaymentStructure($quote->payments),
-	    'sendUpdateOptions' => $sendUpdateOptions,
+	        'sendUpdateOptions' => $sendUpdateOptions,
             'sendUpdateLogs' => $sendUpdateLogs,
             'sendUpdateEnum' => $sendUpdateEnum,
             'hasPolicyIssuedStatus' => $hasPolicyIssuedStatus

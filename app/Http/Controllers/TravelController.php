@@ -212,6 +212,17 @@ class TravelController extends Controller
             $sendUpdateEnum = SendUpdateLogStatusEnum::asArray();
         }
 
+        $sendUpdateOptions = [];
+        $sendUpdateLogs = [];
+        $sendUpdateEnum = (object) [];
+        $hasPolicyIssuedStatus = $this->crudService->hasAtleastOneStatusPolicyIssued(QuoteTypes::TRAVEL->id(), $record->id);        
+        
+        if ($hasPolicyIssuedStatus) {
+            $sendUpdateOptions = $this->lookupService->getSendUpdateOptions(QuoteTypeId::Travel);
+            $sendUpdateLogs = SendUpdateLogRepository::findByQuoteUuid($record->uuid);
+            $sendUpdateEnum = SendUpdateLogStatusEnum::asArray();
+        }
+
         return inertia('TravelQuote/Show', [
             'record' => $record,
             'quote' => $record,
@@ -283,7 +294,7 @@ class TravelController extends Controller
             'bPDetails' => $bPDetails,
             'quoteStatusEnum' => QuoteStatusEnum::asArray(),
             'isNewPaymentStructure' => $isNewPaymentStructure,
-	    'sendUpdateOptions' => $sendUpdateOptions,
+	        'sendUpdateOptions' => $sendUpdateOptions,
             'sendUpdateLogs' => $sendUpdateLogs,
             'hasPolicyIssuedStatus' => $hasPolicyIssuedStatus
         ]);

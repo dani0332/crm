@@ -1396,7 +1396,6 @@ const handlePlanSelected = plan => {
 };
 
 const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
-
 </script>
 
 <template>
@@ -1616,10 +1615,10 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
             </dl>
           </div>
 
-      <div class="mt-6">
-        <h3 class="font-semibold text-primary-800">Quote Details</h3>
-        <x-divider class="mb-4 mt-1" />
-      </div>
+          <div class="mt-6">
+            <h3 class="font-semibold text-primary-800">Quote Details</h3>
+            <x-divider class="mb-4 mt-1" />
+          </div>
 
           <div class="text-sm">
             <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
@@ -1649,31 +1648,11 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
                 <dt class="font-medium">ADDITIONAL NOTES</dt>
                 <dd>{{ quote.additional_notes }}</dd>
               </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">ENQUIRY COUNT</dt>
+                <dd>{{ quote.enquiry_count }}</dd>
+              </div>
             </dl>
-          </div>
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">CURRENTLY INSURED WITH</dt>
-            <dd>{{ quote.currently_insured_with_id_text }}</dd>
-          </div>
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">TYPE OF PLAN</dt>
-            <dd>{{ checkPlanType(quoteRequest.health_plan_type_id) }}</dd>
-          </div>
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">NEXT FOLLOWUP DATE</dt>
-            <dd>{{ dateFormat(quote.next_followup_date) }}</dd>
-          </div>
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">DETAILS</dt>
-            <dd>{{ quote.details }}</dd>
-          </div>
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">ADDITIONAL NOTES</dt>
-            <dd>{{ quote.additional_notes }}</dd>
-          </div>
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">ENQUIRY COUNT</dt>
-            <dd>{{ quote.enquiry_count }}</dd>
           </div>
         </template>
       </Collapsible>
@@ -1914,6 +1893,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
         </template>
       </Collapsible>
     </div>
+
     <x-modal v-model="getParentEntityModel" size="lg" show-close backdrop>
       <h3 class="font-semibold text-center text-lg mb-10">
         Search Entity by Parent Entity Trade License No
@@ -2420,47 +2400,48 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
         </template>
         <template #body>
           <x-divider class="my-4" />
-      <div class="text-sm">
-        <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">PLAN NAME</dt>
-            <dd>{{ selectedProviderPlan.planName }}</dd>
+          <div class="text-sm">
+            <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">PLAN NAME</dt>
+                <dd>{{ ecomDetails.planName }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">PROVIDER NAME</dt>
+                <dd>{{ ecomDetails.providerName }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">PAYMENT STATUS</dt>
+                <dd>{{ quote.payment_status_text }}</dd>
+              </div>
+              <div
+                class="grid sm:grid-cols-2"
+                v-if="
+                  page.props.quote.payment_status_id ==
+                  paymentStatusEnum.DECLINED
+                "
+              >
+                <dt class="font-medium">REASON</dt>
+                <dd>{{ mainPayment?.payment_status_message }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">PAID AT</dt>
+                <dd>{{ ecomDetails.paidAt }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">NETWORK</dt>
+                <dd>{{ ecomDetails.network }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">TOTAL PRICE (with VAT)</dt>
+                <dd>{{ fixedValue(ecomDetails.priceWithVAT) }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">CO-PAY / CO-INSURANCE</dt>
+                <dd>{{ coPayment ? coPayment.text : 'N/A' }}</dd>
+              </div>
+            </dl>
           </div>
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">PROVIDER NAME</dt>
-            <dd>{{ selectedProviderPlan.providerName }}</dd>
-          </div>
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">PAYMENT STATUS</dt>
-            <dd>{{ quote.payment_status_text }}</dd>
-          </div>
-          <div
-            class="grid sm:grid-cols-2"
-            v-if="
-              page.props.quote.payment_status_id == paymentStatusEnum.DECLINED
-            "
-          >
-            <dt class="font-medium">REASON</dt>
-            <dd>{{ mainPayment?.payment_status_message }}</dd>
-          </div>
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">PAID AT</dt>
-            <dd>{{ ecomDetails.paidAt }}</dd>
-          </div>
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">NETWORK</dt>
-            <dd>{{ ecomDetails.network }}</dd>
-          </div>
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">TOTAL PRICE (with VAT)</dt>
-            <dd>{{ (selectedProviderPlan.premium) }}</dd>
-          </div>
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">CO-PAY / CO-INSURANCE</dt>
-            <dd>{{ coPayment ? coPayment.text : 'N/A' }}</dd>
-          </div>
-        </dl>
-      </div>
         </template>
       </Collapsible>
     </div>
@@ -2880,6 +2861,69 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       <template #actions>
         <div class="text-right space-x-4">
           <x-button
+            @click.prevent="modals.doc = true"
+            size="sm"
+            color="orange"
+          >
+            Upload Documents
+          </x-button>
+          <x-button
+            size="sm"
+            color="red"
+            v-if="sendPolicy"
+            @click="sendPolicyToClient"
+          >
+            Send Policy
+          </x-button>
+        </div>
+        <DataTable
+          table-class-name="compact"
+          :headers="quoteDocumentsTable.columns"
+          :items="quoteDocuments || []"
+          border-cell
+          hide-rows-per-page
+          :rows-per-page="15"
+          :hide-footer="quoteDocuments.length < 15"
+        >
+          <template #item-original_name="item">
+            <a
+              :href="cdnPath + item.doc_url"
+              target="_blank"
+              class="text-primary-600"
+            >
+              {{ item.original_name }}
+            </a>
+          </template>
+          <template #item-action="{ doc_name }">
+            <div>
+              <x-button
+                size="xs"
+                color="error"
+                outlined
+                @click.prevent="onDocDelete(doc_name)"
+              >
+                Delete
+              </x-button>
+            </div>
+          </template>
+        </DataTable>
+      </template>
+    </x-modal>
+    <x-modal v-model="modals.doc" size="xl" show-close backdrop>
+      <template #header> Upload Documents </template>
+      <LazyDocumentUploader
+        :members="memberDataDocs(membersDetail)"
+        :doc-types="documentTypes"
+        :docs="quoteDocuments || []"
+        :cdn="cdnPath"
+      />
+    </x-modal>
+    <x-modal v-model="modals.docConfirm" show-close backdrop>
+      <template #header> Delete Document </template>
+      <p>Are you sure you want to delete this document?</p>
+      <template #actions>
+        <div class="text-right space-x-4">
+          <x-button
             size="sm"
             ghost
             @click.prevent="modals.docConfirm = false"
@@ -3082,13 +3126,46 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
         </template>
       </Collapsible>
     </div>
-    
-    <AuditLogs :type="'App\\Models\\HealthQuote'" :id="$page.props.quote.id" :quoteCode="$page.props.quote.code" :expanded="sectionExpanded"/>
-    
 
     <ClientInquiryLogs
-        v-if="clientInquiryLogs.length > 0"
-        :logs="clientInquiryLogs"
-    />
+      v-if="clientInquiryLogs.length > 0"
+      :logs="clientInquiryLogs"
+      />
+
+    <div class="p-4 rounded shadow mb-6 bg-white">
+      <Collapsible :expanded="sectionExpanded">
+        <template #header>
+          <div>
+            <h3 class="font-semibold text-primary-800 text-lg">Lead History</h3>
+          </div>
+        </template>
+        <template #body>
+          <x-divider class="my-4" />
+          <div v-if="historyData === null" class="text-center py-3">
+            <x-button
+              size="sm"
+              color="primary"
+              outlined
+              @click.prevent="onLoadHistoryData"
+              :loading="historyLoading"
+            >
+              Load History Data
+            </x-button>
+          </div>
+          <DataTable
+            v-else
+            table-class-name="compact"
+            :headers="historyDataTable"
+            :items="historyData || []"
+            border-cell
+            hide-rows-per-page
+            :rows-per-page="15"
+            :hide-footer="historyData.length < 15"
+          />
+        </template>
+      </Collapsible>
+    </div>
+
+    <AuditLogs :type="'App\\Models\\HealthQuote'" :id="$page.props.quote.id" :quoteCode="$page.props.quote.code" :expanded="sectionExpanded"/>
   </div>
 </template>

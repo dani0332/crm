@@ -214,7 +214,7 @@ class LifeQuoteController extends Controller
             'bPDetails' => $bPDetails,
             'vatPercentage' => $vatPercentage,
             'isNewPaymentStructure' => app(SplitPaymentService::class)->isNewPaymentStructure($quote->payments),
-	    'sendUpdateEnum' => $sendUpdateEnum,
+	        'sendUpdateEnum' => $sendUpdateEnum,
             'sendUpdateOptions' => $sendUpdateOptions,
             'sendUpdateLogs' => $sendUpdateLogs,
             'hasPolicyIssuedStatus' => $hasPolicyIssuedStatus

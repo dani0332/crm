@@ -508,99 +508,99 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
                 <dd>{{ quote.email }}</dd>
               </div>
 
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">COMPANY NAME</dt>
-            <dd>{{ quote.company_name }}</dd>
-          </div>
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">NEXT FOLLOWUP DATE</dt>
-            <dd>{{ quote.next_followup_date }}</dd>
-          </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">COMPANY NAME</dt>
+                <dd>{{ quote.company_name }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">NEXT FOLLOWUP DATE</dt>
+                <dd>{{ quote.next_followup_date }}</dd>
+              </div>
 
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">TRANSAPP CODE</dt>
-            <dd>{{ quote.transapp_code }}</dd>
-          </div>
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">SOURCE</dt>
-            <dd>{{ quote.source }}</dd>
-          </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">TRANSAPP CODE</dt>
+                <dd>{{ quote.transapp_code }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">SOURCE</dt>
+                <dd>{{ quote.source }}</dd>
+              </div>
 
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">LOST REASON</dt>
-            <dd>
-              {{ quote?.business_quote_request_detail?.lost_reason?.text }}
-            </dd>
-          </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">LOST REASON</dt>
+                <dd>
+                  {{ quote?.business_quote_request_detail?.lost_reason?.text }}
+                </dd>
+              </div>
 
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">ADVISOR</dt>
-            <dd>{{ quote?.advisor?.name }}</dd>
-          </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">ADVISOR</dt>
+                <dd>{{ quote?.advisor?.name }}</dd>
+              </div>
 
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">CREATED DATE</dt>
-            <dd>{{ quote.created_at }}</dd>
-          </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">CREATED DATE</dt>
+                <dd>{{ quote.created_at }}</dd>
+              </div>
 
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">LAST MODIFIED DATE</dt>
-            <dd>{{ quote.updated_at }}</dd>
-          </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">LAST MODIFIED DATE</dt>
+                <dd>{{ quote.updated_at }}</dd>
+              </div>
 
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">NUMBER OF EMPLOYEES</dt>
-            <dd>{{ quote.number_of_employees }}</dd>
-          </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">NUMBER OF EMPLOYEES</dt>
+                <dd>{{ quote.number_of_employees }}</dd>
+              </div>
 
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">BUSINESS INSURANCE TYPE</dt>
-            <dd>Group Medical</dd>
-          </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">BUSINESS INSURANCE TYPE</dt>
+                <dd>Group Medical</dd>
+              </div>
 
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">BRIEF DETAILS</dt>
-            <dd>{{ quote.brief_details }}</dd>
-          </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">BRIEF DETAILS</dt>
+                <dd>{{ quote.brief_details }}</dd>
+              </div>
 
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">RENEWAL EXPIRY DATE</dt>
-            <dd>{{ quote.renewal_expiry_date }}</dd>
-          </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">RENEWAL EXPIRY DATE</dt>
+                <dd>{{ quote.renewal_expiry_date }}</dd>
+              </div>
 
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">RENEWAL BATCH</dt>
-            <dd>{{ quote.renewal_batch }}</dd>
-          </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">RENEWAL BATCH</dt>
+                <dd>{{ quote.renewal_batch }}</dd>
+              </div>
 
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">GENDER</dt>
-            <dd>{{ genderText(quote.gender).value }}</dd>
-          </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">GENDER</dt>
+                <dd>{{ genderText(quote.gender).value }}</dd>
+              </div>
 
-          <div class="grid sm:grid-cols-2">
-            <div>
-              <x-tooltip position="bottom">
-                <label
-                  class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
-                >
-                  Parent Ref-ID
-                </label>
-                <template #tooltip> Parent Reference ID </template>
-              </x-tooltip>
-            </div>
-            <div>{{ quote.parent_duplicate_quote_id }}</div>
-          </div>
+              <div class="grid sm:grid-cols-2">
+                <div>
+                  <x-tooltip position="bottom">
+                    <label
+                      class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
+                    >
+                      Parent Ref-ID
+                    </label>
+                    <template #tooltip> Parent Reference ID </template>
+                  </x-tooltip>
+                </div>
+                <div>{{ quote.parent_duplicate_quote_id }}</div>
+              </div>
 
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">RENEWAL IMPORT CODE</dt>
-            <dd>{{ quote.renewal_import_code }}</dd>
-          </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">RENEWAL IMPORT CODE</dt>
+                <dd>{{ quote.renewal_import_code }}</dd>
+              </div>
 
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">DEVICE</dt>
-            <dd>{{ quote.device }}</dd>
-          </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">DEVICE</dt>
+                <dd>{{ quote.device }}</dd>
+              </div>
 
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">PRICE</dt>
@@ -739,6 +739,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
         </template>
       </Collapsible>
     </div>
+
     <x-modal v-model="getParentEntityModel" size="lg" show-close backdrop>
       <h3 class="font-semibold text-center text-lg mb-10">
         Search Entity by Parent Entity Trade License No
@@ -768,6 +769,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
         </x-button>
       </div>
     </x-modal>
+
     <x-modal v-model="entityDetailsFound" size="lg" show-close backdrop>
       <h3 class="font-semibold text-center text-lg mb-10">
         Entity found with the entered Trade License number
@@ -859,6 +861,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       :quote-documents="quote.documents || []"
       :storageUrl="storageUrl"
       :quote="quote"
+      :expanded="sectionExpanded"
     />
 
     <div class="p-4 rounded shadow mb-6 bg-primary-50/25">
