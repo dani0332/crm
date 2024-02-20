@@ -286,7 +286,7 @@ const onUpdatePolicyDetails = () => {
           v-if="props.modelType === quoteTypeCodeEnum.Car.toLowerCase()"
         >
           <x-button
-            v-if="1"
+            v-if="hasRole(rolesEnum.PA)"
             class="mt-4"
             color="emerald"
             size="sm"
