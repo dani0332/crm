@@ -3282,7 +3282,7 @@ const handlePlanSelected = plan => {
           </x-button>
           <template
             v-if="
-              !can(permissionEnum.ApprovePayments) && !hasRole(rolesEnum.PA)
+              !can(permissionEnum.ApprovePayments)
             "
           >
             <!-- <Link :href="`${record.uuid}/documents`" class="btn btn-primary btn-sm" style="float:right;">Upload Documents</Link> -->
