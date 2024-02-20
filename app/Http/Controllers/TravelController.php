@@ -15,17 +15,20 @@ use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
+use App\Enums\SendUpdateLogStatusEnum;
 use App\Enums\TravelQuoteEnum;
 use App\Http\Requests\StoreTravelRequest;
 use App\Http\Requests\TravelRenewalsUploadRequest;
 use App\Http\Requests\UpdateTravelRequest;
 use App\Models\Emirate;
 use App\Models\PolicyIssuanceStatus;
+use App\Models\PersonalQuote;
 use App\Repositories\CustomerMembersRepository;
 use App\Repositories\EmbeddedProductRepository;
 use App\Repositories\InsuranceProviderRepository;
 use App\Repositories\LookupRepository;
 use App\Repositories\NationalityRepository;
+use App\Repositories\SendUpdateLogRepository;
 use App\Services\AMLService;
 use App\Services\CRUDService;
 use App\Services\DropdownSourceService;
@@ -198,6 +201,17 @@ class TravelController extends Controller
         $policyIssuanceStatus = PolicyIssuanceStatus::active()->get();
         $bPDetails = $this->bookPolicyPayload($record, $quoteType, $payments, $quoteDocuments);
 
+        $sendUpdateOptions = [];
+        $sendUpdateLogs = [];
+        $sendUpdateEnum = (object) [];
+        $hasPolicyIssuedStatus = $this->crudService->hasAtleastOneStatusPolicyIssued(QuoteTypes::TRAVEL->id(), $record->id);        
+        
+        if ($hasPolicyIssuedStatus) {
+            $sendUpdateOptions = $this->lookupService->getSendUpdateOptions(QuoteTypeId::Travel);
+            $sendUpdateLogs = SendUpdateLogRepository::findByQuoteUuid($record->uuid);
+            $sendUpdateEnum = SendUpdateLogStatusEnum::asArray();
+        }
+
         return inertia('TravelQuote/Show', [
             'record' => $record,
             'quote' => $record,
@@ -257,6 +271,7 @@ class TravelController extends Controller
                 'paymentStatusEnum' => PaymentStatusEnum::asArray(),
                 'travelQuoteEnum' => TravelQuoteEnum::asArray(),
             ],
+            'sendUpdateEnum' => $sendUpdateEnum,
             'customerTypeEnum' => CustomerTypeEnum::asArray(),
             'nationalities' => $nationalities,
             'memberRelations' => $memberRelations,
@@ -268,6 +283,9 @@ class TravelController extends Controller
             'bPDetails' => $bPDetails,
             'quoteStatusEnum' => QuoteStatusEnum::asArray(),
             'isNewPaymentStructure' => $isNewPaymentStructure,
+	    'sendUpdateOptions' => $sendUpdateOptions,
+            'sendUpdateLogs' => $sendUpdateLogs,
+            'hasPolicyIssuedStatus' => $hasPolicyIssuedStatus
         ]);
     }
 
