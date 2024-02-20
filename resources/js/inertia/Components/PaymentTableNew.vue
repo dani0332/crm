@@ -25,6 +25,7 @@ const props = defineProps({
     default: '',
   },
 });
+
 const createPaymentModal = ref(false);
 const isPaymentNoEnabled = ref(false);
 const isCustomReasonEnabled = ref(false);
@@ -32,7 +33,7 @@ const isCustomDiscountReasonEnabled = ref(false);
 const isDiscountEnabled = ref(false);
 const isDiscountReasonEnabled = ref(false);
 const isCheckDetailsEnabled = ref([]);
-const isExpandedSplitPayments = ref(false);
+const isExpandedSplitPayments = ref([]);
 const isPaymentCalculationError = ref(false);
 const isDowngradeFrequencyError = ref(false);
 const isFieldReadonly = ref(false);
@@ -53,7 +54,6 @@ const isMultipleDocumentEnabled = ref(true);
 const approvedDocument = ref('');
 const resetDiscountReason = ref('');
 const approveErrorMessage = ref('');
-
 const discountValue = ref(0); // Initial discount value
 
 const discountDocumentModel = ref([]);
@@ -116,7 +116,7 @@ if (quoteTypesToCheck.includes(props.quoteType)) {
 } else {
   initalPlanDetails = props.quoteRequest.insurance_provider;
 }
-const planDetail = initalPlanDetails;
+let planDetail = ref(initalPlanDetails);
 const paidAmountSum = ref(0);
 const totalPaidAmount = ref(0);
 const masterPaymentStatus = ref('NEW');
@@ -446,7 +446,7 @@ if (!(familyEmployeDiscount.includes(props.quoteType))) {
 }
 
 const discountReasons = [
-  { value: '', label: ''},
+  { value: '', label: 'Select a reason'},
   { value: 'refer_a_friend', label: 'Refer a friend', tooltip: props.paymentTooltipEnum.DISCOUNT_TYPE_LIST_REFER },
   { value: 'promotional_campaign_discount', label: 'Promotional campaign discount', tooltip: props.paymentTooltipEnum.DISCOUNT_REASON_LIST_PROMOTIONAL },
   { value: 'loyalty_reward_discount', label: 'Loyalty reward discount', tooltip: props.paymentTooltipEnum.DISCOUNT_REASON_LIST_LOYALTY },
@@ -577,14 +577,16 @@ const resetCreditApproval = () => {
   handleFrequencyChange(false);
 };
 
-const resetDiscount = () => {
+const resetDiscount = (callDiscountChang=true) => {
   isDiscountEnabled.value = false;
   isDiscountReasonEnabled.value = false;
   paymentMethodsForm.discount = '';
   totalAmount.value = totalPrice.value;
   discountValue.value = 0;
   paymentMethodsForm.discount_reason = '';
-  handleDiscountChange();
+  if (callDiscountChang) {
+    handleDiscountChange();
+  }  
   handleDiscountReasonChange();
   calculateTotalAmount();
 };
@@ -602,6 +604,7 @@ const handleDiscountChange = () => {
 
   isDiscountReasonEnabled.value = false;
   if(paymentMethodsForm.discount === '' || paymentMethodsForm.discount === undefined ){
+    resetDiscount(false);
     isDiscountEnabled.value = false;    
   }else{
     isDiscountEnabled.value = true; 
@@ -719,7 +722,9 @@ const calculatePaymentBreakup = (changeMethod = true) => {
     var trueValuesCount = trueValuesArray.length;
     if(paymentMethodsForm.payment_no <= trueValuesCount){ 
       paymentMethodsForm.payment_no = oldTotalPayments.value;
-      isDowngradeFrequencyError.value = true; 
+      if(paymentMethodsForm.payment_no < trueValuesCount){ 
+        isDowngradeFrequencyError.value = true; 
+      }
       return;
     }    
   }
@@ -847,6 +852,7 @@ const generateCCLink = async (code,splitPaymentId,paymentStatus) => {
         paymentCode: code,
         splitPaymentId: splitPaymentId,
         isInertia: true,
+        new_payment_structure: true,
       });
 
       if (response.data.success) {
@@ -904,7 +910,7 @@ const addPaymentModal = () => {
   isDiscountDocumentNotUploaded.value = false;
   discountDocumentModel.value = [];
 
-  if (totalPrice.value > 0 && planDetail) {
+  if (totalPrice.value > 0 && planDetail.value) {
     totalAmount.value = totalPrice.value;
   } else {
     let errorMsg = 'Please update the Total Price in the Plan Details section.'; 
@@ -988,6 +994,7 @@ const editPaymentModal = (payment,split_payment_id,sr_no,capture_approval) => {
   discountDocumentModel.value = [];
   isDiscountEnabled.value = false;
   isTotalPriceUpdated.value = false;
+  isGalleryModelOpen.value = false;    
   if(sr_no>0){
     splitPaymentNo.value = sr_no;
     isFieldReadonly.value = true;
@@ -1046,12 +1053,16 @@ const editPaymentModal = (payment,split_payment_id,sr_no,capture_approval) => {
   calculateTotalAmount();
 
   var isAnyPaid = false;
+
+  const paidStatusIds = [
+    props.paymentStatusEnum.PAID,
+    props.paymentStatusEnum.AUTHORISED,
+    props.paymentStatusEnum.CAPTURED,
+    props.paymentStatusEnum.PARTIAL_CAPTURED
+  ];
+
   for(let i=1; i<=payment.total_payments; i++){ 
-    if(
-      payment.payment_splits[i-1].payment_status_id===props.paymentStatusEnum.PAID ||
-      payment.payment_splits[i-1].payment_status_id===props.paymentStatusEnum.AUTHORISED ||      
-      payment.payment_splits[i-1].payment_status_id===props.paymentStatusEnum.CAPTURED   
-    ) { 
+    if (paidStatusIds.includes(payment.payment_splits[i-1].payment_status_id)) {
       readOnlyPayments.value[i] = true;
       totalPaidAmount.value++;
       paidAmountSum.value = parseFloat(paidAmountSum.value) + parseFloat(payment.payment_splits[i-1].payment_amount);
@@ -1224,13 +1235,18 @@ const addPayment = isValid => {
     mainPaymentMethod = paymentMethodsModels.value[1];
   }
   
-  let data = {
-    captured_amount: paymentMethodsForm.amount,
+  let data = {    
     code: paymentMethodsForm.payment_method,
     modelType: props.quoteType,
     quote_id: props.quoteRequest.id,
-    plan_id: planDetail.id,
+    plan_id: planDetail.value.id,
+    captured_amount: paymentMethodsForm.amount,
     insurance_provider_id: providerId.value,
+    new_payment_structure: true,
+    isInertia: true,   
+  };
+
+  data.payment = {
     collection_type: paymentMethodsForm.collection_type,
     payment_methods: mainPaymentMethod,
     reference: paymentMethodsForm.payment_reference,
@@ -1246,19 +1262,37 @@ const addPayment = isValid => {
     total_amount: totalAmount.value, // after discount calculation
     total_price: totalPrice.value, 
     collection_date: paymentMethodsForm.collection_date,
-    discount_value: discountValue.value, // discount amount
-    isInertia: true,
+    discount_value: discountValue.value, // discount amount     
   };
 
+  let splitPayments = [];
+  for (let i = 1; i < splitAmountModels.value.length; i++) {
+    if (i <= paymentMethodsForm.payment_no) {
+      splitPayments[i] = {
+        sr_no: i,
+        payment_method: paymentMethodsModels.value[i],
+        payment_amount: splitAmountModels.value[i],
+        due_date: dueDateModels.value[i],
+        collection_amount: collectionAmountModels.value[i],
+        document_detail: fileUploadModels.value[i],
+        check_detail: checkDetailModels.value[i],        
+      };    
+      if (i === 1) {
+        splitPayments[i]['discount_documents'] = discountDocumentModel.value;
+      }
+    }
+  }
+  splitPayments = splitPayments.filter(item => item !== null);
+  data.payment.payment_splits = splitPayments;
   // Combine split_amount and payment_type into a single object
-  data.split_payment_details = {
+  /*data.payment.split_payments = {   
     split_amount: splitAmountModels.value,
     payment_type: paymentMethodsModels.value,
     due_date: dueDateModels.value,
     check_detail: checkDetailModels.value,
     document_detail: fileUploadModels.value,
     discount_documents: discountDocumentModel.value,
-  };
+  };*/
 
   let declinedCustomReason= paymentMethodsForm.declined_custom_reason;
   if (paymentMethodsForm.status === 'view' || isCreditApprovalView.value === true) { 
@@ -1276,7 +1310,7 @@ const addPayment = isValid => {
     let viewData = {
       modelType: props.quoteType,
       quote_id: props.quoteRequest.id,
-      plan_id: planDetail.id,
+      plan_id: planDetail.value.id,
       customer_id: props.quoteRequest.customer_id,      
       collection_amount: collectionAmountModels.value,      
       is_declined: isDeclineClicked.value,
@@ -1309,7 +1343,7 @@ const addPayment = isValid => {
     let viewData = {
       modelType: props.quoteType,
       quote_id: props.quoteRequest.id,
-      plan_id: planDetail.id,
+      plan_id: planDetail.value.id,
       customer_id: props.quoteRequest.customer_id,
       collection_amount: paymentMethodsForm.collection_amount,
       bank_reference_number: paymentMethodsForm.bank_reference_number,
@@ -1594,7 +1628,7 @@ const getCaptureValidation = computed(() => {
         (paymentRecord.payment_splits[0].payment_method.code==='IP' ||
         paymentRecord.payment_splits[0].payment_method.code==='PDC'
         ) &&
-        paymentRecord.payment_splits[0].payment_status.code===props.paymentStatusEnum.PENDING) {
+        paymentRecord.payment_splits[0].payment_status_id===props.paymentStatusEnum.PENDING) {
         return true;
       } else if(
           paymentRecord.payment_splits[0].payment_status_id===props.paymentStatusEnum.PAID ||
@@ -1639,12 +1673,12 @@ const getPlanName = computed(() => {
   if (props.quoteType === 'Travel') {
     return 'Not Available';
   } 
-  const plan = planDetail;
+  const plan = planDetail.value;
   return (quoteTypesToCheck.includes(props.quoteType) && plan) ? plan.text : 'Not Available';
 });
 
 const providerName = computed(() => {
-  const plan = planDetail;
+  const plan = planDetail.value;
     if (quoteTypesToCheck.includes(props.quoteType) && plan.insurance_provider) {
       return plan ? plan.insurance_provider.text : 'Not Available';
     } else {
@@ -1653,7 +1687,7 @@ const providerName = computed(() => {
 });
 
 const providerId = computed(() => {
-  const plan = planDetail;  
+  const plan = planDetail.value;  
   if (plan && plan.insurance_provider) {
     return plan.insurance_provider.id;
   } else if (plan && plan.provider_id) {
@@ -1668,6 +1702,28 @@ const providerId = computed(() => {
 watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
   calculateDueDates();
 });
+
+watch(() => props.quoteRequest, (newValue, oldValue) => {
+  //refresh premium
+  if (props.quoteType === 'Health') {
+    initialAmount = props.eCommercePrice;
+  } else {
+    initialAmount = quoteTypesToCheck.includes(props.quoteType)
+      ? props.quoteRequest.premium
+      : props.quoteRequest.price_with_vat;
+  }
+  totalPrice.value = initialAmount;
+  //refresh plan
+  if (quoteTypesToCheck.includes(props.quoteType)) {
+    initalPlanDetails = props.quoteRequest.plan;
+  } else if(props.quoteType=='Business' || props.quoteType=='Home'){
+    initalPlanDetails = props.quoteRequest.insurance_provider_details;
+  } else {
+    initalPlanDetails = props.quoteRequest.insurance_provider;
+  }
+  planDetail.value = initalPlanDetails;
+});
+
 </script>
 
 <template>
@@ -1809,14 +1865,16 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
           </thead>         
           
           <tbody class="vue3-easy-data-table__body">
-             <tr v-for="(item,index) in payments" :key="item.code">  
-              <template v-if="index===0">
+
+            <template  v-for="(item,index) in payments" :key="item.code">
+             <tr>  
+              
               <td class="text-center">
                 <span
                   class="expand-pointer"
-                  @click="isExpandedSplitPayments=!isExpandedSplitPayments"
+                  @click="isExpandedSplitPayments[index]=!isExpandedSplitPayments[index]"
                 >
-                  {{ isExpandedSplitPayments ? '&and;' : '&or;' }}
+                  {{ isExpandedSplitPayments[index] ? '&and;' : '&or;' }}
                 </span>
               </td>
               <td>{{ item.code }}</td>             
@@ -1845,11 +1903,10 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
                       </x-button>
                     </template>               
             </div>
-              </td>
-            </template>           
+              </td>                   
             </tr>
-            <template v-if="isExpandedSplitPayments">
-            <tr v-for="splitPayment in payments[0].payment_splits" :key="splitPayment.id">
+            <template v-if="isExpandedSplitPayments[index]">
+            <tr v-for="splitPayment in item.payment_splits" :key="splitPayment.id">
               <td class="text-center">{{ splitPayment.sr_no }}</td>
               <td></td>
               <td>{{ formatDate(splitPayment.due_date) }}</td>
@@ -1862,11 +1919,14 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
               <td>{{ formatString(splitPayment.payment_status.text) }}</td>
               <td>{{ splitPayment.payment_allocation_status !== null ? formatString(splitPayment.payment_allocation_status) : ''}}</td>
               <td>
-                <x-button size="xs" color="primary" @click="editPaymentModal(payments[0],splitPayment.id,splitPayment.sr_no,0)" outlined >View</x-button>                
+                <x-button size="xs" color="primary" @click="editPaymentModal(item,splitPayment.id,splitPayment.sr_no,0)" outlined >View</x-button>                
                 <x-button v-if="splitPayment.payment_method.code=='CC'" class="ml-2" size="xs" color="emerald"  @click.prevent="generateCCLink(splitPayment.code,splitPayment.sr_no,splitPayment.payment_status_id);" outlined >Copy Payment Link</x-button>                
               </td>
             </tr>
           </template>
+
+        </template>
+
           </tbody>
         </table>
         <div v-if="!payments.length>0" data-v-32683533="" class="vue3-easy-data-table__message">No Available Data</div>
@@ -2822,7 +2882,9 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
                 </x-button>
               </div>
               <div v-if="!isApproveClicked && isDeclineClicked" class="mr-4">
-                <x-button size="sm"  type="submit" tabindex="0" class="focus:outline-black" >
+                <x-button size="sm"  type="submit" tabindex="0" class="focus:outline-black" 
+                :loading = "paymentMethodsForm.processing"
+                >
                   Decline
                 </x-button>
               </div>

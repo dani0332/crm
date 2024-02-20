@@ -10,6 +10,7 @@ use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Facades\Capi;
 use App\Facades\Ken;
+use App\Models\CarQuote;
 use App\Models\PersonalQuote;
 use App\Models\PersonalQuoteDetail;
 use App\Repositories\PersonalQuoteRepository;
@@ -198,6 +199,27 @@ class CentralService
         }
     }
 
+    public function updateQuotePayment($quote, $priceWithVat)
+    {
+        info('fn: updateQuotePayment called');
+
+        if ($quote->payments()->count() > 0) {
+            info('fn: updateQuotePayment payment found to be updated for quote uuid: '.$quote->uuid);
+
+            $payment = $quote->payments->first();
+
+            $paymentData = ['total_price' => $priceWithVat];
+
+            if ($priceWithVat > $payment->total_price && in_array($payment->payment_status_id, [PaymentStatusEnum::PAID, PaymentStatusEnum::CAPTURED])) {
+                $paymentData['payment_status_id'] = PaymentStatusEnum::PARTIALLY_PAID;
+            }
+
+            $payment->update($paymentData);
+
+            info('fn: updateQuotePayment payment updated for quote uuid: '.$quote->uuid);
+        }
+    }
+
     /**
      * @return true
      */
@@ -218,20 +240,9 @@ class CentralService
 
             $quote = $repository::where('code', $code)->firstOrFail();
 
-            if ($quote->payments()->count() > 0) {
-
-                $payment = $quote->payments->first();
-
-                $paymentData = ['total_price' => $data->price_with_vat];
-
-                if ($data->price_with_vat > $payment->total_price && $payment->payment_status_id == PaymentStatusEnum::PAID) {
-                    $paymentData['payment_status_id'] = PaymentStatusEnum::PARTIALLY_PAID;
-                }
-
-                $payment->update($paymentData);
-            }
-
             $quote->update($data->toArray());
+
+            $this->updateQuotePayment($quote, $data->price_with_vat);
 
             return true;
 
@@ -240,6 +251,8 @@ class CentralService
 
     public function updateSelectedPlan($quoteType, $uuid, $data)
     {
+        $response = [];
+
         //switch for quote type
         switch (ucfirst($quoteType)) {
             case QuoteTypes::CAR->value:
@@ -248,22 +261,30 @@ class CentralService
                     'planId' => intval($data->plan_id),
                     'quoteTypeId' => QuoteTypeId::Car,
                     'quoteUID' => $uuid,
-                    'callSource' => LeadSourceEnum::IMCRM,
+                    'callSource' => strtolower(LeadSourceEnum::IMCRM),
                 ];
 
-                return Ken::request($endpoint, 'post', $data);
+                $response = Ken::request($endpoint, 'post', $data);
+                info('car plan update response: '.json_encode($response));
+
+                if (isset($response['planProcessValue']['totalPremium'])) {
+                    $quote = CarQuote::where('uuid', $uuid)->first();
+                    $this->updateQuotePayment($quote, $response['planProcessValue']['totalPremium']);
+                }
                 break;
             case QuoteTypes::TRAVEL->value:
                 $endpoint = '/process-travel-quote-plan';
                 $data = [
                     'quoteTypeId' => QuoteTypeId::Car,
                     'quoteUID' => $uuid,
+                    'callSource' => strtolower(LeadSourceEnum::IMCRM),
                     'plans' => [
                         ['id' => intval($data->plan_id), 'addonOptionIds' => []],
                     ],
                 ];
 
-                return Ken::request($endpoint, 'post', $data);
+                $response = Ken::request($endpoint, 'post', $data);
+                info('travel plan update response: '.json_encode($response));
                 break;
             case QuoteTypes::HEALTH->value:
                 $endpoint = '/api/v1-process-booking';
@@ -273,17 +294,16 @@ class CentralService
                     'addonOptionIds' => [],
                     'healthPlanCoPaymentId' => intval($data->copay_id),
                     'quoteUID' => $uuid,
-                    'callSource' => LeadSourceEnum::IMCRM,
+                    'callSource' => strtolower(LeadSourceEnum::IMCRM),
                 ];
 
-                return Capi::request($endpoint, 'post', $data);
+                $response = Capi::request($endpoint, 'post', $data);
+                info('health plan update response: '.json_encode($response));
+
                 break;
         }
 
-        //info('fn: updateSelectedPlan quoteType: '.$quoteType.' uuid: '.$uuid.' data: '.json_encode($data));
-
-        //dd(json_encode($response));
-        //return $response;
+        return $response;
     }
 
 }

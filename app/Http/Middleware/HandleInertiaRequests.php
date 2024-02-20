@@ -11,6 +11,7 @@ use App\Enums\QuoteIssuanceStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\RolesEnum;
 use App\Enums\TravelQuoteEnum;
+use App\Services\UserService;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 use Spatie\Navigation\Navigation;
@@ -73,6 +74,7 @@ class HandleInertiaRequests extends Middleware
             'pusherKey' => config('constants.VITE_PUSHER_APP_KEY'),
             'epLink' => config('constants.AFIA_WEBSITE_DOMAIN'),
             'vat' => ApplicationStorageEnums::VAT,
+            'im_logo' => getIMLogo(),
         ];
     }
 
@@ -146,7 +148,7 @@ class HandleInertiaRequests extends Middleware
                     ->addIf(auth()->user()->can(PermissionsEnum::LEAD_DISTRIBUTION_REPORT_VIEW), 'Lead Distribution', route('lead-distribution-report-view', [], false), fn ($s) => $s->attributes(['icon' => 'bar']))
                     ->addIf(auth()->user()->can(PermissionsEnum::UtmLeadsSalesReport), 'UTM Report', route('utm-leads-sales-report', [], false), fn ($s) => $s->attributes(['icon' => 'bar']))
                     ->addIf(auth()->user()->can(PermissionsEnum::RENEWAL_BATCH_REPORT), 'Daily Renewal Report', route('renewal-batch-report', [], false), fn ($s) => $s->attributes(['icon' => 'bar']))
-                    ->addIf(auth()->user()->can(PermissionsEnum::RENEWAL_BATCH_REPORT), 'Lead List Report', route('lead-list-report', [], false), fn ($s) => $s->attributes(['icon' => 'bar']));
+                    ->addIf(app(UserService::class)->isAllowedToShowLeadListReport(), 'Lead List Report', route('lead-list-report', [], false), fn ($s) => $s->attributes(['icon' => 'bar']));
             });
         }
 
@@ -199,7 +201,9 @@ class HandleInertiaRequests extends Middleware
                         ),
                 )
                 ->addIf(
-                    auth()->user()->can(PermissionsEnum::HealthQuotesList),
+                    auth()->user()->hasAnyPermission(PermissionsEnum::HealthQuotesList,
+                        PermissionsEnum::HEALTH_QUOTES_MANAGER_ACCESS,
+                        PermissionsEnum::HEALTH_QUOTES_ACCESS),
                     'Health Quotes',
                     '/quotes/health',
                     fn ($s) => $s->attributes(['icon' => 'health'])

@@ -6,8 +6,8 @@ use App\Factories\SagePayloadFactory;
 use App\Models\Customer;
 use App\Models\Lookup;
 use App\Models\User;
-use Illuminate\Support\Facades\Auth;
 use App\Traits\SageLoggable;
+use Illuminate\Support\Facades\Auth;
 
 class SageApiService
 {
@@ -111,14 +111,15 @@ class SageApiService
                 }
             }
         }
+
         return $sageCustomerNumber;
     }
 
     public function postToSage300($endPoint, $payLoad, $verb = 'POST')
     {
         // Create the payload data for the POST request
-        $sageEndPoint = $this->sageRequestUrl . $endPoint;
-        info('endpoint-----------' . json_encode($sageEndPoint));
+        $sageEndPoint = $this->sageRequestUrl.$endPoint;
+        //Http facade not giving expected response,so have to use curl
         $ch = curl_init($sageEndPoint);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 

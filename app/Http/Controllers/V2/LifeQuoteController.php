@@ -34,6 +34,7 @@ use App\Services\CentralService;
 use App\Services\LookupService;
 use App\Services\QuoteDocumentService;
 use App\Traits\GenericQueriesAllLobs;
+use App\Services\SplitPaymentService;
 use Illuminate\Http\Request;
 
 class LifeQuoteController extends Controller
@@ -79,7 +80,7 @@ class LifeQuoteController extends Controller
     {
         $response = LifeQuoteRepository::create($request->validated());
 
-        if (! empty($response->errors) || ! empty($response->msg)) {
+        if (!empty($response->errors) || !empty($response->msg)) {
             vAbort($response->msg);
         }
 
@@ -184,14 +185,15 @@ class LifeQuoteController extends Controller
             'permissions' => [
                 'isQuoteDocumentEnabled' => $isQuoteDocumentEnabled,
             ],
-            
+
             'enums' => [
                 'quoteStatusEnum' => QuoteStatusEnum::asArray(),
                 'paymentStatusEnum' => PaymentStatusEnum::asArray(),
                 'travelQuoteEnum' => TravelQuoteEnum::asArray(),
             ],
             'policyIssuanceStatus' => $policyIssuanceStatus,
-            'bPDetails' => $bPDetails
+            'bPDetails' => $bPDetails,
+            'isNewPaymentStructure' => app(SplitPaymentService::class)->isNewPaymentStructure($quote->payments),
         ]);
     }
 

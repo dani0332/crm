@@ -32,6 +32,7 @@ use App\Models\PolicyIssuanceStatus;
 use App\Models\QuoteType;
 use App\Services\QuoteDocumentService;
 use App\Traits\GenericQueriesAllLobs;
+use App\Services\SplitPaymentService;
 
 class PetQuoteController extends Controller
 {
@@ -76,7 +77,7 @@ class PetQuoteController extends Controller
     {
         $response = PetQuoteRepository::create($request->validated());
 
-        if (! empty($response->errors) || ! empty($response->msg)) {
+        if (!empty($response->errors) || !empty($response->msg)) {
             vAbort($response->msg);
         }
 
@@ -125,7 +126,7 @@ class PetQuoteController extends Controller
         $quoteDocuments = (new QuoteDocumentService())->getQuoteDocuments(QuoteTypes::PET->value, $quote->id);
         $bPDetails = $this->bookPolicyPayload($quote, QuoteTypes::PET->value, $quote->payments, $quoteDocuments);
 
-        
+
         return inertia('PetQuote/Show', [
             'quoteType' => QuoteTypes::PET,
             'quote' => $quote,
@@ -164,7 +165,8 @@ class PetQuoteController extends Controller
             ],
             'policyIssuanceStatus' => $policyIssuanceStatus,
             'bPDetails' => $bPDetails,
-            'payments' => $quote->payments->toArray() ?? []
+            'payments' => $quote->payments->toArray() ?? [],
+            'isNewPaymentStructure' => app(SplitPaymentService::class)->isNewPaymentStructure($quote->payments),
         ]);
     }
 

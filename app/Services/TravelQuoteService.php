@@ -903,14 +903,36 @@ class TravelQuoteService extends BaseService
 
     public function updateManualPlansBulk($request)
     {
-        // api not available for now
+        if ($request->planIds && isset($request->toggle) && isset($request->quote_uuid)) {
+            $isDisabled = $request->toggle;
+            $plansArray = [];
+            foreach ($request->planIds as $planId) {
+                $apiArray = [
+                    'planId' => (int) $planId,
+                    'isDisabled' => filter_var($isDisabled, FILTER_VALIDATE_BOOLEAN),
+                ];
+                array_push($plansArray, $apiArray);
+            }
+
+            $dataArray = [
+                'quoteUID' => $request->quote_uuid,
+                'plans' => $plansArray,
+            ];
+            $response = Ken::request('/save-manual-travel-quote-plan', 'post', $dataArray);
+
+            return $response;
+        }
 
     }
+
     public function exportPlansPdf($quoteType, $data, $quotePlans = null)
     {
+
         $planIds = $data['plan_ids'];
         $addons = (isset($data['addons'])) ? $data['addons'] : null;
 
+        $selectedPlanIds = isset($data['selectedPlanIds']) ? $data['selectedPlanIds'] : [];
+        $hasAdultAndSeniorMember = isset($data['hasAdultAndSeniorMember']) ? $data['hasAdultAndSeniorMember'] : false;
         $quotePlans = $this->getQuotePlans($data['quote_uuid']);
         if (! isset($quotePlans->quotes->plans)) {
             return ['error' => 'Quote plans not available'];
@@ -924,7 +946,7 @@ class TravelQuoteService extends BaseService
             $q->select('id', 'email', 'mobile_no', 'name', 'landline_no', 'profile_photo_path');
         }, 'customer']);
         $pdf = PDF::setOption(['isHtml5ParserEnabled' => true, 'dpi' => 150])
-            ->loadView('pdf.travel_quote_plans', compact('quotePlans', 'planIds', 'quote', 'addons', 'providers'));
+            ->loadView('pdf.travel_quote_plans', compact('quotePlans', 'planIds', 'quote', 'addons', 'providers', 'selectedPlanIds', 'hasAdultAndSeniorMember'));
 
         // generate pdf with file name e.g. InsuranceMarket.ae™ Motor Insurance Comparison for Rahul.pdf
         $pdfName = 'InsuranceMarket.ae™ Travel Insurance Comparison for '.$quote->first_name.' '.$quote->last_name.'.pdf';

@@ -22,8 +22,17 @@ class SplitPaymentApproveRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'modelType' => 'required',
-            'quote_id' => 'required|numeric',
+            'collection_amount' => 'array',
+            'collection_amount.*' => 'nullable|numeric',
+            'customer_id' => 'required|integer',
+            'declined_custom_reason' => 'nullable|string',
+            'declined_reason' => 'nullable|string',
+            'is_approved' => 'required|boolean',
+            'is_capture' => 'required|boolean',
+            'is_declined' => 'required|boolean',
+            'modelType' => 'required|string',
+            'plan_id' => 'required|integer',
+            'quote_id' => 'required|integer',
         ];
     }
 }

@@ -76,7 +76,7 @@ const tableHeader = [
   { text: 'Ref-ID', value: 'code' },
   { text: 'FIRST NAME', value: 'first_name' },
   { text: 'LAST NAME', value: 'last_name' },
-  { text: 'Company Name', value: 'company_name' },
+  { text: 'Company Name', value: 'business_company_name' },
   { text: 'TRANSAPP CODE', value: 'transapp_code' },
   { text: 'SOURCE', value: 'source' },
   { text: 'POLICY NUMBER', value: 'policy_number' },

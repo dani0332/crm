@@ -8,6 +8,7 @@ use App\Traits\FilterCriteria;
 use App\Traits\QuoteModelTrait;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
@@ -110,7 +111,7 @@ class HealthQuote extends Model implements AuditableContract
 
     public function getFullNameAttribute()
     {
-        return $this->first_name.' '.$this->last_name;
+        return $this->first_name . ' ' . $this->last_name;
     }
 
     public function documents()
@@ -160,5 +161,10 @@ class HealthQuote extends Model implements AuditableContract
     public function sageLog()
     {
         return $this->morphMany(SageApiLog::class, 'section');
+    }
+
+    public function duplicateInquiryLog(): MorphMany
+    {
+        return $this->morphMany(DuplicateInquiryLog::class, 'loggable');
     }
 }

@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\GenericRequestEnum;
 use App\Enums\HealthTeamType;
 use App\Enums\Kyc;
+use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
@@ -24,6 +25,7 @@ use App\Models\QuoteStatusLog;
 use App\Models\QuoteType;
 use App\Models\User;
 use App\Traits\GenericQueriesAllLobs;
+use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -31,7 +33,7 @@ use Illuminate\Support\Facades\DB;
 
 class CRUDService extends BaseService
 {
-    use GenericQueriesAllLobs;
+    use GenericQueriesAllLobs, TeamHierarchyTrait;
 
     protected $healthQuoteService;
     protected $carQuoteService;
@@ -344,6 +346,20 @@ class CRUDService extends BaseService
                 }
             }
 
+            // ========= assign renewal batch to HEALTH LOB leads upon transaction approved =========
+
+            if (strtolower($request->modelType) == strtolower(quoteTypeCode::Health) && $request->leadStatus == QuoteStatusEnum::TransactionApproved) {
+                $this->healthQuoteService->assignRenewalBatch($entity);
+                $this->updatePaymentStatus($entity);
+            }
+
+            // ========= END =========
+
+            if (strtolower($request->modelType) == strtolower(quoteTypeCode::Car)
+            && $request->leadStatus == QuoteStatusEnum::TransactionApproved) {
+                $this->updatePaymentStatus($entity);
+            }
+
             QuoteStatusLog::create([
                 'quote_type_id' => QuoteTypeId::Car,
                 'quote_request_id' => $entity->id,
@@ -363,11 +379,22 @@ class CRUDService extends BaseService
     {
         $query = User::join('model_has_roles as mr', 'mr.model_id', '=', 'users.id')
             ->join('roles as r', 'r.id', '=', 'mr.role_id')
+            ->join('user_team as ut', 'ut.user_id', '=', 'users.id')
             ->select('users.id', DB::raw("CONCAT(users.name,' - ',r.name) AS name"));
         if (strtolower($modelType) == strtolower(quoteTypeCode::Car)) {
             $query->whereIn('r.name', [RolesEnum::CarAdvisor, RolesEnum::CarDeputyManager]);
         } elseif (strtolower($modelType) == strtolower(quoteTypeCode::Health)) {
-            $query->whereIn('r.name', [RolesEnum::RMAdvisor, RolesEnum::EBPAdvisor, RolesEnum::HealthRenewalAdvisor, RolesEnum::HealthNewBusinessAdvisor]);
+
+            if ((auth()->user()->hasAnyRole([RolesEnum::CarManager, RolesEnum::CarAdvisor])) &&
+                auth()->user()->hasAnyPermission(PermissionsEnum::HEALTH_QUOTES_ACCESS,
+                    PermissionsEnum::HEALTH_QUOTES_MANAGER_ACCESS)
+            ) {
+                $authUserTeamsId = $this->getUserTeams(auth()->id())->pluck('id')->toArray();
+                $query->whereIn('ut.team_id', $authUserTeamsId);
+                $query->whereIn('r.name', [RolesEnum::CarAdvisor, RolesEnum::CarDeputyManager]);
+            } else {
+                $query->whereIn('r.name', [RolesEnum::RMAdvisor, RolesEnum::EBPAdvisor, RolesEnum::HealthRenewalAdvisor, RolesEnum::HealthNewBusinessAdvisor]);
+            }
         } elseif (strtolower($modelType) == strtolower(quoteTypeCode::Business)) {
             $query->whereIn('r.name', [RolesEnum::CorpLineAdvisor, RolesEnum::CorpLineRenewalAdvisor, RolesEnum::CorpLineNewBusinessAdvisor, RolesEnum::GMRenewalAdvisor, RolesEnum::GMNewBusinessAdvisor]);
         } else {
@@ -787,5 +814,15 @@ class CRUDService extends BaseService
                 }
             }
         }
+    }
+
+    public function getInquiryLogs($modelType, $uuid)
+    {
+        $model = 'App\\Models\\'.$modelType.'Quote';
+        $quote = $model::where('uuid', $uuid)->with('duplicateInquiryLog')
+            ->whereHas('duplicateInquiryLog')
+            ->first();
+
+        return optional($quote)->duplicateInquiryLog;
     }
 }

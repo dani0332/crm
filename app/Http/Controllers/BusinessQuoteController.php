@@ -29,6 +29,7 @@ use App\Services\BusinessQuoteService;
 use App\Services\CRUDService;
 use App\Services\DropdownSourceService;
 use App\Services\LookupService;
+use App\Services\SplitPaymentService;
 use App\Traits\RolePermissionConditions;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -159,7 +160,8 @@ class BusinessQuoteController extends Controller
         $payments = $paymentEntityModel->payments;
         $paymentMethods = $this->lookupService->getPaymentMethods();
 
-        if (auth()->user()->hasRole(RolesEnum::BetaUser)) {
+        $isNewPaymentStructure = app(SplitPaymentService::class)->isNewPaymentStructure($payments);
+        if ($isNewPaymentStructure) { 
             $filteredPaymentMethods = $this->lookupService->getPaymentMethods();
         } else {
             $filteredPaymentMethods = $paymentMethods->filter(function ($paymentMethod) {
@@ -283,6 +285,7 @@ class BusinessQuoteController extends Controller
             'canAddBatchNumber' => auth()->user()->hasRole(RolesEnum::CorplineManager),
             'paymentTooltipEnum' => PaymentTooltip::asArray(),
             'paymentStatusEnum' => PaymentStatusEnum::asArray(),
+            'isNewPaymentStructure' => $isNewPaymentStructure,
         ]);
     }
 

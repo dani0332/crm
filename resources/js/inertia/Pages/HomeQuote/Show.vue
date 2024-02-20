@@ -2,7 +2,7 @@
 import MemberDetails from '../../Components/MemberDetails.vue';
 import QuoteDocuments from '@/inertia/Pages/PersonalQuote/Partials/QuoteDocuments.vue';
 import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue';
-import PaymentTableNew from '../../Components/PaymentTableNew.vue'; 
+import PaymentTableNew from '../../Components/PaymentTableNew.vue';
 
 defineProps({
   quote: Object,
@@ -42,6 +42,7 @@ defineProps({
   enums: Object,
   policyIssuanceStatus: Array,
   bPDetails: Array,
+  isNewPaymentStructure: Boolean,
 });
 
 const page = usePage();
@@ -962,7 +963,7 @@ const linkEntity = () => {
       :quote_type="modelType"
     />
 
-    <customerAdditionalContacts
+    <CustomerAdditionalContacts
       quoteType="Home"
       :customerId="quote.customer_id"
       :quoteId="quote.id"
@@ -1056,8 +1057,8 @@ const linkEntity = () => {
       :quoteType="quoteType"
     />
 
-    <PaymentTableNew 
-			v-if="hasRole(rolesEnum.BetaUser)"
+    <PaymentTableNew
+			v-if="isNewPaymentStructure"
 			:quoteType="quoteType"
 			:payments="payments"
 			:paymentDocument="documentTypes.filter(item => item.code === 'HOMPD' || item.code === 'HOMPDR' || item.code === 'HOMDPDR')"
@@ -1236,7 +1237,7 @@ const linkEntity = () => {
           </div>
         </template>
       </x-modal>
-    </div>  
+    </div>
 
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div>

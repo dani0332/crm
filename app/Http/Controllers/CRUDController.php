@@ -55,7 +55,7 @@ use App\Repositories\EmbeddedProductRepository;
 use App\Repositories\InsuranceProviderRepository;
 use App\Repositories\LookupRepository;
 use App\Repositories\NationalityRepository;
-use App\Repositories\PaymentSplitsRepository;
+use App\Repositories\PaymentRepository;
 use App\Repositories\RenewalBatchRepository;
 use App\Repositories\UserRepository;
 use App\Services\ActivitiesService;
@@ -79,6 +79,7 @@ use App\Services\NotesForCustomerService;
 use App\Services\PetQuoteService;
 use App\Services\QuoteDocumentService;
 use App\Services\SendEmailCustomerService;
+use App\Services\SplitPaymentService;
 use App\Services\TeamService;
 use App\Services\TierService;
 use App\Services\TravelQuoteService;
@@ -116,7 +117,6 @@ class CRUDController extends Controller
     protected $quoteDocumentService;
     protected $emailDataService;
     protected $allocationService;
-    protected $paymentSplitsRepository;
 
     use GenericQueriesAllLobs;
 
@@ -144,7 +144,6 @@ class CRUDController extends Controller
         QuoteDocumentService $quoteDocumentService,
         EmailDataService $emailDataService,
         AllocationService $allocationService,
-        PaymentSplitsRepository $paymentSplitsRepository,
     ) {
         $this->genericModel = new GenericModel();
         $this->healthQuoteService = $healthService;
@@ -171,7 +170,6 @@ class CRUDController extends Controller
         $this->allocationService = $allocationService;
         $this->setModelType($request);
         $this->fillModelByModelType(ucwords($this->genericModel->modelType), $request);
-        $this->paymentSplitsRepository = $paymentSplitsRepository;
     }
 
     /**
@@ -242,6 +240,8 @@ class CRUDController extends Controller
         $gridData = $this->crudService->getGridData($this->genericModel, $request);
         // Getting the data for the advisor dropdown based on the model type
         $advisors = $this->crudService->getAdvisorsByModelType($this->genericModel->modelType);
+        // Get user teams
+        $teams = $this->crudService->getUserTeams(Auth::user()->id);
         // Checking if the loggedIn user has Manager or Deputy Role
         $isManagerORDeputy = Auth::user()->isManagerOrDeputy();
         $isLeadPool = Auth::user()->isLeadPool();
@@ -278,6 +278,7 @@ class CRUDController extends Controller
                 'quotes' => $gridData,
                 'leadStatuses' => $quote_status,
                 'advisors' => $advisors,
+                'teams' => $teams,
                 'userMaxCap' => $userMaxCap,
                 'todayAutoCount' => $todayAutoCount,
                 'todayManualCount' => $todayManualCount,
@@ -543,7 +544,8 @@ class CRUDController extends Controller
             $selectedLostReasonId = $this->crudService->getSelectedLostReason($this->genericModel->modelType, $record->id);
         }
         $advisors = [];
-        if (strtolower($this->genericModel->modelType) == strtolower(quoteTypeCode::Health) && ($record->health_team_type == HealthTeamType::EBP ||
+        if (! (auth()->user()->hasAnyRole([RolesEnum::CarManager, RolesEnum::CarAdvisor])) &&
+            strtolower($this->genericModel->modelType) == strtolower(quoteTypeCode::Health) && ($record->health_team_type == HealthTeamType::EBP ||
             $record->health_team_type == HealthTeamType::RM_NB || $record->health_team_type == HealthTeamType::RM_SPEED)) {
             $advisors = $this->crudService->getEBPAndRMAdvisors();
         } elseif (strtolower($this->genericModel->modelType) == 'business') {
@@ -591,7 +593,7 @@ class CRUDController extends Controller
         $tiers = $this->lookupService->getTierR();
 
         $access = $this->carQuoteService->updatedAccessAgainstPaymentStatus($paymentEntityModel, $record);
-
+        $isNewPaymentStructure = app(SplitPaymentService::class)->isNewPaymentStructure($payments);
         if ($this->genericModel->modelType == quoteTypeCode::Car) { // Car plans to display on detail view
             $quote = $record;
             $isCommercialVehicles = false;
@@ -704,7 +706,7 @@ class CRUDController extends Controller
                 'paymentEntityModel', 'payments', 'paymentMethods', 'isQuoteDocumentEnabled', 'quoteDocuments', 'displaySendPolicyButton', 'customerAdditionalContacts', 'lostApproveReasons', 'lostRejectReasons', 'allowQuoteLogAction', 'carLostChangeStatus',
                 'carMakeText', 'carModelText', 'advisor', 'tiers', 'daysAfterCapturedPayment', 'access', 'carPlanFeaturesCodeEnum', 'carPlanExclusionsCodeEnum', 'documentTypes', 'planURL', 'storageUrl', 'kyoEndPoint',
                 'carPlanTypeEnum', 'UBORelations', 'UBOsDetails', 'emirates', 'customerTypeEnum', 'memberRelations', 'membersDetails', 'industryType', 'nationalities',
-                'isCommercialVehicles', 'carInsuranceProviders', 'policyIssuanceStatus', 'bPDetails', 'documentTypesByCategory', 'paymentTooltipEnum'
+                'isCommercialVehicles', 'carInsuranceProviders', 'policyIssuanceStatus', 'bPDetails', 'documentTypesByCategory', 'paymentTooltipEnum','isNewPaymentStructure',
             ]));
         }
 
@@ -731,7 +733,7 @@ class CRUDController extends Controller
                 'isNewBusinessUser', 'ecomTravelInsuranceQuoteUrl', 'quoteType', 'autoAllocationDisabled',
                 'paymentEntityModel', 'payments', 'mainPayment', 'paymentMethods', 'insuranceProviders', 'emailStatuses',
                 'isQuoteDocumentEnabled', 'quoteDocuments', 'displaySendPolicyButton', 'customerAdditionalContacts',
-                'quoteTypeId', 'tiers', 'access',
+                'quoteTypeId', 'tiers', 'access', 'isNewPaymentStructure',
             ]));
         }
 
@@ -760,7 +762,9 @@ class CRUDController extends Controller
                 $payment->approved_button = $payment->payment_status_id == PaymentStatusEnum::PAID;
             });
 
-            if (auth()->user()->hasRole(RolesEnum::BetaUser)) {
+
+            $isNewPaymentStructure = app(SplitPaymentService::class)->isNewPaymentStructure($payments);
+            if ($isNewPaymentStructure) {
                 $filteredPaymentMethods = $this->lookupService->getPaymentMethods();
             } else {
                 $filteredPaymentMethods = $paymentMethods->filter(function ($paymentMethod) {
@@ -785,7 +789,7 @@ class CRUDController extends Controller
 
             $documentTypes = $this->quoteDocumentService->getQuoteDocumentsForUpload(QuoteTypeId::Home);
             $policyIssuanceStatus = PolicyIssuanceStatus::active()->get();
-            
+
             $quoteDocument = (new QuoteDocumentService())->getQuoteDocuments(QuoteTypes::HOME->value, $record->id);
             $bPDetails = $this->bookPolicyPayload($record, QuoteTypes::HOME->value, $payments, $quoteDocument);
 
@@ -840,7 +844,8 @@ class CRUDController extends Controller
                     'quoteStatusEnum' => QuoteStatusEnum::asArray(),
                 ],
                 'policyIssuanceStatus' => $policyIssuanceStatus,
-                'bPDetails' => $bPDetails
+                'bPDetails' => $bPDetails,
+                'isNewPaymentStructure' => $isNewPaymentStructure,
             ]);
         }
 
@@ -896,8 +901,8 @@ class CRUDController extends Controller
 
                 $payment->approved_button = $payment->payment_status_id == PaymentStatusEnum::PAID;
             });
-
-            if (auth()->user()->hasRole(RolesEnum::BetaUser)) {
+            $isNewPaymentStructure = app(SplitPaymentService::class)->isNewPaymentStructure($payments);
+            if ($isNewPaymentStructure) {
                 $paymentMethods = $this->lookupService->getPaymentMethods();
             } else {
                 $paymentMethods = $paymentMethods->filter(function ($paymentMethod) {
@@ -925,7 +930,9 @@ class CRUDController extends Controller
             $policyIssuanceStatus = PolicyIssuanceStatus::active()->get();
             $bPDetails = $this->bookPolicyPayload($record, $quoteType, $payments, $quoteDocuments);
 
-        
+            // Get user teams
+            $teams = $this->crudService->getUserTeams(Auth::user()->id);
+
             return inertia('HealthQuote/Show', [
                 'paymentLink' => $paymentLink,
                 'quote' => $record,
@@ -943,6 +950,7 @@ class CRUDController extends Controller
                 'nationalities' => $nationalities,
                 'emirates' => $emirates,
                 'advisors' => $advisors,
+                'teams' => $teams,
                 'quoteDocuments' => array_values($quoteDocuments->toArray()),
                 'documentTypes' => $documentTypes,
                 'cdnPath' => $cdnPath,
@@ -977,7 +985,7 @@ class CRUDController extends Controller
                     'edit_payments' => auth()->user()->can(PermissionsEnum::PaymentsEdit),
                     'create_payments' => auth()->user()->can(PermissionsEnum::PaymentsCreate) && $paymentEntityModel->plan && !auth()->user()->hasRole(RolesEnum::PA),
                     'isPA' => auth()->user()->hasRole(RolesEnum::PA),
-                    'isAdvisor' => auth()->user()->hasRole(RolesEnum::EBPAdvisor) || auth()->user()->hasRole(RolesEnum::HealthAdvisor) || auth()->user()->hasRole(RolesEnum::RMAdvisor),
+                    'isAdvisor' => auth()->user()->hasRole(RolesEnum::EBPAdvisor) || auth()->user()->hasRole(RolesEnum::HealthAdvisor) || auth()->user()->hasRole(RolesEnum::RMAdvisor) || auth()->user()->hasRole(RolesEnum::CarAdvisor),
                 ],
                 'customerTypeEnum' => CustomerTypeEnum::asArray(),
                 'industryType' => $industryType,
@@ -991,6 +999,7 @@ class CRUDController extends Controller
                        'policyIssuanceStatus' => $policyIssuanceStatus,
             'bPDetails' => $bPDetails,
             'quoteStatusEnum' => QuoteStatusEnum::asArray(),
+                'isNewPaymentStructure' => $isNewPaymentStructure,
             ]);
         } else {
             return view('shared.show', compact([
@@ -1204,8 +1213,8 @@ class CRUDController extends Controller
         if ($modelType == null) {
             $modelType = $request->get('modelType');
         }
-        $ignoreModelTypes = ['Bike', 'Cycle', 'Yacht'];
-        if (!in_array($modelType, $ignoreModelTypes) && $modelType != null) {
+        $ignoreModelTypes = [quoteTypeCode::Bike, quoteTypeCode::Cycle, quoteTypeCode::Yacht];
+        if (! in_array($modelType, $ignoreModelTypes) && $modelType != null) {
             $quoteTypes = 'Health,Car,Travel,Life,Home,Business,Pet';
             $serviceType = str_contains($quoteTypes, ucwords($modelType)) ? strtolower($modelType) . 'QuoteService' : lcfirst(ucwords($modelType)) . 'Service';
             $this->genericModel->properties = $this->{$serviceType}->fillModelProperties();
@@ -1499,7 +1508,8 @@ class CRUDController extends Controller
     public function loadMoreRecords(Request $request)
     {
         if ($request->has('modelType') && $request->modelType && $request->status) {
-            $results = getDataAgainstEveryStatus($request->modelType, $request);
+            // $results = getDataAgainstEveryStatus($request->modelType, $request);
+            $results = getDataAgainstStatus($request->modelType, $request->status);
 
             // and newUi is true
             if (in_array($request->modelType, [quoteTypeCode::Health, quoteTypeCode::Business, quoteTypeCode::Travel, quoteTypeCode::Home, quoteTypeCode::Life]) && in_array($request->modelType, newUi())) {
@@ -1733,66 +1743,11 @@ class CRUDController extends Controller
         if (!$quoteModel) {
             return response()->json(['success' => false]);
         }
-        if (auth()->user()->hasRole(RolesEnum::BetaUser)) {
-
+        if ($request->new_payment_structure) {
             if (! (auth()->user()->can(PermissionsEnum::PaymentsCreate))) {
                 return;
             }
-
-            $masterPaymentStatus = PaymentStatusEnum::NEW;
-            if ($request->payment_methods == PaymentMethodsEnum::CreditApproval) {
-                $masterPaymentStatus = PaymentStatusEnum::CREDIT_APPROVED;
-            }
-            $paymentInformation = [
-                'total_price' => $request->total_price,
-                'notes' => !empty($request->notes) ? $request->notes : null,
-                'custom_reason' => !empty($request->custom_reason) ? $request->custom_reason : null,
-                'discount_reason' => $request->discount_reason,
-                'discount_custom_reason' => $request->discount_custom_reason,
-                'discount_type' => $request->discount,
-                'frequency' => $request->frequency,
-                'credit_approval' => $request->credit_approval,
-                'total_payments' => $request->payment_no,
-                'collection_type' => $request->collection_type,
-                'captured_amount' => 0,
-                'total_amount' => $request->total_amount, //amount after discount
-                'collection_date' => $request->collection_date,
-                'discount_value' => $request->discount_value,
-                'payment_methods_code' => $request->payment_methods,
-                'payment_status_id' => $masterPaymentStatus,
-                'plan_id' => !empty($request->plan_id) ? $request->plan_id : null,
-                'insurance_provider_id' => !empty($request->insurance_provider_id) ? $request->insurance_provider_id : null,
-                'created_by' => $request->user()->id,
-                'updated_by' => $request->user()->id,
-            ];
-
-            $count = $quoteModel->payments->count();
-            $paymentInformation['code'] = ($count > 0) ? $quoteModel->code . '-' . $count : $quoteModel->code;
-
-            if ($request->reference) {
-                $paymentInformation['reference'] = $request->reference;
-            }
-            if ($request->payment_methods != PaymentMethodsEnum::CreditCard && $request->payment_methods != PaymentMethodsEnum::InsureNowPayLater) {
-                $paymentInformation['authorized_at'] = now();
-            }
-            $payment = Payment::create($paymentInformation);
-
-            //Add split payments start
-            $this->paymentSplitsRepository->addPaymentSplits($request, $paymentInformation['code']);
-            //Add split payments ends
-
-            $quoteModel->payments()->save($payment);
-            $paymentLog = new PaymentStatusLog([
-                'current_payment_status_id' => PaymentStatusEnum::NEW,
-                'payment_code' => $paymentInformation['code'],
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
-            $paymentLog->save();
-            $quoteModel->quote_status_id = QuoteStatusEnum::PaymentPending;
-            $quoteModel->save();
-
-            return back()->with('success', 'Payment Added');
+            PaymentRepository::createNewPayment($request, $quoteModel);
         } else {
             $paymentInformation = [
                 'collection_type' => $request->collection_type,
@@ -1833,7 +1788,7 @@ class CRUDController extends Controller
     public function splitPaymentUpdate(SplitPaymentUpdateRequest $request)
     {
         if (auth()->user()->can(PermissionsEnum::ApprovePayments)) {
-            $successMessage = $this->paymentSplitsRepository->updatePaymentStatus($request);
+            $successMessage = PaymentRepository::updatePaymentStatus($request);
 
             return back()->with('success', $successMessage);
         } else {
@@ -1844,7 +1799,7 @@ class CRUDController extends Controller
     public function splitPaymentsApprove(SplitPaymentApproveRequest $request)
     {
         if (auth()->user()->can(PermissionsEnum::ApprovePayments)) {
-            $successMessage = $this->paymentSplitsRepository->updateSplitPaymentsApprove($request);
+            $successMessage = PaymentRepository::updateSplitPaymentsApprove($request);
 
             return back()->with('success', $successMessage);
         } else {
@@ -1854,49 +1809,11 @@ class CRUDController extends Controller
 
     public function updatePayment(UpdatePaymentRequest $request)
     {
-
-        if (auth()->user()->hasRole(RolesEnum::BetaUser)) {
+        if ($request->new_payment_structure) {
             if (! (auth()->user()->can(PermissionsEnum::PaymentsEdit))) {
                 return;
             }
-            $paymentInformation = [
-                'total_price' => $request->total_price,
-                'notes' => !empty($request->notes) ? $request->notes : null,
-                'custom_reason' => !empty($request->custom_reason) ? $request->custom_reason : null,
-                'discount_reason' => $request->discount_reason,
-                'discount_custom_reason' => $request->discount_custom_reason,
-                'discount_type' => $request->discount,
-                'frequency' => $request->frequency,
-                'credit_approval' => $request->credit_approval,
-                'total_payments' => $request->payment_no,
-                'collection_type' => $request->collection_type,
-                'total_amount' => $request->total_amount, //amount after discount
-                'collection_date' => $request->collection_date,
-                'discount_value' => $request->discount_value,
-                'payment_methods_code' => $request->payment_methods,
-                'insurance_provider_id' => !empty($request->insurance_provider_id) ? $request->insurance_provider_id : null,
-                'updated_by' => $request->user()->id,
-            ];
-
-            if ($request->reference) {
-                $paymentInformation['reference'] = $request->reference;
-            }
-            $payment = Payment::where('code', $request->paymentCode)->first();
-            if (!$payment) {
-                return back()->with('message', 'Payment record not found');
-            }
-
-            if ($request->payment_methods == PaymentMethodsEnum::CreditApproval) {
-                $paymentInformation['payment_status_id'] = PaymentStatusEnum::CREDIT_APPROVED;
-            } elseif ($payment->payment_status_id == PaymentStatusEnum::CREDIT_APPROVED) {
-                $paymentInformation['payment_status_id'] = PaymentStatusEnum::NEW;
-            }
-            $payment->update($paymentInformation);
-
-            //Update split payments start
-            $this->paymentSplitsRepository->updatePaymentSplits($request);
-
-            return back()->with('success', 'Payment Updated');
+            PaymentRepository::updateNewPayment($request);
         } else {
             $paymentInformation = [
                 'collection_type' => $request->collection_type,

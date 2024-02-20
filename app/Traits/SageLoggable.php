@@ -2,9 +2,9 @@
 
 namespace App\Traits;
 
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Auth;
 use App\Models\SageApiLog;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 trait SageLoggable
 {
@@ -17,7 +17,7 @@ trait SageLoggable
                 [
                     'section_id' => optional($section)->id,
                     'section_type' => optional($section)->getMorphClass(),
-                    'step' => $step, 
+                    'step' => $step,
                 ],
                 [
                     'user_id' => $userId,
@@ -29,7 +29,7 @@ trait SageLoggable
                 ]
             );
         } catch (\Exception $e) {
-            Log::error('Failed to log Sage API call: ' . $e->getMessage());
+            Log::error('Failed to log Sage API call: '.$e->getMessage());
         }
     }
 }

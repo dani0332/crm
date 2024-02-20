@@ -86,11 +86,6 @@ const submitPlanDetailsForm = isValid => {
         title: 'Plan details saved',
         position: 'top',
       });
-
-      //reload for payment task for now, should be handled by props update along with hafeez
-      setTimeout(() => {
-        location.reload();
-      }, 500);
     },
   });
 };

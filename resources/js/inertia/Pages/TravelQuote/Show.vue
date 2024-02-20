@@ -53,6 +53,7 @@ defineProps({
   policyIssuanceStatus: Array,
   record: Object,
   bPDetails: Array,
+  isNewPaymentStructure: Boolean,
 });
 
 const permissionEnum = page.props.permissionsEnum;
@@ -1078,11 +1079,15 @@ const selectedProviderPlan = ref({
 });
 
 const handlePlanSelected = plan => {
-
   selectedProviderPlan.value.id = plan.id
   selectedProviderPlan.value.planName = plan.planName
   selectedProviderPlan.value.providerName = plan.providerName
   selectedProviderPlan.value.premium = plan.premium
+  router.reload({
+    preserveState: true,
+    preserveScroll: true,
+    only: ['payments','quoteRequest'],
+  });
 };
 
 const genderList = [
@@ -2187,7 +2192,7 @@ const genderList = [
     </div>
 
     <PaymentTableNew
-			v-if="hasRole(rolesEnum.BetaUser)"
+			v-if="isNewPaymentStructure"
 			quoteType="Travel"
 			:payments="payments"
 			:paymentDocument="documentTypes.QUOTE.filter(item => item.code === 'TPD' || item.code === 'TPDR' || item.code === 'TDPDR')"

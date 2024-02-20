@@ -28,6 +28,7 @@ use App\Repositories\UserRepository;
 use App\Repositories\YachtQuoteRepository;
 use App\Services\AMLService;
 use App\Services\LookupService;
+use App\Services\SplitPaymentService;
 
 class YachtQuoteController extends Controller
 {
@@ -142,6 +143,7 @@ class YachtQuoteController extends Controller
             'emirates' => $emirates,
             'paymentTooltipEnum' => PaymentTooltip::asArray(),
             'paymentStatusEnum' => PaymentStatusEnum::asArray(),
+            'isNewPaymentStructure' => app(SplitPaymentService::class)->isNewPaymentStructure($quote->payments),
         ]);
     }
 

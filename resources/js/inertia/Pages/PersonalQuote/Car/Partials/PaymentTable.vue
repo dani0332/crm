@@ -27,6 +27,7 @@ const insuranceProviderOptions = computed(() => {
 });
 
 const createPaymentModal = ref(false);
+const isLoading = ref(false);
 
 const rules = {
   isRequired: v => !!v || 'This field is required',
@@ -141,6 +142,7 @@ const addPayment = isValid => {
   if (props.quoteRequest.plan && props.quoteRequest.plan.id) {
     plan_id = props.quoteRequest.plan.id;
   }
+    isLoading.value = true;
   let data = {
     captured_amount: paymentMethodsForm.amount,
     code: paymentMethodsForm.payment_method,
@@ -171,12 +173,14 @@ const addPayment = isValid => {
             position: 'top',
           });
           createPaymentModal.value = false;
+          isLoading.value = false;
         },
         onError: () => {
           notification.error({
             title: 'Payment Update Failed',
             position: 'top',
           });
+          isLoading.value = false;
         },
       });
     return;
@@ -194,12 +198,14 @@ const addPayment = isValid => {
           position: 'top',
         });
         createPaymentModal.value = false;
+        isLoading.value = false;
       },
       onError: () => {
         notification.error({
           title: 'Payment Add Failed',
           position: 'top',
         });
+        isLoading.value = false;
       },
     });
 };
@@ -261,13 +267,9 @@ const providerId = computed(() => {
     <div class="flex justify-between gap-4 items-center mb-4">
       <h3 class="font-semibold text-primary-800 text-lg">Payments</h3>
       <x-button
-        v-if="
-          (can(permissionEnum.PaymentsCreate) &&
-            !can(permissionEnum.ApprovePayments) &&
-            !hasRole(rolesEnum.PA) &&
-            quoteRequest.plan) ||
-          isCommercialVehicles
-        "
+        v-if="(can(permissionEnum.PaymentsCreate) &&
+        !can(permissionEnum.ApprovePayments) &&
+        !hasRole(rolesEnum.PA) && quoteRequest.plan) || isCommercialVehicles"
         size="sm"
         color="orange"
         @click="addPaymentModal"
@@ -437,7 +439,7 @@ const providerId = computed(() => {
               paymentMethodsForm.status == 'edit'
             "
           >
-            <x-button color="primary" type="submit">
+            <x-button color="primary" type="submit" :loading="isLoading">
               {{ paymentMethodsForm.status == 'create' ? 'Create' : 'Update' }}
               Payment
             </x-button>

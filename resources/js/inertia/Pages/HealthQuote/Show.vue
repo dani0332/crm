@@ -19,6 +19,7 @@ defineProps({
   nationalities: Array,
   emirates: Array,
   advisors: Array,
+  teams: Object,
   quoteDocuments: Object,
   documentTypes: Object,
   cdnPath: String,
@@ -56,6 +57,7 @@ defineProps({
   enums: Object,
   policyIssuanceStatus: Array,
   bPDetails: Array,
+  isNewPaymentStructure: Boolean,
 });
 
 const page = usePage();
@@ -173,6 +175,18 @@ const memberCategoryText = memberCategoryId =>
       category => category.id === memberCategoryId,
     )?.text;
   });
+
+
+// const subTeamOptions = computed(() => {
+//     let subteamArray = page.props.teams?.map(team => ({
+//         value: team.name,
+//         label: team.name,
+//     }));
+
+//     subteamArray.push({ value: 'No-Type', label: 'No-Type' });
+
+//     return subteamArray;
+// });
 
 const subTeamOptions = [
   { value: 'RM-NB', label: 'RM-NB' },
@@ -1371,6 +1385,11 @@ const handlePlanSelected = plan => {
   selectedProviderPlan.value.planName = plan.planName
   selectedProviderPlan.value.providerName = plan.providerName
   selectedProviderPlan.value.premium = plan.premium
+  router.reload({
+    preserveState: true,
+    preserveScroll: true,
+    only: ['payments','quoteRequest','ecomDetails'],
+  });
 };
 
 </script>
@@ -2630,7 +2649,7 @@ const handlePlanSelected = plan => {
       </x-modal>
     </div>
     <PaymentTableNew
-			v-if="hasRole(rolesEnum.BetaUser)"
+			v-if="isNewPaymentStructure"
 			quoteType="Health"
 			:payments="payments"
 			:paymentDocument="documentTypes.QUOTE.filter(item => item.code === 'HPD' || item.code === 'HPDR' || item.code === 'HDPDR')"

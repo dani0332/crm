@@ -45,6 +45,7 @@ defineProps({
   policyIssuanceStatus: Array,
   bPDetails: Array,
   payments: Array,
+  isNewPaymentStructure: Boolean,
 });
 
 const page = usePage();
@@ -803,7 +804,7 @@ const linkEntity = () => {
       :quoteType="quoteType"
     />
     <PaymentTableNew
-			v-if="hasRole(rolesEnum.BetaUser)"
+			v-if="isNewPaymentStructure"
 			:quoteType="quoteType"
 			:payments="quote.payments"
 			:paymentDocument="documentTypes.filter(item => item.code === 'PPD' || item.code === 'PPDR' || item.code === 'PDPDR')"
@@ -861,7 +862,7 @@ const linkEntity = () => {
       :bPDetails="bPDetails"
       :payments="payments"
     />
-    
+
     <LeadHistory :quote="quote" />
 
     <AuditLogs :quote-type="quoteType" :id="$page.props.quote.id" :quoteCode="$page.props.quote.code" />

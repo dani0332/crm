@@ -479,7 +479,7 @@ class SendEmailCustomerService extends BaseService
                 'api-key' => $this->apiKey,
                 'Content-Type' => 'application/json',
             ];
-
+            $subjectEnvTag = $this->appEnv == EnvEnum::PRODUCTION ? '' : $this->appEnv.' - ';
             $emailAttachments = isset($emailData->documentUrl) ? $emailData->documentUrl : null;
 
             if ($emailAttachments) {
@@ -511,7 +511,7 @@ class SendEmailCustomerService extends BaseService
             }
 
             $advisorCustomEmail = strstr($emailData->advisorEmail, '@', true).'@notify.insurancemarket.ae';
-
+            $emailData->env = $subjectEnvTag;
             $body = json_encode([
                 'sender' => ['name' => $emailData->advisorName, 'email' => $advisorCustomEmail],
                 'to' => [[

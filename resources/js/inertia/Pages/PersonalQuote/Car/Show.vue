@@ -90,6 +90,7 @@ defineProps({
   isCommercialVehicles: Boolean,
   carInsuranceProviders: Array,
   paymentTooltipEnum: Object,
+  isNewPaymentStructure: Boolean,
 });
 
 const page = usePage();
@@ -367,6 +368,7 @@ const documentsTableItems = computed(() => {
       document_type_text:
         doc.document_type_text.length > 0 ? doc.document_type_text : '',
       document_name_text: doc.doc_name,
+      document_original_name: doc.original_name,
       created_at: doc.created_at,
       doc_uuid: doc.doc_uuid,
       doc_url: doc.doc_url,
@@ -1572,30 +1574,16 @@ const linkEntity = () => {
 };
 
 const handlePlanSelected = plan => {
-  console.log('HHH', plan);
-  //se.value = plan.id;
-  selectedProviderPlan.value.id = plan.id;
-  selectedProviderPlan.value.planName = plan.planName;
-  selectedProviderPlan.value.providerName = plan.providerName;
-  selectedProviderPlan.value.premium = plan.premium;
+  selectedProviderPlan.value.id = plan.id
+  selectedProviderPlan.value.planName = plan.planName
+  selectedProviderPlan.value.providerName = plan.providerName
+  selectedProviderPlan.value.premium = plan.premium
+  router.reload({
+    preserveState: true,
+    preserveScroll: true,
+    only: ['payments','paymentEntityModel'],
+  });
 };
-
-/*watch(prefillPlanId, (newPlanId) =>  {
-  //find selected plan from available plans and calculate prefilled plan premium
-
-  if(newPlanId)
-  {
-    let selectedPlan = availablePlansTable.data.find(
-        plan => newPlanId === plan.id,
-      );
-
-      console.log(newPlanId,"NEW PLAN ID", JSON.stringify(selectedPlan));
-      //prefillPlanPremium.value = selectedPlan.discountPremium + selectedPlan.vat + getAddonVat(selectedPlan);
-      computedPlanDetails.planName = selectedPlan.name;
-      computedPlanDetails.providerName = selectedPlan.providerName;
-      computedPlanDetails.premium = (selectedPlan.discountPremium + selectedPlan.vat + getAddonVat(selectedPlan)).toFixed(2);
-  }
-});*/
 </script>
 
 <template>
@@ -1903,6 +1891,10 @@ const handlePlanSelected = plan => {
           >
             <dt class="font-medium">ID</dt>
             <dd>{{ record.id }}</dd>
+          </div>
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">ENQUIRY COUNT</dt>
+            <dd>{{ record.enquiry_count }}</dd>
           </div>
         </dl>
       </div>
@@ -3167,27 +3159,16 @@ const handlePlanSelected = plan => {
     </div>
 
     <PaymentTableNew
-      v-if="hasRole(rolesEnum.BetaUser)"
-      quoteType="Car"
-      :payments="payments"
-      :paymentDocument="
-        page.props.documentTypes.filter(
-          item =>
-            item.code === 'CPD' ||
-            item.code === 'CPDR' ||
-            item.code === 'CDPDR',
-        )
-      "
-      :quoteRequest="paymentEntityModel"
-      :paymentStatusEnum="paymentStatusEnum"
-      :paymentTooltipEnum="paymentTooltipEnum"
-      :paymentMethods="
-        paymentMethods.map(pm => {
-          return { value: pm.code, label: pm.name, tooltip: pm.tool_tip };
-        })
-      "
-      :storageUrl="storageUrl"
-    />
+			v-if="isNewPaymentStructure"
+			quoteType="Car"
+			:payments="payments"
+			:paymentDocument="page.props.documentTypes.filter(item => item.code === 'CPD' || item.code === 'CPDR' || item.code === 'CDPDR')"
+			:quoteRequest="paymentEntityModel"
+			:paymentStatusEnum="paymentStatusEnum"
+			:paymentTooltipEnum="paymentTooltipEnum"
+			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name, tooltip: pm.tool_tip } })"
+			:storageUrl="storageUrl"
+		/>
     <PaymentTable
       v-else
       :payments="payments"
@@ -3337,7 +3318,7 @@ const handlePlanSelected = plan => {
       >
         <template #item-document_name_text="item">
           <a target="_blank" :href="storageUrl + item.doc_url">{{
-            item.document_name_text
+            item.document_original_name
           }}</a>
         </template>
         <template #item-action="item">
@@ -3729,7 +3710,7 @@ const handlePlanSelected = plan => {
         </x-form>
       </x-modal>
     </div>
-    <customerAdditionalContacts
+    <CustomerAdditionalContacts
       quoteType="Car"
       :customerId="record.customer_id"
       :quoteId="record.id"

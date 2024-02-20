@@ -24,6 +24,7 @@ defineProps({
   paymentStatusEnum: Object,
   paymentTooltipEnum: Object,
   paymentMethods: Array,
+  isNewPaymentStructure: Boolean,
 });
 
 const page = usePage();
@@ -807,7 +808,7 @@ const linkEntity = () => {
     />
 
     <!-- Additional Contact -->
-    <customerAdditionalContacts
+    <CustomerAdditionalContacts
       quoteType="Business"
       :customerId="quote.customer_id"
       :quoteId="quote.id"
@@ -915,7 +916,7 @@ const linkEntity = () => {
     />
 
     <PaymentTableNew 
-			v-if="hasRole(rolesEnum.BetaUser)"
+			v-if="isNewPaymentStructure"
 			:quoteType="page.props.quoteType"
 			:payments="quote.payments"
 			:paymentDocument="documentTypes.filter(item => item.code === 'GMQPD' || item.code === 'GMQPDR' || item.code === 'GMQDPDR')"

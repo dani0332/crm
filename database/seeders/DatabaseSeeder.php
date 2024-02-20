@@ -48,11 +48,11 @@ class DatabaseSeeder extends Seeder
             // BookPolicyPermissionSeeder::class,
             //            AddNewDocumentTypesSeeder::class,
             // UpdateCustomerToHealthAndTravelMemberDetails::class,
-            // PaymentMethodsAddSeeder::class,
-            // AddNewDocumentTypeSeeder::class,
-            // PaymentStatusAddSeeder::class,
-            // updateDocTypePayment::class,
-            // PaymentsMoveInNewTableStructure::class,
+            PaymentMethodsAddSeeder::class,
+            AddNewDocumentTypeSeeder::class,
+            PaymentStatusAddSeeder::class,
+            updateDocTypePayment::class,
+            //PaymentsMoveInNewTableStructure::class,
         ]);
     }
 }

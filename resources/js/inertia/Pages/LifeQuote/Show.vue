@@ -36,6 +36,7 @@ defineProps({
   policyIssuanceStatus: Array,
   permissions: Object,
   bPDetails: Array,
+  isNewPaymentStructure: Boolean,
 });
 
 const { isRequired } = useRules();
@@ -954,7 +955,7 @@ const linkEntity = () => {
       :memberRelations="memberRelations"
       :quote_type="quoteType"
     />
-    
+
     <PolicyDetail
       v-if="permissions.isQuoteDocumentEnabled"
       :record="record"
@@ -972,7 +973,7 @@ const linkEntity = () => {
       :quote_type="quoteType"
     />
 
-    <customerAdditionalContacts
+    <CustomerAdditionalContacts
       quoteType="Life"
       :customerId="quote.customer_id"
       :quoteId="quote.id"
@@ -1073,8 +1074,8 @@ const linkEntity = () => {
         </x-button>
       </div>
     </div>
-    <PaymentTableNew 
-			v-if="hasRole(rolesEnum.BetaUser)"
+    <PaymentTableNew
+			v-if="isNewPaymentStructure"
 			:quoteType="quoteType"
 			:payments="payments"
 			:paymentDocument="page.props.documentTypes.filter(item => item.code === 'LPD' || item.code === 'LPDR' || item.code === 'LDPDR')"

@@ -245,4 +245,6 @@ final class PermissionsEnum extends Enum
     public const EXPORT_MAKES_MODELS = 'export-makes-models';
     public const VIEW_INSLY_BOOK_POLICY = 'view-insly-book-policy';
     public const SEND_INSLY_BOOK_POLICY = 'send-insly-book-policy';
+    public const HEALTH_QUOTES_MANAGER_ACCESS = 'health-quotes-manager-access';
+    public const HEALTH_QUOTES_ACCESS = 'health-quotes-access';
 }
