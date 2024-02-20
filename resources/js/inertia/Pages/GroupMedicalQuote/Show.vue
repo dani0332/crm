@@ -21,6 +21,7 @@ defineProps({
   documentTypes: Object,
   storageUrl: String,
   insuranceProviders: Object,
+  vatPercentage: Number,
   paymentStatusEnum: Object,
   paymentTooltipEnum: Object,
   paymentMethods: Array,
@@ -947,6 +948,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       :quote="quote"
       :quoteType="page.props.quoteType"
       :expanded="sectionExpanded"
+      :vatPrice="vatPercentage"
     />
 
     <PaymentTableNew 

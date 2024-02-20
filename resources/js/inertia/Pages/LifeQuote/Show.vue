@@ -27,6 +27,8 @@ defineProps({
   canAddBatchNumber: Boolean,
   documentTypes: Object,
   storageUrl: String,
+  insuranceProviders: Object,
+  vatPercentage: Number,
   payments: Array,
   paymentStatusEnum: Object,
   paymentTooltipEnum: Object,
@@ -1027,14 +1029,6 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       :expanded="sectionExpanded"
     />
 
-   <PlanDetails
-      :insuranceProviders="insuranceProviders"
-      :quote="quote"
-      :quoteType="quoteType"
-      :expanded="sectionExpanded"
-    />
-
-
     <div class="p-4 rounded shadow mb-6 bg-primary-50/25">
       <Collapsible :expanded="sectionExpanded">
         <template #header>
@@ -1120,7 +1114,16 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
         </template>
       </Collapsible>
     </div>
-    <PaymentTableNew
+
+    <PlanDetails
+      :insuranceProviders="insuranceProviders"
+      :quote="quote"
+      :quoteType="quoteType"
+      :vatPrice="vatPercentage"
+      :expanded="sectionExpanded"
+    />
+
+    <PaymentTableNew 
 			v-if="isNewPaymentStructure"
 			:quoteType="quoteType"
 			:payments="payments"

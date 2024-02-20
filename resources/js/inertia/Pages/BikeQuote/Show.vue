@@ -36,6 +36,7 @@ defineProps({
   UBORelations: Array,
   UBOsDetails: Array,
   canAddBatchNumber: Boolean,
+  vatPercentage: Number,
   paymentStatusEnum: Object,
   paymentTooltipEnum: Object,
   isNewPaymentStructure: Boolean,
@@ -726,6 +727,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       :quote="quote"
       :quoteType="quoteType"
       :expanded="sectionExpanded"
+      :vatPrice="vatPercentage"
     />
 
     <PaymentTableNew 
