@@ -102,17 +102,16 @@ const rules = {
   expiry_date: v => {
     if (v) {
       const date = new Date(v);
-      if (policyDetailsForm.quote_policy_start_date) {
-        const startDate = new Date(policyDetailsForm.quote_policy_start_date);
-        if (startDate >= date) {
-          return 'Expiry date should be greater than Start Date';
-        }
+      const startDate = new Date(policyDetailsForm.quote_policy_start_date);
+      if (startDate >= date) {
+        return 'Expiry date should be greater than Start Date';
       }
-      return !isNaN(date.getTime());
+      return isNaN(date.getTime());
     }
-    return true;
+    return false;
   },
 };
+
 const onUpdatePolicyDetails = isValid => {
   if (!isValid) return;
   policyDetailsForm.post(`/quotes/${props.modelType}/update-quote-policy`, {
@@ -205,7 +204,9 @@ const onUpdatePolicyDetails = isValid => {
         <div class="w-full md:w-1/2">
           <DatePicker
             v-model="policyDetailsForm.quote_policy_expiry_date"
-            :rules="[rules.expiry_date]"
+            :custom-error="
+              rules.expiry_date(policyDetailsForm.quote_policy_expiry_date)
+            "
             type="date"
             label="Expiry Date"
             placeholder="Expiry Date"
