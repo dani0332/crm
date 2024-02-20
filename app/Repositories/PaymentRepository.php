@@ -15,6 +15,7 @@ use App\Models\QuoteDocument;
 use App\Services\CRUDService;
 use App\Services\PaymentLinkService;
 use App\Services\SplitPaymentService;
+use App\Services\TravelQuoteService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -308,7 +309,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
         $quoteModel = $this->getQuoteObject($request->modelType, $request->quote_id);
         if (! $quoteModel) {
             return response()->json(['success' => false]);
-        }
+        }      
 
         $firstPayment = $quoteModel->payments()->where('code',$request->payment_code)->first();
         if ($request->is_declined) {
@@ -321,10 +322,8 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
             $quoteModel->save();
             $successMessage = 'Transaction declined';
         } else {
-
+            $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($request->modelType));
             if ($request->is_capture) { //update collected amount in childs
-                $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($request->modelType));
-
                 foreach ($request->collection_amount as $key => $splitAmount) {
                     $paymentSplit = PaymentSplits::where(['code' => $quoteModel->code, 'sr_no' => $key])->first();
                     if ($paymentSplit && $paymentSplit->payment_status_id != PaymentStatusEnum::PAID) {
@@ -374,15 +373,19 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                 'payment_status_id' => $masterPaymentStatus,
                 'updated_by' => Auth::user()->id,
             ]);
-            
+            $successMessage = 'Transaction approved';
             $totalApproved = $quoteModel->payments()->where('is_approved',1)->count();
             if($totalApproved == $quoteModel->payments()->count()){
                 $quoteModel->quote_status_id = QuoteStatusEnum::TransactionApproved;
-                $quoteModel->save();  
-            }
-            $successMessage = 'Transaction approved';
+                $quoteModel->save();                
+                //Create duplicate lead for TRAVEL
+                if($quoteTypeId == QuoteTypeId::Travel && $quoteModel->payments()->count()>1){
+                    if ( app(TravelQuoteService::class)->createDuplicateLead($quoteModel) ) {
+                        $successMessage .= ", ".$quoteModel->code."-1 Created For Booking The Additional Policy";
+                    }
+                }
+            }            
         }
-
         return $successMessage;
     }
 

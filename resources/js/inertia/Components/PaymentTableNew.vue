@@ -1270,16 +1270,7 @@ const addPayment = isValid => {
   }
   splitPayments = splitPayments.filter(item => item !== null);
   data.payment.payment_splits = splitPayments;
-  // Combine split_amount and payment_type into a single object
-  /*data.payment.split_payments = {   
-    split_amount: splitAmountModels.value,
-    payment_type: paymentMethodsModels.value,
-    due_date: dueDateModels.value,
-    check_detail: checkDetailModels.value,
-    document_detail: fileUploadModels.value,
-    discount_documents: discountDocumentModel.value,
-  };*/
-
+  
   let declinedCustomReason= paymentMethodsForm.declined_custom_reason;
   if (paymentMethodsForm.status === 'view' || isCreditApprovalView.value === true) { 
     if(isDeclineClicked.value === true && paymentMethodsForm.declined_reason === ''){
@@ -1310,8 +1301,8 @@ const addPayment = isValid => {
       .transform(data => viewData)
       .post('/payments/Car/split-payments-approve', {
         preserveScroll: true,
-        onSuccess: () => {
-          createPaymentModal.value = false;
+        onSuccess: (res) => {
+          createPaymentModal.value = false;              
           setTimeout(() => {
             location.reload();
           }, 500);
@@ -1403,28 +1394,6 @@ const addPayment = isValid => {
         });
       },
     });
-};
-const approvePayment = payment => {
-  let data = {
-    code: payment.code,
-    modelType: 'Car',
-    quote_id: props.quoteRequest.id,
-  };
-  if (confirm('Are you sure you want to approve this payment?')) {
-    axios.post('/update-payment-status', data).then(response => {
-      if (response.data.success) {
-        notification.success({
-          title: 'Payment Approved',
-          position: 'top',
-        });
-      } else {
-        notification.error({
-          title: 'Payment Approval Failed',
-          position: 'top',
-        });
-      }
-    });
-  }
 };
 
 const documentForm = useForm({
@@ -1564,8 +1533,14 @@ const uploadDocument = (doc, files, count) => {
 const getCaptureValidation = computed(() => {  
   return (payment) => {
     //6 =AML Screening Cleared , 32 = Transaction Declined
-    if ( props.payments.length>0 && (props.quoteRequest.quote_status_id === 6 || props.quoteRequest.quote_status_id === 32) 
-    && props.quoteRequest.kyc_decision === 'Complete') {
+    if ( props.payments.length>0 && 
+      (
+      ((props.quoteRequest.quote_status_id === 6 || props.quoteRequest.quote_status_id === 32) 
+      && props.quoteRequest.kyc_decision === 'Complete')
+      || 
+      props.quoteType === 'Travel' //skip AML & KYC for travel
+      )
+    ) {
       if(payment.is_approved===1){
         return false;
       }
