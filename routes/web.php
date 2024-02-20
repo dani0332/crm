@@ -169,7 +169,6 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
             Route::get('batches', [RenewalsUploadController::class, 'listRenewalBatches'])->name('renewals-batches');
             Route::get('search', [RenewalsUploadController::class, 'search'])->name('renewals-batches-search');
             Route::get('/search/export', [RenewalsUploadController::class, 'export'])->name('renewal-search-export');
-
         });
     });
 
@@ -190,7 +189,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Artisan::call('config:clear');
         Artisan::call('view:clear');
 
-        return '<h1>All cache cleared. LARAVEL Version='.app()->version().'</h1>';
+        return '<h1>All cache cleared. LARAVEL Version=' . app()->version() . '</h1>';
     });
     Route::post('/payments/{quoteType}/store', [CRUDController::class, 'storePayment']);
     Route::post('/payments/{quoteType}/update', [CRUDController::class, 'updatePayment']);
@@ -317,7 +316,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
             Route::resource('business', BusinessQuoteController::class);
         }
         Route::resource('travel', CRUDController::class);
-        if (! in_array(quoteTypeCode::Pet, newUi())) {
+        if (!in_array(quoteTypeCode::Pet, newUi())) {
             Route::resource('pet', CRUDController::class);
         }
         Route::post('save', [CRUDController::class, 'store'])->name('saveQuote');
@@ -357,7 +356,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::post('{quoteType}/toggle-product', [CRUDController::class, 'toggleEmbeddedProduct'])->name('toggleEmbeddedProduct');
         Route::get('{quoteType}/risk-rating-details/{quoteId}', [CRUDController::class, 'riskRatingDetails'])->name('risk-rating-details');
 
-        if (! in_array(quoteTypeCode::Life, newUi())) {
+        if (!in_array(quoteTypeCode::Life, newUi())) {
             Route::resource('life', CRUDController::class);
         }
 
@@ -509,6 +508,9 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::post('/health-plan-manual-create', [HealthQuoteController::class, 'healthPlanCreateQuote']);
 
     Route::post('quotes/update-last-year-policy', [CentralController::class, 'updateLastYearPolicy'])->name('update-last-year-policy');
+    //bookpolicy routes
+    Route::post('quotes/update-booking-policy', [CentralController::class, 'updateBookingPolicy'])->name('update-booking-policy');
+    Route::post('quotes/send-booking-policy', [CentralController::class, 'sendBookingPolicy'])->name('send-booking-policy');
 
     //todo: commented for later use
     //Route::get('schedule-non-motor-aml', [RenewalsUploadController::class, 'scheduleNonMotorAml']);

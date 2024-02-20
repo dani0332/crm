@@ -119,4 +119,10 @@ class PetQuote extends Model implements AuditableContract
     {
         return $this->morphMany(Payment::class, 'paymentable');
     }
+
+    public function sageLog()
+    {
+        return $this->morphMany(SageApiLog::class, 'section');
+    }
+    
 }

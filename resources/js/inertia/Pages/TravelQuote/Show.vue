@@ -50,10 +50,14 @@ defineProps({
   canAddBatchNumber: Boolean,
   paymentTooltipEnum: Object,
   storageUrl: String,
+  policyIssuanceStatus: Array,
+  record: Object,
+  bPDetails: Array,
   isNewPaymentStructure: Boolean,
 });
 
-
+const permissionEnum = page.props.permissionsEnum;
+const canAny = permissions => useCanAny(permissions);
 const hasAnyRole = roles => useHasAnyRole(roles);
 const checkedItems = ref([]);
 const checkCheckedPlans = computed(() => {
@@ -433,53 +437,6 @@ const dateToYMD = date => {
     return `${year}-${month}-${day}`;
   }
   return '';
-};
-
-const policyDetails = useForm({
-  premium: page.props.quote.premium,
-  policy_number: page.props.quote.policy_number || '',
-  policy_start_date: dateToYMD(page.props.quote.policy_start_date),
-  renewal_expiry_date: dateToYMD(page.props.quote.renewal_expiry_date) || '',
-  policy_issuance_date: dateToYMD(page.props.quote.policy_issuance_date) || '',
-  quote_status_id: page.props.quote.quote_status_id,
-  canEdit:
-    page.props.quote.quote_status_id ==
-      page.props.enums.quoteStatusEnum.TransactionApproved &&
-    page.props.permissions.notProductionApproval,
-  editMode: false,
-  modelType: page.props.modelType,
-  quote_id: page.props.quote.id,
-});
-
-const cancelPolicyFrom = () => {
-  policyDetails.editMode = false;
-};
-
-const submitPolicyDetails = isValid => {
-  if (!isValid) return;
-  policyDetails
-    .transform(data => ({
-      quote_policy_number: data.policy_number,
-      quote_policy_start_date: data.policy_start_date,
-      quote_policy_expiry_date: data.renewal_expiry_date,
-      quote_policy_issuance_date: data.policy_issuance_date,
-      quote_premium: data.premium,
-      modelType: data.modelType,
-      quote_id: data.quote_id,
-      isInertia: true,
-    }))
-    .post(`/quotes/${page.props.modelType}/update-quote-policy`, {
-      preserveScroll: true,
-      onSuccess: () => {
-        notification.success({
-          title: 'Policy Details Updated',
-          position: 'top',
-        });
-      },
-      onFinish: () => {
-        policyDetails.editMode = false;
-      },
-    });
 };
 
 const memberCategoryText = memberCategoryId =>
@@ -1129,8 +1086,8 @@ const handlePlanSelected = plan => {
   router.reload({
     preserveState: true,
     preserveScroll: true,
-    only: ['payments','quoteRequest'],        
-  });  
+    only: ['payments','quoteRequest'],
+  });
 };
 
 const genderList = [
@@ -1270,17 +1227,17 @@ const genderList = [
                 quote.direction_code != null
                   ? quote.direction_code
                   : quote?.currently_located_in_id_text ==
-                      enums.travelQuoteEnum.LOCATION_UAE_TEXT &&
-                    quote?.region_cover_for_id !=
-                      enums.travelQuoteEnum.REGION_COVER_ID_UAE
-                  ? enums.travelQuoteEnum.TRAVEL_UAE_OUTBOUND
-                  : quote?.destination_id_text ==
-                      enums.travelQuoteEnum
-                        .LOCATION_UNITED_ARAB_EMIRATES_TEXT ||
-                    quote?.region_cover_for_id ==
-                      enums.travelQuoteEnum.REGION_COVER_ID_UAE
-                  ? enums.travelQuoteEnum.TRAVEL_UAE_INBOUND
-                  : ''
+                        enums.travelQuoteEnum.LOCATION_UAE_TEXT &&
+                      quote?.region_cover_for_id !=
+                        enums.travelQuoteEnum.REGION_COVER_ID_UAE
+                    ? enums.travelQuoteEnum.TRAVEL_UAE_OUTBOUND
+                    : quote?.destination_id_text ==
+                          enums.travelQuoteEnum
+                            .LOCATION_UNITED_ARAB_EMIRATES_TEXT ||
+                        quote?.region_cover_for_id ==
+                          enums.travelQuoteEnum.REGION_COVER_ID_UAE
+                      ? enums.travelQuoteEnum.TRAVEL_UAE_INBOUND
+                      : ''
               }}
             </dt>
           </div>
@@ -1386,10 +1343,10 @@ const genderList = [
                 quote.coverage_code != null
                   ? quote.coverage_code
                   : quote.days_cover_for <= 92
-                  ? enums.travelQuoteEnum.COVERAGE_CODE_SINGLE_TRIP
-                  : enums.travelQuoteEnum.COVERAGE_CODE_ANNUAL_TRIP +
-                    '/' +
-                    enums.travelQuoteEnum.COVERAGE_CODE_MULTI_TRIP
+                    ? enums.travelQuoteEnum.COVERAGE_CODE_SINGLE_TRIP
+                    : enums.travelQuoteEnum.COVERAGE_CODE_ANNUAL_TRIP +
+                      '/' +
+                      enums.travelQuoteEnum.COVERAGE_CODE_MULTI_TRIP
               }}
             </dt>
           </div>
@@ -1983,95 +1940,6 @@ const genderList = [
           </div>
         </dl>
       </div>
-    </div>    
-
-    <div class="p-4 rounded shadow mb-6 bg-white">
-      <div>
-        <h3 class="font-semibold text-primary-800 text-lg">Policy Details</h3>
-        <x-divider class="mb-4 mt-1" />
-      </div>
-      <x-form @submit="submitPolicyDetails" :auto-focus="false">
-        <div class="flex gap-6 w-full">
-          <div class="w-full md:w-1/2">
-            <x-input
-              v-model="policyDetails.policy_number"
-              :disabled="!policyDetails.editMode"
-              label="POLICY NUMBER"
-              :rules="[isRequired, policy_number]"
-              class="w-full"
-            />
-          </div>
-          <div class="w-full md:w-1/2">
-            <DatePicker
-              v-model="policyDetails.policy_issuance_date"
-              :disabled="!policyDetails.editMode"
-              type="date"
-              label="ISSUANCE DATE"
-              :rules="[isRequired]"
-              class="w-full"
-            />
-          </div>
-        </div>
-        <div class="flex gap-6 w-full">
-          <div class="w-full md:w-1/2">
-            <DatePicker
-              v-model="policyDetails.policy_start_date"
-              :disabled="!policyDetails.editMode"
-              type="date"
-              label="START DATE"
-              :rules="[isRequired, policy_start_date]"
-              class="w-full"
-            />
-          </div>
-          <div class="w-full md:w-1/2">
-            <DatePicker
-              v-model="policyDetails.renewal_expiry_date"
-              :disabled="!policyDetails.editMode"
-              type="date"
-              label="EXPIRY DATE"
-              :rules="[isRequired, renewal_expiry_date]"
-              class="w-full"
-            />
-          </div>
-        </div>
-        <div class="flex gap-6 w-full">
-          <div class="w-full md:w-1/2">
-            <x-input
-              v-model="policyDetails.premium"
-              :disabled="!policyDetails.editMode"
-              label="PRICE"
-              :rules="[isRequired, premium]"
-              class="w-full"
-            />
-          </div>
-          <div class="w-full md:w-1/2"></div>
-        </div>
-
-        <div class="text-right space-x-4 mt-12" v-if="policyDetails.canEdit">
-          <x-button
-            color="#007bff"
-            size="sm"
-            v-show="policyDetails.editMode"
-            @click.prevent="cancelPolicyFrom"
-            >Cancel</x-button
-          >
-          <x-button
-            color="#26B99A"
-            type="submit"
-            size="sm"
-            v-show="policyDetails.editMode"
-            >Update</x-button
-          >
-          <x-button
-            color="#007bff"
-            size="sm"
-            type="submit"
-            v-show="!policyDetails.editMode"
-            @click.prevent="policyDetails.editMode = true"
-            >Edit</x-button
-          >
-        </div>
-      </x-form>
     </div>
 
     <div class="p-4 rounded shadow mb-6 bg-white">
@@ -2098,27 +1966,24 @@ const genderList = [
       </DataTable>
     </div>
 
-    <div
-      class="p-4 rounded shadow mb-6 bg-white"
-
-    >
+    <div class="p-4 rounded shadow mb-6 bg-white">
       <div class="flex justify-between items-center mb-4">
         <h3 class="font-semibold text-primary-800 text-lg">
           Documents
           <x-tag size="sm">{{ quoteDocuments.length || 0 }}</x-tag>
         </h3>
         <div class="flex gap-2">
-          <x-button
-            @click.prevent="modals.doc = true"
-            size="sm"
-            color="orange"
-          >
+          <x-button @click.prevent="modals.doc = true" size="sm" color="orange">
             Upload Documents
           </x-button>
           <x-button
             size="sm"
             color="red"
-            v-if="displaySendPolicyButton && permissions.notProductionApproval && permissions.isQuoteDocumentEnabled"
+            v-if="
+              displaySendPolicyButton &&
+              permissions.notProductionApproval &&
+              permissions.isQuoteDocumentEnabled
+            "
             @click="sendPolicyToClient"
           >
             Send Policy
@@ -2190,7 +2055,15 @@ const genderList = [
         </template>
       </x-modal>
     </div>
-   
+
+    <PolicyDetail
+      v-if="permissions.isQuoteDocumentEnabled"
+      :record="record"
+      :quoteStatusEnum="enums.quoteStatusEnum"
+      :policyIssuanceStatus="policyIssuanceStatus"
+      modelType="travel"
+    />
+
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div class="flex flex-wrap gap-4 justify-between items-center mb-4">
         <h3 class="font-semibold text-primary-800 text-lg">
@@ -2318,7 +2191,7 @@ const genderList = [
       </x-modal>
     </div>
 
-    <PaymentTableNew 
+    <PaymentTableNew
 			v-if="isNewPaymentStructure"
 			quoteType="Travel"
 			:payments="payments"
@@ -2346,6 +2219,19 @@ const genderList = [
       :code="quote.code"
       :quote="quote"
       :modelType="quoteType"
+    />
+
+    <BookPolicy
+      v-if="
+        canAny([
+          permissionEnum.VIEW_INSLY_BOOK_POLICY,
+          permissionEnum.SEND_INSLY_BOOK_POLICY,
+        ])
+      "
+      :quote="record"
+      quoteType="travel"
+      :bPDetails="bPDetails"
+      :payments="payments"
     />
 
     <div class="p-4 rounded shadow mb-6 bg-white">
@@ -2511,7 +2397,11 @@ const genderList = [
       />
     </div>
 
-    <AuditLogs :type="'App\\Models\\TravelQuote'" :id="$page.props.quote.id" :quoteCode="$page.props.quote.code"/>
+    <AuditLogs
+      :type="'App\\Models\\TravelQuote'"
+      :id="$page.props.quote.id"
+      :quoteCode="$page.props.quote.code"
+    />
   </div>
 </template>
 <style>

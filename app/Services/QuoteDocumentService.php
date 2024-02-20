@@ -32,7 +32,7 @@ class QuoteDocumentService extends BaseService
 
     public function isEnabled($quoteModelType)
     {
-        $enabledLOBs = [quoteTypeCode::Car, quoteTypeCode::Health, quoteTypeCode::Travel, quoteTypeCode::Life, quoteTypeCode::Home];
+        $enabledLOBs = [quoteTypeCode::Car, quoteTypeCode::Health, quoteTypeCode::Travel, quoteTypeCode::Life, quoteTypeCode::Home, quoteTypeCode::Pet];
         if (in_array($quoteModelType, $enabledLOBs)) {
             return true;
         }
@@ -44,6 +44,7 @@ class QuoteDocumentService extends BaseService
     {
         return DocumentType::where(['quote_type_id' => $quoteTypeId, 'is_active' => true])
             ->orderBy('sort_order', 'asc')
+            ->active()
             ->get();
     }
 

@@ -9,7 +9,7 @@ import LeadHistory from '../PersonalQuote/Partials/LeadHistory.vue';
 import MemberDetails from '../../Components/MemberDetails.vue';
 import PlanDetails from '../../Components/PlanDetails.vue';
 import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue';
-import PaymentTableNew from '../../Components/PaymentTableNew.vue'; 
+import PaymentTableNew from '../../Components/PaymentTableNew.vue';
 
 defineProps({
   quote: Object,
@@ -39,6 +39,12 @@ defineProps({
   canAddBatchNumber: Boolean,
   paymentStatusEnum: Object,
   paymentTooltipEnum: Object,
+  record: Object,
+  permissions: Object,
+  enums: Object,
+  policyIssuanceStatus: Array,
+  bPDetails: Array,
+  payments: Array,
   isNewPaymentStructure: Boolean,
 });
 
@@ -47,6 +53,8 @@ const hasAnyRole = roles => useHasAnyRole(roles);
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
 const rolesEnum = page.props.rolesEnum;
+const permissionEnum = page.props.permissionsEnum;
+const canAny = permissions => useCanAny(permissions);
 
 const historyLoading = ref(false);
 
@@ -781,7 +789,7 @@ const linkEntity = () => {
       :activities="activities"
       :advisors="advisors"
       :quote-type="quoteType"
-    />  
+    />
 
     <QuoteStatus
       :quote="quote"
@@ -795,7 +803,7 @@ const linkEntity = () => {
       :quote="quote"
       :quoteType="quoteType"
     />
-    <PaymentTableNew 
+    <PaymentTableNew
 			v-if="isNewPaymentStructure"
 			:quoteType="quoteType"
 			:payments="quote.payments"
@@ -824,9 +832,15 @@ const linkEntity = () => {
       :quote="quote"
     />
 
-    <QuotePolicy :quote="quote" :can="can" :quoteStatusEnum="quoteStatusEnum" />
+    <PolicyDetail
+      v-if="permissions.isQuoteDocumentEnabled"
+      :record="record"
+      :quoteStatusEnum="enums.quoteStatusEnum"
+      :policyIssuanceStatus="policyIssuanceStatus"
+      modelType="pet"
+    />
 
-    
+    <!-- <QuotePolicy :quote="quote" :can="can" :quoteStatusEnum="quoteStatusEnum" /> -->
 
     <EmbeddedProducts
       :data="embeddedProducts"
@@ -834,6 +848,19 @@ const linkEntity = () => {
       :code="quote.code"
       :quote="quote"
       :modelType="quoteType"
+    />
+
+    <BookPolicy
+      v-if="
+        canAny([
+          permissionEnum.VIEW_INSLY_BOOK_POLICY,
+          permissionEnum.SEND_INSLY_BOOK_POLICY,
+        ])
+      "
+      :quote="record"
+      quoteType="pet"
+      :bPDetails="bPDetails"
+      :payments="payments"
     />
 
     <LeadHistory :quote="quote" />

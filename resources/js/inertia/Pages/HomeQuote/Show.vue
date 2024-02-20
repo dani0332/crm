@@ -2,10 +2,11 @@
 import MemberDetails from '../../Components/MemberDetails.vue';
 import QuoteDocuments from '@/inertia/Pages/PersonalQuote/Partials/QuoteDocuments.vue';
 import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue';
-import PaymentTableNew from '../../Components/PaymentTableNew.vue'; 
+import PaymentTableNew from '../../Components/PaymentTableNew.vue';
 
 defineProps({
   quote: Object,
+  record: Object,
   quoteType: String,
   quoteTypeId: Number,
   leadStatuses: Array,
@@ -38,6 +39,9 @@ defineProps({
   storageUrl: String,
   paymentStatusEnum: Object,
   paymentTooltipEnum: Object,
+  enums: Object,
+  policyIssuanceStatus: Array,
+  bPDetails: Array,
   isNewPaymentStructure: Boolean,
 });
 
@@ -47,6 +51,8 @@ const notification = useNotifications('toast');
 const hasAnyRole = roles => useHasAnyRole(roles);
 const rolesEnum = page.props.rolesEnum;
 const hasRole = role => useHasRole(role);
+const permissionEnum = page.props.permissionsEnum;
+const canAny = permissions => useCanAny(permissions);
 
 const modals = reactive({
   duplicate: false,
@@ -931,6 +937,14 @@ const linkEntity = () => {
       </dl>
     </x-modal>
 
+    <PolicyDetail
+      v-if="permissions.isQuoteDocumentEnabled"
+      :record="record"
+      :quoteStatusEnum="enums.quoteStatusEnum"
+      :policyIssuanceStatus="policyIssuanceStatus"
+      modelType="home"
+    />
+
     <MemberDetails
       v-if="quote.customer_type == page.props.customerTypeEnum.Individual"
       :quote="quote"
@@ -1043,7 +1057,7 @@ const linkEntity = () => {
       :quoteType="quoteType"
     />
 
-    <PaymentTableNew 
+    <PaymentTableNew
 			v-if="isNewPaymentStructure"
 			:quoteType="quoteType"
 			:payments="payments"
@@ -1064,7 +1078,19 @@ const linkEntity = () => {
       :insuranceProviders="insuranceProviders"
       :quote="quote"
     />
-    
+
+    <BookPolicy
+      v-if="
+        canAny([
+          permissionEnum.VIEW_INSLY_BOOK_POLICY,
+          permissionEnum.SEND_INSLY_BOOK_POLICY,
+        ])
+      "
+      :quote="record"
+      quoteType="home"
+      :bPDetails="bPDetails"
+      :payments="payments"
+    />
 
     <EmbeddedProducts
       :data="embeddedProducts"
@@ -1211,7 +1237,7 @@ const linkEntity = () => {
           </div>
         </template>
       </x-modal>
-    </div>  
+    </div>
 
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div>

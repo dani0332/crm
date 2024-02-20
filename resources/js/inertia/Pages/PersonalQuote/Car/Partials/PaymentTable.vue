@@ -16,14 +16,14 @@ const props = defineProps({
   paymentMethods: Array,
   quote: Object,
   isCommercialVehicles: Boolean,
-  carInsuranceProviders: Array
+  carInsuranceProviders: Array,
 });
 
 const insuranceProviderOptions = computed(() => {
-    return page.props.carInsuranceProviders.map(provider => ({
-        value: provider.id,
-        label: provider.text,
-    }));
+  return page.props.carInsuranceProviders.map(provider => ({
+    value: provider.id,
+    label: provider.text,
+  }));
 });
 
 const createPaymentModal = ref(false);
@@ -51,12 +51,12 @@ const paymentTableHeaders = [
   { text: 'Payment Status', value: 'payment_status.code' },
   { text: 'Provider Name', value: 'insurance_provider.text' },
   { text: 'Plan Name', value: 'plan_name' },
-  { text: 'Authorize Amount', value: 'captured_amount'},
+  { text: 'Authorize Amount', value: 'captured_amount' },
   { text: 'Status Change Date', value: 'status_changed_at' },
   { text: 'Authorized At', value: 'authorized_at' },
   { text: 'Captured At', value: 'captured_at' },
   { text: 'Payment method', value: 'payment_method.name' },
-  { text: 'Captured Amount', value: 'premium_captured'},
+  { text: 'Captured Amount', value: 'premium_captured' },
   { text: 'Reference', value: 'reference' },
   { text: 'Status Details', value: 'payment_status_message' },
   { text: 'Actions', value: 'actions', sortable: false },
@@ -126,21 +126,21 @@ const editPaymentModal = payment => {
   createPaymentModal.value = true;
 };
 
-const insurance_provider_id= ref('')
+const insurance_provider_id = ref('');
 const paymentMethodsForm = useForm({
   payment_method: '',
   collection_type: '',
   amount: '',
   payment_reference: '',
   paymentCode: '',
-  status: 'create'
+  status: 'create',
 });
 
 const addPayment = isValid => {
   if (!isValid) return;
-  let plan_id= null;
+  let plan_id = null;
   if (props.quoteRequest.plan && props.quoteRequest.plan.id) {
-      plan_id = props.quoteRequest.plan.id
+    plan_id = props.quoteRequest.plan.id;
   }
     isLoading.value = true;
   let data = {
@@ -149,7 +149,9 @@ const addPayment = isValid => {
     modelType: 'Car',
     quote_id: props.quoteRequest.id,
     plan_id: plan_id,
-    insurance_provider_id: props.isCommercialVehicles ? insurance_provider_id.value : providerId.value,
+    insurance_provider_id: props.isCommercialVehicles
+      ? insurance_provider_id.value
+      : providerId.value,
     collection_type: paymentMethodsForm.collection_type,
     payment_methods: paymentMethodsForm.payment_method,
     reference: paymentMethodsForm.payment_reference,
@@ -245,10 +247,10 @@ const providerName = computed(() => {
 });
 
 onMounted(() => {
-    const plan = props.quoteRequest.plan;
-    if (plan && plan.insurance_provider) {
-        insurance_provider_id.value=  plan.insurance_provider.id;
-    }
+  const plan = props.quoteRequest.plan;
+  if (plan && plan.insurance_provider) {
+    insurance_provider_id.value = plan.insurance_provider.id;
+  }
 });
 
 const providerId = computed(() => {
@@ -290,41 +292,71 @@ const providerId = computed(() => {
         {{ quoteRequest.plan ? quoteRequest.plan.text : '' }}
       </template>
       <template #item-status_changed_at="item">
-        {{ item.payment_status_logs.length > 0 ? item.payment_status_logs.at(-1).created_at : '' }}
+        {{
+          item.payment_status_logs.length > 0
+            ? item.payment_status_logs.at(-1).created_at
+            : ''
+        }}
       </template>
 
       <template #item-actions="item">
-            <div class="flex gap-2">
-                <template v-if="!can(permissionEnum.ApprovePayments)">
-                    <x-button v-if="(item.payment_methods_code == 'CC' || item.payment_methods_code == 'IN_PL') && item.payment_status_id != paymentStatusEnum.PAID && item.payment_status_id != paymentStatusEnum.CAPTURED && item.payment_status_id != paymentStatusEnum.AUTHORISED && !hasRole(rolesEnum.PA)"
-                        size="xs"
-                        color="primary"
-                        outlined
-                        @click.prevent="generateCCLink(item.code)"
-                    >
-                        Copy Link
-                    </x-button>
-                    <x-button v-if="item.payment_status_id != paymentStatusEnum.PAID && item.payment_status_id != paymentStatusEnum.CAPTURED && item.payment_status_id != paymentStatusEnum.AUTHORISED && !hasRole(rolesEnum.PA) && can(permissionEnum.PaymentsEdit)"  size="xs" color="error" @click="editPaymentModal(item)">
-                        Edit
-                    </x-button>
-                </template>
-                <template v-if="can(permissionEnum.ApprovePayments)">
-                    <x-button v-if="item.payment_methods_code != 'CC' && ![paymentStatusEnum.PAID, paymentStatusEnum.CAPTURED].includes(item.payment_status_id) && !hasRole(rolesEnum.PA)"
-                        size="xs"
-                        color="primary"
-                        outlined
-                        @click="approvePayment(item)"
-                    >
-                        Approve
-                    </x-button>
-                </template>
-                <template v-if="item.payment_status_id == paymentStatusEnum.PAID">
-                    <x-button size="xs" color="primary" outlined disabled>
-                        Approve
-                    </x-button>
-                </template>
-            </div>
-        </template>
+        <div class="flex gap-2">
+          <template v-if="!can(permissionEnum.ApprovePayments)">
+            <x-button
+              v-if="
+                (item.payment_methods_code == 'CC' ||
+                  item.payment_methods_code == 'IN_PL') &&
+                item.payment_status_id != paymentStatusEnum.PAID &&
+                item.payment_status_id != paymentStatusEnum.CAPTURED &&
+                item.payment_status_id != paymentStatusEnum.AUTHORISED &&
+                !hasRole(rolesEnum.PA)
+              "
+              size="xs"
+              color="primary"
+              outlined
+              @click.prevent="generateCCLink(item.code)"
+            >
+              Copy Link
+            </x-button>
+            <x-button
+              v-if="
+                item.payment_status_id != paymentStatusEnum.PAID &&
+                item.payment_status_id != paymentStatusEnum.CAPTURED &&
+                item.payment_status_id != paymentStatusEnum.AUTHORISED &&
+                !hasRole(rolesEnum.PA) &&
+                can(permissionEnum.PaymentsEdit)
+              "
+              size="xs"
+              color="error"
+              @click="editPaymentModal(item)"
+            >
+              Edit
+            </x-button>
+          </template>
+          <template v-if="can(permissionEnum.ApprovePayments)">
+            <x-button
+              v-if="
+                item.payment_methods_code != 'CC' &&
+                ![paymentStatusEnum.PAID, paymentStatusEnum.CAPTURED].includes(
+                  item.payment_status_id,
+                ) &&
+                !hasRole(rolesEnum.PA)
+              "
+              size="xs"
+              color="primary"
+              outlined
+              @click="approvePayment(item)"
+            >
+              Approve
+            </x-button>
+          </template>
+          <template v-if="item.payment_status_id == paymentStatusEnum.PAID">
+            <x-button size="xs" color="primary" outlined disabled>
+              Approve
+            </x-button>
+          </template>
+        </div>
+      </template>
     </DataTable>
     <x-modal v-model="createPaymentModal" size="lg" show-close backdrop>
       <template #header>
@@ -365,7 +397,11 @@ const providerId = computed(() => {
             >
             </x-select>
           </x-field>
-          <x-field v-if="isCommercialVehicles" label="Insurance Provider" required>
+          <x-field
+            v-if="isCommercialVehicles"
+            label="Insurance Provider"
+            required
+          >
             <x-select
               class="w-full md:col-span-2"
               v-model="insurance_provider_id"
@@ -384,7 +420,11 @@ const providerId = computed(() => {
             Plan Name :
             <span class="text-primary-800">{{ getPlanName }}</span>
           </p>
-          <x-field label="Payment Reference" required v-if="paymentMethodsForm.payment_method != 'CC'">
+          <x-field
+            label="Payment Reference"
+            required
+            v-if="paymentMethodsForm.payment_method != 'CC'"
+          >
             <x-input
               class="w-full md:col-span-2"
               :rules="[rules.isRequired, rules.reference]"

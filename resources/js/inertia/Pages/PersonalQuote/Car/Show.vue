@@ -9,7 +9,7 @@ import RiskRatingScoreDetails from '../../../Components/RiskRatingScoreDetails.v
 import { onMounted, watch } from 'vue';
 import { reactive } from 'vue';
 
-import {fileUploadErrorMessage} from "@/inertia/Composables/utilities.js";
+import { fileUploadErrorMessage } from '@/inertia/Composables/utilities.js';
 
 defineProps({
   quote: Object,
@@ -78,6 +78,9 @@ defineProps({
   tiersExceptTierR: Array,
   leadSourceEnum: Object,
   carPlanTypeEnum: Object,
+  policyIssuanceStatus: Array,
+  bPDetails: Array,
+  documentTypesByCategory: Array,
   customerTypeEnum: Object,
   memberRelations: Array,
   membersDetails: Array,
@@ -90,18 +93,18 @@ defineProps({
   isNewPaymentStructure: Boolean,
 });
 
-
-
 const page = usePage();
 const notification = useNotifications('toast');
 const showfollowup = ref(false);
 
+console.log(page.props);
+
+const canAny = permissions => useCanAny(permissions);
 const selectedProviderPlan = ref({
   id: page.props.record.plan_id,
   planName: page.props.record.plan_id_text,
   providerName: page.props.record.car_plan_provider_id_text,
-  premium: page.props.record.premium
-
+  premium: page.props.record.premium,
 });
 
 /*
@@ -130,16 +133,16 @@ const updateComputedPlanDetails = () => {
 
   if ( (page.props.record.plan_id && !page.props.record.prefill_plan_id) ||  (planSelectedAt > prefillPlanSelectedAt) ) {
 
-      console.log('plan selected at is greater than prefill plan selected at :' , "PRICE", page.props.record.premium, "PLAN", page.props.record.plan_id_text, "PROVIDER",  page.props.record.car_plan_provider_id_text);    
+      console.log('plan selected at is greater than prefill plan selected at :' , "PRICE", page.props.record.premium, "PLAN", page.props.record.plan_id_text, "PROVIDER",  page.props.record.car_plan_provider_id_text);
       computedPlanDetails.premium = page.props.record.premium,
       computedPlanDetails.planName = page.props.record.plan_id_text,
       computedPlanDetails.providerName = page.props.record.car_plan_provider_id_text
   } else
-  {   
+  {
       console.log('plan selected at is less than prefill plan selected at');
       computedPlanDetails.premium = '',
       computedPlanDetails.planName = page.props.record.prefill_plan_id_text,
-      computedPlanDetails.providerName = page.props.record.prefill_plan_provider_id_text   
+      computedPlanDetails.providerName = page.props.record.prefill_plan_provider_id_text
   }
 };
 
@@ -298,8 +301,8 @@ function repairTypeCheck(repairType) {
     ? coreInsurer.includes(repairType.providerCode)
       ? 'Premium workshop'
       : halfLiveInsurer.includes(repairType.providerCode)
-      ? 'Non-Agency workshop'
-      : 'NON-AGENCY'
+        ? 'Non-Agency workshop'
+        : 'NON-AGENCY'
     : repairType.repairType;
 }
 
@@ -330,7 +333,7 @@ watch(availablePlansTable, (newPlans) =>  {
   console.log('plan selected at - inside watch availablePlans - ');
   let planSelectedAt = new Date(page.props.record.plan_selected_at);
   let prefillPlanSelectedAt = new Date(page.props.record.prefill_plan_selected_at);
-  
+
   console.log('plan selected at - prefillPlanId - ' , prefillPlanId.value, " : plan SelectedAT: ", planSelectedAt, " : prefillPlanSelectedAt ", prefillPlanSelectedAt);
 
   //find selected plan from available plans and calculate prefilled plan premium
@@ -342,7 +345,7 @@ watch(availablePlansTable, (newPlans) =>  {
       );
 
     computedPlanDetails.premium = (selectedPlan.discountPremium + selectedPlan.vat + getAddonVat(selectedPlan)).toFixed(2);
-  }  
+  }
   else
   {
     console.log('plan selected at - prefillPlanSelectedAt is less than planSelectedAt' );
@@ -603,15 +606,46 @@ const currentInsuranceOptions = computed(() => {
   ];
 });
 
+const dateToYMD = date => {
+  if (date) {
+    const [day, month, year] = date.split('-');
+    return `${year}-${month}-${day}`;
+  }
+  return '';
+};
+
 const policyDetailsState = reactive({
   isEditing: false,
 });
+
+const planQuoteInsurerNumber = computed(() => {
+  let obj = page.props?.listQuotePlans?.filter(
+    item => item.id == page.props.record.plan_id,
+  );
+  return obj === undefined ? null : obj[0]?.insurerQuoteNo || null;
+});
+const vatAmount = computed(() => {
+  return (page.props.record.premium * 0.05).toFixed(2);
+});
+
+const priceWithoutVat = computed(() => {
+  return page.props.record.premium - vatAmount.value;
+});
+
 const policyDetailsForm = useForm({
   quote_policy_number: page.props.record.policy_number || null,
-  quote_policy_issuance_date: page.props.record.policy_issuance_date || null,
-  quote_policy_start_date: page.props.record.policy_start_date || null,
-  quote_policy_expiry_date: page.props.record.renewal_expiry_date || null,
+
+  quote_policy_issuance_date:
+    dateToYMD(page.props.record.policy_issuance_date) || '',
+  quote_policy_price_vat_notapplicable: null,
+  quote_policy_price_vat_applicable: priceWithoutVat || '',
+  quote_policy_vat_total_amount: vatAmount.value || null,
+  quote_policy_start_date: dateToYMD(page.props.record.policy_start_date) || '',
+  quote_policy_expiry_date:
+    dateToYMD(page.props.record.renewal_expiry_date) || '',
   quote_premium: page.props.record.premium || null,
+  quote_plan_insurer_quote_number: planQuoteInsurerNumber.value || null,
+  quote_policy_issuance_status: null,
   modelType: 'Car',
   quote_id: page.props.record.id,
 });
@@ -1033,15 +1067,15 @@ const docForm = useForm({
 
 const uploadFile = (doc, filesWithInfo) => {
   let url = '/quotes/car/documents/store';
-  const { files, rejectReason} = filesWithInfo;
+  const { files, rejectReason } = filesWithInfo;
   if (files.length == 0) {
     notification.error({
       title: 'File upload failed',
       position: 'top',
     });
-    docForm.setError({error: fileUploadErrorMessage(doc, rejectReason)});
-    return false
-  };
+    docForm.setError({ error: fileUploadErrorMessage(doc, rejectReason) });
+    return false;
+  }
   isUploading.value = true;
   docForm
     .transform(data => ({
@@ -1539,7 +1573,7 @@ const linkEntity = () => {
     });
 };
 
-const handlePlanSelected = plan => {  
+const handlePlanSelected = plan => {
   selectedProviderPlan.value.id = plan.id
   selectedProviderPlan.value.planName = plan.planName
   selectedProviderPlan.value.providerName = plan.providerName
@@ -1547,8 +1581,8 @@ const handlePlanSelected = plan => {
   router.reload({
     preserveState: true,
     preserveScroll: true,
-    only: ['payments','paymentEntityModel'],        
-  });  
+    only: ['payments','paymentEntityModel'],
+  });
 };
 </script>
 
@@ -1572,7 +1606,7 @@ const handlePlanSelected = plan => {
 
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div class="text-sm">
-        <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">          
+        <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">PRICE</dt>
             <dd>{{ selectedProviderPlan.premium ?? '' }}</dd>
@@ -2526,7 +2560,7 @@ const handlePlanSelected = plan => {
 			:quoteType="quoteType"
 			:quote="record"
 		/> -->
-	
+
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div>
         <h3 class="font-semibold text-primary-800 text-lg">Assumptions</h3>
@@ -2807,7 +2841,7 @@ const handlePlanSelected = plan => {
             isManualUpdate,
             isRenewal,
             isDisabled,
-            puaPremium
+            puaPremium,
           }"
         >
           <p>{{ providerName }}</p>
@@ -2843,14 +2877,18 @@ const handlePlanSelected = plan => {
                 class="mt-0.5 text-[10px] text-white"
                 style="background-color: #E00000"
             >
-                <x-tooltip  position="right">
-                    <template #tooltip>
-                      <span class="font-medium">
-                          Pending Underwriter Approval (PUA) indicates that this quote is prepared using our internal rating calculator. Please contact the client to get the required documents, to proceed with generating a quote on the insurer portal and connect with the underwriter to obtain their approval.
-                       </span>
-                    </template>
-                    PUA
-                </x-tooltip>
+              <x-tooltip position="right">
+                <template #tooltip>
+                  <span class="font-medium">
+                    Pending Underwriter Approval (PUA) indicates that this quote
+                    is prepared using our internal rating calculator. Please
+                    contact the client to get the required documents, to proceed
+                    with generating a quote on the insurer portal and connect
+                    with the underwriter to obtain their approval.
+                  </span>
+                </template>
+                PUA
+              </x-tooltip>
             </x-tag>
           </div>
         </template>
@@ -3120,7 +3158,7 @@ const handlePlanSelected = plan => {
       </x-modal>
     </div>
 
-    <PaymentTableNew 
+    <PaymentTableNew
 			v-if="isNewPaymentStructure"
 			quoteType="Car"
 			:payments="payments"
@@ -3132,7 +3170,7 @@ const handlePlanSelected = plan => {
 			:storageUrl="storageUrl"
 		/>
     <PaymentTable
-		v-else
+      v-else
       :payments="payments"
       :quoteRequest="paymentEntityModel"
       :paymentStatusEnum="paymentStatusEnum"
@@ -3218,106 +3256,13 @@ const handlePlanSelected = plan => {
       :modelType="quoteType"
     />
 
-    <div class="p-4 rounded shadow mb-6 bg-white" v-if="isQuoteDocumentEnabled">
-      <div>
-        <h3 class="font-semibold text-primary-800 text-lg">Policy Details</h3>
-        <x-divider class="mb-4 mt-1" />
-      </div>
-      <div class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5">
-        <div class="w-full md:w-1/2">
-          <x-textarea
-            v-model="policyDetailsForm.quote_policy_number"
-            type="text"
-            label="Policy Number"
-            placeholder="Policy Number"
-            class="w-full"
-            :disabled="!policyDetailsState.isEditing"
-          />
-        </div>
-        <div class="w-full md:w-1/2">
-          <DatePicker
-            v-model="policyDetailsForm.quote_policy_issuance_date"
-            name="quote_policy_issuance_date"
-            label="Issuance Date"
-            placeholder="Issuance Date"
-            class="w-full"
-            :disabled="!policyDetailsState.isEditing"
-          />
-        </div>
-      </div>
-      <div class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5">
-        <div class="w-full md:w-1/2">
-          <DatePicker
-            v-model="policyDetailsForm.quote_policy_start_date"
-            type="text"
-            label="Policy Start Date"
-            placeholder="Policy Start Date"
-            class="w-full"
-            :disabled="!policyDetailsState.isEditing"
-          />
-        </div>
-        <div class="w-full md:w-1/2">
-          <DatePicker
-            v-model="policyDetailsForm.quote_policy_expiry_date"
-            type="text"
-            label="Expiry Date"
-            placeholder="Expiry Date"
-            class="w-full"
-            :disabled="!policyDetailsState.isEditing"
-          />
-        </div>
-      </div>
-      <div class="flex flex-wrap md:flex-nowrap gap-6 w-full">
-        <div class="w-full md:w-1/2">
-          <x-input
-            v-model="policyDetailsForm.quote_premium"
-            type="number"
-            label="Price"
-            placeholder="Price"
-            class="w-full"
-            :disabled="!policyDetailsState.isEditing"
-          />
-        </div>
-        <div class="w-full md:w-1/2" />
-      </div>
-      <div
-        class="flex justify-end"
-        v-if="
-          !hasRole(rolesEnum.PA) &&
-          record.quote_status_id == quoteStatusEnum.TransactionApproved
-        "
-      >
-        <x-button
-          v-if="policyDetailsState.isEditing"
-          class="mt-4 mr-2"
-          color="emerald"
-          size="sm"
-          :loading="policyDetailsForm.processing"
-          @click.prevent="policyDetailsState.isEditing = false"
-        >
-          Cancel
-        </x-button>
-        <x-button
-          v-if="policyDetailsState.isEditing"
-          class="mt-4"
-          color="emerald"
-          size="sm"
-          :loading="policyDetailsForm.processing"
-          @click.prevent="onUpdatePolicyDetails"
-        >
-          Update
-        </x-button>
-        <x-button
-          v-if="!policyDetailsState.isEditing"
-          class="mt-4"
-          color="emerald"
-          size="sm"
-          @click.prevent="policyDetailsState.isEditing = true"
-        >
-          Edit
-        </x-button>
-      </div>
-    </div>
+    <PolicyDetail
+      v-if="isQuoteDocumentEnabled"
+      :record="record"
+      :quoteStatusEnum="quoteStatusEnum"
+      :policyIssuanceStatus="policyIssuanceStatus"
+      :modelType="quoteType"
+    />
 
     <div class="p-4 rounded shadow mb-6 bg-white" v-if="isQuoteDocumentEnabled">
       <div class="flex justify-between items-center mb-4">
@@ -3429,42 +3374,68 @@ const handlePlanSelected = plan => {
         </x-alert>
 
         <div
-          v-for="documentType in documentTypes"
-          :key="documentType.id"
-          class="grid md:grid-cols-2 gap-2 my-4 border-b"
+          v-for="(value, key, index) in documentTypesByCategory"
+          :key="index"
         >
-          <div class="flex flex-col gap-1">
-            <h5 class="text-sm font-semibold">
-              {{ documentType.text }}
-            </h5>
-            <p class="text-xs">Max files: {{ documentType.max_files }}</p>
-            <p class="text-xs">Supported: {{ documentType.accepted_files }}</p>
-            <p class="text-xs">Max file size: {{ documentType.max_size }} MB</p>
-          </div>
-          <div class="pb-4">
-            <Dropzone
-              :id="documentType.id"
-              :accept="documentType.accepted_files"
-              :max-files="documentType.max_files"
-              :max-size="documentType.max_size"
-              :loading="docForm.processing"
-              @change="uploadFile(documentType, $event)"
-            />
-            <a
-              v-for="quoteDocument in page.props.quoteDocuments.filter(
-                d => d.document_type_code == documentType.code,
-              )"
-              :key="quoteDocument.id"
-              :href="storageUrl + quoteDocument.doc_url"
-              target="_blank"
-              class="block px-2 py-1 border rounded mt-1 text-xs hover:text-primary-600 truncate"
+          <strong>{{ key + ' Dcouments' }}</strong>
+
+          <div v-if="Array.isArray(value)">
+            <div
+              v-for="(documentType, name, index) in value"
+              :key="documentType.id"
+              class="grid md:grid-cols-2 gap-2 my-4 border-b"
             >
-              {{ quoteDocument.original_name || quoteDocument.doc_name }}
-            </a>
+              <div class="flex flex-col gap-1">
+                <h5 class="text-sm font-semibold">
+                  {{ documentType.text }}
+                </h5>
+                <p class="text-xs">Max files: {{ documentType.max_files }}</p>
+                <p class="text-xs">
+                  Supported: {{ documentType.accepted_files }}
+                </p>
+                <p class="text-xs">
+                  Max file size: {{ documentType.max_size }} MB
+                </p>
+              </div>
+              <div class="pb-4">
+                <Dropzone
+                  :id="documentType.id"
+                  :accept="documentType.accepted_files"
+                  :max-files="documentType.max_files"
+                  :max-size="documentType.max_size"
+                  :loading="docForm.processing"
+                  @change="uploadFile(documentType, $event)"
+                />
+                <a
+                  v-for="quoteDocument in page.props.quoteDocuments.filter(
+                    d => d.document_type_code == documentType.code,
+                  )"
+                  :key="quoteDocument.id"
+                  :href="storageUrl + quoteDocument.doc_url"
+                  target="_blank"
+                  class="block px-2 py-1 border rounded mt-1 text-xs hover:text-primary-600 truncate"
+                >
+                  {{ quoteDocument.original_name || quoteDocument.doc_name }}
+                </a>
+              </div>
+            </div>
           </div>
         </div>
       </x-modal>
     </div>
+
+    <BookPolicy
+      v-if="
+        canAny([
+          permissionEnum.VIEW_INSLY_BOOK_POLICY,
+          permissionEnum.SEND_INSLY_BOOK_POLICY,
+        ])
+      "
+      :quote="record"
+      :quoteType="quoteType"
+      :bPDetails="bPDetails"
+      :payments="payments"
+    />
 
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div class="flex justify-between items-center mb-4">
@@ -3777,7 +3748,11 @@ const handlePlanSelected = plan => {
       />
     </div>
   </div>
-  <AuditLogs :type="'App\\Models\\CarQuote'" :id="$page.props.record.id" :quoteCode="$page.props.record.code"/>
+  <AuditLogs
+    :type="'App\\Models\\CarQuote'"
+    :id="$page.props.record.id"
+    :quoteCode="$page.props.record.code"
+  />
   <ApiLogs
     v-if="can(permissionEnum.API_LOG_VIEW)"
     :type="'App\\Models\\CarQuote'"

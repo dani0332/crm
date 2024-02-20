@@ -6,6 +6,7 @@ import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue'
 
 defineProps({
   quote: Object,
+  record: Object,
   quoteStatuses: Object,
   quoteType: String,
   quoteTypeId: Number,
@@ -31,6 +32,10 @@ defineProps({
   paymentTooltipEnum: Object,
   paymentMethods: Array,
   insuranceProviders: Array,
+  enums: Object,
+  policyIssuanceStatus: Array,
+  permissions: Object,
+  bPDetails: Array,
   isNewPaymentStructure: Boolean,
 });
 
@@ -71,6 +76,8 @@ const can = permission => useCan(permission);
 const hasAnyRole = roles => useHasAnyRole(roles);
 const permissionsEnum = page.props.permissionsEnum;
 const rolesEnum = page.props.rolesEnum;
+const permissionEnum = page.props.permissionsEnum;
+const canAny = permissions => useCanAny(permissions);
 
 const historyLoading = ref(false);
 
@@ -949,6 +956,14 @@ const linkEntity = () => {
       :quote_type="quoteType"
     />
 
+    <PolicyDetail
+      v-if="permissions.isQuoteDocumentEnabled"
+      :record="record"
+      :quoteStatusEnum="enums.quoteStatusEnum"
+      :policyIssuanceStatus="policyIssuanceStatus"
+      modelType="life"
+    />
+
     <UBODetails
       v-if="quote.customer_type == page.props.customerTypeEnum.Entity"
       :quote="quote"
@@ -1059,7 +1074,7 @@ const linkEntity = () => {
         </x-button>
       </div>
     </div>
-    <PaymentTableNew 
+    <PaymentTableNew
 			v-if="isNewPaymentStructure"
 			:quoteType="quoteType"
 			:payments="payments"
@@ -1070,6 +1085,20 @@ const linkEntity = () => {
 			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name, tooltip: pm.tool_tip } })"
 			:storageUrl="storageUrl"
 		/>
+
+    <BookPolicy
+      v-if="
+        canAny([
+          permissionEnum.VIEW_INSLY_BOOK_POLICY,
+          permissionEnum.SEND_INSLY_BOOK_POLICY,
+        ])
+      "
+      :quote="record"
+      quoteType="life"
+      :bPDetails="bPDetails"
+      :payments="payments"
+    />
+
     <EmbeddedProducts
       :data="embeddedProducts"
       :link="quote.uuid"

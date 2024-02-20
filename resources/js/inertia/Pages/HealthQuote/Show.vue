@@ -8,6 +8,7 @@ import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue'
 
 defineProps({
   quote: Object,
+  record: Object,
   leadStatuses: Array,
   ecomDetails: Object,
   coPayment: Object,
@@ -53,11 +54,15 @@ defineProps({
   quoteType: String,
   paymentTooltipEnum: Object,
   storageUrl: String,
+  enums: Object,
+  policyIssuanceStatus: Array,
+  bPDetails: Array,
   isNewPaymentStructure: Boolean,
 });
 
 const page = usePage();
-
+const permissionEnum = page.props.permissionsEnum;
+const canAny = permissions => useCanAny(permissions);
 const notification = useToast();
 const hasRole = role => useHasRole(role);
 const hasAnyRole = roles => useHasAnyRole(roles);
@@ -1383,8 +1388,8 @@ const handlePlanSelected = plan => {
   router.reload({
     preserveState: true,
     preserveScroll: true,
-    only: ['payments','quoteRequest','ecomDetails'],        
-  });  
+    only: ['payments','quoteRequest','ecomDetails'],
+  });
 };
 
 </script>
@@ -1617,6 +1622,10 @@ const handlePlanSelected = plan => {
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">ADDITIONAL NOTES</dt>
             <dd>{{ quote.additional_notes }}</dd>
+          </div>
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">ENQUIRY COUNT</dt>
+            <dd>{{ quote.enquiry_count }}</dd>
           </div>
         </dl>
       </div>
@@ -2360,96 +2369,13 @@ const handlePlanSelected = plan => {
       </div>
     </div>
 
-    
-
-    <!-- <div class="p-4 rounded shadow mb-6 bg-white" v-if="isQuoteDocumentEnabled">
-      <div>
-        <h3 class="font-semibold text-primary-800 text-lg">Policy Details</h3>
-        <x-divider class="mb-4 mt-1" />
-      </div>
-      <x-form @submit="submitPolicyDetails" :auto-focus="false">
-        <div class="flex gap-6 w-full">
-          <div class="w-full md:w-1/2">
-            <x-input
-              v-model="policyDetails.policy_number"
-              :disabled="!policyDetails.editMode"
-              label="Policy Number"
-              :rules="[isRequired, policyDetailRules.policy_number]"
-              class="w-full"
-            />
-          </div>
-          <div class="w-full md:w-1/2">
-            <x-input
-              v-model="policyDetails.policy_issuance_date"
-              :disabled="!policyDetails.editMode"
-              type="date"
-              label="Issuance Date"
-              :rules="[isRequired]"
-              class="w-full"
-            />
-          </div>
-        </div>
-        <div class="flex gap-6 w-full">
-          <div class="w-full md:w-1/2">
-            <x-input
-              v-model="policyDetails.policy_start_date"
-              :disabled="!policyDetails.editMode"
-              type="date"
-              label="Start Date"
-              :rules="[isRequired, policyDetailRules.policy_start_date]"
-              class="w-full"
-            />
-          </div>
-          <div class="w-full md:w-1/2">
-            <x-input
-              v-model="policyDetails.renewal_expiry_date"
-              :disabled="!policyDetails.editMode"
-              type="date"
-              label="Expiry Date"
-              :rules="[isRequired, policyDetailRules.renewal_expiry_date]"
-              class="w-full"
-            />
-          </div>
-        </div>
-        <div class="flex gap-6 w-full">
-          <div class="w-full md:w-1/2">
-            <x-input
-              v-model="policyDetails.premium"
-              :disabled="!policyDetails.editMode"
-              label="Premium"
-              :rules="[isRequired, policyDetailRules.premium]"
-              class="w-full"
-            />
-          </div>
-          <div class="w-full md:w-1/2"></div>
-        </div>
-
-        <div class="text-right space-x-4 mt-12" v-if="policyDetails.canEdit">
-          <x-button
-            color="#007bff"
-            size="sm"
-            v-show="policyDetails.editMode"
-            @click.prevent="cancelPolicyFrom"
-            >Cancel</x-button
-          >
-          <x-button
-            color="#26B99A"
-            type="submit"
-            size="sm"
-            v-show="policyDetails.editMode"
-            >Update</x-button
-          >
-          <x-button
-            color="#007bff"
-            size="sm"
-            type="submit"
-            v-show="!policyDetails.editMode"
-            @click.prevent="policyDetails.editMode = true"
-            >Edit</x-button
-          >
-        </div>
-      </x-form>
-    </div> -->
+    <PolicyDetail
+      v-if="permissions.isQuoteDocumentEnabled"
+      :record="record"
+      :quoteStatusEnum="enums.quoteStatusEnum"
+      :policyIssuanceStatus="policyIssuanceStatus"
+      modelType="health"
+    />
 
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div class="flex flex-wrap gap-4 justify-between items-center mb-4">
@@ -2726,7 +2652,7 @@ const handlePlanSelected = plan => {
         </div>
       </x-modal>
     </div>
-    <PaymentTableNew 
+    <PaymentTableNew
 			v-if="isNewPaymentStructure"
 			quoteType="Health"
 			:payments="payments"
@@ -2755,6 +2681,20 @@ const handlePlanSelected = plan => {
       :quote="quote"
       :modelType="modelType"
       :paymentLink="paymentLink"
+    />
+
+
+    <BookPolicy
+      v-if="
+        canAny([
+          permissionEnum.VIEW_INSLY_BOOK_POLICY,
+          permissionEnum.SEND_INSLY_BOOK_POLICY,
+        ])
+      "
+      :quote="record"
+      quoteType="health"
+      :bPDetails="bPDetails"
+      :payments="payments"
     />
 
     <div class="p-4 rounded shadow mb-6 bg-white">
@@ -3005,6 +2945,11 @@ const handlePlanSelected = plan => {
       />
     </div>
 
-    <AuditLogs :type="'App\\Models\\HealthQuote'" :id="$page.props.quote.id" :quoteCode="$page.props.quote.code"/>
+    <AuditLogs :type="'App\\Models\\HealthQuote'" :id="$page.props.quote.id" />
+
+    <ClientInquiryLogs
+        v-if="clientInquiryLogs.length > 0"
+        :logs="clientInquiryLogs"
+    />
   </div>
 </template>
