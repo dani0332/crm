@@ -318,7 +318,7 @@ class SagePayloadFactory
             $temp['EntryNumber'] = 1;
             $temp['PaymentNumber'] = $key + 1;
             $temp['DueDate'] = date('Y-m-d', strtotime($item->due_date));;
-            $temp['AmountDue']  =  $item->collection_amount;
+            $temp['AmountDue']  =  $item->collection_amount === null ? 0 :$item->collection_amount;
             $data[] = $temp;
         }
         return $data;
@@ -627,5 +627,46 @@ class SagePayloadFactory
         ];
 
         return $optionalArray;
+    }
+
+    public static function arSplitPrepaymentPayload($quote, $sage_customer_number, $payment, $splitPayments)
+    {
+        $payLoad = [
+            'BatchRecordType' => 'CA',
+            'ReceiptsAdjustments' => [
+                [
+                    'BatchType' => 'CA',
+                    'CustomerNumber' => $sage_customer_number,
+                    'ReceiptTransactionType' => 'Receipt',
+                    'AppliedReceiptsAdjustments' => self::createAppliedReceiptsAdjustments($quote, $sage_customer_number, $payment ,$splitPayments),
+                ],
+            ],
+        ];
+
+        return [
+            'endPoint' => 'AR/ARReceiptAndAdjustmentBatches',
+            'payload' => $payLoad,
+        ];
+    }
+
+    private static function createAppliedReceiptsAdjustments($quote, $sage_customer_number, $payment, $splitPayments)
+    {
+        $data = [];
+        $data['BatchType'] = 'CA';
+        $data['CustomerNumber'] = $sage_customer_number;
+        $data['DocumentNumber'] = $payment->insurer_tax_number;
+        $data['ReceiptTransactionType'] = 'Receipt';
+        $data['CustomerReceiptAmount'] = floatval($quote->price_with_vat);
+
+        foreach ($splitPayments as $key => $item) {
+            $temp['BatchType'] = 'CA';
+            $temp['CustomerNumber'] = $sage_customer_number;
+            $temp['DocumentNumber'] = $item->sage_reciept_id;
+            $temp['ReceiptTransactionType'] = 'Receipt';
+            $temp['CustomerReceiptAmount'] = -$item->payment_amount;
+            $data[] = $temp;
+        }
+
+        return $data;
     }
 }
