@@ -463,6 +463,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::patch('/update/{id}', 'update')->name('update');
         Route::post('/save-details', 'savePriceDetails')->name('save-price-details');
         Route::post('/save-policy-details', 'savePolicyDetails')->name('save-policy-details');
+        Route::post('/save-booking-details', 'saveBookingDetails')->name('save-booking-details');
     });
     // Route::get('send-update-log/{id}', [SendUpdateLogController::class, 'getLogsById'])->name('send-update-logs.get-by-id');
 
