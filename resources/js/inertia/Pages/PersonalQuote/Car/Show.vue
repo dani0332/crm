@@ -3406,8 +3406,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
           <div
             class="flex justify-end"
             v-if="
-              !hasRole(rolesEnum.PA) &&
-              record.quote_status_id == quoteStatusEnum.TransactionApproved
+              !can(permissionEnum.ApprovePayments)
             "
           >
             <x-button

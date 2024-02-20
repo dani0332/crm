@@ -1701,7 +1701,7 @@ class CRUDController extends Controller
             'price_with_vat' => $request->amount_with_vat ?? '',
             'vat' => $request->vat ?? '',
             'insurer_quote_number' => $request->quote_plan_insurer_quote_number ?? '',
-            'policy_issuance_status_id' => $request->quote_policy_issuance_status ?? '',
+            'policy_issuance_status_id' => $request->quote_policy_issuance_status ?? null,
             'policy_issuance_status_other' => $request->quote_policy_issuance_status_other ?? '',
         ]);
 
