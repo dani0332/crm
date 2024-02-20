@@ -10,7 +10,10 @@ const props = defineProps({
   insuranceProviders: Object,
   sendUpdateStatusEnum: Object,
   quote: Object,
-  indicativePrice: Object
+  indicativePrice: Object,
+  realQuote: Object,
+  isNegativeValue: Boolean,
+  bookingDetails: Array,
 });
 
 const page = usePage();
@@ -273,6 +276,9 @@ const onUpdateLog = () => {
       :quote="quote"
       :quoteType="quoteType"
       :isUpdateBooked="isUpdateBooked"
+      :is-negative-value="isNegativeValue"
+      :booking-details="props.bookingDetails"
+      :real-quote="props.realQuote"
     />
 
     <AuditLogs
