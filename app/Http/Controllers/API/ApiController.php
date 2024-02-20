@@ -57,4 +57,9 @@ class ApiController extends Controller
             return apiResponse($e, Response::HTTP_BAD_REQUEST);
         }
     }
+
+    public function triggerSICWorkflow(Request $request)
+    {
+        return $this->apiService->triggerSICWorkflow($request);
+    }
 }

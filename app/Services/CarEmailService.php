@@ -23,7 +23,7 @@ class CarEmailService extends BaseService
         $this->sendEmailCustomerService = $sendEmailCustomerService;
     }
 
-    public function sendCarOCBIntroEmail($plans, $lead, $tierR, $previousAdvisorId, $carQuoteService)
+    public function sendCarOCBIntroEmail($plans, $lead, $tierR, $previousAdvisorId, $carQuoteService, $triggerSICWorkFlow = false)
     {
         $plans = $this->executePlansSelectionLogic($plans);
 
@@ -47,6 +47,9 @@ class CarEmailService extends BaseService
                 info('attaching pdf: '.$lead->uuid.'    ');
             }
         }
+
+        // trigger SIC workflow
+        SIBService::createWorkflowEvent(config('constants.SIC_WORKFLOW_NAME'), $lead,[], $emailData);
 
         $responseCode = $this->sendEmailCustomerService->sendLMSIntroEmail($emailTemplateId, $emailData, 'lms-intro-email');
 
