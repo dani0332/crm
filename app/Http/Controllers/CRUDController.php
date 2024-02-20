@@ -1773,13 +1773,21 @@ class CRUDController extends Controller
 
     public function sendOCBEmailNB(Request $request, $quoteType, $quoteUuId)
     {
-        Log::info('sendOCBEmailNB OCB email sending started for quote uuid: '.$quoteUuId);
+        if($quoteUuId){
+            Log::info('sendOCBEmailNB OCB email sending started for quote uuid: '.$quoteUuId);
 
-        SendOCBIntroEmailJob::dispatch($quoteUuId, null);
+            SendOCBIntroEmailJob::dispatch($quoteUuId, null);
 
-        info('sendOCBEmailNB OCB email Job dispatched for quote uuid: '.$quoteUuId);
+            info('sendOCBEmailNB OCB email Job dispatched for quote uuid: '.$quoteUuId);
 
-        return response()->json(['success' => 'OCB NB email sent to customer !']);
+            return response()->json(['success' => 'OCB NB email sent to customer !']);
+        }
+        else {
+            Log::info('sendOCBEmailNB OCB email quote uuid not found');
+
+            return response()->json(['error' => 'OCB email sending failed, please try again.'], 500);
+        }
+
 
     }
 
