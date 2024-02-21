@@ -560,10 +560,7 @@ onUpdated(() => {
             <!-- don't remove this commented part anyone please -->
             <x-tooltip
               v-if="
-                label == 'Members' &&
-                (props.memebersDetailsChanged ||
-                  (props.plan.isManualPlan && props.plan.needPriceUpdate))
-              "
+                label == 'Members' && (props.plan.isManualPlan && props.plan.needPriceUpdate)"
               position="bottom"
               class="arrow-t"
             >
@@ -817,7 +814,7 @@ onUpdated(() => {
               </div>
               <DataTable
                 :headers="[
-                  { text: 'Revised', value: 'memberaction' },
+                //   { text: 'Revised', value: 'memberaction' },
                   { text: 'Relationship', value: 'membercategory' },
                   { text: 'DOB', value: 'dobText' },
                   { text: 'Gender', value: 'genderText' },
@@ -896,7 +893,7 @@ onUpdated(() => {
                 </template>
 
                 <!-- Here we goo  -->
-                <template #item-memberaction="item">
+                <!-- <template #item-memberaction="item">
                   <section v-for="data in item.ratesPerCopay">
                     <x-checkbox
                       v-if="data.healthPlanCoPaymentId == selectedCopay.id"
@@ -915,7 +912,7 @@ onUpdated(() => {
                       @change="markMemberBasePriceRevise($event, item.memberId)"
                     />
                   </section>
-                </template>
+                </template> -->
 
                 <template #item-membercategory="{ memberId }">
                   {{ memberCategoryText(memberId) }}
@@ -933,7 +930,7 @@ onUpdated(() => {
 
                 <template #item-premium="item">
                   <section v-for="data in item.ratesPerCopay">
-                    <x-input
+                    <!-- <x-input
                       v-if="
                         (!data.premium || data.premium == undefined) &&
                         data.healthPlanCoPaymentId == selectedCopay.id
@@ -943,9 +940,8 @@ onUpdated(() => {
                           memberIndexPerId(item.memberId)
                         ].premium
                       "
-                      :disabled="data.premium > 0 || data.premium || !isManual"
+                      :disabled="true"
                       size="sm"
-                      @keyup="handleManualBasePrice($event, item.memberId)"
                     />
                     <x-input
                       v-else-if="
@@ -959,34 +955,27 @@ onUpdated(() => {
                           memberIndexPerId(item.memberId)
                         ].premium
                       "
-                      :disabled="!data.notifyAgent || !isManual"
+                      :disabled="true"
                       size="sm"
-                      @keyup="handleManualBasePrice($event, item.memberId)"
-                    />
+                    /> -->
 
                     <x-input
-                      v-else-if="
-                        data.premium != undefined &&
-                        data.premium > 0 &&
+                      v-if="
                         data.healthPlanCoPaymentId == selectedCopay.id
                       "
                       :value="data.premium?.toLocaleString()"
-                      :disabled="!data.notifyAgent || !isManual"
+                      :disabled="true"
                       size="sm"
-                      @update:modelValue="onMemberPremiumUpdate(item, $event)"
                     />
                     <x-input
                       v-else-if="
-                        data.premium != undefined &&
-                        data.premium > 0 &&
                         (selectedCopay === undefined ||
                           selectedCopay.length == 0) &&
                         data.healthPlanCoPaymentId == defaultCopayId
                       "
                       :value="data.premium?.toLocaleString()"
-                      :disabled="!data.notifyAgent || !isManual"
+                      :disabled="true"
                       size="sm"
-                      @update:modelValue="onMemberPremiumUpdate(item, $event)"
                     />
                     <x-button
                       v-if="$page.props.permissions.pa"
