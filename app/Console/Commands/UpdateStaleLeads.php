@@ -78,7 +78,8 @@ class UpdateStaleLeads extends Command
 
             info('------------------- Updating : '.$eligibleQuoteType.' -------------------');
             $eligibleQuoteType::whereNotIn('quote_status_id', $skipStatus)
-                ->where('quote_status_date', '<', date(config('constants.DATE_FORMAT_ONLY'), strtotime('-30 days')))
+                // ->where('quote_status_date', '<', date(config('constants.DATE_FORMAT_ONLY'), strtotime('-30 days')))
+                ->where('quote_status_date', '<', date(config('constants.DATE_FORMAT_ONLY'), strtotime('-3 days')))
                 ->when($eligibleQuoteType == BusinessQuote::class, function ($businessQuote) {
                     $businessQuote->whereNot('business_type_of_insurance_id', quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical));
                 })
@@ -96,7 +97,8 @@ class UpdateStaleLeads extends Command
             info('------------------- Updating Lost Status on Stale Leads for: '.$eligibleQuoteType.' -------------------');
             $eligibleQuoteType::with('activities')
                 ->whereNotNull('stale_at')
-                ->where('stale_at', '<', date(config('constants.DATE_FORMAT_ONLY'), strtotime('-90 days')))
+                // ->where('stale_at', '<', date(config('constants.DATE_FORMAT_ONLY'), strtotime('-90 days')))
+                ->where('stale_at', '<', date(config('constants.DATE_FORMAT_ONLY'), strtotime('-5 days')))
                 ->chunkById(1000, function ($staleLeads) use ($eligibleQuoteType, $lostReasonId) {
                     foreach ($staleLeads as $staleLead) {
 
@@ -116,7 +118,8 @@ class UpdateStaleLeads extends Command
                                 'auditable_type' => $eligibleQuoteType,
                                 'auditable_id' => $staleLead->id,
                                 'old_values' => ['quote_status_id' => $staleLead->quote_status_id],
-                                'new_values' => ['quote_status_id' => QuoteStatusEnum::Lost, 'notes' => 'Stale for more than 90 days'],
+                                // 'new_values' => ['quote_status_id' => QuoteStatusEnum::Lost, 'notes' => 'Stale for more than 90 days'],
+                                'new_values' => ['quote_status_id' => QuoteStatusEnum::Lost, 'notes' => 'Stale for more than 5 days'],
                                 'created_at' => now(),
                                 'updated_at' => now(),
                             ]);
