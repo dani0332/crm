@@ -309,9 +309,9 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
         $quoteModel = $this->getQuoteObject($request->modelType, $request->quote_id);
         if (! $quoteModel) {
             return response()->json(['success' => false]);
-        }      
+        }
 
-        $firstPayment = $quoteModel->payments()->where('code',$request->payment_code)->first();
+        $firstPayment = $quoteModel->payments()->where('code', $request->payment_code)->first();
         if ($request->is_declined) {
             $firstPayment->update([
                 'decline_reason_id' => $request->declined_reason,
@@ -374,18 +374,19 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                 'updated_by' => Auth::user()->id,
             ]);
             $successMessage = 'Transaction approved';
-            $totalApproved = $quoteModel->payments()->where('is_approved',1)->count();
-            if($totalApproved == $quoteModel->payments()->count()){
+            $totalApproved = $quoteModel->payments()->where('is_approved', 1)->count();
+            if ($totalApproved == $quoteModel->payments()->count()) {
                 $quoteModel->quote_status_id = QuoteStatusEnum::TransactionApproved;
-                $quoteModel->save();                
+                $quoteModel->save();
                 //Create duplicate lead for TRAVEL
-                if($quoteTypeId == QuoteTypeId::Travel && $quoteModel->payments()->count()>1){
-                    if ( app(TravelQuoteService::class)->createDuplicateLead($quoteModel) ) {
-                        $successMessage .= ", ".$quoteModel->code."-1 Created For Booking The Additional Policy";
+                if ($quoteTypeId == QuoteTypeId::Travel && $quoteModel->payments()->count() > 1) {
+                    if (app(TravelQuoteService::class)->createDuplicateLead($quoteModel)) {
+                        $successMessage .= ', '.$quoteModel->code.'-1 Created For Booking The Additional Policy';
                     }
                 }
-            }            
+            }
         }
+
         return $successMessage;
     }
 
@@ -393,7 +394,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
     {
         $successMessage = 'Payment Verified';
         $splitPayment = PaymentSplits::find($request->splitPaymentId);
-        $masterPayment = $splitPayment->payment;        
+        $masterPayment = $splitPayment->payment;
         if ($request->is_approved) {
             $paymentInformation = [
                 'collection_amount' => $request->collection_amount,
@@ -401,8 +402,8 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                 'payment_status_id' => PaymentStatusEnum::PAID,
                 'payment_allocation_status' => PaymentAllocationStatus::NOT_ALLOCATED,
                 'updated_by' => $request->user()->id,
-            ];            
-            
+            ];
+
             //associate approved documents with payment split
             if (isset($request->approved_document_model[$splitPayment->sr_no])
                 && count($request->approved_document_model[$splitPayment->sr_no]) > 0) {
@@ -429,7 +430,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                 $failMessage = $sageResponse['response'];
                 vAbort($failMessage);
             }
-        } elseif ($request->is_declined) {            
+        } elseif ($request->is_declined) {
             $paymentInformation = [
                 'decline_reason_id' => $request->declined_reason,
                 'decline_custom_reason' => $request->declined_custom_reason,
@@ -446,7 +447,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
     }
 
     public function setMasterPaymentStatus($payment)
-    {   
+    {
         if ($payment) {
             if ($payment->frequency == 'upfront') {
                 $payment->update(

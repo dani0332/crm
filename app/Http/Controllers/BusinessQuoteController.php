@@ -161,7 +161,7 @@ class BusinessQuoteController extends Controller
         $paymentMethods = $this->lookupService->getPaymentMethods();
 
         $isNewPaymentStructure = app(SplitPaymentService::class)->isNewPaymentStructure($payments);
-        if ($isNewPaymentStructure) { 
+        if ($isNewPaymentStructure) {
             $filteredPaymentMethods = $this->lookupService->getPaymentMethods();
         } else {
             $filteredPaymentMethods = $paymentMethods->filter(function ($paymentMethod) {
