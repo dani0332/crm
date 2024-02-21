@@ -180,7 +180,7 @@ class SIBService extends BaseService
     public static function createWorkflowEvent($eventName, $quote, $eventProperties = [], $eventData = [])
     {
         $appEnv = config('constants.APP_ENV');
-        //$eventQualifiedName = ($appEnv == EnvEnum::PRODUCTION ? '' : $appEnv.'_').$eventName;
+        $eventQualifiedName = ($appEnv == EnvEnum::PRODUCTION ? '' : $appEnv.'_').$eventName;
         $endPointUrl = config('constants.SIB_AUTOMATE_URL').'/trackEvent';
         $apiKey = config('constants.SIB_WORKFLOW_CLIENT_KEY');
         if (empty($eventProperties)) {
@@ -194,7 +194,7 @@ class SIBService extends BaseService
             ];
         }
         $eventData = json_encode([
-            'event' => $eventName,
+            'event' => $eventQualifiedName,
             'email' => $quote ? $quote->email : null,
             'properties' => $eventProperties,
             'eventdata' => [
