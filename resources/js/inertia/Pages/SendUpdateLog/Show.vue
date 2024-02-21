@@ -14,6 +14,7 @@ const props = defineProps({
   realQuote: Object,
   isNegativeValue: Boolean,
   bookingDetails: Array,
+  updateToCustomerBtn: Boolean,
 });
 
 const page = usePage();
@@ -279,6 +280,7 @@ const onUpdateLog = () => {
       :is-negative-value="isNegativeValue"
       :booking-details="props.bookingDetails"
       :real-quote="props.realQuote"
+      :update-to-customer-btn="props.updateToCustomerBtn"
     />
 
     <AuditLogs

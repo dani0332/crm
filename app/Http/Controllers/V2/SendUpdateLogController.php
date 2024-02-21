@@ -94,6 +94,7 @@ class SendUpdateLogController extends Controller
             'realQuote' => $realQuote,
             'isNegativeValue' => $sendUpdateLogService->isNegativeValue($sendUpdateLog),
             'bookingDetails' => $bookingDetails,
+            'updateToCustomerBtn' => count($sendUpdateLog->details) > 0,
         ]);
     }
 

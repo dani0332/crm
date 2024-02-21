@@ -40,6 +40,10 @@ const props = defineProps({
     type: Object,
     required: true,
   },
+  updateToCustomerBtn: {
+    type: Boolean,
+    required: false,
+  },
 });
 
 const state = reactive({
@@ -534,13 +538,21 @@ const saveBookingDetail = (isValid) => {
             </div>
             <x-divider class="my-4 mt-10" />
             <div class="flex justify-end gap-2">
-              <x-button
-                size="sm"
-                @click="state.isEdit = true"
-                v-if="!state.isEdit"
-              >
-                Edit
-              </x-button>
+              <template v-if="!state.isEdit">
+                <x-button
+                  size="sm"
+                  @click="state.isEdit = true"
+                >
+                  Edit
+                </x-button>
+                <x-button
+                  size="sm"
+                  color="orange"
+                  v-if="props.updateToCustomerBtn"
+                >
+                  Send update to customer
+                </x-button>
+              </template>
               <template v-else>
                 <x-button
                   size="sm"
@@ -553,7 +565,7 @@ const saveBookingDetail = (isValid) => {
                 </x-button>
                 <x-button
                   size="sm"
-                  color="primary"
+                  color="#0CA789"
                   type="submit"
                   :loading="bookingDetailsForm.processing"
                   :disabled="bookingDetailsForm.processing"
