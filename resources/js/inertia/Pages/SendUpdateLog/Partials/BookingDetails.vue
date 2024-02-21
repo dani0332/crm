@@ -534,15 +534,31 @@ const saveBookingDetail = (isValid) => {
             </div>
             <x-divider class="my-4 mt-10" />
             <div class="flex justify-end gap-2">
-              <x-button size="sm" @click="state.isEdit = true" v-if="!state.isEdit">
+              <x-button
+                size="sm"
+                @click="state.isEdit = true"
+                v-if="!state.isEdit"
+              >
                 Edit
               </x-button>
               <template v-else>
-                <x-button size="sm" color="orange" @click="state.isEdit = false" :loading="bookingDetailsForm.processing"
-                  :disabled="bookingDetailsForm.processing">Cancel
+                <x-button
+                  size="sm"
+                  color="orange"
+                  @click="state.isEdit = false"
+                  :loading="bookingDetailsForm.processing"
+                  :disabled="bookingDetailsForm.processing"
+                >
+                  Cancel
                 </x-button>
-                <x-button size="sm" color="primary" type="submit" :loading="bookingDetailsForm.processing"
-                  :disabled="bookingDetailsForm.processing">Update
+                <x-button
+                  size="sm"
+                  color="primary"
+                  type="submit"
+                  :loading="bookingDetailsForm.processing"
+                  :disabled="bookingDetailsForm.processing"
+                >
+                  Update
                 </x-button>
               </template>
             </div>
