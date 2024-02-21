@@ -41,6 +41,10 @@ const props = defineProps({
     type: Date,
     default: null,
   },
+  size: {
+    type: String,
+    default: 'md',
+  },
 });
 
 const selectedData = computed({
@@ -75,6 +79,7 @@ const selectedData = computed({
         :label="props.label"
         :placeholder="placeholder"
         :disabled="props.disabled"
+        :size="props.size"
         class="w-full"
         :rules="value ? [] : props.rules"
         :error="props.customError ? props.customError : ''"
