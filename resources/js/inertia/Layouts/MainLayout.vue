@@ -1,5 +1,5 @@
 <script setup>
-import {XToggle} from "@indielayer/ui";
+import VisibilityToggle from "../Components/VisibilityToggle.vue";
 
 const page = usePage();
 const user = computed(() => page.props.auth.user);
@@ -15,81 +15,8 @@ const onLogout = () => {
     window.location.href = '/login';
   });
 };
-const userStatus = ref(false);
-const onStatusChange = async () => {
-    await axios
-        .post('/update-user-status', {
-            user_status: userStatus.value,
-        })
-        .then(res => {
-
-        })
-        .finally(() => {
-
-           // statusModal.show = false;
-        });
-};
 
 
-const isButtonVisible = ref(false);
-const allowedRoles = ['ADMIN','ENGINEERING','CAR_ADVISOR', 'HEALTH_ADVISOR', 'BETA_USER'];
-
-const sameRoles = allowedRoles.filter(element => page.props.auth.roles.includes(element));
-
-const hasAllowedRoles = sameRoles.length > 0;
-
-const shouldShowButton = () => {
-    if(hasAllowedRoles) {
-        const currentTime = new Date().toLocaleString('en-US', {timeZone: 'Asia/Dubai'});
-        const currentDay = new Date(currentTime).getDay();
-        const currentHour = new Date(currentTime).getHours();
-
-        // Show the button all day on Saturday and Sunday
-        console.log('current day', currentDay);
-        if (currentDay === 6 || currentDay === 0 || currentDay === 2) {
-            return true;
-        }
-
-        // Show the button outside the range 9:00 AM to 6:30 PM on other days
-        return !(currentHour >= 10 && currentHour < 15 && new Date(currentTime).getMinutes() >= 0);
-    }
-    return false;
-};
-
-const scheduleUpdate = () => {
-    if(hasAllowedRoles) {
-    const now = new Date().toLocaleString('en-US', { timeZone: 'Asia/Dubai' });
-    let nextUpdate = new Date(now);
-    isButtonVisible.value = shouldShowButton();
-
-    // Calculate the time until the next scheduled update
-    if (nextUpdate.getHours() < 9 || (nextUpdate.getHours() === 9 && nextUpdate.getMinutes() <= 1)) {
-        nextUpdate.setHours(9, 0, 1);
-    } else if (nextUpdate.getHours() >= 18 || (nextUpdate.getHours() === 18 && nextUpdate.getMinutes() >= 30)) {
-        // If it's past 6:30 PM, schedule the next update for the next day at 9:00 AM
-        nextUpdate.setDate(nextUpdate.getDate() + 1);
-        nextUpdate.setHours(9, 0, 1);
-    } else {
-        // Schedule the next update for the same day at 6:30 PM
-        nextUpdate.setHours(18, 30, 1);
-    }
-
-    // Schedule the next check after the calculated time difference
-    setTimeout(() => {
-        isButtonVisible.value = shouldShowButton();
-        scheduleUpdate();
-    }, nextUpdate - new Date());
-    }
-};
-const intializData = ()=>{
-    userStatus.value = (user.value.status =='1')?true:false;
-}
-
-onMounted(() => {
-    scheduleUpdate();
-    intializData();
-
-});
 
 
 
@@ -325,12 +252,10 @@ onMounted(() => {
             </div>
 
             <div class="flex gap-3 items-center">
-             <small v-if="isButtonVisible">{{userStatus == true?'Online':'Offline'}}</small>
-                <x-tooltip position="bottom">
-                    <x-toggle v-model="userStatus" v-if="isButtonVisible"   @change="onStatusChange"  ></x-toggle>
-                    <template #tooltip>{{userStatus == true?'You can toggle this tooltip to go offline, this will temporarily stop new leads allocations':'You can toggle this tooltip to go online,this will start new lead allocation'}}</template>
-                </x-tooltip>
 
+                <VisibilityToggle
+                    :user="user"
+                />
               <!-- <UserStatus /> -->
               <x-popover align="right" block>
                 <x-button size="sm" ghost>
