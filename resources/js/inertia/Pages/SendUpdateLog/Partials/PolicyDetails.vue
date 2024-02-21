@@ -152,6 +152,7 @@ const onUpdate = () => {
 								<x-input
 									v-if="isCPD"
 									:disabled="!state.isEdit"
+                  v-model="policyDetailsForm.provider_name"
 								/>
 								<span v-else>{{ policyDetailsForm.provider_name }}</span>
 							</dd>
@@ -171,6 +172,7 @@ const onUpdate = () => {
 								<x-input
 									v-if="isCPD"
 									:disabled="!state.isEdit"
+                  v-model="policyDetailsForm.plan_name"
 								/>
 								<span v-else>{{ policyDetailsForm.plan_name }}</span>
 							</dd>
