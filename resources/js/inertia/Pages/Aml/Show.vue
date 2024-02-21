@@ -83,12 +83,20 @@ function submitDecision(decision) {
 }
 
 const submitAMLDecision = decision => {
+    setAllDecisionSelected();
   decisionNotes.value = '';
   decisionNotesModal.value = true;
   decisionModalHeading.value = decisionTitles[decision];
   amlDecision.value = decision;
 };
 
+const setAllDecisionSelected = ()=>{
+    amlResults.value.every((x) => {
+        if(x.decision == 'FalsePositive' || x.decision == 'TrueMatch'){
+            decisionSelected.value[x.ID] = x.decision;
+        }
+    });
+}
 const setSelectedOption = (e, item) => {
 
   decisionSelected.value[item.ID] = e;
