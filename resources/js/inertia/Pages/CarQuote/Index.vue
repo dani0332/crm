@@ -343,10 +343,6 @@ const openFollowUpModal = () => {
         {{ car_model?.text }}
       </template>
 
-      <template #item-created_at="{ created_at }">
-        {{ dateFormat(created_at) }}
-      </template>
-
       <template #item-nationality="{ nationality }">
         {{ nationality?.text }}
       </template>
