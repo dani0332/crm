@@ -970,7 +970,7 @@ class TravelQuoteService extends BaseService
         $duplicateLead->parent_id = $leadModal->id;
         $duplicateLead->uuid = $leadModal->uuid.'-1';
         $duplicateLead->code = $newLeadCode;
-        $duplicateLead->source = 'system_generated';
+        $duplicateLead->source = 'imcrm_booking';
         $duplicateLead->save();
 
         if ($duplicateLead) {

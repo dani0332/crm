@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use OwenIt\Auditing\Auditable as AuditableTrait;
 use OwenIt\Auditing\Contracts\Auditable;
+use App\Enums\PaymentStatusEnum;
 
 class PaymentSplits extends Model implements Auditable
 {
@@ -50,5 +51,17 @@ class PaymentSplits extends Model implements Auditable
     public function sageLog()
     {
         return $this->morphMany(SageApiLog::class, 'section');
+    }
+
+    // render payment status PAID if payment status is CAPTURED
+    public function getPaymentStatusIdAttribute($value)
+    {
+        if ($value==PaymentStatusEnum::CAPTURED) {
+            return PaymentStatusEnum::PAID;
+        } else if($value==PaymentStatusEnum::PARTIAL_CAPTURED) {
+            return PaymentStatusEnum::PARTIALLY_PAID;
+        } else {
+            return $value;
+        }        
     }
 }

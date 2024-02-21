@@ -181,4 +181,15 @@ class Payment extends Model implements Auditable
         return $this->hasMany(PaymentSplits::class, 'code', 'code');
     }
 
+    // render payment status PAID if payment status is CAPTURED
+    public function getPaymentStatusIdAttribute($value)
+    {
+        if ($value==PaymentStatusEnum::CAPTURED) {
+            return PaymentStatusEnum::PAID;
+        } else if($value==PaymentStatusEnum::PARTIAL_CAPTURED) {
+            return PaymentStatusEnum::PARTIALLY_PAID;
+        } else {
+            return $value;
+        }        
+    }
 }
