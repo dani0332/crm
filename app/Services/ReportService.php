@@ -278,6 +278,8 @@ class ReportService extends BaseService
         $hasTeam = $request->has('team') && $request->team !== '';
         $hasAdvisors = $request->has('advisors') && count($request->advisors) > 0;
 
+        $totalOp = $request->filter_by === 'total_opportunity';
+
         if ($lob == QuoteTypes::PET->value || $lob == QuoteTypes::CYCLE->value || $lob == QuoteTypes::YACHT->value) {
             $pqs = [
                 QuoteTypes::PET->value => QuoteTypeId::Pet,
@@ -288,17 +290,19 @@ class ReportService extends BaseService
             $tableName = 'personal_quotes';
             $personalQuoteType = $pqs[$lob];
 
+            $priceSum = $totalOp ? 'q.premium' : '1';
+
             $query = DB::table($tableName.' AS q')
                 ->select(
                     'u.name AS team',
                     DB::raw(
                         '
-                            SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::NewLead.' THEN 1 ELSE 0 END) AS new_lead,
-                            SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::Allocated.' THEN 1 ELSE 0 END) AS allocated,
-                            SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::Quoted.' THEN 1 ELSE 0 END) AS quoted,
-                            SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::FollowedUp.' THEN 1 ELSE 0 END) AS followed_up,
-                            SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::InNegotiation.' THEN 1 ELSE 0 END) AS in_negotiation,
-                            SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::PaymentPending.' THEN 1 ELSE 0 END) AS payment_pending
+                            SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::NewLead.' THEN '.$priceSum.' ELSE 0 END) AS new_lead,
+                            SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::Allocated.' THEN '.$priceSum.' ELSE 0 END) AS allocated,
+                            SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::Quoted.' THEN '.$priceSum.' ELSE 0 END) AS quoted,
+                            SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::FollowedUp.' THEN '.$priceSum.' ELSE 0 END) AS followed_up,
+                            SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::InNegotiation.' THEN '.$priceSum.' ELSE 0 END) AS in_negotiation,
+                            SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::PaymentPending.' THEN '.$priceSum.' ELSE 0 END) AS payment_pending
                         '
                     ),
                 )
@@ -320,56 +324,61 @@ class ReportService extends BaseService
                 ->whereBetween('q.created_at', [$start, $end]);
 
             if ($lob == QuoteTypes::HEALTH->value) {
+                $priceSum = $totalOp ? 'q.price_starting_from' : '1';
+
                 $query->select(
                     $hasTeam ? 'u.name AS team' : 'q.health_team_type AS team',
                     DB::raw(
                         '
-                            SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::NewLead.' THEN 1 ELSE 0 END) AS new_lead,
-                            SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::Allocated.' THEN 1 ELSE 0 END) AS allocated,
-                            SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::Quoted.' THEN 1 ELSE 0 END) AS quoted,
-                            SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::FollowedUp.' THEN 1 ELSE 0 END) AS followed_up,
-                            SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::InNegotiation.' THEN 1 ELSE 0 END) AS in_negotiation,
-                            SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::PaymentPending.' THEN 1 ELSE 0 END) AS payment_pending,
-                            SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::RenewalTermsReceived.' THEN 1 ELSE 0 END) AS renewal_terms_recevied,
-                            SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::ApplicationPending.' THEN 1 ELSE 0 END) AS application_pending,
-                            SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::ApplicationSubmitted.' THEN 1 ELSE 0 END) AS application_submitted,
-                            SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::MissingDocumentsRequested.' THEN 1 ELSE 0 END) AS missing_documents
+                        SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::NewLead.' THEN '.$priceSum.' ELSE 0 END) AS new_lead,
+                        SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::Allocated.' THEN '.$priceSum.' ELSE 0 END) AS allocated,
+                        SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::Quoted.' THEN '.$priceSum.' ELSE 0 END) AS quoted,
+                        SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::FollowedUp.' THEN '.$priceSum.' ELSE 0 END) AS followed_up,
+                        SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::InNegotiation.' THEN '.$priceSum.' ELSE 0 END) AS in_negotiation,
+                        SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::PaymentPending.' THEN '.$priceSum.' ELSE 0 END) AS payment_pending,
+                        SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::RenewalTermsReceived.' THEN '.$priceSum.' ELSE 0 END) AS renewal_terms_recevied,
+                        SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::ApplicationPending.' THEN '.$priceSum.' ELSE 0 END) AS application_pending,
+                        SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::ApplicationSubmitted.' THEN '.$priceSum.' ELSE 0 END) AS application_submitted,
+                        SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::MissingDocumentsRequested.' THEN '.$priceSum.' ELSE 0 END) AS missing_documents
                         '
                     )
                 )
                     ->whereNotNull('q.health_team_type')
                     ->groupBy($hasTeam ? 'q.advisor_id' : 'q.health_team_type');
             } elseif ($lob == QuoteTypes::HOME->value) {
+                $priceSum = $totalOp ? 'q.premium' : '1';
+
                 $query->select(
                     'u.name AS team',
                     DB::raw(
                         '
-                        SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::NewLead.' THEN 1 ELSE 0 END) AS new_lead,
-                        SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::Allocated.' THEN 1 ELSE 0 END) AS allocated,
-                        SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::Quoted.' THEN 1 ELSE 0 END) AS quoted,
-                        SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::FollowedUp.' THEN 1 ELSE 0 END) AS followed_up,
-                        SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::InNegotiation.' THEN 1 ELSE 0 END) AS in_negotiation,
-                        SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::PaymentPending.' THEN 1 ELSE 0 END) AS payment_pending
+                        SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::NewLead.' THEN '.$priceSum.' ELSE 0 END) AS new_lead,
+                        SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::Allocated.' THEN '.$priceSum.' ELSE 0 END) AS allocated,
+                        SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::Quoted.' THEN '.$priceSum.' ELSE 0 END) AS quoted,
+                        SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::FollowedUp.' THEN '.$priceSum.' ELSE 0 END) AS followed_up,
+                        SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::InNegotiation.' THEN '.$priceSum.' ELSE 0 END) AS in_negotiation,
+                        SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::PaymentPending.' THEN '.$priceSum.' ELSE 0 END) AS payment_pending
                         '
                     )
                 )
                     ->whereNotNull('q.advisor_id')
                     ->groupBy('q.advisor_id');
             } elseif ($lob == QuoteTypes::CORPLINE->value) {
+                $priceSum = $totalOp ? 'q.premium' : '1';
                 $query->select(
                     'u.name AS team',
                     DB::raw(
                         '
-                        SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::NewLead.' THEN 1 ELSE 0 END) AS new_lead,
-                        SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::Allocated.' THEN 1 ELSE 0 END) AS allocated,
-                        SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::ProposalFormRequested.' THEN 1 ELSE 0 END) AS proposal_form_requested,
-                        SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::ProposalFormReceived.' THEN 1 ELSE 0 END) AS proposal_form_received,
-                        SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::PendingRenewalInformation.' THEN 1 ELSE 0 END) AS pending_renewal_information,
-                        SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::AdditionalInformationRequested.' THEN 1 ELSE 0 END) AS additional_information_requested,
-                        SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::QuoteRequested.' THEN 1 ELSE 0 END) AS quotes_requested,
-                        SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::Quoted.' THEN 1 ELSE 0 END) AS quoted,
-                        SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::FollowedUp.' THEN 1 ELSE 0 END) AS followed_up,
-                        SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::FinalizingTerms.' THEN 1 ELSE 0 END) AS finalizing_terms
+                        SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::NewLead.' THEN '.$priceSum.' ELSE 0 END) AS new_lead,
+                        SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::Allocated.' THEN '.$priceSum.' ELSE 0 END) AS allocated,
+                        SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::ProposalFormRequested.' THEN '.$priceSum.' ELSE 0 END) AS proposal_form_requested,
+                        SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::ProposalFormReceived.' THEN '.$priceSum.' ELSE 0 END) AS proposal_form_received,
+                        SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::PendingRenewalInformation.' THEN '.$priceSum.' ELSE 0 END) AS pending_renewal_information,
+                        SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::AdditionalInformationRequested.' THEN '.$priceSum.' ELSE 0 END) AS additional_information_requested,
+                        SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::QuoteRequested.' THEN '.$priceSum.' ELSE 0 END) AS quotes_requested,
+                        SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::Quoted.' THEN '.$priceSum.' ELSE 0 END) AS quoted,
+                        SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::FollowedUp.' THEN '.$priceSum.' ELSE 0 END) AS followed_up,
+                        SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::FinalizingTerms.' THEN '.$priceSum.' ELSE 0 END) AS finalizing_terms
                         '
                     )
                 )
