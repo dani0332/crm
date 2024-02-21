@@ -207,4 +207,9 @@ class PersonalQuoteRepository extends BaseRepository
 
         return Capi::request('/api/v1-save-personal-quote', 'post', $dataArr);
     }
+
+    public function fetchGetById($quoteId)
+    {
+        return $this->where('id', $quoteId)->first();
+    }
 }
