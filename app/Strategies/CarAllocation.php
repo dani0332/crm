@@ -20,7 +20,7 @@ class CarAllocation implements Allocation
         $this->teamId = $teamId;
     }
 
-    public function executeSteps($overrideAdvisorId = false, $teamId = false)
+    public function executeSteps($overrideAdvisorId = false, $teamId = false, $evaluateTierOnly = false)
     {
         try {
             // Fetch the lead to process
@@ -37,15 +37,11 @@ class CarAllocation implements Allocation
             // If a valid tier is found
             if ($tier) {
 
-                $shouldEnforceSICCheck = $this->carAllocationService->shouldEnforceSICCheck($lead, $tier);
-
-                if ($shouldEnforceSICCheck) {
-                    info('SIC check enforced for lead : '.$lead->uuid.'. Skipping for now.');
-                    $this->processSICFlow($lead, $tier);
-
-                    return 0;
+                if ($evaluateTierOnly) {
+                    $lead->tier_id = $tier->id;
+                    $lead->save();
+                    return $tier->id;
                 }
-
                 info('Tier finalized for lead : '.$lead->uuid.' is : '.$tier->name);
                 // Find available users for the tier
                 $availableUsers = $this->findAvailableUsers($tier->id, $lead->source);
@@ -82,16 +78,6 @@ class CarAllocation implements Allocation
 
             return null;
         }
-    }
-
-    protected function processSICFlow($lead, $tier): void
-    {
-        $this->carAllocationService->processSICFlow($lead, $tier);
-    }
-
-    protected function shouldEnforceSICCheck($lead, $tier): bool
-    {
-        return $this->carAllocationService->shouldEnforceSICCheck($lead, $tier);
     }
 
     protected function fetchLead($overrideAdvisorId): mixed

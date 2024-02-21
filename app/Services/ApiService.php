@@ -144,4 +144,19 @@ class ApiService
 
         return apiResponse(null, Response::HTTP_OK, 'SIC workflow triggered successfully!');
     }
+
+    public function evaluateTier($request)
+    {
+        $allocationType = $request->input('quoteTypeId');
+        $allocationId = $request->input('quoteUUID');
+
+        info('------ Lead allocation request received to evaluate tier only for '.$allocationId.' ------');
+        $allocationStrategy = AllocationFactory::createStrategy($allocationType, $allocationId);
+        $overrideAdvisorId = true;
+        $tierId = $allocationStrategy->executeSteps($overrideAdvisorId, false, true);
+        $responseData = ['assignedTierId' => $tierId];
+        info('------ Lead allocation request completed to evaluate tier only for '.$allocationId.' ------');
+
+        return apiResponse($responseData, Response::HTTP_OK, 'Tier assigned successfully!');
+    }
 }

@@ -54,7 +54,6 @@ class CarAllocationService extends AllocationService
         $carQuoteQuery = CarQuote::where('uuid', $quoteId)
             ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
             ->whereNotIn('source', $exemptedLeadSources)
-            ->where('sic_flow_enabled', 0)
             ->where('is_renewal_tier_email_sent', 0);
 
         if (! $overrideAdvisorId) {
@@ -152,7 +151,7 @@ class CarAllocationService extends AllocationService
         $lead->sic_flow_enabled = 1;
         $lead->tier_id = $tier->id;
         $lead->save();
-        SendOCBIntroEmailJob::dispatch($lead->uuid, null);
+        SendOCBIntroEmailJob::dispatch($lead->uuid, null, true);
         info('SIC flow is email is dispatched for lead : '.$lead->uuid);
     }
 

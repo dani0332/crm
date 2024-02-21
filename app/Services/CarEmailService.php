@@ -50,7 +50,8 @@ class CarEmailService extends BaseService
 
         // trigger SIC workflow
         if ($triggerSICWorkFlow) {
-            SIBService::createWorkflowEvent(config('constants.SIC_WORKFLOW_NAME'), $lead, [], $emailData);
+            $apiResponse = SIBService::createWorkflowEvent(config('constants.SIC_WORKFLOW_NAME'), $lead, [], $emailData);
+            info('SIC workflow response: '.$apiResponse);
         }
 
         $responseCode = $this->sendEmailCustomerService->sendLMSIntroEmail($emailTemplateId, $emailData, 'lms-intro-email');

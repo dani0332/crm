@@ -11,6 +11,7 @@ use App\Services\CarAllocationService;
 use App\Services\CarEmailService;
 use App\Services\HttpRequestService;
 use App\Services\SendSmsCustomerService;
+use App\Services\SIBService;
 
 class HandleCarAdvisorUpdated
 {
@@ -56,6 +57,10 @@ class HandleCarAdvisorUpdated
         info('about to trigger intro email job for lead uuid : '.$lead->uuid.' and previous advisor id : '.$oldAdvisorId);
 
         SendOCBIntroEmailJob::dispatch($lead->uuid, $previousAdvisor);
+
+        if($lead->sic_flow_enabled){
+            SIBService::createWorkflowEvent(config('constants.SIC_END_WORKFLOW_NAME'), null, null);
+        }
 
         info('SMS sending code reached');
 
