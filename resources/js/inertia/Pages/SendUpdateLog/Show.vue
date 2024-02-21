@@ -134,6 +134,18 @@ const onUpdateLog = () => {
     },
   );
 };
+
+// it will only show the Booking Details section if send update types are in array.
+const isBookingDetailsVisible = computed(() => {
+  const validSlugs = [
+    props.sendUpdateStatusEnum.EF,
+    props.sendUpdateStatusEnum.CI,
+    props.sendUpdateStatusEnum.CIR,
+    props.sendUpdateStatusEnum.CPD
+  ];
+
+  return validSlugs.includes(selectedCategory?.value?.subCategory.slug)
+});
 </script>
 
 <template>
@@ -271,6 +283,7 @@ const onUpdateLog = () => {
     2. Booking Details - New Entry
     -->
     <LazyBookingDetails
+      v-if="isBookingDetailsVisible"
       :sendUpdateLog="sendUpdateLog"
       :insuranceProviders="insuranceProviders"
       :selectedCategory="selectedCategory"
