@@ -110,7 +110,7 @@ const userRoles = computed(() => {
         </div>
 
         <div class="grid sm:grid-cols-2">
-          <dt class="font-medium">Managers Name</dt>
+          <dt class="font-medium">MANAGERS NAME</dt>
           <dd class="break-words flex flex-wrap gap-1">
             <template v-if="managerName">
               <x-tag
@@ -127,7 +127,7 @@ const userRoles = computed(() => {
         </div>
 
         <div class="grid sm:grid-cols-2">
-          <dt class="font-medium">Permissions</dt>
+          <dt class="font-medium">PERMISSIONS</dt>
           <dd class="break-words flex flex-wrap gap-1">
             <template v-if="user.permissions">
               <x-tag

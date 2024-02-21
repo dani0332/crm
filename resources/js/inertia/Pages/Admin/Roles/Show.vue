@@ -41,17 +41,30 @@ const permissions = computed(() => {
         </div>
 
         <div class="grid sm:grid-cols-2">
-          <dt class="font-medium">Permissions</dt>
-          <dd>{{ permissions ?? 'N/A' }}</dd>
+          <dt class="font-medium">PERMISSIONS</dt>
+          <!-- <dd>{{ permissions ?? 'N/A' }}</dd> -->
+          <dd class="break-words flex flex-wrap gap-1">
+            <template v-if="permissions">
+              <x-tag
+                size="sm"
+                color="success"
+                v-for="permission in permissions.split(',')"
+                :key="permission"
+                class="text-xs"
+              >
+                {{ permission }}
+              </x-tag>
+            </template>
+          </dd>
         </div>
 
         <div class="grid sm:grid-cols-2">
-          <dt class="font-medium">Created At</dt>
+          <dt class="font-medium">CREATED AT</dt>
           <dd>{{ role.created_at ? role.created_at.split('T')[0] : 'N/A' }}</dd>
         </div>
 
         <div class="grid sm:grid-cols-2">
-          <dt class="font-medium">Updated At</dt>
+          <dt class="font-medium">UPDATED AT</dt>
           <dd>{{ role.updated_at ? role.updated_at.split('T')[0] : 'N/A' }}</dd>
         </div>
       </dl>

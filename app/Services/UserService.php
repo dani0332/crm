@@ -68,6 +68,19 @@ class UserService extends BaseService
             }
         }
 
+        // also add permissions for user
+        if ($request->permissions != '0') {
+            DB::table('model_has_permissions')->where('model_id', $user->id)->delete();
+            foreach ($request->permissions as $permissionId) {
+                DB::table('model_has_permissions')->insert([
+                    'model_id' => $user->id,
+                    'permission_id' => $permissionId,
+                    'model_type' => 'App\Models\User',
+                ]);
+            }
+        }
+
+
         return $user;
     }
 

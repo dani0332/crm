@@ -95,6 +95,7 @@ function onSubmit(isValid) {
           "
           :rules="[isRequired]"
           :hasError="validPermission"
+          autocomplete
         />
       </x-field>
     </div>
