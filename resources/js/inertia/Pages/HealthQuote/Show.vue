@@ -50,6 +50,7 @@ const props = defineProps({
   quoteType: String,
   quoteNotes: Object,
   noteDocumentType: Object,
+  clientInquiryLogs: Array,
 });
 
 const page = usePage();
@@ -1646,6 +1647,10 @@ const handleChildUpdate = planId => {
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">ADDITIONAL NOTES</dt>
             <dd>{{ quote.additional_notes }}</dd>
+          </div>
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">ENQUIRY COUNT</dt>
+            <dd>{{ quote.enquiry_count }}</dd>
           </div>
         </dl>
       </div>
@@ -3994,5 +3999,10 @@ const handleChildUpdate = planId => {
     </div> -->
 
     <AuditLogs :type="'App\\Models\\HealthQuote'" :id="$page.props.quote.id" />
+
+    <ClientInquiryLogs
+        v-if="clientInquiryLogs.length > 0"
+        :logs="clientInquiryLogs"
+    />
   </div>
 </template>
