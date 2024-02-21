@@ -1412,9 +1412,9 @@ const genderList = [
               <dt>
                 <x-tooltip position="bottom">
                   <label class="font-medium text-gray-800 text-sm decoration-dotted decoration-primary-700">
-                    Linked
+                    CHILD REF ID
                   </label>
-                  <template #tooltip>Linked</template>
+                  <template #tooltip>Navigation key from parent to child in data hierarchy.</template>
                 </x-tooltip>
               </dt>
               <dt class="font-medium">
@@ -1427,7 +1427,7 @@ const genderList = [
               <dt>
                 <x-tooltip position="bottom">
                   <label class="font-medium text-gray-800 text-sm decoration-dotted decoration-primary-700">
-                    Parent Ref Id
+                    PARENT REF ID
                   </label>
                   <template #tooltip>Parent Ref Id</template>
                 </x-tooltip>
