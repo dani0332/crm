@@ -504,6 +504,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     //Route::get('schedule-non-motor-aml', [RenewalsUploadController::class, 'scheduleNonMotorAml']);
 
     Route::post('followups/emails/events', [\App\Http\Controllers\V2\FollowupController::class, 'getEmailEvents']);
+    Route::post('/update-user-status', [UserController::class, 'updateUserStatus']);
 });
 
 Route::POST('/sendBulkWelcomeEmails', [BulkEmailProcessController::class, 'ProcessBulkWelcomeEmails'])
@@ -530,6 +531,6 @@ Route::group(['middleware' => ['auth.rest']], function () {
         Route::POST('/store', [UploadResourceController::class, 'store']);
     });
 });
-Route::post('/update-user-status', [UserController::class, 'updateUserStatus']);
+
 Route::POST('/processInslyRenewalData', [RenewalDataProcessingController::class, 'FetchAndProcessInslyData'])
     ->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class]);
