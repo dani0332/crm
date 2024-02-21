@@ -77,7 +77,6 @@ const changeReasonOptions = computed(() => {
 const isPolicyDetailsEnabled = computed(() => {
   return (
     (selectedCategory?.value?.subCategory.slug === 'EF' && selectedCategory?.value?.subCategory.option.slug === 'PPE') ||
-    selectedCategory?.value?.subCategory.slug === 'CIR' ||
     selectedCategory?.value?.subCategory.slug === 'CPD'
   );
 })
