@@ -133,7 +133,7 @@ const bookingDetailsForm = useForm({
   id: props.sendUpdateLog.id,
   send_update_type: props.selectedCategory.subCategory.slug,
   booking_date: props.bookingDetails?.booking_date || dateToYMD(props.quote?.policy_booking_date) || new Date().toJSON().slice(0, 10),
-  invoice_description: props.bookingDetails?.invoice_description || invoiceDescription || '',
+  invoice_description: invoiceDescription.value || '',
   broker_invoice_number: props.bookingDetails?.broker_invoice_number || '',
   transaction_payment_status: props.bookingDetails?.transaction_payment_status || transactionPaymentStatus.value,
   invoice_date: props.bookingDetails?.invoice_date || dateToYMD(props?.payments[0]?.insurer_invoice_date) || '',
