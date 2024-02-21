@@ -103,7 +103,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     });
 
     Route::get('home', function () {
-        return inertia('Home/Home');
+        return inertia('Home/Home', ['im_logo' => getIMLogo()]);
     });
 
     Route::post('personal-quotes/{quoteType}/{code}/update-selected-plan/{planId}', [CentralController::class, 'updateSelectedPlan'])->name('update-selected-plan');
@@ -265,7 +265,9 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::post('/get-users-by-sub-team', [DashboardController::class, 'getUsersBySubTeam']);
     Route::post('/get-team-conversion-stats', [DashboardController::class, 'getTeamAdvisorConversionStats']);
     Route::get('/get-recent-daily-stats', [DashboardController::class, 'getRecentDailyStats']);
-    Route::get('/reports/lead-list', [ReportsController::class, 'renderLeadListReport'])->name('lead-list-report');
+    Route::get('/reports/lead-list', [ReportsController::class, 'renderLeadListReport'])
+        ->middleware('check_lead_report_access')
+        ->name('lead-list-report');
     Route::get('/dashboard/{quoteType}-conversion', [DashboardController::class, 'conversionStats']);
     Route::get('failed-jobs', [FailedJobsController::class, 'index'])->name('failed-jobs.index');
 
@@ -340,6 +342,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::post('{quoteType}/export-car-pdf', [CRUDController::class, 'exportCarPdf'])->name('exportCarPdf');
         Route::post('{quoteType}/export-health-pdf', [CRUDController::class, 'exportHealthPdf'])->name('exportHealthPdf');
         Route::post('{quoteType}/{quoteUuId}/send-email-one-click-buy', [CRUDController::class, 'sendEmailOneClickBuy'])->name('sendEmailOneClickBuy');
+        Route::post('{quoteType}/{quoteUuId}/send-email-ocb-nb', [CRUDController::class, 'sendOCBEmailNB'])->name('sendOCBEmailNB');
         Route::post('update-customer-profile', [CentralController::class, 'updateCustomerProfileDetails'])->name('update-customer-profile');
         Route::post('{quoteType}/toggle-product', [CRUDController::class, 'toggleEmbeddedProduct'])->name('toggleEmbeddedProduct');
         Route::get('{quoteType}/risk-rating-details/{quoteId}', [CRUDController::class, 'riskRatingDetails'])->name('risk-rating-details');

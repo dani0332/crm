@@ -1970,7 +1970,7 @@ class RenewalsUploadService
         $repository = '\\App\\Repositories\\'.ucwords($quoteType->value).'QuoteRepository';
         $quotes = $repository::export();
 
-        return (new RenewalQuotesExport($quotes, $quoteType->name))->download('Renewal.xlsx');
+        return (new RenewalQuotesExport($quotes, $quoteType->name))->download('Renewal');
     }
 
 }

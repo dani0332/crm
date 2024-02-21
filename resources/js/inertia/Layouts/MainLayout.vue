@@ -63,7 +63,7 @@ const onLogout = () => {
 
             <a href="/" class="block w-full">
               <img
-                src="/images/im_logo_21k-hi.png"
+                :src="page.props.im_logo"
                 alt="IMCRM"
                 class="w-full"
                 width="439"

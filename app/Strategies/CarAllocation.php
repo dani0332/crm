@@ -18,11 +18,11 @@ class CarAllocation implements Allocation
         $this->allocationId = $allocationId;
     }
 
-    public function executeSteps()
+    public function executeSteps($overrideAdvisorId = false)
     {
         try {
             // Fetch the lead to process
-            $lead = $this->fetchLead();
+            $lead = $this->fetchLead($overrideAdvisorId);
 
             if (! $lead) {
 
@@ -47,7 +47,7 @@ class CarAllocation implements Allocation
                 if (! empty($advisorId) && $advisorId == $lead->advisor_id) {
                     info('Advisor is same as previous advisor. Skipping for now.');
 
-                    return false;
+                    return $advisorId;
                 }
 
                 if ($advisorId && $advisorId != 0) {
@@ -56,21 +56,25 @@ class CarAllocation implements Allocation
                     // Update the lead's tier information
                     $this->updateLeadTier($lead, $tier);
                 }
+
+                return $advisorId;
             } else {
                 // Log that tier was not found for the lead and skip processing
                 info('Tier not found for lead: '.$lead->uuid.'. Skipping for now.');
+
+                return 0;
             }
         } catch (\Throwable $th) {
             info('exception occurred in car lead allocation with error : '.$th->getMessage());
             info('exception occurred in car lead allocation with error stack as  : '.$th->getTraceAsString());
 
-            return false;
+            return null;
         }
     }
 
-    protected function fetchLead(): mixed
+    protected function fetchLead($overrideAdvisorId): mixed
     {
-        return $this->carAllocationService->fetchLead($this->allocationId);
+        return $this->carAllocationService->fetchLead($this->allocationId, $overrideAdvisorId);
     }
 
     protected function getTier($tierId)

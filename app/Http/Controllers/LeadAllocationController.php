@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Enums\quoteTypeCode;
+use App\Enums\TeamNameEnum;
 use App\Enums\TeamTypeEnum;
 use App\Enums\UserStatusEnum;
 use App\Events\UserStatusChanged;
@@ -40,30 +41,44 @@ class LeadAllocationController extends Controller
      */
     public function index(Request $request)
     {
-        // if (Gate::allows('view-lead-allocation', auth()->user())) {
-        $totalAssignedLeadCount = 0;
-        $availableUsers = 0;
-        $unAvailableUsers = 0;
-        $isAutoAllocationWorking = $this->applicationStorageService->getValueByKey('LEAD_ALLOCATION_JOB_SWITCH');
-        $data = $this->leadAllocationService->getGridData();
-        foreach ($data as $key => $value) {
-            $totalAssignedLeadCount += $value->allocation_count;
-            if ($value->is_available == 1) {
-                $availableUsers++;
-            } else {
-                $unAvailableUsers++;
-            }
-        }
-        if ($request->ajax()) {
-            return Datatables::of($data)
-                ->addIndexColumn()
-                ->make(true);
-        }
 
-        return view('user.lead-allocation', compact(['totalAssignedLeadCount', 'availableUsers', 'unAvailableUsers', 'isAutoAllocationWorking']));
-        /*  } else {
-              abort(403, 'Unauthorized action.');
-          } */
+        if (Gate::allows('view-lead-allocation', auth()->user())) {
+            $totalAssignedLeadCount = 0;
+            $availableUsers = 0;
+            $unAvailableUsers = 0;
+            $isAutoAllocationWorking = $this->applicationStorageService->getValueByKey('LEAD_ALLOCATION_JOB_SWITCH');
+            $data = $this->leadAllocationService->getGridData();
+            foreach ($data as $key => $value) {
+                $totalAssignedLeadCount += $value->allocation_count;
+                if ($value->is_available == 1) {
+                    $availableUsers++;
+                } else {
+                    $unAvailableUsers++;
+                }
+            }
+
+            $unAssignedGood = $this->leadAllocationService->getUnAssignedHealthQuotes(TeamNameEnum::RM_SPEED);
+            $unAssignedBest = $this->leadAllocationService->getUnAssignedHealthQuotes(TeamNameEnum::RM_NB);
+            $unAssignedEntryLevel = $this->leadAllocationService->getUnAssignedHealthQuotes(TeamNameEnum::EBP);
+
+            if ($request->ajax()) {
+                return Datatables::of($data)
+                    ->addIndexColumn()
+                    ->make(true);
+            }
+
+            return view('user.lead-allocation', compact([
+                'totalAssignedLeadCount',
+                'availableUsers',
+                'unAvailableUsers',
+                'isAutoAllocationWorking',
+                'unAssignedGood',
+                'unAssignedBest',
+                'unAssignedEntryLevel',
+            ]));
+        } else {
+            abort(403, 'Unauthorized action.');
+        }
     }
 
     /**
