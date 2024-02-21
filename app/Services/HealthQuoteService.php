@@ -128,6 +128,7 @@ class HealthQuoteService extends BaseService
             'hqr.price_starting_from',
             'hqr.kyc_decision',
             'hqr.risk_score',
+            'hqr.enquiry_count',
             DB::raw('IF(EXISTS (
                 SELECT *
                 FROM quote_request_entity_mapping
@@ -363,7 +364,7 @@ class HealthQuoteService extends BaseService
         if (isset($request->previous_quote_policy_premium) && $request->previous_quote_policy_premium != '') {
             $this->query->where('hqr.previous_quote_policy_premium', $request->previous_quote_policy_premium);
         }
-        $this->whereBasedOnRole($this->query, 'hqr');
+        $this->whereBasedOnRole($this->query, 'hqr', quoteTypeCode::Health);
 
         if (! isset($request->email) && $request->email == '') {
             $this->query->where('hqr.quote_status_id', '!=', 9);
@@ -387,7 +388,7 @@ class HealthQuoteService extends BaseService
             $this->query->whereIn('quote_status_id', $request->quote_status);
         }
 
-        if (isset($request->advisors) && in_array(DefaultAdvisorEnum::UNASSIGNED, $request->advisors)) {
+        if (isset($request->advisors) && is_array($request->advisors) && in_array(DefaultAdvisorEnum::UNASSIGNED, $request->advisors)) {
             $this->query->whereNull('hqr.advisor_id');
         }
 
@@ -440,7 +441,7 @@ class HealthQuoteService extends BaseService
         if (isset($request->previous_quote_policy_premium) && $request->previous_quote_policy_premium != '') {
             $this->query->where('hqr.previous_quote_policy_premium', $request->previous_quote_policy_premium);
         }
-        $this->whereBasedOnRole($this->query, 'hqr');
+        $this->whereBasedOnRole($this->query, 'hqr', quoteTypeCode::Health);
 
         if (isset($request->is_renewal) && $request->is_renewal != '') {
             if ($request->is_renewal == quoteTypeCode::yesText) {
@@ -950,13 +951,13 @@ class HealthQuoteService extends BaseService
             return $responseBodyAsString;
         }
     }
+
     public function getCoPayment($id)
     {
         $quoteUuId = HealthQuote::where('uuid', '=', $id)->first();
         $coPayment = DB::table('health_plan_co_payments as hpcp')->where('id', $quoteUuId->health_plan_co_payment_id)->first();
 
         return $coPayment;
-
     }
 
     public function getQuotePlansPriority($id)

@@ -56,7 +56,7 @@ class UpdateUserStatus extends Command
      */
     public function handle()
     {
-        info('----------- UpdateHealthStatus Command Started -----------');
+        info('----------- UpdateUserStatus Command Started -----------');
         [$userInactiveThreshold, $inactiveThreshold] = $this->getInactiveThreshold();
 
         info('Inactive Threshold right now is : '.$userInactiveThreshold.' and last activity time matched will be : '.$inactiveThreshold);
@@ -71,7 +71,6 @@ class UpdateUserStatus extends Command
             }
 
             if ($lastActivity < $inactiveThreshold) {
-
                 $unAvailableTime = now()->subHours(2);
 
                 $offlineTime = now()->subSeconds($userInactiveThreshold);
