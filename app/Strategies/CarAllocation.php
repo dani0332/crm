@@ -40,6 +40,7 @@ class CarAllocation implements Allocation
                 if ($evaluateTierOnly) {
                     $lead->tier_id = $tier->id;
                     $lead->save();
+
                     return $tier->id;
                 }
                 info('Tier finalized for lead : '.$lead->uuid.' is : '.$tier->name);
