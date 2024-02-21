@@ -93,12 +93,6 @@ class UserController extends Controller
             'permissions' => $permissions
         ]);
 
-        // $roles = Role::pluck('name', 'name')->all(); // get all roles
-        // $products = $this->getAllProducts(); // get all products
-        // $teams = [];
-        // $subTeams = [];
-
-        // return view('user.add', compact('roles', 'products', 'teams', 'subTeams'));
     }
 
     /**
@@ -156,9 +150,6 @@ class UserController extends Controller
         if ($user->sub_team_id) {
             $subTeamName = Team::find($user->sub_team_id)->name;
         }
-
-       
-
         
         return inertia('Admin/Users/Show', [
             'user' => $user,
@@ -168,20 +159,7 @@ class UserController extends Controller
             'managerName' => $managerName,
             'productName' => $productName,
         ]);
-        // $subTeamName = '';
-        // $additionalTeamNames = '';
-        // $managerName = implode(',', $this->getUserManagers($user->id)->pluck('name')->toArray());
-        // $teamName = implode(',', $this->getUserTeams($user->id)->pluck('name')->toArray());
-        // $productName = implode(',', $this->getUserProducts($user->id)->pluck('name')->toArray());
-        // if ($user->additional_team_ids != '') {
-        //     $additionalTeamNamesArray = Team::whereIn('id', explode(',', $user->additional_team_ids))->where('type', TeamTypeEnum::PRODUCT)->pluck('name')->toArray();
-        //     $additionalTeamNames = implode(', ', $additionalTeamNamesArray);
-        // }
-        // if ($user->sub_team_id) {
-        //     $subTeamName = Team::find($user->sub_team_id)->name;
-        // }
-
-        // return view('user.show', compact('user', 'teamName', 'subTeamName', 'additionalTeamNames', 'managerName', 'productName'));
+      
     }
 
     /**
@@ -226,35 +204,7 @@ class UserController extends Controller
             'permissions' => $permissions,
             'userPermissions' => $userPermissions,
         ]);
-        // $roles = Role::pluck('name', 'name')->all();
-        // $userRole = $user->roles->pluck('name', 'name')->all();
-        // $userProductIds = $this->getUserProducts($user->id)->pluck('id')->toArray();
-        // $teams = $this->getTeamsByProductIds($userProductIds);
-        // $subTeams = $this->getSubTeamsByTeamIds($teams->pluck('id'));
-        // $selectedAdditionalTeams = $user->additional_team_ids;
-        // $products = $this->getAllProducts();
-
-        // $userTeamIds = $this->getUserTeams($user->id)->pluck('id')->toArray();
-        // $managers = $this->getManagersBasedOnTeamId($userTeamIds, $user->id);
-        // $userManagerIds = $this->getUserManagers($user->id)->pluck('id')->toArray();
-        // $permissions = Permission::orderBy('name')->get();
-        // $userPermissions = $user->getDirectPermissions()->pluck('name')->toArray();
-
-        // return view('user.edit', compact(
-        //     'user',
-        //     'roles',
-        //     'userRole',
-        //     'selectedAdditionalTeams',
-        //     'subTeams',
-        //     'products',
-        //     'userProductIds',
-        //     'teams',
-        //     'userTeamIds',
-        //     'managers',
-        //     'userManagerIds',
-        //     'permissions',
-        //     'userPermissions'
-        // ));
+    
     }
 
     /**
@@ -349,89 +299,6 @@ class UserController extends Controller
         $user->assignRole($request->input('roles'));
 
         return redirect(route('users.show', $user->id))->with('success', 'User has been updated');
-        // $this->validate($request, [
-        //     'name' => 'required|max:120',
-        //     'email' => [
-        //         'required',
-        //         'email',
-        //         Rule::unique('users')->ignore($user->id),
-        //     ],
-        //     'roles' => 'required',
-        //     'teams' => 'required',
-        //     'permissions' => 'nullable|array',
-        // ]);
-
-        // // Updating user
-        // $user->name = $request->name;
-        // $user->email = $request->email;
-        // $user->mobile_no = $request->mobile_no;
-        // $user->landline_no = $request->landline_no;
-        // $user->password = bcrypt($request->password);
-        // $user->is_active = $request->is_active == 'on' ? 1 : 0;
-
-        // /*
-        //  * temp fix: health lead allocation is using team_id to target health product
-        //  * this needs to be updated with new team/product structure
-        //  */
-        // if (!empty($request->primary_product)) {
-        //     $user->team_id = $request->primary_product;
-        // }
-
-        // $this->leadAllocationService->updateUserAllocationRecord($user->id, null, null, $user->is_active);
-
-        // if (isset($request->additionalTeams)) {
-        //     if (count((array) $request->additionalTeams) > 1) {
-        //         $user->additional_team_ids = implode(',', $request->additionalTeams);
-        //     } else {
-        //         $user->additional_team_ids = $request->additionalTeams[0];
-        //     }
-        // }
-        // if ($request->sub_team_id != '0') {
-        //     $user->sub_team_id = $request->sub_team_id;
-        // }
-
-        // $user->save();
-
-        // if (isset($request->manager) && $request->manager != '0') {
-        //     DB::table('user_manager')->where('user_id', $user->id)->delete();
-        //     foreach ($request->manager as $managerId) {
-        //         DB::table('user_manager')->insert([
-        //             'user_id' => $user->id,
-        //             'manager_id' => $managerId,
-        //         ]);
-        //     }
-        // }
-
-        // if ($request->teams != '0') {
-        //     DB::table('user_team')->where('user_id', $user->id)->delete();
-        //     foreach ($request->teams as $teamId) {
-        //         DB::table('user_team')->insert([
-        //             'user_id' => $user->id,
-        //             'team_id' => $teamId,
-        //         ]);
-        //     }
-        // }
-
-        // if (isset($request->products) && $request->products != '0') {
-        //     DB::table('user_products')->where('user_id', $user->id)->delete();
-        //     foreach ($request->products as $productId) {
-        //         DB::table('user_products')->insert([
-        //             'user_id' => $user->id,
-        //             'product_id' => $productId,
-        //         ]);
-        //     }
-        // }
-
-        // $permissions = (!empty($request->permissions) && count($request->permissions)) ? $request->permissions : [];
-        // $user->syncPermissions($permissions);
-
-        // // Updating user roles
-        // DB::table('model_has_roles')->where('model_id', $user->id)->delete();
-        // $user->assignRole($request->input('roles'));
-
-        // if (isset($request->return_to_view)) {
-        //     return redirect('admin/users/' . $user->id)->with('success', 'User has been updated');
-        // }
     }
 
     /**

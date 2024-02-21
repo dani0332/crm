@@ -82,10 +82,6 @@ class TeamController extends Controller
         $team->updated_at = now();
         $team->save();
 
-        // if (isset($request->return_to_view)) {
-        //     return redirect('generic/team/'.$team->id)->with('success', 'Team has been stored');
-        // }
-
         return redirect(route('team.show', $team->id))->with('success', $team->name . ' has been added');
     }
 
@@ -97,11 +93,14 @@ class TeamController extends Controller
      */
     public function show($id)
     {
-        $data = Team::where('id', $id)->first();
-        $data->parent_team_id = $this->teamService->getTeamNameById($data->parent_team_id);
+        $team = Team::where('id', $id)->first();
+        if (! $team) {
+            return redirect()->back()->with('message', 'Team not found');
+        }
+        $team->parent_team_id = $this->teamService->getTeamNameById($team->parent_team_id);
 
         return inertia('Admin/Teams/Show', [
-            'team' => $data,
+            'team' => $team,
         ]);
     }
 
