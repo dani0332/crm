@@ -62,7 +62,6 @@ class UserController extends Controller
 
         if ($request->has('name')) {
             $query->where('u1.name', 'LIKE', '%' . $request->name . '%');
-            // $query->where('u1.name', $request->name);
         }
 
         $users = $query->groupBy('u1.id')->simplePaginate();

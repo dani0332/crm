@@ -28,7 +28,6 @@ class RoleController extends Controller
 
         if ($request->has('name')) {
             $query->where('name', 'LIKE', '%' . $request->name . '%');
-            // $query = $query->where('name', $request->name);
         }
 
         $roles = $query->simplePaginate();
