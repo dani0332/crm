@@ -121,40 +121,22 @@ const removeSelected = item => {
       class="relative"
       :disabled="props.disabled"
     >
-      <!-- <ComboboxInput
-        :displayValue="list => list?.label"
-        :class="{
-          'border-red-500': props.hasError,
-        }"
-        class="appearance-none block placeholder-gray-400 outline-transparent outline outline-2 outline-offset-[-1px] transition-all duration-150 ease-in-out border-gray-300 border shadow-sm rounded-md hover:border-gray-400 px-3 py-2 bg-white text-gray-700 focus:outline-sky-500 w-full"
-        :placeholder="props.placeholder"
-        :value="
-          props.single
-            ? props.options.find(option => option.value === props.modelValue)
-                ?.label
-            : `${selectedValue[0].label} Selected ${
-                props.maxLimit && !props.selectAll
-                  ? '| max: ' + props.maxLimit
-                  : ''
-              }`
-        "
-        readonly
-      /> -->
-
       <div>
-        <ul
-          class="flex flex-wrap gap-1 border p-2 rounded"
+        <div
+          class="select-none outline-transparent outline outline-2 outline-offset-[-1px] transition-all duration-150 ease-in-out border-gray-300 shadow-sm rounded-md hover:border-gray-400 px-3 py-2 bg-white text-gray-700 active:outline-sky-500 w-full flex flex-wrap gap-1 border pr-5 pl-2"
           v-if="selectedValue.length > 0 && autocomplete"
         >
-          <li
-            class="p-1 rounded bg-[#f3f4f6]"
+          <x-tag
             v-for="item in selectedValue"
             :key="item.label"
+            removable
+            size="xs"
+            color="sky"
+            @remove="removeSelected(item)"
           >
-            <span>{{ item.label.toUpperCase() }}</span>
-            <x-icon icon="xmark" @click="removeSelected(item)" />
-          </li>
-        </ul>
+            {{ item.label }}
+          </x-tag>
+        </div>
         <ComboboxInput
           v-else
           as="input"
