@@ -49,13 +49,8 @@ function onSubmit(isValid) {
 
     roleForm.submit(method, url, {
       onError: errors => {
-        console.log(roleForm);
         Object.keys(errors).forEach(function (key) {
           roleForm.setError(key, errors[key]);
-          notification.error({
-            title: errors[key],
-            position: 'top',
-          });
         });
         return false;
       },

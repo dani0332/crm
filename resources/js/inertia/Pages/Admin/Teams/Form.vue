@@ -68,12 +68,8 @@ function onSubmit(isValid) {
 
     teamForm.submit(method, url, {
       onError: errors => {
-        teamForm.setError(errors);
         Object.keys(errors).forEach(function (key) {
-          notification.error({
-            title: errors[key],
-            position: 'top',
-          });
+          teamForm.setError(key, errors[key]);
         });
       },
     });
@@ -102,7 +98,12 @@ onMounted(() => setInitialState());
   <x-form @submit="onSubmit" :auto-focus="false">
     <div class="grid sm:grid-cols-2 gap-4">
       <x-field label="NAME" required>
-        <x-input v-model="teamForm.name" :rules="[isRequired]" class="w-full" />
+        <x-input
+          v-model="teamForm.name"
+          :rules="[isRequired]"
+          class="w-full"
+          :error="$page.props.errors.name"
+        />
       </x-field>
       <x-field label="RECORD TYPE" required>
         <x-select
@@ -114,6 +115,7 @@ onMounted(() => setInitialState());
             { value: 2, label: 'Team' },
             { value: 3, label: 'SubTeam' },
           ]"
+          :error="$page.props.errors.type"
         />
       </x-field>
     </div>
