@@ -122,6 +122,8 @@ const bookingDetailsForm = useForm({
   price_vat_applicable: props.bookingDetails?.price_vat_applicable || '',
   price_vat_not_applicable: props.bookingDetails?.price_vat_not_applicable || '0.00',
   total_price: props.bookingDetails?.total_price || '0.00',
+  // new entry section related.
+  reversal_invoice: props.bookingDetails?.reversal_invoice || null,
 });
 
 // convertToNegative function will replace all values in negative if the isNegativeValue is true.
@@ -205,6 +207,23 @@ const saveBookingDetail = (isValid) => {
     },
   );
 };
+
+const paymentInvoiceNumberOptions = computed(() => {
+  return page.props.paymentInvoices.map(invoice_number => {
+    return { label: invoice_number, value: invoice_number };
+  });
+});
+
+const selectedInvoice = () => {
+  let url = '/send-update-logs/get-reversal-entries';
+  axios.get(url)
+      .then(response => {
+        console.log(response);
+      })
+      .catch(error => {
+        // handle the error
+      });
+}
 </script>
 
 <template>
@@ -568,6 +587,30 @@ const saveBookingDetail = (isValid) => {
           <div class="text-xs">
             <dl class="grid md:grid-cols-2 gap-y-4">
               <div class="grid sm:grid-cols-2 mt-4">
+                <dt class="font-bold text-right"></dt>
+                <dd>
+                  <span class="text-[#308BCA] text-sm font-bold">
+                    INSURER TAX INVOICE FOR REVERSAL
+                  </span>
+
+                </dd>
+              </div>
+
+              <div class="grid sm:grid-cols-2 mt-4">
+                <dd>
+                  <ComboBox
+                      v-model="bookingDetailsForm.reversal_invoice"
+                      class="w-full"
+                      placeholder="Select Tax invoice number"
+                      @update:model-value="selectedInvoice"
+                      :options="paymentInvoiceNumberOptions"
+                      :single="true"
+                      :disabled="!state.isSectionOneEdit"
+                  />
+                </dd>
+              </div>
+
+              <div class="grid sm:grid-cols-2">
                 <dt class="font-bold text-right mr-10"></dt>
                 <dd></dd>
               </div>

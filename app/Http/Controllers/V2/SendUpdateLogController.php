@@ -76,6 +76,8 @@ class SendUpdateLogController extends Controller
             // it will also fetch broker_invoice_number and invoice_description, from lead detail page, lead detail broker_invoice_number will
             // always same as ```send update log details``` broker_invoice_number but invoice_description will be overwritten from ```send update log details``` page.
             $bookingDetails = $sendUpdateLogService->getInvoiceDescription($realQuote, $quoteType, $payments[0]['insurance_provider_id']);
+            // it will get all invoice_descriptions for booking details
+            $paymentInvoices = collect($payments)->pluck('insurer_tax_number');
         }
 
         if (count($sendUpdateLog->details) > 0) {
@@ -95,6 +97,7 @@ class SendUpdateLogController extends Controller
             'isNegativeValue' => $sendUpdateLogService->isNegativeValue($sendUpdateLog),
             'bookingDetails' => $bookingDetails,
             'updateToCustomerBtn' => count($sendUpdateLog->details) > 0,
+            'paymentInvoices' => $paymentInvoices ?? [],
         ]);
     }
 
@@ -198,5 +201,11 @@ class SendUpdateLogController extends Controller
     public function saveBookingDetails(Request $request)
     {
         SendUpdateLogDetailsRepository::createOrUpdate($request->all());
+    }
+
+    public function getReversalEntries($taxInvoiceNo)
+    {
+        return response()->json(['response' => $taxInvoiceNo]);
+        // return SendUpdateLogService::getReversalEntries($taxInvoiceNo);
     }
 }
