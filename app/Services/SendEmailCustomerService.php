@@ -510,7 +510,7 @@ class SendEmailCustomerService extends BaseService
             }
 
             $advisorCustomEmail = strstr($emailData->advisorEmail, '@', true).'@notify.insurancemarket.ae';
-            $emailData->env = $subjectEnvTag;
+            //$emailData->env = $subjectEnvTag;
             $body = json_encode([
                 'sender' => ['name' => $emailData->advisorName, 'email' => $advisorCustomEmail],
                 'to' => [[
