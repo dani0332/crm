@@ -80,33 +80,6 @@ const isCPD = computed(() => {
   return props.selectedCategory?.subCategory.slug === sendUpdateStatusEnum.CPD;
 });
 
-const isCPU = computed(() => {
-  return props.selectedCategory?.subCategory.slug === sendUpdateStatusEnum.CPU;
-});
-
-const issuanceStatusOptions = computed(() => {
-  return [
-    { label: 'Portal Down', value: 'portal_down' },
-    {
-      label: 'Waiting for client confirmation',
-      value: 'waiting_for_client_confirmation',
-    },
-    { label: 'Issue found', value: 'issue_found' },
-    { label: 'Underwriter Issuance', value: 'underwriter_issuance' },
-    { label: 'Portal Issuance', value: 'portal_issuance' },
-    {
-      label: 'Policy already issued by the underwriter',
-      value: 'policy_already_issued_by_the_underwriter',
-    },
-    {
-      label: 'Renewal, Direct to Underwriter',
-      value: 'renewal_direct_to_underwriter',
-    },
-    { label: 'Policy Issued', value: 'policy_issued' },
-    { label: 'Other', value: 'other' },
-  ];
-});
-
 const transactionPaymentStatus = computed(() => {
   if (Number(props?.quote?.price_with_vat) === 0) {
     return 'Not Paid';
@@ -579,14 +552,14 @@ const saveBookingDetail = (isValid) => {
       </Collapsible>
     </div>
   </template>
-  <template v-else-if="!isCPU">
-    <!-- Secton One -->
+  <template v-else-if="isCPD">
+    <!-- Section One -->
     <div class="p-4 rounded shadow mb-6 bg-white">
       <Collapsible expanded>
         <template #header>
           <div class="flex justify-between gap-4 items-center">
             <h3 class="font-semibold text-primary-800 text-lg">
-              Booking Details - {{ isCPD ? 'Reversal Entry' : 'New Policy' }}
+              Booking Details - Reversal Entry
             </h3>
           </div>
         </template>
@@ -883,7 +856,7 @@ const saveBookingDetail = (isValid) => {
         <template #header>
           <div class="flex justify-between gap-4 items-center">
             <h3 class="font-semibold text-primary-800 text-lg">
-              Booking Details - {{ isCPD ? 'New Entry' : 'Previous Policy' }}
+              Booking Details - New Entry
             </h3>
           </div>
         </template>
