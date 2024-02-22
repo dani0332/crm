@@ -34,6 +34,7 @@ use App\Http\Requests\SplitPaymentUpdateRequest;
 use App\Http\Requests\StorePaymentRequest;
 use App\Http\Requests\UpdateLeadStatusRequest;
 use App\Http\Requests\UpdatePaymentRequest;
+use App\Http\Requests\UpdatePolicyDetailRequest;
 use App\Jobs\CarRenewalEmailJob;
 use App\Jobs\SyncSIBContactJob;
 use App\Models\ApplicationStorage;
@@ -527,8 +528,8 @@ class CRUDController extends Controller
         $sendUpdateOptions = [];
         $sendUpdateLogs = [];
         $sendUpdateEnum = (object) [];
-        $hasPolicyIssuedStatus = $this->crudService->hasAtleastOneStatusPolicyIssued($quoteTypeId, $record->id);        
-        
+        $hasPolicyIssuedStatus = $this->crudService->hasAtleastOneStatusPolicyIssued($quoteTypeId, $record->id);
+
         if ($hasPolicyIssuedStatus) {
             $sendUpdateOptions = $this->lookupService->getSendUpdateOptions($quoteTypeId);
             $sendUpdateLogs = SendUpdateLogRepository::findByQuoteUuid($record->uuid);
@@ -538,8 +539,8 @@ class CRUDController extends Controller
         $sendUpdateOptions = [];
         $sendUpdateLogs = [];
         $sendUpdateEnum = (object) [];
-        $hasPolicyIssuedStatus = $this->crudService->hasAtleastOneStatusPolicyIssued($quoteTypeId, $record->id);        
-        
+        $hasPolicyIssuedStatus = $this->crudService->hasAtleastOneStatusPolicyIssued($quoteTypeId, $record->id);
+
         if ($hasPolicyIssuedStatus) {
             $sendUpdateOptions = $this->lookupService->getSendUpdateOptions($quoteTypeId);
             $sendUpdateLogs = SendUpdateLogRepository::findByQuoteUuid($record->uuid);
@@ -570,9 +571,11 @@ class CRUDController extends Controller
             $selectedLostReasonId = $this->crudService->getSelectedLostReason($this->genericModel->modelType, $record->id);
         }
         $advisors = [];
-        if (! (auth()->user()->hasAnyRole([RolesEnum::CarManager, RolesEnum::CarAdvisor])) &&
+        if (
+            !(auth()->user()->hasAnyRole([RolesEnum::CarManager, RolesEnum::CarAdvisor])) &&
             strtolower($this->genericModel->modelType) == strtolower(quoteTypeCode::Health) && ($record->health_team_type == HealthTeamType::EBP ||
-            $record->health_team_type == HealthTeamType::RM_NB || $record->health_team_type == HealthTeamType::RM_SPEED)) {
+                $record->health_team_type == HealthTeamType::RM_NB || $record->health_team_type == HealthTeamType::RM_SPEED)
+        ) {
             $advisors = $this->crudService->getEBPAndRMAdvisors();
         } elseif (strtolower($this->genericModel->modelType) == 'business') {
             $advisors = $this->crudService->getRMAndBusinessAdvisors();
@@ -676,7 +679,7 @@ class CRUDController extends Controller
                     $carInsuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypeId::Car);
                 }
             }
-            
+
             // return view('shared.show', compact([
             //     'record', 'model', 'customTitles', 'listQuotePlans', 'customTableList', 'embeddedProducts',
             //     'ecomCarInsuranceQuoteUrl', 'carQuotePlanAddons', 'vehicleTypes', 'leadStatuses', 'mainPayment',
@@ -735,7 +738,7 @@ class CRUDController extends Controller
                 'paymentEntityModel', 'payments', 'paymentMethods', 'isQuoteDocumentEnabled', 'quoteDocuments', 'displaySendPolicyButton', 'customerAdditionalContacts', 'lostApproveReasons', 'lostRejectReasons', 'allowQuoteLogAction', 'carLostChangeStatus',
                 'carMakeText', 'carModelText', 'advisor', 'tiers', 'daysAfterCapturedPayment', 'access', 'carPlanFeaturesCodeEnum', 'carPlanExclusionsCodeEnum', 'documentTypes', 'planURL', 'storageUrl', 'kyoEndPoint',
                 'carPlanTypeEnum', 'UBORelations', 'UBOsDetails', 'emirates', 'customerTypeEnum', 'memberRelations', 'membersDetails', 'industryType', 'nationalities', 'paymentTooltipEnum',
-                'isCommercialVehicles', 'carInsuranceProviders', 'isNewPaymentStructure', 'sendUpdateOptions', 'sendUpdateLogs', 'hasPolicyIssuedStatus', 'sendUpdateEnum'
+                'isCommercialVehicles', 'carInsuranceProviders', 'isNewPaymentStructure', 'sendUpdateOptions', 'sendUpdateLogs', 'hasPolicyIssuedStatus', 'sendUpdateEnum', 'policyIssuanceStatus', 'bPDetails',
             ]));
         }
 
@@ -827,7 +830,7 @@ class CRUDController extends Controller
                 'quoteDocuments' => array_values($quoteDocuments->toArray()),
                 'quote' => $record,
                 'record' => $record,
-                'sendUpdateOptions' => $sendUpdateOptions, 
+                'sendUpdateOptions' => $sendUpdateOptions,
                 'sendUpdateLogs' => $sendUpdateLogs,
                 'allowedDuplicateLOB' => $allowedDuplicateLOB,
                 'leadStatuses' => array_values($leadStatuses->toArray()),
@@ -878,7 +881,7 @@ class CRUDController extends Controller
                 'bPDetails' => $bPDetails,
                 'vatPercentage' => $vatPercentage,
                 'isNewPaymentStructure' => $isNewPaymentStructure,
-		        'sendUpdateEnum' => $sendUpdateEnum,
+                'sendUpdateEnum' => $sendUpdateEnum,
                 'hasPolicyIssuedStatus' => $hasPolicyIssuedStatus,
                 'documentTypes' => $documentTypes,
             ]);
@@ -972,7 +975,7 @@ class CRUDController extends Controller
                 'paymentLink' => $paymentLink,
                 'quote' => $record,
                 'record' => $record,
-                'sendUpdateOptions' => $sendUpdateOptions, 
+                'sendUpdateOptions' => $sendUpdateOptions,
                 'sendUpdateLogs' => $sendUpdateLogs,
                 'genderOptions' => $this->crudService->getGenderOptions(),
                 'allowedDuplicateLOB' => $allowedDuplicateLOB,
@@ -1036,7 +1039,7 @@ class CRUDController extends Controller
                 'policyIssuanceStatus' => $policyIssuanceStatus,
                 'bPDetails' => $bPDetails,
                 'quoteStatusEnum' => QuoteStatusEnum::asArray(),
-		        'sendUpdateEnum' => $sendUpdateEnum,
+                'sendUpdateEnum' => $sendUpdateEnum,
                 'hasPolicyIssuedStatus' => $hasPolicyIssuedStatus,
                 'isNewPaymentStructure' => $isNewPaymentStructure,
             ]);
@@ -1253,7 +1256,7 @@ class CRUDController extends Controller
             $modelType = $request->get('modelType');
         }
         $ignoreModelTypes = [quoteTypeCode::Bike, quoteTypeCode::Cycle, quoteTypeCode::Yacht];
-        if (! in_array($modelType, $ignoreModelTypes) && $modelType != null) {
+        if (!in_array($modelType, $ignoreModelTypes) && $modelType != null) {
             $quoteTypes = 'Health,Car,Travel,Life,Home,Business,Pet';
             $serviceType = str_contains($quoteTypes, ucwords($modelType)) ? strtolower($modelType) . 'QuoteService' : lcfirst(ucwords($modelType)) . 'Service';
             $this->genericModel->properties = $this->{$serviceType}->fillModelProperties();
@@ -1684,8 +1687,9 @@ class CRUDController extends Controller
         return $this->notesForCustomerService->notesSendToCustomer($request);
     }
 
-    public function updateQuotePolicy(Request $request)
+    public function updateQuotePolicy(UpdatePolicyDetailRequest $policyDetailRequest)
     {
+        $request = (object) $policyDetailRequest->validated();
         $quoteModel = $this->getQuoteObject($request->modelType, $request->quote_id);
         if (!$quoteModel) {
             return redirect()->back()->with('success', 'Error Updating Policy Details.');
@@ -1783,7 +1787,7 @@ class CRUDController extends Controller
             return response()->json(['success' => false]);
         }
         if ($request->new_payment_structure) {
-            if (! (auth()->user()->can(PermissionsEnum::PaymentsCreate))) {
+            if (!(auth()->user()->can(PermissionsEnum::PaymentsCreate))) {
                 return;
             }
             PaymentRepository::createNewPayment($request, $quoteModel);
@@ -1849,7 +1853,7 @@ class CRUDController extends Controller
     public function updatePayment(UpdatePaymentRequest $request)
     {
         if ($request->new_payment_structure) {
-            if (! (auth()->user()->can(PermissionsEnum::PaymentsEdit))) {
+            if (!(auth()->user()->can(PermissionsEnum::PaymentsEdit))) {
                 return;
             }
             PaymentRepository::updateNewPayment($request);
