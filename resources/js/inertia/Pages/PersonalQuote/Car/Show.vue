@@ -3376,11 +3376,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
             >
               Copy upload Link
             </x-button>
-            <template
-              v-if="
-                !can(permissionEnum.ApprovePayments) && !hasRole(rolesEnum.PA)
-              "
-            >
+            <template v-if="!can(permissionEnum.ApprovePayments)">
               <!-- <Link :href="`${record.uuid}/documents`" class="btn btn-primary btn-sm" style="float:right;">Upload Documents</Link> -->
               <x-button
                 @click.prevent="modals.doc = true"
