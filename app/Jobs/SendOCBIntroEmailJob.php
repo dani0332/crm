@@ -56,6 +56,11 @@ class SendOCBIntroEmailJob implements ShouldQueue
                 info('SendOCBIntroEmailJob - Lead not found for uuid: '.$this->quoteUuid);
 
                 return;
+            }
+            if ($lead->sic_flow_enabled) {
+                info('SendOCBIntroEmailJob - SIC work flow is enabled on this lead already : '.$this->quoteUuid);
+
+                return;
             } else {
                 info('SendOCBIntroEmailJob - Lead found for uuid: '.$this->quoteUuid);
 
