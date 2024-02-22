@@ -58,6 +58,11 @@ class ApiController extends Controller
         }
     }
 
+    public function triggerSICWorkflow(Request $request)
+    {
+        return $this->apiService->triggerSICWorkflow($request);
+    }
+
     public function evaluateTier(Request $request)
     {
         return $this->apiService->evaluateTier($request);

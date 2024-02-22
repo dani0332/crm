@@ -50,8 +50,15 @@ class CarEmailService extends BaseService
 
         // trigger SIC workflow
         if ($triggerSICWorkFlow) {
-            $apiResponse = SIBService::createWorkflowEvent(config('constants.SIC_WORKFLOW_NAME'), $lead, [], $emailData);
-            info('SIC workflow response: '.$apiResponse);
+            if(!$lead->sic_flow_enabled) {
+                $apiResponse = SIBService::createWorkflowEvent(config('constants.SIC_WORKFLOW_NAME'), $lead, [], $emailData);
+                $lead->sic_flow_enabled = true;
+                $lead->save();
+                info('SIC workflow response: '.$apiResponse);
+            } else {
+                info('SIC workflow already enabled for lead: '.$lead->uuid);
+            }
+
         }
 
         $responseCode = $this->sendEmailCustomerService->sendLMSIntroEmail($emailTemplateId, $emailData, 'lms-intro-email');
@@ -129,6 +136,7 @@ class CarEmailService extends BaseService
             'vehicleName' => $this->getVehicleName($carQuote),
             'currentInsurer' => $carQuote->currently_insured_with,
             'quoteLink' => config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$carQuote->uuid,
+            'requestAdvisorLink' => config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$carQuote->uuid.'/?assignAdvisor=true',
             'assignmentType' => $this->getAssignmentTypeText($carQuote->assignment_type),
             'previousAdvisorName' => ! empty($previousAdvisor) ? $previousAdvisor->name : '',
             'previousAdvisorStatus' => ! empty($previousAdvisor) ? UserStatusEnum::getUserStatusText($previousAdvisor->status) : '',
