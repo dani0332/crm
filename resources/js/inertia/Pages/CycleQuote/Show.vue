@@ -42,6 +42,12 @@ defineProps({
   paymentStatusEnum: Object,
   paymentTooltipEnum: Object,
   isNewPaymentStructure: Boolean,
+  record: Object,
+  permissions: Object,
+  enums: Object,
+  policyIssuanceStatus: Array,
+  bPDetails: Array,
+  payments: Array,
 });
 
 const page = usePage();
@@ -49,6 +55,8 @@ const notification = useToast();
 const hasAnyRole = roles => useHasAnyRole(roles);
 const hasRole = role => useHasRole(role);
 const rolesEnum = page.props.rolesEnum;
+const permissionEnum = page.props.permissionsEnum;
+const canAny = permissions => useCanAny(permissions);
 const modals = reactive({
   duplicate: false,
 });
@@ -820,11 +828,13 @@ const linkEntity = () => {
       :quote="quote"
     />
 
-    <QuotePolicy
-      :quote="quote"
-      :can="can"
-      :quoteStatusesEnum="quoteStatusesEnum"
-    />    
+    <PolicyDetail
+      v-if="permissions.isQuoteDocumentEnabled"
+      :record="record"
+      :quoteStatusEnum="enums.quoteStatusEnum"
+      :policyIssuanceStatus="policyIssuanceStatus"
+      modelType="Cycle"
+    />
 
     <EmbeddedProducts
       :data="embeddedProducts"
@@ -832,6 +842,19 @@ const linkEntity = () => {
       :code="quote.code"
       :quote="quote"
       :modelType="quoteType"
+    />
+
+    <BookPolicy
+      v-if="
+        canAny([
+          permissionEnum.VIEW_INSLY_BOOK_POLICY,
+          permissionEnum.SEND_INSLY_BOOK_POLICY,
+        ])
+      "
+      :quote="record"
+      quoteType="Cycle"
+      :bPDetails="bPDetails"
+      :payments="payments"
     />
 
     <AuditLogs :quote-type="quoteType" :id="$page.props.quote.id" :quoteCode="$page.props.quote.code" />

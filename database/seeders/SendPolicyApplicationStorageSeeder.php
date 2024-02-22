@@ -182,5 +182,16 @@ class SendPolicyApplicationStorageSeeder extends Seeder
                 'updated_at' => now(),
             ]);
         }
+
+        $cycleBookPolicy = ApplicationStorage::where('key_name', ApplicationStorageEnums::CYCLE_BOOK_POLICY_TEMPLATE)->first();
+        if (! $cycleBookPolicy) {
+            DB::table('application_storage')->insert([
+                'key_name' => ApplicationStorageEnums::CYCLE_BOOK_POLICY_TEMPLATE,
+                'value' => '618',
+                'is_active' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
     }
 }

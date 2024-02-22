@@ -30,9 +30,15 @@ use App\Repositories\UserRepository;
 use App\Services\AMLService;
 use App\Services\CentralService;
 use App\Services\SplitPaymentService;
+use App\Models\PolicyIssuanceStatus;
+use App\Models\QuoteType;
+use App\Services\QuoteDocumentService;
+use App\Traits\GenericQueriesAllLobs;
 
 class CycleQuoteController extends Controller
 {
+    use GenericQueriesAllLobs;
+
     /**
      * @return \Inertia\Response|\Inertia\ResponseFactory
      */
@@ -141,6 +147,11 @@ class CycleQuoteController extends Controller
         $emirates = Emirate::where('is_active', 1)->select('id', 'text')->get();
         $vatPercentage = ApplicationStorage::where('key_name', ApplicationStorageEnums::VAT_VALUE)->first()->value ?? 0;
 
+        $isQuoteDocumentEnabled = app(QuoteDocumentService::class)->isEnabled(QuoteTypes::CYCLE->value);
+        $policyIssuanceStatus = PolicyIssuanceStatus::active()->get();
+        $quoteDocuments = (new QuoteDocumentService())->getQuoteDocuments(QuoteTypes::CYCLE->value, $quote->id);
+        $bPDetails = $this->bookPolicyPayload($quote, QuoteTypes::PET->value, $quote->payments, $quoteDocuments);
+
         return inertia('CycleQuote/Show', [
             'quoteType' => QuoteTypes::CYCLE,
             'quote' => $quote,
@@ -170,6 +181,16 @@ class CycleQuoteController extends Controller
             'paymentTooltipEnum' => PaymentTooltip::asArray(),
             'paymentStatusEnum' => PaymentStatusEnum::asArray(),
             'isNewPaymentStructure' => app(SplitPaymentService::class)->isNewPaymentStructure($quote->payments),
+            'record' => fn () => $quote,
+            'permissions' => [
+                'isQuoteDocumentEnabled' => $isQuoteDocumentEnabled,
+            ],
+            'enums' => [
+                'quoteStatusEnum' => QuoteStatusEnum::asArray(),
+            ],
+            'policyIssuanceStatus' => $policyIssuanceStatus,
+            'bPDetails' => $bPDetails,
+            'payments' => $quote->payments->toArray() ?? []
         ]);
     }
 }
