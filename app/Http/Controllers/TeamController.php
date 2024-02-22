@@ -49,7 +49,7 @@ class TeamController extends Controller
 
         return inertia('Admin/Teams/Form', [
             'products' => $products,
-          
+
         ]);
     }
 
@@ -82,7 +82,7 @@ class TeamController extends Controller
         $team->updated_at = now();
         $team->save();
 
-        return redirect(route('team.show', $team->id))->with('success', $team->name . ' has been added');
+        return redirect(route('team.show', $team->id))->with('success', $team->name.' has been added');
     }
 
     /**

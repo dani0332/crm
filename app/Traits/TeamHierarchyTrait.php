@@ -115,6 +115,7 @@ trait TeamHierarchyTrait
     public function getUserManagers($userId)
     {
         $managerIds = DB::table('user_manager')->where('user_id', $userId)->get()->pluck('manager_id');
+
         return User::whereIn('id', $managerIds)->where('is_active', 1)->get();
     }
 

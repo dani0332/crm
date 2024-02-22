@@ -27,7 +27,7 @@ class RoleController extends Controller
         $query = Role::select('*')->orderBy('created_at', 'desc');
 
         if ($request->has('name')) {
-            $query->where('name', 'LIKE', '%' . $request->name . '%');
+            $query->where('name', 'LIKE', '%'.$request->name.'%');
         }
 
         $roles = $query->simplePaginate();

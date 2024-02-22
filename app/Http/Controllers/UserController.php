@@ -11,12 +11,12 @@ use App\Services\LeadAllocationService;
 use App\Services\UserService;
 use App\Traits\TeamHierarchyTrait;
 use Auth;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
-use Carbon\Carbon;
 
 class UserController extends Controller
 {
@@ -61,7 +61,7 @@ class UserController extends Controller
         }
 
         if ($request->has('name')) {
-            $query->where('u1.name', 'LIKE', '%' . $request->name . '%');
+            $query->where('u1.name', 'LIKE', '%'.$request->name.'%');
         }
 
         $users = $query->groupBy('u1.id')->simplePaginate();
@@ -89,7 +89,7 @@ class UserController extends Controller
             'products' => $products,
             'teams' => $teams,
             'subTeams' => $subTeams,
-            'permissions' => $permissions
+            'permissions' => $permissions,
         ]);
 
     }
@@ -115,8 +115,8 @@ class UserController extends Controller
         $this->leadAllocationService->createLeadAllocationRecord($user->id);
 
         $user->assignRole($request->input('roles'));
-       
-        return redirect(route('users.show', $user->id))->with('success', $user->name . ' with a email '.$user->email. ' ' .'has been store');
+
+        return redirect(route('users.show', $user->id))->with('success', $user->name.' with a email '.$user->email.' '.'has been store');
     }
 
     /**
@@ -128,9 +128,8 @@ class UserController extends Controller
     public function show(User $user)
     {
 
-  
-        $user["new_created_at"] = Carbon::createFromFormat('d-M-Y h:ia', $user->created_at)->format('Y-m-d H:i:s');
-        $user["new_updated_at"] = Carbon::createFromFormat('d-M-Y h:ia', $user->created_at)->format('Y-m-d H:i:s');
+        $user['new_created_at'] = Carbon::createFromFormat('d-M-Y h:ia', $user->created_at)->format('Y-m-d H:i:s');
+        $user['new_updated_at'] = Carbon::createFromFormat('d-M-Y h:ia', $user->created_at)->format('Y-m-d H:i:s');
 
         $subTeamName = '';
         $additionalTeamNames = '';
@@ -146,7 +145,7 @@ class UserController extends Controller
         if ($user->sub_team_id) {
             $subTeamName = Team::find($user->sub_team_id)->name;
         }
-        
+
         return inertia('Admin/Users/Show', [
             'user' => $user,
             'teamName' => $teamName,
@@ -155,7 +154,7 @@ class UserController extends Controller
             'managerName' => $managerName,
             'productName' => $productName,
         ]);
-      
+
     }
 
     /**
@@ -200,7 +199,7 @@ class UserController extends Controller
             'permissions' => $permissions,
             'userPermissions' => $userPermissions,
         ]);
-    
+
     }
 
     /**
