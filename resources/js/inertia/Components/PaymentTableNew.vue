@@ -320,8 +320,9 @@ const validatePaymentOption = () => {
         } else {        
           isDiscountDocumentNotUploaded.value = false;
         } 
+        console.log("DISC==="+discountValue.value);
         
-        if (discountValue.value === '' || discountValue.value === 0) {
+        if (discountValue.value === '' || parseFloat(discountValue.value)<=0) {
           issueFound = true; 
           isDiscountError.value = true;
           discountError.value =  'This field is required';
@@ -1038,6 +1039,7 @@ const editPaymentModal = (payment,split_payment_id,sr_no,capture_approval) => {
 
   const paidStatusIds = [
     props.paymentStatusEnum.PAID,
+    props.paymentStatusEnum.PARTIALLY_PAID,
     props.paymentStatusEnum.AUTHORISED,
     props.paymentStatusEnum.CAPTURED,
     props.paymentStatusEnum.PARTIAL_CAPTURED
