@@ -91,7 +91,7 @@ const submitAMLDecision = decision => {
 };
 
 const setAllDecisionSelected = ()=>{
-    amlResults.value.every((x) => {
+    amlResults.value.filter((x) => {
         if(x.decision == 'FalsePositive' || x.decision == 'TrueMatch'){
             decisionSelected.value[x.ID] = x.decision;
         }
