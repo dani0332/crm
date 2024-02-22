@@ -37,14 +37,9 @@ const onSubmit = isValid => {
   if (isValid) {
     filters.page = 1;
 
-    Object.keys(filters).forEach(
-      key =>
-        (filters[key] === '' || filters[key].length === 0) &&
-        delete filters[key],
-    );
     router.visit(route('team.index'), {
       method: 'get',
-      data: filters,
+      data: useGenerateQueryString(filters),
       preserveState: true,
       preserveScroll: true,
       onBefore: () => (loader.table = true),

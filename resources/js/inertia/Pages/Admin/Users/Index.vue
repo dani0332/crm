@@ -1,11 +1,10 @@
 <script setup>
-import { onMounted } from 'vue';
-
 const props = defineProps({
   users: Object,
 });
 
 const page = usePage();
+const params = useUrlSearchParams('history');
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
 const dateFormat = date => useDateFormat(date, 'DD-MM-YYYY HH:mm:ss').value;
@@ -61,16 +60,26 @@ const onSubmit = isValid => {
   }
 };
 
-onMounted(() => {
-  const urlParams = new URLSearchParams(window.location.search);
-  // Update filters based on URL parameters
-  Object.keys(filters).forEach(key => {
-    const paramValue = urlParams.get(key);
-
-    if (paramValue !== null) {
-      filters[key] = paramValue;
+function setQueryStringFilters() {
+  for (const [key] of Object.entries(params)) {
+    if (key.includes('[]')) {
+      filters[key.substring(0, key.length - 2)] = params[key];
+    } else {
+      filters[key] = params[key];
     }
-  });
+  }
+}
+
+onMounted(() => {
+  setQueryStringFilters();
+  // // Update filters based on URL parameters
+  // Object.keys(filters).forEach(key => {
+  //   const paramValue = urlParams.get(key);
+
+  //   if (paramValue !== null) {
+  //     filters[key] = paramValue;
+  //   }
+  // });
 });
 </script>
 <template>

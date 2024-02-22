@@ -13,7 +13,6 @@ const page = usePage();
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
 const dateFormat = date => {
-  console.log(useDateFormat(date, 'DD-MM-YYYY HH:mm:ss'));
   return useDateFormat(date, 'DD-MM-YYYY HH:mm:ss').value;
 };
 
