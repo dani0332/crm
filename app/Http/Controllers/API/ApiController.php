@@ -5,6 +5,8 @@ namespace App\Http\Controllers\API;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\APiFetchUrl;
 use App\Http\Requests\AssignLeadRequest;
+use App\Http\Requests\EvaluateTierRequest;
+use App\Http\Requests\SICWorkflowRequest;
 use App\Services\ApiService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -43,9 +45,6 @@ class ApiController extends Controller
                 return apiResponse(null, Response::HTTP_SERVICE_UNAVAILABLE, 'Lead allocation endpoint disabled');
             }
 
-            // Validate the request
-            $request->validated();
-
             return $this->apiService->processAssignLead($request);
         } catch (\Exception $e) {
             info('------ Lead allocation ended for lead with An error occurred ------');
@@ -58,12 +57,12 @@ class ApiController extends Controller
         }
     }
 
-    public function triggerSICWorkflow(Request $request)
+    public function triggerSICWorkflow(SICWorkflowRequest $request)
     {
         return $this->apiService->triggerSICWorkflow($request);
     }
 
-    public function evaluateTier(Request $request)
+    public function evaluateTier(EvaluateTierRequest $request)
     {
         return $this->apiService->evaluateTier($request);
     }

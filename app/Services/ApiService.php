@@ -5,6 +5,8 @@ namespace App\Services;
 use App\Enums\QuoteStatusEnum;
 use App\Factories\AllocationFactory;
 use App\Http\Requests\AssignLeadRequest;
+use App\Http\Requests\EvaluateTierRequest;
+use App\Http\Requests\SICWorkflowRequest;
 use App\Jobs\SendOCBIntroEmailJob;
 use App\Models\Customer;
 use App\Models\HealthQuote;
@@ -136,7 +138,7 @@ class ApiService
         return apiResponse($responseData, Response::HTTP_OK, 'Lead allocated successfully!');
     }
 
-    public function triggerSICWorkflow($request)
+    public function triggerSICWorkflow(SICWorkflowRequest $request)
     {
         info('------ SIC workflow trigger request received for lead : '.$request->quoteUuid.' ------');
         SendOCBIntroEmailJob::dispatch($request->quoteUuid, null, true);
@@ -145,7 +147,7 @@ class ApiService
         return apiResponse(null, Response::HTTP_OK, 'SIC workflow triggered successfully!');
     }
 
-    public function evaluateTier($request)
+    public function evaluateTier(EvaluateTierRequest $request)
     {
         $allocationType = $request->input('quoteTypeId');
         $allocationId = $request->input('quoteUUID');
