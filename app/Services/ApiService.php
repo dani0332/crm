@@ -152,8 +152,7 @@ class ApiService
 
         info('------ Lead allocation request received to evaluate tier only for '.$allocationId.' ------');
         $allocationStrategy = AllocationFactory::createStrategy($allocationType, $allocationId);
-        $overrideAdvisorId = true;
-        $tierId = $allocationStrategy->executeSteps($overrideAdvisorId, false, true);
+        $tierId = $allocationStrategy->executeSteps(false, false, true);
         $responseData = ['assignedTierId' => $tierId];
         info('------ Lead allocation request completed to evaluate tier only for '.$allocationId.' ------');
 
