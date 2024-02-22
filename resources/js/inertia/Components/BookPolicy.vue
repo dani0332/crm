@@ -203,7 +203,7 @@ const caculateCommission = () => {
             <dd>{{ bpForm.invoice_description }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">Main Class Insurance</dt>
+            <dt class="font-medium">Line of Business</dt>
             <dd>{{ props?.quoteType }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
@@ -211,7 +211,7 @@ const caculateCommission = () => {
             <dd>{{ bpForm.transaction_payment_status }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">Sub Class</dt>
+            <dt class="font-medium">Sub Type</dt>
             <dd></dd>
           </div>
           <div class="grid sm:grid-cols-2">
@@ -248,7 +248,7 @@ const caculateCommission = () => {
             <dd>{{ bpForm.discount }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">Insurer Commmission Invoice Number</dt>
+            <dt class="font-medium">Insurer Commission Invoice Number</dt>
             <dd>
               <x-input
                 v-model="bpForm.insurer_commmission_invoice_number"
@@ -260,16 +260,16 @@ const caculateCommission = () => {
             </dd>
           </div>
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">Commmission %</dt>
+            <dt class="font-medium">Commission %</dt>
             <dd>{{ bpForm.commission_percentage }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">Commmission (VAT NOT APPLICABLE)</dt>
+            <dt class="font-medium">Commission (VAT NOT APPLICABLE)</dt>
             <dd>
               <x-input
                 v-model="bpForm.commission_vat_not_applicable"
                 @change="caculateCommission"
-                placeholder="Commmission VAT NOT APPLICABLE"
+                placeholder="Commission VAT NOT APPLICABLE"
                 class="w-full"
                 :disabled="
                   !bp.isEditing || bpForm.commission_vat_applicable !== ''
@@ -282,12 +282,12 @@ const caculateCommission = () => {
             <dd>{{ bpForm.vat_on_commission }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">Commmission VAT APPLICABLE</dt>
+            <dt class="font-medium">Commission VAT APPLICABLE</dt>
             <dd>
               <x-input
                 v-model="bpForm.commission_vat_applicable"
                 @change="caculateCommission"
-                placeholder="Commmission VAT APPLICABLE"
+                placeholder="Commission VAT APPLICABLE"
                 class="w-full"
                 :disabled="
                   !bp.isEditing || bpForm.commission_vat_not_applicable !== ''
