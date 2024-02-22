@@ -154,6 +154,7 @@ class LookupSeeder extends Seeder
                 ['key' => LookupsEnum::LEGAL_STRUCTURE, 'code' => 'branchOfForeignCompany', 'text' => 'Branch of a foreign company', 'created_at' => now(), 'updated_at' => now()],
             ]);
         }
+        Lookup::firstOrCreate(['key' => LookupsEnum::LEGAL_STRUCTURE, 'code' => 'freeZoneEstablish'], ['text' => 'Free Zone Establishment']);
 
         if (! DB::table('lookups')->where('key', LookupsEnum::ISSUANCE_PLACE)->first()) {
             DB::table('lookups')->insert([
@@ -191,6 +192,8 @@ class LookupSeeder extends Seeder
                 ['key' => LookupsEnum::ISSUING_AUTHORITY, 'code' => 'DMCC', 'text' => 'Dubai Multi Commodities Centre (DMCC)', 'created_at' => now(), 'updated_at' => now()],
             ]);
         }
+        Lookup::firstOrCreate(['key' => LookupsEnum::ISSUING_AUTHORITY, 'code' => 'FAICCPS'], ['text' => 'Federal Authority for Identity, Citizenship, Customs and Port Security']);
+        Lookup::firstOrCreate(['key' => LookupsEnum::ISSUING_AUTHORITY, 'code' => 'issuingAuthOthers'], ['text' => 'Others']);
 
         if (! DB::table('lookups')->where('key', LookupsEnum::EMPLOYMENT_SECTOR)->first()) {
             DB::table('lookups')->insert([
@@ -200,6 +203,7 @@ class LookupSeeder extends Seeder
                 ['key' => LookupsEnum::EMPLOYMENT_SECTOR, 'code' => 'freezone', 'text' => 'Freezone Sector', 'created_at' => now(), 'updated_at' => now()],
             ]);
         }
+        Lookup::firstOrCreate(['key' => LookupsEnum::EMPLOYMENT_SECTOR, 'code' => 'unspecifiedEmpSec'], ['text' => 'Unspecified']);
 
         if (! DB::table('lookups')->where('key', LookupsEnum::COMPANY_POSITION)->first()) {
             DB::table('lookups')->insert([
@@ -281,6 +285,7 @@ class LookupSeeder extends Seeder
                 ['key' => LookupsEnum::PROFESSIONAL_TITLE, 'code' => 'tour-guide', 'text' => 'Tour Guide', 'created_at' => now(), 'updated_at' => now()],
             ]);
         }
+        Lookup::firstOrCreate(['key' => LookupsEnum::PROFESSIONAL_TITLE, 'code' => 'pro-unspecified'], ['text' => 'Unspecified']);
 
         if (! DB::table('lookups')->where('key', LookupsEnum::MEMBER_RELATION)->first()) {
             DB::table('lookups')->insert([

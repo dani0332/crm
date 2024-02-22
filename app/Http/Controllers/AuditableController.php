@@ -40,24 +40,26 @@ class AuditableController extends Controller
     {
         return DB::table('audits')
             ->select('audits.*', 'users.name')
-            ->join('users', 'audits.user_id', 'users.id')
+            ->leftJoin('users', 'audits.user_id', 'users.id')
             ->where('auditable_id', $request->auditableId)
             ->where('auditable_type', $request->auditableType)
             ->orderBy('created_at', 'desc')
             ->get();
-
     }
 
     public function loadApiLogs(Request $request)
     {
         if ($request->auditableType == CarQuote::class) {
-            $uuid = CarQuote::where('id', $request->auditableId)->value('uuid');
-
-            return InsurerRequestResponse::with('insuranceProvider')
+            $query = InsurerRequestResponse::with('insuranceProvider')
                 ->select('*')
-                ->where('insurer_request_response.quote_uuid', $uuid)
-                ->orderByDesc('insurer_request_response.created_at')
-                ->get();
+                ->where('insurer_request_response.quote_uuid', CarQuote::where('id', $request->auditableId)->value('uuid'))
+                ->orderByDesc('insurer_request_response.created_at');
+
+            if ($request->insurance_provider) {
+                $query->where('insurer_request_response.provider_id', $request->insurance_provider);
+            }
+
+            return $query->get();
         }
     }
 

@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\V2;
 
-use App\Enums\AmlSearchType;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\QuoteStatusEnum;
@@ -12,7 +11,6 @@ use App\Enums\RolesEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\PetQuoteRequest;
 use App\Models\Emirate;
-use App\Models\Entity;
 use App\Models\Nationality;
 use App\Repositories\ActivityRepository;
 use App\Repositories\CustomerMembersRepository;
@@ -26,9 +24,8 @@ use App\Repositories\PersonalPlanRepository;
 use App\Repositories\PetQuoteRepository;
 use App\Repositories\QuoteStatusRepository;
 use App\Repositories\UserRepository;
+use App\Services\AMLService;
 use App\Services\CentralService;
-use App\Services\CRUDService;
-use App\Services\LookupService;
 
 class PetQuoteController extends Controller
 {
@@ -91,7 +88,7 @@ class PetQuoteController extends Controller
         $quoteStatuses = QuoteStatusRepository::byQuoteTypeId(QuoteTypes::PET->id())->get();
 
         $documentTypes = DocumentTypeRepository::byQuoteTypeId(QuoteTypes::PET->id())->get();
-        $membersDetail = CustomerMembersRepository::getBy('quote_id', $quote->id, QuoteTypes::PET->name);
+        $membersDetail = CustomerMembersRepository::getBy($quote->id, QuoteTypes::PET->name);
         $paymentMethods = PaymentMethodRepository::orderBy('name')->get();
         $nationalities = Nationality::where('is_active', 1)->select('id', 'text')->get();
         $memberRelations = LookupRepository::where('key', LookupsEnum::MEMBER_RELATION)->get();
@@ -99,7 +96,7 @@ class PetQuoteController extends Controller
         $personalPlans = PersonalPlanRepository::get();
         $advisors = UserRepository::getPersonalQuoteAdvisors(QuoteTypes::PET->value);
         $industryType = LookupRepository::where('key', LookupsEnum::COMPANY_TYPE)->get();
-        $uboDetails = CustomerMembersRepository::getBy('quote_id', $quote->id, QuoteTypes::PET->name, CustomerTypeEnum::Entity);
+        $uboDetails = CustomerMembersRepository::getBy($quote->id, QuoteTypes::PET->name, CustomerTypeEnum::Entity);
         $uboRelations = LookupRepository::where('key', LookupsEnum::UBO_RELATION)->get();
         $emirates = Emirate::where('is_active', 1)->select('id', 'text')->get();
 
@@ -111,42 +108,13 @@ class PetQuoteController extends Controller
         $lostReasons = LostReasonRepository::orderBy('text', 'asc')->get();
         $duplicateAllowedLobs = (new CentralService())->duplicateAllowedLobsList(QuoteTypes::PET->value, $quote->code);
         $embeddedProducts = EmbeddedProductRepository::byQuoteType(QuoteTypes::PET->id(), $quote->id);
-        if ($quote->quote_status_id !== QuoteStatusEnum::AMLScreeningCleared) {
+        if (AMLService::checkAMLStatusFailed(QuoteTypes::PET->id(), $quote->id)) {
             $quoteStatuses = collect($quoteStatuses)->filter(function ($value) {
                 return $value['id'] != QuoteStatusEnum::TransactionApproved;
             })->values();
         }
-        $crudService = app(CRUDService::class);
-        $amlQuoteStatus = $crudService->checkAmlQuoteStatus($quote->quote_status_id);
-        $countries = Nationality::all();
-        $lookupService = app(LookupService::class);
-        $entities = $residentialStatus = $legalStructure = $idDocumentType = $modeOfContact = $employmentSectors = $companyPosition = $issuancePlace = $issuanceAuthorities = null;
-        if ($quote->customer_type == AmlSearchType::ENTITY) {
-            $entities = Entity::all();
-            $legalStructure = $lookupService->getLegalStructure();
-            $idDocumentType = $lookupService->getEntityDocumentTypes();
-            $issuancePlace = $lookupService->getIssuancePlaces();
-            $issuanceAuthorities = $lookupService->getIssuanceAuthorities();
-        } else {
-            $idDocumentType = $lookupService->getIndividualDocumentTypes();
-            $modeOfContact = $lookupService->getModeOfContact();
-            $employmentSectors = $lookupService->getEmploymentSector();
-            $residentialStatus = $lookupService->getResidentialStatus();
-            $companyPosition = $lookupService->getCompanyPosition();
-        }
 
         return inertia('PetQuote/Show', [
-            'amlQuoteStatus' => $amlQuoteStatus,
-            'countryList' => $countries,
-            'entities' => $entities,
-            'legalStructure' => $legalStructure,
-            'idDocumentType' => $idDocumentType,
-            'issuancePlace' => $issuancePlace,
-            'issuanceAuthorities' => $issuanceAuthorities,
-            'modeOfContact' => $modeOfContact,
-            'employmentSectors' => $employmentSectors,
-            'residentialStatus' => $residentialStatus,
-            'companyPosition' => $companyPosition,
             'quoteType' => QuoteTypes::PET,
             'quote' => $quote,
             'activities' => $activities,

@@ -25,12 +25,13 @@ class TravelMemberDetailRequest extends FormRequest
     {
         return [
             'travel_quote_request_id' => 'required',
-            'dob' => 'required',
+            'first_name' => 'sometimes|required',
             'nationality_id' => 'nullable',
-            'first_name' => 'nullable',
+            'dob' => 'required',
             'relation_code' => 'nullable',
             'quote_request_id' => 'sometimes|required',
             'customer_id' => 'required',
+            'gender' => 'nullable',
         ];
     }
 }

@@ -56,10 +56,10 @@ const kycForm = reactive({
   id_expiry_date: convertDate(props.entityDetails?.entity?.id_expiry_date),
   place_of_issue: props.entityDetails?.entity?.issuance_place ?? null,
   issuing_authority: props.entityDetails?.entity?.id_issuance_authority ?? null,
-  manager_name: null,
-  manager_nationality: null,
-  manager_dob: null,
-  manager_position: null,
+  manager_name: props.entityDetails?.entity?.quote_member?.first_name ?? null,
+  manager_nationality: props.entityDetails?.entity?.quote_member?.nationality_id ?? null,
+  manager_dob: props.entityDetails?.entity?.quote_member?.dob ?? null,
+  manager_position: props.entityDetails?.entity?.quote_member?.relation_code ?? null,
   pep: props.entityDetails?.entity?.pep ?? props.amlQuoteStatus,
   financial_sanctions: props.entityDetails?.entity?.financial_sanctions ?? props.amlQuoteStatus,
   dual_nationality: props.entityDetails?.entity?.dual_nationality ?? props.amlQuoteStatus,
@@ -91,8 +91,6 @@ const onKycSubmit = isValid => {
             title: 'KYC Document uploaded.',
             position: 'top',
           });
-          // props.status(false);
-          // props.buttonStatus(true);
         } else {
           notification.error({
             title: response.data.message,
@@ -112,13 +110,6 @@ const countryList = computed(() => {
     value: nat.id,
     label: nat.country_name,
   }));
-});
-
-const minDate = computed(() => {
-  const today = new Date();
-  const tomorrow = new Date(today);
-
-  return tomorrow.setDate(today.getDate() + 1);
 });
 
 const nationalityOptions = computed(() => {
@@ -175,11 +166,6 @@ const complianceDisable = reactive({
 });
 
 const complianceRules = computed(() => {
-  // return hasRole(props.roles.COMPLIANCE) ||
-  //   hasRole(props.roles.ComplianceSuperUser)
-  //   ? [rules.isRequired]
-  //   : [];
-
   return can(permissionsEnum.AMLDecisionUpdate) ||
     can(permissionsEnum.AMLDecisionUpdateTrueMatch)
     ? [rules.isRequired]
@@ -187,9 +173,6 @@ const complianceRules = computed(() => {
 });
 
 onMounted(() => {
-  // complianceDisable.isDisable = !(
-  //   hasRole(props.roles.COMPLIANCE) || hasRole(props.roles.ComplianceSuperUser)
-  // );
   complianceDisable.isDisable = !(
     can(permissionsEnum.AMLDecisionUpdate) ||
     can(permissionsEnum.AMLDecisionUpdateTrueMatch)
@@ -385,7 +368,6 @@ onMounted(() => {
         <DatePicker
           v-model="kycForm.id_expiry_date"
           class="w-full"
-          :min-date="minDate"
           :rules="[isRequired]"
         />
       </div>
@@ -543,10 +525,6 @@ onMounted(() => {
     </div>
 
     <div class="flex justify-center gap-3 mt-7">
-      <!-- <x-button size="sm" @click.prevent="status(false)">
-        Cancel
-      </x-button> -->
-
       <x-button
         :loading="isLoading"
         size="sm"

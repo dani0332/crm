@@ -1,7 +1,7 @@
 export const useRules = () =>
 {
   const isEmail = v =>
-    /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/.test(v) ||
+    /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,4})+$/.test(v) ||
     'E-mail must be valid';
 
   const isMobile = v =>
@@ -78,16 +78,20 @@ export const useRules = () =>
 
   const isMobileNo = v =>
   {
-    const regex = /^[0-9+\-\s]+$/;
-    if (v.length < 10)
+    if (v)
     {
-      return 'Mobile Number should be 10 digits long';
+      const regex = /^[0-9+\-\s]+$/;
+      if (v.length < 10)
+      {
+        return 'Mobile Number should be 10 digits long';
+      }
+      if (v.length > 20)
+      {
+        return 'Mobile Number should be less than 20 digits long';
+      }
+      return regex.test(v) || 'Invalid mobile number';
     }
-    if (v.length > 20)
-    {
-      return 'Mobile Number should be less than 20 digits long';
-    }
-    return regex.test(v) || 'Invalid mobile number';
+
   };
 
   return {

@@ -250,7 +250,8 @@ class AjaxController extends Controller
                         'pep' => $data['pep'] ?? null,
                         'financial_sanctions' => $data['financial_sanctions'] ?? null,
                         'dual_nationality' => $data['dual_nationality'] ?? null,
-                    ]);
+                    ]
+                );
 
                 $quote->first_name = $data['first_name'];
                 $quote->last_name = $data['last_name'];
@@ -276,7 +277,7 @@ class AjaxController extends Controller
                 return response()->json(['success' => true]);
             }
         } catch (\Exception $ex) {
-            info($ex->getMessage());
+            info("KYC Individual $request->quote_uuid - ERROR:".$ex->getMessage());
         }
 
         return response()->json(['error' => false]);
@@ -349,7 +350,7 @@ class AjaxController extends Controller
                 return response()->json(['success' => true]);
             }
         } catch (\Exception $ex) {
-            info($ex->getMessage());
+            info("KYC Entity $request->quote_uuid - ERROR:".$ex->getMessage());
         }
 
         return response()->json(['message' => 'Something went wrong, contact to administrator.']);

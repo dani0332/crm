@@ -106,8 +106,6 @@ const onKycSubmit = isValid => {
             title: 'KYC Document uploaded.',
             position: 'top',
           });
-          // props.status(false);
-          // props.buttonStatus(true);
         } else {
           notification.error({
             title: 'Document not uploaded.',
@@ -125,63 +123,63 @@ const onKycSubmit = isValid => {
 };
 
 const countryList = computed(() => {
-  return props.countryList.map(nat => ({
+  return props.countryList?.map(nat => ({
     value: nat.id,
     label: nat.country_name,
   }));
 });
 
 const nationalityOptions = computed(() => {
-  return props.nationalities.map(nat => ({
+  return props.nationalities?.map(nat => ({
     value: nat.id,
     label: nat.text,
   }));
 });
 
 const residentialStatusOptions = computed(() => {
-  return props.residentialStatus.map(nat => ({
+  return props.residentialStatus?.map(nat => ({
     value: nat.code,
     label: nat.text,
   }));
 });
 
 const documentIdTypeOptions = computed(() => {
-  return props.idDocumentType.map(nat => ({
+  return props.idDocumentType?.map(nat => ({
     value: nat.code,
     label: nat.text,
   }));
 });
 
 const modeOfContactOptions = computed(() => {
-  return props.modeOfContact.map(nat => ({
+  return props.modeOfContact?.map(nat => ({
     value: nat.code,
     label: nat.text,
   }));
 });
 
 const modeOfDeliveryOptions = computed(() => {
-  return props.modeOfDelivery.map(nat => ({
+  return props.modeOfDelivery?.map(nat => ({
     value: nat.code,
     label: nat.text,
   }));
 });
 
 const professionalTitleOptions = computed(() => {
-  return props.professionalTitle.map(nat => ({
+  return props.professionalTitle?.map(nat => ({
     value: nat.code,
     label: nat.text,
   }));
 });
 
 const employmentSectorsOptions = computed(() => {
-  return props.employmentSectors.map(nat => ({
+  return props.employmentSectors?.map(nat => ({
     value: nat.code,
     label: nat.text,
   }));
 });
 
 const companyPositionOptions = computed(() => {
-  return props.companyPosition.map(nat => ({
+  return props.companyPosition?.map(nat => ({
     value: nat.code,
     label: nat.text,
   }));
@@ -192,11 +190,6 @@ const complianceDisable = reactive({
 });
 
 const complianceRules = computed(() => {
-  // return hasRole(props.roles.COMPLIANCE) ||
-  //   hasRole(props.roles.ComplianceSuperUser)
-  //   ? [rules.isRequired]
-  //   : [];
-
   return can(permissionsEnum.AMLDecisionUpdate) ||
     can(permissionsEnum.AMLDecisionUpdateTrueMatch)
     ? [rules.isRequired]
@@ -204,11 +197,6 @@ const complianceRules = computed(() => {
 });
 
 onMounted(() => {
-  // complianceDisable.isDisable = !(
-  //   hasRole(props.roles.COMPLIANCE) || hasRole(props.roles.ComplianceSuperUser)
-  // );
-
-  console.log(complianceDisable.isDisable);
   complianceDisable.isDisable = !(
     can(permissionsEnum.AMLDecisionUpdate) ||
     can(permissionsEnum.AMLDecisionUpdateTrueMatch)
@@ -301,7 +289,6 @@ onMounted(() => {
         v-model="kycForm.mobile_number"
         label="Mobile number"
         placeholder="Mobile number"
-        type="number"
         :rules="[isRequired]"
       />
 
@@ -516,10 +503,6 @@ onMounted(() => {
     </div>
 
     <div class="flex justify-center gap-3 mt-7">
-      <!-- <x-button size="sm" @click.prevent="status(false)">
-          Cancel
-        </x-button> -->
-
       <x-button
         :loading="isLoading"
         size="sm"

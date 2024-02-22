@@ -13,7 +13,6 @@ use App\Enums\quoteTypeCode;
 use App\Enums\RolesEnum;
 use App\Enums\RuleTypeEnum;
 use App\Enums\TeamNameEnum;
-use App\Jobs\CammyJob;
 use App\Jobs\GetQuotePlansJob;
 use App\Jobs\IntroEmailJob;
 use App\Mail\HealthAssignmentIssueEmail;
@@ -62,6 +61,7 @@ class LeadAllocationService extends BaseService
                 'lead_allocation.user_id as userId',
                 'lead_allocation.allocation_count',
                 'lead_allocation.max_capacity',
+                'lead_allocation.reset_cap',
                 'u.status as is_available',
                 'lead_allocation.reset_cap',
                 'lead_allocation.last_allocated',
@@ -196,7 +196,6 @@ class LeadAllocationService extends BaseService
                     ->then(function () use ($lead) {
                         if (in_array($lead->health_team_type, [HealthTeamType::EBP, HealthTeamType::RM_NB, HealthTeamType::RM_SPEED])
                             && $lead->quote_status_id == QuoteStatusEnum::Qualified) {
-                            CammyJob::dispatch($lead, 'intro')->delay(now()->addSeconds(15));
                             IntroEmailJob::dispatch(quoteTypeCode::Health, 'Capi', $lead->uuid, 'send-rm-intro-email')->delay(now()->addSeconds(15));
                         }
                     })->dispatch();

@@ -18,9 +18,9 @@ class HealthAllocation implements Allocation
         $this->allocationId = $allocationId;
     }
 
-    public function executeSteps()
+    public function executeSteps($overrideAdvisorId = false)
     {
-        $lead = $this->fetchLead();
+        $lead = $this->fetchLead($overrideAdvisorId);
 
         if (! $lead) {
 
@@ -32,7 +32,7 @@ class HealthAllocation implements Allocation
         if (! $lead->health_team_type) {
             info('No health team found against lead : '.$lead->uuid);
 
-            return false; // when system is not able to identify sub team based on price
+            return 0; // when system is not able to identify sub team based on price
         }
 
         $advisor = $this->fetchAvailableAdvisor($lead->health_team_type);
@@ -40,15 +40,17 @@ class HealthAllocation implements Allocation
         if (! $advisor) {
             info('No advisors found against lead : '.$lead->uuid);
 
-            return false; // when no advisor is found
+            return 0; // when no advisor is found
         }
 
         $this->assignLead($lead, $advisor); // Assign the lead to the advisor
+
+        return $advisor->id;
     }
 
-    private function fetchLead()
+    private function fetchLead($overrideAdvisorId)
     {
-        return $this->healthAllocationService->fetchLead($this->allocationId);
+        return $this->healthAllocationService->fetchLead($this->allocationId, $overrideAdvisorId);
     }
 
     private function assignTeamBasedOnPrice($lead)

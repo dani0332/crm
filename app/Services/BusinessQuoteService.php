@@ -85,6 +85,7 @@ class BusinessQuoteService extends BaseService
                 'qrem.entity_type_code',
                 'ent.industry_type_code',
                 'ent.emirate_of_registration_id',
+                'bqr.company_name as business_company_name',
             )
             ->leftJoin('business_type_of_insurance as bti', 'bti.id', '=', 'bqr.business_type_of_insurance_id')
             ->leftJoin('business_quote_request_detail as bqrd', 'bqrd.business_quote_request_id', '=', 'bqr.id')
@@ -204,6 +205,7 @@ class BusinessQuoteService extends BaseService
             'businessTypeOfInsuranceId' => $request->business_type_of_insurance_id,
             'source' => $sourceName,
             'referenceUrl' => $appUrl,
+            'gender' => $request->gender,
         ];
         if (! Auth::user()->hasRole('ADMIN')) {
             $dataArr['advisorId'] = Auth::user()->id;
@@ -427,7 +429,7 @@ class BusinessQuoteService extends BaseService
             'created_at' => 'input|date|title|range',
             'updated_at' => 'input|date|title',
             'premium' => 'input|number|title',
-            'number_of_employees' => 'input|number|title',
+            'number_of_employees' => 'input|number|title|required',
             'business_type_of_insurance_id' => 'select|title|required',
             'brief_details' => 'textarea|required',
             'previous_quote_id' => 'readonly|title',

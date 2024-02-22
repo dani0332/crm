@@ -15,8 +15,6 @@ const { isRequired } = useRules();
 
 const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
 
-console.log("QuoteType:", props.quoteType, "UUID", props.quote.uuid);
-
 const planDetailsForm = useForm({
   
   insurance_provider_id: props.quote?.insurance_provider_id ?? null,
@@ -29,7 +27,6 @@ const planDetailsForm = useForm({
 });
 
 const insuranceProviderOptions = computed(() => {
-  console.log(props?.insuranceProviders);
   return props?.insuranceProviders?.map(provider => ({
     value: provider.id,
     label: provider.text,

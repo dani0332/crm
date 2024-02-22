@@ -7,6 +7,7 @@ use App\Http\Requests\TravelMemberDetailRequest;
 use App\Models\CustomerMembers;
 use App\Models\TravelMemberDetail;
 use App\Models\TravelQuote;
+use App\Services\TravelQuoteService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 
@@ -39,14 +40,13 @@ class TravelMembersDetailController extends Controller
                     'quote_id' => $request->travel_quote_request_id ?? '',
                 ]);
 
-                TravelQuote::find($quoteMemberDetails['travel_quote_request_id'])->update(['quote_updated_at' => Carbon::now()]);
-
             } else {
                 $customerEntityId = $request->entity_id;
                 $quoteMemberDetails = array_merge($quoteMemberDetails, [
                     'customer_entity_id' => $customerEntityId,
                     'customer_type' => CustomerTypeEnum::Entity,
                     'quote_id' => $request->travel_quote_request_id ?? '',
+                    'gender' => $request->gender ?? '',
                 ]);
             }
 
@@ -72,6 +72,8 @@ class TravelMembersDetailController extends Controller
             $quoteMemberDetails = $quoteMemberDetails->load(['relation', 'nationality']);
             $quoteObject->updated_at = Carbon::now();
             $quoteObject->save();
+
+            app(TravelQuoteService::class)->setQuoteUpdatedAt($quoteObject->id);
 
             return redirect()->back(302, ['status' => true, 'message' => 'Updated', 'data' => $quoteMemberDetails]);
 
@@ -102,7 +104,7 @@ class TravelMembersDetailController extends Controller
     public function update(TravelMemberDetailRequest $request, $id)
     {
         $quoteMemberDetails = $request->validated();
-        $quoteObject = $this->getQuoteObject(strtolower($request->quote_type), $request->quote_request_id);
+        $quoteObject = $this->getQuoteObject(strtolower($request->quote_type), $request->travel_quote_request_id);
 
         if ($quoteObject) {
             $quoteModel = $this->getModelObject(strtolower($request->quote_type));
@@ -134,15 +136,16 @@ class TravelMembersDetailController extends Controller
                     'is_payer' => isset($request->is_payer) && $request->is_payer == 1,
                 ]));
 
-            $travelMemberData = $request->only(['dob', 'nationality_id']);
+            $travelMemberData = $request->only(['dob', 'nationality_id', 'gender']);
 
             TravelQuote::where('primary_member_id', $id)->update($travelMemberData);
-            TravelQuote::find($quoteMemberDetails['travel_quote_request_id'])->update(['quote_updated_at' => Carbon::now()]);
 
             $quoteObject->updated_at = Carbon::now();
             $quoteObject->save();
 
             $memberDetail = $memberDetail->load(['relation', 'nationality']);
+
+            app(TravelQuoteService::class)->setQuoteUpdatedAt($quoteObject->id);
 
             return redirect()->back(302, ['status' => true, 'message' => 'Updated', 'data' => $memberDetail]);
         }
@@ -160,7 +163,7 @@ class TravelMembersDetailController extends Controller
     {
         $data = CustomerMembers::find($id);
         if ($data) {
-            TravelQuote::find($data->quote_id)->update(['quote_updated_at' => Carbon::now(), 'primary_member_id' => null]);
+            TravelQuote::find($data->quote_id)->update(['primary_member_id' => null]);
             $data->delete();
         }
 

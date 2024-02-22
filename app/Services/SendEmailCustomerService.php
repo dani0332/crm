@@ -262,7 +262,7 @@ class SendEmailCustomerService extends BaseService
     public function sendRenewalsOcbEmail($emailTemplateId, $emailData, $tag)
     {
         try {
-            info('fn: sendRenewalsOcbEmail, email sending started. emailTemplateId: '.$emailTemplateId.', emailData: '.json_encode($emailData).', tag: '.$tag);
+            info('fn: sendRenewalsOcbEmail, email sending started. emailTemplateId: '.$emailTemplateId.', tag: '.$tag);
 
             $tag = $this->appEnv == EnvEnum::PRODUCTION ? $tag : $this->appEnv.'-'.$tag;
 
@@ -413,7 +413,7 @@ class SendEmailCustomerService extends BaseService
                 $emailTemplateId = (int) config('constants.SIB_MYALFRED_CUSTOMER_WE_TEMPLATE_ID');
             }
 
-            info('sendMyAlfredWelcomeEmail data: '.json_encode($emailData).' , emailTemplateId:'.$emailTemplateId);
+            info('sendMyAlfredWelcomeEmail  , emailTemplateId: '.$emailTemplateId);
             $tag = $appEnv == EnvEnum::PRODUCTION ? $tag : $appEnv.'-'.$tag;
 
             $headers = [
@@ -478,7 +478,7 @@ class SendEmailCustomerService extends BaseService
                 'api-key' => $this->apiKey,
                 'Content-Type' => 'application/json',
             ];
-
+            $subjectEnvTag = $this->appEnv == EnvEnum::PRODUCTION ? '' : $this->appEnv.' - ';
             $emailAttachments = isset($emailData->documentUrl) ? $emailData->documentUrl : null;
 
             if ($emailAttachments) {
@@ -510,7 +510,7 @@ class SendEmailCustomerService extends BaseService
             }
 
             $advisorCustomEmail = strstr($emailData->advisorEmail, '@', true).'@notify.insurancemarket.ae';
-
+            $emailData->env = $subjectEnvTag;
             $body = json_encode([
                 'sender' => ['name' => $emailData->advisorName, 'email' => $advisorCustomEmail],
                 'to' => [[
