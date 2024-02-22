@@ -324,8 +324,9 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
         } else {
             $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($request->modelType));
             if ($request->is_capture) { //update collected amount in childs
+                
                 foreach ($request->collection_amount as $key => $splitAmount) {
-                    $paymentSplit = PaymentSplits::where(['code' => $quoteModel->code, 'sr_no' => $key])->first();
+                    $paymentSplit = PaymentSplits::where(['code' => $request->payment_code, 'sr_no' => $key])->first();
                     if ($paymentSplit && $paymentSplit->payment_status_id != PaymentStatusEnum::PAID) {
 
                         if ($paymentSplit->payment_method == PaymentMethodsEnum::CreditCard) {
