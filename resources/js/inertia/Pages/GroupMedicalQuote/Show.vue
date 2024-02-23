@@ -29,6 +29,12 @@ defineProps({
   sendUpdateOptions: Array,
   sendUpdateLogs: Array,
   hasPolicyIssuedStatus: Boolean,
+  record: Object,
+  permissions: Object,
+  enums: Object,
+  policyIssuanceStatus: Array,
+  bPDetails: Array,
+  payments: Array,
 });
 
 const page = usePage();
@@ -40,6 +46,9 @@ const hasAnyRole = roles => useHasAnyRole(roles);
 const hasRole = role => useHasRole(role);
 const permissionsEnum = page.props.permissionsEnum;
 const rolesEnum = page.props.rolesEnum;
+
+const permissionEnum = page.props.permissionsEnum;
+const canAny = permissions => useCanAny(permissions);
 
 const historyData = ref(null),
   historyLoading = ref(false);
@@ -966,6 +975,14 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
 			:storageUrl="storageUrl"
       quoteSubType="Group Medical"
 		/>
+
+    <PolicyDetail
+      v-if="permissions.isQuoteDocumentEnabled"
+      :record="record"
+      :quoteStatusEnum="enums.quoteStatusEnum"
+      :policyIssuanceStatus="policyIssuanceStatus"
+      modelType="business"
+    />
 		
     <SendUpdates
       v-if="hasPolicyIssuedStatus"
@@ -973,7 +990,20 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       :quote_type_id="$page.props.quoteTypeId"
       :options="sendUpdateOptions"
       :data="sendUpdateLogs"
-    />		
+    />	
+
+    <BookPolicy
+      v-if="
+        canAny([
+          permissionEnum.VIEW_INSLY_BOOK_POLICY,
+          permissionEnum.SEND_INSLY_BOOK_POLICY,
+        ])
+      "
+      :quote="record"
+      quoteType="business"
+      :bPDetails="bPDetails"
+      :payments="payments"
+    />	
 
     <div class="p-4 rounded shadow mb-6 bg-white">
       <Collapsible :expanded="sectionExpanded">

@@ -39,16 +39,20 @@ use App\Services\CustomerService;
 use App\Services\DropdownSourceService;
 use App\Services\LookupService;
 use App\Services\SplitPaymentService;
+use App\Traits\GenericQueriesAllLobs;
 use App\Traits\RolePermissionConditions;
 use Auth;
 use Carbon\Carbon;
 use DB;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Redirect;
+use App\Services\QuoteDocumentService;
+use App\Models\QuoteType;
+use App\Models\PolicyIssuanceStatus;
 
 class AmtController extends Controller
 {
-    use RolePermissionConditions;
+    use RolePermissionConditions, GenericQueriesAllLobs;
 
     /**
      * Display a listing of the resource.
@@ -288,6 +292,11 @@ class AmtController extends Controller
             $sendUpdateEnum = SendUpdateLogStatusEnum::asArray();
         }
 
+        $isQuoteDocumentEnabled = app(QuoteDocumentService::class)->isEnabled(QuoteTypes::BUSINESS->value);
+        $policyIssuanceStatus = PolicyIssuanceStatus::active()->get();
+        $quoteDocuments = (new QuoteDocumentService())->getQuoteDocuments(QuoteTypes::BUSINESS->value, $record->id);
+        $bPDetails = $this->bookPolicyPayload($record, QuoteTypes::GROUP_MEDICAL->value, $record->payments, $quoteDocuments);
+        
         return inertia('GroupMedicalQuote/Show', [
             'documentTypes' => $documentTypes,
             'storageUrl' => storageUrl(),
@@ -326,8 +335,17 @@ class AmtController extends Controller
 	        'sendUpdateOptions' => $sendUpdateOptions,
             'sendUpdateLogs' => $sendUpdateLogs,
             'sendUpdateEnum' => $sendUpdateEnum,
-            'hasPolicyIssuedStatus' => $hasPolicyIssuedStatus
-
+            'hasPolicyIssuedStatus' => $hasPolicyIssuedStatus,
+            'record' => fn () => $record,
+            'permissions' => [
+                'isQuoteDocumentEnabled' => $isQuoteDocumentEnabled,
+            ],
+            'enums' => [
+                'quoteStatusEnum' => QuoteStatusEnum::asArray(),
+            ],
+            'policyIssuanceStatus' => $policyIssuanceStatus,
+            'bPDetails' => $bPDetails,
+            'payments' => $record->payments->toArray() ?? []
         ]);
     }
 
