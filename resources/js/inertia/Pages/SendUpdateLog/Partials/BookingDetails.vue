@@ -267,6 +267,19 @@ const selectedInvoice = () => {
         reversalEntry.commission_vat_applicable = response.commission_vat_applicable || '';
         reversalEntry.total_commission = response.commission || '';
         reversalEntry.total_price = response.total_price;
+
+        bookingDetailsForm.insurer_tax_invoice_number = response.insurer_tax_number;
+        bookingDetailsForm.broker_invoice_number = response.broker_invoice_number || '';
+        bookingDetailsForm.transaction_payment_status = response.transaction_payment_status || '';
+        bookingDetailsForm.invoice_date = response.insurer_invoice_date || '';
+        bookingDetailsForm.discount = response.discount_value || '';
+        bookingDetailsForm.insurer_commission_invoice_number = response.insurer_commission_invoice_number || '';
+        bookingDetailsForm.commission_percentage = response.commission_percentage || '';
+        bookingDetailsForm.commission_vat_not_applicable = response.commission_vat_not_applicable || '';
+        bookingDetailsForm.vat_on_commission = response.commission_vat || '';
+        bookingDetailsForm.commission_vat_applicable = response.commission_vat_applicable || '';
+        bookingDetailsForm.total_commission = response.commission || '';
+        bookingDetailsForm.total_price = response.total_price;
         // fields missing from response.
         /*reversalEntry.total_vat_amount = '';
         reversalEntry.price_vat_applicable = '';
@@ -279,6 +292,12 @@ const selectedInvoice = () => {
         // handle the error
       });
 }
+
+onMounted(() => {
+  if (props.bookingDetails?.reversal_invoice !== null) {
+    selectedInvoice();
+  }
+});
 </script>
 
 <template>

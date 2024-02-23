@@ -85,6 +85,9 @@ class SendUpdateLogController extends Controller
         if (isset($sendUpdateLog->details) && count($sendUpdateLog->details) > 0) {
             $bookingDetails = array_merge($bookingDetails, $sendUpdateLog->details[0]->data);
             $bookingDetails['type'] = $sendUpdateLog->details[0]->type;
+            if ($bookingDetails['type'] == SendUpdateLogStatusEnum::CPD) {
+                $bookingDetails['reversal_invoice'] = $sendUpdateLog->details[0]->data['reversal_invoice'];
+            }
         }
 
         return inertia('SendUpdateLog/Show', [
