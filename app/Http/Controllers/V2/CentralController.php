@@ -244,7 +244,7 @@ class CentralController extends Controller
                 'quote_status_id' => QuoteStatusEnum::PolicySentToCustomer,
             ]);
 
-            return response()->json(['message' => 'policy sent successfully'], 200);
+            return response()->json(['message' => 'Policy sent to customer'], 200);
         }
         if ($request->send_policy_type == 'sage') {
 

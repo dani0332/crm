@@ -469,7 +469,7 @@ class SageApiService
                     }
                 }
 
-                // Starting from Here 
+                // Starting from Here
 
                 if (!empty($postedResponse['BatchNumber'])) {
 
@@ -480,7 +480,7 @@ class SageApiService
                     }
 
                     $currentStep= 12;
-                    
+
                     $isLiveApiCallStep12 = true;
                     if (isset($sageLogArray[$currentStep]) && $sageLogArray[$currentStep]['status'] == 'success') {
                         $isLiveApiCallStep12 = false;
@@ -556,7 +556,7 @@ class SageApiService
                 }
             }
 
-            return ['status' => true, 'message' => 'Policy Booked Successfully'];
+            return ['status' => true, 'message' => 'Policy Booked'];
         } else {
             return ['status' => false, 'message' => 'Customer not found in sage'];
         }
