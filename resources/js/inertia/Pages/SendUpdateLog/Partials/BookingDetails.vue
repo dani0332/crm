@@ -215,8 +215,14 @@ const paymentInvoiceNumberOptions = computed(() => {
 });
 
 const selectedInvoice = () => {
-  let url = '/send-update-logs/get-reversal-entries';
-  axios.get(url)
+  let url = route('send-update-logs.get-reversal-entries');
+  let data = {
+    quoteType: props.quoteType,
+    quoteUuid: props.realQuote.uuid,
+    quoteId: props.realQuote.id,
+    taxInvoiceNo: bookingDetailsForm.reversal_invoice,
+  };
+  axios.post(url, data)
       .then(response => {
         console.log(response);
       })
@@ -592,7 +598,6 @@ const selectedInvoice = () => {
                   <span class="text-[#308BCA] text-sm font-bold">
                     INSURER TAX INVOICE FOR REVERSAL
                   </span>
-
                 </dd>
               </div>
 
@@ -605,8 +610,8 @@ const selectedInvoice = () => {
                       @update:model-value="selectedInvoice"
                       :options="paymentInvoiceNumberOptions"
                       :single="true"
-                      :disabled="!state.isSectionOneEdit"
                   />
+                      <!--:disabled="!state.isSectionOneEdit"-->
                 </dd>
               </div>
 
