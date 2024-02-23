@@ -177,7 +177,8 @@ class YachtQuoteController extends Controller
 	        'sendUpdateOptions' => $sendUpdateOptions,
             'sendUpdateLogs' => $sendUpdateLogs,
             'hasPolicyIssuedStatus' => $hasPolicyIssuedStatus,
-            'sendUpdateEnum' => $sendUpdateEnum
+            'sendUpdateEnum' => $sendUpdateEnum,
+            'quoteTypeId' => QuoteTypes::YACHT->id(),
         ]);
     }
 

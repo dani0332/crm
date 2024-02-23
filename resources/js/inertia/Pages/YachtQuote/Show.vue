@@ -775,7 +775,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
     <SendUpdates
       v-if="hasPolicyIssuedStatus"
       :reportable="quote"
-      :quote_type_id="$page.props.quoteTypeId"
+      :quote_type_id="page.props.quoteTypeId"
       :options="sendUpdateOptions"
       :data="sendUpdateLogs"
     />
