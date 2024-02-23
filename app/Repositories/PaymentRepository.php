@@ -460,6 +460,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                     PaymentStatusEnum::PAID,
                     PaymentStatusEnum::CAPTURED,
                     PaymentStatusEnum::PARTIAL_CAPTURED,
+                    PaymentStatusEnum::PARTIALLY_PAID,
                 ])
                     ->where('code', $payment->code)
                     ->count();
@@ -474,9 +475,19 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                         ['payment_status_id' => PaymentStatusEnum::PARTIALLY_PAID]
                     );
                 } else {
-                    $payment->update(
-                        ['payment_status_id' => PaymentStatusEnum::NEW]
-                    );
+                    //verify credit approved status
+                    $totalCreditPayments = PaymentSplits::whereIn('payment_status_id', [
+                        PaymentStatusEnum::CREDIT_APPROVED,                        
+                    ])->where('code', $payment->code)->count();                    
+                    if($totalCreditPayments>0){
+                        $payment->update(
+                            ['payment_status_id' => PaymentStatusEnum::CREDIT_APPROVED]
+                        );
+                    } else {
+                        $payment->update(
+                            ['payment_status_id' => PaymentStatusEnum::NEW]
+                        );
+                    }                   
                 }
             }
         }

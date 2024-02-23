@@ -2259,6 +2259,7 @@ watch(() => props.quoteRequest, (newValue, oldValue) => {
                 <x-input
                     v-if="!isFieldReadonly"                  
                     class="w-full"
+                    :class="{'custom-select-error': isDiscountError}"
                     v-model="discountValue"
                     name="discount_value"                    
                     @keyup="calculateTotalAmount()"                   
