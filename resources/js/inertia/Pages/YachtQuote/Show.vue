@@ -3,7 +3,6 @@ import QuoteDocuments from '../PersonalQuote/Partials/QuoteDocuments';
 import QuoteStatus from '../PersonalQuote/Partials/QuoteStatus';
 import QuotePayments from '../PersonalQuote/Partials/QuotePayments';
 import QuoteActivities from '../PersonalQuote/Partials/QuoteActivities';
-import QuotePolicy from '../PersonalQuote/Partials/QuotePolicy';
 import LeadHistory from '../PersonalQuote/Partials/LeadHistory';
 import AdditionalContacts from '../PersonalQuote/Partials/AdditionalContacts.vue';
 import PlanDetails from '../../Components/PlanDetails.vue';
@@ -42,6 +41,12 @@ defineProps({
   sendUpdateOptions: Array,
   sendUpdateLogs: Array,
   hasPolicyIssuedStatus: Boolean,
+  record: Object,
+  permissions: Object,
+  enums: Object,
+  policyIssuanceStatus: Array,
+  bPDetails: Array,
+  payments: Array,
 });
 
 const page = usePage();
@@ -52,6 +57,8 @@ const permissionsEnum = page.props.permissionsEnum;
 const hasAnyRole = roles => useHasAnyRole(roles);
 const hasRole = role => useHasRole(role);
 const rolesEnum = page.props.rolesEnum;
+const permissionEnum = page.props.permissionsEnum;
+const canAny = permissions => useCanAny(permissions);
 
 const industryTypeOptions = computed(() => {
   return page.props.industryType.map(indType => ({
@@ -735,6 +742,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
 			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name, tooltip: pm.tool_tip } })"
 			:storageUrl="storageUrl"
 		/>
+    
     <QuotePayments
       v-else
       :can="can"
@@ -746,6 +754,14 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       :personal-plans="personalPlans"
     />
 
+    <PolicyDetail
+      v-if="permissions.isQuoteDocumentEnabled"
+      :record="record"
+      :quoteStatusEnum="enums.quoteStatusEnum"
+      :policyIssuanceStatus="policyIssuanceStatus"
+      modelType="Yacht"
+    />
+
     <EmbeddedProducts
       :data="embeddedProducts"
       :link="quote.uuid"
@@ -755,11 +771,17 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       :expanded="sectionExpanded"
     />
 
-    <QuotePolicy
-      :quote="quote"
-      :can="can"
-      :quoteStatusEnum="quoteStatusesEnum"
-      :expanded="sectionExpanded"
+    <BookPolicy
+      v-if="
+        canAny([
+          permissionEnum.VIEW_INSLY_BOOK_POLICY,
+          permissionEnum.SEND_INSLY_BOOK_POLICY,
+        ])
+      "
+      :quote="record"
+      quoteType="Yacht"
+      :bPDetails="bPDetails"
+      :payments="payments"
     />
 
     <QuoteDocuments
