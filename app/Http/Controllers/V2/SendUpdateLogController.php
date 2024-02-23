@@ -68,7 +68,7 @@ class SendUpdateLogController extends Controller
             $realQuote = $repository::getBy('uuid', $quote->uuid);
         } else {
             $quoteServiceFile = app(getServiceObject($quoteType));
-            $realQuote = $quoteServiceFile->getEntity($quoteType, $quote->uuid);
+            $realQuote = $quoteServiceFile->getEntity($quote->uuid);
         }
 
         $payments = $this->sendUpdateLogService->getPayments($realQuote->id, $realQuote->uuid, $quoteType);
