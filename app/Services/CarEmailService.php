@@ -61,8 +61,12 @@ class CarEmailService extends BaseService
 
         }
 
-        $responseCode = $this->sendEmailCustomerService->sendLMSIntroEmail($emailTemplateId, $emailData, 'lms-intro-email');
-
+        if($lead->advisor_id){
+            $responseCode = $this->sendEmailCustomerService->sendLMSIntroEmail($emailTemplateId, $emailData, 'lms-intro-email');
+        }
+        else{
+            $responseCode = $this->sendEmailCustomerService->sendNonAdvisorIntroEmail($emailData, 'lms-intro-email', $emailTemplateId);
+        }
         return $responseCode;
     }
 
@@ -118,8 +122,6 @@ class CarEmailService extends BaseService
     private function buildCommonEmailData($carQuote, $advisor, $previousAdvisor)
     {
         $documentUrl = $this->getAppStorageValueByKey(ApplicationStorageEnums::LMS_INTRO_EMAIL_ATTACHMENT_URL);
-        //$whatsAppNumber = ! empty($advisor->mobile_no) ? str_replace(['+', ' ', '0'], '', $advisor->mobile_no) : '';
-        //$whatsAppNumber = '971'.ltrim($whatsAppNumber, '0');
         $whatsAppNumber = ! empty($advisor->mobile_no) ? formatMobileNo($advisor->mobile_no) : '';
         $emailData = (object) [
             'clientFullName' => $carQuote->first_name.' '.$carQuote->last_name,
