@@ -61,12 +61,12 @@ class CarEmailService extends BaseService
 
         }
 
-        if($lead->advisor_id){
+        if ($lead->advisor_id) {
             $responseCode = $this->sendEmailCustomerService->sendLMSIntroEmail($emailTemplateId, $emailData, 'lms-intro-email');
-        }
-        else{
+        } else {
             $responseCode = $this->sendEmailCustomerService->sendNonAdvisorIntroEmail($emailData, 'lms-intro-email', $emailTemplateId);
         }
+
         return $responseCode;
     }
 

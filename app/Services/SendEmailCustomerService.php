@@ -581,7 +581,7 @@ class SendEmailCustomerService extends BaseService
 
     }
 
-    public function sendNonAdvisorIntroEmail($emailData, $tag,$emailTemplateId)
+    public function sendNonAdvisorIntroEmail($emailData, $tag, $emailTemplateId)
     {
         try {
             $appEnv = config('constants.APP_ENV');
