@@ -628,7 +628,6 @@ class SendEmailCustomerService extends BaseService
                 'attachment' => isset($attachments) ? $attachments : null,
             ], JSON_UNESCAPED_SLASHES);
 
-            info('sendNonAdvisorIntroEmail ---- Request Body :  - '.$body);
             $client = new \GuzzleHttp\Client();
             $clientRequest = $client->post(
                 $this->url,

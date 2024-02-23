@@ -202,8 +202,6 @@ class SIBService extends BaseService
             ],
         ]);
 
-        info('Create Event SIB - Data: '.$eventData);
-
         $client = new \GuzzleHttp\Client();
         $apiResponse = null;
         try {
