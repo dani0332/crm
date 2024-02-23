@@ -33,7 +33,7 @@ class PaymentOverdueStatus extends Command
         $currentTime = now()->format('Y-m-d').' 00:00:00';
         $overduePaymentStatuses = [PaymentStatusEnum::PAID, PaymentStatusEnum::CAPTURED,
             PaymentStatusEnum::OVERDUE, PaymentStatusEnum::PARTIALLY_PAID,
-            PaymentStatusEnum::PARTIAL_CAPTURED,
+            PaymentStatusEnum::PARTIAL_CAPTURED, PaymentStatusEnum::AUTHORISED,
         ];
         $payments = Payment::whereNotIn('payment_status_id', $overduePaymentStatuses)
             ->where('collection_date', '<', $currentTime)

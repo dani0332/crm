@@ -754,7 +754,6 @@ class CRUDController extends Controller
                 $payment->approved_button = $payment->payment_status_id == PaymentStatusEnum::PAID;
             });
 
-
             $isNewPaymentStructure = app(SplitPaymentService::class)->isNewPaymentStructure($payments);
             if ($isNewPaymentStructure) {
                 $filteredPaymentMethods = $this->lookupService->getPaymentMethods();

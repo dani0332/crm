@@ -1406,6 +1406,39 @@ const genderList = [
             </dt>
             <dt class="font-medium">{{ quote.region_cover_for_id_text }}</dt>
           </div>
+
+          <div class="grid sm:grid-cols-2" v-if="quoteRequest.child || quoteRequest.parent">
+            <template v-if="quoteRequest.child">
+              <dt>
+                <x-tooltip position="bottom">
+                  <label class="font-medium text-gray-800 text-sm decoration-dotted decoration-primary-700">
+                    CHILD REF ID
+                  </label>
+                  <template #tooltip>Navigation key from parent to child in data hierarchy.</template>
+                </x-tooltip>
+              </dt>
+              <dt class="font-medium">
+                <a :href="'/quotes/travel/' + quoteRequest.child.uuid" target="_blank" class="text-primary-600">
+                  {{ quoteRequest.child?.code }}
+                </a>
+              </dt>
+            </template>
+            <template v-if="quoteRequest.parent">
+              <dt>
+                <x-tooltip position="bottom">
+                  <label class="font-medium text-gray-800 text-sm decoration-dotted decoration-primary-700">
+                    PARENT REF ID
+                  </label>
+                  <template #tooltip>Parent Ref Id</template>
+                </x-tooltip>
+              </dt>
+              <dt class="font-medium">
+                <a :href="'/quotes/travel/' + quoteRequest.parent.uuid" target="_blank" class="text-primary-600">
+                  {{ quoteRequest.parent.code }}
+                </a>
+              </dt>
+            </template>
+          </div>
         </dl>
       </div>
     </div>
