@@ -209,6 +209,6 @@ class SendUpdateLogController extends Controller
     {
         $reversalEntries = $this->sendUpdateLogService->getReversalEntries($request->input());
 
-        return response()->json(['response' => $reversalEntries]);
+        return response()->json($reversalEntries);
     }
 }

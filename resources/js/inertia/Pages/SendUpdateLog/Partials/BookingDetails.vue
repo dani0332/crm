@@ -214,6 +214,26 @@ const paymentInvoiceNumberOptions = computed(() => {
   });
 });
 
+const reversalEntry = reactive({
+  booking_date: null,
+  invoice_description: invoiceDescription.value || null,
+  broker_invoice_number: null,
+  transaction_payment_status: null,
+  invoice_date: null,
+  insurer_tax_invoice_number: null,
+  discount: null,
+  insurer_commission_invoice_number: null,
+  commission_percentage: null,
+  commission_vat_not_applicable: null,
+  vat_on_commission: null,
+  commission_vat_applicable: null,
+  total_commission: null,
+  total_vat_amount: null,
+  price_vat_applicable: null,
+  price_vat_not_applicable: null,
+  total_price: null,
+});
+
 const selectedInvoice = () => {
   let url = route('send-update-logs.get-reversal-entries');
   let data = {
@@ -224,7 +244,27 @@ const selectedInvoice = () => {
   };
   axios.post(url, data)
       .then(response => {
-        console.log(response);
+        console.log(response.data);
+        response = response.data;
+        reversalEntry.insurer_tax_invoice_number = response.insurer_tax_number;
+        reversalEntry.broker_invoice_number = response.broker_invoice_number || '';
+        reversalEntry.transaction_payment_status = response.transaction_payment_status || '';
+        reversalEntry.invoice_date = response.insurer_invoice_date || '';
+        reversalEntry.discount = response.discount_value || '';
+        reversalEntry.insurer_commission_invoice_number = response.insurer_commission_invoice_number || '';
+        reversalEntry.commission_percentage = response.commission_percentage || '';
+        reversalEntry.commission_vat_not_applicable = response.commission_vat_not_applicable || '';
+        reversalEntry.vat_on_commission = response.commission_vat || '';
+        reversalEntry.commission_vat_applicable = response.commission_vat_applicable || '';
+        reversalEntry.total_commission = response.commission || '';
+        reversalEntry.total_price = response.total_price;
+        // fields missing from response. 
+        /*reversalEntry.total_vat_amount = '';
+        reversalEntry.price_vat_applicable = '';
+        reversalEntry.price_vat_not_applicable = '';
+        Object.keys(reversalEntry).forEach(key => {
+          reversalEntry[key] = response[key] || '';
+        });*/
       })
       .catch(error => {
         // handle the error
@@ -625,7 +665,7 @@ const selectedInvoice = () => {
                   <span>BOOKING DATE</span>
                 </dt>
                 <dd>
-                  <span>{{ bookingDetailsForm.booking_date }}</span>
+                  <span>{{ reversalEntry.booking_date }}</span>
                 </dd>
               </div>
 
@@ -634,7 +674,7 @@ const selectedInvoice = () => {
                   <span>INVOICE DESCRIPTION</span>
                 </dt>
                 <dd>
-                  <span>{{ isCIR ? 'N.' : 'R.' }}{{ bookingDetailsForm.invoice_description }}</span>
+                  <span>{{ isCIR ? 'N.' : 'R.' }}{{ reversalEntry.invoice_description }}</span>
                 </dd>
               </div>
 
@@ -657,7 +697,7 @@ const selectedInvoice = () => {
                   </x-tooltip>
                 </dt>
                 <dd>
-                  <span>{{ bookingDetailsForm.transaction_payment_status }}</span>
+                  <span>{{ reversalEntry.transaction_payment_status }}</span>
                 </dd>
               </div>
 
@@ -686,7 +726,7 @@ const selectedInvoice = () => {
                   </x-tooltip>
                 </dt>
                 <dd>
-                  <span>{{ bookingDetailsForm.invoice_date }}</span>
+                  <span>{{ reversalEntry.invoice_date }}</span>
                 </dd>
               </div>
 
@@ -701,7 +741,7 @@ const selectedInvoice = () => {
                   </x-tooltip>
                 </dt>
                 <dd>
-                  <span>{{ bookingDetailsForm.broker_invoice_number }}</span>
+                  <span>{{ reversalEntry.broker_invoice_number }}</span>
                 </dd>
               </div>
 
@@ -716,7 +756,7 @@ const selectedInvoice = () => {
                   </x-tooltip>
                 </dt>
                 <dd>
-                  <span>{{ bookingDetailsForm.insurer_tax_invoice_number }}</span>
+                  <span>{{ reversalEntry.insurer_tax_invoice_number }}</span>
                 </dd>
               </div>
 
@@ -731,7 +771,7 @@ const selectedInvoice = () => {
                   </x-tooltip>
                 </dt>
                 <dd>
-                  <span>{{ bookingDetailsForm.discount }}</span>
+                  <span>{{ reversalEntry.discount }}</span>
                 </dd>
               </div>
 
@@ -746,7 +786,7 @@ const selectedInvoice = () => {
                   </x-tooltip>
                 </dt>
                 <dd>
-                  <span>{{ bookingDetailsForm.insurer_commission_invoice_number }}</span>
+                  <span>{{ reversalEntry.insurer_commission_invoice_number }}</span>
                 </dd>
               </div>
 
@@ -761,7 +801,7 @@ const selectedInvoice = () => {
                   </x-tooltip>
                 </dt>
                 <dd>
-                  <span>{{ bookingDetailsForm.commission_percentage }}</span>
+                  <span>{{ reversalEntry.commission_percentage }}</span>
                 </dd>
               </div>
 
@@ -776,7 +816,7 @@ const selectedInvoice = () => {
                   </x-tooltip>
                 </dt>
                 <dd>
-                  <span>{{ bookingDetailsForm.commission_vat_not_applicable }}</span>
+                  <span>{{ reversalEntry.commission_vat_not_applicable }}</span>
                 </dd>
               </div>
 
@@ -791,7 +831,7 @@ const selectedInvoice = () => {
                   </x-tooltip>
                 </dt>
                 <dd>
-                  <span>{{ bookingDetailsForm.vat_on_commission }}</span>
+                  <span>{{ reversalEntry.vat_on_commission }}</span>
                 </dd>
               </div>
 
@@ -806,7 +846,7 @@ const selectedInvoice = () => {
                   </x-tooltip>
                 </dt>
                 <dd>
-                  <span>{{ bookingDetailsForm.commission_vat_applicable }}</span>
+                  <span>{{ reversalEntry.commission_vat_applicable }}</span>
                 </dd>
               </div>
 
@@ -821,7 +861,7 @@ const selectedInvoice = () => {
                   </x-tooltip>
                 </dt>
                 <dd>
-                  <span>{{ bookingDetailsForm.total_commission }}</span>
+                  <span>{{ reversalEntry.total_commission }}</span>
                 </dd>
               </div>
 
@@ -836,7 +876,7 @@ const selectedInvoice = () => {
                   </x-tooltip>
                 </dt>
                 <dd>
-                  <span>{{ bookingDetailsForm.price_vat_not_applicable }}</span>
+                  <span>{{ reversalEntry.price_vat_not_applicable }}</span>
                 </dd>
               </div>
 
@@ -851,7 +891,7 @@ const selectedInvoice = () => {
                   </x-tooltip>
                 </dt>
                 <dd>
-                  <span>{{ bookingDetailsForm.total_vat_amount }}</span>
+                  <span>{{ reversalEntry.total_vat_amount }}</span>
                 </dd>
               </div>
 
@@ -866,7 +906,7 @@ const selectedInvoice = () => {
                   </x-tooltip>
                 </dt>
                 <dd>
-                  <span>{{ bookingDetailsForm.price_vat_applicable }}</span>
+                  <span>{{ reversalEntry.price_vat_applicable }}</span>
                 </dd>
               </div>
 
@@ -875,7 +915,7 @@ const selectedInvoice = () => {
                   <span>TOTAL PRICE</span>
                 </dt>
                 <dd>
-                  <span>{{ bookingDetailsForm.total_price }}</span>
+                  <span>{{ reversalEntry.total_price }}</span>
                 </dd>
               </div>
             </dl>

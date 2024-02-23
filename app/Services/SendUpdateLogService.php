@@ -60,10 +60,10 @@ class SendUpdateLogService
         return $payments;
     }
 
-    public function getReversalEntries($data): array
+    public function getReversalEntries($data): object
     {
         $payments = $this->getPayments($data['quoteId'], $data['quoteUuid'], $data['quoteType']);
 
-        return collect($payments)->where('insurer_tax_number', $data['taxInvoiceNo'])->toArray();
+        return collect($payments)->where('insurer_tax_number', $data['taxInvoiceNo'])->first();
     }
 }
