@@ -511,8 +511,8 @@ class SendEmailCustomerService extends BaseService
 
             $advisorCustomEmail = strstr($emailData->advisorEmail, '@', true).'@notify.insurancemarket.ae';
             //$emailData->env = $subjectEnvTag;
-            $body = json_encode([
-                'sender' => ['name' => $emailData->advisorName, 'email' => $advisorCustomEmail],
+
+            $body = [
                 'to' => [[
                     'email' => $emailData->customerEmail,
                     'name' => $emailData->clientFullName,
@@ -525,7 +525,15 @@ class SendEmailCustomerService extends BaseService
                     $tag,
                 ],
                 'attachment' => isset($attachments) ? $attachments : null,
-            ], JSON_UNESCAPED_SLASHES);
+            ];
+
+            // Conditionally add 'sender' key if advisorName and $advisorCustomEmail are not null
+            if ($emailData->advisorName !== null && $advisorCustomEmail !== null) {
+                $body['sender'] = ['name' => $emailData->advisorName, 'email' => $advisorCustomEmail];
+            }
+
+            $body = json_encode($body, JSON_UNESCAPED_SLASHES);
+
             info('sendLMSIntroEmail ---- Request Body :  - '.json_encode($emailData));
             $client = new \GuzzleHttp\Client();
             $clientRequest = $client->post(
