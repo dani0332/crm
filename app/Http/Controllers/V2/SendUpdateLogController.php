@@ -18,6 +18,12 @@ use Illuminate\Http\Request;
 
 class SendUpdateLogController extends Controller
 {
+    private object $sendUpdateLogService;
+    public function __construct(SendUpdateLogService $sendUpdateLogService)
+    {
+        $this->sendUpdateLogService = $sendUpdateLogService;
+    }
+
     /**
      * Store a newly created resource in storage.
      */
@@ -48,8 +54,6 @@ class SendUpdateLogController extends Controller
         $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping($quoteTypeId);
 
         $quoteType = QuoteTypes::getName($quoteTypeId)->value;
-        $quoteServiceFile = app(getServiceObject($quoteType));
-        $sendUpdateLogService = app(SendUpdateLogService::class);
 
         $quote = PersonalQuoteRepository::getById($sendUpdateLog->personal_quote_id);
 
@@ -59,28 +63,26 @@ class SendUpdateLogController extends Controller
 
         $issuanceStatuses = PolicyIssuanceStatusRepository::getColumns(['id', 'text']);
 
-        $realQuote = $quoteServiceFile->getEntity($quote->uuid);
-
         if (checkPersonalQuotes($quoteType)) {
-            $repository = getRepositoryObject($quoteType);
-            $payments = $repository::getBy('uuid', $quote->uuid)->payments;
+            $repository = 'App\\Repositories\\'.$quoteType.'QuoteRepository';
+            $realQuote = $repository::getBy('uuid', $quote->uuid);
         } else {
-            $payments = $quoteServiceFile->getEntityPlain($realQuote->id)?->payments ?? null;
-            if (! is_null($payments)) {
-                $payments->load(['paymentStatus', 'paymentStatusLog', 'paymentMethod', 'insuranceProvider']);
-            }
+            $quoteServiceFile = app(getServiceObject($quoteType));
+            $realQuote = $quoteServiceFile->getEntity($quoteType, $quote->uuid);
         }
+
+        $payments = $this->sendUpdateLogService->getPayments($realQuote->id, $realQuote->uuid, $quoteType);
 
         $bookingDetails = [];
         if ($payments && is_countable($payments) && count($payments) > 0) {
             // it will also fetch broker_invoice_number and invoice_description, from lead detail page, lead detail broker_invoice_number will
             // always same as ```send update log details``` broker_invoice_number but invoice_description will be overwritten from ```send update log details``` page.
-            $bookingDetails = $sendUpdateLogService->getInvoiceDescription($realQuote, $quoteType, $payments[0]['insurance_provider_id']);
+            $bookingDetails = $this->sendUpdateLogService->getInvoiceDescription($realQuote, $quoteType, $payments[0]['insurance_provider_id']);
             // it will get all invoice_descriptions for booking details
             $paymentInvoices = collect($payments)->pluck('insurer_tax_number');
         }
 
-        if (count($sendUpdateLog->details) > 0) {
+        if (isset($sendUpdateLog->details) && count($sendUpdateLog->details) > 0) {
             $bookingDetails = array_merge($bookingDetails, $sendUpdateLog->details[0]->data);
             $bookingDetails['type'] = $sendUpdateLog->details[0]->type;
         }
@@ -94,7 +96,7 @@ class SendUpdateLogController extends Controller
             'insuranceProviders' => $insuranceProviders,
             'sendUpdateStatusEnum' => SendUpdateLogStatusEnum::asArray(),
             'realQuote' => $realQuote,
-            'isNegativeValue' => $sendUpdateLogService->isNegativeValue($sendUpdateLog),
+            'isNegativeValue' => $this->sendUpdateLogService->isNegativeValue($sendUpdateLog),
             'bookingDetails' => $bookingDetails,
             'updateToCustomerBtn' => count($sendUpdateLog->details) > 0,
             'paymentInvoices' => $paymentInvoices ?? [],
@@ -203,9 +205,10 @@ class SendUpdateLogController extends Controller
         SendUpdateLogDetailsRepository::createOrUpdate($request->all());
     }
 
-    public function getReversalEntries($taxInvoiceNo)
+    public function getReversalEntries(Request $request)
     {
-        return response()->json(['response' => $taxInvoiceNo]);
-        // return SendUpdateLogService::getReversalEntries($taxInvoiceNo);
+        $reversalEntries = $this->sendUpdateLogService->getReversalEntries($request->input());
+
+        return response()->json(['response' => $reversalEntries]);
     }
 }
