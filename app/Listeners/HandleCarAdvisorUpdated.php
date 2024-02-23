@@ -59,7 +59,7 @@ class HandleCarAdvisorUpdated
         SendOCBIntroEmailJob::dispatch($lead->uuid, $previousAdvisor);
 
         if ($lead->sic_flow_enabled) {
-            SIBService::createWorkflowEvent(config('constants.SIC_END_WORKFLOW_NAME'), null, null);
+            SIBService::createWorkflowEvent(config('constants.SIC_END_WORKFLOW_NAME'), $lead);
         }
 
         info('SMS sending code reached');
