@@ -121,7 +121,7 @@ class ApiService
     private function triggerOCBOnly($allocationId)
     {
         info('------ Lead allocation request received to send OCB only for '.$allocationId.' ------');
-        SendOCBIntroEmailJob::dispatch($allocationId, null);
+        SendOCBIntroEmailJob::dispatch($allocationId, null, false);
         info('------ Lead allocation request completed to send OCB only for '.$allocationId.' ------');
 
         return apiResponse(null, Response::HTTP_OK, 'OCB email triggered successfully!');
