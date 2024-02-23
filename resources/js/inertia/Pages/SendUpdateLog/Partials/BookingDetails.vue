@@ -48,9 +48,19 @@ const props = defineProps({
 
 const state = reactive({
   isEdit: false,
-  isSectionOneEdit: false,
-  isSectionTwoEdit: false,
+  reversalSectionEdit: false,
 });
+
+const checkSectionTwoEdit = () => {
+  if (props.selectedCategory.subCategory.slug === sendUpdateStatusEnum.CPD && bookingDetailsForm.reversal_invoice === null) {
+    notification.error({
+      title: 'Please select tax invoice number for reversal. ',
+      position: 'top',
+    });
+  } else {
+    state.isEdit = !state.isEdit;
+  }
+}
 
 const page = usePage();
 const notification = useToast();
@@ -244,7 +254,6 @@ const selectedInvoice = () => {
   };
   axios.post(url, data)
       .then(response => {
-        console.log(response.data);
         response = response.data;
         reversalEntry.insurer_tax_invoice_number = response.insurer_tax_number;
         reversalEntry.broker_invoice_number = response.broker_invoice_number || '';
@@ -258,7 +267,7 @@ const selectedInvoice = () => {
         reversalEntry.commission_vat_applicable = response.commission_vat_applicable || '';
         reversalEntry.total_commission = response.commission || '';
         reversalEntry.total_price = response.total_price;
-        // fields missing from response. 
+        // fields missing from response.
         /*reversalEntry.total_vat_amount = '';
         reversalEntry.price_vat_applicable = '';
         reversalEntry.price_vat_not_applicable = '';
@@ -273,683 +282,339 @@ const selectedInvoice = () => {
 </script>
 
 <template>
-  <template v-if="isEF || isCI || isCIR">
-    <div class="p-4 rounded shadow mb-6 bg-white">
-      <Collapsible expanded>
-        <template #header>
-          <div class="flex justify-between gap-4 items-center">
-            <h3 class="font-semibold text-primary-800 text-lg">
-              Booking Details
-            </h3>
-          </div>
-        </template>
-        <template #body>
-          <x-divider class="my-4" />
-          <x-form @submit="saveBookingDetail">
-            <div class="text-xs">
-              <dl class="grid md:grid-cols-2 gap-y-4">
-                <div class="grid sm:grid-cols-2 mt-4">
-                  <dt class="font-bold text-right mr-10"></dt>
-                  <dd></dd>
-                </div>
-
-                <div class="grid sm:grid-cols-2 ml-[-50px] mt-4">
-                  <dt class="font-bold text-right mr-10">
-                    <span>BOOKING DATE</span>
-                  </dt>
-                  <dd>
-                    <span>{{ bookingDetailsForm.booking_date }}</span>
-                  </dd>
-                </div>
-
-                <div class="grid sm:grid-cols-2">
-                  <dt class="font-bold text-right mr-10">
-                    <x-tooltip position="left">
-                      <span>INVOICE DESCRIPTION</span>
-                      <template #tooltip>
-                        This field provides a brief description of the invoice, summarizing its content or purpose within
-                        the booking.
-                      </template>
-                    </x-tooltip>
-                  </dt>
-                  <dd>
-                    <span>{{ bookingDetailsForm.invoice_description }}</span>
-                  </dd>
-                </div>
-
-                <div class="grid sm:grid-cols-2 ml-[-50px]">
-                  <dt class="font-bold text-right mr-10">
-                    <span>MAIN CLASS OF INSURANCE</span>
-                  </dt>
-                  <dd>
-                    <span>{{ quoteType }}</span>
-                  </dd>
-                </div>
-
-                <div class="grid sm:grid-cols-2">
-                  <dt class="font-bold text-right mr-10">
-                    <x-tooltip position="left">
-                      <span>TRANSACTION PAYMENT STATUS</span>
-                      <template #tooltip>
-                        This status provides a real-time snapshot of the payment progress for each insurer tax invoice.
-                        Make sure to update these statuses regularly to maintain financial accuracy.
-                      </template>
-                    </x-tooltip>
-                  </dt>
-                  <dd>
-                    <span>{{ bookingDetailsForm.transaction_payment_status }}</span>
-                  </dd>
-                </div>
-
-                <div class="grid sm:grid-cols-2 ml-[-50px]">
-                  <dt class="font-bold text-right mr-10">
-                    <x-tooltip position="left">
-                      <span>SUB CLASS</span>
-                      <template #tooltip>
-                        Identifies the specific coverage or insurance plan offered
-                        by the provider.
-                      </template>
-                    </x-tooltip>
-                  </dt>
-                  <dd>
-                  </dd>
-                </div>
-
-                <div class="grid sm:grid-cols-2">
-                  <dt class="font-bold text-right mr-10">
-                    <x-tooltip position="left">
-                      <span>INSURER INVOICE DATE</span>
-                      <template #tooltip>
-                        Signifies the date when the insurer's invoice within the booking was issued.
-                      </template>
-                    </x-tooltip>
-                  </dt>
-                  <dd>
-                    <DatePicker v-model="bookingDetailsForm.invoice_date" name="issuance_date" :disabled="!state.isEdit"
-                      placeholder="Enter Insurer Invoice date" :rules="[isRequired]" size="xs" />
-                    <!-- <span>{{ bookingDetailsForm.invoice_date }}</span> -->
-                  </dd>
-                </div>
-
-                <div class="grid sm:grid-cols-2 ml-[-50px]">
-                  <dt class="font-bold text-right mr-10">
-                    <x-tooltip position="left">
-                      <span>BROKER INVOICE NUMBER</span>
-                      <template #tooltip>
-                        Invoice number provided by the broker.
-                      </template>
-                    </x-tooltip>
-                  </dt>
-                  <dd>
-                    <span>{{ bookingDetailsForm.broker_invoice_number }}</span>
-                  </dd>
-                </div>
-
-                <div class="grid sm:grid-cols-2">
-                  <dt class="font-bold text-right mr-10">
-                    <x-tooltip position="left">
-                      <span>INSURER TAX INVOICE NUMBER</span>
-                      <template #tooltip>
-                        Enter the unique tax invoice number provided by the insurer. It helps in proper identification and
-                        tracking of transactions.
-                      </template>
-                    </x-tooltip>
-                  </dt>
-                  <dd>
-                    <x-input maxlength="60" v-model="bookingDetailsForm.insurer_tax_invoice_number" class="w-full"
-                      :disabled="!state.isEdit" placeholder="Enter insurer Tax Invoice Number" :rules="[isRequired]"
-                      size="xs" />
-                    <!-- <span>{{ bookingDetailsForm.insurer_tax_invoice_number }}</span> -->
-                  </dd>
-                </div>
-
-                <div class="grid sm:grid-cols-2 ml-[-50px]">
-                  <dt class="font-bold text-right mr-10">
-                    <x-tooltip position="left">
-                      <span>DISCOUNT</span>
-                      <template #tooltip>
-                        If applicable, this field indicates the exact amount or percentage reduced from the original
-                        price.
-                      </template>
-                    </x-tooltip>
-                  </dt>
-                  <dd>
-                    <span>{{ bookingDetailsForm.discount }}</span>
-                  </dd>
-                </div>
-
-                <div class="grid sm:grid-cols-2">
-                  <dt class="font-bold text-right mr-10">
-                    <x-tooltip position="left">
-                      <span>INSURER COMMISSION INVOICE NUMBER</span>
-                      <template #tooltip>
-                        Input the invoice number issued by the insurer for commission purposes. Double-check for accuracy.
-                      </template>
-                    </x-tooltip>
-                  </dt>
-                  <dd>
-                    <x-input maxlength="60" v-model="bookingDetailsForm.insurer_commission_invoice_number" class="w-full"
-                      :disabled="!state.isEdit" placeholder="Enter Commission Tax Invoice No" :rules="[isRequired]"
-                      size="xs" />
-                    <!--<span>{{ bookingDetailsForm.insurer_commission_invoice_number }}</span>-->
-                  </dd>
-                </div>
-
-                <div class="grid sm:grid-cols-2 ml-[-50px]">
-                  <dt class="font-bold text-right mr-10">
-                    <x-tooltip position="left">
-                      <span>COMMISSION (%)</span>
-                      <template #tooltip>
-                        Commission percentage for this transaction.
-                      </template>
-                    </x-tooltip>
-                  </dt>
-                  <dd>
-                    <span>{{ bookingDetailsForm.commission_percentage }}</span>
-                  </dd>
-                </div>
-
-
-                <div class="grid sm:grid-cols-2">
-                  <dt class="font-bold text-right mr-10">
-                    <x-tooltip position="left">
-                      <span>PRICE (VAT APPLICABLE)</span>
-                      <template #tooltip>
-                        Price as per the insurer's tax invoice that VAT is applicable. Please enter the price without
-                        including Value Added Tax (VAT). VAT will be calculated separately.
-                      </template>
-                    </x-tooltip>
-                  </dt>
-                  <dd>
-                    <x-input type="number" v-model="bookingDetailsForm.price_vat_applicable" @change="calculateCommission"
-                      class="w-full" :disabled="!state.isEdit" placeholder="Enter Price" :rules="[isRequired]"
-                      size="xs" />
-                    <!-- <span>{{ bookingDetailsForm.price_vat_applicable }}</span> -->
-                  </dd>
-                </div>
-
-                <div class="grid sm:grid-cols-2 ml-[-50px]">
-                  <dt class="font-bold text-right mr-10">
-                    <x-tooltip position="left">
-                      <span>VAT ON COMMISSION</span>
-                      <template #tooltip>
-                        Value Added Tax (VAT) amount applicable to the commission.
-                      </template>
-                    </x-tooltip>
-                  </dt>
-                  <dd>
-                    <span>{{ bookingDetailsForm.vat_on_commission }}</span>
-                  </dd>
-                </div>
-
-                <div class="grid sm:grid-cols-2">
-                  <dt class="font-bold text-right mr-10">
-                    <x-tooltip position="left">
-                      <span>PRICE (VAT NOT APPLICABLE)</span>
-                      <template #tooltip>
-                        Price that VAT is not applicable. Remember, VAT is exempt for Life Insurance policies.
-                      </template>
-                    </x-tooltip>
-                  </dt>
-                  <dd>
-                    <span>{{ bookingDetailsForm.price_vat_not_applicable }}</span>
-                  </dd>
-                </div>
-
-                <div class="grid sm:grid-cols-2 ml-[-50px]">
-                  <dt class="font-bold text-right mr-10">
-                    <x-tooltip position="left">
-                      <span>TOTAL COMMISSION</span>
-                      <template #tooltip>
-                        Display the total commission amount including VAT for this transaction. Ensure it matches the
-                        calculations.
-                      </template>
-                    </x-tooltip>
-                  </dt>
-                  <dd>
-                    <span>{{ bookingDetailsForm.total_commission }}</span>
-                  </dd>
-                </div>
-
-                <div class="grid sm:grid-cols-2">
-                  <dt class="font-bold text-right mr-10">
-                    <x-tooltip position="left">
-                      <span>COMMISSION VAT APPLICABLE</span>
-                      <template #tooltip>
-                        Commission amount as per the tax invoice raised by buyer that VAT is applicable. Enter commission
-                        amount without including Value Added Tax (VAT). VAT will be calculated separately.
-                      </template>
-                    </x-tooltip>
-                  </dt>
-                  <dd>
-                    <x-input type="number" v-model="bookingDetailsForm.commission_vat_applicable"
-                      @change="calculateCommission" class="w-full" :disabled="!state.isEdit"
-                      placeholder="Enter Commission Amount" :rules="[isRequired]" size="xs" />
-                    <!-- <span>{{ bookingDetailsForm.commission_vat_applicable }}</span> -->
-                  </dd>
-                </div>
-
-                <div class="grid sm:grid-cols-2 ml-[-50px]">
-                  <dt class="font-bold text-right mr-10">
-                    <x-tooltip position="left">
-                      <span>TOTAL VAT AMOUNT</span>
-                      <template #tooltip>
-                        Display the total Value Added Tax (VAT) amount for this transaction. Verify this amount before
-                        submission.
-                      </template>
-                    </x-tooltip>
-                  </dt>
-                  <dd>
-                    <span>{{ bookingDetailsForm.total_vat_amount }}</span>
-                  </dd>
-                </div>
-
-                <div class="grid sm:grid-cols-2">
-                  <dt class="font-bold text-right mr-10">
-                    <x-tooltip position="left">
-                      <span>COMMISSION (VAT NOT APPLICABLE)</span>
-                      <template #tooltip>
-                        Commission amount as per the tax invoice raised by buyer that VAT is not applicable.
-                      </template>
-                    </x-tooltip>
-                  </dt>
-                  <dd>
-                    <span>{{ bookingDetailsForm.commission_vat_not_applicable }}</span>
-                  </dd>
-                </div>
-
-                <div class="grid sm:grid-cols-2 ml-[-50px]">
-                  <dt class="font-bold text-right mr-10">
-                    <x-tooltip position="left">
-                      <span>TOTAL PRICE</span>
-                      <template #tooltip>
-                        Display the total price including all charges and VAT as per tax invoice. Make sure it aligns with
-                        the final transaction amount.
-                      </template>
-                    </x-tooltip>
-                  </dt>
-                  <dd>
-                    <span>{{ bookingDetailsForm.total_price }}</span>
-                  </dd>
-                </div>
-              </dl>
-            </div>
-            <x-divider class="my-4 mt-10" />
-            <div class="flex justify-end gap-2">
-              <template v-if="!state.isEdit">
-                <x-button
-                  size="sm"
-                  @click="state.isEdit = true"
-                >
-                  Edit
-                </x-button>
-                <x-button
-                  size="sm"
-                  color="orange"
-                  v-if="props.updateToCustomerBtn"
-                >
-                  Send update to customer
-                </x-button>
-              </template>
-              <template v-else>
-                <x-button
-                  size="sm"
-                  color="orange"
-                  @click="state.isEdit = false"
-                  :loading="bookingDetailsForm.processing"
-                  :disabled="bookingDetailsForm.processing"
-                >
-                  Cancel
-                </x-button>
-                <x-button
-                  size="sm"
-                  color="#0CA789"
-                  type="submit"
-                  :loading="bookingDetailsForm.processing"
-                  :disabled="bookingDetailsForm.processing"
-                >
-                  Update
-                </x-button>
-              </template>
-            </div>
-          </x-form>
-        </template>
-      </Collapsible>
-    </div>
-  </template>
-  <template v-else-if="isCPD">
-    <!-- Section One -->
-    <div class="p-4 rounded shadow mb-6 bg-white">
-      <Collapsible expanded>
-        <template #header>
-          <div class="flex justify-between gap-4 items-center">
-            <h3 class="font-semibold text-primary-800 text-lg">
-              Booking Details - Reversal Entry
-            </h3>
-          </div>
-        </template>
-        <template #body>
-          <x-divider class="my-4" />
-          <div class="text-xs">
-            <dl class="grid md:grid-cols-2 gap-y-4">
-              <div class="grid sm:grid-cols-2 mt-4">
-                <dt class="font-bold text-right"></dt>
-                <dd>
+  <!-- Reversal Entry -->
+  <div class="p-4 rounded shadow mb-6 bg-white" v-if="isCPD">
+    <Collapsible expanded>
+      <template #header>
+        <div class="flex justify-between gap-4 items-center">
+          <h3 class="font-semibold text-primary-800 text-lg">
+            Booking Details - Reversal Entry
+          </h3>
+        </div>
+      </template>
+      <template #body>
+        <x-divider class="my-4" />
+        <div class="text-xs">
+          <dl class="grid md:grid-cols-2 gap-y-4">
+            <div class="grid sm:grid-cols-2 mt-4">
+              <dt class="font-bold text-right"></dt>
+              <dd>
                   <span class="text-[#308BCA] text-sm font-bold">
                     INSURER TAX INVOICE FOR REVERSAL
                   </span>
-                </dd>
-              </div>
+              </dd>
+            </div>
 
-              <div class="grid sm:grid-cols-2 mt-4">
-                <dd>
-                  <ComboBox
-                      v-model="bookingDetailsForm.reversal_invoice"
-                      class="w-full"
-                      placeholder="Select Tax invoice number"
-                      @update:model-value="selectedInvoice"
-                      :options="paymentInvoiceNumberOptions"
-                      :single="true"
-                  />
-                      <!--:disabled="!state.isSectionOneEdit"-->
-                </dd>
-              </div>
+            <div class="grid sm:grid-cols-2 mt-4">
+              <dd>
+                <ComboBox
+                    v-model="bookingDetailsForm.reversal_invoice"
+                    class="w-full"
+                    placeholder="Select Tax invoice number"
+                    @update:model-value="selectedInvoice"
+                    :options="paymentInvoiceNumberOptions"
+                    :single="true"
+                    :disabled="!state.reversalSectionEdit"
+                />
+              </dd>
+            </div>
 
-              <div class="grid sm:grid-cols-2">
-                <dt class="font-bold text-right mr-10"></dt>
-                <dd></dd>
-              </div>
+            <div class="grid sm:grid-cols-2">
+              <dt class="font-bold text-right mr-10"></dt>
+              <dd></dd>
+            </div>
 
-              <div class="grid sm:grid-cols-2 ml-[-50px] mt-4">
-                <dt class="font-bold text-right mr-10">
-                  <span>BOOKING DATE</span>
-                </dt>
-                <dd>
-                  <span>{{ reversalEntry.booking_date }}</span>
-                </dd>
-              </div>
+            <div class="grid sm:grid-cols-2 ml-[-50px] mt-4">
+              <dt class="font-bold text-right mr-10">
+                <span>BOOKING DATE</span>
+              </dt>
+              <dd>
+                <span>{{ reversalEntry.booking_date }}</span>
+              </dd>
+            </div>
 
-              <div class="grid sm:grid-cols-2">
-                <dt class="font-bold text-right mr-10">
-                  <span>INVOICE DESCRIPTION</span>
-                </dt>
-                <dd>
-                  <span>{{ isCIR ? 'N.' : 'R.' }}{{ reversalEntry.invoice_description }}</span>
-                </dd>
-              </div>
+            <div class="grid sm:grid-cols-2">
+              <dt class="font-bold text-right mr-10">
+                <span>INVOICE DESCRIPTION</span>
+              </dt>
+              <dd>
+                <span>{{ isCIR ? 'N.' : 'R.' }}{{ reversalEntry.invoice_description }}</span>
+              </dd>
+            </div>
 
-              <div class="grid sm:grid-cols-2 ml-[-50px]">
-                <dt class="font-bold text-right mr-10">
-                  <span>MAIN CLASS OF INSURANCE</span>
-                </dt>
-                <dd>
-                  <span>{{ quoteType }}</span>
-                </dd>
-              </div>
+            <div class="grid sm:grid-cols-2 ml-[-50px]">
+              <dt class="font-bold text-right mr-10">
+                <span>MAIN CLASS OF INSURANCE</span>
+              </dt>
+              <dd>
+                <span>{{ quoteType }}</span>
+              </dd>
+            </div>
 
-              <div class="grid sm:grid-cols-2">
-                <dt class="font-bold text-right mr-10">
-                  <x-tooltip position="left">
-                    <span>TRANSACTION PAYMENT STATUS</span>
-                    <template #tooltip>
-                      Name of the insurance company responsible for the coverage.
-                    </template>
-                  </x-tooltip>
-                </dt>
-                <dd>
-                  <span>{{ reversalEntry.transaction_payment_status }}</span>
-                </dd>
-              </div>
+            <div class="grid sm:grid-cols-2">
+              <dt class="font-bold text-right mr-10">
+                <x-tooltip position="left">
+                  <span>TRANSACTION PAYMENT STATUS</span>
+                  <template #tooltip>
+                    Name of the insurance company responsible for the coverage.
+                  </template>
+                </x-tooltip>
+              </dt>
+              <dd>
+                <span>{{ reversalEntry.transaction_payment_status }}</span>
+              </dd>
+            </div>
 
-              <div class="grid sm:grid-cols-2 ml-[-50px]">
-                <dt class="font-bold text-right mr-10">
-                  <x-tooltip position="left">
-                    <span>SUB CLASS</span>
-                    <template #tooltip>
-                      Identifies the specific coverage or insurance plan offered
-                      by the provider.
-                    </template>
-                  </x-tooltip>
-                </dt>
-                <dd>
-                </dd>
-              </div>
+            <div class="grid sm:grid-cols-2 ml-[-50px]">
+              <dt class="font-bold text-right mr-10">
+                <x-tooltip position="left">
+                  <span>SUB CLASS</span>
+                  <template #tooltip>
+                    Identifies the specific coverage or insurance plan offered
+                    by the provider.
+                  </template>
+                </x-tooltip>
+              </dt>
+              <dd>
+              </dd>
+            </div>
 
-              <div class="grid sm:grid-cols-2">
-                <dt class="font-bold text-right mr-10">
-                  <x-tooltip position="left">
-                    <span>INSURER INVOICE DATE</span>
-                    <template #tooltip>
-                      The unique Insurance policy number for the chosen insurance
-                      plan offered by the provider.
-                    </template>
-                  </x-tooltip>
-                </dt>
-                <dd>
-                  <span>{{ reversalEntry.invoice_date }}</span>
-                </dd>
-              </div>
+            <div class="grid sm:grid-cols-2">
+              <dt class="font-bold text-right mr-10">
+                <x-tooltip position="left">
+                  <span>INSURER INVOICE DATE</span>
+                  <template #tooltip>
+                    The unique Insurance policy number for the chosen insurance
+                    plan offered by the provider.
+                  </template>
+                </x-tooltip>
+              </dt>
+              <dd>
+                <span>{{ reversalEntry.invoice_date }}</span>
+              </dd>
+            </div>
 
-              <div class="grid sm:grid-cols-2 ml-[-50px]">
-                <dt class="font-bold text-right mr-10">
-                  <x-tooltip position="left">
-                    <span>BROKER INVOICE NUMBER</span>
-                    <template #tooltip>
-                      Signifies the date when the insurance policy was officially
-                      issued.
-                    </template>
-                  </x-tooltip>
-                </dt>
-                <dd>
-                  <span>{{ reversalEntry.broker_invoice_number }}</span>
-                </dd>
-              </div>
+            <div class="grid sm:grid-cols-2 ml-[-50px]">
+              <dt class="font-bold text-right mr-10">
+                <x-tooltip position="left">
+                  <span>BROKER INVOICE NUMBER</span>
+                  <template #tooltip>
+                    Signifies the date when the insurance policy was officially
+                    issued.
+                  </template>
+                </x-tooltip>
+              </dt>
+              <dd>
+                <span>{{ reversalEntry.broker_invoice_number }}</span>
+              </dd>
+            </div>
 
-              <div class="grid sm:grid-cols-2">
-                <dt class="font-bold text-right mr-10">
-                  <x-tooltip position="left">
-                    <span>INSURER TAX INVOICE NUMBER</span>
-                    <template #tooltip>
-                      Signifies the date when the insurance policy was officially
-                      issued.
-                    </template>
-                  </x-tooltip>
-                </dt>
-                <dd>
-                  <span>{{ reversalEntry.insurer_tax_invoice_number }}</span>
-                </dd>
-              </div>
+            <div class="grid sm:grid-cols-2">
+              <dt class="font-bold text-right mr-10">
+                <x-tooltip position="left">
+                  <span>INSURER TAX INVOICE NUMBER</span>
+                  <template #tooltip>
+                    Signifies the date when the insurance policy was officially
+                    issued.
+                  </template>
+                </x-tooltip>
+              </dt>
+              <dd>
+                <span>{{ reversalEntry.insurer_tax_invoice_number }}</span>
+              </dd>
+            </div>
 
-              <div class="grid sm:grid-cols-2 ml-[-50px]">
-                <dt class="font-bold text-right mr-10">
-                  <x-tooltip position="left">
-                    <span>DISCOUNT</span>
-                    <template #tooltip>
-                      Signifies the date when the insurance policy was officially
-                      issued.
-                    </template>
-                  </x-tooltip>
-                </dt>
-                <dd>
-                  <span>{{ reversalEntry.discount }}</span>
-                </dd>
-              </div>
+            <div class="grid sm:grid-cols-2 ml-[-50px]">
+              <dt class="font-bold text-right mr-10">
+                <x-tooltip position="left">
+                  <span>DISCOUNT</span>
+                  <template #tooltip>
+                    Signifies the date when the insurance policy was officially
+                    issued.
+                  </template>
+                </x-tooltip>
+              </dt>
+              <dd>
+                <span>{{ reversalEntry.discount }}</span>
+              </dd>
+            </div>
 
-              <div class="grid sm:grid-cols-2">
-                <dt class="font-bold text-right mr-10">
-                  <x-tooltip position="left">
-                    <span>INSURER COMMISSION INVOICE NUMBER</span>
-                    <template #tooltip>
-                      Signifies the date when the insurance policy was officially
-                      issued.
-                    </template>
-                  </x-tooltip>
-                </dt>
-                <dd>
-                  <span>{{ reversalEntry.insurer_commission_invoice_number }}</span>
-                </dd>
-              </div>
+            <div class="grid sm:grid-cols-2">
+              <dt class="font-bold text-right mr-10">
+                <x-tooltip position="left">
+                  <span>INSURER COMMISSION INVOICE NUMBER</span>
+                  <template #tooltip>
+                    Signifies the date when the insurance policy was officially
+                    issued.
+                  </template>
+                </x-tooltip>
+              </dt>
+              <dd>
+                <span>{{ reversalEntry.insurer_commission_invoice_number }}</span>
+              </dd>
+            </div>
 
-              <div class="grid sm:grid-cols-2 ml-[-50px]">
-                <dt class="font-bold text-right mr-10">
-                  <x-tooltip position="left">
-                    <span>COMMISSION (%)</span>
-                    <template #tooltip>
-                      Signifies the date when the insurance policy was officially
-                      issued.
-                    </template>
-                  </x-tooltip>
-                </dt>
-                <dd>
-                  <span>{{ reversalEntry.commission_percentage }}</span>
-                </dd>
-              </div>
+            <div class="grid sm:grid-cols-2 ml-[-50px]">
+              <dt class="font-bold text-right mr-10">
+                <x-tooltip position="left">
+                  <span>COMMISSION (%)</span>
+                  <template #tooltip>
+                    Signifies the date when the insurance policy was officially
+                    issued.
+                  </template>
+                </x-tooltip>
+              </dt>
+              <dd>
+                <span>{{ reversalEntry.commission_percentage }}</span>
+              </dd>
+            </div>
 
-              <div class="grid sm:grid-cols-2">
-                <dt class="font-bold text-right mr-10">
-                  <x-tooltip position="left">
-                    <span>COMMISSION (VAT NOT APPLICABLE)</span>
-                    <template #tooltip>
-                      Signifies the date when the insurance policy was officially
-                      issued.
-                    </template>
-                  </x-tooltip>
-                </dt>
-                <dd>
-                  <span>{{ reversalEntry.commission_vat_not_applicable }}</span>
-                </dd>
-              </div>
+            <div class="grid sm:grid-cols-2">
+              <dt class="font-bold text-right mr-10">
+                <x-tooltip position="left">
+                  <span>COMMISSION (VAT NOT APPLICABLE)</span>
+                  <template #tooltip>
+                    Signifies the date when the insurance policy was officially
+                    issued.
+                  </template>
+                </x-tooltip>
+              </dt>
+              <dd>
+                <span>{{ reversalEntry.commission_vat_not_applicable }}</span>
+              </dd>
+            </div>
 
-              <div class="grid sm:grid-cols-2 ml-[-50px]">
-                <dt class="font-bold text-right mr-10">
-                  <x-tooltip position="left">
-                    <span>VAT ON COMMISSION</span>
-                    <template #tooltip>
-                      Signifies the date when the insurance policy was officially
-                      issued.
-                    </template>
-                  </x-tooltip>
-                </dt>
-                <dd>
-                  <span>{{ reversalEntry.vat_on_commission }}</span>
-                </dd>
-              </div>
+            <div class="grid sm:grid-cols-2 ml-[-50px]">
+              <dt class="font-bold text-right mr-10">
+                <x-tooltip position="left">
+                  <span>VAT ON COMMISSION</span>
+                  <template #tooltip>
+                    Signifies the date when the insurance policy was officially
+                    issued.
+                  </template>
+                </x-tooltip>
+              </dt>
+              <dd>
+                <span>{{ reversalEntry.vat_on_commission }}</span>
+              </dd>
+            </div>
 
-              <div class="grid sm:grid-cols-2">
-                <dt class="font-bold text-right mr-10">
-                  <x-tooltip position="left">
-                    <span>COMMISSION VAT APPLICABLE</span>
-                    <template #tooltip>
-                      Signifies the date when the insurance policy was officially
-                      issued.
-                    </template>
-                  </x-tooltip>
-                </dt>
-                <dd>
-                  <span>{{ reversalEntry.commission_vat_applicable }}</span>
-                </dd>
-              </div>
+            <div class="grid sm:grid-cols-2">
+              <dt class="font-bold text-right mr-10">
+                <x-tooltip position="left">
+                  <span>COMMISSION VAT APPLICABLE</span>
+                  <template #tooltip>
+                    Signifies the date when the insurance policy was officially
+                    issued.
+                  </template>
+                </x-tooltip>
+              </dt>
+              <dd>
+                <span>{{ reversalEntry.commission_vat_applicable }}</span>
+              </dd>
+            </div>
 
-              <div class="grid sm:grid-cols-2 ml-[-50px]">
-                <dt class="font-bold text-right mr-10">
-                  <x-tooltip position="left">
-                    <span>TOTAL COMMISSION</span>
-                    <template #tooltip>
-                      Signifies the date when the insurance policy was officially
-                      issued.
-                    </template>
-                  </x-tooltip>
-                </dt>
-                <dd>
-                  <span>{{ reversalEntry.total_commission }}</span>
-                </dd>
-              </div>
+            <div class="grid sm:grid-cols-2 ml-[-50px]">
+              <dt class="font-bold text-right mr-10">
+                <x-tooltip position="left">
+                  <span>TOTAL COMMISSION</span>
+                  <template #tooltip>
+                    Signifies the date when the insurance policy was officially
+                    issued.
+                  </template>
+                </x-tooltip>
+              </dt>
+              <dd>
+                <span>{{ reversalEntry.total_commission }}</span>
+              </dd>
+            </div>
 
-              <div class="grid sm:grid-cols-2">
-                <dt class="font-bold text-right mr-10">
-                  <x-tooltip position="left">
-                    <span>PRICE (VAT NOT APPLICABLE)</span>
-                    <template #tooltip>
-                      Signifies the date when the insurance policy was officially
-                      issued.
-                    </template>
-                  </x-tooltip>
-                </dt>
-                <dd>
-                  <span>{{ reversalEntry.price_vat_not_applicable }}</span>
-                </dd>
-              </div>
+            <div class="grid sm:grid-cols-2">
+              <dt class="font-bold text-right mr-10">
+                <x-tooltip position="left">
+                  <span>PRICE (VAT NOT APPLICABLE)</span>
+                  <template #tooltip>
+                    Signifies the date when the insurance policy was officially
+                    issued.
+                  </template>
+                </x-tooltip>
+              </dt>
+              <dd>
+                <span>{{ reversalEntry.price_vat_not_applicable }}</span>
+              </dd>
+            </div>
 
-              <div class="grid sm:grid-cols-2 ml-[-50px]">
-                <dt class="font-bold text-right mr-10">
-                  <x-tooltip position="left">
-                    <span>TOTAL VAT AMOUNT</span>
-                    <template #tooltip>
-                      Signifies the date when the insurance policy was officially
-                      issued.
-                    </template>
-                  </x-tooltip>
-                </dt>
-                <dd>
-                  <span>{{ reversalEntry.total_vat_amount }}</span>
-                </dd>
-              </div>
+            <div class="grid sm:grid-cols-2 ml-[-50px]">
+              <dt class="font-bold text-right mr-10">
+                <x-tooltip position="left">
+                  <span>TOTAL VAT AMOUNT</span>
+                  <template #tooltip>
+                    Signifies the date when the insurance policy was officially
+                    issued.
+                  </template>
+                </x-tooltip>
+              </dt>
+              <dd>
+                <span>{{ reversalEntry.total_vat_amount }}</span>
+              </dd>
+            </div>
 
-              <div class="grid sm:grid-cols-2">
-                <dt class="font-bold text-right mr-10">
-                  <x-tooltip position="left">
-                    <span>PRICE (VAT APPLICABLE)</span>
-                    <template #tooltip>
-                      Signifies the date when the insurance policy was officially
-                      issued.
-                    </template>
-                  </x-tooltip>
-                </dt>
-                <dd>
-                  <span>{{ reversalEntry.price_vat_applicable }}</span>
-                </dd>
-              </div>
+            <div class="grid sm:grid-cols-2">
+              <dt class="font-bold text-right mr-10">
+                <x-tooltip position="left">
+                  <span>PRICE (VAT APPLICABLE)</span>
+                  <template #tooltip>
+                    Signifies the date when the insurance policy was officially
+                    issued.
+                  </template>
+                </x-tooltip>
+              </dt>
+              <dd>
+                <span>{{ reversalEntry.price_vat_applicable }}</span>
+              </dd>
+            </div>
 
-              <div class="grid sm:grid-cols-2 ml-[-50px]">
-                <dt class="font-bold text-right mr-10">
-                  <span>TOTAL PRICE</span>
-                </dt>
-                <dd>
-                  <span>{{ reversalEntry.total_price }}</span>
-                </dd>
-              </div>
-            </dl>
-          </div>
-          <x-divider class="my-4 mt-10" />
-          <div class="flex justify-end gap-2">
-            <x-button size="sm" @click="state.isSectionOneEdit = true" v-if="!state.isSectionOneEdit">
-              Edit
+            <div class="grid sm:grid-cols-2 ml-[-50px]">
+              <dt class="font-bold text-right mr-10">
+                <span>TOTAL PRICE</span>
+              </dt>
+              <dd>
+                <span>{{ reversalEntry.total_price }}</span>
+              </dd>
+            </div>
+          </dl>
+        </div>
+        <x-divider class="my-4 mt-10" />
+        <div class="flex justify-end gap-2">
+          <x-button size="sm" @click="state.reversalSectionEdit = true" v-if="!state.reversalSectionEdit">
+            Edit
+          </x-button>
+          <template v-else>
+            <x-button size="sm" color="orange" @click="state.reversalSectionEdit = false"
+                      :loading="bookingDetailsForm.processing" :disabled="bookingDetailsForm.processing">Cancel
             </x-button>
-            <template v-else>
-              <x-button size="sm" color="orange" @click="state.isSectionOneEdit = false"
-                :loading="bookingDetailsForm.processing" :disabled="bookingDetailsForm.processing">Cancel
-              </x-button>
-              <x-button size="sm" color="primary" :loading="bookingDetailsForm.processing"
-                :disabled="bookingDetailsForm.processing">Update
-              </x-button>
-            </template>
-          </div>
-        </template>
-      </Collapsible>
-    </div>
+            <x-button size="sm" color="primary" :loading="bookingDetailsForm.processing"
+                      :disabled="bookingDetailsForm.processing">Update
+            </x-button>
+          </template>
+        </div>
+      </template>
+    </Collapsible>
+  </div>
 
-    <!-- Section two -->
-    <div class="p-4 rounded shadow mb-6 bg-white">
-      <Collapsible expanded>
-        <template #header>
-          <div class="flex justify-between gap-4 items-center">
-            <h3 class="font-semibold text-primary-800 text-lg">
-              Booking Details - New Entry
-            </h3>
-          </div>
-        </template>
-        <template #body>
-          <x-divider class="my-4" />
+  <!-- Booking Details Or New Entry -->
+  <div class="p-4 rounded shadow mb-6 bg-white">
+    <Collapsible expanded>
+      <template #header>
+        <div class="flex justify-between gap-4 items-center">
+          <h3 class="font-semibold text-primary-800 text-lg">
+            Booking Details <span v-if="isCPD"> - New Entry</span>
+          </h3>
+        </div>
+      </template>
+      <template #body>
+        <x-divider class="my-4" />
+        <x-form @submit="saveBookingDetail">
           <div class="text-xs">
             <dl class="grid md:grid-cols-2 gap-y-4">
               <div class="grid sm:grid-cols-2 mt-4">
@@ -968,7 +633,13 @@ const selectedInvoice = () => {
 
               <div class="grid sm:grid-cols-2">
                 <dt class="font-bold text-right mr-10">
-                  <span>INVOICE DESCRIPTION</span>
+                  <x-tooltip position="left">
+                    <span>INVOICE DESCRIPTION</span>
+                    <template #tooltip>
+                      This field provides a brief description of the invoice, summarizing its content or purpose within
+                      the booking.
+                    </template>
+                  </x-tooltip>
                 </dt>
                 <dd>
                   <span>{{ isCIR ? 'CI.' : 'C.' }}{{ bookingDetailsForm.invoice_description }}</span>
@@ -989,7 +660,8 @@ const selectedInvoice = () => {
                   <x-tooltip position="left">
                     <span>TRANSACTION PAYMENT STATUS</span>
                     <template #tooltip>
-                      Name of the insurance company responsible for the coverage.
+                      This status provides a real-time snapshot of the payment progress for each insurer tax invoice.
+                      Make sure to update these statuses regularly to maintain financial accuracy.
                     </template>
                   </x-tooltip>
                 </dt>
@@ -1017,13 +689,14 @@ const selectedInvoice = () => {
                   <x-tooltip position="left">
                     <span>INSURER INVOICE DATE</span>
                     <template #tooltip>
-                      The unique Insurance policy number for the chosen insurance
-                      plan offered by the provider.
+                      Signifies the date when the insurer's invoice within the booking was issued.
                     </template>
                   </x-tooltip>
                 </dt>
                 <dd>
-                  <span>{{ bookingDetailsForm.invoice_date }}</span>
+                  <DatePicker v-model="bookingDetailsForm.invoice_date" name="issuance_date" :disabled="!state.isEdit"
+                              placeholder="Enter Insurer Invoice date" :rules="[isRequired]" size="xs" />
+                  <!-- <span>{{ bookingDetailsForm.invoice_date }}</span> -->
                 </dd>
               </div>
 
@@ -1032,8 +705,7 @@ const selectedInvoice = () => {
                   <x-tooltip position="left">
                     <span>BROKER INVOICE NUMBER</span>
                     <template #tooltip>
-                      Signifies the date when the insurance policy was officially
-                      issued.
+                      Invoice number provided by the broker.
                     </template>
                   </x-tooltip>
                 </dt>
@@ -1047,13 +719,16 @@ const selectedInvoice = () => {
                   <x-tooltip position="left">
                     <span>INSURER TAX INVOICE NUMBER</span>
                     <template #tooltip>
-                      Signifies the date when the insurance policy was officially
-                      issued.
+                      Enter the unique tax invoice number provided by the insurer. It helps in proper identification and
+                      tracking of transactions.
                     </template>
                   </x-tooltip>
                 </dt>
                 <dd>
-                  <span>{{ bookingDetailsForm.insurer_tax_invoice_number }}</span>
+                  <x-input maxlength="60" v-model="bookingDetailsForm.insurer_tax_invoice_number" class="w-full"
+                           :disabled="!state.isEdit" placeholder="Enter insurer Tax Invoice Number" :rules="[isRequired]"
+                           size="xs" />
+                  <!-- <span>{{ bookingDetailsForm.insurer_tax_invoice_number }}</span> -->
                 </dd>
               </div>
 
@@ -1062,8 +737,8 @@ const selectedInvoice = () => {
                   <x-tooltip position="left">
                     <span>DISCOUNT</span>
                     <template #tooltip>
-                      Signifies the date when the insurance policy was officially
-                      issued.
+                      If applicable, this field indicates the exact amount or percentage reduced from the original
+                      price.
                     </template>
                   </x-tooltip>
                 </dt>
@@ -1077,13 +752,15 @@ const selectedInvoice = () => {
                   <x-tooltip position="left">
                     <span>INSURER COMMISSION INVOICE NUMBER</span>
                     <template #tooltip>
-                      Signifies the date when the insurance policy was officially
-                      issued.
+                      Input the invoice number issued by the insurer for commission purposes. Double-check for accuracy.
                     </template>
                   </x-tooltip>
                 </dt>
                 <dd>
-                  <span>{{ bookingDetailsForm.insurer_commission_invoice_number }}</span>
+                  <x-input maxlength="60" v-model="bookingDetailsForm.insurer_commission_invoice_number" class="w-full"
+                           :disabled="!state.isEdit" placeholder="Enter Commission Tax Invoice No" :rules="[isRequired]"
+                           size="xs" />
+                  <!--<span>{{ bookingDetailsForm.insurer_commission_invoice_number }}</span>-->
                 </dd>
               </div>
 
@@ -1092,8 +769,7 @@ const selectedInvoice = () => {
                   <x-tooltip position="left">
                     <span>COMMISSION (%)</span>
                     <template #tooltip>
-                      Signifies the date when the insurance policy was officially
-                      issued.
+                      Commission percentage for this transaction.
                     </template>
                   </x-tooltip>
                 </dt>
@@ -1102,18 +778,22 @@ const selectedInvoice = () => {
                 </dd>
               </div>
 
+
               <div class="grid sm:grid-cols-2">
                 <dt class="font-bold text-right mr-10">
                   <x-tooltip position="left">
-                    <span>COMMISSION (VAT NOT APPLICABLE)</span>
+                    <span>PRICE (VAT APPLICABLE)</span>
                     <template #tooltip>
-                      Signifies the date when the insurance policy was officially
-                      issued.
+                      Price as per the insurer's tax invoice that VAT is applicable. Please enter the price without
+                      including Value Added Tax (VAT). VAT will be calculated separately.
                     </template>
                   </x-tooltip>
                 </dt>
                 <dd>
-                  <span>{{ bookingDetailsForm.commission_vat_not_applicable }}</span>
+                  <x-input type="number" v-model="bookingDetailsForm.price_vat_applicable" @change="calculateCommission"
+                           class="w-full" :disabled="!state.isEdit" placeholder="Enter Price" :rules="[isRequired]"
+                           size="xs" />
+                  <!-- <span>{{ bookingDetailsForm.price_vat_applicable }}</span> -->
                 </dd>
               </div>
 
@@ -1122,8 +802,7 @@ const selectedInvoice = () => {
                   <x-tooltip position="left">
                     <span>VAT ON COMMISSION</span>
                     <template #tooltip>
-                      Signifies the date when the insurance policy was officially
-                      issued.
+                      Value Added Tax (VAT) amount applicable to the commission.
                     </template>
                   </x-tooltip>
                 </dt>
@@ -1135,40 +814,9 @@ const selectedInvoice = () => {
               <div class="grid sm:grid-cols-2">
                 <dt class="font-bold text-right mr-10">
                   <x-tooltip position="left">
-                    <span>COMMISSION VAT APPLICABLE</span>
-                    <template #tooltip>
-                      Signifies the date when the insurance policy was officially
-                      issued.
-                    </template>
-                  </x-tooltip>
-                </dt>
-                <dd>
-                  <span>{{ bookingDetailsForm.commission_vat_applicable }}</span>
-                </dd>
-              </div>
-
-              <div class="grid sm:grid-cols-2 ml-[-50px]">
-                <dt class="font-bold text-right mr-10">
-                  <x-tooltip position="left">
-                    <span>TOTAL COMMISSION</span>
-                    <template #tooltip>
-                      Signifies the date when the insurance policy was officially
-                      issued.
-                    </template>
-                  </x-tooltip>
-                </dt>
-                <dd>
-                  <span>{{ bookingDetailsForm.total_commission }}</span>
-                </dd>
-              </div>
-
-              <div class="grid sm:grid-cols-2">
-                <dt class="font-bold text-right mr-10">
-                  <x-tooltip position="left">
                     <span>PRICE (VAT NOT APPLICABLE)</span>
                     <template #tooltip>
-                      Signifies the date when the insurance policy was officially
-                      issued.
+                      Price that VAT is not applicable. Remember, VAT is exempt for Life Insurance policies.
                     </template>
                   </x-tooltip>
                 </dt>
@@ -1180,10 +828,43 @@ const selectedInvoice = () => {
               <div class="grid sm:grid-cols-2 ml-[-50px]">
                 <dt class="font-bold text-right mr-10">
                   <x-tooltip position="left">
+                    <span>TOTAL COMMISSION</span>
+                    <template #tooltip>
+                      Display the total commission amount including VAT for this transaction. Ensure it matches the
+                      calculations.
+                    </template>
+                  </x-tooltip>
+                </dt>
+                <dd>
+                  <span>{{ bookingDetailsForm.total_commission }}</span>
+                </dd>
+              </div>
+
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-bold text-right mr-10">
+                  <x-tooltip position="left">
+                    <span>COMMISSION VAT APPLICABLE</span>
+                    <template #tooltip>
+                      Commission amount as per the tax invoice raised by buyer that VAT is applicable. Enter commission
+                      amount without including Value Added Tax (VAT). VAT will be calculated separately.
+                    </template>
+                  </x-tooltip>
+                </dt>
+                <dd>
+                  <x-input type="number" v-model="bookingDetailsForm.commission_vat_applicable"
+                           @change="calculateCommission" class="w-full" :disabled="!state.isEdit"
+                           placeholder="Enter Commission Amount" :rules="[isRequired]" size="xs" />
+                  <!-- <span>{{ bookingDetailsForm.commission_vat_applicable }}</span> -->
+                </dd>
+              </div>
+
+              <div class="grid sm:grid-cols-2 ml-[-50px]">
+                <dt class="font-bold text-right mr-10">
+                  <x-tooltip position="left">
                     <span>TOTAL VAT AMOUNT</span>
                     <template #tooltip>
-                      Signifies the date when the insurance policy was officially
-                      issued.
+                      Display the total Value Added Tax (VAT) amount for this transaction. Verify this amount before
+                      submission.
                     </template>
                   </x-tooltip>
                 </dt>
@@ -1195,21 +876,26 @@ const selectedInvoice = () => {
               <div class="grid sm:grid-cols-2">
                 <dt class="font-bold text-right mr-10">
                   <x-tooltip position="left">
-                    <span>PRICE (VAT APPLICABLE)</span>
+                    <span>COMMISSION (VAT NOT APPLICABLE)</span>
                     <template #tooltip>
-                      Signifies the date when the insurance policy was officially
-                      issued.
+                      Commission amount as per the tax invoice raised by buyer that VAT is not applicable.
                     </template>
                   </x-tooltip>
                 </dt>
                 <dd>
-                  <span>{{ bookingDetailsForm.price_vat_applicable }}</span>
+                  <span>{{ bookingDetailsForm.commission_vat_not_applicable }}</span>
                 </dd>
               </div>
 
               <div class="grid sm:grid-cols-2 ml-[-50px]">
                 <dt class="font-bold text-right mr-10">
-                  <span>TOTAL PRICE</span>
+                  <x-tooltip position="left">
+                    <span>TOTAL PRICE</span>
+                    <template #tooltip>
+                      Display the total price including all charges and VAT as per tax invoice. Make sure it aligns with
+                      the final transaction amount.
+                    </template>
+                  </x-tooltip>
                 </dt>
                 <dd>
                   <span>{{ bookingDetailsForm.total_price }}</span>
@@ -1219,20 +905,44 @@ const selectedInvoice = () => {
           </div>
           <x-divider class="my-4 mt-10" />
           <div class="flex justify-end gap-2">
-            <x-button size="sm" @click="state.isSectionTwoEdit = true" v-if="!state.isSectionTwoEdit">
-              Edit
-            </x-button>
-            <template v-else>
-              <x-button size="sm" color="orange" @click="state.isSectionTwoEdit = false"
-                :loading="bookingDetailsForm.processing" :disabled="bookingDetailsForm.processing">Cancel
+            <template v-if="!state.isEdit">
+              <x-button
+                  size="sm"
+                  @click="checkSectionTwoEdit"
+              >
+                Edit
               </x-button>
-              <x-button size="sm" color="primary" :loading="bookingDetailsForm.processing"
-                :disabled="bookingDetailsForm.processing">Update
+              <x-button
+                  size="sm"
+                  color="orange"
+                  v-if="props.updateToCustomerBtn"
+              >
+                Send update to customer
+              </x-button>
+            </template>
+            <template v-else>
+              <x-button
+                  size="sm"
+                  color="orange"
+                  @click="state.isEdit = false"
+                  :loading="bookingDetailsForm.processing"
+                  :disabled="bookingDetailsForm.processing"
+              >
+                Cancel
+              </x-button>
+              <x-button
+                  size="sm"
+                  color="#0CA789"
+                  type="submit"
+                  :loading="bookingDetailsForm.processing"
+                  :disabled="bookingDetailsForm.processing"
+              >
+                Update
               </x-button>
             </template>
           </div>
-        </template>
-      </Collapsible>
+        </x-form>
+      </template>
+    </Collapsible>
     </div>
-  </template>
 </template>
