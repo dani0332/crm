@@ -44,7 +44,13 @@ defineProps({
   isNewPaymentStructure: Boolean,
   sendUpdateOptions: Array,
   sendUpdateLogs: Array,
-  hasPolicyIssuedStatus: Boolean
+  hasPolicyIssuedStatus: Boolean,
+  record: Object,
+  permissions: Object,
+  enums: Object,
+  policyIssuanceStatus: Array,
+  bPDetails: Array,
+  payments: Array,
 });
 
 const page = usePage();
@@ -55,6 +61,8 @@ const rolesEnum = page.props.rolesEnum;
 const modals = reactive({
   duplicate: false,
 });
+const permissionEnum = page.props.permissionsEnum;
+const canAny = permissions => useCanAny(permissions);
 
 const leadDuplicateForm = useForm({
   modelType: 'cycle',
@@ -866,7 +874,15 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       :quote="quote"
       :can="can"
       :quoteStatusesEnum="quoteStatusesEnum"
-    />    
+    /> 
+
+    <PolicyDetail
+      v-if="permissions.isQuoteDocumentEnabled"
+      :record="record"
+      :quoteStatusEnum="enums.quoteStatusEnum"
+      :policyIssuanceStatus="policyIssuanceStatus"
+      modelType="Cycle"
+    />
 
     <EmbeddedProducts
       :data="embeddedProducts"
@@ -877,6 +893,19 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       :expanded="sectionExpanded"
     />
 
+    <BookPolicy
+      v-if="
+        canAny([
+          permissionEnum.VIEW_INSLY_BOOK_POLICY,
+          permissionEnum.SEND_INSLY_BOOK_POLICY,
+        ])
+      "
+      :quote="record"
+      quoteType="Cycle"
+      :bPDetails="bPDetails"
+      :payments="payments"
+    />
+    
     <AuditLogs :quote-type="quoteType" :id="$page.props.quote.id" :quoteCode="$page.props.quote.code" :expanded="sectionExpanded" />
 
     <LeadHistory :quote="$page.props.quote" :expanded="sectionExpanded" />
