@@ -84,6 +84,7 @@ const isCreditCardView = ref(false);
 const isDiscountError = ref(false);
 const discountError = ref('');
 const isTotalPriceUpdated = ref(false);
+const trashedFilesModal = ref([]);
 
 const modal2Ref = ref(null);
 
@@ -975,6 +976,7 @@ const editPaymentModal = (payment,split_payment_id,sr_no,capture_approval) => {
   discountError.value = '';
   isDiscountDocumentNotUploaded.value = false;
   discountDocumentModel.value = [];
+  trashedFilesModal.value = [];
   isDiscountEnabled.value = false;
   isTotalPriceUpdated.value = false;
   isGalleryModelOpen.value = false;    
@@ -1362,6 +1364,7 @@ const addPayment = isValid => {
     let editData = {
       ...data,
       paymentCode: paymentMethodsForm.paymentCode,
+      trashedFilesModal: trashedFilesModal.value,
     };
     paymentMethodsForm
       .transform(data => editData)
@@ -1407,27 +1410,40 @@ const documentForm = useForm({
 });
 
 const deleteDocument = (docName,count) => {
-   router.post(
-    `/documents/delete`,
-    {
-      docName: docName,
-      quoteId: props.quoteRequest.id,
-    },
-    {
-      preserveScroll: true,
-      onFinish: () => {
-        if (fileUploadModels.value[count]){
-          fileUploadModels.value[count] = fileUploadModels.value[count].filter(item => item.doc_name !== docName);
-        }
-        if (approvedDocumentModel.value[count]){
-          approvedDocumentModel.value[count] = approvedDocumentModel.value[count].filter(item => item.doc_name !== docName);
-        }
-        if (discountDocumentModel.value[count]){
-          discountDocumentModel.value[0] = discountDocumentModel.value[0].filter(item => item.doc_name !== docName);
-        }        
+  if (paymentMethodsForm.status == 'edit') {
+    if (fileUploadModels.value[count]){
+      fileUploadModels.value[count] = fileUploadModels.value[count].filter(item => item.doc_name !== docName);
+    }
+    if (approvedDocumentModel.value[count]){
+      approvedDocumentModel.value[count] = approvedDocumentModel.value[count].filter(item => item.doc_name !== docName);
+    }
+    if (discountDocumentModel.value[count]){
+      discountDocumentModel.value[0] = discountDocumentModel.value[0].filter(item => item.doc_name !== docName);
+    }
+    trashedFilesModal.value.push(docName);
+  } else {    
+    router.post(
+      `/documents/delete`,
+      {
+        docName: docName,
+        quoteId: props.quoteRequest.id,
       },
-    },
-  );
+      {
+        preserveScroll: true,
+        onFinish: () => {
+          if (fileUploadModels.value[count]){
+            fileUploadModels.value[count] = fileUploadModels.value[count].filter(item => item.doc_name !== docName);
+          }
+          if (approvedDocumentModel.value[count]){
+            approvedDocumentModel.value[count] = approvedDocumentModel.value[count].filter(item => item.doc_name !== docName);
+          }
+          if (discountDocumentModel.value[count]){
+            discountDocumentModel.value[0] = discountDocumentModel.value[0].filter(item => item.doc_name !== docName);
+          }        
+        },
+      },
+    );
+  }
 };
 
 const uploadDocument = (doc, files, count) => {

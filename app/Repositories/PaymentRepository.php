@@ -172,6 +172,9 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
 
             //Update split payments start
             $this->updatePaymentSplits($request);
+            if (!empty($request->trashedFilesModal)) {
+                QuoteDocument::whereIn('doc_name', $request->trashedFilesModal)->delete();
+            }       
             DB::commit(); // Commit changes if everything went well
 
             return back()->with('success', 'Payment Updated');
