@@ -43,4 +43,27 @@ class SendUpdateLogService
             'invoice_description' => $insuranceProviderCode.'-'.$quoteType.'-'.$quote->policy_number,
         ];
     }
+
+    public function getPayments($quoteId, $quoteUuid, $quoteType)
+    {
+        if (checkPersonalQuotes($quoteType)) {
+            $repository = 'App\\Repositories\\'.$quoteType.'QuoteRepository';
+            $payments = $repository::getBy('uuid', $quoteUuid)->payments;
+        } else {
+            $quoteServiceFile = app(getServiceObject($quoteType));
+            $payments = $quoteServiceFile->getEntityPlain($quoteId)?->payments ?? null;
+            if (! is_null($payments)) {
+                $payments->load(['paymentStatus', 'paymentStatusLog', 'paymentMethod', 'insuranceProvider']);
+            }
+        }
+
+        return $payments;
+    }
+
+    public function getReversalEntries($data): array
+    {
+        $payments = $this->getPayments($data['quoteId'], $data['quoteUuid'], $data['quoteType']);
+
+        return collect($payments)->where('insurer_tax_number', $data['taxInvoiceNo'])->toArray();
+    }
 }
