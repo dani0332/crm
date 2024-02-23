@@ -53,6 +53,16 @@ class DatabaseSeeder extends Seeder
             PaymentStatusAddSeeder::class,
             updateDocTypePayment::class,
             //PaymentsMoveInNewTableStructure::class,
+            LookupSeeder::class,
+            //            AddNewDocumentTypesSeeder::class,
+            // UpdateCustomerToHealthAndTravelMemberDetails::class,
+            // AddSendUpdatesCategoriesInLookups::class,
+            // AddNewQuoteStatues::class,
+            // AddCreateSendUpdatePermissionToAllRoles::class,
+            addDubaiNowEmailGroup::class,
+            DubaiLeadSource::class,
+            AddPolicyIssuanceStatuses::class,
+            GenericPermissionSeeder::class,
         ]);
     }
 }
