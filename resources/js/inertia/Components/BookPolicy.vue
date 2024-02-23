@@ -30,9 +30,27 @@ const dateToYMD = date => {
   }
   return '';
 };
+const dateToDMY = date => {
+  if (date) {
+    const d = new Date(date);
+    const year = d.getFullYear();
+    const month = `0${d.getMonth() + 1}`.slice(-2);
+    const day = `0${d.getDate()}`.slice(-2);
+    return `${day}-${month}-${year}`;
+  }
+  return '';
+};
 
 const bp = reactive({
   isEditing: false,
+});
+
+const currentDate = computed(() => {
+  const d = new Date();
+  const year = d.getFullYear();
+  const month = `0${d.getMonth() + 1}`.slice(-2);
+  const day = `0${d.getDate()}`.slice(-2);
+  return `${day}-${month}-${year}`;
 });
 
 const transactionPaymentStatus = computed(() => {
@@ -48,8 +66,7 @@ const transactionPaymentStatus = computed(() => {
 });
 const bpForm = useForm({
   booking_date:
-    dateToYMD(props.quote?.policy_booking_date) ||
-    new Date().toJSON().slice(0, 10),
+    dateToDMY(page.props.quote?.policy_booking_date) || currentDate.value,
   transaction_payment_status: transactionPaymentStatus.value,
   invoice_date: dateToYMD(page.props.payments[0]?.insurer_invoice_date) || '',
   invoice_description: page.props.bPDetails.invoiceDescription || '',
