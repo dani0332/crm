@@ -26,7 +26,7 @@ class SaleSummaryReportService extends ManagementReport
             ->leftJoin('lookups as l', 'sul.category_id', '=', 'l.id')
             ->leftJoin('users', 'personal_quotes.advisor_id', '=', 'users.id')
             ->leftJoin('user_team', 'users.id', '=', 'user_team.user_id')
-            ->leftJoin('teams', 'user_team.team_id', '=', 'teams.id')
+            ->leftJoin('teams as t', 'user_team.team_id', '=', 't.id')
             ->join('quote_type', 'personal_quotes.quote_type_id', '=', 'quote_type.id')
             ->leftJoin('personal_quote_details as pqd', 'personal_quotes.id', '=', 'pqd.personal_quote_id')
             ->join('payments as p', 'personal_quotes.code', '=', 'p.code')
