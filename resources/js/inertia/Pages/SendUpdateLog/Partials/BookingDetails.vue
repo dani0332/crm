@@ -301,6 +301,7 @@ onMounted(() => {
 });
 
 const onUpdateReversal = () => {
+  state.reversalSectionEdit = !state.reversalSectionEdit;
   bookingDetailsForm.insurer_tax_invoice_number = reversalEntry.insurer_tax_invoice_number;
   bookingDetailsForm.broker_invoice_number = reversalEntry.broker_invoice_number || '';
   bookingDetailsForm.transaction_payment_status = reversalEntry.transaction_payment_status || '';
