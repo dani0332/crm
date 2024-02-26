@@ -131,7 +131,7 @@ class BusinessQuoteController extends Controller
     }
 
     /**
-     * @param $uuid
+     * @param    $uuid
      * @return \Inertia\Response|\Inertia\ResponseFactory
      */
     public function show($id)

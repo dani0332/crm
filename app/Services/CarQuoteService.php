@@ -1233,7 +1233,7 @@ class CarQuoteService extends BaseService
     /**
      * modify plan during upload & update process.
      *
-     * @param $data
+     * @param    $data
      * @return false
      */
     public function renewalCreatePlan($planData)
@@ -1320,7 +1320,7 @@ class CarQuoteService extends BaseService
 
     /**
      * @return bool|string
-     * paid_at = authorized date
+     *                     paid_at = authorized date
      */
     public function isPlanModifyAllowed($data)
     {
