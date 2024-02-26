@@ -66,4 +66,9 @@ class SendUpdateLogService
 
         return collect($payments)->where('insurer_tax_number', $data['taxInvoiceNo'])->first();
     }
+
+    public function getUploadedDocuments($sendUpdateLog): array
+    {
+        return $sendUpdateLog->documents()->pluck('document_type_code')->toArray();
+    }
 }

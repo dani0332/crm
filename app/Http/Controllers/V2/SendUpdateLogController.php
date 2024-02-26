@@ -90,6 +90,8 @@ class SendUpdateLogController extends Controller
             }
         }
 
+        $uploadedDocuments = $this->sendUpdateLogService->getUploadedDocuments($sendUpdateLog);
+
         return inertia('SendUpdateLog/Show', [
             'quote' => $quote,
             'quoteType' => $quoteType,
@@ -103,6 +105,7 @@ class SendUpdateLogController extends Controller
             'bookingDetails' => $bookingDetails,
             'updateToCustomerBtn' => count($sendUpdateLog->details) > 0,
             'paymentInvoices' => $paymentInvoices ?? [],
+            'uploadedDocuments' => $uploadedDocuments,
         ]);
     }
 

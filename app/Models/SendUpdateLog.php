@@ -18,4 +18,9 @@ class SendUpdateLog extends Model implements AuditableContract
     {
         return $this->hasMany(SendUpdateLogDetails::class);
     }
+
+    public function documents()
+    {
+        return $this->morphMany(QuoteDocument::class, 'quote_documentable');
+    }
 }

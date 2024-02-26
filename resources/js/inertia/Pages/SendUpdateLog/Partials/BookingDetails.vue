@@ -46,6 +46,10 @@ const props = defineProps({
     type: Boolean,
     required: false,
   },
+  uploadedDocuments: {
+    type: Array,
+    required: false,
+  }
 });
 
 const state = reactive({
@@ -81,16 +85,15 @@ const isCPD = computed(() => {
   return props.selectedCategory?.subCategory.slug === sendUpdateStatusEnum.CPD;
 });
 
-const uploadedDocuments = computed(() => {
-  // document check condition will be add here. 
-  return true;
+const hasTaxDocuments = computed(() => {
+  return props.uploadedDocuments.includes('TTI') && props.uploadedDocuments.includes('TTIRBB');
 });
 
 const checkSectionTwoEdit = () => {
   const taxInvoiceDoc = [sendUpdateStatusEnum.EF, sendUpdateStatusEnum.CI, sendUpdateStatusEnum.CIR, sendUpdateStatusEnum.CPD];
   const checkTaxInvoiceDoc = taxInvoiceDoc.includes(props.selectedCategory.subCategory.slug);
 
-  if (checkTaxInvoiceDoc && !uploadedDocuments.value) {
+  if (checkTaxInvoiceDoc && !hasTaxDocuments.value) {
     notification.error({
       title: 'Please upload tax invoice and tax invoice raised by buyer. ',
       position: 'top',

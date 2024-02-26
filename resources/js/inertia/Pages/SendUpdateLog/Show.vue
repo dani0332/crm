@@ -15,6 +15,7 @@ const props = defineProps({
   isNegativeValue: Boolean,
   bookingDetails: Array,
   updateToCustomerBtn: Boolean,
+  uploadedDocuments: Array,
 });
 
 const page = usePage();
@@ -294,6 +295,7 @@ const isBookingDetailsVisible = computed(() => {
       :booking-details="props.bookingDetails"
       :real-quote="props.realQuote"
       :update-to-customer-btn="props.updateToCustomerBtn"
+      :uploaded-documents="props.uploadedDocuments"
     />
 
     <AuditLogs
