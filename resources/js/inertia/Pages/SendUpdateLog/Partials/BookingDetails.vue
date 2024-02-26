@@ -88,9 +88,9 @@ const uploadedDocuments = computed(() => {
 
 const checkSectionTwoEdit = () => {
   const taxInvoiceDoc = [sendUpdateStatusEnum.EF, sendUpdateStatusEnum.CI, sendUpdateStatusEnum.CIR, sendUpdateStatusEnum.CPD];
-  const isTaxInvoiceDoc = taxInvoiceDoc.includes(props.selectedCategory.subCategory.slug);
+  const checkTaxInvoiceDoc = taxInvoiceDoc.includes(props.selectedCategory.subCategory.slug);
 
-  if (isTaxInvoiceDoc && !uploadedDocuments.value) {
+  if (checkTaxInvoiceDoc && !uploadedDocuments.value) {
     notification.error({
       title: 'Please upload tax invoice and tax invoice raised by buyer. ',
       position: 'top',
@@ -98,7 +98,7 @@ const checkSectionTwoEdit = () => {
     return;
   }
 
-  if (isCPD && bookingDetailsForm.reversal_invoice === null) {
+  if (isCPD.value && bookingDetailsForm.reversal_invoice === null) {
     notification.error({
       title: 'Please select tax invoice number for reversal. ',
       position: 'top',
@@ -217,6 +217,12 @@ function convertToNegative(value) {
 
 const saveBookingDetail = (isValid) => {
   if (!isValid) return;
+  // it will check payment related condition. 
+  let childOptions = [sendUpdateStatusEnum.MPC, sendUpdateStatusEnum.MDOM, sendUpdateStatusEnum.MDOV, sendUpdateStatusEnum.ED, sendUpdateStatusEnum.DM];
+  if (isEF.value && !childOptions.includes(props.selectedCategory.subCategory.option.slug)) {
+    alert('payment condition will goes here. ');
+    return;
+  }
   bookingDetailsForm.post(route('send-update-logs.save-booking-details'),
     {
       preserveState: true,
