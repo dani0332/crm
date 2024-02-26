@@ -606,6 +606,12 @@ class SendEmailCustomerService extends BaseService
                     ];
                 }
             }
+            $additionalBcc = ApplicationStorage::where('key_name', ApplicationStorageEnums::LMS_INTRO_EMAIL_BCC)->first()->value;
+            foreach (explode(',', $additionalBcc) as $additionalContact) {
+                $bccAdditional[] = [
+                    'email' => $additionalContact,
+                ];
+            }
             if (! empty($emailData->pdfAttachment->pdf) && ! empty($emailData->pdfAttachment->name)) {
                 $attachments[] = [
                     'content' => chunk_split(base64_encode($emailData->pdfAttachment->pdf->stream())),
@@ -622,6 +628,7 @@ class SendEmailCustomerService extends BaseService
                 ]],
                 'templateId' => $emailTemplateId,
                 'params' => $emailData,
+                'bcc' => $bccAdditional,
                 'tags' => [
                     $tag,
                 ],
