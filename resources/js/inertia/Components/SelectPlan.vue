@@ -3,7 +3,11 @@
 const props = defineProps({
     plan: Object,
     quoteType: String,
-    uuid: String
+    uuid: String,
+    extraDetails: {
+        type: Object,
+        default: {}
+    }
 })
 
 
@@ -17,11 +21,40 @@ const updateSelectedPlan = () => {
     isLoading.value = true;
 
     let data = {
-        'plan_id' : props.plan.id
+        'plan_id' : props.plan.id,
     }
 
     if(props.quoteType.toLocaleLowerCase() == 'health') {
         data.copay_id = props.plan.selectedCopayId;
+    }
+
+    if (props.quoteType.toLocaleLowerCase() == 'travel') {
+        data.planType = props.extraDetails?.planType;
+        if (props.extraDetails?.selectedPlansIds.length > 0) {
+        for (let i = 0; i < props.extraDetails?.selectedPlansIds.length; i++) {
+            if (
+            props.extraDetails?.planType == 'normalPlans' &&
+            props.extraDetails?.seniorPlansIds.includes(
+                props.extraDetails?.selectedPlansIds[i],
+            )
+            ) {
+            data.plan_id = props.plan.id;
+            data.selected_plan_id = props.extraDetails?.selectedPlansIds[i];
+            }
+
+            if (
+            props.extraDetails?.planType == 'seniorPlans' &&
+            props.extraDetails?.normalPlansIds.includes(
+                props.extraDetails?.selectedPlansIds[i],
+            )
+            ) {
+            data.selected_plan_id = props.plan.id;
+            data.plan_id = props.extraDetails?.selectedPlansIds[i];
+            }
+        }
+        } else {
+        data.plan_id = props.plan.id;
+        }
     }
 
 
