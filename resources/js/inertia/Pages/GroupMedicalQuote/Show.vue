@@ -488,12 +488,12 @@ const linkEntity = () => {
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">EMAIL</dt>
-            <dd>{{ quote.email }}</dd>
+            <dd class="break-words">{{ quote.email }}</dd>
           </div>
 
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">COMPANY NAME</dt>
-            <dd>{{ quote.company_name }}</dd>
+            <dd class="break-words">{{ quote.company_name }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">NEXT FOLLOWUP DATE</dt>
@@ -543,7 +543,7 @@ const linkEntity = () => {
 
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">BRIEF DETAILS</dt>
-            <dd>{{ quote.brief_details }}</dd>
+            <dd class="break-words">{{ quote.brief_details }}</dd>
           </div>
 
           <div class="grid sm:grid-cols-2">
