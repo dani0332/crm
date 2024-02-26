@@ -55,7 +55,7 @@ const approvedDocument = ref('');
 const resetDiscountReason = ref('');
 const approveErrorMessage = ref('');
 const discountValue = ref(0); // Initial discount value
-
+const calculatedDiscount = ref('');
 const discountDocumentModel = ref([]);
 const isDiscountDocumentNotUploaded = ref(false);
 
@@ -360,6 +360,14 @@ const validatePaymentOption = () => {
             isDiscountError.value = true;
             discountError.value =  'Discount should not exceed 50 AED';
           }
+        } else if (paymentMethodsForm.discount === 'employee_discount' || paymentMethodsForm.discount === 'family_employee_discount') {
+          
+          if( parseFloat(discountValue.value) > parseFloat(calculatedDiscount.value)) {
+            issueFound = true; 
+            isDiscountError.value = true;
+            discountError.value =  'Discount should not exceed '+calculatedDiscount.value+' AED';
+          }
+
         } else {
           isDiscountReasonEnabled.value = false;
           isDiscountReasonError.value = false;
@@ -575,7 +583,7 @@ const resetDiscount = (callDiscountChang=true) => {
   calculateTotalAmount();
 };
 
-const handleDiscountChange = () => {
+const handleDiscountChange = (editDiscountValue=0) => {
   isDiscountError.value = false;
   discountError.value = '';
   if( paymentMethodsForm.status === 'create' ){
@@ -609,16 +617,23 @@ const handleDiscountChange = () => {
       discountValue.value = (totalPrice.value * (15 / 100)).toFixed(2); 
     } else {
       discountValue.value = (totalPrice.value * (12.5 / 100)).toFixed(2); // for car
-    }
+    }    
   }
-
   if(paymentMethodsForm.discount === 'family_employee_discount'){
     if( props.quoteType === 'Health' ) {
       discountValue.value = (totalPrice.value * (2.5 / 100)).toFixed(2); 
     } else if( props.quoteType === 'Home' || props.quoteType === 'Travel' ) {
       discountValue.value = (totalPrice.value * (12.5 / 100)).toFixed(2); 
     } else {
+      console.log("DISC==="+totalPrice.value);
       discountValue.value = (totalPrice.value * (7.5 / 100)).toFixed(2); // for car
+    }    
+  }
+  if( paymentMethodsForm.discount === 'family_employee_discount' 
+      || paymentMethodsForm.discount === 'employee_discount' ) {
+    calculatedDiscount.value = discountValue.value;
+    if(editDiscountValue>0){
+      discountValue.value = editDiscountValue;
     }
   }
   calculateTotalAmount();
@@ -1093,6 +1108,7 @@ const editPaymentModal = (payment,split_payment_id,sr_no,capture_approval) => {
     ////if ( isAnyPaid ) {
     totalPrice.value = payment.total_price;
     totalAmount.value = payment.total_price-payment.discount_value;
+    handleDiscountChange(payment.discount_value);
     if  ( isAnyPaid 
           && (payment.total_price<=(payment.total_amount+payment.discount_value)) 
         ) { //FOR EDIT
