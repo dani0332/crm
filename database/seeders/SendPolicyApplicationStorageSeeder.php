@@ -220,7 +220,7 @@ class SendPolicyApplicationStorageSeeder extends Seeder
         if (! $corplineBookPolicy) {
             DB::table('application_storage')->insert([
                 'key_name' => ApplicationStorageEnums::CORPLINE_BOOK_POLICY_TEMPLATE,
-                'value' => '613',
+                'value' => '614',
                 'is_active' => 1,
                 'created_at' => now(),
                 'updated_at' => now(),
