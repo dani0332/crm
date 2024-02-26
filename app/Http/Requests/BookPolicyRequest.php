@@ -30,8 +30,8 @@ class BookPolicyRequest extends FormRequest
             'transaction_payment_status' => 'nullable',
             'commission_percentage' => 'nullable',
             'broker_invoice_number' => 'nullable',
-            'commission_vat_not_applicable' => 'numeric|max:13|required_without:commission_vat_applicable',
-            'commission_vat_applicable' => 'numeric|max:13|required_without:commission_vat_not_applicable',
+            'commission_vat_not_applicable' => 'required_without:commission_vat_applicable|numeric|max:13',
+            'commission_vat_applicable' => 'required_without:commission_vat_not_applicable|numeric|max:13',
             'total_commission' => 'nullable',
             'invoice_description' => 'nullable',
             'vat_on_commission' => 'nullable',
@@ -45,8 +45,8 @@ class BookPolicyRequest extends FormRequest
     public function messages()
     {
         return [
-            'commission_vat_not_applicable.required_without' => 'Commmission (VAT NOT APPLICABLE) OR Commmission (VAT APPLICABLE) is required',
-            'commission_vat_applicable.required_without' => 'Commmission (VAT NOT APPLICABLE) OR Commmission (VAT APPLICABLE) is required',
+            'commission_vat_not_applicable.required_without' => 'Commmission (VAT APPLICABLE) is required',
+            'commission_vat_applicable.required_without' => 'Commmission (VAT NOT APPLICABLE) is required',
 
         ];
     }
