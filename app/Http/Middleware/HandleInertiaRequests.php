@@ -9,6 +9,7 @@ use App\Enums\quoteBusinessTypeCode;
 use App\Enums\quoteTypeCode;
 use App\Enums\RolesEnum;
 use App\Enums\TravelQuoteEnum;
+use App\Services\UserService;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 use Spatie\Navigation\Navigation;
@@ -69,6 +70,7 @@ class HandleInertiaRequests extends Middleware
             'appEnv' => config('constants.APP_ENV'),
             'pusherKey' => config('constants.VITE_PUSHER_APP_KEY'),
             'epLink' => config('constants.AFIA_WEBSITE_DOMAIN'),
+            'im_logo' => getIMLogo(),
         ];
     }
 
@@ -142,7 +144,7 @@ class HandleInertiaRequests extends Middleware
                     ->addIf(auth()->user()->can(PermissionsEnum::LEAD_DISTRIBUTION_REPORT_VIEW), 'Lead Distribution', route('lead-distribution-report-view', [], false), fn ($s) => $s->attributes(['icon' => 'bar']))
                     ->addIf(auth()->user()->can(PermissionsEnum::UtmLeadsSalesReport), 'UTM Report', route('utm-leads-sales-report', [], false), fn ($s) => $s->attributes(['icon' => 'bar']))
                     ->addIf(auth()->user()->can(PermissionsEnum::RENEWAL_BATCH_REPORT), 'Daily Renewal Report', route('renewal-batch-report', [], false), fn ($s) => $s->attributes(['icon' => 'bar']))
-                    ->addIf(auth()->user()->can(PermissionsEnum::RENEWAL_BATCH_REPORT), 'Lead List Report', route('lead-list-report', [], false), fn ($s) => $s->attributes(['icon' => 'bar']));
+                    ->addIf(app(UserService::class)->isAllowedToShowLeadListReport(), 'Lead List Report', route('lead-list-report', [], false), fn ($s) => $s->attributes(['icon' => 'bar']));
             });
         }
 
@@ -195,7 +197,9 @@ class HandleInertiaRequests extends Middleware
                         ),
                 )
                 ->addIf(
-                    auth()->user()->can(PermissionsEnum::HealthQuotesList),
+                    auth()->user()->hasAnyPermission(PermissionsEnum::HealthQuotesList,
+                        PermissionsEnum::HEALTH_QUOTES_MANAGER_ACCESS,
+                        PermissionsEnum::HEALTH_QUOTES_ACCESS),
                     'Health Quotes',
                     '/quotes/health',
                     fn ($s) => $s->attributes(['icon' => 'health'])
@@ -358,7 +362,8 @@ class HandleInertiaRequests extends Middleware
                     ->addIf(auth()->user()->can(PermissionsEnum::RenewalsUpload), 'Upload & Create', route('renewals-upload-create'), fn ($s) => $s->attributes(['icon' => 'box']))
                     ->addIf(auth()->user()->can(PermissionsEnum::RenewalsUploadedLeadList), 'Uploaded Leads', route('renewals-uploaded-leads-list'), fn ($s) => $s->attributes(['icon' => 'box']))
                     ->addIf(auth()->user()->can(PermissionsEnum::RenewalsUploadUpdate), 'Upload & Update', route('renewals-upload-update'), fn ($s) => $s->attributes(['icon' => 'box']))
-                    ->addIf(auth()->user()->can(PermissionsEnum::RenewalsBatches), 'Batches', route('renewals-batches'), fn ($s) => $s->attributes(['icon' => 'box']));
+                    ->addIf(auth()->user()->can(PermissionsEnum::RenewalsBatches), 'Batches', route('renewals-batches'), fn ($s) => $s->attributes(['icon' => 'box']))
+                    ->addIf(PermissionsEnum::RenewalsBatches || PermissionsEnum::RenewalsUploadUpdate || PermissionsEnum::RenewalsUploadedLeadList || PermissionsEnum::RenewalsUpload, 'Search', route('renewals-batches-search'), fn ($s) => $s->attributes(['icon' => 'box']));
             });
         }
 
@@ -402,9 +407,9 @@ class HandleInertiaRequests extends Middleware
         if (auth()->user()->can(PermissionsEnum::AMLList)) {
             $nav = $nav->add('AML', '', function (Section $section) {
                 $section
-                    ->add('All Quotes', url('kyc/aml'), fn ($s) => $s->attributes(['icon' => 'box']))
-                    ->add('Downloaded Sanction Lists', url('kyc/aml/download/history'), fn ($s) => $s->attributes(['icon' => 'box']))
-                    ->add('Upload UAE List', url('kyc/aml/upload/uae'), fn ($s) => $s->attributes(['icon' => 'box']));
+                    ->add('All Quotes', url('kyc/aml'), fn ($s) => $s->attributes(['icon' => 'box']));
+                // ->add('Downloaded Sanction Lists', url('kyc/aml/download/history'), fn ($s) => $s->attributes(['icon' => 'box']))
+                // ->add('Upload UAE List', url('kyc/aml/upload/uae'), fn ($s) => $s->attributes(['icon' => 'box']));
             });
         }
 
@@ -414,30 +419,30 @@ class HandleInertiaRequests extends Middleware
 
         $nav = $nav->addIf(auth()->user()->hasRole(RolesEnum::BetaUser), 'Legacy Policy', url('legacy-policy'));
 
-        // if (auth()->user()->can(PermissionsEnum::TeleMarketingList)) {
-        //     $nav = $nav->add('Telemarketing', '', function (Section $section) {
-        //         $section
-        //             ->add('TM Leads', url('telemarketing/tmleads'), fn ($s) => $s->attributes(['icon' => 'box']))
-        //             ->addIf(
-        //                 auth()->user()->can(PermissionsEnum::TMUploadLeadsList),
-        //                 'Upload TM Leads',
-        //                 url('telemarketing/tmuploadlead'),
-        //                 fn ($s) => $s->attributes(['icon' => 'box'])
-        //             )
-        //             ->addIf(
-        //                 auth()->user()->can(PermissionsEnum::CRMAdmin),
-        //                 'TM Type of Insurance',
-        //                 url('telemarketing/tminsurancetype'),
-        //                 fn ($s) => $s->attributes(['icon' => 'box'])
-        //             )
-        //             ->addIf(
-        //                 auth()->user()->can(PermissionsEnum::CRMAdmin),
-        //                 'TM Lead Status',
-        //                 url('telemarketing/tmleadstatus'),
-        //                 fn ($s) => $s->attributes(['icon' => 'box'])
-        //             );
-        //     });
-        // }
+        if (auth()->user()->can(PermissionsEnum::TeleMarketingList)) {
+            $nav = $nav->add('Telemarketing', '', function (Section $section) {
+                $section
+                    ->add('TM Leads', url('telemarketing/tmleads'), fn ($s) => $s->attributes(['icon' => 'box']))
+                    ->addIf(
+                        auth()->user()->can(PermissionsEnum::TMUploadLeadsList),
+                        'Upload TM Leads',
+                        url('telemarketing/tmuploadlead'),
+                        fn ($s) => $s->attributes(['icon' => 'box'])
+                    )
+                    ->addIf(
+                        auth()->user()->can(PermissionsEnum::CRMAdmin),
+                        'TM Type of Insurance',
+                        url('telemarketing/tminsurancetype'),
+                        fn ($s) => $s->attributes(['icon' => 'box'])
+                    )
+                    ->addIf(
+                        auth()->user()->can(PermissionsEnum::CRMAdmin),
+                        'TM Lead Status',
+                        url('telemarketing/tmleadstatus'),
+                        fn ($s) => $s->attributes(['icon' => 'box'])
+                    );
+            });
+        }
         if (auth()->user()->hasAnyPermission([
             PermissionsEnum::UsersList, PermissionsEnum::RoleList,
             PermissionsEnum::TeamsList, PermissionsEnum::COMMERCIAL_KEYWORDS,

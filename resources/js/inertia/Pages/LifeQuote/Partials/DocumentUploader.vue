@@ -1,5 +1,7 @@
 <script setup>
 // const emit = defineEmits(["update:uploadedFiles"]);
+import {fileUploadErrorMessage} from "@/inertia/Composables/utilities.js";
+
 defineProps({
   members: Array,
   docTypes: Object,
@@ -20,8 +22,16 @@ const docForm = useForm({
   file: null,
 });
 
-const uploadFile = (doc, memberId, files) => {
-  if (files.length == 0) return;
+const uploadFile = (doc, memberId, filesWithInfo) => {
+  const { files, rejectReason} = filesWithInfo;
+  if (files.length == 0) {
+    notification.error({
+      title: 'File upload failed',
+      position: 'top',
+    });
+    docForm.setError({error: fileUploadErrorMessage(doc, rejectReason)});
+    return false
+  };
   isUploading.value = true;
   docForm
     .transform(data => ({
@@ -35,13 +45,8 @@ const uploadFile = (doc, memberId, files) => {
     .post('/quotes/health/documents/store', {
       preserveScroll: true,
       preserveState: true,
-      only: ['quoteDocuments'],
       onFinish: () => {
         isUploading.value = false;
-        notification.success({
-          title: 'File Uploaded',
-          position: 'top',
-        });
       },
     });
 };

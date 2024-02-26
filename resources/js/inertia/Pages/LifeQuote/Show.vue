@@ -645,14 +645,8 @@ const linkEntity = () => {
           }}
           Profile
         </h3>
-        <x-button
-          size="sm"
-          color="orange"
-          v-if="quote.kyc_decision === 'Complete'"
-        >
-          KYC - Complete
-        </x-button>
-        <x-button size="sm" color="primary" v-else> KYC - Pending </x-button>
+        <x-tag color="success" v-if="quote.kyc_decision === 'Complete'"> KYC - Complete </x-tag>
+        <x-tag color="amber" v-else> KYC - Pending </x-tag>
       </div>
       <x-divider class="mb-4 mt-1" />
       <x-form @submit="updateProfileDetails" :auto-focus="false">
@@ -958,7 +952,7 @@ const linkEntity = () => {
       :quote_type="quoteType"
     />
 
-    <customerAdditionalContacts
+    <CustomerAdditionalContacts
       quoteType="Life"
       :customerId="quote.customer_id"
       :quoteId="quote.id"

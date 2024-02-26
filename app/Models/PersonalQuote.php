@@ -6,6 +6,7 @@ use App\Enums\FilterTypes;
 use App\Enums\QuoteTypeId;
 use App\Traits\FilterCriteria;
 use App\Traits\QuoteModelTrait;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Config;
@@ -16,7 +17,6 @@ class PersonalQuote extends Model implements AuditableContract
 {
     use Auditable, FilterCriteria, HasFactory, QuoteModelTrait;
 
-    protected $appends = ['dob_formatted'];
     protected $guarded = [];
     public $filterables = [
         'first_name' => FilterTypes::EXACT,
@@ -33,6 +33,8 @@ class PersonalQuote extends Model implements AuditableContract
         'previous_quote_policy_number_text' => FilterTypes::EXACT,
         'advisor_id' => FilterTypes::IN,
         'policy_number' => FilterTypes::EXACT,
+        'source' => FilterTypes::EXACT,
+        'renewal_expiry_date' => FilterTypes::DATE_BETWEEN,
     ];
 
     /**
@@ -118,12 +120,14 @@ class PersonalQuote extends Model implements AuditableContract
     }
 
     /**
-     * @param $date
+     * @param    $date
      * @return string
      */
-    public function getDobFormattedAttribute()
+    public function getDobAttribute($value)
     {
-        return $this->attributes['dob_formatted'] = $this->asDateTime($this->dob)->timezone(config('app.timezone'))->format(Config::get('constants.DATE_FORMAT'));
+        $date_time_format = config('constants.DATE_FORMAT');
+
+        return Carbon::parse($value)->format($date_time_format);
     }
 
     /**

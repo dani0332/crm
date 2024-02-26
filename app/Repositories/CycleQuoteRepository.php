@@ -23,7 +23,7 @@ class CycleQuoteRepository extends BaseRepository
     /**
      * create new personal quote
      *
-     * @param $quoteTypeCode
+     * @param    $quoteTypeCode
      * @return mixed
      */
     public function fetchCreate($data)
@@ -72,6 +72,19 @@ class CycleQuoteRepository extends BaseRepository
             ->orderBy('created_at', 'desc');
 
         return ($forExport) ? $query->get() : $query->simplePaginate();
+    }
+
+    public function fetchExport()
+    {
+        return $this->byQuoteTypeCode(QuoteTypes::CYCLE)->with(['quoteStatus', 'currentlyInsuredWith', 'advisor'])
+            ->when(\auth()->user()->hasRole(RolesEnum::CycleAdvisor), function ($query) {
+                $query->where(function ($query) {
+                    $query->where('advisor_id', \auth()->user()->id);
+                });
+            })
+            ->filter()
+            ->withFakeLeadCriteria()
+            ->orderBy('created_at', 'desc');
     }
 
     /**

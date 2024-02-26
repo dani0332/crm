@@ -25,6 +25,7 @@ use App\Repositories\InsuranceProviderRepository;
 use App\Repositories\LookupRepository;
 use App\Repositories\LostReasonRepository;
 use App\Repositories\QuoteStatusRepository;
+use App\Services\AMLService;
 use App\Services\BusinessQuoteService;
 use App\Services\CRUDService;
 use App\Services\CustomerService;
@@ -196,7 +197,7 @@ class AmtController extends Controller
             'mobile_no' => 'required|regex:/(0)[0-9]/|not_regex:/[a-z]/|min:7|max:20',
             'business_type_of_insurance_id' => 'required',
             'company_name' => 'required|max:150',
-            'number_of_employees' => 'required',
+            'number_of_employees' => 'required|numeric|max:2147483645',
             'brief_details' => 'required',
         ]);
         $record = app(BusinessQuoteService::class)->saveBusinessQuote($request);
@@ -212,7 +213,7 @@ class AmtController extends Controller
     }
 
     /**
-     * @param $uuid
+     * @param    $uuid
      * @return \Inertia\Response|\Inertia\ResponseFactory
      */
     public function show($id)
@@ -232,12 +233,13 @@ class AmtController extends Controller
         $lostReasons = LostReasonRepository::orderBy('text', 'asc')->get();
         $allowedDuplicateLOB = $crudService->getAllowedDuplicateLOB('Group Medical', $record->code);
         $customerAdditionalContacts = app(CustomerService::class)->getAdditionalContacts($record->customer_id, $record->mobile_no);
-        $UBODetails = CustomerMembersRepository::getBy('quote_id', $record->id, QuoteTypes::BUSINESS->name, CustomerTypeEnum::Entity);
+        $UBODetails = CustomerMembersRepository::getBy($record->id, QuoteTypes::BUSINESS->name, CustomerTypeEnum::Entity);
 
         $nationalities = Nationality::where('is_active', 1)->select('id', 'text')->get();
         $UBORelations = LookupRepository::where('key', LookupsEnum::UBO_RELATION)->get();
         $emirates = Emirate::where('is_active', 1)->select('id', 'text')->get();
-        if ($record->quote_status_id !== QuoteStatusEnum::AMLScreeningCleared) {
+
+        if (AMLService::checkAMLStatusFailed(QuoteTypes::BUSINESS->id(), $record->id)) {
             $quoteStatuses = collect($quoteStatuses)->filter(function ($value) {
                 return $value['id'] != QuoteStatusEnum::TransactionApproved;
             })->values();
@@ -253,7 +255,7 @@ class AmtController extends Controller
         $issuancePlace = $lookupService->getIssuancePlaces();
         $issuanceAuthorities = $lookupService->getIssuanceAuthorities();
 
-        $documentTypes = DocumentTypeRepository::byQuoteTypeId(QuoteTypes::BUSINESS->id())->get();
+        $documentTypes = DocumentTypeRepository::byQuoteTypeId(QuoteTypes::BUSINESS->id())->active()->get();
 
         return inertia('GroupMedicalQuote/Show', [
             'documentTypes' => $documentTypes,
@@ -330,7 +332,7 @@ class AmtController extends Controller
             'last_name' => 'required|max:150',
             'business_type_of_insurance_id' => 'required',
             'company_name' => 'required|max:150',
-            'number_of_employees' => 'required',
+            'number_of_employees' => 'required|numeric|max:2147483645',
             'brief_details' => 'required',
             'group_medical_type_id' => 'required',
             'premium' => 'required',

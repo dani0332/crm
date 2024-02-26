@@ -596,14 +596,10 @@ const linkEntity = () => {
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div class="flex justify-between items-center mb-4">
         <h3 class="font-semibold text-primary-800 text-lg">Entity Profile</h3>
-        <x-button
-          size="sm"
-          color="orange"
-          v-if="quote.kyc_decision === 'Complete'"
-        >
+        <x-tag color="success" v-if="quote.kyc_decision === 'Complete'">
           KYC - Complete
-        </x-button>
-        <x-button size="sm" color="primary" v-else> KYC - Pending </x-button>
+        </x-tag>
+        <x-tag color="amber" v-else> KYC - Pending </x-tag>
       </div>
       <x-divider class="mb-4 mt-1" />
       <x-form @submit="updateProfileDetails" :auto-focus="false">
@@ -806,7 +802,7 @@ const linkEntity = () => {
     />
 
     <!-- Additional Contact -->
-    <customerAdditionalContacts
+    <CustomerAdditionalContacts
       quoteType="Business"
       :customerId="quote.customer_id"
       :quoteId="quote.id"
@@ -941,5 +937,10 @@ const linkEntity = () => {
         :hide-footer="historyData.length < 15"
       />
     </div>
+
+    <AuditLogs
+      :type="'App\\Models\\BusinessQuote'"
+      :id="$page.props.quote.id"
+    />
   </div>
 </template>

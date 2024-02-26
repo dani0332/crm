@@ -1,6 +1,5 @@
 <script setup>
 import QuoteDocuments from '../PersonalQuote/Partials/QuoteDocuments';
-import LeadStatus from '../PersonalQuote/Partials/QuoteStatus';
 import QuoteStatus from '../PersonalQuote/Partials/QuoteStatus';
 import QuotePayments from '../PersonalQuote/Partials/QuotePayments';
 import QuoteActivities from '../PersonalQuote/Partials/QuoteActivities';
@@ -9,7 +8,6 @@ import PlanDetails from '../../Components/PlanDetails.vue';
 import LeadHistory from '../PersonalQuote/Partials/LeadHistory';
 import AdditionalContacts from '../PersonalQuote/Partials/AdditionalContacts';
 import MemberDetails from '../../Components/MemberDetails.vue';
-import KycForm from '@/inertia/Components/KycForm.vue';
 import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue';
 
 defineProps({
@@ -49,13 +47,13 @@ const permissionsEnum = page.props.permissionsEnum;
 const notification = useToast();
 
 const industryTypeOptions = computed(() => {
-  return page.props.industryType.map(indType => ({
+  return page.props.industryType?.map(indType => ({
     value: indType.code,
     label: indType.text,
   }));
 });
 const emiratesOptions = computed(() => {
-  return page.props.emirates.map(em => ({
+  return page.props.emirates?.map(em => ({
     value: em.id,
     label: em.text,
   }));
@@ -363,23 +361,8 @@ const linkEntity = () => {
           }}
           Profile
         </h3>
-        <KycForm
-          :roles="$page.props.rolesEnum"
-          :quote="page.props.quote"
-          :country-list="page.props.countryList"
-          :aml-quote-status="page.props.amlQuoteStatus"
-          :nationalities="page.props.nationalities"
-          :modelType="'Bike'"
-          :entities="page.props.entities"
-          :legal-structure="page.props.legalStructure"
-          :id-document-type="page.props.idDocumentType"
-          :mode-of-contact="page.props.modeOfContact"
-          :employment-sectors="page.props.employmentSectors"
-          :residential-status="page.props.residentialStatus"
-          :company-position="page.props.companyPosition"
-          :issuance-place="page.props.issuancePlace"
-          :issuing-authority="page.props.issuanceAuthorities"
-        />
+        <x-tag color="success" v-if="quote.kyc_decision === 'Complete'"> KYC - Complete </x-tag>
+        <x-tag color="amber" v-else> KYC - Pending </x-tag>
       </div>
       <x-divider class="mb-4 mt-1" />
       <x-form @submit="updateProfileDetails" :auto-focus="false">

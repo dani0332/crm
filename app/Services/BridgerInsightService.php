@@ -90,7 +90,7 @@ class BridgerInsightService
                     $customerOrEntityName = '';
             }
 
-            info('Bridger Insight Service AML Screening API Payload : '.json_encode($amlSearchData));
+            info('Bridger Insight Service - AML Screening API Payload : '.json_encode($amlSearchData));
 
             try {
                 $bridgerRequest = $bridgerClient->post(
@@ -103,7 +103,7 @@ class BridgerInsightService
                             'X-API-Key' => $this->bridgerAPIKey,
                         ],
                         'body' => json_encode($amlSearchData),
-                        'timeout' => 10,
+                        'timeout' => 30,
                     ]
                 );
                 $getStatusCode = $bridgerRequest->getStatusCode();
@@ -132,9 +132,9 @@ class BridgerInsightService
                 } else {
                     if ($getDecodeContents) {
                         // Send Email alert to Compliance team only
-                        if (checkPersonalQuotes($quoteType->code) && (! AMLService::isDataMigrated($quoteTypeId, $quoteId))) {
-                            $quoteId = AMLService::getPersonalQuoteId($quoteTypeId, $quoteId);
-                        }
+                        /*   if (checkPersonalQuotes($quoteType->code) && (! AMLService::isDataMigrated($quoteTypeId, $quoteId))) {
+                               $quoteId = AMLService::getPersonalQuoteId($quoteTypeId, $quoteId);
+                           } */
                         $quoteRefId = $this->getQuoteCode($quoteType->code, $quoteId);
                         if ($quoteRefId) {
                             // AML Log data inserted into kyc_logs just for BridgerInsight
@@ -154,20 +154,20 @@ class BridgerInsightService
                                 'created_at' => Carbon::now(),
                                 'input' => $customerOrEntityName,
                                 'match_found' => $amlResultCount > 0 ? 1 : 0,
-                                'search_type' => $customerType,
+                                'search_type' => (substr($memberUboDetails['code'], 0, 3) == CustomerTypeEnum::IndividualShort) ? CustomerTypeEnum::Individual : CustomerTypeEnum::Entity,
                                 'customer_code' => $memberUboDetails['code'],
+                                'decision' => AMLDecisionStatusEnum::ESCALATED,
                             ];
 
                             if ($amlResultCount == 0) {
                                 $kycLogDetails['decision'] = AMLDecisionStatusEnum::PASS;
                             }
-
                             KycLog::insert($kycLogDetails);
                             Log::info('Bridger Insight Service - KYC Log data inserted');
 
                             if (isset($getDecodeContents->Records)) {
                                 AMLService::sendAMLMatchedEmailtoComplianceTeam($amlQuoteUrl, $quoteRefId, $amlResultCount, $customerOrEntityName, $quoteType->text, $loginCustomerID);
-                                Log::info('Bridger Insight Service - AML Matched Email triggered to Compliance Team');
+                                Log::info('Bridger Insight Service - AML Matched Email triggered to Compliance and Compliance Super Users. Triggered By:'.auth()->user()->email);
                             }
                         }
                     }
@@ -303,7 +303,7 @@ class BridgerInsightService
             $getContents = $bridgerRequest->getBody();
             $getDecodeContents = json_decode($getContents);
 
-            Log::info('Bridger Insight Service - AML Decision Update API Call Response : '.json_encode($getContents));
+            Log::info('Bridger Insight Service - Lexis Nexis Decision Update API Response : '.json_encode($getContents));
         } catch (Exception $exception) {
             Log::error('Bridger Insight Service - Failed - Error : '.$exception->getMessage());
         }
