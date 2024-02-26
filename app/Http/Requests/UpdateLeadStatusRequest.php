@@ -98,9 +98,6 @@ class UpdateLeadStatusRequest extends FormRequest
             $rules['lostReason'] = 'required';
         }
 
-        if (request()->leadStatus == QuoteStatusEnum::TransactionApproved) {
-            $rules['trans_code'] = 'required';
-        }
 
         if (strtolower(request()->modelType) == strtolower(quoteTypeCode::Car)) {
             if (in_array(request()->leadStatus, [QuoteStatusEnum::FollowupCall, QuoteStatusEnum::Interested, QuoteStatusEnum::NoAnswer])) {
