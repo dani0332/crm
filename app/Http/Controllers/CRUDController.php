@@ -27,6 +27,7 @@ use App\Facades\Capi;
 use App\Http\Requests\ExportPlansPdfRequest;
 use App\Http\Requests\UpdateLeadStatusRequest;
 use App\Jobs\CarRenewalEmailJob;
+use App\Jobs\SendOCBIntroEmailJob;
 use App\Jobs\SyncSIBContactJob;
 use App\Models\CarMake;
 use App\Models\CarQuote;
@@ -333,7 +334,6 @@ class CRUDController extends Controller
      */
     public function create(Request $request)
     {
-
         $isRenewalUser = Auth::user()->isRenewalUser();
         if ($isRenewalUser && strtolower($this->genericModel->modelType) == strtolower(quoteTypeCode::Car)) {
             $renewalAdvisors = $this->crudService->fillRenewalData($this->genericModel);
@@ -367,7 +367,6 @@ class CRUDController extends Controller
         }
 
         if ($this->genericModel->modelType == quoteTypeCode::Car && in_array($this->genericModel->modelType, newUi())) {
-
             $dropdownSource['car_make_id'] = $this->getCarMakeDropdown();
 
             return inertia('PersonalQuote/Car/Form', [
@@ -677,6 +676,7 @@ class CRUDController extends Controller
             $customerTypeEnum = CustomerTypeEnum::asArray();
             $industryType = LookupRepository::where('key', LookupsEnum::COMPANY_TYPE)->get();
             $nationalities = NationalityRepository::withActive()->get();
+            $clientInquiryLogs = $this->crudService->getInquiryLogs($this->genericModel->modelType, $record->uuid) ?? [];
 
             return inertia('PersonalQuote/Car/Show', compact([
                 'record', 'quote', 'model', 'customTitles', 'customTableList', 'paymentStatusEnum', 'quoteStatusEnum', 'leadSourceEnum', 'isBetaUser',
@@ -687,7 +687,7 @@ class CRUDController extends Controller
                 'paymentEntityModel', 'payments', 'paymentMethods', 'isQuoteDocumentEnabled', 'quoteDocuments', 'displaySendPolicyButton', 'customerAdditionalContacts', 'lostApproveReasons', 'lostRejectReasons', 'allowQuoteLogAction', 'carLostChangeStatus',
                 'carMakeText', 'carModelText', 'advisor', 'tiers', 'daysAfterCapturedPayment', 'access', 'carPlanFeaturesCodeEnum', 'carPlanExclusionsCodeEnum', 'documentTypes', 'planURL', 'storageUrl', 'kyoEndPoint',
                 'carPlanTypeEnum', 'UBORelations', 'UBOsDetails', 'emirates', 'customerTypeEnum', 'memberRelations', 'membersDetails', 'industryType', 'nationalities',
-                'isCommercialVehicles', 'carInsuranceProviders',
+                'isCommercialVehicles', 'carInsuranceProviders', 'clientInquiryLogs',
             ]));
         }
 
@@ -754,7 +754,6 @@ class CRUDController extends Controller
 
             $filteredInsuranceProviders = [];
             if (! empty($insuranceProviders)) {
-
                 $filteredInsuranceProviders = $insuranceProviders->map(function ($paymentMethod) {
                     return [
                         'value' => $paymentMethod->id,
@@ -873,7 +872,6 @@ class CRUDController extends Controller
             })->values();
 
             if (! empty($insuranceProviders)) {
-
                 $insuranceProviders = $insuranceProviders?->map(function ($paymentMethod) {
                     return [
                         'value' => $paymentMethod->id,
@@ -943,6 +941,7 @@ class CRUDController extends Controller
                 'industryType' => $industryType,
                 'UBOsDetails' => $uboDetails,
                 'UBORelations' => $uboRelations,
+                'clientInquiryLogs' => $this->crudService->getInquiryLogs($this->genericModel->modelType, $record->uuid) ?? [],
             ]);
         } else {
             return view('shared.show', compact([
@@ -958,7 +957,7 @@ class CRUDController extends Controller
      * Show the form for editing the specified resource.
      *
      * @param  int  $id
-     * @return \Illuminate\Http\Response        klm[jo]
+     * @return \Illuminate\Http\Response klm[jo]
      */
     public function edit($id)
     {
@@ -1006,7 +1005,6 @@ class CRUDController extends Controller
         }
 
         if ($this->genericModel->modelType == quoteTypeCode::Car && in_array($this->genericModel->modelType, newUi())) {
-
             $dropdownSource['car_make_id'] = $this->getCarMakeDropdown();
 
             return inertia('PersonalQuote/Car/Form', [
@@ -1382,7 +1380,6 @@ class CRUDController extends Controller
 
                 if ($epTransaction->isNotEmpty()) {
                     foreach ($epTransaction as $item) {
-
                         $product_id = $item->product_id;
                         $embedded_product_id = EmbeddedProductOption::find($product_id)->embedded_product_id;
                         // EP Send documents
@@ -1774,6 +1771,24 @@ class CRUDController extends Controller
         }
     }
 
+    public function sendOCBEmailNB(Request $request, $quoteType, $quoteUuId)
+    {
+        if ($quoteUuId) {
+            Log::info('sendOCBEmailNB OCB email sending started for quote uuid: '.$quoteUuId);
+
+            SendOCBIntroEmailJob::dispatch($quoteUuId, null);
+
+            info('sendOCBEmailNB OCB email Job dispatched for quote uuid: '.$quoteUuId);
+
+            return response()->json(['success' => 'OCB NB email sent to customer !']);
+        } else {
+            Log::info('sendOCBEmailNB OCB email quote uuid not found');
+
+            return response()->json(['error' => 'OCB email sending failed, please try again.'], 500);
+        }
+
+    }
+
     public function manualTierAssignment(Request $request)
     {
         $selectedLeadId = $request->selectedLeadId;
@@ -1817,6 +1832,7 @@ class CRUDController extends Controller
     {
         return CarMake::select('id', 'text', 'code')->where('is_active', true)->get();
     }
+
     public function riskRatingDetails($quoteType, $uuid)
     {
         $quoteModel = $this->getQuoteObject($quoteType, $uuid);
