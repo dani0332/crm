@@ -2,8 +2,8 @@ name: Run Pint Fix
 
 on:
   push:
-  branches:
-    - develop
+    branches:
+      - develop
 
 jobs:
   build:
