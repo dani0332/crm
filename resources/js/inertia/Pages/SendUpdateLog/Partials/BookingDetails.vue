@@ -92,7 +92,7 @@ const checkSectionTwoEdit = () => {
 
   if (isTaxInvoiceDoc && !uploadedDocuments.value) {
     notification.error({
-      title: 'Please upload documents. ',
+      title: 'Please upload tax invoice and tax invoice raised by buyer. ',
       position: 'top',
     });
     return;
