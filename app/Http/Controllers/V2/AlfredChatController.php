@@ -31,8 +31,6 @@ class AlfredChatController extends Controller
     public function show($mongoId)
     {
 
-     
     }
-
 
 }
