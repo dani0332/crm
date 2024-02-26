@@ -31,6 +31,7 @@ use App\Http\Requests\SplitPaymentUpdateRequest;
 use App\Http\Requests\StorePaymentRequest;
 use App\Http\Requests\UpdateLeadStatusRequest;
 use App\Http\Requests\UpdatePaymentRequest;
+use App\Http\Requests\MigratePaymentsRequest;
 use App\Jobs\CarRenewalEmailJob;
 use App\Jobs\SyncSIBContactJob;
 use App\Models\CarMake;
@@ -1760,6 +1761,17 @@ class CRUDController extends Controller
     {
         if (auth()->user()->can(PermissionsEnum::ApprovePayments)) {
             $successMessage = PaymentRepository::updateSplitPaymentsApprove($request);
+
+            return back()->with('success', $successMessage);
+        } else {
+            return back()->with('error', 'You are not authorized');
+        }
+    }
+    // Migrate payments from old system to new system
+    public function migratePayment(MigratePaymentsRequest $request)
+    { 
+        if (auth()->user()->can(PermissionsEnum::PaymentsEdit)) {
+            $successMessage = PaymentRepository::migratePayments($request);
 
             return back()->with('success', $successMessage);
         } else {

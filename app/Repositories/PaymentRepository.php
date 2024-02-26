@@ -239,9 +239,10 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
         if ($paymentSplits) {
             foreach ($paymentSplits as $paymentSplit) {
                 if ($paymentSplit->payment_status_id == PaymentStatusEnum::PAID ||
+                    $paymentSplit->payment_status_id == PaymentStatusEnum::PARTIAL_CAPTURED ||
+                    $paymentSplit->payment_status_id == PaymentStatusEnum::CAPTURED ||
                     $paymentSplit->payment_status_id == PaymentStatusEnum::AUTHORISED) {
                     $paymentPaidSerialNo[] = $paymentSplit->sr_no;
-
                     continue;
                 }
                 if (($masterPayment->payment_no < $paymentSplits->count()) && $paymentSplit->sr_no > $masterPayment->payment_no) {
@@ -365,12 +366,14 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
             $masterPaymentStatus = $firstPayment->payment_status_id;
             $totalPaidPayments = PaymentSplits::whereIn('payment_status_id', [
                 PaymentStatusEnum::PAID,
+                PaymentStatusEnum::PARTIAL_CAPTURED,
+                PaymentStatusEnum::PARTIALLY_PAID,
                 PaymentStatusEnum::CAPTURED,
             ])
                 ->where('code', $firstPayment->code)
                 ->count();
             if ($totalPaidPayments == $firstPayment->total_payments) {
-                $masterPaymentStatus = PaymentStatusEnum::PAID;
+                $masterPaymentStatus = PaymentStatusEnum::CAPTURED;
             }
             $firstPayment->update([
                 'is_approved' => 1,
@@ -393,6 +396,25 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
 
         return $successMessage;
     }
+    //migrate payments
+    public function fetchMigratePayments($request)
+    {
+        $quoteModel = $this->getQuoteObject($request->model_type, $request->quote_id);
+        if (! $quoteModel) {
+            return response()->json(['success' => false]);
+        }
+        $oldPayment = $quoteModel->payments()->where('code', $request->payment_code)->first();
+        if (! $oldPayment) {
+            return response()->json(['success' => false]);
+        }
+
+        $paymentMigrated = app(SplitPaymentService::class)->migratePayments($oldPayment);
+        
+        if ($paymentMigrated) {
+            return response()->json(['success' => true]);
+        }
+        return response()->json(['error' => false]);        
+    }
 
     public function fetchUpdatePaymentStatus($request)
     {
@@ -403,7 +425,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
             $paymentInformation = [
                 'collection_amount' => $request->collection_amount,
                 'bank_reference_number' => $request->bank_reference_number,
-                'payment_status_id' => PaymentStatusEnum::PAID,
+                'payment_status_id' => PaymentStatusEnum::CAPTURED,
                 'payment_allocation_status' => PaymentAllocationStatus::NOT_ALLOCATED,
                 'updated_by' => $request->user()->id,
             ];
@@ -471,11 +493,11 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                 if ($totalPaidPayments == $payment->total_payments
                     && $payment->captured_amount >= ($payment->total_price - $payment->discount_value)) {
                     $payment->update(
-                        ['payment_status_id' => PaymentStatusEnum::PAID]
+                        ['payment_status_id' => PaymentStatusEnum::CAPTURED]
                     );
                 } elseif ($totalPaidPayments > 0) {
                     $payment->update(
-                        ['payment_status_id' => PaymentStatusEnum::PARTIALLY_PAID]
+                        ['payment_status_id' => PaymentStatusEnum::PARTIAL_CAPTURED]
                     );
                 } else {
                     //verify credit approved status

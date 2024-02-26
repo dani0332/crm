@@ -53,7 +53,7 @@ class PaymentSplits extends Model implements Auditable
         return $this->morphMany(SageApiLog::class, 'section');
     }
 
-    // render payment status PAID if payment status is CAPTURED
+    // render payment status PAID if payment status is CAPTURED on BA Request
     public function getPaymentStatusIdAttribute($value)
     {
         if ($value==PaymentStatusEnum::CAPTURED) {
