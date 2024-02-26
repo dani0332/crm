@@ -6,7 +6,7 @@ use MongoDB\Laravel\Eloquent\Model;
 
 class AlfredChat extends Model
 {
-    protected $connection = 'mongodb1';
+    protected $connection = 'alfred-chat-mongo';
     protected $collection = 'chats';
     protected $casts = ['createdAt' => 'datetime', 'updatedAt' => 'datetime'];
 

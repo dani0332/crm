@@ -63,7 +63,7 @@ return [
                 PDO::ATTR_PERSISTENT => env('MYSQL_ATTR_PERSISTENT', true),
             ]) : [],
         ],
-        'mongodb1' => [
+        'alfred-chat-mongo' => [
             'driver' => 'mongodb',
             'dsn' => env('MONGO_DNS_IAS'),
         ],
