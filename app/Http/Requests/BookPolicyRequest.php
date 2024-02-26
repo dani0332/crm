@@ -21,6 +21,7 @@ class BookPolicyRequest extends FormRequest
      */
     public function rules(): array
     {
+
         return [
             'invoice_date' => 'required',
             'booking_date' => 'required',
@@ -30,8 +31,8 @@ class BookPolicyRequest extends FormRequest
             'transaction_payment_status' => 'nullable',
             'commission_percentage' => 'nullable',
             'broker_invoice_number' => 'nullable',
-            'commission_vat_not_applicable' => 'required_without:commission_vat_applicable|numeric|max:13',
-            'commission_vat_applicable' => 'required_without:commission_vat_not_applicable|numeric|max:13',
+            'commission_vat_not_applicable' => 'required_without:commission_vat_applicable|nullable|decimal:0,9999999999999.99',
+            'commission_vat_applicable' => 'required_without:commission_vat_not_applicable|nullable|decimal:0,9999999999999.99',
             'total_commission' => 'nullable',
             'invoice_description' => 'nullable',
             'vat_on_commission' => 'nullable',
