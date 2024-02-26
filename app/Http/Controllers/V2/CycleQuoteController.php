@@ -55,7 +55,7 @@ class CycleQuoteController extends Controller
     }
 
     /**
-     * @param $quoteTypeCode
+     * @param    $quoteTypeCode
      * @return \Illuminate\Http\RedirectResponse
      */
     public function store(CycleQuoteRequest $request)
@@ -87,8 +87,8 @@ class CycleQuoteController extends Controller
     }
 
     /**
-     * @param $quoteTypeCode
-     * @param $quoteId
+     * @param    $quoteTypeCode
+     * @param    $quoteId
      * @return void
      */
     public function update($uuid, CycleQuoteRequest $request)
