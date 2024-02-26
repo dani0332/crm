@@ -18,7 +18,7 @@ jobs:
           node-version: '18.18.x'
       - name: Setup yarn
         run: npm install -g yarn
-      - run: yarn && yarn prod
+      - run: yarn && yarn vite build
       - name: Push changes
         uses: stefanzweifel/git-auto-commit-action@v4
         with:
