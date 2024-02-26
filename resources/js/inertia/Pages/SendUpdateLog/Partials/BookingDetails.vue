@@ -262,7 +262,7 @@ const selectedInvoice = () => {
 }
 
 function reverseValue(value) {
-  if (value === null || value === undefined) {
+  if (value === null || value === undefined || value === '') {
     return '';
   }
   const numericValue = parseFloat(value.toString().replace(/,/g, ''));
@@ -272,7 +272,6 @@ function reverseValue(value) {
 };
 
 function updateReversalEntries(response) {
-  console.log(response);
   reversalEntry.insurer_tax_invoice_number = response.insurer_tax_number;
   reversalEntry.broker_invoice_number = response.broker_invoice_number || '';
   reversalEntry.transaction_payment_status = response.transaction_payment_status || '';
@@ -286,18 +285,6 @@ function updateReversalEntries(response) {
   reversalEntry.total_commission = reverseValue(response.commission) || '';
   reversalEntry.total_price = reverseValue(response.total_price);
 
-  bookingDetailsForm.insurer_tax_invoice_number = response.insurer_tax_number;
-  bookingDetailsForm.broker_invoice_number = response.broker_invoice_number || '';
-  bookingDetailsForm.transaction_payment_status = response.transaction_payment_status || '';
-  bookingDetailsForm.invoice_date = response.insurer_invoice_date || '';
-  bookingDetailsForm.insurer_commission_invoice_number = response.insurer_commission_invoice_number || '';
-  bookingDetailsForm.discount = response.discount_value || '';
-  bookingDetailsForm.commission_percentage = response.commission_percentage || '';
-  bookingDetailsForm.commission_vat_not_applicable = response.commission_vat_not_applicable || '';
-  bookingDetailsForm.vat_on_commission = response.commission_vat || '';
-  bookingDetailsForm.commission_vat_applicable = response.commission_vat_applicable || '';
-  bookingDetailsForm.total_commission = response.commission || '';
-  bookingDetailsForm.total_price = response.total_price;
   // fields missing from response.
   /*reversalEntry.total_vat_amount = '';
   reversalEntry.price_vat_applicable = '';
@@ -312,6 +299,29 @@ onMounted(() => {
     selectedInvoice();
   }
 });
+
+const onUpdateReversal = () => {
+  bookingDetailsForm.insurer_tax_invoice_number = reversalEntry.insurer_tax_invoice_number;
+  bookingDetailsForm.broker_invoice_number = reversalEntry.broker_invoice_number || '';
+  bookingDetailsForm.transaction_payment_status = reversalEntry.transaction_payment_status || '';
+  bookingDetailsForm.invoice_date = reversalEntry.invoice_date || '';
+  bookingDetailsForm.insurer_commission_invoice_number = reversalEntry.insurer_commission_invoice_number || '';
+  bookingDetailsForm.discount = reverseValue(reversalEntry.discount) || '';
+  bookingDetailsForm.commission_percentage = reverseValue(reversalEntry.commission_percentage) || '';
+  bookingDetailsForm.commission_vat_not_applicable = reverseValue(reversalEntry.commission_vat_not_applicable) || '';
+  bookingDetailsForm.vat_on_commission = reverseValue(reversalEntry.vat_on_commission) || '';
+  bookingDetailsForm.commission_vat_applicable = convertToNumber(reversalEntry.commission_vat_applicable) || '';
+  bookingDetailsForm.total_commission = reverseValue(reversalEntry.total_commission) || '';
+  bookingDetailsForm.total_price = reverseValue(reversalEntry.total_price);
+}
+
+function convertToNumber(value) {
+  if (value === null || value === undefined || value === '') {
+    return 'NaN';
+  }
+
+  return -parseFloat(value.toString().replace(/,/g, ''));
+};
 </script>
 
 <template>
@@ -641,6 +651,7 @@ onMounted(() => {
               color="primary"
               :loading="bookingDetailsForm.processing"
               :disabled="bookingDetailsForm.processing"
+              @click="onUpdateReversal"
             >
               Update
             </x-button>
