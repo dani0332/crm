@@ -53,6 +53,7 @@ class QuoteDocumentController extends Controller
      * upload document to azure first and then record in database.
      *
      * @param$type
+     *
      * @param  QuoteDocumentService  $quoteDocumentService
      * @return \Illuminate\Http\JsonResponse
      */
