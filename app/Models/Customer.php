@@ -102,4 +102,5 @@ class Customer extends Model implements AuditableContract
         return $this->hasMany(CustomerAdditionalContact::class, 'customer_id', 'id');
     }
 
+
 }

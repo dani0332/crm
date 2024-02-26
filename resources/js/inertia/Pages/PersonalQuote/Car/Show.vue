@@ -3186,7 +3186,10 @@ const handleChildUpdate = planId => {
       :modelType="quoteType"
     />
 
-    <CustomerChatLogs />
+    <CustomerChatLogs
+      :customerName="record?.first_name + record?.last_name"
+      :quoteId="quote.uuid"
+    />
     <div class="p-4 rounded shadow mb-6 bg-white" v-if="isQuoteDocumentEnabled">
       <div>
         <h3 class="font-semibold text-primary-800 text-lg">Policy Details</h3>
