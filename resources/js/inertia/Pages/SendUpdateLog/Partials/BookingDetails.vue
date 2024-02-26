@@ -1,4 +1,6 @@
 <script setup>
+import { computed } from 'vue';
+
 const { isRequired } = useRules();
 
 const props = defineProps({
@@ -51,17 +53,6 @@ const state = reactive({
   reversalSectionEdit: false,
 });
 
-const checkSectionTwoEdit = () => {
-  if (props.selectedCategory.subCategory.slug === sendUpdateStatusEnum.CPD && bookingDetailsForm.reversal_invoice === null) {
-    notification.error({
-      title: 'Please select tax invoice number for reversal. ',
-      position: 'top',
-    });
-  } else {
-    state.isEdit = !state.isEdit;
-  }
-}
-
 const page = usePage();
 const notification = useToast();
 const sendUpdateStatusEnum = page.props.sendUpdateStatusEnum;
@@ -79,7 +70,7 @@ const isEF = computed(() => {
 });
 
 const isCI = computed(() => {
-  return props.selectedCategory.subCategory.slug === sendUpdateStatusEnum.CI;
+  return props.selectedCategory?.subCategory.slug === sendUpdateStatusEnum.CI;
 });
 
 const isCIR = computed(() => {
@@ -89,6 +80,34 @@ const isCIR = computed(() => {
 const isCPD = computed(() => {
   return props.selectedCategory?.subCategory.slug === sendUpdateStatusEnum.CPD;
 });
+
+const uploadedDocuments = computed(() => {
+  // document check condition will be add here. 
+  return true;
+});
+
+const checkSectionTwoEdit = () => {
+  const taxInvoiceDoc = [sendUpdateStatusEnum.EF, sendUpdateStatusEnum.CI, sendUpdateStatusEnum.CIR, sendUpdateStatusEnum.CPD];
+  const isTaxInvoiceDoc = taxInvoiceDoc.includes(props.selectedCategory.subCategory.slug);
+
+  if (isTaxInvoiceDoc && !uploadedDocuments.value) {
+    notification.error({
+      title: 'Please upload documents. ',
+      position: 'top',
+    });
+    return;
+  }
+
+  if (isCPD && bookingDetailsForm.reversal_invoice === null) {
+    notification.error({
+      title: 'Please select tax invoice number for reversal. ',
+      position: 'top',
+    });
+    return;
+  }
+
+  state.isEdit = !state.isEdit;
+}
 
 const transactionPaymentStatus = computed(() => {
   if (Number(props?.quote?.price_with_vat) === 0) {
