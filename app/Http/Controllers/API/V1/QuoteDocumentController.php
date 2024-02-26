@@ -23,7 +23,7 @@ class QuoteDocumentController extends Controller
     }
 
     /**
-     * return list of quote documents
+     * return list of quote documents.
      *
      * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\Resources\Json\AnonymousResourceCollection
      */
@@ -37,7 +37,7 @@ class QuoteDocumentController extends Controller
     }
 
     /**
-     * get list of active document types can be presented to customer to upload documents
+     * get list of active document types can be presented to customer to upload documents.
      *
      * @return \Illuminate\Http\Resources\Json\AnonymousResourceCollection
      */
@@ -50,9 +50,9 @@ class QuoteDocumentController extends Controller
     }
 
     /**
-     * upload document to azure first and then record in database
+     * upload document to azure first and then record in database.
      *
-     * @param    $type
+     * @param$type
      * @param  QuoteDocumentService  $quoteDocumentService
      * @return \Illuminate\Http\JsonResponse
      */
@@ -66,7 +66,7 @@ class QuoteDocumentController extends Controller
     }
 
     /**
-     * delete quote document
+     * delete quote document.
      *
      * @return \Illuminate\Http\JsonResponse|void
      */
