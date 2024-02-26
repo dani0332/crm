@@ -25,6 +25,8 @@ class EmbeddedProduct extends Model
         'is_active',
     ];
 
+    protected $appends = ['canGenerateCerticate'];
+
     public function insuranceProvider()
     {
         return $this->belongsTo(InsuranceProvider::class, 'insurance_provider_id', 'id');
@@ -38,5 +40,31 @@ class EmbeddedProduct extends Model
     public function prices()
     {
         return $this->hasMany(EmbeddedProductOption::class);
+    }
+
+    /**
+     * Scope the query to only include active reward details.
+     *
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     */
+    public function ScopeActive($query)
+    {
+        $query->where('is_active', 1);
+    }
+
+    /**
+     * Determine if the embedded product can generate a certificate.
+     *
+     * @return bool
+     */
+    protected function getCanGenerateCerticateAttribute(): bool
+    {
+        $certificatesConfig = config('embedded-products.certificates');
+        $shortCode = strtoupper($this->short_code);
+        if(isset($certificatesConfig[$shortCode])) {
+            return true;
+        }
+
+        return false;
     }
 }

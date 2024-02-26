@@ -97,9 +97,15 @@ class EmbeddedProductRepository extends BaseRepository
     /**
      * @return mixed
      */
-    public function fetchGetData()
+    public function fetchGetData($fetchType = 'all')
     {
-        return $this->with(['insuranceProvider'])->latest('updated_at')->simplePaginate();
+        $query = $this->with(['insuranceProvider'])->latest('updated_at');
+
+        if ($fetchType === 'active') {
+            $query = $query->active();
+        }
+
+        return $query->simplePaginate();
     }
 
     /**
@@ -134,14 +140,8 @@ class EmbeddedProductRepository extends BaseRepository
             $certificate_number = $transaction[0]['certificate_number'];
             $premium = $transaction[0]['price_with_vat'];
         }
-        $viewData['name'] = $quoteObject->first_name.' '.$quoteObject->last_name;
-        $viewData['dob'] = isset($quoteObject->dob) ? Carbon::parse($quoteObject->dob)->format('Y-m-d') : null;
-        $viewData['date_of_enrollment'] = Carbon::now()->format('Y-m-d');
-        $viewData['type'] = $modelType;
-        $viewData['master_policy_number'] = 1234;
-        $viewData['certificate_number'] = $certificate_number;
-        $viewData['premium'] = $premium;
-        $pdf = PDF::setOption(['isHtml5ParserEnabled' => true, 'dpi' => 150])->loadView('pdf.ep_certificate', compact('viewData'));
+        $short_code = $ep->short_code;
+        $pdf = $this->getPDF($short_code, $quoteObject, $certificate_number, $premium);
 
         return response()->json(['data' => 'data:application/pdf;base64,'.base64_encode($pdf->stream()), 'name' => 'Salama_Certificate']);
     }
@@ -295,15 +295,8 @@ class EmbeddedProductRepository extends BaseRepository
             $premium = $transaction[0]['price_with_vat'];
         }
         // send certificate only for medex
-        if (strtoupper($short_code) == 'MDX') {
-            $viewData['name'] = $quoteObject->first_name.' '.$quoteObject->last_name;
-            $viewData['dob'] = isset($quoteObject->dob) ? Carbon::parse($quoteObject->dob)->format('Y-m-d') : null;
-            $viewData['date_of_enrollment'] = Carbon::now()->format('Y-m-d');
-            $viewData['type'] = $modelType;
-            $viewData['master_policy_number'] = 1234;
-            $viewData['certificate_number'] = $certificate_number;
-            $viewData['premium'] = $premium;
-            $pdf = PDF::setOption(['isHtml5ParserEnabled' => true, 'dpi' => 150])->loadView('pdf.ep_certificate', compact('viewData'));
+        $pdf = $this->getPDF($short_code, $quoteObject, $certificate_number, $premium);
+        if($pdf) {
             $attachments[] = [
                 'Content' => base64_encode($pdf->output()),
                 'Name' => 'Salama_Certificate.pdf',
@@ -333,5 +326,50 @@ class EmbeddedProductRepository extends BaseRepository
         ], JSON_UNESCAPED_SLASHES);
 
         SendEPDocumentsJob::dispatch($body);
+    }
+
+    /**
+     * Retrieves the PDF certificate for a specific product.
+     *
+     * @param string $short_code
+     * @param object $quoteObject
+     * @param string $certificate_number
+     * @param float $premium
+     * @return \PDF|null The PDF document or null if the short code is not defined in config.
+     */
+    private function getPDF(
+        $short_code,
+        $quoteObject,
+        $certificate_number,
+        $premium
+    ) {
+        $pdf = null;
+        $certificatesConfig = config('embedded-products.certificates');
+        $short_code = strtoupper($short_code);
+        if(isset($certificatesConfig[$short_code])) {
+            $viewData = [
+                'name' => $quoteObject->first_name . ' ' . $quoteObject->last_name,
+                'dob' => isset($quoteObject->dob) ? Carbon::parse($quoteObject->dob)->format('m/d/Y') : '',
+                'emirates_id' => $quoteObject->customer->emirates_id_number ?? '',
+                'plan_type' => 'Individual',
+                'certificate_number' => $certificate_number, // plan no
+                'plan_currency' => 'AED',
+                'plan_term' => '1 Year effect from Plan Commencement date and Subject to Contribution Paid',
+                'date_of_enrollment' => isset($quoteObject->policy_start_date) ? Carbon::parse($quoteObject->policy_start_date)->format('m/d/Y') : '', // Plan Commencement Date
+                'plan_beneficiary' => 'As per Shari’ah',
+                'policy_insurance_date' => isset($quoteObject->policy_issuance_date) ? Carbon::parse($quoteObject->policy_issuance_date)->format('m/d/Y') : '',
+            ];
+            $viewData['contribution_amount'] = $viewData['plan_currency'] . " {$premium}  (Including VAT) Per Annum";
+
+            $pdf = PDF::setOption(
+                [
+                    'isHtml5ParserEnabled' => true,
+                    'dpi' => 150,
+                ]
+            )
+                ->loadView($certificatesConfig[$short_code]['view_file'], compact('viewData'));
+        }
+
+        return $pdf;
     }
 }

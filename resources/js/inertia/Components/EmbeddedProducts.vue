@@ -321,6 +321,7 @@ const hasAnyRole = roles => useHasAnyRole(roles);
             Send Documents
           </x-button>
           <x-button
+            v-if="item.canGenerateCerticate"
             size="xs"
             color="#ff5e00"
             :disabled="!item.send_document_button"
