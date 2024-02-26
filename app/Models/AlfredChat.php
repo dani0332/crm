@@ -9,5 +9,4 @@ class AlfredChat extends Model
     protected $connection = 'alfredcarchatmongo';
     protected $collection = 'chats';
     protected $casts = ['createdAt' => 'datetime', 'updatedAt' => 'datetime'];
-
 }
