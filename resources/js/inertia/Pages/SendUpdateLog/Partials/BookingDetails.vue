@@ -253,48 +253,62 @@ const selectedInvoice = () => {
     taxInvoiceNo: bookingDetailsForm.reversal_invoice,
   };
   axios.post(url, data)
-      .then(response => {
-        response = response.data;
-        reversalEntry.insurer_tax_invoice_number = response.insurer_tax_number;
-        reversalEntry.broker_invoice_number = response.broker_invoice_number || '';
-        reversalEntry.transaction_payment_status = response.transaction_payment_status || '';
-        reversalEntry.invoice_date = response.insurer_invoice_date || '';
-        reversalEntry.discount = response.discount_value || '';
-        reversalEntry.insurer_commission_invoice_number = response.insurer_commission_invoice_number || '';
-        reversalEntry.commission_percentage = response.commission_percentage || '';
-        reversalEntry.commission_vat_not_applicable = response.commission_vat_not_applicable || '';
-        reversalEntry.vat_on_commission = response.commission_vat || '';
-        reversalEntry.commission_vat_applicable = response.commission_vat_applicable || '';
-        reversalEntry.total_commission = response.commission || '';
-        reversalEntry.total_price = response.total_price;
+    .then(response => {
+      updateReversalEntries(response.data);
+    })
+    .catch(error => {
+      // handle the error
+    });
+}
 
-        bookingDetailsForm.insurer_tax_invoice_number = response.insurer_tax_number;
-        bookingDetailsForm.broker_invoice_number = response.broker_invoice_number || '';
-        bookingDetailsForm.transaction_payment_status = response.transaction_payment_status || '';
-        bookingDetailsForm.invoice_date = response.insurer_invoice_date || '';
-        bookingDetailsForm.discount = response.discount_value || '';
-        bookingDetailsForm.insurer_commission_invoice_number = response.insurer_commission_invoice_number || '';
-        bookingDetailsForm.commission_percentage = response.commission_percentage || '';
-        bookingDetailsForm.commission_vat_not_applicable = response.commission_vat_not_applicable || '';
-        bookingDetailsForm.vat_on_commission = response.commission_vat || '';
-        bookingDetailsForm.commission_vat_applicable = response.commission_vat_applicable || '';
-        bookingDetailsForm.total_commission = response.commission || '';
-        bookingDetailsForm.total_price = response.total_price;
-        // fields missing from response.
-        /*reversalEntry.total_vat_amount = '';
-        reversalEntry.price_vat_applicable = '';
-        reversalEntry.price_vat_not_applicable = '';
-        Object.keys(reversalEntry).forEach(key => {
-          reversalEntry[key] = response[key] || '';
-        });*/
-      })
-      .catch(error => {
-        // handle the error
-      });
+function reverseValue(value) {
+  if (value === null || value === undefined) {
+    return '';
+  }
+  const numericValue = parseFloat(value.toString().replace(/,/g, ''));
+  const reversedValue = -numericValue;
+
+  return reversedValue.toLocaleString('en-US', { minimumFractionDigits: 2 });
+};
+
+function updateReversalEntries(response) {
+  console.log(response);
+  reversalEntry.insurer_tax_invoice_number = response.insurer_tax_number;
+  reversalEntry.broker_invoice_number = response.broker_invoice_number || '';
+  reversalEntry.transaction_payment_status = response.transaction_payment_status || '';
+  reversalEntry.invoice_date = response.insurer_invoice_date || '';
+  reversalEntry.insurer_commission_invoice_number = response.insurer_commission_invoice_number || '';
+  reversalEntry.discount = reverseValue(response.discount_value) || '';
+  reversalEntry.commission_percentage = reverseValue(response.commission_percentage) || '';
+  reversalEntry.commission_vat_not_applicable = reverseValue(response.commission_vat_not_applicable) || '';
+  reversalEntry.vat_on_commission = reverseValue(response.commission_vat) || '';
+  reversalEntry.commission_vat_applicable = reverseValue(response.commission_vat_applicable) || '';
+  reversalEntry.total_commission = reverseValue(response.commission) || '';
+  reversalEntry.total_price = reverseValue(response.total_price);
+
+  bookingDetailsForm.insurer_tax_invoice_number = response.insurer_tax_number;
+  bookingDetailsForm.broker_invoice_number = response.broker_invoice_number || '';
+  bookingDetailsForm.transaction_payment_status = response.transaction_payment_status || '';
+  bookingDetailsForm.invoice_date = response.insurer_invoice_date || '';
+  bookingDetailsForm.insurer_commission_invoice_number = response.insurer_commission_invoice_number || '';
+  bookingDetailsForm.discount = response.discount_value || '';
+  bookingDetailsForm.commission_percentage = response.commission_percentage || '';
+  bookingDetailsForm.commission_vat_not_applicable = response.commission_vat_not_applicable || '';
+  bookingDetailsForm.vat_on_commission = response.commission_vat || '';
+  bookingDetailsForm.commission_vat_applicable = response.commission_vat_applicable || '';
+  bookingDetailsForm.total_commission = response.commission || '';
+  bookingDetailsForm.total_price = response.total_price;
+  // fields missing from response.
+  /*reversalEntry.total_vat_amount = '';
+  reversalEntry.price_vat_applicable = '';
+  reversalEntry.price_vat_not_applicable = '';
+  Object.keys(reversalEntry).forEach(key => {
+    reversalEntry[key] = response[key] || '';
+  });*/
 }
 
 onMounted(() => {
-  if (props.bookingDetails?.reversal_invoice !== null) {
+  if (props.bookingDetails?.reversal_invoice && props.bookingDetails?.reversal_invoice !== null) {
     selectedInvoice();
   }
 });
