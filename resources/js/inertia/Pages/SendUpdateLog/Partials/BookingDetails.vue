@@ -371,7 +371,7 @@ onMounted(() => {
                 <span>INVOICE DESCRIPTION</span>
               </dt>
               <dd>
-                <span>{{ isCIR ? 'N.' : 'R.' }}{{ reversalEntry.invoice_description }}</span>
+                <span>{{ reversalEntry.invoice_description }}</span>
               </dd>
             </div>
 
