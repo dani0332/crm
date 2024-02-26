@@ -208,7 +208,18 @@ class SendPolicyApplicationStorageSeeder extends Seeder
         $groupMedicalBookPolicy = ApplicationStorage::where('key_name', ApplicationStorageEnums::GROUP_MEDIAL_BOOK_POLICY_TEMPLATE)->first();
         if (! $groupMedicalBookPolicy) {
             DB::table('application_storage')->insert([
-                'key_name' => ApplicationStorageEnums::YACHT_BOOK_POLICY_TEMPLATE,
+                'key_name' => ApplicationStorageEnums::GROUP_MEDIAL_BOOK_POLICY_TEMPLATE,
+                'value' => '613',
+                'is_active' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+
+        $corplineBookPolicy = ApplicationStorage::where('key_name', ApplicationStorageEnums::CORPLINE_BOOK_POLICY_TEMPLATE)->first();
+        if (! $corplineBookPolicy) {
+            DB::table('application_storage')->insert([
+                'key_name' => ApplicationStorageEnums::CORPLINE_BOOK_POLICY_TEMPLATE,
                 'value' => '613',
                 'is_active' => 1,
                 'created_at' => now(),

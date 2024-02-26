@@ -61,7 +61,7 @@ class BusinessQuoteService extends BaseService
                 'bqr.source',
                 'bqr.policy_number',
                 'bqr.previous_quote_id',
-                'bqr.renewal_expiry_date',
+                DB::raw('DATE_FORMAT(bqr.renewal_expiry_date, "%d-%m-%Y") as renewal_expiry_date'),
                 'bqr.renewal_batch',
                 'bqr.previous_quote_policy_number',
                 'bqr.previous_policy_expiry_date',
@@ -91,6 +91,14 @@ class BusinessQuoteService extends BaseService
                 'bqr.price_vat_not_applicable',
                 'bqr.price_with_vat',
                 'bqr.company_name as business_company_name',
+                'ent.emirate_of_registration_id',
+                'bqr.price_without_vat',
+                'bqr.vat',
+                'bqr.insurer_quote_number',
+                'bqr.policy_issuance_status_id',
+                'bqr.policy_issuance_status_other',
+                DB::raw('DATE_FORMAT(bqr.policy_start_date, "%d-%m-%Y") as policy_start_date'),
+                DB::raw('DATE_FORMAT(bqr.policy_issuance_date, "%d-%m-%Y") as policy_issuance_date'),
             )
             ->leftJoin('business_type_of_insurance as bti', 'bti.id', '=', 'bqr.business_type_of_insurance_id')
             ->leftJoin('business_quote_request_detail as bqrd', 'bqrd.business_quote_request_id', '=', 'bqr.id')

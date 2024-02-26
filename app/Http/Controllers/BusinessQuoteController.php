@@ -38,6 +38,10 @@ use App\Services\SplitPaymentService;
 use App\Traits\RolePermissionConditions;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use App\Models\PolicyIssuanceStatus;
+use App\Models\QuoteType;
+use App\Services\QuoteDocumentService;
+use App\Traits\GenericQueriesAllLobs;
 
 class BusinessQuoteController extends Controller
 {
@@ -50,7 +54,7 @@ class BusinessQuoteController extends Controller
     public const TYPE = quoteTypeCode::Business;
     public const TYPE_ID = QuoteTypeId::Business;
 
-    use RolePermissionConditions;
+    use RolePermissionConditions, GenericQueriesAllLobs;
 
     public function __construct(
         BusinessQuoteService $businessQuoteService,
@@ -246,6 +250,9 @@ class BusinessQuoteController extends Controller
             $sendUpdateLogs = SendUpdateLogRepository::findByQuoteUuid($record->uuid);
             $sendUpdateEnum = SendUpdateLogStatusEnum::asArray();
         }
+        
+        $policyIssuanceStatus = PolicyIssuanceStatus::active()->get();
+        $bPDetails = $this->bookPolicyPayload($record, QuoteTypes::PET->value, $payments, $quoteDocuments);
 
         return inertia('CorpLineQuote/Show', [
             'storageUrl' => storageUrl(),
@@ -318,7 +325,12 @@ class BusinessQuoteController extends Controller
 	        'sendUpdateOptions' => $sendUpdateOptions,
             'sendUpdateLogs' => $sendUpdateLogs,
             'sendUpdateEnum' => $sendUpdateEnum,
-            'hasPolicyIssuedStatus' => $hasPolicyIssuedStatus
+            'hasPolicyIssuedStatus' => $hasPolicyIssuedStatus,
+            'record' => $record,
+            'policyIssuanceStatus' => $policyIssuanceStatus,
+            'bPDetails' => $bPDetails,
+            'payments' => $payments,
+            'quoteStatusEnum' => QuoteStatusEnum::asArray(),
         ]);
     }
 

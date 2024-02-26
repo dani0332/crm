@@ -35,6 +35,7 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
     public function handle(SendEmailCustomerService $sendEmailCustomerService, QuoteDocumentService $quoteDocumentService)
     {
 
+        $modelType= $this->data->model_type;
         $quote = $this->getQuoteObject($this->data->model_type, $this->data->quote_id);
         $quoteDocuments = $quoteDocumentService->getQuoteDocuments($this->data->model_type, $this->data->quote_id);
         $filtered = $quoteDocuments->filter(function ($value, $key) {
@@ -48,7 +49,13 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
 
         $templateId = null;
 
-        switch (ucfirst($this->data->model_type)) {
+        if($modelType === 'business'){
+            $modelType = QuoteTypes::GROUP_MEDICAL->value;
+        }else if($modelType === 'Business') {
+            $modelType = QuoteTypes::CORPLINE->value;
+        }
+
+        switch (ucfirst($modelType)) {
            case QuoteTypes::CAR->value:
                $templateId = ApplicationStorage::where('key_name', ApplicationStorageEnums::CAR_BOOK_POLICY_TEMPLATE)->first()->value;
                break;
@@ -89,10 +96,15 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
                 $templateId = ApplicationStorage::where('key_name', ApplicationStorageEnums::GROUP_MEDIAL_BOOK_POLICY_TEMPLATE)->first()->value;
                 break;
 
+            case QuoteTypes::BUSINESS->value:
+                $templateId = ApplicationStorage::where('key_name', ApplicationStorageEnums::CORPLINE_BOOK_POLICY_TEMPLATE)->first()->value;
+                break;
+
            default:
                 $templateId = null;
                 break;
         }
+        
         info('SendBookPolicyDocumentsJobData ' . json_encode($quote));
 
         if (!empty($templateId)) {
