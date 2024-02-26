@@ -54,13 +54,19 @@ const currentDate = computed(() => {
 });
 
 const transactionPaymentStatus = computed(() => {
-  if (Number(props?.quote?.price_with_vat) === 0) {
+  if (Number(page.props?.payments[0]?.captured_amount) === 0) {
     return 'Not Paid';
   }
-  if (Number(props?.quote?.premium) > Number(props?.quote?.price_with_vat)) {
+  if (
+    Number(page.props?.payments[0]?.total_price) >
+    Number(page.props?.payments[0]?.captured_amount)
+  ) {
     return 'Partially Paid';
   }
-  if (Number(props?.quote?.premium) === Number(props?.quote?.price_with_vat)) {
+  if (
+    Number(page.props?.payments[0]?.captured_amount) >=
+    Number(page.props?.payments[0]?.total_price)
+  ) {
     return 'Paid';
   }
 });
