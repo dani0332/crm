@@ -22,15 +22,4 @@ class AlfredChatController extends Controller
         return response()->json($chat);
     }
 
-    /**
-     * Display the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function show($mongoId)
-    {
-
-    }
-
 }

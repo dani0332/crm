@@ -299,7 +299,6 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::resource('health', CRUDController::class);
         Route::resource('car', CRUDController::class);
         Route::get('health-cards', [HealthQuoteController::class, 'cardsView'])->name('health.cards');
-        // alfred chat
 
         Route::get('home-cards', [CRUDController::class, 'cardsViewHome'])->name('home-cardView');
         Route::resource('home', CRUDController::class);

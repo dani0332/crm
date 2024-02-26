@@ -15,6 +15,8 @@ class AlfredChatRepository extends BaseRepository
 
     public static function fetchGetData()
     {
+        // make it short and add validation
+        
         $query = AlfredChat::query();
         $query->where('quote_id', '=', request()->quoteId)->with('customer')->select('role', 'msg', 'created_at');
 
