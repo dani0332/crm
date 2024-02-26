@@ -26,6 +26,8 @@ defineProps({
   canAddBatchNumber: Boolean,
   documentTypes: Object,
   storageUrl: String,
+  insuranceProviders: Object,
+  vatPercentage: Number,
   payments: Array,
   paymentStatusEnum: Object,
   paymentTooltipEnum: Object,
@@ -977,12 +979,7 @@ const linkEntity = () => {
       :canAddBatchNumber="canAddBatchNumber"
     />
 
-   <PlanDetails
-      :insuranceProviders="insuranceProviders"
-      :quote="quote"
-      :quoteType="quoteType"
-    />
-
+   
 
     <div class="p-4 rounded shadow mb-6 bg-primary-50/25">
       <div>
@@ -1059,6 +1056,15 @@ const linkEntity = () => {
         </x-button>
       </div>
     </div>
+
+    <PlanDetails
+      :insuranceProviders="insuranceProviders"
+      :quote="quote"
+      :quoteType="quoteType"
+      :vatPrice="vatPercentage"
+      
+    />
+
     <PaymentTableNew 
 			v-if="isNewPaymentStructure"
 			:quoteType="quoteType"
