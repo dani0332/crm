@@ -950,14 +950,14 @@ const addPaymentModal = () => {
 };
 
 const editPaymentModal = (payment,split_payment_id,sr_no,capture_approval) => {
-  /*
-  if( sr_no===0 && (payment.payment_status.id === props.paymentStatusEnum.PAID || payment.payment_status.id === props.paymentStatusEnum.CAPTURED) && capture_approval===0 ) {
+  
+  if( sr_no===0 && payment.payment_status.id === props.paymentStatusEnum.PAID && capture_approval===0 ) {
     notification.error({
           title: 'No further actions allowed to paid payments',
           position: 'top',
         });
     return false;
-  };*/
+  };
   paymentMethodsForm.reset();
   splitPaymentNo.value = 0;
   isFieldReadonly.value = false;
