@@ -15,9 +15,7 @@ class AlfredChatController extends Controller
      */
     public function index(AlfredChatRequest $request)
     {
-        $quoteId = $request->quoteId;
-
-        $chat = AlfredChat::where('quote_id', $quoteId)
+        $chat = AlfredChat::where('quote_id', $request->quoteId)
             ->select('role', 'msg', 'created_at')
             ->simplePaginate()
             ->withQueryString()
