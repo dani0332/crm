@@ -23,7 +23,7 @@ class AlfredChatController extends Controller
         if (isset($chat->data)) {
             return response()->json($chat);
         } else {
-            return response()->json(['message' => 'No chat available'], 404);
+            return response()->json(['message' => 'No chat available']);
         }
 
     }
