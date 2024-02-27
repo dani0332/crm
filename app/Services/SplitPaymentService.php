@@ -187,6 +187,10 @@ class SplitPaymentService
                 }
 
                 $childPayments = Payment::where('code', 'like', "$code%")->whereNotIn('paymentable_type', $skipEmbededProducts)->get();
+                if (! ($childPayments->count() > 5)) {                
+                    Log::info('MigratePayment::Child Payments are greater than 5 Payment Code: '.$payment->code);
+                    return false;               
+                }
 
                 Log::info('MigratePayment::Total Child Payments for Payment Code: '.$payment->code.' are: '.$childPayments->count());
                 
