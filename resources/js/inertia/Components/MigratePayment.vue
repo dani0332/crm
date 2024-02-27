@@ -3,9 +3,9 @@
 const props = defineProps({
     quoteType: String,
     quoteId: Number,
-    paymentCode: String
-})
-
+    paymentCode: String,
+    planPrice: Number,
+});
 
 const notification = useNotifications('toast');
 const isLoading = ref(false);
@@ -17,20 +17,28 @@ const migratePayment = () => {
     let data = {
         'model_type' : props.quoteType,
         'quote_id' : props.quoteId,
-        'payment_code' : props.paymentCode
+        'payment_code' : props.paymentCode,
+        'plan_price' : props.planPrice,
     }
     
     axios.post(`/payments/${props.quoteType}/migrate-payment`, data)
         .then(res => {
             isLoading.value = false;
-            //console.log("RESP=="+JSON.stringify(res.data));
-            notification.success({
-                    title: "Payment Migrated Successfully!",
+            if(res.data.error){
+                notification.error({
+                    title:  res.data.error,
                     position: 'top',
-            });
+                });
+                return;
+            } else {
+                notification.success({
+                    title:  res.data.message,
+                    position: 'top',
+                });
+            }           
             setTimeout(() => {
                 location.reload();
-            }, 500);            
+            }, 500);           
         })
         .catch(err => {           
             console.log(err)

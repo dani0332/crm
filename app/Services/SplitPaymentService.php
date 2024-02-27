@@ -12,6 +12,7 @@ use App\Models\QuoteDocument;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\SageLoggable;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
 
 class SplitPaymentService
 {
@@ -153,112 +154,128 @@ class SplitPaymentService
     }
 
     // Migrate payments from old system to new system
-    public function migratePayments($payment)
+    public function migratePayments($payment, $premium=0)
     {
         if ($payment){
-            $skipEmbededProducts = ['App\Models\EmbeddedTransactions','App\Models\EmbeddedTransaction'];
-            // Extract the code and check if it has child payments
-            $code = $payment->code;
-            $tempCode = explode('-', $code);
-            if (count($tempCode) == 3) {
-                $code = $tempCode[0].'-'.$tempCode[1];
-            }            
+            return DB::transaction(function () use ($payment, $premium) {
+                $skipEmbededProducts = ['App\Models\EmbeddedTransactions','App\Models\EmbeddedTransaction'];
+                // Extract the code and check if it has child payments
+                $code = $payment->code;
+                $tempCode = explode('-', $code);
+                if (count($tempCode) == 3) {
+                    $code = $tempCode[0].'-'.$tempCode[1];
+                }            
 
-            $splitPaymentExists = PaymentSplits::where('code', $code)->count();
-            if ($splitPaymentExists > 0) {
-                Log::info('MigratePayment::Split Payment already exists for Payment Code: '.$payment->code);
-                return true;
-            }
-
-            // verify master payment exists or not
-            $masterPaymentExists = Payment::where('code', $code)->count();
-            if (! ($masterPaymentExists > 0)) {                
-                Log::info('MigratePayment::Master Payment does not exists for Payment Code: '.$payment->code);
-                return false;               
-            }
-            
-            $parentCollectionAmount = 0;
-            if ($payment->payment_status_id == PaymentStatusEnum::PAID || $payment->payment_status_id == PaymentStatusEnum::CAPTURED //if paid or captured
-                || $payment->payment_status_id == PaymentStatusEnum::PARTIAL_CAPTURED || $payment->payment_status_id == PaymentStatusEnum::PARTIALLY_PAID //if partial paid or captured
-            ) { 
-                $parentCollectionAmount = $payment->captured_amount;
-            }
-
-            $childPayments = Payment::where('code', 'like', "$code%")->whereNotIn('paymentable_type', $skipEmbededProducts)->get();
-
-            Log::info('MigratePayment::Total Child Payments for Payment Code: '.$payment->code.' are: '.$childPayments->count());
-            //echo $code . "==".$childPayments->count()."<hr>"; //continue;
-            //update `payments` set total_payments=NULL, frequency=NULL
-            $parentCollectionAmount = 0;
-            $grandTotal = $childPayments->sum('captured_amount');
-            $payment->total_payments = $childPayments->count();            
-            if ($childPayments->count()===1){
-                $payment->frequency = 'upfront';
-            } else {
-                $payment->frequency = 'split_payments';
-            }
-            $payment->total_price = $grandTotal;
-            $payment->total_amount = $grandTotal;
-            $payment->collection_type = 'broker';
-
-            if ($payment->payment_status_id == PaymentStatusEnum::DRAFT) { //draft
-                $payment->payment_status_id = PaymentStatusEnum::NEW; //new
-            }
-            //$payment->captured_amount = $parentCollectionAmount;
-            $payment->collection_date = $payment->updated_at;
-            $payment->save();
-
-            if ($childPayments->isNotEmpty()) {
-                $payment_sr_no = 1;
-                foreach ($childPayments as $childPayment) {
-
-                    if ($childPayment->payment_status_id == PaymentStatusEnum::DRAFT) { //draft
-                        $childPayment->payment_status_id = PaymentStatusEnum::NEW; //new
-                    }
-                    // Create a new SplitPayment record
-                    $collectionAmount = 0;
-                    if ($childPayment->payment_status_id == PaymentStatusEnum::PAID || $childPayment->payment_status_id == PaymentStatusEnum::CAPTURED //if paid or captured
-                    || $childPayment->payment_status_id == PaymentStatusEnum::PARTIAL_CAPTURED || $childPayment->payment_status_id == PaymentStatusEnum::PARTIALLY_PAID //if partial paid or captured
-                    ) { 
-                        $collectionAmount = $childPayment->captured_amount;
-                        $parentCollectionAmount += $childPayment->captured_amount;
-                    }
-
-                    PaymentSplits::create([
-                        'sr_no' => $payment_sr_no,
-                        'code' => $code,
-                        'payment_method' => $childPayment->payment_methods_code,
-                        'payment_amount' => $childPayment->captured_amount,
-                        'due_date' => $childPayment->updated_at,
-                        'payment_status_id' => $childPayment->payment_status_id,
-                        'collection_amount' => $collectionAmount,
-                        'cc_payment_id' => $childPayment->amount,
-                        'cc_payment_gateway' => $childPayment->amount,
-                        'payment_link' => $childPayment->payment_link,
-                        'payment_link_created_at' => $childPayment->payment_link_created_at,
-                        'reference' => $childPayment->reference,
-                        'authorized_at' => $childPayment->authorized_at,
-                        'captured_at' => $childPayment->captured_at,
-                        'premium_authorized' => $childPayment->premium_authorized,
-                        'premium_captured' => $childPayment->premium_captured,
-                        'payment_status_message' => $childPayment->payment_status_message,
-                        'payment_gateway_id' => $childPayment->payment_gateway_id,
-                        'customer_payment_instrument_id' => $childPayment->customer_payment_instrument_id,
-                        'created_at' => $childPayment->created_at,
-                        'updated_at' => $childPayment->updated_at,
-                    ]);
-
-                    $payment_sr_no++;
-                    // Delete the child payment from the old table
-                    ////$childPayment->delete();
+                $splitPaymentExists = PaymentSplits::where('code', $code)->count();
+                if ($splitPaymentExists > 0) {
+                    Log::info('MigratePayment::Split Payment already exists for Payment Code: '.$payment->code);
+                    return true;
                 }
-                if ($payment->code == $code) {
-                    $payment->captured_amount = $parentCollectionAmount;
-                    $payment->save();
+
+                // verify master payment exists or not
+                $masterPaymentExists = Payment::where('code', $code)->count();
+                if (! ($masterPaymentExists > 0)) {                
+                    Log::info('MigratePayment::Master Payment does not exists for Payment Code: '.$payment->code);
+                    return false;               
                 }
-                Log::info('MigratePayment::Payment migrated for Payment Code: '.$payment->code);
-            }            
-            return true;       
+                
+                $parentCollectionAmount = 0;
+                if ($payment->payment_status_id == PaymentStatusEnum::PAID || $payment->payment_status_id == PaymentStatusEnum::CAPTURED //if paid or captured
+                    || $payment->payment_status_id == PaymentStatusEnum::PARTIAL_CAPTURED || $payment->payment_status_id == PaymentStatusEnum::PARTIALLY_PAID //if partial paid or captured
+                ) { 
+                    $parentCollectionAmount = $payment->captured_amount;
+                }
+
+                $childPayments = Payment::where('code', 'like', "$code%")->whereNotIn('paymentable_type', $skipEmbededProducts)->get();
+
+                Log::info('MigratePayment::Total Child Payments for Payment Code: '.$payment->code.' are: '.$childPayments->count());
+                
+                $parentCollectionAmount = 0;
+                $grandTotal = $childPayments->sum('captured_amount');
+                $payment->total_payments = $childPayments->count();            
+                if ($childPayments->count()===1){
+                    $payment->frequency = 'upfront';
+                } else {
+                    $payment->frequency = 'split_payments';
+                }
+                $payment->total_price = $grandTotal;
+                $payment->total_amount = $grandTotal;
+                $payment->collection_type = 'broker';
+
+                if ($payment->payment_status_id == PaymentStatusEnum::DRAFT) { //draft
+                    $payment->payment_status_id = PaymentStatusEnum::NEW; //new
+                } else if(
+                    ($payment->payment_status_id == PaymentStatusEnum::CAPTURED || $payment->payment_status_id == PaymentStatusEnum::PARTIAL_CAPTURED)
+                    && $premium > 0
+                ) {
+                    $capturedAmount = 0;
+                    foreach ($childPayments as $childPayment) {
+                        if ($childPayment->payment_status_id == PaymentStatusEnum::CAPTURED 
+                        || $childPayment->payment_status_id == PaymentStatusEnum::PARTIAL_CAPTURED 
+                        ) {
+                            $capturedAmount += $childPayment->captured_amount;
+                        }
+                    }
+                    if( $premium>$capturedAmount ){
+                        $payment->payment_status_id = PaymentStatusEnum::PARTIALLY_PAID; //partially paid                    
+                    } 
+                }
+                //$payment->captured_amount = $parentCollectionAmount;
+                $payment->collection_date = $payment->updated_at;
+                $payment->save();
+
+                if ($childPayments->isNotEmpty()) {
+                    $payment_sr_no = 1;
+                    foreach ($childPayments as $childPayment) {
+
+                        if ($childPayment->payment_status_id == PaymentStatusEnum::DRAFT) { //draft
+                            $childPayment->payment_status_id = PaymentStatusEnum::NEW; //new
+                        }
+                        // Create a new SplitPayment record
+                        $collectionAmount = 0;
+                        if ($childPayment->payment_status_id == PaymentStatusEnum::PAID || $childPayment->payment_status_id == PaymentStatusEnum::CAPTURED //if paid or captured
+                        || $childPayment->payment_status_id == PaymentStatusEnum::PARTIAL_CAPTURED || $childPayment->payment_status_id == PaymentStatusEnum::PARTIALLY_PAID //if partial paid or captured
+                        ) { 
+                            $collectionAmount = $childPayment->captured_amount;
+                            $parentCollectionAmount += $childPayment->captured_amount;
+                        }
+
+                        PaymentSplits::create([
+                            'sr_no' => $payment_sr_no,
+                            'code' => $code,
+                            'payment_method' => $childPayment->payment_methods_code,
+                            'payment_amount' => $childPayment->captured_amount,
+                            'due_date' => $childPayment->updated_at,
+                            'payment_status_id' => $childPayment->payment_status_id,
+                            'collection_amount' => $collectionAmount,
+                            'cc_payment_id' => $childPayment->amount,
+                            'cc_payment_gateway' => $childPayment->amount,
+                            'payment_link' => $childPayment->payment_link,
+                            'payment_link_created_at' => $childPayment->payment_link_created_at,
+                            'reference' => $childPayment->reference,
+                            'authorized_at' => $childPayment->authorized_at,
+                            'captured_at' => $childPayment->captured_at,
+                            'premium_authorized' => $childPayment->premium_authorized,
+                            'premium_captured' => $childPayment->premium_captured,
+                            'payment_status_message' => $childPayment->payment_status_message,
+                            'payment_gateway_id' => $childPayment->payment_gateway_id,
+                            'customer_payment_instrument_id' => $childPayment->customer_payment_instrument_id,
+                            'created_at' => $childPayment->created_at,
+                            'updated_at' => $childPayment->updated_at,
+                        ]);
+
+                        $payment_sr_no++;
+                        // Delete the child payment from the old table
+                        ////$childPayment->delete();
+                    }
+                    if ($payment->code == $code) {
+                        $payment->captured_amount = $parentCollectionAmount;
+                        $payment->save();
+                    }
+                    Log::info('MigratePayment::Payment migrated for Payment Code: '.$payment->code);
+                }            
+                return true; 
+            });      
         } else {
             Log::info('MigratePayment::Payment does not exists for Payment Code: '.$payment->code);
             return false;

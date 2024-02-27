@@ -1867,64 +1867,64 @@ watch(() => props.quoteRequest, (newValue, oldValue) => {
           <tbody class="vue3-easy-data-table__body">
 
             <template  v-for="(item,index) in payments" :key="item.code">
-             <tr>  
-              
-              <td class="text-center">
-                <span
-                  class="expand-pointer"
-                  @click="isExpandedSplitPayments[index]=!isExpandedSplitPayments[index]"
-                >
-                  {{ isExpandedSplitPayments[index] ? '&and;' : '&or;' }}
-                </span>
-              </td>
-              <td>{{ item.code }}</td>             
-              <td>{{ formatDate(item.collection_date) }}</td>
-              <td>{{ formatDate(item.collection_date) }}</td>
-              <td>{{ item.payment_method.name }}</td>
-              <td>{{ formatAmount(item.total_price) }}</td>
-              <td>{{ formatAmount(item.discount_value) }}</td>
-              <td>{{ formatAmount(item.total_amount) }}</td>
-              <td>{{ formatAmount(item.captured_amount) }}</td>
-              <td>{{ formatString(item.payment_status.text) }}</td>
-              <td>{{ item.payment_allocation_status !== null ? formatString(item.payment_allocation_status) : '' }}</td>             
-              <td>
-                <div class="flex gap-2">                                
-                    <x-button v-if="can(permissionEnum.PaymentsEdit)" size="xs" color="primary" outlined @click="editPaymentModal(item,0,0,0)">
-                        Edit
-                    </x-button>
-                    <template v-if="can(permissionEnum.ApprovePayments)">
-                      <x-button v-if="getCaptureOption(item)==='capture' && getCaptureValidation(item)" size="xs" color="orange" outlined 
-                      @click="getCaptureValidation(item) ? editPaymentModal(item, 0, 0, 1) : alertCapture(item)">
-                          Capture
+              <template v-if="item.total_payments>0">
+              <tr>
+                <td class="text-center">
+                  <span
+                    class="expand-pointer"
+                    @click="isExpandedSplitPayments[index]=!isExpandedSplitPayments[index]"
+                  >
+                    {{ isExpandedSplitPayments[index] ? '&and;' : '&or;' }}
+                  </span>
+                </td>
+                <td>{{ item.code }}</td>             
+                <td>{{ formatDate(item.collection_date) }}</td>
+                <td>{{ formatDate(item.collection_date) }}</td>
+                <td>{{ item.payment_method.name }}</td>
+                <td>{{ formatAmount(item.total_price) }}</td>
+                <td>{{ formatAmount(item.discount_value) }}</td>
+                <td>{{ formatAmount(item.total_amount) }}</td>
+                <td>{{ formatAmount(item.captured_amount) }}</td>
+                <td>{{ formatString(item.payment_status.text) }}</td>
+                <td>{{ item.payment_allocation_status !== null ? formatString(item.payment_allocation_status) : '' }}</td>             
+                <td>
+                  <div class="flex gap-2">                                
+                      <x-button v-if="can(permissionEnum.PaymentsEdit)" size="xs" color="primary" outlined @click="editPaymentModal(item,0,0,0)">
+                          Edit
                       </x-button>
-                      <x-button v-if="getCaptureOption(item)==='approve' && getCaptureValidation(item)" size="xs" color="orange" outlined 
-                      @click="getCaptureValidation(item) ? editPaymentModal(item, 0, 0, 2) : alertCapture(item)">
-                          Approve
-                      </x-button>
-                    </template>               
-            </div>
-              </td>                   
-            </tr>
-            <template v-if="isExpandedSplitPayments[index]">
-            <tr v-for="splitPayment in item.payment_splits" :key="splitPayment.id">
-              <td class="text-center">{{ splitPayment.sr_no }}</td>
-              <td></td>
-              <td>{{ formatDate(splitPayment.due_date) }}</td>
-              <td>{{ formatDate(splitPayment.due_date) }}</td>
-              <td>{{ splitPayment.payment_method.name }}</td>
-              <td></td>
-              <td></td>
-              <td>{{ formatAmount(splitPayment.payment_amount) }}</td>
-              <td>{{ (splitPayment.collection_amount>0) ? formatAmount(splitPayment.collection_amount):'' }}</td>
-              <td>{{ formatString(splitPayment.payment_status.text) }}</td>
-              <td>{{ splitPayment.payment_allocation_status !== null ? formatString(splitPayment.payment_allocation_status) : ''}}</td>
-              <td>
-                <x-button size="xs" color="primary" @click="editPaymentModal(item,splitPayment.id,splitPayment.sr_no,0)" outlined >View</x-button>                
-                <x-button v-if="splitPayment.payment_method.code=='CC'" class="ml-2" size="xs" color="emerald"  @click.prevent="generateCCLink(splitPayment.code,splitPayment.sr_no,splitPayment.payment_status_id);" outlined >Copy Payment Link</x-button>                
-              </td>
-            </tr>
+                      <template v-if="can(permissionEnum.ApprovePayments)">
+                        <x-button v-if="getCaptureOption(item)==='capture' && getCaptureValidation(item)" size="xs" color="orange" outlined 
+                        @click="getCaptureValidation(item) ? editPaymentModal(item, 0, 0, 1) : alertCapture(item)">
+                            Capture
+                        </x-button>
+                        <x-button v-if="getCaptureOption(item)==='approve' && getCaptureValidation(item)" size="xs" color="orange" outlined 
+                        @click="getCaptureValidation(item) ? editPaymentModal(item, 0, 0, 2) : alertCapture(item)">
+                            Approve
+                        </x-button>
+                      </template>               
+              </div>
+                </td>                   
+              </tr>
+              <template v-if="isExpandedSplitPayments[index]">
+              <tr v-for="splitPayment in item.payment_splits" :key="splitPayment.id">
+                <td class="text-center">{{ splitPayment.sr_no }}</td>
+                <td></td>
+                <td>{{ formatDate(splitPayment.due_date) }}</td>
+                <td>{{ formatDate(splitPayment.due_date) }}</td>
+                <td>{{ splitPayment.payment_method.name }}</td>
+                <td></td>
+                <td></td>
+                <td>{{ formatAmount(splitPayment.payment_amount) }}</td>
+                <td>{{ (splitPayment.collection_amount>0) ? formatAmount(splitPayment.collection_amount):'' }}</td>
+                <td>{{ formatString(splitPayment.payment_status.text) }}</td>
+                <td>{{ splitPayment.payment_allocation_status !== null ? formatString(splitPayment.payment_allocation_status) : ''}}</td>
+                <td>
+                  <x-button size="xs" color="primary" @click="editPaymentModal(item,splitPayment.id,splitPayment.sr_no,0)" outlined >View</x-button>                
+                  <x-button v-if="splitPayment.payment_method.code=='CC'" class="ml-2" size="xs" color="emerald"  @click.prevent="generateCCLink(splitPayment.code,splitPayment.sr_no,splitPayment.payment_status_id);" outlined >Copy Payment Link</x-button>                
+                </td>
+              </tr>
+            </template>
           </template>
-
         </template>
 
           </tbody>

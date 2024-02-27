@@ -401,19 +401,17 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
     {
         $quoteModel = $this->getQuoteObject($request->model_type, $request->quote_id);
         if (! $quoteModel) {
-            return response()->json(['success' => false]);
+            return response()->json(['message' => 'Quote Not Exists']);
         }
         $oldPayment = $quoteModel->payments()->where('code', $request->payment_code)->first();
         if (! $oldPayment) {
-            return response()->json(['success' => false]);
-        }
-
-        $paymentMigrated = app(SplitPaymentService::class)->migratePayments($oldPayment);
-        
+            return response()->json(['message' => 'Master Payment Not Exists']);
+        }        
+        $paymentMigrated = app(SplitPaymentService::class)->migratePayments($oldPayment, $request->plan_price);        
         if ($paymentMigrated) {
-            return response()->json(['success' => true]);
+            return response()->json(['message' => 'Payment Migrated Successfully']);
         }
-        return response()->json(['error' => false]);        
+        return response()->json(['error' => 'Payment Migration Failed']);        
     }
 
     public function fetchUpdatePaymentStatus($request)

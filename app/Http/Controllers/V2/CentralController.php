@@ -5,6 +5,7 @@ namespace App\Http\Controllers\V2;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\QuoteTypes;
+use App\Enums\PermissionsEnum;
 use App\Exports\AmtQuoteExport;
 use App\Exports\BusinessQuoteExport;
 use App\Exports\CarQuoteExport;
@@ -23,9 +24,13 @@ use App\Http\Requests\LeadAssignRequest;
 use App\Http\Requests\PlanDetailsRequest;
 use App\Http\Requests\UpdateLastYearPolicyRequest;
 use App\Http\Requests\UpdateSelectedPlanRequest;
+use App\Http\Requests\MigratePaymentsRequest;
+use App\Http\Requests\SplitPaymentApproveRequest;
+use App\Http\Requests\SplitPaymentUpdateRequest;
 use App\Models\Customer;
 use App\Models\Entity;
 use App\Models\QuoteRequestEntityMapping;
+use App\Repositories\PaymentRepository;
 use App\Services\CentralService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Http\Request;
@@ -208,6 +213,37 @@ class CentralController extends Controller
         $response = (new CentralService())->updateSelectedPlan($quoteType, $uuid, $request->safe());
 
         return response()->json(['plan' => $response]);
+    }
+
+    // Migrate payments from old system to new system
+    public function migratePayment(MigratePaymentsRequest $request)
+    { 
+        if (auth()->user()->can(PermissionsEnum::PaymentsEdit)) {
+            $successMessage = PaymentRepository::migratePayments($request);
+            return $successMessage;
+        } else {
+            return response()->json(['error' => 'You are not authorized']);
+        }
+    }
+    // Update split payment status
+    public function splitPaymentUpdate(SplitPaymentUpdateRequest $request)
+    {
+        if (auth()->user()->can(PermissionsEnum::ApprovePayments)) {
+            $successMessage = PaymentRepository::updatePaymentStatus($request);
+            return back()->with('success', $successMessage);
+        } else {
+            return back()->with('error', 'You are not authorized');
+        }
+    }
+    // Approve split payments
+    public function splitPaymentsApprove(SplitPaymentApproveRequest $request)
+    {
+        if (auth()->user()->can(PermissionsEnum::ApprovePayments)) {
+            $successMessage = PaymentRepository::updateSplitPaymentsApprove($request);
+            return back()->with('success', $successMessage);
+        } else {
+            return back()->with('error', 'You are not authorized');
+        }
     }
 
 }
