@@ -18,7 +18,6 @@ class AlfredChatController extends Controller
         $quoteId = $request->quoteId;
 
         $chat = AlfredChat::where('quote_id', $quoteId)
-            ->with('customer')
             ->select('role', 'msg', 'created_at')
             ->simplePaginate()
             ->withQueryString()
