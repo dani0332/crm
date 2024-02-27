@@ -2752,10 +2752,10 @@ const handleChildUpdate = planId => {
                   </x-button>
                   <template #content>!</template>
                 </x-badge>
-                <template #tooltip
-                  >Price outdated! <br />
-                  Please update</template
-                >
+                <template #tooltip>
+                  Price outdated! <br />
+                  Please update
+                </template>
               </x-tooltip>
             </template>
             <template v-else>
