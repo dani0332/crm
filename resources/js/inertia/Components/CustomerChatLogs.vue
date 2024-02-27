@@ -130,7 +130,7 @@ onMounted(async () => {
             >
               <p class="text-sm text-white py-4 px-4">
                 {{ message.msg }}
-                <p class="text-xs text-white text-right lowercase">
+                <p class="text-xs text-white text-right">
                 {{ formatted(message.created_at) }}
               </p>
               </p>

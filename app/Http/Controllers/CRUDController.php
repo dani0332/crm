@@ -1840,5 +1840,4 @@ class CRUDController extends Controller
 
         return $response;
     }
-
 }
