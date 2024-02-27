@@ -88,7 +88,13 @@ const selectedData = computed({
       />
       <div
         v-if="!props.disabled"
-        :class="props.label == '' ? 'top-3' : 'top-[34px]'"
+        :class="
+          props.label == ''
+            ? props.size == 'xs'
+              ? 'top-1'
+              : 'top-3'
+            : 'top-[34px]'
+        "
         class="absolute right-2.5 hover:text-secondary-500"
       >
         <svg
