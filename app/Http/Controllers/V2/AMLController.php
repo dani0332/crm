@@ -294,6 +294,7 @@ class AMLController extends Controller
                 $response = ['status' => $response['status'], 'message' => $response['message']];
             }
         }
+
         return response()->json($response);
     }
 
@@ -439,8 +440,10 @@ class AMLController extends Controller
                 // Job dispatch for all UBO members
                 $this->AMLJobDispatchForMembers($updateQuote, $getMemberOrUBODetails, $bridgerAPIToken, $quoteRequestId, $quoteTypeId, CustomerTypeEnum::Individual);
             }
+
             return redirect()->back();
         }
+
         return redirect()->back()->with('error', 'Something went wrong');
     }
 
