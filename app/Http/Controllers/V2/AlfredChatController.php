@@ -21,9 +21,9 @@ class AlfredChatController extends Controller
             ->withQueryString();
 
         if (isset($chat->data)) {
-            return response()->json(['message' => 'No chat available'], 404);
-        } else {
             return response()->json($chat);
+        } else {
+            return response()->json(['message' => 'No chat available'], 404);
         }
 
     }
