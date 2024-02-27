@@ -1,10 +1,10 @@
 <script setup>
-import PaymentTableNew from './../../Components/PaymentTableNew.vue';
-import LazyDocumentUploader from './Partials/DocumentUploader.vue';
-import LazyAvailablePlan from './Partials/AvailablePlans.vue';
-import LazyCreatePlan from './Partials/CreatePlan.vue';
-import { computed } from 'vue';
-import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue';
+import PaymentTableNew from "./../../Components/PaymentTableNew.vue";
+import LazyDocumentUploader from "./Partials/DocumentUploader.vue";
+import LazyAvailablePlan from "./Partials/AvailablePlans.vue";
+import LazyCreatePlan from "./Partials/CreatePlan.vue";
+import { computed } from "vue";
+import RiskRatingScoreDetails from "../../Components/RiskRatingScoreDetails.vue";
 
 defineProps({
   quote: Object,
@@ -61,21 +61,21 @@ defineProps({
   sendUpdateOptions: Array,
   sendUpdateLogs: Array,
   hasPolicyIssuedStatus: Boolean,
+  parentLeadDetails: Object,
 });
 
 const page = usePage();
 const permissionEnum = page.props.permissionsEnum;
-const canAny = permissions => useCanAny(permissions);
+const canAny = (permissions) => useCanAny(permissions);
 const notification = useToast();
-const hasRole = role => useHasRole(role);
-const hasAnyRole = roles => useHasAnyRole(roles);
+const hasRole = (role) => useHasRole(role);
+const hasAnyRole = (roles) => useHasAnyRole(roles);
 const rolesEnum = page.props.rolesEnum;
 
 const paymentStatusEnum = page.props.paymentStatusEnum;
-const dateFormat = date =>
-  date ? useDateFormat(date, 'DD-MM-YYYY').value : '-';
+const dateFormat = (date) => (date ? useDateFormat(date, "DD-MM-YYYY").value : "-");
 
-const fixedValue = number => {
+const fixedValue = (number) => {
   if (number == Math.floor(number)) {
     return number.toLocaleString();
   } else {
@@ -86,8 +86,8 @@ const fixedValue = number => {
   }
 };
 
-const checkPlanType = id => {
-  return page.props.healthPlanTypes.find(type => type.id === id)?.text;
+const checkPlanType = (id) => {
+  return page.props.healthPlanTypes.find((type) => type.id === id)?.text;
 };
 
 const modals = reactive({
@@ -104,8 +104,8 @@ const modals = reactive({
 });
 
 const leadDuplicateForm = useForm({
-  modelType: 'health',
-  parentType: 'health',
+  modelType: "health",
+  parentType: "health",
   entityId: page.props.quote.id,
   entityCode: page.props.quote.code,
   entityUId: page.props.quote.uid,
@@ -118,14 +118,14 @@ const openDuplicate = () => {
   leadDuplicateForm.reset();
 };
 
-const onCreateDuplicate = isValid => {
+const onCreateDuplicate = (isValid) => {
   if (!isValid) return;
-  leadDuplicateForm.post(route('createDuplicate'), {
+  leadDuplicateForm.post(route("createDuplicate"), {
     preserveScroll: true,
     onSuccess: () => {
       notification.success({
-        title: 'Quote duplicated successfully',
-        position: 'top',
+        title: "Quote duplicated successfully",
+        position: "top",
       });
     },
     onFinish: () => {
@@ -141,9 +141,9 @@ const confirmDeleteData = reactive({
   contact: null,
 });
 
-const cleanObj = obj => useCleanObj(obj);
+const cleanObj = (obj) => useCleanObj(obj);
 
-const assignSubteam = ref(page.props.quote.health_team_type || ''),
+const assignSubteam = ref(page.props.quote.health_team_type || ""),
   assignLead = ref(null),
   memberActionEdit = ref(false),
   activityActionEdit = ref(false),
@@ -158,27 +158,26 @@ const { copy, copied } = useClipboard();
 
 const { isRequired, isEmail, isNumber, isMobileNo } = useRules();
 
-const onCopyText = text => {
+const onCopyText = (text) => {
   copy(text);
   if (copied)
     notification.success({
-      title: 'Link copied to clipboard',
-      position: 'top',
+      title: "Link copied to clipboard",
+      position: "top",
     });
 };
 
-const genderText = gender =>
+const genderText = (gender) =>
   computed(() => {
     return page.props.genderOptions[gender];
   });
 
-const memberCategoryText = memberCategoryId =>
+const memberCategoryText = (memberCategoryId) =>
   computed(() => {
     return page.props.memberCategories.find(
-      category => category.id === memberCategoryId,
+      (category) => category.id === memberCategoryId
     )?.text;
   });
-
 
 // const subTeamOptions = computed(() => {
 //     let subteamArray = page.props.teams?.map(team => ({
@@ -192,71 +191,71 @@ const memberCategoryText = memberCategoryId =>
 // });
 
 const subTeamOptions = [
-  { value: 'RM-NB', label: 'RM-NB' },
-  { value: 'RM-SPEED', label: 'RM-SPEED' },
-  { value: 'EBP', label: 'EBP' },
-  { value: 'Wow-Call', label: 'Wow-Call' },
-  { value: 'No-Type', label: 'No-Type' },
+  { value: "RM-NB", label: "RM-NB" },
+  { value: "RM-SPEED", label: "RM-SPEED" },
+  { value: "EBP", label: "EBP" },
+  { value: "Wow-Call", label: "Wow-Call" },
+  { value: "No-Type", label: "No-Type" },
 ];
 
 const advisorOptions = computed(() => {
-  return page.props.advisors.map(advisor => ({
+  return page.props.advisors.map((advisor) => ({
     value: advisor.id,
     label: advisor.name,
   }));
 });
 
 const genderSelect = computed(() => {
-  return Object.keys(page.props.genderOptions).map(status => ({
+  return Object.keys(page.props.genderOptions).map((status) => ({
     value: status,
     label: page.props.genderOptions[status],
   }));
 });
 
 const leadStatusOptions = computed(() => {
-  return page.props.leadStatuses.map(status => ({
+  return page.props.leadStatuses.map((status) => ({
     value: status.id,
     label: status.text,
   }));
 });
 
 const nationalityOptions = computed(() => {
-  return page.props.nationalities.map(nat => ({
+  return page.props.nationalities.map((nat) => ({
     value: nat.id,
     label: nat.text,
   }));
 });
 
 const industryTypeOptions = computed(() => {
-  return page.props.industryType.map(indType => ({
+  return page.props.industryType.map((indType) => ({
     value: indType.code,
     label: indType.text,
   }));
 });
 
 const memberCategoriesOptions = computed(() => {
-  return page.props.memberCategories.map(cat => ({
+  return page.props.memberCategories.map((cat) => ({
     value: cat.id,
     label: cat.text,
   }));
 });
 
 const memberRelationOptions = computed(() => {
-  return page.props.memberRelations.map(relation => ({
+  return page.props.memberRelations.map((relation) => ({
     value: relation.code,
     label: relation.text,
   }));
 });
 
 const emiratesOptions = computed(() => {
-  return page.props.emirates.map(em => ({
+  return page.props.emirates.map((em) => ({
     value: em.id,
     label: em.text,
   }));
 });
 
 const salaryBandsOptions = computed(() => {
-  return page.props.salaryBands.map(sal => ({
+  return page.props.salaryBands.map((sal) => ({
     value: sal.id,
     label: sal.text,
   }));
@@ -265,15 +264,15 @@ const salaryBandsOptions = computed(() => {
 const onTeamAssign = () => {
   if (!assignSubteam.value) {
     notification.error({
-      title: 'Please select a subteam',
-      position: 'top',
+      title: "Please select a subteam",
+      position: "top",
     });
     return;
   }
   router.post(
-    route('healthTeamAssign'),
+    route("healthTeamAssign"),
     {
-      modelType: 'Health',
+      modelType: "Health",
       entityId: page.props.quote.id,
       assign_team: assignSubteam.value,
     },
@@ -284,29 +283,29 @@ const onTeamAssign = () => {
       },
       onSuccess: () => {
         notification.success({
-          title: 'Team Assigned',
-          position: 'top',
+          title: "Team Assigned",
+          position: "top",
         });
       },
       onFinish: () => {
         isDisabled.value = false;
       },
-    },
+    }
   );
 };
 
 const onAssignLead = () => {
   if (!assignLead.value) {
     notification.error({
-      title: 'Please select a lead',
-      position: 'top',
+      title: "Please select a lead",
+      position: "top",
     });
     return;
   }
   router.post(
-    route('manualLeadAssign', { quoteType: 'Health' }),
+    route("manualLeadAssign", { quoteType: "Health" }),
     {
-      modelType: 'Health',
+      modelType: "Health",
       entityId: page.props.quote.id,
       assigned_to_id_new: assignLead.value,
     },
@@ -317,19 +316,19 @@ const onAssignLead = () => {
       },
       onSuccess: () => {
         notification.success({
-          title: 'Lead Assigned',
-          position: 'top',
+          title: "Lead Assigned",
+          position: "top",
         });
       },
       onFinish: () => {
         isDisabled.value = false;
       },
-    },
+    }
   );
 };
 
 const leadStatusForm = useForm({
-  modelType: 'Health',
+  modelType: "Health",
   leadId: page.props.quote.id,
   quote_uuid: page.props.quote.uuid,
   assigned_to_user_id: page.props.quote.advisor_id,
@@ -340,60 +339,57 @@ const leadStatusForm = useForm({
 });
 
 const onLeadStatus = () => {
-  leadStatusForm.post(
-    `/quotes/Health/${page.props.quote.id}/update-lead-status`,
-    {
-      preserveScroll: true,
-      onError: errors => {
-        notification.error({ title: errors.value, position: 'top' });
-      },
-      onSuccess: response => {
-        const flash_messages = response.props.flash;
-        if (!flash_messages) {
-          notification.success({
-            title: 'Lead Status Updated',
-            position: 'top',
-          });
-        }
-      },
+  leadStatusForm.post(`/quotes/Health/${page.props.quote.id}/update-lead-status`, {
+    preserveScroll: true,
+    onError: (errors) => {
+      notification.error({ title: errors.value, position: "top" });
     },
-  );
+    onSuccess: (response) => {
+      const flash_messages = response.props.flash;
+      if (!flash_messages) {
+        notification.success({
+          title: "Lead Status Updated",
+          position: "top",
+        });
+      }
+    },
+  });
 };
 
 const memberDetailsTable = reactive({
   isLoading: false,
   columns: [
     {
-      text: 'Member Name',
-      value: 'first_name',
+      text: "Member Name",
+      value: "first_name",
     },
     {
-      text: 'Gender',
-      value: 'gender',
+      text: "Gender",
+      value: "gender",
     },
     {
-      text: 'DOB',
-      value: 'dob',
+      text: "DOB",
+      value: "dob",
     },
     {
-      text: 'Relation',
-      value: 'relation',
+      text: "Relation",
+      value: "relation",
     },
     {
-      text: 'Nationality',
-      value: 'nationality',
+      text: "Nationality",
+      value: "nationality",
     },
     {
-      text: 'Emirate of Visa',
-      value: 'emirate',
+      text: "Emirate of Visa",
+      value: "emirate",
     },
     {
-      text: 'Member Category',
-      value: 'member_category_id',
+      text: "Member Category",
+      value: "member_category_id",
     },
     {
-      text: 'Action',
-      value: 'action',
+      text: "Action",
+      value: "action",
     },
   ],
 });
@@ -420,14 +416,13 @@ const memberForm = useForm({
 });
 
 const rules = {
-  isEmail: v =>
-    /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/.test(v) ||
-    'E-mail must be valid',
-  isRequired: v => !!v || 'This field is required',
-  allowEmpty: v => true || 'This field is required',
-  isPhone: v =>
+  isEmail: (v) =>
+    /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/.test(v) || "E-mail must be valid",
+  isRequired: (v) => !!v || "This field is required",
+  allowEmpty: (v) => true || "This field is required",
+  isPhone: (v) =>
     /^[\+]?[(]?[0-9]{3}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{4,10}$/im.test(v) ||
-    'Phone must be valid',
+    "Phone must be valid",
 };
 
 function onEditMember(data) {
@@ -457,7 +452,7 @@ const memberFieldReq = reactive({
   nationality: false,
   dob: false,
 });
-const onMemberSubmit = isValid => {
+const onMemberSubmit = (isValid) => {
   if (memberForm.nationality_id == null) {
     memberFieldReq.nationality = true;
   } else {
@@ -474,8 +469,8 @@ const onMemberSubmit = isValid => {
       preserveScroll: true,
       onSuccess: () => {
         notification.success({
-          title: 'Member Updated',
-          position: 'top',
+          title: "Member Updated",
+          position: "top",
         });
         memberForm.reset();
         onLoadAvailablePlansData();
@@ -489,8 +484,8 @@ const onMemberSubmit = isValid => {
       preserveScroll: true,
       onSuccess: () => {
         notification.success({
-          title: 'Member Added',
-          position: 'top',
+          title: "Member Added",
+          position: "top",
         });
         onLoadAvailablePlansData();
       },
@@ -501,7 +496,7 @@ const onMemberSubmit = isValid => {
   }
 };
 
-const memberDelete = id => {
+const memberDelete = (id) => {
   modals.memberConfirm = true;
   confirmDeleteData.member = id;
 };
@@ -513,25 +508,25 @@ const memberDeleteConfirmed = () => {
       preserveScroll: true,
       onSuccess: () => {
         notification.success({
-          title: 'Member Deleted',
-          position: 'top',
+          title: "Member Deleted",
+          position: "top",
         });
         onLoadAvailablePlansData();
       },
       onFinish: () => {
         modals.memberConfirm = false;
       },
-    },
+    }
   );
 };
 
-const memberDataDocs = membersDetail => {
+const memberDataDocs = (membersDetail) => {
   return membersDetail
-    .map(member => ({
+    .map((member) => ({
       id: member.id,
       name: memberCategoryText(member.member_category_id).value,
     }))
-    .filter(member => member.name !== undefined);
+    .filter((member) => member.name !== undefined);
 };
 
 // plans
@@ -542,41 +537,41 @@ const plansTable = reactive({
   data: [],
   columns: [
     {
-      text: 'Provider Name',
-      value: 'providerName',
+      text: "Provider Name",
+      value: "providerName",
     },
     {
-      text: 'Plan Name',
-      value: 'name',
+      text: "Plan Name",
+      value: "name",
     },
     {
-      text: 'Network Provider',
-      value: 'eligibilityName',
+      text: "Network Provider",
+      value: "eligibilityName",
     },
     {
-      text: 'CO-PAY/CO-INSURANCE',
-      value: 'copayName',
+      text: "CO-PAY/CO-INSURANCE",
+      value: "copayName",
       width: 100,
     },
     {
-      text: 'Price',
-      value: 'actualPremium',
+      text: "Price",
+      value: "actualPremium",
     },
     {
-      text: 'Basmah',
-      value: 'basmah',
+      text: "Basmah",
+      value: "basmah",
     },
     {
-      text: 'Policy Fee (if applicable)',
-      value: 'policyFee',
+      text: "Policy Fee (if applicable)",
+      value: "policyFee",
     },
     {
-      text: 'Total Indicative Price (with VAT)',
-      value: 'total',
+      text: "Total Indicative Price (with VAT)",
+      value: "total",
     },
     {
-      text: 'Action',
-      value: 'action',
+      text: "Action",
+      value: "action",
     },
   ],
 });
@@ -588,16 +583,16 @@ const onLoadAvailablePlansData = async () => {
   let url = `/quotes/health/available-plans/${page.props.quote.uuid}`;
   axios
     .post(url, data)
-    .then(res => {
+    .then((res) => {
       plansTable.data = res.data.length > 0 ? res?.data[0] : [];
       getSmallestCopayRateAsDefaultValue();
     })
-    .catch(err => {
+    .catch((err) => {
       console.log(err);
     });
 };
 
-const planClicked = plan => {
+const planClicked = (plan) => {
   selectedPlan.value = plan;
   modals.plan = true;
 };
@@ -605,21 +600,21 @@ const planClicked = plan => {
 const onExportPlans = () => {
   if (selectedPlans.value.length < 1 || selectedPlans.value.length > 5) {
     notification.error({
-      title: 'Please select 1 to 5 plans to download PDF.',
-      position: 'top',
+      title: "Please select 1 to 5 plans to download PDF.",
+      position: "top",
     });
     return;
   }
   exportLoader.value = true;
-  const planIds = selectedPlans.value.map(p => {
+  const planIds = selectedPlans.value.map((p) => {
     return p.id;
   });
 
   let addOns = {};
 
-  selectedPlans.value.map(plan => {
+  selectedPlans.value.map((plan) => {
     let copayIdToBeAdded = plan.selectedCopayId;
-    plan.coPayments.forEach(element => {
+    plan.coPayments.forEach((element) => {
       if (element.id == copayIdToBeAdded) {
         addOns[plan.id] = { coPayment: element };
       }
@@ -628,29 +623,29 @@ const onExportPlans = () => {
 
   axios
     .post(
-      '/api/v1/quotes/health/export-plans-pdf',
+      "/api/v1/quotes/health/export-plans-pdf",
       {
         plan_ids: planIds,
         quote_uuid: page.props.quote.uuid,
         addons: addOns,
       },
       {
-        responseType: 'json',
-      },
+        responseType: "json",
+      }
     )
-    .then(response => {
-      const link = document.createElement('a');
+    .then((response) => {
+      const link = document.createElement("a");
       let fileName = response.data.name;
       link.href = response.data.data;
-      link.setAttribute('download', fileName);
+      link.setAttribute("download", fileName);
       document.body.appendChild(link);
       link.click();
       notification.success({
-        title: 'Plans Exported',
-        position: 'top',
+        title: "Plans Exported",
+        position: "top",
       });
     })
-    .catch(error => {
+    .catch((error) => {
       console.log(error);
     })
     .finally(() => {
@@ -658,35 +653,35 @@ const onExportPlans = () => {
     });
 };
 
-const onTogglePlans = toggle => {
+const onTogglePlans = (toggle) => {
   toggleLoader.value = true;
 
   const planIds = useArrayUnique(
-    selectedPlans.value.map(p => {
+    selectedPlans.value.map((p) => {
       return p.id;
-    }),
+    })
   ).value;
 
   axios
-    .post(route('manualPlanToggle', { quoteType: 'Health' }), {
-      modelType: 'Health',
+    .post(route("manualPlanToggle", { quoteType: "Health" }), {
+      modelType: "Health",
       planIds: planIds,
       quote_uuid: page.props.quote.uuid,
       toggle: toggle,
     })
-    .then(response => {
+    .then((response) => {
       notification.success({
-        title: 'Plans has been updated',
-        position: 'top',
+        title: "Plans has been updated",
+        position: "top",
       });
       router.reload({
         preserveScroll: true,
       });
     })
-    .catch(error => {
+    .catch((error) => {
       notification.error({
         title: error,
-        position: 'top',
+        position: "top",
       });
     })
     .finally(() => {
@@ -699,14 +694,14 @@ const onCreatePlan = () => {
   router.reload({
     preserveState: true,
     preserveScroll: true,
-    only: ['plansTable.data'],
+    only: ["plansTable.data"],
     onStart: () => {
       modals.createPlan = false;
     },
     onFinish: () => {
       notification.success({
-        title: 'Plan Created',
-        position: 'top',
+        title: "Plan Created",
+        position: "top",
       });
     },
   });
@@ -715,8 +710,8 @@ const onCreatePlan = () => {
 const onPlanError = () => {
   modals.createPlan = false;
   notification.error({
-    title: 'Plan Creation Failed',
-    position: 'top',
+    title: "Plan Creation Failed",
+    position: "top",
   });
 };
 
@@ -733,30 +728,30 @@ const options = reactive({
 });
 watch(
   () => planFilters?.insurer,
-  value => {
+  (value) => {
     if (value) {
       options.loading = true;
-      const ids = planFilters.insurer.map(item => {
+      const ids = planFilters.insurer.map((item) => {
         return item;
       });
       let url = `/insurance-provider-networks?insuranceProviderId=${ids.toString()}`;
       axios
         .get(url)
-        .then(res => {
+        .then((res) => {
           if (res.data.length > 0) {
             options.network = res.data;
           } else {
             options.network = [];
           }
         })
-        .catch(err => {
+        .catch((err) => {
           console.log(err);
         })
         .finally(() => {
           options.loading = false;
         });
     }
-  },
+  }
 );
 
 const listQuotePlansFiltered = ref([]);
@@ -770,12 +765,12 @@ watchEffect(() => {
 const onPlanFiltersSubmit = () => {
   const filters = cleanObj(planFilters);
   planFiltersCount.value = Object.keys(filters).length;
-  listQuotePlansFiltered.value = plansTable.data.filter(plan => {
+  listQuotePlansFiltered.value = plansTable.data.filter((plan) => {
     let isManualPlan = planFilters.manual_plan;
     let isCurrentlyOnline = planFilters.current_online;
     let network = planFilters.network;
     let insurerIds =
-      planFilters.insurer?.map(item => {
+      planFilters.insurer?.map((item) => {
         return item;
       }) || [];
     let manualMatch = false;
@@ -832,7 +827,7 @@ const getSmallestCopayRateAsDefaultValue = () => {
   let smallestCopayValue = 0;
   let defaultCopayId = 0;
   let smallestCopayVAT = 0;
-  plansTable.data.forEach(element => {
+  plansTable.data.forEach((element) => {
     element.ratesPerCopay.forEach(function callback(value, index) {
       if (index == 0) {
         smallestCopayValue = Number(value.premium);
@@ -862,7 +857,7 @@ const getSmallestCopayRateAsDefaultValue = () => {
   });
 };
 
-const onSelectedCopay = data => {
+const onSelectedCopay = (data) => {
   selectedCoPay.id = data.id;
   selectedCoPay.premium = Number(data.premium);
   selectedCoPay.vat = Number(data.vat);
@@ -876,25 +871,25 @@ const quoteDocumentsTable = reactive({
   isLoading: false,
   columns: [
     {
-      text: 'Document Type',
-      value: 'document_type_text',
+      text: "Document Type",
+      value: "document_type_text",
     },
     {
-      text: 'Document Name',
-      value: 'original_name',
+      text: "Document Name",
+      value: "original_name",
     },
     {
-      text: 'Created At',
-      value: 'created_at',
+      text: "Created At",
+      value: "created_at",
     },
     {
-      text: 'Created By',
-      value: 'created_by_name',
+      text: "Created By",
+      value: "created_by_name",
     },
   ],
 });
 
-const onDocDelete = name => {
+const onDocDelete = (name) => {
   modals.docConfirm = true;
   confirmDeleteData.docs = name;
 };
@@ -913,29 +908,29 @@ const confirmDeleteDoc = () => {
         modals.docConfirm = false;
         quoteDocumentsTable.isLoading = false;
         notification.error({
-          title: 'File Deleted',
-          position: 'top',
+          title: "File Deleted",
+          position: "top",
         });
       },
-    },
+    }
   );
 };
 
 //activities
 const activityTable = [
-  { text: 'Done', value: 'status', width: 60, align: 'center' },
-  { text: 'Title', value: 'title' },
-  { text: 'Client Name', value: 'client_name' },
-  { text: 'Followup Date', value: 'due_date' },
-  { text: 'Assigned To', value: 'assignee' },
-  { text: 'Action', value: 'action' },
+  { text: "Done", value: "status", width: 60, align: "center" },
+  { text: "Title", value: "title" },
+  { text: "Client Name", value: "client_name" },
+  { text: "Followup Date", value: "due_date" },
+  { text: "Assigned To", value: "assignee" },
+  { text: "Action", value: "action" },
 ];
 
 const activityForm = useForm({
   entityUId: page.props.quote.uuid,
   entityId: page.props.quote.id,
-  modelType: 'Health',
-  parentType: 'Health',
+  modelType: "Health",
+  parentType: "Health",
   quoteType: 3,
   title: null,
   description: null,
@@ -952,20 +947,20 @@ const addActivity = () => {
   modals.activity = true;
 };
 
-const onActivityStatusUpdate = id => {
+const onActivityStatusUpdate = (id) => {
   activityForm.activity_id = id;
-  activityForm.post(route('activities.updateStatus'), {
+  activityForm.post(route("activities.updateStatus"), {
     preserveScroll: true,
     onSuccess: () => {
       notification.success({
-        title: 'Lead Activity Done',
-        position: 'top',
+        title: "Lead Activity Done",
+        position: "top",
       });
     },
   });
 };
 
-const activityEdit = data => {
+const activityEdit = (data) => {
   activityActionEdit.value = true;
   modals.activity = true;
   activityForm.activity_id = data.id;
@@ -973,15 +968,15 @@ const activityEdit = data => {
   activityForm.title = data.title;
   activityForm.description = data.description;
   activityForm.due_date = data.due_date
-    ? data.due_date.split(' ')[0].split('-').reverse().join('-') +
-      'T' +
-      data.due_date.split(' ')[1]
+    ? data.due_date.split(" ")[0].split("-").reverse().join("-") +
+      "T" +
+      data.due_date.split(" ")[1]
     : null;
   activityForm.assignee_id = data.assignee_id;
   activityForm.status = data.status;
 };
 
-const onActivitySubmit = isValid => {
+const onActivitySubmit = (isValid) => {
   if (!isValid) return;
   if (activityActionEdit.value) {
     activityForm.post(`/activities/${activityForm.uuid}/update`, {
@@ -989,8 +984,8 @@ const onActivitySubmit = isValid => {
       onSuccess: () => {
         activityForm.reset();
         notification.success({
-          title: 'Activity Updated',
-          position: 'top',
+          title: "Activity Updated",
+          position: "top",
         });
       },
       onFinish: () => {
@@ -1003,8 +998,8 @@ const onActivitySubmit = isValid => {
       onSuccess: () => {
         activityForm.reset();
         notification.success({
-          title: 'Activity Added',
-          position: 'top',
+          title: "Activity Added",
+          position: "top",
         });
       },
       onFinish: () => {
@@ -1014,7 +1009,7 @@ const onActivitySubmit = isValid => {
   }
 };
 
-const activityDelete = id => {
+const activityDelete = (id) => {
   modals.activityConfirm = true;
   confirmDeleteData.activity = id;
 };
@@ -1030,23 +1025,23 @@ const activityDeleteConfirmed = () => {
       preserveScroll: true,
       onSuccess: () => {
         notification.error({
-          title: 'Activity Deleted',
-          position: 'top',
+          title: "Activity Deleted",
+          position: "top",
         });
       },
       onFinish: () => {
         modals.activityConfirm = false;
       },
-    },
+    }
   );
 };
 
 // additional contact
 const additionalContactTable = [
-  { text: 'Type', value: 'key' },
-  { text: 'Value', value: 'value' },
-  { text: 'Created At', value: 'created_at' },
-  { text: 'Action', value: 'action' },
+  { text: "Type", value: "key" },
+  { text: "Value", value: "value" },
+  { text: "Created At", value: "created_at" },
+  { text: "Action", value: "action" },
 ];
 
 const additionalContact = useForm({
@@ -1055,29 +1050,29 @@ const additionalContact = useForm({
   additional_contact_val: null,
   quote_id: page.props.quote.id,
   customer_id: page.props.quote.customer_id,
-  quote_type: 'health',
+  quote_type: "health",
 });
 
-const onAdditionalContactSubmit = isValid => {
+const onAdditionalContactSubmit = (isValid) => {
   if (!isValid) return;
   additionalContact
-    .transform(data => ({
+    .transform((data) => ({
       ...data,
       isInertia: true,
     }))
     .post(`/customer-additional-contact/add`, {
       preserveScroll: true,
-      onError: errors => {
+      onError: (errors) => {
         notification.error({
-          title: errors.error || 'Data not saved',
-          position: 'top',
+          title: errors.error || "Data not saved",
+          position: "top",
         });
       },
       onSuccess: () => {
         additionalContact.reset();
         notification.success({
-          title: 'Additional Contact Added',
-          position: 'top',
+          title: "Additional Contact Added",
+          position: "top",
         });
       },
       onFinish: () => {
@@ -1086,13 +1081,13 @@ const onAdditionalContactSubmit = isValid => {
     });
 };
 
-const additionalContactPrimary = data => {
+const additionalContactPrimary = (data) => {
   modals.contactPrimaryConfirm = true;
   confirmData.contactPrimary = data;
 };
 
 const additionalContactPrimaryConfirmed = () => {
-  const isEmail = confirmData.contactPrimary.key === 'email';
+  const isEmail = confirmData.contactPrimary.key === "email";
   router.post(
     `/customer-additional-contact/${
       isEmail ? confirmData.contactPrimary.id : 0
@@ -1102,7 +1097,7 @@ const additionalContactPrimaryConfirmed = () => {
       quote_id: page.props.quote.id,
       key: confirmData.contactPrimary.key,
       value: confirmData.contactPrimary.value,
-      quote_type: 'health',
+      quote_type: "health",
     },
     {
       preserveScroll: true,
@@ -1111,15 +1106,15 @@ const additionalContactPrimaryConfirmed = () => {
       },
       onSuccess: () => {
         notification.success({
-          title: 'Primary Contact Updated',
-          position: 'top',
+          title: "Primary Contact Updated",
+          position: "top",
         });
       },
       onFinish: () => {
         contactLoader.value = false;
         modals.contactPrimaryConfirm = false;
       },
-    },
+    }
   );
 };
 
@@ -1129,7 +1124,7 @@ const historyData = ref(null);
 const onLoadHistoryData = async () => {
   historyLoading.value = true;
   const res = await fetch(
-    `/quotes/getLeadHistory?modelType=health&recordId=${page.props.quote.id}`,
+    `/quotes/getLeadHistory?modelType=health&recordId=${page.props.quote.id}`
   );
   const finalRes = await res.json();
   historyData.value = finalRes;
@@ -1137,13 +1132,13 @@ const onLoadHistoryData = async () => {
 };
 
 const historyDataTable = [
-  { text: 'Modified At', value: 'ModifiedAt' },
-  { text: 'Modified By', value: 'ModifiedBy' },
-  { text: 'Notes', value: 'NewNotes' },
-  { text: 'Lead Status', value: 'NewStatus' },
+  { text: "Modified At", value: "ModifiedAt" },
+  { text: "Modified By", value: "ModifiedBy" },
+  { text: "Notes", value: "NewNotes" },
+  { text: "Lead Status", value: "NewStatus" },
 ];
 
-const dateToYMD = date => {
+const dateToYMD = (date) => {
   if (date) {
     const d = new Date(date);
     const year = d.getFullYear();
@@ -1151,19 +1146,18 @@ const dateToYMD = date => {
     const day = `0${d.getDate()}`.slice(-2);
     return `${year}-${month}-${day}`;
   }
-  return '';
+  return "";
 };
 
 const policyDetails = useForm({
   premium: page.props.quote.premium,
-  policy_number: page.props.quote.policy_number || '',
+  policy_number: page.props.quote.policy_number || "",
   policy_start_date: dateToYMD(page.props.quote.policy_start_date),
-  renewal_expiry_date: dateToYMD(page.props.quote.renewal_expiry_date) || '',
-  policy_issuance_date: dateToYMD(page.props.quote.policy_issuance_date) || '',
+  renewal_expiry_date: dateToYMD(page.props.quote.renewal_expiry_date) || "",
+  policy_issuance_date: dateToYMD(page.props.quote.policy_issuance_date) || "",
   quote_status_id: page.props.quote.quote_status_id,
   canEdit:
-    page.props.quote.quote_status_id ==
-      page.props.quoteStatusEnum.TransactionApproved &&
+    page.props.quote.quote_status_id == page.props.quoteStatusEnum.TransactionApproved &&
     page.props.notProductionApproval,
   editMode: false,
   modelType: page.props.modelType,
@@ -1174,10 +1168,10 @@ const cancelPolicyFrom = () => {
   policyDetails.editMode = false;
 };
 
-const submitPolicyDetails = isValid => {
+const submitPolicyDetails = (isValid) => {
   if (!isValid) return;
   policyDetails
-    .transform(data => ({
+    .transform((data) => ({
       quote_policy_number: data.policy_number,
       quote_policy_start_date: data.policy_start_date,
       quote_policy_expiry_date: data.renewal_expiry_date,
@@ -1191,8 +1185,8 @@ const submitPolicyDetails = isValid => {
       preserveScroll: true,
       onSuccess: () => {
         notification.success({
-          title: 'Policy Details Updated',
-          position: 'top',
+          title: "Policy Details Updated",
+          position: "top",
         });
       },
       onFinish: () => {
@@ -1202,21 +1196,20 @@ const submitPolicyDetails = isValid => {
 };
 
 const sendPolicyToClient = () => {
-  if (confirm('Are you sure you want to send documents to customer?')) {
+  if (confirm("Are you sure you want to send documents to customer?")) {
     let quoteType = page.props.modelType;
     let quoteUuId = page.props.quote.uuid;
-    let url =
-      '/quotes/' + quoteType + '/' + quoteUuId + '/send-policy-documents';
-    axios.post(url).then(response => {
+    let url = "/quotes/" + quoteType + "/" + quoteUuId + "/send-policy-documents";
+    axios.post(url).then((response) => {
       if (response.status == 200) {
         notification.success({
-          title: 'Documents Sent',
-          position: 'top',
+          title: "Documents Sent",
+          position: "top",
         });
       } else {
         notification.error({
-          title: 'Documents Sending Failed',
-          position: 'top',
+          title: "Documents Sending Failed",
+          position: "top",
         });
       }
     });
@@ -1238,8 +1231,8 @@ const customerProfileForm = useForm({
   quote_type_id: page.props.quoteTypeId,
   quote_request_id: page.props.quote.id,
 
-  insured_first_name: page.props.quote.insured_first_name || '',
-  insured_last_name: page.props.quote.insured_last_name || '',
+  insured_first_name: page.props.quote.insured_first_name || "",
+  insured_last_name: page.props.quote.insured_last_name || "",
   emirates_id_number: page.props.quote.emirates_id_number || null,
   emirates_id_expiry_date: page.props.quote.emirates_id_expiry_date || null,
 
@@ -1247,28 +1240,27 @@ const customerProfileForm = useForm({
   trade_license_no: page.props.quote.trade_license_no ?? null,
   company_name: page.props.quote.company_name ?? null,
   company_address: page.props.quote.company_address ?? null,
-  entity_type_code: page.props.quote.entity_type_code ?? 'Parent',
+  entity_type_code: page.props.quote.entity_type_code ?? "Parent",
   industry_type_code: page.props.quote.industry_type_code ?? null,
-  emirate_of_registration_id:
-    page.props.quote.emirate_of_registration_id ?? null,
+  emirate_of_registration_id: page.props.quote.emirate_of_registration_id ?? null,
 });
 
-const updateProfileDetails = isValid => {
+const updateProfileDetails = (isValid) => {
   if (!isValid) return;
 
-  customerProfileForm.post(route('update-customer-profile'), {
+  customerProfileForm.post(route("update-customer-profile"), {
     preserveScroll: true,
     onSuccess: () => {
       notification.success({
-        title: 'Customer profile details update Successfully',
-        position: 'top',
+        title: "Customer profile details update Successfully",
+        position: "top",
       });
     },
-    onError: errors => {
+    onError: (errors) => {
       Object.keys(errors).forEach(function (key) {
         notification.error({
           title: errors[key],
-          position: 'top',
+          position: "top",
         });
       });
     },
@@ -1285,17 +1277,17 @@ const tradeLicenseEntity = reactive({
   triggeredFrom: false,
 });
 
-const entityTypeChange = event => {
-  if (event === 'SubEntity') {
+const entityTypeChange = (event) => {
+  if (event === "SubEntity") {
     getParentEntityModel.value = true;
   }
 };
 
-const searchByTradeLicense = trigger => {
+const searchByTradeLicense = (trigger) => {
   let url = `/kyc/aml-fetch-entity?trade_license=${customerProfileForm.trade_license_no}`;
   axios
     .get(url)
-    .then(res => {
+    .then((res) => {
       if (res.data.status) {
         let response = res.data.response;
         entityDetailsFound.value = true;
@@ -1303,20 +1295,20 @@ const searchByTradeLicense = trigger => {
         tradeLicenseEntity.trade_license = response.trade_license_no;
         tradeLicenseEntity.company_name = response.company_name;
         tradeLicenseEntity.company_address = response.company_address;
-        tradeLicenseEntity.triggeredFrom = trigger === 'SubEntity';
+        tradeLicenseEntity.triggeredFrom = trigger === "SubEntity";
 
         notification.success({
           title: res.data.message,
-          position: 'top',
+          position: "top",
         });
       } else {
         notification.error({
           title: res.data.message,
-          position: 'top',
+          position: "top",
         });
       }
     })
-    .catch(err => {
+    .catch((err) => {
       console.log(err);
     });
 };
@@ -1329,8 +1321,8 @@ const linkEntity = () => {
     triggeredFrom: tradeLicenseEntity.triggeredFrom,
   };
   axios
-    .post(route('link-entity-details'), entityDetails)
-    .then(res => {
+    .post(route("link-entity-details"), entityDetails)
+    .then((res) => {
       if (res.data.status) {
         let response = res.data.response;
 
@@ -1339,19 +1331,19 @@ const linkEntity = () => {
         customerProfileForm.company_name = response.company_name;
         customerProfileForm.company_address = response.company_address;
         customerProfileForm.entity_type_code =
-          response?.quote_request_entity_mapping[0]?.entity_type_code ?? '';
+          response?.quote_request_entity_mapping[0]?.entity_type_code ?? "";
         customerProfileForm.industry_type_code = response.industry_type_code;
         customerProfileForm.emirate_of_registration_id =
           response.emirate_of_registration_id;
 
         notification.success({
           title: res.data.message,
-          position: 'top',
+          position: "top",
         });
         entityDetailsFound.value = false;
       }
     })
-    .catch(err => {
+    .catch((err) => {
       console.log(err);
     });
 };
@@ -1359,7 +1351,7 @@ const linkEntity = () => {
 onMounted(() => {
   onLoadAvailablePlansData();
   const isHealthAdvisor = page.props.advisors.find(
-    a => a.id == page.props.quote.advisor_id,
+    (a) => a.id == page.props.quote.advisor_id
   );
   if (isHealthAdvisor) assignLead.value = isHealthAdvisor.id;
   isMounted.value = true;
@@ -1367,7 +1359,7 @@ onMounted(() => {
 
 const prefillPlanId = ref(page.props.quote.prefill_plan_id);
 
-const handleChildUpdate = planId => {
+const handleChildUpdate = (planId) => {
   prefillPlanId.value = planId;
 };
 
@@ -1375,27 +1367,28 @@ const selectedProviderPlan = ref({
   id: page.props.quote.plan_id,
   planName: page.props.quote.health_plan_name_text,
   providerName: page.props.quote.plan_provider_name_text,
-  premium: page.props.ecomDetails.priceWithVAT
-
+  premium: page.props.ecomDetails.priceWithVAT,
 });
 
-console.log(selectedProviderPlan, "LLLKKKKJ", page.props.quote)
+console.log(selectedProviderPlan, "LLLKKKKJ", page.props.quote);
 
-const handlePlanSelected = plan => {
+const handlePlanSelected = (plan) => {
   console.log("HHH", plan);
   //se.value = plan.id;
-  selectedProviderPlan.value.id = plan.id
-  selectedProviderPlan.value.planName = plan.planName
-  selectedProviderPlan.value.providerName = plan.providerName
-  selectedProviderPlan.value.premium = plan.premium
+  selectedProviderPlan.value.id = plan.id;
+  selectedProviderPlan.value.planName = plan.planName;
+  selectedProviderPlan.value.providerName = plan.providerName;
+  selectedProviderPlan.value.premium = plan.premium;
   router.reload({
     preserveState: true,
     preserveScroll: true,
-    only: ['payments','quoteRequest','ecomDetails'],
+    only: ["payments", "quoteRequest", "ecomDetails"],
   });
 };
 
 const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
+const getDetailPageRoute = (uuid, quote_type_id) =>
+  useGetShowPageRoute(uuid, quote_type_id, null);
 </script>
 
 <template>
@@ -1410,7 +1403,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
             v-model="leadDuplicateForm.lob_team"
             label="LOBs"
             :options="
-              allowedDuplicateLOB.map(lob => ({
+              allowedDuplicateLOB.map((lob) => ({
                 value: lob,
                 label: lob,
               }))
@@ -1431,11 +1424,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
             ]"
           />
 
-          <x-button
-            color="orange"
-            type="submit"
-            :loading="leadDuplicateForm.processing"
-          >
+          <x-button color="orange" type="submit" :loading="leadDuplicateForm.processing">
             Create Duplicate
           </x-button>
         </div>
@@ -1450,9 +1439,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       <Collapsible :expanded="sectionExpanded">
         <template #header>
           <div>
-            <h3 class="font-semibold text-primary-800 text-lg">
-              Assign Team & Advisor
-            </h3>
+            <h3 class="font-semibold text-primary-800 text-lg">Assign Team & Advisor</h3>
           </div>
         </template>
         <template #body>
@@ -1511,9 +1498,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       <Collapsible :expanded="sectionExpanded">
         <template #header>
           <div class="flex justify-between items-center flex-wrap gap-2">
-            <h3 class="text-lg font-semibold text-primary-800">
-              Health Detail
-            </h3>
+            <h3 class="text-lg font-semibold text-primary-800">Health Detail</h3>
           </div>
         </template>
         <template #body>
@@ -1524,9 +1509,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
             </x-button>
 
             <Link :href="route('health.index')" preserve-scroll>
-              <x-button size="sm" color="primary" tag="div">
-                Health List
-              </x-button>
+              <x-button size="sm" color="primary" tag="div"> Health List </x-button>
             </Link>
 
             <Link :href="route('health.edit', quote.uuid)">
@@ -1590,15 +1573,28 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
                     <template #tooltip> Parent Reference ID </template>
                   </x-tooltip>
                 </div>
-                <div>{{ quote.parent_duplicate_quote_id }}</div>
+                <div>
+                  <Link
+                    v-if="quote.parent_duplicate_quote_id"
+                    :href="
+                      getDetailPageRoute(
+                        parentLeadDetails.uuid,
+                        parentLeadDetails.quote_type_id,
+                      )
+                    "
+                    class="text-primary-500 hover:underline"
+                  >
+                    {{ quote.parent_duplicate_quote_id ?? '' }}
+                  </Link>
+                </div>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">IS ECOMMERCE</dt>
-                <dd>{{ quote.is_ecommerce ? 'Yes' : 'No' }}</dd>
+                <dd>{{ quote.is_ecommerce ? "Yes" : "No" }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">IS EBP RENEWAL</dt>
-                <dd>{{ quote.is_ebp_renewal ? 'Yes' : 'No' }}</dd>
+                <dd>{{ quote.is_ebp_renewal ? "Yes" : "No" }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">LOST REASON</dt>
@@ -1623,9 +1619,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
           <div class="text-sm">
             <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
               <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">
-                  FOR WHOM DO YOU REQUIRE HEALTH INSURANCE?
-                </dt>
+                <dt class="font-medium">FOR WHOM DO YOU REQUIRE HEALTH INSURANCE?</dt>
                 <dd>{{ quote.cover_for_id_text }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
@@ -1665,8 +1659,8 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
             <h3 class="font-semibold text-primary-800 text-lg">
               {{
                 quote.customer_type == page.props.customerTypeEnum.Individual
-                  ? 'Customer'
-                  : 'Entity '
+                  ? "Customer"
+                  : "Entity "
               }}
               Profile
             </h3>
@@ -1683,9 +1677,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
           <x-form @submit="updateProfileDetails" :auto-focus="false">
             <div class="text-sm">
               <dl
-                v-if="
-                  quote.customer_type === page.props.customerTypeEnum.Individual
-                "
+                v-if="quote.customer_type === page.props.customerTypeEnum.Individual"
                 class="grid md:grid-cols-2 gap-x-6 gap-y-4"
               >
                 <div class="grid sm:grid-cols-2">
@@ -1965,9 +1957,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
           </dd>
         </div>
         <div class="text-left space-x-4">
-          <x-button size="sm" color="orange" @click.prevent="linkEntity">
-            Link
-          </x-button>
+          <x-button size="sm" color="orange" @click.prevent="linkEntity"> Link </x-button>
         </div>
       </dl>
     </x-modal>
@@ -1988,11 +1978,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
         <template #body>
           <x-divider class="my-4" />
           <div class="flex mb-3 justify-end">
-            <x-button
-              @click.prevent="onAddMemberModal"
-              size="sm"
-              color="orange"
-            >
+            <x-button @click.prevent="onAddMemberModal" size="sm" color="orange">
               Add Member
             </x-button>
           </div>
@@ -2007,7 +1993,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
             hide-footer
           >
             <template #item-index="{ index, code }">
-              <div>{{ code ?? 'Member ' + index }}</div>
+              <div>{{ code ?? "Member " + index }}</div>
             </template>
             <template #item-gender="{ gender }">
               {{ genderText(gender).value }}
@@ -2052,9 +2038,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       </Collapsible>
 
       <x-modal v-model="modals.member" size="lg" show-close backdrop>
-        <template #header>
-          {{ memberActionEdit ? 'Edit' : 'Add' }} Member
-        </template>
+        <template #header> {{ memberActionEdit ? "Edit" : "Add" }} Member </template>
 
         <x-form @submit="onMemberSubmit" :auto-focus="false">
           <div class="grid md:grid-cols-2 gap-4 md:pb-16">
@@ -2130,9 +2114,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
           </div>
 
           <div class="flex justify-end gap-3">
-            <x-button size="sm" @click.prevent="modals.member = false">
-              Cancel
-            </x-button>
+            <x-button size="sm" @click.prevent="modals.member = false"> Cancel </x-button>
 
             <x-button
               size="sm"
@@ -2141,7 +2123,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
               type="submit"
               class="px-6"
             >
-              {{ memberActionEdit ? 'Update' : 'Save' }}
+              {{ memberActionEdit ? "Update" : "Save" }}
             </x-button>
           </div>
         </x-form>
@@ -2152,11 +2134,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
         <p>Are you sure you want to delete this?</p>
         <template #actions>
           <div class="text-right space-x-4">
-            <x-button
-              size="sm"
-              ghost
-              @click.prevent="modals.memberConfirm = false"
-            >
+            <x-button size="sm" ghost @click.prevent="modals.memberConfirm = false">
               Cancel
             </x-button>
             <x-button
@@ -2188,9 +2166,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
           <div class="flex flex-wrap gap-3 justify-between items-center">
             <h3 class="font-semibold text-primary-800 text-lg">
               Customer Additional Contacts
-              <x-tag size="sm">{{
-                customerAdditionalContacts.length || 0
-              }}</x-tag>
+              <x-tag size="sm">{{ customerAdditionalContacts.length || 0 }}</x-tag>
             </h3>
           </div>
         </template>
@@ -2361,7 +2337,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
                   v-model="leadStatusForm.lostReason"
                   label="Lost Reason"
                   :options="
-                    lostReasons?.map(item => ({
+                    lostReasons?.map((item) => ({
                       value: item.id,
                       label: item.text,
                     }))
@@ -2393,9 +2369,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       <Collapsible :expanded="sectionExpanded">
         <template #header>
           <div>
-            <h3 class="font-semibold text-primary-800 text-lg">
-              E-COM Details
-            </h3>
+            <h3 class="font-semibold text-primary-800 text-lg">E-COM Details</h3>
           </div>
         </template>
         <template #body>
@@ -2416,10 +2390,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
               </div>
               <div
                 class="grid sm:grid-cols-2"
-                v-if="
-                  page.props.quote.payment_status_id ==
-                  paymentStatusEnum.DECLINED
-                "
+                v-if="page.props.quote.payment_status_id == paymentStatusEnum.DECLINED"
               >
                 <dt class="font-medium">REASON</dt>
                 <dd>{{ mainPayment?.payment_status_message }}</dd>
@@ -2438,7 +2409,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">CO-PAY / CO-INSURANCE</dt>
-                <dd>{{ coPayment ? coPayment.text : 'N/A' }}</dd>
+                <dd>{{ coPayment ? coPayment.text : "N/A" }}</dd>
               </div>
             </dl>
           </div>
@@ -2468,16 +2439,10 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
           <x-divider class="my-4" />
           <div class="flex flex-wrap gap-3 justify-end mb-3">
             <x-button-group v-if="selectedPlans.length > 0" size="sm">
-              <x-button
-                @click.prevent="onTogglePlans(false)"
-                :loading="toggleLoader"
-              >
+              <x-button @click.prevent="onTogglePlans(false)" :loading="toggleLoader">
                 Show
               </x-button>
-              <x-button
-                @click.prevent="onTogglePlans(true)"
-                :loading="toggleLoader"
-              >
+              <x-button @click.prevent="onTogglePlans(true)" :loading="toggleLoader">
                 Hide
               </x-button>
             </x-button-group>
@@ -2496,9 +2461,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
               v-if="plansTable.data.length > 0"
               size="sm"
               color="orange"
-              @click.prevent="
-                onCopyText(ecomHealthInsuranceQuoteUrl + quote.uuid)
-              "
+              @click.prevent="onCopyText(ecomHealthInsuranceQuoteUrl + quote.uuid)"
             >
               Copy Link
             </x-button>
@@ -2555,12 +2518,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
                 >
                   Manual Plan
                 </x-tag>
-                <x-tag
-                  v-if="isHidden"
-                  size="xs"
-                  color="error"
-                  class="mt-0.5 text-[10px]"
-                >
+                <x-tag v-if="isHidden" size="xs" color="error" class="mt-0.5 text-[10px]">
                   Hidden
                 </x-tag>
                 <x-tag
@@ -2575,9 +2533,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
             </template>
 
             <template #item-total="{ actualPremium, policyFee, basmah, vat }">
-              {{
-                fixedValue(actualPremium + (policyFee || 0) + (basmah || 0) + vat)
-              }}
+              {{ fixedValue(actualPremium + (policyFee || 0) + (basmah || 0) + vat) }}
             </template>
             <template #item-action="item">
               <div class="flex gap-2 pr-2">
@@ -2597,7 +2553,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
                     onCopyText(
                       ecomHealthInsuranceQuoteUrl +
                         quote.uuid +
-                        `/payment/?providerCode=${item.providerCode}&planId=${item.id}&selectedCopayId=${item.selectedCopayId}`,
+                        `/payment/?providerCode=${item.providerCode}&planId=${item.id}&selectedCopayId=${item.selectedCopayId}`
                     )
                   "
                 >
@@ -2613,13 +2569,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
                     :uuid="quote.uuid"
                   />
 
-                  <x-button
-                    v-else
-                    size="xs"
-                    color="orange"
-                    outlined
-                    :disabled="true"
-                  >
+                  <x-button v-else size="xs" color="orange" outlined :disabled="true">
                     Selected
                   </x-button>
                 </span>
@@ -2718,37 +2668,36 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
         </div>
 
         <div class="flex justify-end gap-3 mb-4">
-          <x-button
-            size="sm"
-            color="#ff5e00"
-            type="submit"
-            @click="onPlanFiltersSubmit"
-          >
+          <x-button size="sm" color="#ff5e00" type="submit" @click="onPlanFiltersSubmit">
             Apply
           </x-button>
-          <x-button
-            size="sm"
-            color="primary"
-            @click.prevent="onPlanFiltersReset"
-          >
+          <x-button size="sm" color="primary" @click.prevent="onPlanFiltersReset">
             Reset
           </x-button>
         </div>
       </x-modal>
     </div>
-    
+
     <PaymentTableNew
-			v-if="isNewPaymentStructure"
-			quoteType="Health"
-			:payments="payments"
-			:paymentDocument="documentTypes.QUOTE.filter(item => item.code === 'HPD' || item.code === 'HPDR' || item.code === 'HDPDR')"
-			:quoteRequest="quoteRequest"
-			:paymentStatusEnum="paymentStatusEnum"
-			:paymentTooltipEnum="paymentTooltipEnum"
-			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name, tooltip: pm.tool_tip } })"
-			:storageUrl="storageUrl"
-      :eCommercePrice="ecomDetails.priceWithVAT?ecomDetails.priceWithVAT:0"
-		/>
+      v-if="isNewPaymentStructure"
+      quoteType="Health"
+      :payments="payments"
+      :paymentDocument="
+        documentTypes.QUOTE.filter(
+          (item) => item.code === 'HPD' || item.code === 'HPDR' || item.code === 'HDPDR'
+        )
+      "
+      :quoteRequest="quoteRequest"
+      :paymentStatusEnum="paymentStatusEnum"
+      :paymentTooltipEnum="paymentTooltipEnum"
+      :paymentMethods="
+        paymentMethods.map((pm) => {
+          return { value: pm.code, label: pm.name, tooltip: pm.tool_tip };
+        })
+      "
+      :storageUrl="storageUrl"
+      :eCommercePrice="ecomDetails.priceWithVAT ? ecomDetails.priceWithVAT : 0"
+    />
     <PaymentTable
       v-else
       :payments="payments"
@@ -2768,7 +2717,6 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       :paymentLink="paymentLink"
       :expanded="sectionExpanded"
     />
-
 
     <BookPolicy
       v-if="
@@ -2797,19 +2745,10 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
         <template #body>
           <x-divider class="my-4" />
           <div class="flex gap-2 mb-3 justify-end">
-            <x-button
-              @click.prevent="modals.doc = true"
-              size="sm"
-              color="orange"
-            >
+            <x-button @click.prevent="modals.doc = true" size="sm" color="orange">
               Upload Documents
             </x-button>
-            <x-button
-              size="sm"
-              color="red"
-              v-if="sendPolicy"
-              @click="sendPolicyToClient"
-            >
+            <x-button size="sm" color="red" v-if="sendPolicy" @click="sendPolicyToClient">
               Send Policy
             </x-button>
           </div>
@@ -2823,11 +2762,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
             :hide-footer="quoteDocuments.length < 15"
           >
             <template #item-original_name="item">
-              <a
-                :href="cdnPath + item.doc_url"
-                target="_blank"
-                class="text-primary-600"
-              >
+              <a :href="cdnPath + item.doc_url" target="_blank" class="text-primary-600">
                 {{ item.original_name }}
               </a>
             </template>
@@ -2861,19 +2796,10 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       <p>Are you sure you want to delete this document?</p>
       <template #actions>
         <div class="text-right space-x-4">
-          <x-button
-            @click.prevent="modals.doc = true"
-            size="sm"
-            color="orange"
-          >
+          <x-button @click.prevent="modals.doc = true" size="sm" color="orange">
             Upload Documents
           </x-button>
-          <x-button
-            size="sm"
-            color="red"
-            v-if="sendPolicy"
-            @click="sendPolicyToClient"
-          >
+          <x-button size="sm" color="red" v-if="sendPolicy" @click="sendPolicyToClient">
             Send Policy
           </x-button>
         </div>
@@ -2887,11 +2813,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
           :hide-footer="quoteDocuments.length < 15"
         >
           <template #item-original_name="item">
-            <a
-              :href="cdnPath + item.doc_url"
-              target="_blank"
-              class="text-primary-600"
-            >
+            <a :href="cdnPath + item.doc_url" target="_blank" class="text-primary-600">
               {{ item.original_name }}
             </a>
           </template>
@@ -2924,11 +2846,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       <p>Are you sure you want to delete this document?</p>
       <template #actions>
         <div class="text-right space-x-4">
-          <x-button
-            size="sm"
-            ghost
-            @click.prevent="modals.docConfirm = false"
-          >
+          <x-button size="sm" ghost @click.prevent="modals.docConfirm = false">
             Cancel
           </x-button>
           <x-button
@@ -2942,7 +2860,6 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
         </div>
       </template>
     </x-modal>
-    
 
     <SendUpdates
       v-if="hasPolicyIssuedStatus"
@@ -3015,7 +2932,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
     </div>
     <x-modal v-model="modals.activity" size="lg" show-close backdrop>
       <template #header>
-        {{ activityActionEdit ? 'Edit' : 'Add' }} Lead Activity
+        {{ activityActionEdit ? "Edit" : "Add" }} Lead Activity
       </template>
 
       <x-form @submit="onActivitySubmit" :auto-focus="false">
@@ -3054,9 +2971,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
         </div>
 
         <div class="text-right space-x-4 mt-12">
-          <x-button size="sm" @click.prevent="modals.activity = false">
-            Cancel
-          </x-button>
+          <x-button size="sm" @click.prevent="modals.activity = false"> Cancel </x-button>
 
           <x-button
             size="sm"
@@ -3064,7 +2979,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
             :loading="activityForm.processing"
             type="submit"
           >
-            {{ activityActionEdit ? 'Update' : 'Save' }}
+            {{ activityActionEdit ? "Update" : "Save" }}
           </x-button>
         </div>
       </x-form>
@@ -3074,11 +2989,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       <p>Are you sure you want to delete this activity?</p>
       <template #actions>
         <div class="text-right space-x-4">
-          <x-button
-            size="sm"
-            ghost
-            @click.prevent="modals.activityConfirm = false"
-          >
+          <x-button size="sm" ghost @click.prevent="modals.activityConfirm = false">
             Cancel
           </x-button>
           <x-button
@@ -3092,7 +3003,6 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
         </div>
       </template>
     </x-modal>
-    
 
     <div class="p-4 rounded shadow mb-6 bg-white">
       <Collapsible :expanded="sectionExpanded">
@@ -3128,10 +3038,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       </Collapsible>
     </div>
 
-    <ClientInquiryLogs
-      v-if="clientInquiryLogs.length > 0"
-      :logs="clientInquiryLogs"
-      />
+    <ClientInquiryLogs v-if="clientInquiryLogs.length > 0" :logs="clientInquiryLogs" />
 
     <div class="p-4 rounded shadow mb-6 bg-white">
       <Collapsible :expanded="sectionExpanded">
@@ -3167,6 +3074,11 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       </Collapsible>
     </div>
 
-    <AuditLogs :type="'App\\Models\\HealthQuote'" :id="$page.props.quote.id" :quoteCode="$page.props.quote.code" :expanded="sectionExpanded"/>
+    <AuditLogs
+      :type="'App\\Models\\HealthQuote'"
+      :id="$page.props.quote.id"
+      :quoteCode="$page.props.quote.code"
+      :expanded="sectionExpanded"
+    />
   </div>
 </template>

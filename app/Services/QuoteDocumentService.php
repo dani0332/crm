@@ -6,6 +6,7 @@ use App\Enums\quoteTypeCode;
 use App\Enums\RolesEnum;
 use App\Models\DocumentType;
 use App\Models\QuoteDocument;
+use App\Models\SendUpdateLog;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
@@ -198,6 +199,13 @@ class QuoteDocumentService extends BaseService
         $quote = $this->getQuoteObject($quoteType, $recordId);
 
         return $quote ? $quote->documents()->with('createdBy:id,name,email')->latest()->get() : [];
+    }
+
+    public function getQuoteDocumentsForSendUpdates($sendUpdateLogId)
+    {
+        $sendUpdateLog = SendUpdateLog::where('id', $sendUpdateLogId)->firstOrFail();
+
+        return $sendUpdateLog->documents()->with('createdBy:id,name,email')->latest()->get();
     }
 
 }

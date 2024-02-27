@@ -2,34 +2,85 @@
 
 namespace App\Http\Controllers\V2;
 
+use App\Enums\DocumentTypeCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Http\Controllers\Controller;
 use App\Models\PersonalQuote;
+use App\Models\QuoteType;
 use App\Repositories\InsuranceProviderRepository;
+use App\Repositories\LookupRepository;
 use App\Repositories\SendUpdateLogRepository;
 use App\Services\LookupService;
+use App\Services\QuoteDocumentService;
+use App\Services\SendUpdateLogService;
+use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class SendUpdateLogController extends Controller
 {
+    private object $sendUpdateLogService;
+
+    use GenericQueriesAllLobs;
+
+    public function __construct()
+    {
+        $this->sendUpdateLogService = app(SendUpdateLogService::class);
+    }
+
     /**
      * Store a newly created resource in storage.
      */
     public function store(Request $request)
     {
-        $data = $request->all();
-        $response = SendUpdateLogRepository::create($data);
+        try {
+            DB::beginTransaction();
 
-        if (! empty($response->message)) {
-            vAbort($response->message);
+            $childLeadResponse = [];
+            $requestData = $request->all();
+            $categoryCode = $requestData['childCategory']['slug'];
+
+            $response = SendUpdateLogRepository::create($requestData);
+            abort_if(! empty($response->message), 400, $response->message);
+
+            $this->updateQuoteLeadStatus($requestData, 'create');
+            if ($categoryCode == SendUpdateLogStatusEnum::CIR) {
+                $quoteType = QuoteType::where('id', $requestData['quote_type_id'])->first();
+                $quoteModel = $this->getModelObject($quoteType->code);
+                $childLeadResponse = $this->sendUpdateLogService->createChildLead($quoteModel, $requestData, $quoteType->code);
+            }
+
+            DB::commit();
+
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            info('Create send update - Failed - Error : '.$exception->getMessage());
+
+            return redirect()->back()->with('error', 'Failed to create send update');
         }
 
-        $this->updateQuoteLeadStatus($data, 'create');
+        if (! empty($childLeadResponse)) {
+            if ($childLeadResponse['childLeadsCount'] == 0) {
+                if (checkPersonalQuotes($childLeadResponse['quote_type_code'])) {
+                    return redirect('/personal-quotes/'.strtolower($quoteType->code).'/'.$childLeadResponse['uuid'])
+                        ->with('success', $childLeadResponse['ref_id'].' has been created');
+                } else {
+                    return redirect('/quotes/'.strtolower($quoteType->code).'/'.$childLeadResponse['uuid'])
+                        ->with('success', $childLeadResponse['ref_id'].' has been created');
+                }
 
-        return redirect(route('send-update-logs.show', ['uuid' => $response->uuid, 'refURL' => $data['refURL']]));
+            } else {
+                return redirect()->back()->with('error', $childLeadResponse['parent_ref_id'].'-'.$childLeadResponse['childLeadsCount'].' is already created');
+            }
+        }
+
+        return redirect(route('send-update-logs.show', [
+            'uuid' => $response->uuid,
+            'quoteUuid' => $requestData['quote_uuid'],
+            'refURL' => $requestData['refURL'],
+        ]));
     }
 
     /**
@@ -47,6 +98,9 @@ class SendUpdateLogController extends Controller
         $quoteType = QuoteTypes::getName($quoteTypeId)->value;
 
         $quote = $this->getQuote($sendUpdateLog->personal_quote_id);
+        $quoteDocuments = app(QuoteDocumentService::class)->getQuoteDocumentsForSendUpdates($sendUpdateLog->id);
+        $categoryCode = LookupRepository::where('id', $sendUpdateLog->category_id)->value('code');
+        $isBookingDetailsVisible = $this->isBookingDetailsVisible($categoryCode, $quoteDocuments);
 
         if (in_array($quoteType, [QuoteTypes::CAR, QuoteTypes::HEALTH, QuoteTypes::TRAVEL])) {
             $quote->load('plan.insuranceProvider');
@@ -62,6 +116,7 @@ class SendUpdateLogController extends Controller
             'sendUpdateOptions' => $sendUpdateOptions,
             'insuranceProviders' => $insuranceProviders,
             'sendUpdateStatusEnum' => SendUpdateLogStatusEnum::asArray(),
+            'isBookingDetailsVisible' => $isBookingDetailsVisible,
         ]);
     }
 
@@ -82,7 +137,7 @@ class SendUpdateLogController extends Controller
 
         $log = SendUpdateLogRepository::updateLog($id, $data);
 
-        if (isset($log->message) && !empty($log->message)) {
+        if (isset($log->message) && ! empty($log->message)) {
             vAbort($log->message);
         }
 
@@ -96,45 +151,45 @@ class SendUpdateLogController extends Controller
         $quoteUuid = $data['quote_uuid'];
 
         $quoteTypeId = $data['quote_type_id'];
-        
+
         $selectedType = $data['childCategory']['slug'];
-        
+
         $subType = $data['childCategory']['option'];
 
         $model = PersonalQuote::class;
-        
+
         if ($type === 'create') {
 
             switch ($selectedType) {
                 case SendUpdateLogStatusEnum::EF:
                     if ($subType && $subType['slug'] === 'MPC') {
                         $model::where(['uuid' => $quoteUuid, 'quote_type_id' => $quoteTypeId])->update([
-                            'quote_status_id' => QuoteStatusEnum::CancellationPending
+                            'quote_status_id' => QuoteStatusEnum::CancellationPending,
                         ]);
                     }
                     break;
                 case SendUpdateLogStatusEnum::CI:
                 case SendUpdateLogStatusEnum::CIR:
                     $model::where(['uuid' => $quoteUuid, 'quote_type_id' => $quoteTypeId])->update([
-                        'quote_status_id' => QuoteStatusEnum::CancellationPending
+                        'quote_status_id' => QuoteStatusEnum::CancellationPending,
                     ]);
                     break;
             }
         } else {
-            
+
             switch ($selectedType) {
                 case SendUpdateLogStatusEnum::EF:
                 case SendUpdateLogStatusEnum::CI:
                     if ($data['status'] === SendUpdateLogStatusEnum::UPDATE_BOOKED) {
                         $model::where(['uuid' => $quoteUuid, 'quote_type_id' => $quoteTypeId])->update([
-                            'quote_status_id' => QuoteStatusEnum::PolicyCancelled
+                            'quote_status_id' => QuoteStatusEnum::PolicyCancelled,
                         ]);
                     }
                     break;
                 case SendUpdateLogStatusEnum::CIR:
                     if ($data['status'] === SendUpdateLogStatusEnum::UPDATE_BOOKED) {
                         $model::where(['uuid' => $quoteUuid, 'quote_type_id' => $quoteTypeId])->update([
-                            'quote_status_id' => QuoteStatusEnum::PolicyBooked
+                            'quote_status_id' => QuoteStatusEnum::PolicyCancelled,
                         ]);
 
                         // TODO: send it to sage, need to confirm what the sage is.
@@ -149,7 +204,7 @@ class SendUpdateLogController extends Controller
         $data = $request->all();
 
         SendUpdateLogRepository::updateLogPriceDetails($data);
-        
+
         return redirect()->back();
     }
 
@@ -158,7 +213,7 @@ class SendUpdateLogController extends Controller
         $data = $request->all();
 
         SendUpdateLogRepository::savePolicyDetails($data);
-        
+
         return redirect()->back();
     }
 
@@ -167,5 +222,28 @@ class SendUpdateLogController extends Controller
         $repository = 'App\\Repositories\\PersonalQuoteRepository';
 
         return $repository::where('id', $personalQuoteId)->first();
+    }
+
+    public function isBookingDetailsVisible($categoryCode, $quoteDocuments): bool
+    {
+        $_return = false;
+        $documentTypes = $quoteDocuments->pluck('document_type_code')->toArray();
+
+        if (count(array_intersect($documentTypes, [DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE, DocumentTypeCode::SEND_UPDATE_POLICY_CERTIFICATE])) > 0) {
+            $_return = true;
+            $categories = [
+                SendUpdateLogStatusEnum::EF,
+                SendUpdateLogStatusEnum::CI,
+                SendUpdateLogStatusEnum::CIR,
+                SendUpdateLogStatusEnum::CPU,
+            ];
+
+            if (in_array($categoryCode, $categories)) {
+                $requiredDocumentTypes = [DocumentTypeCode::SEND_UPDATE_TAX_INVOICE, DocumentTypeCode::SEND_UPDATE_TAX_INVOICE_RAISED_BUYER];
+                $_return = count(array_intersect($documentTypes, $requiredDocumentTypes)) == count($requiredDocumentTypes);
+            }
+        }
+
+        return $_return;
     }
 }

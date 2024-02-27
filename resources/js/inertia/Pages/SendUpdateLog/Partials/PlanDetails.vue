@@ -59,9 +59,7 @@ const isIndicativeAdditionalPrice = computed(() => {
 });
 
 const isPlanDetails = computed(() => {
-  return (props.selectedCategory?.subCategory.slug === 'CPD' || (props.selectedCategory?.subCategory.slug === 'CIR' && 
-    ![quoteTypeCodeEnum.Car, quoteTypeCodeEnum.Travel, quoteTypeCodeEnum.Health].includes(props.quoteType) 
-  )) 
+  return (props.selectedCategory?.subCategory.slug === 'CPD') 
 })
 
 const insuranceProvidersOptions = computed(() => {

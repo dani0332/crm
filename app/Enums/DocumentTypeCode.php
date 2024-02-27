@@ -12,4 +12,8 @@ use BenSampo\Enum\Enum;
 class DocumentTypeCode extends Enum
 {
     const KYCDOC = 'KYCDOC';
+    const SEND_UPDATE_POLICY_SCHEDULE = 'SUPS';
+    const SEND_UPDATE_POLICY_CERTIFICATE = 'SUPC';
+    const SEND_UPDATE_TAX_INVOICE = 'SUTAXINV';
+    const SEND_UPDATE_TAX_INVOICE_RAISED_BUYER = 'SUTAXINVRB';
 }

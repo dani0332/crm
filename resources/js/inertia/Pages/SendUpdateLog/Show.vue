@@ -10,7 +10,8 @@ const props = defineProps({
   insuranceProviders: Object,
   sendUpdateStatusEnum: Object,
   quote: Object,
-  indicativePrice: Object
+  indicativePrice: Object,
+  isBookingDetailsVisible: Boolean,
 });
 
 const page = usePage();
@@ -130,6 +131,23 @@ const onUpdateLog = () => {
     },
   );
 };
+
+const memberCategoryText = memberCategoryId =>
+  computed(() => {
+    return props.memberCategories.find(
+      category => category.id === memberCategoryId,
+    )?.text;
+  });
+
+const memberDataDocs = membersDetail => {
+  return membersDetail
+    .map(member => ({
+      id: member.id,
+      name: memberCategoryText(member.member_category_id).value,
+    }))
+    .filter(member => member.name !== undefined);
+};
+
 </script>
 
 <template>
@@ -249,24 +267,22 @@ const onUpdateLog = () => {
       :isUpdateBooked="isUpdateBooked"
     />
 
-    <!-- Documents Component goes here -->
+    <QuoteDocuments
+      :document-types="props.documentTypes"
+      :quote-documents="props.quoteDocuments || []"
+      :storageUrl="props.storageUrl"
+      :quote="props.realQuote"
+      :expanded="true"
+      :extras="{
+        pageType: 'send-update-log',
+        quoteType: props.quoteType,
+        sendLogId: props.sendUpdateLog.id,
+        members: memberDataDocs(props.membersDetail)
+      }"
+    />
 
-
-    <!-- EF || CI || CIR, it will show 2 sections for booking details with diff titles || 
-      CPD, it will show 2 sections for booking details with diff titles 
-    -->
-
-
-    <!-- CIR titles 
-    1. Booking Details - New Policy
-    2. Booking Details - Previous Policy
-    -->
-
-    <!-- CPD titles 
-    1. Booking Details - Reversal Entry 
-    2. Booking Details - New Entry
-    -->
     <LazyBookingDetails
+      v-if="props.isBookingDetailsVisible"
       :sendUpdateLog="sendUpdateLog"
       :insuranceProviders="insuranceProviders"
       :selectedCategory="selectedCategory"

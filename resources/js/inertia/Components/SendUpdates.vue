@@ -168,6 +168,7 @@ const onAddUpdate = autoSubmit => {
         option_id: option?.id || null,
         quote_uuid: props.reportable.uuid,
         status: page.props.sendUpdateEnum.NEW_REQUEST,
+        ref_id: props.reportable.id,
       };
     })
     .post(route('send-update-logs.store'), {

@@ -8,26 +8,23 @@ use Illuminate\Support\Str;
 
 class SendUpdateLogRepository extends BaseRepository
 {
-
     public function model()
     {
         return SendUpdateLog::class;
     }
 
-    public function fetchCreate($data) 
+    public function fetchCreate($data)
     {
         try {
             $code = $data['childCategory']['slug'];
-
             $count = $this->fetchGetCount($data['quote_uuid'], $data['quote_type_id']);
-
-            $code = $code . '-' . date('m') . date('y') . '-' . ($count + 1);
-
+            $code = $code.'-'.date('m').date('y').'-'.($count + 1);
             $uuid = strtoupper(Str::random(6));
 
+            // Todo:: Check if personal quote exists because its break when quote not in personal quotes
             $personalQuote = PersonalQuoteRepository::where([
                 'quote_type_id' => $data['quote_type_id'],
-                'uuid' => $data['quote_uuid']
+                'uuid' => $data['quote_uuid'],
             ])->first();
 
             $data['personal_quote_id'] = $personalQuote?->id ?? null;
@@ -40,11 +37,11 @@ class SendUpdateLogRepository extends BaseRepository
                 'option_id' => $data['option_id'],
                 'status' => $data['status'],
                 'uuid' => $uuid,
-                'code' => $code
-            ]);            
+                'code' => $code,
+            ]);
         } catch (\Throwable $th) {
             $res = (object) [
-                'message' => $th->getMessage()
+                'message' => $th->getMessage(),
             ];
         }
 
@@ -63,29 +60,29 @@ class SendUpdateLogRepository extends BaseRepository
                 'notes' => $data['notes'],
                 'option_id' => $data['option_id'],
             ]);
-        } catch(\Exception $ex) {
+        } catch (\Exception $ex) {
             $log = (object) [
-                'message' => $ex->getMessage()
+                'message' => $ex->getMessage(),
             ];
         }
 
         return $log;
     }
 
-    public function fetchGetCount($uuid, $quoteTypeId) 
+    public function fetchGetCount($uuid, $quoteTypeId)
     {
         return $this->where([
-            'quote_uuid' => $uuid, 
-            'quote_type_id' => $quoteTypeId
+            'quote_uuid' => $uuid,
+            'quote_type_id' => $quoteTypeId,
         ])->count();
     }
 
-    public function fetchFindByQuoteUuid($uuid) 
-    {   
+    public function fetchFindByQuoteUuid($uuid)
+    {
         return $this->where(['quote_uuid' => $uuid])->get();
     }
 
-    public function fetchUpdateLogPriceDetails($data) 
+    public function fetchUpdateLogPriceDetails($data)
     {
         try {
             $result = $this->where('id', $data['id'])->update([
@@ -94,18 +91,18 @@ class SendUpdateLogRepository extends BaseRepository
                 'price_without_vat' => $data['price_without_vat'],
                 'insurer_quote_number' => $data['insurer_quote_number'],
                 'insurance_provider_id' => $data['insurance_provider_id'],
-                'status' => SendUpdateLogStatusEnum::REQUEST_IN_PROGRESS
+                'status' => SendUpdateLogStatusEnum::REQUEST_IN_PROGRESS,
             ]);
-        } catch(\Exception $ex) {
+        } catch (\Exception $ex) {
             $result = (object) [
-                'message' => $ex->getMessage()
+                'message' => $ex->getMessage(),
             ];
         }
 
         return $result;
     }
 
-    public function fetchSavePolicyDetails($data) 
+    public function fetchSavePolicyDetails($data)
     {
         try {
             $result = $this->where('id', $data['id'])->update([
@@ -119,11 +116,11 @@ class SendUpdateLogRepository extends BaseRepository
                 'expiry_date' => $data['expiry_date'],
                 'insurer_quote_number' => $data['insurer_quote_number'],
                 'issuance_status_id' => $data['issuance_status_id'],
-                'status' => SendUpdateLogStatusEnum::REQUEST_IN_PROGRESS
+                'status' => SendUpdateLogStatusEnum::REQUEST_IN_PROGRESS,
             ]);
-        } catch(\Exception $ex) {
+        } catch (\Exception $ex) {
             $result = (object) [
-                'message' => $ex->getMessage()
+                'message' => $ex->getMessage(),
             ];
         }
 

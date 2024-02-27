@@ -94,6 +94,7 @@ defineProps({
   sendUpdateOptions: Array,
   sendUpdateLogs: Array,
   hasPolicyIssuedStatus: Boolean,
+  parentLeadDetails: Object,
 });
 const page = usePage();
 const notification = useNotifications('toast');
@@ -1588,6 +1589,11 @@ const handlePlanSelected = plan => {
 };
 
 const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
+
+const getDetailPageRoute = (
+  uuid,
+  quote_type_id,
+) => useGetShowPageRoute(uuid, quote_type_id, null);
 </script>
 
 <template>
@@ -1902,12 +1908,25 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
                     <label
                       class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
                     >
-                      Parent Ref-ID
+                      PARENT REF-ID
                     </label>
                     <template #tooltip> Parent Reference ID </template>
                   </x-tooltip>
                 </dt>
-                <dd>{{ record.parent_duplicate_quote_id ?? '' }}</dd>
+                <dd>
+                  <Link
+                    v-if="record.parent_duplicate_quote_id"
+                    :href="
+                      getDetailPageRoute(
+                        parentLeadDetails.uuid,
+                        parentLeadDetails.quote_type_id,
+                      )
+                    "
+                    class="text-primary-500 hover:underline"
+                  >
+                    {{ record.parent_duplicate_quote_id ?? '' }}
+                  </Link>
+                </dd>
               </div>
               <div
                 class="grid sm:grid-cols-2"
