@@ -7,7 +7,9 @@
     "css": [
       "assets/inertia-2ae46435.css"
     ],
+
     "file": "assets/inertia-6d854195.js",
+
     "isEntry": true,
     "src": "resources/js/inertia/inertia.js"
   }
