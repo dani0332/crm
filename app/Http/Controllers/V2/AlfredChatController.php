@@ -19,7 +19,6 @@ class AlfredChatController extends Controller
             ->select('role', 'msg', 'created_at')
             ->simplePaginate()
             ->withQueryString();
-        
 
         if (isset($chat->data)) {
             return response()->json(['message' => 'No chat available'], 404);
