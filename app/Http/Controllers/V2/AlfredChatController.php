@@ -18,8 +18,8 @@ class AlfredChatController extends Controller
         $chat = AlfredChat::where('quote_id', $request->quoteId)
             ->select('role', 'msg', 'created_at')
             ->simplePaginate()
-            ->withQueryString()
-            ->toArray();
+            ->withQueryString();
+        
 
         if (empty($chat['data'])) {
             return response()->json(['message' => 'No chat available'], 404);
