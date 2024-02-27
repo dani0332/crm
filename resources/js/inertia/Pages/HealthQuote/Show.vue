@@ -618,7 +618,12 @@ const onLoadAvailablePlansData = async () => {
                 if (plan.isManualPlan) {
                     isManualPlansCount.value++;
                 }
+
+                if (plan.id === selectedPlan.value.id && !plan.needPriceUpdate) {
+                    selectedPlan.value.needPriceUpdate = false;
+                }
             });
+
             setTimeout(() => {
                 onPlanFiltersSubmit();
             }, 800);
