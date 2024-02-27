@@ -11,7 +11,7 @@ const props = defineProps({
   },
 });
 
-const showChatLogs = ref(true);
+const showChatLogs = ref(false);
 const formatted = date => useDateFormat(date, 'hh:mm:ss A').value;
 const loader = ref(false);
 const tableHeaders = reactive([
