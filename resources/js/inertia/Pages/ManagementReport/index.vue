@@ -1,5 +1,4 @@
 <script setup>
-import { onMounted, watch, watchEffect } from 'vue';
 import ActivePolicies from './Partials/ActivePolicies.vue';
 import EndingPolicies from './Partials/EndingPolicies.vue';
 import SalesDetail from './Partials/SalesDetail.vue';

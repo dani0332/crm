@@ -10,6 +10,12 @@ const props = defineProps({
   },
 });
 
+const formattedReportData = computed(() => {
+  return props.reportData.data.filter(item => {
+    return (item.total_transaction > 0);
+  });
+});
+
 const priceFormat = (price, thousandSeparator = false) => {
   return thousandSeparator
     ? parseFloat(price).toLocaleString('en-US', {
@@ -100,7 +106,7 @@ const isIntegerColumn = key => {
     table-class-name=""
     :loading="loader"
     :headers="tableHeader"
-    :items="reportData.data || []"
+    :items="formattedReportData || []"
     border-cell
     :empty-message="'No Records Available'"
     :sort-by="'net_conversion'"
@@ -110,28 +116,31 @@ const isIntegerColumn = key => {
     <template #item-total_policies="{ total_policies }">
       {{ total_policies ?? 0 }}
     </template>
+    <template #item-total_endorsements="{ total_endorsements }">
+      {{ total_endorsements ?? 0 }}
+    </template>
     <template #item-total_transaction="{ total_transaction }">
       {{ total_transaction ?? 0 }}
     </template>
     <template #item-price_vat_applicable="{ price_vat_applicable }">
-      {{ price_vat_applicable ? priceFormat(price_vat_applicable) : 0 }}
+      {{ price_vat_applicable ? price_vat_applicable : 0.00 }}
     </template>
     <template #item-total_vat="{ total_vat }">
-      {{ total_vat ? priceFormat(total_vat) : 0 }}
+      {{ total_vat ? total_vat : 0.00 }}
     </template>
     <template #item-price_vat_not_applicable="{ price_vat_not_applicable }">
-      {{ price_vat_not_applicable ? priceFormat(price_vat_not_applicable) : 0 }}
+      {{ price_vat_not_applicable ? price_vat_not_applicable : 0.00 }}
     </template>
     <template #item-discount="{ discount }">
-      {{ discount ? priceFormat(discount) : 0 }}
+      {{ discount ? discount : 0.00 }}
     </template>
     <template #item-commission_vat_applicable="{ commission_vat_applicable }">
       {{
-        commission_vat_applicable ? priceFormat(commission_vat_applicable) : 0
+        commission_vat_applicable ? commission_vat_applicable : 0.00
       }}
     </template>
     <template #item-total_price="{ total_price }">
-      {{ total_price ? priceFormat(total_price) : 0 }}
+      {{ total_price ? total_price : 0.00 }}
     </template>
     <template #body-append>
       <tr v-if="reportData.data.length > 0" class="total-row">
@@ -143,7 +152,7 @@ const isIntegerColumn = key => {
         >
           {{
             isIntegerColumn(header.value)
-              ? calculateTotalSum(reportData.data, header.value)
+              ? priceFormat(calculateTotalSum(reportData.data, header.value), true)
               : 'N/A'
           }}
         </td>

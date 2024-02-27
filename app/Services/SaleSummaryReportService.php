@@ -31,9 +31,9 @@ class SaleSummaryReportService extends ManagementReport
             ->leftJoin('personal_quote_details as pqd', 'personal_quotes.id', '=', 'pqd.personal_quote_id')
             ->join('payments as p', 'personal_quotes.code', '=', 'p.code')
             ->selectRaw("
-            FORMAT((CAST(SUM(CASE WHEN personal_quotes.policy_issuance_date IS NOT NULL AND personal_quotes.policy_number IS NOT NULL THEN 1 ELSE 0 END) / COUNT(DISTINCT(user_team.team_id)) AS UNSIGNED)), 2) as total_policies,
-            FORMAT((CAST(SUM(CASE WHEN sul.id IS NOT NULL AND l.code = 'EF' THEN 1 ELSE 0 END) / COUNT(DISTINCT(user_team.team_id)) AS UNSIGNED)), 2) as total_endorsements,
-            FORMAT((CAST((SUM(CASE WHEN personal_quotes.policy_issuance_date IS NOT NULL AND personal_quotes.policy_number IS NOT NULL THEN 1 ELSE 0 END) + SUM(CASE WHEN sul.id IS NOT NULL AND l.code = 'EF' THEN 1 ELSE 0 END)) / COUNT(DISTINCT(user_team.team_id)) AS UNSIGNED)), 2) as total_transaction,
+            (CAST(SUM(CASE WHEN personal_quotes.policy_issuance_date IS NOT NULL AND personal_quotes.policy_number IS NOT NULL THEN 1 ELSE 0 END) / COUNT(DISTINCT(user_team.team_id)) AS UNSIGNED)) as total_policies,
+            (CAST(SUM(CASE WHEN sul.id IS NOT NULL AND l.code = 'EF' THEN 1 ELSE 0 END) / COUNT(DISTINCT(user_team.team_id)) AS UNSIGNED)) as total_endorsements,
+            (CAST((SUM(CASE WHEN personal_quotes.policy_issuance_date IS NOT NULL AND personal_quotes.policy_number IS NOT NULL THEN 1 ELSE 0 END) + SUM(CASE WHEN sul.id IS NOT NULL AND l.code = 'EF' THEN 1 ELSE 0 END)) / COUNT(DISTINCT(user_team.team_id)) AS UNSIGNED)) as total_transaction,
             FORMAT(IFNULL((CAST(SUM(price_vat_applicable) / COUNT(DISTINCT(user_team.team_id)) AS UNSIGNED)),0), 2) as price_vat_applicable,
             FORMAT(IFNULL((CAST(SUM(price_vat_applicable) / COUNT(DISTINCT(user_team.team_id)) AS UNSIGNED)) * 0.05,0), 2) as total_vat,
             FORMAT(IFNULL((CAST(SUM(price_vat_not_applicable) / COUNT(DISTINCT(user_team.team_id)) AS UNSIGNED)), 0), 2) as price_vat_not_applicable,
