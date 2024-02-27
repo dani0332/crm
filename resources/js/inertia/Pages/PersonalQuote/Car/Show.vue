@@ -3186,10 +3186,6 @@ const handleChildUpdate = planId => {
       :modelType="quoteType"
     />
 
-    <CustomerChatLogs
-      :customerName="record?.first_name + record?.last_name"
-      :quoteId="quote.uuid"
-    />
     <div class="p-4 rounded shadow mb-6 bg-white" v-if="isQuoteDocumentEnabled">
       <div>
         <h3 class="font-semibold text-primary-800 text-lg">Policy Details</h3>
@@ -3748,6 +3744,11 @@ const handleChildUpdate = planId => {
         :hide-footer="historyData.length < 15"
       />
     </div>
+
+    <CustomerChatLogs
+      :customerName="record?.first_name + record?.last_name"
+      :quoteId="quote.uuid"
+    />
   </div>
   <AuditLogs :type="'App\\Models\\CarQuote'" :id="$page.props.record.id" />
   <ApiLogs
