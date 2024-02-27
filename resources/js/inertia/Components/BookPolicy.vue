@@ -23,6 +23,8 @@ const props = defineProps({
 
 const isLoading = ref(false);
 
+const productionProcessTooltipEnum = page.props.productionProcessTooltipEnum;
+
 const dateToYMD = date => {
   if (date) {
     const [year, month, day] = date.split('-');
@@ -218,27 +220,75 @@ const caculateCommission = () => {
       <div class="text-sm">
         <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">Booking Date</dt>
+            <x-tooltip>
+              <dt class="font-medium">Booking Date</dt>
+              <template #tooltip>
+                <span class="custom-tooltip-content">{{
+                  productionProcessTooltipEnum.BOOKING_DATE
+                }}</span>
+              </template>
+            </x-tooltip>
+
             <dd>{{ bpForm.booking_date }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">Invoice Description</dt>
+            <x-tooltip>
+              <dt class="font-medium">Invoice Description</dt>
+              <template #tooltip>
+                <span class="custom-tooltip-content">{{
+                  productionProcessTooltipEnum.INVOICE_DESCRIPTION
+                }}</span>
+              </template>
+            </x-tooltip>
+
             <dd>{{ bpForm.invoice_description }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">Line of Business</dt>
+            <x-tooltip>
+              <dt class="font-medium">Line of Business</dt>
+
+              <template #tooltip>
+                <span class="custom-tooltip-content">{{
+                  productionProcessTooltipEnum.LINE_OF_BUSINESS
+                }}</span>
+              </template>
+            </x-tooltip>
             <dd>{{ props?.quoteType }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">Transaction Payment Status</dt>
+            <x-tooltip>
+              <dt class="font-medium">Transaction Payment Status</dt>
+
+              <template #tooltip>
+                <span class="custom-tooltip-content">{{
+                  productionProcessTooltipEnum.TRANSACTION_PAYMENT_STATUS
+                }}</span>
+              </template>
+            </x-tooltip>
             <dd>{{ bpForm.transaction_payment_status }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">Sub Type</dt>
+            <x-tooltip>
+              <dt class="font-medium">Sub Type</dt>
+
+              <template #tooltip>
+                <span class="custom-tooltip-content">{{
+                  productionProcessTooltipEnum.SUB_TYPE
+                }}</span>
+              </template>
+            </x-tooltip>
             <dd></dd>
           </div>
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">Insurer Invoice Date</dt>
+            <x-tooltip>
+              <dt class="font-medium">Insurer Invoice Date</dt>
+
+              <template #tooltip>
+                <span class="custom-tooltip-content">{{
+                  productionProcessTooltipEnum.INSURER_INVOICE_DATE
+                }}</span>
+              </template>
+            </x-tooltip>
             <dd>
               <DatePicker
                 v-model="bpForm.invoice_date"
@@ -251,11 +301,27 @@ const caculateCommission = () => {
             </dd>
           </div>
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">Broker Invoice Number</dt>
+            <x-tooltip>
+              <dt class="font-medium">Broker Invoice Number</dt>
+
+              <template #tooltip>
+                <span class="custom-tooltip-content">{{
+                  productionProcessTooltipEnum.BROKER_INVOICE_NUMBER
+                }}</span>
+              </template>
+            </x-tooltip>
             <dd>{{ bpForm.broker_invoice_number }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">Insurer Tax Invoice Number</dt>
+            <x-tooltip>
+              <dt class="font-medium">Insurer Tax Invoice Number</dt>
+
+              <template #tooltip>
+                <span class="custom-tooltip-content">{{
+                  productionProcessTooltipEnum.INSURER_TAX_INVOICE_NUMBER
+                }}</span>
+              </template>
+            </x-tooltip>
             <dd>
               <x-input
                 v-model="bpForm.insurer_tax_invoice_number"
@@ -267,11 +333,27 @@ const caculateCommission = () => {
             </dd>
           </div>
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">Discount</dt>
+            <x-tooltip>
+              <dt class="font-medium">Discount</dt>
+
+              <template #tooltip>
+                <span class="custom-tooltip-content">{{
+                  productionProcessTooltipEnum.DISCOUNT_VALUE
+                }}</span>
+              </template>
+            </x-tooltip>
             <dd>{{ bpForm.discount }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">Insurer Commission Invoice Number</dt>
+            <x-tooltip>
+              <dt class="font-medium">Insurer Commission Invoice Number</dt>
+
+              <template #tooltip>
+                <span class="custom-tooltip-content">{{
+                  productionProcessTooltipEnum.INSURER_COMMISSION_TAX_INVOICE_NUMBER
+                }}</span>
+              </template>
+            </x-tooltip>
             <dd>
               <x-input
                 v-model="bpForm.insurer_commmission_invoice_number"
@@ -283,11 +365,28 @@ const caculateCommission = () => {
             </dd>
           </div>
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">Commission %</dt>
+            <x-tooltip>
+              <dt class="font-medium">Commission %</dt>
+
+              <template #tooltip>
+                <span class="custom-tooltip-content">{{
+                  productionProcessTooltipEnum.COMMISSION_PERCENTAGE
+                }}</span>
+              </template>
+            </x-tooltip>
+
             <dd>{{ bpForm.commission_percentage }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">Commission (VAT NOT APPLICABLE)</dt>
+            <x-tooltip>
+              <dt class="font-medium">Commission (VAT NOT APPLICABLE)</dt>
+
+              <template #tooltip>
+                <span class="custom-tooltip-content">{{
+                  productionProcessTooltipEnum.COMMISSION_VAT_NOT_APPLICABLE
+                }}</span>
+              </template>
+            </x-tooltip>
             <dd>
               <x-input
                 v-model="bpForm.commission_vat_not_applicable"
@@ -301,11 +400,27 @@ const caculateCommission = () => {
             </dd>
           </div>
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">VAT on Commission</dt>
+            <x-tooltip>
+              <dt class="font-medium">VAT on Commission</dt>
+
+              <template #tooltip>
+                <span class="custom-tooltip-content">{{
+                  productionProcessTooltipEnum.VAT_ON_COMMISSION
+                }}</span>
+              </template>
+            </x-tooltip>
             <dd>{{ bpForm.vat_on_commission }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">Commission VAT APPLICABLE</dt>
+            <x-tooltip>
+              <dt class="font-medium">Commission VAT APPLICABLE</dt>
+
+              <template #tooltip>
+                <span class="custom-tooltip-content">{{
+                  productionProcessTooltipEnum.COMMISSION_VAT_APPLICABLE
+                }}</span>
+              </template>
+            </x-tooltip>
             <dd>
               <x-input
                 v-model="bpForm.commission_vat_applicable"
@@ -319,7 +434,15 @@ const caculateCommission = () => {
             </dd>
           </div>
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">Total Commission</dt>
+            <x-tooltip>
+              <dt class="font-medium">Total Commission</dt>
+
+              <template #tooltip>
+                <span class="custom-tooltip-content">{{
+                  productionProcessTooltipEnum.TOTAL_COMMISSION
+                }}</span>
+              </template>
+            </x-tooltip>
             <dd>{{ bpForm.total_commission }}</dd>
           </div>
         </dl>
