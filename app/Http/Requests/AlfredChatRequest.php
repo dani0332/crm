@@ -22,7 +22,7 @@ class AlfredChatRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'quoteId' => 'required'
+            'quoteId' => 'required',
         ];
     }
 }
