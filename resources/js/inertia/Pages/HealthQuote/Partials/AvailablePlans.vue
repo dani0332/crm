@@ -560,7 +560,10 @@ onUpdated(() => {
             <!-- don't remove this commented part anyone please -->
             <x-tooltip
               v-if="
-                label == 'Members' && (props.plan.isManualPlan && props.plan.needPriceUpdate)"
+                label == 'Members' &&
+                props.plan.isManualPlan &&
+                props.plan.needPriceUpdate
+              "
               position="bottom"
               class="arrow-t"
             >
@@ -585,8 +588,8 @@ onUpdated(() => {
                 </button>
                 <template #content>!</template>
               </x-badge>
-              <template #tooltip
-                >Price outdated! <br />
+              <template #tooltip>
+                Price outdated! <br />
                 Please update</template
               >
             </x-tooltip>
@@ -814,7 +817,7 @@ onUpdated(() => {
               </div>
               <DataTable
                 :headers="[
-                //   { text: 'Revised', value: 'memberaction' },
+                  //   { text: 'Revised', value: 'memberaction' },
                   { text: 'Relationship', value: 'membercategory' },
                   { text: 'DOB', value: 'dobText' },
                   { text: 'Gender', value: 'genderText' },
@@ -960,9 +963,7 @@ onUpdated(() => {
                     /> -->
 
                     <x-input
-                      v-if="
-                        data.healthPlanCoPaymentId == selectedCopay.id
-                      "
+                      v-if="data.healthPlanCoPaymentId == selectedCopay.id"
                       :value="data.premium?.toLocaleString()"
                       :disabled="true"
                       size="sm"

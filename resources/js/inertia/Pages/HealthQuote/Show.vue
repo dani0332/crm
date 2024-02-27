@@ -170,7 +170,6 @@ const memberCategoryText = memberCategoryId =>
     )?.text;
   });
 
-
 // const subTeamOptions = computed(() => {
 //     let subteamArray = page.props.teams?.map(team => ({
 //         value: team.name,
@@ -491,7 +490,8 @@ const onMemberSubmit = isValid => {
       },
     });
   } else {
-    memberForm.post(`/health-quote-add-member`, {    // new mavonic endpoint
+    memberForm.post(`/health-quote-add-member`, {
+      // new mavonic endpoint
       preserveScroll: true,
       onSuccess: () => {
         notification.success({
@@ -501,16 +501,15 @@ const onMemberSubmit = isValid => {
         onLoadAvailablePlansData();
         // location.reload();
       },
-        onError: errors => {
-            notification.error({
-            title: errors.error || 'Data not saved',
-            position: 'top',
-            });
-        },
+      onError: errors => {
+        notification.error({
+          title: errors.error || 'Data not saved',
+          position: 'top',
+        });
+      },
       onFinish: () => {
         modals.member = false;
         membersDetailsUpdated.value = true;
-
       },
     });
   }
@@ -523,7 +522,8 @@ const memberDelete = id => {
 };
 
 const memberDeleteConfirmed = () => {
-  memberForm.post(`/health-quote-delete-member`,
+  memberForm.post(
+    `/health-quote-delete-member`,
     // `/members/${page.props.quote.customer_type}-${page.props.modelType}-${confirmDeleteData.member}`,
     {
       preserveScroll: true,
@@ -538,15 +538,14 @@ const memberDeleteConfirmed = () => {
       onFinish: () => {
         modals.memberConfirm = false;
         membersDetailsUpdated.value = true;
-
       },
     },
   );
 };
 
 const onRecieveMembersDetailsReview = () => {
-    membersDetailsUpdated.value = false;
-}
+  membersDetailsUpdated.value = false;
+};
 
 const memberDataDocs = membersDetail => {
   return membersDetail
@@ -749,7 +748,7 @@ const onCreatePlan = () => {
   });
 };
 
-const onPlanError = (data) => {
+const onPlanError = data => {
   modals.createPlan = false;
   notification.error({
     title: data ?? 'Plan Creation Failed',
@@ -873,42 +872,56 @@ const getSmallestCopayRateAsDefaultValue = () => {
   plansTable.data.forEach(element => {
     defaultCopayId = element.selectedCopayId;
     element.ratesPerCopay?.forEach(function callback(value, index) {
-
-        if ( element.selectedCopayId && defaultCopayId == value.healthPlanCoPaymentId) {
-            smallestCopayValue = Number(value.premium);
-            smallestCopayVAT = Number(value.vat);
-            smallestCopayLoadingPrice = Number(value.loadingPrice ? value.loadingPrice : 0);
-            defaultCopayId = element.selectedCopayId;
-        } else if (element.selectedCopayId == undefined || element.selectedCopayId == null)
-        {
-            if (index == 0) {
-                smallestCopayValue = Number(value.premium);
-                smallestCopayVAT = Number(value.vat);
-                smallestCopayLoadingPrice = Number(value.loadingPrice ? value.loadingPrice : 0);
-                defaultCopayId = value.healthPlanCoPaymentId;
-            } else if (value.premium < smallestCopayValue) {
-                smallestCopayValue = Number(value.premium);
-                smallestCopayVAT = Number(value.vat);
-                smallestCopayLoadingPrice = Number(value.loadingPrice ? value.loadingPrice : 0);
-                defaultCopayId = value.healthPlanCoPaymentId;
-            }
+      if (
+        element.selectedCopayId &&
+        defaultCopayId == value.healthPlanCoPaymentId
+      ) {
+        smallestCopayValue = Number(value.premium);
+        smallestCopayVAT = Number(value.vat);
+        smallestCopayLoadingPrice = Number(
+          value.loadingPrice ? value.loadingPrice : 0,
+        );
+        defaultCopayId = element.selectedCopayId;
+      } else if (
+        element.selectedCopayId == undefined ||
+        element.selectedCopayId == null
+      ) {
+        if (index == 0) {
+          smallestCopayValue = Number(value.premium);
+          smallestCopayVAT = Number(value.vat);
+          smallestCopayLoadingPrice = Number(
+            value.loadingPrice ? value.loadingPrice : 0,
+          );
+          defaultCopayId = value.healthPlanCoPaymentId;
+        } else if (value.premium < smallestCopayValue) {
+          smallestCopayValue = Number(value.premium);
+          smallestCopayVAT = Number(value.vat);
+          smallestCopayLoadingPrice = Number(
+            value.loadingPrice ? value.loadingPrice : 0,
+          );
+          defaultCopayId = value.healthPlanCoPaymentId;
         }
+      }
     });
 
-    element.memberPremiumBreakdown?.forEach(function callback(breakDown, index){
-        breakDown.ratesPerCopay?.forEach(function callback(ratePerCopay){
-            if (ratePerCopay.notifyAgent) {
-                element.needPriceUpdate = true;
-            }
+    element.memberPremiumBreakdown?.forEach(
+      function callback(breakDown, index) {
+        breakDown.ratesPerCopay?.forEach(function callback(ratePerCopay) {
+          if (ratePerCopay.notifyAgent) {
+            element.needPriceUpdate = true;
+          }
         });
-    });
+      },
+    );
 
     if (isMounted.value && selectedCoPay.planId == element.id) {
       element.actualPremium = selectedCoPay.premium;
       if (smallestCopayLoadingPrice > 0) {
-        element.vat = Number(( selectedCoPay.premium + smallestCopayLoadingPrice ) * 0.05);
+        element.vat = Number(
+          (selectedCoPay.premium + smallestCopayLoadingPrice) * 0.05,
+        );
       } else {
-          element.vat = selectedCoPay.vat;
+        element.vat = selectedCoPay.vat;
       }
       element.selectedCopayId = selectedCoPay.id;
       element.loadingPrice = smallestCopayLoadingPrice;
@@ -917,7 +930,6 @@ const getSmallestCopayRateAsDefaultValue = () => {
       element.actualPremium = smallestCopayValue;
       element.vat = smallestCopayVAT;
       element.loadingPrice = smallestCopayLoadingPrice;
-
     }
     element.coPayments.forEach(function callback(value, index) {
       if (value.id == element.selectedCopayId) {
@@ -936,19 +948,23 @@ const onSelectedCopay = data => {
 };
 
 const onMarkPlanAsManual = (plan, loadingPrice) => {
-
-    listQuotePlansFiltered.value = listQuotePlansFiltered.value.map(element => {
-        if (element.id == plan.id) {
-            element.isManualPlan = true;
-            // LOADING PRICE UPDTAE
-            let vat = ((element.actualPremium + (element.policyFee || 0) + (element.basmah || 0) + (loadingPrice || 0)) * 0.05);
-            element.loadingPrice = Number(loadingPrice);
-            element.vat = Number(vat);
-        }
-        return element;
-    });
-    onLoadAvailablePlansData();
-}
+  listQuotePlansFiltered.value = listQuotePlansFiltered.value.map(element => {
+    if (element.id == plan.id) {
+      element.isManualPlan = true;
+      // LOADING PRICE UPDTAE
+      let vat =
+        (element.actualPremium +
+          (element.policyFee || 0) +
+          (element.basmah || 0) +
+          (loadingPrice || 0)) *
+        0.05;
+      element.loadingPrice = Number(loadingPrice);
+      element.vat = Number(vat);
+    }
+    return element;
+  });
+  onLoadAvailablePlansData();
+};
 
 // quoteDocuments
 
@@ -1450,7 +1466,6 @@ const prefillPlanId = ref(page.props.quote.prefill_plan_id);
 const handleChildUpdate = planId => {
   prefillPlanId.value = planId;
 };
-
 </script>
 
 <template>
@@ -2017,9 +2032,9 @@ const handleChildUpdate = planId => {
         hide-rows-per-page
         hide-footer
       >
-          <template #item-first_name="{ first_name, last_name }">
-              {{ first_name + ' ' + (last_name == null ? '' : last_name)}}
-          </template>
+        <template #item-first_name="{ first_name, last_name }">
+          {{ first_name + ' ' + (last_name == null ? '' : last_name) }}
+        </template>
         <template #item-gender="{ gender }">
           {{ genderText(gender).value }}
         </template>
@@ -2066,30 +2081,47 @@ const handleChildUpdate = planId => {
         </template>
 
         <x-form @submit="onMemberSubmit" :auto-focus="false">
-            <div v-if="isManualPlansCount > 0" class="bg-red-100 border border-red-400 text-red-700 rounded-b px-4 py-3 shadow-md mb-4" role="alert">
-                <div class="flex">
-                    <div class="py-1"><svg class="fill-current h-6 w-6 text-read-900 mr-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M2.93 17.07A10 10 0 1 1 17.07 2.93 10 10 0 0 1 2.93 17.07zm12.73-1.41A8 8 0 1 0 4.34 4.34a8 8 0 0 0 11.32 11.32zM9 11V9h2v6H9v-4zm0-6h2v2H9V5z"/></svg></div>
-                    <div>
-                    <p class="font-bold">ALERT! Manual Plan(s) exists.</p>
-                    <p class="text-sm">Please revist all manual plan(s) and update the per member price</p>
-                    </div>
-                </div>
+          <div
+            v-if="isManualPlansCount > 0"
+            class="bg-red-100 border border-red-400 text-red-700 rounded-b px-4 py-3 shadow-md mb-4"
+            role="alert"
+          >
+            <div class="flex">
+              <div class="py-1">
+                <svg
+                  class="fill-current h-6 w-6 text-read-900 mr-4"
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 20 20"
+                >
+                  <path
+                    d="M2.93 17.07A10 10 0 1 1 17.07 2.93 10 10 0 0 1 2.93 17.07zm12.73-1.41A8 8 0 1 0 4.34 4.34a8 8 0 0 0 11.32 11.32zM9 11V9h2v6H9v-4zm0-6h2v2H9V5z"
+                  />
+                </svg>
+              </div>
+              <div>
+                <p class="font-bold">ALERT! Manual Plan(s) exists.</p>
+                <p class="text-sm">
+                  Please revist all manual plan(s) and update the per member
+                  price
+                </p>
+              </div>
             </div>
+          </div>
           <div class="grid md:grid-cols-2 gap-4 md:pb-16">
-          <input type="hidden" :value="memberForm.id" />
+            <input type="hidden" :value="memberForm.id" />
             <x-input
-                maxLength="60"
-                v-model="memberForm.first_name"
-                label="First Name"
-                placeholder="First Name"
-                :rules="[isRequired]"
+              maxLength="60"
+              v-model="memberForm.first_name"
+              label="First Name"
+              placeholder="First Name"
+              :rules="[isRequired]"
             />
             <x-input
-                maxLength="60"
-                v-model="memberForm.last_name"
-                label="Last Name"
-                placeholder="Last Name"
-                :rules="[isRequired]"
+              maxLength="60"
+              v-model="memberForm.last_name"
+              label="Last Name"
+              placeholder="Last Name"
+              :rules="[isRequired]"
             />
             <ComboBox
               v-model="memberForm.nationality_id"
@@ -2176,14 +2208,30 @@ const handleChildUpdate = planId => {
 
       <x-modal v-model="modals.memberConfirm" show-close backdrop>
         <template #header> Delete Member Detail </template>
-        <div v-if="isManualPlansCount > 0" class="w-full bg-red-100 border border-red-400 text-red-700 rounded-b px-4 py-3 shadow-md mb-4" role="alert">
-                    <div class="flex">
-                        <div class="py-1"><svg class="fill-current h-6 w-6 text-read-900 mr-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M2.93 17.07A10 10 0 1 1 17.07 2.93 10 10 0 0 1 2.93 17.07zm12.73-1.41A8 8 0 1 0 4.34 4.34a8 8 0 0 0 11.32 11.32zM9 11V9h2v6H9v-4zm0-6h2v2H9V5z"/></svg></div>
-                        <div>
-                        <p class="font-bold">ALERT! Manual Plan(s) exists.</p>
-                        <p class="text-sm">Please revist all manual plan(s) and update the per member price</p>
-                        </div>
-                    </div>
+        <div
+          v-if="isManualPlansCount > 0"
+          class="w-full bg-red-100 border border-red-400 text-red-700 rounded-b px-4 py-3 shadow-md mb-4"
+          role="alert"
+        >
+          <div class="flex">
+            <div class="py-1">
+              <svg
+                class="fill-current h-6 w-6 text-read-900 mr-4"
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 20 20"
+              >
+                <path
+                  d="M2.93 17.07A10 10 0 1 1 17.07 2.93 10 10 0 0 1 2.93 17.07zm12.73-1.41A8 8 0 1 0 4.34 4.34a8 8 0 0 0 11.32 11.32zM9 11V9h2v6H9v-4zm0-6h2v2H9V5z"
+                />
+              </svg>
+            </div>
+            <div>
+              <p class="font-bold">ALERT! Manual Plan(s) exists.</p>
+              <p class="text-sm">
+                Please revist all manual plan(s) and update the per member price
+              </p>
+            </div>
+          </div>
         </div>
         <p>Are you sure you want to delete this?</p>
         <template #actions>
@@ -2667,36 +2715,53 @@ const handleChildUpdate = planId => {
             </x-tag>
           </div>
         </template>
-        <template #item-total="{ actualPremium, policyFee, basmah, vat, loadingPrice }">
+        <template
+          #item-total="{ actualPremium, policyFee, basmah, vat, loadingPrice }"
+        >
           {{
-            fixedValue(actualPremium + (policyFee || 0) + (basmah || 0) + vat + (loadingPrice || 0))
+            fixedValue(
+              actualPremium +
+                (policyFee || 0) +
+                (basmah || 0) +
+                vat +
+                (loadingPrice || 0),
+            )
           }}
         </template>
         <template #item-action="item">
           <div class="flex gap-2 pr-2">
             <!-- put here -->
             <!-- don't remove this commented code anyone please -->
-            <template v-if="(item.isManualPlan && membersDetailsUpdated) || item.needPriceUpdate "> <!-- always false temporarily -->
-            <x-tooltip position="top" class="arrow-b">
+            <template
+              v-if="
+                (item.isManualPlan && membersDetailsUpdated) ||
+                item.needPriceUpdate
+              "
+            >
+              <!-- always false temporarily -->
+              <x-tooltip position="top" class="arrow-b">
                 <x-badge
-                    size="xs"
-                    color="error"
-                    outlined
-                    offset-x="-8"
-                    offset-y="-10"
+                  size="xs"
+                  color="error"
+                  outlined
+                  offset-x="-8"
+                  offset-y="-10"
                 >
-                    <x-button
+                  <x-button
                     size="xs"
                     color="primary"
                     outlined
                     @click.prevent="planClicked(item)"
-                    >
+                  >
                     View
-                    </x-button>
-                    <template #content>!</template>
+                  </x-button>
+                  <template #content>!</template>
                 </x-badge>
-              <template #tooltip>Price outdated! <br/> Please update</template>
-            </x-tooltip>
+                <template #tooltip>
+                  Price outdated! <br />
+                  Please update
+                </template>
+              </x-tooltip>
             </template>
             <template v-else>
               <x-button
@@ -2706,7 +2771,7 @@ const handleChildUpdate = planId => {
                 @click.prevent="planClicked(item)"
               >
                 View
-            </x-button>
+              </x-button>
             </template>
             <x-button
               size="xs"
@@ -3115,8 +3180,8 @@ const handleChildUpdate = planId => {
     <AuditLogs :type="'App\\Models\\HealthQuote'" :id="$page.props.quote.id" />
 
     <ClientInquiryLogs
-        v-if="clientInquiryLogs.length > 0"
-        :logs="clientInquiryLogs"
+      v-if="clientInquiryLogs.length > 0"
+      :logs="clientInquiryLogs"
     />
   </div>
 </template>
