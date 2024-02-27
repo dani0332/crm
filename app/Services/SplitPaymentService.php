@@ -159,8 +159,6 @@ class SplitPaymentService
             $skipEmbededProducts = ['App\Models\EmbeddedTransactions','App\Models\EmbeddedTransaction'];
             // Extract the code and check if it has child payments
             $code = $payment->code;
-           
-            //echo    $payment->paymentable_type . "\n"; continue;
             $tempCode = explode('-', $code);
             if (count($tempCode) == 3) {
                 $code = $tempCode[0].'-'.$tempCode[1];
@@ -178,10 +176,10 @@ class SplitPaymentService
                 Log::info('MigratePayment::Master Payment does not exists for Payment Code: '.$payment->code);
                 return false;               
             }
-            //echo $code . "<hr>"; continue;
+            
             $parentCollectionAmount = 0;
-            if ($payment->payment_status_id == 10 || $payment->payment_status_id == 6 //if paid or captured
-                || $payment->payment_status_id == 12 || $payment->payment_status_id == 17 //if partial paid or captured
+            if ($payment->payment_status_id == PaymentStatusEnum::PAID || $payment->payment_status_id == PaymentStatusEnum::CAPTURED //if paid or captured
+                || $payment->payment_status_id == PaymentStatusEnum::PARTIAL_CAPTURED || $payment->payment_status_id == PaymentStatusEnum::PARTIALLY_PAID //if partial paid or captured
             ) { 
                 $parentCollectionAmount = $payment->captured_amount;
             }
@@ -203,8 +201,8 @@ class SplitPaymentService
             $payment->total_amount = $grandTotal;
             $payment->collection_type = 'broker';
 
-            if ($payment->payment_status_id == 11) { //draft
-                $payment->payment_status_id = 14; //new
+            if ($payment->payment_status_id == PaymentStatusEnum::DRAFT) { //draft
+                $payment->payment_status_id = PaymentStatusEnum::NEW; //new
             }
             //$payment->captured_amount = $parentCollectionAmount;
             $payment->collection_date = $payment->updated_at;
@@ -214,13 +212,13 @@ class SplitPaymentService
                 $payment_sr_no = 1;
                 foreach ($childPayments as $childPayment) {
 
-                    if ($childPayment->payment_status_id == 11) { //draft
-                        $childPayment->payment_status_id = 14; //new
+                    if ($childPayment->payment_status_id == PaymentStatusEnum::DRAFT) { //draft
+                        $childPayment->payment_status_id = PaymentStatusEnum::NEW; //new
                     }
                     // Create a new SplitPayment record
                     $collectionAmount = 0;
-                    if ($childPayment->payment_status_id == 10 || $childPayment->payment_status_id == 6 //if paid or captured
-                    || $childPayment->payment_status_id == 12 || $childPayment->payment_status_id == 17 //if partial paid or captured
+                    if ($childPayment->payment_status_id == PaymentStatusEnum::PAID || $childPayment->payment_status_id == PaymentStatusEnum::CAPTURED //if paid or captured
+                    || $childPayment->payment_status_id == PaymentStatusEnum::PARTIAL_CAPTURED || $childPayment->payment_status_id == PaymentStatusEnum::PARTIALLY_PAID //if partial paid or captured
                     ) { 
                         $collectionAmount = $childPayment->captured_amount;
                         $parentCollectionAmount += $childPayment->captured_amount;

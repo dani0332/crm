@@ -5,6 +5,10 @@ namespace Database\Seeders;
 use App\Models\Payment;
 use App\Models\PaymentSplits;
 use Illuminate\Database\Seeder;
+use App\Enums\PaymentStatusEnum;
+use Carbon\Carbon;
+use App\Services\SplitPaymentService;
+use Illuminate\Support\Facades\Log;
 
 class PaymentsMoveInNewTableStructure extends Seeder
 {
@@ -13,8 +17,32 @@ class PaymentsMoveInNewTableStructure extends Seeder
      */
     public function run(): void
     {
+        Log::info('MigratePaymentSeeder::Payment migration started');
+        $skipEmbededProducts = ['App\Models\EmbeddedTransactions','App\Models\EmbeddedTransaction'];
+        $payments = Payment::whereNotIn('paymentable_type',$skipEmbededProducts)
+        ->where('created_at', '>=', Carbon::now()->subDays(300))
+        ->where('total_payments', NULL)
+        ->where('frequency', NULL)
+        ->where('payment_status_id',PaymentStatusEnum::AUTHORISED)
+        //->where('code', 'CAR-GTUKFY49')
+        ->orderBy('created_at')
+        ->get();
 
-        $payments = Payment::whereNotIn('paymentable_type', ['App\Models\EmbeddedTransaction'])
+        if($payments->count() > 0){
+            foreach($payments as $payment){
+                // Extract the code and check if it has child payments
+                $code = $payment->code;
+                $tempCode = explode('-', $code);
+                if (count($tempCode) == 2) {
+                    Log::info('MigratePaymentSeeder::Payment migration for Payment Code: '.$payment->code);
+                    app(SplitPaymentService::class)->migratePayments($payment);                    
+                }
+            }
+        }
+        Log::info('MigratePaymentSeeder::Total Payments migrated: '.$payments->count());
+        
+        /* IF PARENT DOES NOT EXISTS THEN CREATE A NEW PAYMENT */
+        /*$payments = Payment::whereNotIn('paymentable_type', ['App\Models\EmbeddedTransaction'])
             ->orderBy('created_at')
             ->get();
         $masterPayments = [];
@@ -45,116 +73,6 @@ class PaymentsMoveInNewTableStructure extends Seeder
                 //$masterPayments[$code] = $code;
             }
             $masterPayments[$code] = $code;
-        }
-        
-
-        // NEED VERIFICATION AT THE END
-        $payments = Payment::whereNotIn('paymentable_type', ['App\Models\EmbeddedTransaction'])
-            ->orderBy('created_at')
-            ->get();
-
-        //echo $payments->count(); exit;
-        // App\Models\EmbeddedTransactions $payments = Payment::where('code', 'CAR-GTUKFY49')->orderBy('created_at')->get();
-
-        foreach ($payments as $payment) {
-            // Extract the code and check if it has child payments
-            $code = $payment->code;
-
-            //echo    $payment->paymentable_type . "\n"; continue;
-            $tempCode = explode('-', $code);
-            if (count($tempCode) == 3) {
-                $code = $tempCode[0].'-'.$tempCode[1];
-            }
-
-            //echo $code . "\n"; continue;
-
-            $splitPaymentExists = PaymentSplits::where('code', $code)->count();
-
-            if ($splitPaymentExists > 0) {
-                continue;
-            }
-
-            // verify master payment exists or not
-            $masterPaymentExists = Payment::where('code', $code)->count();
-            if (! ($masterPaymentExists > 0)) {
-                echo 'master not exists='.$code."\n";
-
-                continue;
-            }
-
-            $parentCollectionAmount = 0;
-            if ($payment->payment_status_id == 10 || $payment->payment_status_id == 6) { //if paid or captured
-                $parentCollectionAmount = $payment->captured_amount;
-            }
-
-            $childPayments = Payment::where('code', 'like', "$code%")->whereNotIn('paymentable_type', ['App\Models\EmbeddedTransaction'])->get();
-
-            //echo $code . "==".$childPayments->count()."\n"; //continue;
-
-            $grandTotal = $childPayments->sum('captured_amount');
-            $payment->total_payments = $childPayments->count();
-            $payment->frequency = 'split_payments';
-            $payment->total_price = $grandTotal;
-            $payment->total_amount = $grandTotal;
-            $payment->collection_type = 'broker';
-
-            if ($payment->payment_status_id == 11) { //draft
-                $payment->payment_status_id = 14; //new
-            }
-            //$payment->captured_amount = $parentCollectionAmount;
-            $payment->collection_date = $payment->updated_at;
-            $payment->save();
-
-            if ($childPayments->isNotEmpty()) {
-                $payment_sr_no = 1;
-                foreach ($childPayments as $childPayment) {
-
-                    if ($childPayment->payment_status_id == 11) { //draft
-                        $childPayment->payment_status_id = 14; //new
-                    }
-                    // Create a new SplitPayment record
-                    $collectionAmount = 0;
-                    if ($childPayment->payment_status_id == 10 || $childPayment->payment_status_id == 6) { //if paid or captured
-                        $collectionAmount = $childPayment->captured_amount;
-                        $parentCollectionAmount += $childPayment->captured_amount;
-                    }
-
-                    PaymentSplits::create([
-                        'sr_no' => $payment_sr_no,
-                        'code' => $code,
-                        'payment_method' => $childPayment->payment_methods_code,
-                        'payment_amount' => $childPayment->captured_amount,
-                        'due_date' => $childPayment->updated_at,
-                        'payment_status_id' => $childPayment->payment_status_id,
-                        'collection_amount' => $collectionAmount,
-                        'cc_payment_id' => $childPayment->amount,
-                        'cc_payment_gateway' => $childPayment->amount,
-                        'payment_link' => $childPayment->payment_link,
-                        'payment_link_created_at' => $childPayment->payment_link_created_at,
-                        'reference' => $childPayment->reference,
-                        'authorized_at' => $childPayment->authorized_at,
-                        'captured_at' => $childPayment->captured_at,
-                        'premium_authorized' => $childPayment->premium_authorized,
-                        'premium_captured' => $childPayment->premium_captured,
-                        'payment_status_message' => $childPayment->payment_status_message,
-                        'payment_gateway_id' => $childPayment->payment_gateway_id,
-                        'customer_payment_instrument_id' => $childPayment->customer_payment_instrument_id,
-                        'created_at' => $childPayment->created_at,
-                        'updated_at' => $childPayment->updated_at,
-                    ]);
-
-                    $payment_sr_no++;
-                    // Delete the child payment from the old table
-                    ////$childPayment->delete();
-                }
-                if ($payment->code == $code) {
-                    ////$payment->captured_amount = $parentCollectionAmount;
-                    ////$payment->save();
-                }
-
-            }
-
-        }
-
+        }*/
     }
 }
