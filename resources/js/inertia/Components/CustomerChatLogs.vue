@@ -53,7 +53,7 @@ const formatData = rawData => {
 };
 const getAllChat = () => {
   loader.value = true;
-  axios.post('/getAlfredChat', { quoteId: props.quoteId }).then(response => {
+  axios.post('/get-alfred-chat', { quoteId: props.quoteId }).then(response => {
     let { data } = { ...response.data };
     formatData(data);
     loader.value = false;

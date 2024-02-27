@@ -98,7 +98,7 @@ if (config('constants.APP_ENV') == EnvEnum::STAGING || config('constants.APP_ENV
 Route::get('auth/google', 'App\Http\Controllers\GoogleSocialiteController@redirectToGoogle');
 Route::get('google/callback', 'App\Http\Controllers\GoogleSocialiteController@handleCallback');
 
-Route::post('getAlfredChat', [AlfredChatController::class, 'index']);
+Route::post('get-alfred-chat', [AlfredChatController::class, 'index']);
 
 Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::get('leadsearch', function () {
