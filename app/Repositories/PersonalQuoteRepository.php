@@ -10,6 +10,7 @@ use App\Facades\Capi;
 use App\Models\PersonalQuote;
 use App\Models\QuoteDocument;
 use App\Models\QuoteStatusLog;
+use App\Models\SendUpdateLog;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use Illuminate\Support\Arr;
@@ -71,7 +72,11 @@ class PersonalQuoteRepository extends BaseRepository
             $query->where('quote_type_id', request()->quote_type_id);
         }
         $documentType = $query->first();
-        $quote = $this->getQuoteObject(request()->folder_path ?? '', $id);
+        if (request()->is_send_update) {
+            $quote = SendUpdateLog::where('id', request()->send_update_id ?? '')->first();
+        } else {
+            $quote = $this->getQuoteObject(request()->folder_path ?? '', $id);
+        }
 
         $originalName = $file->getClientOriginalName();
         $docName = preg_replace('/\s+/', '', uniqid().'_'.$originalName);

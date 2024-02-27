@@ -18,6 +18,7 @@ final class SendUpdateLogStatusEnum extends Enum
     // const STALE_REQUEST = 'Stale Request';
     const UPDATE_SENT_TO_CUSTOMER = 'Update Sent to Customer';
     const UPDATE_BOOKED = 'Update Booked';
+    const SEND_UPDATE = 'SEND_UPDATE';
     const EF = 'EF';    // Endorsement Financial
     const EN = 'EN';    // Endorsement Non Financial
     const CI = 'CI';    // Cancellation from Inception

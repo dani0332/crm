@@ -9,8 +9,10 @@ use App\Enums\SendUpdateLogStatusEnum;
 use App\Http\Controllers\Controller;
 use App\Models\PersonalQuote;
 use App\Models\QuoteType;
+use App\Repositories\CustomerMembersRepository;
 use App\Repositories\InsuranceProviderRepository;
 use App\Repositories\LookupRepository;
+use App\Repositories\QuoteTypeRepository;
 use App\Repositories\SendUpdateLogRepository;
 use App\Services\LookupService;
 use App\Services\QuoteDocumentService;
@@ -89,23 +91,21 @@ class SendUpdateLogController extends Controller
     public function show($uuid)
     {
         $sendUpdateLog = SendUpdateLogRepository::getLogByUuid($uuid);
-
         $quoteTypeId = $sendUpdateLog->quote_type_id;
-
-        $sendUpdateOptions = (new LookupService)->getSendUpdateOptions($quoteTypeId);
-        $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping($quoteTypeId);
-
-        $quoteType = QuoteTypes::getName($quoteTypeId)->value;
-
+        $quoteType = QuoteTypeRepository::where('id', $quoteTypeId)->value('code');
         $quote = $this->getQuote($sendUpdateLog->personal_quote_id);
-        $quoteDocuments = app(QuoteDocumentService::class)->getQuoteDocumentsForSendUpdates($sendUpdateLog->id);
-        $categoryCode = LookupRepository::where('id', $sendUpdateLog->category_id)->value('code');
-        $isBookingDetailsVisible = $this->isBookingDetailsVisible($categoryCode, $quoteDocuments);
-
+        $realQuote = $this->getRealQuote($quoteType, $quote->uuid);
+        $sendUpdateOptions = (new LookupService)->getSendUpdateOptions($quoteTypeId);
+        
         if (in_array($quoteType, [QuoteTypes::CAR, QuoteTypes::HEALTH, QuoteTypes::TRAVEL])) {
             $quote->load('plan.insuranceProvider');
         }
-
+        
+        $categoryCode = LookupRepository::where('id', $sendUpdateLog->category_id)->value('code');
+        $documentTypes = app(QuoteDocumentService::class)->getQuoteDocumentsForUploadByCategory(SendUpdateLogStatusEnum::SEND_UPDATE);
+        $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping($quoteTypeId);
+        $quoteDocuments = app(QuoteDocumentService::class)->getQuoteDocumentsForSendUpdates($sendUpdateLog->id);
+        $isBookingDetailsVisible = $this->isBookingDetailsVisible($categoryCode, $quoteDocuments);
         $issuanceStatuses = DB::table('policy_issuance_status')->select('id', 'text')->get();
 
         return inertia('SendUpdateLog/Show', [
@@ -116,6 +116,12 @@ class SendUpdateLogController extends Controller
             'sendUpdateOptions' => $sendUpdateOptions,
             'insuranceProviders' => $insuranceProviders,
             'sendUpdateStatusEnum' => SendUpdateLogStatusEnum::asArray(),
+            'storageUrl' => storageUrl(),
+            'documentTypes' => $documentTypes,
+            'quoteDocuments' => array_values($quoteDocuments->toArray()),
+            'membersDetail' => CustomerMembersRepository::getBy($quote->id, strtoupper($quoteType)),
+            'memberCategories' => app(LookupService::class)->getMemberCategories(),
+            'realQuote' => $realQuote,
             'isBookingDetailsVisible' => $isBookingDetailsVisible,
         ]);
     }
@@ -222,6 +228,13 @@ class SendUpdateLogController extends Controller
         $repository = 'App\\Repositories\\PersonalQuoteRepository';
 
         return $repository::where('id', $personalQuoteId)->first();
+    }
+
+    private function getRealQuote($quoteType, $quoteUuid)
+    {
+        $repository = 'App\\Repositories\\'.ucwords($quoteType).'QuoteRepository';
+
+        return $repository::where('uuid', $quoteUuid)->first();
     }
 
     public function isBookingDetailsVisible($categoryCode, $quoteDocuments): bool

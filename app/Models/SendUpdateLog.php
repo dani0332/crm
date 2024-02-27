@@ -12,4 +12,9 @@ class SendUpdateLog extends Model implements AuditableContract
     use Auditable, HasFactory;
 
     protected $guarded = [];
+
+    public function documents()
+    {
+        return $this->morphMany(QuoteDocument::class, 'quote_documentable');
+    }
 }

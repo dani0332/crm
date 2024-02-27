@@ -1,5 +1,6 @@
 <script setup>
 import LazyPlanDetails from './Partials/PlanDetails.vue';
+import QuoteDocuments from '../PersonalQuote/Partials/QuoteDocuments';
 import LazyPolicyDetails from './Partials/PolicyDetails.vue';
 import LazyBookingDetails from './Partials/BookingDetails.vue';
 
@@ -12,6 +13,13 @@ const props = defineProps({
   quote: Object,
   indicativePrice: Object,
   isBookingDetailsVisible: Boolean,
+  membersDetail: Array,
+  memberCategories: Array,
+  documentTypes: Object,
+  quoteDocuments: Object,
+  realQuote: Object,
+  storageUrl: String,
+  quoteType: String,
 });
 
 const page = usePage();

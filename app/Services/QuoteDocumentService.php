@@ -49,6 +49,11 @@ class QuoteDocumentService extends BaseService
             ->get();
     }
 
+    public function getQuoteDocumentsForUploadByCategory($category)
+    {
+        return DocumentType::where(['category' => $category, 'is_active' => true])->get();
+    }
+
     /**
      * @param $data doc_name, doc_uuid
      * @return \Illuminate\Http\JsonResponse

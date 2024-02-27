@@ -24,7 +24,7 @@ class PersonalQuoteController extends Controller
 
     public function uploadDocument($quoteId, QuotesDocumentRequest $request)
     {
-        PersonalQuoteRepository::uploadDocument($quoteId, request()->file('file'), $request->validated());
+        PersonalQuoteRepository::uploadDocument($quoteId, request()->file('file'), $request->all());
 
         return back()->with('message', 'File Uploaded');
     }

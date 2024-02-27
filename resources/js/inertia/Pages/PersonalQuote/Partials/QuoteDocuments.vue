@@ -1,7 +1,7 @@
 <script setup>
 import {fileUploadErrorMessage} from "@/inertia/Composables/utilities.js";
 
-defineProps({
+const props = defineProps({
   quote: Object,
   quoteDocuments: Object,
   documentTypes: Object,
@@ -10,10 +10,24 @@ defineProps({
     type: Boolean,
     required: false,
     default: true
-  }
+  },
+  extras: {
+    type: Object,
+    required: false,
+    default: () => ({}),
+  },
 });
 
 const page = usePage();
+const notification = useNotifications('toast');
+const permissionEnum = page.props.permissionsEnum;
+const can = permission => useCan(permission);
+
+const rowsPerPage = props.extras?.pageType === 'send-update-log' ? 10 : 15;
+const isSendUpdatePage =
+  props.extras?.pageType === 'send-update-log' ? true : false;
+const isUploading = ref(false);
+const memberTabs = ref('quote-documents');
 
 const quoteDocumentsTable = reactive({
   isLoading: false,
@@ -37,6 +51,13 @@ const quoteDocumentsTable = reactive({
   ],
 });
 
+if (isSendUpdatePage) {
+  quoteDocumentsTable.columns.push({
+    text: 'Action',
+    value: 'action',
+  });
+}
+
 const confirmDeleteData = reactive({
   docs: null,
   member: null,
@@ -55,7 +76,7 @@ const confirmDeleteDoc = () => {
     `/documents/delete`,
     {
       docName: confirmDeleteData.docs,
-      quoteId: page.props.quote.id,
+      quoteId: isSendUpdatePage ? props.extras.sendLogId : page.props.quote.id,
     },
     {
       preserveScroll: true,
@@ -76,18 +97,17 @@ const modals = reactive({
   docConfirm: false,
 });
 
-const isUploading = ref(false);
-const notification = useNotifications('toast');
-
 const docForm = useForm({
   quote_id: usePage().props.quote.id || null,
   quote_uuid: usePage().props.quote.code || null,
   quote_type_id: null,
   document_type_code: null,
   file: null,
+  is_send_update: isSendUpdatePage,
+  send_update_id: props.extras.sendLogId || null,
 });
 
-const uploadFile = (doc, filesWithInfo) => {
+const uploadFile = (doc, filesWithInfo, memberId) => {
     let url = '/personal-quotes/' + docForm.quote_id + '/documents';
     const { files, rejectReason} = filesWithInfo;
     if (files.length == 0) {
@@ -106,6 +126,7 @@ const uploadFile = (doc, filesWithInfo) => {
       document_type_code: doc.code,
       folder_path: doc.folder_path,
       file: files[0].file,
+      member_detail_id: memberId || null,
     }))
     .post(url, {
       preserveScroll: true,
@@ -123,6 +144,7 @@ const uploadFile = (doc, filesWithInfo) => {
       },
     });
 };
+
 </script>
 
 <template>
