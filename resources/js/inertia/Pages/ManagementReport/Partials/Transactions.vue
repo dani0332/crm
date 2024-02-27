@@ -178,27 +178,27 @@ const isIntegerColumn = key => {
       {{ policy_due_date ?? 'N/A' }}
     </template>
     <template #item-price_vat_applicable="{ price_vat_applicable }">
-      {{ price_vat_applicable ? priceFormat(price_vat_applicable) : 0 }}
+      {{ price_vat_applicable ? priceFormat(price_vat_applicable) : 0.00 }}
     </template>
     <template #item-vat="{ vat }">
-      {{ vat ? priceFormat(vat) : 0 }}
+      {{ vat ? priceFormat(vat) : 0.00 }}
     </template>
     <template #item-price_vat_not_applicable="{ price_vat_not_applicable }">
-      {{ price_vat_not_applicable ? priceFormat(price_vat_not_applicable) : 0 }}
+      {{ price_vat_not_applicable ? priceFormat(price_vat_not_applicable) : 0.00 }}
     </template>
     <template #item-discount="{ discount }">
-      {{ discount ? priceFormat(discount) : 0 }}
+      {{ discount ? priceFormat(discount) : 0.00 }}
     </template>
     <template #item-total_price="{ total_price }">
-      {{ total_price ? priceFormat(total_price) : 0 }}
+      {{ total_price ? (total_price) : 0.00 }}
     </template>
     <template #item-commission_vat_applicable="{ commission_vat_applicable }">
       {{
-        commission_vat_applicable ? priceFormat(commission_vat_applicable) : 0
+        commission_vat_applicable ? (commission_vat_applicable) : 0.00
       }}
     </template>
     <template #item-commission_vat="{ commission_vat }">
-      {{ commission_vat ? priceFormat(commission_vat) : 0 }}
+      {{ commission_vat ? (commission_vat) : 0.00 }}
     </template>
 
     <template
@@ -206,8 +206,8 @@ const isIntegerColumn = key => {
     >
       {{
         commission_vat_not_applicable
-          ? priceFormat(commission_vat_not_applicable)
-          : 0
+          ? (commission_vat_not_applicable)
+          : 0.00
       }}
     </template>
     <template #item-collected_amount="{ collected_amount }">
@@ -268,7 +268,7 @@ const isIntegerColumn = key => {
         >
           {{
             isIntegerColumn(header.value)
-              ? calculateTotalSum(reportData.data, header.value)
+              ? priceFormat(calculateTotalSum(reportData.data, header.value), true)
               : 'N/A'
           }}
         </td>

@@ -184,39 +184,39 @@ const isIntegerColumn = key => {
       {{ team }}
     </template>
     <template #item-price_vat_applicable="{ price_vat_applicable }">
-      {{ price_vat_applicable ? priceFormat(price_vat_applicable) : 0 }}
+      {{ price_vat_applicable ? (price_vat_applicable) : 0.00 }}
     </template>
     <template #item-vat="{ vat }">
       {{ vat ?? 0 }}
     </template>
     <template #item-price_vat_not_applicable="{ price_vat_not_applicable }">
-      {{ price_vat_not_applicable ? priceFormat(price_vat_not_applicable) : 0 }}
+      {{ price_vat_not_applicable ? (price_vat_not_applicable) : 0.00 }}
     </template>
     <template #item-discount="{ discount }">
-      {{ discount ? priceFormat(discount) : 0 }}
+      {{ discount ? (discount) : 0.00 }}
     </template>
     <template #item-total_price="{ total_price }">
-      {{ total_price ? priceFormat(total_price) : 0 }}
+      {{ total_price ? (total_price) : 0.00 }}
     </template>
     <template #item-commission_vat_applicable="{ commission_vat_applicable }">
       {{
-        commission_vat_applicable ? priceFormat(commission_vat_applicable) : 0
+        commission_vat_applicable ? (commission_vat_applicable) : 0.00
       }}
     </template>
     <template #item-commission_vat="{ commission_vat }">
-      {{ commission_vat ? priceFormat(commission_vat) : 0 }}
+      {{ commission_vat ? (commission_vat) : 0.00 }}
     </template>
     <template
       #item-commission_vat_not_applicable="{ commission_vat_not_applicable }"
     >
       {{
         commission_vat_not_applicable
-          ? priceFormat(commission_vat_not_applicable)
-          : 0
+          ? (commission_vat_not_applicable)
+          : 0.00
       }}
     </template>
     <template #item-total_commission="{ total_commission }">
-      {{ total_commission ? priceFormat(total_commission) : 0 }}
+      {{ total_commission ? (total_commission) : 0.00 }}
     </template>
     <template #item-collects="{ collects }">
       {{ collects }}
@@ -267,7 +267,7 @@ const isIntegerColumn = key => {
         >
           {{
             isIntegerColumn(header.value)
-              ? calculateTotalSum(reportData.data, header.value)
+              ? priceFormat(calculateTotalSum(reportData.data, header.value), true)
               : 'N/A'
           }}
         </td>

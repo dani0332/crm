@@ -107,14 +107,19 @@ const isIntegerColumn = key => {
   return [
     'collected_amount',
     'price_with_vat',
+    'price_vat_applicable',
     'total_vat',
     'price_without_vat',
+    'price_vat_not_applicable',
     'discount',
     'total_price',
     'pending_balance',
     'commission_with_vat',
     'vat_on_commission',
     'commission_without_vat',
+    'commission_vat_applicable',
+    'commission_vat',
+    'commission_vat_not_applicable',
   ].includes(key);
 };
 </script>
@@ -150,34 +155,34 @@ const isIntegerColumn = key => {
       {{ policy_expiry_date ?? 'N/A' }}
     </template>
     <template #item-collected_amount="{ collected_amount }">
-      {{ collected_amount ? priceFormat(collected_amount) : 0 }}
+      {{ collected_amount ? collected_amount : 0.00 }}
     </template>
     <template #item-price_with_vat="{ price_with_vat }">
-      {{ price_with_vat ? priceFormat(price_with_vat) : 0 }}
+      {{ price_with_vat ? price_with_vat : 0.00 }}
     </template>
     <template #item-total_vat="{ total_vat }">
-      {{ total_vat ? priceFormat(total_vat) : 0 }}
+      {{ total_vat ? total_vat : 0.00 }}
     </template>
     <template #item-price_without_vat="{ price_without_vat }">
-      {{ price_without_vat ? priceFormat(price_without_vat) : 0 }}
+      {{ price_without_vat ? price_without_vat : 0.00 }}
     </template>
     <template #item-discount="{ discount }">
-      {{ discount ? priceFormat(discount) : 0 }}
+      {{ discount ? discount : 0.00 }}
     </template>
     <template #item-total_price="{ total_price }">
-      {{ total_price ? priceFormat(total_price) : 0 }}
+      {{ total_price ? total_price : 0.00 }}
     </template>
     <template #item-pending_balance="{ pending_balance }">
-      {{ pending_balance ? priceFormat(pending_balance) : 0 }}
+      {{ pending_balance ? pending_balance : 0.00 }}
     </template>
-    <template #item-commission_with_vat="{ commission_with_vat }">
-      {{ commission_with_vat ? priceFormat(commission_with_vat) : 0 }}
+    <template #item-commission_vat_applicable="{ commission_vat_applicable }">
+      {{ commission_vat_applicable ? commission_vat_applicable : 0.00 }}
     </template>
     <template #item-vat_on_commission="{ vat_on_commission }">
-      {{ vat_on_commission ? priceFormat(vat_on_commission) : 0 }}
+      {{ vat_on_commission ? (vat_on_commission) : 0.00 }}
     </template>
-    <template #item-commission_without_vat="{ commission_without_vat }">
-      {{ commission_without_vat ? priceFormat(commission_without_vat) : 0 }}
+    <template #item-commission_vat_not_applicable="{ commission_vat_not_applicable }">
+      {{ commission_vat_not_applicable ? (commission_vat_not_applicable) : 0.00 }}
     </template>
     <template #item-policy_issuer="{ policy_issuer }">
       {{ policy_issuer ?? 'N/A' }}
@@ -201,7 +206,7 @@ const isIntegerColumn = key => {
         >
           {{
             isIntegerColumn(header.value)
-              ? calculateTotalSum(reportData.data, header.value)
+              ? priceFormat(calculateTotalSum(reportData.data, header.value), true)
               : 'N/A'
           }}
         </td>
