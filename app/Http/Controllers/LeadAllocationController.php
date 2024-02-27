@@ -4,8 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Enums\quoteTypeCode;
 use App\Enums\TeamNameEnum;
-use App\Enums\TeamTypeEnum;
 use App\Enums\TeamNameEnum;
+use App\Enums\TeamTypeEnum;
 use App\Enums\UserStatusEnum;
 use App\Events\UserStatusChanged;
 use App\Jobs\ReAssignCarLeadsJob;
@@ -18,7 +18,6 @@ use App\Services\CarAllocationService;
 use App\Services\HealthAllocationService;
 use App\Services\LeadAllocationService;
 use App\Traits\TeamHierarchyTrait;
-use DataTables;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 
@@ -60,7 +59,6 @@ class LeadAllocationController extends Controller
             $unAssignedGood = $this->leadAllocationService->getUnAssignedHealthQuotes(TeamNameEnum::RM_SPEED);
             $unAssignedBest = $this->leadAllocationService->getUnAssignedHealthQuotes(TeamNameEnum::RM_NB);
             $unAssignedEntryLevel = $this->leadAllocationService->getUnAssignedHealthQuotes(TeamNameEnum::EBP);
-
 
             return inertia('LeadAllocation/Health', [
                 'totalAssignedLeadCount' => $totalAssignedLeadCount,
@@ -144,9 +142,8 @@ class LeadAllocationController extends Controller
     public function updateAvailability(Request $request)
     {
         $updateLogString = '----- Update done successfully to change the';
-        
- 
-        foreach($request->all() as $item){
+
+        foreach ($request->all() as $item) {
             $leadAllocationUser = LeadAllocation::where('user_id', $item['userId'])->where('id', $item['id'])->first();
             if (isset($item['reason'])) {
                 if ($item['reason'] != UserStatusEnum::OFFLINE && $item['reason'] != UserStatusEnum::ONLINE) {
