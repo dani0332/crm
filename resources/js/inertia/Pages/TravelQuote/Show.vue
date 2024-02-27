@@ -104,10 +104,12 @@ const memberActionEdit = ref(false),
   activityActionEdit = ref(false),
   selectedPlan = ref(null),
   selectedPlans = ref([]),
-  toggleLoader = ref(false),
+  selectedAdultPlans = ref([]),
+  selectedSeniorPlans = ref([]),
   selectedPlansPdf = ref([]),
   exportLoader = ref(false),
   historyLoading = ref(false),
+  toggleLoader = ref(false),
   lostReasonId = ref(
     page.props.lostReasons.find(
       reason => reason.text === page.props.quote.lost_reason,
@@ -160,6 +162,7 @@ const modals = reactive({
   activity: false,
   activityConfirm: false,
   planDetails: false,
+  mixInquiryConfirm: false,
 });
 const travelFields = computed(() => {
   let skipFields = [
@@ -556,6 +559,7 @@ const onTogglePlans = toggle => {
         title: 'Plans has been updated',
         position: 'top',
       });
+        onLoadAvailablePlansData();
       router.reload({
         preserveScroll: true,
       });
@@ -593,6 +597,7 @@ const onExportPlans = () => {
         quote_uuid: page.props.quote.uuid,
         modelType: 'travel',
         quoteType: 'travel',
+        hasAdultAndSeniorMember: (availableSeniorPlansTable?.data?.length > 0 && availablePlansTable?.data?.length > 0 )? true : false
       },
       {
         responseType: 'json',
@@ -1141,6 +1146,24 @@ const genderList = [
   { value: 'M', label: 'Male' },
   { value: 'F', label: 'Female' },
 ];
+
+const handleSelectionChange = (tableType, selectedItems) => {
+  if (tableType === 'adult' && selectedSeniorPlans.value.length > 0) {
+    modals.mixInquiryConfirm= true
+    selectedAdultPlans.value = [];
+  } else if (tableType === 'senior' && selectedAdultPlans.value.length > 0) {
+    modals.mixInquiryConfirm= true
+    selectedSeniorPlans.value = [];
+  } else {
+      if (tableType === 'adult') {
+        selectedAdultPlans.value = selectedItems;
+        selectedPlans.value = selectedItems;
+      } else if (tableType === 'senior') {
+        selectedSeniorPlans.value = selectedItems;
+        selectedPlans.value = selectedItems;
+      }
+  }
+};
 </script>
 
 <template>
@@ -1858,7 +1881,7 @@ const genderList = [
       </template>
     </x-modal>
 
-    <customerAdditionalContacts
+    <CustomerAdditionalContacts
       quoteType="Travel"
       :customerId="quote.customer_id"
       :quoteId="quote.id"
@@ -2205,6 +2228,21 @@ const genderList = [
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div class="flex flex-wrap gap-4 justify-between items-center mb-4">
         <h3 class="font-semibold text-primary-800 text-lg">Available Plans</h3>
+          <div>
+              <x-button-group v-if="selectedPlans.length > 0" size="sm" class="mr-2">
+                  <x-button
+                        @click.prevent="onTogglePlans(false)"
+                        :loading="toggleLoader"
+                    >
+                        Show
+                    </x-button>
+                    <x-button
+                        @click.prevent="onTogglePlans(true)"
+                        :loading="toggleLoader"
+                    >
+                        Hide
+                    </x-button>
+              </x-button-group>
         <x-button
             v-if="availablePlansTable.data.length > 0 || availableSeniorPlansTable.data.length > 0"
             size="sm"
@@ -2214,8 +2252,18 @@ const genderList = [
         >
           Copy Link
         </x-button>
+          <x-button
+              v-if="selectedPlans.length > 0"
+              size="sm"
+              color="emerald"
+              @click.prevent="onExportPlans"
+              :loading="exportLoader"
+          >
+              Download PDF
+          </x-button>
+          </div>
       </div>
-      <h6 v-if="aboveAgeMembers > 0" class="font-semibold text-primary-600 text-ms mb-1">
+      <h6 v-if="aboveAgeMembers > 0 && availablePlansTable.data.length > 0" class="font-semibold text-primary-600 text-ms mb-1">
         Travel plans for {{ travelers.length - aboveAgeMembers }} member age 0-64
       </h6>
 
@@ -2232,21 +2280,33 @@ const genderList = [
           {{ availablePlansTable.data }}
         </p>
       </div>
-      <div v-else>
-        <!-- for future use  v-model:items-selected="selectedPlans" -->
+      <div v-else-if="availablePlansTable.data.length > 0">
+        <!-- for future use   -->
         <DataTable
           table-class-name="tablefixed compact"
           :headers="availablePlansTable.columns"
           :items="availablePlansTable.data || []"
+          v-model:items-selected="selectedAdultPlans"
           border-cell
           hide-rows-per-page
           :rows-per-page="15"
           :hide-footer="availablePlansTable.data.length < 15"
+          @update:items-selected="handleSelectionChange('adult', $event)"
         >
           <template #item-providerName="item">
-            <span class="text-primary-600 uppercase">{{
+            <p class="text-primary-600 uppercase">{{
               item.providerName
-            }}</span>
+            }}</p>
+              <div class="flex gap-1">
+              <x-tag
+                  v-if="item.isDisabled"
+                  size="xs"
+                  color="error"
+                  class="mt-0.5 text-[10px]"
+              >
+                  Hidden
+              </x-tag>
+              </div>
           </template>
           <template #item-name="item">
             <span class="text-primary-600 uppercase">{{ item.name }}</span>
@@ -2268,7 +2328,7 @@ const genderList = [
               </x-button>
 
               <!-- v-if="hasRole(rolesEnum.TravelAdvisor)" hide for now -->
-              <span v-if="true == false">
+              <span>
                 <SelectPlan
                   class="ml-1"
                   v-if="prefillPlanId != item.id"
@@ -2295,23 +2355,35 @@ const genderList = [
       </div>
 
       <div v-if="aboveAgeMembers > 0" class="mt-5">
-        <div class="flex flex-wrap gap-4 justify-between items-center mb-4">
-          <h6 class="font-semibold text-primary-600 text-ms mb-1">Travel plans for {{ aboveAgeMembers }} member age 65 and above</h6>
-        </div>
+        <h6 v-if="aboveAgeMembers > 0 && availablePlansTable.data.length > 0" class="font-semibold text-primary-600 text-ms mb-1">
+          Travel plans for {{ aboveAgeMembers }} member age 65 and above
+        </h6>
         <div>
           <DataTable
-              table-class-name="tablefixed compact"
-              :headers="availableSeniorPlansTable.columns"
-              :items="availableSeniorPlansTable.data || []"
-              border-cell
-              hide-rows-per-page
-              :rows-per-page="15"
-              :hide-footer="availableSeniorPlansTable.data.length < 15"
+            table-class-name="tablefixed compact"
+            :headers="availableSeniorPlansTable.columns"
+            :items="availableSeniorPlansTable.data || []"
+            border-cell
+            hide-rows-per-page
+            :rows-per-page="15"
+            :hide-footer="availableSeniorPlansTable.data.length < 15"
+            v-model:items-selected="selectedSeniorPlans"
+            @update:items-selected="handleSelectionChange('senior', $event)"
           >
             <template #item-providerName="item">
-            <span class="text-primary-600 uppercase">{{
+            <p class="text-primary-600 uppercase">{{
                 item.providerName
-              }}</span>
+              }}</p>
+                <div class="flex gap-1">
+                <x-tag
+                    v-if="item.isDisabled"
+                    size="xs"
+                    color="error"
+                    class="mt-0.5 text-[10px]"
+                >
+                    Hidden
+                </x-tag>
+        </div>
             </template>
             <template #item-name="item">
               <span class="text-primary-600 uppercase">{{ item.name }}</span>
@@ -2513,7 +2585,26 @@ const genderList = [
         :hide-footer="historyData.length < 15"
       />
     </div>
-
+    
+    <x-modal v-model="modals.mixInquiryConfirm" show-close backdrop>
+        <template #header> 
+          <div class="text-center">
+            SORRY!
+          </div>  
+        </template>
+        <p>Please choose quotes from the same age group for a correct comparison.</p>
+        <template #actions>
+          <div class="text-center space-x-4">
+            <x-button
+              size="sm"
+              color="emerald"
+              @click.prevent="modals.mixInquiryConfirm = false"
+            >
+              Okay, got it!
+            </x-button>
+          </div>
+        </template>
+      </x-modal>
     <AuditLogs :type="'App\\Models\\TravelQuote'" :id="$page.props.quote.id" />
   </div>
 </template>

@@ -197,7 +197,7 @@ class AmtController extends Controller
             'mobile_no' => 'required|regex:/(0)[0-9]/|not_regex:/[a-z]/|min:7|max:20',
             'business_type_of_insurance_id' => 'required',
             'company_name' => 'required|max:150',
-            'number_of_employees' => 'required',
+            'number_of_employees' => 'required|numeric|max:2147483645',
             'brief_details' => 'required',
         ]);
         $record = app(BusinessQuoteService::class)->saveBusinessQuote($request);
@@ -213,7 +213,7 @@ class AmtController extends Controller
     }
 
     /**
-     * @param $uuid
+     * @param    $uuid
      * @return \Inertia\Response|\Inertia\ResponseFactory
      */
     public function show($id)
@@ -332,7 +332,7 @@ class AmtController extends Controller
             'last_name' => 'required|max:150',
             'business_type_of_insurance_id' => 'required',
             'company_name' => 'required|max:150',
-            'number_of_employees' => 'required',
+            'number_of_employees' => 'required|numeric|max:2147483645',
             'brief_details' => 'required',
             'group_medical_type_id' => 'required',
             'premium' => 'required',

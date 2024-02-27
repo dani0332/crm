@@ -55,6 +55,8 @@ class SendOCBIntroEmailJob implements ShouldQueue
 
                 return;
             } else {
+                info('SendOCBIntroEmailJob - Lead found for uuid: '.$this->quoteUuid);
+
                 if (($lead->assignment_type = AssignmentTypeEnum::MANUAL_ASSIGNED || $lead->assignment_type == AssignmentTypeEnum::MANUAL_REASSIGNED) && $lead->source == LeadSourceEnum::DUBAI_NOW) {
                     $this->sendDubaiNowEmail($lead);
                 } else {

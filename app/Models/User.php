@@ -161,6 +161,21 @@ class User extends Authenticatable implements AuditableContract
         return Auth::user()->hasAnyRole([RolesEnum::CarNewBusinessAdvisor, RolesEnum::TravelNewBusinessAdvisor, RolesEnum::HealthNewBusinessAdvisor, RolesEnum::HomeNewBusinessAdvisor, RolesEnum::LifeNewBusinessAdvisor, RolesEnum::GMNewBusinessAdvisor, RolesEnum::CorpLineNewBusinessAdvisor, RolesEnum::PetNewBusinessAdvisor]);
     }
 
+    public function isHealthManager()
+    {
+        return Auth::user()->hasRole(RolesEnum::HealthManager);
+    }
+
+    public function isCarManager()
+    {
+        return Auth::user()->hasRole(RolesEnum::CarManager);
+    }
+
+    public function isCarAdvisor()
+    {
+        return Auth::user()->hasRole(RolesEnum::CarAdvisor);
+    }
+
     public function isAdvisor()
     {
         $userRoles = Auth::user()->usersroles()->get();
@@ -336,4 +351,5 @@ class User extends Authenticatable implements AuditableContract
         return $this->hasMany(UserProducts::class);
 
     }
+
 }

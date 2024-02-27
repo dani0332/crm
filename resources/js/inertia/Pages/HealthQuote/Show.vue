@@ -17,6 +17,7 @@ defineProps({
   nationalities: Array,
   emirates: Array,
   advisors: Array,
+  teams: Object,
   quoteDocuments: Object,
   documentTypes: Object,
   cdnPath: String,
@@ -49,6 +50,7 @@ defineProps({
   canAddBatchNumber: Boolean,
   paymentLink: String,
   quoteType: String,
+  clientInquiryLogs: Array,
 });
 
 const page = usePage();
@@ -165,6 +167,18 @@ const memberCategoryText = memberCategoryId =>
       category => category.id === memberCategoryId,
     )?.text;
   });
+
+
+// const subTeamOptions = computed(() => {
+//     let subteamArray = page.props.teams?.map(team => ({
+//         value: team.name,
+//         label: team.name,
+//     }));
+
+//     subteamArray.push({ value: 'No-Type', label: 'No-Type' });
+
+//     return subteamArray;
+// });
 
 const subTeamOptions = [
   { value: 'RM-NB', label: 'RM-NB' },
@@ -1576,6 +1590,10 @@ const handleChildUpdate = planId => {
             <dt class="font-medium">ADDITIONAL NOTES</dt>
             <dd>{{ quote.additional_notes }}</dd>
           </div>
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">ENQUIRY COUNT</dt>
+            <dd>{{ quote.enquiry_count }}</dd>
+          </div>
         </dl>
       </div>
     </div>
@@ -2318,7 +2336,7 @@ const handleChildUpdate = planId => {
       </div>
     </div>
 
-    <PaymentTable
+    <!-- <PaymentTable
       :payments="payments"
       :can="can"
       :isBetaUser="isBetaUser"
@@ -2326,7 +2344,7 @@ const handleChildUpdate = planId => {
       :paymentMethods="paymentMethods"
       :insuranceProviders="insuranceProviders"
       :quote="quote"
-    />
+    /> -->
 
     <!-- <div class="p-4 rounded shadow mb-6 bg-white" v-if="isQuoteDocumentEnabled">
       <div>
@@ -2951,5 +2969,10 @@ const handleChildUpdate = planId => {
     </div>
 
     <AuditLogs :type="'App\\Models\\HealthQuote'" :id="$page.props.quote.id" />
+
+    <ClientInquiryLogs
+        v-if="clientInquiryLogs.length > 0"
+        :logs="clientInquiryLogs"
+    />
   </div>
 </template>

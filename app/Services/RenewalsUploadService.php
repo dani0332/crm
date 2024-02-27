@@ -1338,7 +1338,7 @@ class RenewalsUploadService
     /**
      * //$modelName, $quoteRequestIdName.
      *
-     * @param $quoteRequestIdName
+     * @param    $quoteRequestIdName
      * @return false|mixed
      */
     public function updateAdvisorAssignedDateTime($quoteType, $quoteId, $currentUserId, $advisorId)
@@ -1970,7 +1970,7 @@ class RenewalsUploadService
         $repository = '\\App\\Repositories\\'.ucwords($quoteType->value).'QuoteRepository';
         $quotes = $repository::export();
 
-        return (new RenewalQuotesExport($quotes, $quoteType->name))->download('Renewal.xlsx');
+        return (new RenewalQuotesExport($quotes, $quoteType->name))->download('Renewal');
     }
 
 }
