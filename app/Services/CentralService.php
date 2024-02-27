@@ -296,10 +296,10 @@ class CentralService
                 $response = Ken::request($endpoint, 'post', $data);
                 info('travel plan update response: '.json_encode($response));
 
-                if (isset($response['planProcessValue'])) {
-                    $quote = TravelQuote::where('uuid', $uuid)->first();
-                    $this->updateQuotePayment($quote, collect($response['planProcessValue'])->sum('totalPremium'));
-                }
+                // if (isset($response['planProcessValue'])) {
+                //     $quote = TravelQuote::where('uuid', $uuid)->first();
+                //     $this->updateQuotePayment($quote, collect($response['planProcessValue'])->sum('totalPremium'));
+                // }
                 break;
             case QuoteTypes::HEALTH->value:
                 $endpoint = '/api/v1-process-booking';
