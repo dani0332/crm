@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use Config;
 use MongoDB\Laravel\Eloquent\Model;
 
 class AlfredChat extends Model
@@ -13,7 +12,7 @@ class AlfredChat extends Model
 
     public function getCreatedAtAttribute($date)
     {
-        $date_time_format = Config::get('constants.datetime_format');
+        $date_time_format = config('constants.datetime_format');
         return $this->asDateTime($date)->timezone(config('app.timezone'))->format($date_time_format);
     }
 }
