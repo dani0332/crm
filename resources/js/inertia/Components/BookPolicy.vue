@@ -173,7 +173,7 @@ const caculateCommission = () => {
       ).toFixed(2);
 
       bpForm.vat_on_commission = (
-        bpForm.commission_percentage * page.props.vat
+        bpForm.commission_vat_applicable * page.props.vat
       ).toFixed(2);
       bpForm.total_commission =
         Number(bpForm.vat_on_commission) +
