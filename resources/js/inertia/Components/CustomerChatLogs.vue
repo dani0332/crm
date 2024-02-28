@@ -104,7 +104,7 @@ onMounted(async () => {
     </div>
 
     <x-modal v-model="showChatLogs" backdrop size="xl">
-      <template #header> Created At : {{ chatMessages.created_at(' ')[0] }} </template>
+      <template #header> Created At : {{ chatMessages.created_at.split(' ')[0] }} </template>
 
       <div class="flex flex-col space-y-4">
         <div
