@@ -23,4 +23,14 @@ class SendUpdateLog extends Model implements AuditableContract
     {
         return $this->morphMany(QuoteDocument::class, 'quote_documentable');
     }
+
+    public function category()
+    {
+        return $this->belongsTo(Lookup::class, 'category_id');
+    }
+
+    public function option()
+    {
+        return $this->belongsTo(Lookup::class, 'option_id');
+    }
 }
