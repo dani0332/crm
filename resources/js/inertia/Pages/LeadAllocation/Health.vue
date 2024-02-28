@@ -158,7 +158,6 @@ const onUpdateConfirm = async () => {
 };
 
 const tableHeader = ref([
-  { text: 'UserId', value: 'userId', sortable: true },
   { text: 'Name', value: 'userName', width: '240' },
   { text: 'Team Type', value: 'teamName', sortable: true },
   {
@@ -177,11 +176,13 @@ const onStatusSubmit = async () => {
   const item = leadData.value.find(item => item.id === statusModal.data.id);
   item.loading = true;
   await axios
-    .post('/lead-allocation/update-availability', {
-      userId: statusModal.data.userId,
-      id: statusModal.data.id,
-      reason: statusModal.data.reason,
-    })
+    .post('/lead-allocation/update-availability', [
+      {
+        userId: statusModal.data.userId,
+        id: statusModal.data.id,
+        reason: statusModal.data.reason,
+      },
+    ])
     .then(res => {
       router.reload({
         only: ['data'],
