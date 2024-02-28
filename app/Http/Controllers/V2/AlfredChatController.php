@@ -20,12 +20,10 @@ class AlfredChatController extends Controller
             ->simplePaginate()
             ->withQueryString();
 
-        if (isset($chat->data)) {
-            return response()->json($chat);
-        } else {
+        if ($chat->isEmpty()) {
             return response()->json(['message' => 'No chat available']);
         }
-
+        
+        return response()->json($chat);
     }
-
 }
