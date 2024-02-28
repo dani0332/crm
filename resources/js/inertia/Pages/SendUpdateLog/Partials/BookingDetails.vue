@@ -1,5 +1,6 @@
 <script setup>
 import { computed } from 'vue';
+const can = permission => useCan(permission);
 
 const { isRequired } = useRules();
 
@@ -42,8 +43,8 @@ const props = defineProps({
     type: Object,
     required: true,
   },
-  updateToCustomerBtn: {
-    type: Boolean,
+  updateBtn: {
+    type: String,
     required: false,
   },
   uploadedDocuments: {
@@ -86,24 +87,25 @@ const isCPD = computed(() => {
 });
 
 const hasTaxDocuments = computed(() => {
-  return props.uploadedDocuments.includes('TTI') && props.uploadedDocuments.includes('TTIRBB');
+  // tax invoice and tax invoice raised by buyer.
+  return props.uploadedDocuments.includes('SUTAXINV') && props.uploadedDocuments.includes('SUTAXINVRB');
 });
 
 const checkSectionTwoEdit = () => {
   const taxInvoiceDoc = [sendUpdateStatusEnum.EF, sendUpdateStatusEnum.CI, sendUpdateStatusEnum.CIR, sendUpdateStatusEnum.CPD];
   const checkTaxInvoiceDoc = taxInvoiceDoc.includes(props.selectedCategory.subCategory.slug);
 
-  if (checkTaxInvoiceDoc && !hasTaxDocuments.value) {
+  if (isCPD.value && bookingDetailsForm.reversal_invoice === null) {
     notification.error({
-      title: 'Please upload tax invoice and tax invoice raised by buyer. ',
+      title: 'Please select tax invoice number for reversal. ',
       position: 'top',
     });
     return;
   }
 
-  if (isCPD.value && bookingDetailsForm.reversal_invoice === null) {
+  if (checkTaxInvoiceDoc && !hasTaxDocuments.value) {
     notification.error({
-      title: 'Please select tax invoice number for reversal. ',
+      title: 'Please upload tax invoice and tax invoice raised by buyer. ',
       position: 'top',
     });
     return;
@@ -124,21 +126,11 @@ const transactionPaymentStatus = computed(() => {
   }
 });
 
-const invoiceDescription = computed(() => {
-  if (props.selectedCategory.subCategory.slug === sendUpdateStatusEnum.EF) {
-    return 'E.' + props.bookingDetails.invoice_description;
-  } else if (props.selectedCategory.subCategory.slug === sendUpdateStatusEnum.CI) {
-    return 'CI.' + props.bookingDetails.invoice_description;
-  }
-
-  return props.bookingDetails.invoice_description;
-});
-
 const bookingDetailsForm = useForm({
   id: props.sendUpdateLog.id,
   send_update_type: props.selectedCategory.subCategory.slug,
   booking_date: props.bookingDetails?.booking_date || dateToYMD(props.quote?.policy_booking_date) || new Date().toJSON().slice(0, 10),
-  invoice_description: invoiceDescription.value || '',
+  invoice_description: props.bookingDetails?.invoice_description || '',
   broker_invoice_number: props.bookingDetails?.broker_invoice_number || '',
   transaction_payment_status: props.bookingDetails?.transaction_payment_status || transactionPaymentStatus.value,
   invoice_date: props.bookingDetails?.invoice_date || dateToYMD(props?.payments[0]?.insurer_invoice_date) || '',
@@ -223,18 +215,19 @@ const saveBookingDetail = (isValid) => {
   // it will check payment related condition. 
   let childOptions = [sendUpdateStatusEnum.MPC, sendUpdateStatusEnum.MDOM, sendUpdateStatusEnum.MDOV, sendUpdateStatusEnum.ED, sendUpdateStatusEnum.DM];
   if (isEF.value && !childOptions.includes(props.selectedCategory.subCategory.option.slug)) {
-    alert('payment condition will goes here. ');
-    return;
+    /* alert('payment condition will goes here. ');
+    return; */
   }
   bookingDetailsForm.post(route('send-update-logs.save-booking-details'),
     {
-      preserveState: true,
       preserveScroll: true,
       onSuccess: () => {
         notification.success({
           title: 'The request has been updated.',
           position: 'top',
         });
+        state.isEdit = false;
+        router.reload({ preserveState: true });
       },
       onError: () => {
         notification.error({
@@ -254,7 +247,7 @@ const paymentInvoiceNumberOptions = computed(() => {
 
 const reversalEntry = reactive({
   booking_date: null,
-  invoice_description: invoiceDescription.value || null,
+  invoice_description: props.bookingDetails?.reversal_invoice_description || '',
   broker_invoice_number: null,
   transaction_payment_status: null,
   invoice_date: null,
@@ -350,6 +343,42 @@ function convertToNumber(value) {
   }
 
   return -parseFloat(value.toString().replace(/,/g, ''));
+};
+
+const sendUpdateButton = computed(() => {
+  return (isEF || isCI || isCIR) && props.updateBtn && can(page.props.permissionsEnum.SEND_UPDATE_TO_CUSTOMER);
+});
+
+const sendUpdateCustomerBtn = reactive({
+  isLoading: false,
+});
+
+const sendUpdate = () => {
+  sendUpdateCustomerBtn.isLoading = true;
+  axios
+    .post('send-update-to-customer', {
+      quoteType: props.quoteType,
+      quoteUuid: props.realQuote.uuid,
+      sendUpdateId: props.sendUpdateLog.id,
+    })
+    .then(response => {
+      // if (response.data.success) {
+      //   notification.success({
+      //     title: 'The request has been updated.',
+      //     position: 'top',
+      //   });
+      // }
+    })
+    .catch(function (errors) {
+      let responseError = errors.response.data.errors.error;
+      Object.keys(responseError).forEach(function (key) {
+        notification.error({
+          title: responseError[key],
+          position: 'top',
+        });
+      });
+    })
+    .finally(() => (sendUpdateCustomerBtn.isLoading = false));
 };
 </script>
 
@@ -730,7 +759,7 @@ function convertToNumber(value) {
                   </x-tooltip>
                 </dt>
                 <dd>
-                  <span>{{ isCIR ? 'CI.' : 'C.' }}{{ bookingDetailsForm.invoice_description }}</span>
+                  <span>{{ bookingDetailsForm.invoice_description }}</span>
                 </dd>
               </div>
 
@@ -1003,9 +1032,10 @@ function convertToNumber(value) {
               <x-button
                   size="sm"
                   color="orange"
-                  v-if="props.updateToCustomerBtn"
+                  v-if="sendUpdateButton"
+                  @click="sendUpdate"
               >
-                Send update to customer
+                {{ props.updateBtn }}
               </x-button>
             </template>
             <template v-else>
