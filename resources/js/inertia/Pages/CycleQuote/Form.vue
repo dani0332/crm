@@ -33,6 +33,10 @@ const editMode = computed(() => {
   return props.quote ? true : false;
 });
 
+const YearOfManufacture = computed(() => {
+  return props.yearOfManufacture.sort((a, b) => a.sort_order - b.sort_order);
+});
+
 function onSubmit(isValid) {
   if (isValid) {
     let method = editMode.value ? 'put' : 'post';
@@ -130,7 +134,7 @@ function onSubmit(isValid) {
             v-model="quoteForm.year_of_manufacture_id"
             :rules="[isRequired]"
             :options="
-              yearOfManufacture.map(item => ({
+              YearOfManufacture.map(item => ({
                 value: item.id,
                 label: item.text,
               }))
