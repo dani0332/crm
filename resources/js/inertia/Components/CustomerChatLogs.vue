@@ -55,8 +55,8 @@ const getAllChat = () => {
   loader.value = true;
   axios.post('/get-alfred-chat', { quoteId: props.quoteId }).then(response => {
     let { data } = { ...response.data };
-    formatData(data);
     loader.value = false;
+    if (data.length > 0) formatData(data);
   });
 };
 
@@ -67,6 +67,7 @@ const showChat = item => {
   ).data;
   showChatLogs.value = true;
 };
+
 onMounted(async () => {
   await getAllChat();
 });
