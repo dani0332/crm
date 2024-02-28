@@ -301,7 +301,7 @@ const caculateCommission = () => {
           </div>
           <div class="grid sm:grid-cols-2">
             <x-tooltip>
-              <dt class="font-medium">Broker Invoice Number</dt>
+              <dt class="font-medium">Broker Invoice No</dt>
 
               <template #tooltip>
                 <span class="custom-tooltip-content">{{
@@ -313,7 +313,7 @@ const caculateCommission = () => {
           </div>
           <div class="grid sm:grid-cols-2">
             <x-tooltip>
-              <dt class="font-medium">Insurer Tax Invoice Number</dt>
+              <dt class="font-medium">Insurer Tax Invoice No</dt>
 
               <template #tooltip>
                 <span class="custom-tooltip-content">{{
@@ -333,7 +333,7 @@ const caculateCommission = () => {
           </div>
           <div class="grid sm:grid-cols-2">
             <x-tooltip>
-              <dt class="font-medium">Discount</dt>
+              <dt class="font-medium">Discount Value</dt>
 
               <template #tooltip>
                 <span class="custom-tooltip-content">{{
@@ -345,7 +345,7 @@ const caculateCommission = () => {
           </div>
           <div class="grid sm:grid-cols-2">
             <x-tooltip>
-              <dt class="font-medium">Insurer Commission Invoice Number</dt>
+              <dt class="font-medium">Insurer Commission Tax Invoice No</dt>
 
               <template #tooltip>
                 <span class="custom-tooltip-content">{{
@@ -365,7 +365,7 @@ const caculateCommission = () => {
           </div>
           <div class="grid sm:grid-cols-2">
             <x-tooltip>
-              <dt class="font-medium">Commission %</dt>
+              <dt class="font-medium">Commission(%)</dt>
 
               <template #tooltip>
                 <span class="custom-tooltip-content">{{
@@ -412,7 +412,7 @@ const caculateCommission = () => {
           </div>
           <div class="grid sm:grid-cols-2">
             <x-tooltip>
-              <dt class="font-medium">Commission VAT APPLICABLE</dt>
+              <dt class="font-medium">Commission (VAT APPLICABLE)</dt>
 
               <template #tooltip>
                 <span class="custom-tooltip-content">{{
