@@ -56,6 +56,11 @@ class SendUpdateLogRepository extends BaseRepository
         return $this->where('uuid', $uuid)->firstOrFail();
     }
 
+    public function fetchGetLogById($id)
+    {
+        return $this->where('id', $id)->firstOrFail();
+    }
+
     public function fetchUpdateLog($id, $data)
     {
         try {
@@ -120,6 +125,21 @@ class SendUpdateLogRepository extends BaseRepository
                 'insurer_quote_number' => $data['insurer_quote_number'],
                 'issuance_status_id' => $data['issuance_status_id'],
                 'status' => SendUpdateLogStatusEnum::REQUEST_IN_PROGRESS
+            ]);
+        } catch(\Exception $ex) {
+            $result = (object) [
+                'message' => $ex->getMessage()
+            ];
+        }
+
+        return $result;
+    }
+
+    public function fetchSendUpdateToCustomer($data) 
+    {
+        try {
+            $result = $this->where('id', $data['sendUpdateId'])->update([
+                'status' => SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER,
             ]);
         } catch(\Exception $ex) {
             $result = (object) [

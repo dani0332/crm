@@ -465,6 +465,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::post('/save-policy-details', 'savePolicyDetails')->name('save-policy-details');
         Route::post('/save-booking-details', 'saveBookingDetails')->name('save-booking-details');
         Route::post('/get-reversal-entries', 'getReversalEntries')->name('get-reversal-entries');
+        Route::post('/send-update-validation', 'sendUpdateValidation')->name('send-update-validation');
         Route::post('/send-update-to-customer', 'sendUpdateToCustomer')->name('send-update-to-customer');
     });
     // Route::get('send-update-log/{id}', [SendUpdateLogController::class, 'getLogsById'])->name('send-update-logs.get-by-id');

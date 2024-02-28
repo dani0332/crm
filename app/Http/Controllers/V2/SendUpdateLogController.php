@@ -221,8 +221,29 @@ class SendUpdateLogController extends Controller
         return response()->json($reversalEntries);
     }
 
-    public function sendUpdateToCustomer(SendUpdateCustomerRequest $sendUpdateCustomerRequest) 
+    public function sendUpdateValidation(SendUpdateCustomerRequest $sendUpdateCustomerRequest) 
     {
-        return response()->json(json_encode($sendUpdateCustomerRequest->toArray()));
+        if ($sendUpdateCustomerRequest->validated()) {
+            $message = $this->sendUpdateLogService->getSendToCustomerValidation($sendUpdateCustomerRequest->sendUpdateId);
+            
+            return response()->json([
+                'message' => $message
+            ], 200);
+        }
+        
+        return response()->json(['success' => false], 500);
+    }
+
+    public function sendUpdateToCustomer(Request $request)
+    {
+        $data = $request->all();
+
+        $log = SendUpdateLogRepository::sendUpdateToCustomer($data);
+
+        if (isset($log->message) && ! empty($log->message)) {
+            vAbort($log->message);
+        }
+
+        return redirect()->back();
     }
 }

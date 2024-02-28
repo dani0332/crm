@@ -9,6 +9,7 @@ use App\Models\Payment;
 use App\Models\SendUpdateLog;
 use App\Repositories\InsuranceProviderRepository;
 use App\Repositories\LookupRepository;
+use App\Repositories\SendUpdateLogRepository;
 
 class SendUpdateLogService
 {
@@ -115,5 +116,19 @@ class SendUpdateLogService
         }
 
         return false;
+    }
+
+    public function getSendToCustomerValidation($sendUpdateId): string
+    {
+        $sendUpdate = SendUpdateLogRepository::getLogByid($sendUpdateId);
+
+        $sendUpdateToCustomerValidation = in_array($sendUpdate->category->code, [SendUpdateLogStatusEnum::EF, SendUpdateLogStatusEnum::CI, SendUpdateLogStatusEnum::CIR]);
+        $uploadedDocuments = $this->getUploadedDocuments($sendUpdate);
+
+        if ($sendUpdateToCustomerValidation && ! in_array(DocumentTypeCode::SEND_UPDATE_TAX_INVOICE, $uploadedDocuments)) {
+            return 'Please note your current action will only send the update to the customer.';
+        }
+
+        return '';
     }
 }

@@ -349,25 +349,24 @@ const sendUpdateButton = computed(() => {
   return (isEF || isCI || isCIR) && props.updateBtn && can(page.props.permissionsEnum.SEND_UPDATE_TO_CUSTOMER);
 });
 
-const sendUpdateCustomerBtn = reactive({
-  isLoading: false,
+const modals = reactive({
+  sendConfirm: false,
+  isConfirmed: false,
 });
+const isStating = ref(false);
 
-const sendUpdate = () => {
-  sendUpdateCustomerBtn.isLoading = true;
+const sendUpdateValidation = () => {
   axios
-    .post('send-update-to-customer', {
+    .post('send-update-validation', {
       quoteType: props.quoteType,
       quoteUuid: props.realQuote.uuid,
       sendUpdateId: props.sendUpdateLog.id,
     })
     .then(response => {
-      // if (response.data.success) {
-      //   notification.success({
-      //     title: 'The request has been updated.',
-      //     position: 'top',
-      //   });
-      // }
+      if (response.status == 200) {
+        modals.sendConfirm = true;
+        isStating.value = response.data.message;
+      }
     })
     .catch(function (errors) {
       let responseError = errors.response.data.errors.error;
@@ -377,8 +376,49 @@ const sendUpdate = () => {
           position: 'top',
         });
       });
+    });
+};
+
+const isLoading = ref(false);
+const isNotConfirmed = ref(false);
+
+const submitToCustomer = () => {
+  if (!modals.isConfirmed) {
+    isNotConfirmed.value = true;
+    return;
+  }
+  isLoading.value = true;
+  let url = 'send-update-to-customer';
+  let data = {
+    sendUpdateId: props.sendUpdateLog.id,
+  };
+  axios
+    .post(url, data)
+    .then(response => {
+      console.log(response);
+      if (response.status == 200) {
+        notification.success({
+          title: 'Update Sent to the Customer',
+          position: 'top',
+        });
+        location.reload();
+        modals.sendConfirm = false;
+      }
     })
-    .finally(() => (sendUpdateCustomerBtn.isLoading = false));
+    .catch(err => {
+      const flash_messages = err.response.data.errors;
+      Object.keys(flash_messages).forEach(function (key) {
+        notification.error({
+          title: flash_messages[key],
+          position: 'top',
+        });
+      });
+    })
+    .finally(() => {
+      modals.sendConfirm = false;
+      isLoading.value = false;
+      isNotConfirmed.value = false;
+    });
 };
 </script>
 
@@ -1033,7 +1073,7 @@ const sendUpdate = () => {
                   size="sm"
                   color="orange"
                   v-if="sendUpdateButton"
-                  @click="sendUpdate"
+                  @click="sendUpdateValidation"
               >
                 {{ props.updateBtn }}
               </x-button>
@@ -1062,5 +1102,40 @@ const sendUpdate = () => {
         </x-form>
       </template>
     </Collapsible>
-    </div>
+
+      <x-modal v-model="modals.sendConfirm" show-close backdrop>
+        <template #header> Send Policy </template>
+        <span v-if="isStating" class="text-red-500 text-sm font-semibold">{{ isStating }}</span>
+        <x-checkbox
+          v-model="modals.isConfirmed"
+          label="I confirm and attest that all information recorded is correct. I confirm I am in compliance with the COC."
+        />
+        <template #actions>
+          <div class="text-right space-x-4">
+            <x-button
+              size="sm"
+              ghost
+              :disabled="isLoading"
+              @click.prevent="modals.sendConfirm = false"
+            >
+              Cancel
+            </x-button>
+
+            <x-button
+              size="sm"
+              color="error"
+              @click.prevent="submitToCustomer"
+              :loading="isLoading"
+            >
+              Confirm
+            </x-button>
+          </div>
+          <div class="text-center space-x-4"
+            v-if="isNotConfirmed"
+          >
+            <span class="text-red-500">Please select the checkbox to proceed.</span>
+          </div>
+        </template>
+      </x-modal>
+  </div>
 </template>
