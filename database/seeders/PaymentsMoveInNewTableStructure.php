@@ -9,6 +9,7 @@ use App\Enums\PaymentStatusEnum;
 use Carbon\Carbon;
 use App\Services\SplitPaymentService;
 use Illuminate\Support\Facades\Log;
+use App\Enums\quoteTypeCode;
 
 class PaymentsMoveInNewTableStructure extends Seeder
 {
@@ -20,7 +21,7 @@ class PaymentsMoveInNewTableStructure extends Seeder
         Log::info('MigratePaymentSeeder::Payment migration started');
         $skipEmbededProducts = ['App\Models\EmbeddedTransactions','App\Models\EmbeddedTransaction'];
         $payments = Payment::whereNotIn('paymentable_type',$skipEmbededProducts)
-        ->where('created_at', '>=', Carbon::now()->subDays(300))
+        ->where('created_at', '>=', Carbon::now()->subDays(30))
         ->where('total_payments', NULL)
         ->where('frequency', NULL)
         ->where('payment_status_id',PaymentStatusEnum::AUTHORISED)
@@ -29,13 +30,43 @@ class PaymentsMoveInNewTableStructure extends Seeder
         ->get();
 
         if($payments->count() > 0){
+            $ecommerceLob = ['P', 'TRA','HEA','CAR'];
             foreach($payments as $payment){
                 // Extract the code and check if it has child payments
                 $code = $payment->code;
                 $tempCode = explode('-', $code);
+                
+                if(!in_array($tempCode[0],$ecommerceLob))
+                {                    
+                    $modelType = 'Car';
+                    switch($tempCode[0]){
+                        case 'BUS':
+                            $tempCode[0] = quoteTypeCode::Business;
+                            break;
+                        case 'PET':
+                            $tempCode[0] = quoteTypeCode::Pet;
+                            break;
+                        case 'CYC':
+                            $tempCode[0] = quoteTypeCode::Cycle;
+                            break;
+                        case 'BIK':
+                            $tempCode[0] = quoteTypeCode::Bike;
+                            break;
+                        case 'YAC':
+                            $tempCode[0] = quoteTypeCode::Yacht;
+                            break;
+                        case 'HOM':
+                            $tempCode[0] = quoteTypeCode::Home;
+                            break;
+                        case 'LIF':
+                            $tempCode[0] = quoteTypeCode::Life;
+                            break;
+                    }
+                    //echo $tempCode[0]."\n";
+                }
                 if (count($tempCode) == 2) {
                     Log::info('MigratePaymentSeeder::Payment migration for Payment Code: '.$payment->code);
-                    app(SplitPaymentService::class)->migratePayments($payment);                    
+                    //app(SplitPaymentService::class)->migratePayments($payment,$tempCode[0]);                    
                 }
             }
         }

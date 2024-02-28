@@ -3,9 +3,11 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use App\Traits\GenericQueriesAllLobs;
 
 class MigratePaymentsRequest extends FormRequest
 {
+    use GenericQueriesAllLobs;
     /**
      * Determine if the user is authorized to make this request.
      */
@@ -26,5 +28,22 @@ class MigratePaymentsRequest extends FormRequest
             'payment_code' => 'required|string',
             'quote_id' => 'required|integer',
         ];
+    }
+
+    /**
+     * validate quote record and maximum number of alread uploaded files
+     */
+    public function withValidator($validator)
+    { 
+        $validator->after(function ($validator) {
+            $quoteModel = $this->getQuoteObject(request()->model_type, request()->quote_id);
+            if (! $quoteModel) {
+                $validator->errors()->add('value', 'Quote Not Exists');
+            }
+            $oldPayment = $quoteModel->payments()->where('code', request()->payment_code)->first();
+            if (! $oldPayment) {
+                $validator->errors()->add('value', 'Master Payment Not Exists');                
+            }
+        });
     }
 }

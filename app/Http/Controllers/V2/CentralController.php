@@ -218,32 +218,20 @@ class CentralController extends Controller
     // Migrate payments from old system to new system
     public function migratePayment(MigratePaymentsRequest $request)
     { 
-        if (auth()->user()->can(PermissionsEnum::PaymentsEdit)) {
-            $successMessage = PaymentRepository::migratePayments($request);
-            return $successMessage;
-        } else {
-            return response()->json(['error' => 'You are not authorized']);
-        }
+        $successMessage = PaymentRepository::migratePayments($request);
+        return $successMessage;        
     }
     // Update split payment status
     public function splitPaymentUpdate(SplitPaymentUpdateRequest $request)
     {
-        if (auth()->user()->can(PermissionsEnum::ApprovePayments)) {
-            $successMessage = PaymentRepository::updatePaymentStatus($request);
-            return back()->with('success', $successMessage);
-        } else {
-            return back()->with('error', 'You are not authorized');
-        }
+        $successMessage = PaymentRepository::updatePaymentStatus($request);
+        return back()->with('success', $successMessage);
     }
     // Approve split payments
     public function splitPaymentsApprove(SplitPaymentApproveRequest $request)
     {
-        if (auth()->user()->can(PermissionsEnum::ApprovePayments)) {
-            $successMessage = PaymentRepository::updateSplitPaymentsApprove($request);
-            return back()->with('success', $successMessage);
-        } else {
-            return back()->with('error', 'You are not authorized');
-        }
+        $successMessage = PaymentRepository::updateSplitPaymentsApprove($request);
+        return back()->with('success', $successMessage);
     }
 
 }
