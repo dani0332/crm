@@ -9,4 +9,10 @@ class AlfredChat extends Model
     protected $connection = 'alfredchatmongo';
     protected $collection = 'chats';
     protected $casts = ['createdAt' => 'datetime', 'updatedAt' => 'datetime'];
+
+    public function getCreatedAtAttribute($date)
+    {
+        $date_time_format = Config::get('constants.datetime_format');
+        return $this->asDateTime($date)->timezone(config('app.timezone'))->format($date_time_format);
+    }
 }

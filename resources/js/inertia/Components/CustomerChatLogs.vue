@@ -36,7 +36,7 @@ const formatData = rawData => {
   for (const data of rawData) {
     // Find if the createddate already exists in formattedData
     const existingEntry = tableData.value.find(
-      entry => entry.created_at === data.created_at.split('T')[0],
+      entry => entry.created_at === data.created_at.split(' ')[0],
     );
 
     if (existingEntry) {
@@ -45,7 +45,7 @@ const formatData = rawData => {
     } else {
       // If not, create a new entry
       tableData.value.push({
-        created_at: data.created_at.split('T')[0],
+        created_at: data.created_at.split(' ')[0],
         data: [{ ...data }],
       });
     }
@@ -104,7 +104,7 @@ onMounted(async () => {
     </div>
 
     <x-modal v-model="showChatLogs" backdrop size="xl">
-      <template #header> Created At : {{ chatMessages.created_at }} </template>
+      <template #header> Created At : {{ chatMessages.created_at(' ')[0] }} </template>
 
       <div class="flex flex-col space-y-4">
         <div
@@ -132,7 +132,7 @@ onMounted(async () => {
               <p class="text-sm text-white py-4 px-4">
                 {{ message.msg }}
                 <p class="text-xs text-white text-right">
-                {{ formatted(message.created_at) }}
+                {{ message.created_at.split(' ')[1] }}
               </p>
               </p>
              
