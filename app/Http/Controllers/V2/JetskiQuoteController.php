@@ -143,6 +143,7 @@ class JetskiQuoteController extends Controller
             'embeddedProducts' => $embeddedProducts,
             'customerTypeEnum' => CustomerTypeEnum::asArray(),
             'modelType' => QuoteTypes::JETSKI,
+            'quoteTypeId' => QuoteTypes::JETSKI->id(),
             'canAddBatchNumber' => auth()->user()->hasRole(RolesEnum::JetskiManager),
             'vatPercentage' => $vatPercentage,
             'sendUpdateOptions' => $sendUpdateOptions,

@@ -93,7 +93,7 @@ class YachtQuoteController extends Controller
     public function show($uuid)
     {
         $quote = YachtQuoteRepository::getBy('uuid', $uuid);
-
+        $parentLeadDetails = parentQuoteDetails($quote->parent_duplicate_quote_id);
         $quoteStatuses = QuoteStatusRepository::byQuoteTypeId(QuoteTypes::YACHT->id())->get();
         $membersDetail = CustomerMembersRepository::getBy($quote->id, QuoteTypes::YACHT->name);
         $quote->load('documents.createdBy:id,name,email');
@@ -151,6 +151,7 @@ class YachtQuoteController extends Controller
             'quote' => $quote,
             'activities' => $activities,
             'lostReasons' => $lostReasons,
+            'quoteTypeId' => QuoteTypes::YACHT->id(),
             'advisors' => $advisors,
             'quoteStatusEnum' => QuoteStatusEnum::asArray(),
             'documentTypes' => $documentTypes,
@@ -177,6 +178,7 @@ class YachtQuoteController extends Controller
             'sendUpdateLogs' => $sendUpdateLogs,
             'hasPolicyIssuedStatus' => $hasPolicyIssuedStatus,
             'sendUpdateEnum' => $sendUpdateEnum,
+            'parentLeadDetails' => $parentLeadDetails,
         ]);
     }
 

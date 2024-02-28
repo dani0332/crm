@@ -114,6 +114,7 @@ class CycleQuoteController extends Controller
     {
         $quote = CycleQuoteRepository::getBy('uuid', $uuid);
 
+        $parentLeadDetails = parentQuoteDetails($quote->parent_duplicate_quote_id);
         $quoteStatuses = QuoteStatusRepository::byQuoteTypeId(QuoteTypes::CYCLE->id())->get();
 
         $quote->load('documents.createdBy:id,name,email');
@@ -201,6 +202,7 @@ class CycleQuoteController extends Controller
             'sendUpdateLogs' => $sendUpdateLogs,
             'sendUpdateEnum' => $sendUpdateEnum,
             'hasPolicyIssuedStatus' => $hasPolicyIssuedStatus,
+            'parentLeadDetails' => $parentLeadDetails,
         ]);
     }
 }

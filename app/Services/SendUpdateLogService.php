@@ -95,6 +95,9 @@ class SendUpdateLogService
                             'skipColumns' => $requestDetailsSkipColumns,
                             'fillColumns' => ['advisor_assigned_date' => now()],
                         ],
+                        'customerMembers' => [
+                            'isMorph' => true,
+                        ],
                     ],
                     'skipParentColumns' => $parentSkipColumns,
                     'parentClass' => HomeQuote::class,
@@ -118,7 +121,6 @@ class SendUpdateLogService
                 break;
 
             case LifeQuote::class:
-                // Columns not verified
                 $quoteRelations = [
                     'quoteRelations' => [
                         'lifeQuoteRequestDetail' => [
@@ -144,6 +146,7 @@ class SendUpdateLogService
                         'customerMembers' => [
                             'isMorph' => true,
                         ],
+                        'quoteRequestEntityMapping' => [],
                     ],
                     'skipParentColumns' => $parentSkipColumns,
                     'parentClass' => BusinessQuote::class,
@@ -257,6 +260,63 @@ class SendUpdateLogService
         return $quoteRelations;
     }
 
+    private function _createChildRelations($quoteModel, $relation, $relationObject, $modelRelationDetails, $replicateObject)
+    {
+        if (isset($modelRelationDetails['quoteRelations'][$relation]['quoteRelations'])) {
+            $className = $modelRelationDetails['quoteRelations'][$relation]['parentClass'];
+            $nestedRelationExist = $modelRelationDetails['quoteRelations'][$relation]['quoteRelations'];
+
+            $nestedObject = $className::with(array_keys($nestedRelationExist))->find($relationObject->id);
+            $getNestedRelations = $nestedObject->getRelations();
+
+            $fillColumns = $modelRelationDetails['quoteRelations'][$relation]['fillColumns'] ?? [];
+            if (in_array($relation, ['bikeQuote', 'yachtQuote', 'petQuote', 'cycleQuote', 'jetskiQuote'])) {
+                $fillColumns = array_merge($fillColumns, ['personal_quote_id' => $replicateObject->id]);
+
+                if (in_array($relation, ['bikeQuote', 'yachtQuote', 'petQuote'])) {
+                    $fillColumns = array_merge($fillColumns, [
+                        'code' => $replicateObject->code,
+                        'uuid' => $replicateObject->uuid,
+                        'quote_status_id' => QuoteStatusEnum::NewLead,
+                    ]);
+                }
+
+                if ($relation == 'petQuote') {
+                    $fillColumns = array_merge($fillColumns, ['parent_duplicate_quote_id' => $replicateObject->parent_duplicate_quote_id]);
+                }
+            }
+
+            $nestedReplicateObject = $nestedObject->replicate($modelRelationDetails['quoteRelations'][$relation]['skipColumns'] ?? []);
+            $nestedReplicateObject->fill($fillColumns)->save();
+
+            foreach ($getNestedRelations as $nestedRelation => $nestedRelationObject) {
+                if (class_exists($className) && method_exists($className, $nestedRelation) && ! empty($nestedRelationObject)) {
+                    $this->_createChildRelations($className, $nestedRelation, $nestedRelationObject, $modelRelationDetails, $nestedReplicateObject);
+                }
+            }
+        } else {
+            if (isset($modelRelationDetails['quoteRelations'][$relation]['isMorph'])) {
+                $fillColumns = $modelRelationDetails['quoteRelations'][$relation]['fillColumns'] ?? [];
+                foreach ($replicateObject->{$relation} as $morphRelation) {
+                    if ($relation == 'customerMembers') {
+                        $customerMemberCode = generateQuoteMemberCode($morphRelation->customer_type, $morphRelation->customer_entity_id);
+                        $fillColumns = array_merge($fillColumns, [
+                            'code' => $customerMemberCode,
+                        ]);
+                    }
+                    $newMorphRelation = $morphRelation->replicate($modelRelationDetails['quoteRelations'][$relation]['skipColumns'] ?? [])
+                        ->fill($fillColumns);
+                    $replicateObject->{$relation}()->save($newMorphRelation);
+                }
+            } else {
+                $fillColumns = $modelRelationDetails['quoteRelations'][$relation]['fillColumns'] ?? [];
+                $newRelation = $relationObject->replicate($modelRelationDetails['quoteRelations'][$relation]['skipColumns'] ?? [])
+                    ->fill($fillColumns);
+                $replicateObject->{$relation}()->save($newRelation);
+            }
+        }
+    }
+
     public function createChildLead($quoteModel, $requestData, $quoteTypeCode)
     {
         $modelRelationDetails = $this->_getQuoteRelation($quoteModel, $quoteTypeCode);
@@ -279,7 +339,7 @@ class SendUpdateLogService
 
             foreach ($getRelations as $relation => $relationObject) {
                 $className = $modelRelationDetails['parentClass'];
-                if (method_exists($className, $relation) && ! empty($relationObject->toArray())) {
+                if (method_exists($className, $relation) && $relationObject != null && ! empty($relationObject->toArray())) {
                     $this->_createChildRelations($className, $relation, $relationObject, $modelRelationDetails, $replicateObject);
                 }
             }
@@ -292,47 +352,5 @@ class SendUpdateLogService
         }
 
         return $childLeadDetails;
-    }
-
-    private function _createChildRelations($quoteModel, $relation, $relationObject, $modelRelationDetails, $replicateObject)
-    {
-        if (isset($modelRelationDetails['quoteRelations'][$relation]['quoteRelations'])) {
-            $className = $modelRelationDetails['quoteRelations'][$relation]['parentClass'];
-            $nestedRelationExist = $modelRelationDetails['quoteRelations'][$relation]['quoteRelations'];
-
-            $nestedObject = $className::with(array_keys($nestedRelationExist))->find($relationObject->id);
-            $getNestedRelations = $nestedObject->getRelations();
-
-            $fillColumns = $modelRelationDetails['quoteRelations'][$relation]['fillColumns'] ?? [];
-            if (in_array($relation, ['bikeQuote', 'yachtQuote', 'petQuote', 'cycleQuote', 'jetskiQuote'])) {
-                $fillColumns = array_merge($fillColumns, [
-                    'code' => $replicateObject->code,
-                    'uuid' => $replicateObject->uuid,
-                    'quote_status_id' => QuoteStatusEnum::NewLead,
-                    'parent_duplicate_quote_id' => $replicateObject->parent_duplicate_quote_id,
-                    'personal_quote_id' => $replicateObject->id,
-                ]);
-            }
-
-            $nestedReplicateObject = $nestedObject->replicate($modelRelationDetails['quoteRelations'][$relation]['skipColumns'] ?? []);
-            $nestedReplicateObject->fill($fillColumns)->save();
-
-            foreach ($getNestedRelations as $nestedRelation => $nestedRelationObject) {
-                if (class_exists($className) && method_exists($className, $nestedRelation) && ! empty($nestedRelationObject)) {
-                    $this->_createChildRelations($className, $nestedRelation, $nestedRelationObject, $modelRelationDetails, $nestedReplicateObject);
-                }
-            }
-        } else {
-            if (isset($modelRelationDetails['quoteRelations'][$relation]['isMorph'])) {
-                foreach ($replicateObject->{$relation} as $morphRelation) {
-                    $replicateObject->{$relation}()->save($morphRelation);
-                }
-            } else {
-                $fillColumns = $modelRelationDetails['quoteRelations'][$relation]['fillColumns'] ?? [];
-                $newRelation = $relationObject->replicate($modelRelationDetails['quoteRelations'][$relation]['skipColumns'] ?? [])
-                    ->fill($fillColumns);
-                $replicateObject->{$relation}()->save($newRelation);
-            }
-        }
     }
 }

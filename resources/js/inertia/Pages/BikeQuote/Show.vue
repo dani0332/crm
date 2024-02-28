@@ -43,6 +43,7 @@ defineProps({
   sendUpdateOptions: Array,
   sendUpdateLogs: Array,
   hasPolicyIssuedStatus: Boolean,
+  parentLeadDetails: Object,
 });
 
 const page = usePage();
@@ -213,6 +214,8 @@ const linkEntity = () => {
 };
 
 const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
+const getDetailPageRoute = (uuid, quote_type_id) =>
+  useGetShowPageRoute(uuid, quote_type_id, null);
 </script>
 
 <template>
@@ -358,12 +361,25 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
                 <label
                   class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
                 >
-                  Parent Ref-ID
+                  PARENT REF-ID
                 </label>
                 <template #tooltip> Parent Reference ID </template>
               </x-tooltip>
             </div>
-            <div>{{ quote.parent_duplicate_quote_id }}</div>
+            <div>
+              <Link
+                v-if="quote.parent_duplicate_quote_id"
+                :href="
+                  getDetailPageRoute(
+                    parentLeadDetails.uuid,
+                    parentLeadDetails.quote_type_id,
+                  )
+                "
+                class="text-primary-500 hover:underline"
+              >
+                {{ quote.parent_duplicate_quote_id ?? '' }}
+              </Link>
+            </div>
           </div>
         </dl>
       </div>

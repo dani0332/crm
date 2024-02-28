@@ -96,11 +96,11 @@ class SendUpdateLogController extends Controller
         $quote = $this->getQuote($sendUpdateLog->personal_quote_id);
         $realQuote = $this->getRealQuote($quoteType, $quote->uuid);
         $sendUpdateOptions = (new LookupService)->getSendUpdateOptions($quoteTypeId);
-        
+
         if (in_array($quoteType, [QuoteTypes::CAR, QuoteTypes::HEALTH, QuoteTypes::TRAVEL])) {
             $quote->load('plan.insuranceProvider');
         }
-        
+
         $categoryCode = LookupRepository::where('id', $sendUpdateLog->category_id)->value('code');
         $documentTypes = app(QuoteDocumentService::class)->getQuoteDocumentsForUploadByCategory(SendUpdateLogStatusEnum::SEND_UPDATE);
         $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping($quoteTypeId);

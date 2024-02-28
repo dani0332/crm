@@ -584,7 +584,7 @@ const getDetailPageRoute = (
                     <label
                       class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
                     >
-                      Parent Ref-ID
+                      PARENT REF-ID
                     </label>
                     <template #tooltip> Parent Reference ID </template>
                   </x-tooltip>

@@ -101,13 +101,10 @@ class LifeQuoteController extends Controller
     public function show($uuid)
     {
         $quote = LifeQuoteRepository::getBy('uuid', $uuid);
-
         $payments = $quote->payments;
-
         $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypeId::Life);
-
         $duplicateAllowedLobs = (new CentralService())->duplicateAllowedLobsList(QuoteTypes::LIFE->value, $quote->code);
-
+        $parentLeadDetails = parentQuoteDetails($quote->parent_duplicate_quote_id);
         $advisors = UserRepository::getPersonalQuoteAdvisors(QuoteTypes::LIFE->value);
         $memberRelations = LookupRepository::where('key', LookupsEnum::MEMBER_RELATION)->get();
         $membersDetails = CustomerMembersRepository::getBy($quote->id, QuoteTypes::LIFE->name);
@@ -216,6 +213,7 @@ class LifeQuoteController extends Controller
             'sendUpdateOptions' => $sendUpdateOptions,
             'sendUpdateLogs' => $sendUpdateLogs,
             'hasPolicyIssuedStatus' => $hasPolicyIssuedStatus,
+            'parentLeadDetails' => $parentLeadDetails,
         ]);
     }
 

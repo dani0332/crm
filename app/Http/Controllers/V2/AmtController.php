@@ -231,6 +231,7 @@ class AmtController extends Controller
             'business_type_of_insurance_id' => quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical),
         ]);
 
+        $parentLeadDetails = parentQuoteDetails($record->parent_duplicate_quote_id);
         $companyType = LookupRepository::where('key', LookupsEnum::COMPANY_TYPE)->get();
         $data = $record->toArray();
         $record->lost_reason = $data['business_quote_request_detail']['lost_reason']['text'] ?? null;
@@ -326,7 +327,7 @@ class AmtController extends Controller
             'sendUpdateLogs' => $sendUpdateLogs,
             'sendUpdateEnum' => $sendUpdateEnum,
             'hasPolicyIssuedStatus' => $hasPolicyIssuedStatus,
-
+            'parentLeadDetails' => $parentLeadDetails,
         ]);
     }
 

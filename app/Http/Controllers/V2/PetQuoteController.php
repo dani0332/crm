@@ -99,7 +99,7 @@ class PetQuoteController extends Controller
     {
         $quote = PetQuoteRepository::getBy('uuid', $uuid);
         $quoteStatuses = QuoteStatusRepository::byQuoteTypeId(QuoteTypes::PET->id())->get();
-
+        $parentLeadDetails = parentQuoteDetails($quote->parent_duplicate_quote_id);
         $documentTypes = DocumentTypeRepository::byQuoteTypeId(QuoteTypes::PET->id())->get();
         $membersDetail = CustomerMembersRepository::getBy($quote->id, QuoteTypes::PET->name);
         $paymentMethods = PaymentMethodRepository::orderBy('name')->get();
@@ -189,6 +189,7 @@ class PetQuoteController extends Controller
             'sendUpdateLogs' => $sendUpdateLogs,
             'sendUpdateEnum' => $sendUpdateEnum,
             'hasPolicyIssuedStatus' => $hasPolicyIssuedStatus,
+            'parentLeadDetails' => $parentLeadDetails,
         ]);
     }
 

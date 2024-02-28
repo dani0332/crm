@@ -58,6 +58,7 @@ defineProps({
   sendUpdateLogs: Array,
   hasPolicyIssuedStatus: Boolean,
   aboveAgeMembers: Number,
+  parentLeadDetails: Object,
 });
 
 const permissionEnum = page.props.permissionsEnum;
@@ -1204,6 +1205,8 @@ const handleSelectionChange = (tableType, selectedItems) => {
     }
   }
 };
+const getDetailPageRoute = (uuid, quote_type_id) =>
+  useGetShowPageRoute(uuid, quote_type_id, null);
 </script>
 
 <template>
@@ -1304,12 +1307,24 @@ const handleSelectionChange = (tableType, selectedItems) => {
                   </x-tooltip>
                 </dt>
 
-                <dt v-else-if="field.title == 'Parent Ref-ID'">
+                <dt v-else-if="field.title == 'PARENT REF-ID'">
                   <x-tooltip position="bottom">
                     <label
                       class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
                     >
                       {{ field.title }}
+                      <Link
+                        v-if="field.title"
+                        :href="
+                          getDetailPageRoute(
+                            parentLeadDetails.uuid,
+                            parentLeadDetails.quote_type_id,
+                          )
+                        "
+                        class="text-primary-500 hover:underline"
+                      >
+                        {{ field.title ?? '' }}
+                      </Link>
                     </label>
                     <template #tooltip> Parent Reference ID </template>
                   </x-tooltip>
@@ -1955,7 +1970,7 @@ const handleSelectionChange = (tableType, selectedItems) => {
           </x-button>
         </div>
       </template> </x-modal
-    >2
+    >
 
     <customerAdditionalContacts
       quoteType="Travel"

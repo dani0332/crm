@@ -52,4 +52,9 @@ class YachtQuote extends Model implements AuditableContract
     {
         return $this->belongsTo(InsuranceProvider::class, 'insurance_provider_id', 'id');
     }
+
+    public function yachtQuoteRequestDetail()
+    {
+        return $this->hasOne(YachtQuoteRequestDetail::class, 'yacht_quote_request_id', 'id');
+    }
 }

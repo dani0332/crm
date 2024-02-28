@@ -143,6 +143,7 @@ class BusinessQuoteController extends Controller
         $quoteType = strtolower($this->genericModel->modelType);
         $record = $this->crudService->getEntity($this->genericModel->modelType, $id);
         abort_if(! $record, 404);
+        $parentLeadDetails = parentQuoteDetails($record->parent_duplicate_quote_id);
         $allowedDuplicateLOB = $this->crudService->getAllowedDuplicateLOB($quoteType, $record->code);
         $dropdownSource = $this->businessQuoteService->dropdownSource($this->genericModel->properties, self::TYPE_ID);
         $advisors = $this->crudService->getAdvisorsByModelType($this->genericModel->modelType);
@@ -318,6 +319,7 @@ class BusinessQuoteController extends Controller
             'sendUpdateLogs' => $sendUpdateLogs,
             'sendUpdateEnum' => $sendUpdateEnum,
             'hasPolicyIssuedStatus' => $hasPolicyIssuedStatus,
+            'parentLeadDetails' => $parentLeadDetails,
         ]);
     }
 

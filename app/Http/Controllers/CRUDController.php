@@ -721,6 +721,7 @@ class CRUDController extends Controller
             $customerTypeEnum = CustomerTypeEnum::asArray();
             $industryType = LookupRepository::where('key', LookupsEnum::COMPANY_TYPE)->get();
             $nationalities = NationalityRepository::withActive()->get();
+            $clientInquiryLogs = $this->crudService->getInquiryLogs($this->genericModel->modelType, $record->uuid) ?? [];
 
             // book policy details
             $bPDetails = $this->bookPolicyPayload($record, $quoteType, $payments, $quoteDocuments);
@@ -734,7 +735,7 @@ class CRUDController extends Controller
                 'paymentEntityModel', 'payments', 'paymentMethods', 'isQuoteDocumentEnabled', 'quoteDocuments', 'displaySendPolicyButton', 'customerAdditionalContacts', 'lostApproveReasons', 'lostRejectReasons', 'allowQuoteLogAction', 'carLostChangeStatus',
                 'carMakeText', 'carModelText', 'advisor', 'tiers', 'daysAfterCapturedPayment', 'access', 'carPlanFeaturesCodeEnum', 'carPlanExclusionsCodeEnum', 'documentTypes', 'planURL', 'storageUrl', 'kyoEndPoint',
                 'carPlanTypeEnum', 'UBORelations', 'UBOsDetails', 'emirates', 'customerTypeEnum', 'memberRelations', 'membersDetails', 'industryType', 'nationalities', 'paymentTooltipEnum',
-                'isCommercialVehicles', 'carInsuranceProviders', 'isNewPaymentStructure', 'sendUpdateOptions', 'sendUpdateLogs', 'hasPolicyIssuedStatus', 'sendUpdateEnum', 'parentLeadDetails',
+                'isCommercialVehicles', 'carInsuranceProviders', 'isNewPaymentStructure', 'sendUpdateOptions', 'sendUpdateLogs', 'hasPolicyIssuedStatus', 'clientInquiryLogs', 'sendUpdateEnum', 'parentLeadDetails',
             ]));
         }
 
@@ -1037,6 +1038,7 @@ class CRUDController extends Controller
                 'quoteStatusEnum' => QuoteStatusEnum::asArray(),
                 'sendUpdateEnum' => $sendUpdateEnum,
                 'hasPolicyIssuedStatus' => $hasPolicyIssuedStatus,
+                'clientInquiryLogs' => $this->crudService->getInquiryLogs($this->genericModel->modelType, $record->uuid) ?? [],
                 'isNewPaymentStructure' => $isNewPaymentStructure,
                 'parentLeadDetails' => $parentLeadDetails,
             ]);

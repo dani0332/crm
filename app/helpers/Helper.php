@@ -1,11 +1,13 @@
 <?php
 
+use App\Enums\CustomerTypeEnum;
 use App\Enums\IMCRMSearchTypesEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypes;
 use App\Models\CustomerAdditionalInfo;
+use App\Models\CustomerMembers;
 use App\Models\HealthQuote;
 use App\Models\QuoteType;
 use App\Services\HealthQuoteService;
@@ -681,6 +683,20 @@ if (! function_exists('apiResponse')) {
                 'uuid' => explode('-', $parentDuplicateQuoteId)[1],
                 'quote_type_id' => $quoteType->id,
             ];
+        }
+    }
+
+    if (! function_exists('generateQuoteMemberCode')) {
+        function generateQuoteMemberCode($customerType, $customerEntityID)
+        {
+            $quoteMemberCount = CustomerMembers::where([
+                'customer_type' => $customerType,
+                'customer_entity_id' => $customerEntityID,
+            ])->count();
+
+            return ($customerType == CustomerTypeEnum::Individual) ?
+                CustomerTypeEnum::IndividualShort.'-'.$customerEntityID.'-'.(++$quoteMemberCount) :
+                CustomerTypeEnum::EntityShort.'-'.$customerEntityID.'-'.(++$quoteMemberCount);
         }
     }
 }

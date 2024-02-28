@@ -104,6 +104,7 @@ class BikeQuoteController extends Controller
     {
         $quote = BikeQuoteRepository::getBy('uuid', $uuid);
 
+        $parentLeadDetails = parentQuoteDetails($quote->parent_duplicate_quote_id);
         $quoteStatuses = QuoteStatusRepository::byQuoteTypeId(QuoteTypes::BIKE->id())->get();
         $membersDetail = CustomerMembersRepository::getBy($quote->id, QuoteTypes::BIKE->name);
         $documentTypes = DocumentTypeRepository::byQuoteTypeId(QuoteTypes::BIKE->id())->get();
@@ -176,6 +177,7 @@ class BikeQuoteController extends Controller
             'sendUpdateLogs' => $sendUpdateLogs,
             'sendUpdateEnum' => $sendUpdateEnum,
             'hasPolicyIssuedStatus' => $hasPolicyIssuedStatus,
+            'parentLeadDetails' => $parentLeadDetails,
         ]);
     }
 
