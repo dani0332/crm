@@ -25,8 +25,8 @@ class BookPolicyRequest extends FormRequest
         return [
             'invoice_date' => 'required',
             'booking_date' => 'required',
-            'insurer_tax_invoice_number' => 'required|max:22|alpha_dash',
-            'insurer_commmission_invoice_number' => 'required|alpha_dash|max:22',
+            'insurer_tax_invoice_number' => 'required|max:22',
+            'insurer_commmission_invoice_number' => 'required|max:22',
             'discount' => 'nullable',
             'transaction_payment_status' => 'nullable',
             'commission_percentage' => 'nullable',
