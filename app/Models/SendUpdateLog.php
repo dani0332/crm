@@ -14,6 +14,11 @@ class SendUpdateLog extends Model implements AuditableContract
 
     protected $guarded = [];
 
+    public function quoteType()
+    {
+        return $this->belongsTo(QuoteType::class, 'quote_type_id');
+    }
+
     public function details(): HasMany
     {
         return $this->hasMany(SendUpdateLogDetails::class);
