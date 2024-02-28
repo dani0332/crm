@@ -22,7 +22,6 @@ const props = defineProps({
 });
 
 const isLoading = ref(false);
-
 const productionProcessTooltipEnum = page.props.productionProcessTooltipEnum;
 
 const dateToYMD = date => {
@@ -520,16 +519,12 @@ const caculateCommission = () => {
             </x-tooltip>
             <x-tooltip>
               <x-button
-                v-if="
-                  props.quote.quote_status_id ==
-                  page.props.quoteStatusEnum.PolicyBooked
-                "
                 size="sm"
                 class="mt-4 mr-2"
                 color="orange"
                 :disabled="true"
               >
-                {{ props.bPDetails?.text }}
+                Send Policy
               </x-button>
               <template #tooltip>
                 <span>{{
@@ -538,76 +533,45 @@ const caculateCommission = () => {
               </template>
             </x-tooltip>
           </template>
+
           <template v-else>
             <template
               v-if="
                 props.quote.quote_status_id ==
-                  page.props.quoteStatusEnum.PolicySentToCustomer &&
-                props.bPDetails?.editButton
+                page.props.quoteStatusEnum.PolicySentToCustomer
               "
             >
-              <x-button
-                v-if="bp.isEditing"
-                class="mt-4 mr-2"
-                color="emerald"
-                size="sm"
-                :loading="bpForm.processing"
-                @click.prevent="bp.isEditing = false"
-              >
-                Cancel
-              </x-button>
-              <x-button
-                v-if="bp.isEditing"
-                class="mt-4 mr-2"
-                color="emerald"
-                size="sm"
-                :loading="bpForm.processing"
-                type="submit"
-              >
-                Update
-              </x-button>
-              <x-button
-                v-if="!bp.isEditing && props.bPDetails?.editButton"
-                class="mt-4 mr-2"
-                color="emerald"
-                size="sm"
-                @click.prevent="bp.isEditing = true"
-              >
-                Edit
-              </x-button>
-              <x-button
-                size="sm"
-                color="orange"
-                class="mt-4"
-                @click.prevent="confirmSendPolicy"
-                :disabled="bp.isEditing"
-                v-if="props.bPDetails?.sendButton"
-              >
-                {{ props.bPDetails?.text }}
-              </x-button>
-            </template>
-            <template v-else
-              ><x-tooltip>
+              <x-tooltip>
                 <x-button
-                  v-if="
-                    props.quote.quote_status_id ==
-                      page.props.quoteStatusEnum.PolicySentToCustomer &&
-                    !props.bPDetails?.editButton
-                  "
-                  size="sm"
                   class="mt-4 mr-2"
-                  color="orange"
+                  color="emerald"
+                  size="sm"
                   :disabled="true"
                 >
-                  {{ props.bPDetails?.text }}
+                  Edit
                 </x-button>
                 <template #tooltip>
                   <span>{{
                     'The Button is not accessable because policy has been sent to customer'
                   }}</span>
                 </template>
-              </x-tooltip></template
-            >
+              </x-tooltip>
+              <x-tooltip>
+                <x-button
+                  size="sm"
+                  class="mt-4 mr-2"
+                  color="orange"
+                  :disabled="true"
+                >
+                  Send Policy To Customer
+                </x-button>
+                <template #tooltip>
+                  <span>{{
+                    'The Button is not accessable because policy has been sent to customer'
+                  }}</span>
+                </template>
+              </x-tooltip>
+            </template>
           </template>
         </div>
       </div>
