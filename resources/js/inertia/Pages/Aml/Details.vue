@@ -624,6 +624,7 @@ const decisionStatus = {
         border-cell
         :rows-per-page="40"
         fixed-checkbox
+        :hide-footer="kycLogs.length < 40"
       >
         <template #item-insurance_type="{ quotetype }">
           {{ quoteType.text }}
