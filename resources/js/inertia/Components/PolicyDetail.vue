@@ -361,7 +361,7 @@ const onUpdatePolicyDetails = isValid => {
             </x-button>
             <template #tooltip>
               <span>{{
-                'The Button is not accessable because policy has been booked'
+                'The button is not accessable because policy has been booked'
               }}</span>
             </template>
           </x-tooltip>

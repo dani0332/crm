@@ -513,7 +513,7 @@ const caculateCommission = () => {
               </x-button>
               <template #tooltip>
                 <span>{{
-                  'The Button is not accessable because policy has been booked'
+                  'The button is not accessable because policy has been booked'
                 }}</span>
               </template>
             </x-tooltip>
@@ -528,7 +528,7 @@ const caculateCommission = () => {
               </x-button>
               <template #tooltip>
                 <span>{{
-                  'The Button is not accessable because policy has been booked'
+                  'The button is not accessable because policy has been booked'
                 }}</span>
               </template>
             </x-tooltip>
@@ -552,7 +552,7 @@ const caculateCommission = () => {
                 </x-button>
                 <template #tooltip>
                   <span>{{
-                    'The Button is not accessable because policy has been sent to customer'
+                    'The button is not accessable because policy has been sent to customer'
                   }}</span>
                 </template>
               </x-tooltip>
@@ -567,7 +567,7 @@ const caculateCommission = () => {
                 </x-button>
                 <template #tooltip>
                   <span>{{
-                    'The Button is not accessable because policy has been sent to customer'
+                    'The button is not accessable because policy has been sent to customer'
                   }}</span>
                 </template>
               </x-tooltip>
