@@ -27,4 +27,7 @@ final class SendUpdateLogStatusEnum extends Enum
     const ED = 'ED'; //Employee deletion
     const DM = 'DM'; //Delete member
     const CPU = 'CPU'; //Correction of Policy Upload.
+    // send update log button. 
+    const SUC = 'Send Update to Customer'; // send update to customer. 
+    const SU = 'Send Update'; // send update. 
 }
