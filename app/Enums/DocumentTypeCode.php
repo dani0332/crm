@@ -12,4 +12,13 @@ use BenSampo\Enum\Enum;
 class DocumentTypeCode extends Enum
 {
     const KYCDOC = 'KYCDOC';
+    const SEND_UPDATE_POLICY_SCHEDULE = 'SUPS'; // Send Update Policy Schedule
+    const SEND_UPDATE_POLICY_CERTIFICATE = 'SUPC'; // Send Update Policy Certificate
+    const SEND_UPDATE_ECARD = 'SUECARD'; // Send Update E-Card
+    const SEND_UPDATE_TAX_INVOICE = 'SUTAXINV'; // Send Update Tax Invoice
+    const SEND_UPDATE_TAX_INVOICE_RAISED_BUYER = 'SUTAXINVRB'; // Send Update Tax Invoice Raised Buyer
+    const SEND_UPDATE_RECEIPT = 'SURECEIPT'; // Send Update Receipt
+    const SEND_UPDATE_ADDITIONAL_EMAIL_ATTACHEMENTS = 'SUAEA'; // Send Update Additional Email Attachments
+    const SEND_UPDATE_GARAGE_LIST = 'SUGL'; // Send Update Garage List
+    const SEND_UPDATE_POLICY_HANDBOOK = 'SUPHBOOK'; // Send Update Policy Handbook
 }
