@@ -168,7 +168,7 @@ const caculateCommission = () => {
   if (bpForm.commission_vat_applicable > 0) {
     if (Number(props.quote?.price_without_vat > 0)) {
       bpForm.commission_percentage = (
-        (bpForm.commission_vat_applicable / props.quote?.price_with_vat) *
+        (bpForm.commission_vat_applicable / props.quote?.price_without_vat) *
         100
       ).toFixed(2);
 
