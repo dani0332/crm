@@ -6,7 +6,7 @@ import UI, { colors } from '@indielayer/ui';
 import MainLayout from '@/inertia/Layouts/MainLayout.vue';
 import icons from './icons';
 import Vue3EasyDataTable from 'vue3-easy-data-table';
-import { ZiggyVue } from '../../../vendor/tightenco/ziggy/dist/vue.m';
+import { ZiggyVue } from '../../../vendor/tightenco/ziggy';
 
 const appName =
   window.document.getElementsByTagName('title')[0]?.innerText || 'IMCRM';

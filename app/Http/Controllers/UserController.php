@@ -13,7 +13,6 @@ use App\Services\UserService;
 use App\Traits\TeamHierarchyTrait;
 use Auth;
 use Carbon\Carbon;
-use DataTables;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
@@ -44,56 +43,33 @@ class UserController extends Controller
      */
     public function index(Request $request)
     {
-        if ($request->ajax()) {
-            $filteredData = [];
-            $users = DB::select('SELECT u1.id
-                                        ,u1.name
-                                        ,u1.email
-                                        ,u2.roles
-                                        ,teams.name as teamName
-                                        ,u1.created_at
-                                        ,u1.updated_at
-                                        ,u1.is_active
-                                    FROM users u1
-                                    JOIN (
-                                        SELECT users.id
-                                            ,GROUP_CONCAT(roles.name) AS roles
-                                        FROM users
-                                        INNER JOIN model_has_roles ON model_has_roles.model_id = users.id
-                                        INNER JOIN roles ON roles.id = model_has_roles.role_id
-                                        GROUP BY users.name, users.id
-                                        ) u2 ON u2.id = u1.id
-                                    LEFT JOIN user_team ON user_team.user_id = u2.id
-                                    LEFT JOIN teams ON teams.id = user_team.team_id
-                                    GROUP BY u1.id
-                                            ,u1.name
-                                            ,u1.email
-                                            ,u2.roles
-                                            ,u1.created_at
-                                            ,u1.updated_at');
-            $filteredData = $users;
+        $query = DB::table('users as u1')
+            ->select([
+                'u1.id',
+                'u1.name',
+                'u1.email',
+                DB::raw('(SELECT GROUP_CONCAT(roles.name) FROM users INNER JOIN model_has_roles ON model_has_roles.model_id = users.id INNER JOIN roles ON roles.id = model_has_roles.role_id WHERE users.id = u1.id GROUP BY users.name) as roles'),
+                'teams.name as teamName',
+                'u1.created_at',
+                'u1.updated_at',
+                'u1.is_active',
+            ])
+            ->leftJoin('user_team', 'user_team.user_id', '=', 'u1.id')
+            ->leftJoin('teams', 'teams.id', '=', 'user_team.team_id');
 
-            if (! empty($request->email)) {
-                $collection = collect($filteredData);
-                $filteredData = $collection->filter(function ($value, $key) use ($request) {
-                    return $value->email == $request->email;
-                });
-            }
-            if (! empty($request->name)) {
-                $collection = collect($filteredData);
-                $filteredData = $collection->filter(function ($value, $key) use ($request) {
-                    if (str_contains(strtoupper($value->name), strtoupper($request->name))) {
-                        return $value;
-                    }
-                });
-            }
-
-            return Datatables::of($filteredData)
-                ->addIndexColumn()
-                ->make(true);
+        if ($request->has('email')) {
+            $query->where('u1.email', $request->email);
         }
 
-        return view('user.view');
+        if ($request->has('name')) {
+            $query->where('u1.name', 'LIKE', '%'.$request->name.'%');
+        }
+
+        $users = $query->groupBy('u1.id')->simplePaginate();
+
+        return inertia('Admin/Users/Index', [
+            'users' => $users,
+        ]);
     }
 
     /**
@@ -107,8 +83,15 @@ class UserController extends Controller
         $products = $this->getAllProducts(); // get all products
         $teams = [];
         $subTeams = [];
+        $permissions = Permission::orderBy('name')->get();
 
-        return view('user.add', compact('roles', 'products', 'teams', 'subTeams'));
+        return inertia('Admin/Users/Form', [
+            'roles' => $roles,
+            'products' => $products,
+            'teams' => $teams,
+            'subTeams' => $subTeams,
+            'permissions' => $permissions,
+        ]);
     }
 
     /**
@@ -132,9 +115,8 @@ class UserController extends Controller
         $this->leadAllocationService->createLeadAllocationRecord($user->id);
 
         $user->assignRole($request->input('roles'));
-        if (isset($request->return_to_view)) {
-            return redirect('admin/users/'.$user->id)->with('success', 'User has been stored');
-        }
+
+        return redirect(route('users.show', $user->id))->with('success', $user->name.' with a email '.$user->email.' '.'has been store');
     }
 
     /**
@@ -145,11 +127,16 @@ class UserController extends Controller
      */
     public function show(User $user)
     {
+        $user['new_created_at'] = Carbon::createFromFormat('d-M-Y h:ia', $user->created_at)->format('Y-m-d H:i:s');
+        $user['new_updated_at'] = Carbon::createFromFormat('d-M-Y h:ia', $user->created_at)->format('Y-m-d H:i:s');
+
         $subTeamName = '';
         $additionalTeamNames = '';
         $managerName = implode(',', $this->getUserManagers($user->id)->pluck('name')->toArray());
         $teamName = implode(',', $this->getUserTeams($user->id)->pluck('name')->toArray());
         $productName = implode(',', $this->getUserProducts($user->id)->pluck('name')->toArray());
+        $user->roles = $user->roles->pluck('name')->toArray();
+        $user->permissions = $user->permissions->pluck('name')->toArray();
         if ($user->additional_team_ids != '') {
             $additionalTeamNamesArray = Team::whereIn('id', explode(',', $user->additional_team_ids))->where('type', TeamTypeEnum::PRODUCT)->pluck('name')->toArray();
             $additionalTeamNames = implode(', ', $additionalTeamNamesArray);
@@ -158,7 +145,14 @@ class UserController extends Controller
             $subTeamName = Team::find($user->sub_team_id)->name;
         }
 
-        return view('user.show', compact('user', 'teamName', 'subTeamName', 'additionalTeamNames', 'managerName', 'productName'));
+        return inertia('Admin/Users/Show', [
+            'user' => $user,
+            'teamName' => $teamName,
+            'subTeamName' => $subTeamName,
+            'additionalTeamNames' => $additionalTeamNames,
+            'managerName' => $managerName,
+            'productName' => $productName,
+        ]);
     }
 
     /**
@@ -174,30 +168,35 @@ class UserController extends Controller
         $userProductIds = $this->getUserProducts($user->id)->pluck('id')->toArray();
         $teams = $this->getTeamsByProductIds($userProductIds);
         $subTeams = $this->getSubTeamsByTeamIds($teams->pluck('id'));
-        $selectedAdditionalTeams = $user->additional_team_ids;
+
+        $selectedAdditionalTeams = null;
+        if (isset($user->additional_team_ids)) {
+            $selectedAdditionalTeams = array_map('intval', explode(',', $user->additional_team_ids));
+        }
+
         $products = $this->getAllProducts();
 
         $userTeamIds = $this->getUserTeams($user->id)->pluck('id')->toArray();
         $managers = $this->getManagersBasedOnTeamId($userTeamIds, $user->id);
         $userManagerIds = $this->getUserManagers($user->id)->pluck('id')->toArray();
         $permissions = Permission::orderBy('name')->get();
-        $userPermissions = $user->getDirectPermissions()->pluck('name')->toArray();
+        $userPermissions = $user->getDirectPermissions()->pluck('id')->toArray();
 
-        return view('user.edit', compact(
-            'user',
-            'roles',
-            'userRole',
-            'selectedAdditionalTeams',
-            'subTeams',
-            'products',
-            'userProductIds',
-            'teams',
-            'userTeamIds',
-            'managers',
-            'userManagerIds',
-            'permissions',
-            'userPermissions'
-        ));
+        return inertia('Admin/Users/Form', [
+            'user' => $user,
+            'roles' => $roles,
+            'userRole' => $userRole,
+            'selectedAdditionalTeams' => $selectedAdditionalTeams,
+            'subTeams' => $subTeams,
+            'products' => $products,
+            'userProductIds' => $userProductIds,
+            'teams' => $teams,
+            'userTeamIds' => $userTeamIds,
+            'managers' => $managers,
+            'userManagerIds' => $userManagerIds,
+            'permissions' => $permissions,
+            'userPermissions' => $userPermissions,
+        ]);
     }
 
     /**
@@ -225,32 +224,35 @@ class UserController extends Controller
         $user->email = $request->email;
         $user->mobile_no = $request->mobile_no;
         $user->landline_no = $request->landline_no;
-        $user->password = bcrypt($request->password);
-        $user->is_active = $request->is_active == 'on' ? 1 : 0;
+        if (isset($request->password)) {
+            $user->password = bcrypt($request->password);
+        }
+        $user->is_active = $request->is_active ? 1 : 0;
 
         /*
          * temp fix: health lead allocation is using team_id to target health product
          * this needs to be updated with new team/product structure
          */
+
         if (! empty($request->primary_product)) {
             $user->team_id = $request->primary_product;
         }
 
         $this->leadAllocationService->updateUserAllocationRecord($user->id, null, null, $user->is_active);
 
-        if (isset($request->additionalTeams)) {
+        if (! empty($request->additionalTeams) && isset($request->additionalTeams)) {
             if (count((array) $request->additionalTeams) > 1) {
                 $user->additional_team_ids = implode(',', $request->additionalTeams);
             } else {
                 $user->additional_team_ids = $request->additionalTeams[0];
             }
         }
-        if ($request->sub_team_id != '0') {
+
+        if (! empty($request->sub_team_id) && $request->sub_team_id != '0') {
             $user->sub_team_id = $request->sub_team_id;
         }
 
         $user->save();
-
         if (isset($request->manager) && $request->manager != '0') {
             DB::table('user_manager')->where('user_id', $user->id)->delete();
             foreach ($request->manager as $managerId) {
@@ -288,9 +290,7 @@ class UserController extends Controller
         DB::table('model_has_roles')->where('model_id', $user->id)->delete();
         $user->assignRole($request->input('roles'));
 
-        if (isset($request->return_to_view)) {
-            return redirect('admin/users/'.$user->id)->with('success', 'User has been updated');
-        }
+        return redirect(route('users.show', $user->id))->with('success', 'User has been updated');
     }
 
     /**
@@ -366,6 +366,7 @@ class UserController extends Controller
                 DB::raw('CONCAT(users.name, " - ", roles.name) as name')
             )->get();
     }
+
     public function updateUserStatus(Request $request)
     {
         $currentDateTime = Carbon::now();
@@ -378,7 +379,6 @@ class UserController extends Controller
             ($currentDateTime->isWeekday() && $currentDateTime->between($startDateTime, $endDateTime))
             || ($currentDateTime->isWeekend())
         ) {
-
             // Current time is within the specified range on weekdays or any time on Saturday and Sunday
             echo "Current time is between 6:30 PM and 8:59 AM of the next day, and it's a weekday or weekend.";
         } else {

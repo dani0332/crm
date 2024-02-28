@@ -622,9 +622,9 @@ const decisionStatus = {
         :loading="loader.table"
         :items="kycLogs || []"
         border-cell
-        hide-rows-per-page
-        hide-footer
+        :rows-per-page="40"
         fixed-checkbox
+        :hide-footer="kycLogs.length < 40"
       >
         <template #item-insurance_type="{ quotetype }">
           {{ quoteType.text }}

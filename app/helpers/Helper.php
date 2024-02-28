@@ -19,7 +19,7 @@ if (! function_exists('generate_code')) {
      * Checks if a value exists in an array in a case-insensitive manner.
      *
      * @param  string  $prefix
-     * The searched value
+     *                          The searched value
      */
     function generate_code($prefix)
     {
@@ -37,7 +37,7 @@ if (! function_exists('vAbort')) {
     /**
      * abort script execution and return errors in validation format with http status 422.
      *
-     * @param $messages message string or array of messages
+     * @param    $messages  message string or array of messages
      *
      * @throws ValidationException
      */
