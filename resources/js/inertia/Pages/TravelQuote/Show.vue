@@ -1317,8 +1317,8 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
                         v-if="field.title"
                         :href="
                           getDetailPageRoute(
-                            parentLeadDetails.uuid,
-                            parentLeadDetails.quote_type_id,
+                            linkedQuoteDetails.uuid,
+                            linkedQuoteDetails.quote_type_id,
                           )
                         "
                         class="text-primary-500 hover:underline"
@@ -1327,6 +1327,28 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
                       </Link>
                     </label>
                     <template #tooltip> Parent Reference ID </template>
+                  </x-tooltip>
+                </dt>
+                <dt v-else-if="field.title == 'CHILD REF-ID'">
+                  <x-tooltip position="bottom">
+                    <label
+                      class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
+                    >
+                      {{ linkedQuoteDetails.childLeads ?? '' }}
+                      <Link
+                        v-if="linkedQuoteDetails.childLeadsCount == 1"
+                        :href="
+                          getDetailPageRoute(
+                            linkedQuoteDetails.childLeadsUuid,
+                            linkedQuoteDetails.quote_type_id,
+                          )
+                        "
+                        class="text-primary-500 hover:underline"
+                      >
+                        {{ linkedQuoteDetails.childLeads ?? '' }}
+                      </Link>
+                    </label>
+                    <template #tooltip> The Child Reference ID acts as an individual identifier for dependents under the main lead. It's our way of efficiently organizing and accessing each person's records within the system. </template>
                   </x-tooltip>
                 </dt>
                 <div

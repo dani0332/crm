@@ -43,7 +43,7 @@ defineProps({
   sendUpdateOptions: Array,
   sendUpdateLogs: Array,
   hasPolicyIssuedStatus: Boolean,
-  parentLeadDetails: Object,
+  linkedQuoteDetails: Object,
 });
 
 const page = usePage();
@@ -371,13 +371,38 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
                 v-if="quote.parent_duplicate_quote_id"
                 :href="
                   getDetailPageRoute(
-                    parentLeadDetails.uuid,
-                    parentLeadDetails.quote_type_id,
+                    linkedQuoteDetails.uuid,
+                    linkedQuoteDetails.quote_type_id,
                   )
                 "
                 class="text-primary-500 hover:underline"
               >
                 {{ quote.parent_duplicate_quote_id ?? '' }}
+              </Link>
+            </div>
+          </div>
+          <div class="grid sm:grid-cols-2" v-if="linkedQuoteDetails.childLeadsCount == 1">
+            <div>
+              <x-tooltip position="bottom">
+                <label
+                  class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
+                >
+                  CHILD REF-ID
+                </label>
+                <template #tooltip> The Child Reference ID acts as an individual identifier for dependents under the main lead. It's our way of efficiently organizing and accessing each person's records within the system. </template>
+              </x-tooltip>
+            </div>
+            <div>
+              <Link
+                :href="
+                  getDetailPageRoute(
+                    linkedQuoteDetails.childLeadsUuid,
+                    linkedQuoteDetails.quote_type_id,
+                  )
+                "
+                class="text-primary-500 hover:underline"
+              >
+                {{ linkedQuoteDetails.childLeads ?? '' }}
               </Link>
             </div>
           </div>

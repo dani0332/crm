@@ -33,6 +33,7 @@ use App\Services\AMLService;
 use App\Services\CentralService;
 use App\Services\CRUDService;
 use App\Services\LookupService;
+use App\Services\SendUpdateLogService;
 use App\Services\SplitPaymentService;
 
 class CycleQuoteController extends Controller
@@ -114,7 +115,7 @@ class CycleQuoteController extends Controller
     {
         $quote = CycleQuoteRepository::getBy('uuid', $uuid);
 
-        $parentLeadDetails = parentQuoteDetails($quote->parent_duplicate_quote_id);
+        $linkedQuoteDetails = app(SendUpdateLogService::class)->linkedQuoteDetails(QuoteTypes::CYCLE->value, $quote);
         $quoteStatuses = QuoteStatusRepository::byQuoteTypeId(QuoteTypes::CYCLE->id())->get();
 
         $quote->load('documents.createdBy:id,name,email');
@@ -202,7 +203,7 @@ class CycleQuoteController extends Controller
             'sendUpdateLogs' => $sendUpdateLogs,
             'sendUpdateEnum' => $sendUpdateEnum,
             'hasPolicyIssuedStatus' => $hasPolicyIssuedStatus,
-            'parentLeadDetails' => $parentLeadDetails,
+            'linkedQuoteDetails' => $linkedQuoteDetails,
         ]);
     }
 }

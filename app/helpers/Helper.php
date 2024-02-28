@@ -5,6 +5,7 @@ use App\Enums\IMCRMSearchTypesEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Models\CustomerAdditionalInfo;
 use App\Models\CustomerMembers;
@@ -666,24 +667,6 @@ if (! function_exists('apiResponse')) {
             'message' => $message,
             'status' => $statusCode,
         ], $statusCode);
-    }
-
-    if (! function_exists('parentQuoteDetails')) {
-        function parentQuoteDetails($parentDuplicateQuoteId)
-        {
-            if (empty($parentDuplicateQuoteId)) {
-                return [];
-            }
-
-            $quoteTypeShortCode = explode('-', $parentDuplicateQuoteId)[0];
-            $quoteType = QuoteType::where('short_code', $quoteTypeShortCode)->first();
-
-            return [
-                'parent_lead_ref_id' => $parentDuplicateQuoteId,
-                'uuid' => explode('-', $parentDuplicateQuoteId)[1],
-                'quote_type_id' => $quoteType->id,
-            ];
-        }
     }
 
     if (! function_exists('generateQuoteMemberCode')) {

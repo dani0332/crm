@@ -33,6 +33,7 @@ use App\Repositories\YachtQuoteRepository;
 use App\Services\AMLService;
 use App\Services\CRUDService;
 use App\Services\LookupService;
+use App\Services\SendUpdateLogService;
 use App\Services\SplitPaymentService;
 
 class YachtQuoteController extends Controller
@@ -93,7 +94,7 @@ class YachtQuoteController extends Controller
     public function show($uuid)
     {
         $quote = YachtQuoteRepository::getBy('uuid', $uuid);
-        $parentLeadDetails = parentQuoteDetails($quote->parent_duplicate_quote_id);
+        $linkedQuoteDetails = app(SendUpdateLogService::class)->linkedQuoteDetails(QuoteTypes::YACHT->value, $quote);
         $quoteStatuses = QuoteStatusRepository::byQuoteTypeId(QuoteTypes::YACHT->id())->get();
         $membersDetail = CustomerMembersRepository::getBy($quote->id, QuoteTypes::YACHT->name);
         $quote->load('documents.createdBy:id,name,email');
@@ -178,7 +179,7 @@ class YachtQuoteController extends Controller
             'sendUpdateLogs' => $sendUpdateLogs,
             'hasPolicyIssuedStatus' => $hasPolicyIssuedStatus,
             'sendUpdateEnum' => $sendUpdateEnum,
-            'parentLeadDetails' => $parentLeadDetails,
+            'linkedQuoteDetails' => $linkedQuoteDetails,
         ]);
     }
 
