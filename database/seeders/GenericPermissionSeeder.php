@@ -17,18 +17,10 @@ class GenericPermissionSeeder extends Seeder
      */
     public function run()
     {
-        $healthManagerAccess = Permission::where('name', PermissionsEnum::HEALTH_QUOTES_MANAGER_ACCESS)->first();
-        if (! $healthManagerAccess) {
+        $reportManagement = Permission::where('name', PermissionsEnum::REPORT_MANAGEMENT)->first();
+        if (! $reportManagement) {
             Permission::create([
-                'name' => PermissionsEnum::HEALTH_QUOTES_MANAGER_ACCESS,
-                'guard_name' => 'web',
-            ]);
-        }
-
-        $healthQuoteAccess = Permission::where('name', PermissionsEnum::HEALTH_QUOTES_ACCESS)->first();
-        if (! $healthQuoteAccess) {
-            Permission::create([
-                'name' => PermissionsEnum::HEALTH_QUOTES_ACCESS,
+                'name' => PermissionsEnum::REPORT_MANAGEMENT,
                 'guard_name' => 'web',
             ]);
         }
@@ -36,12 +28,9 @@ class GenericPermissionSeeder extends Seeder
         // Add Compliance Permission to Admin
         $role = Role::where('name', RolesEnum::Admin)->first();
 
-        if (! $role->hasPermissionTo(PermissionsEnum::HEALTH_QUOTES_MANAGER_ACCESS)) {
-            $role->givePermissionTo(PermissionsEnum::HEALTH_QUOTES_MANAGER_ACCESS);
+        if (! $role->hasPermissionTo(PermissionsEnum::REPORT_MANAGEMENT)) {
+            $role->givePermissionTo(PermissionsEnum::REPORT_MANAGEMENT);
         }
 
-        if (! $role->hasPermissionTo(PermissionsEnum::HEALTH_QUOTES_ACCESS)) {
-            $role->givePermissionTo(PermissionsEnum::HEALTH_QUOTES_ACCESS);
-        }
     }
 }
