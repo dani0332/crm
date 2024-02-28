@@ -6,6 +6,7 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\SendUpdateCustomerRequest;
 use App\Models\PersonalQuote;
 use App\Repositories\InsuranceProviderRepository;
 use App\Repositories\PersonalQuoteRepository;
@@ -77,7 +78,6 @@ class SendUpdateLogController extends Controller
         if ($payments && is_countable($payments) && count($payments) > 0) {
             // it will also fetch broker_invoice_number and invoice_description, from lead detail page, lead detail broker_invoice_number will
             // always same as ```send update log details``` broker_invoice_number but invoice_description will be overwritten from ```send update log details``` page.
-            $bookingDetails = $this->sendUpdateLogService->getInvoiceDescription($realQuote, $quoteType, $payments[0]['insurance_provider_id']);
             $bookingDetails = $this->sendUpdateLogService->getInvoiceDescription($sendUpdateLog, $realQuote, $quoteType, $payments[0]['insurance_provider_id']);
             // it will get all invoice_descriptions for booking details
             $paymentInvoices = collect($payments)->pluck('insurer_tax_number');
@@ -104,7 +104,6 @@ class SendUpdateLogController extends Controller
             'realQuote' => $realQuote,
             'isNegativeValue' => $this->sendUpdateLogService->isNegativeValue($sendUpdateLog),
             'bookingDetails' => $bookingDetails,
-            'updateToCustomerBtn' => count($sendUpdateLog->details) > 0,
             'updateBtn' => $this->sendUpdateLogService->getUpdateButtonStatus($sendUpdateLog, $quoteType),
             'paymentInvoices' => $paymentInvoices ?? [],
             'uploadedDocuments' => $uploadedDocuments,
@@ -220,5 +219,10 @@ class SendUpdateLogController extends Controller
         $reversalEntries = $this->sendUpdateLogService->getReversalEntries($request->input());
 
         return response()->json($reversalEntries);
+    }
+
+    public function sendUpdateToCustomer(SendUpdateCustomerRequest $sendUpdateCustomerRequest) 
+    {
+        return response()->json(json_encode($sendUpdateCustomerRequest->toArray()));
     }
 }
