@@ -14,7 +14,7 @@ const props = defineProps({
   realQuote: Object,
   isNegativeValue: Boolean,
   bookingDetails: Array,
-  updateToCustomerBtn: Boolean,
+  updateBtn: String,
   uploadedDocuments: Array,
 });
 
@@ -294,7 +294,7 @@ const isBookingDetailsVisible = computed(() => {
       :is-negative-value="isNegativeValue"
       :booking-details="props.bookingDetails"
       :real-quote="props.realQuote"
-      :update-to-customer-btn="props.updateToCustomerBtn"
+      :update-btn="props.updateBtn"
       :uploaded-documents="props.uploadedDocuments"
     />
 
