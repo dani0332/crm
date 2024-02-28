@@ -13,6 +13,7 @@ class AlfredChat extends Model
     public function getCreatedAtAttribute($date)
     {
         $date_time_format = config('constants.datetime_format');
+
         return $this->asDateTime($date)->timezone(config('app.timezone'))->format($date_time_format);
     }
 }
