@@ -3746,7 +3746,7 @@ const handleChildUpdate = planId => {
     </div>
 
     <CustomerChatLogs
-      :customerName="record?.first_name + record?.last_name"
+      :customerName="record?.first_name + ' ' + record?.last_name"
       :quoteId="quote.uuid"
     />
   </div>

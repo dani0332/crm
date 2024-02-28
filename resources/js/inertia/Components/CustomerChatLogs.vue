@@ -1,6 +1,4 @@
 <script setup>
-import axios from 'axios';
-import { onMounted } from 'vue';
 const props = defineProps({
   quoteId: {
     type: [Number, String],
