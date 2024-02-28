@@ -11,6 +11,7 @@ use App\Models\EmbeddedTransaction;
 use App\Models\GenericDocument;
 use App\Models\QuoteType;
 use App\Traits\GenericQueriesAllLobs;
+use App\Factories\EmbeddedProductFactory;
 use Carbon\Carbon;
 use finfo;
 use Illuminate\Support\Facades\DB;
@@ -97,12 +98,16 @@ class EmbeddedProductRepository extends BaseRepository
     /**
      * @return mixed
      */
-    public function fetchGetData($fetchType = 'all')
+    public function fetchGetData($fetchType = 'all', $shortcodes = [])
     {
         $query = $this->with(['insuranceProvider'])->latest('updated_at');
 
         if ($fetchType === 'active') {
             $query = $query->active();
+        }
+
+        if(!empty($shortcodes)) {
+            $query = $query->whereIn('short_code', $shortcodes);
         }
 
         return $query->simplePaginate();
@@ -345,22 +350,9 @@ class EmbeddedProductRepository extends BaseRepository
     ) {
         $pdf = null;
         $certificatesConfig = config('embedded-products.certificates');
-        $short_code = strtoupper($short_code);
         if(isset($certificatesConfig[$short_code])) {
-            $viewData = [
-                'name' => $quoteObject->first_name . ' ' . $quoteObject->last_name,
-                'dob' => isset($quoteObject->dob) ? Carbon::parse($quoteObject->dob)->format('m/d/Y') : '',
-                'emirates_id' => $quoteObject->customer->emirates_id_number ?? '',
-                'plan_type' => 'Individual',
-                'certificate_number' => $certificate_number, // plan no
-                'plan_currency' => 'AED',
-                'plan_term' => '1 Year effect from Plan Commencement date and Subject to Contribution Paid',
-                'date_of_enrollment' => isset($quoteObject->policy_start_date) ? Carbon::parse($quoteObject->policy_start_date)->format('m/d/Y') : '', // Plan Commencement Date
-                'plan_beneficiary' => 'As per Shari’ah',
-                'policy_insurance_date' => isset($quoteObject->policy_issuance_date) ? Carbon::parse($quoteObject->policy_issuance_date)->format('m/d/Y') : '',
-            ];
-            $viewData['contribution_amount'] = $viewData['plan_currency'] . " {$premium}  (Including VAT) Per Annum";
-
+            $strategy = EmbeddedProductFactory::createStrategy($short_code);
+            $viewData = $strategy->getPDFData($quoteObject, $certificate_number, $premium);
             $pdf = PDF::setOption(
                 [
                     'isHtml5ParserEnabled' => true,
@@ -371,5 +363,84 @@ class EmbeddedProductRepository extends BaseRepository
         }
 
         return $pdf;
+    }
+
+    /**
+     * Fetches the sold transaction list for a given EmbeddedProduct and optional filters.
+     *
+     * @param EmbeddedProduct $ep
+     * @param array $filters
+     * @return array
+     */
+    public function fetchGetSoldTransactionList(EmbeddedProduct $ep, $filters = [])
+    {
+        $dataset = DB::table('embedded_products')
+            ->where('embedded_products.id', $ep->id)
+            ->when(isset($filters['ref_id']), function ($query) use ($filters) {
+                $query->where('embedded_transactions.code', 'like', "%{$filters['ref_id']}%");
+            })
+            ->when(isset($filters['months']), function ($query) use ($filters) {
+                $startDate = Carbon::parse($filters['months'])->startOfMonth()->format('Y-m-d');
+                $endDate = Carbon::parse($filters['months'])->endOfMonth()->format('Y-m-d');
+                $query->whereBetween('embedded_transactions.paid_at', [$startDate, $endDate]);
+            })
+            ->join('embedded_product_options', 'embedded_products.id', '=', 'embedded_product_options.embedded_product_id')
+            ->join('embedded_transactions', function ($join) {
+                $join->on('embedded_product_options.id', '=', 'embedded_transactions.product_id')
+                    ->where('embedded_transactions.payment_status_id', PaymentStatusEnum::CAPTURED)
+                    ->where('embedded_transactions.is_selected', true);
+            })
+            ->join('quote_type', 'embedded_transactions.quote_type_id', '=', 'quote_type.id')
+            ->select(
+                'embedded_transactions.id',
+                'embedded_transactions.code',
+                'embedded_transactions.quote_request_id',
+                'embedded_transactions.paid_at',
+                'embedded_transactions.certificate_number',
+                'embedded_transactions.price_with_vat',
+                'quote_type.code as model_type',
+            )->get();
+
+        $strategy = EmbeddedProductFactory::createStrategy($ep->short_code);
+        $dataset = $strategy->getTransactionData($dataset);
+
+        if (isset($filters['date_of_purchase'])) {
+            $dataset = $dataset->filter(function ($item) use ($filters) {
+                if (!empty($item['policy_issuance_date'])) {
+                    $startDate = Carbon::parse($filters['date_of_purchase'][0])->startOfDay();
+                    $endDate = Carbon::parse($filters['date_of_purchase'][1])->endOfDay();
+                    $isBetween = Carbon::parse($item['policy_issuance_date'])->between($startDate, $endDate);
+                    return $isBetween;
+                }
+
+                return false;
+            });
+        }
+
+        if (isset($filters['email'])) {
+            $dataset = $dataset->filter(function ($item) use ($filters) {
+                if (!empty($item['email'])) {
+                    $emailMatch = stripos($item['email'], $filters['email']) !== false;
+                    return $emailMatch;
+                }
+
+                return false;
+            });
+        }
+
+        if (isset($filters['name'])) {
+            $dataset = $dataset->filter(function ($item) use ($filters) {
+                if (!empty($item['name'])) {
+                    $nameParts = explode(' ', $item['name']);
+                    $firstName = $nameParts[0];
+                    $lastName = $nameParts[1] ?? '';
+                    return stripos($firstName, $filters['name']) !== false || stripos($lastName, $filters['name']) !== false;
+                }
+
+                return false;
+            });
+        }
+
+        return $dataset->values()->all();
     }
 }

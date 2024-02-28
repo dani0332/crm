@@ -2,6 +2,10 @@
 
 namespace App\Http\Controllers\V2;
 
+use App\Exports\MDXReport;
+use Illuminate\Http\Request;
+use App\Models\EmbeddedProduct;
+use App\Enums\GenericRequestEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\EmbeddedProducDocumentRequest;
 use App\Http\Requests\EmbeddedProductRequest;
@@ -115,5 +119,55 @@ class EmbeddedProductController extends Controller
     public function downloadDocument(EmbeddedProducDocumentRequest $request)
     {
         return EmbeddedProductRepository::downloadCertificate($request->validated());
+    }
+
+    /**
+     * Get the list of reports for embedded products.
+     *
+     * @return \Inertia\Response
+     */
+    public function reportsList()
+    {
+        $config = config('embedded-products.reports');
+        $data = EmbeddedProductRepository::getData('active', array_keys($config));
+
+        return inertia('EmbeddedProducts/ReportsList', [
+            'embeddedProducts' => $data,
+        ]);
+    }
+
+    /**
+     * Report transactions for an embedded product.
+     *
+     * @param EmbeddedProduct $ep
+     * @param Request $request
+     * @return \Inertia\Response
+     */
+    public function reportTransactions(EmbeddedProduct $ep, Request $request)
+    {
+        $filters = $request->all();
+        $dataset = EmbeddedProductRepository::getSoldTransactionList($ep, $filters);
+        $config = config('embedded-products.reports');
+        $viewFile = $config[strtoupper($ep->short_code)]['view_file'] ?? $ep->short_code;
+
+        return inertia("EmbeddedProducts/Reports/{$viewFile}", [
+            'embeddedProduct' => [
+                'detail' => $ep,
+                'transactions' => $dataset,
+            ],
+        ]);
+    }
+
+    /**
+     * Export a report for the given EmbeddedProduct and request filters.
+     *
+     * @param  EmbeddedProduct  $ep
+     * @param  Request  $request
+     * @return
+     */
+    public function reportExport(EmbeddedProduct $ep, Request $request)
+    {
+        $filters = $request->all();
+        return (new MDXReport($ep, $filters))->download(ucfirst(GenericRequestEnum::EXPORT_MDX_REPORT));
     }
 }
