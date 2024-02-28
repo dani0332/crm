@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Config;
 use MongoDB\Laravel\Eloquent\Model;
 
 class AlfredChat extends Model
