@@ -618,7 +618,7 @@ const onLoadAvailablePlansData = async () => {
                     isManualPlansCount.value++;
                 }
 
-                if (plan.id === selectedPlan.value.id && !plan.needPriceUpdate) {
+                if (plan.id === selectedPlan.value?.id && !plan.needPriceUpdate) {
                     selectedPlan.value.needPriceUpdate = false;
                 }
             });

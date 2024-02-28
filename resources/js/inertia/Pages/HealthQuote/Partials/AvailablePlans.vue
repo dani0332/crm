@@ -522,6 +522,8 @@ onUpdated(() => {
     totalLoadingPrice.value =
       Number(totalLoadingPrice.value) + Number(data.price);
   });
+
+  console.log('plan:', props.plan);
 });
 </script>
 
