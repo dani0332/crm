@@ -193,7 +193,6 @@ class LeadAllocationController extends Controller
                     $leadAllocationObj->save();
                     info('Updated max cap of user : '.$leadAllocationObj->leadAllocationUser->email.' to '.(int) $item['maxCap']);
                 }
-
             }
         }
     }
@@ -212,14 +211,17 @@ class LeadAllocationController extends Controller
     {
         $this->applicationStorageService->updateLeadAllocationJobStatus();
     }
+
     public function toggleCarLeadAllocationJobStatus()
     {
         $this->applicationStorageService->updateCarLeadAllocationJobStatus();
     }
+
     public function toggleRenewalCarLeadAllocationStatus()
     {
         $this->applicationStorageService->updateRenewalCarLeadAllocationStatus();
     }
+
     public function toggleCarLeadFetchSequence()
     {
         $this->applicationStorageService->updateCarLeadFetchSequence();
