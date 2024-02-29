@@ -84,7 +84,7 @@ class SendUpdateCustomerRequest extends FormRequest
                             }
                         }
                     }
-                } elseif (in_array($category, [SendUpdateLogStatusEnum::CI, SendUpdateLogStatusEnum::CIR])) {
+                } elseif (in_array($category, [SendUpdateLogStatusEnum::CI, SendUpdateLogStatusEnum::CIR, SendUpdateLogStatusEnum::CPU])) {
                     if (! (in_array(DocumentTypeCode::SEND_UPDATE_POLICY_CERTIFICATE, $this->sendUpdateDocuemnts->toArray()) || in_array(DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE, $this->sendUpdateDocuemnts->toArray()))) {
                         $validator->errors()->add('error', 'Please upload the Endorsed schedule or Endorsed certificate. ');
                     }
