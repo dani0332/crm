@@ -4,7 +4,7 @@ const props = defineProps({
     quoteType: String,
     quoteId: Number,
     paymentCode: String,
-    planPrice: Number,
+    planPrice: String,
 });
 
 const notification = useNotifications('toast');
@@ -36,9 +36,9 @@ const migratePayment = () => {
                     position: 'top',
                 });
             }           
-            setTimeout(() => {
+            /*setTimeout(() => {
                 location.reload();
-            }, 500);           
+            }, 500); */          
         })
         .catch(err => {           
             console.log(err)

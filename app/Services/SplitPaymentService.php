@@ -156,7 +156,7 @@ class SplitPaymentService
 
     // Migrate payments from old system to new system
     public function migratePayments($payment, $modelType, $premium=0)
-    {   echo "migratePayments";exit;
+    {   
         if ($payment){
             return DB::transaction(function () use ($payment, $modelType, $premium) {
                 $skipEmbededProducts = ['App\Models\EmbeddedTransactions','App\Models\EmbeddedTransaction'];
@@ -213,14 +213,11 @@ class SplitPaymentService
                             $modelObject->insurance_provider_id = $payment->insurance_provider_id;
                             $modelObject->price_without_vat = $grandTotal-$vat;
                             $modelObject->save();
-                            //log info
                             Log::info('MigratePayment::Plan Detail updated for Payment Code: '.$payment->code);
                         } else {
-                            //log info
                             Log::info('MigratePayment::Plan Detail not found for Payment Code: '.$payment->code);
                         }
                     } else {
-                        //log info
                         Log::info('MigratePayment::Insurance Provider not found for Payment Code: '.$payment->code);
                     }
                 }
@@ -302,7 +299,7 @@ class SplitPaymentService
                     }
                     if ($payment->code == $code) {
 
-                        if( $premium>0 && $premium>$capturedAmount ){
+                        if( $premium>0 && $premium>$parentCollectionAmount ){
                             $payment->payment_status_id = PaymentStatusEnum::PARTIALLY_PAID; //partially paid                    
                         } 
 
@@ -311,7 +308,7 @@ class SplitPaymentService
                     }
                     Log::info('MigratePayment::Payment migrated for Payment Code: '.$payment->code);
                 }            
-                //return true; 
+                return true; 
             });      
         } else {
             Log::info('MigratePayment::Payment does not exists for Payment Code: '.$payment->code);
