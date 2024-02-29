@@ -4,7 +4,7 @@ const props = defineProps({
   genders: Object,
 });
 
-const emit = defineEmits(['copayUpdate']);
+const emit = defineEmits(['copayUpdate', 'onLoadAvailablePlansData']);
 
 const notification = useToast();
 
@@ -155,10 +155,7 @@ const onTogglePlans = () => {
         title: 'Plan has been updated',
         position: 'top',
       });
-      router.reload({
-        preserveScroll: true,
-        preserveState: true,
-      });
+      emit("onLoadAvailablePlansData")
     })
     .catch(error => {
       notification.error({

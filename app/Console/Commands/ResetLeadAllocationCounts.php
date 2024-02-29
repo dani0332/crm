@@ -2,8 +2,11 @@
 
 namespace App\Console\Commands;
 
+use App\Enums\UserStatusEnum;
 use App\Models\LeadAllocation;
+use App\Models\User;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\DB;
 
 class ResetLeadAllocationCounts extends Command
 {
@@ -45,6 +48,18 @@ class ResetLeadAllocationCounts extends Command
             'auto_assignment_count' => 0,
             'manual_assignment_count' => 0,
             'max_capacity' => 20,
+        ]);
+
+        LeadAllocation::query()->where('reset_cap', 0)->update([
+            'allocation_count' => 0,
+            'auto_assignment_count' => 0,
+            'manual_assignment_count' => 0,
+        ]);
+
+        DB::table('sessions')->truncate(); // truncate sessions table
+
+        User::query()->where('is_active', 1)->update([
+            'status' => UserStatusEnum::UNAVAILABLE,
         ]);
 
         info('Scheduler has reset counts for all users where reset_cap was true');

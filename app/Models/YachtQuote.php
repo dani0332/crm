@@ -42,4 +42,9 @@ class YachtQuote extends Model implements AuditableContract
             ],
         ];
     }
+
+    public function documents()
+    {
+        return $this->morphMany(QuoteDocument::class, 'quote_documentable');
+    }
 }

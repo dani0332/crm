@@ -42,13 +42,14 @@ trait GenericQueriesAllLobs
     /**
      * get quote object by quote type.
      *
-     * @param $quoteType e.g car, health etc
-     * @param $id can be id or uuid
+     * @param    $quoteType  e.g car, health etc
+     * @param    $id  can be id or uuid
      * @return false|mixed
      */
     public function getQuoteObject($quoteType, $id)
     {
         $nameSpace = '\\App\\Models\\';
+
         $model = (in_array(ucwords($quoteType), newUi()) && checkPersonalQuotes(ucwords($quoteType))) ? $nameSpace.'PersonalQuote' : $nameSpace.ucwords($quoteType).'Quote';
 
         if (! class_exists($model)) {

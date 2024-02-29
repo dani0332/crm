@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\FilterTypes;
+use App\Enums\QuoteTypeId;
 use App\Traits\FilterCriteria;
 use App\Traits\QuoteModelTrait;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -17,11 +18,14 @@ class HomeQuote extends Model implements AuditableContract
     protected $table = 'home_quote_request';
     protected $guarded = [];
     public $filterables = [
-        'first_name' => FilterTypes::EXACT,
-        'last_name' => FilterTypes::EXACT,
-        'uuid' => FilterTypes::EXACT,
+        'first_name' => FilterTypes::FREE,
+        'last_name' => FilterTypes::FREE,
+        'previous_quote_policy_number' => FilterTypes::EXACT,
         'code' => FilterTypes::EXACT,
         'email' => FilterTypes::EXACT,
+        'source' => FilterTypes::EXACT,
+        'renewal_expiry_date' => FilterTypes::DATE_BETWEEN,
+        'uuid' => FilterTypes::EXACT,
         'mobile_no' => FilterTypes::EXACT,
         'created_at' => FilterTypes::DATE_BETWEEN,
         'quote_status_id' => FilterTypes::IN,
@@ -33,9 +37,23 @@ class HomeQuote extends Model implements AuditableContract
         return $this->belongsTo(QuoteStatus::class);
     }
 
+    public function paymentStatus()
+    {
+        return $this->belongsTo(PaymentStatus::class, 'payment_status_id');
+    }
+
     public function homeQuoteRequestDetail()
     {
         return $this->hasOne(HomeQuoteRequestDetail::class, 'home_quote_request_id', 'id');
+    }
+
+    public function insuranceProvider()
+    {
+        return $this->hasOne(InsuranceProvider::class, 'text', 'currently_insured_with')->select(['id', 'text']);
+    }
+    public function nationality()
+    {
+        return $this->hasOne(Nationality::class, 'id', 'nationality_id')->select(['id', 'code', 'text']);
     }
 
     public function accommodationType()
@@ -61,5 +79,16 @@ class HomeQuote extends Model implements AuditableContract
     public function payments()
     {
         return $this->morphMany(Payment::class, 'paymentable');
+    }
+
+    public function quoteRequestEntityMapping()
+    {
+        return $this->hasOne(QuoteRequestEntityMapping::class, 'quote_request_id')
+            ->where('quote_type_id', QuoteTypeId::Home);
+    }
+
+    public function documents()
+    {
+        return $this->morphMany(QuoteDocument::class, 'quote_documentable');
     }
 }

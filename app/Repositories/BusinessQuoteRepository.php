@@ -2,6 +2,7 @@
 
 namespace App\Repositories;
 
+use App\Enums\CustomerTypeEnum;
 use App\Enums\quoteStatusCode;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypes;
@@ -12,9 +13,17 @@ use App\Traits\CentralTrait;
 class BusinessQuoteRepository extends BaseRepository
 {
     use CentralTrait;
+
     public function model()
     {
         return BusinessQuote::class;
+    }
+
+    public function fetchExport()
+    {
+        return $this->filter()->with(
+            ['advisor', 'nationality', 'insuranceProvider', 'businessTypeOfInsurance']
+        )->orderBy('created_at', 'desc');
     }
 
     /**
@@ -55,8 +64,41 @@ class BusinessQuoteRepository extends BaseRepository
         return ($forExport) ? $query->get() : $query->simplePaginate();
     }
 
+    /**
+     * @return mixed
+     */
+    public function fetchGetBy($queryWhere)
+    {
+        $quote = $this->where($queryWhere)
+            ->with([
+                'advisor',
+                'previousAdvisor',
+                'businessQuoteRequestDetail.lostReason',
+                'customer',
+                'quoteRequestEntityMapping' => function ($entityMapping) {
+                    $entityMapping->with('entity');
+                },
+                'documents' => function ($q) {
+                    $q->with('createdBy')->orderBy('created_at', 'desc');
+                },
+            ])
+            ->select([
+                $this->getTable().'.*',
+                \DB::raw('("'.CustomerTypeEnum::Entity.'") as customer_type'),
+            ])
+            ->firstOrFail();
+
+        return $quote;
+    }
+
     public function fetchCreateDuplicate(array $dataArr): object
     {
         return Capi::request('/api/v1-save-'.strtolower(QuoteTypes::BUSINESS->value).'-quote', 'post', $dataArr);
     }
+    public function fetchGetDataOfBusiness()
+    {
+        return $this->filter()->with(
+            ['advisor', 'nationality', 'insuranceProvider', 'businessTypeOfInsurance'])->orderBy('created_at', 'desc')->Paginate();
+    }
+
 }

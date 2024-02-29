@@ -182,7 +182,7 @@ use App\Enums\PermissionsEnum;
                             </ul>
                     </ul>
                 @endcanany
-               
+
                 @canany([PermissionsEnum::VehicleDepreciationList, PermissionsEnum::VehicleValuationList])
                 <ul class="nav side-menu">
                     <li><a><i class="fa fa-car" aria-hidden="true"></i> Car <span class="fa fa-chevron-down"></span></a>
@@ -275,6 +275,7 @@ use App\Enums\PermissionsEnum;
                             @can(PermissionsEnum::RenewalsBatches)
                             <li><a href="{{ route('renewals-batches') }}">Batches</a></li>
                             @endcan
+                              <li><a href="{{ route('renewals-batches-search') }}">Search</a></li>
                         </ul>
                     </li>
                 </ul>
@@ -316,17 +317,17 @@ use App\Enums\PermissionsEnum;
                     <li><a><i class="fa fa-desktop"></i> AML <span class="fa fa-chevron-down"></span></a>
                         <ul class="nav child_menu">
                             <li><a href="{{ url('kyc/aml') }}">All Quotes</a></li>
-                            <li><a href="{{ url('kyc/aml/download/history') }}">Downloaded Sanction Lists</a></li>
-                            <li><a href="{{ url('kyc/aml/upload/uae') }}">Upload UAE List</a></li>
+                            <!-- <li><a href="{{ url('kyc/aml/download/history') }}">Downloaded Sanction Lists</a></li>
+                            <li><a href="{{ url('kyc/aml/upload/uae') }}">Upload UAE List</a></li> -->
                         </ul>
                     </li>
                 </ul>
                 @endcan
-                @hasanyrole(RolesEnum::BetaUser.'|'.RolesEnum::Admin.'|'.RolesEnum::Engineering)
+                @can(PermissionsEnum::EmbeddedProductView)
                 <ul class="nav side-menu">
                     <li><a href="{{ url('embedded-products') }}"><i></i> Embedded Products </a>
                 </ul>
-                @endhasanyrole
+                @endcan
 
                 @if(auth()->user()->hasRole(RolesEnum::BetaUser))
                 <ul class="nav side-menu">

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\FilterTypes;
+use App\Enums\QuoteTypeId;
 use App\Traits\FilterCriteria;
 use App\Traits\QuoteModelTrait;
 use Config;
@@ -27,6 +28,9 @@ class BusinessQuote extends Model implements AuditableContract
         'created_at' => FilterTypes::DATE_BETWEEN,
         'quote_status_id' => FilterTypes::IN,
         'advisor_id' => FilterTypes::IN,
+        'source' => FilterTypes::EXACT,
+        'renewal_expiry_date' => FilterTypes::DATE_BETWEEN,
+        'previous_quote_policy_number' => FilterTypes::EXACT,
     ];
 
     public function getCreatedAtAttribute($table)
@@ -48,6 +52,16 @@ class BusinessQuote extends Model implements AuditableContract
         return $this->belongsTo(QuoteStatus::class);
     }
 
+    public function paymentStatus()
+    {
+        return $this->belongsTo(PaymentStatus::class, 'payment_status_id');
+    }
+
+    public function customer()
+    {
+        return $this->belongsTo(Customer::class);
+    }
+
     public function businessQuoteRequestDetail()
     {
         return $this->hasOne(BusinessQuoteRequestDetail::class, 'business_quote_request_id', 'id');
@@ -58,6 +72,14 @@ class BusinessQuote extends Model implements AuditableContract
         return $this->belongsTo(BusinessInsuranceType::class);
     }
 
+    public function insuranceProvider()
+    {
+        return $this->hasOne(InsuranceProvider::class, 'text', 'currently_insured_with')->select(['id', 'text']);
+    }
+    public function nationality()
+    {
+        return $this->hasOne(Nationality::class, 'id', 'nationality_id')->select(['id', 'code', 'text']);
+    }
     public function advisor()
     {
         return $this->belongsTo(User::class, 'advisor_id');
@@ -70,5 +92,16 @@ class BusinessQuote extends Model implements AuditableContract
     public function payments()
     {
         return $this->morphMany(Payment::class, 'paymentable');
+    }
+
+    public function quoteRequestEntityMapping()
+    {
+        return $this->hasOne(QuoteRequestEntityMapping::class, 'quote_request_id')
+            ->where('quote_type_id', QuoteTypeId::Business);
+    }
+
+    public function documents()
+    {
+        return $this->morphMany(QuoteDocument::class, 'quote_documentable');
     }
 }

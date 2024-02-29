@@ -25,7 +25,9 @@ use App\Models\RenewalQuoteProcess;
 use App\Models\RenewalsBatchEmails;
 use App\Models\RenewalStatusProcess;
 use App\Models\RenewalsUploadLeads;
+use App\Repositories\CarQuoteRepository;
 use App\Services\RenewalsUploadService;
+use App\Traits\TeamHierarchyTrait;
 use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
 use Sammyjo20\LaravelHaystack\Models\Haystack;
@@ -34,6 +36,7 @@ use Yajra\Datatables\Datatables;
 class RenewalsUploadController extends Controller
 {
     private $renewalsUploadFileService;
+    use TeamHierarchyTrait;
 
     public function __construct(RenewalsUploadService $renewalsUploadFileService)
     {
@@ -67,7 +70,7 @@ class RenewalsUploadController extends Controller
     /**
      * fetch plans batch wise.
      *
-     * @param $id
+     * @param    $id
      * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Http\RedirectResponse|\Illuminate\Routing\Redirector
      */
     public function fetchPlans($batch)
@@ -211,7 +214,6 @@ class RenewalsUploadController extends Controller
             'azureStorageUrl' => $azureStorageUrl,
             'azureStorageContainer' => $azureStorageContainer,
         ]);
-
     }
 
     /**
@@ -246,7 +248,6 @@ class RenewalsUploadController extends Controller
             'EnumGenericYes' => GenericRequestEnum::Yes,
             'EnumSkipPlansNonGCC' => SkipPlansEnum::NON_GCC,
         ]);
-
     }
 
     public function updateRenewals()
@@ -308,7 +309,6 @@ class RenewalsUploadController extends Controller
             'process' => $process,
             'batch' => $batch,
         ]);
-
     }
 
     public function batchDetail($batch)
@@ -463,6 +463,35 @@ class RenewalsUploadController extends Controller
         }
 
         return redirect('/');
+    }
+
+    /**
+     * schedule AML check for non-motor uploaded through renewals process
+     *
+     * @return void
+     *
+     * @throws \Laravel\SerializableClosure\Exceptions\PhpVersionNotSupportedException
+     */
+    public function search(Request $request)
+    {
+        $personalQuotes = [];
+        $products = QuoteType::all();
+        if ($request->page) {
+            $personalQuotes = $this->renewalsUploadFileService->getSearch($request);
+        }
+        $advisors = CarQuoteRepository::getAdvisors();
+
+        return inertia('Renewal/Index', [
+            'quotes' => $personalQuotes,
+            'advisors' => $advisors,
+            'products' => $products,
+        ]);
+    }
+    public function export(Request $request)
+    {
+        $quotes = $this->renewalsUploadFileService->getExport($request);
+
+        return $quotes;
     }
 
 }

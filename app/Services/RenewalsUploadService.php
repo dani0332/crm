@@ -2,29 +2,40 @@
 
 namespace App\Services;
 
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\CarPlanAddonsCode;
 use App\Enums\CarPlanType;
 use App\Enums\carTypeInsuranceCode;
 use App\Enums\FetchPlansStatuses;
+use App\Enums\GenericRequestEnum;
 use App\Enums\InsuranceProvidersEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\ProcessStatusCode;
 use App\Enums\quoteStatusCode;
+use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
+use App\Enums\QuoteTypes;
 use App\Enums\QuoteTypeShortCode;
 use App\Enums\RenewalProcessStatuses;
 use App\Enums\RenewalsUploadType;
 use App\Enums\TiersEnum;
+use App\Enums\TravelQuoteEnum;
+use App\Exports\RenewalQuotesExport;
+use App\Imports\TravelUploadAndCreateImport;
 use App\Imports\UploadAndCreateImport;
 use App\Imports\UploadAndUpdateImport;
 use App\Jobs\Renewals\CreateRenewalQuotesJob;
+use App\Jobs\Renewals\CreateRenewalsWorkflowJob;
+use App\Jobs\Renewals\CreateTravelRenewalQuotesJob;
 use App\Jobs\Renewals\FetchPlansForRenewalsQuoteJob;
 use App\Jobs\Renewals\ProcessRenewalsUploadCreate;
 use App\Jobs\Renewals\ProcessRenewalsUploadUpdate;
+use App\Jobs\Renewals\ProcessTravelRenewalsUploadCreate;
 use App\Jobs\Renewals\RenewalBatchEmailJob;
 use App\Jobs\Renewals\UpdateRenewalQuotesJob;
 use App\Models\AML;
+use App\Models\ApplicationStorage;
 use App\Models\CarMake;
 use App\Models\CarModel;
 use App\Models\CarModelDetail;
@@ -32,11 +43,13 @@ use App\Models\CarPlan;
 use App\Models\CarQuote;
 use App\Models\CarQuoteValuation;
 use App\Models\ClaimHistory;
+use App\Models\CurrentlyLocatedIn;
 use App\Models\Customer;
 use App\Models\Emirate;
 use App\Models\HealthPlan;
 use App\Models\InsuranceProvider;
 use App\Models\Nationality;
+use App\Models\PaymentStatus;
 use App\Models\QuoteStatus;
 use App\Models\QuoteType;
 use App\Models\RenewalQuoteProcess;
@@ -44,8 +57,11 @@ use App\Models\RenewalsBatchEmails;
 use App\Models\RenewalStatusProcess;
 use App\Models\RenewalsUploadLeads;
 use App\Models\Tier;
+use App\Models\TravelQuote;
 use App\Models\UAELicenseHeldFor;
 use App\Models\User;
+use App\Repositories\BusinessQuoteRepository;
+use App\Repositories\CarQuoteRepository;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use DateTime;
@@ -111,8 +127,9 @@ class RenewalsUploadService
      *
      * @return array
      */
-    public function uploadRenewalsFile()
+    public function uploadRenewalsFile($isTravel = false)
     {
+        $path = 'renewals';
         // Getting original file name
         $fileName = request()->file('file_name')->getClientOriginalName();
 
@@ -120,7 +137,10 @@ class RenewalsUploadService
         $azureFileName = get_guid().'_'.$fileName;
 
         // Uploading file to Azure
-        $azureFilePath = request()->file('file_name')->storeAs('renewals', $azureFileName, 'azureIM');
+        if ($isTravel) {
+            $path .= '/travel';
+        }
+        $azureFilePath = request()->file('file_name')->storeAs($path, $azureFileName, 'azureIM');
 
         return [
             'file_name' => $fileName,
@@ -585,6 +605,8 @@ class RenewalsUploadService
      */
     public function buildCustomerData($data)
     {
+        $data['customer_name'] = trim($data['customer_name']);
+
         //default values
         $customerData = [
             'first_name' => $data['customer_name'],
@@ -625,8 +647,12 @@ class RenewalsUploadService
      *
      * @return mixed
      */
-    public function getCustomer($customerData)
+    public function getCustomer($customerData, $searchByName = false)
     {
+        if ($searchByName) {
+            return CustomerService::getCustomerByName($customerData['first_name'], $customerData['last_name']);
+        }
+
         $customer = CustomerService::getCustomerByEmail($customerData['email']);
 
         //create new customer if not exists
@@ -756,8 +782,11 @@ class RenewalsUploadService
             ];
 
             if ($quoteType->code == quoteTypeCode::Car) {
+                $model = null;
                 $make = CarMake::where('text', $data['make'])->first();
-                $model = CarModel::where('text', $data['model'])->first();
+                if ($make) {
+                    $model = CarModel::where('text', $data['model'])->where('car_make_code', $make->code)->first();
+                }
 
                 if ($model) {
                     $vehicleType = $this->renewalsAddonService->getVehicleType($model->vehicle_type_id);
@@ -778,7 +807,8 @@ class RenewalsUploadService
                     if ($carModelDetail = CarModelDetail::active()
                         ->where('is_default', 1)
                         ->where('car_model_id', $quoteData['car_model_id'])
-                        ->first()) {
+                        ->first()
+                    ) {
                         $quoteData['cylinder'] = $carModelDetail->cylinder;
                         $quoteData['seat_capacity'] = $carModelDetail->seating_capacity;
                         $quoteData['vehicle_type_id'] = $carModelDetail->vehicle_type_id;
@@ -925,7 +955,7 @@ class RenewalsUploadService
             throw_unless($quote, ('Quote not found for PolicyNumber: '.$data['policy_number'].' EndDate: '.$data['end_date'].' Batch: '.$renewalQuoteProcess->batch));
 
             $carMake = $this->renewalsAddonService->getCarMake($data['make']);
-            $carModel = $this->renewalsAddonService->getCarModel($data['model']);
+            $carModel = $this->renewalsAddonService->getCarModel($data['model'], $carMake);
             $advisorId = $this->renewalsAddonService->getUserInfo($data['advisor']);
             $previousAdvisorId = $this->renewalsAddonService->getUserInfo($data['previous_advisor']);
             $claimHistory = $this->getClaimHistory($data['claim_history']);
@@ -1258,10 +1288,24 @@ class RenewalsUploadService
                 $responseCode = $this->sendEmailCustomerService->sendRenewalsOcbEmail($emailTemplateId, $emailData, 'car-quote-one-click-buy-batch');
 
                 if ($responseCode == 201) {
+
+                    //update quote status to quoted
+                    CarQuoteRepository::updateQuoteStatus([
+                        'quote_uuid' => $carQuote->uuid,
+                        'quote_status_id' => QuoteStatusEnum::Quoted,
+                        'notes' => 'Change quote status to Quoted as OCB sent',
+                    ]);
+
+                    //record ocb sent datetime
+                    $carQuote->carQuoteRequestDetail->updateOrCreate(
+                        ['car_quote_request_id' => $carQuote->id],
+                        ['ocb_sent_date' => Carbon::now()]
+                    );
+
                     Log::info('Renewals OCB Email sent to uuid: '.$carQuote->uuid.' ResponseCode: '.$responseCode);
                     RenewalsBatchEmails::where('id', $renewalsBatchEmail->id)->update(['total_sent' => DB::raw('total_sent+1')]);
                     RenewalQuoteProcess::where('id', $renewalQuoteProcess->id)->update(['email_sent' => 1]);
-                    //$this->updateRenewalQuoteEmailSent($batch, $carQuote->id);
+                //$this->updateRenewalQuoteEmailSent($batch, $carQuote->id);
                 } else {
                     Log::error('Renewals OCB Email failed for uuid: '.$carQuote->uuid.' ResponseCode: '.$responseCode.' batchEmailId:'.$renewalsBatchEmail->id.' Customer EmailAddress:'.$carQuote->email);
                     RenewalsBatchEmails::where('id', $renewalsBatchEmail->id)->update(['total_failed' => DB::raw('total_failed+1')]);
@@ -1294,7 +1338,7 @@ class RenewalsUploadService
     /**
      * //$modelName, $quoteRequestIdName.
      *
-     * @param $quoteRequestIdName
+     * @param    $quoteRequestIdName
      * @return false|mixed
      */
     public function updateAdvisorAssignedDateTime($quoteType, $quoteId, $currentUserId, $advisorId)
@@ -1349,10 +1393,13 @@ class RenewalsUploadService
                         info('CQF VALIDATION - Quote Found for Update - '.$lead->policy_number);
                     }
                 }
-                if (! $leadData->insurer) {
-                    $leadValidationErrors->push('Insurance Provider is required');
-                } elseif (! ($insurer = InsuranceProvider::where('code', $leadData->insurer)->first())) {
-                    $leadValidationErrors->push('Invalid Insurance Code Provided');
+                //If the request is for Travel Renewal Expired Process, it will skip the insurer conditions.
+                if ($lead->quote_type != quoteTypeCode::TRA) {
+                    if (! $leadData->insurer) {
+                        $leadValidationErrors->push('Insurance Provider is required');
+                    } elseif (! ($insurer = InsuranceProvider::where('code', $leadData->insurer)->first())) {
+                        $leadValidationErrors->push('Invalid Insurance Code Provided');
+                    }
                 }
 
                 if ($lead->quote_type == QuoteTypeShortCode::HEA && $lead->type == RenewalsUploadType::CREATE_LEADS && isset($insurer->id) && ! empty($leadData->plan_name)) {
@@ -1434,6 +1481,10 @@ class RenewalsUploadService
                                         $leadValidationErrors->push('Excess should be > 0 with Repair Type - COMP or AGENCY');
                                     }
                                 }
+
+                                if ($lead->type == RenewalsUploadType::UPDATE_LEADS && $leadData->premium > 0 && ! $leadData->insurer_quote_no) {
+                                    $leadValidationErrors->push('Insurer Quote No is required');
+                                }
                                 if (! $leadData->premium && $leadData->excess) {
                                     $leadValidationErrors->push('Renewal Premium is required with Excess');
                                 }
@@ -1455,8 +1506,14 @@ class RenewalsUploadService
                                     if (! $leadData->driver_cover) {
                                         $leadValidationErrors->push('PAB Driver is required with Renewal Premium & Excess');
                                     }
+                                    if ($leadData->driver_cover_amount == '') {
+                                        $leadValidationErrors->push('Amount - PAB Driver is required with Renewal Premium & Excess');
+                                    }
                                     if (! $leadData->passenger_cover) {
                                         $leadValidationErrors->push('PAB Passenger is required with Renewal Premium & Excess');
+                                    }
+                                    if ($leadData->driver_cover_amount == '') {
+                                        $leadValidationErrors->push('Amount - PAB Driver is required with Renewal Premium & Excess');
                                     }
                                     if ($leadData->plan_type != CarPlanType::TPL && $leadData->insurer != InsuranceProvidersEnum::TM && ! $leadData->car_hire) {
                                         $leadValidationErrors->push('Rent a car is required with TPL & TM');
@@ -1464,12 +1521,7 @@ class RenewalsUploadService
                                     if ($leadData->plan_type != CarPlanType::TPL && $leadData->insurer != 'TM' && $leadData->car_hire_amount == '') {
                                         $leadValidationErrors->push('Amount - Rent a Car is required with TPL & TM');
                                     }
-                                    if ($leadData->driver_cover_amount == '') {
-                                        $leadValidationErrors->push('Amount - PAB Driver is required with Renewal Premium & Excess');
-                                    }
-                                    if ($leadData->passenger_cover_amount == '') {
-                                        $leadValidationErrors->push('Amount- PAB Passenger is required with Renewal Premium & Excess');
-                                    }
+
                                     if ($leadData->plan_type != CarPlanType::TPL && $leadData->oman_cover_amount == '') {
                                         $leadValidationErrors->push('Amount- Oman Cover is required');
                                     }
@@ -1506,6 +1558,15 @@ class RenewalsUploadService
                                     ];
 
                                     foreach ($addons as $key => $addonCode) {
+
+                                        info('planType:'.$leadData->plan_type.' insurer:'.$leadData->insurer.' addonCode:'.$addonCode);
+
+                                        if ($leadData->plan_type == CarPlanType::TPL &&
+                                            $leadData->insurer == InsuranceProvidersEnum::TM &&
+                                            $addonCode == CarPlanAddonsCode::CAR_HIRE) {
+                                            continue;
+                                        }
+
                                         if (isset($planAddons[$addonCode])) {
                                             $addon = $planAddons[$addonCode];
 
@@ -1635,9 +1696,18 @@ class RenewalsUploadService
                 Haystack::build()
                     ->onQueue('renewals')
                     ->addJobs($jobs)
-                    ->then(function () use ($logPrefix, $renewalsBatchEmail) {
+                    ->then(function () use ($logPrefix, $renewalsBatchEmail, $batch) {
                         info($logPrefix.' all jobs completed successfully');
                         $renewalsBatchEmail->update(['status' => ProcessStatusCode::COMPLETED]);
+
+                        if (($enableFollowups = ApplicationStorage::where('key_name', ApplicationStorageEnums::ENABLE_AUTO_FOLLOWUP)->first())) {
+                            if ($enableFollowups->value == 1) {
+                                info($logPrefix.'EnableFollowup is: ON. Renewals OCB email followup job dispatched for batch:'.$batch);
+                                CreateRenewalsWorkflowJob::dispatch($renewalsBatchEmail);
+                            } else {
+                                info($logPrefix.'EnableFollowup is: OFF batch: '.$batch.' is not scheduled');
+                            }
+                        }
                     })
                     ->catch(function () use ($logPrefix, $renewalsBatchEmail) {
                         info($logPrefix.' one of batch is failed. ');
@@ -1649,23 +1719,21 @@ class RenewalsUploadService
                     ->allowFailures()
                     ->withDelay(1)
                     ->dispatch();
-
             } else {
                 info($logPrefix.' No leads to schedule OCB email');
                 $renewalsBatchEmail->update(['status' => ProcessStatusCode::COMPLETED]);
             }
-
         } catch (\Exception $exception) {
             info($logPrefix.' one of batch is failed. Exception : '.$exception->getMessage());
             $renewalsBatchEmail->update(['status' => ProcessStatusCode::FAILED]);
         }
 
         //todo: remove this code
-//        foreach ($batchLeads as $key => $batchLead) {
-//            $isCompleted = $batchLeadsCount - 1 == $key ? 1 : 0;
-//            dispatch(new RenewalBatchEmailJob($batchLead->quote_id, $batchEmail->id, QuoteTypeId::Car, $isCompleted, $batch));
-//            sleep(0.5);
-//        }
+        //        foreach ($batchLeads as $key => $batchLead) {
+        //            $isCompleted = $batchLeadsCount - 1 == $key ? 1 : 0;
+        //            dispatch(new RenewalBatchEmailJob($batchLead->quote_id, $batchEmail->id, QuoteTypeId::Car, $isCompleted, $batch));
+        //            sleep(0.5);
+        //        }
     }
 
     //todo: remove this code
@@ -1687,4 +1755,222 @@ class RenewalsUploadService
     //        }
     //        info('updateRenewalQuoteEmailSent END emailSent->id: '.$emailSent->id);
     //    }
+
+    /**
+     * Travel renewals upload and create.
+     *
+     * @return mixed
+     */
+    public function travelRenewalsUploadCreate($data)
+    {
+        $isTravel = true;
+        //upload renewal file to azure
+        $uploadedFile = $this->uploadRenewalsFile($isTravel);
+
+        //create lead record
+        $renewalsUploadLead = $this->createRenewalsLead($uploadedFile, RenewalsUploadType::CREATE_LEADS, $data);
+        info('UAT FN: renewalsUploadCreate File uploaded and renewals lead created');
+
+        //start import process
+        ProcessTravelRenewalsUploadCreate::dispatch($renewalsUploadLead);
+
+        return true;
+    }
+
+    /**
+     * this will be triggered by job to start import process for upload and create.
+     *
+     * @return void
+     */
+    public function travelProcessUploadCreate(RenewalsUploadLeads $renewalsUploadLead)
+    {
+        $logPrefix = 'UAC FN: travelExpiredRenewalsUploadCreate RenewalLeadId: '.$renewalsUploadLead->id.' FileName: '.$renewalsUploadLead->file_name;
+
+        try {
+            $renewalsUploadLead->update(['status' => ProcessStatusCode::IN_PROGRESS]);
+
+            info($logPrefix.' In Progress Now');
+
+            $renewalsUploadLead = DB::transaction(function () use ($renewalsUploadLead) {
+                //start file import
+                $renewalsUpload = new TravelUploadAndCreateImport($renewalsUploadLead);
+                $renewalsUpload->import($renewalsUploadLead->file_path, 'azureIM');
+
+                //update counts
+                $validRows = $renewalsUpload->getValidCount();
+                $failedRows = $renewalsUpload->getFailedCount();
+
+                $renewalsUploadLead->update([
+                    'cannot_upload' => $failedRows,
+                    'good' => 0,
+                    'total_records' => ($validRows + $failedRows),
+                ]);
+
+                return $renewalsUploadLead;
+            });
+
+            info($logPrefix.' excel data stored in DB');
+
+            $validationResult = $this->uploadedLeadsValidation($renewalsUploadLead);
+            if ($validationResult) {
+                $this->createTravelQuotes($renewalsUploadLead);
+            }
+
+            info($logPrefix.' validation and quote creation is completed');
+
+            return true;
+        } catch (\Exception $exception) {
+            $renewalsUploadLead->update(['status' => ProcessStatusCode::FAILED]);
+            Log::error($logPrefix.'Process Failed. Error: '.$exception->getMessage());
+
+            return false;
+        }
+    }
+
+    public function createTravelQuotes(RenewalsUploadLeads $renewalsUploadLead)
+    {
+        $logPrefix = 'UAC fn: createTravelQuotes ';
+        info($logPrefix.' QuoteCreation started');
+
+        try {
+            $jobs = null;
+
+            RenewalQuoteProcess::where([
+                'renewals_upload_lead_id' => $renewalsUploadLead->id,
+                'status' => RenewalProcessStatuses::VALIDATED,
+            ])->chunkById(50, function ($leads) use (&$jobs) {
+                foreach ($leads as $lead) {
+                    $jobs[] = new CreateTravelRenewalQuotesJob($lead);
+                }
+            });
+
+            if ($jobs != null && count($jobs)) {
+                info('the value of $jobs is : '.count($jobs));
+                Haystack::build()
+                    ->onQueue('renewals')
+                    ->addJobs($jobs)
+                    ->then(function () use ($logPrefix, $renewalsUploadLead) {
+                        info($logPrefix.' all jobs completed successfully');
+                        $renewalsUploadLead->update(['status' => ProcessStatusCode::COMPLETED]);
+                    })
+                    ->catch(function () use ($logPrefix, $renewalsUploadLead) {
+                        info($logPrefix.' one of batch is failed. ');
+                        $renewalsUploadLead->update(['status' => ProcessStatusCode::FAILED]);
+                    })
+                    ->finally(function () use ($logPrefix) {
+                        info($logPrefix.' everything done');
+                    })
+                    ->allowFailures()
+                    ->withDelay(2)
+                    ->dispatch();
+            } else {
+                info($logPrefix.' No jobs to create quotes');
+                $renewalsUploadLead->update(['status' => ProcessStatusCode::COMPLETED]);
+            }
+        } catch (\Exception $exception) {
+            info('BATCH: one of batch is failed. Exception : '.$exception->getMessage());
+            $renewalsUploadLead->update(['status' => ProcessStatusCode::FAILED]);
+        }
+    }
+
+    /**
+     * create quote for all businesses.
+     *
+     * @return void
+     */
+    public function createTravelProcessQuote(RenewalQuoteProcess $renewalQuoteProcess)
+    {
+        $data = $renewalQuoteProcess->data;
+        $quoteType = $this->getQuoteTypeByShortCode(QuoteTypeShortCode::TRA);
+        $logPrefix = 'UAC FN: createQuote Policy NO: '.$data['policy_number'];
+        info($logPrefix.' Quote creation started');
+
+        $quote = DB::transaction(function () use ($renewalQuoteProcess, $logPrefix, $data, $quoteType) {
+            $searchByName = true;
+            $renewalUploadLead = RenewalsUploadLeads::where('id', $renewalQuoteProcess->renewals_upload_lead_id)->first();
+            $transApprovedId = $this->getquoteStatusIdbyCode(quoteStatusCode::NEW_LEAD);
+            //advisor and previous advisors will be ignored when not exists
+            $advisorId = $this->renewalsAddonService->getUserInfo($data['advisor']);
+            $quoteUuid = $this->generateUUID($quoteType->id);
+            $payment_status_id = $this->getPaymentStatusIdByCode($data['payment_status']);
+            $customer = $this->getCustomer($data, $searchByName);
+            $currently_located_in_id = $this->getCurrentlyLocatedIdByCode($data['currently_located_in']);
+
+            $quoteData = [
+                'destination' => trim($data['destination']),
+                'first_name' => trim($data['first_name']),
+                'last_name' => trim($data['last_name']),
+                'source' => TravelQuoteEnum::REVIVAL,
+                'customer_id' => $customer->id ?? null,
+                'payment_status_id' => $payment_status_id,
+                'quote_status_id' => $transApprovedId,
+                'code' => trim($data['code']),
+                'uuid' => $quoteUuid,
+                'policy_number' => trim($data['policy_number']),
+                'advisor_id' => $advisorId,
+                'premium' => trim($data['premium']),
+                'is_ecommerce' => trim($data['is_ecommerce']) == GenericRequestEnum::Yes ? 1 : 0,
+                'renewal_batch' => trim($data['renewal_batch']),
+                'currently_located_in_id' => $currently_located_in_id,
+                'renewal_expiry_date' => Carbon::parse(trim($data['renewal_expiry_date']))->format('Y-m-d'),
+                'email' => trim($data['customer_email']),
+                'mobile_no' => trim($data['customer_mobile']),
+            ];
+
+            $quote = TravelQuote::create($quoteData);
+
+            //update advisor assign date/time
+            if (! empty($advisorId)) {
+                $this->updateAdvisorAssignedDateTime($quoteType->code, $quote->id, $renewalUploadLead->created_by_id, $advisorId);
+            }
+
+            $renewalQuoteProcess->update(['status' => RenewalProcessStatuses::PROCESSED, 'quote_id' => $quote->id]);
+
+            RenewalsUploadLeads::where('id', $renewalUploadLead->id)->update(['good' => DB::raw('good+1')]);
+
+            info($logPrefix.' Quote created. QuoteType: Travel UUID: '.$quote->uuid);
+
+            return $quote;
+        });
+
+        return $quote;
+    }
+
+    public function getPaymentStatusIdByCode($paymentStatus)
+    {
+        return PaymentStatus::where('code', strtolower($paymentStatus))->value('id');
+    }
+
+    public function getCurrentlyLocatedIdByCode($currently_located_in)
+    {
+        return CurrentlyLocatedIn::where(DB::raw('LOWER(code)'), strtolower($currently_located_in))
+            ->orWhere(DB::raw('LOWER(text)'), strtolower($currently_located_in))
+            ->value('id');
+    }
+    public function getSearch($data)
+    {
+        $quotes = [];
+        $product = $data->product;
+        if ($product == QuoteTypeId::Business) {
+            $quotes = BusinessQuoteRepository::getDataOfBusiness()->withQueryString();
+        } else {
+            $quoteType = QuoteTypes::getName($product);
+            $repository = '\\App\\Repositories\\'.ucwords($quoteType->value).'QuoteRepository';
+            $quotes = $repository::getData()->withQueryString();
+        }
+
+        return $quotes;
+    }
+
+    public function getExport($data)
+    {
+        $quotes = [];
+        $product = $data->product;
+        $quoteType = QuoteTypes::getName($product);
+        $repository = '\\App\\Repositories\\'.ucwords($quoteType->value).'QuoteRepository';
+        $quotes = $repository::export();
+
+        return (new RenewalQuotesExport($quotes, $quoteType->name))->download('Renewal');
+    }
+
 }

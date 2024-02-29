@@ -286,18 +286,16 @@
                 paymentmode_datatable_route: "{{ route('paymentmode.index') }}",
                 transaction_datatable_route: "{{ route('transaction.index') }}",
                 re_issue_transaction_form: "{{ route('re_issue_transaction_form') }}",
-                aml_datatable_route: "{{ route('aml.index') }}",
-                aml_kyc_logs_datatable_route: "{{ route('kyc-logs-records') }}",
                 valuation_api_route: "{{ Config::get('constants.valuation_api_route') }}",
                 valuation_api_token: "{{ Config::get('constants.valuation_api_token') }}",
                 tminsurancetype_datatable_route: "{{ route('tminsurancetype.index') }}",
-                tmcallstatus_datatable_route: "{{ route('tmcallstatus.index') }}",
+                tmcallstatus_datatable_route: "{{route('tmcallstatus.index') }}",
                 tmleadstatus_datatable_route: "{{ route('tmleadstatus.index') }}",
-                tmlead_datatable_route: "{{ route('tmleads.index') }}",
-                tmuploadlead_datatable_route: "{{ route('tmuploadlead.index') }}",
+                tmlead_datatable_route: "{{ route('tmleads-list') }}",
+                tmuploadlead_datatable_route: "{{ route('tmuploadlead-list') }}",
                 age_discount_datatable_route: "{{ route('age.index') }}",
                 renewals_leads_datatable_route: "{{ route('renewals-uploaded-leads-list') }}",
-                sanction_list_downloads_datatable_route: "{{ url('kyc/aml/download/history') }}",
+                // sanction_list_downloads_datatable_route: "{{ url('kyc/aml/download/history') }}",
                 leadassignmentDataTable: "{{ route('leadassignment.index') }}",
                 amtDataTable: "{{ route('amt.index') }}",
                 activitiesDataTable: "{{ route('activities.index') }}",
@@ -350,7 +348,7 @@
             dt.ajax.reload();
         }
     </script>
-    <script src="{{ asset('old/customjs.min.js') }}"></script>
+    <script src="{{ asset('old/customjs.js') }}"></script>
     <script>
         $(document).ajaxError(function(event, jqxhr, settings, exception) {
             if (exception == 'Unauthorized') {

@@ -94,7 +94,7 @@ const tableHeader = ref([
   { text: 'M. Assigned', value: 'manualAllocationCount', sortable: true },
   { text: 'A. Assigned', value: 'autoAllocationCount', sortable: true },
   { text: 'Cap Limit', value: 'maxCapacity', sortable: true },
-  { text: 'Status', value: 'isAvailable' },
+  { text: 'Status', value: 'isAvailable', sortable: true, width: '100' },
   { text: 'Reset Cap', value: 'reset_cap', sortable: true, width: '100' },
   { text: 'Last Login', value: 'lastLogin', sortable: true, width: '100' },
 ]);
@@ -209,11 +209,13 @@ const onStatusSubmit = async () => {
 
   item.loading = true;
   await axios
-    .post('/lead-allocation/update-availability', {
-      userId: statusModal.data.userId,
-      id: statusModal.data.id,
-      reason: statusModal.data.reason,
-    })
+    .post('/lead-allocation/update-availability', [
+      {
+        userId: statusModal.data.userId,
+        id: statusModal.data.id,
+        reason: statusModal.data.reason,
+      },
+    ])
     .then(res => {
       router.reload({
         only: ['data'],
@@ -417,7 +419,7 @@ onMounted(() => {
       :items="props.data || []"
       :sort-by="'userName'"
       :sort-type="'asc'"
-      :rows-per-page="-1"
+      :rows-per-page="999"
       border-cell
       hide-rows-per-page
       hide-footer

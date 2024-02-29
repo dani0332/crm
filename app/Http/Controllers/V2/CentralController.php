@@ -2,22 +2,33 @@
 
 namespace App\Http\Controllers\V2;
 
+use App\Enums\CustomerTypeEnum;
+use App\Enums\GenericRequestEnum;
 use App\Enums\QuoteTypes;
 use App\Exports\AmtQuoteExport;
 use App\Exports\BusinessQuoteExport;
+use App\Exports\CarQuoteExport;
+use App\Exports\CarQuoteExportWithEmailMobile;
+use App\Exports\CarQuoteExportWithMakeModelTrims;
+use App\Exports\CarQuoteExportWithPlans;
+use App\Exports\HealthQuotesExport;
 use App\Exports\HomeQuoteExport;
 use App\Exports\LifeQuotesExport;
 use App\Exports\PersonalQuotesExport;
 use App\Exports\TravelQuoteExport;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\CustomerProfileRequest;
 use App\Http\Requests\DuplicateLobRequest;
 use App\Http\Requests\LeadAssignRequest;
+use App\Http\Requests\PlanDetailsRequest;
 use App\Http\Requests\UpdateLastYearPolicyRequest;
+use App\Models\Customer;
+use App\Models\Entity;
+use App\Models\QuoteRequestEntityMapping;
 use App\Services\CentralService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
-use Maatwebsite\Excel\Facades\Excel;
 
 class CentralController extends Controller
 {
@@ -33,29 +44,50 @@ class CentralController extends Controller
         return back()->with('message', 'Quote is created successfully.');
     }
 
-    public function exportLeads(Request $request, $quoteType)
+    public function exportLeads(Request $request, $quoteType, $exportTye = null)
     {
+        $diffInDays = 120;
+
         if (! $quoteType) {
             return abort(404);
         }
 
-        if (request()->has('created_at')) {
-            request()->merge(['created_at_start' => request()->get('created_at')]);
-            request()->query->remove('created_at');
-        }
+        if ($exportTye != GenericRequestEnum::EXPORT_MAKES_MODELS) {
+            if ($exportTye == GenericRequestEnum::EXPORT_PLAN_DETAIL) {
+                $error_fields = 'paid at';
 
-        $request->validate([
-            'created_at_start' => 'required',
-            'created_at_end' => 'required',
-        ]);
+                $request->validate([
+                    'paid_at_start' => 'required',
+                    'paid_at_end' => 'required',
+                ]);
+                $created_at_start = Carbon::parse($request->paid_at_start)->format('Y-m-d');
+                $created_at_end = Carbon::parse($request->paid_at_end)->format('Y-m-d');
+            } else {
+                $error_fields = 'created date';
 
-        $created_at_start = Carbon::parse($request->created_at_start)->format('Y-m-d');
-        $created_at_end = Carbon::parse($request->created_at_end)->format('Y-m-d');
+                if (request()->has('created_at')) {
+                    request()->merge(['created_at_start' => request()->get('created_at')]);
+                    request()->query->remove('created_at');
+                }
 
-        $diff = Carbon::parse($created_at_start)->diffInDays(Carbon::parse($created_at_end));
+                $request->validate([
+                    'created_at_start' => 'required',
+                    'created_at_end' => 'required',
+                ]);
 
-        if ($diff > 120) {
-            return back()->with('error', 'Maximum of 120 days (created date) are allowed to be exported.');
+                $created_at_start = Carbon::parse($request->created_at_start)->format('Y-m-d');
+                $created_at_end = Carbon::parse($request->created_at_end)->format('Y-m-d');
+            }
+
+            if (ucfirst($quoteType) == QuoteTypes::CAR->value) {
+                $diffInDays = 31;
+            }
+
+            $diff = Carbon::parse($created_at_start)->diffInDays(Carbon::parse($created_at_end));
+
+            if ($diff > $diffInDays) {
+                return back()->with('error', 'Maximum of '.$diffInDays.' days ('.$error_fields.') are allowed to be exported.');
+            }
         }
 
         // For Personal Quotes
@@ -66,24 +98,40 @@ class CentralController extends Controller
             QuoteTypes::CYCLE->value,
             QuoteTypes::JETSKI->value,
         ])) {
-            return Excel::download(new PersonalQuotesExport, $quoteType.'_leads.xlsx');
+            return app(PersonalQuotesExport::class)->download($quoteType.'_leads');
+        }
+
+        if (QuoteTypes::CAR->value == ucfirst($quoteType)) {
+            if ($exportTye == GenericRequestEnum::EXPORT_PLAN_DETAIL) {
+                return app(CarQuoteExportWithPlans::class)->download(ucfirst(GenericRequestEnum::EXPORT_PLAN_DETAIL));
+            } elseif ($exportTye == GenericRequestEnum::EXPORT_LEADS_DETAIL_WITH_EMAIL_MOBILE) {
+                return app(CarQuoteExportWithEmailMobile::class)->download(ucfirst(GenericRequestEnum::EXPORT_LEADS_DETAIL_WITH_EMAIL_MOBILE));
+            } elseif ($exportTye == GenericRequestEnum::EXPORT_MAKES_MODELS) {
+                return app(CarQuoteExportWithMakeModelTrims::class)->download(ucfirst(GenericRequestEnum::EXPORT_MAKES_MODELS));
+            }
         }
 
         switch (ucfirst($quoteType)) {
             case QuoteTypes::LIFE->value:
-                return Excel::download(new LifeQuotesExport, 'life_leads.xlsx');
+                return app(LifeQuotesExport::class)->download('life_leads');
 
             case QuoteTypes::HOME->value:
-                return Excel::download(new HomeQuoteExport, 'home_leads.xlsx');
+                return app(HomeQuoteExport::class)->download('home_leads');
 
             case QuoteTypes::AMT->value:
-                return Excel::download(new AmtQuoteExport, 'amt_leads.xlsx');
+                return app(AmtQuoteExport::class)->download('amt_leads');
 
             case QuoteTypes::BUSINESS->value:
-                return Excel::download(new BusinessQuoteExport, 'business_leads.xlsx');
+                return app(BusinessQuoteExport::class)->download('business_leads');
 
             case QuoteTypes::TRAVEL->value:
-                return Excel::download(new TravelQuoteExport, 'travel_leads.xlsx');
+                return app(TravelQuoteExport::class)->download('travel_leads');
+
+            case QuoteTypes::CAR->value:
+                return app(CarQuoteExport::class)->download('Car-List');
+
+            case QuoteTypes::HEALTH->value:
+                return app(HealthQuotesExport::class)->download('Health-List');
 
             default:
                 return false;
@@ -95,6 +143,30 @@ class CentralController extends Controller
         (new CentralService())->assignLeadToAdvisor($leadAssignRequest);
 
         return redirect()->back()->with('success', ucfirst($leadAssignRequest->modelType).' Leads has been Assigned');
+    }
+
+    public function updateCustomerProfileDetails(CustomerProfileRequest $customerProfileRequest)
+    {
+        if ($customerProfileRequest->customer_type == CustomerTypeEnum::Individual) {
+            $customer = Customer::where('id', $customerProfileRequest->customer_id)->firstOrFail();
+
+            $customer->update($customerProfileRequest->only([
+                'insured_first_name', 'insured_last_name', 'emirates_id_number', 'emirates_id_expiry_date',
+            ]));
+        }
+
+        if ($customerProfileRequest->customer_type == CustomerTypeEnum::Entity) {
+            $entity = Entity::updateOrCreate(['trade_license_no' => $customerProfileRequest->trade_license_no], $customerProfileRequest->validated());
+            $entity->update(['code' => CustomerTypeEnum::EntityShort.'-'.$entity->id]);
+
+            QuoteRequestEntityMapping::updateOrCreate([
+                'quote_type_id' => $customerProfileRequest->quote_type_id,
+                'quote_request_id' => $customerProfileRequest->quote_request_id,
+            ], ['entity_id' => $entity->id, 'entity_type_code' => $customerProfileRequest->entity_type_code]);
+
+        }
+
+        return redirect()->back();
     }
 
     /**
@@ -114,4 +186,31 @@ class CentralController extends Controller
 
         return redirect()->back()->with('success', 'Last Year Policy Detail has been updated.');
     }
+
+    public function loadAvailablePlans($type, $id)
+    {
+        return (new CentralService())->loadAvailablePlans($type, $id);
+    }
+
+    public function savePlanDetails($quoteType, $code, PlanDetailsRequest $request)
+    {
+        $repository = getRepositoryObject($quoteType);
+
+        $quote = $repository::where('code', $code)->firstOrFail();
+        $quote->update($request->validated());
+
+        return redirect()->back()->with('success', 'updated successfully');
+    }
+
+    public function updateSelectedPlan($quoteType, $uuid, $planId)
+    {
+        $repository = getRepositoryObject($quoteType);
+
+        $quote = $repository::where('uuid', $uuid)->firstOrFail();
+
+        $quote->update(['prefill_plan_id' => $planId]);
+
+        return redirect()->back()->with('success', 'updated successfully');
+    }
+
 }
