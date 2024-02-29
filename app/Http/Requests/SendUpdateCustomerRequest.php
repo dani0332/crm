@@ -36,7 +36,8 @@ class SendUpdateCustomerRequest extends FormRequest
     /**
      * @return void
      */
-    public function withValidator($validator) {
+    public function withValidator($validator)
+    {
         $validator->after(function ($validator) {
             $this->sendUpdate = SendUpdateLog::where('id', request()->sendUpdateId ?? '')->firstOrFail();
             $this->sendUpdateDocuemnts = $this->sendUpdate?->documents()->pluck('document_type_code');
@@ -48,7 +49,7 @@ class SendUpdateCustomerRequest extends FormRequest
                 /* if (in_array($document->document_type_code, [DocumentTypeCode::TTI, DocumentTypeCode::TTIRBB])) {
                     $validator->errors()->add('error', 'Send Update already has Tax Invoice document. Please remove the existing document and try again.');
                 } */
-                
+
                 if ($category == SendUpdateLogStatusEnum::EF) {
                     if ($this->sendUpdate->status != SendUpdateLogStatusEnum::TRANSACTION_APPROVED) {
                         if (! in_array($option, [SendUpdateLogStatusEnum::MPC, SendUpdateLogStatusEnum::MDOM, SendUpdateLogStatusEnum::MDOV, SendUpdateLogStatusEnum::ED, SendUpdateLogStatusEnum::DM])) {
@@ -68,11 +69,11 @@ class SendUpdateCustomerRequest extends FormRequest
                             if (! (in_array(DocumentTypeCode::SEND_UPDATE_POLICY_CERTIFICATE, $this->sendUpdateDocuemnts->toArray()) || in_array(DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE, $this->sendUpdateDocuemnts->toArray()))) {
                                 $validator->errors()->add('error', 'Please upload documents. ');
                             }
-                        } elseif(in_array($option, [SendUpdateLogStatusEnum::QR, SendUpdateLogStatusEnum::RFAML])) {
+                        } elseif (in_array($option, [SendUpdateLogStatusEnum::QR, SendUpdateLogStatusEnum::RFAML])) {
                             if (! in_array(DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE, $this->sendUpdateDocuemnts->toArray())) {
                                 $validator->errors()->add('error', 'Please upload documents. ');
                             }
-                        } elseif($option ==SendUpdateLogStatusEnum::RFEC) {
+                        } elseif ($option == SendUpdateLogStatusEnum::RFEC) {
                             if (! in_array(DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE, $this->sendUpdateDocuemnts->toArray())) {
                                 $validator->errors()->add('error', 'Please upload documents. ');
                             }
