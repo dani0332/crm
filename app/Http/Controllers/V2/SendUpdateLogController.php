@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\V2;
 
 use App\Enums\DocumentTypeCode;
+use App\Enums\quoteBusinessTypeCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Enums\SendUpdateLogStatusEnum;
@@ -69,10 +70,14 @@ class SendUpdateLogController extends Controller
                     return redirect('/personal-quotes/'.strtolower($quoteType->code).'/'.$childLeadResponse['uuid'])
                         ->with('success', $childLeadResponse['ref_id'].' has been created');
                 } else {
-                    return redirect('/quotes/'.strtolower($quoteType->code).'/'.$childLeadResponse['uuid'])
-                        ->with('success', $childLeadResponse['ref_id'].' has been created');
+                    if (isset($childLeadResponse['businessTypeOfInsurance']) && $childLeadResponse['businessTypeOfInsurance'] == quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical)) {
+                        return redirect('/medical/amt/'.$childLeadResponse['uuid'])
+                            ->with('success', $childLeadResponse['ref_id'].' has been created');
+                    } else {
+                        return redirect('/quotes/'.strtolower($quoteType->code).'/'.$childLeadResponse['uuid'])
+                            ->with('success', $childLeadResponse['ref_id'].' has been created');
+                    }
                 }
-
             } else {
                 return redirect()->back()->with('error', $childLeadResponse['parent_ref_id'].'-'.$childLeadResponse['childLeadsCount'].' is already created');
             }

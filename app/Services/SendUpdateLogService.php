@@ -22,7 +22,7 @@ use App\Traits\GenericQueriesAllLobs;
 class SendUpdateLogService
 {
     use GenericQueriesAllLobs;
-    
+
     private function _getQuoteRelation($quoteModel, $quoteType)
     {
         $quoteRelations = [];
@@ -86,6 +86,7 @@ class SendUpdateLogService
                         'customerMembers' => [
                             'isMorph' => true,
                         ],
+                        'quoteRequestEntityMapping' => [],
                     ],
                     'skipParentColumns' => $parentSkipColumns,
                     'parentClass' => CarQuote::class,
@@ -102,6 +103,7 @@ class SendUpdateLogService
                         'customerMembers' => [
                             'isMorph' => true,
                         ],
+                        'quoteRequestEntityMapping' => [],
                     ],
                     'skipParentColumns' => $parentSkipColumns,
                     'parentClass' => HomeQuote::class,
@@ -118,6 +120,7 @@ class SendUpdateLogService
                         'customerMembers' => [
                             'isMorph' => true,
                         ],
+                        'quoteRequestEntityMapping' => [],
                     ],
                     'skipParentColumns' => array_merge($parentSkipColumns, ['health_plan_type_id', 'price_starting_from', 'health_plan_co_payment_id']),
                     'parentClass' => HealthQuote::class,
@@ -134,6 +137,7 @@ class SendUpdateLogService
                         'customerMembers' => [
                             'isMorph' => true,
                         ],
+                        'quoteRequestEntityMapping' => [],
                     ],
                     'skipParentColumns' => $parentSkipColumns,
                     'parentClass' => LifeQuote::class,
@@ -167,6 +171,7 @@ class SendUpdateLogService
                         'customerMembers' => [
                             'isMorph' => true,
                         ],
+                        'quoteRequestEntityMapping' => [],
                     ],
                     'skipParentColumns' => $parentSkipColumns,
                     'parentClass' => TravelQuote::class,
@@ -246,6 +251,7 @@ class SendUpdateLogService
                         'customerMembers' => [
                             'isMorph' => true,
                         ],
+                        'quoteRequestEntityMapping' => [],
                     ],
                     'skipParentColumns' => $parentSkipColumns,
                     'parentClass' => PersonalQuote::class,
@@ -325,11 +331,16 @@ class SendUpdateLogService
     {
         $modelRelationDetails = $this->_getQuoteRelation($quoteModel, $quoteTypeCode);
         $quoteObject = $quoteModel::with(array_keys($modelRelationDetails['quoteRelations']))->find($requestData['ref_id']);
+
         $countChildRecords = $quoteModel::where('code', 'like', '%'.$quoteObject->code.'-%')->count();
         $childLeadDetails = [
             'childLeadsCount' => $countChildRecords,
             'parent_ref_id' => $quoteObject->code,
         ];
+
+        if ($quoteTypeCode == quoteTypeCode::Business) {
+            $childLeadDetails['businessTypeOfInsurance'] = $quoteObject->business_type_of_insurance_id;
+        }
 
         if ($countChildRecords == 0) {
             $getRelations = $quoteObject->getRelations();
@@ -373,16 +384,16 @@ class SendUpdateLogService
             'childLeadsUuid' => '',
         ];
 
-        if(!empty($quote->parent_duplicate_quote_id)) {
+        if (! empty($quote->parent_duplicate_quote_id)) {
             $_return['parent_lead_ref_id'] = $quote->parent_duplicate_quote_id;
             $_return['uuid'] = explode('-', $quote->parent_duplicate_quote_id)[1];
         }
 
-        if($childRecords->count() <= 1) {
+        if ($childRecords->count() <= 1) {
             $_return['childLeads'] = $childRecords->value('code');
             $_return['childLeadsUuid'] = $childRecords->value('uuid');
         }
-        
+
         return $_return;
     }
 }

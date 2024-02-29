@@ -684,7 +684,7 @@ class TravelQuoteService extends BaseService
                 $title = 'Price';
                 break;
             case 'parent_duplicate_quote_id':
-                $title = 'Parent Ref-ID';
+                $title = 'PARENT REF-ID';
                 break;
             case 'customer_type':
                 $title = 'Customer Type';
