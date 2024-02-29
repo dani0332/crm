@@ -8,6 +8,7 @@ import QuotePolicy from '../PersonalQuote/Partials/QuotePolicy';
 import LeadHistory from '../PersonalQuote/Partials/LeadHistory';
 import AdditionalContacts from '../PersonalQuote/Partials/AdditionalContacts';
 import PlanDetails from '../../Components/PlanDetails.vue';
+import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue';
 
 defineProps({
   quote: Object,
@@ -208,6 +209,13 @@ const permissionsEnum = page.props.permissionsEnum;
             <dt class="font-medium">DATE OF BIRTH</dt>
             <dd>{{ quote.dob }}</dd>
           </div>
+
+          
+          <RiskRatingScoreDetails
+              :quote="quote.jetski_quote"
+              :modelType="quoteType"
+            />
+         
         </dl>
       </div>
     </div>

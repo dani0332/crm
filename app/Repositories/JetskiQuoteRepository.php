@@ -98,7 +98,7 @@ class JetskiQuoteRepository extends BaseRepository
     {
         return $this->byQuoteTypeId(QuoteTypes::JETSKI->id())
             ->where($column, $value)
-            ->with(['jetskiQuote', 'advisor', 'quoteDetail.lostReason', 'payments' => function ($q) {
+            ->with(['jetskiQuote','nationality','advisor', 'quoteDetail.lostReason', 'payments' => function ($q) {
                 $q->with(['paymentStatus', 'personalPlan', 'paymentMethod']);
             }, 'createdBy', 'updatedBy', 'customer.additionalContactInfo', 'documents' => function ($q) {
                 $q->with('createdBy')->orderBy('created_at', 'desc');
@@ -114,10 +114,11 @@ class JetskiQuoteRepository extends BaseRepository
             'quoteStatus',
             'currentlyInsuredWith',
             'advisor',
-        ])
-            ->filter(! $forExport)
-            ->withFakeLeadCriteria()
-            ->orderBy('created_at', 'desc');
+        ])->when(\auth()->user()->hasRole(RolesEnum::JetskiAdvisor), function ($query) {
+            $query->where('advisor_id', \auth()->user()->id);
+        })->filter(! $forExport)
+        ->withFakeLeadCriteria()
+        ->orderBy('created_at', 'desc');
 
         return ($forExport) ? $query->get() : $query->simplePaginate();
     }
