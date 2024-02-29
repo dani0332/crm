@@ -27,7 +27,7 @@ class PaymentsMoveInNewTableStructure extends Seeder
             //->where('code', 'CAR-GTUKFY49')
             ->orderBy('created_at')
             ->get();
-
+        //$payments = Payment::where('code', 'CYC-K9VTWM4Q')->get();
         if ($payments->count() > 0) {
             $ecommerceLob = ['P', 'TRA', 'HEA', 'CAR'];
             foreach ($payments as $payment) {

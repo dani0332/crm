@@ -233,7 +233,7 @@ class SplitPaymentService
                         if ($modelObject) {
                             $modelObject->price_with_vat = $grandTotal;
                             $modelObject->insurance_provider_id = $payment->insurance_provider_id;
-                            $modelObject->price_without_vat = $grandTotal - $vat;
+                            $modelObject->price_vat_applicable = $grandTotal - $vat;
                             $modelObject->save();
                             Log::info('MigratePayment::Plan Detail updated for Payment Code: '.$payment->code);
                         } else {
