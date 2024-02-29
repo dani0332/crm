@@ -44,52 +44,152 @@ class SendUpdateCustomerRequest extends FormRequest
             $category = $this->sendUpdate->category->code;
             $option = $this->sendUpdate->option->code;
 
-            if ($this->sendUpdateDocuemnts->count()) {
-                if ($category == SendUpdateLogStatusEnum::EF) {
-                    if ($this->sendUpdate->status != SendUpdateLogStatusEnum::TRANSACTION_APPROVED) {
-                        if (! in_array($option, [SendUpdateLogStatusEnum::MPC, SendUpdateLogStatusEnum::MDOM, SendUpdateLogStatusEnum::MDOV, SendUpdateLogStatusEnum::ED, SendUpdateLogStatusEnum::DM])) {
-                            $validator->errors()->add('error', 'Transaction approval is required. ');
-                        }
-                    }
-                    if (! (in_array(DocumentTypeCode::SEND_UPDATE_POLICY_CERTIFICATE, $this->sendUpdateDocuemnts->toArray()) || in_array(DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE, $this->sendUpdateDocuemnts->toArray()))) {
-                        $validator->errors()->add('error', 'Please upload the Endorsed schedule or Endorsed certificate. ');
-                    }
-                } elseif ($category == SendUpdateLogStatusEnum::EN) {
-                    if (in_array($this->sendUpdate->quoteType->code, [quoteTypeCode::Car, quoteTypeCode::Bike, quoteTypeCode::Travel, quoteTypeCode::Life, quoteTypeCode::Home, quoteTypeCode::Pet, quoteTypeCode::Cycle, quoteTypeCode::Yacht, quoteTypeCode::CORPLINE])) {
-                        if (! (in_array(DocumentTypeCode::SEND_UPDATE_POLICY_CERTIFICATE, $this->sendUpdateDocuemnts->toArray()) || in_array(DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE, $this->sendUpdateDocuemnts->toArray()))) {
-                            $validator->errors()->add('error', 'Please upload documents. ');
-                        }
-                    } elseif ($this->sendUpdate->quoteType->code == quoteTypeCode::Health) {
-                        if (in_array($option, [SendUpdateLogStatusEnum::CAA, SendUpdateLogStatusEnum::EIU, SendUpdateLogStatusEnum::MSCNFI, SendUpdateLogStatusEnum::RFCOC, SendUpdateLogStatusEnum::RFCOI, SendUpdateLogStatusEnum::WOWPA])) {
-                            if (! (in_array(DocumentTypeCode::SEND_UPDATE_POLICY_CERTIFICATE, $this->sendUpdateDocuemnts->toArray()) || in_array(DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE, $this->sendUpdateDocuemnts->toArray()))) {
-                                $validator->errors()->add('error', 'Please upload documents. ');
-                            }
-                        } elseif (in_array($option, [SendUpdateLogStatusEnum::QR, SendUpdateLogStatusEnum::RFAML])) {
-                            if (! in_array(DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE, $this->sendUpdateDocuemnts->toArray())) {
-                                $validator->errors()->add('error', 'Please upload documents. ');
-                            }
-                        } elseif ($option == SendUpdateLogStatusEnum::RFEC) {
-                            if (! in_array(DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE, $this->sendUpdateDocuemnts->toArray())) {
-                                $validator->errors()->add('error', 'Please upload documents. ');
+            $documents = $this->sendUpdateDocuemnts->toArray();
+            $LOBs = array_diff(newUi(), array(quoteTypeCode::Health, quoteTypeCode::Business, quoteTypeCode::Aml));
+
+            if($this->sendUpdateDocuemnts->count()) {
+                switch ($category) {
+                    case SendUpdateLogStatusEnum::EF:
+                        if ($this->sendUpdate->status != SendUpdateLogStatusEnum::TRANSACTION_APPROVED) {
+                            if (! in_array($option, [SendUpdateLogStatusEnum::MPC, SendUpdateLogStatusEnum::MDOM, SendUpdateLogStatusEnum::MDOV, SendUpdateLogStatusEnum::ED, SendUpdateLogStatusEnum::DM])) {
+                                $validator->errors()->add('error', 'Transaction approval is required. ');
                             }
                         }
-                    } elseif ($this->sendUpdate->quoteType->code == quoteTypeCode::GroupMedical) {
-                        if (in_array($option, [SendUpdateLogStatusEnum::CAA, SendUpdateLogStatusEnum::RFCOC, SendUpdateLogStatusEnum::RFCOI, SendUpdateLogStatusEnum::RTI])) {
-                            if (! (in_array(DocumentTypeCode::SEND_UPDATE_POLICY_CERTIFICATE, $this->sendUpdateDocuemnts->toArray()) || in_array(DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE, $this->sendUpdateDocuemnts->toArray()))) {
-                                $validator->errors()->add('error', 'Please upload documents. ');
+                        if ($this->checkDocuments(null, $documents, SendUpdateLogStatusEnum::EF)) {
+                            $validator->errors()->add('error', 'Please upload the Endorsed schedule or Endorsed certificate.');
+                        }
+                        break;
+
+                    case SendUpdateLogStatusEnum::EN:
+                        if (in_array($this->sendUpdate->status, $LOBs)) {
+                            if ($this->checkDocuments(null, $documents, SendUpdateLogStatusEnum::EN)) {
+                                $validator->errors()->add('error', 'Please upload documents.');
                             }
-                        } elseif (in_array($option, [SendUpdateLogStatusEnum::EIU, SendUpdateLogStatusEnum::MSCNFI, SendUpdateLogStatusEnum::QR, SendUpdateLogStatusEnum::RFAML, SendUpdateLogStatusEnum::RFSOA, SendUpdateLogStatusEnum::WOWPA])) {
-                            if (! in_array(DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE, $this->sendUpdateDocuemnts->toArray())) {
-                                $validator->errors()->add('error', 'Please upload documents. ');
+                        } elseif($this->sendUpdate->quoteType->code == quoteTypeCode::Health) {
+                            if($this->optionCheck(quoteTypeCode::Health, $documents, $option)) {
+                                $validator->errors()->add('error', 'Please upload documents.');
+                            }
+                        } elseif($this->sendUpdate->quoteType->code == quoteTypeCode::GroupMedical) {
+                            if($this->optionCheck(quoteTypeCode::GroupMedical, $documents, $option)) {
+                                $validator->errors()->add('error', 'Please upload documents.');
                             }
                         }
-                    }
-                } elseif (in_array($category, [SendUpdateLogStatusEnum::CI, SendUpdateLogStatusEnum::CIR, SendUpdateLogStatusEnum::CPU])) {
-                    if (! (in_array(DocumentTypeCode::SEND_UPDATE_POLICY_CERTIFICATE, $this->sendUpdateDocuemnts->toArray()) || in_array(DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE, $this->sendUpdateDocuemnts->toArray()))) {
-                        $validator->errors()->add('error', 'Please upload the Endorsed schedule or Endorsed certificate. ');
-                    }
+                        break;
+
+                    case SendUpdateLogStatusEnum::CI:
+                    case SendUpdateLogStatusEnum::CIR:
+                    case SendUpdateLogStatusEnum::CPU:
+                        if ($this->checkDocuments(null, $documents, $category)) {
+                            $validator->errors()->add('error', 'Please upload the Endorsed schedule or Endorsed certificate.');
+                        }
+                        break;
+                    
                 }
             }
         });
+    }
+
+    private function optionCheck($quoteType, $documents, $option) 
+    {
+        switch ($quoteType) {
+            case quoteTypeCode::Health:
+                if (in_array($option, [
+                    SendUpdateLogStatusEnum::CAA,
+                    SendUpdateLogStatusEnum::EIU,
+                    SendUpdateLogStatusEnum::MSCNFI,
+                    SendUpdateLogStatusEnum::RFCOC,
+                    SendUpdateLogStatusEnum::RFCOI,
+                    SendUpdateLogStatusEnum::WOWPA,
+                    SendUpdateLogStatusEnum::QR,
+                    SendUpdateLogStatusEnum::RFAML,
+                    SendUpdateLogStatusEnum::RFEC
+                ])) {
+                    return $this->checkDocuments(quoteTypeCode::Health, $documents, $option);
+                }
+                break;
+
+            case quoteTypeCode::GroupMedical:
+                if (in_array($option, [
+                    SendUpdateLogStatusEnum::CAA, 
+                    SendUpdateLogStatusEnum::EIU, 
+                    SendUpdateLogStatusEnum::MSCNFI, 
+                    SendUpdateLogStatusEnum::RFCOC, 
+                    SendUpdateLogStatusEnum::RFCOI, 
+                    SendUpdateLogStatusEnum::WOWPA, 
+                    SendUpdateLogStatusEnum::QR, 
+                    SendUpdateLogStatusEnum::RFAML, 
+                    SendUpdateLogStatusEnum::RTI, 
+                    SendUpdateLogStatusEnum::RFSOA
+                ])) {
+                    return $this->checkDocuments(quoteTypeCode::GroupMedical, $documents, $option);
+                }
+                break;
+        }
+    }
+
+    private function checkDocuments($quoteTypeCode, $documents, $category)
+    {
+        switch ($quoteTypeCode) {
+            case quoteTypeCode::Health:
+                switch ($category) {
+                    case SendUpdateLogStatusEnum::CAA: 
+                    case SendUpdateLogStatusEnum::EIU: 
+                    case SendUpdateLogStatusEnum::MSCNFI:
+                    case SendUpdateLogStatusEnum::RFCOC: 
+                    case SendUpdateLogStatusEnum::RFCOI: 
+                    case SendUpdateLogStatusEnum::WOWPA: 
+                        $requiredDocumentTypes = [DocumentTypeCode::SEND_UPDATE_POLICY_CERTIFICATE, DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE];
+                        
+                        return count(array_intersect($documents, $requiredDocumentTypes)) != 0;
+                        break;
+
+                    case SendUpdateLogStatusEnum::QR: 
+                    case SendUpdateLogStatusEnum::RFAML: 
+                    case SendUpdateLogStatusEnum::RFEC:  
+                        $requiredDocumentTypes = [DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE];
+                        
+                        return count(array_intersect($documents, $requiredDocumentTypes)) != 0;
+                        break;
+                }
+                break;
+
+            case quoteTypeCode::GroupMedical:
+                switch ($category) {
+                    case SendUpdateLogStatusEnum::CAA: 
+                    case SendUpdateLogStatusEnum::RFCOC: 
+                    case SendUpdateLogStatusEnum::RFCOI: 
+                    case SendUpdateLogStatusEnum::RTI:
+                        $requiredDocumentTypes = [DocumentTypeCode::SEND_UPDATE_POLICY_CERTIFICATE, DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE];
+                        
+                        return count(array_intersect($documents, $requiredDocumentTypes)) != 0;
+                        break;
+
+                    case SendUpdateLogStatusEnum::EIU: 
+                    case SendUpdateLogStatusEnum::MSCNFI: 
+                    case SendUpdateLogStatusEnum::QR: 
+                    case SendUpdateLogStatusEnum::RFAML: 
+                    case SendUpdateLogStatusEnum::RFSOA: 
+                    case SendUpdateLogStatusEnum::WOWPA: 
+                        $requiredDocumentTypes = [DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE];
+                        
+                        return count(array_intersect($documents, $requiredDocumentTypes)) != 0;
+                        break;
+                }
+                break;
+            
+            default:
+                switch ($category) {
+                    case SendUpdateLogStatusEnum::CI:
+                    case SendUpdateLogStatusEnum::CIR:
+                    case SendUpdateLogStatusEnum::CPU:
+                    case SendUpdateLogStatusEnum::EF:
+                    case SendUpdateLogStatusEnum::EN:
+                        $requiredDocumentTypes = [DocumentTypeCode::SEND_UPDATE_POLICY_CERTIFICATE, DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE];
+                        
+                        return count(array_intersect($documents, $requiredDocumentTypes)) != 0;
+                        break;
+                }
+                break;
+        }
     }
 }
