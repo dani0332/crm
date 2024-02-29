@@ -103,7 +103,7 @@ class DashboardController extends Controller
         });
 
         return inertia('Dashboard/AccumulativeDashboard', [
-            'totalLeadsReceived' =>  $totalLeadsReceived,
+            'totalLeadsReceived' => $totalLeadsReceived,
             'totalLeadsReceivedEcommerce' => $totalLeadsReceivedEcommerce,
             'totalUnAssignedLeadsReceived' => $totalUnAssignedLeadsReceived,
             'totalUnAssignedLeadsReceivedEcommerce' => $totalUnAssignedLeadsReceivedEcommerce,
@@ -155,7 +155,7 @@ class DashboardController extends Controller
 
         return ['totalLeadsReceived' => $totalLeadsReceived, 'totalLeadsReceivedEcommerce' => $totalLeadsReceivedEcommerce, 'totalUnAssignedLeadsReceived' => $totalUnAssignedLeadsReceived,
             'totalUnAssignedLeadsReceivedEcommerce' => $totalUnAssignedLeadsReceivedEcommerce, 'teamWiseLeadsAssignedAverage' => $teamWiseLeadsAssignedAverage,
-             'totalUnAssignedRevivalLeads' => $totalUnAssignedRevivalLeads, 'leadsCountByTier' => $leadsCountByTier, 'revivalLeadsCount' => $revivalLeadsCount, 'advisorLeadsAssignedData' => $advisorLeadsAssignedData, 'unAssignedLeadsByTier' => $unAssignedLeadsByTier];
+            'totalUnAssignedRevivalLeads' => $totalUnAssignedRevivalLeads, 'leadsCountByTier' => $leadsCountByTier, 'revivalLeadsCount' => $revivalLeadsCount, 'advisorLeadsAssignedData' => $advisorLeadsAssignedData, 'unAssignedLeadsByTier' => $unAssignedLeadsByTier];
     }
 
     public function renderTplDashboard(Request $request)
@@ -174,7 +174,7 @@ class DashboardController extends Controller
         }
 
         return inertia('Dashboard/TPLConversion', [
-            'tplDashboardStats' =>  $tplDashboardStats,
+            'tplDashboardStats' => $tplDashboardStats,
             'teams' => $teams,
             'commonTeam' => $commonTeam,
             'tiers' => $tiers,
@@ -435,7 +435,7 @@ class DashboardController extends Controller
         });
 
         return inertia('Dashboard/ComperhensiveConversion', [
-            'comprehensiveDashboardStats' =>  $comprehensiveDashboardStats,
+            'comprehensiveDashboardStats' => $comprehensiveDashboardStats,
             'teams' => $teams,
             'tiers' => $tiers,
         ]);
