@@ -24,7 +24,7 @@ class PaymentsMoveInNewTableStructure extends Seeder
             ->where('total_payments', null)
             ->where('frequency', null)
             ->where('payment_status_id', PaymentStatusEnum::AUTHORISED)
-        //->where('code', 'CAR-GTUKFY49')
+            //->where('code', 'CAR-GTUKFY49')
             ->orderBy('created_at')
             ->get();
 
@@ -63,8 +63,13 @@ class PaymentsMoveInNewTableStructure extends Seeder
                     //echo $tempCode[0]."\n";
                 }
                 if (count($tempCode) == 2) {
-                    Log::info('MigratePaymentSeeder::Payment migration for Payment Code: '.$payment->code);
-                    //app(SplitPaymentService::class)->migratePayments($payment,$tempCode[0]);
+                    $totalPayments = Payment::where('code', 'like', "$code%")->whereNotIn('paymentable_type', $skipEmbededProducts)->count();
+                    if ($totalPayments == 1) { // If only 1 payment exists then migrate
+                        Log::info('MigratePaymentSeeder::Payment migration for Payment Code: '.$payment->code);
+                        ////app(SplitPaymentService::class)->migratePayments($payment, $tempCode[0]);
+                    } else {
+                        Log::info('MigratePaymentSeeder::Payment migration skipped for Payment Code: '.$payment->code.',having more than 1 child payments');
+                    }                   
                 }
             }
         }
