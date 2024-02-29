@@ -3366,10 +3366,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
           <div class="my-2 flex justify-end">
             <x-button
               class="mr-2"
-              v-if="
-                record.payment_status_id === paymentStatusEnum.AUTHORISED &&
-                !hasRole(rolesEnum.PA)
-              "
+              v-if="record.payment_status_id === paymentStatusEnum.AUTHORISED"
               @click.prevent="copyUploadURL"
               size="sm"
               color="orange"
