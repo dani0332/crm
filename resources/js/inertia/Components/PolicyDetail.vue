@@ -68,7 +68,8 @@ const policyDetailsForm = useForm({
   quote_policy_expiry_date:
     dateToYMD(page.props.record.renewal_expiry_date) || '',
   amount_with_vat: page.props.record.price_with_vat || '',
-  quote_plan_insurer_quote_number: planQuoteInsurerNumber.value || null,
+  quote_plan_insurer_quote_number:
+    planQuoteInsurerNumber.value || page.props.record.insurer_quote_number,
   quote_policy_issuance_status: page.props.record.policy_issuance_status_id,
   quote_policy_issuance_status_other:
     page.props.record.policy_issuance_status_other || '',
@@ -333,6 +334,7 @@ const onUpdatePolicyDetails = isValid => {
             type="text"
             placeholder="Insurer Quote Number"
             class="w-full"
+            :rules="[rules.isRequired]"
             :disabled="!policyDetailsState.isEditing"
           />
         </div>
