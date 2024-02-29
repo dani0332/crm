@@ -98,7 +98,7 @@ class CentralController extends Controller
             $diff = Carbon::parse($created_at_start)->diffInDays(Carbon::parse($created_at_end));
 
             if ($diff > $diffInDays) {
-                return back()->with('error', 'Maximum of '.$diffInDays.' days ('.$error_fields.') are allowed to be exported.');
+                return back()->with('error', 'Maximum of ' . $diffInDays . ' days (' . $error_fields . ') are allowed to be exported.');
             }
         }
 
@@ -110,7 +110,7 @@ class CentralController extends Controller
             QuoteTypes::CYCLE->value,
             QuoteTypes::JETSKI->value,
         ])) {
-            return app(PersonalQuotesExport::class)->download($quoteType.'_leads');
+            return app(PersonalQuotesExport::class)->download($quoteType . '_leads');
         }
 
         if (QuoteTypes::CAR->value == ucfirst($quoteType)) {
@@ -233,6 +233,7 @@ class CentralController extends Controller
     public function sendBookingPolicy(SendBookPolicyRequest $sendBookPolicyRequest)
     {
         $request = (object) $sendBookPolicyRequest->validated();
+
         $quote = $this->getQuoteObject($request->model_type, $request->quote_id);
 
         if ($request->send_policy_type == 'customer') {
@@ -264,8 +265,11 @@ class CentralController extends Controller
                 ]], 500);
             }
 
-            // dispath job to send email
-            dispatch(new SendBookPolicyDocumentsJob($request));
+            if ($quote->quote_status_id != QuoteStatusEnum::PolicySentToCustomer) {
+
+                // dispath job to send email
+                dispatch(new SendBookPolicyDocumentsJob($request));
+            }
 
             $quote->update([
                 'quote_status_id' => QuoteStatusEnum::PolicyBooked,

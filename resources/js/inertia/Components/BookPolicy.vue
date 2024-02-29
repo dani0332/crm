@@ -541,36 +541,66 @@ const caculateCommission = () => {
                 page.props.quoteStatusEnum.PolicySentToCustomer
               "
             >
-              <x-tooltip>
+              <x-button
+                v-if="bp.isEditing"
+                class="mt-4 mr-2"
+                color="emerald"
+                size="sm"
+                :loading="bpForm.processing"
+                @click.prevent="bp.isEditing = false"
+              >
+                Cancel
+              </x-button>
+              <x-button
+                v-if="bp.isEditing"
+                class="mt-4 mr-2"
+                color="emerald"
+                size="sm"
+                :loading="bpForm.processing"
+                type="submit"
+              >
+                Update
+              </x-button>
+              <div v-if="!bp.isEditing && props.bPDetails?.editButton">
                 <x-button
                   class="mt-4 mr-2"
                   color="emerald"
                   size="sm"
-                  :disabled="true"
+                  :disabled="!props.bPDetails?.editButton"
+                  @click.prevent="bp.isEditing = true"
                 >
                   Edit
                 </x-button>
-                <template #tooltip>
-                  <span>{{
-                    'The button is not accessable because policy has been sent to customer'
-                  }}</span>
-                </template>
-              </x-tooltip>
-              <x-tooltip>
+              </div>
+
+              <template v-if="props.bPDetails?.editButton">
                 <x-button
                   size="sm"
                   class="mt-4 mr-2"
                   color="orange"
-                  :disabled="true"
+                  :disabled="!props.bPDetails?.editButton || bp.isEditing"
+                  @click.prevent="confirmSendPolicy"
                 >
-                  Send Policy To Customer
-                </x-button>
-                <template #tooltip>
-                  <span>{{
-                    'The button is not accessable because policy has been sent to customer'
-                  }}</span>
-                </template>
-              </x-tooltip>
+                  Send Policy
+                </x-button></template
+              >
+              <template v-else>
+                <x-tooltip>
+                  <x-button
+                    size="sm"
+                    class="mt-4 mr-2"
+                    color="orange"
+                    :disabled="!props.bPDetails?.editButton"
+                  >
+                    Send Policy To Customer
+                  </x-button>
+                  <template #tooltip>
+                    <span>{{
+                      'The button is not accessable because policy has been sent to customer'
+                    }}</span>
+                  </template>
+                </x-tooltip></template
+              >
             </template>
           </template>
         </div>
