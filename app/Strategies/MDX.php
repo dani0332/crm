@@ -45,10 +45,10 @@ class MDX extends EmbeddedProduct
             $modelType = $item->model_type;
             $quoteId = $item->quote_request_id;
             $quoteObject = $this->getQuoteObject($modelType, $quoteId);
-            $status = $quoteObject->quoteStatus->text;
+            $status = $quoteObject->quoteStatus->text ?? '';
             $customer = $quoteObject->customer;
-            $carMake = $quoteObject->carMake->text;
-            $carModel = $quoteObject->carModel->text;
+            $carMake = $quoteObject->carMake->text ?? '';
+            $carModel = $quoteObject->carModel->text ?? '';
             $age = isset($quoteObject->dob) ?
                 Carbon::parse($quoteObject->dob)->diffInYears(Carbon::now()) . ' Years'
                 : '';
@@ -64,17 +64,17 @@ class MDX extends EmbeddedProduct
                 'payment_date' => isset($item->paid_at) ? Carbon::parse($item->paid_at)->format('m/d/Y') : '',
                 'plan_start_date' => $planStartDate,
                 'plan_end_date' => $planEndDate,
-                'certificate_number' => $item->certificate_number,
+                'certificate_number' => $item->certificate_number ?? '',
                 'name' => $quoteObject->first_name . ' ' . $quoteObject->last_name,
                 'dob' => isset($quoteObject->dob) ? Carbon::parse($quoteObject->dob)->format('m/d/Y') : '',
                 'age' => $age,
                 'vehicle' => $carMake . ' ' . $carModel,
-                'contact_number' => $quoteObject->mobile_no,
-                'email' => $quoteObject->email,
+                'contact_number' => $quoteObject->mobile_no ?? '',
+                'email' => $quoteObject->email ?? '',
                 'contribution_amount' => 'AED ' . $item->price_with_vat . '/-',
                 'status' => $status,
-                'policy_issuance_date' => $quoteObject->policy_issuance_date,
-                'emirates_id_number' => $customer->emirates_id_number,
+                'policy_issuance_date' => $quoteObject->policy_issuance_date ?? '',
+                'emirates_id_number' => $customer->emirates_id_number ?? '',
             ];
         });
     }
