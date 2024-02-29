@@ -192,20 +192,36 @@ trait GenericQueriesAllLobs
         $bPDetails['text'] = '';
         if (!empty($quoteDocuments)) {
             $document_type_codes = collect($quoteDocuments)->pluck('document_type_code')->toArray();
+            if(quoteTypeCode::Life == $quoteType) {
+                if (in_array(QuoteDocumentsEnum::LIFE_POLICY_CERTIFICATE, $document_type_codes) && in_array(QuoteDocumentsEnum::LIFE_POLICY_SCHEDULE, $document_type_codes) && in_array(QuoteDocumentsEnum::LIFE_POLICY_HANDBOOK, $document_type_codes)) {
+                    $bPDetails['sendButton'] = true;
+                    $bPDetails['text'] = 'Send Policy To Customer';
+                    $bPDetails['sendPolicyType'] = 'customer';
+                }
+                $taxDocuments = (in_array(QuoteDocumentsEnum::LIFE_TAX_INVOICE, $document_type_codes) && in_array(QuoteDocumentsEnum::LIFE_TAX_INVOICE_RAISE_BY_BUYER, $document_type_codes));
+    
+                if ($bPDetails['sendButton'] && $taxDocuments) {
+                    $bPDetails['text'] = 'Send Policy';
+                    $bPDetails['editButton'] = true;
+                    $bPDetails['sendPolicyType'] = 'sage';
+                }
+                
+            } else{
+                if (in_array(QuoteDocumentsEnum::CAR_POLICY_CERTIFICATE, $document_type_codes) && in_array(QuoteDocumentsEnum::POLICY_SCHEDULE, $document_type_codes) && in_array(QuoteDocumentsEnum::POLICY_HANDBOOK, $document_type_codes)) {
 
-            if (in_array(QuoteDocumentsEnum::CAR_POLICY_CERTIFICATE, $document_type_codes) && in_array(QuoteDocumentsEnum::POLICY_SCHEDULE, $document_type_codes) && in_array(QuoteDocumentsEnum::POLICY_HANDBOOK, $document_type_codes)) {
-
-                $bPDetails['sendButton'] = true;
-                $bPDetails['text'] = 'Send Policy To Customer';
-                $bPDetails['sendPolicyType'] = 'customer';
+                    $bPDetails['sendButton'] = true;
+                    $bPDetails['text'] = 'Send Policy To Customer';
+                    $bPDetails['sendPolicyType'] = 'customer';
+                }
+                $taxDocuments = (in_array(QuoteDocumentsEnum::CAR_TAX_INVOICE, $document_type_codes) && in_array(QuoteDocumentsEnum::CAR_TAX_INVOICE_RAISE_BY_BUYER, $document_type_codes));
+    
+                if ($bPDetails['sendButton'] && $taxDocuments) {
+                    $bPDetails['text'] = 'Send Policy';
+                    $bPDetails['editButton'] = true;
+                    $bPDetails['sendPolicyType'] = 'sage';
+                }
             }
-            $taxDocuments = (in_array(QuoteDocumentsEnum::CAR_TAX_INVOICE, $document_type_codes) && in_array(QuoteDocumentsEnum::CAR_TAX_INVOICE_RAISE_BY_BUYER, $document_type_codes));
-
-            if ($bPDetails['sendButton'] && $taxDocuments) {
-                $bPDetails['text'] = 'Send Policy';
-                $bPDetails['editButton'] = true;
-                $bPDetails['sendPolicyType'] = 'sage';
-            }
+            
         }
         return $bPDetails;
     }
