@@ -64,11 +64,7 @@ class SendUpdateCustomerRequest extends FormRequest
                             if (! (in_array(DocumentTypeCode::SEND_UPDATE_POLICY_CERTIFICATE, $this->sendUpdateDocuemnts->toArray()) || in_array(DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE, $this->sendUpdateDocuemnts->toArray()))) {
                                 $validator->errors()->add('error', 'Please upload documents. ');
                             }
-                        } elseif (in_array($option, [SendUpdateLogStatusEnum::QR, SendUpdateLogStatusEnum::RFAML])) {
-                            if (! in_array(DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE, $this->sendUpdateDocuemnts->toArray())) {
-                                $validator->errors()->add('error', 'Please upload documents. ');
-                            }
-                        } elseif ($option == SendUpdateLogStatusEnum::RFEC) {
+                        } elseif (in_array($option, [SendUpdateLogStatusEnum::QR, SendUpdateLogStatusEnum::RFAML, SendUpdateLogStatusEnum::RFEC])) {
                             if (! in_array(DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE, $this->sendUpdateDocuemnts->toArray())) {
                                 $validator->errors()->add('error', 'Please upload documents. ');
                             }
