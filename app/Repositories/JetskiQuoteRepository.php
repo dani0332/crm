@@ -114,8 +114,8 @@ class JetskiQuoteRepository extends BaseRepository
             'quoteStatus',
             'currentlyInsuredWith',
             'advisor',
-        ])->when(\auth()->user()->hasRole(RolesEnum::JetskiAdvisor), function ($query) {
-            $query->where('advisor_id', \auth()->user()->id);
+        ])->when(auth()->user()->hasRole(RolesEnum::JetskiAdvisor), function ($query) {
+            $query->where('advisor_id', auth()->user()->id);
         })->filter(! $forExport)
         ->withFakeLeadCriteria()
         ->orderBy('created_at', 'desc');
