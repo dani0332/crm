@@ -29,7 +29,6 @@ use App\Http\Requests\ExportPlansPdfRequest;
 use App\Http\Requests\StorePaymentRequest;
 use App\Http\Requests\UpdateLeadStatusRequest;
 use App\Http\Requests\UpdatePaymentRequest;
-use App\Http\Requests\MigratePaymentsRequest;
 use App\Jobs\CarRenewalEmailJob;
 use App\Jobs\SyncSIBContactJob;
 use App\Models\CarMake;
@@ -1742,8 +1741,8 @@ class CRUDController extends Controller
 
             return back()->with('success', 'Payment has been created');
         }
-    }    
-    
+    }
+
     public function updatePayment(UpdatePaymentRequest $request)
     {
         if ($request->new_payment_structure) {

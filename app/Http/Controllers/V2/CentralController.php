@@ -5,7 +5,6 @@ namespace App\Http\Controllers\V2;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\QuoteTypes;
-use App\Enums\PermissionsEnum;
 use App\Exports\AmtQuoteExport;
 use App\Exports\BusinessQuoteExport;
 use App\Exports\CarQuoteExport;
@@ -21,12 +20,12 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\CustomerProfileRequest;
 use App\Http\Requests\DuplicateLobRequest;
 use App\Http\Requests\LeadAssignRequest;
-use App\Http\Requests\PlanDetailsRequest;
-use App\Http\Requests\UpdateLastYearPolicyRequest;
-use App\Http\Requests\UpdateSelectedPlanRequest;
 use App\Http\Requests\MigratePaymentsRequest;
+use App\Http\Requests\PlanDetailsRequest;
 use App\Http\Requests\SplitPaymentApproveRequest;
 use App\Http\Requests\SplitPaymentUpdateRequest;
+use App\Http\Requests\UpdateLastYearPolicyRequest;
+use App\Http\Requests\UpdateSelectedPlanRequest;
 use App\Models\Customer;
 use App\Models\Entity;
 use App\Models\QuoteRequestEntityMapping;
@@ -217,20 +216,23 @@ class CentralController extends Controller
 
     // Migrate payments from old system to new system
     public function migratePayment(MigratePaymentsRequest $request)
-    { 
+    {
         $successMessage = PaymentRepository::migratePayments($request);
-        return $successMessage;        
+
+        return $successMessage;
     }
     // Update split payment status
     public function splitPaymentUpdate(SplitPaymentUpdateRequest $request)
     {
         $successMessage = PaymentRepository::updatePaymentStatus($request);
+
         return back()->with('success', $successMessage);
     }
     // Approve split payments
     public function splitPaymentsApprove(SplitPaymentApproveRequest $request)
     {
         $successMessage = PaymentRepository::updateSplitPaymentsApprove($request);
+
         return back()->with('success', $successMessage);
     }
 

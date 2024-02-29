@@ -2,14 +2,13 @@
 
 namespace Database\Seeders;
 
-use App\Models\Payment;
-use App\Models\PaymentSplits;
-use Illuminate\Database\Seeder;
 use App\Enums\PaymentStatusEnum;
-use Carbon\Carbon;
-use App\Services\SplitPaymentService;
-use Illuminate\Support\Facades\Log;
 use App\Enums\quoteTypeCode;
+use App\Models\Payment;
+use App\Services\SplitPaymentService;
+use Carbon\Carbon;
+use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Log;
 
 class PaymentsMoveInNewTableStructure extends Seeder
 {
@@ -19,27 +18,26 @@ class PaymentsMoveInNewTableStructure extends Seeder
     public function run(): void
     {
         Log::info('MigratePaymentSeeder::Payment migration started');
-        $skipEmbededProducts = ['App\Models\EmbeddedTransactions','App\Models\EmbeddedTransaction'];
-        $payments = Payment::whereNotIn('paymentable_type',$skipEmbededProducts)
-        ->where('created_at', '>=', Carbon::now()->subDays(30))
-        ->where('total_payments', NULL)
-        ->where('frequency', NULL)
-        ->where('payment_status_id',PaymentStatusEnum::AUTHORISED)
+        $skipEmbededProducts = ['App\Models\EmbeddedTransactions', 'App\Models\EmbeddedTransaction'];
+        $payments = Payment::whereNotIn('paymentable_type', $skipEmbededProducts)
+            ->where('created_at', '>=', Carbon::now()->subDays(30))
+            ->where('total_payments', null)
+            ->where('frequency', null)
+            ->where('payment_status_id', PaymentStatusEnum::AUTHORISED)
         //->where('code', 'CAR-GTUKFY49')
-        ->orderBy('created_at')
-        ->get();
+            ->orderBy('created_at')
+            ->get();
 
-        if($payments->count() > 0){
-            $ecommerceLob = ['P', 'TRA','HEA','CAR'];
-            foreach($payments as $payment){
+        if ($payments->count() > 0) {
+            $ecommerceLob = ['P', 'TRA', 'HEA', 'CAR'];
+            foreach ($payments as $payment) {
                 // Extract the code and check if it has child payments
                 $code = $payment->code;
                 $tempCode = explode('-', $code);
-                
-                if(!in_array($tempCode[0],$ecommerceLob))
-                {                    
+
+                if (! in_array($tempCode[0], $ecommerceLob)) {
                     $modelType = 'Car';
-                    switch($tempCode[0]){
+                    switch ($tempCode[0]) {
                         case 'BUS':
                             $tempCode[0] = quoteTypeCode::Business;
                             break;
@@ -66,12 +64,12 @@ class PaymentsMoveInNewTableStructure extends Seeder
                 }
                 if (count($tempCode) == 2) {
                     Log::info('MigratePaymentSeeder::Payment migration for Payment Code: '.$payment->code);
-                    //app(SplitPaymentService::class)->migratePayments($payment,$tempCode[0]);                    
+                    //app(SplitPaymentService::class)->migratePayments($payment,$tempCode[0]);
                 }
             }
         }
         Log::info('MigratePaymentSeeder::Total Payments migrated: '.$payments->count());
-        
+
         /* IF PARENT DOES NOT EXISTS THEN CREATE A NEW PAYMENT */
         /*$payments = Payment::whereNotIn('paymentable_type', ['App\Models\EmbeddedTransaction'])
             ->orderBy('created_at')

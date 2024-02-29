@@ -3125,8 +3125,7 @@ const handlePlanSelected = plan => {
       v-if="!isNewPaymentStructure"
       :quoteId="record.id"
       :paymentCode = "record.code"
-      :quoteType="quoteType"
-      :planPrice="paymentEntityModel.premium"      
+      :quoteType="quoteType"      
     />    
 
     <PaymentTableNew 

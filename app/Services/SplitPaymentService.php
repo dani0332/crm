@@ -4,16 +4,16 @@ namespace App\Services;
 
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
-use App\Enums\QuoteTypeId;
 use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypeId;
 use App\Factories\SagePayloadFactory;
-use App\Models\PaymentSplits;
 use App\Models\Payment;
+use App\Models\PaymentSplits;
 use App\Models\QuoteDocument;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\SageLoggable;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class SplitPaymentService
 {
@@ -45,11 +45,11 @@ class SplitPaymentService
     }
     // function to get the payment status of the child payment
     public function getChildPaymentStatus($splitPayment)
-    {  
+    {
         $paymentType = $splitPayment->payment_method;
         $childPaymentStatus = PaymentStatusEnum::NEW;
-        if($paymentType == PaymentMethodsEnum::InsurerPayment){
-            if ($splitPayment->documents()->count()>0){
+        if ($paymentType == PaymentMethodsEnum::InsurerPayment) {
+            if ($splitPayment->documents()->count() > 0) {
                 $childPaymentStatus = PaymentStatusEnum::PENDING;
             }
         } elseif ($paymentType == PaymentMethodsEnum::BankTransfer ||
@@ -60,6 +60,7 @@ class SplitPaymentService
         } elseif ($paymentType == PaymentMethodsEnum::CreditApproval) {
             $childPaymentStatus = PaymentStatusEnum::CREDIT_APPROVED;
         }
+
         return $childPaymentStatus;
     }
 
@@ -157,64 +158,82 @@ class SplitPaymentService
         return false;
     }
 
-    // Migrate payments from old system to new system
-    public function migratePayments($payment, $modelType, $premium=0)
-    {   
-        if ($payment){
+    // Migrate payments from old system to new system ,will be called from command/seeder and lead page
+    public function migratePayments($payment, $modelType, $premium = 0)
+    {
+        if ($payment) {
             return DB::transaction(function () use ($payment, $modelType, $premium) {
-                $skipEmbededProducts = ['App\Models\EmbeddedTransactions','App\Models\EmbeddedTransaction'];
-                $ecomModels = [quoteTypeCode::Car ,quoteTypeCode::Health,quoteTypeCode::Travel];
+                $skipEmbededProducts = ['App\Models\EmbeddedTransactions', 'App\Models\EmbeddedTransaction'];
+                $ecomModels = [quoteTypeCode::Car, quoteTypeCode::Health, quoteTypeCode::Travel];
                 // Extract the code and check if it has child payments
                 $code = $payment->code;
                 $tempCode = explode('-', $code);
                 if (count($tempCode) == 3) {
                     $code = $tempCode[0].'-'.$tempCode[1];
-                }            
+                }
+                $quoteModelObject = $this->getModelObject(strtolower($modelType));
+                $modelObject = $quoteModelObject::where('code', $code)->first();
+                if (! $modelObject) {
+                    Log::info('MigratePayment::LOB does not exists for Payment Code: '.$payment->code);
+
+                    return false;
+                }
+                $premium = 0;
+                if ($modelType == quoteTypeCode::Health) {
+                    //Get Ecommerce Health Premium
+                    $ecomDetail = app(HealthQuoteService::class)->getEcomDetails($modelObject);
+                    if (isset($ecomDetail['priceWithVAT'])) {
+                        $premium = $ecomDetail['priceWithVAT'];
+                    }
+                } elseif (isset($modelObject->premium)) {
+                    $premium = $modelObject->premium;
+                }
 
                 $splitPaymentExists = PaymentSplits::where('code', $code)->count();
                 if ($splitPaymentExists > 0) {
                     Log::info('MigratePayment::Split Payment already exists for Payment Code: '.$payment->code);
+
                     return false;
                 }
 
                 // verify master payment exists or not
                 $masterPaymentExists = Payment::where('code', $code)->count();
-                if (! ($masterPaymentExists > 0)) {                
+                if (! ($masterPaymentExists > 0)) {
                     Log::info('MigratePayment::Master Payment does not exists for Payment Code: '.$payment->code);
-                    return false;               
+
+                    return false;
                 }
-                
+
                 /*
                 $parentCollectionAmount = 0;
                 if ($payment->payment_status_id == PaymentStatusEnum::PAID || $payment->payment_status_id == PaymentStatusEnum::CAPTURED //if paid or captured
                     || $payment->payment_status_id == PaymentStatusEnum::PARTIAL_CAPTURED || $payment->payment_status_id == PaymentStatusEnum::PARTIALLY_PAID //if partial paid or captured
-                ) { 
+                ) {
                     $parentCollectionAmount = $payment->captured_amount;
                 }*/
 
                 $childPayments = Payment::where('code', 'like', "$code%")->whereNotIn('paymentable_type', $skipEmbededProducts)->get();
-                if ($childPayments->count() > 5) {                
+                if ($childPayments->count() > 5) {
                     Log::info('MigratePayment::Child Payments are greater than 5 for Payment Code: '.$payment->code);
-                    return false;               
+
+                    return false;
                 }
 
                 Log::info('MigratePayment::Total Child Payments for Payment Code: '.$payment->code.' are: '.$childPayments->count());
-                
+
                 $parentCollectionAmount = 0;
                 $grandTotal = $childPayments->sum('captured_amount');
-                $payment->total_payments = $childPayments->count();            
-                
+                $payment->total_payments = $childPayments->count();
+
                 // Create plan detail for non ecommerce lobs
-                if(!in_array(ucfirst($modelType), $ecomModels) && $childPayments->count()==1){                    
-                    if ( $payment->insurance_provider_id>0 ) {                        
-                        $quoteModelObject = $this->getModelObject(strtolower($modelType));  
-                        $modelObject = $quoteModelObject::where('code',$oldPayment->code)->first();                        
+                if (! in_array(ucfirst($modelType), $ecomModels) && $childPayments->count() == 1) {
+                    if ($payment->insurance_provider_id > 0) {
                         //get 5% of grandTotal
                         $vat = $grandTotal * 0.05;
-                        if($modelObject){
+                        if ($modelObject) {
                             $modelObject->price_with_vat = $grandTotal;
                             $modelObject->insurance_provider_id = $payment->insurance_provider_id;
-                            $modelObject->price_without_vat = $grandTotal-$vat;
+                            $modelObject->price_without_vat = $grandTotal - $vat;
                             $modelObject->save();
                             Log::info('MigratePayment::Plan Detail updated for Payment Code: '.$payment->code);
                         } else {
@@ -224,33 +243,39 @@ class SplitPaymentService
                         Log::info('MigratePayment::Insurance Provider not found for Payment Code: '.$payment->code);
                     }
                 }
-                // Create a new SplitPayment record                
-                if ($childPayments->count()===1){
+                // Create a new SplitPayment record
+                if ($childPayments->count() === 1) {
                     $payment->frequency = 'upfront';
                 } else {
                     $payment->frequency = 'split_payments';
                 }
-                $payment->total_price = $grandTotal;
+
+                if (in_array(ucfirst($modelType), $ecomModels)) {
+                    $payment->total_price = $premium;
+                } else {
+                    $payment->total_price = $grandTotal;
+                }
+
                 $payment->total_amount = $grandTotal;
                 $payment->collection_type = 'broker';
 
                 if ($payment->payment_status_id == PaymentStatusEnum::DRAFT) { //draft
                     $payment->payment_status_id = PaymentStatusEnum::NEW; //new
-                } else if(
+                } elseif (
                     ($payment->payment_status_id == PaymentStatusEnum::CAPTURED || $payment->payment_status_id == PaymentStatusEnum::PARTIAL_CAPTURED)
                     && $premium > 0
                 ) {
                     $capturedAmount = 0;
                     foreach ($childPayments as $childPayment) {
-                        if ($childPayment->payment_status_id == PaymentStatusEnum::CAPTURED 
-                        || $childPayment->payment_status_id == PaymentStatusEnum::PARTIAL_CAPTURED 
+                        if ($childPayment->payment_status_id == PaymentStatusEnum::CAPTURED
+                        || $childPayment->payment_status_id == PaymentStatusEnum::PARTIAL_CAPTURED
                         ) {
                             $capturedAmount += $childPayment->captured_amount;
                         }
                     }
-                    if( $premium>$capturedAmount ){
-                        $payment->payment_status_id = PaymentStatusEnum::PARTIALLY_PAID; //partially paid                    
-                    } 
+                    if ($premium > $capturedAmount) {
+                        $payment->payment_status_id = PaymentStatusEnum::PARTIALLY_PAID; //partially paid
+                    }
                 }
                 //$payment->captured_amount = $parentCollectionAmount;
                 $payment->collection_date = $payment->updated_at;
@@ -267,7 +292,7 @@ class SplitPaymentService
                         $collectionAmount = 0;
                         if ($childPayment->payment_status_id == PaymentStatusEnum::PAID || $childPayment->payment_status_id == PaymentStatusEnum::CAPTURED //if paid or captured
                         || $childPayment->payment_status_id == PaymentStatusEnum::PARTIAL_CAPTURED || $childPayment->payment_status_id == PaymentStatusEnum::PARTIALLY_PAID //if partial paid or captured
-                        ) { 
+                        ) {
                             $collectionAmount = $childPayment->captured_amount;
                             $parentCollectionAmount += $childPayment->captured_amount;
                         }
@@ -302,19 +327,21 @@ class SplitPaymentService
                     }
                     if ($payment->code == $code) {
 
-                        if( $premium>0 && $premium>$parentCollectionAmount ){
-                            $payment->payment_status_id = PaymentStatusEnum::PARTIALLY_PAID; //partially paid                    
-                        } 
+                        if ($premium > 0 && $premium > $parentCollectionAmount) {
+                            $payment->payment_status_id = PaymentStatusEnum::PARTIALLY_PAID; //partially paid
+                        }
 
                         $payment->captured_amount = $parentCollectionAmount;
                         $payment->save();
                     }
                     Log::info('MigratePayment::Payment migrated for Payment Code: '.$payment->code);
-                }            
-                return true; 
-            });      
+                }
+
+                return true;
+            });
         } else {
             Log::info('MigratePayment::Payment does not exists for Payment Code: '.$payment->code);
+
             return false;
         }
     }

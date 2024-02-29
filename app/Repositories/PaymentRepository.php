@@ -130,7 +130,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
             return back()->with('error', $exception->getMessage());
         }
     }
-    
+
     public function fetchUpdateNewPayment($request)
     {
         DB::beginTransaction();
@@ -171,10 +171,10 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
             $payment->update($paymentInformation);
 
             //Update split payments start
-            if (!empty($request->trashedFilesModal)) {
+            if (! empty($request->trashedFilesModal)) {
                 QuoteDocument::whereIn('doc_name', $request->trashedFilesModal)->delete();
             }
-            $this->updatePaymentSplits($request);       
+            $this->updatePaymentSplits($request);
             DB::commit(); // Commit changes if everything went well
 
             return back()->with('success', 'Payment Updated');
@@ -196,7 +196,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
 
         foreach ($masterPayment->payment_splits as $splitPayment) {
             if (isset($splitPayment['payment_method']) && $splitPayment['payment_method'] != null) {
-                
+
                 $splitPaymentInformation = [
                     'code' => $quoteID,
                     'sr_no' => $splitPayment['sr_no'],
@@ -244,6 +244,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                     $paymentSplit->payment_status_id == PaymentStatusEnum::CAPTURED ||
                     $paymentSplit->payment_status_id == PaymentStatusEnum::AUTHORISED) {
                     $paymentPaidSerialNo[] = $paymentSplit->sr_no;
+
                     continue;
                 }
                 if (($masterPayment->payment_no < $paymentSplits->count()) && $paymentSplit->sr_no > $masterPayment->payment_no) {
@@ -279,6 +280,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                     'payment_method' => $splitPayment['payment_method'],
                     'check_detail' => isset($splitPayment['check_detail']) ? $splitPayment['check_detail'] : null,
                     'payment_amount' => $splitPayment['payment_amount'],
+                    'payment_status_id' => PaymentStatusEnum::NEW, //reset status to 'NEW
                     'due_date' => $splitPayment['due_date'],
                     'discount_value' => $discount,
                 ];
@@ -302,10 +304,10 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                         }
                     }
                 }
-                if($paymentSplitRecord){
+                if ($paymentSplitRecord) {
                     $childPaymentStatus = app(SplitPaymentService::class)->getChildPaymentStatus($paymentSplitRecord);
                     $paymentSplitRecord->update(['payment_status_id' => $childPaymentStatus]);
-                }                
+                }
             }
         }
         $payment = Payment::where('code', $request->paymentCode)->first();
@@ -333,7 +335,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
         } else {
             $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($request->modelType));
             if ($request->is_capture) { //update collected amount in childs
-                
+
                 foreach ($request->collection_amount as $key => $splitAmount) {
                     $paymentSplit = PaymentSplits::where(['code' => $request->payment_code, 'sr_no' => $key])->first();
                     if ($paymentSplit && $paymentSplit->payment_status_id != PaymentStatusEnum::PAID) {
@@ -406,11 +408,12 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
     {
         $quoteModel = $this->getQuoteObject(request()->model_type, request()->quote_id);
         $oldPayment = $quoteModel->payments()->where('code', $request->payment_code)->first();
-        $paymentMigrated = app(SplitPaymentService::class)->migratePayments($oldPayment, $request->model_type, $request->plan_price);        
-        if ($paymentMigrated) { 
+        $paymentMigrated = app(SplitPaymentService::class)->migratePayments($oldPayment, $request->model_type);
+        if ($paymentMigrated) {
             return response()->json(['message' => 'Payment Migrated Successfully']);
         }
-        return response()->json(['error' => 'Payment Migration Failed']);        
+
+        return response()->json(['error' => 'Payment Migration Failed']);
     }
 
     public function fetchUpdatePaymentStatus($request)
@@ -499,9 +502,9 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                 } else {
                     //verify credit approved status
                     $totalCreditPayments = PaymentSplits::whereIn('payment_status_id', [
-                        PaymentStatusEnum::CREDIT_APPROVED,                        
-                    ])->where('code', $payment->code)->count();                    
-                    if($totalCreditPayments>0){
+                        PaymentStatusEnum::CREDIT_APPROVED,
+                    ])->where('code', $payment->code)->count();
+                    if ($totalCreditPayments > 0) {
                         $payment->update(
                             ['payment_status_id' => PaymentStatusEnum::CREDIT_APPROVED]
                         );
@@ -509,7 +512,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                         $payment->update(
                             ['payment_status_id' => PaymentStatusEnum::NEW]
                         );
-                    }                   
+                    }
                 }
             }
         }

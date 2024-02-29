@@ -1,5 +1,6 @@
 <script setup>
 import PaymentTableNew from './../../Components/PaymentTableNew.vue';
+import MigratePayment from './../../Components/MigratePayment.vue';
 import LazyDocumentUploader from './Partials/DocumentUploader.vue';
 import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue';
@@ -2350,6 +2351,13 @@ const genderList = [
         <LazyAvailablePlan :plan="planDetails" />
       </x-modal>
     </div>
+
+    <MigratePayment
+      v-if="!isNewPaymentStructure"
+      :quoteId="quote.id"
+      :paymentCode = "quote.code"
+      quoteType="Travel"      
+    />
 
     <PaymentTableNew 
 			v-if="isNewPaymentStructure"

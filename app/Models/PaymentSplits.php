@@ -2,11 +2,11 @@
 
 namespace App\Models;
 
+use App\Enums\PaymentStatusEnum;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use OwenIt\Auditing\Auditable as AuditableTrait;
 use OwenIt\Auditing\Contracts\Auditable;
-use App\Enums\PaymentStatusEnum;
 
 class PaymentSplits extends Model implements Auditable
 {
@@ -56,12 +56,12 @@ class PaymentSplits extends Model implements Auditable
     // render payment status PAID if payment status is CAPTURED on BA Request
     public function getPaymentStatusIdAttribute($value)
     {
-        if ($value==PaymentStatusEnum::CAPTURED) {
+        if ($value == PaymentStatusEnum::CAPTURED) {
             return PaymentStatusEnum::PAID;
-        } else if($value==PaymentStatusEnum::PARTIAL_CAPTURED) {
+        } elseif ($value == PaymentStatusEnum::PARTIAL_CAPTURED) {
             return PaymentStatusEnum::PARTIALLY_PAID;
         } else {
             return $value;
-        }        
+        }
     }
 }

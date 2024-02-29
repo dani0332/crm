@@ -3,8 +3,7 @@
 const props = defineProps({
     quoteType: String,
     quoteId: Number,
-    paymentCode: String,
-    planPrice: String,
+    paymentCode: String,    
 });
 
 const notification = useNotifications('toast');
@@ -17,8 +16,7 @@ const migratePayment = () => {
     let data = {
         'model_type' : props.quoteType,
         'quote_id' : props.quoteId,
-        'payment_code' : props.paymentCode,
-        'plan_price' : props.planPrice,
+        'payment_code' : props.paymentCode,        
     }
     
     axios.post(`/payments/${props.quoteType}/migrate-payment`, data)
@@ -36,9 +34,9 @@ const migratePayment = () => {
                     position: 'top',
                 });
             }           
-            /*setTimeout(() => {
+            setTimeout(() => {
                 location.reload();
-            }, 500); */          
+            }, 500);           
         })
         .catch(err => {           
             console.log(err)
@@ -59,6 +57,7 @@ const showConfirmation = () => {
 
 <template>
     <div style="float:right; padding:20px;">
+        
         <x-button
             size="sm"
             color="orange"

@@ -31,7 +31,7 @@ class PaymentOverdueStatus extends Command
         info('PaymentOverdueStatus Command Started');
         // get payments where payment status is not paid/captured and collection date is less than current date
         $currentTime = now()->format('Y-m-d').' 00:00:00';
-        
+
         $payments = Payment::where('payment_status_id', PaymentStatusEnum::NEW)
             ->where('collection_date', '<', $currentTime)
             ->where('total_payments', '>', 0)
