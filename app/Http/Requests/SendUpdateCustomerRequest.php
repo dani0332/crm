@@ -45,11 +45,6 @@ class SendUpdateCustomerRequest extends FormRequest
             $option = $this->sendUpdate->option->code;
 
             if ($this->sendUpdateDocuemnts->count()) {
-                // info();
-                /* if (in_array($document->document_type_code, [DocumentTypeCode::TTI, DocumentTypeCode::TTIRBB])) {
-                    $validator->errors()->add('error', 'Send Update already has Tax Invoice document. Please remove the existing document and try again.');
-                } */
-
                 if ($category == SendUpdateLogStatusEnum::EF) {
                     if ($this->sendUpdate->status != SendUpdateLogStatusEnum::TRANSACTION_APPROVED) {
                         if (! in_array($option, [SendUpdateLogStatusEnum::MPC, SendUpdateLogStatusEnum::MDOM, SendUpdateLogStatusEnum::MDOV, SendUpdateLogStatusEnum::ED, SendUpdateLogStatusEnum::DM])) {
