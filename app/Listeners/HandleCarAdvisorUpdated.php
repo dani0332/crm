@@ -56,12 +56,18 @@ class HandleCarAdvisorUpdated
 
         info('about to trigger intro email job for lead uuid : '.$lead->uuid.' and previous advisor id : '.$oldAdvisorId);
 
-        SendOCBIntroEmailJob::dispatch($lead->uuid, $previousAdvisor);
-
         if ($lead->sic_flow_enabled) {
+
+            $lead->sic_flow_enabled = 0;
+            $lead->save();
+            info('SIC flow is disabled for lead uuid : '.$lead->uuid);
+
             // We need to trigger stop workflow event for SIC if the lead is in SIC workflow
             SIBService::createWorkflowEvent(config('constants.SIC_END_WORKFLOW_NAME'), $lead);
+            info('SIC workflow stopped for lead uuid : '.$lead->uuid);
         }
+
+        SendOCBIntroEmailJob::dispatch($lead->uuid, $previousAdvisor);
 
         info('SMS sending code reached');
 
