@@ -130,7 +130,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
             return back()->with('error', $exception->getMessage());
         }
     }
-
+    
     public function fetchUpdateNewPayment($request)
     {
         DB::beginTransaction();
@@ -171,10 +171,10 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
             $payment->update($paymentInformation);
 
             //Update split payments start
-            $this->updatePaymentSplits($request);
             if (!empty($request->trashedFilesModal)) {
                 QuoteDocument::whereIn('doc_name', $request->trashedFilesModal)->delete();
-            }       
+            }
+            $this->updatePaymentSplits($request);       
             DB::commit(); // Commit changes if everything went well
 
             return back()->with('success', 'Payment Updated');
@@ -184,7 +184,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
             return back()->with('error', $exception->getMessage());
         }
     }
-
+    //Add split payments
     public function addPaymentSplits($request, $quoteID)
     {
         $masterPayment = (object) $request->payment;
@@ -196,7 +196,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
 
         foreach ($masterPayment->payment_splits as $splitPayment) {
             if (isset($splitPayment['payment_method']) && $splitPayment['payment_method'] != null) {
-                $childPaymentStatus = app(SplitPaymentService::class)->getChildPaymentStatus($splitPayment['payment_method']);
+                
                 $splitPaymentInformation = [
                     'code' => $quoteID,
                     'sr_no' => $splitPayment['sr_no'],
@@ -204,7 +204,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                     'check_detail' => isset($splitPayment['check_detail']) ? $splitPayment['check_detail'] : null,
                     'payment_amount' => $splitPayment['payment_amount'],
                     'due_date' => $splitPayment['due_date'],
-                    'payment_status_id' => $childPaymentStatus,
+                    'payment_status_id' => PaymentStatusEnum::NEW,
                     'discount_value' => $discount,
                 ];
                 $paymentSplitRecord = PaymentSplits::create($splitPaymentInformation);
@@ -219,10 +219,11 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                             }
                         }
                     }
+                    $childPaymentStatus = app(SplitPaymentService::class)->getChildPaymentStatus($paymentSplitRecord);
+                    $paymentSplitRecord->update(['payment_status_id' => $childPaymentStatus]);
                 }
             }
         }
-
         //Update parent payment status
         $payment = Payment::where('code', $quoteID)->first();
         $this->setMasterPaymentStatus($payment);
@@ -281,7 +282,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                     'due_date' => $splitPayment['due_date'],
                     'discount_value' => $discount,
                 ];
-                $splitPaymentInformation['payment_status_id'] = app(SplitPaymentService::class)->getChildPaymentStatus($splitPayment['payment_method']);
+
                 $paymentSplitRecord = PaymentSplits::where(['code' => $request->paymentCode, 'sr_no' => $serialNo])->first();
                 if (! $paymentSplitRecord) {
                     $paymentSplitRecord = PaymentSplits::create($splitPaymentInformation);
@@ -301,6 +302,10 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                         }
                     }
                 }
+                if($paymentSplitRecord){
+                    $childPaymentStatus = app(SplitPaymentService::class)->getChildPaymentStatus($paymentSplitRecord);
+                    $paymentSplitRecord->update(['payment_status_id' => $childPaymentStatus]);
+                }                
             }
         }
         $payment = Payment::where('code', $request->paymentCode)->first();
@@ -346,7 +351,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                             }
                             //Marshal Service to capture split payment
                             $response = app(CRUDService::class)->capturePayment($quoteModel, $paymentSplit, $quoteTypeId, $splitAmount);
-                            $paymentSplit->payment_status_id = PaymentStatusEnum::PAID;
+                            $paymentSplit->payment_status_id = PaymentStatusEnum::CAPTURED;
                         }
                         DB::beginTransaction();
                         try {

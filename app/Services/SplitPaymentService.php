@@ -43,12 +43,16 @@ class SplitPaymentService
             }
         }
     }
-
-    public function getChildPaymentStatus($paymentType)
-    {
+    // function to get the payment status of the child payment
+    public function getChildPaymentStatus($splitPayment)
+    {  
+        $paymentType = $splitPayment->payment_method;
         $childPaymentStatus = PaymentStatusEnum::NEW;
-        if ($paymentType == PaymentMethodsEnum::BankTransfer ||
-            $paymentType == PaymentMethodsEnum::InsurerPayment ||
+        if($paymentType == PaymentMethodsEnum::InsurerPayment){
+            if ($splitPayment->documents()->count()>0){
+                $childPaymentStatus = PaymentStatusEnum::PENDING;
+            }
+        } elseif ($paymentType == PaymentMethodsEnum::BankTransfer ||
             $paymentType == PaymentMethodsEnum::Cheque ||
             $paymentType == PaymentMethodsEnum::PostDatedCheque
         ) {
@@ -56,7 +60,6 @@ class SplitPaymentService
         } elseif ($paymentType == PaymentMethodsEnum::CreditApproval) {
             $childPaymentStatus = PaymentStatusEnum::CREDIT_APPROVED;
         }
-
         return $childPaymentStatus;
     }
 
