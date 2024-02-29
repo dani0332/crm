@@ -129,7 +129,7 @@ class EmbeddedProductController extends Controller
     public function reportsList()
     {
         $config = config('embedded-products.reports');
-        $data = EmbeddedProductRepository::getData('active', array_keys($config));
+        $data = EmbeddedProductRepository::getData('all', array_keys($config));
 
         return inertia('EmbeddedProducts/ReportsList', [
             'embeddedProducts' => $data,
