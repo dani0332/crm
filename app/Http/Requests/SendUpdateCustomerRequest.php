@@ -45,45 +45,51 @@ class SendUpdateCustomerRequest extends FormRequest
             $option = $this->sendUpdate->option->code;
 
             if ($this->sendUpdateDocuemnts->count()) {
-                if ($category == SendUpdateLogStatusEnum::EF) {
-                    if ($this->sendUpdate->status != SendUpdateLogStatusEnum::TRANSACTION_APPROVED) {
-                        if (! in_array($option, [SendUpdateLogStatusEnum::MPC, SendUpdateLogStatusEnum::MDOM, SendUpdateLogStatusEnum::MDOV, SendUpdateLogStatusEnum::ED, SendUpdateLogStatusEnum::DM])) {
-                            $validator->errors()->add('error', 'Transaction approval is required. ');
+                switch ($category) {
+                    case SendUpdateLogStatusEnum::EF:
+                        if ($this->sendUpdate->status != SendUpdateLogStatusEnum::TRANSACTION_APPROVED) {
+                            if (! in_array($option, [SendUpdateLogStatusEnum::MPC, SendUpdateLogStatusEnum::MDOM, SendUpdateLogStatusEnum::MDOV, SendUpdateLogStatusEnum::ED, SendUpdateLogStatusEnum::DM])) {
+                                $validator->errors()->add('error', 'Transaction approval is required. ');
+                            }
                         }
-                    }
-                    if (! (in_array(DocumentTypeCode::SEND_UPDATE_POLICY_CERTIFICATE, $this->sendUpdateDocuemnts->toArray()) || in_array(DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE, $this->sendUpdateDocuemnts->toArray()))) {
-                        $validator->errors()->add('error', 'Please upload the Endorsed schedule or Endorsed certificate. ');
-                    }
-                } elseif ($category == SendUpdateLogStatusEnum::EN) {
-                    if (in_array($this->sendUpdate->quoteType->code, [quoteTypeCode::Car, quoteTypeCode::Bike, quoteTypeCode::Travel, quoteTypeCode::Life, quoteTypeCode::Home, quoteTypeCode::Pet, quoteTypeCode::Cycle, quoteTypeCode::Yacht, quoteTypeCode::CORPLINE])) {
                         if (! (in_array(DocumentTypeCode::SEND_UPDATE_POLICY_CERTIFICATE, $this->sendUpdateDocuemnts->toArray()) || in_array(DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE, $this->sendUpdateDocuemnts->toArray()))) {
-                            $validator->errors()->add('error', 'Please upload documents. ');
+                            $validator->errors()->add('error', 'Please upload the Endorsed schedule or Endorsed certificate. ');
                         }
-                    } elseif ($this->sendUpdate->quoteType->code == quoteTypeCode::Health) {
-                        if (in_array($option, [SendUpdateLogStatusEnum::CAA, SendUpdateLogStatusEnum::EIU, SendUpdateLogStatusEnum::MSCNFI, SendUpdateLogStatusEnum::RFCOC, SendUpdateLogStatusEnum::RFCOI, SendUpdateLogStatusEnum::WOWPA])) {
+                        break;
+                    case SendUpdateLogStatusEnum::EN:
+                        if (in_array($this->sendUpdate->quoteType->code, [quoteTypeCode::Car, quoteTypeCode::Bike, quoteTypeCode::Travel, quoteTypeCode::Life, quoteTypeCode::Home, quoteTypeCode::Pet, quoteTypeCode::Cycle, quoteTypeCode::Yacht, quoteTypeCode::CORPLINE])) {
                             if (! (in_array(DocumentTypeCode::SEND_UPDATE_POLICY_CERTIFICATE, $this->sendUpdateDocuemnts->toArray()) || in_array(DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE, $this->sendUpdateDocuemnts->toArray()))) {
                                 $validator->errors()->add('error', 'Please upload documents. ');
                             }
-                        } elseif (in_array($option, [SendUpdateLogStatusEnum::QR, SendUpdateLogStatusEnum::RFAML, SendUpdateLogStatusEnum::RFEC])) {
-                            if (! in_array(DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE, $this->sendUpdateDocuemnts->toArray())) {
-                                $validator->errors()->add('error', 'Please upload documents. ');
+                        } elseif ($this->sendUpdate->quoteType->code == quoteTypeCode::Health) {
+                            if (in_array($option, [SendUpdateLogStatusEnum::CAA, SendUpdateLogStatusEnum::EIU, SendUpdateLogStatusEnum::MSCNFI, SendUpdateLogStatusEnum::RFCOC, SendUpdateLogStatusEnum::RFCOI, SendUpdateLogStatusEnum::WOWPA])) {
+                                if (! (in_array(DocumentTypeCode::SEND_UPDATE_POLICY_CERTIFICATE, $this->sendUpdateDocuemnts->toArray()) || in_array(DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE, $this->sendUpdateDocuemnts->toArray()))) {
+                                    $validator->errors()->add('error', 'Please upload documents. ');
+                                }
+                            } elseif (in_array($option, [SendUpdateLogStatusEnum::QR, SendUpdateLogStatusEnum::RFAML, SendUpdateLogStatusEnum::RFEC])) {
+                                if (! in_array(DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE, $this->sendUpdateDocuemnts->toArray())) {
+                                    $validator->errors()->add('error', 'Please upload documents. ');
+                                }
+                            }
+                        } elseif ($this->sendUpdate->quoteType->code == quoteTypeCode::GroupMedical) {
+                            if (in_array($option, [SendUpdateLogStatusEnum::CAA, SendUpdateLogStatusEnum::RFCOC, SendUpdateLogStatusEnum::RFCOI, SendUpdateLogStatusEnum::RTI])) {
+                                if (! (in_array(DocumentTypeCode::SEND_UPDATE_POLICY_CERTIFICATE, $this->sendUpdateDocuemnts->toArray()) || in_array(DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE, $this->sendUpdateDocuemnts->toArray()))) {
+                                    $validator->errors()->add('error', 'Please upload documents. ');
+                                }
+                            } elseif (in_array($option, [SendUpdateLogStatusEnum::EIU, SendUpdateLogStatusEnum::MSCNFI, SendUpdateLogStatusEnum::QR, SendUpdateLogStatusEnum::RFAML, SendUpdateLogStatusEnum::RFSOA, SendUpdateLogStatusEnum::WOWPA])) {
+                                if (! in_array(DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE, $this->sendUpdateDocuemnts->toArray())) {
+                                    $validator->errors()->add('error', 'Please upload documents. ');
+                                }
                             }
                         }
-                    } elseif ($this->sendUpdate->quoteType->code == quoteTypeCode::GroupMedical) {
-                        if (in_array($option, [SendUpdateLogStatusEnum::CAA, SendUpdateLogStatusEnum::RFCOC, SendUpdateLogStatusEnum::RFCOI, SendUpdateLogStatusEnum::RTI])) {
-                            if (! (in_array(DocumentTypeCode::SEND_UPDATE_POLICY_CERTIFICATE, $this->sendUpdateDocuemnts->toArray()) || in_array(DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE, $this->sendUpdateDocuemnts->toArray()))) {
-                                $validator->errors()->add('error', 'Please upload documents. ');
-                            }
-                        } elseif (in_array($option, [SendUpdateLogStatusEnum::EIU, SendUpdateLogStatusEnum::MSCNFI, SendUpdateLogStatusEnum::QR, SendUpdateLogStatusEnum::RFAML, SendUpdateLogStatusEnum::RFSOA, SendUpdateLogStatusEnum::WOWPA])) {
-                            if (! in_array(DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE, $this->sendUpdateDocuemnts->toArray())) {
-                                $validator->errors()->add('error', 'Please upload documents. ');
-                            }
+                        break;
+                    case SendUpdateLogStatusEnum::CI:
+                    case SendUpdateLogStatusEnum::CIR:
+                    case SendUpdateLogStatusEnum::CPU:
+                        if (! (in_array(DocumentTypeCode::SEND_UPDATE_POLICY_CERTIFICATE, $this->sendUpdateDocuemnts->toArray()) || in_array(DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE, $this->sendUpdateDocuemnts->toArray()))) {
+                            $validator->errors()->add('error', 'Please upload the Endorsed schedule or Endorsed certificate. ');
                         }
-                    }
-                } elseif (in_array($category, [SendUpdateLogStatusEnum::CI, SendUpdateLogStatusEnum::CIR, SendUpdateLogStatusEnum::CPU])) {
-                    if (! (in_array(DocumentTypeCode::SEND_UPDATE_POLICY_CERTIFICATE, $this->sendUpdateDocuemnts->toArray()) || in_array(DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE, $this->sendUpdateDocuemnts->toArray()))) {
-                        $validator->errors()->add('error', 'Please upload the Endorsed schedule or Endorsed certificate. ');
-                    }
+                        break;
                 }
             }
         });
