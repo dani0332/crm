@@ -843,6 +843,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
 			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name, tooltip: pm.tool_tip } })"
 			:storageUrl="storageUrl"
 		/>
+    
     <QuotePayments
       v-else
       :can="can"
@@ -854,12 +855,33 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       :personal-plans="personalPlans"
     />
 
+    <PolicyDetail
+      v-if="permissions.isQuoteDocumentEnabled"
+      :record="record"
+      :quoteStatusEnum="enums.quoteStatusEnum"
+      :policyIssuanceStatus="policyIssuanceStatus"
+      modelType="Cycle"
+    />
+
     <QuoteDocuments
       :document-types="documentTypes"
       :quote-documents="quote.documents || []"
       :storageUrl="storageUrl"
       :quote="quote"
       :expanded="sectionExpanded"
+    />
+
+    <BookPolicy
+      v-if="
+        canAny([
+          permissionEnum.VIEW_INSLY_BOOK_POLICY,
+          permissionEnum.SEND_INSLY_BOOK_POLICY,
+        ])
+      "
+      :quote="record"
+      quoteType="Cycle"
+      :bPDetails="bPDetails"
+      :payments="payments"
     />
 
     <SendUpdates
@@ -876,14 +898,6 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       :quoteStatusesEnum="quoteStatusesEnum"
     /> 
 
-    <PolicyDetail
-      v-if="permissions.isQuoteDocumentEnabled"
-      :record="record"
-      :quoteStatusEnum="enums.quoteStatusEnum"
-      :policyIssuanceStatus="policyIssuanceStatus"
-      modelType="Cycle"
-    />
-
     <EmbeddedProducts
       :data="embeddedProducts"
       :link="quote.uuid"
@@ -891,19 +905,6 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       :quote="quote"
       :modelType="quoteType"
       :expanded="sectionExpanded"
-    />
-
-    <BookPolicy
-      v-if="
-        canAny([
-          permissionEnum.VIEW_INSLY_BOOK_POLICY,
-          permissionEnum.SEND_INSLY_BOOK_POLICY,
-        ])
-      "
-      :quote="record"
-      quoteType="Cycle"
-      :bPDetails="bPDetails"
-      :payments="payments"
     />
     
     <AuditLogs :quote-type="quoteType" :id="$page.props.quote.id" :quoteCode="$page.props.quote.code" :expanded="sectionExpanded" />

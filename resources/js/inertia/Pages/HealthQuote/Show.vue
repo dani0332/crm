@@ -2446,14 +2446,6 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       </Collapsible>
     </div>
 
-    <PolicyDetail
-      v-if="permissions.isQuoteDocumentEnabled"
-      :record="record"
-      :quoteStatusEnum="enums.quoteStatusEnum"
-      :policyIssuanceStatus="policyIssuanceStatus"
-      modelType="health"
-    />
-
     <div class="p-4 rounded shadow mb-6 bg-white">
       <Collapsible :expanded="sectionExpanded">
         <template #header>
@@ -2769,19 +2761,12 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       :expanded="sectionExpanded"
     />
 
-
-    <BookPolicy
-      v-if="
-        canAny([
-          permissionEnum.VIEW_INSLY_BOOK_POLICY,
-          permissionEnum.SEND_INSLY_BOOK_POLICY,
-        ])
-      "
-      :quote="record"
-      quoteType="health"
-      :bPDetails="bPDetails"
-      :payments="payments"
-      :expanded="sectionExpanded"
+    <PolicyDetail
+      v-if="permissions.isQuoteDocumentEnabled"
+      :record="record"
+      :quoteStatusEnum="enums.quoteStatusEnum"
+      :policyIssuanceStatus="policyIssuanceStatus"
+      modelType="health"
     />
 
     <div class="p-4 rounded shadow mb-6 bg-white">
@@ -2847,6 +2832,21 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
         </template>
       </Collapsible>
     </div>
+    
+    <BookPolicy
+      v-if="
+        canAny([
+          permissionEnum.VIEW_INSLY_BOOK_POLICY,
+          permissionEnum.SEND_INSLY_BOOK_POLICY,
+        ])
+      "
+      :quote="record"
+      quoteType="health"
+      :bPDetails="bPDetails"
+      :payments="payments"
+      :expanded="sectionExpanded"
+    />
+
     <x-modal v-model="modals.doc" size="xl" show-close backdrop>
       <template #header> Upload Documents </template>
       <LazyDocumentUploader
@@ -3129,7 +3129,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
     </div>
 
     <ClientInquiryLogs
-      v-if="clientInquiryLogs.length > 0"
+      v-if="clientInquiryLogs?.length > 0"
       :logs="clientInquiryLogs"
       />
 

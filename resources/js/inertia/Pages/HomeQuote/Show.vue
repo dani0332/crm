@@ -965,14 +965,6 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       </dl>
     </x-modal>
 
-    <PolicyDetail
-      v-if="permissions.isQuoteDocumentEnabled"
-      :record="record"
-      :quoteStatusEnum="enums.quoteStatusEnum"
-      :policyIssuanceStatus="policyIssuanceStatus"
-      modelType="home"
-    />
-
     <MemberDetails
       v-if="quote.customer_type == page.props.customerTypeEnum.Individual"
       :quote="quote"
@@ -1122,6 +1114,31 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       :quote="quote"
     />
 
+    <EmbeddedProducts
+      :data="embeddedProducts"
+      :link="quote.uuid"
+      :code="quote.code"
+      :quote="quote"
+      :modelType="quoteType"
+      :expanded="sectionExpanded"
+    />
+
+    <PolicyDetail
+      v-if="permissions.isQuoteDocumentEnabled"
+      :record="record"
+      :quoteStatusEnum="enums.quoteStatusEnum"
+      :policyIssuanceStatus="policyIssuanceStatus"
+      modelType="home"
+    />
+
+    <QuoteDocuments
+      :document-types="documentTypes"
+      :quote-documents="quoteDocuments || []"
+      :storageUrl="storageUrl"
+      :quote="quote"
+      :expanded="sectionExpanded"
+    />
+    
     <BookPolicy
       v-if="
         canAny([
@@ -1133,23 +1150,6 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       quoteType="home"
       :bPDetails="bPDetails"
       :payments="payments"
-      :expanded="sectionExpanded"
-    />
-
-    <EmbeddedProducts
-      :data="embeddedProducts"
-      :link="quote.uuid"
-      :code="quote.code"
-      :quote="quote"
-      :modelType="quoteType"
-      :expanded="sectionExpanded"
-    />
-
-    <QuoteDocuments
-      :document-types="documentTypes"
-      :quote-documents="quoteDocuments || []"
-      :storageUrl="storageUrl"
-      :quote="quote"
       :expanded="sectionExpanded"
     />
 

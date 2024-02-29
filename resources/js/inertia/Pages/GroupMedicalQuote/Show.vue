@@ -865,6 +865,13 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       :expanded="sectionExpanded"
     />
 
+    <PolicyDetail
+      v-if="permissions.isQuoteDocumentEnabled"
+      :record="record"
+      :quoteStatusEnum="enums.quoteStatusEnum"
+      :policyIssuanceStatus="policyIssuanceStatus"
+      modelType="business"
+    />
     <QuoteDocuments
       :document-types="documentTypes"
       :quote-documents="quote.documents || []"
@@ -873,6 +880,19 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       :expanded="sectionExpanded"
     />
 
+    <BookPolicy
+      v-if="
+        canAny([
+          permissionEnum.VIEW_INSLY_BOOK_POLICY,
+          permissionEnum.SEND_INSLY_BOOK_POLICY,
+        ])
+      "
+      :quote="record"
+      quoteType="business"
+      :bPDetails="bPDetails"
+      :payments="payments"
+    />	
+    
     <div class="p-4 rounded shadow mb-6 bg-primary-50/25">
       <Collapsible :expanded="sectionExpanded">
         <template #header>
@@ -976,33 +996,12 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       quoteSubType="Group Medical"
 		/>
 
-    <PolicyDetail
-      v-if="permissions.isQuoteDocumentEnabled"
-      :record="record"
-      :quoteStatusEnum="enums.quoteStatusEnum"
-      :policyIssuanceStatus="policyIssuanceStatus"
-      modelType="business"
-    />
-		
     <SendUpdates
       v-if="hasPolicyIssuedStatus"
       :reportable="quote"
       :quote_type_id="$page.props.quoteTypeId"
       :options="sendUpdateOptions"
       :data="sendUpdateLogs"
-    />	
-
-    <BookPolicy
-      v-if="
-        canAny([
-          permissionEnum.VIEW_INSLY_BOOK_POLICY,
-          permissionEnum.SEND_INSLY_BOOK_POLICY,
-        ])
-      "
-      :quote="record"
-      quoteType="business"
-      :bPDetails="bPDetails"
-      :payments="payments"
     />	
 
     <div class="p-4 rounded shadow mb-6 bg-white">

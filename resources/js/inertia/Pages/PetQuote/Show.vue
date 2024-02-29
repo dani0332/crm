@@ -3,7 +3,6 @@ import QuoteDocuments from '../PersonalQuote/Partials/QuoteDocuments';
 import QuoteStatus from '../PersonalQuote/Partials/QuoteStatus';
 import QuotePayments from '../PersonalQuote/Partials/QuotePayments';
 import QuoteActivities from '../PersonalQuote/Partials/QuoteActivities';
-import QuotePolicy from '../PersonalQuote/Partials/QuotePolicy';
 import AdditionalContacts from '../PersonalQuote/Partials/AdditionalContacts.vue';
 import LeadHistory from '../PersonalQuote/Partials/LeadHistory.vue';
 import MemberDetails from '../../Components/MemberDetails.vue';
@@ -876,17 +875,6 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       :expanded="sectionExpanded"
     />
 
-    <PolicyDetail
-      v-if="permissions.isQuoteDocumentEnabled"
-      :record="record"
-      :quoteStatusEnum="enums.quoteStatusEnum"
-      :policyIssuanceStatus="policyIssuanceStatus"
-      modelType="pet"
-      :expanded="sectionExpanded"
-    />
-
-    <!-- <QuotePolicy :quote="quote" :can="can" :quoteStatusEnum="quoteStatusEnum" /> -->
-
     <EmbeddedProducts
       :data="embeddedProducts"
       :link="quote.uuid"
@@ -896,7 +884,14 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       :expanded="sectionExpanded"
     />
 
-    <QuotePolicy :quote="quote" :can="can" :quoteStatusEnum="quoteStatusEnum" :expanded="sectionExpanded" />
+    <PolicyDetail
+      v-if="permissions.isQuoteDocumentEnabled"
+      :record="record"
+      :quoteStatusEnum="enums.quoteStatusEnum"
+      :policyIssuanceStatus="policyIssuanceStatus"
+      modelType="pet"
+      :expanded="sectionExpanded"
+    />
 
     <QuoteDocuments
       :document-types="documentTypes"
@@ -904,14 +899,6 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       :storageUrl="storageUrl"
       :quote="quote"
       :expanded="sectionExpanded"
-    />
-
-    <SendUpdates
-      v-if="hasPolicyIssuedStatus"
-      :reportable="quote"
-      :quote_type_id="$page.props.quoteTypeId"
-      :options="sendUpdateOptions"
-      :data="sendUpdateLogs"
     />
 
     <BookPolicy
@@ -926,6 +913,14 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       :bPDetails="bPDetails"
       :payments="payments"
       :expanded="sectionExpanded"
+    />
+
+    <SendUpdates
+      v-if="hasPolicyIssuedStatus"
+      :reportable="quote"
+      :quote_type_id="$page.props.quoteTypeId"
+      :options="sendUpdateOptions"
+      :data="sendUpdateLogs"
     />
 
     <LeadHistory :quote="quote" :expanded="sectionExpanded" />

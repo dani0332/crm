@@ -2104,105 +2104,6 @@ const handleSelectionChange = (tableType, selectedItems) => {
     </div>
 
     <div class="p-4 rounded shadow mb-6 bg-white">
-      <Collapsible expanded>
-        <template #header>
-          <div>
-            <h3 class="font-semibold text-primary-800 text-lg">
-              Policy Details
-            </h3>
-          </div>
-        </template>
-        <template #body>
-          <x-divider class="my-4" />
-          <x-form @submit="submitPolicyDetails" :auto-focus="false">
-            <div class="flex gap-6 w-full">
-              <div class="w-full md:w-1/2">
-                <x-input
-                  v-model="policyDetails.policy_number"
-                  :disabled="!policyDetails.editMode"
-                  label="POLICY NUMBER"
-                  :rules="[isRequired, policy_number]"
-                  class="w-full"
-                />
-              </div>
-              <div class="w-full md:w-1/2">
-                <DatePicker
-                  v-model="policyDetails.policy_issuance_date"
-                  :disabled="!policyDetails.editMode"
-                  type="date"
-                  label="ISSUANCE DATE"
-                  :rules="[isRequired]"
-                  class="w-full"
-                />
-              </div>
-            </div>
-            <div class="flex gap-6 w-full">
-              <div class="w-full md:w-1/2">
-                <DatePicker
-                  v-model="policyDetails.policy_start_date"
-                  :disabled="!policyDetails.editMode"
-                  type="date"
-                  label="START DATE"
-                  :rules="[isRequired, policy_start_date]"
-                  class="w-full"
-                />
-              </div>
-              <div class="w-full md:w-1/2">
-                <DatePicker
-                  v-model="policyDetails.renewal_expiry_date"
-                  :disabled="!policyDetails.editMode"
-                  type="date"
-                  label="EXPIRY DATE"
-                  :rules="[isRequired, renewal_expiry_date]"
-                  class="w-full"
-                />
-              </div>
-            </div>
-            <div class="flex gap-6 w-full">
-              <div class="w-full md:w-1/2">
-                <x-input
-                  v-model="policyDetails.premium"
-                  :disabled="!policyDetails.editMode"
-                  label="PRICE"
-                  :rules="[isRequired, premium]"
-                  class="w-full"
-                />
-              </div>
-              <div class="w-full md:w-1/2"></div>
-            </div>
-            <div
-              class="text-right space-x-4 mt-12"
-              v-if="policyDetails.canEdit"
-            >
-              <x-button
-                color="#007bff"
-                size="sm"
-                v-show="policyDetails.editMode"
-                @click.prevent="cancelPolicyFrom"
-                >Cancel</x-button
-              >
-              <x-button
-                color="#26B99A"
-                type="submit"
-                size="sm"
-                v-show="policyDetails.editMode"
-                >Update</x-button
-              >
-              <x-button
-                color="#007bff"
-                size="sm"
-                type="submit"
-                v-show="!policyDetails.editMode"
-                @click.prevent="policyDetails.editMode = true"
-                >Edit</x-button
-              >
-            </div>
-          </x-form>
-        </template>
-      </Collapsible>
-    </div>
-
-    <div class="p-4 rounded shadow mb-6 bg-white">
       <Collapsible :expanded="sectionExpanded">
         <template #header>
           <div class="flex flex-wrap gap-4 justify-between items-center">
@@ -2232,6 +2133,15 @@ const handleSelectionChange = (tableType, selectedItems) => {
         </template>
       </Collapsible>
     </div>
+
+    <PolicyDetail
+      v-if="permissions.isQuoteDocumentEnabled"
+      :record="record"
+      :quoteStatusEnum="enums.quoteStatusEnum"
+      :policyIssuanceStatus="policyIssuanceStatus"
+      modelType="travel"
+      :expanded="sectionExpanded"
+    />
 
     <div class="p-4 rounded shadow mb-6 bg-white">
       <Collapsible :expanded="sectionExpanded">
@@ -2301,6 +2211,21 @@ const handleSelectionChange = (tableType, selectedItems) => {
         </template>
       </Collapsible>
     </div>
+
+    <BookPolicy
+      v-if="
+        canAny([
+          permissionEnum.VIEW_INSLY_BOOK_POLICY,
+          permissionEnum.SEND_INSLY_BOOK_POLICY,
+        ])
+      "
+      :quote="record"
+      quoteType="travel"
+      :bPDetails="bPDetails"
+      :payments="payments"
+      :expanded="sectionExpanded"
+    />
+
     <x-modal v-model="modals.doc" size="xl" show-close backdrop>
       <template #header> Upload Documents </template>
       <LazyDocumentUploader
@@ -2353,14 +2278,6 @@ const handleSelectionChange = (tableType, selectedItems) => {
       :quote="quote"
     />
 
-    <PolicyDetail
-      v-if="permissions.isQuoteDocumentEnabled"
-      :record="record"
-      :quoteStatusEnum="enums.quoteStatusEnum"
-      :policyIssuanceStatus="policyIssuanceStatus"
-      modelType="travel"
-      :expanded="sectionExpanded"
-    />
 
     <div class="p-4 rounded shadow mb-6 bg-white">
       <Collapsible :expanded="sectionExpanded">
@@ -2600,20 +2517,6 @@ const handleSelectionChange = (tableType, selectedItems) => {
       :code="quote.code"
       :quote="quote"
       :modelType="quoteType"
-      :expanded="sectionExpanded"
-    />
-
-    <BookPolicy
-      v-if="
-        canAny([
-          permissionEnum.VIEW_INSLY_BOOK_POLICY,
-          permissionEnum.SEND_INSLY_BOOK_POLICY,
-        ])
-      "
-      :quote="record"
-      quoteType="travel"
-      :bPDetails="bPDetails"
-      :payments="payments"
       :expanded="sectionExpanded"
     />
 

@@ -755,6 +755,15 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       :personal-plans="personalPlans"
     />
 
+    <EmbeddedProducts
+      :data="embeddedProducts"
+      :link="quote.uuid"
+      :code="quote.code"
+      :quote="quote"
+      :modelType="quoteType"
+      :expanded="sectionExpanded"
+    />
+
     <PolicyDetail
       v-if="permissions.isQuoteDocumentEnabled"
       :record="record"
@@ -763,12 +772,13 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       modelType="Yacht"
     />
 
-    <EmbeddedProducts
-      :data="embeddedProducts"
-      :link="quote.uuid"
-      :code="quote.code"
+    <QuoteDocuments
+      :document-types="documentTypes"
+      :quote-documents="quote.documents || []"
+      :storageUrl="storageUrl"
       :quote="quote"
-      :modelType="quoteType"
+      :quoteType="quoteType"
+      :vatPrice="vatPercentage"
       :expanded="sectionExpanded"
     />
 
@@ -783,16 +793,6 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       quoteType="Yacht"
       :bPDetails="bPDetails"
       :payments="payments"
-    />
-
-    <QuoteDocuments
-      :document-types="documentTypes"
-      :quote-documents="quote.documents || []"
-      :storageUrl="storageUrl"
-      :quote="quote"
-      :quoteType="quoteType"
-      :vatPrice="vatPercentage"
-      :expanded="sectionExpanded"
     />
 
     <SendUpdates

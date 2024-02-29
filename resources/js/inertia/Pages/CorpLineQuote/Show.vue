@@ -1108,14 +1108,6 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       :quote="quote"
     />
 
-    <QuoteDocuments
-      :document-types="documentTypes"
-      :quote-documents="page.props.quoteDocuments || []"
-      :storageUrl="storageUrl"
-      :quote="quote"
-      :expanded="sectionExpanded"
-    />
-
     <PolicyDetail
       v-if="permissions.isQuoteDocumentEnabled"
       :record="record"
@@ -1124,12 +1116,12 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       modelType="Business"
     />
 
-    <SendUpdates
-      v-if="hasPolicyIssuedStatus"
-      :reportable="quote"
-      :quote_type_id="$page.props.quoteTypeId"
-      :options="sendUpdateOptions"
-      :data="sendUpdateLogs"
+    <QuoteDocuments
+      :document-types="documentTypes"
+      :quote-documents="page.props.quoteDocuments || []"
+      :storageUrl="storageUrl"
+      :quote="quote"
+      :expanded="sectionExpanded"
     />
 
     <BookPolicy
@@ -1143,6 +1135,14 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       quoteType="Business"
       :bPDetails="bPDetails"
       :payments="payments"
+    />
+
+    <SendUpdates
+      v-if="hasPolicyIssuedStatus"
+      :reportable="quote"
+      :quote_type_id="$page.props.quoteTypeId"
+      :options="sendUpdateOptions"
+      :data="sendUpdateLogs"
     />
 
     <div class="p-4 rounded shadow mb-6 bg-white">

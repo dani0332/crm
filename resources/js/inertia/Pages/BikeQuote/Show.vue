@@ -769,20 +769,20 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       :data="sendUpdateLogs"
     />
 
-    <QuoteDocuments
-      :document-types="documentTypes"
-      :quote-documents="quote.documents || []"
-      :storageUrl="storageUrl"
-      :quote="quote"
-      :expanded="sectionExpanded"
-    />
-
     <PolicyDetail
       v-if="permissions.isQuoteDocumentEnabled"
       :record="record"
       :quoteStatusEnum="enums.quoteStatusEnum"
       :policyIssuanceStatus="policyIssuanceStatus"
       modelType="Bike"
+    />
+    
+    <QuoteDocuments
+      :document-types="documentTypes"
+      :quote-documents="quote.documents || []"
+      :storageUrl="storageUrl"
+      :quote="quote"
+      :expanded="sectionExpanded"
     />
 
     <BookPolicy
