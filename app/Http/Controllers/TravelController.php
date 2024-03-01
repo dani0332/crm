@@ -22,7 +22,6 @@ use App\Http\Requests\TravelRenewalsUploadRequest;
 use App\Http\Requests\UpdateTravelRequest;
 use App\Models\Emirate;
 use App\Models\PolicyIssuanceStatus;
-use App\Models\PersonalQuote;
 use App\Repositories\CustomerMembersRepository;
 use App\Repositories\EmbeddedProductRepository;
 use App\Repositories\InsuranceProviderRepository;
@@ -204,8 +203,8 @@ class TravelController extends Controller
         $sendUpdateOptions = [];
         $sendUpdateLogs = [];
         $sendUpdateEnum = (object) [];
-        $hasPolicyIssuedStatus = $this->crudService->hasAtleastOneStatusPolicyIssued(QuoteTypes::TRAVEL->id(), $record->id);        
-        
+        $hasPolicyIssuedStatus = $this->crudService->hasAtleastOneStatusPolicyIssued(QuoteTypes::TRAVEL->id(), $record->id);
+
         if ($hasPolicyIssuedStatus) {
             $sendUpdateOptions = $this->lookupService->getSendUpdateOptions(QuoteTypeId::Travel);
             $sendUpdateLogs = SendUpdateLogRepository::findByQuoteUuid($record->uuid);
@@ -215,8 +214,8 @@ class TravelController extends Controller
         $sendUpdateOptions = [];
         $sendUpdateLogs = [];
         $sendUpdateEnum = (object) [];
-        $hasPolicyIssuedStatus = $this->crudService->hasAtleastOneStatusPolicyIssued(QuoteTypes::TRAVEL->id(), $record->id);        
-        
+        $hasPolicyIssuedStatus = $this->crudService->hasAtleastOneStatusPolicyIssued(QuoteTypes::TRAVEL->id(), $record->id);
+
         if ($hasPolicyIssuedStatus) {
             $sendUpdateOptions = $this->lookupService->getSendUpdateOptions(QuoteTypeId::Travel);
             $sendUpdateLogs = SendUpdateLogRepository::findByQuoteUuid($record->uuid);
@@ -294,9 +293,9 @@ class TravelController extends Controller
             'bPDetails' => $bPDetails,
             'quoteStatusEnum' => QuoteStatusEnum::asArray(),
             'isNewPaymentStructure' => $isNewPaymentStructure,
-	        'sendUpdateOptions' => $sendUpdateOptions,
+            'sendUpdateOptions' => $sendUpdateOptions,
             'sendUpdateLogs' => $sendUpdateLogs,
-            'hasPolicyIssuedStatus' => $hasPolicyIssuedStatus
+            'hasPolicyIssuedStatus' => $hasPolicyIssuedStatus,
         ]);
     }
 

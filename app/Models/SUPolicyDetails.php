@@ -10,6 +10,5 @@ class SUPolicyDetails extends Model
     use HasFactory;
 
     protected $table = 'su_policy_details';
-
     protected $gaurded = [];
 }

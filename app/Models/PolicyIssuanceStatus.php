@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class PolicyIssuanceStatus extends Model
 {
-    use  HasFactory;
+    use HasFactory;
 
     protected $table = 'policy_issuance_status';
 

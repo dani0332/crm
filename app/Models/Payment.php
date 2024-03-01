@@ -43,7 +43,7 @@ class Payment extends Model implements Auditable
      */
     public function getAllowAttribute()
     {
-        return $this->attributes['allow'] = ($this->payment_status_id != PaymentStatusEnum::CAPTURED && $this->payment_status_id != PaymentStatusEnum::AUTHORISED && !auth()->user()->hasRole(RolesEnum::PA));
+        return $this->attributes['allow'] = ($this->payment_status_id != PaymentStatusEnum::CAPTURED && $this->payment_status_id != PaymentStatusEnum::AUTHORISED && ! auth()->user()->hasRole(RolesEnum::PA));
     }
 
     /**
@@ -60,7 +60,7 @@ class Payment extends Model implements Auditable
     public function getApproveButtonAttribute()
     {
         return $this->attributes['approve_button'] = (optional($this->paymentMethod)->code != PaymentMethodsEnum::CreditCard && $this->payment_status_id != PaymentStatusEnum::PAID && $this->payment_status_id != PaymentStatusEnum::CAPTURED
-            && !auth()->user()->hasRole(RolesEnum::PA));
+            && ! auth()->user()->hasRole(RolesEnum::PA));
     }
 
     /**
@@ -135,17 +135,17 @@ class Payment extends Model implements Auditable
 
     public function getCreatedAtAttribute($date)
     {
-        return (!empty($date)) ? Carbon::parse($date)->format(config('constants.DATETIME_DISPLAY_FORMAT')) : '';
+        return (! empty($date)) ? Carbon::parse($date)->format(config('constants.DATETIME_DISPLAY_FORMAT')) : '';
     }
 
     public function getAuthorizedAtAttribute($date)
     {
-        return (!empty($date)) ? Carbon::parse($date)->format(config('constants.DATETIME_DISPLAY_FORMAT')) : '';
+        return (! empty($date)) ? Carbon::parse($date)->format(config('constants.DATETIME_DISPLAY_FORMAT')) : '';
     }
 
     public function getCapturedAtAttribute($date)
     {
-        return (!empty($date)) ? Carbon::parse($date)->format(config('constants.DATETIME_DISPLAY_FORMAT')) : '';
+        return (! empty($date)) ? Carbon::parse($date)->format(config('constants.DATETIME_DISPLAY_FORMAT')) : '';
     }
 
     /**

@@ -17,7 +17,6 @@ use App\Exports\HomeQuoteExport;
 use App\Exports\LifeQuotesExport;
 use App\Exports\PersonalQuotesExport;
 use App\Exports\TravelQuoteExport;
-use App\Factories\SagePayloadFactory;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\BookPolicyRequest;
 use App\Http\Requests\CustomerProfileRequest;
@@ -26,8 +25,8 @@ use App\Http\Requests\LeadAssignRequest;
 use App\Http\Requests\PlanDetailsRequest;
 use App\Http\Requests\SendBookPolicyRequest;
 use App\Http\Requests\UpdateLastYearPolicyRequest;
-use App\Jobs\SendBookPolicyDocumentsJob;
 use App\Http\Requests\UpdateSelectedPlanRequest;
+use App\Jobs\SendBookPolicyDocumentsJob;
 use App\Models\Customer;
 use App\Models\Entity;
 use App\Models\Payment;
@@ -39,8 +38,6 @@ use App\Services\SageApiService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
-use League\CommonMark\Extension\SmartPunct\Quote;
-use Maatwebsite\Excel\Facades\Excel;
 
 class CentralController extends Controller
 {
@@ -49,7 +46,7 @@ class CentralController extends Controller
     {
         $response = (new CentralService())->saveDuplicateLeads($request->validated());
 
-        if (!empty($response['errors'])) {
+        if (! empty($response['errors'])) {
             return redirect()->back()->withErrors($response['errors']);
         }
 
@@ -60,7 +57,7 @@ class CentralController extends Controller
     {
         $diffInDays = 120;
 
-        if (!$quoteType) {
+        if (! $quoteType) {
             return abort(404);
         }
 
@@ -154,7 +151,7 @@ class CentralController extends Controller
     {
         (new CentralService())->assignLeadToAdvisor($leadAssignRequest);
 
-        return redirect()->back()->with('success', ucfirst($leadAssignRequest->modelType) . ' Leads has been Assigned');
+        return redirect()->back()->with('success', ucfirst($leadAssignRequest->modelType).' Leads has been Assigned');
     }
 
     public function updateCustomerProfileDetails(CustomerProfileRequest $customerProfileRequest)
@@ -169,7 +166,7 @@ class CentralController extends Controller
 
         if ($customerProfileRequest->customer_type == CustomerTypeEnum::Entity) {
             $entity = Entity::updateOrCreate(['trade_license_no' => $customerProfileRequest->trade_license_no], $customerProfileRequest->validated());
-            $entity->update(['code' => CustomerTypeEnum::EntityShort . '-' . $entity->id]);
+            $entity->update(['code' => CustomerTypeEnum::EntityShort.'-'.$entity->id]);
 
             QuoteRequestEntityMapping::updateOrCreate([
                 'quote_type_id' => $customerProfileRequest->quote_type_id,
@@ -187,7 +184,7 @@ class CentralController extends Controller
     {
         $quote = $this->getQuoteObject($request->model_type, $request->quote_id);
 
-        if (!$quote) {
+        if (! $quote) {
             return redirect()->back()->with('error', 'Error Updating Policy Details.');
         }
 
@@ -216,7 +213,7 @@ class CentralController extends Controller
             'invoice_description' => $validatedData['invoice_description'],
         ];
         $payment = Payment::where('code', $validatedData['payment_code'])->first();
-        if (!$payment) {
+        if (! $payment) {
             return back()->with('message', 'Payment record not found');
         }
         $payment->update($paymentInformation);
@@ -226,9 +223,6 @@ class CentralController extends Controller
 
         return redirect()->back()->with('success', 'Booking Status has been updated.');
     }
-
-
-
 
     public function sendBookingPolicy(SendBookPolicyRequest $sendBookPolicyRequest)
     {
@@ -257,7 +251,6 @@ class CentralController extends Controller
             $sageService = new SageApiService();
             $response = $sageService->postBookPolicyToSage($request, $payment, $quote, $paymentSplits, $data);
 
-
             if ($response['status'] === false) {
                 return response()->json(['errors' => [
                     'message' => $response['message'],
@@ -271,7 +264,7 @@ class CentralController extends Controller
                 'quote_status_id' => QuoteStatusEnum::PolicyBooked,
             ]);
 
-            return response()->json(['message' =>  $response['message']], 200);
+            return response()->json(['message' => $response['message']], 200);
         }
     }
     public function loadAvailablePlans($type, $id)

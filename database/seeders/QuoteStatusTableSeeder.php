@@ -3,10 +3,8 @@
 namespace Database\Seeders;
 
 use App\Enums\QuoteStatusEnum;
-use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Models\QuoteStatus;
-use App\Models\QuoteStatusMap;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
@@ -34,7 +32,7 @@ class QuoteStatusTableSeeder extends Seeder
         ];
 
         // Policy Sent to Customer
-        if (!QuoteStatus::where('id', QuoteStatusEnum::PolicySentToCustomer)->first()) {
+        if (! QuoteStatus::where('id', QuoteStatusEnum::PolicySentToCustomer)->first()) {
             QuoteStatus::create([
                 'id' => QuoteStatusEnum::PolicySentToCustomer,
                 'text' => 'Policy Sent to Customer',
@@ -48,11 +46,11 @@ class QuoteStatusTableSeeder extends Seeder
             foreach ($lobs as $key => $item) {
 
                 $mapping = DB::table('quote_status_map')->where(['quote_type_id' => $item, 'quote_status_id' => QuoteStatusEnum::PolicySentToCustomer])->first();
-                if (!$mapping) {
+                if (! $mapping) {
                     DB::table('quote_status_map')->insert([
                         'quote_type_id' => $item,
                         'quote_status_id' => QuoteStatusEnum::PolicySentToCustomer,
-                        'sort_order' =>  ++$key,
+                        'sort_order' => ++$key,
                         'created_by' => 'nouman.hussain@insurancemarket.ae',
                         'updated_by' => 'nouman.hussain@insurancemarket.ae',
                         'created_at' => now(),
@@ -62,9 +60,8 @@ class QuoteStatusTableSeeder extends Seeder
             }
         }
 
-
         // Policy Booked
-        if (!QuoteStatus::where('id', QuoteStatusEnum::PolicyBooked)->first()) {
+        if (! QuoteStatus::where('id', QuoteStatusEnum::PolicyBooked)->first()) {
             QuoteStatus::create([
                 'id' => QuoteStatusEnum::PolicyBooked,
                 'text' => 'Policy Booked',
@@ -78,11 +75,11 @@ class QuoteStatusTableSeeder extends Seeder
             foreach ($lobs as $key => $item) {
 
                 $mapping = DB::table('quote_status_map')->where(['quote_type_id' => $item, 'quote_status_id' => QuoteStatusEnum::PolicyBooked])->first();
-                if (!$mapping) {
+                if (! $mapping) {
                     DB::table('quote_status_map')->insert([
                         'quote_type_id' => $item,
                         'quote_status_id' => QuoteStatusEnum::PolicyBooked,
-                        'sort_order' =>  ++$key,
+                        'sort_order' => ++$key,
                         'created_by' => 'nouman.hussain@insurancemarket.ae',
                         'updated_by' => 'nouman.hussain@insurancemarket.ae',
                         'created_at' => now(),
