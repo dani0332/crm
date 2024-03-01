@@ -593,7 +593,7 @@ class SendEmailCustomerService extends BaseService
                         $mimeType = $fileInfo->buffer($file);
                         $attachments[] = [
                             'Content' => base64_encode(file_get_contents($pwDoc)),
-                            'Name' => $item->document_type_text.'.pdf',
+                            'Name' => $item->document_type_text,
                             'ContentType' => $mimeType,
                         ];
                     }
