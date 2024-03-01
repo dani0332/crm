@@ -1122,6 +1122,7 @@ const editPaymentModal = (payment,split_payment_id,sr_no,capture_approval) => {
     //Assign plan for Travel
     if (props.quoteType === 'Travel') {      
       planDetail.value =  payment.travel_plan;
+      planDetail.value['insurance_provider'] =  payment.insurance_provider;
     }
   }
   
@@ -1670,9 +1671,6 @@ const getCaptureOption = computed(() => {
 });
 
 const getPlanName = computed(() => {
-  if (props.quoteType === 'Travel') {
-    return 'Not Available';
-  } 
   const plan = planDetail.value;
   return (quoteTypesToCheck.includes(props.quoteType) && plan) ? plan.text : 'Not Available';
 });
@@ -1681,7 +1679,7 @@ const providerName = computed(() => {
   const plan = planDetail.value;
     if (quoteTypesToCheck.includes(props.quoteType) && plan.insurance_provider) {
       return plan ? plan.insurance_provider.text : 'Not Available';
-    } else {
+    } else {      
       return plan ? plan.text : 'Not Available';
     }  
 });
