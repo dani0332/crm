@@ -24,5 +24,24 @@ final class SendUpdateLogStatusEnum extends Enum
     const CI = 'CI';    // Cancellation from Inception
     const CIR = 'CIR';  // Cancellation from Inception and Reissuance
     const CPD = 'CPD';  // Correction of Policy Details
-    const CPU = 'CPU'; //Correction of Policy Upload.
+    const MPC = 'MPC'; //Midterm policy cancellation
+    const MDOM = 'MDOM'; //Midterm deletion of member
+    const MDOV = 'MDOV'; //Midterm deletion of vehicle
+    const ED = 'ED'; //Employee deletion
+    const DM = 'DM'; //Delete member
+    const CPU = 'CPU'; // Correction of Policy Upload.
+    const CAA = 'CAA'; // Correction and amendments. 
+    const EIU = 'EIU'; // Emirates ID update. 
+    const MSCNFI = 'MSCNFI'; // Marital status change (with no financial impact).
+    const RFCOC = 'RFCOC'; // Request for certificate of continuity.
+    const RFCOI = 'RFCOI'; // Request for certificate of insurance.
+    const WOWPA = 'WOWPA'; // Waive off waiting period applied.
+    const QR = 'QR'; // Quote request.
+    const RFAML = 'RFAML'; // Request for active member list.
+    const RFEC = 'RFEC'; // Request for ecard copy.
+    const RTI = 'RTI'; // Request for tax invoice.
+    const RFSOA = 'RFSOA'; // Request for statement of account (SOA).
+    // send update log button. 
+    const SUC = 'Send Update to Customer'; // send update to customer. 
+    const SU = 'Send Update'; // send update. 
 }

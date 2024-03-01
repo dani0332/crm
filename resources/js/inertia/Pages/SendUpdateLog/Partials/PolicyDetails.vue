@@ -27,11 +27,26 @@ const state = reactive({
 const page = usePage();
 const notification = useToast();
 
+const issuanceStatus = page.props.issuanceStatuses;
+
 const issuanceStatusOptions = computed(() => {
-  return page.props.issuanceStatuses.map(status => {
+  return issuanceStatus.map(status => {
     return { label: status.text, value: status.id };
   })
-})
+});
+
+const issuanceStatusText = computed(() => {
+  const statusMap = new Map(issuanceStatus.map(status => [status.id, status.text]));
+
+  return (value) => statusMap.get(value);
+});
+
+/*const issuanceStatusTextById = computed(() => {
+  const statusMap = new Map(page.props.issuanceStatuses.map(status => [status.id, status.text]));
+  return (id) => statusMap.get(id);
+});*/
+
+
 
 const isEndorsementFinancial = computed(() => {
   return props.selectedCategory.subCategory.slug === 'EF' && props.selectedCategory.subCategory.option.slug === 'PPE'
@@ -152,6 +167,7 @@ const onUpdate = () => {
 								<x-input
 									v-if="isCPD"
 									:disabled="!state.isEdit"
+                  v-model="policyDetailsForm.provider_name"
 								/>
 								<span v-else>{{ policyDetailsForm.provider_name }}</span>
 							</dd>
@@ -171,6 +187,7 @@ const onUpdate = () => {
 								<x-input
 									v-if="isCPD"
 									:disabled="!state.isEdit"
+                  v-model="policyDetailsForm.plan_name"
 								/>
 								<span v-else>{{ policyDetailsForm.plan_name }}</span>
 							</dd>
@@ -299,7 +316,7 @@ const onUpdate = () => {
                   placeholder="Select Status"
                   class="w-1/2"
 								/>
-                <span v-else>{{ policyDetailsForm.issuance_status_id }}</span>
+                <span v-else>{{ issuanceStatusText(policyDetailsForm.issuance_status_id) }}</span>
 							</dd>
             </div>
           </dl>

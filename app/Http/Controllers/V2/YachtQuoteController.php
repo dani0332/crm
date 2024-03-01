@@ -180,6 +180,7 @@ class YachtQuoteController extends Controller
             'hasPolicyIssuedStatus' => $hasPolicyIssuedStatus,
             'sendUpdateEnum' => $sendUpdateEnum,
             'linkedQuoteDetails' => $linkedQuoteDetails,
+            'quoteTypeId' => QuoteTypes::YACHT->id(),
         ]);
     }
 

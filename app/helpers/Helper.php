@@ -607,6 +607,19 @@ if (! function_exists('getRepositoryObject')) {
     }
 }
 
+if (! function_exists('getServiceObject')) {
+    function getServiceObject($quoteType)
+    {
+        if (checkPersonalQuotes($quoteType)) {
+            $quoteType = QuoteTypes::PERSONAL->value;
+        }
+
+        $quoteType = ucfirst($quoteType);
+
+        return 'App\\Services\\'.$quoteType.'QuoteService';
+    }
+}
+
 if (! function_exists('checkModifiedRecord')) {
     function checkModifiedRecord($firstDate, $secondDate): bool
     {
@@ -679,5 +692,12 @@ if (! function_exists('apiResponse')) {
                 CustomerTypeEnum::IndividualShort.'-'.$customerEntityID.'-'.(++$quoteMemberCount) :
                 CustomerTypeEnum::EntityShort.'-'.$customerEntityID.'-'.(++$quoteMemberCount);
         }
+    }
+}
+
+if (! function_exists('strToFloat')) {
+    function strToFloat($value): float
+    {
+        return floatval(str_replace(',', '', $value));
     }
 }

@@ -8,19 +8,22 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\SendUpdateCustomerRequest;
 use App\Models\PersonalQuote;
 use App\Models\QuoteType;
 use App\Repositories\CustomerMembersRepository;
 use App\Repositories\InsuranceProviderRepository;
 use App\Repositories\LookupRepository;
 use App\Repositories\QuoteTypeRepository;
+use App\Services\QuoteDocumentService;
+use App\Traits\GenericQueriesAllLobs;
+use App\Repositories\PersonalQuoteRepository;
+use App\Repositories\PolicyIssuanceStatusRepository;
+use App\Repositories\SendUpdateLogDetailsRepository;
 use App\Repositories\SendUpdateLogRepository;
 use App\Services\LookupService;
-use App\Services\QuoteDocumentService;
 use App\Services\SendUpdateLogService;
-use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 
 class SendUpdateLogController extends Controller
 {
@@ -98,9 +101,11 @@ class SendUpdateLogController extends Controller
         $sendUpdateLog = SendUpdateLogRepository::getLogByUuid($uuid);
         $quoteTypeId = $sendUpdateLog->quote_type_id;
         $quoteType = QuoteTypeRepository::where('id', $quoteTypeId)->value('code');
-        $quote = $this->getQuote($sendUpdateLog->personal_quote_id);
-        $realQuote = $this->getRealQuote($quoteType, $quote->uuid);
+
         $sendUpdateOptions = (new LookupService)->getSendUpdateOptions($quoteTypeId);
+        $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping($quoteTypeId);
+
+        $quote = PersonalQuoteRepository::getById($sendUpdateLog->personal_quote_id);
 
         if (in_array($quoteType, [QuoteTypes::CAR, QuoteTypes::HEALTH, QuoteTypes::TRAVEL])) {
             $quote->load('plan.insuranceProvider');
@@ -108,10 +113,38 @@ class SendUpdateLogController extends Controller
 
         $categoryCode = LookupRepository::where('id', $sendUpdateLog->category_id)->value('code');
         $documentTypes = app(QuoteDocumentService::class)->getQuoteDocumentsForUploadByCategory(SendUpdateLogStatusEnum::SEND_UPDATE);
-        $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping($quoteTypeId);
         $quoteDocuments = app(QuoteDocumentService::class)->getQuoteDocumentsForSendUpdates($sendUpdateLog->id);
         $isBookingDetailsVisible = $this->isBookingDetailsVisible($categoryCode, $quoteDocuments);
-        $issuanceStatuses = DB::table('policy_issuance_status')->select('id', 'text')->get();
+        $issuanceStatuses = PolicyIssuanceStatusRepository::getColumns(['id', 'text']);
+
+        if (checkPersonalQuotes($quoteType)) {
+            $repository = 'App\\Repositories\\'.$quoteType.'QuoteRepository';
+            $realQuote = $repository::getBy('uuid', $quote->uuid);
+        } else {
+            $quoteServiceFile = app(getServiceObject($quoteType));
+            $realQuote = $quoteServiceFile->getEntity($quote->uuid);
+        }
+
+        $payments = $this->sendUpdateLogService->getPayments($realQuote->id, $realQuote->uuid, $quoteType);
+
+        $bookingDetails = [];
+        if ($payments && is_countable($payments) && count($payments) > 0) {
+            // it will also fetch broker_invoice_number and invoice_description, from lead detail page, lead detail broker_invoice_number will
+            // always same as ```send update log details``` broker_invoice_number but invoice_description will be overwritten from ```send update log details``` page.
+            $bookingDetails = $this->sendUpdateLogService->getInvoiceDescription($sendUpdateLog, $realQuote, $quoteType, $payments[0]['insurance_provider_id']);
+            // it will get all invoice_descriptions for booking details
+            $paymentInvoices = collect($payments)->pluck('insurer_tax_number');
+        }
+
+        if (isset($sendUpdateLog->details) && count($sendUpdateLog->details) > 0) {
+            $bookingDetails = array_merge($bookingDetails, $sendUpdateLog->details[0]->data);
+            $bookingDetails['type'] = $sendUpdateLog->details[0]->type;
+            if ($bookingDetails['type'] == SendUpdateLogStatusEnum::CPD) {
+                $bookingDetails['reversal_invoice'] = $sendUpdateLog->details[0]->data['reversal_invoice'];
+            }
+        }
+
+        $uploadedDocuments = $this->sendUpdateLogService->getUploadedDocuments($sendUpdateLog);
 
         return inertia('SendUpdateLog/Show', [
             'quote' => $quote,
@@ -126,8 +159,13 @@ class SendUpdateLogController extends Controller
             'quoteDocuments' => array_values($quoteDocuments->toArray()),
             'membersDetail' => CustomerMembersRepository::getBy($quote->id, strtoupper($quoteType)),
             'memberCategories' => app(LookupService::class)->getMemberCategories(),
-            'realQuote' => $realQuote,
             'isBookingDetailsVisible' => $isBookingDetailsVisible,
+            'realQuote' => $realQuote,
+            'isNegativeValue' => $this->sendUpdateLogService->isNegativeValue($sendUpdateLog),
+            'bookingDetails' => $bookingDetails,
+            'updateBtn' => $this->sendUpdateLogService->getUpdateButtonStatus($sendUpdateLog, $quoteType),
+            'paymentInvoices' => $paymentInvoices ?? [],
+            'uploadedDocuments' => $uploadedDocuments,
         ]);
     }
 
@@ -200,7 +238,7 @@ class SendUpdateLogController extends Controller
                 case SendUpdateLogStatusEnum::CIR:
                     if ($data['status'] === SendUpdateLogStatusEnum::UPDATE_BOOKED) {
                         $model::where(['uuid' => $quoteUuid, 'quote_type_id' => $quoteTypeId])->update([
-                            'quote_status_id' => QuoteStatusEnum::PolicyCancelled,
+                            'quote_status_id' => QuoteStatusEnum::PolicyBooked,
                         ]);
 
                         // TODO: send it to sage, need to confirm what the sage is.
@@ -228,11 +266,44 @@ class SendUpdateLogController extends Controller
         return redirect()->back();
     }
 
-    private function getQuote($personalQuoteId)
+    public function saveBookingDetails(Request $request)
     {
-        $repository = 'App\\Repositories\\PersonalQuoteRepository';
+        SendUpdateLogDetailsRepository::createOrUpdate($request->all());
 
-        return $repository::where('id', $personalQuoteId)->first();
+        return redirect()->back();
+    }
+
+    public function getReversalEntries(Request $request)
+    {
+        $reversalEntries = $this->sendUpdateLogService->getReversalEntries($request->input());
+
+        return response()->json($reversalEntries);
+    }
+
+    public function sendUpdateValidation(SendUpdateCustomerRequest $sendUpdateCustomerRequest)
+    {
+        if ($sendUpdateCustomerRequest->validated()) {
+            $message = $this->sendUpdateLogService->getSendToCustomerValidation($sendUpdateCustomerRequest->sendUpdateId);
+
+            return response()->json([
+                'message' => $message,
+            ], 200);
+        }
+
+        return response()->json(['success' => false], 500);
+    }
+
+    public function sendUpdateToCustomer(Request $request)
+    {
+        $data = $request->all();
+
+        $log = SendUpdateLogRepository::sendUpdateToCustomer($data);
+
+        if (isset($log->message) && ! empty($log->message)) {
+            vAbort($log->message);
+        }
+
+        return redirect()->back();
     }
 
     private function getRealQuote($quoteType, $quoteUuid)

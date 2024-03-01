@@ -18,7 +18,9 @@ class SendUpdateLogRepository extends BaseRepository
         try {
             $code = $data['childCategory']['slug'];
             $count = $this->fetchGetCount($data['quote_uuid'], $data['quote_type_id']);
+
             $code = $code.'-'.date('m').date('y').'-'.($count + 1);
+
             $uuid = strtoupper(Str::random(6));
 
             // Todo:: Check if personal quote exists because its break when quote not in personal quotes
@@ -51,6 +53,11 @@ class SendUpdateLogRepository extends BaseRepository
     public function fetchGetLogByUuid($uuid)
     {
         return $this->where('uuid', $uuid)->firstOrFail();
+    }
+
+    public function fetchGetLogById($id)
+    {
+        return $this->where('id', $id)->firstOrFail();
     }
 
     public function fetchUpdateLog($id, $data)
@@ -117,6 +124,21 @@ class SendUpdateLogRepository extends BaseRepository
                 'insurer_quote_number' => $data['insurer_quote_number'],
                 'issuance_status_id' => $data['issuance_status_id'],
                 'status' => SendUpdateLogStatusEnum::REQUEST_IN_PROGRESS,
+            ]);
+        } catch (\Exception $ex) {
+            $result = (object) [
+                'message' => $ex->getMessage(),
+            ];
+        }
+
+        return $result;
+    }
+
+    public function fetchSendUpdateToCustomer($data)
+    {
+        try {
+            $result = $this->where('id', $data['sendUpdateId'])->update([
+                'status' => SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER,
             ]);
         } catch (\Exception $ex) {
             $result = (object) [

@@ -17,9 +17,13 @@ const props = defineProps({
   memberCategories: Array,
   documentTypes: Object,
   quoteDocuments: Object,
-  realQuote: Object,
   storageUrl: String,
   quoteType: String,
+  realQuote: Object,
+  isNegativeValue: Boolean,
+  bookingDetails: Array,
+  updateBtn: String,
+  uploadedDocuments: Array,
 });
 
 const page = usePage();
@@ -83,7 +87,6 @@ const changeReasonOptions = computed(() => {
 const isPolicyDetailsEnabled = computed(() => {
   return (
     (selectedCategory?.value?.subCategory.slug === 'EF' && selectedCategory?.value?.subCategory.option.slug === 'PPE') ||
-    selectedCategory?.value?.subCategory.slug === 'CIR' ||
     selectedCategory?.value?.subCategory.slug === 'CPD'
   );
 })
@@ -98,6 +101,7 @@ const sendUpdateForm = useForm({
   personal_quote_id: props.sendUpdateLog?.personal_quote_id || null,
   childCategory: selectedCategory?.value?.subCategory,
   status: props.sendUpdateLog?.status || '',
+  quote_uuid: props.realQuote.uuid,
 });
 
 onMounted(() => {
@@ -156,6 +160,17 @@ const memberDataDocs = membersDetail => {
     .filter(member => member.name !== undefined);
 };
 
+// it will only show the Booking Details section if send update types are in array.
+const isBookingDetailsVisible = computed(() => {
+  const validSlugs = [
+    props.sendUpdateStatusEnum.EF,
+    props.sendUpdateStatusEnum.CI,
+    props.sendUpdateStatusEnum.CIR,
+    props.sendUpdateStatusEnum.CPD
+  ];
+
+  return validSlugs.includes(selectedCategory?.value?.subCategory.slug)
+});
 </script>
 
 <template>
@@ -297,6 +312,11 @@ const memberDataDocs = membersDetail => {
       :quote="quote"
       :quoteType="quoteType"
       :isUpdateBooked="isUpdateBooked"
+      :is-negative-value="isNegativeValue"
+      :booking-details="props.bookingDetails"
+      :real-quote="props.realQuote"
+      :update-btn="props.updateBtn"
+      :uploaded-documents="props.uploadedDocuments"
     />
 
     <AuditLogs
