@@ -507,27 +507,27 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
 Route::POST('/sendBulkWelcomeEmails', [BulkEmailProcessController::class, 'ProcessBulkWelcomeEmails'])
     ->withoutMiddleware([App\Http\Middleware\VerifyCsrfToken::class]);
 
+//Scheduled to delete 1st April 2024
 /***** RestAPI */
+// Route::group(['middleware' => ['auth.rest']], function () {
+//     Route::group(['prefix' => 'form'], function () {
+//         Route::GET('/{form}', [FormController::class, 'index']);
+//         Route::GET('/{form}/{form_id}', [FormController::class, 'getFormDetail']);
+//         Route::PUT('/{form}/{form_id}', [FormController::class, 'update']);
+//         Route::DELETE('/{form}/{form_id}', [FormController::class, 'delete']);
+//         Route::POST('/{form}', [FormController::class, 'save']);
+//     });
+//     // Route::POST('/sendReviewEmail', [FormController::class,'sendReviewEmail'])
+//     //         ->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class]);;
 
-Route::group(['middleware' => ['auth.rest']], function () {
-    Route::group(['prefix' => 'form'], function () {
-        Route::GET('/{form}', [FormController::class, 'index']);
-        Route::GET('/{form}/{form_id}', [FormController::class, 'getFormDetail']);
-        Route::PUT('/{form}/{form_id}', [FormController::class, 'update']);
-        Route::DELETE('/{form}/{form_id}', [FormController::class, 'delete']);
-        Route::POST('/{form}', [FormController::class, 'save']);
-    });
-    // Route::POST('/sendReviewEmail', [FormController::class,'sendReviewEmail'])
-    //         ->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class]);;
+//     Route::group(['prefix' => 'users'], function () {
+//         Route::GET('/me', [UserController::class, 'me']);
+//     });
 
-    Route::group(['prefix' => 'users'], function () {
-        Route::GET('/me', [UserController::class, 'me']);
-    });
+//     Route::group(['prefix' => 'resource'], function () {
+//         Route::POST('/store', [UploadResourceController::class, 'store']);
+//     });
+// });
 
-    Route::group(['prefix' => 'resource'], function () {
-        Route::POST('/store', [UploadResourceController::class, 'store']);
-    });
-});
-
-Route::POST('/processInslyRenewalData', [RenewalDataProcessingController::class, 'FetchAndProcessInslyData'])
-    ->withoutMiddleware([App\Http\Middleware\VerifyCsrfToken::class]);
+// Route::POST('/processInslyRenewalData', [RenewalDataProcessingController::class, 'FetchAndProcessInslyData'])
+//     ->withoutMiddleware([App\Http\Middleware\VerifyCsrfToken::class]);
