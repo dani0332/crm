@@ -22,6 +22,6 @@ class AlfredChatController extends Controller
             return response()->json(['message' => 'No chat available']);
         }
 
-        return response()->json($chat);
+        return response()->json(['data' => $chat]);
     }
 }
