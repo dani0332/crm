@@ -28,4 +28,5 @@ enum LookupsEnum: string
     case MODE_OF_DELIVERY = 'mode-of-delivery';
     case DELETED_MODE_OF_DELIVERY = 'mode-of-delivery-deleted';
     case PROFESSIONAL_TITLE = 'professional-title';
+    case SEND_UPDATE_CODE = 'send-update-code';
 }

@@ -8,9 +8,12 @@ use App\Http\Controllers\AjaxController;
 use App\Http\Controllers\AllocationThresholdController;
 use App\Http\Controllers\AMTController;
 use App\Http\Controllers\AuditableController;
+use App\Http\Controllers\BaseDiscountController;
 use App\Http\Controllers\BulkEmailProcessController;
 use App\Http\Controllers\BusinessQuoteController;
 use App\Http\Controllers\CarLeadAllocationController;
+use App\Http\Controllers\CarRepairCoverageController;
+use App\Http\Controllers\CarRepairTypeController;
 use App\Http\Controllers\ClaimController;
 use App\Http\Controllers\ClaimsAttachmentsController;
 use App\Http\Controllers\ClaimsStatusController;
@@ -68,6 +71,7 @@ use App\Http\Controllers\V2\LifeQuoteController;
 use App\Http\Controllers\V2\PersonalPlanController;
 use App\Http\Controllers\V2\PersonalQuoteController;
 use App\Http\Controllers\V2\PetQuoteController;
+use App\Http\Controllers\V2\SendUpdateLogController;
 use App\Http\Controllers\V2\YachtQuoteController;
 use App\Http\Controllers\ValuationController;
 use App\Http\Controllers\VehicleDepreciationController;
@@ -189,7 +193,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Artisan::call('config:clear');
         Artisan::call('view:clear');
 
-        return '<h1>All cache cleared. LARAVEL Version='.app()->version().'</h1>';
+        return '<h1>All cache cleared. LARAVEL Version=' . app()->version() . '</h1>';
     });
     Route::post('/payments/{quoteType}/store', [CRUDController::class, 'storePayment']);
     Route::post('/payments/{quoteType}/update', [CRUDController::class, 'updatePayment']);
@@ -306,6 +310,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::group(['prefix' => 'quotes'], function () {
         Route::resource('health', CRUDController::class);
         Route::resource('car', CRUDController::class);
+        Route::get('/car/{id}/send-update-log/{uuid}', [SendUpdateLogController::class, 'show'])->name('quotes.car.view-update-log');
         Route::get('health-cards', [HealthQuoteController::class, 'cardsView'])->name('health.cards');
 
         Route::get('home-cards', [CRUDController::class, 'cardsViewHome'])->name('home-cardView');
@@ -316,7 +321,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
             Route::resource('business', BusinessQuoteController::class);
         }
         Route::resource('travel', CRUDController::class);
-        if (! in_array(quoteTypeCode::Pet, newUi())) {
+        if (!in_array(quoteTypeCode::Pet, newUi())) {
             Route::resource('pet', CRUDController::class);
         }
         Route::post('save', [CRUDController::class, 'store'])->name('saveQuote');
@@ -357,7 +362,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::post('{quoteType}/toggle-product', [CRUDController::class, 'toggleEmbeddedProduct'])->name('toggleEmbeddedProduct');
         Route::get('{quoteType}/risk-rating-details/{quoteId}', [CRUDController::class, 'riskRatingDetails'])->name('risk-rating-details');
 
-        if (! in_array(quoteTypeCode::Life, newUi())) {
+        if (!in_array(quoteTypeCode::Life, newUi())) {
             Route::resource('life', CRUDController::class);
         }
 
@@ -452,6 +457,16 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         //        Route::post('aml/upload/uae-list', [AMLController::class, 'uaeSanctionListUpload'])->name('uaeSanctionListUpload');
     });
 
+    Route::controller(SendUpdateLogController::class)->prefix('send-update-logs')->name('send-update-logs.')->group(function () {
+        Route::get('/', 'index')->name('index');
+        Route::post('/', 'store')->name('store');
+        Route::get('/{uuid}', 'show')->name('show');
+        Route::patch('/update/{id}', 'update')->name('update');
+        Route::post('/save-details', 'savePriceDetails')->name('save-price-details');
+        Route::post('/save-policy-details', 'savePolicyDetails')->name('save-policy-details');
+    });
+    // Route::get('send-update-log/{id}', [SendUpdateLogController::class, 'getLogsById'])->name('send-update-logs.get-by-id');
+
     Route::group(['prefix' => 'medical'], function () {
         if (in_array('Business', newUi())) {
             Route::get('amt/cards', [V2AmtController::class, 'cardsView'])->name('amt.cardsView');
@@ -508,6 +523,9 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::post('/health-plan-manual-create', [HealthQuoteController::class, 'healthPlanCreateQuote']);
 
     Route::post('quotes/update-last-year-policy', [CentralController::class, 'updateLastYearPolicy'])->name('update-last-year-policy');
+    //bookpolicy routes
+    Route::post('quotes/update-booking-policy', [CentralController::class, 'updateBookingPolicy'])->name('update-booking-policy');
+    Route::post('quotes/send-booking-policy', [CentralController::class, 'sendBookingPolicy'])->name('send-booking-policy');
 
     //todo: commented for later use
     //Route::get('schedule-non-motor-aml', [RenewalsUploadController::class, 'scheduleNonMotorAml']);

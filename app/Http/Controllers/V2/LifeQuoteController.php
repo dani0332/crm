@@ -6,16 +6,21 @@ use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\PaymentStatusEnum;
+use App\Enums\TravelQuoteEnum;
 use App\Enums\PaymentTooltip;
 use App\Enums\quoteStatusCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
+use App\Enums\SendUpdateLogStatusEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\LifeQuoteRequest;
 use App\Models\ApplicationStorage;
 use App\Models\Emirate;
+use App\Models\PolicyIssuanceStatus;
+use App\Models\PersonalQuote;
+use App\Models\SendUpdateLog;
 use App\Repositories\ActivityRepository;
 use App\Repositories\CustomerMembersRepository;
 use App\Repositories\CustomerRepository;
@@ -27,15 +32,22 @@ use App\Repositories\LookupRepository;
 use App\Repositories\LostReasonRepository;
 use App\Repositories\NationalityRepository;
 use App\Repositories\QuoteStatusRepository;
+use App\Repositories\SendUpdateLogRepository;
 use App\Repositories\UserRepository;
 use App\Services\AMLService;
+use App\Services\BaseService;
 use App\Services\CentralService;
+use App\Services\CRUDService;
 use App\Services\LookupService;
+use App\Services\QuoteDocumentService;
+use App\Traits\GenericQueriesAllLobs;
 use App\Services\SplitPaymentService;
 use Illuminate\Http\Request;
 
 class LifeQuoteController extends Controller
 {
+    use GenericQueriesAllLobs;
+
     /**
      * Display a listing of the resource.
      *
@@ -75,7 +87,7 @@ class LifeQuoteController extends Controller
     {
         $response = LifeQuoteRepository::create($request->validated());
 
-        if (! empty($response->errors) || ! empty($response->msg)) {
+        if (!empty($response->errors) || !empty($response->msg)) {
             vAbort($response->msg);
         }
 
@@ -91,6 +103,7 @@ class LifeQuoteController extends Controller
     public function show($uuid)
     {
         $quote = LifeQuoteRepository::getBy('uuid', $uuid);
+
         $payments = $quote->payments;
 
         $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypeId::Life);
@@ -121,6 +134,17 @@ class LifeQuoteController extends Controller
             })->values();
         }
 
+        $sendUpdateOptions = [];
+        $sendUpdateLogs = [];
+        $sendUpdateEnum = (object) [];
+        $hasPolicyIssuedStatus = app(CRUDService::class)->hasAtleastOneStatusPolicyIssued(QuoteTypes::LIFE->id(), $quote->id);        
+        
+        if ($hasPolicyIssuedStatus) {
+            $sendUpdateOptions = (new LookupService)->getSendUpdateOptions(QuoteTypes::LIFE->id());
+            $sendUpdateLogs = SendUpdateLogRepository::findByQuoteUuid($quote->uuid);
+            $sendUpdateEnum = SendUpdateLogStatusEnum::asArray();
+        }
+
         $activitiesData = [];
         foreach ($activities as $activity) {
             $activitiesData[] = [
@@ -142,6 +166,11 @@ class LifeQuoteController extends Controller
         $documentTypes = DocumentTypeRepository::byQuoteTypeId(QuoteTypes::LIFE->id())->get();
         $vatPercentage = ApplicationStorage::where('key_name', ApplicationStorageEnums::VAT_VALUE)->first()->value ?? 0;
 
+        $isQuoteDocumentEnabled = app(BaseService::class)->quoteDocumentEnabled(QuoteTypes::LIFE->value);
+        $policyIssuanceStatus = PolicyIssuanceStatus::active()->get();
+        $quoteDocuments = (new QuoteDocumentService())->getQuoteDocuments(QuoteTypes::LIFE->value, $quote->id);
+        $bPDetails = $this->bookPolicyPayload($quote, QuoteTypes::LIFE->value, $payments, $quoteDocuments);
+
         return inertia('LifeQuote/Show', [
             'documentTypes' => $documentTypes,
             'storageUrl' => storageUrl(),
@@ -149,6 +178,7 @@ class LifeQuoteController extends Controller
             'quoteTypeId' => QuoteTypeId::Life,
             'quoteStatuses' => $quoteStatuses,
             'quote' => $quote,
+            'record' => $quote,
             'activities' => $activitiesData,
             'advisors' => $advisors,
             'allowedDuplicateLOB' => $duplicateAllowedLobs,
@@ -171,8 +201,23 @@ class LifeQuoteController extends Controller
             'paymentStatusEnum' => PaymentStatusEnum::asArray(),
             'payments' => $payments,
             'insuranceProviders' => $insuranceProviders,
+            'permissions' => [
+                'isQuoteDocumentEnabled' => $isQuoteDocumentEnabled,
+            ],
+
+            'enums' => [
+                'quoteStatusEnum' => QuoteStatusEnum::asArray(),
+                'paymentStatusEnum' => PaymentStatusEnum::asArray(),
+                'travelQuoteEnum' => TravelQuoteEnum::asArray(),
+            ],
+            'policyIssuanceStatus' => $policyIssuanceStatus,
+            'bPDetails' => $bPDetails,
             'vatPercentage' => $vatPercentage,
             'isNewPaymentStructure' => app(SplitPaymentService::class)->isNewPaymentStructure($quote->payments),
+	        'sendUpdateEnum' => $sendUpdateEnum,
+            'sendUpdateOptions' => $sendUpdateOptions,
+            'sendUpdateLogs' => $sendUpdateLogs,
+            'hasPolicyIssuedStatus' => $hasPolicyIssuedStatus
         ]);
     }
 
