@@ -378,7 +378,8 @@ const onUpdatePolicyDetails = isValid => {
           v-if="
             record.quote_status_id == quoteStatusEnum.TransactionApproved ||
             record.quote_status_id == quoteStatusEnum.PolicyPending ||
-            record.quote_status_id == quoteStatusEnum.PolicyIssued
+            record.quote_status_id == quoteStatusEnum.PolicyIssued ||
+            record.quote_status_id == quoteStatusEnum.PolicySentToCustomer
           "
         >
           <x-button
