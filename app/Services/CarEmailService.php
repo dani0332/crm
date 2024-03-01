@@ -54,7 +54,7 @@ class CarEmailService extends BaseService
                 $apiResponse = SIBService::createWorkflowEvent(config('constants.SIC_WORKFLOW_NAME'), $lead, [], $emailData);
                 $lead->sic_flow_enabled = true;
                 $lead->save();
-                info('SIC workflow event triggered for lead: '.$lead->uuid. ' and sic_flow_enabled: '.$lead->sic_flow_enabled);
+                info('SIC workflow event triggered for lead: '.$lead->uuid.' and sic_flow_enabled: '.$lead->sic_flow_enabled);
                 info('SIC workflow response: '.$apiResponse);
             } else {
                 info('SIC workflow already enabled for lead: '.$lead->uuid);
