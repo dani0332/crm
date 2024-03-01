@@ -151,6 +151,7 @@ class CarAllocationService extends AllocationService
         $lead->sic_flow_enabled = 1;
         $lead->tier_id = $tier->id;
         $lead->save();
+        info('SIC flow is enabled for lead : '.$lead->uuid. ' , the updated field : '. $lead->sic_flow_enabled);
         SendOCBIntroEmailJob::dispatch($lead->uuid, null, true);
         info('SIC flow is email is dispatched for lead : '.$lead->uuid);
     }

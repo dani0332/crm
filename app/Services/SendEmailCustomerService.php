@@ -532,15 +532,12 @@ class SendEmailCustomerService extends BaseService
                 $body['sender'] = ['name' => $emailData->advisorName, 'email' => $advisorCustomEmail];
             }
 
-            $body = json_encode($body, JSON_UNESCAPED_SLASHES);
-
-            info('sendLMSIntroEmail ---- Request Body :  - '.json_encode($emailData));
             $client = new \GuzzleHttp\Client();
             $clientRequest = $client->post(
                 $this->url,
                 [
                     'headers' => $headers,
-                    'body' => $body,
+                    'body' => json_encode($body, JSON_UNESCAPED_SLASHES),
                     'timeout' => 10,
                 ]
             );
