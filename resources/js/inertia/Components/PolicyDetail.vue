@@ -200,7 +200,7 @@ const onUpdatePolicyDetails = isValid => {
               }}</span>
             </template>
           </x-tooltip>
-          <x-input
+          <x-textarea
             v-model="policyDetailsForm.price_vat_notapplicable"
             @change="caculateVatAmount"
             type="number"
@@ -243,7 +243,7 @@ const onUpdatePolicyDetails = isValid => {
               }}</span>
             </template>
           </x-tooltip>
-          <x-input
+          <x-textarea
             v-model="policyDetailsForm.amount"
             @change="caculateVatAmount"
             type="number"
