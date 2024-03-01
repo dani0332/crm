@@ -156,7 +156,6 @@
         }
 
 
-
         .info h5 {
             background: #1d83bc;
             color: #ffffff;
@@ -222,6 +221,7 @@
             font-size: 14px;
             margin: 0;
         }
+
         .payment-invoice-section {
             text-align: left;
             width: 90%;
@@ -238,12 +238,12 @@
             margin: 0;
         }
 
-        table.tbl-bank-details tr th , table.tbl-bank-details tr td   {
-            padding: 10px 10px ;
+        table.tbl-bank-details tr th, table.tbl-bank-details tr td {
+            padding: 10px 10px;
         }
 
         table.tbl-bank-details .heading {
-           color: #1d83bc;
+            color: #1d83bc;
             font-size: 16px;
             font-weight: 700;
         }
@@ -265,25 +265,31 @@
             font-size: 14px;
             margin: 0 auto;
         }
-        table.tbl-payment-invoice tr th , table.tbl-payment-invoice tr td   {
-            padding: 5px 10px ;
+
+        table.tbl-payment-invoice tr th, table.tbl-payment-invoice tr td {
+            padding: 5px 10px;
         }
+
         table.tbl-payment-invoice tfoot tr th {
             border-top: 1px solid black;
         }
+
         .border-top {
             border-top: 1px solid black;
         }
+
         table.tbl-payment-invoice .remarks {
             width: 60%;
             font-size: 14px;
             text-align: left;
         }
+
         table.tbl-payment-invoice .payment-heading {
             width: 20%;
             font-size: 14px;
             text-align: left;
         }
+
         table.tbl-payment-invoice .amount {
             width: 20%;
             font-size: 14px;
@@ -318,17 +324,21 @@
             vertical-align: baseline;
             border-radius: 0.25rem;
         }
-        .tbl-customer{
+
+        .tbl-customer {
 
         }
-        .tbl-payment-details{
+
+        .tbl-payment-details {
             margin: 0;
             margin-top: 30px;
 
         }
-        table.tbl-payment-details tr th , table.tbl-payment-details tr td   {
-            padding: 5px 10px ;
+
+        table.tbl-payment-details tr th, table.tbl-payment-details tr td {
+            padding: 5px 10px;
         }
+
         .customer {
             width: 50%;
             font-size: 14px;
@@ -340,7 +350,8 @@
             font-size: 14px;
             text-align: left;
         }
-        .advisor-image img{
+
+        .advisor-image img {
             width: 75px;
         }
     </style>
@@ -349,7 +360,19 @@
 <body>
 
 @php
+    use App\Enums\PaymentMethodsEnum;
+
     $websitURL = config('constants.AFIA_WEBSITE_DOMAIN');
+
+    $paidPayments = $quote->payments()->where('payment_status_id', \App\Enums\PaymentStatusEnum::PAID)->get();
+
+    $advisor = $quote->advisor;
+
+    $proformaPaymentRequest = $quote->payments()->where('payment_methods_code', \App\Enums\PaymentMethodsEnum::ProformaPaymentRequest)->first();
+
+    $invoiceDate = Carbon\Carbon::parse($proformaPaymentRequest->created_at)->format('d-m-Y');
+
+    $customer_name =  ucwords($quote->customer->first_name .' '. $quote->customer->last_name);
 @endphp
 
 
@@ -371,9 +394,9 @@
             </tr>
             <tr>
                 <th>
-
+                    {{ $proformaPaymentRequest?->notes }}
                 </th>
-                <td  class="payment-heading">
+                <td class="payment-heading">
                     Vat
                 </td>
                 <td class="amount">
@@ -386,7 +409,7 @@
             <tfoot>
             <tr class="border-top">
                 <td></td>
-                <th  class="payment-heading  text-medium">
+                <th class="payment-heading  text-medium">
                     Total Due:
                 </th>
                 <th class="amount text-medium">
@@ -396,62 +419,71 @@
             </tfoot>
         </table>
     </div>
+    @if($proformaPaymentRequest->collection_type ==  \App\Enums\PaymentCollectionTypeEnum::BROKER)
 
     <table class="table-fixed no-border tbl-bank-details">
 
         <tbody>
         <tr class="border-top">
             <td>
-                 <p class="heading">Payment Details:</p>
-                 <p>Bank Name: EMIRATES NBD </p>
-                 <p>Account Holder: AFIA INSURANCE BROKERAGE SERVICES LLC</p>
-                 <p>Account Number: 1011170518302 </p>
-                 <p>IBAN: AE650260001011170518302  </p>
-                 <p> SWIFT Code: EBILAEAD </p>
+                <p class="heading">Payment Details:</p>
+                <p>Bank Name: EMIRATES NBD</p>
+                <p>Account Holder: AFIA INSURANCE BROKERAGE SERVICES LLC</p>
+                <p>Account Number: 1011170518302 </p>
+                <p>IBAN: AE650260001011170518302 </p>
+                <p> SWIFT Code: EBILAEAD </p>
             </td>
-
         </tr>
-
-
         </tbody>
 
     </table>
+    @endif
 
     <table class="tbl-disclaimer">
         <tr>
             <td class="text-left">
-                This document is issued for the sole purpose of collection of premium on behalf of Oriental Insurance Company LTD, and should not be construed as an Official Tax Invoice compliant with FTA regulations. To receive Tax Invoice and avail Input Vat credit,  please reach out to your contact in AFIA who will obtain the document from the Insurer and send it across to you.
+                This document is issued for the sole purpose of collection of premium on behalf of Oriental Insurance
+                Company LTD, and should not be construed as an Official Tax Invoice compliant with FTA regulations. To
+                receive Tax Invoice and avail Input Vat credit, please reach out to your contact in AFIA who will obtain
+                the document from the Insurer and send it across to you.
             </td>
         </tr>
     </table>
     <table class="tbl-footer">
         <tr>
-            <td colspan="2" class="text-center"><h4>InsuranceMarket.ae is the registered trademark of AFIA Insurance Brokerage Services LLC</h4></td>
+            <td colspan="2" class="text-center"><h4>InsuranceMarket.ae is the registered trademark of AFIA Insurance
+                    Brokerage Services LLC</h4></td>
         </tr>
         <tr>
-            <td colspan="2" class="text-center"><h6>27th Floor, Control Tower, Motor City,Dubai, United Arab Emirates, P.O Box 26423 | Tel: <a class="text-xxs" href="tel:+800253733">800 ALFRED (800-253-733)</a> | <a class="text-xxs" href="https://insurancemarket.ae">www.insurancemarket.ae</a></h6></td>
+            <td colspan="2" class="text-center"><h6>27th Floor, Control Tower, Motor City,Dubai, United Arab Emirates,
+                    P.O Box 26423 | Tel: <a class="text-xxs" href="tel:+800253733">800 ALFRED (800-253-733)</a> | <a
+                        class="text-xxs" href="https://insurancemarket.ae">www.insurancemarket.ae</a></h6></td>
         </tr>
         <tr>
             <td class="text-left">UAE Central Bank Registration number 85</td>
-            <td class="text-right">Insurance Advisor: Navya Shetty </td>
+            <td class="text-right">Insurance Advisor: {{ $advisor?->name }}</td>
             <td class="text-right advisor-image" rowspan="4">
-                <img class="im-logo" src="{{'data:image/png;base64,'.base64_encode(file_get_contents(public_path('images/proforma-payment/advisor.png')))}}" />
+                @if($advisor?->profile_photo_path)
+                    <img class="im-logo" src="{{'data:image/png;base64,'.base64_encode(file_get_contents($advisor?->profile_photo_path))}}" />
+                @endif
+
             </td>
         </tr>
         <tr>
             <td class="text-left">Registered member of the Emirates Insurance Association</td>
-            <td class="text-right">Email: <a href="mailto:navya.shetty@insurancemarket.ae ">navya.shetty@insurancemarket.ae </a></td>
+            <td class="text-right">Email: <a href="mailto:{{ $advisor?->email }}">{{ $advisor?->email }} </a>
+            </td>
         </tr>
         <tr>
             <td class="text-left">Department of Economy & Tourism in Dubai Trade License number 238534</td>
-            <td class="text-right">Mobile Number: <a href="tel:03008332905">03008332905</a> </td>
+            <td class="text-right">Mobile Number: <a href="tel:{{ $advisor?->mobile_no }}">{{ $advisor?->mobile_no }}</a></td>
         </tr>
         <tr>
             <td class="text-left">Holder of Health Insurance Intermediary Permit ID Number BRK-00003 from Dubai Health Authority </td>
-            <td class="text-right">Direct Line: <a href="tel:048185663">048185663</a> </td>
+            <td class="text-right">Direct Line: <a href="tel:048185663">048185663</a></td>
         </tr>
         <tr>
-            <td class="text-left">Registered member of the Insurance Business Group under the Dubai Chamber of Commerce and Industry </td>
+            <td class="text-left">Registered member of the Insurance Business Group under the Dubai Chamber of Commerce and Industry.</td>
 
         </tr>
     </table>
@@ -472,14 +504,14 @@
             <tr class="text-left">
 
                 <th class="customer">
-                    Customer:
+                    CUSTOMER:
                 </th>
                 <th class="date">
-                    Data:
+                    DATE:
                 </th>
 
                 <td class="date">
-                    2024-03-01
+                    {{ $invoiceDate }}
                 </td>
 
 
@@ -488,15 +520,15 @@
             <tr>
 
                 <td class="customer">
-                    Muhammad Ali
+                    {{ $customer_name }}
                 </td>
 
                 <th class="date">
-                    Reference Number:
+                    REFERENCE NUMBER:
                 </th>
 
                 <td class="date">
-                    1321321231312313123
+                    {{ $proformaPaymentRequest?->code }}
                 </td>
 
             </tr>
@@ -519,16 +551,16 @@
             <thead class="blue-box">
             <tr>
                 <th>
-                    Payment
+                    PAYMENT
                 </th>
                 <th>
-                    Due Data
+                    DUE DATE
                 </th>
                 <th>
                     Description
                 </th>
                 <th>
-                    Amount
+                    AMOUNT
                 </th>
             </tr>
             </thead>
@@ -538,7 +570,7 @@
                     1
                 </td>
                 <td>
-                    01-03-2024
+                    {{ $invoiceDate }}
                 </td>
                 <td>
                     Property Insurance <br />

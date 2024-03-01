@@ -885,8 +885,8 @@ const generateCCLink = async (code,splitPaymentId,paymentStatus) => {
 
 const downloadProformaPayment = () =>{
     let errorMsg = '';
-    if (paymentStatusEnum.PAID == proformaPayment.payment_status_id) {
-      errorMsg = paymentTooltipEnum.PAYMENT_MANAGEMENT_NO_ACTION_ALLOWED_TO_PAID_PAYMENTS;
+    if (props.paymentStatusEnum.PAID == props.proformaPayment?.payment_status_id) {
+      errorMsg = props.paymentTooltipEnum.PAYMENT_MANAGEMENT_NO_ACTION_ALLOWED_TO_PAID_PAYMENTS;
       notification.error({
         title: errorMsg,
         position: 'top',
@@ -904,6 +904,7 @@ const downloadProformaPayment = () =>{
         });
         return;
     }
+    router.visit(route('download.proforma.payment.request', [props.quoteType, props.quoteRequest.uuid ]));
 };
 
 const addPaymentModal = () => {
@@ -1757,16 +1758,16 @@ watch(() => props.quoteRequest, (newValue, oldValue) => {
         <div class="flex gap-2">
             <x-tooltip position="right">
                 <x-button
-                    :disabled="!proformaPayment"
+
                     size="sm"
                     color="primary"
                     target="_blank"
                     @click="downloadProformaPayment"
-                    :href="route('download.proforma.payment.request', [quoteType, quoteRequest.uuid ])"
+
                 >
                     <span class="border-b border-dotted">Download Proforma Payment Request</span>
                 </x-button>
-                <template #tooltip v-if="proformaPayment.payment_status_id != paymentStatusEnum.PAID">
+                <template #tooltip v-if="proformaPayment?.payment_status_id != paymentStatusEnum.PAID">
                     <span>{{ paymentTooltipEnum.PAYMENT_MANAGEMENT_DOWNLOAD_PROFORMA_PAYMENT }}</span>
                 </template>
             </x-tooltip>
