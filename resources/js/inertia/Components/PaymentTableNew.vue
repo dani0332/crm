@@ -883,6 +883,29 @@ const generateCCLink = async (code,splitPaymentId,paymentStatus) => {
   }
 };
 
+const downloadProformaPayment = () =>{
+    let errorMsg = '';
+    if (paymentStatusEnum.PAID == proformaPayment.payment_status_id) {
+      errorMsg = paymentTooltipEnum.PAYMENT_MANAGEMENT_NO_ACTION_ALLOWED_TO_PAID_PAYMENTS;
+      notification.error({
+        title: errorMsg,
+        position: 'top',
+      });
+      return;
+    }
+    if (totalPrice.value < 0 && planDetail.value)  {
+        errorMsg = 'Please update the Total Price in the Plan Details section.';
+        if(quoteTypesToCheck.includes(props.quoteType)) {
+            errorMsg = 'Please select a plan.';
+        }
+        notification.error({
+            title: errorMsg,
+            position: 'top',
+        });
+        return;
+    }
+};
+
 const addPaymentModal = () => {
 
   if ( props.payments.length>0 ) {
@@ -1738,11 +1761,12 @@ watch(() => props.quoteRequest, (newValue, oldValue) => {
                     size="sm"
                     color="primary"
                     target="_blank"
+                    @click="downloadProformaPayment"
                     :href="route('download.proforma.payment.request', [quoteType, quoteRequest.uuid ])"
                 >
                     <span class="border-b border-dotted">Download Proforma Payment Request</span>
                 </x-button>
-                <template #tooltip>
+                <template #tooltip v-if="proformaPayment.payment_status_id != paymentStatusEnum.PAID">
                     <span>{{ paymentTooltipEnum.PAYMENT_MANAGEMENT_DOWNLOAD_PROFORMA_PAYMENT }}</span>
                 </template>
             </x-tooltip>

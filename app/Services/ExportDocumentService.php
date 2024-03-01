@@ -13,7 +13,7 @@ class ExportDocumentService extends BaseService implements ExportDocumentInterfa
     {
         $quote = $this->getQuote($quoteType, $quote);
         if (isset($response['error'])) {
-            return redirect()->back()->with('message', $response['error']);
+            return $quote;
         }
         $pdf = PDF::setOption(['isHtml5ParserEnabled' => true, 'dpi' => 150])->loadView('pdf.proforma-invoice', compact('quote'));
 

@@ -795,7 +795,7 @@ const linkEntity = () => {
 			v-if="isNewPaymentStructure"
 			:quoteType="quoteType"
 			:payments="quote.payments"
-            :proformaPayment="quote.payments.find(item => item.payment_methods_code === 'PPR')?.length > 0"
+            :proformaPayment="quote.payments.find(item => item.payment_methods_code === 'PPR')"
 			:paymentDocument="documentTypes.filter(item => item.code === 'CYCPD' || item.code === 'CYCPDR' || item.code === 'CYCDPDR')"
 			:quoteRequest="quote"
 			:paymentStatusEnum="paymentStatusEnum"
