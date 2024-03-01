@@ -10,7 +10,7 @@ import AdditionalContacts from '../PersonalQuote/Partials/AdditionalContacts.vue
 import KycForm from '@/inertia/Components/KycForm.vue';
 import PlanDetails from '../../Components/PlanDetails.vue';
 import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue';
-import PaymentTableNew from '../../Components/PaymentTableNew.vue'; 
+import PaymentTableNew from '../../Components/PaymentTableNew.vue';
 
 defineProps({
   quote: Object,
@@ -791,10 +791,11 @@ const linkEntity = () => {
       :quoteType="quoteType"
     />
 
-    <PaymentTableNew 
+    <PaymentTableNew
 			v-if="isNewPaymentStructure"
 			:quoteType="quoteType"
 			:payments="quote.payments"
+            :proformaPayment="quote.payments.find(item => item.payment_methods_code === 'PPR')?.length > 0"
 			:paymentDocument="documentTypes.filter(item => item.code === 'CYCPD' || item.code === 'CYCPDR' || item.code === 'CYCDPDR')"
 			:quoteRequest="quote"
 			:paymentStatusEnum="paymentStatusEnum"
@@ -824,7 +825,7 @@ const linkEntity = () => {
       :quote="quote"
       :can="can"
       :quoteStatusesEnum="quoteStatusesEnum"
-    />    
+    />
 
     <EmbeddedProducts
       :data="embeddedProducts"

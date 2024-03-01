@@ -11,6 +11,7 @@ use App\Services\ActivitiesService;
 use App\Services\ApplicationStorageService;
 use App\Services\CRUDService;
 use App\Services\CustomerService;
+use App\Services\ExportDocumentService;
 use App\Services\QuoteDocumentService;
 use App\Services\SendEmailCustomerService;
 use App\Services\UserService;
@@ -28,6 +29,7 @@ class QuoteDocumentController extends Controller
     protected $sendEmailCustomerService;
     protected $customerService;
     protected $userService;
+    protected $exportDocumentService;
 
     public function __construct(
         CRUDService $crudService,
@@ -36,6 +38,7 @@ class QuoteDocumentController extends Controller
         SendEmailCustomerService $sendEmailCustomerService,
         CustomerService $customerService,
         UserService $userService,
+        ExportDocumentService $exportDocumentService,
         ApplicationStorageService $applicationStorageService,
     ) {
         $this->crudService = $crudService;
@@ -44,6 +47,7 @@ class QuoteDocumentController extends Controller
         $this->sendEmailCustomerService = $sendEmailCustomerService;
         $this->customerService = $customerService;
         $this->userService = $userService;
+        $this->exportDocumentService = $exportDocumentService;
         $this->applicationStorageService = $applicationStorageService;
     }
 
@@ -256,5 +260,25 @@ class QuoteDocumentController extends Controller
         $document->delete();
 
         // return response()->json(['message' => 'Document has been deleted.']);
+    }
+
+
+    /**
+     * export selected plans to PDF.
+     *
+     *
+     *
+     */
+    public function downloadProformaPaymentRequest($quoteType, $quote)
+    {
+        $response = $this->exportDocumentService->exportProformaPaymentRequest($quoteType, $quote);
+
+        if (isset($response['error'])) {
+            return redirect()->back()->with('message', $response['error']);
+        }
+
+        $pdf = $response['pdf'];
+
+        return $pdf->download($response['name']);
     }
 }
