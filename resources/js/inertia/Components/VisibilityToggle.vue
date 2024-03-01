@@ -38,8 +38,7 @@ const shouldShowButton = () => {
         const currentHour = new Date(currentTime).getHours();
 
         // Show the button all day on Saturday and Sunday
-        console.log('current day', currentDay);
-        if (currentDay === 6 || currentDay === 0 || currentDay === 2) {
+        if (currentDay === 6 || currentDay === 0 ) {
             return true;
         }
 
@@ -69,10 +68,6 @@ const scheduleUpdate = () => {
         }
 
         // Schedule the next check after the calculated time difference
-        setTimeout(() => {
-            isButtonVisible.value = shouldShowButton();
-            scheduleUpdate();
-        }, nextUpdate - new Date());
     }
 };
 
