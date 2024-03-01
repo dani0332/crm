@@ -208,7 +208,6 @@ trait GenericQueriesAllLobs
                 
             } else{
                 if (in_array(QuoteDocumentsEnum::CAR_POLICY_CERTIFICATE, $document_type_codes) && in_array(QuoteDocumentsEnum::POLICY_SCHEDULE, $document_type_codes) && in_array(QuoteDocumentsEnum::POLICY_HANDBOOK, $document_type_codes)) {
-
                     $bPDetails['sendButton'] = true;
                     $bPDetails['text'] = 'Send Policy To Customer';
                     $bPDetails['sendPolicyType'] = 'customer';

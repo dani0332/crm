@@ -775,6 +775,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       :quoteStatusEnum="enums.quoteStatusEnum"
       :policyIssuanceStatus="policyIssuanceStatus"
       modelType="Bike"
+      :expanded="sectionExpanded"
     />
     
     <QuoteDocuments
@@ -796,6 +797,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       quoteType="Bike"
       :bPDetails="bPDetails"
       :payments="payments"
+      :expanded="sectionExpanded"
     />
 
    <EmbeddedProducts

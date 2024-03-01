@@ -1129,6 +1129,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       :quoteStatusEnum="enums.quoteStatusEnum"
       :policyIssuanceStatus="policyIssuanceStatus"
       modelType="home"
+      :expanded="sectionExpanded"
     />
 
     <QuoteDocuments
