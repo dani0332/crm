@@ -162,7 +162,6 @@ const onUpdatePolicyDetails = isValid => {
           </x-tooltip>
           <x-input
             v-model="policyDetailsForm.quote_policy_number"
-            :rules="[rules.isRequired]"
             type="text"
             placeholder="Policy Number"
             class="w-full"
@@ -181,7 +180,6 @@ const onUpdatePolicyDetails = isValid => {
           <DatePicker
             v-model="policyDetailsForm.quote_policy_issuance_date"
             :disabled="!policyDetailsState.isEditing"
-            :rules="[rules.isRequired]"
             type="date"
             class="w-full"
           />
@@ -222,7 +220,7 @@ const onUpdatePolicyDetails = isValid => {
           </x-tooltip>
           <DatePicker
             v-model="policyDetailsForm.quote_policy_start_date"
-            :rules="[rules.start_date, rules.isRequired]"
+            :rules="[rules.start_date]"
             type="date"
             placeholder="Start Date"
             class="w-full"
@@ -269,7 +267,6 @@ const onUpdatePolicyDetails = isValid => {
             :custom-error="
               rules.expiry_date(policyDetailsForm.quote_policy_expiry_date)
             "
-            :rules="[rules.isRequired]"
             type="date"
             placeholder="Expiry Date"
             class="w-full"
@@ -309,7 +306,6 @@ const onUpdatePolicyDetails = isValid => {
           <x-input
             v-model="policyDetailsForm.amount_with_vat"
             type="number"
-            :rules="[rules.isRequired]"
             placeholder="Price"
             class="w-full"
             readonly
@@ -334,7 +330,6 @@ const onUpdatePolicyDetails = isValid => {
             type="text"
             placeholder="Insurer Quote Number"
             class="w-full"
-            :rules="[rules.isRequired]"
             :disabled="!policyDetailsState.isEditing"
           />
         </div>
@@ -380,7 +375,11 @@ const onUpdatePolicyDetails = isValid => {
       <div class="flex justify-end">
         <template
           class="flex justify-end"
-          v-if="record.quote_status_id == quoteStatusEnum.TransactionApproved"
+          v-if="
+            record.quote_status_id == quoteStatusEnum.TransactionApproved ||
+            record.quote_status_id == quoteStatusEnum.PolicyPending ||
+            record.quote_status_id == quoteStatusEnum.PolicyIssued
+          "
         >
           <x-button
             v-if="policyDetailsState.isEditing"

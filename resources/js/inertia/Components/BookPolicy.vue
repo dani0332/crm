@@ -453,7 +453,9 @@ const caculateCommission = () => {
           <template
             v-if="
               props.quote.quote_status_id ==
-              page.props.quoteStatusEnum.TransactionApproved
+                page.props.quoteStatusEnum.TransactionApproved ||
+              props.quote.quote_status_id ==
+                page.props.quoteStatusEnum.PolicyIssued
             "
           >
             <x-button

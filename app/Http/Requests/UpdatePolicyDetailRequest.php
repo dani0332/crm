@@ -21,21 +21,34 @@ class UpdatePolicyDetailRequest extends FormRequest
      */
     public function rules(): array
     {
-        return [
-            'quote_policy_number' => 'required',
-            'quote_policy_issuance_date' => 'required',
-            'quote_policy_start_date' => 'required',
-            'quote_policy_expiry_date' => 'required|date|after:quote_policy_start_date',
-            'price_vat_notapplicable' => 'required_without:amount|nullable|numeric|between:0,9999999999999.99',
-            'amount' => 'required_without:price_vat_notapplicable|nullable|numeric|between:0,9999999999999.99',
-            'amount_with_vat' => 'required',
-            'vat' => 'nullable',
-            'quote_plan_insurer_quote_number' => 'nullable',
-            'quote_policy_issuance_status' => 'nullable',
-            'quote_policy_issuance_status_other' => 'nullable',
-            'modelType' => 'required',
-            'quote_id' => 'required',
-        ];
+        if (!empty(request()->quote_policy_issuance_status) && request()->price_with_vat <= 0 && empty(request()->quote_policy_number)) {
+            return [
+                'quote_policy_issuance_status' => 'nullable',
+                'quote_policy_issuance_status_other' => 'nullable',
+                'modelType' => 'required',
+                'quote_id' => 'required',
+
+            ];
+        } else {
+
+            return [
+
+                'quote_policy_number' => 'required',
+                'quote_policy_issuance_date' => 'required',
+                'quote_policy_start_date' => 'required',
+                'quote_policy_expiry_date' => 'required|date|after:quote_policy_start_date',
+                'price_vat_notapplicable' => 'required_without:amount|nullable|numeric|between:0,9999999999999.99',
+                'amount' => 'required_without:price_vat_notapplicable|nullable|numeric|between:0,9999999999999.99',
+                'amount_with_vat' => 'required',
+                'vat' => 'nullable',
+                'quote_plan_insurer_quote_number' => 'nullable',
+                'quote_policy_issuance_status' => 'nullable',
+                'quote_policy_issuance_status_other' => 'nullable',
+                'modelType' => 'required',
+                'quote_id' => 'required',
+
+            ];
+        }
     }
 
     public function messages()

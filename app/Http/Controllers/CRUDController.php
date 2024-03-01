@@ -1694,12 +1694,11 @@ class CRUDController extends Controller
         if (!$quoteModel) {
             return redirect()->back()->with('success', 'Error Updating Policy Details.');
         }
-
         $quoteModel->update([
-            'policy_number' => $request->quote_policy_number,
-            'policy_issuance_date' => Carbon::parse($request->quote_policy_issuance_date)->format('Y-m-d'),
-            'policy_start_date' => Carbon::parse($request->quote_policy_start_date)->format('Y-m-d'),
-            'renewal_expiry_date' => Carbon::parse($request->quote_policy_expiry_date)->format('Y-m-d'),
+            'policy_number' => $request->quote_policy_number ?? '',
+            'policy_issuance_date' => isset($request->quote_policy_issuance_date) ? Carbon::parse($request->quote_policy_issuance_date)->format('Y-m-d') : NULL,
+            'policy_start_date' => isset($request->quote_policy_start_date) ? Carbon::parse($request->quote_policy_start_date)->format('Y-m-d') : NULL,
+            'renewal_expiry_date' =>  isset($request->quote_policy_expiry_date) ? Carbon::parse($request->quote_policy_expiry_date)->format('Y-m-d') : NULL,
             'price_vat_not_applicable' => $request->price_vat_notapplicable ?? '',
             'price_without_vat' => $request->amount ?? '',
             'price_with_vat' => $request->amount_with_vat ?? '',
@@ -1708,6 +1707,14 @@ class CRUDController extends Controller
             'policy_issuance_status_id' => $request->quote_policy_issuance_status ?? null,
             'policy_issuance_status_other' => $request->quote_policy_issuance_status_other ?? '',
         ]);
+
+        if (!empty(request()->quote_policy_issuance_status) && request()->price_with_vat <= 0 && empty(request()->quote_policy_number)) {
+            $quoteModel->update([
+                'quote_status_id' => QuoteStatusEnum::PolicyPending,
+            ]);
+        }
+        // update status policy issued of req fulfilled
+        $this->updateStatus($request->modelType, $request->quote_id);
 
         return redirect()->back()->with('success', 'Quote Policy Detail has been updated.');
     }
