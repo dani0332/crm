@@ -153,6 +153,7 @@ onMounted(() => {
   updateComputedPlanDetails();
 });*/
 
+const processingOCBEmailNB = ref(false);
 const permissionEnum = page.props.permissionsEnum;
 const rolesEnum = page.props.rolesEnum;
 
@@ -700,6 +701,10 @@ const leadDuplicateForm = useForm({
 const openDuplicate = () => {
   modals.duplicate = true;
   leadDuplicateForm.reset();
+};
+
+const openSendOCBConfirmNB = () => {
+  modals.sendOCBConfirmNB = true;
 };
 
 const onCreateDuplicate = isValid => {
@@ -1320,6 +1325,32 @@ const confirmSendEmail = () => {
     });
 };
 
+const confirmSendOCBEmailNB = () => {
+  processingOCBEmailNB.value = true;
+  axios
+    .post(
+      `/quotes/car/${page.props.record.uuid}/send-email-ocb-nb`,
+      {
+        responseType: 'json',
+      },
+    )
+    .then(response => {
+      processingOCBEmailNB.value = false;
+      notification.success({
+        title: response.data.success,
+        position: 'top',
+      });
+    })
+    .catch(error => {
+      processingOCBEmailNB.value = false;
+      console.log(error);
+    })
+    .finally(() => {
+      processingOCBEmailNB.value = false;
+      modals.sendOCBConfirmNB = false;
+    });
+};
+
 const disableFollowUp = ref(false);
 const followUpstatus = ref('');
 const followUpEmails = ref([]);
@@ -1738,6 +1769,19 @@ const getDetailPageRoute = (
                 allowedDuplicateLOB.length > 0
               "
             >
+            <x-button
+              v-if="
+                hasAnyRole([
+                  rolesEnum.LeadPool,
+                ])
+              "
+              class="mr-2"
+              size="sm"
+              color="#ff5e00"
+              @click.prevent="openSendOCBConfirmNB"
+            >
+              Send NB OCB To Customer
+            </x-button>
               <x-button
                 v-if="
                   !hasAnyRole([
@@ -3259,7 +3303,34 @@ const getDetailPageRoute = (
           </div>
         </template>
       </x-modal>
-
+      <AppModal
+        :actions="true"
+        :showHeader="true"
+        v-model:modelValue="modals.sendOCBConfirmNB"
+        :backdrop-close="false"
+        >
+        <template #header>
+        <p>Send Email OCB NB</p>
+        </template>
+        <template #default>
+        <p>Are you sure send email to customer?</p>
+        </template>
+        <template #actions>
+            <div class="text-right space-x-4">
+            <x-button
+              size="sm"
+              ghost
+              @click.prevent="modals.sendOCBConfirmNB = false"
+              :disable="processingOCBEmailNB"
+            >
+              Cancel
+            </x-button>
+            <x-button size="sm" color="error" :loading="processingOCBEmailNB" @click.prevent="confirmSendOCBEmailNB">
+              Send
+            </x-button>
+          </div>
+        </template>
+    </AppModal>
       <x-modal v-model="modals.createPlan" size="xl" show-close backdrop>
         <template #header> Create Car Quote </template>
         <LazyCreatePlan
