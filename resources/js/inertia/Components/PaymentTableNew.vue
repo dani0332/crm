@@ -904,7 +904,16 @@ const downloadProformaPayment = () =>{
         });
         return;
     }
-    router.visit(route('download.proforma.payment.request', [props.quoteType, props.quoteRequest.uuid ]));
+    if(props.proformaPayment?.length > 0){
+        router.visit(route('download.proforma.payment.request', [props.quoteType, props.quoteRequest.uuid ]));
+    }else{
+        errorMsg = 'No Proforma Payment found';
+        notification.error({
+            title: errorMsg,
+            position: 'top',
+        });
+    }
+
 };
 
 const addPaymentModal = () => {
@@ -1758,7 +1767,7 @@ watch(() => props.quoteRequest, (newValue, oldValue) => {
         <div class="flex gap-2">
             <x-tooltip position="right">
                 <x-button
-
+                    :disabled="!proformaPayment"
                     size="sm"
                     color="primary"
                     target="_blank"

@@ -353,6 +353,8 @@
 
         .advisor-image img {
             width: 75px;
+            border-radius: 50%;
+            margin-right: 5px;
         }
     </style>
 </head>
@@ -476,7 +478,7 @@
         </tr>
         <tr>
             <td class="text-left">Department of Economy & Tourism in Dubai Trade License number 238534</td>
-            <td class="text-right">Mobile Number: <a href="tel:{{ $advisor?->mobile_no }}">{{ $advisor?->mobile_no }}</a></td>
+            <td class="text-right">Mobile Number adas: <a href="tel:{{ $advisor?->mobile_no }}">{{ $advisor?->mobile_no }}</a></td>
         </tr>
         <tr>
             <td class="text-left">Holder of Health Insurance Intermediary Permit ID Number BRK-00003 from Dubai Health Authority </td>
