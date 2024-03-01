@@ -231,11 +231,15 @@ trait GenericQueriesAllLobs
                 $quoteDocuments = array_values($quoteDocuments->toArray());
                 $document_type_codes = collect($quoteDocuments)->pluck('document_type_code')->toArray();
                 if (in_array(QuoteDocumentsEnum::CAR_POLICY_CERTIFICATE, $document_type_codes) && in_array(QuoteDocumentsEnum::POLICY_SCHEDULE, $document_type_codes) && in_array(QuoteDocumentsEnum::POLICY_HANDBOOK, $document_type_codes)) {
-                    $quote->update([
-                        'quote_status_id' => QuoteStatusEnum::PolicyIssued,
-                        'policy_issuance_status_id' =>  null,
-                        'policy_issuance_status_other' =>  '',
-                    ]);
+
+                    if ($quote->quote_status_id != QuoteStatusEnum::PolicySentToCustomer) {
+
+                        $quote->update([
+                            'quote_status_id' => QuoteStatusEnum::PolicyIssued,
+                            'policy_issuance_status_id' =>  null,
+                            'policy_issuance_status_other' =>  '',
+                        ]);
+                    }
                 }
             }
         }
