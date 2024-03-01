@@ -3,11 +3,9 @@
 namespace App\Traits;
 
 use App\Enums\GenericRequestEnum;
-use App\Enums\PermissionsEnum;
 use App\Enums\QuoteDocumentsEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypes;
-use App\Enums\RolesEnum;
 use App\Models\Payment;
 use App\Repositories\InsuranceProviderRepository;
 use App\Services\CapiRequestService;
@@ -17,9 +15,9 @@ trait GenericQueriesAllLobs
     public function getQuoteCode($quoteType, $id)
     {
         $nameSpace = '\\App\\Models\\';
-        $modelType = (in_array(ucwords($quoteType), newUi()) && checkPersonalQuotes(ucwords($quoteType))) ? $nameSpace . 'PersonalQuote' : $nameSpace . ucwords($quoteType) . 'Quote';
+        $modelType = (in_array(ucwords($quoteType), newUi()) && checkPersonalQuotes(ucwords($quoteType))) ? $nameSpace.'PersonalQuote' : $nameSpace.ucwords($quoteType).'Quote';
 
-        if (!class_exists($modelType)) {
+        if (! class_exists($modelType)) {
             return false;
         }
 
@@ -34,9 +32,9 @@ trait GenericQueriesAllLobs
     public function getModelObject($quoteType)
     {
         $nameSpace = '\\App\\Models\\';
-        $model = (in_array(ucwords($quoteType), newUi()) && checkPersonalQuotes(ucwords($quoteType))) ? $nameSpace . 'PersonalQuote' : $nameSpace . ucwords($quoteType) . 'Quote';
+        $model = (in_array(ucwords($quoteType), newUi()) && checkPersonalQuotes(ucwords($quoteType))) ? $nameSpace.'PersonalQuote' : $nameSpace.ucwords($quoteType).'Quote';
 
-        if (!class_exists($model)) {
+        if (! class_exists($model)) {
             return false;
         }
 
@@ -46,17 +44,17 @@ trait GenericQueriesAllLobs
     /**
      * get quote object by quote type.
      *
-     * @param    $quoteType  e.g car, health etc
-     * @param    $id  can be id or uuid
+     * @param  $quoteType  e.g car, health etc
+     * @param  $id  can be id or uuid
      * @return false|mixed
      */
     public function getQuoteObject($quoteType, $id)
     {
         $nameSpace = '\\App\\Models\\';
 
-        $model = (in_array(ucwords($quoteType), newUi()) && checkPersonalQuotes(ucwords($quoteType))) ? $nameSpace . 'PersonalQuote' : $nameSpace . ucwords($quoteType) . 'Quote';
+        $model = (in_array(ucwords($quoteType), newUi()) && checkPersonalQuotes(ucwords($quoteType))) ? $nameSpace.'PersonalQuote' : $nameSpace.ucwords($quoteType).'Quote';
 
-        if (!class_exists($model)) {
+        if (! class_exists($model)) {
             return false;
         }
 
@@ -72,9 +70,9 @@ trait GenericQueriesAllLobs
     {
         $nameSpace = '\\App\\Models\\';
 
-        $model = (in_array(ucwords($quoteType), newUi()) && checkPersonalQuotes(ucwords($quoteType))) ? $nameSpace . 'PersonalQuote' : $nameSpace . ucwords($quoteType) . 'Quote';
+        $model = (in_array(ucwords($quoteType), newUi()) && checkPersonalQuotes(ucwords($quoteType))) ? $nameSpace.'PersonalQuote' : $nameSpace.ucwords($quoteType).'Quote';
 
-        if (!class_exists($model)) {
+        if (! class_exists($model)) {
             return false;
         }
 
@@ -91,9 +89,9 @@ trait GenericQueriesAllLobs
     public function getMemberDetailObject($quoteType, $id)
     {
         $nameSpace = '\\App\\Models\\';
-        $model = $nameSpace . ucwords($quoteType) . 'QuoteMemberDetail';
+        $model = $nameSpace.ucwords($quoteType).'QuoteMemberDetail';
 
-        if (!class_exists($model)) {
+        if (! class_exists($model)) {
             return false;
         }
 
@@ -102,9 +100,9 @@ trait GenericQueriesAllLobs
 
     public function getRepositoryObject($quoteType)
     {
-        $repository = '\\App\\Repositories\\' . ucwords($quoteType) . 'QuoteRepository';
+        $repository = '\\App\\Repositories\\'.ucwords($quoteType).'QuoteRepository';
 
-        if (!class_exists($repository)) {
+        if (! class_exists($repository)) {
             return false;
         }
 
@@ -113,12 +111,12 @@ trait GenericQueriesAllLobs
 
     public function createDuplicateRecord($lob, $parentRecord)
     {
-        if (!($lob) || !isset($parentRecord->enquiryType) || !isset($parentRecord->id)) {
+        if (! ($lob) || ! isset($parentRecord->enquiryType) || ! isset($parentRecord->id)) {
             return false;
         }
         $nameSpace = '\\App\\Models\\';
-        $model = $nameSpace . ucwords($lob) . 'Quote';
-        if (!class_exists($model)) {
+        $model = $nameSpace.ucwords($lob).'Quote';
+        if (! class_exists($model)) {
             return false;
         }
         $dataArr = [
@@ -132,7 +130,7 @@ trait GenericQueriesAllLobs
         if (strtolower($lob) == strtolower(quoteTypeCode::GroupMedical)) {
             $dataArr['business_type_of_insurance_id'] = 5;
         }
-        $response = CapiRequestService::sendCAPIRequest('/api/v1-save-' . strtolower($lob) . '-quote', $dataArr);
+        $response = CapiRequestService::sendCAPIRequest('/api/v1-save-'.strtolower($lob).'-quote', $dataArr);
         if (isset($response->message) && str_contains($response->message, 'Error')) {
             return false;
         } elseif (isset($parentRecord->enquiryType) && $parentRecord->enquiryType == GenericRequestEnum::RECORD_PURPOSE) {
@@ -184,13 +182,13 @@ trait GenericQueriesAllLobs
             $insuranceProviderCode = InsuranceProviderRepository::where('id', $insurance_provider_id)->value('code');
             $insuranceProviderLeadCount = Payment::where('insurance_provider_id', '=', $insurance_provider_id)->count();
         }
-        $bPDetails['brokerInvoiceNo'] = $insuranceProviderCode . $insuranceProviderLeadCount;
-        $bPDetails['invoiceDescription'] = $insuranceProviderCode . '-' . $quoteType . '-' . $record->policy_number;
+        $bPDetails['brokerInvoiceNo'] = $insuranceProviderCode.$insuranceProviderLeadCount;
+        $bPDetails['invoiceDescription'] = $insuranceProviderCode.'-'.$quoteType.'-'.$record->policy_number;
         $bPDetails['sendButton'] = false;
         $bPDetails['editButton'] = false;
         $bPDetails['sendPolicyType'] = null;
         $bPDetails['text'] = '';
-        if (!empty($quoteDocuments)) {
+        if (! empty($quoteDocuments)) {
             $document_type_codes = collect($quoteDocuments)->pluck('document_type_code')->toArray();
 
             if (in_array(QuoteDocumentsEnum::CAR_POLICY_CERTIFICATE, $document_type_codes) && in_array(QuoteDocumentsEnum::POLICY_SCHEDULE, $document_type_codes) && in_array(QuoteDocumentsEnum::POLICY_HANDBOOK, $document_type_codes)) {
@@ -207,6 +205,7 @@ trait GenericQueriesAllLobs
                 $bPDetails['sendPolicyType'] = 'sage';
             }
         }
+
         return $bPDetails;
     }
 

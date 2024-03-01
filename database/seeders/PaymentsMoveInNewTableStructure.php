@@ -40,7 +40,7 @@ class PaymentsMoveInNewTableStructure extends Seeder
                     'created_at' => $childPayments->created_at,
                     'updated_at' => $childPayments->updated_at,
                 ]);
-            //continue;
+                //continue;
             } else {
                 //$masterPayments[$code] = $code;
             }

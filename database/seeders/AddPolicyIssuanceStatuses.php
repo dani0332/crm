@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
@@ -22,7 +21,7 @@ class AddPolicyIssuanceStatuses extends Seeder
             'Policy already issued by the underwriter',
             'Renewal, Direct to Underwriter',
             'Policy Issued',
-            'Other'
+            'Other',
         ];
 
         $index = 1;
