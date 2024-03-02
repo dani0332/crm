@@ -290,7 +290,7 @@ const onUpdatePolicyDetails = isValid => {
             type="text"
             placeholder="Total VAT Amount"
             class="w-full"
-            :disabled="!policyDetailsState.isEditing"
+            :disabled="true"
             readonly
           />
         </div>
