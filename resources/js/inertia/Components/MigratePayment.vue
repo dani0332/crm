@@ -56,15 +56,21 @@ const showConfirmation = () => {
 </script>
 
 <template>
-    <div style="float:right; padding:20px;">
-        
-        <x-button
-            size="sm"
-            color="orange"
-            :loading="isLoading"        
-            @click.prevent="showConfirmation()"
-        >
-            Migrate Payment
-        </x-button>
+    <div class="p-4 rounded shadow mb-6 bg-white flex justify-between items-center">
+        <div>
+            <h3 class="font-semibold text-primary-800 text-lg">
+                Migrate Payment
+            </h3>
+        </div>
+        <div>
+            <x-button
+                size="sm"
+                color="orange"
+                :loading="isLoading"        
+                @click.prevent="showConfirmation()"
+            >
+                Migrate Payment
+            </x-button>
+        </div>
     </div>
 </template>

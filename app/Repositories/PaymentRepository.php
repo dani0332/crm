@@ -7,6 +7,7 @@ use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
+use App\Enums\ApplicationStorageEnums;
 use App\Interfaces\PaymentRepositoryInterface;
 use App\Models\Payment;
 use App\Models\PaymentSplits;
@@ -16,6 +17,7 @@ use App\Services\CRUDService;
 use App\Services\PaymentLinkService;
 use App\Services\SplitPaymentService;
 use App\Services\TravelQuoteService;
+use App\Services\ApplicationStorageService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -333,6 +335,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
             $quoteModel->save();
             $successMessage = 'Transaction declined';
         } else {
+            $isSageEnabled = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::SAGE_ENABLED);
             $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($request->modelType));
             if ($request->is_capture) { //update collected amount in childs
 
@@ -342,7 +345,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
 
                         if ($paymentSplit->payment_method == PaymentMethodsEnum::CreditCard) {
                             //create sage reciept
-                            if ($paymentSplit->sage_reciept_id == null || $paymentSplit->sage_reciept_id == '') {
+                            if ( $isSageEnabled && ($paymentSplit->sage_reciept_id == null || $paymentSplit->sage_reciept_id == '')) {
                                 $sageResponse = app(SplitPaymentService::class)->createSageRecipt($request, $paymentSplit, $splitAmount);
                                 if ($sageResponse['status'] == 'success') {
                                     $paymentSplit->sage_reciept_id = $sageResponse['response'];
@@ -369,7 +372,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                     }
                 }
             }
-
+            
             $masterPaymentStatus = $firstPayment->payment_status_id;
             $totalPaidPayments = PaymentSplits::whereIn('payment_status_id', [
                 PaymentStatusEnum::PAID,
@@ -442,20 +445,32 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                 }
             }
             //create sage reciept
-            $sageResponse = app(SplitPaymentService::class)->createSageRecipt($request, $splitPayment);
-            if ($sageResponse['status'] == 'success') {
-                $paymentInformation['sage_reciept_id'] = $sageResponse['response'];
+            $isSageEnabled = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::SAGE_ENABLED);
+            if($isSageEnabled) { 
+                $sageResponse = app(SplitPaymentService::class)->createSageRecipt($request, $splitPayment);
+                if ($sageResponse['status'] == 'success') {
+                    $paymentInformation['sage_reciept_id'] = $sageResponse['response'];
+                    $splitPayment->update($paymentInformation);
+                    if ($masterPayment) {
+                        $masterPayment->update(
+                            ['captured_amount' => ($masterPayment->captured_amount + $request->collection_amount),
+                             'payment_allocation_status' => PaymentAllocationStatus::NOT_ALLOCATED]
+                        );
+                    }
+                } else {
+                    $failMessage = $sageResponse['response'];
+                    vAbort($failMessage);
+                }
+            } else { 
                 $splitPayment->update($paymentInformation);
                 if ($masterPayment) {
                     $masterPayment->update(
                         ['captured_amount' => ($masterPayment->captured_amount + $request->collection_amount),
-                            'payment_allocation_status' => PaymentAllocationStatus::NOT_ALLOCATED]
+                        'payment_allocation_status' => PaymentAllocationStatus::NOT_ALLOCATED]
                     );
                 }
-            } else {
-                $failMessage = $sageResponse['response'];
-                vAbort($failMessage);
             }
+
         } elseif ($request->is_declined) {
             $paymentInformation = [
                 'decline_reason_id' => $request->declined_reason,

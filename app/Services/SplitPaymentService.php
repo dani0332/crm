@@ -163,7 +163,12 @@ class SplitPaymentService
     {
         if ($payment) {
             return DB::transaction(function () use ($payment, $modelType, $premium) {
-                $skipEmbededProducts = ['App\Models\EmbeddedTransactions', 'App\Models\EmbeddedTransaction'];
+                $allowedModels = [
+                    'App\Models\BusinessQuote', 'App\Models\CarQuote',
+                    'App\Models\HealthQuote', 'App\Models\HomeQuote',
+                    'App\Models\LifeQuote', 'App\Models\PersonalQuote',
+                    'App\Models\TravelQuote', 'App\Models\YachtQuote',
+                ];
                 $ecomModels = [quoteTypeCode::Car, quoteTypeCode::Health, quoteTypeCode::Travel];
                 // Extract the code and check if it has child payments
                 $code = $payment->code;
@@ -212,7 +217,7 @@ class SplitPaymentService
                     $parentCollectionAmount = $payment->captured_amount;
                 }*/
 
-                $childPayments = Payment::where('code', 'like', "$code%")->whereNotIn('paymentable_type', $skipEmbededProducts)->get();
+                $childPayments = Payment::where('code', 'like', "$code%")->whereIn('paymentable_type', $allowedModels)->get();
                 if ($childPayments->count() > 5) {
                     Log::info('MigratePayment::Child Payments are greater than 5 for Payment Code: '.$payment->code);
 

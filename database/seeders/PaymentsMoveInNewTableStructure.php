@@ -9,6 +9,7 @@ use App\Services\SplitPaymentService;
 use Carbon\Carbon;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
 
 class PaymentsMoveInNewTableStructure extends Seeder
 {
@@ -18,15 +19,21 @@ class PaymentsMoveInNewTableStructure extends Seeder
     public function run(): void
     {
         Log::info('MigratePaymentSeeder::Payment migration started');
-        $skipEmbededProducts = ['App\Models\EmbeddedTransactions', 'App\Models\EmbeddedTransaction'];
-        $payments = Payment::whereNotIn('paymentable_type', $skipEmbededProducts)
+        //DB::enableQueryLog();
+        $allowedModels = ['App\Models\BusinessQuote', 'App\Models\CarQuote',
+                                'App\Models\HealthQuote', 'App\Models\HomeQuote',
+                                'App\Models\LifeQuote', 'App\Models\PersonalQuote',
+                                'App\Models\TravelQuote', 'App\Models\YachtQuote',
+                         ];
+        $payments = Payment::whereIn('paymentable_type', $allowedModels)
             ->where('created_at', '>=', Carbon::now()->subDays(30))
             ->where('total_payments', null)
             ->where('frequency', null)
-            ->where('payment_status_id', PaymentStatusEnum::AUTHORISED)
-            //->where('code', 'CAR-GTUKFY49')
+            ->where('payment_status_id', PaymentStatusEnum::AUTHORISED)            
             ->orderBy('created_at')
             ->get();
+              
+        //$q=DB::getQueryLog();
         //$payments = Payment::where('code', 'CYC-K9VTWM4Q')->get();
         if ($payments->count() > 0) {
             $ecommerceLob = ['P', 'TRA', 'HEA', 'CAR'];
@@ -63,7 +70,7 @@ class PaymentsMoveInNewTableStructure extends Seeder
                     //echo $tempCode[0]."\n";
                 }
                 if (count($tempCode) == 2) {
-                    $totalPayments = Payment::where('code', 'like', "$code%")->whereNotIn('paymentable_type', $skipEmbededProducts)->count();
+                    $totalPayments = Payment::where('code', 'like', "$code%")->whereIn('paymentable_type', $allowedModels)->count();
                     if ($totalPayments == 1) { // If only 1 payment exists then migrate
                         Log::info('MigratePaymentSeeder::Payment migration for Payment Code: '.$payment->code);
                         ////app(SplitPaymentService::class)->migratePayments($payment, $tempCode[0]);
