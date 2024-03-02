@@ -18,7 +18,6 @@ const props = defineProps({
   documentTypes: Object,
   quoteDocuments: Object,
   storageUrl: String,
-  quoteType: String,
   realQuote: Object,
   isNegativeValue: Boolean,
   bookingDetails: Array,
