@@ -436,7 +436,7 @@ class SendUpdateLogService
 
         $invoiceDescription = $insuranceProviderCode.'-'.$quoteType.'-'.$quote->policy_number;
 
-        if (in_array($sendUpdateLogCategory, [SendUpdateLogStatusEnum::EF])) {
+        if ($sendUpdateLogCategory == SendUpdateLogStatusEnum::EF) {
             $invoiceDescription = 'E.'.$invoiceDescription;
         } elseif (in_array($sendUpdateLogCategory, [SendUpdateLogStatusEnum::CI, SendUpdateLogStatusEnum::CIR])) {
             $invoiceDescription = 'CI.'.$invoiceDescription;
