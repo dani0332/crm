@@ -149,7 +149,7 @@ class SendUpdateLogRepository extends BaseRepository
         return $result;
     }
 
-    public function fetchUpdateBookingDetails($request)
+    public function fetchSaveBookingDetails($request)
     {
         try {
             $data = [
