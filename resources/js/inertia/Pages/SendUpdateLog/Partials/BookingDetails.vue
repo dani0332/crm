@@ -355,9 +355,11 @@ const modals = reactive({
 });
 const isStating = ref(false);
 
+const sendUpdateURL = (props.updateBtn === sendUpdateStatusEnum.SU) ? 'send-update' : 'send-update-validation';
+
 const sendUpdateValidation = () => {
   axios
-    .post('send-update-validation', {
+    .post(sendUpdateURL, {
       quoteType: props.quoteType,
       quoteUuid: props.realQuote.uuid,
       sendUpdateId: props.sendUpdateLog.id,

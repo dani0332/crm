@@ -9,6 +9,7 @@ use App\Enums\QuoteTypes;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\SendUpdateCustomerRequest;
+use App\Http\Requests\SendUpdateRequest;
 use App\Models\PersonalQuote;
 use App\Models\QuoteType;
 use App\Repositories\CustomerMembersRepository;
@@ -334,5 +335,10 @@ class SendUpdateLogController extends Controller
         }
 
         return $_return;
+    }
+
+    public function sendUpdate(SendUpdateRequest $sendUpdateRequest)
+    {
+        dd($sendUpdateRequest->toArray());
     }
 }
