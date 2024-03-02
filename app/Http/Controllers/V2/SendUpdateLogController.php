@@ -8,6 +8,7 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\SaveBookingDetailsRequest;
 use App\Http\Requests\SendUpdateCustomerRequest;
 use App\Models\PersonalQuote;
 use App\Models\QuoteType;
@@ -261,9 +262,9 @@ class SendUpdateLogController extends Controller
         return redirect()->back();
     }
 
-    public function saveBookingDetails(Request $request)
+    public function saveBookingDetails(SaveBookingDetailsRequest $saveBookingDetailsRequest)
     {
-        SendUpdateLogRepository::updateBookingDetails($request->all());
+        SendUpdateLogRepository::saveBookingDetails($saveBookingDetailsRequest);
 
         return redirect()->back();
     }
