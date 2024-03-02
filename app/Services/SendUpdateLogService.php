@@ -484,7 +484,10 @@ class SendUpdateLogService
     {
         if (count($sendUpdateLog->details) > 0) {
             $uploadedDocuments = $this->getUploadedDocuments($sendUpdateLog);
-            if (in_array($sendUpdateLog->category->code, [SendUpdateLogStatusEnum::EF, SendUpdateLogStatusEnum::EN, SendUpdateLogStatusEnum::CI, SendUpdateLogStatusEnum::CIR, SendUpdateLogStatusEnum::CPU])) {
+
+            if (in_array($sendUpdateLog->category->code, [
+                SendUpdateLogStatusEnum::EF, SendUpdateLogStatusEnum::EN, 
+                SendUpdateLogStatusEnum::CI, SendUpdateLogStatusEnum::CIR, SendUpdateLogStatusEnum::CPU])) {
                 $requiredDocuments = [DocumentTypeCode::SEND_UPDATE_TAX_INVOICE, DocumentTypeCode::SEND_UPDATE_TAX_INVOICE_RAISED_BUYER];
                 // it will check is 'tax invoice' and 'tax invoice by buyer' uploaded or not.
                 if (count(array_diff($requiredDocuments, $uploadedDocuments)) > 0) {
@@ -492,17 +495,72 @@ class SendUpdateLogService
                 }
             }
 
-            // Policy Shedule documents is mandatory for all LOB's.
-            /* if (in_array(DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE, $uploadedDocuments)) {
-                // if it is a car, bike or health quote then it will check for 'Policy Certificate' document.
-                if (in_array($quoteType, [quoteTypeCode::Car, quoteTypeCode::Bike, quoteTypeCode::Health])) {
-                    if (! in_array(DocumentTypeCode::SEND_UPDATE_POLICY_CERTIFICATE, $uploadedDocuments)) {
-                        return false;
-                    }
-                }
+            // Check documents for Send Update
+            // $commonManditoryDocumets = [DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE, DocumentTypeCode::SEND_UPDATE_MYALFRED_OFFERS];
+            // if (count(array_intersect($uploadedDocuments, $commonManditoryDocumets)) == count($commonManditoryDocumets)) {
+            //     switch ($quoteType) {
+            //         case quoteTypeCode::Car:
+            //         case quoteTypeCode::Bike:
+            //         case quoteTypeCode::Health:
+
+            //             $requiredDocuments = [
+            //                 DocumentTypeCode::SEND_UPDATE_POLICY_CERTIFICATE, 
+            //                 DocumentTypeCode::SEND_UPDATE_POLICY_HANDBOOK,
+            //             ];
+
+            //             if (count(array_intersect($uploadedDocuments, $requiredDocuments)) == count($requiredDocuments)) {
+            //                 if ($quoteType == quoteTypeCode::Health) {
+            //                     $healthRequiredDocuments = [
+            //                         DocumentTypeCode::SEND_UPDATE_TAX_INVOICE, 
+            //                         DocumentTypeCode::SEND_UPDATE_NETWORK_LIST,
+            //                         DocumentTypeCode::SEND_UPDATE_SIGNED_MED_APP_FORM,
+            //                     ];
+            //                     if (count(array_intersect($uploadedDocuments, $healthRequiredDocuments)) != count($healthRequiredDocuments))
+            //                         return false;
+            //                 }
+            //             } else {
+            //                 return false;
+            //             }
+            //             break;
+
+            //         case quoteTypeCode::Yacht:
+            //         case quoteTypeCode::Business:
+
+            //             $requiredDocuments = [
+            //                 DocumentTypeCode::SEND_UPDATE_TAX_INVOICE, 
+            //                 DocumentTypeCode::SEND_UPDATE_RECEIPT,
+            //             ];
+
+            //             if (count(array_intersect($uploadedDocuments, $requiredDocuments)) == count($requiredDocuments)) {
+            //                 if ($quoteType == quoteTypeCode::Business) {
+            //                     if (!in_array(DocumentTypeCode::SEND_UPDATE_NETWORK_LIST, $uploadedDocuments))
+            //                         return false;
+            //                 }
+
+            //                 if ($quoteType == quoteTypeCode::Yacht) {
+            //                     if (!in_array(DocumentTypeCode::SEND_UPDATE_POLICY_HANDBOOK, $uploadedDocuments))
+            //                         return false;
+            //                 }
+            //             } else {
+            //                 return false;
+            //             }
+            //             break;
+
+            //         case quoteTypeCode::Life:
+
+            //             $requiredDocuments = [
+            //                 DocumentTypeCode::SEND_UPDATE_POLICY_HANDBOOK, 
+            //                 DocumentTypeCode::SEND_UPDATE_APP_COPY,
+            //             ];
+
+            //             if (count(array_intersect($uploadedDocuments, $requiredDocuments)) != count($requiredDocuments))
+            //                 return false;
+
+            //         break;
+            //     }
 
                 return SendUpdateLogStatusEnum::SU;
-            } */
+            }
         }
 
         return false;

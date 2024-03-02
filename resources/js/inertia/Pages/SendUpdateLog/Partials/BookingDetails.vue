@@ -346,7 +346,8 @@ function convertToNumber(value) {
 };
 
 const sendUpdateButton = computed(() => {
-  return (isEF || isCI || isCIR) && props.updateBtn && can(page.props.permissionsEnum.SEND_UPDATE_TO_CUSTOMER);
+  // return (isEF || isCI || isCIR) && props.updateBtn && can(page.props.permissionsEnum.SEND_UPDATE_TO_CUSTOMER);
+  return (isEF || isCI || isCIR) && props.updateBtn;
 });
 
 const modals = reactive({
