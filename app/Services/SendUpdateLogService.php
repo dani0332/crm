@@ -491,7 +491,7 @@ class SendUpdateLogService
             if ($check) {
                 return SendUpdateLogStatusEnum::SUC;
             }
-        } elseif (count($sendUpdateLog->details) > 0) {
+        } elseif ($sendUpdateLog->is_booking_filled) {
             if ($check) {
                 return SendUpdateLogStatusEnum::SUC;
             }
