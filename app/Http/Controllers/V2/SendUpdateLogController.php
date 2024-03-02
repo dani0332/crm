@@ -14,14 +14,14 @@ use App\Models\QuoteType;
 use App\Repositories\CustomerMembersRepository;
 use App\Repositories\InsuranceProviderRepository;
 use App\Repositories\LookupRepository;
-use App\Repositories\QuoteTypeRepository;
-use App\Services\QuoteDocumentService;
-use App\Traits\GenericQueriesAllLobs;
 use App\Repositories\PersonalQuoteRepository;
 use App\Repositories\PolicyIssuanceStatusRepository;
+use App\Repositories\QuoteTypeRepository;
 use App\Repositories\SendUpdateLogRepository;
 use App\Services\LookupService;
+use App\Services\QuoteDocumentService;
 use App\Services\SendUpdateLogService;
+use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Http\Request;
 
 class SendUpdateLogController extends Controller
@@ -292,7 +292,7 @@ class SendUpdateLogController extends Controller
 
         $log = SendUpdateLogRepository::sendUpdateToCustomer($data);
 
-        if ( ! empty($log->message)) {
+        if (! empty($log->message)) {
             vAbort($log->message);
         }
 
