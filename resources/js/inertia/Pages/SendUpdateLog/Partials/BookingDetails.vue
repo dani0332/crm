@@ -343,6 +343,7 @@ function convertToNumber(value) {
   }
 
   return -parseFloat(value.toString().replace(/,/g, ''));
+}
 
 const sendUpdateButton = computed(() => {
   return (isEF.value || isCI.value || isCIR.value) && props.updateBtn && can(page.props.permissionsEnum.SEND_UPDATE_TO_CUSTOMER);
