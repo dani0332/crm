@@ -513,4 +513,30 @@ class SendUpdateLogService
 
         return '';
     }
+
+    public function mergeBookingDetails($bookingDetails, $sendUpdateLog)
+    {
+        $data = [
+            'reversal_invoice' => $sendUpdateLog->reversal_invoice ?? null,
+            'booking_date' => $sendUpdateLog->booking_date,
+            'invoice_description' => $sendUpdateLog->invoice_description,
+            'broker_invoice_number' => $sendUpdateLog->broker_invoice_number,
+            'transaction_payment_status' => $sendUpdateLog->transaction_payment_status,
+            'invoice_date' => $sendUpdateLog->invoice_date,
+            'insurer_tax_invoice_number' => $sendUpdateLog->insurer_tax_invoice_number,
+            'insurer_commission_invoice_number' => $sendUpdateLog->insurer_commission_invoice_number,
+            'discount' => $sendUpdateLog->discount,
+            'commission_percentage' => $sendUpdateLog->commission_percentage,
+            'commission_vat_not_applicable' => $sendUpdateLog->commission_vat_not_applicable,
+            'vat_on_commission' => $sendUpdateLog->vat_on_commission,
+            'commission_vat_applicable' => $sendUpdateLog->commission_vat_applicable,
+            'total_commission' => $sendUpdateLog->total_commission,
+            'total_vat_amount' => $sendUpdateLog->total_vat_amount,
+            'price_vat_applicable' => $sendUpdateLog->price_vat_applicable,
+            'price_vat_not_applicable' => $sendUpdateLog->price_vat_not_applicable,
+            'total_price' => $sendUpdateLog->total_price,
+        ];
+
+        return array_merge($bookingDetails, $data);
+    }
 }

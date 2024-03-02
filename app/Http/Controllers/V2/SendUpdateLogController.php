@@ -19,7 +19,6 @@ use App\Services\QuoteDocumentService;
 use App\Traits\GenericQueriesAllLobs;
 use App\Repositories\PersonalQuoteRepository;
 use App\Repositories\PolicyIssuanceStatusRepository;
-use App\Repositories\SendUpdateLogDetailsRepository;
 use App\Repositories\SendUpdateLogRepository;
 use App\Services\LookupService;
 use App\Services\SendUpdateLogService;
@@ -136,12 +135,8 @@ class SendUpdateLogController extends Controller
             $paymentInvoices = collect($payments)->pluck('insurer_tax_number');
         }
 
-        if (isset($sendUpdateLog->details) && count($sendUpdateLog->details) > 0) {
-            $bookingDetails = array_merge($bookingDetails, $sendUpdateLog->details[0]->data);
-            $bookingDetails['type'] = $sendUpdateLog->details[0]->type;
-            if ($bookingDetails['type'] == SendUpdateLogStatusEnum::CPD) {
-                $bookingDetails['reversal_invoice'] = $sendUpdateLog->details[0]->data['reversal_invoice'];
-            }
+        if ($sendUpdateLog->is_booking_filled) {
+            $bookingDetails = $this->sendUpdateLogService->mergeBookingDetails($bookingDetails, $sendUpdateLog);
         }
 
         $uploadedDocuments = $this->sendUpdateLogService->getUploadedDocuments($sendUpdateLog);
@@ -268,7 +263,7 @@ class SendUpdateLogController extends Controller
 
     public function saveBookingDetails(Request $request)
     {
-        SendUpdateLogDetailsRepository::createOrUpdate($request->all());
+        SendUpdateLogRepository::updateBookingDetails($request->all());
 
         return redirect()->back();
     }
@@ -299,7 +294,7 @@ class SendUpdateLogController extends Controller
 
         $log = SendUpdateLogRepository::sendUpdateToCustomer($data);
 
-        if (isset($log->message) && ! empty($log->message)) {
+        if ( ! empty($log->message)) {
             vAbort($log->message);
         }
 
