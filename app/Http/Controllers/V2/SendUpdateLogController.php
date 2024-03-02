@@ -277,13 +277,11 @@ class SendUpdateLogController extends Controller
 
     public function sendUpdateValidation(SendUpdateCustomerRequest $sendUpdateCustomerRequest)
     {
-        if ($sendUpdateCustomerRequest->validated()) {
-            $message = $this->sendUpdateLogService->getSendToCustomerValidation($sendUpdateCustomerRequest->sendUpdateId);
+        $message = $this->sendUpdateLogService->getSendToCustomerValidation($sendUpdateCustomerRequest->sendUpdateId);
 
-            return response()->json([
-                'message' => $message,
-            ], 200);
-        }
+        return response()->json([
+            'message' => $message,
+        ], 200);
 
         return response()->json(['success' => false], 500);
     }
