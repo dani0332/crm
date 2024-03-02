@@ -30,8 +30,8 @@ final class SendUpdateLogStatusEnum extends Enum
     const ED = 'ED'; //Employee deletion
     const DM = 'DM'; //Delete member
     const CPU = 'CPU'; // Correction of Policy Upload.
-    const CAA = 'CAA'; // Correction and amendments. 
-    const EIU = 'EIU'; // Emirates ID update. 
+    const CAA = 'CAA'; // Correction and amendments.
+    const EIU = 'EIU'; // Emirates ID update.
     const MSCNFI = 'MSCNFI'; // Marital status change (with no financial impact).
     const RFCOC = 'RFCOC'; // Request for certificate of continuity.
     const RFCOI = 'RFCOI'; // Request for certificate of insurance.
@@ -41,8 +41,9 @@ final class SendUpdateLogStatusEnum extends Enum
     const RFEC = 'RFEC'; // Request for ecard copy.
     const RTI = 'RTI'; // Request for tax invoice.
     const RFSOA = 'RFSOA'; // Request for statement of account (SOA).
-    // send update log button. 
-    const SUC = 'Send Update to Customer'; // send update to customer. 
+
+    // send update log button.
+    const SUC = 'Send Update to Customer'; // send update to customer.
     const SU = 'Send Update'; // send update.
     const BOOKING_FILLED = 1;
 }
