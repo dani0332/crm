@@ -43,5 +43,6 @@ final class SendUpdateLogStatusEnum extends Enum
     const RFSOA = 'RFSOA'; // Request for statement of account (SOA).
     // send update log button. 
     const SUC = 'Send Update to Customer'; // send update to customer. 
-    const SU = 'Send Update'; // send update. 
+    const SU = 'Send Update'; // send update.
+    const BOOKING_FILLED = 1;
 }
