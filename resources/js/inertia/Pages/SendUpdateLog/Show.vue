@@ -18,7 +18,6 @@ const props = defineProps({
   documentTypes: Object,
   quoteDocuments: Object,
   storageUrl: String,
-  quoteType: String,
   realQuote: Object,
   isNegativeValue: Boolean,
   bookingDetails: Array,
@@ -302,10 +301,12 @@ const isBookingDetailsVisible = computed(() => {
         sendLogId: props.sendUpdateLog.id,
         members: memberDataDocs(props.membersDetail)
       }"
+      :selectedCategory="selectedCategory"
+      :update-btn="props.updateBtn"
     />
 
     <LazyBookingDetails
-      v-if="props.isBookingDetailsVisible"
+      v-if="isBookingDetailsVisible"
       :sendUpdateLog="sendUpdateLog"
       :insuranceProviders="insuranceProviders"
       :selectedCategory="selectedCategory"

@@ -482,20 +482,27 @@ class SendUpdateLogService
 
     public function getUpdateButtonStatus($sendUpdateLog, $quoteType): string
     {
-        if (count($sendUpdateLog->details) > 0) {
-            $uploadedDocuments = $this->getUploadedDocuments($sendUpdateLog);
+        $uploadedDocuments = $this->getUploadedDocuments($sendUpdateLog);
+        $requiredDocuments = [DocumentTypeCode::SEND_UPDATE_TAX_INVOICE, DocumentTypeCode::SEND_UPDATE_TAX_INVOICE_RAISED_BUYER];
+        // it will check is 'tax invoice' and 'tax invoice by buyer' uploaded or not.
+        $check = count(array_diff($requiredDocuments, $uploadedDocuments)) > 0;
 
-            if (in_array($sendUpdateLog->category->code, [
-                SendUpdateLogStatusEnum::EF, SendUpdateLogStatusEnum::EN, 
-                SendUpdateLogStatusEnum::CI, SendUpdateLogStatusEnum::CIR, SendUpdateLogStatusEnum::CPU])) {
-                $requiredDocuments = [DocumentTypeCode::SEND_UPDATE_TAX_INVOICE, DocumentTypeCode::SEND_UPDATE_TAX_INVOICE_RAISED_BUYER];
-                // it will check is 'tax invoice' and 'tax invoice by buyer' uploaded or not.
-                if (count(array_diff($requiredDocuments, $uploadedDocuments)) > 0) {
-                    return SendUpdateLogStatusEnum::SUC;
-                }
+        if (in_array($sendUpdateLog->category->code, [SendUpdateLogStatusEnum::EN, SendUpdateLogStatusEnum::CPU])) {
+            if ($check) {
+                return SendUpdateLogStatusEnum::SUC;
             }
+        } elseif (count($sendUpdateLog->details) > 0) {
 
-            // Check documents for Send Update
+            // need to add send update validation here
+
+
+
+            if ($check) {
+                return SendUpdateLogStatusEnum::SUC;
+            }
+        }
+
+        // Check documents for Send Update
             // $commonManditoryDocumets = [DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE, DocumentTypeCode::SEND_UPDATE_MYALFRED_OFFERS];
             // if (count(array_intersect($uploadedDocuments, $commonManditoryDocumets)) == count($commonManditoryDocumets)) {
             //     switch ($quoteType) {
@@ -559,11 +566,8 @@ class SendUpdateLogService
             //         break;
             //     }
 
-                return SendUpdateLogStatusEnum::SU;
-            }
-        }
 
-        return false;
+        return SendUpdateLogStatusEnum::SU;
     }
 
     public function getSendToCustomerValidation($sendUpdateId): string

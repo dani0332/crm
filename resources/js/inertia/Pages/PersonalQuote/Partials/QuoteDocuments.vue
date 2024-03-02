@@ -1,5 +1,6 @@
 <script setup>
 import {fileUploadErrorMessage} from "@/inertia/Composables/utilities.js";
+import {computed} from "vue";
 
 const props = defineProps({
   quote: Object,
@@ -16,11 +17,20 @@ const props = defineProps({
     required: false,
     default: () => ({}),
   },
+  selectedCategory: {
+    type: Object,
+    required: true,
+  },
+  updateBtn: {
+    type: String,
+    required: false,
+  },
 });
 
 const page = usePage();
 const notification = useNotifications('toast');
 const permissionEnum = page.props.permissionsEnum;
+const sendUpdateStatusEnum = page.props.sendUpdateStatusEnum;
 const can = permission => useCan(permission);
 
 const rowsPerPage = props.extras?.pageType === 'send-update-log' ? 10 : 15;
@@ -145,6 +155,40 @@ const uploadFile = (doc, filesWithInfo, memberId) => {
     });
 };
 
+const isEN = computed(() => {
+  return props.selectedCategory?.subCategory.slug === sendUpdateStatusEnum.EN;
+});
+
+const isCPU = computed(() => {
+  return props.selectedCategory?.subCategory.slug === sendUpdateStatusEnum.CPU;
+});
+
+const sendUpdateButton = computed(() => {
+  return (isEN.value || isCPU.value) && (props.updateBtn && props.updateBtn !== 'Send Update') && can(permissionEnum.SEND_UPDATE_TO_CUSTOMER);
+});
+const sendUpdateValidation = () => {
+  axios
+    .post('send-update-validation', {
+      quoteType: props.quoteType,
+      quoteUuid: props.realQuote.uuid,
+      sendUpdateId: props.sendUpdateLog.id,
+    })
+    .then(response => {
+      if (response.status == 200) {
+        modals.sendConfirm = true;
+        isStating.value = response.data.message;
+      }
+    })
+    .catch(function (errors) {
+      let responseError = errors.response.data.errors.error;
+      Object.keys(responseError).forEach(function (key) {
+        notification.error({
+          title: responseError[key],
+          position: 'top',
+        });
+      });
+    });
+};
 </script>
 
 <template>
@@ -197,6 +241,17 @@ const uploadFile = (doc, filesWithInfo, memberId) => {
         </div>
       </template>
         </DataTable>
+        <div class="flex gap-2 mb-4 justify-end">
+          <x-button
+              size="sm"
+              color="orange"
+              class="mt-5"
+              v-if="sendUpdateButton"
+              @click="sendUpdateValidation"
+          >
+            {{ props.updateBtn }}
+          </x-button>
+        </div>
       </template>
     </Collapsible>
 
