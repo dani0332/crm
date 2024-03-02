@@ -482,30 +482,22 @@ class SendUpdateLogService
 
     public function getUpdateButtonStatus($sendUpdateLog, $quoteType): string
     {
-        if (count($sendUpdateLog->details) > 0) {
-            $uploadedDocuments = $this->getUploadedDocuments($sendUpdateLog);
-            if (in_array($sendUpdateLog->category->code, [SendUpdateLogStatusEnum::EF, SendUpdateLogStatusEnum::EN, SendUpdateLogStatusEnum::CI, SendUpdateLogStatusEnum::CIR, SendUpdateLogStatusEnum::CPU])) {
-                $requiredDocuments = [DocumentTypeCode::SEND_UPDATE_TAX_INVOICE, DocumentTypeCode::SEND_UPDATE_TAX_INVOICE_RAISED_BUYER];
-                // it will check is 'tax invoice' and 'tax invoice by buyer' uploaded or not.
-                if (count(array_diff($requiredDocuments, $uploadedDocuments)) > 0) {
-                    return SendUpdateLogStatusEnum::SUC;
-                }
+        $uploadedDocuments = $this->getUploadedDocuments($sendUpdateLog);
+        $requiredDocuments = [DocumentTypeCode::SEND_UPDATE_TAX_INVOICE, DocumentTypeCode::SEND_UPDATE_TAX_INVOICE_RAISED_BUYER];
+        // it will check is 'tax invoice' and 'tax invoice by buyer' uploaded or not.
+        $check = count(array_diff($requiredDocuments, $uploadedDocuments)) > 0;
+
+        if (in_array($sendUpdateLog->category->code, [SendUpdateLogStatusEnum::EN, SendUpdateLogStatusEnum::CPU])) {
+            if ($check) {
+                return SendUpdateLogStatusEnum::SUC;
             }
-
-            // Policy Shedule documents is mandatory for all LOB's.
-            /* if (in_array(DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE, $uploadedDocuments)) {
-                // if it is a car, bike or health quote then it will check for 'Policy Certificate' document.
-                if (in_array($quoteType, [quoteTypeCode::Car, quoteTypeCode::Bike, quoteTypeCode::Health])) {
-                    if (! in_array(DocumentTypeCode::SEND_UPDATE_POLICY_CERTIFICATE, $uploadedDocuments)) {
-                        return false;
-                    }
-                }
-
-                return SendUpdateLogStatusEnum::SU;
-            } */
+        } elseif (count($sendUpdateLog->details) > 0) {
+            if ($check) {
+                return SendUpdateLogStatusEnum::SUC;
+            }
         }
 
-        return false;
+        return SendUpdateLogStatusEnum::SU;
     }
 
     public function getSendToCustomerValidation($sendUpdateId): string
