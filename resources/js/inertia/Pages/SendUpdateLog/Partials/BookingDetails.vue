@@ -348,10 +348,6 @@ const sendUpdateButton = computed(() => {
   return (isEF.value || isCI.value || isCIR.value) && props.updateBtn && can(page.props.permissionsEnum.SEND_UPDATE_TO_CUSTOMER);
 });
 
-onMounted(() => {
-  console.log(sendUpdateButton.value);
-});
-
 const modals = reactive({
   sendConfirm: false,
   isConfirmed: false,
