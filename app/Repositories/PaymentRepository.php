@@ -372,38 +372,43 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                     }
                 }
             }
-            
-            $masterPaymentStatus = $firstPayment->payment_status_id;
-            $totalPaidPayments = PaymentSplits::whereIn('payment_status_id', [
-                PaymentStatusEnum::PAID,
-                PaymentStatusEnum::PARTIAL_CAPTURED,
-                PaymentStatusEnum::PARTIALLY_PAID,
-                PaymentStatusEnum::CAPTURED,
-            ])
-                ->where('code', $firstPayment->code)
-                ->count();
-            if ($totalPaidPayments == $firstPayment->total_payments) {
-                $masterPaymentStatus = PaymentStatusEnum::CAPTURED;
-            }
-            $firstPayment->update([
-                'is_approved' => 1,
-                'payment_status_id' => $masterPaymentStatus,
-                'updated_by' => Auth::user()->id,
-            ]);
-            $successMessage = 'Transaction approved';
-            $totalApproved = $quoteModel->payments()->where('is_approved', 1)->count();
-            if ($totalApproved == $quoteModel->payments()->count()) {
-                $quoteModel->quote_status_id = QuoteStatusEnum::TransactionApproved;
-                $quoteModel->save();
-                //Create duplicate lead for TRAVEL
-                if ($quoteTypeId == QuoteTypeId::Travel && $quoteModel->payments()->count() > 1) {
-                    if (app(TravelQuoteService::class)->createDuplicateLead($quoteModel)) {
-                        $successMessage .= ', '.$quoteModel->code.'-1 Created For Booking The Additional Policy';
+            // On failure, the capture button will render again and the user can try again
+            DB::beginTransaction();
+            try {
+                $masterPaymentStatus = $firstPayment->payment_status_id;
+                $totalPaidPayments = PaymentSplits::whereIn('payment_status_id', [
+                    PaymentStatusEnum::PAID,
+                    PaymentStatusEnum::PARTIAL_CAPTURED,
+                    PaymentStatusEnum::PARTIALLY_PAID,
+                    PaymentStatusEnum::CAPTURED,
+                ])
+                    ->where('code', $firstPayment->code)
+                    ->count();
+                if ($totalPaidPayments == $firstPayment->total_payments) {
+                    $masterPaymentStatus = PaymentStatusEnum::CAPTURED;
+                }
+                $firstPayment->update([
+                    'is_approved' => 1,
+                    'payment_status_id' => $masterPaymentStatus,
+                    'updated_by' => Auth::user()->id,
+                ]);
+                $successMessage = 'Transaction approved';
+                $totalApproved = $quoteModel->payments()->where('is_approved', 1)->count();
+                if ($totalApproved == $quoteModel->payments()->count()) {
+                    $quoteModel->quote_status_id = QuoteStatusEnum::TransactionApproved;
+                    $quoteModel->save();
+                    //Create duplicate lead for TRAVEL
+                    if ($quoteTypeId == QuoteTypeId::Travel && $quoteModel->payments()->count() > 1) {
+                        if (app(TravelQuoteService::class)->createDuplicateLead($quoteModel)) {
+                            $successMessage .= ', '.$quoteModel->code.'-1 Created For Booking The Additional Policy';
+                        }
                     }
                 }
+                DB::commit();
+            } catch (Exception $exception) {
+                DB::rollBack();
             }
         }
-
         return $successMessage;
     }
     //migrate payments
