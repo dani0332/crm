@@ -231,8 +231,9 @@ class SplitPaymentService
                 $payment->total_payments = $childPayments->count();
 
                 // Create plan detail for non ecommerce lobs
-                if (! in_array(ucfirst($modelType), $ecomModels) && $childPayments->count() == 1) {
-                    if ($payment->insurance_provider_id > 0) {
+                if ((!in_array(ucfirst($modelType), $ecomModels)) && $childPayments->count() == 1) {
+                    Log::info('MigratePayment::Payment migration for Payment Code: '.$payment->code.' Model Type: '.ucfirst($modelType));
+                    if ( isset($payment->insurance_provider_id) && $payment->insurance_provider_id > 0) {
                         //get 5% of grandTotal
                         $vat = $grandTotal * 0.05;
                         if ($modelObject) {

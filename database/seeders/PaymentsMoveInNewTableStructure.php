@@ -36,15 +36,23 @@ class PaymentsMoveInNewTableStructure extends Seeder
         //$q=DB::getQueryLog();
         //$payments = Payment::where('code', 'CYC-K9VTWM4Q')->get();
         if ($payments->count() > 0) {
-            $ecommerceLob = ['P', 'TRA', 'HEA', 'CAR'];
+            $ecommerceLob = ['P'];
             foreach ($payments as $payment) {
                 // Extract the code and check if it has child payments
                 $code = $payment->code;
                 $tempCode = explode('-', $code);
 
-                if (! in_array($tempCode[0], $ecommerceLob)) {
-                    $modelType = 'Car';
+                if (! in_array($tempCode[0], $ecommerceLob)) {                    
                     switch ($tempCode[0]) {
+                        case 'TRA':
+                            $tempCode[0] = quoteTypeCode::Travel;
+                            break;
+                        case 'HEA':
+                            $tempCode[0] = quoteTypeCode::Health;
+                            break;
+                        case 'CAR':
+                            $tempCode[0] = quoteTypeCode::Car;
+                            break;
                         case 'BUS':
                             $tempCode[0] = quoteTypeCode::Business;
                             break;
@@ -72,7 +80,7 @@ class PaymentsMoveInNewTableStructure extends Seeder
                 if (count($tempCode) == 2) {
                     $totalPayments = Payment::where('code', 'like', "$code%")->whereIn('paymentable_type', $allowedModels)->count();
                     if ($totalPayments == 1) { // If only 1 payment exists then migrate
-                        Log::info('MigratePaymentSeeder::Payment migration for Payment Code: '.$payment->code);
+                        Log::info('MigratePaymentSeeder::Payment migration for Payment Code: '.$payment->code.' Model Type: '.$tempCode[0]);
                         ////app(SplitPaymentService::class)->migratePayments($payment, $tempCode[0]);
                     } else {
                         Log::info('MigratePaymentSeeder::Payment migration skipped for Payment Code: '.$payment->code.',having more than 1 child payments');
