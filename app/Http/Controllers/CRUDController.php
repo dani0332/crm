@@ -30,7 +30,9 @@ use App\Http\Requests\StorePaymentRequest;
 use App\Http\Requests\UpdateLeadStatusRequest;
 use App\Http\Requests\UpdatePaymentRequest;
 use App\Jobs\CarRenewalEmailJob;
+use App\Jobs\SendOCBIntroEmailJob;
 use App\Jobs\SyncSIBContactJob;
+use App\Models\ApplicationStorage;
 use App\Models\CarMake;
 use App\Models\CarQuote;
 use App\Models\EmbeddedProductOption;
@@ -587,6 +589,8 @@ class CRUDController extends Controller
         $tiers = $this->lookupService->getTierR();
 
         $access = $this->carQuoteService->updatedAccessAgainstPaymentStatus($paymentEntityModel, $record);
+        $vatPercentage = ApplicationStorage::where('key_name', ApplicationStorageEnums::VAT_VALUE)->first()->value ?? 0;
+
         $isNewPaymentStructure = app(SplitPaymentService::class)->isNewPaymentStructure($payments);
         if ($this->genericModel->modelType == quoteTypeCode::Car) { // Car plans to display on detail view
             $quote = $record;
@@ -820,6 +824,7 @@ class CRUDController extends Controller
                 'paymentTooltipEnum' => PaymentTooltip::asArray(),
                 'paymentStatusEnum' => PaymentStatusEnum::asArray(),
                 'documentTypes' => $documentTypes,
+                'vatPercentage' => $vatPercentage,
                 'isNewPaymentStructure' => $isNewPaymentStructure,
             ]);
         }
@@ -978,7 +983,7 @@ class CRUDController extends Controller
      * Show the form for editing the specified resource.
      *
      * @param  int  $id
-     * @return \Illuminate\Http\Response        klm[jo]
+     * @return \Illuminate\Http\Response klm[jo]
      */
     public function edit($id)
     {
@@ -1810,6 +1815,24 @@ class CRUDController extends Controller
 
             return response()->json(['error' => 'OCB email sending failed, please try again. Error Code: '.$responseCode], 500);
         }
+    }
+
+    public function sendOCBEmailNB(Request $request, $quoteType, $quoteUuId)
+    {
+        if ($quoteUuId) {
+            Log::info('sendOCBEmailNB OCB email sending started for quote uuid: '.$quoteUuId);
+
+            SendOCBIntroEmailJob::dispatch($quoteUuId, null);
+
+            info('sendOCBEmailNB OCB email Job dispatched for quote uuid: '.$quoteUuId);
+
+            return response()->json(['success' => 'OCB NB email sent to customer !']);
+        } else {
+            Log::info('sendOCBEmailNB OCB email quote uuid not found');
+
+            return response()->json(['error' => 'OCB email sending failed, please try again.'], 500);
+        }
+
     }
 
     public function manualTierAssignment(Request $request)

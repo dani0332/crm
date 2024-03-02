@@ -1619,6 +1619,10 @@ const handlePlanSelected = plan => {
             <dt class="font-medium">ADDITIONAL NOTES</dt>
             <dd>{{ quote.additional_notes }}</dd>
           </div>
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">ENQUIRY COUNT</dt>
+            <dd>{{ quote.enquiry_count }}</dd>
+          </div>
         </dl>
       </div>
     </div>
@@ -3015,5 +3019,11 @@ const handlePlanSelected = plan => {
     </div>
 
     <AuditLogs :type="'App\\Models\\HealthQuote'" :id="$page.props.quote.id" :quoteCode="$page.props.quote.code"/>
+    
+
+    <ClientInquiryLogs
+        v-if="clientInquiryLogs.length > 0"
+        :logs="clientInquiryLogs"
+    />
   </div>
 </template>

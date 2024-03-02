@@ -128,6 +128,7 @@ class HealthQuoteService extends BaseService
             'hqr.price_starting_from',
             'hqr.kyc_decision',
             'hqr.risk_score',
+            'hqr.enquiry_count',
             DB::raw('IF(EXISTS (
                 SELECT *
                 FROM quote_request_entity_mapping
@@ -1380,7 +1381,7 @@ class HealthQuoteService extends BaseService
     /**
      * create health plan for upload & create process.
      *
-     * @param $data
+     * @param    $data
      * @return false
      */
     public function renewalCreatePlan($planData)

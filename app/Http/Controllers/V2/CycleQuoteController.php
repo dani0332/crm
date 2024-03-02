@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\V2;
 
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\PaymentStatusEnum;
@@ -11,6 +12,7 @@ use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\CycleQuoteRequest;
+use App\Models\ApplicationStorage;
 use App\Models\Emirate;
 use App\Models\Nationality;
 use App\Repositories\ActivityRepository;
@@ -58,7 +60,7 @@ class CycleQuoteController extends Controller
     }
 
     /**
-     * @param $quoteTypeCode
+     * @param    $quoteTypeCode
      * @return \Illuminate\Http\RedirectResponse
      */
     public function store(CycleQuoteRequest $request)
@@ -90,8 +92,8 @@ class CycleQuoteController extends Controller
     }
 
     /**
-     * @param $quoteTypeCode
-     * @param $quoteId
+     * @param    $quoteTypeCode
+     * @param    $quoteId
      * @return void
      */
     public function update($uuid, CycleQuoteRequest $request)
@@ -137,6 +139,7 @@ class CycleQuoteController extends Controller
         $uboDetails = CustomerMembersRepository::getBy($quote->id, QuoteTypes::CYCLE->name, CustomerTypeEnum::Entity);
         $uboRelations = LookupRepository::where('key', LookupsEnum::UBO_RELATION)->get();
         $emirates = Emirate::where('is_active', 1)->select('id', 'text')->get();
+        $vatPercentage = ApplicationStorage::where('key_name', ApplicationStorageEnums::VAT_VALUE)->first()->value ?? 0;
 
         return inertia('CycleQuote/Show', [
             'quoteType' => QuoteTypes::CYCLE,
@@ -163,6 +166,7 @@ class CycleQuoteController extends Controller
             'emirates' => $emirates,
             'UBOsDetails' => $uboDetails,
             'UBORelations' => $uboRelations,
+            'vatPercentage' => $vatPercentage,
             'paymentTooltipEnum' => PaymentTooltip::asArray(),
             'paymentStatusEnum' => PaymentStatusEnum::asArray(),
             'isNewPaymentStructure' => app(SplitPaymentService::class)->isNewPaymentStructure($quote->payments),

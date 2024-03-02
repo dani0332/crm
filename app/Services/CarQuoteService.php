@@ -171,7 +171,9 @@ class CarQuoteService extends BaseService
                 'ent.company_address',
                 'qrem.entity_type_code',
                 'ent.industry_type_code',
-                'cqr.prefill_plan_id',
+                //'cqr.prefill_plan_id',
+                //'cqr.prefill_plan_selected_at',
+                //'cqr.plan_selected_at'                
                 'cqr.enquiry_count',
             )
             ->leftJoin('nationality as n', 'n.id', '=', 'cqr.nationality_id')
@@ -1233,7 +1235,7 @@ class CarQuoteService extends BaseService
     /**
      * modify plan during upload & update process.
      *
-     * @param $data
+     * @param    $data
      * @return false
      */
     public function renewalCreatePlan($planData)
@@ -1320,7 +1322,7 @@ class CarQuoteService extends BaseService
 
     /**
      * @return bool|string
-     * paid_at = authorized date
+     *                     paid_at = authorized date
      */
     public function isPlanModifyAllowed($data)
     {
