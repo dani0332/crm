@@ -197,9 +197,11 @@ class HandleInertiaRequests extends Middleware
                         ),
                 )
                 ->addIf(
-                    auth()->user()->hasAnyPermission(PermissionsEnum::HealthQuotesList,
+                    auth()->user()->hasAnyPermission(
+                        PermissionsEnum::HealthQuotesList,
                         PermissionsEnum::HEALTH_QUOTES_MANAGER_ACCESS,
-                        PermissionsEnum::HEALTH_QUOTES_ACCESS),
+                        PermissionsEnum::HEALTH_QUOTES_ACCESS
+                    ),
                     'Health Quotes',
                     '/quotes/health',
                     fn ($s) => $s->attributes(['icon' => 'health'])
@@ -443,11 +445,19 @@ class HandleInertiaRequests extends Middleware
                     );
             });
         }
-        if (auth()->user()->hasAnyPermission([
+        $adminMenuPermissions = [
             PermissionsEnum::UsersList, PermissionsEnum::RoleList,
-            PermissionsEnum::TeamsList, PermissionsEnum::COMMERCIAL_KEYWORDS,
-            PermissionsEnum::CONFIGURE_COMMERCIAL_VEHICLES, PermissionsEnum::RENEWAL_BATCHES_LIST,
-        ])) {
+            PermissionsEnum::TeamsList, PermissionsEnum::RENEWAL_BATCHES_LIST,
+            PermissionsEnum::COMMERCIAL_KEYWORDS,
+            PermissionsEnum::CONFIGURE_COMMERCIAL_VEHICLES,
+            PermissionsEnum::RULE_CONFIG_LIST,
+            PermissionsEnum::QUAD_CONFIG_LIST,
+            PermissionsEnum::TIER_CONFIG_LIST,
+            PermissionsEnum::TeamThresholdView,
+            PermissionsEnum::COMMERCIAL_KEYWORDS,
+            PermissionsEnum::CONFIGURE_COMMERCIAL_VEHICLES,
+        ];
+        if (auth()->user()->hasAnyPermission($adminMenuPermissions)) {
             $nav = $nav->add('Admin', '', function (Section $section) {
                 $section
                     ->addIf(
