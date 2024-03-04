@@ -230,10 +230,9 @@ class CarAllocationService extends AllocationService
 
         if ($teamId) {
             $teamUserIds = UserTeams::where('team_id', $teamId)->select('user_id')->get();
-            if($teamUserIds->count() > 0) {
+            if ($teamUserIds->count() > 0) {
                 $teamUserIds = $teamUserIds->pluck('user_id')->toArray();
-            }
-            else {
+            } else {
                 $teamUserIds = [];
             }
             $tierUserIds = array_intersect($tierUserIds->toArray(), $teamUserIds);

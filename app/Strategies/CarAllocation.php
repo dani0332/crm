@@ -28,6 +28,7 @@ class CarAllocation implements Allocation
 
             if (! $lead) {
                 info('Lead not found or not under fetch criteria for allocation id: '.$this->allocationId);
+
                 return false; // when lead is not on criteria or not found
             }
 
