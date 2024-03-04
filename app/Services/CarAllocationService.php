@@ -229,7 +229,7 @@ class CarAllocationService extends AllocationService
         $tierUserIds = $this->executeRevivalCheck($leadSource, $tierUserIds);
 
         if ($teamId) {
-            $teamUserIds = UserTeams::where('team_id', $teamId)->select('user_id')->get();
+            $teamUserIds = UserTeams::where('team_id', $teamId)->pluck('user_id')->get()->toArray();
             $tierUserIds = array_intersect($tierUserIds, $teamUserIds);
         }
 
