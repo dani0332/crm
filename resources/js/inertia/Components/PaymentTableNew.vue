@@ -910,7 +910,11 @@ const downloadProformaPayment = () =>{
     console.log('props.proformaPayment',props.proformaPayment.code);
     if(props.proformaPayment){
         router.visit(route('download.proforma.payment.request', [props.quoteType, props.quoteRequest.uuid ]),{
-            onSuccess: () => {
+            onProgress: progress => {
+                console.log('progress',progress);
+
+            },
+            onSuccess: async () => {
                 notification.error({
                     title: 'Proforma payment request has been saved',
                     position: 'top',

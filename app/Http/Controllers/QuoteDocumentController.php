@@ -274,7 +274,7 @@ class QuoteDocumentController extends Controller
         }
 
         $pdf = $response['pdf'];
-
+        $this->exportDocumentService->saveProformaPaymentRequestToDocuments($quoteType, $quote, $pdf, $response['name']);
         return $pdf->download($response['name']);
     }
 }
