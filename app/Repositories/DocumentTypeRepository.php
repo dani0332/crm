@@ -25,14 +25,9 @@ class DocumentTypeRepository extends BaseRepository
         return DocumentType::taxDocument()->where('quote_type_id',app(ActivitiesService::class)->getQuoteTypeId($quoteType))->pluck('code')->toArray();
     }
 
-    
     public function getQuoteDocumentsSentToCustomerCode($quoteType)
     {
-        return DocumentType::active()->issuingDocument()->where([
-            'send_to_customer' => 1,
-            'quote_type_id' => app(ActivitiesService::class)->getQuoteTypeId($quoteType),
-        ])
-        ->pluck('code')->toArray();
+        return DocumentType::sendToCustomer()->where('quote_type_id' , app(ActivitiesService::class)->getQuoteTypeId($quoteType))->pluck('code')->toArray();
     }
 
 }

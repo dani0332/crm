@@ -68,4 +68,9 @@ class DocumentType extends Model implements AuditableContract
     {
         return $query->where('is_required_for_send_policy', 1)->required()->active()->issuingDocument();
     }
+
+    public function scopeSendToCustomer($query)
+    {
+        $query->whereNotIn('text', [DocumentTypeCode::TAX_INVOICE, DocumentTypeCode::TAX_INVOICE_RAISED_BY_BUYER])->where('send_to_customer' ,1)->issuingDocument()->active();
+    }
 }
