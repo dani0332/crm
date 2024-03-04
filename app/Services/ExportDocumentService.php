@@ -27,6 +27,7 @@ class ExportDocumentService extends BaseService implements ExportDocumentInterfa
         if (! $repository) {
             return ['error' => 'Repository not found'];
         }
+
         return $repository::getBy('uuid', $quote);
     }
 }

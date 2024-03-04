@@ -262,12 +262,8 @@ class QuoteDocumentController extends Controller
         // return response()->json(['message' => 'Document has been deleted.']);
     }
 
-
     /**
      * export selected plans to PDF.
-     *
-     *
-     *
      */
     public function downloadProformaPaymentRequest($quoteType, $quote)
     {

@@ -244,8 +244,10 @@ final class PermissionsEnum extends Enum
     public const EXPORT_MAKES_MODELS = 'export-makes-models';
     public const HEALTH_QUOTES_MANAGER_ACCESS = 'health-quotes-manager-access';
     public const HEALTH_QUOTES_ACCESS = 'health-quotes-access';
+
     /* To Enable the "Proforma Payment Request" Option in Add Manual Payment Modal */
     public const PROFORMA_PAYMENT_REQUEST_ADD = 'proforma-payment-request-add';
+
     /* To access proforma request download button */
     public const PROFORMA_CREATE = 'proforma-create';
 }
