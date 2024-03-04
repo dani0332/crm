@@ -133,7 +133,7 @@ class ActivitiesService extends BaseService
     public function getQuoteTypeId($modelType)
     {
         $quoteTypeId = null;
-        switch ($modelType) {
+        switch (strtolower($modelType)) {
             case 'car':
                 $quoteTypeId = QuoteTypeId::Car;
                 break;
@@ -166,6 +166,9 @@ class ActivitiesService extends BaseService
                 break;
             case 'yacht':
                 $quoteTypeId = QuoteTypeId::Yacht;
+                break;
+            case 'group medical':
+                $quoteTypeId = QuoteTypeId::Business;
                 break;
             default:
                 break;

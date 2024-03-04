@@ -63,24 +63,4 @@ enum QuoteTypes: string
 
         return $types[$value];
     }
-
-    public static function getQuoteId($value): int
-    {
-        if($value === QuoteTypes::GROUP_MEDICAL->value) {
-            $value= 'business';
-        }
-        return match (strtolower($value)) {
-            'car' => 1,
-            'home' => 2,
-            'health' => 3,
-            'life' => 4,
-            'business' => 5,
-            'bike' => 6,
-            'yacht' => 7,
-            'travel' => 8,
-            'pet' => 9,
-            'cycle' => 10,
-            'jetski' => 11,
-        };
-    }
 }

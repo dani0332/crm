@@ -6,9 +6,11 @@ use App\Enums\ApplicationStorageEnums;
 use App\Enums\QuoteDocumentsEnum;
 use App\Enums\QuoteTypes;
 use App\Models\ApplicationStorage;
+use App\Repositories\DocumentTypeRepository;
 use App\Services\QuoteDocumentService;
 use App\Services\SendEmailCustomerService;
 use App\Traits\GenericQueriesAllLobs;
+use Exception;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -34,15 +36,18 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
      */
     public function handle(SendEmailCustomerService $sendEmailCustomerService, QuoteDocumentService $quoteDocumentService)
     {
-
         $modelType= $this->data->model_type;
         $quote = $this->getQuoteObject($this->data->model_type, $this->data->quote_id);
-        $quoteDocuments = $quoteDocumentService->getQuoteDocuments($this->data->model_type, $this->data->quote_id);
-        $filtered = $quoteDocuments->filter(function ($value, $key) {
-            return in_array($value->document_type_code, [QuoteDocumentsEnum::CAR_POLICY_CERTIFICATE, QuoteDocumentsEnum::POLICY_SCHEDULE, QuoteDocumentsEnum::POLICY_HANDBOOK]);
-        });
 
-        $docs = $filtered->all();
+        try{
+            $document_type_codes= app(DocumentTypeRepository::class)->getQuoteDocumentsSentToCustomerCode($this->data->model_type);
+            $quoteDocuments = app(QuoteDocumentService::class)->getQuoteDocuments($this->data->model_type, $this->data->quote_id);
+            $docs = $quoteDocuments->whereIn('document_type_code', $document_type_codes);
+        } catch(Exception $ex) {
+            info('SendBookPolicyDocumentsJobError ' . $ex->getMessage());
+            $docs= [];
+        }
+
         info('SendBookPolicyDocumentsJobDocuments ' . json_encode($quoteDocuments));
 
         $quote->load('advisor');
