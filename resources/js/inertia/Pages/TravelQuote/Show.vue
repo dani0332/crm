@@ -1129,8 +1129,8 @@ const handlePlanSelected = plan => {
   router.reload({
     preserveState: true,
     preserveScroll: true,
-    only: ['payments','quoteRequest'],        
-  });  
+    only: ['payments','quoteRequest'],
+  });
 };
 
 const genderList = [
@@ -1983,7 +1983,7 @@ const genderList = [
           </div>
         </dl>
       </div>
-    </div>    
+    </div>
 
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div>
@@ -2190,7 +2190,7 @@ const genderList = [
         </template>
       </x-modal>
     </div>
-   
+
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div class="flex flex-wrap gap-4 justify-between items-center mb-4">
         <h3 class="font-semibold text-primary-800 text-lg">
@@ -2318,10 +2318,11 @@ const genderList = [
       </x-modal>
     </div>
 
-    <PaymentTableNew 
+    <PaymentTableNew
 			v-if="isNewPaymentStructure"
 			quoteType="Travel"
 			:payments="payments"
+            :proformaPayment="payments.find(item => item.payment_methods_code === 'PPR')"
 			:paymentDocument="documentTypes.QUOTE.filter(item => item.code === 'TPD' || item.code === 'TPDR' || item.code === 'TDPDR')"
 			:quoteRequest="quoteRequest"
 			:paymentStatusEnum="enums.paymentStatusEnum"

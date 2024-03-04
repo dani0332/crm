@@ -8,7 +8,7 @@ import LeadHistory from '../PersonalQuote/Partials/LeadHistory';
 import AdditionalContacts from '../PersonalQuote/Partials/AdditionalContacts.vue';
 import PlanDetails from '../../Components/PlanDetails.vue';
 import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue';
-import PaymentTableNew from '../../Components/PaymentTableNew.vue'; 
+import PaymentTableNew from '../../Components/PaymentTableNew.vue';
 
 defineProps({
   quote: Object,
@@ -690,10 +690,11 @@ const linkEntity = () => {
       :quoteType="quoteType"
     />
 
-    <PaymentTableNew 
+    <PaymentTableNew
 			v-if="isNewPaymentStructure"
 			:quoteType="quoteType"
 			:payments="quote.payments"
+            :proformaPayment="quote.payments.find(item => item.payment_methods_code === 'PPR')"
 			:paymentDocument="documentTypes.filter(item => item.code === 'YPD' || item.code === 'YPDR' || item.code === 'YDPDR')"
 			:quoteRequest="quote"
 			:paymentStatusEnum="paymentStatusEnum"

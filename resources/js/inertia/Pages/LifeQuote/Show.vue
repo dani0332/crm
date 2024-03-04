@@ -979,7 +979,7 @@ const linkEntity = () => {
       :canAddBatchNumber="canAddBatchNumber"
     />
 
-   
+
 
     <div class="p-4 rounded shadow mb-6 bg-primary-50/25">
       <div>
@@ -1062,13 +1062,14 @@ const linkEntity = () => {
       :quote="quote"
       :quoteType="quoteType"
       :vatPrice="vatPercentage"
-      
+
     />
 
-    <PaymentTableNew 
+    <PaymentTableNew
 			v-if="isNewPaymentStructure"
 			:quoteType="quoteType"
 			:payments="payments"
+            :proformaPayment="payments.find(item => item.payment_methods_code === 'PPR')"
 			:paymentDocument="page.props.documentTypes.filter(item => item.code === 'LPD' || item.code === 'LPDR' || item.code === 'LDPDR')"
 			:quoteRequest="quote"
 			:paymentStatusEnum="paymentStatusEnum"

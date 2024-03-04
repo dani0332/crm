@@ -2,7 +2,7 @@
 import MemberDetails from '../../Components/MemberDetails.vue';
 import QuoteDocuments from '@/inertia/Pages/PersonalQuote/Partials/QuoteDocuments.vue';
 import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue';
-import PaymentTableNew from '../../Components/PaymentTableNew.vue'; 
+import PaymentTableNew from '../../Components/PaymentTableNew.vue';
 
 defineProps({
   quote: Object,
@@ -1045,10 +1045,11 @@ const linkEntity = () => {
       :vatPrice="vatPercentage"
     />
 
-    <PaymentTableNew 
+    <PaymentTableNew
 			v-if="isNewPaymentStructure"
 			:quoteType="quoteType"
 			:payments="payments"
+            :proformaPayment="payments.find(item => item.payment_methods_code === 'PPR')"
 			:paymentDocument="documentTypes.filter(item => item.code === 'HOMPD' || item.code === 'HOMPDR' || item.code === 'HOMDPDR')"
 			:quoteRequest="quoteRequest"
 			:paymentStatusEnum="paymentStatusEnum"
@@ -1066,7 +1067,7 @@ const linkEntity = () => {
       :insuranceProviders="insuranceProviders"
       :quote="quote"
     />
-    
+
 
     <EmbeddedProducts
       :data="embeddedProducts"
@@ -1213,7 +1214,7 @@ const linkEntity = () => {
           </div>
         </template>
       </x-modal>
-    </div>  
+    </div>
 
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div>

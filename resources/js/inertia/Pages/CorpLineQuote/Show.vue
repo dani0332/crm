@@ -1,6 +1,6 @@
 <script setup>
 import QuoteDocuments from '@/inertia/Pages/PersonalQuote/Partials/QuoteDocuments.vue';
-import PaymentTableNew from '../../Components/PaymentTableNew.vue'; 
+import PaymentTableNew from '../../Components/PaymentTableNew.vue';
 
 defineProps({
   quote: Object,
@@ -1032,13 +1032,14 @@ const linkEntity = () => {
       :insuranceProviders="insuranceProvidersAll"
       :quote="quote"
       :quoteType="page.props.quoteType"
-    />  
+    />
 
     <!-- Payments -->
-    <PaymentTableNew 
+    <PaymentTableNew
 			v-if="isNewPaymentStructure"
 			:quoteType="page.props.quoteType"
 			:payments="payments"
+            :proformaPayment="payments.find(item => item.payment_methods_code === 'PPR')"
 			:paymentDocument="documentTypes && documentTypes.filter && documentTypes.filter(item => item.code === 'CLPD' || item.code === 'CLPDR' || item.code === 'CLDPDR')"
 			:quoteRequest="quoteRequest"
 			:paymentStatusEnum="paymentStatusEnum"
@@ -1198,8 +1199,8 @@ const linkEntity = () => {
           </div>
         </template>
       </x-modal>
-    </div> 
-    
+    </div>
+
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div>
         <h3 class="font-semibold text-primary-800 text-lg">Lead History</h3>

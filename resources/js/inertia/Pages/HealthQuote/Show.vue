@@ -1383,8 +1383,8 @@ const handlePlanSelected = plan => {
   router.reload({
     preserveState: true,
     preserveScroll: true,
-    only: ['payments','quoteRequest','ecomDetails'],        
-  });  
+    only: ['payments','quoteRequest','ecomDetails'],
+  });
 };
 
 </script>
@@ -2364,7 +2364,7 @@ const handlePlanSelected = plan => {
       </div>
     </div>
 
-    
+
 
     <!-- <div class="p-4 rounded shadow mb-6 bg-white" v-if="isQuoteDocumentEnabled">
       <div>
@@ -2730,10 +2730,11 @@ const handlePlanSelected = plan => {
         </div>
       </x-modal>
     </div>
-    <PaymentTableNew 
+    <PaymentTableNew
 			v-if="isNewPaymentStructure"
 			quoteType="Health"
 			:payments="payments"
+            :proformaPayment="payments.find(item => item.payment_methods_code === 'PPR')"
 			:paymentDocument="documentTypes.QUOTE.filter(item => item.code === 'HPD' || item.code === 'HPDR' || item.code === 'HDPDR')"
 			:quoteRequest="quoteRequest"
 			:paymentStatusEnum="paymentStatusEnum"
@@ -3010,7 +3011,7 @@ const handlePlanSelected = plan => {
     </div>
 
     <AuditLogs :type="'App\\Models\\HealthQuote'" :id="$page.props.quote.id" :quoteCode="$page.props.quote.code"/>
-    
+
 
     <ClientInquiryLogs
         v-if="clientInquiryLogs.length > 0"

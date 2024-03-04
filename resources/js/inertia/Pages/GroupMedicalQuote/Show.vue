@@ -1,6 +1,6 @@
 <script setup>
 import QuoteDocuments from '@/inertia/Pages/PersonalQuote/Partials/QuoteDocuments.vue';
-import PaymentTableNew from '../../Components/PaymentTableNew.vue'; 
+import PaymentTableNew from '../../Components/PaymentTableNew.vue';
 
 defineProps({
   quote: Object,
@@ -917,10 +917,11 @@ const linkEntity = () => {
       :vatPrice="vatPercentage"
     />
 
-    <PaymentTableNew 
+    <PaymentTableNew
 			v-if="isNewPaymentStructure"
 			:quoteType="page.props.quoteType"
 			:payments="quote.payments"
+            :proformaPayment="quote.payments.find(item => item.payment_methods_code === 'PPR')"
 			:paymentDocument="documentTypes.filter(item => item.code === 'GMQPD' || item.code === 'GMQPDR' || item.code === 'GMQDPDR')"
 			:quoteRequest="quote"
 			:paymentStatusEnum="paymentStatusEnum"
