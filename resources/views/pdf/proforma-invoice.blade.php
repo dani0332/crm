@@ -393,7 +393,7 @@
                     <b>Remarks:</b> {{ $proformaPaymentRequest?->notes }}
                 </td>
                 <td class="payment-heading">
-                    Subtotal
+                    SUBTOTAL
                 </td>
                 <td class="amount">
                     {{ $quote->price_without_vat }}
@@ -406,9 +406,16 @@
             </tr>
             @if($proformaPaymentRequest->discount_value)
             <tr>
-                <th>
-
-                </th>
+                <th></th>
+                <td class="payment-heading">
+                    TOTAL PRICE (AED)
+                </td>
+                <td class="amount">
+                    {{ $quote->price_with_vat }}
+                </td>
+            </tr>
+            <tr>
+                <th></th>
                 <td class="payment-heading">
                     Discount
                 </td>
@@ -565,7 +572,7 @@
                     DUE DATE
                 </th>
                 <th>
-                    Description
+                    DESCRIPTION
                 </th>
                 <th>
                     AMOUNT
