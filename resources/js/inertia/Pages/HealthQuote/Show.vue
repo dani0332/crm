@@ -3014,7 +3014,7 @@ const handlePlanSelected = plan => {
 
 
     <ClientInquiryLogs
-        v-if="clientInquiryLogs.length > 0"
+        v-if="clientInquiryLogs && clientInquiryLogs.length > 0"
         :logs="clientInquiryLogs"
     />
   </div>
