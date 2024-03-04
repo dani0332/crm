@@ -1321,7 +1321,7 @@ const addPayment = isValid => {
     };
     paymentMethodsForm
       .transform(data => viewData)
-      .post('/payments/Car/split-payments-approve', {
+      .post('/payments/'+props.quoteType+'/split-payments-approve', {
         preserveScroll: true,
         onSuccess: (res) => {
           createPaymentModal.value = false;              
@@ -1356,7 +1356,7 @@ const addPayment = isValid => {
     };
     paymentMethodsForm
       .transform(data => viewData)
-      .post('/payments/Car/split-update', {
+      .post('/payments/'+props.quoteType+'/split-update', {
         preserveScroll: true,
         onSuccess: () => {
           createPaymentModal.value = false;
@@ -1386,7 +1386,7 @@ const addPayment = isValid => {
     };
     paymentMethodsForm
       .transform(data => editData)
-      .post('/payments/Car/update', {
+      .post('/payments/'+props.quoteType+'/update', {
         preserveScroll: true,
         onSuccess: () => {
           createPaymentModal.value = false;
@@ -1405,7 +1405,7 @@ const addPayment = isValid => {
   };
   paymentMethodsForm
     .transform(data => storeData)
-    .post('/payments/Car/store', {
+    .post('/payments/'+props.quoteType+'/store', {
       preserveScroll: true,
       onSuccess: () => {
         createPaymentModal.value = false;
