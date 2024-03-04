@@ -10,7 +10,6 @@ use App\Enums\TiersIdEnum;
 use App\Factories\AllocationFactory;
 use App\Models\CarQuote;
 use App\Models\HealthQuote;
-use App\Models\Tier;
 use App\Services\ApplicationStorageService;
 use Illuminate\Console\Command;
 
