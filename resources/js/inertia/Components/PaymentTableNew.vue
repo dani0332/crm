@@ -504,8 +504,8 @@ const handlePaymentOptions = (count) => {
 const handleCollectionTypeChange = () => {
   //customize payment method based on collection type
   paymentTypesFiltered.value = paymentTypes.value;
-  let excludedPaymentTypes = ['IN_PL',  'CA', 'MP', 'PP'];
-  if(can(permissionEnum.PROFORMA_PAYMENT_REQUEST_ADD)){
+  let excludedPaymentTypes = ['IN_PL', 'CA', 'MP', 'PP'];
+  if(!can(permissionEnum.PROFORMA_PAYMENT_REQUEST_ADD)){
       excludedPaymentTypes.push('PPR');
   }
   paymentTypesFiltered.value = paymentTypesFiltered.value.filter(item => !excludedPaymentTypes.includes(item.value));

@@ -493,7 +493,6 @@
         </tr>
         <tr>
             <td class="text-left">Registered member of the Insurance Business Group under the Dubai Chamber of Commerce and Industry.</td>
-
         </tr>
     </table>
 </footer>
