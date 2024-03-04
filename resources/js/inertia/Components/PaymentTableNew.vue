@@ -504,8 +504,11 @@ const handlePaymentOptions = (count) => {
 const handleCollectionTypeChange = () => {
   //customize payment method based on collection type
   paymentTypesFiltered.value = paymentTypes.value;
-
-  paymentTypesFiltered.value = paymentTypesFiltered.value.filter(item => !['IN_PL', 'PPR', 'CA', 'MP', 'PP'].includes(item.value));
+  let excludedPaymentTypes = ['IN_PL',  'CA', 'MP', 'PP'];
+  if(can(permissionEnum.PROFORMA_PAYMENT_REQUEST_ADD)){
+      excludedPaymentTypes.push('PPR');
+  }
+  paymentTypesFiltered.value = paymentTypesFiltered.value.filter(item => !excludedPaymentTypes.includes(item.value));
   if (paymentMethodsForm.collection_type === 'insurer') {
     paymentTypesFiltered.value = paymentTypesFiltered.value.filter(item => !['CC', 'BT', 'CHQ', 'CSH'].includes(item.value));
     paymentMethodsModels.value[1] = 'IP';
@@ -904,14 +907,17 @@ const downloadProformaPayment = () =>{
         });
         return;
     }
-    if(props.proformaPayment?.length > 0){
+    console.log('props.proformaPayment',props.proformaPayment.code);
+    if(props.proformaPayment){
         router.visit(route('download.proforma.payment.request', [props.quoteType, props.quoteRequest.uuid ]));
+        return;
     }else{
         errorMsg = 'No Proforma Payment found';
         notification.error({
             title: errorMsg,
             position: 'top',
         });
+        return;
     }
 
 };
@@ -1765,21 +1771,35 @@ watch(() => props.quoteRequest, (newValue, oldValue) => {
     <div class="flex justify-between gap-4 items-center mb-4">
       <h3 class="font-semibold text-primary-800 text-lg">Manage Payments</h3>
         <div class="flex gap-2">
-            <x-tooltip position="right">
-                <x-button
-                    :disabled="!proformaPayment"
-                    size="sm"
-                    color="primary"
-                    target="_blank"
-                    @click="downloadProformaPayment"
-
-                >
-                    <span class="border-b border-dotted">Download Proforma Payment Request</span>
-                </x-button>
-                <template #tooltip v-if="proformaPayment?.payment_status_id != paymentStatusEnum.PAID">
-                    <span>{{ paymentTooltipEnum.PAYMENT_MANAGEMENT_DOWNLOAD_PROFORMA_PAYMENT }}</span>
+            <templete v-if="(can(permissionEnum.PROFORMA_CREATE))">
+                <template v-if="proformaPayment?.payment_status_id == paymentStatusEnum.PAID">
+                    <x-button
+                        v-if="proformaPayment"
+                        size="sm"
+                        color="primary"
+                        target="_blank"
+                        @click="downloadProformaPayment"
+                    >
+                        <span class="border-b border-dotted">Download Proforma Payment Request</span>
+                    </x-button>
                 </template>
-            </x-tooltip>
+                <template v-else>
+                    <x-tooltip position="right">
+                        <x-button
+                            v-if="proformaPayment"
+                            size="sm"
+                            color="primary"
+                            target="_blank"
+                            @click="downloadProformaPayment"
+                        >
+                            <span class="border-b border-dotted">Download Proforma Payment Request</span>
+                        </x-button>
+                        <template #tooltip >
+                            <span>{{ paymentTooltipEnum.PAYMENT_MANAGEMENT_DOWNLOAD_PROFORMA_PAYMENT }}</span>
+                        </template>
+                    </x-tooltip>
+                </template>
+            </templete>
             <template v-if="payments.length>0">
                 <x-button
                     v-if="can(permissionEnum.PaymentsCreate)"

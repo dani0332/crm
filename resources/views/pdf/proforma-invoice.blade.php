@@ -366,6 +366,9 @@
 
     $websitURL = config('constants.AFIA_WEBSITE_DOMAIN');
 
+    $quoteType = $quote->quoteType;
+    $insuranceProvider = $quote->insuranceProvider;
+
     $paidPayments = $quote->payments()->where('payment_status_id', \App\Enums\PaymentStatusEnum::PAID)->get();
 
     $advisor = $quote->advisor;
@@ -374,7 +377,9 @@
 
     $invoiceDate = Carbon\Carbon::parse($proformaPaymentRequest->created_at)->format('d-m-Y');
 
-    $customer_name =  ucwords($quote->customer->first_name .' '. $quote->customer->last_name);
+    $customer = $quote->customer;
+    $customerName =  ucwords($customer->first_name .' '. $customer->last_name);
+    $customerDetail =  $customer->detail;
 @endphp
 
 
@@ -384,61 +389,65 @@
 
             <tbody>
             <tr class="">
-                <th class="remarks">
-                    Remarks:
-                </th>
+                <td class="remarks">
+                    <b>Remarks:</b> {{ $proformaPaymentRequest?->notes }}
+                </td>
                 <td class="payment-heading">
-                    Sub Total
+                    Subtotal
                 </td>
                 <td class="amount">
-                    1000
+                    {{ $quote->price_without_vat }}
                 </td>
             </tr>
             <tr>
+                <th></th>
+                <td class="payment-heading"> VAT </td>
+                <td class="amount"> {{ $quote->vat }} </td>
+            </tr>
+            @if($proformaPaymentRequest->discount_value)
+            <tr>
                 <th>
-                    {{ $proformaPaymentRequest?->notes }}
+
                 </th>
                 <td class="payment-heading">
-                    Vat
+                    Discount
                 </td>
                 <td class="amount">
-                    50
+                    {{ $proformaPaymentRequest->discount_value }}
                 </td>
             </tr>
-
+            @endif
 
             </tbody>
             <tfoot>
             <tr class="border-top">
                 <td></td>
                 <th class="payment-heading  text-medium">
-                    Total Due:
+                    TOTAL DUE(AED):
                 </th>
                 <th class="amount text-medium">
-                    1050
+                    {{ $proformaPaymentRequest->total_amount }}
                 </th>
             </tr>
             </tfoot>
         </table>
     </div>
     @if($proformaPaymentRequest->collection_type ==  \App\Enums\PaymentCollectionTypeEnum::BROKER)
+        <table class="table-fixed no-border tbl-bank-details">
+            <tbody>
+            <tr class="border-top">
+                <td>
+                    <p class="heading">PAYMENT DETAILS:</p>
+                    <p>Bank Name: EMIRATES NBD</p>
+                    <p>Account Holder: AFIA INSURANCE BROKERAGE SERVICES LLC</p>
+                    <p>Account Number: 1011170518302 </p>
+                    <p>IBAN: AE650260001011170518302 </p>
+                    <p> SWIFT Code: EBILAEAD </p>
+                </td>
+            </tr>
+            </tbody>
 
-    <table class="table-fixed no-border tbl-bank-details">
-
-        <tbody>
-        <tr class="border-top">
-            <td>
-                <p class="heading">Payment Details:</p>
-                <p>Bank Name: EMIRATES NBD</p>
-                <p>Account Holder: AFIA INSURANCE BROKERAGE SERVICES LLC</p>
-                <p>Account Number: 1011170518302 </p>
-                <p>IBAN: AE650260001011170518302 </p>
-                <p> SWIFT Code: EBILAEAD </p>
-            </td>
-        </tr>
-        </tbody>
-
-    </table>
+        </table>
     @endif
 
     <table class="tbl-disclaimer">
@@ -457,9 +466,7 @@
                     Brokerage Services LLC</h4></td>
         </tr>
         <tr>
-            <td colspan="2" class="text-center"><h6>27th Floor, Control Tower, Motor City,Dubai, United Arab Emirates,
-                    P.O Box 26423 | Tel: <a class="text-xxs" href="tel:+800253733">800 ALFRED (800-253-733)</a> | <a
-                        class="text-xxs" href="https://insurancemarket.ae">www.insurancemarket.ae</a></h6></td>
+            <td colspan="2" class="text-center"><h6>27th Floor, Control Tower, Motor City,Dubai, United Arab Emirates, P.O Box 26423 | Tel: <a class="text-xxs" href="tel:+800253733">800 ALFRED (800-253-733)</a> | <a class="text-xxs" href="https://insurancemarket.ae">www.insurancemarket.ae</a></h6></td>
         </tr>
         <tr>
             <td class="text-left">UAE Central Bank Registration number 85</td>
@@ -522,7 +529,7 @@
             <tr>
 
                 <td class="customer">
-                    {{ $customer_name }}
+                    {{ $customerName }}
                 </td>
 
                 <th class="date">
@@ -537,12 +544,12 @@
             <tr>
 
                 <td class="customer">
-                    Flat 201, Building 4c, lane 3
+                    {{ $customerDetail?->employer_company_name }}
                 </td>
             </tr>
             <tr>
                 <td class="customer">
-                    ittehad road, Dubai
+                    {{--{{ $customerDetail?->employer_company_name }}--}}
                 </td>
             </tr>
 
@@ -575,11 +582,10 @@
                     {{ $invoiceDate }}
                 </td>
                 <td>
-                    Property Insurance <br />
-                    alliance Insurance
+                   {{ $quoteType?->text }} <br /> {{ $insuranceProvider?->text }}
                 </td>
                 <td>
-                    1000
+                    {{ $quote->price_without_vat }}
                 </td>
             </tr>
 
