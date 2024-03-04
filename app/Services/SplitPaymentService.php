@@ -159,28 +159,17 @@ class SplitPaymentService
     }
 
     // Migrate payments from old system to new system ,will be called from command/seeder and lead page
-    public function migratePayments($payment, $modelType, $premium = 0)
+    public function migratePayments($payment, $modelType)
     {
         if ($payment) {
-            return DB::transaction(function () use ($payment, $modelType, $premium) {
-                $allowedModels = [
-                    'App\Models\BusinessQuote', 'App\Models\CarQuote',
-                    'App\Models\HealthQuote', 'App\Models\HomeQuote',
-                    'App\Models\LifeQuote', 'App\Models\PersonalQuote',
-                    'App\Models\TravelQuote', 'App\Models\YachtQuote',
-                ];
+            return DB::transaction(function () use ($payment, $modelType) {                
                 $ecomModels = [quoteTypeCode::Car, quoteTypeCode::Health, quoteTypeCode::Travel];
                 // Extract the code and check if it has child payments
                 $code = $payment->code;
-                $tempCode = explode('-', $code);
-                if (count($tempCode) == 3) {
-                    $code = $tempCode[0].'-'.$tempCode[1];
-                }
                 $quoteModelObject = $this->getModelObject(strtolower($modelType));
                 $modelObject = $quoteModelObject::where('code', $code)->first();
                 if (! $modelObject) {
                     Log::info('MigratePayment::LOB does not exists for Payment Code: '.$payment->code);
-
                     return false;
                 }
                 $premium = 0;
@@ -197,7 +186,6 @@ class SplitPaymentService
                 $splitPaymentExists = PaymentSplits::where('code', $code)->count();
                 if ($splitPaymentExists > 0) {
                     Log::info('MigratePayment::Split Payment already exists for Payment Code: '.$payment->code);
-
                     return false;
                 }
 
@@ -205,22 +193,12 @@ class SplitPaymentService
                 $masterPaymentExists = Payment::where('code', $code)->count();
                 if (! ($masterPaymentExists > 0)) {
                     Log::info('MigratePayment::Master Payment does not exists for Payment Code: '.$payment->code);
-
                     return false;
-                }
+                }                
 
-                /*
-                $parentCollectionAmount = 0;
-                if ($payment->payment_status_id == PaymentStatusEnum::PAID || $payment->payment_status_id == PaymentStatusEnum::CAPTURED //if paid or captured
-                    || $payment->payment_status_id == PaymentStatusEnum::PARTIAL_CAPTURED || $payment->payment_status_id == PaymentStatusEnum::PARTIALLY_PAID //if partial paid or captured
-                ) {
-                    $parentCollectionAmount = $payment->captured_amount;
-                }*/
-
-                $childPayments = Payment::where('code', 'like', "$code%")->whereIn('paymentable_type', $allowedModels)->get();
+                $childPayments = Payment::where('code', 'like', "$code%")->get();
                 if ($childPayments->count() > 5) {
                     Log::info('MigratePayment::Child Payments are greater than 5 for Payment Code: '.$payment->code);
-
                     return false;
                 }
 
@@ -279,11 +257,11 @@ class SplitPaymentService
                             $capturedAmount += $childPayment->captured_amount;
                         }
                     }
-                    if ($premium > $capturedAmount) {
+                    if ($capturedAmount > 0 && $premium > $capturedAmount) {
                         $payment->payment_status_id = PaymentStatusEnum::PARTIALLY_PAID; //partially paid
                     }
                 }
-                //$payment->captured_amount = $parentCollectionAmount;
+                
                 $payment->collection_date = $payment->updated_at;
                 $payment->save();
 
@@ -333,8 +311,10 @@ class SplitPaymentService
                     }
                     if ($payment->code == $code) {
 
-                        if ($premium > 0 && $premium > $parentCollectionAmount) {
+                        if ($premium > 0 &&  $parentCollectionAmount>0 && $premium > $parentCollectionAmount) {
                             $payment->payment_status_id = PaymentStatusEnum::PARTIALLY_PAID; //partially paid
+                        }  else if($payment->frequency == 'upfront'){
+                            $payment->payment_status_id = $childPayment->payment_status_id;
                         }
 
                         $payment->captured_amount = $parentCollectionAmount;
@@ -347,7 +327,6 @@ class SplitPaymentService
             });
         } else {
             Log::info('MigratePayment::Payment does not exists for Payment Code: '.$payment->code);
-
             return false;
         }
     }
