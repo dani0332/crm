@@ -916,7 +916,7 @@ const getSmallestCopayRateAsDefaultValue = () => {
 
     if (isMounted.value && selectedCoPay.planId == element.id) {
       element.actualPremium = selectedCoPay.premium;
-      if (smallestCopayLoadingPrice > 0) {
+      if (smallestCopayLoadingPrice != 0) {
         element.vat = Number(
           (selectedCoPay.premium + smallestCopayLoadingPrice) * 0.05,
         );

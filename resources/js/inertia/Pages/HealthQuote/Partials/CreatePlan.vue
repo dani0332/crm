@@ -371,6 +371,8 @@ watch(
                   class="!mb-0 w-36"
                   type="number"
                   step="0.01"
+                  onkeydown="return event.keyCode !== 69"
+                  @paste.prevent
                   :rules="[isRequired, isDecimal]"
                 />
               </td>
@@ -381,6 +383,8 @@ watch(
                   class="!mb-0"
                   type="number"
                   step="0.01"
+                  onkeydown="return event.keyCode !== 69"
+                  @paste.prevent
                   :rules="[isDecimal]"
                 />
               </td>

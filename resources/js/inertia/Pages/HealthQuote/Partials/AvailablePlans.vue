@@ -1008,6 +1008,8 @@ onUpdated(() => {
                       size="sm"
                       type="number"
                       step="0.01"
+                      onkeydown="return event.keyCode !== 69"
+                      @paste.prevent
                       @keyup="handleLoadingPrice($event, item.memberId)"
                     />
                     <x-input
@@ -1022,6 +1024,8 @@ onUpdated(() => {
                       size="sm"
                       type="number"
                       step="0.01"
+                      onkeydown="return event.keyCode !== 69"
+                      @paste.prevent
                       @keyup="handleLoadingPrice($event, item.memberId)"
                     />
                     <x-input
@@ -1038,6 +1042,8 @@ onUpdated(() => {
                       size="sm"
                       type="number"
                       step="0.01"
+                      onkeydown="return event.keyCode !== 69"
+                      @paste.prevent
                       @keyup="handleLoadingPrice($event, item.memberId)"
                     />
                     <x-input
@@ -1054,6 +1060,8 @@ onUpdated(() => {
                       size="sm"
                       type="number"
                       step="0.01"
+                      onkeydown="return event.keyCode !== 69"
+                      @paste.prevent
                       @keyup="handleLoadingPrice($event, item.memberId)"
                     />
                   </section>
