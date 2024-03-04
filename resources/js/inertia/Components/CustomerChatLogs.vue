@@ -106,53 +106,64 @@ onMounted(async () => {
       </DataTable>
     </div>
 
-    <AppModal class="w-min-[750px]"  v-model="showChatLogs" show-close :backdropClose="false"  show-header>
-      <template #header> Created At : {{ chatMessages.created_at.split(' ')[0] }} </template>
+    <AppModal
+      class="w-min-[750px]"
+      v-model="showChatLogs"
+      show-close
+      :backdropClose="false"
+      show-header
+    >
+      <template #header>
+        Created At : {{ chatMessages.created_at.split(' ')[0] }}
+      </template>
       <template #default>
         <div class="flex flex-col space-y-4">
-        <div
-          v-for="(message, index) in chatMessages.data"
-          :key="index"
-          :class="{
-            'flex items-start': message.role == 'USER',
-            'flex justify-end': message.role == 'AI',
-          }"
-          
-        >
-          <div >
-            <p class="text-sm mb-2 text-gray-500" v-if="message.role == 'USER'">
-              {{ customerName ??  message.role }}
-            </p>
-            <p class="text-sm mb-2 text-end text-gray-500" v-else>
-              InstantAlfred
-            </p>
-            <div
-              :class="{
-                'bg-blue-500': message.role == 'USER',
-                'bg-success-500 text-white': message.role == 'AI',
-                'mr-16' : message.role == 'USER'
-              }"
-              class="rounded-[20px] relative max-w-[45rem]"
-            >
-              <p class="text-sm text-white py-4 px-4 ">
-                {{ message.msg }}
-                <p class="text-xs text-white text-right uppercase">
-                {{ message.created_at.split(' ')[1] }}
+          <div
+            v-for="(message, index) in chatMessages.data"
+            :key="index"
+            :class="{
+              'flex items-start': message.role == 'USER',
+              'flex justify-end': message.role == 'AI',
+            }"
+          >
+            <div>
+              <p
+                class="text-sm mb-2 text-gray-500"
+                v-if="message.role == 'USER'"
+              >
+                {{ customerName ?? message.role }}
               </p>
+              <p class="text-sm mb-2 text-end text-gray-500" v-else>
+                InstantAlfred
               </p>
-             
               <div
                 :class="{
-                  'bg-blue-500 left-[-16px]': message.role == 'USER',
-                  'bg-success-500 right-[-16px] rotate-180':
-                    message.role == 'AI',
+                  'bg-blue-500': message.role == 'USER',
+                  'bg-success-500 text-white': message.role == 'AI',
+                  'mr-16': message.role == 'USER',
                 }"
-                class="absolute border-t-[6px] border-b-[6px] border-r-[17px] border-t-white border-b-white border-r-transparent h-0 w-0 top-3.5"
-              ></div>
+                class="rounded-[20px] relative max-w-[45rem]"
+              >
+                <p
+                  class="text-sm text-white py-4 px-4"
+                  v-html="message.msg"
+                ></p>
+                <p class="text-xs text-white text-right uppercase">
+                  {{ message.created_at.split(' ')[1] }}
+                </p>
+
+                <div
+                  :class="{
+                    'bg-blue-500 left-[-16px]': message.role == 'USER',
+                    'bg-success-500 right-[-16px] rotate-180':
+                      message.role == 'AI',
+                  }"
+                  class="absolute border-t-[6px] border-b-[6px] border-r-[17px] border-t-white border-b-white border-r-transparent h-0 w-0 top-3.5"
+                ></div>
+              </div>
             </div>
           </div>
         </div>
-      </div>
       </template>
     </AppModal>
     <!-- <x-modal v-model="showChatLogs" backdrop size="xl">
