@@ -91,7 +91,6 @@ class UserController extends Controller
             'subTeams' => $subTeams,
             'permissions' => $permissions,
         ]);
-
     }
 
     /**
@@ -127,7 +126,6 @@ class UserController extends Controller
      */
     public function show(User $user)
     {
-
         $user['new_created_at'] = Carbon::createFromFormat('d-M-Y h:ia', $user->created_at)->format('Y-m-d H:i:s');
         $user['new_updated_at'] = Carbon::createFromFormat('d-M-Y h:ia', $user->created_at)->format('Y-m-d H:i:s');
 
@@ -154,7 +152,6 @@ class UserController extends Controller
             'managerName' => $managerName,
             'productName' => $productName,
         ]);
-
     }
 
     /**
@@ -199,7 +196,6 @@ class UserController extends Controller
             'permissions' => $permissions,
             'userPermissions' => $userPermissions,
         ]);
-
     }
 
     /**
@@ -314,10 +310,11 @@ class UserController extends Controller
         return $this->getTeamsByProductIds($request->productIds);
     }
 
-    public function me(Request $request)
-    {
-        return ['name' => Auth::user()->name, 'email' => Auth::user()->email, 'id' => Auth::user()->id, 'role' => strtolower(Auth::user()->usersroles[0]->name)];
-    }
+    //Scheduled to delete 1st April 2024
+    // public function me(Request $request)
+    // {
+    //     return ['name' => Auth::user()->name, 'email' => Auth::user()->email, 'id' => Auth::user()->id, 'role' => strtolower(Auth::user()->usersroles[0]->name)];
+    // }
 
     public function getSubTeams(Request $request)
     {
