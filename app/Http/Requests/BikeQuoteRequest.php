@@ -25,8 +25,8 @@ class BikeQuoteRequest extends FormRequest
     public function rules()
     {
         return [
-            'first_name' => 'required',
-            'last_name' => 'required',
+            'first_name' => 'required|between:1,20',
+            'last_name' => 'required|between:1,20',
             'email' => 'required|email:rfc,dns',
             'mobile_no' => 'required',
             'dob' => 'required|date_format:Y-m-d|before:today',

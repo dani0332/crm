@@ -7,12 +7,12 @@ const props = defineProps({
 
 const isEdit = computed(() => (props.quote.uuid ? true : false));
 
-const maxValidation = (maxValue) => {
-    return (value) => {
-        const isValid = value <= maxValue;
-        return isValid || `Value must be less than or equal to ${maxValue}.`;
-    };
-}
+const maxValidation = maxValue => {
+  return value => {
+    const isValid = value <= maxValue;
+    return isValid || `Value must be less than or equal to ${maxValue}.`;
+  };
+};
 
 const quoteForm = useForm({
   modelType: '"Business"',
@@ -109,6 +109,7 @@ function onSubmit(isValid) {
             :rules="[isRequired]"
             class="w-full"
             :error="quoteForm.errors.first_name"
+            maxLength="20"
           />
         </x-field>
 
@@ -119,6 +120,7 @@ function onSubmit(isValid) {
             :rules="[isRequired]"
             class="w-full"
             :error="quoteForm.errors.last_name"
+            maxLength="20"
           />
         </x-field>
 
