@@ -343,7 +343,7 @@ const onLoadingPricesUpdate = (member, updateManual = 1) => {
     selectedCopay: selectedCopay.value,
     loadingPrice: loadingPrices.value.map(m => ({
       memberId: m.memberId,
-      price: m.price > 0 ? parseFloat(m.price) : parseFloat(0.0),
+      price: parseFloat(m.price),
     })),
     manualPremiumPrice: manualPlansMembersPremium.value.map(m => ({
       memberId: m.memberId,
@@ -1006,6 +1006,8 @@ onUpdated(() => {
                       "
                       :disabled="!isManual"
                       size="sm"
+                      type="number"
+                      step="0.01"
                       @keyup="handleLoadingPrice($event, item.memberId)"
                     />
                     <x-input
@@ -1018,6 +1020,8 @@ onUpdated(() => {
                       "
                       :disabled="!isManual"
                       size="sm"
+                      type="number"
+                      step="0.01"
                       @keyup="handleLoadingPrice($event, item.memberId)"
                     />
                     <x-input
@@ -1032,6 +1036,8 @@ onUpdated(() => {
                       "
                       :disabled="!isManual"
                       size="sm"
+                      type="number"
+                      step="0.01"
                       @keyup="handleLoadingPrice($event, item.memberId)"
                     />
                     <x-input
@@ -1046,6 +1052,8 @@ onUpdated(() => {
                       "
                       :disabled="!isManual"
                       size="sm"
+                      type="number"
+                      step="0.01"
                       @keyup="handleLoadingPrice($event, item.memberId)"
                     />
                   </section>

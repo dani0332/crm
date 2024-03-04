@@ -369,6 +369,8 @@ watch(
                   v-model="membersPrice[index].base_price"
                   size="sm"
                   class="!mb-0 w-36"
+                  type="number"
+                  step="0.01"
                   :rules="[isRequired, isDecimal]"
                 />
               </td>
@@ -377,6 +379,8 @@ watch(
                   v-model="membersPrice[index].loading_price"
                   size="sm"
                   class="!mb-0"
+                  type="number"
+                  step="0.01"
                   :rules="[isDecimal]"
                 />
               </td>
