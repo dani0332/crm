@@ -27,7 +27,7 @@ class CarAllocation implements Allocation
             $lead = $this->fetchLead($overrideAdvisorId);
 
             if (! $lead) {
-
+                info('Lead not found or not under fetch criteria for allocation id: '.$this->allocationId);
                 return false; // when lead is not on criteria or not found
             }
 
@@ -38,6 +38,7 @@ class CarAllocation implements Allocation
             if ($tier) {
 
                 if ($evaluateTierOnly) {
+                    info('Evaluate tier only. Tier finalized for lead : '.$lead->uuid.' is : '.$tier->name);
                     $lead->tier_id = $tier->id;
                     $lead->save();
 
@@ -62,6 +63,7 @@ class CarAllocation implements Allocation
                 if ($advisorId && $advisorId != 0) {
                     $this->assignLead($lead, $advisorId, $tier);
                 } else {
+                    info('Advisor not found. Skipping for now.');
                     // Update the lead's tier information
                     $this->updateLeadTier($lead, $tier);
                 }

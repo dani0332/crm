@@ -229,8 +229,14 @@ class CarAllocationService extends AllocationService
         $tierUserIds = $this->executeRevivalCheck($leadSource, $tierUserIds);
 
         if ($teamId) {
-            $teamUserIds = UserTeams::where('team_id', $teamId)->pluck('user_id')->get()->toArray();
-            $tierUserIds = array_intersect($tierUserIds, $teamUserIds);
+            $teamUserIds = UserTeams::where('team_id', $teamId)->select('user_id')->get();
+            if($teamUserIds->count() > 0) {
+                $teamUserIds = $teamUserIds->pluck('user_id')->toArray();
+            }
+            else {
+                $teamUserIds = [];
+            }
+            $tierUserIds = array_intersect($tierUserIds->toArray(), $teamUserIds);
         }
 
         // Define the order in which user statuses should be considered.
