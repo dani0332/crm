@@ -1595,8 +1595,10 @@ const getCaptureValidation = computed(() => {
       } else if ( paymentRecord.frequency==='split_payments' ){
         const paymentMethodCC = paymentRecord.payment_splits.filter(item => item.payment_method.code === "CC");      
         if (paymentMethodCC.length > 0) {
+          let totalSplitPayments = paymentRecord.payment_splits.length;
+          let paidPaymentStatus = paymentRecord.payment_splits.filter(item => item.payment_status_id===props.paymentStatusEnum.PAID);
           let ccPaymentStatus = paymentMethodCC.filter(item => item.payment_status_id===props.paymentStatusEnum.AUTHORISED);
-          if( ccPaymentStatus.length===paymentMethodCC.length ) {
+          if( totalSplitPayments == (ccPaymentStatus.length + paidPaymentStatus.length) ) {
             return true;
           }
         } else {
