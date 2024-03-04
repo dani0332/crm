@@ -15,9 +15,13 @@ class ExportDocumentService extends BaseService implements ExportDocumentInterfa
         if (isset($response['error'])) {
             return $quote;
         }
+        $proformaPaymentRequest = $quote->payments()->where('payment_methods_code', \App\Enums\PaymentMethodsEnum::ProformaPaymentRequest)->first();
+        if (! $proformaPaymentRequest) {
+            return ['error' => 'Proforma Payment Request not found'];
+        }
         $pdf = PDF::setOption(['isHtml5ParserEnabled' => true, 'dpi' => 150])->loadView('pdf.proforma-invoice', compact('quote'));
 
-        $pdfName = 'InsuranceMarket.ae™ Motor Insurance Comparison for '.$quote->first_name.' '.$quote->last_name.'.pdf';
+        $pdfName = 'InsuranceMarket.ae™ Proforma Payment Request for '.$quote->first_name.' '.$quote->last_name.'<'.$proformaPaymentRequest->code.'>.pdf';
 
         return ['pdf' => $pdf, 'name' => $pdfName];
     }

@@ -909,7 +909,22 @@ const downloadProformaPayment = () =>{
     }
     console.log('props.proformaPayment',props.proformaPayment.code);
     if(props.proformaPayment){
-        router.visit(route('download.proforma.payment.request', [props.quoteType, props.quoteRequest.uuid ]));
+        router.visit(route('download.proforma.payment.request', [props.quoteType, props.quoteRequest.uuid ]),{
+            onSuccess: () => {
+                notification.error({
+                    title: 'Proforma payment request has been saved',
+                    position: 'top',
+                });
+                notification.error({
+                    title: 'File exported',
+                    position: 'top',
+                });
+            },
+            onFinish: visit => {
+                // This won't be called until doThing()
+                // and doAnotherThing() have finished.
+            },
+        });
         return;
     }else{
         errorMsg = 'No Proforma Payment found';
@@ -920,6 +935,10 @@ const downloadProformaPayment = () =>{
         return;
     }
 
+};
+
+const showMessages = () => {
+    console.log('showMessages');
 };
 
 const addPaymentModal = () => {
