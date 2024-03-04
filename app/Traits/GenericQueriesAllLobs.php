@@ -5,12 +5,18 @@ namespace App\Traits;
 use App\Enums\GenericRequestEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteDocumentsEnum;
+use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
+use App\Models\DocumentType;
 use App\Models\Payment;
+use App\Models\QuoteType;
+use App\Repositories\DocumentTypeRepository;
 use App\Repositories\InsuranceProviderRepository;
 use App\Services\CapiRequestService;
+use League\CommonMark\Extension\SmartPunct\Quote;
 
 trait GenericQueriesAllLobs
 {
@@ -178,7 +184,7 @@ trait GenericQueriesAllLobs
 
     public function bookPolicyPayload($record, $quoteType, $payments, $quoteDocuments)
     {
-        $insuranceProviderLeadCount = $insuranceProviderCode = '';
+       $insuranceProviderLeadCount = $insuranceProviderCode = '';
         if ($payments->first()) {
             $insurance_provider_id = $payments[0]['insurance_provider_id'];
             $insuranceProviderCode = InsuranceProviderRepository::where('id', $insurance_provider_id)->value('code');
@@ -191,36 +197,22 @@ trait GenericQueriesAllLobs
         $bPDetails['sendPolicyType'] = null;
         $bPDetails['text'] = '';
         if (!empty($quoteDocuments)) {
-            $document_type_codes = collect($quoteDocuments)->pluck('document_type_code')->toArray();
-            if(quoteTypeCode::Life == $quoteType) {
-                if (in_array(QuoteDocumentsEnum::LIFE_POLICY_CERTIFICATE, $document_type_codes) && in_array(QuoteDocumentsEnum::LIFE_POLICY_SCHEDULE, $document_type_codes) && in_array(QuoteDocumentsEnum::LIFE_POLICY_HANDBOOK, $document_type_codes)) {
-                    $bPDetails['sendButton'] = true;
-                    $bPDetails['text'] = 'Send Policy To Customer';
-                    $bPDetails['sendPolicyType'] = 'customer';
-                }
-                $taxDocuments = (in_array(QuoteDocumentsEnum::LIFE_TAX_INVOICE, $document_type_codes) && in_array(QuoteDocumentsEnum::LIFE_TAX_INVOICE_RAISE_BY_BUYER, $document_type_codes));
-    
-                if ($bPDetails['sendButton'] && $taxDocuments) {
-                    $bPDetails['text'] = 'Send Policy';
-                    $bPDetails['editButton'] = true;
-                    $bPDetails['sendPolicyType'] = 'sage';
-                }
-                
-            } else{
-                if (in_array(QuoteDocumentsEnum::CAR_POLICY_CERTIFICATE, $document_type_codes) && in_array(QuoteDocumentsEnum::POLICY_SCHEDULE, $document_type_codes) && in_array(QuoteDocumentsEnum::POLICY_HANDBOOK, $document_type_codes)) {
-                    $bPDetails['sendButton'] = true;
-                    $bPDetails['text'] = 'Send Policy To Customer';
-                    $bPDetails['sendPolicyType'] = 'customer';
-                }
-                $taxDocuments = (in_array(QuoteDocumentsEnum::CAR_TAX_INVOICE, $document_type_codes) && in_array(QuoteDocumentsEnum::CAR_TAX_INVOICE_RAISE_BY_BUYER, $document_type_codes));
-    
-                if ($bPDetails['sendButton'] && $taxDocuments) {
+            $documentTypeCodes= app(DocumentTypeRepository::class)->getSendPolicyDocumentCodes($quoteType);
+            $quoteDocumentsCount = collect($quoteDocuments)->whereIn('document_type_code', $documentTypeCodes)->groupBy('document_type_code')->count();
+            if($quoteDocumentsCount == count($documentTypeCodes)) {
+                $bPDetails['sendButton'] = true;
+                $bPDetails['text'] = 'Send Policy To Customer';
+                $bPDetails['sendPolicyType'] = 'customer';
+            }
+            if ($bPDetails['sendButton']) {
+                $taxDocuments= app(DocumentTypeRepository::class)->getTaxDocumentsCode($quoteType);
+                $taxDocumentsCount = collect($quoteDocuments)->whereIn('document_type_code', $taxDocuments)->groupBy('document_type_code')->count();
+                if($taxDocumentsCount == count($taxDocuments)) {
                     $bPDetails['text'] = 'Send Policy';
                     $bPDetails['editButton'] = true;
                     $bPDetails['sendPolicyType'] = 'sage';
                 }
             }
-            
         }
         return $bPDetails;
     }

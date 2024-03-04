@@ -252,7 +252,7 @@ class BusinessQuoteController extends Controller
         }
         
         $policyIssuanceStatus = PolicyIssuanceStatus::active()->get();
-        $bPDetails = $this->bookPolicyPayload($record, QuoteTypes::PET->value, $payments, $quoteDocuments);
+        $bPDetails = $this->bookPolicyPayload($record, QuoteTypes::BUSINESS->value, $payments, $quoteDocuments);
 
         return inertia('CorpLineQuote/Show', [
             'storageUrl' => storageUrl(),

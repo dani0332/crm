@@ -151,10 +151,10 @@ class YachtQuoteController extends Controller
             $sendUpdateEnum = SendUpdateLogStatusEnum::asArray();
         }
 
-        $isQuoteDocumentEnabled = app(QuoteDocumentService::class)->isEnabled(QuoteTypes::CYCLE->value);
+        $isQuoteDocumentEnabled = app(QuoteDocumentService::class)->isEnabled(QuoteTypes::YACHT->value);
         $policyIssuanceStatus = PolicyIssuanceStatus::active()->get();
-        $quoteDocuments = (new QuoteDocumentService())->getQuoteDocuments(QuoteTypes::CYCLE->value, $quote->id);
-        $bPDetails = $this->bookPolicyPayload($quote, QuoteTypes::PET->value, $quote->payments, $quoteDocuments);
+        $quoteDocuments = (new QuoteDocumentService())->getQuoteDocuments(QuoteTypes::YACHT->value, $quote->id);
+        $bPDetails = $this->bookPolicyPayload($quote, QuoteTypes::YACHT->value, $quote->payments, $quoteDocuments);
 
         return inertia('YachtQuote/Show', [
             'quoteType' => QuoteTypes::YACHT,

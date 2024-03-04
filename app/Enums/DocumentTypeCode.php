@@ -12,4 +12,7 @@ use BenSampo\Enum\Enum;
 class DocumentTypeCode extends Enum
 {
     const KYCDOC = 'KYCDOC';
+    const ISSUING_DOCUMENTS= 'ISSUING_DOCUMENTS';
+    const TAX_INVOICE= 'Tax Invoice';
+    const TAX_INVOICE_RAISED_BY_BUYER= 'Tax Invoice Raised By Buyer';
 }

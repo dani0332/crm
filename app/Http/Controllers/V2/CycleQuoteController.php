@@ -177,7 +177,7 @@ class CycleQuoteController extends Controller
         $isQuoteDocumentEnabled = app(QuoteDocumentService::class)->isEnabled(QuoteTypes::CYCLE->value);
         $policyIssuanceStatus = PolicyIssuanceStatus::active()->get();
         $quoteDocuments = (new QuoteDocumentService())->getQuoteDocuments(QuoteTypes::CYCLE->value, $quote->id);
-        $bPDetails = $this->bookPolicyPayload($quote, QuoteTypes::PET->value, $quote->payments, $quoteDocuments);
+        $bPDetails = $this->bookPolicyPayload($quote, QuoteTypes::CYCLE->value, $quote->payments, $quoteDocuments);
         return inertia('CycleQuote/Show', [
             'quoteType' => QuoteTypes::CYCLE,
             'quote' => $quote,
