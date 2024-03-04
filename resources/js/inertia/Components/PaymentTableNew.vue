@@ -505,7 +505,7 @@ const handleCollectionTypeChange = () => {
   //customize payment method based on collection type
   paymentTypesFiltered.value = paymentTypes.value;
   let excludedPaymentTypes = ['IN_PL', 'CA', 'MP', 'PP'];
-  if(!can(permissionEnum.PROFORMA_PAYMENT_REQUEST_ADD)){
+  if(can(permissionEnum.PROFORMA_PAYMENT_REQUEST_ADD) == false || props.quoteRequest.quote_status_id != page.props.quoteStatusEnum.ApplicationPending){
       excludedPaymentTypes.push('PPR');
   }
   paymentTypesFiltered.value = paymentTypesFiltered.value.filter(item => !excludedPaymentTypes.includes(item.value));
@@ -1771,7 +1771,7 @@ watch(() => props.quoteRequest, (newValue, oldValue) => {
     <div class="flex justify-between gap-4 items-center mb-4">
       <h3 class="font-semibold text-primary-800 text-lg">Manage Payments</h3>
         <div class="flex gap-2">
-            <templete v-if="(can(permissionEnum.PROFORMA_CREATE))">
+            <templete v-if="(can(permissionEnum.PROFORMA_CREATE)) && (props.quoteRequest.quote_status_id == page.props.quoteStatusEnum.ApplicationPending)">
                 <template v-if="proformaPayment?.payment_status_id == paymentStatusEnum.PAID">
                     <x-button
                         v-if="proformaPayment"
