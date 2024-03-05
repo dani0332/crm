@@ -1,4 +1,5 @@
 <script setup>
+import moment from 'moment';
 import ToolTip from './../Components/ToolTip.vue';
 const notification = useNotifications('toast');
 const page = usePage();
@@ -886,6 +887,23 @@ const generateCCLink = async (code,splitPaymentId,paymentStatus) => {
   }
 };
 
+const isExportable = (payment, documents) =>{
+    if(!documents) return true;
+
+    let proformaPaymentRequestDocuments = documents.filter(doc => doc.document_type_text === 'Proforma Payment Request');
+    if(!proformaPaymentRequestDocuments) return true;
+
+    proformaPaymentRequestDocuments.sort((a, b) => b.id - a.id);
+
+    let latestProformaPaymentRequestDocument = proformaPaymentRequestDocuments[0];
+
+    let paymentUpdateAt = moment(payment.updated_at);
+    let latestProformaRequestDocumentCreatedAt = moment(latestProformaPaymentRequestDocument.created_at, 'DD-MM-YYYY HH:mm:s').format('YYYY-MM-DD HH:mm:ss');
+    console.log('paymentUpdateAt - latestProformaRequestDocumentCreatedAt',paymentUpdateAt , latestProformaRequestDocumentCreatedAt);
+
+    return paymentUpdateAt.isAfter(latestProformaRequestDocumentCreatedAt);
+}
+
 const downloadProformaPayment = () =>{
     let errorMsg = '';
     if (props.paymentStatusEnum.PAID == props.proformaPayment?.payment_status_id) {
@@ -895,6 +913,14 @@ const downloadProformaPayment = () =>{
         position: 'top',
       });
       return;
+    }
+    let exportProformaRequest = isExportable(props.proformaPayment, props.quoteRequest.documents);
+    if (!exportProformaRequest) {
+        notification.error({
+            title: 'Please update the Payment details for this Proforma Request. ',
+            position: 'top',
+        });
+        return;
     }
     if (totalPrice.value < 0 && planDetail.value)  {
         errorMsg = 'Please update the Total Price in the Plan Details section.';
