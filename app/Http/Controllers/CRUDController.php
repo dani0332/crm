@@ -28,8 +28,6 @@ use App\Enums\TiersEnum;
 use App\Enums\TravelQuoteEnum;
 use App\Facades\Capi;
 use App\Http\Requests\ExportPlansPdfRequest;
-use App\Http\Requests\SplitPaymentApproveRequest;
-use App\Http\Requests\SplitPaymentUpdateRequest;
 use App\Http\Requests\StorePaymentRequest;
 use App\Http\Requests\UpdateLeadStatusRequest;
 use App\Http\Requests\UpdatePaymentRequest;
@@ -1819,28 +1817,6 @@ class CRUDController extends Controller
             $quoteModel->save();
 
             return back()->with('success', 'Payment has been created');
-        }
-    }
-
-    public function splitPaymentUpdate(SplitPaymentUpdateRequest $request)
-    {
-        if (auth()->user()->can(PermissionsEnum::ApprovePayments)) {
-            $successMessage = PaymentRepository::updatePaymentStatus($request);
-
-            return back()->with('success', $successMessage);
-        } else {
-            return back()->with('error', 'You are not authorized');
-        }
-    }
-
-    public function splitPaymentsApprove(SplitPaymentApproveRequest $request)
-    {
-        if (auth()->user()->can(PermissionsEnum::ApprovePayments)) {
-            $successMessage = PaymentRepository::updateSplitPaymentsApprove($request);
-
-            return back()->with('success', $successMessage);
-        } else {
-            return back()->with('error', 'You are not authorized');
         }
     }
 

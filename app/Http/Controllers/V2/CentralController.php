@@ -22,7 +22,10 @@ use App\Http\Requests\BookPolicyRequest;
 use App\Http\Requests\CustomerProfileRequest;
 use App\Http\Requests\DuplicateLobRequest;
 use App\Http\Requests\LeadAssignRequest;
+use App\Http\Requests\MigratePaymentsRequest;
 use App\Http\Requests\PlanDetailsRequest;
+use App\Http\Requests\SplitPaymentApproveRequest;
+use App\Http\Requests\SplitPaymentUpdateRequest;
 use App\Http\Requests\SendBookPolicyRequest;
 use App\Http\Requests\UpdateLastYearPolicyRequest;
 use App\Http\Requests\UpdateSelectedPlanRequest;
@@ -32,6 +35,7 @@ use App\Models\Entity;
 use App\Models\Payment;
 use App\Models\PaymentSplits;
 use App\Models\QuoteRequestEntityMapping;
+use App\Repositories\PaymentRepository;
 use App\Services\ActivitiesService;
 use App\Services\CentralService;
 use App\Services\SageApiService;
@@ -287,5 +291,27 @@ class CentralController extends Controller
         $response = (new CentralService())->updateSelectedPlan($quoteType, $uuid, $request->safe());
 
         return response()->json(['plan' => $response]);
+    }
+
+    // Migrate payments from old system to new system
+    public function migratePayment(MigratePaymentsRequest $request)
+    {
+        $successMessage = PaymentRepository::migratePayments($request);
+
+        return $successMessage;
+    }
+    // Update split payment status
+    public function splitPaymentUpdate(SplitPaymentUpdateRequest $request)
+    {
+        $successMessage = PaymentRepository::updatePaymentStatus($request);
+
+        return back()->with('success', $successMessage);
+    }
+    // Approve split payments
+    public function splitPaymentsApprove(SplitPaymentApproveRequest $request)
+    {
+        $successMessage = PaymentRepository::updateSplitPaymentsApprove($request);
+
+        return back()->with('success', $successMessage);
     }
 }
