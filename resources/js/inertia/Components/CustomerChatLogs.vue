@@ -144,10 +144,13 @@ onMounted(async () => {
                 }"
                 class="rounded-[20px] relative max-w-[45rem]"
               >
-                <p
+                <div class="text-sm text-white py-4 px-4">
+                  <vue-markdown :source="message.msg"></vue-markdown>
+                </div>
+                <!-- <p
                   class="text-sm text-white py-4 px-4"
                   v-html="message.msg"
-                ></p>
+                ></p> -->
                 <p class="text-xs text-white text-right uppercase">
                   {{ message.created_at.split(' ')[1] }}
                 </p>

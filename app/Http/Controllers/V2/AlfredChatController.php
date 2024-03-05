@@ -15,10 +15,7 @@ class AlfredChatController extends Controller
      */
     public function index(AlfredChatRequest $request)
     {
-        $chat = AlfredChat::where([
-            'quote_id' => $request->quoteId,
-            'format' => 'html',
-        ]) ->select('role', 'msg', 'created_at')->get();
+        $chat = AlfredChat::where('quote_id', $request->quoteId) ->select('role', 'msg', 'created_at')->get();
 
         if ($chat->isEmpty()) {
             return response()->json(['message' => 'No chat available']);
