@@ -83,7 +83,13 @@ function onSubmit(isValid) {
     </div>
     <x-divider class="my-4" />
     <x-form @submit="onSubmit" :auto-focus="false">
-      <x-alert color="error" class="mb-5" v-if="$page.props?.errors">
+      <x-alert
+        color="error"
+        class="mb-5"
+        v-if="
+          $page.props?.errors && Object.keys($page.props?.errors).length > 0
+        "
+      >
         {{ $page.props?.errors }}
       </x-alert>
 
