@@ -1,6 +1,6 @@
 <script setup>
-import { computed } from 'vue';
-const can = permission => useCan(permission);
+import { computed } from "vue";
+const can = (permission) => useCan(permission);
 
 const { isRequired } = useRules();
 
@@ -28,12 +28,12 @@ const props = defineProps({
   bookingDetails: {
     type: Array,
     required: true,
-    default: () => { }
+    default: () => {},
   },
   payments: {
     type: Array,
     required: true,
-    default: () => []
+    default: () => [],
   },
   isNegativeValue: {
     type: Boolean,
@@ -50,7 +50,8 @@ const props = defineProps({
   uploadedDocuments: {
     type: Array,
     required: false,
-  }
+  },
+  paymentStatusEnum: Object,
 });
 
 const state = reactive({
@@ -61,13 +62,14 @@ const state = reactive({
 const page = usePage();
 const notification = useToast();
 const sendUpdateStatusEnum = page.props.sendUpdateStatusEnum;
+const paymentStatusEnum = page.props.paymentStatusEnum;
 
-const dateToYMD = date => {
+const dateToYMD = (date) => {
   if (date) {
-    const [year, month, day] = date.split('-');
+    const [year, month, day] = date.split("-");
     return `${year}-${month}-${day}`;
   }
-  return '';
+  return "";
 };
 
 const isEF = computed(() => {
@@ -88,64 +90,99 @@ const isCPD = computed(() => {
 
 const hasTaxDocuments = computed(() => {
   // tax invoice and tax invoice raised by buyer.
-  return props.uploadedDocuments.includes('SUTAXINV') && props.uploadedDocuments.includes('SUTAXINVRB');
+  return (
+    props.uploadedDocuments.includes("SUTAXINV") &&
+    props.uploadedDocuments.includes("SUTAXINVRB")
+  );
 });
 
 const checkSectionTwoEdit = () => {
-  const taxInvoiceDoc = [sendUpdateStatusEnum.EF, sendUpdateStatusEnum.CI, sendUpdateStatusEnum.CIR, sendUpdateStatusEnum.CPD];
-  const checkTaxInvoiceDoc = taxInvoiceDoc.includes(props.selectedCategory.subCategory.slug);
+  const taxInvoiceDoc = [
+    sendUpdateStatusEnum.EF,
+    sendUpdateStatusEnum.CI,
+    sendUpdateStatusEnum.CIR,
+    sendUpdateStatusEnum.CPD,
+  ];
+  const checkTaxInvoiceDoc = taxInvoiceDoc.includes(
+    props.selectedCategory.subCategory.slug
+  );
 
   if (isCPD.value && bookingDetailsForm.reversal_invoice === null) {
     notification.error({
-      title: 'Please select tax invoice number for reversal. ',
-      position: 'top',
+      title: "Please select tax invoice number for reversal. ",
+      position: "top",
     });
     return;
   }
 
   if (checkTaxInvoiceDoc && !hasTaxDocuments.value) {
     notification.error({
-      title: 'Please upload tax invoice and tax invoice raised by buyer. ',
-      position: 'top',
+      title: "Please upload tax invoice and tax invoice raised by buyer. ",
+      position: "top",
     });
     return;
   }
 
   state.isEdit = !state.isEdit;
-}
+};
 
 const transactionPaymentStatus = computed(() => {
   if (Number(props?.quote?.price_with_vat) === 0) {
-    return 'Not Paid';
+    return "Not Paid";
   }
   if (Number(props?.quote?.premium) > Number(props?.quote?.price_with_vat)) {
-    return 'Partially Paid';
+    return "Partially Paid";
   }
   if (Number(props?.quote?.premium) === Number(props?.quote?.price_with_vat)) {
-    return 'Paid';
+    return "Paid";
   }
 });
 
 const bookingDetailsForm = useForm({
   id: props.sendUpdateLog.id,
   send_update_type: props.selectedCategory.subCategory.slug,
-  booking_date: props.bookingDetails?.booking_date || dateToYMD(props.quote?.policy_booking_date) || new Date().toJSON().slice(0, 10),
-  invoice_description: props.bookingDetails?.invoice_description || '',
-  broker_invoice_number: props.bookingDetails?.broker_invoice_number || '',
-  transaction_payment_status: props.bookingDetails?.transaction_payment_status || transactionPaymentStatus.value,
-  invoice_date: props.bookingDetails?.invoice_date || dateToYMD(props?.payments[0]?.insurer_invoice_date) || '',
-  insurer_tax_invoice_number: props.bookingDetails?.insurer_tax_invoice_number || props?.payments[0]?.insurer_tax_number || '',
-  discount: props.bookingDetails?.discount || props?.payments[0]?.discount_value || '0.00',
-  insurer_commission_invoice_number: props.bookingDetails?.insurer_commission_invoice_number || props?.payments[0]?.insurer_commmission_invoice_number || '',
-  commission_percentage: props.bookingDetails?.commission_percentage || props?.payments[0]?.commmission_percentage || '',
-  commission_vat_not_applicable: props.bookingDetails?.commission_vat_not_applicable || props?.payments[0]?.commission_vat_not_applicable || '0.00',
-  vat_on_commission: props.bookingDetails?.vat_on_commission || props?.payments[0]?.commission_vat || '',
-  commission_vat_applicable: props.bookingDetails?.commission_vat_applicable || props?.payments[0]?.commission_vat_applicable || '',
-  total_commission: props.bookingDetails?.total_commission || props?.payments[0]?.commission || '',
+  booking_date:
+    props.bookingDetails?.booking_date ||
+    dateToYMD(props.quote?.policy_booking_date) ||
+    new Date().toJSON().slice(0, 10),
+  invoice_description: props.bookingDetails?.invoice_description || "",
+  broker_invoice_number: props.bookingDetails?.broker_invoice_number || "",
+  transaction_payment_status:
+    props.bookingDetails?.transaction_payment_status || transactionPaymentStatus.value,
+  invoice_date:
+    props.bookingDetails?.invoice_date ||
+    dateToYMD(props?.payments[0]?.insurer_invoice_date) ||
+    "",
+  insurer_tax_invoice_number:
+    props.bookingDetails?.insurer_tax_invoice_number ||
+    props?.payments[0]?.insurer_tax_number ||
+    "",
+  discount:
+    props.bookingDetails?.discount || props?.payments[0]?.discount_value || "0.00",
+  insurer_commission_invoice_number:
+    props.bookingDetails?.insurer_commission_invoice_number ||
+    props?.payments[0]?.insurer_commmission_invoice_number ||
+    "",
+  commission_percentage:
+    props.bookingDetails?.commission_percentage ||
+    props?.payments[0]?.commmission_percentage ||
+    "",
+  commission_vat_not_applicable:
+    props.bookingDetails?.commission_vat_not_applicable ||
+    props?.payments[0]?.commission_vat_not_applicable ||
+    "0.00",
+  vat_on_commission:
+    props.bookingDetails?.vat_on_commission || props?.payments[0]?.commission_vat || "",
+  commission_vat_applicable:
+    props.bookingDetails?.commission_vat_applicable ||
+    props?.payments[0]?.commission_vat_applicable ||
+    "",
+  total_commission:
+    props.bookingDetails?.total_commission || props?.payments[0]?.commission || "",
   total_vat_amount: props.bookingDetails?.total_vat_amount || null,
-  price_vat_applicable: props.bookingDetails?.price_vat_applicable || '',
-  price_vat_not_applicable: props.bookingDetails?.price_vat_not_applicable || '0.00',
-  total_price: props.bookingDetails?.total_price || '0.00',
+  price_vat_applicable: props.bookingDetails?.price_vat_applicable || "",
+  price_vat_not_applicable: props.bookingDetails?.price_vat_not_applicable || "0.00",
+  total_price: props.bookingDetails?.total_price || "0.00",
   // new entry section related.
   reversal_invoice: props.bookingDetails?.reversal_invoice || null,
 });
@@ -154,28 +191,36 @@ const bookingDetailsForm = useForm({
 const calculateCommission = () => {
   if (bookingDetailsForm.commission_vat_applicable > 0) {
     if (Number(props.realQuote?.price_with_vat > 0)) {
-      let vat_on_commission = bookingDetailsForm.commission_vat_applicable * Number(5 / 100);
+      let vat_on_commission =
+        bookingDetailsForm.commission_vat_applicable * Number(5 / 100);
       bookingDetailsForm.vat_on_commission = convertToNegative(vat_on_commission);
 
-      let total_commission = Number(bookingDetailsForm.commission_vat_not_applicable) + Number(bookingDetailsForm.commission_vat_applicable) +
+      let total_commission =
+        Number(bookingDetailsForm.commission_vat_not_applicable) +
+        Number(bookingDetailsForm.commission_vat_applicable) +
         vat_on_commission;
       bookingDetailsForm.total_commission = convertToNegative(total_commission);
 
       // in this calculation, number 5 is not VAT amount, we need to * the price_vat and price_not_vat with 5% to get the total VAT amount.
-      let total_price_with_vat_and_not_vat_applicable = (
-        Number(bookingDetailsForm.price_vat_applicable) + Number(bookingDetailsForm.price_vat_not_applicable)
-      );
-      let total_vat_amount = Number(bookingDetailsForm.price_vat_applicable) * Number(5 / 100);
+      let total_price_with_vat_and_not_vat_applicable =
+        Number(bookingDetailsForm.price_vat_applicable) +
+        Number(bookingDetailsForm.price_vat_not_applicable);
+      let total_vat_amount =
+        Number(bookingDetailsForm.price_vat_applicable) * Number(5 / 100);
       bookingDetailsForm.total_vat_amount = convertToNegative(total_vat_amount);
 
-      let total_price = total_price_with_vat_and_not_vat_applicable + Number(total_vat_amount - total_price_with_vat_and_not_vat_applicable);
+      let total_price =
+        total_price_with_vat_and_not_vat_applicable +
+        Number(total_vat_amount - total_price_with_vat_and_not_vat_applicable);
       bookingDetailsForm.total_price = convertToNegative(total_price);
 
-      bookingDetailsForm.commission_percentage = convertToNegative((total_commission / total_price) * 100);
+      bookingDetailsForm.commission_percentage = convertToNegative(
+        (total_commission / total_price) * 100
+      );
     } else {
       notification.error({
-        title: 'Please add Policy Detail Price (VAT APPLICABLE)',
-        position: 'top',
+        title: "Please add Policy Detail Price (VAT APPLICABLE)",
+        position: "top",
       });
     }
   } else if (bookingDetailsForm.commission_vat_not_applicable > 0) {
@@ -186,17 +231,18 @@ const calculateCommission = () => {
         100
       ).toFixed(2);
 
-      bookingDetailsForm.total_commission = bookingDetailsForm.commission_vat_not_applicable;
+      bookingDetailsForm.total_commission =
+        bookingDetailsForm.commission_vat_not_applicable;
     } else {
       notification.error({
-        title: 'Please add Policy Detail Price (VAT NOT APPLICABLE)',
-        position: 'top',
+        title: "Please add Policy Detail Price (VAT NOT APPLICABLE)",
+        position: "top",
       });
     }
   } else {
-    bookingDetailsForm.commission_percentage = '';
-    bookingDetailsForm.vat_on_commission = '';
-    bookingDetailsForm.total_commission = '';
+    bookingDetailsForm.commission_percentage = "";
+    bookingDetailsForm.vat_on_commission = "";
+    bookingDetailsForm.total_commission = "";
   }
 };
 
@@ -207,47 +253,57 @@ function convertToNegative(value) {
   }
   value = isNaN(value) ? 0 : Number(value);
 
-  return Number(value.toFixed(2)).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  return Number(value.toFixed(2)).toLocaleString("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
 }
 
 const saveBookingDetail = (isValid) => {
   if (!isValid) return;
-  // it will check payment related condition. 
-  let childOptions = [sendUpdateStatusEnum.MPC, sendUpdateStatusEnum.MDOM, sendUpdateStatusEnum.MDOV, sendUpdateStatusEnum.ED, sendUpdateStatusEnum.DM];
-  if (isEF.value && !childOptions.includes(props.selectedCategory.subCategory.option.slug)) {
+  // it will check payment related condition.
+  let childOptions = [
+    sendUpdateStatusEnum.MPC,
+    sendUpdateStatusEnum.MDOM,
+    sendUpdateStatusEnum.MDOV,
+    sendUpdateStatusEnum.ED,
+    sendUpdateStatusEnum.DM,
+  ];
+  if (
+    isEF.value &&
+    !childOptions.includes(props.selectedCategory.subCategory.option.slug)
+  ) {
     /* alert('payment condition will goes here. ');
     return; */
   }
-  bookingDetailsForm.post(route('send-update-logs.save-booking-details'),
-    {
-      preserveScroll: true,
-      onSuccess: () => {
-        notification.success({
-          title: 'The request has been updated.',
-          position: 'top',
-        });
-        state.isEdit = false;
-        router.reload({ preserveState: true });
-      },
-      onError: () => {
-        notification.error({
-          title: 'The data not update.',
-          position: 'top',
-        });
-      },
+  bookingDetailsForm.post(route("send-update-logs.save-booking-details"), {
+    preserveScroll: true,
+    onSuccess: () => {
+      notification.success({
+        title: "The request has been updated.",
+        position: "top",
+      });
+      state.isEdit = false;
+      router.reload({ preserveState: true });
     },
-  );
+    onError: () => {
+      notification.error({
+        title: "The data not update.",
+        position: "top",
+      });
+    },
+  });
 };
 
 const paymentInvoiceNumberOptions = computed(() => {
-  return page.props.paymentInvoices.map(invoice_number => {
+  return page.props.paymentInvoices.map((invoice_number) => {
     return { label: invoice_number, value: invoice_number };
   });
 });
 
 const reversalEntry = reactive({
   booking_date: null,
-  invoice_description: props.bookingDetails?.reversal_invoice_description || '',
+  invoice_description: props.bookingDetails?.reversal_invoice_description || "",
   broker_invoice_number: null,
   transaction_payment_status: null,
   invoice_date: null,
@@ -266,44 +322,49 @@ const reversalEntry = reactive({
 });
 
 const selectedInvoice = () => {
-  let url = route('send-update-logs.get-reversal-entries');
+  let url = route("send-update-logs.get-reversal-entries");
   let data = {
     quoteType: props.quoteType,
     quoteUuid: props.realQuote.uuid,
     quoteId: props.realQuote.id,
     taxInvoiceNo: bookingDetailsForm.reversal_invoice,
   };
-  axios.post(url, data)
-    .then(response => {
+  axios
+    .post(url, data)
+    .then((response) => {
       updateReversalEntries(response.data);
     })
-    .catch(error => {
+    .catch((error) => {
       // handle the error
     });
-}
+};
 
 function reverseValue(value) {
-  if (value === null || value === undefined || value === '') {
-    return '';
+  if (value === null || value === undefined || value === "") {
+    return "";
   }
-  const numericValue = parseFloat(value.toString().replace(/,/g, ''));
+  const numericValue = parseFloat(value.toString().replace(/,/g, ""));
   const reversedValue = -numericValue;
 
-  return reversedValue.toLocaleString('en-US', { minimumFractionDigits: 2 });
-};
+  return reversedValue.toLocaleString("en-US", { minimumFractionDigits: 2 });
+}
 
 function updateReversalEntries(response) {
   reversalEntry.insurer_tax_invoice_number = response.insurer_tax_number;
-  reversalEntry.broker_invoice_number = response.broker_invoice_number || '';
-  reversalEntry.transaction_payment_status = response.transaction_payment_status || '';
-  reversalEntry.invoice_date = response.insurer_invoice_date || '';
-  reversalEntry.insurer_commission_invoice_number = response.insurer_commission_invoice_number || '';
-  reversalEntry.discount = reverseValue(response.discount_value) || '';
-  reversalEntry.commission_percentage = reverseValue(response.commission_percentage) || '';
-  reversalEntry.commission_vat_not_applicable = reverseValue(response.commission_vat_not_applicable) || '';
-  reversalEntry.vat_on_commission = reverseValue(response.commission_vat) || '';
-  reversalEntry.commission_vat_applicable = reverseValue(response.commission_vat_applicable) || '';
-  reversalEntry.total_commission = reverseValue(response.commission) || '';
+  reversalEntry.broker_invoice_number = response.broker_invoice_number || "";
+  reversalEntry.transaction_payment_status = response.transaction_payment_status || "";
+  reversalEntry.invoice_date = response.insurer_invoice_date || "";
+  reversalEntry.insurer_commission_invoice_number =
+    response.insurer_commission_invoice_number || "";
+  reversalEntry.discount = reverseValue(response.discount_value) || "";
+  reversalEntry.commission_percentage =
+    reverseValue(response.commission_percentage) || "";
+  reversalEntry.commission_vat_not_applicable =
+    reverseValue(response.commission_vat_not_applicable) || "";
+  reversalEntry.vat_on_commission = reverseValue(response.commission_vat) || "";
+  reversalEntry.commission_vat_applicable =
+    reverseValue(response.commission_vat_applicable) || "";
+  reversalEntry.total_commission = reverseValue(response.commission) || "";
   reversalEntry.total_price = reverseValue(response.total_price);
 
   // fields missing from response.
@@ -316,70 +377,176 @@ function updateReversalEntries(response) {
 }
 
 onMounted(() => {
-  if (props.bookingDetails?.reversal_invoice && props.bookingDetails?.reversal_invoice !== null) {
+  if (
+    props.bookingDetails?.reversal_invoice &&
+    props.bookingDetails?.reversal_invoice !== null
+  ) {
     selectedInvoice();
   }
 });
 
 const onUpdateReversal = () => {
   state.reversalSectionEdit = !state.reversalSectionEdit;
-  bookingDetailsForm.insurer_tax_invoice_number = reversalEntry.insurer_tax_invoice_number;
-  bookingDetailsForm.broker_invoice_number = reversalEntry.broker_invoice_number || '';
-  bookingDetailsForm.transaction_payment_status = reversalEntry.transaction_payment_status || '';
-  bookingDetailsForm.invoice_date = reversalEntry.invoice_date || '';
-  bookingDetailsForm.insurer_commission_invoice_number = reversalEntry.insurer_commission_invoice_number || '';
-  bookingDetailsForm.discount = reverseValue(reversalEntry.discount) || '';
-  bookingDetailsForm.commission_percentage = reverseValue(reversalEntry.commission_percentage) || '';
-  bookingDetailsForm.commission_vat_not_applicable = reverseValue(reversalEntry.commission_vat_not_applicable) || '';
-  bookingDetailsForm.vat_on_commission = reverseValue(reversalEntry.vat_on_commission) || '';
-  bookingDetailsForm.commission_vat_applicable = convertToNumber(reversalEntry.commission_vat_applicable) || '';
-  bookingDetailsForm.total_commission = reverseValue(reversalEntry.total_commission) || '';
+  bookingDetailsForm.insurer_tax_invoice_number =
+    reversalEntry.insurer_tax_invoice_number;
+  bookingDetailsForm.broker_invoice_number = reversalEntry.broker_invoice_number || "";
+  bookingDetailsForm.transaction_payment_status =
+    reversalEntry.transaction_payment_status || "";
+  bookingDetailsForm.invoice_date = reversalEntry.invoice_date || "";
+  bookingDetailsForm.insurer_commission_invoice_number =
+    reversalEntry.insurer_commission_invoice_number || "";
+  bookingDetailsForm.discount = reverseValue(reversalEntry.discount) || "";
+  bookingDetailsForm.commission_percentage =
+    reverseValue(reversalEntry.commission_percentage) || "";
+  bookingDetailsForm.commission_vat_not_applicable =
+    reverseValue(reversalEntry.commission_vat_not_applicable) || "";
+  bookingDetailsForm.vat_on_commission =
+    reverseValue(reversalEntry.vat_on_commission) || "";
+  bookingDetailsForm.commission_vat_applicable =
+    convertToNumber(reversalEntry.commission_vat_applicable) || "";
+  bookingDetailsForm.total_commission =
+    reverseValue(reversalEntry.total_commission) || "";
   bookingDetailsForm.total_price = reverseValue(reversalEntry.total_price);
-}
-
-function convertToNumber(value) {
-  if (value === null || value === undefined || value === '') {
-    return 'NaN';
-  }
-
-  return -parseFloat(value.toString().replace(/,/g, ''));
 };
 
+function convertToNumber(value) {
+  if (value === null || value === undefined || value === "") {
+    return "NaN";
+  }
+
+  return -parseFloat(value.toString().replace(/,/g, ""));
+}
+
 const sendUpdateButton = computed(() => {
-  return (isEF.value || isCI.value || isCIR.value) && props.updateBtn && can(page.props.permissionsEnum.SEND_UPDATE_TO_CUSTOMER);
+  return (
+    (isEF.value || isCI.value || isCIR.value) &&
+    props.updateBtn &&
+    can(page.props.permissionsEnum.SEND_UPDATE_TO_CUSTOMER)
+  );
 });
 
 const modals = reactive({
   sendConfirm: false,
   isConfirmed: false,
+  paymentConfirmation: false,
+  attestRecord: false,
 });
-const isStating = ref(false);
 
-const sendUpdateURL = (props.updateBtn === sendUpdateStatusEnum.SU) ? 'send-update' : 'send-update-validation';
+const isStating = ref(false);
+const sendUpdateValidationURL =
+  props.updateBtn === sendUpdateStatusEnum.SU
+    ? "send-update"
+    : "send-update-customer-validation";
+const paymentConfirmationMessage = reactive({ status: "", message: "" });
+
+const loader = reactive({
+  sendUpdateSectionBtn: false,
+  sendUpdate: false,
+});
 
 const sendUpdateValidation = () => {
+  loader.sendUpdateSectionBtn = true;
   axios
-    .post(sendUpdateURL, {
+    .post(sendUpdateValidationURL, {
       quoteType: props.quoteType,
       quoteUuid: props.realQuote.uuid,
       sendUpdateId: props.sendUpdateLog.id,
+      quoteRefId: props.realQuote.id,
     })
-    .then(response => {
+    .then((response) => {
       if (response.status == 200) {
-        modals.sendConfirm = true;
-        isStating.value = response.data.message;
+        if (props.updateBtn === sendUpdateStatusEnum.SU) {
+          prePaymentConfirmation(response);
+        } else {
+          modals.sendConfirm = true;
+          isStating.value = response.data.message;
+        }
       }
+    })
+    .catch(function (errors) {
+      loader.sendUpdateSectionBtn = false;
+      let responseError = errors.response.data.errors.error;
+      Object.keys(responseError).forEach(function (key) {
+        notification.error({
+          title: responseError[key],
+          position: "top",
+        });
+      });
+    });
+};
+
+function prePaymentConfirmation(response) {
+  let paymentOptions = [
+    paymentStatusEnum.PENDING,
+    paymentStatusEnum.PARTIALLY_PAID,
+    paymentStatusEnum.CREDIT_APPROVED,
+  ];
+  if (
+    (response.data.insuficientPaymentCheck == true &&
+      paymentOptions.includes(response.data.parentPaymentStatus)) ||
+    true
+  ) {
+    paymentConfirmationMessage.message =
+      "Unpaid policies breach our Code of Conduct and will be escalated to management. Do you still want to continue?";
+    switch (response.data.parentPaymentStatus) {
+      case paymentStatusEnum.PENDING:
+        paymentConfirmationMessage.status = "Payment not yet completed";
+        break;
+
+      case paymentStatusEnum.PARTIALLY_PAID:
+        paymentConfirmationMessage.status = "Insufficient payment received";
+        break;
+
+      case paymentStatusEnum.CREDIT_APPROVED:
+        paymentConfirmationMessage.status = "Pending payment under 'Credit approval'";
+        break;
+    }
+
+    modals.paymentConfirmation = true;
+  }
+}
+
+function attestRecord() {
+  modals.paymentConfirmation = false;
+  modals.attestRecord = true;
+}
+
+function confirmationModalClose() {
+  modals.paymentConfirmation = false;
+  modals.attestRecord = false;
+  loader.sendUpdateSectionBtn = false;
+}
+
+function sendUpdate() {
+  loader.sendUpdate = true;
+  axios
+    .post("send-update", {
+      quoteType: props.quoteType,
+      quoteUuid: props.realQuote.uuid,
+      sendUpdateId: props.sendUpdateLog.id,
+      quoteRefId: props.realQuote.id,
+      paymentValidated: true,
+    })
+    .then((response) => {
+      loader.sendUpdate = false;
+      loader.sendUpdateSectionBtn = false;
+      modals.attestRecord = false;
+      router.reload({ preserveState: true });
+      notification.success({
+        title: response.data.message,
+        position: "top",
+      });
     })
     .catch(function (errors) {
       let responseError = errors.response.data.errors.error;
       Object.keys(responseError).forEach(function (key) {
         notification.error({
           title: responseError[key],
-          position: 'top',
+          position: "top",
         });
       });
     });
-};
+}
 
 const isLoading = ref(false);
 const isNotConfirmed = ref(false);
@@ -390,29 +557,29 @@ const submitToCustomer = () => {
     return;
   }
   isLoading.value = true;
-  let url = 'send-update-to-customer';
+  let url = "send-update-to-customer";
   let data = {
     sendUpdateId: props.sendUpdateLog.id,
   };
   axios
     .post(url, data)
-    .then(response => {
+    .then((response) => {
       console.log(response);
       if (response.status == 200) {
         notification.success({
-          title: 'Update Sent to the Customer',
-          position: 'top',
+          title: "Update Sent to the Customer",
+          position: "top",
         });
         location.reload();
         modals.sendConfirm = false;
       }
     })
-    .catch(err => {
+    .catch((err) => {
       const flash_messages = err.response.data.errors;
       Object.keys(flash_messages).forEach(function (key) {
         notification.error({
           title: flash_messages[key],
-          position: 'top',
+          position: "top",
         });
       });
     })
@@ -442,22 +609,22 @@ const submitToCustomer = () => {
             <div class="grid sm:grid-cols-2 mt-4">
               <dt class="font-bold text-right"></dt>
               <dd>
-                  <span class="text-[#308BCA] text-sm font-bold">
-                    INSURER TAX INVOICE FOR REVERSAL
-                  </span>
+                <span class="text-[#308BCA] text-sm font-bold">
+                  INSURER TAX INVOICE FOR REVERSAL
+                </span>
               </dd>
             </div>
 
             <div class="grid sm:grid-cols-2 mt-4">
               <dd>
                 <ComboBox
-                    v-model="bookingDetailsForm.reversal_invoice"
-                    class="w-full"
-                    placeholder="Select Tax invoice number"
-                    @update:model-value="selectedInvoice"
-                    :options="paymentInvoiceNumberOptions"
-                    :single="true"
-                    :disabled="!state.reversalSectionEdit"
+                  v-model="bookingDetailsForm.reversal_invoice"
+                  class="w-full"
+                  placeholder="Select Tax invoice number"
+                  @update:model-value="selectedInvoice"
+                  :options="paymentInvoiceNumberOptions"
+                  :single="true"
+                  :disabled="!state.reversalSectionEdit"
                 />
               </dd>
             </div>
@@ -513,13 +680,12 @@ const submitToCustomer = () => {
                 <x-tooltip position="left">
                   <span>SUB CLASS</span>
                   <template #tooltip>
-                    Identifies the specific coverage or insurance plan offered
-                    by the provider.
+                    Identifies the specific coverage or insurance plan offered by the
+                    provider.
                   </template>
                 </x-tooltip>
               </dt>
-              <dd>
-              </dd>
+              <dd></dd>
             </div>
 
             <div class="grid sm:grid-cols-2">
@@ -527,8 +693,8 @@ const submitToCustomer = () => {
                 <x-tooltip position="left">
                   <span>INSURER INVOICE DATE</span>
                   <template #tooltip>
-                    The unique Insurance policy number for the chosen insurance
-                    plan offered by the provider.
+                    The unique Insurance policy number for the chosen insurance plan
+                    offered by the provider.
                   </template>
                 </x-tooltip>
               </dt>
@@ -542,8 +708,7 @@ const submitToCustomer = () => {
                 <x-tooltip position="left">
                   <span>BROKER INVOICE NUMBER</span>
                   <template #tooltip>
-                    Signifies the date when the insurance policy was officially
-                    issued.
+                    Signifies the date when the insurance policy was officially issued.
                   </template>
                 </x-tooltip>
               </dt>
@@ -557,8 +722,7 @@ const submitToCustomer = () => {
                 <x-tooltip position="left">
                   <span>INSURER TAX INVOICE NUMBER</span>
                   <template #tooltip>
-                    Signifies the date when the insurance policy was officially
-                    issued.
+                    Signifies the date when the insurance policy was officially issued.
                   </template>
                 </x-tooltip>
               </dt>
@@ -572,8 +736,7 @@ const submitToCustomer = () => {
                 <x-tooltip position="left">
                   <span>DISCOUNT</span>
                   <template #tooltip>
-                    Signifies the date when the insurance policy was officially
-                    issued.
+                    Signifies the date when the insurance policy was officially issued.
                   </template>
                 </x-tooltip>
               </dt>
@@ -587,8 +750,7 @@ const submitToCustomer = () => {
                 <x-tooltip position="left">
                   <span>INSURER COMMISSION INVOICE NUMBER</span>
                   <template #tooltip>
-                    Signifies the date when the insurance policy was officially
-                    issued.
+                    Signifies the date when the insurance policy was officially issued.
                   </template>
                 </x-tooltip>
               </dt>
@@ -602,8 +764,7 @@ const submitToCustomer = () => {
                 <x-tooltip position="left">
                   <span>COMMISSION (%)</span>
                   <template #tooltip>
-                    Signifies the date when the insurance policy was officially
-                    issued.
+                    Signifies the date when the insurance policy was officially issued.
                   </template>
                 </x-tooltip>
               </dt>
@@ -617,8 +778,7 @@ const submitToCustomer = () => {
                 <x-tooltip position="left">
                   <span>COMMISSION (VAT NOT APPLICABLE)</span>
                   <template #tooltip>
-                    Signifies the date when the insurance policy was officially
-                    issued.
+                    Signifies the date when the insurance policy was officially issued.
                   </template>
                 </x-tooltip>
               </dt>
@@ -632,8 +792,7 @@ const submitToCustomer = () => {
                 <x-tooltip position="left">
                   <span>VAT ON COMMISSION</span>
                   <template #tooltip>
-                    Signifies the date when the insurance policy was officially
-                    issued.
+                    Signifies the date when the insurance policy was officially issued.
                   </template>
                 </x-tooltip>
               </dt>
@@ -647,8 +806,7 @@ const submitToCustomer = () => {
                 <x-tooltip position="left">
                   <span>COMMISSION VAT APPLICABLE</span>
                   <template #tooltip>
-                    Signifies the date when the insurance policy was officially
-                    issued.
+                    Signifies the date when the insurance policy was officially issued.
                   </template>
                 </x-tooltip>
               </dt>
@@ -662,8 +820,7 @@ const submitToCustomer = () => {
                 <x-tooltip position="left">
                   <span>TOTAL COMMISSION</span>
                   <template #tooltip>
-                    Signifies the date when the insurance policy was officially
-                    issued.
+                    Signifies the date when the insurance policy was officially issued.
                   </template>
                 </x-tooltip>
               </dt>
@@ -677,8 +834,7 @@ const submitToCustomer = () => {
                 <x-tooltip position="left">
                   <span>PRICE (VAT NOT APPLICABLE)</span>
                   <template #tooltip>
-                    Signifies the date when the insurance policy was officially
-                    issued.
+                    Signifies the date when the insurance policy was officially issued.
                   </template>
                 </x-tooltip>
               </dt>
@@ -692,8 +848,7 @@ const submitToCustomer = () => {
                 <x-tooltip position="left">
                   <span>TOTAL VAT AMOUNT</span>
                   <template #tooltip>
-                    Signifies the date when the insurance policy was officially
-                    issued.
+                    Signifies the date when the insurance policy was officially issued.
                   </template>
                 </x-tooltip>
               </dt>
@@ -707,8 +862,7 @@ const submitToCustomer = () => {
                 <x-tooltip position="left">
                   <span>PRICE (VAT APPLICABLE)</span>
                   <template #tooltip>
-                    Signifies the date when the insurance policy was officially
-                    issued.
+                    Signifies the date when the insurance policy was officially issued.
                   </template>
                 </x-tooltip>
               </dt>
@@ -795,8 +949,8 @@ const submitToCustomer = () => {
                   <x-tooltip position="left">
                     <span>INVOICE DESCRIPTION</span>
                     <template #tooltip>
-                      This field provides a brief description of the invoice, summarizing its content or purpose within
-                      the booking.
+                      This field provides a brief description of the invoice, summarizing
+                      its content or purpose within the booking.
                     </template>
                   </x-tooltip>
                 </dt>
@@ -819,8 +973,9 @@ const submitToCustomer = () => {
                   <x-tooltip position="left">
                     <span>TRANSACTION PAYMENT STATUS</span>
                     <template #tooltip>
-                      This status provides a real-time snapshot of the payment progress for each insurer tax invoice.
-                      Make sure to update these statuses regularly to maintain financial accuracy.
+                      This status provides a real-time snapshot of the payment progress
+                      for each insurer tax invoice. Make sure to update these statuses
+                      regularly to maintain financial accuracy.
                     </template>
                   </x-tooltip>
                 </dt>
@@ -834,13 +989,12 @@ const submitToCustomer = () => {
                   <x-tooltip position="left">
                     <span>SUB CLASS</span>
                     <template #tooltip>
-                      Identifies the specific coverage or insurance plan offered
-                      by the provider.
+                      Identifies the specific coverage or insurance plan offered by the
+                      provider.
                     </template>
                   </x-tooltip>
                 </dt>
-                <dd>
-                </dd>
+                <dd></dd>
               </div>
 
               <div class="grid sm:grid-cols-2">
@@ -848,13 +1002,20 @@ const submitToCustomer = () => {
                   <x-tooltip position="left">
                     <span>INSURER INVOICE DATE</span>
                     <template #tooltip>
-                      Signifies the date when the insurer's invoice within the booking was issued.
+                      Signifies the date when the insurer's invoice within the booking was
+                      issued.
                     </template>
                   </x-tooltip>
                 </dt>
                 <dd>
-                  <DatePicker v-model="bookingDetailsForm.invoice_date" name="issuance_date" :disabled="!state.isEdit"
-                              placeholder="Enter Insurer Invoice date" :rules="[isRequired]" size="xs" />
+                  <DatePicker
+                    v-model="bookingDetailsForm.invoice_date"
+                    name="issuance_date"
+                    :disabled="!state.isEdit"
+                    placeholder="Enter Insurer Invoice date"
+                    :rules="[isRequired]"
+                    size="xs"
+                  />
                   <!-- <span>{{ bookingDetailsForm.invoice_date }}</span> -->
                 </dd>
               </div>
@@ -863,9 +1024,7 @@ const submitToCustomer = () => {
                 <dt class="font-bold text-right mr-10">
                   <x-tooltip position="left">
                     <span>BROKER INVOICE NUMBER</span>
-                    <template #tooltip>
-                      Invoice number provided by the broker.
-                    </template>
+                    <template #tooltip> Invoice number provided by the broker. </template>
                   </x-tooltip>
                 </dt>
                 <dd>
@@ -878,15 +1037,21 @@ const submitToCustomer = () => {
                   <x-tooltip position="left">
                     <span>INSURER TAX INVOICE NUMBER</span>
                     <template #tooltip>
-                      Enter the unique tax invoice number provided by the insurer. It helps in proper identification and
-                      tracking of transactions.
+                      Enter the unique tax invoice number provided by the insurer. It
+                      helps in proper identification and tracking of transactions.
                     </template>
                   </x-tooltip>
                 </dt>
                 <dd>
-                  <x-input maxlength="60" v-model="bookingDetailsForm.insurer_tax_invoice_number" class="w-full"
-                           :disabled="!state.isEdit" placeholder="Enter insurer Tax Invoice Number" :rules="[isRequired]"
-                           size="xs" />
+                  <x-input
+                    maxlength="60"
+                    v-model="bookingDetailsForm.insurer_tax_invoice_number"
+                    class="w-full"
+                    :disabled="!state.isEdit"
+                    placeholder="Enter insurer Tax Invoice Number"
+                    :rules="[isRequired]"
+                    size="xs"
+                  />
                   <!-- <span>{{ bookingDetailsForm.insurer_tax_invoice_number }}</span> -->
                 </dd>
               </div>
@@ -896,8 +1061,8 @@ const submitToCustomer = () => {
                   <x-tooltip position="left">
                     <span>DISCOUNT</span>
                     <template #tooltip>
-                      If applicable, this field indicates the exact amount or percentage reduced from the original
-                      price.
+                      If applicable, this field indicates the exact amount or percentage
+                      reduced from the original price.
                     </template>
                   </x-tooltip>
                 </dt>
@@ -911,14 +1076,21 @@ const submitToCustomer = () => {
                   <x-tooltip position="left">
                     <span>INSURER COMMISSION INVOICE NUMBER</span>
                     <template #tooltip>
-                      Input the invoice number issued by the insurer for commission purposes. Double-check for accuracy.
+                      Input the invoice number issued by the insurer for commission
+                      purposes. Double-check for accuracy.
                     </template>
                   </x-tooltip>
                 </dt>
                 <dd>
-                  <x-input maxlength="60" v-model="bookingDetailsForm.insurer_commission_invoice_number" class="w-full"
-                           :disabled="!state.isEdit" placeholder="Enter Commission Tax Invoice No" :rules="[isRequired]"
-                           size="xs" />
+                  <x-input
+                    maxlength="60"
+                    v-model="bookingDetailsForm.insurer_commission_invoice_number"
+                    class="w-full"
+                    :disabled="!state.isEdit"
+                    placeholder="Enter Commission Tax Invoice No"
+                    :rules="[isRequired]"
+                    size="xs"
+                  />
                   <!--<span>{{ bookingDetailsForm.insurer_commission_invoice_number }}</span>-->
                 </dd>
               </div>
@@ -937,21 +1109,28 @@ const submitToCustomer = () => {
                 </dd>
               </div>
 
-
               <div class="grid sm:grid-cols-2">
                 <dt class="font-bold text-right mr-10">
                   <x-tooltip position="left">
                     <span>PRICE (VAT APPLICABLE)</span>
                     <template #tooltip>
-                      Price as per the insurer's tax invoice that VAT is applicable. Please enter the price without
-                      including Value Added Tax (VAT). VAT will be calculated separately.
+                      Price as per the insurer's tax invoice that VAT is applicable.
+                      Please enter the price without including Value Added Tax (VAT). VAT
+                      will be calculated separately.
                     </template>
                   </x-tooltip>
                 </dt>
                 <dd>
-                  <x-input type="number" v-model="bookingDetailsForm.price_vat_applicable" @change="calculateCommission"
-                           class="w-full" :disabled="!state.isEdit" placeholder="Enter Price" :rules="[isRequired]"
-                           size="xs" />
+                  <x-input
+                    type="number"
+                    v-model="bookingDetailsForm.price_vat_applicable"
+                    @change="calculateCommission"
+                    class="w-full"
+                    :disabled="!state.isEdit"
+                    placeholder="Enter Price"
+                    :rules="[isRequired]"
+                    size="xs"
+                  />
                   <!-- <span>{{ bookingDetailsForm.price_vat_applicable }}</span> -->
                 </dd>
               </div>
@@ -975,7 +1154,8 @@ const submitToCustomer = () => {
                   <x-tooltip position="left">
                     <span>PRICE (VAT NOT APPLICABLE)</span>
                     <template #tooltip>
-                      Price that VAT is not applicable. Remember, VAT is exempt for Life Insurance policies.
+                      Price that VAT is not applicable. Remember, VAT is exempt for Life
+                      Insurance policies.
                     </template>
                   </x-tooltip>
                 </dt>
@@ -989,8 +1169,8 @@ const submitToCustomer = () => {
                   <x-tooltip position="left">
                     <span>TOTAL COMMISSION</span>
                     <template #tooltip>
-                      Display the total commission amount including VAT for this transaction. Ensure it matches the
-                      calculations.
+                      Display the total commission amount including VAT for this
+                      transaction. Ensure it matches the calculations.
                     </template>
                   </x-tooltip>
                 </dt>
@@ -1004,15 +1184,23 @@ const submitToCustomer = () => {
                   <x-tooltip position="left">
                     <span>COMMISSION VAT APPLICABLE</span>
                     <template #tooltip>
-                      Commission amount as per the tax invoice raised by buyer that VAT is applicable. Enter commission
-                      amount without including Value Added Tax (VAT). VAT will be calculated separately.
+                      Commission amount as per the tax invoice raised by buyer that VAT is
+                      applicable. Enter commission amount without including Value Added
+                      Tax (VAT). VAT will be calculated separately.
                     </template>
                   </x-tooltip>
                 </dt>
                 <dd>
-                  <x-input type="number" v-model="bookingDetailsForm.commission_vat_applicable"
-                           @change="calculateCommission" class="w-full" :disabled="!state.isEdit"
-                           placeholder="Enter Commission Amount" :rules="[isRequired]" size="xs" />
+                  <x-input
+                    type="number"
+                    v-model="bookingDetailsForm.commission_vat_applicable"
+                    @change="calculateCommission"
+                    class="w-full"
+                    :disabled="!state.isEdit"
+                    placeholder="Enter Commission Amount"
+                    :rules="[isRequired]"
+                    size="xs"
+                  />
                   <!-- <span>{{ bookingDetailsForm.commission_vat_applicable }}</span> -->
                 </dd>
               </div>
@@ -1022,8 +1210,8 @@ const submitToCustomer = () => {
                   <x-tooltip position="left">
                     <span>TOTAL VAT AMOUNT</span>
                     <template #tooltip>
-                      Display the total Value Added Tax (VAT) amount for this transaction. Verify this amount before
-                      submission.
+                      Display the total Value Added Tax (VAT) amount for this transaction.
+                      Verify this amount before submission.
                     </template>
                   </x-tooltip>
                 </dt>
@@ -1037,7 +1225,8 @@ const submitToCustomer = () => {
                   <x-tooltip position="left">
                     <span>COMMISSION (VAT NOT APPLICABLE)</span>
                     <template #tooltip>
-                      Commission amount as per the tax invoice raised by buyer that VAT is not applicable.
+                      Commission amount as per the tax invoice raised by buyer that VAT is
+                      not applicable.
                     </template>
                   </x-tooltip>
                 </dt>
@@ -1051,8 +1240,8 @@ const submitToCustomer = () => {
                   <x-tooltip position="left">
                     <span>TOTAL PRICE</span>
                     <template #tooltip>
-                      Display the total price including all charges and VAT as per tax invoice. Make sure it aligns with
-                      the final transaction amount.
+                      Display the total price including all charges and VAT as per tax
+                      invoice. Make sure it aligns with the final transaction amount.
                     </template>
                   </x-tooltip>
                 </dt>
@@ -1065,37 +1254,33 @@ const submitToCustomer = () => {
           <x-divider class="my-4 mt-10" />
           <div class="flex justify-end gap-2">
             <template v-if="!state.isEdit">
+              <x-button size="sm" @click="checkSectionTwoEdit"> Edit </x-button>
               <x-button
-                  size="sm"
-                  @click="checkSectionTwoEdit"
-              >
-                Edit
-              </x-button>
-              <x-button
-                  size="sm"
-                  color="orange"
-                  v-if="sendUpdateButton"
-                  @click="sendUpdateValidation"
+                size="sm"
+                color="orange"
+                v-if="sendUpdateButton"
+                :loading="loader.sendUpdateSectionBtn"
+                @click="sendUpdateValidation"
               >
                 {{ props.updateBtn }}
               </x-button>
             </template>
             <template v-else>
               <x-button
-                  size="sm"
-                  color="orange"
-                  @click="state.isEdit = false"
-                  :loading="bookingDetailsForm.processing"
-                  :disabled="bookingDetailsForm.processing"
+                size="sm"
+                color="orange"
+                @click="state.isEdit = false"
+                :loading="bookingDetailsForm.processing"
+                :disabled="bookingDetailsForm.processing"
               >
                 Cancel
               </x-button>
               <x-button
-                  size="sm"
-                  color="#0CA789"
-                  type="submit"
-                  :loading="bookingDetailsForm.processing"
-                  :disabled="bookingDetailsForm.processing"
+                size="sm"
+                color="#0CA789"
+                type="submit"
+                :loading="bookingDetailsForm.processing"
+                :disabled="bookingDetailsForm.processing"
               >
                 Update
               </x-button>
@@ -1105,39 +1290,90 @@ const submitToCustomer = () => {
       </template>
     </Collapsible>
 
-      <x-modal v-model="modals.sendConfirm" show-close backdrop>
-        <template #header> Send Policy </template>
-        <span v-if="isStating" class="text-red-500 text-sm font-semibold">{{ isStating }}</span>
-        <x-checkbox
-          v-model="modals.isConfirmed"
-          label="I confirm and attest that all information recorded is correct. I confirm I am in compliance with the COC."
-        />
-        <template #actions>
-          <div class="text-right space-x-4">
-            <x-button
-              size="sm"
-              ghost
-              :disabled="isLoading"
-              @click.prevent="modals.sendConfirm = false"
-            >
-              Cancel
-            </x-button>
-
-            <x-button
-              size="sm"
-              color="error"
-              @click.prevent="submitToCustomer"
-              :loading="isLoading"
-            >
-              Confirm
-            </x-button>
-          </div>
-          <div class="text-center space-x-4"
-            v-if="isNotConfirmed"
+    <x-modal v-model="modals.sendConfirm" show-close backdrop>
+      <template #header> Send Policy </template>
+      <span v-if="isStating" class="text-red-500 text-sm font-semibold">{{
+        isStating
+      }}</span>
+      <x-checkbox
+        v-model="modals.isConfirmed"
+        label="I confirm and attest that all information recorded is correct. I confirm I am in compliance with the COC."
+      />
+      <template #actions>
+        <div class="text-right space-x-4">
+          <x-button
+            size="sm"
+            ghost
+            :disabled="isLoading"
+            @click.prevent="modals.sendConfirm = false"
           >
-            <span class="text-red-500">Please select the checkbox to proceed.</span>
-          </div>
-        </template>
-      </x-modal>
+            Cancel
+          </x-button>
+
+          <x-button
+            size="sm"
+            color="error"
+            @click.prevent="submitToCustomer"
+            :loading="isLoading"
+          >
+            Confirm
+          </x-button>
+        </div>
+        <div class="text-center space-x-4" v-if="isNotConfirmed">
+          <span class="text-red-500">Please select the checkbox to proceed.</span>
+        </div>
+      </template>
+    </x-modal>
+
+    <x-modal v-model="modals.paymentConfirmation" backdrop>
+      <template #header>
+        <div class="flex justify-between gap-4 items-center">
+          <h3 class="font-semibold text-sm">Arey you sure you want to continue?</h3>
+        </div>
+      </template>
+      <template #actions>
+        <div class="text-center space-x-4 mb-5">
+          <span class="font-semibold">{{ paymentConfirmationMessage.status }}</span>
+          <p class="text-sm">{{ paymentConfirmationMessage.message }}</p>
+        </div>
+        <div class="text-center space-x-4">
+          <x-button size="sm" @click.prevent="attestRecord()"> Continue </x-button>
+
+          <x-button size="sm" color="orange" @click.prevent="confirmationModalClose()">
+            Go Back
+          </x-button>
+        </div>
+      </template>
+    </x-modal>
+
+    <x-modal v-model="modals.attestRecord" show-close backdrop>
+      <template #header>
+        <div class="flex justify-between gap-4 items-center">
+          <h3 class="font-semibold text-sm">-</h3>
+        </div>
+      </template>
+      <template #actions>
+        <div class="text-center space-x-4 mb-5">
+          <p class="text-sm">
+            I confirm and attest that all information recorded is correct.
+          </p>
+          <p class="text-sm">I confirm I am in compliance with the COC.</p>
+        </div>
+        <div class="text-center space-x-4">
+          <x-button size="sm" @click.prevent="confirmationModalClose()">
+            Cancel
+          </x-button>
+
+          <x-button
+            size="sm"
+            color="orange"
+            :loading="loader.sendUpdate"
+            @click.prevent="sendUpdate()"
+          >
+            Confirm
+          </x-button>
+        </div>
+      </template>
+    </x-modal>
   </div>
 </template>

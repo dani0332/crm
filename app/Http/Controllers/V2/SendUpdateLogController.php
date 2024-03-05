@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\V2;
 
 use App\Enums\DocumentTypeCode;
+use App\Enums\PaymentStatusEnum;
 use App\Enums\quoteBusinessTypeCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
@@ -167,6 +168,7 @@ class SendUpdateLogController extends Controller
             'updateBtn' => $this->sendUpdateLogService->getUpdateButtonStatus($sendUpdateLog, $quoteType),
             'paymentInvoices' => $paymentInvoices ?? [],
             'uploadedDocuments' => $uploadedDocuments,
+            'paymentStatusEnum' => PaymentStatusEnum::asArray(),
         ]);
     }
 
@@ -281,7 +283,7 @@ class SendUpdateLogController extends Controller
         return response()->json($reversalEntries);
     }
 
-    public function sendUpdateValidation(SendUpdateCustomerRequest $sendUpdateCustomerRequest)
+    public function sendUpdateCustomerValidation(SendUpdateCustomerRequest $sendUpdateCustomerRequest)
     {
         if ($sendUpdateCustomerRequest->validated()) {
             $message = $this->sendUpdateLogService->getSendToCustomerValidation($sendUpdateCustomerRequest->sendUpdateId);
@@ -339,6 +341,20 @@ class SendUpdateLogController extends Controller
 
     public function sendUpdate(SendUpdateRequest $sendUpdateRequest)
     {
-        dd($sendUpdateRequest->toArray());
+        $quote = $this->getModelObject($sendUpdateRequest->quoteType)::with('payments')->find($sendUpdateRequest->quoteRefId);
+
+        if (!isset($sendUpdateRequest->paymentValidated)) {
+            $paymentStatus = $quote?->payments->value('payment_status_id') ?? null;
+
+            // Add insuficient Payment Validations here
+            $insuficientPaymentCheck = true;
+
+            return response()->json([
+                'insuficientPaymentCheck' => $insuficientPaymentCheck,
+                'parentPaymentStatus' => $paymentStatus
+            ], 200);
+        }
+
+        return response()->json(['message' => 'Update booked'], 200);
     }
 }

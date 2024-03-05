@@ -60,7 +60,6 @@ class SendUpdateRequest extends FormRequest
 
                                 $_error = 'policy handbook and myAlfred offers';
                                 $requiredDocuments = [
-                                    DocumentTypeCode::SEND_UPDATE_MYALFRED_OFFERS, 
                                     DocumentTypeCode::SEND_UPDATE_POLICY_HANDBOOK,
                                 ];
 
@@ -83,10 +82,6 @@ class SendUpdateRequest extends FormRequest
                             case QuoteTypeId::Yacht:
                             case QuoteTypeId::Business:
                             case QuoteTypeId::Life:
-
-                                if (!in_array(DocumentTypeCode::SEND_UPDATE_MYALFRED_OFFERS, $uploadedDocuments)) {
-                                    $validator->errors()->add('error', 'Please upload the myAlfred offers');
-                                }
 
                                 if ($sendUpdateLog->quote_type_id == QuoteTypeId::Yacht){
                                     $requiredDocuments = [
@@ -138,7 +133,7 @@ class SendUpdateRequest extends FormRequest
             ])) {
 
                 // Check all booking details have been correctly filled
-                if(count($sendUpdateLog->details) !== 0) {
+                if(count($sendUpdateLog->details) == 0) {
                     $validator->errors()->add('error', 'Please update the missing booking details');
                 }
 

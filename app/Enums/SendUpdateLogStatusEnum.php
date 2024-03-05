@@ -44,5 +44,5 @@ final class SendUpdateLogStatusEnum extends Enum
     // send update log button. 
     const SUC = 'Send Update to Customer'; // send update to customer. 
     const SU = 'Send Update'; // send update. 
-    const PPE = 'PPE'; // Need to confirm if alredy created otherwise should add this, Policy Period Extension
+    const PPE = 'PPE'; // Policy Period Extension
 }
