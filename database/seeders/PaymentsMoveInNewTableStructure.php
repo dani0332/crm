@@ -33,8 +33,8 @@ class PaymentsMoveInNewTableStructure extends Seeder
             echo $modelType.'--'.$quoteModelObject."\n";
             if ($quoteModelObject == '') {
                 Log::info('MigratePaymentSeeder::Model not found for: '.$modelType);
-
                 continue;
+
             }
             $modelObjects = $quoteModelObject::where('created_at', '>', $thirtyDaysOldDate)->get();
             //echo $modelObjects->count(); exit;

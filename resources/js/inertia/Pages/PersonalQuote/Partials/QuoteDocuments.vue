@@ -6,6 +6,11 @@ defineProps({
   quoteDocuments: Object,
   documentTypes: Object,
   storageUrl: String,
+  expanded: {
+    type: Boolean,
+    required: false,
+    default: true
+  }
 });
 
 const page = usePage();
@@ -122,19 +127,24 @@ const uploadFile = (doc, filesWithInfo) => {
 
 <template>
   <div class="p-4 rounded shadow mb-6 bg-white">
-    <div class="flex justify-between items-center mb-4">
-      <h3 class="font-semibold text-primary-800 text-lg">
-        Documents
-        <x-tag size="sm">{{ quoteDocuments.length || 0 }}</x-tag>
-      </h3>
-      <div class="flex gap-2">
-        <x-button @click.prevent="modals.doc = true" size="sm" color="orange">
-          Upload Documents
-        </x-button>
-      </div>
-    </div>
-
-    <DataTable
+    <Collapsible :expanded="expanded">
+      <template #header>
+        <div class="flex justify-between items-center">
+          <h3 class="font-semibold text-primary-800 text-lg">
+            Documents
+            <x-tag size="sm">{{ quoteDocuments.length || 0 }}</x-tag>
+          </h3>
+        </div>
+      </template>
+      <template #body>
+        <x-divider class="my-4" />
+        <div class="flex gap-2 mb-4 justify-end">
+          <x-button @click.prevent="modals.doc = true" size="sm" color="orange">
+            Upload Documents
+          </x-button>
+        </div>
+        
+        <DataTable
       table-class-name="compact"
       :headers="quoteDocumentsTable.columns"
       :items="quoteDocuments || []"
@@ -164,7 +174,9 @@ const uploadFile = (doc, filesWithInfo) => {
           </x-button>
         </div>
       </template>
-    </DataTable>
+        </DataTable>
+      </template>
+    </Collapsible>
 
     <x-modal v-model="modals.doc" size="xl" show-close backdrop>
       <template #header> Upload Documents </template>
@@ -175,7 +187,7 @@ const uploadFile = (doc, filesWithInfo) => {
         v-if="Object.keys(docForm.errors).length"
       >
         <ul>
-          <li v-for="error in docForm?.errors">{{ error }}</li>
+          <li v-for="error in docForm?.errors" :key="error">{{ error }}</li>
         </ul>
       </x-alert>
 

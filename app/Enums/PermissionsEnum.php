@@ -238,10 +238,14 @@ final class PermissionsEnum extends Enum
     public const RENEWAL_BATCHES_EDIT = 'renewal-batches-edit';
     public const RENEWAL_BATCH_REPORT = 'renewal-batch-report';
     public const PAUSE_AUTO_FOLLOWUPS = 'pause-auto-followups';
+    public const BOOK_POLICY_EDIT = 'book-policy-edit';
     const EmbeddedProductView = 'embedded-product-view';
+    const SEND_UPDATE_CREATE = 'send-update-create';
     public const EXPORT_PLAN_DETAIL = 'export-plan-detail';
     public const EXPORT_LEADS_DETAIL_WITH_EMAIL_MOBILE = 'export-leads-detail-with-email-mobile';
     public const EXPORT_MAKES_MODELS = 'export-makes-models';
+    public const VIEW_INSLY_BOOK_POLICY = 'view-insly-book-policy';
+    public const SEND_INSLY_BOOK_POLICY = 'send-insly-book-policy';
     public const HEALTH_QUOTES_MANAGER_ACCESS = 'health-quotes-manager-access';
     public const HEALTH_QUOTES_ACCESS = 'health-quotes-access';
 }

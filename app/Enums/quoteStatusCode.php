@@ -36,4 +36,6 @@ final class quoteStatusCode extends Enum
     const QualificationPending = 'Qualification Pending';
     const CAR_SOLD = 'Car Sold';
     const UNCONTACTABLE = 'Uncontactable';
+    const PolicyBooked = 'PolicyBooked';
+    const PolicySentToCustomer = 'PolicySentToCustomer';
 }
