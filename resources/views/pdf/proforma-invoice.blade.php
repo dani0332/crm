@@ -362,18 +362,20 @@
 <body>
 
 @php
+    use App\Enums\PaymentCollectionTypeEnum;
     use App\Enums\PaymentMethodsEnum;
+    use App\Enums\PaymentStatusEnum;
 
     $websitURL = config('constants.AFIA_WEBSITE_DOMAIN');
 
     $quoteType = $quote->quoteType;
     $insuranceProvider = $quote->insuranceProvider;
 
-    $paidPayments = $quote->payments()->where('payment_status_id', \App\Enums\PaymentStatusEnum::PAID)->get();
+    $paidPayments = $quote->payments()->where('payment_status_id', PaymentStatusEnum::PAID)->get();
 
     $advisor = $quote->advisor;
 
-    $proformaPaymentRequest = $quote->payments()->where('payment_methods_code', \App\Enums\PaymentMethodsEnum::ProformaPaymentRequest)->first();
+    $proformaPaymentRequest = $quote->payments()->where('payment_methods_code', PaymentMethodsEnum::ProformaPaymentRequest)->first();
 
     $invoiceDate = Carbon\Carbon::parse($proformaPaymentRequest->created_at)->format('d-m-Y');
 
@@ -401,28 +403,28 @@
             </tr>
             <tr>
                 <th></th>
-                <td class="payment-heading"> VAT </td>
+                <td class="payment-heading"> VAT</td>
                 <td class="amount"> {{ $quote->vat }} </td>
             </tr>
             @if($proformaPaymentRequest->discount_value)
-            <tr>
-                <th></th>
-                <td class="payment-heading">
-                    TOTAL PRICE (AED)
-                </td>
-                <td class="amount">
-                    {{ $quote->price_with_vat }}
-                </td>
-            </tr>
-            <tr>
-                <th></th>
-                <td class="payment-heading">
-                    Discount
-                </td>
-                <td class="amount">
-                    {{ $proformaPaymentRequest->discount_value }}
-                </td>
-            </tr>
+                <tr>
+                    <th></th>
+                    <td class="payment-heading">
+                        TOTAL PRICE (AED)
+                    </td>
+                    <td class="amount">
+                        {{ $quote->price_with_vat }}
+                    </td>
+                </tr>
+                <tr>
+                    <th></th>
+                    <td class="payment-heading">
+                        Discount
+                    </td>
+                    <td class="amount">
+                        {{ $proformaPaymentRequest->discount_value }}
+                    </td>
+                </tr>
             @endif
 
             </tbody>
@@ -439,7 +441,7 @@
             </tfoot>
         </table>
     </div>
-    @if($proformaPaymentRequest->collection_type ==  \App\Enums\PaymentCollectionTypeEnum::BROKER)
+    @if($proformaPaymentRequest->collection_type ==  PaymentCollectionTypeEnum::BROKER)
         <table class="table-fixed no-border tbl-bank-details">
             <tbody>
             <tr class="border-top">
@@ -473,14 +475,17 @@
                     Brokerage Services LLC</h4></td>
         </tr>
         <tr>
-            <td colspan="2" class="text-center"><h6>27th Floor, Control Tower, Motor City,Dubai, United Arab Emirates, P.O Box 26423 | Tel: <a class="text-xxs" href="tel:+800253733">800 ALFRED (800-253-733)</a> | <a class="text-xxs" href="https://insurancemarket.ae">www.insurancemarket.ae</a></h6></td>
+            <td colspan="2" class="text-center"><h6>27th Floor, Control Tower, Motor City,Dubai, United Arab Emirates,
+                    P.O Box 26423 | Tel: <a class="text-xxs" href="tel:+800253733">800 ALFRED (800-253-733)</a> | <a
+                        class="text-xxs" href="https://insurancemarket.ae">www.insurancemarket.ae</a></h6></td>
         </tr>
         <tr>
             <td class="text-left">UAE Central Bank Registration number 85</td>
             <td class="text-right">Insurance Advisor: {{ $advisor?->name }}</td>
             <td class="text-right advisor-image" rowspan="4">
                 @if($advisor?->profile_photo_path)
-                    <img class="im-logo" src="{{'data:image/png;base64,'.base64_encode(file_get_contents($advisor?->profile_photo_path))}}" />
+                    <img class="im-logo"
+                         src="{{'data:image/png;base64,'.base64_encode(file_get_contents($advisor?->profile_photo_path))}}" />
                 @endif
 
             </td>
@@ -492,14 +497,19 @@
         </tr>
         <tr>
             <td class="text-left">Department of Economy & Tourism in Dubai Trade License number 238534</td>
-            <td class="text-right">Mobile Number adas: <a href="tel:{{ $advisor?->mobile_no }}">{{ $advisor?->mobile_no }}</a></td>
+            <td class="text-right">Mobile Number adas: <a
+                    href="tel:{{ $advisor?->mobile_no }}">{{ $advisor?->mobile_no }}</a></td>
         </tr>
         <tr>
-            <td class="text-left">Holder of Health Insurance Intermediary Permit ID Number BRK-00003 from Dubai Health Authority </td>
+            <td class="text-left">Holder of Health Insurance Intermediary Permit ID Number BRK-00003 from Dubai Health
+                Authority
+            </td>
             <td class="text-right">Direct Line: <a href="tel:048185663">048185663</a></td>
         </tr>
         <tr>
-            <td class="text-left">Registered member of the Insurance Business Group under the Dubai Chamber of Commerce and Industry.</td>
+            <td class="text-left">Registered member of the Insurance Business Group under the Dubai Chamber of Commerce
+                and Industry.
+            </td>
         </tr>
     </table>
 </footer>
@@ -588,7 +598,7 @@
                     {{ $invoiceDate }}
                 </td>
                 <td>
-                   {{ $quoteType?->text }} <br /> {{ $insuranceProvider?->text }}
+                    {{ $quoteType?->text }} <br /> {{ $insuranceProvider?->text }}
                 </td>
                 <td>
                     {{ $quote->price_without_vat }}
