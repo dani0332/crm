@@ -323,6 +323,7 @@ function resetTravelInfo(value) {
             :rules="[isRequired]"
             class="w-full"
             maxLength="20"
+            :error="quoteForm.errors.first_name"
           />
         </x-field>
         <x-field label="Last Name" required>
@@ -331,6 +332,7 @@ function resetTravelInfo(value) {
             :rules="[isRequired]"
             class="w-full"
             maxLength="20"
+            :error="quoteForm.errors.last_name"
           />
         </x-field>
 

@@ -39,10 +39,8 @@ class StoreTravelRequest extends FormRequest
         foreach ($requireProperties as $key => $value) {
             $rule = ['required'];
             if ($key == 'first_name' || $key == 'last_name') {
-                $rule[] = 'max:255';
-            } else {
-                $rule[] = 'max:1000';
-            }
+                $rule[] = 'between:1,20';
+            } 
 
             if ($key == 'email') {
                 $rule[] = 'email:rfc,dns';

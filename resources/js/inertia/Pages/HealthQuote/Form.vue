@@ -122,7 +122,7 @@ function onSubmit(isValid) {
             :rules="[isRequired]"
             class="w-full"
             maxLength="20"
-            :error="quoteForm.errors.first_name"
+            :error="quoteForm.errors.last_name"
           />
         </x-field>
 
