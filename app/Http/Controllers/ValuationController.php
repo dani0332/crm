@@ -2,8 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use DB;
+use App\Facades\Ken;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class ValuationController extends Controller
 {
@@ -17,14 +18,22 @@ class ValuationController extends Controller
         $this->middleware('permission:vehicle-valuation-list', ['only' => ['index', 'store']]);
     }
 
-    public function calculateValuation(Request $request)
+    public function index()
     {
         $carMakes = DB::table('car_make')->where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
 
         return inertia('Valuation/Car', [
             'carMakes' => $carMakes,
-            'kenPath' => config('constants.KEN_API_ENDPOINT'),
         ]);
+    }
+
+    public function calculateValuation(Request $request)
+    {
+        if (! isset($request->carModelDetailId) && ! isset($request->yearOfManufacture)) {
+            return response()->json(['error' => 'Please select car make, model and year of manufacture'], 422);
+        }
+
+        return Ken::request('/get-vehicle-value', 'post', ['carModelDetailId' => $request->carModelDetailId, 'yearOfManufacture' => $request->yearOfManufacture]);
     }
 
     public function carModelBasedOnCarMake(Request $request)
