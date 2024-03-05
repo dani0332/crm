@@ -537,7 +537,6 @@ const memberDeleteConfirmed = () => {
       },
       onFinish: () => {
         modals.memberConfirm = false;
-        membersDetailsUpdated.value = true;
       },
     },
   );
