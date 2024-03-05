@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Enums\ApplicationStorageEnums;
 use App\Models\ApplicationStorage;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
@@ -97,6 +98,72 @@ class SendPolicyApplicationStorageSeeder extends Seeder
             DB::table('application_storage')->insert([
                 'key_name' => 'TM_CUSTOMER_SUPPORT_NUMBER',
                 'value' => '800 4900',
+                'is_active' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+
+        $carBookPolicy = ApplicationStorage::where('key_name', ApplicationStorageEnums::CAR_BOOK_POLICY_TEMPLATE)->first();
+        if (! $carBookPolicy) {
+            DB::table('application_storage')->insert([
+                'key_name' => ApplicationStorageEnums::CAR_BOOK_POLICY_TEMPLATE,
+                'value' => '591',
+                'is_active' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+
+        $travelBookPolicy = ApplicationStorage::where('key_name', ApplicationStorageEnums::TRAVEL_BOOK_POLICY_TEMPLATE)->first();
+        if (! $travelBookPolicy) {
+            DB::table('application_storage')->insert([
+                'key_name' => ApplicationStorageEnums::TRAVEL_BOOK_POLICY_TEMPLATE,
+                'value' => '612',
+                'is_active' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+
+        $healthBookPolicy = ApplicationStorage::where('key_name', ApplicationStorageEnums::HEALTH_BOOK_POLICY_TEMPLATE)->first();
+        if (! $healthBookPolicy) {
+            DB::table('application_storage')->insert([
+                'key_name' => ApplicationStorageEnums::HEALTH_BOOK_POLICY_TEMPLATE,
+                'value' => '593',
+                'is_active' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+
+        $lifeBookPolicy = ApplicationStorage::where('key_name', ApplicationStorageEnums::LIFE_BOOK_POLICY_TEMPLATE)->first();
+        if (! $lifeBookPolicy) {
+            DB::table('application_storage')->insert([
+                'key_name' => ApplicationStorageEnums::LIFE_BOOK_POLICY_TEMPLATE,
+                'value' => '617',
+                'is_active' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+
+        $homeBookPolicy = ApplicationStorage::where('key_name', ApplicationStorageEnums::HOME_BOOK_POLICY_TEMPLATE)->first();
+        if (! $homeBookPolicy) {
+            DB::table('application_storage')->insert([
+                'key_name' => ApplicationStorageEnums::HOME_BOOK_POLICY_TEMPLATE,
+                'value' => '616',
+                'is_active' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+
+        $petBookPolicy = ApplicationStorage::where('key_name', ApplicationStorageEnums::PET_BOOK_POLICY_TEMPLATE)->first();
+        if (! $petBookPolicy) {
+            DB::table('application_storage')->insert([
+                'key_name' => ApplicationStorageEnums::PET_BOOK_POLICY_TEMPLATE,
+                'value' => '615',
                 'is_active' => 1,
                 'created_at' => now(),
                 'updated_at' => now(),
