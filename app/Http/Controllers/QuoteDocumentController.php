@@ -105,6 +105,7 @@ class QuoteDocumentController extends Controller
             return false;
         }
 
+
         $this->quoteDocumentService->uploadQuoteDocument($request->file('file'), $request->all(), $quote);
 
         // update quote status - production process
