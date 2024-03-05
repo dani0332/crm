@@ -38,7 +38,6 @@ defineProps({
   isBetaUser: Boolean,
   payments: Array,
   quoteRequest: Object,
-  permissions: Object,
   paymentMethods: Object,
   insuranceProviders: Array,
   embeddedProducts: Array,
@@ -1546,7 +1545,8 @@ const handleSelectionChange = (tableType, selectedItems) => {
               </dt>
             </template>
           </div>
-        </dl>
+        </template>
+      </Collapsible>
       </div>
     </div>
 
@@ -1644,203 +1644,10 @@ const handleSelectionChange = (tableType, selectedItems) => {
                 />
               </dd>
             </div>
+          </dl>
+        </div>
+      </x-form>
 
-          <x-form @submit="updateProfileDetails" :auto-focus="false">
-            <div class="text-sm">
-              <dl
-                v-if="
-                  quote.customer_type === page.props.customerTypeEnum.Individual
-                "
-                class="grid md:grid-cols-2 gap-x-6 gap-y-4"
-              >
-                <div class="grid sm:grid-cols-2">
-                  <dt class="font-medium">FIRST NAME</dt>
-                  <dd>{{ quote.first_name }}</dd>
-                </div>
-                <div class="grid sm:grid-cols-2">
-                  <dt class="font-medium">LAST NAME</dt>
-                  <dd>{{ quote.last_name }}</dd>
-                </div>
-                <div class="grid sm:grid-cols-2">
-                  <dt class="font-medium">INSURED FIRST NAME</dt>
-                  <dd>
-                    <x-input
-                      v-model="customerProfileForm.insured_first_name"
-                      :rules="[isRequired]"
-                      placeholder="INSURED FIRST NAME"
-                      class="w-full"
-                      :disabled="!isProfileUpdateAllow"
-                    />
-                  </dd>
-                </div>
-                <div class="grid sm:grid-cols-2">
-                  <dt class="font-medium">INSURED LAST NAME</dt>
-                  <dd>
-                    <x-input
-                      v-model="customerProfileForm.insured_last_name"
-                      :rules="[isRequired]"
-                      placeholder="INSURED LAST NAME"
-                      class="w-full"
-                      :disabled="!isProfileUpdateAllow"
-                    />
-                  </dd>
-                </div>
-                <div class="grid sm:grid-cols-2">
-                  <dt class="font-medium">MOBILE NUMBER</dt>
-                  <dd>{{ quote.mobile_no }}</dd>
-                </div>
-                <div class="grid sm:grid-cols-2">
-                  <dt class="font-medium">EMAIL</dt>
-                  <dd>{{ quote.email }}</dd>
-                </div>
-                <div class="grid sm:grid-cols-2">
-                  <dt class="font-medium">NATIONALITY</dt>
-                  <dd>{{ quote.nationality_id_text }}</dd>
-                </div>
-                <div class="grid sm:grid-cols-2">
-                  <dt class="font-medium">DATE OF BIRTH</dt>
-                  <dd>{{ quote.dob }}</dd>
-                </div>
-                <div class="grid sm:grid-cols-2">
-                  <dt class="font-medium">EMIRATES ID NUMBER</dt>
-                  <dd>
-                    <x-input
-                      v-model="customerProfileForm.emirates_id_number"
-                      :rules="[isRequired]"
-                      placeholder="EMIRATES ID NUMBER"
-                      class="w-full"
-                      :disabled="!isProfileUpdateAllow"
-                    />
-                  </dd>
-                </div>
-                <div class="grid sm:grid-cols-2">
-                  <dt class="font-medium">EMIRATES ID EXPIRY DATE</dt>
-                  <dd>
-                    <DatePicker
-                      v-model="customerProfileForm.emirates_id_expiry_date"
-                      :rules="[isRequired]"
-                      placeholder="EMIRATES ID EXPIRY DATE"
-                      :disabled="!isProfileUpdateAllow"
-                      :min-date="new Date()"
-                    />
-                  </dd>
-                </div>
-
-                <RiskRatingScoreDetails :quote="quote" :modelType="'Travel'" />
-              </dl>
-              <dl
-                v-if="
-                  quote.customer_type === page.props.customerTypeEnum.Entity
-                "
-                class="grid md:grid-cols-2 gap-x-6 gap-y-4"
-              >
-                <div class="grid sm:grid-cols-2">
-                  <dt class="font-medium">FIRST NAME</dt>
-                  <dd>{{ quote.first_name }}</dd>
-                </div>
-                <div class="grid sm:grid-cols-2">
-                  <dt class="font-medium">LAST NAME</dt>
-                  <dd>{{ quote.last_name }}</dd>
-                </div>
-                <div class="grid sm:grid-cols-2">
-                  <dt class="font-medium">MOBILE NUMBER</dt>
-                  <dd>{{ quote.mobile_no }}</dd>
-                </div>
-                <div class="grid sm:grid-cols-2">
-                  <dt class="font-medium">EMAIL</dt>
-                  <dd>{{ quote.email }}</dd>
-                </div>
-                <div class="grid sm:grid-cols-2">
-                  <dt class="font-medium">COMPANY NAME</dt>
-                  <dd>{{ customerProfileForm.company_name }}</dd>
-                </div>
-                <div class="grid sm:grid-cols-2">
-                  <dt class="font-medium">TRADE LICENSE NO</dt>
-                  <dd>
-                    <x-input
-                      v-model="customerProfileForm.trade_license_no"
-                      placeholder="TRADE LICENSE NO"
-                      type="text"
-                      class="w-full"
-                    />
-                    <x-button
-                      @click.prevent="searchByTradeLicense"
-                      size="xs"
-                      color="primary"
-                    >
-                      Search
-                    </x-button>
-                  </dd>
-                </div>
-                <div class="grid sm:grid-cols-2">
-                  <dt class="font-medium">EMIRATES OF REGISTRATION</dt>
-                  <dd>
-                    <ComboBox
-                      v-model="customerProfileForm.emirate_of_registration_id"
-                      :single="true"
-                      placeholder="SELECT EMIRATES OF REGISTRATION"
-                      :options="emiratesOptions"
-                      class="w-full"
-                    />
-                  </dd>
-                </div>
-                <div class="grid sm:grid-cols-2">
-                  <dt class="font-medium">COMPANY ADDRESS</dt>
-                  <dd>
-                    <x-input
-                      v-model="customerProfileForm.company_address"
-                      placeholder="COMPANY ADDRESS"
-                      type="text"
-                      class="w-full"
-                    />
-                  </dd>
-                </div>
-                <div class="grid sm:grid-cols-2">
-                  <dt class="font-medium">INDUSTRY TYPE</dt>
-                  <dd>
-                    <ComboBox
-                      :single="true"
-                      v-model="customerProfileForm.industry_type_code"
-                      placeholder="SELECT INDUSTRY TYPE"
-                      :options="industryTypeOptions"
-                      class="w-full"
-                    />
-                  </dd>
-                </div>
-                <div class="grid sm:grid-cols-2">
-                  <dt class="font-medium">ENTITY TYPE</dt>
-                  <dd>
-                    <ComboBox
-                      @update:modelValue="entityTypeChange($event)"
-                      :single="true"
-                      v-model:modelValue="customerProfileForm.entity_type_code"
-                      placeholder="SELECT ENTITY TYPE"
-                      :options="[
-                        { label: 'Parent', value: 'Parent' },
-                        { label: 'Sub Entity', value: 'SubEntity' },
-                      ]"
-                      class="w-full"
-                    />
-                  </dd>
-                </div>
-              </dl>
-              <div class="flex justify-end">
-                <x-button
-                  v-if="isProfileUpdateAllow"
-                  class="mt-4"
-                  color="emerald"
-                  size="sm"
-                  :loading="customerProfileForm.processing"
-                  type="submit"
-                >
-                  Update Profile
-                </x-button>
-              </div>
-            </div>
-          </x-form>
-        </template>
-      </Collapsible>
-    </div>
     <x-modal v-model="getParentEntityModel" size="lg" show-close backdrop>
       <h3 class="font-semibold text-center text-lg mb-10">
         Search Entity by Parent Entity Trade License No
