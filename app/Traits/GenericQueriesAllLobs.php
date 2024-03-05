@@ -16,6 +16,7 @@ use App\Models\QuoteType;
 use App\Repositories\DocumentTypeRepository;
 use App\Repositories\InsuranceProviderRepository;
 use App\Services\CapiRequestService;
+use App\Services\QuoteDocumentService;
 use League\CommonMark\Extension\SmartPunct\Quote;
 
 trait GenericQueriesAllLobs
@@ -196,21 +197,23 @@ trait GenericQueriesAllLobs
         $bPDetails['editButton'] = false;
         $bPDetails['sendPolicyType'] = null;
         $bPDetails['text'] = '';
-        if (!empty($quoteDocuments)) {
-            $documentTypeCodes= app(DocumentTypeRepository::class)->getSendPolicyDocumentCodes($quoteType);
-            $quoteDocumentsCount = collect($quoteDocuments)->whereIn('document_type_code', $documentTypeCodes)->groupBy('document_type_code')->count();
-            if($quoteDocumentsCount == count($documentTypeCodes)) {
-                $bPDetails['sendButton'] = true;
-                $bPDetails['text'] = 'Send Policy To Customer';
-                $bPDetails['sendPolicyType'] = 'customer';
-            }
-            if ($bPDetails['sendButton']) {
-                $taxDocuments= app(DocumentTypeRepository::class)->getTaxDocumentsCode($quoteType);
-                $taxDocumentsCount = collect($quoteDocuments)->whereIn('document_type_code', $taxDocuments)->groupBy('document_type_code')->count();
-                if($taxDocumentsCount == count($taxDocuments)) {
-                    $bPDetails['text'] = 'Send Policy';
-                    $bPDetails['editButton'] = true;
-                    $bPDetails['sendPolicyType'] = 'sage';
+        if (!empty($record->policy_number) && !empty($record->policy_issuance_date) && !empty($record->policy_start_date) && !empty($record->renewal_expiry_date) && $record->price_with_vat > 0 && !empty($record->insurer_quote_number)) {
+            if (!empty($quoteDocuments)) {
+                $documentTypeCodes= app(DocumentTypeRepository::class)->getSendPolicyDocumentCodes($quoteType);
+                $quoteDocumentsCount = collect($quoteDocuments)->whereIn('document_type_code', $documentTypeCodes)->groupBy('document_type_code')->count();
+                if($quoteDocumentsCount == count($documentTypeCodes)) {
+                    $bPDetails['sendButton'] = true;
+                    $bPDetails['text'] = 'Send Policy To Customer';
+                    $bPDetails['sendPolicyType'] = 'customer';
+                }
+                if ($bPDetails['sendButton']) {
+                    $taxDocuments= app(DocumentTypeRepository::class)->getTaxDocumentsCode($quoteType);
+                    $taxDocumentsCount = collect($quoteDocuments)->whereIn('document_type_code', $taxDocuments)->groupBy('document_type_code')->count();
+                    if($taxDocumentsCount == count($taxDocuments)) {
+                        $bPDetails['text'] = 'Send Policy';
+                        $bPDetails['editButton'] = true;
+                        $bPDetails['sendPolicyType'] = 'sage';
+                    }
                 }
             }
         }
@@ -225,5 +228,24 @@ trait GenericQueriesAllLobs
         }
 
         return $leadCodeArray[0];
+    }
+
+    public function updateQuoteStatus($type, $id)
+    {
+        $quote = $this->getQuoteObject($type, $id);
+        if ($quote->quote_status_id != QuoteStatusEnum::PolicySentToCustomer) {
+            if (!empty($quote->policy_number) && !empty($quote->policy_issuance_date) && !empty($quote->policy_start_date) && !empty($quote->renewal_expiry_date) && $quote->price_with_vat > 0 && !empty($quote->insurer_quote_number)) {
+                $quoteDocuments  = (new QuoteDocumentService())->getQuoteDocuments($type, $id);
+                $documentTypeCodes= app(DocumentTypeRepository::class)->getSendPolicyDocumentCodes($type);
+                $quoteDocumentsCount = collect($quoteDocuments)->whereIn('document_type_code', $documentTypeCodes)->groupBy('document_type_code')->count();
+                if($quoteDocumentsCount == count($documentTypeCodes)) {
+                    $quote->update([
+                        'quote_status_id' => QuoteStatusEnum::PolicyIssued,
+                        'policy_issuance_status_id' =>  null,
+                        'policy_issuance_status_other' =>  '',
+                    ]);
+                }
+            }
+        }
     }
 }

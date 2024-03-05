@@ -15,7 +15,7 @@ class DocumentTypeRepository extends BaseRepository
 
     public function getSendPolicyDocumentCodes($quoteType){
         $documentTypeCodes= DocumentType::requiredForSendPolicy()->where('quote_type_id', app(ActivitiesService::class)->getQuoteTypeId($quoteType))->pluck('code')->toArray();
-        if($quoteType == QuoteTypes::GROUP_MEDICAL->value) {
+        if($quoteType == QuoteTypes::GROUP_MEDICAL->value || $quoteType == 'business') {
             $documentTypeCodes= array_merge($documentTypeCodes, array('REC_GH', 'NL_GH'));
         }
         return $documentTypeCodes;

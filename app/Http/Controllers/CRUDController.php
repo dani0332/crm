@@ -1706,6 +1706,9 @@ class CRUDController extends Controller
             'policy_issuance_status_other' => $request->quote_policy_issuance_status_other ?? '',
         ]);
 
+        // update status policy issued of req fulfilled
+        $this->updateQuoteStatus($request->modelType, $request->quote_id);
+
         return redirect()->back()->with('success', 'Quote Policy Detail has been updated.');
     }
 
