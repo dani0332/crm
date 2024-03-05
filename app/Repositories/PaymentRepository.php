@@ -97,6 +97,10 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
 
             $count = $quoteModel->payments->count();
             $paymentInformation['code'] = ($count > 0) ? $quoteModel->code.'-'.$count : $quoteModel->code;
+            if ($request->send_update_id) { // it will check if the payment is added from send update.
+                $paymentInformation['code'] .= '-1';
+                $quoteModel = SendUpdateLogRepository::getLogById($request->send_update_id);
+            }
 
             if ($masterPayment->reference) {
                 $paymentInformation['reference'] = $masterPayment->reference;
@@ -118,7 +122,9 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                 'updated_at' => now(),
             ]);
             $paymentLog->save();
-            $quoteModel->quote_status_id = QuoteStatusEnum::PaymentPending;
+            if (! $request->send_update_id) { // it will check if the payment is added from send update.
+                $quoteModel->quote_status_id = QuoteStatusEnum::PaymentPending;
+            }
             $quoteModel->save();
             DB::commit();
 

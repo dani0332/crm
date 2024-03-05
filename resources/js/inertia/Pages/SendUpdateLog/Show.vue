@@ -23,12 +23,17 @@ const props = defineProps({
   bookingDetails: Array,
   updateBtn: String,
   uploadedDocuments: Array,
+  payments: Array,
+  isPaymentVisible: Boolean,
+  paymentDocumentTypes: Object,
+  paymentStatusEnum: Array,
+  paymentTooltipEnum: Object,
+  paymentMethods: Object,
+  quoteRequest: Object,
 });
 
 const page = usePage();
 const notification = useToast();
-
-const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
 
 const state = reactive({
   edit: false,
@@ -278,6 +283,23 @@ const isBookingDetailsVisible = computed(() => {
       :insuranceProviders="insuranceProviders"
       :quoteType="quoteType"
       :isUpdateBooked="isUpdateBooked"
+    />
+
+    <PaymentTableNew
+        v-if="props.isPaymentVisible"
+        :quoteType="props.quoteType"
+        :payments="props.payments || []"
+        :paymentDocument="props.paymentDocumentTypes"
+        :quoteRequest="props.quoteRequest"
+        :paymentStatusEnum="props.paymentStatusEnum"
+        :paymentTooltipEnum="props.paymentTooltipEnum"
+        :paymentMethods="
+          props.paymentMethods.map(pm => {
+            return { value: pm.code, label: pm.name, tooltip: pm.tool_tip };
+          })
+        "
+        :storageUrl="props.storageUrl"
+        :send-update-id="sendUpdateLog.id"
     />
 
     <LazyPolicyDetails

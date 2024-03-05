@@ -4,9 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class SendUpdateLog extends Model implements AuditableContract
 {
@@ -14,23 +16,28 @@ class SendUpdateLog extends Model implements AuditableContract
 
     protected $guarded = [];
 
-    public function quoteType()
+    public function quoteType(): BelongsTo
     {
         return $this->belongsTo(QuoteType::class, 'quote_type_id');
     }
 
-    public function documents()
+    public function documents(): MorphMany
     {
         return $this->morphMany(QuoteDocument::class, 'quote_documentable');
     }
 
-    public function category()
+    public function category(): BelongsTo
     {
         return $this->belongsTo(Lookup::class, 'category_id');
     }
 
-    public function option()
+    public function option(): BelongsTo
     {
         return $this->belongsTo(Lookup::class, 'option_id');
+    }
+
+    public function payments(): MorphMany
+    {
+        return $this->morphMany(Payment::class, 'paymentable');
     }
 }

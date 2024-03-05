@@ -3,9 +3,14 @@
 namespace App\Http\Controllers\V2;
 
 use App\Enums\DocumentTypeCode;
+use App\Enums\PaymentMethodsEnum;
+use App\Enums\PaymentStatusEnum;
+use App\Enums\PaymentTooltip;
 use App\Enums\quoteBusinessTypeCode;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypes;
+use App\Enums\RolesEnum;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\SaveBookingDetailsRequest;
@@ -14,7 +19,6 @@ use App\Models\PersonalQuote;
 use App\Models\QuoteType;
 use App\Repositories\CustomerMembersRepository;
 use App\Repositories\InsuranceProviderRepository;
-use App\Repositories\LookupRepository;
 use App\Repositories\PersonalQuoteRepository;
 use App\Repositories\PolicyIssuanceStatusRepository;
 use App\Repositories\QuoteTypeRepository;
@@ -28,6 +32,7 @@ use Illuminate\Http\Request;
 class SendUpdateLogController extends Controller
 {
     private object $sendUpdateLogService;
+    private object $quoteDocumentService;
 
     use GenericQueriesAllLobs;
 
@@ -111,7 +116,8 @@ class SendUpdateLogController extends Controller
             $quote->load('plan.insuranceProvider');
         }
 
-        $categoryCode = LookupRepository::where('id', $sendUpdateLog->category_id)->value('code');
+        $categoryCode = $sendUpdateLog->category->code;
+        $optionCode = $sendUpdateLog->option->code ?? null;
         $documentTypes = app(QuoteDocumentService::class)->getQuoteDocumentsForUploadByCategory(SendUpdateLogStatusEnum::SEND_UPDATE);
         $quoteDocuments = app(QuoteDocumentService::class)->getQuoteDocumentsForSendUpdates($sendUpdateLog->id);
         $isBookingDetailsVisible = $this->isBookingDetailsVisible($categoryCode, $quoteDocuments);
@@ -125,6 +131,7 @@ class SendUpdateLogController extends Controller
             $realQuote = $quoteServiceFile->getEntity($quote->uuid);
         }
 
+        // booking details section.
         $payments = $this->sendUpdateLogService->getPayments($realQuote->id, $realQuote->uuid, $quoteType);
 
         $bookingDetails = [];
@@ -141,6 +148,34 @@ class SendUpdateLogController extends Controller
         }
 
         $uploadedDocuments = $this->sendUpdateLogService->getUploadedDocuments($sendUpdateLog);
+        // payment related work.
+        $this->quoteDocumentService = app(QuoteDocumentService::class);
+        $paymentDocumentTypesOptions = $this->quoteDocumentService->paymentDocumentTypesOptions($quoteTypeId);
+        $paymentDocumentTypes = $this->quoteDocumentService->getQuoteDocumentsForUpload($quoteTypeId, $paymentDocumentTypesOptions);
+
+        $paymentMethods = app(LookupService::class)->getPaymentMethods();
+        if (auth()->user()->hasRole(RolesEnum::BetaUser)) {
+            $filteredPaymentMethods = $paymentMethods;
+        } else {
+            $filteredPaymentMethods = $paymentMethods->filter(function ($paymentMethod) {
+                return $paymentMethod->code == PaymentMethodsEnum::CreditCard;
+            })->map(function ($paymentMethod) {
+                return [
+                    'value' => $paymentMethod->code,
+                    'label' => $paymentMethod->name,
+                ];
+            })->values();
+        }
+
+        $serviceFile = 'App\\Services\\'.$quoteType.'QuoteService';
+
+        $paymentEntityModel = app($serviceFile)->getEntityPlain($realQuote->id);
+
+        $sendUpdatePayments = $this->sendUpdateLogService->getSendUpdatePayments($sendUpdateLog);
+
+        if (! in_array($quoteType, [quoteTypeCode::Business, quoteTypeCode::Home, quoteTypeCode::Life, quoteTypeCode::Pet, quoteTypeCode::Bike, quoteTypeCode::Cycle, quoteTypeCode::Yacht])) {
+            $paymentEntityModel->load(['plan']);
+        }
 
         return inertia('SendUpdateLog/Show', [
             'quote' => $quote,
@@ -162,6 +197,13 @@ class SendUpdateLogController extends Controller
             'updateBtn' => $this->sendUpdateLogService->getUpdateButtonStatus($sendUpdateLog, $quoteType),
             'paymentInvoices' => $paymentInvoices ?? [],
             'uploadedDocuments' => $uploadedDocuments,
+            'isPaymentVisible' => $this->sendUpdateLogService->isPaymentVisible($categoryCode, $optionCode),
+            'payments' => $sendUpdatePayments,
+            'paymentDocumentTypes' => $paymentDocumentTypes,
+            'paymentStatusEnum' => PaymentStatusEnum::asArray(),
+            'paymentTooltipEnum' => PaymentTooltip::asArray(),
+            'paymentMethods' => $filteredPaymentMethods,
+            'quoteRequest' => $paymentEntityModel,
         ]);
     }
 

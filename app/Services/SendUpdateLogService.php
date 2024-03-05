@@ -539,4 +539,35 @@ class SendUpdateLogService
 
         return array_merge($bookingDetails, $data);
     }
+
+    public function isPaymentVisible($categoryCode, $optionCode): bool
+    {
+        if (! $optionCode) {
+            return false;
+        }
+        // categories in which we have to show manage payments.
+        $categories = [
+            SendUpdateLogStatusEnum::EF,
+            SendUpdateLogStatusEnum::CPD,
+        ];
+
+        // if below options are not selected then we have to show manage payments, these are related to Endorsement Financial.
+        $options = [
+            SendUpdateLogStatusEnum::MPC,
+            SendUpdateLogStatusEnum::MDOM,
+            SendUpdateLogStatusEnum::MDOV,
+            SendUpdateLogStatusEnum::ED,
+            SendUpdateLogStatusEnum::DM,
+        ];
+
+        return in_array($categoryCode, $categories) && ! in_array($optionCode, $options);
+    }
+
+    public function getSendUpdatePayments($sendUpdateLog)
+    {
+        $payments = $sendUpdateLog->payments;
+        $payments->load(['paymentSplits', 'paymentStatus', 'paymentMethod', 'insuranceProvider', 'paymentStatusLog', 'paymentSplits.paymentStatus', 'paymentSplits.documents']);
+
+        return $payments;
+    }
 }
