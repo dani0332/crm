@@ -46,4 +46,5 @@ final class SendUpdateLogStatusEnum extends Enum
     const SUC = 'Send Update to Customer'; // send update to customer.
     const SU = 'Send Update'; // send update.
     const BOOKING_FILLED = 1;
+    const IS_SEND_UPDATE = 1;
 }
