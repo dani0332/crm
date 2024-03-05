@@ -301,6 +301,9 @@ class RenewalBatchReportService extends BaseService
         } else {
             $reportDateEnd = Carbon::today()->endOfDay()->format($dateFormat);
         }
+        // set previous and next month as per report date
+        $previousMonth = Carbon::parse($reportDateEnd)->subMonth()->startOfMonth()->format($dateFormat);
+        $nextMonth = Carbon::parse($reportDateEnd)->addMonth()->endOfMonth()->format($dateFormat);
 
         /**
          * query as per auth roles
@@ -535,7 +538,8 @@ class RenewalBatchReportService extends BaseService
                     THEN 1 ELSE 0 END) as uncontactable_by_value_segment'),
         );
 
-        $query->where('car_quote_request.created_at', '<=', $reportDateEnd);
+        // $query->where('car_quote_request.created_at', '<=', $reportDateEnd);
+        $query->whereBetween('car_quote_request.created_at', [$previousMonth, $nextMonth]);
 
         return $query;
     }
@@ -626,6 +630,9 @@ class RenewalBatchReportService extends BaseService
         } else {
             $reportDateEnd = Carbon::today()->endOfDay()->format($dateFormat);
         }
+        // set previous and next month as per report date
+        $previousMonth = Carbon::parse($reportDateEnd)->subMonth()->startOfMonth()->format($dateFormat);
+        $nextMonth = Carbon::parse($reportDateEnd)->addMonth()->endOfMonth()->format($dateFormat);
 
         /**
          * query as per auth roles
@@ -718,7 +725,8 @@ class RenewalBatchReportService extends BaseService
             $query->whereIn('health_quote_request.renewal_batch', $renewalBatches);
         }
 
-        $query->where('health_quote_request.created_at', '<=', $reportDateEnd);
+        // $query->where('health_quote_request.created_at', '<=', $reportDateEnd);
+        $query->whereBetween('health_quote_request.created_at', [$previousMonth, $nextMonth]);
 
         return $query;
     }
