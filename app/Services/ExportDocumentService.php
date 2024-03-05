@@ -4,8 +4,10 @@ namespace App\Services;
 
 use App\Enums\DocumentTypeEnum;
 use App\Interfaces\ExportDocumentInterface;
+use App\Models\QuoteDocument;
 use App\Traits\GenericQueriesAllLobs;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Facades\Storage;
 
 class ExportDocumentService extends BaseService implements ExportDocumentInterface
 {
@@ -24,6 +26,8 @@ class ExportDocumentService extends BaseService implements ExportDocumentInterfa
 
         $pdfName = 'InsuranceMarket.ae™ Proforma Payment Request for '.$quote->first_name.' '.$quote->last_name.'-'.$proformaPaymentRequest->code.'.pdf';
 
+        $this->saveProformaPaymentRequestToDocuments($quote, $pdf, $pdfName);
+
         return ['pdf' => $pdf, 'name' => $pdfName];
     }
     private function getQuote($quoteType, $quote)
@@ -36,18 +40,30 @@ class ExportDocumentService extends BaseService implements ExportDocumentInterfa
         return $repository::getBy('uuid', $quote);
     }
 
-    public function saveProformaPaymentRequestToDocuments($quoteType, $quoteUUID, $pdf, $fileName)
+    private function saveProformaPaymentRequestToDocuments($quote, $pdf, $originalName)
     {
-        $quote = $this->getQuote($quoteType, $quoteUUID);
+        $docName = preg_replace('/\s+/', '', uniqid().'_'.$originalName);
+        $fileMimeType = 'application/pdf';
 
-        $path = 'app/public/'.$fileName;
-        $pdf->save(storage_path($path));
+        //upload file to azure
+        $fileNameAzure = uniqid().'_'.$quote->uuid.'_'.$docName;
+        $filePathAzure = 'documents/'.$quote->quoteType->code.'/'.$fileNameAzure;
+        $azureDisk = Storage::disk('azureIM');
+        $azureDisk->put($filePathAzure, $pdf->output());
 
-        $quote->documents()->create([
-            'original_name' => $fileName,
-            'doc_name' => $fileName,
-            'doc_url' => $path,
+        $docUuid = uniqid();
+        while (QuoteDocument::where('doc_uuid', $docUuid)->first()) {
+            $docUuid = uniqid().rand(1, 100);
+        }
+
+        return $quote->documents()->create([
+            'doc_name' => $docName,
+            'original_name' => $originalName,
+            'doc_url' => $filePathAzure,
+            'doc_mime_type' => $fileMimeType,
             'document_type_text' => DocumentTypeEnum::ProformaPaymentRequest,
+            'doc_uuid' => $docUuid,
+            'created_by_id' => auth()->id(),
         ]);
     }
 
