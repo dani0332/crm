@@ -120,7 +120,7 @@ class PersonalQuote extends Model implements AuditableContract
     }
 
     /**
-     * @param    $date
+     * @param  $date
      * @return string
      */
     public function getDobAttribute($value)
@@ -249,5 +249,10 @@ class PersonalQuote extends Model implements AuditableContract
     public function insuranceProvider()
     {
         return $this->belongsTo(InsuranceProvider::class, 'insurance_provider_id', 'id');
+    }
+
+    public function sageLog()
+    {
+        return $this->morphMany(SageApiLog::class, 'section');
     }
 }

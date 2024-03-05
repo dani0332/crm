@@ -158,6 +158,11 @@ class HealthQuote extends Model implements AuditableContract
         return $this->morphMany(CustomerMembers::class, 'quote');
     }
 
+    public function sageLog()
+    {
+        return $this->morphMany(SageApiLog::class, 'section');
+    }
+
     public function duplicateInquiryLog(): MorphMany
     {
         return $this->morphMany(DuplicateInquiryLog::class, 'loggable');

@@ -3,8 +3,11 @@
 namespace App\Traits;
 
 use App\Enums\GenericRequestEnum;
+use App\Enums\QuoteDocumentsEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypes;
+use App\Models\Payment;
+use App\Repositories\InsuranceProviderRepository;
 use App\Services\CapiRequestService;
 
 trait GenericQueriesAllLobs
@@ -36,14 +39,13 @@ trait GenericQueriesAllLobs
         }
 
         return $model;
-
     }
 
     /**
      * get quote object by quote type.
      *
-     * @param    $quoteType  e.g car, health etc
-     * @param    $id  can be id or uuid
+     * @param  $quoteType  e.g car, health etc
+     * @param  $id  can be id or uuid
      * @return false|mixed
      */
     public function getQuoteObject($quoteType, $id)
@@ -152,7 +154,8 @@ trait GenericQueriesAllLobs
     {
         return [
             QuoteTypes::BIKE->value => ['Bike insurance'],
-            QuoteTypes::BUSINESS->value => ['Business interruption insurance', 'Contractors all risks', 'Cyber liability', 'Directors and officers liability insurance',
+            QuoteTypes::BUSINESS->value => [
+                'Business interruption insurance', 'Contractors all risks', 'Cyber liability', 'Directors and officers liability insurance',
                 'Engineering and plant insurance', 'Fidelity guarantee', 'Group life', 'Group medical insurance', 'Holiday homes',
                 'Livestock insurance', 'Machinery breakdown insurance', 'Marine cargo (individual shipment) insurance',
                 'Marine hull insurance', 'Medical malpractice insurance', 'Money insurance', 'Motor fleet',
@@ -169,6 +172,41 @@ trait GenericQueriesAllLobs
             QuoteTypes::PET->value => ['Pet insurance'],
             QuoteTypes::YACHT->value => ['Yacht insurance'],
         ];
+    }
+
+    public function bookPolicyPayload($record, $quoteType, $payments, $quoteDocuments)
+    {
+        $insuranceProviderLeadCount = $insuranceProviderCode = '';
+        if ($payments->first()) {
+            $insurance_provider_id = $payments[0]['insurance_provider_id'];
+            $insuranceProviderCode = InsuranceProviderRepository::where('id', $insurance_provider_id)->value('code');
+            $insuranceProviderLeadCount = Payment::where('insurance_provider_id', '=', $insurance_provider_id)->count();
+        }
+        $bPDetails['brokerInvoiceNo'] = $insuranceProviderCode.$insuranceProviderLeadCount;
+        $bPDetails['invoiceDescription'] = $insuranceProviderCode.'-'.$quoteType.'-'.$record->policy_number;
+        $bPDetails['sendButton'] = false;
+        $bPDetails['editButton'] = false;
+        $bPDetails['sendPolicyType'] = null;
+        $bPDetails['text'] = '';
+        if (! empty($quoteDocuments)) {
+            $document_type_codes = collect($quoteDocuments)->pluck('document_type_code')->toArray();
+
+            if (in_array(QuoteDocumentsEnum::CAR_POLICY_CERTIFICATE, $document_type_codes) && in_array(QuoteDocumentsEnum::POLICY_SCHEDULE, $document_type_codes) && in_array(QuoteDocumentsEnum::POLICY_HANDBOOK, $document_type_codes)) {
+
+                $bPDetails['sendButton'] = true;
+                $bPDetails['text'] = 'Send Policy To Customer';
+                $bPDetails['sendPolicyType'] = 'customer';
+            }
+            $taxDocuments = (in_array(QuoteDocumentsEnum::CAR_TAX_INVOICE, $document_type_codes) && in_array(QuoteDocumentsEnum::CAR_TAX_INVOICE_RAISE_BY_BUYER, $document_type_codes));
+
+            if ($bPDetails['sendButton'] && $taxDocuments) {
+                $bPDetails['text'] = 'Send Policy';
+                $bPDetails['editButton'] = true;
+                $bPDetails['sendPolicyType'] = 'sage';
+            }
+        }
+
+        return $bPDetails;
     }
 
     public function getQuoteCodeType($lead)
