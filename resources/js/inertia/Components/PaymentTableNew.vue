@@ -506,7 +506,9 @@ const handleCollectionTypeChange = () => {
   //customize payment method based on collection type
   paymentTypesFiltered.value = paymentTypes.value;
   let excludedPaymentTypes = ['IN_PL', 'CA', 'MP', 'PP'];
-  if(can(permissionEnum.PROFORMA_PAYMENT_REQUEST_ADD) == false || props.quoteRequest.quote_status_id != page.props.quoteStatusEnum.ApplicationPending){
+  if(paymentMethodsForm.frequency != 'upfront'){
+      excludedPaymentTypes.push('PPR');
+  }else if(can(permissionEnum.PROFORMA_PAYMENT_REQUEST_ADD) == false || props.quoteRequest.quote_status_id != page.props.quoteStatusEnum.ApplicationPending){
       excludedPaymentTypes.push('PPR');
   }
   paymentTypesFiltered.value = paymentTypesFiltered.value.filter(item => !excludedPaymentTypes.includes(item.value));
@@ -550,14 +552,18 @@ const handleApprovalReasonChange = () => {
     paymentTypesFiltered.value = paymentTypes.value;
     paymentTypesFiltered.value = paymentTypesFiltered.value.filter(item => !['IN_PL', 'PPR', 'MP', 'PP'].includes(item.value));
     if (paymentMethodsForm.collection_type === 'insurer') {
-      if (paymentMethodsForm.frequency === 'upfront' || paymentMethodsForm.frequency === 'split_payments' ){
+      if (paymentMethodsForm.frequency === 'upfront'){
         paymentTypesFiltered.value = paymentTypesFiltered.value.filter(item => !['PDC', 'CHQ','CSH','CC','BT'].includes(item.value));
+      }else if (paymentMethodsForm.frequency === 'split_payments' ){
+        paymentTypesFiltered.value = paymentTypesFiltered.value.filter(item => !['PDC', 'PPR', 'CHQ','CSH','CC','BT'].includes(item.value));
       } else {
         paymentTypesFiltered.value = paymentTypesFiltered.value.filter(item => !['CHQ','CSH','CC','BT'].includes(item.value));
       }
     } else {
-      if (paymentMethodsForm.frequency === 'upfront' || paymentMethodsForm.frequency === 'split_payments' ){
+      if (paymentMethodsForm.frequency === 'upfront'){
         paymentTypesFiltered.value = paymentTypesFiltered.value.filter(item => !['PDC','IP'].includes(item.value));
+      } else if (paymentMethodsForm.frequency === 'split_payments' ){
+        paymentTypesFiltered.value = paymentTypesFiltered.value.filter(item => !['PDC', 'PPR','IP'].includes(item.value));
       } else {
         paymentTypesFiltered.value = paymentTypesFiltered.value.filter(item => !['IP'].includes(item.value));
       }
@@ -891,7 +897,8 @@ const isExportable = (payment, documents) =>{
     if(!documents) return true;
 
     let proformaPaymentRequestDocuments = documents.filter(doc => doc.document_type_text === 'Proforma Payment Request');
-    if(!proformaPaymentRequestDocuments) return true;
+    console.log('proformaPaymentRequestDocuments',proformaPaymentRequestDocuments);
+    if(proformaPaymentRequestDocuments.length == 0) return true;
 
     proformaPaymentRequestDocuments.sort((a, b) => b.id - a.id);
 
