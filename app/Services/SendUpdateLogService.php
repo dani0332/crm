@@ -542,9 +542,6 @@ class SendUpdateLogService
 
     public function isPaymentVisible($categoryCode, $optionCode): bool
     {
-        if (! $optionCode) {
-            return false;
-        }
         // categories in which we have to show manage payments.
         $categories = [
             SendUpdateLogStatusEnum::EF,
