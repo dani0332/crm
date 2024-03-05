@@ -2,9 +2,11 @@
 
 namespace App\Services;
 
+use App\Enums\DocumentTypeCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
+use App\Enums\SendUpdateLogStatusEnum;
 use App\Models\BikeQuote;
 use App\Models\BusinessQuote;
 use App\Models\CarQuote;
@@ -13,17 +15,15 @@ use App\Models\HealthQuote;
 use App\Models\HomeQuote;
 use App\Models\JetskiQuote;
 use App\Models\LifeQuote;
+use App\Models\Payment;
 use App\Models\PersonalQuote;
 use App\Models\PetQuote;
 use App\Models\TravelQuote;
 use App\Models\YachtQuote;
-use App\Traits\GenericQueriesAllLobs;
-use App\Enums\DocumentTypeCode;
-use App\Enums\SendUpdateLogStatusEnum;
-use App\Models\Payment;
 use App\Repositories\InsuranceProviderRepository;
 use App\Repositories\LookupRepository;
 use App\Repositories\SendUpdateLogRepository;
+use App\Traits\GenericQueriesAllLobs;
 
 class SendUpdateLogService
 {
@@ -543,9 +543,6 @@ class SendUpdateLogService
 
     public function isPaymentVisible($categoryCode, $optionCode): bool
     {
-        if (! $optionCode) {
-            return false;
-        }
         // categories in which we have to show manage payments.
         $categories = [
             SendUpdateLogStatusEnum::EF,
@@ -570,5 +567,17 @@ class SendUpdateLogService
         $payments->load(['paymentSplits', 'paymentStatus', 'paymentMethod', 'insuranceProvider', 'paymentStatusLog', 'paymentSplits.paymentStatus', 'paymentSplits.documents']);
 
         return $payments;
+    }
+
+    public function concatenatePaymentRef($sendUpdateLog): string
+    {
+        // for non Travel LOB.
+        if ($sendUpdateLog->category->code == SendUpdateLogStatusEnum::EF) {
+            return '-2';
+        } elseif ($sendUpdateLog->category->code == SendUpdateLogStatusEnum::CPD) {
+            return '-1';
+        }
+
+        return '';
     }
 }

@@ -1,5 +1,6 @@
 <script setup>
 import ToolTip from './../Components/ToolTip.vue';
+import {computed} from "vue";
 const notification = useNotifications('toast');
 const page = usePage();
 
@@ -24,11 +25,15 @@ const props = defineProps({
     type: String,
     default: '',
   },
-  sendUpdateId: {
-    type: Number,
+  sendUpdate: {
+    type: Object,
     default: null,
   },
-});
+  sendUpdateStatusEnum: {
+    type: Object,
+    default: null,
+  },
+})
 
 const createPaymentModal = ref(false);
 const isPaymentNoEnabled = ref(false);
@@ -98,7 +103,9 @@ const quoteTypesToCheck = ['Car', 'Health', 'Travel']; //Ecommerce LOBs
 let initialAmount;
 
 // Check quoteType and set initialAmount accordingly
-if (props.quoteType === 'Health') {
+if (props.sendUpdate) {
+  initialAmount = props.sendUpdate.total_price;
+} else if (props.quoteType === 'Health') {
   initialAmount = props.eCommercePrice;
 } else {
   initialAmount = quoteTypesToCheck.includes(props.quoteType)
@@ -113,7 +120,9 @@ const paymentProofDocument  = props.paymentDocument.find(item => item.text === "
 const approveProofDocument  = props.paymentDocument.find(item => item.text === "Receipt");
 
 let initalPlanDetails = [];
-if (quoteTypesToCheck.includes(props.quoteType)) {
+if (props.sendUpdate) {
+  initalPlanDetails = 'Test Plan';
+} else if (quoteTypesToCheck.includes(props.quoteType)) {
   initalPlanDetails = props.quoteRequest.plan;
 } else if(props.quoteType=='Business' || props.quoteType=='Home'){
   initalPlanDetails = props.quoteRequest.insurance_provider_details;
@@ -886,8 +895,32 @@ const generateCCLink = async (code,splitPaymentId,paymentStatus) => {
   }
 };
 
-const addPaymentModal = () => {
+const sendUpdateStatusEnum = props.sendUpdateStatusEnum;
+const isEF = computed(() => {
+  return props.sendUpdate?.category?.code === sendUpdateStatusEnum.EF;
+});
 
+const isCPD = computed(() => {
+  return props.sendUpdate?.category?.code === sendUpdateStatusEnum.CPD;
+});
+
+const addPaymentModal = () => {
+  if (props.sendUpdate) {
+    if (isEF.value && ! props.sendUpdate?.total_price) {
+      notification.error({
+        title: 'Please update indicative additional price.',
+        position: 'top',
+      });
+      return;
+    }
+    if (isCPD.value && ! props.sendUpdate?.total_price) {
+      notification.error({
+        title: 'Please update the Total Price in the Plan Details section.',
+        position: 'top',
+      });
+      return;
+    }
+  }
   if ( props.payments.length>0 ) {
       notification.error({
         title: 'Payment already added, click \'Edit\' for changes.',
@@ -1216,7 +1249,7 @@ const validateCapturePayment = (isValid) => {
   return false;
 }
 
-const addPayment = isValid => {  
+const addPayment = isValid => {
   if(isCreditApprovalView.value === true && isDeclineClicked.value === false){
     if (validateCapturePayment(isValid)) return;
   } else if (paymentMethodsForm.status === 'view' && isApproveClicked.value) {
@@ -1248,7 +1281,7 @@ const addPayment = isValid => {
     insurance_provider_id: providerId.value,
     new_payment_structure: true,
     isInertia: true,
-    send_update_id: props.sendUpdateId,
+    send_update_id: props.sendUpdate.id,
   };
 
   data.payment = {
@@ -1678,12 +1711,18 @@ const getPlanName = computed(() => {
     return 'Not Available';
   } 
   const plan = planDetail.value;
+  if (props.sendUpdate) {
+    return props.sendUpdate?.plan_name || 'Not Available';
+  }
+
   return (quoteTypesToCheck.includes(props.quoteType) && plan) ? plan.text : 'Not Available';
 });
 
 const providerName = computed(() => {
   const plan = planDetail.value;
-    if (quoteTypesToCheck.includes(props.quoteType) && plan.insurance_provider) {
+    if (props.sendUpdate) {
+      return props.sendUpdate?.provider_name || 'Not Available';
+    } else if (quoteTypesToCheck.includes(props.quoteType) && plan.insurance_provider) {
       return plan ? plan.insurance_provider.text : 'Not Available';
     } else {
       return plan ? plan.text : 'Not Available';
@@ -1691,12 +1730,14 @@ const providerName = computed(() => {
 });
 
 const providerId = computed(() => {
-  const plan = planDetail.value;  
-  if (plan && plan.insurance_provider) {
+  const plan = planDetail.value;
+  if (props.sendUpdate) {
+    return props.sendUpdate.insurance_provider_id
+  } else if (plan && plan.insurance_provider) {
     return plan.insurance_provider.id;
   } else if (plan && plan.provider_id) {
     return plan.provider_id;
-  }  else if (plan && plan.id) {
+  } else if (plan && plan.id) {
     return plan.id;
   }
   return null;
@@ -2018,7 +2059,7 @@ watch(() => props.quoteRequest, (newValue, oldValue) => {
           </div>
           <div>
           <x-tooltip>
-            <span class="border-b-2 border-dotted border-black text-sm">PROVIDER NAME</span>           
+            <span class="border-b-2 border-dotted border-black text-sm">PROVIDER NAME</span>
             <template #tooltip>
                 <span v-if="isFieldReadonly">{{ paymentTooltipEnum.PROVIDER_NAME_VIEW }}</span>
                 <span v-else >{{ paymentTooltipEnum.PROVIDER_NAME }}</span>
