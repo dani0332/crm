@@ -1807,8 +1807,8 @@ class CRUDController extends Controller
             $count = $quoteModel->payments->count();
             $paymentInformation['code'] = ($count > 0) ? $quoteModel->code.'-'.$count : $quoteModel->code;
             if ($request->send_update_id) { // it will check if the payment is added from send update.
-                $paymentInformation['code'] .= '-1';
                 $quoteModel = SendUpdateLogRepository::getLogById($request->send_update_id);
+                $paymentInformation['code'] .= app(SendUpdateLogService::class)->concatenatePaymentRef($quoteModel);
             }
 
             if ($request->reference) {

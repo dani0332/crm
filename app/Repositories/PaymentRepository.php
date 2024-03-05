@@ -14,6 +14,7 @@ use App\Models\PaymentStatusLog;
 use App\Models\QuoteDocument;
 use App\Services\CRUDService;
 use App\Services\PaymentLinkService;
+use App\Services\SendUpdateLogService;
 use App\Services\SplitPaymentService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Support\Facades\Auth;
@@ -98,8 +99,8 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
             $count = $quoteModel->payments->count();
             $paymentInformation['code'] = ($count > 0) ? $quoteModel->code.'-'.$count : $quoteModel->code;
             if ($request->send_update_id) { // it will check if the payment is added from send update.
-                $paymentInformation['code'] .= '-1';
                 $quoteModel = SendUpdateLogRepository::getLogById($request->send_update_id);
+                $paymentInformation['code'] .= app(SendUpdateLogService::class)->concatenatePaymentRef($quoteModel);
             }
 
             if ($masterPayment->reference) {
