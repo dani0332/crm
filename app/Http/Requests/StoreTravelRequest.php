@@ -40,7 +40,7 @@ class StoreTravelRequest extends FormRequest
             $rule = ['required'];
             if ($key == 'first_name' || $key == 'last_name') {
                 $rule[] = 'between:1,20';
-            } 
+            }
 
             if ($key == 'email') {
                 $rule[] = 'email:rfc,dns';

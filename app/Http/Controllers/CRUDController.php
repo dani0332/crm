@@ -407,7 +407,7 @@ class CRUDController extends Controller
         }
         $request->dob = isset($request->dob) ? Carbon::parse($request->dob)->format('Y-m-d') : null;
 
-        if($modelType == quoteTypeCode::Health || $modelType == quoteTypeCode::Car  || $modelType == quoteTypeCode::Travel  || $modelType == quoteTypeCode::Home) {
+        if ($modelType == quoteTypeCode::Health || $modelType == quoteTypeCode::Car || $modelType == quoteTypeCode::Travel || $modelType == quoteTypeCode::Home) {
             $validateArray = [];
             if ($request->has('first_name')) {
                 $this->validate($request, [
