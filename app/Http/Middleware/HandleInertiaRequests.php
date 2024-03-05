@@ -257,6 +257,7 @@ class HandleInertiaRequests extends Middleware
         if (auth()->user()->hasAnyPermission([
             PermissionsEnum::GMQuotesList,
             PermissionsEnum::CorpLineQuotesList,
+            PermissionsEnum::VehicleValuationList,
         ])) {
             $nav = $nav->add('Car', '', function (Section $section) {
                 $section
