@@ -51,7 +51,7 @@ function onSubmit(isValid) {
   else {
     loader.table = true;
     axios
-      .post(`${props.kenPath}/get-vehicle-value`, {
+      .post(route('valuation.calculate'), {
         carModelDetailId: valuationForm.carTrim,
         yearOfManufacture: valuationForm.yearOfManufacture,
       })
