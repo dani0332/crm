@@ -2,22 +2,22 @@
 
 namespace App\Repositories;
 
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\PaymentAllocationStatus;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
-use App\Enums\ApplicationStorageEnums;
 use App\Interfaces\PaymentRepositoryInterface;
 use App\Models\Payment;
 use App\Models\PaymentSplits;
 use App\Models\PaymentStatusLog;
 use App\Models\QuoteDocument;
+use App\Services\ApplicationStorageService;
 use App\Services\CRUDService;
 use App\Services\PaymentLinkService;
 use App\Services\SplitPaymentService;
 use App\Services\TravelQuoteService;
-use App\Services\ApplicationStorageService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -345,7 +345,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
 
                         if ($paymentSplit->payment_method == PaymentMethodsEnum::CreditCard) {
                             //create sage reciept
-                            if ( $isSageEnabled && ($paymentSplit->sage_reciept_id == null || $paymentSplit->sage_reciept_id == '')) {
+                            if ($isSageEnabled && ($paymentSplit->sage_reciept_id == null || $paymentSplit->sage_reciept_id == '')) {
                                 $sageResponse = app(SplitPaymentService::class)->createSageRecipt($request, $paymentSplit, $splitAmount);
                                 if ($sageResponse['status'] == 'success') {
                                     $paymentSplit->sage_reciept_id = $sageResponse['response'];
@@ -409,6 +409,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                 DB::rollBack();
             }
         }
+
         return $successMessage;
     }
     //migrate payments
@@ -451,7 +452,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
             }
             //create sage reciept
             $isSageEnabled = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::SAGE_ENABLED);
-            if($isSageEnabled) { 
+            if ($isSageEnabled) {
                 $sageResponse = app(SplitPaymentService::class)->createSageRecipt($request, $splitPayment);
                 if ($sageResponse['status'] == 'success') {
                     $paymentInformation['sage_reciept_id'] = $sageResponse['response'];
@@ -459,19 +460,19 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                     if ($masterPayment) {
                         $masterPayment->update(
                             ['captured_amount' => ($masterPayment->captured_amount + $request->collection_amount),
-                             'payment_allocation_status' => PaymentAllocationStatus::NOT_ALLOCATED]
+                                'payment_allocation_status' => PaymentAllocationStatus::NOT_ALLOCATED]
                         );
                     }
                 } else {
                     $failMessage = $sageResponse['response'];
                     vAbort($failMessage);
                 }
-            } else { 
+            } else {
                 $splitPayment->update($paymentInformation);
                 if ($masterPayment) {
                     $masterPayment->update(
                         ['captured_amount' => ($masterPayment->captured_amount + $request->collection_amount),
-                        'payment_allocation_status' => PaymentAllocationStatus::NOT_ALLOCATED]
+                            'payment_allocation_status' => PaymentAllocationStatus::NOT_ALLOCATED]
                     );
                 }
             }
@@ -496,12 +497,12 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
     {
         if ($payment) {
             if ($payment->frequency == 'upfront') {
-                
-                if($payment->paymentSplits[0]->payment_status_id == PaymentStatusEnum::PAID){
+
+                if ($payment->paymentSplits[0]->payment_status_id == PaymentStatusEnum::PAID) {
                     $payment->update(
                         ['payment_status_id' => PaymentStatusEnum::CAPTURED]
                     );
-                } elseif($payment->paymentSplits[0]->payment_status_id == PaymentStatusEnum::PARTIALLY_PAID){
+                } elseif ($payment->paymentSplits[0]->payment_status_id == PaymentStatusEnum::PARTIALLY_PAID) {
                     $payment->update(
                         ['payment_status_id' => PaymentStatusEnum::PARTIAL_CAPTURED]
                     );
@@ -510,7 +511,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                         ['payment_status_id' => $payment->paymentSplits[0]->payment_status_id]
                     );
                 }
-               
+
             } else {
 
                 $totalPaidPayments = PaymentSplits::whereIn('payment_status_id', [
