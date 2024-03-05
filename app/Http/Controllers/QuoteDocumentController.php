@@ -274,6 +274,7 @@ class QuoteDocumentController extends Controller
         }
 
         $pdf = $response['pdf'];
+
         return $pdf->download($response['name']);
     }
 }
