@@ -253,10 +253,14 @@ function convertToNegative(value) {
   }
   value = isNaN(value) ? 0 : Number(value);
 
-  return Number(value.toFixed(2)).toLocaleString("en-US", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
+  return value.toFixed(2);
+}
+
+function thousandSeparator(value) {
+  if (value === null || value === undefined || value === '') {
+    return '';
+  }
+  return value.toLocaleString('en-US', { minimumFractionDigits: 2 });
 }
 
 const saveBookingDetail = (isValid) => {
@@ -286,10 +290,12 @@ const saveBookingDetail = (isValid) => {
       state.isEdit = false;
       router.reload({ preserveState: true });
     },
-    onError: () => {
-      notification.error({
-        title: "The data not update.",
-        position: "top",
+    onError: (errors) => {
+      Object.keys(errors).forEach(function (key) {
+        notification.error({
+          title: errors[key],
+          position: 'top',
+        });
       });
     },
   });
@@ -1105,7 +1111,7 @@ const submitToCustomer = () => {
                   </x-tooltip>
                 </dt>
                 <dd>
-                  <span>{{ bookingDetailsForm.commission_percentage }}</span>
+                  <span>{{ thousandSeparator(bookingDetailsForm.commission_percentage) }}</span>
                 </dd>
               </div>
 
@@ -1145,7 +1151,7 @@ const submitToCustomer = () => {
                   </x-tooltip>
                 </dt>
                 <dd>
-                  <span>{{ bookingDetailsForm.vat_on_commission }}</span>
+                  <span>{{ thousandSeparator(bookingDetailsForm.vat_on_commission) }}</span>
                 </dd>
               </div>
 
@@ -1175,7 +1181,7 @@ const submitToCustomer = () => {
                   </x-tooltip>
                 </dt>
                 <dd>
-                  <span>{{ bookingDetailsForm.total_commission }}</span>
+                  <span>{{ thousandSeparator(bookingDetailsForm.total_commission) }}</span>
                 </dd>
               </div>
 
@@ -1216,7 +1222,7 @@ const submitToCustomer = () => {
                   </x-tooltip>
                 </dt>
                 <dd>
-                  <span>{{ bookingDetailsForm.total_vat_amount }}</span>
+                  <span>{{ thousandSeparator(bookingDetailsForm.total_vat_amount) }}</span>
                 </dd>
               </div>
 
@@ -1246,7 +1252,7 @@ const submitToCustomer = () => {
                   </x-tooltip>
                 </dt>
                 <dd>
-                  <span>{{ bookingDetailsForm.total_price }}</span>
+                  <span>{{ thousandSeparator(bookingDetailsForm.total_price) }}</span>
                 </dd>
               </div>
             </dl>

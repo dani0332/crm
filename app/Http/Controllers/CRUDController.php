@@ -1806,6 +1806,10 @@ class CRUDController extends Controller
 
             $count = $quoteModel->payments->count();
             $paymentInformation['code'] = ($count > 0) ? $quoteModel->code.'-'.$count : $quoteModel->code;
+            if ($request->send_update_id) { // it will check if the payment is added from send update.
+                $paymentInformation['code'] .= '-1';
+                $quoteModel = SendUpdateLogRepository::getLogById($request->send_update_id);
+            }
 
             if ($request->reference) {
                 $paymentInformation['reference'] = $request->reference;
@@ -1822,7 +1826,9 @@ class CRUDController extends Controller
                 'updated_at' => now(),
             ]);
             $paymentLog->save();
-            $quoteModel->quote_status_id = QuoteStatusEnum::PaymentPending;
+            if (! $request->send_update_id) { // it will check if the payment is added from send update.
+                $quoteModel->quote_status_id = QuoteStatusEnum::PaymentPending;
+            }
             $quoteModel->save();
 
             return back()->with('success', 'Payment has been created');

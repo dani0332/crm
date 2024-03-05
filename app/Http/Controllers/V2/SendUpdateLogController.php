@@ -4,32 +4,36 @@ namespace App\Http\Controllers\V2;
 
 use App\Enums\DocumentTypeCode;
 use App\Enums\PaymentStatusEnum;
+use App\Enums\PaymentMethodsEnum;
+use App\Enums\PaymentTooltip;
 use App\Enums\quoteBusinessTypeCode;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypes;
+use App\Enums\RolesEnum;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\SaveBookingDetailsRequest;
 use App\Http\Requests\SendUpdateCustomerRequest;
 use App\Http\Requests\SendUpdateRequest;
 use App\Models\PersonalQuote;
 use App\Models\QuoteType;
 use App\Repositories\CustomerMembersRepository;
 use App\Repositories\InsuranceProviderRepository;
-use App\Repositories\LookupRepository;
-use App\Repositories\QuoteTypeRepository;
-use App\Services\QuoteDocumentService;
-use App\Traits\GenericQueriesAllLobs;
 use App\Repositories\PersonalQuoteRepository;
 use App\Repositories\PolicyIssuanceStatusRepository;
-use App\Repositories\SendUpdateLogDetailsRepository;
+use App\Repositories\QuoteTypeRepository;
 use App\Repositories\SendUpdateLogRepository;
 use App\Services\LookupService;
+use App\Services\QuoteDocumentService;
 use App\Services\SendUpdateLogService;
+use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Http\Request;
 
 class SendUpdateLogController extends Controller
 {
     private object $sendUpdateLogService;
+    private object $quoteDocumentService;
 
     use GenericQueriesAllLobs;
 
@@ -113,7 +117,8 @@ class SendUpdateLogController extends Controller
             $quote->load('plan.insuranceProvider');
         }
 
-        $categoryCode = LookupRepository::where('id', $sendUpdateLog->category_id)->value('code');
+        $categoryCode = $sendUpdateLog->category->code;
+        $optionCode = $sendUpdateLog->option->code ?? null;
         $documentTypes = app(QuoteDocumentService::class)->getQuoteDocumentsForUploadByCategory(SendUpdateLogStatusEnum::SEND_UPDATE);
         $quoteDocuments = app(QuoteDocumentService::class)->getQuoteDocumentsForSendUpdates($sendUpdateLog->id);
         $isBookingDetailsVisible = $this->isBookingDetailsVisible($categoryCode, $quoteDocuments);
@@ -127,6 +132,7 @@ class SendUpdateLogController extends Controller
             $realQuote = $quoteServiceFile->getEntity($quote->uuid);
         }
 
+        // booking details section.
         $payments = $this->sendUpdateLogService->getPayments($realQuote->id, $realQuote->uuid, $quoteType);
 
         $bookingDetails = [];
@@ -138,15 +144,39 @@ class SendUpdateLogController extends Controller
             $paymentInvoices = collect($payments)->pluck('insurer_tax_number');
         }
 
-        if (isset($sendUpdateLog->details) && count($sendUpdateLog->details) > 0) {
-            $bookingDetails = array_merge($bookingDetails, $sendUpdateLog->details[0]->data);
-            $bookingDetails['type'] = $sendUpdateLog->details[0]->type;
-            if ($bookingDetails['type'] == SendUpdateLogStatusEnum::CPD) {
-                $bookingDetails['reversal_invoice'] = $sendUpdateLog->details[0]->data['reversal_invoice'];
-            }
+        if ($sendUpdateLog->is_booking_filled) {
+            $bookingDetails = $this->sendUpdateLogService->mergeBookingDetails($bookingDetails, $sendUpdateLog);
         }
 
         $uploadedDocuments = $this->sendUpdateLogService->getUploadedDocuments($sendUpdateLog);
+        // payment related work.
+        $this->quoteDocumentService = app(QuoteDocumentService::class);
+        $paymentDocumentTypesOptions = $this->quoteDocumentService->paymentDocumentTypesOptions($quoteTypeId);
+        $paymentDocumentTypes = $this->quoteDocumentService->getQuoteDocumentsForUpload($quoteTypeId, $paymentDocumentTypesOptions);
+
+        $paymentMethods = app(LookupService::class)->getPaymentMethods();
+        if (auth()->user()->hasRole(RolesEnum::BetaUser)) {
+            $filteredPaymentMethods = $paymentMethods;
+        } else {
+            $filteredPaymentMethods = $paymentMethods->filter(function ($paymentMethod) {
+                return $paymentMethod->code == PaymentMethodsEnum::CreditCard;
+            })->map(function ($paymentMethod) {
+                return [
+                    'value' => $paymentMethod->code,
+                    'label' => $paymentMethod->name,
+                ];
+            })->values();
+        }
+
+        $serviceFile = 'App\\Services\\'.$quoteType.'QuoteService';
+
+        $paymentEntityModel = app($serviceFile)->getEntityPlain($realQuote->id);
+
+        $sendUpdatePayments = $this->sendUpdateLogService->getSendUpdatePayments($sendUpdateLog);
+
+        if (! in_array($quoteType, [quoteTypeCode::Business, quoteTypeCode::Home, quoteTypeCode::Life, quoteTypeCode::Pet, quoteTypeCode::Bike, quoteTypeCode::Cycle, quoteTypeCode::Yacht])) {
+            $paymentEntityModel->load(['plan']);
+        }
 
         return inertia('SendUpdateLog/Show', [
             'quote' => $quote,
@@ -168,7 +198,13 @@ class SendUpdateLogController extends Controller
             'updateBtn' => $this->sendUpdateLogService->getUpdateButtonStatus($sendUpdateLog, $quoteType),
             'paymentInvoices' => $paymentInvoices ?? [],
             'uploadedDocuments' => $uploadedDocuments,
+            'isPaymentVisible' => $this->sendUpdateLogService->isPaymentVisible($categoryCode, $optionCode),
+            'payments' => $sendUpdatePayments,
+            'paymentDocumentTypes' => $paymentDocumentTypes,
             'paymentStatusEnum' => PaymentStatusEnum::asArray(),
+            'paymentTooltipEnum' => PaymentTooltip::asArray(),
+            'paymentMethods' => $filteredPaymentMethods,
+            'quoteRequest' => $paymentEntityModel,
         ]);
     }
 
@@ -269,9 +305,9 @@ class SendUpdateLogController extends Controller
         return redirect()->back();
     }
 
-    public function saveBookingDetails(Request $request)
+    public function saveBookingDetails(SaveBookingDetailsRequest $saveBookingDetailsRequest)
     {
-        SendUpdateLogDetailsRepository::createOrUpdate($request->all());
+        SendUpdateLogRepository::saveBookingDetails($saveBookingDetailsRequest);
 
         return redirect()->back();
     }
@@ -285,13 +321,11 @@ class SendUpdateLogController extends Controller
 
     public function sendUpdateCustomerValidation(SendUpdateCustomerRequest $sendUpdateCustomerRequest)
     {
-        if ($sendUpdateCustomerRequest->validated()) {
-            $message = $this->sendUpdateLogService->getSendToCustomerValidation($sendUpdateCustomerRequest->sendUpdateId);
+        $message = $this->sendUpdateLogService->getSendToCustomerValidation($sendUpdateCustomerRequest->sendUpdateId);
 
-            return response()->json([
-                'message' => $message,
-            ], 200);
-        }
+        return response()->json([
+            'message' => $message,
+        ], 200);
 
         return response()->json(['success' => false], 500);
     }
@@ -302,7 +336,7 @@ class SendUpdateLogController extends Controller
 
         $log = SendUpdateLogRepository::sendUpdateToCustomer($data);
 
-        if (isset($log->message) && ! empty($log->message)) {
+        if (! empty($log->message)) {
             vAbort($log->message);
         }
 

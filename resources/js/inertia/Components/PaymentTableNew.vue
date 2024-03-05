@@ -24,6 +24,10 @@ const props = defineProps({
     type: String,
     default: '',
   },
+  sendUpdateId: {
+    type: Number,
+    default: null,
+  },
 });
 
 const createPaymentModal = ref(false);
@@ -1243,7 +1247,8 @@ const addPayment = isValid => {
     captured_amount: paymentMethodsForm.amount,
     insurance_provider_id: providerId.value,
     new_payment_structure: true,
-    isInertia: true,   
+    isInertia: true,
+    send_update_id: props.sendUpdateId,
   };
 
   data.payment = {
@@ -1261,8 +1266,7 @@ const addPayment = isValid => {
     notes: paymentMethodsForm.notes,
     total_amount: totalAmount.value, // after discount calculation
     total_price: totalPrice.value, 
-    collection_date: paymentMethodsForm.collection_date,
-    discount_value: discountValue.value, // discount amount     
+    discount_value: discountValue.value, // discount amount
   };
 
   let splitPayments = [];

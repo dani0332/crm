@@ -436,7 +436,7 @@ class SendUpdateLogService
 
         $invoiceDescription = $insuranceProviderCode.'-'.$quoteType.'-'.$quote->policy_number;
 
-        if (in_array($sendUpdateLogCategory, [SendUpdateLogStatusEnum::EF])) {
+        if ($sendUpdateLogCategory == SendUpdateLogStatusEnum::EF) {
             $invoiceDescription = 'E.'.$invoiceDescription;
         } elseif (in_array($sendUpdateLogCategory, [SendUpdateLogStatusEnum::CI, SendUpdateLogStatusEnum::CIR])) {
             $invoiceDescription = 'CI.'.$invoiceDescription;
@@ -492,8 +492,8 @@ class SendUpdateLogService
             if ($requiredDocumentsCheck) {
                 return SendUpdateLogStatusEnum::SUC;
             }
-        } elseif (count($sendUpdateLog->details) > 0) { // Check if all booking details uploaded.
-            if ($requiredDocumentsCheck) {
+        } elseif ($sendUpdateLog->is_booking_filled) { // Check if all booking details uploaded.
+            if ($requiredDocuments) {
                 return SendUpdateLogStatusEnum::SUC;
             }
         }
@@ -513,5 +513,62 @@ class SendUpdateLogService
         }
 
         return '';
+    }
+
+    public function mergeBookingDetails($bookingDetails, $sendUpdateLog)
+    {
+        $data = [
+            'reversal_invoice' => $sendUpdateLog->reversal_invoice ?? null,
+            'booking_date' => $sendUpdateLog->booking_date,
+            'invoice_description' => $sendUpdateLog->invoice_description,
+            'broker_invoice_number' => $sendUpdateLog->broker_invoice_number,
+            'transaction_payment_status' => $sendUpdateLog->transaction_payment_status,
+            'invoice_date' => $sendUpdateLog->invoice_date,
+            'insurer_tax_invoice_number' => $sendUpdateLog->insurer_tax_invoice_number,
+            'insurer_commission_invoice_number' => $sendUpdateLog->insurer_commission_invoice_number,
+            'discount' => $sendUpdateLog->discount,
+            'commission_percentage' => $sendUpdateLog->commission_percentage,
+            'commission_vat_not_applicable' => $sendUpdateLog->commission_vat_not_applicable,
+            'vat_on_commission' => $sendUpdateLog->vat_on_commission,
+            'commission_vat_applicable' => $sendUpdateLog->commission_vat_applicable,
+            'total_commission' => $sendUpdateLog->total_commission,
+            'total_vat_amount' => $sendUpdateLog->total_vat_amount,
+            'price_vat_applicable' => $sendUpdateLog->price_vat_applicable,
+            'price_vat_not_applicable' => $sendUpdateLog->price_vat_not_applicable,
+            'total_price' => $sendUpdateLog->total_price,
+        ];
+
+        return array_merge($bookingDetails, $data);
+    }
+
+    public function isPaymentVisible($categoryCode, $optionCode): bool
+    {
+        if (! $optionCode) {
+            return false;
+        }
+        // categories in which we have to show manage payments.
+        $categories = [
+            SendUpdateLogStatusEnum::EF,
+            SendUpdateLogStatusEnum::CPD,
+        ];
+
+        // if below options are not selected then we have to show manage payments, these are related to Endorsement Financial.
+        $options = [
+            SendUpdateLogStatusEnum::MPC,
+            SendUpdateLogStatusEnum::MDOM,
+            SendUpdateLogStatusEnum::MDOV,
+            SendUpdateLogStatusEnum::ED,
+            SendUpdateLogStatusEnum::DM,
+        ];
+
+        return in_array($categoryCode, $categories) && ! in_array($optionCode, $options);
+    }
+
+    public function getSendUpdatePayments($sendUpdateLog)
+    {
+        $payments = $sendUpdateLog->payments;
+        $payments->load(['paymentSplits', 'paymentStatus', 'paymentMethod', 'insuranceProvider', 'paymentStatusLog', 'paymentSplits.paymentStatus', 'paymentSplits.documents']);
+
+        return $payments;
     }
 }
