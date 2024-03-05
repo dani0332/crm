@@ -892,20 +892,17 @@ const generateCCLink = async (code,splitPaymentId,paymentStatus) => {
   }
 };
 
-const isExportable = (payment, documents) =>{
+const isProformaPaymentRequestExportable = (payment, documents) =>{
     if(!documents) return true;
 
     let proformaPaymentRequestDocuments = documents.filter(doc => doc.document_type_text === 'Proforma Payment Request');
-    console.log('proformaPaymentRequestDocuments',proformaPaymentRequestDocuments);
     if(proformaPaymentRequestDocuments.length == 0) return true;
 
     proformaPaymentRequestDocuments.sort((a, b) => b.id - a.id);
-
     let latestProformaPaymentRequestDocument = proformaPaymentRequestDocuments[0];
 
     let paymentUpdateAt = moment(payment.updated_at);
     let latestProformaRequestDocumentCreatedAt = moment(latestProformaPaymentRequestDocument.created_at, 'DD-MM-YYYY HH:mm:s').format('YYYY-MM-DD HH:mm:ss');
-    console.log('paymentUpdateAt - latestProformaRequestDocumentCreatedAt',paymentUpdateAt , latestProformaRequestDocumentCreatedAt);
 
     return paymentUpdateAt.isAfter(latestProformaRequestDocumentCreatedAt);
 }
@@ -920,7 +917,8 @@ const downloadProformaPayment = () =>{
       });
       return;
     }
-    let exportProformaRequest = isExportable(props.proformaPayment, props.quoteRequest.documents);
+    /* Proforma Payment Request is exportable if payment's updated_at is greated then the lasted generated Proforma Payment pdf's created_at in quote documentes */
+    let exportProformaRequest = isProformaPaymentRequestExportable(props.proformaPayment, props.quoteRequest.documents);
     if (!exportProformaRequest) {
         notification.error({
             title: 'Please update the Payment details for this Proforma Request. ',
