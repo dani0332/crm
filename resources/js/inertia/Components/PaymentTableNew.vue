@@ -1691,12 +1691,12 @@ const providerName = computed(() => {
 });
 
 const providerId = computed(() => {
-  const plan = planDetail.value;  
+  const plan = planDetail.value;
   if (plan && plan.insurance_provider) {
     return plan.insurance_provider.id;
   } else if (plan && plan.provider_id) {
     return plan.provider_id;
-  }  else if (plan && plan.id) {
+  } else if (plan && plan.id) {
     return plan.id;
   }
   return null;
