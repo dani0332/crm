@@ -1216,7 +1216,7 @@ const validateCapturePayment = (isValid) => {
   return false;
 }
 
-const addPayment = isValid => {  
+const addPayment = isValid => {
   if(isCreditApprovalView.value === true && isDeclineClicked.value === false){
     if (validateCapturePayment(isValid)) return;
   } else if (paymentMethodsForm.status === 'view' && isApproveClicked.value) {
@@ -2018,7 +2018,7 @@ watch(() => props.quoteRequest, (newValue, oldValue) => {
           </div>
           <div>
           <x-tooltip>
-            <span class="border-b-2 border-dotted border-black text-sm">PROVIDER NAME</span>           
+            <span class="border-b-2 border-dotted border-black text-sm">PROVIDER NAME</span>
             <template #tooltip>
                 <span v-if="isFieldReadonly">{{ paymentTooltipEnum.PROVIDER_NAME_VIEW }}</span>
                 <span v-else >{{ paymentTooltipEnum.PROVIDER_NAME }}</span>
