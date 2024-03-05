@@ -9,6 +9,7 @@ import AdditionalContacts from '../PersonalQuote/Partials/AdditionalContacts.vue
 import PlanDetails from '../../Components/PlanDetails.vue';
 import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue';
 import PaymentTableNew from '../../Components/PaymentTableNew.vue';
+import MigratePayment from '../../Components/MigratePayment.vue';
 
 defineProps({
   quote: Object,
@@ -689,7 +690,12 @@ const linkEntity = () => {
       :quote="quote"
       :quoteType="quoteType"
     />
-
+    <MigratePayment
+      v-if="!isNewPaymentStructure"
+      :quoteId="quote.id"
+      :paymentCode = "quote.code"
+      :quoteType="quoteType"
+    />
     <PaymentTableNew
 			v-if="isNewPaymentStructure"
 			:quoteType="quoteType"

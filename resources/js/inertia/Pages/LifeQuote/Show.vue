@@ -3,6 +3,7 @@ import PaymentTableNew from '../../Components/PaymentTableNew.vue';
 import MemberDetails from "../../Components/MemberDetails.vue";
 import QuoteDocuments from '../PersonalQuote/Partials/QuoteDocuments';
 import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue';
+import MigratePayment from '../../Components/MigratePayment.vue';
 
 defineProps({
   quote: Object,
@@ -1063,6 +1064,13 @@ const linkEntity = () => {
       :quoteType="quoteType"
       :vatPrice="vatPercentage"
 
+    />
+
+<MigratePayment
+      v-if="!isNewPaymentStructure"
+      :quoteId="quote.id"
+      :paymentCode = "quote.code"
+      :quoteType="quoteType"
     />
 
     <PaymentTableNew
