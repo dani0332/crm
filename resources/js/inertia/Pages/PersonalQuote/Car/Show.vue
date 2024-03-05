@@ -8,6 +8,7 @@ import FollowUpReasons from './Partials/FollowUpReasons.vue';
 import RiskRatingScoreDetails from '../../../Components/RiskRatingScoreDetails.vue';
 import { onMounted, watch } from 'vue';
 import { reactive } from 'vue';
+import MigratePayment from './../../../Components/MigratePayment.vue';
 
 import {fileUploadErrorMessage} from "@/inertia/Composables/utilities.js";
 
@@ -3191,6 +3192,13 @@ const handlePlanSelected = plan => {
          missing @error="onPlanError" -->
       </x-modal>
     </div>
+
+    <MigratePayment
+      v-if="!isNewPaymentStructure"
+      :quoteId="record.id"
+      :paymentCode = "record.code"
+      :quoteType="quoteType"      
+    />    
 
     <PaymentTableNew 
 			v-if="isNewPaymentStructure"
