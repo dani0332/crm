@@ -8,7 +8,6 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\Log;
 
 class BridgerAMLJob implements ShouldQueue
 {
@@ -18,7 +17,7 @@ class BridgerAMLJob implements ShouldQueue
     public $timeout = 40;
     public $backoff = 360;
     private $payload;
-    private $quoteRequestID;
+    private $quoteDetails;
     private $quoteTypeID;
     private $customerType;
     private $bridgerAPIToken;
@@ -27,11 +26,11 @@ class BridgerAMLJob implements ShouldQueue
     /**
      * Create a new job instance.
      */
-    public function __construct($bridgerAPIToken, $payload, $quoteRequestID, $quoteTypeID, $customerType, $loginCustomerEmail)
+    public function __construct($bridgerAPIToken, $payload, $quoteDetails, $quoteTypeID, $customerType, $loginCustomerEmail)
     {
         $this->bridgerAPIToken = $bridgerAPIToken;
         $this->payload = $payload;
-        $this->quoteRequestID = $quoteRequestID;
+        $this->quoteDetails = $quoteDetails;
         $this->quoteTypeID = $quoteTypeID;
         $this->customerType = $customerType;
         $this->loginCustomerEmail = $loginCustomerEmail ?? '';
@@ -43,11 +42,17 @@ class BridgerAMLJob implements ShouldQueue
     public function handle(BridgerInsightService $bridgerInsightService): void
     {
         try {
-            info('AML Screening Bridger Job - AML Screening run with Code '.$this->payload['code'].' - Data : '.json_encode($this->payload).'. Triggered By:'.$this->loginCustomerEmail);
-            $bridgerInsightService->searchAMLResult($this->bridgerAPIToken, $this->payload, $this->quoteRequestID, $this->quoteTypeID, $this->customerType, $this->loginCustomerEmail);
+            $bridgerInsightService->searchAMLResult(
+                $this->bridgerAPIToken,
+                $this->payload,
+                $this->quoteDetails,
+                $this->quoteTypeID,
+                $this->customerType,
+                $this->loginCustomerEmail
+            );
+
         } catch (\Exception $exception) {
-            info('AML Screening Bridger Job Exception: '.$exception->getMessage());
-            Log::error($exception);
+            logger()->error('AML Screening Bridger Job Exception: '.$exception->getMessage());
         }
     }
 }

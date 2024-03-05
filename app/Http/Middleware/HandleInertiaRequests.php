@@ -197,9 +197,11 @@ class HandleInertiaRequests extends Middleware
                         ),
                 )
                 ->addIf(
-                    auth()->user()->hasAnyPermission(PermissionsEnum::HealthQuotesList,
+                    auth()->user()->hasAnyPermission(
+                        PermissionsEnum::HealthQuotesList,
                         PermissionsEnum::HEALTH_QUOTES_MANAGER_ACCESS,
-                        PermissionsEnum::HEALTH_QUOTES_ACCESS),
+                        PermissionsEnum::HEALTH_QUOTES_ACCESS
+                    ),
                     'Health Quotes',
                     '/quotes/health',
                     fn ($s) => $s->attributes(['icon' => 'health'])
@@ -258,7 +260,7 @@ class HandleInertiaRequests extends Middleware
         ])) {
             $nav = $nav->add('Car', '', function (Section $section) {
                 $section
-                    ->add('Valuation', '/valuation/calculatevaluation', fn ($s) => $s->attributes(['icon' => 'car']))
+                    ->add('Valuation', '/valuation', fn ($s) => $s->attributes(['icon' => 'car']))
                     ->add('Vehicle Depreciation', '/valuation/vehicledepreciation', fn ($s) => $s->attributes(['icon' => 'car']));
             });
         }
