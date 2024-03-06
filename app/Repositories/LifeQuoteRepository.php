@@ -2,6 +2,8 @@
 
 namespace App\Repositories;
 
+use App\Enums\CustomerTypeEnum;
+use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Facades\Capi;
@@ -79,11 +81,35 @@ class LifeQuoteRepository extends BaseRepository
             ->withQueryString();
     }
 
+    public function fetchExport()
+    {
+        return $this->with(['advisor', 'quoteStatus', 'nationality'])
+            ->filter()
+            ->withFakeLeadCriteria()
+            ->orderBy('created_at', 'desc');
+    }
+
     public function fetchGetBy($column, $value)
     {
         $quote = $this->where($column, $value)->with(['advisor', 'quoteStatus', 'nationality', 'previousAdvisor', 'lifeQuoteRequestDetail.lostReason',
-            'purposeOfInsurance', 'childern', 'currency', 'insuranceTenure', 'numberOfYears', 'maritalStatus',
-            'paymentStatus', 'customer.additionalContactInfo'])->firstOrFail();
+            'purposeOfInsurance', 'children', 'currency', 'insuranceTenure', 'numberOfYears', 'maritalStatus',
+            'paymentStatus', 'customer.additionalContactInfo', 'quoteRequestEntityMapping' => function ($entityMapping) {
+                $entityMapping->with('entity');
+            }])
+            ->with([
+                'documents' => function ($q) {
+                    $q->with('createdBy')->orderBy('created_at', 'desc');
+                },
+            ])
+            ->select([
+                'life_quote_request.*',
+                \DB::raw('IF(EXISTS (
+                    SELECT *
+                    FROM quote_request_entity_mapping
+                    WHERE quote_type_id = '.QuoteTypeId::Life.' AND quote_request_id = life_quote_request.id),
+                    "'.CustomerTypeEnum::Entity.'", "'.CustomerTypeEnum::Individual.'")
+                as customer_type'),
+            ])->firstOrFail();
 
         $data = ! empty($quote) ? $quote->toArray() : [];
         $quote->lost_reason = $data['quote_detail']['lost_reason']['text'] ?? null;
@@ -104,7 +130,7 @@ class LifeQuoteRepository extends BaseRepository
             'currency' => CurrencyTypeRepository::withActive()->get(),
             'purposeOfInsurance' => PurposeOfInsuranceRepository::withActive()->get(),
             'maritalStatus' => MaritalStatusRepository::withActive()->get(),
-            'childern' => LifeChildrenRepository::withActive()->get(),
+            'children' => LifeChildrenRepository::withActive()->get(),
             'typeOfInsurance' => LifeInsuranceTenureRepository::withActive()->get(),
             'numberOfYears' => LifeNumberOfYearsRepository::withActive()->get(),
 

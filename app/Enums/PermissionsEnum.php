@@ -96,6 +96,8 @@ final class PermissionsEnum extends Enum
     const VehicleDepreciationDelete = 'vehicle-depreciation-delete';
     const VehicleValuationList = 'vehicle-valuation-list';
     const AMLList = 'aml-list';
+    const AMLDecisionUpdate = 'aml-decision-update';
+    const AMLDecisionUpdateTrueMatch = 'aml-decision-update-true-match';
     const TeleMarketingList = 'telemarketing-list';
     const TeleMarketingCreate = 'telemarketing-create';
     const TeleMarketingEdit = 'telemarketing-edit';
@@ -218,6 +220,7 @@ final class PermissionsEnum extends Enum
     public const TeamThresholdView = 'team-allocation-threshold-view';
     public const CarRevivalQuoteList = 'carrevival-quotes-list';
     public const ViewTeamsFilters = 'view-teams-filters';
+    public const EXPORT_NO_CONTACTINFO = 'export-no-contactinfo';
     public const COMMERCIAL_KEYWORDS = 'admin-commercial-keywords';
     public const COMMERCIAL_KEYWORDS_SHOW = 'admin-commercial-keywords-show';
     public const COMMERCIAL_KEYWORDS_CREATE = 'admin-commercial-keywords-create';
@@ -235,6 +238,12 @@ final class PermissionsEnum extends Enum
     public const RENEWAL_BATCHES_EDIT = 'renewal-batches-edit';
     public const RENEWAL_BATCH_REPORT = 'renewal-batch-report';
     public const PAUSE_AUTO_FOLLOWUPS = 'pause-auto-followups';
+    const EmbeddedProductView = 'embedded-product-view';
+    public const EXPORT_PLAN_DETAIL = 'export-plan-detail';
+    public const EXPORT_LEADS_DETAIL_WITH_EMAIL_MOBILE = 'export-leads-detail-with-email-mobile';
+    public const EXPORT_MAKES_MODELS = 'export-makes-models';
+    public const HEALTH_QUOTES_MANAGER_ACCESS = 'health-quotes-manager-access';
+    public const HEALTH_QUOTES_ACCESS = 'health-quotes-access';
     public const LEGACY_INSTALLMENTS = 'legacy-installments';
     public const LEGACY_INVOICES = 'legacy-invoices';
     public const LEGACY_PAYMENTS = 'legacy-payments';

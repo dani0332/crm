@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Enums\quoteTypeCode;
+use App\Enums\TeamNameEnum;
 use App\Enums\TeamTypeEnum;
 use App\Enums\UserStatusEnum;
 use App\Events\UserStatusChanged;
@@ -16,7 +17,6 @@ use App\Services\CarAllocationService;
 use App\Services\HealthAllocationService;
 use App\Services\LeadAllocationService;
 use App\Traits\TeamHierarchyTrait;
-use DataTables;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 
@@ -54,13 +54,21 @@ class LeadAllocationController extends Controller
                     $unAvailableUsers++;
                 }
             }
-            if ($request->ajax()) {
-                return Datatables::of($data)
-                    ->addIndexColumn()
-                    ->make(true);
-            }
 
-            return view('user.lead-allocation', compact(['totalAssignedLeadCount', 'availableUsers', 'unAvailableUsers', 'isAutoAllocationWorking']));
+            $unAssignedGood = $this->leadAllocationService->getUnAssignedHealthQuotes(TeamNameEnum::RM_SPEED);
+            $unAssignedBest = $this->leadAllocationService->getUnAssignedHealthQuotes(TeamNameEnum::RM_NB);
+            $unAssignedEntryLevel = $this->leadAllocationService->getUnAssignedHealthQuotes(TeamNameEnum::EBP);
+
+            return inertia('LeadAllocation/Health', [
+                'totalAssignedLeadCount' => $totalAssignedLeadCount,
+                'availableUsers' => $availableUsers,
+                'unAvailableUsers' => $unAvailableUsers,
+                'isAutoAllocationWorking' => (int) $isAutoAllocationWorking,
+                'data' => $data,
+                'unAssignedGood' => $unAssignedGood,
+                'unAssignedBest' => $unAssignedBest,
+                'unAssignedEntryLevel' => $unAssignedEntryLevel,
+            ]);
         } else {
             abort(403, 'Unauthorized action.');
         }
@@ -134,45 +142,45 @@ class LeadAllocationController extends Controller
     {
         $updateLogString = '----- Update done successfully to change the';
 
-        $leadAllocationUser = LeadAllocation::where('user_id', $request->userId)->where('id', $request->id)->first();
-
-        if (isset($request->reason)) {
-
-            if ($request->reason != UserStatusEnum::OFFLINE && $request->reason != UserStatusEnum::ONLINE) {
-                $car = Team::where('type', TeamTypeEnum::PRODUCT)->where('name', quoteTypeCode::Car)->first();
-                $health = Team::where('type', TeamTypeEnum::PRODUCT)->where('name', quoteTypeCode::Health)->first();
-                if ($this->userHaveProduct($request->userId, $car->id)) {
-                    info('user belong to car so dispatching car reassignment job');
-                    dispatch(new ReAssignCarLeadsJob(app(CarAllocationService::class), $request->userId));
+        foreach ($request->all() as $item) {
+            $leadAllocationUser = LeadAllocation::where('user_id', $item['userId'])->where('id', $item['id'])->first();
+            if (isset($item['reason'])) {
+                if ($item['reason'] != UserStatusEnum::OFFLINE && $item['reason'] != UserStatusEnum::ONLINE) {
+                    $car = Team::where('type', TeamTypeEnum::PRODUCT)->where('name', quoteTypeCode::Car)->first();
+                    $health = Team::where('type', TeamTypeEnum::PRODUCT)->where('name', quoteTypeCode::Health)->first();
+                    if ($this->userHaveProduct($item['userId'], $car->id)) {
+                        info('user belong to car so dispatching car reassignment job');
+                        dispatch(new ReAssignCarLeadsJob(app(CarAllocationService::class), $item['userId']));
+                    }
+                    if ($this->userHaveProduct($item['userId'], $health->id)) {
+                        info('user belong to health so dispatching health reassignment job');
+                        dispatch(new ReAssignHealthLeadsJob(app(HealthAllocationService::class), $item['userId']));
+                    }
                 }
-                if ($this->userHaveProduct($request->userId, $health->id)) {
-                    info('user belong to health so dispatching health reassignment job');
-                    dispatch(new ReAssignHealthLeadsJob(app(HealthAllocationService::class), $request->userId));
+
+                $user = User::where('id', $item['userId'])->first();
+                if ($user) {
+                    $user->status = $item['reason'];
+                    info('user status is going to change on id : '.$user->id.' and status : '.$user->status);
+                    event(new UserStatusChanged($user->id, $user->status, $user->name));
+                    $user->save();
                 }
             }
 
-            $user = User::where('id', $request->userId)->first();
-            if ($user) {
-                $user->status = $request->reason;
-                info('user status is going to change on id : '.$user->id.' and status : '.$user->status);
-                event(new UserStatusChanged($user->id, $user->status, $user->name));
-                $user->save();
+            if (isset($item['is_available'])) {
+                $updateLogString = $updateLogString.' is_available to : '.$item['is_available'];
+                $leadAllocationUser->is_available = $item['is_available'];
             }
-        }
 
-        if (isset($request->is_available)) {
-            $updateLogString = $updateLogString.' is_available to : '.$request->is_available;
-            $leadAllocationUser->is_available = $request->is_available;
-        }
+            if (isset($item['team_type']) && $item['team_type'] == 'health' && isset($item['max_cap'])) {
+                $updateLogString = $updateLogString.' max_cap to : '.$item['max_cap'];
+                $leadAllocationUser->max_capacity = $item['max_cap'];
+            }
 
-        if (isset($request->team_type) && $request->team_type == 'health' && isset($request->max_cap)) {
-            $updateLogString = $updateLogString.' max_cap to : '.$request->max_cap;
-            $leadAllocationUser->max_capacity = $request->max_cap;
+            $leadAllocationUser->save();
+            $updateLogString = $updateLogString.' for user : '.$item['userId'].' and by user : '.auth()->user()->id.' ----- ';
+            info($updateLogString);
         }
-
-        $leadAllocationUser->save();
-        $updateLogString = $updateLogString.' for user : '.$request->aid.' and by user : '.auth()->user()->id.' ----- ';
-        info($updateLogString);
     }
 
     public function updateCaps(Request $request)
@@ -185,8 +193,17 @@ class LeadAllocationController extends Controller
                     $leadAllocationObj->save();
                     info('Updated max cap of user : '.$leadAllocationObj->leadAllocationUser->email.' to '.(int) $item['maxCap']);
                 }
-
             }
+        }
+    }
+
+    public function updateResetCapSwitch(Request $request)
+    {
+        if (isset($request->resetCap)) {
+            $leadAllocationObj = LeadAllocation::with(['leadAllocationUser'])->where('user_id', $request->userId)->first();
+            $leadAllocationObj->reset_cap = (int) $request->resetCap;
+            $leadAllocationObj->save();
+            info('Updated reset cap flag of user : '.$leadAllocationObj->leadAllocationUser->email.' to '.(int) $request->resetCap.' by user : '.auth()->user()->email);
         }
     }
 
@@ -194,14 +211,17 @@ class LeadAllocationController extends Controller
     {
         $this->applicationStorageService->updateLeadAllocationJobStatus();
     }
+
     public function toggleCarLeadAllocationJobStatus()
     {
         $this->applicationStorageService->updateCarLeadAllocationJobStatus();
     }
+
     public function toggleRenewalCarLeadAllocationStatus()
     {
         $this->applicationStorageService->updateRenewalCarLeadAllocationStatus();
     }
+
     public function toggleCarLeadFetchSequence()
     {
         $this->applicationStorageService->updateCarLeadFetchSequence();

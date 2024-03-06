@@ -3,6 +3,7 @@ defineProps({
   quotes: Object,
   leadStatuses: Array,
   advisors: Array,
+  teams: Object,
   userMaxCap: Number,
   todayAutoCount: Number,
   todayManualCount: Number,
@@ -58,6 +59,8 @@ const tableHeader = [
   { text: 'MEMBER CATEGORY', value: 'member_category_id_text' },
   { text: 'CURRENTLY INSURED WITH', value: 'currently_insured_with_id_text' },
   { text: 'IS ECOMMERCE', value: 'is_ecommerce' },
+  { text: 'Previous Policy Number', value: 'previous_quote_policy_number' },
+  { text: 'Renewal Batch', value: 'renewal_batch' },
 ];
 
 const filteredTableHeader = computed(() => {
@@ -84,6 +87,10 @@ const filters = reactive({
   is_ecommerce: '',
   is_renewal: '',
   page: 1,
+  previous_quote_policy_number: '',
+  renewal_batch: '',
+  assigned_to_date_start: '',
+  assigned_to_date_end: '',
 });
 
 const subTeamOptions = [
@@ -116,6 +123,36 @@ const advisorOptions = computed(() => {
     label: advisor.name,
   }));
 });
+
+const modifiedAdvisorOptions = ref([]);
+
+modifiedAdvisorOptions.value = advisorOptions.value;
+
+modifiedAdvisorOptions.value.push({
+  value: 'unassigned',
+  label: 'Unassigned',
+});
+
+// const subTeamsOptions = computed(() => {
+
+//     let subteamArray = page.props.teams?.map(team => ({
+//         value: team.name,
+//         label: team.name,
+//     }));
+
+//     subteamArray.push({ value: 'No-Type', label: 'No-Type' });
+
+//     return subteamArray;
+
+// });
+
+const subTeamsOptions = [
+  { value: 'RM-NB', label: 'RM-NB' },
+  { value: 'RM-SPEED', label: 'RM-SPEED' },
+  { value: 'EBP', label: 'EBP' },
+  { value: 'Wow-Call', label: 'Wow-Call' },
+  { value: 'No-Type', label: 'No-Type' },
+];
 
 function onSubmit(isValid) {
   if (isValid) {
@@ -322,11 +359,11 @@ onMounted(() => {
           :options="leadStatusOptions"
         />
         <ComboBox
-          v-if="!hasAnyRole([rolesEnum.RMAdvisor, rolesEnum.EBPAdvisor])"
+          v-if="!hasAnyRole([rolesEnum.RMAdvisor, rolesEnum.EBPAdvisor, rolesEnum.CarAdvisor])"
           v-model="filters.advisors"
           label="Advisor"
           placeholder="Search by Advisor"
-          :options="advisorOptions"
+          :options="modifiedAdvisorOptions"
         />
         <x-select
           v-model="filters.is_ecommerce"
@@ -351,13 +388,42 @@ onMounted(() => {
           class="w-full"
         />
         <x-select
-          v-if="!hasAnyRole([rolesEnum.RMAdvisor, rolesEnum.EBPAdvisor])"
+          v-if="!hasAnyRole([rolesEnum.RMAdvisor, rolesEnum.EBPAdvisor, rolesEnum.CarAdvisor])"
           v-model="filters.assignment_type"
           label="Assignment Type"
           name="assignment_type"
           :options="assignmentTypeOptions"
           placeholder="Please select assignment type"
           class="w-full"
+        />
+        <x-input
+          v-model="filters.previous_quote_policy_number"
+          type="text"
+          name="previous_quote_policy_number"
+          label="Previous Policy Number"
+          class="w-full"
+          placeholder="Search by Previous Policy Number"
+        />
+        <x-input
+          v-model="filters.renewal_batch"
+          type="text"
+          name="renewal_batch"
+          label="Renewal Batch"
+          class="w-full"
+          placeholder="Search by Renewal Batch"
+        />
+
+        <DatePicker
+            v-if="!hasAnyRole([rolesEnum.CarAdvisor])"
+            v-model="filters.assigned_to_date_start"
+            name="assigned_to_date_start"
+            label="Advisor Assigned Date Start"
+        />
+        <DatePicker
+            v-if="!hasAnyRole([rolesEnum.CarAdvisor])"
+            v-model="filters.assigned_to_date_end"
+            name="assigned_to_date_end"
+            label="Advisor Assigned Date End"
         />
       </div>
       <div class="flex justify-between gap-3 mb-4 mt-1">
@@ -366,7 +432,7 @@ onMounted(() => {
             v-if="canExport"
             size="sm"
             color="emerald"
-            :href="`/quotes/health-export?${objToUrl(filters)}`"
+            :href="`/health/leads-export?${objToUrl(filters)}`"
             class="justify-self-start"
           >
             Export
@@ -397,13 +463,7 @@ onMounted(() => {
               <x-select
                 v-model="assignForm.assign_team"
                 label="Assign Subteam"
-                :options="[
-                  { value: 'Wow-Call', label: 'Wow-Call' },
-                  { value: 'RM-NB', label: 'RM-NB' },
-                  { value: 'RM-SPEED', label: 'RM-SPEED' },
-                  { value: 'EBP', label: 'EBP' },
-                  { value: 'No-Type', label: 'No-Type' },
-                ]"
+                :options="subTeamsOptions"
                 placeholder="Select Subteam"
                 class="flex-1 w-auto"
                 :rules="[rules.isRequired]"

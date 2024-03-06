@@ -4,11 +4,6 @@ namespace App\Enums;
 
 use BenSampo\Enum\Enum;
 
-/**
- * @method static static OptionOne()
- * @method static static OptionTwo()
- * @method static static OptionThree()
- */
 class quoteTypeCode extends Enum
 {
     const Car = 'Car';
@@ -46,4 +41,5 @@ class quoteTypeCode extends Enum
     const Cycle = 'Cycle';
     const Jetski = 'Jetski';
     const Aml = 'Aml';
+    const TRA = 'TRA';
 }

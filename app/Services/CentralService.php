@@ -108,9 +108,9 @@ class CentralService
                     ((method_exists($repository, 'fetchCreateDuplicate') && ! checkPersonalQuotes(ucfirst($lob))) ? $repository::createDuplicate($dataArr) : PersonalQuoteRepository::createDuplicate($dataArr, ucfirst($lob))) :
                     Capi::request('/api/v1-save-'.strtolower($lob).'-quote', 'post', $dataArr);
 
-                if (isset($response->message) && str_contains($response->message, 'Error')) {
+                if (empty($response) || (isset($response->message) && str_contains($response->message, 'Error'))) {
                     $resp['errors'][] = 'Something went wrong while duplicating '.$lob.' quotes';
-                } elseif (isset($parentRecord->enquiryType) && $parentRecord->enquiryType == GenericRequestEnum::RECORD_PURPOSE) {
+                } elseif (isset($response->quoteUID) && isset($parentRecord->enquiryType) && $parentRecord->enquiryType == GenericRequestEnum::RECORD_PURPOSE) {
                     $record = $repository::where('uuid', $response->quoteUID)->first();
                     if ($record) {
                         $update = [
@@ -168,4 +168,35 @@ class CentralService
             }
         });
     }
+
+    public function loadAvailablePlans($type, $id)
+    {
+        $type = ucfirst($type);
+        switch ($type) {
+            case quoteTypeCode::Car:
+                return app(CarQuoteService::class)->getPlans($id);
+            case quoteTypeCode::Travel:
+                return app(TravelQuoteService::class)->sortedPlansList($id);
+            case quoteTypeCode::Health:
+                $listQuotePlans = [];
+                $quotePlans = app(HealthQuoteService::class)->getQuotePlans($id);
+                if (isset($quotePlans->message) && $quotePlans->message != '') {
+                    $listQuotePlans = [];
+                } else {
+                    if (gettype($quotePlans) != 'string') {
+                        $listQuotePlans[] = $quotePlans->quote->plans;
+                    }
+                }
+
+                return $listQuotePlans;
+            default:
+                return [];
+        }
+    }
+
+    public function savePlanDetails()
+    {
+
+    }
+
 }

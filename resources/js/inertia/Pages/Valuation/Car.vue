@@ -1,7 +1,6 @@
 <script setup>
 const props = defineProps({
   carMakes: Array,
-  kenPath: String,
 });
 
 const notification = useToast();
@@ -10,10 +9,8 @@ const { isRequired } = useRules();
 const carModels = ref([]);
 const carTrims = ref([]);
 const tableData = ref([]);
-const isloading = ref(false);
-const trimloading = ref(false);
 
-const loader = reactive({ table: false });
+const loader = reactive({ table: false, carModel: false, trimloading: false });
 
 const tableHeader = ref([
   { text: 'Provider', value: 'providerName' },
@@ -22,18 +19,38 @@ const tableHeader = ref([
   { text: 'Car Value Lower Limit', value: 'carValueLowerLimit' },
 ]);
 
-const valuationForm = reactive({
+const valuationForm = useForm({
   make_code: null,
-  modelId: '',
-  carTrim: '',
+  modelId: null,
+  carTrim: null,
   yearOfManufacture: new Date().getFullYear(),
 });
 
+const error = ref(false);
+
+const makeCodeError = computed(() => {
+  return (valuationForm.make_code == null && error.value) ?? false;
+});
+
+const carIdError = computed(() => {
+  return (valuationForm.modelId == null && error.value) ?? false;
+});
+
+const carTrimError = computed(() => {
+  return (valuationForm.carTrim == null && error.value) ?? false;
+});
+
 function onSubmit(isValid) {
-  if (isValid) {
+  if (
+    valuationForm.make_code == null ||
+    valuationForm.modelId == null ||
+    valuationForm.carTrim == null
+  )
+    error.value = true;
+  else {
     loader.table = true;
     axios
-      .post(`${props.kenPath}/get-vehicle-value`, {
+      .post(route('valuation.calculate'), {
         carModelDetailId: valuationForm.carTrim,
         yearOfManufacture: valuationForm.yearOfManufacture,
       })
@@ -55,7 +72,7 @@ function onSubmit(isValid) {
 }
 
 const getCarModel = e => {
-  isloading.value = true;
+  loader.carModel = true;
   axios
     .get(route('valuation.carmodels', { make_code: valuationForm.make_code }))
     .then(response => {
@@ -67,11 +84,11 @@ const getCarModel = e => {
         position: 'top',
       }),
     )
-    .finally(() => (isloading.value = false));
+    .finally(() => (loader.carModel = false));
 };
 
 function getCarTrim() {
-  trimloading.value = true;
+  loader.trimloading = true;
   axios
     .get(route('valuation.carmodeldetail', { modelId: valuationForm.modelId }))
     .then(response => {
@@ -83,13 +100,13 @@ function getCarTrim() {
         position: 'top',
       }),
     )
-    .finally(() => (trimloading.value = false));
+    .finally(() => (loader.trimloading = false));
 }
 
 const onReset = () => {
   valuationForm.make_code = null;
-  valuationForm.modelId = '';
-  valuationForm.carTrim = '';
+  valuationForm.modelId = null;
+  valuationForm.carTrim = null;
   valuationForm.yearOfManufacture = new Date().getFullYear();
 };
 </script>
@@ -102,21 +119,24 @@ const onReset = () => {
   <x-form @submit="onSubmit" :auto-focus="false">
     <div class="grid grid-cols-2 gap-4">
       <x-field label="Car Make" required>
-        <x-select
-          :rules="[isRequired]"
+        <ComboBox
+          :single="true"
+          v-model="valuationForm.make_code"
+          placeholder="Search by Car Make"
           :options="
             props.carMakes.map(item => ({
               value: item.code,
               label: item.text,
             }))
           "
-          v-model="valuationForm.make_code"
+          :rules="[isRequired]"
           @update:modelValue="getCarModel($event)"
-          class="w-full"
+          :hasError="makeCodeError"
         />
       </x-field>
       <x-field label="Car Model" required>
-        <x-select
+        <ComboBox
+          :single="true"
           v-model="valuationForm.modelId"
           :rules="[isRequired]"
           :options="
@@ -127,11 +147,12 @@ const onReset = () => {
           "
           class="w-full"
           @update:modelValue="getCarTrim($event)"
-          :loading="isloading"
+          :loading="loader.carModel"
+          :hasError="carIdError"
         />
       </x-field>
       <x-field label="Car Trim" required>
-        <x-select
+        <ComboBox
           v-model="valuationForm.carTrim"
           :rules="[isRequired]"
           :options="
@@ -140,7 +161,10 @@ const onReset = () => {
               label: item.text,
             }))
           "
+          :single="true"
           class="w-full"
+          :loading="loader.trimloading"
+          :hasError="carTrimError"
         />
       </x-field>
       <x-field label="Year Of Manufacture" required>

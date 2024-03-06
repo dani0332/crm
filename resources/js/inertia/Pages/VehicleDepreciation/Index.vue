@@ -3,12 +3,14 @@ const props = defineProps({
   data: Object,
 });
 
+const page = usePage();
 const loader = reactive({ table: false });
+
+const can = permission => useCan(permission);
+const permissionsEnum = page.props.permissionsEnum;
 
 const tableHeaders = ref([
   { text: 'Ref ID', value: 'id' },
-  { text: 'Car Make Id', value: 'car_make_text' },
-  { text: 'Car Model Id', value: 'car_model_id' },
   { text: 'Insurance Provider', value: 'ip_text' },
   { text: 'First Year', value: 'first_year' },
   { text: 'Second Year', value: 'second_year' },
@@ -27,7 +29,10 @@ const tableHeaders = ref([
   <div class="flex justify-between items-center">
     <h2 class="text-xl font-semibold">Vehical Depreciation</h2>
     <div class="space-x-3">
-      <Link :href="route('vehicledepreciation.create')">
+      <Link
+        v-if="can(permissionsEnum.VehicleDepreciationCreate)"
+        :href="route('vehicledepreciation.create')"
+      >
         <x-button size="sm" color="#ff5e00" tag="div">
           Create Vehical Depreciation
         </x-button>

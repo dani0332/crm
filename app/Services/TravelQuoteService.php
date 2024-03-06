@@ -2,23 +2,31 @@
 
 namespace App\Services;
 
+use App\Enums\CustomerTypeEnum;
 use App\Enums\DatabaseColumnsString;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypeId;
+use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Enums\TravelQuoteEnum;
 use App\Facades\Ken;
+use App\Models\CustomerMembers;
+use App\Models\InsuranceProvider;
 use App\Models\TravelMemberDetail;
 use App\Models\TravelQuote;
 use App\Models\TravelQuotePlan;
 use App\Models\TravelQuoteRequestDetail;
+use App\Repositories\CustomerMembersRepository;
 use App\Traits\AddPremiumAllLobs;
+use App\Traits\GenericQueriesAllLobs;
 use App\Traits\RolePermissionConditions;
 use Auth;
 use Carbon\Carbon;
 use DB;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use PDF;
 
 class TravelQuoteService extends BaseService
 {
@@ -26,6 +34,7 @@ class TravelQuoteService extends BaseService
     protected $leadAllocationService;
 
     use AddPremiumAllLobs;
+    use GenericQueriesAllLobs;
     use RolePermissionConditions;
 
     public function __construct(LeadAllocationService $leadAllocationService)
@@ -92,7 +101,27 @@ class TravelQuoteService extends BaseService
             'end_date',
             'direction_code',
             'coverage_code',
-            'tqr.primary_member_id'
+            'tqr.primary_member_id',
+            'tqr.risk_score',
+            'tqr.kyc_decision',
+            DB::raw('IF(EXISTS (
+                SELECT *
+                FROM quote_request_entity_mapping
+                WHERE quote_type_id = '.QuoteTypeId::Travel.' AND quote_request_id = tqr.id),
+                "'.CustomerTypeEnum::Entity.'", "'.CustomerTypeEnum::Individual.'")
+            as customer_type'),
+            'c.insured_first_name',
+            'c.insured_last_name',
+            'c.emirates_id_number',
+            'c.emirates_id_expiry_date',
+            'qrem.entity_id',
+            'ent.code as entity_code',
+            'ent.trade_license_no',
+            'ent.company_name',
+            'ent.company_address',
+            'qrem.entity_type_code',
+            'ent.industry_type_code',
+            'ent.emirate_of_registration_id'
         )
             ->leftJoin('travel_cover_for as tcf', 'tcf.id', '=', 'tqr.travel_cover_for_id')
             ->leftJoin('travel_quote_request_detail as tqrd', 'tqr.id', '=', 'tqrd.travel_quote_request_id')
@@ -105,7 +134,13 @@ class TravelQuoteService extends BaseService
             ->leftJoin('currently_located_in as cli', 'cli.id', '=', 'tqr.currently_located_in_id')
             ->leftJoin('nationality', 'nationality.id', '=', 'tqr.destination_id')
             ->leftJoin('travel_plan as tp', 'tp.id', '=', 'tqr.plan_id')
-            ->leftJoin('payment_status as ps', 'ps.id', '=', 'tqr.payment_status_id');
+            ->leftJoin('payment_status as ps', 'ps.id', '=', 'tqr.payment_status_id')
+            ->leftJoin('customer as c', 'tqr.customer_id', 'c.id')
+            ->leftJoin('quote_request_entity_mapping as qrem', function ($entityMappingJoin) {
+                $entityMappingJoin->on('qrem.quote_type_id', '=', DB::raw(QuoteTypeId::Travel));
+                $entityMappingJoin->on('qrem.quote_request_id', '=', 'tqr.id');
+            })
+            ->leftJoin('entities as ent', 'qrem.entity_id', '=', 'ent.id');
     }
 
     public function saveTravelQuote(Request $request)
@@ -162,6 +197,11 @@ class TravelQuoteService extends BaseService
 
         if ($request->uuid != null) {
             $travelQuote['quoteUID'] = $request->uuid;
+            $travelQuoteData = TravelQuote::where('uuid', $travelQuote['quoteUID'])->first();
+            $selectedColumns = ['id', 'gender', 'dob'];
+            $travelersMembers = CustomerMembersRepository::getMemberInfo('quote_id', $travelQuoteData->id, QuoteTypes::TRAVEL->name, CustomerTypeEnum::Individual, $selectedColumns);
+            $travelQuote['members'] = $travelersMembers;
+            $this->setQuoteUpdatedAt($travelQuoteData->id);
             $response = Ken::request('/get-revised-travel-quote-plans', 'post', $travelQuote);
 
             return $response;
@@ -268,24 +308,24 @@ class TravelQuoteService extends BaseService
         if (isset($request->assigned_to_date_start) && $request->assigned_to_date_start != '') {
             $dateFrom = $this->parseDate($request['assigned_to_date_start'], true);
             $dateTo = $this->parseDate($request['assigned_to_date_end'], false);
-            $this->query->whereBetween(DB::raw('DATE(tqrd.advisor_assigned_date)'), [$dateFrom, $dateTo]);
+            $this->query->whereBetween('tqrd.advisor_assigned_date', [$dateFrom, $dateTo]);
         }
         if (! empty($request->created_at) && ! empty($request->created_at_end)) {
             $dateFrom = $this->parseDate($request['created_at'], true);
             $dateTo = $this->parseDate($request['created_at_end'], true);
-            $this->query->whereBetween(DB::raw('DATE(tqr.created_at)'), [$dateFrom, $dateTo]);
+            $this->query->whereBetween('tqr.created_at', [$dateFrom, $dateTo]);
         }
 
         if (! empty($request->created_at_start) && ! empty($request->created_at_end)) {
             $dateFrom = date('Y-m-d 00:00:00', strtotime($request['created_at_start']));
             $dateTo = date('Y-m-d 23:59:59', strtotime($request['created_at_end']));
-            $this->query->whereBetween(DB::raw('DATE(tqr.created_at)'), [$dateFrom, $dateTo]);
+            $this->query->whereBetween('tqr.created_at', [$dateFrom, $dateTo]);
         }
 
         if (isset($request->next_followup_date) && $request->next_followup_date != '') {
             $dateFrom = $this->parseDate($request['next_followup_date'], true);
             $dateTo = $this->parseDate($request['next_followup_date_end'], true);
-            $this->query->whereBetween(DB::raw('DATE(hqrd.next_followup_date)'), [$dateFrom, $dateTo]);
+            $this->query->whereBetween('hqrd.next_followup_date', [$dateFrom, $dateTo]);
         }
 
         if (isset($request->code) && $request->code != '') {
@@ -341,6 +381,10 @@ class TravelQuoteService extends BaseService
             if ($request->is_ecommerce == quoteTypeCode::noText) {
                 $this->query->where('tqr.is_ecommerce', 0);
             }
+        }
+
+        if (isset($request->source) && $request->source != '') {
+            $this->query->where('tqr.source', $request->source);
         }
 
         foreach ($searchProperties as $item) {
@@ -518,6 +562,7 @@ class TravelQuoteService extends BaseService
         return [
             'id' => 'readonly|none',
             'code' => 'input|title',
+            'customer_type' => 'input|title',
             'first_name' => 'input|text|required',
             'last_name' => 'input|text|required',
             'email' => 'input|email|required',
@@ -629,6 +674,9 @@ class TravelQuoteService extends BaseService
             case 'parent_duplicate_quote_id':
                 $title = 'Parent Ref-ID';
                 break;
+            case 'customer_type':
+                $title = 'Customer Type';
+                break;
             default:
                 break;
         }
@@ -733,7 +781,14 @@ class TravelQuoteService extends BaseService
 
     public function getMembersDetail($id)
     {
-        return TravelMemberDetail::where('travel_quote_request_id', $id)->get();
+        return TravelMemberDetail::where('travel_quote_request_id', $id)->with('nationality', 'relation')->get();
+    }
+
+    public function getAboveAgeMembers($id)
+    {
+        return CustomerMembers::where('quote_id', $id)
+            ->where('quote_type', 'App\Models\TravelQuote')
+            ->whereDate('dob', '<=', now()->subYears(65))->count();
     }
 
     public function getDuplicateEntityByCode($code)
@@ -811,10 +866,86 @@ class TravelQuoteService extends BaseService
 
         return $listQuotePlans;
     }
+
+    public function sortedPlansList($id): array
+    {
+        $result = [];
+        $plans = $this->listQuotePlans($id);
+        $collection = collect($plans);
+
+        $seniorPlans = $collection->where('isSeniorPlan', true);
+        $normalPlans = $collection->where('isSeniorPlan', false);
+
+        $result['normalPlans'] = array_values($normalPlans->toArray());
+        $result['seniorPlans'] = array_values($seniorPlans->toArray());
+
+        return $result;
+    }
+
     public function listTravelQuotePlans($id)
     {
         $travelQuotePlans = TravelQuotePlan::where('travel_quote_request_id', $id)->first();
 
         return $travelQuotePlans;
+    }
+
+    public function updateManualPlansBulk($request)
+    {
+        if ($request->planIds && isset($request->toggle) && isset($request->quote_uuid)) {
+            $isDisabled = $request->toggle;
+            $plansArray = [];
+            foreach ($request->planIds as $planId) {
+                $apiArray = [
+                    'planId' => (int) $planId,
+                    'isDisabled' => filter_var($isDisabled, FILTER_VALIDATE_BOOLEAN),
+                ];
+                array_push($plansArray, $apiArray);
+            }
+
+            $dataArray = [
+                'quoteUID' => $request->quote_uuid,
+                'plans' => $plansArray,
+            ];
+            $response = Ken::request('/save-manual-travel-quote-plan', 'post', $dataArray);
+
+            return $response;
+        }
+
+    }
+
+    public function exportPlansPdf($quoteType, $data, $quotePlans = null)
+    {
+
+        $planIds = $data['plan_ids'];
+        $addons = (isset($data['addons'])) ? $data['addons'] : null;
+
+        $selectedPlanIds = isset($data['selectedPlanIds']) ? $data['selectedPlanIds'] : [];
+        $hasAdultAndSeniorMember = isset($data['hasAdultAndSeniorMember']) ? $data['hasAdultAndSeniorMember'] : false;
+        $quotePlans = $this->getQuotePlans($data['quote_uuid']);
+        if (! isset($quotePlans->quotes->plans)) {
+            return ['error' => 'Quote plans not available'];
+        }
+
+        $providerIds = collect($quotePlans->quotes->plans)->pluck('providerId')->toArray();
+        $providers = InsuranceProvider::whereIn('id', $providerIds)->get()->keyBy('id')->toArray();
+
+        $quote = $this->getQuoteObject($quoteType, $data['quote_uuid']);
+        $quote->load(['advisor' => function ($q) {
+            $q->select('id', 'email', 'mobile_no', 'name', 'landline_no', 'profile_photo_path');
+        }, 'customer']);
+        $pdf = PDF::setOption(['isHtml5ParserEnabled' => true, 'dpi' => 150])
+            ->loadView('pdf.travel_quote_plans', compact('quotePlans', 'planIds', 'quote', 'addons', 'providers', 'selectedPlanIds', 'hasAdultAndSeniorMember'));
+
+        // generate pdf with file name e.g. InsuranceMarket.ae™ Motor Insurance Comparison for Rahul.pdf
+        $pdfName = 'InsuranceMarket.ae™ Travel Insurance Comparison for '.$quote->first_name.' '.$quote->last_name.'.pdf';
+
+        return ['pdf' => $pdf, 'name' => $pdfName];
+
+    }
+    public function setQuoteUpdatedAt($id)
+    {
+        $travelQuote = TravelQuote::find($id);
+        $travelQuote->quote_updated_at = Carbon::now();
+        $travelQuote->save();
     }
 }

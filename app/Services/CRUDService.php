@@ -4,6 +4,8 @@ namespace App\Services;
 
 use App\Enums\GenericRequestEnum;
 use App\Enums\HealthTeamType;
+use App\Enums\Kyc;
+use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
@@ -23,6 +25,7 @@ use App\Models\QuoteStatusLog;
 use App\Models\QuoteType;
 use App\Models\User;
 use App\Traits\GenericQueriesAllLobs;
+use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -30,7 +33,7 @@ use Illuminate\Support\Facades\DB;
 
 class CRUDService extends BaseService
 {
-    use GenericQueriesAllLobs;
+    use GenericQueriesAllLobs, TeamHierarchyTrait;
 
     protected $healthQuoteService;
     protected $carQuoteService;
@@ -258,8 +261,10 @@ class CRUDService extends BaseService
             }
             $entity->save();
 
-            if (strtolower($request->modelType) == strtolower(quoteTypeCode::Car)
-                && $request->leadStatus == QuoteStatusEnum::CarSold || $request->leadStatus == QuoteStatusEnum::Uncontactable) {
+            if (
+                strtolower($request->modelType) == strtolower(quoteTypeCode::Car)
+                && $request->leadStatus == QuoteStatusEnum::CarSold || $request->leadStatus == QuoteStatusEnum::Uncontactable
+            ) {
                 if (! empty($request->car_lost_quote_log_id) && auth()->user()->hasRole(RolesEnum::MarketingOperations)) {
                     //perform approval or rejection
                     $carLostQuoteLog = CarLostQuoteLog::where([
@@ -323,10 +328,11 @@ class CRUDService extends BaseService
                 strtolower($request->modelType) == strtolower(quoteTypeCode::Health)
                 && in_array($entity->health_team_type, [HealthTeamType::EBP, HealthTeamType::RM_NB, HealthTeamType::RM_SPEED])
             ) {
+                if ($entity->quote_status_id == QuoteStatusEnum::FollowedUp && $entity->advisor_id) {
+                    CammyJob::dispatch($entity, 'intro');
+                }
                 if ($request->leadStatus == QuoteStatusEnum::Qualified && $entity->advisor_id) {
-                    //CammyJob::dispatch($entity, 'intro')->delay(now()->addSeconds(3));
-                    IntroEmailJob::dispatch(quoteTypeCode::Health, 'Capi', $entity->uuid, 'send-rm-intro-email', null, false)
-                        ->delay(now()->addSeconds(3));
+                    IntroEmailJob::dispatch(quoteTypeCode::Health, 'Capi', $entity->uuid, 'send-rm-intro-email', null, false);
                 } else {
                     SyncSIBContactJob::dispatch($entity);
                 }
@@ -334,9 +340,24 @@ class CRUDService extends BaseService
                 if (
                     $previousQuoteStatus == QuoteStatusEnum::FollowedUp && $request->leadStatus != QuoteStatusEnum::FollowedUp
                     || $previousQuoteStatus == QuoteStatusEnum::ApplicationPending && $request->leadStatus != QuoteStatusEnum::ApplicationPending
+                    || $request->leadStatus == QuoteStatusEnum::TransactionApproved
                 ) {
-                    //CammyJob::dispatch($entity, 'unsub');
+                    CammyJob::dispatch($entity, 'unsub');
                 }
+            }
+
+            // ========= assign renewal batch to HEALTH LOB leads upon transaction approved =========
+
+            if (strtolower($request->modelType) == strtolower(quoteTypeCode::Health) && $request->leadStatus == QuoteStatusEnum::TransactionApproved) {
+                $this->healthQuoteService->assignRenewalBatch($entity);
+                $this->updatePaymentStatus($entity);
+            }
+
+            // ========= END =========
+
+            if (strtolower($request->modelType) == strtolower(quoteTypeCode::Car)
+            && $request->leadStatus == QuoteStatusEnum::TransactionApproved) {
+                $this->updatePaymentStatus($entity);
             }
 
             QuoteStatusLog::create([
@@ -358,11 +379,22 @@ class CRUDService extends BaseService
     {
         $query = User::join('model_has_roles as mr', 'mr.model_id', '=', 'users.id')
             ->join('roles as r', 'r.id', '=', 'mr.role_id')
+            ->join('user_team as ut', 'ut.user_id', '=', 'users.id')
             ->select('users.id', DB::raw("CONCAT(users.name,' - ',r.name) AS name"));
         if (strtolower($modelType) == strtolower(quoteTypeCode::Car)) {
             $query->whereIn('r.name', [RolesEnum::CarAdvisor, RolesEnum::CarDeputyManager]);
         } elseif (strtolower($modelType) == strtolower(quoteTypeCode::Health)) {
-            $query->whereIn('r.name', [RolesEnum::RMAdvisor, RolesEnum::EBPAdvisor, RolesEnum::HealthRenewalAdvisor, RolesEnum::HealthNewBusinessAdvisor]);
+
+            if ((auth()->user()->hasAnyRole([RolesEnum::CarManager, RolesEnum::CarAdvisor])) &&
+                auth()->user()->hasAnyPermission(PermissionsEnum::HEALTH_QUOTES_ACCESS,
+                    PermissionsEnum::HEALTH_QUOTES_MANAGER_ACCESS)
+            ) {
+                $authUserTeamsId = $this->getUserTeams(auth()->id())->pluck('id')->toArray();
+                $query->whereIn('ut.team_id', $authUserTeamsId);
+                $query->whereIn('r.name', [RolesEnum::CarAdvisor, RolesEnum::CarDeputyManager]);
+            } else {
+                $query->whereIn('r.name', [RolesEnum::RMAdvisor, RolesEnum::EBPAdvisor, RolesEnum::HealthRenewalAdvisor, RolesEnum::HealthNewBusinessAdvisor]);
+            }
         } elseif (strtolower($modelType) == strtolower(quoteTypeCode::Business)) {
             $query->whereIn('r.name', [RolesEnum::CorpLineAdvisor, RolesEnum::CorpLineRenewalAdvisor, RolesEnum::CorpLineNewBusinessAdvisor, RolesEnum::GMRenewalAdvisor, RolesEnum::GMNewBusinessAdvisor]);
         } else {
@@ -531,6 +563,7 @@ class CRUDService extends BaseService
 
         return $genderOptions;
     }
+
     public function toggleSelection($data, $quoteTypeId)
     {
         $toggleData = [
@@ -543,43 +576,56 @@ class CRUDService extends BaseService
 
         return $response;
     }
+
     public function cancelPayment($request)
     {
         $embeddedProductOptionsIds = EmbeddedProductOption::where('embedded_product_id', $request->embedded_id)->pluck('id');
         $type = QuoteType::where('code', $request->modelType)->first();
-        $embededTransaction = EmbeddedTransaction::where('quote_request_id', $request->quote_id)
+
+        $embededTransaction = EmbeddedTransaction::with(['payments'])->where('quote_request_id', $request->quote_id)
             ->where('quote_type_id', $type->id)
+            ->where('is_selected', true)
             ->whereIn('product_id', $embeddedProductOptionsIds)
-            ->first();
-        if (isset($embededTransaction->payments[0])) {
-            $payment = $embededTransaction->payments[0];
-            $maxAmount = $payment->premium_captured - $payment->premium_refunded;
-            if ($maxAmount >= $request->amount) {
-                $paymentAction = new PaymentAction();
-                $paymentAction->payment_code = $embededTransaction->code; //$embededTransaction->code;
-                $paymentAction->is_fulfilled = 0;
-                $paymentAction->action_type = 'REFUND';
-                $paymentAction->reason = $request->reason;
-                $paymentAction->amount = $request->amount;
-                $paymentAction->created_by = auth()->user()->email;
+            ->get();
 
-                $paymentAction->save();
-                $data = [
-                    'uuid' => $request->uuid,
-                    'type_id' => $type->id,
-                    'code' => $embededTransaction->code,
+        if ($embededTransaction->isNotEmpty()) {
+            if (! empty($embededTransaction[0]['payments'][0])) {
+                $transaction = $embededTransaction[0];
 
-                ];
-                $processResponse = $this->processCancelPayment($data);
+                $payment = $transaction['payments'][0];
+                $maxAmount = $payment->premium_captured - $payment->premium_refunded;
 
-                return response($processResponse, 403);
+                if ($maxAmount >= $request->amount) {
+                    PaymentAction::create([
+                        'payment_code' => $transaction->code,
+                        'is_fulfilled' => 0,
+                        'action_type' => 'REFUND',
+                        'reason' => $request->reason,
+                        'amount' => $request->amount,
+                        'created_by' => auth()->user()->email,
+                        'is_manager_approved' => 1,
+
+                    ]);
+                    $data = [
+                        'uuid' => $request->uuid,
+                        'type_id' => $type->id,
+                        'code' => $transaction->code,
+
+                    ];
+                    $processResponse = $this->processCancelPayment($data);
+
+                    return response($processResponse, 200);
+                } else {
+                    return response(['Cancel amount should not exceeded from transaction amount'], 403);
+                }
             } else {
-                return response(['should not be maximum'], 403);
+                return response(['Payment not exist'], 403);
             }
         }
 
-        return response(['Payment not exist'], 403);
+        return response(['Transaction does not exist'], 403);
     }
+
     public function processCancelPayment($data)
     {
         $planData = [
@@ -595,5 +641,142 @@ class CRUDService extends BaseService
         $response = Marshall::request('/payment/checkout/cancel', 'post', $planData);
 
         return $response;
+    }
+
+    /*
+     * This function is just for checking AML Status.
+     */
+    public function checkAmlQuoteStatus($statusId)
+    {
+        if ($statusId == QuoteStatusEnum::AMLScreeningCleared) {
+            return 'No';
+        } elseif ($statusId == QuoteStatusEnum::AMLScreeningFailed) {
+            return 'Yes';
+        }
+
+        return '';
+    }
+
+    public function scoreBreakdown($quote, $type)
+    {
+        $scoreList = [];
+        $customerScore = 0;
+        if ($quote->payments->first() && isset($quote->customer)) {
+            $paymentTopScore = 0;
+            $paymentMethod = '';
+            $paymentAuthorized = 0;
+
+            foreach ($quote->payments as $payment) {
+                $currentScore = in_array(strtolower($payment->payment_methods_code), Kyc::PAYMENT_MODE_THREE_RATING) ? 3 : (in_array(strtolower($payment->payment_methods_code), Kyc::PAYMENT_MODE_TWO_RATING) ? 2 : 2);
+                if ($currentScore > $paymentTopScore) {
+                    $paymentTopScore = $currentScore;
+                    $paymentMethod = $payment->payment_methods_code;
+                }
+                if ($payment->premium_authorized != null) {
+                    $paymentAuthorized += $payment->premium_authorized;
+                }
+            }
+
+            if (isset($quote->customer->customerDetail)) {
+                $customerDetail = $quote->customer->customerDetail;
+                $jobScore = in_array(strtolower($customerDetail->job_title), Kyc::PROFESSION_THREE_RATING) ? 3 : (in_array(strtolower($customerDetail->job_title), Kyc::PROFESSION_TWO_RATING) ? 2 : 1);
+                $scoreList[] = ['score' => $jobScore, 'text' => 'Profession - Professional Job Title', 'value' => str_replace('-', ' ', $customerDetail->job_title)];
+                $customerScore += $jobScore;
+
+                // Nationality
+                if (isset($quote->customer->nationality)) {
+                    $nationalityScore = in_array(strtolower($quote->customer->nationality->country_name), Kyc::COUNTRY_NATIONALITY_FOUR_RATING) ? 4 : 1;
+                    $scoreList[] = ['score' => $nationalityScore, 'text' => 'Nationality', 'value' => $quote->customer->nationality->country_name];
+                    $customerScore += $nationalityScore;
+                }
+                // Product type
+                $customerScore += 1; // For products all product have 1
+                $scoreList[] = ['score' => 1, 'text' => 'Product -Insurance Type', 'value' => $type];
+
+                // Payment amount Transaction value / Premium (AED)
+                $paymentScore = ($paymentAuthorized >= 100001) ? 3 : (($paymentAuthorized >= 55001 && $paymentAuthorized <= 100000) ? 2 : 1);
+                $scoreList[] = ['score' => $paymentScore, 'text' => 'Transaction value / Premium (AED)', 'value' => $paymentAuthorized];
+                $customerScore += $paymentScore;
+                // payment mode
+                $customerScore += $paymentTopScore;
+                $scoreList[] = ['score' => $paymentTopScore, 'text' => 'Mode of Payment', 'value' => $paymentMethod];
+
+                $residentScore = in_array(strtolower($customerDetail->residential_status), Kyc::RESIDENT_STATUS_THREE_RATING) ? 3 : 1;
+                $scoreList[] = ['score' => $residentScore, 'text' => 'Resident Status', 'value' => preg_replace('/[A-Z]/', ' '.'$0', $customerDetail->residential_status)];
+                $customerScore += $residentScore;
+
+                $scoreList[] = ['score' => 1, 'text' => 'Transaction Volume', 'value' => 1];
+                $customerScore += 1; // payment volume for future use
+
+                $deliveryModeScore = in_array(strtolower($customerDetail->mode_of_delivery), Kyc::MODE_OF_DELIVERY_THREE_RATING) ? 3 : 1;
+                $scoreList[] = ['score' => $deliveryModeScore, 'text' => 'Mode Of Delivery', 'value' => Kyc::MODE_OF_DELIVERY[$customerDetail->mode_of_delivery]];
+                $customerScore += $deliveryModeScore;
+
+                $contactScore = in_array(strtolower($customerDetail->mode_of_contact), Kyc::MODE_OF_CONTACT_THREE_RATING) ? 3 : 1;
+                $scoreList[] = ['score' => $contactScore, 'text' => 'Mode Of Contact', 'value' => preg_replace('/[A-Z]/', ' '.'$0', $customerDetail->mode_of_contact)];
+                $customerScore += $contactScore;
+
+                $empScore = in_array(strtolower($customerDetail->employment_sector), Kyc::EMPLOYMENT_SECTOR_THREE_RATING) ? 3 : (in_array(strtolower($customerDetail->employment_sector), Kyc::EMPLOYMENT_SECTOR_TWO_RATING) ? 2 : 1);
+                $scoreList[] = ['score' => $empScore, 'text' => 'Employment Sector', 'value' => preg_replace('/[A-Z]/', ' '.'$0', $customerDetail->employment_sector)];
+                $customerScore += $empScore;
+
+                $tenScore = in_array(strtolower($customerDetail->customer_tenure), Kyc::TENURE_THREE_RATING) ? 3 : (in_array(strtolower($customerDetail->customer_tenure), Kyc::TENURE_TWO_RATING) ? 2 : 1);
+                $scoreList[] = ['score' => $tenScore, 'text' => 'Customer Tenure with IM', 'value' => $customerDetail->customer_tenure];
+                $customerScore += $tenScore;
+            }
+
+            return $scoreList;
+        }
+    }
+
+    public function calculateScore($quote)
+    {
+        if ($quote->payments->first() && isset($quote->customer)) {
+            $paymentTopScore = 0;
+            $paymentAuthorized = 0;
+            $customerScore = 0;
+            foreach ($quote->payments as $payment) {
+                $currentScore = in_array(strtolower($payment->payment_methods_code), Kyc::PAYMENT_MODE_THREE_RATING) ? 3 : (in_array(strtolower($payment->payment_methods_code), Kyc::PAYMENT_MODE_TWO_RATING) ? 2 : 2);
+                if ($currentScore > $paymentTopScore) {
+                    $paymentTopScore = $currentScore;
+                }
+                if ($payment->premium_authorized != null) {
+                    $paymentAuthorized += $payment->premium_authorized;
+                }
+            }
+            if (isset($quote->customer->nationality)) {
+                $customerScore = in_array(strtolower($quote->customer->nationality->country_name), Kyc::COUNTRY_NATIONALITY_FOUR_RATING) ? 4 : 1;
+            }
+            $customerScore += ($paymentAuthorized >= 100001) ? 3 : (($paymentAuthorized >= 55001 && $paymentAuthorized <= 100000) ? 2 : 1);
+            $customerScore += 1; // For products all product have 1
+            $customerScore += 1; // payment volume for future use
+            $customerScore += $paymentTopScore;
+
+            if (isset($quote->customer->customerDetail)) {
+                $customerDetail = $quote->customer->customerDetail;
+                if (isset($customerDetail)) {
+                    $customerScore += in_array(strtolower($customerDetail->job_title), Kyc::PROFESSION_THREE_RATING) ? 3 : (in_array(strtolower($customerDetail->job_title), Kyc::PROFESSION_TWO_RATING) ? 2 : 1);
+                    $customerScore += in_array(strtolower($customerDetail->residential_status), Kyc::RESIDENT_STATUS_THREE_RATING) ? 3 : 1;
+                    $customerScore += in_array(strtolower($customerDetail->mode_of_delivery), Kyc::MODE_OF_DELIVERY_THREE_RATING) ? 3 : 1;
+                    $customerScore += in_array(strtolower($customerDetail->mode_of_contact), Kyc::MODE_OF_CONTACT_THREE_RATING) ? 3 : 1;
+
+                    $customerScore += in_array(strtolower($customerDetail->employment_sector), Kyc::EMPLOYMENT_SECTOR_THREE_RATING) ? 3 : (in_array(strtolower($customerDetail->employment_sector), Kyc::EMPLOYMENT_SECTOR_TWO_RATING) ? 2 : 1);
+                    $customerScore += in_array(strtolower($customerDetail->customer_tenure), Kyc::TENURE_THREE_RATING) ? 3 : (in_array(strtolower($customerDetail->customer_tenure), Kyc::TENURE_TWO_RATING) ? 2 : 1);
+
+                    $quote->risk_score = $customerScore;
+                    $quote->save();
+                }
+            }
+        }
+    }
+
+    public function getInquiryLogs($modelType, $uuid)
+    {
+        $model = 'App\\Models\\'.$modelType.'Quote';
+        $quote = $model::where('uuid', $uuid)->with('duplicateInquiryLog')
+            ->whereHas('duplicateInquiryLog')
+            ->first();
+
+        return optional($quote)->duplicateInquiryLog;
     }
 }

@@ -2,7 +2,6 @@
 
 namespace App\Imports;
 
-use App\Jobs\MAWelcomeJob;
 use App\Models\Customer;
 use App\Models\QuoteCustomer;
 use App\Services\BerlinService;
@@ -85,14 +84,7 @@ class CustomersImport implements OnEachRow
                 $customerId = $newCustomer->id;
             }
 
-            $customer = Customer::find($customerId);
-            if ($this->inviatationEmail == 'on') {
-                if ($customer && $customer->is_we_sent == 0) {
-                    MAWelcomeJob::dispatch($customer->first_name, $customer->last_name, $customer->email, $customer->mobile_no, 'CORPORATE', 'corporate-myalfred-we');
-                }
-            }
-
-            $responseExtend = $this->berlinService->extendCustomerSubscription($customerId, $email);
+            $responseExtend = $this->berlinService->extendCustomerSubscription($customerId, $email, 'CORPORATE', 'corporate-myalfred-we');
             info('CustomersImport responseExtend: '.$responseExtend);
 
             $newQuoteCustomer = new QuoteCustomer();

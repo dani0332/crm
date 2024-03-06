@@ -390,7 +390,7 @@
 
     <div class="header">
         <div class="logo">
-            <img class="im-logo" src="{{public_path('images/im_logo.png')}}" />
+            <img class="im-logo" src="{{'data:image/png;base64,'.base64_encode(file_get_contents(getIMLogo(true)))}}" />
         </div>
         <h3>Your Tailor Made <br />Car Insurance Comparison Table</h3>
     </div>
@@ -524,9 +524,9 @@
                                 @if($feature['type'] == 'info')
 
                                     @if($feature['code'] == 'ancillaryExcess')
-                                        {!!  $plans[$planId]->{$feature['code']} ? ($plans[$planId]->{$feature['code']} . '%')  : 'N/A' !!}
+                                        {!!  $plans[$planId]->{$feature['code']} ? ($plans[$planId]->{$feature['code']} . '%')  : 'TBA' !!}
                                     @else
-                                        {!!  $plans[$planId]->{$feature['code']} ? formatAmount($plans[$planId]->{$feature['code']})  : 'N/A' !!}
+                                        {!!  $plans[$planId]->{$feature['code']} ? formatAmount($plans[$planId]->{$feature['code']})  : 'TBA' !!}
                                     @endif
 
                                 @elseif($feature['type'] == 'prop')

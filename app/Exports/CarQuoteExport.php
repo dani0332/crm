@@ -2,24 +2,16 @@
 
 namespace App\Exports;
 
-use Maatwebsite\Excel\Concerns\Exportable;
-use Maatwebsite\Excel\Concerns\FromQuery;
-use Maatwebsite\Excel\Concerns\ShouldAutoSize;
-use Maatwebsite\Excel\Concerns\WithHeadings;
-use Maatwebsite\Excel\Concerns\WithMapping;
+use App\Services\CarQuoteService;
+use App\Traits\ExcelExportable;
 
-class CarQuoteExport implements FromQuery, ShouldAutoSize, WithHeadings, WithMapping
+class CarQuoteExport
 {
-    use Exportable;
+    use ExcelExportable;
 
-    public function __construct($query)
+    public function collection()
     {
-        $this->query = $query;
-    }
-
-    public function query()
-    {
-        return $this->query;
+        return app(CarQuoteService::class)->getGridData()->get();
     }
 
     public function headings(): array
@@ -109,4 +101,5 @@ class CarQuoteExport implements FromQuery, ShouldAutoSize, WithHeadings, WithMap
             $quote->quote_link,
         ];
     }
+
 }

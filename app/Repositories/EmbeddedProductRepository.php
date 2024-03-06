@@ -39,7 +39,7 @@ class EmbeddedProductRepository extends BaseRepository
     }
 
     /**
-     * @param $quoteType
+     * @param    $quoteType
      * @return mixed
      */
     public function fetchCreate($data)
@@ -199,25 +199,28 @@ class EmbeddedProductRepository extends BaseRepository
         $ep->each(function ($item) use ($modelType, $quoteTypeId, $quoteRequestId) {
 
             $item->send_document_button = false;
+            $optionsIds = $item->prices->pluck('id');
+
+            $transaction = EmbeddedTransaction::where([
+                ['quote_type_id', '=', $quoteTypeId],
+                ['quote_request_id',  '=', $quoteRequestId],
+                ['is_selected',  '=', true],
+                ['payment_status_id',  '=', PaymentStatusEnum::CAPTURED],
+            ])->whereIn('product_id', $optionsIds)->get();
+
             if ($item->product_category == EpCategoryEnum::BOLT_ON) {
                 $quoteObject = $this->getQuoteObject($modelType, $quoteRequestId);
 
                 if ($quoteObject->payment_status_id == PaymentStatusEnum::CAPTURED) {
 
-                    $item->send_document_button = true;
-                }
-            } elseif ($item->product_category == EpCategoryEnum::STAND_ALONE) {
-                if ($item->prices) {
-                    $optionsIds = $item->prices->pluck('id');
-                    $transaction = EmbeddedTransaction::where([
-                        ['quote_type_id', '=', $quoteTypeId],
-                        ['quote_request_id',  '=', $quoteRequestId],
-                        ['is_selected',  '=', true],
-                        ['payment_status_id',  '=', PaymentStatusEnum::CAPTURED],
-                    ])->whereIn('product_id', $optionsIds)->get();
                     if ($transaction->isNotEmpty()) {
                         $item->send_document_button = true;
                     }
+                }
+            } elseif ($item->product_category == EpCategoryEnum::STAND_ALONE) {
+
+                if ($transaction->isNotEmpty()) {
+                    $item->send_document_button = true;
                 }
             }
         });
@@ -291,20 +294,22 @@ class EmbeddedProductRepository extends BaseRepository
             $certificate_number = $transaction[0]['certificate_number'];
             $premium = $transaction[0]['price_with_vat'];
         }
-        $viewData['name'] = $quoteObject->first_name.' '.$quoteObject->last_name;
-        $viewData['dob'] = isset($quoteObject->dob) ? Carbon::parse($quoteObject->dob)->format('Y-m-d') : null;
-        $viewData['date_of_enrollment'] = Carbon::now()->format('Y-m-d');
-        $viewData['type'] = $modelType;
-        $viewData['master_policy_number'] = 1234;
-        $viewData['certificate_number'] = $certificate_number;
-        $viewData['premium'] = $premium;
-        $pdf = PDF::setOption(['isHtml5ParserEnabled' => true, 'dpi' => 150])->loadView('pdf.ep_certificate', compact('viewData'));
-
-        $attachments[] = [
-            'Content' => base64_encode($pdf->output()),
-            'Name' => 'Salama_Certificate.pdf',
-            'ContentType' => 'application/pdf',
-        ];
+        // send certificate only for medex
+        if (strtoupper($short_code) == 'MDX') {
+            $viewData['name'] = $quoteObject->first_name.' '.$quoteObject->last_name;
+            $viewData['dob'] = isset($quoteObject->dob) ? Carbon::parse($quoteObject->dob)->format('Y-m-d') : null;
+            $viewData['date_of_enrollment'] = Carbon::now()->format('Y-m-d');
+            $viewData['type'] = $modelType;
+            $viewData['master_policy_number'] = 1234;
+            $viewData['certificate_number'] = $certificate_number;
+            $viewData['premium'] = $premium;
+            $pdf = PDF::setOption(['isHtml5ParserEnabled' => true, 'dpi' => 150])->loadView('pdf.ep_certificate', compact('viewData'));
+            $attachments[] = [
+                'Content' => base64_encode($pdf->output()),
+                'Name' => 'Salama_Certificate.pdf',
+                'ContentType' => 'application/pdf',
+            ];
+        }
 
         $body = json_encode([
             'From' => config('constants.MA_FROM_EMAIL'),
@@ -316,7 +321,8 @@ class EmbeddedProductRepository extends BaseRepository
             'TemplateModel' => [
                 'params' => [
                     'customerName' => $quoteObject->first_name.' '.$quoteObject->last_name,
-                    'isMedex' => true,
+                    // For MEDEX pass true else false
+                    'isMedex' => strtoupper($short_code) == 'MDX' ? true : false,
                     'productName' => $product_name,
                     'productDescription' => $product_description,
                     'advisor' => (object) $advisorData,
