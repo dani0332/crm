@@ -327,7 +327,6 @@ class AmtController extends Controller
             'sendUpdateLogs' => $sendUpdateLogs,
             'sendUpdateEnum' => $sendUpdateEnum,
             'hasPolicyIssuedStatus' => $hasPolicyIssuedStatus,
-            'paymentMethodsEnum' => PaymentMethodsEnum::asArray(),
 
         ]);
     }

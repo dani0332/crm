@@ -198,7 +198,6 @@ class LifeQuoteController extends Controller
             'paymentMethods' => (new LookupService())->getPaymentMethods(),
             'paymentTooltipEnum' => PaymentTooltip::asArray(),
             'paymentStatusEnum' => PaymentStatusEnum::asArray(),
-            'paymentMethodsEnum' => PaymentMethodsEnum::asArray(),
             'payments' => $payments,
             'insuranceProviders' => $insuranceProviders,
             'permissions' => [

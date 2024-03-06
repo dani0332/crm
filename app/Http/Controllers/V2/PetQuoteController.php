@@ -176,7 +176,6 @@ class PetQuoteController extends Controller
             'paymentStatusEnum' => PaymentStatusEnum::asArray(),
             'paymentTooltipEnum' => PaymentTooltip::asArray(),
             'record' => fn () => $quote,
-            'paymentMethodsEnum' => PaymentMethodsEnum::asArray(),
             'permissions' => [
                 'isQuoteDocumentEnabled' => $isQuoteDocumentEnabled,
             ],

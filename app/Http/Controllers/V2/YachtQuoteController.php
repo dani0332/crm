@@ -178,7 +178,6 @@ class YachtQuoteController extends Controller
             'sendUpdateLogs' => $sendUpdateLogs,
             'hasPolicyIssuedStatus' => $hasPolicyIssuedStatus,
             'sendUpdateEnum' => $sendUpdateEnum,
-            'paymentMethodsEnum' => PaymentMethodsEnum::asArray(),
         ]);
     }
 

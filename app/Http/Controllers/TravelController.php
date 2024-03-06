@@ -296,7 +296,6 @@ class TravelController extends Controller
             'sendUpdateOptions' => $sendUpdateOptions,
             'sendUpdateLogs' => $sendUpdateLogs,
             'hasPolicyIssuedStatus' => $hasPolicyIssuedStatus,
-            'paymentMethodsEnum' => PaymentMethodsEnum::asArray(),
         ]);
     }
 

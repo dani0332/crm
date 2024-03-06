@@ -318,7 +318,6 @@ class BusinessQuoteController extends Controller
             'sendUpdateLogs' => $sendUpdateLogs,
             'sendUpdateEnum' => $sendUpdateEnum,
             'hasPolicyIssuedStatus' => $hasPolicyIssuedStatus,
-            'paymentMethodsEnum' => PaymentMethodsEnum::asArray(),
             'quoteStatusEnum' => QuoteStatusEnum::asArray(),
         ]);
     }
