@@ -222,7 +222,7 @@ const rules = {
   isRequired: v => !!v || 'This field is required',
   isBankReferenceRequird: v => {
       if (paymentMethodsForm.collection_type === 'insurer'
-          && paymentMethodsModels.value[splitPaymentNo.value] === 'CHQ'
+          && paymentMethodsModels.value[splitPaymentNo.value] === page.props.paymentMethodsEnum?.Cheque
           && paymentMethodsForm.credit_approval != '') {
             return true;
       } else {
@@ -231,7 +231,7 @@ const rules = {
       return true;
   },
   reference: v => {
-    if (paymentMethodsForm.payment_method !== 'CC') {
+    if (paymentMethodsForm.payment_method !== page.props.paymentMethodsEnum?.CreditCard) {
       return !!v || 'This field is required';
     }
     return true;
@@ -289,7 +289,7 @@ const validatePaymentOption = () => {
       if(
         (paymentMethodsForm.frequency === 'monthly' || paymentMethodsForm.frequency === 'quarterly'
         || paymentMethodsForm.frequency === 'semi_annual' || paymentMethodsForm.frequency === 'custom')
-        && paymentMethodsModels.value[1]=='IP' && paymentMethodsForm.collection_type === 'insurer'
+        && paymentMethodsModels.value[1]== page.props.paymentMethodsEnum?.InsurerPayment && paymentMethodsForm.collection_type === 'insurer'
         ){
           if ((fileUploadModels.value[1]===undefined || fileUploadModels.value[1].length===0)) {
             isDocumentNotUploaded.value[1] = true;
@@ -299,15 +299,14 @@ const validatePaymentOption = () => {
         for (let i = 1; i <= paymentMethodsForm.payment_no; i++) {
           isDocumentNotUploaded.value[i] = false;
           if ( (
-            paymentMethodsModels.value[i]=='BT' || paymentMethodsModels.value[i]=='CHQ'
-            || paymentMethodsModels.value[i]=='PDC' || paymentMethodsModels.value[i]=='IP'
-            /*|| ( paymentMethodsForm.discount !== '' && i===1 && (paymentMethodsModels.value[i]=='CC' || paymentMethodsModels.value[i]=='CSH') )   */
+            paymentMethodsModels.value[i] == page.props.paymentMethodsEnum?.BankTransfer || paymentMethodsModels.value[i] == page.props.paymentMethodsEnum?.Cheque
+            || paymentMethodsModels.value[i] == page.props.paymentMethodsEnum?.PostDatedCheque || paymentMethodsModels.value[i] == page.props.paymentMethodsEnum?.InsurerPayment
             )
           && (fileUploadModels.value[i]===undefined || fileUploadModels.value[i].length===0)
           ) {
             isDocumentNotUploaded.value[i] = true;
             issueFound = true;
-          } else if (paymentMethodsModels.value[i]=='CA' && i===1  && (fileUploadModels.value[i]===undefined || fileUploadModels.value[i].length===0)) {
+          } else if (paymentMethodsModels.value[i] == page.props.paymentMethodsEnum?.CreditApproval && i===1  && (fileUploadModels.value[i]===undefined || fileUploadModels.value[i].length===0)) {
             isDocumentNotUploaded.value[i] = true;
             issueFound = true;
           }
@@ -386,7 +385,7 @@ const totalPayments = ref([
   { value: '1', label: '1'},
  ]);
 
- const paymentTypes = ref(props.paymentMethods.filter(item => !['CR_FAYAZ', 'CR_HITESH', 'CR_MAHESH', 'CR'].includes(item.value)));
+ const paymentTypes = ref(props.paymentMethods.filter(item => ![page.props.paymentMethodsEnum?.GMApproval, page.props.paymentMethodsEnum?.CMOApproval, page.props.paymentMethodsEnum?.COOApproval, page.props.paymentMethodsEnum?.Credit].includes(item.value)));
  paymentTypes.value.unshift({ value: '', label: 'Select Payment' });
 
 
@@ -487,7 +486,7 @@ const handleNoButtonChange = () => {
 
 const handlePaymentOptions = (count) => {
   isPaymentMetodNotSelected.value[count] = false;
-  if( paymentMethodsModels.value[count] === 'CHQ' || paymentMethodsModels.value[count] === 'PDC' ) {
+  if( paymentMethodsModels.value[count] === page.props.paymentMethodsEnum?.Cheque || paymentMethodsModels.value[count] === page.props.paymentMethodsEnum?.PostDatedCheque ) {
     isCheckDetailsEnabled.value[count] = true;
   } else {
     isCheckDetailsEnabled.value[count] = false;
@@ -547,17 +546,20 @@ const handleApprovalReasonChange = () => {
     paymentTypesFiltered.value = paymentTypesFiltered.value.filter(item => ![page.props.paymentMethodsEnum?.InsureNowPayLater, page.props.paymentMethodsEnum?.ProformaPaymentRequest, page.props.paymentMethodsEnum?.MultiplePayment,page.props.paymentMethodsEnum?.PartialPayment].includes(item.value));
     if (paymentMethodsForm.collection_type === 'insurer') {
       if (paymentMethodsForm.frequency === 'upfront'){
+          /*Add Proforma Payment Request to excluded Payment Methods if Payment frequency is  UpFront*/
         paymentTypesFiltered.value = paymentTypesFiltered.value.filter(item => ![page.props.paymentMethodsEnum?.PostDatedCheque, page.props.paymentMethodsEnum?.Cheque,page.props.paymentMethodsEnum?.Cash,page.props.paymentMethodsEnum?.CreditCard,page.props.paymentMethodsEnum?.BankTransfer].includes(item.value));
       }else if (paymentMethodsForm.frequency === 'split_payments' ){
-        /*Add Proforma Payment Request to excluded Payment Methods if Payment frequency is not UpFront*/
+        /*Add Proforma Payment Request to excluded Payment Methods if Payment frequency is split_payments*/
         paymentTypesFiltered.value = paymentTypesFiltered.value.filter(item => ![page.props.paymentMethodsEnum?.PostDatedCheque, page.props.paymentMethodsEnum?.ProformaPaymentRequest, page.props.paymentMethodsEnum?.Cheque,page.props.paymentMethodsEnum?.Cash,page.props.paymentMethodsEnum?.CreditCard,page.props.paymentMethodsEnum?.BankTransfer].includes(item.value));
       } else {
         paymentTypesFiltered.value = paymentTypesFiltered.value.filter(item => ![page.props.paymentMethodsEnum?.Cheque,page.props.paymentMethodsEnum?.Cash,page.props.paymentMethodsEnum?.CreditCard,page.props.paymentMethodsEnum?.BankTransfer].includes(item.value));
       }
     } else {
       if (paymentMethodsForm.frequency === 'upfront'){
+          /*Add Proforma Payment Request to excluded Payment Methods if Payment frequency is upfront*/
         paymentTypesFiltered.value = paymentTypesFiltered.value.filter(item => ![page.props.paymentMethodsEnum?.PostDatedCheque,page.props.paymentMethodsEnum?.InsurerPayment].includes(item.value));
       } else if (paymentMethodsForm.frequency === 'split_payments' ){
+          /*Add Proforma Payment Request to excluded Payment Methods if Payment frequency is split_payments*/
         paymentTypesFiltered.value = paymentTypesFiltered.value.filter(item => ![page.props.paymentMethodsEnum?.PostDatedCheque, page.props.paymentMethodsEnum?.ProformaPaymentRequest,page.props.paymentMethodsEnum?.InsurerPayment].includes(item.value));
       } else {
         paymentTypesFiltered.value = paymentTypesFiltered.value.filter(item => ![page.props.paymentMethodsEnum?.InsurerPayment].includes(item.value));
@@ -567,7 +569,7 @@ const handleApprovalReasonChange = () => {
       if ( readOnlyPayments.value[i] === true ) {
         continue;
       }
-      paymentMethodsModels.value[i] = 'CA';
+      paymentMethodsModels.value[i] = page.props.paymentMethodsEnum?.CreditApproval;
     }
   } else {
     if (isTotalPriceUpdated.value === false) {
