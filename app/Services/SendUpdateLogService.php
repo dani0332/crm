@@ -19,7 +19,6 @@ use App\Models\TravelQuote;
 use App\Models\YachtQuote;
 use App\Traits\GenericQueriesAllLobs;
 use App\Enums\DocumentTypeCode;
-use App\Enums\PaymentStatusEnum;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Models\Payment;
 use App\Repositories\InsuranceProviderRepository;
@@ -564,9 +563,6 @@ class SendUpdateLogService
 
     public function isPaymentVisible($categoryCode, $optionCode): bool
     {
-        if (! $optionCode) {
-            return false;
-        }
         // categories in which we have to show manage payments.
         $categories = [
             SendUpdateLogStatusEnum::EF,
@@ -601,5 +597,17 @@ class SendUpdateLogService
     public function updatesMoveToLead($sendUpdateLog, $quote)
     {
         dd("This function responsible to move updates to the Main lead");
+    }
+    
+    public function concatenatePaymentRef($sendUpdateLog): string
+    {
+        // for non Travel LOB.
+        if ($sendUpdateLog->category->code == SendUpdateLogStatusEnum::EF) {
+            return '-2';
+        } elseif ($sendUpdateLog->category->code == SendUpdateLogStatusEnum::CPD) {
+            return '-1';
+        }
+
+        return '';
     }
 }

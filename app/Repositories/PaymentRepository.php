@@ -7,6 +7,7 @@ use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
+use App\Enums\SendUpdateLogStatusEnum;
 use App\Interfaces\PaymentRepositoryInterface;
 use App\Models\Payment;
 use App\Models\PaymentSplits;
@@ -14,6 +15,7 @@ use App\Models\PaymentStatusLog;
 use App\Models\QuoteDocument;
 use App\Services\CRUDService;
 use App\Services\PaymentLinkService;
+use App\Services\SendUpdateLogService;
 use App\Services\SplitPaymentService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Support\Facades\Auth;
@@ -98,8 +100,9 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
             $count = $quoteModel->payments->count();
             $paymentInformation['code'] = ($count > 0) ? $quoteModel->code.'-'.$count : $quoteModel->code;
             if ($request->send_update_id) { // it will check if the payment is added from send update.
-                $paymentInformation['code'] .= '-1';
+                $paymentInformation['is_send_update'] = SendUpdateLogStatusEnum::IS_SEND_UPDATE;
                 $quoteModel = SendUpdateLogRepository::getLogById($request->send_update_id);
+                $paymentInformation['code'] .= app(SendUpdateLogService::class)->concatenatePaymentRef($quoteModel);
             }
 
             if ($masterPayment->reference) {
