@@ -1,6 +1,7 @@
 <script setup>
 import moment from 'moment';
 import ToolTip from './../Components/ToolTip.vue';
+import NProgress from 'nprogress'
 const notification = useNotifications('toast');
 const page = usePage();
 
@@ -944,8 +945,9 @@ const downloadProformaPayment = async () => {
     }
     if (props.proformaPayment) {
         try {
+            NProgress.start();
             const response = await axios.get(route('download.proforma.payment.request', [props.quoteType, props.quoteRequest.uuid ]));
-
+            NProgress.done();
             if (response.data.success) {
                 if(response.data?.proforma_request){
                     let proforma_request = response.data.proforma_request
