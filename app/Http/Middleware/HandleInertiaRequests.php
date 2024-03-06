@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\LeadSourceEnum;
+use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\quoteBusinessTypeCode;
@@ -74,6 +75,7 @@ class HandleInertiaRequests extends Middleware
             'pusherKey' => config('constants.VITE_PUSHER_APP_KEY'),
             'epLink' => config('constants.AFIA_WEBSITE_DOMAIN'),
             'vat' => ApplicationStorageEnums::VAT,
+            'paymentMethodsEnum' => PaymentMethodsEnum::asArray(),
             'im_logo' => getIMLogo(),
         ];
     }
