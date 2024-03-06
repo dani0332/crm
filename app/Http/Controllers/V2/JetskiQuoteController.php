@@ -4,6 +4,7 @@ namespace App\Http\Controllers\V2;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerTypeEnum;
+use App\Enums\PaymentMethodsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
@@ -149,6 +150,7 @@ class JetskiQuoteController extends Controller
             'sendUpdateLogs' => $sendUpdateLogs,
             'hasPolicyIssuedStatus' => $hasPolicyIssuedStatus,
             'sendUpdateEnum' => $sendUpdateEnum,
+            'paymentMethodsEnum' => PaymentMethodsEnum::asArray(),
         ]);
     }
 
