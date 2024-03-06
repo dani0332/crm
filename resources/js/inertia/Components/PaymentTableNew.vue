@@ -836,8 +836,8 @@ const handleFrequencyChange = (noPaymentUpdate=true) => {
     paymentMethodsForm.payment_no = '1';
   }
   calculatePaymentBreakup();
-  if (paymentMethodsModels.value[1]==='CC' && resetPaymentMethod){
-    paymentMethodsModels.value[1] = 'BT';
+  if (paymentMethodsModels.value[1] === page.props.paymentMethodsEnum?.CreditCard && resetPaymentMethod){
+    paymentMethodsModels.value[1] = page.props.paymentMethodsEnum?.BankTransfer;
   }
 };
 
