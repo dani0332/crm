@@ -1099,6 +1099,9 @@ const uploadFile = (doc, filesWithInfo) => {
           position: 'top',
         });
       },
+      onSuccess: () => {
+        leadStatusForm.leadStatus = page.props.record.quote_status_id;
+      },
       onFinish: () => {
         isUploading.value = false;
       },
