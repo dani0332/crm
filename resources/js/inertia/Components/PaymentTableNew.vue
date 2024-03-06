@@ -919,13 +919,13 @@ const downloadProformaPayment = async () => {
     }
     /* Proforma Payment Request is exportable if payment's updated_at is greated then the lasted generated Proforma Payment pdf's created_at in quote documentes */
     let exportProformaRequest = isProformaPaymentRequestExportable(props.proformaPayment, props.quoteRequest.documents);
-    /*if (!exportProformaRequest) {
+    if (!exportProformaRequest) {
         notification.error({
             title: 'Please update the Payment details for this Proforma Request. ',
             position: 'top',
         });
         return;
-    }*/
+    }
     if (totalPrice.value < 0 && planDetail.value) {
         errorMsg = 'Please update the Total Price in the Plan Details section.';
         if (quoteTypesToCheck.includes(props.quoteType)) {
@@ -945,12 +945,15 @@ const downloadProformaPayment = async () => {
             if (response.data.success) {
                 if(response.data?.proforma_request){
                     let proforma_request = response.data.proforma_request
+
                     const a = document.createElement("a");
                     a.href = props.storageUrl + proforma_request.doc_url;
                     a.download = proforma_request.original_name;
                     document.body.appendChild(a);
                     a.click();
+
                     document.body.removeChild(a);
+
                     notification.success({
                         title: 'Proforma payment request has been saved',
                         position: 'top',
@@ -959,9 +962,7 @@ const downloadProformaPayment = async () => {
                         title: 'File exported',
                         position: 'top',
                     });
-
                 }
-
             } else {
                 notification.error({
                     title: 'Proforma Payment Request Generation Failed',
