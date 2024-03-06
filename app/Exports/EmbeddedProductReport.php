@@ -10,7 +10,7 @@ class EmbeddedProductReport
 {
     use ExcelExportable;
 
-    private  $embeddedProduct;
+    private $embeddedProduct;
     private $filters;
 
     public function __construct(EmbeddedProduct $embeddedProduct, $filters)

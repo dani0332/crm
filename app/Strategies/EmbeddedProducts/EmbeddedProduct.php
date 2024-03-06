@@ -2,15 +2,16 @@
 
 namespace App\Strategies\EmbeddedProducts;
 
-use Exception;
-use Carbon\Carbon;
 use App\Traits\GenericQueriesAllLobs;
+use Carbon\Carbon;
+use Exception;
 
 class EmbeddedProduct
 {
     use GenericQueriesAllLobs;
 
-    public function getPDFData($quoteObject, $certificate_number, $premium) {
+    public function getPDFData($quoteObject, $certificate_number, $premium)
+    {
         throw new Exception('Method not implemented');
     }
 

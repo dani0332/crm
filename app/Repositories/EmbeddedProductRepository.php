@@ -10,13 +10,13 @@ use App\Models\EmbeddedProduct;
 use App\Models\EmbeddedTransaction;
 use App\Models\GenericDocument;
 use App\Models\QuoteType;
+use App\Strategies\EmbeddedProducts\EmbeddedProduct as EmbeddedProductStrategy;
+use App\Strategies\EmbeddedProducts\MDX;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use finfo;
 use Illuminate\Support\Facades\DB;
 use PDF;
-use App\Strategies\EmbeddedProducts\MDX;
-use App\Strategies\EmbeddedProducts\EmbeddedProduct as EmbeddedProductStrategy;
 
 class EmbeddedProductRepository extends BaseRepository
 {
@@ -404,7 +404,7 @@ class EmbeddedProductRepository extends BaseRepository
         $strategy = $this->createStrategy($ep->short_code);
         $dataset = $strategy->getTransactionData($dataset);
 
-        if (isset($filters['date_of_purchase']) && !empty($filters['date_of_purchase'])) {
+        if (isset($filters['date_of_purchase']) && ! empty($filters['date_of_purchase'])) {
             $dataset = $dataset->filter(function ($item) use ($filters) {
                 if (! empty($item['policy_issuance_date'])) {
                     $startDate = Carbon::parse($filters['date_of_purchase'][0])->startOfDay();
@@ -418,7 +418,7 @@ class EmbeddedProductRepository extends BaseRepository
             });
         }
 
-        if (isset($filters['email']) && !empty($filters['email'])) {
+        if (isset($filters['email']) && ! empty($filters['email'])) {
             $dataset = $dataset->filter(function ($item) use ($filters) {
                 if (! empty($item['email'])) {
                     $emailMatch = stripos($item['email'], $filters['email']) !== false;
@@ -430,7 +430,7 @@ class EmbeddedProductRepository extends BaseRepository
             });
         }
 
-        if (isset($filters['name']) && !empty($filters['name'])) {
+        if (isset($filters['name']) && ! empty($filters['name'])) {
             $dataset = $dataset->filter(function ($item) use ($filters) {
                 if (! empty($item['name'])) {
                     $nameParts = explode(' ', $item['name']);

@@ -144,7 +144,7 @@ class EmbeddedProductController extends Controller
         $filters = $request->all();
         $dataset = EmbeddedProductRepository::getSoldTransactionList($ep, $filters);
 
-        return inertia("EmbeddedProducts/Transactions", [
+        return inertia('EmbeddedProducts/Transactions', [
             'embeddedProduct' => [
                 'detail' => $ep,
                 'transactions' => $dataset,
@@ -158,6 +158,7 @@ class EmbeddedProductController extends Controller
     public function reportExport(EmbeddedProduct $ep, Request $request)
     {
         $filters = $request->all();
+
         return (new EmbeddedProductReport($ep, $filters))->download("Export-{$ep->short_code}-Report");
     }
 }
