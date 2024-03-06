@@ -7,7 +7,7 @@ const props = defineProps({
   policy: Object,
 });
 
-const skipFields = ['_id','email', 'phone', 'idcode', 'mobile_phone', 'profile_data','broker', 
+const skipFields = ['_id','email', 'phone', 'idcode', 'mobile_phone', 'profile_data','broker',
 'name','policy_no','policy_oid','insurer','start_date','end_date'];
 
 if(props.title == 'CUSTOMER') {
@@ -34,7 +34,7 @@ const formatLabel = (inputString) => {
         <tr>
           <td class="fixheight" colspan="2">
             <strong>{{ title }}</strong>
-          </td>          
+          </td>
         </tr>
 
         <tr v-for="(mainRecord, index) in legacy" :key="index">
@@ -84,7 +84,6 @@ const formatLabel = (inputString) => {
 
         <template v-if="title == 'QUOTE'">
           <tr><td colspan="2"></td></tr>
-          <tr><th>Additional Information</th><td>Test</td></tr>
           <tr v-for="(mainRecord, index) in policy.additional_information" :key="index">
             <template v-if="!skipFields.includes(index)">
               <th>{{ formatLabel(index) }}</th>
