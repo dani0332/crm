@@ -1,5 +1,6 @@
 <script setup>
 import ToolTip from './../Components/ToolTip.vue';
+import UpdateTotalPrice from './../Components/UpdateTotalPrice.vue';
 const notification = useNotifications('toast');
 const page = usePage();
 
@@ -789,7 +790,7 @@ const handleFrequencyChange = (noPaymentUpdate=true) => {
   isCustomReasonEnabled.value = false; 
   handleApprovalReasonChange();
 
-  for (let i = 1; i <= 12; i++) { // Append 7 more values to totalPayments
+  for (let i = 1; i <= 15; i++) { // Append 7 more values to totalPayments
     totalPayments.value.push({ value: i.toString(), label: i.toString() });
   }
   calculatePaymentBreakup();
@@ -808,7 +809,7 @@ const handleFrequencyChange = (noPaymentUpdate=true) => {
     if(noPaymentUpdate){
       paymentMethodsForm.payment_no = '2';
     }
-    totalPayments.value.splice(-7);
+    totalPayments.value.splice(-10);
     totalPayments.value.splice(0, 1);     
   } else if (paymentMethodsForm.frequency === 'custom') {
     isPaymentNoEnabled.value = true;
@@ -1731,7 +1732,14 @@ watch(() => props.quoteRequest, (newValue, oldValue) => {
   <div class="p-4 rounded shadow mb-6 bg-white">
     <div class="flex justify-between gap-4 items-center mb-4">
       <h3 class="font-semibold text-primary-800 text-lg">Manage Payments</h3>
-      <template v-if="payments.length>0">
+      <template v-if="payments.length>0">        
+        <UpdateTotalPrice
+          v-if="quoteRequest.quote_status_id === 15"
+          :quoteId="quoteRequest.id"
+          :paymentCode = "payments[0].code"
+          :quoteType="quoteType" 
+          :totalPrice="payments[0].total_price"     
+        />
         <x-button
             v-if="can(permissionEnum.PaymentsCreate)"
             size="sm"
