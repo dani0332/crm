@@ -1964,8 +1964,17 @@ watch(() => props.quoteRequest, (newValue, oldValue) => {
               <td>{{ formatString(splitPayment.payment_status.text) }}</td>
               <td>{{ splitPayment.payment_allocation_status !== null ? formatString(splitPayment.payment_allocation_status) : ''}}</td>
               <td>
-                <x-button size="xs" color="primary" @click="editPaymentModal(item,splitPayment.id,splitPayment.sr_no,0)" outlined >View</x-button>                
-                <x-button v-if="splitPayment.payment_method.code=='CC'" class="ml-2" size="xs" color="emerald"  @click.prevent="generateCCLink(splitPayment.code,splitPayment.sr_no,splitPayment.payment_status_id);" outlined >Copy Payment Link</x-button>                
+                <x-button size="xs" color="primary" @click="editPaymentModal(item,splitPayment.id,splitPayment.sr_no,0)" outlined >View</x-button>
+                <x-button
+                    v-if="splitPayment.payment_method.code === 'CC' || splitPayment.payment_method === 'CC'"
+                    class="ml-2"
+                    size="xs"
+                    color="emerald"
+                    @click.prevent="generateCCLink(splitPayment.code,splitPayment.sr_no,splitPayment.payment_status_id);"
+                    outlined
+                >
+                  Copy Payment Link
+                </x-button>
               </td>
             </tr>
           </template>
