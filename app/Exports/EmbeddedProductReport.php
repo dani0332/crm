@@ -6,7 +6,7 @@ use App\Models\EmbeddedProduct;
 use App\Repositories\EmbeddedProductRepository;
 use App\Traits\ExcelExportable;
 
-class MDXReport
+class EmbeddedProductReport
 {
     use ExcelExportable;
 

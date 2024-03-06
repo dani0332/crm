@@ -5,7 +5,6 @@ namespace App\Repositories;
 use App\Enums\EpCategoryEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteTypeId;
-use App\Factories\EmbeddedProductFactory;
 use App\Jobs\SendEPDocumentsJob;
 use App\Models\EmbeddedProduct;
 use App\Models\EmbeddedTransaction;
@@ -16,6 +15,8 @@ use Carbon\Carbon;
 use finfo;
 use Illuminate\Support\Facades\DB;
 use PDF;
+use App\Strategies\EmbeddedProducts\MDX;
+use App\Strategies\EmbeddedProducts\EmbeddedProduct as EmbeddedProductStrategy;
 
 class EmbeddedProductRepository extends BaseRepository
 {
@@ -351,7 +352,7 @@ class EmbeddedProductRepository extends BaseRepository
         $pdf = null;
         $certificatesConfig = config('embedded-products.certificates');
         if (isset($certificatesConfig[$short_code])) {
-            $strategy = EmbeddedProductFactory::createStrategy($short_code);
+            $strategy = $this->createStrategy($short_code);
             $viewData = $strategy->getPDFData($quoteObject, $certificate_number, $premium);
             $pdf = PDF::setOption(
                 [
@@ -400,10 +401,10 @@ class EmbeddedProductRepository extends BaseRepository
                 'quote_type.code as model_type',
             )->get();
 
-        $strategy = EmbeddedProductFactory::createStrategy($ep->short_code);
+        $strategy = $this->createStrategy($ep->short_code);
         $dataset = $strategy->getTransactionData($dataset);
 
-        if (isset($filters['date_of_purchase']) && ! empty($filters['date_of_purchase'])) {
+        if (isset($filters['date_of_purchase']) && !empty($filters['date_of_purchase'])) {
             $dataset = $dataset->filter(function ($item) use ($filters) {
                 if (! empty($item['policy_issuance_date'])) {
                     $startDate = Carbon::parse($filters['date_of_purchase'][0])->startOfDay();
@@ -417,7 +418,7 @@ class EmbeddedProductRepository extends BaseRepository
             });
         }
 
-        if (isset($filters['email']) && empty($filters['email'])) {
+        if (isset($filters['email']) && !empty($filters['email'])) {
             $dataset = $dataset->filter(function ($item) use ($filters) {
                 if (! empty($item['email'])) {
                     $emailMatch = stripos($item['email'], $filters['email']) !== false;
@@ -429,7 +430,7 @@ class EmbeddedProductRepository extends BaseRepository
             });
         }
 
-        if (isset($filters['name']) && empty($filters['name'])) {
+        if (isset($filters['name']) && !empty($filters['name'])) {
             $dataset = $dataset->filter(function ($item) use ($filters) {
                 if (! empty($item['name'])) {
                     $nameParts = explode(' ', $item['name']);
@@ -444,5 +445,18 @@ class EmbeddedProductRepository extends BaseRepository
         }
 
         return $dataset->values()->all();
+    }
+
+    public function createStrategy($shortCode)
+    {
+        $strategy = null;
+        $shortCode = strtoupper($shortCode);
+        if ($shortCode == 'MDX') {
+            $strategy = new MDX();
+        } else {
+            $strategy = new EmbeddedProductStrategy();
+        }
+
+        return $strategy;
     }
 }

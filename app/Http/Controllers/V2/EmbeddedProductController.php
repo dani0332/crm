@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\V2;
 
-use App\Exports\MDXReport;
+use App\Exports\EmbeddedProductReport;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\EmbeddedProducDocumentRequest;
 use App\Http\Requests\EmbeddedProductRequest;
@@ -127,8 +127,7 @@ class EmbeddedProductController extends Controller
      */
     public function reportsList()
     {
-        $config = config('embedded-products.reports');
-        $data = EmbeddedProductRepository::getData('all', array_keys($config));
+        $data = EmbeddedProductRepository::getData('all');
 
         return inertia('EmbeddedProducts/ReportsList', [
             'embeddedProducts' => $data,
@@ -144,10 +143,8 @@ class EmbeddedProductController extends Controller
     {
         $filters = $request->all();
         $dataset = EmbeddedProductRepository::getSoldTransactionList($ep, $filters);
-        $config = config('embedded-products.reports');
-        $viewFile = $config[strtoupper($ep->short_code)]['view_file'] ?? $ep->short_code;
 
-        return inertia("EmbeddedProducts/Reports/{$viewFile}", [
+        return inertia("EmbeddedProducts/Transactions", [
             'embeddedProduct' => [
                 'detail' => $ep,
                 'transactions' => $dataset,
@@ -161,7 +158,6 @@ class EmbeddedProductController extends Controller
     public function reportExport(EmbeddedProduct $ep, Request $request)
     {
         $filters = $request->all();
-
-        return (new MDXReport($ep, $filters))->download('Export-Medex-Report');
+        return (new EmbeddedProductReport($ep, $filters))->download("Export-{$ep->short_code}-Report");
     }
 }
