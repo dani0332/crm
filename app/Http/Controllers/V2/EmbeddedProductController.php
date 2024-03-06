@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\V2;
 
-use App\Enums\GenericRequestEnum;
 use App\Exports\MDXReport;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\EmbeddedProducDocumentRequest;
@@ -162,6 +161,7 @@ class EmbeddedProductController extends Controller
     public function reportExport(EmbeddedProduct $ep, Request $request)
     {
         $filters = $request->all();
+
         return (new MDXReport($ep, $filters))->download('Export-Medex-Report');
     }
 }
