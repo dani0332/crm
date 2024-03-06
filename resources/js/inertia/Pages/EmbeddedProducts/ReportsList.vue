@@ -1,5 +1,4 @@
 <script setup>
-import Breadcrumbs from '@/inertia/Components/Breadcrumbs.vue';
 
 defineProps({
   embeddedProducts: Object,
@@ -32,7 +31,13 @@ const tableHeader = [
 <template>
   <div>
     <Head title="Reports" />
-    <Breadcrumbs></Breadcrumbs>
+    <nav class="mb-4">
+        <ol class="flex gap-1">
+            <li> <Link :href="route('embedded-products.index')" class="text-sm border-b text-gray-500"><span> Embedded Products </span></Link> </li>
+            <li> <span class="text-gray-400">/</span> </li>
+            <li> <span class="text-sm font-semibold"> Reports </span> </li>
+        </ol>
+    </nav>
     <div class="flex justify-between items-center">
       <h2 class="text-xl font-semibold">Reports</h2>
     </div>
