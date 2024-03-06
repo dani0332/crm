@@ -366,6 +366,8 @@
     use App\Enums\PaymentMethodsEnum;
     use App\Enums\PaymentStatusEnum;
 
+    $dateFormat = config('constants.DATE_DISPLAY_FORMAT');
+
     $websitURL = config('constants.AFIA_WEBSITE_DOMAIN');
 
     $quoteType = $quote->quoteType;
@@ -377,7 +379,7 @@
 
     $proformaPaymentRequest = $quote->payments()->where('payment_methods_code', PaymentMethodsEnum::ProformaPaymentRequest)->first();
 
-    $invoiceDate = Carbon\Carbon::parse($proformaPaymentRequest->created_at)->format('d-m-Y');
+    $invoiceDate = Carbon\Carbon::parse($proformaPaymentRequest->created_at)->format($dateFormat);
 
     $customer = $quote->customer;
     $customerName =  ucwords($customer->first_name .' '. $customer->last_name);
