@@ -1546,104 +1546,6 @@ const handleSelectionChange = (tableType, selectedItems) => {
               </dt>
             </template>
           </div>
-        </dl>
-      </div>
-    </div>
-
-    <div class="p-4 rounded shadow mb-6 bg-white">
-      <div class="flex justify-between items-center mb-4">
-        <h3 class="font-semibold text-primary-800 text-lg">
-          {{
-            quote.customer_type == page.props.customerTypeEnum.Individual
-              ? 'Customer '
-              : 'Entity '
-          }}
-          Profile
-        </h3>
-        <x-tag color="success" v-if="quote.kyc_decision === 'Complete'"> KYC - Complete </x-tag>
-        <x-tag color="amber" v-else> KYC - Pending </x-tag>
-      </div>
-      <x-divider class="mb-4 mt-1" />
-      <x-form @submit="updateProfileDetails" :auto-focus="false">
-        <div class="text-sm">
-          <dl
-            v-if="
-              quote.customer_type === page.props.customerTypeEnum.Individual
-            "
-            class="grid md:grid-cols-2 gap-x-6 gap-y-4"
-          >
-            <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">FIRST NAME</dt>
-              <dd>{{ quote.first_name }}</dd>
-            </div>
-            <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">LAST NAME</dt>
-              <dd>{{ quote.last_name }}</dd>
-            </div>
-            <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">INSURED FIRST NAME</dt>
-              <dd>
-                <x-input
-                  v-model="customerProfileForm.insured_first_name"
-                  :rules="[isRequired]"
-                  placeholder="INSURED FIRST NAME"
-                  class="w-full"
-                  :disabled="!isProfileUpdateAllow"
-                />
-              </dd>
-            </div>
-            <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">INSURED LAST NAME</dt>
-              <dd>
-                <x-input
-                  v-model="customerProfileForm.insured_last_name"
-                  :rules="[isRequired]"
-                  placeholder="INSURED LAST NAME"
-                  class="w-full"
-                  :disabled="!isProfileUpdateAllow"
-                />
-              </dd>
-            </div>
-            <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">MOBILE NUMBER</dt>
-              <dd>{{ quote.mobile_no }}</dd>
-            </div>
-            <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">EMAIL</dt>
-              <dd>{{ quote.email }}</dd>
-            </div>
-            <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">NATIONALITY</dt>
-              <dd>{{ quote.nationality_id_text }}</dd>
-            </div>
-            <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">DATE OF BIRTH</dt>
-              <dd>{{ quote.dob }}</dd>
-            </div>
-            <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">EMIRATES ID NUMBER</dt>
-              <dd>
-                <x-input
-                  v-model="customerProfileForm.emirates_id_number"
-                  :rules="[isRequired]"
-                  placeholder="EMIRATES ID NUMBER"
-                  class="w-full"
-                  :disabled="!isProfileUpdateAllow"
-                />
-              </dd>
-            </div>
-            <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">EMIRATES ID EXPIRY DATE</dt>
-              <dd>
-                <DatePicker
-                  v-model="customerProfileForm.emirates_id_expiry_date"
-                  :rules="[isRequired]"
-                  placeholder="EMIRATES ID EXPIRY DATE"
-                  :disabled="!isProfileUpdateAllow"
-                  :min-date="new Date()"
-                />
-              </dd>
-            </div>
 
           <x-form @submit="updateProfileDetails" :auto-focus="false">
             <div class="text-sm">
@@ -1841,6 +1743,7 @@ const handleSelectionChange = (tableType, selectedItems) => {
         </template>
       </Collapsible>
     </div>
+    
     <x-modal v-model="getParentEntityModel" size="lg" show-close backdrop>
       <h3 class="font-semibold text-center text-lg mb-10">
         Search Entity by Parent Entity Trade License No
