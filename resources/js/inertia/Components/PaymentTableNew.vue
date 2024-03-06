@@ -497,20 +497,20 @@ const handlePaymentOptions = (count) => {
 const handleCollectionTypeChange = () => {
   //customize payment method based on collection type
   paymentTypesFiltered.value = paymentTypes.value;
-  let excludedPaymentTypes = ['IN_PL', 'CA', 'MP', 'PP'];
+  let excludedPaymentTypes = [page.props.paymentMethodsEnum?.InsureNowPayLater, page.props.paymentMethodsEnum?.CreditApproval, page.props.paymentMethodsEnum?.MultiplePayment, page.props.paymentMethodsEnum?.PartialPayment];
   if(paymentMethodsForm.frequency != 'upfront'){
       /*Add Proforma Payment Request to excluded Payment Methods if Payment frequency is not UpFront*/
-      excludedPaymentTypes.push('PPR');
+      excludedPaymentTypes.push(page.props.paymentMethodsEnum?.ProformaPaymentRequest);
   }else if(can(permissionEnum.ADD_PROFORMA_PAYMENT_REQUEST_DROPDOWN_OPTION) == false || props.quoteRequest.quote_status_id != page.props.quoteStatusEnum.ApplicationPending){
       /*Add Proforma Payment Request to excluded Payment Methods if Application is not at pending status or dont have ADD_PROFORMA_PAYMENT_REQUEST_DROPDOWN_OPTION permission */
-      excludedPaymentTypes.push('PPR');
+      excludedPaymentTypes.push(page.props.paymentMethodsEnum?.ProformaPaymentRequest);
   }
   paymentTypesFiltered.value = paymentTypesFiltered.value.filter(item => !excludedPaymentTypes.includes(item.value));
   if (paymentMethodsForm.collection_type === 'insurer') {
-    paymentTypesFiltered.value = paymentTypesFiltered.value.filter(item => !['CC', 'BT', 'CHQ', 'CSH'].includes(item.value));
-    paymentMethodsModels.value[1] = 'IP';
+    paymentTypesFiltered.value = paymentTypesFiltered.value.filter(item => ![page.props.paymentMethodsEnum?.CreditCard, page.props.paymentMethodsEnum?.BankTransfer, page.props.paymentMethodsEnum?.Cheque, page.props.paymentMethodsEnum?.Cash].includes(item.value));
+    paymentMethodsModels.value[1] = page.props.paymentMethodsEnum?.InsurerPayment;
   } else {
-    paymentTypesFiltered.value = paymentTypesFiltered.value.filter(item => !['IP'].includes(item.value));
+    paymentTypesFiltered.value = paymentTypesFiltered.value.filter(item => ![page.props.paymentMethodsEnum?.InsurerPayment].includes(item.value));
     paymentMethodsModels.value[1] = '';
   }
 };
@@ -525,11 +525,11 @@ const handlePaymentTypes = (count) => {
           paymentMethodsForm.frequency === 'custom'
         )
     ){
-    paymentTypesWithoutCheck =  paymentTypesFiltered.value.filter(item => !['CHQ','CC'].includes(item.value));
+    paymentTypesWithoutCheck =  paymentTypesFiltered.value.filter(item => ![page.props.paymentMethodsEnum?.Cheque,page.props.paymentMethodsEnum?.CreditCard].includes(item.value));
   }
 
   if(paymentMethodsForm.frequency === 'upfront' || paymentMethodsForm.frequency === 'split_payments' ){
-    paymentTypesWithoutCheck =  paymentTypesWithoutCheck.filter(item => !['PDC'].includes(item.value));
+    paymentTypesWithoutCheck =  paymentTypesWithoutCheck.filter(item => ![page.props.paymentMethodsEnum?.PostDatedCheque].includes(item.value));
   }
 
   return paymentTypesWithoutCheck;
@@ -544,23 +544,23 @@ const handleApprovalReasonChange = () => {
   //customize payment method based on collection type
   if(paymentMethodsForm.credit_approval !== ''){
     paymentTypesFiltered.value = paymentTypes.value;
-    paymentTypesFiltered.value = paymentTypesFiltered.value.filter(item => !['IN_PL', 'PPR', 'MP', 'PP'].includes(item.value));
+    paymentTypesFiltered.value = paymentTypesFiltered.value.filter(item => ![page.props.paymentMethodsEnum?.InsureNowPayLater, page.props.paymentMethodsEnum?.ProformaPaymentRequest, page.props.paymentMethodsEnum?.MultiplePayment,page.props.paymentMethodsEnum?.PartialPayment].includes(item.value));
     if (paymentMethodsForm.collection_type === 'insurer') {
       if (paymentMethodsForm.frequency === 'upfront'){
-        paymentTypesFiltered.value = paymentTypesFiltered.value.filter(item => !['PDC', 'CHQ','CSH','CC','BT'].includes(item.value));
+        paymentTypesFiltered.value = paymentTypesFiltered.value.filter(item => ![page.props.paymentMethodsEnum?.PostDatedCheque, page.props.paymentMethodsEnum?.Cheque,page.props.paymentMethodsEnum?.Cash,page.props.paymentMethodsEnum?.CreditCard,page.props.paymentMethodsEnum?.BankTransfer].includes(item.value));
       }else if (paymentMethodsForm.frequency === 'split_payments' ){
         /*Add Proforma Payment Request to excluded Payment Methods if Payment frequency is not UpFront*/
-        paymentTypesFiltered.value = paymentTypesFiltered.value.filter(item => !['PDC', 'PPR', 'CHQ','CSH','CC','BT'].includes(item.value));
+        paymentTypesFiltered.value = paymentTypesFiltered.value.filter(item => ![page.props.paymentMethodsEnum?.PostDatedCheque, page.props.paymentMethodsEnum?.ProformaPaymentRequest, page.props.paymentMethodsEnum?.Cheque,page.props.paymentMethodsEnum?.Cash,page.props.paymentMethodsEnum?.CreditCard,page.props.paymentMethodsEnum?.BankTransfer].includes(item.value));
       } else {
-        paymentTypesFiltered.value = paymentTypesFiltered.value.filter(item => !['CHQ','CSH','CC','BT'].includes(item.value));
+        paymentTypesFiltered.value = paymentTypesFiltered.value.filter(item => ![page.props.paymentMethodsEnum?.Cheque,page.props.paymentMethodsEnum?.Cash,page.props.paymentMethodsEnum?.CreditCard,page.props.paymentMethodsEnum?.BankTransfer].includes(item.value));
       }
     } else {
       if (paymentMethodsForm.frequency === 'upfront'){
-        paymentTypesFiltered.value = paymentTypesFiltered.value.filter(item => !['PDC','IP'].includes(item.value));
+        paymentTypesFiltered.value = paymentTypesFiltered.value.filter(item => ![page.props.paymentMethodsEnum?.PostDatedCheque,page.props.paymentMethodsEnum?.InsurerPayment].includes(item.value));
       } else if (paymentMethodsForm.frequency === 'split_payments' ){
-        paymentTypesFiltered.value = paymentTypesFiltered.value.filter(item => !['PDC', 'PPR','IP'].includes(item.value));
+        paymentTypesFiltered.value = paymentTypesFiltered.value.filter(item => ![page.props.paymentMethodsEnum?.PostDatedCheque, page.props.paymentMethodsEnum?.ProformaPaymentRequest,page.props.paymentMethodsEnum?.InsurerPayment].includes(item.value));
       } else {
-        paymentTypesFiltered.value = paymentTypesFiltered.value.filter(item => !['IP'].includes(item.value));
+        paymentTypesFiltered.value = paymentTypesFiltered.value.filter(item => ![page.props.paymentMethodsEnum?.InsurerPayment].includes(item.value));
       }
     }
     for (let i = 1; i <= paymentMethodsForm.payment_no; i++) {
