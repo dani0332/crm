@@ -273,8 +273,6 @@ class QuoteDocumentController extends Controller
             return redirect()->back()->with('message', $response['error']);
         }
 
-        $pdf = $response['pdf'];
-
-        return $pdf->download($response['name']);
+        return response()->json(['success' => true, 'proforma_request' => $response]);
     }
 }

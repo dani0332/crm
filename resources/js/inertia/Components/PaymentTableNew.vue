@@ -907,28 +907,28 @@ const isProformaPaymentRequestExportable = (payment, documents) =>{
     return paymentUpdateAt.isAfter(latestProformaRequestDocumentCreatedAt);
 }
 
-const downloadProformaPayment = () =>{
+const downloadProformaPayment = async () => {
     let errorMsg = '';
     if (props.paymentStatusEnum.PAID == props.proformaPayment?.payment_status_id) {
-      errorMsg = props.paymentTooltipEnum.PAYMENT_MANAGEMENT_NO_ACTION_ALLOWED_TO_PAID_PAYMENTS;
-      notification.error({
-        title: errorMsg,
-        position: 'top',
-      });
-      return;
+        errorMsg = props.paymentTooltipEnum.PAYMENT_MANAGEMENT_NO_ACTION_ALLOWED_TO_PAID_PAYMENTS;
+        notification.error({
+            title: errorMsg,
+            position: 'top',
+        });
+        return;
     }
     /* Proforma Payment Request is exportable if payment's updated_at is greated then the lasted generated Proforma Payment pdf's created_at in quote documentes */
     let exportProformaRequest = isProformaPaymentRequestExportable(props.proformaPayment, props.quoteRequest.documents);
-    if (!exportProformaRequest) {
+    /*if (!exportProformaRequest) {
         notification.error({
             title: 'Please update the Payment details for this Proforma Request. ',
             position: 'top',
         });
         return;
-    }
-    if (totalPrice.value < 0 && planDetail.value)  {
+    }*/
+    if (totalPrice.value < 0 && planDetail.value) {
         errorMsg = 'Please update the Total Price in the Plan Details section.';
-        if(quoteTypesToCheck.includes(props.quoteType)) {
+        if (quoteTypesToCheck.includes(props.quoteType)) {
             errorMsg = 'Please select a plan.';
         }
         notification.error({
@@ -937,30 +937,45 @@ const downloadProformaPayment = () =>{
         });
         return;
     }
-    console.log('props.proformaPayment',props.proformaPayment.code);
-    if(props.proformaPayment){
-        router.visit(route('download.proforma.payment.request', [props.quoteType, props.quoteRequest.uuid ]),{
-            onProgress: progress => {
-                console.log('progress',progress);
+    console.log('props.proformaPayment', props.proformaPayment.code);
+    if (props.proformaPayment) {
+        try {
+            const response = await axios.get(route('download.proforma.payment.request', [props.quoteType, props.quoteRequest.uuid ]));
 
-            },
-            onSuccess: async () => {
+            if (response.data.success) {
+                if(response.data?.proforma_request){
+                    let proforma_request = response.data.proforma_request
+                    const a = document.createElement("a");
+                    a.href = props.storageUrl + proforma_request.doc_url;
+                    a.download = proforma_request.original_name;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    notification.success({
+                        title: 'Proforma payment request has been saved',
+                        position: 'top',
+                    });
+                    notification.success({
+                        title: 'File exported',
+                        position: 'top',
+                    });
+
+                }
+
+            } else {
                 notification.error({
-                    title: 'Proforma payment request has been saved',
+                    title: 'Proforma Payment Request Generation Failed',
                     position: 'top',
                 });
-                notification.error({
-                    title: 'File exported',
-                    position: 'top',
-                });
-            },
-            onFinish: visit => {
-                // This won't be called until doThing()
-                // and doAnotherThing() have finished.
-            },
-        });
+            }
+        } catch (err) {
+            notification.error({
+                title: 'Proforma Payment Request Generation Failed',
+                position: 'top',
+            });
+        }
         return;
-    }else{
+    } else {
         errorMsg = 'No Proforma Payment found';
         notification.error({
             title: errorMsg,
@@ -968,7 +983,6 @@ const downloadProformaPayment = () =>{
         });
         return;
     }
-
 };
 
 const showMessages = () => {
