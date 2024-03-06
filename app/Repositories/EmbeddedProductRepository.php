@@ -404,7 +404,7 @@ class EmbeddedProductRepository extends BaseRepository
         $strategy = EmbeddedProductFactory::createStrategy($ep->short_code);
         $dataset = $strategy->getTransactionData($dataset);
 
-        if (!empty($filters['date_of_purchase'])) {
+        if (isset($filters['date_of_purchase']) && !empty($filters['date_of_purchase'])) {
             $dataset = $dataset->filter(function ($item) use ($filters) {
                 if (!empty($item['policy_issuance_date'])) {
                     $startDate = Carbon::parse($filters['date_of_purchase'][0])->startOfDay();
@@ -417,7 +417,7 @@ class EmbeddedProductRepository extends BaseRepository
             });
         }
 
-        if (empty($filters['email'])) {
+        if (isset($filters['email']) && empty($filters['email'])) {
             $dataset = $dataset->filter(function ($item) use ($filters) {
                 if (!empty($item['email'])) {
                     $emailMatch = stripos($item['email'], $filters['email']) !== false;
@@ -428,7 +428,7 @@ class EmbeddedProductRepository extends BaseRepository
             });
         }
 
-        if (empty($filters['name'])) {
+        if (isset($filters['name']) && empty($filters['name'])) {
             $dataset = $dataset->filter(function ($item) use ($filters) {
                 if (!empty($item['name'])) {
                     $nameParts = explode(' ', $item['name']);
