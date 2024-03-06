@@ -563,20 +563,10 @@ class SendUpdateLogService
     public function getSendUpdatePayments($sendUpdateLog)
     {
         $payments = $sendUpdateLog->payments;
-        $payments->load(['paymentSplits', 'paymentStatus', 'paymentMethod', 'insuranceProvider', 'paymentStatusLog', 'paymentSplits.paymentStatus', 'paymentSplits.documents']);
-
-        return $payments;
-    }
-
-    public function concatenatePaymentRef($sendUpdateLog): string
-    {
-        // for non Travel LOB.
-        if ($sendUpdateLog->category->code == SendUpdateLogStatusEnum::EF) {
-            return '-2';
-        } elseif ($sendUpdateLog->category->code == SendUpdateLogStatusEnum::CPD) {
-            return '-1';
+        if ($payments) {
+            $payments->load(['paymentSplits', 'paymentStatus', 'paymentMethod', 'insuranceProvider', 'paymentStatusLog', 'paymentSplits.paymentStatus', 'paymentSplits.documents']);
         }
 
-        return '';
+        return $payments;
     }
 }
