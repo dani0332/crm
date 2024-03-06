@@ -8,7 +8,7 @@ abstract class EmbeddedProduct
 {
     use GenericQueriesAllLobs;
 
-    abstract function getPDFData($quoteObject, $certificate_number, $premium);
+    abstract public function getPDFData($quoteObject, $certificate_number, $premium);
 
-    abstract function getTransactionData($dataset);
+    abstract public function getTransactionData($dataset);
 }

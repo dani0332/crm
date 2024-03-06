@@ -24,7 +24,6 @@ class EmbeddedProduct extends Model
         'company_documents',
         'is_active',
     ];
-
     protected $appends = ['canGenerateCerticate'];
 
     public function insuranceProvider()
@@ -45,7 +44,7 @@ class EmbeddedProduct extends Model
     /**
      * Scope the query to only include active reward details.
      *
-     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
      */
     public function ScopeActive($query)
     {
@@ -54,14 +53,12 @@ class EmbeddedProduct extends Model
 
     /**
      * Determine if the embedded product can generate a certificate.
-     *
-     * @return bool
      */
     protected function getCanGenerateCerticateAttribute(): bool
     {
         $certificatesConfig = config('embedded-products.certificates');
         $shortCode = strtoupper($this->short_code);
-        if(isset($certificatesConfig[$shortCode])) {
+        if (isset($certificatesConfig[$shortCode])) {
             return true;
         }
 

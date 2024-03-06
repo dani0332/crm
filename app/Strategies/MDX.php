@@ -9,15 +9,15 @@ class MDX extends EmbeddedProduct
     /**
      * Retrieves the PDF data for a quote object.
      *
-     * @param object $quoteObject
-     * @param string $certificateNumber
-     * @param float $premium
+     * @param  object  $quoteObject
+     * @param  string  $certificateNumber
+     * @param  float  $premium
      * @return array
      */
     public function getPDFData($quoteObject, $certificateNumber, $premium)
     {
         $data = [
-            'name' => $quoteObject->first_name . ' ' . $quoteObject->last_name,
+            'name' => $quoteObject->first_name.' '.$quoteObject->last_name,
             'dob' => isset($quoteObject->dob) ? Carbon::parse($quoteObject->dob)->format('m/d/Y') : '',
             'emirates_id' => $quoteObject->customer->emirates_id_number ?? '',
             'plan_type' => 'Individual',
@@ -28,7 +28,7 @@ class MDX extends EmbeddedProduct
             'plan_beneficiary' => 'As per Shari’ah',
             'policy_insurance_date' => isset($quoteObject->policy_issuance_date) ? Carbon::parse($quoteObject->policy_issuance_date)->format('m/d/Y') : '',
         ];
-        $data['contribution_amount'] = $data['plan_currency'] . " {$premium}  (Including VAT) Per Annum";
+        $data['contribution_amount'] = $data['plan_currency']." {$premium}  (Including VAT) Per Annum";
 
         return $data;
     }
@@ -36,7 +36,6 @@ class MDX extends EmbeddedProduct
     /**
      * Retrieves sold transaction data from a dataset.
      *
-     * @param $dataset
      * @return array
      */
     public function getTransactionData($dataset)
@@ -50,7 +49,7 @@ class MDX extends EmbeddedProduct
             $carMake = $quoteObject->carMake->text ?? '';
             $carModel = $quoteObject->carModel->text ?? '';
             $age = isset($quoteObject->dob) ?
-                Carbon::parse($quoteObject->dob)->diffInYears(Carbon::now()) . ' Years'
+                Carbon::parse($quoteObject->dob)->diffInYears(Carbon::now()).' Years'
                 : '';
             $planStartDate = isset($quoteObject->policy_start_date) ? Carbon::parse($quoteObject->policy_start_date)->format('m/d/Y') : '';
             $planEndDate = '';
@@ -65,13 +64,13 @@ class MDX extends EmbeddedProduct
                 'plan_start_date' => $planStartDate,
                 'plan_end_date' => $planEndDate,
                 'certificate_number' => $item->certificate_number ?? '',
-                'name' => $quoteObject->first_name . ' ' . $quoteObject->last_name,
+                'name' => $quoteObject->first_name.' '.$quoteObject->last_name,
                 'dob' => isset($quoteObject->dob) ? Carbon::parse($quoteObject->dob)->format('m/d/Y') : '',
                 'age' => $age,
-                'vehicle' => $carMake . ' ' . $carModel,
+                'vehicle' => $carMake.' '.$carModel,
                 'contact_number' => $quoteObject->mobile_no ?? '',
                 'email' => $quoteObject->email ?? '',
-                'contribution_amount' => 'AED ' . $item->price_with_vat . '/-',
+                'contribution_amount' => 'AED '.$item->price_with_vat.'/-',
                 'status' => $status,
                 'policy_issuance_date' => $quoteObject->policy_issuance_date ?? '',
                 'emirates_id_number' => $customer->emirates_id_number ?? '',

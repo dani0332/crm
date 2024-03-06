@@ -3,13 +3,14 @@
 namespace App\Exports;
 
 use App\Models\EmbeddedProduct;
+use App\Repositories\EmbeddedProductRepository;
 use App\Traits\ExcelExportable;
 use Maatwebsite\Excel\Concerns\FromCollection;
-use App\Repositories\EmbeddedProductRepository;
 
 class MDXReport implements FromCollection
 {
     use ExcelExportable;
+
     protected $embeddedProduct;
     protected $filters;
 

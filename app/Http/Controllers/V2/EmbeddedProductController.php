@@ -2,14 +2,14 @@
 
 namespace App\Http\Controllers\V2;
 
-use App\Exports\MDXReport;
-use Illuminate\Http\Request;
-use App\Models\EmbeddedProduct;
 use App\Enums\GenericRequestEnum;
+use App\Exports\MDXReport;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\EmbeddedProducDocumentRequest;
 use App\Http\Requests\EmbeddedProductRequest;
+use App\Models\EmbeddedProduct;
 use App\Repositories\EmbeddedProductRepository;
+use Illuminate\Http\Request;
 
 class EmbeddedProductController extends Controller
 {
@@ -139,8 +139,6 @@ class EmbeddedProductController extends Controller
     /**
      * Report transactions for an embedded product.
      *
-     * @param EmbeddedProduct $ep
-     * @param Request $request
      * @return \Inertia\Response
      */
     public function reportTransactions(EmbeddedProduct $ep, Request $request)
@@ -160,14 +158,11 @@ class EmbeddedProductController extends Controller
 
     /**
      * Export a report for the given EmbeddedProduct and request filters.
-     *
-     * @param  EmbeddedProduct  $ep
-     * @param  Request  $request
-     * @return
      */
     public function reportExport(EmbeddedProduct $ep, Request $request)
     {
         $filters = $request->all();
+
         return (new MDXReport($ep, $filters))->download(ucfirst(GenericRequestEnum::EXPORT_MDX_REPORT));
     }
 }

@@ -5,13 +5,13 @@ namespace App\Repositories;
 use App\Enums\EpCategoryEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteTypeId;
+use App\Factories\EmbeddedProductFactory;
 use App\Jobs\SendEPDocumentsJob;
 use App\Models\EmbeddedProduct;
 use App\Models\EmbeddedTransaction;
 use App\Models\GenericDocument;
 use App\Models\QuoteType;
 use App\Traits\GenericQueriesAllLobs;
-use App\Factories\EmbeddedProductFactory;
 use Carbon\Carbon;
 use finfo;
 use Illuminate\Support\Facades\DB;
@@ -106,7 +106,7 @@ class EmbeddedProductRepository extends BaseRepository
             $query = $query->active();
         }
 
-        if(!empty($shortcodes)) {
+        if (! empty($shortcodes)) {
             $query = $query->whereIn('short_code', $shortcodes);
         }
 
@@ -301,7 +301,7 @@ class EmbeddedProductRepository extends BaseRepository
         }
         // send certificate only for medex
         $pdf = $this->getPDF($short_code, $quoteObject, $certificate_number, $premium);
-        if($pdf) {
+        if ($pdf) {
             $attachments[] = [
                 'Content' => base64_encode($pdf->output()),
                 'Name' => 'Salama_Certificate.pdf',
@@ -336,10 +336,10 @@ class EmbeddedProductRepository extends BaseRepository
     /**
      * Retrieves the PDF certificate for a specific product.
      *
-     * @param string $short_code
-     * @param object $quoteObject
-     * @param string $certificate_number
-     * @param float $premium
+     * @param  string  $short_code
+     * @param  object  $quoteObject
+     * @param  string  $certificate_number
+     * @param  float  $premium
      * @return \PDF|null The PDF document or null if the short code is not defined in config.
      */
     private function getPDF(
@@ -350,7 +350,7 @@ class EmbeddedProductRepository extends BaseRepository
     ) {
         $pdf = null;
         $certificatesConfig = config('embedded-products.certificates');
-        if(isset($certificatesConfig[$short_code])) {
+        if (isset($certificatesConfig[$short_code])) {
             $strategy = EmbeddedProductFactory::createStrategy($short_code);
             $viewData = $strategy->getPDFData($quoteObject, $certificate_number, $premium);
             $pdf = PDF::setOption(
@@ -368,8 +368,7 @@ class EmbeddedProductRepository extends BaseRepository
     /**
      * Fetches the sold transaction list for a given EmbeddedProduct and optional filters.
      *
-     * @param EmbeddedProduct $ep
-     * @param array $filters
+     * @param  array  $filters
      * @return array
      */
     public function fetchGetSoldTransactionList(EmbeddedProduct $ep, $filters = [])
@@ -404,12 +403,13 @@ class EmbeddedProductRepository extends BaseRepository
         $strategy = EmbeddedProductFactory::createStrategy($ep->short_code);
         $dataset = $strategy->getTransactionData($dataset);
 
-        if (isset($filters['date_of_purchase']) && !empty($filters['date_of_purchase'])) {
+        if (isset($filters['date_of_purchase']) && ! empty($filters['date_of_purchase'])) {
             $dataset = $dataset->filter(function ($item) use ($filters) {
-                if (!empty($item['policy_issuance_date'])) {
+                if (! empty($item['policy_issuance_date'])) {
                     $startDate = Carbon::parse($filters['date_of_purchase'][0])->startOfDay();
                     $endDate = Carbon::parse($filters['date_of_purchase'][1])->endOfDay();
                     $isBetween = Carbon::parse($item['policy_issuance_date'])->between($startDate, $endDate);
+
                     return $isBetween;
                 }
 
@@ -419,8 +419,9 @@ class EmbeddedProductRepository extends BaseRepository
 
         if (isset($filters['email']) && empty($filters['email'])) {
             $dataset = $dataset->filter(function ($item) use ($filters) {
-                if (!empty($item['email'])) {
+                if (! empty($item['email'])) {
                     $emailMatch = stripos($item['email'], $filters['email']) !== false;
+
                     return $emailMatch;
                 }
 
@@ -430,10 +431,11 @@ class EmbeddedProductRepository extends BaseRepository
 
         if (isset($filters['name']) && empty($filters['name'])) {
             $dataset = $dataset->filter(function ($item) use ($filters) {
-                if (!empty($item['name'])) {
+                if (! empty($item['name'])) {
                     $nameParts = explode(' ', $item['name']);
                     $firstName = $nameParts[0];
                     $lastName = $nameParts[1] ?? '';
+
                     return stripos($firstName, $filters['name']) !== false || stripos($lastName, $filters['name']) !== false;
                 }
 
