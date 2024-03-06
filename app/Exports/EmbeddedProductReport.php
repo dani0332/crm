@@ -10,8 +10,8 @@ class EmbeddedProductReport
 {
     use ExcelExportable;
 
-    protected $embeddedProduct;
-    protected $filters;
+    private  $embeddedProduct;
+    private $filters;
 
     public function __construct(EmbeddedProduct $embeddedProduct, $filters)
     {
