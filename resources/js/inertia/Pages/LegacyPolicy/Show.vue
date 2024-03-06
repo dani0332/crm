@@ -57,7 +57,7 @@ const installmentsTableHeader = [
   { text: 'Commision Sum', value: 'commission_sum' },
   { text: 'Discount', value: 'discount' },
   { text: 'Tax', value: 'tax' },
-  { text: 'Customer Payable', value: 'customer_payable' }, 
+  { text: 'Customer Payable', value: 'customer_payable' },
 ];
 /* payments ends */
 const moveToImcrm = async policyNumber => {
@@ -213,7 +213,43 @@ const moveToImcrm = async policyNumber => {
         <h3 class="font-semibold text-primary-800">Documents</h3>
         <x-divider class="mb-4 mt-1" />
       </div>
-      <div class="text-sm"></div>
+      <div class="text-sm">
+          <div class="grid grid-cols-2 gap-2">
+
+              <div v-if="policy?.documents?.policy && Object.keys(policy?.documents?.policy).length > 0">
+                  <h2 class="text-lg font-semibold mb-2">Policy Document</h2>
+                  <ul class="" >
+                      <li class="my-1" v-for="document in policy?.documents?.policy ">
+                          <Link :href="document.document_path" class="text-primary-500 hover:underline">
+                              {{ document.document_name }}
+                          </Link>
+                      </li>
+                  </ul>
+              </div>
+
+              <div v-if="policy?.documents?.quote && Object.keys(policy?.documents?.quote).length > 0">
+                  <h2 class="text-lg font-semibold mb-2">Quote Document</h2>
+                  <ul class="" >
+                      <li class="my-1" v-for="document in policy?.documents?.quote ">
+                          <Link :href="document.document_path" class="text-primary-500 hover:underline">
+                              {{ document.document_name }}
+                          </Link>
+                      </li>
+                  </ul>
+              </div>
+
+              <div v-if="policy?.documents?.customer && Object.keys(policy?.documents?.customer).length > 0">
+                  <h2 class="text-lg font-semibold mb-2">Customer Document</h2>
+                  <ul class="" >
+                      <li class="my-1" v-for="document in policy?.documents?.customer ">
+                          <Link :href="document.document_path" class="text-primary-500 hover:underline">
+                              {{ document.document_name }}
+                          </Link>
+                      </li>
+                  </ul>
+              </div>
+          </div>
+      </div>
 
       <!-- payments start -->
       <template v-if="can(permissionEnum.LEGACY_INSTALLMENTS)">
@@ -228,7 +264,7 @@ const moveToImcrm = async policyNumber => {
           border-cell
           hide-rows-per-page
           hide-footer
-          fixed-checkbox       
+          fixed-checkbox
         >
           <template #item-comment="{ comment }">
             {{ comment ? comment : 'null' }}
@@ -253,7 +289,7 @@ const moveToImcrm = async policyNumber => {
           </template>
           <template #item-discount="{ discount }">
               {{ discount }} AED
-          </template>          
+          </template>
           <template #item-gross_premium="{ gross_premium }">
               {{ gross_premium }} AED
           </template>
@@ -262,7 +298,7 @@ const moveToImcrm = async policyNumber => {
           </template>
         </DataTable>
         <!-- Display the total customer payable outside the DataTable -->
-      <table>      
+      <table>
           <tr>
             <th>Total Gross Premium:</th>
             <td class="custom-table">{{ calculateGrossPremium }} AED</td>
@@ -270,19 +306,19 @@ const moveToImcrm = async policyNumber => {
             <td class="custom-table">{{ calculateTax }} AED</td>
             <th>Total Customer Payable:</th>
             <td class="custom-table">{{ calculateTotalCustomerPayable }} AED</td>
-          </tr>      
+          </tr>
       </table>
     </template>
-    <!-- Invoices --> 
+    <!-- Invoices -->
     <template v-if="can(permissionEnum.LEGACY_INVOICES)">
       <div class="mt-6">
         <h3 class="font-semibold text-primary-800">Invoices</h3>
         <x-divider class="mb-4 mt-1" />
       </div>
       <div class="row-with-scroll">
-        <LegacyCard :legacy="policy.invoices" type="multiple" />      
+        <LegacyCard :legacy="policy.invoices" type="multiple" />
       </div>
-    </template> 
+    </template>
 
     <!-- Payments -->
     <template v-if="can(permissionEnum.LEGACY_PAYMENTS)">
@@ -292,10 +328,10 @@ const moveToImcrm = async policyNumber => {
         <x-divider class="mb-4 mt-1" />
       </div>
       <div class="row-with-scroll">
-        <LegacyCard :legacy="policy.payments" type="multiple" />      
+        <LegacyCard :legacy="policy.payments" type="multiple" />
       </div>
-    </template>    
-  
+    </template>
+
     <!-- Other Legacy Details -->
     <template v-if="can(permissionEnum.LEGACY_OTHER_DETAILS)">
       <x-divider class="mb-4 mt-1" />
@@ -304,45 +340,46 @@ const moveToImcrm = async policyNumber => {
         <x-divider class="mb-4 mt-1" />
       </div>
       <div class="scrollable-container">
-          <LegacyCard  
-            v-if="policy.customer && Object.keys(policy.customer).length > 0" 
-            :legacy="policy.customer" 
-            type="single" 
+          <LegacyCard
+            v-if="policy.customer && Object.keys(policy.customer).length > 0"
+            :legacy="policy.customer"
+            type="single"
             title="CUSTOMER"
             :policy="policy"
           />
-          
-          <LegacyCard  
-            v-if="policy.quote && Object.keys(policy.quote).length > 0" 
-            :legacy="policy.quote" 
-            type="single" 
+
+          <LegacyCard
+            v-if="policy.quote && Object.keys(policy.quote).length > 0"
+            :legacy="policy.quote"
+            type="single"
             title="QUOTE"
             :policy="policy"
-          />        
-          <LegacyCard  
-            v-if="policy.renewal && Object.keys(policy.renewal).length > 0" 
-            :legacy="policy.renewal" 
-            type="single" 
-            title="RENEWAL"
-            :policy="policy" 
           />
-          <LegacyCard  
-            v-if="policy.claims && Object.keys(policy.claims).length > 0" 
-            :legacy="policy.claims" 
-            type="single" 
-            title="CLAIM" 
+          <LegacyCard
+            v-if="policy.renewal && Object.keys(policy.renewal).length > 0"
+            :legacy="policy.renewal"
+            type="single"
+            title="RENEWAL"
             :policy="policy"
-          />        
-          <LegacyCard 
+          />
+          <LegacyCard
+            v-if="policy.claims && Object.keys(policy.claims).length > 0"
+            :legacy="policy.claims"
+            type="single"
+            title="CLAIM"
+            :policy="policy"
+          />
+
+          <LegacyCard
             v-if="policy.objects && Object.keys(policy.objects).length > 0"
-            :legacy="policy.objects" 
-            type="multiple" 
+            :legacy="policy.objects"
+            type="multiple"
             title="OBJECT"
             :policy="policy"
-             />
+          />
 
       </div>
-    </template>    
+    </template>
   </div>
 
     <x-modal v-model="moveToImcrmModal" size="lg" show-close backdrop>
@@ -400,15 +437,15 @@ const moveToImcrm = async policyNumber => {
 <style scoped>
 .row-with-scroll {
   display: flex;
-  overflow-x: auto; 
-  white-space: nowrap; 
-  width: 100%; 
+  overflow-x: auto;
+  white-space: nowrap;
+  width: 100%;
 }
 .scrollable-container {
   max-height: 400px;
-  overflow-y: auto; 
-  display: flex;  
-  gap: 20px; 
+  overflow-y: auto;
+  display: flex;
+  gap: 20px;
 }
 
 .custom-table {
