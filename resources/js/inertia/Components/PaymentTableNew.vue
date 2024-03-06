@@ -499,8 +499,10 @@ const handleCollectionTypeChange = () => {
   paymentTypesFiltered.value = paymentTypes.value;
   let excludedPaymentTypes = ['IN_PL', 'CA', 'MP', 'PP'];
   if(paymentMethodsForm.frequency != 'upfront'){
+      /*Add Proforma Payment Request to excluded Payment Methods if Payment frequency is not UpFront*/
       excludedPaymentTypes.push('PPR');
   }else if(can(permissionEnum.ADD_PROFORMA_PAYMENT_REQUEST_DROPDOWN_OPTION) == false || props.quoteRequest.quote_status_id != page.props.quoteStatusEnum.ApplicationPending){
+      /*Add Proforma Payment Request to excluded Payment Methods if Application is not at pending status or dont have ADD_PROFORMA_PAYMENT_REQUEST_DROPDOWN_OPTION permission */
       excludedPaymentTypes.push('PPR');
   }
   paymentTypesFiltered.value = paymentTypesFiltered.value.filter(item => !excludedPaymentTypes.includes(item.value));
@@ -547,6 +549,7 @@ const handleApprovalReasonChange = () => {
       if (paymentMethodsForm.frequency === 'upfront'){
         paymentTypesFiltered.value = paymentTypesFiltered.value.filter(item => !['PDC', 'CHQ','CSH','CC','BT'].includes(item.value));
       }else if (paymentMethodsForm.frequency === 'split_payments' ){
+        /*Add Proforma Payment Request to excluded Payment Methods if Payment frequency is not UpFront*/
         paymentTypesFiltered.value = paymentTypesFiltered.value.filter(item => !['PDC', 'PPR', 'CHQ','CSH','CC','BT'].includes(item.value));
       } else {
         paymentTypesFiltered.value = paymentTypesFiltered.value.filter(item => !['CHQ','CSH','CC','BT'].includes(item.value));
@@ -921,7 +924,7 @@ const downloadProformaPayment = async () => {
     let exportProformaRequest = isProformaPaymentRequestExportable(props.proformaPayment, props.quoteRequest.documents);
     if (!exportProformaRequest) {
         notification.error({
-            title: 'Please update the Payment details for this Proforma Request. ',
+            title: 'Please update the Payment details for this Proforma Request.',
             position: 'top',
         });
         return;
@@ -937,7 +940,6 @@ const downloadProformaPayment = async () => {
         });
         return;
     }
-    console.log('props.proformaPayment', props.proformaPayment.code);
     if (props.proformaPayment) {
         try {
             const response = await axios.get(route('download.proforma.payment.request', [props.quoteType, props.quoteRequest.uuid ]));
@@ -946,12 +948,13 @@ const downloadProformaPayment = async () => {
                 if(response.data?.proforma_request){
                     let proforma_request = response.data.proforma_request
 
+                    /* Create the link and download Proforma Request document*/
                     const a = document.createElement("a");
                     a.href = props.storageUrl + proforma_request.doc_url;
                     a.download = proforma_request.original_name;
                     document.body.appendChild(a);
                     a.click();
-
+                    /* Remove Link */
                     document.body.removeChild(a);
 
                     notification.success({
