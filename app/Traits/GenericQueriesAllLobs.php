@@ -197,7 +197,7 @@ trait GenericQueriesAllLobs
         $bPDetails['editButton'] = false;
         $bPDetails['sendPolicyType'] = null;
         $bPDetails['text'] = '';
-        if (!empty($record->policy_number) && !empty($record->policy_issuance_date) && !empty($record->policy_start_date) && !empty($record->renewal_expiry_date) && $record->price_with_vat > 0 && !empty($record->insurer_quote_number)) {
+        if ($this->isFilledPolicyDetails($quoteType, $record)) {
             if (!empty($quoteDocuments)) {
                 $documentTypeCodes= app(DocumentTypeRepository::class)->getSendPolicyDocumentCodes($quoteType);
                 $quoteDocumentsCount = collect($quoteDocuments)->whereIn('document_type_code', $documentTypeCodes)->groupBy('document_type_code')->count();
@@ -234,7 +234,7 @@ trait GenericQueriesAllLobs
     {
         $quote = $this->getQuoteObject($type, $id);
         if ($quote->quote_status_id != QuoteStatusEnum::PolicySentToCustomer) {
-            if (!empty($quote->policy_number) && !empty($quote->policy_issuance_date) && !empty($quote->policy_start_date) && !empty($quote->renewal_expiry_date) && $quote->price_with_vat > 0 && !empty($quote->insurer_quote_number)) {
+            if ($this->isFilledPolicyDetails($type, $quote)) {
                 $quoteDocuments  = (new QuoteDocumentService())->getQuoteDocuments($type, $id);
                 $documentTypeCodes= app(DocumentTypeRepository::class)->getSendPolicyDocumentCodes($type);
                 $quoteDocumentsCount = collect($quoteDocuments)->whereIn('document_type_code', $documentTypeCodes)->groupBy('document_type_code')->count();
@@ -245,6 +245,16 @@ trait GenericQueriesAllLobs
                         'policy_issuance_status_other' =>  '',
                     ]);
                 }
+            }
+        }
+    }
+
+    private function isFilledPolicyDetails($type, $quote) {
+        if (!empty($quote->policy_number) && !empty($quote->policy_issuance_date) && !empty($quote->policy_start_date) && !empty($quote->renewal_expiry_date) && $quote->price_with_vat > 0) {
+            if(in_array($type, [QuoteTypes::CAR->value, QuoteTypes::BIKE->value]) && !empty($quote->insurer_quote_number)) {
+                return true;
+            } else {
+                return true;
             }
         }
     }

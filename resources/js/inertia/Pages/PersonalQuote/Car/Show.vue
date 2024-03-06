@@ -3338,113 +3338,15 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       :expanded="sectionExpanded"
     />
 
-    <div class="p-4 rounded shadow mb-6 bg-white" v-if="isQuoteDocumentEnabled">
-      <Collapsible expanded>
-        <template #header>
-          <div>
-            <h3 class="font-semibold text-primary-800 text-lg">
-              Policy Details
-            </h3>
-          </div>
-        </template>
-        <template #body>
-          <x-divider class="my-4" />
-          <div class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5">
-            <div class="w-full md:w-1/2">
-              <x-textarea
-                v-model="policyDetailsForm.quote_policy_number"
-                type="text"
-                label="Policy Number"
-                placeholder="Policy Number"
-                class="w-full"
-                :disabled="!policyDetailsState.isEditing"
-              />
-            </div>
-            <div class="w-full md:w-1/2">
-              <DatePicker
-                v-model="policyDetailsForm.quote_policy_issuance_date"
-                name="quote_policy_issuance_date"
-                label="Issuance Date"
-                placeholder="Issuance Date"
-                class="w-full"
-                :disabled="!policyDetailsState.isEditing"
-              />
-            </div>
-          </div>
-          <div class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5">
-            <div class="w-full md:w-1/2">
-              <DatePicker
-                v-model="policyDetailsForm.quote_policy_start_date"
-                type="text"
-                label="Policy Start Date"
-                placeholder="Policy Start Date"
-                class="w-full"
-                :disabled="!policyDetailsState.isEditing"
-              />
-            </div>
-            <div class="w-full md:w-1/2">
-              <DatePicker
-                v-model="policyDetailsForm.quote_policy_expiry_date"
-                type="text"
-                label="Expiry Date"
-                placeholder="Expiry Date"
-                class="w-full"
-                :disabled="!policyDetailsState.isEditing"
-              />
-            </div>
-          </div>
-          <div class="flex flex-wrap md:flex-nowrap gap-6 w-full">
-            <div class="w-full md:w-1/2">
-              <x-input
-                v-model="policyDetailsForm.quote_premium"
-                type="number"
-                label="Price"
-                placeholder="Price"
-                class="w-full"
-                :disabled="!policyDetailsState.isEditing"
-              />
-            </div>
-            <div class="w-full md:w-1/2" />
-          </div>
-          <div
-            class="flex justify-end"
-            v-if="
-              !can(permissionEnum.ApprovePayments)
-            "
-          >
-            <x-button
-              v-if="policyDetailsState.isEditing"
-              class="mt-4 mr-2"
-              color="emerald"
-              size="sm"
-              :loading="policyDetailsForm.processing"
-              @click.prevent="policyDetailsState.isEditing = false"
-            >
-              Cancel
-            </x-button>
-            <x-button
-              v-if="policyDetailsState.isEditing"
-              class="mt-4"
-              color="emerald"
-              size="sm"
-              :loading="policyDetailsForm.processing"
-              @click.prevent="onUpdatePolicyDetails"
-            >
-              Update
-            </x-button>
-            <x-button
-              v-if="!policyDetailsState.isEditing"
-              class="mt-4"
-              color="emerald"
-              size="sm"
-              @click.prevent="policyDetailsState.isEditing = true"
-            >
-              Edit
-            </x-button>
-          </div>
-        </template>
-      </Collapsible>
-    </div>
+
+    <PolicyDetail
+      v-if="isQuoteDocumentEnabled"
+      :record="record"
+      :quoteStatusEnum="quoteStatusEnum"
+      :policyIssuanceStatus="policyIssuanceStatus"
+      :modelType="quoteType"
+    />    
+    
     <div class="p-4 rounded shadow mb-6 bg-white" v-if="isQuoteDocumentEnabled">
       <Collapsible :expanded="sectionExpanded">
         <template #header>
@@ -3601,14 +3503,6 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
         </div>
     </x-modal>
 
-    <SendUpdates
-      v-if="hasPolicyIssuedStatus"
-      :reportable="record"
-      :quote_type_id="$page.props.quoteTypeId"
-      :options="sendUpdateOptions"
-      :data="sendUpdateLogs"
-    />
-
     <BookPolicy
       v-if="
         canAny([
@@ -3620,6 +3514,14 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       :quoteType="quoteType"
       :bPDetails="bPDetails"
       :payments="payments"
+    />
+
+    <SendUpdates
+      v-if="hasPolicyIssuedStatus"
+      :reportable="record"
+      :quote_type_id="$page.props.quoteTypeId"
+      :options="sendUpdateOptions"
+      :data="sendUpdateLogs"
     />
 
     <div class="p-4 rounded shadow mb-6 bg-white">
