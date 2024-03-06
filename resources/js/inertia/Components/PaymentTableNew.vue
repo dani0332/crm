@@ -969,6 +969,7 @@ const downloadProformaPayment = async () => {
                         title: 'File exported',
                         position: 'top',
                     });
+                    router.visit(location.href);
                 }
             } else {
                 notification.error({
@@ -977,6 +978,10 @@ const downloadProformaPayment = async () => {
                 });
             }
         } catch (err) {
+            notification.error({
+                title: err,
+                position: 'top',
+            });
             notification.error({
                 title: 'Proforma Payment Request Generation Failed',
                 position: 'top',
