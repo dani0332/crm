@@ -58,7 +58,7 @@ class SendUpdateRequest extends FormRequest
                             case QuoteTypeId::Bike:
                             case QuoteTypeId::Health:
 
-                                $_error = 'policy handbook and myAlfred offers';
+                                $_error = 'policy handbook';
                                 $requiredDocuments = [
                                     DocumentTypeCode::SEND_UPDATE_POLICY_HANDBOOK,
                                 ];
@@ -67,7 +67,7 @@ class SendUpdateRequest extends FormRequest
                                     $requiredDocuments = array_merge($requiredDocuments, 
                                         [DocumentTypeCode::SEND_UPDATE_NETWORK_LIST, DocumentTypeCode::SEND_UPDATE_SIGNED_MED_APP_FORM]
                                     );
-                                    $_error = 'policy handbook, myAlfred offers, network list and signed medical application form';
+                                    $_error = 'policy handbook, network list and signed medical application form';
                                 }
                                 
                                 if (count(array_intersect($uploadedDocuments, $requiredDocuments)) !== count($requiredDocuments)) {
@@ -90,7 +90,7 @@ class SendUpdateRequest extends FormRequest
                                     ];
 
                                     if (count(array_intersect($uploadedDocuments, $requiredDocuments)) !== count($requiredDocuments)) {
-                                        $validator->errors()->add('error', 'Please upload receipt and policy Handbook');
+                                        $validator->errors()->add('error', 'Please upload receipt and policy handbook');
                                     }
                                 }
 
@@ -101,7 +101,7 @@ class SendUpdateRequest extends FormRequest
                                     ];
 
                                     if (count(array_intersect($uploadedDocuments, $requiredDocuments)) !== count($requiredDocuments)) {
-                                        $validator->errors()->add('error', 'Please upload application copy and policy Handbook');
+                                        $validator->errors()->add('error', 'Please upload application copy and policy handbook');
                                     }
                                 }
 
@@ -112,7 +112,7 @@ class SendUpdateRequest extends FormRequest
                                     ];
 
                                     if (count(array_intersect($uploadedDocuments, $requiredDocuments)) !== count($requiredDocuments)) {
-                                        $validator->errors()->add('error', 'Please upload receipt and network List');
+                                        $validator->errors()->add('error', 'Please upload receipt and network list');
                                     }
                                 }
                                 break;
@@ -133,17 +133,19 @@ class SendUpdateRequest extends FormRequest
             ])) {
 
                 // Check all booking details have been correctly filled
-                if(count($sendUpdateLog->details) == 0) {
+                if(!$sendUpdateLog->is_booking_filled) {
                     $validator->errors()->add('error', 'Please update the missing booking details');
                 }
 
                 // Check all policy details have been corretly filled
                 if(($sendUpdateCategoryCode == SendUpdateLogStatusEnum::EF && $categorySubType == SendUpdateLogStatusEnum::PPE) || 
                     $sendUpdateCategoryCode == SendUpdateLogStatusEnum::CPD) {
-                        // Need to add Polcy check here and return "Please update the missing policy details" if not corretly filled.
+                    if(true) { // Need to add Policy check here
+                        $validator->errors()->add('error', 'Please update the missing policy details');
+                    }
                 }
 
-                if($sendUpdateCategoryCode == SendUpdateLogStatusEnum::EF && $sendUpdateLog->status != SendUpdateLogStatusEnum::TRANSACTION_APPROVED && 
+                if($sendUpdateCategoryCode == SendUpdateLogStatusEnum::EF && $sendUpdateLog->transaction_payment_status != SendUpdateLogStatusEnum::TRANSACTION_APPROVED && 
                     !in_array($categorySubType, [
                         SendUpdateLogStatusEnum::MPC,
                         SendUpdateLogStatusEnum::MDOM,

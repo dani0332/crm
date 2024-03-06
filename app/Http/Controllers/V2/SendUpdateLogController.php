@@ -18,6 +18,7 @@ use App\Http\Requests\SendUpdateCustomerRequest;
 use App\Http\Requests\SendUpdateRequest;
 use App\Models\PersonalQuote;
 use App\Models\QuoteType;
+use App\Models\SendUpdateLog;
 use App\Repositories\CustomerMembersRepository;
 use App\Repositories\InsuranceProviderRepository;
 use App\Repositories\PersonalQuoteRepository;
@@ -29,6 +30,7 @@ use App\Services\QuoteDocumentService;
 use App\Services\SendUpdateLogService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class SendUpdateLogController extends Controller
 {
@@ -387,6 +389,24 @@ class SendUpdateLogController extends Controller
                 'insuficientPaymentCheck' => $insuficientPaymentCheck,
                 'parentPaymentStatus' => $paymentStatus
             ], 200);
+        }
+
+        $sendUpdate = SendUpdateLog::find($sendUpdateRequest->sendUpdateId);
+
+        // Start working on Sage APIs on necessary send update type.
+        $this->sendUpdateLogService->sendUpdateToSage($sendUpdate, $quote);
+
+        try {
+            DB::beginTransaction(); 
+            $this->sendUpdateLogService->updatesMoveToLead($sendUpdate, $quote);
+
+            DB::commit();
+
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            info('Send update - Failed - Error : '.$exception->getMessage());
+
+            return redirect()->back()->with('error', 'Send update failed');
         }
 
         return response()->json(['message' => 'Update booked'], 200);

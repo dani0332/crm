@@ -19,6 +19,7 @@ use App\Models\TravelQuote;
 use App\Models\YachtQuote;
 use App\Traits\GenericQueriesAllLobs;
 use App\Enums\DocumentTypeCode;
+use App\Enums\PaymentStatusEnum;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Models\Payment;
 use App\Repositories\InsuranceProviderRepository;
@@ -493,12 +494,32 @@ class SendUpdateLogService
                 return SendUpdateLogStatusEnum::SUC;
             }
         } elseif ($sendUpdateLog->is_booking_filled) { // Check if all booking details uploaded.
+            if($sendUpdateLog->category->code == SendUpdateLogStatusEnum::EF) {
+                if($sendUpdateLog->option->code == SendUpdateLogStatusEnum::PPE && $sendUpdateLog->transaction_payment_status == SendUpdateLogStatusEnum::TRANSACTION_APPROVED && true ) { // Check if all policy details uploaded.
+                    return SendUpdateLogStatusEnum::SU;
+                } 
+
+                if(!in_array($sendUpdateLog->option->code, [
+                    SendUpdateLogStatusEnum::MPC,
+                    SendUpdateLogStatusEnum::MDOM,
+                    SendUpdateLogStatusEnum::MDOV,
+                    SendUpdateLogStatusEnum::ED,
+                    SendUpdateLogStatusEnum::DM,
+                ]) && $sendUpdateLog->transaction_payment_status == SendUpdateLogStatusEnum::TRANSACTION_APPROVED) {
+                    return SendUpdateLogStatusEnum::SU;
+                }
+            } elseif($sendUpdateLog->category->code == SendUpdateLogStatusEnum::CPD && true) { // Check if all policy details uploaded.
+                return SendUpdateLogStatusEnum::SU;
+            } elseif(in_array($sendUpdateLog->category->code, [SendUpdateLogStatusEnum::CI, SendUpdateLogStatusEnum::CIR])) {
+                return SendUpdateLogStatusEnum::SU;
+            }
+            
             if ($requiredDocuments) {
                 return SendUpdateLogStatusEnum::SUC;
             }
         }
         
-        return SendUpdateLogStatusEnum::SU;
+        return false;
     }
 
     public function getSendToCustomerValidation($sendUpdateId): string
@@ -570,5 +591,15 @@ class SendUpdateLogService
         $payments->load(['paymentSplits', 'paymentStatus', 'paymentMethod', 'insuranceProvider', 'paymentStatusLog', 'paymentSplits.paymentStatus', 'paymentSplits.documents']);
 
         return $payments;
+    }
+
+    public function sendUpdateToSage($sendUpdateLog, $quote)
+    {
+        dd("This function responsible to send updates on Sage");
+    }
+
+    public function updatesMoveToLead($sendUpdateLog, $quote)
+    {
+        dd("This function responsible to move updates to the Main lead");
     }
 }
