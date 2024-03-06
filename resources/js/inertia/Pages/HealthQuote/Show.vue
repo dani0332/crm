@@ -3686,7 +3686,7 @@ const handleChildUpdate = planId => {
                   {{ due_date }}
                 </p>
                 <template #tooltip>
-                  <span>Pending overdue Task, please complete immediately</span>
+                  <span>Pending overdue task! Please complete immediately</span>
                 </template>
               </x-tooltip>
             </template>
@@ -4001,8 +4001,8 @@ const handleChildUpdate = planId => {
     <AuditLogs :type="'App\\Models\\HealthQuote'" :id="$page.props.quote.id" />
 
     <ClientInquiryLogs
-        v-if="clientInquiryLogs.length > 0"
-        :logs="clientInquiryLogs"
+      v-if="clientInquiryLogs.length > 0"
+      :logs="clientInquiryLogs"
     />
   </div>
 </template>

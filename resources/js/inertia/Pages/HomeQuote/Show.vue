@@ -1231,7 +1231,7 @@ const linkEntity = () => {
                   {{ due_date }}
                 </p>
                 <template #tooltip>
-                  <span>Pending overdue Task, please complete immediately</span>
+                  <span>Pending overdue task! Please complete immediately</span>
                 </template>
               </x-tooltip>
             </template>
