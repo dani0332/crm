@@ -584,7 +584,9 @@ class SendUpdateLogService
     public function getSendUpdatePayments($sendUpdateLog)
     {
         $payments = $sendUpdateLog->payments;
-        $payments->load(['paymentSplits', 'paymentStatus', 'paymentMethod', 'insuranceProvider', 'paymentStatusLog', 'paymentSplits.paymentStatus', 'paymentSplits.documents']);
+        if ($payments) {
+            $payments->load(['paymentSplits', 'paymentStatus', 'paymentMethod', 'insuranceProvider', 'paymentStatusLog', 'paymentSplits.paymentStatus', 'paymentSplits.documents']);
+        }
 
         return $payments;
     }
@@ -597,17 +599,5 @@ class SendUpdateLogService
     public function updatesMoveToLead($sendUpdateLog, $quote)
     {
         dd("This function responsible to move updates to the Main lead");
-    }
-    
-    public function concatenatePaymentRef($sendUpdateLog): string
-    {
-        // for non Travel LOB.
-        if ($sendUpdateLog->category->code == SendUpdateLogStatusEnum::EF) {
-            return '-2';
-        } elseif ($sendUpdateLog->category->code == SendUpdateLogStatusEnum::CPD) {
-            return '-1';
-        }
-
-        return '';
     }
 }
