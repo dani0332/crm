@@ -48,6 +48,14 @@ label {
   @apply overflow-x-auto;
 }
 
+
+.overflow-hidden-table   {
+  overflow: unset !important;
+}
+
+.overflow-hidden-table .vue3-easy-data-table__main  {
+  overflow: unset !important;
+}
 /* Scrollbar styles */
 .vue3-easy-data-table__main::-webkit-scrollbar {
   @apply h-1.5 bg-transparent cursor-pointer;
@@ -103,6 +111,8 @@ label {
 .tablefixed .vue3-easy-data-table__body tr td {
   @apply whitespace-nowrap;
 }
+
+
 /* Table body tr */
 .vue3-easy-data-table__body tr {
   @apply hover:bg-primary-50 transition;

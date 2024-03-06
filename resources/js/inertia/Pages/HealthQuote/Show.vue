@@ -3664,7 +3664,7 @@ const handleChildUpdate = planId => {
           </x-button>
         </div>
         <DataTable
-          table-class-name="compact"
+          table-class-name="overflow-hidden-table"
           :headers="activityTable"
           :items="activities"
           border-cell
@@ -3676,8 +3676,8 @@ const handleChildUpdate = planId => {
             {{ code }}
           </template>
           <template #item-due_date="{ due_date }">
-            <template v-if="compareDueDate(due_date)">
-              <x-tooltip align="right" position="top">
+            <template v-if="!compareDueDate(due_date)">
+              <x-tooltip align="right" position="top" class="w-full">
                 <p
                   :class="
                     compareDueDate(due_date) ? 'bg-error-300 rounded p-1' : ''
@@ -3686,7 +3686,10 @@ const handleChildUpdate = planId => {
                   {{ due_date }}
                 </p>
                 <template #tooltip>
-                  <span>Pending overdue task! Please complete immediately</span>
+                  <span
+                    >Pending overdue task! <br />Please complete
+                    immediately</span
+                  >
                 </template>
               </x-tooltip>
             </template>
