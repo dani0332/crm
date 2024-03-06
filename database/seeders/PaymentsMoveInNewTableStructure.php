@@ -29,13 +29,14 @@ class PaymentsMoveInNewTableStructure extends Seeder
         foreach ($allModelTypes as $modelType) {
             $quoteModelObject = $this->getModelObject(strtolower($modelType));
             echo $modelType.'--'.$quoteModelObject."\n";
+
             if ($quoteModelObject == '') {
                 Log::info('MigratePaymentSeeder::Model not found for: '.$modelType);
 
                 continue;
             }
-            $modelObjects = $quoteModelObject::where('created_at', '>', $thirtyDaysOldDate)->get();
 
+            $modelObjects = $quoteModelObject::where('created_at', '>', $thirtyDaysOldDate)->get();
             if ($modelObjects->count() > 0) {
                 foreach ($modelObjects as $modelObject) {
                     if ($modelObject->payments()->count() > 0) {

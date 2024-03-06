@@ -2,8 +2,6 @@
 
 namespace App\Http\Resources;
 
-use App\Enums\DocumentTypeEnum;
-use App\Models\QuoteDocument;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 class ProformaPaymentRequestResource extends JsonResource

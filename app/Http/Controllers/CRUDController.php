@@ -733,7 +733,7 @@ class CRUDController extends Controller
                 'paymentEntityModel', 'payments', 'paymentMethods', 'isQuoteDocumentEnabled', 'quoteDocuments', 'displaySendPolicyButton', 'customerAdditionalContacts', 'lostApproveReasons', 'lostRejectReasons', 'allowQuoteLogAction', 'carLostChangeStatus',
                 'carMakeText', 'carModelText', 'advisor', 'tiers', 'daysAfterCapturedPayment', 'access', 'carPlanFeaturesCodeEnum', 'carPlanExclusionsCodeEnum', 'documentTypes', 'planURL', 'storageUrl', 'kyoEndPoint',
                 'carPlanTypeEnum', 'UBORelations', 'UBOsDetails', 'emirates', 'customerTypeEnum', 'memberRelations', 'membersDetails', 'industryType', 'nationalities', 'paymentTooltipEnum',
-                'isCommercialVehicles', 'carInsuranceProviders', 'isNewPaymentStructure', 'sendUpdateOptions', 'sendUpdateLogs', 'hasPolicyIssuedStatus', 'sendUpdateEnum', 'paymentMethodsEnum'
+                'isCommercialVehicles', 'carInsuranceProviders', 'isNewPaymentStructure', 'sendUpdateOptions', 'sendUpdateLogs', 'hasPolicyIssuedStatus', 'sendUpdateEnum', 'paymentMethodsEnum',
             ]));
         }
 
@@ -760,7 +760,7 @@ class CRUDController extends Controller
                 'isNewBusinessUser', 'ecomTravelInsuranceQuoteUrl', 'quoteType', 'autoAllocationDisabled',
                 'paymentEntityModel', 'payments', 'mainPayment', 'paymentMethods', 'insuranceProviders', 'emailStatuses',
                 'isQuoteDocumentEnabled', 'quoteDocuments', 'displaySendPolicyButton', 'customerAdditionalContacts',
-                'quoteTypeId', 'tiers', 'access', 'isNewPaymentStructure', 'hasPolicyIssuedStatus', 'paymentMethodsEnum'
+                'quoteTypeId', 'tiers', 'access', 'isNewPaymentStructure', 'hasPolicyIssuedStatus', 'paymentMethodsEnum',
             ]));
         }
 
@@ -1044,7 +1044,7 @@ class CRUDController extends Controller
                 'paymentLink', 'record', 'model', 'payments', 'mainPayment', 'paymentMethods', 'insuranceProviders', 'paymentEntityModel', 'customTitles', 'customTableList', 'advisors', 'leadStatuses', 'lostReasons',
                 'selectedLostReasonId', 'model_name', 'allowedDuplicateLOB', 'audits', 'activities', 'isRenewalUser',
                 'isNewBusinessUser', 'autoAllocationDisabled', 'isQuoteDocumentEnabled', 'quoteDocuments',
-                'displaySendPolicyButton', 'customerAdditionalContacts', 'quoteType', 'quoteTypeId', 'tiers', 'access', 'paymentMethodsEnum'
+                'displaySendPolicyButton', 'customerAdditionalContacts', 'quoteType', 'quoteTypeId', 'tiers', 'access', 'paymentMethodsEnum',
             ]));
         }
     }
