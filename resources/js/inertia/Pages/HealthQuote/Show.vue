@@ -3676,7 +3676,7 @@ const handleChildUpdate = planId => {
             {{ code }}
           </template>
           <template #item-due_date="{ due_date }">
-            <template v-if="!compareDueDate(due_date)">
+            <template v-if="compareDueDate(due_date)">
               <x-tooltip align="right" position="top" class="w-full">
                 <p
                   :class="

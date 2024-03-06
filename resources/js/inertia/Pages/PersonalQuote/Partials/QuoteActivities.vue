@@ -158,7 +158,7 @@ const onDeleteConfirmation = () => {
         </x-button>
       </div>
       <DataTable
-        table-class-name="compact"
+        table-class-name="overflow-hidden-table"
         :headers="activityTable"
         :items="activities"
         border-cell
@@ -180,7 +180,9 @@ const onDeleteConfirmation = () => {
                 {{ due_date }}
               </p>
               <template #tooltip>
-                <span>Pending overdue task! Please complete immediately</span>
+                <span
+                  >Pending overdue task! <br />Please complete immediately</span
+                >
               </template>
             </x-tooltip>
           </template>
