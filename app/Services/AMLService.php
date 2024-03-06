@@ -226,8 +226,6 @@ class AMLService
             $emailRecipients[] = $recipient->user_email;
         }
 
-        info('AML Email trigger to Role:('.json_encode($complianceRole).')');
-
         if (strtolower($emailSystem) == EnvEnum::PRODUCTION) {
             $fromEmail = config('constants.MAIL_FROM_ADDRESS_AML');
             $fromName = config('constants.MAIL_FROM_NAME_AML');
@@ -267,11 +265,10 @@ class AMLService
     public static function updateAMLDecisionLexisNexis($request)
     {
         if (! $request->result_id) {
-            info('AML Screening Bridger - Lexis Nexis Decision update API Call - Result Id not found');
+            info('AML Screening Bridger - Bridger Decision update API Call - Result Id not found');
 
             return false;
         }
-        info('AML Screening Bridger - Lexis Nexis Decision update API Call. Quote Ref ID: '.$request->ref_id.' - AML ID: '.($request->aml_id ?? '-').' - Lexis Nexis Alert ID: '.($request->result_id ?? '-').'. Triggered by:'.auth()->user()->email);
 
         $bridgerInsightService = new BridgerInsightService();
         $bridgerAPIToken = $bridgerInsightService->getJWTToken();
@@ -285,9 +282,9 @@ class AMLService
             ];
         }
 
-        $bridgerInsightService->updateDecisionOnLexisNexis($bridgerAPIToken, $request->result_id, $matchResultsForUpdate, $request->notes);
+        $response = $bridgerInsightService->updateDecisionOnLexisNexis($bridgerAPIToken, $request, $matchResultsForUpdate);
 
-        return true;
+        return $response;
     }
 
     public static function getKycType($quoteTypeId, $quoteRequestId)
