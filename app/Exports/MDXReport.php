@@ -5,9 +5,8 @@ namespace App\Exports;
 use App\Models\EmbeddedProduct;
 use App\Repositories\EmbeddedProductRepository;
 use App\Traits\ExcelExportable;
-use Maatwebsite\Excel\Concerns\FromCollection;
 
-class MDXReport implements FromCollection
+class MDXReport
 {
     use ExcelExportable;
 

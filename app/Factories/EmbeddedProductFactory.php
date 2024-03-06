@@ -2,8 +2,7 @@
 
 namespace App\Factories;
 
-use App\Enums\EmbeddedProductEnum;
-use App\Strategies\MDX;
+use App\Strategies\EmbeddedProducts\MDX;
 
 class EmbeddedProductFactory
 {
@@ -11,7 +10,7 @@ class EmbeddedProductFactory
     {
         $strategy = null;
         $shortCode = strtoupper($shortCode);
-        if ($shortCode == EmbeddedProductEnum::MDX) {
+        if ($shortCode == 'MDX') {
             $strategy = new MDX();
         }
 

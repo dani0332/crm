@@ -419,8 +419,8 @@ class HandleInertiaRequests extends Middleware
         if (auth()->user()->can(PermissionsEnum::EmbeddedProductView)) {
             $nav = $nav->add('Embedded Products', '', function (Section $section) {
                 $section
-                    ->add('All Products', url('embedded-products'), fn ($s) => $s->attributes(['icon' => 'box']))
-                    ->add('Reports', url('embedded-products-reports'), fn ($s) => $s->attributes(['icon' => 'bar']));
+                    ->add('All Products', route('embedded-products.index'), fn ($s) => $s->attributes(['icon' => 'box']))
+                    ->add('Reports', route('embedded-products.reports'), fn ($s) => $s->attributes(['icon' => 'bar']));
             });
         }
 
