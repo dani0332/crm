@@ -1,5 +1,6 @@
 <script setup>
 import LegacyCard from '../LegacyPolicy/Partials/LegacyCard';
+import DocumentListing from './Partials/DocumentListing.vue';
 import {formatDate} from '../../Composables/utilities.js';
 const props = defineProps({
   policy: Object,
@@ -215,39 +216,9 @@ const moveToImcrm = async policyNumber => {
       </div>
       <div class="text-sm">
           <div class="grid grid-cols-2 gap-2">
-
-              <div v-if="policy?.documents?.policy && Object.keys(policy?.documents?.policy).length > 0">
-                  <h2 class="text-lg font-semibold mb-2">Policy Document</h2>
-                  <ul class="" >
-                      <li class="my-1" v-for="document in policy?.documents?.policy ">
-                          <Link :href="document.document_path" class="text-primary-500 hover:underline">
-                              {{ document.document_name }}
-                          </Link>
-                      </li>
-                  </ul>
-              </div>
-
-              <div v-if="policy?.documents?.quote && Object.keys(policy?.documents?.quote).length > 0">
-                  <h2 class="text-lg font-semibold mb-2">Quote Document</h2>
-                  <ul class="" >
-                      <li class="my-1" v-for="document in policy?.documents?.quote ">
-                          <Link :href="document.document_path" class="text-primary-500 hover:underline">
-                              {{ document.document_name }}
-                          </Link>
-                      </li>
-                  </ul>
-              </div>
-
-              <div v-if="policy?.documents?.customer && Object.keys(policy?.documents?.customer).length > 0">
-                  <h2 class="text-lg font-semibold mb-2">Customer Document</h2>
-                  <ul class="" >
-                      <li class="my-1" v-for="document in policy?.documents?.customer ">
-                          <Link :href="document.document_path" class="text-primary-500 hover:underline">
-                              {{ document.document_name }}
-                          </Link>
-                      </li>
-                  </ul>
-              </div>
+              <DocumentListing v-if="policy?.documents?.policy && Object.keys(policy?.documents?.policy).length > 0" :documents="policy?.documents?.policy" title="Policy Document" />
+              <DocumentListing v-if="policy?.documents?.quote && Object.keys(policy?.documents?.quote).length > 0" :documents="policy?.documents?.quote" title="Quote Document" />
+              <DocumentListing v-if="policy?.documents?.customer && Object.keys(policy?.documents?.customer).length > 0" :documents="policy?.documents?.customer" title="Customer Document" />
           </div>
       </div>
 
