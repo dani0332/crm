@@ -210,7 +210,7 @@ watch(
             : '0.00'
         }}</span>
       </div>
-      <div v-if="isAllowed">
+      <!-- <div v-if="isAllowed">
         <x-input
           v-model="quotes.queries[quote.id]"
           type="search"
@@ -220,7 +220,7 @@ watch(
           @change.prevent="onSearch(quote.id)"
           :disabled="quotes.searching"
         />
-      </div>
+      </div> -->
     </div>
     <div class="flex flex-col px-2 pb-2 overflow-auto h-screen">
       <div
