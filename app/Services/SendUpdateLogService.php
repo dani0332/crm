@@ -591,12 +591,29 @@ class SendUpdateLogService
 
     public function sendUpdateToSage($sendUpdateLog, $quote)
     {
-        dd("This function responsible to send updates on Sage");
+        info("This function responsible to send updates on Sage");
+
+        return true;
     }
 
-    public function updatesMoveToLead($sendUpdateLog, $quote)
+    public function updatesMoveToLead($sendUpdateRequest, $sendUpdateLog)
     {
-        dd("This function responsible to move updates to the Main lead");
+        $categoryCode = $sendUpdateLog->category->code;
+        $optionCode = $sendUpdateLog->option->code;
+        $quoteModel = $this->getModelObject($sendUpdateRequest->quoteType)::find($sendUpdateRequest->quoteRefId);
+
+        if(in_array($categoryCode, [SendUpdateLogStatusEnum::EF, SendUpdateLogStatusEnum::CPD])) {
+            // Move payments and update refrence
+
+            if($optionCode == SendUpdateLogStatusEnum::PPE) {
+                $quoteModel->renewal_expiry_date = $sendUpdateLog->expiry_date;
+            } else {
+                // The values of Booking Details - New Entry should be move in Main Lead Booking Details, 
+                // The values of Policy Details - should be move in Main Lead Policy Details, 
+            }
+        }
+
+        // $quoteModel->save();
     }
     
     public function concatenatePaymentRef($sendUpdateLog): string

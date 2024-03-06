@@ -438,7 +438,10 @@ const modals = reactive({
   attestRecord: false,
 });
 
+const confirmationCheck = ref(false);
+const confirmationCheckError = ref(false);
 const isStating = ref(false);
+
 const sendUpdateValidationURL =
   props.updateBtn === sendUpdateStatusEnum.SU
     ? "send-update"
@@ -524,6 +527,13 @@ function confirmationModalClose() {
 }
 
 function sendUpdate() {
+  if(!confirmationCheck.value) {
+    confirmationCheckError.value = true;
+    return false;
+  } else {
+    confirmationCheckError.value = false;
+  }
+
   loader.sendUpdate = true;
   axios
     .post("send-update", {
@@ -1355,15 +1365,16 @@ const submitToCustomer = () => {
     <x-modal v-model="modals.attestRecord" show-close backdrop>
       <template #header>
         <div class="flex justify-between gap-4 items-center">
-          <h3 class="font-semibold text-sm">-</h3>
+          <h3 class="font-semibold text-sm">Confirmation</h3>
         </div>
       </template>
       <template #actions>
         <div class="text-center space-x-4 mb-5">
-          <p class="text-sm">
-            I confirm and attest that all information recorded is correct.
-          </p>
-          <p class="text-sm">I confirm I am in compliance with the COC.</p>
+          <span v-if="confirmationCheckError" class="text-red-500 text-sm font-semibold">* Confirmation is required</span>
+          <x-checkbox 
+            v-model="confirmationCheck"
+            label="I confirm and attest that all information recorded is correct. I confirm I am in compliance with the COC."
+          />
         </div>
         <div class="text-center space-x-4">
           <x-button size="sm" @click.prevent="confirmationModalClose()">

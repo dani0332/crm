@@ -391,23 +391,23 @@ class SendUpdateLogController extends Controller
             ], 200);
         }
 
-        $sendUpdate = SendUpdateLog::find($sendUpdateRequest->sendUpdateId);
+        // $sendUpdate = SendUpdateLog::find($sendUpdateRequest->sendUpdateId);
 
         // Start working on Sage APIs on necessary send update type.
-        $this->sendUpdateLogService->sendUpdateToSage($sendUpdate, $quote);
+        // $this->sendUpdateLogService->sendUpdateToSage($sendUpdateRequest, $sendUpdate);
 
-        try {
-            DB::beginTransaction(); 
-            $this->sendUpdateLogService->updatesMoveToLead($sendUpdate, $quote);
+        // try {
+        //     DB::beginTransaction(); 
+        //     $this->sendUpdateLogService->updatesMoveToLead($sendUpdateRequest, $sendUpdate);
 
-            DB::commit();
+        //     DB::commit();
 
-        } catch (\Exception $exception) {
-            DB::rollBack();
-            info('Send update - Failed - Error : '.$exception->getMessage());
+        // } catch (\Exception $exception) {
+        //     DB::rollBack();
+        //     info('Send update - Failed - Error : '.$exception->getMessage());
 
-            return redirect()->back()->with('error', 'Send update failed');
-        }
+        //     return redirect()->back()->with('error', 'Send update failed');
+        // }
 
         return response()->json(['message' => 'Update booked'], 200);
     }
