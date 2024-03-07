@@ -47,4 +47,5 @@ final class SendUpdateLogStatusEnum extends Enum
     const PPE = 'PPE'; // Policy Period Extension
     const BOOKING_FILLED = 1;
     const IS_SEND_UPDATE = 1;
+    const POLICY_FILLED = 1;
 }
