@@ -137,7 +137,13 @@ const leadStatusForm = useForm({
   lostReason: page.props.quoteDetails.lost_reason_id || null,
 });
 
+const loaders = ref({
+  leadStatus: false,
+});
+
 const onLeadStatus = () => {
+  console.log('hrererrer in lead status');
+  loaders.value.leadStatus = true;
   let data = {
     modelType: 'Business',
     leadId: leadStatusForm.leadId,
@@ -161,6 +167,7 @@ const onLeadStatus = () => {
         title: 'Lead Status Updated',
         position: 'top',
       });
+      loaders.value.leadStatus = false;
     })
     .catch(err => {
       const flash_messages = err.response.data.errors.value;
@@ -170,6 +177,7 @@ const onLeadStatus = () => {
           position: 'top',
         });
       });
+      loaders.value.leadStatus = false;
     });
 };
 
@@ -1077,7 +1085,7 @@ const linkEntity = () => {
             class="mt-4"
             color="emerald"
             size="sm"
-            :loading="leadStatusForm.processing"
+            :loading="loaders.leadStatus"
             @click.prevent="onLeadStatus"
             :disabled="disableStatusSection"
           >

@@ -101,7 +101,6 @@ class YachtQuoteController extends Controller
         $quoteStatuses = QuoteStatusRepository::byQuoteTypeId(QuoteTypes::YACHT->id())->get();
         $membersDetail = CustomerMembersRepository::getBy($quote->id, QuoteTypes::YACHT->name);
         $quote->load('documents.createdBy:id,name,email');
-
         $documentTypes = DocumentTypeRepository::byQuoteTypeId(QuoteTypes::YACHT->id())->get();
         $noteDocumentType = DocumentTypeRepository::where('code', DocumentTypeCode::OD)->first();
         $paymentMethods = PaymentMethodRepository::orderBy('name')->get();
