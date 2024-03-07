@@ -1396,9 +1396,14 @@ const handlePlanSelected = plan => {
 };
 
 const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
-const onUploadDocument = () => {
-  leadStatusForm.leadStatus = page.props.quote.quote_status_id;
-};
+watch(
+  () => page.props.quote.quote_status_id,
+  (newValue, oldValue) => {
+    if (newValue !== oldValue) {
+      leadStatusForm.leadStatus = newValue;
+    }
+  },
+);
 </script>
 
 <template>
@@ -2858,7 +2863,6 @@ const onUploadDocument = () => {
         :doc-types="documentTypes"
         :docs="quoteDocuments || []"
         :cdn="cdnPath"
-        @update-quote-status="onUploadDocument"
       />
     </x-modal>
     <x-modal v-model="modals.docConfirm" show-close backdrop>

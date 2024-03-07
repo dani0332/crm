@@ -1205,10 +1205,14 @@ const handleSelectionChange = (tableType, selectedItems) => {
   }
 };
 
-const onUploadDocument = () => {
-  leadStatusForm.leadStatus = page.props.record.quote_status_id;
-};
-
+watch(
+  () => page.props.quote.quote_status_id,
+  (newValue, oldValue) => {
+    if (newValue !== oldValue) {
+      leadStatusForm.leadStatus = newValue;
+    }
+  },
+);
 </script>
 
 <template>
@@ -2238,7 +2242,6 @@ const onUploadDocument = () => {
         :doc-types="documentTypes"
         :docs="quoteDocuments || []"
         :cdn="cdnPath"
-        @update-quote-status="onUploadDocument"
       />
     </x-modal>
 

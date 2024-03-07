@@ -1099,9 +1099,6 @@ const uploadFile = (doc, filesWithInfo) => {
           position: 'top',
         });
       },
-      onSuccess: () => {
-        leadStatusForm.leadStatus = page.props.record.quote_status_id;
-      },
       onFinish: () => {
         isUploading.value = false;
       },
@@ -1591,6 +1588,14 @@ const handlePlanSelected = plan => {
 };
 
 const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
+watch(
+  () => page.props.record.quote_status_id,
+  (newValue, oldValue) => {
+    if (newValue !== oldValue) {
+      leadStatusForm.leadStatus = newValue;
+    }
+  },
+);
 </script>
 
 <template>
