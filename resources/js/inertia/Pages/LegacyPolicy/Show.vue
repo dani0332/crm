@@ -214,13 +214,7 @@ const moveToImcrm = async policyNumber => {
         <h3 class="font-semibold text-primary-800">Documents</h3>
         <x-divider class="mb-4 mt-1" />
       </div>
-      <div class="text-sm">
-          <div class="grid grid-cols-2 gap-2">
-              <DocumentListing v-if="policy?.documents?.policy && Object.keys(policy?.documents?.policy).length > 0" :documents="policy?.documents?.policy" title="Policy Document" />
-              <DocumentListing v-if="policy?.documents?.quote && Object.keys(policy?.documents?.quote).length > 0" :documents="policy?.documents?.quote" title="Quote Document" />
-              <DocumentListing v-if="policy?.documents?.customer && Object.keys(policy?.documents?.customer).length > 0" :documents="policy?.documents?.customer" title="Customer Document" />
-          </div>
-      </div>
+      <div class="text-sm"></div>
 
       <!-- payments start -->
       <template v-if="can(permissionEnum.LEGACY_INSTALLMENTS)">
