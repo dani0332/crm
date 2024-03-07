@@ -248,6 +248,6 @@ final class PermissionsEnum extends Enum
     public const SEND_INSLY_BOOK_POLICY = 'send-insly-book-policy';
     public const HEALTH_QUOTES_MANAGER_ACCESS = 'health-quotes-manager-access';
     public const HEALTH_QUOTES_ACCESS = 'health-quotes-access';
-    public const ADD_PROFORMA_PAYMENT_REQUEST_DROPDOWN_OPTION = 'proforma-payment-request-add';
-    public const ENABLE_PROFORMA_PDF_DOWNLOAD_BUTTON = 'proforma-create';
+    public const ADD_PROFORMA_PAYMENT_REQUEST_DROPDOWN_OPTION = 'enable-proforma-payment-request-dropdown-option';
+    public const ENABLE_PROFORMA_PDF_DOWNLOAD_BUTTON = 'enable-proforma-download-button';
 }
