@@ -414,6 +414,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::get('car-model-detail', [ValuationController::class, 'carTrimBasedOnCarModel'])->name('valuation.carmodeldetail');
     });
 
+    // Scheduled to delete 15th April 2024
     Route::group(['prefix' => 'claim'], function () {
         Route::resource('claims', ClaimController::class);
         Route::resource('typeofinsurance', TypeOfInsuranceController::class);
@@ -505,8 +506,8 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::post('/update-user-status', [UserController::class, 'updateUserStatus']);
 });
 
-Route::POST('/sendBulkWelcomeEmails', [BulkEmailProcessController::class, 'ProcessBulkWelcomeEmails'])
-    ->withoutMiddleware([App\Http\Middleware\VerifyCsrfToken::class]);
+// Route::POST('/sendBulkWelcomeEmails', [BulkEmailProcessController::class, 'ProcessBulkWelcomeEmails'])
+// ->withoutMiddleware([App\Http\Middleware\VerifyCsrfToken::class]);
 
 //Scheduled to delete 1st April 2024
 /***** RestAPI */
