@@ -547,6 +547,16 @@ const linkEntity = () => {
 };
 
 const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
+
+watch(
+  () => page.props.quote.quote_status_id,
+  (newValue, oldValue) => {
+  console.log('quote_status_id', newValue, oldValue)
+    if (newValue !== oldValue) {
+      leadStatusForm.leadStatus = newValue;
+    }
+  },
+);
 </script>
 
 <template>

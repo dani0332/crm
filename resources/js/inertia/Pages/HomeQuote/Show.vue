@@ -461,6 +461,9 @@ const linkEntity = () => {
 };
 
 const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
+const onUploadDocument = () => {
+  leadStatusForm.leadStatus = page.props.quote.quote_status_id;
+};
 </script>
 
 <template>
@@ -1138,6 +1141,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       :storageUrl="storageUrl"
       :quote="quote"
       :expanded="sectionExpanded"
+      @update-quote-status="onUploadDocument"
     />
     
     <BookPolicy

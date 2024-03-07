@@ -13,7 +13,6 @@ const props = defineProps({
     default: true
   }
 });
-
 const notification = useNotifications('toast');
 
 const quoteStatusOptions = computed(() => {
@@ -22,6 +21,7 @@ const quoteStatusOptions = computed(() => {
     label: status.text,
   }));
 });
+
 const quoteStatusForm = useForm({
   quote_uuid: props.quote.uuid,
   quote_status_id: props.quote.quote_status_id,
@@ -29,6 +29,7 @@ const quoteStatusForm = useForm({
   transapp_code: props.quote?.quote_detail?.transapp_code || null,
   lost_reason_id: props.quote?.quote_detail?.lost_reason_id || null,
 });
+
 
 const onLeadStatus = () => {
   quoteStatusForm.patch(
@@ -59,6 +60,14 @@ const allowStatusUpdate = computed(() => {
     props.quoteStatusEnum.TransactionApproved
   );
 });
+watch(
+  () => props.quote.quote_status_id,
+  (newValue, oldValue) => {
+    if (newValue !== oldValue) {
+      quoteStatusForm.quote_status_id = newValue;
+    }
+  },
+);
 </script>
 
 <template>

@@ -1,5 +1,5 @@
 <script setup>
-// const emit = defineEmits(["update:uploadedFiles"]);
+const emit = defineEmits(["updateQuoteStatus"]);
 import {fileUploadErrorMessage} from "@/inertia/Composables/utilities.js";
 defineProps({
   members: Array,
@@ -54,6 +54,7 @@ const uploadFile = (doc, memberId, filesWithInfo) => {
       },
       onFinish: () => {
         isUploading.value = false;
+        emit('updateQuoteStatus');
       },
     });
 };

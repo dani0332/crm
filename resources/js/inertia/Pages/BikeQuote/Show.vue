@@ -723,7 +723,8 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       :quote-type="quoteType"
       :expanded="sectionExpanded"
     />
-  <QuoteStatus
+
+    <QuoteStatus
       :quote="quote"
       :quote-type="quoteType"
       :quote-statuses="quoteStatuses"
@@ -731,6 +732,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       :quote-status-enum="quoteStatusEnum"
       :expanded="sectionExpanded"
     />
+
     <PlanDetails
       :insuranceProviders="insuranceProviders"
       :quote="quote"

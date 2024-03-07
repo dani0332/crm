@@ -58,7 +58,7 @@ const permissionsEnum = page.props.permissionsEnum;
 const rolesEnum = page.props.rolesEnum;
 const permissionEnum = page.props.permissionsEnum;
 const canAny = permissions => useCanAny(permissions);
-
+const emit = defineEmits(["updateQuoteStatus"]);
 const historyLoading = ref(false);
 
 const { isRequired } = useRules();
