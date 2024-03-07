@@ -220,7 +220,7 @@ const caculateCommission = () => {
         <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
           <div class="grid sm:grid-cols-2">
             <x-tooltip>
-              <dt class="font-medium">Booking Date</dt>
+              <dt class="font-medium">Booking Details</dt>
               <template #tooltip>
                 <span class="custom-tooltip-content">{{
                   productionProcessTooltipEnum.BOOKING_DATE

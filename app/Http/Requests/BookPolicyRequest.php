@@ -26,7 +26,7 @@ class BookPolicyRequest extends FormRequest
             'invoice_date' => 'required',
             'booking_date' => 'required',
             'insurer_tax_invoice_number' => 'required|max:22',
-            'insurer_commmission_invoice_number' => 'required|max:22',
+            'insurer_commmission_invoice_number' => 'required|max:22|different:insurer_tax_invoice_number',
             'discount' => 'nullable',
             'transaction_payment_status' => 'nullable',
             'commission_percentage' => 'nullable',
@@ -41,6 +41,27 @@ class BookPolicyRequest extends FormRequest
             'model_type' => 'required',
             'quote_id' => 'required',
         ];
+    }
+    public function withValidator($validator)
+    {
+        $validator->after(function ($validator) {
+
+            $iTIN = Payment::where('insurer_tax_number', request()->insurer_tax_invoice_number)->get();
+
+            if (!empty($iTIN[0]['paymentable_id'])) {
+                if ($iTIN[0]['paymentable_id'] != request()->quote_id) {
+                    $validator->errors()->add('error', 'Insurer Tax Invoice Number already exists,Please enter a unique value');
+                }
+            }
+
+            $iCIN = Payment::where([['insurer_commmission_invoice_number', request()->insurer_commmission_invoice_number]])->get();
+
+            if (!empty($iCIN[0]['paymentable_id'])) {
+                if ($iCIN[0]['paymentable_id'] != request()->quote_id) {
+                    $validator->errors()->add('error', 'Insurer Commmission Invoice Number already exists,Please enter a unique value');
+                }
+            }
+        });
     }
 
     public function messages()
