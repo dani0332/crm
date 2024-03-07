@@ -66,6 +66,7 @@ const policyDetailsForm = useForm({
 	first_name: props.sendUpdateLog?.first_name || props.quote?.first_name || null,
 	last_name: props.sendUpdateLog?.last_name || props.quote?.last_name || null,
 	provider_name: props.sendUpdateLog?.provider_name || props.quote?.plan?.insurance_provider?.name || null,
+  insurance_provider_id: props.sendUpdateLog?.insurance_provider_id || null,
 	plan_name: props.sendUpdateLog?.plan_name || props.quote?.plan?.name || null,
 	policy_number: props.sendUpdateLog?.policy_number || props.quote?.policy_number || null,
 	issuance_date: props.sendUpdateLog?.issuance_date || props.quote?.policy_issuance_date || null,
@@ -99,6 +100,13 @@ const onUpdate = () => {
     },
   );
 }
+
+const insuranceProvidersOptions = computed(() => {
+  return props?.insuranceProviders?.map(provider => ({
+    value: provider.id,
+    label: provider.text,
+  }));
+})
 </script>
 
 <template>
@@ -164,11 +172,14 @@ const onUpdate = () => {
                 </x-tooltip>
               </dt>
               <dd>
-								<x-input
-									v-if="isCPD"
-									:disabled="!state.isEdit"
-                  v-model="policyDetailsForm.provider_name"
-								/>
+                <ComboBox
+                    v-if="isCPD"
+                    v-model="policyDetailsForm.insurance_provider_id"
+                    :options="insuranceProvidersOptions"
+                    placeholder="Provider Name"
+                    :single="true"
+                    :disabled="!state.isEdit"
+                />
 								<span v-else>{{ policyDetailsForm.provider_name }}</span>
 							</dd>
             </div>

@@ -581,6 +581,12 @@ class SendUpdateLogService
         return in_array($categoryCode, $categories) && ! in_array($optionCode, $options);
     }
 
+    public function isPolicyDetailsVisible($categoryCode, $optionCode): bool
+    {
+        return $categoryCode == SendUpdateLogStatusEnum::CPD || 
+               ($categoryCode == SendUpdateLogStatusEnum::EF && $optionCode == SendUpdateLogStatusEnum::PPE);
+    }
+
     public function getSendUpdatePayments($sendUpdateLog)
     {
         $payments = $sendUpdateLog->payments;

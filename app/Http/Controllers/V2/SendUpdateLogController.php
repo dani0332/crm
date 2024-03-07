@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\V2;
 
 use App\Enums\DocumentTypeCode;
-use App\Enums\PaymentStatusEnum;
 use App\Enums\PaymentMethodsEnum;
+use App\Enums\PaymentStatusEnum;
 use App\Enums\PaymentTooltip;
 use App\Enums\quoteBusinessTypeCode;
 use App\Enums\QuoteStatusEnum;
@@ -18,7 +18,6 @@ use App\Http\Requests\SendUpdateCustomerRequest;
 use App\Http\Requests\SendUpdateRequest;
 use App\Models\PersonalQuote;
 use App\Models\QuoteType;
-use App\Models\SendUpdateLog;
 use App\Repositories\CustomerMembersRepository;
 use App\Repositories\InsuranceProviderRepository;
 use App\Repositories\PersonalQuoteRepository;
@@ -111,7 +110,6 @@ class SendUpdateLogController extends Controller
         $quoteType = QuoteTypeRepository::where('id', $quoteTypeId)->value('code');
 
         $sendUpdateOptions = (new LookupService)->getSendUpdateOptions($quoteTypeId);
-        $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping($quoteTypeId);
 
         $quote = PersonalQuoteRepository::getById($sendUpdateLog->personal_quote_id);
 
@@ -186,7 +184,7 @@ class SendUpdateLogController extends Controller
             'sendUpdateLog' => $sendUpdateLog,
             'issuanceStatuses' => $issuanceStatuses,
             'sendUpdateOptions' => $sendUpdateOptions,
-            'insuranceProviders' => $insuranceProviders,
+            'insuranceProviders' => InsuranceProviderRepository::byQuoteTypeMapping($quoteTypeId),
             'sendUpdateStatusEnum' => SendUpdateLogStatusEnum::asArray(),
             'storageUrl' => storageUrl(),
             'documentTypes' => $documentTypes,
@@ -207,6 +205,7 @@ class SendUpdateLogController extends Controller
             'paymentTooltipEnum' => PaymentTooltip::asArray(),
             'paymentMethods' => $filteredPaymentMethods,
             'quoteRequest' => $paymentEntityModel,
+            'isPolicyDetailsEnabled' => $this->sendUpdateLogService->isPolicyDetailsVisible($categoryCode, $optionCode),
         ]);
     }
 
