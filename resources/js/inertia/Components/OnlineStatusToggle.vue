@@ -33,22 +33,20 @@ const hasAllowedRoles = sameRoles.length > 0;
 
 const shouldShowButton = () => {
     if(hasAllowedRoles) {
-        const currentTime = new Date();
+        const currentTime = new Date().toLocaleString('en-US', {timeZone: 'Asia/Dubai'});
         const currentDay = new Date(currentTime).getDay();
-        const startWorkingHour = new Date().setHours(9,0,0);
-        const endWorkingHour = new Date().setHours(18,30,0);
+        const currentHour = new Date(currentTime).getHours();
+
         // Show the button all day on Saturday and Sunday
         if (currentDay === 6 || currentDay === 0 ) {
             return true;
         }
         // Show the button outside the range 9:00 AM to 6:30 PM on other days
-        if(currentTime < startWorkingHour || currentTime >= endWorkingHour){
+        if(currentHour < 9 || currentHour > 18 || currentHour >= 18 && new Date(currentTime).getMinutes() >= 30){
             return true;
         } else {
             return false;
         }
-        
-        // return (currentHour < 9 && currentHour >= 18 && new Date(currentTime).getMinutes() <= 30);
     }
     return false;
 };

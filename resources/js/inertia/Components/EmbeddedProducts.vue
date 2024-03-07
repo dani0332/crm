@@ -282,7 +282,9 @@ const hasAnyRole = roles => useHasAnyRole(roles);
                     @change="toggleProduct(priceItem, $event)"
                     :model-value="true"
                     color="primary"
-                    :disabled="priceItem.transactions[0]?.payment_status_id == 4 || priceItem.transactions[0]?.payment_status_id == 6 || priceItem.transactions[0]?.payment_status_id == 12"
+                    :disabled="priceItem.transactions[0]?.payment_status_id == paymentStatusEnum.AUTHORISED
+                    || priceItem.transactions[0]?.payment_status_id == paymentStatusEnum.CAPTURED
+                    || priceItem.transactions[0]?.payment_status_id == paymentStatusEnum.PARTIAL_CAPTURED"
 
                 />
                 <x-checkbox
@@ -290,7 +292,9 @@ const hasAnyRole = roles => useHasAnyRole(roles);
                     v-else
                     @change="toggleProduct(priceItem, $event)"
                     color="primary"
-                    :disabled="priceItem.transactions[0]?.payment_status_id == 4 || priceItem.transactions[0]?.payment_status_id == 6 || priceItem.transactions[0]?.payment_status_id == 12"
+                    :disabled="priceItem.transactions[0]?.payment_status_id == paymentStatusEnum.AUTHORISED
+                    || priceItem.transactions[0]?.payment_status_id == paymentStatusEnum.CAPTURED
+                    || priceItem.transactions[0]?.payment_status_id == paymentStatusEnum.PARTIAL_CAPTURED"
                 />
               {{ (parseFloat(priceItem.price) + (priceItem.price * 5) / 100).toFixed(2) }}
             </x-tag>
