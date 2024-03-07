@@ -10,6 +10,8 @@ use App\Models\EmbeddedProduct;
 use App\Models\EmbeddedTransaction;
 use App\Models\GenericDocument;
 use App\Models\QuoteType;
+use App\Strategies\EmbeddedProducts\EmbeddedProduct as EmbeddedProductStrategy;
+use App\Strategies\EmbeddedProducts\MDX;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use finfo;
@@ -97,9 +99,19 @@ class EmbeddedProductRepository extends BaseRepository
     /**
      * @return mixed
      */
-    public function fetchGetData()
+    public function fetchGetData($fetchType = 'all', $shortcodes = [])
     {
-        return $this->with(['insuranceProvider'])->latest('updated_at')->simplePaginate();
+        $query = $this->with(['insuranceProvider'])->latest('updated_at');
+
+        if ($fetchType === 'active') {
+            $query = $query->active();
+        }
+
+        if (! empty($shortcodes)) {
+            $query = $query->whereIn('short_code', $shortcodes);
+        }
+
+        return $query->simplePaginate();
     }
 
     /**
@@ -134,14 +146,8 @@ class EmbeddedProductRepository extends BaseRepository
             $certificate_number = $transaction[0]['certificate_number'];
             $premium = $transaction[0]['price_with_vat'];
         }
-        $viewData['name'] = $quoteObject->first_name.' '.$quoteObject->last_name;
-        $viewData['dob'] = isset($quoteObject->dob) ? Carbon::parse($quoteObject->dob)->format('Y-m-d') : null;
-        $viewData['date_of_enrollment'] = Carbon::now()->format('Y-m-d');
-        $viewData['type'] = $modelType;
-        $viewData['master_policy_number'] = 1234;
-        $viewData['certificate_number'] = $certificate_number;
-        $viewData['premium'] = $premium;
-        $pdf = PDF::setOption(['isHtml5ParserEnabled' => true, 'dpi' => 150])->loadView('pdf.ep_certificate', compact('viewData'));
+        $short_code = $ep->short_code;
+        $pdf = $this->getPDF($short_code, $quoteObject, $certificate_number, $premium);
 
         return response()->json(['data' => 'data:application/pdf;base64,'.base64_encode($pdf->stream()), 'name' => 'Salama_Certificate']);
     }
@@ -295,15 +301,8 @@ class EmbeddedProductRepository extends BaseRepository
             $premium = $transaction[0]['price_with_vat'];
         }
         // send certificate only for medex
-        if (strtoupper($short_code) == 'MDX') {
-            $viewData['name'] = $quoteObject->first_name.' '.$quoteObject->last_name;
-            $viewData['dob'] = isset($quoteObject->dob) ? Carbon::parse($quoteObject->dob)->format('Y-m-d') : null;
-            $viewData['date_of_enrollment'] = Carbon::now()->format('Y-m-d');
-            $viewData['type'] = $modelType;
-            $viewData['master_policy_number'] = 1234;
-            $viewData['certificate_number'] = $certificate_number;
-            $viewData['premium'] = $premium;
-            $pdf = PDF::setOption(['isHtml5ParserEnabled' => true, 'dpi' => 150])->loadView('pdf.ep_certificate', compact('viewData'));
+        $pdf = $this->getPDF($short_code, $quoteObject, $certificate_number, $premium);
+        if ($pdf) {
             $attachments[] = [
                 'Content' => base64_encode($pdf->output()),
                 'Name' => 'Salama_Certificate.pdf',
@@ -333,5 +332,131 @@ class EmbeddedProductRepository extends BaseRepository
         ], JSON_UNESCAPED_SLASHES);
 
         SendEPDocumentsJob::dispatch($body);
+    }
+
+    /**
+     * Retrieves the PDF certificate for a specific product.
+     *
+     * @param  string  $short_code
+     * @param  object  $quoteObject
+     * @param  string  $certificate_number
+     * @param  float  $premium
+     * @return \PDF|null The PDF document or null if the short code is not defined in config.
+     */
+    private function getPDF(
+        $short_code,
+        $quoteObject,
+        $certificate_number,
+        $premium
+    ) {
+        $pdf = null;
+        $certificatesConfig = config('embedded-products.certificates');
+        if (isset($certificatesConfig[$short_code])) {
+            $strategy = $this->createStrategy($short_code);
+            $viewData = $strategy->getPDFData($quoteObject, $certificate_number, $premium);
+            $pdf = PDF::setOption(
+                [
+                    'isHtml5ParserEnabled' => true,
+                    'dpi' => 150,
+                ]
+            )
+                ->loadView($certificatesConfig[$short_code]['view_file'], compact('viewData'));
+        }
+
+        return $pdf;
+    }
+
+    /**
+     * Fetches the sold transaction list for a given EmbeddedProduct and optional filters.
+     *
+     * @param  array  $filters
+     * @return array
+     */
+    public function fetchGetSoldTransactionList(EmbeddedProduct $ep, $filters = [])
+    {
+        $dataset = DB::table('embedded_products')
+            ->where('embedded_products.id', $ep->id)
+            ->when(isset($filters['ref_id']), function ($query) use ($filters) {
+                $query->where('embedded_transactions.code', 'like', "%{$filters['ref_id']}%");
+            })
+            ->when(isset($filters['months']), function ($query) use ($filters) {
+                $startDate = Carbon::parse($filters['months'])->startOfMonth()->format('Y-m-d');
+                $endDate = Carbon::parse($filters['months'])->endOfMonth()->format('Y-m-d');
+                $query->whereBetween('embedded_transactions.paid_at', [$startDate, $endDate]);
+            })
+            ->join('embedded_product_options', 'embedded_products.id', '=', 'embedded_product_options.embedded_product_id')
+            ->join('embedded_transactions', function ($join) {
+                $join->on('embedded_product_options.id', '=', 'embedded_transactions.product_id')
+                    ->where('embedded_transactions.payment_status_id', PaymentStatusEnum::CAPTURED)
+                    ->where('embedded_transactions.is_selected', true);
+            })
+            ->join('quote_type', 'embedded_transactions.quote_type_id', '=', 'quote_type.id')
+            ->select(
+                'embedded_transactions.id',
+                'embedded_transactions.code',
+                'embedded_transactions.quote_request_id',
+                'embedded_transactions.paid_at',
+                'embedded_transactions.certificate_number',
+                'embedded_transactions.price_with_vat',
+                'quote_type.code as model_type',
+            )->get();
+
+        $strategy = $this->createStrategy($ep->short_code);
+        $dataset = $strategy->getTransactionData($dataset);
+
+        if (isset($filters['date_of_purchase']) && ! empty($filters['date_of_purchase'])) {
+            $dataset = $dataset->filter(function ($item) use ($filters) {
+                if (! empty($item['policy_issuance_date'])) {
+                    $startDate = Carbon::parse($filters['date_of_purchase'][0])->startOfDay();
+                    $endDate = Carbon::parse($filters['date_of_purchase'][1])->endOfDay();
+                    $isBetween = Carbon::parse($item['policy_issuance_date'])->between($startDate, $endDate);
+
+                    return $isBetween;
+                }
+
+                return false;
+            });
+        }
+
+        if (isset($filters['email']) && ! empty($filters['email'])) {
+            $dataset = $dataset->filter(function ($item) use ($filters) {
+                if (! empty($item['email'])) {
+                    $emailMatch = stripos($item['email'], $filters['email']) !== false;
+
+                    return $emailMatch;
+                }
+
+                return false;
+            });
+        }
+
+        if (isset($filters['name']) && ! empty($filters['name'])) {
+            $dataset = $dataset->filter(function ($item) use ($filters) {
+                if (! empty($item['name'])) {
+                    $nameParts = explode(' ', $item['name']);
+                    $firstName = $nameParts[0];
+                    $lastName = $nameParts[1] ?? '';
+
+                    return stripos($firstName, $filters['name']) !== false || stripos($lastName, $filters['name']) !== false;
+                }
+
+                return false;
+            });
+        }
+
+        return $dataset->values()->all();
+    }
+
+    public function createStrategy($shortCode)
+    {
+        $strategy = null;
+        $shortCode = strtoupper($shortCode);
+        if ($shortCode == 'MDX') {
+            $strategy = new MDX();
+        } else {
+            $strategy = new EmbeddedProductStrategy();
+        }
+
+        return $strategy;
     }
 }

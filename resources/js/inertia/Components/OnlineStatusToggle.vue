@@ -43,8 +43,7 @@ const shouldShowButton = () => {
         }
 
         // Show the button outside the range 9:00 AM to 6:30 PM on other days
-
-         return !(currentHour >= 15 && currentHour < 17 && new Date(currentTime).getMinutes() >= 0);
+        return !(currentHour >= 9 && currentHour < 18 && new Date(currentTime).getMinutes() <= 30);
     }
     return false;
 };
@@ -88,7 +87,7 @@ onMounted(() => {
       <small v-if="isButtonVisible" class="mr-2">{{userStatus == true?'Online':'Offline'}}</small>
         <x-tooltip position="bottom">
             <x-toggle v-model="userStatus" v-if="isButtonVisible"   @change="onStatusChange"  ></x-toggle>
-            <template #tooltip>{{'About this button: Your status will display as "Offline" after working hours. This means that all incoming leads will be as per a low-priority queue. If you are ready to engage with leads during non-working hours, click this toggle and switch to "Online" mode such that the system will auto-adjust the lead allocations and prioritize you for any incoming hot lead over other offline members.'}}</template>
+            <template #tooltip>{{'"Offline" after working hours. This means that all incoming leads will be as per a priority queue. If you are ready to engage with leads during non-working hours, click this toggle and switch to "Online" mode such that the system will auto-adjust the lead allocations and prioritize you for any incoming hot lead over other offline members.'}}</template>
         </x-tooltip>
   </span>
 </template>
