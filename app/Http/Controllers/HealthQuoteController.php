@@ -49,6 +49,7 @@ class HealthQuoteController extends Controller
             'planId' => $planId,
             'isManualUpdate' => true,
             'isHidden' => false,
+            "selectedCopayId" => (int) $copayId,
             'memberPremiumBreakdown' => $membersBreakDown,
         ];
 
