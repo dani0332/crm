@@ -21,7 +21,7 @@ class CarQuoteRepository extends BaseRepository
     }
 
     /**
-     * @param  $quoteStatusId  (CarLost/Uncontactable)
+     * @param    $quoteStatusId  (CarLost/Uncontactable)
      * @return mixed
      */
     public function fetchGetLostQuotes($quoteStatusId)

@@ -33,6 +33,7 @@ class PaymentsMoveInNewTableStructure extends Seeder
             echo $modelType.'--'.$quoteModelObject."\n";
             if ($quoteModelObject == '') {
                 Log::info('MigratePaymentSeeder::Model not found for: '.$modelType);
+
                 continue;
 
             }
