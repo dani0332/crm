@@ -17,10 +17,58 @@ const travelHeaders = ref([
   { text: 'Trans.Aprove.Non-Ecom', value: 'tran_approved_non_ecom' },
   { text: 'Trans.Aprove.Total', value: 'tran_approved_total' },
   { text: 'Ecom Total', value: 'ecom_total' },
-  { text: 'Ecom Conversion', value: 'ecom_conv' },
   { text: 'Non-Ecom Conversion', value: 'non_ecom_conv' },
   { text: 'Overall Conversion', value: 'overall_ecom_conv' },
 ]);
+
+const isIntegerColumn = key => {
+  // Add logic to determine if the column contains an integer
+  // For example, check if the key corresponds to an integer column
+  return [
+    'total_assigned',
+    'paid_ecom',
+    'paid_ecom_auth',
+    'paid_ecom_captured',
+    'paid_ecom_cancelled',
+    'ecom_conv',
+    'tran_approved_ecom',
+    'tran_approved_non_ecom',
+    'tran_approved_total',
+    'ecom_total',
+    'non_ecom_conv',
+    'overall_ecom_conv',
+  ].includes(key);
+};
+
+let stats = ref({ ...props.statsArray });
+const tranformArray = () => {
+  Object.keys(props.headingArray).map(key => {
+    let array = stats.value[key];
+    array = array.map(item => {
+      return {
+        ...item,
+        non_ecom_conv: Math.round(
+          (item.tran_approved_non_ecom /
+            (item.total_assigned - item.ecom_total)) *
+            100,
+        ).toFixed(2),
+        overall_ecom_conv: Math.round(
+          (+item.tran_approved_total / +item.total_assigned) * 100,
+        ).toFixed(2),
+        ecom_conv: Math.round(
+          (+item.paid_ecom_captured / +item.ecom_total) * 100,
+        ).toFixed(2),
+      };
+    });
+    stats.value[key] = array;
+  });
+};
+
+const calculateTotalSum = useCalculateTotalSum;
+
+onMounted(() => {
+  tranformArray();
+});
 </script>
 
 <template>
@@ -38,12 +86,12 @@ const travelHeaders = ref([
       hide-rows-per-page
       hide-footer
       fixed-checkbox
-      :items="statsArray[key]"
+      :items="stats[key]"
     >
       <template #item-email="item">
         <p>{{ item.email ?? 'UnAssigned' }}</p>
       </template>
-      <template #item-non_ecom_conv="item" v-if="tableHeaders == 'travel'">
+      <!-- <template #item-non_ecom_conv="item">
         <p>
           {{
             Math.round(
@@ -53,8 +101,8 @@ const travelHeaders = ref([
             ).toFixed(2)
           }}
         </p>
-      </template>
-      <template #item-overall_ecom_conv="item" v-if="tableHeaders == 'travel'">
+      </template> -->
+      <!-- <template #item-overall_ecom_conv="item">
         <p>
           {{
             Math.round(
@@ -62,6 +110,22 @@ const travelHeaders = ref([
             ).toFixed(2)
           }}
         </p>
+      </template> -->
+      <template #body-append>
+        <tr class="total-row">
+          <td class="direction-left">Total</td>
+          <td
+            v-for="header in travelHeaders.slice(1, travelHeaders.length)"
+            :key="header.value"
+            class="direction-center"
+          >
+            {{
+              isIntegerColumn(header.value)
+                ? calculateTotalSum(stats[key], header.value)
+                : 'N/A'
+            }}
+          </td>
+        </tr>
       </template>
     </DataTable>
   </div>
