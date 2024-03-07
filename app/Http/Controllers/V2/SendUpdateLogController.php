@@ -82,7 +82,7 @@ class SendUpdateLogController extends Controller
 
         $log = SendUpdateLogRepository::updateLog($id, $data);
 
-        if (isset($log->message) && !empty($log->message)) {
+        if (isset($log->message) && ! empty($log->message)) {
             vAbort($log->message);
         }
 
@@ -96,45 +96,45 @@ class SendUpdateLogController extends Controller
         $quoteUuid = $data['quote_uuid'];
 
         $quoteTypeId = $data['quote_type_id'];
-        
+
         $selectedType = $data['childCategory']['slug'];
-        
+
         $subType = $data['childCategory']['option'];
 
         $model = PersonalQuote::class;
-        
+
         if ($type === 'create') {
 
             switch ($selectedType) {
                 case SendUpdateLogStatusEnum::EF:
                     if ($subType && $subType['slug'] === 'MPC') {
                         $model::where(['uuid' => $quoteUuid, 'quote_type_id' => $quoteTypeId])->update([
-                            'quote_status_id' => QuoteStatusEnum::CancellationPending
+                            'quote_status_id' => QuoteStatusEnum::CancellationPending,
                         ]);
                     }
                     break;
                 case SendUpdateLogStatusEnum::CI:
                 case SendUpdateLogStatusEnum::CIR:
                     $model::where(['uuid' => $quoteUuid, 'quote_type_id' => $quoteTypeId])->update([
-                        'quote_status_id' => QuoteStatusEnum::CancellationPending
+                        'quote_status_id' => QuoteStatusEnum::CancellationPending,
                     ]);
                     break;
             }
         } else {
-            
+
             switch ($selectedType) {
                 case SendUpdateLogStatusEnum::EF:
                 case SendUpdateLogStatusEnum::CI:
                     if ($data['status'] === SendUpdateLogStatusEnum::UPDATE_BOOKED) {
                         $model::where(['uuid' => $quoteUuid, 'quote_type_id' => $quoteTypeId])->update([
-                            'quote_status_id' => QuoteStatusEnum::PolicyCancelled
+                            'quote_status_id' => QuoteStatusEnum::PolicyCancelled,
                         ]);
                     }
                     break;
                 case SendUpdateLogStatusEnum::CIR:
                     if ($data['status'] === SendUpdateLogStatusEnum::UPDATE_BOOKED) {
                         $model::where(['uuid' => $quoteUuid, 'quote_type_id' => $quoteTypeId])->update([
-                            'quote_status_id' => QuoteStatusEnum::PolicyBooked
+                            'quote_status_id' => QuoteStatusEnum::PolicyBooked,
                         ]);
 
                         // TODO: send it to sage, need to confirm what the sage is.
@@ -149,7 +149,7 @@ class SendUpdateLogController extends Controller
         $data = $request->all();
 
         SendUpdateLogRepository::updateLogPriceDetails($data);
-        
+
         return redirect()->back();
     }
 
@@ -158,7 +158,7 @@ class SendUpdateLogController extends Controller
         $data = $request->all();
 
         SendUpdateLogRepository::savePolicyDetails($data);
-        
+
         return redirect()->back();
     }
 

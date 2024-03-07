@@ -137,7 +137,7 @@ class PetQuoteRepository extends BaseRepository
                 'quoteRequestEntityMapping' => function ($entityMapping) {
                     $entityMapping->with('entity');
                 },
-                'quoteDetail'
+                'quoteDetail',
             ])
             ->select([
                 $this->getTable().'.*',
@@ -152,7 +152,7 @@ class PetQuoteRepository extends BaseRepository
                 as customer_type'),
             ])
             ->firstOrFail();
-            
+
         $quote->payments->each->setAppends(['allow', 'copy_link_button', 'edit_button', 'approve_button', 'approved_button']);
 
         $data = ! empty($quote) ? $quote->toArray() : [];

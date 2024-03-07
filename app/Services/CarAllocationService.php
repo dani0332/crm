@@ -94,7 +94,7 @@ class CarAllocationService extends AllocationService
     public function getExcludedUserIds()
     {
         // Define a list of excluded team names.
-        $excludedTeams = [TeamNameEnum::AFFINITY, TeamNameEnum::RENEWALS];
+        $excludedTeams = [TeamNameEnum::AFFINITY];
 
         // Retrieve the IDs of excluded teams.
         $excludedTeamIds = Team::whereIn('name', $excludedTeams)->select('id')->get();

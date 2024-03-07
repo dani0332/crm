@@ -137,7 +137,6 @@ class SendPolicyApplicationStorageSeeder extends Seeder
             ]);
         }
 
-
         $lifeBookPolicy = ApplicationStorage::where('key_name', ApplicationStorageEnums::LIFE_BOOK_POLICY_TEMPLATE)->first();
         if (! $lifeBookPolicy) {
             DB::table('application_storage')->insert([
@@ -148,7 +147,6 @@ class SendPolicyApplicationStorageSeeder extends Seeder
                 'updated_at' => now(),
             ]);
         }
-
 
         $homeBookPolicy = ApplicationStorage::where('key_name', ApplicationStorageEnums::HOME_BOOK_POLICY_TEMPLATE)->first();
         if (! $homeBookPolicy) {
