@@ -1108,17 +1108,24 @@ const editPaymentModal = (payment,split_payment_id,sr_no,capture_approval) => {
     ////if ( isAnyPaid ) {
     totalPrice.value = payment.total_price;
     totalAmount.value = payment.total_price-payment.discount_value;
-    handleDiscountChange(payment.discount_value);
+    
     if  ( isAnyPaid 
           && (payment.total_price<=(payment.total_amount+payment.discount_value)) 
         ) { //FOR EDIT
       isFieldReadonly.value = true;    
     } else if(payment.total_price>(payment.total_amount+payment.discount_value)) {    
       isFieldReadonly.value = false;      
-      isTotalPriceUpdated.value = true;
+      isTotalPriceUpdated.value = true;      
     } else {
       isFieldReadonly.value = false;
-    }    
+    }
+  }
+
+  if(
+    (payment.discount_type==='family_employee_discount' || payment.discount_type==='employee_discount')
+    && payment.discount_value>0
+    ){
+    handleDiscountChange(payment.discount_value);
   }
 
    //Assign plan for Travel
@@ -1701,7 +1708,16 @@ const providerId = computed(() => {
 
 // Watch for changes in paymentMethodsForm.collection_date
 watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
-  calculateDueDates();
+  if (newValue && oldValue) {
+      // Get the date part without the time from the newValue and oldValue
+      const newDate = new Date(newValue).toISOString().split('T')[0];
+      const oldDate = new Date(oldValue).toISOString().split('T')[0];
+      console.log('paymentMethodsForm.collection_date',newDate, oldDate);
+      // Compare the dates
+      if (newDate !== oldDate) {
+          calculateDueDates();
+      }
+  }  
 });
 
 watch(() => props.quoteRequest, (newValue, oldValue) => {
