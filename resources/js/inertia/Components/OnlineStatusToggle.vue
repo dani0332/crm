@@ -86,10 +86,10 @@ onMounted(() => {
 <template>
   <span class="flex">
       <small v-if="isButtonVisible" class="mr-2">{{userStatus == true?'Online':'Offline'}}</small>
-                <x-tooltip position="bottom">
-                    <x-toggle v-model="userStatus" v-if="isButtonVisible"   @change="onStatusChange"  ></x-toggle>
-                    <template #tooltip>{{userStatus == true?'You can toggle this tooltip to go offline, this will temporarily stop new leads allocations':'You can toggle this tooltip to go online,this will start new lead allocation'}}</template>
-                </x-tooltip>
+        <x-tooltip position="bottom">
+            <x-toggle v-model="userStatus" v-if="isButtonVisible"   @change="onStatusChange"  ></x-toggle>
+            <template #tooltip>{{'Your status will display as "Offline" after working hours. This means that all incoming leads will be as per a low-priority queue. If you are ready to engage with leads during non-working hours, then click this toggle and switch to "Online" mode, such that the system will auto-adjust the lead allocations and prioritize you for any incoming hot lead over other offline members.'}}</template>
+        </x-tooltip>
   </span>
 </template>
 

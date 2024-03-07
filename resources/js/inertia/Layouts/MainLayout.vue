@@ -1,5 +1,5 @@
 <script setup>
-import VisibilityToggle from "../Components/VisibilityToggle.vue";
+import OnlineStatusToggle from "../Components/OnlineStatusToggle.vue";
 
 const page = usePage();
 const user = computed(() => page.props.auth.user);
@@ -253,7 +253,7 @@ const onLogout = () => {
 
             <div class="flex gap-3 items-center">
 
-                <VisibilityToggle
+                <OnlineStatusToggle
                     :user="user"
                 />
               <!-- <UserStatus /> -->
