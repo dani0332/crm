@@ -25,7 +25,7 @@ class CycleQuoteRequest extends FormRequest
     {
         return [
             'first_name' => 'required|between:1,20',
-            'last_name' => 'required|between:1,20',
+            'last_name' => 'required|between:1,50',
             'email' => 'required|email:rfc,dns',
             'mobile_no' => 'required',
             'cycle_make' => 'required',

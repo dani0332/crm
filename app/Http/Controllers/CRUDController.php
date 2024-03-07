@@ -416,7 +416,7 @@ class CRUDController extends Controller
             }
             if ($request->has('last_name')) {
                 $this->validate($request, [
-                    'last_name' => 'required|between:1,20',
+                    'last_name' => 'required|between:1,50',
                 ]);
             }
         }

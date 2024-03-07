@@ -220,7 +220,7 @@ class AMTController extends Controller
     {
         $this->validate($request, [
             'first_name' => 'required|between:1,20',
-            'last_name' => 'required|between:1,20',
+            'last_name' => 'required|between:1,50',
             'email' => 'required|email:rfc,dns|max:150',
             'mobile_no' => 'required|regex:/(0)[0-9]/|not_regex:/[a-z]/|min:7|max:20',
             'business_type_of_insurance_id' => 'required',
