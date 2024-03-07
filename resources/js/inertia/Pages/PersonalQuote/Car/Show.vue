@@ -1608,14 +1608,14 @@ const linkEntity = () => {
 };
 
 const handlePlanSelected = plan => {
-  selectedProviderPlan.value.id = plan.id
-  selectedProviderPlan.value.planName = plan.planName
-  selectedProviderPlan.value.providerName = plan.providerName
-  selectedProviderPlan.value.premium = plan.premium
+  selectedProviderPlan.value.id = plan.id;
+  selectedProviderPlan.value.planName = plan.planName;
+  selectedProviderPlan.value.providerName = plan.providerName;
+  selectedProviderPlan.value.premium = plan.premium;
   router.reload({
     preserveState: true,
     preserveScroll: true,
-    only: ['payments','paymentEntityModel'],
+    only: ['payments', 'paymentEntityModel'],
   });
 };
 
@@ -3153,28 +3153,28 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
                   </x-button>
                 </template>
 
-            <span v-if="hasRole(rolesEnum.CarAdvisor)">
-              <SelectPlan
-                v-if="selectedProviderPlan.id != item.id"
-                @update:selectedPlanChanged="handlePlanSelected"
-                :plan="item"
-                :quoteType="quoteType"
-                :uuid="quote.uuid"
-              />
+                <span v-if="hasRole(rolesEnum.CarAdvisor)">
+                  <SelectPlan
+                    v-if="selectedProviderPlan.id != item.id"
+                    @update:selectedPlanChanged="handlePlanSelected"
+                    :plan="item"
+                    :quoteType="quoteType"
+                    :uuid="quote.uuid"
+                  />
 
-              <x-button
-                v-else
-                size="xs"
-                color="orange"
-                outlined
-                :disabled="true"
-              >
-                Selected
-              </x-button>
-            </span>
-          </div>
-        </template>
-      </DataTable>
+                  <x-button
+                    v-else
+                    size="xs"
+                    color="orange"
+                    outlined
+                    :disabled="true"
+                  >
+                    Selected
+                  </x-button>
+                </span>
+              </div>
+            </template>
+          </DataTable>
         </template>
       </Collapsible>
 
@@ -3309,16 +3309,27 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       :quoteType="quoteType"      
     />    
     <PaymentTableNew
-			v-if="isNewPaymentStructure"
-			quoteType="Car"
-			:payments="payments"
-			:paymentDocument="page.props.documentTypes.filter(item => item.code === 'CPD' || item.code === 'CPDR' || item.code === 'CDPDR')"
-			:quoteRequest="paymentEntityModel"
-			:paymentStatusEnum="paymentStatusEnum"
-			:paymentTooltipEnum="paymentTooltipEnum"
-			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name, tooltip: pm.tool_tip } })"
-			:storageUrl="storageUrl"
-		/>
+      v-if="isNewPaymentStructure"
+      quoteType="Car"
+      :payments="payments"
+      :paymentDocument="
+        page.props.documentTypes.filter(
+          item =>
+            item.code === 'CPD' ||
+            item.code === 'CPDR' ||
+            item.code === 'CDPDR',
+        )
+      "
+      :quoteRequest="paymentEntityModel"
+      :paymentStatusEnum="paymentStatusEnum"
+      :paymentTooltipEnum="paymentTooltipEnum"
+      :paymentMethods="
+        paymentMethods.map(pm => {
+          return { value: pm.code, label: pm.name, tooltip: pm.tool_tip };
+        })
+      "
+      :storageUrl="storageUrl"
+    />
     <PaymentTable
       v-else
       :payments="payments"
@@ -3413,113 +3424,14 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       :expanded="sectionExpanded"
     />
 
-    <div class="p-4 rounded shadow mb-6 bg-white" v-if="isQuoteDocumentEnabled">
-      <Collapsible expanded>
-        <template #header>
-          <div>
-            <h3 class="font-semibold text-primary-800 text-lg">
-              Policy Details
-            </h3>
-          </div>
-        </template>
-        <template #body>
-          <x-divider class="my-4" />
-          <div class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5">
-            <div class="w-full md:w-1/2">
-              <x-textarea
-                v-model="policyDetailsForm.quote_policy_number"
-                type="text"
-                label="Policy Number"
-                placeholder="Policy Number"
-                class="w-full"
-                :disabled="!policyDetailsState.isEditing"
-              />
-            </div>
-            <div class="w-full md:w-1/2">
-              <DatePicker
-                v-model="policyDetailsForm.quote_policy_issuance_date"
-                name="quote_policy_issuance_date"
-                label="Issuance Date"
-                placeholder="Issuance Date"
-                class="w-full"
-                :disabled="!policyDetailsState.isEditing"
-              />
-            </div>
-          </div>
-          <div class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5">
-            <div class="w-full md:w-1/2">
-              <DatePicker
-                v-model="policyDetailsForm.quote_policy_start_date"
-                type="text"
-                label="Policy Start Date"
-                placeholder="Policy Start Date"
-                class="w-full"
-                :disabled="!policyDetailsState.isEditing"
-              />
-            </div>
-            <div class="w-full md:w-1/2">
-              <DatePicker
-                v-model="policyDetailsForm.quote_policy_expiry_date"
-                type="text"
-                label="Expiry Date"
-                placeholder="Expiry Date"
-                class="w-full"
-                :disabled="!policyDetailsState.isEditing"
-              />
-            </div>
-          </div>
-          <div class="flex flex-wrap md:flex-nowrap gap-6 w-full">
-            <div class="w-full md:w-1/2">
-              <x-input
-                v-model="policyDetailsForm.quote_premium"
-                type="number"
-                label="Price"
-                placeholder="Price"
-                class="w-full"
-                :disabled="!policyDetailsState.isEditing"
-              />
-            </div>
-            <div class="w-full md:w-1/2" />
-          </div>
-          <div
-            class="flex justify-end"
-            v-if="
-              !can(permissionEnum.ApprovePayments)
-            "
-          >
-            <x-button
-              v-if="policyDetailsState.isEditing"
-              class="mt-4 mr-2"
-              color="emerald"
-              size="sm"
-              :loading="policyDetailsForm.processing"
-              @click.prevent="policyDetailsState.isEditing = false"
-            >
-              Cancel
-            </x-button>
-            <x-button
-              v-if="policyDetailsState.isEditing"
-              class="mt-4"
-              color="emerald"
-              size="sm"
-              :loading="policyDetailsForm.processing"
-              @click.prevent="onUpdatePolicyDetails"
-            >
-              Update
-            </x-button>
-            <x-button
-              v-if="!policyDetailsState.isEditing"
-              class="mt-4"
-              color="emerald"
-              size="sm"
-              @click.prevent="policyDetailsState.isEditing = true"
-            >
-              Edit
-            </x-button>
-          </div>
-        </template>
-      </Collapsible>
-    </div>
+    <PolicyDetail
+      v-if="isQuoteDocumentEnabled"
+      :record="record"
+      :quoteStatusEnum="quoteStatusEnum"
+      :policyIssuanceStatus="policyIssuanceStatus"
+      :modelType="quoteType"
+    />
+
     <div class="p-4 rounded shadow mb-6 bg-white" v-if="isQuoteDocumentEnabled">
       <Collapsible :expanded="sectionExpanded">
         <template #header>
@@ -3532,21 +3444,14 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
           <div class="my-2 flex justify-end">
             <x-button
               class="mr-2"
-              v-if="
-                record.payment_status_id === paymentStatusEnum.AUTHORISED &&
-                !hasRole(rolesEnum.PA)
-              "
+              v-if="record.payment_status_id === paymentStatusEnum.AUTHORISED"
               @click.prevent="copyUploadURL"
               size="sm"
               color="orange"
             >
               Copy upload Link
             </x-button>
-            <template
-              v-if="
-                !can(permissionEnum.ApprovePayments) && !hasRole(rolesEnum.PA)
-              "
-            >
+            <template v-if="1">
               <!-- <Link :href="`${record.uuid}/documents`" class="btn btn-primary btn-sm" style="float:right;">Upload Documents</Link> -->
               <x-button
                 @click.prevent="modals.doc = true"
@@ -3608,11 +3513,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       <p>Are you sure you want to delete this document?</p>
       <template #actions>
         <div class="text-right space-x-4">
-          <x-button
-            size="sm"
-            ghost
-            @click.prevent="modals.docConfirm = false"
-          >
+          <x-button size="sm" ghost @click.prevent="modals.docConfirm = false">
             Cancel
           </x-button>
           <x-button
@@ -3639,41 +3540,41 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
         </ul>
       </x-alert>
 
-        <div
-          v-for="documentType in documentTypes"
-          :key="documentType.id"
-          class="grid md:grid-cols-2 gap-2 my-4 border-b"
-        >
-          <div class="flex flex-col gap-1">
-            <h5 class="text-sm font-semibold">
-              {{ documentType.text }}
-            </h5>
-            <p class="text-xs">Max files: {{ documentType.max_files }}</p>
-            <p class="text-xs">Supported: {{ documentType.accepted_files }}</p>
-            <p class="text-xs">Max file size: {{ documentType.max_size }} MB</p>
-          </div>
-          <div class="pb-4">
-            <Dropzone
-              :id="documentType.id"
-              :accept="documentType.accepted_files"
-              :max-files="documentType.max_files"
-              :max-size="documentType.max_size"
-              :loading="docForm.processing"
-              @change="uploadFile(documentType, $event)"
-            />
-            <a
-              v-for="quoteDocument in page.props.quoteDocuments.filter(
-                d => d.document_type_code == documentType.code,
-              )"
-              :key="quoteDocument.id"
-              :href="storageUrl + quoteDocument.doc_url"
-              target="_blank"
-              class="block px-2 py-1 border rounded mt-1 text-xs hover:text-primary-600 truncate"
-            >
-              {{ quoteDocument.original_name || quoteDocument.doc_name }}
-            </a>
-          </div>
+      <div
+        v-for="documentType in documentTypes"
+        :key="documentType.id"
+        class="grid md:grid-cols-2 gap-2 my-4 border-b"
+      >
+        <div class="flex flex-col gap-1">
+          <h5 class="text-sm font-semibold">
+            {{ documentType.text }}
+          </h5>
+          <p class="text-xs">Max files: {{ documentType.max_files }}</p>
+          <p class="text-xs">Supported: {{ documentType.accepted_files }}</p>
+          <p class="text-xs">Max file size: {{ documentType.max_size }} MB</p>
         </div>
+        <div class="pb-4">
+          <Dropzone
+            :id="documentType.id"
+            :accept="documentType.accepted_files"
+            :max-files="documentType.max_files"
+            :max-size="documentType.max_size"
+            :loading="docForm.processing"
+            @change="uploadFile(documentType, $event)"
+          />
+          <a
+            v-for="quoteDocument in page.props.quoteDocuments.filter(
+              d => d.document_type_code == documentType.code,
+            )"
+            :key="quoteDocument.id"
+            :href="storageUrl + quoteDocument.doc_url"
+            target="_blank"
+            class="block px-2 py-1 border rounded mt-1 text-xs hover:text-primary-600 truncate"
+          >
+            {{ quoteDocument.original_name || quoteDocument.doc_name }}
+          </a>
+        </div>
+      </div>
     </x-modal>
 
     <SendUpdates
@@ -4031,8 +3932,13 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
     </div>
   </div>
 
-  <AuditLogs :type="'App\\Models\\CarQuote'" :id="$page.props.record.id" :quoteCode="$page.props.record.code" :expanded="sectionExpanded"/>
-  
+  <AuditLogs
+    :type="'App\\Models\\CarQuote'"
+    :id="$page.props.record.id"
+    :quoteCode="$page.props.record.code"
+    :expanded="sectionExpanded"
+  />
+
   <ApiLogs
     v-if="can(permissionEnum.API_LOG_VIEW)"
     :type="'App\\Models\\CarQuote'"

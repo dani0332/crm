@@ -6,6 +6,7 @@ use App\Enums\ApplicationStorageEnums;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
+use App\Enums\ProductionProcessTooltipEnum;
 use App\Enums\quoteBusinessTypeCode;
 use App\Enums\QuoteIssuanceStatusEnum;
 use App\Enums\quoteTypeCode;
@@ -75,6 +76,7 @@ class HandleInertiaRequests extends Middleware
             'epLink' => config('constants.AFIA_WEBSITE_DOMAIN'),
             'vat' => ApplicationStorageEnums::VAT,
             'im_logo' => getIMLogo(),
+            'productionProcessTooltipEnum' => ProductionProcessTooltipEnum::asArray(),
         ];
     }
 
