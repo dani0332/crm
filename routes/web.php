@@ -415,16 +415,16 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     });
 
     // Scheduled to delete 15th April 2024
-    Route::group(['prefix' => 'claim'], function () {
-        Route::resource('claims', ClaimController::class);
-        Route::resource('typeofinsurance', TypeOfInsuranceController::class);
-        Route::resource('subtypeofinsurance', SubTypeOfInsuranceController::class);
-        Route::resource('claimsstatus', ClaimsStatusController::class);
-        Route::resource('carrepaircoverage', CarRepairCoverageController::class);
-        Route::resource('carrepairtype', CarRepairTypeController::class);
-        Route::resource('rentacar', RentACarController::class);
-        Route::resource('claims.claim-attachment', ClaimsAttachmentsController::class);
-    });
+    // Route::group(['prefix' => 'claim'], function () {
+    //     Route::resource('claims', ClaimController::class);
+    //     Route::resource('typeofinsurance', TypeOfInsuranceController::class);
+    //     Route::resource('subtypeofinsurance', SubTypeOfInsuranceController::class);
+    //     Route::resource('claimsstatus', ClaimsStatusController::class);
+    //     Route::resource('carrepaircoverage', CarRepairCoverageController::class);
+    //     Route::resource('carrepairtype', CarRepairTypeController::class);
+    //     Route::resource('rentacar', RentACarController::class);
+    //     Route::resource('claims.claim-attachment', ClaimsAttachmentsController::class);
+    // });
 
     Route::group(['prefix' => 'kyc'], function () {
         Route::resource('aml', AMLController::class);
