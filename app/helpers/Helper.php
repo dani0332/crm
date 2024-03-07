@@ -19,7 +19,7 @@ if (! function_exists('generate_code')) {
      * Checks if a value exists in an array in a case-insensitive manner.
      *
      * @param  string  $prefix
-     * The searched value
+     *                          The searched value
      */
     function generate_code($prefix)
     {
@@ -37,7 +37,7 @@ if (! function_exists('vAbort')) {
     /**
      * abort script execution and return errors in validation format with http status 422.
      *
-     * @param $messages message string or array of messages
+     * @param  $messages  message string or array of messages
      *
      * @throws ValidationException
      */
@@ -634,6 +634,39 @@ if (! function_exists('getIMLogo')) {
         $imLogo = 'images/im_logo_21k-hi.png';
 
         return $isPDF ? public_path($imLogo) : asset($imLogo);
+    }
+}
+if (! function_exists('mimeContentType')) {
+    function mimeContentType($ext = null, $mimeType = null)
+    {
+
+        $mime_types = [ // images
+            'png' => 'image/png',
+            'jpeg' => 'image/jpeg',
+            'jpg' => 'image/jpeg',
+            'gif' => 'image/gif',
+            'bmp' => 'image/bmp',
+            'ico' => 'image/vnd.microsoft.icon',
+            'tiff' => 'image/tiff',
+            'tif' => 'image/tiff',
+            'svg' => 'image/svg+xml',
+            'svgz' => 'image/svg+xml',
+
+            'pdf' => 'application/pdf',
+            'psd' => 'image/vnd.adobe.photoshop',
+            'ai' => 'application/postscript',
+            'eps' => 'application/postscript',
+            'ps' => 'application/postscript',
+        ];
+
+        if (! empty($ext)) {
+            array_key_exists($ext, $mime_types);
+
+            return $mime_types[$ext];
+        }
+        if (! empty($mimeType)) {
+            return array_search($mimeType, $mime_types);
+        }
     }
 }
 

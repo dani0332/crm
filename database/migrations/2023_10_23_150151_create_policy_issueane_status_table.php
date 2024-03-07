@@ -1,6 +1,5 @@
 <?php
 
-use App\Enums\QuoteTypes;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -12,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        if (!Schema::hasTable('policy_issuance_status')) {
+        if (! Schema::hasTable('policy_issuance_status')) {
 
             Schema::create('policy_issuance_status', function (Blueprint $table) {
                 $table->id();

@@ -42,24 +42,24 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
         });
 
         $docs = $filtered->all();
-        info('SendBookPolicyDocumentsJobDocuments ' . json_encode($quoteDocuments));
+        info('SendBookPolicyDocumentsJobDocuments '.json_encode($quoteDocuments));
 
         $quote->load('advisor');
 
         $templateId = null;
 
         switch (ucfirst($this->data->model_type)) {
-           case QuoteTypes::CAR->value:
-               $templateId = ApplicationStorage::where('key_name', ApplicationStorageEnums::CAR_BOOK_POLICY_TEMPLATE)->first()->value;
-               break;
+            case QuoteTypes::CAR->value:
+                $templateId = ApplicationStorage::where('key_name', ApplicationStorageEnums::CAR_BOOK_POLICY_TEMPLATE)->first()->value;
+                break;
 
-           case QuoteTypes::BIKE->value:
+            case QuoteTypes::BIKE->value:
                 $templateId = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIKE_BOOK_POLICY_TEMPLATE)->first()->value;
                 break;
 
-           case QuoteTypes::TRAVEL->value:
-               $templateId = ApplicationStorage::where('key_name', ApplicationStorageEnums::TRAVEL_BOOK_POLICY_TEMPLATE)->first()->value;
-               break;
+            case QuoteTypes::TRAVEL->value:
+                $templateId = ApplicationStorage::where('key_name', ApplicationStorageEnums::TRAVEL_BOOK_POLICY_TEMPLATE)->first()->value;
+                break;
 
             case QuoteTypes::HEALTH->value:
                 $templateId = ApplicationStorage::where('key_name', ApplicationStorageEnums::HEALTH_BOOK_POLICY_TEMPLATE)->first()->value;
@@ -89,9 +89,9 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
                 $templateId = null;
                 break;
         }
-        info('SendBookPolicyDocumentsJobData ' . json_encode($quote));
+        info('SendBookPolicyDocumentsJobData '.json_encode($quote));
 
-        if (!empty($templateId)) {
+        if (! empty($templateId)) {
 
             // payload
             $dataArr = new \stdClass();
@@ -99,13 +99,13 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
             // $dataArr->customerEmail = 'wasim.abbas@myalfred.com';
             // $dataArr->customerEmail = 'nouman.hussain@myalfred.com';
             $dataArr->customerEmail = $quote->email;
-            $dataArr->clientFullName = $quote->first_name . ' ' . $quote->last_name;
+            $dataArr->clientFullName = $quote->first_name.' '.$quote->last_name;
             $dataArr->policy_number = $quote->policy_number;
             $dataArr->renewalDueDate = date('Y-m-d', strtotime($quote['renewal_expiry_date']));
             $dataArr->quoteDocuments = $docs;
             $dataArr->advisorName = '';
             $dataArr->advisorEmail = '';
-            if (!empty($quote->advisor)) {
+            if (! empty($quote->advisor)) {
                 $dataArr->advisorName = $quote->advisor->name;
                 $dataArr->advisorEmail = $quote->advisor->email;
             }
@@ -113,15 +113,15 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
             $dataArr->currentInsurer = 'Insurance market';
             $dataArr->emailTemplateId = $templateId;
 
-            info('SendBookPolicyDocumentsJobEmailData ' . json_encode($dataArr));
+            info('SendBookPolicyDocumentsJobEmailData '.json_encode($dataArr));
             $response = $sendEmailCustomerService->sendBookPolicyDocumentsEmail($dataArr, 'book-policy-document');
 
-            info('SendBookPolicyDocumentsJobResponse ' . json_encode($response));
+            info('SendBookPolicyDocumentsJobResponse '.json_encode($response));
         }
     }
 
     public function failed(Throwable $exception)
     {
-        info('SendBookPolicyDocumentsJob -: ' . $this->data->quote_id . ' Error: ' . $exception->getMessage());
+        info('SendBookPolicyDocumentsJob -: '.$this->data->quote_id.' Error: '.$exception->getMessage());
     }
 }
