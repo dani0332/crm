@@ -258,7 +258,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::get('quotes/{quoteType}/{quoteId}/documents/{documentTypeCode}/get-uploaded', [QuoteDocumentController::class, 'getQuoteDocumentsUploaded']);
     Route::post('documents/delete', [QuoteDocumentController::class, 'destroy']);
     Route::get('quotes/{quoteType}/{quote}/proforma-payment-request', [QuoteDocumentController::class, 'downloadProformaPaymentRequest'])->name('download.proforma.payment.request')
-        ->middleware('permission:proforma-payment-request-add');
+        ->middleware('permission:enable-proforma-download-button');
 
     Route::group(['prefix' => 'renewals'], function () {
         Route::post('upload-create', [RenewalsUploadController::class, 'renewalsUploadCreate'])->name('upload-create');
