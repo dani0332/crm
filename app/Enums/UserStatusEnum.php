@@ -11,12 +11,14 @@ final class UserStatusEnum extends Enum
     public const UNAVAILABLE = 3;
     public const SICK = 4;
     public const LEAVE = 5;
+    public const MANUAL_OFFLINE = 6;
     const UserStatusList = [
         self::ONLINE,
         self::OFFLINE,
         self::UNAVAILABLE,
         self::SICK,
         self::LEAVE,
+        self::MANUAL_OFFLINE,
     ];
 
     public static function getUserStatusText($status)
@@ -37,6 +39,9 @@ final class UserStatusEnum extends Enum
                 break;
             case 5:
                 $statusText = 'on Leave';
+                break;
+            case 6:
+                $statusText = 'Manual Offline';
                 break;
             default:
                 break;
