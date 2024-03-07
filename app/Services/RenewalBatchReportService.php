@@ -111,6 +111,7 @@ class RenewalBatchReportService extends BaseService
         $authUserIsCEO = auth()->user()->hasRole(RolesEnum::SeniorManagement);
         $authUserIsAccounts = auth()->user()->hasRole(RolesEnum::Accounts);
         $authUserIsAdvisor = auth()->user()->hasRole(RolesEnum::CarAdvisor);
+        $authUserTeamsIds = auth()->user()->getUserTeamsIds($authUserId)->toArray();
 
         // get instance of crud service with the help of app service container
         $crudService = app()->make(CRUDService::class);
@@ -147,8 +148,6 @@ class RenewalBatchReportService extends BaseService
                 ->pluck('name', 'id')
                 ->toArray();
         } else {
-            $authUserTeamsIds = auth()->user()->getUserTeamsIds($authUserId)->toArray();
-
             $authUserSubTeams = $this->getSubTeamsByTeamIds($authUserTeamsIds)->toArray();
 
             $authUserSubTeams = array_reduce($authUserSubTeams, function ($carry, $item) {
