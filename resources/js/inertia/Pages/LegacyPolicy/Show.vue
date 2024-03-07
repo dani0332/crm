@@ -336,7 +336,7 @@ const moveToImcrm = async policyNumber => {
           <LegacyCard
             v-if="policy.claims && Object.keys(policy.claims).length > 0"
             :legacy="policy.claims"
-            type="single"
+            type="multiple"
             title="CLAIM"
             :policy="policy"
           />
