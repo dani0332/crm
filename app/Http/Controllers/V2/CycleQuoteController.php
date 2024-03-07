@@ -16,6 +16,7 @@ use App\Http\Requests\CycleQuoteRequest;
 use App\Models\ApplicationStorage;
 use App\Models\Emirate;
 use App\Models\Nationality;
+use App\Models\PolicyIssuanceStatus;
 use App\Repositories\ActivityRepository;
 use App\Repositories\CustomerMembersRepository;
 use App\Repositories\CycleQuoteRepository;
@@ -31,13 +32,11 @@ use App\Repositories\SendUpdateLogRepository;
 use App\Repositories\UserRepository;
 use App\Services\AMLService;
 use App\Services\CentralService;
-use App\Services\SplitPaymentService;
-use App\Models\PolicyIssuanceStatus;
-use App\Models\QuoteType;
-use App\Services\QuoteDocumentService;
-use App\Traits\GenericQueriesAllLobs;
 use App\Services\CRUDService;
 use App\Services\LookupService;
+use App\Services\QuoteDocumentService;
+use App\Services\SplitPaymentService;
+use App\Traits\GenericQueriesAllLobs;
 
 class CycleQuoteController extends Controller
 {
@@ -217,7 +216,7 @@ class CycleQuoteController extends Controller
             'policyIssuanceStatus' => $policyIssuanceStatus,
             'bPDetails' => $bPDetails,
             'payments' => $quote->payments->toArray() ?? [],
-	        'sendUpdateOptions' => $sendUpdateOptions,
+            'sendUpdateOptions' => $sendUpdateOptions,
             'sendUpdateLogs' => $sendUpdateLogs,
             'sendUpdateEnum' => $sendUpdateEnum,
             'hasPolicyIssuedStatus' => $hasPolicyIssuedStatus,

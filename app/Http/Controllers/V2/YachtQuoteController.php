@@ -17,7 +17,6 @@ use App\Http\Requests\YachtQuoteRequest;
 use App\Models\ApplicationStorage;
 use App\Models\Emirate;
 use App\Models\Nationality;
-use App\Models\PersonalQuote;
 use App\Models\PolicyIssuanceStatus;
 use App\Repositories\ActivityRepository;
 use App\Repositories\CustomerMembersRepository;
@@ -196,7 +195,7 @@ class YachtQuoteController extends Controller
             ],
             'policyIssuanceStatus' => $policyIssuanceStatus,
             'bPDetails' => $bPDetails,
-            'payments' => $quote->payments->toArray() ?? []
+            'payments' => $quote->payments->toArray() ?? [],
         ]);
     }
 
