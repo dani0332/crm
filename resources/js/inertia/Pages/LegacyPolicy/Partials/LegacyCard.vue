@@ -41,7 +41,7 @@ const formatLabel = (inputString) => {
           <template v-if="!skipFields.includes(index)">
             <th>{{ formatLabel(index) }}</th>
             <td>
-              {{ index.toLowerCase().includes('date') ? formatDate(mainRecord) : mainRecord ? mainRecord : '' }}
+              {{ index.toLowerCase().includes('date') ? formatDate(mainRecord) : (mainRecord ? mainRecord : '') }}
             </td>
           </template>
         </tr>
@@ -52,7 +52,7 @@ const formatLabel = (inputString) => {
             <template v-if="!skipFields.includes(index)">
               <th>{{ formatLabel(index) }}</th>
               <td>
-                {{ index.toLowerCase().includes('date') ? formatDate(mainRecord) : mainRecord ? mainRecord : '' }}
+                {{ index.toLowerCase().includes('date') ? formatDate(mainRecord) : (mainRecord ? mainRecord : '') }}
               </td>
             </template>
           </tr>
@@ -64,7 +64,7 @@ const formatLabel = (inputString) => {
             <template v-if="!skipFields.includes(index)">
               <th>{{ formatLabel(index) }}</th>
               <td>
-                {{ index.toLowerCase().includes('date') ? formatDate(mainRecord) : mainRecord ? mainRecord : '' }}
+                {{ index.toLowerCase().includes('date') ? formatDate(mainRecord) : (mainRecord ? mainRecord : '') }}
               </td>
             </template>
           </tr>
@@ -76,7 +76,7 @@ const formatLabel = (inputString) => {
             <template v-if="!skipFields.includes(index)">
               <th>{{ formatLabel(index) }}</th>
               <td>
-                {{ index.toLowerCase().includes('date') ? formatDate(mainRecord) : mainRecord ? mainRecord : '' }}
+                {{ index.toLowerCase().includes('date') ? formatDate(mainRecord) : (mainRecord ? mainRecord : '') }}
               </td>
             </template>
           </tr>
@@ -88,7 +88,7 @@ const formatLabel = (inputString) => {
             <template v-if="!skipFields.includes(index)">
               <th>{{ formatLabel(index) }}</th>
               <td>
-                {{ index.toLowerCase().includes('date') ? formatDate(mainRecord) : mainRecord ? mainRecord : '' }}
+                {{ index.toLowerCase().includes('date') ? formatDate(mainRecord) : (mainRecord ? mainRecord : '') }}
               </td>
             </template>
           </tr>
