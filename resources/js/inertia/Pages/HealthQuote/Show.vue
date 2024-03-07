@@ -2661,7 +2661,7 @@ const handleChildUpdate = planId => {
           </x-badge>
 
           <x-button
-            v-if="isBetaUser"
+            v-if="hasAnyRole([rolesEnum.BetaUser, rolesEnum.RMAdvisor, rolesEnum.HealthManager])"
             size="sm"
             color="emerald"
             @click.prevent="modals.createPlan = true"
