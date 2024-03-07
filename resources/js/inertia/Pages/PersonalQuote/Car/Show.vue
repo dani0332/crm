@@ -8,6 +8,7 @@ import FollowUpReasons from './Partials/FollowUpReasons.vue';
 import RiskRatingScoreDetails from '../../../Components/RiskRatingScoreDetails.vue';
 import { onMounted, watch } from 'vue';
 import { reactive } from 'vue';
+import MigratePayment from './../../../Components/MigratePayment.vue';
 
 import { fileUploadErrorMessage } from '@/inertia/Composables/utilities.js';
 
@@ -152,6 +153,7 @@ onMounted(() => {
   updateComputedPlanDetails();
 });*/
 
+const processingOCBEmailNB = ref(false);
 const permissionEnum = page.props.permissionsEnum;
 const rolesEnum = page.props.rolesEnum;
 
@@ -699,6 +701,10 @@ const leadDuplicateForm = useForm({
 const openDuplicate = () => {
   modals.duplicate = true;
   leadDuplicateForm.reset();
+};
+
+const openSendOCBConfirmNB = () => {
+  modals.sendOCBConfirmNB = true;
 };
 
 const onCreateDuplicate = isValid => {
@@ -1319,6 +1325,32 @@ const confirmSendEmail = () => {
     });
 };
 
+const confirmSendOCBEmailNB = () => {
+  processingOCBEmailNB.value = true;
+  axios
+    .post(
+      `/quotes/car/${page.props.record.uuid}/send-email-ocb-nb`,
+      {
+        responseType: 'json',
+      },
+    )
+    .then(response => {
+      processingOCBEmailNB.value = false;
+      notification.success({
+        title: response.data.success,
+        position: 'top',
+      });
+    })
+    .catch(error => {
+      processingOCBEmailNB.value = false;
+      console.log(error);
+    })
+    .finally(() => {
+      processingOCBEmailNB.value = false;
+      modals.sendOCBConfirmNB = false;
+    });
+};
+
 const disableFollowUp = ref(false);
 const followUpstatus = ref('');
 const followUpEmails = ref([]);
@@ -1576,14 +1608,14 @@ const linkEntity = () => {
 };
 
 const handlePlanSelected = plan => {
-  selectedProviderPlan.value.id = plan.id
-  selectedProviderPlan.value.planName = plan.planName
-  selectedProviderPlan.value.providerName = plan.providerName
-  selectedProviderPlan.value.premium = plan.premium
+  selectedProviderPlan.value.id = plan.id;
+  selectedProviderPlan.value.planName = plan.planName;
+  selectedProviderPlan.value.providerName = plan.providerName;
+  selectedProviderPlan.value.premium = plan.premium;
   router.reload({
     preserveState: true,
     preserveScroll: true,
-    only: ['payments','paymentEntityModel'],
+    only: ['payments', 'paymentEntityModel'],
   });
 };
 
@@ -1740,6 +1772,19 @@ watch(
                 allowedDuplicateLOB.length > 0
               "
             >
+            <x-button
+              v-if="
+                hasAnyRole([
+                  rolesEnum.LeadPool,
+                ])
+              "
+              class="mr-2"
+              size="sm"
+              color="#ff5e00"
+              @click.prevent="openSendOCBConfirmNB"
+            >
+              Send NB OCB To Customer
+            </x-button>
               <x-button
                 v-if="
                   !hasAnyRole([
@@ -3116,28 +3161,28 @@ watch(
                   </x-button>
                 </template>
 
-            <span v-if="hasRole(rolesEnum.CarAdvisor)">
-              <SelectPlan
-                v-if="selectedProviderPlan.id != item.id"
-                @update:selectedPlanChanged="handlePlanSelected"
-                :plan="item"
-                :quoteType="quoteType"
-                :uuid="quote.uuid"
-              />
+                <span v-if="hasRole(rolesEnum.CarAdvisor)">
+                  <SelectPlan
+                    v-if="selectedProviderPlan.id != item.id"
+                    @update:selectedPlanChanged="handlePlanSelected"
+                    :plan="item"
+                    :quoteType="quoteType"
+                    :uuid="quote.uuid"
+                  />
 
-              <x-button
-                v-else
-                size="xs"
-                color="orange"
-                outlined
-                :disabled="true"
-              >
-                Selected
-              </x-button>
-            </span>
-          </div>
-        </template>
-      </DataTable>
+                  <x-button
+                    v-else
+                    size="xs"
+                    color="orange"
+                    outlined
+                    :disabled="true"
+                  >
+                    Selected
+                  </x-button>
+                </span>
+              </div>
+            </template>
+          </DataTable>
         </template>
       </Collapsible>
 
@@ -3223,7 +3268,34 @@ watch(
           </div>
         </template>
       </x-modal>
-
+      <AppModal
+        :actions="true"
+        :showHeader="true"
+        v-model:modelValue="modals.sendOCBConfirmNB"
+        :backdrop-close="false"
+        >
+        <template #header>
+        <p>Send Email OCB NB</p>
+        </template>
+        <template #default>
+        <p>Are you sure send email to customer?</p>
+        </template>
+        <template #actions>
+            <div class="text-right space-x-4">
+            <x-button
+              size="sm"
+              ghost
+              @click.prevent="modals.sendOCBConfirmNB = false"
+              :disable="processingOCBEmailNB"
+            >
+              Cancel
+            </x-button>
+            <x-button size="sm" color="error" :loading="processingOCBEmailNB" @click.prevent="confirmSendOCBEmailNB">
+              Send
+            </x-button>
+          </div>
+        </template>
+    </AppModal>
       <x-modal v-model="modals.createPlan" size="xl" show-close backdrop>
         <template #header> Create Car Quote </template>
         <LazyCreatePlan
@@ -3238,17 +3310,34 @@ watch(
       </x-modal>
     </div>
 
+    <MigratePayment
+      v-if="!isNewPaymentStructure"
+      :quoteId="record.id"
+      :paymentCode = "record.code"
+      :quoteType="quoteType"      
+    />    
     <PaymentTableNew
-			v-if="isNewPaymentStructure"
-			quoteType="Car"
-			:payments="payments"
-			:paymentDocument="page.props.documentTypes.filter(item => item.code === 'CPD' || item.code === 'CPDR' || item.code === 'CDPDR')"
-			:quoteRequest="paymentEntityModel"
-			:paymentStatusEnum="paymentStatusEnum"
-			:paymentTooltipEnum="paymentTooltipEnum"
-			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name, tooltip: pm.tool_tip } })"
-			:storageUrl="storageUrl"
-		/>
+      v-if="isNewPaymentStructure"
+      quoteType="Car"
+      :payments="payments"
+      :paymentDocument="
+        page.props.documentTypes.filter(
+          item =>
+            item.code === 'CPD' ||
+            item.code === 'CPDR' ||
+            item.code === 'CDPDR',
+        )
+      "
+      :quoteRequest="paymentEntityModel"
+      :paymentStatusEnum="paymentStatusEnum"
+      :paymentTooltipEnum="paymentTooltipEnum"
+      :paymentMethods="
+        paymentMethods.map(pm => {
+          return { value: pm.code, label: pm.name, tooltip: pm.tool_tip };
+        })
+      "
+      :storageUrl="storageUrl"
+    />
     <PaymentTable
       v-else
       :payments="payments"
@@ -3343,7 +3432,6 @@ watch(
       :expanded="sectionExpanded"
     />
 
-
     <PolicyDetail
       v-if="isQuoteDocumentEnabled"
       :record="record"
@@ -3364,21 +3452,14 @@ watch(
           <div class="my-2 flex justify-end">
             <x-button
               class="mr-2"
-              v-if="
-                record.payment_status_id === paymentStatusEnum.AUTHORISED &&
-                !hasRole(rolesEnum.PA)
-              "
+              v-if="record.payment_status_id === paymentStatusEnum.AUTHORISED"
               @click.prevent="copyUploadURL"
               size="sm"
               color="orange"
             >
               Copy upload Link
             </x-button>
-            <template
-              v-if="
-                !can(permissionEnum.ApprovePayments) && !hasRole(rolesEnum.PA)
-              "
-            >
+            <template v-if="1">
               <!-- <Link :href="`${record.uuid}/documents`" class="btn btn-primary btn-sm" style="float:right;">Upload Documents</Link> -->
               <x-button
                 @click.prevent="modals.doc = true"
@@ -3440,11 +3521,7 @@ watch(
       <p>Are you sure you want to delete this document?</p>
       <template #actions>
         <div class="text-right space-x-4">
-          <x-button
-            size="sm"
-            ghost
-            @click.prevent="modals.docConfirm = false"
-          >
+          <x-button size="sm" ghost @click.prevent="modals.docConfirm = false">
             Cancel
           </x-button>
           <x-button
@@ -3471,41 +3548,41 @@ watch(
         </ul>
       </x-alert>
 
-        <div
-          v-for="documentType in documentTypes"
-          :key="documentType.id"
-          class="grid md:grid-cols-2 gap-2 my-4 border-b"
-        >
-          <div class="flex flex-col gap-1">
-            <h5 class="text-sm font-semibold">
-              {{ documentType.text }}
-            </h5>
-            <p class="text-xs">Max files: {{ documentType.max_files }}</p>
-            <p class="text-xs">Supported: {{ documentType.accepted_files }}</p>
-            <p class="text-xs">Max file size: {{ documentType.max_size }} MB</p>
-          </div>
-          <div class="pb-4">
-            <Dropzone
-              :id="documentType.id"
-              :accept="documentType.accepted_files"
-              :max-files="documentType.max_files"
-              :max-size="documentType.max_size"
-              :loading="docForm.processing"
-              @change="uploadFile(documentType, $event)"
-            />
-            <a
-              v-for="quoteDocument in page.props.quoteDocuments.filter(
-                d => d.document_type_code == documentType.code,
-              )"
-              :key="quoteDocument.id"
-              :href="storageUrl + quoteDocument.doc_url"
-              target="_blank"
-              class="block px-2 py-1 border rounded mt-1 text-xs hover:text-primary-600 truncate"
-            >
-              {{ quoteDocument.original_name || quoteDocument.doc_name }}
-            </a>
-          </div>
+      <div
+        v-for="documentType in documentTypes"
+        :key="documentType.id"
+        class="grid md:grid-cols-2 gap-2 my-4 border-b"
+      >
+        <div class="flex flex-col gap-1">
+          <h5 class="text-sm font-semibold">
+            {{ documentType.text }}
+          </h5>
+          <p class="text-xs">Max files: {{ documentType.max_files }}</p>
+          <p class="text-xs">Supported: {{ documentType.accepted_files }}</p>
+          <p class="text-xs">Max file size: {{ documentType.max_size }} MB</p>
         </div>
+        <div class="pb-4">
+          <Dropzone
+            :id="documentType.id"
+            :accept="documentType.accepted_files"
+            :max-files="documentType.max_files"
+            :max-size="documentType.max_size"
+            :loading="docForm.processing"
+            @change="uploadFile(documentType, $event)"
+          />
+          <a
+            v-for="quoteDocument in page.props.quoteDocuments.filter(
+              d => d.document_type_code == documentType.code,
+            )"
+            :key="quoteDocument.id"
+            :href="storageUrl + quoteDocument.doc_url"
+            target="_blank"
+            class="block px-2 py-1 border rounded mt-1 text-xs hover:text-primary-600 truncate"
+          >
+            {{ quoteDocument.original_name || quoteDocument.doc_name }}
+          </a>
+        </div>
+      </div>
     </x-modal>
 
     <BookPolicy
@@ -3863,8 +3940,13 @@ watch(
     </div>
   </div>
 
-  <AuditLogs :type="'App\\Models\\CarQuote'" :id="$page.props.record.id" :quoteCode="$page.props.record.code" :expanded="sectionExpanded"/>
-  
+  <AuditLogs
+    :type="'App\\Models\\CarQuote'"
+    :id="$page.props.record.id"
+    :quoteCode="$page.props.record.code"
+    :expanded="sectionExpanded"
+  />
+
   <ApiLogs
     v-if="can(permissionEnum.API_LOG_VIEW)"
     :type="'App\\Models\\CarQuote'"

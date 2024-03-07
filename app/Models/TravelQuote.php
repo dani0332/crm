@@ -60,6 +60,17 @@ class TravelQuote extends Model implements AuditableContract
     {
         return $this->belongsTo(TravelPlan::class, 'plan_id');
     }
+
+    public function parent()
+    {
+        return $this->belongsTo(TravelQuote::class, 'parent_id');
+    }
+
+    public function child()
+    {
+        return $this->hasOne(TravelQuote::class, 'parent_id');
+    }
+
     public function quotePlan()
     {
         return $this->hasMany(TravelQuotePlan::class, 'travel_quote_request_id');
@@ -141,7 +152,7 @@ class TravelQuote extends Model implements AuditableContract
         return $this->hasOne(QuoteRequestEntityMapping::class, 'quote_request_id')
             ->where('quote_type_id', QuoteTypeId::Travel);
     }
-    
+
     public function sageLog()
     {
         return $this->morphMany(SageApiLog::class, 'section');

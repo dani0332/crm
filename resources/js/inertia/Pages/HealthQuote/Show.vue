@@ -1,5 +1,6 @@
 <script setup>
 import PaymentTableNew from './../../Components/PaymentTableNew.vue';
+import MigratePayment from './../../Components/MigratePayment.vue';
 import LazyDocumentUploader from './Partials/DocumentUploader.vue';
 import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 import LazyCreatePlan from './Partials/CreatePlan.vue';
@@ -2736,7 +2737,13 @@ watch(
         </div>
       </x-modal>
     </div>
-    
+
+    <MigratePayment
+      v-if="!isNewPaymentStructure"
+      :quoteId="quote.id"
+      :paymentCode = "quote.code"
+      quoteType="Health"      
+    />
     <PaymentTableNew
 			v-if="isNewPaymentStructure"
 			quoteType="Health"

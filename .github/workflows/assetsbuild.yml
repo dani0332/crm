@@ -1,0 +1,32 @@
+name: Build JS and CSS assets
+
+on:
+  pull_request:
+    branches:
+      - develop
+    types: [opened, reopened, edited, synchronize]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@v3
+      - name: Install PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.1'
+          tools: composer:v2
+      - name: Install Composer dependencies
+        run: composer install
+      - name: Use Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18.18.x'
+      - name: Setup yarn
+        run: npm install -g yarn
+      - run: yarn && yarn vite build
+      - name: Push changes
+        uses: stefanzweifel/git-auto-commit-action@v4
+        with:
+          commit_message: yarn prod

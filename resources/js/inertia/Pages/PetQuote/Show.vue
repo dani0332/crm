@@ -9,6 +9,7 @@ import MemberDetails from '../../Components/MemberDetails.vue';
 import PlanDetails from '../../Components/PlanDetails.vue';
 import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue';
 import PaymentTableNew from '../../Components/PaymentTableNew.vue';
+import MigratePayment from '../../Components/MigratePayment.vue';
 
 defineProps({
   quote: Object,
@@ -844,6 +845,13 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       :vatPrice="vatPercentage"
       :expanded="sectionExpanded"
     />
+
+    <MigratePayment
+      v-if="!isNewPaymentStructure"
+      :quoteId="quote.id"
+      :paymentCode = "quote.code"
+      :quoteType="quoteType"      
+    />    
     <PaymentTableNew
 			v-if="isNewPaymentStructure"
 			:quoteType="quoteType"

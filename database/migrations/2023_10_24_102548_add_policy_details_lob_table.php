@@ -22,27 +22,27 @@ return new class extends Migration
         ];
 
         foreach ($lobs as $item) {
-            Schema::table(strtolower($item) . '_quote_request', function (Blueprint $table) use ($item) {
-                if (!Schema::hasColumn(strtolower($item) . '_quote_request', 'price_vat_not_applicable')) {
+            Schema::table(strtolower($item).'_quote_request', function (Blueprint $table) use ($item) {
+                if (! Schema::hasColumn(strtolower($item).'_quote_request', 'price_vat_not_applicable')) {
                     $table->decimal('price_vat_not_applicable', 10, 2)->nullable();
                 }
-                if (!Schema::hasColumn(strtolower($item) . '_quote_request', 'price_without_vat')) {
+                if (! Schema::hasColumn(strtolower($item).'_quote_request', 'price_without_vat')) {
                     $table->decimal('price_without_vat', 10, 2)->nullable();
                 }
-                if (!Schema::hasColumn(strtolower($item) . '_quote_request', 'price_with_vat')) {
+                if (! Schema::hasColumn(strtolower($item).'_quote_request', 'price_with_vat')) {
                     $table->decimal('price_with_vat', 10, 2)->nullable();
                 }
-                if (!Schema::hasColumn(strtolower($item) . '_quote_request', 'vat')) {
+                if (! Schema::hasColumn(strtolower($item).'_quote_request', 'vat')) {
                     $table->decimal('vat', 10, 2)->nullable();
                 }
-                if (!Schema::hasColumn(strtolower($item) . '_quote_request', 'insurer_quote_number')) {
+                if (! Schema::hasColumn(strtolower($item).'_quote_request', 'insurer_quote_number')) {
                     $table->integer('insurer_quote_number')->nullable();
                 }
-                if (!Schema::hasColumn(strtolower($item) . '_quote_request', 'policy_issuance_status_id')) {
+                if (! Schema::hasColumn(strtolower($item).'_quote_request', 'policy_issuance_status_id')) {
                     $table->unsignedBigInteger('policy_issuance_status_id')->nullable();
                     $table->foreign('policy_issuance_status_id')->references('id')->on('policy_issuance_status');
                 }
-                if (!Schema::hasColumn(strtolower($item) . '_quote_request', 'policy_issuance_status_other')) {
+                if (! Schema::hasColumn(strtolower($item).'_quote_request', 'policy_issuance_status_other')) {
                     $table->text('policy_issuance_status_other')->nullable();
                 }
             });
@@ -50,26 +50,26 @@ return new class extends Migration
 
         if (Schema::hasTable('personal_quotes')) {
             Schema::table('personal_quotes', function ($table) {
-                if (!Schema::hasColumn('personal_quotes', 'price_vat_not_applicable')) {
+                if (! Schema::hasColumn('personal_quotes', 'price_vat_not_applicable')) {
                     $table->decimal('price_vat_not_applicable', 10, 2)->nullable();
                 }
-                if (!Schema::hasColumn('personal_quotes', 'price_without_vat')) {
+                if (! Schema::hasColumn('personal_quotes', 'price_without_vat')) {
                     $table->decimal('price_without_vat', 10, 2)->nullable();
                 }
-                if (!Schema::hasColumn('personal_quotes', 'price_with_vat')) {
+                if (! Schema::hasColumn('personal_quotes', 'price_with_vat')) {
                     $table->decimal('price_with_vat', 10, 2)->nullable();
                 }
-                if (!Schema::hasColumn('personal_quotes', 'vat')) {
+                if (! Schema::hasColumn('personal_quotes', 'vat')) {
                     $table->decimal('vat', 10, 2)->nullable();
                 }
-                if (!Schema::hasColumn('personal_quotes', 'insurer_quote_number')) {
+                if (! Schema::hasColumn('personal_quotes', 'insurer_quote_number')) {
                     $table->integer('insurer_quote_number')->nullable();
                 }
-                if (!Schema::hasColumn('personal_quotes', 'policy_issuance_status_id')) {
+                if (! Schema::hasColumn('personal_quotes', 'policy_issuance_status_id')) {
                     $table->unsignedBigInteger('policy_issuance_status_id')->nullable();
                     $table->foreign('policy_issuance_status_id')->references('id')->on('policy_issuance_status');
                 }
-                if (!Schema::hasColumn('personal_quotes', 'policy_issuance_status_other')) {
+                if (! Schema::hasColumn('personal_quotes', 'policy_issuance_status_other')) {
                     $table->text('policy_issuance_status_other')->nullable();
                 }
             });
@@ -91,7 +91,7 @@ return new class extends Migration
         ];
 
         foreach ($lobs as $item) {
-            Schema::table(strtolower($item) . '_quote_request', function (Blueprint $table) {
+            Schema::table(strtolower($item).'_quote_request', function (Blueprint $table) {
                 $table->dropColumn('price_vat_not_applicable');
                 $table->dropColumn('price_without_vat');
                 $table->dropColumn('price_with_vat');

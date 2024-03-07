@@ -99,7 +99,8 @@ class QuoteDocumentController extends Controller
 
     public function store($quoteType, QuotesDocumentRequest $request)
     {
-        if (! $request->hasFile('file') ||
+        if (
+            ! $request->hasFile('file') ||
             ! ($quote = $this->getQuoteObject($quoteType, $request->quote_id))
         ) {
             return false;
@@ -107,6 +108,8 @@ class QuoteDocumentController extends Controller
 
 
         $this->quoteDocumentService->uploadQuoteDocument($request->file('file'), $request->all(), $quote);
+        // update quote status - production process
+        $this->updateStatus($quoteType, $request->quote_id);
 
         // update quote status - production process
         $this->updateQuoteStatus($quoteType, $request->quote_id);
@@ -116,7 +119,8 @@ class QuoteDocumentController extends Controller
 
     public function storeMultiple(Request $request, $quoteType)
     {
-        if (! count($request->file) ||
+        if (
+            ! count($request->file) ||
             ! ($quote = $this->getQuoteObject($quoteType, $request->quote_id))
         ) {
             return false;

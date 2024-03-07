@@ -1,6 +1,7 @@
 <script setup>
 import QuoteDocuments from '@/inertia/Pages/PersonalQuote/Partials/QuoteDocuments.vue';
 import PaymentTableNew from '../../Components/PaymentTableNew.vue'; 
+import MigratePayment from '../../Components/MigratePayment.vue';
 
 defineProps({
   quote: Object,
@@ -1095,6 +1096,12 @@ watch(
     />  
 
     <!-- Payments -->
+    <MigratePayment
+      v-if="!isNewPaymentStructure"
+      :quoteId="quote.id"
+      :paymentCode = "quote.code"
+      :quoteType="page.props.quoteType"      
+    />    
     <PaymentTableNew 
 			v-if="isNewPaymentStructure"
 			:quoteType="page.props.quoteType"
