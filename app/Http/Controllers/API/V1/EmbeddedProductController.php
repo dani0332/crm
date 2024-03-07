@@ -12,6 +12,7 @@ class EmbeddedProductController extends Controller
     public function sendDocument(EmbeddedProducDocumentRequest $request)
     {
         EmbeddedProductRepository::sendDocument($request->validated());
+
         return apiResponse(null, Response::HTTP_OK, 'Certificate send Successfully');
     }
 }
