@@ -17,6 +17,7 @@ use App\Http\Requests\YachtQuoteRequest;
 use App\Models\ApplicationStorage;
 use App\Models\Emirate;
 use App\Models\Nationality;
+use App\Models\PolicyIssuanceStatus;
 use App\Repositories\ActivityRepository;
 use App\Repositories\CustomerMembersRepository;
 use App\Repositories\DocumentTypeRepository;
@@ -33,14 +34,14 @@ use App\Repositories\YachtQuoteRepository;
 use App\Services\AMLService;
 use App\Services\CRUDService;
 use App\Services\LookupService;
-use App\Services\SplitPaymentService;
-use App\Models\PolicyIssuanceStatus;
 use App\Services\QuoteDocumentService;
+use App\Services\SplitPaymentService;
 use App\Traits\GenericQueriesAllLobs;
+
 class YachtQuoteController extends Controller
 {
     use GenericQueriesAllLobs;
-    
+
     /**
      * @return \Inertia\Response|\Inertia\ResponseFactory
      */
@@ -196,7 +197,7 @@ class YachtQuoteController extends Controller
             ],
             'policyIssuanceStatus' => $policyIssuanceStatus,
             'bPDetails' => $bPDetails,
-            'payments' => $quote->payments->toArray() ?? []
+            'payments' => $quote->payments->toArray() ?? [],
         ]);
     }
 

@@ -24,6 +24,7 @@ use App\Models\BusinessQuote;
 use App\Models\Emirate;
 use App\Models\Entity;
 use App\Models\Nationality;
+use App\Models\PolicyIssuanceStatus;
 use App\Repositories\CustomerMembersRepository;
 use App\Repositories\InsuranceProviderRepository;
 use App\Repositories\LookupRepository;
@@ -34,13 +35,10 @@ use App\Services\CRUDService;
 use App\Services\DropdownSourceService;
 use App\Services\LookupService;
 use App\Services\SplitPaymentService;
+use App\Traits\GenericQueriesAllLobs;
 use App\Traits\RolePermissionConditions;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
-use App\Models\PolicyIssuanceStatus;
-use App\Models\QuoteType;
-use App\Services\QuoteDocumentService;
-use App\Traits\GenericQueriesAllLobs;
 
 class BusinessQuoteController extends Controller
 {
@@ -53,7 +51,7 @@ class BusinessQuoteController extends Controller
     public const TYPE = quoteTypeCode::Business;
     public const TYPE_ID = QuoteTypeId::Business;
 
-    use RolePermissionConditions, GenericQueriesAllLobs;
+    use GenericQueriesAllLobs, RolePermissionConditions;
 
     public function __construct(
         BusinessQuoteService $businessQuoteService,
@@ -249,7 +247,7 @@ class BusinessQuoteController extends Controller
             $sendUpdateLogs = SendUpdateLogRepository::findByQuoteUuid($record->uuid);
             $sendUpdateEnum = SendUpdateLogStatusEnum::asArray();
         }
-        
+
         $policyIssuanceStatus = PolicyIssuanceStatus::active()->get();
         $bPDetails = $this->bookPolicyPayload($record, QuoteTypes::BUSINESS->value, $payments, $quoteDocuments);
 

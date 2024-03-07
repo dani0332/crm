@@ -16,6 +16,7 @@ use App\Http\Requests\BikeQuoteRequest;
 use App\Models\ApplicationStorage;
 use App\Models\Emirate;
 use App\Models\Nationality;
+use App\Models\PolicyIssuanceStatus;
 use App\Repositories\ActivityRepository;
 use App\Repositories\BikeQuoteRepository;
 use App\Repositories\CustomerMembersRepository;
@@ -32,10 +33,10 @@ use App\Repositories\UserRepository;
 use App\Services\AMLService;
 use App\Services\CRUDService;
 use App\Services\LookupService;
-use App\Models\PolicyIssuanceStatus;
+use App\Services\QuoteDocumentService;
 use App\Services\SplitPaymentService;
 use App\Traits\GenericQueriesAllLobs;
-use App\Services\QuoteDocumentService;
+
 class BikeQuoteController extends Controller
 {
     use GenericQueriesAllLobs;

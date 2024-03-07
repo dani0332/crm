@@ -3,15 +3,10 @@
 namespace App\Traits;
 
 use App\Enums\GenericRequestEnum;
-use App\Enums\QuoteDocumentsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
-use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
-use App\Enums\RolesEnum;
-use App\Models\DocumentType;
 use App\Models\Payment;
-use App\Models\QuoteType;
 use App\Repositories\DocumentTypeRepository;
 use App\Repositories\InsuranceProviderRepository;
 use App\Services\CapiRequestService;
@@ -184,7 +179,7 @@ trait GenericQueriesAllLobs
 
     public function bookPolicyPayload($record, $quoteType, $payments, $quoteDocuments)
     {
-       $insuranceProviderLeadCount = $insuranceProviderCode = '';
+        $insuranceProviderLeadCount = $insuranceProviderCode = '';
         if ($payments->first()) {
             $insurance_provider_id = $payments[0]['insurance_provider_id'];
             $insuranceProviderCode = InsuranceProviderRepository::where('id', $insurance_provider_id)->value('code');
@@ -197,18 +192,18 @@ trait GenericQueriesAllLobs
         $bPDetails['sendPolicyType'] = null;
         $bPDetails['text'] = '';
         if ($this->isFilledPolicyDetails($quoteType, $record)) {
-            if (!empty($quoteDocuments)) {
-                $documentTypeCodes= app(DocumentTypeRepository::class)->getSendPolicyDocumentCodes($quoteType);
+            if (! empty($quoteDocuments)) {
+                $documentTypeCodes = app(DocumentTypeRepository::class)->getSendPolicyDocumentCodes($quoteType);
                 $quoteDocumentsCount = collect($quoteDocuments)->whereIn('document_type_code', $documentTypeCodes)->groupBy('document_type_code')->count();
-                if($quoteDocumentsCount == count($documentTypeCodes)) {
+                if ($quoteDocumentsCount == count($documentTypeCodes)) {
                     $bPDetails['sendButton'] = true;
                     $bPDetails['text'] = 'Send Policy To Customer';
                     $bPDetails['sendPolicyType'] = 'customer';
                 }
                 if ($bPDetails['sendButton']) {
-                    $taxDocuments= app(DocumentTypeRepository::class)->getTaxDocumentsCode($quoteType);
+                    $taxDocuments = app(DocumentTypeRepository::class)->getTaxDocumentsCode($quoteType);
                     $taxDocumentsCount = collect($quoteDocuments)->whereIn('document_type_code', $taxDocuments)->groupBy('document_type_code')->count();
-                    if($taxDocumentsCount == count($taxDocuments)) {
+                    if ($taxDocumentsCount == count($taxDocuments)) {
                         $bPDetails['text'] = 'Send Policy';
                         $bPDetails['editButton'] = true;
                         $bPDetails['sendPolicyType'] = 'sage';
@@ -235,30 +230,32 @@ trait GenericQueriesAllLobs
         $quote = $this->getQuoteObject($type, $id);
         if ($quote->quote_status_id != QuoteStatusEnum::PolicySentToCustomer) {
             if ($this->isFilledPolicyDetails($type, $quote)) {
-                $quoteDocuments  = (new QuoteDocumentService())->getQuoteDocuments($type, $id);
-                $documentTypeCodes= app(DocumentTypeRepository::class)->getSendPolicyDocumentCodes($type);
+                $quoteDocuments = (new QuoteDocumentService())->getQuoteDocuments($type, $id);
+                $documentTypeCodes = app(DocumentTypeRepository::class)->getSendPolicyDocumentCodes($type);
                 $quoteDocumentsCount = collect($quoteDocuments)->whereIn('document_type_code', $documentTypeCodes)->groupBy('document_type_code')->count();
-                if($quoteDocumentsCount == count($documentTypeCodes)) {
+                if ($quoteDocumentsCount == count($documentTypeCodes)) {
                     $quote->update([
                         'quote_status_id' => QuoteStatusEnum::PolicyIssued,
-                        'policy_issuance_status_id' =>  null,
-                        'policy_issuance_status_other' =>  '',
+                        'policy_issuance_status_id' => null,
+                        'policy_issuance_status_other' => '',
                     ]);
                 }
             }
         }
     }
 
-    private function isFilledPolicyDetails($type, $quote) {
-        if (!empty($quote->policy_number) && !empty($quote->policy_issuance_date) && !empty($quote->policy_start_date) && !empty($quote->renewal_expiry_date) && $quote->price_with_vat > 0) {
-            if(in_array(ucfirst($type), [QuoteTypes::CAR->value, QuoteTypes::BIKE->value])) {
-                if(!empty($quote->insurer_quote_number)){
+    private function isFilledPolicyDetails($type, $quote)
+    {
+        if (! empty($quote->policy_number) && ! empty($quote->policy_issuance_date) && ! empty($quote->policy_start_date) && ! empty($quote->renewal_expiry_date) && $quote->price_with_vat > 0) {
+            if (in_array(ucfirst($type), [QuoteTypes::CAR->value, QuoteTypes::BIKE->value])) {
+                if (! empty($quote->insurer_quote_number)) {
                     return true;
                 }
             } else {
                 return true;
             }
         }
+
         return false;
     }
 }

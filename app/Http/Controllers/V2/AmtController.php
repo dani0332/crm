@@ -23,6 +23,7 @@ use App\Models\Emirate;
 use App\Models\Entity;
 use App\Models\GroupMedicalType;
 use App\Models\Nationality;
+use App\Models\PolicyIssuanceStatus;
 use App\Repositories\BusinessQuoteRepository;
 use App\Repositories\CustomerMembersRepository;
 use App\Repositories\DocumentTypeRepository;
@@ -37,6 +38,7 @@ use App\Services\CRUDService;
 use App\Services\CustomerService;
 use App\Services\DropdownSourceService;
 use App\Services\LookupService;
+use App\Services\QuoteDocumentService;
 use App\Services\SplitPaymentService;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\RolePermissionConditions;
@@ -45,13 +47,10 @@ use Carbon\Carbon;
 use DB;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Redirect;
-use App\Services\QuoteDocumentService;
-use App\Models\QuoteType;
-use App\Models\PolicyIssuanceStatus;
 
 class AmtController extends Controller
 {
-    use RolePermissionConditions, GenericQueriesAllLobs;
+    use GenericQueriesAllLobs, RolePermissionConditions;
 
     /**
      * Display a listing of the resource.
@@ -295,7 +294,7 @@ class AmtController extends Controller
         $policyIssuanceStatus = PolicyIssuanceStatus::active()->get();
         $quoteDocuments = (new QuoteDocumentService())->getQuoteDocuments(QuoteTypes::BUSINESS->value, $record->id);
         $bPDetails = $this->bookPolicyPayload($record, QuoteTypes::GROUP_MEDICAL->value, $record->payments, $quoteDocuments);
-        
+
         return inertia('GroupMedicalQuote/Show', [
             'documentTypes' => $documentTypes,
             'storageUrl' => storageUrl(),
@@ -344,7 +343,7 @@ class AmtController extends Controller
             ],
             'policyIssuanceStatus' => $policyIssuanceStatus,
             'bPDetails' => $bPDetails,
-            'payments' => $record->payments->toArray() ?? []
+            'payments' => $record->payments->toArray() ?? [],
         ]);
     }
 
