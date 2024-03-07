@@ -110,7 +110,7 @@ const formatLabel = (inputString) => {
               <template v-if="!skipFields.includes(subIndex)">
                 <th>{{ formatLabel(subIndex) }}</th>
                 <td>
-                  {{ subIndex.toLowerCase().includes('date') ? formatDate(subRecord) : subRecord ? subRecord : '' }}
+                  {{ subIndex.toLowerCase().includes('date') ? formatDate(subRecord) : (subRecord ? subRecord : '') }}
                 </td>
               </template>
             </tr>
