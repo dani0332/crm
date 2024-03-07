@@ -43,6 +43,9 @@ defineProps({
   paymentStatusEnum: Object,
   paymentTooltipEnum: Object,
   isNewPaymentStructure: Boolean,
+  sendUpdateOptions: Array,
+  sendUpdateLogs: Array,
+  hasPolicyIssuedStatus: Boolean
 });
 
 const page = usePage();
@@ -269,34 +272,14 @@ const linkEntity = () => {
       console.log(err);
     });
 };
+
+const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
 </script>
 
 <template>
   <div>
     <Head title="Cycle Quotes" />
-    <div class="flex justify-between items-center flex-wrap gap-2 mb-5">
-      <h2 class="text-xl font-semibold">Cycle Detail</h2>
-      <div class="flex gap-2">
-        <x-button size="sm" color="#ff5e00" @click.prevent="openDuplicate">
-          Duplicate Lead
-        </x-button>
-        <Link
-          v-if="can(permissionsEnum.CycleQuotesList)"
-          :href="route('cycle-quotes-list')"
-          preserve-scroll
-        >
-          <x-button size="sm" color="primary" tag="div">
-            Cycle Quotes
-          </x-button>
-        </Link>
-        <Link
-          v-if="can(permissionsEnum.CycleQuotesEdit)"
-          :href="route('cycle-quotes-edit', quote.uuid)"
-        >
-          <x-button size="sm" tag="div">Edit</x-button>
-        </Link>
-      </div>
-    </div>
+    
     <x-modal v-model="modals.duplicate" size="lg" show-close backdrop>
       <template #header> Duplicate Lead </template>
       <x-form @submit="onCreateDuplicate" :auto-focus="false">
@@ -339,9 +322,38 @@ const linkEntity = () => {
     </x-modal>
 
     <div class="p-4 rounded shadow mb-6 bg-white">
-      <div class="text-sm">
-        <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
-          <div class="grid sm:grid-cols-2">
+      <Collapsible :expanded="sectionExpanded">
+        <template #header>
+          <div class="flex justify-between items-center flex-wrap gap-2">
+            <h3 class="text-lg font-semibold text-primary-800">Cycle Detail</h3>
+          </div>
+        </template>
+        <template #body>
+          <x-divider class="my-4" />
+          <div class="flex gap-2 mb-4 justify-end">
+            <x-button size="sm" color="#ff5e00" @click.prevent="openDuplicate">
+              Duplicate Lead
+            </x-button>
+            <Link
+              v-if="can(permissionsEnum.CycleQuotesList)"
+              :href="route('cycle-quotes-list')"
+              preserve-scroll
+            >
+              <x-button size="sm" color="primary" tag="div">
+                Cycle Quotes
+              </x-button>
+            </Link>
+            <Link
+              v-if="can(permissionsEnum.CycleQuotesEdit)"
+              :href="route('cycle-quotes-edit', quote.uuid)"
+            >
+              <x-button size="sm" tag="div">Edit</x-button>
+            </Link>
+          </div>
+
+          <div class="text-sm">
+            <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
+              <div class="grid sm:grid-cols-2">
             <div
               class="grid sm:grid-cols-2"
               v-if="hasAnyRole([rolesEnum.Admin, rolesEnum.Engineering])"
@@ -349,329 +361,340 @@ const linkEntity = () => {
               <dt class="font-medium">ID</dt>
               <dd>{{ quote.id }}</dd>
             </div>
-            <div>
-              <x-tooltip position="bottom">
-                <label
-                  class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
-                >
-                  Ref-ID
-                </label>
-                <template #tooltip> Reference ID </template>
-              </x-tooltip>
-            </div>
-            <div>{{ quote.code }}</div>
+                <div>
+                  <x-tooltip position="bottom">
+                    <label
+                      class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
+                    >
+                      Ref-ID
+                    </label>
+                    <template #tooltip> Reference ID </template>
+                  </x-tooltip>
+                </div>
+                <div>{{ quote.code }}</div>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">CUSTOMER TYPE</dt>
+                <dd>{{ quote.customer_type }}</dd>
+              </div>
+    
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">ADVISOR</dt>
+                <dd>{{ quote.advisor?.name }}</dd>
+              </div>
+    
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">SOURCE</dt>
+                <dd>{{ quote.source }}</dd>
+              </div>
+    
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">CREATED DATE</dt>
+                <dd>{{ quote.created_at }}</dd>
+              </div>
+    
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">CREATED BY</dt>
+                <dd>{{ quote?.created_by?.email }}</dd>
+              </div>
+    
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">UPDATED BY</dt>
+                <dd>{{ quote?.updated_by?.email }}</dd>
+              </div>
+    
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">LAST MODIFIED DATE</dt>
+                <dd>{{ quote.updated_at }}</dd>
+              </div>
+    
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">LOST REASON</dt>
+                <dd>{{ quote.quote_detail?.lost_reason?.text }}</dd>
+              </div>
+    
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">DEVICE</dt>
+                <dd>{{ quote.device }}</dd>
+              </div>
+    
+              <div class="grid sm:grid-cols-2">
+                <div>
+                  <x-tooltip position="bottom">
+                    <label
+                      class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
+                    >
+                      Parent Ref-ID
+                    </label>
+                    <template #tooltip> Parent Reference ID </template>
+                  </x-tooltip>
+                </div>
+                <div>{{ quote.parent_duplicate_quote_id }}</div>
+              </div>
+            </dl>
           </div>
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">CUSTOMER TYPE</dt>
-            <dd>{{ quote.customer_type }}</dd>
+    
+          <div class="mt-6">
+            <h3 class="font-semibold text-primary-800">Quote Details</h3>
+            <x-divider class="mb-4 mt-1" />
           </div>
-
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">ADVISOR</dt>
-            <dd>{{ quote.advisor?.name }}</dd>
+    
+          <div class="text-sm">
+            <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">CYCLE MAKE</dt>
+                <dd>{{ quote?.cycle_quote?.cycle_make }}</dd>
+              </div>
+    
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">CYCLE MODEL</dt>
+                <dd>{{ quote?.cycle_quote?.cycle_model }}</dd>
+              </div>
+    
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">YEAR OF MANUFACTURE</dt>
+                <dd>{{ quote?.cycle_quote?.year_of_manufacture?.text }}</dd>
+              </div>
+    
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">PURCHASED OF VALUE(AED)</dt>
+                <dd>{{ quote?.asset_value }}</dd>
+              </div>
+    
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">ACCESSORIES</dt>
+                <dd>{{ quote?.cycle_quote?.accessories }}</dd>
+              </div>
+    
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">HAS ACCIDENT</dt>
+                <dd>{{ quote?.cycle_quote?.has_accident ? 'YES' : 'NO' }}</dd>
+              </div>
+    
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">HAS GOOD CONDITION</dt>
+                <dd>{{ quote?.cycle_quote?.has_good_condition ? 'YES' : 'NO' }}</dd>
+              </div>
+            </dl>
           </div>
-
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">SOURCE</dt>
-            <dd>{{ quote.source }}</dd>
-          </div>
-
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">CREATED DATE</dt>
-            <dd>{{ quote.created_at }}</dd>
-          </div>
-
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">CREATED BY</dt>
-            <dd>{{ quote?.created_by?.email }}</dd>
-          </div>
-
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">UPDATED BY</dt>
-            <dd>{{ quote?.updated_by?.email }}</dd>
-          </div>
-
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">LAST MODIFIED DATE</dt>
-            <dd>{{ quote.updated_at }}</dd>
-          </div>
-
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">LOST REASON</dt>
-            <dd>{{ quote.quote_detail?.lost_reason?.text }}</dd>
-          </div>
-
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">DEVICE</dt>
-            <dd>{{ quote.device }}</dd>
-          </div>
-
-          <div class="grid sm:grid-cols-2">
-            <div>
-              <x-tooltip position="bottom">
-                <label
-                  class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
-                >
-                  Parent Ref-ID
-                </label>
-                <template #tooltip> Parent Reference ID </template>
-              </x-tooltip>
-            </div>
-            <div>{{ quote.parent_duplicate_quote_id }}</div>
-          </div>
-        </dl>
-      </div>
-
-      <div class="mt-6">
-        <h3 class="font-semibold text-primary-800">Quote Details</h3>
-        <x-divider class="mb-4 mt-1" />
-      </div>
-
-      <div class="text-sm">
-        <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">CYCLE MAKE</dt>
-            <dd>{{ quote?.cycle_quote?.cycle_make }}</dd>
-          </div>
-
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">CYCLE MODEL</dt>
-            <dd>{{ quote?.cycle_quote?.cycle_model }}</dd>
-          </div>
-
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">YEAR OF MANUFACTURE</dt>
-            <dd>{{ quote?.cycle_quote?.year_of_manufacture?.text }}</dd>
-          </div>
-
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">PURCHASED OF VALUE(AED)</dt>
-            <dd>{{ quote?.asset_value }}</dd>
-          </div>
-
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">ACCESSORIES</dt>
-            <dd>{{ quote?.cycle_quote?.accessories }}</dd>
-          </div>
-
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">HAS ACCIDENT</dt>
-            <dd>{{ quote?.cycle_quote?.has_accident ? 'YES' : 'NO' }}</dd>
-          </div>
-
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">HAS GOOD CONDITION</dt>
-            <dd>{{ quote?.cycle_quote?.has_good_condition ? 'YES' : 'NO' }}</dd>
-          </div>
-        </dl>
-      </div>
+        </template>
+      </Collapsible>
     </div>
 
     <div class="p-4 rounded shadow mb-6 bg-white">
-      <div class="flex justify-between items-center mb-4">
-        <h3 class="font-semibold text-primary-800 text-lg">
-          {{
-            quote.customer_type == page.props.customerTypeEnum.Individual
-              ? 'Customer '
-              : 'Entity '
-          }}
-          Profile
-        </h3>
-        <x-tag color="success" v-if="quote.kyc_decision === 'Complete'"> KYC - Complete </x-tag>
-        <x-tag color="amber" v-else> KYC - Pending </x-tag>
-      </div>
-      <x-divider class="mb-4 mt-1" />
-      <x-form @submit="updateProfileDetails" :auto-focus="false">
-        <div class="text-sm">
-          <dl
-            v-if="
-              quote.customer_type === page.props.customerTypeEnum.Individual
-            "
-            class="grid md:grid-cols-2 gap-x-6 gap-y-4"
-          >
-            <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">FIRST NAME</dt>
-              <dd>{{ quote.first_name }}</dd>
-            </div>
-            <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">LAST NAME</dt>
-              <dd>{{ quote.last_name }}</dd>
-            </div>
-            <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">INSURED FIRST NAME</dt>
-              <dd>
-                <x-input
-                  v-model="customerProfileForm.insured_first_name"
-                  :rules="[isRequired]"
-                  placeholder="INSURED FIRST NAME"
-                  class="w-full"
-                  :disabled="!isProfileUpdateAllow"
-                />
-              </dd>
-            </div>
-            <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">INSURED LAST NAME</dt>
-              <dd>
-                <x-input
-                  v-model="customerProfileForm.insured_last_name"
-                  :rules="[isRequired]"
-                  placeholder="INSURED LAST NAME"
-                  class="w-full"
-                  :disabled="!isProfileUpdateAllow"
-                />
-              </dd>
-            </div>
-            <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">MOBILE NUMBER</dt>
-              <dd>{{ quote.mobile_no }}</dd>
-            </div>
-            <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">EMAIL</dt>
-              <dd>{{ quote.email }}</dd>
-            </div>
-            <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">NATIONALITY</dt>
-              <dd>{{ quote.nationality?.text }}</dd>
-            </div>
-            <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">DATE OF BIRTH</dt>
-              <dd>{{ quote.dob }}</dd>
-            </div>
-            <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">EMIRATES ID NUMBER</dt>
-              <dd>
-                <x-input
-                  v-model="customerProfileForm.emirates_id_number"
-                  :rules="[isRequired]"
-                  placeholder="EMIRATES ID NUMBER"
-                  class="w-full"
-                  :disabled="!isProfileUpdateAllow"
-                />
-              </dd>
-            </div>
-            <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">EMIRATES ID EXPIRY DATE</dt>
-              <dd>
-                <DatePicker
-                  v-model="customerProfileForm.emirates_id_expiry_date"
-                  :rules="[isRequired]"
-                  placeholder="EMIRATES ID EXPIRY DATE"
-                  :disabled="!isProfileUpdateAllow"
-                  :min-date="new Date()"
-                />
-              </dd>
-            </div>
-            <RiskRatingScoreDetails :quote="quote" :modelType="quoteType" />
-          </dl>
-          <dl
-            v-if="quote.customer_type === page.props.customerTypeEnum.Entity"
-            class="grid md:grid-cols-2 gap-x-6 gap-y-4"
-          >
-            <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">FIRST NAME</dt>
-              <dd>{{ quote.first_name }}</dd>
-            </div>
-            <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">LAST NAME</dt>
-              <dd>{{ quote.last_name }}</dd>
-            </div>
-            <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">MOBILE NUMBER</dt>
-              <dd>{{ quote.mobile_no }}</dd>
-            </div>
-            <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">EMAIL</dt>
-              <dd>{{ quote.email }}</dd>
-            </div>
-            <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">COMPANY NAME</dt>
-              <dd>{{ customerProfileForm.company_name }}</dd>
-            </div>
-            <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">TRADE LICENSE NO</dt>
-              <dd>
-                <x-input
-                  v-model="customerProfileForm.trade_license_no"
-                  placeholder="TRADE LICENSE NO"
-                  type="text"
-                  class="w-full"
-                />
-                <x-button
-                  @click.prevent="searchByTradeLicense"
-                  size="xs"
-                  color="primary"
-                >
-                  Search
-                </x-button>
-              </dd>
-            </div>
-            <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">EMIRATES OF REGISTRATION</dt>
-              <dd>
-                <ComboBox
-                  v-model="customerProfileForm.emirate_of_registration_id"
-                  :single="true"
-                  placeholder="SELECT EMIRATES OF REGISTRATION"
-                  :options="emiratesOptions"
-                  class="w-full"
-                />
-              </dd>
-            </div>
-            <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">COMPANY ADDRESS</dt>
-              <dd>
-                <x-input
-                  v-model="customerProfileForm.company_address"
-                  placeholder="COMPANY ADDRESS"
-                  type="text"
-                  class="w-full"
-                />
-              </dd>
-            </div>
-            <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">INDUSTRY TYPE</dt>
-              <dd>
-                <ComboBox
-                  :single="true"
-                  v-model="customerProfileForm.industry_type_code"
-                  placeholder="SELECT INDUSTRY TYPE"
-                  :options="industryTypeOptions"
-                  class="w-full"
-                />
-              </dd>
-            </div>
-            <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">ENTITY TYPE</dt>
-              <dd>
-                <ComboBox
-                  @update:modelValue="entityTypeChange($event)"
-                  :single="true"
-                  v-model:modelValue="customerProfileForm.entity_type_code"
-                  placeholder="SELECT ENTITY TYPE"
-                  :options="[
-                    { label: 'Parent', value: 'Parent' },
-                    { label: 'Sub Entity', value: 'SubEntity' },
-                  ]"
-                  class="w-full"
-                />
-              </dd>
-            </div>
-          </dl>
-          <div class="flex justify-end">
-            <x-button
-              v-if="isProfileUpdateAllow"
-              class="mt-4"
-              color="emerald"
-              size="sm"
-              :loading="customerProfileForm.processing"
-              type="submit"
-            >
-              Update Profile
-            </x-button>
+      <Collapsible :expanded="sectionExpanded">
+        <template #header>
+          <div class="flex justify-between items-center">
+            <h3 class="font-semibold text-primary-800 text-lg">
+              {{
+                quote.customer_type == page.props.customerTypeEnum.Individual
+                  ? 'Customer '
+                  : 'Entity '
+              }}
+              Profile
+            </h3>
           </div>
-        </div>
-      </x-form>
+        </template>
+        <template #body>
+          <x-divider class="my-4" />
+          <div class="flex mb-4 justify-end">
+            <x-tag color="success" v-if="quote.kyc_decision === 'Complete'"> KYC - Complete </x-tag>
+            <x-tag color="amber" v-else> KYC - Pending </x-tag>
+          </div>
+          <x-form @submit="updateProfileDetails" :auto-focus="false">
+            <div class="text-sm">
+              <dl
+                v-if="
+                  quote.customer_type === page.props.customerTypeEnum.Individual
+                "
+                class="grid md:grid-cols-2 gap-x-6 gap-y-4"
+              >
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">FIRST NAME</dt>
+                  <dd>{{ quote.first_name }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">LAST NAME</dt>
+                  <dd>{{ quote.last_name }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">INSURED FIRST NAME</dt>
+                  <dd>
+                    <x-input
+                      v-model="customerProfileForm.insured_first_name"
+                      :rules="[isRequired]"
+                      placeholder="INSURED FIRST NAME"
+                      class="w-full"
+                      :disabled="!isProfileUpdateAllow"
+                    />
+                  </dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">INSURED LAST NAME</dt>
+                  <dd>
+                    <x-input
+                      v-model="customerProfileForm.insured_last_name"
+                      :rules="[isRequired]"
+                      placeholder="INSURED LAST NAME"
+                      class="w-full"
+                      :disabled="!isProfileUpdateAllow"
+                    />
+                  </dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">MOBILE NUMBER</dt>
+                  <dd>{{ quote.mobile_no }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">EMAIL</dt>
+                  <dd>{{ quote.email }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">NATIONALITY</dt>
+                  <dd>{{ quote.nationality?.text }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">DATE OF BIRTH</dt>
+                  <dd>{{ quote.dob }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">EMIRATES ID NUMBER</dt>
+                  <dd>
+                    <x-input
+                      v-model="customerProfileForm.emirates_id_number"
+                      :rules="[isRequired]"
+                      placeholder="EMIRATES ID NUMBER"
+                      class="w-full"
+                      :disabled="!isProfileUpdateAllow"
+                    />
+                  </dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">EMIRATES ID EXPIRY DATE</dt>
+                  <dd>
+                    <DatePicker
+                      v-model="customerProfileForm.emirates_id_expiry_date"
+                      :rules="[isRequired]"
+                      placeholder="EMIRATES ID EXPIRY DATE"
+                      :disabled="!isProfileUpdateAllow"
+                      :min-date="new Date()"
+                    />
+                  </dd>
+                </div>
+                <RiskRatingScoreDetails :quote="quote" :modelType="quoteType" />
+              </dl>
+              <dl
+                v-if="quote.customer_type === page.props.customerTypeEnum.Entity"
+                class="grid md:grid-cols-2 gap-x-6 gap-y-4"
+              >
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">FIRST NAME</dt>
+                  <dd>{{ quote.first_name }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">LAST NAME</dt>
+                  <dd>{{ quote.last_name }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">MOBILE NUMBER</dt>
+                  <dd>{{ quote.mobile_no }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">EMAIL</dt>
+                  <dd>{{ quote.email }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">COMPANY NAME</dt>
+                  <dd>{{ customerProfileForm.company_name }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">TRADE LICENSE NO</dt>
+                  <dd>
+                    <x-input
+                      v-model="customerProfileForm.trade_license_no"
+                      placeholder="TRADE LICENSE NO"
+                      type="text"
+                      class="w-full"
+                    />
+                    <x-button
+                      @click.prevent="searchByTradeLicense"
+                      size="xs"
+                      color="primary"
+                    >
+                      Search
+                    </x-button>
+                  </dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">EMIRATES OF REGISTRATION</dt>
+                  <dd>
+                    <ComboBox
+                      v-model="customerProfileForm.emirate_of_registration_id"
+                      :single="true"
+                      placeholder="SELECT EMIRATES OF REGISTRATION"
+                      :options="emiratesOptions"
+                      class="w-full"
+                    />
+                  </dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">COMPANY ADDRESS</dt>
+                  <dd>
+                    <x-input
+                      v-model="customerProfileForm.company_address"
+                      placeholder="COMPANY ADDRESS"
+                      type="text"
+                      class="w-full"
+                    />
+                  </dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">INDUSTRY TYPE</dt>
+                  <dd>
+                    <ComboBox
+                      :single="true"
+                      v-model="customerProfileForm.industry_type_code"
+                      placeholder="SELECT INDUSTRY TYPE"
+                      :options="industryTypeOptions"
+                      class="w-full"
+                    />
+                  </dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">ENTITY TYPE</dt>
+                  <dd>
+                    <ComboBox
+                      @update:modelValue="entityTypeChange($event)"
+                      :single="true"
+                      v-model:modelValue="customerProfileForm.entity_type_code"
+                      placeholder="SELECT ENTITY TYPE"
+                      :options="[
+                        { label: 'Parent', value: 'Parent' },
+                        { label: 'Sub Entity', value: 'SubEntity' },
+                      ]"
+                      class="w-full"
+                    />
+                  </dd>
+                </div>
+              </dl>
+              <div class="flex justify-end">
+                <x-button
+                  v-if="isProfileUpdateAllow"
+                  class="mt-4"
+                  color="emerald"
+                  size="sm"
+                  :loading="customerProfileForm.processing"
+                  type="submit"
+                >
+                  Update Profile
+                </x-button>
+              </div>
+            </div>
+          </x-form>
+        </template>
+      </Collapsible>
     </div>
+
     <x-modal v-model="getParentEntityModel" size="lg" show-close backdrop>
       <h3 class="font-semibold text-center text-lg mb-10">
         Search Entity by Parent Entity Trade License No
@@ -701,6 +724,7 @@ const linkEntity = () => {
         </x-button>
       </div>
     </x-modal>
+
     <x-modal v-model="entityDetailsFound" size="lg" show-close backdrop>
       <h3 class="font-semibold text-center text-lg mb-10">
         Entity found with the entered Trade License number
@@ -756,9 +780,14 @@ const linkEntity = () => {
       :nationalities="nationalities"
       :memberRelations="memberRelations"
       :quote_type="quoteType"
+      :expanded="sectionExpanded"
     />
 
-    <AdditionalContacts :quote="quote" :quote-type="quoteType" />
+    <AdditionalContacts
+      :quote="quote"
+      :quote-type="quoteType"
+      :expanded="sectionExpanded"
+    />
 
     <LastYearPolicyDetail
       v-if="
@@ -768,6 +797,7 @@ const linkEntity = () => {
       modelType="Cycle"
       :quote="quote"
       :canAddBatchNumber="canAddBatchNumber"
+      :expanded="sectionExpanded"
     />
 
     <QuoteActivities
@@ -776,6 +806,7 @@ const linkEntity = () => {
       :activities="activities"
       :advisors="advisors"
       :quote-type="quoteType"
+      :expanded="sectionExpanded"
     />
 
     <QuoteStatus
@@ -784,12 +815,14 @@ const linkEntity = () => {
       :quote-statuses="quoteStatuses"
       :lost-reasons="lostReasons"
       :quote-status-enum="quoteStatusEnum"
+      :expanded="sectionExpanded"
     />
 
     <PlanDetails
       :insuranceProviders="insuranceProviders"
       :quote="quote"
       :quoteType="quoteType"
+      :expanded="sectionExpanded"
     />
 
     <MigratePayment
@@ -825,6 +858,15 @@ const linkEntity = () => {
       :quote-documents="quote.documents || []"
       :storageUrl="storageUrl"
       :quote="quote"
+      :expanded="sectionExpanded"
+    />
+
+    <SendUpdates
+      v-if="hasPolicyIssuedStatus"
+      :reportable="quote"
+      :quote_type_id="$page.props.quoteTypeId"
+      :options="sendUpdateOptions"
+      :data="sendUpdateLogs"
     />
 
     <QuotePolicy
@@ -839,10 +881,11 @@ const linkEntity = () => {
       :code="quote.code"
       :quote="quote"
       :modelType="quoteType"
+      :expanded="sectionExpanded"
     />
 
-    <AuditLogs :quote-type="quoteType" :id="$page.props.quote.id" :quoteCode="$page.props.quote.code" />
+    <AuditLogs :quote-type="quoteType" :id="$page.props.quote.id" :quoteCode="$page.props.quote.code" :expanded="sectionExpanded" />
 
-    <LeadHistory :quote="$page.props.quote" />
+    <LeadHistory :quote="$page.props.quote" :expanded="sectionExpanded" />
   </div>
 </template>

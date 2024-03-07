@@ -32,7 +32,7 @@ class QuoteDocumentService extends BaseService
 
     public function isEnabled($quoteModelType)
     {
-        $enabledLOBs = [quoteTypeCode::Car, quoteTypeCode::Health, quoteTypeCode::Travel, quoteTypeCode::Life, quoteTypeCode::Home];
+        $enabledLOBs = [quoteTypeCode::Car, quoteTypeCode::Health, quoteTypeCode::Travel, quoteTypeCode::Life, quoteTypeCode::Home, quoteTypeCode::Pet];
         if (in_array($quoteModelType, $enabledLOBs)) {
             return true;
         }
@@ -44,11 +44,12 @@ class QuoteDocumentService extends BaseService
     {
         return DocumentType::where(['quote_type_id' => $quoteTypeId, 'is_active' => true])
             ->orderBy('sort_order', 'asc')
+            ->active()
             ->get();
     }
 
     /**
-     * @param    $data  doc_name, doc_uuid
+     * @param  $data  doc_name, doc_uuid
      * @return \Illuminate\Http\JsonResponse
      */
     public function deleteQuoteDocument($quoteType, $data)
@@ -77,8 +78,8 @@ class QuoteDocumentService extends BaseService
     /**
      * upload quote document and store document record in db.
      *
-     * @param    $documentTypeCode
-     * @param    $uuid
+     * @param  $documentTypeCode
+     * @param  $uuid
      * @return \Illuminate\Http\JsonResponse
      */
     public function uploadQuoteDocument($fileOrBase64, $data, $quote, $isKyc = false)

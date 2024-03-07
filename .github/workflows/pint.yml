@@ -4,6 +4,7 @@ on:
   pull_request:
     branches:
       - develop
+      - feat/insly-project-central
     types: [opened, reopened, edited, synchronize]
 
 jobs:

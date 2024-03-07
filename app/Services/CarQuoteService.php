@@ -99,6 +99,13 @@ class CarQuoteService extends BaseService
                 'pra.name AS previous_advisor_id_text',
                 'cqr.payment_status_id',
                 'ps.text AS payment_status_id_text',
+                'cqr.price_vat_not_applicable',
+                'cqr.price_without_vat',
+                'cqr.price_with_vat',
+                'cqr.vat',
+                'cqr.insurer_quote_number',
+                'cqr.policy_issuance_status_id',
+                'cqr.policy_issuance_status_other',
                 'cqr.plan_id',
                 'cp.text AS plan_id_text',
                 'cp.provider_id AS car_plan_provider_id',
@@ -1235,7 +1242,7 @@ class CarQuoteService extends BaseService
     /**
      * modify plan during upload & update process.
      *
-     * @param    $data
+     * @param  $data
      * @return false
      */
     public function renewalCreatePlan($planData)

@@ -10,6 +10,7 @@ use App\Enums\PaymentTooltip;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
+use App\Enums\SendUpdateLogStatusEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\CycleQuoteRequest;
 use App\Models\ApplicationStorage;
@@ -26,9 +27,12 @@ use App\Repositories\LostReasonRepository;
 use App\Repositories\PaymentMethodRepository;
 use App\Repositories\PersonalPlanRepository;
 use App\Repositories\QuoteStatusRepository;
+use App\Repositories\SendUpdateLogRepository;
 use App\Repositories\UserRepository;
 use App\Services\AMLService;
 use App\Services\CentralService;
+use App\Services\CRUDService;
+use App\Services\LookupService;
 use App\Services\SplitPaymentService;
 
 class CycleQuoteController extends Controller
@@ -60,7 +64,7 @@ class CycleQuoteController extends Controller
     }
 
     /**
-     * @param    $quoteTypeCode
+     * @param  $quoteTypeCode
      * @return \Illuminate\Http\RedirectResponse
      */
     public function store(CycleQuoteRequest $request)
@@ -92,8 +96,8 @@ class CycleQuoteController extends Controller
     }
 
     /**
-     * @param    $quoteTypeCode
-     * @param    $quoteId
+     * @param  $quoteTypeCode
+     * @param  $quoteId
      * @return void
      */
     public function update($uuid, CycleQuoteRequest $request)
@@ -141,12 +145,35 @@ class CycleQuoteController extends Controller
         $emirates = Emirate::where('is_active', 1)->select('id', 'text')->get();
         $vatPercentage = ApplicationStorage::where('key_name', ApplicationStorageEnums::VAT_VALUE)->first()->value ?? 0;
 
+        $sendUpdateOptions = [];
+        $sendUpdateLogs = [];
+        $sendUpdateEnum = (object) [];
+        $hasPolicyIssuedStatus = app(CRUDService::class)->hasAtleastOneStatusPolicyIssued(QuoteTypes::CYCLE->id(), $quote->id);
+
+        if ($hasPolicyIssuedStatus) {
+            $sendUpdateOptions = (new LookupService)->getSendUpdateOptions(QuoteTypes::CYCLE->id());
+            $sendUpdateLogs = SendUpdateLogRepository::findByQuoteUuid($quote->uuid);
+            $sendUpdateEnum = SendUpdateLogStatusEnum::asArray();
+        }
+
+        $sendUpdateOptions = [];
+        $sendUpdateLogs = [];
+        $sendUpdateEnum = (object) [];
+        $hasPolicyIssuedStatus = app(CRUDService::class)->hasAtleastOneStatusPolicyIssued(QuoteTypes::CYCLE->id(), $quote->id);
+
+        if ($hasPolicyIssuedStatus) {
+            $sendUpdateOptions = (new LookupService)->getSendUpdateOptions(QuoteTypes::CYCLE->id());
+            $sendUpdateLogs = SendUpdateLogRepository::findByQuoteUuid($quote->uuid);
+            $sendUpdateEnum = SendUpdateLogStatusEnum::asArray();
+        }
+
         return inertia('CycleQuote/Show', [
             'quoteType' => QuoteTypes::CYCLE,
             'quote' => $quote,
             'activities' => $activities,
             'lostReasons' => $lostReasons,
             'advisors' => $advisors,
+            'quoteTypeId' => QuoteTypes::CYCLE->id(),
             'quoteStatusEnum' => QuoteStatusEnum::asArray(),
             'documentTypes' => $documentTypes,
             'quoteStatuses' => $quoteStatuses,
@@ -170,6 +197,10 @@ class CycleQuoteController extends Controller
             'paymentTooltipEnum' => PaymentTooltip::asArray(),
             'paymentStatusEnum' => PaymentStatusEnum::asArray(),
             'isNewPaymentStructure' => app(SplitPaymentService::class)->isNewPaymentStructure($quote->payments),
+            'sendUpdateOptions' => $sendUpdateOptions,
+            'sendUpdateLogs' => $sendUpdateLogs,
+            'sendUpdateEnum' => $sendUpdateEnum,
+            'hasPolicyIssuedStatus' => $hasPolicyIssuedStatus,
         ]);
     }
 }
