@@ -121,7 +121,7 @@ function onSubmit(isValid) {
             v-model="quoteForm.last_name"
             :rules="[isRequired]"
             class="w-full"
-            maxLength="20"
+            maxLength="50"
             :error="quoteForm.errors.last_name"
           />
         </x-field>

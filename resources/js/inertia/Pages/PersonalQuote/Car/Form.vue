@@ -253,7 +253,7 @@ const setCarMake = id => {
 
         <x-field label="LAST NAME" required>
           <x-input
-            maxLength="20"
+            maxLength="50"
             v-model="quoteForm.last_name"
             :rules="[isRequired]"
             class="w-full"
