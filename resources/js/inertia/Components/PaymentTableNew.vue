@@ -71,6 +71,7 @@ const collectionAmountModels = ref([]);
 const fileUploadModels = ref([]);
 const checkDetailModels = ref([]);
 const readOnlyPayments = ref([]);
+const authorizedPayments = ref([]);
 const splitPaymentRecord = ref([]);
 const filesTest = ref([]);
 const isCreditPaymentInvalid = ref([]);
@@ -660,6 +661,7 @@ const calculateDueDates = () => {
     }
   } else if(paymentMethodsForm.frequency === 'custom'){
     for (let i = 2; i <= paymentMethodsForm.payment_no; i++) { 
+        if(i>12) continue;
         const currentDueDate = dueDateModels.value[i - 1];
         const nextDueDate = new Date(currentDueDate);
         // Set the month to the next month
@@ -995,7 +997,8 @@ const editPaymentModal = (payment,split_payment_id,sr_no,capture_approval) => {
   trashedFilesModal.value = [];
   isDiscountEnabled.value = false;
   isTotalPriceUpdated.value = false;
-  isGalleryModelOpen.value = false;    
+  isGalleryModelOpen.value = false;
+  authorizedPayments.value = []; 
   if(sr_no>0){
     splitPaymentNo.value = sr_no;
     isFieldReadonly.value = true;
@@ -1072,6 +1075,12 @@ const editPaymentModal = (payment,split_payment_id,sr_no,capture_approval) => {
     } else {
       readOnlyPayments.value[i] = false;
     }
+    if(payment.payment_splits[i-1].payment_status_id === props.paymentStatusEnum.AUTHORISED){
+      authorizedPayments.value[i] = true;
+    } else {
+      authorizedPayments.value[i] = false;
+    }
+
     fileUploadModels.value[i] = [];
     paymentMethodsModels.value[i] = payment.payment_splits[i-1].payment_method.code;
     splitAmountModels.value[i] = payment.payment_splits[i-1].payment_amount;
@@ -1569,11 +1578,12 @@ const uploadDocument = (doc, files, count) => {
 
 const getCaptureValidation = computed(() => {  
   return (payment) => {
-    //6 =AML Screening Cleared , 32 = Transaction Declined
+    //6 =AML Screening Cleared , 32 = Transaction Declined , 15 = Transaction Approved
     if ( props.payments.length>0 && 
       (
-      ((props.quoteRequest.quote_status_id === 6 || props.quoteRequest.quote_status_id === 32) 
-      && props.quoteRequest.kyc_decision === 'Complete')
+      ((props.quoteRequest.quote_status_id === 6 || props.quoteRequest.quote_status_id === 32 || props.quoteRequest.quote_status_id === 15) 
+      && props.quoteRequest.kyc_decision === 'Complete' && (payment.total_price === (payment.total_amount + payment.discount_value))
+      )
       || 
       props.quoteType === 'Travel' //skip AML & KYC for travel
       )
@@ -1734,7 +1744,7 @@ watch(() => props.quoteRequest, (newValue, oldValue) => {
       <h3 class="font-semibold text-primary-800 text-lg">Manage Payments</h3>
       <template v-if="payments.length>0">        
         <UpdateTotalPrice
-          v-if="quoteRequest.quote_status_id === 15"
+          v-if="can(permissionEnum.TEMP_UPDATE_TOTALPRICE) && quoteRequest.quote_status_id === 15"
           :quoteId="quoteRequest.id"
           :paymentCode = "payments[0].code"
           :quoteType="quoteType" 
@@ -2638,7 +2648,7 @@ watch(() => props.quoteRequest, (newValue, oldValue) => {
                     </template>
                     <template v-else >                      
                       <x-input
-                        v-if="paymentMethodsModels[count]==='CC'"
+                        v-if="paymentMethodsModels[count]==='CC' && authorizedPayments[count]"
                         v-model="collectionAmountModels[count]"
                         class="w-full"
                         :class="{'custom-select-error': isCreditPaymentInvalid[count]}"                                           
@@ -2655,7 +2665,8 @@ watch(() => props.quoteRequest, (newValue, oldValue) => {
                       <DatePicker
                         v-model="dueDateModels[count]"
                         class="w-full"
-                        :rules="[rules.isRequired]"              
+                        :rules="[rules.isRequired]"
+                        placeholder="dd-mm-yyyy"            
                       /> 
                     </template> 
                   </div>

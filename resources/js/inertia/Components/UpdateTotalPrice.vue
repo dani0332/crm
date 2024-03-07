@@ -22,13 +22,12 @@ const rules = {
       }     
   },
   verifyDecimalPlaces: v => {
-      let regex = /^\d*\.?\d{3,}$/;
-      if (regex.test(newTotalPrice.value)) {
-        return 'The entered amount should have only 2 decimal places.';    
-      } else {
-        
-        return true;
-      }     
+        let regex = /^\d+(\.\d{1,2})?$/;
+        if (!regex.test(v)) {
+            return 'The entered amount should have no more than 2 decimal places.';
+        } else {
+            return true;
+        }
   }, 
 };
 
@@ -59,10 +58,10 @@ const submitTotalPrice = isValid => {
                 });
             }           
             updatePriceModal.value = false;    
-            /*
+            
             setTimeout(() => {
                 location.reload();
-            }, 500);  */         
+            }, 500);           
         })
         .catch(err => {           
             console.log(err)
