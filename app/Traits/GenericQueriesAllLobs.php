@@ -251,7 +251,7 @@ trait GenericQueriesAllLobs
 
     private function isFilledPolicyDetails($type, $quote) {
         if (!empty($quote->policy_number) && !empty($quote->policy_issuance_date) && !empty($quote->policy_start_date) && !empty($quote->renewal_expiry_date) && $quote->price_with_vat > 0) {
-            if(in_array($type, [QuoteTypes::CAR->value, QuoteTypes::BIKE->value])) {
+            if(in_array(ucfirst($type), [QuoteTypes::CAR->value, QuoteTypes::BIKE->value])) {
                 if(!empty($quote->insurer_quote_number)){
                     return true;
                 }
