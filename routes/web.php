@@ -510,12 +510,17 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     //todo: commented for later use
     //Route::get('schedule-non-motor-aml', [RenewalsUploadController::class, 'scheduleNonMotorAml']);
 
+<<<<<<< HEAD
     Route::post('followups/emails/events', [\App\Http\Controllers\V2\FollowupController::class, 'getEmailEvents']);
 
     /** health quote members */
     Route::post('/health-quote-add-member', [HealthQuoteController::class, 'healthQuoteAddMember']);
     Route::put('/health-quote-update-member', [HealthQuoteController::class, 'healthQuoteUpdateMember']);
     Route::post('/health-quote-delete-member', [HealthQuoteController::class, 'healthQuoteDeleteMember']);
+=======
+    Route::post('followups/emails/events', [App\Http\Controllers\V2\FollowupController::class, 'getEmailEvents']);
+    Route::post('/update-user-status', [UserController::class, 'updateUserStatus']);
+>>>>>>> 35846690ac9c620a6310759dd46b1e168e2fd8ed
 });
 
 Route::POST('/sendBulkWelcomeEmails', [BulkEmailProcessController::class, 'ProcessBulkWelcomeEmails'])
