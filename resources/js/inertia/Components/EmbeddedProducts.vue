@@ -276,14 +276,11 @@ const hasAnyRole = roles => useHasAnyRole(roles);
 
 
             <x-tag color="primary" v-for="priceItem  in prices">
-                <x-checkbox
-
+                <x-icon
                     v-if="priceItem.transactions[0]?.is_selected == '1'"
-                    @change="toggleProduct(priceItem, $event)"
-                    :model-value="true"
-                    color="primary"
-                    :disabled="priceItem.transactions[0]?.payment_status_id == 4 || priceItem.transactions[0]?.payment_status_id == 6 || priceItem.transactions[0]?.payment_status_id == 12"
-
+                    icon="boxchecked"
+                    color="green"
+                    class="mr-1"
                 />
                 <x-checkbox
 
@@ -321,6 +318,7 @@ const hasAnyRole = roles => useHasAnyRole(roles);
             Send Documents
           </x-button>
           <x-button
+            v-if="item.canGenerateCerticate"
             size="xs"
             color="#ff5e00"
             :disabled="!item.send_document_button"
