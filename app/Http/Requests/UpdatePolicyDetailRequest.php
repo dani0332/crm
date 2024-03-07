@@ -21,7 +21,7 @@ class UpdatePolicyDetailRequest extends FormRequest
      */
     public function rules(): array
     {
-        if (!empty(request()->quote_policy_issuance_status) && request()->price_with_vat <= 0 && empty(request()->quote_policy_number)) {
+        if (! empty(request()->quote_policy_issuance_status) && request()->price_with_vat <= 0 && empty(request()->quote_policy_number)) {
             return [
                 'quote_policy_issuance_status' => 'nullable',
                 'quote_policy_issuance_status_other' => 'nullable',

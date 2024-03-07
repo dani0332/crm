@@ -57,7 +57,7 @@ class SendBookPolicyRequest extends FormRequest
                         if (empty($payment->commission_vat_not_applicable) && empty($payment->commission_vat_applicable)) {
                             $validator->errors()->add('value', 'Commmission (VAT NOT APPLICABLE) OR Commmission (VAT APPLICABLE) is required');
                         }
-                        if (!empty($payment->insurer_invoice_date) && !empty($paymentSplit->due_date)) {
+                        if (! empty($payment->insurer_invoice_date) && ! empty($paymentSplit->due_date)) {
                             $invoiceDate = Carbon::parse($payment->insurer_invoice_date)->startOfDay();
                             $paymentDueDate = Carbon::parse($paymentSplit->due_date)->startOfDay();
 

@@ -48,7 +48,7 @@ class BookPolicyRequest extends FormRequest
 
             $iTIN = Payment::where('insurer_tax_number', request()->insurer_tax_invoice_number)->get();
 
-            if (!empty($iTIN[0]['paymentable_id'])) {
+            if (! empty($iTIN[0]['paymentable_id'])) {
                 if ($iTIN[0]['paymentable_id'] != request()->quote_id) {
                     $validator->errors()->add('error', 'Insurer Tax Invoice Number already exists,Please enter a unique value');
                 }
@@ -56,7 +56,7 @@ class BookPolicyRequest extends FormRequest
 
             $iCIN = Payment::where([['insurer_commmission_invoice_number', request()->insurer_commmission_invoice_number]])->get();
 
-            if (!empty($iCIN[0]['paymentable_id'])) {
+            if (! empty($iCIN[0]['paymentable_id'])) {
                 if ($iCIN[0]['paymentable_id'] != request()->quote_id) {
                     $validator->errors()->add('error', 'Insurer Commmission Invoice Number already exists,Please enter a unique value');
                 }

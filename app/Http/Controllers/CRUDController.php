@@ -569,7 +569,7 @@ class CRUDController extends Controller
         }
         $advisors = [];
         if (
-            !(auth()->user()->hasAnyRole([RolesEnum::CarManager, RolesEnum::CarAdvisor])) &&
+            ! (auth()->user()->hasAnyRole([RolesEnum::CarManager, RolesEnum::CarAdvisor])) &&
             strtolower($this->genericModel->modelType) == strtolower(quoteTypeCode::Health) && ($record->health_team_type == HealthTeamType::EBP ||
                 $record->health_team_type == HealthTeamType::RM_NB || $record->health_team_type == HealthTeamType::RM_SPEED)
         ) {
@@ -1252,7 +1252,7 @@ class CRUDController extends Controller
             $modelType = $request->get('modelType');
         }
         $ignoreModelTypes = [quoteTypeCode::Bike, quoteTypeCode::Cycle, quoteTypeCode::Yacht];
-        if (!in_array($modelType, $ignoreModelTypes) && $modelType != null) {
+        if (! in_array($modelType, $ignoreModelTypes) && $modelType != null) {
             $quoteTypes = 'Health,Car,Travel,Life,Home,Business,Pet';
             $serviceType = str_contains($quoteTypes, ucwords($modelType)) ? strtolower($modelType).'QuoteService' : lcfirst(ucwords($modelType)).'Service';
             $this->genericModel->properties = $this->{$serviceType}->fillModelProperties();
@@ -1692,9 +1692,9 @@ class CRUDController extends Controller
         }
         $quoteModel->update([
             'policy_number' => $request->quote_policy_number ?? '',
-            'policy_issuance_date' => isset($request->quote_policy_issuance_date) ? Carbon::parse($request->quote_policy_issuance_date)->format('Y-m-d') : NULL,
-            'policy_start_date' => isset($request->quote_policy_start_date) ? Carbon::parse($request->quote_policy_start_date)->format('Y-m-d') : NULL,
-            'renewal_expiry_date' =>  isset($request->quote_policy_expiry_date) ? Carbon::parse($request->quote_policy_expiry_date)->format('Y-m-d') : NULL,
+            'policy_issuance_date' => isset($request->quote_policy_issuance_date) ? Carbon::parse($request->quote_policy_issuance_date)->format('Y-m-d') : null,
+            'policy_start_date' => isset($request->quote_policy_start_date) ? Carbon::parse($request->quote_policy_start_date)->format('Y-m-d') : null,
+            'renewal_expiry_date' => isset($request->quote_policy_expiry_date) ? Carbon::parse($request->quote_policy_expiry_date)->format('Y-m-d') : null,
             'price_vat_not_applicable' => $request->price_vat_notapplicable ?? '',
             'price_without_vat' => $request->amount ?? '',
             'price_with_vat' => $request->amount_with_vat ?? '',
@@ -1704,7 +1704,7 @@ class CRUDController extends Controller
             'policy_issuance_status_other' => $request->quote_policy_issuance_status_other ?? '',
         ]);
 
-        if (!empty(request()->quote_policy_issuance_status) && request()->price_with_vat <= 0 && empty(request()->quote_policy_number)) {
+        if (! empty(request()->quote_policy_issuance_status) && request()->price_with_vat <= 0 && empty(request()->quote_policy_number)) {
             $quoteModel->update([
                 'quote_status_id' => QuoteStatusEnum::PolicyPending,
             ]);
@@ -1790,7 +1790,7 @@ class CRUDController extends Controller
             return response()->json(['success' => false]);
         }
         if ($request->new_payment_structure) {
-            if (!(auth()->user()->can(PermissionsEnum::PaymentsCreate))) {
+            if (! (auth()->user()->can(PermissionsEnum::PaymentsCreate))) {
                 return;
             }
             PaymentRepository::createNewPayment($request, $quoteModel);
@@ -1834,7 +1834,7 @@ class CRUDController extends Controller
     public function updatePayment(UpdatePaymentRequest $request)
     {
         if ($request->new_payment_structure) {
-            if (!(auth()->user()->can(PermissionsEnum::PaymentsEdit))) {
+            if (! (auth()->user()->can(PermissionsEnum::PaymentsEdit))) {
                 return;
             }
             PaymentRepository::updateNewPayment($request);
