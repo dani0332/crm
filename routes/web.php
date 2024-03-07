@@ -38,6 +38,7 @@ use App\Http\Controllers\RenewalsUploadController;
 use App\Http\Controllers\RentACarController;
 use App\Http\Controllers\ReportsController;
 use App\Http\Controllers\RoleController;
+use App\Http\Controllers\SageApi;
 use App\Http\Controllers\StatusController;
 use App\Http\Controllers\SubTypeOfInsuranceController;
 use App\Http\Controllers\TeamController;
@@ -101,12 +102,13 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::get('leadsearch', function () {
         return redirect('home');
     });
+    Route::get('verify-sage', [SageApi::class, 'index']);
 
     Route::get('home', function () {
         return inertia('Home/Home', ['im_logo' => getIMLogo()]);
     });
 
-    Route::post('personal-quotes/{quoteType}/{code}/update-selected-plan/{planId}', [CentralController::class, 'updateSelectedPlan'])->name('update-selected-plan');
+    Route::post('personal-quotes/{quoteType}/{code}/update-selected-plan', [CentralController::class, 'updateSelectedPlan'])->name('update-selected-plan');
     Route::post('personal-quotes/{quoteType}/{code}/save-plan-details', [CentralController::class, 'savePlanDetails'])->name('save-plan-details');
     Route::post('/reports/fetch-advisor-assigned-leads-data', [ReportsController::class, 'fetchAdvisorAssignedLeadsData'])->name('fetch-advisor-assigned-leads-data');
     Route::post('/reports/fetch-advisor-by-team', [ReportsController::class, 'fetchAdvisorListByTeam']);
@@ -179,6 +181,9 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::post('embedded-products/{id}/toggle-status', [EmbeddedProductController::class, 'toggleStatus'])->name('embedded-products.toggle-status');
 
     Route::get('/clear-cache', function () {
+        if (request()->has('info')) {
+            return phpinfo();
+        }
         Artisan::call('cache:clear');
         Artisan::call('route:clear');
         Artisan::call('config:clear');
@@ -188,6 +193,12 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     });
     Route::post('/payments/{quoteType}/store', [CRUDController::class, 'storePayment']);
     Route::post('/payments/{quoteType}/update', [CRUDController::class, 'updatePayment']);
+    Route::post('/payments/{quoteType}/split-update', [CentralController::class, 'splitPaymentUpdate'])->name('approve-payments')->middleware('check_route_access');
+    Route::post('/payments/{quoteType}/split-payments-approve', [CentralController::class, 'splitPaymentsApprove'])->name('approve-payments')->middleware('check_route_access');
+    Route::post('/payments/{quoteType}/migrate-payment', [CentralController::class, 'migratePayment'])->name('payment-edit')->middleware('check_route_access');
+
+    Route::get('/quotes/car/post-sage-data', [SageApi::class, 'processSagePostTest'])->name('post-sage-data');
+    // Route::post('/quotes/car/post-sage-data', [\App\Http\Controllers\V2\CarQuoteController::class, 'processSagePost'])->name('post-sage-data');
 
     Route::resource('leadassignment', LeadAssignmentController::class)->names([
         'index' => 'leadassignment.index',
@@ -237,6 +248,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
 
     Route::get('quotes/{quoteType}/{quoteUuId}/documents', [QuoteDocumentController::class, 'list']);
     Route::post('quotes/{quoteType}/documents/store', [QuoteDocumentController::class, 'store']);
+    Route::post('quotes/{quoteType}/documents/store-multiple', [QuoteDocumentController::class, 'storeMultiple']);
     Route::get('documents/{id}', [QuoteDocumentController::class, 'show'])->name('documents.show');
     Route::post('quotes/{quoteType}/{quoteUuId}/send-policy-documents', [QuoteDocumentController::class, 'sendPolicyDocument']);
     Route::get('quotes/{quoteType}/{quoteId}/documents/{documentTypeCode}/get-uploaded', [QuoteDocumentController::class, 'getQuoteDocumentsUploaded']);

@@ -2,11 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
+use App\Enums\PaymentTooltip;
 use App\Enums\PermissionsEnum;
 use App\Enums\quoteStatusCode;
 use App\Enums\QuoteStatusEnum;
@@ -16,6 +18,7 @@ use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Http\Requests\StoreBusinessQuoteRequest;
 use App\Http\Requests\UpdateBusinessQuoteRequest;
+use App\Models\ApplicationStorage;
 use App\Models\BusinessQuote;
 use App\Models\Emirate;
 use App\Models\Entity;
@@ -28,6 +31,7 @@ use App\Services\BusinessQuoteService;
 use App\Services\CRUDService;
 use App\Services\DropdownSourceService;
 use App\Services\LookupService;
+use App\Services\SplitPaymentService;
 use App\Traits\RolePermissionConditions;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -157,14 +161,20 @@ class BusinessQuoteController extends Controller
         $paymentEntityModel = $this->{strtolower($this->genericModel->modelType).'QuoteService'}->getEntityPlain($record->id);
         $payments = $paymentEntityModel->payments;
         $paymentMethods = $this->lookupService->getPaymentMethods();
-        $filteredPaymentMethods = $paymentMethods->filter(function ($paymentMethod) {
-            return $paymentMethod->code == PaymentMethodsEnum::CreditCard;
-        })->map(function ($paymentMethod) {
-            return [
-                'value' => $paymentMethod->code,
-                'label' => $paymentMethod->name,
-            ];
-        })->values();
+
+        $isNewPaymentStructure = app(SplitPaymentService::class)->isNewPaymentStructure($payments);
+        if ($isNewPaymentStructure) {
+            $filteredPaymentMethods = $this->lookupService->getPaymentMethods();
+        } else {
+            $filteredPaymentMethods = $paymentMethods->filter(function ($paymentMethod) {
+                return $paymentMethod->code == PaymentMethodsEnum::CreditCard;
+            })->map(function ($paymentMethod) {
+                return [
+                    'value' => $paymentMethod->code,
+                    'label' => $paymentMethod->name,
+                ];
+            })->values();
+        }
 
         if (AMLService::checkAMLStatusFailed(self::TYPE_ID, $record->id)) {
             $dropdownSource['quote_status_id'] = collect($dropdownSource['quote_status_id'])->filter(function ($value) {
@@ -210,6 +220,7 @@ class BusinessQuoteController extends Controller
         $idDocumentType = $this->lookupService->getEntityDocumentTypes();
         $issuancePlace = $this->lookupService->getIssuancePlaces();
         $issuanceAuthorities = $this->lookupService->getIssuanceAuthorities();
+        $vatPercentage = ApplicationStorage::where('key_name', ApplicationStorageEnums::VAT_VALUE)->first()->value ?? 0;
 
         return inertia('CorpLineQuote/Show', [
             'storageUrl' => storageUrl(),
@@ -275,6 +286,10 @@ class BusinessQuoteController extends Controller
             'nationalities' => $nationalities,
             'emirates' => $emirates,
             'canAddBatchNumber' => auth()->user()->hasRole(RolesEnum::CorplineManager),
+            'vatPercentage' => $vatPercentage,
+            'paymentTooltipEnum' => PaymentTooltip::asArray(),
+            'paymentStatusEnum' => PaymentStatusEnum::asArray(),
+            'isNewPaymentStructure' => $isNewPaymentStructure,
         ]);
     }
 

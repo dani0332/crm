@@ -233,7 +233,7 @@ watch(
                   <span
                     class="font-semibold tracking-widest uppercase text-xs underline decoration-dotted decoration-primary-600 cursor-help"
                   >
-                    Base Price
+                    Price
                   </span>
                   <template #tooltip> Base Price (exclusive of VAT) </template>
                 </x-tooltip>

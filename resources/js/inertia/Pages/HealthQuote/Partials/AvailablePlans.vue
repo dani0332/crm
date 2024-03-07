@@ -253,7 +253,7 @@ onMounted( () => {
               <dd>{{ props.plan.eligibilityName }}</dd>
             </div>
             <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">Base Price</dt>
+                <dt class="font-medium">Price</dt>
                 <dd v-if="selectedCopay === undefined || selectedCopay.length == 0">
                     {{ props.plan.actualPremium }}
                 </dd>
