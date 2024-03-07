@@ -43,8 +43,7 @@ const shouldShowButton = () => {
         }
 
         // Show the button outside the range 9:00 AM to 6:30 PM on other days
-
-         return !(currentHour >= 15 && currentHour < 17 && new Date(currentTime).getMinutes() >= 0);
+        return !(currentHour >= 9 && currentHour < 18 && new Date(currentTime).getMinutes() <= 30);
     }
     return false;
 };
