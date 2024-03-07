@@ -4,7 +4,7 @@ const props = defineProps({
   nationalities: Object,
   uaeLicenses: Object,
   insuranceProviders: Object,
-  yearOfManufacture: Object,
+  yearOfManufacture: Array,
   dropdownSource: Object,
   model: String,
   quote: { type: Object, default: null },
@@ -31,6 +31,17 @@ const { isRequired, isEmail, isMobileNo } = useRules();
 
 const editMode = computed(() => {
   return props.quote ? true : false;
+});
+
+const YearOfManufacture = computed(() => {
+  if (props.yearOfManufacture.length > 0)
+    return props.yearOfManufacture
+      .sort((a, b) => a.sort_order - b.sort_order)
+      .map(item => ({
+        value: item.id,
+        label: item.text,
+      }));
+  else return [];
 });
 
 function onSubmit(isValid) {
@@ -129,12 +140,7 @@ function onSubmit(isValid) {
           <x-select
             v-model="quoteForm.year_of_manufacture_id"
             :rules="[isRequired]"
-            :options="
-              yearOfManufacture.map(item => ({
-                value: item.id,
-                label: item.text,
-              }))
-            "
+            :options="YearOfManufacture"
             class="w-full"
             :error="quoteForm.errors.year_of_manufacture_id"
           />

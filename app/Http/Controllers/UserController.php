@@ -311,10 +311,11 @@ class UserController extends Controller
         return $this->getTeamsByProductIds($request->productIds);
     }
 
-    public function me(Request $request)
-    {
-        return ['name' => Auth::user()->name, 'email' => Auth::user()->email, 'id' => Auth::user()->id, 'role' => strtolower(Auth::user()->usersroles[0]->name)];
-    }
+    //Scheduled to delete 1st April 2024
+    // public function me(Request $request)
+    // {
+    //     return ['name' => Auth::user()->name, 'email' => Auth::user()->email, 'id' => Auth::user()->id, 'role' => strtolower(Auth::user()->usersroles[0]->name)];
+    // }
 
     public function getSubTeams(Request $request)
     {
