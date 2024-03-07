@@ -63,6 +63,7 @@ class DatabaseSeeder extends Seeder
             DubaiLeadSource::class,
             AddPolicyIssuanceStatuses::class,
             GenericPermissionSeeder::class,
+            InsuranceProviderNameSeeder::class,
         ]);
     }
 }
