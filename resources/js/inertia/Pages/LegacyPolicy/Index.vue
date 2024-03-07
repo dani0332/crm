@@ -75,7 +75,7 @@ const tableHeader = [
           name="policy_number"
           label="Policy Number"
           class="w-full"
-          placeholder="Search by Last Name"
+          placeholder="Search by Policy Number"
         />
         <x-input
           v-model="filters.email"
