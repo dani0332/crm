@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\V2;
 
+use App\Enums\PermissionsEnum;
 use App\Exports\EmbeddedProductReport;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\EmbeddedProducDocumentRequest;
@@ -12,6 +13,11 @@ use Illuminate\Http\Request;
 
 class EmbeddedProductController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware(['permission:'.PermissionsEnum::EmbeddedProductView]);
+    }
+
     /**
      * @return \Inertia\Response|\Inertia\ResponseFactory
      */
