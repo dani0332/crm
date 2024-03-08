@@ -83,16 +83,13 @@ Before proceeding, ensure that you have the following prerequisites installed on
 - Docker Compose
 
 ## Configuration
-The provided configuration is a basic setup that you can customize according to your requirements. Some ports may already be in use by other services on your system, so you may need to mirror those ports using Docker, these environment variable are necessary it will help you configure according to your need.
+The provided configuration is a basic setup that you can customize according to your requirements. Some ports may already be in use by other services on your system, so you may need to mirror those ports using Docker, these environment variable are necessary it will help you configure according to your need. You can use the localenvs_docker which already have these keys set by default at Doppler
 
 ### Example Configuration
 ```dotenv
 # App port 
-APP_DEBUG="true"
-APP_ENV="local"
-APP_NAME="appblanka"
-APP_URL=http://localhost:4000
-WEB_PORT=4000
+APP_URL=http://localhost:8000
+WEB_PORT=8000
 
 # Nginx Port
 SSL_PORT=452
@@ -120,6 +117,8 @@ MAIL_FROM_NAME="${APP_NAME}"
 # Phpmyadmin Port
 PHPMYADMIN_PORT=2600
 ```
+
+
 
 ## Container Names
 - mailhogblanka

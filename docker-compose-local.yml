@@ -7,7 +7,7 @@ services:
       context: .
       dockerfile: Dockerfile_Local
     # image: digitalocean.com/php
-    container_name: $APP_NAME
+    container_name: appblanka
     restart: unless-stopped
     tty: false
     environment:
