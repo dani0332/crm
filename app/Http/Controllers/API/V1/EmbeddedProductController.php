@@ -14,7 +14,7 @@ class EmbeddedProductController extends Controller
         $response = EmbeddedProductRepository::sendDocument($request->validated());
         $message = 'Certificate send Successfully';
         $responseCode = Response::HTTP_OK;
-        if($response === false) {
+        if ($response === false) {
             $responseCode = Response::HTTP_INTERNAL_SERVER_ERROR;
             $message = 'unable to send Certificate';
         }
