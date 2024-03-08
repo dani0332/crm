@@ -1239,8 +1239,9 @@ const addPayment = isValid => {
     if (validatePaymentOption()) return;  
   }  
   if (!isValid) return;  
+
   //define main payment method
-  let mainPaymentMethod = 'CR';
+  let mainPaymentMethod = paymentMethodsModels.value[0]?paymentMethodsModels.value[0]:paymentMethodsModels.value[1];
   if(paymentMethodsForm.credit_approval!=='' && paymentMethodsForm.credit_approval!==null){
     mainPaymentMethod = 'CA';
   } else if(paymentMethodsForm.frequency === 'custom' || paymentMethodsForm.frequency === 'monthly'
@@ -1249,8 +1250,10 @@ const addPayment = isValid => {
     mainPaymentMethod = 'PP';
   } else if(paymentMethodsForm.frequency === 'split_payments'){
     mainPaymentMethod = 'MP';
-  } else if(splitAmountModels.value.length===2){
-    mainPaymentMethod = paymentMethodsModels.value[1];
+  }
+  
+  if(mainPaymentMethod==='' || mainPaymentMethod===null){
+    mainPaymentMethod = 'CSH';
   }
   
   let data = {    
