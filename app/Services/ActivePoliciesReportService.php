@@ -30,6 +30,9 @@ class ActivePoliciesReportService extends ManagementReport
             ->join('payments as p', 'personal_quotes.code', '=', 'p.code')
             ->join('quote_type', 'quote_type.id', '=', 'quote_type_id')
             ->join('insurance_provider as ip', 'ip.id', '=', 'p.insurance_provider_id')
+            ->leftJoin('users as u', 'personal_quotes.advisor_id', '=', 'u.id')
+            ->leftJoin('user_team', 'u.id', '=', 'user_team.user_id')
+            ->leftJoin('teams as t', 'user_team.team_id', '=', 't.id')
             ->groupBy('ip.text', 'personal_quotes.quote_type_id');
 
         $this->applyFilters($query, $request);

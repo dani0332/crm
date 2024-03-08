@@ -24,8 +24,8 @@ class SaleSummaryReportService extends ManagementReport
         $query = PersonalQuote::query()
             ->leftJoin('send_update_logs as sul', 'personal_quotes.id', '=', 'sul.personal_quote_id')
             ->leftJoin('lookups as l', 'sul.category_id', '=', 'l.id')
-            ->leftJoin('users', 'personal_quotes.advisor_id', '=', 'users.id')
-            ->leftJoin('user_team', 'users.id', '=', 'user_team.user_id')
+            ->leftJoin('users as u', 'personal_quotes.advisor_id', '=', 'u.id')
+            ->leftJoin('user_team', 'u.id', '=', 'user_team.user_id')
             ->leftJoin('teams as t', 'user_team.team_id', '=', 't.id')
             ->join('quote_type', 'personal_quotes.quote_type_id', '=', 'quote_type.id')
             ->leftJoin('personal_quote_details as pqd', 'personal_quotes.id', '=', 'pqd.personal_quote_id')
@@ -46,7 +46,7 @@ class SaleSummaryReportService extends ManagementReport
             });
 
         if ($request->groupBy == 'advisor') {
-            $query->addSelect('users.name as advisor');
+            $query->addSelect('u.name as advisor');
             $query->whereNotNull('advisor_id');
         }
 
@@ -84,7 +84,7 @@ class SaleSummaryReportService extends ManagementReport
             'policy_issuer' => 'p.policy_issuer_id',
             'customer_group' => 'personal_quotes.customer_id',
             'insurer' => 'p.insurance_provider_id',
-            'advisor' => 'users.name',
+            'advisor' => 'u.name',
             'line_of_business' => 'quote_type.code',
         ];
 
