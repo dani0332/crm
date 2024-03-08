@@ -16,7 +16,6 @@ use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use finfo;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use PDF;
 
 class EmbeddedProductRepository extends BaseRepository
@@ -277,7 +276,7 @@ class EmbeddedProductRepository extends BaseRepository
             $optionsIds = $ep->prices->pluck('id');
         }
         $quoteObject = $this->getQuoteObject($modelType, $quoteId);
-        if(empty($quoteObject)){
+        if (empty($quoteObject)) {
             return 'Quote not found';
         }
 
@@ -336,6 +335,7 @@ class EmbeddedProductRepository extends BaseRepository
         ], JSON_UNESCAPED_SLASHES);
 
         SendEPDocumentsJob::dispatch($body);
+
         return 'Certificate sent successfully';
     }
 
