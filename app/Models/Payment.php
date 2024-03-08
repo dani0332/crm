@@ -105,6 +105,11 @@ class Payment extends Model implements Auditable
         return $this->belongsTo(PersonalPlan::class, 'plan_id');
     }
 
+    public function travelPlan()
+    {
+        return $this->belongsTo(TravelPlan::class, 'plan_id');
+    }
+
     public function plan()
     {
         return $this->belongsTo('App\Models\Plan', 'plan_id');
@@ -178,5 +183,17 @@ class Payment extends Model implements Auditable
     public function paymentSplits()
     {
         return $this->hasMany(PaymentSplits::class, 'code', 'code');
+    }
+
+    // render payment status PAID if payment status is CAPTURED
+    public function getPaymentStatusIdAttribute($value)
+    {
+        if ($value == PaymentStatusEnum::CAPTURED) {
+            return PaymentStatusEnum::PAID;
+        } elseif ($value == PaymentStatusEnum::PARTIAL_CAPTURED) {
+            return PaymentStatusEnum::PARTIALLY_PAID;
+        } else {
+            return $value;
+        }
     }
 }

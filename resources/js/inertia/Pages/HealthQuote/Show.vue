@@ -1,10 +1,11 @@
 <script setup>
-import PaymentTableNew from "./../../Components/PaymentTableNew.vue";
-import LazyDocumentUploader from "./Partials/DocumentUploader.vue";
-import LazyAvailablePlan from "./Partials/AvailablePlans.vue";
-import LazyCreatePlan from "./Partials/CreatePlan.vue";
-import { computed } from "vue";
-import RiskRatingScoreDetails from "../../Components/RiskRatingScoreDetails.vue";
+import PaymentTableNew from './../../Components/PaymentTableNew.vue';
+import MigratePayment from './../../Components/MigratePayment.vue';
+import LazyDocumentUploader from './Partials/DocumentUploader.vue';
+import LazyAvailablePlan from './Partials/AvailablePlans.vue';
+import LazyCreatePlan from './Partials/CreatePlan.vue';
+import { computed } from 'vue';
+import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue';
 
 defineProps({
   quote: Object,
@@ -2703,6 +2704,12 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
       </x-modal>
     </div>
 
+    <MigratePayment
+      v-if="!isNewPaymentStructure"
+      :quoteId="quote.id"
+      :paymentCode = "quote.code"
+      quoteType="Health"      
+    />
     <PaymentTableNew
       v-if="isNewPaymentStructure"
       quoteType="Health"

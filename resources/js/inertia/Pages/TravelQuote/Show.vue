@@ -1,5 +1,6 @@
 <script setup>
 import PaymentTableNew from './../../Components/PaymentTableNew.vue';
+import MigratePayment from './../../Components/MigratePayment.vue';
 import LazyDocumentUploader from './Partials/DocumentUploader.vue';
 import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue';
@@ -1568,6 +1569,39 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
             <x-tag color="amber" v-else> KYC - Pending </x-tag>
           </div>
 
+          <div class="grid sm:grid-cols-2" v-if="quoteRequest.child || quoteRequest.parent">
+            <template v-if="quoteRequest.child">
+              <dt>
+                <x-tooltip position="bottom">
+                  <label class="font-medium text-gray-800 text-sm decoration-dotted decoration-primary-700">
+                    CHILD REF ID
+                  </label>
+                  <template #tooltip>Navigation key from parent to child in data hierarchy.</template>
+                </x-tooltip>
+              </dt>
+              <dt class="font-medium">
+                <a :href="'/quotes/travel/' + quoteRequest.child.uuid" target="_blank" class="text-primary-600">
+                  {{ quoteRequest.child?.code }}
+                </a>
+              </dt>
+            </template>
+            <template v-if="quoteRequest.parent">
+              <dt>
+                <x-tooltip position="bottom">
+                  <label class="font-medium text-gray-800 text-sm decoration-dotted decoration-primary-700">
+                    PARENT REF ID
+                  </label>
+                  <template #tooltip>Parent Ref Id</template>
+                </x-tooltip>
+              </dt>
+              <dt class="font-medium">
+                <a :href="'/quotes/travel/' + quoteRequest.parent.uuid" target="_blank" class="text-primary-600">
+                  {{ quoteRequest.parent.code }}
+                </a>
+              </dt>
+            </template>
+          </div>
+
           <x-form @submit="updateProfileDetails" :auto-focus="false">
             <div class="text-sm">
               <dl
@@ -1764,6 +1798,7 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
         </template>
       </Collapsible>
     </div>
+    
     <x-modal v-model="getParentEntityModel" size="lg" show-close backdrop>
       <h3 class="font-semibold text-center text-lg mb-10">
         Search Entity by Parent Entity Trade License No
@@ -2627,6 +2662,12 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
       </x-modal>
     </div>
 
+    <MigratePayment
+      v-if="!isNewPaymentStructure"
+      :quoteId="quote.id"
+      :paymentCode = "quote.code"
+      quoteType="Travel"      
+    />
     <PaymentTableNew
 			v-if="isNewPaymentStructure"
 			quoteType="Travel"

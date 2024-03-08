@@ -13,6 +13,7 @@ use App\Enums\TravelQuoteEnum;
 use App\Facades\Ken;
 use App\Models\CustomerMembers;
 use App\Models\InsuranceProvider;
+use App\Models\Payment;
 use App\Models\TravelMemberDetail;
 use App\Models\TravelQuote;
 use App\Models\TravelQuotePlan;
@@ -510,7 +511,7 @@ class TravelQuoteService extends BaseService
     {
         return TravelQuote::where('id', $id)->with(['payments.paymentSplits' => function ($query) {
             $query->orderBy('sr_no', 'asc');
-        }, 'payments.paymentSplits.paymentStatus', 'payments.paymentSplits.paymentMethod', 'payments.paymentSplits.documents'])->first();
+        }, 'payments.paymentSplits.paymentStatus', 'payments.paymentSplits.paymentMethod', 'payments.paymentSplits.documents', 'child', 'parent'])->first();
     }
 
     public function getSelectedLostReason($id)
@@ -960,4 +961,38 @@ class TravelQuoteService extends BaseService
         $travelQuote->quote_updated_at = Carbon::now();
         $travelQuote->save();
     }
+
+    public function createDuplicateLead($leadModal)
+    {
+        if (! $leadModal) {
+            return false; // Add validation to avoid failure if $leadModal is null
+        }
+        $newLeadCode = $leadModal->code.'-1';
+        $leadExists = TravelQuote::where('code', $newLeadCode)->exists();
+        if ($leadExists) {
+            // Lead with the code already exists
+            return false;
+        }
+        $duplicateLead = $leadModal->replicate();
+        $duplicateLead->parent_id = $leadModal->id;
+        $duplicateLead->uuid = $leadModal->uuid.'-1';
+        $duplicateLead->code = $newLeadCode;
+        $duplicateLead->source = TravelQuoteEnum::IMCRM_BOOKING;
+        $duplicateLead->save();
+
+        if ($duplicateLead) {
+            //update morph relation in payments table
+            $leadModal->payments()->where('code', $newLeadCode)->update(['paymentable_id' => $duplicateLead->id]);
+
+            //update morph relation in quote_documents table,which are associated with split payments
+            Payment::where('code', $newLeadCode)->with('paymentSplits')->get()->each(function ($payment) use ($duplicateLead) {
+                $payment->paymentSplits->each(function ($split) use ($duplicateLead) {
+                    $split->documents()->update(['quote_documentable_id' => $duplicateLead->id]);
+                });
+            });
+        }
+
+        return true;
+    }
+
 }

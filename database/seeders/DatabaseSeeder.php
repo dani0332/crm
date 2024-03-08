@@ -52,6 +52,8 @@ class DatabaseSeeder extends Seeder
             AddNewDocumentTypeSeeder::class,
             PaymentStatusAddSeeder::class,
             updateDocTypePayment::class,
+            AddSageFlagApplicationStorage::class,
+            PaymentsMoveInNewTableStructure::class,
             //PaymentsMoveInNewTableStructure::class,
             LookupSeeder::class,
             //            AddNewDocumentTypesSeeder::class,
