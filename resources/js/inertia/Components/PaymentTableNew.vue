@@ -625,7 +625,6 @@ const handleDiscountChange = (editDiscountValue=0) => {
     } else if( props.quoteType === 'Home' || props.quoteType === 'Travel' ) {
       discountValue.value = (totalPrice.value * (12.5 / 100)).toFixed(2); 
     } else {
-      console.log("DISC==="+totalPrice.value);
       discountValue.value = (totalPrice.value * (7.5 / 100)).toFixed(2); // for car
     }    
   }
@@ -1104,8 +1103,6 @@ const editPaymentModal = (payment,split_payment_id,sr_no,capture_approval) => {
   }
 
   if (paymentMethodsForm.status == 'edit') {
-    //if ( isAnyPaid && (totalPrice.value <= payment.total_price) ) { //FOR EDIT
-    ////if ( isAnyPaid ) {
     totalPrice.value = payment.total_price;
     totalAmount.value = payment.total_price-payment.discount_value;
     
@@ -1125,7 +1122,7 @@ const editPaymentModal = (payment,split_payment_id,sr_no,capture_approval) => {
     (payment.discount_type==='family_employee_discount' || payment.discount_type==='employee_discount')
     && payment.discount_value>0
     ){
-    handleDiscountChange(payment.discount_value);
+      discountValue.value = payment.discount_value;    
   }
 
    //Assign plan for Travel
@@ -1711,8 +1708,7 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
   if (newValue && oldValue) {
       // Get the date part without the time from the newValue and oldValue
       const newDate = new Date(newValue).toISOString().split('T')[0];
-      const oldDate = new Date(oldValue).toISOString().split('T')[0];
-      console.log('paymentMethodsForm.collection_date',newDate, oldDate);
+      const oldDate = new Date(oldValue).toISOString().split('T')[0];      
       // Compare the dates
       if (newDate !== oldDate) {
           calculateDueDates();
