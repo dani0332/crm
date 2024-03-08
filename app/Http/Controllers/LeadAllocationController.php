@@ -40,6 +40,7 @@ class LeadAllocationController extends Controller
      */
     public function index(Request $request)
     {
+
         if (Gate::allows('view-lead-allocation', auth()->user())) {
             $totalAssignedLeadCount = 0;
             $availableUsers = 0;
