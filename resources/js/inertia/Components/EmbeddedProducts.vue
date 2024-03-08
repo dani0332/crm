@@ -28,12 +28,9 @@ const props = defineProps({
     type: Object,
     default: {},
   },
-    paymentStatusEnum: {
-        type: Array,
-        default: () => [],
-    },
 });
 
+const paymentStatusEnum = page.props.paymentStatusEnum;
 const modals = reactive({
   cancelPayment: false,
 });
@@ -186,7 +183,7 @@ let paymentLink = page.props.epLink + '/car-insurance/quote/'+props.quote.uuid+'
 };
 
 const paymentStatus = id => {
-  const enums = props.paymentStatusEnum || {};
+  const enums = paymentStatusEnum || {};
   const item = Object.keys(enums).find(key => enums[key] === id);
   return item ? item : 'N/A';
 };
