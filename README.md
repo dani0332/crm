@@ -83,7 +83,7 @@ Before proceeding, ensure that you have the following prerequisites installed on
 - Docker Compose
 
 ## Configuration
-The provided configuration is a basic setup that you can customize according to your requirements. Some ports may already be in use by other services on your system, so you may need to mirror those ports using Docker.
+The provided configuration is a basic setup that you can customize according to your requirements. Some ports may already be in use by other services on your system, so you may need to mirror those ports using Docker, these environment variable are necessary it will help you configure according to your need.
 
 ### Example Configuration
 ```dotenv
@@ -128,31 +128,63 @@ PHPMYADMIN_PORT=2600
 
 
 ## Building and Running Containers
-Use the following commands to build and run the containers for your services:
+Use the following commands to build and run the containers for your services for build you dont need to run with doppler:
 
 ```dotenv
-docker-compose build
+docker-compose -f docker-compose-local.yml build
 ```
-This command builds the containers related to your services.
+This command builds the containers related to your services, here -f flag detonates which dockerfile you want to use as there are some production docker files as well so its better to mention which file to use otherwise it will pick by default file which docker-compose.yml .
 
 ## Run Containers:
 
 ```dotenv
-docker-compose up
+doppler run -- docker-compose -f docker-compose-local.yml up
 ```
 This command starts your services. If you add the -d flag, it will run in the background. If your containers are not working as expected, try running without the -d flag to see the logs and errors in the console.
 
 ## Execute Commands Inside Containers:
 
 ```dotenv
-docker-compose exec container-name-here-like-(appblanka) php artisan optimize
-docker-compose exec container-name-here-like-(appblanka) php artisan migrate/make:controller
-docker-compose exec container-name-here-like-(appblanka) php artisan make:controller
-docker-compose exec container-name-here-like-(appblanka) /bin/bash
-docker-compose exec container-name-here-like-(dbblanka) /bin/bash
+doppler run -- docker-compose -f docker-compose-local.yml exec container-name-here-like-(appblanka) php artisan optimize
+doppler run -- docker-compose -f docker-compose-local.yml exec container-name-here-like-(appblanka) php artisan migrate/make:controller
+doppler run -- docker-compose -f docker-compose-local.yml exec container-name-here-like-(appblanka) php artisan make:controller
+doppler run -- docker-compose -f docker-compose-local.yml exec container-name-here-like-(appblanka) /bin/bash
+doppler run -- docker-compose -f docker-compose-local.yml exec container-name-here-like-(dbblanka) /bin/bash
 ```
 
 This command allows you to run commands inside your container. You can also enter the container using bin/bash instead of php command.
+
+## Important Note
+I have created separate Docker files and configurations for local environments. The docker-local folder contains configurations for local Docker, including files "Dockerfile-Local" and "docker-compose-local.yml", which are used to build and run images for local development.
+
+You Nginx config file show always match docker container name
+
+```docker-local/nginx/conf.d/app.conf
+
+server {
+    listen 80;
+    index index.php index.html;
+    error_log  /var/log/nginx/error.log;
+    access_log /var/log/nginx/access.log;
+    root /var/www/public;
+    client_max_body_size 2048M;
+    location ~ \.php$ {
+        try_files $uri =404;
+        fastcgi_split_path_info ^(.+\.php)(/.+)$;
+        fastcgi_pass appblanka:9000; ---------------------> This Line should match with your container name which is appblanka in our current repository
+        fastcgi_index index.php;
+        include fastcgi_params;
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+        fastcgi_param PATH_INFO $fastcgi_path_info;
+    }
+    location / {
+        try_files $uri $uri/ /index.php?$query_string;
+        gzip_static on;
+    }
+}
+
+```
+
 
 ## Conclusion
 By following these steps, you can easily run the project locally on Docker. Docker provides a convenient and isolated environment for development, ensuring consistency across different systems. If you encounter any issues, refer to the Docker documentation or seek assistance from the project team.
