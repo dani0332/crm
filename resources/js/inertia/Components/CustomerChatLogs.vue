@@ -211,7 +211,10 @@ onMounted(async () => {
             </div>
             <div class="chat-header">InstantAlfred</div>
             <div class="chat-bubble text-sm">
-              <vue-markdown :source="message.msg"></vue-markdown>
+              <vue-markdown
+                :source="message.msg"
+                :options="markdownOptions"
+              ></vue-markdown>
             </div>
             <div class="chat-footer opacity-50">
               {{ message.created_at.split(' ')[1] }}
