@@ -168,7 +168,6 @@ const memberCategoryText = memberCategoryId =>
     )?.text;
   });
 
-
 // const subTeamOptions = computed(() => {
 //     let subteamArray = page.props.teams?.map(team => ({
 //         value: team.name,
@@ -2968,11 +2967,16 @@ const handleChildUpdate = planId => {
       />
     </div>
 
+    <CustomerChatLogs
+      :customerName="quote?.first_name + ' ' + quote?.last_name"
+      :quoteId="quote.uuid"
+      :quoteType="'HEALTH'"
+    />
     <AuditLogs :type="'App\\Models\\HealthQuote'" :id="$page.props.quote.id" />
 
     <ClientInquiryLogs
-        v-if="clientInquiryLogs.length > 0"
-        :logs="clientInquiryLogs"
+      v-if="clientInquiryLogs.length > 0"
+      :logs="clientInquiryLogs"
     />
   </div>
 </template>

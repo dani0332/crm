@@ -23,6 +23,7 @@ class AlfredChatRequest extends FormRequest
     {
         return [
             'quoteId' => 'required',
+            'quoteType' =>'required'
         ];
     }
 }

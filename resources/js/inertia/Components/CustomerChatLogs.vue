@@ -4,6 +4,9 @@ const props = defineProps({
     type: [Number, String],
     required: true,
   },
+  quoteType: {
+    type: String,
+  },
   customerName: {
     type: String,
   },
@@ -97,7 +100,10 @@ const formatData = rawData => {
 const getAllChat = () => {
   loader.value = true;
   axios
-    .post('/get-alfred-chat', { quoteId: props.quoteId })
+    .post('/get-alfred-chat', {
+      quoteId: props.quoteId,
+      quoteType: props.quoteType,
+    })
     .then(response => {
       let { data } = { ...response.data };
       loader.value = false;

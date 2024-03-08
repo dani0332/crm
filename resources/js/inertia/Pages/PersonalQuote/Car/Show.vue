@@ -3748,6 +3748,7 @@ const handleChildUpdate = planId => {
     <CustomerChatLogs
       :customerName="record?.first_name + ' ' + record?.last_name"
       :quoteId="quote.uuid"
+      :quoteType="'CAR'"
     />
   </div>
   <AuditLogs :type="'App\\Models\\CarQuote'" :id="$page.props.record.id" />
