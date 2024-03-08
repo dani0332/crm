@@ -13,6 +13,13 @@ const props = defineProps({
 });
 
 const showChatLogs = ref(false);
+
+const markdownOptions = ref({
+  html: true,
+  linkify: true,
+  typographer: true,
+});
+
 const formatted = date => useDateFormat(date, 'hh:mm:ss A').value;
 const loader = ref(false);
 const tableHeaders = reactive([
@@ -183,7 +190,10 @@ onMounted(async () => {
               {{ customerName ?? message.role }}
             </div>
             <div class="chat-bubble text-sm">
-              <vue-markdown :source="message.msg"></vue-markdown>
+              <vue-markdown
+                :source="message.msg"
+                :options="markdownOptions"
+              ></vue-markdown>
             </div>
             <div class="chat-footer opacity-50 text-right">
               {{ message.created_at.split(' ')[1] }}
