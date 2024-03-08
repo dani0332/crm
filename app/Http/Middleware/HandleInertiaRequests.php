@@ -370,7 +370,8 @@ class HandleInertiaRequests extends Middleware
             });
         }
 
-        if (auth()->user()->can(PermissionsEnum::ClaimList)) {
+        // Scheduled to delete 15th April 2024
+        if (auth()->user()->can(PermissionsEnum::CRMAdmin)) {
             $nav = $nav->add('Claims', '', function (Section $section) {
                 $section
                     ->add('Claims List', url('claim/claims'), fn ($s) => $s->attributes(['icon' => 'box']))
@@ -411,8 +412,6 @@ class HandleInertiaRequests extends Middleware
             $nav = $nav->add('AML', '', function (Section $section) {
                 $section
                     ->add('All Quotes', url('kyc/aml'), fn ($s) => $s->attributes(['icon' => 'box']));
-                // ->add('Downloaded Sanction Lists', url('kyc/aml/download/history'), fn ($s) => $s->attributes(['icon' => 'box']))
-                // ->add('Upload UAE List', url('kyc/aml/upload/uae'), fn ($s) => $s->attributes(['icon' => 'box']));
             });
         }
 
