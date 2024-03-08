@@ -2160,6 +2160,7 @@ const handleChildUpdate = planId => {
             <DatePicker
               v-model="memberForm.dob"
               label="DOB*"
+              :max-date="new Date()"
               :rules="[isRequired]"
               :hasError="memberFieldReq.dob"
             />
