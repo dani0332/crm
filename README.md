@@ -69,3 +69,92 @@ If any deployment fails on any environment, make sure to check the deployment lo
 This project is not used for running migrations.
 
 This repo is integrated with [dhalsim](https://github.com/InsuranceMarket-ae/dhalsim); on each env deployment, the relelvant branch from dhalsim is triggered to run the migrations from before blanka deployment.
+
+
+
+# Running Project Locally with Docker
+
+## Introduction
+This guide outlines the steps to run the project locally on Docker. Docker provides a consistent environment for development and deployment, ensuring that the project runs smoothly across different systems.
+
+## Prerequisites
+Before proceeding, ensure that you have the following prerequisites installed on your system:
+- Docker
+- Docker Compose
+
+## Configuration
+The provided configuration is a basic setup that you can customize according to your requirements. Some ports may already be in use by other services on your system, so you may need to mirror those ports using Docker.
+
+### Example Configuration
+```dotenv
+# App port 
+APP_DEBUG="true"
+APP_ENV="local"
+APP_NAME="appblanka"
+APP_URL=http://localhost:4000
+WEB_PORT=4000
+
+# Nginx Port
+SSL_PORT=452
+
+# Database Configuration
+DB_CONNECTION=mysql
+DB_HOST=dbblanka:3306
+DB_PORT=3306
+DB_MIRROR_PORT=3313
+DB_DATABASE=blanka_db
+DB_USERNAME=root
+DB_PASSWORD=root
+
+# Mailhog Configuration
+MAIL_MAILER=smtp
+MAIL_HOST=mailhogblanka
+MAIL_PORT=1032
+MAIL_UI_PORT=7025
+MAIL_USERNAME=null
+MAIL_PASSWORD=null
+MAIL_ENCRYPTION=null
+MAIL_FROM_ADDRESS="hello@example.com"
+MAIL_FROM_NAME="${APP_NAME}"
+
+# Phpmyadmin Port
+PHPMYADMIN_PORT=2600
+```
+
+## Container Names
+- mailhogblanka
+- dbblanka
+- appblanka
+
+
+## Building and Running Containers
+Use the following commands to build and run the containers for your services:
+
+```dotenv
+docker-compose build
+```
+This command builds the containers related to your services.
+
+## Run Containers:
+
+```dotenv
+docker-compose up
+```
+This command starts your services. If you add the -d flag, it will run in the background. If your containers are not working as expected, try running without the -d flag to see the logs and errors in the console.
+
+## Execute Commands Inside Containers:
+
+```dotenv
+docker-compose exec container-name-here-like-(appblanka) php artisan optimize
+docker-compose exec container-name-here-like-(appblanka) php artisan migrate/make:controller
+docker-compose exec container-name-here-like-(appblanka) php artisan make:controller
+docker-compose exec container-name-here-like-(appblanka) /bin/bash
+docker-compose exec container-name-here-like-(dbblanka) /bin/bash
+```
+
+This command allows you to run commands inside your container. You can also enter the container using bin/bash instead of php command.
+
+## Conclusion
+By following these steps, you can easily run the project locally on Docker. Docker provides a convenient and isolated environment for development, ensuring consistency across different systems. If you encounter any issues, refer to the Docker documentation or seek assistance from the project team.
+
+
