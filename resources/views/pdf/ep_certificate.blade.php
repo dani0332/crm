@@ -459,7 +459,7 @@
                 <b>Signed on behalf of SALAMA Islamic Arab Insurance Co. (P.S.C.)</b>
             </p>
             <p style="margin-top: 5px;">
-                <p> <b>Date:</b> {{ $viewData['policy_insurance_date'] }} </p>
+                <p> <b>Date:</b> {{ $viewData['date_of_enrollment'] }} </p>
             </p>
         </div>
     </main>
