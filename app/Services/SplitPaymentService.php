@@ -91,6 +91,7 @@ class SplitPaymentService
             $isLiveApiCallStep2 = false;
             $sageResponse = json_decode($sageLogArray[2]['response'], true);
         } else {
+            $request->merge(['sage_payment_code' => $splitPayment->payment_method]);
             $payLoadOptions = SagePayloadFactory::createPrepaymentPayload($request);
             $message = $sageApiService->postToSage300($payLoadOptions['endPoint'], $payLoadOptions['payload']);
             $sageResponse = json_decode($message, true);
