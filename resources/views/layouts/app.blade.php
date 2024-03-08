@@ -266,11 +266,9 @@
             routes: {
                 user_datatable_route: "{{ route('users.index') }}",
                 role_datatable_route: "{{ route('roles.index') }}",
-                claim_datatable_route: "{{ route('claims.index') }}",
                 typeofinsurance_datatable_route: "{{ route('typeofinsurance.index') }}",
                 vehicledepreciation_datatable_route: "{{ route('vehicledepreciation.index') }}",
                 subtypeofinsurance_datatable_route: "{{ route('subtypeofinsurance.index') }}",
-                claimsstatus_datatable_route: "{{ route('claimsstatus.index') }}",
                 carrepaircoverage_datatable_route: "{{ route('carrepaircoverage.index') }}",
                 carrepairtype_datatable_route: "{{ route('carrepairtype.index') }}",
                 rentacar_datatable_route: "{{ route('rentacar.index') }}",
