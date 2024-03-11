@@ -33,8 +33,8 @@ const tableHeader = reactive([
   },
 
   {
-    text: 'Policy Due Date',
-    value: 'policy_due_date',
+    text: 'Payment Due Date',
+    value: 'payment_due_date',
   },
   {
     text: 'Price (VAT applicable)',
@@ -178,37 +178,33 @@ const isIntegerColumn = key => {
       {{ policy_due_date ?? 'N/A' }}
     </template>
     <template #item-price_vat_applicable="{ price_vat_applicable }">
-      {{ price_vat_applicable ? priceFormat(price_vat_applicable) : 0.00 }}
+      {{ price_vat_applicable ? priceFormat(price_vat_applicable) : 0.0 }}
     </template>
     <template #item-vat="{ vat }">
-      {{ vat ? priceFormat(vat) : 0.00 }}
+      {{ vat ? priceFormat(vat) : 0.0 }}
     </template>
     <template #item-price_vat_not_applicable="{ price_vat_not_applicable }">
-      {{ price_vat_not_applicable ? priceFormat(price_vat_not_applicable) : 0.00 }}
-    </template>
-    <template #item-discount="{ discount }">
-      {{ discount ? priceFormat(discount) : 0.00 }}
-    </template>
-    <template #item-total_price="{ total_price }">
-      {{ total_price ? (total_price) : 0.00 }}
-    </template>
-    <template #item-commission_vat_applicable="{ commission_vat_applicable }">
       {{
-        commission_vat_applicable ? (commission_vat_applicable) : 0.00
+        price_vat_not_applicable ? priceFormat(price_vat_not_applicable) : 0.0
       }}
     </template>
+    <template #item-discount="{ discount }">
+      {{ discount ? priceFormat(discount) : 0.0 }}
+    </template>
+    <template #item-total_price="{ total_price }">
+      {{ total_price ? total_price : 0.0 }}
+    </template>
+    <template #item-commission_vat_applicable="{ commission_vat_applicable }">
+      {{ commission_vat_applicable ? commission_vat_applicable : 0.0 }}
+    </template>
     <template #item-commission_vat="{ commission_vat }">
-      {{ commission_vat ? (commission_vat) : 0.00 }}
+      {{ commission_vat ? commission_vat : 0.0 }}
     </template>
 
     <template
       #item-commission_vat_not_applicable="{ commission_vat_not_applicable }"
     >
-      {{
-        commission_vat_not_applicable
-          ? (commission_vat_not_applicable)
-          : 0.00
-      }}
+      {{ commission_vat_not_applicable ? commission_vat_not_applicable : 0.0 }}
     </template>
     <template #item-collected_amount="{ collected_amount }">
       {{ collected_amount ? priceFormat(collected_amount) : 0 }}
@@ -268,7 +264,10 @@ const isIntegerColumn = key => {
         >
           {{
             isIntegerColumn(header.value)
-              ? priceFormat(calculateTotalSum(reportData.data, header.value), true)
+              ? priceFormat(
+                  calculateTotalSum(reportData.data, header.value),
+                  true,
+                )
               : 'N/A'
           }}
         </td>
