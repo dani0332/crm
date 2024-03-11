@@ -142,7 +142,6 @@ const loaders = ref({
 });
 
 const onLeadStatus = () => {
-  console.log('hrererrer in lead status');
   loaders.value.leadStatus = true;
   let data = {
     modelType: 'Business',
@@ -158,7 +157,7 @@ const onLeadStatus = () => {
     .post(
       route('updateLeadStatus', {
         QuoteUId: page.props.quote.id,
-        modelType: 'Bussiness',
+        modelType: 'Business',
       }),
       data,
     )
