@@ -21,6 +21,7 @@ use App\Services\TravelQuoteService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use App\Enums\RolesEnum;
 
 class PaymentRepository extends BaseRepository implements PaymentRepositoryInterface
 {
@@ -361,7 +362,10 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                         DB::beginTransaction();
                         try {
                             $paymentSplit->collection_amount = $splitAmount;
-                            $paymentSplit->save();
+                            $paymentSplit->save();                            
+                            if (Auth::user()->hasRole(RolesEnum::BetaUser)) { //Part of milestone 2
+                                app(SplitPaymentService::class)->createReciept($quoteModel, $quoteTypeId, $paymentSplit);
+                            }
                             $parentPayment = $paymentSplit->payment;
                             $parentPayment->captured_amount = ($parentPayment->captured_amount + $splitAmount);
                             $parentPayment->save();
@@ -466,6 +470,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                     }
                 }
             }
+
             //create sage reciept
             $isSageEnabled = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::SAGE_ENABLED);
             if ($isSageEnabled) {
@@ -491,6 +496,9 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                             'payment_allocation_status' => PaymentAllocationStatus::NOT_ALLOCATED]
                     );
                 }
+            }
+            if (Auth::user()->hasRole(RolesEnum::BetaUser)) { //Part of milestone 2
+                app(SplitPaymentService::class)->createReciept($request->modelType, $request->quote_id, $splitPayment);
             }
 
         } elseif ($request->is_declined) {
