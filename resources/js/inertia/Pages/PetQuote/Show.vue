@@ -803,7 +803,8 @@ const linkEntity = () => {
       v-if="!isNewPaymentStructure"
       :quoteId="quote.id"
       :paymentCode = "quote.code"
-      :quoteType="quoteType"      
+      :quoteType="quoteType"
+      :payments="quote.payments"   
     />    
     <PaymentTableNew 
 			v-if="isNewPaymentStructure"
