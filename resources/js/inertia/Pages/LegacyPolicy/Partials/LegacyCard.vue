@@ -7,8 +7,7 @@ const props = defineProps({
   policy: Object,
 });
 
-const skipFields = ['_id','email', 'phone', 'idcode', 'mobile_phone', 'profile_data','broker',
-'name','policy_no','policy_oid','insurer','start_date','end_date'];
+const skipFields = ['_id','email', 'phone', 'idcode', 'mobile_phone', 'profile_data','name','policy_no','policy_oid','insurer','start_date','end_date'];
 
 if(props.title == 'CUSTOMER') {
   skipFields.push('customer');
