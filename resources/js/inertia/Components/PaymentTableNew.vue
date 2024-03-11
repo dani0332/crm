@@ -896,11 +896,11 @@ const generateCCLink = async (code,splitPaymentId,paymentStatus) => {
 
 const sendUpdateStatusEnum = props.sendUpdateStatusEnum;
 const isEF = computed(() => {
-  return props.sendUpdate?.category?.code === sendUpdateStatusEnum.EF;
+  return props.sendUpdate !== null && props.sendUpdate?.category?.code === sendUpdateStatusEnum.EF;
 });
 
 const isCPD = computed(() => {
-  return props.sendUpdate?.category?.code === sendUpdateStatusEnum.CPD;
+  return props.sendUpdate !== null && props.sendUpdate?.category?.code === sendUpdateStatusEnum.CPD;
 });
 
 const addPaymentModal = () => {
@@ -1289,7 +1289,7 @@ const addPayment = isValid => {
     insurance_provider_id: providerId.value,
     new_payment_structure: true,
     isInertia: true,
-    send_update_id: props.sendUpdate.id,
+    send_update_id: props.sendUpdate?.id || null,
   };
 
   data.payment = {
