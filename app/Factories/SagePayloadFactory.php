@@ -3,6 +3,7 @@
 namespace App\Factories;
 
 use App\Enums\PaymentMethodsEnum;
+use App\Enums\SagePaymentMethodsEnum;
 use App\Models\QuoteRequestEntityMapping;
 
 class SagePayloadFactory
@@ -546,16 +547,16 @@ class SagePayloadFactory
     private static function sagePaymentCodeMapping($paymentMethod)
     {
         $sagePaymentCodeMappingArray = [
-            PaymentMethodsEnum::BankTransfer => 'BT',
-            PaymentMethodsEnum::Cash => 'CASH',
-            PaymentMethodsEnum::Cheque => 'CHEQUE',
-            PaymentMethodsEnum::PostDatedCheque => 'PDC',
-            PaymentMethodsEnum::CreditCard => 'CC',
+            PaymentMethodsEnum::BankTransfer => SagePaymentMethodsEnum::SAGE_BANK_TRANSFER,
+            PaymentMethodsEnum::Cash => SagePaymentMethodsEnum::SAGE_CASH,
+            PaymentMethodsEnum::Cheque => SagePaymentMethodsEnum::SAGE_CHEQUE,
+            PaymentMethodsEnum::PostDatedCheque => SagePaymentMethodsEnum::SAGE_POST_DATED_CHEQUE,
+            PaymentMethodsEnum::CreditCard => SagePaymentMethodsEnum::SAGE_CREDIT_CARD,
         ];
         if (array_key_exists($paymentMethod, $sagePaymentCodeMappingArray)) {
             return $sagePaymentCodeMappingArray[$paymentMethod];
         } else {
-            return 'BT';
+            return SagePaymentMethodsEnum::SAGE_BANK_TRANSFER;
         }
     }
 }
