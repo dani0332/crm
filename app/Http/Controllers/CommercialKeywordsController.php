@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\PermissionsEnum;
 use App\Http\Requests\CommercialKeywordRequest;
 use App\Models\CommercialKeyword;
 use App\Services\CommercialKeywordsService;
@@ -10,7 +11,8 @@ use Yajra\DataTables\DataTables;
 
 class CommercialKeywordsController extends Controller
 {
-    protected $commercialKeywordsService;
+    private $commercialKeywordsService;
+
     /**
      * Display a listing of the resource.
      *
@@ -18,12 +20,15 @@ class CommercialKeywordsController extends Controller
      */
     public function __construct(CommercialKeywordsService $commercialKeywordsService)
     {
-        $this->middleware('auth');
+        $this->middleware(
+            ['permission:'.PermissionsEnum::COMMERCIAL_KEYWORDS],
+            ['only' => ['index', 'create', 'store', 'edit', 'update', 'show']]
+        );
         $this->commercialKeywordsService = $commercialKeywordsService;
     }
 
     /**
-     * get resource grid view function
+     * get resource grid view function.
      *
      * @return void
      */
@@ -92,7 +97,7 @@ class CommercialKeywordsController extends Controller
     }
 
     /**
-     * update resource function
+     * update resource function.
      *
      * @param  Request  $request
      * @param  int  $id
@@ -104,5 +109,4 @@ class CommercialKeywordsController extends Controller
 
         return $this->commercialKeywordsService->update($id, $attributes);
     }
-
 }
