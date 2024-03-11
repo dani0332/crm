@@ -81,7 +81,7 @@ const uploadFile = (doc, memberId, filesWithInfo) => {
           >
             <div class="flex flex-col gap-1">
               <h5 class="text-sm font-semibold">
-                {{ docType.text }}
+                {{ docType.text }} {{ docType.is_required ? '*' : ''}}
               </h5>
               <p class="text-xs">Max files: {{ docType.max_files }}</p>
               <p class="text-xs">Supported: {{ docType.accepted_files }}</p>
@@ -123,7 +123,7 @@ const uploadFile = (doc, memberId, filesWithInfo) => {
         >
           <div class="flex flex-col gap-1">
             <h5 class="text-sm font-semibold">
-              {{ docType.text }}
+              {{ docType.text }} {{ docType.is_required ? '*' : ''}}
             </h5>
             <p class="text-xs">Max files: {{ docType.max_files }}</p>
             <p class="text-xs">Supported: {{ docType.accepted_files }}</p>

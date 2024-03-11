@@ -3555,7 +3555,7 @@ watch(
       >
         <div class="flex flex-col gap-1">
           <h5 class="text-sm font-semibold">
-            {{ documentType.text }}
+            {{ documentType.text }} {{ documentType.is_required ? '*' : ''}} 
           </h5>
           <p class="text-xs">Max files: {{ documentType.max_files }}</p>
           <p class="text-xs">Supported: {{ documentType.accepted_files }}</p>
