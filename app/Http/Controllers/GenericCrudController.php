@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\GenericModelTypeEnum;
 use App\Enums\InsuranceProvderConstants;
+use App\Enums\PermissionsEnum;
 use App\Models\GenericModel;
 use App\Services\ApplicationStorageService;
 use App\Services\CarPlanAddOnOptionService;
@@ -55,6 +56,11 @@ class GenericCrudController extends Controller
         QuadrantService $quadrantService,
         RuleService $ruleService
     ) {
+        $this->middleware(
+            ['permission:'.PermissionsEnum::TIER_CONFIG_LIST.'|'.PermissionsEnum::QUAD_CONFIG_LIST.'|'.PermissionsEnum::RULE_CONFIG_LIST],
+            ['only' => ['index', 'create', 'store', 'edit', 'update', 'show']]
+        );
+
         $this->genericModel = new GenericModel();
         $this->crudService = $crudService;
         $this->dropdownSourceService = $dropdownSourceService;
