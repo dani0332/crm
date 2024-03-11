@@ -383,31 +383,32 @@ class SendUpdateLogController extends Controller
             $paymentStatus = $quote?->payments->value('payment_status_id') ?? null;
 
             // Add insuficient Payment Validations here
-            $insuficientPaymentCheck = true;
+            $insuficientPaymentCheck = false;
 
             return response()->json([
                 'insuficientPaymentCheck' => $insuficientPaymentCheck,
                 'parentPaymentStatus' => $paymentStatus
             ], 200);
         }
+        
+        $sendUpdate = SendUpdateLog::find($sendUpdateRequest->sendUpdateId);
 
-        // $sendUpdate = SendUpdateLog::find($sendUpdateRequest->sendUpdateId);
+        try {
+            DB::beginTransaction(); 
+            $sageResponse = $this->sendUpdateLogService->sendUpdateToSage($sendUpdateRequest, $sendUpdate);
+            if ($sageResponse['status'] == false) 
+                return response()->json(['message' => $sageResponse['message']], 500);
 
-        // Start working on Sage APIs on necessary send update type.
-        // $this->sendUpdateLogService->sendUpdateToSage($sendUpdateRequest, $sendUpdate);
+            $this->sendUpdateLogService->updatesMoveToLead($sendUpdateRequest, $sendUpdate);
 
-        // try {
-        //     DB::beginTransaction(); 
-        //     $this->sendUpdateLogService->updatesMoveToLead($sendUpdateRequest, $sendUpdate);
+            DB::commit();
 
-        //     DB::commit();
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            info('Send update - Failed - Error : '.$exception->getMessage());
 
-        // } catch (\Exception $exception) {
-        //     DB::rollBack();
-        //     info('Send update - Failed - Error : '.$exception->getMessage());
-
-        //     return redirect()->back()->with('error', 'Send update failed');
-        // }
+            return redirect()->back()->with('error', 'Send update failed');
+        }
 
         return response()->json(['message' => 'Update booked'], 200);
     }

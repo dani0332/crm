@@ -2,7 +2,11 @@
 
 namespace App\Factories;
 
+use App\Enums\quoteStatusCode;
+use App\Enums\SageEnums;
+use App\Models\Lookup;
 use App\Models\QuoteRequestEntityMapping;
+use App\Models\User;
 
 class SagePayloadFactory
 {
@@ -672,4 +676,248 @@ class SagePayloadFactory
 
         return $data;
     }
+
+    public static function sagePayLoad($quoteType, $quote, $payment, $splitPayments) 
+    {
+        $response = [
+            'discount' => floatval($payment->discount_value),
+            'invoiceDescription' => $payment->invoice_description,
+            'bookingDate' => date('Y-m-d', strtotime($quote['policy_booking_date'])),
+            'policyExpiryDate' => date('Ymd', strtotime($quote['renewal_expiry_date'])),
+            'insurerInvoiceDate' => date('Y-m-d', strtotime($payment->insurer_invoice_date)),
+            'mainClassInsurance' => $quoteType,
+            'policyNumber' => $quote->policy_number,
+            'policyIssuer' => auth()->user()->name,
+            'requestType' => Lookup::where('id', $quote->transaction_type_id)->first()->text ?? '',
+            'subClass' => '',
+            'invoicePaymentStatus' => $payment->transaction_payment_status,
+            'advisorName' => !empty($quote->advisor_id) ? User::where('id', $quote->advisor_id)->value('name') : '',
+            'premiumWithoutTax' => floatval($quote->price_without_vat),
+            'premiumWithTax' => floatval($quote->price_with_vat),
+            'vatOnCommission' => floatval($payment->commission_vat),
+            'commission' => floatval($payment->commission),
+            'commissionIncludingVat' => floatval($payment->commission_vat_applicable),
+            'commissionWithOutVat' => $payment->commission_vat_not_applicable,
+            'insurerPremiumNumber' => (string) $payment['insurer_tax_number'],
+            'insurerCommissionNumber' => (string) $payment['insurer_commmission_invoice_number'],
+        ];
+
+        if(!empty($splitPayments)) {
+            $response['paymentDueDate'] = date('Y-m-d', strtotime($splitPayments[0]['due_date']));
+        }
+
+        if (count($splitPayments) == 1) {
+            $response['sage_reciept_id'] = $splitPayments[0]['sage_reciept_id'];
+            $response['collection_amount'] = $splitPayments[0]['collection_amount'];
+        }
+
+        return (object) $response;
+    }
+
+    public static function handleSageAPIsParms($apiType, $extras = [])
+    {
+        $response = [];
+        switch ($apiType) {
+            case SageEnums::DOCUMENT_TYPE_CREATE_AR_INVOICE:
+                $response = [
+                    'steps' => 3,
+                    'recursiveCalls' => [
+                        'createARInvoicePremAndComm',
+                        'readyToPostInvoiceAr',
+                        'aRPostInvoices'
+                    ],
+                    'extraDetails' => [
+                        'createARInvoicePremAndComm' => [
+                            'requestParms' => 'payload',
+                            'nextCondition' => 'BatchNumber',
+                            'errorMessage' => 'AR Invoice & prem failed from Sage'
+                        ],
+                        'readyToPostInvoiceAr' => [
+                            'requestParms' => 'BatchNumber',
+                            'verb' => 'PATCH',
+                            'logResponse' => true,
+                            'conditionChecks' => ['type' => 'Not Empty', 'condtion_to_check' => ''],
+                            'errorMessage' => 'Error while making AR Invoice & prem ready to post to Sage'
+                        ],
+                        'aRPostInvoices' => [
+                            'requestParms' => 'BatchNumber',
+                            'logResponse' => true,
+                            'conditionChecks' => ['type' => 'isset', 'condtion_to_check' => 'error'],
+                            'errorMessage' => 'Error while making AR Invoice & prem Posted to Sage'
+                        ]
+                    ]
+                ];
+                break;
+
+            case SageEnums::DOCUMENT_TYPE_CREATE_AP_INVOICE:
+                $response = [
+                    'steps' => 3,
+                    'recursiveCalls' => [
+                        'createAPInvoicePrem',
+                        'readyToPostInvoiceAP',
+                        'aPPostInvoices'
+                    ],
+                    'extraDetails' => [
+                        'createAPInvoicePrem' => [
+                            'requestParms' => 'payload',
+                            'nextCondition' => 'BatchNumber',
+                            'errorMessage' => 'AP Invoice prem failed from Sage'
+                        ],
+                        'readyToPostInvoiceAP' => [
+                            'requestParms' => 'BatchNumber',
+                            'verb' => 'PATCH',
+                            'logResponse' => true,
+                            'conditionChecks' => ['type' => 'Not Empty', 'condtion_to_check' => ''],
+                            'errorMessage' => 'Error while making AP Invoice ready to post to Sage'
+                        ],
+                        'aPPostInvoices' => [
+                            'requestParms' => 'BatchNumber',
+                            'logResponse' => true,
+                            'conditionChecks' => ['type' => 'isset', 'condtion_to_check' => 'error'],
+                            'errorMessage' => 'Error while making AP Invoices Posted to Sage'
+                        ]
+                    ]
+                ];
+                break;
+
+            case SageEnums::DOCUMENT_TYPE_CREATE_AR_INVOICE_DIS:
+                $response = [
+                    'steps' => 3,
+                    'recursiveCalls' => [
+                        'createARInvoiceDis',
+                        'readyToPostInvoiceAr',
+                        'aRPostInvoices'
+                    ],
+                    'extraDetails' => [
+                        'createARInvoiceDis' => [
+                            'requestParms' => 'payload',
+                            'nextCondition' => 'BatchNumber',
+                            'errorMessage' => 'AR discount Invoice failed from Sage'
+                        ],
+                        'readyToPostInvoiceAr' => [
+                            'requestParms' => 'BatchNumber',
+                            'verb' => 'PATCH',
+                            'logResponse' => true,
+                            'conditionChecks' => ['type' => 'Not Empty', 'condtion_to_check' => ''],
+                            'errorMessage' => 'Error while making AR discount Invoice ready to post to Sage'
+                        ],
+                        'aRPostInvoices' => [
+                            'requestParms' => 'BatchNumber',
+                            'logResponse' => true,
+                            'conditionChecks' => ['type' => 'isset', 'condtion_to_check' => 'error'],
+                            'errorMessage' => 'Error while making AR discount Invoice Posted to Sage'
+                        ]
+                    ]
+                ];
+            
+            default:
+                # code...
+                break;
+        }
+
+        return $response;
+    }
+
+    // public static function handleSageAPIsParams($type)
+    // {
+    //     $response = [];
+    //     switch ($type) {
+    //         case SageEnums::TYPE_SEND_POLICY:
+    //             $response = [
+    //                 'steps' => 13
+    //             ];
+    //             break;
+
+    //         case SageEnums::TYPE_CREATE_RECEIPT:
+    //             $response = [
+    //                 'steps' => 4,
+    //                 'recursiveCalls' => [
+    //                     'createPrepaymentPayload' => [
+    //                         'readyToPostReceiptArPayment',
+    //                         'aRPostReceiptsPayment'
+    //                     ]
+    //                 ]
+    //             ];
+    //             break;
+
+    //         case SageEnums::TYPE_SEND_UPDATE:
+    //             $response = [
+    //                 'steps' => 13,
+    //                 'recursiveCalls' => [
+    //                     'createARInvoicePremAndComm',
+    //                     'readyToPostInvoiceAr',
+    //                     'aRPostInvoices',
+    //                     'createAPInvoicePrem',
+    //                     'readyToPostInvoiceAP',
+    //                     'aPPostInvoices',
+    //                     'createARInvoiceDis',
+    //                     'readyToPostInvoiceAr',
+    //                     'aRPostInvoices'
+    //                 ],
+    //                 'extraDetails' => [
+    //                     'createARInvoicePremAndComm_1' => [
+    //                         'requestParms' => 'payload',
+    //                         'nextCondition' => 'BatchNumber',
+    //                         'errorMessage' => 'AR invoice & prem failed from Sage'
+    //                     ],
+    //                     'readyToPostInvoiceAr_2' => [
+    //                         'requestParms' => 'BatchNumber',
+    //                         'verb' => 'PATCH',
+    //                         'logResponse' => true,
+    //                         'checkCondition' => ['type' => 'Not Empty', 'response' => ''],
+    //                         'errorMessage' => 'Error while making AR invoice & prem ready to post to Sage'
+    //                     ],
+    //                     'aRPostInvoices_3' => [
+    //                         'requestParms' => 'BatchNumber',
+    //                         'logResponse' => true,
+    //                         'checkCondition' => ['type' => 'isset', 'response' => 'error'],
+    //                         'errorMessage' => 'Error while making AR invoice & prem Posted to Sage'
+    //                     ],
+    //                     'createAPInvoicePrem_4' => [
+    //                         'requestParms' => 'payload',
+    //                         'nextCondition' => 'BatchNumber',
+    //                         'errorMessage' => 'AP invoice prem failed from Sage'
+    //                     ],
+    //                     'readyToPostInvoiceAP_5' => [
+    //                         'requestParms' => 'BatchNumber',
+    //                         'verb' => 'PATCH',
+    //                         'logResponse' => true,
+    //                         'checkCondition' => ['type' => 'Not Empty', 'response' => ''],
+    //                         'errorMessage' => 'Error while making AP invoice ready to post to Sage'
+    //                     ],
+    //                     'aPPostInvoices_6' => [
+    //                         'requestParms' => 'BatchNumber',
+    //                         'logResponse' => true,
+    //                         'checkCondition' => ['type' => 'isset', 'response' => 'error'],
+    //                         'errorMessage' => 'Error while making AP invoices Posted to Sage'
+    //                     ],
+    //                     'createARInvoiceDis_7' => [
+    //                         'requestParms' => 'payload',
+    //                         'nextCondition' => 'BatchNumber',
+    //                         'errorMessage' => 'AR discount invoice failed from Sage'
+    //                     ],
+    //                     'readyToPostInvoiceAr_8' => [
+    //                         'requestParms' => 'BatchNumber',
+    //                         'verb' => 'PATCH',
+    //                         'logResponse' => true,
+    //                         'checkCondition' => ['type' => 'Not Empty', 'response' => ''],
+    //                         'errorMessage' => 'Error while making AR discount invoice ready to post to sage'
+    //                     ],
+    //                     'aRPostInvoices_9' => [
+    //                         'requestParms' => 'BatchNumber',
+    //                         'logResponse' => true,
+    //                         'checkCondition' => ['type' => 'isset', 'response' => 'error'],
+    //                         'errorMessage' => 'Error while making AR discount invoice Posted to sage'
+    //                     ]
+    //                 ]
+    //             ];
+    //             break;
+            
+    //         default:
+    //             $response = [];
+    //             break;
+    //     }
+
+    //     return $response;
+    // }
 }

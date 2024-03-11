@@ -465,7 +465,11 @@ const sendUpdateValidation = () => {
     .then((response) => {
       if (response.status == 200) {
         if (props.updateBtn === sendUpdateStatusEnum.SU) {
-          prePaymentConfirmation(response);
+          if(response.data.insuficientPaymentCheck == true) {
+            insuficientPaymentConfirmation(response);
+          } else if(response.data.insuficientPaymentCheck == false) {
+            attestRecord();
+          }
         } else {
           modals.sendConfirm = true;
           isStating.value = response.data.message;
@@ -484,17 +488,13 @@ const sendUpdateValidation = () => {
     });
 };
 
-function prePaymentConfirmation(response) {
+function insuficientPaymentConfirmation(response) {
   let paymentOptions = [
     paymentStatusEnum.PENDING,
     paymentStatusEnum.PARTIALLY_PAID,
     paymentStatusEnum.CREDIT_APPROVED,
   ];
-  if (
-    (response.data.insuficientPaymentCheck == true &&
-      paymentOptions.includes(response.data.parentPaymentStatus)) ||
-    true
-  ) {
+  if (paymentOptions.includes(response.data.parentPaymentStatus) || true) {
     paymentConfirmationMessage.message =
       "Unpaid policies breach our Code of Conduct and will be escalated to management. Do you still want to continue?";
     switch (response.data.parentPaymentStatus) {
@@ -526,8 +526,8 @@ function confirmationModalClose() {
   loader.sendUpdateSectionBtn = false;
 }
 
-function sendUpdate() {
-  if(!confirmationCheck.value) {
+function sendUpdate(prePaymentCheck = true) {
+  if(!confirmationCheck.value && prePaymentCheck) {
     confirmationCheckError.value = true;
     return false;
   } else {
@@ -554,13 +554,18 @@ function sendUpdate() {
       });
     })
     .catch(function (errors) {
-      let responseError = errors.response.data.errors.error;
-      Object.keys(responseError).forEach(function (key) {
-        notification.error({
-          title: responseError[key],
+      // console.log(errors);
+      // let responseError = errors.response.data.message;
+      notification.error({
+          title: errors.response.data.message,
           position: "top",
         });
-      });
+      // Object.keys(responseError).forEach(function (key) {
+      //   notification.error({
+      //     title: responseError[key],
+      //     position: "top",
+      //   });
+      // });
     });
 }
 
@@ -1353,7 +1358,7 @@ const submitToCustomer = () => {
           <p class="text-sm">{{ paymentConfirmationMessage.message }}</p>
         </div>
         <div class="text-center space-x-4">
-          <x-button size="sm" @click.prevent="attestRecord()"> Continue </x-button>
+          <x-button size="sm" @click.prevent="sendUpdate(false)"> Continue </x-button>
 
           <x-button size="sm" color="orange" @click.prevent="confirmationModalClose()">
             Go Back

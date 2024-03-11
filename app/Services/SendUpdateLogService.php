@@ -19,8 +19,10 @@ use App\Models\TravelQuote;
 use App\Models\YachtQuote;
 use App\Traits\GenericQueriesAllLobs;
 use App\Enums\DocumentTypeCode;
+use App\Enums\SageEnums;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Models\Payment;
+use App\Models\SageApiLog;
 use App\Repositories\InsuranceProviderRepository;
 use App\Repositories\LookupRepository;
 use App\Repositories\SendUpdateLogRepository;
@@ -591,30 +593,68 @@ class SendUpdateLogService
         return $payments;
     }
 
-    public function sendUpdateToSage($sendUpdateLog, $quote)
+    public function sendUpdateToSage($sendUpdateRequest, $sendUpdateLog)
     {
-        info("This function responsible to send updates on Sage");
+        $categoryCode = $sendUpdateLog->category->code;
+        $quoteModel = $this->getModelObject($sendUpdateRequest->quoteType);
+        $quote = $quoteModel::where('id', $sendUpdateRequest->quoteRefId)->first();
 
-        return true;
+        if($categoryCode == SendUpdateLogStatusEnum::EF) {
+            $sageResponse = app(SageApiService::class)->handleDocumentsToSage(
+                $sendUpdateRequest, $quote, [
+                    'type' => SageEnums::TYPE_SEND_UPDATE,
+                    'category' => $sendUpdateLog->category->code,
+                    'option' => $sendUpdateLog->option->code,
+                ]
+            );
+            
+            return $sageResponse;
+        }
+        
+        
+        if ($categoryCode == SendUpdateLogStatusEnum::CPD) { 
+            // Should be create reversal entry for that type
+            // $fetchOldARInvoice = SageApiLog::where([
+            //     'section_type' => CarQuote::class, // need to be updated
+            //     'section_id' => 169863
+            // ])->get();
+        }
+
+        return ['status' => false, 'message' => 'Something went wrong'];
     }
 
     public function updatesMoveToLead($sendUpdateRequest, $sendUpdateLog)
     {
         $categoryCode = $sendUpdateLog->category->code;
         $optionCode = $sendUpdateLog->option->code;
-        $quoteModel = $this->getModelObject($sendUpdateRequest->quoteType)::find($sendUpdateRequest->quoteRefId);
+        $quoteModel = $this->getModelObject($sendUpdateRequest->quoteType);
+        $quote = $quoteModel::where('id', $sendUpdateRequest->quoteRefId)->first();
 
         if(in_array($categoryCode, [SendUpdateLogStatusEnum::EF, SendUpdateLogStatusEnum::CPD])) {
-            // Move payments and update refrence
+            Payment::where('send_update_log_id', $sendUpdateLog->id)->update([
+                'paymentable_id' => $quote->id,
+                'paymentable_type' => ltrim($quoteModel, '\\')
+            ]);
 
             if($optionCode == SendUpdateLogStatusEnum::PPE) {
-                $quoteModel->renewal_expiry_date = $sendUpdateLog->expiry_date;
+                $quote->update(['renewal_expiry_date' => $sendUpdateLog->expiry_date]);
             } else {
                 // The values of Booking Details - New Entry should be move in Main Lead Booking Details, 
-                // The values of Policy Details - should be move in Main Lead Policy Details, 
+
+                $quote->update([
+                    'policy_number' => $sendUpdateLog->policy_number,
+                    'policy_issuance_date' => $sendUpdateLog->issuance_date,
+                    'price_vat_not_applicable' => $sendUpdateLog->price_vat_not_applicable,
+                    'price_without_vat' => $sendUpdateLog->price_without_vat,
+                    'policy_start_date' => $sendUpdateLog->start_date,
+                    'renewal_expiry_date' => $sendUpdateLog->expiry_date,
+                    'price_with_vat' => $sendUpdateLog->price_with_vat,
+                    'quote_plan_insurer_quote_number' => $sendUpdateLog->insurer_quote_number,
+                    'policy_issuance_status_id' => $sendUpdateLog->issuance_status_id,
+                    // 'vat' => $sendUpdateLog->expiry_date,
+                    // 'policy_issuance_status_other' => $sendUpdateLog->expiry_date,
+                ]);
             }
         }
-
-        // $quoteModel->save();
     }
 }
