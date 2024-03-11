@@ -1,4 +1,5 @@
 <script setup>
+import markdownit from 'markdown-it';
 const props = defineProps({
   quoteId: {
     type: [Number, String],
@@ -14,11 +15,34 @@ const props = defineProps({
 
 const showChatLogs = ref(false);
 
-const markdownOptions = ref({
-  html: true,
-  linkify: true,
-  typographer: true,
-});
+const md = new markdownit();
+
+const renderMarkdown = markdownString => {
+  // Parse the markdown string
+  const initialHtml = md.render(markdownString);
+
+  // Adjust links to open in a new tab
+  const adjustedHtml = initialHtml.replace(/<a /g, '<a target="_blank" ');
+
+  return adjustedHtml;
+};
+
+// const markdownOptions = ref({
+//   html: true,
+//   linkify: true,
+//   typographer: true,
+//   breaks: true,
+//   link_open: function (tokens, idx, options, env, self) {
+//     console.log('here to get the link');
+//     const token = tokens[idx];
+//     const hrefIndex = token.attrIndex('href');
+//     if (hrefIndex !== -1) {
+//       // Add target="_blank" to the link
+//       token.attrs[hrefIndex][1] += ' " target="_blank"';
+//     }
+//     return self.renderToken(tokens, idx, options, env, self);
+//   },
+// });
 
 const formatted = date => useDateFormat(date, 'hh:mm:ss A').value;
 const loader = ref(false);
@@ -50,6 +74,7 @@ const tableData = ref([]);
 //   },
 //   // Add more fake data as needed
 // ]);
+
 const chatMessages = ref({
   created_at: '',
   data: [],
@@ -104,6 +129,7 @@ const formatData = rawData => {
     }
   }
 };
+
 const getAllChat = () => {
   loader.value = true;
   axios
@@ -190,10 +216,7 @@ onMounted(async () => {
               {{ customerName ?? message.role }}
             </div>
             <div class="chat-bubble text-sm">
-              <vue-markdown
-                :source="message.msg"
-                :options="markdownOptions"
-              ></vue-markdown>
+              <div v-html="renderMarkdown(message.msg)"></div>
             </div>
             <div class="chat-footer opacity-50 text-right">
               {{ message.created_at.split(' ')[1] }}
@@ -211,10 +234,7 @@ onMounted(async () => {
             </div>
             <div class="chat-header">InstantAlfred</div>
             <div class="chat-bubble text-sm">
-              <vue-markdown
-                :source="message.msg"
-                :options="markdownOptions"
-              ></vue-markdown>
+              <div v-html="renderMarkdown(message.msg)"></div>
             </div>
             <div class="chat-footer opacity-50">
               {{ message.created_at.split(' ')[1] }}
