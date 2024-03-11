@@ -212,7 +212,7 @@ const caculateCommission = () => {
 <template>
   <div class="p-4 rounded shadow mb-6 bg-white">
     <div>
-      <h3 class="font-semibold text-primary-800 text-lg">Book Policy</h3>
+      <h3 class="font-semibold text-primary-800 text-lg">Booking Details</h3>
       <x-divider class="mb-4 mt-1" />
     </div>
     <x-form @submit="onUpdateBpDetails" :auto-focus="false">
