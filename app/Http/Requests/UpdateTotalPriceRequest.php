@@ -44,7 +44,7 @@ class UpdateTotalPriceRequest extends FormRequest
             $oldPayment = $quoteModel->payments()->where('code', request()->payment_code)->first();
             if (! $oldPayment) {
                 $validator->errors()->add('value', 'Master Payment Not Exists');
-            } else if( request()->total_price <= $oldPayment->total_price ) {
+            } elseif (request()->total_price <= $oldPayment->total_price) {
                 $validator->errors()->add('value', 'Total Price is not valid');
             }
         });

@@ -8,6 +8,7 @@ use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
+use App\Enums\RolesEnum;
 use App\Interfaces\PaymentRepositoryInterface;
 use App\Models\Payment;
 use App\Models\PaymentSplits;
@@ -21,7 +22,6 @@ use App\Services\TravelQuoteService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use App\Enums\RolesEnum;
 
 class PaymentRepository extends BaseRepository implements PaymentRepositoryInterface
 {
@@ -362,7 +362,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                         DB::beginTransaction();
                         try {
                             $paymentSplit->collection_amount = $splitAmount;
-                            $paymentSplit->save();                            
+                            $paymentSplit->save();
                             if (Auth::user()->hasRole(RolesEnum::BetaUser)) { //Part of milestone 2
                                 app(SplitPaymentService::class)->createReciept($quoteModel, $quoteTypeId, $paymentSplit);
                             }
@@ -438,10 +438,11 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
             $payment->total_price = $request->total_price;
             $payment->is_approved = 0;
             $payment->payment_status_id = PaymentStatusEnum::PARTIAL_CAPTURED;
-            $payment->save();            
-            return response()->json(['message' => 'Total Price Updated Successfully']);          
-        }      
-        
+            $payment->save();
+
+            return response()->json(['message' => 'Total Price Updated Successfully']);
+        }
+
         return response()->json(['error' => 'Total Price Update Failed']);
     }
 

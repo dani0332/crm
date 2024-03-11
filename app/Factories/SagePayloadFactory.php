@@ -2,8 +2,8 @@
 
 namespace App\Factories;
 
-use App\Models\QuoteRequestEntityMapping;
 use App\Enums\PaymentMethodsEnum;
+use App\Models\QuoteRequestEntityMapping;
 
 class SagePayloadFactory
 {
@@ -281,7 +281,7 @@ class SagePayloadFactory
 */
 
     public static function createPrepaymentPayload($request)
-    {        
+    {
         $payLoad = [
             'BatchRecordType' => 'CA',
             'ReceiptsAdjustments' => [
@@ -302,6 +302,7 @@ class SagePayloadFactory
                 ],
             ],
         ];
+
         return [
             'endPoint' => 'AR/ARReceiptAndAdjustmentBatches',
             'payload' => $payLoad,
@@ -549,12 +550,12 @@ class SagePayloadFactory
             PaymentMethodsEnum::Cash => 'CASH',
             PaymentMethodsEnum::Cheque => 'CHEQUE',
             PaymentMethodsEnum::PostDatedCheque => 'PDC',
-            PaymentMethodsEnum::CreditCard => 'CC',                
+            PaymentMethodsEnum::CreditCard => 'CC',
         ];
         if (array_key_exists($paymentMethod, $sagePaymentCodeMappingArray)) {
             return $sagePaymentCodeMappingArray[$paymentMethod];
         } else {
             return 'BT';
-        }        
+        }
     }
 }

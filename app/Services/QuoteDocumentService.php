@@ -104,7 +104,7 @@ class QuoteDocumentService extends BaseService
 
                 // Generate a unique filename
                 $docName = preg_replace('/\s+/', '', uniqid().'_'.$originalName);
-                $fileMimeType = "application/pdf";
+                $fileMimeType = 'application/pdf';
 
                 // Set the filename for Azure storage
                 $fileNameAzure = uniqid().'_'.$data['quote_uuid'].'_'.$docName;
@@ -155,7 +155,7 @@ class QuoteDocumentService extends BaseService
                 'doc_uuid' => $docUuid,
                 'member_detail_id' => $data['member_detail_id'] ?? null,
                 'payment_split_type' => $data['split_payment_doc_type'] ?? null,
-                'payment_split_id'  => $data['payment_split_id'] ?? null,
+                'payment_split_id' => $data['payment_split_id'] ?? null,
                 'created_by_id' => auth()->id(),
             ]);
         } catch (\Exception $exception) {

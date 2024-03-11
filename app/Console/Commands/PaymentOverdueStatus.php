@@ -33,15 +33,15 @@ class PaymentOverdueStatus extends Command
         $currentTime = now()->format('Y-m-d').' 00:00:00';
 
         Payment::where('payment_status_id', PaymentStatusEnum::NEW)
-                ->where('collection_date', '<', $currentTime)
-                ->where('total_payments', '>', 0)
-                ->update(['payment_status_id' => PaymentStatusEnum::OVERDUE]);
-      
+            ->where('collection_date', '<', $currentTime)
+            ->where('total_payments', '>', 0)
+            ->update(['payment_status_id' => PaymentStatusEnum::OVERDUE]);
+
         // update payment splits where payment status is NEW and due date is less than current date
         PaymentSplits::where('payment_status_id', PaymentStatusEnum::NEW)
-                    ->where('due_date', '<', $currentTime)
-                    ->update(['payment_status_id' => PaymentStatusEnum::OVERDUE]);
+            ->where('due_date', '<', $currentTime)
+            ->update(['payment_status_id' => PaymentStatusEnum::OVERDUE]);
 
-        info('PaymentOverdueStatus Command Ends');        
+        info('PaymentOverdueStatus Command Ends');
     }
 }
