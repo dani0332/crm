@@ -18,6 +18,7 @@ use App\Services\SplitPaymentService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use App\Enums\RolesEnum;
 
 class PaymentRepository extends BaseRepository implements PaymentRepositoryInterface
 {
@@ -344,8 +345,10 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                         DB::beginTransaction();
                         try {
                             $paymentSplit->collection_amount = $splitAmount;
-                            $paymentSplit->save();
-                            app(SplitPaymentService::class)->createReciept($quoteModel, $quoteTypeId, $paymentSplit);
+                            $paymentSplit->save();                            
+                            if (Auth::user()->hasRole(RolesEnum::BetaUser)) { //Part of milestone 2
+                                app(SplitPaymentService::class)->createReciept($quoteModel, $quoteTypeId, $paymentSplit);
+                            }
                             $parentPayment = $paymentSplit->payment;
                             $parentPayment->captured_amount = ($parentPayment->captured_amount + $splitAmount);
                             $parentPayment->save();
@@ -417,8 +420,10 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
             if ($sageResponse['status'] == 'success') {
                 $paymentInformation['sage_reciept_id'] = $sageResponse['response'];
                 $paymentInformation['captured_at'] = now();
-                $splitPayment->update($paymentInformation);
-                app(SplitPaymentService::class)->createReciept($request->modelType, $request->quote_id, $splitPayment);
+                $splitPayment->update($paymentInformation);                
+                if (Auth::user()->hasRole(RolesEnum::BetaUser)) { //Part of milestone 2
+                    app(SplitPaymentService::class)->createReciept($request->modelType, $request->quote_id, $splitPayment);
+                }
             } else {
                 $failMessage = $sageResponse['response'];
                 vAbort($failMessage);
