@@ -1258,6 +1258,13 @@ const validateCapturePayment = (isValid) => {
 }
 
 const addPayment = isValid => {
+  if (props.sendUpdate && providerId.value === null) {
+    notification.error({
+      title: 'Please select an insurance provider.',
+      position: 'top',
+    });
+    return;
+  }
   if(isCreditApprovalView.value === true && isDeclineClicked.value === false){
     if (validateCapturePayment(isValid)) return;
   } else if (paymentMethodsForm.status === 'view' && isApproveClicked.value) {
