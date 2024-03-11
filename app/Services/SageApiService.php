@@ -23,7 +23,7 @@ class SageApiService
         //Guzzle was not working for post request
         $this->sageLogin = env('SAGE_300_LOGIN');
         $this->sagePassword = env('SAGE_300_PASSWORD');
-        $this->sageRequestUrl = env('SAGE_300_BASE_URL').env('SAGE_300_VERSION');
+        $this->sageRequestUrl = env('SAGE_300_BASE_URL') . env('SAGE_300_VERSION');
     }
 
     public static function sagePayLoad($modelType, $payment, $quote, $paymentSplits)
@@ -37,7 +37,7 @@ class SageApiService
         $sageRequest->policyExpiryDate = date('Ymd', strtotime($quote['renewal_expiry_date']));
         $sageRequest->insurerInvoiceDate = date('Y-m-d', strtotime($payment->insurer_invoice_date));
 
-        if (! empty($paymentSplits)) {
+        if (!empty($paymentSplits)) {
             $sageRequest->paymentDueDate = date('Y-m-d', strtotime($paymentSplits[0]['due_date']));
         }
 
@@ -51,7 +51,7 @@ class SageApiService
         $sageRequest->invoicePaymentStatus = $payment->transaction_payment_status;
         // $sageRequest->invoicePaymentStatus = 'paid';
         $advisorName = '';
-        if (! empty($quote->advisor_id)) {
+        if (!empty($quote->advisor_id)) {
 
             $advisorName = User::where('id', $quote->advisor_id)->value('name');
         }
@@ -61,7 +61,7 @@ class SageApiService
         $sageRequest->vatOnCommission = floatval($payment->commission_vat);
         $sageRequest->commission = floatval($payment->commission);
         $sageRequest->commissionIncludingVat = floatval($payment->commission_vat_applicable);
-        $sageRequest->commissionWithOutVat = $payment->commission_vat_not_applicable;
+        $sageRequest->commissionWithOutVat = floatval($payment->commission_vat_not_applicable);
 
         $sageRequest->insurerPremiumNumber = (string) $payment['insurer_tax_number'];
         $sageRequest->insurerCommissionNumber = (string) $payment['insurer_commmission_invoice_number'];
@@ -76,7 +76,7 @@ class SageApiService
     public function verifySageCustomer($customerId, $data = null, $logModal = null, $sageLogArray = [], $totalSteps = 4)
     {
         $customer = Customer::find($customerId);
-        $customer->data = ! empty($data) ? $data : [];
+        $customer->data = !empty($data) ? $data : [];
         $sageCustomerNumber = false;
         $payLoadOptions['endPoint'] = 'AR/ARCustomers';
         $payLoadOptions['payload'] = [];
@@ -119,7 +119,7 @@ class SageApiService
     public function postToSage300($endPoint, $payLoad, $verb = 'POST')
     {
         // Create the payload data for the POST request
-        $sageEndPoint = $this->sageRequestUrl.$endPoint;
+        $sageEndPoint = $this->sageRequestUrl . $endPoint;
         //Http facade not giving expected response,so have to use curl
         $ch = curl_init($sageEndPoint);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
@@ -140,7 +140,7 @@ class SageApiService
         curl_setopt($ch, CURLOPT_USERPWD, "$this->sageLogin:$this->sagePassword");
         $response = curl_exec($ch);
 
-        info('response -------- : '.json_encode($response));
+        info('response -------- : ' . json_encode($response));
         if ($response === false || $response == '') {
             $errorResponse = curl_error($ch);
             $errorResponse = json_decode($errorResponse, true);
@@ -173,7 +173,6 @@ class SageApiService
         $sageRequest = $this->sagePayLoad($request->model_type, $payment, $quote, $paymentSplits);
 
         $sageLogArray = $quote->sageLog->keyBy('step')->toArray();
-
         // sape customer number generation
         $sageCustomerNumber = $this->verifySageCustomer($quote->customer_id, $data, $quote, $sageLogArray, 13);
 
@@ -199,7 +198,7 @@ class SageApiService
                 $sageResponse = json_decode($resp, true);
             }
 
-            if (! empty($sageResponse['BatchNumber'])) {
+            if (!empty($sageResponse['BatchNumber'])) {
 
                 if ($isLiveApiCallStep2) {
                     $this->logSageApiCall($payLoadOptions, $sageResponse, $quote, 2, 13);
@@ -278,7 +277,7 @@ class SageApiService
                 $this->logSageApiCall($createARInvoiceSplitPayments, $postedResponse, $quote, 2, 16);
             }
 
-            $url = 'AR/ARInvoiceBatches('.$batchNumber.')';
+            $url = 'AR/ARInvoiceBatches(' . $batchNumber . ')';
             $resp = $this->postToSage300($url, [], 'GET');
             $postedResponse = json_decode($resp, true);
 
@@ -376,7 +375,7 @@ class SageApiService
                 $postedResponse = json_decode($resp, true);
             }
 
-            if (! empty($postedResponse['BatchNumber'])) {
+            if (!empty($postedResponse['BatchNumber'])) {
 
                 if ($isLiveApiCallStep5) {
                     $this->logSageApiCall($createAPInvoicePrem, $postedResponse, $quote, 5, 13);
@@ -446,7 +445,7 @@ class SageApiService
                 $postedResponse = json_decode($resp, true);
             }
 
-            if (! empty($postedResponse['BatchNumber'])) {
+            if (!empty($postedResponse['BatchNumber'])) {
 
                 if ($isLiveApiCallStep8) {
                     $this->logSageApiCall($createARInvoiceDis, $postedResponse, $quote, 8, 13);
@@ -649,7 +648,7 @@ class SageApiService
             }
         }
 
-        if (! in_array($payment->frequency, ['upfront', 'split_payments']) && in_array($paymentSplits[0]['payment_status_id'], [PaymentStatusEnum::PAID, PaymentStatusEnum::CAPTURED])) {
+        if (!in_array($payment->frequency, ['upfront', 'split_payments']) && in_array($paymentSplits[0]['payment_status_id'], [PaymentStatusEnum::PAID, PaymentStatusEnum::CAPTURED])) {
 
             $totalSteps = 13;
 
