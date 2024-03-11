@@ -2,42 +2,43 @@
 
 namespace App\Services;
 
-use App\Enums\ApplicationStorageEnums;
-use App\Enums\AssignmentTypeEnum;
-use App\Enums\CarTypeOfInsuranceIdEnum;
+use Carbon\Carbon;
+use App\Models\Rule;
+use App\Models\Team;
+use App\Models\Tier;
+use App\Models\User;
+use App\Models\CarMake;
+use App\Enums\RolesEnum;
+use App\Models\CarModel;
+use App\Models\CarQuote;
+use App\Models\TierUser;
+use App\Enums\QuoteTypes;
+use App\Models\LeadSource;
+use App\Models\RuleDetail;
 use App\Enums\DaysNameEnum;
+use App\Enums\RuleTypeEnum;
+use App\Enums\TeamNameEnum;
+use App\Jobs\IntroEmailJob;
+use App\Models\HealthQuote;
+use App\Enums\quoteTypeCode;
+use App\Models\QuoteBatches;
 use App\Enums\HealthTeamType;
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
-use App\Enums\quoteTypeCode;
-use App\Enums\RolesEnum;
-use App\Enums\RuleTypeEnum;
-use App\Enums\TeamNameEnum;
 use App\Jobs\GetQuotePlansJob;
-use App\Jobs\IntroEmailJob;
-use App\Mail\HealthAssignmentIssueEmail;
-use App\Models\ApplicationStorage;
-use App\Models\CarMake;
-use App\Models\CarModel;
-use App\Models\CarQuote;
-use App\Models\CarQuoteRequestDetail;
-use App\Models\CommercialKeyword;
-use App\Models\HealthQuote;
-use App\Models\HealthQuoteRequestDetail;
 use App\Models\LeadAllocation;
-use App\Models\LeadSource;
-use App\Models\QuoteBatches;
-use App\Models\Rule;
-use App\Models\RuleDetail;
-use App\Models\Team;
-use App\Models\Tier;
-use App\Models\TierUser;
-use App\Models\User;
 use App\Traits\GetUserTreeTrait;
-use Carbon\Carbon;
+use App\Enums\AssignmentTypeEnum;
+use App\Models\CommercialKeyword;
+use App\Models\ApplicationStorage;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use App\Models\CarQuoteRequestDetail;
+use App\Enums\ApplicationStorageEnums;
+use App\Enums\CarTypeOfInsuranceIdEnum;
+use App\Mail\HealthAssignmentIssueEmail;
+use App\Models\HealthQuoteRequestDetail;
 use Sammyjo20\LaravelHaystack\Models\Haystack;
 
 class LeadAllocationService extends BaseService
@@ -75,13 +76,14 @@ class LeadAllocationService extends BaseService
                 ->leftJoin('teams as t', 'ut.team_id', '=', 't.id')
                 ->groupBy('u.name', 'u.id', 'lead_allocation.id')
                 ->whereIn('t.name', [TeamNameEnum::EBP, TeamNameEnum::RM_NB, TeamNameEnum::RM_SPEED])
+                ->where('lead_allocation.quote_type_id', QuoteTypes::HEALTH->id())
                 ->where('u.is_active', true)
                 ->whereIn('r.name', [RolesEnum::EBPAdvisor, RolesEnum::RMAdvisor]);
 
             if (! auth()->user()->hasRole(RolesEnum::SuperManagerLeadAllocation)) {
                 $query = $query->where('u.manager_id', auth()->user()->id);
             }
-            //dd($query->toSql());
+           
 
             return $query->get();
         } catch (\Exception $e) {
@@ -89,7 +91,7 @@ class LeadAllocationService extends BaseService
         }
     }
 
-    public function createLeadAllocationRecord($userId)
+    public function createLeadAllocationRecord($userId,$quote_type_id=null)
     {
         try {
             DB::beginTransaction();
@@ -98,6 +100,7 @@ class LeadAllocationService extends BaseService
             $leadAllocation->allocation_count = 0;
             $leadAllocation->last_allocated = now()->timestamp;
             $leadAllocation->max_capacity = 0;
+            $leadAllocation->quote_type_id = $quote_type_id ?? null;
             $leadAllocation->is_available = false;
             $leadAllocation->save();
 
@@ -433,10 +436,16 @@ class LeadAllocationService extends BaseService
         return $this->getAppStorageValueByKey('LEAD_ALLOCATION_JOB_SWITCH') == '1';
     }
 
-    public function getLeadAllocationRecordByUserId($userId)
+    public function getLeadAllocationRecordByUserId($userId,$quoteTypeId=null)
     {
         try {
-            $leadAllocation = LeadAllocation::where('user_id', $userId)->first();
+            $leadAllocation = LeadAllocation::latest();
+
+            if(!empty($quoteTypeId)){
+                $leadAllocation = $leadAllocation->where('quote_type_id', $quoteTypeId);
+            }
+            
+            $leadAllocation = $leadAllocation->where('user_id', $userId)->first();
 
             return $leadAllocation;
         } catch (\Exception $e) {

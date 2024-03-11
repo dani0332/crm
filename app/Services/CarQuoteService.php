@@ -2,31 +2,32 @@
 
 namespace App\Services;
 
-use App\Enums\AssignmentTypeEnum;
-use App\Enums\CustomerTypeEnum;
-use App\Enums\GenericRequestEnum;
-use App\Enums\LeadSourceEnum;
-use App\Enums\PaymentStatusEnum;
-use App\Enums\QuoteStatusEnum;
-use App\Enums\quoteTypeCode;
-use App\Enums\QuoteTypeId;
+use PDF;
+use Carbon\Carbon;
+use App\Models\Tier;
+use App\Models\Payment;
 use App\Enums\RolesEnum;
 use App\Models\CarQuote;
-use App\Models\CarQuoteRequestDetail;
-use App\Models\Payment;
+use App\Enums\QuoteTypes;
+use App\Enums\QuoteTypeId;
+use App\Enums\quoteTypeCode;
 use App\Models\QuoteBatches;
-use App\Models\QuoteViewCount;
-use App\Models\Tier;
-use App\Traits\GenericQueriesAllLobs;
-use App\Traits\TeamHierarchyTrait;
-use Carbon\Carbon;
 use Illuminate\Http\Request;
+use App\Enums\LeadSourceEnum;
+use App\Enums\QuoteStatusEnum;
+use App\Models\QuoteViewCount;
+use App\Enums\CustomerTypeEnum;
+use App\Enums\PaymentStatusEnum;
+use App\Enums\AssignmentTypeEnum;
+use App\Enums\GenericRequestEnum;
+use App\Traits\TeamHierarchyTrait;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
-use PDF;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Http;
+use App\Models\CarQuoteRequestDetail;
+use App\Traits\GenericQueriesAllLobs;
 
 class CarQuoteService extends BaseService
 {
@@ -1407,6 +1408,7 @@ class CarQuoteService extends BaseService
     public function processManualLeadAssignment($request): array
     {
         $userId = (int) $request->assigned_to_id_new;
+        $quote_type = $request->modelType;
 
         foreach ($this->getLeadIdsToProcessFromRequest($request) as $leadId) {
             $lead = $this->getEntityPlain($leadId);
@@ -1433,7 +1435,7 @@ class CarQuoteService extends BaseService
 
             info('Manual assignment done for lead : '.$lead->uuid.' and old advisor assigned date is : '.$oldAdvisorAssignedDate);
 
-            $this->addManualAllocationCountAndUpdate($userId, $lead, $previousAdvisorId, $oldAdvisorAssignedDate, $oldAssignmentType); // update new and previous (if applicable) advisor counts in lead allocation table
+            $this->addManualAllocationCountAndUpdate($userId, $lead, $previousAdvisorId, $oldAdvisorAssignedDate, $oldAssignmentType, $quote_type); // update new and previous (if applicable) advisor counts in lead allocation table
 
             $this->updateExistingQuoteViewCount($userId, $lead->id); // update existing record of quote view count if exists and reset count to zero
 
@@ -1713,7 +1715,19 @@ class CarQuoteService extends BaseService
         return [$allowQuoteLogAction, $carLostChangeStatus, $statuses];
     }
 
-    public function addManualAllocationCountAndUpdate($newAdvisorId, $lead, $previousAdvisorId, $oldAdvisorAssignedDate, $previousAssignmentType)
+    public function getQuoteType($val)
+    {
+        switch (ucfirst($val)) {
+            case QuoteTypes::CAR->value:
+                return QuoteTypes::CAR->id();
+
+            case QuoteTypes::HEALTH->value:
+                return QuoteTypes::HEALTH->id();
+
+        }
+    }
+    
+    public function addManualAllocationCountAndUpdate($newAdvisorId, $lead, $previousAdvisorId, $oldAdvisorAssignedDate, $previousAssignmentType, $quoteType=null)
     {
         // Check if $lead or $newAdvisorId is not provided
         if ($lead === null || $newAdvisorId === null) {
@@ -1722,14 +1736,28 @@ class CarQuoteService extends BaseService
 
         info('Previous assignment type is : '.$previousAssignmentType);
 
+        $quote_type_id = $this->getQuoteType($quoteType) ?? null;
+   
+
         //Constants for system assigned types
         $systemAssignedTypes = [AssignmentTypeEnum::SYSTEM_ASSIGNED, AssignmentTypeEnum::SYSTEM_REASSIGNED];
 
+       
+
         // Get the allocation record for the new advisor
-        $newAdvisorAllocationRecord = $this->leadAllocationService->getLeadAllocationRecordByUserId($newAdvisorId);
+        $newAdvisorAllocationRecord = $this->leadAllocationService->getLeadAllocationRecordByUserId($newAdvisorId, $quote_type_id);
+    
+        if(empty($newAdvisorAllocationRecord)){
+
+            $this->leadAllocationService->createLeadAllocationRecord($newAdvisorId, $quote_type_id);
+            
+            $newAdvisorAllocationRecord = $this->leadAllocationService->getLeadAllocationRecordByUserId($newAdvisorId, $quote_type_id);
+        }
 
         // Update allocation counts for the new advisor only if its different from previous advisor
+       
         if ($newAdvisorId !== $previousAdvisorId) {
+         
             // Update allocation counts for the new advisor (if applicable)
             $this->updateAllocationCountsForNewAdvisor($newAdvisorAllocationRecord, $lead, $systemAssignedTypes);
         }
@@ -1748,7 +1776,7 @@ class CarQuoteService extends BaseService
         if ($advisorAllocationRecord === null || $lead === null) {
             return;
         }
-
+  
         // Determine if the lead was system-assigned or manually assigned
         $isSystemAssigned = in_array($lead->assignment_type, $systemAssignedTypes);
 
@@ -1766,6 +1794,7 @@ class CarQuoteService extends BaseService
 
         // Save the updated allocation record
         $advisorAllocationRecord->save();
+    
     }
 
     private function updateAllocationCountsForPreviousAdvisor($previousAdvisorId, $oldAdvisorAssignedDate, $previousAssignmentType, $previousAdvisorAllocationRecord, $systemAssignedTypes)

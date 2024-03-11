@@ -2,46 +2,47 @@
 
 namespace App\Services;
 
-use App\Enums\AssignmentTypeEnum;
-use App\Enums\CustomerTypeEnum;
-use App\Enums\DatabaseColumnsString;
-use App\Enums\DefaultAdvisorEnum;
-use App\Enums\GenericRequestEnum;
-use App\Enums\HealthTeamType;
-use App\Enums\LeadSourceTypes;
-use App\Enums\QuoteStatusEnum;
-use App\Enums\quoteTypeCode;
-use App\Enums\QuoteTypeId;
-use App\Enums\RolesEnum;
-use App\Jobs\CammyJob;
-use App\Jobs\GetQuotePlansJob;
-use App\Jobs\IntroEmailJob;
-use App\Models\BusinessInsuranceType;
-use App\Models\BusinessQuote;
-use App\Models\EmbeddedProductOption;
-use App\Models\EmbeddedTransaction;
-use App\Models\HealthMemberDetail;
-use App\Models\HealthPlan;
-use App\Models\HealthQuote;
-use App\Models\HealthQuotePlan;
-use App\Models\HealthQuoteRequestDetail;
-use App\Models\InsuranceProvider;
-use App\Models\PaymentAction;
-use App\Models\QuoteType;
-use App\Models\QuoteViewCount;
-use App\Models\RenewalBatch;
-use App\Models\Team;
-use App\Models\User;
-use App\Traits\AddPremiumAllLobs;
-use App\Traits\GenericQueriesAllLobs;
-use App\Traits\GetUserTreeTrait;
-use App\Traits\RolePermissionConditions;
+use DB;
+use PDF;
 use Auth;
 use Carbon\Carbon;
-use DB;
+use App\Models\Team;
+use App\Models\User;
+use App\Jobs\CammyJob;
+use App\Enums\RolesEnum;
+use App\Enums\QuoteTypes;
+use App\Models\QuoteType;
+use App\Enums\QuoteTypeId;
+use App\Models\HealthPlan;
+use App\Jobs\IntroEmailJob;
+use App\Models\HealthQuote;
 use Hidehalo\Nanoid\Client;
+use App\Enums\quoteTypeCode;
+use App\Models\RenewalBatch;
 use Illuminate\Http\Request;
-use PDF;
+use App\Enums\HealthTeamType;
+use App\Models\BusinessQuote;
+use App\Models\PaymentAction;
+use App\Enums\LeadSourceTypes;
+use App\Enums\QuoteStatusEnum;
+use App\Jobs\GetQuotePlansJob;
+use App\Models\QuoteViewCount;
+use App\Enums\CustomerTypeEnum;
+use App\Models\HealthQuotePlan;
+use App\Traits\GetUserTreeTrait;
+use App\Enums\AssignmentTypeEnum;
+use App\Enums\DefaultAdvisorEnum;
+use App\Enums\GenericRequestEnum;
+use App\Models\InsuranceProvider;
+use App\Traits\AddPremiumAllLobs;
+use App\Models\HealthMemberDetail;
+use App\Models\EmbeddedTransaction;
+use App\Enums\DatabaseColumnsString;
+use App\Models\BusinessInsuranceType;
+use App\Models\EmbeddedProductOption;
+use App\Traits\GenericQueriesAllLobs;
+use App\Models\HealthQuoteRequestDetail;
+use App\Traits\RolePermissionConditions;
 use Sammyjo20\LaravelHaystack\Models\Haystack;
 
 class HealthQuoteService extends BaseService
@@ -328,7 +329,7 @@ class HealthQuoteService extends BaseService
 
             $this->query->whereBetween('hqr.created_at', [$dateFrom, $dateTo]);
         }
-        if (Auth::user()->isSpecificTeamAdvisor('Health') || Auth::user()->isSpecificTeamAdvisor('EBP') || Auth::user()->isSpecificTeamAdvisor('RM')) {
+        if (Auth::user()->isSpecificTeamAdvisor('Health') || Auth::user()->isSpecificTeamAdvisor(HealthTeamType::EBP) || Auth::user()->isSpecificTeamAdvisor('RM')) {
             // if user has advisor Role then fetch leads assigned to the user only
             $this->query->where('hqr.advisor_id', Auth::user()->id);    // fetch leads assigned to the user
         }
@@ -405,7 +406,7 @@ class HealthQuoteService extends BaseService
             }
         }
 
-        if (Auth::user()->isSpecificTeamAdvisor('Health') || Auth::user()->isSpecificTeamAdvisor('EBP') || Auth::user()->isSpecificTeamAdvisor('RM')) {
+        if (Auth::user()->isSpecificTeamAdvisor('Health') || Auth::user()->isSpecificTeamAdvisor(HealthTeamType::EBP) || Auth::user()->isSpecificTeamAdvisor('RM')) {
             // if user has advisor Role then fetch leads assigned to the user only
             $this->query->where('hqr.advisor_id', Auth::user()->id);    // fetch leads assigned to the user
         }
@@ -667,7 +668,7 @@ class HealthQuoteService extends BaseService
             'created_at' => 'input|date|title|range',
             'updated_at' => 'input|date|title',
             'dob' => 'input|date|title|required',
-            'health_team_type' => '|static|default:All|All,RM-NB,RM-Speed,EBP,Wow-Call,No-Type',
+            'health_team_type' => '|static|default:All|All,Good,Best,Entry-Level,Wow-Call,No-Type',
             'next_followup_date' => 'input|date|title|range',
             'transapp_code' => 'readonly|none',
             'lost_reason' => 'input|text',
@@ -1131,19 +1132,23 @@ class HealthQuoteService extends BaseService
     public function processManualLeadAssignment($request): array
     {
         // Extract lead IDs from the request
+
         $sourceData = ($request->selectTmLeadId == '' || $request->selectTmLeadId === null) ? $request->entityId : $request->selectTmLeadId;
         $leadsIds = array_map('intval', explode(',', trim($sourceData, ',')));
+       
         $userId = (int) $request->assigned_to_id_new;
-
+        $quote_type = $request->modelType;
+    
         foreach ($leadsIds as $leadId) {
-            $lead = $this->getEntityPlain($leadId);
 
+            $lead = $this->getEntityPlain($leadId);
+            
             if (isset($request->assign_team) && $request->assign_team !== '') {
                 $lead->health_team_type = $request->assign_team;
             }
 
             $oldAssignmentType = $lead->assignment_type;
-
+      
             $isReassignment = $lead->advisor_id != null ? true : false; // checking if the advisor is already assigned or not for reassignment email template
 
             $previousAdvisorId = $lead->advisor_id; // saving previous advisor before updating the new to update the counts
@@ -1156,14 +1161,14 @@ class HealthQuoteService extends BaseService
 
             info('Manual assignment done and details table updated for lead : '.$lead->uuid.'and old advisor assigned date is : '.$oldAdvisorAssignedDate);
 
-            $this->addManualAllocationCountAndUpdate($userId, $lead, $previousAdvisorId, $oldAdvisorAssignedDate, $oldAssignmentType); // update new and previous (if applicable) advisor counts in lead allocation table
+            $this->addManualAllocationCountAndUpdate($userId, $lead, $previousAdvisorId, $oldAdvisorAssignedDate, $oldAssignmentType, $quote_type); // update new and previous (if applicable) advisor counts in lead allocation table
 
             $this->updateExistingQuoteViewCount($userId, $lead->id); // update existing record of quote view count if exists and reset count to zero
 
             $lead->quote_updated_at = now();
 
             $lead->save();
-
+         
             Haystack::build()
                 ->addJob(new GetQuotePlansJob($lead))
                 ->then(function () use ($lead, $isReassignment, $previousAdvisorId) {
@@ -1178,28 +1183,52 @@ class HealthQuoteService extends BaseService
 
         return [];
     }
+    public function getQuoteType($val)
+    {
+        switch (ucfirst($val)) {
+            case QuoteTypes::CAR->value:
+                return QuoteTypes::CAR->id();
 
-    public function addManualAllocationCountAndUpdate($newAdvisorId, $lead, $previousAdvisorId, $oldAdvisorAssignedDate, $previousAssignmentType)
+            case QuoteTypes::HEALTH->value:
+                return QuoteTypes::HEALTH->id();
+
+        }
+    }
+    public function addManualAllocationCountAndUpdate($newAdvisorId, $lead, $previousAdvisorId, $oldAdvisorAssignedDate, $previousAssignmentType,$quoteType=null)
     {
         // Check if $lead or $newAdvisorId is not provided
         if ($lead === null || $newAdvisorId === null) {
             return;
         }
 
+   
         info('Previous assignment type is : '.$previousAssignmentType);
 
         //Constants for system assigned types
         $systemAssignedTypes = [AssignmentTypeEnum::SYSTEM_ASSIGNED, AssignmentTypeEnum::SYSTEM_REASSIGNED];
 
         // Get the allocation record for the new advisor
-        $newAdvisorAllocationRecord = $this->leadAllocationService->getLeadAllocationRecordByUserId($newAdvisorId);
 
+        
+        $quote_type_id=$this->getQuoteType($quoteType) ?? null;
+ 
+        
+        $newAdvisorAllocationRecord = $this->leadAllocationService->getLeadAllocationRecordByUserId($newAdvisorId, $quote_type_id);
+        
+        if(empty($newAdvisorAllocationRecord)){
+
+            $this->leadAllocationService->createLeadAllocationRecord($newAdvisorId, $quote_type_id);
+            
+            $newAdvisorAllocationRecord = $this->leadAllocationService->getLeadAllocationRecordByUserId($newAdvisorId, $quote_type_id);
+        }
+
+   
         // Update allocation counts for the new advisor (if applicable)
         $this->updateAllocationCountsForNewAdvisor($newAdvisorAllocationRecord, $lead, $systemAssignedTypes);
 
         // Get the allocation record for the previous advisor (if applicable)
         if ($previousAdvisorId !== null) {
-            $previousAdvisorAllocationRecord = $this->leadAllocationService->getLeadAllocationRecordByUserId($previousAdvisorId);
+            $previousAdvisorAllocationRecord = $this->leadAllocationService->getLeadAllocationRecordByUserId($previousAdvisorId, $quote_type_id);
 
             // Update allocation counts for the previous advisor (if applicable)
             $this->updateAllocationCountsForPreviousAdvisor($previousAdvisorId, $oldAdvisorAssignedDate, $previousAssignmentType, $previousAdvisorAllocationRecord, $systemAssignedTypes);
@@ -1253,7 +1282,7 @@ class HealthQuoteService extends BaseService
                     $previousAdvisorAllocationRecord->allocation_count = $previousAdvisorAllocationRecord->allocation_count - 1;
                     $previousAdvisorAllocationRecord->updated_at = now();
                 }
-
+              
                 // Save the updated allocation record
                 $previousAdvisorAllocationRecord->save();
             }

@@ -8,6 +8,7 @@ const props = defineProps({
     type: Array,
     default: () => [],
   },
+  quoteType: String,
   totalAssignedLeadCount: {
     type: Number,
     default: 0,
@@ -209,7 +210,7 @@ const onStatusSubmit = async () => {
 
   item.loading = true;
   await axios
-    .post('/lead-allocation/update-availability', [
+    .post(`/lead-allocation/${page.props.quoteType}/update-availability`, [
       {
         userId: statusModal.data.userId,
         id: statusModal.data.id,
@@ -250,7 +251,7 @@ const onSubmitChanges = async () => {
       };
     });
   await axios
-    .post('/lead-allocation/update-cap', { max_cap })
+    .post(`/lead-allocation/${page.props.quoteType}/update-cap`, { max_cap })
     .then(() => {
       router.get('/lead-allocation/car', {
         replace: true,

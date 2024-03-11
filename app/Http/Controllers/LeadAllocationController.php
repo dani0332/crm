@@ -2,23 +2,24 @@
 
 namespace App\Http\Controllers;
 
-use App\Enums\quoteTypeCode;
-use App\Enums\TeamNameEnum;
-use App\Enums\TeamTypeEnum;
-use App\Enums\UserStatusEnum;
-use App\Events\UserStatusChanged;
-use App\Jobs\ReAssignCarLeadsJob;
-use App\Jobs\ReAssignHealthLeadsJob;
-use App\Models\LeadAllocation;
 use App\Models\Team;
 use App\Models\User;
-use App\Services\ApplicationStorageService;
-use App\Services\CarAllocationService;
-use App\Services\HealthAllocationService;
-use App\Services\LeadAllocationService;
-use App\Traits\TeamHierarchyTrait;
+use App\Enums\QuoteTypes;
+use App\Enums\TeamNameEnum;
+use App\Enums\TeamTypeEnum;
+use App\Enums\quoteTypeCode;
 use Illuminate\Http\Request;
+use App\Enums\UserStatusEnum;
+use App\Models\LeadAllocation;
+use App\Events\UserStatusChanged;
+use App\Jobs\ReAssignCarLeadsJob;
+use App\Traits\TeamHierarchyTrait;
+use App\Jobs\ReAssignHealthLeadsJob;
 use Illuminate\Support\Facades\Gate;
+use App\Services\CarAllocationService;
+use App\Services\LeadAllocationService;
+use App\Services\HealthAllocationService;
+use App\Services\ApplicationStorageService;
 
 class LeadAllocationController extends Controller
 {
@@ -58,7 +59,8 @@ class LeadAllocationController extends Controller
             $unAssignedGood = $this->leadAllocationService->getUnAssignedHealthQuotes(TeamNameEnum::RM_SPEED);
             $unAssignedBest = $this->leadAllocationService->getUnAssignedHealthQuotes(TeamNameEnum::RM_NB);
             $unAssignedEntryLevel = $this->leadAllocationService->getUnAssignedHealthQuotes(TeamNameEnum::EBP);
-
+     
+   
             return inertia('LeadAllocation/Health', [
                 'totalAssignedLeadCount' => $totalAssignedLeadCount,
                 'availableUsers' => $availableUsers,
@@ -67,6 +69,7 @@ class LeadAllocationController extends Controller
                 'data' => $data,
                 'unAssignedGood' => $unAssignedGood,
                 'unAssignedBest' => $unAssignedBest,
+                'quoteType' => QuoteTypes::HEALTH->value,
                 'unAssignedEntryLevel' => $unAssignedEntryLevel,
             ]);
         } else {
@@ -145,7 +148,9 @@ class LeadAllocationController extends Controller
         foreach ($request->all() as $item) {
             $leadAllocationUser = LeadAllocation::where('user_id', $item['userId'])->where('id', $item['id'])->first();
             if (isset($item['reason'])) {
+          
                 if ($item['reason'] != UserStatusEnum::OFFLINE && $item['reason'] != UserStatusEnum::ONLINE) {
+          
                     $car = Team::where('type', TeamTypeEnum::PRODUCT)->where('name', quoteTypeCode::Car)->first();
                     $health = Team::where('type', TeamTypeEnum::PRODUCT)->where('name', quoteTypeCode::Health)->first();
                     if ($this->userHaveProduct($item['userId'], $car->id)) {
@@ -168,13 +173,19 @@ class LeadAllocationController extends Controller
             }
 
             if (isset($item['is_available'])) {
+       
                 $updateLogString = $updateLogString.' is_available to : '.$item['is_available'];
                 $leadAllocationUser->is_available = $item['is_available'];
             }
 
-            if (isset($item['team_type']) && $item['team_type'] == 'health' && isset($item['max_cap'])) {
+            $quote_type_id=$this->getQuoteType($request->quoteType) ?? null;
+
+            if (!empty($quote_type_id) && isset($item['max_cap'])) {
+    
                 $updateLogString = $updateLogString.' max_cap to : '.$item['max_cap'];
-                $leadAllocationUser->max_capacity = $item['max_cap'];
+                $leadAllocationUser->max_capacity = (int)$item['max_cap'];
+                $leadAllocationUser->quote_type_id = $quote_type_id;
+
             }
 
             $leadAllocationUser->save();
@@ -183,13 +194,28 @@ class LeadAllocationController extends Controller
         }
     }
 
-    public function updateCaps(Request $request)
+    public function getQuoteType($val)
     {
+        switch (ucfirst($val)) {
+            case QuoteTypes::CAR->value:
+                return QuoteTypes::CAR->id();
+
+            case QuoteTypes::HEALTH->value:
+                return QuoteTypes::HEALTH->id();
+
+        }
+    }
+    public function updateCaps(Request $request)
+    {   
+     
+     
         if (isset($request->max_cap)) {
+            $quote_type_id=$this->getQuoteType($request->quoteType) ?? null;
             foreach ($request->max_cap as $item) {
                 if ($item['userId'] && $item['maxCap']) {
                     $leadAllocationObj = LeadAllocation::with(['leadAllocationUser'])->where('user_id', $item['userId'])->first();
                     $leadAllocationObj->max_capacity = (int) $item['maxCap'];
+                    $leadAllocationObj->quote_type_id = $quote_type_id;
                     $leadAllocationObj->save();
                     info('Updated max cap of user : '.$leadAllocationObj->leadAllocationUser->email.' to '.(int) $item['maxCap']);
                 }

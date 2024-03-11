@@ -170,6 +170,7 @@ class CRUDController extends Controller
      */
     public function index(Request $request)
     {
+       
         $renewalAdvisors = $upcomingBatch = [];
         $isNewBusinessUser = false;
         $isManualAllocationAllowed = false;
@@ -1303,6 +1304,7 @@ class CRUDController extends Controller
     public function manualLeadAssign(Request $request)
     {
         $isValidRequest = $this->crudService->validateRequest($request->modelType, $request);
+ 
         if ($isValidRequest != 'true') {
             return redirect()->back()->with('error', $isValidRequest);
         }
@@ -1311,6 +1313,7 @@ class CRUDController extends Controller
             return Redirect::back()->with('message', 'Selected advisor does not exist in the system!');
         }
         $assignmentResult = $this->{strtolower($request->modelType).'QuoteService'}->processManualLeadAssignment($request);
+
         if (count($assignmentResult) > 0) {
             $msg = '';
             foreach ($assignmentResult as $assignmentResultItem) {
