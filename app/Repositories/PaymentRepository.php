@@ -425,6 +425,22 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
         return response()->json(['error' => 'Payment Migration Failed']);
     }
 
+    //update total price
+    public function fetchUpdateTotalPrice($request)
+    {
+        $quoteModel = $this->getQuoteObject(request()->model_type, request()->quote_id);
+        $payment = $quoteModel->payments()->where('code', $request->payment_code)->first();
+        if ($payment) {
+            $payment->total_price = $request->total_price;
+            $payment->is_approved = 0;
+            $payment->payment_status_id = PaymentStatusEnum::PARTIAL_CAPTURED;
+            $payment->save();            
+            return response()->json(['message' => 'Total Price Updated Successfully']);          
+        }      
+        
+        return response()->json(['error' => 'Total Price Update Failed']);
+    }
+
     public function fetchUpdatePaymentStatus($request)
     {
         $successMessage = 'Payment Verified';

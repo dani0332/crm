@@ -26,6 +26,7 @@ use App\Http\Requests\SplitPaymentApproveRequest;
 use App\Http\Requests\SplitPaymentUpdateRequest;
 use App\Http\Requests\UpdateLastYearPolicyRequest;
 use App\Http\Requests\UpdateSelectedPlanRequest;
+use App\Http\Requests\UpdateTotalPriceRequest;
 use App\Models\Customer;
 use App\Models\Entity;
 use App\Models\QuoteRequestEntityMapping;
@@ -234,6 +235,14 @@ class CentralController extends Controller
         $successMessage = PaymentRepository::updateSplitPaymentsApprove($request);
 
         return back()->with('success', $successMessage);
+    }
+
+    // Update total price
+    public function updateTotalPrice(UpdateTotalPriceRequest $request)
+    {
+        $successMessage = PaymentRepository::updateTotalPrice($request);
+
+        return $successMessage;
     }
 
 }
