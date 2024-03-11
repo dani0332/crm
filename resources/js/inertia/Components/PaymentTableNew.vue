@@ -1759,7 +1759,7 @@ watch(() => props.quoteRequest, (newValue, oldValue) => {
       <h3 class="font-semibold text-primary-800 text-lg">Manage Payments</h3>
       <template v-if="payments.length>0">        
         <UpdateTotalPrice
-          v-if="can(permissionEnum.TEMP_UPDATE_TOTALPRICE) && quoteRequest.quote_status_id === 15"
+          v-if="can(permissionEnum.TEMP_UPDATE_TOTALPRICE) && quoteRequest.quote_status_id === 915 "
           :quoteId="quoteRequest.id"
           :paymentCode = "payments[0].code"
           :quoteType="quoteType" 
