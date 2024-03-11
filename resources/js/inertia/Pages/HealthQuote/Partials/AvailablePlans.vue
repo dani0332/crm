@@ -423,6 +423,7 @@ const markMemberBasePriceRevise = (event, id) => {
 
 onUpdated(() => {
   defaultCopayId.value = props.plan?.selectedCopayId;
+  hidePlan.value = props.plan?.isHidden;
   loadingPrices.value = [];
   manualPlansMembersPremium.value = [];
   selectedCopay.value = [];
@@ -522,8 +523,6 @@ onUpdated(() => {
     totalLoadingPrice.value =
       Number(totalLoadingPrice.value) + Number(data.price);
   });
-
-  console.log('plan:', props.plan);
 });
 </script>
 

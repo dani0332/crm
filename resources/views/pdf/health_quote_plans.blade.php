@@ -380,7 +380,7 @@
 
         foreach ($quotePlans->quote->plans as &$quotePlan){
             $addonsPrice = $addonsVat =
-            $quotePlan->discountPremium =
+            // $quotePlan->discountPremium =
             $quotePlan->vat =
             $quotePlan->total= 0;
 
