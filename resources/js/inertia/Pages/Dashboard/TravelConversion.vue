@@ -121,7 +121,7 @@ const calculateNonEcomTotal = data => {
     return accumulator;
   }, 0);
 
-  return ((totalPaidEcomCaputed / (totalEcom - total_assigned)) * 100).toFixed(
+  return ((totalPaidEcomCaputed / (total_assigned - totalEcom)) * 100).toFixed(
     2,
   );
 };
