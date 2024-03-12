@@ -83,7 +83,7 @@ class UpdateUserStatus extends Command
                     $newStatus = UserStatusEnum::OFFLINE;
                 }
 
-                if ($newStatus != $currentUserStatus) {
+                if ($newStatus != $currentUserStatus && $newStatus != UserStatusEnum::OFFLINE && $currentUserStatus != UserStatusEnum::MANUAL_OFFLINE) {
                     info('System will now change status from : '.$currentUserStatus.' to : '.$newStatus.' for user : '.$session->user->name);
                     User::where('id', $userId)->update(['status' => $newStatus]);
                     event(new UserStatusChanged($userId, $newStatus, $session->user->name));
@@ -100,7 +100,7 @@ class UpdateUserStatus extends Command
                         }
                     }
                 }
-            } elseif ($lastActivity >= $inactiveThreshold && $currentUserStatus != UserStatusEnum::ONLINE) {
+            } elseif ($lastActivity >= $inactiveThreshold && $currentUserStatus != UserStatusEnum::ONLINE && $currentUserStatus != UserStatusEnum::MANUAL_OFFLINE) {
                 info('System will now change the status to Active from status : '.$currentUserStatus.' for user : '.$session->user->name);
                 event(new UserStatusChanged($userId, UserStatusEnum::ONLINE, $session->user->name));
                 User::where('id', $userId)->update(['status' => UserStatusEnum::ONLINE]);

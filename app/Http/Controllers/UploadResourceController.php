@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Services\UploadResourceService;
 use Illuminate\Http\Request;
 
+//Scheduled to delete 1st April 2024
 class UploadResourceController extends ApiController
 {
     /**

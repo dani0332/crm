@@ -25,8 +25,8 @@ class LifeQuoteRequest extends FormRequest
     public function rules()
     {
         return [
-            'first_name' => 'required|max:50',
-            'last_name' => 'required|max:50',
+            'first_name' => 'required|between:1,20',
+            'last_name' => 'required|between:1,50',
             'email' => 'required|email:rfc,dns',
             'mobile_no' => 'required|max:20',
             'dob' => 'nullable',
