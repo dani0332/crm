@@ -75,7 +75,8 @@ class QuoteAllocation extends Command
                     'conditions' => function ($lead) {
                         return $lead instanceof HealthQuote
                             && $lead->quote_status_id === QuoteStatusEnum::Qualified
-                            && $lead->health_quote_request->price_starting_from !== null
+                            && ! in_array($lead->quote_status_id, [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate, QuoteStatusEnum::Lost])
+                            && $lead->health_quote_request->health_plan_type_id !== null
                             && ! $lead->health_quote_request->is_error_email_sent
                             && $lead->health_quote_request->advisor_id === null;
                     },
