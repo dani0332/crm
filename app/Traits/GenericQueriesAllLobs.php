@@ -227,6 +227,9 @@ trait GenericQueriesAllLobs
 
     public function updateQuoteStatus($type, $id)
     {
+        if ($type  == 'send-update'){
+            return true;
+        }
         $quote = $this->getQuoteObject($type, $id);
         if ($quote->quote_status_id != QuoteStatusEnum::PolicySentToCustomer) {
             if ($this->isFilledPolicyDetails($type, $quote)) {
