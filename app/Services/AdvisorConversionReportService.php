@@ -286,29 +286,6 @@ class AdvisorConversionReportService extends BaseService
         ];
     }
 
-    public function getAdvisorsAssignedLeads($filters)
-    {
-        $query = CarQuote::query()
-            ->select(
-                DB::raw("CONCAT(car_quote_request.first_name, ' ', car_quote_request.last_name) as fullName"),
-                'car_quote_request.code as cdbId',
-                'quote_status.text as quoteStatusName'
-            )
-            ->join('users', 'users.id', 'car_quote_request.advisor_id')
-            ->join('quote_batches', 'quote_batches.id', 'car_quote_request.quote_batch_id')
-            ->join('car_quote_request_detail', 'car_quote_request_detail.car_quote_request_id', 'car_quote_request.id')
-            ->join('quote_status', 'quote_status.id', 'car_quote_request.quote_status_id')
-            ->leftJoin('car_make', 'car_make.id', '=', 'car_quote_request.car_make_id')
-            ->leftJoin('car_model', 'car_model.id', '=', 'car_quote_request.car_model_id')
-            ->whereNull('car_quote_request.renewal_import_code')
-            ->where('car_quote_request.source', '!=', LeadSourceEnum::RENEWAL_UPLOAD)
-            ->orderBy('car_quote_request_detail.advisor_assigned_date', 'desc');
-
-        $query = $this->applyFilters($query, $filters);
-
-        return $query->paginate(10);
-    }
-
     public function applyFiltersAdvisorConversionReport($query, $filters)
     {
         $filters = (object) $filters;
@@ -480,6 +457,142 @@ class AdvisorConversionReportService extends BaseService
             if(!empty($filters->travel_coverage) && $filters->travel_coverage != '') {
                 $query->where('travel_quote_request.coverage_code', $filters->travel_coverage);
             }
+        }
+
+        return $query;
+    }
+
+    public function getAdvisorsAssignedLeads($filters)
+    {
+        $query = CarQuote::query()
+            ->select(
+                DB::raw("CONCAT(car_quote_request.first_name, ' ', car_quote_request.last_name) as fullName"),
+                'car_quote_request.code as cdbId',
+                'quote_status.text as quoteStatusName'
+            )
+            ->join('users', 'users.id', 'car_quote_request.advisor_id')
+            ->join('quote_batches', 'quote_batches.id', 'car_quote_request.quote_batch_id')
+            ->join('car_quote_request_detail', 'car_quote_request_detail.car_quote_request_id', 'car_quote_request.id')
+            ->join('quote_status', 'quote_status.id', 'car_quote_request.quote_status_id')
+            ->leftJoin('car_make', 'car_make.id', '=', 'car_quote_request.car_make_id')
+            ->leftJoin('car_model', 'car_model.id', '=', 'car_quote_request.car_model_id')
+            ->whereNull('car_quote_request.renewal_import_code')
+            ->where('car_quote_request.source', '!=', LeadSourceEnum::RENEWAL_UPLOAD)
+            ->orderBy('car_quote_request_detail.advisor_assigned_date', 'desc');
+
+        $query = $this->applyFilters($query, $filters);
+
+        return $query->paginate(10);
+    }
+
+    public function applyFilters($query, $filters)
+    {
+        $filters = (object) $filters;
+
+        if (isset($filters->advisorId)) {
+            $query = $query->where('car_quote_request.advisor_id', $filters->advisorId);
+        }
+
+        $dateFormat = config('constants.DB_DATE_FORMAT_MATCH');
+        $batch = null;
+        if (isset($filters->quoteBatchId)) {
+            $batch = QuoteBatches::where('id', $filters->quoteBatchId)->first();
+        }
+
+        if (isset($filters->batchNumberFilter) && count($filters->batchNumberFilter) > 0) {
+            $query = $query->whereIn('car_quote_request.quote_batch_id', $filters->batchNumberFilter);
+        }
+
+        if ($batch) {
+            $query = $query->where('car_quote_request.quote_batch_id', $batch->id);
+        }
+        $dateFormat = config('constants.DB_DATE_FORMAT_MATCH');
+
+        $maxDays = ApplicationStorageService::getValueByKeyName(GenericRequestEnum::MAX_DAYS);
+        $freshLoad = ! isset($filters->page);
+
+        $startDate = isset($filters->advisorAssignedDates) ?
+            Carbon::parse($filters->advisorAssignedDates[0])->startOfDay()->format($dateFormat) :
+                ($freshLoad ? Carbon::parse(now())->startOfDay()->format($dateFormat) :
+                    now()->subDays((int) $maxDays)->startOfDay()->format($dateFormat));
+
+        $endDate = isset($filters->advisorAssignedDates) ?
+            Carbon::parse($filters->advisorAssignedDates[1])->endOfDay()->format($dateFormat) :
+            Carbon::parse(now())->endOfDay()->format($dateFormat);
+
+        if ($freshLoad) {
+            $query->whereBetween('car_quote_request_detail.advisor_assigned_date', [$startDate, $endDate]);
+        } elseif (isset($filters->advisorAssignedDates)) {
+            $query->whereBetween('car_quote_request_detail.advisor_assigned_date', [$startDate, $endDate]);
+        }
+
+        if (isset($filters->ecommerceFilter) && $filters->ecommerceFilter != 'All') {
+            $query->where('car_quote_request.is_ecommerce', $filters->ecommerceFilter == 'Yes' ? 1 : 0);
+        }
+        if (isset($filters->excludeCreatedLeadsFilter)) {
+            if ($filters->excludeCreatedLeadsFilter == 'yes') {
+                info('inside excludeCreatedLeadsFilter');
+                $query->where('car_quote_request.source', '!=', LeadSourceEnum::IMCRM);
+            }
+        }
+        if (isset($filters->tiersFilter) && count($filters->tiersFilter) > 0) {
+            $query->whereIn('car_quote_request.tier_id', $filters->tiersFilter);
+        }
+        if (isset($filters->leadSourceFilter) && count($filters->leadSourceFilter) > 0) {
+            $query->whereIn('car_quote_request.source', $filters->leadSourceFilter);
+        }
+        if (isset($filters->teamsFilter) && count($filters->teamsFilter) > 0) {
+            $value = $filters->teamsFilter;
+            $query->whereIn('users.id', function ($query) use ($value) {
+                $query->distinct()
+                    ->select('users.id')
+                    ->from('users')
+                    ->join('user_team', 'user_team.user_id', 'users.id')
+                    ->join('teams', 'teams.id', 'user_team.team_id')
+                    ->whereIn('teams.id', $value);
+            });
+        }
+        if (isset($filters->advisorsFilter) && count($filters->advisorsFilter) > 0) {
+            $query->whereIn('car_quote_request.advisor_id', $filters->advisorsFilter);
+        }
+
+        if (isset($filters->leadType) && $filters->leadType == ReportsLeadTypeEnum::TOTAL_LEADS) {
+            $query->where('source', '!=', LeadSourceEnum::IMCRM);
+        }
+        if (isset($filters->leadType) && $filters->leadType == ReportsLeadTypeEnum::NEW_LEADS) {
+            $query->where('car_quote_request.quote_status_id', QuoteStatusEnum::NewLead)->where('source', '!=', LeadSourceEnum::IMCRM);
+        }
+        if (isset($filters->leadType) && $filters->leadType == ReportsLeadTypeEnum::NOT_INTERESTED) {
+            $query->whereIn('car_quote_request.quote_status_id', [QuoteStatusEnum::PriceTooHigh, QuoteStatusEnum::PolicyPurchasedBeforeFirstCall, QuoteStatusEnum::NotInterested, QuoteStatusEnum::NotEligibleForInsurance, QuoteStatusEnum::NotLookingForMotorInsurance, QuoteStatusEnum::NonGccSpec, QuoteStatusEnum::AMLScreeningFailed])->where('source', '!=', LeadSourceEnum::IMCRM);
+        }
+        if (isset($filters->leadType) && $filters->leadType == ReportsLeadTypeEnum::IN_PROGRESS) {
+            $query->whereIn('car_quote_request.quote_status_id', [QuoteStatusEnum::NotContactablePe, QuoteStatusEnum::FollowupCall, QuoteStatusEnum::Interested, QuoteStatusEnum::NoAnswer, QuoteStatusEnum::Quoted, QuoteStatusEnum::PaymentPending, QuoteStatusEnum::AMLScreeningCleared, QuoteStatusEnum::PendingQuote])->where('source', '!=', LeadSourceEnum::IMCRM);
+        }
+        if (isset($filters->leadType) && $filters->leadType == ReportsLeadTypeEnum::MANUAL_CREATED) {
+            $query->where('source', LeadSourceEnum::IMCRM);
+        }
+        if (isset($filters->leadType) && $filters->leadType == ReportsLeadTypeEnum::BAD_LEAD) {
+            $query->whereIn('car_quote_request.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])->where('source', '!=', LeadSourceEnum::IMCRM);
+        }
+        if (isset($filters->leadType) && $filters->leadType == ReportsLeadTypeEnum::AFIA_RENEWALS_COUNT) {
+            $query->where('car_quote_request.quote_status_id', QuoteStatusEnum::IMRenewal)->where('source', '!=', LeadSourceEnum::IMCRM);
+        }
+        if (isset($filters->leadType) && $filters->leadType == ReportsLeadTypeEnum::SALE_LEAD) {
+            $query->where(function ($query) {
+                $query->whereIn('car_quote_request.quote_status_id', [QuoteStatusEnum::TransactionApproved, QuoteStatusEnum::PolicyIssued])
+                    ->orWhere('car_quote_request.payment_status_id', PaymentStatusEnum::CAPTURED);
+            })->where('source', '!=', LeadSourceEnum::IMCRM);
+        }
+        if (isset($filters->leadType) && $filters->leadType == ReportsLeadTypeEnum::CREATED_SALE_LEAD) {
+            $query->where(function ($query) {
+                $query->whereIn('car_quote_request.quote_status_id', [QuoteStatusEnum::TransactionApproved, QuoteStatusEnum::PolicyIssued])
+                    ->orWhere('car_quote_request.payment_status_id', PaymentStatusEnum::CAPTURED);
+            })->where('source', '=', LeadSourceEnum::IMCRM);
+        }
+
+        if (isset($filters->isCommercial) && $filters->isCommercial != 'All') {
+            $filters->isCommercial = $filters->isCommercial == 'true' ? true : false;
+            $query->where('car_model.is_commercial', '=', $filters->isCommercial);
         }
 
         return $query;
