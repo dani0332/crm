@@ -227,7 +227,7 @@ trait GenericQueriesAllLobs
 
     public function updateQuoteStatus($type, $id)
     {
-        if ($type  == 'send-update'){
+        if ($type == 'send-update') {
             return true;
         }
         $quote = $this->getQuoteObject($type, $id);
