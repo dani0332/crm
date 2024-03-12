@@ -9,6 +9,7 @@ use App\Enums\PaymentTooltip;
 use App\Enums\quoteBusinessTypeCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Enums\SendUpdateLogStatusEnum;
@@ -178,13 +179,20 @@ class SendUpdateLogController extends Controller
             $paymentEntityModel->load(['plan']);
         }
 
+        // quote type business only has 2 providers, but as per business lead detail page it's getting providers via Corpline.
+        if ($quoteTypeId == QuoteTypeId::Business) {
+            $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypeId::Corpline);
+        } else {
+            $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping($quoteTypeId);
+        }
+
         return inertia('SendUpdateLog/Show', [
             'quote' => $quote,
             'quoteType' => $quoteType,
             'sendUpdateLog' => $sendUpdateLog,
             'issuanceStatuses' => $issuanceStatuses,
             'sendUpdateOptions' => $sendUpdateOptions,
-            'insuranceProviders' => InsuranceProviderRepository::byQuoteTypeMapping($quoteTypeId),
+            'insuranceProviders' => $insuranceProviders,
             'sendUpdateStatusEnum' => SendUpdateLogStatusEnum::asArray(),
             'storageUrl' => storageUrl(),
             'documentTypes' => $documentTypes,
