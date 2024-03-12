@@ -119,7 +119,7 @@ class SendUpdateLogRepository extends BaseRepository
                 'first_name' => $data['first_name'],
                 'last_name' => $data['last_name'],
                 'provider_name' => isset($insuranceProvider) ? $insuranceProvider->text : $data['provider_name'],
-                'insurance_provider_id' => $data['insurance_provider_id'] ?? null,
+                'insurance_provider_id' => $data['insurance_provider_id'],
                 'plan_name' => $data['plan_name'],
                 'policy_number' => $data['policy_number'],
                 'issuance_date' => $data['issuance_date'],
