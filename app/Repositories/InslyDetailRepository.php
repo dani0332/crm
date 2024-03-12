@@ -8,6 +8,8 @@ use App\Models\InslyDetail;
 use App\Services\CapiRequestService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
+use MongoDB\BSON\ObjectId;
+
 
 class InslyDetailRepository extends BaseRepository
 {
@@ -38,8 +40,11 @@ class InslyDetailRepository extends BaseRepository
 
     public function fetchGetBy($column, $value)
     {
-        $policy = $this->where($column, $value)->firstOrFail();
-
+        $query = $this->where($column, $value);
+        if (! empty(request()->policy_oid)) {
+            $query->orWhere('policy_oid', (int) request()->policy_oid);
+        }
+        $policy = $query->firstOrFail();
         $data = $policy->toArray();
         if (! empty($data['installments'])) {
             $policy->premium = collect($data['installments'])->sum('gross_premium');
