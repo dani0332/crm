@@ -68,7 +68,7 @@ class TransactionReportService extends ManagementReport
 
         if ($utmGroupBy) {
             $query->groupBy(['personal_quotes.code', $utmGroupBy]);
-        }else {
+        } else {
             $query->groupBy('personal_quotes.code');
         }
 
