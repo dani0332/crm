@@ -62,7 +62,7 @@ const permissionsEnum = page.props.permissionsEnum;
 
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div class="text-sm">
-        <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
+        <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
           <div class="grid sm:grid-cols-2">
             <div>
               <x-tooltip position="bottom">
@@ -79,7 +79,7 @@ const permissionsEnum = page.props.permissionsEnum;
 
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">ADVISOR</dt>
-            <dd>{{ quote.advisor?.email }}</dd>
+            <dd class="break-words">{{ quote.advisor?.email }}</dd>
           </div>
 
           <div class="grid sm:grid-cols-2">
@@ -94,12 +94,12 @@ const permissionsEnum = page.props.permissionsEnum;
 
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">CREATED BY</dt>
-            <dd>{{ quote?.created_by?.email }}</dd>
+            <dd class="break-words">{{ quote?.created_by?.email }}</dd>
           </div>
 
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">UPDATED BY</dt>
-            <dd>{{ quote?.updated_by?.email }}</dd>
+            <dd class="break-words">{{ quote?.updated_by?.email }}</dd>
           </div>
 
           <div class="grid sm:grid-cols-2">
@@ -125,7 +125,7 @@ const permissionsEnum = page.props.permissionsEnum;
       </div>
 
       <div class="text-sm">
-        <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
+        <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">JetSki Make</dt>
             <dd>{{ quote?.jetski_quote?.jetski_make }}</dd>
@@ -179,7 +179,7 @@ const permissionsEnum = page.props.permissionsEnum;
       </div>
 
       <div class="text-sm">
-        <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
+        <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">FIRST NAME</dt>
             <dd>{{ quote.first_name }}</dd>
@@ -263,10 +263,10 @@ const permissionsEnum = page.props.permissionsEnum;
     />
 
     <PlanDetails
-    :insuranceProviders="insuranceProviders"
-    :quote="quote"
-    :quoteType="quoteType"
-     />
+      :insuranceProviders="insuranceProviders"
+      :quote="quote"
+      :quoteType="quoteType"
+    />
 
     <EmbeddedProducts
       :data="embeddedProducts"
