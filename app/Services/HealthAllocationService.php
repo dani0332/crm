@@ -27,8 +27,8 @@ class HealthAllocationService extends AllocationService
     public function fetchLead($quoteId, $overrideAdvisorId)
     {
         $healthQuoteQuery = HealthQuote::where('uuid', $quoteId)
-            ->whereIn('quote_status_id', [QuoteStatusEnum::Qualified, QuoteStatusEnum::ApplicationPending])
-            ->whereNotNull('health_quote_request.price_starting_from');
+            ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate, QuoteStatusEnum::Lost])
+            ->whereNotNull('health_quote_request.health_plan_type_id');
 
         if (! $overrideAdvisorId) {
             $healthQuoteQuery->whereNull('health_quote_request.advisor_id');
