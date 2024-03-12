@@ -358,7 +358,6 @@ class CRUDService extends BaseService
                 $activityResponse =  (new CentralService())->saveAndAssignActivitesToAdvisor($entity, $quoteTypeId[strtolower($request->modelType)]);
             }
 
-            dd($activityResponse);
             // ========= assign renewal batch to HEALTH LOB leads upon transaction approved =========
 
             if (strtolower($request->modelType) == strtolower(quoteTypeCode::Health) && $request->leadStatus == QuoteStatusEnum::TransactionApproved) {
@@ -384,7 +383,7 @@ class CRUDService extends BaseService
                 'created_by' => Auth::user()->id,
             ]);
 
-            return $entity;
+            return ['entity' => $entity, 'activityResponse' => $activityResponse];
         });
     }
 

@@ -143,41 +143,61 @@ const loaders = ref({
 
 const onLeadStatus = () => {
   loaders.value.leadStatus = true;
-  let data = {
-    modelType: 'Business',
-    leadId: leadStatusForm.leadId,
-    quote_uuid: leadStatusForm.quote_uuid,
-    assigned_to_user_id: leadStatusForm.assigned_to_user_id,
-    leadStatus: leadStatusForm.leadStatus,
-    notes: leadStatusForm.notes,
-    trans_code: leadStatusForm.trans_code,
-    lostReason: leadStatusForm.lostReason,
-  };
-  axios
-    .post(
-      route('updateLeadStatus', {
-        QuoteUId: page.props.quote.id,
-        modelType: 'Business',
-      }),
-      data,
-    )
-    .then(res => {
-      notification.success({
-        title: 'Lead Status Updated',
-        position: 'top',
-      });
-      loaders.value.leadStatus = false;
-    })
-    .catch(err => {
-      const flash_messages = err.response.data.errors.value;
-      Object.keys(flash_messages).forEach(function (key) {
-        notification.error({
-          title: flash_messages[key],
-          position: 'top',
-        });
-      });
-      loaders.value.leadStatus = false;
-    });
+  console.log(leadStatusForm.processing);
+  leadStatusForm.post(
+    route('updateLeadStatus', {
+      modelType: 'Business',
+      QuoteUId: page.props.quote.id,
+    }),
+    {
+      preserveScroll: true,
+      onSuccess: () => {
+        loaders.value.leadStatus = false;
+      },
+      onError: errors => {
+        loaders.value.leadStatus = false;
+        notification.error({ title: errors.value, position: 'top' });
+      },
+    },
+  );
+
+  // loaders.value.leadStatus = true;
+  // let data = {
+  //   modelType: 'Business',
+  //   leadId: leadStatusForm.leadId,
+  //   quote_uuid: leadStatusForm.quote_uuid,
+  //   assigned_to_user_id: leadStatusForm.assigned_to_user_id,
+  //   leadStatus: leadStatusForm.leadStatus,
+  //   notes: leadStatusForm.notes,
+  //   trans_code: leadStatusForm.trans_code,
+  //   lostReason: leadStatusForm.lostReason,
+  // };
+  // axios
+  //   .post(
+  //     route('updateLeadStatus', {
+  //       QuoteUId: page.props.quote.id,
+  //       modelType: 'Business',
+  //     }),
+  //     data,
+  //   )
+  //   .then(res => {
+  //     console.log(res);
+  //     notification.success({
+  //       title: 'Lead Status Updated',
+  //       position: 'top',
+  //     });
+  //     loaders.value.leadStatus = false;
+  //   })
+  //   .catch(err => {
+  //     const flash_messages = err.response.data.errors.value;
+  //     Object.keys(flash_messages).forEach(function (key) {
+  //       notification.error({
+  //         title: flash_messages[key],
+  //         position: 'top',
+  //       });
+  //     });
+  //     loaders.value.leadStatus = false;
+  //   });
 };
 
 // Lead History

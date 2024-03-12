@@ -1433,7 +1433,8 @@ class CRUDController extends Controller
         }
 
         $oldEntity = $this->crudService->getEntityByUUID($request->quote_uuid, $request->modelType);
-        $entity = $this->crudService->updateQuoteStatus($request);
+        $result = $this->crudService->updateQuoteStatus($request);
+        $entity = $result['entity'];
         $plainEntity = $this->crudService->getLeadPlainEntityByUUID($request->modelType, $request->quote_uuid);
         if ($request->leadStatus == QuoteStatusEnum::TransactionApproved) {
             $this->crudService->calculateScore($plainEntity);
@@ -1453,6 +1454,9 @@ class CRUDController extends Controller
             return redirect()->to('/quotes/health')->with('success', ' Lead status has been updated successfully');
         }
 
+        if($result['activityResponse']){
+            return back()->with('message', 'Status updated successfully & Activity has been created');
+        }
         return redirect()->to('/quotes/'.strtolower($request->modelType).'/'.$entity->uuid)->with('success', ' Lead Status has been Updated');
     }
 
