@@ -8,8 +8,6 @@ use App\Models\InslyDetail;
 use App\Services\CapiRequestService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
-use MongoDB\BSON\ObjectId;
-
 
 class InslyDetailRepository extends BaseRepository
 {
