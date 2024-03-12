@@ -269,7 +269,7 @@ class CarEmailService extends BaseService
         if (count($plans) == 0) {
             // No plans with available ratings, send a specific email template
             return $lead->tier_id == $tierR->id ? 492 : 494;
-        } elseif (count($plans) > 0 && $lead->tier_id == TiersIdEnum::TIER_5 && ($lead->advisor_id == null || $lead->advisor_id == 0)) {
+        } elseif ($lead->sic_flow_enabled) {
             return 605; // Send email template for Tier 5 leads with no advisor : SIC intro email
         } else {
             // Plans with available ratings exist, send a different email template
