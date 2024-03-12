@@ -67,10 +67,11 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
         return $paymentLink;
     }
 
-    public function fetchCreateNewPayment($request, $quoteModel)
+    public function fetchCreateNewPayment($request)
     {
         DB::beginTransaction();
         try {
+            $quoteModel = $this->getQuoteObject($request->modelType, $request->quote_id);
             $masterPayment = (object) $request->payment;
             $masterPaymentStatus = PaymentStatusEnum::NEW;
             if ($masterPayment->payment_methods == PaymentMethodsEnum::CreditApproval) {

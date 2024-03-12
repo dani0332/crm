@@ -1403,7 +1403,7 @@ const addPayment = isValid => {
     };
     paymentMethodsForm
       .transform(data => editData)
-      .post('/payments/'+props.quoteType+'/update', {
+      .post('/payments/'+props.quoteType+'/update-new', {
         preserveScroll: true,
         onSuccess: () => {
           createPaymentModal.value = false;
@@ -1422,7 +1422,7 @@ const addPayment = isValid => {
   };
   paymentMethodsForm
     .transform(data => storeData)
-    .post('/payments/'+props.quoteType+'/store', {
+    .post('/payments/'+props.quoteType+'/store-new', {
       preserveScroll: true,
       onSuccess: () => {
         createPaymentModal.value = false;
@@ -1751,6 +1751,14 @@ watch(() => props.quoteRequest, (newValue, oldValue) => {
   planDetail.value = initalPlanDetails;
 });
 
+// verify if master payment is paid
+const isMasterPaymentPaid = computed(() => {  
+  if (props.payments[0].payment_status_id===props.paymentStatusEnum.PAID) {
+    return true;
+  }
+  return false;  
+});
+
 </script>
 
 <template>
@@ -1759,7 +1767,7 @@ watch(() => props.quoteRequest, (newValue, oldValue) => {
       <h3 class="font-semibold text-primary-800 text-lg">Manage Payments</h3>
       <template v-if="payments.length>0">        
         <UpdateTotalPrice
-          v-if="can(permissionEnum.TEMP_UPDATE_TOTALPRICE) && quoteRequest.quote_status_id === 915 "
+          v-if="can(permissionEnum.TEMP_UPDATE_TOTALPRICE) && quoteRequest.quote_status_id === 15 && isMasterPaymentPaid"
           :quoteId="quoteRequest.id"
           :paymentCode = "payments[0].code"
           :quoteType="quoteType" 

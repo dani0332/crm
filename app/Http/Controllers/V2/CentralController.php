@@ -27,6 +27,8 @@ use App\Http\Requests\SplitPaymentUpdateRequest;
 use App\Http\Requests\UpdateLastYearPolicyRequest;
 use App\Http\Requests\UpdateSelectedPlanRequest;
 use App\Http\Requests\UpdateTotalPriceRequest;
+use App\Http\Requests\StorePaymentRequest;
+use App\Http\Requests\UpdatePaymentRequest;
 use App\Models\Customer;
 use App\Models\Entity;
 use App\Models\QuoteRequestEntityMapping;
@@ -243,6 +245,17 @@ class CentralController extends Controller
         $successMessage = PaymentRepository::updateTotalPrice($request);
 
         return $successMessage;
+    }
+    // Store new payment
+    public function storeNewPayment(StorePaymentRequest $request)
+    {        
+        PaymentRepository::createNewPayment($request);       
+    }
+
+    // Update payment
+    public function updateNewPayment(UpdatePaymentRequest $request)
+    {
+        PaymentRepository::updateNewPayment($request);        
     }
 
 }
