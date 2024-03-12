@@ -1740,7 +1740,7 @@ const providerName = computed(() => {
 const providerId = computed(() => {
   const plan = planDetail.value;
   if (props.sendUpdate) {
-    return props.sendUpdate.insurance_provider_id
+    return props.sendUpdate.insurance_provider_id || props.quoteRequest?.insurance_provider_details.id
   } else if (plan && plan.insurance_provider) {
     return plan.insurance_provider.id;
   } else if (plan && plan.provider_id) {

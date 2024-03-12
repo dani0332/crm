@@ -302,7 +302,7 @@ const isBookingDetailsVisible = computed(() => {
       :sendUpdateLog="sendUpdateLog"
       :insuranceProviders="props.insuranceProviders"
       :selectedCategory="selectedCategory"
-      :quote="quote"
+      :quote="props.realQuote"
       :isUpdateBooked="isUpdateBooked"
     />
 
