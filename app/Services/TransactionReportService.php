@@ -57,14 +57,21 @@ class TransactionReportService extends ManagementReport
             ->leftJoin('users as pi', 'pi.id', '=', 'p.policy_issuer_id')
             ->join('user_team as ut', 'ut.user_id', '=', 'u.id')
             ->join('teams as t', 't.id', '=', 'ut.team_id')
+            ->leftJoin('personal_quote_details as pqd', 'personal_quotes.id', '=', 'pqd.personal_quote_id')
             ->leftJoin('insurance_provider as ip', 'ip.id', '=', 'p.insurance_provider_id')
             ->leftJoin('payment_methods as pm', 'pm.code', '=', 'p.payment_methods_code')
-            ->leftJoin('payment_gateway as pg', 'pg.id', '=', 'p.payment_gateway_id')
-            ->groupBy('personal_quotes.code');
+            ->leftJoin('payment_gateway as pg', 'pg.id', '=', 'p.payment_gateway_id');
 
         $this->applyFilters($query, $request);
 
-        //dd($query->toSql(), $query->getBindings());
+        $utmGroupBy = $this->getUtmGroup($request, $query);
+
+        if ($utmGroupBy) {
+            $query->groupBy(['personal_quotes.code', $utmGroupBy]);
+        }else {
+            $query->groupBy('personal_quotes.code');
+        }
+
         return $query->simplePaginate(10)->withQueryString();
     }
 

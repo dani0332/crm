@@ -28,6 +28,7 @@ class EndingPoliciesReportService extends ManagementReport
             ->leftJoin('payment_status as ps', 'ps.id', '=', 'p.payment_status_id')
             ->leftJoin('customer as c', 'c.id', '=', 'customer_id')
             ->leftJoin('users as pi', 'pi.id', '=', 'p.policy_issuer_id')
+            ->leftJoin('personal_quote_details as pqd', 'personal_quotes.id', '=', 'pqd.personal_quote_id')
             ->join('user_team as ut', 'ut.user_id', '=', 'u.id')
             ->join('teams as t', 't.id', '=', 'ut.team_id')
             ->select(
@@ -51,9 +52,17 @@ class EndingPoliciesReportService extends ManagementReport
                 'u.name as advisor',
                 'personal_quotes.source',
                 'personal_quotes.notes',
-            )->groupBy('personal_quotes.code');
+            );
 
         $this->applyFilters($query, $request);
+
+        $utmGroupBy = $this->getUtmGroup($request, $query);
+
+        if ($utmGroupBy) {
+            $query->groupBy(['personal_quotes.code', $utmGroupBy]);
+        }else {
+            $query->groupBy('personal_quotes.code');
+        }
 
         return $query->simplePaginate(10)->withQueryString();
     }

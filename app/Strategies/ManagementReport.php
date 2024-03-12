@@ -165,4 +165,27 @@ class ManagementReport
             }
         }
     }
+
+    public function getUtmGroup($request, $query)
+    {
+        if (isset($request['utmGroupBy']) && !empty($request['utmGroupBy'])) {
+            switch ($request['utmGroupBy']) {
+                case 'UTM Campaign':
+                    $query->addSelect('pqd.utm_campaign');
+                    $query->whereNotNull('pqd.utm_campaign');
+                    return 'pqd.utm_campaign';
+                    break;
+                case 'UTM Source':
+                    $query->addSelect('pqd.utm_source');
+                    $query->whereNotNull('pqd.utm_source');
+                    return 'pqd.utm_source';
+                    break;
+                case 'UTM Medium':
+                    $query->addSelect('pqd.utm_medium');
+                    $query->whereNotNull('pqd.utm_medium');
+                    return 'pqd.utm_medium';
+                    break;
+            }
+        }
+    }
 }

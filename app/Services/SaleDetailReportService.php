@@ -54,12 +54,19 @@ class SaleDetailReportService extends ManagementReport
             ->join('payment_status', 'payment_status.id', '=', 'p.payment_status_id')
             ->join('quote_type', 'quote_type.id', '=', 'quote_type_id')
             ->join('insurance_provider as ip', 'ip.id', '=', 'p.insurance_provider_id')
+            ->leftJoin('personal_quote_details as pqd', 'personal_quotes.id', '=', 'pqd.personal_quote_id')
             ->leftJoin('users as u', 'u.id', '=', 'advisor_id')
             ->leftJoin('users as pi', 'pi.id', '=', 'p.policy_issuer_id')
             ->leftJoin('user_team as ut', 'ut.user_id', '=', 'u.id')
             ->leftJoin('teams as t', 't.id', '=', 'ut.team_id');
 
         $this->applyFilters($query, $request);
+
+        $utmGroupBy = $this->getUtmGroup($request, $query);
+
+        if ($utmGroupBy) {
+            $query->groupBy($utmGroupBy);
+        }
 
         return $query->simplePaginate(10)->withQueryString();
     }

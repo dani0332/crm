@@ -41,8 +41,15 @@ class SaleSummaryReportService extends ManagementReport
             FORMAT(IFNULL((CAST(SUM(p.commission_vat_applicable) / COUNT(DISTINCT(user_team.team_id)) AS UNSIGNED)), 0), 2) as commission_vat_applicable,
             FORMAT(IFNULL((CAST(SUM(personal_quotes.price_vat_applicable) / COUNT(DISTINCT(user_team.team_id)) AS UNSIGNED)), 0) + IFNULL((CAST(SUM(personal_quotes.price_vat_not_applicable) / COUNT(DISTINCT(user_team.team_id)) AS UNSIGNED)), 0) + IFNULL((CAST(SUM(personal_quotes.price_vat_applicable) / COUNT(DISTINCT(user_team.team_id)) AS UNSIGNED)) * 0.05, 0) - IFNULL((CAST(SUM(p.discount_value) / COUNT(DISTINCT(user_team.team_id)) AS UNSIGNED)), 0), 2) as total_price
             ")
-            ->when($request->groupBy, function ($query, $groupBy) {
-                return $query->groupBy($this->resolveGroupByColumn($groupBy));
+            ->when($request->groupBy, function ($query, $groupBy) use ($request) {
+                $groupByArray = array();
+                $groupBy = $this->resolveGroupByColumn($groupBy);
+                array_push($groupByArray, $groupBy);
+                $utmGroupBy = $this->getUtmGroup($request, $query);
+                if ($utmGroupBy) {
+                    array_push($groupByArray, $utmGroupBy);
+                }
+                return $query->groupBy($groupByArray);
             });
 
         if ($request->groupBy == 'advisor') {
