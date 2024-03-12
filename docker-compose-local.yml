@@ -1,11 +1,12 @@
 version: '3'
 services:
-
   #PHP Service
   appblanka:
     build:
       context: .
       dockerfile: Dockerfile_Local
+      args:
+        - DOPPLER_TOKEN_IMCRM=$DOPPLER_TOKEN_IMCRM
     # image: digitalocean.com/php
     container_name: appblanka
     restart: unless-stopped
@@ -17,6 +18,7 @@ services:
     volumes:
       - ./:/var/www
       - ./docker-local/php/local.ini:/usr/local/etc/php/conf.d/local.ini
+    # command: sh -c "doppler secrets download --token="${DOPPLER_TOKEN_IMCRM}" --no-file --format=env > /var/www/.env"
     networks:
       - blanka-app-network
 
@@ -37,7 +39,7 @@ services:
 
   #MySQL Service
   dbblanka:
-    image: mysql:5.7.22
+    image: mariadb:10.3.23
     container_name: dbblanka
     restart: unless-stopped
     tty: false
@@ -47,7 +49,7 @@ services:
       MYSQL_DATABASE: blanka_db
       MYSQL_ROOT_PASSWORD: root
       SERVICE_TAGS: dev
-      SERVICE_NAME: mysql
+      SERVICE_NAME: mariadb
     volumes:
       - dbdata:/var/lib/mysql/
       - ./docker-local/mysql/my.cnf:/etc/mysql/my.cnf

@@ -40,6 +40,9 @@ RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local
 RUN pecl install redis \
     && docker-php-ext-enable redis
 
+# install doppler
+RUN curl -Ls --tlsv1.2 --proto "=https" --retry 3 https://cli.doppler.com/install.sh | sh
+
 # Add user for laravel application
 RUN groupadd -g 1000 www
 RUN useradd -u 1000 -ms /bin/bash -g www www
@@ -53,6 +56,11 @@ COPY --chown=www:www . /var/www
 # Change current user to www
 USER www
 
+# Grant execute permissions to the script
+RUN chmod +x /var/www/docker-local/entrypoint.sh
+
 # Expose port 9000 and start php-fpm server
 EXPOSE 9000
+# Set the script as the entrypoint
+ENTRYPOINT ["/var/www/docker-local/entrypoint.sh"]
 CMD ["php-fpm"]
