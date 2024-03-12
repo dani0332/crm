@@ -81,7 +81,7 @@ const policyDetailsForm = useForm({
 	last_name: props.sendUpdateLog?.last_name || props.quote?.last_name || null,
 	provider_name: props.sendUpdateLog?.provider_name || providerName.value || null,
   insurance_provider_id: props.sendUpdateLog?.insurance_provider_id || props.quote?.insurance_provider_id || null,
-	plan_name: props.sendUpdateLog?.plan_name || props.quote?.plan?.name || null,
+	plan_name: props.sendUpdateLog?.plan_name || props.quote?.plan_id_text || null,
 	policy_number: props.sendUpdateLog?.policy_number || props.quote?.policy_number || null,
 	issuance_date: props.sendUpdateLog?.issuance_date || props.quote?.policy_issuance_date || null,
 	start_date: props.sendUpdateLog?.start_date || props.quote?.policy_start_date || null,
