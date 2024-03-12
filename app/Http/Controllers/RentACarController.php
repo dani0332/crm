@@ -7,6 +7,7 @@ use DataTables;
 use DB;
 use Illuminate\Http\Request;
 
+// Scheduled to delete 15th April 2024
 class RentACarController extends Controller
 {
     public function __construct()
@@ -77,7 +78,7 @@ class RentACarController extends Controller
     /**
      * Display the specified resource.
      *
-     * @param  \App\Models\RentACar  $rentACar
+     * @param  RentACar  $rentACar
      * @return \Illuminate\Http\Response
      */
     public function show(RentACar $rentacar)
@@ -88,7 +89,7 @@ class RentACarController extends Controller
     /**
      * Show the form for editing the specified resource.
      *
-     * @param  \App\Models\RentACar  $rentACar
+     * @param  RentACar  $rentACar
      * @return \Illuminate\Http\Response
      */
     public function edit(RentACar $rentacar)
@@ -99,7 +100,7 @@ class RentACarController extends Controller
     /**
      * Update the specified resource in storage.
      *
-     * @param  \App\Models\RentACar  $rentACar
+     * @param  RentACar  $rentACar
      * @return \Illuminate\Http\Response
      */
     public function update(Request $request, RentACar $rentacar)
@@ -123,7 +124,7 @@ class RentACarController extends Controller
     /**
      * Remove the specified resource from storage.
      *
-     * @param  \App\Models\RentACar  $rentACar
+     * @param  RentACar  $rentACar
      * @return \Illuminate\Http\Response
      */
     public function destroy(RentACar $rentacar)
