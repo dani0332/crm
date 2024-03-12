@@ -91,6 +91,9 @@ The provided configuration is a basic setup that you can customize according to 
 APP_URL=http://localhost:8000
 WEB_PORT=8000
 
+# Doppler env token
+DOPPLER_TOKEN_IMCRM=DOPPLER_TOKEN
+
 # Nginx Port
 SSL_PORT=452
 
