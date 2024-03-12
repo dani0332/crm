@@ -230,7 +230,7 @@ const linkEntity = () => {
 
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div class="text-sm">
-        <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
+        <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
           <div
             class="grid sm:grid-cols-2"
             v-if="hasAnyRole([rolesEnum.Admin, rolesEnum.Engineering])"
@@ -272,12 +272,12 @@ const linkEntity = () => {
 
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">CREATED BY</dt>
-            <dd>{{ quote?.created_by?.email }}</dd>
+            <dd class="break-words">{{ quote?.created_by?.email }}</dd>
           </div>
 
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">UPDATED BY</dt>
-            <dd>{{ quote?.updated_by?.email }}</dd>
+            <dd class="break-words">{{ quote?.updated_by?.email }}</dd>
           </div>
 
           <div class="grid sm:grid-cols-2">
@@ -308,7 +308,7 @@ const linkEntity = () => {
       </div>
 
       <div class="text-sm">
-        <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
+        <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">UAE licence held for</dt>
             <dd>{{ quote?.bike_quote?.uae_license_held_for?.text }}</dd>
@@ -361,7 +361,9 @@ const linkEntity = () => {
           }}
           Profile
         </h3>
-        <x-tag color="success" v-if="quote.kyc_decision === 'Complete'"> KYC - Complete </x-tag>
+        <x-tag color="success" v-if="quote.kyc_decision === 'Complete'">
+          KYC - Complete
+        </x-tag>
         <x-tag color="amber" v-else> KYC - Pending </x-tag>
       </div>
       <x-divider class="mb-4 mt-1" />
@@ -371,7 +373,7 @@ const linkEntity = () => {
             v-if="
               quote.customer_type === page.props.customerTypeEnum.Individual
             "
-            class="grid md:grid-cols-2 gap-x-6 gap-y-4"
+            class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words"
           >
             <div class="grid sm:grid-cols-2">
               <dt class="font-medium">FIRST NAME</dt>
