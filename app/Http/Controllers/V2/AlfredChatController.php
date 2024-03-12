@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\AlfredChatRequest;
 use App\Models\AlfredChat;
 use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 
 class AlfredChatController extends Controller
 {
@@ -30,7 +31,10 @@ class AlfredChatController extends Controller
 
     public function getChatByDate(AlfredChatRequest $request)
     {
-        $chat = AlfredChat::where('quote_id', $request->quoteId)->where('quote_type', $request->quoteType)->where('created_at', $request->created_at)
+        $dateFrom = Carbon::createFromFormat('Y-m-d', $request->created_at)->startOfDay();
+        $dateTo = Carbon::createFromFormat('Y-m-d', $request->created_at)->endOfDay();
+        
+        $chat = AlfredChat::where('quote_id', $request->quoteId)->where('quote_type', $request->quoteType)->where('created_at', [$dateFrom, $dateTo])
         ->select('role', 'msg', 'created_at')
         ->get();
 
