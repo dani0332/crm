@@ -561,4 +561,9 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
             }
         }
     }
+
+    public function fetchGetPaymentsByQuoteCode($quoteCode)
+    {
+        return $this->where('code', 'LIKE', "%$quoteCode%")->count();
+    }
 }
