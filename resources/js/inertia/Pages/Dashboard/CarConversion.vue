@@ -32,6 +32,29 @@ const tranformArray = () => {
   });
 };
 
+const calculateTotalEcomConv = data => {
+  let key = 'paid_ecom_captured';
+  let totalPaidEcomCaputed = data.reduce((accumulator, currentItem) => {
+    if (key in currentItem) {
+      let value = currentItem[key] != null ? currentItem[key] : 0;
+      accumulator += +parseFloat(value.toString().replace(/,/g, '')) || 0;
+    }
+    return accumulator;
+  }, 0);
+
+  let ecom_total_key = 'ecom_total';
+  let totalEcom = data.reduce((accumulator, currentItem) => {
+    if (ecom_total_key in currentItem) {
+      let value =
+        currentItem[ecom_total_key] != null ? currentItem[ecom_total_key] : 0;
+      accumulator += +parseFloat(value.toString().replace(/,/g, '')) || 0;
+    }
+    return accumulator;
+  }, 0);
+
+  return ((totalPaidEcomCaputed / totalEcom) * 100).toFixed(2);
+};
+
 const calculateTotalSum = useCalculateTotalSum;
 
 const isIntegerColumn = key => {
@@ -91,9 +114,9 @@ onMounted(() => {
             class="direction-center"
           >
             {{
-              isIntegerColumn(header.value)
+              isIntegerColumn(header.value) && header.value != 'ecom_conv'
                 ? calculateTotalSum(stats[key], header.value)
-                : 'N/A'
+                : calculateTotalEcomConv(stats[key], header.value) + '%'
             }}
           </td>
         </tr>

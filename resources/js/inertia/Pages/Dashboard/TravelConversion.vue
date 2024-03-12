@@ -12,11 +12,11 @@ const travelHeaders = ref([
   { text: 'Paid Ecom Authorised', value: 'paid_ecom_auth' },
   { text: 'Paid Ecom Captured', value: 'paid_ecom_captured' },
   { text: 'Paid Ecom Cancelled', value: 'paid_ecom_cancelled' },
-  { text: 'Ecom Conversion', value: 'ecom_conv' },
   { text: 'Trans.Aprove.Ecom', value: 'tran_approved_ecom' },
   { text: 'Trans.Aprove.Non-Ecom', value: 'tran_approved_non_ecom' },
   { text: 'Trans.Aprove.Total', value: 'tran_approved_total' },
   { text: 'Ecom Total', value: 'ecom_total' },
+  { text: 'Ecom Conversion', value: 'ecom_conv' },
   { text: 'Non-Ecom Conversion', value: 'non_ecom_conv' },
   { text: 'Overall Conversion', value: 'overall_ecom_conv' },
 ]);
@@ -30,11 +30,11 @@ const isIntegerColumn = key => {
     'paid_ecom_auth',
     'paid_ecom_captured',
     'paid_ecom_cancelled',
-    'ecom_conv',
     'tran_approved_ecom',
     'tran_approved_non_ecom',
     'tran_approved_total',
     'ecom_total',
+    'ecom_conv',
     'non_ecom_conv',
     'overall_ecom_conv',
   ].includes(key);
@@ -66,6 +66,89 @@ const tranformArray = () => {
 
 const calculateTotalSum = useCalculateTotalSum;
 
+const calculateEcomTotal = data => {
+  let key = 'tran_approved_ecom';
+  let totalPaidEcomCaputed = data.reduce((accumulator, currentItem) => {
+    if (key in currentItem) {
+      let value = currentItem[key] != null ? currentItem[key] : 0;
+      accumulator += +parseFloat(value.toString().replace(/,/g, '')) || 0;
+    }
+    return accumulator;
+  }, 0);
+
+  let ecom_total_key = 'ecom_total';
+  let totalEcom = data.reduce((accumulator, currentItem) => {
+    if (ecom_total_key in currentItem) {
+      let value =
+        currentItem[ecom_total_key] != null ? currentItem[ecom_total_key] : 0;
+      accumulator += +parseFloat(value.toString().replace(/,/g, '')) || 0;
+    }
+    return accumulator;
+  }, 0);
+
+  return ((totalPaidEcomCaputed / totalEcom) * 100).toFixed(2);
+};
+
+const calculateNonEcomTotal = data => {
+  let key = 'tran_approved_non_ecom';
+  let totalPaidEcomCaputed = data.reduce((accumulator, currentItem) => {
+    if (key in currentItem) {
+      let value = currentItem[key] != null ? currentItem[key] : 0;
+      accumulator += +parseFloat(value.toString().replace(/,/g, '')) || 0;
+    }
+    return accumulator;
+  }, 0);
+
+  let ecom_total_key = 'ecom_total';
+  let totalEcom = data.reduce((accumulator, currentItem) => {
+    if (ecom_total_key in currentItem) {
+      let value =
+        currentItem[ecom_total_key] != null ? currentItem[ecom_total_key] : 0;
+      accumulator += +parseFloat(value.toString().replace(/,/g, '')) || 0;
+    }
+    return accumulator;
+  }, 0);
+
+  let total_assigned_key = 'total_assigned';
+  let total_assigned = data.reduce((accumulator, currentItem) => {
+    if (total_assigned_key in currentItem) {
+      let value =
+        currentItem[total_assigned_key] != null
+          ? currentItem[total_assigned_key]
+          : 0;
+      accumulator += +parseFloat(value.toString().replace(/,/g, '')) || 0;
+    }
+    return accumulator;
+  }, 0);
+
+  return ((totalPaidEcomCaputed / (totalEcom - total_assigned)) * 100).toFixed(
+    2,
+  );
+};
+const calculateOverConvEacomTotal = data => {
+  let key = 'tran_approved_total';
+  let totalTransApproved = data.reduce((accumulator, currentItem) => {
+    if (key in currentItem) {
+      let value = currentItem[key] != null ? currentItem[key] : 0;
+      accumulator += +parseFloat(value.toString().replace(/,/g, '')) || 0;
+    }
+    return accumulator;
+  }, 0);
+
+  let total_assigned_key = 'total_assigned';
+  let total_assigned = data.reduce((accumulator, currentItem) => {
+    if (total_assigned_key in currentItem) {
+      let value =
+        currentItem[total_assigned_key] != null
+          ? currentItem[total_assigned_key]
+          : 0;
+      accumulator += +parseFloat(value.toString().replace(/,/g, '')) || 0;
+    }
+    return accumulator;
+  }, 0);
+
+  return ((totalTransApproved / total_assigned) * 100).toFixed(2);
+};
 onMounted(() => {
   tranformArray();
 });
@@ -91,26 +174,6 @@ onMounted(() => {
       <template #item-email="item">
         <p>{{ item.email ?? 'UnAssigned' }}</p>
       </template>
-      <!-- <template #item-non_ecom_conv="item">
-        <p>
-          {{
-            Math.round(
-              (item.tran_approved_non_ecom /
-                (item.total_assigned - item.ecom_total)) *
-                100,
-            ).toFixed(2)
-          }}
-        </p>
-      </template> -->
-      <!-- <template #item-overall_ecom_conv="item">
-        <p>
-          {{
-            Math.round(
-              (item.tran_approved_total / item.total_assigned) * 100,
-            ).toFixed(2)
-          }}
-        </p>
-      </template> -->
       <template #body-append>
         <tr class="total-row">
           <td class="direction-left">Total</td>
@@ -120,7 +183,13 @@ onMounted(() => {
             class="direction-center"
           >
             {{
-              isIntegerColumn(header.value)
+              header.value == 'overall_ecom_conv'
+                ? calculateOverConvEacomTotal(stats[key]) + '%'
+                : header.value == 'non_ecom_conv'
+                ? calculateNonEcomTotal(stats[key]) + '%'
+                : header.value == 'ecom_conv'
+                ? calculateEcomTotal(stats[key]) + '%'
+                : isIntegerColumn(header.value)
                 ? calculateTotalSum(stats[key], header.value)
                 : 'N/A'
             }}
