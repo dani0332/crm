@@ -17,6 +17,7 @@ use App\Models\PersonalQuote;
 use App\Models\PetQuote;
 use App\Models\TravelQuote;
 use App\Models\YachtQuote;
+use App\Repositories\PaymentRepository;
 use App\Traits\GenericQueriesAllLobs;
 use App\Enums\DocumentTypeCode;
 use App\Enums\SendUpdateLogStatusEnum;
@@ -622,5 +623,16 @@ class SendUpdateLogService
         }
 
         // $quoteModel->save();
+    }
+
+    public function getPaymentCode($quoteCode): string
+    {
+        $countPayments = PaymentRepository::getPaymentsByQuoteCode($quoteCode);
+
+        if ($countPayments < 2) {
+            return $quoteCode.'-1';
+        }
+
+        return $quoteCode.'-'.$countPayments;
     }
 }
