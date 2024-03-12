@@ -891,6 +891,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       :policyIssuanceStatus="policyIssuanceStatus"
       modelType="pet"
       :expanded="sectionExpanded"
+      :payments="payments"
     />
 
     <!-- <QuotePolicy :quote="quote" :can="can" :quoteStatusEnum="quoteStatusEnum" /> -->

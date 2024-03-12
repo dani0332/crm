@@ -18,6 +18,10 @@ const props = defineProps({
     type: String,
     default: '',
   },
+  payments: {
+    type: Array,
+    default: [],
+  },
 });
 const notification = useNotifications('toast');
 const hasRole = role => useHasRole(role);
@@ -118,6 +122,7 @@ const rules = {
 };
 
 const onUpdatePolicyDetails = isValid => {
+  showInsufficientPaymentAlert();
   if (!isValid) return;
   policyDetailsForm.post(`/quotes/${props.modelType}/update-quote-policy`, {
     preserveScroll: true,
@@ -141,6 +146,29 @@ const onUpdatePolicyDetails = isValid => {
     },
   });
 };
+
+const getPayment = () => {
+  return page.props?.payments[0] ?? null;
+}
+
+const isUpfrontOrSplitPayments = () => {
+  return getPayment()?.frequency == 'upfront' || getPayment()?.frequency == 'split_payments';
+}
+
+const isPartiallyPaid = () => {
+  return getPayment()?.payment_status?.text == 'PARTIALLY_PAID';
+}
+
+const showInsufficientPaymentAlert = () => {
+  if (isUpfrontOrSplitPayments() && isPartiallyPaid()) {
+    notification.error({
+      title: 'Insufficient payment',
+      position: 'top',
+      timeout: 30000
+    });
+  }
+}
+
 </script>
 
 <template>

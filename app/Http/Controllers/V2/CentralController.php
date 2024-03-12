@@ -42,6 +42,8 @@ use App\Services\SageApiService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use App\Enums\PaymentAllocationStatus;
+use App\Enums\PaymentStatusEnum;
 
 class CentralController extends Controller
 {
@@ -231,7 +233,6 @@ class CentralController extends Controller
     public function sendBookingPolicy(SendBookPolicyRequest $sendBookPolicyRequest)
     {
         $request = (object) $sendBookPolicyRequest->validated();
-
         $quote = $this->getQuoteObject($request->model_type, $request->quote_id);
 
         if ($request->send_policy_type == 'customer') {
@@ -246,9 +247,10 @@ class CentralController extends Controller
             return response()->json(['message' => 'Policy sent to customer'], 200);
         }
         if ($request->send_policy_type == 'sage') {
-
             $quoteTypeId = app(ActivitiesService::class)->getQuoteTypeId(strtolower($request->model_type));
             $payment = Payment::where('code', $quote['code'])->first();
+            $this->handleInSufficientPayment($request, $payment);
+
             $paymentSplits = PaymentSplits::where('code', $quote['code'])->get();
             $data['quoteTypeId'] = $quoteTypeId;
             $data['id'] = $quote->id;
@@ -263,7 +265,6 @@ class CentralController extends Controller
             }
 
             if ($quote->quote_status_id != QuoteStatusEnum::PolicySentToCustomer) {
-
                 // dispath job to send email
                 dispatch(new SendBookPolicyDocumentsJob($request));
             }
@@ -271,6 +272,8 @@ class CentralController extends Controller
             $quote->update([
                 'quote_status_id' => QuoteStatusEnum::PolicyBooked,
             ]);
+
+            $this->handleInSufficientPayment($request, $payment);
 
             return response()->json(['message' => $response['message']], 200);
         }
@@ -317,5 +320,15 @@ class CentralController extends Controller
         $successMessage = PaymentRepository::updateSplitPaymentsApprove($request);
 
         return back()->with('success', $successMessage);
+    }
+
+    private function handleInsufficientPayment($request, $payment)
+    {
+        dd($request, $payment);
+        if ($request->is_send_policy && $payment) {
+            $payment->payment_allocation_status = PaymentAllocationStatus::FULLY_ALLOCATED;
+            $payment->transaction_payment_status = $request->transaction_payment_status;
+            $payment->save();
+        }
     }
 }

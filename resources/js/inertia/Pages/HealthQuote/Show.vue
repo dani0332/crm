@@ -2453,6 +2453,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       :quoteStatusEnum="enums.quoteStatusEnum"
       :policyIssuanceStatus="policyIssuanceStatus"
       modelType="health"
+      :payments="payments"
     />
 
     <div class="p-4 rounded shadow mb-6 bg-white">

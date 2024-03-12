@@ -997,6 +997,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       :policyIssuanceStatus="policyIssuanceStatus"
       modelType="life"
       :expanded="sectionExpanded"
+      :payments="payments"
     />
 
     <UBODetails
