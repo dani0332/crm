@@ -38,6 +38,7 @@ defineProps({
   sendUpdateLogs: Array,
   hasPolicyIssuedStatus: Boolean,
   parentLeadDetails: Object,
+  linkedQuoteDetails: Array,
 });
 
 const page = usePage();
