@@ -601,7 +601,7 @@ const caculateCommission = () => {
                         color="orange"
                         :disabled="!props.bPDetails?.editButton"
                       >
-                        Send Policy To Customer
+                        Sending Policy To Customer
                       </x-button>
                       <template #tooltip>
                         <span>{{
