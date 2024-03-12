@@ -5,6 +5,7 @@ namespace App\Http\Controllers\V2;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\AlfredChatRequest;
 use App\Models\AlfredChat;
+use Illuminate\Support\Facades\DB;
 
 class AlfredChatController extends Controller
 {
@@ -15,7 +16,23 @@ class AlfredChatController extends Controller
      */
     public function index(AlfredChatRequest $request)
     {
-        $chat = AlfredChat::where('quote_id', $request->quoteId)->where('quote_type', $request->quoteType)->select('role', 'msg', 'created_at')->get();
+        $chat = AlfredChat::where('quote_id', $request->quoteId)->where('quote_type', $request->quoteType)
+        ->groupBy(DB::raw('DATE(created_at)'))
+        ->select('role', 'msg', DB::raw('DATE(created_at) as date'))
+        ->get();
+
+        if ($chat->isEmpty()) {
+            return response()->json(['message' => 'No chat available']);
+        }
+
+        return response()->json(['data' => $chat]);
+    }
+
+    public function getChatByDate(AlfredChatRequest $request)
+    {
+        $chat = AlfredChat::where('quote_id', $request->quoteId)->where('quote_type', $request->quoteType)->where('created_at', $request->created_at)
+        ->select('role', 'msg', 'created_at')
+        ->get();
 
         if ($chat->isEmpty()) {
             return response()->json(['message' => 'No chat available']);

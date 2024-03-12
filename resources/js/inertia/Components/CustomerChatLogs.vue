@@ -140,7 +140,8 @@ const getAllChat = () => {
     .then(response => {
       let { data } = { ...response.data };
       loader.value = false;
-      if (data && data.length > 0) formatData(data);
+      tableData.value = data;
+      // if (data && data.length > 0) formatData(data);
     })
     .catch(error => {
       loader.value = false;
@@ -148,11 +149,28 @@ const getAllChat = () => {
 };
 
 const showChat = item => {
-  chatMessages.value.created_at = item.created_at;
-  chatMessages.value.data = tableData.value.find(
-    entry => entry.created_at === item.created_at,
-  ).data;
-  showChatLogs.value = true;
+  loader.value = true;
+  axios
+    .post('/get-alfred-chat-by-date', {
+      quoteId: props.quoteId,
+      quoteType: props.quoteType,
+      created_at: item.created_at,
+    })
+    .then(response => {
+      let { data } = { ...response.data };
+      loader.value = false;
+      chatMessages.value.created_at = item.created_at;
+      chatMessages.value.data = data;
+      showChatLogs.value = true;
+    })
+    .catch(error => {
+      loader.value = false;
+    });
+  // chatMessages.value.created_at = item.created_at;
+  // chatMessages.value.data = tableData.value.find(
+  //   entry => entry.created_at === item.created_at,
+  // ).data;
+  // showChatLogs.value = true;
 };
 
 onMounted(async () => {
