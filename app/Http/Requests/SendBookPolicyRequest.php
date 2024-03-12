@@ -44,6 +44,7 @@ class SendBookPolicyRequest extends FormRequest
                 if ($quote) {
                     $payment = Payment::where('code', $quote->code)->first();
                     $paymentSplit = PaymentSplits::where('code', $quote->code)->first();
+                    $splits = PaymentSplits::where('code', $quote->code)->get();
                     if ($payment->first() && $paymentSplit->first()) {
                         if (empty($payment->insurer_invoice_date)) {
                             $validator->errors()->add('value', 'Insurer Invoice date is required');
@@ -57,8 +58,8 @@ class SendBookPolicyRequest extends FormRequest
                         if (empty($payment->commission_vat_not_applicable) && empty($payment->commission_vat_applicable)) {
                             $validator->errors()->add('value', 'Commmission (VAT NOT APPLICABLE) OR Commmission (VAT APPLICABLE) is required');
                         }
-                        if (!empty($paymentSplit)) {
-                            foreach ($paymentSplit as $item) {
+                        if (!empty($splits)) {
+                            foreach ($splits as $item) {
                                 if (empty($item->sage_reciept_id)) {
                                     $validator->errors()->add('value', 'Payment sage reciept id can not be null');
                                 }
