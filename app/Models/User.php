@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\RolesEnum;
+use App\Enums\PermissionsEnum;
 use Auth;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -352,4 +353,16 @@ class User extends Authenticatable implements AuditableContract
 
     }
 
+    public function canViewAdvisorConverionReport()
+    {
+        return Auth::user()->hasAnyPermission(
+            PermissionsEnum::ADVISOR_CONVERSION_REPORT_VIEW,
+            PermissionsEnum::BIKE_CONVERSION_REPORT,
+            PermissionsEnum::HEALTH_CONVERSION_REPORT,
+            PermissionsEnum::TRAVEL_CONVERSION_REPORT,
+            PermissionsEnum::PET_CONVERSION_REPORT,
+            PermissionsEnum::CYCLE_CONVERSION_REPORT,
+            PermissionsEnum::YACHT_CONVERSION_REPORT,
+        );
+    }
 }

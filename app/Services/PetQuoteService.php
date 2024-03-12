@@ -16,6 +16,7 @@ use Config;
 use DB;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use App\Models\QuoteBatches;
 
 class PetQuoteService extends BaseService
 {
@@ -587,7 +588,8 @@ class PetQuoteService extends BaseService
             $leadsIds = array_map('intval', explode(',', trim($request->selectTmLeadId, ',')));
         }
         $userId = (int) $request->assigned_to_id_new;
-        Log::info('Leads ids to assign: '.json_encode($leadsIds));
+        $quoteBatch = QuoteBatches::latest()->first();
+        Log::info('Leads ids to assign: '.json_encode($leadsIds) . ' Quote Batch with ID: '.$quoteBatch->id.' and Name: '.$quoteBatch->name);
         $result = [];
         foreach ($leadsIds as $leadId) {
             if (in_array(quoteTypeCode::Pet, newUi())) {
@@ -598,6 +600,7 @@ class PetQuoteService extends BaseService
 
             if ($lead) {
                 $lead->advisor_id = $userId;
+                $lead->quote_batch_id = $quoteBatch->id;
                 $lead->save();
                 $this->updateChildRecord($lead->id);
             }

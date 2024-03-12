@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Team;
 use App\Models\RenewalBatch;
 use App\Models\User;
 use App\Services\AdvisorConversionReportService;
@@ -13,6 +14,9 @@ use App\Services\ReportService;
 use App\Traits\GetUserTreeTrait;
 use App\Traits\TeamHierarchyTrait;
 use Illuminate\Http\Request;
+use App\Enums\TeamNameEnum;
+use App\Enums\quoteTypeCode;
+use Illuminate\Support\Facades\Auth;
 
 class ReportsController extends Controller
 {
@@ -23,6 +27,7 @@ class ReportsController extends Controller
     {
         return inertia('Reports/AdvisorConversion', [
             'reportData' => $advisorConversionReportService->getReportData($request),
+            'filtersByLob' => $advisorConversionReportService->getFiltersByLob(),
             'filterOptions' => $advisorConversionReportService->getFilterOptions(),
             'defaultFilters' => $advisorConversionReportService->getDefaultFilters(),
         ]);
@@ -82,6 +87,76 @@ class ReportsController extends Controller
             'reportData' => $reportService->getLeadsListReport($request),
             'defaultFilters' => $reportService->getDefaultFiltersForLeadsList(),
         ]);
+    }
+
+    /**
+     * Fetches the team list based on the line of business (LOB) requested.
+     *
+     * @param \Illuminate\Http\Request $request The HTTP request object.
+     * @return array The array of team names and IDs.
+     */
+    public function fetchTeamListByLob(Request $request)
+    {
+        $names = [];
+        if($request->lob === quoteTypeCode::Car) {
+            $names = [
+                TeamNameEnum::ORGANIC,
+                TeamNameEnum::BDM,
+                TeamNameEnum::SBDM,
+                TeamNameEnum::RENEWALS,
+                TeamNameEnum::MOTOR_CORPORATE_NB_COMMERCIAL,
+                TeamNameEnum::MOTOR_COOPERATE_RENEWALS,
+            ];
+        } else if($request->lob === quoteTypeCode::Health) {
+            $names = [
+                TeamNameEnum::RM_NB,
+                TeamNameEnum::RM_SPEED,
+                TeamNameEnum::EBP,
+            ];
+        }
+
+        return $this->fetchTeamsByLob($names);
+    }
+
+    /**
+     * Fetches the list of advisors by line of business (LOB).
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return array
+     */
+    public function fetchAdvisorsListByLob(Request $request)
+    {
+        $loginUserId = auth()->user()->id;
+        $userProducts = $this->getUsersByProductName($request->lob)->pluck('id')->toArray();
+
+        $usersReportToLoggedInUser = $this->walkTree($loginUserId);
+        $advisorIdsByTeam = array_intersect($userProducts, $usersReportToLoggedInUser);
+
+        return User::whereIn('id', $advisorIdsByTeam)
+            ->select('name', 'id')
+            ->orderBy('name')
+            ->where('is_active', 1)
+            ->get()
+            ->toArray();
+    }
+
+    /**
+     * Fetches the list of sub-teams based on the given team IDs and the current user's teams and sub-teams.
+     *
+     * @param \Illuminate\Http\Request $request The HTTP request object.
+     * @return array The list of sub-teams as an array of associative arrays containing 'name' and 'id' keys.
+     */
+    public function fetchSubTeamListByTeam(Request $request)
+    {
+        $subTeams = $this->getSubTeamsByTeamIds($request->teamIds)->pluck('id')->toArray();
+        $userTeams = $this->getCurrentUserTeamsAndSubTeams(Auth::user()->id)->pluck('id')->toArray();
+        $ids = array_intersect($subTeams, $userTeams);
+        return Team::whereIn('id', $ids)
+            ->select('name', 'id')
+            ->orderBy('name')
+            ->where('is_active', 1)
+            ->get()
+            ->toArray();
     }
 
     public function fetchAdvisorListByTeam(Request $request)

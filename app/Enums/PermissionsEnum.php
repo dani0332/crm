@@ -244,4 +244,14 @@ final class PermissionsEnum extends Enum
     public const EXPORT_MAKES_MODELS = 'export-makes-models';
     public const HEALTH_QUOTES_MANAGER_ACCESS = 'health-quotes-manager-access';
     public const HEALTH_QUOTES_ACCESS = 'health-quotes-access';
+    public const BIKE_CONVERSION_REPORT = 'bike-conversion-report';
+    public const HEALTH_CONVERSION_REPORT = 'health-conversion-report';
+    public const TRAVEL_CONVERSION_REPORT = 'travel-conversion-report';
+    public const LIFE_CONVERSION_REPORT = 'life-conversion-report';
+    public const HOME_CONVERSION_REPORT = 'home-conversion-report';
+    public const PET_CONVERSION_REPORT = 'pet-conversion-report';
+    public const CYCLE_CONVERSION_REPORT = 'cycle-conversion-report';
+    public const YACHT_CONVERSION_REPORT = 'yacht-conversion-report';
+    public const BUSINESS_CONVERSION_REPORT = 'business-conversion-report';
+    public const GROUPMEDICAL_CONVERSION_REPORT = 'groupmedicals-conversion-report';
 }

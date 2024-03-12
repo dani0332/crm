@@ -43,6 +43,7 @@ use Hidehalo\Nanoid\Client;
 use Illuminate\Http\Request;
 use PDF;
 use Sammyjo20\LaravelHaystack\Models\Haystack;
+use App\Models\QuoteBatches;
 
 class HealthQuoteService extends BaseService
 {
@@ -1134,6 +1135,7 @@ class HealthQuoteService extends BaseService
         $sourceData = ($request->selectTmLeadId == '' || $request->selectTmLeadId === null) ? $request->entityId : $request->selectTmLeadId;
         $leadsIds = array_map('intval', explode(',', trim($sourceData, ',')));
         $userId = (int) $request->assigned_to_id_new;
+        $quoteBatch = QuoteBatches::latest()->first();
 
         foreach ($leadsIds as $leadId) {
             $lead = $this->getEntityPlain($leadId);
@@ -1154,13 +1156,15 @@ class HealthQuoteService extends BaseService
 
             $oldAdvisorAssignedDate = $this->updateChildRecord($lead->id, $userId); // will update the car quote request detail entity about assignment
 
-            info('Manual assignment done and details table updated for lead : '.$lead->uuid.'and old advisor assigned date is : '.$oldAdvisorAssignedDate);
+            info('Manual assignment done and details table updated for lead : '.$lead->uuid.'and old advisor assigned date is : '.$oldAdvisorAssignedDate .' Quote Batch with ID: '.$quoteBatch->id.' and Name: '.$quoteBatch->name);
 
             $this->addManualAllocationCountAndUpdate($userId, $lead, $previousAdvisorId, $oldAdvisorAssignedDate, $oldAssignmentType); // update new and previous (if applicable) advisor counts in lead allocation table
 
             $this->updateExistingQuoteViewCount($userId, $lead->id); // update existing record of quote view count if exists and reset count to zero
 
             $lead->quote_updated_at = now();
+
+            $lead->quote_batch_id = $quoteBatch->id;
 
             $lead->save();
 
