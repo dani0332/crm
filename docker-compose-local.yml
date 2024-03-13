@@ -12,6 +12,7 @@ services:
     restart: unless-stopped
     tty: false
     environment:
+      DOPPLER_TOKEN_IMCRM: ${DOPPLER_TOKEN_IMCRM}
       SERVICE_NAME: appblanka
       SERVICE_TAGS: dev
     working_dir: /var/www
