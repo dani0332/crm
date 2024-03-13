@@ -603,6 +603,7 @@ class SendUpdateLogService
             $sageResponse = app(SageApiService::class)->handleDocumentsToSage(
                 $sendUpdateRequest, $quote, [
                     'type' => SageEnums::TYPE_SEND_UPDATE,
+                    'send_update_type' => SageEnums::SEND_UPDATE_NORMAL,
                     'category' => $sendUpdateLog->category->code,
                     'option' => $sendUpdateLog->option->code,
                 ]
@@ -631,6 +632,11 @@ class SendUpdateLogService
         $quote = $quoteModel::where('id', $sendUpdateRequest->quoteRefId)->first();
 
         if(in_array($categoryCode, [SendUpdateLogStatusEnum::EF, SendUpdateLogStatusEnum::CPD])) {
+            
+            $sendUpdateLog->update([
+                'status' => SendUpdateLogStatusEnum::UPDATE_BOOKED
+            ]);
+
             Payment::where('send_update_log_id', $sendUpdateLog->id)->update([
                 'paymentable_id' => $quote->id,
                 'paymentable_type' => ltrim($quoteModel, '\\')

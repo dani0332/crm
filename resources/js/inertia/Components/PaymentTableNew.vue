@@ -1281,7 +1281,7 @@ const addPayment = isValid => {
     insurance_provider_id: providerId.value,
     new_payment_structure: true,
     isInertia: true,
-    send_update_id: props.sendUpdate.id,
+    send_update_id: props.sendUpdate?.id ?? '',
   };
 
   data.payment = {
