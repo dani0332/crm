@@ -7,7 +7,6 @@ services:
       dockerfile: Dockerfile_Local
       args:
         - DOPPLER_TOKEN_IMCRM=$DOPPLER_TOKEN_IMCRM
-    # image: digitalocean.com/php
     container_name: appblanka
     restart: unless-stopped
     tty: false
@@ -21,7 +20,6 @@ services:
       - ../dhalsim:/var/www/dhalsim
       - ./.env:/var/www/dhalsim/.env
       - ./docker-local/php/local.ini:/usr/local/etc/php/conf.d/local.ini
-    # command: sh -c "doppler secrets download --token="${DOPPLER_TOKEN_IMCRM}" --no-file --format=env > /var/www/.env"
     networks:
       - blanka-app-network
 
