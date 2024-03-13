@@ -33,6 +33,10 @@ const props = defineProps({
     type: Object,
     default: null,
   },
+  insuranceProviders: {
+    type: Array,
+    required: false,
+  },
 })
 
 const createPaymentModal = ref(false);
@@ -1258,7 +1262,7 @@ const validateCapturePayment = (isValid) => {
 }
 
 const addPayment = isValid => {
-  if (props.sendUpdate && providerId.value === null) {
+  if (props.sendUpdate && (providerId.value === null || providerId.value === undefined)) {
     notification.error({
       title: 'Please select an insurance provider.',
       position: 'top',
@@ -1720,27 +1724,16 @@ const getCaptureOption = computed(() => {
 const getPlanName = computed(() => {
   const plan = planDetail.value;
   if (props.sendUpdate) {
-    return props.sendUpdate?.plan_name || 'Not Available';
+    return props.sendUpdate?.plan_name || props.quoteRequest?.plan?.text || 'Not Available';
   }
 
   return (quoteTypesToCheck.includes(props.quoteType) && plan) ? plan.text : 'Not Available';
 });
 
-const providerName = computed(() => {
-  const plan = planDetail.value;
-    if (props.sendUpdate) {
-      return props.sendUpdate?.provider_name || 'Not Available';
-    } else if (quoteTypesToCheck.includes(props.quoteType) && plan.insurance_provider) {
-      return plan ? plan.insurance_provider.text : 'Not Available';
-    } else {      
-      return plan ? plan.text : 'Not Available';
-    }  
-});
-
 const providerId = computed(() => {
   const plan = planDetail.value;
   if (props.sendUpdate) {
-    return props.sendUpdate.insurance_provider_id || props.quoteRequest?.insurance_provider_details.id
+    return props.sendUpdate?.insurance_provider_id || props.quoteRequest?.insurance_provider_details?.id || props.quoteRequest?.plan?.provider_id;
   } else if (plan && plan.insurance_provider) {
     return plan.insurance_provider.id;
   } else if (plan && plan.provider_id) {
@@ -1749,6 +1742,19 @@ const providerId = computed(() => {
     return plan.id;
   }
   return null;
+});
+
+const providerName = computed(() => {
+  const plan = planDetail.value;
+  if (props.sendUpdate) {
+    let provider = props?.insuranceProviders?.find(provider => provider.id === providerId.value);
+
+    return props.sendUpdate?.provider_name || (provider ? provider.text : null) || 'Not Available';
+  } else if (quoteTypesToCheck.includes(props.quoteType) && plan.insurance_provider) {
+    return plan ? plan.insurance_provider.text : 'Not Available';
+  } else {
+    return plan ? plan.text : 'Not Available';
+  }
 });
 
 // Watch for changes in paymentMethodsForm.collection_date

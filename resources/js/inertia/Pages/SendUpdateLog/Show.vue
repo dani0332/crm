@@ -295,6 +295,7 @@ const isBookingDetailsVisible = computed(() => {
         :storageUrl="props.storageUrl"
         :send-update="sendUpdateLog"
         :send-update-status-enum="page.props.sendUpdateStatusEnum"
+        :insuranceProviders="props.insuranceProviders"
     />
 
     <LazyPolicyDetails
