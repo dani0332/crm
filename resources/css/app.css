@@ -111,6 +111,10 @@ label {
   @apply even:bg-slate-50;
 }
 
+.text-wrap .vue3-easy-data-table__header tr th {
+    text-wrap: wrap;
+}
+
 /* table head sort icons */
 /* None */
 .vue3-easy-data-table__header tr th.sortable.none .sortType-icon {

@@ -910,7 +910,7 @@ const getAdvisorLabel = () => {
 
     <DataTable
       ref="dataTableRef"
-      table-class-name="tablefixed"
+      table-class-name="compact text-wrap"
       :loading="loaders.table"
       :headers="tableHeader"
       :items="reportData || []"
