@@ -5,7 +5,6 @@ namespace App\Http\Controllers\V2;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\AlfredChatRequest;
 use App\Models\AlfredChat;
-use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 
 class AlfredChatController extends Controller
@@ -17,10 +16,32 @@ class AlfredChatController extends Controller
      */
     public function index(AlfredChatRequest $request)
     {
-        $chat = AlfredChat::where('quote_id', $request->quoteId)->where('quote_type', $request->quoteType)
-        ->groupBy(DB::raw('DATE(created_at)'))
-        ->select('role', 'msg', DB::raw('DATE(created_at) as date'))
-        ->get();
+        $chat = AlfredChat::raw(function ($collection) use ($request) {
+            return $collection->aggregate([
+                [
+                    '$match' => [ // $match is a group operator to filter the records just like where clause in SQL
+                        'quote_id' => $request->quoteId,
+                        'quote_type' => $request->quoteType,
+                    ],
+                ],
+                [
+                    '$group' => [
+                        '_id' => [ // _id is a group operator to group the records
+                            '$dateToString' => [ // $dateToString is an aggregation operator to convert date to string
+                                'format' => '%Y-%m-%d', // format of the date
+                                'date' => ['$toDate' => '$created_at'], // $toDate is an aggregation operator to convert string to date
+                            ],
+                        ],
+                        'role' => ['$first' => '$role'], //$first is used to add role field of the first occurrence of the group
+                        'msg' => ['$first' => '$msg'],   //$first is used to add msg field  of the first occurrence of the group
+                        'count' => ['$sum' => 1], // $sum is used to count the number of records in the group
+                    ],
+                ],
+                [
+                    '$sort' => ['_id' => -1], // Sort by _id (date) in descending order
+                ],
+            ]);
+        });
 
         if ($chat->isEmpty()) {
             return response()->json(['message' => 'No chat available']);
@@ -31,12 +52,14 @@ class AlfredChatController extends Controller
 
     public function getChatByDate(AlfredChatRequest $request)
     {
-        $dateFrom = Carbon::createFromFormat('Y-m-d', $request->created_at)->startOfDay();
-        $dateTo = Carbon::createFromFormat('Y-m-d', $request->created_at)->endOfDay();
-        
-        $chat = AlfredChat::where('quote_id', $request->quoteId)->where('quote_type', $request->quoteType)->where('created_at', [$dateFrom, $dateTo])
-        ->select('role', 'msg', 'created_at')
-        ->get();
+        $dateFrom = Carbon::createFromFormat('Y-m-d', $request->created_at)->startOfDay()->toIso8601String();
+        $dateTo = Carbon::createFromFormat('Y-m-d', $request->created_at)->endOfDay()->toIso8601String();
+
+        $chat = AlfredChat::where('quote_id', $request->quoteId)
+            ->where('quote_type', $request->quoteType)
+            ->whereBetween('created_at', [$dateFrom, $dateTo])
+            ->select('role', 'msg', 'created_at')
+            ->get();
 
         if ($chat->isEmpty()) {
             return response()->json(['message' => 'No chat available']);

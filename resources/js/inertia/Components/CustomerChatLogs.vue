@@ -49,7 +49,7 @@ const loader = ref(false);
 const tableHeaders = reactive([
   {
     text: 'Created At',
-    value: 'created_at',
+    value: '_id',
   },
   {
     text: 'View',
@@ -154,12 +154,12 @@ const showChat = item => {
     .post('/get-alfred-chat-by-date', {
       quoteId: props.quoteId,
       quoteType: props.quoteType,
-      created_at: item.created_at,
+      created_at: item._id,
     })
     .then(response => {
       let { data } = { ...response.data };
       loader.value = false;
-      chatMessages.value.created_at = item.created_at;
+      chatMessages.value.created_at = item._id;
       chatMessages.value.data = data;
       showChatLogs.value = true;
     })
@@ -341,7 +341,7 @@ onMounted(async () => {
                 {{ message.created_at.split(' ')[1] }}
               </p>
               </p>
-             
+
               <div
                 :class="{
                   'bg-blue-500 left-[-16px]': message.role == 'USER',
