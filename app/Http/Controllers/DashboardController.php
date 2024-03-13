@@ -111,7 +111,7 @@ class DashboardController extends Controller
             'assignedLeadsBySource' => $assignedLeadsBySource,
             'leadReceivedSummaryBySource' => $leadReceivedSummaryBySource,
         ]);
-      
+
     }
 
     public function getRecentDailyStats(Request $request)
@@ -414,7 +414,7 @@ class DashboardController extends Controller
 
     public function renderComprehensiveDashboard(Request $request)
     {
-        
+
         $tiers = Tier::where('can_handle_tpl', 0)->orderBy('name', 'asc')->where('name', '!=', TiersEnum::TIER_R)->where('is_active', 1)->get();
         $comprehensiveDashboardStats = $this->getComprehensiveDashboardStats($request, $tiers);
         info('inside renderComprehensiveDashboard comp stats are : '.json_encode($comprehensiveDashboardStats));
