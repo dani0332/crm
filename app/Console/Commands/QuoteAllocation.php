@@ -74,7 +74,6 @@ class QuoteAllocation extends Command
                     'allocationKey' => 'advisor_id',
                     'conditions' => function ($lead) {
                         return $lead instanceof HealthQuote
-                            && $lead->quote_status_id === QuoteStatusEnum::Qualified
                             && ! in_array($lead->quote_status_id, [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate, QuoteStatusEnum::Lost])
                             && $lead->health_quote_request->price_starting_from !== null
                             && ! $lead->health_quote_request->is_error_email_sent
