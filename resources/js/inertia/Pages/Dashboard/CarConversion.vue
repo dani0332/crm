@@ -85,7 +85,6 @@ onMounted(() => {
   <div v-for="(heading, key) in headingArray" :key="heading" class="my-8">
     <h1 class="text-lg my-3">{{ heading }}</h1>
     <DataTable
-      show-index
       table-class-name="tablefixed"
       :headers="carHeaders"
       border-cell

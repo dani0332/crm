@@ -166,10 +166,10 @@ onMounted(() => {
       table-class-name="tablefixed"
       :headers="travelHeaders"
       border-cell
-      hide-rows-per-page
       hide-footer
       fixed-checkbox
       :items="stats[key]"
+      :rows-per-page="500"
     >
       <template #item-email="item">
         <p>{{ item.email ?? 'UnAssigned' }}</p>
