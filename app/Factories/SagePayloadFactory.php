@@ -810,6 +810,41 @@ class SagePayloadFactory
                         ]
                     ]
                 ];
+
+            case SageEnums::APPLY_SPLIT_PAYMENT_INVOICES:
+                $response = [
+                    'recursiveCalls' => [
+                        'createPaymontRecieptOneInvoice',
+                        'readyToPostReceiptArPayment',
+                        'aRPostReceipts',
+                        'arSplitPrepaymentPayload',
+                    ],
+                    'extraDetails' => [
+                        'createPaymontRecieptOneInvoice' => [
+                            'requestParms' => 'payload',
+                            'nextCondition' => 'BatchNumber',
+                            'errorMessage' => 'Apply payment failed from Sage'
+                        ],
+                        'readyToPostReceiptArPayment' => [
+                            'requestParms' => 'sageCustomerNumber',
+                            'logResponse' => true,
+                            'conditionChecks' => ['type' => 'Not Empty', 'condtion_to_check' => ''],
+                            'errorMessage' => 'Error while posting to Payment'
+                        ],
+                        'aRPostReceipts' => [
+                            'requestParms' => 'BatchNumber',
+                            'logResponse' => true,
+                            'conditionChecks' => ['type' => 'isset', 'condtion_to_check' => 'error'],
+                            'errorMessage' => 'Error while making Apply payment posted to Sage'
+                        ],
+                        'arSplitPrepaymentPayload' => [
+                            'requestParms' => 'sageCustomerNumber',
+                            'logResponse' => true,
+                            'conditionChecks' => ['type' => 'Not Empty', 'condtion_to_check' => ''],
+                            'errorMessage' => 'Error while making Apply payment ready to post to Sage'
+                        ]
+                    ]
+                ];
             
             default:
                 # code...
@@ -819,106 +854,4 @@ class SagePayloadFactory
         return $response;
     }
 
-    // public static function handleSageAPIsParams($type)
-    // {
-    //     $response = [];
-    //     switch ($type) {
-    //         case SageEnums::TYPE_SEND_POLICY:
-    //             $response = [
-    //                 'steps' => 13
-    //             ];
-    //             break;
-
-    //         case SageEnums::TYPE_CREATE_RECEIPT:
-    //             $response = [
-    //                 'steps' => 4,
-    //                 'recursiveCalls' => [
-    //                     'createPrepaymentPayload' => [
-    //                         'readyToPostReceiptArPayment',
-    //                         'aRPostReceiptsPayment'
-    //                     ]
-    //                 ]
-    //             ];
-    //             break;
-
-    //         case SageEnums::TYPE_SEND_UPDATE:
-    //             $response = [
-    //                 'steps' => 13,
-    //                 'recursiveCalls' => [
-    //                     'createARInvoicePremAndComm',
-    //                     'readyToPostInvoiceAr',
-    //                     'aRPostInvoices',
-    //                     'createAPInvoicePrem',
-    //                     'readyToPostInvoiceAP',
-    //                     'aPPostInvoices',
-    //                     'createARInvoiceDis',
-    //                     'readyToPostInvoiceAr',
-    //                     'aRPostInvoices'
-    //                 ],
-    //                 'extraDetails' => [
-    //                     'createARInvoicePremAndComm_1' => [
-    //                         'requestParms' => 'payload',
-    //                         'nextCondition' => 'BatchNumber',
-    //                         'errorMessage' => 'AR invoice & prem failed from Sage'
-    //                     ],
-    //                     'readyToPostInvoiceAr_2' => [
-    //                         'requestParms' => 'BatchNumber',
-    //                         'verb' => 'PATCH',
-    //                         'logResponse' => true,
-    //                         'checkCondition' => ['type' => 'Not Empty', 'response' => ''],
-    //                         'errorMessage' => 'Error while making AR invoice & prem ready to post to Sage'
-    //                     ],
-    //                     'aRPostInvoices_3' => [
-    //                         'requestParms' => 'BatchNumber',
-    //                         'logResponse' => true,
-    //                         'checkCondition' => ['type' => 'isset', 'response' => 'error'],
-    //                         'errorMessage' => 'Error while making AR invoice & prem Posted to Sage'
-    //                     ],
-    //                     'createAPInvoicePrem_4' => [
-    //                         'requestParms' => 'payload',
-    //                         'nextCondition' => 'BatchNumber',
-    //                         'errorMessage' => 'AP invoice prem failed from Sage'
-    //                     ],
-    //                     'readyToPostInvoiceAP_5' => [
-    //                         'requestParms' => 'BatchNumber',
-    //                         'verb' => 'PATCH',
-    //                         'logResponse' => true,
-    //                         'checkCondition' => ['type' => 'Not Empty', 'response' => ''],
-    //                         'errorMessage' => 'Error while making AP invoice ready to post to Sage'
-    //                     ],
-    //                     'aPPostInvoices_6' => [
-    //                         'requestParms' => 'BatchNumber',
-    //                         'logResponse' => true,
-    //                         'checkCondition' => ['type' => 'isset', 'response' => 'error'],
-    //                         'errorMessage' => 'Error while making AP invoices Posted to Sage'
-    //                     ],
-    //                     'createARInvoiceDis_7' => [
-    //                         'requestParms' => 'payload',
-    //                         'nextCondition' => 'BatchNumber',
-    //                         'errorMessage' => 'AR discount invoice failed from Sage'
-    //                     ],
-    //                     'readyToPostInvoiceAr_8' => [
-    //                         'requestParms' => 'BatchNumber',
-    //                         'verb' => 'PATCH',
-    //                         'logResponse' => true,
-    //                         'checkCondition' => ['type' => 'Not Empty', 'response' => ''],
-    //                         'errorMessage' => 'Error while making AR discount invoice ready to post to sage'
-    //                     ],
-    //                     'aRPostInvoices_9' => [
-    //                         'requestParms' => 'BatchNumber',
-    //                         'logResponse' => true,
-    //                         'checkCondition' => ['type' => 'isset', 'response' => 'error'],
-    //                         'errorMessage' => 'Error while making AR discount invoice Posted to sage'
-    //                     ]
-    //                 ]
-    //             ];
-    //             break;
-            
-    //         default:
-    //             $response = [];
-    //             break;
-    //     }
-
-    //     return $response;
-    // }
 }
