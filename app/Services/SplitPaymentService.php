@@ -204,7 +204,15 @@ class SplitPaymentService
                     return false;
                 }
 
-                $childPayments = Payment::where('code', 'like', "$code%")->get();
+                $childPayments = Payment::where('code', 'like', "$code%")
+                ->whereNotIn('payment_status_id', [PaymentStatusEnum::DRAFT, PaymentStatusEnum::CANCELLED])
+                ->get();
+
+                if ($childPayments->count() == 0) {
+                    Log::info('MigratePayment::All payments are drafted or cancelled for Payment Code: '.$payment->code);
+
+                    return false;
+                }
                 if ($childPayments->count() > 5) {
                     Log::info('MigratePayment::Child Payments are greater than 5 for Payment Code: '.$payment->code);
 

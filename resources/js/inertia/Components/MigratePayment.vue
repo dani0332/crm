@@ -1,5 +1,5 @@
 <script setup>
-
+const page = usePage();
 const props = defineProps({
     quoteType: String,
     quoteId: Number,
@@ -10,17 +10,39 @@ const props = defineProps({
 const notification = useNotifications('toast');
 const isLoading = ref(false);
 
+
 // Check if the component should be visible
 const isVisible = computed(() => {
     if (props.payments.length > 5) {
         return false; 
     }
+
+    if(isAllCancelled(props.payments)){
+        return false; 
+    }
+
     if(isSameInsuranceProviderId(props.payments)){
         return true; 
     } else {
         return false;
     }    
 });
+
+// Check if all insurance_provider_id are the same
+const isAllCancelled = (allPayments) => {
+    if (allPayments.length === 0) {
+        return false; 
+    }           
+    
+    // filter out the 3 cancelled and 11 drafted payments 
+    let cancelledPayments = allPayments.filter(payment => payment.payment_status_id === page.props.paymentStatusEnum.CANCELLED || payment.payment_status_id === page.props.paymentStatusEnum.DRAFT);
+    
+    if(cancelledPayments.length === allPayments.length){
+        return true;
+    } else {
+        return false;
+    }
+}
 
 // Check if all insurance_provider_id are the same
 const isSameInsuranceProviderId = (arr) => {
