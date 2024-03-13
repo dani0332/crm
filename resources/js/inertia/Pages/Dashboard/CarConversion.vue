@@ -85,13 +85,14 @@ onMounted(() => {
   <div v-for="(heading, key) in headingArray" :key="heading" class="my-8">
     <h1 class="text-lg my-3">{{ heading }}</h1>
     <DataTable
+      show-index
       table-class-name="tablefixed"
       :headers="carHeaders"
       border-cell
-      hide-rows-per-page
       hide-footer
       fixed-checkbox
       :items="stats[key]"
+      :rows-per-page="500"
     >
       <template #item-email="item">
         <p>{{ item.email ?? 'UnAssigned' }}</p>
