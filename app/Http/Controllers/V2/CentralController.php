@@ -249,8 +249,6 @@ class CentralController extends Controller
         if ($request->send_policy_type == 'sage') {
             $quoteTypeId = app(ActivitiesService::class)->getQuoteTypeId(strtolower($request->model_type));
             $payment = Payment::where('code', $quote['code'])->first();
-            $this->handleInSufficientPayment($request, $payment);
-
             $paymentSplits = PaymentSplits::where('code', $quote['code'])->get();
             $data['quoteTypeId'] = $quoteTypeId;
             $data['id'] = $quote->id;
