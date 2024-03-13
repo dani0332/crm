@@ -552,6 +552,7 @@ class SagePayloadFactory
             PaymentMethodsEnum::Cheque => SagePaymentMethodsEnum::SAGE_CHEQUE,
             PaymentMethodsEnum::PostDatedCheque => SagePaymentMethodsEnum::SAGE_POST_DATED_CHEQUE,
             PaymentMethodsEnum::CreditCard => SagePaymentMethodsEnum::SAGE_CREDIT_CARD,
+            PaymentMethodsEnum::InsurerPayment => SagePaymentMethodsEnum::SAGE_INSURER_PAYMENT,
         ];
         if (array_key_exists($paymentMethod, $sagePaymentCodeMappingArray)) {
             return $sagePaymentCodeMappingArray[$paymentMethod];
