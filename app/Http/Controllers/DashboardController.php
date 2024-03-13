@@ -47,13 +47,6 @@ class DashboardController extends Controller
         $dateFormat = config('constants.DB_DATE_FORMAT_MATCH');
         $startDate = now()->startOfDay()->format($dateFormat);
         $endDate = now()->endOfDay()->format($dateFormat);
-        // if (isset($request->range)) {
-        //     $startDate = Carbon::parse(explode(',', $request->range)[0])->startOfDay()->format($dateFormat);
-        //     $endDate = Carbon::parse(explode(',', $request->range)[1])->endOfDay()->format($dateFormat);
-        // } else {
-        //     $startDate = now()->startOfDay()->format($dateFormat);
-        //     $endDate = now()->endOfDay()->format($dateFormat);
-        // }
 
         $todaysLeads = CarQuote::whereBetween('created_at', [now()->startOfDay(), now()->endOfDay()])
             ->whereNotIn('car_quote_request.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
@@ -118,9 +111,7 @@ class DashboardController extends Controller
             'assignedLeadsBySource' => $assignedLeadsBySource,
             'leadReceivedSummaryBySource' => $leadReceivedSummaryBySource,
         ]);
-        // return view('dashboard.main_dashboard', compact(['totalLeadsReceived', 'totalLeadsReceivedEcommerce', 'totalUnAssignedLeadsReceived', 'totalUnAssignedLeadsReceivedEcommerce',
-        //     'teams', 'carAdvisors', 'teamWiseLeadsAssignedAverage', 'totalUnAssignedRevivalLeads', 'leadsCountByTier', 'unAssignedLeadsByTier',
-        //     'revivalLeadsCount', 'advisorLeadsAssignedData', 'assignedLeadsBySource', ]));
+      
     }
 
     public function getRecentDailyStats(Request $request)
@@ -180,7 +171,6 @@ class DashboardController extends Controller
             'tiers' => $tiers,
         ]);
 
-        // return view('dashboard.tpl_dashboard', compact('tplDashboardStats', 'teams', 'commonTeam', 'tiers'));
     }
 
     public function getTPLDashboardStats(Request $request): array
@@ -424,7 +414,7 @@ class DashboardController extends Controller
 
     public function renderComprehensiveDashboard(Request $request)
     {
-        // $carUsers = $this->getUsersByProductName(quoteTypeCode::Car);
+        
         $tiers = Tier::where('can_handle_tpl', 0)->orderBy('name', 'asc')->where('name', '!=', TiersEnum::TIER_R)->where('is_active', 1)->get();
         $comprehensiveDashboardStats = $this->getComprehensiveDashboardStats($request, $tiers);
         info('inside renderComprehensiveDashboard comp stats are : '.json_encode($comprehensiveDashboardStats));
@@ -439,7 +429,7 @@ class DashboardController extends Controller
             'teams' => $teams,
             'tiers' => $tiers,
         ]);
-        // return view('dashboard.comprehensive_dashboard', compact('tiers', 'comprehensiveDashboardStats', 'teams'));
+
     }
 
     public function conversionStats($quoteType)
@@ -452,7 +442,7 @@ class DashboardController extends Controller
             'headingArray' => $headingArray,
             'qouteType' => $quoteType,
         ]);
-        // return view('dashboard.'.$quoteType.'-conversion', compact('statsArray', 'headingArray'));
+
     }
 
     public function getWeeklyStats($type): array
