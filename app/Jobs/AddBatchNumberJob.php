@@ -83,7 +83,7 @@ class AddBatchNumberJob implements ShouldQueue
         while ($startDate < now()) {
             $currentDate = $startDate->toDateString();
             $nextWeek = $startDate->addDays(6)->toDateString();
-            $key = $currentDate.','.$nextWeek;
+            $key = $currentDate.','.$currentDate;
             $value = 'Batch '.$count;
             array_push($batchArray, $key.'|'.$value);
             $count++;
