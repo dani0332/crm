@@ -72,6 +72,7 @@ class UpdatePolicyDetailRequest extends FormRequest
             'price_vat_notapplicable.required_without' => 'Price (VAT NOT APPLICABLE) OR Price (VAT APPLICABLE) is required',
             'price_vat_notapplicable.between' => 'Price (VAT NOT APPLICABLE) must be less than 13 digits',
             'amount.between' => 'Price (VAT NOT APPLICABLE) must be less than 13 digits',
+            'amount_with_vat.required' => 'Total price is required',
 
         ];
     }
