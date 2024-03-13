@@ -265,11 +265,14 @@ class CarEmailService extends BaseService
 
     private function getEmailTemplateId($lead, $plans, $tierR)
     {
+        if ($lead->sic_flow_enabled) {
+            info('Inside sic flow enabled: '.$lead->uuid);
+
+            return 605; // Send email template for Tier 5 leads with no advisor : SIC intro email
+        }
         if (count($plans) == 0) {
             // No plans with available ratings, send a specific email template
             return $lead->tier_id == $tierR->id ? 492 : 494;
-        } elseif ($lead->sic_flow_enabled) {
-            return 605; // Send email template for Tier 5 leads with no advisor : SIC intro email
         } else {
             // Plans with available ratings exist, send a different email template
             return $lead->tier_id == $tierR->id ? 491 : 493;
