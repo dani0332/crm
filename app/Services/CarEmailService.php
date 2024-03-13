@@ -27,7 +27,7 @@ class CarEmailService extends BaseService
         $plans = $this->executePlansSelectionLogic($plans);
 
         // Determine the email template ID
-        $emailTemplateId = $this->getEmailTemplateId($lead, $plans, $tierR);
+        $emailTemplateId = $this->getEmailTemplateId($lead, $plans, $tierR, $triggerSICWorkFlow);
 
         // Build email data
         $emailData = $this->buildEmailData($lead, $plans, $previousAdvisorId, $tierR->id);
@@ -263,9 +263,9 @@ class CarEmailService extends BaseService
         return $result;
     }
 
-    private function getEmailTemplateId($lead, $plans, $tierR)
+    private function getEmailTemplateId($lead, $plans, $tierR, $triggerSICWorkFlow = false)
     {
-        if ($lead->sic_flow_enabled) {
+        if ($triggerSICWorkFlow) {
             info('Inside sic flow enabled: '.$lead->uuid);
 
             return 605; // Send email template for Tier 5 leads with no advisor : SIC intro email
