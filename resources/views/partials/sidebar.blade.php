@@ -187,7 +187,7 @@ use App\Enums\PermissionsEnum;
                 <ul class="nav side-menu">
                     <li><a><i class="fa fa-car" aria-hidden="true"></i> Car <span class="fa fa-chevron-down"></span></a>
                         <ul class="nav child_menu">
-                            <li><a href="{{ route('calculatevaluation') }}">Valuation</a></li>
+                            <li><a href="{{ route('valuation') }}">Valuation</a></li>
                             <li><a href="{{ url('valuation/vehicledepreciation') }}">Vehicle Depreciation</a></li>
                         </ul>
                     </li>
@@ -280,6 +280,7 @@ use App\Enums\PermissionsEnum;
                     </li>
                 </ul>
                 @endcanany
+                <!-- // Scheduled to delete 15th April 2024
                 @can(PermissionsEnum::ClaimList)
                 <ul class="nav side-menu">
                     <li><a><i class="fa fa-quote-left"></i> Claims <span class="fa fa-chevron-down"></span></a>
@@ -311,14 +312,12 @@ use App\Enums\PermissionsEnum;
                         </ul>
                     </li>
                 </ul>
-                @endcan
+                @endcan -->
                 @can(PermissionsEnum::AMLList)
                 <ul class="nav side-menu">
                     <li><a><i class="fa fa-desktop"></i> AML <span class="fa fa-chevron-down"></span></a>
                         <ul class="nav child_menu">
                             <li><a href="{{ url('kyc/aml') }}">All Quotes</a></li>
-                            <!-- <li><a href="{{ url('kyc/aml/download/history') }}">Downloaded Sanction Lists</a></li>
-                            <li><a href="{{ url('kyc/aml/upload/uae') }}">Upload UAE List</a></li> -->
                         </ul>
                     </li>
                 </ul>

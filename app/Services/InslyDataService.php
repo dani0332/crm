@@ -7,6 +7,7 @@ use App\Models\InslyDataMapping;
 use Config;
 use Illuminate\Support\Facades\Log;
 
+//Scheduled to delete 1st April 2024
 class InslyDataService extends BaseService
 {
     public static function GetDataFromInsly($nextStartDate, $nextEndDate)
