@@ -79,11 +79,12 @@ This guide outlines the steps to run the project locally on Docker. Docker provi
 
 ## Prerequisites
 Before proceeding, ensure that you have the following prerequisites installed on your system:
+- Doppler
 - Docker
 - Docker Compose
 
 ## Configuration
-The provided configuration is a basic setup that you can customize according to your requirements. Some ports may already be in use by other services on your system, so you may need to mirror those ports using Docker, these environment variable are necessary it will help you configure according to your need. You can use the localenvs_docker which already have these keys set by default at Doppler, There is already configuration available on doppler "localenvs_docker" if you configure with this env configuration everything run smoothly
+The provided configuration is a basic setup that you can customize according to your requirements. Some ports may already be in use by other services on your system, so you may need to mirror those ports using Docker, these environment variable are necessary it will help you configure according to your need. You can use the "localenvs_docker" which already have these keys set by default at Doppler, There is already configuration available on doppler "localenvs_docker" if you configure with this env configuration everything run smoothly
 
 ### Example Configuration
 ```dotenv
@@ -127,15 +128,17 @@ PHPMYADMIN_PORT=2600
 - mailhogblanka
 - dbblanka
 - appblanka
+- phpmyadminblanka
+- mailhogblanka
 
 
 ## Building and Running Containers
-Use the following commands to build and run the containers for your services for build you dont need to run with doppler:
+Use the following commands to build and run the containers for your services for build you need to run with doppler cause it will passed down doppler token from env to your containers:
 
 ```dotenv
-docker-compose -f docker-compose-local.yml build
+doppler run -- docker-compose -f docker-compose-local.yml build
 ```
-This command builds the containers related to your services, here -f flag detonates which dockerfile you want to use as there are some production docker files as well so its better to mention which file to use otherwise it will pick by default file which docker-compose.yml .
+This command builds the containers related to your services, here -f flag detonates which dockerfile you want to use as there are some production docker files as well so its better to mention which file to use otherwise it will pick by default file which is docker-compose.yml .
 
 ## Run Containers:
 
@@ -150,42 +153,23 @@ This command starts your services. If you add the -d flag, it will run in the ba
 doppler run -- docker-compose -f docker-compose-local.yml exec container-name-here-like-(appblanka) php artisan optimize
 doppler run -- docker-compose -f docker-compose-local.yml exec container-name-here-like-(appblanka) php artisan migrate/make:controller
 doppler run -- docker-compose -f docker-compose-local.yml exec container-name-here-like-(appblanka) php artisan make:controller
-doppler run -- docker-compose -f docker-compose-local.yml exec container-name-here-like-(appblanka) /bin/bash
-doppler run -- docker-compose -f docker-compose-local.yml exec container-name-here-like-(dbblanka) /bin/bash
+doppler run -- docker-compose -f docker-compose-local.yml exec container-name-here-like-(appblanka) /bin/bash ----------- you can access php container
+doppler run -- docker-compose -f docker-compose-local.yml exec container-name-here-like-(dbblanka) /bin/bash ----------- you can access mysql container
 ```
 
-This command allows you to run commands inside your container. You can also enter the container using bin/bash instead of php command.
+This command allows you to run commands inside your container. You can also enter the container using bin/bash instead of php/mysql command.
+
+
 
 ## Important Note
 I have created separate Docker files and configurations for local environments. The docker-local folder contains configurations for local Docker, including files "Dockerfile-Local" and "docker-compose-local.yml", which are used to build and run images for local development.
 
-You Nginx config file show always match docker container name
 
-```docker-local/nginx/conf.d/app.conf
+## Access containers application on your local browser according default docker config from doppler
+- appblanka --------- you can access application http://127.0.0.1:8000  
+- phpmyadminblanka -- you can access phpmyadmin http://127.0.0.1:2600  
+- mailhogblanka ----- you can access mailhog http://127.0.0.1:7025  
 
-server {
-    listen 80;
-    index index.php index.html;
-    error_log  /var/log/nginx/error.log;
-    access_log /var/log/nginx/access.log;
-    root /var/www/public;
-    client_max_body_size 2048M;
-    location ~ \.php$ {
-        try_files $uri =404;
-        fastcgi_split_path_info ^(.+\.php)(/.+)$;
-        fastcgi_pass appblanka:9000; ---------------------> This Line should match with your container name which is appblanka in our current repository
-        fastcgi_index index.php;
-        include fastcgi_params;
-        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
-        fastcgi_param PATH_INFO $fastcgi_path_info;
-    }
-    location / {
-        try_files $uri $uri/ /index.php?$query_string;
-        gzip_static on;
-    }
-}
-
-```
 
 
 ## Conclusion
