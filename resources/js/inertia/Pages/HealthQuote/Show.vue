@@ -2453,7 +2453,6 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       :quoteStatusEnum="enums.quoteStatusEnum"
       :policyIssuanceStatus="policyIssuanceStatus"
       modelType="health"
-      :payments="payments"
     />
 
     <div class="p-4 rounded shadow mb-6 bg-white">
@@ -3137,7 +3136,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
     </div>
 
     <ClientInquiryLogs
-      v-if="clientInquiryLogs.length > 0"
+      v-if="clientInquiryLogs?.length > 0"
       :logs="clientInquiryLogs"
       />
 
