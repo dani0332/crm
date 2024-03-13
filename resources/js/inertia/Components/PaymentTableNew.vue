@@ -791,7 +791,7 @@ const handleFrequencyChange = (noPaymentUpdate=true) => {
   isCustomReasonEnabled.value = false; 
   handleApprovalReasonChange();
 
-  for (let i = 1; i <= 15; i++) { // Append 7 more values to totalPayments
+  for (let i = 1; i <= 20; i++) { // Append 7 more values to totalPayments
     totalPayments.value.push({ value: i.toString(), label: i.toString() });
   }
   calculatePaymentBreakup();
@@ -810,7 +810,7 @@ const handleFrequencyChange = (noPaymentUpdate=true) => {
     if(noPaymentUpdate){
       paymentMethodsForm.payment_no = '2';
     }
-    totalPayments.value.splice(-10);
+    totalPayments.value.splice(-15);
     totalPayments.value.splice(0, 1);     
   } else if (paymentMethodsForm.frequency === 'custom') {
     isPaymentNoEnabled.value = true;

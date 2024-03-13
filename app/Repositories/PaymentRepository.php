@@ -365,7 +365,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                             $paymentSplit->collection_amount = $splitAmount;
                             $paymentSplit->save();
                             if (Auth::user()->hasRole(RolesEnum::BetaUser)) { //Part of milestone 2
-                                app(SplitPaymentService::class)->createReciept($quoteModel, $quoteTypeId, $paymentSplit);
+                                app(SplitPaymentService::class)->createReciept($request->modelType, $request->quote_id, $paymentSplit);
                             }
                             $parentPayment = $paymentSplit->payment;
                             $parentPayment->captured_amount = ($parentPayment->captured_amount + $splitAmount);
