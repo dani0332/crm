@@ -622,7 +622,13 @@ const caculateCommission = () => {
     </Collapsible>
     <x-modal v-model="modals.sendPolicyConfirm" size="lg" show-close backdrop>
       <template #header> Send Policy </template>
-      <x-alert color="orange" light type="error" class="text-sm mb-4">
+      <x-alert
+        color="orange"
+        light
+        type="error"
+        class="text-sm mb-4"
+        v-if="bPDetails.sendPolicyType == 'customer'"
+      >
         Please be aware that your current action involves sending the policy to
         the customer only.
       </x-alert>
