@@ -208,6 +208,16 @@ class User extends Authenticatable implements AuditableContract
         return Auth::user()->hasRole(RolesEnum::Admin);
     }
 
+    public function isEngineer()
+    {
+        return Auth::user()->hasRole(RolesEnum::Engineering);
+    }
+
+    public function isSeniorManagement()
+    {
+        return Auth::user()->hasRole(RolesEnum::SeniorManagement);
+    }
+
     public function getUserTeams($userId)
     {
         $userTeamIds = UserTeams::where('user_id', $userId)->get()->pluck('team_id');

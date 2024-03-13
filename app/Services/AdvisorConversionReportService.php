@@ -22,6 +22,7 @@ use App\Models\PersonalQuote;
 use App\Enums\PermissionsEnum;
 use App\Enums\TravelQuoteEnum;
 use Illuminate\Support\Facades\Auth;
+use App\Http\Traits\VehicleTypeTrait;
 use App\Services\DropdownSourceService;
 use App\Repositories\QuoteTypeRepository;
 
@@ -29,6 +30,7 @@ class AdvisorConversionReportService extends BaseService
 {
     use GetUserTreeTrait;
     use TeamHierarchyTrait;
+    use VehicleTypeTrait;
 
     public function getReportData($request)
     {
@@ -108,19 +110,26 @@ class AdvisorConversionReportService extends BaseService
 
     public function getFiltersByLob()
     {
+        $isAdvisor = Auth::user()->isAdvisor() &&
+            !Auth::user()->isManagerOrDeputy() &&
+            !Auth::user()->isLeadPool() &&
+            !Auth::user()->isAdmin() &&
+            !Auth::user()->isEngineer() &&
+            !Auth::user()->isSeniorManagement();
+
         return [
             'advisors' => [
-                'can_view' => !Auth::user()->isAdvisor(),
+                'can_view' => !$isAdvisor,
             ],
             'teams' => [
-                'can_view' => !Auth::user()->isAdvisor(),
+                'can_view' => !$isAdvisor,
                 'lobs' => [
                     quoteTypeCode::Car,
                     quoteTypeCode::Health,
                 ],
             ],
             'sub_teams' => [
-                'can_view' => !Auth::user()->isAdvisor(),
+                'can_view' => !$isAdvisor,
                 'lobs' => [
                     quoteTypeCode::Car,
                 ],
@@ -248,12 +257,12 @@ class AdvisorConversionReportService extends BaseService
                 ["value" => TravelQuoteEnum::TRAVEL_UAE_OUTBOUND, 'label' => 'Outside UAE (OutBound)'],
             ],
         ];
+
+        $vehicleCategories = $this->getVehicleTypes()->pluck('text')->map(function ($category) {
+            return ['value' => ucwords($category), 'label' => ucwords(strtolower($category))];
+        })->toArray();
         $vehicleType = [
-            quoteTypeCode::Car => [
-                ["value" => 'saloon', 'label' => 'Saloon'],
-                ["value" => 'suv', 'label' => 'SUV'],
-                ["value" => 'other', 'label' => 'Other'],
-            ],
+            quoteTypeCode::Car => $vehicleCategories,
         ];
 
         return [

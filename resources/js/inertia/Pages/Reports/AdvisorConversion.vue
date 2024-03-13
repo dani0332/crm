@@ -24,6 +24,7 @@ const subteamOptions = ref([]);
 const advisorOptions = ref([]);
 const isDirty = ref(false);
 const isMounted = ref(false);
+const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
 
 const {
   currentPageFirstIndex,
@@ -210,7 +211,7 @@ function calculateNetConversion(row) {
 }
 
 const filters = reactive({
-  lob: 'Car',
+  lob: quoteTypeCodeEnum.Car,
   advisorAssignedDates: [],
   is_ecommerce: '',
   batches: [],
@@ -477,7 +478,7 @@ const onLobChange = e => {
     subteamOptions.value = [];
     advisorOptions.value = [];
 
-    if(!['Car', 'Health'].includes(filters.lob)) {
+    if(![quoteTypeCodeEnum.Car, quoteTypeCodeEnum.Health].includes(filters.lob)) {
         loadAdvisorsByLob(e);
     } else {
         loadTeams(e);
@@ -491,8 +492,9 @@ const onTeamChange = e => {
     filters.advisors = [];
     advisorOptions.value = [];
 
-    if(filters.lob === 'Car') {
+    if(filters.lob === quoteTypeCodeEnum.Car) {
         loadSubTeams(e);
+        loadAdvisors(e);
     } else {
         loadAdvisors(e);
     }
@@ -502,7 +504,15 @@ const onSubTeamChange = e => {
 
     filters.advisors = [];
     advisorOptions.value = [];
-    loadAdvisors(e);
+
+    if (e.length == 0 &&
+        filters.lob === quoteTypeCodeEnum.Car &&
+        filters.teams.length > 0) {
+
+        loadAdvisors(filters.teams);
+    } else {
+        loadAdvisors(e);
+    }
 };
 
 const loadTeams = e => {
@@ -693,13 +703,7 @@ const isDisabled = (element) => {
 
 const getAdvisorLabel = () => {
     let label = 'Advisors'
-    if(filters.lob === 'Car' &&
-    (!filters.teams || filters.teams.length == 0 ||
-     !filters.sub_teams || filters.sub_teams.length == 0)) {
-
-        label = 'Advisors (select teams and subteams first)';
-
-    } else if (filters.lob === 'Health' &&
+    if ([quoteTypeCodeEnum.Car, quoteTypeCodeEnum.Health].includes(filters.lob) &&
     (!filters.teams || filters.teams.length == 0)) {
         label = 'Advisors (select teams first)';
     }
