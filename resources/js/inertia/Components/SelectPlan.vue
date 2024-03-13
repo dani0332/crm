@@ -62,10 +62,11 @@ const updateSelectedPlan = () => {
         .then(res => {
             isLoading.value = false;
             let premium = 0;
-            console.log(props.quoteType.toLowerCase())
             switch (props.quoteType.toLowerCase()) {
                 case 'travel':
-                    premium = res.data.plan.planProcessValue[0].totalPremium
+                    if(res.data.plan.planProcessValue[0]) {
+                        premium = res.data.plan.planProcessValue[0].totalPremium
+                    }
                     break;
                 case 'car':
                     premium = res.data.plan.planProcessValue.totalPremium
@@ -77,13 +78,18 @@ const updateSelectedPlan = () => {
                     break;
             }
 
-
-            emit('update:selectedPlanChanged', {
+            let selectedPlan = {
                 id: props.plan.id,
                 providerName: props.plan.providerName,
                 planName: props.plan.name,
-                premium: premium.toFixed(2)
-            });
+            }
+
+            if(res.data.plan.planProcessValue[0]) {
+                selectedPlan.push({
+                    premium: premium.toFixed(2)
+                });
+            }
+            emit('update:selectedPlanChanged', selectedPlan);
             notification.success({
                     title: "Selected plan updated",
                     position: 'top',
