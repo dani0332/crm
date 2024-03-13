@@ -355,9 +355,11 @@ const caculateCommission = () => {
                   <dt class="font-medium">Insurer Commission Tax Invoice No</dt>
 
                   <template #tooltip>
-                    <span class="custom-tooltip-content">{{
-                      productionProcessTooltipEnum.INSURER_COMMISSION_TAX_INVOICE_NUMBER
-                    }}</span>
+                    <span class="custom-tooltip-content">
+                      {{
+                        productionProcessTooltipEnum.INSURER_COMMISSION_TAX_INVOICE_NUMBER
+                      }}
+                    </span>
                   </template>
                 </x-tooltip>
                 <dd>
@@ -618,8 +620,12 @@ const caculateCommission = () => {
         </x-form>
       </template>
     </Collapsible>
-    <x-modal v-model="modals.sendPolicyConfirm" show-close backdrop>
+    <x-modal v-model="modals.sendPolicyConfirm" size="lg" show-close backdrop>
       <template #header> Send Policy </template>
+      <x-alert color="orange" light type="error" class="text-sm mb-4">
+        Please be aware that your current action involves sending the policy to
+        the customer only.
+      </x-alert>
       <x-checkbox
         v-model="modals.isConfirmed"
         label="I confirm and attest that all the information is correct"
