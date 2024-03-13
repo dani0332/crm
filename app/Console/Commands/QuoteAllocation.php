@@ -76,7 +76,6 @@ class QuoteAllocation extends Command
             ->whereIn('source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD])
             ->where('tier_id', '!=', TiersIdEnum::TIER_R)
             ->where('is_renewal_tier_email_sent', 0)
-            ->where('sic_flow_enabled', 0)
             ->take($chunkSize);
 
         foreach ($leads->get() as $lead) {
