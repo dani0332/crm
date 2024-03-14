@@ -1,8 +1,6 @@
 <script setup>
-
-import QuoteFilters from "@/inertia/Pages/CarShared/QuoteFilters.vue";
-import LeadAssignment from "@/inertia/Pages/PersonalQuote/Partials/LeadAssignment.vue";
-import ExportExcel from "@/inertia/Components/ExportExcel.vue";
+import QuoteFilters from '@/inertia/Pages/CarShared/QuoteFilters.vue';
+import LeadAssignment from '@/inertia/Pages/PersonalQuote/Partials/LeadAssignment.vue';
 
 defineProps({
   quotes: Object,
@@ -24,9 +22,9 @@ const dateFormat = (date, with_time = true) => {
 };
 
 const quotesSelected = ref([]),
-assignAdvisor = ref(null),
-assignmentType = ref(null),
-isDisabled = ref(false);
+  assignAdvisor = ref(null),
+  assignmentType = ref(null),
+  isDisabled = ref(false);
 
 const tableHeader = [
   { text: 'CDB ID', value: 'code' },
@@ -67,19 +65,15 @@ const tableHeader = [
 ];
 
 const advisorOptions = computed(() => {
-    return page.props.leadStatuses.advisors.map(advisor => ({
-        value: advisor.id,
-        label: advisor.name,
-    }));
+  return page.props.leadStatuses.advisors.map(advisor => ({
+    value: advisor.id,
+    label: advisor.name,
+  }));
 });
-
 </script>
 
 <template>
-  <QuoteFilters
-    dynamic_route="carrevival"
-    :lead-statuses="leadStatuses"
-  />
+  <QuoteFilters dynamic_route="carrevival" :lead-statuses="leadStatuses" />
 
   <Transition name="fade">
     <div v-if="quotesSelected.length > 0" class="mb-4">
@@ -88,7 +82,7 @@ const advisorOptions = computed(() => {
         :advisors="advisorOptions"
         model_type="car"
       />
-      <ExportExcel
+      <!-- <ExportExcel
         :data="quotesSelected"
         :columns="tableHeader"
         :filename="'CarRevival-List'"
@@ -102,7 +96,7 @@ const advisorOptions = computed(() => {
             Selected: {{ quotesSelected.length }}
           </span>
         </x-button>
-      </ExportExcel>
+      </ExportExcel> -->
     </div>
   </Transition>
 

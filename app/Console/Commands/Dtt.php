@@ -50,8 +50,9 @@ class Dtt extends Command
     public function handle()
     {
         try {
-            $dateOne = Carbon::now()->subYear(1)->subDays(15)->toDateString();
-            $dateTwo = Carbon::now()->subYear(2)->subDays(15)->toDateString();
+            $dateOne = Carbon::now()->subMonths(11)->toDateString();
+            $dateTwo = Carbon::now()->subYear(1)->subMonths(11)->toDateString();
+
 
             $datethirtyDaysBefore = Carbon::now()->subDays(30)->toDateString();
 
@@ -86,12 +87,11 @@ class Dtt extends Command
                 ->orderBy('id', 'DESC')
                 ->get();
 
-            // dd(count($leads));
-            info('------CarRevivalLeadsCreationJobCount --'.count($leads));
+            info('------CarRevivalLeadsCreationJobCount --' . count($leads));
             foreach ($leads as $carLead) {
                 $isTierR = $this->leadAllocationService->checkIfLeadIsRenewal($carLead);
-                info('------isTierR --'.! $isTierR);
-                if (! $isTierR) {
+                info('------isTierR --' . !$isTierR);
+                if (!$isTierR) {
                     $jobs[] = new CarRevivalLeadsCreationJob($carLead);
                 }
             }
@@ -103,13 +103,13 @@ class Dtt extends Command
                     ->addJobs($jobs)
 
                     ->then(function () use ($logPrefix) {
-                        info('------'.$logPrefix.' all jobs completed successfully ------');
+                        info('------' . $logPrefix . ' all jobs completed successfully ------');
                     })
                     ->catch(function () use ($logPrefix) {
-                        info('------'.$logPrefix.' one of batch is failed.------');
+                        info('------' . $logPrefix . ' one of batch is failed.------');
                     })
                     ->finally(function () use ($logPrefix) {
-                        info('------'.$logPrefix.' everything done ------');
+                        info('------' . $logPrefix . ' everything done ------');
                     })
                     ->allowFailures()
                     ->withDelay(2)
@@ -118,7 +118,7 @@ class Dtt extends Command
                 info('------No lead Found------');
             }
         } catch (\Exception $exception) {
-            info('DTT Exception : '.$exception->getMessage());
+            info('DTT Exception : ' . $exception->getMessage());
         }
     }
 }
