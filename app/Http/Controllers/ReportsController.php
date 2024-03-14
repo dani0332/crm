@@ -168,7 +168,7 @@ class ReportsController extends Controller
             'reportData' => $renewalBatchReportService->getReportData($request),
             'superRetentionData' => $renewalBatchReportService->getSuperRetentinoData($request),
             'filterOptions' => $renewalBatchReportService->getFilterOptions(),
-            'defaultFilters' => $renewalBatchReportService->getDefaultFilters(),
+            // 'defaultFilters' => $renewalBatchReportService->getDefaultFilters(),
             'renewalBatchesList' => $renewalBatches,
         ]);
     }
