@@ -199,5 +199,14 @@ class QuoteDocumentService extends BaseService
 
         return $quote ? $quote->documents()->with('createdBy:id,name,email')->latest()->get() : [];
     }
+    
+    public function getDocumentTypes($quoteTypeId)
+    {
+        $documentTypes= DocumentType::active()
+        ->whereNotIn('category', ['SEND_UPDATE', 'ENDORSEMENT_DOCUMENTS'])
+        ->byQuoteTypeId($quoteTypeId)
+        ->get();
 
+        return $documentTypes->groupBy('category');
+    }
 }

@@ -144,7 +144,7 @@ const uploadFile = (doc, filesWithInfo) => {
           </x-button>
         </div>
         
-        <DataTable
+      <DataTable
       table-class-name="compact"
       :headers="quoteDocumentsTable.columns"
       :items="quoteDocuments || []"

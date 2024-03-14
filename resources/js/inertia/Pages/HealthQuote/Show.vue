@@ -1,11 +1,11 @@
 <script setup>
 import PaymentTableNew from './../../Components/PaymentTableNew.vue';
 import MigratePayment from './../../Components/MigratePayment.vue';
-import LazyDocumentUploader from './Partials/DocumentUploader.vue';
 import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 import LazyCreatePlan from './Partials/CreatePlan.vue';
 import { computed } from 'vue';
 import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue';
+import QuoteDocuments from '@/inertia/Pages/PersonalQuote/Partials/QuoteDocuments.vue';
 
 defineProps({
   quote: Object,
@@ -23,6 +23,7 @@ defineProps({
   teams: Object,
   quoteDocuments: Object,
   documentTypes: Object,
+  documentType: Object,
   cdnPath: String,
   ecomHealthInsuranceQuoteUrl: String,
   activities: Array,
@@ -2791,165 +2792,14 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       :expanded="sectionExpanded"
     />
 
-    <div class="p-4 rounded shadow mb-6 bg-white">
-      <Collapsible :expanded="sectionExpanded">
-        <template #header>
-          <div class="flex justify-between items-center">
-            <h3 class="font-semibold text-primary-800 text-lg">
-              Documents
-              <x-tag size="sm">{{ quoteDocuments.length || 0 }}</x-tag>
-            </h3>
-          </div>
-        </template>
-        <template #body>
-          <x-divider class="my-4" />
-          <div class="flex gap-2 mb-3 justify-end">
-            <x-button
-              @click.prevent="modals.doc = true"
-              size="sm"
-              color="orange"
-            >
-              Upload Documents
-            </x-button>
-            <x-button
-              size="sm"
-              color="red"
-              v-if="sendPolicy"
-              @click="sendPolicyToClient"
-            >
-              Send Policy
-            </x-button>
-          </div>
-          <DataTable
-            table-class-name="compact"
-            :headers="quoteDocumentsTable.columns"
-            :items="quoteDocuments || []"
-            border-cell
-            hide-rows-per-page
-            :rows-per-page="15"
-            :hide-footer="quoteDocuments.length < 15"
-          >
-            <template #item-original_name="item">
-              <a
-                :href="cdnPath + item.doc_url"
-                target="_blank"
-                class="text-primary-600"
-              >
-                {{ item.original_name }}
-              </a>
-            </template>
-            <template #item-action="{ doc_name }">
-              <div>
-                <x-button
-                  size="xs"
-                  color="error"
-                  outlined
-                  @click.prevent="onDocDelete(doc_name)"
-                >
-                  Delete
-                </x-button>
-              </div>
-            </template>
-          </DataTable>
-        </template>
-      </Collapsible>
-    </div>
-    <x-modal v-model="modals.doc" size="xl" show-close backdrop>
-      <template #header> Upload Documents </template>
-      <LazyDocumentUploader
-        :members="memberDataDocs(membersDetail)"
-        :doc-types="documentTypes"
-        :docs="quoteDocuments || []"
-        :cdn="cdnPath"
-      />
-    </x-modal>
-    <x-modal v-model="modals.docConfirm" show-close backdrop>
-      <template #header> Delete Document </template>
-      <p>Are you sure you want to delete this document?</p>
-      <template #actions>
-        <div class="text-right space-x-4">
-          <x-button
-            @click.prevent="modals.doc = true"
-            size="sm"
-            color="orange"
-          >
-            Upload Documents
-          </x-button>
-          <x-button
-            size="sm"
-            color="red"
-            v-if="sendPolicy"
-            @click="sendPolicyToClient"
-          >
-            Send Policy
-          </x-button>
-        </div>
-        <DataTable
-          table-class-name="compact"
-          :headers="quoteDocumentsTable.columns"
-          :items="quoteDocuments || []"
-          border-cell
-          hide-rows-per-page
-          :rows-per-page="15"
-          :hide-footer="quoteDocuments.length < 15"
-        >
-          <template #item-original_name="item">
-            <a
-              :href="cdnPath + item.doc_url"
-              target="_blank"
-              class="text-primary-600"
-            >
-              {{ item.original_name }}
-            </a>
-          </template>
-          <template #item-action="{ doc_name }">
-            <div>
-              <x-button
-                size="xs"
-                color="error"
-                outlined
-                @click.prevent="onDocDelete(doc_name)"
-              >
-                Delete
-              </x-button>
-            </div>
-          </template>
-        </DataTable>
-      </template>
-    </x-modal>
-    <x-modal v-model="modals.doc" size="xl" show-close backdrop>
-      <template #header> Upload Documents </template>
-      <LazyDocumentUploader
-        :members="memberDataDocs(membersDetail)"
-        :doc-types="documentTypes"
-        :docs="quoteDocuments || []"
-        :cdn="cdnPath"
-      />
-    </x-modal>
-    <x-modal v-model="modals.docConfirm" show-close backdrop>
-      <template #header> Delete Document </template>
-      <p>Are you sure you want to delete this document?</p>
-      <template #actions>
-        <div class="text-right space-x-4">
-          <x-button
-            size="sm"
-            ghost
-            @click.prevent="modals.docConfirm = false"
-          >
-            Cancel
-          </x-button>
-          <x-button
-            size="sm"
-            color="error"
-            @click.prevent="confirmDeleteDoc"
-            :loading="quoteDocumentsTable.isLoading"
-          >
-            Delete
-          </x-button>
-        </div>
-      </template>
-    </x-modal>
-    
+
+    <QuoteDocuments
+      :document-types="documentType"
+      :quote-documents="page.props.quoteDocuments || []"
+      :storageUrl="storageUrl"
+      :quote="record"
+      :expanded="sectionExpanded"
+    />
 
     <SendUpdates
       v-if="hasPolicyIssuedStatus"
@@ -3136,7 +2986,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
     </div>
 
     <ClientInquiryLogs
-      v-if="clientInquiryLogs.length > 0"
+      v-if="clientInquiryLogs?.length > 0"
       :logs="clientInquiryLogs"
       />
 

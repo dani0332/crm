@@ -865,6 +865,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
 			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name, tooltip: pm.tool_tip } })"
 			:storageUrl="storageUrl"
 		/>
+
     <QuotePayments
       v-else
       :can="can"
@@ -906,13 +907,6 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
 
     <QuotePolicy :quote="quote" :can="can" :quoteStatusEnum="quoteStatusEnum" :expanded="sectionExpanded" />
 
-    <QuoteDocuments
-      :document-types="documentTypes"
-      :quote-documents="quote.documents || []"
-      :storageUrl="storageUrl"
-      :quote="quote"
-      :expanded="sectionExpanded"
-    />
 
     <SendUpdates
       v-if="hasPolicyIssuedStatus"

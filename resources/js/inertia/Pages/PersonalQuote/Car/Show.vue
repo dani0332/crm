@@ -9,6 +9,7 @@ import RiskRatingScoreDetails from '../../../Components/RiskRatingScoreDetails.v
 import { onMounted, watch } from 'vue';
 import { reactive } from 'vue';
 import MigratePayment from './../../../Components/MigratePayment.vue';
+import QuoteDocuments from '@/inertia/Pages/PersonalQuote/Partials/QuoteDocuments.vue';
 
 import { fileUploadErrorMessage } from '@/inertia/Composables/utilities.js';
 
@@ -25,6 +26,7 @@ defineProps({
   listQuotePlans: { Array, String },
   quoteDocuments: Array,
   documentTypes: Object,
+  documentType: Object,
   cdnPath: String,
   ecomHealthInsuranceQuoteUrl: String,
   activities: Array,
@@ -1073,43 +1075,6 @@ const docForm = useForm({
   file: null,
 });
 
-const uploadFile = (doc, filesWithInfo) => {
-  let url = '/quotes/car/documents/store';
-  const { files, rejectReason } = filesWithInfo;
-  if (files.length == 0) {
-    notification.error({
-      title: 'File upload failed',
-      position: 'top',
-    });
-    docForm.setError({ error: fileUploadErrorMessage(doc, rejectReason) });
-    return false;
-  }
-  isUploading.value = true;
-  docForm
-    .transform(data => ({
-      ...data,
-      quote_type_id: doc.quote_type_id,
-      document_type_code: doc.code,
-      folder_path: doc.folder_path,
-      file: files[0].file,
-    }))
-    .post(url, {
-      preserveScroll: true,
-      preserveState: true,
-      onError: errors => {
-        docForm.setError(errors.error);
-        console.log('errors');
-        console.log(errors);
-        notification.error({
-          title: 'File upload failed',
-          position: 'top',
-        });
-      },
-      onFinish: () => {
-        isUploading.value = false;
-      },
-    });
-};
 
 const confirmDeleteDocData = reactive({
   docs: null,
@@ -2648,13 +2613,6 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
         </template>
       </Collapsible>
     </div>
-    <!-- <QuoteStatus
-			:quoteStatuses="leadStatuses"
-			:lostReasons="lostReasons"
-			:quoteStatusEnum="quoteStatusEnum"
-			:quoteType="quoteType"
-			:quote="record"
-		/> -->
 
     <div class="p-4 rounded shadow mb-6 bg-white">
       <Collapsible :expanded="sectionExpanded">
@@ -3431,151 +3389,14 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       :policyIssuanceStatus="policyIssuanceStatus"
       :modelType="quoteType"
     />
-
-    <div class="p-4 rounded shadow mb-6 bg-white" v-if="isQuoteDocumentEnabled">
-      <Collapsible :expanded="sectionExpanded">
-        <template #header>
-          <div class="flex justify-between items-center">
-            <h3 class="font-semibold text-primary-800 text-lg">Documents</h3>
-          </div>
-        </template>
-        <template #body>
-          <x-divider class="my-4" />
-          <div class="my-2 flex justify-end">
-            <x-button
-              class="mr-2"
-              v-if="record.payment_status_id === paymentStatusEnum.AUTHORISED"
-              @click.prevent="copyUploadURL"
-              size="sm"
-              color="orange"
-            >
-              Copy upload Link
-            </x-button>
-            <template v-if="1">
-              <!-- <Link :href="`${record.uuid}/documents`" class="btn btn-primary btn-sm" style="float:right;">Upload Documents</Link> -->
-              <x-button
-                @click.prevent="modals.doc = true"
-                size="sm"
-                color="orange"
-              >
-                Upload Documents
-              </x-button>
-              <template v-if="displaySendPolicyButton">
-                <x-button
-                  class="ml-2 mr-2"
-                  size="sm"
-                  color="orange"
-                  @click.prevent="sendQuoteDocumentsToCustomer"
-                >
-                  Send Policy
-                </x-button>
-              </template>
-            </template>
-          </div>
-          <DataTable
-            table-class-name="tablefixed compact"
-            :headers="documentsTable.columns"
-            :items="documentsTableItems || []"
-            show-index
-            border-cell
-            fixed-checkbox
-            hide-rows-per-page
-            hide-footer
-          >
-            <template #item-document_name_text="item">
-              <a target="_blank" :href="storageUrl + item.doc_url">{{
-                item.document_name_text
-              }}</a>
-            </template>
-            <template #item-action="item">
-              <div class="flex gap-2">
-                <x-button
-                  v-if="
-                    !hasRole(rolesEnum.PA) &&
-                    !can(permissionEnum.ApprovePayments)
-                  "
-                  size="xs"
-                  color="error"
-                  outlined
-                  @click.prevent="onDocDelete(item.document_name_text)"
-                >
-                  Delete
-                </x-button>
-              </div>
-            </template>
-          </DataTable>
-        </template>
-      </Collapsible>
-    </div>
-
-    <x-modal v-model="modals.docConfirm" show-close backdrop>
-      <template #header> Delete Document </template>
-      <p>Are you sure you want to delete this document?</p>
-      <template #actions>
-        <div class="text-right space-x-4">
-          <x-button size="sm" ghost @click.prevent="modals.docConfirm = false">
-            Cancel
-          </x-button>
-          <x-button
-            size="sm"
-            color="error"
-            @click.prevent="confirmDeleteDoc"
-            :loading="documentsTable.isLoading"
-          >
-            Delete
-          </x-button>
-        </div>
-      </template>
-    </x-modal>
-    <x-modal v-model="modals.doc" size="xl" show-close backdrop>
-      <template #header> Upload Documents </template>
-
-      <x-alert
-        color="error"
-        class="mb-5"
-        v-if="Object.keys(docForm.errors).length"
-      >
-        <ul>
-          <li v-for="error in docForm?.errors" :key="error">{{ error }}</li>
-        </ul>
-      </x-alert>
-
-      <div
-        v-for="documentType in documentTypes"
-        :key="documentType.id"
-        class="grid md:grid-cols-2 gap-2 my-4 border-b"
-      >
-        <div class="flex flex-col gap-1">
-          <h5 class="text-sm font-semibold">
-            {{ documentType.text }}
-          </h5>
-          <p class="text-xs">Max files: {{ documentType.max_files }}</p>
-          <p class="text-xs">Supported: {{ documentType.accepted_files }}</p>
-          <p class="text-xs">Max file size: {{ documentType.max_size }} MB</p>
-        </div>
-        <div class="pb-4">
-          <Dropzone
-            :id="documentType.id"
-            :accept="documentType.accepted_files"
-            :max-files="documentType.max_files"
-            :max-size="documentType.max_size"
-            :loading="docForm.processing"
-            @change="uploadFile(documentType, $event)"
-          />
-          <a
-            v-for="quoteDocument in page.props.quoteDocuments.filter(
-              d => d.document_type_code == documentType.code,
-            )"
-            :key="quoteDocument.id"
-            :href="storageUrl + quoteDocument.doc_url"
-            target="_blank"
-            class="block px-2 py-1 border rounded mt-1 text-xs hover:text-primary-600 truncate"
-          >
-            {{ quoteDocument.original_name || quoteDocument.doc_name }}
-          </a>
-        </div>
-      </div>
-    </x-modal>
+  
+    <QuoteDocuments
+      :document-types="documentTypes"
+      :quote-documents="page.props.quoteDocuments || []"
+      :storageUrl="storageUrl"
+      :quote="record"
+      :expanded="sectionExpanded"
+    />
 
     <SendUpdates
       v-if="hasPolicyIssuedStatus"
