@@ -88,7 +88,7 @@ class QuoteStatusTableSeeder extends Seeder
                 }
             }
         }   // Policy Pending
-        if (!QuoteStatus::where('id', QuoteStatusEnum::PolicyPending)->first()) {
+        if (! QuoteStatus::where('id', QuoteStatusEnum::PolicyPending)->first()) {
             QuoteStatus::create([
                 'id' => QuoteStatusEnum::PolicyPending,
                 'text' => 'Policy Pending',
@@ -102,11 +102,11 @@ class QuoteStatusTableSeeder extends Seeder
             foreach ($lobs as $key => $item) {
 
                 $mapping = DB::table('quote_status_map')->where(['quote_type_id' => $item, 'quote_status_id' => QuoteStatusEnum::PolicyPending])->first();
-                if (!$mapping) {
+                if (! $mapping) {
                     DB::table('quote_status_map')->insert([
                         'quote_type_id' => $item,
                         'quote_status_id' => QuoteStatusEnum::PolicyPending,
-                        'sort_order' =>  ++$key,
+                        'sort_order' => ++$key,
                         'created_by' => 'nouman.hussain@insurancemarket.ae',
                         'updated_by' => 'nouman.hussain@insurancemarket.ae',
                         'created_at' => now(),

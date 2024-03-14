@@ -100,8 +100,8 @@ class QuoteDocumentController extends Controller
     public function store($quoteType, QuotesDocumentRequest $request)
     {
         if (
-            !$request->hasFile('file') ||
-            !($quote = $this->getQuoteObject($quoteType, $request->quote_id))
+            ! $request->hasFile('file') ||
+            ! ($quote = $this->getQuoteObject($quoteType, $request->quote_id))
         ) {
             return false;
         }
@@ -116,8 +116,8 @@ class QuoteDocumentController extends Controller
     public function storeMultiple(Request $request, $quoteType)
     {
         if (
-            !count($request->file) ||
-            !($quote = $this->getQuoteObject($quoteType, $request->quote_id))
+            ! count($request->file) ||
+            ! ($quote = $this->getQuoteObject($quoteType, $request->quote_id))
         ) {
             return false;
         }
@@ -145,10 +145,10 @@ class QuoteDocumentController extends Controller
         }
 
         $quotePlan = $quoteModel->plan;
-        if (!$quotePlan || !$quotePlan->insuranceProvider || !$quotePlan->insuranceProvider->code) {
+        if (! $quotePlan || ! $quotePlan->insuranceProvider || ! $quotePlan->insuranceProvider->code) {
             $providerSupportNumber = false;
         } else {
-            $providerSupportNumber = $this->applicationStorageService->getValueByKey(strtoupper($quotePlan->insuranceProvider->code) . '_CUSTOMER_SUPPORT_NUMBER');
+            $providerSupportNumber = $this->applicationStorageService->getValueByKey(strtoupper($quotePlan->insuranceProvider->code).'_CUSTOMER_SUPPORT_NUMBER');
         }
         if ($emailTemplateId == false) {
             if (request()->ajax()) {
@@ -158,7 +158,7 @@ class QuoteDocumentController extends Controller
             return redirect()->back()->with('error', 'Error sending Quote Policy. Email Template not configured.');
         }
 
-        if (!$providerSupportNumber) {
+        if (! $providerSupportNumber) {
             if (request()->ajax()) {
                 return response()->json(['error' => 'Error sending Quote Policy. Provider Support Number not configured.']);
             }
@@ -174,7 +174,7 @@ class QuoteDocumentController extends Controller
         $quoteTypeId = $this->activityService->getQuoteTypeId($quoteType);
 
         $emailData = (object) [
-            'customerName' => $customer->first_name . ' ' . $customer->last_name,
+            'customerName' => $customer->first_name.' '.$customer->last_name,
             'customerEmail' => $customer->email,
             'advisorName' => $advisor->name,
             'advisorLandlineNo' => $advisor->landline_no,
@@ -188,7 +188,7 @@ class QuoteDocumentController extends Controller
             'providerSupportNumber' => $providerSupportNumber,
         ];
 
-        $response = $this->sendEmailCustomerService->sendEmail($emailTemplateId, $emailData, 'policy-documents-' . $quoteType . '-quote');
+        $response = $this->sendEmailCustomerService->sendEmail($emailTemplateId, $emailData, 'policy-documents-'.$quoteType.'-quote');
 
         if ($response == 201) {
             $this->crudService->updateQuoteStatusbyModel($quoteModel, QuoteStatusEnum::PolicyIssued);
@@ -217,7 +217,7 @@ class QuoteDocumentController extends Controller
             $documentType = DocumentType::where('code', $quoteDocument->document_type_code)->where('is_active', 1)->first();
 
             if ($documentType && $documentType->send_to_customer == 1) {
-                $quoteDocumentUrls[] = $azureStorageUrl . $azureStorageContainer . '/' . $quoteDocument->doc_url;
+                $quoteDocumentUrls[] = $azureStorageUrl.$azureStorageContainer.'/'.$quoteDocument->doc_url;
             }
         }
 
@@ -226,7 +226,7 @@ class QuoteDocumentController extends Controller
 
     public function getPolicyWordingDocuments($quoteType, $quotePlanId)
     {
-        $model = '\\App\\Models\\' . ucwords($quoteType) . 'PlanPolicyWording';
+        $model = '\\App\\Models\\'.ucwords($quoteType).'PlanPolicyWording';
         $policyWordingDocumentUrl = [];
         $policyWordingDocuments = $model::select('link')->where('plan_id', $quotePlanId)->get();
         foreach ($policyWordingDocuments as $policyWordingDocument) {
@@ -240,7 +240,7 @@ class QuoteDocumentController extends Controller
     {
         $query = QuoteDocument::where(['quote_documentable_id' => $quoteId, 'document_type_code' => $documentCode]);
 
-        if (!empty(request()->member_id)) {
+        if (! empty(request()->member_id)) {
             $query->where('member_detail_id', request()->member_id);
         }
 
@@ -254,7 +254,7 @@ class QuoteDocumentController extends Controller
             'quoteId' => 'required|integer',
         ]);
         $document = QuoteDocument::where('doc_name', $request->docName)->where('quote_documentable_id', $request->quoteId)->first();
-        if (!$document) {
+        if (! $document) {
             return redirect()->back()->with('message', 'Document not found');
         }
         $document->delete();
