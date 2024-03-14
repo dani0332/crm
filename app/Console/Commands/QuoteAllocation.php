@@ -55,6 +55,7 @@ class QuoteAllocation extends Command
         if ($quoteAllocationSwitch == 1 && $masterSwitchConfigValue == 1) {
             $to = now()->subMinutes(5)->toDateTimeString();
             $chunkSize = 200;
+            info('start and end dates are : '.$allocationStartDate.' and '.$to);
             $this->executeCarAllocation(QuoteTypeId::Car, $to, $chunkSize, $allocationStartDate);
             $this->executeHealthAllocation(QuoteTypeId::Health, $to, $chunkSize, $allocationStartDate);
 
@@ -74,7 +75,10 @@ class QuoteAllocation extends Command
             ->orderBy('created_at', 'desc')
             ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
             ->whereNotIn('source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD])
-            ->where('tier_id', '!=', TiersIdEnum::TIER_R)
+            ->where(function ($query) {
+                $query->where('tier_id', '!=', TiersIdEnum::TIER_R)
+                    ->orWhereNull('tier_id');
+            })
             ->where('is_renewal_tier_email_sent', 0)
             ->take($chunkSize);
 
