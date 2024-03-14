@@ -317,8 +317,14 @@ const onUpdate = () => {
                 </x-tooltip>
               </dt>
               <dd>
-								<span>{{ policyDetailsForm.insurer_quote_number }}</span>
-							</dd>
+                <x-input
+                    v-if="isCPD"
+                    :disabled="!state.isEdit"
+                    v-model="policyDetailsForm.insurer_quote_number"
+                    placeholder="Enter Insurer Quote number"
+                />
+                <span v-else>{{ policyDetailsForm.insurer_quote_number }}</span>
+              </dd>
             </div>
 
 						<!-- Issuance Status -->
