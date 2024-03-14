@@ -170,6 +170,9 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         });
     });
 
+    Route::get('embedded-products-reports', [EmbeddedProductController::class, 'reportsList'])->name('embedded-products.reports');
+    Route::get('embedded-products-reports/{ep}', [EmbeddedProductController::class, 'reportTransactions'])->name('embedded-products.reports.certificates');
+    Route::get('embedded-products-reports/{ep}/export', [EmbeddedProductController::class, 'reportExport'])->name('embedded-products.reports.certificates.export');
     Route::resource('embedded-products', EmbeddedProductController::class);
     Route::resource('legacy-policy', LegacyPolicyController::class);
     Route::post('legacy-policy/move-to-imcrm', [LegacyPolicyController::class, 'moveToImcrm']);
@@ -260,7 +263,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::post('/get-comp-filter-stats', [DashboardController::class, 'getComprehensiveDashboardStats']);
     Route::post('/get-users-by-team', [DashboardController::class, 'getUsersByTeam']);
 
-    Route::post('/get-sub-teams-by-team', [DashboardController::class, 'getSubTeamsByTeam']);
+    Route::post('/get-sub-teams-by-team', [DashboardController::class, 'getSubTeamsByTeam'])->name('getSubTeamsByTeams');
     Route::post('/get-users-by-sub-team', [DashboardController::class, 'getUsersBySubTeam']);
     Route::post('/get-team-conversion-stats', [DashboardController::class, 'getTeamAdvisorConversionStats']);
     Route::get('/get-recent-daily-stats', [DashboardController::class, 'getRecentDailyStats']);
@@ -414,16 +417,17 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::get('car-model-detail', [ValuationController::class, 'carTrimBasedOnCarModel'])->name('valuation.carmodeldetail');
     });
 
-    Route::group(['prefix' => 'claim'], function () {
-        Route::resource('claims', ClaimController::class);
-        Route::resource('typeofinsurance', TypeOfInsuranceController::class);
-        Route::resource('subtypeofinsurance', SubTypeOfInsuranceController::class);
-        Route::resource('claimsstatus', ClaimsStatusController::class);
-        Route::resource('carrepaircoverage', CarRepairCoverageController::class);
-        Route::resource('carrepairtype', CarRepairTypeController::class);
-        Route::resource('rentacar', RentACarController::class);
-        Route::resource('claims.claim-attachment', ClaimsAttachmentsController::class);
-    });
+    // Scheduled to delete 15th April 2024
+    // Route::group(['prefix' => 'claim'], function () {
+    //     Route::resource('claims', ClaimController::class);
+    //     Route::resource('typeofinsurance', TypeOfInsuranceController::class);
+    //     Route::resource('subtypeofinsurance', SubTypeOfInsuranceController::class);
+    //     Route::resource('claimsstatus', ClaimsStatusController::class);
+    //     Route::resource('carrepaircoverage', CarRepairCoverageController::class);
+    //     Route::resource('carrepairtype', CarRepairTypeController::class);
+    //     Route::resource('rentacar', RentACarController::class);
+    //     Route::resource('claims.claim-attachment', ClaimsAttachmentsController::class);
+    // });
 
     Route::group(['prefix' => 'kyc'], function () {
         Route::resource('aml', AMLController::class);
@@ -502,10 +506,11 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     //Route::get('schedule-non-motor-aml', [RenewalsUploadController::class, 'scheduleNonMotorAml']);
 
     Route::post('followups/emails/events', [App\Http\Controllers\V2\FollowupController::class, 'getEmailEvents']);
+    Route::post('/update-user-status', [UserController::class, 'updateUserStatus']);
 });
 
-Route::POST('/sendBulkWelcomeEmails', [BulkEmailProcessController::class, 'ProcessBulkWelcomeEmails'])
-    ->withoutMiddleware([App\Http\Middleware\VerifyCsrfToken::class]);
+// Route::POST('/sendBulkWelcomeEmails', [BulkEmailProcessController::class, 'ProcessBulkWelcomeEmails'])
+// ->withoutMiddleware([App\Http\Middleware\VerifyCsrfToken::class]);
 
 //Scheduled to delete 1st April 2024
 /***** RestAPI */

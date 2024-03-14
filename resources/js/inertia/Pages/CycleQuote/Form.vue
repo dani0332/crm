@@ -87,6 +87,7 @@ function onSubmit(isValid) {
             :rules="[isRequired]"
             class="w-full"
             :error="quoteForm.errors.first_name"
+            maxLength="20"
           />
         </x-field>
         <x-field label="Last Name" required>
@@ -96,6 +97,7 @@ function onSubmit(isValid) {
             :rules="[isRequired]"
             class="w-full"
             :error="quoteForm.errors.last_name"
+            maxLength="50"
           />
         </x-field>
         <x-field label="Email" required>

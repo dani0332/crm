@@ -1,7 +1,6 @@
 <script setup>
 const props = defineProps({
   carMakes: Array,
-  kenPath: String,
 });
 
 const notification = useToast();
