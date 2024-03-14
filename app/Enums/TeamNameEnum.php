@@ -18,4 +18,6 @@ final class TeamNameEnum extends Enum
     public const BDM = 'BDM';
     public const SBDM = 'SBDM';
     public const MOTOR_COOPERATE_RENEWALS = 'Motor cooperate Renewals';
+    public const VALUE = 'Value';
+    public const VOLUME = 'Volume';
 }

@@ -148,7 +148,8 @@ class ReportsController extends Controller
      */
     public function fetchSubTeamListByTeam(Request $request)
     {
-        $subTeams = $this->getSubTeamsByTeamIds($request->teamIds)->pluck('id')->toArray();
+        $allowedSubTeams = [TeamNameEnum::VALUE, TeamNameEnum::VOLUME];
+        $subTeams = $this->getSubTeamsByTeamIds($request->teamIds)->whereIn('name', $allowedSubTeams)->pluck('id')->toArray();
         $userTeams = $this->getCurrentUserTeamsAndSubTeams(Auth::user()->id)->pluck('id')->toArray();
         $ids = array_intersect($subTeams, $userTeams);
         return Team::whereIn('id', $ids)
