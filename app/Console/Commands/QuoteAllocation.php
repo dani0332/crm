@@ -72,8 +72,8 @@ class QuoteAllocation extends Command
             ->select('uuid')
             ->whereBetween('created_at', [$allocationStartDate, $to])
             ->orderBy('created_at', 'desc')
-            ->whereIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
-            ->whereIn('source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD])
+            ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
+            ->whereNotIn('source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD])
             ->where('tier_id', '!=', TiersIdEnum::TIER_R)
             ->where('is_renewal_tier_email_sent', 0)
             ->take($chunkSize);
