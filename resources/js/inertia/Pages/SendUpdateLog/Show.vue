@@ -30,6 +30,7 @@ const props = defineProps({
   paymentTooltipEnum: Object,
   paymentMethods: Object,
   quoteRequest: Object,
+  isPolicyDetailsEnabled: Boolean,
 });
 
 const page = usePage();
@@ -86,14 +87,7 @@ const isUpdateBooked = computed(() => {
 
 const changeReasonOptions = computed(() => {
   return [];
-}); 
-
-const isPolicyDetailsEnabled = computed(() => {
-  return (
-    (selectedCategory?.value?.subCategory.slug === 'EF' && selectedCategory?.value?.subCategory.option.slug === 'PPE') ||
-    selectedCategory?.value?.subCategory.slug === 'CPD'
-  );
-})
+});
 
 const sendUpdateForm = useForm({
   notes: props.sendUpdateLog?.notes || '',
@@ -280,7 +274,7 @@ const isBookingDetailsVisible = computed(() => {
       :sendUpdateLog="sendUpdateLog"
       :updateLogOptions="updateLogOptions"
       :selectedCategory="selectedCategory"
-      :insuranceProviders="insuranceProviders"
+      :insuranceProviders="props.insuranceProviders"
       :quoteType="quoteType"
       :isUpdateBooked="isUpdateBooked"
     />
@@ -301,14 +295,15 @@ const isBookingDetailsVisible = computed(() => {
         :storageUrl="props.storageUrl"
         :send-update="sendUpdateLog"
         :send-update-status-enum="page.props.sendUpdateStatusEnum"
+        :insuranceProviders="props.insuranceProviders"
     />
 
     <LazyPolicyDetails
-      v-if="isPolicyDetailsEnabled"
+      v-if="props.isPolicyDetailsEnabled"
       :sendUpdateLog="sendUpdateLog"
-      :insuranceProviders="insuranceProviders"
+      :insuranceProviders="props.insuranceProviders"
       :selectedCategory="selectedCategory"
-      :quote="quote"
+      :quote="props.realQuote"
       :isUpdateBooked="isUpdateBooked"
     />
 
@@ -331,7 +326,7 @@ const isBookingDetailsVisible = computed(() => {
     <LazyBookingDetails
       v-if="isBookingDetailsVisible"
       :sendUpdateLog="sendUpdateLog"
-      :insuranceProviders="insuranceProviders"
+      :insuranceProviders="props.insuranceProviders"
       :selectedCategory="selectedCategory"
       :quote="quote"
       :quoteType="quoteType"

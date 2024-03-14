@@ -132,12 +132,12 @@ class TravelController extends Controller
                 ];
             })->values();
         }
-
+        /* // Will skip KYC and AML check , required by BA for payments
         if (AMLService::checkAMLStatusFailed(self::TYPE_ID, $record->id)) {
             $dropdownSource['quote_status_id'] = collect($dropdownSource['quote_status_id'])->filter(function ($value) {
                 return $value['id'] != QuoteStatusEnum::TransactionApproved;
             })->values();
-        }
+        }*/
 
         $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypeId::Travel);
         $filteredInsuranceProviders = [];
@@ -150,7 +150,7 @@ class TravelController extends Controller
                 ];
             })->sortBy('label')->values();
         }
-        $payments->load(['paymentStatus', 'paymentStatusLog', 'paymentMethod', 'insuranceProvider']);
+        $payments->load(['paymentStatus', 'paymentStatusLog', 'paymentMethod', 'insuranceProvider', 'travelPlan']);
 
         $payments->each(function ($payment) {
             $allow = $payment->payment_status_id != PaymentStatusEnum::CAPTURED && $payment->payment_status_id != PaymentStatusEnum::AUTHORISED && ! auth()->user()->hasRole(RolesEnum::PA);

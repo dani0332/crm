@@ -70,12 +70,13 @@ const insuranceProvidersOptions = computed(() => {
 })
 
 const updatePriceWithVat = () => {
-  if (planDetailsForm.price_with_vat != "") {
+  if (planDetailsForm.price_with_vat) {
+    console.log(planDetailsForm.price_with_vat)
     let price = parseFloat(planDetailsForm.price_with_vat);
     planDetailsForm.total_price = ((price / 100) * 5) + price;
-  } else if (planDetailsForm.price_without_vat != "") {
+  } else if (planDetailsForm.price_without_vat) {
     let price = parseFloat(planDetailsForm.price_without_vat);
-    planDetailsForm.total_price = ((price / 100) * 5) + price;
+    planDetailsForm.total_price = Number(price);
   }
 }
 
@@ -138,6 +139,7 @@ const onUpdate = () => {
                   placeholder="Enter price (VAT not applicable)"
                   type="number"
                   min="0"
+                  @change="updatePriceWithVat"
                 />
               </dd>
             </div>

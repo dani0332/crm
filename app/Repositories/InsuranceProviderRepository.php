@@ -69,4 +69,9 @@ class InsuranceProviderRepository extends BaseRepository
 
         return false;
     }
+
+    public function fetchGetById($id)
+    {
+        return $this->where('id', $id)->firstOrFail();
+    }
 }

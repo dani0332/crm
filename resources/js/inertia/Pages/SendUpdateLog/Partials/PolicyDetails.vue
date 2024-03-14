@@ -62,11 +62,32 @@ const isCPD = computed(() => {
 
 const dateFormat = date => useDateFormat(date, 'DD-MM-YYYY');
 
+const insuranceProvidersOptions = computed(() => {
+  return props?.insuranceProviders?.map(provider => ({
+    value: provider.id,
+    label: provider.text,
+  }));
+})
+
+const providerName = computed(() => {
+  let provider;
+  if (props.quote?.insurance_provider_id) {
+    provider = props?.insuranceProviders?.find(provider => provider.id === props.quote?.insurance_provider_id);
+  } else if (props.quote?.car_plan_provider_id) {
+    provider = props?.insuranceProviders?.find(provider => provider.id === props.quote?.car_plan_provider_id);
+  } else {
+    return null;
+  }
+
+  return provider ? provider.text : null;
+});
+
 const policyDetailsForm = useForm({
 	first_name: props.sendUpdateLog?.first_name || props.quote?.first_name || null,
 	last_name: props.sendUpdateLog?.last_name || props.quote?.last_name || null,
-	provider_name: props.sendUpdateLog?.provider_name || props.quote?.plan?.insurance_provider?.name || null,
-	plan_name: props.sendUpdateLog?.plan_name || props.quote?.plan?.name || null,
+	provider_name: props.sendUpdateLog?.provider_name || providerName.value || null,
+  insurance_provider_id: props.sendUpdateLog?.insurance_provider_id || props.quote?.insurance_provider_id || props.quote?.car_plan_provider_id || null,
+	plan_name: props.sendUpdateLog?.plan_name || props.quote?.plan_id_text || null,
 	policy_number: props.sendUpdateLog?.policy_number || props.quote?.policy_number || null,
 	issuance_date: props.sendUpdateLog?.issuance_date || props.quote?.policy_issuance_date || null,
 	start_date: props.sendUpdateLog?.start_date || props.quote?.policy_start_date || null,
@@ -164,11 +185,14 @@ const onUpdate = () => {
                 </x-tooltip>
               </dt>
               <dd>
-								<x-input
-									v-if="isCPD"
-									:disabled="!state.isEdit"
-                  v-model="policyDetailsForm.provider_name"
-								/>
+                <ComboBox
+                    v-if="isCPD"
+                    v-model="policyDetailsForm.insurance_provider_id"
+                    :options="insuranceProvidersOptions"
+                    placeholder="Provider Name"
+                    :single="true"
+                    :disabled="!state.isEdit"
+                />
 								<span v-else>{{ policyDetailsForm.provider_name }}</span>
 							</dd>
             </div>

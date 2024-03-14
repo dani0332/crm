@@ -31,11 +31,8 @@ class PaymentOverdueStatus extends Command
         info('PaymentOverdueStatus Command Started');
         // get payments where payment status is not paid/captured and collection date is less than current date
         $currentTime = now()->format('Y-m-d').' 00:00:00';
-        $overduePaymentStatuses = [PaymentStatusEnum::PAID, PaymentStatusEnum::CAPTURED,
-            PaymentStatusEnum::OVERDUE, PaymentStatusEnum::PARTIALLY_PAID,
-            PaymentStatusEnum::PARTIAL_CAPTURED,
-        ];
-        $payments = Payment::whereNotIn('payment_status_id', $overduePaymentStatuses)
+
+        $payments = Payment::where('payment_status_id', PaymentStatusEnum::NEW)
             ->where('collection_date', '<', $currentTime)
             ->where('total_payments', '>', 0)
             ->get();
@@ -46,7 +43,7 @@ class PaymentOverdueStatus extends Command
         });
 
         // get all split payments where payment status is not paid/captured and collection date is less than current date
-        $splitPayments = PaymentSplits::whereNotIn('payment_status_id', $overduePaymentStatuses)
+        $splitPayments = PaymentSplits::where('payment_status_id', PaymentStatusEnum::NEW)
             ->where('due_date', '<', $currentTime)
             ->get();
 

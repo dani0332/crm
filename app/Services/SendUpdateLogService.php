@@ -17,6 +17,7 @@ use App\Models\PersonalQuote;
 use App\Models\PetQuote;
 use App\Models\TravelQuote;
 use App\Models\YachtQuote;
+use App\Repositories\PaymentRepository;
 use App\Traits\GenericQueriesAllLobs;
 use App\Enums\DocumentTypeCode;
 use App\Enums\SageEnums;
@@ -583,6 +584,12 @@ class SendUpdateLogService
         return in_array($categoryCode, $categories) && ! in_array($optionCode, $options);
     }
 
+    public function isPolicyDetailsVisible($categoryCode, $optionCode): bool
+    {
+        return $categoryCode == SendUpdateLogStatusEnum::CPD || 
+               ($categoryCode == SendUpdateLogStatusEnum::EF && $optionCode == SendUpdateLogStatusEnum::PPE);
+    }
+
     public function getSendUpdatePayments($sendUpdateLog)
     {
         $payments = $sendUpdateLog->payments;
@@ -662,5 +669,16 @@ class SendUpdateLogService
                 ]);
             }
         }
+    }
+
+    public function getPaymentCode($quoteCode): string
+    {
+        $countPayments = PaymentRepository::getPaymentsByQuoteCode($quoteCode);
+
+        if ($countPayments < 2) {
+            return $quoteCode.'-1';
+        }
+
+        return $quoteCode.'-'.$countPayments;
     }
 }

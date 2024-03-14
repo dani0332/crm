@@ -28,8 +28,6 @@ use App\Enums\TiersEnum;
 use App\Enums\TravelQuoteEnum;
 use App\Facades\Capi;
 use App\Http\Requests\ExportPlansPdfRequest;
-use App\Http\Requests\SplitPaymentApproveRequest;
-use App\Http\Requests\SplitPaymentUpdateRequest;
 use App\Http\Requests\StorePaymentRequest;
 use App\Http\Requests\UpdateLeadStatusRequest;
 use App\Http\Requests\UpdatePaymentRequest;
@@ -1805,11 +1803,13 @@ class CRUDController extends Controller
             ];
 
             $count = $quoteModel->payments->count();
-            $paymentInformation['code'] = ($count > 0) ? $quoteModel->code.'-'.$count : $quoteModel->code;
             if ($request->send_update_id) { // it will check if the payment is added from send update.
                 $paymentInformation['send_update_log_id'] = $request->send_update_id;
+                $paymentInformation['code'] = app(SendUpdateLogService::class)->getPaymentCode($quoteModel->code);
                 // it will make $quoteModel as SendUpdateLog model.
                 $quoteModel = SendUpdateLogRepository::getLogById($request->send_update_id);
+            } else {
+                $paymentInformation['code'] = ($count > 0) ? $quoteModel->code.'-'.$count : $quoteModel->code;
             }
 
             if ($request->reference) {
@@ -1833,28 +1833,6 @@ class CRUDController extends Controller
             $quoteModel->save();
 
             return back()->with('success', 'Payment has been created');
-        }
-    }
-
-    public function splitPaymentUpdate(SplitPaymentUpdateRequest $request)
-    {
-        if (auth()->user()->can(PermissionsEnum::ApprovePayments)) {
-            $successMessage = PaymentRepository::updatePaymentStatus($request);
-
-            return back()->with('success', $successMessage);
-        } else {
-            return back()->with('error', 'You are not authorized');
-        }
-    }
-
-    public function splitPaymentsApprove(SplitPaymentApproveRequest $request)
-    {
-        if (auth()->user()->can(PermissionsEnum::ApprovePayments)) {
-            $successMessage = PaymentRepository::updateSplitPaymentsApprove($request);
-
-            return back()->with('success', $successMessage);
-        } else {
-            return back()->with('error', 'You are not authorized');
         }
     }
 

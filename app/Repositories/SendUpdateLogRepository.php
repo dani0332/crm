@@ -112,10 +112,14 @@ class SendUpdateLogRepository extends BaseRepository
     public function fetchSavePolicyDetails($data)
     {
         try {
+            if (! empty($data['insurance_provider_id'])) {
+                $insuranceProvider = InsuranceProviderRepository::getById($data['insurance_provider_id']);
+            }
             $result = $this->where('id', $data['id'])->update([
                 'first_name' => $data['first_name'],
                 'last_name' => $data['last_name'],
-                'provider_name' => $data['provider_name'],
+                'provider_name' => isset($insuranceProvider) ? $insuranceProvider->text : $data['provider_name'],
+                'insurance_provider_id' => $data['insurance_provider_id'],
                 'plan_name' => $data['plan_name'],
                 'policy_number' => $data['policy_number'],
                 'issuance_date' => $data['issuance_date'],
@@ -124,6 +128,7 @@ class SendUpdateLogRepository extends BaseRepository
                 'insurer_quote_number' => $data['insurer_quote_number'],
                 'issuance_status_id' => $data['issuance_status_id'],
                 'status' => SendUpdateLogStatusEnum::REQUEST_IN_PROGRESS,
+                'is_policy_filled' => SendUpdateLogStatusEnum::POLICY_FILLED,
             ]);
         } catch (\Exception $ex) {
             $result = (object) [

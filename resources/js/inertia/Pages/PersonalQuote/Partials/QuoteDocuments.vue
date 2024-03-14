@@ -156,11 +156,11 @@ const uploadFile = (doc, filesWithInfo, memberId) => {
 };
 
 const isEN = computed(() => {
-  return props.selectedCategory?.subCategory.slug === sendUpdateStatusEnum.EN;
+  return isSendUpdatePage && props.selectedCategory?.subCategory.slug === sendUpdateStatusEnum.EN;
 });
 
 const isCPU = computed(() => {
-  return props.selectedCategory?.subCategory.slug === sendUpdateStatusEnum.CPU;
+  return isSendUpdatePage && props.selectedCategory?.subCategory.slug === sendUpdateStatusEnum.CPU;
 });
 
 const sendUpdateButton = computed(() => {
