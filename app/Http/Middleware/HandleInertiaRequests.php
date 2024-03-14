@@ -205,7 +205,6 @@ class HandleInertiaRequests extends Middleware
                     fn ($s) => $s->attributes(['icon' => 'car'])
                 )
                 ->addIf(
-                    auth()->user()->can(PermissionsEnum::HealthQuotesList),
                     auth()->user()->hasAnyPermission(
                         PermissionsEnum::HealthQuotesList,
                         PermissionsEnum::HEALTH_QUOTES_MANAGER_ACCESS,
