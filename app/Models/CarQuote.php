@@ -9,6 +9,7 @@ use App\Traits\QuoteModelTrait;
 use Auth;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use LookUpModel;
 use OwenIt\Auditing\Auditable;
 
@@ -37,10 +38,12 @@ class CarQuote extends BaseModel
         'renewal_batch' => FilterTypes::EXACT,
         'renewal_expiry_date' => FilterTypes::DATE_BETWEEN,
         'policy_number' => FilterTypes::NULL_CHECK,
+        'source' => FilterTypes::EXACT,
         'advisor_id' => FilterTypes::IN,
         'created_at' => FilterTypes::DATE,
         'previous_quote_policy_number' => FilterTypes::EXACT,
         'renewal_batch' => FilterTypes::EXACT,
+        'mobile_no' => FilterTypes::EXACT,
         'quote_batch_id' => FilterTypes::IN,
     ];
 
@@ -280,6 +283,11 @@ class CarQuote extends BaseModel
         return $this->hasOne(User::class, 'email', 'updated_by')->select(['id', 'email', 'name']);
     }
 
+    public function previousAdvisor()
+    {
+        return $this->hasOne(User::class, 'id', 'previous_advisor_id')->select(['id', 'email', 'name']);
+    }
+
     public function customerMembers()
     {
         return $this->morphMany(CustomerMembers::class, 'quote');
@@ -466,5 +474,10 @@ class CarQuote extends BaseModel
     {
         return $this->hasOne(QuoteRequestEntityMapping::class, 'quote_request_id')
             ->where('quote_type_id', QuoteTypeId::Car);
+    }
+
+    public function duplicateInquiryLog(): MorphMany
+    {
+        return $this->morphMany(DuplicateInquiryLog::class, 'loggable');
     }
 }

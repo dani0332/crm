@@ -1,4 +1,6 @@
 <script setup>
+import OnlineStatusToggle from "../Components/OnlineStatusToggle.vue";
+
 const page = usePage();
 const user = computed(() => page.props.auth.user);
 const navLinks = computed(() => page.props.sidebar);
@@ -55,7 +57,13 @@ const onLogout = () => {
             </button>
 
             <a href="/" class="block w-full">
-              <img src="/image/new_logo.png" alt="IMCRM" class="w-full" />
+              <img
+                :src="page.props.im_logo"
+                alt="IMCRM"
+                class="w-full"
+                width="439"
+                height="66"
+              />
             </a>
           </div>
         </header>
@@ -239,6 +247,9 @@ const onLogout = () => {
             </div>
 
             <div class="flex gap-3 items-center">
+                <OnlineStatusToggle
+                    :user="user"
+                />
               <!-- <UserStatus /> -->
               <x-popover align="right" block>
                 <x-button size="sm" ghost>

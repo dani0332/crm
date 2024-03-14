@@ -449,7 +449,7 @@ const linkEntity = () => {
 
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div class="text-sm">
-        <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
+        <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
           <div
             class="grid sm:grid-cols-2"
             v-if="hasAnyRole([rolesEnum.Admin, rolesEnum.Engineering])"
@@ -488,12 +488,12 @@ const linkEntity = () => {
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">EMAIL</dt>
-            <dd>{{ quote.email }}</dd>
+            <dd class="break-words">{{ quote.email }}</dd>
           </div>
 
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">COMPANY NAME</dt>
-            <dd>{{ quote.company_name }}</dd>
+            <dd class="break-words">{{ quote.company_name }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">NEXT FOLLOWUP DATE</dt>
@@ -543,7 +543,7 @@ const linkEntity = () => {
 
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">BRIEF DETAILS</dt>
-            <dd>{{ quote.brief_details }}</dd>
+            <dd class="break-words">{{ quote.brief_details }}</dd>
           </div>
 
           <div class="grid sm:grid-cols-2">
@@ -596,13 +596,15 @@ const linkEntity = () => {
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div class="flex justify-between items-center mb-4">
         <h3 class="font-semibold text-primary-800 text-lg">Entity Profile</h3>
-        <x-tag color="success" v-if="quote.kyc_decision === 'Complete'"> KYC - Complete </x-tag>
+        <x-tag color="success" v-if="quote.kyc_decision === 'Complete'">
+          KYC - Complete
+        </x-tag>
         <x-tag color="amber" v-else> KYC - Pending </x-tag>
       </div>
       <x-divider class="mb-4 mt-1" />
       <x-form @submit="updateProfileDetails" :auto-focus="false">
         <div class="text-sm">
-          <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
+          <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
             <div class="grid sm:grid-cols-2">
               <dt class="font-medium">FIRST NAME</dt>
               <dd>{{ quote.first_name }}</dd>
@@ -800,7 +802,7 @@ const linkEntity = () => {
     />
 
     <!-- Additional Contact -->
-    <customerAdditionalContacts
+    <CustomerAdditionalContacts
       quoteType="Business"
       :customerId="quote.customer_id"
       :quoteId="quote.id"
@@ -935,5 +937,10 @@ const linkEntity = () => {
         :hide-footer="historyData.length < 15"
       />
     </div>
+
+    <AuditLogs
+      :type="'App\\Models\\BusinessQuote'"
+      :id="$page.props.quote.id"
+    />
   </div>
 </template>

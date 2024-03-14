@@ -13,7 +13,6 @@ use App\Enums\quoteTypeCode;
 use App\Enums\RolesEnum;
 use App\Enums\RuleTypeEnum;
 use App\Enums\TeamNameEnum;
-use App\Jobs\CammyJob;
 use App\Jobs\GetQuotePlansJob;
 use App\Jobs\IntroEmailJob;
 use App\Mail\HealthAssignmentIssueEmail;
@@ -62,7 +61,9 @@ class LeadAllocationService extends BaseService
                 'lead_allocation.user_id as userId',
                 'lead_allocation.allocation_count',
                 'lead_allocation.max_capacity',
+                'lead_allocation.reset_cap',
                 'u.status as is_available',
+                'lead_allocation.reset_cap',
                 'lead_allocation.last_allocated',
                 't.name as teamName',
                 'u.name as userName',
@@ -195,7 +196,6 @@ class LeadAllocationService extends BaseService
                     ->then(function () use ($lead) {
                         if (in_array($lead->health_team_type, [HealthTeamType::EBP, HealthTeamType::RM_NB, HealthTeamType::RM_SPEED])
                             && $lead->quote_status_id == QuoteStatusEnum::Qualified) {
-                            CammyJob::dispatch($lead, 'intro')->delay(now()->addSeconds(15));
                             IntroEmailJob::dispatch(quoteTypeCode::Health, 'Capi', $lead->uuid, 'send-rm-intro-email')->delay(now()->addSeconds(15));
                         }
                     })->dispatch();
@@ -998,33 +998,8 @@ class LeadAllocationService extends BaseService
             );
     }
 
-    public function getUsersForRevivalReplied($currentLoginAvailableUserIds)
+    public function getUnAssignedHealthQuotes($teamType)
     {
-        $organicTeam = Team::where('name', 'Organic')->first();
-        if ($organicTeam) {
-            info('getUsersForRevivalReplied - organicTeam found with id '.$organicTeam->id);
-
-            $organicUserIds = $this->getUsersByTeamId($organicTeam->id)->pluck('id')->toArray();
-            info('getUsersForRevivalReplied - users found with organic '.json_encode($organicUserIds));
-
-            $users = LeadAllocation::join('users as u', 'u.id', 'lead_allocation.user_id')
-                ->select('u.id', 'u.email')
-                ->where('u.last_login', '>', DB::raw('DATE_ADD(CURDATE(), INTERVAL 1 SECOND)'))
-                ->where('lead_allocation.is_available', 1) // user must be available
-                ->where(function ($query) {
-                    $query->whereRaw('lead_allocation.allocation_count < lead_allocation.max_capacity')
-                        ->orWhere('lead_allocation.max_capacity', '=', -1);
-                })
-                ->whereIn('u.id', $organicUserIds)
-                ->orderBy('lead_allocation.last_allocated', 'desc')->get()->pluck('id')->toArray();
-
-            $organicUserIdsIntersection = array_intersect($currentLoginAvailableUserIds, $users);
-
-            info('getUsersForRevivalReplied - users after intersection are : '.json_encode($organicUserIdsIntersection));
-
-            return $organicUserIdsIntersection;
-        } else {
-            return $currentLoginAvailableUserIds;
-        }
+        return HealthQuote::whereNull('advisor_id')->where('health_team_type', $teamType)->count() ?? 0;
     }
 }

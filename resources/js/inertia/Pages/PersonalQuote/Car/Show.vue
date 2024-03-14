@@ -5,6 +5,7 @@ import LazyCreatePlan from './Partials/CreatePlan.vue';
 import AssignTier from './Partials/AssignTier.vue';
 import FollowUpReasons from './Partials/FollowUpReasons.vue';
 import RiskRatingScoreDetails from '../../../Components/RiskRatingScoreDetails.vue';
+import {fileUploadErrorMessage} from "@/inertia/Composables/utilities.js";
 
 defineProps({
   quote: Object,
@@ -81,12 +82,13 @@ defineProps({
   UBOsDetails: Array,
   isCommercialVehicles: Boolean,
   carInsuranceProviders: Array,
+  clientInquiryLogs: Array,
 });
 
 const page = usePage();
 const notification = useNotifications('toast');
 const showfollowup = ref(false);
-
+const processingOCBEmailNB = ref(false);
 const permissionEnum = page.props.permissionsEnum;
 const rolesEnum = page.props.rolesEnum;
 
@@ -577,6 +579,10 @@ const openDuplicate = () => {
   leadDuplicateForm.reset();
 };
 
+const openSendOCBConfirmNB = () => {
+  modals.sendOCBConfirmNB = true;
+};
+
 const onCreateDuplicate = isValid => {
   if (!isValid) return;
   leadDuplicateForm.post('/quotes/createDuplicate', {
@@ -943,15 +949,16 @@ const docForm = useForm({
   file: null,
 });
 
-const uploadFile = (doc, files) => {
+const uploadFile = (doc, filesWithInfo) => {
   let url = '/quotes/car/documents/store';
-
+  const { files, rejectReason} = filesWithInfo;
   if (files.length == 0) {
     notification.error({
-      title: 'Incorrect file type\nPlease upload a ' + doc.accepted_files + ' file',
+      title: 'File upload failed',
       position: 'top',
     });
-    return false;
+    docForm.setError({error: fileUploadErrorMessage(doc, rejectReason)});
+    return false
   };
   isUploading.value = true;
   docForm
@@ -1104,9 +1111,9 @@ const onTogglePlans = toggle => {
 };
 const exportLoader = ref(false);
 const onExportPlans = () => {
-  if (selectedPlans.value.length < 3 || selectedPlans.value.length > 5) {
+  if (selectedPlans.value.length < 1 || selectedPlans.value.length > 5) {
     notification.error({
-      title: 'Please select 3 to 5 plans to download PDF.',
+      title: 'Please select 1 to 5 plans to download PDF.',
       position: 'top',
     });
     return;
@@ -1191,6 +1198,32 @@ const confirmSendEmail = () => {
     })
     .finally(() => {
       modals.sendConfirm = false;
+    });
+};
+
+const confirmSendOCBEmailNB = () => {
+  processingOCBEmailNB.value = true;
+  axios
+    .post(
+      `/quotes/car/${page.props.record.uuid}/send-email-ocb-nb`,
+      {
+        responseType: 'json',
+      },
+    )
+    .then(response => {
+      processingOCBEmailNB.value = false;
+      notification.success({
+        title: response.data.success,
+        position: 'top',
+      });
+    })
+    .catch(error => {
+      processingOCBEmailNB.value = false;
+      console.log(error);
+    })
+    .finally(() => {
+      processingOCBEmailNB.value = false;
+      modals.sendOCBConfirmNB = false;
     });
 };
 
@@ -1594,6 +1627,19 @@ const handleChildUpdate = planId => {
             >
               Duplicate Lead
             </x-button>
+            <x-button
+              v-if="
+                hasAnyRole([
+                  rolesEnum.LeadPool,
+                ])
+              "
+              class="mr-2"
+              size="sm"
+              color="#ff5e00"
+              @click.prevent="openSendOCBConfirmNB"
+            >
+              Send NB OCB To Customer
+            </x-button>
           </template>
           <Link :href="route('car.index')">
             <x-button size="sm" tag="div">Car List</x-button>
@@ -1761,6 +1807,10 @@ const handleChildUpdate = planId => {
           >
             <dt class="font-medium">ID</dt>
             <dd>{{ record.id }}</dd>
+          </div>
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">ENQUIRY COUNT</dt>
+            <dd>{{ record.enquiry_count }}</dd>
           </div>
         </dl>
       </div>
@@ -2719,6 +2769,7 @@ const handleChildUpdate = planId => {
             isManualUpdate,
             isRenewal,
             isDisabled,
+            puaPremium
           }"
         >
           <p>{{ providerName }}</p>
@@ -2746,6 +2797,22 @@ const handleChildUpdate = planId => {
               class="mt-0.5 text-[10px]"
             >
               Hidden
+            </x-tag>
+
+            <x-tag
+                v-if="puaPremium && puaPremium != null"
+                size="xs"
+                class="mt-0.5 text-[10px] text-white"
+                style="background-color: #E00000"
+            >
+                <x-tooltip  position="right">
+                    <template #tooltip>
+                      <span class="font-medium">
+                          Pending Underwriter Approval (PUA) indicates that this quote is prepared using our internal rating calculator. Please contact the client to get the required documents, to proceed with generating a quote on the insurer portal and connect with the underwriter to obtain their approval.
+                       </span>
+                    </template>
+                    PUA
+                </x-tooltip>
             </x-tag>
           </div>
         </template>
@@ -3002,6 +3069,34 @@ const handleChildUpdate = planId => {
           </div>
         </template>
       </x-modal>
+      <AppModal
+        :actions="true"
+        :showHeader="true"
+        v-model:modelValue="modals.sendOCBConfirmNB"
+        :backdrop-close="false"
+        >
+        <template #header>
+        <p>Send Email OCB NB</p>
+        </template>
+        <template #default>
+        <p>Are you sure send email to customer?</p>
+        </template>
+        <template #actions>
+            <div class="text-right space-x-4">
+            <x-button
+              size="sm"
+              ghost
+              @click.prevent="modals.sendOCBConfirmNB = false"
+              :disable="processingOCBEmailNB"
+            >
+              Cancel
+            </x-button>
+            <x-button size="sm" color="error" :loading="processingOCBEmailNB" @click.prevent="confirmSendOCBEmailNB">
+              Send
+            </x-button>
+          </div>
+        </template>
+    </AppModal>
       <x-modal v-model="modals.createPlan" size="xl" show-close backdrop>
         <template #header> Create Car Quote </template>
         <LazyCreatePlan
@@ -3610,7 +3705,7 @@ const handleChildUpdate = planId => {
         </x-form>
       </x-modal>
     </div>
-    <customerAdditionalContacts
+    <CustomerAdditionalContacts
       quoteType="Car"
       :customerId="record.customer_id"
       :quoteId="record.id"
@@ -3653,5 +3748,10 @@ const handleChildUpdate = planId => {
     v-if="can(permissionEnum.API_LOG_VIEW)"
     :type="'App\\Models\\CarQuote'"
     :id="$page.props.record.id"
+  />
+
+  <ClientInquiryLogs
+      v-if="clientInquiryLogs.length > 0"
+      :logs="clientInquiryLogs"
   />
 </template>

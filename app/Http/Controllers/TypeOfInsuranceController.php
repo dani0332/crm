@@ -8,6 +8,7 @@ use App\Models\TypeOfInsurance;
 use DataTables;
 use Illuminate\Http\Request;
 
+// Scheduled to delete 15th April 2024
 class TypeOfInsuranceController extends Controller
 {
     public function __construct()
@@ -53,7 +54,7 @@ class TypeOfInsuranceController extends Controller
     /**
      * Store a newly created resource in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
+     * @param  Request  $request
      * @return \Illuminate\Http\Response
      */
     public function store(TypeInsuranceRequest $request, TypeOfInsurance $typeofinsurance)
@@ -95,7 +96,7 @@ class TypeOfInsuranceController extends Controller
     /**
      * Update the specified resource in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
+     * @param  Request  $request
      * @return \Illuminate\Http\Response
      */
     public function update(TypeInsuranceRequest $request, TypeOfInsurance $typeofinsurance)

@@ -1,18 +1,18 @@
 <p align="center"><a href="https://insurancemarket.ae" target="_blank"><img src="https://insurancemarket.ae/_next/image/?url=%2Fassets%2Fimg%2Flogo%2Flogo.png&w=2048&q=75" width="400"></a> </p>  
 
-## About Blanka  - IMCRM 
+## About Blanka  - IMCRM  
 Insurance Market CRM (IMCRM) is the CRM used by internal team to handle the incoming leads, transactions, view or generate quotes for customers, generate car valuation, and manage customers. Basically its a complete solution for the back office to handle incoming customer inquiries and process their insurnace quotes.
 
 IMCRM is developed on Laravel using PHP 8.0.1 or above, MariaDB 10.x or above.
 
-URLs: 
+URLs:
 
 - [Live](https://imcrm.alfred.ae/) 
 - [Stage](https://imcrmstage.alfred.ae/)
 - [UAT](https://imcrmuat.alfred.ae)
 - [DEV](https://imcrmdev.alfred.ae) [DEV1](https://imcrmdev01.alfred.ae) [DEV2](https://imcrmdev02.alfred.ae)
 - [TEST](https://imcrmtest.alfred.ae)
-- [Laravel Code Standard Guide Lines](https://xqsit.github.io/laravel-coding-guidelines/)
+- [Laravel Code Standard Guide Lines](https://xqsit94.github.io/laravel-coding-guidelines/)
 - [Team Engineering Guide](https://github.com/InsuranceMarket-ae/engineering/wiki)
 
 Please make sure to go through the last two lines to familiarize yourself with the code quality guide before you start contributing.
@@ -20,7 +20,7 @@ Please make sure to go through the last two lines to familiarize yourself with t
 ## Setting up Laravel
 
 - Clone the repo in a new folder and use the develop branch for initial setup.
-- Make sure you're using PHP 8.0.1 or above, Maria DB server 10.x or above on your local machine.
+- Make sure you're using PHP 8.1 or above, Maria DB server 10.x or above on your local machine.
 - Install and configure Doppler CLI, we use [Doppler](https://doppler.com/) to handle the ```ENV``` variables and do not use .env file. Ask the team mate to setup your doppler profile in your name with credentials.
 - Ask for a dump of stage DB which you will need to import.
 - Run ```composer install``` to install the laravel required files..
@@ -34,11 +34,22 @@ Once you have doppler CLI installed on your local machine, run the following com
 - ```doppler run -- php artisan <any command>``` will run the laravel commands using your doppler configured profile.
 
 **Assets Configuration**
+
 This repository use Laravel Vite to build assets like CSS and JavaScript, use the following commands once modifying these files. Yarn will be our default package manager.
 
 - Run ```yarn``` so all the necassary packages are installed 
 - Run ```yarn prod``` to generate a production build
 - Run ```yarn dev``` to hot load the changes as you make them while development.
+
+Make sure to run `yarn prod` before every push so the assets are compiled with the updates.
+
+**Code Formatting**
+
+This project has pint configured, make sure to run `composer pint:fix` before every push to the code repo.
+
+**Getting Deployment Logs**
+
+If any deployment fails on any environment, make sure to check the deployment logs. An email will be received in your inbox with the release ID of the deployment. Use that Release ID and go into postman collection `Logs -> Release Logs`, replace the release ID in the URL, click on the arrow next to Send button and click Send and Download.
 
 **Redis Allocated DBs**
 - Prod - 15

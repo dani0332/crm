@@ -9,6 +9,7 @@ defineProps({
   quote: Object,
   leadStatuses: Array,
   ecomDetails: Object,
+  coPayment: Object,
   membersDetail: Array,
   memberCategories: Array,
   memberRelations: Array,
@@ -16,6 +17,7 @@ defineProps({
   nationalities: Array,
   emirates: Array,
   advisors: Array,
+  teams: Object,
   quoteDocuments: Object,
   documentTypes: Object,
   cdnPath: String,
@@ -48,6 +50,7 @@ defineProps({
   canAddBatchNumber: Boolean,
   paymentLink: String,
   quoteType: String,
+  clientInquiryLogs: Array,
 });
 
 const page = usePage();
@@ -164,6 +167,17 @@ const memberCategoryText = memberCategoryId =>
       category => category.id === memberCategoryId,
     )?.text;
   });
+
+// const subTeamOptions = computed(() => {
+//     let subteamArray = page.props.teams?.map(team => ({
+//         value: team.name,
+//         label: team.name,
+//     }));
+
+//     subteamArray.push({ value: 'No-Type', label: 'No-Type' });
+
+//     return subteamArray;
+// });
 
 const subTeamOptions = [
   { value: 'RM-NB', label: 'RM-NB' },
@@ -528,6 +542,11 @@ const plansTable = reactive({
       value: 'eligibilityName',
     },
     {
+      text: 'CO-PAY/CO-INSURANCE',
+      value: 'copayName',
+      width: 100,
+    },
+    {
       text: 'Base Price',
       value: 'actualPremium',
     },
@@ -823,6 +842,11 @@ const getSmallestCopayRateAsDefaultValue = () => {
       element.actualPremium = smallestCopayValue;
       element.vat = smallestCopayVAT;
     }
+    element.coPayments.forEach(function callback(value, index) {
+      if (value.id == element.selectedCopayId) {
+        element.copayName = value.text;
+      }
+    });
   });
 };
 
@@ -1408,12 +1432,13 @@ const handleChildUpdate = planId => {
             label="Assign Subteam"
             :options="subTeamOptions"
             placeholder="Select Subteam"
-            class="w-auto flex-1"
+            class="w-auto flex-1 !mb-2"
           />
           <div>
             <x-button
               color="orange"
               size="sm"
+              class="mb-2"
               @click.prevent="onTeamAssign"
               :loading="isDisabled"
             >
@@ -1425,17 +1450,19 @@ const handleChildUpdate = planId => {
           v-if="!hasRole($page.props.rolesEnum.HealthWCUAdvisor)"
           class="w-full md:w-1/2 flex gap-2 items-end"
         >
-          <x-select
+          <ComboBox
             v-model="assignLead"
             label="Assign Lead"
             :options="advisorOptions"
             placeholder="Select Lead"
-            class="w-auto flex-1"
+            class="w-auto flex-1 !mb-2"
+            :single="true"
           />
           <div>
             <x-button
               color="orange"
               size="sm"
+              class="mb-2"
               @click.prevent="onAssignLead"
               :loading="isDisabled"
             >
@@ -1448,7 +1475,7 @@ const handleChildUpdate = planId => {
 
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div class="text-sm">
-        <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
+        <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
           <div
             v-if="hasAnyRole([rolesEnum.Admin, rolesEnum.Engineering])"
             class="grid sm:grid-cols-2"
@@ -1535,7 +1562,7 @@ const handleChildUpdate = planId => {
       </div>
 
       <div class="text-sm">
-        <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
+        <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">
               FOR WHOM DO YOU REQUIRE HEALTH INSURANCE?
@@ -1562,6 +1589,10 @@ const handleChildUpdate = planId => {
             <dt class="font-medium">ADDITIONAL NOTES</dt>
             <dd>{{ quote.additional_notes }}</dd>
           </div>
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">ENQUIRY COUNT</dt>
+            <dd>{{ quote.enquiry_count }}</dd>
+          </div>
         </dl>
       </div>
     </div>
@@ -1576,7 +1607,9 @@ const handleChildUpdate = planId => {
           }}
           Profile
         </h3>
-        <x-tag color="success" v-if="quote.kyc_decision === 'Complete'"> KYC - Complete </x-tag>
+        <x-tag color="success" v-if="quote.kyc_decision === 'Complete'">
+          KYC - Complete
+        </x-tag>
         <x-tag color="amber" v-else> KYC - Pending </x-tag>
       </div>
       <x-divider class="mb-4 mt-1" />
@@ -1586,7 +1619,7 @@ const handleChildUpdate = planId => {
             v-if="
               quote.customer_type === page.props.customerTypeEnum.Individual
             "
-            class="grid md:grid-cols-2 gap-x-6 gap-y-4"
+            class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words"
           >
             <div class="grid sm:grid-cols-2">
               <dt class="font-medium">FIRST NAME</dt>
@@ -1626,7 +1659,7 @@ const handleChildUpdate = planId => {
             </div>
             <div class="grid sm:grid-cols-2">
               <dt class="font-medium">EMAIL</dt>
-              <dd>{{ quote.email }}</dd>
+              <dd class="break-words">{{ quote.email }}</dd>
             </div>
             <div class="grid sm:grid-cols-2">
               <dt class="font-medium">NATIONALITY</dt>
@@ -1704,7 +1737,9 @@ const handleChildUpdate = planId => {
             </div>
             <div class="grid sm:grid-cols-2">
               <dt class="font-medium">COMPANY NAME</dt>
-              <dd>{{ customerProfileForm.company_name }}</dd>
+              <dd class="break-words">
+                {{ customerProfileForm.company_name }}
+              </dd>
             </div>
             <div class="grid sm:grid-cols-2">
               <dt class="font-medium">TRADE LICENSE NO</dt>
@@ -2294,11 +2329,15 @@ const handleChildUpdate = planId => {
             <dt class="font-medium">TOTAL PRICE (with VAT)</dt>
             <dd>{{ fixedValue(ecomDetails.priceWithVAT) }}</dd>
           </div>
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">CO-PAY / CO-INSURANCE</dt>
+            <dd>{{ coPayment ? coPayment.text : 'N/A' }}</dd>
+          </div>
         </dl>
       </div>
     </div>
 
-    <PaymentTable
+    <!-- <PaymentTable
       :payments="payments"
       :can="can"
       :isBetaUser="isBetaUser"
@@ -2306,7 +2345,7 @@ const handleChildUpdate = planId => {
       :paymentMethods="paymentMethods"
       :insuranceProviders="insuranceProviders"
       :quote="quote"
-    />
+    /> -->
 
     <!-- <div class="p-4 rounded shadow mb-6 bg-white" v-if="isQuoteDocumentEnabled">
       <div>
@@ -2476,8 +2515,12 @@ const handleChildUpdate = planId => {
         border-cell
         hide-rows-per-page
         :rows-per-page="15"
+        class="flex-wrap"
         :hide-footer="listQuotePlansFiltered.length < 15"
       >
+        <template #item-copayName="item">
+          <span class="copay-max">{{ item.copayName }}</span>
+        </template>
         <template #item-providerName="{ providerName, isManualPlan, isHidden }">
           <p>{{ providerName }}</p>
           <div class="flex gap-1">
@@ -2507,6 +2550,7 @@ const handleChildUpdate = planId => {
             </x-tag>
           </div>
         </template>
+
         <template #item-total="{ actualPremium, policyFee, basmah, vat }">
           {{
             fixedValue(actualPremium + (policyFee || 0) + (basmah || 0) + vat)
@@ -2926,5 +2970,10 @@ const handleChildUpdate = planId => {
     </div>
 
     <AuditLogs :type="'App\\Models\\HealthQuote'" :id="$page.props.quote.id" />
+
+    <ClientInquiryLogs
+      v-if="clientInquiryLogs.length > 0"
+      :logs="clientInquiryLogs"
+    />
   </div>
 </template>

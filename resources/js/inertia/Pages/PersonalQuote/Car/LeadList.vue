@@ -11,6 +11,8 @@ defineProps({
   todayManualCount: Number,
   yesterdayAutoCount: Number,
   yesterdayManualCount: Number,
+  genericRequestEnum: Array,
+  isBetaUser: Boolean,
 });
 
 const page = usePage();
@@ -185,6 +187,8 @@ const filters = reactive({
   renewal_expiry_date_end: '',
   created_at_end: page.props.createdAtEnd || '',
   page: 1,
+  paid_at_start: '',
+  paid_at_end: ''
 });
 
 const loader = reactive({
@@ -194,6 +198,7 @@ const loader = reactive({
 
 const quotesSelected = ref([]);
 const canExport = ref(false);
+const canExportLeadsAndPlan = ref(false);
 
 watch(
   () => filters,
@@ -203,8 +208,14 @@ watch(
     } else {
       canExport.value = false;
     }
+    if (filters.paid_at_start && filters.paid_at_end) {
+      canExportLeadsAndPlan.value = true;
+    } else {
+      canExportLeadsAndPlan.value = false;
+    }
   },
   { deep: true, immediate: true },
+
 );
 
 const rules = {
@@ -503,28 +514,83 @@ onMounted(() => {
           placeholder="Please select assignment type"
           class="w-full"
         />
+
+        <DatePicker
+          v-if="can(permissionsEnum.EXPORT_PLAN_DETAIL)"
+          v-model="filters.paid_at_start"
+          label="Paid Date Start"
+        />
+
+        <DatePicker
+          v-if="can(permissionsEnum.EXPORT_PLAN_DETAIL)"
+          v-model="filters.paid_at_end"
+          label="Paid Date End"
+        />
       </div>
       <div class="flex justify-between gap-3 mb-4 mt-1">
-        <div v-if="can(permissionsEnum.DATA_EXTRACTION)">
+        <div>
           <x-button
-            v-if="canExport"
+            v-if="canExport && can(permissionsEnum.DATA_EXTRACTION)"
             size="sm"
             color="emerald"
             :href="`/car/leads-export?${objToUrl(filters)}`"
-            class="justify-self-start"
+            class="justify-self-start mr-3"
           >
             Export
           </x-button>
-          <x-tooltip v-else position="right">
-            <x-button tag="div" size="sm" color="emerald"> Export </x-button>
+          <x-tooltip v-if="!canExport && can(permissionsEnum.DATA_EXTRACTION)" position="right">
+            <x-button tag="div" size="sm" color="emerald" class="mr-3"> Export </x-button>
             <template #tooltip>
               <span class="font-medium">
                 Created dates are required to export data.
               </span>
             </template>
           </x-tooltip>
+          <x-button
+            v-if="canExportLeadsAndPlan && can(permissionsEnum.EXPORT_PLAN_DETAIL)"
+            size="sm"
+            color="emerald"
+            :href="`/car/leads-export-plan/${genericRequestEnum.EXPORT_PLAN_DETAIL}?${objToUrl(filters)}`"
+            class="justify-self-start mr-3"
+          >
+            Extract leads and plan detail
+          </x-button>
+          <x-tooltip v-if="!canExportLeadsAndPlan && can(permissionsEnum.EXPORT_PLAN_DETAIL)" position="right">
+            <x-button class="mr-3" tag="div" size="sm" color="emerald"> Extract leads and plan detail</x-button>
+            <template #tooltip>
+              <span class="font-medium">
+                Paid dates are required to export data.
+              </span>
+            </template>
+          </x-tooltip>
+
+          <x-button
+              v-if="canExport && can(permissionsEnum.EXPORT_LEADS_DETAIL_WITH_EMAIL_MOBILE)"
+              size="sm"
+              color="emerald"
+              :href="`/car/leads-details-with-email/${genericRequestEnum.EXPORT_LEADS_DETAIL_WITH_EMAIL_MOBILE}?${objToUrl(filters)}`"
+              class="justify-self-start mr-3"
+          >
+              Extract leads detail with email/mobile_no
+          </x-button>
+            <x-tooltip v-if="!canExport && can(permissionsEnum.EXPORT_LEADS_DETAIL_WITH_EMAIL_MOBILE)" position="right">
+                <x-button class="mr-3" tag="div" size="sm" color="emerald">Extract leads detail with email/mobile_no</x-button>
+                <template #tooltip>
+              <span class="font-medium">
+                Created dates are required to export data.
+              </span>
+                </template>
+            </x-tooltip>
+            <x-button
+                v-if="can(permissionsEnum.EXPORT_MAKES_MODELS)"
+                size="sm"
+                color="emerald"
+                :href="`/car/export-makes-model/${genericRequestEnum.EXPORT_MAKES_MODELS}?${objToUrl(filters)}`"
+                class="justify-self-start mr-3"
+            >
+                Extract makes models trims
+            </x-button>
         </div>
-        <div v-else />
         <div class="flex justify-self-end gap-3">
           <x-button type="submit" size="sm" color="#ff5e00">Search</x-button>
           <x-button size="sm" color="primary" @click.prevent="onReset">

@@ -1,25 +1,30 @@
 <?php
 
 use App\Enums\IMCRMSearchTypesEnum;
+use App\Enums\PermissionsEnum;
+use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypes;
 use App\Models\CustomerAdditionalInfo;
 use App\Models\HealthQuote;
+use App\Services\HealthQuoteService;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 if (! function_exists('generate_code')) {
     /**
      * Checks if a value exists in an array in a case-insensitive manner.
      *
      * @param  string  $prefix
-     * The searched value
+     *                          The searched value
      */
     function generate_code($prefix)
     {
         $transaction = DB::table('transactions')->count();
-        $now = \Carbon\Carbon::now();
+        $now = Carbon::now();
         $day = $now->day < 10 ? '0'.$now->day : $now->day;
         $month = $now->month < 10 ? '0'.$now->month : $now->month;
         $year = substr($now->year, 2);
@@ -32,16 +37,16 @@ if (! function_exists('vAbort')) {
     /**
      * abort script execution and return errors in validation format with http status 422.
      *
-     * @param $messages message string or array of messages
+     * @param    $messages  message string or array of messages
      *
-     * @throws \Illuminate\Validation\ValidationException
+     * @throws ValidationException
      */
     function vAbort($messages, $field = 'error')
     {
         if (! is_array($messages)) {
             $messages = [$field => [$messages]];
         }
-        throw Illuminate\Validation\ValidationException::withMessages($messages);
+        throw ValidationException::withMessages($messages);
     }
 }
 
@@ -143,30 +148,30 @@ function getDataAgainstStatus($modelType, $statusId, $myleads = null)
     if ($myleads) {
         if (Auth::user()->isRenewalAdvisor()) {
             $result['total_leads'] = $modelType::where('quote_status_id', $statusId)
-                ->where('advisor_id', \Auth::user()->id)
+                ->where('advisor_id', Auth::user()->id)
                 ->whereNotNull('previous_quote_id')
                 ->count();
             $result['total_premium'] = $modelType::where('quote_status_id', $statusId)
-                ->where('advisor_id', \Auth::user()->id)
+                ->where('advisor_id', Auth::user()->id)
                 ->whereNotNull('previous_quote_id')
                 ->sum('premium');
 
             $result['leads_list'] = $modelType::where('quote_status_id', $statusId)
-                ->where('advisor_id', \Auth::user()->id)
+                ->where('advisor_id', Auth::user()->id)
                 ->whereNotNull('previous_quote_id')
                 ->paginate(10);
         } elseif (Auth::user()->isNewBusinessAdvisor()) {
             $result['total_leads'] = $modelType::where('quote_status_id', $statusId)
-                ->where('advisor_id', \Auth::user()->id)
+                ->where('advisor_id', Auth::user()->id)
                 ->whereNull('previous_quote_id')
                 ->count();
             $result['total_premium'] = $modelType::where('quote_status_id', $statusId)
-                ->where('advisor_id', \Auth::user()->id)
+                ->where('advisor_id', Auth::user()->id)
                 ->whereNull('previous_quote_id')
                 ->sum('premium');
 
             $result['leads_list'] = $modelType::where('quote_status_id', $statusId)
-                ->where('advisor_id', \Auth::user()->id)
+                ->where('advisor_id', Auth::user()->id)
                 ->whereNull('previous_quote_id')
                 ->paginate(10);
         } else {
@@ -183,28 +188,58 @@ function getDataAgainstStatus($modelType, $statusId, $myleads = null)
     } else {
         if (Auth::user()->isRenewalAdvisor()) {
             $result['total_leads'] = $modelType::where('quote_status_id', $statusId)
-                ->where('advisor_id', \Auth::user()->id)
+                ->where('advisor_id', Auth::user()->id)
                 ->whereNotNull('previous_quote_id')->count();
 
             $result['total_premium'] = $modelType::where('quote_status_id', $statusId)
-                ->where('advisor_id', \Auth::user()->id)
+                ->where('advisor_id', Auth::user()->id)
                 ->whereNotNull('previous_quote_id')->sum('premium');
 
             $result['leads_list'] = $modelType::where('quote_status_id', $statusId)
-                ->where('advisor_id', \Auth::user()->id)
+                ->where('advisor_id', Auth::user()->id)
                 ->whereNotNull('previous_quote_id')->paginate(10);
         } elseif (Auth::user()->isNewBusinessAdvisor()) {
             $result['total_leads'] = $modelType::where('quote_status_id', $statusId)
-                ->where('advisor_id', \Auth::user()->id)
+                ->where('advisor_id', Auth::user()->id)
                 ->whereNull('previous_quote_id')->count();
 
             $result['total_premium'] = $modelType::where('quote_status_id', $statusId)
-                ->where('advisor_id', \Auth::user()->id)
+                ->where('advisor_id', Auth::user()->id)
                 ->whereNull('previous_quote_id')->sum('premium');
 
             $result['leads_list'] = $modelType::where('quote_status_id', $statusId)
-                ->where('advisor_id', \Auth::user()->id)
+                ->where('advisor_id', Auth::user()->id)
                 ->whereNull('previous_quote_id')->paginate(10);
+        } elseif ($modelType == HealthQuote::class && Auth::user()->isCarAdvisor() && Auth::user()->can(PermissionsEnum::HEALTH_QUOTES_ACCESS)) {
+            $result['total_leads'] = $modelType::where('quote_status_id', $statusId)
+                ->where('advisor_id', Auth::user()->id)
+                ->count();
+
+            $result['total_premium'] = $modelType::where('quote_status_id', $statusId)
+                ->where('advisor_id', Auth::user()->id)
+                ->sum('premium');
+
+            $result['total_opportunity'] = $modelType::where('quote_status_id', $statusId)->sum('price_starting_from');
+
+            $result['leads_list'] = $modelType::where('quote_status_id', $statusId)
+                ->where('advisor_id', Auth::user()->id)
+                ->paginate(10);
+        } elseif ($modelType == HealthQuote::class && Auth::user()->isCarManager() && Auth::user()->can(PermissionsEnum::HEALTH_QUOTES_MANAGER_ACCESS)) {
+            $ids = app(HealthQuoteService::class)->walkTree(Auth::user()->id);
+
+            $result['total_leads'] = $modelType::where('quote_status_id', $statusId)
+                ->whereIn('advisor_id', $ids)
+                ->count();
+
+            $result['total_premium'] = $modelType::where('quote_status_id', $statusId)
+                ->whereIn('advisor_id', $ids)
+                ->sum('premium');
+
+            $result['total_opportunity'] = $modelType::where('quote_status_id', $statusId)->sum('price_starting_from');
+
+            $result['leads_list'] = $modelType::where('quote_status_id', $statusId)
+                ->whereIn('advisor_id', $ids)
+                ->paginate(10);
         } else {
             $result['total_leads'] = $modelType::where('quote_status_id', $statusId)->count();
             $result['total_premium'] = $modelType::where('quote_status_id', $statusId)->sum('premium');
@@ -229,26 +264,26 @@ function getDataAgainstEveryStatus($modelType, $request)
     if ($request->has('myleads')) {
         if (Auth::user()->isRenewalAdvisor()) {
             $result['leads_list'] = $modelType::where('quote_status_id', $request->status)
-                ->where('advisor_id', \Auth::user()->id)
+                ->where('advisor_id', Auth::user()->id)
                 ->whereNotNull('previous_quote_id')
                 ->paginate(10);
         } elseif (Auth::user()->isNewBusinessAdvisor()) {
             $result['leads_list'] = $modelType::where('quote_status_id', $request->status)
-                ->where('advisor_id', \Auth::user()->id)
+                ->where('advisor_id', Auth::user()->id)
                 ->whereNull('previous_quote_id')
                 ->paginate(10);
         } else {
-            $result['leads_list'] = $modelType::where('quote_status_id', $request->status)->where('advisor_id', \Auth::user()->id)->paginate(10);
+            $result['leads_list'] = $modelType::where('quote_status_id', $request->status)->where('advisor_id', Auth::user()->id)->paginate(10);
         }
     } else {
         if (Auth::user()->isRenewalAdvisor()) {
             $result['leads_list'] = $modelType::where('quote_status_id', $request->status)
-                ->where('advisor_id', \Auth::user()->id)
+                ->where('advisor_id', Auth::user()->id)
                 ->whereNotNull('previous_quote_id')
                 ->paginate(10);
         } elseif (Auth::user()->isNewBusinessAdvisor()) {
             $result['leads_list'] = $modelType::where('quote_status_id', $request->status)
-                ->where('advisor_id', \Auth::user()->id)
+                ->where('advisor_id', Auth::user()->id)
                 ->whereNull('previous_quote_id')
                 ->paginate(10);
         } else {
@@ -272,19 +307,19 @@ function getDataAgainstSearchTerm($modelType, $request)
             if (Auth::user()->isRenewalAdvisor()) {
                 $result['leads_list'] = $modelType::where('quote_status_id', $request->status)
                     ->whereRaw('MATCH (company_name, first_name, last_name, code, mobile_no, email) AGAINST (?)', [$request->term.'*'])
-                    ->where('advisor_id', \Auth::user()->id)
+                    ->where('advisor_id', Auth::user()->id)
                     ->whereNotNull('previous_quote_id')
                     ->get();
             } elseif (Auth::user()->isNewBusinessAdvisor()) {
                 $result['leads_list'] = $modelType::where('quote_status_id', $request->status)
                     ->whereRaw('MATCH (company_name, first_name, last_name, code, mobile_no, email) AGAINST (?)', [$request->term.'*'])
-                    ->where('advisor_id', \Auth::user()->id)
+                    ->where('advisor_id', Auth::user()->id)
                     ->whereNull('previous_quote_id')
                     ->get();
             } else {
                 $result['leads_list'] = $modelType::where('quote_status_id', $request->status)
                     ->whereRaw('MATCH (company_name, first_name, last_name, code, mobile_no, email) AGAINST (? IN BOOLEAN MODE)', [$request->term.'*'])
-                    ->where('advisor_id', \Auth::user()->id)
+                    ->where('advisor_id', Auth::user()->id)
                     ->get();
             }
         } else {
@@ -292,13 +327,13 @@ function getDataAgainstSearchTerm($modelType, $request)
                 $result['leads_list'] = $modelType::where('quote_status_id', $request->status)
                     ->whereRaw('MATCH (company_name, first_name, last_name, code, mobile_no, email) AGAINST (? IN BOOLEAN MODE)', [$request->term.'*'])
                     ->whereNotNull('previous_quote_id')
-                    ->where('advisor_id', \Auth::user()->id)
+                    ->where('advisor_id', Auth::user()->id)
                     ->get();
             } elseif (Auth::user()->isNewBusinessAdvisor()) {
                 $result['leads_list'] = $modelType::where('quote_status_id', $request->status)
                     ->whereRaw('MATCH (company_name, first_name, last_name, code, mobile_no, email) AGAINST (? IN BOOLEAN MODE)', [$request->term.'*'])
                     ->whereNull('previous_quote_id')
-                    ->where('advisor_id', \Auth::user()->id)
+                    ->where('advisor_id', Auth::user()->id)
                     ->get();
             } else {
                 $result['leads_list'] = $modelType::where('quote_status_id', $request->status)
@@ -311,13 +346,13 @@ function getDataAgainstSearchTerm($modelType, $request)
             $result['leads_list'] = $modelType::where('quote_status_id', $request->status)
                 ->whereRaw('MATCH (first_name, last_name, code, mobile_no, email) AGAINST (? IN BOOLEAN MODE)', [$request->term.'*'])
                 ->whereNotNull('previous_quote_id')
-                ->where('advisor_id', \Auth::user()->id)
+                ->where('advisor_id', Auth::user()->id)
                 ->get();
         } elseif (Auth::user()->isNewBusinessAdvisor()) {
             $result['leads_list'] = $modelType::where('quote_status_id', $request->status)
                 ->whereRaw('MATCH (first_name, last_name, code, mobile_no, email) AGAINST (? IN BOOLEAN MODE)', [$request->term.'*'])
                 ->whereNull('previous_quote_id')
-                ->where('advisor_id', \Auth::user()->id)
+                ->where('advisor_id', Auth::user()->id)
                 ->get();
         } else {
             $result['leads_list'] = $modelType::where('quote_status_id', $request->status)
@@ -444,7 +479,7 @@ if (! function_exists('newUi')) {
 if (! function_exists('isCarLostStatus')) {
     function isCarLostStatus($quoteStatus): bool
     {
-        return $quoteStatus == \App\Enums\QuoteStatusEnum::CarSold || $quoteStatus == \App\Enums\QuoteStatusEnum::Uncontactable;
+        return $quoteStatus == QuoteStatusEnum::CarSold || $quoteStatus == QuoteStatusEnum::Uncontactable;
     }
 }
 
@@ -575,5 +610,58 @@ if (! function_exists('checkModifiedRecord')) {
     {
         return Carbon::parse($firstDate)->format(config('constants.datetime_format')) !==
             Carbon::parse($secondDate)->format(config('constants.datetime_format'));
+    }
+}
+
+if (! function_exists('dateQueryFilter')) {
+    function dateQueryFilter($firstDate, $secondDate, $clauseTypeBetween = true): array
+    {
+        $firstDate = date(config('constants.DATE_FORMAT_ONLY').' 00:00:00', strtotime($firstDate));
+        $secondDate = date(config('constants.DATE_FORMAT_ONLY').' 23:59:59', strtotime($secondDate));
+        $currentDate = Carbon::now()->format(config('constants.DB_DATE_FORMAT_MATCH'));
+
+        if ($clauseTypeBetween) {
+            return [$firstDate, $secondDate];
+        }
+
+        return [$currentDate, $currentDate];
+    }
+}
+
+if (! function_exists('getIMLogo')) {
+    function getIMLogo($isPDF = false)
+    {
+        $imLogo = 'images/im_logo_21k-hi.png';
+
+        return $isPDF ? public_path($imLogo) : asset($imLogo);
+    }
+}
+
+if (! function_exists('apiResponse')) {
+    function apiResponse($data, $statusCode = 200, $message = null)
+    {
+        // If the data is an instance of Exception, handle it separately
+        if ($data instanceof Exception) {
+            $statusCode = 500;
+            $message = $data->getMessage();
+            $data = null;
+        }
+
+        if ($data instanceof ValidationException) {
+            $statusCode = 422;
+            $message = $data->errors();
+            $data = null;
+        }
+
+        // If the status code is 400, set a default error message if none is provided
+        if ($statusCode === 400 && $message === null) {
+            $message = 'Missing or invalid parameters.';
+        }
+
+        return response()->json([
+            'data' => $data,
+            'message' => $message,
+            'status' => $statusCode,
+        ], $statusCode);
     }
 }
