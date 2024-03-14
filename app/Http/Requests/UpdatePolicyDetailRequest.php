@@ -52,19 +52,17 @@ class UpdatePolicyDetailRequest extends FormRequest
         }
     }
 
-
     public function withValidator($validator)
     {
         $validator->after(function ($validator) {
             $pattern = '/^(\w+[-\/]?)+$/';
             $quote_policy_number = request()->quote_policy_number;
-            if (!preg_match($pattern, $quote_policy_number)) {
+            if (! preg_match($pattern, $quote_policy_number)) {
 
                 $validator->errors()->add('value', 'Invalid format for policy number');
             }
         });
     }
-
 
     public function messages()
     {
