@@ -454,6 +454,10 @@ const removeUnusedFilters = filters => {
 function setQueryStringFilters() {
   for (const [key] of Object.entries(params)) {
     if (key.includes('[]')) {
+        if(['teams[]','sub_teams[]','advisors[]'].includes(key) && Array.isArray(params[key])) {
+            params[key] = params[key].map(item => Number(item));
+        }
+
       filters[key.substring(0, key.length - 2)] = params[key];
     } else {
       filters[key] = params[key];
@@ -469,40 +473,50 @@ const calculateTotalSum = (data, key) => {
   return data.reduce((sum, item) => Number(sum) + Number(item[key]), 0);
 };
 
-const onLobChange = e => {
+const onLobChange = (e, isOnMounted = false) => {
 
-    filters.teams = [];
-    filters.sub_teams = [];
-    filters.advisors = [];
-    teamOptions.value = [];
-    subteamOptions.value = [];
-    advisorOptions.value = [];
+    if(!isOnMounted) {
+        filters.teams = [];
+        filters.sub_teams = [];
+        filters.advisors = [];
+        teamOptions.value = [];
+        subteamOptions.value = [];
+        advisorOptions.value = [];
+    }
 
-    if(![quoteTypeCodeEnum.Car, quoteTypeCodeEnum.Health].includes(filters.lob)) {
-        loadAdvisorsByLob(e);
+    if([quoteTypeCodeEnum.Car, quoteTypeCodeEnum.Health].includes(filters.lob)) {
+        loadTeamsAndAdvisors(e);
     } else {
-        loadTeams(e);
+        loadAdvisorsByLob(e);
     }
 };
 
-const onTeamChange = e => {
+const onTeamChange = (e, isOnMounted = false) => {
 
-    filters.sub_teams = [];
-    subteamOptions.value = [];
-    filters.advisors = [];
-    advisorOptions.value = [];
+    if(!isOnMounted) {
+        filters.sub_teams = [];
+        subteamOptions.value = [];
+        filters.advisors = [];
+        advisorOptions.value = [];
+    }
 
     if(filters.lob === quoteTypeCodeEnum.Car) {
         loadSubTeams(e);
-        loadAdvisors(e);
+
+        if(!(isOnMounted && filters.sub_teams.length > 0)) {
+            loadAdvisors(e);
+        }
     } else {
         loadAdvisors(e);
     }
 };
 
-const onSubTeamChange = e => {
+const onSubTeamChange = (e, isOnMounted = false) => {
 
-    filters.advisors = [];
+    if(!isOnMounted) {
+        filters.advisors = [];
+    }
+
     advisorOptions.value = [];
 
     if (e.length == 0 &&
@@ -515,7 +529,7 @@ const onSubTeamChange = e => {
     }
 };
 
-const loadTeams = e => {
+const loadTeamsAndAdvisors = e => {
   if (e.length == 0) {
     return;
   }
@@ -645,17 +659,16 @@ const setDefaultValues = () => {
 }
 
 onMounted(() => {
-    setDefaultValues();
+  setDefaultValues();
   setQueryStringFilters();
-
-  onLobChange(filters.lob);
+  onLobChange(filters.lob, true);
 
   if (params['teams[]'] && params['teams[]'].length > 0) {
-    onTeamChange(params['teams[]']);
+    onTeamChange(params['teams[]'], true);
   }
 
   if (params['sub_teams[]'] && params['sub_teams[]'].length > 0) {
-    onSubTeamChange(params['sub_teams[]']);
+    onSubTeamChange(params['sub_teams[]'], true);
   }
 
   isMounted.value = true;
