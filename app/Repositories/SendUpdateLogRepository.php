@@ -2,6 +2,7 @@
 
 namespace App\Repositories;
 
+use App\Enums\QuoteTypeId;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Models\SendUpdateLog;
 use Illuminate\Support\Str;
@@ -41,6 +42,32 @@ class SendUpdateLogRepository extends BaseRepository
                 'uuid' => $uuid,
                 'code' => $code,
             ]);
+            // it will check if send update type is Correction of Policy Details or Enorsement Financial with subtype Policy Period Extension, it will save
+            // insurance_provider_id and plan_id.
+            if ($res->category->code == SendUpdateLogStatusEnum::CPD || ($res->category->code == SendUpdateLogStatusEnum::EF && $res->option->code == SendUpdateLogStatusEnum::PPE)) {
+                $quoteType = QuoteTypeRepository::getById($data['quote_type_id'])->code;
+
+                if (checkPersonalQuotes($quoteType)) {
+                    $repository = 'App\\Repositories\\'.$quoteType.'QuoteRepository';
+                    $realQuote = $repository::getBy('uuid', $res->quote_uuid);
+                } else {
+                    $quoteServiceFile = app(getServiceObject($quoteType));
+                    $realQuote = $quoteServiceFile->getEntity($res->quote_uuid);
+                }
+                if (in_array($data['quote_type_id'], [QuoteTypeId::Car, QuoteTypeId::Travel, QuoteTypeId::Health])) {
+                    $serviceFile = 'App\\Services\\'.$quoteType.'QuoteService';
+
+                    $quoteModel = app($serviceFile)->getEntityPlain($realQuote->id)->load(['plan']);
+                    $res->insurance_provider_id = $quoteModel->plan->provider_id ?? null;
+                    $res->plan_id = $quoteModel->plan->id ?? null;
+                    $res->plan_name = $quoteModel->plan->text ?? null;
+                } else {
+                    $res->insurance_provider_id = $realQuote->insuranceProvider->id ?? null;
+                    $res->provider_name = $realQuote->insuranceProvider->text ?? null;
+                }
+
+                $res->save();
+            }
         } catch (\Throwable $th) {
             $res = (object) [
                 'message' => $th->getMessage(),
