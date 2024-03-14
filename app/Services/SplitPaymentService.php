@@ -231,15 +231,16 @@ class SplitPaymentService
                     if (isset($payment->insurance_provider_id) && $payment->insurance_provider_id > 0) {
                         //get vat from settings
                         $vat = 0;
+                        $priceVatApplicable = $grandTotal;
                         $vatValue = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::VAT_VALUE);
                         if ($vatValue) {
-                            $vat = $grandTotal * ($vatValue / 100);
+                            $priceVatApplicable = $priceVatApplicable / (1 + ($vatValue / 100));
                         }
 
                         if ($modelObject) {
                             $modelObject->price_with_vat = $grandTotal;
                             $modelObject->insurance_provider_id = $payment->insurance_provider_id;
-                            $modelObject->price_vat_applicable = $grandTotal - $vat;
+                            $modelObject->price_vat_applicable = $priceVatApplicable;
                             $modelObject->save();
                             Log::info('MigratePayment::Plan Detail updated for Payment Code: '.$payment->code);
                         } else {
