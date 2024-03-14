@@ -458,7 +458,6 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
             //create sage reciept
             $isSageEnabled = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::SAGE_ENABLED);
 
-            // dd($isSageEnabled);
             if ($isSageEnabled) {
                 $sageResponse = app(SplitPaymentService::class)->createSageRecipt($request, $splitPayment);
                 if ($sageResponse['status'] == 'success') {
