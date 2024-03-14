@@ -8,25 +8,15 @@ final class ProductionProcessTooltipEnum extends Enum
 {
     //Managment section
     const POLICY_NUMBER = 'The unique Insurance policy number for the chosen insurance plan offered by the provider.';
-
     const PRICE_VAT_NOT_APPLICABLE = 'Price that VAT is not applicable. Remember, VAT is exempt for Life Insurance policies.';
-
     const PRICE_VAT_APPLICABLE = 'Price as per the insurers tax invoice that VAT is applicable. Please enter the price without including Value Added Tax (VAT). VAT will be calculated separately.';
-
     const TOTAL_VAT_AMOUNT = 'Display the total Value Added Tax (VAT) amount for this transaction. Verify this amount before submission.';
-
     const INSURER_QUOTE_NUMBER = 'Refers to the unique identifier associated with the initial quote provided by the insurer.';
-
     const ISSUANCE_DATE = 'Signifies the date when the insurance policy was officially issued.';
-
     const START_DATE = 'Indicates the commencement date of the insurance coverage, marking when the policy becomes effective.';
-
     const EXPIRY_DATE = 'This field records the date when the insurance coverage is set to expire, marking the end of the policy validity.';
-
     const TOTAL_PRICE = 'Display the total price including all charges and VAT as per tax invoice. Make sure it aligns with the final transaction amount.';
-
     const ISSURANEC_STATUS = 'Indicates the current state or progress of policy issuance, tracking whether its pending, approved, or completed.';
-
 
     // Bookind policy section
     const BOOKING_DATE = 'The exact date when the booking details was successfully recorded in the system.';
@@ -44,6 +34,4 @@ final class ProductionProcessTooltipEnum extends Enum
     const VAT_ON_COMMISSION = 'Value Added Tax (VAT) amount applicable to the commission.';
     const TOTAL_COMMISSION = 'Display the total commission amount including VAT for this transaction. Ensure it matches the calculations.';
     const DISCOUNT_VALUE = 'If applicable, this field indicates the exact amount or percentage reduced from the original price.';
-
-
 }

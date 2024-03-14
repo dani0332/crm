@@ -99,7 +99,7 @@ class CentralController extends Controller
             $diff = Carbon::parse($created_at_start)->diffInDays(Carbon::parse($created_at_end));
 
             if ($diff > $diffInDays) {
-                return back()->with('error', 'Maximum of ' . $diffInDays . ' days (' . $error_fields . ') are allowed to be exported.');
+                return back()->with('error', 'Maximum of '.$diffInDays.' days ('.$error_fields.') are allowed to be exported.');
             }
         }
 
@@ -111,7 +111,7 @@ class CentralController extends Controller
             QuoteTypes::CYCLE->value,
             QuoteTypes::JETSKI->value,
         ])) {
-            return app(PersonalQuotesExport::class)->download($quoteType . '_leads');
+            return app(PersonalQuotesExport::class)->download($quoteType.'_leads');
         }
 
         if (QuoteTypes::CAR->value == ucfirst($quoteType)) {

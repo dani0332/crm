@@ -65,7 +65,7 @@ class SendBookPolicyRequest extends FormRequest
                                 }
                             }
                         }
-                        if (!empty($payment->insurer_invoice_date) && !empty($paymentSplit->due_date)) {
+                        if (! empty($payment->insurer_invoice_date) && ! empty($paymentSplit->due_date)) {
                             $invoiceDate = Carbon::parse($payment->insurer_invoice_date)->startOfDay();
                             $paymentDueDate = Carbon::parse($paymentSplit->due_date)->startOfDay();
 
