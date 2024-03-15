@@ -96,7 +96,7 @@ class HealthQuoteController extends Controller
         $response = $this->healthQuoteService->healthPlanModifyV2($request);
 
         $message = '';
-        if ( $response['message'] && $response['message'] === 'health quote plan updated successfully') {
+        if ($response['message'] && $response['message'] === 'health quote plan updated successfully') {
             $message = 'Plan has been updated';
         } else {
             if (isset($response->message)) {
