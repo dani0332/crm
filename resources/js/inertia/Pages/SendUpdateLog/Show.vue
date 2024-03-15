@@ -305,6 +305,7 @@ const isBookingDetailsVisible = computed(() => {
       :selectedCategory="selectedCategory"
       :quote="props.realQuote"
       :isUpdateBooked="isUpdateBooked"
+      :quote-type="props.quoteType"
     />
 
     <QuoteDocuments

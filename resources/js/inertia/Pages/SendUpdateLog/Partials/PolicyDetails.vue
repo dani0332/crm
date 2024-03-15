@@ -1,4 +1,6 @@
 <script setup>
+import ComboBox from "../../../Components/ComboBox.vue";
+
 const { isRequired } = useRules();
 
 const props = defineProps({
@@ -18,6 +20,10 @@ const props = defineProps({
     type: Object,
     required: true,
   },
+  quoteType: {
+    type: String,
+    required: true,
+  }
 });
 
 const state = reactive({
@@ -87,6 +93,7 @@ const policyDetailsForm = useForm({
 	last_name: props.sendUpdateLog?.last_name || props.quote?.last_name || null,
 	provider_name: props.sendUpdateLog?.provider_name || providerName.value || null,
   insurance_provider_id: props.sendUpdateLog?.insurance_provider_id || props.quote?.insurance_provider_id || props.quote?.car_plan_provider_id || null,
+	plan_id: props.sendUpdateLog?.plan_id || props.quote?.plan_id || null,
 	plan_name: props.sendUpdateLog?.plan_name || props.quote?.plan_id_text || null,
 	policy_number: props.sendUpdateLog?.policy_number || props.quote?.policy_number || null,
 	issuance_date: props.sendUpdateLog?.issuance_date || props.quote?.policy_issuance_date || null,
@@ -95,6 +102,7 @@ const policyDetailsForm = useForm({
 	insurer_quote_number: props.sendUpdateLog?.insurer_quote_number || props.quote?.insurer_quote_number || null,
 	issuance_status_id: props.sendUpdateLog?.issuance_status_id || props.quote?.policy_issuance_status_id || null,
 	id: props.sendUpdateLog.id,
+  quote_type: props.quoteType,
 })
 
 const onUpdate = () => {
@@ -120,6 +128,40 @@ const onUpdate = () => {
     },
   );
 }
+
+const quoteTypesToCheck = ['Car', 'Health', 'Travel']; //Ecommerce LOBs
+const isEcom = computed(() => {
+  return quoteTypesToCheck.includes(props.quoteType);
+})
+
+const plansOptions = ref([]);
+
+const fetchPlans = (quoteType, providerId) => {
+  let url = `/get-plans/${quoteType}/${providerId}`;
+  axios.get(url)
+    .then(res => {
+      plansOptions.value = res.data.map(plan => ({
+        label: plan.text,
+        value: plan.id,
+      }));
+    })
+    .catch(err => {
+      console.log(err);
+    });
+};
+
+onMounted(() => {
+  if (isEcom.value && props.sendUpdateLog?.insurance_provider_id) {
+    fetchPlans(props.quoteType, props.sendUpdateLog.insurance_provider_id);
+  }
+});
+
+watch(() => policyDetailsForm.insurance_provider_id, (providerId) => {
+  if (isEcom.value && providerId) {
+    fetchPlans(props.quoteType, providerId);
+  }
+});
+
 </script>
 
 <template>
@@ -208,11 +250,14 @@ const onUpdate = () => {
 								</x-tooltip>
 							</dt>
 							<dd>
-								<x-input
-									v-if="isCPD"
-									:disabled="!state.isEdit"
-                  v-model="policyDetailsForm.plan_name"
-								/>
+                <ComboBox
+                    v-if="isCPD && isEcom"
+                    v-model="policyDetailsForm.plan_id"
+                    :options="plansOptions"
+                    placeholder="Plan Name"
+                    :single="true"
+                    :disabled="!state.isEdit"
+                />
 								<span v-else>{{ policyDetailsForm.plan_name }}</span>
 							</dd>
             </div>

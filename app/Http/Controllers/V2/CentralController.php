@@ -5,6 +5,7 @@ namespace App\Http\Controllers\V2;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Exports\AmtQuoteExport;
 use App\Exports\BusinessQuoteExport;
@@ -313,5 +314,10 @@ class CentralController extends Controller
         $successMessage = PaymentRepository::updateSplitPaymentsApprove($request);
 
         return back()->with('success', $successMessage);
+    }
+
+    public function getQuoteWisePlans($quoteType, $providerId): object
+    {
+        return response()->json((new CentralService())->getQuoteWiseProviderPlans($quoteType, $providerId));
     }
 }
