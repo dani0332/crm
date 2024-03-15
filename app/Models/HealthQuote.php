@@ -3,14 +3,14 @@
 namespace App\Models;
 
 use App\Enums\FilterTypes;
+use App\Enums\GenericRequestEnum;
 use App\Enums\QuoteTypeId;
 use App\Traits\FilterCriteria;
-use OwenIt\Auditing\Auditable;
 use App\Traits\QuoteModelTrait;
-use App\Enums\GenericRequestEnum;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
+use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
 class HealthQuote extends Model implements AuditableContract
@@ -112,7 +112,7 @@ class HealthQuote extends Model implements AuditableContract
 
     public function getFullNameAttribute()
     {
-        return $this->first_name . ' ' . $this->last_name;
+        return $this->first_name.' '.$this->last_name;
     }
 
     public function documents()
@@ -178,11 +178,11 @@ class HealthQuote extends Model implements AuditableContract
                 $customerMember->save();
             }
 
-            return $customerMember->first_name . ' ' . $customerMember->last_name;
+            return $customerMember->first_name.' '.$customerMember->last_name;
         } else {
             $healthQuote = HealthQuote::find($id);
             if ($healthQuote) {
-                return $healthQuote->first_name . ' ' . $healthQuote->last_name;
+                return $healthQuote->first_name.' '.$healthQuote->last_name;
             }
         }
 
