@@ -83,12 +83,11 @@ const updateSelectedPlan = () => {
                 providerName: props.plan.providerName,
                 planName: props.plan.name,
             }
-
+            
             if(res.data.plan.planProcessValue[0]) {
-                selectedPlan.push({
-                    premium: premium.toFixed(2)
-                });
+                selectedPlan.premium = premium.toFixed(2);
             }
+            
             emit('update:selectedPlanChanged', selectedPlan);
             notification.success({
                     title: "Selected plan updated",
