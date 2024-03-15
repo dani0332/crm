@@ -16,6 +16,20 @@ use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Log;
+use App\Models\User;
+use App\Enums\LeadSourceEnum;
+use App\Models\HealthQuote;
+use App\Models\Team;
+use App\Enums\TeamNameEnum;
+use App\Enums\TeamTypeEnum;
+use App\Models\HomeQuote;
+use App\Models\LifeQuote;
+use App\Models\BusinessQuote;
+use App\Models\CarQuote;
+use App\Models\CycleQuote;
+use App\Models\PetQuote;
+use App\Models\TravelQuote;
+use App\Models\YachtQuote;
 
 class CentralService
 {
@@ -204,17 +218,100 @@ class CentralService
 
     public function saveAndAssignActivitesToAdvisor($quoteDetails, $quoteTypeId)
     {
-        $roles = auth()->user()->roles->pluck('id')->toArray();
 
+        $quoteDetails['quote_type_id'] = $quoteTypeId;
+        $quoteTypeDetails = [
+            CarQuote::class => [
+                'eligible_for_automate' => false,
+            ],
+            HomeQuote::class => [
+                'eligible_for_automate' => true,
+                'quote_type_id' => QuoteTypeId::Home,
+                'renewal_team' => Team::where(['type' => TeamTypeEnum::TEAM, 'name' => TeamNameEnum::HOME_RENEWALS])->first()->id,
+            ],
+            HealthQuote::class => [
+                'eligible_for_automate' => true,
+                'quote_type_id' => QuoteTypeId::Health,
+                'renewal_team' => Team::where(['type' => TeamTypeEnum::TEAM, 'name' => TeamNameEnum::RM_RENEWALS])->first()->id,
+            ],
+            LifeQuote::class => [
+                'eligible_for_automate' => false,
+            ],
+            BusinessQuote::class => [
+                'eligible_for_automate' => true,
+                'quote_type_id' => QuoteTypeId::Business,
+                'renewal_team' => Team::where(['type' => TeamTypeEnum::TEAM, 'name' => TeamNameEnum::CORPLINE_RENEWALS])->first()->id,
+            ],
+            TravelQuote::class => [
+                'eligible_for_automate' => false,
+            ],
+            PetQuote::class => [
+                'quote_type_id' => QuoteTypeId::Pet,
+                'renewal_team' => Team::where(['type' => TeamTypeEnum::TEAM, 'name' => TeamNameEnum::PET_RENEWALS])->first()->id,
+            ],
+            CycleQuote::class => [
+                'quote_type_id' => QuoteTypeId::Cycle,
+                'renewal_team' => Team::where(['type' => TeamTypeEnum::TEAM, 'name' => TeamNameEnum::CYCLE_RENEWALS])->first()->id,
+            ],
+            YachtQuote::class => [
+                'quote_type_id' => QuoteTypeId::Yacht,
+                'renewal_team' => Team::where(['type' => TeamTypeEnum::TEAM, 'name' => TeamNameEnum::YACHT_RENEWALS])->first()->id,
+            ],
+        ];
+
+        $quoteTypeDetail = null;
+
+        switch ($quoteDetails->quote_type_id) {
+            case QuoteTypeId::Car:
+                $quoteTypeDetail = $quoteTypeDetails[CarQuote::class];
+                break;
+            case QuoteTypeId::Home:
+                $quoteTypeDetail = $quoteTypeDetails[HomeQuote::class];
+                break;
+            case QuoteTypeId::Health:
+                $quoteTypeDetail = $quoteTypeDetails[HealthQuote::class];
+                break;
+            case QuoteTypeId::Life:
+                $quoteTypeDetail = $quoteTypeDetails[LifeQuote::class];
+                break;
+            case QuoteTypeId::Business:
+                $quoteTypeDetail = $quoteTypeDetails[BusinessQuote::class];
+                break;
+            case QuoteTypeId::Travel:
+                $quoteTypeDetail = $quoteTypeDetails[TravelQuote::class];
+                break;
+            case QuoteTypeId::Pet:
+                $quoteTypeDetail = $quoteTypeDetails[PetQuote::class];
+                break;
+            case QuoteTypeId::Yacht:
+                $quoteTypeDetail = $quoteTypeDetails[YachtQuote::class];
+                break;
+            case QuoteTypeId::Cycle:
+                $quoteTypeDetail = $quoteTypeDetails[CycleQuote::class];
+                break;
+            default:
+                $quoteTypeDetail =  null;
+                break;
+        }
+
+
+        $advisorDetails = User::with('usersroles', 'teams')->where('id', $quoteDetails->advisor_id)->first();
         $getActivitySchedule = ActivitySchedule::where([
             'quote_type_id' => $quoteTypeId,
             'quote_status_id' => $quoteDetails->quote_status_id,
         ])
-            ->whereIn('role_id', $roles)
-            ->whereIn('team_id', $this->getUserTeams(auth()->user()->id)->pluck('id')->toArray())
+            ->whereIn('role_id', $advisorDetails->usersroles->pluck('id'))
+            ->whereIn('team_id', $advisorDetails->teams->pluck('id'))
+            ->when($quoteDetails->source == LeadSourceEnum::RENEWAL_UPLOAD, function ($query) use ($quoteDetails, $quoteTypeDetail) {
+                // $renewalTeamID = isset($quoteTypeDetail['multiple_lobs']) ?
+                //     $quoteTypeDetail['quote_type_details'][$quoteDetails->quote_type_id]['renewal_team'] : $quoteTypeDetail['renewal_team'];
+                $renewalTeamID =  $quoteTypeDetail['renewal_team'];
+              
+                $query->where('team_id', $renewalTeamID ?? null);
+            })
             ->orderBy('sorting_order')
             ->first();
-
+            
         if ($getActivitySchedule && $quoteDetails->advisor_id) {
 
             $activity = Activities::create([
@@ -231,6 +328,7 @@ class CentralService
                 'client_name' => $quoteDetails->first_name.' '.$quoteDetails->last_name,
                 'client_email' => $quoteDetails->email,
                 'quote_uuid' => $quoteDetails->uuid,
+                'activity_schedule_id' => $getActivitySchedule->id
             ]);
 
             return $activity;

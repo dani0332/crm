@@ -584,7 +584,8 @@ if (! function_exists('dateQueryFilter')) {
 if (! function_exists('addDaysExcludeWeekend')) {
     function addDaysExcludeWeekend($daysToAdd, $date = null)
     {
-        $date = $date ?? Carbon::now();
+        // $date = $date ?? Carbon::now();
+        $date = Carbon::parse($date) ?? Carbon::now();
         $date = $date->addDays($daysToAdd);
 
         if ($date->isWeekend()) {
