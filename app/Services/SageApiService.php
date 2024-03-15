@@ -237,7 +237,8 @@ class SageApiService
 
         if ($sageCustomerNumber) {
 
-            $paymentFilterAsPerType = $extras['type'] == SageEnums::TYPE_SEND_UPDATE ? ['send_update_log_id' => $request->sendUpdateId] : ['code' => $quote['code']];
+            $response = '';
+            $paymentFilterAsPerType = ($extras['type'] == SageEnums::TYPE_SEND_UPDATE) ? ['send_update_log_id' => $request->sendUpdateId] : ['code' => $quote['code']];
             $payment = Payment::where($paymentFilterAsPerType)->first();
             $splitPayments = PaymentSplits::where('code', $payment->code)->get();
             $sageRequestPayload = SagePayloadFactory::sagePayLoad($request->quoteType, $quote, $payment, $splitPayments);
@@ -265,13 +266,11 @@ class SageApiService
                 $this->handleSendUpdateNormalCalls($quote, $payment, $splitPayments, $sageRequestPayload, $sageLogArray);
                 break;
 
-            case SageEnums::SEND_UPDATE_CORRECTION:
-                # code...
+            case SageEnums::SEND_UPDATE_REVERSAL_CORRECTION:
+                $this->handleSendUpdateReversalCalls($quote, $payment, $splitPayments, $sageRequestPayload, $sageLogArray, $extras);
                 break;
 
-            case SageEnums::SEND_UPDATE_REVERSAL:
-                # code...
-                break;
+            
         }
     }
 
@@ -309,6 +308,15 @@ class SageApiService
                 'splitPayments' => $splitPayments
             ]);
         }
+    }
+
+    private function handleSendUpdateReversalCalls($quote, $payment, $splitPayments, $sageRequestPayload, $sageLogArray, $extras)
+    {
+        $sendUpdateLog = $extras['send_update_log'];
+
+
+        
+        dd($extras['send_update_log']->toArray());
     }
 
     private function recursiveSageAPIsCalls($quote, $sageRequestPayload, $sageLogArray, $extras)

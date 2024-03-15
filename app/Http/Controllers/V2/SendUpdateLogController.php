@@ -19,6 +19,7 @@ use App\Http\Requests\SendUpdateCustomerRequest;
 use App\Http\Requests\SendUpdateRequest;
 use App\Models\PersonalQuote;
 use App\Models\QuoteType;
+use App\Models\SendUpdateLog;
 use App\Repositories\CustomerMembersRepository;
 use App\Repositories\InsuranceProviderRepository;
 use App\Repositories\PersonalQuoteRepository;
@@ -384,39 +385,29 @@ class SendUpdateLogController extends Controller
 
     public function sendUpdate(SendUpdateRequest $sendUpdateRequest)
     {
-        $quote = $this->getModelObject($sendUpdateRequest->quoteType)::with('payments')->find($sendUpdateRequest->quoteRefId);
+        $sendUpdate = SendUpdateLog::find($sendUpdateRequest->sendUpdateId);
 
         if (!isset($sendUpdateRequest->paymentValidated)) {
-            $paymentStatus = $quote?->payments->value('payment_status_id') ?? null;
-
             // Add insuficient Payment Validations here
             $insuficientPaymentCheck = false;
 
             return response()->json([
                 'insuficientPaymentCheck' => $insuficientPaymentCheck,
-                'parentPaymentStatus' => $paymentStatus
+                'parentPaymentStatus' => $sendUpdate->payment_status_id ?? null
             ], 200);
         }
         
-        $sendUpdate = SendUpdateLog::find($sendUpdateRequest->sendUpdateId);
-
-        try {
-            DB::beginTransaction(); 
-            $sageResponse = $this->sendUpdateLogService->sendUpdateToSage($sendUpdateRequest, $sendUpdate);
+        // // Calling Sage for necessary Documents
+        $sageResponse = $this->sendUpdateLogService->sendUpdateToSage($sendUpdateRequest, $sendUpdate);
             if ($sageResponse['status'] == false) 
                 return response()->json(['message' => $sageResponse['message']], 500);
 
-            $this->sendUpdateLogService->updatesMoveToLead($sendUpdateRequest, $sendUpdate);
+        // // Send Update Data move to main lead page as per Send update Type
+        $response = $this->sendUpdateLogService->updatesMoveToLead($sendUpdateRequest, $sendUpdate);
 
-            DB::commit();
+        if ($response['status'])
+            return response()->json(['message' => $response['message']], 200);
 
-        } catch (\Exception $exception) {
-            DB::rollBack();
-            info('Send update - Failed - Error : '.$exception->getMessage());
-
-            return redirect()->back()->with('error', 'Send update failed');
-        }
-
-        return response()->json(['message' => 'Update booked'], 200);
+        return response()->json(['message' => $response['message']], 500);
     }
 }

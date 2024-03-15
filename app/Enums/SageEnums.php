@@ -32,8 +32,7 @@ final class SageEnums extends Enum
 
     // Send Update Type to Sage
     const SEND_UPDATE_NORMAL = 'SEND_UPDATE_NORMAL';
-    const SEND_UPDATE_CORRECTION = 'SEND_UPDATE_CORRECTION';
-    const SEND_UPDATE_REVERSAL = 'SEND_UPDATE_REVERSAL';
+    const SEND_UPDATE_REVERSAL_CORRECTION = 'SEND_UPDATE_REVERSAL_CORRECTION';
 
     // Functions
     const TYPE_SEND_POLICY = 'Send Policy';
