@@ -1,10 +1,9 @@
 <script setup>
 import PaymentTableNew from './../../Components/PaymentTableNew.vue';
 import MigratePayment from './../../Components/MigratePayment.vue';
-import LazyDocumentUploader from './Partials/DocumentUploader.vue';
 import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue';
-import QuoteDocuments from '@/inertia/Pages/PersonalQuote/Partials/QuoteDocuments.vue';
+import QuoteDocument from '@/inertia/Components/QuoteDocument.vue';
 
 const page = usePage();
 defineProps({
@@ -182,6 +181,7 @@ const modals = reactive({
   planDetails: false,
   mixInquiryConfirm: false,
 });
+
 const travelFields = computed(() => {
   let skipFields = [
     'previous_quote_policy_number',
@@ -512,28 +512,6 @@ const memberDataDocs = membersDetail => {
     .filter(member => member.name !== undefined);
 };
 
-const quoteDocumentsTable = reactive({
-  isLoading: false,
-  columns: [
-    {
-      text: 'Document Type',
-      value: 'document_type_text',
-    },
-    {
-      text: 'Document Name',
-      value: 'original_name',
-    },
-    {
-      text: 'Created At',
-      value: 'created_at',
-    },
-    {
-      text: 'Created By',
-      value: 'created_by_name',
-    },
-  ],
-});
-
 const sendPolicyToClient = () => {
   if (confirm('Are you sure you want to send documents to customer?')) {
     let quoteType = page.props.modelType;
@@ -648,11 +626,6 @@ const onExportPlans = () => {
         });
 };
 
-const onDocDelete = name => {
-  modals.docConfirm = true;
-  confirmDeleteData.docs = name;
-};
-
 const onLoadAvailablePlansData = async () => {
   let data = {
     jsonData: true,
@@ -669,27 +642,6 @@ const onLoadAvailablePlansData = async () => {
     });
 };
 
-const confirmDeleteDoc = () => {
-  quoteDocumentsTable.isLoading = true;
-  router.post(
-    `/documents/delete`,
-    {
-      docName: confirmDeleteData.docs,
-      quoteId: page.props.quote.id,
-    },
-    {
-      preserveScroll: true,
-      onFinish: () => {
-        modals.docConfirm = false;
-        quoteDocumentsTable.isLoading = false;
-        notification.error({
-          title: 'File Deleted',
-          position: 'top',
-        });
-      },
-    },
-  );
-};
 
 const emailStatusesTable = reactive({
   isLoading: false,
@@ -2558,12 +2510,13 @@ const handleSelectionChange = (tableType, selectedItems) => {
       :expanded="sectionExpanded"
     />
 
-    <QuoteDocuments
-      :document-types="documentType"
+    <QuoteDocument
+      :document-types="documentTypes"
       :quote-documents="page.props.quoteDocuments || []"
       :storageUrl="storageUrl"
       :quote="record"
       :expanded="sectionExpanded"
+      :docUploadURL="docUploadURL"
     />
     
     <div class="p-4 rounded shadow mb-6 bg-white">

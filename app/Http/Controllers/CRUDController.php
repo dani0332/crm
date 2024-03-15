@@ -894,10 +894,9 @@ class CRUDController extends Controller
             $nationalities = Nationality::where('is_active', 1)->select('id', 'text')->get();
             $emirates = Emirate::where('is_active', 1)->select('id', 'text')->get();
             $industryType = LookupRepository::where('key', LookupsEnum::COMPANY_TYPE)->get();
-            $documentTypes = $documentType = $this->quoteDocumentService->getQuoteDocumentsForUpload(QuoteTypeId::Health);
             $uboRelations = LookupRepository::where('key', LookupsEnum::UBO_RELATION)->get();
-            $documentTypes = collect($documentTypes)->groupBy('category');
 
+            @[$documentTypes, $documentTypeCodes] = $this->quoteDocumentService->getDocumentTypes(QuoteTypeId::Health);
             $quoteDocuments = $quoteDocuments->map(function ($quoteDocument) {
                 $quoteDocument->created_by_name = isset($quoteDocument->createdBy->name) ? $quoteDocument->createdBy->name : null;
 
@@ -976,7 +975,6 @@ class CRUDController extends Controller
                 'teams' => $teams,
                 'quoteDocuments' => array_values($quoteDocuments->toArray()),
                 'documentTypes' => $documentTypes,
-                'documentType' => $documentType,
                 'cdnPath' => $cdnPath,
                 'domainPath' => $domainPath,
                 'activities' => $activities,

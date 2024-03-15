@@ -1,7 +1,7 @@
 <script setup>
 import PaymentTableNew from '../../Components/PaymentTableNew.vue';
 import MemberDetails from "../../Components/MemberDetails.vue";
-import QuoteDocuments from '../PersonalQuote/Partials/QuoteDocuments';
+import QuoteDocuments from '@/inertia/Components/QuoteDocument.vue';
 import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue';
 import MigratePayment from '../../Components/MigratePayment.vue';
 
@@ -42,7 +42,8 @@ defineProps({
   isNewPaymentStructure: Boolean,
   sendUpdateOptions: Array,
   sendUpdateLogs: Array,
-  hasPolicyIssuedStatus: Boolean
+  hasPolicyIssuedStatus: Boolean,
+  documentTypeCodes: Array,
 });
 const { isRequired } = useRules();
 const notification = useNotifications('toast');
@@ -1135,7 +1136,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
 			v-if="isNewPaymentStructure"
 			:quoteType="quoteType"
 			:payments="payments"
-			:paymentDocument="page.props.documentTypes.filter(item => item.code === 'LPD' || item.code === 'LPDR' || item.code === 'LDPDR')"
+			:paymentDocument="page.props.documentTypeCodes.filter(item => item === 'LPD' || item === 'LPDR' || item.code === 'LDPDR')"
 			:quoteRequest="quote"
 			:paymentStatusEnum="paymentStatusEnum"
 			:paymentTooltipEnum="paymentTooltipEnum"

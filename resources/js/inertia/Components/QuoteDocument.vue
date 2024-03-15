@@ -10,13 +10,12 @@ defineProps({
     type: Boolean,
     required: false,
     default: true
-  },
-  docUploadURL: String,
+  }
 });
 
 const page = usePage();
 const selectedTab = ref(0); 
-const isUploading = ref(false);
+const uploadingStatus = ref({});
 
 const quoteDocumentsTable = reactive({
   isLoading: false,
@@ -57,50 +56,41 @@ const docForm = useForm({
 });
 
 const uploadFile = (doc, filesWithInfo) => {
-    let url = '/personal-quotes/' + docForm.quote_id + '/documents';
-    const { files, rejectReason} = filesWithInfo;
-    if (files.length == 0) {
-        notification.error({
-            title: 'File upload failed',
-            position: 'top',
-        });
-        docForm.setError({error: fileUploadErrorMessage(doc, rejectReason)});
-        return false
-    };
-  isUploading.value = true;
-  docForm
-    .transform(data => ({
-      ...data,
-      quote_type_id: doc.quote_type_id,
-      document_type_code: doc.code,
-      folder_path: doc.folder_path,
-      file: files[0].file,
-    }))
-    .post(url, {
-      preserveScroll: true,
-      preserveState: true,
-      onError: errors => {
-        docForm.setError(errors.error);
-        console.log(errors);
-        notification.error({
-          title: 'File upload failed',
-          position: 'top',
-        });
-      },
-      onFinish: () => {
-        isUploading.value = false;
-      },
+const { files, rejectReason } = filesWithInfo;
+  if (files.length == 0) {
+    notification.error({
+      title: 'File upload failed',
+      position: 'top',
+    });
+    docForm.setError({error: fileUploadErrorMessage(doc, rejectReason)});
+    return false;
+  };
+
+  const url = '/personal-quotes/' + docForm.quote_id + '/documents';
+  const formData = new FormData();
+  formData.append('quote_type_id', doc.quote_type_id);
+  formData.append('document_type_code', doc.code);
+  formData.append('folder_path', doc.folder_path);
+  formData.append('file', files[0].file);
+
+  uploadingStatus.value[doc.id] = true;
+
+  axios.post(url, formData)
+    .then(response => {
+      uploadingStatus.value[doc.id] = false;
+    })
+    .catch(error => {
+      // Handle error...
+      docForm.setError(error);
+      console.log(error);
+      notification.error({
+        title: 'File upload failed',
+        position: 'top',
+      });
+      uploadingStatus.value[doc.id] = false;
     });
 };
 
-const copyUploadURL = () => {
-  copy(page.props.docUploadURL);
-  if (copied)
-    notification.success({
-      title: 'Link copied to clipboard',
-      position: 'top',
-    });
-};
 </script>
 
 <template>
@@ -181,7 +171,7 @@ const copyUploadURL = () => {
                 :accept="documentType.accepted_files"
                 :max-files="documentType.max_files"
                 :max-size="documentType.max_size"
-                :loading="docForm.processing"
+                :loading="uploadingStatus[documentType.id]"
                 @change="uploadFile(documentType, $event)"
               />
               <template
@@ -205,3 +195,5 @@ const copyUploadURL = () => {
     </x-modal>
   </div>
 </template>
+
+
