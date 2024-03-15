@@ -2736,7 +2736,8 @@ const handlePlanSelected = plan => {
       v-if="!isNewPaymentStructure"
       :quoteId="quote.id"
       :paymentCode = "quote.code"
-      quoteType="Health"      
+      quoteType="Health"
+      :payments="payments"      
     />
 
     <PaymentTableNew 

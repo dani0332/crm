@@ -1040,7 +1040,8 @@ const linkEntity = () => {
       v-if="!isNewPaymentStructure"
       :quoteId="quote.id"
       :paymentCode = "quote.code"
-      :quoteType="page.props.quoteType"      
+      :quoteType="page.props.quoteType"
+      :payments="payments"    
     />    
     <PaymentTableNew 
 			v-if="isNewPaymentStructure"

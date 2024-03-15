@@ -2356,7 +2356,8 @@ const genderList = [
       v-if="!isNewPaymentStructure"
       :quoteId="quote.id"
       :paymentCode = "quote.code"
-      quoteType="Travel"      
+      quoteType="Travel"
+      :payments="payments"    
     />
 
     <PaymentTableNew 
