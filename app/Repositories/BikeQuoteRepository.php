@@ -23,7 +23,7 @@ class BikeQuoteRepository extends BaseRepository
     /**
      * create new personal quote
      *
-     * @param    $quoteTypeCode
+     * @param  $quoteTypeCode
      * @return mixed
      */
     public function fetchCreate($data)
@@ -106,6 +106,7 @@ class BikeQuoteRepository extends BaseRepository
                 'quoteDetail.lostReason',
                 'quoteDetail.previousAdvisor',
                 'currentlyInsuredWith',
+                'insuranceProvider',
                 'payments' => function ($q) {
                     $q->with([
                         'paymentStatus',
@@ -113,6 +114,9 @@ class BikeQuoteRepository extends BaseRepository
                         'paymentMethod',
                         'paymentStatusLogs',
                         'insuranceProvider',
+                        'paymentSplits.paymentStatus',
+                        'paymentSplits.paymentMethod',
+                        'paymentSplits.documents',
                     ]);
                 },
                 'createdBy',
