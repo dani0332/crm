@@ -2248,55 +2248,54 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
         </template>
         <template #body>
           <x-divider class="my-4" />
-          <div class="flex justify-end mb-4">
-            <x-button-group
-              v-if="selectedPlans.length > 0"
-              size="sm"
-              class="mr-2"
-            >
-              <x-button
-                @click.prevent="onTogglePlans(false)"
-                :loading="toggleLoader"
-              >
-                Show
-              </x-button>
-              <x-button
-                @click.prevent="onTogglePlans(true)"
-                :loading="toggleLoader"
-              >
-                Hide
-              </x-button>
-            </x-button-group>
-            <x-button
-              v-if="
-                availablePlansTable.data.length > 0 ||
-                availableSeniorPlansTable.data.length > 0
-              "
-              size="sm"
-              color="orange"
-              class="mr-2"
-              @click.prevent="
-                onCopyText(ecomTravelInsuranceQuoteUrl + quote.uuid)
-              "
-            >
-              Copy Link
-            </x-button>
-            <x-button
-              v-if="selectedPlans.length > 0"
-              size="sm"
-              color="emerald"
-              @click.prevent="onExportPlans"
-              :loading="exportLoader"
-            >
-              Download PDF
-            </x-button>
-            <h6
-              v-if="aboveAgeMembers > 0 && availablePlansTable.data.length > 0"
-              class="font-semibold text-primary-600 text-ms mb-1"
-            >
+          <div class="flex justify-between items-center flex-wrap gap-2">
+            <h6 v-if="aboveAgeMembers > 0 && availablePlansTable.data.length > 0" class="font-semibold text-primary-600 text-ms mb-1">
               Travel plans for {{ travelers.length - aboveAgeMembers }} member
               age 0-64
             </h6>
+            <div class="flex gap-2 mb-4">
+              <x-button-group
+                v-if="selectedPlans.length > 0"
+                size="sm"
+                class="mr-2"
+              >
+                <x-button
+                  @click.prevent="onTogglePlans(false)"
+                  :loading="toggleLoader"
+                >
+                  Show
+                </x-button>
+                <x-button
+                  @click.prevent="onTogglePlans(true)"
+                  :loading="toggleLoader"
+                >
+                  Hide
+                </x-button>
+              </x-button-group>
+              <x-button
+                v-if="
+                  availablePlansTable.data.length > 0 ||
+                  availableSeniorPlansTable.data.length > 0
+                "
+                size="sm"
+                color="orange"
+                class="mr-2"
+                @click.prevent="
+                  onCopyText(ecomTravelInsuranceQuoteUrl + quote.uuid)
+                "
+              >
+                Copy Link
+              </x-button>
+              <x-button
+                v-if="selectedPlans.length > 0"
+                size="sm"
+                color="emerald"
+                @click.prevent="onExportPlans"
+                :loading="exportLoader"
+              >
+                Download PDF
+              </x-button>
+            </div>
           </div>
 
           <div
