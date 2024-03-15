@@ -96,7 +96,7 @@ class HealthQuoteController extends Controller
         $response = $this->healthQuoteService->healthPlanModifyV2($request);
 
         $message = '';
-        if (gettype($response) == GenericRequestEnum::INTEGER && ($response == 200 || $response == 201)) {
+        if ( $response['message'] && $response['message'] === 'health quote plan updated successfully') {
             $message = 'Plan has been updated';
         } else {
             if (isset($response->message)) {
@@ -265,7 +265,7 @@ class HealthQuoteController extends Controller
         $request->validate([
             'planId' => 'required',
         ]);
-        
+
         $healthPlanId = $request->planId;
 
         $copays = $this->healthQuoteService->getCopaysByPlanId($healthPlanId);

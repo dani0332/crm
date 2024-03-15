@@ -387,7 +387,7 @@
             if ($first) {
                 foreach ($quotePlan->memberPremiumBreakdown as $key => $memberPremiumBreakdown) {
                     $key = "discountPremium".$key;
-                    $features[]= ["code" =>$key, "title" => getCustomerMemberName($memberPremiumBreakdown->memberId), "type" => "info",  "heading_class" => "text-heading", "row_class" => 'row-spacing'];
+                    $features[]= ["code" =>$key, "title" => \App\Models\HealthQuote::getCustomerMemberName($memberPremiumBreakdown->memberId), "type" => "info",  "heading_class" => "text-heading", "row_class" => 'row-spacing'];
                 }
             }
             $first= false;
