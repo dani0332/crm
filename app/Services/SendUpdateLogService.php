@@ -338,6 +338,10 @@ class SendUpdateLogService
     {
         $modelRelationDetails = $this->_getQuoteRelation($quoteModel, $quoteTypeCode);
         $quoteObject = $quoteModel::with(array_keys($modelRelationDetails['quoteRelations']))->find($requestData['ref_id']);
+        // Change quote status to Policy Cancelled
+        $quoteObject->update([
+            'quote_status_id' => QuoteStatusEnum::PolicyCancelled,
+        ]);
 
         $countChildRecords = $quoteModel::where('code', 'like', '%'.$quoteObject->code.'-%')->count();
         $childLeadDetails = [
@@ -497,7 +501,7 @@ class SendUpdateLogService
             if($sendUpdateLog->category->code == SendUpdateLogStatusEnum::EF) {
                 if($sendUpdateLog->option->code == SendUpdateLogStatusEnum::PPE && $sendUpdateLog->transaction_payment_status == SendUpdateLogStatusEnum::TRANSACTION_APPROVED && true ) { // Check if all policy details uploaded.
                     return SendUpdateLogStatusEnum::SU;
-                } 
+                }
 
                 if(!in_array($sendUpdateLog->option->code, [
                     SendUpdateLogStatusEnum::MPC,
@@ -513,12 +517,12 @@ class SendUpdateLogService
             } elseif(in_array($sendUpdateLog->category->code, [SendUpdateLogStatusEnum::CI, SendUpdateLogStatusEnum::CIR])) {
                 return SendUpdateLogStatusEnum::SU;
             }
-            
+
             if ($requiredDocuments) {
                 return SendUpdateLogStatusEnum::SUC;
             }
         }
-        
+
         return false;
     }
 
@@ -584,7 +588,7 @@ class SendUpdateLogService
 
     public function isPolicyDetailsVisible($categoryCode, $optionCode): bool
     {
-        return $categoryCode == SendUpdateLogStatusEnum::CPD || 
+        return $categoryCode == SendUpdateLogStatusEnum::CPD ||
                ($categoryCode == SendUpdateLogStatusEnum::EF && $optionCode == SendUpdateLogStatusEnum::PPE);
     }
 
@@ -617,8 +621,8 @@ class SendUpdateLogService
             if($optionCode == SendUpdateLogStatusEnum::PPE) {
                 $quoteModel->renewal_expiry_date = $sendUpdateLog->expiry_date;
             } else {
-                // The values of Booking Details - New Entry should be move in Main Lead Booking Details, 
-                // The values of Policy Details - should be move in Main Lead Policy Details, 
+                // The values of Booking Details - New Entry should be move in Main Lead Booking Details,
+                // The values of Policy Details - should be move in Main Lead Policy Details,
             }
         }
 

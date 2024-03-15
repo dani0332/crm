@@ -270,7 +270,7 @@ class SendUpdateLogController extends Controller
                 case SendUpdateLogStatusEnum::CI:
                 case SendUpdateLogStatusEnum::CIR:
                     $model::where(['uuid' => $quoteUuid, 'quote_type_id' => $quoteTypeId])->update([
-                        'quote_status_id' => QuoteStatusEnum::CancellationPending,
+                        'quote_status_id' => QuoteStatusEnum::PolicyCancelled,
                     ]);
                     break;
             }
@@ -406,7 +406,7 @@ class SendUpdateLogController extends Controller
         // $this->sendUpdateLogService->sendUpdateToSage($sendUpdateRequest, $sendUpdate);
 
         // try {
-        //     DB::beginTransaction(); 
+        //     DB::beginTransaction();
         //     $this->sendUpdateLogService->updatesMoveToLead($sendUpdateRequest, $sendUpdate);
 
         //     DB::commit();
