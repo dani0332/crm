@@ -9,9 +9,8 @@ import RiskRatingScoreDetails from '../../../Components/RiskRatingScoreDetails.v
 import { onMounted, watch } from 'vue';
 import { reactive } from 'vue';
 import MigratePayment from './../../../Components/MigratePayment.vue';
-import QuoteDocuments from '@/inertia/Pages/PersonalQuote/Partials/QuoteDocuments.vue';
+import QuoteDocument from '@/inertia/Components/QuoteDocument.vue';
 
-import { fileUploadErrorMessage } from '@/inertia/Composables/utilities.js';
 
 defineProps({
   quote: Object,
@@ -26,7 +25,6 @@ defineProps({
   listQuotePlans: { Array, String },
   quoteDocuments: Array,
   documentTypes: Object,
-  documentType: Object,
   cdnPath: String,
   ecomHealthInsuranceQuoteUrl: String,
   activities: Array,
@@ -97,6 +95,7 @@ defineProps({
   sendUpdateOptions: Array,
   sendUpdateLogs: Array,
   hasPolicyIssuedStatus: Boolean,
+  documentTypeCodes: Array
 });
 const page = usePage();
 const notification = useNotifications('toast');
@@ -358,30 +357,6 @@ watch(availablePlansTable, (newPlans) =>  {
   }
 
 }); */
-
-const documentsTable = reactive({
-  columns: [
-    { text: 'Document Type', value: 'document_type_text' },
-    { text: 'Document Name', value: 'document_name_text' },
-    { text: 'Created At', value: 'created_at' },
-    { text: 'Created By', value: 'created_by' },
-  ],
-});
-
-const documentsTableItems = computed(() => {
-  return page.props.quoteDocuments.map(doc => {
-    return {
-      document_type_text:
-        doc.document_type_text.length > 0 ? doc.document_type_text : '',
-      document_name_text: doc.doc_name,
-      document_original_name: doc.original_name,
-      created_at: doc.created_at,
-      doc_uuid: doc.doc_uuid,
-      doc_url: doc.doc_url,
-      created_by: doc.created_by ? doc.created_by.name : '',
-    };
-  });
-});
 
 const notesForCustomersTable = reactive({
   columns: [
@@ -1051,63 +1026,9 @@ const copyPlanURL = item => {
     });
 };
 
-const copyUploadURL = () => {
-  copy(page.props.docUploadURL);
-  if (copied)
-    notification.success({
-      title: 'Link copied to clipboard',
-      position: 'top',
-    });
-};
-
 const selectPlan = item => {
   selectedPlan.value = item;
   modals.plan = true;
-};
-
-const isUploading = ref(false);
-
-const docForm = useForm({
-  quote_id: usePage().props.record.id || null,
-  quote_uuid: usePage().props.record.code || null,
-  quote_type_id: null,
-  document_type_code: null,
-  file: null,
-});
-
-
-const confirmDeleteDocData = reactive({
-  docs: null,
-  member: null,
-  activity: null,
-  contact: null,
-});
-
-const onDocDelete = name => {
-  modals.docConfirm = true;
-  confirmDeleteDocData.docs = name;
-};
-
-const confirmDeleteDoc = () => {
-  documentsTable.isLoading = true;
-  router.post(
-    `/documents/delete`,
-    {
-      docName: confirmDeleteDocData.docs,
-      quoteId: page.props.record.id,
-    },
-    {
-      preserveScroll: true,
-      onFinish: () => {
-        modals.docConfirm = false;
-        documentsTable.isLoading = false;
-        notification.error({
-          title: 'File Deleted',
-          position: 'top',
-        });
-      },
-    },
-  );
 };
 
 const getAddonVat = item => {
@@ -3270,14 +3191,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       v-if="isNewPaymentStructure"
       quoteType="Car"
       :payments="payments"
-      :paymentDocument="
-        page.props.documentTypes.filter(
-          item =>
-            item.code === 'CPD' ||
-            item.code === 'CPDR' ||
-            item.code === 'CDPDR',
-        )
-      "
+      :paymentDocument="page.props.documentTypeCodes.filter(item => ['CPD', 'CPDR', 'CDPDR'].includes(item))"
       :quoteRequest="paymentEntityModel"
       :paymentStatusEnum="paymentStatusEnum"
       :paymentTooltipEnum="paymentTooltipEnum"
@@ -3390,12 +3304,13 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       :modelType="quoteType"
     />
   
-    <QuoteDocuments
+    <QuoteDocument
       :document-types="documentTypes"
       :quote-documents="page.props.quoteDocuments || []"
       :storageUrl="storageUrl"
       :quote="record"
       :expanded="sectionExpanded"
+      :docUploadURL="docUploadURL"
     />
 
     <SendUpdates

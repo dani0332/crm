@@ -48,8 +48,8 @@ class DocumentType extends Model implements AuditableContract
         $query->where('is_active', 1);
     }
 
-    public function scopeBySortDocumentType($query)
+    public function scopeSortDocumentType($query)
     {
-        $query->orderBy('is_required', 'asc')->orderBy('text', 'asc');
+        $query->orderBy('is_required', 'desc')->orderBy('text', 'asc');
     }
 }

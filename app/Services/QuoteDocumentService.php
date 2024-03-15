@@ -205,8 +205,10 @@ class QuoteDocumentService extends BaseService
         $documentTypes= DocumentType::active()
         ->whereNotIn('category', ['SEND_UPDATE', 'ENDORSEMENT_DOCUMENTS'])
         ->byQuoteTypeId($quoteTypeId)
+        ->sortDocumentType()
         ->get();
 
-        return $documentTypes->groupBy('category');
+        $documentTypesByCategory= $documentTypes->groupBy('category');
+        return [$documentTypesByCategory, $documentTypes->pluck('code')];
     }
 }
