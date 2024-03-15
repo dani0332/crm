@@ -90,7 +90,7 @@ class HealthQuoteController extends Controller
             'planId' => 'required',
             'planDetails' => 'required|array',
             'selectedCopay' => 'sometimes|nullable',
-            'defaultCopayId' => 'required_without:selectedCopay'
+            'defaultCopayId' => 'required_without:selectedCopay',
         ]);
 
         $response = $this->healthQuoteService->healthPlanModifyV2($request);
@@ -118,7 +118,7 @@ class HealthQuoteController extends Controller
             'memberId' => 'required',
             'notifyAgent' => 'required',
             'selectedCopay' => 'sometimes|nullable',
-            'defaultCopayId' => 'required_without:selectedCopay'
+            'defaultCopayId' => 'required_without:selectedCopay',
         ]);
 
         $response = $this->healthQuoteService->updateNotifyAgentFlag($request);
@@ -265,7 +265,7 @@ class HealthQuoteController extends Controller
         $request->validate([
             'planId' => 'required',
         ]);
-        
+
         $healthPlanId = $request->planId;
 
         $copays = $this->healthQuoteService->getCopaysByPlanId($healthPlanId);
