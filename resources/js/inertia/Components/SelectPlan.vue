@@ -78,17 +78,25 @@ const updateSelectedPlan = () => {
                     break;
             }
 
-            let selectedPlan = {
-                id: props.plan.id,
-                providerName: props.plan.providerName,
-                planName: props.plan.name,
-            }
+            if(props.quoteType.toLowerCase() == 'travel') {
+                let selectedPlan = {
+                    id: props.plan.id,
+                    providerName: props.plan.providerName,
+                    planName: props.plan.name,
+                }
             
-            if(res.data.plan.planProcessValue[0]) {
-                selectedPlan.premium = premium.toFixed(2);
+                if(res.data.plan.planProcessValue[0]) {
+                    selectedPlan.premium = premium.toFixed(2);
+                }
+                emit('update:selectedPlanChanged', selectedPlan);
+            } else {
+                emit('update:selectedPlanChanged', {
+                    id: props.plan.id,
+                    providerName: props.plan.providerName,
+                    planName: props.plan.name,
+                    premium: premium.toFixed(2)
+                });
             }
-            
-            emit('update:selectedPlanChanged', selectedPlan);
             notification.success({
                     title: "Selected plan updated",
                     position: 'top',
