@@ -104,7 +104,7 @@ class HealthQuoteController extends Controller
             } else {
                 $responseMessage = $response;
             }
-            $message = 'Plan has not been updated '.$responseMessage;
+            $message = 'Plan has not been updated '.json_encode($responseMessage);
         }
 
         return $message;
@@ -132,7 +132,7 @@ class HealthQuoteController extends Controller
             } else {
                 $responseMessage = $response;
             }
-            $message = 'Base price has not been updated '.$responseMessage;
+            $message = 'Base price has not been updated '.json_encode($responseMessage);
         }
 
         return $message;
@@ -153,7 +153,7 @@ class HealthQuoteController extends Controller
             } else {
                 $responseMessage = $response;
             }
-            $message = 'Request not processed. '.$responseMessage;
+            $message = 'Request not processed. '.json_encode($responseMessage);
         }
 
         return redirect()->back();
@@ -174,7 +174,7 @@ class HealthQuoteController extends Controller
             } else {
                 $responseMessage = $response;
             }
-            $message = 'Request not processed. '.$responseMessage;
+            $message = 'Request not processed. '.json_encode($responseMessage);
         }
 
         return redirect()->back();
@@ -193,7 +193,7 @@ class HealthQuoteController extends Controller
             } else {
                 $responseMessage = $response;
             }
-            $message = 'Request not processed. '.$responseMessage;
+            $message = 'Request not processed. '.json_encode($responseMessage);
         }
 
         return redirect()->back();
@@ -217,6 +217,12 @@ class HealthQuoteController extends Controller
 
     public function plansByNetwork(Request $request)
     {
+        $request->validate([
+            'network' => 'required',
+            'quoteUuId' => 'required',
+            'insuranceProviderId' => 'required',
+        ]);
+
         $network = trim($request->network);
         $quoteUuId = $request->quoteUuId;
         $insuranceProviderId = $request->insuranceProviderId;
@@ -256,6 +262,10 @@ class HealthQuoteController extends Controller
 
     public function copaysByPlan(Request $request)
     {
+        $request->validate([
+            'planId' => 'required',
+        ]);
+        
         $healthPlanId = $request->planId;
 
         $copays = $this->healthQuoteService->getCopaysByPlanId($healthPlanId);

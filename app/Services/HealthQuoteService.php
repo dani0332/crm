@@ -1461,12 +1461,6 @@ class HealthQuoteService extends BaseService
 
         if ($quoteId) {
 
-            $apiEndPoint = config('constants.KEN_API_ENDPOINT').'/add-health-quote-members';
-            $apiToken = config('constants.KEN_API_TOKEN');
-            $apiTimeout = config('constants.KEN_API_TIMEOUT');
-            $apiUserName = config('constants.KEN_API_USER');
-            $apiPassword = config('constants.KEN_API_PWD');
-
             $memberDetails = [
                 'firstName' => $request->first_name,
                 'lastName' => $request->last_name ?? null,
@@ -1484,17 +1478,7 @@ class HealthQuoteService extends BaseService
                 'memberDetails' => [$memberDetails],
             ];
 
-            $apiCreds = [
-                'apiEndPoint' => $apiEndPoint,
-                'apiToken' => $apiToken,
-                'apiTimeout' => $apiTimeout,
-                'apiUserName' => $apiUserName,
-                'apiPassword' => $apiPassword,
-            ];
-
             $response = Ken::request('/add-health-quote-members', 'POST', $dataArray);
-
-            // $response = $this->httpService->processRequest($dataArray, $apiCreds);
         } else {
             $response = [
                 'status' => false,
@@ -1512,12 +1496,6 @@ class HealthQuoteService extends BaseService
 
         if ($quoteId && $memberId) {
 
-            $apiEndPoint = config('constants.KEN_API_ENDPOINT').'/update-health-quote-members';
-            $apiToken = config('constants.KEN_API_TOKEN');
-            $apiTimeout = config('constants.KEN_API_TIMEOUT');
-            $apiUserName = config('constants.KEN_API_USER');
-            $apiPassword = config('constants.KEN_API_PWD');
-
             $memberDetails = [
                 'id' => $memberId,
                 'firstName' => $request->first_name,
@@ -1536,15 +1514,8 @@ class HealthQuoteService extends BaseService
                 'memberDetails' => [$memberDetails],
             ];
 
-            $apiCreds = [
-                'apiEndPoint' => $apiEndPoint,
-                'apiToken' => $apiToken,
-                'apiTimeout' => $apiTimeout,
-                'apiUserName' => $apiUserName,
-                'apiPassword' => $apiPassword,
-            ];
+            $response = Ken::request('/update-health-quote-members', 'POST', $dataArray);
 
-            $response = $this->httpService->processRequest($dataArray, $apiCreds);
         } else {
             $response = [
                 'status' => false,
@@ -1562,12 +1533,6 @@ class HealthQuoteService extends BaseService
 
         if ($quoteId && $memberId) {
 
-            $apiEndPoint = config('constants.KEN_API_ENDPOINT').'/delete-health-quote-members';
-            $apiToken = config('constants.KEN_API_TOKEN');
-            $apiTimeout = config('constants.KEN_API_TIMEOUT');
-            $apiUserName = config('constants.KEN_API_USER');
-            $apiPassword = config('constants.KEN_API_PWD');
-
             $memberDetails = [
                 'id' => $memberId,
             ];
@@ -1577,15 +1542,7 @@ class HealthQuoteService extends BaseService
                 'memberDetails' => [$memberDetails],
             ];
 
-            $apiCreds = [
-                'apiEndPoint' => $apiEndPoint,
-                'apiToken' => $apiToken,
-                'apiTimeout' => $apiTimeout,
-                'apiUserName' => $apiUserName,
-                'apiPassword' => $apiPassword,
-            ];
-
-            $response = $this->httpService->processRequest($dataArray, $apiCreds);
+            $response = Ken::request('/delete-health-quote-members', 'POST', $dataArray);
         } else {
             $response = [
                 'status' => false,
@@ -1885,12 +1842,6 @@ class HealthQuoteService extends BaseService
             $copayId = $selectedCopay['id'];
         }
 
-        $apiEndPoint = config('constants.KEN_API_ENDPOINT').'/update-notify-agent';
-        $apiToken = config('constants.KEN_API_TOKEN');
-        $apiTimeout = config('constants.KEN_API_TIMEOUT');
-        $apiUserName = config('constants.KEN_API_USER');
-        $apiPassword = config('constants.KEN_API_PWD');
-
         $dataArray = [
             'quoteUID' => $request->quoteUID,
             'planId' => $request->get('planId'),
@@ -1899,15 +1850,7 @@ class HealthQuoteService extends BaseService
             'notifyAgent' => $request->get('notifyAgent'),
         ];
 
-        $apiCreds = [
-            'apiEndPoint' => $apiEndPoint,
-            'apiToken' => $apiToken,
-            'apiTimeout' => $apiTimeout,
-            'apiUserName' => $apiUserName,
-            'apiPassword' => $apiPassword,
-        ];
-
-        $response = $this->httpService->processRequest($dataArray, $apiCreds);
+        $response = Ken::request('/update-notify-agent', 'POST', $dataArray);
 
         return $response;
     }
