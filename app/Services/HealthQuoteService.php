@@ -2,46 +2,47 @@
 
 namespace App\Services;
 
-use App\Enums\AssignmentTypeEnum;
-use App\Enums\CustomerTypeEnum;
-use App\Enums\DatabaseColumnsString;
-use App\Enums\DefaultAdvisorEnum;
-use App\Enums\GenericRequestEnum;
-use App\Enums\HealthTeamType;
-use App\Enums\LeadSourceTypes;
-use App\Enums\QuoteStatusEnum;
-use App\Enums\quoteTypeCode;
-use App\Enums\QuoteTypeId;
-use App\Enums\RolesEnum;
-use App\Jobs\CammyJob;
-use App\Jobs\GetQuotePlansJob;
-use App\Jobs\IntroEmailJob;
-use App\Models\BusinessInsuranceType;
-use App\Models\BusinessQuote;
-use App\Models\EmbeddedProductOption;
-use App\Models\EmbeddedTransaction;
-use App\Models\HealthMemberDetail;
-use App\Models\HealthPlan;
-use App\Models\HealthQuote;
-use App\Models\HealthQuotePlan;
-use App\Models\HealthQuoteRequestDetail;
-use App\Models\InsuranceProvider;
-use App\Models\PaymentAction;
-use App\Models\QuoteType;
-use App\Models\QuoteViewCount;
-use App\Models\RenewalBatch;
-use App\Models\Team;
-use App\Models\User;
-use App\Traits\AddPremiumAllLobs;
-use App\Traits\GenericQueriesAllLobs;
-use App\Traits\GetUserTreeTrait;
-use App\Traits\RolePermissionConditions;
+use DB;
+use PDF;
 use Auth;
 use Carbon\Carbon;
-use DB;
+use App\Facades\Ken;
+use App\Models\Team;
+use App\Models\User;
+use App\Jobs\CammyJob;
+use App\Enums\RolesEnum;
+use App\Models\QuoteType;
+use App\Enums\QuoteTypeId;
+use App\Models\HealthPlan;
+use App\Jobs\IntroEmailJob;
+use App\Models\HealthQuote;
 use Hidehalo\Nanoid\Client;
+use App\Enums\quoteTypeCode;
+use App\Models\RenewalBatch;
 use Illuminate\Http\Request;
-use PDF;
+use App\Enums\HealthTeamType;
+use App\Models\BusinessQuote;
+use App\Models\PaymentAction;
+use App\Enums\LeadSourceTypes;
+use App\Enums\QuoteStatusEnum;
+use App\Jobs\GetQuotePlansJob;
+use App\Models\QuoteViewCount;
+use App\Enums\CustomerTypeEnum;
+use App\Models\HealthQuotePlan;
+use App\Traits\GetUserTreeTrait;
+use App\Enums\AssignmentTypeEnum;
+use App\Enums\DefaultAdvisorEnum;
+use App\Enums\GenericRequestEnum;
+use App\Models\InsuranceProvider;
+use App\Traits\AddPremiumAllLobs;
+use App\Models\HealthMemberDetail;
+use App\Models\EmbeddedTransaction;
+use App\Enums\DatabaseColumnsString;
+use App\Models\BusinessInsuranceType;
+use App\Models\EmbeddedProductOption;
+use App\Traits\GenericQueriesAllLobs;
+use App\Models\HealthQuoteRequestDetail;
+use App\Traits\RolePermissionConditions;
 use Sammyjo20\LaravelHaystack\Models\Haystack;
 
 class HealthQuoteService extends BaseService
@@ -1377,7 +1378,7 @@ class HealthQuoteService extends BaseService
     }
 
     /**
-     * HERE We ARE
+     * Health Plan Edit V2. New method to handle the new health plan edit.
      */
     public function healthPlanModifyV2($request)
     {
@@ -1491,7 +1492,9 @@ class HealthQuoteService extends BaseService
                 'apiPassword' => $apiPassword,
             ];
 
-            $response = $this->httpService->processRequest($dataArray, $apiCreds);
+            $response = Ken::request('/add-health-quote-members', 'POST', $dataArray);
+
+            // $response = $this->httpService->processRequest($dataArray, $apiCreds);
         } else {
             $response = [
                 'status' => false,

@@ -20,6 +20,12 @@ class HealthQuoteController extends Controller
 
     public function healthPlanCreateQuote(Request $request)
     {
+        $request->validate([
+            'quoteUID' => 'required',
+            'formData' => 'required|array',
+            'membersPrice' => 'required',
+        ]);
+
         $quoteUID = $request->quoteUID;
         $planId = $request->formData['plan_id'];
         $copayId = $request->formData['deductibles'];
@@ -79,6 +85,14 @@ class HealthQuoteController extends Controller
 
     public function healthPlanUpdateManualProcessV2(Request $request)
     {
+        $request->validate([
+            'quoteUID' => 'required',
+            'planId' => 'required',
+            'planDetails' => 'required|array',
+            'selectedCopay' => 'sometimes|nullable',
+            'defaultCopayId' => 'required_without:selectedCopay'
+        ]);
+
         $response = $this->healthQuoteService->healthPlanModifyV2($request);
 
         $message = '';
@@ -98,6 +112,15 @@ class HealthQuoteController extends Controller
 
     public function healthPlanNotifyAgent(Request $request)
     {
+        $request->validate([
+            'quoteUID' => 'required',
+            'planId' => 'required',
+            'memberId' => 'required',
+            'notifyAgent' => 'required',
+            'selectedCopay' => 'sometimes|nullable',
+            'defaultCopayId' => 'required_without:selectedCopay'
+        ]);
+
         $response = $this->healthQuoteService->updateNotifyAgentFlag($request);
 
         $message = '';
