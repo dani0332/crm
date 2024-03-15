@@ -172,7 +172,6 @@ const memberCategoryText = memberCategoryId =>
     )?.text;
   });
 
-
 // const subTeamOptions = computed(() => {
 //     let subteamArray = page.props.teams?.map(team => ({
 //         value: team.name,
@@ -1505,7 +1504,7 @@ const handlePlanSelected = plan => {
 
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div class="text-sm">
-        <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
+        <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
           <div
             v-if="hasAnyRole([rolesEnum.Admin, rolesEnum.Engineering])"
             class="grid sm:grid-cols-2"
@@ -1592,7 +1591,7 @@ const handlePlanSelected = plan => {
       </div>
 
       <div class="text-sm">
-        <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
+        <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">
               FOR WHOM DO YOU REQUIRE HEALTH INSURANCE?
@@ -1649,7 +1648,7 @@ const handlePlanSelected = plan => {
             v-if="
               quote.customer_type === page.props.customerTypeEnum.Individual
             "
-            class="grid md:grid-cols-2 gap-x-6 gap-y-4"
+            class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words"
           >
             <div class="grid sm:grid-cols-2">
               <dt class="font-medium">FIRST NAME</dt>
@@ -1689,7 +1688,7 @@ const handlePlanSelected = plan => {
             </div>
             <div class="grid sm:grid-cols-2">
               <dt class="font-medium">EMAIL</dt>
-              <dd>{{ quote.email }}</dd>
+              <dd class="break-words">{{ quote.email }}</dd>
             </div>
             <div class="grid sm:grid-cols-2">
               <dt class="font-medium">NATIONALITY</dt>
@@ -1767,7 +1766,9 @@ const handlePlanSelected = plan => {
             </div>
             <div class="grid sm:grid-cols-2">
               <dt class="font-medium">COMPANY NAME</dt>
-              <dd>{{ customerProfileForm.company_name }}</dd>
+              <dd class="break-words">
+                {{ customerProfileForm.company_name }}
+              </dd>
             </div>
             <div class="grid sm:grid-cols-2">
               <dt class="font-medium">TRADE LICENSE NO</dt>
@@ -3023,8 +3024,8 @@ const handlePlanSelected = plan => {
     
 
     <ClientInquiryLogs
-        v-if="clientInquiryLogs.length > 0"
-        :logs="clientInquiryLogs"
+      v-if="clientInquiryLogs.length > 0"
+      :logs="clientInquiryLogs"
     />
   </div>
 </template>

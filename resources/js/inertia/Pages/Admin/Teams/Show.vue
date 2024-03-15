@@ -42,8 +42,11 @@ const permissionsEnum = page.props.permissionsEnum;
         <div class="grid sm:grid-cols-2">
           <dt class="font-medium">Active</dt>
           <dd>
-            <x-tag size="sm" :color="team.is_active ? 'success' : 'error'">
-              {{ team.is_active ? 'Yes' : 'No' }}
+            <x-tag
+              size="sm"
+              :color="team.is_active == 'True' ? 'success' : 'error'"
+            >
+              {{ team.is_active == 'True' ? 'Yes' : 'No' }}
             </x-tag>
           </dd>
         </div>
