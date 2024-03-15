@@ -19,17 +19,17 @@ use App\Exports\TravelQuoteExport;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\CustomerProfileRequest;
 use App\Http\Requests\DuplicateLobRequest;
+use App\Http\Requests\GeneratePaymentLinkRequest;
 use App\Http\Requests\LeadAssignRequest;
 use App\Http\Requests\MigratePaymentsRequest;
 use App\Http\Requests\PlanDetailsRequest;
 use App\Http\Requests\SplitPaymentApproveRequest;
 use App\Http\Requests\SplitPaymentUpdateRequest;
+use App\Http\Requests\StorePaymentRequest;
 use App\Http\Requests\UpdateLastYearPolicyRequest;
+use App\Http\Requests\UpdatePaymentRequest;
 use App\Http\Requests\UpdateSelectedPlanRequest;
 use App\Http\Requests\UpdateTotalPriceRequest;
-use App\Http\Requests\StorePaymentRequest;
-use App\Http\Requests\UpdatePaymentRequest;
-use App\Http\Requests\GeneratePaymentLinkRequest;
 use App\Models\Customer;
 use App\Models\Entity;
 use App\Models\QuoteRequestEntityMapping;
@@ -250,20 +250,20 @@ class CentralController extends Controller
     }
     // Store new payment
     public function storeNewPayment(StorePaymentRequest $request)
-    {        
-        return PaymentRepository::createNewPayment($request);       
+    {
+        return PaymentRepository::createNewPayment($request);
     }
 
     // Update payment
     public function updateNewPayment(UpdatePaymentRequest $request)
     {
-        return PaymentRepository::updateNewPayment($request);        
+        return PaymentRepository::updateNewPayment($request);
     }
 
     // Generate payment link for split payment
     public function generatePaymentLink(GeneratePaymentLinkRequest $request)
     {
-        return (new SplitPaymentService())->generateSplitPaymentLink($request);        
+        return (new SplitPaymentService())->generateSplitPaymentLink($request);
     }
 
 }

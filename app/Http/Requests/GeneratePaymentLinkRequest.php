@@ -25,7 +25,7 @@ class GeneratePaymentLinkRequest extends FormRequest
             'paymentCode' => 'required|string',
             'modelType' => 'required|string',
             'splitPaymentId' => 'required|integer',
-            'quoteId' => 'required|integer',          
+            'quoteId' => 'required|integer',
         ];
     }
 }

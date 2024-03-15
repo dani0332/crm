@@ -52,7 +52,7 @@ class PaymentsMoveInNewTableStructure extends Seeder
 
                         if ($oldPayment->count() == 1) {
                             Log::info('MigratePaymentSeeder::Payment migrated for: '.$modelObject->code);
-                        ////app(SplitPaymentService::class)->migratePayments($oldPayment[0], $modelType);
+                            ////app(SplitPaymentService::class)->migratePayments($oldPayment[0], $modelType);
                         } else {
                             Log::info('MigratePaymentSeeder::Payment migration skipped for: '.$modelObject->code.',having more than 1 child payments');
                         }

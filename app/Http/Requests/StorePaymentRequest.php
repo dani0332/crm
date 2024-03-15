@@ -2,8 +2,8 @@
 
 namespace App\Http\Requests;
 
-use Illuminate\Foundation\Http\FormRequest;
 use App\Traits\GenericQueriesAllLobs;
+use Illuminate\Foundation\Http\FormRequest;
 
 class StorePaymentRequest extends FormRequest
 {
@@ -55,7 +55,7 @@ class StorePaymentRequest extends FormRequest
     }
 
     /**
-     * validate quote record 
+     * validate quote record
      */
     public function withValidator($validator)
     {
@@ -63,7 +63,7 @@ class StorePaymentRequest extends FormRequest
             $quoteModel = $this->getQuoteObject(request()->modelType, request()->quote_id);
             if (! $quoteModel) {
                 $validator->errors()->add('value', 'Quote Not Exists');
-            }            
+            }
         });
     }
 }

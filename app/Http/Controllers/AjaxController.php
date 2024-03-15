@@ -20,7 +20,6 @@ use App\Models\CustomerDetail;
 use App\Models\Entity;
 use App\Models\Nationality;
 use App\Models\Payment;
-use App\Models\PaymentSplits;
 use App\Models\PaymentStatusLog;
 use App\Models\PersonalQuote;
 use App\Models\QuoteMemberDetail;
@@ -178,8 +177,8 @@ class AjaxController extends Controller
 
             return response()->json(['success' => true, 'payment_link' => $paymentLinkURL]);
         }
-        
-    }   
+
+    }
 
     public function commercialCarModelBasedOnCarMakeId(Request $request)
     {
