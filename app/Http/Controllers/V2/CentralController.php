@@ -251,16 +251,16 @@ class CentralController extends Controller
     // Store new payment
     public function storeNewPayment(StorePaymentRequest $request)
     {        
-        PaymentRepository::createNewPayment($request);       
+        return PaymentRepository::createNewPayment($request);       
     }
 
     // Update payment
     public function updateNewPayment(UpdatePaymentRequest $request)
     {
-        PaymentRepository::updateNewPayment($request);        
+        return PaymentRepository::updateNewPayment($request);        
     }
 
-    // Update payment
+    // Generate payment link for split payment
     public function generatePaymentLink(GeneratePaymentLinkRequest $request)
     {
         return (new SplitPaymentService())->generateSplitPaymentLink($request);        
