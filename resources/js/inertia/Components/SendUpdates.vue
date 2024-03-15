@@ -31,7 +31,7 @@ const optionError = ref(false);
 const sendUpdatesTable = reactive({
   headers: [
     {
-      text: 'SU-REF ID',
+      text: 'SU REF ID',
       value: 'code',
       tooltip:
         'A unique reference identifier assigned to each "Send Update" request, allowing for easy tracking and reference.',
