@@ -70,6 +70,15 @@ const selectedCategory = computed(() => {
   return category;
 })
 
+// as per the link 'Transaction Type' column -> https://docs.google.com/spreadsheets/d/1TE7RfMpEtL7kenl8s1DUVKRvP_DbUvCJ82XyCFYJ7Rw/edit#gid=803033517
+const transactionType = computed(() => {
+  if (['CI', 'CIR', 'CPD'].includes(selectedCategory?.value?.subCategory.slug)) {
+    return 'Endorsement';
+  }
+
+  return null;
+});
+
 const updateLogOptions = computed(() => {
   return selectedCategory?.value?.subCategory.options.map(child => ({
     value: child.id,
@@ -205,7 +214,7 @@ const isBookingDetailsVisible = computed(() => {
           <div class="grid sm:grid-cols-2">
             <template v-if="selectedCategory.subCategory.slug !== 'EN' && selectedCategory.subCategory.slug !== 'CPU'">
               <dt class="font-bold text-right mr-10">Transaction Type</dt>
-              <dd>{{ selectedCategory.title }}</dd> 
+              <dd>{{ transactionType || selectedCategory.title }}</dd>
             </template>
           </div>
           <div class="grid sm:grid-cols-2 ml-[-250px]">
