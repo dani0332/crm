@@ -822,7 +822,8 @@ const handleFrequencyChange = (noPaymentUpdate=true) => {
     paymentMethodsForm.payment_no = '1';    
   }
   calculatePaymentBreakup();
-  if (paymentMethodsModels.value[1]==='CC' && resetPaymentMethod){
+    
+  if (paymentMethodsModels.value[1]==='CC' && resetPaymentMethod && readOnlyPayments.value[1]===undefined){
     paymentMethodsModels.value[1] = 'BT';
   }    
 };
@@ -1628,12 +1629,8 @@ const getCaptureValidation = computed(() => {
               return true;
             } 
           } else {
-            let caPaymentStatus = paymentRecord.payment_splits.filter(item => item.payment_method.code === "CA");
-            if (caPaymentStatus.length > 0) {
-              let caApproved = caPaymentStatus.filter(item => item.payment_status_id===props.paymentStatusEnum.CREDIT_APPROVED);
-              if( caApproved.length===caPaymentStatus.length ) {
-                return true;
-              } 
+            if(verifyCreditArroved(paymentRecord)) {
+              return true;
             } else {
               let paidPaymentStatus = paymentRecord.payment_splits.filter(item => item.payment_status_id===props.paymentStatusEnum.PAID);
               if( paidPaymentStatus.length===paymentRecord.payment_splits.length ) {
@@ -1643,28 +1640,39 @@ const getCaptureValidation = computed(() => {
           }
         }
       } else {
-        if (
+
+        if( paymentRecord.payment_status_id === props.paymentStatusEnum.CREDIT_APPROVED ){
+          if (verifyCreditArroved(paymentRecord)) {
+            return true;
+          }
+        } else if (
           (paymentRecord.payment_splits[0].payment_method.code==='IP' ||
           paymentRecord.payment_splits[0].payment_method.code==='PDC'
           ) &&
           paymentRecord.payment_splits[0].payment_status_id===props.paymentStatusEnum.PENDING) {
           return true;
-        } else if(
+        } else if (
             paymentRecord.payment_splits[0].payment_status_id===props.paymentStatusEnum.PAID ||
             paymentRecord.payment_splits[0].payment_status_id===props.paymentStatusEnum.AUTHORISED        
           ){
           return true;
-        }
-        /*
-        let paidPaymentStatus = paymentRecord.payment_splits.filter(item => item.payment_status.code===props.paymentStatusEnum.PAID);
-        if( paidPaymentStatus.length===paymentRecord.payment_splits.length ) {
-          return true;
-        }*/      
+        }        
       }
     }
     return false;
   };
 });
+//verify if all credit payments are approved
+const verifyCreditArroved = (paymentRecord) => {  
+  let caPaymentStatus = paymentRecord.payment_splits.filter(item => item.payment_method.code === 'CA');   
+  if (caPaymentStatus.length > 0) {
+    let caApproved = caPaymentStatus.filter(item => item.payment_status_id===props.paymentStatusEnum.CREDIT_APPROVED);
+    if( caApproved.length===caPaymentStatus.length ) {
+      return true;
+    } 
+  }
+  return false; 
+}
 
 const alertCapture = (payment) => {  
   let errorMsg = 'Pending payment';
