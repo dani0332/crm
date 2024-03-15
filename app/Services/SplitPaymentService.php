@@ -17,6 +17,8 @@ use App\Traits\GenericQueriesAllLobs;
 use App\Traits\SageLoggable;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use App\Models\PersonalQuote;
+use Carbon\Carbon;
 use PDF;
 
 class SplitPaymentService
@@ -436,5 +438,64 @@ class SplitPaymentService
             info('Payment Reciept - ERROR:'.$ex->getMessage());
         }
 
+    }
+    
+    public function generateSplitPaymentLink($request)
+    { 
+        $splitPayment = PaymentSplits::where(['code' => $request->paymentCode, 'sr_no' => $request->splitPaymentId])->first();
+        $payment = $splitPayment->payment;
+        $modelType = $request->modelType;
+        $quoteId = $request->quoteId;
+
+        if (! $payment) {
+            return response()->json(['success' => false]);
+        }
+        
+        if ($splitPayment->payment_link != null && now() < Carbon::parse($splitPayment->payment_link_created_at)->addDays(3)) {
+            return response()->json(['success' => true, 'payment_link' => $splitPayment->payment_link]);
+        } else {
+           
+            $quoteModel = $this->getQuoteObject($modelType, $quoteId);
+            $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
+
+            $description = (get_class($quoteModel) == PersonalQuote::class) ? ($payment->personalPlan->text ?? '') : ($quoteModel->plan->text ?? '');
+
+            $paymentLink = config('constants.PAYMENT_REDIRECT_LINK');
+
+            $paymentLink = $splitPayment->payment_method == PaymentMethodsEnum::InsureNowPayLater ? $paymentLink.'tabby' : $paymentLink.'checkout';
+
+            $paymentParams = [
+                'code' => $payment->code.'-'.$splitPayment->sr_no,
+                'quoteTypeId' => $quoteTypeId,
+            ];
+            $paymentLinkURL = $paymentLink.'?'.http_build_query($paymentParams);
+
+            $invoiceRequestData = [
+                'firstName' => $quoteModel->first_name,
+                'lastName' => $quoteModel->last_name,
+                'email' => $quoteModel->email,
+                'emailSubject' => 'Payment Request',
+                'items' => [
+                    [
+                        'description' => $description,
+                        'totalPrice' => [
+                            'currencyCode' => 'AED',
+                            'value' => ceil($splitPayment->payment_amount * 100),
+                        ],
+                        'quantity' => 1,
+                    ],
+                ],
+                'total' => [
+                    'currencyCode' => 'AED',
+                    'value' => ceil($splitPayment->payment_amount * 100),
+                ],
+                'merchantOrderReference' => strtoupper($payment->code.'-'.$splitPayment->sr_no),
+            ];
+
+            info('Request object for '.$quoteModel->uuid.' is '.json_encode($invoiceRequestData));
+
+            return response()->json(['success' => true, 'payment_link' => $paymentLinkURL]);
+
+        }
     }
 }

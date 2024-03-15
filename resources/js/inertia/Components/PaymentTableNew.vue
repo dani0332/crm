@@ -847,7 +847,7 @@ const generateCCLink = async (code,splitPaymentId,paymentStatus) => {
       });
   } else {
     try {
-      const response = await axios.post('/generate-payment-link', {
+      const response = await axios.post('/generate-payment-link-new', {
         quoteId: props.quoteRequest.id,
         modelType: props.quoteType,
         paymentCode: code,

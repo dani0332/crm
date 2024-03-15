@@ -29,11 +29,13 @@ use App\Http\Requests\UpdateSelectedPlanRequest;
 use App\Http\Requests\UpdateTotalPriceRequest;
 use App\Http\Requests\StorePaymentRequest;
 use App\Http\Requests\UpdatePaymentRequest;
+use App\Http\Requests\GeneratePaymentLinkRequest;
 use App\Models\Customer;
 use App\Models\Entity;
 use App\Models\QuoteRequestEntityMapping;
 use App\Repositories\PaymentRepository;
 use App\Services\CentralService;
+use App\Services\SplitPaymentService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -256,6 +258,12 @@ class CentralController extends Controller
     public function updateNewPayment(UpdatePaymentRequest $request)
     {
         PaymentRepository::updateNewPayment($request);        
+    }
+
+    // Update payment
+    public function generatePaymentLink(GeneratePaymentLinkRequest $request)
+    {
+        return (new SplitPaymentService())->generateSplitPaymentLink($request);        
     }
 
 }
