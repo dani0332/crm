@@ -127,6 +127,12 @@ const onEdit = () => {
   }
 }
 
+const onCancel = () => {
+  state.edit = false;
+  sendUpdateForm.notes = props.sendUpdateLog?.notes || '';
+  sendUpdateForm.option_id = props.sendUpdateLog?.option_id || null;
+}
+
 const onUpdateLog = () => {
   sendUpdateForm.patch(
     route('send-update-logs.update', { id: props.sendUpdateLog.id }),
@@ -260,7 +266,7 @@ const isBookingDetailsVisible = computed(() => {
           <x-button
             size="sm"
             color="orange"
-            @click="state.edit = false"
+            @click="onCancel"
             class="mr-3"
             :loading="sendUpdateForm.processing"
             :disabled="sendUpdateForm.processing"
