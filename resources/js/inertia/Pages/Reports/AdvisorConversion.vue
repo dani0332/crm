@@ -74,6 +74,10 @@ const tableHeader = [
     value: 'in_progress',
   },
   {
+    text: 'Cancelled Leads',
+    value: 'cancelled_leads',
+  },
+  {
     text: 'Bad Leads',
     value: 'bad_leads',
   },
@@ -132,7 +136,7 @@ const totalLeads = reactive({
 
 function calculateGrossConversion(item) {
   if (item) {
-    const totalLeadsCount = item.total_leads;
+    const totalLeadsCount = item.total_leads - item.cancelled_leads;
     const manualCreated = item.manual_created;
     const saleLeads = item.sale_leads;
     const createdSaleLeads = item.created_sale_leads;
@@ -156,7 +160,7 @@ function calculateTotalNetConversion(data) {
   let saleLeads = 0;
   let createdSaleLeads = 0;
   data.forEach(row => {
-    totalLeads += Number(row.total_leads);
+    totalLeads += (Number(row.total_leads) - Number(row.cancelled_leads));
     manualCreated += Number(row.manual_created);
     saleLeads += Number(row.sale_leads);
     createdSaleLeads += Number(row.created_sale_leads);
@@ -176,7 +180,7 @@ function calculateTotalGrossConversion(data) {
   let saleLeads = 0;
   let createdSaleLeads = 0;
   data.forEach(row => {
-    totalLeads += Number(row.total_leads);
+    totalLeads += (Number(row.total_leads) - Number(row.cancelled_leads));
     manualCreated += Number(row.manual_created);
     saleLeads += Number(row.sale_leads);
     createdSaleLeads += Number(row.created_sale_leads);
@@ -189,7 +193,7 @@ function calculateTotalGrossConversion(data) {
 }
 
 function calculateNetConversion(row) {
-  const totalLeads = row.total_leads;
+  const totalLeads = row.total_leads - row.cancelled_leads;
   const manualCreated = row.manual_created;
   const badLeads = row.bad_leads;
   const manualCreatedBadLeads = row.manual_created_bad_leads;
@@ -643,6 +647,17 @@ watch(
         </button>
       </template>
 
+      <template #item-cancelled_leads="item">
+        <p v-if="item.cancelled_leads == 0">{{ item.cancelled_leads }}</p>
+        <button
+          v-else
+          @click="onFetchAdvisorAssignedLeads(item, 'cancelled_leads')"
+          class="text-primary underline"
+        >
+          {{ item.cancelled_leads }}
+        </button>
+      </template>
+
       <template #item-bad_leads="item">
         <p v-if="item.bad_leads == 0">{{ item.bad_leads }}</p>
         <button
@@ -717,6 +732,9 @@ watch(
           </td>
           <td class="direction-center">
             {{ calculateTotalSum(reportData, 'in_progress') }}
+          </td>
+          <td class="direction-center">
+            {{ calculateTotalSum(reportData, 'cancelled_leads') }}
           </td>
           <td class="direction-center">
             {{ calculateTotalSum(reportData, 'bad_leads') }}
