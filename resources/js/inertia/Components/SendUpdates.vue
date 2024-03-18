@@ -396,7 +396,7 @@ const findOption = (item, key) => {
                 form.childCategory.childs.map(item => ({
                   label: item.title,
                   value: item.id,
-                  tooltip: item.tooltip,
+                  tooltip: item.description,
                 }))
               "
               :rules="[isRequired]"
