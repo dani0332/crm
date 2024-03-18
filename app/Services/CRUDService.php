@@ -262,7 +262,7 @@ class CRUDService extends BaseService
                 $entity->tier_id = $request->tier_id;
             }
 
-            if (in_array(strtolower($request->modelType), [strtolower(quoteTypeCode::Health), strtolower(quoteTypeCode::Home)])) {
+            if (in_array(strtolower($request->modelType), [strtolower(quoteTypeCode::Health), strtolower(quoteTypeCode::Home), strtolower(quoteTypeCode::Business)])) {
                 $entity->activities()->where('status', 0)->update(['status' => 1]);
                 $entity->quote_status_date = now();
             }
