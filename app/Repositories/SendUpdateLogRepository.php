@@ -19,7 +19,7 @@ class SendUpdateLogRepository extends BaseRepository
     {
         try {
             $code = $data['childCategory']['slug'];
-            $count = $this->fetchGetCount($data['quote_uuid'], $data['quote_type_id']);
+            $count = $this->fetchGetCount($data['quote_uuid'], $data['quote_type_id'], $code);
 
             $code = $code.'-'.date('m').date('y').'-'.($count + 1);
 
@@ -104,12 +104,12 @@ class SendUpdateLogRepository extends BaseRepository
         return $log;
     }
 
-    public function fetchGetCount($uuid, $quoteTypeId)
+    public function fetchGetCount($uuid, $quoteTypeId, $code)
     {
         return $this->where([
             'quote_uuid' => $uuid,
             'quote_type_id' => $quoteTypeId,
-        ])->count();
+        ])->where('code', 'like', "%$code%")->count();
     }
 
     public function fetchFindByQuoteUuid($uuid)
