@@ -534,17 +534,6 @@ class CRUDController extends Controller
             $sendUpdateEnum = SendUpdateLogStatusEnum::asArray();
         }
 
-        $sendUpdateOptions = [];
-        $sendUpdateLogs = [];
-        $sendUpdateEnum = (object) [];
-        $hasPolicyIssuedStatus = $this->crudService->hasAtleastOneStatusPolicyIssued($quoteTypeId, $record->id);
-
-        if ($hasPolicyIssuedStatus) {
-            $sendUpdateOptions = $this->lookupService->getSendUpdateOptions($quoteTypeId);
-            $sendUpdateLogs = SendUpdateLogRepository::findByQuoteUuid($record->uuid);
-            $sendUpdateEnum = SendUpdateLogStatusEnum::asArray();
-        }
-
         $customTitles = $customTableList = [];
         if (Auth::user()->isRenewalManager() || Auth::user()->isRenewalAdvisor()) {
             $isRenewalUser = true;
