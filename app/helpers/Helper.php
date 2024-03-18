@@ -522,7 +522,6 @@ if (! function_exists('formatMobileNumber')) {
 if (! function_exists('checkPersonalQuotes')) {
     function checkPersonalQuotes($quoteType)
     {
-        info('checkPersonalQuotes quoteType: '. $quoteType);
         return in_array($quoteType, [
             QuoteTypes::BIKE->value,
             QuoteTypes::CYCLE->value,
