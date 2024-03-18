@@ -241,7 +241,7 @@ const findOption = (item, key) => {
         </div>
       </template>
       <template #body>
-        <div class="my-4 flex justify-end">
+        <div v-if="page.props.linkedQuoteDetails.childLeadsCount == 0" class="mt-4 flex justify-end">
           <x-button
             v-if="can(permissionsEnum.SEND_UPDATE_CREATE)"
             size="sm"
@@ -252,7 +252,7 @@ const findOption = (item, key) => {
           </x-button>
         </div>
         <DataTable
-          table-class-name="table-fixed-width"
+          table-class-name="table-fixed-width mt-4"
           :headers="sendUpdatesTable.headers"
           :items="sendUpdatesTable.data"
           border-cell
@@ -462,11 +462,11 @@ const findOption = (item, key) => {
         >
             <div class="flex flex-col gap-2 flex-grow w-75">
                 <div>
-                    <p class="text-red-500 text-2xl"> Please note the following when performing these updates:</p>
+                    <p class="text-red-600 font-bold text-2xl"> Please note the following when performing these updates:</p>
                     <div class="my-4">
-                        <ul class="list-disc pl-4">
+                        <ul class="list-disc pl-4 font-medium">
                             <li>The new lead for the reissued policy counts as a sale only once the lead status is policy issued</li>
-                            <li>When a policy is cancelled and reissued or simply cancelled, it will no longer count as sale.</li>
+                            <li class="my-2">When a policy is cancelled and reissued or simply cancelled, it will no longer count as sale.</li>
                             <li>Lead details will be moved to new lead.</li>
                         </ul>
                     </div>

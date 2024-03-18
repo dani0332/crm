@@ -215,12 +215,12 @@ const additionalContactDeleteConfirmed = () => {
           <div class="flex flex-wrap gap-3 justify-between items-center">
             <h3 class="font-semibold text-primary-800 text-lg">
               Customer Additional Contacts
-              <x-tag size="sm">{{ contacts.length || 0 }}</x-tag>
+              <x-tag size="sm">{{ contacts.length || 0  }}</x-tag>
             </h3>
           </div>
         </template>
         <template #body>
-          <div class="flex my-4 justify-end">
+          <div  class="flex my-4 justify-end">
             <x-button
               size="sm"
               color="orange"

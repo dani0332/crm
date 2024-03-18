@@ -181,7 +181,7 @@ const memberDeleteConfirmed = () => {
       </template>
       <template #body>
         <x-divider class="my-4" />
-        <div class="flex mb-3 justify-end">
+        <div class="flex mb-3 justify-end" v-if="page.props.linkedQuoteDetails.childLeadsCount == 0">
           <x-button @click.prevent="addMemberModal" size="sm" color="orange">
             Add Member
           </x-button>
@@ -209,7 +209,7 @@ const memberDeleteConfirmed = () => {
             {{ nationality?.text }}
           </template>
           <template #item-action="item">
-            <div class="flex gap-2">
+            <div v-if="page.props.linkedQuoteDetails.childLeadsCount == 0" class="flex gap-2">
               <x-button
                 size="xs"
                 color="primary"
