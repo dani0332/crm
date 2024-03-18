@@ -271,6 +271,7 @@ class SendUpdateLogController extends Controller
                 case SendUpdateLogStatusEnum::CIR:
                     $model::where(['uuid' => $quoteUuid, 'quote_type_id' => $quoteTypeId])->update([
                         'quote_status_id' => QuoteStatusEnum::PolicyCancelled,
+                        'quote_batch_id' => null,
                     ]);
                     break;
             }

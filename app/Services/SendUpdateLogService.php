@@ -376,6 +376,9 @@ class SendUpdateLogService
                 'quote_type_code' => $quoteTypeCode,
             ]);
         }
+        $quoteObject->update([
+            'quote_batch_id' => null,
+        ]);
 
         return $childLeadDetails;
     }
