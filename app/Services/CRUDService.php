@@ -243,6 +243,7 @@ class CRUDService extends BaseService
                 $quoteDetailEntity->next_followup_date = date('Y-m-d H:i:s', strtotime($request->next_followup_date));
             }
 
+           
             $quoteDetailEntity->save();
 
             $entity = $this->{strtolower($request->modelType).'QuoteService'}->getEntityPlain($request->leadId);
@@ -263,6 +264,7 @@ class CRUDService extends BaseService
 
             if (in_array(strtolower($request->modelType), [strtolower(quoteTypeCode::Health), strtolower(quoteTypeCode::Home)])) {
                 $entity->activities()->where('status', 0)->update(['status' => 1]);
+                $entity->quote_status_date = now();
             }
 
             $entity->save();
