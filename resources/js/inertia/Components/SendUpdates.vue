@@ -67,6 +67,7 @@ const sendUpdatesTable = reactive({
 const modals = reactive({
   step: 'step1',
   show: false,
+  confirm: false,
 });
 
 const form = useForm({
@@ -128,6 +129,7 @@ const setOption = (next_step, value) => {
     default:
       modals.step = 'step1';
       modals.show = false;
+      modals.confirm = false;
       break;
   }
 };
@@ -141,7 +143,27 @@ const goBack = () => {
     form.childCategory = null;
     form.option = null;
     optionError.value = false;
+  } else if (modals.step === 'step4') {
+    modals.step = 'step3';
+    modals.confirm = false;
   }
+};
+
+const confirmOrAddUpdate = autoSubmit => {
+    if (!autoSubmit) {
+        if (form.option === null) {
+            optionError.value = true;
+            return;
+        }
+    }
+    if (!['CIR'].includes(form.childCategory.slug)) {
+        onAddUpdate(true);
+    }else {
+        modals.step = 'step4';
+        modals.confirm = true;
+        optionError.value = false;
+    }
+
 };
 
 const onAddUpdate = autoSubmit => {
@@ -173,7 +195,14 @@ const onAddUpdate = autoSubmit => {
     })
     .post(route('send-update-logs.store'), {
       onSuccess: () => {
+        modals.step = 'step1';
+        form.parentCategory = null;
+        form.childCategory = null;
+        form.option = null;
+        optionError.value = false;
         modals.show = false;
+        modals.confirm = false;
+
         // resetForm()
         // sendUpdatesTable.data = [...sendUpdatesTable.data, form.data]
       },
@@ -419,15 +448,55 @@ const findOption = (item, key) => {
             <x-button
               size="sm"
               color="primary"
-              @click="onAddUpdate(false)"
-              :disabled="form.processing"
-              :loading="form.processing"
+              @click="confirmOrAddUpdate(false)"
             >
               Add
             </x-button>
           </div>
         </div>
       </div>
+<!--   Modal 4 - Confirmation and causation     -->
+        <div
+            class="w-full flex gap-5 mb-10"
+            v-else-if="modals.step === 'step4' && modals.confirm === true "
+        >
+            <div class="flex flex-col gap-2 flex-grow w-75">
+                <div>
+                    <p class="text-red-500 text-2xl"> Please note the following when performing these updates:</p>
+                    <div class="my-4">
+                        <ul class="list-disc pl-4">
+                            <li>The new lead for the reissued policy counts as a sale only once the lead status is policy issued</li>
+                            <li>When a policy is cancelled and reissued or simply cancelled, it will no longer count as sale.</li>
+                            <li>Lead details will be moved to new lead.</li>
+                        </ul>
+                    </div>
+
+                </div>
+                <div class="flex justify-end mt-2">
+                    <x-button
+                        class="mr-2"
+                        size="sm"
+                        color="primary"
+                        @click="onAddUpdate(false)"
+                        :disabled="form.processing"
+                        :loading="form.processing"
+                    >
+                        Confirm
+                    </x-button>
+                    <x-button
+                        size="sm"
+                        color="primary"
+                        :disabled="form.processing"
+                        :loading="form.processing"
+                        @click="setOption('step3', form.childCategory)"
+                    >
+                        Cancel
+                    </x-button>
+
+                </div>
+            </div>
+        </div>
+
     </AppModal>
   </div>
 </template>
