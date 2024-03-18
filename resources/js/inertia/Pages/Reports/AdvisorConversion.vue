@@ -74,10 +74,6 @@ const tableHeader = [
     value: 'in_progress',
   },
   {
-    text: 'Cancelled Leads',
-    value: 'cancelled_leads',
-  },
-  {
     text: 'Bad Leads',
     value: 'bad_leads',
   },
@@ -647,17 +643,6 @@ watch(
         </button>
       </template>
 
-      <template #item-cancelled_leads="item">
-        <p v-if="item.cancelled_leads == 0">{{ item.cancelled_leads }}</p>
-        <button
-          v-else
-          @click="onFetchAdvisorAssignedLeads(item, 'cancelled_leads')"
-          class="text-primary underline"
-        >
-          {{ item.cancelled_leads }}
-        </button>
-      </template>
-
       <template #item-bad_leads="item">
         <p v-if="item.bad_leads == 0">{{ item.bad_leads }}</p>
         <button
@@ -732,9 +717,6 @@ watch(
           </td>
           <td class="direction-center">
             {{ calculateTotalSum(reportData, 'in_progress') }}
-          </td>
-          <td class="direction-center">
-            {{ calculateTotalSum(reportData, 'cancelled_leads') }}
           </td>
           <td class="direction-center">
             {{ calculateTotalSum(reportData, 'bad_leads') }}
