@@ -1602,15 +1602,18 @@ const getCaptureValidation = computed(() => {
       let paymentRecord = payment
       if ( paymentRecord.frequency==='upfront' ){
           let paymentSplitRec = paymentRecord.payment_splits[0];
-          if (paymentSplitRec.payment_method.code==='CC' &&  paymentSplitRec.payment_status_id===props.paymentStatusEnum.AUTHORISED) {
-            return true;
+          if (paymentSplitRec.payment_method.code==='CC' ) {
+            if (paymentSplitRec.payment_status_id===props.paymentStatusEnum.AUTHORISED) {
+              return true;
+            }
+            return false;
           } else if (paymentSplitRec.payment_method.code==='IP' &&  paymentSplitRec.payment_status_id===props.paymentStatusEnum.PENDING) {
             return true;
           } else if (paymentSplitRec.payment_method.code==='CA' &&  paymentSplitRec.payment_status_id===props.paymentStatusEnum.CREDIT_APPROVED) {
             return true;
           } else if (paymentSplitRec.payment_status_id===props.paymentStatusEnum.PAID) {
             return true;
-          }
+          }         
       } else if ( paymentRecord.frequency==='split_payments' ){
         const paymentMethodCC = paymentRecord.payment_splits.filter(item => item.payment_method.code === "CC");      
         if (paymentMethodCC.length > 0) {
@@ -1775,11 +1778,12 @@ const isMasterPaymentPaid = computed(() => {
       <h3 class="font-semibold text-primary-800 text-lg">Manage Payments</h3>
       <template v-if="payments.length>0">        
         <UpdateTotalPrice
-          v-if="can(permissionEnum.TEMP_UPDATE_TOTALPRICE) && quoteRequest.quote_status_id === 15 && isMasterPaymentPaid"
+          v-if="can(permissionEnum.TEMP_UPDATE_TOTALPRICE) && quoteRequest.quote_status_id === 15"
           :quoteId="quoteRequest.id"
           :paymentCode = "payments[0].code"
           :quoteType="quoteType" 
-          :totalPrice="payments[0].total_price"     
+          :totalPrice="payments[0].total_price"
+          :totalPaidPrice="payments[0].total_amount+payments[0].discount_value"   
         />
         <x-button
             v-if="can(permissionEnum.PaymentsCreate)"
