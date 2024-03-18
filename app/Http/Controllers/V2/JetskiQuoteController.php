@@ -2,28 +2,29 @@
 
 namespace App\Http\Controllers\V2;
 
-use App\Enums\ApplicationStorageEnums;
-use App\Enums\CustomerTypeEnum;
-use App\Enums\QuoteStatusEnum;
-use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
-use App\Enums\SendUpdateLogStatusEnum;
-use App\Http\Controllers\Controller;
-use App\Http\Requests\JetskiQuoteRequest;
+use App\Enums\QuoteTypes;
+use App\Services\CRUDService;
+use App\Enums\QuoteStatusEnum;
+use App\Enums\CustomerTypeEnum;
+use App\Services\LookupService;
 use App\Models\ApplicationStorage;
+use App\Http\Controllers\Controller;
+use App\Repositories\UserRepository;
+use App\Enums\ApplicationStorageEnums;
+use App\Enums\SendUpdateLogStatusEnum;
+use App\Services\QuoteDocumentService;
 use App\Repositories\ActivityRepository;
+use App\Http\Requests\JetskiQuoteRequest;
+use App\Repositories\LostReasonRepository;
+use App\Repositories\JetskiQuoteRepository;
+use App\Repositories\QuoteStatusRepository;
 use App\Repositories\DocumentTypeRepository;
+use App\Repositories\PersonalPlanRepository;
+use App\Repositories\PaymentMethodRepository;
+use App\Repositories\SendUpdateLogRepository;
 use App\Repositories\EmbeddedProductRepository;
 use App\Repositories\InsuranceProviderRepository;
-use App\Repositories\JetskiQuoteRepository;
-use App\Repositories\LostReasonRepository;
-use App\Repositories\PaymentMethodRepository;
-use App\Repositories\PersonalPlanRepository;
-use App\Repositories\QuoteStatusRepository;
-use App\Repositories\SendUpdateLogRepository;
-use App\Repositories\UserRepository;
-use App\Services\CRUDService;
-use App\Services\LookupService;
 
 class JetskiQuoteController extends Controller
 {
@@ -98,7 +99,8 @@ class JetskiQuoteController extends Controller
 
         $quote->load('documents.createdBy');
 
-        $documentTypes = DocumentTypeRepository::byQuoteTypeId(QuoteTypes::JETSKI->id())->get();
+        @[$documentTypes, $documentTypeCodes] = app(QuoteDocumentService::class)->getDocumentTypes(QuoteTypes::JETSKI->id());
+
         $paymentMethods = PaymentMethodRepository::orderBy('name')->get();
 
         $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypes::JETSKI->id());
@@ -149,6 +151,7 @@ class JetskiQuoteController extends Controller
             'sendUpdateLogs' => $sendUpdateLogs,
             'hasPolicyIssuedStatus' => $hasPolicyIssuedStatus,
             'sendUpdateEnum' => $sendUpdateEnum,
+            'documentTypeCodes' => $documentTypeCodes,
         ]);
     }
 

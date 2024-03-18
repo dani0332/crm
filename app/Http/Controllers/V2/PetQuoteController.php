@@ -100,7 +100,7 @@ class PetQuoteController extends Controller
         $quote = PetQuoteRepository::getBy('uuid', $uuid);
         $quoteStatuses = QuoteStatusRepository::byQuoteTypeId(QuoteTypes::PET->id())->get();
 
-        $documentTypes = DocumentTypeRepository::byQuoteTypeId(QuoteTypes::PET->id())->get();
+        @[$documentTypes, $documentTypeCodes] = app(QuoteDocumentService::class)->getDocumentTypes(QuoteTypeId::Travel);
         $membersDetail = CustomerMembersRepository::getBy($quote->id, QuoteTypes::PET->name);
         $paymentMethods = PaymentMethodRepository::orderBy('name')->get();
         $nationalities = Nationality::where('is_active', 1)->select('id', 'text')->get();
@@ -189,6 +189,7 @@ class PetQuoteController extends Controller
             'sendUpdateLogs' => $sendUpdateLogs,
             'sendUpdateEnum' => $sendUpdateEnum,
             'hasPolicyIssuedStatus' => $hasPolicyIssuedStatus,
+            'documentTypeCodes' => $documentTypeCodes,
         ]);
     }
 

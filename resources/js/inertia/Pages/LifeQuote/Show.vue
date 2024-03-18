@@ -1136,7 +1136,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
 			v-if="isNewPaymentStructure"
 			:quoteType="quoteType"
 			:payments="payments"
-			:paymentDocument="page.props.documentTypeCodes.filter(item => item === 'LPD' || item === 'LPDR' || item.code === 'LDPDR')"
+      :paymentDocument="page.props.documentTypeCodes.filter(item => ['LPD', 'LPDR', 'LDPDR'].includes(item))"
 			:quoteRequest="quote"
 			:paymentStatusEnum="paymentStatusEnum"
 			:paymentTooltipEnum="paymentTooltipEnum"
@@ -1172,6 +1172,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       :storageUrl="storageUrl"
       :quote="quote"
       :expanded="sectionExpanded"
+      quoteType="Life"
     />
 
     <SendUpdates

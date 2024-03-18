@@ -1,5 +1,5 @@
 <script setup>
-import QuoteDocuments from '../PersonalQuote/Partials/QuoteDocuments';
+import QuoteDocuments from '@/inertia/Components/QuoteDocument.vue';
 import QuoteStatus from '../PersonalQuote/Partials/QuoteStatus';
 import QuotePayments from '../PersonalQuote/Partials/QuotePayments';
 import QuoteActivities from '../PersonalQuote/Partials/QuoteActivities';
@@ -45,7 +45,8 @@ defineProps({
   isNewPaymentStructure: Boolean,
   sendUpdateOptions: Array,
   sendUpdateLogs: Array,
-  hasPolicyIssuedStatus: Boolean
+  hasPolicyIssuedStatus: Boolean,
+  documentTypeCodes: Array,
 });
 
 const page = usePage();
@@ -835,7 +836,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
 			v-if="isNewPaymentStructure"
 			:quoteType="quoteType"
 			:payments="quote.payments"
-			:paymentDocument="documentTypes.filter(item => item.code === 'CYCPD' || item.code === 'CYCPDR' || item.code === 'CYCDPDR')"
+      :paymentDocument="documentTypeCodes.filter(item => ['CYCPD', 'CYCPDR', 'CYCDPDR'].includes(item))"
 			:quoteRequest="quote"
 			:paymentStatusEnum="paymentStatusEnum"
 			:paymentTooltipEnum="paymentTooltipEnum"
@@ -859,6 +860,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       :storageUrl="storageUrl"
       :quote="quote"
       :expanded="sectionExpanded"
+      quoteType="Cycle"
     />
 
     <SendUpdates

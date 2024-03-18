@@ -1,5 +1,5 @@
 <script setup>
-import QuoteDocuments from '../PersonalQuote/Partials/QuoteDocuments';
+import QuoteDocuments from '@/inertia/Components/QuoteDocument.vue';;
 import QuoteStatus from '../PersonalQuote/Partials/QuoteStatus';
 import QuotePayments from '../PersonalQuote/Partials/QuotePayments';
 import QuoteActivities from '../PersonalQuote/Partials/QuoteActivities';
@@ -43,6 +43,7 @@ defineProps({
   sendUpdateOptions: Array,
   sendUpdateLogs: Array,
   hasPolicyIssuedStatus: Boolean,
+  documentTypeCodes: Array,
 });
 
 const page = usePage();
@@ -734,7 +735,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
 			v-if="isNewPaymentStructure"
 			:quoteType="quoteType"
 			:payments="quote.payments"
-			:paymentDocument="documentTypes.filter(item => item.code === 'YPD' || item.code === 'YPDR' || item.code === 'YDPDR')"
+      :paymentDocument="documentTypeCodes.filter(item => ['YPD', 'YPDR', 'YDPDR'].includes(item))"
 			:quoteRequest="quote"
 			:paymentStatusEnum="paymentStatusEnum"
 			:paymentTooltipEnum="paymentTooltipEnum"
@@ -776,6 +777,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       :quoteType="quoteType"
       :vatPrice="vatPercentage"
       :expanded="sectionExpanded"
+      quoteType="Yacht"
     />
 
     <SendUpdates

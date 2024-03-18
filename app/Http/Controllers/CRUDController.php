@@ -803,7 +803,7 @@ class CRUDController extends Controller
                 })->sortBy('label')->values();
             }
 
-            $documentTypes = $this->quoteDocumentService->getQuoteDocumentsForUpload(QuoteTypeId::Home);
+            @[$documentTypes, $documentTypeCodes] = $this->quoteDocumentService->getDocumentTypes(QuoteTypeId::Home);
             $policyIssuanceStatus = PolicyIssuanceStatus::active()->get();
 
             $quoteDocument = (new QuoteDocumentService())->getQuoteDocuments(QuoteTypes::HOME->value, $record->id);
@@ -867,6 +867,7 @@ class CRUDController extends Controller
                 'isNewPaymentStructure' => $isNewPaymentStructure,
                 'sendUpdateEnum' => $sendUpdateEnum,
                 'hasPolicyIssuedStatus' => $hasPolicyIssuedStatus,
+                'documentTypeCodes' => $documentTypeCodes
             ]);
         }
 

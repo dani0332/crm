@@ -8,6 +8,7 @@ use App\Enums\LookupsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PaymentTooltip;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Enums\SendUpdateLogStatusEnum;
@@ -32,6 +33,7 @@ use App\Repositories\UserRepository;
 use App\Services\AMLService;
 use App\Services\CRUDService;
 use App\Services\LookupService;
+use App\Services\QuoteDocumentService;
 use App\Services\SplitPaymentService;
 use App\Traits\GenericQueriesAllLobs;
 
@@ -106,7 +108,8 @@ class BikeQuoteController extends Controller
 
         $quoteStatuses = QuoteStatusRepository::byQuoteTypeId(QuoteTypes::BIKE->id())->get();
         $membersDetail = CustomerMembersRepository::getBy($quote->id, QuoteTypes::BIKE->name);
-        $documentTypes = DocumentTypeRepository::byQuoteTypeId(QuoteTypes::BIKE->id())->get();
+        @[$documentTypes, $documentTypeCodes] = app(QuoteDocumentService::class)->getDocumentTypes(QuoteTypeId::Bike);
+
         $paymentMethods = PaymentMethodRepository::orderBy('name')->get();
         $nationalities = Nationality::where('is_active', 1)->select('id', 'text')->get();
         $memberRelations = LookupRepository::where('key', LookupsEnum::MEMBER_RELATION)->get();
@@ -176,6 +179,7 @@ class BikeQuoteController extends Controller
             'sendUpdateLogs' => $sendUpdateLogs,
             'sendUpdateEnum' => $sendUpdateEnum,
             'hasPolicyIssuedStatus' => $hasPolicyIssuedStatus,
+            'documentTypeCodes' => $documentTypeCodes,
         ]);
     }
 

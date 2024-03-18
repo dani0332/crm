@@ -10,8 +10,12 @@ defineProps({
     type: Boolean,
     required: false,
     default: true
-  }
+  },
+  quoteType: String,
+  paymentStatusEnum: Object,
 });
+
+const emit = defineEmits(['copyUploadURL']);
 
 const page = usePage();
 const selectedTab = ref(0); 
@@ -71,6 +75,7 @@ const { files, rejectReason } = filesWithInfo;
   formData.append('quote_type_id', doc.quote_type_id);
   formData.append('document_type_code', doc.code);
   formData.append('folder_path', doc.folder_path);
+  formData.append('quote_type', usePage().props.quoteType);
   formData.append('file', files[0].file);
 
   uploadingStatus.value[doc.id] = true;
@@ -90,7 +95,9 @@ const { files, rejectReason } = filesWithInfo;
       uploadingStatus.value[doc.id] = false;
     });
 };
-
+const copyUploadURL = () => {
+  emit('copyUploadURL');s
+};
 </script>
 
 <template>
@@ -99,15 +106,23 @@ const { files, rejectReason } = filesWithInfo;
       <template #header>
         <div class="flex justify-between items-center">
           <h3 class="font-semibold text-primary-800 text-lg">
-          Documents - Code Refactor
+          Documents
           <x-tag size="sm">{{ quoteDocuments.length || 0 }}</x-tag>
           </h3>
         </div>
       </template>
       <template #body>
         <x-divider class="my-4" />  
-
         <div class="flex gap-2 mb-4 justify-end">
+          <x-button
+            v-if="quoteType == 'Car' && quote.payment_status_id === paymentStatusEnum.AUTHORISED"
+            class="mr-2"
+            @click.prevent="copyUploadURL"
+            size="sm"
+            color="orange"
+          >
+            Copy upload Link
+          </x-button>
           <x-button @click.prevent="modals.doc = true" size="sm" color="orange">
             Upload Documents
           </x-button>

@@ -1,5 +1,5 @@
 <script setup>
-import QuoteDocuments from '@/inertia/Pages/PersonalQuote/Partials/QuoteDocuments.vue';
+import QuoteDocuments from '@/inertia/Components/QuoteDocument.vue';
 import PaymentTableNew from '../../Components/PaymentTableNew.vue';
 import MigratePayment from '../../Components/MigratePayment.vue';
 
@@ -30,6 +30,7 @@ defineProps({
   sendUpdateOptions: Array,
   sendUpdateLogs: Array,
   hasPolicyIssuedStatus: Boolean,
+  documentTypeCodes: Array
 });
 
 const page = usePage();
@@ -863,6 +864,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       :storageUrl="storageUrl"
       :quote="quote"
       :expanded="sectionExpanded"
+      quoteType="Business"
     />
 
     <div class="p-4 rounded shadow mb-6 bg-primary-50/25">
@@ -965,7 +967,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
 			v-if="isNewPaymentStructure"
 			:quoteType="page.props.quoteType"
 			:payments="quote.payments"
-			:paymentDocument="documentTypes.filter(item => item.code === 'GMQPD' || item.code === 'GMQPDR' || item.code === 'GMQDPDR')"
+      :paymentDocument="documentTypeCodes.filter(item => ['GMQPD', 'GMQPDR', 'GMQDPDR'].includes(item))"
 			:quoteRequest="quote"
 			:paymentStatusEnum="paymentStatusEnum"
 			:paymentTooltipEnum="paymentTooltipEnum"

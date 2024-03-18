@@ -2,48 +2,49 @@
 
 namespace App\Http\Controllers\V2;
 
-use App\Enums\ApplicationStorageEnums;
-use App\Enums\CustomerTypeEnum;
-use App\Enums\LookupsEnum;
-use App\Enums\PaymentStatusEnum;
-use App\Enums\PaymentTooltip;
-use App\Enums\quoteBusinessTypeCode;
-use App\Enums\quoteStatusCode;
-use App\Enums\QuoteStatusEnum;
-use App\Enums\quoteTypeCode;
-use App\Enums\QuoteTypeId;
-use App\Enums\QuoteTypes;
-use App\Enums\RolesEnum;
-use App\Enums\SendUpdateLogStatusEnum;
-use App\Http\Controllers\Controller;
-use App\Models\ApplicationStorage;
-use App\Models\BusinessInsuranceType;
-use App\Models\BusinessQuote;
-use App\Models\Emirate;
-use App\Models\Entity;
-use App\Models\GroupMedicalType;
-use App\Models\Nationality;
-use App\Repositories\BusinessQuoteRepository;
-use App\Repositories\CustomerMembersRepository;
-use App\Repositories\DocumentTypeRepository;
-use App\Repositories\InsuranceProviderRepository;
-use App\Repositories\LookupRepository;
-use App\Repositories\LostReasonRepository;
-use App\Repositories\QuoteStatusRepository;
-use App\Repositories\SendUpdateLogRepository;
-use App\Services\AMLService;
-use App\Services\BusinessQuoteService;
-use App\Services\CRUDService;
-use App\Services\CustomerService;
-use App\Services\DropdownSourceService;
-use App\Services\LookupService;
-use App\Services\SplitPaymentService;
-use App\Traits\RolePermissionConditions;
+use DB;
 use Auth;
 use Carbon\Carbon;
-use DB;
+use App\Models\Entity;
+use App\Models\Emirate;
+use App\Enums\RolesEnum;
+use App\Enums\QuoteTypes;
+use App\Enums\LookupsEnum;
+use App\Enums\QuoteTypeId;
+use App\Models\Nationality;
+use App\Enums\quoteTypeCode;
+use App\Services\AMLService;
 use Illuminate\Http\Request;
+use App\Enums\PaymentTooltip;
+use App\Models\BusinessQuote;
+use App\Services\CRUDService;
+use App\Enums\quoteStatusCode;
+use App\Enums\QuoteStatusEnum;
+use App\Enums\CustomerTypeEnum;
+use App\Services\LookupService;
+use App\Enums\PaymentStatusEnum;
+use App\Models\GroupMedicalType;
+use App\Services\CustomerService;
+use App\Models\ApplicationStorage;
+use App\Enums\quoteBusinessTypeCode;
+use App\Http\Controllers\Controller;
+use App\Models\BusinessInsuranceType;
+use App\Services\SplitPaymentService;
+use App\Enums\ApplicationStorageEnums;
+use App\Enums\SendUpdateLogStatusEnum;
+use App\Repositories\LookupRepository;
+use App\Services\BusinessQuoteService;
+use App\Services\QuoteDocumentService;
+use App\Services\DropdownSourceService;
+use App\Traits\RolePermissionConditions;
 use Illuminate\Support\Facades\Redirect;
+use App\Repositories\LostReasonRepository;
+use App\Repositories\QuoteStatusRepository;
+use App\Repositories\DocumentTypeRepository;
+use App\Repositories\BusinessQuoteRepository;
+use App\Repositories\SendUpdateLogRepository;
+use App\Repositories\CustomerMembersRepository;
+use App\Repositories\InsuranceProviderRepository;
 
 class AmtController extends Controller
 {
@@ -262,7 +263,7 @@ class AmtController extends Controller
         $idDocumentType = $lookupService->getEntityDocumentTypes();
         $issuancePlace = $lookupService->getIssuancePlaces();
         $issuanceAuthorities = $lookupService->getIssuanceAuthorities();
-        $documentTypes = DocumentTypeRepository::byQuoteTypeId(QuoteTypes::BUSINESS->id())->active()->get();
+        @[$documentTypes, $documentTypeCodes] = app(QuoteDocumentService::class)->getDocumentTypes(QuoteTypes::BUSINESS->id());
         $vatPercentage = ApplicationStorage::where('key_name', ApplicationStorageEnums::VAT_VALUE)->first()->value ?? 0;
 
         $sendUpdateOptions = [];
@@ -326,6 +327,7 @@ class AmtController extends Controller
             'sendUpdateLogs' => $sendUpdateLogs,
             'sendUpdateEnum' => $sendUpdateEnum,
             'hasPolicyIssuedStatus' => $hasPolicyIssuedStatus,
+            'documentTypeCodes' => $documentTypeCodes,
 
         ]);
     }

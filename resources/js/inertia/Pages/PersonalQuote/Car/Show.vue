@@ -1506,6 +1506,14 @@ const handlePlanSelected = plan => {
 };
 
 const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
+const copyUploadURL = () => {
+  copy(page.props.docUploadURL);
+  if (copied)
+    notification.success({
+      title: 'Link copied to clipboard',
+      position: 'top',
+    });
+};
 </script>
 
 <template>
@@ -3310,7 +3318,9 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       :storageUrl="storageUrl"
       :quote="record"
       :expanded="sectionExpanded"
-      :docUploadURL="docUploadURL"
+      @copyUploadURL="copyUploadURL"
+      quoteType="Car"
+      :paymentStatusEnum="paymentStatusEnum"
     />
 
     <SendUpdates

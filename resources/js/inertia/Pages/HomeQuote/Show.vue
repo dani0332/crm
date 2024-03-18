@@ -1,6 +1,6 @@
 <script setup>
 import MemberDetails from '../../Components/MemberDetails.vue';
-import QuoteDocuments from '@/inertia/Pages/PersonalQuote/Partials/QuoteDocuments.vue';
+import QuoteDocuments from '@/inertia/Components/QuoteDocument.vue';
 import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue';
 import PaymentTableNew from '../../Components/PaymentTableNew.vue';
 import MigratePayment from '../../Components/MigratePayment.vue';
@@ -48,6 +48,7 @@ defineProps({
   sendUpdateOptions: Array,
   sendUpdateLogs: Array,
   hasPolicyIssuedStatus: Boolean,
+  documentTypeCodes: Array,
 });
 
 const page = usePage();
@@ -1111,7 +1112,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
 			v-if="isNewPaymentStructure"
 			:quoteType="quoteType"
 			:payments="payments"
-			:paymentDocument="documentTypes.filter(item => item.code === 'HOMPD' || item.code === 'HOMPDR' || item.code === 'HOMDPDR')"
+      :paymentDocument="page.props.documentTypeCodes.filter(item => ['HOMPD', 'HOMPDR', 'HOMDPDR'].includes(item))"
 			:quoteRequest="quoteRequest"
 			:paymentStatusEnum="paymentStatusEnum"
 			:paymentTooltipEnum="paymentTooltipEnum"
@@ -1158,6 +1159,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       :storageUrl="storageUrl"
       :quote="quote"
       :expanded="sectionExpanded"
+      quoteType="Home"
     />
 
     <SendUpdates

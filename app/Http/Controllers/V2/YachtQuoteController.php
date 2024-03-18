@@ -2,38 +2,40 @@
 
 namespace App\Http\Controllers\V2;
 
-use App\Enums\ApplicationStorageEnums;
-use App\Enums\CustomerTypeEnum;
-use App\Enums\LookupsEnum;
-use App\Enums\PaymentStatusEnum;
-use App\Enums\PaymentTooltip;
-use App\Enums\QuoteStatusEnum;
-use App\Enums\QuoteTypes;
+use App\Models\Emirate;
 use App\Enums\RolesEnum;
-use App\Enums\SendUpdateLogStatusEnum;
+use App\Enums\QuoteTypes;
+use App\Enums\LookupsEnum;
+use App\Enums\QuoteTypeId;
+use App\Models\Nationality;
+use App\Services\AMLService;
+use App\Enums\PaymentTooltip;
+use App\Services\CRUDService;
+use App\Enums\QuoteStatusEnum;
+use App\Enums\CustomerTypeEnum;
+use App\Services\LookupService;
+use App\Enums\PaymentStatusEnum;
+use App\Models\ApplicationStorage;
 use App\Http\Controllers\Controller;
+use App\Repositories\UserRepository;
+use App\Services\SplitPaymentService;
+use App\Enums\ApplicationStorageEnums;
+use App\Enums\SendUpdateLogStatusEnum;
+use App\Repositories\LookupRepository;
+use App\Services\QuoteDocumentService;
 use App\Http\Requests\BikeQuoteRequest;
 use App\Http\Requests\YachtQuoteRequest;
-use App\Models\ApplicationStorage;
-use App\Models\Emirate;
-use App\Models\Nationality;
 use App\Repositories\ActivityRepository;
-use App\Repositories\CustomerMembersRepository;
+use App\Repositories\LostReasonRepository;
+use App\Repositories\YachtQuoteRepository;
+use App\Repositories\QuoteStatusRepository;
 use App\Repositories\DocumentTypeRepository;
+use App\Repositories\PersonalPlanRepository;
+use App\Repositories\PaymentMethodRepository;
+use App\Repositories\SendUpdateLogRepository;
+use App\Repositories\CustomerMembersRepository;
 use App\Repositories\EmbeddedProductRepository;
 use App\Repositories\InsuranceProviderRepository;
-use App\Repositories\LookupRepository;
-use App\Repositories\LostReasonRepository;
-use App\Repositories\PaymentMethodRepository;
-use App\Repositories\PersonalPlanRepository;
-use App\Repositories\QuoteStatusRepository;
-use App\Repositories\SendUpdateLogRepository;
-use App\Repositories\UserRepository;
-use App\Repositories\YachtQuoteRepository;
-use App\Services\AMLService;
-use App\Services\CRUDService;
-use App\Services\LookupService;
-use App\Services\SplitPaymentService;
 
 class YachtQuoteController extends Controller
 {
@@ -98,7 +100,8 @@ class YachtQuoteController extends Controller
         $membersDetail = CustomerMembersRepository::getBy($quote->id, QuoteTypes::YACHT->name);
         $quote->load('documents.createdBy:id,name,email');
 
-        $documentTypes = DocumentTypeRepository::byQuoteTypeId(QuoteTypes::YACHT->id())->get();
+        @[$documentTypes, $documentTypeCodes] = app(QuoteDocumentService::class)->getDocumentTypes(QuoteTypeId::Yacht);
+
         $paymentMethods = PaymentMethodRepository::orderBy('name')->get();
         $nationalities = Nationality::where('is_active', 1)->select('id', 'text')->get();
         $memberRelations = LookupRepository::where('key', LookupsEnum::MEMBER_RELATION)->get();
@@ -177,6 +180,7 @@ class YachtQuoteController extends Controller
             'sendUpdateLogs' => $sendUpdateLogs,
             'hasPolicyIssuedStatus' => $hasPolicyIssuedStatus,
             'sendUpdateEnum' => $sendUpdateEnum,
+            'documentTypeCodes' => $documentTypeCodes,
         ]);
     }
 

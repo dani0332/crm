@@ -2517,6 +2517,7 @@ const handleSelectionChange = (tableType, selectedItems) => {
       :quote="record"
       :expanded="sectionExpanded"
       :docUploadURL="docUploadURL"
+      quoteType="Travel"
     />
     
     <div class="p-4 rounded shadow mb-6 bg-white">

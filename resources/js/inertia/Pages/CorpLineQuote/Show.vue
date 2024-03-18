@@ -1,5 +1,5 @@
 <script setup>
-import QuoteDocuments from '@/inertia/Pages/PersonalQuote/Partials/QuoteDocuments.vue';
+import QuoteDocuments from '@/inertia/Components/QuoteDocument.vue';
 import PaymentTableNew from '../../Components/PaymentTableNew.vue'; 
 import MigratePayment from '../../Components/MigratePayment.vue';
 
@@ -37,6 +37,7 @@ defineProps({
   sendUpdateOptions: Array,
   sendUpdateLogs: Array,
   hasPolicyIssuedStatus: Boolean,
+  documentTypeCodes: Array,
 });
 
 const page = usePage();
@@ -1087,7 +1088,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
 			v-if="isNewPaymentStructure"
 			:quoteType="page.props.quoteType"
 			:payments="payments"
-			:paymentDocument="documentTypes && documentTypes.filter && documentTypes.filter(item => item.code === 'CLPD' || item.code === 'CLPDR' || item.code === 'CLDPDR')"
+      :paymentDocument="documentTypeCodes.filter(item => ['CLPD', 'CLPDR', 'CLDPDR'].includes(item))"
 			:quoteRequest="quoteRequest"
 			:paymentStatusEnum="paymentStatusEnum"
 			:paymentTooltipEnum="paymentTooltipEnum"
@@ -1095,6 +1096,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
 			:storageUrl="storageUrl"
       quoteSubType="Corpline"
 		/>
+    
     <PaymentTable
       v-else
       :payments="payments"
@@ -1112,6 +1114,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       :storageUrl="storageUrl"
       :quote="quote"
       :expanded="sectionExpanded"
+      quoteType="Business"
     />
 
     <SendUpdates
