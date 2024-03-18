@@ -180,7 +180,11 @@ watch(() => policyDetailsForm.insurance_provider_id, (providerId) => {
             <div class="grid sm:grid-cols-2">
               <dt class="font-bold text-right mr-10">
                 <x-tooltip position="left">
-                  <span>First Name</span>
+                  <label
+                    class="text-gray-800 underline decoration-dotted decoration-primary-700"
+                  >
+                    First Name
+                  </label>
                   <template #tooltip>
                     This field captures the policyholder's first name, representing the primary contact person associated with the policy.
                   </template>
@@ -200,7 +204,11 @@ watch(() => policyDetailsForm.insurance_provider_id, (providerId) => {
             <div class="grid sm:grid-cols-2 ml-[-250px]">
 							<dt class="font-bold text-right mr-10">
 								<x-tooltip position="left">
-									<span>Last Name</span>
+                  <label
+                    class="text-gray-800 underline decoration-dotted decoration-primary-700"
+                  >
+                    Last Name
+                  </label>
 									<template #tooltip>
 										Records the policyholder's surname or family name.
 									</template>
@@ -220,7 +228,11 @@ watch(() => policyDetailsForm.insurance_provider_id, (providerId) => {
             <div class="grid sm:grid-cols-2">
               <dt class="font-bold text-right mr-10">
                 <x-tooltip position="left">
-                  <span>Provider Name</span>
+                  <label
+                    class="text-gray-800 underline decoration-dotted decoration-primary-700"
+                  >
+                    Provider Name
+                  </label>
                   <template #tooltip>
                     Name of the insurance company responsible for the coverage.
                   </template>
@@ -243,7 +255,11 @@ watch(() => policyDetailsForm.insurance_provider_id, (providerId) => {
             <div class="grid sm:grid-cols-2 ml-[-250px]">
 							<dt class="font-bold text-right mr-10">
 								<x-tooltip position="left">
-									<span>Plan Name</span>
+                  <label
+                    class="text-gray-800 underline decoration-dotted decoration-primary-700"
+                  >
+                    Plan Name
+                  </label>
 									<template #tooltip>
 										Identifies the specific coverage or insurance plan offered by the provider.
 									</template>
@@ -266,7 +282,11 @@ watch(() => policyDetailsForm.insurance_provider_id, (providerId) => {
             <div class="grid sm:grid-cols-2">
               <dt class="font-bold text-right mr-10">
                 <x-tooltip position="left">
-                  <span>Policy Number</span>
+                  <label
+                    class="text-gray-800 underline decoration-dotted decoration-primary-700"
+                  >
+                    Policy Number
+                  </label>
                   <template #tooltip>
                     The unique Insurance policy number for the chosen insurance plan offered by the provider.
                   </template>
@@ -288,7 +308,11 @@ watch(() => policyDetailsForm.insurance_provider_id, (providerId) => {
             <div class="grid sm:grid-cols-2 ml-[-250px]">
               <dt class="font-bold text-right mr-10">
                 <x-tooltip position="left">
-                  <span>Issuance Date</span>
+                  <label
+                    class="text-gray-800 underline decoration-dotted decoration-primary-700"
+                  >
+                    Issuance Date
+                  </label>
                   <template #tooltip>
                     Signifies the date when the insurance policy was officially issued.
                   </template>
@@ -311,9 +335,13 @@ watch(() => policyDetailsForm.insurance_provider_id, (providerId) => {
             <div class="grid sm:grid-cols-2">
               <dt class="font-bold text-right mr-10">
                 <x-tooltip position="left">
-                  <span>Start Date</span>
+                  <label
+                    class="text-gray-800 underline decoration-dotted decoration-primary-700"
+                  >
+                    Start Date
+                  </label>
                   <template #tooltip>
-                    Signifies the date when the insurance policy was officially issued.
+                    Indicates the commencement date of the insurance coverage, marking when the policy becomes effective.
                   </template>
                 </x-tooltip>
               </dt>
@@ -334,9 +362,13 @@ watch(() => policyDetailsForm.insurance_provider_id, (providerId) => {
             <div class="grid sm:grid-cols-2 ml-[-250px]">
               <dt class="font-bold text-right mr-10">
                 <x-tooltip position="left">
-                  <span>Expiry Date</span>
+                  <label
+                    class="text-gray-800 underline decoration-dotted decoration-primary-700"
+                  >
+                    Expiry Date
+                  </label>
                   <template #tooltip>
-                    Signifies the date when the insurance policy was officially issued.
+                    This field records the date when the insurance coverage is set to expire, marking the end of the policy's validity.
                   </template>
                 </x-tooltip>
               </dt>
@@ -355,9 +387,13 @@ watch(() => policyDetailsForm.insurance_provider_id, (providerId) => {
             <div class="grid sm:grid-cols-2">
               <dt class="font-bold text-right mr-10">
                 <x-tooltip position="left">
-                  <span>Insurer Quote Number</span>
+                  <label
+                    class="text-gray-800 underline decoration-dotted decoration-primary-700"
+                  >
+                    Insurer Quote Number
+                  </label>
                   <template #tooltip>
-                    Signifies the date when the insurance policy was officially issued.
+                    Refers to the unique identifier associated with the initial quote provided by the insurer.
                   </template>
                 </x-tooltip>
               </dt>
@@ -376,9 +412,13 @@ watch(() => policyDetailsForm.insurance_provider_id, (providerId) => {
             <div class="grid sm:grid-cols-2 ml-[-250px]">
               <dt class="font-bold text-right mr-10">
                 <x-tooltip position="left">
-                  <span>Issuance Status</span>
+                  <label
+                    class="text-gray-800 underline decoration-dotted decoration-primary-700"
+                  >
+                    Issuance Status
+                  </label>
                   <template #tooltip>
-                    Signifies the date when the insurance policy was officially issued.
+                    Indicates the current state or progress of policy issuance, tracking whether it's pending, approved, or completed.
                   </template>
                 </x-tooltip>
               </dt>
