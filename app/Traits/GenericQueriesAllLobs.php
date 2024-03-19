@@ -230,8 +230,8 @@ trait GenericQueriesAllLobs
         if ($type == 'send-update') {
             return true;
         }
-        if(request()->has('quote_type')) {
-            $type= request()->quote_type;
+        if (request()->has('quote_type')) {
+            $type = request()->quote_type;
         }
         $quote = $this->getQuoteObject($type, $id);
         if ($quote->quote_status_id != QuoteStatusEnum::PolicySentToCustomer) {
