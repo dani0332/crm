@@ -2749,6 +2749,8 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       :expanded="sectionExpanded"
       :docUploadURL="docUploadURL"
       quoteType="Health"
+      :sendPolicy="sendPolicy"
+      @sendPolicyToClient="sendPolicyToClient"
     />
 
     <SendUpdates

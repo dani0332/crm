@@ -9,9 +9,11 @@ defineProps({
     required: false,
     default: true,
   },
+  sendPolicy: Boolean,
+
 });
 
-const emit = defineEmits(['copyUploadURL']);
+const emit = defineEmits(['copyUploadURL', 'sendPolicyToClient']);
 
 const page = usePage();
 const selectedTab = ref(0);
@@ -102,6 +104,10 @@ const uploadFile = (doc, filesWithInfo) => {
 const copyUploadURL = () => {
   emit('copyUploadURL');
 };
+
+const sendPolicyToClient = () => {
+  emit('sendPolicyToClient');
+};
 </script>
 
 <template>
@@ -131,6 +137,9 @@ const copyUploadURL = () => {
           <x-button @click.prevent="modals.doc = true" size="sm" color="orange">
             Upload Documents
           </x-button>
+          <x-button size="sm" color="red" v-if="sendPolicy" @click="sendPolicyToClient">
+              Send Policy
+            </x-button>
         </div>
         <DataTable
           table-class-name="compact"

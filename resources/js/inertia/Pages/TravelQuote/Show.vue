@@ -2518,6 +2518,8 @@ const handleSelectionChange = (tableType, selectedItems) => {
       :expanded="sectionExpanded"
       :docUploadURL="docUploadURL"
       quoteType="Travel"
+      :sendPolicy="(displaySendPolicyButton && permissions.notProductionApproval && permissions.isQuoteDocumentEnabled)"
+      @sendPolicyToClient="sendPolicyToClient"
     />
     
     <div class="p-4 rounded shadow mb-6 bg-white">
