@@ -1,6 +1,4 @@
 <script setup>
-import {fileUploadErrorMessage} from "@/inertia/Composables/utilities.js";
-
 defineProps({
   quote: Object,
   quoteDocuments: Object,
@@ -9,17 +7,17 @@ defineProps({
   expanded: {
     type: Boolean,
     required: false,
-    default: true
+    default: true,
   },
-  quoteType: String,
-  paymentStatusEnum: Object,
 });
 
 const emit = defineEmits(['copyUploadURL']);
 
 const page = usePage();
-const selectedTab = ref(0); 
+const selectedTab = ref(0);
 const uploadingStatus = ref({});
+const errorMsg = ref({});
+const successStatus = ref({});
 
 const quoteDocumentsTable = reactive({
   isLoading: false,
@@ -43,7 +41,6 @@ const quoteDocumentsTable = reactive({
   ],
 });
 
-
 const modals = reactive({
   doc: false,
   docConfirm: false,
@@ -51,24 +48,24 @@ const modals = reactive({
 
 const notification = useNotifications('toast');
 
-const docForm = useForm({
-  quote_id: usePage().props.quote.id || null,
-  quote_uuid: usePage().props.quote.code || null,
+const docForm = reactive({
+  quote_id: page.props.quote.id || null,
+  quote_uuid: page.props.quote.code || null,
   quote_type_id: null,
   document_type_code: null,
   file: null,
 });
 
 const uploadFile = (doc, filesWithInfo) => {
-const { files, rejectReason } = filesWithInfo;
+  const { files, rejectReason } = filesWithInfo;
   if (files.length == 0) {
     notification.error({
       title: 'File upload failed',
       position: 'top',
     });
-    docForm.setError({error: fileUploadErrorMessage(doc, rejectReason)});
+    errorMsg.value[doc.id] = useFileUploadErrorMessage(doc, rejectReason);
     return false;
-  };
+  }
 
   const url = '/personal-quotes/' + docForm.quote_id + '/documents';
   const formData = new FormData();
@@ -80,23 +77,31 @@ const { files, rejectReason } = filesWithInfo;
 
   uploadingStatus.value[doc.id] = true;
 
-  axios.post(url, formData)
+  axios
+    .post(url, formData)
     .then(response => {
-      uploadingStatus.value[doc.id] = false;
+      successStatus.value[doc.id] = true;
+      router.reload({
+        preserveScroll: true,
+        only: ['quoteDocuments'],
+      });
     })
     .catch(error => {
-      // Handle error...
-      docForm.setError(error);
       console.log(error);
+      errorMsg.value[doc.id] =
+        error.response.data.message || 'File upload failed';
       notification.error({
         title: 'File upload failed',
         position: 'top',
       });
+    })
+    .finally(() => {
       uploadingStatus.value[doc.id] = false;
     });
 };
+
 const copyUploadURL = () => {
-  emit('copyUploadURL');s
+  emit('copyUploadURL');
 };
 </script>
 
@@ -112,7 +117,8 @@ const copyUploadURL = () => {
         </div>
       </template>
       <template #body>
-        <x-divider class="my-4" />  
+        <x-divider class="my-4" />
+
         <div class="flex gap-2 mb-4 justify-end">
           <x-button
             v-if="quoteType == 'Car' && quote.payment_status_id === paymentStatusEnum.AUTHORISED"
@@ -127,50 +133,48 @@ const copyUploadURL = () => {
             Upload Documents
           </x-button>
         </div>
-    <DataTable
-      table-class-name="compact"
-      :headers="quoteDocumentsTable.columns"
-      :items="quoteDocuments || []"
-      border-cell
-      hide-rows-per-page
-      :rows-per-page="15"
-      :hide-footer="quoteDocuments.length < 15"
-    >
-      <template #item-original_name="item">
-        <a
-          :href="storageUrl + item.doc_url"
-          target="_blank"
-          class="text-primary-600"
+        <DataTable
+          table-class-name="compact"
+          :headers="quoteDocumentsTable.columns"
+          :items="quoteDocuments || []"
+          border-cell
+          hide-rows-per-page
+          :rows-per-page="15"
+          :hide-footer="quoteDocuments.length < 15"
         >
-          {{ item.original_name }}
-        </a>
-      </template>
+          <template #item-original_name="item">
+            <a
+              :href="storageUrl + item.doc_url"
+              target="_blank"
+              class="text-primary-600"
+            >
+              {{ item.original_name }}
+            </a>
+          </template>
         </DataTable>
       </template>
     </Collapsible>
 
     <x-modal v-model="modals.doc" size="xl" show-close backdrop>
       <template #header> Upload Documents </template>
-      <x-alert
-        color="error"
-        class="mb-5"
-        v-if="Object.keys(docForm.errors).length"
-      >
-      <ul>
-        <li v-for="error in docForm?.errors" :key="error">{{ error }}</li>
-      </ul>
-      </x-alert>
 
-    <x-tab-group v-model="selectedTab" class="pb-10" variant="block">
-      <x-tab :value="index" :label="key.replace(/_/g, ' ')" v-for="(docType, key, index) in documentTypes">
-        <div
+      <x-tab-group v-model="selectedTab" class="pb-10" variant="block">
+        <x-tab
+          :value="index"
+          :label="key.replace(/_/g, ' ')"
+          v-for="(docType, key, index) in documentTypes"
+        >
+          <div
             v-for="documentType in docType"
             :key="documentType.id"
             class="grid md:grid-cols-2 gap-2 my-4 border-b"
           >
             <div class="flex flex-col gap-1">
               <h5 class="text-sm font-semibold">
-                {{ documentType.text }} <span class="text-red-500"> {{documentType.is_required ? '*' : ''  }}</span>
+                {{ documentType.text }}
+                <span class="text-red-500">
+                  {{ documentType.is_required ? '*' : '' }}</span
+                >
               </h5>
               <p class="text-xs">Max files: {{ documentType.max_files }}</p>
               <p class="text-xs">
@@ -179,6 +183,24 @@ const copyUploadURL = () => {
               <p class="text-xs">
                 Max file size: {{ documentType.max_size }} MB
               </p>
+
+              <x-alert
+                v-if="successStatus[documentType.id]"
+                type="success"
+                color="success"
+                light
+              >
+                <p class="text-sm">File uploaded successfully</p>
+              </x-alert>
+
+              <x-alert
+                v-if="errorMsg[documentType.id]"
+                type="error"
+                color="error"
+                light
+              >
+                <p class="text-sm">{{ errorMsg[documentType.id] }}</p>
+              </x-alert>
             </div>
             <div class="pb-4">
               <Dropzone
@@ -189,26 +211,25 @@ const copyUploadURL = () => {
                 :loading="uploadingStatus[documentType.id]"
                 @change="uploadFile(documentType, $event)"
               />
+
               <template
                 v-for="quoteDocument in quoteDocuments.filter(
                   d => d.document_type_code == documentType.code,
                 )"
                 :key="quoteDocument.id"
+              >
+                <a
+                  :href="storageUrl + quoteDocument.doc_url"
+                  target="_blank"
+                  class="block px-2 py-1 border rounded mt-1 text-xs hover:text-primary-600 truncate"
                 >
-                  <a
-                    :href="storageUrl + quoteDocument.doc_url"
-                    target="_blank"
-                    class="block px-2 py-1 border rounded mt-1 text-xs hover:text-primary-600 truncate"
-                  >
-                    {{ quoteDocument.original_name || quoteDocument.doc_name }}
-                  </a>
+                  {{ quoteDocument.original_name || quoteDocument.doc_name }}
+                </a>
               </template>
             </div>
           </div>
-      </x-tab>
-    </x-tab-group>
+        </x-tab>
+      </x-tab-group>
     </x-modal>
   </div>
 </template>
-
-
