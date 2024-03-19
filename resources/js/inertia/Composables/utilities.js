@@ -67,6 +67,8 @@ export const formatDate = (dateObject) => {
     const formattedDate = new Date(timestamp);
     const options = { year: 'numeric', month: '2-digit', day: '2-digit' };
     return formattedDate.toLocaleDateString('en-US', options);
+  }else if(dateObject && dateObject.includes('-')){
+    return dateObject;
   }
   return null;
 }
