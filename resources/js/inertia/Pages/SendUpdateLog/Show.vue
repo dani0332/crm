@@ -204,7 +204,18 @@ const isBookingDetailsVisible = computed(() => {
       <div class="text-sm">
         <dl class="grid md:grid-cols-2 gap-y-4">
           <div class="grid sm:grid-cols-2">
-            <dt class="font-bold text-right mr-10">SU REF ID</dt>
+            <dt class="font-bold text-right mr-10">
+              <x-tooltip position="left">
+                <label
+                  class="text-gray-800 underline decoration-dotted decoration-primary-700"
+                >
+                  SU ref ID
+                </label>
+                <template #tooltip>
+                  A unique reference identifier assigned to each "Send Update" request, allowing for easy tracking and reference.
+                </template>
+              </x-tooltip>
+            </dt>
             <dd>{{ sendUpdateLog.code }}</dd>
           </div>
           <div class="grid sm:grid-cols-2 ml-[-250px]">
@@ -219,17 +230,50 @@ const isBookingDetailsVisible = computed(() => {
           </div>
           <div class="grid sm:grid-cols-2">
             <template v-if="selectedCategory.subCategory.slug !== 'EN' && selectedCategory.subCategory.slug !== 'CPU'">
-              <dt class="font-bold text-right mr-10">Transaction Type</dt>
+              <dt class="font-bold text-right mr-10">
+                <x-tooltip position="left">
+                  <label
+                    class="text-gray-800 underline decoration-dotted decoration-primary-700"
+                  >
+                    Transaction Type
+                  </label>
+                  <template #tooltip>
+                    Refers to category of the financial transaction associated with the policy. It helps classify the specific type of transaction being recorded or processed within the system.
+                  </template>
+                </x-tooltip>
+              </dt>
               <dd>{{ transactionType || selectedCategory.title }}</dd>
             </template>
           </div>
           <div class="grid sm:grid-cols-2 ml-[-250px]">
-            <dt class="font-bold text-right mr-10">Status</dt>
+            <dt class="font-bold text-right mr-10">
+              <x-tooltip position="left">
+                <label
+                  class="text-gray-800 underline decoration-dotted decoration-primary-700"
+                >
+                  Status
+                </label>
+                <template #tooltip>
+                  The current status of the ""Send Update"" request, indicating whether it is pending, transaction approved, or declined, among other possible states.
+                </template>
+              </x-tooltip>
+            </dt>
             <dd>{{ sendUpdateLog.status }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
             <template v-if="selectedCategory.subCategory.slug !== 'CI' && selectedCategory.subCategory.slug !== 'CIR' && selectedCategory.subCategory.slug !== 'CPU' && selectedCategory.subCategory.slug !== 'CPD'">
-              <dt class="font-bold text-right mr-10">Sub Type</dt>
+              <dt class="font-bold text-right mr-10">
+                <x-tooltip position="left">
+                  <label
+                    class="text-gray-800 underline decoration-dotted decoration-primary-700"
+                  >
+                    Sub Type
+                  </label>
+                  <template #tooltip>
+                    A further classification of the "Send Update" request, providing additional context or details.
+                  </template>
+                </x-tooltip>
+              </dt>
               <dd>
                 <x-select
                   size="xs"

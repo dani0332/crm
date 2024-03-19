@@ -778,7 +778,7 @@ const submitToCustomer = () => {
                     INSURER TAX INVOICE NUMBER
                   </label>
                   <template #tooltip>
-                    Signifies the date when the insurance policy was officially issued.
+                    Enter the unique tax invoice number provided by the insurer. It helps in proper identification and tracking of transactions
                   </template>
                 </x-tooltip>
               </dt>
@@ -1169,7 +1169,7 @@ const submitToCustomer = () => {
                       INSURER TAX INVOICE NUMBER
                     </label>
                     <template #tooltip>
-                      Signifies the date when the insurance policy was officially issued.
+                      Enter the unique tax invoice number provided by the insurer. It helps in proper identification and tracking of transactions
                     </template>
                   </x-tooltip>
                 </dt>
