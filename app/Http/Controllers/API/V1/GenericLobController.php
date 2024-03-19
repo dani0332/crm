@@ -18,7 +18,7 @@ class GenericLobController extends Controller
      */
     public function exportPlansPdf($quoteType, ExportPlansPdfRequest $request)
     {
-        $service = app('App\Services\\'.ucfirst($quoteType).'QuoteService');
+        $service = app('App\\Services\\' . ucfirst($quoteType) . 'QuoteService');
         $response = $service->exportPlansPdf($quoteType, $request->validated());
 
         if (isset($response['error'])) {
@@ -27,14 +27,14 @@ class GenericLobController extends Controller
 
         $pdf = $response['pdf'];
 
-        return response()->json(['data' => 'data:application/pdf;base64,'.base64_encode($pdf->stream()), 'name' => $response['name']]);
+        return response()->json(['data' => 'data:application/pdf;base64,' . base64_encode($pdf->stream()), 'name' => $response['name']]);
     }
 
     public function getQuoteForOCBEmail(OCBEmailRequest $OCBEmailRequest)
     {
         dispatch(new SendOCBEmailJob($OCBEmailRequest->quoteUuId));
 
-        return response()->json(['message' => 'OCB Email Job dispatched against UUID: '.$OCBEmailRequest->quoteUuId]);
+        return response()->json(['message' => 'OCB Email Job dispatched against UUID: ' . $OCBEmailRequest->quoteUuId]);
     }
 
     public function dispatchCarRenewalEmail(string $uuid)
