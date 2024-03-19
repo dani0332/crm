@@ -1,6 +1,8 @@
 <?php
 
-namespace Database\Seeders;
+namespace App\Console\Commands;
+
+use Illuminate\Console\Command;
 
 use App\Enums\PaymentStatusEnum;
 use App\Enums\quoteTypeCode;
@@ -9,19 +11,31 @@ use App\Models\PaymentSplits;
 use App\Services\SplitPaymentService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
-use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Log;
 
-class PaymentsMoveInNewTableStructure extends Seeder
+class MigrateOldPayments extends Command
 {
+    /**
+     * The name and signature of the console command.
+     *
+     * @var string
+     */
+    protected $signature = 'migrate-old-payments:cron';
+
+    /**
+     * The console command description.
+     *
+     * @var string
+     */
+    protected $description = 'Migrate old payments to new table structure';
     use GenericQueriesAllLobs;
     /**
-     * Run the database seeds.
+     * Execute the console command.
      */
-    public function run(): void
+    public function handle()
     {
         info('MigratePaymentSeederDate::Total Payments migrated: '.Carbon::now());
-        return;
+        //return;
         
         $allModelTypes = [quoteTypeCode::Car, quoteTypeCode::Health, quoteTypeCode::Travel,
             quoteTypeCode::Home, quoteTypeCode::Yacht, quoteTypeCode::Pet, quoteTypeCode::Cycle,
@@ -54,7 +68,7 @@ class PaymentsMoveInNewTableStructure extends Seeder
                             Log::info('MigratePaymentSeeder::Payment migrated for: '.$modelObject->code.'-'.$modelObject->id);
                             app(SplitPaymentService::class)->migratePayments($oldPayment[0], $modelType);
                         } else {
-                            Log::info('MigratePaymentSeeder::Payment migration skipped for: '.$modelObject->code.',having more than 1 child payments');
+                            Log::info('MigratePaymentSeeder::Payment migration skipped for: '.$modelObject->code.',having no/more than 1 child payments');
                         }
                     } else {
                         Log::info('MigratePaymentSeeder::Payment not found for: '.$modelObject->code);
@@ -64,31 +78,5 @@ class PaymentsMoveInNewTableStructure extends Seeder
                 Log::info('MigratePaymentSeeder::No '.$modelType.' found');
             }
         }
-
-        //temporary function to manage migration
-        /* $paymentsArchive = Payment::where('created_at', '>', '2023-04-09')
-             ->where('total_payments', '>' , 0)
-             ->get();
-         if($paymentsArchive->count()>0){
-             foreach($paymentsArchive as $payment){
-                 $splitPayments = PaymentSplits::where('code', $payment->code)->orderBy('sr_no')->get();
-                 if($splitPayments->count()>0){
-                     foreach($splitPayments as $splitPayment){
-                        if($splitPayment->sr_no == 1){
-                             $payment->captured_amount = $splitPayments[0]->payment_amount;
-                             $payment->total_payments = NULL;
-                             $payment->frequency = NULL;
-                             $payment->total_price = NULL;
-                             $payment->payment_status_id = PaymentStatusEnum::AUTHORISED;
-                             $payment->save();
-                        }
-                        $splitPayment->delete();
-                     }
-                     echo $payment->total_payments.'-'.$payment->captured_amount.'-'.$splitPayments[0]->payment_amount. "\n";
-
-                 }
-             }
-         }
-         echo $paymentsArchive->count(); exit;*/
     }
 }
