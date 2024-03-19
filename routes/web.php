@@ -62,6 +62,7 @@ use App\Http\Controllers\V2\CentralController;
 use App\Http\Controllers\V2\CustomerController as V2CustomerController;
 use App\Http\Controllers\V2\CycleQuoteController;
 use App\Http\Controllers\V2\EmbeddedProductController;
+use App\Http\Controllers\V2\FollowupController;
 use App\Http\Controllers\V2\JetskiQuoteController;
 use App\Http\Controllers\V2\LegacyPolicyController;
 use App\Http\Controllers\V2\LifeQuoteController;
@@ -505,18 +506,31 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::post('members/update', [MembersDetailController::class, 'uboUpdate']);
     Route::get('/insurance-provider-plans', [ClaimController::class, 'carPlansByInsuranceProvider']);
     Route::get('/insurance-provider-plans-health', [HealthQuoteController::class, 'plansByInsuranceProvider']);
+    //health plan manual add routes
+    Route::get('/network-plans-health', [HealthQuoteController::class, 'plansByNetwork']);
+    Route::get('/health-plan-copays', [HealthQuoteController::class, 'copaysByPlan']);
+
     Route::get('/insurance-provider-networks', [HealthQuoteController::class, 'networksByInsuranceProvider']);
     Route::post('/car-plan-manual-update-process', [ClaimController::class, 'carPlanUpdateManualProcess']);
     Route::resource('travelers', TravelMembersDetailController::class);
     Route::post('/health-plan-manual-update-process', [HealthQuoteController::class, 'healthPlanUpdateManualProcess']);
+
+    // new route for health plan update process being used now
+
+    Route::post('/health-plan-manual-update-process-v2', [HealthQuoteController::class, 'healthPlanUpdateManualProcessV2']);
     Route::post('/health-plan-manual-create', [HealthQuoteController::class, 'healthPlanCreateQuote']);
+    Route::post('/health-plan-notify-agent', [HealthQuoteController::class, 'healthPlanNotifyAgent']);
 
     Route::post('quotes/update-last-year-policy', [CentralController::class, 'updateLastYearPolicy'])->name('update-last-year-policy');
 
     //todo: commented for later use
     //Route::get('schedule-non-motor-aml', [RenewalsUploadController::class, 'scheduleNonMotorAml']);
 
-    Route::post('followups/emails/events', [App\Http\Controllers\V2\FollowupController::class, 'getEmailEvents']);
+    /* health quote members */
+    Route::post('/health-quote-add-member', [HealthQuoteController::class, 'healthQuoteAddMember']);
+    Route::put('/health-quote-update-member', [HealthQuoteController::class, 'healthQuoteUpdateMember']);
+    Route::post('/health-quote-delete-member', [HealthQuoteController::class, 'healthQuoteDeleteMember']);
+    Route::post('followups/emails/events', [FollowupController::class, 'getEmailEvents']);
     Route::post('/update-user-status', [UserController::class, 'updateUserStatus']);
 });
 
