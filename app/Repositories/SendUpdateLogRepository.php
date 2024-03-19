@@ -5,7 +5,6 @@ namespace App\Repositories;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\SendUpdateLogStatusEnum;
-use App\Models\PersonalQuote;
 use App\Models\SendUpdateLog;
 use App\Services\CentralService;
 use Illuminate\Support\Str;
@@ -72,7 +71,10 @@ class SendUpdateLogRepository extends BaseRepository
                 $res->save();
             }
 
-            if ($res->category->code == SendUpdateLogStatusEnum::EF && $res->option->code == SendUpdateLogStatusEnum::MPC) {
+            // if the send update category is 'Cancellation from Inception', 'Cancellation from Inception and reissuance' or 'Endorsement Financial' with
+            // subtype 'Midterm policy cancellation, then it will update the quote status to 'Cancellation Pending'.
+            if (in_array($res->category->code, [SendUpdateLogStatusEnum::CI, SendUpdateLogStatusEnum::CIR]) ||
+                ($res->category->code == SendUpdateLogStatusEnum::EF && $res->option->code == SendUpdateLogStatusEnum::MPC)) {
                 if (! checkPersonalQuotes($quoteType)) {
                     $model = 'App\\Models\\'.$quoteType.'Quote';
                     $personalQuote = $model::where('uuid', $data['quote_uuid'])->first();
