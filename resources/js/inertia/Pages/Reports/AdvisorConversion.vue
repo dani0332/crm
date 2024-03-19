@@ -308,10 +308,10 @@ const currentTypeTitle = computed(() => {
 });
 
 const quoteTypesOptions = computed(() => {
-  return page.props.filterOptions.lob.map(method => ({
-    value: method.code,
-    label: method.text,
-  }));
+    return Object.keys(page.props.filterOptions.lob).map(text => ({
+        label: text,
+        value: page.props.filterOptions.lob[text],
+    }));
 });
 
 const vehicleTypeOptions = computed(() => {
@@ -336,7 +336,7 @@ const insuranceTypeOptions = computed(() => {
     const types = page.props.filterOptions.insurance_type;
     if(types[filters.lob]) {
         return types[filters.lob].map(option => ({
-            value: option.value,
+            value: option.value.toString(),
             label: option.label,
         }));
     }
@@ -348,7 +348,7 @@ const insuranceForOptions = computed(() => {
     const types = page.props.filterOptions.insurance_for;
     if(types[filters.lob]) {
         return types[filters.lob].map(option => ({
-            value: option.id,
+            value: option.id.toString(),
             label: option.text,
         }));
     }
@@ -454,10 +454,6 @@ const removeUnusedFilters = filters => {
 function setQueryStringFilters() {
   for (const [key] of Object.entries(params)) {
     if (key.includes('[]')) {
-        if(['teams[]','sub_teams[]','advisors[]'].includes(key) && Array.isArray(params[key])) {
-            params[key] = params[key].map(item => Number(item));
-        }
-
       filters[key.substring(0, key.length - 2)] = params[key];
     } else {
       filters[key] = params[key];
@@ -482,10 +478,21 @@ const onLobChange = (e, isOnMounted = false) => {
         teamOptions.value = [];
         subteamOptions.value = [];
         advisorOptions.value = [];
+        filters.insurance_type = '';
+        filters.insurance_for = '';
+        filters.travel_coverage = '';
+        filters.isCommercial = '';
+        filters.vehicle_type = 'All';
+        filters.is_ecommerce = '';
+        filters.tiers = [];
     }
 
-    if([quoteTypeCodeEnum.Car, quoteTypeCodeEnum.Health].includes(filters.lob)) {
-        loadTeamsAndAdvisors(e);
+    if([quoteTypeCodeEnum.Car,
+        quoteTypeCodeEnum.Health,
+        quoteTypeCodeEnum.Business,
+        quoteTypeCodeEnum.GroupMedical
+    ].includes(filters.lob)) {
+        loadTeams(e);
     } else {
         loadAdvisorsByLob(e);
     }
@@ -500,7 +507,9 @@ const onTeamChange = (e, isOnMounted = false) => {
         advisorOptions.value = [];
     }
 
-    if(filters.lob === quoteTypeCodeEnum.Car) {
+    if([quoteTypeCodeEnum.Car,
+        quoteTypeCodeEnum.GroupMedical
+    ].includes(filters.lob)) {
         loadSubTeams(e);
 
         if(!(isOnMounted && filters.sub_teams.length > 0)) {
@@ -520,7 +529,7 @@ const onSubTeamChange = (e, isOnMounted = false) => {
     advisorOptions.value = [];
 
     if (e.length == 0 &&
-        filters.lob === quoteTypeCodeEnum.Car &&
+        [quoteTypeCodeEnum.Car, quoteTypeCodeEnum.GroupMedical].includes(filters.lob) &&
         filters.teams.length > 0) {
 
         loadAdvisors(filters.teams);
@@ -529,7 +538,7 @@ const onSubTeamChange = (e, isOnMounted = false) => {
     }
 };
 
-const loadTeamsAndAdvisors = e => {
+const loadTeams = e => {
   if (e.length == 0) {
     return;
   }
@@ -547,7 +556,7 @@ const loadTeamsAndAdvisors = e => {
     .then(res => {
       if (res.data.length > 0) {
         teamOptions.value = Object.keys(res.data).map(key => ({
-          value: res.data[key].id,
+          value: res.data[key].id.toString(),
           label: res.data[key].name,
         }));
       }
@@ -575,7 +584,7 @@ const loadSubTeams = e => {
     .then(res => {
       if (res.data.length > 0) {
         subteamOptions.value = Object.keys(res.data).map(key => ({
-          value: res.data[key].id,
+          value: res.data[key].id.toString(),
           label: res.data[key].name,
         }));
       }
@@ -603,7 +612,7 @@ const loadAdvisors = e => {
     .then(res => {
       if (res.data.length > 0) {
         advisorOptions.value = Object.keys(res.data).map(key => ({
-          value: res.data[key].id,
+          value: res.data[key].id.toString(),
           label: res.data[key].name,
         }));
       }
@@ -631,7 +640,7 @@ const loadAdvisorsByLob = e => {
     .then(res => {
       if (res.data.length > 0) {
         advisorOptions.value = Object.keys(res.data).map(key => ({
-          value: res.data[key].id,
+          value: res.data[key].id.toString(),
           label: res.data[key].name,
         }));
       }
@@ -716,7 +725,10 @@ const isDisabled = (element) => {
 
 const getAdvisorLabel = () => {
     let label = 'Advisors'
-    if ([quoteTypeCodeEnum.Car, quoteTypeCodeEnum.Health].includes(filters.lob) &&
+    if ([quoteTypeCodeEnum.Car,
+        quoteTypeCodeEnum.Health,
+        quoteTypeCodeEnum.Business,
+        quoteTypeCodeEnum.GroupMedical].includes(filters.lob) &&
     (!filters.teams || filters.teams.length == 0)) {
         label = 'Advisors (select teams first)';
     }

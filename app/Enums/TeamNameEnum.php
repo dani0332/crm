@@ -20,4 +20,8 @@ final class TeamNameEnum extends Enum
     public const MOTOR_COOPERATE_RENEWALS = 'Motor cooperate Renewals';
     public const VALUE = 'Value';
     public const VOLUME = 'Volume';
+    public const AMT = 'AMT';
+    public const MICRO_SME = 'Micro SME';
+    public const NEW_BUSINESS = 'New Business';
+    public const BUSINESS_RENEWALS = 'Business Renewal';
 }

@@ -113,6 +113,15 @@ class ReportsController extends Controller
                 TeamNameEnum::RM_SPEED,
                 TeamNameEnum::EBP,
             ];
+        } else if($request->lob === quoteTypeCode::Business) {
+            $names = [
+                TeamNameEnum::NEW_BUSINESS,
+                TeamNameEnum::BUSINESS_RENEWALS,
+            ];
+        } else if($request->lob === quoteTypeCode::GroupMedical) {
+            $names = [
+                TeamNameEnum::AMT,
+            ];
         }
 
         return $this->fetchTeamsByLob($names);
@@ -148,7 +157,7 @@ class ReportsController extends Controller
      */
     public function fetchSubTeamListByTeam(Request $request)
     {
-        $allowedSubTeams = [TeamNameEnum::VALUE, TeamNameEnum::VOLUME];
+        $allowedSubTeams = [TeamNameEnum::VALUE, TeamNameEnum::VOLUME, TeamNameEnum::MICRO_SME];
         $subTeams = $this->getSubTeamsByTeamIds($request->teamIds)->whereIn('name', $allowedSubTeams)->pluck('id')->toArray();
         $userTeams = $this->getCurrentUserTeamsAndSubTeams(Auth::user()->id)->pluck('id')->toArray();
         $ids = array_intersect($subTeams, $userTeams);
