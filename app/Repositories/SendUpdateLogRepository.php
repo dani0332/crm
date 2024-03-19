@@ -19,7 +19,7 @@ class SendUpdateLogRepository extends BaseRepository
     {
         try {
             $code = $data['childCategory']['slug'];
-            $count = $this->fetchGetCount($data['quote_uuid'], $data['quote_type_id'], $code);
+            $count = $this->fetchGetCount($code);
 
             $code = $code.'-'.date('m').date('y').'-'.($count + 1);
 
@@ -104,12 +104,10 @@ class SendUpdateLogRepository extends BaseRepository
         return $log;
     }
 
-    public function fetchGetCount($uuid, $quoteTypeId, $code)
+    public function fetchGetCount($code)
     {
-        return $this->where([
-            'quote_uuid' => $uuid,
-            'quote_type_id' => $quoteTypeId,
-        ])->where('code', 'like', "%$code%")->count();
+        // in code where clause, added - hyphen sign to get actual difference like CI and CIR.
+        return $this->where('code', 'like', "%$code-%")->whereMonth('created_at', '=', date('m'))->count();
     }
 
     public function fetchFindByQuoteUuid($uuid)
