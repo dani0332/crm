@@ -51,7 +51,7 @@ class Kernel extends ConsoleKernel
             ->at('9:00');
 
         $schedule
-            ->command('AddBatchNumber:cron')->timezone('Asia/Dubai')->dailyAt('12:00')->onOneServer()->withoutOverlapping(1);
+            ->command('AddBatchNumber:cron')->timezone('Asia/Dubai')->dailyAt('00:10')->onOneServer()->withoutOverlapping(1);
 
         $schedule
             ->command(UpdateHealthStatus::class)->timezone('Asia/Dubai')->dailyAt('01:00')->onOneServer()->withoutOverlapping(1);
