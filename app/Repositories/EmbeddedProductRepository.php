@@ -276,6 +276,9 @@ class EmbeddedProductRepository extends BaseRepository
             $optionsIds = $ep->prices->pluck('id');
         }
         $quoteObject = $this->getQuoteObject($modelType, $quoteId);
+        if (empty($quoteObject)) {
+            return 'Quote not found';
+        }
 
         $advisorData = [];
         // advisor data
@@ -332,6 +335,8 @@ class EmbeddedProductRepository extends BaseRepository
         ], JSON_UNESCAPED_SLASHES);
 
         SendEPDocumentsJob::dispatch($body);
+
+        return 'Certificate sent successfully';
     }
 
     /**
