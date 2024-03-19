@@ -389,7 +389,7 @@ class SendUpdateLogController extends Controller
     {
         $quote = $this->getModelObject($sendUpdateRequest->quoteType)::with('payments')->find($sendUpdateRequest->quoteRefId);
 
-        if (!isset($sendUpdateRequest->paymentValidated)) {
+        if (! isset($sendUpdateRequest->paymentValidated)) {
             $paymentStatus = $quote?->payments->value('payment_status_id') ?? null;
 
             // Add insuficient Payment Validations here
@@ -397,7 +397,7 @@ class SendUpdateLogController extends Controller
 
             return response()->json([
                 'insuficientPaymentCheck' => $insuficientPaymentCheck,
-                'parentPaymentStatus' => $paymentStatus
+                'parentPaymentStatus' => $paymentStatus,
             ], 200);
         }
 

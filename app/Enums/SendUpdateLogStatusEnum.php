@@ -41,6 +41,7 @@ final class SendUpdateLogStatusEnum extends Enum
     const RFEC = 'RFEC'; // Request for ecard copy.
     const RTI = 'RTI'; // Request for tax invoice.
     const RFSOA = 'RFSOA'; // Request for statement of account (SOA).
+
     // send update log button.
     const SUC = 'Send Update to Customer'; // send update to customer.
     const SU = 'Send Update'; // send update.

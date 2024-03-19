@@ -2,9 +2,11 @@
 
 namespace App\Services;
 
+use App\Enums\DocumentTypeCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
+use App\Enums\SendUpdateLogStatusEnum;
 use App\Models\BikeQuote;
 use App\Models\BusinessQuote;
 use App\Models\CarQuote;
@@ -13,18 +15,16 @@ use App\Models\HealthQuote;
 use App\Models\HomeQuote;
 use App\Models\JetskiQuote;
 use App\Models\LifeQuote;
+use App\Models\Payment;
 use App\Models\PersonalQuote;
 use App\Models\PetQuote;
 use App\Models\TravelQuote;
 use App\Models\YachtQuote;
-use App\Repositories\PaymentRepository;
-use App\Traits\GenericQueriesAllLobs;
-use App\Enums\DocumentTypeCode;
-use App\Enums\SendUpdateLogStatusEnum;
-use App\Models\Payment;
 use App\Repositories\InsuranceProviderRepository;
 use App\Repositories\LookupRepository;
+use App\Repositories\PaymentRepository;
 use App\Repositories\SendUpdateLogRepository;
+use App\Traits\GenericQueriesAllLobs;
 
 class SendUpdateLogService
 {
@@ -501,12 +501,12 @@ class SendUpdateLogService
                 return SendUpdateLogStatusEnum::SUC;
             }
         } elseif ($sendUpdateLog->is_booking_filled) { // Check if all booking details uploaded.
-            if($sendUpdateLog->category->code == SendUpdateLogStatusEnum::EF) {
-                if($sendUpdateLog->option->code == SendUpdateLogStatusEnum::PPE && $sendUpdateLog->transaction_payment_status == SendUpdateLogStatusEnum::TRANSACTION_APPROVED && true ) { // Check if all policy details uploaded.
+            if ($sendUpdateLog->category->code == SendUpdateLogStatusEnum::EF) {
+                if ($sendUpdateLog->option->code == SendUpdateLogStatusEnum::PPE && $sendUpdateLog->transaction_payment_status == SendUpdateLogStatusEnum::TRANSACTION_APPROVED && true) { // Check if all policy details uploaded.
                     return SendUpdateLogStatusEnum::SU;
                 }
 
-                if(!in_array($sendUpdateLog->option->code, [
+                if (! in_array($sendUpdateLog->option->code, [
                     SendUpdateLogStatusEnum::MPC,
                     SendUpdateLogStatusEnum::MDOM,
                     SendUpdateLogStatusEnum::MDOV,
@@ -515,9 +515,9 @@ class SendUpdateLogService
                 ]) && $sendUpdateLog->transaction_payment_status == SendUpdateLogStatusEnum::TRANSACTION_APPROVED) {
                     return SendUpdateLogStatusEnum::SU;
                 }
-            } elseif($sendUpdateLog->category->code == SendUpdateLogStatusEnum::CPD && true) { // Check if all policy details uploaded.
+            } elseif ($sendUpdateLog->category->code == SendUpdateLogStatusEnum::CPD && true) { // Check if all policy details uploaded.
                 return SendUpdateLogStatusEnum::SU;
-            } elseif(in_array($sendUpdateLog->category->code, [SendUpdateLogStatusEnum::CI, SendUpdateLogStatusEnum::CIR])) {
+            } elseif (in_array($sendUpdateLog->category->code, [SendUpdateLogStatusEnum::CI, SendUpdateLogStatusEnum::CIR])) {
                 return SendUpdateLogStatusEnum::SU;
             }
 
@@ -607,7 +607,7 @@ class SendUpdateLogService
 
     public function sendUpdateToSage($sendUpdateLog, $quote)
     {
-        info("This function responsible to send updates on Sage");
+        info('This function responsible to send updates on Sage');
 
         return true;
     }
@@ -618,10 +618,10 @@ class SendUpdateLogService
         $optionCode = $sendUpdateLog->option->code;
         $quoteModel = $this->getModelObject($sendUpdateRequest->quoteType)::find($sendUpdateRequest->quoteRefId);
 
-        if(in_array($categoryCode, [SendUpdateLogStatusEnum::EF, SendUpdateLogStatusEnum::CPD])) {
+        if (in_array($categoryCode, [SendUpdateLogStatusEnum::EF, SendUpdateLogStatusEnum::CPD])) {
             // Move payments and update refrence
 
-            if($optionCode == SendUpdateLogStatusEnum::PPE) {
+            if ($optionCode == SendUpdateLogStatusEnum::PPE) {
                 $quoteModel->renewal_expiry_date = $sendUpdateLog->expiry_date;
             } else {
                 // The values of Booking Details - New Entry should be move in Main Lead Booking Details,
