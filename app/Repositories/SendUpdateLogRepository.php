@@ -2,8 +2,10 @@
 
 namespace App\Repositories;
 
+use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\SendUpdateLogStatusEnum;
+use App\Models\PersonalQuote;
 use App\Models\SendUpdateLog;
 use App\Services\CentralService;
 use Illuminate\Support\Str;
@@ -45,8 +47,8 @@ class SendUpdateLogRepository extends BaseRepository
             ]);
             // it will check if send update type is Correction of Policy Details or Enorsement Financial with subtype Policy Period Extension, it will save
             // insurance_provider_id and plan_id.
+            $quoteType = QuoteTypeRepository::getById($data['quote_type_id'])->code;
             if ($res->category->code == SendUpdateLogStatusEnum::CPD || ($res->category->code == SendUpdateLogStatusEnum::EF && $res->option->code == SendUpdateLogStatusEnum::PPE)) {
-                $quoteType = QuoteTypeRepository::getById($data['quote_type_id'])->code;
 
                 if (checkPersonalQuotes($quoteType)) {
                     $repository = 'App\\Repositories\\'.$quoteType.'QuoteRepository';
@@ -68,6 +70,16 @@ class SendUpdateLogRepository extends BaseRepository
                 }
 
                 $res->save();
+            }
+
+            if ($res->category->code == SendUpdateLogStatusEnum::EF && $res->option->code == SendUpdateLogStatusEnum::MPC) {
+                if (! checkPersonalQuotes($quoteType)) {
+                    $model = 'App\\Models\\'.$quoteType.'Quote';
+                    $personalQuote = $model::where('uuid', $data['quote_uuid'])->first();
+                }
+                $personalQuote->quote_status_id = QuoteStatusEnum::CancellationPending;
+
+                $personalQuote->save();
             }
         } catch (\Throwable $th) {
             $res = (object) [
