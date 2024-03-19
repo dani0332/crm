@@ -66,6 +66,7 @@ class DatabaseSeeder extends Seeder
             AddPolicyIssuanceStatuses::class,
             GenericPermissionSeeder::class,
             InsuranceProviderNameSeeder::class,
+            QuoteStatusMapSeeder::class,
         ]);
     }
 }
