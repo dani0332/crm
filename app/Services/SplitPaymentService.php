@@ -12,13 +12,13 @@ use App\Enums\QuoteTypes;
 use App\Factories\SagePayloadFactory;
 use App\Models\Payment;
 use App\Models\PaymentSplits;
+use App\Models\PersonalQuote;
 use App\Models\QuoteDocument;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\SageLoggable;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use App\Models\PersonalQuote;
-use Carbon\Carbon;
 use PDF;
 
 class SplitPaymentService
@@ -207,8 +207,8 @@ class SplitPaymentService
                 }
 
                 $childPayments = Payment::where('code', 'like', "$code%")
-                ->whereNotIn('payment_status_id', [PaymentStatusEnum::DRAFT, PaymentStatusEnum::CANCELLED])
-                ->get();
+                    ->whereNotIn('payment_status_id', [PaymentStatusEnum::DRAFT, PaymentStatusEnum::CANCELLED])
+                    ->get();
 
                 if ($childPayments->count() == 0) {
                     Log::info('MigratePayment::All payments are drafted or cancelled for Payment Code: '.$payment->code);
@@ -439,9 +439,9 @@ class SplitPaymentService
         }
 
     }
-    
+
     public function generateSplitPaymentLink($request)
-    { 
+    {
         $splitPayment = PaymentSplits::where(['code' => $request->paymentCode, 'sr_no' => $request->splitPaymentId])->first();
         $payment = $splitPayment->payment;
         $modelType = $request->modelType;
@@ -450,11 +450,11 @@ class SplitPaymentService
         if (! $payment) {
             return response()->json(['success' => false]);
         }
-        
+
         if ($splitPayment->payment_link != null && now() < Carbon::parse($splitPayment->payment_link_created_at)->addDays(3)) {
             return response()->json(['success' => true, 'payment_link' => $splitPayment->payment_link]);
         } else {
-           
+
             $quoteModel = $this->getQuoteObject($modelType, $quoteId);
             $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
 

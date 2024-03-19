@@ -52,7 +52,6 @@ use App\Repositories\EmbeddedProductRepository;
 use App\Repositories\InsuranceProviderRepository;
 use App\Repositories\LookupRepository;
 use App\Repositories\NationalityRepository;
-use App\Repositories\PaymentRepository;
 use App\Repositories\RenewalBatchRepository;
 use App\Repositories\UserRepository;
 use App\Services\ActivitiesService;
@@ -1738,11 +1737,11 @@ class CRUDController extends Controller
         $quoteModel->quote_status_id = QuoteStatusEnum::PaymentPending;
         $quoteModel->save();
 
-        return back()->with('success', 'Payment has been created');        
+        return back()->with('success', 'Payment has been created');
     }
 
     public function updatePayment(UpdatePaymentRequest $request)
-    {        
+    {
         $paymentInformation = [
             'collection_type' => $request->collection_type,
             'captured_amount' => $request->captured_amount,
@@ -1760,7 +1759,7 @@ class CRUDController extends Controller
         $payment->update($paymentInformation);
 
         return back()->with('success', 'Payment has been updated');
-        
+
     }
 
     public function sendEmailOneClickBuy(Request $request)

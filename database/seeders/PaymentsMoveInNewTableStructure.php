@@ -21,8 +21,9 @@ class PaymentsMoveInNewTableStructure extends Seeder
     public function run(): void
     {
         info('MigratePaymentSeederDate::Total Payments migrated: '.Carbon::now());
+
         return;
-        
+
         $allModelTypes = [quoteTypeCode::Car, quoteTypeCode::Health, quoteTypeCode::Travel,
             quoteTypeCode::Home, quoteTypeCode::Yacht, quoteTypeCode::Pet, quoteTypeCode::Cycle,
             quoteTypeCode::Bike, quoteTypeCode::Business, quoteTypeCode::Life,
@@ -37,7 +38,7 @@ class PaymentsMoveInNewTableStructure extends Seeder
                 continue;
             }
             $modelObjects = $quoteModelObject::where('created_at', '>', $thirtyDaysOldDate)->get();
-            
+
             if ($modelObjects->count() > 0) {
                 foreach ($modelObjects as $modelObject) {
 
