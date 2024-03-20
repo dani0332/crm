@@ -414,19 +414,22 @@ class CRUDController extends Controller
         }
         $request->dob = isset($request->dob) ? Carbon::parse($request->dob)->format('Y-m-d') : null;
 
-        // new ui enabled
-        if ($modelType == quoteTypeCode::Home && in_array($modelType, newUi())) {
+        if ($modelType == quoteTypeCode::Health || $modelType == quoteTypeCode::Car || $modelType == quoteTypeCode::Travel || $modelType == quoteTypeCode::Home) {
             $validateArray = [];
             if ($request->has('first_name')) {
                 $this->validate($request, [
-                    'first_name' => 'required|max:255',
+                    'first_name' => 'required|between:1,20',
                 ]);
             }
             if ($request->has('last_name')) {
                 $this->validate($request, [
-                    'last_name' => 'required|max:255',
+                    'last_name' => 'required|between:1,50',
                 ]);
             }
+        }
+        // new ui enabled
+        if ($modelType == quoteTypeCode::Home && in_array($modelType, newUi())) {
+            $validateArray = [];
             if ($request->has('ilivein_accommodation_type_id')) {
                 $this->validate($request, [
                     'ilivein_accommodation_type_id' => 'required|exists:home_accommodation_type,id',
