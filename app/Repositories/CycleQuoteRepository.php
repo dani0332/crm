@@ -23,7 +23,7 @@ class CycleQuoteRepository extends BaseRepository
     /**
      * create new personal quote
      *
-     * @param    $quoteTypeCode
+     * @param  $quoteTypeCode
      * @return mixed
      */
     public function fetchCreate($data)
@@ -135,8 +135,17 @@ class CycleQuoteRepository extends BaseRepository
                 'nationality',
                 'quoteDetail.lostReason',
                 'quoteDetail.previousAdvisor',
+                'insuranceProvider',
                 'payments' => function ($q) {
-                    $q->with(['paymentStatus', 'personalPlan', 'paymentMethod', 'paymentStatusLogs', 'insuranceProvider']);
+                    $q->with([
+                        'paymentSplits' => function ($query) {
+                            $query->orderBy('sr_no', 'asc');
+                        },
+                        'paymentStatus', 'personalPlan', 'paymentMethod', 'paymentStatusLogs', 'insuranceProvider',
+                        'paymentSplits.paymentStatus',
+                        'paymentSplits.paymentMethod',
+                        'paymentSplits.documents',
+                    ]);
                 },
                 'customer',
                 'createdBy',

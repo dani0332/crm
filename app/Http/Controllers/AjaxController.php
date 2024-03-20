@@ -177,6 +177,7 @@ class AjaxController extends Controller
 
             return response()->json(['success' => true, 'payment_link' => $paymentLinkURL]);
         }
+
     }
 
     public function commercialCarModelBasedOnCarMakeId(Request $request)
