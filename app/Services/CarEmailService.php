@@ -275,7 +275,7 @@ class CarEmailService extends BaseService
             info('Inside sic flow enabled: '.$lead->uuid);
             $noAdvisorTemplateId = ApplicationStorage::where('key_name', 'SIC_NO_ADVISOR_TEMPLATE_ID')->first();
             if ($noAdvisorTemplateId) {
-                return $noAdvisorTemplateId->value;
+                return (int) $noAdvisorTemplateId->value;
             } else {
                 return 605; // keeping it as a fallback
             }
