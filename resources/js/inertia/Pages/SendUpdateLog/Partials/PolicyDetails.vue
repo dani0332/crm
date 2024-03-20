@@ -1,4 +1,6 @@
 <script setup>
+import ComboBox from "../../../Components/ComboBox.vue";
+
 const { isRequired } = useRules();
 
 const props = defineProps({
@@ -18,6 +20,10 @@ const props = defineProps({
     type: Object,
     required: true,
   },
+  quoteType: {
+    type: String,
+    required: true,
+  }
 });
 
 const state = reactive({
@@ -87,6 +93,7 @@ const policyDetailsForm = useForm({
 	last_name: props.sendUpdateLog?.last_name || props.quote?.last_name || null,
 	provider_name: props.sendUpdateLog?.provider_name || providerName.value || null,
   insurance_provider_id: props.sendUpdateLog?.insurance_provider_id || props.quote?.insurance_provider_id || props.quote?.car_plan_provider_id || null,
+	plan_id: props.sendUpdateLog?.plan_id || props.quote?.plan_id || null,
 	plan_name: props.sendUpdateLog?.plan_name || props.quote?.plan_id_text || null,
 	policy_number: props.sendUpdateLog?.policy_number || props.quote?.policy_number || null,
 	issuance_date: props.sendUpdateLog?.issuance_date || props.quote?.policy_issuance_date || null,
@@ -95,6 +102,7 @@ const policyDetailsForm = useForm({
 	insurer_quote_number: props.sendUpdateLog?.insurer_quote_number || props.quote?.insurer_quote_number || null,
 	issuance_status_id: props.sendUpdateLog?.issuance_status_id || props.quote?.policy_issuance_status_id || null,
 	id: props.sendUpdateLog.id,
+  quote_type: props.quoteType,
 })
 
 const onUpdate = () => {
@@ -120,6 +128,40 @@ const onUpdate = () => {
     },
   );
 }
+
+const quoteTypesToCheck = ['Car', 'Health', 'Travel']; //Ecommerce LOBs
+const isEcom = computed(() => {
+  return quoteTypesToCheck.includes(props.quoteType);
+})
+
+const plansOptions = ref([]);
+
+const fetchPlans = (quoteType, providerId) => {
+  let url = `/get-plans/${quoteType}/${providerId}`;
+  axios.get(url)
+    .then(res => {
+      plansOptions.value = res.data.map(plan => ({
+        label: plan.text,
+        value: plan.id,
+      }));
+    })
+    .catch(err => {
+      console.log(err);
+    });
+};
+
+onMounted(() => {
+  if (isEcom.value && props.sendUpdateLog?.insurance_provider_id) {
+    fetchPlans(props.quoteType, props.sendUpdateLog.insurance_provider_id);
+  }
+});
+
+watch(() => policyDetailsForm.insurance_provider_id, (providerId) => {
+  if (isEcom.value && providerId) {
+    fetchPlans(props.quoteType, providerId);
+  }
+});
+
 </script>
 
 <template>
@@ -138,7 +180,11 @@ const onUpdate = () => {
             <div class="grid sm:grid-cols-2">
               <dt class="font-bold text-right mr-10">
                 <x-tooltip position="left">
-                  <span>First Name</span>
+                  <label
+                    class="text-gray-800 underline decoration-dotted decoration-primary-700"
+                  >
+                    First Name
+                  </label>
                   <template #tooltip>
                     This field captures the policyholder's first name, representing the primary contact person associated with the policy.
                   </template>
@@ -158,7 +204,11 @@ const onUpdate = () => {
             <div class="grid sm:grid-cols-2 ml-[-250px]">
 							<dt class="font-bold text-right mr-10">
 								<x-tooltip position="left">
-									<span>Last Name</span>
+                  <label
+                    class="text-gray-800 underline decoration-dotted decoration-primary-700"
+                  >
+                    Last Name
+                  </label>
 									<template #tooltip>
 										Records the policyholder's surname or family name.
 									</template>
@@ -178,7 +228,11 @@ const onUpdate = () => {
             <div class="grid sm:grid-cols-2">
               <dt class="font-bold text-right mr-10">
                 <x-tooltip position="left">
-                  <span>Provider Name</span>
+                  <label
+                    class="text-gray-800 underline decoration-dotted decoration-primary-700"
+                  >
+                    Provider Name
+                  </label>
                   <template #tooltip>
                     Name of the insurance company responsible for the coverage.
                   </template>
@@ -201,18 +255,25 @@ const onUpdate = () => {
             <div class="grid sm:grid-cols-2 ml-[-250px]">
 							<dt class="font-bold text-right mr-10">
 								<x-tooltip position="left">
-									<span>Plan Name</span>
+                  <label
+                    class="text-gray-800 underline decoration-dotted decoration-primary-700"
+                  >
+                    Plan Name
+                  </label>
 									<template #tooltip>
 										Identifies the specific coverage or insurance plan offered by the provider.
 									</template>
 								</x-tooltip>
 							</dt>
 							<dd>
-								<x-input
-									v-if="isCPD"
-									:disabled="!state.isEdit"
-                  v-model="policyDetailsForm.plan_name"
-								/>
+                <ComboBox
+                    v-if="isCPD && isEcom"
+                    v-model="policyDetailsForm.plan_id"
+                    :options="plansOptions"
+                    placeholder="Plan Name"
+                    :single="true"
+                    :disabled="!state.isEdit"
+                />
 								<span v-else>{{ policyDetailsForm.plan_name }}</span>
 							</dd>
             </div>
@@ -221,7 +282,11 @@ const onUpdate = () => {
             <div class="grid sm:grid-cols-2">
               <dt class="font-bold text-right mr-10">
                 <x-tooltip position="left">
-                  <span>Policy Number</span>
+                  <label
+                    class="text-gray-800 underline decoration-dotted decoration-primary-700"
+                  >
+                    Policy Number
+                  </label>
                   <template #tooltip>
                     The unique Insurance policy number for the chosen insurance plan offered by the provider.
                   </template>
@@ -243,7 +308,11 @@ const onUpdate = () => {
             <div class="grid sm:grid-cols-2 ml-[-250px]">
               <dt class="font-bold text-right mr-10">
                 <x-tooltip position="left">
-                  <span>Issuance Date</span>
+                  <label
+                    class="text-gray-800 underline decoration-dotted decoration-primary-700"
+                  >
+                    Issuance Date
+                  </label>
                   <template #tooltip>
                     Signifies the date when the insurance policy was officially issued.
                   </template>
@@ -266,9 +335,13 @@ const onUpdate = () => {
             <div class="grid sm:grid-cols-2">
               <dt class="font-bold text-right mr-10">
                 <x-tooltip position="left">
-                  <span>Start Date</span>
+                  <label
+                    class="text-gray-800 underline decoration-dotted decoration-primary-700"
+                  >
+                    Start Date
+                  </label>
                   <template #tooltip>
-                    Signifies the date when the insurance policy was officially issued.
+                    Indicates the commencement date of the insurance coverage, marking when the policy becomes effective.
                   </template>
                 </x-tooltip>
               </dt>
@@ -289,9 +362,13 @@ const onUpdate = () => {
             <div class="grid sm:grid-cols-2 ml-[-250px]">
               <dt class="font-bold text-right mr-10">
                 <x-tooltip position="left">
-                  <span>Expiry Date</span>
+                  <label
+                    class="text-gray-800 underline decoration-dotted decoration-primary-700"
+                  >
+                    Expiry Date
+                  </label>
                   <template #tooltip>
-                    Signifies the date when the insurance policy was officially issued.
+                    This field records the date when the insurance coverage is set to expire, marking the end of the policy's validity.
                   </template>
                 </x-tooltip>
               </dt>
@@ -310,24 +387,38 @@ const onUpdate = () => {
             <div class="grid sm:grid-cols-2">
               <dt class="font-bold text-right mr-10">
                 <x-tooltip position="left">
-                  <span>Insurer Quote Number</span>
+                  <label
+                    class="text-gray-800 underline decoration-dotted decoration-primary-700"
+                  >
+                    Insurer Quote Number
+                  </label>
                   <template #tooltip>
-                    Signifies the date when the insurance policy was officially issued.
+                    Refers to the unique identifier associated with the initial quote provided by the insurer.
                   </template>
                 </x-tooltip>
               </dt>
               <dd>
-								<span>{{ policyDetailsForm.insurer_quote_number }}</span>
-							</dd>
+                <x-input
+                    v-if="isCPD"
+                    :disabled="!state.isEdit"
+                    v-model="policyDetailsForm.insurer_quote_number"
+                    placeholder="Enter Insurer Quote number"
+                />
+                <span v-else>{{ policyDetailsForm.insurer_quote_number }}</span>
+              </dd>
             </div>
 
 						<!-- Issuance Status -->
             <div class="grid sm:grid-cols-2 ml-[-250px]">
               <dt class="font-bold text-right mr-10">
                 <x-tooltip position="left">
-                  <span>Issuance Status</span>
+                  <label
+                    class="text-gray-800 underline decoration-dotted decoration-primary-700"
+                  >
+                    Issuance Status
+                  </label>
                   <template #tooltip>
-                    Signifies the date when the insurance policy was officially issued.
+                    Indicates the current state or progress of policy issuance, tracking whether it's pending, approved, or completed.
                   </template>
                 </x-tooltip>
               </dt>

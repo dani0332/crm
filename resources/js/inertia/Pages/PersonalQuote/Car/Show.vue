@@ -3720,14 +3720,6 @@ const getDetailPageRoute = (
         </div>
     </x-modal>
 
-    <SendUpdates
-      v-if="hasPolicyIssuedStatus"
-      :reportable="record"
-      :quote_type_id="$page.props.quoteTypeId"
-      :options="sendUpdateOptions"
-      :data="sendUpdateLogs"
-    />
-
     <BookPolicy
       v-if="
         canAny([
@@ -3739,6 +3731,14 @@ const getDetailPageRoute = (
       :quoteType="quoteType"
       :bPDetails="bPDetails"
       :payments="payments"
+    />
+
+    <SendUpdates
+        v-if="hasPolicyIssuedStatus"
+        :reportable="record"
+        :quote_type_id="$page.props.quoteTypeId"
+        :options="sendUpdateOptions"
+        :data="sendUpdateLogs"
     />
 
     <div class="p-4 rounded shadow mb-6 bg-white">

@@ -2,8 +2,11 @@
 
 namespace App\Repositories;
 
+use App\Enums\QuoteStatusEnum;
+use App\Enums\QuoteTypeId;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Models\SendUpdateLog;
+use App\Services\CentralService;
 use Illuminate\Support\Str;
 
 class SendUpdateLogRepository extends BaseRepository
@@ -17,7 +20,7 @@ class SendUpdateLogRepository extends BaseRepository
     {
         try {
             $code = $data['childCategory']['slug'];
-            $count = $this->fetchGetCount($data['quote_uuid'], $data['quote_type_id']);
+            $count = $this->fetchGetCount($code);
 
             $code = $code.'-'.date('m').date('y').'-'.($count + 1);
 
@@ -41,6 +44,45 @@ class SendUpdateLogRepository extends BaseRepository
                 'uuid' => $uuid,
                 'code' => $code,
             ]);
+            // it will check if send update type is Correction of Policy Details or Enorsement Financial with subtype Policy Period Extension, it will save
+            // insurance_provider_id and plan_id.
+            $quoteType = QuoteTypeRepository::getById($data['quote_type_id'])->code;
+            if ($res->category->code == SendUpdateLogStatusEnum::CPD || ($res->category->code == SendUpdateLogStatusEnum::EF && $res->option->code == SendUpdateLogStatusEnum::PPE)) {
+
+                if (checkPersonalQuotes($quoteType)) {
+                    $repository = 'App\\Repositories\\'.$quoteType.'QuoteRepository';
+                    $realQuote = $repository::getBy('uuid', $res->quote_uuid);
+                } else {
+                    $quoteServiceFile = app(getServiceObject($quoteType));
+                    $realQuote = $quoteServiceFile->getEntity($res->quote_uuid);
+                }
+                if (in_array($data['quote_type_id'], [QuoteTypeId::Car, QuoteTypeId::Travel, QuoteTypeId::Health])) {
+                    $serviceFile = 'App\\Services\\'.$quoteType.'QuoteService';
+
+                    $quoteModel = app($serviceFile)->getEntityPlain($realQuote->id)->load(['plan']);
+                    $res->insurance_provider_id = $quoteModel->plan->provider_id ?? null;
+                    $res->plan_id = $quoteModel->plan->id ?? null;
+                    $res->plan_name = $quoteModel->plan->text ?? null;
+                } else {
+                    $res->insurance_provider_id = $realQuote->insuranceProvider->id ?? null;
+                    $res->provider_name = $realQuote->insuranceProvider->text ?? null;
+                }
+
+                $res->save();
+            }
+
+            // if the send update category is 'Cancellation from Inception', 'Cancellation from Inception and reissuance' or 'Endorsement Financial' with
+            // subtype 'Midterm policy cancellation, then it will update the quote status to 'Cancellation Pending'.
+            if (in_array($res->category->code, [SendUpdateLogStatusEnum::CI, SendUpdateLogStatusEnum::CIR]) ||
+                ($res->category->code == SendUpdateLogStatusEnum::EF && $res->option->code == SendUpdateLogStatusEnum::MPC)) {
+                if (! checkPersonalQuotes($quoteType)) {
+                    $model = 'App\\Models\\'.$quoteType.'Quote';
+                    $personalQuote = $model::where('uuid', $data['quote_uuid'])->first();
+                }
+                $personalQuote->quote_status_id = QuoteStatusEnum::CancellationPending;
+
+                $personalQuote->save();
+            }
         } catch (\Throwable $th) {
             $res = (object) [
                 'message' => $th->getMessage(),
@@ -76,12 +118,10 @@ class SendUpdateLogRepository extends BaseRepository
         return $log;
     }
 
-    public function fetchGetCount($uuid, $quoteTypeId)
+    public function fetchGetCount($code)
     {
-        return $this->where([
-            'quote_uuid' => $uuid,
-            'quote_type_id' => $quoteTypeId,
-        ])->count();
+        // in code where clause, added - hyphen sign to get actual difference like CI and CIR.
+        return $this->where('code', 'like', "%$code-%")->whereMonth('created_at', '=', date('m'))->count();
     }
 
     public function fetchFindByQuoteUuid($uuid)
@@ -115,12 +155,16 @@ class SendUpdateLogRepository extends BaseRepository
             if (! empty($data['insurance_provider_id'])) {
                 $insuranceProvider = InsuranceProviderRepository::getById($data['insurance_provider_id']);
             }
+            if (! empty($data['plan_id'])) {
+                $plan = app(CentralService::class)->getPlanById($data['quote_type'], $data['plan_id']);
+            }
             $result = $this->where('id', $data['id'])->update([
                 'first_name' => $data['first_name'],
                 'last_name' => $data['last_name'],
                 'provider_name' => isset($insuranceProvider) ? $insuranceProvider->text : $data['provider_name'],
                 'insurance_provider_id' => $data['insurance_provider_id'],
-                'plan_name' => $data['plan_name'],
+                'plan_id' => $data['plan_id'],
+                'plan_name' => $plan->text ?? $data['plan_name'],
                 'policy_number' => $data['policy_number'],
                 'issuance_date' => $data['issuance_date'],
                 'start_date' => $data['start_date'],

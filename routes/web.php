@@ -471,6 +471,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::post('/send-update-to-customer', 'sendUpdateToCustomer')->name('send-update-to-customer');
         Route::post('send-update', 'sendUpdate')->name('send-update');
     });
+    Route::get('get-plans/{quoteType}/{providerId}', [CentralController::class, 'getQuoteWisePlans'])->name('get-quote-wise-plans');
     // Route::get('send-update-log/{id}', [SendUpdateLogController::class, 'getLogsById'])->name('send-update-logs.get-by-id');
 
     Route::group(['prefix' => 'medical'], function () {

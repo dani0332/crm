@@ -313,4 +313,17 @@ class CentralService
         return $response;
     }
 
+    public function getQuoteWiseProviderPlans($quoteType, $providerId): object
+    {
+        $planModel = 'App\\Models\\'.ucfirst($quoteType).'Plan';
+
+        return $planModel::where('provider_id', $providerId)->get();
+    }
+
+    public function getPlanById($quoteType, $planId)
+    {
+        $planModel = 'App\\Models\\'.ucfirst($quoteType).'Plan';
+
+        return $planModel::find($planId);
+    }
 }

@@ -172,11 +172,13 @@ class SendUpdateLogController extends Controller
 
         $serviceFile = 'App\\Services\\'.$quoteType.'QuoteService';
 
-        $paymentEntityModel = app($serviceFile)->getEntityPlain($realQuote->id);
+        if (! checkPersonalQuotes($quoteType)) {
+            $paymentEntityModel = app($serviceFile)->getEntityPlain($realQuote->id);
+        }
 
         $sendUpdatePayments = $this->sendUpdateLogService->getSendUpdatePayments($sendUpdateLog);
 
-        if (! in_array($quoteType, [quoteTypeCode::Business, quoteTypeCode::Home, quoteTypeCode::Life, quoteTypeCode::Pet, quoteTypeCode::Bike, quoteTypeCode::Cycle, quoteTypeCode::Yacht])) {
+        if (in_array($quoteType, [quoteTypeCode::Car, quoteTypeCode::Travel, quoteTypeCode::Health])) {
             $paymentEntityModel->load(['plan']);
         }
 
@@ -213,7 +215,7 @@ class SendUpdateLogController extends Controller
             'paymentStatusEnum' => PaymentStatusEnum::asArray(),
             'paymentTooltipEnum' => PaymentTooltip::asArray(),
             'paymentMethods' => $filteredPaymentMethods,
-            'quoteRequest' => $paymentEntityModel,
+            'quoteRequest' => $paymentEntityModel ?? $realQuote,
             'isPolicyDetailsEnabled' => $this->sendUpdateLogService->isPolicyDetailsVisible($categoryCode, $optionCode),
         ]);
     }

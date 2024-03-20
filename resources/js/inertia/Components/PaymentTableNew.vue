@@ -1783,6 +1783,10 @@ watch(() => props.quoteRequest, (newValue, oldValue) => {
   planDetail.value = initalPlanDetails;
 });
 
+watch(() => props.sendUpdate?.total_price, (newValue, oldValue) => {
+  totalPrice.value = newValue;
+});
+
 </script>
 
 <template>

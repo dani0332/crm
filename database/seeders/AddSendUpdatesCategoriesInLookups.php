@@ -256,13 +256,11 @@ class AddSendUpdatesCategoriesInLookups extends Seeder
             'Home' => [
                 [
                     'name' => 'Additional Cover',
-                    'tooltip' => 'Opt for this when you wish to add extra protection or coverages to the existing home insurance policy, such as new items or increased risk factors not originally included.
-                    Note: Adding additional cover may result in a premium increase, which will need to be collected from the policyholder.',
+                    'tooltip' => "Opt for this when you wish to add extra protection or coverages to the existing home insurance policy, such as new items or increased risk factors not originally included.\nNote: Adding additional cover may result in a premium increase, which will need to be collected from the policyholder.",
                 ],
                 [
                     'name' => 'Increase the sum insured',
-                    'tooltip' => 'Select this when you want to enhance the total amount for which your home is insured, possibly due to home improvements or acquisition of valuable items.
-                    Be aware: Increasing the sum insured will likely incur additional premiums that must be collected from the policyholder.',
+                    'tooltip' => "Select this when you want to enhance the total amount for which your home is insured, possibly due to home improvements or acquisition of valuable items.\nBe aware: Increasing the sum insured will likely incur additional premiums that must be collected from the policyholder.",
                 ],
                 [
                     'name' => 'Decrease the sum insured',
@@ -276,8 +274,7 @@ class AddSendUpdatesCategoriesInLookups extends Seeder
             'Pet' => [
                 [
                     'name' => 'Additional Cover',
-                    'tooltip' => "Choose this option to incorporate extra protection or benefits to the existing pet insurance. This could be due to new health concerns, additional pets, or other evolving needs of the policyholder's pet.
-                    Keep in mind: Opting for additional cover might lead to an increase in premium, to be collected from the policyholder.",
+                    'tooltip' => "Choose this option to incorporate extra protection or benefits to the existing pet insurance. This could be due to new health concerns, additional pets, or other evolving needs of the policyholder's pet.\nKeep in mind: Opting for additional cover might lead to an increase in premium, to be collected from the policyholder.",
                 ],
                 [
                     'name' => 'Midterm policy cancellation',
@@ -287,8 +284,7 @@ class AddSendUpdatesCategoriesInLookups extends Seeder
             'Cycle' => [
                 [
                     'name' => 'Additional Cover',
-                    'tooltip' => 'Opt for this when the policyholder seeks to bolster their bicycle protection. This could be to cover additional accessories, specific events or races, or due to upgrades made to the cycle.
-                    Remember: Enhancing or adding covers may result in a higher premium amount, to be collected from the policyholder.',
+                    'tooltip' => "Opt for this when the policyholder seeks to bolster their bicycle protection. This could be to cover additional accessories, specific events or races, or due to upgrades made to the cycle.\nRemember: Enhancing or adding covers may result in a higher premium amount, to be collected from the policyholder.",
                 ],
                 [
                     'name' => 'Midterm policy cancellation',
@@ -651,23 +647,19 @@ class AddSendUpdatesCategoriesInLookups extends Seeder
         $data = [
             [
                 'name' => 'Change in inception date',
-                'tooltip' => "Requires cancellation and reissuance of the policy due to a change in the policy's start date.
-                Example: Policy is issued with the start date as of today. Client has gotten back to us to request a change in the start date to a later date (future date) because of any reason, like, they have an existing policy until then.",
+                'tooltip' => "Requires cancellation and reissuance of the policy due to a change in the policy's start date.\nExample: Policy is issued with the start date as of today. Client has gotten back to us to request a change in the start date to a later date (future date) because of any reason, like, they have an existing policy until then.",
             ],
             [
                 'name' => 'Change in expiry date / Extension of policy',
-                'tooltip' => "Requires cancellation and re-issuance due to a policy's expiry date change.
-                Example: Travel date extension of a trip, which has the same start date however, extension is made to the end date of the trip.",
+                'tooltip' => "Requires cancellation and re-issuance due to a policy's expiry date change.\nExample: Travel date extension of a trip, which has the same start date however, extension is made to the end date of the trip.",
             ],
             [
                 'name' => 'Change in insurer',
-                'tooltip' => 'Requires cancellation and re-issuance due to a change of provider.
-                Example: Client still needs to receive the benefits of the chosen insurer and hence wants to change their Insurer due to a delay. This change may involve a debit amount due or credit to the client.',
+                'tooltip' => "Requires cancellation and re-issuance due to a change of provider.\nExample: Client still needs to receive the benefits of the chosen insurer and hence wants to change their Insurer due to a delay. This change may involve a debit amount due or credit to the client.",
             ],
             [
                 'name' => 'Change in cover',
-                'tooltip' => 'Requires cancellation and re-issuance due to a change of cover. 
-                Example: Policy is not yet started, and the client now wants to add a cover, this would involve a cancellation of the current policy and re-issuance of the new policy with the cover(s) added accordingly.',
+                'tooltip' => "Requires cancellation and re-issuance due to a change of cover.\nExample: Policy is not yet started, and the client now wants to add a cover, this would involve a cancellation of the current policy and re-issuance of the new policy with the cover(s) added accordingly.",
             ],
         ];
 

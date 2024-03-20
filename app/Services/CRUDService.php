@@ -817,15 +817,19 @@ class CRUDService extends BaseService
         }
     }
 
-    public function hasAtleastOneStatusPolicyIssued($quoteTypeId, $recordId)
+    public function hasAtleastOneStatusPolicyIssued($quoteTypeId, $record)
     {
+        if (isset($record->quote_status_id) && $record->quote_status_id == QuoteStatusEnum::PolicyIssued) {
+            return true;
+        }
+
         return QuoteStatusLog::where('quote_type_id', $quoteTypeId)
-            ->where('quote_request_id', $recordId)
-            ->where(function ($query) {
-                $query->where('current_quote_status_id', QuoteStatusEnum::PolicyIssued)
-                    ->orWhere('previous_quote_status_id', QuoteStatusEnum::PolicyIssued);
-            })
-            ->first() !== null;
+                ->where('quote_request_id', $record->id)
+                ->where(function ($query) {
+                    $query->where('current_quote_status_id', QuoteStatusEnum::PolicyIssued)
+                        ->orWhere('previous_quote_status_id', QuoteStatusEnum::PolicyIssued);
+                })
+                ->first() !== null;
     }
 
     public function getInquiryLogs($modelType, $uuid)

@@ -150,18 +150,7 @@ class CycleQuoteController extends Controller
         $sendUpdateOptions = [];
         $sendUpdateLogs = [];
         $sendUpdateEnum = (object) [];
-        $hasPolicyIssuedStatus = app(CRUDService::class)->hasAtleastOneStatusPolicyIssued(QuoteTypes::CYCLE->id(), $quote->id);
-
-        if ($hasPolicyIssuedStatus) {
-            $sendUpdateOptions = (new LookupService)->getSendUpdateOptions(QuoteTypes::CYCLE->id());
-            $sendUpdateLogs = SendUpdateLogRepository::findByQuoteUuid($quote->uuid);
-            $sendUpdateEnum = SendUpdateLogStatusEnum::asArray();
-        }
-
-        $sendUpdateOptions = [];
-        $sendUpdateLogs = [];
-        $sendUpdateEnum = (object) [];
-        $hasPolicyIssuedStatus = app(CRUDService::class)->hasAtleastOneStatusPolicyIssued(QuoteTypes::CYCLE->id(), $quote->id);
+        $hasPolicyIssuedStatus = app(CRUDService::class)->hasAtleastOneStatusPolicyIssued(QuoteTypes::CYCLE->id(), $quote);
 
         if ($hasPolicyIssuedStatus) {
             $sendUpdateOptions = (new LookupService)->getSendUpdateOptions(QuoteTypes::CYCLE->id());

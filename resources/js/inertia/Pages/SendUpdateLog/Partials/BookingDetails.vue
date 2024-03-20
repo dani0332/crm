@@ -644,11 +644,18 @@ const submitToCustomer = () => {
         <div class="text-xs">
           <dl class="grid md:grid-cols-2 gap-y-4">
             <div class="grid sm:grid-cols-2 mt-4">
-              <dt class="font-bold text-right"></dt>
+              <dt class="text-right"></dt>
               <dd>
-                <span class="text-[#308BCA] text-sm font-bold">
-                  INSURER TAX INVOICE FOR REVERSAL
-                </span>
+                <x-tooltip position="left">
+                  <label
+                    class="text-[#308BCA] text-sm font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
+                  >
+                    INSURER TAX INVOICE FOR REVERSAL
+                  </label>
+                  <template #tooltip>
+                    This field displays the insurer's tax invoice number associated with this specific lead that requires a reversal.
+                  </template>
+                </x-tooltip>
               </dd>
             </div>
 
@@ -673,7 +680,16 @@ const submitToCustomer = () => {
 
             <div class="grid sm:grid-cols-2 ml-[-50px] mt-4">
               <dt class="font-bold text-right mr-10">
-                <span>BOOKING DATE</span>
+                <x-tooltip position="left">
+                  <label
+                    class="text-xs text-gray-800 underline decoration-dotted decoration-primary-700"
+                  >
+                    BOOKING DATE
+                  </label>
+                  <template #tooltip>
+                    The exact date when the booking details was successfully recorded in the system.
+                  </template>
+                </x-tooltip>
               </dt>
               <dd>
                 <span>{{ reversalEntry.booking_date }}</span>
@@ -682,7 +698,16 @@ const submitToCustomer = () => {
 
             <div class="grid sm:grid-cols-2">
               <dt class="font-bold text-right mr-10">
-                <span>INVOICE DESCRIPTION</span>
+                <x-tooltip position="left">
+                  <label
+                    class="text-xs text-gray-800 underline decoration-dotted decoration-primary-700"
+                  >
+                    INVOICE DESCRIPTION
+                  </label>
+                  <template #tooltip>
+                    This field provides a brief description of the invoice, summarizing its content or purpose within the booking.
+                  </template>
+                </x-tooltip>
               </dt>
               <dd>
                 <span>{{ reversalEntry.invoice_description }}</span>
@@ -701,9 +726,13 @@ const submitToCustomer = () => {
             <div class="grid sm:grid-cols-2">
               <dt class="font-bold text-right mr-10">
                 <x-tooltip position="left">
-                  <span>TRANSACTION PAYMENT STATUS</span>
+                  <label
+                    class="text-xs text-gray-800 underline decoration-dotted decoration-primary-700"
+                  >
+                    TRANSACTION PAYMENT STATUS
+                  </label>
                   <template #tooltip>
-                    Name of the insurance company responsible for the coverage.
+                    This status provides a real-time snapshot of the payment progress for each insurer tax invoice. Make sure to update these statuses regularly to maintain financial accuracy.
                   </template>
                 </x-tooltip>
               </dt>
@@ -728,10 +757,13 @@ const submitToCustomer = () => {
             <div class="grid sm:grid-cols-2">
               <dt class="font-bold text-right mr-10">
                 <x-tooltip position="left">
-                  <span>INSURER INVOICE DATE</span>
+                  <label
+                    class="text-xs text-gray-800 underline decoration-dotted decoration-primary-700"
+                  >
+                    INSURER INVOICE DATE
+                  </label>
                   <template #tooltip>
-                    The unique Insurance policy number for the chosen insurance plan
-                    offered by the provider.
+                    Signifies the date when the insurer's invoice within the booking was issued.
                   </template>
                 </x-tooltip>
               </dt>
@@ -743,9 +775,13 @@ const submitToCustomer = () => {
             <div class="grid sm:grid-cols-2 ml-[-50px]">
               <dt class="font-bold text-right mr-10">
                 <x-tooltip position="left">
-                  <span>BROKER INVOICE NUMBER</span>
+                  <label
+                    class="text-xs text-gray-800 underline decoration-dotted decoration-primary-700"
+                  >
+                    BROKER INVOICE NUMBER
+                  </label>
                   <template #tooltip>
-                    Signifies the date when the insurance policy was officially issued.
+                    Invoice number provided by the broker.
                   </template>
                 </x-tooltip>
               </dt>
@@ -757,9 +793,13 @@ const submitToCustomer = () => {
             <div class="grid sm:grid-cols-2">
               <dt class="font-bold text-right mr-10">
                 <x-tooltip position="left">
-                  <span>INSURER TAX INVOICE NUMBER</span>
+                  <label
+                    class="text-xs text-gray-800 underline decoration-dotted decoration-primary-700"
+                  >
+                    INSURER TAX INVOICE NUMBER
+                  </label>
                   <template #tooltip>
-                    Signifies the date when the insurance policy was officially issued.
+                    Enter the unique tax invoice number provided by the insurer. It helps in proper identification and tracking of transactions
                   </template>
                 </x-tooltip>
               </dt>
@@ -771,9 +811,13 @@ const submitToCustomer = () => {
             <div class="grid sm:grid-cols-2 ml-[-50px]">
               <dt class="font-bold text-right mr-10">
                 <x-tooltip position="left">
-                  <span>DISCOUNT</span>
+                  <label
+                    class="text-xs text-gray-800 underline decoration-dotted decoration-primary-700"
+                  >
+                    DISCOUNT
+                  </label>
                   <template #tooltip>
-                    Signifies the date when the insurance policy was officially issued.
+                    If applicable, this field indicates the exact amount or percentage reduced from the original price.
                   </template>
                 </x-tooltip>
               </dt>
@@ -785,9 +829,13 @@ const submitToCustomer = () => {
             <div class="grid sm:grid-cols-2">
               <dt class="font-bold text-right mr-10">
                 <x-tooltip position="left">
-                  <span>INSURER COMMISSION INVOICE NUMBER</span>
+                  <label
+                    class="text-xs text-gray-800 underline decoration-dotted decoration-primary-700"
+                  >
+                    INSURER COMMISSION INVOICE NUMBER
+                  </label>
                   <template #tooltip>
-                    Signifies the date when the insurance policy was officially issued.
+                    Input the invoice number issued by the insurer for commission purposes. Double-check for accuracy.
                   </template>
                 </x-tooltip>
               </dt>
@@ -799,9 +847,13 @@ const submitToCustomer = () => {
             <div class="grid sm:grid-cols-2 ml-[-50px]">
               <dt class="font-bold text-right mr-10">
                 <x-tooltip position="left">
-                  <span>COMMISSION (%)</span>
+                  <label
+                    class="text-xs text-gray-800 underline decoration-dotted decoration-primary-700"
+                  >
+                    COMMISSION (%)
+                  </label>
                   <template #tooltip>
-                    Signifies the date when the insurance policy was officially issued.
+                    Commission percentage for this transaction.
                   </template>
                 </x-tooltip>
               </dt>
@@ -813,9 +865,13 @@ const submitToCustomer = () => {
             <div class="grid sm:grid-cols-2">
               <dt class="font-bold text-right mr-10">
                 <x-tooltip position="left">
-                  <span>COMMISSION (VAT NOT APPLICABLE)</span>
+                  <label
+                    class="text-xs text-gray-800 underline decoration-dotted decoration-primary-700"
+                  >
+                    COMMISSION (VAT NOT APPLICABLE)
+                  </label>
                   <template #tooltip>
-                    Signifies the date when the insurance policy was officially issued.
+                    Commission amount as per the tax invoice raised by buyer that VAT is not applicable.
                   </template>
                 </x-tooltip>
               </dt>
@@ -827,9 +883,13 @@ const submitToCustomer = () => {
             <div class="grid sm:grid-cols-2 ml-[-50px]">
               <dt class="font-bold text-right mr-10">
                 <x-tooltip position="left">
-                  <span>VAT ON COMMISSION</span>
+                  <label
+                    class="text-xs text-gray-800 underline decoration-dotted decoration-primary-700"
+                  >
+                    VAT ON COMMISSION
+                  </label>
                   <template #tooltip>
-                    Signifies the date when the insurance policy was officially issued.
+                    Value Added Tax (VAT) amount applicable to the commission.
                   </template>
                 </x-tooltip>
               </dt>
@@ -841,9 +901,13 @@ const submitToCustomer = () => {
             <div class="grid sm:grid-cols-2">
               <dt class="font-bold text-right mr-10">
                 <x-tooltip position="left">
-                  <span>COMMISSION VAT APPLICABLE</span>
+                  <label
+                    class="text-xs text-gray-800 underline decoration-dotted decoration-primary-700"
+                  >
+                    COMMISSION VAT APPLICABLE
+                  </label>
                   <template #tooltip>
-                    Signifies the date when the insurance policy was officially issued.
+                    Commission amount as per the tax invoice raised by buyer that VAT is applicable. Enter commission amount without including Value Added Tax (VAT). VAT will be calculated separately.
                   </template>
                 </x-tooltip>
               </dt>
@@ -855,9 +919,13 @@ const submitToCustomer = () => {
             <div class="grid sm:grid-cols-2 ml-[-50px]">
               <dt class="font-bold text-right mr-10">
                 <x-tooltip position="left">
-                  <span>TOTAL COMMISSION</span>
+                  <label
+                    class="text-xs text-gray-800 underline decoration-dotted decoration-primary-700"
+                  >
+                    TOTAL COMMISSION
+                  </label>
                   <template #tooltip>
-                    Signifies the date when the insurance policy was officially issued.
+                    Display the total commission amount including VAT for this transaction. Ensure it matches the calculations.
                   </template>
                 </x-tooltip>
               </dt>
@@ -869,9 +937,13 @@ const submitToCustomer = () => {
             <div class="grid sm:grid-cols-2">
               <dt class="font-bold text-right mr-10">
                 <x-tooltip position="left">
-                  <span>PRICE (VAT NOT APPLICABLE)</span>
+                  <label
+                    class="text-xs text-gray-800 underline decoration-dotted decoration-primary-700"
+                  >
+                    PRICE (VAT NOT APPLICABLE)
+                  </label>
                   <template #tooltip>
-                    Signifies the date when the insurance policy was officially issued.
+                    Price that VAT is not applicable. Remember, VAT is exempt for Life Insurance policies.
                   </template>
                 </x-tooltip>
               </dt>
@@ -883,9 +955,13 @@ const submitToCustomer = () => {
             <div class="grid sm:grid-cols-2 ml-[-50px]">
               <dt class="font-bold text-right mr-10">
                 <x-tooltip position="left">
-                  <span>TOTAL VAT AMOUNT</span>
+                  <label
+                    class="text-xs text-gray-800 underline decoration-dotted decoration-primary-700"
+                  >
+                    TOTAL VAT AMOUNT
+                  </label>
                   <template #tooltip>
-                    Signifies the date when the insurance policy was officially issued.
+                    Display the total Value Added Tax (VAT) amount for this transaction. Verify this amount before submission.
                   </template>
                 </x-tooltip>
               </dt>
@@ -897,9 +973,13 @@ const submitToCustomer = () => {
             <div class="grid sm:grid-cols-2">
               <dt class="font-bold text-right mr-10">
                 <x-tooltip position="left">
-                  <span>PRICE (VAT APPLICABLE)</span>
+                  <label
+                    class="text-xs text-gray-800 underline decoration-dotted decoration-primary-700"
+                  >
+                    PRICE (VAT APPLICABLE)
+                  </label>
                   <template #tooltip>
-                    Signifies the date when the insurance policy was officially issued.
+                    Price as per the insurer's tax invoice that VAT is applicable. Please enter the price without including Value Added Tax (VAT). VAT will be calculated separately.
                   </template>
                 </x-tooltip>
               </dt>
@@ -910,7 +990,16 @@ const submitToCustomer = () => {
 
             <div class="grid sm:grid-cols-2 ml-[-50px]">
               <dt class="font-bold text-right mr-10">
-                <span>TOTAL PRICE</span>
+                <x-tooltip position="left">
+                  <label
+                    class="text-xs text-gray-800 underline decoration-dotted decoration-primary-700"
+                  >
+                    TOTAL PRICE
+                  </label>
+                  <template #tooltip>
+                    Display the total price including all charges and VAT as per tax invoice. Make sure it aligns with the final transaction amount.
+                  </template>
+                </x-tooltip>
               </dt>
               <dd>
                 <span>{{ reversalEntry.total_price }}</span>
@@ -974,7 +1063,16 @@ const submitToCustomer = () => {
 
               <div class="grid sm:grid-cols-2 ml-[-50px] mt-4">
                 <dt class="font-bold text-right mr-10">
-                  <span>BOOKING DATE</span>
+                  <x-tooltip position="left">
+                    <label
+                      class="text-xs text-gray-800 underline decoration-dotted decoration-primary-700"
+                    >
+                      BOOKING DATE
+                    </label>
+                    <template #tooltip>
+                      The exact date when the booking details was successfully recorded in the system.
+                    </template>
+                  </x-tooltip>
                 </dt>
                 <dd>
                   <span>{{ bookingDetailsForm.booking_date }}</span>
@@ -984,10 +1082,13 @@ const submitToCustomer = () => {
               <div class="grid sm:grid-cols-2">
                 <dt class="font-bold text-right mr-10">
                   <x-tooltip position="left">
-                    <span>INVOICE DESCRIPTION</span>
+                    <label
+                      class="text-xs text-gray-800 underline decoration-dotted decoration-primary-700"
+                    >
+                      INVOICE DESCRIPTION
+                    </label>
                     <template #tooltip>
-                      This field provides a brief description of the invoice, summarizing
-                      its content or purpose within the booking.
+                      This field provides a brief description of the invoice, summarizing its content or purpose within the booking.
                     </template>
                   </x-tooltip>
                 </dt>
@@ -1008,11 +1109,13 @@ const submitToCustomer = () => {
               <div class="grid sm:grid-cols-2">
                 <dt class="font-bold text-right mr-10">
                   <x-tooltip position="left">
-                    <span>TRANSACTION PAYMENT STATUS</span>
+                    <label
+                      class="text-xs text-gray-800 underline decoration-dotted decoration-primary-700"
+                    >
+                      TRANSACTION PAYMENT STATUS
+                    </label>
                     <template #tooltip>
-                      This status provides a real-time snapshot of the payment progress
-                      for each insurer tax invoice. Make sure to update these statuses
-                      regularly to maintain financial accuracy.
+                      This status provides a real-time snapshot of the payment progress for each insurer tax invoice. Make sure to update these statuses regularly to maintain financial accuracy.
                     </template>
                   </x-tooltip>
                 </dt>
@@ -1037,10 +1140,13 @@ const submitToCustomer = () => {
               <div class="grid sm:grid-cols-2">
                 <dt class="font-bold text-right mr-10">
                   <x-tooltip position="left">
-                    <span>INSURER INVOICE DATE</span>
+                    <label
+                      class="text-xs text-gray-800 underline decoration-dotted decoration-primary-700"
+                    >
+                      INSURER INVOICE DATE
+                    </label>
                     <template #tooltip>
-                      Signifies the date when the insurer's invoice within the booking was
-                      issued.
+                      Signifies the date when the insurer's invoice within the booking was issued.
                     </template>
                   </x-tooltip>
                 </dt>
@@ -1060,8 +1166,14 @@ const submitToCustomer = () => {
               <div class="grid sm:grid-cols-2 ml-[-50px]">
                 <dt class="font-bold text-right mr-10">
                   <x-tooltip position="left">
-                    <span>BROKER INVOICE NUMBER</span>
-                    <template #tooltip> Invoice number provided by the broker. </template>
+                    <label
+                      class="text-xs text-gray-800 underline decoration-dotted decoration-primary-700"
+                    >
+                      BROKER INVOICE NUMBER
+                    </label>
+                    <template #tooltip>
+                      Invoice number provided by the broker.
+                    </template>
                   </x-tooltip>
                 </dt>
                 <dd>
@@ -1072,10 +1184,13 @@ const submitToCustomer = () => {
               <div class="grid sm:grid-cols-2">
                 <dt class="font-bold text-right mr-10">
                   <x-tooltip position="left">
-                    <span>INSURER TAX INVOICE NUMBER</span>
+                    <label
+                      class="text-xs text-gray-800 underline decoration-dotted decoration-primary-700"
+                    >
+                      INSURER TAX INVOICE NUMBER
+                    </label>
                     <template #tooltip>
-                      Enter the unique tax invoice number provided by the insurer. It
-                      helps in proper identification and tracking of transactions.
+                      Enter the unique tax invoice number provided by the insurer. It helps in proper identification and tracking of transactions
                     </template>
                   </x-tooltip>
                 </dt>
@@ -1096,10 +1211,13 @@ const submitToCustomer = () => {
               <div class="grid sm:grid-cols-2 ml-[-50px]">
                 <dt class="font-bold text-right mr-10">
                   <x-tooltip position="left">
-                    <span>DISCOUNT</span>
+                    <label
+                      class="text-xs text-gray-800 underline decoration-dotted decoration-primary-700"
+                    >
+                      DISCOUNT
+                    </label>
                     <template #tooltip>
-                      If applicable, this field indicates the exact amount or percentage
-                      reduced from the original price.
+                      If applicable, this field indicates the exact amount or percentage reduced from the original price.
                     </template>
                   </x-tooltip>
                 </dt>
@@ -1111,10 +1229,13 @@ const submitToCustomer = () => {
               <div class="grid sm:grid-cols-2">
                 <dt class="font-bold text-right mr-10">
                   <x-tooltip position="left">
-                    <span>INSURER COMMISSION INVOICE NUMBER</span>
+                    <label
+                      class="text-xs text-gray-800 underline decoration-dotted decoration-primary-700"
+                    >
+                      INSURER COMMISSION INVOICE NUMBER
+                    </label>
                     <template #tooltip>
-                      Input the invoice number issued by the insurer for commission
-                      purposes. Double-check for accuracy.
+                      Input the invoice number issued by the insurer for commission purposes. Double-check for accuracy.
                     </template>
                   </x-tooltip>
                 </dt>
@@ -1135,7 +1256,11 @@ const submitToCustomer = () => {
               <div class="grid sm:grid-cols-2 ml-[-50px]">
                 <dt class="font-bold text-right mr-10">
                   <x-tooltip position="left">
-                    <span>COMMISSION (%)</span>
+                    <label
+                      class="text-xs text-gray-800 underline decoration-dotted decoration-primary-700"
+                    >
+                      COMMISSION (%)
+                    </label>
                     <template #tooltip>
                       Commission percentage for this transaction.
                     </template>
@@ -1149,11 +1274,13 @@ const submitToCustomer = () => {
               <div class="grid sm:grid-cols-2">
                 <dt class="font-bold text-right mr-10">
                   <x-tooltip position="left">
-                    <span>PRICE (VAT APPLICABLE)</span>
+                    <label
+                      class="text-xs text-gray-800 underline decoration-dotted decoration-primary-700"
+                    >
+                      PRICE (VAT APPLICABLE)
+                    </label>
                     <template #tooltip>
-                      Price as per the insurer's tax invoice that VAT is applicable.
-                      Please enter the price without including Value Added Tax (VAT). VAT
-                      will be calculated separately.
+                      Price as per the insurer's tax invoice that VAT is applicable. Please enter the price without including Value Added Tax (VAT). VAT will be calculated separately.
                     </template>
                   </x-tooltip>
                 </dt>
@@ -1175,7 +1302,11 @@ const submitToCustomer = () => {
               <div class="grid sm:grid-cols-2 ml-[-50px]">
                 <dt class="font-bold text-right mr-10">
                   <x-tooltip position="left">
-                    <span>VAT ON COMMISSION</span>
+                    <label
+                      class="text-xs text-gray-800 underline decoration-dotted decoration-primary-700"
+                    >
+                      VAT ON COMMISSION
+                    </label>
                     <template #tooltip>
                       Value Added Tax (VAT) amount applicable to the commission.
                     </template>
@@ -1189,10 +1320,13 @@ const submitToCustomer = () => {
               <div class="grid sm:grid-cols-2">
                 <dt class="font-bold text-right mr-10">
                   <x-tooltip position="left">
-                    <span>PRICE (VAT NOT APPLICABLE)</span>
+                    <label
+                      class="text-xs text-gray-800 underline decoration-dotted decoration-primary-700"
+                    >
+                      PRICE (VAT NOT APPLICABLE)
+                    </label>
                     <template #tooltip>
-                      Price that VAT is not applicable. Remember, VAT is exempt for Life
-                      Insurance policies.
+                      Price that VAT is not applicable. Remember, VAT is exempt for Life Insurance policies.
                     </template>
                   </x-tooltip>
                 </dt>
@@ -1204,10 +1338,13 @@ const submitToCustomer = () => {
               <div class="grid sm:grid-cols-2 ml-[-50px]">
                 <dt class="font-bold text-right mr-10">
                   <x-tooltip position="left">
-                    <span>TOTAL COMMISSION</span>
+                    <label
+                      class="text-xs text-gray-800 underline decoration-dotted decoration-primary-700"
+                    >
+                      TOTAL COMMISSION
+                    </label>
                     <template #tooltip>
-                      Display the total commission amount including VAT for this
-                      transaction. Ensure it matches the calculations.
+                      Display the total commission amount including VAT for this transaction. Ensure it matches the calculations.
                     </template>
                   </x-tooltip>
                 </dt>
@@ -1219,11 +1356,13 @@ const submitToCustomer = () => {
               <div class="grid sm:grid-cols-2">
                 <dt class="font-bold text-right mr-10">
                   <x-tooltip position="left">
-                    <span>COMMISSION VAT APPLICABLE</span>
+                    <label
+                      class="text-xs text-gray-800 underline decoration-dotted decoration-primary-700"
+                    >
+                      COMMISSION VAT APPLICABLE
+                    </label>
                     <template #tooltip>
-                      Commission amount as per the tax invoice raised by buyer that VAT is
-                      applicable. Enter commission amount without including Value Added
-                      Tax (VAT). VAT will be calculated separately.
+                      Commission amount as per the tax invoice raised by buyer that VAT is applicable. Enter commission amount without including Value Added Tax (VAT). VAT will be calculated separately.
                     </template>
                   </x-tooltip>
                 </dt>
@@ -1245,10 +1384,13 @@ const submitToCustomer = () => {
               <div class="grid sm:grid-cols-2 ml-[-50px]">
                 <dt class="font-bold text-right mr-10">
                   <x-tooltip position="left">
-                    <span>TOTAL VAT AMOUNT</span>
+                    <label
+                      class="text-xs text-gray-800 underline decoration-dotted decoration-primary-700"
+                    >
+                      TOTAL VAT AMOUNT
+                    </label>
                     <template #tooltip>
-                      Display the total Value Added Tax (VAT) amount for this transaction.
-                      Verify this amount before submission.
+                      Display the total Value Added Tax (VAT) amount for this transaction. Verify this amount before submission.
                     </template>
                   </x-tooltip>
                 </dt>
@@ -1260,10 +1402,13 @@ const submitToCustomer = () => {
               <div class="grid sm:grid-cols-2">
                 <dt class="font-bold text-right mr-10">
                   <x-tooltip position="left">
-                    <span>COMMISSION (VAT NOT APPLICABLE)</span>
+                    <label
+                      class="text-xs text-gray-800 underline decoration-dotted decoration-primary-700"
+                    >
+                      COMMISSION (VAT NOT APPLICABLE)
+                    </label>
                     <template #tooltip>
-                      Commission amount as per the tax invoice raised by buyer that VAT is
-                      not applicable.
+                      Commission amount as per the tax invoice raised by buyer that VAT is not applicable.
                     </template>
                   </x-tooltip>
                 </dt>
@@ -1275,10 +1420,13 @@ const submitToCustomer = () => {
               <div class="grid sm:grid-cols-2 ml-[-50px]">
                 <dt class="font-bold text-right mr-10">
                   <x-tooltip position="left">
-                    <span>TOTAL PRICE</span>
+                    <label
+                      class="text-xs text-gray-800 underline decoration-dotted decoration-primary-700"
+                    >
+                      TOTAL PRICE
+                    </label>
                     <template #tooltip>
-                      Display the total price including all charges and VAT as per tax
-                      invoice. Make sure it aligns with the final transaction amount.
+                      Display the total price including all charges and VAT as per tax invoice. Make sure it aligns with the final transaction amount.
                     </template>
                   </x-tooltip>
                 </dt>

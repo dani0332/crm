@@ -122,9 +122,13 @@ const onUpdate = () => {
 
 						<!-- price VAT not applicable -->
             <div class="grid sm:grid-cols-2">
-              <dt class="font-bold text-right mr-10">
+              <dt class="text-right mr-10">
                 <x-tooltip position="left">
-                  <span>PRICE (VAT NOT APPLICABLE)</span>
+                  <label
+                      class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
+                    >
+                      PRICE (VAT NOT APPLICABLE)
+                    </label>
                   <template #tooltip>
                     Enter the quoted price that VAT is not applicable. Remember,
                     VAT is exempt for Life Insurance policies.
@@ -146,9 +150,13 @@ const onUpdate = () => {
 
             <div class="grid sm:grid-cols-2 ml-[-250px]">
 							<template v-if="isPlanDetails && selectedCategory.subCategory.slug !== 'CPD'">
-								<dt class="font-bold text-right mr-10">
+								<dt class="text-right mr-10">
 									<x-tooltip position="left">
-										<span>Provider name</span>
+                    <label
+                      class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
+                    >
+                      Provider name
+                    </label>
 										<template #tooltip>
 											Name of the insurance company this insurance policy will be issued from.
 										</template>
@@ -172,9 +180,13 @@ const onUpdate = () => {
 
 						<!-- price VAT applicable -->
             <div class="grid sm:grid-cols-2">
-              <dt class="font-bold text-right mr-10">
+              <dt class="text-right mr-10">
 								<x-tooltip position="left">
-                  <span>PRICE (VAT APPLICABLE)</span>
+                  <label
+                    class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
+                  >
+                      PRICE (VAT APPLICABLE)
+                  </label>
                   <template #tooltip>
                     Please enter the quoted price without including Value Added Tax (VAT). VAT will be calculated separately.
                   </template>
@@ -197,9 +209,13 @@ const onUpdate = () => {
 						<!-- Quote number -->
             <div class="grid sm:grid-cols-2 ml-[-250px]">
 							<template v-if="isPlanDetails && selectedCategory.subCategory.slug !== 'CPD'">
-								<dt class="font-bold text-right mr-10">
+								<dt class="text-right mr-10">
 									<x-tooltip position="left">
-										<span>Quote number</span>
+                    <label
+                      class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
+                    >
+                      Quote number
+                    </label>
 										<template #tooltip>
 											Refers to the unique identifier associated with the initial quote provided by the insurer.
 										</template>
@@ -223,9 +239,13 @@ const onUpdate = () => {
 
 						<!-- Total price -->
             <div class="grid sm:grid-cols-2">
-              <dt class="font-bold text-right mr-10">
+              <dt class="text-right mr-10">
 								<x-tooltip position="left">
-									<span>TOTAL PRICE</span>
+                  <label
+                    class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
+                  >
+                    TOTAL PRICE
+                  </label>
 									<template #tooltip>
 										The entire amount due before any potential discounts. 
 									</template>
