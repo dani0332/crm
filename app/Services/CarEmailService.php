@@ -273,8 +273,12 @@ class CarEmailService extends BaseService
     {
         if ($triggerSICWorkFlow) {
             info('Inside sic flow enabled: '.$lead->uuid);
-
-            return 605; // Send email template for Tier 5 leads with no advisor : SIC intro email
+            $noAdvisorTemplateId = ApplicationStorage::where('key_name', 'SIC_NO_ADVISOR_TEMPLATE_ID')->first();
+            if ($noAdvisorTemplateId) {
+                return $noAdvisorTemplateId->value;
+            } else {
+                return 605; // keeping it as a fallback
+            }
         }
         if (count($plans) == 0) {
             // No plans with available ratings, send a specific email template

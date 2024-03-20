@@ -33,5 +33,16 @@ class addSICWorkflow extends Seeder
                 'is_active' => 1,
             ]);
         }
+
+        $sicNoAdvisorEmailTemplateID = ApplicationStorage::where('key_name', 'SIC_NO_ADVISOR_TEMPLATE_ID')->count();
+        if ($sicNoAdvisorEmailTemplateID == 0) {
+            ApplicationStorage::insert([
+                'key_name' => 'SIC_NO_ADVISOR_TEMPLATE_ID',
+                'value' => 605,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ]);
+        }
     }
 }
