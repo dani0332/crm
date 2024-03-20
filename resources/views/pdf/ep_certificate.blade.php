@@ -123,7 +123,7 @@
         }
 
         main {
-            max-width: 70%;
+            max-width: 75%;
             width: 100%;
             margin: 0 auto;
             font-size: 18px;
@@ -213,7 +213,7 @@
             </thead>
             <tbody>
                 <tr>
-                    <td width="65%">
+                    <td width="30%">
                         <p><b>Full Name</b></p>
                     </td>
                     <td >{{ $viewData['name'] }}</td>
