@@ -31,26 +31,13 @@ const loader = reactive({
 const tableHeader = ref([
   { text: 'Name', value: 'userName', width: '240' },
   { text: 'Quote Type', value: 'quote_type_code', sortable: true },
-  {
-    text: 'Total Assigned Leads',
-    value: 'allocation_count',
-    sortable: true,
-  },
-  { text: 'Last Allocations', value: 'last_allocated', sortable: true },
+
+
   { text: 'Max Cap Limit', value: 'max_capacity', sortable: true },
-  { text: 'Status', value: 'is_available', sortable: true, width: '100' },
-  { text: 'Reset Cap', value: 'reset_cap', sortable: true, width: '100' },
+  { text: 'Last Modified', value: 'updated_at', sortable: true },
 
 ]);
 
-const statusText = statusId =>
-({
-  1: 'Online',
-  2: 'Offline',
-  3: 'Unavailable',
-  4: 'Sick',
-  5: 'On leave',
-}[parseInt(statusId)] || 'Unavailable');
 
 
 const leadData = ref([
@@ -143,72 +130,14 @@ const onToggleResetCap = async (active, userId, lead_id) => {
     });
 };
 
-const onToggleStatus = (status, id, userId, quote_type_code) => {
-  statusModal.data.id = id;
-  statusModal.data.userId = userId;
-  statusModal.data.quote_type_code = quote_type_code;
-
-  if (status) {
-    statusModal.data.reason = 1;
-    onStatusSubmit();
-  } else {
-    statusModal.data.reason = 3;
-    statusModal.show = true;
-  }
-};
 
 
-const statusModal = reactive({
-  show: false,
-  loader: false,
-  data: {
-    id: 0,
-    userId: 0,
-    reason: 1,
-    quote_type_code: "",
-    loader: false,
-  },
-});
 
-const onStatusSubmit = async () => {
-  statusModal.loader = true;
 
-  const item = leadData.value.find(item => item.id === statusModal.data.id);
- 
-  item.loading = true;
-  await axios
-    .post(`/lead-allocation/${statusModal.data.quote_type_code}/update-availability`, [
-      {
-        userId: statusModal.data.userId,
-        id: statusModal.data.id,
-        reason: statusModal.data.reason,
 
-      },
-    ])
-    .then(res => {
-      router.reload({
-        only: ['data'],
-        preserveScroll: true,
-        preserveState: true,
-      });
-    })
-    .finally(() => {
-      statusModal.loader = false;
-      item.loading = false;
-      statusModal.show = false;
-    });
-};
 
-const onStatusModalClose = event => {
-  const item = leadData.value.find(item => item.id === statusModal.data.id);
-  if (!event) {
-    item.reset = true;
-    setTimeout(() => {
-      item.reset = false;
-    }, 300);
-    statusModal.show = false;
-  }
-};
+
+
 
 function setQueryStringFilters() {
   let queryString = window.location.search;
@@ -359,58 +288,13 @@ onMounted(() => {
           <x-button icon="reset" size="sm" ghost @click="resetCap(id, max_capacity)" />
         </div>
       </template>
-      <template #item-is_available="{ is_available, id, userId, quote_type_code }">
-        <div class="flex flex-col gap-1.5 items-center">
-          <x-tag size="xs" :color="['emerald', 'red', 'gray', 'yellow', 'yellow', 'gray'][
-        +is_available - 1
-        ]
-        ">
-            {{ statusText(is_available) }}
-          </x-tag>
-
-          <ItemToggler v-if="hasAnyRole([
-        rolesEnum.Admin,
-        rolesEnum.LeadPool,
-        rolesEnum.Engineering,
-      ])
-        " :is-active="parseInt(leadData.find(item => item.id === id)?.status)" :id="id"
-            @toggle="onToggleStatus($event.active, id, userId, quote_type_code)"
-            :loading="leadData.find(item => item.id === id)?.loading"
-            :refresh="leadData.find(item => item.id === id)?.reset" />
-        </div>
-      </template>
-      <template #item-last_allocated="{ last_allocated }">
-        <div class="text-center">
-          {{ new Date(last_allocated * 1000).toLocaleString() }}
-        </div>
-      </template>
-      <template #item-reset_cap="{ reset_cap, userId, id }">
-        <div class="text-center">
-          <ItemToggler :is-active="reset_cap" :id="id" @toggle="onToggleResetCap($event.active, userId, id)" />
-        </div>
-      </template>
+  
+   
+      
 
     </DataTable>
 
-    <x-modal v-model="statusModal.show" show-close backdrop @update:model-value="onStatusModalClose($event)">
-      <template #header> Select Reason of Unavailability </template>
-      <x-select placeholder="Select Reason" :options="[
-        { value: 3, label: 'Temp. Unavailable' },
-        { value: 4, label: 'Sick' },
-        { value: 5, label: 'On Leave' },
-      ]" class="w-full mb-28" v-model="statusModal.data.reason" />
-
-      <template #actions>
-        <div class="text-right space-x-4">
-          <x-button size="sm" ghost @click.prevent="onStatusModalClose(false)">
-            Cancel
-          </x-button>
-          <x-button size="sm" color="primary" :loading="statusModal.loader" @click="onStatusSubmit">
-            Submit
-          </x-button>
-        </div>
-      </template>
-    </x-modal>
+    
 
     <Pagination :links="{
         next: props.allocations_leads.next_page_url,

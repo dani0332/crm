@@ -1,11 +1,11 @@
 <script setup>
 
+
+
+
 const props = defineProps({
   lead: { type: Object, default: null },
-  quoteTypes:{
-    type: Object,
-    default: () => {},
-  },
+
   advisors: {
     type: Object,
     default: () => {},
@@ -13,6 +13,12 @@ const props = defineProps({
 
 });
 const editMode = computed(() => (props.lead ? true : false));
+const quoteTypes = ref([]);
+const loader = reactive({
+  submit: false,
+  table: false,
+});
+
 const { isRequired } = useRules();
 const isEmptyField = ref(false);
 const leadForm = useForm({
@@ -23,6 +29,30 @@ const leadForm = useForm({
     is_available: props.lead?.is_available,
 
 });
+
+watch(() => leadForm?.user_id, async (user_id) => { 
+   // Watch for changes in user_id
+   if (user_id) {
+    
+     await getAdvisorByQuoteType(user_id); // Call the function to fetch advisors
+   }
+});
+
+
+
+const getAdvisorByQuoteType = async (id) => {
+  quoteTypes.value = [];
+  try {
+    const response = await axios.get(`/advisor-by-quotetype/${id}`);
+   
+    quoteTypes.value = response.data.quoteTypes;
+    
+  } catch (error) {
+    console.error('Error fetching advisors:', error);
+
+   
+  }
+};
 
  const onSubmit = (isValid) => {
   
@@ -74,7 +104,9 @@ const leadForm = useForm({
         <x-field label="Advisors" required>
         <x-select
             v-model="leadForm.user_id"
+          
             :rules="[isRequired]"
+          
             :options="
               props.advisors?.map(item => ({
                 value: item.id,
@@ -85,12 +117,14 @@ const leadForm = useForm({
             :error="leadForm.errors.user_id"
           />
           </x-field>
-        <x-field label="Quote Type" required>
+        <x-field v-if="quoteTypes.length > 0"  label="Quote Type" required>
+       
           <x-select
             v-model="leadForm.quote_type_id"
+            
             :rules="[isRequired]"
             :options="
-              props.quoteTypes.map(item => ({
+             quoteTypes?.map(item => ({
                 value: item.id,
                 label: item.code,
               }))
@@ -106,19 +140,11 @@ const leadForm = useForm({
             v-model="leadForm.max_capacity"
             type="number"
             :rules="[isRequired]"
+            min="-1"
             class="w-full"
             :error="leadForm.errors.max_capacity"
           />
         </x-field>
-        <!-- <x-field label="Is Available" >
-        <x-checkbox
-          color="emerald"
-          size="xl"
-          v-model="leadForm.is_available"
-        
-          
-        />
-        </x-field> -->
       </div>
 
       <x-divider class="my-4" />

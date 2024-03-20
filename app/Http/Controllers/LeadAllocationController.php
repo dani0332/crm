@@ -10,6 +10,7 @@ use App\Enums\TeamTypeEnum;
 use App\Enums\quoteTypeCode;
 use Illuminate\Http\Request;
 use App\Enums\UserStatusEnum;
+use App\Services\UserService;
 use App\Models\LeadAllocation;
 use App\Events\UserStatusChanged;
 use App\Jobs\ReAssignCarLeadsJob;
@@ -268,7 +269,7 @@ class LeadAllocationController extends Controller
     
 
     public function showLeadAllocations(Request $request){
-         if (Gate::allows('advisors-lead-allocation-caps', auth()->user())) {
+         if (Gate::allows('advisor-capacity', auth()->user())) {
             $data = $this->leadAllocationService->getAllocationLeads();
             $quoteTypes = QuoteTypeRepository::GetList();
     
@@ -331,11 +332,11 @@ class LeadAllocationController extends Controller
     }
 
     public function createLeadAllocation(Request $request){
-        
-        $quoteTypes = QuoteTypeRepository::GetList();
+      
+
          
         return inertia('LeadAllocation/CreateAdvisorsLeadCaps', [
-            'quoteTypes' => $quoteTypes,
+         
             'advisors'=> $this->getHealthAndMotorAdvisorsList(),
         ]);
     }
@@ -357,6 +358,15 @@ class LeadAllocationController extends Controller
         }
 
         return  redirect(route('lead.allocations.index'))->with('message', 'Advisor capacity assigned successfully');
+    }
+
+    public function getAdvisorByQuoteType($user_id){
+
+    $user =$this->getUserProducts($user_id);
+    $quote_types_names = collect( $user)->pluck('name');
+    $quoteTypes = QuoteTypeRepository::GetList();
+    $quoteTypes = collect($quoteTypes)->whereIn('code',$quote_types_names);
+    return response()->json(['quoteTypes'=>$quoteTypes]);
     }
 
 }

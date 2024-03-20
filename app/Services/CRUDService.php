@@ -406,35 +406,7 @@ class CRUDService extends BaseService
     }
 
 
-    public function fetchOnlyMotorEligibleAdvisorsForHealth($users){
-        info('Fetching only eligible motor advisors for health');
-        $allowed_teams = [TeamNameEnum::RENEWALS,TeamNameEnum::BDM,TeamNameEnum::SBDM];
-        $motor_advisor_roles = [RolesEnum::CarAdvisor,RolesEnum::CarRenewalAdvisor,RolesEnum::CarNewBusinessAdvisor];
-        $finalEligibleUsers = [];
-
-        foreach ($users as $key => $user) {
-            $userRolesAndTeams = checkForRoleOrTeam($user->id, 'both');  // Fetch roles and teams in one go
-                $roles = $userRolesAndTeams['roles'];
-                $teams = $userRolesAndTeams['teams'];
-
-                // Check for matching roles
-                $matchingRoles = collect($roles)->pluck('name')->intersect($motor_advisor_roles);
-
-                // Check for matching teams
-                $isValidTeam = isValidTeamForLOBAdvisor($teams, $allowed_teams);
-               
-                if($matchingRoles->isNotEmpty() && $isValidTeam)
-                {
-                   
-                    $finalEligibleUsers [] = $user;
-                }
-
-        }
-        info('Final eligible users after filtering for motor advisors: ');
-     
-        return $finalEligibleUsers;
-    }
-
+  
     public function getRenewalAdvisorsByModelType($modelType)
     {
         $query = DB::table('users as u')

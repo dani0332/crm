@@ -244,5 +244,5 @@ final class PermissionsEnum extends Enum
     public const EXPORT_MAKES_MODELS = 'export-makes-models';
     public const HEALTH_QUOTES_MANAGER_ACCESS = 'health-quotes-manager-access';
     public const HEALTH_QUOTES_ACCESS = 'health-quotes-access';
-    public const ADVISOR_CAPACITY_MANAGEMENT = 'advisor-capacity-management';
+    public const ADVISOR_CAPACITY_MANAGEMENT = 'advisor-capacity';
 }

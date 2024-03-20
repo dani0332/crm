@@ -266,16 +266,14 @@ class CRUDController extends Controller
             $yesterdayAllocationData = $this->allocationService->getHealthYesterdayCounts(auth()->user()->id);
             $yesterdayAutoCount = $yesterdayAllocationData['auto_assignment_count'];
             $yesterdayManualCount = $yesterdayAllocationData['manual_assignment_count'];
-            $motor_advisors = $this->crudService->getAdvisorsByModelType(QuoteTypes::CAR->value);
-            $eligible_advisors = $this->crudService->fetchOnlyMotorEligibleAdvisorsForHealth($motor_advisors);
-            $merge_advisors = collect([$advisors,$eligible_advisors])->collapse()->unique()->all();
+            
         
          
       
             return inertia('HealthQuote/Index', [
                 'quotes' => $gridData,
                 'leadStatuses' => $quote_status,
-                'advisors' => $merge_advisors,
+                'advisors' => $advisors,
                 'teams' => $teams,
                 'userMaxCap' => $userMaxCap,
                 'todayAutoCount' => $todayAutoCount,

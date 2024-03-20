@@ -234,6 +234,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::get('/create-lead-allocation',[LeadAllocationController::class, 'createLeadAllocation'])->name('lead.allocations.create');
     Route::delete('/delete-lead-allocation',[LeadAllocationController::class, 'deleteLeadAllocation'])->name('lead.allocations.delete');
     Route::post('/update-cap/lead-allocation', [LeadAllocationController::class, 'updateCapsLeadAllocation']);
+    Route::get('/advisor-by-quotetype/{user_id}',[LeadAllocationController::class, 'getAdvisorByQuoteType'])->name('lead.allocations.advisor-quotestype');
 
     Route::post('/lead-allocation/{quoteType}/update-availability', [LeadAllocationController::class, 'updateAvailability']);
     Route::post('/lead-allocation/{quoteType}/update-cap', [LeadAllocationController::class, 'updateCaps']);
