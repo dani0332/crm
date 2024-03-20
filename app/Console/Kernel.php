@@ -68,7 +68,7 @@ class Kernel extends ConsoleKernel
 
         $schedule->command('QuoteSyncUpdate:cron')->everyFiveMinutes()->onOneServer()->withoutOverlapping(1);
 
-        $schedule->command('MigrateOldPayments:cron')->once();
+        $schedule->command('MigrateOldPayments:cron');
 
     }
 

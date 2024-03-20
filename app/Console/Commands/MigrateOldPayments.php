@@ -40,6 +40,9 @@ class MigrateOldPayments extends Command
             quoteTypeCode::Bike, quoteTypeCode::Business, quoteTypeCode::Life,
         ];
         $thirtyDaysOldDate = Carbon::now()->subDays(30)->startOfDay(); // 30 days old date
+        $thirtyDaysOldDate = '2024-03-15 00:00:00'; //For Testing
+        
+        
         Log::info('MigratePaymentCronDate:: Payment Migration Starts: '.$thirtyDaysOldDate);
         $totalMigrationCount = 0;
         foreach ($allModelTypes as $modelType) {
