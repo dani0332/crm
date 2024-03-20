@@ -35,6 +35,10 @@ class AdvisorConversionReportService extends BaseService
 
     public function getReportData($request)
     {
+        $lob = $request->lob ?? quoteTypeCode::Car;
+        $lob = $lob === quoteTypeCode::GroupMedical ? quoteTypeCode::Business : $lob;
+        $lobId = quoteTypeRepository::where('code', $lob)->first();
+
         $query = PersonalQuote::query()
             ->select(
                 'users.id as advisorId',
@@ -58,6 +62,7 @@ class AdvisorConversionReportService extends BaseService
             ->join('quote_batches', 'quote_batches.id', 'personal_quotes.quote_batch_id')
             ->join('personal_quote_details', 'personal_quote_details.personal_quote_id', 'personal_quotes.id')
             ->where('personal_quotes.source', '!=', LeadSourceEnum::RENEWAL_UPLOAD)
+            ->where('personal_quotes.quote_type_id', $lobId->id)
             ->where('users.is_active', true)
             ->groupBy('personal_quotes.advisor_id' ,'personal_quotes.quote_batch_id'
             )
