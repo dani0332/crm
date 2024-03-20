@@ -41,6 +41,8 @@ class DatabaseSeeder extends Seeder
             //            EmbeddedProductRoleAndPermissionSeeder::class,
             //            addDubaiNowLeadSourceExemptionInAppStorage::class,
             LookupSeeder::class,
+            GenericPermissionSeeder::class,
+            HealthPlanTableElibilityIdSeeder::class,
             addDubaiNowEmailGroup::class,
             DubaiLeadSource::class,
             //            AddNewDocumentTypesSeeder::class,
