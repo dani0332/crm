@@ -1215,13 +1215,6 @@ class HealthQuoteService extends BaseService
         
         $newAdvisorAllocationRecord = $this->leadAllocationService->getLeadAllocationRecordByUserId($newAdvisorId, $quote_type_id);
         
-        if(empty($newAdvisorAllocationRecord)){
-
-            $this->leadAllocationService->createLeadAllocationRecord($newAdvisorId, $quote_type_id);
-            
-            $newAdvisorAllocationRecord = $this->leadAllocationService->getLeadAllocationRecordByUserId($newAdvisorId, $quote_type_id);
-        }
-
    
         // Update allocation counts for the new advisor (if applicable)
         $this->updateAllocationCountsForNewAdvisor($newAdvisorAllocationRecord, $lead, $systemAssignedTypes);

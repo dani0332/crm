@@ -1747,13 +1747,6 @@ class CarQuoteService extends BaseService
         // Get the allocation record for the new advisor
         $newAdvisorAllocationRecord = $this->leadAllocationService->getLeadAllocationRecordByUserId($newAdvisorId, $quote_type_id);
     
-        if(empty($newAdvisorAllocationRecord)){
-
-            $this->leadAllocationService->createLeadAllocationRecord($newAdvisorId, $quote_type_id);
-            
-            $newAdvisorAllocationRecord = $this->leadAllocationService->getLeadAllocationRecordByUserId($newAdvisorId, $quote_type_id);
-        }
-
         // Update allocation counts for the new advisor only if its different from previous advisor
        
         if ($newAdvisorId !== $previousAdvisorId) {

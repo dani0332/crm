@@ -231,6 +231,7 @@ class CRUDController extends Controller
         // Getting the data for grid based on the model type
         $gridData = $this->crudService->getGridData($this->genericModel, $request);
         // Getting the data for the advisor dropdown based on the model type
+       
         $advisors = $this->crudService->getAdvisorsByModelType($this->genericModel->modelType);
         // Get user teams
         $teams = $this->crudService->getUserTeams(Auth::user()->id);
@@ -265,11 +266,16 @@ class CRUDController extends Controller
             $yesterdayAllocationData = $this->allocationService->getHealthYesterdayCounts(auth()->user()->id);
             $yesterdayAutoCount = $yesterdayAllocationData['auto_assignment_count'];
             $yesterdayManualCount = $yesterdayAllocationData['manual_assignment_count'];
-
+            $motor_advisors = $this->crudService->getAdvisorsByModelType(QuoteTypes::CAR->value);
+            $eligible_advisors = $this->crudService->fetchOnlyMotorEligibleAdvisorsForHealth($motor_advisors);
+            $merge_advisors = collect([$advisors,$eligible_advisors])->collapse()->unique()->all();
+        
+         
+      
             return inertia('HealthQuote/Index', [
                 'quotes' => $gridData,
                 'leadStatuses' => $quote_status,
-                'advisors' => $advisors,
+                'advisors' => $merge_advisors,
                 'teams' => $teams,
                 'userMaxCap' => $userMaxCap,
                 'todayAutoCount' => $todayAutoCount,
@@ -1309,6 +1315,7 @@ class CRUDController extends Controller
             return redirect()->back()->with('error', $isValidRequest);
         }
         $assignedUser = $this->userService->getUserById((int) $request->assigned_to_id_new);
+       
         if (! $assignedUser) {
             return Redirect::back()->with('message', 'Selected advisor does not exist in the system!');
         }
@@ -1317,6 +1324,7 @@ class CRUDController extends Controller
         if (count($assignmentResult) > 0) {
             $msg = '';
             foreach ($assignmentResult as $assignmentResultItem) {
+                
                 $msg = $msg.' Lead with Ref-ID'.$assignmentResultItem['leadId'].' is not assigned, Reason : '.$assignmentResultItem['msg'].' <br>';
             }
             Log::warning('Manual Lead Assignment Failed for '.$request->modelType.' Quote , selected id was '.$request->selectTmLeadId);

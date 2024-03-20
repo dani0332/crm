@@ -2,36 +2,38 @@
 
 namespace App\Services;
 
-use App\Enums\ApplicationStorageEnums;
-use App\Enums\AssignmentTypeEnum;
-use App\Enums\CarPlanType;
-use App\Enums\InsuranceProvidersEnum;
-use App\Enums\LeadSourceEnum;
-use App\Enums\QuoteStatusEnum;
-use App\Enums\RuleTypeEnum;
-use App\Enums\TeamNameEnum;
-use App\Enums\TiersEnum;
-use App\Enums\UserStatusEnum;
-use App\Models\CarMake;
-use App\Models\CarModel;
-use App\Models\CarQuote;
-use App\Models\CarQuotePlanDetail;
-use App\Models\CarQuoteRequestDetail;
-use App\Models\CommercialKeyword;
-use App\Models\InsuranceProvider;
-use App\Models\LeadAllocation;
-use App\Models\LeadSource;
-use App\Models\QuoteBatches;
+use Carbon\Carbon;
 use App\Models\Rule;
-use App\Models\RuleLeadSource;
 use App\Models\Team;
 use App\Models\Tier;
-use App\Models\TierUser;
 use App\Models\User;
+use App\Models\CarMake;
+use App\Enums\TiersEnum;
+use App\Models\CarModel;
+use App\Models\CarQuote;
+use App\Models\TierUser;
+use App\Enums\QuoteTypes;
+use App\Models\QuoteType;
 use App\Models\UserTeams;
-use Carbon\Carbon;
+use App\Enums\CarPlanType;
+use App\Models\LeadSource;
+use App\Enums\RuleTypeEnum;
+use App\Enums\TeamNameEnum;
+use App\Models\QuoteBatches;
+use App\Enums\LeadSourceEnum;
+use App\Enums\UserStatusEnum;
+use App\Enums\QuoteStatusEnum;
+use App\Models\LeadAllocation;
+use App\Models\RuleLeadSource;
+use App\Enums\AssignmentTypeEnum;
+use App\Models\CommercialKeyword;
+use App\Models\InsuranceProvider;
+use App\Models\CarQuotePlanDetail;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use App\Enums\InsuranceProvidersEnum;
+use App\Models\CarQuoteRequestDetail;
+use App\Enums\ApplicationStorageEnums;
 
 class CarAllocationService extends AllocationService
 {
@@ -248,6 +250,7 @@ class CarAllocationService extends AllocationService
             })
             ->whereIn('user_id', $tierUserIds)
             ->whereNotIn('user_id', $excludedUserIds)
+            ->where('quote_type_id', QuoteTypes::CAR->id())
             ->orderBy('last_allocated');
 
         // Exclude a specific advisor if an advisor ID is provided.
@@ -412,7 +415,7 @@ class CarAllocationService extends AllocationService
         info('Updating user record in lead allocation table with count increment for User ID: '.$userId);
 
         // Depending on the assignment type, either add or adjust allocation counts.
-        $assignmentType == AssignmentTypeEnum::SYSTEM_ASSIGNED ? $this->addAllocationCounts($userId) : $this->adjustAllocationCounts($userId, $lead, $previousUserId, $previousAdvisorAssignedDate, $previousAssignmentType);
+        $assignmentType == AssignmentTypeEnum::SYSTEM_ASSIGNED ? $this->addAllocationCounts($userId, QuoteTypes::CAR->id()) : $this->adjustAllocationCounts($userId, $lead, $previousUserId, $previousAdvisorAssignedDate, $previousAssignmentType, QuoteTypes::CAR->id());
 
         info('Completed assignment of lead, and lead count update is done for quote with code: '.$carQuote->code);
     }

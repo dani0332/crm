@@ -2,34 +2,35 @@
 
 namespace App\Services;
 
-use App\Enums\GenericRequestEnum;
-use App\Enums\HealthTeamType;
 use App\Enums\Kyc;
+use Carbon\Carbon;
+use App\Facades\Ken;
+use App\Models\User;
+use App\Jobs\CammyJob;
+use App\Enums\RolesEnum;
+use App\Facades\Marshall;
+use App\Models\QuoteType;
+use App\Enums\QuoteTypeId;
+use App\Enums\TeamNameEnum;
+use App\Jobs\IntroEmailJob;
+use App\Enums\quoteTypeCode;
+use App\Models\GenericModel;
+use Illuminate\Http\Request;
+use App\Enums\HealthTeamType;
+use App\Models\PaymentAction;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
-use App\Enums\quoteTypeCode;
-use App\Enums\QuoteTypeId;
-use App\Enums\RolesEnum;
-use App\Facades\Ken;
-use App\Facades\Marshall;
-use App\Jobs\CammyJob;
-use App\Jobs\CarLost\CarLostStatusRejected;
-use App\Jobs\IntroEmailJob;
+use App\Models\QuoteStatusLog;
 use App\Jobs\SyncSIBContactJob;
 use App\Models\CarLostQuoteLog;
-use App\Models\EmbeddedProductOption;
-use App\Models\EmbeddedTransaction;
-use App\Models\GenericModel;
-use App\Models\PaymentAction;
-use App\Models\QuoteStatusLog;
-use App\Models\QuoteType;
-use App\Models\User;
-use App\Traits\GenericQueriesAllLobs;
+use App\Enums\GenericRequestEnum;
 use App\Traits\TeamHierarchyTrait;
-use Carbon\Carbon;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use App\Models\EmbeddedTransaction;
+use Illuminate\Support\Facades\Auth;
+use App\Models\EmbeddedProductOption;
+use App\Traits\GenericQueriesAllLobs;
+use App\Jobs\CarLost\CarLostStatusRejected;
 
 class CRUDService extends BaseService
 {
@@ -402,6 +403,36 @@ class CRUDService extends BaseService
         }
 
         return $query->orderBy('r.name')->distinct()->get();
+    }
+
+
+    public function fetchOnlyMotorEligibleAdvisorsForHealth($users){
+        info('Fetching only eligible motor advisors for health');
+        $allowed_teams = [TeamNameEnum::RENEWALS,TeamNameEnum::BDM,TeamNameEnum::SBDM];
+        $motor_advisor_roles = [RolesEnum::CarAdvisor,RolesEnum::CarRenewalAdvisor,RolesEnum::CarNewBusinessAdvisor];
+        $finalEligibleUsers = [];
+
+        foreach ($users as $key => $user) {
+            $userRolesAndTeams = checkForRoleOrTeam($user->id, 'both');  // Fetch roles and teams in one go
+                $roles = $userRolesAndTeams['roles'];
+                $teams = $userRolesAndTeams['teams'];
+
+                // Check for matching roles
+                $matchingRoles = collect($roles)->pluck('name')->intersect($motor_advisor_roles);
+
+                // Check for matching teams
+                $isValidTeam = isValidTeamForLOBAdvisor($teams, $allowed_teams);
+               
+                if($matchingRoles->isNotEmpty() && $isValidTeam)
+                {
+                   
+                    $finalEligibleUsers [] = $user;
+                }
+
+        }
+        info('Final eligible users after filtering for motor advisors: ');
+     
+        return $finalEligibleUsers;
     }
 
     public function getRenewalAdvisorsByModelType($modelType)

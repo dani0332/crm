@@ -18,6 +18,7 @@ use App\Jobs\ReAssignHealthLeadsJob;
 use Illuminate\Support\Facades\Gate;
 use App\Services\CarAllocationService;
 use App\Services\LeadAllocationService;
+use App\Repositories\QuoteTypeRepository;
 use App\Services\HealthAllocationService;
 use App\Services\ApplicationStorageService;
 
@@ -226,7 +227,14 @@ class LeadAllocationController extends Controller
     public function updateResetCapSwitch(Request $request)
     {
         if (isset($request->resetCap)) {
-            $leadAllocationObj = LeadAllocation::with(['leadAllocationUser'])->where('user_id', $request->userId)->first();
+            $leadAllocationObj = LeadAllocation::latest()->with(['leadAllocationUser']);
+            if(isset($request->lead_id)){
+                $leadAllocationObj =  $leadAllocationObj->where('id',$request->lead_id);
+            }
+            else {
+                $leadAllocationObj =  $leadAllocationObj->where('user_id', $request->userId);
+            }
+            $leadAllocationObj = $leadAllocationObj->first();
             $leadAllocationObj->reset_cap = (int) $request->resetCap;
             $leadAllocationObj->save();
             info('Updated reset cap flag of user : '.$leadAllocationObj->leadAllocationUser->email.' to '.(int) $request->resetCap.' by user : '.auth()->user()->email);
@@ -257,4 +265,98 @@ class LeadAllocationController extends Controller
     {
         return $this->leadAllocationService->getTierUsersWithLeadAllocationRecord($tierId);
     }
+    
+
+    public function showLeadAllocations(Request $request){
+         if (Gate::allows('advisors-lead-allocation-caps', auth()->user())) {
+            $data = $this->leadAllocationService->getAllocationLeads();
+            $quoteTypes = QuoteTypeRepository::GetList();
+    
+          
+      
+            return inertia('LeadAllocation/AdvisorsLeadCaps', [
+                'quoteTypes' => $quoteTypes,
+                'allocations_leads' =>  $data,
+                'advisors'=> $this->getHealthAndMotorAdvisorsList(),
+            ]);
+        } else {
+            abort(403, 'Unauthorized action.');
+        }
+    }
+
+    public function storeLeadAllocation(Request $request){
+      
+       $validateDate =(object) $request->validate([
+            'quote_type_id' => 'required',
+            'user_id' => 'required',
+            'max_capacity' => 'required|integer',
+            
+        ]);
+
+        $is_lead = $this->leadAllocationService->getLeadAllocationRecordByUserId($request->user_id,$request->quote_type_id);
+       
+        if(!empty($is_lead))
+           return back()->with('error','Advisor already has an assigned capacity value for this quote type');
+        
+        $new_lead = $this->leadAllocationService->createLeadAllocationRecord($request->user_id, $validateDate );
+      
+
+        return redirect(route('lead.allocations.index'))->with('message', 'Advisor capacity assigned successfully');
+       
+        
+    }
+    
+    public function deleteLeadAllocation($id){
+        
+        $is_delete = $this->leadAllocationService->deleteAllocationLead($id);
+        
+        if($is_delete){
+
+            return back()->with('success','Lead allocation deleted successfully');
+        }
+
+    }
+    
+
+    public function getHealthAndMotorAdvisorsList(){
+        
+        $health_advisors = $this->leadAllocationService->getAdvisorsByModelType(QuoteTypes::HEALTH->value);
+        $motor_advisors = $this->leadAllocationService->getAdvisorsByModelType(QuoteTypes::CAR->value);
+
+        $advisors_collection = collect([$health_advisors,$motor_advisors]);
+        $advisors_collapsed = $advisors_collection->collapse();
+        $advisors = $advisors_collapsed->unique()->values()->all();
+
+        return $advisors;
+    }
+
+    public function createLeadAllocation(Request $request){
+        
+        $quoteTypes = QuoteTypeRepository::GetList();
+         
+        return inertia('LeadAllocation/CreateAdvisorsLeadCaps', [
+            'quoteTypes' => $quoteTypes,
+            'advisors'=> $this->getHealthAndMotorAdvisorsList(),
+        ]);
+    }
+
+
+    public function updateCapsLeadAllocation(Request $request){
+        
+        if (isset($request->items)) {
+           
+            foreach ($request->items as $item) {
+           
+                if ($item['userId'] && $item['maxCap']) {
+                    $leadAllocationObj = LeadAllocation::with(['leadAllocationUser'])->where('user_id', $item['userId'])->first();
+                    $leadAllocationObj->max_capacity = (int) $item['maxCap'];
+                    $leadAllocationObj->save();
+                    info('Updated max cap of user : '.$leadAllocationObj->leadAllocationUser->email.' to '.(int) $item['maxCap']);
+                }
+            }
+        }
+
+        return  redirect(route('lead.allocations.index'))->with('message', 'Advisor capacity assigned successfully');
+    }
+
 }

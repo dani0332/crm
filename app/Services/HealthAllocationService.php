@@ -2,24 +2,26 @@
 
 namespace App\Services;
 
-use App\Enums\ApplicationStorageEnums;
-use App\Enums\AssignmentTypeEnum;
-use App\Enums\HealthTeamType;
-use App\Enums\LeadSourceEnum;
-use App\Enums\QuoteStatusEnum;
-use App\Enums\quoteTypeCode;
-use App\Enums\RolesEnum;
-use App\Enums\UserStatusEnum;
-use App\Jobs\CammyJob;
-use App\Jobs\GetQuotePlansJob;
-use App\Jobs\IntroEmailJob;
-use App\Mail\HealthAssignmentIssueEmail;
-use App\Models\HealthQuote;
-use App\Models\HealthQuoteRequestDetail;
+use Carbon\Carbon;
 use App\Models\Team;
 use App\Models\User;
-use Carbon\Carbon;
+use App\Jobs\CammyJob;
+use App\Enums\RolesEnum;
+use App\Enums\QuoteTypes;
+use App\Jobs\IntroEmailJob;
+use App\Models\HealthQuote;
+use App\Enums\quoteTypeCode;
+use App\Enums\HealthTeamType;
+use App\Enums\LeadSourceEnum;
+use App\Enums\UserStatusEnum;
+use App\Enums\QuoteStatusEnum;
+use App\Jobs\GetQuotePlansJob;
+use App\Enums\AssignmentTypeEnum;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
+use App\Enums\ApplicationStorageEnums;
+use App\Mail\HealthAssignmentIssueEmail;
+use App\Models\HealthQuoteRequestDetail;
 use Sammyjo20\LaravelHaystack\Models\Haystack;
 
 class HealthAllocationService extends AllocationService
@@ -96,9 +98,10 @@ class HealthAllocationService extends AllocationService
         if (! $isReassignmentJob) {
             $statusOrder[] = UserStatusEnum::UNAVAILABLE;
         }
-
+   
         foreach ($statusOrder as $status) {
             $eligibleUser = $this->getAdvisorByStatus($status, $leadTeam);
+        
             if ($eligibleUser) {
                 info('eligible user found for team : '.$leadTeam.' with status : '.$status.' and user id :'.$eligibleUser->user_id);
 
@@ -113,7 +116,7 @@ class HealthAllocationService extends AllocationService
     {
         info('trying to get advisors for team : '.$leadTeam.' with current status as '.$status);
 
-        return User::join('lead_allocation as la', 'la.user_id', '=', 'users.id')
+        return  User::join('lead_allocation as la', 'la.user_id', '=', 'users.id')
             ->join('model_has_roles as mhr', 'mhr.model_id', '=', 'users.id')
             ->join('roles as r', 'r.id', '=', 'mhr.role_id')
             ->join('teams as t', 't.id', '=', 'users.sub_team_id')
@@ -123,6 +126,7 @@ class HealthAllocationService extends AllocationService
                     ->orWhere('la.max_capacity', '=', -1);
             })
             ->whereIn('r.name', [RolesEnum::EBPAdvisor, RolesEnum::RMAdvisor])
+            ->where('la.quote_type_id', QuoteTypes::HEALTH->id())
             ->where('users.is_active', true)
             ->where('t.name', $leadTeam)
             ->orderBy('la.last_allocated', 'asc')->first();
@@ -143,7 +147,7 @@ class HealthAllocationService extends AllocationService
 
         if ($lead->source != LeadSourceEnum::REFERRAL) {
             info('lead source is not referral so about to update allocation record');
-            $assignmentType == AssignmentTypeEnum::SYSTEM_ASSIGNED ? $this->addAllocationCounts($advisor->id) : $this->adjustAllocationCounts($advisor->id, $lead, $previousUserId, $previousAdvisorAssignedDate, $previousAssignmentType);
+            $assignmentType == AssignmentTypeEnum::SYSTEM_ASSIGNED ? $this->addAllocationCounts($advisor->id, QuoteTypes::HEALTH->id()) : $this->adjustAllocationCounts($advisor->id, $lead, $previousUserId, $previousAdvisorAssignedDate, $previousAssignmentType, QuoteTypes::HEALTH->id());
         }
 
         Haystack::build()

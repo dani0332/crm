@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Enums\TiersEnum;
 use App\Models\CarQuote;
@@ -34,6 +35,7 @@ class CarLeadAllocationDashboardService extends BaseService
                 ->join('user_team', 'user_team.user_id', 'users.id')
                 ->join('teams', 'teams.id', 'user_team.team_id')
                 ->where('users.is_active', 1)
+                ->where('la.quote_type_id', QuoteTypes::CAR->id())
                 ->groupBy('users.name', 'users.id', 'la.id')
                 ->select(
                     'users.id as userId',

@@ -1,17 +1,18 @@
 <?php
 
-use App\Enums\IMCRMSearchTypesEnum;
+use Carbon\Carbon;
+use App\Models\User;
+use App\Enums\QuoteTypes;
+use App\Models\HealthQuote;
+use App\Enums\quoteTypeCode;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
-use App\Enums\quoteTypeCode;
-use App\Enums\QuoteTypes;
-use App\Models\CustomerAdditionalInfo;
-use App\Models\HealthQuote;
-use App\Services\HealthQuoteService;
-use Carbon\Carbon;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use App\Enums\IMCRMSearchTypesEnum;
+use App\Services\HealthQuoteService;
+use Illuminate\Support\Facades\Auth;
+use App\Models\CustomerAdditionalInfo;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Validation\ValidationException;
 
 if (! function_exists('generate_code')) {
@@ -663,5 +664,52 @@ if (! function_exists('apiResponse')) {
             'message' => $message,
             'status' => $statusCode,
         ], $statusCode);
+    }
+}
+
+
+if (!function_exists('checkForRoleOrTeam')) {
+    function checkForRoleOrTeam($user_id, $type)
+    {
+        $with = [];
+        switch ($type) {
+            case 'role':
+                $with[] = 'usersroles:id,name';
+                break;
+            case 'team':
+                $with[] = 'teams:id,name';
+                break;
+            case 'both':
+                $with[] = 'usersroles:id,name';
+                $with[] = 'teams:id,name';
+                break;
+        }
+
+        // Fetch user with conditional eager loading
+        $user = User::where('id', $user_id)->with($with)->first();
+
+        if ($type === 'role') {
+            return $user->usersroles;
+        } else if ($type === 'team') {
+            return $user->teams;
+        } else {
+            return [
+                'roles' => $user->usersroles,
+                'teams' => $user->teams,
+            ];
+        }
+    }
+}
+
+if (!function_exists('isValidTeamForLOBAdvisor')) {
+    function isValidTeamForLOBAdvisor($teams, $allowed_teams)
+    {
+        $teams = collect($teams)->pluck('name');
+        $matching_teams = collect($teams)->intersect($allowed_teams);
+        if ($matching_teams->isNotEmpty()) {
+
+            return true;
+        }
+        return false;
     }
 }
