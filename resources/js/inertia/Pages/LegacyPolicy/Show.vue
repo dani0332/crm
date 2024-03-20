@@ -232,7 +232,7 @@ const moveToImcrm = async policyNumber => {
           fixed-checkbox
         >
           <template #item-comment="{ comment }">
-            {{ comment ? comment : 'null' }}
+            {{ comment ? comment : '' }}
           </template>
           <template #item-date_from="{ date_from }">
               {{ formatDate(date_from) }}
