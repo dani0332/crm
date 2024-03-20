@@ -113,7 +113,7 @@ const loadManagerByTeam = async () => {
   loader.managers = true;
   try {
     let response = await axios.post('/get-team-managers', {
-      teamId: userForm.teams ?? userForm.products,
+      teamId: userForm.products,
     });
     if (response.data.length > 0) managers.value = [...response.data];
     else managers.value = [];

@@ -53,6 +53,16 @@ class InsuranceProviderRepository extends BaseRepository
         return $networks;
     }
 
+    public function fetchNetworksIdByInsuranceProvider($providerId, $network)
+    {
+        $networkId = HealthRatingEligibility::where('insurance_provider_id', $providerId)
+            ->select('id')
+            ->where('text', $network)
+            ->first();
+
+        return $networkId->id ?? 0;
+    }
+
     public function fetchIsCommercialVehicles($record)
     {
         $commercialVehicleCount = DB::table('car_make')

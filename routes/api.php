@@ -2,9 +2,9 @@
 
 use App\Http\Controllers\API\ApiController;
 use App\Http\Controllers\API\V1\CarQuoteController;
+use App\Http\Controllers\API\V1\EmbeddedProductController;
 use App\Http\Controllers\API\V1\GenericLobController;
 use App\Http\Controllers\API\V1\QuoteDocumentController;
-use App\Http\Controllers\V2\EmbeddedProductController;
 use Illuminate\Support\Facades\Route;
 
 /*

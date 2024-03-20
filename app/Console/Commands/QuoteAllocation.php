@@ -55,6 +55,7 @@ class QuoteAllocation extends Command
         if ($quoteAllocationSwitch == 1 && $masterSwitchConfigValue == 1) {
             $to = now()->subMinutes(5)->toDateTimeString();
             $chunkSize = 200;
+            info('start and end dates are : '.$allocationStartDate.' and '.$to);
             $this->executeCarAllocation(QuoteTypeId::Car, $to, $chunkSize, $allocationStartDate);
             $this->executeHealthAllocation(QuoteTypeId::Health, $to, $chunkSize, $allocationStartDate);
 
@@ -72,11 +73,13 @@ class QuoteAllocation extends Command
             ->select('uuid')
             ->whereBetween('created_at', [$allocationStartDate, $to])
             ->orderBy('created_at', 'desc')
-            ->whereIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
-            ->whereIn('source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD])
-            ->where('tier_id', '!=', TiersIdEnum::TIER_R)
+            ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
+            ->whereNotIn('source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD])
+            ->where(function ($query) {
+                $query->where('tier_id', '!=', TiersIdEnum::TIER_R)
+                    ->orWhereNull('tier_id');
+            })
             ->where('is_renewal_tier_email_sent', 0)
-            ->where('sic_flow_enabled', 0)
             ->take($chunkSize);
 
         foreach ($leads->get() as $lead) {
@@ -96,7 +99,7 @@ class QuoteAllocation extends Command
             ->select('uuid')
             ->whereBetween('created_at', [$allocationStartDate, $to])
             ->orderBy('created_at', 'desc')
-            ->where('quote_status_id', QuoteStatusEnum::Qualified)
+            ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate, QuoteStatusEnum::Lost])
             ->where('health_quote_request.price_starting_from', '!=', null)
             ->where('health_quote_request.is_error_email_sent', 0)
             ->where('health_quote_request.advisor_id', null)

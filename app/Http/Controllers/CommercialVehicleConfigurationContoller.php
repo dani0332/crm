@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\PermissionsEnum;
 use App\Http\Requests\CommercialVehicleConfigurationRequest;
 use App\Models\CarMake;
 use App\Services\CommercialVehicleConfigurationService;
@@ -10,7 +11,8 @@ use Yajra\DataTables\DataTables;
 
 class CommercialVehicleConfigurationContoller extends Controller
 {
-    protected $commercialVehicleConfigurationService;
+    private $commercialVehicleConfigurationService;
+
     /**
      * Display a listing of the resource.
      *
@@ -18,12 +20,15 @@ class CommercialVehicleConfigurationContoller extends Controller
      */
     public function __construct(CommercialVehicleConfigurationService $commercialVehicleConfigurationService)
     {
-        $this->middleware('auth');
+        $this->middleware(
+            ['permission:'.PermissionsEnum::CONFIGURE_COMMERCIAL_VEHICLES],
+            ['only' => ['index', 'create', 'store', 'edit', 'update', 'show']]
+        );
         $this->commercialVehicleConfigurationService = $commercialVehicleConfigurationService;
     }
 
     /**
-     * get resource grid view function
+     * get resource grid view function.
      *
      * @return void
      */
@@ -107,7 +112,7 @@ class CommercialVehicleConfigurationContoller extends Controller
     }
 
     /**
-     * update resource function
+     * update resource function.
      *
      * @param  Request  $request
      * @param  int  $id
@@ -118,6 +123,5 @@ class CommercialVehicleConfigurationContoller extends Controller
         $attributes = $request->validated();
 
         return $this->commercialVehicleConfigurationService->update($attributes);
-
     }
 }
