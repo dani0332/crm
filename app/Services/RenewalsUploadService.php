@@ -768,7 +768,7 @@ class RenewalsUploadService
                 'email' => $customerData['email'],
                 'mobile_no' => $customerData['mobile_no'],
                 'uuid' => $quoteUuid,
-                'code' => $renewalQuoteProcess->quote_type.'-'.$quoteUuid,
+                'code' => strtoupper($renewalQuoteProcess->quote_type).'-'.$quoteUuid,
                 'source' => 'Renewal_upload',
                 'additional_notes' => $data['notes'].$customerData['notes'],
                 'advisor_id' => $advisorId,
