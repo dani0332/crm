@@ -3,7 +3,6 @@
 namespace Database\Seeders;
 
 use App\Models\ApplicationStorage;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class addSICWorkflow extends Seeder

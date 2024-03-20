@@ -65,11 +65,10 @@ class HandleCarAdvisorUpdated
 
             // We need to trigger stop workflow event for SIC if the lead is in SIC workflow
             $sicEventName = ApplicationStorage::where('key_name', 'SIC_END_WORKFLOW_NAME')->first();
-            if($sicEventName){
+            if ($sicEventName) {
                 SIBService::createWorkflowEvent($sicEventName->value, $lead);
                 info('SIC workflow stopped for lead uuid : '.$lead->uuid);
-            }
-            else{
+            } else {
                 info('SIC workflow key not found');
             }
 

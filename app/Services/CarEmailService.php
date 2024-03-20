@@ -51,13 +51,13 @@ class CarEmailService extends BaseService
         if ($triggerSICWorkFlow) {
             if (! $lead->sic_flow_enabled) {
                 $sicEventName = ApplicationStorage::where('key_name', 'SIC_WORKFLOW_NAME')->first();
-                if($sicEventName){
+                if ($sicEventName) {
                     $apiResponse = SIBService::createWorkflowEvent($sicEventName->value, $lead, [], $emailData);
                     $lead->sic_flow_enabled = true;
                     $lead->save();
                     info('SIC workflow event triggered for lead: '.$lead->uuid.' and sic_flow_enabled: '.$lead->sic_flow_enabled);
                     info('SIC workflow response: '.$apiResponse);
-                }else{
+                } else {
                     info('SIC workflow key not found');
                 }
 
