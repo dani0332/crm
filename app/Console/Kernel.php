@@ -79,7 +79,7 @@ class Kernel extends ConsoleKernel
             ->onOneServer()
             ->withoutOverlapping(1);
 
-        $schedule->command('MigrateOldPayments:cron');
+        //$schedule->command('MigrateOldPayments:cron');
 
     }
 
