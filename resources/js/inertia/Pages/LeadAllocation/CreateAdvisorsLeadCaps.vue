@@ -33,7 +33,8 @@ const leadForm = useForm({
 watch(() => leadForm?.user_id, async (user_id) => { 
    // Watch for changes in user_id
    if (user_id) {
-    
+     
+     quoteTypes.value = [];
      await getAdvisorByQuoteType(user_id); // Call the function to fetch advisors
    }
 });
@@ -41,16 +42,17 @@ watch(() => leadForm?.user_id, async (user_id) => {
 
 
 const getAdvisorByQuoteType = async (id) => {
-  quoteTypes.value = [];
+
   try {
+    
     const response = await axios.get(`/advisor-by-quotetype/${id}`);
    
     quoteTypes.value = response.data.quoteTypes;
-    
+
   } catch (error) {
+
     console.error('Error fetching advisors:', error);
 
-   
   }
 };
 

@@ -365,7 +365,8 @@ class LeadAllocationController extends Controller
     $user =$this->getUserProducts($user_id);
     $quote_types_names = collect( $user)->pluck('name');
     $quoteTypes = QuoteTypeRepository::GetList();
-    $quoteTypes = collect($quoteTypes)->whereIn('code',$quote_types_names);
+    $quoteTypes = collect($quoteTypes)->whereIn('code',$quote_types_names)->values();
+
     return response()->json(['quoteTypes'=>$quoteTypes]);
     }
 
