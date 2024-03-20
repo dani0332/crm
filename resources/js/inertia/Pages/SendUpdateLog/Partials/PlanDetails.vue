@@ -134,8 +134,8 @@ const onUpdate = () => {
         <div class="text-sm">
           <dl class="grid md:grid-cols-2 gap-y-4">
             <!-- price VAT not applicable -->
-            <div class="grid sm:grid-cols-2">
-              <dt>
+            <div class="grid sm:grid-cols-2 gap-2">
+              <dt class="flex justify-end">
                 <x-tooltip position="left">
                   <label
                     class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
@@ -165,13 +165,13 @@ const onUpdate = () => {
               </dd>
             </div>
 
-            <div class="grid sm:grid-cols-2 ml-[-250px]">
+            <div class="grid sm:grid-cols-2 gap-2">
               <template
                 v-if="
                   isPlanDetails && selectedCategory.subCategory.slug !== 'CPD'
                 "
               >
-                <dt class="text-right mr-10">
+                <dt class="flex justify-end">
                   <x-tooltip position="left">
                     <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
@@ -201,8 +201,8 @@ const onUpdate = () => {
             </div>
 
             <!-- price VAT applicable -->
-            <div class="grid sm:grid-cols-2">
-              <dt class="text-right mr-10">
+            <div class="grid sm:grid-cols-2 gap-2">
+              <dt class="flex justify-end">
                 <x-tooltip position="left">
                   <label
                     class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
@@ -236,13 +236,13 @@ const onUpdate = () => {
             </div>
 
             <!-- Quote number -->
-            <div class="grid sm:grid-cols-2 ml-[-250px]">
+            <div class="grid sm:grid-cols-2 gap-2">
               <template
                 v-if="
                   isPlanDetails && selectedCategory.subCategory.slug !== 'CPD'
                 "
               >
-                <dt class="text-right mr-10">
+                <dt class="flex justify-end">
                   <x-tooltip position="left">
                     <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
@@ -266,14 +266,14 @@ const onUpdate = () => {
                 </dd>
               </template>
               <template v-else>
-                <dt class="font-bold text-right mr-10"></dt>
+                <dt class="font-bold"></dt>
                 <dd></dd>
               </template>
             </div>
 
             <!-- Total price -->
-            <div class="grid sm:grid-cols-2">
-              <dt class="text-right mr-10">
+            <div class="grid sm:grid-cols-2 gap-2">
+              <dt class="flex justify-end">
                 <x-tooltip position="left">
                   <label
                     class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
