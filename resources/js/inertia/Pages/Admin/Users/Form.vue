@@ -57,6 +57,13 @@ const userForm = useForm({
       : true,
   primary_product: props.userProductIds ? props?.userProductIds[0] : null,
   permissions: props?.userPermissions ?? null,
+  calendar_link: props.calendar_link ?? null,
+  phone_calendar_link: props.phone_calendar_link ?? null,
+});
+
+const isAdvisor = computed(() => {
+  const regex = /\badvisor|ADVISOR\b/i;
+  return userForm.roles.some(role => regex.test(role));
 });
 
 const isEdit = computed(() => {
@@ -166,11 +173,6 @@ function onSubmit(isValid) {
         });
       },
       onSuccess: response => {
-        console.log(response);
-        // notification.success({
-        //   title: response.message,
-        //   position: 'top',
-        // });
         userForm.reset();
       },
     });
@@ -216,14 +218,6 @@ onMounted(() => setInitialState());
       width="150"
     />
   </div>
-  <!-- <div class="grid sm:grid-cols-1 justify-center my-2" v-if="isEdit">
-    <x-toggle
-      class="mx-auto"
-      size="xs"
-      v-model="userForm.is_active"
-      color="primary"
-    />
-  </div> -->
   <x-form @submit="onSubmit" :auto-focus="false">
     <div class="grid sm:grid-cols-2 gap-4">
       <x-field label="NAME" required>
@@ -263,19 +257,6 @@ onMounted(() => setInitialState());
         />
       </x-field>
       <x-field label="ROLES" required>
-        <!-- <x-select
-          :multiple="true"
-          :options="
-            roles.map(item => ({
-              value: item.id,
-              label: item.text,
-            }))
-          "
-          class="w-full"
-          :rules="[isRequired]"
-          v-model="userForm.roles"
-          placeholder="Select role"
-        /> -->
         <ComboBox
           v-model="userForm.roles"
           :options="
@@ -303,21 +284,6 @@ onMounted(() => setInitialState());
           @update:modelValue="loadTeamsByProduct($event), loadManagerByTeam()"
           autocomplete
         />
-
-        <!-- <x-select
-          :multiple="true"
-          :options="
-            props.products.map(item => ({
-              value: item.id,
-              label: item.name,
-            }))
-          "
-          class="w-full"
-          :rules="[isRequired]"
-          v-model="userForm.products"
-          placeholder="Select products"
-          @update:modelValue="loadTeamsByProduct($event), loadManagerByTeam()"
-        /> -->
       </x-field>
       <x-field label="TEAMS" required>
         <ComboBox
@@ -329,17 +295,6 @@ onMounted(() => setInitialState());
           @update:modelValue="loadSubTeams($event)"
           autocomplete
         />
-
-        <!-- <x-select
-          :multiple="true"
-          v-model="userForm.teams"
-          :options="computedTeams"
-          :loading="loader.teamLoader"
-          :rules="[isRequired]"
-          class="w-full"
-          placeholder="Select teams for MyLeads Tab visiblity"
-          @update:modelValue="loadSubTeams($event)"
-        /> -->
       </x-field>
       <x-field label="SUB TEAM">
         <x-select
@@ -377,19 +332,6 @@ onMounted(() => setInitialState());
           class="w-full"
           autocomplete
         />
-
-        <!-- <x-select
-          :multiple="true"
-          v-model="userForm.permissions"
-          :options="
-            props.permissions.map(x => ({
-              value: x.id,
-              label: x.name,
-            }))
-          "
-          class="w-full"
-          placeholder="Select premissions"
-        /> -->
       </x-field>
       <x-field label="ACTIVE">
         <x-select
@@ -414,20 +356,32 @@ onMounted(() => setInitialState());
           :loading="loader.managers"
           autocomplete
         />
-
-        <!-- <x-select
-          :multiple="true"
-          v-model="userForm.manager"
-          :options="
-            managers.map(x => ({
-              value: x.id,
-              label: x.name,
-            }))
-          "
-          :loading="loader.managers"
+      </x-field>
+    </div>
+    <div class="grid sm:grid-cols-2 gap-4 mt-2">
+      <x-field
+        label="GOOGLE MEET CALENDAR (EMBEDDED LINK)"
+        :required="isAdvisor"
+      >
+        <x-textarea
           class="w-full"
-          placeholder="Select manager"
-        /> -->
+          size="xl"
+          v-model="userForm.calendar_link"
+          :rules="isAdvisor ? [isRequired] : []"
+        >
+        </x-textarea>
+      </x-field>
+      <x-field
+        label="PHONE CALL CALENDAR (EMBEDDED LINK)"
+        :required="isAdvisor"
+      >
+        <x-textarea
+          class="w-full"
+          size="xl"
+          v-model="userForm.phone_calendar_link"
+          :rules="isAdvisor ? [isRequired] : []"
+        >
+        </x-textarea>
       </x-field>
     </div>
 
