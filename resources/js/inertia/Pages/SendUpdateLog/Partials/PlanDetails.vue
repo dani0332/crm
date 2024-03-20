@@ -161,6 +161,7 @@ const onUpdate = () => {
                   type="number"
                   min="0"
                   @change="updatePriceWithVat"
+                  class="w-full"
                 />
               </dd>
             </div>

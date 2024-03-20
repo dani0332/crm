@@ -178,10 +178,10 @@ watch(() => policyDetailsForm.insurance_provider_id, (providerId) => {
           <dl class="grid md:grid-cols-2 gap-y-4">
             <!-- First name -->
             <div class="grid sm:grid-cols-2">
-              <dt class="font-bold text-right mr-10">
+              <dt class="flex justify-end mr-10">
                 <x-tooltip position="left">
                   <label
-                    class="text-gray-800 underline decoration-dotted decoration-primary-700"
+                      class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
                     First Name
                   </label>
@@ -202,18 +202,18 @@ watch(() => policyDetailsForm.insurance_provider_id, (providerId) => {
 
             <!-- Last name -->
             <div class="grid sm:grid-cols-2 ml-[-250px]">
-							<dt class="font-bold text-right mr-10">
-								<x-tooltip position="left">
+              <dt class="flex justify-end mr-10">
+                <x-tooltip position="left">
                   <label
-                    class="text-gray-800 underline decoration-dotted decoration-primary-700"
+                      class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
                     Last Name
                   </label>
-									<template #tooltip>
-										Records the policyholder's surname or family name.
-									</template>
-								</x-tooltip>
-							</dt>
+                  <template #tooltip>
+                    Records the policyholder's surname or family name.
+                  </template>
+                </x-tooltip>
+              </dt>
 							<dd>
 								<x-input
 									v-if="isCPD"
@@ -226,10 +226,10 @@ watch(() => policyDetailsForm.insurance_provider_id, (providerId) => {
 
             <!-- Provider Name -->
             <div class="grid sm:grid-cols-2">
-              <dt class="font-bold text-right mr-10">
+              <dt class="flex justify-end mr-10">
                 <x-tooltip position="left">
                   <label
-                    class="text-gray-800 underline decoration-dotted decoration-primary-700"
+                      class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
                     Provider Name
                   </label>
@@ -253,18 +253,18 @@ watch(() => policyDetailsForm.insurance_provider_id, (providerId) => {
 
             <!-- Plan Name -->
             <div class="grid sm:grid-cols-2 ml-[-250px]">
-							<dt class="font-bold text-right mr-10">
-								<x-tooltip position="left">
+              <dt class="flex justify-end mr-10">
+                <x-tooltip position="left">
                   <label
-                    class="text-gray-800 underline decoration-dotted decoration-primary-700"
+                      class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
                     Plan Name
                   </label>
-									<template #tooltip>
-										Identifies the specific coverage or insurance plan offered by the provider.
-									</template>
-								</x-tooltip>
-							</dt>
+                  <template #tooltip>
+                    Identifies the specific coverage or insurance plan offered by the provider.
+                  </template>
+                </x-tooltip>
+              </dt>
 							<dd>
                 <ComboBox
                     v-if="isCPD && isEcom"
@@ -280,10 +280,10 @@ watch(() => policyDetailsForm.insurance_provider_id, (providerId) => {
 
             <!-- Policy Number -->
             <div class="grid sm:grid-cols-2">
-              <dt class="font-bold text-right mr-10">
+              <dt class="flex justify-end mr-10">
                 <x-tooltip position="left">
                   <label
-                    class="text-gray-800 underline decoration-dotted decoration-primary-700"
+                      class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
                     Policy Number
                   </label>
@@ -306,10 +306,10 @@ watch(() => policyDetailsForm.insurance_provider_id, (providerId) => {
 
 						<!-- Issuance Date -->
             <div class="grid sm:grid-cols-2 ml-[-250px]">
-              <dt class="font-bold text-right mr-10">
+              <dt class="flex justify-end mr-10">
                 <x-tooltip position="left">
                   <label
-                    class="text-gray-800 underline decoration-dotted decoration-primary-700"
+                      class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
                     Issuance Date
                   </label>
@@ -333,10 +333,10 @@ watch(() => policyDetailsForm.insurance_provider_id, (providerId) => {
 
 						<!-- Start Date -->
             <div class="grid sm:grid-cols-2">
-              <dt class="font-bold text-right mr-10">
+              <dt class="flex justify-end mr-10">
                 <x-tooltip position="left">
                   <label
-                    class="text-gray-800 underline decoration-dotted decoration-primary-700"
+                      class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
                     Start Date
                   </label>
@@ -360,10 +360,10 @@ watch(() => policyDetailsForm.insurance_provider_id, (providerId) => {
 
 						<!-- Expiry Date -->
             <div class="grid sm:grid-cols-2 ml-[-250px]">
-              <dt class="font-bold text-right mr-10">
+              <dt class="flex justify-end mr-10">
                 <x-tooltip position="left">
                   <label
-                    class="text-gray-800 underline decoration-dotted decoration-primary-700"
+                      class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
                     Expiry Date
                   </label>
@@ -385,10 +385,10 @@ watch(() => policyDetailsForm.insurance_provider_id, (providerId) => {
 
 						<!-- Insurer Quote Number -->
             <div class="grid sm:grid-cols-2">
-              <dt class="font-bold text-right mr-10">
+              <dt class="flex justify-end mr-10">
                 <x-tooltip position="left">
                   <label
-                    class="text-gray-800 underline decoration-dotted decoration-primary-700"
+                      class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
                     Insurer Quote Number
                   </label>
@@ -410,10 +410,10 @@ watch(() => policyDetailsForm.insurance_provider_id, (providerId) => {
 
 						<!-- Issuance Status -->
             <div class="grid sm:grid-cols-2 ml-[-250px]">
-              <dt class="font-bold text-right mr-10">
+              <dt class="flex justify-end mr-10">
                 <x-tooltip position="left">
                   <label
-                    class="text-gray-800 underline decoration-dotted decoration-primary-700"
+                      class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
                     Issuance Status
                   </label>
