@@ -110,9 +110,14 @@ const onUpdate = () => {
     <Collapsible expanded>
       <template #header>
         <div class="flex justify-between gap-4 items-center">
-          <h3 class="font-semibold text-primary-800 text-lg">
-            {{ isPlanDetails ? 'Plan Details' : 'Indicative Additional Price' }}
-          </h3>
+          <x-tooltip position="left">
+            <label class="font-semibold text-primary-800 text-lg underline decoration-dotted decoration-primary-700">
+              {{ isPlanDetails ? 'Plan Details' : 'Indicative Additional Price' }}
+            </label>
+            <template #tooltip>
+              Refers to an estimated cost that may be added to the policy. Please check with the policy schedule or insurance provider for the most accurate and up-to-date pricing.
+            </template>
+          </x-tooltip>
         </div>
       </template>
       <template #body>
@@ -122,7 +127,7 @@ const onUpdate = () => {
 
 						<!-- price VAT not applicable -->
             <div class="grid sm:grid-cols-2">
-              <dt class="text-right mr-10">
+              <dt>
                 <x-tooltip position="left">
                   <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
@@ -130,8 +135,8 @@ const onUpdate = () => {
                       PRICE (VAT NOT APPLICABLE)
                     </label>
                   <template #tooltip>
-                    Enter the quoted price that VAT is not applicable. Remember,
-                    VAT is exempt for Life Insurance policies.
+                      Enter the quoted price that VAT is not applicable. Remember,
+                      VAT is exempt for Life Insurance policies.
                   </template>
                 </x-tooltip>
               </dt>
