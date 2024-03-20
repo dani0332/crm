@@ -23,8 +23,8 @@ watch(copied, value => {
 
 <template>
   <div class="flex items-center gap-1">
-    <span>{{ props.text }}</span>
-    <x-tooltip position="top">
+    <!-- <span>{{ props.text }}</span> -->
+    <x-tooltip align="right" position="top">
       <div
         class="cursor-pointer"
         :class="

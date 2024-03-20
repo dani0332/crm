@@ -57,8 +57,8 @@ const userForm = useForm({
       : true,
   primary_product: props.userProductIds ? props?.userProductIds[0] : null,
   permissions: props?.userPermissions ?? null,
-  calendar_link: props.calendar_link ?? null,
-  phone_calendar_link: props.phone_calendar_link ?? null,
+  calendar_link: props.user?.calendar_link ?? null,
+  phone_calendar_link: props.user?.phone_calendar_link ?? null,
 });
 
 const isAdvisor = computed(() => {
@@ -364,8 +364,7 @@ onMounted(() => setInitialState());
         :required="isAdvisor"
       >
         <x-textarea
-          class="w-full"
-          size="xl"
+          class="w-full text-md"
           v-model="userForm.calendar_link"
           :rules="isAdvisor ? [isRequired] : []"
         >
@@ -376,8 +375,7 @@ onMounted(() => setInitialState());
         :required="isAdvisor"
       >
         <x-textarea
-          class="w-full"
-          size="xl"
+          class="w-full text-md"
           v-model="userForm.phone_calendar_link"
           :rules="isAdvisor ? [isRequired] : []"
         >
