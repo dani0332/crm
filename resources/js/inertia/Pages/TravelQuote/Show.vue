@@ -60,6 +60,7 @@ defineProps({
   sendUpdateLogs: Array,
   hasPolicyIssuedStatus: Boolean,
   aboveAgeMembers: Number,
+  documentTypeCodes: Array,
 });
 
 const permissionEnum = page.props.permissionsEnum;
@@ -2469,7 +2470,7 @@ const handleSelectionChange = (tableType, selectedItems) => {
 			v-if="isNewPaymentStructure"
 			quoteType="Travel"
 			:payments="payments"
-			:paymentDocument="documentTypes.QUOTE.filter(item => item.code === 'TPD' || item.code === 'TPDR' || item.code === 'TDPDR')"
+      :paymentDocument="documentTypeCodes.filter(item => ['TPD', 'TPDR', 'TDPDR'].includes(item.code))"
 			:quoteRequest="quoteRequest"
 			:paymentStatusEnum="enums.paymentStatusEnum"
 			:paymentTooltipEnum="paymentTooltipEnum"

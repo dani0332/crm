@@ -3199,7 +3199,7 @@ const copyUploadURL = () => {
       v-if="isNewPaymentStructure"
       quoteType="Car"
       :payments="payments"
-      :paymentDocument="page.props.documentTypeCodes.filter(item => ['CPD', 'CPDR', 'CDPDR'].includes(item))"
+      :paymentDocument="page.props.documentTypeCodes.filter(item => ['CPD', 'CPDR', 'CDPDR'].includes(item.code))"
       :quoteRequest="paymentEntityModel"
       :paymentStatusEnum="paymentStatusEnum"
       :paymentTooltipEnum="paymentTooltipEnum"

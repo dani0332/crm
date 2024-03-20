@@ -1025,6 +1025,7 @@ class CRUDController extends Controller
                 'sendUpdateEnum' => $sendUpdateEnum,
                 'hasPolicyIssuedStatus' => $hasPolicyIssuedStatus,
                 'isNewPaymentStructure' => $isNewPaymentStructure,
+                'documentTypeCodes' => $documentTypeCodes
             ]);
         } else {
             return view('shared.show', compact([

@@ -209,6 +209,6 @@ class QuoteDocumentService extends BaseService
         ->get();
 
         $documentTypesByCategory= $documentTypes->groupBy('category');
-        return [$documentTypesByCategory, $documentTypes->pluck('code')];
+        return [$documentTypesByCategory, $documentTypes];
     }
 }
