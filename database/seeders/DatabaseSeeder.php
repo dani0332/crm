@@ -17,6 +17,7 @@ class DatabaseSeeder extends Seeder
             LookupSeeder::class,
             GenericPermissionSeeder::class,
             HealthPlanTableElibilityIdSeeder::class,
+            addSICWorkflow::class,
         ]);
     }
 }
