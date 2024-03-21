@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\V2;
 
+use App\Enums\AssignmentTypeEnum;
 use App\Enums\DocumentTypeCode;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
@@ -17,6 +18,8 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\SaveBookingDetailsRequest;
 use App\Http\Requests\SendUpdateCustomerRequest;
 use App\Http\Requests\SendUpdateRequest;
+use App\Models\CarQuote;
+use App\Models\LeadAllocation;
 use App\Models\PersonalQuote;
 use App\Models\QuoteType;
 use App\Repositories\CustomerMembersRepository;
@@ -64,6 +67,7 @@ class SendUpdateLogController extends Controller
                 $quoteType = QuoteType::where('id', $requestData['quote_type_id'])->first();
                 $quoteModel = $this->getModelObject($quoteType->code);
                 $childLeadResponse = $this->sendUpdateLogService->createChildLead($quoteModel, $requestData, $quoteType->code);
+                $this->updateLeadAllocationCount($requestData['quote_uuid']);
             }
 
             DB::commit();
@@ -420,5 +424,22 @@ class SendUpdateLogController extends Controller
         // }
 
         return response()->json(['message' => 'Update booked'], 200);
+    }
+
+    private function updateLeadAllocationCount($quoteUuid)
+    {
+        $quote = CarQuote::with('advisor')->where('uuid', $quoteUuid)->first();
+        if ($quote->advisor) {
+            $leadAllocation = LeadAllocation::where('user_id', $quote->advisor->id)->first();
+            $leadAllocation->allocation_count = $leadAllocation->allocation_count - 1;
+            if (in_array($quote->assignment_type, [AssignmentTypeEnum::SYSTEM_ASSIGNED, AssignmentTypeEnum::SYSTEM_REASSIGNED])) {
+                $leadAllocation->auto_assignment_count = $leadAllocation->auto_assignment_count - 1;
+            }elseif (in_array($quote->assignment_type, [AssignmentTypeEnum::MANUAL_ASSIGNED, AssignmentTypeEnum::MANUAL_REASSIGNED])) {
+                $leadAllocation->manual_assignment_count = $leadAllocation->manual_assignment_count - 1;
+            }
+            $leadAllocation->save();
+        }
+
+
     }
 }
