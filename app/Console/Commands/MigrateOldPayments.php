@@ -32,17 +32,14 @@ class MigrateOldPayments extends Command
      */
     public function handle()
     {
-        //Log::info('MigratePaymentCronDate:: Payment Migration Starts: '.Carbon::now());
-        //return;
-
         $allModelTypes = [quoteTypeCode::Car, quoteTypeCode::Health, quoteTypeCode::Travel,
             quoteTypeCode::Home, quoteTypeCode::Yacht, quoteTypeCode::Pet, quoteTypeCode::Cycle,
             quoteTypeCode::Bike, quoteTypeCode::Business, quoteTypeCode::Life,
         ];
         $thirtyDaysOldDate = Carbon::now()->subDays(30)->startOfDay(); // 30 days old date
-        $thirtyDaysOldDate = '2024-03-15 00:00:00'; //For Testing
+        //$thirtyDaysOldDate = '2024-03-15 00:00:00'; //For Testing
 
-
+        echo "MigratePaymentCronDate:: Payment Migration Starts: ".$thirtyDaysOldDate."<br>";
         Log::info('MigratePaymentCronDate:: Payment Migration Starts: '.$thirtyDaysOldDate);
         $totalMigrationCount = 0;
         foreach ($allModelTypes as $modelType) {
@@ -58,34 +55,30 @@ class MigrateOldPayments extends Command
                     ->whereNull('frequency')
                     ->where('payment_status_id', PaymentStatusEnum::AUTHORISED);
             })->where('created_at', '>', $thirtyDaysOldDate)->get();
-
+            
             if ($modelObjects->count() > 0) {
                 foreach ($modelObjects as $modelObject) {
 
-                    if ($modelObject->payments()->count() > 0) {
-                        $oldPayment = $modelObject->payments()
-                            ->where('code', $modelObject->code)
-                            ->where('total_payments', null)
-                            ->where('frequency', null)
-                            ->where('payment_status_id', PaymentStatusEnum::AUTHORISED)
-                            ->get();
-
-                        if ($oldPayment->count() == 1) {
-                            //echo 'MigratePaymentCron::Payment migrated for: '.$modelObject->code.'-'.$modelObject->id."\n";
-                            Log::info('MigratePaymentCron::Payment migrated for: '.$modelObject->code.'-'.$modelObject->id);
-                            app(SplitPaymentService::class)->migratePayments($oldPayment[0], $modelType);
-                            $totalMigrationCount++;
-                        } else {
-                            Log::info('MigratePaymentCron::Payment migration skipped for: '.$modelObject->code.',having no/more than 1 child payments');
-                        }
-                    } else {
-                        Log::info('MigratePaymentCron::Payment not found for: '.$modelObject->code);
-                    }
+                    if ($modelObject->payments()->count() == 1) {
+                         $oldPayment = $modelObject->payments()->first();
+                         if ($oldPayment->code == $modelObject->code) {
+                            //echo 'MigratePaymentCron::Payment migrated for code= '.$modelObject->code.' id='.$modelObject->id."<br>";
+                            Log::info('MigratePaymentCron::Payment migrated for code= '.$modelObject->code.' id='.$modelObject->id);
+                            ////app(SplitPaymentService::class)->migratePayments($oldPayment, $modelType);
+                            $totalMigrationCount++;                             
+                         } else {
+                            Log::info('MigratePaymentCron::Payment migration skipped for: '.$modelObject->code.',having no master payment');                                        
+                         }
+                        
+                    }  else {
+                        Log::info('MigratePaymentCron::Payment migration skipped for: '.$modelObject->code.',having payments: '.$modelObject->payments()->count());
+                    }                    
                 }
             } else {
                 Log::info('MigratePaymentCron::No '.$modelType.' found');
             }
         }
+        echo "MigratePaymentCronDate:: Payment Migration Ends: ".$totalMigrationCount;
         Log::info('MigratePaymentCronDate:: Payment Migration Ends: '.$totalMigrationCount);
     }
 }
