@@ -27,4 +27,9 @@ class EmbeddedTransaction extends Model
     {
         return $this->morphMany(Payment::class, 'paymentable');
     }
+
+    public function quote_request()
+    {
+        return $this->morphTo('quote_request');
+    }
 }

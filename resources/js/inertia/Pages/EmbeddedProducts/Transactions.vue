@@ -214,7 +214,7 @@ onMounted(() => {
       table-class-name=""
       :headers="tableHeader"
       :loading="loader.table"
-      :items="embeddedProduct.transactions || []"
+      :items="embeddedProduct.transactions.data || []"
       border-cell
       hide-rows-per-page
       hide-footer
@@ -253,5 +253,16 @@ onMounted(() => {
         </div>
       </template>
     </DataTable>
+
+    <Pagination
+      :links="{
+        next: embeddedProduct.transactions.next_page_url,
+        prev: embeddedProduct.transactions.prev_page_url,
+        current: embeddedProduct.transactions.current_page,
+        from: embeddedProduct.transactions.from,
+        to: embeddedProduct.transactions.to,
+      }"
+    />
+
   </div>
 </template>
