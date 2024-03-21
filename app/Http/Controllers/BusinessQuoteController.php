@@ -233,7 +233,17 @@ class BusinessQuoteController extends Controller
         $hasPolicyIssuedStatus = $this->crudService->hasAtleastOneStatusPolicyIssued(QuoteTypes::BUSINESS->id(), $record);
 
         if ($hasPolicyIssuedStatus) {
-            $sendUpdateOptions = (new LookupService)->getSendUpdateOptions(QuoteTypes::BUSINESS->id());
+            $removeOptions = [
+                SendUpdateLogStatusEnum::MAOM,
+                SendUpdateLogStatusEnum::MDOM,
+                SendUpdateLogStatusEnum::MD,
+                SendUpdateLogStatusEnum::MSC,
+                SendUpdateLogStatusEnum::MPC,
+                SendUpdateLogStatusEnum::PU,
+                SendUpdateLogStatusEnum::SC,
+            ];
+
+            $sendUpdateOptions = (new LookupService)->getSendUpdateOptions(QuoteTypes::BUSINESS->id(), $removeOptions);
             $sendUpdateLogs = SendUpdateLogRepository::findByQuoteUuid($record->uuid);
             $sendUpdateEnum = SendUpdateLogStatusEnum::asArray();
         }
