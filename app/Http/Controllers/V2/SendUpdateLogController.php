@@ -398,13 +398,13 @@ class SendUpdateLogController extends Controller
                 'parentPaymentStatus' => $sendUpdate->payment_status_id ?? null
             ], 200);
         }
-        
-        // // Calling Sage for necessary Documents
+
+        // Calling Sage for necessary Documents
         $sageResponse = $this->sendUpdateLogService->sendUpdateToSage($sendUpdateRequest, $sendUpdate);
             if ($sageResponse['status'] == false) 
                 return response()->json(['message' => $sageResponse['message']], 500);
 
-        // // Send Update Data move to main lead page as per Send update Type
+        // Send Update Data move to main lead page as per Send update Type
         $response = $this->sendUpdateLogService->updatesMoveToLead($sendUpdateRequest, $sendUpdate);
 
         if ($response['status'])

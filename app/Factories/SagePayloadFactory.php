@@ -3,7 +3,7 @@
 namespace App\Factories;
 
 use App\Enums\quoteStatusCode;
-use App\Enums\SageEnums;
+use App\Enums\SageEnum;
 use App\Models\Lookup;
 use App\Models\QuoteRequestEntityMapping;
 use App\Models\User;
@@ -719,7 +719,7 @@ class SagePayloadFactory
     {
         $response = [];
         switch ($apiType) {
-            case SageEnums::DOCUMENT_TYPE_CREATE_AR_INVOICE:
+            case SageEnum::SRT_CREATE_AR_PREM_COMM_INV:
                 $response = [
                     'steps' => 3,
                     'recursiveCalls' => [
@@ -750,7 +750,7 @@ class SagePayloadFactory
                 ];
                 break;
 
-            case SageEnums::DOCUMENT_TYPE_CREATE_AP_INVOICE:
+            case SageEnum::SRT_CREATE_AP_PREM_INV:
                 $response = [
                     'steps' => 3,
                     'recursiveCalls' => [
@@ -781,7 +781,7 @@ class SagePayloadFactory
                 ];
                 break;
 
-            case SageEnums::DOCUMENT_TYPE_CREATE_AR_INVOICE_DIS:
+            case SageEnum::SRT_CREATE_AR_DISC_INV:
                 $response = [
                     'steps' => 3,
                     'recursiveCalls' => [
@@ -811,7 +811,7 @@ class SagePayloadFactory
                     ]
                 ];
 
-            case SageEnums::APPLY_SPLIT_PAYMENT_INVOICES:
+            case SageEnum::SRT_CREATE_AR_SPPAY_INV:
                 $response = [
                     'recursiveCalls' => [
                         'createPaymontRecieptOneInvoice',

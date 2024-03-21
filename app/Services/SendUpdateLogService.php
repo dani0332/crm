@@ -20,7 +20,7 @@ use App\Models\YachtQuote;
 use App\Repositories\PaymentRepository;
 use App\Traits\GenericQueriesAllLobs;
 use App\Enums\DocumentTypeCode;
-use App\Enums\SageEnums;
+use App\Enums\SageEnum;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Models\Payment;
 use App\Models\SageApiLog;
@@ -510,7 +510,7 @@ class SendUpdateLogService
                 ]) && $sendUpdateLog->transaction_payment_status == SendUpdateLogStatusEnum::TRANSACTION_APPROVED) {
                     return SendUpdateLogStatusEnum::SU;
                 }
-            } elseif($sendUpdateLog->category->code == SendUpdateLogStatusEnum::CPD && true) { // Check if all policy details uploaded.
+            } elseif($sendUpdateLog->category->code == SendUpdateLogStatusEnum::CPD && $sendUpdateLog->is_policy_filled) { // Check if all policy details uploaded.
                 return SendUpdateLogStatusEnum::SU;
             } elseif(in_array($sendUpdateLog->category->code, [SendUpdateLogStatusEnum::CI, SendUpdateLogStatusEnum::CIR])) {
                 return SendUpdateLogStatusEnum::SU;
@@ -609,8 +609,8 @@ class SendUpdateLogService
         if($categoryCode == SendUpdateLogStatusEnum::EF) {
             $sageResponse = app(SageApiService::class)->handleDocumentsToSage(
                 $sendUpdateRequest, $quote, [
-                    'type' => SageEnums::TYPE_SEND_UPDATE,
-                    'send_update_type' => SageEnums::SEND_UPDATE_NORMAL,
+                    'type' => SageEnum::PT_SEND_UPDATE,
+                    'send_update_type' => SageEnum::SUT_NORMAL,
                     'category' => $categoryCode,
                     'option' => $sendUpdateLog->option->code,
                 ]
@@ -619,12 +619,11 @@ class SendUpdateLogService
             return $sageResponse;
         }
         
-        
         if ($categoryCode == SendUpdateLogStatusEnum::CPD) { 
             $sageResponse = app(SageApiService::class)->handleDocumentsToSage(
                 $sendUpdateRequest, $quote, [
-                    'type' => SageEnums::TYPE_SEND_UPDATE,
-                    'send_update_type' => SageEnums::SEND_UPDATE_REVERSAL_CORRECTION,
+                    'type' => SageEnum::PT_SEND_UPDATE,
+                    'send_update_type' => SageEnum::SUT_REVE_CORR,
                     'category' => $categoryCode,
                     'send_update_log' => $sendUpdateLog,
                 ]
