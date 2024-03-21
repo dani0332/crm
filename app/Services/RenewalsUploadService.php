@@ -798,6 +798,9 @@ class RenewalsUploadService
                 $detailData['additional_notes'] = $data['notes'].$customerData['notes'];
                 $detailData['previous_advisor_id'] = $previousAdvisorId;
                 $quoteData['quote_type_id'] = $quoteType->id;
+                if(!empty($data['insly_id'])) {
+                    $detailData['insly_id'] = $data['insly_id'];
+                }
             } else
             {
                 $quoteData['additional_notes'] = $data['notes'].$customerData['notes'];
