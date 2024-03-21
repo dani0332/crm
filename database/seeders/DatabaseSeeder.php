@@ -20,6 +20,7 @@ class DatabaseSeeder extends Seeder
             DttOCBNewBusinessSeeder::class,
             GenericPermissionSeeder::class,
             HealthPlanTableElibilityIdSeeder::class,
+            addSICWorkflow::class,
         ]);
     }
 }

@@ -22,12 +22,12 @@ class CarEmailService extends BaseService
         $this->sendEmailCustomerService = $sendEmailCustomerService;
     }
 
-    public function sendCarOCBIntroEmail($plans, $lead, $tierR, $previousAdvisorId, $carQuoteService)
+    public function sendCarOCBIntroEmail($plans, $lead, $tierR, $previousAdvisorId, $carQuoteService, $triggerSICWorkFlow = false)
     {
         $plans = $this->executePlansSelectionLogic($plans);
 
         // Determine the email template ID
-        $emailTemplateId = $this->getEmailTemplateId($lead, $plans, $tierR);
+        $emailTemplateId = $this->getEmailTemplateId($lead, $plans, $tierR, $triggerSICWorkFlow);
 
         // Build email data
         $emailData = $this->buildEmailData($lead, $plans, $previousAdvisorId, $tierR->id);
@@ -47,7 +47,31 @@ class CarEmailService extends BaseService
             }
         }
 
-        $responseCode = $this->sendEmailCustomerService->sendLMSIntroEmail($emailTemplateId, $emailData, 'lms-intro-email');
+        // trigger SIC workflow
+        if ($triggerSICWorkFlow) {
+            if (! $lead->sic_flow_enabled) {
+                $sicEventName = ApplicationStorage::where('key_name', 'SIC_WORKFLOW_NAME')->first();
+                if ($sicEventName) {
+                    $apiResponse = SIBService::createWorkflowEvent($sicEventName->value, $lead, [], $emailData);
+                    $lead->sic_flow_enabled = true;
+                    $lead->save();
+                    info('SIC workflow event triggered for lead: '.$lead->uuid.' and sic_flow_enabled: '.$lead->sic_flow_enabled);
+                    info('SIC workflow response: '.$apiResponse);
+                } else {
+                    info('SIC workflow key not found');
+                }
+
+            } else {
+                info('SIC workflow already enabled for lead: '.$lead->uuid);
+            }
+
+        }
+
+        if ($lead->advisor_id) {
+            $responseCode = $this->sendEmailCustomerService->sendLMSIntroEmail($emailTemplateId, $emailData, 'lms-intro-email');
+        } else {
+            $responseCode = $this->sendEmailCustomerService->sendNonAdvisorIntroEmail($emailData, 'lms-intro-email', $emailTemplateId);
+        }
 
         return $responseCode;
     }
@@ -104,8 +128,6 @@ class CarEmailService extends BaseService
     private function buildCommonEmailData($carQuote, $advisor, $previousAdvisor)
     {
         $documentUrl = $this->getAppStorageValueByKey(ApplicationStorageEnums::LMS_INTRO_EMAIL_ATTACHMENT_URL);
-        //$whatsAppNumber = ! empty($advisor->mobile_no) ? str_replace(['+', ' ', '0'], '', $advisor->mobile_no) : '';
-        //$whatsAppNumber = '971'.ltrim($whatsAppNumber, '0');
         $whatsAppNumber = ! empty($advisor->mobile_no) ? formatMobileNo($advisor->mobile_no) : '';
         $emailData = (object) [
             'clientFullName' => $carQuote->first_name.' '.$carQuote->last_name,
@@ -122,6 +144,7 @@ class CarEmailService extends BaseService
             'vehicleName' => $this->getVehicleName($carQuote),
             'currentInsurer' => $carQuote->currently_insured_with,
             'quoteLink' => config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$carQuote->uuid,
+            'requestAdvisorLink' => config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$carQuote->uuid.'/?assignAdvisor=true',
             'assignmentType' => $this->getAssignmentTypeText($carQuote->assignment_type),
             'previousAdvisorName' => ! empty($previousAdvisor) ? $previousAdvisor->name : '',
             'previousAdvisorStatus' => ! empty($previousAdvisor) ? UserStatusEnum::getUserStatusText($previousAdvisor->status) : '',
@@ -246,8 +269,17 @@ class CarEmailService extends BaseService
         return $result;
     }
 
-    private function getEmailTemplateId($lead, $plans, $tierR)
+    private function getEmailTemplateId($lead, $plans, $tierR, $triggerSICWorkFlow = false)
     {
+        if ($triggerSICWorkFlow) {
+            info('Inside sic flow enabled: '.$lead->uuid);
+            $noAdvisorTemplateId = ApplicationStorage::where('key_name', 'SIC_NO_ADVISOR_TEMPLATE_ID')->first();
+            if ($noAdvisorTemplateId) {
+                return (int) $noAdvisorTemplateId->value;
+            } else {
+                return 605; // keeping it as a fallback
+            }
+        }
         if (count($plans) == 0) {
             // No plans with available ratings, send a specific email template
             return $lead->tier_id == $tierR->id ? 492 : 494;
