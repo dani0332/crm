@@ -294,7 +294,17 @@ final class PermissionsEnum extends Enum
     public const CORPLINE_COMPREHENSIVE_DASHBOARD = 'corpline-comprehensive-dashboard';
     public const GROUPMEDICAL_COMPREHENSIVE_DASHBOARD = 'groupmedicals-comprehensive-dashboard';
     public const QUOTE_SYNC_LOGS = 'quote-sync-logs';
-
+    public const BIKE_DISTRIBUTION_REPORT = 'bike-distribution-report';
+    public const HEALTH_DISTRIBUTION_REPORT = 'health-distribution-report';
+    public const TRAVEL_DISTRIBUTION_REPORT = 'travel-distribution-report';
+    public const LIFE_DISTRIBUTION_REPORT = 'life-distribution-report';
+    public const HOME_DISTRIBUTION_REPORT = 'home-distribution-report';
+    public const PET_DISTRIBUTION_REPORT = 'pet-distribution-report';
+    public const CYCLE_DISTRIBUTION_REPORT = 'cycle-distribution-report';
+    public const YACHT_DISTRIBUTION_REPORT = 'yacht-distribution-report';
+    public const BUSINESS_DISTRIBUTION_REPORT = 'business-distribution-report';
+    public const GROUPMEDICAL_DISTRIBUTION_REPORT = 'groupmedicals-distribution-report';
+    
     public static function getAdvisorConverionReportPermissions()
     {
         return [
