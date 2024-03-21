@@ -551,7 +551,7 @@ class SageApiService
                 }
             }
 
-            return ['status' => true, 'message' => 'Policy Booked Successfully'];
+            return ['status' => true, 'message' => 'Policy Booked'];
         } else {
             return ['status' => false, 'message' => 'Customer not found in sage'];
         }

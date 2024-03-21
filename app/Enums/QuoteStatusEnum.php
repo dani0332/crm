@@ -54,7 +54,20 @@ final class QuoteStatusEnum extends Enum
     const CarSold = 52;
     const Uncontactable = 53;
     const Stale = 54;
-    const PolicyCancelled = 55;
-    const CancellationPending = 56;
-    const PolicyBooked = 57;
+    const PolicySentToCustomer = 55;
+    const PolicyBooked = 56;
+    const CancellationPending = 57;
+    const PolicyCancelled = 58;
+    const Allocated = 59;
+    const RenewalTermsReceived = 60;
+    const ProposalFormRequested = 61;
+    const ProposalFormReceived = 62;
+    const PendingRenewalInformation = 63;
+    const AdditionalInformationRequested = 64;
+    const QuoteRequested = 65;
+    const FinalizingTerms = 66;
+    const QuotedByUW = 67;
+    const SentForTransactionApproval = 68;
+    const RenewalTermsSent = 69;
+    const PolicyPending = 70;
 }

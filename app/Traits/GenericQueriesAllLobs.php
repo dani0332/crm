@@ -4,11 +4,13 @@ namespace App\Traits;
 
 use App\Enums\GenericRequestEnum;
 use App\Enums\QuoteDocumentsEnum;
+use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypes;
 use App\Models\Payment;
 use App\Repositories\InsuranceProviderRepository;
 use App\Services\CapiRequestService;
+use App\Services\QuoteDocumentService;
 
 trait GenericQueriesAllLobs
 {
@@ -217,5 +219,28 @@ trait GenericQueriesAllLobs
         }
 
         return $leadCodeArray[0];
+    }
+
+    public function updateStatus($type, $id)
+    {
+        $quote = $this->getQuoteObject($type, $id);
+        if (! empty($quote->policy_number) && ! empty($quote->policy_issuance_date) && ! empty($quote->policy_start_date) && ! empty($quote->renewal_expiry_date) && $quote->price_with_vat > 0 && ! empty($quote->insurer_quote_number)) {
+            if (ucfirst($type) == QuoteTypes::CAR->value) {
+                $quoteDocuments = (new QuoteDocumentService())->getQuoteDocuments(QuoteTypes::CAR->value, $id);
+                $quoteDocuments = array_values($quoteDocuments->toArray());
+                $document_type_codes = collect($quoteDocuments)->pluck('document_type_code')->toArray();
+                if (in_array(QuoteDocumentsEnum::CAR_POLICY_CERTIFICATE, $document_type_codes) && in_array(QuoteDocumentsEnum::POLICY_SCHEDULE, $document_type_codes) && in_array(QuoteDocumentsEnum::POLICY_HANDBOOK, $document_type_codes)) {
+
+                    if ($quote->quote_status_id != QuoteStatusEnum::PolicySentToCustomer) {
+
+                        $quote->update([
+                            'quote_status_id' => QuoteStatusEnum::PolicyIssued,
+                            'policy_issuance_status_id' => null,
+                            'policy_issuance_status_other' => '',
+                        ]);
+                    }
+                }
+            }
+        }
     }
 }

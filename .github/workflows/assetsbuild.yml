@@ -1,10 +1,9 @@
-name: Run Pint Fix
+name: Build JS and CSS assets
 
 on:
   pull_request:
     branches:
       - develop
-      - feat/insly-project-central
     types: [opened, reopened, edited, synchronize]
 
 jobs:
@@ -20,9 +19,14 @@ jobs:
           tools: composer:v2
       - name: Install Composer dependencies
         run: composer install
-      - name: Run Pint
-        run: composer pint:fix
+      - name: Use Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18.18.x'
+      - name: Setup yarn
+        run: npm install -g yarn
+      - run: yarn && yarn vite build
       - name: Push changes
         uses: stefanzweifel/git-auto-commit-action@v4
         with:
-          commit_message: pint fix
+          commit_message: yarn prod

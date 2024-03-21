@@ -51,7 +51,6 @@ class RoleController extends Controller
             'permissions' => $permission,
 
         ]);
-
     }
 
     /**
@@ -69,7 +68,6 @@ class RoleController extends Controller
         $role->syncPermissions($request->input('permission'));
 
         return redirect(route('roles.show', $role->id))->with('success', 'Role has been stored');
-
     }
 
     /**
@@ -111,7 +109,6 @@ class RoleController extends Controller
             'rolePermissions' => $rolePermissions,
             'role' => $role,
         ]);
-
     }
 
     /**
@@ -130,9 +127,9 @@ class RoleController extends Controller
         $role->name = $request->input('name');
         $role->save();
         $role->syncPermissions($request->input('permission'));
+        app()->make(\Spatie\Permission\PermissionRegistrar::class)->forgetCachedPermissions();
 
         return redirect(route('roles.show', $role->id))->with('success', 'Role has been updated');
-
     }
 
     /**

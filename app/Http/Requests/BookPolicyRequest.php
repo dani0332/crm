@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Models\Payment;
 use Illuminate\Foundation\Http\FormRequest;
 
 class BookPolicyRequest extends FormRequest
@@ -24,16 +25,16 @@ class BookPolicyRequest extends FormRequest
         return [
             'invoice_date' => 'required',
             'booking_date' => 'required',
-            'insurer_tax_invoice_number' => 'required',
-            'insurer_commmission_invoice_number' => 'required|unique:payments,insurer_commmission_invoice_number',
+            'insurer_tax_invoice_number' => 'required|max:22',
+            'insurer_commmission_invoice_number' => 'required|max:22|different:insurer_tax_invoice_number',
             'discount' => 'nullable',
             'transaction_payment_status' => 'nullable',
             'commission_percentage' => 'nullable',
             'broker_invoice_number' => 'nullable',
-            'commission_vat_not_applicable' => 'required_without:commission_vat_applicable',
-            'commission_vat_applicable' => 'required_without:commission_vat_not_applicable',
+            'commission_vat_not_applicable' => 'required_without:commission_vat_applicable|nullable|numeric|between:0,9999999999999.99',
+            'commission_vat_applicable' => 'required_without:commission_vat_not_applicable|nullable|numeric|between:0,9999999999999.99',
             'total_commission' => 'nullable',
-            'invoice_description' => 'nullable',
+            'invoice_description' => 'required|max:60',
             'vat_on_commission' => 'nullable',
             'commission_percentage' => 'nullable',
             'payment_code' => 'required',
@@ -41,12 +42,36 @@ class BookPolicyRequest extends FormRequest
             'quote_id' => 'required',
         ];
     }
+    public function withValidator($validator)
+    {
+        $validator->after(function ($validator) {
+
+            $iTIN = Payment::where('insurer_tax_number', request()->insurer_tax_invoice_number)->get();
+
+            if (! empty($iTIN[0]['paymentable_id'])) {
+                if ($iTIN[0]['paymentable_id'] != request()->quote_id) {
+                    $validator->errors()->add('error', 'Insurer Tax Invoice Number already exists,Please enter a unique value');
+                }
+            }
+
+            $iCIN = Payment::where([['insurer_commmission_invoice_number', request()->insurer_commmission_invoice_number]])->get();
+
+            if (! empty($iCIN[0]['paymentable_id'])) {
+                if ($iCIN[0]['paymentable_id'] != request()->quote_id) {
+                    $validator->errors()->add('error', 'Insurer Commmission Invoice Number already exists,Please enter a unique value');
+                }
+            }
+        });
+    }
 
     public function messages()
     {
         return [
-            'commission_vat_not_applicable.required_without' => 'Commmission (VAT NOT APPLICABLE) OR Commmission (VAT APPLICABLE) is required',
-            'commission_vat_applicable.required_without' => 'Commmission (VAT NOT APPLICABLE) OR Commmission (VAT APPLICABLE) is required',
+            'commission_vat_not_applicable.required_without' => 'Commmission (VAT APPLICABLE) is required',
+            'commission_vat_not_applicable.between' => 'Commmission (VAT NOT APPLICABLE) must be less than 13 digits',
+
+            'commission_vat_applicable.between' => 'Commmission (VAT APPLICABLE) must be less than 13 digits',
+            'commission_vat_applicable.required_without' => 'Commmission (VAT NOT APPLICABLE) is required',
 
         ];
     }
