@@ -33,7 +33,7 @@ class AdvisorDistributionReportService extends BaseService
     {
         $lob = $request->lob ?? quoteTypeCode::Car;
         $lob = $lob === quoteTypeCode::GroupMedical ? quoteTypeCode::Business : $lob;
-        $lobId = quoteTypeRepository::where('code', $lob)->first();
+        $lobId = QuoteTypeRepository::where('code', $lob)->first();
 
         $selectColumns = [
             DB::raw('count(DISTINCT personal_quotes.id) as total_leads'),
