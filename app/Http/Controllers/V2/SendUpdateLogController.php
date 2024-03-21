@@ -434,12 +434,11 @@ class SendUpdateLogController extends Controller
             $leadAllocation->allocation_count = $leadAllocation->allocation_count - 1;
             if (in_array($quote->assignment_type, [AssignmentTypeEnum::SYSTEM_ASSIGNED, AssignmentTypeEnum::SYSTEM_REASSIGNED])) {
                 $leadAllocation->auto_assignment_count = $leadAllocation->auto_assignment_count - 1;
-            }elseif (in_array($quote->assignment_type, [AssignmentTypeEnum::MANUAL_ASSIGNED, AssignmentTypeEnum::MANUAL_REASSIGNED])) {
+            } elseif (in_array($quote->assignment_type, [AssignmentTypeEnum::MANUAL_ASSIGNED, AssignmentTypeEnum::MANUAL_REASSIGNED])) {
                 $leadAllocation->manual_assignment_count = $leadAllocation->manual_assignment_count - 1;
             }
             $leadAllocation->save();
         }
-
 
     }
 }

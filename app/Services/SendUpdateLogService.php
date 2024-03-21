@@ -340,7 +340,6 @@ class SendUpdateLogService
         $quoteObject = $quoteModel::with(array_keys($modelRelationDetails['quoteRelations']))->find($requestData['ref_id']);
         // Change quote status to Policy Cancelled
 
-
         $countChildRecords = $quoteModel::where('code', 'like', '%'.$quoteObject->code.'-%')->count();
         $childLeadDetails = [
             'childLeadsCount' => $countChildRecords,
