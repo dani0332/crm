@@ -183,10 +183,10 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::post('embedded-products/send-document', [EmbeddedProductController::class, 'sendDocument'])->name('embedded-products.send-document');
     Route::post('embedded-products/download-document', [EmbeddedProductController::class, 'downloadDocument'])->name('embedded-products.download-document');
     Route::post('embedded-products/{id}/toggle-status', [EmbeddedProductController::class, 'toggleStatus'])->name('embedded-products.toggle-status');
-
+    
     Route::get('/temp-migrate-payment', function () {
-        if (auth()->user()->hasRole(App\Enums\RolesEnum::Admin)) {
-            Artisan::call('MigrateOldPayments:cron');            
+        if (auth()->user()->hasRole(App\Enums\RolesEnum::Admin)) {            
+            App\Jobs\MigrateOldPaymentsJob::dispatch();          
         }
     });
 

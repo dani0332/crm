@@ -19,6 +19,8 @@ defineProps({
 
 const paymentModal = ref(false);
 
+const enableManageOptions = ref(false);
+
 const rules = {
   isRequired: v => !!v || 'This field is required',
   reference: v => {
@@ -235,7 +237,7 @@ const rolesEnum = page.props.rolesEnum;
         v-if="
           can(permissionsEnum.PaymentsCreate) &&
           !can(permissionsEnum.ApprovePayments) &&
-          !hasRole(rolesEnum.PA)
+          !hasRole(rolesEnum.PA) && enableManageOptions
         "
         size="sm"
         color="orange"
@@ -268,7 +270,7 @@ const rolesEnum = page.props.rolesEnum;
       <template #item-actions="item">
         <div class="flex gap-2">
           <template v-if="can(permissionsEnum.ApprovePayments)">
-            <x-button size="xs" color="error" @click="approvePayment(item)">
+            <x-button size="xs" color="error" @click="approvePayment(item)" v-if="enableManageOptions">
               Approve
             </x-button>
 
@@ -278,7 +280,7 @@ const rolesEnum = page.props.rolesEnum;
             <x-button
               size="xs"
               color="orange"
-              v-if="item.copy_link_button"
+              v-if="item.copy_link_button  && enableManageOptions"
               @click="generateCCLink(item)"
               :loading="paymentLoader == item.code"
             >
@@ -287,7 +289,7 @@ const rolesEnum = page.props.rolesEnum;
             <x-button
               size="xs"
               color="emerald"
-              v-if="can(permissionsEnum.PaymentsEdit) && item.edit_button"
+              v-if="can(permissionsEnum.PaymentsEdit) && item.edit_button && enableManageOptions"
               @click="editPaymentModal(item)"
             >
               Edit
