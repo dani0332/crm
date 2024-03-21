@@ -41,11 +41,16 @@ final class SendUpdateLogStatusEnum extends Enum
     const RFEC = 'RFEC'; // Request for ecard copy.
     const RTI = 'RTI'; // Request for tax invoice.
     const RFSOA = 'RFSOA'; // Request for statement of account (SOA).
-    // send update log button. 
-    const SUC = 'Send Update to Customer'; // send update to customer. 
-    const SU = 'Send Update'; // send update. 
+    // send update log button.
+    const SUC = 'Send Update to Customer'; // send update to customer.
+    const SU = 'Send Update'; // send update.
     const PPE = 'PPE'; // Policy Period Extension
     const BOOKING_FILLED = 1;
     const IS_SEND_UPDATE = 1;
     const POLICY_FILLED = 1;
+    const MAOM = 'MAOM'; // Midterm addition of member
+    const MD = 'MD'; // Midterm declaration
+    const MSC = 'MSC'; // Marital status change
+    const PU = 'PU'; // Plan upgrade
+    const SC = 'SC'; // Sub-group creation
 }
