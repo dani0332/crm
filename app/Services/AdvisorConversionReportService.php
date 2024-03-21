@@ -37,7 +37,7 @@ class AdvisorConversionReportService extends BaseService
     {
         $lob = $request->lob ?? quoteTypeCode::Car;
         $lob = $lob === quoteTypeCode::GroupMedical ? quoteTypeCode::Business : $lob;
-        $lobId = quoteTypeRepository::where('code', $lob)->first();
+        $lobId = QuoteTypeRepository::where('code', $lob)->first();
 
         $query = PersonalQuote::query()
             ->select(
