@@ -240,7 +240,7 @@ const isIntegerColumn = key => {
       {{ customer_name }}
     </template>
     <template #item-customer_type="{ customer_type }">
-      {{ customer_type }}
+      {{ (customer_type && customer_type.includes('IND')) ? 'Individual' : '--' }}
     </template>
     <template #item-insurer="{ insurer }">
       {{ insurer }}

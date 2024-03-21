@@ -25,7 +25,7 @@ class SaleDetailReportService extends ManagementReport
                 DB::raw("CONCAT(p.reference, ' ', p.tax_invoice_number) as transactions"),
                 'personal_quotes.policy_start_date',
                 'p.policy_due_date',
-                'source',
+                'personal_quotes.source',
                 't.name as team',
                 'personal_quotes.price_vat_applicable',
                 'personal_quotes.vat',
@@ -42,8 +42,8 @@ class SaleDetailReportService extends ManagementReport
                 'payment_status.text as transaction_payment_status',
                 'p.captured_at as date_paid',
                 DB::raw('FORMAT(personal_quotes.premium_captured,2) as collected_amount'),
-                DB::raw("CONCAT(first_name, ' ', last_name) as customer_name"),
-                DB::raw("'customer_type' as customer_type"),
+                DB::raw("CONCAT(personal_quotes.first_name, ' ', personal_quotes.last_name) as customer_name"),
+                'cm.code as customer_type',
                 'ip.code as insurer',
                 'quote_type.text as line_of_business',
                 DB::raw("'sub_type_line_of_business' as sub_type_line_of_business"),
@@ -58,7 +58,8 @@ class SaleDetailReportService extends ManagementReport
             ->leftJoin('users as u', 'u.id', '=', 'advisor_id')
             ->leftJoin('users as pi', 'pi.id', '=', 'p.policy_issuer_id')
             ->leftJoin('user_team as ut', 'ut.user_id', '=', 'u.id')
-            ->leftJoin('teams as t', 't.id', '=', 'ut.team_id');
+            ->leftJoin('teams as t', 't.id', '=', 'ut.team_id')
+            ->leftJoin('customer as cm', 'cm.id', '=', 'personal_quotes.customer_id');
 
         $this->applyFilters($query, $request);
 

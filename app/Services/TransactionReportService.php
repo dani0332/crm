@@ -25,7 +25,7 @@ class TransactionReportService extends ManagementReport
                 'policy_number',
                 DB::raw('CONCAT(p.reference, " ", p.tax_invoice_number) as transactions'),
                 'policy_start_date',
-                'p.policy_due_date',
+                'p.payment_due_date',
                 'price_vat_applicable',
                 'vat',
                 'price_vat_not_applicable',
@@ -68,7 +68,7 @@ class TransactionReportService extends ManagementReport
 
         if ($utmGroupBy) {
             $query->groupBy(['personal_quotes.code', $utmGroupBy]);
-        }else {
+        } else {
             $query->groupBy('personal_quotes.code');
         }
 

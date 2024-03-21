@@ -147,6 +147,9 @@ class ManagementReport
         if (isset($request['teams']) && count($request['teams']) > 0) {
             $value = $request['teams'];
             $query->whereIn('t.id', $value);
+        } else {
+            $teamIds = $this->getUserTeams(auth()->user()->id);
+            $query->whereIn('t.id', $teamIds->pluck('id'));
         }
 
         if (isset($request['subTeams']) && ! empty($request['subTeams'])) {

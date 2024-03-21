@@ -511,8 +511,8 @@ class SendEmailCustomerService extends BaseService
 
             $advisorCustomEmail = strstr($emailData->advisorEmail, '@', true).'@notify.insurancemarket.ae';
             $emailData->env = $subjectEnvTag;
-            $body = json_encode([
-                'sender' => ['name' => $emailData->advisorName, 'email' => $advisorCustomEmail],
+
+            $body = [
                 'to' => [[
                     'email' => $emailData->customerEmail,
                     'name' => $emailData->clientFullName,
@@ -525,14 +525,19 @@ class SendEmailCustomerService extends BaseService
                     $tag,
                 ],
                 'attachment' => isset($attachments) ? $attachments : null,
-            ], JSON_UNESCAPED_SLASHES);
+            ];
+
+            // Conditionally add 'sender' key if advisorName and $advisorCustomEmail are not null
+            if ($emailData->advisorName !== null && $advisorCustomEmail !== null) {
+                $body['sender'] = ['name' => $emailData->advisorName, 'email' => $advisorCustomEmail];
+            }
 
             $client = new \GuzzleHttp\Client();
             $clientRequest = $client->post(
                 $this->url,
                 [
                     'headers' => $headers,
-                    'body' => $body,
+                    'body' => json_encode($body, JSON_UNESCAPED_SLASHES),
                     'timeout' => 10,
                 ]
             );
@@ -544,7 +549,6 @@ class SendEmailCustomerService extends BaseService
             $responseCode = $ex->getCode();
             $responseDetail = 'SIB Send sendLMSIntroEmail: Code/Message: '.$responseCode.'/'.$ex->getMessage();
             Log::error($responseDetail);
-            $response = json_encode($ex->getCode().' '.$ex->getMessage());
         }
 
         return $responseCode;
@@ -571,5 +575,82 @@ class SendEmailCustomerService extends BaseService
         } elseif ($response && isset($response->message)) {
             info('RM Intro Email Triggered to CAPI for HEA-'.$quoteUuid.' - Message: '.$response->message);
         }
+
+    }
+
+    public function sendNonAdvisorIntroEmail($emailData, $tag, $emailTemplateId)
+    {
+        try {
+            $appEnv = config('constants.APP_ENV');
+
+            info('sendNonAdvisorIntroEmail  , emailTemplateId: '.$emailTemplateId);
+            $tag = $appEnv == EnvEnum::PRODUCTION ? $tag : $appEnv.'-'.$tag;
+
+            $headers = [
+                'Accept' => 'application/json',
+                'api-key' => $this->apiKey,
+                'Content-Type' => 'application/json',
+            ];
+
+            $emailAttachments = isset($emailData->documentUrl) ? $emailData->documentUrl : null;
+
+            if ($emailAttachments) {
+                $attachments = [];
+                foreach ($emailAttachments as $emailAttachment) {
+                    $attachments[] = [
+                        'url' => $emailAttachment,
+                        'name' => basename($emailAttachment),
+                    ];
+                }
+            }
+            $additionalBcc = ApplicationStorage::where('key_name', ApplicationStorageEnums::LMS_INTRO_EMAIL_BCC)->first()->value;
+            foreach (explode(',', $additionalBcc) as $additionalContact) {
+                $bccAdditional[] = [
+                    'email' => $additionalContact,
+                ];
+            }
+            if (! empty($emailData->pdfAttachment->pdf) && ! empty($emailData->pdfAttachment->name)) {
+                $attachments[] = [
+                    'content' => chunk_split(base64_encode($emailData->pdfAttachment->pdf->stream())),
+                    'name' => $emailData->pdfAttachment->name,
+                ];
+            }
+            $subjectEnvTag = $this->appEnv == EnvEnum::PRODUCTION ? '' : $this->appEnv.' - ';
+            $emailData->env = $subjectEnvTag;
+
+            $body = json_encode([
+                'to' => [[
+                    'email' => $emailData->customerEmail,
+                    'name' => $emailData->clientFullName,
+                ]],
+                'templateId' => $emailTemplateId,
+                'params' => $emailData,
+                'bcc' => $bccAdditional,
+                'tags' => [
+                    $tag,
+                ],
+                'attachment' => isset($attachments) ? $attachments : null,
+            ], JSON_UNESCAPED_SLASHES);
+
+            $client = new \GuzzleHttp\Client();
+            $clientRequest = $client->post(
+                $this->url,
+                [
+                    'headers' => $headers,
+                    'body' => $body,
+                    'timeout' => 10,
+                ]
+            );
+            info('sendNonAdvisorIntroEmail ---- Request Sent');
+            $responseCode = $clientRequest->getStatusCode();
+            info('sendNonAdvisorIntroEmail ---- Received Code : '.$responseCode);
+            info('sendNonAdvisorIntroEmail ---- response object : '.json_encode($clientRequest->getBody()->getContents()));
+        } catch (Exception $ex) {
+            $responseCode = $ex->getCode();
+            $responseDetail = 'SIB Send sendNonAdvisorIntroEmail: Code/Message: '.$responseCode.'/'.$ex->getMessage();
+            Log::error($responseDetail);
+        }
+
+        return $responseCode;
     }
 }
