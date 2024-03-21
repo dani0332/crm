@@ -16,7 +16,7 @@ class DatabaseSeeder extends Seeder
         $this->call([
             LookupSeeder::class,
             GenericPermissionSeeder::class,
-            HealthPlanTableElibilityIdSeeder::class,
+            addSICWorkflow::class,
         ]);
     }
 }
