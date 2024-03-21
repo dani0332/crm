@@ -679,10 +679,10 @@ const submitToCustomer = () => {
             </div>
 
             <div class="grid sm:grid-cols-2 ml-[-50px] mt-4">
-              <dt class="font-bold text-right mr-10">
+              <dt class="flex justify-end mr-10">
                 <x-tooltip position="left">
                   <label
-                    class="text-xs text-gray-800 underline decoration-dotted decoration-primary-700"
+                      class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
                     BOOKING DATE
                   </label>
@@ -697,10 +697,10 @@ const submitToCustomer = () => {
             </div>
 
             <div class="grid sm:grid-cols-2">
-              <dt class="font-bold text-right mr-10">
+              <dt class="flex justify-end mr-10">
                 <x-tooltip position="left">
                   <label
-                    class="text-xs text-gray-800 underline decoration-dotted decoration-primary-700"
+                      class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
                     INVOICE DESCRIPTION
                   </label>
@@ -724,10 +724,10 @@ const submitToCustomer = () => {
             </div>
 
             <div class="grid sm:grid-cols-2">
-              <dt class="font-bold text-right mr-10">
+              <dt class="flex justify-end mr-10">
                 <x-tooltip position="left">
                   <label
-                    class="text-xs text-gray-800 underline decoration-dotted decoration-primary-700"
+                      class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
                     TRANSACTION PAYMENT STATUS
                   </label>
@@ -742,12 +742,15 @@ const submitToCustomer = () => {
             </div>
 
             <div class="grid sm:grid-cols-2 ml-[-50px]">
-              <dt class="font-bold text-right mr-10">
+              <dt class="flex justify-end mr-10">
                 <x-tooltip position="left">
-                  <span>SUB CLASS</span>
+                  <label
+                      class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
+                  >
+                    SUB CLASS
+                  </label>
                   <template #tooltip>
-                    Identifies the specific coverage or insurance plan offered by the
-                    provider.
+                    Identifies the specific coverage or insurance plan offered by the provider.
                   </template>
                 </x-tooltip>
               </dt>
@@ -755,10 +758,10 @@ const submitToCustomer = () => {
             </div>
 
             <div class="grid sm:grid-cols-2">
-              <dt class="font-bold text-right mr-10">
+              <dt class="flex justify-end mr-10">
                 <x-tooltip position="left">
                   <label
-                    class="text-xs text-gray-800 underline decoration-dotted decoration-primary-700"
+                      class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
                     INSURER INVOICE DATE
                   </label>
@@ -773,10 +776,10 @@ const submitToCustomer = () => {
             </div>
 
             <div class="grid sm:grid-cols-2 ml-[-50px]">
-              <dt class="font-bold text-right mr-10">
+              <dt class="flex justify-end mr-10">
                 <x-tooltip position="left">
                   <label
-                    class="text-xs text-gray-800 underline decoration-dotted decoration-primary-700"
+                      class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
                     BROKER INVOICE NUMBER
                   </label>
@@ -791,10 +794,10 @@ const submitToCustomer = () => {
             </div>
 
             <div class="grid sm:grid-cols-2">
-              <dt class="font-bold text-right mr-10">
+              <dt class="flex justify-end mr-10">
                 <x-tooltip position="left">
                   <label
-                    class="text-xs text-gray-800 underline decoration-dotted decoration-primary-700"
+                      class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
                     INSURER TAX INVOICE NUMBER
                   </label>
@@ -809,10 +812,10 @@ const submitToCustomer = () => {
             </div>
 
             <div class="grid sm:grid-cols-2 ml-[-50px]">
-              <dt class="font-bold text-right mr-10">
+              <dt class="flex justify-end mr-10">
                 <x-tooltip position="left">
                   <label
-                    class="text-xs text-gray-800 underline decoration-dotted decoration-primary-700"
+                      class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
                     DISCOUNT
                   </label>
@@ -827,10 +830,10 @@ const submitToCustomer = () => {
             </div>
 
             <div class="grid sm:grid-cols-2">
-              <dt class="font-bold text-right mr-10">
+              <dt class="flex justify-end mr-10">
                 <x-tooltip position="left">
                   <label
-                    class="text-xs text-gray-800 underline decoration-dotted decoration-primary-700"
+                      class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
                     INSURER COMMISSION INVOICE NUMBER
                   </label>
@@ -845,10 +848,10 @@ const submitToCustomer = () => {
             </div>
 
             <div class="grid sm:grid-cols-2 ml-[-50px]">
-              <dt class="font-bold text-right mr-10">
+              <dt class="flex justify-end mr-10">
                 <x-tooltip position="left">
                   <label
-                    class="text-xs text-gray-800 underline decoration-dotted decoration-primary-700"
+                      class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
                     COMMISSION (%)
                   </label>
@@ -863,10 +866,10 @@ const submitToCustomer = () => {
             </div>
 
             <div class="grid sm:grid-cols-2">
-              <dt class="font-bold text-right mr-10">
+              <dt class="flex justify-end mr-10">
                 <x-tooltip position="left">
                   <label
-                    class="text-xs text-gray-800 underline decoration-dotted decoration-primary-700"
+                      class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
                     COMMISSION (VAT NOT APPLICABLE)
                   </label>
@@ -881,10 +884,10 @@ const submitToCustomer = () => {
             </div>
 
             <div class="grid sm:grid-cols-2 ml-[-50px]">
-              <dt class="font-bold text-right mr-10">
+              <dt class="flex justify-end mr-10">
                 <x-tooltip position="left">
                   <label
-                    class="text-xs text-gray-800 underline decoration-dotted decoration-primary-700"
+                      class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
                     VAT ON COMMISSION
                   </label>
@@ -899,10 +902,10 @@ const submitToCustomer = () => {
             </div>
 
             <div class="grid sm:grid-cols-2">
-              <dt class="font-bold text-right mr-10">
+              <dt class="flex justify-end mr-10">
                 <x-tooltip position="left">
                   <label
-                    class="text-xs text-gray-800 underline decoration-dotted decoration-primary-700"
+                      class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
                     COMMISSION VAT APPLICABLE
                   </label>
@@ -917,10 +920,10 @@ const submitToCustomer = () => {
             </div>
 
             <div class="grid sm:grid-cols-2 ml-[-50px]">
-              <dt class="font-bold text-right mr-10">
+              <dt class="flex justify-end mr-10">
                 <x-tooltip position="left">
                   <label
-                    class="text-xs text-gray-800 underline decoration-dotted decoration-primary-700"
+                      class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
                     TOTAL COMMISSION
                   </label>
@@ -935,10 +938,10 @@ const submitToCustomer = () => {
             </div>
 
             <div class="grid sm:grid-cols-2">
-              <dt class="font-bold text-right mr-10">
+              <dt class="flex justify-end mr-10">
                 <x-tooltip position="left">
                   <label
-                    class="text-xs text-gray-800 underline decoration-dotted decoration-primary-700"
+                      class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
                     PRICE (VAT NOT APPLICABLE)
                   </label>
@@ -953,10 +956,10 @@ const submitToCustomer = () => {
             </div>
 
             <div class="grid sm:grid-cols-2 ml-[-50px]">
-              <dt class="font-bold text-right mr-10">
+              <dt class="flex justify-end mr-10">
                 <x-tooltip position="left">
                   <label
-                    class="text-xs text-gray-800 underline decoration-dotted decoration-primary-700"
+                      class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
                     TOTAL VAT AMOUNT
                   </label>
@@ -971,10 +974,10 @@ const submitToCustomer = () => {
             </div>
 
             <div class="grid sm:grid-cols-2">
-              <dt class="font-bold text-right mr-10">
+              <dt class="flex justify-end mr-10">
                 <x-tooltip position="left">
                   <label
-                    class="text-xs text-gray-800 underline decoration-dotted decoration-primary-700"
+                      class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
                     PRICE (VAT APPLICABLE)
                   </label>
@@ -989,10 +992,10 @@ const submitToCustomer = () => {
             </div>
 
             <div class="grid sm:grid-cols-2 ml-[-50px]">
-              <dt class="font-bold text-right mr-10">
+              <dt class="flex justify-end mr-10">
                 <x-tooltip position="left">
                   <label
-                    class="text-xs text-gray-800 underline decoration-dotted decoration-primary-700"
+                      class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
                     TOTAL PRICE
                   </label>
@@ -1080,10 +1083,10 @@ const submitToCustomer = () => {
               </div>
 
               <div class="grid sm:grid-cols-2">
-                <dt class="font-bold text-right mr-10">
+                <dt class="flex justify-end mr-10">
                   <x-tooltip position="left">
                     <label
-                      class="text-xs text-gray-800 underline decoration-dotted decoration-primary-700"
+                        class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
                       INVOICE DESCRIPTION
                     </label>
@@ -1107,10 +1110,10 @@ const submitToCustomer = () => {
               </div>
 
               <div class="grid sm:grid-cols-2">
-                <dt class="font-bold text-right mr-10">
+                <dt class="flex justify-end mr-10">
                   <x-tooltip position="left">
                     <label
-                      class="text-xs text-gray-800 underline decoration-dotted decoration-primary-700"
+                        class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
                       TRANSACTION PAYMENT STATUS
                     </label>
@@ -1125,12 +1128,15 @@ const submitToCustomer = () => {
               </div>
 
               <div class="grid sm:grid-cols-2 ml-[-50px]">
-                <dt class="font-bold text-right mr-10">
+                <dt class="flex justify-end mr-10">
                   <x-tooltip position="left">
-                    <span>SUB CLASS</span>
+                    <label
+                        class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
+                    >
+                      SUB CLASS
+                    </label>
                     <template #tooltip>
-                      Identifies the specific coverage or insurance plan offered by the
-                      provider.
+                      Identifies the specific coverage or insurance plan offered by the provider.
                     </template>
                   </x-tooltip>
                 </dt>
@@ -1138,10 +1144,10 @@ const submitToCustomer = () => {
               </div>
 
               <div class="grid sm:grid-cols-2">
-                <dt class="font-bold text-right mr-10">
+                <dt class="flex justify-end mr-10">
                   <x-tooltip position="left">
                     <label
-                      class="text-xs text-gray-800 underline decoration-dotted decoration-primary-700"
+                        class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
                       INSURER INVOICE DATE
                     </label>
@@ -1164,10 +1170,10 @@ const submitToCustomer = () => {
               </div>
 
               <div class="grid sm:grid-cols-2 ml-[-50px]">
-                <dt class="font-bold text-right mr-10">
+                <dt class="flex justify-end mr-10">
                   <x-tooltip position="left">
                     <label
-                      class="text-xs text-gray-800 underline decoration-dotted decoration-primary-700"
+                        class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
                       BROKER INVOICE NUMBER
                     </label>
@@ -1182,10 +1188,10 @@ const submitToCustomer = () => {
               </div>
 
               <div class="grid sm:grid-cols-2">
-                <dt class="font-bold text-right mr-10">
+                <dt class="flex justify-end mr-10">
                   <x-tooltip position="left">
                     <label
-                      class="text-xs text-gray-800 underline decoration-dotted decoration-primary-700"
+                        class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
                       INSURER TAX INVOICE NUMBER
                     </label>
@@ -1209,10 +1215,10 @@ const submitToCustomer = () => {
               </div>
 
               <div class="grid sm:grid-cols-2 ml-[-50px]">
-                <dt class="font-bold text-right mr-10">
+                <dt class="flex justify-end mr-10">
                   <x-tooltip position="left">
                     <label
-                      class="text-xs text-gray-800 underline decoration-dotted decoration-primary-700"
+                        class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
                       DISCOUNT
                     </label>
@@ -1227,10 +1233,10 @@ const submitToCustomer = () => {
               </div>
 
               <div class="grid sm:grid-cols-2">
-                <dt class="font-bold text-right mr-10">
+                <dt class="flex justify-end mr-10">
                   <x-tooltip position="left">
                     <label
-                      class="text-xs text-gray-800 underline decoration-dotted decoration-primary-700"
+                        class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
                       INSURER COMMISSION INVOICE NUMBER
                     </label>
@@ -1254,10 +1260,10 @@ const submitToCustomer = () => {
               </div>
 
               <div class="grid sm:grid-cols-2 ml-[-50px]">
-                <dt class="font-bold text-right mr-10">
+                <dt class="flex justify-end mr-10">
                   <x-tooltip position="left">
                     <label
-                      class="text-xs text-gray-800 underline decoration-dotted decoration-primary-700"
+                        class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
                       COMMISSION (%)
                     </label>
@@ -1272,10 +1278,10 @@ const submitToCustomer = () => {
               </div>
 
               <div class="grid sm:grid-cols-2">
-                <dt class="font-bold text-right mr-10">
+                <dt class="flex justify-end mr-10">
                   <x-tooltip position="left">
                     <label
-                      class="text-xs text-gray-800 underline decoration-dotted decoration-primary-700"
+                        class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
                       PRICE (VAT APPLICABLE)
                     </label>
@@ -1300,10 +1306,10 @@ const submitToCustomer = () => {
               </div>
 
               <div class="grid sm:grid-cols-2 ml-[-50px]">
-                <dt class="font-bold text-right mr-10">
+                <dt class="flex justify-end mr-10">
                   <x-tooltip position="left">
                     <label
-                      class="text-xs text-gray-800 underline decoration-dotted decoration-primary-700"
+                        class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
                       VAT ON COMMISSION
                     </label>
@@ -1318,10 +1324,10 @@ const submitToCustomer = () => {
               </div>
 
               <div class="grid sm:grid-cols-2">
-                <dt class="font-bold text-right mr-10">
+                <dt class="flex justify-end mr-10">
                   <x-tooltip position="left">
                     <label
-                      class="text-xs text-gray-800 underline decoration-dotted decoration-primary-700"
+                        class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
                       PRICE (VAT NOT APPLICABLE)
                     </label>
@@ -1336,10 +1342,10 @@ const submitToCustomer = () => {
               </div>
 
               <div class="grid sm:grid-cols-2 ml-[-50px]">
-                <dt class="font-bold text-right mr-10">
+                <dt class="flex justify-end mr-10">
                   <x-tooltip position="left">
                     <label
-                      class="text-xs text-gray-800 underline decoration-dotted decoration-primary-700"
+                        class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
                       TOTAL COMMISSION
                     </label>
@@ -1354,10 +1360,10 @@ const submitToCustomer = () => {
               </div>
 
               <div class="grid sm:grid-cols-2">
-                <dt class="font-bold text-right mr-10">
+                <dt class="flex justify-end mr-10">
                   <x-tooltip position="left">
                     <label
-                      class="text-xs text-gray-800 underline decoration-dotted decoration-primary-700"
+                        class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
                       COMMISSION VAT APPLICABLE
                     </label>
@@ -1382,10 +1388,10 @@ const submitToCustomer = () => {
               </div>
 
               <div class="grid sm:grid-cols-2 ml-[-50px]">
-                <dt class="font-bold text-right mr-10">
+                <dt class="flex justify-end mr-10">
                   <x-tooltip position="left">
                     <label
-                      class="text-xs text-gray-800 underline decoration-dotted decoration-primary-700"
+                        class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
                       TOTAL VAT AMOUNT
                     </label>
@@ -1400,10 +1406,10 @@ const submitToCustomer = () => {
               </div>
 
               <div class="grid sm:grid-cols-2">
-                <dt class="font-bold text-right mr-10">
+                <dt class="flex justify-end mr-10">
                   <x-tooltip position="left">
                     <label
-                      class="text-xs text-gray-800 underline decoration-dotted decoration-primary-700"
+                        class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
                       COMMISSION (VAT NOT APPLICABLE)
                     </label>
@@ -1418,10 +1424,10 @@ const submitToCustomer = () => {
               </div>
 
               <div class="grid sm:grid-cols-2 ml-[-50px]">
-                <dt class="font-bold text-right mr-10">
+                <dt class="flex justify-end mr-10">
                   <x-tooltip position="left">
                     <label
-                      class="text-xs text-gray-800 underline decoration-dotted decoration-primary-700"
+                        class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
                       TOTAL PRICE
                     </label>

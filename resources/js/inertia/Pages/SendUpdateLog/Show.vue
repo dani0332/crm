@@ -204,10 +204,10 @@ const isBookingDetailsVisible = computed(() => {
       <div class="text-sm">
         <dl class="grid md:grid-cols-2 gap-y-4">
           <div class="grid sm:grid-cols-2">
-            <dt class="font-bold text-right mr-10">
+            <dt class="flex justify-end mr-10">
               <x-tooltip position="left">
                 <label
-                  class="text-gray-800 underline decoration-dotted decoration-primary-700"
+                    class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                 >
                   SU ref ID
                 </label>
@@ -230,10 +230,10 @@ const isBookingDetailsVisible = computed(() => {
           </div>
           <div class="grid sm:grid-cols-2">
             <template v-if="selectedCategory.subCategory.slug !== 'EN' && selectedCategory.subCategory.slug !== 'CPU'">
-              <dt class="font-bold text-right mr-10">
+              <dt class="flex justify-end mr-10">
                 <x-tooltip position="left">
                   <label
-                    class="text-gray-800 underline decoration-dotted decoration-primary-700"
+                      class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
                     Transaction Type
                   </label>
@@ -246,10 +246,10 @@ const isBookingDetailsVisible = computed(() => {
             </template>
           </div>
           <div class="grid sm:grid-cols-2 ml-[-250px]">
-            <dt class="font-bold text-right mr-10">
+            <dt class="flex justify-end mr-10">
               <x-tooltip position="left">
                 <label
-                  class="text-gray-800 underline decoration-dotted decoration-primary-700"
+                    class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                 >
                   Status
                 </label>
@@ -262,10 +262,10 @@ const isBookingDetailsVisible = computed(() => {
           </div>
           <div class="grid sm:grid-cols-2">
             <template v-if="selectedCategory.subCategory.slug !== 'CI' && selectedCategory.subCategory.slug !== 'CIR' && selectedCategory.subCategory.slug !== 'CPU' && selectedCategory.subCategory.slug !== 'CPD'">
-              <dt class="font-bold text-right mr-10">
+              <dt class="flex justify-end mr-10">
                 <x-tooltip position="left">
                   <label
-                    class="text-gray-800 underline decoration-dotted decoration-primary-700"
+                      class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
                     Sub Type
                   </label>
