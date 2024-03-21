@@ -218,7 +218,7 @@ class CentralService
 
     public function saveAndAssignActivitesToAdvisor($quoteDetails, $quoteTypeId)
     {
-
+       
         $quoteDetails['quote_type_id'] = $quoteTypeId;
         $quoteTypeDetails = [
             CarQuote::class => [
@@ -296,23 +296,52 @@ class CentralService
 
 
         $advisorDetails = User::with('usersroles', 'teams')->where('id', $quoteDetails->advisor_id)->first();
+
+        
+        $lastActivity = Activities::where([
+            'quote_request_id' => $quoteDetails->id,
+            'status' => true,
+        ])->orderBy('created_at', 'desc')->first();
+        
+        if ($lastActivity) {
+            $lastActivity = $lastActivity->toArray();
+        }
+        
+        $lastActivityDueDateIsGreater = false;
+        if($lastActivity && $lastActivity['due_date'] > now()->format('d-m-Y')){
+            $lastActivityDueDateIsGreater = true;
+        }
+        
+
+        $scheduledActivitiesIDs = Activities::where([
+            'quote_request_id'=> $quoteDetails->id,
+           'status' => true,
+        ])->where('due_date', '<', now())
+        ->orderBy('created_at', 'desc')->pluck('activity_schedule_id')
+        ->unique()->filter(function ($filter) {
+            return ! is_null($filter);
+        })->toArray();
+
+
         $getActivitySchedule = ActivitySchedule::where([
             'quote_type_id' => $quoteTypeId,
             'quote_status_id' => $quoteDetails->quote_status_id,
         ])
-            ->whereIn('role_id', $advisorDetails->usersroles->pluck('id'))
-            ->whereIn('team_id', $advisorDetails->teams->pluck('id'))
-            ->when($quoteDetails->source == LeadSourceEnum::RENEWAL_UPLOAD, function ($query) use ($quoteDetails, $quoteTypeDetail) {
-                // $renewalTeamID = isset($quoteTypeDetail['multiple_lobs']) ?
-                //     $quoteTypeDetail['quote_type_details'][$quoteDetails->quote_type_id]['renewal_team'] : $quoteTypeDetail['renewal_team'];
-                $renewalTeamID =  $quoteTypeDetail['renewal_team'];
-              
-                $query->where('team_id', $renewalTeamID ?? null);
-            })
-            ->orderBy('sorting_order')
-            ->first();
+        ->whereIn('role_id', $advisorDetails->usersroles->pluck('id'))
+        ->whereIn('team_id', $advisorDetails->teams->pluck('id'))
+        ->when(! empty($scheduledActivitiesIDs), function ($previousSchedule) use ($scheduledActivitiesIDs) {
+            $previousSchedule->whereNotIn('id', $scheduledActivitiesIDs);
+        })
+        ->when($quoteDetails->source == LeadSourceEnum::RENEWAL_UPLOAD, function ($query) use ($quoteDetails, $quoteTypeDetail) {
+            $renewalTeamID =  $quoteTypeDetail['renewal_team']; // check activity_schedule table 
             
-        if ($getActivitySchedule && $quoteDetails->advisor_id) {
+            $query->where('team_id', $renewalTeamID ?? null);
+        })
+        ->orderBy('sorting_order')
+        ->first();
+
+
+        if ($getActivitySchedule && $quoteDetails->advisor_id && !$lastActivityDueDateIsGreater) {
 
             $activity = Activities::create([
                 'title' => $getActivitySchedule->name,

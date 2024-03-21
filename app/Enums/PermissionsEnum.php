@@ -247,4 +247,10 @@ final class PermissionsEnum extends Enum
     public const HEALTH_QUOTES_ACCESS = 'health-quotes-access';
     public const STALE_LEADS_REPORT = 'stale-leads-report-view';
     public const PIPELINE_REPORT = 'pipeline-report-view';
+    public const PET_CARD_VIEW = 'pet-quotes-card';
+    public const HEALTH_CARD_VIEW = 'health-cards';
+    public const HOME_CARD_VIEW = 'home-cardView';
+    public const YACHT_CARD_VIEW = 'yacht-quotes-card';
+    public const CYCLE_CARD_VIEW = 'cycle-quotes-card';
+    public const CORPLINE_CARD_VIEW = 'business-cards';
 }

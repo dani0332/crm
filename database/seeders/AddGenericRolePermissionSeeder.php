@@ -32,6 +32,25 @@ class AddGenericRolePermissionSeeder extends Seeder
             ]],
             ['name' => [PermissionsEnum::STALE_LEADS_REPORT], 'role' => []],
             ['name' => [PermissionsEnum::PIPELINE_REPORT], 'role' => []],
+            ['name' => [PermissionsEnum::HEALTH_CARD_VIEW], 'role' => [
+                RolesEnum::HealthManager,RolesEnum::HealthAdvisor,
+                RolesEnum::RMAdvisor, RolesEnum::EBPAdvisor,
+            ]],
+            ['name' => [PermissionsEnum::CORPLINE_CARD_VIEW], 'role' => [
+                RolesEnum::CorplineManager,RolesEnum::CorpLineAdvisor,
+            ]],
+            ['name' => [PermissionsEnum::HOME_CARD_VIEW], 'role' => [
+                RolesEnum::HomeManager,RolesEnum::HomeAdvisor,
+            ]],
+            ['name' => [PermissionsEnum::CYCLE_CARD_VIEW], 'role' => [
+                RolesEnum::CycleManager,RolesEnum::CycleAdvisor,
+            ]],
+            ['name' => [PermissionsEnum::PET_CARD_VIEW], 'role' => [
+                RolesEnum::PetManager,RolesEnum::PetAdvisor,
+            ]],
+            ['name' => [PermissionsEnum::YACHT_CARD_VIEW], 'role' => [
+                RolesEnum::YachtManager,RolesEnum::YachtAdvisor,
+            ]],
         ];
 
         foreach ($permissions as $permission) {
