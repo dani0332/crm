@@ -284,7 +284,7 @@ class BridgerInsightService
 
         ];
 
-        info('Bridger Insight Service - Bridger Decision update API Call - Quote Ref-ID: '.$request->ref_id.' - AML ID: '.($request->aml_id ?? '-').' - Bridger Alert ID: '.($request->result_id ?? '-').' - Decision Update API Payload : '.json_encode($amlUpdateData).' - Triggered by: '.auth()->user()->email);
+        // info('Bridger Insight Service - Bridger Decision update API Call - Quote Ref-ID: '.$request->ref_id.' - AML ID: '.($request->aml_id ?? '-').' - Bridger Alert ID: '.($request->result_id ?? '-').' - Decision Update API Payload : '.json_encode($amlUpdateData).' - Triggered by: '.auth()->user()->email);
 
         try {
             $bridgerRequest = $bridgerClient->post(
@@ -306,14 +306,14 @@ class BridgerInsightService
 
             $response['status'] = 'success';
             $response['message'] = 'Bridger Decision';
-
         } catch (Exception $exception) {
-            logger()->error('Bridger Insight Service - Failed - Error : '.$exception->getMessage());
             $response['status'] = 'error';
             $response['message'] = 'Bridger Decision Update Failed';
 
             if (str_contains($exception->getMessage(), 'The record was locked')) {
                 $response['message'] = str_replace(['}', '"', ']', '\n'], '', explode('{"Message":', $exception->getMessage())[1]) ?? 'The record was locked';
+            } else {
+                logger()->error('Bridger Insight Service - Failed - Error : '.$exception->getMessage());
             }
         }
 

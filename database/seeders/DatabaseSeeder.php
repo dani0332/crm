@@ -19,7 +19,6 @@ class DatabaseSeeder extends Seeder
             DubaiLeadSource::class,
             personalQuoteSeeder::class,
             GenericPermissionSeeder::class,
-            HealthPlanTableElibilityIdSeeder::class,
             addSICWorkflow::class,
         ]);
     }
