@@ -66,7 +66,9 @@ const batchForm = useForm({
   start_date: props?.renewalBatch?.start_date ?? null,
   end_date: props?.renewalBatch?.end_date ?? null,
   dead_date: props.carSoldDeadline ?? null,
-  batchMonth: props?.renewalBatch?.month ?? null,
+  batchMonth: +props?.renewalBatch.month
+    ? { month: props?.renewalBatch.month - 1 }
+    : null,
   slab: props.lastBatchSlabs,
   segment_volume: props.volumeSegmentAdvisorsId ?? [],
   segment_value: props.valueSegmentAdvisorsId ?? [],
@@ -86,6 +88,13 @@ const generateDeadlineDate = () => {
     .reduce((acc, [key, value]) => ({ ...acc, [key]: value }), {});
 };
 
+const setBatchMonth = () => {
+  if (props?.renewalBatch?.month != batchForm.batchMonth.month) {
+    return batchForm.batchMonth.month
+      ? batchForm.batchMonth.month + 1
+      : batchForm.batchMonth;
+  }
+};
 function onSubmit(isValid) {
   if (!isValid) return;
 
@@ -93,13 +102,12 @@ function onSubmit(isValid) {
 
   batchForm.transform(data => ({
     ...data,
-    month: data.batchMonth.month ? data.batchMonth.month + 1 : data.batchMonth,
+    month: setBatchMonth(),
     [dynamicKey]: data.dead_date,
     slab: generateSlabArray(),
     deadline_date: generateDeadlineDate(),
   }));
-  console.log(batchForm);
-  // return;
+
   const method = isEdit.value ? 'put' : 'post';
   const url = isEdit.value
     ? route('renewal-batches-update', props.renewalBatch?.id)
@@ -154,6 +162,7 @@ onMounted(() => {
             class="w-full"
             :monthPicker="true"
             placeholder="Batch Month"
+            format="MMM"
           />
         </x-field>
         <x-field label="Start Date" required>
