@@ -11,7 +11,9 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\RuleTypeEnum;
 use App\Enums\TeamNameEnum;
 use App\Enums\TiersEnum;
+use App\Enums\TiersIdEnum;
 use App\Enums\UserStatusEnum;
+use App\Jobs\SendOCBIntroEmailJob;
 use App\Models\CarMake;
 use App\Models\CarModel;
 use App\Models\CarQuote;
@@ -134,6 +136,26 @@ class CarAllocationService extends AllocationService
         return [$plans, $yearOfManufacture];
     }
 
+    public function shouldEnforceSICCheck($lead, $tier): bool
+    {
+        [$plans, $yearOfManufacture] = $this->getPlanAndYear($lead);
+        if ($tier->id == TiersIdEnum::TIER_5 && count($plans) > 0) {
+            return true;
+        }
+
+        return false;
+    }
+
+    public function processSICFlow($lead, $tier): void
+    {
+        $lead->sic_flow_enabled = 1;
+        $lead->tier_id = $tier->id;
+        $lead->save();
+        info('SIC flow is enabled for lead : '.$lead->uuid.' , the updated field : '.$lead->sic_flow_enabled);
+        SendOCBIntroEmailJob::dispatch($lead->uuid, null, true);
+        info('SIC flow is email is dispatched for lead : '.$lead->uuid);
+    }
+
     /**
      * @return array|mixed
      */
@@ -200,11 +222,21 @@ class CarAllocationService extends AllocationService
         return null;
     }
 
-    public function getEligibleUserForAllocation($tierId, $advisorId, $isReassignmentJob, $leadSource)
+    public function getEligibleUserForAllocation($tierId, $advisorId, $isReassignmentJob, $leadSource, $teamId)
     {
         $tierUserIds = $this->getTierUserIds($tierId, $advisorId);
 
         $tierUserIds = $this->executeRevivalCheck($leadSource, $tierUserIds);
+
+        if ($teamId) {
+            $teamUserIds = UserTeams::where('team_id', $teamId)->select('user_id')->get();
+            if ($teamUserIds->count() > 0) {
+                $teamUserIds = $teamUserIds->pluck('user_id')->toArray();
+            } else {
+                $teamUserIds = [];
+            }
+            $tierUserIds = array_intersect($tierUserIds->toArray(), $teamUserIds);
+        }
 
         // Define the order in which user statuses should be considered.
         $statusOrder = [
