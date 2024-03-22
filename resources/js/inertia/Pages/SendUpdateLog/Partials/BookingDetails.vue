@@ -220,10 +220,10 @@ const calculateCommission = () => {
       });
     }
   } else if (bookingDetailsForm.commission_vat_not_applicable > 0) {
-    if (Number(props.realQuote?.price_vat_not_applicable) > 0) {
+    if (Number(props.sendUpdateLog?.price_vat_not_applicable) > 0) {
       bookingDetailsForm.commission_percentage = (
         (bookingDetailsForm.commission_vat_not_applicable /
-          props.realQuote?.price_vat_not_applicable) *
+          props.sendUpdateLog?.price_vat_not_applicable) *
         100
       ).toFixed(2);
 
