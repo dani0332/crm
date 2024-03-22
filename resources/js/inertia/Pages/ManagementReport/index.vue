@@ -269,6 +269,7 @@ function onReset() {
           size="sm"
           model-type="yyyy-MM-dd"
           :rules="[isRequired]"
+          :onlySelect="true"
         />
       </x-field>
       <x-field v-if="showPaymentDueDate" label="Payment Due Date" required>
