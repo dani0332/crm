@@ -3,15 +3,11 @@
 namespace App\Exports;
 
 use App\Repositories\HomeQuoteRepository;
-use Maatwebsite\Excel\Concerns\Exportable;
-use Maatwebsite\Excel\Concerns\FromCollection;
-use Maatwebsite\Excel\Concerns\ShouldAutoSize;
-use Maatwebsite\Excel\Concerns\WithHeadings;
-use Maatwebsite\Excel\Concerns\WithMapping;
+use App\Traits\ExcelExportable;
 
-class HomeQuoteExport implements FromCollection, ShouldAutoSize, WithHeadings, WithMapping
+class HomeQuoteExport
 {
-    use Exportable;
+    use ExcelExportable;
 
     public function collection()
     {

@@ -38,11 +38,17 @@ class StoreBusinessQuoteRequest extends FormRequest
             if ($key == 'email') {
                 $rule[] = 'email:rfc,dns';
             }
+            if ($key == 'first_name' || $key == 'last_name') {
+                $rule[] = 'between:1,20';
+            }
             if ($key == 'phone') {
                 $rule[] = 'regex:/(0)[0-9]/';
                 $rule[] = 'not_regex:/[a-z]/';
                 $rule[] = 'min:7';
                 $rule[] = 'max:20';
+            }
+            if ($key == 'number_of_employees') {
+                $rule = 'required|numeric|max:2147483645';
             }
             $rules[$key] = $rule;
         }

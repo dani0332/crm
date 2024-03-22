@@ -82,12 +82,13 @@ defineProps({
   UBOsDetails: Array,
   isCommercialVehicles: Boolean,
   carInsuranceProviders: Array,
+  clientInquiryLogs: Array,
 });
 
 const page = usePage();
 const notification = useNotifications('toast');
 const showfollowup = ref(false);
-
+const processingOCBEmailNB = ref(false);
 const permissionEnum = page.props.permissionsEnum;
 const rolesEnum = page.props.rolesEnum;
 
@@ -576,6 +577,10 @@ const leadDuplicateForm = useForm({
 const openDuplicate = () => {
   modals.duplicate = true;
   leadDuplicateForm.reset();
+};
+
+const openSendOCBConfirmNB = () => {
+  modals.sendOCBConfirmNB = true;
 };
 
 const onCreateDuplicate = isValid => {
@@ -1196,6 +1201,32 @@ const confirmSendEmail = () => {
     });
 };
 
+const confirmSendOCBEmailNB = () => {
+  processingOCBEmailNB.value = true;
+  axios
+    .post(
+      `/quotes/car/${page.props.record.uuid}/send-email-ocb-nb`,
+      {
+        responseType: 'json',
+      },
+    )
+    .then(response => {
+      processingOCBEmailNB.value = false;
+      notification.success({
+        title: response.data.success,
+        position: 'top',
+      });
+    })
+    .catch(error => {
+      processingOCBEmailNB.value = false;
+      console.log(error);
+    })
+    .finally(() => {
+      processingOCBEmailNB.value = false;
+      modals.sendOCBConfirmNB = false;
+    });
+};
+
 const disableFollowUp = ref(false);
 const followUpstatus = ref('');
 const followUpEmails = ref([]);
@@ -1596,6 +1627,19 @@ const handleChildUpdate = planId => {
             >
               Duplicate Lead
             </x-button>
+            <x-button
+              v-if="
+                hasAnyRole([
+                  rolesEnum.LeadPool,
+                ])
+              "
+              class="mr-2"
+              size="sm"
+              color="#ff5e00"
+              @click.prevent="openSendOCBConfirmNB"
+            >
+              Send NB OCB To Customer
+            </x-button>
           </template>
           <Link :href="route('car.index')">
             <x-button size="sm" tag="div">Car List</x-button>
@@ -1763,6 +1807,10 @@ const handleChildUpdate = planId => {
           >
             <dt class="font-medium">ID</dt>
             <dd>{{ record.id }}</dd>
+          </div>
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">ENQUIRY COUNT</dt>
+            <dd>{{ record.enquiry_count }}</dd>
           </div>
         </dl>
       </div>
@@ -3021,6 +3069,34 @@ const handleChildUpdate = planId => {
           </div>
         </template>
       </x-modal>
+      <AppModal
+        :actions="true"
+        :showHeader="true"
+        v-model:modelValue="modals.sendOCBConfirmNB"
+        :backdrop-close="false"
+        >
+        <template #header>
+        <p>Send Email OCB NB</p>
+        </template>
+        <template #default>
+        <p>Are you sure send email to customer?</p>
+        </template>
+        <template #actions>
+            <div class="text-right space-x-4">
+            <x-button
+              size="sm"
+              ghost
+              @click.prevent="modals.sendOCBConfirmNB = false"
+              :disable="processingOCBEmailNB"
+            >
+              Cancel
+            </x-button>
+            <x-button size="sm" color="error" :loading="processingOCBEmailNB" @click.prevent="confirmSendOCBEmailNB">
+              Send
+            </x-button>
+          </div>
+        </template>
+    </AppModal>
       <x-modal v-model="modals.createPlan" size="xl" show-close backdrop>
         <template #header> Create Car Quote </template>
         <LazyCreatePlan
@@ -3629,7 +3705,7 @@ const handleChildUpdate = planId => {
         </x-form>
       </x-modal>
     </div>
-    <customerAdditionalContacts
+    <CustomerAdditionalContacts
       quoteType="Car"
       :customerId="record.customer_id"
       :quoteId="record.id"
@@ -3672,5 +3748,10 @@ const handleChildUpdate = planId => {
     v-if="can(permissionEnum.API_LOG_VIEW)"
     :type="'App\\Models\\CarQuote'"
     :id="$page.props.record.id"
+  />
+
+  <ClientInquiryLogs
+      v-if="clientInquiryLogs.length > 0"
+      :logs="clientInquiryLogs"
   />
 </template>

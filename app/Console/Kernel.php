@@ -3,8 +3,10 @@
 namespace App\Console;
 
 use App\Console\Commands\UpdateHealthStatus;
+use App\Console\Commands\UpdateManualOffline;
 use App\Jobs\CarLost\CarSoldResubmissions;
 use App\Jobs\CarLost\UnconSubmissionReminder;
+use Carbon\Carbon;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
 
@@ -63,6 +65,15 @@ class Kernel extends ConsoleKernel
         $schedule->command('ResetLeadAllocationCounts:cron')->timezone('Asia/Dubai')->dailyAt('23:59')->onOneServer()->withoutOverlapping(1);
 
         $schedule->command('QuoteSyncUpdate:cron')->everyFiveMinutes()->onOneServer()->withoutOverlapping(1);
+        $schedule->command(UpdateManualOffline::class)
+            ->timezone('Asia/Dubai')
+            ->dailyAt('08:58')
+            ->unlessBetween(
+                Carbon::now()->next(Carbon::SATURDAY)->startOfDay(),
+                Carbon::now()->next(Carbon::SUNDAY)->endOfDay()
+            )
+            ->onOneServer()
+            ->withoutOverlapping(1);
 
     }
 

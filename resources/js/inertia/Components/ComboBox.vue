@@ -48,6 +48,10 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  autocomplete: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 const emit = defineEmits(['update:modelValue']);
@@ -84,14 +88,6 @@ const filteredList = computed(() => {
       });
 });
 
-const { list, containerProps, wrapperProps, scrollTo } = useVirtualList(
-  filteredList,
-  {
-    itemHeight: 34,
-    overscan: 10,
-  },
-);
-
 const onSelectAll = () => {
   const values = props.options.map(item => item.value);
   emit('update:modelValue', values);
@@ -99,6 +95,15 @@ const onSelectAll = () => {
 
 const onDeselectAll = () => {
   emit('update:modelValue', []);
+};
+
+const removeSelected = item => {
+  let index = props.modelValue.findIndex(x => {
+    return x == item.value || x == item.label;
+  });
+  if (index != -1) {
+    props.modelValue.splice(index, 1);
+  }
 };
 </script>
 
@@ -116,26 +121,51 @@ const onDeselectAll = () => {
       class="relative"
       :disabled="props.disabled"
     >
-      <ComboboxInput
-        :displayValue="list => list?.label"
-        :class="{
-          'border-red-500': props.hasError,
-        }"
-        class="appearance-none block placeholder-gray-400 outline-transparent outline outline-2 outline-offset-[-1px] transition-all duration-150 ease-in-out border-gray-300 border shadow-sm rounded-md hover:border-gray-400 px-3 py-2 bg-white text-gray-700 focus:outline-sky-500 w-full"
-        :placeholder="props.placeholder"
-        :value="
-          props.single
-            ? props.options.find(option => option.value === props.modelValue)
-                ?.label
-            : `${selectedValue.length} Selected ${
-                props.maxLimit && !props.selectAll
-                  ? '| max: ' + props.maxLimit
-                  : ''
-              }`
-        "
-        readonly
-      />
-      <ComboboxButton class="absolute bottom-0 right-0 w-full h-full" />
+      <div>
+        <div
+          class="select-none outline-transparent outline outline-2 outline-offset-[-1px] transition-all duration-150 ease-in-out border-gray-300 shadow-sm rounded-md hover:border-gray-400 px-3 py-2 bg-white text-gray-700 active:outline-sky-500 w-full flex flex-wrap gap-1 border pr-5 pl-2"
+          v-if="selectedValue.length > 0 && autocomplete"
+        >
+          <x-tag
+            v-for="item in selectedValue"
+            :key="item.label"
+            removable
+            size="xs"
+            color="sky"
+            @remove="removeSelected(item)"
+          >
+            {{ item.label }}
+          </x-tag>
+        </div>
+        <ComboboxInput
+          v-else
+          as="input"
+          :displayValue="list => list?.label"
+          :class="{
+            'border-red-500': props.hasError,
+          }"
+          class="appearance-none block placeholder-gray-400 outline-transparent outline outline-2 outline-offset-[-1px] transition-all duration-150 ease-in-out border-gray-300 border shadow-sm rounded-md hover:border-gray-400 px-3 py-2 bg-white text-gray-700 focus:outline-sky-500 w-full"
+          :placeholder="props.placeholder"
+          :value="
+            props.single
+              ? props.options.find(option => option.value === props.modelValue)
+                  ?.label
+              : `${selectedValue.length} Selected ${
+                  props.maxLimit && !props.selectAll
+                    ? '| max: ' + props.maxLimit
+                    : ''
+                }`
+          "
+          readonly
+        />
+        <ComboboxButton
+          class="absolute right-0 w-full h-full"
+          :class="{
+            'bottom-0': selectedValue.length == 0 || !props.autocomplete,
+          }"
+        />
+      </div>
+
       <TransitionRoot
         leave="transition ease-in duration-100"
         leaveFrom="opacity-100"
@@ -151,7 +181,6 @@ const onDeselectAll = () => {
               v-model="query"
               :placeholder="`${props.searchPlaceholder} (${props.options.length})`"
               class="w-full"
-              @update:modelValue="scrollTo(0)"
             />
           </li>
 
@@ -161,11 +190,11 @@ const onDeselectAll = () => {
           >
             No results found
           </li>
-          <div v-bind="containerProps" class="max-h-40 overflow-auto h-full">
-            <div v-bind="wrapperProps">
+          <div class="max-h-40 overflow-auto h-full">
+            <div>
               <ComboboxOption
                 as="template"
-                v-for="{ data: item } of list"
+                v-for="item of filteredList"
                 v-slot="{ selected }"
                 :key="`${item.value}-${item.label}`"
                 :value="item"

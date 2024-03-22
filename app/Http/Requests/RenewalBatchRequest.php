@@ -31,8 +31,8 @@ class RenewalBatchRequest extends FormRequest
 
         // Get the slab array from the request data
         $slabArray = $this->input('slab');
-        $optionalSlabsId = $this->input('optional_slabs');
-        $optionalTeamsId = $this->input('optional_teams');
+        $optionalSlabsId = $this->input('optional_slabs') ?? [];
+        $optionalTeamsId = $this->input('optional_teams') ?? [];
 
         $slabIndex = count($slabArray);
 
