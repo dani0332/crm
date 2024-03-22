@@ -13,9 +13,7 @@ class LegacyPolicyController extends Controller
 {
     public function __construct()
     {
-        $this->middleware(
-            ['permission:'.PermissionsEnum::VIEW_LEGACY_DETAILS], ['only' => ['index', 'show', 'moveToImcrm']]
-        );
+        $this->middleware('permission:'.PermissionsEnum::VIEW_LEGACY_DETAILS, ['only' => ['index', 'show', 'moveToImcrm']]);
     }
     /**
      * Display a listing of the resource.
