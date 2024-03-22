@@ -27,7 +27,7 @@ class EmbeddedProduct
             $dateFormat = config('constants.DATE_DISPLAY_FORMAT');
             $quoteObject = $item->quote_request;
             $status = $quoteObject->quoteStatus->text ?? '';
-            $customer = $quoteObject->customer;
+            $customer = $quoteObject->customer ?? null;
             $carMake = $quoteObject->carMake->text ?? '';
             $carModel = $quoteObject->carModel->text ?? '';
             $age = isset($quoteObject->dob) ?
