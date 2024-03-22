@@ -90,7 +90,7 @@ const generateDeadlineDate = () => {
 
 const setBatchMonth = () => {
   if (+props?.renewalBatch?.month != +batchForm.batchMonth.month) {
-    return batchForm.batchMonth.month
+    return batchForm.batchMonth.month.toString()
       ? batchForm.batchMonth.month + 1
       : batchForm.batchMonth;
   }
@@ -233,7 +233,9 @@ onMounted(() => {
               <td class="border" v-for="(slab, index) in slabs" :key="slab.id">
                 <div
                   class="flex gap-2 items-center mt-3 px-2"
-                  v-if="index < team.slabs_count"
+                  v-if="
+                    index < team.slabs_count && lastBatchSlabs[slab.id][team.id]
+                  "
                 >
                   <x-input
                     v-model="lastBatchSlabs[slab.id][team.id]['pivot']['min']"
