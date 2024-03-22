@@ -80,7 +80,7 @@ class QuoteAllocation extends Command
             ->take($chunkSize);
         info('leads fetch query is : '.$leads->toSql().' with params : '.$leads->getBindings());
         foreach ($leads->get() as $lead) {
-            if ($lead->tier_id != TiersIdEnum::TIER_R) {
+            if ($lead->tier_id == TiersIdEnum::TIER_R) {
                 continue;
             }
             info('Processing record for Quote Allocation with uuid: '.$lead->uuid);
