@@ -89,7 +89,7 @@ const generateDeadlineDate = () => {
 };
 
 const setBatchMonth = () => {
-  if (props?.renewalBatch?.month != batchForm.batchMonth.month) {
+  if (+props?.renewalBatch?.month != +batchForm.batchMonth.month) {
     return batchForm.batchMonth.month
       ? batchForm.batchMonth.month + 1
       : batchForm.batchMonth;
@@ -99,10 +99,9 @@ function onSubmit(isValid) {
   if (!isValid) return;
 
   batchForm.clearErrors();
-
+  batchForm.month = setBatchMonth();
   batchForm.transform(data => ({
     ...data,
-    month: setBatchMonth(),
     [dynamicKey]: data.dead_date,
     slab: generateSlabArray(),
     deadline_date: generateDeadlineDate(),
