@@ -23,6 +23,7 @@ use DataTables;
 use DB;
 use Illuminate\Http\Request;
 
+// Scheduled to delete 15th April 2024
 class ClaimController extends Controller
 {
     /**
@@ -433,7 +434,8 @@ class ClaimController extends Controller
     {
         $response = $this->carQuoteService->carPlanModify($request);
 
-        $message = '';
+        $message = 'Car Plan has not been updated';
+
         if (gettype($response) == GenericRequestEnum::INTEGER && ($response == 200 || $response == 201)) {
             $message = 'Plan has been updated';
 
@@ -447,8 +449,7 @@ class ClaimController extends Controller
             $message = 'Car Plan has not been updated '.$responseMessage;
         }
 
-        return redirect()->back()->withErrors('message', $message);
-
+        return redirect()->back()->with('error', $message);
     }
 
     public function getoverdueleads(Request $request)

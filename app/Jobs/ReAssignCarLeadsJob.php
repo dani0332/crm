@@ -107,7 +107,7 @@ class ReAssignCarLeadsJob implements ShouldQueue
 
     protected function findAvailableUsers($tierId, $leadSource)
     {
-        return $this->carAllocationService->getEligibleUserForAllocation($tierId, $this->advisorId, true, $leadSource);
+        return $this->carAllocationService->getEligibleUserForAllocation($tierId, $this->advisorId, true, $leadSource, null);
     }
 
     protected function findRules($lead)

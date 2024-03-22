@@ -21,12 +21,14 @@
         "vite": "^5.0.12"
     },
     "dependencies": {
-        "@headlessui/vue": "^1.7.17",
+        "@headlessui/vue": "1.7.18",
         "@indielayer/ui": "1.0.9",
         "@inertiajs/vue3": "^1.0.14",
         "@vuepic/vue-datepicker": "7.4.1",
         "@vueuse/core": "^10.7.2",
         "cypress-file-upload": "^5.0.8",
+        "highcharts": "^11.2.0",
+        "highcharts-vue": "^1.4.3",
         "laravel-echo": "^1.15.2",
         "laravel-vite-plugin": "^1.0.1",
         "md-editor-v3": "^2.11.2",

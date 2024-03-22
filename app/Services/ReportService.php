@@ -48,7 +48,6 @@ class ReportService extends BaseService
     {
         $records = [];
         if ($request->has('quote_type_id') && $request->has('group_by_one')) {
-
             $isGroupMedical = false;
             if ($request->quote_type_id == 999) {
                 $request->quote_type_id = QuoteTypeId::Business; // group medical and business quote table is same
@@ -74,7 +73,6 @@ class ReportService extends BaseService
                 DB::raw('COUNT('.$quoteRequestTable.'_detail.id) as leads_count'),
                 DB::raw('COUNT(CASE  WHEN payment_status_id = '.PaymentStatusEnum::AUTHORISED.' THEN 1 ELSE NULL END) as authorized'),
                 DB::raw('COUNT(CASE  WHEN payment_status_id = '.PaymentStatusEnum::CAPTURED.' THEN 1 ELSE NULL END) as captured'),
-
                 DB::raw('sum(CASE WHEN payment_status_id = '.PaymentStatusEnum::AUTHORISED.' THEN premium  ELSE 0 END) as authorized_sum'),
                 DB::raw('sum(CASE WHEN payment_status_id = '.PaymentStatusEnum::CAPTURED.' THEN premium  ELSE 0 END) as captured_sum'),
             )
@@ -97,7 +95,6 @@ class ReportService extends BaseService
             $records = $query->get();
 
             $records->map(function ($item) use ($groupBy) {
-
                 $item['utm_source'] = in_array('utm_source', $groupBy) ? $item['utm_source'] : '';
                 $item['utm_medium'] = in_array('utm_medium', $groupBy) ? $item['utm_medium'] : '';
                 $item['utm_campaign'] = in_array('utm_campaign', $groupBy) ? $item['utm_campaign'] : '';
@@ -117,7 +114,6 @@ class ReportService extends BaseService
         $resp['lobs'] = $lobs;
 
         return $resp;
-
     }
 
     public function getLeadsListReport($request)
@@ -223,7 +219,6 @@ class ReportService extends BaseService
 
     public function getDefaultFiltersForLeadsList()
     {
-
         $loginUserId = auth()->user()->id;
         $teamIds = $this->getUserTeams($loginUserId);
         $teams = Team::whereIn('id', $teamIds->pluck('id'))
@@ -271,5 +266,4 @@ class ReportService extends BaseService
             'advisorAssignedDates' => $advisorAssignedDates,
         ];
     }
-
 }

@@ -768,7 +768,7 @@ class RenewalsUploadService
                 'email' => $customerData['email'],
                 'mobile_no' => $customerData['mobile_no'],
                 'uuid' => $quoteUuid,
-                'code' => $renewalQuoteProcess->quote_type.'-'.$quoteUuid,
+                'code' => strtoupper($renewalQuoteProcess->quote_type).'-'.$quoteUuid,
                 'source' => 'Renewal_upload',
                 'additional_notes' => $data['notes'].$customerData['notes'],
                 'advisor_id' => $advisorId,
@@ -1338,7 +1338,7 @@ class RenewalsUploadService
     /**
      * //$modelName, $quoteRequestIdName.
      *
-     * @param $quoteRequestIdName
+     * @param    $quoteRequestIdName
      * @return false|mixed
      */
     public function updateAdvisorAssignedDateTime($quoteType, $quoteId, $currentUserId, $advisorId)
@@ -1970,7 +1970,7 @@ class RenewalsUploadService
         $repository = '\\App\\Repositories\\'.ucwords($quoteType->value).'QuoteRepository';
         $quotes = $repository::export();
 
-        return (new RenewalQuotesExport($quotes, $quoteType->name))->download('Renewal.xlsx');
+        return (new RenewalQuotesExport($quotes, $quoteType->name))->download('Renewal');
     }
 
 }
