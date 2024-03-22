@@ -89,11 +89,9 @@ const generateDeadlineDate = () => {
 };
 
 const setBatchMonth = () => {
-  if (+props?.renewalBatch?.month != +batchForm.batchMonth.month) {
-    return batchForm.batchMonth.month.toString()
-      ? batchForm.batchMonth.month + 1
-      : batchForm.batchMonth;
-  }
+  return batchForm.batchMonth.month.toString()
+    ? batchForm.batchMonth.month + 1
+    : batchForm.batchMonth;
 };
 function onSubmit(isValid) {
   if (!isValid) return;
