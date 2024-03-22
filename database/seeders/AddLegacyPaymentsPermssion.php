@@ -105,5 +105,27 @@ class AddLegacyPaymentsPermssion extends Seeder
                 ]
             );
         }
+        ///////
+        $permission = Permission::findOrCreate(PermissionsEnum::VIEW_LEGACY_DETAILS, 'web');
+        $role = Role::where('name', RolesEnum::Accounts)->first();
+        $rolePermission = DB::table('role_has_permissions')->where('role_id', $role->id)->where('permission_id', $permission->id)->first();
+        if ($rolePermission === null) {
+            DB::table('role_has_permissions')->insert(
+                [
+                    'role_id' => $role->id,
+                    'permission_id' => $permission->id,
+                ]
+            );
+        }
+        $role = Role::where('name', RolesEnum::Invoicing)->first();
+        $rolePermission = DB::table('role_has_permissions')->where('role_id', $role->id)->where('permission_id', $permission->id)->first();
+        if ($rolePermission === null) {
+            DB::table('role_has_permissions')->insert(
+                [
+                    'role_id' => $role->id,
+                    'permission_id' => $permission->id,
+                ]
+            );
+        }
     }
 }
