@@ -363,12 +363,19 @@ function onReset() {
         />
       </x-field>
       <x-field label="UTM" v-if="!hideUmtGroup">
-        <x-select
+        <ComboBox
+          :single="true"
+          v-model="filters.leadSources"
+          placeholder="Search by Lead Source"
+          :options="umtGroup"
+          deselect-all
+        />
+        <!-- <x-select
           v-model="filters.utmGroupBy"
           placeholder="Search by UTM Group"
           :options="umtGroup"
           class="w-full"
-        />
+        /> -->
       </x-field>
     </div>
 
