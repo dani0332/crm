@@ -19,7 +19,6 @@ class DatabaseSeeder extends Seeder
             // UpdateCustomerToHealthAndTravelMemberDetails::class,
             DttOCBNewBusinessSeeder::class,
             GenericPermissionSeeder::class,
-            HealthPlanTableElibilityIdSeeder::class,
             addSICWorkflow::class,
         ]);
     }
