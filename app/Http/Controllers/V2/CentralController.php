@@ -263,7 +263,6 @@ class CentralController extends Controller
             }
 
             if ($quote->quote_status_id != QuoteStatusEnum::PolicySentToCustomer) {
-
                 // dispath job to send email
                 dispatch(new SendBookPolicyDocumentsJob($request));
             }
