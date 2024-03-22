@@ -3,7 +3,7 @@ import ActivePolicies from './Partials/ActivePolicies.vue';
 import EndingPolicies from './Partials/EndingPolicies.vue';
 import SalesDetail from './Partials/SalesDetail.vue';
 import SalesSummary from './Partials/SaleSummary.vue';
-import Transaction from './Partials/Transactions.vue';
+import Transaction from './Partials/Transaction.vue';
 
 const props = defineProps({
   reportData: Object,
@@ -16,7 +16,7 @@ const reportComponents = {
   'Active Policies': ActivePolicies,
   'Ending Policies': EndingPolicies,
   'Sales Detail': SalesDetail,
-  'Transaction ': Transaction,
+  Transaction: Transaction,
   'Sales Summary': SalesSummary,
 };
 
@@ -76,21 +76,15 @@ let filters = reactive({
   page: 1,
 });
 
-watch(
-  () => filters.reportCategory,
-  () => {
-    console.log(filters.reportCategory);
-  },
-);
-
 const loaders = reactive({
   table: false,
   subTeams: false,
 });
 
-let selectedReport = computed(
-  () => reportComponents[props.reportName] || SalesSummary,
-);
+let selectedReport = computed(() => {
+  console.log(props.reportName);
+  return reportComponents[props.reportName] ?? SalesSummary;
+});
 
 const computedReportTypes = computed(() => {
   const filterCondition = filters.reportCategory ?? null;
@@ -183,7 +177,6 @@ watch(
   () => filters.reportCategory,
   (newReportCategory, oldReportCategory) => {
     // This function will only run when reportCategory changes
-
     // Your logic to update reportType based on reportCategory
     let selectedReport = reportTypes.value.find(x =>
       x.report.includes(newReportCategory),
@@ -198,6 +191,7 @@ watch(
 const onTeamChange = e => {
   if (e.length == 0) return;
 
+  filters.subTeams = [];
   loaders.subTeams = true;
   axios
     .post(`/get-sub-teams-by-team`, {
@@ -333,7 +327,7 @@ function onReset() {
           v-model="filters.subTeams"
           placeholder="Search By Teams"
           :options="subTeams"
-          :max-limit="3"
+          :maxLimit="3"
           deselect-all
           :loading="loaders.subTeams"
         />
@@ -343,7 +337,7 @@ function onReset() {
           v-model="filters.leadSources"
           placeholder="Search by Lead Source"
           :options="leadSource"
-          :max-limit="3"
+          :maxLimit="3"
           deselect-all
         />
       </x-field>
@@ -369,12 +363,19 @@ function onReset() {
         />
       </x-field>
       <x-field label="UTM" v-if="!hideUmtGroup">
-        <x-select
+        <ComboBox
+          :single="true"
+          v-model="filters.leadSources"
+          placeholder="Search by Lead Source"
+          :options="umtGroup"
+          deselect-all
+        />
+        <!-- <x-select
           v-model="filters.utmGroupBy"
           placeholder="Search by UTM Group"
           :options="umtGroup"
           class="w-full"
-        />
+        /> -->
       </x-field>
     </div>
 
