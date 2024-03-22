@@ -76,7 +76,7 @@ class QuoteAllocation extends Command
             ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
             ->whereNotIn('source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD])
             ->where(function ($query) {
-                $query->where('tier_id', '!=', TiersIdEnum::TIER_R)
+                $query->whereNotIn('tier_id', [TiersIdEnum::TIER_R])
                     ->orWhereNull('tier_id');
             })
             ->where('is_renewal_tier_email_sent', 0)
