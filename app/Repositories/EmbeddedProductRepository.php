@@ -415,6 +415,19 @@ class EmbeddedProductRepository extends BaseRepository
                         });
                     });
 
+        $sortBy = 'embedded_transactions.id';
+        $sortOrder = 'desc';
+        if(!empty($filters['sortBy']) && !empty($filters['sortType'])) {
+            $sortableColumns = [
+                'payment_date' => 'embedded_transactions.paid_at',
+                'contribution_amount' => 'embedded_transactions.price_with_vat',
+            ];
+            $sortBy = $sortableColumns[$filters['sortBy']] ?? 'embedded_transactions.id';
+            $sortOrder = $filters['sortType'] ?? 'desc';
+        }
+
+        $dataset = $dataset->orderBy($sortBy, $sortOrder);
+
         if(isset($filters['excel_export']) && $filters['excel_export'] == true) {
             $dataset = $dataset->get();
         } else {
