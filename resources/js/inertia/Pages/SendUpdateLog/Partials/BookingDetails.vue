@@ -158,7 +158,7 @@ const bookingDetailsForm = useForm({
     props?.payments[0]?.insurer_tax_number ||
     "",
   discount:
-    props.bookingDetails?.discount || props?.payments[0]?.discount_value || "0.00",
+    props.bookingDetails?.discount || props?.payments[0]?.discount_value || 0.00,
   insurer_commission_invoice_number:
     props.bookingDetails?.insurer_commission_invoice_number ||
     props?.payments[0]?.insurer_commmission_invoice_number ||
@@ -170,19 +170,19 @@ const bookingDetailsForm = useForm({
   commission_vat_not_applicable:
     props.bookingDetails?.commission_vat_not_applicable ||
     props?.payments[0]?.commission_vat_not_applicable ||
-    "0.00",
+    0.00,
   vat_on_commission:
     props.bookingDetails?.vat_on_commission || props?.payments[0]?.commission_vat || "",
   commission_vat_applicable:
     props.bookingDetails?.commission_vat_applicable ||
     props?.payments[0]?.commission_vat_applicable ||
-    "",
+    0.00,
   total_commission:
     props.bookingDetails?.total_commission || props?.payments[0]?.commission || "",
   total_vat_amount: props.bookingDetails?.total_vat_amount || null,
   price_vat_applicable: props.bookingDetails?.price_vat_applicable || "",
-  price_vat_not_applicable: props.bookingDetails?.price_vat_not_applicable || "0.00",
-  total_price: props.bookingDetails?.total_price || "0.00",
+  price_vat_not_applicable: props.bookingDetails?.price_vat_not_applicable || 0.00,
+  total_price: props.bookingDetails?.total_price || 0.00,
   // new entry section related.
   reversal_invoice: props.bookingDetails?.reversal_invoice || null,
 });
@@ -190,15 +190,12 @@ const bookingDetailsForm = useForm({
 // convertToNegative function will replace all values in negative if the isNegativeValue is true.
 const calculateCommission = () => {
   if (bookingDetailsForm.commission_vat_applicable > 0) {
-    if (Number(props.realQuote?.price_with_vat > 0)) {
-      let vat_on_commission =
-        bookingDetailsForm.commission_vat_applicable * Number(5 / 100);
+    if (Number(props.sendUpdateLog?.price_with_vat > 0)) {
+      let vat_on_commission = bookingDetailsForm.commission_vat_applicable * Number(5 / 100);
       bookingDetailsForm.vat_on_commission = convertToNegative(vat_on_commission);
 
       let total_commission =
-        Number(bookingDetailsForm.commission_vat_not_applicable) +
-        Number(bookingDetailsForm.commission_vat_applicable) +
-        vat_on_commission;
+        Number(bookingDetailsForm.commission_vat_not_applicable) + Number(bookingDetailsForm.commission_vat_applicable) + vat_on_commission;
       bookingDetailsForm.total_commission = convertToNegative(total_commission);
 
       // in this calculation, number 5 is not VAT amount, we need to * the price_vat and price_not_vat with 5% to get the total VAT amount.
@@ -209,14 +206,13 @@ const calculateCommission = () => {
         Number(bookingDetailsForm.price_vat_applicable) * Number(5 / 100);
       bookingDetailsForm.total_vat_amount = convertToNegative(total_vat_amount);
 
-      let total_price =
-        total_price_with_vat_and_not_vat_applicable +
-        Number(total_vat_amount - total_price_with_vat_and_not_vat_applicable);
+      let total_price = total_price_with_vat_and_not_vat_applicable + Number(total_vat_amount);
       bookingDetailsForm.total_price = convertToNegative(total_price);
 
       bookingDetailsForm.commission_percentage = convertToNegative(
         (total_commission / total_price) * 100
       );
+      console.log(bookingDetailsForm.commission_percentage);
     } else {
       notification.error({
         title: "Please add Policy Detail Price (VAT APPLICABLE)",
@@ -1252,7 +1248,7 @@ const submitToCustomer = () => {
                   </x-tooltip>
                 </dt>
                 <dd>
-                  <span>{{ thousandSeparator(bookingDetailsForm.commission_percentage) }}</span>
+                  <span>{{ bookingDetailsForm.commission_percentage }}%</span>
                 </dd>
               </div>
 
