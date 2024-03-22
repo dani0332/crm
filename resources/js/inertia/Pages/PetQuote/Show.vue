@@ -771,6 +771,7 @@ const linkEntity = () => {
       "
       modelType="Pet"
       :quote="quote"
+      :insly-id="quote?.quote_detail?.insly_id"
       :canAddBatchNumber="canAddBatchNumber"
     />
 
@@ -805,6 +806,7 @@ const linkEntity = () => {
       :quote-documents="quote.documents || []"
       :storageUrl="storageUrl"
       :quote="quote"
+      :insly-id="quote?.quote_detail?.insly_id"
     />
 
     <QuotePolicy :quote="quote" :can="can" :quoteStatusEnum="quoteStatusEnum" />

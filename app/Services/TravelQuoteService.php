@@ -77,6 +77,7 @@ class TravelQuoteService extends BaseService
             'r.TEXT AS region_cover_for_id_text',
             DB::raw('DATE_FORMAT(tqrd.next_followup_date, "%d-%m-%Y %H:%i:%s") as next_followup_date'),
             'tqrd.transapp_code',
+            'tqrd.insly_id',
             'ls.text as lost_reason',
             'tqrd.notes',
             'tqr.currently_located_in_id',

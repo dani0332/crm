@@ -1896,6 +1896,7 @@ const handleSelectionChange = (tableType, selectedItems) => {
       "
       modelType="Travel"
       :quote="quote"
+      :insly-id="quote?.insly_id"
       :canAddBatchNumber="canAddBatchNumber"
     />
 
@@ -2132,10 +2133,19 @@ const handleSelectionChange = (tableType, selectedItems) => {
           <x-tag size="sm">{{ quoteDocuments.length || 0 }}</x-tag>
         </h3>
         <div class="flex gap-2">
+            <Link
+                v-if="quote?.insly_id"
+                :href="`/legacy-policy/${quote.insly_id}`"
+                preserve-scroll
+            >
+                <x-button size="sm" color="#ff5e00" tag="div">
+                    View Legacy policy
+                </x-button>
+            </Link>
           <x-button
             @click.prevent="modals.doc = true"
             size="sm"
-            color="orange"
+            color="primary"
           >
             Upload Documents
           </x-button>
@@ -2585,12 +2595,12 @@ const handleSelectionChange = (tableType, selectedItems) => {
         :hide-footer="historyData.length < 15"
       />
     </div>
-    
+
     <x-modal v-model="modals.mixInquiryConfirm" show-close backdrop>
-        <template #header> 
+        <template #header>
           <div class="text-center">
             SORRY!
-          </div>  
+          </div>
         </template>
         <p>Please choose quotes from the same age group for a correct comparison.</p>
         <template #actions>

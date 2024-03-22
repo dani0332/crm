@@ -6,6 +6,7 @@ defineProps({
   quoteDocuments: Object,
   documentTypes: Object,
   storageUrl: String,
+  inslyId: String,
 });
 
 const page = usePage();
@@ -128,7 +129,16 @@ const uploadFile = (doc, filesWithInfo) => {
         <x-tag size="sm">{{ quoteDocuments.length || 0 }}</x-tag>
       </h3>
       <div class="flex gap-2">
-        <x-button @click.prevent="modals.doc = true" size="sm" color="orange">
+          <Link
+              v-if="inslyId"
+              :href="`/legacy-policy/${inslyId}`"
+              preserve-scroll
+          >
+              <x-button size="sm" color="#ff5e00" tag="div">
+                  View Legacy policy
+              </x-button>
+          </Link>
+        <x-button @click.prevent="modals.doc = true" size="sm" color="primary">
           Upload Documents
         </x-button>
       </div>

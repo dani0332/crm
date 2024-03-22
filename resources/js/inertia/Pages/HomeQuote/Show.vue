@@ -964,6 +964,7 @@ const linkEntity = () => {
       "
       modelType="Home"
       :quote="quote"
+      :insly-id="quote?.insly_id"
       :canAddBatchNumber="canAddBatchNumber"
     />
 
@@ -1050,6 +1051,7 @@ const linkEntity = () => {
       :quote-documents="quoteDocuments || []"
       :storageUrl="storageUrl"
       :quote="quote"
+      :insly-id="quote?.insly_id"
     />
 
     <div class="p-4 rounded shadow mb-6 bg-white">

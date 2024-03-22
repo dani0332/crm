@@ -2388,6 +2388,7 @@ const handleChildUpdate = planId => {
       "
       modelType="Health"
       :quote="quote"
+      :insly-id="quote?.insly_id"
       :canAddBatchNumber="canAddBatchNumber"
     />
 
@@ -2938,7 +2939,16 @@ const handleChildUpdate = planId => {
           <x-tag size="sm">{{ quoteDocuments.length || 0 }}</x-tag>
         </h3>
         <div class="flex gap-2">
-          <x-button @click.prevent="modals.doc = true" size="sm" color="orange">
+            <Link
+                v-if="quote?.insly_id"
+                :href="`/legacy-policy/${quote.insly_id}`"
+                preserve-scroll
+            >
+                <x-button size="sm" color="#ff5e00" tag="div">
+                    View Legacy policy
+                </x-button>
+            </Link>
+          <x-button @click.prevent="modals.doc = true" size="sm" color="primary">
             Upload Documents
           </x-button>
           <x-button

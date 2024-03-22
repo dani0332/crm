@@ -818,6 +818,7 @@ const linkEntity = () => {
       "
       modelType="Business"
       :quote="quote"
+      :insly-id="quoteDetails?.insly_id"
       :canAddBatchNumber="canAddBatchNumber"
     />
 
@@ -826,6 +827,7 @@ const linkEntity = () => {
       :quote-documents="quote.documents || []"
       :storageUrl="storageUrl"
       :quote="quote"
+      :insly-id="quoteDetails?.insly_id"
     />
 
     <PlanDetails

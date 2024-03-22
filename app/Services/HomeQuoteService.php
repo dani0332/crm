@@ -72,6 +72,7 @@ class HomeQuoteService extends BaseService
             'n.TEXT AS nationality_id_text',
             'hqrd.transapp_code',
             'hqrd.notes',
+            'hqrd.insly_id',
             'ls.text as lost_reason',
             'ls.id as lost_reason_id',
             'hqr.previous_quote_id',

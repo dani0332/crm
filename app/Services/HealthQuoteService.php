@@ -99,6 +99,7 @@ class HealthQuoteService extends BaseService
             'hqrd.next_followup_date',
             'hqrd.transapp_code',
             'hqrd.notes',
+            'hqrd.insly_id',
             'hqr.lead_type_id',
             'lt.TEXT AS lead_type_id_text',
             'ls.text as lost_reason',
