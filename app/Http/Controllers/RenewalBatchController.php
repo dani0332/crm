@@ -41,7 +41,7 @@ class RenewalBatchController extends Controller
         // }
 
         return inertia('Admin/RenewalBatches/Index', [
-            'batches' => $gridData
+            'batches' => $gridData,
         ]);
         // return view('renewalbatch.index');
     }
@@ -62,7 +62,7 @@ class RenewalBatchController extends Controller
         $lastBatchSlabs = $params['lastBatchSlabs'];
         $carAdvisors = $params['carAdvisors'];
         $slabs = $params['slabs'];
-        
+
         return inertia('Admin/RenewalBatches/Form', [
             'teams' => $teams,
             'volumeSegmentAdvisorsId' => $volumeSegmentAdvisorsId,
@@ -70,7 +70,7 @@ class RenewalBatchController extends Controller
             'lastBatchSlabs' => $lastBatchSlabs,
             'carAdvisors' => $carAdvisors,
             'slabs' => $slabs,
-            'quoteStatus' => QuoteStatusEnum::asArray()
+            'quoteStatus' => QuoteStatusEnum::asArray(),
         ]);
 
         // return view('renewalbatch.config-views.create',
@@ -119,7 +119,7 @@ class RenewalBatchController extends Controller
      */
     public function edit(RenewalBatch $renewalBatch)
     {
-       
+
         $params = $this->getProcessedBatchData($renewalBatch);
 
         $teams = $params['teams'];
@@ -142,7 +142,7 @@ class RenewalBatchController extends Controller
             'carSoldDeadline' => $carSoldDeadline,
             'uncontactableDeadline' => $uncontactableDeadline,
             'renewalBatch' => $renewalBatch,
-            'quoteStatus' => QuoteStatusEnum::asArray()
+            'quoteStatus' => QuoteStatusEnum::asArray(),
         ]);
 
         // return view('renewalbatch.config-views.edit',

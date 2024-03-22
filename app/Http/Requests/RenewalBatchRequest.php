@@ -36,8 +36,6 @@ class RenewalBatchRequest extends FormRequest
 
         $slabIndex = count($slabArray);
 
-
-
         // Define the validation rules
         if ($slabIndex > 0) {
             $i = $slabIndex;
