@@ -605,10 +605,10 @@ class SendEmailCustomerService extends BaseService
                 }
             }
 
-            // Get 
+            // Get
             $staticDocumentPaths = [
                 public_path('pdf/send-policy/myAlfred Offers.pdf'),
-                public_path('pdf/send-policy/Policy handbooks.pdf')
+                public_path('pdf/send-policy/Policy handbooks.pdf'),
             ];
 
             foreach ($staticDocumentPaths as $path) {
