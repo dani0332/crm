@@ -78,7 +78,7 @@ class QuoteAllocation extends Command
             ->where('is_renewal_tier_email_sent', 0)
             ->where('sic_flow_enabled', 0)
             ->take($chunkSize);
-        info('leads fetch query is : '.$leads->toSql().' with params : '.$leads->getBindings());
+        info('leads fetch query is : '.$leads->toSql().' with params : '.json_encode($leads->getBindings()));
         foreach ($leads->get() as $lead) {
             if ($lead->tier_id == TiersIdEnum::TIER_R) {
                 continue;
