@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\V2;
 
+use App\Enums\PermissionsEnum;
 use App\Http\Controllers\Controller;
 use App\Repositories\InslyDetailRepository;
 use Carbon\Carbon;
@@ -10,6 +11,12 @@ use Illuminate\Support\Facades\Storage;
 
 class LegacyPolicyController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware(
+            ['permission:'.PermissionsEnum::VIEW_LEGACY_DETAILS], ['only' => ['index', 'show', 'moveToImcrm']]
+        );
+    }
     /**
      * Display a listing of the resource.
      *

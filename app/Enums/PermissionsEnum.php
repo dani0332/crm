@@ -248,4 +248,5 @@ final class PermissionsEnum extends Enum
     public const LEGACY_INVOICES = 'legacy-invoices';
     public const LEGACY_PAYMENTS = 'legacy-payments';
     public const LEGACY_OTHER_DETAILS = 'legacy-other-details';
+    public const VIEW_LEGACY_DETAILS = 'view-legacy-details';
 }

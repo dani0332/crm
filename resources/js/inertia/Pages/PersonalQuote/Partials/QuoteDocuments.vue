@@ -11,6 +11,9 @@ defineProps({
 
 const page = usePage();
 
+const can = permission => useCan(permission);
+const permissionsEnum = page.props.permissionsEnum;
+
 const quoteDocumentsTable = reactive({
   isLoading: false,
   columns: [
@@ -130,7 +133,7 @@ const uploadFile = (doc, filesWithInfo) => {
       </h3>
       <div class="flex gap-2">
           <Link
-              v-if="inslyId"
+              v-if="inslyId && can(permissionsEnum.VIEW_LEGACY_DETAILS)"
               :href="`/legacy-policy/${inslyId}`"
               preserve-scroll
           >

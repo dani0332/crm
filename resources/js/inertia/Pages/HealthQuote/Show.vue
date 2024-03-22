@@ -57,6 +57,9 @@ const isManualPlansCount = ref(0);
 
 const page = usePage();
 
+const permissionsEnum = page.props.permissionsEnum;
+const can = permission => useCan(permission);
+
 const notification = useToast();
 const hasRole = role => useHasRole(role);
 const hasAnyRole = roles => useHasAnyRole(roles);
@@ -2940,7 +2943,7 @@ const handleChildUpdate = planId => {
         </h3>
         <div class="flex gap-2">
             <Link
-                v-if="quote?.insly_id"
+                v-if="quote?.insly_id && can(permissionsEnum.VIEW_LEGACY_DETAILS)"
                 :href="`/legacy-policy/${quote.insly_id}`"
                 preserve-scroll
             >

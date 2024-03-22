@@ -11,7 +11,8 @@ const props = defineProps({
   inslyId: String,
 });
 
-
+const can = permission => useCan(permission);
+const permissionsEnum = page.props.permissionsEnum;
 const dateFormat = date => {
   return date ? useDateFormat(date, 'DD-MM-YYYY').value : '-';
 };
@@ -63,7 +64,7 @@ const rolesEnum = page.props.rolesEnum;
       </h3>
         <div>
             <Link
-                v-if="inslyId"
+                v-if="inslyId && can(permissionsEnum.VIEW_LEGACY_DETAILS)"
                 :href="`/legacy-policy/${inslyId}`"
                 preserve-scroll
             >
