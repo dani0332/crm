@@ -3291,7 +3291,7 @@ const handleChildUpdate = planId => {
         <h3 class="font-semibold text-primary-800 text-lg">Documents</h3>
         <div>
             <Link
-                v-if="record?.insly_id && can(permissionsEnum.VIEW_LEGACY_DETAILS)"
+                v-if="record?.insly_id && can(permissionEnum.VIEW_LEGACY_DETAILS)"
                 :href="`/legacy-policy/${record.insly_id}`"
                 preserve-scroll
             >
