@@ -82,7 +82,7 @@ class QuoteAllocation extends Command
             ->where('is_renewal_tier_email_sent', 0)
             ->where('sic_flow_enabled', 0)
             ->take($chunkSize);
-
+        info('leads query : '. $leads->toSql(). ' and params : '.json_encode($leads->getBindings()));
         foreach ($leads->get() as $lead) {
             $allocationStrategy = AllocationFactory::createStrategy($quoteType, $lead->uuid);
             $allocationStrategy->executeSteps();
