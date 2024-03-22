@@ -75,18 +75,19 @@ class QuoteAllocation extends Command
             ->orderBy('created_at', 'desc')
             ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
             ->whereNotIn('source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD])
-            ->where(function ($query) {
-                $query->whereNotIn('tier_id', [TiersIdEnum::TIER_R])
-                    ->orWhereNull('tier_id');
-            })
             ->where('is_renewal_tier_email_sent', 0)
             ->where('sic_flow_enabled', 0)
             ->take($chunkSize);
-
+        info('leads fetch query is : '.$leads->toSql().' with params : '.$leads->getBindings());
         foreach ($leads->get() as $lead) {
+            if ($lead->tier_id == TiersIdEnum::TIER_R) {
+                continue;
+            }
+            info('Processing record for Quote Allocation with uuid: '.$lead->uuid);
             $allocationStrategy = AllocationFactory::createStrategy($quoteType, $lead->uuid);
             $allocationStrategy->executeSteps();
             $processedRecords++;
+            info('Processed record for Quote Allocation with uuid: '.$lead->uuid);
         }
         if ($processedRecords === 0) {
             info('No records found for '.QuoteTypeId::getDescription($quoteType));
