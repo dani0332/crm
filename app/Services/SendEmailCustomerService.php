@@ -538,7 +538,7 @@ class SendEmailCustomerService extends BaseService
                 [
                     'headers' => $headers,
                     'body' => json_encode($body, JSON_UNESCAPED_SLASHES),
-                    'timeout' => 10,
+                    'timeout' => 30,
                 ]
             );
             info('sendLMSIntroEmail ---- Request Sent');
