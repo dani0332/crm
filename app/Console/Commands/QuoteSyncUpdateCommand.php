@@ -17,6 +17,7 @@ use App\Models\PetQuote;
 use App\Models\QuoteSync;
 use App\Models\TravelQuote;
 use App\Models\YachtQuote;
+use App\Traits\PersonalQuoteSyncTrait;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Console\Command;
@@ -26,6 +27,8 @@ use Illuminate\Support\Facades\Schema;
 
 class QuoteSyncUpdateCommand extends Command
 {
+    use PersonalQuoteSyncTrait;
+
     /**
      * The name and signature of the console command.
      *
@@ -82,7 +85,7 @@ class QuoteSyncUpdateCommand extends Command
             info('Entry for quote: '.$entry->quote_uuid.' found in personal quotes table');
             try {
                 $newValues = json_decode($entry->updated_fields, true);
-                $this->syncQuote($quote, $newValues, 'personal_quotes');
+                $this->syncTable($quote, $newValues, 'personal_quotes');
                 $quote->quote_type_id = $entry->quote_type_id;
                 $quote->save();
                 $entry->update(['is_synced' => true, 'synced_at' => now()]);
@@ -94,10 +97,10 @@ class QuoteSyncUpdateCommand extends Command
             info('Entry for quote: '.$entry->quote_uuid.' found in personal quotes table but missing required fields');
             $sourceQuote = $this->getQuoteRecord($entry->quote_type_id, $entry->quote_uuid);
             if ($sourceQuote) {
-                $this->syncQuote($quote, $sourceQuote->getAttributes(), 'personal_quotes');
+                $this->syncTable($quote, $sourceQuote->getAttributes(), 'personal_quotes');
                 $quote->quote_type_id = $entry->quote_type_id;
                 $quote->save();
-                $this->syncQuote($quote, json_decode($entry->updated_fields, true), 'personal_quotes');
+                $this->syncTable($quote, json_decode($entry->updated_fields, true), 'personal_quotes');
                 $quote->quote_type_id = $entry->quote_type_id;
                 $quote->save();
             }
@@ -113,7 +116,7 @@ class QuoteSyncUpdateCommand extends Command
             try {
                 $newValues = json_decode($entry->updated_fields, true);
                 $personalQuote = $this->createPersonalQuoteFromSource($sourceQuote, $entry);
-                $this->syncQuote($personalQuote, $newValues, 'personal_quotes');
+                $this->syncTable($personalQuote, $newValues, 'personal_quotes');
                 $this->createPersonalQuoteDetail($personalQuote, $newValues);
                 $entry->update(['is_synced' => true, 'synced_at' => now()]);
                 info('Entry for quote: '.$personalQuote->id.' saved in personal quotes table');
@@ -135,11 +138,11 @@ class QuoteSyncUpdateCommand extends Command
     {
         $personalQuote = new PersonalQuote();
         $sourceAttributes = $sourceQuote->getAttributes();
-        $this->syncQuote($personalQuote, $sourceAttributes, 'personal_quotes');
+        $this->syncTable($personalQuote, $sourceAttributes, 'personal_quotes');
         $personalQuote->quote_type_id = $entry->quote_type_id;
         $existingQuote = PersonalQuote::where('uuid', $entry->quote_uuid)->where('quote_type_id', $entry->quote_type_id)->first();
         if ($existingQuote) {
-            $this->syncQuote($existingQuote, $sourceAttributes, 'personal_quotes');
+            $this->syncTable($existingQuote, $sourceAttributes, 'personal_quotes');
             $existingQuote->quote_type_id = $entry->quote_type_id;
             $existingQuote->save();
 
@@ -181,37 +184,11 @@ class QuoteSyncUpdateCommand extends Command
             $personalQuoteDetail = new PersonalQuoteDetail();
         }
 
-        $this->syncQuote($personalQuoteDetail, $newValues, 'personal_quote_details');
+        $this->syncTable($personalQuoteDetail, $newValues, 'personal_quote_details');
 
         $personalQuoteDetail->personal_quote_id = $personalQuote->id;
         $personalQuoteDetail->save();
 
         return $personalQuoteDetail;
     }
-
-    private function formatColumnValue($columnType, $value)
-    {
-        if (in_array($columnType, ['date', 'datetime'])) {
-            return Carbon::parse($value)->toDateTimeString();
-        }
-
-        return $value;
-    }
-
-    private function syncQuote($quote, $updatedFields, $quoteTable)
-    {
-        foreach ($updatedFields as $column => $value) {
-            if ($column === 'id' || $column === 'currently_insured_with') {
-                continue;
-            }
-            if (Schema::hasColumn($quoteTable, $column)) {
-                $columnType = DB::getSchemaBuilder()->getColumnType($quoteTable, $column);
-                $value = $this->formatColumnValue($columnType, $value);
-                if ($value !== null || $value !== '' || $value !== 'NULL') {
-                    $quote->$column = $value;
-                }
-            }
-        }
-    }
-
 }
