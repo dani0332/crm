@@ -4,19 +4,19 @@ namespace App\Providers;
 
 use App\Models\BusinessQuote;
 use App\Models\CarQuote;
-use App\Observers\CarQuoteObserver;
-use App\Services\CarAllocationService;
-use App\Services\HealthAllocationService;
-use Illuminate\Support\ServiceProvider;
 use App\Models\HealthQuote;
 use App\Models\HomeQuote;
 use App\Models\LifeQuote;
 use App\Models\TravelQuote;
+use App\Observers\BusinessQuoteObserver;
+use App\Observers\CarQuoteObserver;
 use App\Observers\HealthQuoteObserver;
 use App\Observers\HomeQuoteObserver;
 use App\Observers\LifeQuoteObserver;
 use App\Observers\TravelQuoteObserver;
-use App\Observers\BusinessQuoteObserver;
+use App\Services\CarAllocationService;
+use App\Services\HealthAllocationService;
+use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
 {

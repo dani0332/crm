@@ -2,12 +2,12 @@
 
 namespace App\Traits;
 
+use App\Models\PersonalQuoteDetail;
 use App\Repositories\PersonalQuoteRepository;
-use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Carbon;
-use App\Models\PersonalQuoteDetail;
+use Illuminate\Support\Facades\Schema;
 
 trait PersonalQuoteSyncTrait
 {
@@ -15,8 +15,9 @@ trait PersonalQuoteSyncTrait
     {
         // update personal quote
         $personalQuote = PersonalQuoteRepository::where('uuid', $quote->uuid)->first();
-        if (!$personalQuote) {
+        if (! $personalQuote) {
             Log::warning("Quote not found in personal quotes table, uuid: {$quote->uuid}");
+
             return;
         }
 
@@ -25,8 +26,9 @@ trait PersonalQuoteSyncTrait
 
         // update personal quote details
         $personalQuoteDetail = PersonalQuoteDetail::where('personal_quote_id', $personalQuote->id)->first();
-        if (!$personalQuoteDetail) {
+        if (! $personalQuoteDetail) {
             Log::warning("Quote details not found in personal quote details table, personal_quote_id: {$personalQuote->id}");
+
             return;
         }
 

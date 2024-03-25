@@ -21,9 +21,7 @@ use App\Traits\PersonalQuoteSyncTrait;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Schema;
 
 class QuoteSyncUpdateCommand extends Command
 {
