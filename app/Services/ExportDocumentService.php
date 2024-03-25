@@ -6,7 +6,6 @@ use App\Enums\DocumentTypeEnum;
 use App\Enums\PaymentMethodsEnum;
 use App\Http\Resources\ProformaPaymentRequestResource;
 use App\Interfaces\ExportDocumentInterface;
-use App\Models\PersonalQuote;
 use App\Traits\GenericQueriesAllLobs;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Storage;
