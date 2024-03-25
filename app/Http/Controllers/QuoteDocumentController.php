@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Http\Requests\QuotesDocumentRequest;
@@ -41,6 +42,8 @@ class QuoteDocumentController extends Controller
         ExportDocumentService $exportDocumentService,
         ApplicationStorageService $applicationStorageService,
     ) {
+        $this->middleware('permission:'.PermissionsEnum::ENABLE_PROFORMA_PDF_DOWNLOAD_BUTTON, ['only' => ['downloadProformaPaymentRequest']]);
+
         $this->crudService = $crudService;
         $this->activityService = $activityService;
         $this->quoteDocumentService = $quoteDocumentService;
