@@ -901,8 +901,6 @@ const generateCCLink = async (code,splitPaymentId,paymentStatus) => {
 };
 
 const isProformaPaymentRequestExportable = (payment, documents) =>{
-    console.log(documents);
-    console.log(quoteDocuments);
     if(!documents && !quoteDocuments) return true;
     let proformaPaymentRequestDocuments = null;
     if (documents) {
@@ -911,7 +909,6 @@ const isProformaPaymentRequestExportable = (payment, documents) =>{
         // For some LOBs, Documents are not available in the quote object, so we need to check the quoteDocuments object
         proformaPaymentRequestDocuments = quoteDocuments.filter(doc => doc.document_type_text === documentTypeEnum.ProformaPaymentRequest);
     }
-    console.log(proformaPaymentRequestDocuments);
     if(proformaPaymentRequestDocuments.length == 0) return true;
 
     proformaPaymentRequestDocuments.sort((a, b) => b.id - a.id);
@@ -935,7 +932,6 @@ const downloadProformaPayment = async () => {
     }
     /* Proforma Payment Request is exportable if payment's updated_at is greated then the lasted generated Proforma Payment pdf's created_at in quote documentes */
     let exportProformaRequest = isProformaPaymentRequestExportable(props.proformaPayment, props.quoteRequest.documents);
-     console.log('can exportProformaRequest', exportProformaRequest);
     if (!exportProformaRequest) {
         notification.error({
             title: 'Please update the Payment details for this Proforma Request.',
