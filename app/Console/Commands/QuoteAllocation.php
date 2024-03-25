@@ -56,7 +56,7 @@ class QuoteAllocation extends Command
             $to = now()->subMinutes(5)->toDateTimeString();
             $chunkSize = 200;
             info('start and end dates are : '.$allocationStartDate.' and '.$to);
-            $this->executeCarAllocation(QuoteTypeId::Car, $to, $chunkSize, $allocationStartDate);
+            $this->executeCarAllocation(QuoteTypeId::Car, $to, $chunkSize, $allocationStartDate, $applicationStorageService);
             $this->executeHealthAllocation(QuoteTypeId::Health, $to, $chunkSize, $allocationStartDate);
 
         } else {
@@ -66,27 +66,37 @@ class QuoteAllocation extends Command
         info("------------------- Quote Allocation Command Finished for $currentIteration -------------------");
     }
 
-    public function executeCarAllocation($quoteType, $to, $chunkSize, $allocationStartDate)
+    public function executeCarAllocation($quoteType, $to, $chunkSize, $allocationStartDate, $applicationStorageService)
     {
         $processedRecords = 0;
+        $shouldIncludeDubaiNow = $applicationStorageService->getValueByKey(ApplicationStorageEnums::APPLY_DUBAI_NOW_EXCLUSION) == 1;
+        $exemptedLeadSources = [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD];
+
+        if ($shouldIncludeDubaiNow) {
+            $exemptedLeadSources[] = LeadSourceEnum::DUBAI_NOW;
+        }
+
         $leads = CarQuote::whereNull('advisor_id')
             ->select('uuid')
             ->whereBetween('created_at', [$allocationStartDate, $to])
             ->orderBy('created_at', 'desc')
             ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
-            ->whereNotIn('source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD])
-            ->where(function ($query) {
-                $query->where('tier_id', '!=', TiersIdEnum::TIER_R)
-                    ->orWhereNull('tier_id');
-            })
+            ->whereNotIn('source', $exemptedLeadSources)
             ->where('is_renewal_tier_email_sent', 0)
             ->where('sic_flow_enabled', 0)
             ->take($chunkSize);
 
+        info('leads fetch query is : '.$leads->toSql().' with params : '.json_encode($leads->getBindings()));
+
         foreach ($leads->get() as $lead) {
+            if ($lead->tier_id == TiersIdEnum::TIER_R) {
+                continue;
+            }
+            info('Processing record for Quote Allocation with uuid: '.$lead->uuid);
             $allocationStrategy = AllocationFactory::createStrategy($quoteType, $lead->uuid);
             $allocationStrategy->executeSteps();
             $processedRecords++;
+            info('Processed record for Quote Allocation with uuid: '.$lead->uuid);
         }
         if ($processedRecords === 0) {
             info('No records found for '.QuoteTypeId::getDescription($quoteType));
