@@ -10,6 +10,9 @@ trait SageLoggable
 {
     protected function logSageApiCall($payload, $response = [], $section = null, $step = null, $totalSteps = null, $status = 'success')
     {
+        // if($payload['endPoint'] == 'AR/ARInvoiceBatches') {
+        //     dd(strtolower($payload['sage_request_type']), strtolower($payload['entry_type']),$payload, $response, $section, $step, $totalSteps, $status);
+        // } 
         try {
             $userId = Auth::id();
             // Ensure mandatory fields are populated
@@ -18,12 +21,14 @@ trait SageLoggable
                     'section_id' => optional($section)->id,
                     'section_type' => optional($section)->getMorphClass(),
                     'step' => $step,
+                    'sage_request_type' => strtolower($payload['sage_request_type']) ?? '',
+                    'entry_type' => strtolower($payload['entry_type'])
                 ],
                 [
                     'user_id' => $userId,
                     'total_steps' => $totalSteps,
                     'sage_end_point' => $payload['endPoint'],
-                    'sage_payload' => json_encode($payload['payload']),
+                    'sage_payload' => json_encode($payload['payload'] ?? []),
                     'response' => json_encode($response),
                     'status' => $status,
                 ]

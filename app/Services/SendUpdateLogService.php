@@ -628,6 +628,8 @@ class SendUpdateLogService
                     'send_update_log' => $sendUpdateLog,
                 ]
             );
+
+            return $sageResponse;
         }
 
         return ['status' => false, 'message' => 'Something went wrong'];
@@ -635,47 +637,67 @@ class SendUpdateLogService
 
     public function updatesMoveToLead($sendUpdateRequest, $sendUpdateLog)
     {
-        $categoryCode = $sendUpdateLog->category->code;
-        $optionCode = $sendUpdateLog->option->code;
+
+        $categoryCode = $sendUpdateLog->category?->code;
+        $optionCode = $sendUpdateLog->option?->code;
         $quoteModel = $this->getModelObject($sendUpdateRequest->quoteType);
         $quote = $quoteModel::where('id', $sendUpdateRequest->quoteRefId)->first();
 
         try {
-            DB::beginTransaction();
+            \DB::beginTransaction();
 
             if (in_array($categoryCode, [SendUpdateLogStatusEnum::EF, SendUpdateLogStatusEnum::CPD])) {
+                // dd($sendUpdateLog->toArray());
 
-                Payment::where('send_update_log_id', $sendUpdateLog->id)->update([
-                    'paymentable_id' => $quote->id,
-                    'paymentable_type' => ltrim($quoteModel, '\\')
-                ]);
+                // // First need to update send update booking details value to the send update payment.
+                // $payment = Payment::where('send_update_log_id', $sendUpdateLog->id)->first();
+                // $payment->update([
+                //     'commission_vat_applicable' => $sendUpdateLog->commission_vat_applicable,
+                //     'commission_vat_not_applicable' => $sendUpdateLog->commission_vat_not_applicable,
+                //     'insurer_tax_number' => $sendUpdateLog->insurer_tax_invoice_number,
+                //     'broker_invoice_number' => $sendUpdateLog->broker_invoice_number,
+                //     'insurer_invoice_date' => $sendUpdateLog->invoice_date,
+                //     'invoice_description' => $sendUpdateLog->invoice_description,
+                //     'insurer_commission_invoice_number' => $sendUpdateLog->insurer_commission_invoice_number,
+                //     'commission_percentage' => $sendUpdateLog->commission_percentage,
+                //     'transaction_payment_status' => $sendUpdateLog->transaction_payment_status,
 
-                if($categoryCode == SendUpdateLogStatusEnum::EF && $optionCode == SendUpdateLogStatusEnum::PPE) {
-                    $quote->update(['renewal_expiry_date' => $sendUpdateLog->expiry_date]);
-                } 
 
-                if($categoryCode == SendUpdateLogStatusEnum::CPD) {
-                    // Need to move Booking and Policy Details to the main lead.
-                    // $quote->update([
-                    //     'policy_number' => $sendUpdateLog->policy_number,
-                    //     'policy_issuance_date' => $sendUpdateLog->issuance_date,
-                    //     'price_vat_not_applicable' => $sendUpdateLog->price_vat_not_applicable,
-                    //     'price_without_vat' => $sendUpdateLog->price_without_vat,
-                    //     'policy_start_date' => $sendUpdateLog->start_date,
-                    //     'renewal_expiry_date' => $sendUpdateLog->expiry_date,
-                    //     'price_with_vat' => $sendUpdateLog->price_with_vat,
-                    //     'quote_plan_insurer_quote_number' => $sendUpdateLog->insurer_quote_number,
-                    //     'policy_issuance_status_id' => $sendUpdateLog->issuance_status_id,
-                    //     // 'vat' => $sendUpdateLog->expiry_date,
-                    //     // 'policy_issuance_status_other' => $sendUpdateLog->expiry_date,
-                    // ]);
-                }
+
+
+
+                //     'booking_date' => $sendUpdateLog->booking_date,
+                //     'vat_on_commission' => $sendUpdateLog->vat_on_commission,
+                //     'total_commission' => $sendUpdateLog->total_commission,
+                //     'total_vat_amount' => $sendUpdateLog->total_vat_amount,
+                //     'price_vat_applicable' => $sendUpdateLog->price_vat_applicable,
+                //     'price_vat_not_applicable' => $sendUpdateLog->price_vat_not_applicable,
+                // ]);
+
+
+
+                // Payment::where('send_update_log_id', $sendUpdateLog->id)->update([
+                //     'paymentable_id' => $quote->id,
+                //     'paymentable_type' => ltrim($quoteModel, '\\')
+                // ]);
+
+                // if($categoryCode == SendUpdateLogStatusEnum::EF && $optionCode == SendUpdateLogStatusEnum::PPE) {
+                //     $quote->update(['renewal_expiry_date' => $sendUpdateLog->expiry_date]);
+                // } 
+
+                // if($categoryCode == SendUpdateLogStatusEnum::CPD) {
+                    
+
+
+
+                //     // Need to move Booking and Policy Details to the main lead.
+                // }
             }
 
-            DB::commit();
+            \DB::commit();
 
         } catch (\Exception $exception) {
-            DB::rollBack();
+            \DB::rollBack();
             info('Send update Lead impact Failed - Error : '.$exception->getMessage());
 
             return ['status' => false, 'message' => 'Update not booked'];
