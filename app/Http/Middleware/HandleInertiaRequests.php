@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\DocumentTypeEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
@@ -65,6 +66,7 @@ class HandleInertiaRequests extends Middleware
             'permissionsEnum' => PermissionsEnum::asArray(),
             'rolesEnum' => RolesEnum::asArray(),
             'paymentStatusEnum' => PaymentStatusEnum::asArray(),
+            'documentTypeEnum' => DocumentTypeEnum::asArray(),
             'quoteTypeCodeEnum' => quoteTypeCode::asArray(),
             'travelQuoteEnum' => TravelQuoteEnum::asArray(),
             'quoteIssuanceStatusEnum' => QuoteIssuanceStatusEnum::asArray(),

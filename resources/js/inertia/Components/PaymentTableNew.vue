@@ -6,6 +6,7 @@ const notification = useNotifications('toast');
 const page = usePage();
 
 const permissionEnum = page.props.permissionsEnum;
+const documentTypeEnum = page.props.documentTypeEnum;
 const can = permission => useCan(permission);
 
 const props = defineProps({
@@ -901,7 +902,7 @@ const generateCCLink = async (code,splitPaymentId,paymentStatus) => {
 const isProformaPaymentRequestExportable = (payment, documents) =>{
     if(!documents) return true;
 
-    let proformaPaymentRequestDocuments = documents.filter(doc => doc.document_type_text === 'Proforma Payment Request');
+    let proformaPaymentRequestDocuments = documents.filter(doc => doc.document_type_text === documentTypeEnum.ProformaPaymentRequest);
     if(proformaPaymentRequestDocuments.length == 0) return true;
 
     proformaPaymentRequestDocuments.sort((a, b) => b.id - a.id);
