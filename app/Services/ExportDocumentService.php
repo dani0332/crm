@@ -25,7 +25,7 @@ class ExportDocumentService extends BaseService implements ExportDocumentInterfa
     public function createProformaPaymentRequestPdf($quoteType, $quoteUuid)
     {
         // INFO: Getting Quote by LOB Model because payments are linked with Quotes using polymorphic relationship and later on if we have to change it than have to make it at single place i.e logic for newUI() method in all LOB Models
-        $quote = $this->getLOBQuoteObject($quoteType, $quoteUuid);
+        $quote = $this->getQuoteObject($quoteType, $quoteUuid);
         if (! $quote) {
             return ['error' => 'Quote  not found'];
         }
