@@ -6,6 +6,7 @@ use App\Enums\DocumentTypeEnum;
 use App\Enums\PaymentMethodsEnum;
 use App\Http\Resources\ProformaPaymentRequestResource;
 use App\Interfaces\ExportDocumentInterface;
+use App\Models\PersonalQuote;
 use App\Traits\GenericQueriesAllLobs;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Storage;
@@ -21,11 +22,12 @@ class ExportDocumentService extends BaseService implements ExportDocumentInterfa
         $this->helperService = $helperService;
     }
 
-    public function createProformaPaymentRequestPdf($quoteType, $quote)
+    public function createProformaPaymentRequestPdf($quoteType, $quoteUuid)
     {
-        $quote = $this->getQuote($quoteType, $quote);
-        if (isset($response['error'])) {
-            return $quote;
+        // INFO: Getting Quote by LOB Model because payments are linked with Quotes using polymorphic relationship and later on if we have to change it than have to make it at single place i.e logic for newUI() method in all LOB Models
+        $quote = $this->getLOBQuoteObject($quoteType, $quoteUuid);
+        if (! $quote) {
+            return ['error' => 'Quote  not found'];
         }
         $proformaPaymentRequest = $quote->payments()->where('payment_methods_code', PaymentMethodsEnum::ProformaPaymentRequest)->first();
         $proformaPaymentRequestVersion = $quote->documents()->where(['document_type_text' => DocumentTypeEnum::ProformaPaymentRequest])->count();
@@ -37,26 +39,17 @@ class ExportDocumentService extends BaseService implements ExportDocumentInterfa
 
         $pdfName = 'InsuranceMarket.ae™ Proforma Payment Request for '.$quote->first_name.' '.$quote->last_name.'-'.$proformaPaymentRequest->code.($proformaPaymentRequestVersion > 0 ? '('.($proformaPaymentRequestVersion + 1).')' : '').'.pdf';
 
-        return $this->saveProformaPaymentRequestToDocuments($quote, $pdf, $pdfName);
-    }
-    private function getQuote($quoteType, $quote)
-    {
-        $repository = $this->getRepositoryObject($quoteType);
-        if (! $repository) {
-            return ['error' => 'Repository not found'];
-        }
-
-        return $repository::getBy('uuid', $quote);
+        return $this->saveProformaPaymentRequestToDocuments($quote, $pdf, $pdfName, $quoteType);
     }
 
-    private function saveProformaPaymentRequestToDocuments($quote, $pdf, $originalName)
+    private function saveProformaPaymentRequestToDocuments($quote, $pdf, $originalName, $quoteType)
     {
         $docName = preg_replace('/\s+/', '', uniqid().'_'.$originalName);
         $fileMimeType = 'application/pdf';
 
         //upload file to azure
         $fileNameAzure = uniqid().'_'.$quote->uuid.'_'.$docName;
-        $filePathAzure = 'documents/'.$quote->quoteType->code.'/'.$fileNameAzure;
+        $filePathAzure = 'documents/'.ucwords($quoteType).'/'.$fileNameAzure;
         $azureDisk = Storage::disk('azureIM');
         $azureDisk->put($filePathAzure, $pdf->output());
 

@@ -66,6 +66,28 @@ trait GenericQueriesAllLobs
     }
 
     /**
+     * get quote object by quote type.
+     *
+     * @param  $quoteType  e.g car, health etc
+     * @param  $id  can be id or uuid
+     * @return false|mixed
+     */
+    public function getLOBQuoteObject($quoteType, $id)
+    {
+        $nameSpace = '\\App\\Models\\';
+
+        $model = $nameSpace.ucwords($quoteType).'Quote';
+
+        if (! class_exists($model)) {
+            return false;
+        }
+
+        $quote = (is_numeric($id)) ? $model::find($id) : $model::where('uuid', $id)->first();
+
+        return (isset($quote->id)) ? $quote : false;
+    }
+
+    /**
      * @return false|mixed
      */
     public function getQuoteObjectBy($quoteType, $id, $column = 'id')
