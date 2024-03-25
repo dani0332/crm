@@ -955,6 +955,7 @@ const downloadProformaPayment = async () => {
                     /* Create the link and download Proforma Request document*/
                     const a = document.createElement("a");
                     a.href = props.storageUrl + proforma_request.doc_url;
+                    a.target = '_blank';
                     a.download = proforma_request.original_name;
                     document.body.appendChild(a);
                     a.click();
