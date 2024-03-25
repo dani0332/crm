@@ -1018,7 +1018,7 @@ class LeadAllocationService extends BaseService
         }
     }
 
-    public function getAllocationLeads()
+    public function getAllocationLeads($quoteTypeIds)
     {
         try {
             $query = LeadAllocation::select([
@@ -1042,17 +1042,20 @@ class LeadAllocationService extends BaseService
                 ->join('roles as r', 'r.id', '=', 'mhr.role_id')
                 ->leftJoin('teams as t', 'ut.team_id', '=', 't.id')
                 ->groupBy('u.name', 'u.id', 'lead_allocation.id')
-                ->where('u.is_active', true);
-
+                ->where('u.is_active', true)
+                ->whereIn('lead_allocation.quote_type_id',(array) $quoteTypeIds);
+               
             if (! auth()->user()->hasRole(RolesEnum::SuperManagerLeadAllocation)) {
                 $query = $query->where('u.manager_id', auth()->user()->id);
             }
 
-            if(!empty(request('user_ids'))){
-                $query = $query->whereIn('u.id', (array)request('user_ids'));
+            if(!empty(request('userIds'))){
+              
+                $query = $query->whereIn('u.id', (array)request('userIds'));
             }
-            if(!empty(request('quote_type_ids'))){
-                $query = $query->whereIn('lead_allocation.quote_type_id', (array)request('quote_type_ids'));
+            if(!empty(request('quoteTypeIds'))){ 
+             
+                $query = $query->whereIn('lead_allocation.quote_type_id', (array)request('quoteTypeIds'));
             }
 
             return $query->simplePaginate(10)->withQueryString();;

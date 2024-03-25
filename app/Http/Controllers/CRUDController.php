@@ -170,7 +170,6 @@ class CRUDController extends Controller
      */
     public function index(Request $request)
     {
-       
         $renewalAdvisors = $upcomingBatch = [];
         $isNewBusinessUser = false;
         $isManualAllocationAllowed = false;

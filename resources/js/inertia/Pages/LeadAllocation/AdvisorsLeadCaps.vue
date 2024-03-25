@@ -1,7 +1,7 @@
 <script setup>
 
 const props = defineProps({
-  allocations_leads: {
+  allocationsLeads: {
     type: Array,
     default: () => [],
   },
@@ -52,8 +52,8 @@ const leadData = ref([
 
 
 let availableFilters = {
-  user_ids: [],
-  quote_type_ids: [],
+  userId: [],
+  quoteTypeIds: [],
   page: 1,
 };
 
@@ -187,7 +187,7 @@ function onReset() {
 
 onMounted(() => {
   setQueryStringFilters();
-  leadData.value = props.allocations_leads.data.map(item => {
+  leadData.value = props.allocationsLeads.data.map(item => {
     return {
       id: item.id,
       userId: item.userId,
@@ -237,7 +237,7 @@ onMounted(() => {
       
         <x-field label="Advisors">
           <ComboBox
-            v-model="filters.user_ids"
+            v-model="filters.userId"
             name="user_id"
             placeholder="Search by Quote Type"
             :options="
@@ -251,7 +251,7 @@ onMounted(() => {
      
         <x-field label="Quote Type">
           <ComboBox
-            v-model="filters.quote_type_ids"
+            v-model="filters.quoteTypeIds"
             name="quote_type_id"
             placeholder="Search by Quote Type"
             :options="
@@ -277,7 +277,7 @@ onMounted(() => {
     </x-form>
 
     <DataTable id="car-lead-allocation" table-class-name="compact" :loading="loader.table" :headers="tableHeader"
-      :items="props.allocations_leads.data || []" :sort-by="'userName'" :sort-type="'asc'" :rows-per-page="999"
+      :items="props.allocationsLeads.data || []" :sort-by="'userName'" :sort-type="'asc'" :rows-per-page="999"
       border-cell hide-rows-per-page hide-footer>
       <template #item-max_capacity="{ max_capacity, id }">
         <div v-if="!currentRow(id)" @click="editCap(id)">
@@ -297,11 +297,11 @@ onMounted(() => {
     
 
     <Pagination :links="{
-        next: props.allocations_leads.next_page_url,
-        prev: props.allocations_leads.prev_page_url,
-        current: props.allocations_leads.current_page,
-        from: props.allocations_leads.from,
-        to: props.allocations_leads.to,
+        next: props.allocationsLeads.next_page_url,
+        prev: props.allocationsLeads.prev_page_url,
+        current: props.allocationsLeads.current_page,
+        from: props.allocationsLeads.from,
+        to: props.allocationsLeads.to,
       }" />
   </div>
 

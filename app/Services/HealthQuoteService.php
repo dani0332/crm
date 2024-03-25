@@ -37,6 +37,7 @@ use App\Models\InsuranceProvider;
 use App\Traits\AddPremiumAllLobs;
 use App\Models\HealthMemberDetail;
 use App\Models\EmbeddedTransaction;
+use App\Services\ActivitiesService;
 use App\Enums\DatabaseColumnsString;
 use App\Models\BusinessInsuranceType;
 use App\Models\EmbeddedProductOption;
@@ -50,13 +51,15 @@ class HealthQuoteService extends BaseService
     protected $query;
     protected $leadAllocationService;
     protected $httpService;
+    protected $activityService;
 
     use AddPremiumAllLobs, GenericQueriesAllLobs, GetUserTreeTrait, RolePermissionConditions;
 
-    public function __construct(HttpRequestService $httpService, LeadAllocationService $leadAllocationService)
+    public function __construct(HttpRequestService $httpService, LeadAllocationService $leadAllocationService , ActivitiesService $activityService)
     {
         $this->leadAllocationService = $leadAllocationService;
         $this->httpService = $httpService;
+        $this->activityService = $activityService;
         $this->query = DB::table('health_quote_request as hqr')->select(
             'hqr.id',
             'hqr.prefill_plan_id',
@@ -1183,17 +1186,6 @@ class HealthQuoteService extends BaseService
 
         return [];
     }
-    public function getQuoteType($val)
-    {
-        switch (ucfirst($val)) {
-            case QuoteTypes::CAR->value:
-                return QuoteTypes::CAR->id();
-
-            case QuoteTypes::HEALTH->value:
-                return QuoteTypes::HEALTH->id();
-
-        }
-    }
     public function addManualAllocationCountAndUpdate($newAdvisorId, $lead, $previousAdvisorId, $oldAdvisorAssignedDate, $previousAssignmentType,$quoteType=null)
     {
         // Check if $lead or $newAdvisorId is not provided
@@ -1210,7 +1202,7 @@ class HealthQuoteService extends BaseService
         // Get the allocation record for the new advisor
 
         
-        $quote_type_id=$this->getQuoteType($quoteType) ?? null;
+        $quote_type_id = $this->activityService->getQuoteTypeId(strtolower($quoteType)) ?? null;
  
         
         $newAdvisorAllocationRecord = $this->leadAllocationService->getLeadAllocationRecordByUserId($newAdvisorId, $quote_type_id);

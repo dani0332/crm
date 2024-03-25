@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\PermissionsEnum;
 use App\Models\Team;
 use App\Models\User;
 use App\Enums\QuoteTypes;
@@ -15,6 +16,7 @@ use App\Models\LeadAllocation;
 use App\Events\UserStatusChanged;
 use App\Jobs\ReAssignCarLeadsJob;
 use App\Traits\TeamHierarchyTrait;
+use App\Services\ActivitiesService;
 use App\Jobs\ReAssignHealthLeadsJob;
 use Illuminate\Support\Facades\Gate;
 use App\Services\CarAllocationService;
@@ -29,11 +31,13 @@ class LeadAllocationController extends Controller
 
     protected $leadAllocationService;
     protected $applicationStorageService;
+    protected $activityService;
 
-    public function __construct(LeadAllocationService $leadAllocationService, ApplicationStorageService $applicationStorageService)
+    public function __construct(LeadAllocationService $leadAllocationService, ApplicationStorageService $applicationStorageService , ActivitiesService $activityService)
     {
         $this->leadAllocationService = $leadAllocationService;
         $this->applicationStorageService = $applicationStorageService;
+        $this->activityService = $activityService;
     }
 
     /**
@@ -180,7 +184,7 @@ class LeadAllocationController extends Controller
                 $leadAllocationUser->is_available = $item['is_available'];
             }
 
-            $quote_type_id=$this->getQuoteType($request->quoteType) ?? null;
+            $quote_type_id = $this->activityService->getQuoteTypeId(strtolower($request->quoteType)) ?? null;
 
             if (!empty($quote_type_id) && isset($item['max_cap'])) {
     
@@ -196,23 +200,13 @@ class LeadAllocationController extends Controller
         }
     }
 
-    public function getQuoteType($val)
-    {
-        switch (ucfirst($val)) {
-            case QuoteTypes::CAR->value:
-                return QuoteTypes::CAR->id();
-
-            case QuoteTypes::HEALTH->value:
-                return QuoteTypes::HEALTH->id();
-
-        }
-    }
+   
     public function updateCaps(Request $request)
     {   
      
      
         if (isset($request->max_cap)) {
-            $quote_type_id=$this->getQuoteType($request->quoteType) ?? null;
+            $quote_type_id = $this->activityService->getQuoteTypeId(strtolower($request->quoteType)) ?? null;
             foreach ($request->max_cap as $item) {
                 if ($item['userId'] && $item['maxCap']) {
                     $leadAllocationObj = LeadAllocation::with(['leadAllocationUser'])->where('user_id', $item['userId'])->first();
@@ -269,15 +263,18 @@ class LeadAllocationController extends Controller
     
 
     public function showLeadAllocations(Request $request){
-         if (Gate::allows('advisor-capacity', auth()->user())) {
-            $data = $this->leadAllocationService->getAllocationLeads();
-            $quoteTypes = QuoteTypeRepository::GetList();
-    
+         if (Gate::allows(PermissionsEnum::ADVISOR_CAPACITY_MANAGEMENT, auth()->user())) {
+
+            $quoteTypes = $this->getQuoteTypesByUser(auth()->user()->id);
+            $quoteTypeIds = collect( $quoteTypes)->pluck('id')->all();
+
+            $data = $this->leadAllocationService->getAllocationLeads($quoteTypeIds);
           
+
       
             return inertia('LeadAllocation/AdvisorsLeadCaps', [
                 'quoteTypes' => $quoteTypes,
-                'allocations_leads' =>  $data,
+                'allocationsLeads' =>  $data,
                 'advisors'=> $this->getHealthAndMotorAdvisorsList(),
             ]);
         } else {
@@ -287,19 +284,15 @@ class LeadAllocationController extends Controller
 
     public function storeLeadAllocation(Request $request){
       
-       $validateDate =(object) $request->validate([
-            'quote_type_id' => 'required',
-            'user_id' => 'required',
-            'max_capacity' => 'required|integer',
-            
-        ]);
+       $validateDate =(object) $request->validated();
 
-        $is_lead = $this->leadAllocationService->getLeadAllocationRecordByUserId($request->user_id,$request->quote_type_id);
+        $isLead = $this->leadAllocationService->getLeadAllocationRecordByUserId($request->userId,$request->quoteTypeId);
        
-        if(!empty($is_lead))
+        if(!empty($isLead))
            return back()->with('error','Advisor already has an assigned capacity value for this quote type');
         
-        $new_lead = $this->leadAllocationService->createLeadAllocationRecord($request->user_id, $validateDate );
+
+        $newLead = $this->leadAllocationService->createLeadAllocationRecord($request->user_id, $validateDate );
       
 
         return redirect(route('lead.allocations.index'))->with('message', 'Advisor capacity assigned successfully');
@@ -360,12 +353,16 @@ class LeadAllocationController extends Controller
         return  redirect(route('lead.allocations.index'))->with('message', 'Advisor capacity assigned successfully');
     }
 
-    public function getAdvisorByQuoteType($user_id){
+    public function getQuoteTypesByUser($userId){
+        $user =$this->getUserProducts($userId);
+        $quoteTypesNames = collect( $user)->pluck('name');
+        $quoteTypes = QuoteTypeRepository::GetList();
 
-    $user =$this->getUserProducts($user_id);
-    $quote_types_names = collect( $user)->pluck('name');
-    $quoteTypes = QuoteTypeRepository::GetList();
-    $quoteTypes = collect($quoteTypes)->whereIn('code',$quote_types_names)->values();
+      return collect($quoteTypes)->whereIn('code', $quoteTypesNames)->values();
+    }
+    public function getAdvisorByQuoteType($userId){
+
+     $quoteTypes = $this->getQuoteTypesByUser($userId);
 
     return response()->json(['quoteTypes'=>$quoteTypes]);
     }

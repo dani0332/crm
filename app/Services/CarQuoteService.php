@@ -23,6 +23,7 @@ use App\Enums\GenericRequestEnum;
 use App\Traits\TeamHierarchyTrait;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use App\Services\ActivitiesService;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
@@ -37,15 +38,18 @@ class CarQuoteService extends BaseService
     protected $leadAllocationService;
     protected $sendEmailCustomerService;
     protected $applicationStorageService;
+    protected $activityService;
+    
     use GenericQueriesAllLobs;
     use TeamHierarchyTrait;
 
-    public function __construct(HttpRequestService $httpService, LeadAllocationService $leadAllocationService, SendEmailCustomerService $sendEmailCustomerService, ApplicationStorageService $applicationStorageService)
+    public function __construct(HttpRequestService $httpService, LeadAllocationService $leadAllocationService, SendEmailCustomerService $sendEmailCustomerService, ApplicationStorageService $applicationStorageService, ActivitiesService $activityService)
     {
         $this->leadAllocationService = $leadAllocationService;
         $this->httpService = $httpService;
         $this->applicationStorageService = $applicationStorageService;
         $this->sendEmailCustomerService = $sendEmailCustomerService;
+        $this->activityService = $activityService;
         $this->query = DB::table('car_quote_request as cqr')
             ->select(
                 'cqr.uuid',
@@ -1715,17 +1719,7 @@ class CarQuoteService extends BaseService
         return [$allowQuoteLogAction, $carLostChangeStatus, $statuses];
     }
 
-    public function getQuoteType($val)
-    {
-        switch (ucfirst($val)) {
-            case QuoteTypes::CAR->value:
-                return QuoteTypes::CAR->id();
-
-            case QuoteTypes::HEALTH->value:
-                return QuoteTypes::HEALTH->id();
-
-        }
-    }
+   
     
     public function addManualAllocationCountAndUpdate($newAdvisorId, $lead, $previousAdvisorId, $oldAdvisorAssignedDate, $previousAssignmentType, $quoteType=null)
     {
@@ -1736,7 +1730,7 @@ class CarQuoteService extends BaseService
 
         info('Previous assignment type is : '.$previousAssignmentType);
 
-        $quote_type_id = $this->getQuoteType($quoteType) ?? null;
+        $quote_type_id = $this->activityService->getQuoteTypeId(strtolower($quoteType)) ?? null;
    
 
         //Constants for system assigned types
