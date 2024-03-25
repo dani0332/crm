@@ -49,16 +49,11 @@ class CarAllocation implements Allocation
                 // Find available users for the tier
                 $availableUsers = $this->findAvailableUsers($tier->id, $lead->source);
 
-                if (! $this->teamId) {
-                    // Find custom rules for the lead
-                    $rules = $this->findRules($lead);
+                // Find custom rules for the lead
+                $rules = $this->findRules($lead);
 
-                    // Determine the final advisor for the lead based on tier, users, and rules
-                    $advisorId = $this->finalizeAdvisors($lead, $tier, $availableUsers, $rules);
-                } else {
-                    // in case when team id is provided for the allocation we don't need to find rules and we will assign advisor based on team id
-                    $advisorId = reset($availableUsers);
-                }
+                // Determine the final advisor for the lead based on tier, users, and rules
+                $advisorId = $this->finalizeAdvisors($lead, $tier, $availableUsers, $rules);
 
                 if (! empty($advisorId) && $advisorId == $lead->advisor_id) {
                     info('Advisor is same as previous advisor. Skipping for now.');
@@ -120,7 +115,7 @@ class CarAllocation implements Allocation
 
     protected function finalizeAdvisors($lead, $tier, $users, $rules): int
     {
-        return $this->carAllocationService->determineFinalUserId($lead, $users, $rules);
+        return $this->carAllocationService->determineFinalUserId($lead, $users, $rules, $this->teamId);
     }
 
     protected function assignLead($lead, $userId, $tier): void
