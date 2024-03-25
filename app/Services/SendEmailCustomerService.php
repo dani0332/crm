@@ -537,7 +537,7 @@ class SendEmailCustomerService extends BaseService
                 [
                     'headers' => $headers,
                     'body' => json_encode($body, JSON_UNESCAPED_SLASHES),
-                    'timeout' => 10,
+                    'timeout' => config('constants.LMS_EMAILS_TIMEOUT'),
                 ]
             );
             info('sendLMSIntroEmail ---- Request Sent');
@@ -693,7 +693,7 @@ class SendEmailCustomerService extends BaseService
                 [
                     'headers' => $headers,
                     'body' => $body,
-                    'timeout' => 10,
+                    'timeout' => config('constants.LMS_EMAILS_TIMEOUT'),
                 ]
             );
             info('sendNonAdvisorIntroEmail ---- Request Sent');
