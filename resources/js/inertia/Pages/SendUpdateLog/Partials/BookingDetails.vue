@@ -568,7 +568,7 @@ function sendUpdate(prePaymentCheck = true) {
     })
     .catch(function (errors) {
       loader.sendUpdateSectionBtn = false;
-      if(errors.response.data.errors.error) {
+      if(typeof(errors.response.data.errors.error) !== "undefined") {
         let responseError = errors.response.data.errors.error;
         Object.keys(responseError).forEach(function (key) {
           notification.error({

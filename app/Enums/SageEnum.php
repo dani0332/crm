@@ -93,7 +93,7 @@ final class SageEnum extends Enum
     const SRT_GET_AR_INVOICE = 'GET_AR_INVOICE';
     const SRT_GET_AP_INVOICE = 'GET_AP_INVOICE';
     const SRT_REV_CORR_AR_PREM_COMM_INV = 'SRT_REV_CORR_AR_PREM_COMM_INV';
-    const SRT_REV_CORR_AP_COMM_INV = 'SRT_REV_CORR_AP_COMM_INV';
+    const SRT_REV_CORR_AP_PREM_INV = 'SRT_REV_CORR_AP_PREM_INV';
     const SRT_REV_CORR_AR_DIS_INV = 'SRT_REV_CORR_AR_DIS_INV';
     // Sage Request Types End
 

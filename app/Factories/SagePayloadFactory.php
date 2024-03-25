@@ -112,26 +112,40 @@ class SagePayloadFactory
         $sageRequestType = SageEnum::SRT_CREATE_AP_PREM_INV;
         $entryType = SageEnum::SCT_STRAIGHT;
 
-        // Payload uppdate logic for reversal and correction scenario
+        // Payload update logic for reversal and correction scenario
         if (in_array($type, [SageEnum::SCT_REVERSAL, SageEnum::SCT_CORRECTION]) && !empty($revCorrDetails)) {
             $entryType = $type;
+            $payLoad = json_decode($revCorrDetails);
+
+            $applyToDocument = $payLoad->Invoices[0]->DocumentNumber;
+            unset($payLoad->BatchStatus);
 
             if ($type == SageEnum::SCT_REVERSAL) {
-                $payLoad['Invoices'][0]['DocumentNumber'] = $revCorrDetails->Invoices[0]->DocumentNumber.'-REV'; 
-                $payLoad['Invoices'][0]['InvoiceDescription'] = $revCorrDetails->Invoices[0]->InvoiceDescription.' - REVERSAL'; 
-                $payLoad['Invoices'][0]['DocumentType'] = 'CreditNote'; 
-                $payLoad['Invoices'][0]['ApplytoDocument'] = $revCorrDetails->Invoices[0]->DocumentNumber; 
+                
+                $payLoad->Invoices[0]->DocumentNumber = $payLoad->Invoices[0]->DocumentNumber.'-REV'; 
+                $payLoad->Invoices[0]->InvoiceDescription = $payLoad->Invoices[0]->InvoiceDescription.' - REVERSAL'; 
+                $payLoad->Invoices[0]->DocumentType = 'CreditNote'; 
+                $payLoad->Invoices[0]->ApplytoDocument = $applyToDocument; 
                 $sageRequestType = SageEnum::SRT_CREATE_AP_PREM_REV_INV;
             }
 
             if ($type == SageEnum::SCT_CORRECTION) {
-                $payLoad['Invoices'][0]['DocumentNumber'] = $revCorrDetails->Invoices[0]->DocumentNumber.'-NEW'; 
-                $payLoad['Invoices'][0]['InvoiceDescription'] = $revCorrDetails->Invoices[0]->InvoiceDescription.' - NEW'; 
-                $payLoad['Invoices'][0]['DocumentType'] = 'DebitNote'; 
-                $payLoad['Invoices'][0]['ApplytoDocument'] = $revCorrDetails->Invoices[0]->DocumentNumber;  //
+
+                $payLoad->Invoices[0]->DocumentNumber = $payLoad->Invoices[0]->DocumentNumber.'-NEW'; 
+                $payLoad->Invoices[0]->InvoiceDescription = $payLoad->Invoices[0]->InvoiceDescription.' - NEW'; 
+                // $payLoad->Invoices[0]->DocumentDate = $request->insurerInvoiceDate; 
+                // $payLoad->Invoices[0]->DueDate = $request->paymentDueDate; 
+                $payLoad->Invoices[0]->DocumentTotalBeforeTaxes = $request->premiumWithoutTax;
+                $payLoad->Invoices[0]->DocumentTotalIncludingTax = $request->premiumWithTax;
+                // $payLoad->Invoices[0]->PostingDate = $request->bookingDate;
+                $payLoad->Invoices[0]->DocumentType = 'DebitNote'; 
+                $payLoad->Invoices[0]->ApplytoDocument = $applyToDocument;
+                
+                // $payLoad->Invoices[0]->InvoicePaymentSchedules[0]->DueDate = $request->paymentDueDate;
+                $payLoad->Invoices[0]->InvoiceOptionalFields = self::createOptionalFields($request);
+                
                 $sageRequestType = SageEnum::SRT_CREATE_AP_PREM_CORR_INV;
             }
-
         }
 
         return [
@@ -186,27 +200,37 @@ class SagePayloadFactory
         // Payload uppdate logic for reversal and correction scenario
         if (in_array($type, [SageEnum::SCT_REVERSAL, SageEnum::SCT_CORRECTION]) && !empty($revCorrDetails)) {
             $entryType = $type;
+            $payLoad = json_decode($revCorrDetails);
+
+            $applyToDocument = $payLoad->Invoices[0]->DocumentNumber;
+            unset($payLoad->BatchStatus);
 
             if ($type == SageEnum::SCT_REVERSAL) {
-                $payLoad['Invoices'][0]['DocumentNumber'] = $revCorrDetails->Invoices[0]->DocumentNumber.'-REV'; 
-                $payLoad['Invoices'][0]['InvoiceDescription'] = $revCorrDetails->Invoices[0]->InvoiceDescription.' - REVERSAL'; 
-                $payLoad['Invoices'][0]['DocumentType'] = 'DebitNote'; 
-                $payLoad['Invoices'][0]['ApplytoDocument'] = $revCorrDetails->Invoices[0]->DocumentNumber; 
-                $payLoad['Invoices'][0]['TaxAmount1'] = 0.000; 
-                $payLoad['Invoices'][0]['InvoiceDetails'][0]['RevenueAccount'] = '55020'; 
+
+                $payLoad->Invoices[0]->DocumentNumber = $payLoad->Invoices[0]->DocumentNumber.'-REV'; 
+                $payLoad->Invoices[0]->InvoiceDescription = $payLoad->Invoices[0]->InvoiceDescription.' - REVERSAL'; 
+                $payLoad->Invoices[0]->DocumentType = 'DebitNote'; 
+                $payLoad->Invoices[0]->ApplytoDocument = $applyToDocument; 
                 $sageRequestType = SageEnum::SRT_CREATE_AR_DISC_REV_INV;
             }
 
             if ($type == SageEnum::SCT_CORRECTION) {
-                $payLoad['Invoices'][0]['DocumentNumber'] = $revCorrDetails->Invoices[0]->DocumentNumber.'-NEW'; 
-                $payLoad['Invoices'][0]['InvoiceDescription'] = $revCorrDetails->Invoices[0]->InvoiceDescription.' - NEW'; 
-                $payLoad['Invoices'][0]['DocumentType'] = 'CreditNote'; 
-                $payLoad['Invoices'][0]['ApplytoDocument'] = $revCorrDetails->Invoices[0]->DocumentNumber;
-                $payLoad['Invoices'][0]['TaxAmount1'] = 0.000;
-                $payLoad['Invoices'][0]['InvoiceDetails'][0]['RevenueAccount'] = '55020'; 
+
+                $payLoad->Invoices[0]->DocumentNumber = $payLoad->Invoices[0]->DocumentNumber.'-NEW'; 
+                $payLoad->Invoices[0]->InvoiceDescription = $payLoad->Invoices[0]->InvoiceDescription.' - NEW'; 
+                // $payLoad->Invoices[0]->DocumentDate = $request->insurerInvoiceDate; 
+                // $payLoad->Invoices[0]->DueDate = $request->paymentDueDate; 
+                $payLoad->Invoices[0]->DocumentTotalBeforeTaxes = $request->premiumWithoutTax;
+                $payLoad->Invoices[0]->DocumentTotalIncludingTax = $request->premiumWithTax;
+                // $payLoad->Invoices[0]->PostingDate = $request->bookingDate;
+                $payLoad->Invoices[0]->DocumentType = 'CreditNote'; 
+                $payLoad->Invoices[0]->ApplytoDocument = $applyToDocument;
+                
+                // $payLoad->Invoices[0]->InvoicePaymentSchedules[0]->DueDate = $request->paymentDueDate;
+                $payLoad->Invoices[0]->InvoiceOptionalFields = self::createOptionalFields($request);
+
                 $sageRequestType = SageEnum::SRT_CREATE_AR_DISC_CORR_INV;
             }
-
         }
 
         return [
@@ -1065,6 +1089,75 @@ class SagePayloadFactory
                         ]
                     ]
                 ];
+                break;
+
+            case SageEnum::SRT_REV_CORR_AP_PREM_INV:
+                $response = [
+                    'recursiveCalls' => [
+                        'getInvoiceDetails',
+                        'createAPInvoicePrem',
+                        'readyToPostInvoiceAP',
+                        'aPPostInvoices',
+                    ],
+                    'extraDetails' => [
+                        'getInvoiceDetails' => [
+                            'verb' => 'GET',
+                        ],
+                        'createAPInvoicePrem' => [
+                            'requestParms' => 'payload',
+                            'nextCondition' => 'BatchNumber',
+                            'errorMessage' => $message[$apiType][$useFor]['createAPInvoicePrem']['error']
+                        ],
+                        'readyToPostInvoiceAP' => [
+                            'requestParms' => 'BatchNumber',
+                            'verb' => 'PATCH',
+                            'logResponse' => true,
+                            'conditionChecks' => ['type' => 'Not Empty', 'condtion_to_check' => ''],
+                            'errorMessage' => $message[$apiType][$useFor]['readyToPostInvoiceAP']['error']
+                        ],
+                        'aPPostInvoices' => [
+                            'requestParms' => 'BatchNumber',
+                            'logResponse' => true,
+                            'conditionChecks' => ['type' => 'isset', 'condtion_to_check' => 'error'],
+                            'errorMessage' => $message[$apiType][$useFor]['aPPostInvoices']['error']
+                        ]
+                    ]
+                ];
+                break;
+
+            case SageEnum::SRT_REV_CORR_AR_DIS_INV:
+                $response = [
+                    'recursiveCalls' => [
+                        'getInvoiceDetails',
+                        'createARInvoiceDis',
+                        'readyToPostInvoiceAr',
+                        'aRPostInvoices',
+                    ],
+                    'extraDetails' => [
+                        'getInvoiceDetails' => [
+                            'verb' => 'GET',
+                        ],
+                        'createARInvoiceDis' => [
+                            'requestParms' => 'payload',
+                            'nextCondition' => 'BatchNumber',
+                            'errorMessage' => $message[$apiType][$useFor]['createARInvoiceDis']['error']
+                        ],
+                        'readyToPostInvoiceAr' => [
+                            'requestParms' => 'BatchNumber',
+                            'verb' => 'PATCH',
+                            'logResponse' => true,
+                            'conditionChecks' => ['type' => 'Not Empty', 'condtion_to_check' => ''],
+                            'errorMessage' => $message[$apiType][$useFor]['readyToPostInvoiceAr']['error']
+                        ],
+                        'aRPostInvoices' => [
+                            'requestParms' => 'BatchNumber',
+                            'logResponse' => true,
+                            'conditionChecks' => ['type' => 'isset', 'condtion_to_check' => 'error'],
+                            'errorMessage' => $message[$apiType][$useFor]['aRPostInvoices']['error']
+                        ]
+                    ]
+                ];
+                break;
         }
 
         return $response;
@@ -1108,7 +1201,7 @@ class SagePayloadFactory
                     ]
                 ]
             ],
-            SageEnum::SRT_CREATE_AP_PREM_INV => [
+            SageEnum::SRT_REV_CORR_AP_PREM_INV => [
                 SageEnum::SCT_STRAIGHT => [
                     'createAPInvoicePrem' => [
                         'error' => 'AP Invoice prem failed from Sage'
@@ -1143,7 +1236,7 @@ class SagePayloadFactory
                     ]
                 ]
             ],
-            SageEnum::SRT_CREATE_AR_DISC_INV => [
+            SageEnum::SRT_REV_CORR_AR_DIS_INV => [
                 SageEnum::SCT_STRAIGHT => [
                     'createARInvoiceDis' => [
                         'error' => 'AR discount Invoice failed from Sage'
