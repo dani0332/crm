@@ -22,7 +22,7 @@ class UpdatePolicyDetailRequest extends FormRequest
     public function rules(): array
     {
 
-        if (!empty(request()->quote_policy_issuance_status) && request()->price_with_vat <= 0 && empty(request()->quote_policy_number)) {
+        if (! empty(request()->quote_policy_issuance_status) && request()->price_with_vat <= 0 && empty(request()->quote_policy_number)) {
             return [
                 'quote_policy_issuance_status' => 'nullable',
                 'quote_policy_issuance_status_other' => 'nullable',
@@ -59,7 +59,7 @@ class UpdatePolicyDetailRequest extends FormRequest
         $validator->after(function ($validator) {
             $pattern = '/^(\w+[-\/]?)+$/';
             $quote_policy_number = request()->quote_policy_number;
-            if (!preg_match($pattern, $quote_policy_number)) {
+            if (! preg_match($pattern, $quote_policy_number)) {
 
                 $validator->errors()->add('value', 'Invalid format for policy number');
             }
