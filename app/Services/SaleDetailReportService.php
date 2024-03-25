@@ -31,7 +31,7 @@ class SaleDetailReportService extends ManagementReport
                 'personal_quotes.vat',
                 'personal_quotes.price_vat_not_applicable',
                 'p.discount_value as discount',
-                DB::raw('FORMAT(((price_vat_applicable + price_vat_not_applicable + vat) - p.discount_value),2) as total_price'),
+                DB::raw('FORMAT(((personal_quotes.price_vat_applicable + personal_quotes.price_vat_not_applicable + personal_quotes.vat) - p.discount_value),2) as total_price'),
                 DB::raw('FORMAT(p.commission_vat_applicable,2) as commission_vat_applicable'),
                 DB::raw('FORMAT(p.commission_vat,2) as commission_vat'),
                 DB::raw('FORMAT(p.commission_vat_not_applicable,2) as commission_vat_not_applicable'),
@@ -46,7 +46,7 @@ class SaleDetailReportService extends ManagementReport
                 'cm.code as customer_type',
                 'ip.code as insurer',
                 'quote_type.text as line_of_business',
-                DB::raw("'sub_type_line_of_business' as sub_type_line_of_business"),
+                'btoi.text as sub_type_line_of_business',
                 'u.name as advisor',
                 'pi.name as policy_issuer',
             )
@@ -59,7 +59,9 @@ class SaleDetailReportService extends ManagementReport
             ->leftJoin('users as pi', 'pi.id', '=', 'p.policy_issuer_id')
             ->leftJoin('user_team as ut', 'ut.user_id', '=', 'u.id')
             ->leftJoin('teams as t', 't.id', '=', 'ut.team_id')
-            ->leftJoin('customer as cm', 'cm.id', '=', 'personal_quotes.customer_id');
+            ->leftJoin('customer as cm', 'cm.id', '=', 'personal_quotes.customer_id')
+            ->leftJoin('business_quote_request as bqr', 'bqr.code', '=', 'personal_quotes.code')
+            ->leftJoin('business_type_of_insurance as btoi', 'btoi.id', '=', 'bqr.business_type_of_insurance_id');
 
         $this->applyFilters($query, $request);
 
