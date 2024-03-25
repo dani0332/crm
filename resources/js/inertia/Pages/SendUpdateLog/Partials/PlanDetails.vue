@@ -113,13 +113,11 @@ const onUpdate = () => {
     <Collapsible expanded>
       <template #header>
         <div class="flex justify-between gap-4 items-center">
-          <x-tooltip position="left">
+          <x-tooltip position="left" v-if="!isPlanDetails">
             <label
               class="font-semibold text-primary-800 text-lg underline decoration-dotted decoration-primary-700"
             >
-              {{
-                isPlanDetails ? 'Plan Details' : 'Indicative Additional Price'
-              }}
+              Indicative Additional Price
             </label>
             <template #tooltip>
               Refers to an estimated cost that may be added to the policy.
@@ -127,6 +125,9 @@ const onUpdate = () => {
               the most accurate and up-to-date pricing.
             </template>
           </x-tooltip>
+          <h3 v-else class="text-lg font-semibold text-primary-800 capitalize">
+            Plan Details
+          </h3>
         </div>
       </template>
       <template #body>
@@ -232,6 +233,7 @@ const onUpdate = () => {
                   type="number"
                   min="0"
                   @change="updatePriceWithVat"
+                  class="w-full"
                 />
               </dd>
             </div>
