@@ -74,7 +74,6 @@ const insuranceProvidersOptions = computed(() => {
 
 const updatePriceWithVat = () => {
   if (planDetailsForm.price_with_vat) {
-    console.log(planDetailsForm.price_with_vat);
     let price = parseFloat(planDetailsForm.price_with_vat);
     planDetailsForm.total_price = (price / 100) * 5 + price;
   } else if (planDetailsForm.price_without_vat) {
