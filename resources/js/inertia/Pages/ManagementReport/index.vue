@@ -281,6 +281,7 @@ function onReset() {
           size="sm"
           model-type="yyyy-MM-dd"
           :rules="[isRequired]"
+          :onlySelect="true"
         />
       </x-field>
       <x-field v-if="showExpiryDate" label="Policy Expiry Date" required>
@@ -292,6 +293,7 @@ function onReset() {
           size="sm"
           model-type="yyyy-MM-dd"
           :rules="[isRequired]"
+          :onlySelect="true"
         />
       </x-field>
       <x-field v-if="showDateTo" label="Date To" required>
@@ -302,6 +304,7 @@ function onReset() {
           size="sm"
           model-type="yyyy-MM-dd"
           :rules="[isRequired]"
+          :onlySelect="true"
         />
       </x-field>
       <x-field label="Transaction Type">
