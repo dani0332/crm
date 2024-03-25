@@ -21,7 +21,7 @@ class ExportDocumentService extends BaseService implements ExportDocumentInterfa
         $this->helperService = $helperService;
     }
 
-    public function exportProformaPaymentRequest($quoteType, $quote)
+    public function createProformaPaymentRequestPdf($quoteType, $quote)
     {
         $quote = $this->getQuote($quoteType, $quote);
         if (isset($response['error'])) {
