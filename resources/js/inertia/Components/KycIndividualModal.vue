@@ -25,6 +25,7 @@ const props = defineProps({
   residentialStatus: Array,
   companyPosition: Array,
   customerDetails: Object,
+
 });
 
 const rules = {
@@ -207,6 +208,7 @@ onMounted(() => {
 </script>
 
 <template>
+
   <x-form @submit="onKycSubmit" :auto-focus="false">
     <div class="grid md:grid-cols-4 gap-4">
       <x-input

@@ -127,13 +127,11 @@ const searchByTradeLicense = () => {
     .then(res => {
       if (res.data.status) {
         let response = res.data.response;
-
         entityFound.value = true;
         tradeLicenseEntity.entity_id = response.id;
         tradeLicenseEntity.trade_license = response.trade_license_no;
         tradeLicenseEntity.company_name = response.company_name;
         tradeLicenseEntity.company_address = response.company_address;
-
         notification.success({
           title: res.data.message,
           position: 'top',
@@ -153,6 +151,11 @@ const searchByTradeLicense = () => {
     .finally(() => (loader.value.search = false));
 };
 
+const componentKey = ref(0);
+
+
+
+
 const linkEntity = () => {
   loader.value.link = true;
   let entityDetails = {
@@ -164,6 +167,28 @@ const linkEntity = () => {
     .post(route('link-entity-details'), entityDetails)
     .then(res => {
       entityFound.value = false;
+      insuredFormDetails.company_name = res.data.response.company_name;
+        insuredFormDetails.company_address = res.data.response.company_address;
+       props.entityDetails.entity.company_name = res.data.response.company_name;
+        props.entityDetails.entity.email = res.data.response.email;
+        props.entityDetails.entity.registered_address = res.data.response.registered_address;
+        props.entityDetails.entity.communication_address = res.data.response.communication_address;
+        props.entityDetails.entity.legal_structure = res.data.response.legal_structure;
+        props.entityDetails.entity.industry_type_code = res.data.response.industry_type_code;
+        props.entityDetails.entity.country_of_corporation = res.data.response.country_of_corporation;
+        props.entityDetails.entity.mobile_no = res.data.response.mobile_no;
+        props.entityDetails.entity.website = res.data.response.website;
+        props.entityDetails.entity.id_type = res.data.response.id_type;
+        props.entityDetails.entity.id_number = res.data.response.id_number;
+        props.entityDetails.entity.id_issuance_date = res.data.response.id_issuance_date;
+        props.entityDetails.entity.id_expiry_date = res.data.response.id_expiry_date;
+        props.entityDetails.entity.issuance_place = res.data.response.issuance_place;
+        props.entityDetails.entity.id_issuance_authority = res.data.response.id_issuance_authority;
+        props.entityDetails.entity.pep = res.data.response.pep;
+        props.entityDetails.entity.financial_sanctions = res.data.response.financial_sanctions;
+        props.entityDetails.entity.dual_nationality = res.data.response.dual_nationality;
+
+        componentKey.value += 1
       notification.success({
         title: res.data.message,
         position: 'top',
@@ -194,6 +219,7 @@ const show = ref(true);
         Please confirm the Company Name, and UBO details as per the Trade
         License
       </p>
+
       <x-form @submit="insuredDetailsSubmit" :auto-focus="false">
         <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 mb-5">
           <x-field label="Trade License No">
@@ -327,6 +353,8 @@ const show = ref(true);
           :ubo-relation="props.lookups.ubo_relation"
           :entity-details="props.entityDetails"
           :industry-type="props.lookups.company_type"
+          :key="componentKey"
+
         />
       </x-form>
     </template>
@@ -475,6 +503,7 @@ const show = ref(true);
         :residentialStatus="props.lookups.resident_status"
         :companyPosition="props.lookups.company_position"
         :modeOfDelivery="props.lookups.mode_of_delivery"
+
       />
     </x-form>
   </x-modal>
