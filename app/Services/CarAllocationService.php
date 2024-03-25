@@ -376,7 +376,7 @@ class CarAllocationService extends AllocationService
             info('Rule found, and users against the rule are: '.json_encode($finalEligibleUserIds));
         } else {
             // If no rules are found, get user IDs from rule lead sources.
-            $ruleUsers = !$teamId || $teamId != 0 ? $this->getRuleUsers() : [];
+            $ruleUsers = ! $teamId || $teamId != 0 ? $this->getRuleUsers() : [];
 
             info('No rule found against this lead ('.$lead->uuid.'), so filtering rule users: '.json_encode($ruleUsers));
 
