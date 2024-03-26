@@ -2,13 +2,13 @@
 
 namespace App\Http\Controllers;
 
-use DataTables;
 use App\Enums\QuoteTypes;
-use Illuminate\Http\Request;
-use App\Services\CacheService;
-use Illuminate\Support\Facades\Gate;
 use App\Services\ApplicationStorageService;
+use App\Services\CacheService;
 use App\Services\CarLeadAllocationDashboardService;
+use DataTables;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 
 class CarLeadAllocationController extends Controller
 {
@@ -46,7 +46,7 @@ class CarLeadAllocationController extends Controller
             $isRenewalLeadAllocationWorking = $this->applicationStorageService->getValueByKey('CAR_RENEWAL_LEAD_ALLOCATION');
             $isFIFO = $this->applicationStorageService->getValueByKey('CAR_LEAD_PICKUP_FIFO');
             $data = $this->carLeadAllocationService->getGridData();
-    
+
             foreach ($data as $key => $value) {
                 $totalAssignedLeadCount = $totalAssignedLeadCount + $value->allocationCount;
                 $value->isAvailable == 1 ? $availableUsers++ : $unAvailableUsers++;

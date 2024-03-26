@@ -2,26 +2,25 @@
 
 namespace App\Services;
 
-use Carbon\Carbon;
-use App\Models\Team;
-use App\Models\User;
-use App\Jobs\CammyJob;
-use App\Enums\RolesEnum;
-use App\Enums\QuoteTypes;
-use App\Jobs\IntroEmailJob;
-use App\Models\HealthQuote;
-use App\Enums\quoteTypeCode;
+use App\Enums\ApplicationStorageEnums;
+use App\Enums\AssignmentTypeEnum;
 use App\Enums\HealthTeamType;
 use App\Enums\LeadSourceEnum;
-use App\Enums\UserStatusEnum;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypes;
+use App\Enums\RolesEnum;
+use App\Enums\UserStatusEnum;
+use App\Jobs\CammyJob;
 use App\Jobs\GetQuotePlansJob;
-use App\Enums\AssignmentTypeEnum;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Mail;
-use App\Enums\ApplicationStorageEnums;
+use App\Jobs\IntroEmailJob;
 use App\Mail\HealthAssignmentIssueEmail;
+use App\Models\HealthQuote;
 use App\Models\HealthQuoteRequestDetail;
+use App\Models\Team;
+use App\Models\User;
+use Carbon\Carbon;
+use Illuminate\Support\Facades\Mail;
 use Sammyjo20\LaravelHaystack\Models\Haystack;
 
 class HealthAllocationService extends AllocationService
@@ -98,10 +97,10 @@ class HealthAllocationService extends AllocationService
         if (! $isReassignmentJob) {
             $statusOrder[] = UserStatusEnum::UNAVAILABLE;
         }
-   
+
         foreach ($statusOrder as $status) {
             $eligibleUser = $this->getAdvisorByStatus($status, $leadTeam);
-        
+
             if ($eligibleUser) {
                 info('eligible user found for team : '.$leadTeam.' with status : '.$status.' and user id :'.$eligibleUser->user_id);
 
@@ -116,7 +115,7 @@ class HealthAllocationService extends AllocationService
     {
         info('trying to get advisors for team : '.$leadTeam.' with current status as '.$status);
 
-        return  User::join('lead_allocation as la', 'la.user_id', '=', 'users.id')
+        return User::join('lead_allocation as la', 'la.user_id', '=', 'users.id')
             ->join('model_has_roles as mhr', 'mhr.model_id', '=', 'users.id')
             ->join('roles as r', 'r.id', '=', 'mhr.role_id')
             ->join('teams as t', 't.id', '=', 'users.sub_team_id')

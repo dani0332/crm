@@ -2,35 +2,34 @@
 
 namespace App\Services;
 
-use App\Enums\Kyc;
-use Carbon\Carbon;
-use App\Facades\Ken;
-use App\Models\User;
-use App\Jobs\CammyJob;
-use App\Enums\RolesEnum;
-use App\Facades\Marshall;
-use App\Models\QuoteType;
-use App\Enums\QuoteTypeId;
-use App\Enums\TeamNameEnum;
-use App\Jobs\IntroEmailJob;
-use App\Enums\quoteTypeCode;
-use App\Models\GenericModel;
-use Illuminate\Http\Request;
+use App\Enums\GenericRequestEnum;
 use App\Enums\HealthTeamType;
-use App\Models\PaymentAction;
+use App\Enums\Kyc;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
-use App\Models\QuoteStatusLog;
+use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypeId;
+use App\Enums\RolesEnum;
+use App\Facades\Ken;
+use App\Facades\Marshall;
+use App\Jobs\CammyJob;
+use App\Jobs\CarLost\CarLostStatusRejected;
+use App\Jobs\IntroEmailJob;
 use App\Jobs\SyncSIBContactJob;
 use App\Models\CarLostQuoteLog;
-use App\Enums\GenericRequestEnum;
-use App\Traits\TeamHierarchyTrait;
-use Illuminate\Support\Facades\DB;
-use App\Models\EmbeddedTransaction;
-use Illuminate\Support\Facades\Auth;
 use App\Models\EmbeddedProductOption;
+use App\Models\EmbeddedTransaction;
+use App\Models\GenericModel;
+use App\Models\PaymentAction;
+use App\Models\QuoteStatusLog;
+use App\Models\QuoteType;
+use App\Models\User;
 use App\Traits\GenericQueriesAllLobs;
-use App\Jobs\CarLost\CarLostStatusRejected;
+use App\Traits\TeamHierarchyTrait;
+use Carbon\Carbon;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class CRUDService extends BaseService
 {
@@ -405,8 +404,6 @@ class CRUDService extends BaseService
         return $query->orderBy('r.name')->distinct()->get();
     }
 
-
-  
     public function getRenewalAdvisorsByModelType($modelType)
     {
         $query = DB::table('users as u')

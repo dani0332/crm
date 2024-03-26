@@ -2,51 +2,49 @@
 
 namespace App\Services;
 
-
-use Carbon\Carbon;
-use App\Models\Rule;
-use App\Models\Team;
-use App\Models\Tier;
-use App\Models\User;
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\AssignmentTypeEnum;
+use App\Enums\AssignmentTypeEnum;
+use App\Enums\CarPlanType;
 use App\Enums\CarPlanType;
 use App\Enums\InsuranceProvidersEnum;
+use App\Enums\InsuranceProvidersEnum;
+use App\Enums\LeadSourceEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\QuoteStatusEnum;
+use App\Enums\QuoteTypes;
+use App\Enums\RuleTypeEnum;
 use App\Enums\RuleTypeEnum;
 use App\Enums\TeamNameEnum;
+use App\Enums\TeamNameEnum;
+use App\Enums\TiersEnum;
 use App\Enums\TiersEnum;
 use App\Enums\TiersIdEnum;
 use App\Enums\UserStatusEnum;
+use App\Enums\UserStatusEnum;
 use App\Jobs\SendOCBIntroEmailJob;
 use App\Models\CarMake;
-use App\Enums\TiersEnum;
 use App\Models\CarModel;
 use App\Models\CarQuote;
-use App\Models\TierUser;
-use App\Enums\QuoteTypes;
-use App\Models\QuoteType;
-use App\Models\UserTeams;
-use App\Enums\CarPlanType;
-use App\Models\LeadSource;
-use App\Enums\RuleTypeEnum;
-use App\Enums\TeamNameEnum;
-use App\Models\QuoteBatches;
-use App\Enums\LeadSourceEnum;
-use App\Enums\UserStatusEnum;
-use App\Enums\QuoteStatusEnum;
-use App\Models\LeadAllocation;
-use App\Models\RuleLeadSource;
-use App\Enums\AssignmentTypeEnum;
+use App\Models\CarQuotePlanDetail;
+use App\Models\CarQuoteRequestDetail;
 use App\Models\CommercialKeyword;
 use App\Models\InsuranceProvider;
-use App\Models\CarQuotePlanDetail;
+use App\Models\LeadAllocation;
+use App\Models\LeadSource;
+use App\Models\QuoteBatches;
+use App\Models\Rule;
+use App\Models\RuleLeadSource;
+use App\Models\Team;
+use App\Models\Tier;
+use App\Models\TierUser;
+use App\Models\User;
+use App\Models\UserTeams;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use App\Enums\InsuranceProvidersEnum;
-use App\Models\CarQuoteRequestDetail;
-use App\Enums\ApplicationStorageEnums;
 
 class CarAllocationService extends AllocationService
 {

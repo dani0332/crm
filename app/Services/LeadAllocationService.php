@@ -2,44 +2,44 @@
 
 namespace App\Services;
 
-use Carbon\Carbon;
-use App\Models\Rule;
-use App\Models\Team;
-use App\Models\Tier;
-use App\Models\User;
-use App\Models\CarMake;
-use App\Enums\RolesEnum;
-use App\Models\CarModel;
-use App\Models\CarQuote;
-use App\Models\TierUser;
-use App\Enums\QuoteTypes;
-use App\Models\LeadSource;
-use App\Models\RuleDetail;
+use App\Enums\ApplicationStorageEnums;
+use App\Enums\AssignmentTypeEnum;
+use App\Enums\CarTypeOfInsuranceIdEnum;
 use App\Enums\DaysNameEnum;
-use App\Enums\RuleTypeEnum;
-use App\Enums\TeamNameEnum;
-use App\Jobs\IntroEmailJob;
-use App\Models\HealthQuote;
-use App\Enums\quoteTypeCode;
-use App\Models\QuoteBatches;
 use App\Enums\HealthTeamType;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypes;
+use App\Enums\RolesEnum;
+use App\Enums\RuleTypeEnum;
+use App\Enums\TeamNameEnum;
 use App\Jobs\GetQuotePlansJob;
-use App\Models\LeadAllocation;
-use App\Traits\GetUserTreeTrait;
-use App\Enums\AssignmentTypeEnum;
-use App\Models\CommercialKeyword;
+use App\Jobs\IntroEmailJob;
+use App\Mail\HealthAssignmentIssueEmail;
 use App\Models\ApplicationStorage;
+use App\Models\CarMake;
+use App\Models\CarModel;
+use App\Models\CarQuote;
+use App\Models\CarQuoteRequestDetail;
+use App\Models\CommercialKeyword;
+use App\Models\HealthQuote;
+use App\Models\HealthQuoteRequestDetail;
+use App\Models\LeadAllocation;
+use App\Models\LeadSource;
+use App\Models\QuoteBatches;
+use App\Models\Rule;
+use App\Models\RuleDetail;
+use App\Models\Team;
+use App\Models\Tier;
+use App\Models\TierUser;
+use App\Models\User;
+use App\Traits\GetUserTreeTrait;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
-use App\Models\CarQuoteRequestDetail;
-use App\Enums\ApplicationStorageEnums;
-use App\Enums\CarTypeOfInsuranceIdEnum;
-use App\Mail\HealthAssignmentIssueEmail;
-use App\Models\HealthQuoteRequestDetail;
 use Sammyjo20\LaravelHaystack\Models\Haystack;
 
 class LeadAllocationService extends BaseService
@@ -84,7 +84,6 @@ class LeadAllocationService extends BaseService
             if (! auth()->user()->hasRole(RolesEnum::SuperManagerLeadAllocation)) {
                 $query = $query->where('u.manager_id', auth()->user()->id);
             }
-           
 
             return $query->get();
         } catch (\Exception $e) {
@@ -92,7 +91,7 @@ class LeadAllocationService extends BaseService
         }
     }
 
-    public function createLeadAllocationRecord($userId,$data=null)
+    public function createLeadAllocationRecord($userId, $data = null)
     {
         try {
             DB::beginTransaction();
@@ -164,7 +163,7 @@ class LeadAllocationService extends BaseService
             Log::error($e->getMessage());
         }
     }
-    
+
     public function assignLead($lead, $advisorId, $isManualAssignment)
     {
         info('assignLead -- started with lead : '.$lead->uuid.' , advisorId : '.$advisorId.' , isManualAssignment : '.$isManualAssignment);
@@ -437,13 +436,14 @@ class LeadAllocationService extends BaseService
         return $this->getAppStorageValueByKey('LEAD_ALLOCATION_JOB_SWITCH') == '1';
     }
 
-    public function getLeadAllocationRecordByUserId($userId,$quoteTypeId=null)
+    public function getLeadAllocationRecordByUserId($userId, $quoteTypeId = null)
     {
         try {
             $leadAllocation = LeadAllocation::latest()->where('user_id', $userId);
-            if(!empty($quoteTypeId)){
+            if (! empty($quoteTypeId)) {
                 $leadAllocation = $leadAllocation->where('quote_type_id', $quoteTypeId);
             }
+
             return $leadAllocation->first();
         } catch (\Exception $e) {
             Log::error($e->getMessage());
@@ -1004,7 +1004,8 @@ class LeadAllocationService extends BaseService
         return HealthQuote::whereNull('advisor_id')->where('health_team_type', $teamType)->count() ?? 0;
     }
 
-    public function deleteAllocationLead($id){
+    public function deleteAllocationLead($id)
+    {
         try {
             $leadAllocation = LeadAllocation::latest()->where('id', $id)->delete();
 
@@ -1039,20 +1040,19 @@ class LeadAllocationService extends BaseService
                 ->leftJoin('teams as t', 'ut.team_id', '=', 't.id')
                 ->groupBy('u.name', 'u.id', 'lead_allocation.id')
                 ->where('u.is_active', true)
-                ->whereIn('lead_allocation.quote_type_id',(array) $quoteTypeIds);
-               
-            $query = $query->when(!auth()->user()->hasRole(RolesEnum::SuperManagerLeadAllocation), function ($query) {
-                    return $query->where('u.manager_id', auth()->user()->id);
-             });
-            $query = $query->when(!empty(request('userIds')), function ($query) {
-                return $query->whereIn('u.id', (array)request('userIds'));
-            });
-            $query = $query->when(!empty(request('quoteTypeIds')), function ($query) {
-                return $query->whereIn('lead_allocation.quote_type_id', (array)request('quoteTypeIds'));
-            });
-        
+                ->whereIn('lead_allocation.quote_type_id', (array) $quoteTypeIds);
 
-            return $query->simplePaginate(10)->withQueryString();;
+            $query = $query->when(! auth()->user()->hasRole(RolesEnum::SuperManagerLeadAllocation), function ($query) {
+                return $query->where('u.manager_id', auth()->user()->id);
+            });
+            $query = $query->when(! empty(request('userIds')), function ($query) {
+                return $query->whereIn('u.id', (array) request('userIds'));
+            });
+            $query = $query->when(! empty(request('quoteTypeIds')), function ($query) {
+                return $query->whereIn('lead_allocation.quote_type_id', (array) request('quoteTypeIds'));
+            });
+
+            return $query->simplePaginate(10)->withQueryString();
         } catch (\Exception $e) {
             Log::error($e->getMessage());
         }
