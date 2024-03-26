@@ -18,9 +18,8 @@ const props = defineProps({
   lookups: Object,
   quoteAmlStatus: Number,
   customerDetails: Object,
+    cardHolderName:Object,
 });
-
-// const paymentsDataArray = ref(props.quoteDetails.payments || []);
 
 const loader = ref({
   search: false,
@@ -50,34 +49,6 @@ const nationalitiesOptions = computed(() => {
   }));
 });
 
-const residentStatusOptions = computed(() => {
-  return props?.lookups?.resident_status.map(item => ({
-    value: item.code,
-    label: item.text,
-  }));
-});
-
-const modeOfDeliveryOptions = computed(() => {
-  return props?.lookups?.mode_of_delivery.map(item => ({
-    value: item.code,
-    label: item.text,
-  }));
-});
-
-const idTypeOptions = computed(() => {
-  return props?.lookups?.id_type.map(item => ({
-    value: item.code,
-    label: item.text,
-  }));
-});
-
-const modeOfContactOptions = computed(() => {
-  return props?.lookups?.mode_of_contact.map(item => ({
-    value: item.code,
-    label: item.text,
-  }));
-});
-
 const emirateRegistrationOptions = computed(() => {
   return props.emirates.map(emirate => ({
     value: emirate.id,
@@ -92,65 +63,10 @@ const industryTypeOptions = computed(() => {
   }));
 });
 
-const employmentSectorOptions = computed(() => {
-  return props?.lookups?.employment_sector.map(item => ({
-    value: item.code,
-    label: item.text,
-  }));
-});
-
-const legalStructureOptions = computed(() => {
-  return props?.lookups?.legal_structure.map(item => ({
-    value: item.code,
-    label: item.text,
-  }));
-});
-
-const idIssuanceAuthorityOptions = computed(() => {
-  return props?.lookups?.issuing_authority.map(item => ({
-    value: item.code,
-    label: item.text,
-  }));
-});
-
-const idIssuancePlanceOptions = computed(() => {
-  return props?.lookups?.issuance_place.map(item => ({
-    value: item.code,
-    label: item.text,
-  }));
-});
-
-// const paymentDetailsRef = ref([
-//     {
-//         paymentCode : '',
-//         paymentMethod: '',
-//         payerName: '',
-//         paymentAmount: '',
-//         paidBy: '',
-//     }
-// ]);
-
 const validateCustomerFields = ref(false);
 
 const customerAmlOnly = () => {
   validateCustomerFields.value = false;
-  return true;
-};
-
-const customerAllFields = () => {
-  validateCustomerFields.value = true;
-  return true;
-};
-
-const validateEntityFields = ref(false);
-
-const entityAmlOnly = () => {
-  validateEntityFields.value = false;
-  return true;
-};
-
-const entityAllFields = () => {
-  validateEntityFields.value = true;
   return true;
 };
 
@@ -192,8 +108,8 @@ const insuredFormDetails = useForm({
   id_issuance_authority:
     props.entityDetails?.entity?.id_issuance_authority ?? null,
 
-  insured_first_name: props.quoteDetails?.customer?.insured_first_name ?? null,
-  insured_last_name: props.quoteDetails?.customer?.insured_last_name ?? null,
+  insured_first_name: props.quoteDetails?.customer?.insured_first_name ?? (props.quoteType.code === 'Health' ? props.membersDetails[0]?.first_name : null),
+  insured_last_name: props.quoteDetails?.customer?.insured_last_name ?? (props.quoteType.code === 'Health' ? props.membersDetails[0]?.last_name : null),
   nationality_id: props.quoteDetails?.customer.nationality_id ?? null,
   dob: props.quoteDetails?.customer.dob ?? null,
 
@@ -483,6 +399,7 @@ watch(
           :membersDetails="membersDetails"
           :memberRelations="props.lookups.member_relation"
           :customerType="props.customerTypeEnum.Individual"
+          :cardHolderName="cardHolderName"
         />
         <div class="my-5 flex justify-center">
           <x-button

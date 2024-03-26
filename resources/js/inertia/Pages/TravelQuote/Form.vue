@@ -32,14 +32,17 @@ const quoteForm = useForm({
   first_name: props.quote?.first_name || null,
   last_name: props.quote?.last_name || null,
   email: props.quote?.email || null,
-    direction_code: props.quote?.direction_code
-        ? props.quote?.direction_code
-        : editMode.value &&
-        props.quote?.region_cover_for_id == travelQuoteEnum.REGION_COVER_ID_UAE
-            ? travelQuoteEnum.TRAVEL_UAE_INBOUND
-            : editMode.value && props.quote?.currently_located_in_id_text == travelQuoteEnum.LOCATION_UAE_TEXT && props.quote?.region_cover_for_id != travelQuoteEnum.REGION_COVER_ID_UAE
-                ? travelQuoteEnum.TRAVEL_UAE_OUTBOUND
-                : null,
+  direction_code: props.quote?.direction_code
+    ? props.quote?.direction_code
+    : editMode.value &&
+      props.quote?.region_cover_for_id == travelQuoteEnum.REGION_COVER_ID_UAE
+    ? travelQuoteEnum.TRAVEL_UAE_INBOUND
+    : editMode.value &&
+      props.quote?.currently_located_in_id_text ==
+        travelQuoteEnum.LOCATION_UAE_TEXT &&
+      props.quote?.region_cover_for_id != travelQuoteEnum.REGION_COVER_ID_UAE
+    ? travelQuoteEnum.TRAVEL_UAE_OUTBOUND
+    : null,
   has_arrived_uae:
     props.quote?.has_arrived_uae?.toString() ||
     (editMode.value && props.quotePlans && props.quote?.has_arrived_uae
@@ -94,7 +97,10 @@ const {
 
 const subTeamOptions = [
   { value: travelQuoteEnum.TRAVEL_UAE_INBOUND, label: 'To the UAE (Inbound)' },
-  { value: travelQuoteEnum.TRAVEL_UAE_OUTBOUND, label: 'Outside UAE (OutBound)' },
+  {
+    value: travelQuoteEnum.TRAVEL_UAE_OUTBOUND,
+    label: 'Outside UAE (OutBound)',
+  },
 ];
 const alreadylived = [
   { value: '1', label: 'Yes' },
@@ -119,11 +125,11 @@ const outboundRegions = [
 ];
 
 function addTravler() {
-    if(quoteForm.members.length == 0){
-        quoteForm.members.push({dob: '', gender: '', primary:true});
-    }else {
-        quoteForm.members.push({dob: '', gender: ''});
-    }
+  if (quoteForm.members.length == 0) {
+    quoteForm.members.push({ dob: '', gender: '', primary: true });
+  } else {
+    quoteForm.members.push({ dob: '', gender: '' });
+  }
 }
 function removeMember(index) {
   quoteForm.members.splice(index, 1);
@@ -134,8 +140,8 @@ function onSubmit(isValid) {
 
   quoteForm.clearErrors();
 
-  const method =  'post';
-  const url =  route('travel.store');
+  const method = 'post';
+  const url = route('travel.store');
 
   const options = {
     onError: errors => {
@@ -167,30 +173,39 @@ onMounted(() => {
   addUpdatedTraveller();
 });
 
-watch(() => quoteForm.direction_code, (newValue, oldValue) => {
+watch(
+  () => quoteForm.direction_code,
+  (newValue, oldValue) => {
     if (newValue == travelQuoteEnum.TRAVEL_UAE_INBOUND) {
-        quoteForm.has_arrived_uae = '1';
-        quoteForm.has_arrived_destination = null;
+      quoteForm.has_arrived_uae = '1';
+      quoteForm.has_arrived_destination = null;
     } else {
-        quoteForm.has_arrived_uae = null;
-        quoteForm.has_arrived_destination = '0';
+      quoteForm.has_arrived_uae = null;
+      quoteForm.has_arrived_destination = '0';
     }
-});
+  },
+);
 
-watch(() => quoteForm.has_arrived_uae, (newValue, oldValue) => {
+watch(
+  () => quoteForm.has_arrived_uae,
+  (newValue, oldValue) => {
     resetTravelInfo(newValue);
-});
+  },
+);
 
-watch(() => quoteForm.has_arrived_destination, (newValue, oldValue) => {
+watch(
+  () => quoteForm.has_arrived_destination,
+  (newValue, oldValue) => {
     resetTravelInfo(newValue);
-});
+  },
+);
 
 function resetTravelInfo(value) {
-    if (value == 1) {
-        quoteForm.start_date = null;
-        quoteForm.end_date = null;
-        quoteForm.coverage_code = null;
-    }
+  if (value == 1) {
+    quoteForm.start_date = null;
+    quoteForm.end_date = null;
+    quoteForm.coverage_code = null;
+  }
 }
 </script>
 
@@ -251,8 +266,10 @@ function resetTravelInfo(value) {
       <div
         class="grid sm:grid-cols-2 gap-4"
         v-if="
-          !(quoteForm.has_arrived_uae == 1 ||
-          quoteForm.has_arrived_destination == 1)
+          !(
+            quoteForm.has_arrived_uae == 1 ||
+            quoteForm.has_arrived_destination == 1
+          )
         "
       >
         <x-field label="Travel Coverage" required>
@@ -286,7 +303,9 @@ function resetTravelInfo(value) {
           <DatePicker v-model="quoteForm.start_date" name="created_at_start" />
         </x-field>
         <x-field
-          v-if="quoteForm.coverage_code == travelQuoteEnum.COVERAGE_CODE_SINGLE_TRIP"
+          v-if="
+            quoteForm.coverage_code == travelQuoteEnum.COVERAGE_CODE_SINGLE_TRIP
+          "
           label="Travel End Date"
           required
         >
@@ -303,6 +322,8 @@ function resetTravelInfo(value) {
             v-model="quoteForm.first_name"
             :rules="[isRequired]"
             class="w-full"
+            maxLength="20"
+            :error="quoteForm.errors.first_name"
           />
         </x-field>
         <x-field label="Last Name" required>
@@ -310,6 +331,8 @@ function resetTravelInfo(value) {
             v-model="quoteForm.last_name"
             :rules="[isRequired]"
             class="w-full"
+            maxLength="50"
+            :error="quoteForm.errors.last_name"
           />
         </x-field>
 
@@ -338,6 +361,7 @@ function resetTravelInfo(value) {
 
         <x-field label="Email">
           <x-input
+            type="email"
             v-model="quoteForm.email"
             class="w-full"
             :disabled="editMode"
@@ -357,8 +381,9 @@ function resetTravelInfo(value) {
 
       <template
         v-if="
-          !editMode && (quoteForm.has_arrived_uae == '0' ||
-          quoteForm.has_arrived_destination == '0')
+          !editMode &&
+          (quoteForm.has_arrived_uae == '0' ||
+            quoteForm.has_arrived_destination == '0')
         "
       >
         <div
@@ -405,9 +430,9 @@ function resetTravelInfo(value) {
 
       <x-button
         v-if="
-          !editMode && (
-          quoteForm.has_arrived_uae == '0' ||
-          quoteForm.has_arrived_destination == '0' )
+          !editMode &&
+          (quoteForm.has_arrived_uae == '0' ||
+            quoteForm.has_arrived_destination == '0')
         "
         size="md"
         color="emerald"

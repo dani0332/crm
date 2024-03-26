@@ -6,6 +6,7 @@ use App\Jobs\RewardsBulkWEJob;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
+// Scheduled to delete 15th April 2024
 class BulkEmailProcessController extends Controller
 {
     /**

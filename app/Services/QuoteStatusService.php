@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Enums\AMLDecisionStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Models\KycLog;
 use App\Models\QuoteStatus;
@@ -31,14 +30,8 @@ class QuoteStatusService
             ]);
 
             $kycLog = $fetchKycLog->first();
-            $kycLogs = KycLog::where(['quote_request_id' => $kycLog->quote_request_id, 'quote_type_id' => $kycLog->quote_type_id])
-                ->where(function ($aml) {
-                    $aml->whereNotIn('decision', [AMLDecisionStatusEnum::RYU]);
-                    $aml->orWhereNull('decision');
-                })->whereNull('screenshot')->withTrashed()->get()->pluck('decision')->toArray();
-
             $updateQuote = $this->getQuoteObject($quoteType->code, $quoteRequestId);
-            $quoteStatusID = (in_array(AMLDecisionStatusEnum::TRUE_MATCH_REJECT_RISK, $kycLogs)) ? QuoteStatusEnum::AMLScreeningFailed : $quoteStatus->id;
+            $quoteStatusID = (AMLService::checkAMLStatusFailed($kycLog->quote_type_id, $kycLog->quote_request_id)) ? QuoteStatusEnum::AMLScreeningFailed : $quoteStatus->id;
             $updateQuote->quote_status_id = $quoteStatusID;
         } else {
             $updateQuote = $this->getQuoteObject($quoteType->code, $quoteRequestId);
@@ -48,7 +41,13 @@ class QuoteStatusService
         if ($updateQuote->save()) {
             $clientFullName = $updateQuote->first_name.' '.$updateQuote->last_name;
 
-            return [$quoteStatus->text, $updateQuote->code, $quoteType->text, $updateQuote->pa_id, $clientFullName];
+            return [
+                'quote_status_text' => $quoteStatus->text,
+                'quote_ref_id' => $updateQuote->code,
+                'quote_type_text' => $quoteType->text,
+                'pa_id' => $updateQuote->pa_id,
+                'client_name' => $clientFullName,
+            ];
         } else {
             return 'false';
         }

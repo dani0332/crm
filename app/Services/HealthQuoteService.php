@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\AssignmentTypeEnum;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\DatabaseColumnsString;
+use App\Enums\DefaultAdvisorEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\HealthTeamType;
 use App\Enums\LeadSourceTypes;
@@ -12,6 +13,7 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\RolesEnum;
+use App\Facades\Ken;
 use App\Jobs\CammyJob;
 use App\Jobs\GetQuotePlansJob;
 use App\Jobs\IntroEmailJob;
@@ -28,6 +30,7 @@ use App\Models\InsuranceProvider;
 use App\Models\PaymentAction;
 use App\Models\QuoteType;
 use App\Models\QuoteViewCount;
+use App\Models\RenewalBatch;
 use App\Models\Team;
 use App\Models\User;
 use App\Traits\AddPremiumAllLobs;
@@ -127,6 +130,7 @@ class HealthQuoteService extends BaseService
             'lu.text as transaction_type_text',
             'hqr.kyc_decision',
             'hqr.risk_score',
+            'hqr.enquiry_count',
             DB::raw('IF(EXISTS (
                 SELECT *
                 FROM quote_request_entity_mapping
@@ -219,6 +223,8 @@ class HealthQuoteService extends BaseService
             'health_quote_request_id' => $id,
             'created_at' => now(),
             'updated_at' => now(),
+            'advisor_assigned_date' => now(),
+            'advisor_assigned_by_id' => auth()->user()->id,
         ]);
     }
 
@@ -261,7 +267,7 @@ class HealthQuoteService extends BaseService
             $dataArr['advisorId'] = Auth::user()->id;
         }
 
-        $response = CapiRequestService::sendCAPIRequest('/api/v1-save-health-quote', $dataArr);
+        $response = CapiRequestService::sendCAPIRequest('/api/v1-save-health-quote', $dataArr, HealthQuote::class);
 
         if (isset($response->quoteUID)) {
             $this->savePremium(quoteTypeCode::HealthQuote, $request, $response);
@@ -277,7 +283,6 @@ class HealthQuoteService extends BaseService
 
     public function getGridData($model = null, $request = null)
     {
-
         $searchProperties = [];
         $isRenewalUser = Auth::user()->isRenewalUser();
         $isRenewalAdvisor = Auth::user()->isRenewalAdvisor();
@@ -303,10 +308,12 @@ class HealthQuoteService extends BaseService
         ) {
             $this->query->where('hqr.quote_status_id', '!=', QuoteStatusEnum::Fake);
         }
-        if (isset($request->assigned_to_date_start) && $request->assigned_to_date_start != '') {
-            $dateFrom = $this->parseDate($request['assigned_to_date_start'], true);
-            $dateTo = $this->parseDate($request['assigned_to_date_end'], false);
+        if (! empty($request->assigned_to_date_start) && ! empty($request->assigned_to_date_end)) {
+            $dateFrom = date('Y-m-d 00:00:00', strtotime($request['assigned_to_date_start']));
+            $dateTo = date('Y-m-d 23:59:59', strtotime($request['assigned_to_date_end']));
+
             $this->query->whereBetween('hqrd.advisor_assigned_date', [$dateFrom, $dateTo]);
+            $this->query->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate]);
         }
         if (isset($request->next_followup_date) && $request->next_followup_date != '') {
             $dateFrom = $this->parseDate($request['next_followup_date'], true);
@@ -360,16 +367,16 @@ class HealthQuoteService extends BaseService
         if (isset($request->previous_quote_policy_premium) && $request->previous_quote_policy_premium != '') {
             $this->query->where('hqr.previous_quote_policy_premium', $request->previous_quote_policy_premium);
         }
-        $this->whereBasedOnRole($this->query, 'hqr');
+        $this->whereBasedOnRole($this->query, 'hqr', quoteTypeCode::Health);
 
         if (! isset($request->email) && $request->email == '') {
             $this->query->where('hqr.quote_status_id', '!=', 9);
         }
-        if (isset($request->assigned_to_date_start) && $request->assigned_to_date_start != '') {
+        /*if (isset($request->assigned_to_date_start) && $request->assigned_to_date_start != '') {
             $dateFrom = $this->parseDate($request['assigned_to_date_start'], true);
             $dateTo = $this->parseDate($request['assigned_to_date_end'], false);
             $this->query->whereBetween('hqrd.advisor_assigned_date', [$dateFrom, $dateTo]);
-        }
+        }*/
         if (isset($request->next_followup_date) && $request->next_followup_date != '') {
             $dateFrom = $this->parseDate($request['next_followup_date'], true);
             $dateTo = $this->parseDate($request['next_followup_date_end'], true);
@@ -383,8 +390,13 @@ class HealthQuoteService extends BaseService
         if (isset($request->quote_status) && is_array($request->quote_status) && count($request->quote_status) > 0) {
             $this->query->whereIn('quote_status_id', $request->quote_status);
         }
+
+        if (isset($request->advisors) && is_array($request->advisors) && in_array(DefaultAdvisorEnum::UNASSIGNED, $request->advisors)) {
+            $this->query->whereNull('hqr.advisor_id');
+        }
+
         // advisors filter
-        if (isset($request->advisors) && is_array($request->advisors) && count($request->advisors) > 0) {
+        if (isset($request->advisors) && is_array($request->advisors) && count($request->advisors) > 0 && ! in_array(DefaultAdvisorEnum::UNASSIGNED, $request->advisors)) {
             $this->query->whereIn('advisor_id', $request->advisors)->orWhereIn('wcu_id', $request->advisors);
         }
         // is_renewal filter
@@ -432,7 +444,7 @@ class HealthQuoteService extends BaseService
         if (isset($request->previous_quote_policy_premium) && $request->previous_quote_policy_premium != '') {
             $this->query->where('hqr.previous_quote_policy_premium', $request->previous_quote_policy_premium);
         }
-        $this->whereBasedOnRole($this->query, 'hqr');
+        $this->whereBasedOnRole($this->query, 'hqr', quoteTypeCode::Health);
 
         if (isset($request->is_renewal) && $request->is_renewal != '') {
             if ($request->is_renewal == quoteTypeCode::yesText) {
@@ -627,15 +639,15 @@ class HealthQuoteService extends BaseService
         return $query;
     }
 
-    public function updateChildRecord($id)
+    public function updateChildRecord($id, $advisorId)
     {
         $childRecord = HealthQuoteRequestDetail::where('health_quote_request_id', $id)->first();
         if (empty($childRecord)) {
             $childRecord = $this->createDetailEntity($id);
         }
         $oldAdvisorAssignedDate = $childRecord->advisor_assigned_date;
-        if ($childRecord->advisor_id != null) {
-            $childRecord->advisor_assigned_by_id = Auth::user()->id;
+        if ($advisorId != null) {
+            $childRecord->advisor_assigned_by_id = auth()->user()->id;
             $childRecord->advisor_assigned_date = now();
             $childRecord->save();
         }
@@ -887,7 +899,6 @@ class HealthQuoteService extends BaseService
 
     public function getQuotePlans($id)
     {
-
         $quoteUuId = HealthQuote::where('uuid', '=', $id)->value('uuid');
         $plansApiEndPoint = config('constants.KEN_API_ENDPOINT').'/get-health-quote-plans';
         $plansApiToken = config('constants.KEN_API_TOKEN');
@@ -942,6 +953,14 @@ class HealthQuoteService extends BaseService
 
             return $responseBodyAsString;
         }
+    }
+
+    public function getCoPayment($id)
+    {
+        $quoteUuId = HealthQuote::where('uuid', '=', $id)->first();
+        $coPayment = DB::table('health_plan_co_payments as hpcp')->where('id', $quoteUuId->health_plan_co_payment_id)->first();
+
+        return $coPayment;
     }
 
     public function getQuotePlansPriority($id)
@@ -1136,7 +1155,7 @@ class HealthQuoteService extends BaseService
 
             $lead->assignment_type = $isReassignment ? AssignmentTypeEnum::MANUAL_REASSIGNED : AssignmentTypeEnum::MANUAL_ASSIGNED;
 
-            $oldAdvisorAssignedDate = $this->updateChildRecord($lead->id); // will update the car quote request detail entity about assignment
+            $oldAdvisorAssignedDate = $this->updateChildRecord($lead->id, $userId); // will update the car quote request detail entity about assignment
 
             info('Manual assignment done and details table updated for lead : '.$lead->uuid.'and old advisor assigned date is : '.$oldAdvisorAssignedDate);
 
@@ -1152,7 +1171,9 @@ class HealthQuoteService extends BaseService
                 ->addJob(new GetQuotePlansJob($lead))
                 ->then(function () use ($lead, $isReassignment, $previousAdvisorId) {
                     if (in_array($lead->health_team_type, [HealthTeamType::EBP, HealthTeamType::RM_NB, HealthTeamType::RM_SPEED])) {
-                        CammyJob::dispatch($lead, 'intro')->delay(now()->addSeconds(15));
+                        if ($lead->quote_status_id == QuoteStatusEnum::FollowedUp) {
+                            CammyJob::dispatch($lead, 'intro')->delay(now()->addSeconds(15));
+                        }
                         IntroEmailJob::dispatch(quoteTypeCode::Health, 'Capi', $lead->uuid, 'send-rm-intro-email', $previousAdvisorId, $isReassignment)->delay(now()->addSeconds(15));
                     }
                 })->dispatch();
@@ -1218,7 +1239,6 @@ class HealthQuoteService extends BaseService
         // Check if there is a previous advisor and the lead assignment date is today
         if ($previousAdvisorId !== null && Carbon::parse($oldAdvisorAssignedDate)->startOfDay() == now()->startOfDay()) {
             if ($previousAdvisorAllocationRecord !== null) {
-
                 // Determine if the previous assignment was system-assigned
                 $isSystemAssigned = in_array($previousAssignmentType, $systemAssignedTypes);
 
@@ -1327,10 +1347,17 @@ class HealthQuoteService extends BaseService
                     'dob' => $value['dob'],
                     'gender' => $value['gender'],
                     'memberCategoryText' => $value['memberCategoryText'],
-                    'premium' => (float) $value['premium'],
-                    'basmah' => (int) $value['basmah'],
-                    'vat' => (int) $value['vat'],
                 ];
+                if (isset($value['premium'])) {
+                    $array['premium'] = (float) $value['premium'];
+                }
+                if (isset($value['basmah'])) {
+                    $array['basmah'] = (int) $value['basmah'];
+                }
+                if (isset($value['vat'])) {
+                    $array['vat'] = (int) $value['vat'];
+                }
+
                 array_push($membersBreakDown, $array);
             }
             $plansArray['memberPremiumBreakdown'] = $membersBreakDown;
@@ -1353,9 +1380,172 @@ class HealthQuoteService extends BaseService
     }
 
     /**
+     * Health Plan Edit V2. New method to handle the new health plan edit.
+     */
+    public function healthPlanModifyV2($request)
+    {
+        $loadingPrices = $request->get('loadingPrice');
+        $manualPremiumPrices = $request->get('manualPremiumPrice');
+
+        if (empty($request->get('selectedCopay'))) {
+            $copayId = $request->get('defaultCopayId');
+        } else {
+            $selectedCopay = $request->get('selectedCopay');
+            $copayId = $selectedCopay['id'];
+        }
+
+        if ($request->planId && ! empty($request->planDetails)) {
+            $membersBreakDown = [];
+            $plansArray = [
+                'planId' => (int) $request->planId,
+                'isManualUpdate' => (bool) $request->tagAsManual,
+                'selectedCopayId' => (int) $copayId,
+                'memberPremiumBreakdown' => '',
+            ];
+            foreach ($request->planDetails as $key => $value) {
+                $toBeUpdatedCopay = [];
+                if (isset($value['ratesPerCopay'])) {
+                    foreach ($value['ratesPerCopay'] as $copay) {
+                        if ((int) $copay['healthPlanCoPaymentId'] == (int) $copayId) {
+
+                            if (
+                                (int) $loadingPrices[$key]['memberId'] == $value['memberId']
+                            ) {
+                                $copay['loadingPrice'] = (float) $loadingPrices[$key]['price'];
+                            }
+                            if (
+                                (int) $manualPremiumPrices[$key]['memberId'] == $value['memberId']
+                                && $manualPremiumPrices[$key]['premium'] != 0
+                            ) {
+                                $copay['basePrice'] = (float) $manualPremiumPrices[$key]['premium'];
+                            }
+
+                            array_push($toBeUpdatedCopay, $copay);
+                        }
+                    }
+                }
+
+                $array = [
+                    'memberId' => (int) $value['memberId'],
+                    'ratesPerCopay' => $toBeUpdatedCopay,
+                ];
+                array_push($membersBreakDown, $array);
+            }
+            $plansArray['memberPremiumBreakdown'] = $membersBreakDown;
+            $dataArray = [
+                'quoteUID' => $request->quoteUID,
+                'update' => true,
+                'plans' => [$plansArray],
+            ];
+
+            $response = Ken::request('/save-manual-health-quote-plans', 'POST', $dataArray);
+
+            return $response;
+        }
+    }
+
+    public function healthQuoteAddMember($request)
+    {
+        $quoteId = $request->quoteId;
+
+        if ($quoteId) {
+
+            $memberDetails = [
+                'firstName' => $request->first_name,
+                'lastName' => $request->last_name ?? null,
+                'emirateOfYourVisaId' => $request->emirate_of_your_visa_id,
+                'gender' => $request->gender,
+                'nationalityId' => $request->nationality_id,
+                'memberCategoryId' => $request->member_category_id,
+                'salaryBandId' => $request->salary_band_id,
+                'dob' => Carbon::parse($request->dob)->toDateString(),
+                'relationCode' => $request->relation_code,
+            ];
+
+            $dataArray = [
+                'quoteUID' => $quoteId,
+                'memberDetails' => [$memberDetails],
+            ];
+
+            $response = Ken::request('/add-health-quote-members', 'POST', $dataArray);
+        } else {
+            $response = [
+                'status' => false,
+                'message' => 'Quote Id not found',
+            ];
+        }
+
+        return $response;
+    }
+
+    public function healthQuoteUpdateMember($request)
+    {
+        $quoteId = $request->quoteId ?? null;
+        $memberId = $request->id ?? null;
+
+        if ($quoteId && $memberId) {
+
+            $memberDetails = [
+                'id' => $memberId,
+                'firstName' => $request->first_name,
+                'lastName' => $request->last_name ?? null,
+                'emirateOfYourVisaId' => $request->emirate_of_your_visa_id,
+                'gender' => $request->gender,
+                'nationalityId' => $request->nationality_id,
+                'memberCategoryId' => $request->member_category_id,
+                'salaryBandId' => $request->salary_band_id,
+                'dob' => Carbon::parse($request->dob)->toDateString(),
+                'relationCode' => $request->relation_code,
+            ];
+
+            $dataArray = [
+                'quoteUID' => $quoteId,
+                'memberDetails' => [$memberDetails],
+            ];
+
+            $response = Ken::request('/update-health-quote-members', 'POST', $dataArray);
+
+        } else {
+            $response = [
+                'status' => false,
+                'message' => 'Quote Id not found',
+            ];
+        }
+
+        return $response;
+    }
+
+    public function healthQuoteDeleteMember($request)
+    {
+        $quoteId = $request->quoteId ?? null;
+        $memberId = $request->customer_member_id ?? null;
+
+        if ($quoteId && $memberId) {
+
+            $memberDetails = [
+                'id' => $memberId,
+            ];
+
+            $dataArray = [
+                'quoteUID' => $quoteId,
+                'memberDetails' => [$memberDetails],
+            ];
+
+            $response = Ken::request('/delete-health-quote-members', 'POST', $dataArray);
+        } else {
+            $response = [
+                'status' => false,
+                'message' => 'Member not found',
+            ];
+        }
+
+        return $response;
+    }
+
+    /**
      * create health plan for upload & create process.
      *
-     * @param $data
+     * @param    $data
      * @return false
      */
     public function renewalCreatePlan($planData)
@@ -1428,11 +1618,13 @@ class HealthQuoteService extends BaseService
         return $leadStatuses->whereNotIn('id', $statusesToRemove);
     }
 
-    public function getNonQuotedHealthPlans($insuranceProviderId, $quotePlanId)
+    public function getNonQuotedHealthPlans($insuranceProviderId, $quotePlanId, $networkId = null)
     {
         return HealthPlan::select('id', 'text')
             ->where('provider_id', $insuranceProviderId)
+            ->where('health_rating_eligibility_id', $networkId)
             ->whereNotIn('id', $quotePlanId)
+            ->where('is_active', true)
             ->get();
     }
 
@@ -1513,6 +1705,7 @@ class HealthQuoteService extends BaseService
 
         return response(['Payment not exist'], 403);
     }
+
     public function toggleSelection($data, $quoteTypeId)
     {
         $apiEndPoint = config('constants.KEN_API_ENDPOINT').'/toggle-embedded-product';
@@ -1539,6 +1732,7 @@ class HealthQuoteService extends BaseService
 
         return $response;
     }
+
     public function processCancelPayment($data)
     {
         $apiEndPoint = config('constants.MARSHALL_API_ENDPOINT').'/payment/checkout/cancel';
@@ -1578,8 +1772,10 @@ class HealthQuoteService extends BaseService
         $lead->save();
 
         if ($lead->quote_status_id == QuoteStatusEnum::Qualified) {
-            CammyJob::dispatch($lead, 'intro')->delay(now()->addSeconds(3));
             IntroEmailJob::dispatch(quoteTypeCode::Health, 'Capi', $lead->uuid, 'send-rm-intro-email', null, false)->delay(now()->addSeconds(3));
+        }
+        if ($lead->quote_status_id == QuoteStatusEnum::FollowedUp) {
+            CammyJob::dispatch($lead, 'intro')->delay(now()->addSeconds(3));
         }
     }
 
@@ -1600,5 +1796,51 @@ class HealthQuoteService extends BaseService
         }
 
         return [$result, $skipLead];
+    }
+
+    public function assignRenewalBatch(HealthQuote $quote)
+    {
+        $date = Carbon::today()->toDateString();
+
+        $renewalBatch = RenewalBatch::select('name')->whereDate('start_date', '<=', $date)
+            ->whereDate('end_date', '>=', $date)
+            ->first();
+
+        if ($renewalBatch) {
+            $quote->renewal_batch = $renewalBatch->name;
+            $quote->save();
+        }
+    }
+
+    public function getCopaysByPlanId($planId)
+    {
+        $copays = DB::table('health_plan_co_payments')
+            ->select('id', 'text')
+            ->where('health_plan_id', $planId)
+            ->get()->toArray();
+
+        return $copays;
+    }
+
+    public function updateNotifyAgentFlag($request)
+    {
+        if (empty($request->get('selectedCopay'))) {
+            $copayId = $request->get('defaultCopayId');
+        } else {
+            $selectedCopay = $request->get('selectedCopay');
+            $copayId = $selectedCopay['id'];
+        }
+
+        $dataArray = [
+            'quoteUID' => $request->quoteUID,
+            'planId' => $request->get('planId'),
+            'memberId' => $request->get('memberId'),
+            'healthPlanCoPaymentId' => $copayId,
+            'notifyAgent' => $request->get('notifyAgent'),
+        ];
+
+        $response = Ken::request('/update-notify-agent', 'POST', $dataArray);
+
+        return $response;
     }
 }

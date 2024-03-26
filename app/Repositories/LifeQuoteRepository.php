@@ -81,6 +81,14 @@ class LifeQuoteRepository extends BaseRepository
             ->withQueryString();
     }
 
+    public function fetchExport()
+    {
+        return $this->with(['advisor', 'quoteStatus', 'nationality'])
+            ->filter()
+            ->withFakeLeadCriteria()
+            ->orderBy('created_at', 'desc');
+    }
+
     public function fetchGetBy($column, $value)
     {
         $quote = $this->where($column, $value)->with([

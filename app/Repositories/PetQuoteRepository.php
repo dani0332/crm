@@ -87,6 +87,7 @@ class PetQuoteRepository extends BaseRepository
 
     public function fetchGetData($forExport = false)
     {
+
         $query = $this->byQuoteTypeCode(QuoteTypes::PET)->with([
             'quoteStatus',
             'quoteDetail',
@@ -177,4 +178,11 @@ class PetQuoteRepository extends BaseRepository
 
         return Capi::request('/api/v1-save-personal-quote', 'post', $dataArr);
     }
+
+    public function fetchExport()
+    {
+        return $this->filter()->with(
+            ['advisor', 'nationality', 'insuranceProvider'])->orderBy('created_at', 'desc');
+    }
+
 }

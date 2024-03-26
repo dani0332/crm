@@ -16,11 +16,13 @@ use App\Enums\quoteStatusCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
+use App\Enums\QuoteTypes;
 use App\Enums\QuoteTypeShortCode;
 use App\Enums\RenewalProcessStatuses;
 use App\Enums\RenewalsUploadType;
 use App\Enums\TiersEnum;
 use App\Enums\TravelQuoteEnum;
+use App\Exports\RenewalQuotesExport;
 use App\Imports\TravelUploadAndCreateImport;
 use App\Imports\UploadAndCreateImport;
 use App\Imports\UploadAndUpdateImport;
@@ -59,6 +61,7 @@ use App\Models\Tier;
 use App\Models\TravelQuote;
 use App\Models\UAELicenseHeldFor;
 use App\Models\User;
+use App\Repositories\BusinessQuoteRepository;
 use App\Repositories\CarQuoteRepository;
 use App\Repositories\LookupRepository;
 use App\Traits\GenericQueriesAllLobs;
@@ -767,7 +770,7 @@ class RenewalsUploadService
                 'email' => $customerData['email'],
                 'mobile_no' => $customerData['mobile_no'],
                 'uuid' => $quoteUuid,
-                'code' => $renewalQuoteProcess->quote_type.'-'.$quoteUuid,
+                'code' => strtoupper($renewalQuoteProcess->quote_type).'-'.$quoteUuid,
                 'source' => 'Renewal_upload',
                 'additional_notes' => $data['notes'].$customerData['notes'],
                 'advisor_id' => $advisorId,
@@ -1341,7 +1344,7 @@ class RenewalsUploadService
     /**
      * //$modelName, $quoteRequestIdName.
      *
-     * @param $quoteRequestIdName
+     * @param    $quoteRequestIdName
      * @return false|mixed
      */
     public function updateAdvisorAssignedDateTime($quoteType, $quoteId, $currentUserId, $advisorId)
@@ -1509,8 +1512,14 @@ class RenewalsUploadService
                                     if (! $leadData->driver_cover) {
                                         $leadValidationErrors->push('PAB Driver is required with Renewal Premium & Excess');
                                     }
+                                    if ($leadData->driver_cover_amount == '') {
+                                        $leadValidationErrors->push('Amount - PAB Driver is required with Renewal Premium & Excess');
+                                    }
                                     if (! $leadData->passenger_cover) {
                                         $leadValidationErrors->push('PAB Passenger is required with Renewal Premium & Excess');
+                                    }
+                                    if ($leadData->driver_cover_amount == '') {
+                                        $leadValidationErrors->push('Amount - PAB Driver is required with Renewal Premium & Excess');
                                     }
                                     if ($leadData->plan_type != CarPlanType::TPL && $leadData->insurer != InsuranceProvidersEnum::TM && ! $leadData->car_hire) {
                                         $leadValidationErrors->push('Rent a car is required with TPL & TM');
@@ -1518,12 +1527,7 @@ class RenewalsUploadService
                                     if ($leadData->plan_type != CarPlanType::TPL && $leadData->insurer != 'TM' && $leadData->car_hire_amount == '') {
                                         $leadValidationErrors->push('Amount - Rent a Car is required with TPL & TM');
                                     }
-                                    if ($leadData->driver_cover_amount == '') {
-                                        $leadValidationErrors->push('Amount - PAB Driver is required with Renewal Premium & Excess');
-                                    }
-                                    if ($leadData->passenger_cover_amount == '') {
-                                        $leadValidationErrors->push('Amount- PAB Passenger is required with Renewal Premium & Excess');
-                                    }
+
                                     if ($leadData->plan_type != CarPlanType::TPL && $leadData->oman_cover_amount == '') {
                                         $leadValidationErrors->push('Amount- Oman Cover is required');
                                     }
@@ -1560,6 +1564,15 @@ class RenewalsUploadService
                                     ];
 
                                     foreach ($addons as $key => $addonCode) {
+
+                                        info('planType:'.$leadData->plan_type.' insurer:'.$leadData->insurer.' addonCode:'.$addonCode);
+
+                                        if ($leadData->plan_type == CarPlanType::TPL &&
+                                            $leadData->insurer == InsuranceProvidersEnum::TM &&
+                                            $addonCode == CarPlanAddonsCode::CAR_HIRE) {
+                                            continue;
+                                        }
+
                                         if (isset($planAddons[$addonCode])) {
                                             $addon = $planAddons[$addonCode];
 
@@ -1940,4 +1953,30 @@ class RenewalsUploadService
             ->orWhere(DB::raw('LOWER(text)'), strtolower($currently_located_in))
             ->value('id');
     }
+    public function getSearch($data)
+    {
+        $quotes = [];
+        $product = $data->product;
+        if ($product == QuoteTypeId::Business) {
+            $quotes = BusinessQuoteRepository::getDataOfBusiness()->withQueryString();
+        } else {
+            $quoteType = QuoteTypes::getName($product);
+            $repository = '\\App\\Repositories\\'.ucwords($quoteType->value).'QuoteRepository';
+            $quotes = $repository::getData()->withQueryString();
+        }
+
+        return $quotes;
+    }
+
+    public function getExport($data)
+    {
+        $quotes = [];
+        $product = $data->product;
+        $quoteType = QuoteTypes::getName($product);
+        $repository = '\\App\\Repositories\\'.ucwords($quoteType->value).'QuoteRepository';
+        $quotes = $repository::export();
+
+        return (new RenewalQuotesExport($quotes, $quoteType->name))->download('Renewal');
+    }
+
 }

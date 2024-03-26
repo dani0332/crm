@@ -2,17 +2,32 @@
 
 namespace App\Models;
 
+use App\Enums\FilterTypes;
+use App\Enums\GenericRequestEnum;
 use App\Enums\QuoteTypeId;
+use App\Traits\FilterCriteria;
+use App\Traits\QuoteModelTrait;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
 class HealthQuote extends Model implements AuditableContract
 {
-    use Auditable, HasFactory;
+    use Auditable, FilterCriteria, HasFactory, QuoteModelTrait;
 
     protected $table = 'health_quote_request';
+    public $filterables = [
+        'first_name' => FilterTypes::FREE,
+        'last_name' => FilterTypes::FREE,
+        'previous_quote_policy_number' => FilterTypes::EXACT,
+        'code' => FilterTypes::EXACT,
+        'email' => FilterTypes::EXACT,
+        'source' => FilterTypes::EXACT,
+        'renewal_expiry_date' => FilterTypes::DATE_BETWEEN,
+        'mobile_no' => FilterTypes::EXACT,
+    ];
     protected $guarded = [];
 
     public function emirate()
@@ -85,6 +100,11 @@ class HealthQuote extends Model implements AuditableContract
         return $this->hasOne(User::class, 'id', 'advisor_id');
     }
 
+    public function insuranceProvider()
+    {
+        return $this->hasOne(InsuranceProvider::class, 'text', 'currently_insured_with')->select(['id', 'text']);
+    }
+
     public function wcAdvisor()
     {
         return $this->hasOne(User::class, 'id', 'wcu_id');
@@ -137,5 +157,35 @@ class HealthQuote extends Model implements AuditableContract
     public function customerMembers()
     {
         return $this->morphMany(CustomerMembers::class, 'quote');
+    }
+
+    public function duplicateInquiryLog(): MorphMany
+    {
+        return $this->morphMany(DuplicateInquiryLog::class, 'loggable');
+    }
+
+    public static function getCustomerMemberName($id)
+    {
+        $customerMember = CustomerMembers::find($id);
+        if ($customerMember) {
+            if ($customerMember->first_name == null && $customerMember->last_name == null) {
+                $quoteMemberCount = CustomerMembers::where([
+                    'customer_type' => $customerMember->customer_type,
+                    'first_name' => GenericRequestEnum::MEMBER,
+                ])->count();
+                $customerMember->first_name = GenericRequestEnum::MEMBER;
+                $customerMember->last_name = (++$quoteMemberCount);
+                $customerMember->save();
+            }
+
+            return $customerMember->first_name.' '.$customerMember->last_name;
+        } else {
+            $healthQuote = HealthQuote::find($id);
+            if ($healthQuote) {
+                return $healthQuote->first_name.' '.$healthQuote->last_name;
+            }
+        }
+
+        return 'Price';
     }
 }

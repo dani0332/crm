@@ -13,9 +13,17 @@ use App\Traits\CentralTrait;
 class BusinessQuoteRepository extends BaseRepository
 {
     use CentralTrait;
+
     public function model()
     {
         return BusinessQuote::class;
+    }
+
+    public function fetchExport()
+    {
+        return $this->filter()->with(
+            ['advisor', 'nationality', 'insuranceProvider', 'businessTypeOfInsurance']
+        )->orderBy('created_at', 'desc');
     }
 
     /**
@@ -88,4 +96,10 @@ class BusinessQuoteRepository extends BaseRepository
     {
         return Capi::request('/api/v1-save-'.strtolower(QuoteTypes::BUSINESS->value).'-quote', 'post', $dataArr);
     }
+    public function fetchGetDataOfBusiness()
+    {
+        return $this->filter()->with(
+            ['advisor', 'nationality', 'insuranceProvider', 'businessTypeOfInsurance'])->orderBy('created_at', 'desc')->Paginate();
+    }
+
 }

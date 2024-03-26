@@ -54,7 +54,7 @@ class YachtQuoteController extends Controller
     }
 
     /**
-     * @param $quoteTypeCode
+     * @param    $quoteTypeCode
      * @param  BikeQuoteRequest  $request
      * @return \Illuminate\Http\RedirectResponse
      */
@@ -88,7 +88,7 @@ class YachtQuoteController extends Controller
 
         $quoteStatuses = QuoteStatusRepository::byQuoteTypeId(QuoteTypes::YACHT->id())->get();
         $membersDetail = CustomerMembersRepository::getBy($quote->id, QuoteTypes::YACHT->name);
-        $quote->load('documents.createdBy');
+        $quote->load('documents.createdBy:id,name,email');
 
         $documentTypes = DocumentTypeRepository::byQuoteTypeId(QuoteTypes::YACHT->id())->get();
         $paymentMethods = PaymentMethodRepository::orderBy('name')->get();
@@ -142,8 +142,8 @@ class YachtQuoteController extends Controller
     }
 
     /**
-     * @param $quoteTypeCode
-     * @param $quoteId
+     * @param    $quoteTypeCode
+     * @param    $quoteId
      * @param  BikeQuoteRequest  $request
      * @return void
      */

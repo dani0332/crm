@@ -23,7 +23,7 @@ class YachtQuoteRepository extends BaseRepository
     /**
      * create new personal quote
      *
-     * @param $quoteTypeCode
+     * @param    $quoteTypeCode
      * @return mixed
      */
     public function fetchCreate($data)
@@ -136,5 +136,25 @@ class YachtQuoteRepository extends BaseRepository
             ->orderBy('created_at', 'desc');
 
         return ($forExport) ? $query->get() : $query->simplePaginate();
+    }
+
+    public function fetchExport()
+    {
+        return $this->byQuoteTypeCode(QuoteTypes::YACHT)->with(['quoteStatus', 'currentlyInsuredWith', 'advisor'])
+            ->filter()
+            ->withFakeLeadCriteria()
+            ->orderBy('created_at', 'desc');
+    }
+
+    /**
+     * get data by  yacht type.
+     *
+     * @return mixed
+     */
+    public function scopeByQuoteTypeCode($query, $quoteTypeCode)
+    {
+        return $query->whereHas('quoteType', function ($q) use ($quoteTypeCode) {
+            $q->where('code', ($quoteTypeCode));
+        });
     }
 }
