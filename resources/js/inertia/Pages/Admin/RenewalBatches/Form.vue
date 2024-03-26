@@ -1,7 +1,4 @@
 <script setup>
-import { useForm } from '@inertiajs/vue3';
-import { onMounted } from 'vue';
-
 const props = defineProps({
   teams: Array,
   volumeSegmentAdvisorsId: Array,
@@ -122,10 +119,6 @@ function onSubmit(isValid) {
 const findIndex = item => {
   return props.teams.findIndex(x => x.id === item.id);
 };
-
-onMounted(() => {
-  console.log(permissionEnum);
-});
 </script>
 <template>
   <Head title="Renewal Batch Configs" />
