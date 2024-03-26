@@ -2,6 +2,7 @@
 
 namespace App\Repositories;
 
+use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\SendUpdateLogStatusEnum;
@@ -140,6 +141,7 @@ class SendUpdateLogRepository extends BaseRepository
                 'insurance_provider_id' => $data['insurance_provider_id'],
                 'status' => SendUpdateLogStatusEnum::REQUEST_IN_PROGRESS,
             ]);
+            $this->updatePayment($data);
         } catch (\Exception $ex) {
             $result = (object) [
                 'message' => $ex->getMessage(),
@@ -147,6 +149,25 @@ class SendUpdateLogRepository extends BaseRepository
         }
 
         return $result;
+    }
+
+
+    public function updatePayment($data)
+    {
+        $result = $this->where('id', $data['id'])->with('payments')->first();
+
+        if ($result->payments->isNotEmpty()) {
+            $payments = $result->payments[0];
+            $payments->total_price = $data['total_price'];
+
+            if ($payments->payment_status_id == PaymentStatusEnum::PAID) {
+                $payments->payment_status_id = PaymentStatusEnum::PARTIALLY_PAID;
+            }
+
+            return $payments->save();
+        }
+
+        return null;
     }
 
     public function fetchSavePolicyDetails($data)
