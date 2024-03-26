@@ -25,6 +25,8 @@ use App\Repositories\LookupRepository;
 use App\Repositories\PaymentRepository;
 use App\Repositories\SendUpdateLogRepository;
 use App\Traits\GenericQueriesAllLobs;
+use App\Enums\SageEnum;
+use App\Models\SageApiLog;
 
 class SendUpdateLogService
 {
@@ -514,7 +516,7 @@ class SendUpdateLogService
                 ]) && $sendUpdateLog->transaction_payment_status == SendUpdateLogStatusEnum::TRANSACTION_APPROVED) {
                     return SendUpdateLogStatusEnum::SU;
                 }
-            } elseif ($sendUpdateLog->category->code == SendUpdateLogStatusEnum::CPD && true) { // Check if all policy details uploaded.
+            } elseif ($sendUpdateLog->category->code == SendUpdateLogStatusEnum::CPD && $sendUpdateLog->is_policy_filled) { // Check if all policy details uploaded.
                 return SendUpdateLogStatusEnum::SU;
             } elseif (in_array($sendUpdateLog->category->code, [SendUpdateLogStatusEnum::CI, SendUpdateLogStatusEnum::CIR])) {
                 return SendUpdateLogStatusEnum::SU;
@@ -604,31 +606,121 @@ class SendUpdateLogService
         return $payments;
     }
 
-    public function sendUpdateToSage($sendUpdateLog, $quote)
+    public function updatePaymentDetails($sendUpdateLog)
     {
-        info('This function responsible to send updates on Sage');
+        // Update Payment Details
+        $payment = Payment::where('send_update_log_id', $sendUpdateLog->id)->first();
+        $sendUpdatePaymentDetails = [
+            'plan_id' => $sendUpdateLog->plan_id,
+            'policy_expiry_date' => $sendUpdateLog->expiry_date,
+            'total_price' => $sendUpdateLog->total_price,
+            'insurance_provider_id' => $sendUpdateLog->insurance_provider_id,
+            'invoice_description' => $sendUpdateLog->invoice_description,
+            'broker_invoice_number' => $sendUpdateLog->broker_invoice_number,
+            'transaction_payment_status' => $sendUpdateLog->transaction_payment_status,
+            'insurer_tax_number' => $sendUpdateLog->insurer_tax_invoice_number,
+            // 'tax_invoice_number' => $sendUpdateLog->insurer_tax_invoice_number, Looked same as above
+            'insurer_commmission_invoice_number' => $sendUpdateLog->insurer_commission_invoice_number,
+            'commmission_percentage' => $sendUpdateLog->commission_percentage,
+            'commission_vat_not_applicable' => $sendUpdateLog->commission_vat_not_applicable,
+            'commission_vat_applicable' => $sendUpdateLog->commission_vat_applicable,
+            'payment_status_id' => $sendUpdateLog->payment_status_id,
+            'premium_authorized' => $sendUpdateLog->premium_authorized,
+            'premium_captured' => $sendUpdateLog->premium_captured,
+            'premium_refunded' => $sendUpdateLog->premium_refunded,
+            'commission' => $sendUpdateLog->total_commission,
+            'insurer_invoice_date' => $sendUpdateLog->invoice_date,
+            'total_amount' => $sendUpdateLog->commission_vat_applicable, //already filled in Payment table, but should be map with total_vat_amount send_update_table
+            'discount_value' => $sendUpdateLog->commission_vat_applicable, //already filled in Payment table
+            'commission_vat' => $sendUpdateLog->commission_vat_applicable, // Didn't find column to map
+            'commission_without_vat' => $sendUpdateLog->commission_vat_applicable, // Didn't find column to map
+            'policy_due_date' => $sendUpdateLog->commission_vat_applicable, // Didn't find column to map
+        ];
 
-        return true;
+        return $payment->update($sendUpdatePaymentDetails);
+    }
+
+    public function sendUpdateToSage($sendUpdateRequest, $sendUpdateLog)
+    {
+        $categoryCode = $sendUpdateLog->category->code;
+        $quoteModel = $this->getModelObject($sendUpdateRequest->quoteType);
+        $quote = $quoteModel::where('id', $sendUpdateRequest->quoteRefId)->first();
+
+        if($categoryCode == SendUpdateLogStatusEnum::EF) {
+            $sageResponse = app(SageApiService::class)->handleDocumentsToSage(
+                $sendUpdateRequest, $quote, [
+                    'type' => SageEnum::PT_SEND_UPDATE,
+                    'send_update_type' => SageEnum::SUT_NORMAL,
+                    'category' => $categoryCode,
+                    'option' => $sendUpdateLog->option->code,
+                ]
+            );
+
+            return $sageResponse;
+        }
+
+        if ($categoryCode == SendUpdateLogStatusEnum::CPD) {
+            $sageResponse = app(SageApiService::class)->handleDocumentsToSage(
+                $sendUpdateRequest, $quote, [
+                    'type' => SageEnum::PT_SEND_UPDATE,
+                    'send_update_type' => SageEnum::SUT_REVE_CORR,
+                    'category' => $categoryCode,
+                    'send_update_log' => $sendUpdateLog,
+                ]
+            );
+
+            return $sageResponse;
+        }
+
+        return ['status' => false, 'message' => 'Something went wrong'];
     }
 
     public function updatesMoveToLead($sendUpdateRequest, $sendUpdateLog)
     {
-        $categoryCode = $sendUpdateLog->category->code;
-        $optionCode = $sendUpdateLog->option->code;
-        $quoteModel = $this->getModelObject($sendUpdateRequest->quoteType)::find($sendUpdateRequest->quoteRefId);
+        $categoryCode = $sendUpdateLog->category?->code;
+        $optionCode = $sendUpdateLog->option?->code;
+        $quoteModel = $this->getModelObject($sendUpdateRequest->quoteType);
+        $quote = $quoteModel::where('id', $sendUpdateRequest->quoteRefId)->first();
 
-        if (in_array($categoryCode, [SendUpdateLogStatusEnum::EF, SendUpdateLogStatusEnum::CPD])) {
-            // Move payments and update refrence
+        try {
+            \DB::beginTransaction();
 
-            if ($optionCode == SendUpdateLogStatusEnum::PPE) {
-                $quoteModel->renewal_expiry_date = $sendUpdateLog->expiry_date;
-            } else {
-                // The values of Booking Details - New Entry should be move in Main Lead Booking Details,
-                // The values of Policy Details - should be move in Main Lead Policy Details,
+            if (in_array($categoryCode, [SendUpdateLogStatusEnum::EF, SendUpdateLogStatusEnum::CPD])) {
+
+                Payment::where('send_update_log_id', $sendUpdateLog->id)->update([
+                    'paymentable_id' => $quote->id,
+                    'paymentable_type' => ltrim($quoteModel, '\\')
+                ]);
+
+                if($categoryCode == SendUpdateLogStatusEnum::EF && $optionCode == SendUpdateLogStatusEnum::PPE) {
+                    $quote->update(['renewal_expiry_date' => $sendUpdateLog->expiry_date]);
+                }
+
+                if($categoryCode == SendUpdateLogStatusEnum::CPD) {
+                    $quote->update([
+                        'policy_number' => $sendUpdateLog->policy_number,
+                        'policy_start_date' => $sendUpdateLog->start_date,
+                        'policy_issuance_date' => $sendUpdateLog->issuance_date,
+                        'renewal_expiry_date' => $sendUpdateLog->expiry_date,
+                        'insurer_quote_number' => $sendUpdateLog->insurer_quote_number,
+                        'policy_issuance_status_id' => $sendUpdateLog->issuance_status_id,
+                        'policy_booking_date' => $sendUpdateLog->booking_date,
+                    ]);
+                }
+
+                $sendUpdateLog->update(['status' => SendUpdateLogStatusEnum::UPDATE_BOOKED]);
             }
+
+            \DB::commit();
+
+        } catch (\Exception $exception) {
+            \DB::rollBack();
+            info('Send update Lead impact Failed - Error : '.$exception->getMessage());
+
+            return ['status' => false, 'message' => 'Update not booked'];
         }
 
-        // $quoteModel->save();
+        return ['status' => true, 'message' => 'Update booked'];
     }
 
     public function getPaymentCode($quoteCode): string
