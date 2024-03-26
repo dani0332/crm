@@ -950,7 +950,7 @@ const addPaymentModal = () => {
   isDiscountDocumentNotUploaded.value = false;
   discountDocumentModel.value = [];
 
-  if (totalPrice.value > 0 && planDetail.value) {
+  if ((totalPrice.value > 0 && planDetail.value) || (totalPrice.value > 0 && props.sendUpdate)) {
     totalAmount.value = totalPrice.value;
   } else {
     let errorMsg = 'Please update the Total Price in the Plan Details section.'; 
