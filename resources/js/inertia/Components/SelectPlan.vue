@@ -3,7 +3,8 @@
 const props = defineProps({
     plan: Object,
     quoteType: String,
-    uuid: String
+    uuid: String,
+    hasChildLead:Boolean
 })
 
 
@@ -54,7 +55,7 @@ const updateSelectedPlan = () => {
             notification.success({
                     title: "Selected plan updated",
                     position: 'top',
-            });            
+            });
         })
         .catch(err => {
             console.log(err)
@@ -74,6 +75,7 @@ const updateSelectedPlan = () => {
         outlined
         :loading="isLoading"
         v-if="props.plan.actualPremium > 0"
+        :disabled="hasChildLead"
         @click.prevent="updateSelectedPlan()"
     >
         Select

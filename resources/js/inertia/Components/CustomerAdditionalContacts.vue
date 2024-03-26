@@ -30,6 +30,11 @@ const props = defineProps({
     required: false,
     default: true,
   },
+  hasChildLead: {
+    type: Boolean,
+    required: false,
+    default: false,
+  },
 });
 
 const { isRequired, isEmail, isMobileNo } = useRules();
@@ -222,6 +227,7 @@ const additionalContactDeleteConfirmed = () => {
         <template #body>
           <div  class="flex my-4 justify-end">
             <x-button
+              v-if="!hasChildLead"
               size="sm"
               color="orange"
               @click.prevent="addAdditionalContact"
@@ -245,6 +251,7 @@ const additionalContactDeleteConfirmed = () => {
             <template #item-action="item">
               <div class="space-x-4">
                 <x-button
+                  v-if="!hasChildLead"
                   size="xs"
                   color="emerald"
                   outlined
@@ -257,6 +264,7 @@ const additionalContactDeleteConfirmed = () => {
                   size="xs"
                   color="error"
                   outlined
+                  :disabled="hasChildLead"
                   @click.prevent="additionalContactDelete(item.id)"
                 >
                   Delete

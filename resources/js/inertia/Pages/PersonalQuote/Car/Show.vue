@@ -1609,10 +1609,10 @@ const linkEntity = () => {
 };
 
 const handlePlanSelected = plan => {
-  selectedProviderPlan.value.id = plan.id
-  selectedProviderPlan.value.planName = plan.planName
-  selectedProviderPlan.value.providerName = plan.providerName
-  selectedProviderPlan.value.premium = plan.premium
+  selectedProviderPlan.value.id = plan.id;
+  selectedProviderPlan.value.planName = plan.planName;
+  selectedProviderPlan.value.providerName = plan.providerName;
+  selectedProviderPlan.value.premium = plan.premium;
   router.reload({
     preserveState: true,
     preserveScroll: true,
@@ -2910,6 +2910,7 @@ const getDetailPageRoute = (
             <x-button-group v-if="selectedPlans.length > 0" size="sm">
               <x-button
                 @click.prevent="onTogglePlans(false)"
+                :disabled="page.props.linkedQuoteDetails.childLeadsCount > 0"
                 :loading="toggleLoader"
               >
                 Show
@@ -2928,6 +2929,7 @@ const getDetailPageRoute = (
               class="ml-2 mr-2"
               @click.prevent="onExportPlans"
               :loading="exportLoader"
+              :disabled="page.props.linkedQuoteDetails.childLeadsCount > 0"
             >
               Download PDF
             </x-button>
@@ -2936,7 +2938,7 @@ const getDetailPageRoute = (
               size="sm"
               color="orange"
               class="mr-2"
-              :disabled="record.advisor_id != $page.props.auth.user.id"
+              :disabled="record.advisor_id != $page.props.auth.user.id || page.props.linkedQuoteDetails.childLeadsCount > 0"
             >
               Send OCB Email to Customer
             </x-button>
@@ -2950,6 +2952,7 @@ const getDetailPageRoute = (
                 (access.carManagerCanEdit || access.carAdvisorCanEdit) &&
                 can(permissionEnum.CarQuotesPlansCreate)
               "
+              :disabled="page.props.linkedQuoteDetails.childLeadsCount > 0"
             >
               Add Plan
             </x-button>
@@ -2962,6 +2965,7 @@ const getDetailPageRoute = (
               size="sm"
               color="orange"
               class="mr-2"
+              :disabled="page.props.linkedQuoteDetails.childLeadsCount > 0"
             >
               Add Plan
             </x-button>
@@ -2973,6 +2977,7 @@ const getDetailPageRoute = (
                 typeof availablePlansTable.data !== 'string' &&
                 availablePlansTable.data.length > 0
               "
+              :disabled="page.props.linkedQuoteDetails.childLeadsCount > 0"
             >
               Copy Link
             </x-button>
@@ -3165,6 +3170,7 @@ const getDetailPageRoute = (
             <template #item-action="item">
               <div class="flex gap-2">
                 <x-button
+                  v-if="page.props.linkedQuoteDetails.childLeadsCount == 0"
                   size="xs"
                   color="primary"
                   outlined
@@ -3178,6 +3184,7 @@ const getDetailPageRoute = (
                   outlined
                   @click.prevent="copyPlanURL(item)"
                   v-if="item.discountPremium + item.vat + totalPriceVAT > 0"
+                  :disabled="page.props.linkedQuoteDetails.childLeadsCount > 0"
                 >
                   Copy
                 </x-button>
@@ -3194,6 +3201,7 @@ const getDetailPageRoute = (
                     color="error"
                     outlined
                     @click="confirmChangeInsurer(item)"
+                    :disabled="page.props.linkedQuoteDetails.childLeadsCount > 0"
                   >
                     Change Insurer
                   </x-button>
@@ -3205,6 +3213,7 @@ const getDetailPageRoute = (
                 @update:selectedPlanChanged="handlePlanSelected"
                 :plan="item"
                 :quoteType="quoteType"
+                :has-child-lead="page.props.linkedQuoteDetails.childLeadsCount > 0"
                 :uuid="quote.uuid"
               />
 
@@ -4042,6 +4051,7 @@ const getDetailPageRoute = (
       :quoteEmail="record.email"
       :quoteMobile="record.mobile_no"
       :canDelete="false"
+      :has-child-lead="page.props.linkedQuoteDetails.childLeadsCount > 0"
       :expanded="sectionExpanded"
     />
 
@@ -4080,8 +4090,12 @@ const getDetailPageRoute = (
     </div>
   </div>
 
-  <AuditLogs :type="'App\\Models\\CarQuote'" :id="$page.props.record.id" :quoteCode="$page.props.record.code" :expanded="sectionExpanded"/>
-
+  <AuditLogs
+    :type="'App\\Models\\CarQuote'"
+    :id="$page.props.record.id"
+    :quoteCode="$page.props.record.code"
+    :expanded="sectionExpanded"
+/>
   <ApiLogs
     v-if="can(permissionEnum.API_LOG_VIEW)"
     :type="'App\\Models\\CarQuote'"
