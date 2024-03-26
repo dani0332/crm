@@ -338,7 +338,7 @@ class SendUpdateLogService
     {
         $modelRelationDetails = $this->_getQuoteRelation($quoteModel, $quoteTypeCode);
         $quoteObject = $quoteModel::with(array_keys($modelRelationDetails['quoteRelations']))->find($requestData['ref_id']);
-        // Change quote status to Policy Cancelled
+
 
         $countChildRecords = $quoteModel::where('code', 'like', '%'.$quoteObject->code.'-%')->count();
         $childLeadDetails = [
@@ -373,6 +373,7 @@ class SendUpdateLogService
                 'quote_type_code' => $quoteTypeCode,
             ]);
         }
+        // Change quote status to Policy Cancelled and remove quote batch id to remove it from batches
         $quoteObject->update([
             'quote_status_id' => QuoteStatusEnum::PolicyCancelled,
             'quote_batch_id' => null,
