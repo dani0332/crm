@@ -400,15 +400,18 @@ class SendUpdateLogController extends Controller
         }
 
         // Calling Sage for necessary Documents
-        $sageResponse = $this->sendUpdateLogService->sendUpdateToSage($sendUpdateRequest, $sendUpdate);
+        $paymentDetailsUpdate = $this->sendUpdateLogService->updatePaymentDetails($sendUpdate);
+        if ($paymentDetailsUpdate) {
+            $sageResponse = $this->sendUpdateLogService->sendUpdateToSage($sendUpdateRequest, $sendUpdate);
             if ($sageResponse['status'] === false) 
                 return response()->json(['message' => $sageResponse['message']], 500);
 
-        // Send Update Data move to main lead page as per Send update Type
-        $response = $this->sendUpdateLogService->updatesMoveToLead($sendUpdateRequest, $sendUpdate);
+            // Send Update Data move to main lead page as per Send update Type
+            $response = $this->sendUpdateLogService->updatesMoveToLead($sendUpdateRequest, $sendUpdate);
 
-        if ($sageResponse['status'] && $response['status'])
-            return response()->json(['message' => $response['message']], 200);
+            if ($sageResponse['status'] && $response['status'])
+                return response()->json(['message' => $response['message']], 200);
+        }
 
         return response()->json(['message' => $response['message']], 500);
     }

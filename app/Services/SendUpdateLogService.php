@@ -600,6 +600,40 @@ class SendUpdateLogService
         return $payments;
     }
 
+    public function updatePaymentDetails($sendUpdateLog)
+    {
+        // Update Payment Details
+        $payment = Payment::where('send_update_log_id', $sendUpdateLog->id)->first();
+        $sendUpdatePaymentDetails = [
+            'plan_id' => $sendUpdateLog->plan_id,
+            'policy_expiry_date' => $sendUpdateLog->expiry_date,
+            'total_price' => $sendUpdateLog->total_price,
+            'insurance_provider_id' => $sendUpdateLog->insurance_provider_id,
+            'invoice_description' => $sendUpdateLog->invoice_description,
+            'broker_invoice_number' => $sendUpdateLog->broker_invoice_number,
+            'transaction_payment_status' => $sendUpdateLog->transaction_payment_status,
+            'insurer_tax_number' => $sendUpdateLog->insurer_tax_invoice_number,
+            // 'tax_invoice_number' => $sendUpdateLog->insurer_tax_invoice_number, Looked same as above
+            'insurer_commmission_invoice_number' => $sendUpdateLog->insurer_commission_invoice_number,
+            'commmission_percentage' => $sendUpdateLog->commission_percentage,
+            'commission_vat_not_applicable' => $sendUpdateLog->commission_vat_not_applicable,
+            'commission_vat_applicable' => $sendUpdateLog->commission_vat_applicable,
+            'payment_status_id' => $sendUpdateLog->payment_status_id,
+            'premium_authorized' => $sendUpdateLog->premium_authorized,
+            'premium_captured' => $sendUpdateLog->premium_captured,
+            'premium_refunded' => $sendUpdateLog->premium_refunded,
+            'commission' => $sendUpdateLog->total_commission,
+            'insurer_invoice_date' => $sendUpdateLog->invoice_date,
+            'total_amount' => $sendUpdateLog->commission_vat_applicable, //already filled in Payment table, but should be map with total_vat_amount send_update_table
+            'discount_value' => $sendUpdateLog->commission_vat_applicable, //already filled in Payment table
+            'commission_vat' => $sendUpdateLog->commission_vat_applicable, // Didn't find column to map
+            'commission_without_vat' => $sendUpdateLog->commission_vat_applicable, // Didn't find column to map
+            'policy_due_date' => $sendUpdateLog->commission_vat_applicable, // Didn't find column to map
+        ];
+
+        return $payment->update($sendUpdatePaymentDetails);
+    }
+
     public function sendUpdateToSage($sendUpdateRequest, $sendUpdateLog)
     {
         $categoryCode = $sendUpdateLog->category->code;
@@ -637,7 +671,6 @@ class SendUpdateLogService
 
     public function updatesMoveToLead($sendUpdateRequest, $sendUpdateLog)
     {
-
         $categoryCode = $sendUpdateLog->category?->code;
         $optionCode = $sendUpdateLog->option?->code;
         $quoteModel = $this->getModelObject($sendUpdateRequest->quoteType);
@@ -647,51 +680,29 @@ class SendUpdateLogService
             \DB::beginTransaction();
 
             if (in_array($categoryCode, [SendUpdateLogStatusEnum::EF, SendUpdateLogStatusEnum::CPD])) {
-                // dd($sendUpdateLog->toArray());
 
-                // // First need to update send update booking details value to the send update payment.
-                // $payment = Payment::where('send_update_log_id', $sendUpdateLog->id)->first();
-                // $payment->update([
-                //     'commission_vat_applicable' => $sendUpdateLog->commission_vat_applicable,
-                //     'commission_vat_not_applicable' => $sendUpdateLog->commission_vat_not_applicable,
-                //     'insurer_tax_number' => $sendUpdateLog->insurer_tax_invoice_number,
-                //     'broker_invoice_number' => $sendUpdateLog->broker_invoice_number,
-                //     'insurer_invoice_date' => $sendUpdateLog->invoice_date,
-                //     'invoice_description' => $sendUpdateLog->invoice_description,
-                //     'insurer_commission_invoice_number' => $sendUpdateLog->insurer_commission_invoice_number,
-                //     'commission_percentage' => $sendUpdateLog->commission_percentage,
-                //     'transaction_payment_status' => $sendUpdateLog->transaction_payment_status,
+                Payment::where('send_update_log_id', $sendUpdateLog->id)->update([
+                    'paymentable_id' => $quote->id,
+                    'paymentable_type' => ltrim($quoteModel, '\\')
+                ]);
 
+                if($categoryCode == SendUpdateLogStatusEnum::EF && $optionCode == SendUpdateLogStatusEnum::PPE) {
+                    $quote->update(['renewal_expiry_date' => $sendUpdateLog->expiry_date]);
+                } 
 
+                if($categoryCode == SendUpdateLogStatusEnum::CPD) {
+                    $quote->update([
+                        'policy_number' => $sendUpdateLog->policy_number,
+                        'policy_start_date' => $sendUpdateLog->start_date,
+                        'policy_issuance_date' => $sendUpdateLog->issuance_date,
+                        'renewal_expiry_date' => $sendUpdateLog->expiry_date,
+                        'insurer_quote_number' => $sendUpdateLog->insurer_quote_number,
+                        'policy_issuance_status_id' => $sendUpdateLog->issuance_status_id,
+                        'policy_booking_date' => $sendUpdateLog->booking_date,
+                    ]);
+                }
 
-
-
-                //     'booking_date' => $sendUpdateLog->booking_date,
-                //     'vat_on_commission' => $sendUpdateLog->vat_on_commission,
-                //     'total_commission' => $sendUpdateLog->total_commission,
-                //     'total_vat_amount' => $sendUpdateLog->total_vat_amount,
-                //     'price_vat_applicable' => $sendUpdateLog->price_vat_applicable,
-                //     'price_vat_not_applicable' => $sendUpdateLog->price_vat_not_applicable,
-                // ]);
-
-
-
-                // Payment::where('send_update_log_id', $sendUpdateLog->id)->update([
-                //     'paymentable_id' => $quote->id,
-                //     'paymentable_type' => ltrim($quoteModel, '\\')
-                // ]);
-
-                // if($categoryCode == SendUpdateLogStatusEnum::EF && $optionCode == SendUpdateLogStatusEnum::PPE) {
-                //     $quote->update(['renewal_expiry_date' => $sendUpdateLog->expiry_date]);
-                // } 
-
-                // if($categoryCode == SendUpdateLogStatusEnum::CPD) {
-                    
-
-
-
-                //     // Need to move Booking and Policy Details to the main lead.
-                // }
+                $sendUpdateLog->update(['status' => SendUpdateLogStatusEnum::UPDATE_BOOKED]);
             }
 
             \DB::commit();
