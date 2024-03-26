@@ -115,7 +115,7 @@ class CarAllocation implements Allocation
 
     protected function finalizeAdvisors($lead, $tier, $users, $rules): int
     {
-        return $this->carAllocationService->determineFinalUserId($lead, $users, $rules);
+        return $this->carAllocationService->determineFinalUserId($lead, $users, $rules, $this->teamId);
     }
 
     protected function assignLead($lead, $userId, $tier): void
