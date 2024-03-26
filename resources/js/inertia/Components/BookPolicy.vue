@@ -59,18 +59,32 @@ const transactionPaymentStatus = computed(() => {
     return 'Not Paid';
   }
   if (
-    Number(page.props?.payments[0]?.total_price) >
-    Number(page.props?.payments[0]?.captured_amount)
+    (Number(page.props?.payments[0]?.total_price) >
+    Number(page.props?.payments[0]?.captured_amount)  || (Number(props?.quote?.price_with_vat) > Number(page.props.payments[0]?.captured_amount)))
   ) {
     return 'Partially Paid';
   }
   if (
-    Number(page.props?.payments[0]?.captured_amount) >=
-    Number(page.props?.payments[0]?.total_price)
+   ( Number(page.props?.payments[0]?.captured_amount) >=
+    Number(page.props?.payments[0]?.total_price) || (Number(props?.quote?.price_with_vat) < Number(page.props.payments[0]?.captured_amount)))
   ) {
     return 'Paid';
   }
 });
+
+const transactionPaymentStatusTooltip= computed(() => {
+  if(transactionPaymentStatus.value == 'Not Paid'){
+    return productionProcessTooltipEnum.TRANSACTION_PAYMENT_STATUS_NOT_PAID;
+  }
+  else if(transactionPaymentStatus.value == 'Partially Paid'){
+    return productionProcessTooltipEnum.TRANSACTION_PAYMENT_STATUS_PARTIALLY_PAID;
+  }
+  else if(transactionPaymentStatus.value == 'Paid'){
+    return productionProcessTooltipEnum.TRANSACTION_PAYMENT_STATUS_PAID;
+  }
+});
+
+
 const bpForm = useForm({
   booking_date:
     dateToDMY(page.props.quote?.policy_booking_date) || currentDate.value,
@@ -92,6 +106,7 @@ const bpForm = useForm({
   discount: page.props?.payments[0]?.discount_value || '',
   model_type: props.quoteType,
   quote_id: page.props.quote.id,
+  transaction_payment_status_tool_tip: transactionPaymentStatusTooltip.value
 });
 
 const onUpdateBpDetails = isValid => {
@@ -264,7 +279,10 @@ const caculateCommission = () => {
                 }}</span>
               </template>
             </x-tooltip>
-            <dd>{{ bpForm.transaction_payment_status }}</dd>
+            <x-tooltip position="center">
+              <dd>{{ bpForm.transaction_payment_status }}</dd>
+              <template #tooltip> {{ bpForm.transaction_payment_status_tool_tip }}</template>
+            </x-tooltip>
           </div>
           <div class="grid sm:grid-cols-2">
             <x-tooltip>

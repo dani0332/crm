@@ -42,6 +42,8 @@ use App\Services\SageApiService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use App\Enums\PaymentAllocationStatus;
+use App\Enums\PaymentStatusEnum;
 
 class CentralController extends Controller
 {
@@ -271,6 +273,7 @@ class CentralController extends Controller
             $quote->update([
                 'quote_status_id' => QuoteStatusEnum::PolicyBooked,
             ]);
+            $this->straightforwardPayments($payment, $quote);
 
             return response()->json(['message' => $response['message']], 200);
         }
@@ -317,5 +320,18 @@ class CentralController extends Controller
         $successMessage = PaymentRepository::updateSplitPaymentsApprove($request);
 
         return back()->with('success', $successMessage);
+    }
+
+    private function straightforwardPayments($payment, $quote)
+    {
+        if (($payment->captured_amount + $payment->discount_value)  < $quote->price_with_vat) {
+            $payment->payment_status_id = PaymentStatusEnum::PAID;
+            $payment->payment_allocation_status = PaymentAllocationStatus::FULLY_ALLOCATED;
+            $payment->save();
+        } elseif (($payment->captured_amount + $payment->discount_value)  >= $quote->price_with_vat) {
+            $payment->payment_status_id = PaymentStatusEnum::PAID;
+            $payment->payment_allocation_status = PaymentAllocationStatus::PARTIALLY_ALLOCATED;
+            $payment->save();
+        }
     }
 }

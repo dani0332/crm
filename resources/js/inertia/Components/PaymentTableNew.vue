@@ -5,6 +5,7 @@ const page = usePage();
 
 const permissionEnum = page.props.permissionsEnum;
 const can = permission => useCan(permission);
+const productionProcessTooltipEnum = page.props.productionProcessTooltipEnum;
 
 const props = defineProps({
   payments: Array,
@@ -1724,7 +1725,17 @@ watch(() => props.quoteRequest, (newValue, oldValue) => {
   }
   planDetail.value = initalPlanDetails;
 });
-
+const paymentAllocationStatusTooltip= payment_allocation_status  => {
+  if(payment_allocation_status == 'not_allocated'){
+    return productionProcessTooltipEnum.PAYMENT_ALLOCATION_STATUS_NOT_ALLOCATED;
+  }
+  else if(payment_allocation_status == 'partially_allocated'){
+    return productionProcessTooltipEnum.PAYMENT_ALLOCATION_STATUS_PARTIALLY_ALLOCATED;
+  }
+  else if(payment_allocation_status == 'fully_allocated'){
+    return productionProcessTooltipEnum.PAYMENT_ALLOCATION_STATUS_FULLY_ALLOCATED;
+  }
+}
 </script>
 
 <template>
@@ -1758,7 +1769,7 @@ watch(() => props.quoteRequest, (newValue, oldValue) => {
       </template>
     </div>
     <div class="vue3-easy-data-table tablefixed custom-height">
-      <div class="vue3-easy-data-table__main fixed-header hoverable border-cell custom-height">
+      <div class="vue3-easy-data-table__main fixed-header hoverable border-cell custom-height manage-payment-table-parent-div">
         <table>
           <thead class="vue3-easy-data-table__header">
             <tr>
@@ -1887,7 +1898,18 @@ watch(() => props.quoteRequest, (newValue, oldValue) => {
                 <td>{{ formatAmount(item.total_amount) }}</td>
                 <td>{{ formatAmount(item.captured_amount) }}</td>
                 <td>{{ formatString(item.payment_status.text) }}</td>
-                <td>{{ item.payment_allocation_status !== null ? formatString(item.payment_allocation_status) : '' }}</td>             
+                <td>  
+                  <x-tooltip >
+                    <span class="border-b-0 ">
+                      {{ item.payment_allocation_status !== null ? formatString(item.payment_allocation_status) : '' }}
+                    </span>
+                    <template #tooltip>
+                      <span class="custom-tooltip-content">
+                        {{ paymentAllocationStatusTooltip(item.payment_allocation_status) }}
+                      </span>
+                    </template>
+                  </x-tooltip>
+                </td> 
                 <td>
                   <div class="flex gap-2">                                
                       <x-button v-if="can(permissionEnum.PaymentsEdit)" size="xs" color="primary" outlined @click="editPaymentModal(item,0,0,0)">
@@ -3079,8 +3101,15 @@ watch(() => props.quoteRequest, (newValue, oldValue) => {
   position: relative;
   font-size: 12px;
   text-transform: none;
-  }
+}
 .custom-height {
-    min-height: 160px;
-  }
+    min-height: 185px;
+}
+.manage-payment-table-parent-div{
+  overflow-y: hidden;
+}
+.manage-payment-table-parent-div::-webkit-scrollbar {
+  width: 6px;
+  background-color: #C1C1C1;
+}
 </style>
