@@ -30,20 +30,11 @@ class RenewalBatchController extends Controller
     {
         $gridData = RenewalBatch::orderByDesc('id')->paginate(15);
 
-        // if ($request->ajax()) {
-
-        //     return DataTables::of($gridData)
-        //         ->addIndexColumn()
-        //         ->addColumn('action', function ($gridData) {
-        //         })
-        //         ->rawColumns(['action'])
-        //         ->make(true);
-        // }
 
         return inertia('Admin/RenewalBatches/Index', [
             'batches' => $gridData,
         ]);
-        // return view('renewalbatch.index');
+
     }
 
     /**
@@ -72,16 +63,6 @@ class RenewalBatchController extends Controller
             'slabs' => $slabs,
             'quoteStatus' => QuoteStatusEnum::asArray(),
         ]);
-
-        // return view('renewalbatch.config-views.create',
-        //     compact(
-        //         'teams',
-        //         'volumeSegmentAdvisorsId',
-        //         'valueSegmentAdvisorsId',
-        //         'lastBatchSlabs',
-        //         'carAdvisors',
-        //         'slabs'
-        //     ));
 
     }
 
@@ -145,18 +126,6 @@ class RenewalBatchController extends Controller
             'quoteStatus' => QuoteStatusEnum::asArray(),
         ]);
 
-        // return view('renewalbatch.config-views.edit',
-        //     compact(
-        //         'teams',
-        //         'renewalBatch',
-        //         'volumeSegmentAdvisorsId',
-        //         'valueSegmentAdvisorsId',
-        //         'lastBatchSlabs',
-        //         'carAdvisors',
-        //         'slabs',
-        //         'carSoldDeadline',
-        //         'uncontactableDeadline'
-        //     ));
     }
 
     /**
