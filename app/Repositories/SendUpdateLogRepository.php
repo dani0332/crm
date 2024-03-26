@@ -2,9 +2,11 @@
 
 namespace App\Repositories;
 
+use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\SendUpdateLogStatusEnum;
+use App\Models\QuoteStatusLog;
 use App\Models\SendUpdateLog;
 use App\Services\CentralService;
 use Illuminate\Support\Str;
@@ -80,6 +82,11 @@ class SendUpdateLogRepository extends BaseRepository
                     $personalQuote = $model::where('uuid', $data['quote_uuid'])->first();
                 }
                 $personalQuote->quote_status_id = QuoteStatusEnum::CancellationPending;
+                QuoteStatusLog::create([
+                    'quote_type_id' => $data['quote_type_id'],
+                    'quote_request_id' => $data['personal_quote_id'],
+                    'current_quote_status_id' => QuoteStatusEnum::CancellationPending,
+                ]);
 
                 $personalQuote->save();
             }
@@ -140,6 +147,7 @@ class SendUpdateLogRepository extends BaseRepository
                 'insurance_provider_id' => $data['insurance_provider_id'],
                 'status' => SendUpdateLogStatusEnum::REQUEST_IN_PROGRESS,
             ]);
+            $this->updatePayment($data);
         } catch (\Exception $ex) {
             $result = (object) [
                 'message' => $ex->getMessage(),
@@ -147,6 +155,25 @@ class SendUpdateLogRepository extends BaseRepository
         }
 
         return $result;
+    }
+
+
+    public function updatePayment($data)
+    {
+        $result = $this->where('id', $data['id'])->with('payments')->first();
+
+        if ($result->payments->isNotEmpty()) {
+            $payments = $result->payments[0];
+            $payments->total_price = $data['total_price'];
+
+            if ($payments->payment_status_id == PaymentStatusEnum::PAID) {
+                $payments->payment_status_id = PaymentStatusEnum::PARTIALLY_PAID;
+            }
+
+            return $payments->save();
+        }
+
+        return null;
     }
 
     public function fetchSavePolicyDetails($data)
