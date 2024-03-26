@@ -37,6 +37,10 @@ class SendUpdateRequest extends FormRequest
     {
         $validator->after(function ($validator) {
             $sendUpdateLog = SendUpdateLog::where('id', request()->sendUpdateId ?? '')->firstOrFail();
+
+            if($sendUpdateLog->status == SendUpdateLogStatusEnum::UPDATE_BOOKED)
+                $validator->errors()->add('error', 'Update already booked');
+
             $sendUpdateCategoryCode = $sendUpdateLog?->category->code ?? '';
             $categorySubType = $this->sendUpdate->option->code ?? '';
             $uploadedDocuments = $sendUpdateLog?->documents()->pluck('document_type_code')->toArray();
@@ -140,7 +144,7 @@ class SendUpdateRequest extends FormRequest
                 // Check all policy details have been corretly filled
                 if(($sendUpdateCategoryCode == SendUpdateLogStatusEnum::EF && $categorySubType == SendUpdateLogStatusEnum::PPE) || 
                     $sendUpdateCategoryCode == SendUpdateLogStatusEnum::CPD) {
-                    if(true) { // Need to add Policy check here
+                    if(!$sendUpdateLog->is_policy_filled) { 
                         $validator->errors()->add('error', 'Please update the missing policy details');
                     }
                 }

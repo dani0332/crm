@@ -421,7 +421,7 @@ function convertToNumber(value) {
 
 const sendUpdateButton = computed(() => {
   return (
-    (isEF.value || isCI.value || isCIR.value) &&
+    (isEF.value || isCI.value || isCIR.value || isCPD.value) &&
     props.updateBtn &&
     can(page.props.permissionsEnum.SEND_UPDATE_TO_CUSTOMER)
   );
@@ -461,7 +461,11 @@ const sendUpdateValidation = () => {
     .then((response) => {
       if (response.status == 200) {
         if (props.updateBtn === sendUpdateStatusEnum.SU) {
-          prePaymentConfirmation(response);
+          if(response.data.insuficientPaymentCheck == true) {
+            insuficientPaymentConfirmation(response);
+          } else if(response.data.insuficientPaymentCheck == false) {
+            attestRecord();
+          }
         } else {
           modals.sendConfirm = true;
           isStating.value = response.data.message;
@@ -470,27 +474,30 @@ const sendUpdateValidation = () => {
     })
     .catch(function (errors) {
       loader.sendUpdateSectionBtn = false;
-      let responseError = errors.response.data.errors.error;
-      Object.keys(responseError).forEach(function (key) {
+      if(errors.response.data.errors.error) {
+        let responseError = errors.response.data.errors.error;
+        Object.keys(responseError).forEach(function (key) {
+          notification.error({
+            title: responseError[key],
+            position: "top",
+          });
+        });
+      } else {
         notification.error({
-          title: responseError[key],
+          title: errors.response.data.message,
           position: "top",
         });
-      });
+      }
     });
 };
 
-function prePaymentConfirmation(response) {
+function insuficientPaymentConfirmation(response) {
   let paymentOptions = [
     paymentStatusEnum.PENDING,
     paymentStatusEnum.PARTIALLY_PAID,
     paymentStatusEnum.CREDIT_APPROVED,
   ];
-  if (
-    (response.data.insuficientPaymentCheck == true &&
-      paymentOptions.includes(response.data.parentPaymentStatus)) ||
-    true
-  ) {
+  if (paymentOptions.includes(response.data.parentPaymentStatus)) {
     paymentConfirmationMessage.message =
       "Unpaid policies breach our Code of Conduct and will be escalated to management. Do you still want to continue?";
     switch (response.data.parentPaymentStatus) {
@@ -508,6 +515,12 @@ function prePaymentConfirmation(response) {
     }
 
     modals.paymentConfirmation = true;
+  } else {
+    loader.sendUpdateSectionBtn = false;
+    notification.error({
+      title: "Payment status is not valid.",
+      position: "top",
+    });
   }
 }
 
@@ -522,8 +535,8 @@ function confirmationModalClose() {
   loader.sendUpdateSectionBtn = false;
 }
 
-function sendUpdate() {
-  if(!confirmationCheck.value) {
+function sendUpdate(prePaymentCheck = true) {
+  if(!confirmationCheck.value && prePaymentCheck) {
     confirmationCheckError.value = true;
     return false;
   } else {
@@ -550,13 +563,21 @@ function sendUpdate() {
       });
     })
     .catch(function (errors) {
-      let responseError = errors.response.data.errors.error;
-      Object.keys(responseError).forEach(function (key) {
+      loader.sendUpdateSectionBtn = false;
+      if(typeof(errors.response.data.errors.error) !== "undefined") {
+        let responseError = errors.response.data.errors.error;
+        Object.keys(responseError).forEach(function (key) {
+          notification.error({
+            title: responseError[key],
+            position: "top",
+          });
+        });
+      } else {
         notification.error({
-          title: responseError[key],
+          title: errors.response.data.message,
           position: "top",
         });
-      });
+      }
     });
 }
 
@@ -1503,7 +1524,7 @@ const submitToCustomer = () => {
           <p class="text-sm">{{ paymentConfirmationMessage.message }}</p>
         </div>
         <div class="text-center space-x-4">
-          <x-button size="sm" @click.prevent="attestRecord()"> Continue </x-button>
+          <x-button size="sm" :loading="loader.sendUpdate" @click.prevent="sendUpdate(false)"> Continue </x-button>
 
           <x-button size="sm" color="orange" @click.prevent="confirmationModalClose()">
             Go Back
