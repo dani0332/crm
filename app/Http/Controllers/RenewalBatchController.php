@@ -10,7 +10,6 @@ use App\Models\Slab;
 use App\Models\Team;
 use App\Services\CRUDService;
 use Illuminate\Http\Request;
-use Yajra\DataTables\Facades\DataTables;
 
 class RenewalBatchController extends Controller
 {
@@ -29,7 +28,6 @@ class RenewalBatchController extends Controller
     public function index(Request $request)
     {
         $gridData = RenewalBatch::orderByDesc('id')->paginate(15);
-
 
         return inertia('Admin/RenewalBatches/Index', [
             'batches' => $gridData,
