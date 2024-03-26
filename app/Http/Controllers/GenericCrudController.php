@@ -124,6 +124,7 @@ class GenericCrudController extends Controller
     {
         $id = '';
         $customTitles = $dropdownSource = [];
+        // dd($this->genericModel->properties);
         foreach ($this->genericModel->properties as $property => $value) {
             if (str_contains($value, 'title')) {
                 $customTitles[$property] = $this->crudService->getCustomTitleByModelType($this->genericModel->modelType, $property);
@@ -134,10 +135,17 @@ class GenericCrudController extends Controller
             }
         }
         $model = $this->genericModel;
+        dd($model);
         if ($request->has('id')) {
             $id = $request->id;
         }
 
+        // return inertia('Admin/AllocationConfig/Tiers/Form', [
+        //     'model' => $model,
+        //     'dropdownSource' => $dropdownSource,
+        //     'customTitles' => $customTitles,
+        //     'id' => $id,
+        // ]);
         return view('generic.add', compact('model', 'dropdownSource', 'customTitles', 'id'));
     }
 

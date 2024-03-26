@@ -31,7 +31,11 @@ class AllocationThresholdController extends Controller
         });
         $teams = $sortedTeams;
 
-        return view('allocationthreshold.view', compact('teams'));
+         return inertia('Admin/AllocationConfig/AllocationThreshold', [
+            'teams' => $teams,
+           
+        ]);
+        // return view('allocationthreshold.view', compact('teams'));
     }
 
     public function updateAllocation(Request $request)
@@ -43,6 +47,6 @@ class AllocationThresholdController extends Controller
             }
         }
 
-        return true;
+        return response()->json(['message' => 'Allocation Threshold updated successfully']);
     }
 }
