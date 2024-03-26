@@ -6,6 +6,7 @@ use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\SendUpdateLogStatusEnum;
+use App\Models\QuoteStatusLog;
 use App\Models\SendUpdateLog;
 use App\Services\CentralService;
 use Illuminate\Support\Str;
@@ -81,6 +82,11 @@ class SendUpdateLogRepository extends BaseRepository
                     $personalQuote = $model::where('uuid', $data['quote_uuid'])->first();
                 }
                 $personalQuote->quote_status_id = QuoteStatusEnum::CancellationPending;
+                QuoteStatusLog::create([
+                    'quote_type_id' => $data['quote_type_id'],
+                    'quote_request_id' => $data['personal_quote_id'],
+                    'current_quote_status_id' => QuoteStatusEnum::CancellationPending,
+                ]);
 
                 $personalQuote->save();
             }
