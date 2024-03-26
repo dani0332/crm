@@ -52,7 +52,7 @@ const leadData = ref([
 
 
 let availableFilters = {
-  userId: [],
+  userIds: [],
   quoteTypeIds: [],
   page: 1,
 };
@@ -237,7 +237,7 @@ onMounted(() => {
       
         <x-field label="Advisors">
           <ComboBox
-            v-model="filters.userId"
+            v-model="filters.userIds"
             name="user_id"
             placeholder="Search by Quote Type"
             :options="

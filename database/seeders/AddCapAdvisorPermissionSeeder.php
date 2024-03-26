@@ -17,9 +17,7 @@ class AddCapAdvisorPermissionSeeder extends Seeder
      */
     public function run(): void
     {
-        //
         $adviosrCapPermission = Permission::where('name', PermissionsEnum::ADVISOR_CAPACITY_MANAGEMENT)->first();
-    
         if ($adviosrCapPermission == null) {
             DB::table('permissions')->insert([
                 'name' => PermissionsEnum::ADVISOR_CAPACITY_MANAGEMENT,

@@ -440,15 +440,11 @@ class LeadAllocationService extends BaseService
     public function getLeadAllocationRecordByUserId($userId,$quoteTypeId=null)
     {
         try {
-            $leadAllocation = LeadAllocation::latest();
-
+            $leadAllocation = LeadAllocation::latest()->where('user_id', $userId);
             if(!empty($quoteTypeId)){
                 $leadAllocation = $leadAllocation->where('quote_type_id', $quoteTypeId);
             }
-            
-            $leadAllocation = $leadAllocation->where('user_id', $userId)->first();
-
-            return $leadAllocation;
+            return $leadAllocation->first();
         } catch (\Exception $e) {
             Log::error($e->getMessage());
         }
@@ -1045,18 +1041,16 @@ class LeadAllocationService extends BaseService
                 ->where('u.is_active', true)
                 ->whereIn('lead_allocation.quote_type_id',(array) $quoteTypeIds);
                
-            if (! auth()->user()->hasRole(RolesEnum::SuperManagerLeadAllocation)) {
-                $query = $query->where('u.manager_id', auth()->user()->id);
-            }
-
-            if(!empty(request('userIds'))){
-              
-                $query = $query->whereIn('u.id', (array)request('userIds'));
-            }
-            if(!empty(request('quoteTypeIds'))){ 
-             
-                $query = $query->whereIn('lead_allocation.quote_type_id', (array)request('quoteTypeIds'));
-            }
+            $query = $query->when(!auth()->user()->hasRole(RolesEnum::SuperManagerLeadAllocation), function ($query) {
+                    return $query->where('u.manager_id', auth()->user()->id);
+             });
+            $query = $query->when(!empty(request('userIds')), function ($query) {
+                return $query->whereIn('u.id', (array)request('userIds'));
+            });
+            $query = $query->when(!empty(request('quoteTypeIds')), function ($query) {
+                return $query->whereIn('lead_allocation.quote_type_id', (array)request('quoteTypeIds'));
+            });
+        
 
             return $query->simplePaginate(10)->withQueryString();;
         } catch (\Exception $e) {

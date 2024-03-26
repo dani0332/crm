@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Enums\PermissionsEnum;
 use App\Models\Team;
 use App\Models\User;
 use App\Enums\QuoteTypes;
@@ -12,6 +11,7 @@ use App\Enums\quoteTypeCode;
 use Illuminate\Http\Request;
 use App\Enums\UserStatusEnum;
 use App\Services\UserService;
+use App\Enums\PermissionsEnum;
 use App\Models\LeadAllocation;
 use App\Events\UserStatusChanged;
 use App\Jobs\ReAssignCarLeadsJob;
@@ -24,6 +24,7 @@ use App\Services\LeadAllocationService;
 use App\Repositories\QuoteTypeRepository;
 use App\Services\HealthAllocationService;
 use App\Services\ApplicationStorageService;
+use App\Http\Requests\LeadAllocationRequest;
 
 class LeadAllocationController extends Controller
 {
@@ -265,13 +266,11 @@ class LeadAllocationController extends Controller
     public function showLeadAllocations(Request $request){
          if (Gate::allows(PermissionsEnum::ADVISOR_CAPACITY_MANAGEMENT, auth()->user())) {
 
-            $quoteTypes = $this->getQuoteTypesByUser(auth()->user()->id);
-            $quoteTypeIds = collect( $quoteTypes)->pluck('id')->all();
-
+            $quoteTypesByUser = $this->getQuoteTypesByUser(auth()->user()->id);
+            $quoteTypeIds = collect( $quoteTypesByUser)->pluck('id')->all();
+            $quoteTypes = QuoteTypeRepository::GetList();
             $data = $this->leadAllocationService->getAllocationLeads($quoteTypeIds);
-          
 
-      
             return inertia('LeadAllocation/AdvisorsLeadCaps', [
                 'quoteTypes' => $quoteTypes,
                 'allocationsLeads' =>  $data,
@@ -282,7 +281,7 @@ class LeadAllocationController extends Controller
         }
     }
 
-    public function storeLeadAllocation(Request $request){
+    public function storeLeadAllocation(LeadAllocationRequest $request){
       
        $validateDate =(object) $request->validated();
 
@@ -290,50 +289,42 @@ class LeadAllocationController extends Controller
        
         if(!empty($isLead))
            return back()->with('error','Advisor already has an assigned capacity value for this quote type');
-        
 
-        $newLead = $this->leadAllocationService->createLeadAllocationRecord($request->user_id, $validateDate );
-      
-
-        return redirect(route('lead.allocations.index'))->with('message', 'Advisor capacity assigned successfully');
-       
-        
+        $this->leadAllocationService->createLeadAllocationRecord($request->user_id, $validateDate );
+    
+        return redirect(route('lead.allocations.index'))->with('message', 'Advisor capacity assigned successfully'); 
     }
     
     public function deleteLeadAllocation($id){
         
-        $is_delete = $this->leadAllocationService->deleteAllocationLead($id);
+        $isDelete = $this->leadAllocationService->deleteAllocationLead($id);
         
-        if($is_delete){
+        if($isDelete){
 
             return back()->with('success','Lead allocation deleted successfully');
         }
 
+        return back()->with('error','something went wrong');
     }
     
-
     public function getHealthAndMotorAdvisorsList(){
         
-        $health_advisors = $this->leadAllocationService->getAdvisorsByModelType(QuoteTypes::HEALTH->value);
-        $motor_advisors = $this->leadAllocationService->getAdvisorsByModelType(QuoteTypes::CAR->value);
+        $healthAdvisors = $this->leadAllocationService->getAdvisorsByModelType(QuoteTypes::HEALTH->value);
+        $motorAdvisors = $this->leadAllocationService->getAdvisorsByModelType(QuoteTypes::CAR->value);
 
-        $advisors_collection = collect([$health_advisors,$motor_advisors]);
-        $advisors_collapsed = $advisors_collection->collapse();
-        $advisors = $advisors_collapsed->unique()->values()->all();
+        $advisorsCollection = collect([$healthAdvisors,$motorAdvisors]);
+        $advisorsCollapsed = $advisorsCollection->collapse();
+        $advisors = $advisorsCollapsed->unique()->values()->all();
 
         return $advisors;
     }
 
     public function createLeadAllocation(Request $request){
-      
-
-         
         return inertia('LeadAllocation/CreateAdvisorsLeadCaps', [
          
             'advisors'=> $this->getHealthAndMotorAdvisorsList(),
         ]);
     }
-
 
     public function updateCapsLeadAllocation(Request $request){
         
@@ -349,7 +340,7 @@ class LeadAllocationController extends Controller
                 }
             }
         }
-
+        
         return  redirect(route('lead.allocations.index'))->with('message', 'Advisor capacity assigned successfully');
     }
 

@@ -22,20 +22,20 @@ const loader = reactive({
 const { isRequired } = useRules();
 const isEmptyField = ref(false);
 const leadForm = useForm({
-    quote_type_id: props.lead?.quote_type_id ,
-    user_id: props.lead?.user_id ,
+    quoteTypeId: props.lead?.quote_type_id ,
+    userId: props.lead?.user_id ,
     allocation_count: props.lead?.allocation_count ,
-    max_capacity: props.lead?.max_capacity ,
+    maxCapacity: props.lead?.max_capacity ,
     is_available: props.lead?.is_available,
 
 });
 
-watch(() => leadForm?.user_id, async (user_id) => { 
+watch(() => leadForm?.userId, async (userId) => { 
    // Watch for changes in user_id
-   if (user_id) {
+   if (userId) {
      
      quoteTypes.value = [];
-     await getAdvisorByQuoteType(user_id); // Call the function to fetch advisors
+     await getAdvisorByQuoteType(userId); // Call the function to fetch advisors
    }
 });
 
@@ -58,7 +58,7 @@ const getAdvisorByQuoteType = async (id) => {
 
  const onSubmit = (isValid) => {
   
-  if (leadForm.quote_type_id == null) {
+  if (leadForm.quoteTypeId == null) {
     isEmptyField.value = true;
   } else {
     isEmptyField.value = false;
@@ -105,7 +105,7 @@ const getAdvisorByQuoteType = async (id) => {
       <div class="grid sm:grid-cols-2 gap-4">
         <x-field label="Advisors" required>
         <x-select
-            v-model="leadForm.user_id"
+            v-model="leadForm.userId"
           
             :rules="[isRequired]"
           
@@ -116,13 +116,13 @@ const getAdvisorByQuoteType = async (id) => {
               }))
             "
             class="w-full"
-            :error="leadForm.errors.user_id"
+            :error="leadForm.errors.userId"
           />
           </x-field>
         <x-field v-if="quoteTypes.length > 0"  label="Quote Type" required>
        
           <x-select
-            v-model="leadForm.quote_type_id"
+            v-model="leadForm.quoteTypeId"
             
             :rules="[isRequired]"
             :options="
@@ -132,19 +132,19 @@ const getAdvisorByQuoteType = async (id) => {
               }))
             "
             class="w-full"
-            :error="leadForm.errors.quote_type_id"
+            :error="leadForm.errors.quoteTypeId"
           />
         </x-field>
       
 
           <x-field label="Max Capacity" required>
           <x-input
-            v-model="leadForm.max_capacity"
+            v-model="leadForm.maxCapacity"
             type="number"
             :rules="[isRequired]"
             min="-1"
             class="w-full"
-            :error="leadForm.errors.max_capacity"
+            :error="leadForm.errors.maxCapacity"
           />
         </x-field>
       </div>
