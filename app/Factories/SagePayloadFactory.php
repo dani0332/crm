@@ -131,17 +131,17 @@ class SagePayloadFactory
 
             if ($type == SageEnum::SCT_CORRECTION) {
 
-                $payLoad->Invoices[0]->DocumentNumber = $payLoad->Invoices[0]->DocumentNumber.'-NEW'; 
-                $payLoad->Invoices[0]->InvoiceDescription = $payLoad->Invoices[0]->InvoiceDescription.' - NEW'; 
-                // $payLoad->Invoices[0]->DocumentDate = $request->insurerInvoiceDate; 
-                // $payLoad->Invoices[0]->DueDate = $request->paymentDueDate; 
+                $payLoad->Invoices[0]->DocumentNumber = $payLoad->Invoices[0]->DocumentNumber.'-CORR'; 
+                $payLoad->Invoices[0]->InvoiceDescription = $payLoad->Invoices[0]->InvoiceDescription.' - CORR'; 
+                $payLoad->Invoices[0]->DocumentDate = $request->insurerInvoiceDate; //
+                $payLoad->Invoices[0]->DueDate = $request->paymentDueDate; //
                 $payLoad->Invoices[0]->DocumentTotalBeforeTaxes = $request->premiumWithoutTax;
                 $payLoad->Invoices[0]->DocumentTotalIncludingTax = $request->premiumWithTax;
-                // $payLoad->Invoices[0]->PostingDate = $request->bookingDate;
+                $payLoad->Invoices[0]->PostingDate = $request->bookingDate; //
                 $payLoad->Invoices[0]->DocumentType = 'DebitNote'; 
                 $payLoad->Invoices[0]->ApplytoDocument = $applyToDocument;
                 
-                // $payLoad->Invoices[0]->InvoicePaymentSchedules[0]->DueDate = $request->paymentDueDate;
+                $payLoad->Invoices[0]->InvoicePaymentSchedules[0]->DueDate = $request->paymentDueDate; //
                 $payLoad->Invoices[0]->InvoiceOptionalFields = self::createOptionalFields($request);
                 
                 $sageRequestType = SageEnum::SRT_CREATE_AP_PREM_CORR_INV;
@@ -216,17 +216,17 @@ class SagePayloadFactory
 
             if ($type == SageEnum::SCT_CORRECTION) {
 
-                $payLoad->Invoices[0]->DocumentNumber = $payLoad->Invoices[0]->DocumentNumber.'-NEW'; 
-                $payLoad->Invoices[0]->InvoiceDescription = $payLoad->Invoices[0]->InvoiceDescription.' - NEW'; 
-                // $payLoad->Invoices[0]->DocumentDate = $request->insurerInvoiceDate; 
-                // $payLoad->Invoices[0]->DueDate = $request->paymentDueDate; 
+                $payLoad->Invoices[0]->DocumentNumber = $payLoad->Invoices[0]->DocumentNumber.'-CORR'; 
+                $payLoad->Invoices[0]->InvoiceDescription = $payLoad->Invoices[0]->InvoiceDescription.' - CORR'; 
+                $payLoad->Invoices[0]->DocumentDate = $request->insurerInvoiceDate; //
+                $payLoad->Invoices[0]->DueDate = $request->paymentDueDate; //
                 $payLoad->Invoices[0]->DocumentTotalBeforeTaxes = $request->premiumWithoutTax;
                 $payLoad->Invoices[0]->DocumentTotalIncludingTax = $request->premiumWithTax;
-                // $payLoad->Invoices[0]->PostingDate = $request->bookingDate;
+                $payLoad->Invoices[0]->PostingDate = $request->bookingDate; //
                 $payLoad->Invoices[0]->DocumentType = 'CreditNote'; 
                 $payLoad->Invoices[0]->ApplytoDocument = $applyToDocument;
                 
-                // $payLoad->Invoices[0]->InvoicePaymentSchedules[0]->DueDate = $request->paymentDueDate;
+                $payLoad->Invoices[0]->InvoicePaymentSchedules[0]->DueDate = $request->paymentDueDate; //
                 $payLoad->Invoices[0]->InvoiceOptionalFields = self::createOptionalFields($request);
 
                 $sageRequestType = SageEnum::SRT_CREATE_AR_DISC_CORR_INV;
@@ -342,13 +342,13 @@ class SagePayloadFactory
 
             if ($type == SageEnum::SCT_CORRECTION) {
 
-                $payLoad->Invoices[0]->DocumentNumber = $payLoad->Invoices[0]->DocumentNumber.'-NEW'; 
-                $payLoad->Invoices[0]->InvoiceDescription = $payLoad->Invoices[0]->InvoiceDescription.' - NEW'; 
-                // $payLoad->Invoices[0]->DocumentDate = $request->insurerInvoiceDate; 
-                // $payLoad->Invoices[0]->DueDate = $request->paymentDueDate; 
+                $payLoad->Invoices[0]->DocumentNumber = $payLoad->Invoices[0]->DocumentNumber.'-CORR'; 
+                $payLoad->Invoices[0]->InvoiceDescription = $payLoad->Invoices[0]->InvoiceDescription.' - CORR'; 
+                $payLoad->Invoices[0]->DocumentDate = $request->insurerInvoiceDate; //
+                $payLoad->Invoices[0]->DueDate = $request->paymentDueDate; //
                 $payLoad->Invoices[0]->DocumentTotalBeforeTax = $request->premiumWithoutTax;
                 $payLoad->Invoices[0]->DocumentTotalIncludingTax = $request->premiumWithTax;
-                // $payLoad->Invoices[0]->PostingDate = $request->bookingDate;
+                $payLoad->Invoices[0]->PostingDate = $request->bookingDate; //
                 $payLoad->Invoices[0]->DocumentType = 'DebitNote'; 
                 $payLoad->Invoices[0]->ApplytoDocument = $applyToDocumentPrem;
 
@@ -356,17 +356,17 @@ class SagePayloadFactory
                 $payLoad->Invoices[0]->InvoiceDetails[0]->ExtendedAmountWithTIP = $request->premiumWithTax;
                 $payLoad->Invoices[0]->InvoiceDetails[0]->ExtendedAmountWithoutTIP = $request->premiumWithoutTax;
                 
-                // $payLoad->Invoices[0]->InvoicePaymentSchedules[0]->DueDate = $request->paymentDueDate;
+                $payLoad->Invoices[0]->InvoicePaymentSchedules[0]->DueDate = $request->paymentDueDate; //
                 $payLoad->Invoices[0]->InvoiceOptionalFields = self::createOptionalFields($request);
 
                 // Commision Invoice Correction
-                $payLoad->Invoices[1]->DocumentNumber = $payLoad->Invoices[1]->DocumentNumber.'-NEW'; 
-                $payLoad->Invoices[1]->InvoiceDescription = $payLoad->Invoices[1]->InvoiceDescription.' - NEW'; 
-                // $payLoad->Invoices[1]->DocumentDate = $request->insurerInvoiceDate; 
-                // $payLoad->Invoices[1]->DueDate = $request->paymentDueDate; 
+                $payLoad->Invoices[1]->DocumentNumber = $payLoad->Invoices[1]->DocumentNumber.'-CORR'; 
+                $payLoad->Invoices[1]->InvoiceDescription = $payLoad->Invoices[1]->InvoiceDescription.' - CORR'; 
+                $payLoad->Invoices[1]->DocumentDate = $request->insurerInvoiceDate; //
+                $payLoad->Invoices[1]->DueDate = $request->paymentDueDate; //
                 $payLoad->Invoices[1]->DocumentTotalBeforeTax = $request->commission;
                 $payLoad->Invoices[1]->DocumentTotalIncludingTax = $request->commissionIncludingVat;
-                // $payLoad->Invoices[1]->PostingDate = $request->bookingDate;
+                $payLoad->Invoices[1]->PostingDate = $request->bookingDate; //
                 $payLoad->Invoices[1]->DocumentType = 'DebitNote'; 
                 $payLoad->Invoices[1]->ApplytoDocument = $applyToDocumentComm;
 
@@ -374,7 +374,7 @@ class SagePayloadFactory
                 $payLoad->Invoices[1]->InvoiceDetails[0]->ExtendedAmountWithTIP = $request->commissionIncludingVat;
                 $payLoad->Invoices[1]->InvoiceDetails[0]->ExtendedAmountWithoutTIP = $request->commission;
                 
-                // $payLoad->Invoices[1]->InvoicePaymentSchedules[0]->DueDate = $request->paymentDueDate;
+                $payLoad->Invoices[1]->InvoicePaymentSchedules[0]->DueDate = $request->paymentDueDate; //
                 $payLoad->Invoices[1]->InvoiceOptionalFields = self::createOptionalFields($request);
                 
                 $sageRequestType = SageEnum::SRT_CREATE_AR_PREM_COMM_CORR_INV;
