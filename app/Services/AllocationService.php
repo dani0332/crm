@@ -80,16 +80,16 @@ class AllocationService
         }
     }
 
-    public function getLeadAllocationRecordByUserId($userId,$quoteTypeId=null)
+    public function getLeadAllocationRecordByUserId($userId, $quoteTypeId = null)
     {
         try {
             $leadAllocation = LeadAllocation::latest();
 
-            if(!empty($quoteTypeId)){
+            if (! empty($quoteTypeId)) {
 
                 $leadAllocation = $leadAllocation->where('quote_type_id', $quoteTypeId);
             }
-            
+
             $leadAllocation = $leadAllocation->where('user_id', $userId)->first();
 
             return $leadAllocation;
@@ -98,11 +98,11 @@ class AllocationService
         }
     }
 
-    public function addAllocationCounts($userId, $quoteTypeId=null)
+    public function addAllocationCounts($userId, $quoteTypeId = null)
     {
-        $allocationRecord = $this->getLeadAllocationRecordByUserId($userId,$quoteTypeId);
+        $allocationRecord = $this->getLeadAllocationRecordByUserId($userId, $quoteTypeId);
 
-        if(!empty($allocationRecord)){
+        if (! empty($allocationRecord)) {
             $allocationRecord->auto_assignment_count = $allocationRecord->auto_assignment_count + 1;
             $allocationRecord->allocation_count = $allocationRecord->allocation_count + 1;
             $allocationRecord->updated_at = now();
@@ -110,7 +110,6 @@ class AllocationService
             $allocationRecord->save();
 
         }
-       
 
     }
 
@@ -155,7 +154,7 @@ class AllocationService
         return $assignmentText;
     }
 
-    public function adjustAllocationCounts($newAdvisorId, $lead, $previousAdvisorId, $oldAdvisorAssignedDate, $previousAssignmentType, $quoteTypeId=null)
+    public function adjustAllocationCounts($newAdvisorId, $lead, $previousAdvisorId, $oldAdvisorAssignedDate, $previousAssignmentType, $quoteTypeId = null)
     {
         // Check if $lead or $newAdvisorId is not provided
         if ($lead === null || $newAdvisorId === null) {

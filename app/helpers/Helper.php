@@ -1,18 +1,17 @@
 <?php
 
-use Carbon\Carbon;
-use App\Models\User;
-use App\Enums\QuoteTypes;
-use App\Models\HealthQuote;
-use App\Enums\quoteTypeCode;
+use App\Enums\IMCRMSearchTypesEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
-use Illuminate\Support\Facades\DB;
-use App\Enums\IMCRMSearchTypesEnum;
-use App\Services\HealthQuoteService;
-use Illuminate\Support\Facades\Auth;
+use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypes;
 use App\Models\CustomerAdditionalInfo;
+use App\Models\HealthQuote;
+use App\Services\HealthQuoteService;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 if (! function_exists('generate_code')) {
@@ -666,4 +665,3 @@ if (! function_exists('apiResponse')) {
         ], $statusCode);
     }
 }
-

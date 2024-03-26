@@ -53,7 +53,7 @@ class CarLeadAllocationDashboardService extends BaseService
             if (! auth()->user()->hasRole(RolesEnum::Admin)) {
                 $userTeamIds = $this->getUserTeams(auth()->user()->id)->pluck('id')->toArray();
                 $users = $users->whereIn('teams.id', $userTeamIds);
-           
+
             }
             if (! auth()->user()->hasRole(RolesEnum::SuperManagerLeadAllocation)) {
                 $users = $users->where('users.manager_id', auth()->user()->id);
