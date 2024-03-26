@@ -1262,7 +1262,7 @@ const validateCapturePayment = (isValid) => {
 }
 
 const addPayment = isValid => {
-  if (props.sendUpdate && (providerId.value === null || providerId.value === undefined)) {
+  if (! props.sendUpdate?.insurance_provider_id && (providerId.value === null || providerId.value === undefined)) {
     notification.error({
       title: 'Please select an insurance provider.',
       position: 'top',
