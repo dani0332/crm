@@ -824,12 +824,12 @@ class CRUDService extends BaseService
         }
 
         return QuoteStatusLog::where('quote_type_id', $quoteTypeId)
-                ->where('quote_request_id', $record->id)
-                ->where(function ($query) {
-                    $query->where('current_quote_status_id', QuoteStatusEnum::PolicyIssued)
-                        ->orWhere('previous_quote_status_id', QuoteStatusEnum::PolicyIssued);
-                })
-                ->first() !== null;
+            ->where('quote_request_id', $record->id)
+            ->where(function ($query) {
+                $query->where('current_quote_status_id', QuoteStatusEnum::PolicyIssued)
+                    ->orWhere('previous_quote_status_id', QuoteStatusEnum::PolicyIssued);
+            })
+            ->first() !== null;
     }
 
     public function getInquiryLogs($modelType, $uuid)
