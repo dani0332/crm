@@ -532,6 +532,14 @@ class SageApiService
                 $this->logSageApiCall($payLoadOptions, $postedResponse, $quote, $currentStep, $totalSteps);
             }
 
+            if (isset($postedResponse['error'])) {
+                $this->logSageApiCall($payLoadOptions, $postedResponse, $quote, $currentStep, $totalSteps, 'fail');
+                $returnMessage['status'] = false;
+                $returnMessage['message'] = 'Error while making split prepayments to sage';
+
+                return $returnMessage;
+            }
+
             $batchNumber = $postedResponse['BatchNumber'];
 
             //12

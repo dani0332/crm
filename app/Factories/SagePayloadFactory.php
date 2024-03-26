@@ -658,21 +658,21 @@ class SagePayloadFactory
 
         foreach ($splitPayments as $key => $item) {
 
-            $arr['BatchType'] = 'CA';
-            $arr['CustomerNumber'] = $sage_customer_number;
-            $arr['DocumentNumber'] = $payment->insurer_tax_number;
-            $arr['PaymentNumber'] = $key + 1;
-            $arr['ReceiptTransactionType'] = 'Receipt';
-            $arr['CustomerReceiptAmount'] = floatval($item->payment_amount);
-            $data[] = $arr;
+            $receiptData['BatchType'] = 'CA';
+            $receiptData['CustomerNumber'] = $sage_customer_number;
+            $receiptData['DocumentNumber'] = $payment->insurer_tax_number;
+            $receiptData['PaymentNumber'] = $key + 1;
+            $receiptData['ReceiptTransactionType'] = 'Receipt';
+            $receiptData['CustomerReceiptAmount'] = floatval($item->payment_amount);
+            $data[] = $receiptData;
 
-            $temp['BatchType'] = 'CA';
-            $temp['CustomerNumber'] = $sage_customer_number;
-            $temp['DocumentNumber'] = $item->sage_reciept_id;
-            $temp['PaymentNumber'] = 1;
-            $temp['ReceiptTransactionType'] = 'Receipt';
-            $temp['CustomerReceiptAmount'] = -$item->payment_amount;
-            $data[] = $temp;
+            $prePaymentData['BatchType'] = 'CA';
+            $prePaymentData['CustomerNumber'] = $sage_customer_number;
+            $prePaymentData['DocumentNumber'] = $item->sage_reciept_id;
+            $prePaymentData['PaymentNumber'] = 1;
+            $prePaymentData['ReceiptTransactionType'] = 'Receipt';
+            $prePaymentData['CustomerReceiptAmount'] = -$item->payment_amount;
+            $data[] = $prePaymentData;
         }
 
         return $data;

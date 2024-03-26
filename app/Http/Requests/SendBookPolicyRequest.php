@@ -45,6 +45,9 @@ class SendBookPolicyRequest extends FormRequest
                     $payment = Payment::where('code', $quote->code)->first();
                     $paymentSplit = PaymentSplits::where('code', $quote->code)->first();
                     $splits = PaymentSplits::where('code', $quote->code)->get();
+
+                    // Blow code is for checking if payment and payment split record exists or not which is required for sage
+
                     if ($payment->first() && $paymentSplit->first()) {
                         if (empty($payment->insurer_invoice_date)) {
                             $validator->errors()->add('value', 'Insurer Invoice date is required');
