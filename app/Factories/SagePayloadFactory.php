@@ -874,7 +874,6 @@ class SagePayloadFactory
 
     public static function sagePayLoad($quoteType, $quote, $payment, $splitPayments) 
     {
-        // Todo:: Need to confirm on this, those values which are fetching from quote is correct for Send update payment case?
         $response = [
             'discount' => floatval($payment->discount_value),
             'invoiceDescription' => $payment->invoice_description,

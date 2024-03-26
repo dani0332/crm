@@ -40,7 +40,6 @@ class SendUpdateRequest extends FormRequest
 
             if($sendUpdateLog->status == SendUpdateLogStatusEnum::UPDATE_BOOKED)
                 $validator->errors()->add('error', 'Update already booked');
-            
 
             $sendUpdateCategoryCode = $sendUpdateLog?->category->code ?? '';
             $categorySubType = $this->sendUpdate->option->code ?? '';

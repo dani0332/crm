@@ -35,10 +35,9 @@ class SageApiService
         $this->sageRequestUrl = env('SAGE_300_BASE_URL').env('SAGE_300_VERSION');
         $this->sageBatchNumber = '';
         $this->recursiveCallStatus = SageEnum::STATUS_SUCCESS;
-        $this->payloadOptions = [];
     }
 
-    // This payload moved to SagePayloadFactory, Need to verify
+    // This payload moved to SagePayloadFactory
     public static function sagePayLoad($modelType, $payment, $quote, $paymentSplits)
     {
         $sageRequest = new \stdClass();
@@ -86,7 +85,7 @@ class SageApiService
         return $sageRequest;
     }
 
-    // Code Refactor, Old function verifySageCustomer updated function sageCustomer, Need to verify
+    // Code Refactor, Old function verifySageCustomer updated function sageCustomer
     public function sageCustomer($quoteTypeId, $quote, $totalSteps = 4) 
     {
         $sageCustomerNumber = false;
