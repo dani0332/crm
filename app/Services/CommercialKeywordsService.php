@@ -14,11 +14,12 @@ class CommercialKeywordsService extends BaseService
     {
         $latestRecord = CommercialKeyword::select('id')->orderByDesc('id')->first();
 
-        CommercialKeyword::create([
+        $keyword = CommercialKeyword::create([
             'id' => ($latestRecord->id + 1),
             'name' => $attributes['name'],
             'key' => strtoupper(str_replace(' ', '_', $attributes['name'])),
         ]);
+
 
         return redirect()->back()->with('success', 'Commercial Keyword has been stored');
     }

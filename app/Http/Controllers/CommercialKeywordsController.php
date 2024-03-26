@@ -36,20 +36,19 @@ class CommercialKeywordsController extends Controller
     {
         $gridData = CommercialKeyword::query();
 
-        if ($request->ajax()) {
-            if (isset($request->name) && ! empty($request->name)) {
-                $name = $request->name;
-                $gridData = $gridData->where(function ($query) use ($name) {
-                    $query->whereRaw('LOWER(name) LIKE ?', [strtolower("%{$name}%")]);
-                });
-            }
-
-            return DataTables::of($gridData->orderByDesc('id')->get())
-                ->addIndexColumn()
-                ->make(true);
+        if(isset($request->name) && ! empty($request->name)){
+            $name = $request->name;
+            $gridData = $gridData->where(function ($query) use ($name) {
+                $query->whereRaw('LOWER(name) LIKE ?', [strtolower("%{$name}%")]);
+            });
         }
-
-        return view('commercialkeywords.index');
+        
+        $gridData = $gridData->orderByDesc('id')->paginate();
+        return inertia('Admin/AllocationConfig/CommercialKeywords/Index', [
+            'data' => $gridData,
+           
+        ]);
+        // return view('commercialkeywords.index');
     }
 
     /**
@@ -59,7 +58,8 @@ class CommercialKeywordsController extends Controller
      */
     public function create()
     {
-        return view('commercialkeywords.add');
+        return inertia('Admin/AllocationConfig/CommercialKeywords/Form', );
+        // return view('commercialkeywords.add');
     }
 
     /**
