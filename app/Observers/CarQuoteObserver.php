@@ -4,9 +4,12 @@ namespace App\Observers;
 
 use App\Events\CarQuoteAdvisorUpdated;
 use App\Models\CarQuote;
+use App\Traits\PersonalQuoteSyncTrait;
 
 class CarQuoteObserver
 {
+    use PersonalQuoteSyncTrait;
+
     public function updated(CarQuote $lead)
     {
         $changes = [];
@@ -24,5 +27,7 @@ class CarQuoteObserver
             $oldAdvisorId = $changes['advisor_id']['old'];
             event(new CarQuoteAdvisorUpdated($lead, $oldAdvisorId));
         }
+
+        $this->syncQuote($lead, $lead->getDirty());
     }
 }

@@ -2,11 +2,24 @@
 
 namespace App\Services;
 
+
 use Carbon\Carbon;
 use App\Models\Rule;
 use App\Models\Team;
 use App\Models\Tier;
 use App\Models\User;
+use App\Enums\ApplicationStorageEnums;
+use App\Enums\AssignmentTypeEnum;
+use App\Enums\CarPlanType;
+use App\Enums\InsuranceProvidersEnum;
+use App\Enums\LeadSourceEnum;
+use App\Enums\QuoteStatusEnum;
+use App\Enums\RuleTypeEnum;
+use App\Enums\TeamNameEnum;
+use App\Enums\TiersEnum;
+use App\Enums\TiersIdEnum;
+use App\Enums\UserStatusEnum;
+use App\Jobs\SendOCBIntroEmailJob;
 use App\Models\CarMake;
 use App\Enums\TiersEnum;
 use App\Models\CarModel;
@@ -96,7 +109,7 @@ class CarAllocationService extends AllocationService
     public function getExcludedUserIds()
     {
         // Define a list of excluded team names.
-        $excludedTeams = [TeamNameEnum::AFFINITY, TeamNameEnum::RENEWALS];
+        $excludedTeams = [TeamNameEnum::AFFINITY];
 
         // Retrieve the IDs of excluded teams.
         $excludedTeamIds = Team::whereIn('name', $excludedTeams)->select('id')->get();
@@ -134,6 +147,26 @@ class CarAllocationService extends AllocationService
         info('yearOfManufacture is: '.$yearOfManufacture.' and number of plans found are: '.count($plans));
 
         return [$plans, $yearOfManufacture];
+    }
+
+    public function shouldEnforceSICCheck($lead, $tier): bool
+    {
+        [$plans, $yearOfManufacture] = $this->getPlanAndYear($lead);
+        if ($tier->id == TiersIdEnum::TIER_5 && count($plans) > 0) {
+            return true;
+        }
+
+        return false;
+    }
+
+    public function processSICFlow($lead, $tier): void
+    {
+        $lead->sic_flow_enabled = 1;
+        $lead->tier_id = $tier->id;
+        $lead->save();
+        info('SIC flow is enabled for lead : '.$lead->uuid.' , the updated field : '.$lead->sic_flow_enabled);
+        SendOCBIntroEmailJob::dispatch($lead->uuid, null, true);
+        info('SIC flow is email is dispatched for lead : '.$lead->uuid);
     }
 
     /**
@@ -202,11 +235,21 @@ class CarAllocationService extends AllocationService
         return null;
     }
 
-    public function getEligibleUserForAllocation($tierId, $advisorId, $isReassignmentJob, $leadSource)
+    public function getEligibleUserForAllocation($tierId, $advisorId, $isReassignmentJob, $leadSource, $teamId)
     {
         $tierUserIds = $this->getTierUserIds($tierId, $advisorId);
 
         $tierUserIds = $this->executeRevivalCheck($leadSource, $tierUserIds);
+
+        if ($teamId) {
+            $teamUserIds = UserTeams::where('team_id', $teamId)->select('user_id')->get();
+            if ($teamUserIds->count() > 0) {
+                $teamUserIds = $teamUserIds->pluck('user_id')->toArray();
+            } else {
+                $teamUserIds = [];
+            }
+            $tierUserIds = array_intersect($tierUserIds->toArray(), $teamUserIds);
+        }
 
         // Define the order in which user statuses should be considered.
         $statusOrder = [
@@ -330,7 +373,7 @@ class CarAllocationService extends AllocationService
             )->get();
     }
 
-    public function determineFinalUserId($lead, $eligibleUsers, $rules): mixed
+    public function determineFinalUserId($lead, $eligibleUsers, $rules, $teamId): mixed
     {
         // Extract user IDs from the eligible user data and convert them to an array.
         $availableUserIds = collect($eligibleUsers)->pluck('user_id')->toArray();
@@ -347,7 +390,7 @@ class CarAllocationService extends AllocationService
             info('Rule found, and users against the rule are: '.json_encode($finalEligibleUserIds));
         } else {
             // If no rules are found, get user IDs from rule lead sources.
-            $ruleUsers = $this->getRuleUsers();
+            $ruleUsers = ! $teamId || $teamId != 0 ? $this->getRuleUsers() : [];
 
             info('No rule found against this lead ('.$lead->uuid.'), so filtering rule users: '.json_encode($ruleUsers));
 

@@ -29,7 +29,7 @@ class HealthAllocationService extends AllocationService
     public function fetchLead($quoteId, $overrideAdvisorId)
     {
         $healthQuoteQuery = HealthQuote::where('uuid', $quoteId)
-            ->where('quote_status_id', QuoteStatusEnum::Qualified)
+            ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate, QuoteStatusEnum::Lost])
             ->whereNotNull('health_quote_request.price_starting_from');
 
         if (! $overrideAdvisorId) {
