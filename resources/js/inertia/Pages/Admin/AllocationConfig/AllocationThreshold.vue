@@ -10,7 +10,6 @@ const teamsForm = useForm({
 });
 
 let minErrorTeam = ref('');
-const checkMinPriceEBP = computed(() => {});
 const validateTeams = () => {
   let valid = true;
   let teams = teamsForm.teams.map(x => {
@@ -39,6 +38,7 @@ const validateTeams = () => {
           position: 'top',
         });
         valid = false;
+        break;
       }
       if (teams[i].max_price < 2) {
         notification.error({
@@ -49,6 +49,7 @@ const validateTeams = () => {
           position: 'top',
         });
         valid = false;
+        break;
       }
     }
     if (i == 2 || i == 4) {
@@ -64,6 +65,8 @@ const validateTeams = () => {
             'Invalid min range configuration. Please review the values for other teams.',
           position: 'top',
         });
+        valid = false;
+        break;
       }
       if (maxPriceValue < 2 || maxPriceValue <= minPriceValue) {
         notification.error({
@@ -72,23 +75,43 @@ const validateTeams = () => {
             'Invalid max range configuration. Please review the values for other teams.',
           position: 'top',
         });
+        valid = false;
+        break;
       }
     }
-    valid = false;
   }
+  return valid;
 };
 
+const generateTeamsToPost = () => {
+  return teamsForm.teams.map(team => {
+    return {
+      id: team.id,
+      min: parseFloat(team.min_price),
+      max: parseFloat(team.max_price),
+    };
+  });
+};
 const updateTeams = () => {
-  validateTeams();
-  //   if () {
-  //     teamsForm.post(route('allocation-threshold.update'), {
-  //       preserveState: true,
-  //       preserveScroll: true,
-  //       onSuccess: () => {
-  //         toast.success('Allocation Threshold updated successfully');
-  //       },
-  //     });
-  //   }
+  let valid = validateTeams();
+  if (valid) {
+    let teams = generateTeamsToPost();
+    axios
+      .post('/update-team-allocation-threshold', { teams })
+      .then(response => {
+        notification.success({
+          title: 'Allocation Threshold updated successfully',
+          position: 'top',
+        });
+      })
+      .catch(error => {
+        notification.error({
+          title: 'Error',
+          message: 'Something went wrong',
+          position: 'top',
+        });
+      });
+  }
 };
 </script>
 <template>
