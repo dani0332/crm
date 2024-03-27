@@ -1915,7 +1915,6 @@ class CRUDController extends Controller
 
             return response()->json(['error' => 'OCB email sending failed, please try again.'], 500);
         }
-
     }
 
     public function manualTierAssignment(Request $request)

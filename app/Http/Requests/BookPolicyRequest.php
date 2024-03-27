@@ -31,8 +31,8 @@ class BookPolicyRequest extends FormRequest
             'transaction_payment_status' => 'nullable',
             'commission_percentage' => 'nullable',
             'broker_invoice_number' => 'nullable',
-            'commission_vat_not_applicable' => 'required_without:commission_vat_applicable|nullable|numeric|between:0,9999999999999.99',
-            'commission_vat_applicable' => 'required_without:commission_vat_not_applicable|nullable|numeric|between:0,9999999999999.99',
+            'commission_vat_not_applicable' => 'required_without:commission_vat_applicable|nullable|numeric|between:0,9999999.99',
+            'commission_vat_applicable' => 'nullable|numeric|between:0,9999999.99',
             'total_commission' => 'nullable',
             'invoice_description' => 'required|max:60',
             'vat_on_commission' => 'nullable',
@@ -67,11 +67,10 @@ class BookPolicyRequest extends FormRequest
     public function messages()
     {
         return [
-            'commission_vat_not_applicable.required_without' => 'Commmission (VAT APPLICABLE) is required',
+            'commission_vat_not_applicable.required_without' => 'Commmission (VAT APPLICABLE) OR Commmission (VAT NOT APPLICABLE) is required',
             'commission_vat_not_applicable.between' => 'Commmission (VAT NOT APPLICABLE) must be less than 13 digits',
 
             'commission_vat_applicable.between' => 'Commmission (VAT APPLICABLE) must be less than 13 digits',
-            'commission_vat_applicable.required_without' => 'Commmission (VAT NOT APPLICABLE) is required',
 
         ];
     }
