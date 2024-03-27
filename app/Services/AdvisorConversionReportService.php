@@ -201,7 +201,6 @@ class AdvisorConversionReportService extends BaseService
             quoteTypeCode::Life => PermissionsEnum::LIFE_CONVERSION_REPORT,
             quoteTypeCode::Home => PermissionsEnum::HOME_CONVERSION_REPORT,
             quoteTypeCode::Business => PermissionsEnum::BUSINESS_CONVERSION_REPORT,
-            quoteTypeCode::GroupMedical => PermissionsEnum::GROUPMEDICAL_CONVERSION_REPORT,
         ];
 
         $lobs = array_filter($lobs, function ($permission) {
@@ -209,7 +208,9 @@ class AdvisorConversionReportService extends BaseService
         });
 
         $lobs = QuoteTypeRepository::GetList(array_keys($lobs))->pluck('code', 'text')->toArray();
-        $lobs = array_merge(['Group Medical Insurance' => quoteTypeCode::GroupMedical], $lobs);
+        if(Auth::user()->can(PermissionsEnum::GROUPMEDICAL_CONVERSION_REPORT)) {
+            $lobs = array_merge(['Group Medical Insurance' => quoteTypeCode::GroupMedical], $lobs);
+        }
 
         return $lobs;
     }
@@ -325,8 +326,9 @@ class AdvisorConversionReportService extends BaseService
             Carbon::parse(now())->endOfDay()->format($dateFormat),
         ];
 
+        $lobs = $this->getLobByPermissions();
         return [
-            'lob' => quoteTypeCode::Car,
+            'lob' => reset($lobs),
             'advisorAssignedDates' => $advisorAssignedDates,
             'isCommercial' => 'All',
         ];

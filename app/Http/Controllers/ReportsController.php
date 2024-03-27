@@ -17,11 +17,18 @@ use Illuminate\Http\Request;
 use App\Enums\TeamNameEnum;
 use App\Enums\quoteTypeCode;
 use Illuminate\Support\Facades\Auth;
+use App\Enums\PermissionsEnum;
 
 class ReportsController extends Controller
 {
     use GetUserTreeTrait;
     use TeamHierarchyTrait;
+
+    public function __construct()
+    {
+        $advisorConverionReportPermissions = implode('|', PermissionsEnum::getAdvisorConverionReportPermissions());
+        $this->middleware(['permission:' . $advisorConverionReportPermissions],['only' => ['renderAdvisorConversionReport']]);
+    }
 
     public function renderAdvisorConversionReport(Request $request, AdvisorConversionReportService $advisorConversionReportService)
     {
