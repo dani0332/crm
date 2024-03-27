@@ -75,7 +75,7 @@ class BusinessQuoteRepository extends BaseRepository
                 'previousAdvisor',
                 'businessQuoteRequestDetail.lostReason',
                 'customer',
-                'lookUp',
+                'transactionType',
                 'quoteRequestEntityMapping' => function ($entityMapping) {
                     $entityMapping->with('entity');
                 },

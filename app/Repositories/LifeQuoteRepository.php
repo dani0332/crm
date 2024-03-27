@@ -94,7 +94,7 @@ class LifeQuoteRepository extends BaseRepository
         $quote = $this->where($column, $value)->with([
             'advisor', 'quoteStatus', 'nationality', 'previousAdvisor', 'lifeQuoteRequestDetail.lostReason',
             'purposeOfInsurance', 'children', 'currency', 'insuranceTenure', 'numberOfYears', 'maritalStatus',
-            'paymentStatus', 'customer.additionalContactInfo', 'lookUp', 'quoteRequestEntityMapping' => function ($entityMapping) {
+            'paymentStatus', 'customer.additionalContactInfo', 'transactionType', 'quoteRequestEntityMapping' => function ($entityMapping) {
                 $entityMapping->with('entity');
             },
         ])
@@ -116,7 +116,7 @@ class LifeQuoteRepository extends BaseRepository
         $data = ! empty($quote) ? $quote->toArray() : [];
         $quote->lost_reason = $data['quote_detail']['lost_reason']['text'] ?? null;
         $quote->previous_advisor_id_text = $data['quote_detail']['previous_advisor']['name'] ?? null;
-        $quote->transaction_type_text = $data['look_up']['text'] ?? null;
+        $quote->transaction_type_text = $data['transaction_type']['text'] ?? null;
 
         return $quote;
     }

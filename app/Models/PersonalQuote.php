@@ -239,7 +239,7 @@ class PersonalQuote extends Model implements AuditableContract
     {
         return $this->hasMany(QuoteStatusLog::class, 'quote_request_id');
     }
-    public function lookUp()
+    public function transactionType()
     {
         return $this->belongsTo(Lookup::class, 'transaction_type_id', 'id');
     }

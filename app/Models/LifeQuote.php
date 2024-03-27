@@ -103,7 +103,7 @@ class LifeQuote extends Model implements AuditableContract
     {
         return $this->belongsTo(Customer::class);
     }
-    public function lookUp()
+    public function transactionType()
     {
         return $this->belongsTo(Lookup::class, 'transaction_type_id', 'id');
     }
