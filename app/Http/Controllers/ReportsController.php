@@ -21,7 +21,6 @@ class ReportsController extends Controller
 
     public function renderAdvisorConversionReport(Request $request, AdvisorConversionReportService $advisorConversionReportService)
     {
-        //dd($advisorConversionReportService->getReportData($request));
         return inertia('Reports/AdvisorConversion', [
             'reportData' => $advisorConversionReportService->getReportData($request),
             'filterOptions' => $advisorConversionReportService->getFilterOptions(),

@@ -29,6 +29,7 @@ use App\Repositories\PersonalQuoteRepository;
 use App\Repositories\PolicyIssuanceStatusRepository;
 use App\Repositories\QuoteTypeRepository;
 use App\Repositories\SendUpdateLogRepository;
+use App\Services\LeadAllocationService;
 use App\Services\LookupService;
 use App\Services\QuoteDocumentService;
 use App\Services\SendUpdateLogService;
@@ -68,7 +69,7 @@ class SendUpdateLogController extends Controller
                 $quoteType = QuoteType::where('id', $requestData['quote_type_id'])->first();
                 $quoteModel = $this->getModelObject($quoteType->code);
                 $childLeadResponse = $this->sendUpdateLogService->createChildLead($quoteModel, $requestData, $quoteType->code);
-                $this->updateLeadAllocationCount($requestData['quote_uuid']);
+                (new LeadAllocationService())->deductLeadAllocationCount($requestData['quote_uuid']);
             }
 
             DB::commit();
@@ -421,21 +422,5 @@ class SendUpdateLogController extends Controller
         }
 
         return response()->json(['message' => $response['message']], 500);
-    }
-
-    private function updateLeadAllocationCount($quoteUuid)
-    {
-        $quote = CarQuote::with('advisor')->where('uuid', $quoteUuid)->first();
-        if ($quote->advisor) {
-            $leadAllocation = LeadAllocation::where('user_id', $quote->advisor->id)->first();
-            $leadAllocation->allocation_count = $leadAllocation->allocation_count - 1;
-            if (in_array($quote->assignment_type, [AssignmentTypeEnum::SYSTEM_ASSIGNED, AssignmentTypeEnum::SYSTEM_REASSIGNED])) {
-                $leadAllocation->auto_assignment_count = $leadAllocation->auto_assignment_count - 1;
-            } elseif (in_array($quote->assignment_type, [AssignmentTypeEnum::MANUAL_ASSIGNED, AssignmentTypeEnum::MANUAL_REASSIGNED])) {
-                $leadAllocation->manual_assignment_count = $leadAllocation->manual_assignment_count - 1;
-            }
-            $leadAllocation->save();
-        }
-
     }
 }
