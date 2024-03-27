@@ -2,6 +2,7 @@
 defineProps({
   quote: Object,
   quoteDocuments: Object,
+  paymentStatusEnum: Object,
   documentTypes: Object,
   storageUrl: String,
   expanded: {
@@ -9,8 +10,13 @@ defineProps({
     required: false,
     default: true,
   },
+  quoteType: {
+    type: String,
+    required: true,
+  },
+  inslyId: String,
   sendPolicy: Boolean,
-
+  paymentStatusEnum: Object,
 });
 
 const emit = defineEmits(['copyUploadURL', 'sendPolicyToClient']);
@@ -20,6 +26,8 @@ const selectedTab = ref(0);
 const uploadingStatus = ref({});
 const errorMsg = ref({});
 const successStatus = ref({});
+const can = permission => useCan(permission);
+const permissionEnum = page.props.permissionsEnum;
 
 const quoteDocumentsTable = reactive({
   isLoading: false,
@@ -116,8 +124,8 @@ const sendPolicyToClient = () => {
       <template #header>
         <div class="flex justify-between items-center">
           <h3 class="font-semibold text-primary-800 text-lg">
-          Documents
-          <x-tag size="sm">{{ quoteDocuments.length || 0 }}</x-tag>
+            Documents
+            <x-tag size="sm">{{ quoteDocuments.length || 0 }}</x-tag>
           </h3>
         </div>
       </template>
@@ -125,8 +133,20 @@ const sendPolicyToClient = () => {
         <x-divider class="my-4" />
 
         <div class="flex gap-2 mb-4 justify-end">
+          <Link
+            v-if="inslyId && can(permissionEnum.VIEW_LEGACY_DETAILS)"
+            :href="`/legacy-policy/${inslyId}`"
+            preserve-scroll
+          >
+            <x-button size="sm" color="#ff5e00" tag="div">
+              View Legacy policy
+            </x-button>
+          </Link>
           <x-button
-            v-if="quoteType == 'Car' && quote.payment_status_id === paymentStatusEnum.AUTHORISED"
+            v-if="
+              quoteType == 'Car' &&
+              quote.payment_status_id === paymentStatusEnum.AUTHORISED
+            "
             class="mr-2"
             @click.prevent="copyUploadURL"
             size="sm"
@@ -137,9 +157,14 @@ const sendPolicyToClient = () => {
           <x-button @click.prevent="modals.doc = true" size="sm" color="orange">
             Upload Documents
           </x-button>
-          <x-button size="sm" color="red" v-if="sendPolicy" @click="sendPolicyToClient">
-              Send Policy
-            </x-button>
+          <x-button
+            size="sm"
+            color="red"
+            v-if="sendPolicy"
+            @click="sendPolicyToClient"
+          >
+            Send Policy
+          </x-button>
         </div>
         <DataTable
           table-class-name="compact"
