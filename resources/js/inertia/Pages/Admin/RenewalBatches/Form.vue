@@ -63,7 +63,7 @@ const batchForm = useForm({
   start_date: props?.renewalBatch?.start_date ?? null,
   end_date: props?.renewalBatch?.end_date ?? null,
   dead_date: props.carSoldDeadline ?? null,
-  batchMonth: +props?.renewalBatch.month
+  batchMonth: +props?.renewalBatch?.month
     ? { month: props?.renewalBatch.month - 1 }
     : null,
   slab: props.lastBatchSlabs,
