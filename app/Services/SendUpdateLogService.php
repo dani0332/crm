@@ -501,7 +501,9 @@ class SendUpdateLogService
             }
         } elseif ($sendUpdateLog->is_booking_filled) { // Check if all booking details uploaded.
             if ($sendUpdateLog->category->code == SendUpdateLogStatusEnum::EF) {
-                if ($sendUpdateLog->option->code == SendUpdateLogStatusEnum::PPE && $sendUpdateLog->transaction_payment_status == SendUpdateLogStatusEnum::TRANSACTION_APPROVED && true) { // Check if all policy details uploaded.
+                $isTransactionApproved = $sendUpdateLog->transaction_payment_status == SendUpdateLogStatusEnum::TRANSACTION_APPROVED;
+                $isPolicyPeriodExtensionOptionSelected = $sendUpdateLog->option->code == SendUpdateLogStatusEnum::PPE;
+                if ($isPolicyPeriodExtensionOptionSelected && $isTransactionApproved) { // Check if all policy details uploaded.
                     return SendUpdateLogStatusEnum::SU;
                 }
 
