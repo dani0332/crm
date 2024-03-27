@@ -1,4 +1,7 @@
 <script setup>
+import { watch } from 'vue';
+import moment from 'moment';
+
 const page = usePage();
 
 const props = defineProps({
@@ -141,6 +144,28 @@ const onUpdatePolicyDetails = isValid => {
     },
   });
 };
+
+watch(
+  () => policyDetailsForm.quote_policy_start_date,
+  quote_policy_start_date => {
+    if (props.modelType === quoteTypeCodeEnum.Car.toLowerCase()) {
+      policyDetailsForm.quote_policy_expiry_date = moment(
+        quote_policy_start_date,
+      ).add(13, 'months');
+    } else if (
+      props.modelType === quoteTypeCodeEnum.Health.toLowerCase() ||
+      props.modelType === quoteTypeCodeEnum.GroupMedical.toLowerCase()
+    ) {
+      policyDetailsForm.quote_policy_expiry_date = moment(
+        quote_policy_start_date,
+      ).add(12, 'months');
+    }
+    console.log(`quote_policy_start_date is: ${quote_policy_start_date}`);
+    console.log(
+      `quote_policy_expiry_date is: ${policyDetailsForm.quote_policy_expiry_date}`,
+    );
+  },
+);
 </script>
 
 <template>
