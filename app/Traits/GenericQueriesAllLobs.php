@@ -176,6 +176,14 @@ trait GenericQueriesAllLobs
         ];
     }
 
+    /**
+     * add comments & improvements needed
+     * @param $record
+     * @param $quoteType
+     * @param $payments
+     * @param $quoteDocuments
+     * @return array
+     */
     public function bookPolicyPayload($record, $quoteType, $payments, $quoteDocuments)
     {
         $insuranceProviderLeadCount = $insuranceProviderCode = '';
