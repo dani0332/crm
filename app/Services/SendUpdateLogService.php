@@ -6,6 +6,7 @@ use App\Enums\DocumentTypeCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
+use App\Enums\SageEnum;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Models\BikeQuote;
 use App\Models\BusinessQuote;
@@ -25,8 +26,6 @@ use App\Repositories\LookupRepository;
 use App\Repositories\PaymentRepository;
 use App\Repositories\SendUpdateLogRepository;
 use App\Traits\GenericQueriesAllLobs;
-use App\Enums\SageEnum;
-use App\Models\SageApiLog;
 
 class SendUpdateLogService
 {
@@ -341,7 +340,6 @@ class SendUpdateLogService
         $modelRelationDetails = $this->_getQuoteRelation($quoteModel, $quoteTypeCode);
         $quoteObject = $quoteModel::with(array_keys($modelRelationDetails['quoteRelations']))->find($requestData['ref_id']);
 
-
         $countChildRecords = $quoteModel::where('code', 'like', '%'.$quoteObject->code.'-%')->count();
         $childLeadDetails = [
             'childLeadsCount' => $countChildRecords,
@@ -646,7 +644,7 @@ class SendUpdateLogService
         $quoteModel = $this->getModelObject($sendUpdateRequest->quoteType);
         $quote = $quoteModel::where('id', $sendUpdateRequest->quoteRefId)->first();
 
-        if($categoryCode == SendUpdateLogStatusEnum::EF) {
+        if ($categoryCode == SendUpdateLogStatusEnum::EF) {
             $sageResponse = app(SageApiService::class)->handleDocumentsToSage(
                 $sendUpdateRequest, $quote, [
                     'type' => SageEnum::PT_SEND_UPDATE,
@@ -689,14 +687,14 @@ class SendUpdateLogService
 
                 Payment::where('send_update_log_id', $sendUpdateLog->id)->update([
                     'paymentable_id' => $quote->id,
-                    'paymentable_type' => ltrim($quoteModel, '\\')
+                    'paymentable_type' => ltrim($quoteModel, '\\'),
                 ]);
 
-                if($categoryCode == SendUpdateLogStatusEnum::EF && $optionCode == SendUpdateLogStatusEnum::PPE) {
+                if ($categoryCode == SendUpdateLogStatusEnum::EF && $optionCode == SendUpdateLogStatusEnum::PPE) {
                     $quote->update(['renewal_expiry_date' => $sendUpdateLog->expiry_date]);
                 }
 
-                if($categoryCode == SendUpdateLogStatusEnum::CPD) {
+                if ($categoryCode == SendUpdateLogStatusEnum::CPD) {
                     $quote->update([
                         'policy_number' => $sendUpdateLog->policy_number,
                         'policy_start_date' => $sendUpdateLog->start_date,
