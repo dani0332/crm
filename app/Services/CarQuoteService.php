@@ -143,6 +143,7 @@ class CarQuoteService extends BaseService
                 'qvc.visit_count as visit_count',
                 't.cost_per_lead as cost_per_lead',
                 'cqr.quote_batch_id',
+                'lu.text as transaction_type_text',
                 'qb.name as quote_batch_id_text',
                 'cqr.car_value_tier',
                 'cqr.risk_score',
@@ -180,6 +181,7 @@ class CarQuoteService extends BaseService
             ->leftJoin('uae_license_held_for as ulhf', 'ulhf.id', '=', 'cqr.uae_license_held_for_id')
             ->leftJoin('uae_license_held_for as ulhfs', 'ulhfs.id', '=', 'cqr.back_home_license_held_for_id')
             ->leftJoin('car_model as cmodel', 'cmodel.id', '=', 'cqr.car_model_id')
+            ->leftJoin('lookups as lu', 'lu.id', '=', 'cqr.transaction_type_id')
             ->leftJoin('emirates as e', 'e.id', '=', 'cqr.emirate_of_registration_id')
             ->leftJoin('car_type_insurance as cti', 'cti.id', '=', 'cqr.car_type_insurance_id')
             ->leftJoin('claim_history as ch', 'ch.id', '=', 'cqr.claim_history_id')
@@ -1094,8 +1096,10 @@ class CarQuoteService extends BaseService
     public function getOcbDetails($uuid)
     {
         $carQuote = CarQuote::select(
-            ['id', 'code', 'uuid', 'advisor_id', 'first_name', 'last_name', 'email', 'car_make_id', 'customer_id',
-                'car_model_id', 'currently_insured_with', 'quote_status_id', 'payment_status_id', 'policy_number', 'renewal_expiry_date', 'previous_quote_policy_number', 'previous_policy_expiry_date']
+            [
+                'id', 'code', 'uuid', 'advisor_id', 'first_name', 'last_name', 'email', 'car_make_id', 'customer_id',
+                'car_model_id', 'currently_insured_with', 'quote_status_id', 'payment_status_id', 'policy_number', 'renewal_expiry_date', 'previous_quote_policy_number', 'previous_policy_expiry_date',
+            ]
         )->with(['advisor', 'carMake', 'carModel', 'customer' => function ($q) {
             $q->select('id', 'first_name', 'last_name')->with(['additionalContacts' => function ($q) {
                 $q->where('key', 'email');

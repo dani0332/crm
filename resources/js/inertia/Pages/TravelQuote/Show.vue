@@ -1968,6 +1968,14 @@ const handleSelectionChange = (tableType, selectedItems) => {
               :error="leadStatusForm.errors.lostReason"
             />
           </x-field>
+          <x-field label="Transaction Type">
+            <x-input
+              type="text"
+              :value="quote.transaction_type_text"
+              class="w-full"
+              :disabled="true"
+            />
+          </x-field>
         </div>
       </div>
       <div class="flex justify-end">

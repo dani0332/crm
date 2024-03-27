@@ -986,6 +986,7 @@ const linkEntity = () => {
         <h3 class="font-semibold text-primary-800 text-lg">Lead Status</h3>
         <x-divider class="mb-4 mt-1" />
       </div>
+
       <div class="flex flex-wrap md:flex-nowrap gap-6 w-full">
         <div class="w-full md:w-1/2">
           <div class="flex flex-col gap-4">
@@ -1010,37 +1011,49 @@ const linkEntity = () => {
           </div>
         </div>
         <div class="w-full md:w-2/3">
-          <x-field
-            label="TransApp Code"
-            v-if="
-              leadStatusForm.leadStatus ==
-              page.props.quoteStatusEnum.TransactionApproved
-            "
-          >
-            <x-input
-              v-model="leadStatusForm.trans_code"
-              placeholder="TransApp Code is required"
-              class="w-full"
-              :error="leadStatusForm.errors.trans_code"
-            />
-          </x-field>
-          <x-field
-            label="Lost Reason"
-            v-if="leadStatusForm.leadStatus == page.props.quoteStatusEnum.Lost"
-          >
-            <x-select
-              v-model="leadStatusForm.lostReason"
-              :options="
-                lostReasons?.map(item => ({
-                  value: item.id,
-                  label: item.text,
-                }))
+          <div class="flex flex-col gap-4">
+            <x-field
+              label="TransApp Code"
+              v-if="
+                leadStatusForm.leadStatus ==
+                page.props.quoteStatusEnum.TransactionApproved
               "
-              placeholder="Lost Reason is required"
-              class="w-full"
-              :error="leadStatusForm.errors.lostReason"
-            />
-          </x-field>
+            >
+              <x-input
+                v-model="leadStatusForm.trans_code"
+                placeholder="TransApp Code is required"
+                class="w-full"
+                :error="leadStatusForm.errors.trans_code"
+              />
+            </x-field>
+            <x-field
+              label="Lost Reason"
+              v-if="
+                leadStatusForm.leadStatus == page.props.quoteStatusEnum.Lost
+              "
+            >
+              <x-select
+                v-model="leadStatusForm.lostReason"
+                :options="
+                  lostReasons?.map(item => ({
+                    value: item.id,
+                    label: item.text,
+                  }))
+                "
+                placeholder="Lost Reason is required"
+                class="w-full"
+                :error="leadStatusForm.errors.lostReason"
+              />
+            </x-field>
+            <x-field label="Transaction Type">
+              <x-input
+                type="text"
+                :value="quote.transaction_type_text"
+                class="w-full"
+                :disabled="true"
+              />
+            </x-field>
+          </div>
         </div>
       </div>
       <div class="flex justify-end">
