@@ -56,7 +56,7 @@ const currentDate = computed(() => {
 
 const transactionPaymentStatus = computed(() => {
   if (Number(page.props?.payments[0]?.captured_amount) === 0) {
-    return 'Not Paid';
+    return 'Unpaid';
   }
   if (
     (Number(page.props?.payments[0]?.total_price) >
@@ -68,18 +68,18 @@ const transactionPaymentStatus = computed(() => {
    ( Number(page.props?.payments[0]?.captured_amount) >=
     Number(page.props?.payments[0]?.total_price) || (Number(props?.quote?.price_with_vat) < Number(page.props.payments[0]?.captured_amount)))
   ) {
-    return 'Paid';
+    return 'Fully Paid';
   }
 });
 
 const transactionPaymentStatusTooltip= computed(() => {
-  if(transactionPaymentStatus.value == 'Not Paid'){
+  if(transactionPaymentStatus.value == 'Unpaid'){
     return productionProcessTooltipEnum.TRANSACTION_PAYMENT_STATUS_NOT_PAID;
   }
   else if(transactionPaymentStatus.value == 'Partially Paid'){
     return productionProcessTooltipEnum.TRANSACTION_PAYMENT_STATUS_PARTIALLY_PAID;
   }
-  else if(transactionPaymentStatus.value == 'Paid'){
+  else if(transactionPaymentStatus.value == 'Fully Paid'){
     return productionProcessTooltipEnum.TRANSACTION_PAYMENT_STATUS_PAID;
   }
 });
