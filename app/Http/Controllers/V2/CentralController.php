@@ -324,14 +324,14 @@ class CentralController extends Controller
 
     private function straightforwardPayments($payment, $quote)
     {
-        if (($payment->captured_amount + $payment->discount_value)  < $quote->price_with_vat) {
-            $payment->payment_status_id = PaymentStatusEnum::PAID;
+        $payment->payment_status_id = PaymentStatusEnum::PAID;
+    
+        if (($payment->captured_amount + $payment->discount_value) <= $quote->price_with_vat) {
             $payment->payment_allocation_status = PaymentAllocationStatus::FULLY_ALLOCATED;
-            $payment->save();
-        } elseif (($payment->captured_amount + $payment->discount_value)  >= $quote->price_with_vat) {
-            $payment->payment_status_id = PaymentStatusEnum::PAID;
+        } else {
             $payment->payment_allocation_status = PaymentAllocationStatus::PARTIALLY_ALLOCATED;
-            $payment->save();
         }
+    
+        $payment->save();
     }
 }
