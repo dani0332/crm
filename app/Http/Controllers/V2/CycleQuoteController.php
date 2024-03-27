@@ -31,6 +31,7 @@ use App\Repositories\UserRepository;
 use App\Services\AMLService;
 use App\Services\CentralService;
 use Illuminate\Http\Request;
+use App\Enums\TeamNameEnum;
 
 class CycleQuoteController extends Controller
 {
@@ -196,24 +197,37 @@ class CycleQuoteController extends Controller
 
         $quoteStatusEnums = QuoteStatusEnum::asArray();
         $lostReasons = LostReasonRepository::orderBy('text', 'asc')->get();
-        $isManagerOrAdminAccess = auth()->user()->hasAnyRole([RolesEnum::CycleManager, RolesEnum::Admin]);
 
-        if (! $isManagerOrAdminAccess) {
-            if (auth()->user()->hasRole(RolesEnum::CycleNewBusinessAdvisor)) {
-                $quotes = collect($quotes)->whereNotIn('id', [
-                    QuoteStatusEnum::Allocated,
-                    QuoteStatusEnum::InNegotiation,
-                ])->values()->toArray();
-
-            } elseif (auth()->user()->hasRole(RolesEnum::CycleRenewalAdvisor)) {
-                $quotes = collect($quotes)->whereNotIn('id', [
-                    QuoteStatusEnum::NewLead,
-                    QuoteStatusEnum::InNegotiation,
-                ])->values()->toArray();
-            } else {
-                $quotes = [];
-            }
+        $userId = auth()->id();
+        $userTeams = auth()->user()->getUserTeams($userId)->toArray();
+        if(array_intersect([TeamNameEnum::CYCLE], $userTeams)){
+            $quotes = collect($quotes)->whereNotIn('id', [
+                QuoteStatusEnum::Allocated,
+                QuoteStatusEnum::InNegotiation,
+            ])->values()->toArray();
+        }elseif(array_intersect([TeamNameEnum::CYCLE_RENEWALS], $userTeams)) {
+            $quotes = collect($quotes)->whereNotIn('id', [
+                QuoteStatusEnum::NewLead,
+                QuoteStatusEnum::InNegotiation,])->values()->toArray();
         }
+        // $isManagerOrAdminAccess = auth()->user()->hasAnyRole([RolesEnum::CycleManager, RolesEnum::Admin]);
+
+        // if (! $isManagerOrAdminAccess) {
+        //     if (auth()->user()->hasRole(RolesEnum::CycleNewBusinessAdvisor)) {
+        //         $quotes = collect($quotes)->whereNotIn('id', [
+        //             QuoteStatusEnum::Allocated,
+        //             QuoteStatusEnum::InNegotiation,
+        //         ])->values()->toArray();
+
+        //     } elseif (auth()->user()->hasRole(RolesEnum::CycleRenewalAdvisor)) {
+        //         $quotes = collect($quotes)->whereNotIn('id', [
+        //             QuoteStatusEnum::NewLead,
+        //             QuoteStatusEnum::InNegotiation,
+        //         ])->values()->toArray();
+        //     } else {
+        //         $quotes = [];
+        //     }
+        // }
 
         return inertia('CycleQuote/Cards', [
             'quotes' => $quotes,

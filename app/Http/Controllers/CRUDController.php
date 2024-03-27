@@ -91,6 +91,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redirect;
+use App\Enums\TeamNameEnum;
 
 class CRUDController extends Controller
 {
@@ -1112,24 +1113,38 @@ class CRUDController extends Controller
 
         $quoteStatusEnums = QuoteStatusEnum::asArray();
         $lostReasons = LostReasonRepository::orderBy('text', 'asc')->get();
-        $isManagerOrAdminAccess = auth()->user()->hasAnyRole([RolesEnum::HomeManager, RolesEnum::Admin]);
+        // $isManagerOrAdminAccess = auth()->user()->hasAnyRole([RolesEnum::HomeManager, RolesEnum::Admin]);
 
-        if (! $isManagerOrAdminAccess) {
-            if (auth()->user()->hasRole(RolesEnum::HomeNewBusinessAdvisor)) {
-                $quotes = collect($quotes)->whereNotIn('id', [
-                    QuoteStatusEnum::Allocated,
-                    QuoteStatusEnum::InNegotiation,
+        $userId = auth()->id();
+        $userTeams = auth()->user()->getUserTeams($userId)->toArray();
+        if(array_intersect([TeamNameEnum::HOME], $userTeams)){
+            $quotes = collect($quotes)->whereNotIn('id', [
+                QuoteStatusEnum::Allocated,
+                QuoteStatusEnum::InNegotiation,
+            ])->values()->toArray();
+        }elseif(array_intersect([TeamNameEnum::HOME_RENEWALS], $userTeams)) {
+            $quotes = collect($quotes)->whereNotIn('id', [
+                QuoteStatusEnum::NewLead,
+                QuoteStatusEnum::InNegotiation,
                 ])->values()->toArray();
-
-            } elseif (auth()->user()->hasRole(RolesEnum::HomeRenewalAdvisor)) {
-                $quotes = collect($quotes)->whereNotIn('id', [
-                    QuoteStatusEnum::NewLead,
-                    QuoteStatusEnum::InNegotiation,
-                ])->values()->toArray();
-            } else {
-                $quotes = [];
-            }
         }
+        
+        // if (! $isManagerOrAdminAccess) {
+        //     if (auth()->user()->hasRole(RolesEnum::HomeNewBusinessAdvisor)) {
+        //         $quotes = collect($quotes)->whereNotIn('id', [
+        //             QuoteStatusEnum::Allocated,
+        //             QuoteStatusEnum::InNegotiation,
+        //         ])->values()->toArray();
+
+        //     } elseif (auth()->user()->hasRole(RolesEnum::HomeRenewalAdvisor)) {
+        //         $quotes = collect($quotes)->whereNotIn('id', [
+        //             QuoteStatusEnum::NewLead,
+        //             QuoteStatusEnum::InNegotiation,
+        //         ])->values()->toArray();
+        //     } else {
+        //         $quotes = [];
+        //     }
+        // }
 
         return inertia('HomeQuote/Cards', [
             'quotes' => $quotes,

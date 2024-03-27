@@ -32,6 +32,7 @@ use App\Repositories\UserRepository;
 use App\Services\AMLService;
 use App\Services\CentralService;
 use Illuminate\Http\Request;
+use App\Enums\TeamNameEnum;
 
 class PetQuoteController extends Controller
 {
@@ -208,24 +209,37 @@ class PetQuoteController extends Controller
 
         $quoteStatusEnums = QuoteStatusEnum::asArray();
         $lostReasons = LostReasonRepository::orderBy('text', 'asc')->get();
-        $isManagerOrAdminAccess = auth()->user()->hasAnyRole([RolesEnum::PetManager, RolesEnum::Admin]);
-
-        if (! $isManagerOrAdminAccess) {
-            if (auth()->user()->hasRole(RolesEnum::PetNewBusinessAdvisor)) {
-                $quotes = collect($quotes)->whereNotIn('id', [
-                    QuoteStatusEnum::Allocated,
-                    QuoteStatusEnum::InNegotiation,
+        
+        $userId = auth()->id();
+        $userTeams = auth()->user()->getUserTeams($userId)->toArray();
+        if(array_intersect([TeamNameEnum::PET_TEAM,], $userTeams)){
+            $quotes = collect($quotes)->whereNotIn('id', [
+                QuoteStatusEnum::Allocated,
+                QuoteStatusEnum::InNegotiation,
                 ])->values()->toArray();
-
-            } elseif (auth()->user()->hasRole(RolesEnum::PetRenewalAdvisor)) {
+            }elseif(array_intersect([TeamNameEnum::PET_RENEWALS], $userTeams)) {
                 $quotes = collect($quotes)->whereNotIn('id', [
                     QuoteStatusEnum::NewLead,
-                    QuoteStatusEnum::InNegotiation,
-                ])->values()->toArray();
-            } else {
-                $quotes = [];
-            }
-        }
+                    QuoteStatusEnum::InNegotiation])->values()->toArray();
+                }
+                
+        // $isManagerOrAdminAccess = auth()->user()->hasAnyRole([RolesEnum::PetManager, RolesEnum::Admin]);
+        // if (! $isManagerOrAdminAccess) {
+        //     if (auth()->user()->hasRole(RolesEnum::PetNewBusinessAdvisor)) {
+        //         $quotes = collect($quotes)->whereNotIn('id', [
+        //             QuoteStatusEnum::Allocated,
+        //             QuoteStatusEnum::InNegotiation,
+        //         ])->values()->toArray();
+
+        //     } elseif (auth()->user()->hasRole(RolesEnum::PetRenewalAdvisor)) {
+        //         $quotes = collect($quotes)->whereNotIn('id', [
+        //             QuoteStatusEnum::NewLead,
+        //             QuoteStatusEnum::InNegotiation,
+        //         ])->values()->toArray();
+        //     } else {
+        //         $quotes = [];
+        //     }
+        // }
 
         // Todo:: Need to send total Counts and Oppurtunity Counts
 
