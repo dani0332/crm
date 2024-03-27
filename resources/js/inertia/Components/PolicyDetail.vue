@@ -160,10 +160,6 @@ watch(
         quote_policy_start_date,
       ).add(12, 'months');
     }
-    console.log(`quote_policy_start_date is: ${quote_policy_start_date}`);
-    console.log(
-      `quote_policy_expiry_date is: ${policyDetailsForm.quote_policy_expiry_date}`,
-    );
   },
 );
 </script>
