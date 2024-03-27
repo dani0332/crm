@@ -23,6 +23,7 @@ use App\Traits\TeamHierarchyTrait;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use App\Enums\PermissionsEnum;
 
 class ReportsController extends Controller
 {
@@ -33,6 +34,9 @@ class ReportsController extends Controller
     {
         $advisorConverionReportPermissions = implode('|', PermissionsEnum::getAdvisorConverionReportPermissions());
         $this->middleware(['permission:'.$advisorConverionReportPermissions], ['only' => ['renderAdvisorConversionReport']]);
+        
+        $advisorDistributionReportPermissions = implode('|', PermissionsEnum::getAdvisorDistributionReportPermissions());
+        $this->middleware(['permission:' . $advisorDistributionReportPermissions], ['only' => ['renderAdvisorDistributionReport']]);
     }
 
     public function renderAdvisorConversionReport(Request $request, AdvisorConversionReportService $advisorConversionReportService)

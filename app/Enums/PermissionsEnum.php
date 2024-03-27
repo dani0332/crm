@@ -338,4 +338,21 @@ final class PermissionsEnum extends Enum
             PermissionsEnum::GROUPMEDICAL_COMPREHENSIVE_DASHBOARD,
         ];
     }
+
+    public static function getAdvisorDistributionReportPermissions()
+    {
+        return [
+            PermissionsEnum::ADVISOR_DISTRIBUTION_REPORT_VIEW,
+            PermissionsEnum::BIKE_DISTRIBUTION_REPORT,
+            PermissionsEnum::HEALTH_DISTRIBUTION_REPORT,
+            PermissionsEnum::TRAVEL_DISTRIBUTION_REPORT,
+            PermissionsEnum::LIFE_DISTRIBUTION_REPORT,
+            PermissionsEnum::HOME_DISTRIBUTION_REPORT,
+            PermissionsEnum::PET_DISTRIBUTION_REPORT,
+            PermissionsEnum::CYCLE_DISTRIBUTION_REPORT,
+            PermissionsEnum::YACHT_DISTRIBUTION_REPORT,
+            PermissionsEnum::BUSINESS_DISTRIBUTION_REPORT,
+            PermissionsEnum::GROUPMEDICAL_DISTRIBUTION_REPORT,
+        ];
+    }
 }
