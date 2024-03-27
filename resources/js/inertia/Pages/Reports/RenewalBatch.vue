@@ -266,15 +266,14 @@ function getMonthName(monthNumber) {
 }
 
 function calculateValuesAndHighlight() {
-    lastMonthSummedIndex = 0;
-    lastMonthSummedIndexForSuperRetention = 0;
-    currentRowSpan = 0;
-
+    lastMonthSummedIndex = 0;  // to track till which month the sum has been calculated
+    lastMonthSummedIndexForSuperRetention = 0; // to track till which month the sum has been calculated for super retention
+    currentRowSpan = 0; // to determine the rowspan of the monthly retention column
 
     let segmentFilter = filters.segment ? filters.segment : '';
 
+    // process the data to get the correct values for the retention report
     reportDataRef.forEach((item, index) => {
-
         if (segmentFilter == 'volume') {
             item.total_allocated_leads = item.total_by_volume_segment_advisors
             item.renewed = item.renewed_by_volume_segment_advisors
@@ -287,17 +286,15 @@ function calculateValuesAndHighlight() {
             // item.early_renewal = item.early_renewal_by_value_segment
         }
     });
-
+    // process the data to get the correct values for the super retention report
     superRetentionDataRef.forEach((superItem, superIndex) => {
         if (segmentFilter == 'volume') {
             superItem.health_converted = superItem.health_converted_by_volume_segment_advisors
         } else if (segmentFilter == 'value') {
             superItem.health_converted = superItem.health_converted_by_value_segment_advisors
         }
-
         superItem.monthlyHealthRenewed = calculateMonthlyHealthRenewed(superRetentionDataRef, superIndex);
         superItem.rowSpan = currentRowSpanForSuperRetention;
-
     });
 
     reportDataRef.forEach((item, index) => {
@@ -332,7 +329,6 @@ function calculateValuesAndHighlight() {
             ).toFixed(2);
 
             rawRetention = ((item.renewed_by_all_advisors / item.total_allocated_leads_by_all_advisors) * 100).toFixed(2);
-
         }
         else {
             imRetention = (
@@ -347,7 +343,6 @@ function calculateValuesAndHighlight() {
             ).toFixed(2);
 
             rawRetention = ((item.renewed / item.total_allocated_leads) * 100).toFixed(2);
-
         }
         imRetention = imRetention == 'NaN' ? '0.00' : imRetention;
 
@@ -384,11 +379,10 @@ function calculateValuesAndHighlight() {
                 parseInt(item.total_allocated_leads)
             ) * 100
         ).toFixed(2);
-        ratioCarSoldUncontactable = ratioCarSoldUncontactable == 'NaN' ? '0.00' : ratioCarSoldUncontactable;
 
+        ratioCarSoldUncontactable = ratioCarSoldUncontactable == 'NaN' ? '0.00' : ratioCarSoldUncontactable;
         item.ratioCarSoldUncontactable = ratioCarSoldUncontactable == 'NaN' ? '0.00' : ratioCarSoldUncontactable;
         item.advisorRetention = advisorRetention == 'NaN' ? '0.00' : advisorRetention;
-
         item.volumeSegmentConversion = volumeSegmentConversion == 'NaN' ? '0.00' : volumeSegmentConversion;
         item.valueSegmentConversion = valueSegmentConversion == 'NaN' ? '0.00' : valueSegmentConversion;
         item.imRetention = imRetention == 'NaN' ? '0.00' : imRetention;
@@ -477,14 +471,11 @@ function calculateValuesAndHighlight() {
             });
         }
     });
-
     monthlyIMAverages = calculateMonthlyAverages(avgImRetentionArr);
     monthlyRawAverages = calculateMonthlyAverages(avgRawRetentionArr);
-
     // reset arrays
     avgImRetentionArr = {};
     avgRawRetentionArr = {};
-
 }
 
 const calculateMonthlyHealthRenewed = (data, index) =>{
