@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Enums\quoteTypeCode;
 use App\Enums\RolesEnum;
 use App\Enums\TeamTypeEnum;
+use App\Enums\UserStatusEnum;
 use App\Models\Team;
 use App\Models\User;
 use App\Services\LeadAllocationService;
@@ -91,7 +92,6 @@ class UserController extends Controller
             'subTeams' => $subTeams,
             'permissions' => $permissions,
         ]);
-
     }
 
     /**
@@ -127,7 +127,6 @@ class UserController extends Controller
      */
     public function show(User $user)
     {
-
         $user['new_created_at'] = Carbon::createFromFormat('d-M-Y h:ia', $user->created_at)->format('Y-m-d H:i:s');
         $user['new_updated_at'] = Carbon::createFromFormat('d-M-Y h:ia', $user->created_at)->format('Y-m-d H:i:s');
 
@@ -154,7 +153,6 @@ class UserController extends Controller
             'managerName' => $managerName,
             'productName' => $productName,
         ]);
-
     }
 
     /**
@@ -199,7 +197,6 @@ class UserController extends Controller
             'permissions' => $permissions,
             'userPermissions' => $userPermissions,
         ]);
-
     }
 
     /**
@@ -314,10 +311,11 @@ class UserController extends Controller
         return $this->getTeamsByProductIds($request->productIds);
     }
 
-    public function me(Request $request)
-    {
-        return ['name' => Auth::user()->name, 'email' => Auth::user()->email, 'id' => Auth::user()->id, 'role' => strtolower(Auth::user()->usersroles[0]->name)];
-    }
+    //Scheduled to delete 1st April 2024
+    // public function me(Request $request)
+    // {
+    //     return ['name' => Auth::user()->name, 'email' => Auth::user()->email, 'id' => Auth::user()->id, 'role' => strtolower(Auth::user()->usersroles[0]->name)];
+    // }
 
     public function getSubTeams(Request $request)
     {
@@ -368,5 +366,25 @@ class UserController extends Controller
                 'users.id',
                 DB::raw('CONCAT(users.name, " - ", roles.name) as name')
             )->get();
+    }
+
+    public function updateUserStatus(Request $request)
+    {
+        $currentDateTime = Carbon::now();
+        $startDateTime = Carbon::parse('18:30:00'); // 6:30 PM
+        $endDateTime = Carbon::parse('08:59:00')->addDay(); // 8:59 AM of the next day
+        $user = User::find(auth()->user()->id);
+        $user->status = $request->user_status == true ? UserStatusEnum::ONLINE : UserStatusEnum::MANUAL_OFFLINE;
+        $user->update();
+        if (
+            ($currentDateTime->isWeekday() && $currentDateTime->between($startDateTime, $endDateTime))
+            || ($currentDateTime->isWeekend())
+        ) {
+            // Current time is within the specified range on weekdays or any time on Saturday and Sunday
+            echo "Current time is between 6:30 PM and 8:59 AM of the next day, and it's a weekday or weekend.";
+        } else {
+            // Current time is outside the specified range or it's not a weekday or weekend
+            echo "Current time is outside the specified range or it's not a weekday or weekend.";
+        }
     }
 }

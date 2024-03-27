@@ -449,7 +449,7 @@ const linkEntity = () => {
 
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div class="text-sm">
-        <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
+        <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
           <div
             class="grid sm:grid-cols-2"
             v-if="hasAnyRole([rolesEnum.Admin, rolesEnum.Engineering])"
@@ -488,12 +488,12 @@ const linkEntity = () => {
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">EMAIL</dt>
-            <dd>{{ quote.email }}</dd>
+            <dd class="break-words">{{ quote.email }}</dd>
           </div>
 
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">COMPANY NAME</dt>
-            <dd>{{ quote.company_name }}</dd>
+            <dd class="break-words">{{ quote.company_name }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">NEXT FOLLOWUP DATE</dt>
@@ -543,7 +543,7 @@ const linkEntity = () => {
 
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">BRIEF DETAILS</dt>
-            <dd>{{ quote.brief_details }}</dd>
+            <dd class="break-words">{{ quote.brief_details }}</dd>
           </div>
 
           <div class="grid sm:grid-cols-2">
@@ -604,7 +604,7 @@ const linkEntity = () => {
       <x-divider class="mb-4 mt-1" />
       <x-form @submit="updateProfileDetails" :auto-focus="false">
         <div class="text-sm">
-          <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
+          <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
             <div class="grid sm:grid-cols-2">
               <dt class="font-medium">FIRST NAME</dt>
               <dd>{{ quote.first_name }}</dd>
@@ -892,6 +892,15 @@ const linkEntity = () => {
             class="w-full"
             :error="leadStatusForm.errors.lostReason"
           />
+
+          <x-field label="Transaction Type">
+            <x-input
+              type="text"
+              :value="quote.transaction_type_text"
+              class="w-full"
+              :disabled="true"
+            />
+          </x-field>
         </div>
       </div>
       <div class="flex justify-end">
