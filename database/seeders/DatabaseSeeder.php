@@ -16,6 +16,7 @@ class DatabaseSeeder extends Seeder
         $this->call([
             LookupSeeder::class,
             GenericPermissionSeeder::class,
+            addSICWorkflow::class,
             AdvisorConversionReportPermissionSeeder::class,
         ]);
     }

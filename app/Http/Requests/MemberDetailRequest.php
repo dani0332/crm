@@ -41,6 +41,7 @@ class MemberDetailRequest extends FormRequest
             $rules['salary_band_id'] = 'nullable';
             $rules['modelType'] = '';
             $rules['first_name'] = 'sometimes|required';
+            $rules['last_name'] = 'nullable';
         }
 
         return $rules;
