@@ -22,7 +22,6 @@ trait QuoteModelTrait
             return $query->where('quote_status_id', '<>', QuoteStatusEnum::Fake);
         }
 
-
     }
 
     /**
