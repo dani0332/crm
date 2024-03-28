@@ -2,9 +2,12 @@
 
 namespace App\Services;
 
+use App\Enums\DocumentTypeCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
+use App\Enums\SageEnum;
+use App\Enums\SendUpdateLogStatusEnum;
 use App\Models\BikeQuote;
 use App\Models\BusinessQuote;
 use App\Models\CarQuote;
@@ -13,20 +16,16 @@ use App\Models\HealthQuote;
 use App\Models\HomeQuote;
 use App\Models\JetskiQuote;
 use App\Models\LifeQuote;
+use App\Models\Payment;
 use App\Models\PersonalQuote;
 use App\Models\PetQuote;
 use App\Models\TravelQuote;
 use App\Models\YachtQuote;
-use App\Repositories\PaymentRepository;
-use App\Traits\GenericQueriesAllLobs;
-use App\Enums\DocumentTypeCode;
-use App\Enums\SageEnum;
-use App\Enums\SendUpdateLogStatusEnum;
-use App\Models\Payment;
-use App\Models\SageApiLog;
 use App\Repositories\InsuranceProviderRepository;
 use App\Repositories\LookupRepository;
+use App\Repositories\PaymentRepository;
 use App\Repositories\SendUpdateLogRepository;
+use App\Traits\GenericQueriesAllLobs;
 
 class SendUpdateLogService
 {
@@ -496,12 +495,12 @@ class SendUpdateLogService
                 return SendUpdateLogStatusEnum::SUC;
             }
         } elseif ($sendUpdateLog->is_booking_filled) { // Check if all booking details uploaded.
-            if($sendUpdateLog->category->code == SendUpdateLogStatusEnum::EF) {
-                if($sendUpdateLog->option->code == SendUpdateLogStatusEnum::PPE && $sendUpdateLog->transaction_payment_status == SendUpdateLogStatusEnum::TRANSACTION_APPROVED && true ) { // Check if all policy details uploaded.
+            if ($sendUpdateLog->category->code == SendUpdateLogStatusEnum::EF) {
+                if ($sendUpdateLog->option->code == SendUpdateLogStatusEnum::PPE && $sendUpdateLog->transaction_payment_status == SendUpdateLogStatusEnum::TRANSACTION_APPROVED && true) { // Check if all policy details uploaded.
                     return SendUpdateLogStatusEnum::SU;
-                } 
+                }
 
-                if(!in_array($sendUpdateLog->option->code, [
+                if (! in_array($sendUpdateLog->option->code, [
                     SendUpdateLogStatusEnum::MPC,
                     SendUpdateLogStatusEnum::MDOM,
                     SendUpdateLogStatusEnum::MDOV,
@@ -510,17 +509,17 @@ class SendUpdateLogService
                 ]) && $sendUpdateLog->transaction_payment_status == SendUpdateLogStatusEnum::TRANSACTION_APPROVED) {
                     return SendUpdateLogStatusEnum::SU;
                 }
-            } elseif($sendUpdateLog->category->code == SendUpdateLogStatusEnum::CPD && $sendUpdateLog->is_policy_filled) { // Check if all policy details uploaded.
+            } elseif ($sendUpdateLog->category->code == SendUpdateLogStatusEnum::CPD && $sendUpdateLog->is_policy_filled) { // Check if all policy details uploaded.
                 return SendUpdateLogStatusEnum::SU;
-            } elseif(in_array($sendUpdateLog->category->code, [SendUpdateLogStatusEnum::CI, SendUpdateLogStatusEnum::CIR])) {
+            } elseif (in_array($sendUpdateLog->category->code, [SendUpdateLogStatusEnum::CI, SendUpdateLogStatusEnum::CIR])) {
                 return SendUpdateLogStatusEnum::SU;
             }
-            
+
             if ($requiredDocuments) {
                 return SendUpdateLogStatusEnum::SUC;
             }
         }
-        
+
         return false;
     }
 
@@ -586,7 +585,7 @@ class SendUpdateLogService
 
     public function isPolicyDetailsVisible($categoryCode, $optionCode): bool
     {
-        return $categoryCode == SendUpdateLogStatusEnum::CPD || 
+        return $categoryCode == SendUpdateLogStatusEnum::CPD ||
                ($categoryCode == SendUpdateLogStatusEnum::EF && $optionCode == SendUpdateLogStatusEnum::PPE);
     }
 
@@ -640,7 +639,7 @@ class SendUpdateLogService
         $quoteModel = $this->getModelObject($sendUpdateRequest->quoteType);
         $quote = $quoteModel::where('id', $sendUpdateRequest->quoteRefId)->first();
 
-        if($categoryCode == SendUpdateLogStatusEnum::EF) {
+        if ($categoryCode == SendUpdateLogStatusEnum::EF) {
             $sageResponse = app(SageApiService::class)->handleDocumentsToSage(
                 $sendUpdateRequest, $quote, [
                     'type' => SageEnum::PT_SEND_UPDATE,
@@ -649,11 +648,11 @@ class SendUpdateLogService
                     'option' => $sendUpdateLog->option->code,
                 ]
             );
-            
+
             return $sageResponse;
         }
-        
-        if ($categoryCode == SendUpdateLogStatusEnum::CPD) { 
+
+        if ($categoryCode == SendUpdateLogStatusEnum::CPD) {
             $sageResponse = app(SageApiService::class)->handleDocumentsToSage(
                 $sendUpdateRequest, $quote, [
                     'type' => SageEnum::PT_SEND_UPDATE,
@@ -683,14 +682,14 @@ class SendUpdateLogService
 
                 Payment::where('send_update_log_id', $sendUpdateLog->id)->update([
                     'paymentable_id' => $quote->id,
-                    'paymentable_type' => ltrim($quoteModel, '\\')
+                    'paymentable_type' => ltrim($quoteModel, '\\'),
                 ]);
 
-                if($categoryCode == SendUpdateLogStatusEnum::EF && $optionCode == SendUpdateLogStatusEnum::PPE) {
+                if ($categoryCode == SendUpdateLogStatusEnum::EF && $optionCode == SendUpdateLogStatusEnum::PPE) {
                     $quote->update(['renewal_expiry_date' => $sendUpdateLog->expiry_date]);
-                } 
+                }
 
-                if($categoryCode == SendUpdateLogStatusEnum::CPD) {
+                if ($categoryCode == SendUpdateLogStatusEnum::CPD) {
                     $quote->update([
                         'policy_number' => $sendUpdateLog->policy_number,
                         'policy_start_date' => $sendUpdateLog->start_date,
