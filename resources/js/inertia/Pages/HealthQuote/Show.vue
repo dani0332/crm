@@ -1371,10 +1371,10 @@ const selectedProviderPlan = ref({
   premium: page.props.ecomDetails.priceWithVAT,
 });
 
-console.log(selectedProviderPlan, "LLLKKKKJ", page.props.quote);
+console.log(selectedProviderPlan, 'LLLKKKKJ', page.props.quote);
 
-const handlePlanSelected = (plan) => {
-  console.log("HHH", plan);
+const handlePlanSelected = plan => {
+  console.log('HHH', plan);
   //se.value = plan.id;
   selectedProviderPlan.value.id = plan.id;
   selectedProviderPlan.value.planName = plan.planName;
@@ -1383,7 +1383,7 @@ const handlePlanSelected = (plan) => {
   router.reload({
     preserveState: true,
     preserveScroll: true,
-    only: ["payments", "quoteRequest", "ecomDetails"],
+    only: ['payments', 'quoteRequest', 'ecomDetails'],
   });
 };
 
@@ -1801,7 +1801,9 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
                 <RiskRatingScoreDetails :quote="quote" :modelType="quoteType" />
               </dl>
               <dl
-                v-if="quote.customer_type === page.props.customerTypeEnum.Entity"
+                v-if="
+                  quote.customer_type === page.props.customerTypeEnum.Entity
+                "
                 class="grid md:grid-cols-2 gap-x-6 gap-y-4"
               >
                 <div class="grid sm:grid-cols-2">
@@ -2533,7 +2535,9 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
             <template #item-copayName="item">
               <span class="copay-max">{{ item.copayName }}</span>
             </template>
-            <template #item-providerName="{ providerName, isManualPlan, isHidden }">
+            <template
+              #item-providerName="{ providerName, isManualPlan, isHidden }"
+            >
               <p>{{ providerName }}</p>
               <div class="flex gap-1">
                 <x-tag
@@ -2559,7 +2563,11 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
             </template>
 
             <template #item-total="{ actualPremium, policyFee, basmah, vat }">
-              {{ fixedValue(actualPremium + (policyFee || 0) + (basmah || 0) + vat) }}
+              {{
+                fixedValue(
+                  actualPremium + (policyFee || 0) + (basmah || 0) + vat,
+                )
+              }}
             </template>
             <template #item-action="item">
               <div class="flex gap-2 pr-2">
@@ -2707,8 +2715,8 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
     <MigratePayment
       v-if="!isNewPaymentStructure"
       :quoteId="quote.id"
-      :paymentCode = "quote.code"
-      quoteType="Health"      
+      :paymentCode="quote.code"
+      quoteType="Health"
     />
     <PaymentTableNew
       v-if="isNewPaymentStructure"
@@ -2716,14 +2724,17 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
       :payments="payments"
       :paymentDocument="
         documentTypes.QUOTE.filter(
-          (item) => item.code === 'HPD' || item.code === 'HPDR' || item.code === 'HDPDR'
+          item =>
+            item.code === 'HPD' ||
+            item.code === 'HPDR' ||
+            item.code === 'HDPDR',
         )
       "
       :quoteRequest="quoteRequest"
       :paymentStatusEnum="paymentStatusEnum"
       :paymentTooltipEnum="paymentTooltipEnum"
       :paymentMethods="
-        paymentMethods.map((pm) => {
+        paymentMethods.map(pm => {
           return { value: pm.code, label: pm.name, tooltip: pm.tool_tip };
         })
       "
@@ -3070,7 +3081,10 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
       </Collapsible>
     </div>
 
-    <ClientInquiryLogs v-if="clientInquiryLogs.length > 0" :logs="clientInquiryLogs" />
+    <ClientInquiryLogs
+      v-if="clientInquiryLogs?.length > 0"
+      :logs="clientInquiryLogs"
+    />
 
     <div class="p-4 rounded shadow mb-6 bg-white">
       <Collapsible :expanded="sectionExpanded">

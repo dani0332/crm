@@ -157,7 +157,6 @@ class SendUpdateLogRepository extends BaseRepository
         return $result;
     }
 
-
     public function updatePayment($data)
     {
         $result = $this->where('id', $data['id'])->with('payments')->first();

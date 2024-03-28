@@ -3,7 +3,6 @@
 namespace Database\Seeders;
 
 use App\Enums\QuoteStatusEnum;
-use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Models\QuoteStatusMap;
 use Illuminate\Database\Seeder;

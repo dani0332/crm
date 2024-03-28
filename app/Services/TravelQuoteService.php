@@ -525,7 +525,7 @@ class TravelQuoteService extends BaseService
                 ]);
                 // This condition added to get the latest payment first for fetching Booking Details accordingly
                 $payment->orderBy('created_at', 'desc');
-            }
+            },
         ])->first();
     }
 

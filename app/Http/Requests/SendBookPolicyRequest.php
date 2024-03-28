@@ -44,6 +44,10 @@ class SendBookPolicyRequest extends FormRequest
                 if ($quote) {
                     $payment = Payment::where('code', $quote->code)->first();
                     $paymentSplit = PaymentSplits::where('code', $quote->code)->first();
+                    $splits = PaymentSplits::where('code', $quote->code)->get();
+
+                    // Blow code is for checking if payment and payment split record exists or not which is required for sage
+
                     if ($payment->first() && $paymentSplit->first()) {
                         if (empty($payment->insurer_invoice_date)) {
                             $validator->errors()->add('value', 'Insurer Invoice date is required');
@@ -57,11 +61,20 @@ class SendBookPolicyRequest extends FormRequest
                         if (empty($payment->commission_vat_not_applicable) && empty($payment->commission_vat_applicable)) {
                             $validator->errors()->add('value', 'Commmission (VAT NOT APPLICABLE) OR Commmission (VAT APPLICABLE) is required');
                         }
-                        $invoiceDate = Carbon::parse($payment->insurer_invoice_date)->startOfDay();
-                        $paymentDueDate = Carbon::parse($paymentSplit->due_date)->startOfDay();
+                        if (! empty($splits)) {
+                            foreach ($splits as $item) {
+                                if (empty($item->sage_reciept_id)) {
+                                    $validator->errors()->add('value', 'Payment sage reciept id can not be null');
+                                }
+                            }
+                        }
+                        if (! empty($payment->insurer_invoice_date) && ! empty($paymentSplit->due_date)) {
+                            $invoiceDate = Carbon::parse($payment->insurer_invoice_date)->startOfDay();
+                            $paymentDueDate = Carbon::parse($paymentSplit->due_date)->startOfDay();
 
-                        if ($invoiceDate->gt($paymentDueDate)) {
-                            $validator->errors()->add('value', 'Payment Due date cannot be earlier than Insurer Invoice date');
+                            if ($invoiceDate->gt($paymentDueDate)) {
+                                $validator->errors()->add('value', 'Payment Due date cannot be earlier than Insurer Invoice date');
+                            }
                         }
                     } else {
                         $validator->errors()->add('value', 'Payment Not found');
