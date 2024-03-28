@@ -127,6 +127,7 @@ class HealthQuoteService extends BaseService
             'hqr.is_ecommerce',
             'payment_status.text as payment_status_text',
             'hqr.price_starting_from',
+            'lu.text as transaction_type_text',
             'hqr.kyc_decision',
             'hqr.risk_score',
             'hqr.enquiry_count',
@@ -164,6 +165,7 @@ class HealthQuoteService extends BaseService
             ->leftJoin('lost_reasons as ls', 'ls.id', '=', 'hqrd.lost_reason_id')
             ->leftJoin('health_cover_for as hcf', 'hcf.id', '=', 'hqr.cover_for_id')
             ->leftJoin('nationality as n', 'n.id', '=', 'hqr.nationality_id')
+            ->leftJoin('lookups as lu', 'lu.id', '=', 'hqr.transaction_type_id')
             ->leftJoin('emirates as e', 'e.id', '=', 'hqr.emirate_of_your_visa_id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'hqr.quote_status_id')
             ->leftJoin('health_lead_type as lt', 'lt.id', '=', 'hqr.lead_type_id')
