@@ -6,7 +6,7 @@ defineProps({
 const params = useUrlSearchParams('history');
 
 const filters = reactive({
-  name: '',
+  text: '',
   page: 1,
 });
 
@@ -16,14 +16,13 @@ const loader = reactive({
 
 const tableHeader = reactive([
   { text: 'ID', value: 'id' },
-  { text: 'Key', value: 'key' },
-  { text: 'Name', value: 'name' },
-  { text: 'Created At', value: 'created_at' },
-  { text: 'Update At', value: 'updated_at' },
+  { text: 'Text', value: 'text' },
+  { text: 'Code', value: 'code' },
+  { text: 'Commercial Car Models', value: 'car_models' },
 ]);
 
 const onReset = () => {
-  router.visit(route('admin.commercial.keywords'), {
+  router.visit(route('admin.configure.commerical.vehicles'), {
     method: 'get',
     data: { page: 1 },
     preserveScroll: true,
@@ -36,7 +35,7 @@ const onSubmit = isValid => {
   if (isValid) {
     filters.page = 1;
 
-    router.visit(route('admin.commercial.keywords'), {
+    router.visit(route('admin.configure.commerical.vehicles'), {
       method: 'get',
       data: useGenerateQueryString(filters),
       preserveState: true,
@@ -62,13 +61,13 @@ onMounted(() => {
 });
 </script>
 <template>
-  <Head title="Commercial Keywords" />
+  <Head title="Commercial Vehicles" />
   <div class="flex justify-between items-center">
-    <h2 class="text-xl font-semibold">Commercial Keywords</h2>
+    <h2 class="text-xl font-semibold">Commercial Vehicles</h2>
     <div class="space-x-3">
-      <Link :href="route('admin.commercial.keywords.create')">
+      <Link :href="route('admin.configure.commerical.vehicles.create')">
         <x-button size="sm" color="#ff5e00" tag="div">
-          Add new Keyword
+          Assign more Vehicles
         </x-button>
       </Link>
     </div>
@@ -76,8 +75,8 @@ onMounted(() => {
   <x-divider class="my-4" />
   <x-form @submit="onSubmit" :auto-focus="false">
     <div class="flex flex-wrap gap-6">
-      <x-field class="flex-1" label="Keyword Name" required>
-        <x-input class="w-full" v-model="filters.name" />
+      <x-field class="flex-1" label="Search By Car Make">
+        <x-input class="w-full" v-model="filters.text" />
       </x-field>
       <div class="self-center mt-2 flex justify-end gap-3">
         <x-button size="sm" color="#ff5e00" type="submit">Search</x-button>
@@ -99,11 +98,18 @@ onMounted(() => {
   >
     <template #item-id="{ id }">
       <Link
-        :href="route('admin.commercial.keywords.show', id)"
+        :href="route('admin.configure.commerical.vehicles.show', id)"
         class="text-primary-500 hover:underline"
       >
         {{ id }}
       </Link>
+    </template>
+    <template #item-car_models="{ car_models }">
+      {{
+        car_models.length > 0
+          ? car_models.map(({ text }) => text).join(', ')
+          : 'N/A'
+      }}
     </template>
   </DataTable>
   <Pagination

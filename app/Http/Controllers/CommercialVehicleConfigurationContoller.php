@@ -36,26 +36,46 @@ class CommercialVehicleConfigurationContoller extends Controller
     {
         $gridData = $this->commercialVehicleConfigurationService->getGridData();
 
-        if ($request->ajax()) {
-            if (isset($request->text) && ! empty($request->text)) {
-                $text = $request->text;
-                $gridData = $gridData->where(function ($query) use ($text) {
-                    $query->whereRaw('LOWER(text) LIKE ?', [strtolower("%{$text}%")]);
-                });
-            }
-
-            return DataTables::of($gridData->get()->sortBy('text'))
-                ->addIndexColumn()
-                ->addColumn('car_models', function (CarMake $carMake) {
-                    if (! empty($carMake->carModels)) {
-                        return implode(', ', $carMake->carModels->pluck('text')->toArray());
-                    }
-                })
-                ->rawColumns(['car_models'])
-                ->make(true);
+        
+        if(isset($request->text) && ! empty($request->text)){
+            $text = $request->text;
+            $gridData = $gridData->where(function ($query) use ($text) {
+                $query->whereRaw('LOWER(text) LIKE ?', [strtolower("%{$text}%")]);
+            });
         }
 
-        return view('commercialcarmakemodel.index');
+        // $gridData->getCollection()->transform(function ($item) {
+        //     $carModels = $item->carModels->pluck('text')->toArray();
+        //     $item->car_models = implode(', ', $carModels);
+        //     unset($item->carModels);
+        //     return $item;
+        // });
+
+        $gridData = $gridData->orderBy('text')->paginate();
+
+        // if ($request->ajax()) {
+        //     if (isset($request->text) && ! empty($request->text)) {
+        //         $text = $request->text;
+        //         $gridData = $gridData->where(function ($query) use ($text) {
+        //             $query->whereRaw('LOWER(text) LIKE ?', [strtolower("%{$text}%")]);
+        //         });
+        //     }
+
+        //     return DataTables::of($gridData->get()->sortBy('text'))
+        //         ->addIndexColumn()
+        //         ->addColumn('car_models', function (CarMake $carMake) {
+        //             if (! empty($carMake->carModels)) {
+        //                 return implode(', ', $carMake->carModels->pluck('text')->toArray());
+        //             }
+        //         })
+        //         ->rawColumns(['car_models'])
+        //         ->make(true);
+        // }
+
+        return inertia('Admin/AllocationConfig/CommericalVehicles/Index', [
+            'data' => $gridData,
+        ]);
+        // return view('commercialcarmakemodel.index');
     }
 
     /**
@@ -67,7 +87,10 @@ class CommercialVehicleConfigurationContoller extends Controller
     {
         $carsMake = $this->commercialVehicleConfigurationService->getActiveCarMakes();
 
-        return view('commercialcarmakemodel.add', compact('carsMake'));
+        return inertia('Admin/AllocationConfig/CommericalVehicles/Form', [
+            'carMakes' => $carsMake,
+        ]);
+        // return view('commercialcarmakemodel.add', compact('carsMake'));
     }
 
     /**
@@ -92,7 +115,11 @@ class CommercialVehicleConfigurationContoller extends Controller
     {
         $carMake = $this->commercialVehicleConfigurationService->getDetails($id);
 
-        return view('commercialcarmakemodel.show', compact('carMake'));
+        return inertia('Admin/AllocationConfig/CommericalVehicles/Show', [
+            'carMake' => $carMake,
+        ]);
+
+        // return view('commercialcarmakemodel.show', compact('carMake'));
     }
 
     /**

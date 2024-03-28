@@ -46,7 +46,6 @@ class CommercialKeywordsController extends Controller
         $gridData = $gridData->orderByDesc('id')->paginate();
         return inertia('Admin/AllocationConfig/CommercialKeywords/Index', [
             'data' => $gridData,
-           
         ]);
         // return view('commercialkeywords.index');
     }
