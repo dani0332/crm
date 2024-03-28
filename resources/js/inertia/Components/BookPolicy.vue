@@ -155,7 +155,8 @@ const submitPolicy = () => {
       }
     })
     .catch(err => {
-      const flash_messages = err.response.data.errors;
+      const flash_messages = err.response.data.errors.value;
+
       Object.keys(flash_messages).forEach(function (key) {
         notification.error({
           title: flash_messages[key],
@@ -220,17 +221,18 @@ const caculateCommission = () => {
       <template #header>
         <div class="flex flex-wrap gap-4 justify-between items-center">
           <h3 class="font-semibold text-primary-800 text-lg">
-            Book Policy
+            Booking Details
           </h3>
         </div>
       </template>
       <template #body>
+        <x-divider class="my-4" />
         <x-form @submit="onUpdateBpDetails" :auto-focus="false">
-          <div class="text-sm my-4">
+          <div class="text-sm">
             <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
               <div class="grid sm:grid-cols-2">
                 <x-tooltip>
-                  <dt class="font-medium">Booking Details</dt>
+                  <dt class="font-medium">Booking Date</dt>
                   <template #tooltip>
                     <span class="custom-tooltip-content">{{
                       productionProcessTooltipEnum.BOOKING_DATE
@@ -358,9 +360,11 @@ const caculateCommission = () => {
                   <dt class="font-medium">Insurer Commission Tax Invoice No</dt>
 
                   <template #tooltip>
-                    <span class="custom-tooltip-content">{{
-                      productionProcessTooltipEnum.INSURER_COMMISSION_TAX_INVOICE_NUMBER
-                    }}</span>
+                    <span class="custom-tooltip-content">
+                      {{
+                        productionProcessTooltipEnum.INSURER_COMMISSION_TAX_INVOICE_NUMBER
+                      }}
+                    </span>
                   </template>
                 </x-tooltip>
                 <dd>
@@ -437,7 +441,8 @@ const caculateCommission = () => {
                     placeholder="Commission VAT APPLICABLE"
                     class="w-full"
                     :disabled="
-                      !bp.isEditing || bpForm.commission_vat_not_applicable !== ''
+                      !bp.isEditing ||
+                      bpForm.commission_vat_not_applicable !== ''
                     "
                   />
                 </dd>
@@ -604,7 +609,7 @@ const caculateCommission = () => {
                         color="orange"
                         :disabled="!props.bPDetails?.editButton"
                       >
-                        Send Policy To Customer
+                        Sending Policy To Customer
                       </x-button>
                       <template #tooltip>
                         <span>{{
@@ -618,10 +623,20 @@ const caculateCommission = () => {
             </div>
           </div>
         </x-form>
-       </template>
+      </template>
     </Collapsible>
-    <x-modal v-model="modals.sendPolicyConfirm" show-close backdrop>
+    <x-modal v-model="modals.sendPolicyConfirm" size="lg" show-close backdrop>
       <template #header> Send Policy </template>
+      <x-alert
+        color="orange"
+        light
+        type="error"
+        class="text-sm mb-4"
+        v-if="bPDetails.sendPolicyType == 'customer'"
+      >
+        Please be aware that your current action involves sending the policy to
+        the customer only.
+      </x-alert>
       <x-checkbox
         v-model="modals.isConfirmed"
         label="I confirm and attest that all the information is correct"

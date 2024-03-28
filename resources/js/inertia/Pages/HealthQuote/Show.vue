@@ -180,7 +180,6 @@ const memberCategoryText = memberCategoryId =>
     )?.text;
   });
 
-
 // const subTeamOptions = computed(() => {
 //     let subteamArray = page.props.teams?.map(team => ({
 //         value: team.name,
@@ -1376,23 +1375,22 @@ const selectedProviderPlan = ref({
   id: page.props.quote.plan_id,
   planName: page.props.quote.health_plan_name_text,
   providerName: page.props.quote.plan_provider_name_text,
-  premium: page.props.ecomDetails.priceWithVAT
-
+  premium: page.props.ecomDetails.priceWithVAT,
 });
 
-console.log(selectedProviderPlan, "LLLKKKKJ", page.props.quote)
+console.log(selectedProviderPlan, 'LLLKKKKJ', page.props.quote);
 
 const handlePlanSelected = plan => {
-  console.log("HHH", plan);
+  console.log('HHH', plan);
   //se.value = plan.id;
-  selectedProviderPlan.value.id = plan.id
-  selectedProviderPlan.value.planName = plan.planName
-  selectedProviderPlan.value.providerName = plan.providerName
-  selectedProviderPlan.value.premium = plan.premium
+  selectedProviderPlan.value.id = plan.id;
+  selectedProviderPlan.value.planName = plan.planName;
+  selectedProviderPlan.value.providerName = plan.providerName;
+  selectedProviderPlan.value.premium = plan.premium;
   router.reload({
     preserveState: true,
     preserveScroll: true,
-    only: ['payments','quoteRequest','ecomDetails'],
+    only: ['payments', 'quoteRequest', 'ecomDetails'],
   });
 };
 
@@ -1792,7 +1790,9 @@ watch(
                 <RiskRatingScoreDetails :quote="quote" :modelType="quoteType" />
               </dl>
               <dl
-                v-if="quote.customer_type === page.props.customerTypeEnum.Entity"
+                v-if="
+                  quote.customer_type === page.props.customerTypeEnum.Entity
+                "
                 class="grid md:grid-cols-2 gap-x-6 gap-y-4"
               >
                 <div class="grid sm:grid-cols-2">
@@ -2545,7 +2545,9 @@ watch(
             <template #item-copayName="item">
               <span class="copay-max">{{ item.copayName }}</span>
             </template>
-            <template #item-providerName="{ providerName, isManualPlan, isHidden }">
+            <template
+              #item-providerName="{ providerName, isManualPlan, isHidden }"
+            >
               <p>{{ providerName }}</p>
               <div class="flex gap-1">
                 <x-tag
@@ -2577,7 +2579,9 @@ watch(
 
             <template #item-total="{ actualPremium, policyFee, basmah, vat }">
               {{
-                fixedValue(actualPremium + (policyFee || 0) + (basmah || 0) + vat)
+                fixedValue(
+                  actualPremium + (policyFee || 0) + (basmah || 0) + vat,
+                )
               }}
             </template>
             <template #item-action="item">
@@ -2741,21 +2745,32 @@ watch(
     <MigratePayment
       v-if="!isNewPaymentStructure"
       :quoteId="quote.id"
-      :paymentCode = "quote.code"
-      quoteType="Health"      
+      :paymentCode="quote.code"
+      quoteType="Health"
     />
     <PaymentTableNew
-			v-if="isNewPaymentStructure"
-			quoteType="Health"
-			:payments="payments"
-			:paymentDocument="documentTypes.QUOTE.filter(item => item.code === 'HPD' || item.code === 'HPDR' || item.code === 'HDPDR')"
-			:quoteRequest="quoteRequest"
-			:paymentStatusEnum="paymentStatusEnum"
-			:paymentTooltipEnum="paymentTooltipEnum"
-			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name, tooltip: pm.tool_tip } })"
-			:storageUrl="storageUrl"
-      :eCommercePrice="ecomDetails.priceWithVAT?ecomDetails.priceWithVAT:0"
-		/>
+      v-if="isNewPaymentStructure"
+      quoteType="Health"
+      :payments="payments"
+      :paymentDocument="
+        documentTypes.QUOTE.filter(
+          item =>
+            item.code === 'HPD' ||
+            item.code === 'HPDR' ||
+            item.code === 'HDPDR',
+        )
+      "
+      :quoteRequest="quoteRequest"
+      :paymentStatusEnum="paymentStatusEnum"
+      :paymentTooltipEnum="paymentTooltipEnum"
+      :paymentMethods="
+        paymentMethods.map(pm => {
+          return { value: pm.code, label: pm.name, tooltip: pm.tool_tip };
+        })
+      "
+      :storageUrl="storageUrl"
+      :eCommercePrice="ecomDetails.priceWithVAT ? ecomDetails.priceWithVAT : 0"
+    />
     <PaymentTable
       v-else
       :payments="payments"
@@ -2783,6 +2798,7 @@ watch(
       :policyIssuanceStatus="policyIssuanceStatus"
       modelType="health"
       :expanded="sectionExpanded"
+      :payments="payments"
     />
 
     <div class="p-4 rounded shadow mb-6 bg-white">
@@ -2877,11 +2893,7 @@ watch(
       <p>Are you sure you want to delete this document?</p>
       <template #actions>
         <div class="text-right space-x-4">
-          <x-button
-            @click.prevent="modals.doc = true"
-            size="sm"
-            color="orange"
-          >
+          <x-button @click.prevent="modals.doc = true" size="sm" color="orange">
             Upload Documents
           </x-button>
           <x-button
@@ -2940,11 +2952,7 @@ watch(
       <p>Are you sure you want to delete this document?</p>
       <template #actions>
         <div class="text-right space-x-4">
-          <x-button
-            size="sm"
-            ghost
-            @click.prevent="modals.docConfirm = false"
-          >
+          <x-button size="sm" ghost @click.prevent="modals.docConfirm = false">
             Cancel
           </x-button>
           <x-button
@@ -2958,7 +2966,6 @@ watch(
         </div>
       </template>
     </x-modal>
-    
 
     <SendUpdates
       v-if="hasPolicyIssuedStatus"
@@ -3108,7 +3115,6 @@ watch(
         </div>
       </template>
     </x-modal>
-    
 
     <div class="p-4 rounded shadow mb-6 bg-white">
       <Collapsible :expanded="sectionExpanded">
@@ -3147,7 +3153,7 @@ watch(
     <ClientInquiryLogs
       v-if="clientInquiryLogs?.length > 0"
       :logs="clientInquiryLogs"
-      />
+    />
 
     <div class="p-4 rounded shadow mb-6 bg-white">
       <Collapsible :expanded="sectionExpanded">
@@ -3183,6 +3189,11 @@ watch(
       </Collapsible>
     </div>
 
-    <AuditLogs :type="'App\\Models\\HealthQuote'" :id="$page.props.quote.id" :quoteCode="$page.props.quote.code" :expanded="sectionExpanded"/>
+    <AuditLogs
+      :type="'App\\Models\\HealthQuote'"
+      :id="$page.props.quote.id"
+      :quoteCode="$page.props.quote.code"
+      :expanded="sectionExpanded"
+    />
   </div>
 </template>
