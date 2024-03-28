@@ -1,5 +1,4 @@
 <script setup>
-import { watch } from 'vue';
 import moment from 'moment';
 
 const page = usePage();
@@ -160,6 +159,10 @@ watch(
         quote_policy_start_date,
       ).add(12, 'months');
     }
+    console.log(
+      'quote_policy_expiry_date',
+      policyDetailsForm.quote_policy_expiry_date,
+    );
   },
 );
 </script>
