@@ -23,6 +23,7 @@ use DataTables;
 use DB;
 use Illuminate\Http\Request;
 
+// Scheduled to delete 15th April 2024
 class ClaimController extends Controller
 {
     /**
@@ -449,7 +450,6 @@ class ClaimController extends Controller
         }
 
         return redirect()->back()->with('error', $message);
-
     }
 
     public function getoverdueleads(Request $request)

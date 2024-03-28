@@ -15,7 +15,7 @@ class ValuationController extends Controller
      */
     public function __construct()
     {
-        $this->middleware('permission:vehicle-valuation-list', ['only' => ['index', 'store']]);
+        $this->middleware('permission:vehicle-valuation-list', ['only' => ['index']]);
     }
 
     public function index()
