@@ -44,25 +44,25 @@ final class SageEnum extends Enum
     const SRT_RTP_AR_DISC_INV = 'RTP_AR_DISC_INV';
     const SRT_POST_AR_DISC_INV = 'POST_AR_DISC_INV';
 
-    // Creation of Invoice - Monthly, Quaterly, Semi-Annual, Split, Custom
+    // Creation AR Invoice - Monthly, Quaterly, Semi-Annual, Split, Custom
     const SRT_CREATE_AR_SPPAY_INV = 'CREATE_AR_SPPAY_INV';
-    const SRT_RTP_AR_SPPAY_INV = 'RTP_AR_SPPAY_INV';
-    const SRT_POST_AR_SPPAY_INV = 'POST_AR_SPPAY_INV';
+    // const SRT_RTP_AR_SPPAY_INV = 'RTP_AR_SPPAY_INV';
+    // const SRT_POST_AR_SPPAY_INV = 'POST_AR_SPPAY_INV';
 
-    // Mapping of Prepayment to Invoice - Upfront
-    const SRT_PP_REC_ONE_INV = 'PRE_PAY_REC_ONE_INV';
-    const SRT_RTP_PP_REC_ONE_INV = 'RTP_PP_REC_ONE_INV';
-    const SRT_POST_PP_REC_ONE_INV = 'POST_PP_REC_ONE_INV';
+    // Create Payment Receipt Invoice - Upfront
+    const SRT_PAY_REC_ONE_INV = 'PAY_REC_ONE_INV';
+    const SRT_RTP_PAY_REC_ONE_INV = 'RTP_PAY_REC_ONE_INV';
+    const SRT_POST_PAY_REC_ONE_INV = 'POST_PAY_REC_ONE_INV';
     
-    // Mapping of Prepayment to Invoice - Split
-    const SRT_PP_REC_SPINV = 'PRE_PAY_REC_SPINV';
-    const SRT_RTP_PP_REC_SPINV = 'RTP_PP_REC_SPINV';
-    const SRT_POST_PP_REC_SPINV = 'POST_PP_REC_SPINV';
+    // Mapping of AR Prepayment to Invoice - Split
+    const SRT_MAP_PP_AR_SPINV = 'MAP_PRE_PAY_AR_SPINV';
+    // const SRT_RTP_PP_REC_SPINV = 'RTP_PP_REC_SPINV';
+    // const SRT_POST_PP_REC_SPINV = 'POST_PP_REC_SPINV';
     
     // Mapping of Prepayment to Invoice - Monthly, Quaterly, Semi-Annual, Custom
-    const SRT_PP_REC_CFQ_INV = 'PRE_PAY_REC_CFQ_INV';
-    const SRT_RTP_PP_REC_CFQ_INV = 'RTP_PP_REC_CFQ_INV';
-    const SRT_POST_PP_REC_CFQ_INV = 'POST_PP_REC_CFQ_INV';
+    // const SRT_PP_REC_CFQ_INV = 'PRE_PAY_REC_CFQ_INV';
+    // const SRT_RTP_PP_REC_CFQ_INV = 'RTP_PP_REC_CFQ_INV';
+    // const SRT_POST_PP_REC_CFQ_INV = 'POST_PP_REC_CFQ_INV';
 
     // Creation of Reversal & Correction Invoice
     const SRT_CREATE_AR_PREM_COMM_REV_INV = 'CREATE_AR_PREM_COMM_REV_INV';
