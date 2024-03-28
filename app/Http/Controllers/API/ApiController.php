@@ -2,11 +2,9 @@
 
 namespace App\Http\Controllers\API;
 
-
 use App\Enums\quoteBusinessTypeCode;
 use App\Enums\quoteTypeCode;
 use App\Events\PaymentNotifications;
-use App\Factories\AllocationFactory;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\APiFetchUrl;
 use App\Http\Requests\AssignLeadRequest;
@@ -65,7 +63,6 @@ class ApiController extends Controller
         }
     }
 
-
     public function quotePaymentStatusUpdated(Request $request)
     {
         $model = $this->getModelObject(strtolower($request->quoteType));
@@ -91,7 +88,6 @@ class ApiController extends Controller
 
         return response()->json(['message' => 'Payment notification successfully send to advisor!'], 200);
     }
-
 
     public function triggerSICWorkflow(SICWorkflowRequest $request)
     {
