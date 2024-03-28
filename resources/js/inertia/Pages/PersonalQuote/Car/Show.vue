@@ -3758,6 +3758,7 @@ const handleChildUpdate = planId => {
     </div>
 
     <CustomerChatLogs
+      v-if="hasRole(rolesEnum.BetaUser)"
       :customerName="record?.first_name + ' ' + record?.last_name"
       :quoteId="quote.uuid"
       :quoteType="'CAR'"
