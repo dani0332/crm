@@ -433,7 +433,7 @@ let discountTypes = [
       { value: '', label: 'Discount Type'},
       { value: 'managerial_approval_discount', label: 'Managerial approval discount', tooltip: props.paymentTooltipEnum.DISCOUNT_TYPE_LIST_MANAGERIAL },
       { value: 'employee_discount', label: 'Employee discount', tooltip: props.paymentTooltipEnum.DISCOUNT_TYPE_LIST_EMPLOYEE },
-      { value: 'family_employee_discount', label: 'Family employee discount', tooltip: props.paymentTooltipEnum.DISCOUNT_TYPE_LIST_FAMILY }, 
+      { value: 'family_employee_discount', label: 'Employee family discount', tooltip: props.paymentTooltipEnum.DISCOUNT_TYPE_LIST_FAMILY }, 
     ];
 if (!(familyEmployeDiscount.includes(props.quoteType))) {
   discountTypes = discountTypes.filter(type => (type.value !== 'employee_discount' && type.value !== 'family_employee_discount'));
@@ -1776,23 +1776,25 @@ const isMasterPaymentPaid = computed(() => {
   <div class="p-4 rounded shadow mb-6 bg-white">
     <div class="flex justify-between gap-4 items-center mb-4">
       <h3 class="font-semibold text-primary-800 text-lg">Manage Payments</h3>
-      <template v-if="payments.length>0">        
-        <UpdateTotalPrice
-          v-if="can(permissionEnum.TEMP_UPDATE_TOTALPRICE) && quoteRequest.quote_status_id === 15"
-          :quoteId="quoteRequest.id"
-          :paymentCode = "payments[0].code"
-          :quoteType="quoteType" 
-          :totalPrice="payments[0].total_price"
-          :totalPaidPrice="payments[0].total_amount+payments[0].discount_value"   
-        />
-        <x-button
-            v-if="can(permissionEnum.PaymentsCreate)"
-            size="sm"
-            color="emerald"
-            @click="addPaymentModal"          
-          >
-            Add Manual Payment
-          </x-button>
+      <template v-if="payments.length>0">
+        <div class="flex justify-between items-center gap-2" style="margin-left:auto">
+          <UpdateTotalPrice
+            v-if="can(permissionEnum.TEMP_UPDATE_TOTALPRICE) && quoteRequest.quote_status_id === 15"
+            :quoteId="quoteRequest.id"
+            :paymentCode = "payments[0].code"
+            :quoteType="quoteType" 
+            :totalPrice="payments[0].total_price"
+            :totalPaidPrice="payments[0].total_amount+payments[0].discount_value"   
+          />
+          <x-button
+              v-if="can(permissionEnum.PaymentsCreate)"
+              size="sm"
+              color="emerald"
+              @click="addPaymentModal"          
+            >
+              Add Manual Payment
+            </x-button>
+          </div>
       </template>
       <template v-else>
         <x-tooltip>
