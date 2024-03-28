@@ -15,7 +15,10 @@ class EmbeddedProductController extends Controller
 {
     public function __construct()
     {
-        $this->middleware(['permission:'.PermissionsEnum::EmbeddedProductView]);
+        $this->middleware([
+            'permission:' . PermissionsEnum::EmbeddedProductAdvisor,
+            'permission:' . PermissionsEnum::EmbeddedProductAdmin
+        ]);
     }
 
     /**

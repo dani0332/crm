@@ -1,6 +1,7 @@
 <script setup>
 const notification = useNotifications('toast');
 import { XButton } from '@indielayer/ui';
+import { useCan, useCanAny } from '../Composables/can';
 
 const page = usePage();
 const props = defineProps({
@@ -31,6 +32,7 @@ const props = defineProps({
 });
 
 const paymentStatusEnum = page.props.paymentStatusEnum;
+const permissionsEnum = page.props.permissionsEnum;
 const modals = reactive({
   cancelPayment: false,
 });
@@ -232,13 +234,7 @@ const hasAnyRole = roles => useHasAnyRole(roles);
 </script>
 
 <template>
-  <div
-    v-if="
-      hasAnyRole([
-        $page.props.rolesEnum.Engineering,
-        $page.props.rolesEnum.BetaUser,
-      ])
-    "
+  <div v-if="useCanAny([permissionsEnum.EmbeddedProductAdvisor, permissionsEnum.EmbeddedProductAdmin])"
     class="p-4 rounded shadow mb-6 bg-white"
   >
     <div class="flex flex-wrap gap-4 justify-between items-center mb-4">
@@ -341,6 +337,7 @@ const hasAnyRole = roles => useHasAnyRole(roles);
             Download Product Wordings
           </x-button>
           <x-button
+            v-if="useCan([permissionsEnum.EmbeddedProductAdmin])"
             size="xs"
             color="#ff5e00"
             :disabled="checkTransactionExist(item)"
@@ -351,7 +348,7 @@ const hasAnyRole = roles => useHasAnyRole(roles);
         </div>
       </template>
     </DataTable>
-    <x-modal v-model="modals.cancelPayment" size="lg" show-close backdrop>
+    <x-modal v-if="useCan([permissionsEnum.EmbeddedProductAdmin])" v-model="modals.cancelPayment" size="lg" show-close backdrop>
       <template #header> Cancel Payment </template>
 
       <x-form @submit="onActivitySubmit" :auto-focus="false">

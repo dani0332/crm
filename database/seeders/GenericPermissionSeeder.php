@@ -43,5 +43,38 @@ class GenericPermissionSeeder extends Seeder
         if (! $role->hasPermissionTo(PermissionsEnum::HEALTH_QUOTES_ACCESS)) {
             $role->givePermissionTo(PermissionsEnum::HEALTH_QUOTES_ACCESS);
         }
+
+        $this->embeddedProductSeeds();
+    }
+
+    private function embeddedProductSeeds()
+    {
+        // update name of existing permission
+        Permission::where(['name' => 'embedded-product-view'])->update(['name' => PermissionsEnum::EmbeddedProductAdvisor]);
+
+        $permissionList = [
+            PermissionsEnum::EmbeddedProductAdvisor => [
+                RolesEnum::CarAdvisor,
+                RolesEnum::Admin,
+                RolesEnum::Engineering,
+                RolesEnum::BetaUser,
+                RolesEnum::EpAdmin
+            ],
+            PermissionsEnum::EmbeddedProductAdmin => [
+                RolesEnum::Admin,
+                RolesEnum::Engineering,
+                RolesEnum::BetaUser,
+                RolesEnum::EpAdmin
+            ],
+        ];
+
+        foreach ($permissionList as $permission => $roles) {
+            $dataset = Permission::firstOrCreate(['name' => $permission, 'guard_name' => 'web']);
+            foreach ($roles as $roleName) {
+                if (($role = Role::where('name', $roleName)->first()) && !$role->hasPermissionTo($dataset->id)) {
+                    $role->givePermissionTo($dataset->id);
+                }
+            }
+        }
     }
 }
