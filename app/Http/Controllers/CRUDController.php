@@ -526,7 +526,7 @@ class CRUDController extends Controller
         $sendUpdateOptions = [];
         $sendUpdateLogs = [];
         $sendUpdateEnum = (object) [];
-        $hasPolicyIssuedStatus = $this->crudService->hasAtleastOneStatusPolicyIssued($quoteTypeId, $record);
+        $hasPolicyIssuedStatus = $this->crudService->hasAtleastOneStatusPolicyIssued($record);
 
         if ($hasPolicyIssuedStatus) {
             $sendUpdateOptions = $this->lookupService->getSendUpdateOptions($quoteTypeId);

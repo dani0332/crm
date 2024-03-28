@@ -205,7 +205,7 @@ class TravelController extends Controller
         $sendUpdateOptions = [];
         $sendUpdateLogs = [];
         $sendUpdateEnum = (object) [];
-        $hasPolicyIssuedStatus = $this->crudService->hasAtleastOneStatusPolicyIssued(QuoteTypes::TRAVEL->id(), $record);
+        $hasPolicyIssuedStatus = $this->crudService->hasAtleastOneStatusPolicyIssued($record);
 
         if ($hasPolicyIssuedStatus) {
             $sendUpdateOptions = $this->lookupService->getSendUpdateOptions(QuoteTypeId::Travel);
