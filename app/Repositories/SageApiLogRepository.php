@@ -16,7 +16,7 @@ class SageApiLogRepository extends BaseRepository
         return $this->where([
             'section_type' => $request['quoteTypeObject'],
             'section_id' => $request['quote_id'],
-            'sage_request_type' => $request['invoiceType']
+            'sage_request_type' => $request['invoiceType'],
         ])->first()->response;
     }
 }
