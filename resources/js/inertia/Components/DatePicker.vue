@@ -41,7 +41,15 @@ const props = defineProps({
     type: Date,
     default: null,
   },
+  maxDate: {
+    type: Date,
+    default: null,
+  },
   monthPicker: {
+    type: Boolean,
+    default: false,
+  },
+  disableYear: {
     type: Boolean,
     default: false,
   },
@@ -60,6 +68,11 @@ const selectedData = computed({
 const monthPicker = computed(() => {
   return props.monthPicker;
 });
+const onlyCurentYear = () => {
+  if (props.disableYear && props.monthPicker)
+    return [new Date().getFullYear(), new Date().getFullYear()];
+  else return [1900, 2100];
+};
 </script>
 <template>
   <VueDatePicker
@@ -78,6 +91,7 @@ const monthPicker = computed(() => {
     :clearable="false"
     :disabled="props.disabled"
     :min-date="props.minDate"
+    :max-date="props.maxDate"
     utc="preserve"
     :is-24="false"
     text-input

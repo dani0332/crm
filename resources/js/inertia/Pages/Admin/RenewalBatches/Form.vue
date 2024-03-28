@@ -209,6 +209,9 @@ onMounted(() => {
             :monthPicker="true"
             placeholder="Batch Month"
             format="MMM"
+            :disableYear="true"
+            :minDate="new Date(new Date().getFullYear(), 0)"
+            :maxDate="new Date(new Date().getFullYear(), 11)"
           />
         </x-field>
         <x-field label="Start Date" required>
