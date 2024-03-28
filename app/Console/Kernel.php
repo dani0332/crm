@@ -3,8 +3,10 @@
 namespace App\Console;
 
 use App\Console\Commands\UpdateHealthStatus;
+use App\Console\Commands\UpdateManualOffline;
 use App\Jobs\CarLost\CarSoldResubmissions;
 use App\Jobs\CarLost\UnconSubmissionReminder;
+use Carbon\Carbon;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
 
@@ -23,6 +25,7 @@ class Kernel extends ConsoleKernel
         Commands\LeadsReassignment::class,
         Commands\ResetLeadAllocationCounts::class,
         Commands\UpdateHealthStatus::class,
+        Commands\QuoteSyncUpdateCommand::class,
     ];
 
     /**
@@ -35,11 +38,11 @@ class Kernel extends ConsoleKernel
         $schedule
             ->command('UpdateUserStatus:cron')->everyMinute()->onOneServer()->withoutOverlapping(1);
 
-        $schedule->job(new UnconSubmissionReminder)
+        /*$schedule->job(new UnconSubmissionReminder)
             ->tuesdays()
             ->fridays()
             ->withoutOverlapping(1)->onOneServer()
-            ->at('9:00');
+            ->at('9:00');*/
 
         //send leads which are resubmitted for car sold approval yesterday
         $schedule->job((new CarSoldResubmissions))
@@ -60,6 +63,18 @@ class Kernel extends ConsoleKernel
             ->command('LeadsReassignment:cron')->everyFiveMinutes()->onOneServer()->withoutOverlapping(1);
 
         $schedule->command('ResetLeadAllocationCounts:cron')->timezone('Asia/Dubai')->dailyAt('23:59')->onOneServer()->withoutOverlapping(1);
+
+        $schedule->command('QuoteSyncUpdate:cron')->everyFiveMinutes()->onOneServer()->withoutOverlapping(1);
+        $schedule->command(UpdateManualOffline::class)
+            ->timezone('Asia/Dubai')
+            ->dailyAt('08:58')
+            ->unlessBetween(
+                Carbon::now()->next(Carbon::SATURDAY)->startOfDay(),
+                Carbon::now()->next(Carbon::SUNDAY)->endOfDay()
+            )
+            ->onOneServer()
+            ->withoutOverlapping(1);
+
     }
 
     /**

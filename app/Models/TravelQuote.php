@@ -20,14 +20,20 @@ class TravelQuote extends Model implements AuditableContract
     protected $guarded = [];
     public $filterables = [
         'first_name' => FilterTypes::EXACT,
-        'last_name' => FilterTypes::EXACT,
+        'last_name' => FilterTypes::FREE,
         'uuid' => FilterTypes::EXACT,
         'code' => FilterTypes::EXACT,
         'email' => FilterTypes::EXACT,
         'mobile_no' => FilterTypes::EXACT,
         'created_at' => FilterTypes::DATE_BETWEEN,
+        'renewal_batch' => FilterTypes::EXACT,
         'quote_status_id' => FilterTypes::IN,
+        'is_ecommerce' => FilterTypes::EXACT,
+        'previous_quote_policy_number' => FilterTypes::NULL_CHECK,
         'advisor_id' => FilterTypes::IN,
+        'policy_number' => FilterTypes::EXACT,
+        'source' => FilterTypes::EXACT,
+        'renewal_expiry_date' => FilterTypes::DATE_BETWEEN,
     ];
 
     public function quoteStatus()
@@ -106,9 +112,37 @@ class TravelQuote extends Model implements AuditableContract
         return $this->asDateTime($table)->timezone(config('app.timezone'))->format($date_time_format);
     }
 
+    public function insuranceProvider()
+    {
+        return $this->hasOne(InsuranceProvider::class, 'text', 'currently_insured_with')->select(['id', 'text']);
+    }
+    /**
+     * get data by personal quote type.
+     *
+     * @return mixed
+     */
+    public function scopeByQuoteTypeCode($query, $quoteTypeCode)
+    {
+        return $query->whereHas('quoteType', function ($q) use ($quoteTypeCode) {
+            $q->where('code', ($quoteTypeCode));
+        });
+    }
+
+    /**
+     * @return mixed
+     */
+    public function scopeByQuoteTypeId($query, $quoteTypeId)
+    {
+        return $query->where('quote_type_id', $quoteTypeId);
+    }
+
     public function quoteRequestEntityMapping()
     {
         return $this->hasOne(QuoteRequestEntityMapping::class, 'quote_request_id')
             ->where('quote_type_id', QuoteTypeId::Travel);
+    }
+    public function transactionType()
+    {
+        return $this->belongsTo(Lookup::class, 'transaction_type_id', 'id');
     }
 }

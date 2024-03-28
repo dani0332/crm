@@ -1,5 +1,7 @@
 <script setup>
+
 import PaymentNotification from "../Components/PaymentNotification.vue";
+import OnlineStatusToggle from "../Components/OnlineStatusToggle.vue";
 
 const page = usePage();
 const user = computed(() => page.props.auth.user);
@@ -56,7 +58,13 @@ const onLogout = () => {
             </button>
 
             <a href="/" class="block w-full">
-              <img src="/image/new_logo.png" alt="IMCRM" class="w-full" />
+              <img
+                :src="page.props.im_logo"
+                alt="IMCRM"
+                class="w-full"
+                width="439"
+                height="66"
+              />
             </a>
           </div>
         </header>
@@ -240,6 +248,9 @@ const onLogout = () => {
             </div>
 
             <div class="flex gap-3 items-center">
+                <OnlineStatusToggle
+                    :user="user"
+                />
               <!-- <UserStatus /> -->
               <PaymentNotification />
               <x-popover align="right" block>

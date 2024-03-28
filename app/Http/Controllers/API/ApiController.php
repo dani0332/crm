@@ -2,15 +2,21 @@
 
 namespace App\Http\Controllers\API;
 
+
 use App\Enums\quoteBusinessTypeCode;
 use App\Enums\quoteTypeCode;
 use App\Events\PaymentNotifications;
 use App\Factories\AllocationFactory;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\APiFetchUrl;
+use App\Http\Requests\AssignLeadRequest;
+use App\Http\Requests\EvaluateTierRequest;
+use App\Http\Requests\SICWorkflowRequest;
 use App\Services\ApiService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
+use Illuminate\Validation\ValidationException;
 
 class ApiController extends Controller
 {
@@ -35,43 +41,30 @@ class ApiController extends Controller
         }
     }
 
-    public function assignLeads(Request $request)
+    public function assignLeads(AssignLeadRequest $request)
     {
         try {
 
+            // Log the incoming request parameters
             info('API assignLeads called with request params as : '.json_encode($request->all()));
 
-            if (config('constants.DISABLE_LEAD_ALLOCATION_ENDPOINT') == 1) {
-                info('------ Lead allocation ended for lead with Lead allocation endpoint disabled ------');
-
-                return response()->json(['error' => 'Lead allocation endpoint disabled'], 503);
+            // Check if lead allocation endpoint is disabled
+            if ($this->apiService->isLeadAllocationEndpointDisabled()) {
+                return apiResponse(null, Response::HTTP_SERVICE_UNAVAILABLE, 'Lead allocation endpoint disabled');
             }
 
-            if ($request->has('quoteUUID') && $request->has('quoteTypeId')) {
-
-                $allocationType = $request->input('quoteTypeId');
-                $allocationId = $request->input('quoteUUID');
-
-                info('------ Lead allocation with api started for lead : '.$allocationId.' with quote type id'.$allocationType.' ------');
-
-                $allocationStrategy = AllocationFactory::createStrategy($allocationType, $allocationId);
-
-                $allocationStrategy->executeSteps();
-
-                info('------ Lead allocation ended for lead : '.$allocationId.' ------');
-
-                return response()->json(['message' => 'Quote allocation completed successfully!'], 200);
-            } else {
-                info('------ Lead allocation ended for lead with Required parameters missing ------');
-
-                return response()->json(['error' => 'Required parameters missing'], 400);
-            }
+            return $this->apiService->processAssignLead($request);
         } catch (\Exception $e) {
             info('------ Lead allocation ended for lead with An error occurred ------');
 
-            return response()->json(['error' => 'An error occurred', 'message' => $e->getMessage(), 'stackTrace' => $e->getTraceAsString()], 500);
+            return apiResponse($e, Response::HTTP_INTERNAL_SERVER_ERROR);
+        } catch (ValidationException $e) {
+            info('------ Lead allocation ended for lead with Required parameters missing ------');
+
+            return apiResponse($e, Response::HTTP_BAD_REQUEST);
         }
     }
+
 
     public function quotePaymentStatusUpdated(Request $request)
     {
@@ -97,6 +90,17 @@ class ApiController extends Controller
         event(new PaymentNotifications($model, $url));
 
         return response()->json(['message' => 'Payment notification successfully send to advisor!'], 200);
+    }
+
+
+    public function triggerSICWorkflow(SICWorkflowRequest $request)
+    {
+        return $this->apiService->triggerSICWorkflow($request);
+    }
+
+    public function evaluateTier(EvaluateTierRequest $request)
+    {
+        return $this->apiService->evaluateTier($request);
     }
 
 }

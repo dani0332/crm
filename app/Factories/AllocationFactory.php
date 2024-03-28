@@ -10,11 +10,11 @@ use App\Strategies\HealthAllocation;
 
 class AllocationFactory
 {
-    public static function createStrategy($allocationType, $allocationId)
+    public static function createStrategy($allocationType, $allocationId, $teamId = false)
     {
         $strategy = null;
         if ($allocationType == QuoteTypeId::Car) {
-            $strategy = new CarAllocation(new CarAllocationService(), $allocationId);
+            $strategy = new CarAllocation(new CarAllocationService(), $allocationId, $teamId);
         } elseif ($allocationType == QuoteTypeId::Health) {
             $strategy = new HealthAllocation(new HealthAllocationService(), $allocationId);
         }

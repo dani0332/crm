@@ -11,20 +11,23 @@ class CarAllocation implements Allocation
 {
     private $carAllocationService;
     private $allocationId;
+    private $teamId;
 
-    public function __construct(CarAllocationService $carAllocationService, $allocationId)
+    public function __construct(CarAllocationService $carAllocationService, $allocationId, $teamId)
     {
         $this->carAllocationService = $carAllocationService;
         $this->allocationId = $allocationId;
+        $this->teamId = $teamId;
     }
 
-    public function executeSteps()
+    public function executeSteps($overrideAdvisorId = false, $teamId = false, $evaluateTierOnly = false)
     {
         try {
             // Fetch the lead to process
-            $lead = $this->fetchLead();
+            $lead = $this->fetchLead($overrideAdvisorId);
 
             if (! $lead) {
+                info('Lead not found or not under fetch criteria for allocation id: '.$this->allocationId);
 
                 return false; // when lead is not on criteria or not found
             }
@@ -34,6 +37,14 @@ class CarAllocation implements Allocation
 
             // If a valid tier is found
             if ($tier) {
+
+                if ($evaluateTierOnly) {
+                    info('Evaluate tier only. Tier finalized for lead : '.$lead->uuid.' is : '.$tier->name);
+                    $lead->tier_id = $tier->id;
+                    $lead->save();
+
+                    return $tier->id;
+                }
                 info('Tier finalized for lead : '.$lead->uuid.' is : '.$tier->name);
                 // Find available users for the tier
                 $availableUsers = $this->findAvailableUsers($tier->id, $lead->source);
@@ -47,30 +58,35 @@ class CarAllocation implements Allocation
                 if (! empty($advisorId) && $advisorId == $lead->advisor_id) {
                     info('Advisor is same as previous advisor. Skipping for now.');
 
-                    return false;
+                    return $advisorId;
                 }
 
                 if ($advisorId && $advisorId != 0) {
                     $this->assignLead($lead, $advisorId, $tier);
                 } else {
+                    info('Advisor not found. Skipping for now.');
                     // Update the lead's tier information
                     $this->updateLeadTier($lead, $tier);
                 }
+
+                return $advisorId;
             } else {
                 // Log that tier was not found for the lead and skip processing
                 info('Tier not found for lead: '.$lead->uuid.'. Skipping for now.');
+
+                return 0;
             }
         } catch (\Throwable $th) {
             info('exception occurred in car lead allocation with error : '.$th->getMessage());
             info('exception occurred in car lead allocation with error stack as  : '.$th->getTraceAsString());
 
-            return false;
+            return null;
         }
     }
 
-    protected function fetchLead(): mixed
+    protected function fetchLead($overrideAdvisorId): mixed
     {
-        return $this->carAllocationService->fetchLead($this->allocationId);
+        return $this->carAllocationService->fetchLead($this->allocationId, $overrideAdvisorId);
     }
 
     protected function getTier($tierId)
@@ -89,7 +105,7 @@ class CarAllocation implements Allocation
 
     protected function findAvailableUsers($tierId, $leadSource): array|Collection
     {
-        return $this->carAllocationService->getEligibleUserForAllocation($tierId, null, false, $leadSource);
+        return $this->carAllocationService->getEligibleUserForAllocation($tierId, null, false, $leadSource, $this->teamId);
     }
 
     protected function findRules($lead)
@@ -99,7 +115,7 @@ class CarAllocation implements Allocation
 
     protected function finalizeAdvisors($lead, $tier, $users, $rules): int
     {
-        return $this->carAllocationService->determineFinalUserId($lead, $users, $rules);
+        return $this->carAllocationService->determineFinalUserId($lead, $users, $rules, $this->teamId);
     }
 
     protected function assignLead($lead, $userId, $tier): void

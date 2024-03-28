@@ -12,6 +12,11 @@ class HomeQuoteRepository extends BaseRepository
     {
         return HomeQuote::class;
     }
+    public function fetchExport()
+    {
+        return $this->filter()->with(
+            ['advisor', 'nationality', 'insuranceProvider'])->orderBy('created_at', 'desc');
+    }
 
     public function fetchGetData($forExport = false)
     {
@@ -21,6 +26,8 @@ class HomeQuoteRepository extends BaseRepository
             'accommodationType:id,text',
             'possessionType:id,text',
             'advisor',
+            'nationality',
+            'insuranceProvider',
         ])
             ->filter(! $forExport)
             ->withFakeLeadCriteria()

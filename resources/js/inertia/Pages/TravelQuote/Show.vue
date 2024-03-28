@@ -46,33 +46,31 @@ defineProps({
   UBORelations: Array,
   UBOsDetails: Array,
   canAddBatchNumber: Boolean,
+  aboveAgeMembers: Number,
 });
-
 
 const hasAnyRole = roles => useHasAnyRole(roles);
 const checkedItems = ref([]);
 const checkCheckedPlans = computed(() => {
-    return true;
+  return true;
 });
 const checkedCount = computed(() => {
-    return checkedItems.value.length;
+  return checkedItems.value.length;
 });
 const updateCheckedCount = (id, event) => {
-    if (event.target.checked) {
-        if(checkedItems.value.length < 6) {
-            checkedItems.value.push(id);
-        }else{
-            return false;
-        }
+  if (event.target.checked) {
+    if (checkedItems.value.length < 6) {
+      checkedItems.value.push(id);
     } else {
-        var index =  checkedItems.value.indexOf(id);
-        if (index != -1) {
-            checkedItems.value.splice(id, 1);
-        }
+      return false;
     }
+  } else {
+    var index = checkedItems.value.indexOf(id);
+    if (index != -1) {
+      checkedItems.value.splice(id, 1);
+    }
+  }
 };
-
-
 
 const dateFormat = date => {
   if (!date) return '';
@@ -86,7 +84,6 @@ const notification = useNotifications('toast');
 
 const rolesEnum = page.props.rolesEnum;
 const hasRole = role => useHasRole(role);
-
 
 const {
   isRequired,
@@ -106,16 +103,19 @@ const confirmDeleteData = reactive({
 const memberActionEdit = ref(false),
   activityActionEdit = ref(false),
   selectedPlan = ref(null),
-    selectedPlans = ref([]),
-    toggleLoader = ref(false),
+  selectedPlans = ref([]),
+  selectedAdultPlans = ref([]),
+  selectedSeniorPlans = ref([]),
   selectedPlansPdf = ref([]),
   exportLoader = ref(false),
   historyLoading = ref(false),
+  toggleLoader = ref(false),
   lostReasonId = ref(
     page.props.lostReasons.find(
       reason => reason.text === page.props.quote.lost_reason,
     )?.id || null,
   );
+
 const leadDuplicateForm = useForm({
   modelType: 'travel',
   parentType: 'travel',
@@ -140,9 +140,9 @@ const onCreateDuplicate = isValid => {
 };
 
 const genderText = gender =>
-  computed(() => {
-    return page.props.genderOptions[gender];
-  });
+    computed(() => {
+      return page.props.genderOptions[gender];
+    });
 
 const lostReasonsOptions = computed(() => {
   return page.props.lostReasons.map(reason => ({
@@ -162,6 +162,7 @@ const modals = reactive({
   activity: false,
   activityConfirm: false,
   planDetails: false,
+  mixInquiryConfirm: false,
 });
 const travelFields = computed(() => {
   let skipFields = [
@@ -200,25 +201,25 @@ const leadStatusOptions = computed(() => {
 
 const onLeadStatus = () => {
   leadStatusForm.post(
-    route('updateLeadStatus', {
-      modelType: 'Travel',
-      QuoteUId: page.props.quote.id,
-    }),
-    {
-      preserveScroll: true,
-      onError: errors => {
-        notification.error({ title: errors.value, position: 'top' });
+      route('updateLeadStatus', {
+        modelType: 'Travel',
+        QuoteUId: page.props.quote.id,
+      }),
+      {
+        preserveScroll: true,
+        onError: errors => {
+          notification.error({title: errors.value, position: 'top'});
+        },
+        onSuccess: response => {
+          const flash_messages = response.props.flash;
+          if (!flash_messages) {
+            notification.success({
+              title: 'Lead Status Updated',
+              position: 'top',
+            });
+          }
+        },
       },
-      onSuccess: response => {
-        const flash_messages = response.props.flash;
-        if (!flash_messages) {
-          notification.success({
-            title: 'Lead Status Updated',
-            position: 'top',
-          });
-        }
-      },
-    },
   );
 };
 
@@ -438,9 +439,9 @@ const policyDetails = useForm({
   policy_issuance_date: dateToYMD(page.props.quote.policy_issuance_date) || '',
   quote_status_id: page.props.quote.quote_status_id,
   canEdit:
-    page.props.quote.quote_status_id ==
+      page.props.quote.quote_status_id ==
       page.props.enums.quoteStatusEnum.TransactionApproved &&
-    page.props.permissions.notProductionApproval,
+      page.props.permissions.notProductionApproval,
   editMode: false,
   modelType: page.props.modelType,
   quote_id: page.props.quote.id,
@@ -453,44 +454,44 @@ const cancelPolicyFrom = () => {
 const submitPolicyDetails = isValid => {
   if (!isValid) return;
   policyDetails
-    .transform(data => ({
-      quote_policy_number: data.policy_number,
-      quote_policy_start_date: data.policy_start_date,
-      quote_policy_expiry_date: data.renewal_expiry_date,
-      quote_policy_issuance_date: data.policy_issuance_date,
-      quote_premium: data.premium,
-      modelType: data.modelType,
-      quote_id: data.quote_id,
-      isInertia: true,
-    }))
-    .post(`/quotes/${page.props.modelType}/update-quote-policy`, {
-      preserveScroll: true,
-      onSuccess: () => {
-        notification.success({
-          title: 'Policy Details Updated',
-          position: 'top',
-        });
-      },
-      onFinish: () => {
-        policyDetails.editMode = false;
-      },
-    });
+      .transform(data => ({
+        quote_policy_number: data.policy_number,
+        quote_policy_start_date: data.policy_start_date,
+        quote_policy_expiry_date: data.renewal_expiry_date,
+        quote_policy_issuance_date: data.policy_issuance_date,
+        quote_premium: data.premium,
+        modelType: data.modelType,
+        quote_id: data.quote_id,
+        isInertia: true,
+      }))
+      .post(`/quotes/${page.props.modelType}/update-quote-policy`, {
+        preserveScroll: true,
+        onSuccess: () => {
+          notification.success({
+            title: 'Policy Details Updated',
+            position: 'top',
+          });
+        },
+        onFinish: () => {
+          policyDetails.editMode = false;
+        },
+      });
 };
 
 const memberCategoryText = memberCategoryId =>
-  computed(() => {
-    return page.props.memberCategories.find(
-      category => category.id === memberCategoryId,
-    )?.text;
-  });
+    computed(() => {
+      return page.props.memberCategories.find(
+          category => category.id === memberCategoryId,
+      )?.text;
+    });
 
 const memberDataDocs = membersDetail => {
   return membersDetail
-    .map(member => ({
-      id: member.id,
-      name: memberCategoryText(member.member_category_id).value,
-    }))
-    .filter(member => member.name !== undefined);
+      .map(member => ({
+        id: member.id,
+        name: memberCategoryText(member.member_category_id).value,
+      }))
+      .filter(member => member.name !== undefined);
 };
 
 const quoteDocumentsTable = reactive({
@@ -520,7 +521,7 @@ const sendPolicyToClient = () => {
     let quoteType = page.props.modelType;
     let quoteUuId = page.props.quote.uuid;
     let url =
-      '/quotes/' + quoteType + '/' + quoteUuId + '/send-policy-documents';
+        '/quotes/' + quoteType + '/' + quoteUuId + '/send-policy-documents';
     axios.post(url).then(response => {
       if (response.status == 200) {
         notification.success({
@@ -537,90 +538,89 @@ const sendPolicyToClient = () => {
   }
 };
 
-
 const onTogglePlans = toggle => {
-    toggleLoader.value = true;
+  toggleLoader.value = true;
 
-    const planIds = useArrayUnique(
-        selectedPlans.value.map(p => {
-            return p.id;
-        }),
-    ).value;
+  const planIds = useArrayUnique(
+    selectedPlans.value.map(p => {
+      return p.id;
+    }),
+  ).value;
 
-    axios
-        .post(route('manualPlanToggle', { quoteType: 'travel' }), {
-            modelType: 'Travel',
-            planIds: planIds,
-            quote_uuid: page.props.quote.uuid,
-            toggle: toggle,
-        })
-        .then(response => {
-            notification.success({
-                title: 'Plans has been updated',
-                position: 'top',
-            });
-            router.reload({
-                preserveScroll: true,
-            });
-        })
-        .catch(error => {
-            notification.error({
-                title: error,
-                position: 'top',
-            });
-        })
-        .finally(() => {
-            toggleLoader.value = false;
-            selectedPlans.value = [];
-        });
+  axios
+    .post(route('manualPlanToggle', { quoteType: 'travel' }), {
+      modelType: 'Travel',
+      planIds: planIds,
+      quote_uuid: page.props.quote.uuid,
+      toggle: toggle,
+    })
+    .then(response => {
+      notification.success({
+        title: 'Plans has been updated',
+        position: 'top',
+      });
+        onLoadAvailablePlansData();
+      router.reload({
+        preserveScroll: true,
+      });
+    })
+    .catch(error => {
+      notification.error({
+        title: error,
+        position: 'top',
+      });
+    })
+    .finally(() => {
+      toggleLoader.value = false;
+      selectedPlans.value = [];
+    });
 };
 
-
 const onExportPlans = () => {
-
-    if (selectedPlans.value.length < 2 || selectedPlans.value.length > 5) {
-        notification.error({
-            title: 'Please select 2 to 5 plans to download PDF.',
-            position: 'top',
-        });
-        return;
-    }
-    exportLoader.value = true;
-    const planIds = selectedPlans.value.map(p => {
-        return p.id;
+  if (selectedPlans.value.length < 2 || selectedPlans.value.length > 5) {
+    notification.error({
+      title: 'Please select 2 to 5 plans to download PDF.',
+      position: 'top',
     });
+    return;
+  }
+  exportLoader.value = true;
+  const planIds = selectedPlans.value.map(p => {
+    return p.id;
+  });
 
-    axios
-        .post(
-            '/api/v1/quotes/travel/export-plans-pdf',
-            {
-                plan_ids: planIds,
-                quote_uuid: page.props.quote.uuid,
-                modelType: 'travel',
-                quoteType:'travel'
-            },
-            {
-                responseType: 'json',
-            },
-        )
-        .then(response => {
-            const link = document.createElement('a');
-            let fileName = response.data.name;
-            link.href = response.data.data;
-            link.setAttribute('download', fileName);
-            document.body.appendChild(link);
-            link.click();
-            notification.success({
-                title: 'Plans Exported',
-                position: 'top',
-            });
-        })
-        .catch(error => {
-            console.log(error);
-        })
-        .finally(() => {
-            exportLoader.value = false;
-        });
+  axios
+    .post(
+      '/api/v1/quotes/travel/export-plans-pdf',
+      {
+        plan_ids: planIds,
+        quote_uuid: page.props.quote.uuid,
+        modelType: 'travel',
+        quoteType: 'travel',
+        hasAdultAndSeniorMember: (availableSeniorPlansTable?.data?.length > 0 && availablePlansTable?.data?.length > 0 )? true : false
+      },
+      {
+        responseType: 'json',
+      },
+    )
+    .then(response => {
+      const link = document.createElement('a');
+      let fileName = response.data.name;
+      link.href = response.data.data;
+      link.setAttribute('download', fileName);
+      document.body.appendChild(link);
+      link.click();
+      notification.success({
+        title: 'Plans Exported',
+        position: 'top',
+      });
+    })
+    .catch(error => {
+      console.log(error);
+    })
+    .finally(() => {
+      exportLoader.value = false;
+    });
 };
 
 const onDocDelete = name => {
@@ -634,34 +634,35 @@ const onLoadAvailablePlansData = async () => {
   };
   let url = `/quotes/travel/available-plans/${page.props.quote.uuid}`;
   axios
-    .post(url, data)
-    .then(res => {
-      availablePlansTable.data = res.data;
-    })
-    .catch(err => {
-      console.log(err);
-    });
+      .post(url, data)
+      .then(res => {
+        availablePlansTable.data = res.data.normalPlans
+        availableSeniorPlansTable.data = res.data.seniorPlans
+      })
+      .catch(err => {
+        console.log(err);
+      })
 };
 
 const confirmDeleteDoc = () => {
   quoteDocumentsTable.isLoading = true;
   router.post(
-    `/documents/delete`,
-    {
-      docName: confirmDeleteData.docs,
-      quoteId: page.props.quote.id,
-    },
-    {
-      preserveScroll: true,
-      onFinish: () => {
-        modals.docConfirm = false;
-        quoteDocumentsTable.isLoading = false;
-        notification.error({
-          title: 'File Deleted',
-          position: 'top',
-        });
+      `/documents/delete`,
+      {
+        docName: confirmDeleteData.docs,
+        quoteId: page.props.quote.id,
       },
-    },
+      {
+        preserveScroll: true,
+        onFinish: () => {
+          modals.docConfirm = false;
+          quoteDocumentsTable.isLoading = false;
+          notification.error({
+            title: 'File Deleted',
+            position: 'top',
+          });
+        },
+      },
   );
 };
 
@@ -746,15 +747,45 @@ const availablePlansTable = reactive({
   ],
 });
 
+const availableSeniorPlansTable = reactive({
+  data: [],
+  columns: [
+    {
+      text: 'Provider Name',
+      value: 'providerName',
+    },
+    {
+      text: 'Plan Name',
+      value: 'name',
+    },
+    {
+      text: 'Travel Type',
+      value: 'travelType',
+    },
+    {
+      text: 'Actual Price',
+      value: 'actualPremium',
+    },
+    {
+      text: 'Price with VAT',
+      value: 'discountPremium',
+    },
+    {
+      text: 'Action',
+      value: 'action',
+    },
+  ],
+});
+
 //activities
 
 const activityTable = [
-  { text: 'Done', value: 'status', width: 60, align: 'center' },
-  { text: 'Title', value: 'title' },
-  { text: 'Client Name', value: 'client_name' },
-  { text: 'Followup Date', value: 'due_date' },
-  { text: 'Assigned To', value: 'assignee' },
-  { text: 'Action', value: 'action' },
+  {text: 'Done', value: 'status', width: 60, align: 'center'},
+  {text: 'Title', value: 'title'},
+  {text: 'Client Name', value: 'client_name'},
+  {text: 'Followup Date', value: 'due_date'},
+  {text: 'Assigned To', value: 'assignee'},
+  {text: 'Action', value: 'action'},
 ];
 
 const activityForm = useForm({
@@ -815,10 +846,10 @@ const activityEdit = data => {
   activityForm.title = data.title;
   activityForm.description = data.description;
   activityForm.due_date = data.due_date
-    ? data.due_date.split(' ')[0].split('-').reverse().join('-') +
+      ? data.due_date.split(' ')[0].split('-').reverse().join('-') +
       'T' +
       data.due_date.split(' ')[1]
-    : null;
+      : null;
   activityForm.assignee_id = data.assignee_id;
   activityForm.status = data.status;
 };
@@ -828,9 +859,9 @@ const onActivitySubmit = isValid => {
   if (activityActionEdit.value) {
     let date = new Date(activityForm.due_date);
     date =
-      date.toISOString().split('T')[0] +
-      ' ' +
-      date.toTimeString().split(' ')[0];
+        date.toISOString().split('T')[0] +
+        ' ' +
+        date.toTimeString().split(' ')[0];
     activityForm.due_date = date;
     activityForm.post(route('activities.update.activity', activityForm.uuid), {
       preserveScroll: true,
@@ -847,9 +878,9 @@ const onActivitySubmit = isValid => {
   } else {
     let date = new Date(activityForm.due_date);
     date =
-      date.toISOString().split('T')[0] +
-      ' ' +
-      date.toTimeString().split(' ')[0];
+        date.toISOString().split('T')[0] +
+        ' ' +
+        date.toTimeString().split(' ')[0];
     activityForm.due_date = date;
     activityForm.post(route('activities.create.activity'), {
       preserveScroll: true,
@@ -873,23 +904,23 @@ const activityDelete = id => {
 
 const activityDeleteConfirmed = () => {
   router.post(
-    route('activities.destroy', confirmDeleteData.activity),
-    {
-      isInertia: true,
-      quote_uuid: page.props.quote.uuid,
-    },
-    {
-      preserveScroll: true,
-      onSuccess: () => {
-        notification.error({
-          title: 'Activity Deleted',
-          position: 'top',
-        });
+      route('activities.destroy', confirmDeleteData.activity),
+      {
+        isInertia: true,
+        quote_uuid: page.props.quote.uuid,
       },
-      onFinish: () => {
-        modals.activityConfirm = false;
+      {
+        preserveScroll: true,
+        onSuccess: () => {
+          notification.error({
+            title: 'Activity Deleted',
+            position: 'top',
+          });
+        },
+        onFinish: () => {
+          modals.activityConfirm = false;
+        },
       },
-    },
   );
 };
 
@@ -905,10 +936,10 @@ const historyData = ref(null);
 const onLoadHistoryData = async () => {
   historyLoading.value = true;
   const res = await fetch(
-    route('getLeadHistory', {
-      modelType: 'travel',
-      recordId: page.props.quote.id,
-    }),
+      route('getLeadHistory', {
+        modelType: 'travel',
+        recordId: page.props.quote.id,
+      }),
   );
   const finalRes = await res.json();
   historyData.value = finalRes;
@@ -916,10 +947,10 @@ const onLoadHistoryData = async () => {
 };
 
 const historyDataTable = [
-  { text: 'Modified At', value: 'ModifiedAt' },
-  { text: 'Modified By', value: 'ModifiedBy' },
-  { text: 'Notes', value: 'NewNotes' },
-  { text: 'Lead Status', value: 'NewStatus' },
+  {text: 'Modified At', value: 'ModifiedAt'},
+  {text: 'Modified By', value: 'ModifiedBy'},
+  {text: 'Notes', value: 'NewNotes'},
+  {text: 'Lead Status', value: 'NewStatus'},
 ];
 
 // selected tab
@@ -929,19 +960,19 @@ const planDetails = ref(null);
 const getPlanDetails = id => {
   try {
     axios
-      .get(`/quotes/travel/${page.props.quote.uuid}/plan_details/${id}`)
-      .then(res => {
-        planDetails.value = res.data;
-        modals.planDetails = true;
-      })
-      .catch(err => {
-        notification.error({
-          title: 'Error',
-          message: 'Plan Details Not Found',
-          position: 'top',
+        .get(`/quotes/travel/${page.props.quote.uuid}/plan_details/${id}`)
+        .then(res => {
+          planDetails.value = res.data;
+          modals.planDetails = true;
+        })
+        .catch(err => {
+          notification.error({
+            title: 'Error',
+            message: 'Plan Details Not Found',
+            position: 'top',
+          });
+          console.log(err);
         });
-        console.log(err);
-      });
   } catch (err) {
     console.log(err);
     notification.error({
@@ -952,7 +983,7 @@ const getPlanDetails = id => {
   }
 };
 
-const { copy, copied } = useClipboard();
+const {copy, copied} = useClipboard();
 const onCopyText = text => {
   copy(text);
   if (copied)
@@ -989,7 +1020,7 @@ const customerProfileForm = useForm({
   entity_type_code: page.props.quote.entity_type_code ?? 'Parent',
   industry_type_code: page.props.quote.industry_type_code ?? null,
   emirate_of_registration_id:
-    page.props.quote.emirate_of_registration_id ?? null,
+      page.props.quote.emirate_of_registration_id ?? null,
 });
 
 const updateProfileDetails = isValid => {
@@ -1033,31 +1064,31 @@ const entityTypeChange = event => {
 const searchByTradeLicense = trigger => {
   let url = `/kyc/aml-fetch-entity?trade_license=${customerProfileForm.trade_license_no}`;
   axios
-    .get(url)
-    .then(res => {
-      if (res.data.status) {
-        let response = res.data.response;
-        entityDetailsFound.value = true;
-        tradeLicenseEntity.entity_id = response.id;
-        tradeLicenseEntity.trade_license = response.trade_license_no;
-        tradeLicenseEntity.company_name = response.company_name;
-        tradeLicenseEntity.company_address = response.company_address;
-        tradeLicenseEntity.triggeredFrom = trigger === 'SubEntity';
+      .get(url)
+      .then(res => {
+        if (res.data.status) {
+          let response = res.data.response;
+          entityDetailsFound.value = true;
+          tradeLicenseEntity.entity_id = response.id;
+          tradeLicenseEntity.trade_license = response.trade_license_no;
+          tradeLicenseEntity.company_name = response.company_name;
+          tradeLicenseEntity.company_address = response.company_address;
+          tradeLicenseEntity.triggeredFrom = trigger === 'SubEntity';
 
-        notification.success({
-          title: res.data.message,
-          position: 'top',
-        });
-      } else {
-        notification.error({
-          title: res.data.message,
-          position: 'top',
-        });
-      }
-    })
-    .catch(err => {
-      console.log(err);
-    });
+          notification.success({
+            title: res.data.message,
+            position: 'top',
+          });
+        } else {
+          notification.error({
+            title: res.data.message,
+            position: 'top',
+          });
+        }
+      })
+      .catch(err => {
+        console.log(err);
+      });
 };
 
 const linkEntity = () => {
@@ -1068,31 +1099,31 @@ const linkEntity = () => {
     triggeredFrom: tradeLicenseEntity.triggeredFrom,
   };
   axios
-    .post(route('link-entity-details'), entityDetails)
-    .then(res => {
-      if (res.data.status) {
-        let response = res.data.response;
+      .post(route('link-entity-details'), entityDetails)
+      .then(res => {
+        if (res.data.status) {
+          let response = res.data.response;
 
-        // Append Entity data in fields
-        customerProfileForm.trade_license_no = response.trade_license_no;
-        customerProfileForm.company_name = response.company_name;
-        customerProfileForm.company_address = response.company_address;
-        customerProfileForm.entity_type_code =
-          response?.quote_request_entity_mapping[0]?.entity_type_code ?? '';
-        customerProfileForm.industry_type_code = response.industry_type_code;
-        customerProfileForm.emirate_of_registration_id =
-          response.emirate_of_registration_id;
+          // Append Entity data in fields
+          customerProfileForm.trade_license_no = response.trade_license_no;
+          customerProfileForm.company_name = response.company_name;
+          customerProfileForm.company_address = response.company_address;
+          customerProfileForm.entity_type_code =
+              response?.quote_request_entity_mapping[0]?.entity_type_code ?? '';
+          customerProfileForm.industry_type_code = response.industry_type_code;
+          customerProfileForm.emirate_of_registration_id =
+              response.emirate_of_registration_id;
 
-        notification.success({
-          title: res.data.message,
-          position: 'top',
-        });
-        entityDetailsFound.value = false;
-      }
-    })
-    .catch(err => {
-      console.log(err);
-    });
+          notification.success({
+            title: res.data.message,
+            position: 'top',
+          });
+          entityDetailsFound.value = false;
+        }
+      })
+      .catch(err => {
+        console.log(err);
+      });
 };
 
 onMounted(() => {
@@ -1112,10 +1143,27 @@ const handleChildUpdate = planId => {
 };
 
 const genderList = [
-    { value: 'M', label: 'Male' },
-    { value: 'F', label: 'Female' },
+  { value: 'M', label: 'Male' },
+  { value: 'F', label: 'Female' },
 ];
 
+const handleSelectionChange = (tableType, selectedItems) => {
+  if (tableType === 'adult' && selectedSeniorPlans.value.length > 0) {
+    modals.mixInquiryConfirm= true
+    selectedAdultPlans.value = [];
+  } else if (tableType === 'senior' && selectedAdultPlans.value.length > 0) {
+    modals.mixInquiryConfirm= true
+    selectedSeniorPlans.value = [];
+  } else {
+      if (tableType === 'adult') {
+        selectedAdultPlans.value = selectedItems;
+        selectedPlans.value = selectedItems;
+      } else if (tableType === 'senior') {
+        selectedSeniorPlans.value = selectedItems;
+        selectedPlans.value = selectedItems;
+      }
+  }
+};
 </script>
 
 <template>
@@ -1398,7 +1446,9 @@ const genderList = [
           }}
           Profile
         </h3>
-        <x-tag color="success" v-if="quote.kyc_decision === 'Complete'"> KYC - Complete </x-tag>
+        <x-tag color="success" v-if="quote.kyc_decision === 'Complete'">
+          KYC - Complete
+        </x-tag>
         <x-tag color="amber" v-else> KYC - Pending </x-tag>
       </div>
       <x-divider class="mb-4 mt-1" />
@@ -1676,27 +1726,27 @@ const genderList = [
       v-if="quote.customer_type == page.props.customerTypeEnum.Individual"
       class="p-4 rounded shadow mb-6 bg-white"
     >
-      <div class="flex flex-wrap gap-4 justify-between items-center mb-4">
-        <h3 class="font-semibold text-primary-800 text-lg">
-          Member Details
-          <x-tag size="sm">{{ travelers.length || 0 }}</x-tag>
-        </h3>
-        <div class="flex flex-wrap gap-3">
-          <x-button size="sm" color="orange" @click.prevent="onAddTraveler">
-            Add Member
-          </x-button>
-        </div>
+    <div class="flex flex-wrap gap-4 justify-between items-center mb-4">
+      <h3 class="font-semibold text-primary-800 text-lg">
+        Member Details
+        <x-tag size="sm">{{ travelers.length || 0 }}</x-tag>
+      </h3>
+      <div class="flex flex-wrap gap-3">
+        <x-button size="sm" color="orange" @click.prevent="onAddTraveler">
+          Add Member
+        </x-button>
       </div>
-      <DataTable
-        table-class-name="tablefixed compact"
-        :headers="travelerTable.columns"
-        :items="travelers || []"
-        border-cell
-        hide-rows-per-page
-        :rows-per-page="15"
-        :hide-footer="travelers.length < 15"
-        show-index
-      >
+    </div>
+    <DataTable
+      table-class-name="tablefixed compact"
+      :headers="travelerTable.columns"
+      :items="travelers || []"
+      border-cell
+      hide-rows-per-page
+      :rows-per-page="15"
+      :hide-footer="travelers.length < 15"
+      show-index
+    >
         <template #item-index="{ index, code }">
           <div>{{ code ?? 'Member ' + index }}</div>
         </template>
@@ -1706,7 +1756,7 @@ const genderList = [
           {{ relation?.text }}
         </template>
         <template #item-gender="{ gender }">
-          {{ gender === 'M' ? 'Male' : gender === 'F' ? 'Female' : ''  }}
+          {{ gender === 'M' ? 'Male' : gender === 'F' ? 'Female' : '' }}
         </template>
         <template #item-nationality="{ nationality }">
           {{ nationality?.text }}
@@ -1774,13 +1824,13 @@ const genderList = [
               placeholder="Select Relation"
               class="w-full"
             />
-            <x-field label="Gender*" >
+            <x-field label="Gender*">
               <x-select
-                  v-model="travelerForm.gender"
-                  placeholder="Gender"
-                  :options="genderList"
-                  :rules="[isRequired]"
-                  class="w-full"
+                v-model="travelerForm.gender"
+                placeholder="Gender"
+                :options="genderList"
+                :rules="[isRequired]"
+                class="w-full"
               />
             </x-field>
           </div>
@@ -1831,7 +1881,7 @@ const genderList = [
       </template>
     </x-modal>
 
-    <customerAdditionalContacts
+    <CustomerAdditionalContacts
       quoteType="Travel"
       :customerId="quote.customer_id"
       :quoteId="quote.id"
@@ -1912,6 +1962,14 @@ const genderList = [
               placeholder="Lost Reason is required"
               class="w-full"
               :error="leadStatusForm.errors.lostReason"
+            />
+          </x-field>
+          <x-field label="Transaction Type">
+            <x-input
+              type="text"
+              :value="quote.transaction_type_text"
+              class="w-full"
+              :disabled="true"
             />
           </x-field>
         </div>
@@ -2177,39 +2235,32 @@ const genderList = [
 
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div class="flex flex-wrap gap-4 justify-between items-center mb-4">
-        <h3 class="font-semibold text-primary-800 text-lg">
-            Available Plans
-        </h3>
+        <h3 class="font-semibold text-primary-800 text-lg">Available Plans</h3>
           <div>
               <x-button-group v-if="selectedPlans.length > 0" size="sm" class="mr-2">
-                <!--  <x-button
-                      @click.prevent="onTogglePlans(false)"
-                      :loading="toggleLoader"
-                  >
-                      Show
-                  </x-button>
                   <x-button
-                      @click.prevent="onTogglePlans(true)"
-                      :loading="toggleLoader"
-                  >
-                      Hide
-                  </x-button>-->
+                        @click.prevent="onTogglePlans(false)"
+                        :loading="toggleLoader"
+                    >
+                        Show
+                    </x-button>
+                    <x-button
+                        @click.prevent="onTogglePlans(true)"
+                        :loading="toggleLoader"
+                    >
+                        Hide
+                    </x-button>
               </x-button-group>
         <x-button
-          v-if="
-            availablePlansTable.data.length > 0 &&
-            permissions.canNotApprovePayments
-          "
-          size="sm"
-          color="orange"
-          class="mr-2"
-          @click.prevent="onCopyText(ecomTravelInsuranceQuoteUrl + quote.uuid)"
+            v-if="availablePlansTable.data.length > 0 || availableSeniorPlansTable.data.length > 0"
+            size="sm"
+            color="orange"
+            class="mr-2"
+            @click.prevent="onCopyText(ecomTravelInsuranceQuoteUrl + quote.uuid)"
         >
           Copy Link
         </x-button>
-
-
-         <!-- <x-button
+          <x-button
               v-if="selectedPlans.length > 0"
               size="sm"
               color="emerald"
@@ -2217,9 +2268,12 @@ const genderList = [
               :loading="exportLoader"
           >
               Download PDF
-          </x-button>-->
+          </x-button>
           </div>
       </div>
+      <h6 v-if="aboveAgeMembers > 0 && availablePlansTable.data.length > 0" class="font-semibold text-primary-600 text-ms mb-1">
+        Travel plans for {{ travelers.length - aboveAgeMembers }} member age 0-64
+      </h6>
 
       <div
         v-if="
@@ -2234,22 +2288,33 @@ const genderList = [
           {{ availablePlansTable.data }}
         </p>
       </div>
-      <div v-else>
-        <!-- for future use  v-model:items-selected="selectedPlans" -->
+      <div v-else-if="availablePlansTable.data.length > 0">
+        <!-- for future use   -->
         <DataTable
-
           table-class-name="tablefixed compact"
           :headers="availablePlansTable.columns"
           :items="availablePlansTable.data || []"
+          v-model:items-selected="selectedAdultPlans"
           border-cell
           hide-rows-per-page
           :rows-per-page="15"
           :hide-footer="availablePlansTable.data.length < 15"
+          @update:items-selected="handleSelectionChange('adult', $event)"
         >
           <template #item-providerName="item">
-            <span class="text-primary-600 uppercase">{{
+            <p class="text-primary-600 uppercase">{{
               item.providerName
-            }}</span>
+            }}</p>
+              <div class="flex gap-1">
+              <x-tag
+                  v-if="item.isDisabled"
+                  size="xs"
+                  color="error"
+                  class="mt-0.5 text-[10px]"
+              >
+                  Hidden
+              </x-tag>
+              </div>
           </template>
           <template #item-name="item">
             <span class="text-primary-600 uppercase">{{ item.name }}</span>
@@ -2271,7 +2336,7 @@ const genderList = [
               </x-button>
 
               <!-- v-if="hasRole(rolesEnum.TravelAdvisor)" hide for now -->
-              <span v-if="true == false">
+              <span>
                 <SelectPlan
                   class="ml-1"
                   v-if="prefillPlanId != item.id"
@@ -2295,6 +2360,61 @@ const genderList = [
             </div>
           </template>
         </DataTable>
+      </div>
+
+      <div v-if="aboveAgeMembers > 0" class="mt-5">
+        <h6 v-if="aboveAgeMembers > 0 && availablePlansTable.data.length > 0" class="font-semibold text-primary-600 text-ms mb-1">
+          Travel plans for {{ aboveAgeMembers }} member age 65 and above
+        </h6>
+        <div>
+          <DataTable
+            table-class-name="tablefixed compact"
+            :headers="availableSeniorPlansTable.columns"
+            :items="availableSeniorPlansTable.data || []"
+            border-cell
+            hide-rows-per-page
+            :rows-per-page="15"
+            :hide-footer="availableSeniorPlansTable.data.length < 15"
+            v-model:items-selected="selectedSeniorPlans"
+            @update:items-selected="handleSelectionChange('senior', $event)"
+          >
+            <template #item-providerName="item">
+            <p class="text-primary-600 uppercase">{{
+                item.providerName
+              }}</p>
+                <div class="flex gap-1">
+                <x-tag
+                    v-if="item.isDisabled"
+                    size="xs"
+                    color="error"
+                    class="mt-0.5 text-[10px]"
+                >
+                    Hidden
+                </x-tag>
+        </div>
+            </template>
+            <template #item-name="item">
+              <span class="text-primary-600 uppercase">{{ item.name }}</span>
+            </template>
+            <template #item-discountPremium="item">
+            <span class="text-primary-600">{{
+                item.discountPremium + item.vat
+              }}</span>
+            </template>
+            <template #item-action="item">
+              <div>
+                <x-button
+                    size="xs"
+                    color="error"
+                    outlined
+                    @click.prevent="getPlanDetails(item.id)"
+                >
+                  View
+                </x-button>
+              </div>
+            </template>
+          </DataTable>
+        </div>
       </div>
 
       <x-modal v-model="modals.planDetails" size="xl" show-close backdrop>
@@ -2474,6 +2594,25 @@ const genderList = [
       />
     </div>
 
+    <x-modal v-model="modals.mixInquiryConfirm" show-close backdrop>
+        <template #header>
+          <div class="text-center">
+            SORRY!
+          </div>
+        </template>
+        <p>Please choose quotes from the same age group for a correct comparison.</p>
+        <template #actions>
+          <div class="text-center space-x-4">
+            <x-button
+              size="sm"
+              color="emerald"
+              @click.prevent="modals.mixInquiryConfirm = false"
+            >
+              Okay, got it!
+            </x-button>
+          </div>
+        </template>
+      </x-modal>
     <AuditLogs :type="'App\\Models\\TravelQuote'" :id="$page.props.quote.id" />
   </div>
 </template>

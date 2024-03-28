@@ -58,6 +58,7 @@ class BusinessQuoteService extends BaseService
                 'bqrd.notes',
                 'bqrd.transapp_code',
                 'ls.text as lost_reason',
+                'lu.text as transaction_type_text',
                 'bqr.source',
                 'bqr.policy_number',
                 'bqr.previous_quote_id',
@@ -85,10 +86,12 @@ class BusinessQuoteService extends BaseService
                 'qrem.entity_type_code',
                 'ent.industry_type_code',
                 'ent.emirate_of_registration_id',
+                'bqr.company_name as business_company_name',
             )
             ->leftJoin('business_type_of_insurance as bti', 'bti.id', '=', 'bqr.business_type_of_insurance_id')
             ->leftJoin('business_quote_request_detail as bqrd', 'bqrd.business_quote_request_id', '=', 'bqr.id')
             ->leftJoin('lost_reasons as ls', 'ls.id', '=', 'bqrd.lost_reason_id')
+            ->leftJoin('lookups as lu', 'lu.id', '=', 'bqr.transaction_type_id')
             ->leftJoin('users as u', 'u.id', '=', 'bqr.advisor_id')
             ->leftJoin('users as uadv', 'uadv.id', '=', 'bqr.previous_advisor_id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'bqr.quote_status_id')
@@ -204,6 +207,7 @@ class BusinessQuoteService extends BaseService
             'businessTypeOfInsuranceId' => $request->business_type_of_insurance_id,
             'source' => $sourceName,
             'referenceUrl' => $appUrl,
+            'gender' => $request->gender,
         ];
         if (! Auth::user()->hasRole('ADMIN')) {
             $dataArr['advisorId'] = Auth::user()->id;
@@ -234,8 +238,10 @@ class BusinessQuoteService extends BaseService
             $searchProperties = $model->searchProperties;
         }
         // if ($request->ajax()) {
-        if (empty($request->email) && empty($request->code) && empty($request->first_name) &&
-                empty($request->last_name) && empty($request->quote_status_id) && empty($request->mobile_no)) {
+        if (
+            empty($request->email) && empty($request->code) && empty($request->first_name) &&
+            empty($request->last_name) && empty($request->quote_status_id) && empty($request->mobile_no)
+        ) {
             $this->query->where('bqr.quote_status_id', '!=', QuoteStatusEnum::Fake);
         }
         if (isset($request->assigned_to_date_start) && $request->assigned_to_date_start != '') {
@@ -427,7 +433,7 @@ class BusinessQuoteService extends BaseService
             'created_at' => 'input|date|title|range',
             'updated_at' => 'input|date|title',
             'premium' => 'input|number|title',
-            'number_of_employees' => 'input|number|title',
+            'number_of_employees' => 'input|number|title|required',
             'business_type_of_insurance_id' => 'select|title|required',
             'brief_details' => 'textarea|required',
             'previous_quote_id' => 'readonly|title',

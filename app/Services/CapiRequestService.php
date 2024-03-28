@@ -5,12 +5,14 @@ namespace App\Services;
 use App\Enums\UserNameEnum;
 use App\Models\CarQuote;
 use App\Models\CarQuoteRequestDetail;
+use App\Models\HealthQuote;
+use App\Models\HealthQuoteRequestDetail;
 use App\Models\QuoteBatches;
 use App\Models\User;
 
 class CapiRequestService
 {
-    public static function sendCAPIRequest($endpoint, $data)
+    public static function sendCAPIRequest($endpoint, $data, $quoteModel = null)
     {
         $apiEndPoint = config('constants.CENTRAL_API_ENDPOINT').$endpoint;
         $apiToken = config('constants.CENTRAL_API_TOKEN');
@@ -31,44 +33,81 @@ class CapiRequestService
         if ($getStatusCode == 200) {
             $getContents = $capiRequest->getBody();
             $getdecodeContents = json_decode($getContents);
-
-            if (isset($data['carTypeInsuranceId']) && $data['carTypeInsuranceId'] != '') {
-                $carQuote = CarQuote::where('uuid', $getdecodeContents->quoteUID)->first();
-                if ($carQuote) {
-                    $carQuote->cylinder = $data['cylinder'];
-                    $carQuote->seat_capacity = $data['seatCapacity'];
-                    $carQuote->vehicle_type_id = $data['vehicleTypeId'];
-                    $carQuote->is_quote_locked = true;
-                    $carQuote->car_model_detail_id = $data['trim'];
-                    $carQuote->car_value_tier = $data['carValueTier'];
-                    $carQuote->auto_assigned = null;
-                    $carQuote->assignment_type = null;
-                    $carQuote->save();
-
-                    if ($carQuote->advisor_id != null) {
-                        $carQuote->quote_batch_id = QuoteBatches::latest()->first()->id;
-                        $carQuote->save();
-                        $carQuoteDetail = CarQuoteRequestDetail::where('car_quote_request_id', $carQuote->id)->first();
-                        if ($carQuoteDetail) {
-                            $carQuoteDetail->advisor_assigned_date = now();
-                            $carQuoteDetail->advisor_assigned_by_id = auth()->id();
-                            $carQuoteDetail->save();
-                        } else {
-                            CarQuoteRequestDetail::create([
-                                'car_quote_request_id' => $carQuote->id,
-                                'advisor_assigned_date' => now(),
-                                'advisor_assigned_by_id' => auth()->user()->id ?? User::where('name', UserNameEnum::System)->first(),
-                                'created_at' => now(),
-                                'updated_at' => now(),
-                            ]);
-                        }
-                    }
-                }
+            switch ($quoteModel) {
+                case CarQuote::class:
+                    self::handleCarResponse($getdecodeContents);
+                    break;
+                case HealthQuote::class:
+                    self::handleHealthResponse($getdecodeContents);
+                    break;
+                    // TODO : implement other LOBs
+                default:
+                    break;
             }
 
             return $getdecodeContents;
         } else {
             return 'API failed';
+        }
+    }
+
+    private static function handleCarResponse($requestContent)
+    {
+        if (isset($data['carTypeInsuranceId']) && $data['carTypeInsuranceId'] != '') {
+            $carQuote = CarQuote::where('uuid', $requestContent->quoteUID)->first();
+            if ($carQuote) {
+                $carQuote->cylinder = $data['cylinder'];
+                $carQuote->seat_capacity = $data['seatCapacity'];
+                $carQuote->vehicle_type_id = $data['vehicleTypeId'];
+                $carQuote->is_quote_locked = true;
+                $carQuote->car_model_detail_id = $data['trim'];
+                $carQuote->car_value_tier = $data['carValueTier'];
+                $carQuote->auto_assigned = null;
+                $carQuote->assignment_type = null;
+                $carQuote->save();
+
+                if ($carQuote->advisor_id != null) {
+                    $carQuote->quote_batch_id = QuoteBatches::latest()->first()->id;
+                    $carQuote->save();
+                    $carQuoteDetail = CarQuoteRequestDetail::where('car_quote_request_id', $carQuote->id)->first();
+                    if ($carQuoteDetail) {
+                        $carQuoteDetail->advisor_assigned_date = now();
+                        $carQuoteDetail->advisor_assigned_by_id = auth()->id();
+                        $carQuoteDetail->updated_at = now();
+                        $carQuoteDetail->save();
+                    } else {
+                        CarQuoteRequestDetail::create([
+                            'car_quote_request_id' => $carQuote->id,
+                            'advisor_assigned_date' => now(),
+                            'advisor_assigned_by_id' => auth()->user()->id ?? User::where('name', UserNameEnum::System)->first(),
+                            'created_at' => now(),
+                            'updated_at' => now(),
+                        ]);
+                    }
+                }
+            }
+        }
+    }
+
+    private static function handleHealthResponse($requestContent)
+    {
+        if (isset($requestContent->quoteUID)) {
+            $healthQuote = HealthQuote::where('uuid', $requestContent->quoteUID)->first();
+            $healthQuoteDetail = HealthQuoteRequestDetail::where('health_quote_request_id', $healthQuote->id)->first();
+            if ($healthQuoteDetail) {
+                $healthQuoteDetail->advisor_assigned_date = now();
+                $healthQuoteDetail->advisor_assigned_by_id = auth()->id();
+                $healthQuoteDetail->updated_at = now();
+                $healthQuoteDetail->save();
+            } else {
+                HealthQuoteRequestDetail::create([
+                    'health_quote_request_id' => $healthQuote->id,
+                    'advisor_assigned_date' => now(),
+                    'advisor_assigned_by_id' => auth()->user()->id ?? User::where('name', UserNameEnum::System)->first(),
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
         }
     }
 

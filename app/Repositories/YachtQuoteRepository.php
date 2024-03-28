@@ -23,7 +23,7 @@ class YachtQuoteRepository extends BaseRepository
     /**
      * create new personal quote
      *
-     * @param $quoteTypeCode
+     * @param    $quoteTypeCode
      * @return mixed
      */
     public function fetchCreate($data)
@@ -82,6 +82,7 @@ class YachtQuoteRepository extends BaseRepository
             ->with([
                 'yachtQuote',
                 'advisor',
+                'transactionType',
                 'nationality',
                 'quoteDetail.lostReason',
                 'quoteDetail.previousAdvisor',
@@ -112,6 +113,7 @@ class YachtQuoteRepository extends BaseRepository
         $data = ! empty($quote) ? $quote->toArray() : [];
         $quote->lost_reason = $data['quote_detail']['lost_reason']['text'] ?? null;
         $quote->previous_advisor_id_text = $data['quote_detail']['previous_advisor']['name'] ?? null;
+        $quote->transaction_type_text = $data['transaction_type']['text'] ?? null;
 
         return $quote;
     }
@@ -134,5 +136,25 @@ class YachtQuoteRepository extends BaseRepository
             ->orderBy('created_at', 'desc');
 
         return ($forExport) ? $query->get() : $query->simplePaginate();
+    }
+
+    public function fetchExport()
+    {
+        return $this->byQuoteTypeCode(QuoteTypes::YACHT)->with(['quoteStatus', 'currentlyInsuredWith', 'advisor'])
+            ->filter()
+            ->withFakeLeadCriteria()
+            ->orderBy('created_at', 'desc');
+    }
+
+    /**
+     * get data by  yacht type.
+     *
+     * @return mixed
+     */
+    public function scopeByQuoteTypeCode($query, $quoteTypeCode)
+    {
+        return $query->whereHas('quoteType', function ($q) use ($quoteTypeCode) {
+            $q->where('code', ($quoteTypeCode));
+        });
     }
 }
