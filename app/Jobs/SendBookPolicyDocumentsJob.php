@@ -2,8 +2,6 @@
 
 namespace App\Jobs;
 
-use App\Enums\ApplicationStorageEnums;
-use App\Enums\QuoteTypes;
 use App\Models\ApplicationStorage;
 use App\Repositories\DocumentTypeRepository;
 use App\Services\QuoteDocumentService;
@@ -40,7 +38,7 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
 
         try {
             $documentTypeCodes = app(DocumentTypeRepository::class)->getQuoteDocumentsSentToCustomerCode($this->data->model_type);
-            $quoteDocuments = $docs = app(QuoteDocumentService::class)->getQuoteDocuments($this->data->model_type, $this->data->quote_id,  $documentTypeCodes);
+            $quoteDocuments = $docs = app(QuoteDocumentService::class)->getQuoteDocuments($this->data->model_type, $this->data->quote_id, $documentTypeCodes);
         } catch (Exception $ex) {
             info('SendBookPolicyDocumentsJobError '.$ex->getMessage());
             $docs = [];
@@ -50,7 +48,7 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
 
         $quote->load('advisor');
 
-        $templateId = ApplicationStorage::where('key_name', strtoupper($modelType) . '_BOOK_POLICY_TEMPLATE')->first()->value ?? null;
+        $templateId = ApplicationStorage::where('key_name', strtoupper($modelType).'_BOOK_POLICY_TEMPLATE')->first()->value ?? null;
 
         info('SendBookPolicyDocumentsJobData '.json_encode($quote));
 
