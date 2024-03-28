@@ -193,10 +193,13 @@ class QuoteDocumentService extends BaseService
         return $displaySendPolicyButton;
     }
 
-    public function getQuoteDocuments($quoteType, $recordId)
+    public function getQuoteDocuments($quoteType, $recordId, $documentTypeCodes=null)
     {
         $quote = $this->getQuoteObject($quoteType, $recordId);
 
+        if ($documentTypeCodes) {
+            $quote->documents()->whereIn('document_type_code', $documentTypeCodes);
+        }
         return $quote ? $quote->documents()->with('createdBy:id,name,email')->latest()->get() : [];
     }
 

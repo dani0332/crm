@@ -1130,7 +1130,7 @@ watch(
       :record="record"
       :quoteStatusEnum="enums.quoteStatusEnum"
       :policyIssuanceStatus="policyIssuanceStatus"
-      modelType="Business"
+      modelType="Corpline"
       :expanded="sectionExpanded"
     />
 
@@ -1150,7 +1150,7 @@ watch(
         ])
       "
       :quote="record"
-      quoteType="Business"
+      quoteType="Corpline"
       :bPDetails="bPDetails"
       :payments="payments"
       :expanded="sectionExpanded"

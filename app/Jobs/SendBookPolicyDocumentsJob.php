@@ -39,9 +39,8 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
         $quote = $this->getQuoteObject($this->data->model_type, $this->data->quote_id);
 
         try {
-            $document_type_codes = app(DocumentTypeRepository::class)->getQuoteDocumentsSentToCustomerCode($this->data->model_type);
-            $quoteDocuments = app(QuoteDocumentService::class)->getQuoteDocuments($this->data->model_type, $this->data->quote_id);
-            $docs = $quoteDocuments->whereIn('document_type_code', $document_type_codes);
+            $documentTypeCodes = app(DocumentTypeRepository::class)->getQuoteDocumentsSentToCustomerCode($this->data->model_type);
+            $quoteDocuments = $docs = app(QuoteDocumentService::class)->getQuoteDocuments($this->data->model_type, $this->data->quote_id,  $documentTypeCodes);
         } catch (Exception $ex) {
             info('SendBookPolicyDocumentsJobError '.$ex->getMessage());
             $docs = [];
@@ -51,63 +50,7 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
 
         $quote->load('advisor');
 
-        $templateId = null;
-
-        if ($modelType === 'business') {
-            $modelType = QuoteTypes::GROUP_MEDICAL->value;
-        } elseif ($modelType === 'Business') {
-            $modelType = QuoteTypes::CORPLINE->value;
-        }
-
-        switch (ucfirst($modelType)) {
-            case QuoteTypes::CAR->value:
-                $templateId = ApplicationStorage::where('key_name', ApplicationStorageEnums::CAR_BOOK_POLICY_TEMPLATE)->first()->value;
-                break;
-
-            case QuoteTypes::BIKE->value:
-                $templateId = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIKE_BOOK_POLICY_TEMPLATE)->first()->value;
-                break;
-
-            case QuoteTypes::TRAVEL->value:
-                $templateId = ApplicationStorage::where('key_name', ApplicationStorageEnums::TRAVEL_BOOK_POLICY_TEMPLATE)->first()->value;
-                break;
-
-            case QuoteTypes::HEALTH->value:
-                $templateId = ApplicationStorage::where('key_name', ApplicationStorageEnums::HEALTH_BOOK_POLICY_TEMPLATE)->first()->value;
-                break;
-
-            case QuoteTypes::LIFE->value:
-                $templateId = ApplicationStorage::where('key_name', ApplicationStorageEnums::LIFE_BOOK_POLICY_TEMPLATE)->first()->value;
-                break;
-
-            case QuoteTypes::HOME->value:
-                $templateId = ApplicationStorage::where('key_name', ApplicationStorageEnums::HOME_BOOK_POLICY_TEMPLATE)->first()->value;
-                break;
-
-            case QuoteTypes::PET->value:
-                $templateId = ApplicationStorage::where('key_name', ApplicationStorageEnums::PET_BOOK_POLICY_TEMPLATE)->first()->value;
-                break;
-
-            case QuoteTypes::CYCLE->value:
-                $templateId = ApplicationStorage::where('key_name', ApplicationStorageEnums::CYCLE_BOOK_POLICY_TEMPLATE)->first()->value;
-                break;
-
-            case QuoteTypes::YACHT->value:
-                $templateId = ApplicationStorage::where('key_name', ApplicationStorageEnums::YACHT_BOOK_POLICY_TEMPLATE)->first()->value;
-                break;
-
-            case QuoteTypes::GROUP_MEDICAL->value:
-                $templateId = ApplicationStorage::where('key_name', ApplicationStorageEnums::GROUP_MEDIAL_BOOK_POLICY_TEMPLATE)->first()->value;
-                break;
-
-            case QuoteTypes::CORPLINE->value:
-                $templateId = ApplicationStorage::where('key_name', ApplicationStorageEnums::CORPLINE_BOOK_POLICY_TEMPLATE)->first()->value;
-                break;
-
-            default:
-                $templateId = null;
-                break;
-        }
+        $templateId = ApplicationStorage::where('key_name', strtoupper($modelType) . '_BOOK_POLICY_TEMPLATE')->first()->value ?? null;
 
         info('SendBookPolicyDocumentsJobData '.json_encode($quote));
 
