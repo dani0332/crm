@@ -71,7 +71,8 @@ class ManagementReport
     }
     public function applyFilters($query, $request)
     {
-        $dateFilter = function ($fieldName, $filterKey) use ($query, $request) {
+        //secondOptionalFieldName to be used in case of transaction due date, coming from a different table 'payment_splits'
+        $dateFilter = function ($fieldName, $filterKey, $secondOptionalFieldName=null) use ($query, $request) {
 
             if ($request[$filterKey] != null) {
                 if (is_array($request[$filterKey])) {
@@ -95,7 +96,15 @@ class ManagementReport
                 Carbon::parse(now())->startOfDay()->format(config('constants.DATE_FORMAT_ONLY')),
                 Carbon::parse(now())->endOfDay()->format(config('constants.DATE_FORMAT_ONLY')),
             ];
-            $query->whereBetween($fieldName, $dateRange);
+
+            if ($secondOptionalFieldName) {
+                $query->where(function ($query) use ($fieldName, $dateRange, $secondOptionalFieldName) {
+                    $query->whereBetween($fieldName, $dateRange)
+                        ->orWhereBetween($secondOptionalFieldName, $dateRange);
+                });
+            } else {
+                $query->whereBetween($fieldName, $dateRange);
+            }
 
         };
 
@@ -105,7 +114,7 @@ class ManagementReport
                 if ($request['reportType'] == ManagementReportTypeEnum::ISSUED_POLICIES) {
                     $dateFilter('personal_quotes.policy_issuance_date', 'policyIssuanceDate');
                 } elseif ($request['reportType'] == ManagementReportTypeEnum::TRANSACTION_PAYMENTS) {
-                    $dateFilter('p.payment_due_date', 'paymentDueDate');
+                    $dateFilter('p.payment_due_date', 'paymentDueDate', 'ps.due_date');
                 }
                 break;
 
@@ -117,7 +126,7 @@ class ManagementReport
 
             case ManagementReportCategoriesEnum::TRANSACTION:
                 if ($request['reportType'] == ManagementReportTypeEnum::TRANSACTION_PAYMENTS) {
-                    $dateFilter('p.payment_due_date', 'paymentDueDate');
+                    $dateFilter('p.payment_due_date', 'paymentDueDate', 'ps.due_date');
                 }
                 break;
 

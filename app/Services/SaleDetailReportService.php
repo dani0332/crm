@@ -24,7 +24,8 @@ class SaleDetailReportService extends ManagementReport
                 DB::raw('DISTINCT(personal_quotes.policy_number)'),
                 DB::raw("CONCAT(p.reference, ' ', p.tax_invoice_number) as transactions"),
                 'personal_quotes.policy_start_date',
-                'p.policy_due_date',
+                'p.payment_due_date',
+                'ps.due_date',
                 'personal_quotes.source',
                 't.name as team',
                 'personal_quotes.price_vat_applicable',
@@ -51,6 +52,7 @@ class SaleDetailReportService extends ManagementReport
                 'pi.name as policy_issuer',
             )
             ->join('payments as p', 'personal_quotes.code', '=', 'p.code')
+            ->join('payment_splits as ps', 'personal_quotes.code', '=', 'ps.code')
             ->join('payment_status', 'payment_status.id', '=', 'p.payment_status_id')
             ->join('quote_type', 'quote_type.id', '=', 'quote_type_id')
             ->join('insurance_provider as ip', 'ip.id', '=', 'p.insurance_provider_id')

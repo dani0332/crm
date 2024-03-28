@@ -30,8 +30,8 @@ const tableHeader = reactive([
     value: 'policy_start_date',
   },
   {
-    text: 'Policy Due Date',
-    value: 'policy_due_date',
+    text: 'Payment Due Date',
+    value: 'payment_due_date',
   },
   {
     text: 'Source',
@@ -174,8 +174,8 @@ const isIntegerColumn = key => {
     <template #item-policy_start_date="{ policy_start_date }">
       {{ policy_start_date ?? 'N/A' }}
     </template>
-    <template #item-policy_due_date="{ policy_due_date }">
-      {{ policy_due_date ?? 'N/A' }}
+    <template #item-payment_due_date="{payment_due_date, due_date}">
+      {{ (payment_due_date ? payment_due_date : (due_date ? due_date : 'N/A')) }}
     </template>
     <template #item-source="{ source }">
       {{ source }}
