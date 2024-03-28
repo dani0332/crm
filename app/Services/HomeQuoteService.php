@@ -82,7 +82,7 @@ class HomeQuoteService extends BaseService
             'ls.text as lost_reason',
             'ls.id as lost_reason_id',
             'hqr.previous_quote_id',
-            'renewal_expiry_date',
+            'hqr.renewal_expiry_date',
             'hqr.renewal_batch',
             'hqr.previous_quote_policy_number',
             'hqr.previous_quote_policy_premium',
@@ -112,8 +112,8 @@ class HomeQuoteService extends BaseService
             'hqr.insurer_quote_number',
             'hqr.policy_issuance_status_id',
             'hqr.policy_issuance_status_other',
-            'policy_start_date',
-            'policy_issuance_date',
+            'hqr.policy_start_date',
+            'hqr.policy_issuance_date',
         )
             ->leftJoin('nationality as n', 'n.id', '=', 'hqr.nationality_id')
             ->leftJoin('home_quote_request_detail as hqrd', 'hqrd.home_quote_request_id', '=', 'hqr.id')
