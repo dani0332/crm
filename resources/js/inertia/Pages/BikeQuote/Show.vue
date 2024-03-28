@@ -3,7 +3,6 @@ import QuoteDocuments from '../PersonalQuote/Partials/QuoteDocuments';
 import QuoteStatus from '../PersonalQuote/Partials/QuoteStatus';
 import QuotePayments from '../PersonalQuote/Partials/QuotePayments';
 import QuoteActivities from '../PersonalQuote/Partials/QuoteActivities';
-import QuotePolicy from '../PersonalQuote/Partials/QuotePolicy';
 import PlanDetails from '../../Components/PlanDetails.vue';
 import LeadHistory from '../PersonalQuote/Partials/LeadHistory';
 import AdditionalContacts from '../PersonalQuote/Partials/AdditionalContacts';
@@ -789,13 +788,6 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       :quoteStatusEnum="enums.quoteStatusEnum"
       :policyIssuanceStatus="policyIssuanceStatus"
       modelType="Bike"
-    />
-
-    <QuotePolicy
-      :quote="quote"
-      :can="can"
-      :quoteStatusEnum="quoteStatusesEnum"
-      :expanded="sectionExpanded"
     />
 
    <EmbeddedProducts
