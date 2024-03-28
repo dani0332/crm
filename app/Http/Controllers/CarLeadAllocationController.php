@@ -46,7 +46,6 @@ class CarLeadAllocationController extends Controller
             $isRenewalLeadAllocationWorking = $this->applicationStorageService->getValueByKey('CAR_RENEWAL_LEAD_ALLOCATION');
             $isFIFO = $this->applicationStorageService->getValueByKey('CAR_LEAD_PICKUP_FIFO');
             $data = $this->carLeadAllocationService->getGridData();
-
             foreach ($data as $key => $value) {
                 $totalAssignedLeadCount = $totalAssignedLeadCount + $value->allocationCount;
                 $value->isAvailable == 1 ? $availableUsers++ : $unAvailableUsers++;

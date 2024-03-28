@@ -31,13 +31,11 @@ class LeadAllocationController extends Controller
 
     protected $leadAllocationService;
     protected $applicationStorageService;
-    protected $activityService;
 
-    public function __construct(LeadAllocationService $leadAllocationService, ApplicationStorageService $applicationStorageService, ActivitiesService $activityService)
+    public function __construct(LeadAllocationService $leadAllocationService, ApplicationStorageService $applicationStorageService)
     {
         $this->leadAllocationService = $leadAllocationService;
         $this->applicationStorageService = $applicationStorageService;
-        $this->activityService = $activityService;
     }
 
     /**
@@ -66,7 +64,7 @@ class LeadAllocationController extends Controller
             $unAssignedGood = $this->leadAllocationService->getUnAssignedHealthQuotes(TeamNameEnum::RM_SPEED);
             $unAssignedBest = $this->leadAllocationService->getUnAssignedHealthQuotes(TeamNameEnum::RM_NB);
             $unAssignedEntryLevel = $this->leadAllocationService->getUnAssignedHealthQuotes(TeamNameEnum::EBP);
-
+            
             return inertia('LeadAllocation/Health', [
                 'totalAssignedLeadCount' => $totalAssignedLeadCount,
                 'availableUsers' => $availableUsers,

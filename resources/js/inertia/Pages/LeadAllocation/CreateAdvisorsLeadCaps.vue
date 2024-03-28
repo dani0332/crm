@@ -1,8 +1,4 @@
 <script setup>
-
-
-
-
 const props = defineProps({
   lead: { type: Object, default: null },
 
@@ -57,7 +53,6 @@ const getAdvisorByQuoteType = async (id) => {
 };
 
  const onSubmit = (isValid) => {
-  
   if (leadForm.quoteTypeId == null) {
     isEmptyField.value = true;
   } else {
@@ -80,7 +75,6 @@ const getAdvisorByQuoteType = async (id) => {
   }
 }
 </script>
-
 
 <template>
     <div class="flex justify-between items-center">

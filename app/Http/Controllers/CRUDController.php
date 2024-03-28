@@ -230,7 +230,6 @@ class CRUDController extends Controller
         // Getting the data for grid based on the model type
         $gridData = $this->crudService->getGridData($this->genericModel, $request);
         // Getting the data for the advisor dropdown based on the model type
-
         $advisors = $this->crudService->getAdvisorsByModelType($this->genericModel->modelType);
         // Get user teams
         $teams = $this->crudService->getUserTeams(Auth::user()->id);
@@ -1307,21 +1306,17 @@ class CRUDController extends Controller
     public function manualLeadAssign(Request $request)
     {
         $isValidRequest = $this->crudService->validateRequest($request->modelType, $request);
-
         if ($isValidRequest != 'true') {
             return redirect()->back()->with('error', $isValidRequest);
         }
         $assignedUser = $this->userService->getUserById((int) $request->assigned_to_id_new);
-
         if (! $assignedUser) {
             return Redirect::back()->with('message', 'Selected advisor does not exist in the system!');
         }
         $assignmentResult = $this->{strtolower($request->modelType).'QuoteService'}->processManualLeadAssignment($request);
-
         if (count($assignmentResult) > 0) {
             $msg = '';
             foreach ($assignmentResult as $assignmentResultItem) {
-
                 $msg = $msg.' Lead with Ref-ID'.$assignmentResultItem['leadId'].' is not assigned, Reason : '.$assignmentResultItem['msg'].' <br>';
             }
             Log::warning('Manual Lead Assignment Failed for '.$request->modelType.' Quote , selected id was '.$request->selectTmLeadId);
