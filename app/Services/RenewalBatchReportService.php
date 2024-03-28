@@ -105,11 +105,12 @@ class RenewalBatchReportService extends BaseService
         /**
          * get auth user roles
          */
-        $authUserIsManager = auth()->user()->hasRole(RolesEnum::CarManager);
-        $authUserIsRenewalsManager = auth()->user()->hasRole(RolesEnum::RenewalsManager);
-        $authUserIsCEO = auth()->user()->hasRole(RolesEnum::SeniorManagement);
-        $authUserIsAccounts = auth()->user()->hasRole(RolesEnum::Accounts);
-        $authUserIsAdvisor = auth()->user()->hasRole(RolesEnum::CarAdvisor);
+        [$authUserIsManager, $authUserIsRenewalsManager, $authUserIsCEO, $authUserIsAccounts, $authUserIsAdvisor]
+            = $this->identifyUserRoles();
+
+        /**
+         * fetch teams and subteams
+         */
         $authUserTeamsIds = auth()->user()->getUserTeamsIds($authUserId)->toArray();
 
         // get instance of crud service with the help of app service container
@@ -216,11 +217,8 @@ class RenewalBatchReportService extends BaseService
         /**
          * check auth user roles
          */
-        $authUserIsManager = auth()->user()->hasRole(RolesEnum::CarManager);
-        $authUserIsRenewalsManager = auth()->user()->hasRole(RolesEnum::RenewalsManager);
-        $authUserIsAdvisor = auth()->user()->hasRole(RolesEnum::CarAdvisor);
-        $authUserIsCEO = auth()->user()->hasRole(RolesEnum::SeniorManagement);
-        $authUserIsAccounts = auth()->user()->hasRole(RolesEnum::Accounts);
+        [$authUserIsManager, $authUserIsRenewalsManager, $authUserIsCEO, $authUserIsAccounts, $authUserIsAdvisor]
+            = $this->identifyUserRoles();
         /**
          * fetch teams and subteams
          */
@@ -421,11 +419,10 @@ class RenewalBatchReportService extends BaseService
         /**
          * check auth user roles
          */
-        $authUserIsManager = auth()->user()->hasRole(RolesEnum::CarManager);
-        $authUserIsRenewalsManager = auth()->user()->hasRole(RolesEnum::RenewalsManager);
-        $authUserIsAdvisor = auth()->user()->hasRole(RolesEnum::CarAdvisor);
-        $authUserIsCEO = auth()->user()->hasRole(RolesEnum::SeniorManagement);
-        $authUserIsAccounts = auth()->user()->hasRole(RolesEnum::Accounts);
+
+        [$authUserIsManager, $authUserIsRenewalsManager, $authUserIsCEO, $authUserIsAccounts, $authUserIsAdvisor]
+            = $this->identifyUserRoles();
+
         /**
          * fetch teams and subteams
          */
@@ -833,5 +830,28 @@ class RenewalBatchReportService extends BaseService
                     and car_lost_quote_logs.updated_at <="' . $reportDateEnd . '"
                     THEN 1 ELSE 0 END) as early_renewal_by_value_segment'),
         );
+    }
+
+    public function identifyUserRoles()
+    {
+        /**
+         * get auth user roles
+         */
+        $authUserRoles = auth()->user()->roles->pluck('name')->toArray();
+
+        $authUserIsManager = in_array(RolesEnum::CarManager, $authUserRoles);
+        $authUserIsRenewalsManager = in_array(RolesEnum::RenewalsManager, $authUserRoles);
+        $authUserIsCEO = in_array(RolesEnum::SeniorManagement, $authUserRoles);
+        $authUserIsAccounts = in_array(RolesEnum::Accounts, $authUserRoles);
+        $authUserIsAdvisor = in_array(RolesEnum::CarAdvisor, $authUserRoles);
+
+        return [
+            $authUserIsManager,
+            $authUserIsRenewalsManager,
+            $authUserIsCEO,
+            $authUserIsAccounts,
+            $authUserIsAdvisor,
+        ];
+
     }
 }
