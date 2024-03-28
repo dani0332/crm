@@ -153,16 +153,13 @@ watch(
       ).add(13, 'months');
     } else if (
       props.modelType === quoteTypeCodeEnum.Health.toLowerCase() ||
-      props.modelType === quoteTypeCodeEnum.GroupMedical.toLowerCase()
+      props.modelType === quoteTypeCodeEnum.GroupMedical.toLowerCase() ||
+      props.modelType === quoteTypeCodeEnum.Business.toLowerCase() // model type is ""Business"" when visiting the business quote page so added this condition
     ) {
       policyDetailsForm.quote_policy_expiry_date = moment(
         quote_policy_start_date,
       ).add(12, 'months');
     }
-    console.log(
-      'quote_policy_expiry_date',
-      policyDetailsForm.quote_policy_expiry_date,
-    );
   },
 );
 </script>
