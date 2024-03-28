@@ -2189,7 +2189,7 @@ const handleChildUpdate = planId => {
         <h3 class="font-semibold text-primary-800 text-lg">Lead Status</h3>
         <x-divider class="mb-4 mt-1" />
       </div>
-      <div class="flex flex-wrap md:flex-nowrap gap-6 w-full">
+      <div class="flex flex-wrap md:flex-nowrap gap-4 w-full">
         <div class="w-full md:w-50">
           <div class="flex flex-col gap-4">
             <ComboBox
@@ -2201,6 +2201,38 @@ const handleChildUpdate = planId => {
               :disabled="leadStatusDisabled"
               :options="leadStatusOptions"
             />
+            <x-field
+              label="Notes"
+              :required="
+                leadStatusForm.leadStatus == quoteStatusEnum.FollowupCall ||
+                leadStatusForm.leadStatus == quoteStatusEnum.Interested ||
+                leadStatusForm.leadStatus == quoteStatusEnum.NoAnswer
+              "
+            >
+              <x-textarea
+                v-model="leadStatusForm.notes"
+                type="text"
+                placeholder="Lead Notes"
+                class="w-full"
+                :rules="
+                  leadStatusForm.leadStatus == quoteStatusEnum.FollowupCall ||
+                  leadStatusForm.leadStatus == quoteStatusEnum.Interested ||
+                  leadStatusForm.leadStatus == quoteStatusEnum.NoAnswer
+                    ? [isRequired]
+                    : []
+                "
+                :error="leadStatusForm.errors.notes"
+                :disabled="
+                  record.quote_status_id ==
+                    quoteStatusEnum.TransactionApproved ||
+                  isCarLostStatus(record.quote_status_id)
+                "
+              />
+            </x-field>
+          </div>
+        </div>
+        <div class="w-full md:w-50">
+          <div class="flex flex-col gap-7">
             <x-field
               label="TransApp Code"
               required
@@ -2275,34 +2307,6 @@ const handleChildUpdate = planId => {
               :error="leadStatusForm.errors.tier_id"
             />
             <x-field
-              label="Notes"
-              :required="
-                leadStatusForm.leadStatus == quoteStatusEnum.FollowupCall ||
-                leadStatusForm.leadStatus == quoteStatusEnum.Interested ||
-                leadStatusForm.leadStatus == quoteStatusEnum.NoAnswer
-              "
-            >
-              <x-textarea
-                v-model="leadStatusForm.notes"
-                type="text"
-                placeholder="Lead Notes"
-                class="w-full"
-                :rules="
-                  leadStatusForm.leadStatus == quoteStatusEnum.FollowupCall ||
-                  leadStatusForm.leadStatus == quoteStatusEnum.Interested ||
-                  leadStatusForm.leadStatus == quoteStatusEnum.NoAnswer
-                    ? [isRequired]
-                    : []
-                "
-                :error="leadStatusForm.errors.notes"
-                :disabled="
-                  record.quote_status_id ==
-                    quoteStatusEnum.TransactionApproved ||
-                  isCarLostStatus(record.quote_status_id)
-                "
-              />
-            </x-field>
-            <x-field
               label="Car Sold / Uncontactable Proof"
               v-if="
                 leadStatusForm.leadStatus == quoteStatusEnum.CarSold ||
@@ -2318,6 +2322,14 @@ const handleChildUpdate = planId => {
                 "
                 placeholder="Car Sold / Uncontactable Proof"
                 class="form-control w-full"
+              />
+            </x-field>
+            <x-field class="" label="Transaction Type">
+              <x-input
+                type="text"
+                :value="record.transaction_type_text"
+                class="w-full"
+                :disabled="true"
               />
             </x-field>
           </div>
