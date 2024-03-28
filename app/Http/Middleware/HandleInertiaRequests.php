@@ -6,6 +6,7 @@ use App\Enums\ApplicationStorageEnums;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
+use App\Enums\ProductionProcessTooltipEnum;
 use App\Enums\quoteBusinessTypeCode;
 use App\Enums\QuoteIssuanceStatusEnum;
 use App\Enums\quoteTypeCode;
@@ -75,6 +76,7 @@ class HandleInertiaRequests extends Middleware
             'epLink' => config('constants.AFIA_WEBSITE_DOMAIN'),
             'vat' => ApplicationStorageEnums::VAT,
             'im_logo' => getIMLogo(),
+            'productionProcessTooltipEnum' => ProductionProcessTooltipEnum::asArray(),
         ];
     }
 
@@ -201,9 +203,11 @@ class HandleInertiaRequests extends Middleware
                         ),
                 )
                 ->addIf(
-                    auth()->user()->hasAnyPermission(PermissionsEnum::HealthQuotesList,
+                    auth()->user()->hasAnyPermission(
+                        PermissionsEnum::HealthQuotesList,
                         PermissionsEnum::HEALTH_QUOTES_MANAGER_ACCESS,
-                        PermissionsEnum::HEALTH_QUOTES_ACCESS),
+                        PermissionsEnum::HEALTH_QUOTES_ACCESS
+                    ),
                     'Health Quotes',
                     '/quotes/health',
                     fn ($s) => $s->attributes(['icon' => 'health'])
@@ -259,10 +263,11 @@ class HandleInertiaRequests extends Middleware
         if (auth()->user()->hasAnyPermission([
             PermissionsEnum::GMQuotesList,
             PermissionsEnum::CorpLineQuotesList,
+            PermissionsEnum::VehicleValuationList,
         ])) {
             $nav = $nav->add('Car', '', function (Section $section) {
                 $section
-                    ->add('Valuation', '/valuation/calculatevaluation', fn ($s) => $s->attributes(['icon' => 'car']))
+                    ->add('Valuation', '/valuation', fn ($s) => $s->attributes(['icon' => 'car']))
                     ->add('Vehicle Depreciation', '/valuation/vehicledepreciation', fn ($s) => $s->attributes(['icon' => 'car']));
             });
         }

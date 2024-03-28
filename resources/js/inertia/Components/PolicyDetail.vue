@@ -19,7 +19,7 @@ const props = defineProps({
     default: '',
   },
 });
-
+const notification = useNotifications('toast');
 const hasRole = role => useHasRole(role);
 const rolesEnum = page.props.rolesEnum;
 const dateToYMD = date => {
@@ -29,6 +29,7 @@ const dateToYMD = date => {
   }
   return '';
 };
+const productionProcessTooltipEnum = page.props.productionProcessTooltipEnum;
 const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
 const quoteIssuanceStatusEnum = page.props.quoteIssuanceStatusEnum;
 const policyIssuanceStatusOptions = computed(() => {
@@ -52,7 +53,10 @@ const policyDetailsState = reactive({
   isEditing: false,
 });
 const policyDetailsForm = useForm({
-  quote_policy_number: page.props.record.policy_number || null,
+  quote_policy_number:
+    page.props.record.policy_number == 'NULL'
+      ? ''
+      : page.props.record.policy_number || '',
 
   quote_policy_issuance_date:
     dateToYMD(page.props.record.policy_issuance_date) ||
@@ -64,7 +68,8 @@ const policyDetailsForm = useForm({
   quote_policy_expiry_date:
     dateToYMD(page.props.record.renewal_expiry_date) || '',
   amount_with_vat: page.props.record.price_with_vat || '',
-  quote_plan_insurer_quote_number: planQuoteInsurerNumber.value || null,
+  quote_plan_insurer_quote_number:
+    planQuoteInsurerNumber.value || page.props.record.insurer_quote_number,
   quote_policy_issuance_status: page.props.record.policy_issuance_status_id,
   quote_policy_issuance_status_other:
     page.props.record.policy_issuance_status_other || '',
@@ -90,11 +95,42 @@ const caculateVatAmount = () => {
   }
 };
 
-const onUpdatePolicyDetails = () => {
+const rules = {
+  isRequired: v => !!v || 'This field is required',
+  start_date: v => {
+    if (v) {
+      const date = new Date(v);
+      return !isNaN(date.getTime());
+    }
+    return true;
+  },
+  expiry_date: v => {
+    if (v) {
+      const date = new Date(v);
+      const startDate = new Date(policyDetailsForm.quote_policy_start_date);
+      if (startDate >= date) {
+        return 'Expiry date should be greater than Start Date';
+      }
+      return isNaN(date.getTime());
+    }
+    return false;
+  },
+};
+
+const onUpdatePolicyDetails = isValid => {
+  if (!isValid) return;
   policyDetailsForm.post(`/quotes/${props.modelType}/update-quote-policy`, {
     preserveScroll: true,
     onSuccess: () => {
       policyDetailsState.isEditing = false;
+    },
+    onError: errors => {
+      Object.keys(errors).forEach(function (key) {
+        notification.error({
+          title: errors[key],
+          position: 'top',
+        });
+      });
     },
     onFinish: () => {
       policyDetailsState.isEditing = false;
@@ -108,221 +144,307 @@ const onUpdatePolicyDetails = () => {
 </script>
 
 <template>
-  <div class="p-4 rounded shadow mb-6 bg-white">
-    <div>
-      <h3 class="font-semibold text-primary-800 text-lg">Policy Details</h3>
-      <x-divider class="mb-4 mt-1" />
-    </div>
-    <div class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5">
-      <div class="w-full md:w-1/2">
-        <x-textarea
-          v-model="policyDetailsForm.quote_policy_number"
-          type="text"
-          label="Policy Number"
-          placeholder="Policy Number"
-          class="w-full"
-          :disabled="!policyDetailsState.isEditing"
-        />
+  <x-form @submit="onUpdatePolicyDetails" :auto-focus="false">
+    <div class="p-4 rounded shadow mb-6 bg-white">
+      <div>
+        <h3 class="font-semibold text-primary-800 text-lg">Policy Details</h3>
+        <x-divider class="mb-4 mt-1" />
       </div>
-      <div class="w-full md:w-1/2">
-        <DatePicker
-          v-model="policyDetailsForm.quote_policy_issuance_date"
-          :disabled="!policyDetailsState.isEditing"
-          :rules="[isRequired]"
-          type="date"
-          label="ISSUANCE DATE"
-          class="w-full"
-        />
+      <div class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5">
+        <div class="w-full md:w-1/2">
+          <x-tooltip
+            ><label class="font-medium text-gray-800 dark:text-gray-200 mb-1"
+              >Policy Number</label
+            >
+            <template #tooltip>
+              <span>{{ productionProcessTooltipEnum.POLICY_NUMBER }}</span>
+            </template>
+          </x-tooltip>
+          <x-input
+            v-model="policyDetailsForm.quote_policy_number"
+            type="text"
+            placeholder="Policy Number"
+            class="w-full"
+            :disabled="!policyDetailsState.isEditing"
+          />
+        </div>
+        <div class="w-full md:w-1/2">
+          <x-tooltip
+            ><label class="font-medium text-gray-800 dark:text-gray-200 mb-1"
+              >ISSUANCE DATE</label
+            >
+            <template #tooltip>
+              <span>{{ productionProcessTooltipEnum.ISSUANCE_DATE }}</span>
+            </template>
+          </x-tooltip>
+          <DatePicker
+            v-model="policyDetailsForm.quote_policy_issuance_date"
+            :disabled="!policyDetailsState.isEditing"
+            type="date"
+            class="w-full"
+          />
+        </div>
       </div>
-    </div>
 
-    <div class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5">
-      <div class="w-full md:w-1/2">
-        <x-textarea
-          v-model="policyDetailsForm.price_vat_notapplicable"
-          @change="caculateVatAmount"
-          type="number"
-          label="Price (VAT NOT APPLICABLE)"
-          placeholder="Price (VAT NOT APPLICABLE)"
-          class="w-full"
-          :disabled="
-            !policyDetailsState.isEditing || policyDetailsForm.amount > 0
-          "
-        />
+      <div class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5">
+        <div class="w-full md:w-1/2">
+          <x-tooltip
+            ><label class="font-medium text-gray-800 dark:text-gray-200 mb-1"
+              >Price (VAT NOT APPLICABLE)</label
+            >
+            <template #tooltip>
+              <span>{{
+                productionProcessTooltipEnum.PRICE_VAT_NOT_APPLICABLE
+              }}</span>
+            </template>
+          </x-tooltip>
+          <x-textarea
+            v-model="policyDetailsForm.price_vat_notapplicable"
+            @change="caculateVatAmount"
+            type="number"
+            placeholder="Price (VAT NOT APPLICABLE)"
+            class="w-full"
+            :disabled="
+              !policyDetailsState.isEditing || policyDetailsForm.amount > 0
+            "
+          />
+        </div>
+        <div class="w-full md:w-1/2">
+          <x-tooltip
+            ><label class="font-medium text-gray-800 dark:text-gray-200 mb-1"
+              >Start Date</label
+            >
+            <template #tooltip>
+              <span>{{ productionProcessTooltipEnum.START_DATE }}</span>
+            </template>
+          </x-tooltip>
+          <DatePicker
+            v-model="policyDetailsForm.quote_policy_start_date"
+            :rules="[rules.start_date]"
+            type="date"
+            placeholder="Start Date"
+            class="w-full"
+            :disabled="!policyDetailsState.isEditing"
+          />
+        </div>
       </div>
-      <div class="w-full md:w-1/2">
-        <DatePicker
-          v-model="policyDetailsForm.quote_policy_start_date"
-          type="date"
-          label="Start Date"
-          placeholder="Start Date"
-          class="w-full"
-          :disabled="!policyDetailsState.isEditing"
-        />
-      </div>
-    </div>
 
-    <div class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5">
-      <div class="w-full md:w-1/2">
-        <x-textarea
-          v-model="policyDetailsForm.amount"
-          @change="caculateVatAmount"
-          type="number"
-          label="Price (VAT APPLICABLE)"
-          placeholder="Price (VAT APPLICABLE)"
-          class="w-full"
-          :disabled="
-            !policyDetailsState.isEditing ||
-            policyDetailsForm.price_vat_notapplicable > 0
-          "
-        />
+      <div class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5">
+        <div class="w-full md:w-1/2">
+          <x-tooltip
+            ><label class="font-medium text-gray-800 dark:text-gray-200 mb-1"
+              >Price (VAT APPLICABLE)</label
+            >
+            <template #tooltip>
+              <span>{{
+                productionProcessTooltipEnum.PRICE_VAT_APPLICABLE
+              }}</span>
+            </template>
+          </x-tooltip>
+          <x-textarea
+            v-model="policyDetailsForm.amount"
+            @change="caculateVatAmount"
+            type="number"
+            placeholder="Price (VAT APPLICABLE)"
+            class="w-full"
+            :disabled="
+              !policyDetailsState.isEditing ||
+              policyDetailsForm.price_vat_notapplicable > 0
+            "
+          />
+        </div>
+        <div class="w-full md:w-1/2">
+          <x-tooltip
+            ><label class="font-medium text-gray-800 dark:text-gray-200 mb-1"
+              >Expiry Date</label
+            >
+            <template #tooltip>
+              <span>{{ productionProcessTooltipEnum.EXPIRY_DATE }}</span>
+            </template>
+          </x-tooltip>
+          <DatePicker
+            v-model="policyDetailsForm.quote_policy_expiry_date"
+            :custom-error="
+              rules.expiry_date(policyDetailsForm.quote_policy_expiry_date)
+            "
+            type="date"
+            placeholder="Expiry Date"
+            class="w-full"
+            :disabled="!policyDetailsState.isEditing"
+          />
+        </div>
       </div>
-      <div class="w-full md:w-1/2">
-        <DatePicker
-          v-model="policyDetailsForm.quote_policy_expiry_date"
-          type="date"
-          label="Expiry Date"
-          placeholder="Expiry Date"
-          class="w-full"
-          :disabled="!policyDetailsState.isEditing"
-        />
-      </div>
-    </div>
 
-    <div class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5">
-      <div class="w-full md:w-1/2">
-        <x-input
-          v-model="policyDetailsForm.vat"
-          type="text"
-          label="Total VAT Amount"
-          placeholder="Total VAT Amount"
-          class="w-full"
-          :disabled="!policyDetailsState.isEditing"
-          readonly
-        />
-      </div>
-      <div class="w-full md:w-1/2">
-        <x-input
-          v-model="policyDetailsForm.amount_with_vat"
-          type="number"
-          label="Total Price"
-          placeholder="Price"
-          class="w-full"
-          readonly
-          :disabled="!policyDetailsState.isEditing"
-        />
-      </div>
-    </div>
-    <div class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5">
-      <div class="w-full md:w-1/2">
-        <x-input
-          v-model="policyDetailsForm.quote_plan_insurer_quote_number"
-          type="text"
-          label="Insurer Quote Number"
-          placeholder="Insurer Quote Number"
-          class="w-full"
-          :disabled="!policyDetailsState.isEditing"
-        />
-      </div>
-      <div class="w-full md:w-1/2">
-        <x-select
-          v-model="policyDetailsForm.quote_policy_issuance_status"
-          class="w-full"
-          label="Issuance Status"
-          placeholder="Select any option"
-          :disabled="!policyDetailsState.isEditing"
-          :options="policyIssuanceStatusOptions"
-        />
-      </div>
-    </div>
-    <div class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5">
-      <div class="w-full md:w-1/2">
-        <x-input
-          v-if="
-            policyDetailsForm.quote_policy_issuance_status ==
-            quoteIssuanceStatusEnum.Other
-          "
-          v-model="policyDetailsForm.quote_policy_issuance_status_other"
-          type="text"
-          label="Additionl Info"
-          placeholder="Additionl Info"
-          class="w-full"
-          :disabled="!policyDetailsState.isEditing"
-        />
-      </div>
-    </div>
-    <div class="flex flex-wrap md:flex-nowrap gap-6 w-full">
-      <div class="w-full md:w-1/2"></div>
-      <div class="w-full md:w-1/2" />
-    </div>
-
-    <div class="flex justify-end">
-      <template
-        class="flex justify-end"
-        v-if="record.quote_status_id == quoteStatusEnum.TransactionApproved"
-      >
-        <x-button
-          v-if="policyDetailsState.isEditing"
-          class="mt-4 mr-2"
-          color="emerald"
-          size="sm"
-          :loading="policyDetailsForm.processing"
-          @click.prevent="policyDetailsState.isEditing = false"
-        >
-          Cancel
-        </x-button>
-        <x-button
-          v-if="policyDetailsState.isEditing"
-          class="mt-4"
-          color="emerald"
-          size="sm"
-          :loading="policyDetailsForm.processing"
-          @click.prevent="onUpdatePolicyDetails"
-        >
-          Update
-        </x-button>
-
-        <template
-          v-if="props.modelType === quoteTypeCodeEnum.Car.toLowerCase()"
-        >
-          <x-button
-            v-if="!policyDetailsState.isEditing && hasRole(rolesEnum.PA)"
-            class="mt-4"
-            color="emerald"
-            size="sm"
-            @click.prevent="policyDetailsState.isEditing = true"
-          >
-            Edit
-          </x-button></template
-        >
-        <template v-else>
-          <x-button
-            v-if="!policyDetailsState.isEditing && hasRole(rolesEnum.NRA)"
-            class="mt-4"
-            color="emerald"
-            size="sm"
-            @click.prevent="policyDetailsState.isEditing = true"
-          >
-            Edit
-          </x-button></template
-        >
-      </template>
-      <template v-else>
-        <x-tooltip>
-          <x-button
-            v-if="record.quote_status_id == quoteStatusEnum.PolicyBooked"
-            size="sm"
-            color="emerald"
+      <div class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5">
+        <div class="w-full md:w-1/2">
+          <x-tooltip
+            ><label class="font-medium text-gray-800 dark:text-gray-200 mb-1"
+              >Total VAT Amount</label
+            >
+            <template #tooltip>
+              <span>{{ productionProcessTooltipEnum.TOTAL_VAT_AMOUNT }}</span>
+            </template>
+          </x-tooltip>
+          <x-input
+            v-model="policyDetailsForm.vat"
+            type="text"
+            placeholder="Total VAT Amount"
+            class="w-full"
             :disabled="true"
-            >Edit
+            readonly
+          />
+        </div>
+        <div class="w-full md:w-1/2">
+          <x-tooltip
+            ><label class="font-medium text-gray-800 dark:text-gray-200 mb-1"
+              >Total Price</label
+            >
+            <template #tooltip>
+              <span>{{ productionProcessTooltipEnum.TOTAL_PRICE }}</span>
+            </template>
+          </x-tooltip>
+          <x-input
+            v-model="policyDetailsForm.amount_with_vat"
+            type="number"
+            placeholder="Price"
+            class="w-full"
+            readonly
+            :disabled="!policyDetailsState.isEditing"
+          />
+        </div>
+      </div>
+      <div class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5">
+        <div class="w-full md:w-1/2">
+          <x-tooltip
+            ><label class="font-medium text-gray-800 dark:text-gray-200 mb-1"
+              >Insurer Quote Number</label
+            >
+            <template #tooltip>
+              <span>{{
+                productionProcessTooltipEnum.INSURER_QUOTE_NUMBER
+              }}</span>
+            </template>
+          </x-tooltip>
+          <x-input
+            v-model="policyDetailsForm.quote_plan_insurer_quote_number"
+            type="text"
+            placeholder="Insurer Quote Number"
+            class="w-full"
+            :disabled="!policyDetailsState.isEditing"
+          />
+        </div>
+        <div class="w-full md:w-1/2">
+          <x-tooltip
+            ><label class="font-medium text-gray-800 dark:text-gray-200 mb-1"
+              >Issuance Status</label
+            >
+            <template #tooltip>
+              <span>{{ productionProcessTooltipEnum.ISSURANEC_STATUS }}</span>
+            </template>
+          </x-tooltip>
+          <x-select
+            v-model="policyDetailsForm.quote_policy_issuance_status"
+            class="w-full"
+            placeholder="Select any option"
+            :disabled="!policyDetailsState.isEditing"
+            :options="policyIssuanceStatusOptions"
+          />
+        </div>
+      </div>
+      <div class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5">
+        <div class="w-full md:w-1/2">
+          <x-input
+            v-if="
+              policyDetailsForm.quote_policy_issuance_status ==
+              quoteIssuanceStatusEnum.Other
+            "
+            v-model="policyDetailsForm.quote_policy_issuance_status_other"
+            type="text"
+            label="Additionl Info"
+            placeholder="Additionl Info"
+            class="w-full"
+            :disabled="!policyDetailsState.isEditing"
+          />
+        </div>
+      </div>
+      <div class="flex flex-wrap md:flex-nowrap gap-6 w-full">
+        <div class="w-full md:w-1/2"></div>
+        <div class="w-full md:w-1/2" />
+      </div>
+
+      <div class="flex justify-end">
+        <template
+          class="flex justify-end"
+          v-if="
+            record.quote_status_id == quoteStatusEnum.TransactionApproved ||
+            record.quote_status_id == quoteStatusEnum.PolicyPending ||
+            record.quote_status_id == quoteStatusEnum.PolicyIssued ||
+            record.quote_status_id == quoteStatusEnum.PolicySentToCustomer
+          "
+        >
+          <x-button
+            v-if="policyDetailsState.isEditing"
+            class="mt-4 mr-2"
+            color="emerald"
+            size="sm"
+            :loading="policyDetailsForm.processing"
+            @click.prevent="policyDetailsState.isEditing = false"
+          >
+            Cancel
           </x-button>
-          <template #tooltip>
-            <span>{{
-              'The Button is not accessable because policy has been booked'
-            }}</span>
-          </template>
-        </x-tooltip>
-      </template>
+          <x-button
+            v-if="policyDetailsState.isEditing"
+            class="mt-4"
+            color="emerald"
+            size="sm"
+            :loading="policyDetailsForm.processing"
+            type="submit"
+          >
+            Update
+          </x-button>
+
+          <template
+            v-if="props.modelType === quoteTypeCodeEnum.Car.toLowerCase()"
+          >
+            <x-button
+              v-if="!policyDetailsState.isEditing && hasRole(rolesEnum.PA)"
+              class="mt-4"
+              color="emerald"
+              size="sm"
+              @click.prevent="policyDetailsState.isEditing = true"
+            >
+              Edit
+            </x-button></template
+          >
+          <template v-else>
+            <x-button
+              v-if="!policyDetailsState.isEditing && hasRole(rolesEnum.NRA)"
+              class="mt-4"
+              color="emerald"
+              size="sm"
+              @click.prevent="policyDetailsState.isEditing = true"
+            >
+              Edit
+            </x-button></template
+          >
+        </template>
+        <template v-else>
+          <x-tooltip>
+            <x-button
+              v-if="record.quote_status_id == quoteStatusEnum.PolicyBooked"
+              size="sm"
+              color="emerald"
+              :disabled="true"
+              >Edit
+            </x-button>
+            <template #tooltip>
+              <span>{{
+                'The button is not accessable because policy has been booked'
+              }}</span>
+            </template>
+          </x-tooltip>
+        </template>
+      </div>
     </div>
-  </div>
+  </x-form>
 </template>

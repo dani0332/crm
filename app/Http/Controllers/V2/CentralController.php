@@ -24,9 +24,9 @@ use App\Http\Requests\DuplicateLobRequest;
 use App\Http\Requests\LeadAssignRequest;
 use App\Http\Requests\MigratePaymentsRequest;
 use App\Http\Requests\PlanDetailsRequest;
+use App\Http\Requests\SendBookPolicyRequest;
 use App\Http\Requests\SplitPaymentApproveRequest;
 use App\Http\Requests\SplitPaymentUpdateRequest;
-use App\Http\Requests\SendBookPolicyRequest;
 use App\Http\Requests\UpdateLastYearPolicyRequest;
 use App\Http\Requests\UpdateSelectedPlanRequest;
 use App\Jobs\SendBookPolicyDocumentsJob;
@@ -223,7 +223,7 @@ class CentralController extends Controller
         $payment->update($paymentInformation);
 
         $quote = $this->getQuoteObject($validatedData['model_type'], $validatedData['quote_id']);
-        $quote->update(['policy_booking_date' => $validatedData['booking_date']]);
+        $quote->update(['policy_booking_date' => Carbon::parse($validatedData['booking_date'])->format('Y-m-d')]);
 
         return redirect()->back()->with('success', 'Booking Status has been updated.');
     }
@@ -231,6 +231,7 @@ class CentralController extends Controller
     public function sendBookingPolicy(SendBookPolicyRequest $sendBookPolicyRequest)
     {
         $request = (object) $sendBookPolicyRequest->validated();
+
         $quote = $this->getQuoteObject($request->model_type, $request->quote_id);
 
         if ($request->send_policy_type == 'customer') {
@@ -242,7 +243,7 @@ class CentralController extends Controller
                 'quote_status_id' => QuoteStatusEnum::PolicySentToCustomer,
             ]);
 
-            return response()->json(['message' => 'policy sent successfully'], 200);
+            return response()->json(['message' => 'Policy sent to customer'], 200);
         }
         if ($request->send_policy_type == 'sage') {
 
@@ -261,8 +262,11 @@ class CentralController extends Controller
                 ]], 500);
             }
 
-            // dispath job to send email
-            dispatch(new SendBookPolicyDocumentsJob($request));
+            if ($quote->quote_status_id != QuoteStatusEnum::PolicySentToCustomer) {
+
+                // dispath job to send email
+                dispatch(new SendBookPolicyDocumentsJob($request));
+            }
 
             $quote->update([
                 'quote_status_id' => QuoteStatusEnum::PolicyBooked,

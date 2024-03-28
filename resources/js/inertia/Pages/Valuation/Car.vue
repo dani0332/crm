@@ -1,7 +1,6 @@
 <script setup>
 const props = defineProps({
   carMakes: Array,
-  kenPath: String,
 });
 
 const notification = useToast();
@@ -51,7 +50,7 @@ function onSubmit(isValid) {
   else {
     loader.table = true;
     axios
-      .post(`${props.kenPath}/get-vehicle-value`, {
+      .post(route('valuation.calculate'), {
         carModelDetailId: valuationForm.carTrim,
         yearOfManufacture: valuationForm.yearOfManufacture,
       })
