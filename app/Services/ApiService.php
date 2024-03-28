@@ -101,8 +101,6 @@ class ApiService
         }
 
         return apiResponse(null, Response::HTTP_BAD_REQUEST, 'Invalid request');
-
-        info('------ Lead allocation ended for lead with Invalid request ------');
     }
 
     private function assignAdvisorOnly($allocationType, $allocationId)
