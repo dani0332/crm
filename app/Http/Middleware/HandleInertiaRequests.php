@@ -170,7 +170,7 @@ class HandleInertiaRequests extends Middleware
                     ->addIf(
                         auth()->user()->can(PermissionsEnum::ADVISOR_CAPACITY_MANAGEMENT),
                         'Advisors Capacity',
-                        route('lead.allocations.index'),
+                        route('allocations.index'),
                         fn ($s) => $s->attributes(['icon' => 'box'])
                     );
             });

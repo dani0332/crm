@@ -63,8 +63,7 @@ class LeadAllocationController extends Controller
 
             $unAssignedGood = $this->leadAllocationService->getUnAssignedHealthQuotes(TeamNameEnum::RM_SPEED);
             $unAssignedBest = $this->leadAllocationService->getUnAssignedHealthQuotes(TeamNameEnum::RM_NB);
-            $unAssignedEntryLevel = $this->leadAllocationService->getUnAssignedHealthQuotes(TeamNameEnum::EBP);
-            
+            $unAssignedEntryLevel = $this->leadAllocationService->getUnAssignedHealthQuotes(TeamNameEnum::EBP);   
             return inertia('LeadAllocation/Health', [
                 'totalAssignedLeadCount' => $totalAssignedLeadCount,
                 'availableUsers' => $availableUsers,
@@ -154,7 +153,6 @@ class LeadAllocationController extends Controller
             if (isset($item['reason'])) {
 
                 if ($item['reason'] != UserStatusEnum::OFFLINE && $item['reason'] != UserStatusEnum::ONLINE) {
-
                     $car = Team::where('type', TeamTypeEnum::PRODUCT)->where('name', quoteTypeCode::Car)->first();
                     $health = Team::where('type', TeamTypeEnum::PRODUCT)->where('name', quoteTypeCode::Health)->first();
                     if ($this->userHaveProduct($item['userId'], $car->id)) {
@@ -177,19 +175,15 @@ class LeadAllocationController extends Controller
             }
 
             if (isset($item['is_available'])) {
-
                 $updateLogString = $updateLogString.' is_available to : '.$item['is_available'];
                 $leadAllocationUser->is_available = $item['is_available'];
             }
 
-            $quote_type_id = $this->activityService->getQuoteTypeId(strtolower($request->quoteType)) ?? null;
-
-            if (! empty($quote_type_id) && isset($item['max_cap'])) {
-
+            $quoteTypeId = QuoteTypes::getIdFromValue(request('quoteType')) ?? null;
+            if (! empty($quoteTypeId) && isset($item['max_cap'])) {
                 $updateLogString = $updateLogString.' max_cap to : '.$item['max_cap'];
                 $leadAllocationUser->max_capacity = (int) $item['max_cap'];
-                $leadAllocationUser->quote_type_id = $quote_type_id;
-
+                $leadAllocationUser->quote_type_id = $quoteTypeId;
             }
 
             $leadAllocationUser->save();
@@ -202,12 +196,12 @@ class LeadAllocationController extends Controller
     {
 
         if (isset($request->max_cap)) {
-            $quote_type_id = $this->activityService->getQuoteTypeId(strtolower($request->quoteType)) ?? null;
+            $quoteTypeId = QuoteTypes::getIdFromValue(request('quoteType')) ?? null;
             foreach ($request->max_cap as $item) {
                 if ($item['userId'] && $item['maxCap']) {
                     $leadAllocationObj = LeadAllocation::with(['leadAllocationUser'])->where('user_id', $item['userId'])->first();
                     $leadAllocationObj->max_capacity = (int) $item['maxCap'];
-                    $leadAllocationObj->quote_type_id = $quote_type_id;
+                    $leadAllocationObj->quote_type_id = $quoteTypeId;
                     $leadAllocationObj->save();
                     info('Updated max cap of user : '.$leadAllocationObj->leadAllocationUser->email.' to '.(int) $item['maxCap']);
                 }
@@ -256,7 +250,7 @@ class LeadAllocationController extends Controller
         return $this->leadAllocationService->getTierUsersWithLeadAllocationRecord($tierId);
     }
 
-    public function showLeadAllocations(Request $request)
+    public function showAllocations(Request $request)
     {
         if (Gate::allows(PermissionsEnum::ADVISOR_CAPACITY_MANAGEMENT, auth()->user())) {
 
@@ -264,7 +258,6 @@ class LeadAllocationController extends Controller
             $quoteTypeIds = collect($quoteTypesByUser)->pluck('id')->all();
             $quoteTypes = QuoteTypeRepository::GetList();
             $data = $this->leadAllocationService->getAllocationLeads($quoteTypeIds);
-
             return inertia('LeadAllocation/AdvisorsLeadCaps', [
                 'quoteTypes' => $quoteTypes,
                 'allocationsLeads' => $data,
@@ -288,7 +281,7 @@ class LeadAllocationController extends Controller
 
         $this->leadAllocationService->createLeadAllocationRecord($request->user_id, $validateDate);
 
-        return redirect(route('lead.allocations.index'))->with('message', 'Advisor capacity assigned successfully');
+        return redirect(route('allocations.index'))->with('message', 'Advisor capacity assigned successfully');
     }
 
     public function deleteLeadAllocation($id)
@@ -327,11 +320,8 @@ class LeadAllocationController extends Controller
 
     public function updateCapsLeadAllocation(Request $request)
     {
-
         if (isset($request->items)) {
-
             foreach ($request->items as $item) {
-
                 if ($item['userId'] && $item['maxCap']) {
                     $leadAllocationObj = LeadAllocation::with(['leadAllocationUser'])->where('user_id', $item['userId'])->first();
                     $leadAllocationObj->max_capacity = (int) $item['maxCap'];
@@ -339,9 +329,12 @@ class LeadAllocationController extends Controller
                     info('Updated max cap of user : '.$leadAllocationObj->leadAllocationUser->email.' to '.(int) $item['maxCap']);
                 }
             }
+            return redirect(route('allocations.index'))->with('message', 'Advisor capacity assigned successfully');
+        }   
+        else {
+            return redirect(route('allocations.index'))->with('error', 'Please select at least one item.');
         }
-
-        return redirect(route('lead.allocations.index'))->with('message', 'Advisor capacity assigned successfully');
+      
     }
 
     public function getQuoteTypesByUser($userId)

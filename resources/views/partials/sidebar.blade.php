@@ -78,7 +78,7 @@ use App\Enums\PermissionsEnum;
                             <li><a href="{{ url('car-lead-allocation') }}">Car</a></li>
                             @endcan
                             @can(PermissionsEnum::ADVISOR_CAPACITY_MANAGEMENT)
-                            <li><a href="{{ route('lead.allocations.index') }}">Capacity Management</a></li>
+                            <li><a href="{{ route('allocations.index') }}">Capacity Management</a></li>
                             @endcan
                         </ul>
                     </li>

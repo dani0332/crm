@@ -232,10 +232,9 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::resource('lead-allocation', LeadAllocationController::class);
     Route::resource('car-lead-allocation', CarLeadAllocationController::class);
 
-    Route::get('/advisor-allocations', [LeadAllocationController::class, 'showLeadAllocations'])->name('lead.allocations.index');
-    Route::post('/store-lead-allocation', [LeadAllocationController::class, 'storeLeadAllocation'])->name('lead.allocations.store');
-    Route::get('/create-lead-allocation', [LeadAllocationController::class, 'createLeadAllocation'])->name('lead.allocations.create');
-    Route::delete('/delete-lead-allocation', [LeadAllocationController::class, 'deleteLeadAllocation'])->name('lead.allocations.delete');
+    Route::get('/allocations', [LeadAllocationController::class, 'showAllocations'])->name('allocations.index');
+    Route::post('/store-allocation', [LeadAllocationController::class, 'storeLeadAllocation'])->name('allocation.store');
+    Route::get('/create-allocation', [LeadAllocationController::class, 'createLeadAllocation'])->name('allocation.create');
     Route::post('/update-cap/lead-allocation', [LeadAllocationController::class, 'updateCapsLeadAllocation']);
     Route::get('/advisor-by-quotetype/{user_id}', [LeadAllocationController::class, 'getAdvisorByQuoteType'])->name('lead.allocations.advisor-quotestype');
 

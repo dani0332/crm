@@ -162,7 +162,7 @@ function onSubmit(isValid) {
         delete filters[key],
     );
 
-    router.visit(route('lead.allocations.index'), {
+    router.visit(route('allocations.index'), {
       method: 'get',
       data: filters,
       preserveState: true,
@@ -176,7 +176,7 @@ function onSubmit(isValid) {
 }
 
 function onReset() {
-  router.visit(route('lead.allocations.index'), {
+  router.visit(route('allocations.index'), {
     method: 'get',
     data: { page: 1 },
     preserveScroll: true,
@@ -207,7 +207,7 @@ onMounted(() => {
     <Head title="Advisors Capacity Management" />
     <div class="flex justify-between items-center">
       <h2 class="text-xl font-semibold">Advisors Capacity Management</h2>
-      <x-button size="sm" color="#ff5e00" :href="route('lead.allocations.create')">
+      <x-button size="sm" color="#ff5e00" :href="route('allocation.create')">
         Create Allocation
       </x-button>
     </div>

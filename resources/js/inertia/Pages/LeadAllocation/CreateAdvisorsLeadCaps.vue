@@ -63,7 +63,7 @@ const getAdvisorByQuoteType = async (id) => {
     let method = editMode.value ? 'put' : 'post';
     let url = editMode.value
       ? route('lead.allocations.update', props.lead.id)
-      : route('lead.allocations.store');
+      : route('allocation.store');
 
     leadForm.clearErrors();
     leadForm.submit(method, url, {
@@ -84,7 +84,7 @@ const getAdvisorByQuoteType = async (id) => {
         Advisor Capacity Management
       </h2>
       <div>
-        <Link :href="route('lead.allocations.index')">
+        <Link :href="route('allocations.index')">
           <x-button size="sm" color="#ff5e00">   Advisor Capacity Management List </x-button>
         </Link>
       </div>
