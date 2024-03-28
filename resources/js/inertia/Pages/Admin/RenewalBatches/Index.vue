@@ -3,6 +3,8 @@ defineProps({
   batches: Object,
 });
 
+const formatted = date => useDateFormat(date, 'DD-MM-YYYY').value;
+
 const loader = reactive({
   table: false,
 });
@@ -45,6 +47,12 @@ const tableHeader = [
         >
           {{ item.id }}
         </a>
+      </template>
+      <template #item-start_date="{ start_date }">
+        {{ start_date ? formatted(start_date) : 'N/A' }}
+      </template>
+      <template #item-end_date="{ end_date }">
+        {{ end_date ? formatted(end_date) : 'N/A' }}
       </template>
     </DataTable>
 

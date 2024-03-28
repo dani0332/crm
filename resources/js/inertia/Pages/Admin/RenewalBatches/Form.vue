@@ -15,6 +15,7 @@ const props = defineProps({
 
 const page = usePage();
 const permissionEnum = page.props.permissionsEnum;
+const notification = useToast();
 
 const { isRequired } = useRules();
 const isEdit = computed(() => {
@@ -42,8 +43,8 @@ const generateSlabArray = () => {
         }
         if (props.lastBatchSlabs[slab.id][team.id]) {
           slabs[slab.id][team.id] = {
-            Min: props.lastBatchSlabs[slab.id][team.id]['pivot']['min'],
-            Max: props.lastBatchSlabs[slab.id][team.id]['pivot']['max'],
+            Min: +props.lastBatchSlabs[slab.id][team.id]['pivot']['min'],
+            Max: +props.lastBatchSlabs[slab.id][team.id]['pivot']['max'],
           };
         } else {
           batchForm.optional_slabs.push(slab.id);
@@ -90,8 +91,11 @@ const setBatchMonth = () => {
     ? batchForm.batchMonth.month + 1
     : batchForm.batchMonth;
 };
+
 function onSubmit(isValid) {
-  if (!isValid) return;
+  let valid = validateSlabs();
+
+  if (!isValid && !valid) return;
 
   batchForm.clearErrors();
   batchForm.month = setBatchMonth();
@@ -109,16 +113,68 @@ function onSubmit(isValid) {
 
   const options = {
     onError: errors => {
-      batchForm.setError(errors);
+      Object.keys(errors).forEach(function (key) {
+        notification.error({
+          title: errors[key],
+          position: 'top',
+        });
+      });
     },
   };
 
   batchForm.submit(method, url, options);
 }
 
-const findIndex = item => {
-  return props.teams.findIndex(x => x.id === item.id);
+const validateSlabs = () => {
+  let isValid = true;
+
+  props.teams.forEach((team, index) => {
+    for (let slabIndex = 0; slabIndex < props.teams.length - 1; slabIndex++) {
+      const currentSlab = props.lastBatchSlabs[slabIndex]?.[team.id]?.pivot;
+      const nextSlab = props.lastBatchSlabs[slabIndex + 1]?.[team.id]?.pivot;
+
+      if (currentSlab && nextSlab) {
+        if (currentSlab.min > nextSlab.min) {
+          notification.error({
+            title: `Incorrect slab for ${team.name}`,
+            message: 'Check the other teams slab for a min values',
+            position: 'top',
+          });
+          isValid = false;
+          break;
+        }
+        if (currentSlab.max > nextSlab.max) {
+          notification.error({
+            title: `Incorrect slab for ${team.name}`,
+            message: 'Check the other teams slab for a max values',
+            position: 'top',
+          });
+          isValid = false;
+          break;
+        }
+      }
+    }
+  });
+
+  return isValid;
 };
+
+const setInitialState = () => {
+  props.teams.forEach((team, index) => {
+    for (let key in props.lastBatchSlabs) {
+      if (!props.lastBatchSlabs[key][team.id]) {
+        props.lastBatchSlabs[key][team.id] = {};
+        props.lastBatchSlabs[key][team.id]['pivot'] = {};
+        props.lastBatchSlabs[key][team.id]['pivot']['min'] = null;
+        props.lastBatchSlabs[key][team.id]['pivot']['max'] = null;
+      }
+    }
+  });
+};
+
+onMounted(() => {
+  setInitialState();
+});
 </script>
 <template>
   <Head title="Renewal Batch Configs" />
@@ -186,14 +242,6 @@ const findIndex = item => {
             placeholder="Car Sold Deadline"
           />
         </x-field>
-        <!-- <x-field label="Uncontactable Deadline" required>
-          <DatePicker
-            v-model="batchForm.start_date"
-            :rules="[isRequired]"
-            class="w-full"
-            placeholder="Uncontactable Deadline"
-          />
-        </x-field> -->
       </div>
     </x-card>
     <x-card class="rounded-lg mt-5">
@@ -232,15 +280,20 @@ const findIndex = item => {
                     v-model="lastBatchSlabs[slab.id][team.id]['pivot']['min']"
                     :rules="[isRequired]"
                     class="w-full mb-0"
-                    placeholder="Batch Name"
+                    placeholder="Min"
+                    type="number"
+                    step="0.01"
                   />
                   <x-input
                     v-model="lastBatchSlabs[slab.id][team.id]['pivot']['max']"
                     :rules="[isRequired]"
                     class="w-full mb-0"
-                    placeholder="Batch Name"
+                    placeholder="Max"
+                    type="number"
+                    step="0.01"
                   />
                 </div>
+
                 <div v-else class="text-center">
                   <h4>Not Applicable</h4>
                   <input
