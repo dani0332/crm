@@ -150,7 +150,9 @@ watch(
     if (props.modelType === quoteTypeCodeEnum.Car.toLowerCase()) {
       policyDetailsForm.quote_policy_expiry_date = moment(
         quote_policy_start_date,
-      ).add(13, 'months');
+      )
+        .add(13, 'months')
+        .subtract(1, 'days');
     } else if (
       props.modelType === quoteTypeCodeEnum.Health.toLowerCase() ||
       props.modelType === quoteTypeCodeEnum.GroupMedical.toLowerCase() ||
@@ -158,7 +160,9 @@ watch(
     ) {
       policyDetailsForm.quote_policy_expiry_date = moment(
         quote_policy_start_date,
-      ).add(12, 'months');
+      )
+        .add(12, 'months')
+        .subtract(1, 'days');
     }
   },
 );
