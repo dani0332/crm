@@ -140,7 +140,6 @@ class CentralController extends Controller
 
     public function manualLeadAssign(LeadAssignRequest $leadAssignRequest)
     {
-
         (new CentralService())->assignLeadToAdvisor($leadAssignRequest);
 
         return redirect()->back()->with('success', ucfirst($leadAssignRequest->modelType).' Leads has been Assigned');

@@ -84,14 +84,10 @@ class AllocationService
     {
         try {
             $leadAllocation = LeadAllocation::latest();
-
             if (! empty($quoteTypeId)) {
-
                 $leadAllocation = $leadAllocation->where('quote_type_id', $quoteTypeId);
             }
-
             $leadAllocation = $leadAllocation->where('user_id', $userId)->first();
-
             return $leadAllocation;
         } catch (\Exception $e) {
             Log::error($e->getMessage());
@@ -101,16 +97,16 @@ class AllocationService
     public function addAllocationCounts($userId, $quoteTypeId = null)
     {
         $allocationRecord = $this->getLeadAllocationRecordByUserId($userId, $quoteTypeId);
-
         if (! empty($allocationRecord)) {
             $allocationRecord->auto_assignment_count = $allocationRecord->auto_assignment_count + 1;
             $allocationRecord->allocation_count = $allocationRecord->allocation_count + 1;
             $allocationRecord->updated_at = now();
             $allocationRecord->last_allocated = now()->timestamp;
             $allocationRecord->save();
-
         }
-
+        else {
+            info('Allocation record not found against advisor');
+        }
     }
 
     public function updateExistingQuoteDetail($quoteDetail, $uuid): void

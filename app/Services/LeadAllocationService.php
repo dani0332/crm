@@ -91,7 +91,7 @@ class LeadAllocationService extends BaseService
         }
     }
 
-    public function createLeadAllocationRecord($userId, $data = null)
+    public function createLeadAllocationRecord($userId, $allocationRequest = null)
     {
         try {
             DB::beginTransaction();
@@ -99,9 +99,9 @@ class LeadAllocationService extends BaseService
             $leadAllocation->user_id = $userId;
             $leadAllocation->allocation_count = 0;
             $leadAllocation->last_allocated = now()->timestamp;
-            $leadAllocation->max_capacity = $data->max_capacity ?? 0;
-            $leadAllocation->quote_type_id = $data->quote_type_id ?? null;
-            $leadAllocation->is_available = $data->is_available ?? false;
+            $leadAllocation->max_capacity = $allocationRequest->max_capacity ?? 0;
+            $leadAllocation->quote_type_id = $allocationRequest->quote_type_id ?? null;
+            $leadAllocation->is_available = $allocationRequest->is_available ?? false;
             $leadAllocation->save();
 
             DB::commit();
@@ -1004,17 +1004,6 @@ class LeadAllocationService extends BaseService
         return HealthQuote::whereNull('advisor_id')->where('health_team_type', $teamType)->count() ?? 0;
     }
 
-    public function deleteAllocationLead($id)
-    {
-        try {
-            $leadAllocation = LeadAllocation::latest()->where('id', $id)->delete();
-
-            return $leadAllocation;
-        } catch (\Exception $e) {
-            Log::error($e->getMessage());
-        }
-    }
-
     public function getAllocationLeads($quoteTypeIds)
     {
         try {
@@ -1058,32 +1047,4 @@ class LeadAllocationService extends BaseService
         }
     }
 
-    public function getAdvisorsByModelType($modelType)
-    {
-        $query = User::join('model_has_roles as mr', 'mr.model_id', '=', 'users.id')
-            ->join('roles as r', 'r.id', '=', 'mr.role_id')
-            ->join('user_team as ut', 'ut.user_id', '=', 'users.id')
-            ->select('users.id', DB::raw("CONCAT(users.name,' - ',r.name) AS name"));
-        if (strtolower($modelType) == strtolower(quoteTypeCode::Car)) {
-            $query->whereIn('r.name', [RolesEnum::CarAdvisor, RolesEnum::CarDeputyManager]);
-        } elseif (strtolower($modelType) == strtolower(quoteTypeCode::Health)) {
-
-            if ((auth()->user()->hasAnyRole([RolesEnum::CarManager, RolesEnum::CarAdvisor])) &&
-                auth()->user()->hasAnyPermission(PermissionsEnum::HEALTH_QUOTES_ACCESS,
-                    PermissionsEnum::HEALTH_QUOTES_MANAGER_ACCESS)
-            ) {
-                $authUserTeamsId = $this->getUserTeams(auth()->id())->pluck('id')->toArray();
-                $query->whereIn('ut.team_id', $authUserTeamsId);
-                $query->whereIn('r.name', [RolesEnum::CarAdvisor, RolesEnum::CarDeputyManager]);
-            } else {
-                $query->whereIn('r.name', [RolesEnum::RMAdvisor, RolesEnum::EBPAdvisor, RolesEnum::HealthRenewalAdvisor, RolesEnum::HealthNewBusinessAdvisor]);
-            }
-        } elseif (strtolower($modelType) == strtolower(quoteTypeCode::Business)) {
-            $query->whereIn('r.name', [RolesEnum::CorpLineAdvisor, RolesEnum::CorpLineRenewalAdvisor, RolesEnum::CorpLineNewBusinessAdvisor, RolesEnum::GMRenewalAdvisor, RolesEnum::GMNewBusinessAdvisor]);
-        } else {
-            $query->whereIn('r.name', [strtoupper($modelType).'_ADVISOR', strtoupper($modelType).'_RENEWAL_ADVISOR', strtoupper($modelType).'_NEW_BUSINESS_ADVISOR']);
-        }
-
-        return $query->orderBy('r.name')->distinct()->get();
-    }
 }

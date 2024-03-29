@@ -130,15 +130,6 @@ const onToggleResetCap = async (active, userId, lead_id) => {
     });
 };
 
-
-
-
-
-
-
-
-
-
 function setQueryStringFilters() {
   let queryString = window.location.search;
   let urlParams = new URLSearchParams(queryString);
