@@ -88,6 +88,7 @@ class AllocationService
                 $leadAllocation = $leadAllocation->where('quote_type_id', $quoteTypeId);
             }
             $leadAllocation = $leadAllocation->where('user_id', $userId)->first();
+
             return $leadAllocation;
         } catch (\Exception $e) {
             Log::error($e->getMessage());
@@ -103,8 +104,7 @@ class AllocationService
             $allocationRecord->updated_at = now();
             $allocationRecord->last_allocated = now()->timestamp;
             $allocationRecord->save();
-        }
-        else {
+        } else {
             info('Allocation record not found against advisor');
         }
     }

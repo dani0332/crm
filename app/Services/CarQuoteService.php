@@ -2,32 +2,32 @@
 
 namespace App\Services;
 
-use PDF;
-use Carbon\Carbon;
-use App\Models\Tier;
-use App\Models\Payment;
+use App\Enums\AssignmentTypeEnum;
+use App\Enums\CustomerTypeEnum;
+use App\Enums\GenericRequestEnum;
+use App\Enums\LeadSourceEnum;
+use App\Enums\PaymentStatusEnum;
+use App\Enums\QuoteStatusEnum;
+use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypeId;
+use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Models\CarQuote;
-use App\Enums\QuoteTypes;
-use App\Enums\QuoteTypeId;
-use App\Enums\quoteTypeCode;
-use App\Models\QuoteBatches;
-use Illuminate\Http\Request;
-use App\Enums\LeadSourceEnum;
-use App\Enums\QuoteStatusEnum;
-use App\Models\QuoteViewCount;
-use App\Enums\CustomerTypeEnum;
-use App\Enums\PaymentStatusEnum;
-use App\Enums\AssignmentTypeEnum;
-use App\Enums\GenericRequestEnum;
-use App\Traits\TeamHierarchyTrait;
-use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Http;
 use App\Models\CarQuoteRequestDetail;
+use App\Models\Payment;
+use App\Models\QuoteBatches;
+use App\Models\QuoteViewCount;
+use App\Models\Tier;
 use App\Traits\GenericQueriesAllLobs;
+use App\Traits\TeamHierarchyTrait;
+use Carbon\Carbon;
+use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
+use PDF;
 
 class CarQuoteService extends BaseService
 {
@@ -1748,7 +1748,7 @@ class CarQuoteService extends BaseService
 
         // Get the allocation record for the previous advisor (if applicable)
         if ($previousAdvisorId !== null) {
-            $previousAdvisorAllocationRecord = $this->leadAllocationService->getLeadAllocationRecordByUserId($previousAdvisorId,  $quoteTypeId);
+            $previousAdvisorAllocationRecord = $this->leadAllocationService->getLeadAllocationRecordByUserId($previousAdvisorId, $quoteTypeId);
 
             // Update allocation counts for the previous advisor (if applicable)
             $this->updateAllocationCountsForPreviousAdvisor($previousAdvisorId, $oldAdvisorAssignedDate, $previousAssignmentType, $previousAdvisorAllocationRecord, $systemAssignedTypes);

@@ -2,29 +2,28 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Team;
-use App\Models\User;
+use App\Enums\PermissionsEnum;
+use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypes;
 use App\Enums\TeamNameEnum;
 use App\Enums\TeamTypeEnum;
-use App\Enums\quoteTypeCode;
-use Illuminate\Http\Request;
 use App\Enums\UserStatusEnum;
-use App\Services\CRUDService;
-use App\Enums\PermissionsEnum;
-use App\Models\LeadAllocation;
 use App\Events\UserStatusChanged;
-use App\Jobs\ReAssignCarLeadsJob;
-use App\Traits\TeamHierarchyTrait;
-use App\Services\ActivitiesService;
-use App\Jobs\ReAssignHealthLeadsJob;
-use Illuminate\Support\Facades\Gate;
-use App\Services\CarAllocationService;
-use App\Services\LeadAllocationService;
-use App\Repositories\QuoteTypeRepository;
-use App\Services\HealthAllocationService;
-use App\Services\ApplicationStorageService;
 use App\Http\Requests\LeadAllocationRequest;
+use App\Jobs\ReAssignCarLeadsJob;
+use App\Jobs\ReAssignHealthLeadsJob;
+use App\Models\LeadAllocation;
+use App\Models\Team;
+use App\Models\User;
+use App\Repositories\QuoteTypeRepository;
+use App\Services\ApplicationStorageService;
+use App\Services\CarAllocationService;
+use App\Services\CRUDService;
+use App\Services\HealthAllocationService;
+use App\Services\LeadAllocationService;
+use App\Traits\TeamHierarchyTrait;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 
 class LeadAllocationController extends Controller
 {
@@ -34,7 +33,7 @@ class LeadAllocationController extends Controller
     protected $applicationStorageService;
     protected $crudService;
 
-    public function __construct(LeadAllocationService $leadAllocationService, ApplicationStorageService $applicationStorageService,  CRUDService $crudService,)
+    public function __construct(LeadAllocationService $leadAllocationService, ApplicationStorageService $applicationStorageService, CRUDService $crudService)
     {
         $this->leadAllocationService = $leadAllocationService;
         $this->applicationStorageService = $applicationStorageService;
@@ -66,7 +65,8 @@ class LeadAllocationController extends Controller
 
             $unAssignedGood = $this->leadAllocationService->getUnAssignedHealthQuotes(TeamNameEnum::RM_SPEED);
             $unAssignedBest = $this->leadAllocationService->getUnAssignedHealthQuotes(TeamNameEnum::RM_NB);
-            $unAssignedEntryLevel = $this->leadAllocationService->getUnAssignedHealthQuotes(TeamNameEnum::EBP);   
+            $unAssignedEntryLevel = $this->leadAllocationService->getUnAssignedHealthQuotes(TeamNameEnum::EBP);
+
             return inertia('LeadAllocation/Health', [
                 'totalAssignedLeadCount' => $totalAssignedLeadCount,
                 'availableUsers' => $availableUsers,
@@ -207,9 +207,8 @@ class LeadAllocationController extends Controller
                     info('Updated max cap of user : '.$leadAllocationObj->leadAllocationUser->email.' to '.(int) $item['maxCap']);
                 }
             }
-        }
-        else {
-            return back()->with('info','Please select at least one item.');
+        } else {
+            return back()->with('info', 'Please select at least one item.');
         }
     }
 
@@ -260,6 +259,7 @@ class LeadAllocationController extends Controller
             $quoteTypesByUser = $this->getQuoteTypesByUser(auth()->user()->id);
             $quoteTypes = QuoteTypeRepository::GetList();
             $data = $this->leadAllocationService->getAllocationLeads(collect($quoteTypesByUser)->pluck('id')->all());
+
             return inertia('LeadAllocation/AdvisorsLeadCaps', [
                 'quoteTypes' => $quoteTypes,
                 'allocationsLeads' => $data,
@@ -274,10 +274,11 @@ class LeadAllocationController extends Controller
     {
         $allocationRequest = (object) $request->validated();
         $isLead = $this->leadAllocationService->getLeadAllocationRecordByUserId($request->userId, $request->quoteTypeId);
-        if (!empty($isLead)) {
+        if (! empty($isLead)) {
             return back()->with('error', 'Advisor already has an assigned capacity value for this quote type');
         }
         $this->leadAllocationService->createLeadAllocationRecord($request->user_id, $allocationRequest);
+
         return redirect(route('allocations.index'))->with('message', 'Advisor capacity assigned successfully');
     }
 
@@ -285,6 +286,7 @@ class LeadAllocationController extends Controller
     {
         $healthAdvisors = $this->crudService->getAdvisorsByModelType(QuoteTypes::HEALTH->value);
         $motorAdvisors = $this->crudService->getAdvisorsByModelType(QuoteTypes::CAR->value);
+
         return collect([$healthAdvisors, $motorAdvisors])->collapse()->unique()->values()->all();
     }
 
@@ -306,12 +308,12 @@ class LeadAllocationController extends Controller
                     info('Updated max cap of user : '.$leadAllocationObj->leadAllocationUser->email.' to '.(int) $item['maxCap']);
                 }
             }
+
             return redirect(route('allocations.index'))->with('message', 'Advisor capacity assigned successfully');
-        }   
-        else {
+        } else {
             return redirect(route('allocations.index'))->with('info', 'Please select at least one item.');
         }
-      
+
     }
 
     public function getQuoteTypesByUser($userId)
@@ -319,12 +321,14 @@ class LeadAllocationController extends Controller
         $user = $this->getUserProducts($userId);
         $quoteTypesNames = collect($user)->pluck('name');
         $quoteTypes = QuoteTypeRepository::GetList();
+
         return collect($quoteTypes)->whereIn('code', $quoteTypesNames)->values();
     }
 
     public function getAdvisorByQuoteType($userId)
     {
         $quoteTypes = $this->getQuoteTypesByUser($userId);
+
         return response()->json(['quoteTypes' => $quoteTypes]);
     }
 

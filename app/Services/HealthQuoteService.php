@@ -2,48 +2,48 @@
 
 namespace App\Services;
 
-use DB;
-use PDF;
-use Auth;
-use Carbon\Carbon;
-use App\Facades\Ken;
-use App\Models\Team;
-use App\Models\User;
-use App\Jobs\CammyJob;
-use App\Enums\RolesEnum;
-use App\Enums\QuoteTypes;
-use App\Models\QuoteType;
-use App\Enums\QuoteTypeId;
-use App\Models\HealthPlan;
-use App\Jobs\IntroEmailJob;
-use App\Models\HealthQuote;
-use Hidehalo\Nanoid\Client;
-use App\Enums\quoteTypeCode;
-use App\Models\RenewalBatch;
-use Illuminate\Http\Request;
-use App\Enums\HealthTeamType;
-use App\Models\BusinessQuote;
-use App\Models\PaymentAction;
-use App\Enums\LeadSourceTypes;
-use App\Enums\QuoteStatusEnum;
-use App\Jobs\GetQuotePlansJob;
-use App\Models\QuoteViewCount;
-use App\Enums\CustomerTypeEnum;
-use App\Models\HealthQuotePlan;
-use App\Traits\GetUserTreeTrait;
 use App\Enums\AssignmentTypeEnum;
+use App\Enums\CustomerTypeEnum;
+use App\Enums\DatabaseColumnsString;
 use App\Enums\DefaultAdvisorEnum;
 use App\Enums\GenericRequestEnum;
-use App\Models\InsuranceProvider;
-use App\Traits\AddPremiumAllLobs;
-use App\Models\HealthMemberDetail;
-use App\Models\EmbeddedTransaction;
-use App\Enums\DatabaseColumnsString;
+use App\Enums\HealthTeamType;
+use App\Enums\LeadSourceTypes;
+use App\Enums\QuoteStatusEnum;
+use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypeId;
+use App\Enums\QuoteTypes;
+use App\Enums\RolesEnum;
+use App\Facades\Ken;
+use App\Jobs\CammyJob;
+use App\Jobs\GetQuotePlansJob;
+use App\Jobs\IntroEmailJob;
 use App\Models\BusinessInsuranceType;
+use App\Models\BusinessQuote;
 use App\Models\EmbeddedProductOption;
-use App\Traits\GenericQueriesAllLobs;
+use App\Models\EmbeddedTransaction;
+use App\Models\HealthMemberDetail;
+use App\Models\HealthPlan;
+use App\Models\HealthQuote;
+use App\Models\HealthQuotePlan;
 use App\Models\HealthQuoteRequestDetail;
+use App\Models\InsuranceProvider;
+use App\Models\PaymentAction;
+use App\Models\QuoteType;
+use App\Models\QuoteViewCount;
+use App\Models\RenewalBatch;
+use App\Models\Team;
+use App\Models\User;
+use App\Traits\AddPremiumAllLobs;
+use App\Traits\GenericQueriesAllLobs;
+use App\Traits\GetUserTreeTrait;
 use App\Traits\RolePermissionConditions;
+use Auth;
+use Carbon\Carbon;
+use DB;
+use Hidehalo\Nanoid\Client;
+use Illuminate\Http\Request;
+use PDF;
 use Sammyjo20\LaravelHaystack\Models\Haystack;
 
 class HealthQuoteService extends BaseService
@@ -1158,14 +1158,14 @@ class HealthQuoteService extends BaseService
             $lead->advisor_id = $userId;
 
             $lead->assignment_type = $isReassignment ? AssignmentTypeEnum::MANUAL_REASSIGNED : AssignmentTypeEnum::MANUAL_ASSIGNED;
-             // will update the car quote request detail entity about assignment
+            // will update the car quote request detail entity about assignment
             $oldAdvisorAssignedDate = $this->updateChildRecord($lead->id, $userId);
 
             info('Manual assignment done and details table updated for lead : '.$lead->uuid.'and old advisor assigned date is : '.$oldAdvisorAssignedDate);
             // update new and previous (if applicable) advisor counts in lead allocation table
-            $this->addManualAllocationCountAndUpdate($userId, $lead, $previousAdvisorId, $oldAdvisorAssignedDate, $oldAssignmentType, $quote_type); 
+            $this->addManualAllocationCountAndUpdate($userId, $lead, $previousAdvisorId, $oldAdvisorAssignedDate, $oldAssignmentType, $quote_type);
             // update existing record of quote view count if exists and reset count to zero
-            $this->updateExistingQuoteViewCount($userId, $lead->id); 
+            $this->updateExistingQuoteViewCount($userId, $lead->id);
 
             $lead->quote_updated_at = now();
 
@@ -1198,7 +1198,7 @@ class HealthQuoteService extends BaseService
         $systemAssignedTypes = [AssignmentTypeEnum::SYSTEM_ASSIGNED, AssignmentTypeEnum::SYSTEM_REASSIGNED];
 
         $quoteTypeId = QuoteTypes::getIdFromValue($quoteType) ?? null;
-         // Get the allocation record for the new advisor
+        // Get the allocation record for the new advisor
         $newAdvisorAllocationRecord = $this->leadAllocationService->getLeadAllocationRecordByUserId($newAdvisorId, $quoteTypeId);
 
         // Update allocation counts for the new advisor (if applicable)
