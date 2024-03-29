@@ -273,7 +273,21 @@ class AmtController extends Controller
         $hasPolicyIssuedStatus = $crudService->hasAtleastOneStatusPolicyIssued($record);
 
         if ($hasPolicyIssuedStatus) {
-            $sendUpdateOptions = (new LookupService)->getSendUpdateOptions(QuoteTypes::BUSINESS->id());
+            $removeOptions = [
+                SendUpdateLogStatusEnum::AOLOPFMP,
+                SendUpdateLogStatusEnum::AC,
+                SendUpdateLogStatusEnum::AL,
+                SendUpdateLogStatusEnum::EA,
+                SendUpdateLogStatusEnum::ED,
+                SendUpdateLogStatusEnum::EFMP,
+                SendUpdateLogStatusEnum::ICOLOIALOLR,
+                SendUpdateLogStatusEnum::IIEAFT,
+                SendUpdateLogStatusEnum::IISI,
+                SendUpdateLogStatusEnum::MPC,
+                SendUpdateLogStatusEnum::PPE,
+            ];
+
+            $sendUpdateOptions = (new LookupService)->getSendUpdateOptions(QuoteTypes::BUSINESS->id(), $removeOptions);
             $sendUpdateLogs = SendUpdateLogRepository::findByQuoteUuid($record->uuid);
             $sendUpdateEnum = SendUpdateLogStatusEnum::asArray();
         }
