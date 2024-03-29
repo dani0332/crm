@@ -336,6 +336,17 @@ class SageApiService
                 'entryType' => SageEnum::SCT_STRAIGHT,
                 'requestType' => SageEnum::SRT_CREATE_AR_PREM_COMM_INV,
             ]);
+
+            // Create AP Invoice and marked as posted
+            $this->sageRecursiveCalls($quote, $sageRequestPayload, $sageLogArray, [
+                'iterator' => 0,
+                'lastIteration' => 2,
+                'startingStep' => 5,
+                'totalSteps' => 13,
+                'entryType' => SageEnum::SCT_STRAIGHT,
+                'requestType' => SageEnum::SRT_CREATE_AP_PREM_INV,
+            ]);
+
         } else {
             // Create AR Invoice Split Payment and marked as posted
             $this->sageRecursiveCalls($quote, $sageRequestPayload, $sageLogArray, [
@@ -347,18 +358,6 @@ class SageApiService
                 'requestType' => SageEnum::SRT_CREATE_AR_SPPAY_INV,
                 'payment' => $payment,
                 'splitPayments' => $splitPayments
-            ]);
-        }
-
-        if($payment->frequency == SageEnum::SF_UPFRONT) {
-            // Create AP Invoice and marked as posted
-            $this->sageRecursiveCalls($quote, $sageRequestPayload, $sageLogArray, [
-                'iterator' => 0,
-                'lastIteration' => 2,
-                'startingStep' => 5,
-                'totalSteps' => 13,
-                'entryType' => SageEnum::SCT_STRAIGHT,
-                'requestType' => SageEnum::SRT_CREATE_AP_PREM_INV,
             ]);
         }
 
@@ -424,6 +423,10 @@ class SageApiService
     private function handleSendUpdateRevCorrCalls($quote, $payment, $splitPayments, $sageRequestPayload, $sageLogArray, $extras)
     {
         $sendUpdateLog = $extras['send_update_log'];
+        // Should be add split payment case here. Ex - 
+            // CREATE_PAY_REC_ONE_INV, 
+            // SRT_CREATE_AR_SPPAY_INV, 
+            // SRT_CREATE_AR_SP_PRE_PAYMENT
         $invoicesForReverse = collect($extras['sageLogArray'])->filter(function ($sageApiLog) {
             return in_array($sageApiLog['sage_request_type'], [
                 SageEnum::SRT_CREATE_AR_PREM_COMM_INV,
@@ -432,34 +435,50 @@ class SageApiService
             ]) && $sageApiLog['status'] == 'success';
         })->values()->toArray();
 
-        // Reverse and Correct AR Invoice
-        if (isset($invoicesForReverse[0])) {
-            $invoiceResponse = json_decode($invoicesForReverse[0]['response']);
-            $this->sageRecursiveCalls($quote, $sageRequestPayload, $sageLogArray, [
-                'iterator' => 0,
-                'lastIteration' => 6,
-                'startingStep' => 1,
-                'totalSteps' => 21,
-                'batchNumber' => $invoiceResponse->BatchNumber,
-                'entryType' => SageEnum::SCT_STRAIGHT,
-                'invoiceType' => SageEnum::SRT_GET_AR_INVOICE,
-                'requestType' => SageEnum::SRT_REV_CORR_AR_PREM_COMM_INV,
-            ]);
-        }
+        // If upfront Payment
+        if($payment->frequency == SageEnum::SF_UPFRONT) {
+            // Create AR Reverse and Correction Invoice
+            if (isset($invoicesForReverse[0])) {
+                $invoiceResponse = json_decode($invoicesForReverse[0]['response']);
+                $this->sageRecursiveCalls($quote, $sageRequestPayload, $sageLogArray, [
+                    'iterator' => 0,
+                    'lastIteration' => 6,
+                    'startingStep' => 1,
+                    'totalSteps' => 21,
+                    'batchNumber' => $invoiceResponse->BatchNumber,
+                    'entryType' => SageEnum::SCT_STRAIGHT,
+                    'invoiceType' => SageEnum::SRT_GET_AR_INVOICE,
+                    'requestType' => SageEnum::SRT_REV_CORR_AR_PREM_COMM_INV,
+                ]);
+            }
 
-        // Reverse and Correct AP Invoice
-        if (isset($invoicesForReverse[1])) {
-            $invoiceResponse = json_decode($invoicesForReverse[1]['response']);
-            $this->sageRecursiveCalls($quote, $sageRequestPayload, $sageLogArray, [
-                'iterator' => 0,
-                'lastIteration' => 6,
-                'startingStep' => 8,
-                'totalSteps' => 21,
-                'batchNumber' => $invoiceResponse->BatchNumber,
-                'entryType' => SageEnum::SCT_STRAIGHT,
-                'invoiceType' => SageEnum::SRT_GET_AP_INVOICE,
-                'requestType' => SageEnum::SRT_REV_CORR_AP_PREM_INV,
-            ]);
+            // Create AP Reverse and Correction Invoice
+            if (isset($invoicesForReverse[1])) {
+                $invoiceResponse = json_decode($invoicesForReverse[1]['response']);
+                $this->sageRecursiveCalls($quote, $sageRequestPayload, $sageLogArray, [
+                    'iterator' => 0,
+                    'lastIteration' => 6,
+                    'startingStep' => 8,
+                    'totalSteps' => 21,
+                    'batchNumber' => $invoiceResponse->BatchNumber,
+                    'entryType' => SageEnum::SCT_STRAIGHT,
+                    'invoiceType' => SageEnum::SRT_GET_AP_INVOICE,
+                    'requestType' => SageEnum::SRT_REV_CORR_AP_PREM_INV,
+                ]);
+            }
+
+        } else {
+            // Create AR Reverse and Correction Invoice Split Payment and marked as posted
+            // $this->sageRecursiveCalls($quote, $sageRequestPayload, $sageLogArray, [
+            //     'iterator' => 0, 
+            //     'lastIteration' => 2,
+            //     'startingStep' => 2, 
+            //     'totalSteps' => 16, 
+            //     'entryType' => SageEnum::SCT_STRAIGHT,
+            //     'requestType' => SageEnum::SRT_CREATE_AR_SPPAY_INV,
+            //     'payment' => $payment,
+            //     'splitPayments' => $splitPayments
+            // ]);
         }
 
         // Reverse and Correct AR Invoice DIS
@@ -476,6 +495,7 @@ class SageApiService
                 'requestType' => SageEnum::SRT_REV_CORR_AR_DIS_INV,
             ]);
         }
+
         $response = ['status' => $_REQUEST['status'] ?? true, 'message' => $_REQUEST['message'] ?? 'Invoices reversed and corrected successfully'];
 
         return ['status' => $response['status'], 'message' => $response['message']];

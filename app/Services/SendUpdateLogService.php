@@ -609,7 +609,6 @@ class SendUpdateLogService
             'policy_expiry_date' => $sendUpdateLog->expiry_date,
             'invoice_description' => $sendUpdateLog->invoice_description,
             'broker_invoice_number' => $sendUpdateLog->broker_invoice_number,
-            // 'transaction_payment_status' => $sendUpdateLog->transaction_payment_status, Validation conflict with send update button
             'insurer_tax_number' => $sendUpdateLog->insurer_tax_invoice_number,
             'insurer_commmission_invoice_number' => $sendUpdateLog->insurer_commission_invoice_number,
             'commmission_percentage' => $sendUpdateLog->commission_percentage,
