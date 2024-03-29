@@ -391,6 +391,8 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                     ->count();
                 if ($totalPaidPayments == $firstPayment->total_payments) {
                     $masterPaymentStatus = PaymentStatusEnum::CAPTURED;
+                } elseif ($totalPaidPayments > 0) {
+                    $masterPaymentStatus = PaymentStatusEnum::PARTIAL_CAPTURED;
                 }
                 $firstPayment->update([
                     'is_approved' => 1,

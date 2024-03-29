@@ -4,7 +4,8 @@ const props = defineProps({
     quoteType: String,
     quoteId: Number,
     paymentCode: String,
-    totalPrice: Number,    
+    totalPrice: Number,
+    totalPaidPrice: Number,  
 });
 
 const updatePriceModal = ref(false);
@@ -15,10 +16,10 @@ const newTotalPrice = ref(props.totalPrice);
 const rules = {
   isRequired: v => !!v || 'This field is required',
   isTotalAmountLess: v => {
-      if (newTotalPrice.value > props.totalPrice) {
+      if (newTotalPrice.value > props.totalPaidPrice) {
             return true;
       } else {
-        return 'The entered amount should be greater than '+props.totalPrice+' AED';
+        return 'The entered amount should be greater than '+props.totalPaidPrice+' AED';
       }     
   },
   verifyDecimalPlaces: v => {
@@ -87,7 +88,7 @@ const showPriceModel = () => {
                 @click.prevent="showPriceModel()"
                 class="ml-auto"               
             >
-            Update Total Price
+            <span class="border-b border-dotted">Update Total Price</span>
             </x-button>
             <template #tooltip>
               <span>Click this if you need to modify the total price to collect additional payments.</span>

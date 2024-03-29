@@ -433,7 +433,7 @@ let discountTypes = [
       { value: '', label: 'Discount Type'},
       { value: 'managerial_approval_discount', label: 'Managerial approval discount', tooltip: props.paymentTooltipEnum.DISCOUNT_TYPE_LIST_MANAGERIAL },
       { value: 'employee_discount', label: 'Employee discount', tooltip: props.paymentTooltipEnum.DISCOUNT_TYPE_LIST_EMPLOYEE },
-      { value: 'family_employee_discount', label: 'Family employee discount', tooltip: props.paymentTooltipEnum.DISCOUNT_TYPE_LIST_FAMILY }, 
+      { value: 'family_employee_discount', label: 'Employee family discount', tooltip: props.paymentTooltipEnum.DISCOUNT_TYPE_LIST_FAMILY }, 
     ];
 if (!(familyEmployeDiscount.includes(props.quoteType))) {
   discountTypes = discountTypes.filter(type => (type.value !== 'employee_discount' && type.value !== 'family_employee_discount'));
@@ -822,7 +822,8 @@ const handleFrequencyChange = (noPaymentUpdate=true) => {
     paymentMethodsForm.payment_no = '1';    
   }
   calculatePaymentBreakup();
-  if (paymentMethodsModels.value[1]==='CC' && resetPaymentMethod){
+    
+  if (paymentMethodsModels.value[1]==='CC' && resetPaymentMethod && readOnlyPayments.value[1]===undefined){
     paymentMethodsModels.value[1] = 'BT';
   }    
 };
@@ -1586,10 +1587,10 @@ const uploadDocument = (doc, files, count) => {
 const getCaptureValidation = computed(() => {  
   return (payment) => {
     //6 =AML Screening Cleared , 32 = Transaction Declined , 15 = Transaction Approved
-    if ( props.payments.length>0 && 
+    if ( props.payments.length>0 && (payment.total_price === (payment.total_amount + payment.discount_value)) && 
       (
       ((props.quoteRequest.quote_status_id === 6 || props.quoteRequest.quote_status_id === 32 || props.quoteRequest.quote_status_id === 15) 
-      && props.quoteRequest.kyc_decision === 'Complete' && (payment.total_price === (payment.total_amount + payment.discount_value))
+      && props.quoteRequest.kyc_decision === 'Complete'
       )
       || 
       props.quoteType === 'Travel' //skip AML & KYC for travel
@@ -1601,15 +1602,18 @@ const getCaptureValidation = computed(() => {
       let paymentRecord = payment
       if ( paymentRecord.frequency==='upfront' ){
           let paymentSplitRec = paymentRecord.payment_splits[0];
-          if (paymentSplitRec.payment_method.code==='CC' &&  paymentSplitRec.payment_status_id===props.paymentStatusEnum.AUTHORISED) {
-            return true;
+          if (paymentSplitRec.payment_method.code==='CC' ) {
+            if (paymentSplitRec.payment_status_id===props.paymentStatusEnum.AUTHORISED) {
+              return true;
+            }
+            return false;
           } else if (paymentSplitRec.payment_method.code==='IP' &&  paymentSplitRec.payment_status_id===props.paymentStatusEnum.PENDING) {
             return true;
           } else if (paymentSplitRec.payment_method.code==='CA' &&  paymentSplitRec.payment_status_id===props.paymentStatusEnum.CREDIT_APPROVED) {
             return true;
           } else if (paymentSplitRec.payment_status_id===props.paymentStatusEnum.PAID) {
             return true;
-          }
+          }         
       } else if ( paymentRecord.frequency==='split_payments' ){
         const paymentMethodCC = paymentRecord.payment_splits.filter(item => item.payment_method.code === "CC");      
         if (paymentMethodCC.length > 0) {
@@ -1628,12 +1632,8 @@ const getCaptureValidation = computed(() => {
               return true;
             } 
           } else {
-            let caPaymentStatus = paymentRecord.payment_splits.filter(item => item.payment_method.code === "CA");
-            if (caPaymentStatus.length > 0) {
-              let caApproved = caPaymentStatus.filter(item => item.payment_status_id===props.paymentStatusEnum.CREDIT_APPROVED);
-              if( caApproved.length===caPaymentStatus.length ) {
-                return true;
-              } 
+            if(verifyCreditArroved(paymentRecord)) {
+              return true;
             } else {
               let paidPaymentStatus = paymentRecord.payment_splits.filter(item => item.payment_status_id===props.paymentStatusEnum.PAID);
               if( paidPaymentStatus.length===paymentRecord.payment_splits.length ) {
@@ -1643,28 +1643,39 @@ const getCaptureValidation = computed(() => {
           }
         }
       } else {
-        if (
+
+        if( paymentRecord.payment_status_id === props.paymentStatusEnum.CREDIT_APPROVED ){
+          if (verifyCreditArroved(paymentRecord)) {
+            return true;
+          }
+        } else if (
           (paymentRecord.payment_splits[0].payment_method.code==='IP' ||
           paymentRecord.payment_splits[0].payment_method.code==='PDC'
           ) &&
           paymentRecord.payment_splits[0].payment_status_id===props.paymentStatusEnum.PENDING) {
           return true;
-        } else if(
+        } else if (
             paymentRecord.payment_splits[0].payment_status_id===props.paymentStatusEnum.PAID ||
             paymentRecord.payment_splits[0].payment_status_id===props.paymentStatusEnum.AUTHORISED        
           ){
           return true;
-        }
-        /*
-        let paidPaymentStatus = paymentRecord.payment_splits.filter(item => item.payment_status.code===props.paymentStatusEnum.PAID);
-        if( paidPaymentStatus.length===paymentRecord.payment_splits.length ) {
-          return true;
-        }*/      
+        }        
       }
     }
     return false;
   };
 });
+//verify if all credit payments are approved
+const verifyCreditArroved = (paymentRecord) => {  
+  let caPaymentStatus = paymentRecord.payment_splits.filter(item => item.payment_method.code === 'CA');   
+  if (caPaymentStatus.length > 0) {
+    let caApproved = caPaymentStatus.filter(item => item.payment_status_id===props.paymentStatusEnum.CREDIT_APPROVED);
+    if( caApproved.length===caPaymentStatus.length ) {
+      return true;
+    } 
+  }
+  return false; 
+}
 
 const alertCapture = (payment) => {  
   let errorMsg = 'Pending payment';
@@ -1765,22 +1776,25 @@ const isMasterPaymentPaid = computed(() => {
   <div class="p-4 rounded shadow mb-6 bg-white">
     <div class="flex justify-between gap-4 items-center mb-4">
       <h3 class="font-semibold text-primary-800 text-lg">Manage Payments</h3>
-      <template v-if="payments.length>0">        
-        <UpdateTotalPrice
-          v-if="can(permissionEnum.TEMP_UPDATE_TOTALPRICE) && quoteRequest.quote_status_id === 15 && isMasterPaymentPaid"
-          :quoteId="quoteRequest.id"
-          :paymentCode = "payments[0].code"
-          :quoteType="quoteType" 
-          :totalPrice="payments[0].total_price"     
-        />
-        <x-button
-            v-if="can(permissionEnum.PaymentsCreate)"
-            size="sm"
-            color="emerald"
-            @click="addPaymentModal"          
-          >
-            Add Manual Payment
-          </x-button>
+      <template v-if="payments.length>0">
+        <div class="flex justify-between items-center gap-2" style="margin-left:auto">
+          <UpdateTotalPrice
+            v-if="can(permissionEnum.TEMP_UPDATE_TOTALPRICE) && quoteRequest.quote_status_id === 15"
+            :quoteId="quoteRequest.id"
+            :paymentCode = "payments[0].code"
+            :quoteType="quoteType" 
+            :totalPrice="payments[0].total_price"
+            :totalPaidPrice="payments[0].total_amount+payments[0].discount_value"   
+          />
+          <x-button
+              v-if="can(permissionEnum.PaymentsCreate)"
+              size="sm"
+              color="emerald"
+              @click="addPaymentModal"          
+            >
+              Add Manual Payment
+            </x-button>
+          </div>
       </template>
       <template v-else>
         <x-tooltip>
