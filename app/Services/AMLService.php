@@ -282,9 +282,7 @@ class AMLService
             ];
         }
 
-        $response = $bridgerInsightService->updateDecisionOnLexisNexis($bridgerAPIToken, $request, $matchResultsForUpdate);
-
-        return $response;
+        return $bridgerInsightService->updateDecisionOnLexisNexis($bridgerAPIToken, $request, $matchResultsForUpdate);
     }
 
     public static function getKycType($quoteTypeId, $quoteRequestId)
