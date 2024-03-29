@@ -365,18 +365,6 @@ onMounted(() => {
                   :hasError="isSagmentVolumeEmpty"
                   autocomplete
                 />
-                <!-- <x-select
-                  v-model="batchForm.segment_volume"
-                  :rules="[isRequired]"
-                  :options="
-                    carAdvisors.map(item => ({
-                      value: item.id,
-                      label: item.name,
-                    }))
-                  "
-                  class="w-full"
-                  :multiple="true"
-                /> -->
               </td>
             </tr>
             <tr class="border">
@@ -397,18 +385,6 @@ onMounted(() => {
                   :hasError="isSagmentValueEmpty"
                   autocomplete
                 />
-                <!-- <x-select
-                  v-model="batchForm.segment_value"
-                  :rules="[isRequired]"
-                  :options="
-                    carAdvisors.map(item => ({
-                      value: item.id,
-                      label: item.name,
-                    }))
-                  "
-                  class="w-full"
-                  :multiple="true"
-                /> -->
               </td>
             </tr>
           </tbody>
