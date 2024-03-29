@@ -3,8 +3,8 @@
 namespace App\Observers;
 
 use App\Models\BusinessQuote;
-use App\Traits\PersonalQuoteSyncTrait;
 use App\Models\BusinessQuoteRequestDetail;
+use App\Traits\PersonalQuoteSyncTrait;
 
 class BusinessQuoteDetailObserver
 {

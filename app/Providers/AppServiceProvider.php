@@ -14,21 +14,21 @@ use App\Models\LifeQuote;
 use App\Models\LifeQuoteRequestDetail;
 use App\Models\TravelQuote;
 use App\Models\TravelQuoteRequestDetail;
+use App\Observers\BusinessQuoteDetailObserver;
 use App\Observers\BusinessQuoteObserver;
+use App\Observers\CarQuoteDetailObserver;
 use App\Observers\CarQuoteObserver;
+use App\Observers\HealthQuoteDetailObserver;
 use App\Observers\HealthQuoteObserver;
+use App\Observers\HomeQuoteDetailObserver;
 use App\Observers\HomeQuoteObserver;
+use App\Observers\LifeQuoteDetailObserver;
 use App\Observers\LifeQuoteObserver;
+use App\Observers\TravelQuoteDetailObserver;
 use App\Observers\TravelQuoteObserver;
 use App\Services\CarAllocationService;
 use App\Services\HealthAllocationService;
 use Illuminate\Support\ServiceProvider;
-use App\Observers\CarQuoteDetailObserver;
-use App\Observers\HealthQuoteDetailObserver;
-use App\Observers\HomeQuoteDetailObserver;
-use App\Observers\LifeQuoteDetailObserver;
-use App\Observers\TravelQuoteDetailObserver;
-use App\Observers\BusinessQuoteDetailObserver;
 
 class AppServiceProvider extends ServiceProvider
 {

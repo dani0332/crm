@@ -24,7 +24,7 @@ trait PersonalQuoteSyncTrait
         $this->syncTable($personalQuote, $updatedFields, 'personal_quotes');
         $personalQuote->save();
     }
-    
+
     public function syncQuoteDetail($quote, $updatedFields)
     {
         // get personal quote
