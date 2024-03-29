@@ -431,7 +431,7 @@ class EmbeddedProductRepository extends BaseRepository
         if(isset($filters['excel_export']) && $filters['excel_export'] == true) {
             $dataset = $dataset->get();
         } else {
-            $dataset =  $dataset->simplePaginate();
+            $dataset =  $dataset->simplePaginate()->withQueryString();
         }
 
         $strategy = $this->createStrategy($ep->short_code);
