@@ -52,7 +52,6 @@ class DatabaseSeeder extends Seeder
             PaymentStatusAddSeeder::class,
             updateDocTypePayment::class,
             AddSageFlagApplicationStorage::class,
-            PaymentsMoveInNewTableStructure::class,
             AddTempUpdateTotalPricePermission::class,
         ]);
     }
