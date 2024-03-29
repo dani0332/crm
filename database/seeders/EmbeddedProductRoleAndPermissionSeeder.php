@@ -24,7 +24,7 @@ class EmbeddedProductRoleAndPermissionSeeder extends Seeder
             'updated_at' => now(),
         ]);
         $permission = Permission::firstOrCreate([
-            'name' => PermissionsEnum::EmbeddedProductView,
+            'name' => PermissionsEnum::EmbeddedProductAdvisor,
             'guard_name' => 'web',
         ], [
             'created_at' => now(),
