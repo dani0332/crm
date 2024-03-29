@@ -18,6 +18,8 @@ const permissionEnum = page.props.permissionsEnum;
 const notification = useToast();
 
 const { isRequired } = useRules();
+const isSagmentVolumeEmpty = ref(false);
+const isSagmentValueEmpty = ref(false);
 const isEdit = computed(() => {
   return route().current().includes('edit');
 });
@@ -42,10 +44,14 @@ const generateSlabArray = () => {
           slabs[slab.id] = {};
         }
         if (props.lastBatchSlabs[slab.id][team.id]) {
-          slabs[slab.id][team.id] = {
-            Min: +props.lastBatchSlabs[slab.id][team.id]['pivot']['min'],
-            Max: +props.lastBatchSlabs[slab.id][team.id]['pivot']['max'],
-          };
+          let minValue = props.lastBatchSlabs[slab.id][team.id]['pivot']['min'];
+          let maxValue = props.lastBatchSlabs[slab.id][team.id]['pivot']['max'];
+          if (minValue && maxValue) {
+            slabs[slab.id][team.id] = {
+              Min: +minValue,
+              Max: +maxValue,
+            };
+          }
         } else {
           batchForm.optional_slabs.push(slab.id);
           batchForm.optional_teams.push(team.id);
@@ -93,9 +99,21 @@ const setBatchMonth = () => {
 };
 
 function onSubmit(isValid) {
+  if (batchForm.segment_volume.length > 0) isSagmentVolumeEmpty.value = false;
+  else isSagmentVolumeEmpty.value = true;
+
+  if (batchForm.segment_value.length > 0) isSagmentValueEmpty.value = false;
+  else isSagmentValueEmpty.value = true;
+
   let valid = validateSlabs();
 
-  if (!isValid && !valid) return;
+  if (
+    !isValid ||
+    !valid ||
+    isSagmentVolumeEmpty.value ||
+    isSagmentValueEmpty.value
+  )
+    return;
 
   batchForm.clearErrors();
   batchForm.month = setBatchMonth();
@@ -330,11 +348,23 @@ onMounted(() => {
           </thead>
           <tbody>
             <tr class="border">
-              <th scope="row" class="w-40">
+              <th scope="row" class="w-40 border-r">
                 Segment Volume <span class="required">*</span>
               </th>
-              <td>
-                <x-select
+              <td class="">
+                <ComboBox
+                  class="p-2"
+                  v-model="batchForm.segment_volume"
+                  :single="false"
+                  :options="
+                    carAdvisors.map(item => ({
+                      value: item.id,
+                      label: item.name,
+                    }))
+                  "
+                  :hasError="isSagmentVolumeEmpty"
+                />
+                <!-- <x-select
                   v-model="batchForm.segment_volume"
                   :rules="[isRequired]"
                   :options="
@@ -345,13 +375,27 @@ onMounted(() => {
                   "
                   class="w-full"
                   :multiple="true"
-                />
+                /> -->
               </td>
             </tr>
             <tr class="border">
-              <th scope="row">Segment Value <span class="required">*</span></th>
+              <th scope="row" class="border-r">
+                Segment Value <span class="required">*</span>
+              </th>
               <td>
-                <x-select
+                <ComboBox
+                  class="p-2"
+                  v-model="batchForm.segment_value"
+                  :single="false"
+                  :options="
+                    carAdvisors.map(item => ({
+                      value: item.id,
+                      label: item.name,
+                    }))
+                  "
+                  :hasError="isSagmentValueEmpty"
+                />
+                <!-- <x-select
                   v-model="batchForm.segment_value"
                   :rules="[isRequired]"
                   :options="
@@ -362,7 +406,7 @@ onMounted(() => {
                   "
                   class="w-full"
                   :multiple="true"
-                />
+                /> -->
               </td>
             </tr>
           </tbody>
