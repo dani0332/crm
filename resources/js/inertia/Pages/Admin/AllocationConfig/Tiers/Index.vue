@@ -106,31 +106,13 @@ function onReset() {
     hide-footer
     fixed-checkbox
   >
-    <!-- <template #item-id="{ id }">
+    <template #item-id="{ id }">
       <Link
-        :href="route('users.show', id)"
+        :href="route('tier.show', id)"
         class="text-primary-500 hover:underline"
       >
         {{ id }}
       </Link>
-    </template> -->
-    <!-- <template #item-email="item">
-      <Link
-        :href="route('users.show', item.id)"
-        class="text-primary-500 hover:underline"
-      >
-        {{ item.email }}
-      </Link>
-    </template> -->
-    <!-- <template #item-created_at="{ created_at }">
-      <span>
-        {{ created_at ? dateFormat(created_at) : 'N/A' }}
-      </span>
-    </template> -->
-    <!-- <template #item-updated_at="{ updated_at }">
-      <span>
-        {{ updated_at ? dateFormat(updated_at) : 'N/A' }}
-      </span>
     </template>
     <template #item-is_active="{ is_active }">
       <div class="text-center">
@@ -138,20 +120,7 @@ function onReset() {
           {{ is_active ? 'Yes' : 'No' }}
         </x-tag>
       </div>
-    </template> -->
-    <!-- <template #item-roles="item">
-      <div class="break-words flex flex-wrap gap-1" v-if="item.roles">
-        <x-tag
-          class="text-xs"
-          size="sm"
-          color="success"
-          v-for="role in item.roles.split(',')"
-          :key="role"
-        >
-          {{ role }}
-        </x-tag>
-      </div>
-    </template> -->
+    </template>
   </DataTable>
   <Pagination
     :links="{

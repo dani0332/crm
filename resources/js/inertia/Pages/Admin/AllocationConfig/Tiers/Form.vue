@@ -1,5 +1,6 @@
 <script setup>
 const props = defineProps({
+  tier: Object,
   id: String,
   model: Object,
   dropdownSource: Object,
@@ -12,15 +13,15 @@ const isEdit = computed(() => {
 });
 
 const tierForm = useForm({
-  name: null,
-  min_price: null,
-  max_price: null,
-  cost_per_lead: null,
-  can_handle_ecommerce: null,
-  can_handle_null_value: null,
-  is_tpl_renewals: null,
-  is_active: false,
-  tier_user: null,
+  name: props.tier?.name ?? null,
+  min_price: props.tier?.min_price ?? null,
+  max_price: props.tier?.max_price ?? null,
+  cost_per_lead: props.tier?.cost_per_lead ?? null,
+  can_handle_ecommerce: props.tier?.can_handle_ecommerce ?? null,
+  can_handle_null_value: props.tier?.can_handle_null_value ?? null,
+  is_tpl_renewals: props.tier?.is_tpl_renewals ?? null,
+  is_active: props.tier?.is_active ? true : false,
+  tier_user: props.tier?.tier_user ?? null,
 });
 
 const tierUsers = computed(() => {
@@ -54,7 +55,9 @@ function onSubmit(isValid) {
 <template>
   <Head :title="isEdit ? 'Edit Tier' : 'Create Tier'" />
   <div class="flex justify-between items-center">
-    <h2 class="text-xl font-semibold">{{ isEdit ? 'Edit' : 'Create' }} Role</h2>
+    <h2 class="text-xl font-semibold">
+      {{ isEdit ? 'Edit' : 'Create' }} Tiers
+    </h2>
     <div>
       <Link :href="route('tier.index')">
         <x-button size="sm" color="#1d83bc" tag="div"> Tier List </x-button>
