@@ -533,7 +533,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
             </Link>
           </div>
           <div class="text-sm">
-            <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
+        <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
               <div class="grid sm:grid-cols-2">
                 <div
                   class="grid sm:grid-cols-2"
@@ -608,7 +608,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
           </div>
 
           <div class="text-sm">
-            <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
+        <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">I AM</dt>
                 <dd>{{ quote.iam_possesion_type_id_text }}</dd>
@@ -692,7 +692,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
                 v-if="
                   quote.customer_type === page.props.customerTypeEnum.Individual
                 "
-                class="grid md:grid-cols-2 gap-x-6 gap-y-4"
+            class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words"
               >
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">FIRST NAME</dt>
@@ -777,7 +777,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
                 v-if="
                   quote.customer_type === page.props.customerTypeEnum.Entity
                 "
-                class="grid md:grid-cols-2 gap-x-6 gap-y-4"
+            class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words"
               >
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">FIRST NAME</dt>
@@ -793,11 +793,13 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">EMAIL</dt>
-                  <dd>{{ quote.email }}</dd>
+              <dd class="break-words">{{ quote.email }}</dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">COMPANY NAME</dt>
-                  <dd>{{ customerProfileForm.company_name }}</dd>
+              <dd class="break-words">
+                {{ customerProfileForm.company_name }}
+              </dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">TRADE LICENSE NO</dt>
@@ -1077,6 +1079,15 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
                 class="w-full"
                 :disabled="quote.quote_status_id == 15"
               />
+	      
+	      <x-field label="Transaction Type">
+            <x-input
+              type="text"
+              :value="quote.transaction_type_text"
+              class="w-full"
+              :disabled="true"
+            />
+          </x-field>
             </div>
           </div>
           <div class="flex justify-end">
@@ -1105,7 +1116,8 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       v-if="!isNewPaymentStructure"
       :quoteId="quote.id"
       :paymentCode = "quote.code"
-      :quoteType="quoteType"      
+      :quoteType="quoteType"
+      :payments="payments"     
     />    
     <PaymentTableNew
 			v-if="isNewPaymentStructure"

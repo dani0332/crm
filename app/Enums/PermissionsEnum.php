@@ -248,4 +248,5 @@ final class PermissionsEnum extends Enum
     public const SEND_INSLY_BOOK_POLICY = 'send-insly-book-policy';
     public const HEALTH_QUOTES_MANAGER_ACCESS = 'health-quotes-manager-access';
     public const HEALTH_QUOTES_ACCESS = 'health-quotes-access';
+    public const TEMP_UPDATE_TOTALPRICE = 'temp-update-totalprice';
 }
