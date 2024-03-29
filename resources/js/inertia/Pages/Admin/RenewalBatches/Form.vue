@@ -363,6 +363,7 @@ onMounted(() => {
                     }))
                   "
                   :hasError="isSagmentVolumeEmpty"
+                  autocomplete
                 />
                 <!-- <x-select
                   v-model="batchForm.segment_volume"
@@ -394,6 +395,7 @@ onMounted(() => {
                     }))
                   "
                   :hasError="isSagmentValueEmpty"
+                  autocomplete
                 />
                 <!-- <x-select
                   v-model="batchForm.segment_value"
