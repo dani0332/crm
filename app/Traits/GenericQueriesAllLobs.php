@@ -2,15 +2,16 @@
 
 namespace App\Traits;
 
+use App\Models\Payment;
+use App\Enums\QuoteTypes;
+use App\Enums\quoteTypeCode;
+use App\Enums\QuoteStatusEnum;
+use App\Enums\PaymentStatusEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\QuoteDocumentsEnum;
-use App\Enums\QuoteStatusEnum;
-use App\Enums\quoteTypeCode;
-use App\Enums\QuoteTypes;
-use App\Models\Payment;
-use App\Repositories\InsuranceProviderRepository;
 use App\Services\CapiRequestService;
 use App\Services\QuoteDocumentService;
+use App\Repositories\InsuranceProviderRepository;
 
 trait GenericQueriesAllLobs
 {
@@ -242,5 +243,14 @@ trait GenericQueriesAllLobs
                 }
             }
         }
+    }
+
+    public function updatePaymentTotalPrice($quoteModel) {
+        $payment= $quoteModel->payments()->first();   
+        if( $payment->payment_status_id === PaymentStatusEnum::PAID && $payment->total_price < $quoteModel->price_with_vat){
+            $payment->payment_status_id= PaymentStatusEnum::PARTIALLY_PAID;
+        }
+        $payment->total_price = $quoteModel->price_with_vat;
+        $payment->save();
     }
 }
