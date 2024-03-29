@@ -127,18 +127,20 @@ function onSubmit(isValid) {
           <x-input
             v-model="quoteForm.first_name"
             type="text"
-            maxLength="255"
             :rules="[isRequired]"
             class="w-full"
+            maxLength="20"
+            :error="quoteForm.errors.first_name"
           />
         </x-field>
         <x-field label="LAST NAME" required>
           <x-input
             v-model="quoteForm.last_name"
             type="text"
-            maxLength="255"
+            maxLength="50"
             :rules="[isRequired]"
             class="w-full"
+            :error="quoteForm.errors.last_name"
           />
         </x-field>
         <x-field label="EMAIL" required>
