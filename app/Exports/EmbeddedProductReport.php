@@ -25,6 +25,7 @@ class EmbeddedProductReport
     public function collection()
     {
         $this->filters['excel_export'] = true;
+
         return EmbeddedProductRepository::getSoldTransactionList($this->embeddedProduct, $this->filters);
     }
 

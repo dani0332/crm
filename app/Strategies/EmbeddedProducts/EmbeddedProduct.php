@@ -35,7 +35,7 @@ class EmbeddedProduct
                 : '';
             $planStartDate = isset($quoteObject->policy_start_date) ? Carbon::parse($quoteObject->policy_start_date)->format($dateFormat) : '';
             $planEndDate = '';
-            if (!empty($planStartDate)) {
+            if (! empty($planStartDate)) {
                 $planEndDate = Carbon::parse($quoteObject->policy_start_date)->addYear()->format($dateFormat);
             }
             $firstName = $quoteObject->first_name ?? '';
@@ -47,7 +47,7 @@ class EmbeddedProduct
             $item->plan_start_date = $planStartDate;
             $item->plan_end_date = $planEndDate;
             $item->certificate_number = $item->certificate_number ?? '';
-            $item->name = $firstName . ' ' . $lastName;
+            $item->name = $firstName.' '.$lastName;
             $item->dob = isset($quoteObject->dob) ? Carbon::parse($quoteObject->dob)->format($dateFormat) : '';
             $item->age = $age;
             $item->vehicle = $carMake.' '.$carModel;

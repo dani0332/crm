@@ -380,44 +380,44 @@ class EmbeddedProductRepository extends BaseRepository
     public function fetchGetSoldTransactionList(EmbeddedProduct $ep, $filters = [])
     {
         $dataset = EmbeddedTransaction::with('quote_request.customer', 'quote_request.carMake', 'quote_request.carModel', 'quote_request.quoteStatus')
-                    ->join('embedded_product_options', function ($join) use ($ep) {
-                        $join->on('embedded_product_options.id', '=', 'embedded_transactions.product_id')
-                            ->where('embedded_product_options.embedded_product_id', $ep->id);
-                    })
-                    ->where('embedded_transactions.payment_status_id', PaymentStatusEnum::CAPTURED)
-                    ->where('embedded_transactions.is_selected', true)
-                    ->when(isset($filters['ref_id']), function ($query) use ($filters) {
-                        $query->where('embedded_transactions.code', 'like', "%{$filters['ref_id']}%");
-                    })
-                    ->when(isset($filters['months']), function ($query) use ($filters) {
-                        $startDate = Carbon::parse($filters['months'])->startOfMonth()->format('Y-m-d');
-                        $endDate = Carbon::parse($filters['months'])->endOfMonth()->format('Y-m-d');
-                        $query->whereBetween('embedded_transactions.paid_at', [$startDate, $endDate]);
-                    })
-                    ->when(isset($filters['name']), function ($query) use ($filters) {
-                        $query->whereHas('quote_request', function ($query) use ($filters) {
-                            $name = $filters['name'];
-                            $query->where('first_name', 'like', "%{$name}%")
-                                ->orWhere('last_name', 'like', "%{$name}%");
-                        });
-                    })
-                    ->when(isset($filters['email']), function ($query) use ($filters) {
-                        $query->whereHas('quote_request', function ($query) use ($filters) {
-                            $email = $filters['email'];
-                            $query->where('email', 'like', "%{$email}%");
-                        });
-                    })
-                    ->when(isset($filters['date_of_purchase']), function ($query) use ($filters) {
-                        $query->whereHas('quote_request', function ($query) use ($filters) {
-                            $startDate = Carbon::parse($filters['date_of_purchase'][0])->startOfDay();
-                            $endDate = Carbon::parse($filters['date_of_purchase'][1])->endOfDay();
-                            $query->whereBetween('policy_issuance_date', [$startDate, $endDate]);
-                        });
-                    });
+            ->join('embedded_product_options', function ($join) use ($ep) {
+                $join->on('embedded_product_options.id', '=', 'embedded_transactions.product_id')
+                    ->where('embedded_product_options.embedded_product_id', $ep->id);
+            })
+            ->where('embedded_transactions.payment_status_id', PaymentStatusEnum::CAPTURED)
+            ->where('embedded_transactions.is_selected', true)
+            ->when(isset($filters['ref_id']), function ($query) use ($filters) {
+                $query->where('embedded_transactions.code', 'like', "%{$filters['ref_id']}%");
+            })
+            ->when(isset($filters['months']), function ($query) use ($filters) {
+                $startDate = Carbon::parse($filters['months'])->startOfMonth()->format('Y-m-d');
+                $endDate = Carbon::parse($filters['months'])->endOfMonth()->format('Y-m-d');
+                $query->whereBetween('embedded_transactions.paid_at', [$startDate, $endDate]);
+            })
+            ->when(isset($filters['name']), function ($query) use ($filters) {
+                $query->whereHas('quote_request', function ($query) use ($filters) {
+                    $name = $filters['name'];
+                    $query->where('first_name', 'like', "%{$name}%")
+                        ->orWhere('last_name', 'like', "%{$name}%");
+                });
+            })
+            ->when(isset($filters['email']), function ($query) use ($filters) {
+                $query->whereHas('quote_request', function ($query) use ($filters) {
+                    $email = $filters['email'];
+                    $query->where('email', 'like', "%{$email}%");
+                });
+            })
+            ->when(isset($filters['date_of_purchase']), function ($query) use ($filters) {
+                $query->whereHas('quote_request', function ($query) use ($filters) {
+                    $startDate = Carbon::parse($filters['date_of_purchase'][0])->startOfDay();
+                    $endDate = Carbon::parse($filters['date_of_purchase'][1])->endOfDay();
+                    $query->whereBetween('policy_issuance_date', [$startDate, $endDate]);
+                });
+            });
 
         $sortBy = 'embedded_transactions.id';
         $sortOrder = 'desc';
-        if(!empty($filters['sortBy']) && !empty($filters['sortType'])) {
+        if (! empty($filters['sortBy']) && ! empty($filters['sortType'])) {
             $sortableColumns = [
                 'payment_date' => 'embedded_transactions.paid_at',
                 'contribution_amount' => 'embedded_transactions.price_with_vat',
@@ -428,10 +428,10 @@ class EmbeddedProductRepository extends BaseRepository
 
         $dataset = $dataset->orderBy($sortBy, $sortOrder);
 
-        if(isset($filters['excel_export']) && $filters['excel_export'] == true) {
+        if (isset($filters['excel_export']) && $filters['excel_export'] == true) {
             $dataset = $dataset->get();
         } else {
-            $dataset =  $dataset->simplePaginate()->withQueryString();
+            $dataset = $dataset->simplePaginate()->withQueryString();
         }
 
         $strategy = $this->createStrategy($ep->short_code);
