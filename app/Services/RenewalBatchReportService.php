@@ -413,7 +413,6 @@ class RenewalBatchReportService extends BaseService
         /**
          * check auth user roles
          */
-
         [$authUserIsManager, $authUserIsRenewalsManager, $authUserIsCEO, $authUserIsAccounts, $authUserIsAdvisor]
             = $this->identifyUserRoles();
 
