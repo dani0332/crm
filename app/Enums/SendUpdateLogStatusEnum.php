@@ -54,4 +54,12 @@ final class SendUpdateLogStatusEnum extends Enum
     const MSC = 'MSC'; // Marital status change
     const PU = 'PU'; // Plan upgrade
     const SC = 'SC'; // Sub-group creation
+    const AOLOPFMP = 'AOLOPFMP'; // Addition of location of practice for medical professionals
+    const AC = 'AC'; // Additional Cover
+    const AL = 'AL'; // Additional location
+    const EA = 'EA'; // Employee addition
+    const EFMP = 'EFMP'; // Extension for maintenance period
+    const ICOLOIALOLR = 'I/COLOIALOLR'; // Increase / Change of limit of indemnity and limit of liability required
+    const IIEAFT = 'IIEAF/T'; // Increase in estimated annual fees / turnover
+    const IISI = 'IISI'; // Increase in sum Insured
 }
