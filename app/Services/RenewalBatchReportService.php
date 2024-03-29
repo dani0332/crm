@@ -583,8 +583,8 @@ class RenewalBatchReportService extends BaseService
         $dateFormat = config('constants.DATE_FORMAT_ONLY');
         $dateTimeFormat = config('constants.DB_DATE_FORMAT_MATCH');
         $reportDate = Carbon::today()->format($dateFormat);
-        $previousMonth = Carbon::parse($reportDate)->subMonth(2)->startOfMonth()->format($dateFormat);
-        $nextMonth = Carbon::parse($reportDate)->addMonth(2)->endOfMonth()->format($dateFormat);
+        $previousMonth = Carbon::parse($reportDate)->subMonth(1)->startOfMonth()->format($dateFormat);
+        $nextMonth = Carbon::parse($reportDate)->addMonth(1)->endOfMonth()->format($dateFormat);
 
         $defaultBatchRange = RenewalBatch::query()
             ->select('name', 'start_date', 'end_date', 'id')
