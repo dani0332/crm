@@ -65,7 +65,7 @@ return [
         ],
         'alfredchatmongo' => [
             'driver' => 'mongodb',
-            'dsn' => env('MONGO_DSN_ALFRED'),
+            'dsn' => env('MONGODB_DSN_INSTANT_ALFRED'),
         ],
 
         'mongodb' => [
