@@ -379,7 +379,7 @@ class EmbeddedProductRepository extends BaseRepository
      */
     public function fetchGetSoldTransactionList(EmbeddedProduct $ep, $filters = [])
     {
-        $dataset = EmbeddedTransaction::with('quote_request.customer', 'quote_request.carMake', 'quote_request.carModel', 'quote_request.quoteStatus')
+        $dataset = EmbeddedTransaction::with('quoteRequest.customer', 'quoteRequest.carMake', 'quoteRequest.carModel', 'quoteRequest.quoteStatus')
             ->join('embedded_product_options', function ($join) use ($ep) {
                 $join->on('embedded_product_options.id', '=', 'embedded_transactions.product_id')
                     ->where('embedded_product_options.embedded_product_id', $ep->id);
@@ -395,20 +395,20 @@ class EmbeddedProductRepository extends BaseRepository
                 $query->whereBetween('embedded_transactions.paid_at', [$startDate, $endDate]);
             })
             ->when(isset($filters['name']), function ($query) use ($filters) {
-                $query->whereHas('quote_request', function ($query) use ($filters) {
+                $query->whereHas('quoteRequest', function ($query) use ($filters) {
                     $name = $filters['name'];
                     $query->where('first_name', 'like', "%{$name}%")
                         ->orWhere('last_name', 'like', "%{$name}%");
                 });
             })
             ->when(isset($filters['email']), function ($query) use ($filters) {
-                $query->whereHas('quote_request', function ($query) use ($filters) {
+                $query->whereHas('quoteRequest', function ($query) use ($filters) {
                     $email = $filters['email'];
                     $query->where('email', 'like', "%{$email}%");
                 });
             })
             ->when(isset($filters['date_of_purchase']), function ($query) use ($filters) {
-                $query->whereHas('quote_request', function ($query) use ($filters) {
+                $query->whereHas('quoteRequest', function ($query) use ($filters) {
                     $startDate = Carbon::parse($filters['date_of_purchase'][0])->startOfDay();
                     $endDate = Carbon::parse($filters['date_of_purchase'][1])->endOfDay();
                     $query->whereBetween('policy_issuance_date', [$startDate, $endDate]);

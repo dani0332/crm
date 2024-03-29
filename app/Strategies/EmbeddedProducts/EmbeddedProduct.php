@@ -25,7 +25,7 @@ class EmbeddedProduct
     {
         $dataset->each(function ($item) {
             $dateFormat = config('constants.DATE_DISPLAY_FORMAT');
-            $quoteObject = $item->quote_request;
+            $quoteObject = $item->quoteRequest;
             $status = $quoteObject->quoteStatus->text ?? '';
             $customer = $quoteObject->customer ?? null;
             $carMake = $quoteObject->carMake->text ?? '';
