@@ -197,7 +197,7 @@ trait GenericQueriesAllLobs
             if (in_array(QuoteDocumentsEnum::CAR_POLICY_CERTIFICATE, $document_type_codes) && in_array(QuoteDocumentsEnum::POLICY_SCHEDULE, $document_type_codes) && in_array(QuoteDocumentsEnum::POLICY_HANDBOOK, $document_type_codes)) {
 
                 $bPDetails['sendButton'] = true;
-                $bPDetails['text'] = 'Send Policy To Customer';
+                $bPDetails['text'] = 'Sending Policy To Customer';
                 $bPDetails['sendPolicyType'] = 'customer';
             }
             $taxDocuments = (in_array(QuoteDocumentsEnum::CAR_TAX_INVOICE, $document_type_codes) && in_array(QuoteDocumentsEnum::CAR_TAX_INVOICE_RAISE_BY_BUYER, $document_type_codes));
