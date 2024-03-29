@@ -337,7 +337,7 @@ const hasAnyRole = roles => useHasAnyRole(roles);
             Download Product Wordings
           </x-button>
           <x-button
-            v-if="useCan([permissionsEnum.EmbeddedProductAdmin])"
+            v-if="useCan(permissionsEnum.EmbeddedProductAdmin)"
             size="xs"
             color="#ff5e00"
             :disabled="checkTransactionExist(item)"
@@ -348,7 +348,7 @@ const hasAnyRole = roles => useHasAnyRole(roles);
         </div>
       </template>
     </DataTable>
-    <x-modal v-if="useCan([permissionsEnum.EmbeddedProductAdmin])" v-model="modals.cancelPayment" size="lg" show-close backdrop>
+    <x-modal v-if="useCan(permissionsEnum.EmbeddedProductAdmin)" v-model="modals.cancelPayment" size="lg" show-close backdrop>
       <template #header> Cancel Payment </template>
 
       <x-form @submit="onActivitySubmit" :auto-focus="false">
