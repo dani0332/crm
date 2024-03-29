@@ -288,14 +288,14 @@ class LeadAllocationController extends Controller
         return collect([$healthAdvisors, $motorAdvisors])->collapse()->unique()->values()->all();
     }
 
-    public function createLeadAllocation(Request $request)
+    public function createAllocation(Request $request)
     {
         return inertia('LeadAllocation/CreateAdvisorsLeadCaps', [
             'advisors' => $this->getHealthAndMotorAdvisorsList(),
         ]);
     }
 
-    public function updateCapsLeadAllocation(Request $request)
+    public function updateCapsAllocation(Request $request)
     {
         if (isset($request->items)) {
             foreach ($request->items as $item) {
