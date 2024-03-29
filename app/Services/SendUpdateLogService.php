@@ -490,13 +490,9 @@ class SendUpdateLogService
         // check if required documents not uploaded then show Send Update to Customer
         $requiredDocumentsCheck = count(array_diff($requiredDocuments, $uploadedDocuments)) > 0;
 
-        if (in_array($sendUpdateLog->category->code, [SendUpdateLogStatusEnum::EN, SendUpdateLogStatusEnum::CPU])) {
-            if ($requiredDocumentsCheck) {
-                return SendUpdateLogStatusEnum::SUC;
-            }
-        } elseif ($sendUpdateLog->is_booking_filled) { // Check if all booking details uploaded.
-            if ($sendUpdateLog->category->code == SendUpdateLogStatusEnum::EF) {
-                if ($sendUpdateLog->option->code == SendUpdateLogStatusEnum::PPE && $sendUpdateLog->transaction_payment_status == SendUpdateLogStatusEnum::TRANSACTION_APPROVED && true) { // Check if all policy details uploaded.
+        if ($sendUpdateLog->is_booking_filled) { // Check if all booking details uploaded.
+            if($sendUpdateLog->category->code == SendUpdateLogStatusEnum::EF) {
+                if($sendUpdateLog->option->code == SendUpdateLogStatusEnum::PPE && $sendUpdateLog->transaction_payment_status == SendUpdateLogStatusEnum::TRANSACTION_APPROVED && $sendUpdateLog->is_policy_filled ) { // Check if all policy details uploaded.
                     return SendUpdateLogStatusEnum::SU;
                 }
 
@@ -514,8 +510,14 @@ class SendUpdateLogService
             } elseif (in_array($sendUpdateLog->category->code, [SendUpdateLogStatusEnum::CI, SendUpdateLogStatusEnum::CIR])) {
                 return SendUpdateLogStatusEnum::SU;
             }
+            
+            if ($requiredDocumentsCheck) {
+                return SendUpdateLogStatusEnum::SUC;
+            }
+        }
 
-            if ($requiredDocuments) {
+        if (in_array($sendUpdateLog->category->code, [SendUpdateLogStatusEnum::EN, SendUpdateLogStatusEnum::CPU])) {
+            if ($requiredDocumentsCheck) {
                 return SendUpdateLogStatusEnum::SUC;
             }
         }
@@ -604,30 +606,19 @@ class SendUpdateLogService
         // Update Payment Details
         $payment = Payment::where('send_update_log_id', $sendUpdateLog->id)->first();
         $sendUpdatePaymentDetails = [
-            'plan_id' => $sendUpdateLog->plan_id,
             'policy_expiry_date' => $sendUpdateLog->expiry_date,
-            'total_price' => $sendUpdateLog->total_price,
-            'insurance_provider_id' => $sendUpdateLog->insurance_provider_id,
             'invoice_description' => $sendUpdateLog->invoice_description,
             'broker_invoice_number' => $sendUpdateLog->broker_invoice_number,
-            'transaction_payment_status' => $sendUpdateLog->transaction_payment_status,
             'insurer_tax_number' => $sendUpdateLog->insurer_tax_invoice_number,
-            // 'tax_invoice_number' => $sendUpdateLog->insurer_tax_invoice_number, Looked same as above
             'insurer_commmission_invoice_number' => $sendUpdateLog->insurer_commission_invoice_number,
             'commmission_percentage' => $sendUpdateLog->commission_percentage,
             'commission_vat_not_applicable' => $sendUpdateLog->commission_vat_not_applicable,
             'commission_vat_applicable' => $sendUpdateLog->commission_vat_applicable,
-            'payment_status_id' => $sendUpdateLog->payment_status_id,
-            'premium_authorized' => $sendUpdateLog->premium_authorized,
-            'premium_captured' => $sendUpdateLog->premium_captured,
-            'premium_refunded' => $sendUpdateLog->premium_refunded,
             'commission' => $sendUpdateLog->total_commission,
             'insurer_invoice_date' => $sendUpdateLog->invoice_date,
-            'total_amount' => $sendUpdateLog->commission_vat_applicable, //already filled in Payment table, but should be map with total_vat_amount send_update_table
-            'discount_value' => $sendUpdateLog->commission_vat_applicable, //already filled in Payment table
-            'commission_vat' => $sendUpdateLog->commission_vat_applicable, // Didn't find column to map
-            'commission_without_vat' => $sendUpdateLog->commission_vat_applicable, // Didn't find column to map
-            'policy_due_date' => $sendUpdateLog->commission_vat_applicable, // Didn't find column to map
+            // 'commission_vat' => $sendUpdateLog->commission_vat_applicable, // Didn't find respective column in send_update_log table
+            // 'commission_without_vat' => $sendUpdateLog->commission_vat_applicable, // Didn't find respective column in send_update_log table
+            // 'policy_due_date' => $sendUpdateLog->commission_vat_applicable, // Didn't find respective column in send_update_log table
         ];
 
         return $payment->update($sendUpdatePaymentDetails);

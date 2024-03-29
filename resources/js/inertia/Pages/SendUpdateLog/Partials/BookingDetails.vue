@@ -564,7 +564,12 @@ function sendUpdate(prePaymentCheck = true) {
     })
     .catch(function (errors) {
       loader.sendUpdateSectionBtn = false;
-      if(typeof(errors.response.data.errors.error) !== "undefined") {
+      if(errors.response.data.message !== '') {
+        notification.error({
+          title: errors.response.data.message,
+          position: "top",
+        });
+      } else if(errors.response.data.errors.error) {
         let responseError = errors.response.data.errors.error;
         Object.keys(responseError).forEach(function (key) {
           notification.error({
@@ -574,7 +579,7 @@ function sendUpdate(prePaymentCheck = true) {
         });
       } else {
         notification.error({
-          title: errors.response.data.message,
+          title: "Something went wrong",
           position: "top",
         });
       }
