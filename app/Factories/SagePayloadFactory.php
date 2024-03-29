@@ -679,7 +679,7 @@ class SagePayloadFactory
 
         return $data;
     }
-    
+
     // Payment code mapping
     private static function sagePaymentCodeMapping($paymentMethod)
     {
