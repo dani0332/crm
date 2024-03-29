@@ -75,7 +75,7 @@ class SagePayloadFactory
         $payLoad = [
             'Invoices' => [
                 [
-                    'VendorNumber' => 'IP002', // use vender api to create vender in sage
+                    'VendorNumber' => $request->sageVenderId, // use vender api to create vender in sage
 
                     'DocumentNumber' => $request->insurerPremiumNumber,
                     'InvoiceDescription' => $request->invoiceDescription,
@@ -92,7 +92,7 @@ class SagePayloadFactory
                         [
                             'DistributionDescription' => $request->invoiceDescription,
                             'TaxClass1' => 5,
-                            'GLAccount' => '55020',
+                            'GLAccount' => $request->insurerGlLiaiblityAccount,
                             'DistributedAmount' => $request->premiumWithoutTax,
                             'DistributedAmountBeforeTaxes' => $request->premiumWithTax,
                         ],
@@ -185,7 +185,7 @@ class SagePayloadFactory
                         [
                             'Description' => $request->invoiceDescription,
                             'TaxClass1' => 5,
-                            'RevenueAccount' => '55020',
+                            'RevenueAccount' => $request->insurerGlLiaiblityAccount,
                             'ExtendedAmountWithTIP' => $request->premiumWithTax,
                             'ExtendedAmountWithoutTIP' => $request->premiumWithoutTax,
                         ],
@@ -264,7 +264,7 @@ class SagePayloadFactory
                         [
                             'Description' => $request->invoiceDescription,
                             'TaxClass1' => 5,
-                            'RevenueAccount' => '55020',
+                            'RevenueAccount' => $request->insurerGlLiaiblityAccount,
                             'ExtendedAmountWithTIP' => $request->premiumWithTax,
                             'ExtendedAmountWithoutTIP' => $request->premiumWithTax,
                         ],

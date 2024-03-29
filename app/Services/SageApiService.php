@@ -191,6 +191,12 @@ class SageApiService
 
         $sageRequest->customerId = $sageCustomerNumber;
 
+        if (! $payment->insuranceProvider) {
+            return ['status' => false, 'message' => 'Insurance Provider not found'];
+        }
+        $sageRequest->insurerGlLiaiblityAccount = $payment->insuranceProvider->gl_liaiblity_account;
+        $sageRequest->sageVenderId = $payment->insuranceProvider->sage_vendor_id;
+        //dd($sageRequest);
         // frequency  is 'upfront'
 
         if ($payment->frequency == 'upfront') {
