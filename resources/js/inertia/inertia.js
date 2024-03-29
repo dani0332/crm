@@ -7,6 +7,7 @@ import MainLayout from '@/inertia/Layouts/MainLayout.vue';
 import icons from './icons';
 import Vue3EasyDataTable from 'vue3-easy-data-table';
 import { ZiggyVue } from '../../../vendor/tightenco/ziggy';
+import VueMarkdown from 'vue-markdown-render';
 
 const appName =
   window.document.getElementsByTagName('title')[0]?.innerText || 'IMCRM';
@@ -29,6 +30,7 @@ createInertiaApp({
       render: () => h(App, props),
     })
       .component('DataTable', Vue3EasyDataTable)
+      .component('vue-markdown', VueMarkdown)
       .use(ZiggyVue, Ziggy)
       .use(plugin)
       .use(UI, {
