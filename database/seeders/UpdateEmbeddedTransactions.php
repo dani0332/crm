@@ -14,6 +14,7 @@ class UpdateEmbeddedTransactions extends Seeder
     {
         DB::table('embedded_transactions')
             ->where('quote_type_id', 1)
+            ->where('quote_request_type', null)
             ->update(['quote_request_type' => 'App\\Models\\CarQuote']);
     }
 }
