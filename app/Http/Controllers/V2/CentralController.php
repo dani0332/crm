@@ -324,7 +324,8 @@ class CentralController extends Controller
 
     private function straightforwardPayments($payment, $quote)
     {
-        $payment->payment_status_id = PaymentStatusEnum::PAID;
+        // Need to confrim this wether need to c
+        // $payment->payment_status_id = PaymentStatusEnum::PAID;
     
         if (($payment->captured_amount + $payment->discount_value) <= $quote->price_with_vat) {
             $payment->payment_allocation_status = PaymentAllocationStatus::FULLY_ALLOCATED;
