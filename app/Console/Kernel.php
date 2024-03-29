@@ -26,7 +26,7 @@ class Kernel extends ConsoleKernel
         Commands\ResetLeadAllocationCounts::class,
         Commands\UpdateHealthStatus::class,
         Commands\QuoteSyncUpdateCommand::class,
-        Commands\PaymentOverdueStatus::class,        
+        Commands\PaymentOverdueStatus::class,
     ];
 
     /**
@@ -76,7 +76,7 @@ class Kernel extends ConsoleKernel
                 Carbon::now()->next(Carbon::SUNDAY)->endOfDay()
             )
             ->onOneServer()
-            ->withoutOverlapping(1);       
+            ->withoutOverlapping(1);
 
     }
 
