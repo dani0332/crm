@@ -31,6 +31,7 @@ class ResetLeadAllocationCounts extends Command
      */
     public function __construct()
     {
+        info('ResetLeadAllocationCounts Command Started');
         parent::__construct();
     }
 
