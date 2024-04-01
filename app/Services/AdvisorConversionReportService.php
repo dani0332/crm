@@ -69,7 +69,7 @@ class AdvisorConversionReportService extends BaseService
             ->orderBy('personal_quotes.quote_batch_id')
             ->orderBy('users.email');
 
-        if (! auth()->user()->hasRole(RolesEnum::LeadPool)) {
+        if (! auth()->user()->hasAnyRole([RolesEnum::LeadPool, RolesEnum::SeniorManagement])) {
             $userIds = $this->walkTree(auth()->user()->id);
             $query = $query->whereIn('personal_quotes.advisor_id', $userIds);
         }
