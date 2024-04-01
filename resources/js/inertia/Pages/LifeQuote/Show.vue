@@ -82,7 +82,6 @@ const can = permission => useCan(permission);
 const hasAnyRole = roles => useHasAnyRole(roles);
 const permissionsEnum = page.props.permissionsEnum;
 const rolesEnum = page.props.rolesEnum;
-const permissionEnum = page.props.permissionsEnum;
 const canAny = permissions => useCanAny(permissions);
 
 const historyLoading = ref(false);
@@ -1187,8 +1186,8 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
     <BookPolicy
       v-if="
         canAny([
-          permissionEnum.VIEW_INSLY_BOOK_POLICY,
-          permissionEnum.SEND_INSLY_BOOK_POLICY,
+          permissionsEnum.VIEW_INSLY_BOOK_POLICY,
+          permissionsEnum.SEND_INSLY_BOOK_POLICY,
         ])
       "
       :quote="record"
