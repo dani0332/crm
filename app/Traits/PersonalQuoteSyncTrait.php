@@ -23,6 +23,17 @@ trait PersonalQuoteSyncTrait
 
         $this->syncTable($personalQuote, $updatedFields, 'personal_quotes');
         $personalQuote->save();
+    }
+
+    public function syncQuoteDetail($quote, $updatedFields)
+    {
+        // get personal quote
+        $personalQuote = PersonalQuoteRepository::where('uuid', $quote->uuid)->first();
+        if (! $personalQuote) {
+            Log::warning("Quote not found in personal quotes table, uuid: {$quote->uuid}");
+
+            return;
+        }
 
         // update personal quote details
         $personalQuoteDetail = PersonalQuoteDetail::where('personal_quote_id', $personalQuote->id)->first();
