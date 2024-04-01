@@ -22,45 +22,46 @@ final class SageEnum extends Enum
     const STATUS_FAIL = 'fail';
     const STATUS_PAID = 'paid';
 
-    // Sage Request Types Start
+    // -------------------------------------- Sage Request Types Start --------------------------------------------
+
     // Creation of Customer
     const SRT_CREATE_CUSTOMER = 'CREATE_CUSTOMER';
 
-    // Creation of Prepayment Receipt
+    // AR Pre Payments Receipts
     const SRT_CREATE_PP_REC = 'CREATE_PP_REC';
     const SRT_RTP_PP_REC = 'RTP_PP_REC';
     const SRT_POST_PP_REC = 'POST_PP_REC';
 
-    // Creation of Invoice - Upfront
+    // AR Invoices - Upfront
     const SRT_CREATE_AR_PREM_COMM_INV = 'CREATE_AR_PREM_COMM_INV';
     const SRT_RTP_AR_PREM_COMM_INV = 'RTP_AR_PREM_COMM_INV';
     const SRT_POST_AR_PREM_COMM_INV = 'POST_AR_PREM_COMM_INV';
+
+    // AR Invoices - Monthly, Quaterly, Semi-Annual, Split, Custom
+    const SRT_CREATE_AR_SPPAY_INV = 'CREATE_AR_SPPAY_INV';
+    const SRT_RTP_AR_SPPAY_INV = 'RTP_AR_SPPAY_INV';
+    const SRT_POST_AR_SPPAY_INV = 'POST_AR_SPPAY_INV';
+    const SRT_AR_SPPAY_INV_PATCH = 'AR_SPPAY_INV_PATCH';
+
+    // AP Invoices - Upfront
     const SRT_CREATE_AP_PREM_INV = 'CREATE_AP_PREM_INV';
     const SRT_RTP_AP_PREM_INV = 'RTP_AP_PREM_INV';
     const SRT_POST_AP_PREM_INV = 'POST_AP_PREM_INV';
+
+    // AR Discount Invoices
     const SRT_CREATE_AR_DISC_INV = 'CREATE_AR_DISC_INV';
     const SRT_RTP_AR_DISC_INV = 'RTP_AR_DISC_INV';
     const SRT_POST_AR_DISC_INV = 'POST_AR_DISC_INV';
 
-    // Creation of Invoice - Monthly, Quaterly, Semi-Annual, Split, Custom
-    const SRT_CREATE_AR_SPPAY_INV = 'CREATE_AR_SPPAY_INV';
-    const SRT_RTP_AR_SPPAY_INV = 'RTP_AR_SPPAY_INV';
-    const SRT_POST_AR_SPPAY_INV = 'POST_AR_SPPAY_INV';
+    // Payment Receipt One Invoice - Upfront
+    const SRT_CREATE_PAY_REC_ONE_INV = 'CREATE_PAY_REC_ONE_INV';
+    const SRT_RTP_PAY_REC_ONE_INV = 'RTP_PAY_REC_ONE_INV';
+    const SRT_POST_PAY_REC_ONE_INV = 'POST_PAY_REC_ONE_INV';
 
-    // Mapping of Prepayment to Invoice - Upfront
-    const SRT_PP_REC_ONE_INV = 'PRE_PAY_REC_ONE_INV';
-    const SRT_RTP_PP_REC_ONE_INV = 'RTP_PP_REC_ONE_INV';
-    const SRT_POST_PP_REC_ONE_INV = 'POST_PP_REC_ONE_INV';
-
-    // Mapping of Prepayment to Invoice - Split
-    const SRT_PP_REC_SPINV = 'PRE_PAY_REC_SPINV';
-    const SRT_RTP_PP_REC_SPINV = 'RTP_PP_REC_SPINV';
-    const SRT_POST_PP_REC_SPINV = 'POST_PP_REC_SPINV';
-
-    // Mapping of Prepayment to Invoice - Monthly, Quaterly, Semi-Annual, Custom
-    const SRT_PP_REC_CFQ_INV = 'PRE_PAY_REC_CFQ_INV';
-    const SRT_RTP_PP_REC_CFQ_INV = 'RTP_PP_REC_CFQ_INV';
-    const SRT_POST_PP_REC_CFQ_INV = 'POST_PP_REC_CFQ_INV';
+    // AR Split Pre payments Receipts - Split
+    const SRT_CREATE_AR_SP_PRE_PAYMENT = 'CREATE_AR_SP_PRE_PAYMENT';
+    const SRT_RTP_AR_SP_PRE_PAYMENT = 'RTP_AR_SP_PRE_PAYMENT';
+    const SRT_POST_AR_SP_PRE_PAYMENT = 'POST_AR_SP_PRE_PAYMENT';
 
     // Creation of Reversal & Correction Invoice
     const SRT_CREATE_AR_PREM_COMM_REV_INV = 'CREATE_AR_PREM_COMM_REV_INV';
@@ -86,7 +87,8 @@ final class SageEnum extends Enum
     const SRT_REV_CORR_AR_PREM_COMM_INV = 'SRT_REV_CORR_AR_PREM_COMM_INV';
     const SRT_REV_CORR_AP_PREM_INV = 'SRT_REV_CORR_AP_PREM_INV';
     const SRT_REV_CORR_AR_DIS_INV = 'SRT_REV_CORR_AR_DIS_INV';
-    // Sage Request Types End
+
+    // -------------------------------------- Sage Request Types End --------------------------------------------
 
     // Process Types
     const PT_BOOK_POLICY = 'BOOK_POLICY';
@@ -101,4 +103,8 @@ final class SageEnum extends Enum
     const SCT_REVERSAL = 'REVERSAL';
     const SCT_CORRECTION = 'CORRECTION';
     const SCT_DISCOUNT = 'DISCOUNT';
+
+    // Payment Frequencies
+    const SF_UPFRONT = 'upfront';
+    const SF_SPLIT_PAYMENT = 'split_payments';
 }

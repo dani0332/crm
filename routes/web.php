@@ -423,13 +423,13 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::post('cancel-transaction', [TransactionController::class, 'cancelAndReIssueTransection'])->name('cancel');
     });
     Route::group(['prefix' => 'valuation'], function () {
-        Route::get('calculatevaluation', [ValuationController::class, 'calculateValuation'])->name('calculatevaluation');
+        Route::get('/', [ValuationController::class, 'index'])->name('valuation');
+        Route::post('calculate', [ValuationController::class, 'calculateValuation'])->name('valuation.calculate');
         Route::resource('vehicledepreciation', VehicleDepreciationController::class);
-        // Route::resource('vehiclerange', VehicleRangeController::class);
-        // Route::resource('vehiclevalue', VehicleValueController::class);
+
+        Route::get('car-models', [ValuationController::class, 'carModelBasedOnCarMake'])->name('valuation.carmodels');
+        Route::get('car-model-detail', [ValuationController::class, 'carTrimBasedOnCarModel'])->name('valuation.carmodeldetail');
     });
-    Route::get('/valuation/car-models', [ValuationController::class, 'carModelBasedOnCarMake'])->name('valuation.carmodels');
-    Route::get('/valuation/car-model-detail', [ValuationController::class, 'carTrimBasedOnCarModel'])->name('valuation.carmodeldetail');
 
     Route::group(['prefix' => 'claim'], function () {
         Route::resource('claims', ClaimController::class);
@@ -538,32 +538,33 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     //Route::get('schedule-non-motor-aml', [RenewalsUploadController::class, 'scheduleNonMotorAml']);
 
     Route::post('followups/emails/events', [App\Http\Controllers\V2\FollowupController::class, 'getEmailEvents']);
+    Route::post('/update-user-status', [UserController::class, 'updateUserStatus']);
 });
 
 Route::POST('/sendBulkWelcomeEmails', [BulkEmailProcessController::class, 'ProcessBulkWelcomeEmails'])
     ->withoutMiddleware([App\Http\Middleware\VerifyCsrfToken::class]);
 
+//Scheduled to delete 1st April 2024
 /***** RestAPI */
+// Route::group(['middleware' => ['auth.rest']], function () {
+//     Route::group(['prefix' => 'form'], function () {
+//         Route::GET('/{form}', [FormController::class, 'index']);
+//         Route::GET('/{form}/{form_id}', [FormController::class, 'getFormDetail']);
+//         Route::PUT('/{form}/{form_id}', [FormController::class, 'update']);
+//         Route::DELETE('/{form}/{form_id}', [FormController::class, 'delete']);
+//         Route::POST('/{form}', [FormController::class, 'save']);
+//     });
+//     // Route::POST('/sendReviewEmail', [FormController::class,'sendReviewEmail'])
+//     //         ->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class]);;
 
-Route::group(['middleware' => ['auth.rest']], function () {
-    Route::group(['prefix' => 'form'], function () {
-        Route::GET('/{form}', [FormController::class, 'index']);
-        Route::GET('/{form}/{form_id}', [FormController::class, 'getFormDetail']);
-        Route::PUT('/{form}/{form_id}', [FormController::class, 'update']);
-        Route::DELETE('/{form}/{form_id}', [FormController::class, 'delete']);
-        Route::POST('/{form}', [FormController::class, 'save']);
-    });
-    // Route::POST('/sendReviewEmail', [FormController::class,'sendReviewEmail'])
-    //         ->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class]);;
+//     Route::group(['prefix' => 'users'], function () {
+//         Route::GET('/me', [UserController::class, 'me']);
+//     });
 
-    Route::group(['prefix' => 'users'], function () {
-        Route::GET('/me', [UserController::class, 'me']);
-    });
+//     Route::group(['prefix' => 'resource'], function () {
+//         Route::POST('/store', [UploadResourceController::class, 'store']);
+//     });
+// });
 
-    Route::group(['prefix' => 'resource'], function () {
-        Route::POST('/store', [UploadResourceController::class, 'store']);
-    });
-});
-
-Route::POST('/processInslyRenewalData', [RenewalDataProcessingController::class, 'FetchAndProcessInslyData'])
-    ->withoutMiddleware([App\Http\Middleware\VerifyCsrfToken::class]);
+// Route::POST('/processInslyRenewalData', [RenewalDataProcessingController::class, 'FetchAndProcessInslyData'])
+//     ->withoutMiddleware([App\Http\Middleware\VerifyCsrfToken::class]);

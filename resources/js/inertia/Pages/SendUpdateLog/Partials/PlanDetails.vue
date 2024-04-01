@@ -50,7 +50,7 @@ const isIndicativeAdditionalPrice = computed(() => {
   let hasRestrictedSubType = false;
   props.updateLogOptions?.forEach(option => {
     if (
-      ['MDOM', 'MDOV', 'MPC'].includes(option.slug) &&
+      ['MDOM', 'MDOV', 'MPC', 'ED', 'DM'].includes(option.slug) &&
       props.sendUpdateLog.option_id === option.value
     ) {
       hasRestrictedSubType = true;

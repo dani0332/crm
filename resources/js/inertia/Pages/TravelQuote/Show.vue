@@ -2855,7 +2855,6 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
         </template>
       </x-modal>
     </div>
-    <div class="p-4 rounded shadow mb-6 bg-warning"></div>
 
     <div class="p-4 rounded shadow mb-6 bg-white">
       <Collapsible :expanded="sectionExpanded">
