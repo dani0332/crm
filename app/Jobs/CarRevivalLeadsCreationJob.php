@@ -64,8 +64,8 @@ class CarRevivalLeadsCreationJob implements ShouldQueue, StackableJob
         $dataArr = [
             'firstName' => $this->lead->first_name,
             'lastName' => $this->lead->last_name,
-            // 'email' => $this->lead->email,
-            'email' => 'nouman.hussain@myalfred.com',
+            'email' => $this->lead->email,
+            // 'email' => 'nouman.hussain@myalfred.com',
             'address' => $this->lead->address,
             'mobileNo' => $this->lead->mobile_no,
             'dob' => $this->lead->dob,
