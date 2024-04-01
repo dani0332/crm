@@ -72,8 +72,8 @@ class EmbeddedProductRepository extends BaseRepository
 
             foreach ($prices as $price) {
                 if (! in_array($price->id, array_column($data['pricings'], 'id'))) {
-                    
-                    if(EmbeddedTransaction::where('product_id', $price->id)->exists()) {
+
+                    if (EmbeddedTransaction::where('product_id', $price->id)->exists()) {
                         $price->is_active = 0;
                         $price->save();
                     } else {
