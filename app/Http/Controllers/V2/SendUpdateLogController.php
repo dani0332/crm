@@ -29,6 +29,7 @@ use App\Repositories\PersonalQuoteRepository;
 use App\Repositories\PolicyIssuanceStatusRepository;
 use App\Repositories\QuoteTypeRepository;
 use App\Repositories\SendUpdateLogRepository;
+use App\Services\AllocationService;
 use App\Services\LeadAllocationService;
 use App\Services\LookupService;
 use App\Services\QuoteDocumentService;
@@ -69,7 +70,7 @@ class SendUpdateLogController extends Controller
                 $quoteType = QuoteType::where('id', $requestData['quote_type_id'])->first();
                 $quoteModel = $this->getModelObject($quoteType->code);
                 $childLeadResponse = $this->sendUpdateLogService->createChildLead($quoteModel, $requestData, $quoteType->code);
-                (new LeadAllocationService())->deductLeadAllocationCount($requestData['quote_uuid']);
+                (new AllocationService())->deductLeadAllocationCount($requestData['quote_uuid']);
             }
 
             DB::commit();

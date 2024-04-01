@@ -997,19 +997,5 @@ class LeadAllocationService extends BaseService
         return HealthQuote::whereNull('advisor_id')->where('health_team_type', $teamType)->count() ?? 0;
     }
 
-    public function deductLeadAllocationCount($quoteUuid)
-    {
-        $quote = CarQuote::with('advisor')->where('uuid', $quoteUuid)->first();
-        if ($quote->advisor) {
-            $leadAllocation = LeadAllocation::where('user_id', $quote->advisor->id)->first();
-            $leadAllocation->allocation_count = $leadAllocation->allocation_count - 1;
-            if (in_array($quote->assignment_type, [AssignmentTypeEnum::SYSTEM_ASSIGNED, AssignmentTypeEnum::SYSTEM_REASSIGNED])) {
-                $leadAllocation->auto_assignment_count = $leadAllocation->auto_assignment_count - 1;
-            } elseif (in_array($quote->assignment_type, [AssignmentTypeEnum::MANUAL_ASSIGNED, AssignmentTypeEnum::MANUAL_REASSIGNED])) {
-                $leadAllocation->manual_assignment_count = $leadAllocation->manual_assignment_count - 1;
-            }
-            $leadAllocation->save();
-        }
 
-    }
 }
