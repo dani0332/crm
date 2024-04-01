@@ -18,6 +18,7 @@ class DatabaseSeeder extends Seeder
             GenericPermissionSeeder::class,
             addSICWorkflow::class,
             UpdateOldTeamNamesSeeder::class,
+            AddCapAdvisorPermissionSeeder::class,
         ]);
     }
 }
