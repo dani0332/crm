@@ -309,9 +309,10 @@ class AllocationService
         return $query->get();
     }
 
-    public function deductLeadAllocationCount($quoteUuid)
+    public function deductLeadAllocationCount($quoteModel, $quoteUuid)
     {
-        $quote = CarQuote::with('advisor')->where('uuid', $quoteUuid)->first();
+        $quote = $quoteModel::with('advisor')->where('uuid', $quoteUuid)->first();
+
         if ($quote->advisor) {
             $leadAllocation = LeadAllocation::where('user_id', $quote->advisor->id)->first();
             $leadAllocation->allocation_count = $leadAllocation->allocation_count - 1;

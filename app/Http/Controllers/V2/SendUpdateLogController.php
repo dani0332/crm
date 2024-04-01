@@ -70,7 +70,7 @@ class SendUpdateLogController extends Controller
                 $quoteType = QuoteType::where('id', $requestData['quote_type_id'])->first();
                 $quoteModel = $this->getModelObject($quoteType->code);
                 $childLeadResponse = $this->sendUpdateLogService->createChildLead($quoteModel, $requestData, $quoteType->code);
-                (new AllocationService())->deductLeadAllocationCount($requestData['quote_uuid']);
+                (new AllocationService())->deductLeadAllocationCount($quoteModel, $requestData['quote_uuid']);
             }
 
             DB::commit();
