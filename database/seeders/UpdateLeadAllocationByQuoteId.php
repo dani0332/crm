@@ -2,13 +2,12 @@
 
 namespace Database\Seeders;
 
-use App\Enums\RolesEnum;
 use App\Enums\QuoteTypes;
+use App\Enums\RolesEnum;
 use App\Enums\TeamNameEnum;
 use App\Models\LeadAllocation;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 
 class UpdateLeadAllocationByQuoteId extends Seeder
 {
@@ -20,56 +19,55 @@ class UpdateLeadAllocationByQuoteId extends Seeder
         //
         // get all Advisors Car Lead Allocation
         $carLeadAllocations = DB::table('users')
-        ->select(
-            'users.id as userId',
-            'users.name as userName',
-            DB::raw('GROUP_CONCAT(DISTINCT t.name) as tiers'),
-            DB::raw('GROUP_CONCAT(DISTINCT q.name) as quads'),
-            DB::raw('(la.manual_assignment_count + la.auto_assignment_count) as allocationCount'),
-            DB::raw("DATE_FORMAT(FROM_UNIXTIME(la.last_allocated), '%d-%m-%Y %H:%i:%s') as lastAllocation"),
-            'la.max_capacity as maxCapacity',
-            'users.status as isAvailable',
-            DB::raw("DATE_FORMAT(users.last_login, '%d-%m-%Y %H:%i:%s') as lastLogin"),
-            'la.id as id',
-            'la.manual_assignment_count as manualAllocationCount',
-            'la.auto_assignment_count as autoAllocationCount',
-            'la.reset_cap'
-        )
-        ->join('tier_users as tu', 'tu.user_id', '=', 'users.id')
-        ->join('tiers as t', 't.id', '=', 'tu.tier_id')
-        ->leftJoin('quad_users as qu', 'qu.user_id', '=', 'users.id')
-        ->leftJoin('quadrants as q', 'q.id', '=', 'qu.quad_id')
-        ->join('lead_allocation as la', 'la.user_id', '=', 'users.id')
-        ->join('user_team', 'user_team.user_id', '=', 'users.id')
-        ->join('teams', 'teams.id', '=', 'user_team.team_id')
-        ->where('users.is_active', 1)
-        ->whereNull('la.quote_type_id')
-        ->groupBy('users.name', 'users.id', 'la.id')
-        ->get()->count();
+            ->select(
+                'users.id as userId',
+                'users.name as userName',
+                DB::raw('GROUP_CONCAT(DISTINCT t.name) as tiers'),
+                DB::raw('GROUP_CONCAT(DISTINCT q.name) as quads'),
+                DB::raw('(la.manual_assignment_count + la.auto_assignment_count) as allocationCount'),
+                DB::raw("DATE_FORMAT(FROM_UNIXTIME(la.last_allocated), '%d-%m-%Y %H:%i:%s') as lastAllocation"),
+                'la.max_capacity as maxCapacity',
+                'users.status as isAvailable',
+                DB::raw("DATE_FORMAT(users.last_login, '%d-%m-%Y %H:%i:%s') as lastLogin"),
+                'la.id as id',
+                'la.manual_assignment_count as manualAllocationCount',
+                'la.auto_assignment_count as autoAllocationCount',
+                'la.reset_cap'
+            )
+            ->join('tier_users as tu', 'tu.user_id', '=', 'users.id')
+            ->join('tiers as t', 't.id', '=', 'tu.tier_id')
+            ->leftJoin('quad_users as qu', 'qu.user_id', '=', 'users.id')
+            ->leftJoin('quadrants as q', 'q.id', '=', 'qu.quad_id')
+            ->join('lead_allocation as la', 'la.user_id', '=', 'users.id')
+            ->join('user_team', 'user_team.user_id', '=', 'users.id')
+            ->join('teams', 'teams.id', '=', 'user_team.team_id')
+            ->where('users.is_active', 1)
+            ->whereNull('la.quote_type_id')
+            ->groupBy('users.name', 'users.id', 'la.id')
+            ->get()->count();
 
         if ($carLeadAllocations > 0) {
-                //Update Car Lead Allocation By Quote Type Id Wise
-                DB::table('lead_allocation')
-                    ->whereIn('user_id', function ($query) {
-                        $query->select('userId')
-                            ->from(function ($subquery) {
-                                $subquery->select('users.id as userId')
-                                    ->from('users')
-                                    ->join('tier_users as tu', 'tu.user_id', '=', 'users.id')
-                                    ->join('tiers as t', 't.id', '=', 'tu.tier_id')
-                                    ->leftJoin('quad_users as qu', 'qu.user_id', '=', 'users.id')
-                                    ->leftJoin('quadrants as q', 'q.id', '=', 'qu.quad_id')
-                                    ->join('lead_allocation as la', 'la.user_id', '=', 'users.id')
-                                    ->join('user_team', 'user_team.user_id', '=', 'users.id')
-                                    ->join('teams', 'teams.id', '=', 'user_team.team_id')
-                                    ->where('users.is_active', 1)
-                                    ->groupBy('users.id', 'la.id');
-                            });
-                    })
-                    ->update(['quote_type_id' => QuoteTypes::CAR->id()]);
+            //Update Car Lead Allocation By Quote Type Id Wise
+            DB::table('lead_allocation')
+                ->whereIn('user_id', function ($query) {
+                    $query->select('userId')
+                        ->from(function ($subquery) {
+                            $subquery->select('users.id as userId')
+                                ->from('users')
+                                ->join('tier_users as tu', 'tu.user_id', '=', 'users.id')
+                                ->join('tiers as t', 't.id', '=', 'tu.tier_id')
+                                ->leftJoin('quad_users as qu', 'qu.user_id', '=', 'users.id')
+                                ->leftJoin('quadrants as q', 'q.id', '=', 'qu.quad_id')
+                                ->join('lead_allocation as la', 'la.user_id', '=', 'users.id')
+                                ->join('user_team', 'user_team.user_id', '=', 'users.id')
+                                ->join('teams', 'teams.id', '=', 'user_team.team_id')
+                                ->where('users.is_active', 1)
+                                ->groupBy('users.id', 'la.id');
+                        });
+                })
+                ->update(['quote_type_id' => QuoteTypes::CAR->id()]);
         }
 
-        
         $healthLeadAllocations = LeadAllocation::select([
             'lead_allocation.id as id',
             'lead_allocation.user_id as userId',
@@ -92,8 +90,8 @@ class UpdateLeadAllocationByQuoteId extends Seeder
             ->where('u.is_active', true)
             ->whereNull('lead_allocation.quote_type_id')
             ->whereIn('r.name', [RolesEnum::EBPAdvisor, RolesEnum::RMAdvisor])->get()->count();
-          
-         if($healthLeadAllocations > 0){
+
+        if ($healthLeadAllocations > 0) {
 
             DB::table('lead_allocation')
                 ->whereIn('user_id', function ($query) {
@@ -110,7 +108,7 @@ class UpdateLeadAllocationByQuoteId extends Seeder
                         ->groupBy('u.name', 'u.id', 'lead_allocation.id');
                 })
                 ->update(['quote_type_id' => QuoteTypes::HEALTH->id()]);
-         }
+        }
 
     }
 }
