@@ -20,7 +20,6 @@ use App\Models\CustomerDetail;
 use App\Models\Entity;
 use App\Models\Nationality;
 use App\Models\Payment;
-use App\Models\PaymentSplits;
 use App\Models\PaymentStatusLog;
 use App\Models\PersonalQuote;
 use App\Models\QuoteMemberDetail;
@@ -130,84 +129,24 @@ class AjaxController extends Controller
 
     public function generatePaymentLink(Request $request)
     {
-        if ($request->new_payment_structure === true) {
-            return $this->generateSplitPaymentLink($request);
-        } else {
-            $payment = Payment::where('code', '=', $request->paymentCode)->first();
-            if (! $payment) {
-                return response()->json(['success' => false]);
-            }
-            if ($payment->payment_link != null && now() < Carbon::parse($payment->payment_link_created_at)->addDays(3)) {
-                return response()->json(['success' => true, 'payment_link' => $payment->payment_link]);
-            } else {
-                $quoteModel = $this->getQuoteObject($request->modelType, $request->quoteId);
-                $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($request->modelType));
-
-                $description = (get_class($quoteModel) == PersonalQuote::class) ? ($payment->personalPlan->text ?? '') : ($quoteModel->plan->text ?? '');
-
-                $paymentLink = config('constants.PAYMENT_REDIRECT_LINK');
-
-                $paymentLink = $payment->payment_methods_code == PaymentMethodsEnum::InsureNowPayLater ? $paymentLink.'tabby' : $paymentLink.'checkout';
-
-                $paymentParams = [
-                    'code' => $payment->code,
-                    'quoteTypeId' => $quoteTypeId,
-                ];
-                $paymentLinkURL = $paymentLink.'?'.http_build_query($paymentParams);
-
-                $invoiceRequestData = [
-                    'firstName' => $quoteModel->first_name,
-                    'lastName' => $quoteModel->last_name,
-                    'email' => $quoteModel->email,
-                    'emailSubject' => 'Payment Request',
-                    'items' => [
-                        [
-                            'description' => $description,
-                            'totalPrice' => [
-                                'currencyCode' => 'AED',
-                                'value' => ceil($payment->captured_amount * 100),
-                            ],
-                            'quantity' => 1,
-                        ],
-                    ],
-                    'total' => [
-                        'currencyCode' => 'AED',
-                        'value' => ceil($payment->captured_amount * 100),
-                    ],
-                    'merchantOrderReference' => strtoupper($payment->code),
-                ];
-
-                info('Request object for '.$quoteModel->uuid.' is '.json_encode($invoiceRequestData));
-
-                return response()->json(['success' => true, 'payment_link' => $paymentLinkURL]);
-            }
-        }
-    }
-
-    public function generateSplitPaymentLink($request)
-    {
-        $splitPayment = PaymentSplits::where(['code' => $request->paymentCode, 'sr_no' => $request->splitPaymentId])->first();
-        $payment = $splitPayment->payment;
-        $modelType = $request->modelType;
-        $quoteId = $request->quoteId;
-
+        $payment = Payment::where('code', '=', $request->paymentCode)->first();
         if (! $payment) {
             return response()->json(['success' => false]);
         }
-        if ($splitPayment->payment_link != null && now() < Carbon::parse($splitPayment->payment_link_created_at)->addDays(3)) {
-            return response()->json(['success' => true, 'payment_link' => $splitPayment->payment_link]);
+        if ($payment->payment_link != null && now() < Carbon::parse($payment->payment_link_created_at)->addDays(3)) {
+            return response()->json(['success' => true, 'payment_link' => $payment->payment_link]);
         } else {
-            $quoteModel = $this->getQuoteObject($modelType, $quoteId);
-            $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
+            $quoteModel = $this->getQuoteObject($request->modelType, $request->quoteId);
+            $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($request->modelType));
 
             $description = (get_class($quoteModel) == PersonalQuote::class) ? ($payment->personalPlan->text ?? '') : ($quoteModel->plan->text ?? '');
 
             $paymentLink = config('constants.PAYMENT_REDIRECT_LINK');
 
-            $paymentLink = $splitPayment->payment_method == PaymentMethodsEnum::InsureNowPayLater ? $paymentLink.'tabby' : $paymentLink.'checkout';
+            $paymentLink = $payment->payment_methods_code == PaymentMethodsEnum::InsureNowPayLater ? $paymentLink.'tabby' : $paymentLink.'checkout';
 
             $paymentParams = [
-                'code' => $payment->code.'-'.$splitPayment->sr_no,
+                'code' => $payment->code,
                 'quoteTypeId' => $quoteTypeId,
             ];
             $paymentLinkURL = $paymentLink.'?'.http_build_query($paymentParams);
@@ -222,23 +161,23 @@ class AjaxController extends Controller
                         'description' => $description,
                         'totalPrice' => [
                             'currencyCode' => 'AED',
-                            'value' => ceil($splitPayment->payment_amount * 100),
+                            'value' => ceil($payment->captured_amount * 100),
                         ],
                         'quantity' => 1,
                     ],
                 ],
                 'total' => [
                     'currencyCode' => 'AED',
-                    'value' => ceil($splitPayment->payment_amount * 100),
+                    'value' => ceil($payment->captured_amount * 100),
                 ],
-                'merchantOrderReference' => strtoupper($payment->code.'-'.$splitPayment->sr_no),
+                'merchantOrderReference' => strtoupper($payment->code),
             ];
 
             info('Request object for '.$quoteModel->uuid.' is '.json_encode($invoiceRequestData));
 
             return response()->json(['success' => true, 'payment_link' => $paymentLinkURL]);
-
         }
+
     }
 
     public function commercialCarModelBasedOnCarMakeId(Request $request)
@@ -317,7 +256,7 @@ class AjaxController extends Controller
 
                 $quote->first_name = $data['first_name'];
                 $quote->last_name = $data['last_name'];
-                $quote->dob = $data['dob'];
+                $quote->dob = date('Y-m-d', strtotime($data['dob']));
                 $quote->email = $data['email'];
                 $quote->mobile_no = $data['mobile_number'];
                 $quote->nationality_id = $data['nationality_id'];

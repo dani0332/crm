@@ -657,7 +657,7 @@ const caculateCommission = () => {
       </x-alert>
       <x-checkbox
         v-model="modals.isConfirmed"
-        label="I confirm and attest that all the information is correct"
+        label="I confirm and attest that all information recorded is correct."
       />
       <template #actions>
         <div class="text-right space-x-4">
