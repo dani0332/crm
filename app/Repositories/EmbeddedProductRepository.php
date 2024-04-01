@@ -72,7 +72,14 @@ class EmbeddedProductRepository extends BaseRepository
 
             foreach ($prices as $price) {
                 if (! in_array($price->id, array_column($data['pricings'], 'id'))) {
-                    $price->delete();
+                    
+                    if(EmbeddedTransaction::where('product_id', $price->id)->exists()) {
+                        $price->is_active = 0;
+                        $price->save();
+                    } else {
+                        // only delete options which are not used in any transaction
+                        $price->delete();
+                    }
                 }
             }
 
@@ -93,7 +100,9 @@ class EmbeddedProductRepository extends BaseRepository
      */
     public function fetchGetBy($column, $value)
     {
-        return $this->where($column, $value)->with(['insuranceProvider', 'placements.quoteType', 'prices'])->firstOrFail();
+        return $this->where($column, $value)->with(['insuranceProvider', 'placements.quoteType', 'prices' => function ($query) {
+            $query->where('is_active', 1);
+        }])->firstOrFail();
     }
 
     /**
