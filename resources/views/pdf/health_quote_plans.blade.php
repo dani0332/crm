@@ -207,9 +207,9 @@
             font-size: 12px;
         }
         .provider-logo {
-            width: 100px;
+            width: 150px;
             position: absolute;
-            top: 50%;
+            top: 55%;
             left: 50%;
             transform: translate(-50%, -50%);
             max-width: 100%;
