@@ -26,7 +26,7 @@ class Dtt extends Command
      *
      * @var string
      */
-    protected $description = 'This cron will fetch the leads 1 year ago (- 15 days) from the car quotes according to given criteria';
+    protected $description = 'This cron will fetch the leads 11 months && 1 year 11 months ago from the car quotes according to given criteria';
 
     private $leadAllocationService = null;
 
@@ -69,28 +69,20 @@ class Dtt extends Command
                         ->where('created_at', '<=', $datethirtyDaysBefore);
                 })
                 ->where('source', '!=', LeadSourceEnum::RENEWAL_UPLOAD)
-                // ->where(function ($q) {
-                //     $q->where('source', '!=', LeadSourceEnum::RENEWAL_UPLOAD)
-                //         ->orWhereNotNull('renewal_batch')
-                //         ->orWhereNotNull('previous_quote_policy_number')
-                //         ->orWhereNotNull('mobile_no');
-                // })
 
                 ->whereNotIn('quote_status_id', [QuoteStatusEnum::PolicyIssued, QuoteStatusEnum::TransactionApproved])
                 ->where('payment_status_id', '!=', PaymentStatusEnum::CAPTURED)
-                // ->where(function ($q) {
-                //     $q->whereNotIn('quote_status_id', [QuoteStatusEnum::PolicyIssued, QuoteStatusEnum::TransactionApproved])
-                //         ->orWhere('payment_status_id', '!=', PaymentStatusEnum::CAPTURED);
-                // })
+
                 ->groupBy(['email', 'car_make_id', 'car_model_id', 'year_of_manufacture'])
                 ->orderBy('id', 'DESC')
                 ->get();
 
-            info('------CarRevivalLeadsCreationJobCount --'.count($leads));
+            // dd($leads->pluck('uuid')->toArray());
+            info('------CarRevivalLeadsCreationJobCount --' . count($leads));
             foreach ($leads as $carLead) {
                 $isTierR = $this->leadAllocationService->checkIfLeadIsRenewal($carLead);
-                info('------isTierR --'.! $isTierR);
-                if (! $isTierR) {
+                info('------isTierR --' . !$isTierR);
+                if (!$isTierR) {
                     $jobs[] = new CarRevivalLeadsCreationJob($carLead);
                 }
             }
@@ -102,13 +94,13 @@ class Dtt extends Command
                     ->addJobs($jobs)
 
                     ->then(function () use ($logPrefix) {
-                        info('------'.$logPrefix.' all jobs completed successfully ------');
+                        info('------' . $logPrefix . ' all jobs completed successfully ------');
                     })
                     ->catch(function () use ($logPrefix) {
-                        info('------'.$logPrefix.' one of batch is failed.------');
+                        info('------' . $logPrefix . ' one of batch is failed.------');
                     })
                     ->finally(function () use ($logPrefix) {
-                        info('------'.$logPrefix.' everything done ------');
+                        info('------' . $logPrefix . ' everything done ------');
                     })
                     ->allowFailures()
                     ->withDelay(2)
@@ -117,7 +109,7 @@ class Dtt extends Command
                 info('------No lead Found------');
             }
         } catch (\Exception $exception) {
-            info('DTT Exception : '.$exception->getMessage());
+            info('DTT Exception : ' . $exception->getMessage());
         }
     }
 }
