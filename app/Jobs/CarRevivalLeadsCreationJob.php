@@ -160,7 +160,7 @@ class CarRevivalLeadsCreationJob implements ShouldQueue, StackableJob
 
                 info('CarRevivalLeadsCreationJobDttRevivalsInsertedUUID -' . $capiResponse->quoteUID);
 
-                // CarQuote::find($this->lead->id)->update(['is_revived' => true]);
+                CarQuote::find($this->lead->id)->update(['is_revived' => true]);
 
                 info('CarRevivalLeadsCreationJobIs_revivedUpdated -' . $this->lead->id);
             } else {
