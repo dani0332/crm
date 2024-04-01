@@ -607,32 +607,32 @@ const plansTable = reactive({
 });
 
 const onLoadAvailablePlansData = async () => {
-    let data = {
-        jsonData: true,
-    };
-    let url = `/quotes/health/available-plans/${page.props.quote.uuid}`;
-    axios
-        .post(url, data)
-        .then(res => {
-            plansTable.data = res.data.length > 0 ? res?.data[0] : [];
-            getSmallestCopayRateAsDefaultValue();
-            plansTable.data.forEach(plan => {
-                if (plan.isManualPlan) {
-                    isManualPlansCount.value++;
-                }
+  let data = {
+    jsonData: true,
+  };
+  let url = `/quotes/health/available-plans/${page.props.quote.uuid}`;
+  axios
+    .post(url, data)
+    .then(res => {
+      plansTable.data = res.data.length > 0 ? res?.data[0] : [];
+      getSmallestCopayRateAsDefaultValue();
+      plansTable.data.forEach(plan => {
+        if (plan.isManualPlan) {
+          isManualPlansCount.value++;
+        }
 
-                if (plan.id === selectedPlan.value?.id && !plan.needPriceUpdate) {
-                    selectedPlan.value.needPriceUpdate = false;
-                }
-            });
+        if (plan.id === selectedPlan.value?.id && !plan.needPriceUpdate) {
+          selectedPlan.value.needPriceUpdate = false;
+        }
+      });
 
-            setTimeout(() => {
-                onPlanFiltersSubmit();
-            }, 800);
-        })
-        .catch(err => {
-            console.log(err);
-        });
+      setTimeout(() => {
+        onPlanFiltersSubmit();
+      }, 800);
+    })
+    .catch(err => {
+      console.log(err);
+    });
 };
 
 const planClicked = plan => {
@@ -907,15 +907,16 @@ const getSmallestCopayRateAsDefaultValue = () => {
       }
     });
 
-    element.memberPremiumBreakdown?.forEach(
-      function callback(breakDown, index) {
-        breakDown.ratesPerCopay?.forEach(function callback(ratePerCopay) {
-          if (ratePerCopay.notifyAgent) {
-            element.needPriceUpdate = true;
-          }
-        });
-      },
-    );
+    element.memberPremiumBreakdown?.forEach(function callback(
+      breakDown,
+      index,
+    ) {
+      breakDown.ratesPerCopay?.forEach(function callback(ratePerCopay) {
+        if (ratePerCopay.notifyAgent) {
+          element.needPriceUpdate = true;
+        }
+      });
+    });
 
     if (isMounted.value && selectedCoPay.planId == element.id) {
       element.actualPremium = selectedCoPay.premium;
@@ -2695,7 +2696,13 @@ const handlePlanSelected = plan => {
           </x-badge>
 
           <x-button
-            v-if="hasAnyRole([rolesEnum.BetaUser, rolesEnum.RMAdvisor, rolesEnum.HealthManager])"
+            v-if="
+              hasAnyRole([
+                rolesEnum.BetaUser,
+                rolesEnum.RMAdvisor,
+                rolesEnum.HealthManager,
+              ])
+            "
             size="sm"
             color="emerald"
             @click.prevent="modals.createPlan = true"
@@ -3240,6 +3247,13 @@ const handlePlanSelected = plan => {
       />
     </div>
 
+    <CustomerChatLogs
+      v-if="hasRole(rolesEnum.BetaUser)"
+      :customerName="quote?.first_name + ' ' + quote?.last_name"
+      :quoteId="quote.uuid"
+      :quoteType="'HEALTH'"
+    />
+    
     <AuditLogs :type="'App\\Models\\HealthQuote'" :id="$page.props.quote.id" :quoteCode="$page.props.quote.code"/>
     
 

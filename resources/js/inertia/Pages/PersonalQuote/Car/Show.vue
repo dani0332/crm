@@ -6,11 +6,12 @@ import LazyCreatePlan from './Partials/CreatePlan.vue';
 import AssignTier from './Partials/AssignTier.vue';
 import FollowUpReasons from './Partials/FollowUpReasons.vue';
 import RiskRatingScoreDetails from '../../../Components/RiskRatingScoreDetails.vue';
+import { fileUploadErrorMessage } from '@/inertia/Composables/utilities.js';
 import { onMounted, watch } from 'vue';
 import { reactive } from 'vue';
 import MigratePayment from './../../../Components/MigratePayment.vue';
 
-import {fileUploadErrorMessage} from "@/inertia/Composables/utilities.js";
+
 
 defineProps({
   quote: Object,
@@ -1039,15 +1040,15 @@ const docForm = useForm({
 
 const uploadFile = (doc, filesWithInfo) => {
   let url = '/quotes/car/documents/store';
-  const { files, rejectReason} = filesWithInfo;
+  const { files, rejectReason } = filesWithInfo;
   if (files.length == 0) {
     notification.error({
       title: 'File upload failed',
       position: 'top',
     });
-    docForm.setError({error: fileUploadErrorMessage(doc, rejectReason)});
-    return false
-  };
+    docForm.setError({ error: fileUploadErrorMessage(doc, rejectReason) });
+    return false;
+  }
   isUploading.value = true;
   docForm
     .transform(data => ({
@@ -1292,12 +1293,9 @@ const confirmSendEmail = () => {
 const confirmSendOCBEmailNB = () => {
   processingOCBEmailNB.value = true;
   axios
-    .post(
-      `/quotes/car/${page.props.record.uuid}/send-email-ocb-nb`,
-      {
-        responseType: 'json',
-      },
-    )
+    .post(`/quotes/car/${page.props.record.uuid}/send-email-ocb-nb`, {
+      responseType: 'json',
+    })
     .then(response => {
       processingOCBEmailNB.value = false;
       notification.success({
@@ -1723,11 +1721,7 @@ const handlePlanSelected = plan => {
               Duplicate Lead
             </x-button>
             <x-button
-              v-if="
-                hasAnyRole([
-                  rolesEnum.LeadPool,
-                ])
-              "
+              v-if="hasAnyRole([rolesEnum.LeadPool])"
               class="mr-2"
               size="sm"
               color="#ff5e00"
@@ -2864,7 +2858,7 @@ const handlePlanSelected = plan => {
             isManualUpdate,
             isRenewal,
             isDisabled,
-            puaPremium
+            puaPremium,
           }"
         >
           <p>{{ providerName }}</p>
@@ -2895,19 +2889,23 @@ const handlePlanSelected = plan => {
             </x-tag>
 
             <x-tag
-                v-if="puaPremium && puaPremium != null"
-                size="xs"
-                class="mt-0.5 text-[10px] text-white"
-                style="background-color: #E00000"
+              v-if="puaPremium && puaPremium != null"
+              size="xs"
+              class="mt-0.5 text-[10px] text-white"
+              style="background-color: #e00000"
             >
-                <x-tooltip  position="right">
-                    <template #tooltip>
-                      <span class="font-medium">
-                          Pending Underwriter Approval (PUA) indicates that this quote is prepared using our internal rating calculator. Please contact the client to get the required documents, to proceed with generating a quote on the insurer portal and connect with the underwriter to obtain their approval.
-                       </span>
-                    </template>
-                    PUA
-                </x-tooltip>
+              <x-tooltip position="right">
+                <template #tooltip>
+                  <span class="font-medium">
+                    Pending Underwriter Approval (PUA) indicates that this quote
+                    is prepared using our internal rating calculator. Please
+                    contact the client to get the required documents, to proceed
+                    with generating a quote on the insurer portal and connect
+                    with the underwriter to obtain their approval.
+                  </span>
+                </template>
+                PUA
+              </x-tooltip>
             </x-tag>
           </div>
         </template>
@@ -3168,15 +3166,15 @@ const handlePlanSelected = plan => {
         :showHeader="true"
         v-model:modelValue="modals.sendOCBConfirmNB"
         :backdrop-close="false"
-        >
+      >
         <template #header>
-        <p>Send Email OCB NB</p>
+          <p>Send Email OCB NB</p>
         </template>
         <template #default>
-        <p>Are you sure send email to customer?</p>
+          <p>Are you sure send email to customer?</p>
         </template>
         <template #actions>
-            <div class="text-right space-x-4">
+          <div class="text-right space-x-4">
             <x-button
               size="sm"
               ghost
@@ -3185,12 +3183,17 @@ const handlePlanSelected = plan => {
             >
               Cancel
             </x-button>
-            <x-button size="sm" color="error" :loading="processingOCBEmailNB" @click.prevent="confirmSendOCBEmailNB">
+            <x-button
+              size="sm"
+              color="error"
+              :loading="processingOCBEmailNB"
+              @click.prevent="confirmSendOCBEmailNB"
+            >
               Send
             </x-button>
           </div>
         </template>
-    </AppModal>
+      </AppModal>
       <x-modal v-model="modals.createPlan" size="xl" show-close backdrop>
         <template #header> Create Car Quote </template>
         <LazyCreatePlan
@@ -3869,11 +3872,23 @@ const handlePlanSelected = plan => {
         :hide-footer="historyData.length < 15"
       />
     </div>
+
+    <CustomerChatLogs
+      v-if="hasRole(rolesEnum.BetaUser)"
+      :customerName="record?.first_name + ' ' + record?.last_name"
+      :quoteId="quote.uuid"
+      :quoteType="'CAR'"
+    />
   </div>
   <AuditLogs :type="'App\\Models\\CarQuote'" :id="$page.props.record.id" :quoteCode="$page.props.record.code"/>
   <ApiLogs
     v-if="can(permissionEnum.API_LOG_VIEW)"
     :type="'App\\Models\\CarQuote'"
     :id="$page.props.record.id"
+  />
+
+  <ClientInquiryLogs
+    v-if="clientInquiryLogs.length > 0"
+    :logs="clientInquiryLogs"
   />
 </template>

@@ -19,9 +19,8 @@ class MigrateOldPaymentsJob implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
     use GenericQueriesAllLobs;
 
-    public $tries = 3;
+    public $tries = 1;
     public $timeout = 7200; // 2 hours
-    public $backoff = 300;
     /**
      * Create a new job instance.
      */
