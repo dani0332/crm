@@ -149,7 +149,6 @@ function onAssignLead(isValid) {
         preserveState: true,
         onSuccess: res => {
           quotesSelected.value = [];
-          selected = [];
         },
       });
   }
