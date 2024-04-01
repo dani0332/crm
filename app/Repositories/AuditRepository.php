@@ -15,8 +15,9 @@ class AuditRepository extends BaseRepository
     public function fetchGetQuoteAudits()
     {
         $quoteObject = app('\\App\\Models\\'.ucfirst(strtolower(request()->quote_type)).'Quote');
-
         $auditables = $quoteObject->getAuditables();
+        $code = isset(request()->code) ? request()->code : '';
+        $auditableTypes = ['App\Models\Payment', 'App\Models\PaymentSplits'];
 
         $query = DB::table('audits')
             ->select('audits.*', 'users.name')
@@ -24,7 +25,12 @@ class AuditRepository extends BaseRepository
             ->where(function ($q) use ($auditables) {
                 $q->where('auditable_id', request()->auditable_id)->where('auditable_type', $auditables['auditable_type']);
             });
-
+        if ($code != '') {
+            $query->orWhere(function ($query) use ($code, $auditableTypes) {
+                $query->where('old_values', 'like', '%"code":"'.$code.'"%')
+                    ->whereIn('auditable_type', $auditableTypes);
+            });
+        }
         if (! empty($auditables['relations'])) {
             foreach ($auditables['relations'] as $relation) {
                 $model = $relation['auditable_type'];
