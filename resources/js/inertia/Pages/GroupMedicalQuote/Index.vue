@@ -147,6 +147,10 @@ function onAssignLead(isValid) {
       .post(route('manualLeadAssign', { quoteType: 'business' }), {
         preserveScroll: true,
         preserveState: true,
+        onSuccess: res => {
+          quotesSelected.value = [];
+          selected = [];
+        },
       });
   }
 }
@@ -320,7 +324,6 @@ onMounted(() => {
           class="w-full"
           placeholder="Search by Renewal Batch"
         />
-
       </div>
       <div class="flex justify-between gap-3 mb-4 mt-1">
         <div v-if="can(permissionsEnum.DATA_EXTRACTION)">
