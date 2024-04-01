@@ -68,6 +68,7 @@ use App\Http\Controllers\V2\LifeQuoteController;
 use App\Http\Controllers\V2\PersonalPlanController;
 use App\Http\Controllers\V2\PersonalQuoteController;
 use App\Http\Controllers\V2\PetQuoteController;
+use App\Http\Controllers\V2\TiersController;
 use App\Http\Controllers\V2\YachtQuoteController;
 use App\Http\Controllers\ValuationController;
 use App\Http\Controllers\VehicleDepreciationController;
@@ -387,6 +388,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
             ->names(generateRouteNames('renewal-batches'))
             ->middleware('check_route_access');
         Route::resource('tier', GenericCrudController::class);
+        // Route::resource('tier', TiersController::class);
         Route::resource('quadrant', GenericCrudController::class);
         Route::resource('rule', GenericCrudController::class);
         Route::post('save', [GenericCrudController::class, 'store'])->name('save');
