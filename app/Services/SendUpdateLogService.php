@@ -496,8 +496,8 @@ class SendUpdateLogService
         $requiredDocumentsCheck = count(array_diff($requiredDocuments, $uploadedDocuments)) > 0;
 
         if ($sendUpdateLog->is_booking_filled) { // Check if all booking details uploaded.
-            if($sendUpdateLog->category->code == SendUpdateLogStatusEnum::EF) {
-                if($sendUpdateLog->option->code == SendUpdateLogStatusEnum::PPE && $sendUpdateLog->transaction_payment_status == SendUpdateLogStatusEnum::TRANSACTION_APPROVED && $sendUpdateLog->is_policy_filled ) { // Check if all policy details uploaded.
+            if ($sendUpdateLog->category->code == SendUpdateLogStatusEnum::EF) {
+                if ($sendUpdateLog->option->code == SendUpdateLogStatusEnum::PPE && $sendUpdateLog->transaction_payment_status == SendUpdateLogStatusEnum::TRANSACTION_APPROVED && $sendUpdateLog->is_policy_filled) { // Check if all policy details uploaded.
                     return SendUpdateLogStatusEnum::SU;
                 }
 
@@ -520,11 +520,12 @@ class SendUpdateLogService
                 return SendUpdateLogStatusEnum::SUC;
             }
         }
-if (in_array($sendUpdateLog->category->code, [SendUpdateLogStatusEnum::EN, SendUpdateLogStatusEnum::CPU])) {
+        if (in_array($sendUpdateLog->category->code, [SendUpdateLogStatusEnum::EN, SendUpdateLogStatusEnum::CPU])) {
             if ($requiredDocumentsCheck) {
                 return SendUpdateLogStatusEnum::SUC;
             }
         }
+
         return false;
     }
 
