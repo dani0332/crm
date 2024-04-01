@@ -7,7 +7,7 @@ const props = defineProps({
   modelValue: { type: Boolean, default: false },
   quoteType: Object,
   quoteDetails: Object,
-  entityDetails: Object,
+    entityDetails: {type: Object},
   nationalities: Object,
   membersDetails: Object,
   uboDetails: Object,
@@ -17,6 +17,11 @@ const props = defineProps({
   quoteAmlStatus: Number,
   customerDetails: Object,
 });
+
+
+if (props.entityDetails.entity === undefined) {
+    props.entityDetails.entity = {company_name:null};
+}
 
 const loader = ref({
   search: false,
@@ -187,8 +192,8 @@ const linkEntity = () => {
         props.entityDetails.entity.pep = res.data.response.pep;
         props.entityDetails.entity.financial_sanctions = res.data.response.financial_sanctions;
         props.entityDetails.entity.dual_nationality = res.data.response.dual_nationality;
-
         componentKey.value += 1
+
       notification.success({
         title: res.data.message,
         position: 'top',
@@ -207,6 +212,7 @@ const show = ref(true);
 </script>
 
 <template>
+
   <AppModal
     :showClose="true"
     :showHeader="true"
@@ -219,7 +225,6 @@ const show = ref(true);
         Please confirm the Company Name, and UBO details as per the Trade
         License
       </p>
-
       <x-form @submit="insuredDetailsSubmit" :auto-focus="false">
         <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 mb-5">
           <x-field label="Trade License No">
