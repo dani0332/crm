@@ -19,6 +19,7 @@ class DatabaseSeeder extends Seeder
             addSICWorkflow::class,
             UpdateOldTeamNamesSeeder::class,
             AddCapAdvisorPermissionSeeder::class,
+            UpdateLeadAllocationByQuoteId::class,
         ]);
     }
 }
