@@ -4,7 +4,6 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 
 class UpdateOldTeamNamesSeeder extends Seeder
 {
@@ -17,18 +16,18 @@ class UpdateOldTeamNamesSeeder extends Seeder
         $nameMappings = [
             'RM-NB' => 'Best',
             'RM-Speed' => 'Good',
-            'EBP' =>  'Entry-Level'
+            'EBP' => 'Entry-Level',
         ];
 
         // Update the team names
         foreach ($nameMappings as $oldName => $newName) {
             DB::table('teams')->where('name', $oldName)->update(['name' => $newName]);
         }
-        
-       // Update health_quote_request table
-       DB::table('health_quote_request')
-       ->whereIn('health_team_type', array_keys($nameMappings))
-       ->update(['health_team_type' => DB::raw('CASE 
+
+        // Update health_quote_request table
+        DB::table('health_quote_request')
+            ->whereIn('health_team_type', array_keys($nameMappings))
+            ->update(['health_team_type' => DB::raw('CASE 
                                                WHEN health_team_type = "EBP" THEN "Entry-Level"
                                                WHEN health_team_type = "RM-Speed" THEN "Good"
                                                WHEN health_team_type = "RM-NB" THEN "Best"
@@ -37,4 +36,3 @@ class UpdateOldTeamNamesSeeder extends Seeder
     }
 
 }
-
