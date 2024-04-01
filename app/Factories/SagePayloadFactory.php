@@ -11,7 +11,7 @@ use Carbon\Carbon;
 
 class SagePayloadFactory
 {
-    private static $sageDateTimeFormat = config('constants.SAGE_300_API_DATE_FORMAT');
+    private static $sageDateTimeFormat = 'Y-m-d\TH:i:s\Z'; //config('constants.SAGE_300_API_DATE_FORMAT');
 
     public static function createPayload($request, $leadStatus)
     {
