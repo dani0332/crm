@@ -28,7 +28,6 @@ use App\Facades\Capi;
 use App\Http\Requests\ExportPlansPdfRequest;
 use App\Http\Requests\StorePaymentRequest;
 use App\Http\Requests\UpdateLeadStatusRequest;
-use App\Http\Requests\UpdatePaymentRequest;
 use App\Jobs\CarRenewalEmailJob;
 use App\Jobs\SendOCBIntroEmailJob;
 use App\Jobs\SyncSIBContactJob;
@@ -1743,7 +1742,7 @@ class CRUDController extends Controller
         return back()->with('success', 'Payment has been created');
     }
 
-    public function updatePayment(UpdatePaymentRequest $request)
+    public function updatePayment(Request $request)
     {
         $paymentInformation = [
             'collection_type' => $request->collection_type,

@@ -109,13 +109,11 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
             if ($masterPayment->payment_methods != PaymentMethodsEnum::CreditCard && $masterPayment->payment_methods != PaymentMethodsEnum::InsureNowPayLater) {
                 $paymentInformation['authorized_at'] = now();
             }
-            $payment = Payment::create($paymentInformation);
-
+            $quoteModel->payments()->create($paymentInformation);
             //Add split payments start
             $this->addPaymentSplits($request, $paymentInformation['code']);
             //Add split payments ends
-
-            $quoteModel->payments()->save($payment);
+           
             $paymentLog = new PaymentStatusLog([
                 'current_payment_status_id' => PaymentStatusEnum::NEW,
                 'payment_code' => $paymentInformation['code'],
@@ -126,12 +124,10 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
             $quoteModel->quote_status_id = QuoteStatusEnum::PaymentPending;
             $quoteModel->save();
             DB::commit();
-
-            return back()->with('success', 'Payment Added');
+            return ['status' => 'success', 'message' => 'Payment Added'];            
         } catch (Exception $exception) {
             DB::rollBack(); // Rollback changes if any error occurred
-
-            return back()->with('error', $exception->getMessage());
+            return ['status' => 'error', 'message' => $exception->getMessage()];            
         }
     }
 
@@ -164,7 +160,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
             }
             $payment = Payment::where('code', $request->paymentCode)->first();
             if (! $payment) {
-                return back()->with('message', 'Payment record not found');
+                return ['status' => 'error', 'message' => 'Payment record not found'];
             }
 
             if ($masterPayment->payment_methods == PaymentMethodsEnum::CreditApproval) {
@@ -180,12 +176,11 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
             }
             $this->updatePaymentSplits($request);
             DB::commit(); // Commit changes if everything went well
-
-            return back()->with('success', 'Payment Updated');
+            
+            return ['status' => 'success', 'message' => 'Payment Updated'];  
         } catch (Exception $exception) {
             DB::rollBack(); // Rollback changes if any error occurred
-
-            return back()->with('error', $exception->getMessage());
+            return ['status' => 'error', 'message' => $exception->getMessage()];            
         }
     }
     //Add split payments
@@ -260,8 +255,6 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                             unset($masterPayment->payment_splits[$key]);
                         }
                     }
-
-                    continue;
                 }
             }
         }
