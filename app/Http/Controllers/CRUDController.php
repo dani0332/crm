@@ -1712,7 +1712,7 @@ class CRUDController extends Controller
         // update status policy issued of req fulfilled
         $this->updateStatus($request->modelType, $request->quote_id);
         // Manage payment total price update
-        $this->updatePaymentTotalPrice($quoteModel);
+        $this->updatePriceAndDiscount($quoteModel);
         return redirect()->back()->with('success', 'Quote Policy Detail has been updated.');
     }
 
