@@ -16,7 +16,6 @@ class UpdateLeadAllocationByQuoteId extends Seeder
      */
     public function run(): void
     {
-        //
         // get all Advisors Car Lead Allocation
         $carLeadAllocations = DB::table('users')
             ->select(
@@ -47,7 +46,7 @@ class UpdateLeadAllocationByQuoteId extends Seeder
             ->get()->count();
 
         if ($carLeadAllocations > 0) {
-            //Update Car Lead Allocation By Quote Type Id Wise
+            // Update Car Lead Allocation By Quote Type Id Wise
             DB::table('lead_allocation')
                 ->whereIn('user_id', function ($query) {
                     $query->select('userId')
@@ -68,6 +67,7 @@ class UpdateLeadAllocationByQuoteId extends Seeder
                 ->update(['quote_type_id' => QuoteTypes::CAR->id()]);
         }
 
+        // get all Advisors Health Lead Allocation
         $healthLeadAllocations = LeadAllocation::select([
             'lead_allocation.id as id',
             'lead_allocation.user_id as userId',
@@ -92,22 +92,18 @@ class UpdateLeadAllocationByQuoteId extends Seeder
             ->whereIn('r.name', [RolesEnum::EBPAdvisor, RolesEnum::RMAdvisor])->get()->count();
 
         if ($healthLeadAllocations > 0) {
-
-            DB::table('lead_allocation')
-                ->whereIn('user_id', function ($query) {
-                    $query->select('lead_allocation.user_id')
-                        ->from('lead_allocation')
-                        ->join('users as u', 'lead_allocation.user_id', '=', 'u.id')
-                        ->join('user_team as ut', 'ut.user_id', '=', 'u.id')
-                        ->join('model_has_roles as mhr', 'mhr.model_id', '=', 'u.id')
-                        ->join('roles as r', 'r.id', '=', 'mhr.role_id')
-                        ->leftJoin('teams as t', 'ut.team_id', '=', 't.id')
-                        ->whereIn('t.name', ['EBP', 'RM_NB', 'RM_SPEED'])
-                        ->where('u.is_active', true)
-                        ->whereIn('r.name', ['EBPAdvisor', 'RMAdvisor'])
-                        ->groupBy('u.name', 'u.id', 'lead_allocation.id');
-                })
-                ->update(['quote_type_id' => QuoteTypes::HEALTH->id()]);
+            
+             // Update Health Lead Allocation By Quote Type Id Wise
+            LeadAllocation::join('users as u', 'lead_allocation.user_id', '=', 'u.id')
+                ->join('user_team as ut', 'ut.user_id', '=', 'u.id')
+                ->join('model_has_roles as mhr', 'mhr.model_id', '=', 'u.id')
+                ->join('roles as r', 'r.id', '=', 'mhr.role_id')
+                ->leftJoin('teams as t', 'ut.team_id', '=', 't.id')
+                ->whereIn('t.name', [TeamNameEnum::EBP, TeamNameEnum::RM_NB, TeamNameEnum::RM_SPEED])
+                ->where('u.is_active', true)
+                ->whereNull('lead_allocation.quote_type_id')
+                ->whereIn('r.name', [RolesEnum::EBPAdvisor, RolesEnum::RMAdvisor])
+                ->update(['lead_allocation.quote_type_id' => QuoteTypes::HEALTH->id()]);
         }
 
     }
