@@ -77,11 +77,11 @@ class AdvisorDistributionReportService extends BaseService
             ->join('tiers', 'tiers.id', 'personal_quotes.tier_id');
         }
 
-        if (auth()->user()->hasRole(RolesEnum::CarAdvisor)) {
+        if (auth()->user()->isAdvisor()) {
             $query = $query->where('users.id', auth()->user()->id);
         } else {
-            if (! auth()->user()->hasRole(RolesEnum::LeadPool)) {
-                $userIds = $this->walkTree(auth()->user()->id);
+            if (! auth()->user()->hasAnyRole([RolesEnum::LeadPool, RolesEnum::SeniorManagement])) {
+                $userIds = $this->walkTree(auth()->user()->id, $request->lob);
                 $query = $query->whereIn('personal_quotes.advisor_id', $userIds);
             }
         }
@@ -309,6 +309,21 @@ class AdvisorDistributionReportService extends BaseService
                     ->join('teams', 'teams.id', 'user_team.team_id')
                     ->whereIn('teams.id', $value);
             });
+        }
+
+        if ((isset($filters->subeams) && count($filters->subeams) > 0)) {
+            $value = $filters->subeams;
+            $query->whereIn('users.id', function ($query) use ($value) {
+
+                $query->distinct()
+                    ->select('users.id')
+                    ->from('users')
+                    ->whereIn('sub_team_id', $value);
+            });
+        }
+
+        if (isset($filters->advisors) && count($filters->advisors) > 0) {
+            $query->whereIn('personal_quotes.advisor_id', $filters->advisors);
         }
 
         if (isset($filters->leadSources) && count($filters->leadSources) > 0) {

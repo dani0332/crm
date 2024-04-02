@@ -90,6 +90,8 @@ class AdvisorDistributionReportPermissionSeeder extends Seeder
                 RolesEnum::Engineering,
             ],
             PermissionsEnum::GROUPMEDICAL_DISTRIBUTION_REPORT => [
+                RolesEnum::BusinessAdvisor,
+                RolesEnum::BusinessManager,
                 RolesEnum::SeniorManagement,
                 RolesEnum::Admin,
                 RolesEnum::Engineering,

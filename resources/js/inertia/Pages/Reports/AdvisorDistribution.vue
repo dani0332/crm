@@ -17,6 +17,7 @@ const subteamOptions = ref([]);
 const advisorOptions = ref([]);
 const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
 const tableHeader = ref([]);
+const canShowFooterColumn = ref([]);
 
 const params = useUrlSearchParams('history');
 const filters = reactive({
@@ -150,10 +151,6 @@ const calculateTotalSum = (data, key) => {
   return data.reduce((sum, item) => Number(sum) + Number(item[key]), 0);
 };
 
-const canShowTableColumn = computed(() => {
-    return [quoteTypeCodeEnum.Car, quoteTypeCodeEnum.Bike].includes(filters.lob);
-});
-
 const setTableHeader = () => {
 
     let headers = [
@@ -166,6 +163,7 @@ const setTableHeader = () => {
             value: 'total_leads',
         }
     ];
+    canShowFooterColumn.value = false;
 
     if([quoteTypeCodeEnum.Car, quoteTypeCodeEnum.Bike].includes(filters.lob)) {
 
@@ -227,6 +225,8 @@ const setTableHeader = () => {
             value: 'total_lead_cost',
         }
         );
+
+        canShowFooterColumn.value = true;
     }
 
     tableHeader.value = headers;
@@ -295,7 +295,7 @@ if (e.length == 0 &&
 
     loadAdvisors(filters.teams);
 } else {
-    loadAdvisors(e);
+    loadAdvisorsBySubteams(e);
 }
 };
 
@@ -333,6 +333,7 @@ loaders.subteamOptions = true;
 axios
 .post(`/reports/fetch-subteams-by-team`, {
   teamIds: Array.isArray(e) ? e : [e],
+  lob: filters.lob,
 })
 .then(res => {
   if (res.data.length > 0) {
@@ -357,6 +358,7 @@ loaders.advisorOptions = true;
 axios
 .post(`/reports/fetch-advisor-by-team`, {
   teamIds: Array.isArray(e) ? e : [e],
+  lob: filters.lob,
 })
 .then(res => {
   if (res.data.length > 0) {
@@ -369,6 +371,31 @@ axios
 .finally(() => {
   loaders.advisorOptions = false;
 });
+};
+
+const loadAdvisorsBySubteams = e => {
+  if (e.length == 0) {
+    return;
+  }
+
+  loaders.advisorOptions = true;
+
+  axios
+    .post(`/reports/fetch-advisor-by-sub-team`, {
+      teamIds: Array.isArray(e) ? e : [e],
+      lob: filters.lob,
+    })
+    .then(res => {
+      if (res.data.length > 0) {
+        advisorOptions.value = Object.keys(res.data).map(key => ({
+          value: res.data[key].id.toString(),
+          label: res.data[key].name,
+        }));
+      }
+    })
+    .finally(() => {
+      loaders.advisorOptions = false;
+    });
 };
 
 const loadAdvisorsByLob = e => {
@@ -648,46 +675,46 @@ const travelCoverageOptions = computed(() => {
           <td class="direction-center">
             {{ calculateTotalSum(reportData.data, 'total_leads') }}
           </td>
-          <td class="direction-center" v-if="canShowTableColumn">
+          <td class="direction-center" v-if="canShowFooterColumn">
             {{ calculateTotalSum(reportData.data, 'tier_0_lead_count') }}
           </td>
-          <td class="direction-center" v-if="canShowTableColumn">
+          <td class="direction-center" v-if="canShowFooterColumn">
             {{ calculateTotalSum(reportData.data, 'tier_1_lead_count') }}
           </td>
-          <td class="direction-center" v-if="canShowTableColumn">
+          <td class="direction-center" v-if="canShowFooterColumn">
             {{ calculateTotalSum(reportData.data, 'tier_2_lead_count') }}
           </td>
-          <td class="direction-center" v-if="canShowTableColumn">
+          <td class="direction-center" v-if="canShowFooterColumn">
             {{ calculateTotalSum(reportData.data, 'tier_3_lead_count') }}
           </td>
-          <td class="direction-center" v-if="canShowTableColumn">
+          <td class="direction-center" v-if="canShowFooterColumn">
             {{ calculateTotalSum(reportData.data, 'tier_4_lead_count') }}
           </td>
-          <td class="direction-center" v-if="canShowTableColumn">
+          <td class="direction-center" v-if="canShowFooterColumn">
             {{ calculateTotalSum(reportData.data, 'tier_5_lead_count') }}
           </td>
-          <td class="direction-center" v-if="canShowTableColumn">
+          <td class="direction-center" v-if="canShowFooterColumn">
             {{ calculateTotalSum(reportData.data, 'tier_l_lead_count') }}
           </td>
-          <td class="direction-center" v-if="canShowTableColumn">
+          <td class="direction-center" v-if="canShowFooterColumn">
             {{ calculateTotalSum(reportData.data, 'tier_h_lead_count') }}
           </td>
-          <td class="direction-center" v-if="canShowTableColumn">
+          <td class="direction-center" v-if="canShowFooterColumn">
             {{ calculateTotalSum(reportData.data, 'tier_r_lead_count') }}
           </td>
-          <td class="direction-center" v-if="canShowTableColumn">
+          <td class="direction-center" v-if="canShowFooterColumn">
             {{ calculateTotalSum(reportData.data, 'tier_6_lead_count') }}
           </td>
-          <td class="direction-center" v-if="canShowTableColumn">
+          <td class="direction-center" v-if="canShowFooterColumn">
             {{ calculateTotalSum(reportData.data, 'tier_6_lead_count_e') }}
           </td>
-          <td class="direction-center" v-if="canShowTableColumn">
+          <td class="direction-center" v-if="canShowFooterColumn">
             {{ calculateTotalSum(reportData.data, 'tier_tr_lead_count_e') }}
           </td>
-          <td class="direction-center" v-if="canShowTableColumn">
+          <td class="direction-center" v-if="canShowFooterColumn">
             {{ calculateTotalSum(reportData.data, 'tier_tr_lead_count') }}
           </td>
-          <td class="direction-center" v-if="canShowTableColumn">
+          <td class="direction-center" v-if="canShowFooterColumn">
             {{ calculateTotalSum(reportData.data, 'total_lead_cost') }}
           </td>
         </tr>
