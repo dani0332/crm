@@ -260,15 +260,14 @@ trait GenericQueriesAllLobs
                 $payment->discount_value = $difference;
                 $payment->discount_type = 'system_applied_discount';
             }
-        } else {
-            $payment->total_price = $quoteModel->price_with_vat;
+            $payment->total_amount -= $difference;
         }
 
         // If status is partially paid & total price is less than price with vat then set status to partially paid
-        if ($payment->payment_status_id === PaymentStatusEnum::PAID && $payment->total_price < $quoteModel->price_with_vat) {
+        if ($payment->payment_status_id === PaymentStatusEnum::PAID && $payment->total_price < $quoteModel->price_with_vat && ($difference > 0.99)) {
             $payment->payment_status_id = PaymentStatusEnum::PARTIALLY_PAID;
         }
-    
+        $payment->total_price = $quoteModel->price_with_vat;
         $payment->save();
     }
 }

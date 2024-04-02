@@ -1004,6 +1004,7 @@ const editPaymentModal = (payment,split_payment_id,sr_no,capture_approval) => {
     paymentMethodsForm.collection_amount = '';
     paymentMethodsForm.bank_reference_number = '';
     splitPaymentRecord.value = payment.payment_splits.find(item => item.sr_no === sr_no);
+    paymentMethodsForm.system_applied_discount = payment.system_applied_discount;
   } 
 
   //paymentMethodsForm.masterPaymentStatus = payment.
@@ -1725,6 +1726,27 @@ watch(() => props.quoteRequest, (newValue, oldValue) => {
   planDetail.value = initalPlanDetails;
 });
 
+const discountTypeLabel = computed(() => {
+  let systemAplliedDiscount = '';
+  if (paymentMethodsForm.status === 'view' && 
+      (paymentMethodsForm.discount === 'system_applied_discount' || 
+      paymentMethodsForm.system_applied_discount > 0))
+  {
+    systemAplliedDiscount = 'System applied discount';
+  }
+  let discountType = discountTypes.find(item => item.value === paymentMethodsForm.discount);
+  if (discountType) {
+    if (systemAplliedDiscount !== '') {
+      return discountType.label+' + '+systemAplliedDiscount;
+    } else {
+      return discountType.label;
+    }    
+  } else if (systemAplliedDiscount !== '') {
+    return systemAplliedDiscount;
+  } else {
+    return 'N/A';
+  }  
+});
 </script>
 
 <template>
@@ -2171,7 +2193,7 @@ watch(() => props.quoteRequest, (newValue, oldValue) => {
             </x-tooltip>            
             <x-field class="w-full">
             <span v-if="isFieldReadonly">              
-              {{ discountTypes.find(item => item.value === paymentMethodsForm.discount)?.label  || 'N/A'}}          
+              {{ discountTypeLabel }}          
             </span>
               <div v-if="!isFieldReadonly" class="custom-dropdown">
                 <span v-if="paymentMethodsForm.discount!=''" class="close-icon"  @mousedown.stop="resetDiscount()">
