@@ -131,7 +131,21 @@ class ReportsController extends Controller
             ];
         }
 
-        return $this->fetchTeamsByLob($names);
+        $lobId = $this->getProductByName($request->lob)->id;
+        $allTeams = $this->getTeamsByProductId($lobId)->pluck('id')->toArray();
+        $userTeams = $this->getUserTeams(auth()->user()->id)->pluck('id')->toArray();
+        $commonteamIds = array_intersect($allTeams, $userTeams);
+
+        $teams = Team::whereIn('id', $commonteamIds)
+            ->select('name', 'id')
+            ->orderBy('name')
+            ->where('is_active', 1);
+
+        if (count($names) > 0) {
+            $teams = $teams->whereIn('name', $names);
+        }
+
+        return $teams->get()->toArray();
     }
 
     /**

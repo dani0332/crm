@@ -207,28 +207,4 @@ trait TeamHierarchyTrait
 
         return $user && $user->products->contains('product_id', $productId);
     }
-
-    /**
-     * Fetch teams by line of business.
-     *
-     * @param array $names The names of the teams to fetch.
-     * @return array The fetched teams.
-     */
-    public function fetchTeamsByLob($names = [])
-    {
-        $loginUserId = auth()->user()->id;
-        $teamIds = $this->getUserTeams($loginUserId);
-        $teams = Team::whereIn('id', $teamIds->pluck('id'))
-            ->select('name', 'id')
-            ->orderBy('name')
-            ->where('is_active', 1);
-
-        if(count($names) > 0) {
-            $teams = $teams->whereIn('name', $names);
-        }
-
-        $teams = $teams->get()->toArray();
-
-        return $teams;
-    }
 }
