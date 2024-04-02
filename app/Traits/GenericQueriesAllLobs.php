@@ -258,7 +258,7 @@ trait GenericQueriesAllLobs
                 $payment->discount_value += $difference;
             } else{
                 $payment->discount_value = $difference;
-                $payment->discount_type = 'system_applied_discount';
+                $payment->discount_type = 'system_adjusted_discount';
             }
             $payment->total_amount -= $difference;
         }

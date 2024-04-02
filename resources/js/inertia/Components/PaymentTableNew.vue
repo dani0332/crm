@@ -1732,7 +1732,7 @@ const discountTypeLabel = computed(() => {
       (paymentMethodsForm.discount === 'system_applied_discount' || 
       paymentMethodsForm.system_applied_discount > 0))
   {
-    systemAplliedDiscount = 'System applied discount';
+    systemAplliedDiscount = 'System adjusted discount';
   }
   let discountType = discountTypes.find(item => item.value === paymentMethodsForm.discount);
   if (discountType) {
