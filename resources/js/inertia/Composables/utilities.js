@@ -94,6 +94,7 @@ export const useConvertDate = date =>
 export const useFormatPrice = (price, thousandSeparator = false) => {
   return (thousandSeparator ? parseFloat(price).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}) : parseFloat(price).toFixed(2));
 }
+
 export const fileUploadErrorMessage = (doc, rejectReason) => {
   let errorMessage = "";
   if (rejectReason.code == "file-too-large")

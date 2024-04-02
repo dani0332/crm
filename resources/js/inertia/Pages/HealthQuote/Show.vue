@@ -1491,7 +1491,7 @@ const handlePlanSelected = plan => {
   router.reload({
     preserveState: true,
     preserveScroll: true,
-    only: ['payments','quoteRequest','ecomDetails'],        
+    only: ['payments','quoteRequest','ecomDetails', 'coPayment'],        
   });  
 };
 
@@ -3258,8 +3258,8 @@ const handlePlanSelected = plan => {
     
 
     <ClientInquiryLogs
-      v-if="clientInquiryLogs.length > 0"
-      :logs="clientInquiryLogs"
+        v-if="clientInquiryLogs?.length > 0"
+        :logs="clientInquiryLogs"
     />
   </div>
 </template>

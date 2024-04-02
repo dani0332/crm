@@ -16,6 +16,7 @@ use App\Models\CarQuote;
 use App\Models\HealthQuote;
 use App\Models\PersonalQuote;
 use App\Models\PersonalQuoteDetail;
+use App\Models\TravelQuote;
 use App\Repositories\PersonalQuoteRepository;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
@@ -257,6 +258,7 @@ class CentralService
     public function updateSelectedPlan($quoteType, $uuid, $data)
     {
         $response = [];
+        $requestData = $data;
 
         //switch for quote type
         switch (ucfirst($quoteType)) {
@@ -288,8 +290,17 @@ class CentralService
                     ],
                 ];
 
+                if (isset($requestData->selected_plan_id)) {
+                    $data['plans'][] = ['id' => intval($requestData->selected_plan_id), 'addonOptionIds' => []];
+                }
+
                 $response = Ken::request($endpoint, 'post', $data);
                 info('travel plan update response: '.json_encode($response));
+
+                // if (isset($response['planProcessValue'])) {
+                //     $quote = TravelQuote::where('uuid', $uuid)->first();
+                //     $this->updateQuotePayment($quote, collect($response['planProcessValue'])->sum('totalPremium'));
+                // }
                 break;
             case QuoteTypes::HEALTH->value:
                 $endpoint = '/api/v1-process-booking';

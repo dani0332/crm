@@ -3,7 +3,11 @@
 const props = defineProps({
     plan: Object,
     quoteType: String,
-    uuid: String
+    uuid: String,
+    extraDetails: {
+        type: Object,
+        default: {}
+    }
 })
 
 
@@ -17,11 +21,40 @@ const updateSelectedPlan = () => {
     isLoading.value = true;
 
     let data = {
-        'plan_id' : props.plan.id
+        'plan_id' : props.plan.id,
     }
 
     if(props.quoteType.toLocaleLowerCase() == 'health') {
         data.copay_id = props.plan.selectedCopayId;
+    }
+
+    if (props.quoteType.toLocaleLowerCase() == 'travel') {
+        data.planType = props.extraDetails?.planType;
+        if (props.extraDetails?.selectedPlansIds.length > 0) {
+        for (let i = 0; i < props.extraDetails?.selectedPlansIds.length; i++) {
+            if (
+            props.extraDetails?.planType == 'normalPlans' &&
+            props.extraDetails?.seniorPlansIds.includes(
+                props.extraDetails?.selectedPlansIds[i],
+            )
+            ) {
+            data.plan_id = props.plan.id;
+            data.selected_plan_id = props.extraDetails?.selectedPlansIds[i];
+            }
+
+            if (
+            props.extraDetails?.planType == 'seniorPlans' &&
+            props.extraDetails?.normalPlansIds.includes(
+                props.extraDetails?.selectedPlansIds[i],
+            )
+            ) {
+            data.selected_plan_id = props.plan.id;
+            data.plan_id = props.extraDetails?.selectedPlansIds[i];
+            }
+        }
+        } else {
+        data.plan_id = props.plan.id;
+        }
     }
 
 
@@ -29,10 +62,11 @@ const updateSelectedPlan = () => {
         .then(res => {
             isLoading.value = false;
             let premium = 0;
-            console.log(props.quoteType.toLowerCase())
             switch (props.quoteType.toLowerCase()) {
                 case 'travel':
-                    premium = res.data.plan.planProcessValue[0].totalPremium
+                    if(res.data.plan.planProcessValue[0]) {
+                        premium = res.data.plan.planProcessValue[0].totalPremium
+                    }
                     break;
                 case 'car':
                     premium = res.data.plan.planProcessValue.totalPremium
@@ -44,13 +78,25 @@ const updateSelectedPlan = () => {
                     break;
             }
 
-
-            emit('update:selectedPlanChanged', {
-                id: props.plan.id,
-                providerName: props.plan.providerName,
-                planName: props.plan.name,
-                premium: premium.toFixed(2)
-            });
+            if(props.quoteType.toLowerCase() == 'travel') {
+                let selectedPlan = {
+                    id: props.plan.id,
+                    providerName: props.plan.providerName,
+                    planName: props.plan.name,
+                }
+            
+                if(res.data.plan.planProcessValue[0]) {
+                    selectedPlan.premium = premium.toFixed(2);
+                }
+                emit('update:selectedPlanChanged', selectedPlan);
+            } else {
+                emit('update:selectedPlanChanged', {
+                    id: props.plan.id,
+                    providerName: props.plan.providerName,
+                    planName: props.plan.name,
+                    premium: premium.toFixed(2)
+                });
+            }
             notification.success({
                     title: "Selected plan updated",
                     position: 'top',
