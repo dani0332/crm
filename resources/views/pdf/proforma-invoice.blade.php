@@ -384,6 +384,11 @@
     $customer = $quote->customer;
     $customerName =  ucwords($customer->first_name .' '. $customer->last_name);
     $customerDetail =  $customer->detail;
+
+    $subTotal =  $quote->price_vat_applicable ?? $quote->price_vat_not_applicable;
+    $totalAmount =  $quote->price_with_vat ?? $quote->price_without_vat;
+    $vat =  $quote->vat ?: ($quote->price_with_vat ? $totalAmount - $subTotal : 0); // if amount with vat then vat = total - subTotal else 0
+
 @endphp
 
 
@@ -397,34 +402,34 @@
                     <b>Remarks:</b> {{ $proformaPaymentRequest?->notes }}
                 </td>
                 <td class="payment-heading">
-                    SUBTOTAL
+                    SUBTOTAL:
                 </td>
                 <td class="amount">
-                    {{ $quote->price_without_vat }}
+                    {{ number_format($subTotal, 2 , '.', '') }}
                 </td>
             </tr>
             <tr>
                 <th></th>
-                <td class="payment-heading"> VAT</td>
-                <td class="amount"> {{ $quote->vat }} </td>
+                <td class="payment-heading"> VAT:</td>
+                <td class="amount"> {{ number_format($vat, 2 , '.', '') }} </td>
             </tr>
             @if($proformaPaymentRequest->discount_value)
                 <tr>
                     <th></th>
                     <td class="payment-heading">
-                        TOTAL PRICE (AED)
+                        TOTAL PRICE (AED):
                     </td>
                     <td class="amount">
-                        {{ $quote->price_with_vat }}
+                        {{ number_format($totalAmount, 2 , '.', '') }}
                     </td>
                 </tr>
                 <tr>
                     <th></th>
                     <td class="payment-heading">
-                        Discount
+                        Discount:
                     </td>
                     <td class="amount">
-                        {{ $proformaPaymentRequest->discount_value }}
+                        - {{ number_format( $proformaPaymentRequest->discount_value, 2, '.', '') }}
                     </td>
                 </tr>
             @endif
@@ -437,7 +442,7 @@
                     TOTAL DUE(AED):
                 </th>
                 <th class="amount text-medium">
-                    {{ $proformaPaymentRequest->total_amount }}
+                    {{ number_format($proformaPaymentRequest->total_amount, 2, '.', '')}}
                 </th>
             </tr>
             </tfoot>
@@ -473,7 +478,7 @@
     </table>
     <table class="tbl-footer">
         <tr>
-            <td colspan="2" class="text-center"><h4>InsuranceMarket.ae is the registered trademark of AFIA Insurance
+            <td colspan="2" class="text-center"><h4>InsuranceMarket.ae™  is the registered trademark of AFIA Insurance
                     Brokerage Services LLC</h4></td>
         </tr>
         <tr>
@@ -499,7 +504,7 @@
         </tr>
         <tr>
             <td class="text-left">Department of Economy & Tourism in Dubai Trade License number 238534</td>
-            <td class="text-right">Mobile Number adas: <a
+            <td class="text-right">Mobile Number: <a
                     href="tel:{{ $advisor?->mobile_no }}">{{ $advisor?->mobile_no }}</a></td>
         </tr>
         <tr>
@@ -603,7 +608,7 @@
                     {{ $quoteType?->text }} <br /> {{ $insuranceProvider?->text }}
                 </td>
                 <td>
-                    {{ $quote->price_without_vat }}
+                    {{ $totalAmount }}
                 </td>
             </tr>
 

@@ -628,6 +628,12 @@ const handleNoButtonChange = () => {
   isDeclinedReasonError.value = false;
   isApprovePaymentError.value = false;
 };
+const isProformaPaymentRequest = () => {
+  return (
+    paymentMethodsForm.payment_method ===
+    page.props.paymentMethodsEnum?.ProformaPaymentRequest
+  );
+};
 
 const handlePaymentOptions = count => {
   isPaymentMetodNotSelected.value[count] = false;
@@ -1197,7 +1203,7 @@ const downloadProformaPayment = async () => {
     });
     return;
   }
-  /* Proforma Payment Request is exportable if payment's updated_at is greated then the lasted generated Proforma Payment pdf's created_at in quote documentes */
+  /* Proforma Payment Request is exportable if payment's updated_at is greated then the lasted generated Proforma Payment pdf's created_at in quote documents */
   let exportProformaRequest = isProformaPaymentRequestExportable(
     props.proformaPayment,
     props.quoteRequest.documents,
@@ -1224,7 +1230,7 @@ const downloadProformaPayment = async () => {
     try {
       NProgress.start();
       const response = await axios.get(
-        route('download.proforma.payment.request', [
+        route('create.proforma.payment.request', [
           props.quoteType,
           props.quoteRequest.uuid,
         ]),
@@ -1233,14 +1239,16 @@ const downloadProformaPayment = async () => {
       if (response.data.success) {
         if (response.data?.proforma_request) {
           let proforma_request = response.data.proforma_request;
-
+          let proforma_request_id = proforma_request.id;
           /* Create the link and download Proforma Request document*/
           const a = document.createElement('a');
-          a.href = props.storageUrl + proforma_request.doc_url;
+          a.href = route('download.proforma.payment.request', [
+            proforma_request_id,
+          ]);
           a.target = '_blank';
           a.download = proforma_request.original_name;
           document.body.appendChild(a);
-          a.click();
+          await a.click();
           /* Remove Link */
           document.body.removeChild(a);
 
@@ -1417,6 +1425,7 @@ const editPaymentModal = (
     paymentMethodsForm.splitPaymentId = split_payment_id;
     paymentMethodsForm.status = 'view';
     paymentMethodsForm.collection_amount = '';
+    paymentMethodsForm.payment_method = payment.payment_method.code;
     paymentMethodsForm.bank_reference_number = '';
     splitPaymentRecord.value = payment.payment_splits.find(
       item => item.sr_no === sr_no,
@@ -4000,6 +4009,7 @@ watch(
                 class="mr-4"
               >
                 <x-button
+                  v-if="!isProformaPaymentRequest"
                   size="sm"
                   @click="handleDeclinedChange"
                   tabindex="0"
@@ -4027,7 +4037,11 @@ watch(
                 "
               >
                 <x-button
-                  v-if="!isApproveClicked && isViewEnabled"
+                  v-if="
+                    !isApproveClicked &&
+                    isViewEnabled &&
+                    !isProformaPaymentRequest
+                  "
                   class="mr-2 focus:outline-black"
                   size="sm"
                   color="#ff5e00"

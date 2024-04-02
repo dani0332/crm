@@ -36,7 +36,7 @@ class ExportDocumentService extends BaseService implements ExportDocumentInterfa
         }
         $pdf = PDF::setOption(['isHtml5ParserEnabled' => true, 'dpi' => 150])->loadView('pdf.proforma-invoice', compact('quote'));
 
-        $pdfName = 'InsuranceMarket.ae™ Proforma Payment Request for '.$quote->first_name.' '.$quote->last_name.'-'.$proformaPaymentRequest->code.($proformaPaymentRequestVersion > 0 ? '('.($proformaPaymentRequestVersion + 1).')' : '').'.pdf';
+        $pdfName = 'InsuranceMarket.ae™ Proforma Payment Request for '.$quote->first_name.' '.$quote->last_name.'-'.$proformaPaymentRequest->code.'('.($proformaPaymentRequestVersion + 1).')'.'.pdf';
 
         return $this->saveProformaPaymentRequestToDocuments($quote, $pdf, $pdfName, $quoteType);
     }

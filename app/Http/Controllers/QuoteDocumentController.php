@@ -42,7 +42,7 @@ class QuoteDocumentController extends Controller
         ExportDocumentService $exportDocumentService,
         ApplicationStorageService $applicationStorageService,
     ) {
-        $this->middleware('permission:'.PermissionsEnum::ENABLE_PROFORMA_PDF_DOWNLOAD_BUTTON, ['only' => ['downloadProformaPaymentRequest']]);
+        $this->middleware('permission:'.PermissionsEnum::ENABLE_PROFORMA_PDF_DOWNLOAD_BUTTON, ['only' => ['createProformaPaymentRequest','downloadProformaPaymentRequest']]);
 
         $this->crudService = $crudService;
         $this->activityService = $activityService;
@@ -270,9 +270,9 @@ class QuoteDocumentController extends Controller
     }
 
     /**
-     * export selected plans to PDF.
+     * Create Proforma Payment Request PDF.
      */
-    public function downloadProformaPaymentRequest($quoteType, $quote)
+    public function createProformaPaymentRequest($quoteType, $quote)
     {
         $response = $this->exportDocumentService->createProformaPaymentRequestPdf($quoteType, $quote);
 
@@ -281,5 +281,21 @@ class QuoteDocumentController extends Controller
         }
 
         return response()->json(['success' => true, 'proforma_request' => $response]);
+    }
+
+    /**
+     * download Proforma Payment Request PDF.
+     */
+    public function downloadProformaPaymentRequest(QuoteDocument $quoteDocument)
+    {
+        $disk = Storage::disk('azureIM');
+
+        if ($disk->exists($quoteDocument->doc_url)) {
+            $contents = $disk->get($quoteDocument->doc_url);
+
+            return response($contents)->header('content-type', $quoteDocument->doc_mime_type);
+        } else {
+            abort(404);
+        }
     }
 }

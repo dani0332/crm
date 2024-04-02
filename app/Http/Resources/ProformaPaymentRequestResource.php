@@ -14,6 +14,7 @@ class ProformaPaymentRequestResource extends JsonResource
     public function toArray($request): array
     {
         return [
+            'id' => $this->id,
             'original_name' => $this->original_name,
             'doc_url' => $this->doc_url,
         ];
