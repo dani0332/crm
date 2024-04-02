@@ -25,6 +25,15 @@ trait GetUserTreeTrait
         $productTeam = $this->getProductByName($productType ?? quoteTypeCode::Car);
         $rolesArray = [
             RolesEnum::CarManager,
+            RolesEnum::BikeManager,
+            RolesEnum::HealthManager,
+            RolesEnum::TravelManager,
+            RolesEnum::PetManager,
+            RolesEnum::CycleManager,
+            RolesEnum::BikeManager,
+            RolesEnum::CycleManager,
+            RolesEnum::HomeManager,
+            RolesEnum::BusinessManager,
             RolesEnum::LeadPool,
         ];
         if (auth()->user()->hasAnyRole($rolesArray)) {
