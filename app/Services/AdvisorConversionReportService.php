@@ -70,7 +70,7 @@ class AdvisorConversionReportService extends BaseService
             ->orderBy('users.email');
 
         if (! auth()->user()->hasAnyRole([RolesEnum::LeadPool, RolesEnum::SeniorManagement])) {
-            $userIds = $this->walkTree(auth()->user()->id);
+            $userIds = $this->walkTree(auth()->user()->id, $request->lob);
             $query = $query->whereIn('personal_quotes.advisor_id', $userIds);
         }
 
@@ -392,12 +392,7 @@ class AdvisorConversionReportService extends BaseService
             $query->whereIn('personal_quotes.source', $filters->leadSourceFilter);
         }
 
-        $hasSubTeamFilter = false;
-        if((isset($filters->subeams) && count($filters->subeams) > 0)) {
-            $hasSubTeamFilter = true;
-        }
-
-        if (isset($filters->teamsFilter) && count($filters->teamsFilter) > 0 && !$hasSubTeamFilter) {
+        if (isset($filters->teamsFilter) && count($filters->teamsFilter) > 0) {
             $value = $filters->teamsFilter;
             $query->whereIn('users.id', function ($query) use ($value) {
                 $query->distinct()
@@ -409,15 +404,14 @@ class AdvisorConversionReportService extends BaseService
             });
         }
 
-        if ($hasSubTeamFilter) {
+        if ((isset($filters->subeams) && count($filters->subeams) > 0)) {
             $value = $filters->subeams;
             $query->whereIn('users.id', function ($query) use ($value) {
+
                 $query->distinct()
                     ->select('users.id')
                     ->from('users')
-                    ->join('user_team', 'user_team.user_id', 'users.id')
-                    ->join('teams', 'teams.id', 'user_team.team_id')
-                    ->whereIn('teams.id', $value);
+                    ->whereIn('sub_team_id', $value);
             });
         }
 

@@ -18,6 +18,7 @@ use App\Enums\TeamNameEnum;
 use App\Enums\quoteTypeCode;
 use Illuminate\Support\Facades\Auth;
 use App\Enums\PermissionsEnum;
+use App\Enums\RolesEnum;
 
 class ReportsController extends Controller
 {
@@ -157,12 +158,9 @@ class ReportsController extends Controller
     public function fetchAdvisorsListByLob(Request $request)
     {
         $loginUserId = auth()->user()->id;
-        $userProducts = $this->getUsersByProductName($request->lob)->pluck('id')->toArray();
+        $usersReportToLoggedInUser = $this->walkTree($loginUserId, $request->lob);
 
-        $usersReportToLoggedInUser = $this->walkTree($loginUserId);
-        $advisorIdsByTeam = array_intersect($userProducts, $usersReportToLoggedInUser);
-
-        return User::whereIn('id', $advisorIdsByTeam)
+        return User::whereIn('id', $usersReportToLoggedInUser)
             ->select('name', 'id')
             ->orderBy('name')
             ->where('is_active', 1)
@@ -194,7 +192,23 @@ class ReportsController extends Controller
     {
         $teamUsers = $this->getUsersByTeamIds($request->teamIds)->pluck('id')->toArray();
 
-        $usersReportToLoggedInUser = $this->walkTree(auth()->user()->id);
+        $usersReportToLoggedInUser = $this->walkTree(auth()->user()->id, $request->lob);
+
+        $advisorIdsByTeam = array_intersect($teamUsers, $usersReportToLoggedInUser);
+
+        return User::whereIn('id', $advisorIdsByTeam)
+            ->select('name', 'id')
+            ->orderBy('name')
+            ->where('is_active', 1)
+            ->get()
+            ->toArray();
+    }
+
+    public function fetchAdvisorListBySubTeam(Request $request)
+    {
+        $teamUsers = $this->getUsersBySubTeamIds($request->teamIds)->pluck('id')->toArray();
+
+        $usersReportToLoggedInUser = $this->walkTree(auth()->user()->id, $request->lob);
 
         $advisorIdsByTeam = array_intersect($teamUsers, $usersReportToLoggedInUser);
 

@@ -534,7 +534,7 @@ const onSubTeamChange = (e, isOnMounted = false) => {
 
         loadAdvisors(filters.teams);
     } else {
-        loadAdvisors(e);
+        loadAdvisorsBySubteams(e);
     }
 };
 
@@ -608,6 +608,36 @@ const loadAdvisors = e => {
   axios
     .post(`/reports/fetch-advisor-by-team`, {
       teamIds: Array.isArray(e) ? e : [e],
+      lob: filters.lob,
+    })
+    .then(res => {
+      if (res.data.length > 0) {
+        advisorOptions.value = Object.keys(res.data).map(key => ({
+          value: res.data[key].id.toString(),
+          label: res.data[key].name,
+        }));
+      }
+    })
+    .finally(() => {
+      loaders.advisorOptions = false;
+    });
+};
+
+const loadAdvisorsBySubteams = e => {
+  if (e.length == 0) {
+    return;
+  }
+
+  if (isMounted.value) {
+    isDirty.value = true;
+  }
+
+  loaders.advisorOptions = true;
+
+  axios
+    .post(`/reports/fetch-advisor-by-sub-team`, {
+      teamIds: Array.isArray(e) ? e : [e],
+      lob: filters.lob,
     })
     .then(res => {
       if (res.data.length > 0) {
