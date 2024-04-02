@@ -67,6 +67,8 @@ const docForm = reactive({
 });
 
 const uploadFile = (doc, filesWithInfo) => {
+  successStatus.value[doc.id] = false;
+  errorMsg.value[doc.id] ='';
   const { files, rejectReason } = filesWithInfo;
   if (files.length == 0) {
     notification.error({
