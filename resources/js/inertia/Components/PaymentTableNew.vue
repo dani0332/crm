@@ -628,12 +628,13 @@ const handleNoButtonChange = () => {
   isDeclinedReasonError.value = false;
   isApprovePaymentError.value = false;
 };
-const isProformaPaymentRequest = () => {
+
+const isProformaPaymentRequest = computed(() => {
   return (
     paymentMethodsForm.payment_method ===
     page.props.paymentMethodsEnum?.ProformaPaymentRequest
   );
-};
+});
 
 const handlePaymentOptions = count => {
   isPaymentMetodNotSelected.value[count] = false;
