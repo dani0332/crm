@@ -5,7 +5,7 @@ Insurance Market CRM (IMCRM) is the CRM used by internal team to handle the inco
 
 IMCRM is developed on Laravel using PHP 8.0.1 or above, MariaDB 10.x or above.
 
-URLs: 
+URLs:
 
 - [Live](https://imcrm.alfred.ae/) 
 - [Stage](https://imcrmstage.alfred.ae/)
@@ -25,7 +25,7 @@ Please make sure to go through the last two lines to familiarize yourself with t
 - Ask for a dump of stage DB which you will need to import.
 - Run ```composer install``` to install the laravel required files..
 
-**Doppler Configuration** 
+**Doppler Configuration**
 
 Once you have doppler CLI installed on your local machine, run the following command to initiate the login setup.
 - ```doppler setup``` This will initiate the login process, use Google login. Once logged in you will be prompted to select the profile you want to use the environment variables. You can run the command again to switch profile.
