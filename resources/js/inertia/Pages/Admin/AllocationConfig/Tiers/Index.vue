@@ -1,9 +1,6 @@
 <script setup>
 const props = defineProps({
   tiers: Object,
-  model: Object,
-  dropdownSource: Object,
-  customTitles: Object,
 });
 
 const loader = ref({
@@ -31,11 +28,12 @@ const tableHeader = [
   { text: 'Is TPL', value: 'can_handle_tpl' },
   { text: 'Renewal (TPL_RENEWALS)', value: 'is_tpl_renewals' },
   { text: 'IsActive', value: 'is_active' },
+  { text: "Actions", value: "actions" }
 ];
 
 function onSubmit(isValid) {
   filters.page = 1;
-  router.visit(route('tier.index'), {
+  router.visit(route('tier-inertia.index'), {
     method: 'get',
     data: useGenerateQueryString(filters),
     preserveState: true,
@@ -46,7 +44,7 @@ function onSubmit(isValid) {
 }
 
 function onReset() {
-  router.visit(route('tier.index'), {
+  router.visit(route('tier-inertia.index'), {
     method: 'get',
     data: { page: 1 },
     preserveScroll: true,
@@ -54,13 +52,26 @@ function onReset() {
     onSuccess: () => (loader.table = false),
   });
 }
+
+const showDeleteModal = ref(false),
+    deleteAction = useForm({
+        id: null
+    }),
+    onConfirmDelete = () => {
+        deleteAction.delete(route("tier-inertia.destroy", deleteAction.id), {
+            onFinish: () => {
+                showDeleteModal.value = false;
+            }
+        });
+    };
+
 </script>
 <template>
   <Head title="Tier List" />
   <div class="flex justify-between items-center">
     <h2 class="text-xl font-semibold">Tier List</h2>
     <div class="space-x-3">
-      <Link :href="route('tier.create')">
+      <Link :href="route('tier-inertia.create')">
         <x-button size="sm" color="#ff5e00" tag="div"> Create Tier </x-button>
       </Link>
     </div>
@@ -114,6 +125,36 @@ function onReset() {
         {{ id }}
       </Link>
     </template>
+
+    <template #item-can_handle_ecommerce="{ can_handle_ecommerce }">
+      <div class="text-center">
+        <x-tag size="sm" :color="can_handle_ecommerce ? 'success' : 'error'">
+          {{ can_handle_ecommerce ? 'Yes' : 'No' }}
+        </x-tag>
+      </div>
+    </template>
+    <template #item-can_handle_tpl="{ can_handle_tpl }">
+      <div class="text-center">
+        <x-tag size="sm" :color="can_handle_tpl ? 'success' : 'error'">
+          {{ can_handle_tpl ? 'Yes' : 'No' }}
+        </x-tag>
+      </div>
+    </template>
+    <template #item-can_handle_null_value="{ can_handle_null_value }">
+      <div class="text-center">
+        <x-tag size="sm" :color="can_handle_null_value ? 'success' : 'error'">
+          {{ can_handle_null_value ? 'Yes' : 'No' }}
+        </x-tag>
+      </div>
+    </template>
+    <template #item-is_tpl_renewals="{ is_tpl_renewals }">
+      <div class="text-center">
+        <x-tag size="sm" :color="is_tpl_renewals ? 'success' : 'error'">
+          {{ is_tpl_renewals ? 'Yes' : 'No' }}
+        </x-tag>
+      </div>
+    </template>
+
     <template #item-is_active="{ is_active }">
       <div class="text-center">
         <x-tag size="sm" :color="is_active ? 'success' : 'error'">
@@ -121,6 +162,33 @@ function onReset() {
         </x-tag>
       </div>
     </template>
+
+    <template #item-actions="{ id }">
+                    <div class="flex gap-1.5 justify-end">
+                        <Link :href="route('tier-inertia.show', id)">
+                            <x-button tag="div" size="xs" outlined>
+                                View
+                            </x-button>
+                        </Link>
+                        <Link :href="route('tier-inertia.edit', id)">
+                            <x-button color="primary" size="xs" outlined>
+                                Edit
+                            </x-button>
+                        </Link>
+                        <x-button
+                            color="red"
+                            size="xs"
+                            outlined
+                            @click.prevent="
+                                deleteAction.id = id;
+                                showDeleteModal = true;
+                            "
+                        >
+                            Delete
+                        </x-button>
+                    </div>
+                </template>
+                
   </DataTable>
   <Pagination
     :links="{
@@ -131,4 +199,28 @@ function onReset() {
       to: tiers.to,
     }"
   />
+
+  <x-modal v-model="showDeleteModal" size="md" show-close backdrop>
+                <template #header> Delete Resource </template>
+                <p>Are you sure you want to delete selected resource?</p>
+                <template #actions>
+                    <div class="text-right space-x-4">
+                        <x-button
+                            size="sm"
+                            ghost
+                            @click.prevent="showDeleteModal = false"
+                        >
+                            Cancel
+                        </x-button>
+                        <x-button
+                            size="sm"
+                            color="error"
+                            :loading="deleteAction.processing"
+                            @click.prevent="onConfirmDelete"
+                        >
+                            Delete
+                        </x-button>
+                    </div>
+                </template>
+            </x-modal>
 </template>

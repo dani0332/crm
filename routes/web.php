@@ -388,7 +388,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
             ->names(generateRouteNames('renewal-batches'))
             ->middleware('check_route_access');
         Route::resource('tier', GenericCrudController::class);
-        // Route::resource('tier', TiersController::class);
+        Route::resource('tier-inertia', TiersController::class);
         Route::resource('quadrant', GenericCrudController::class);
         Route::resource('rule', GenericCrudController::class);
         Route::post('save', [GenericCrudController::class, 'store'])->name('save');

@@ -2,18 +2,19 @@
 const props = defineProps({
   tier: Array,
 });
+
 </script>
 <template>
   <Head title="Tier Detail" />
   <div class="flex justify-between items-center">
     <h2 class="text-xl font-semibold">Tier Detail</h2>
     <div class="flex gap-2">
-      <Link :href="route('tier.index')">
+      <Link :href="route('tier-inertia.index')">
         <x-button size="sm" color="#1d83bc" tag="div">
           Tier Detail List
         </x-button>
       </Link>
-      <Link :href="route('tier.edit', tier.id)">
+      <Link :href="route('tier-inertia.edit', tier.id)">
         <x-button size="sm" tag="div">Edit</x-button>
       </Link>
     </div>

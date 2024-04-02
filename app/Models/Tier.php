@@ -13,7 +13,7 @@ class Tier extends Model implements AuditableContract
     use Auditable, HasFactory, FilterCriteria;
 
     protected $table = 'tiers';
-    protected $fillable = ['name', 'min_price', 'max_price', 'is_tpl', 'is_active', 'cost_per_lead', 'is_auto_assignment_enabled'];
+    protected $guarded = [];
 
     /**
      * @return $query
@@ -22,4 +22,9 @@ class Tier extends Model implements AuditableContract
     {
         return $query->where('is_active', 1);
     }
+
+    function users(){
+        return $this->belongsToMany(User::class, 'tier_users', 'tier_id', 'user_id');
+    }
+
 }

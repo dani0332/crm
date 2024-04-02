@@ -2,44 +2,53 @@
 const props = defineProps({
   tier: Object,
   id: String,
-  model: Object,
-  dropdownSource: Object,
-  customTitles: Object,
+  usersList: Object,
 });
-const { isRequired } = useRules();
+const { isRequired, isNumber } = useRules();
 
 const isEdit = computed(() => {
   return route().current().includes('edit');
 });
 
 const tierForm = useForm({
+  id: props.tier?.id ?? null,
   name: props.tier?.name ?? null,
   min_price: props.tier?.min_price ?? null,
   max_price: props.tier?.max_price ?? null,
   cost_per_lead: props.tier?.cost_per_lead ?? null,
-  can_handle_ecommerce: props.tier?.can_handle_ecommerce ?? null,
-  can_handle_null_value: props.tier?.can_handle_null_value ?? null,
-  is_tpl_renewals: props.tier?.is_tpl_renewals ?? null,
+  can_handle_ecommerce: props.tier?.can_handle_ecommerce  ? true : false,
+  can_handle_null_value: props.tier?.can_handle_null_value  ? true : false,
+  is_tpl_renewals: props.tier?.is_tpl_renewals  ? true : false,
   is_active: props.tier?.is_active ? true : false,
   tier_user: props.tier?.tier_user ?? null,
+  can_handle_tpl: props.tier?.can_handle_tpl ? true : false,
 });
 
 const tierUsers = computed(() => {
-  let { tier_users } = { ...props.dropdownSource };
-  return tier_users.map(users => {
+  let tier_users = Object.values(props.usersList);
+  return tier_users.map(user => {
     return {
-      value: users.id,
-      label: users.name,
+      value: user.id,
+      label: user.name,
     };
   });
 });
+
+const selectedUsers = computed(() => {
+  if (!props.tier || !props.tier.users) {
+    return [];
+  }
+  
+  return props.tier.users.map(user => user.id);
+});
+
 
 function onSubmit(isValid) {
   if (isValid) {
     let method = isEdit.value ? 'put' : 'post';
     let url = isEdit.value
-      ? route('tier.update', tierForm.id)
-      : route('tier.store');
+      ? route('tier-inertia.update', tierForm.id)
+      : route('tier-inertia.store');
 
     tierForm.submit(method, url, {
       onError: errors => {
@@ -53,82 +62,68 @@ function onSubmit(isValid) {
 }
 </script>
 <template>
+
   <Head :title="isEdit ? 'Edit Tier' : 'Create Tier'" />
   <div class="flex justify-between items-center">
     <h2 class="text-xl font-semibold">
       {{ isEdit ? 'Edit' : 'Create' }} Tiers
     </h2>
     <div>
-      <Link :href="route('tier.index')">
-        <x-button size="sm" color="#1d83bc" tag="div"> Tier List </x-button>
+      <Link :href="route('tier-inertia.index')">
+      <x-button size="sm" color="#1d83bc" tag="div"> Tier List </x-button>
       </Link>
     </div>
   </div>
   <x-divider class="my-4" />
   <x-form @submit="onSubmit" :auto-focus="false">
     <div class="grid sm:grid-cols-2 gap-4">
-      <input type="hidden" name="model" :value="model.properties" />
-      <input type="hidden" name="modelSkipProperties" value="" />
-      <input type="hidden" name="modelType" value="" />
-      <input type="hidden" name="addon_id" value="" />
       <x-field label="Tier Name" required>
-        <x-input v-model="tierForm.name" class="w-full" />
+        <x-input v-model="tierForm.name" class="w-full" :error="tierForm.errors.name" />
       </x-field>
       <x-field label="Min Price">
-        <x-input v-model="tierForm.min_price" class="w-full" />
+        <x-input v-model="tierForm.min_price" :rule="[isNumber]" type="number" class="w-full" :error="tierForm.errors.min_price" />
       </x-field>
       <x-field label="Max Price">
-        <x-input v-model="tierForm.max_price" class="w-full" />
+        <x-input v-model="tierForm.max_price" class="w-full" :rule="[isNumber]" type="number" :error="tierForm.errors.max_price" />
       </x-field>
       <x-field label="Cost Per Lead">
-        <x-input v-model="tierForm.cost_per_lead" class="w-full" />
+        <x-input v-model="tierForm.cost_per_lead" class="w-full" type="number" :error="tierForm.errors.cost_per_lead" />
       </x-field>
       <x-field label="Tiers Users">
-        <ComboBox
-          v-model="tierForm.tier_user"
-          :single="true"
-          :options="tierUsers"
-        />
+        <ComboBox v-model="tierForm.tier_user" :multiple="true" :options="tierUsers" :selected="selectedUsers"
+          :error="tierForm.errors.tier_user" />
       </x-field>
       <x-field label="Is Ecommerce?">
-        <x-select
-          v-model="tierForm.can_handle_ecommerce"
-          class="w-full"
-          :options="[
-            { value: true, label: 'Yes' },
-            { value: false, label: 'No' },
-          ]"
-        />
+        <x-select v-model="tierForm.can_handle_ecommerce" class="w-full" :options="[
+    { value: true, label: 'Yes' },
+    { value: false, label: 'No' },
+  ]" :error="tierForm.errors.can_handle_ecommerce" />
       </x-field>
       <x-field label="Null Value?">
-        <x-select
-          v-model="tierForm.can_handle_null_value"
-          class="w-full"
-          :options="[
-            { value: true, label: 'Yes' },
-            { value: false, label: 'No' },
-          ]"
-        />
+        <x-select v-model="tierForm.can_handle_null_value" class="w-full" :options="[
+    { value: true, label: 'Yes' },
+    { value: false, label: 'No' },
+  ]" :error="tierForm.errors.can_handle_null_value" />
       </x-field>
+
+      <x-field label="IS TPL ?">
+        <x-select v-model="tierForm.can_handle_tpl" class="w-full" :options="[
+    { value: true, label: 'Yes' },
+    { value: false, label: 'No' },
+  ]" :error="tierForm.errors.can_handle_tpl" />
+      </x-field>
+
       <x-field label="Renewal">
-        <x-select
-          v-model="tierForm.is_tpl_renewals"
-          class="w-full"
-          :options="[
-            { value: true, label: 'Yes' },
-            { value: false, label: 'No' },
-          ]"
-        />
+        <x-select v-model="tierForm.is_tpl_renewals" class="w-full" :options="[
+    { value: true, label: 'Yes' },
+    { value: false, label: 'No' },
+  ]" :error="tierForm.errors.is_tpl_renewals" />
       </x-field>
       <x-field label="Is Active?">
-        <x-select
-          v-model="tierForm.is_active"
-          class="w-full"
-          :options="[
-            { value: true, label: 'Yes' },
-            { value: false, label: 'No' },
-          ]"
-        />
+        <x-select v-model="tierForm.is_active" class="w-full" :options="[
+    { value: true, label: 'Yes' },
+    { value: false, label: 'No' },
+  ]" :error="tierForm.errors.is_active" />
       </x-field>
     </div>
     <x-divider class="my-4" />
