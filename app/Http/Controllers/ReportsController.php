@@ -57,6 +57,13 @@ class ReportsController extends Controller
             'advisorsFilter' => $request->advisors,
             'quoteBatchId' => $request->quote_batch_id,
             'page' => $request->page,
+            'isCommercial' => $request->isCommercial,
+            'lob' => $request->lob,
+            'subeams' => $request->sub_teams,
+            'vehicle_type' => $request->vehicle_type,
+            'insurance_type' => $request->insurance_type,
+            'insurance_for' => $request->insurance_for,
+            'travel_coverage' => $request->travel_coverage,
         ];
 
         return $advisorConversionReportService->getAdvisorsAssignedLeads($filters);
