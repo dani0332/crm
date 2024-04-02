@@ -47,8 +47,8 @@ function onSubmit(isValid) {
   if (isValid) {
     let method = isEdit.value ? 'put' : 'post';
     let url = isEdit.value
-      ? route('tier-inertia.update', tierForm.id)
-      : route('tier-inertia.store');
+      ? route('tiers.update', tierForm.id)
+      : route('tiers.store');
 
     tierForm.submit(method, url, {
       onError: errors => {
@@ -69,7 +69,7 @@ function onSubmit(isValid) {
       {{ isEdit ? 'Edit' : 'Create' }} Tiers
     </h2>
     <div>
-      <Link :href="route('tier-inertia.index')">
+      <Link :href="route('tiers.index')">
       <x-button size="sm" color="#1d83bc" tag="div"> Tier List </x-button>
       </Link>
     </div>

@@ -9,12 +9,12 @@ const props = defineProps({
   <div class="flex justify-between items-center">
     <h2 class="text-xl font-semibold">Tier Detail</h2>
     <div class="flex gap-2">
-      <Link :href="route('tier-inertia.index')">
+      <Link :href="route('tiers.index')">
         <x-button size="sm" color="#1d83bc" tag="div">
           Tier Detail List
         </x-button>
       </Link>
-      <Link :href="route('tier-inertia.edit', tier.id)">
+      <Link :href="route('tiers.edit', tier.id)">
         <x-button size="sm" tag="div">Edit</x-button>
       </Link>
     </div>
