@@ -580,6 +580,7 @@ const loadSubTeams = e => {
   axios
     .post(`/reports/fetch-subteams-by-team`, {
       teamIds: Array.isArray(e) ? e : [e],
+      lob: filters.lob,
     })
     .then(res => {
       if (res.data.length > 0) {

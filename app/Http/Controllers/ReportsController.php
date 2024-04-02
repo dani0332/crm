@@ -134,8 +134,13 @@ class ReportsController extends Controller
 
         $lobId = $this->getProductByName($request->lob)->id;
         $allTeams = $this->getTeamsByProductId($lobId)->pluck('id')->toArray();
-        $userTeams = $this->getUserTeams(auth()->user()->id)->pluck('id')->toArray();
-        $commonteamIds = array_intersect($allTeams, $userTeams);
+        
+        if (auth()->user()->hasRole(RolesEnum::SeniorManagement)) {
+            $commonteamIds = $allTeams;
+        } else {
+            $userTeams = $this->getUserTeams(auth()->user()->id)->pluck('id')->toArray();
+            $commonteamIds = array_intersect($allTeams, $userTeams);
+        }
 
         $teams = Team::whereIn('id', $commonteamIds)
             ->select('name', 'id')
@@ -158,7 +163,11 @@ class ReportsController extends Controller
     public function fetchAdvisorsListByLob(Request $request)
     {
         $loginUserId = auth()->user()->id;
-        $usersReportToLoggedInUser = $this->walkTree($loginUserId, $request->lob);
+        if (auth()->user()->hasRole(RolesEnum::SeniorManagement)) {
+            $usersReportToLoggedInUser = $this->getUsersByProductName($request->lob)->pluck('id')->toArray();
+        } else {
+            $usersReportToLoggedInUser = $this->walkTree($loginUserId, $request->lob);
+        }
 
         return User::whereIn('id', $usersReportToLoggedInUser)
             ->select('name', 'id')
@@ -176,10 +185,25 @@ class ReportsController extends Controller
      */
     public function fetchSubTeamListByTeam(Request $request)
     {
-        $allowedSubTeams = [TeamNameEnum::VALUE, TeamNameEnum::VOLUME, TeamNameEnum::MICRO_SME];
+        $allowedSubTeams = [];
+        if ($request->lob === quoteTypeCode::Car) {
+            $allowedSubTeams = [
+                TeamNameEnum::VALUE,
+                TeamNameEnum::VOLUME
+            ];
+        } else if ($request->lob === quoteTypeCode::GroupMedical) {
+            $allowedSubTeams = [
+                TeamNameEnum::MICRO_SME
+            ];
+        }
         $subTeams = $this->getSubTeamsByTeamIds($request->teamIds)->whereIn('name', $allowedSubTeams)->pluck('id')->toArray();
-        $userTeams = $this->getCurrentUserTeamsAndSubTeams(Auth::user()->id)->pluck('id')->toArray();
-        $ids = array_intersect($subTeams, $userTeams);
+        if (auth()->user()->hasRole(RolesEnum::SeniorManagement)) {
+            $ids = $subTeams;
+        } else {
+            $userTeams = $this->getCurrentUserTeamsAndSubTeams(Auth::user()->id)->pluck('id')->toArray();
+            $ids = array_intersect($subTeams, $userTeams);
+        }
+        
         return Team::whereIn('id', $ids)
             ->select('name', 'id')
             ->orderBy('name')
@@ -190,11 +214,13 @@ class ReportsController extends Controller
 
     public function fetchAdvisorListByTeam(Request $request)
     {
-        $teamUsers = $this->getUsersByTeamIds($request->teamIds)->pluck('id')->toArray();
-
-        $usersReportToLoggedInUser = $this->walkTree(auth()->user()->id, $request->lob);
-
-        $advisorIdsByTeam = array_intersect($teamUsers, $usersReportToLoggedInUser);
+        if (auth()->user()->hasRole(RolesEnum::SeniorManagement)) {
+            $advisorIdsByTeam = $this->getUsersByTeamIds($request->teamIds)->pluck('id')->toArray();
+        } else {
+            $usersReportToLoggedInUser = $this->walkTree(auth()->user()->id, $request->lob);
+            $teamUsers = $this->getUsersByTeamIds($request->teamIds)->pluck('id')->toArray();
+            $advisorIdsByTeam = array_intersect($teamUsers, $usersReportToLoggedInUser);
+        }
 
         return User::whereIn('id', $advisorIdsByTeam)
             ->select('name', 'id')
@@ -207,10 +233,12 @@ class ReportsController extends Controller
     public function fetchAdvisorListBySubTeam(Request $request)
     {
         $teamUsers = $this->getUsersBySubTeamIds($request->teamIds)->pluck('id')->toArray();
-
-        $usersReportToLoggedInUser = $this->walkTree(auth()->user()->id, $request->lob);
-
-        $advisorIdsByTeam = array_intersect($teamUsers, $usersReportToLoggedInUser);
+        if (auth()->user()->hasRole(RolesEnum::SeniorManagement)) {
+            $advisorIdsByTeam = $teamUsers;
+        } else {
+            $usersReportToLoggedInUser = $this->walkTree(auth()->user()->id, $request->lob);
+            $advisorIdsByTeam = array_intersect($teamUsers, $usersReportToLoggedInUser);
+        }
 
         return User::whereIn('id', $advisorIdsByTeam)
             ->select('name', 'id')
