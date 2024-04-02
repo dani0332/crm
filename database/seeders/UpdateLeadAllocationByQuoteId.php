@@ -92,8 +92,8 @@ class UpdateLeadAllocationByQuoteId extends Seeder
             ->whereIn('r.name', [RolesEnum::EBPAdvisor, RolesEnum::RMAdvisor])->get()->count();
 
         if ($healthLeadAllocations > 0) {
-            
-             // Update Health Lead Allocation By Quote Type Id Wise
+
+            // Update Health Lead Allocation By Quote Type Id Wise
             LeadAllocation::join('users as u', 'lead_allocation.user_id', '=', 'u.id')
                 ->join('user_team as ut', 'ut.user_id', '=', 'u.id')
                 ->join('model_has_roles as mhr', 'mhr.model_id', '=', 'u.id')
