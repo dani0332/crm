@@ -218,7 +218,7 @@ class AmtController extends Controller
     }
 
     /**
-     * @param  $uuid
+     * @param    $uuid
      * @return \Inertia\Response|\Inertia\ResponseFactory
      */
     public function show($id)
@@ -233,6 +233,7 @@ class AmtController extends Controller
         $data = $record->toArray();
         $record->lost_reason = $data['business_quote_request_detail']['lost_reason']['text'] ?? null;
         $record->previous_advisor_id_text = $data['previous_advisor']['name'] ?? null;
+        $record->transaction_type_text = $data['transaction_type']['text'] ?? null;
         $quoteDetails = app(BusinessQuoteService::class)->getDetailEntity($record->id);
         $quoteStatuses = QuoteStatusRepository::byQuoteTypeId(QuoteTypes::BUSINESS->id())->get();
         $lostReasons = LostReasonRepository::orderBy('text', 'asc')->get();

@@ -29,12 +29,13 @@ class JetskiQuoteController extends Controller
     public function index()
     {
         $quotes = JetskiQuoteRepository::getData();
-
         $quoteStatuses = QuoteStatusRepository::byQuoteTypeId(QuoteTypes::JETSKI->id())->get();
+        $advisors = UserRepository::getPersonalQuoteAdvisors(QuoteTypes::JETSKI->value);
 
         return inertia('JetskiQuote/Index', [
             'quotes' => $quotes,
             'quoteStatuses' => $quoteStatuses,
+            'advisors' => $advisors,
         ]);
     }
 

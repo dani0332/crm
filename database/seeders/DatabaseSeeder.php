@@ -41,6 +41,9 @@ class DatabaseSeeder extends Seeder
             //            EmbeddedProductRoleAndPermissionSeeder::class,
             //            addDubaiNowLeadSourceExemptionInAppStorage::class,
             LookupSeeder::class,
+            GenericPermissionSeeder::class,
+            addSICWorkflow::class,
+            HealthPlanTableElibilityIdSeeder::class,
             addDubaiNowEmailGroup::class,
             DubaiLeadSource::class,
             //            AddNewDocumentTypesSeeder::class,
@@ -50,7 +53,6 @@ class DatabaseSeeder extends Seeder
             PaymentStatusAddSeeder::class,
             updateDocTypePayment::class,
             AddSageFlagApplicationStorage::class,
-            PaymentsMoveInNewTableStructure::class,
             AddTempUpdateTotalPricePermission::class,
         ]);
     }

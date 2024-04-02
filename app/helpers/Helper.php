@@ -37,7 +37,7 @@ if (! function_exists('vAbort')) {
     /**
      * abort script execution and return errors in validation format with http status 422.
      *
-     * @param  $messages  message string or array of messages
+     * @param    $messages  message string or array of messages
      *
      * @throws ValidationException
      */
@@ -471,6 +471,7 @@ if (! function_exists('newUi')) {
             quoteTypeCode::Cycle,
             quoteTypeCode::Bike,
             quoteTypeCode::Yacht,
+            quoteTypeCode::Jetski,
             quoteTypeCode::Aml,
         ];
     }
