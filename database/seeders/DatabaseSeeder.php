@@ -17,7 +17,6 @@ class DatabaseSeeder extends Seeder
             LookupSeeder::class,
             GenericPermissionSeeder::class,
             addSICWorkflow::class,
-            UpdateEmbeddedTransactions::class,
         ]);
     }
 }
