@@ -118,16 +118,16 @@ class RenewalBatchRequest extends FormRequest
                 'numeric',
                 'different:segment_volume.*',
             ],
-            // 'deadline_date' => [
-            //     'required',
-            //     'array',
-            //     'min:2',
-            //     'max:2',
-            // ],
-            // 'deadline_date.*' => [
-            //     'required',
-            //     'date',
-            // ],
+            'deadline_date' => [
+                'required',
+                'array',
+                'min:1',
+                'max:1',
+            ],
+            'deadline_date.*' => [
+                'required',
+                'date',
+            ],
             'quote_status_id' => [
                 'required',
                 'array',
