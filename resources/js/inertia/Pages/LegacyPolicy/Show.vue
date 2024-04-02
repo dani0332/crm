@@ -1,7 +1,7 @@
 <script setup>
 import LegacyCard from '../LegacyPolicy/Partials/LegacyCard';
 import DocumentListing from './Partials/DocumentListing.vue';
-import {formatDate} from '../../Composables/utilities.js';
+import { formatDate } from '../../Composables/utilities.js';
 const props = defineProps({
   policy: Object,
 });
@@ -102,7 +102,7 @@ const moveToImcrm = async policyNumber => {
 
       <div class="flex gap-2">
         <x-button
-          v-show="false"
+          v-show="true"
           size="sm"
           color="#ff5e00"
           :disabled="policy?.moved_to_imcrm"
@@ -235,76 +235,74 @@ const moveToImcrm = async policyNumber => {
             {{ comment ? comment : '' }}
           </template>
           <template #item-date_from="{ date_from }">
-              {{ formatDate(date_from) }}
+            {{ formatDate(date_from) }}
           </template>
           <template #item-date_to="{ date_to }">
-              {{ formatDate(date_to) }}
+            {{ formatDate(date_to) }}
           </template>
           <template #item-due_date="{ due_date }">
-              {{ formatDate(due_date) }}
+            {{ formatDate(due_date) }}
           </template>
-          <template #item-tax="{ tax }">
-              {{ tax }} AED
-          </template>
-          <template #item-comm="{ comm }">
-              {{ comm }}%
-          </template>
+          <template #item-tax="{ tax }"> {{ tax }} AED </template>
+          <template #item-comm="{ comm }"> {{ comm }}% </template>
           <template #item-commission_sum="{ commission_sum }">
-              {{ commission_sum }} AED
+            {{ commission_sum }} AED
           </template>
           <template #item-discount="{ discount }">
-              {{ discount }} AED
+            {{ discount }} AED
           </template>
           <template #item-gross_premium="{ gross_premium }">
-              {{ gross_premium }} AED
+            {{ gross_premium }} AED
           </template>
           <template #item-customer_payable="{ customer_payable }">
-              {{ customer_payable }} AED
+            {{ customer_payable }} AED
           </template>
         </DataTable>
         <!-- Display the total customer payable outside the DataTable -->
-      <table>
+        <table>
           <tr>
             <th>Total Gross Premium:</th>
             <td class="custom-table">{{ calculateGrossPremium }} AED</td>
             <th>Total Tax:</th>
             <td class="custom-table">{{ calculateTax }} AED</td>
             <th>Total Customer Payable:</th>
-            <td class="custom-table">{{ calculateTotalCustomerPayable }} AED</td>
+            <td class="custom-table">
+              {{ calculateTotalCustomerPayable }} AED
+            </td>
           </tr>
-      </table>
-    </template>
-    <!-- Invoices -->
-    <template v-if="can(permissionEnum.LEGACY_INVOICES)">
-      <div class="mt-6">
-        <h3 class="font-semibold text-primary-800">Invoices</h3>
-        <x-divider class="mb-4 mt-1" />
-      </div>
-      <div class="row-with-scroll">
-        <LegacyCard :legacy="policy.invoices" type="multiple" />
-      </div>
-    </template>
+        </table>
+      </template>
+      <!-- Invoices -->
+      <template v-if="can(permissionEnum.LEGACY_INVOICES)">
+        <div class="mt-6">
+          <h3 class="font-semibold text-primary-800">Invoices</h3>
+          <x-divider class="mb-4 mt-1" />
+        </div>
+        <div class="row-with-scroll">
+          <LegacyCard :legacy="policy.invoices" type="multiple" />
+        </div>
+      </template>
 
-    <!-- Payments -->
-    <template v-if="can(permissionEnum.LEGACY_PAYMENTS)">
-      <x-divider class="mb-4 mt-1" />
-      <div class="mt-6">
-        <h3 class="font-semibold text-primary-800">Payments</h3>
+      <!-- Payments -->
+      <template v-if="can(permissionEnum.LEGACY_PAYMENTS)">
         <x-divider class="mb-4 mt-1" />
-      </div>
-      <div class="row-with-scroll">
-        <LegacyCard :legacy="policy.payments" type="multiple" />
-      </div>
-    </template>
+        <div class="mt-6">
+          <h3 class="font-semibold text-primary-800">Payments</h3>
+          <x-divider class="mb-4 mt-1" />
+        </div>
+        <div class="row-with-scroll">
+          <LegacyCard :legacy="policy.payments" type="multiple" />
+        </div>
+      </template>
 
-    <!-- Other Legacy Details -->
-    <template v-if="can(permissionEnum.LEGACY_OTHER_DETAILS)">
-      <x-divider class="mb-4 mt-1" />
-      <div class="mt-6">
-        <h3 class="font-semibold text-primary-800">Other Legacy Details</h3>
+      <!-- Other Legacy Details -->
+      <template v-if="can(permissionEnum.LEGACY_OTHER_DETAILS)">
         <x-divider class="mb-4 mt-1" />
-      </div>
-      <div class="scrollable-container">
+        <div class="mt-6">
+          <h3 class="font-semibold text-primary-800">Other Legacy Details</h3>
+          <x-divider class="mb-4 mt-1" />
+        </div>
+        <div class="scrollable-container">
           <LegacyCard
             v-if="policy.customer && Object.keys(policy.customer).length > 0"
             :legacy="policy.customer"
@@ -342,10 +340,9 @@ const moveToImcrm = async policyNumber => {
             title="OBJECT"
             :policy="policy"
           />
-
-      </div>
-    </template>
-  </div>
+        </div>
+      </template>
+    </div>
 
     <x-modal v-model="moveToImcrmModal" size="lg" show-close backdrop>
       <div v-if="single">
@@ -414,6 +411,6 @@ const moveToImcrm = async policyNumber => {
 }
 
 .custom-table {
-   padding-right: 20px;
+  padding-right: 20px;
 }
 </style>
