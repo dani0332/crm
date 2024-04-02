@@ -39,6 +39,7 @@ class TierRepository extends BaseRepository
     public static function deleteTier($id)
     {
         $tier = self::findOrFail($id);
+        $tier->users()->detach();
         $tier->delete();
         return true;
     }
