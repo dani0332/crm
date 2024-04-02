@@ -106,7 +106,7 @@ const onSubmitChanges = async () => {
   await axios
     .post(`/update-cap/lead-allocation`, { 'items': max_cap })
     .then(() => {
-      router.get('/advisor-allocations', {
+      router.get('/allocations', {
         replace: true,
         preserveScroll: true,
         preserveState: true,
