@@ -498,13 +498,13 @@ class HandleInertiaRequests extends Middleware
                             PermissionsEnum::CONFIGURE_COMMERCIAL_VEHICLES,
                         ]),
                         'Allocation Config',
-                        url('generic/tier'),
+                        url('generic/tiers'),
                         fn ($s) => $s
                             ->attributes(['icon' => 'box'])
                             ->addIf(
                                 auth()->user()->can(PermissionsEnum::TIER_CONFIG_LIST),
                                 'Tiers',
-                                url('generic/tier'),
+                                url('generic/tiers'),
                                 fn ($s) => $s->attributes(['icon' => 'box'])
                             )
                             ->addIf(

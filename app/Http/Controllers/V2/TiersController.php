@@ -37,7 +37,7 @@ class TiersController extends Controller
     public function store(TierRequest $request)
     {
 
-        $tier = TierRepository::create($request->validated());
+        $tier = TierRepository::create($request->except('tier_user'));
 
         // Attaching users
         $response = $tier->users()->attach($request->tier_user);

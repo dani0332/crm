@@ -1,8 +1,7 @@
 <script setup>
 const props = defineProps({
-  tier: Array,
+  tier: Object,
 });
-
 </script>
 <template>
   <Head title="Tier Detail" />
