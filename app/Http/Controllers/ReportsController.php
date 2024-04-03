@@ -172,4 +172,14 @@ class ReportsController extends Controller
             'renewalBatchesList' => $renewalBatches,
         ]);
     }
+
+
+    public function renderPaymentSummary(Request $request, ReportService $reportService)
+    {
+        return inertia('Reports/AuthorisedPaymentSummary', [
+            'reportData' => $reportService->getPaymentAuthorisedSummary($request),
+            'defaultFilters' => $reportService->getDefaultFiltersForLeadsList(),
+        ]);
+    }
+
 }

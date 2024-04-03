@@ -266,4 +266,23 @@ class ReportService extends BaseService
             'advisorAssignedDates' => $advisorAssignedDates,
         ];
     }
+
+    public function getPaymentAuthorisedSummary($request)
+    {
+        $query = CarQuote::query()
+            ->select(
+                'users.id as advisor_id',
+                'users.name as advisor',
+                DB::raw('COUNT(payment_status.text) as payment_status_id')
+            )
+            ->join('users', 'users.id', 'car_quote_request.advisor_id')
+            ->join('payment_status', 'payment_status.id', 'car_quote_request.payment_status_id')
+            ->where('payment_status_id', PaymentStatusEnum::AUTHORISED)
+            ->groupBy('users.id', 'users.name')
+            ->orderBy('car_quote_request.created_at', 'desc');
+
+
+        return $query->simplePaginate(5)->withQueryString();
+
+    }
 }
