@@ -196,9 +196,8 @@ class SageApiService
         }
         $sageRequest->insurerGlLiaiblityAccount = $payment->insuranceProvider->gl_liaiblity_account;
         $sageRequest->sageVenderId = $payment->insuranceProvider->sage_vendor_id;
-        //dd($sageRequest);
-        // frequency  is 'upfront'
 
+        // frequency  is 'upfront'
         if ($payment->frequency == 'upfront') {
 
             /* createARInvoicePremAndComm */

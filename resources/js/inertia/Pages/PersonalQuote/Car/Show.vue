@@ -3306,8 +3306,8 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       v-if="!isNewPaymentStructure"
       :quoteId="record.id"
       :paymentCode = "record.code"
-      :quoteType="quoteType"      
-    />    
+      :quoteType="quoteType"
+    />
     <PaymentTableNew
       v-if="isNewPaymentStructure"
       quoteType="Car"

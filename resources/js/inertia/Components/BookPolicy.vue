@@ -150,7 +150,7 @@ const submitPolicy = () => {
       }
     })
     .catch(err => {
-      const flash_messages = err.response.data.errors.value;
+      const flash_messages = err.response.data.errors;
 
       Object.keys(flash_messages).forEach(function (key) {
         notification.error({
