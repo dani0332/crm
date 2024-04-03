@@ -5,8 +5,8 @@ const notification = useNotifications('toast');
 const page = usePage();
 
 const permissionEnum = page.props.permissionsEnum;
+const paymentLookups = page.props.paymentLookups;
 const can = permission => useCan(permission);
-
 const props = defineProps({
   payments: Array,
   can: Object,
@@ -398,55 +398,42 @@ const getPaymentTypeLabel = (code) => {
   return '';
 };
 
-const collectionTypes = [
-  { value: 'broker', label: 'Broker' , tooltip: props.paymentTooltipEnum.COLLECTOR_LIST_BROKER},
-  { value: 'insurer', label: 'Insurer' , tooltip: props.paymentTooltipEnum.COLLECTOR_LIST_INSURER},
-];
+// Define payment collection types
+const collectionTypes = paymentLookups.paymentCollectionTypes.map(item => ({
+  value: item.code,  label: item.text,  tooltip: item.description,
+}));
 
-const frequencyTypes = [
-  { value: 'upfront', label: 'Upfront', tooltip: props.paymentTooltipEnum.FREQUENCY_LIST_UPFRONT },
-  { value: 'monthly', label: 'Monthly', tooltip: props.paymentTooltipEnum.FREQUENCY_LIST_MONTHLY },
-  { value: 'quarterly', label: 'Quarterly', tooltip: props.paymentTooltipEnum.FREQUENCY_LIST_QUARTERLY },
-  { value: 'semi_annual', label: 'Semi Annual', tooltip: props.paymentTooltipEnum.FREQUENCY_LIST_SEMI_ANNUAL },
-  { value: 'split_payments', label: 'Split Payments', tooltip: props.paymentTooltipEnum.FREQUENCY_LIST_SPLIT_PAYMENTS },
-  { value: 'custom', label: 'Custom', tooltip: props.paymentTooltipEnum.FREQUENCY_LIST_CUSTOM },
-];
+// Define frequency types
+const frequencyTypes = paymentLookups.paymentFrequencyTypes.map(item => ({
+  value: item.code,  label: item.text,  tooltip: item.description,
+}));
 
-const declinedReasons = [
-  { value: '', label: 'Select Reason'},
-  { value: '1', label: props.paymentTooltipEnum.DECLINED_REASON_1},
-  { value: '2', label: props.paymentTooltipEnum.DECLINED_REASON_2},
-  { value: '3', label: props.paymentTooltipEnum.DECLINED_REASON_3},
-  { value: '4', label: props.paymentTooltipEnum.DECLINED_REASON_4},
-  { value: '5', label: props.paymentTooltipEnum.DECLINED_REASON_5},
-  { value: '6', label: props.paymentTooltipEnum.DECLINED_REASON_6},
-];
+// Define payment decline reasons
+const declinedReasons = paymentLookups.paymentDeclineReasons.map(item => ({
+  value: item.code,  label: item.text,
+}));
+declinedReasons.unshift({ value: '', label: 'Select Reason' });
 
-const creditApprovalReasons = [
-  { value: '', label: 'Approval Reason'},
-  { value: 'available_credit_balance', label: 'Available credit balance', tooltip: props.paymentTooltipEnum.CREDIT_APPROVAL_LIST_AVAILABLE },
-  { value: 'post_dated_cheque_payment', label: 'Post-dated cheque payment', tooltip: props.paymentTooltipEnum.CREDIT_APPROVAL_LIST_POSTDATED },
-  { value: 'cheque_under_clearance', label: 'Cheque under clearance', tooltip: props.paymentTooltipEnum.CREDIT_APPROVAL_LIST_CLEARANCE },
-  { value: 'other_reasons', label: 'Other reasons', tooltip: props.paymentTooltipEnum.CREDIT_APPROVAL_LIST_REASON },  
-];
-let discountTypes = [
-      { value: '', label: 'Discount Type'},
-      { value: 'managerial_approval_discount', label: 'Managerial approval discount', tooltip: props.paymentTooltipEnum.DISCOUNT_TYPE_LIST_MANAGERIAL },
-      { value: 'employee_discount', label: 'Employee discount', tooltip: props.paymentTooltipEnum.DISCOUNT_TYPE_LIST_EMPLOYEE },
-      { value: 'family_employee_discount', label: 'Employee family discount', tooltip: props.paymentTooltipEnum.DISCOUNT_TYPE_LIST_FAMILY }, 
-    ];
+// Define payment approval reasons
+const creditApprovalReasons = paymentLookups.paymentCreditApprovalReasons.map(item => ({
+  value: item.code,  label: item.text,  tooltip: item.description,
+}));
+creditApprovalReasons.unshift({ value: '', label: 'Approval Reason' });
+
+// Define payment discount types
+let discountTypes = paymentLookups.paymentDispountTypes.map(item => ({
+  value: item.code,  label: item.text,  tooltip: item.description,
+}));
+discountTypes.unshift({ value: '', label: 'Discount Type' });
 if (!(familyEmployeDiscount.includes(props.quoteType))) {
   discountTypes = discountTypes.filter(type => (type.value !== 'employee_discount' && type.value !== 'family_employee_discount'));
 }
 
-const discountReasons = [
-  { value: '', label: 'Select a reason'},
-  { value: 'refer_a_friend', label: 'Refer a friend', tooltip: props.paymentTooltipEnum.DISCOUNT_TYPE_LIST_REFER },
-  { value: 'promotional_campaign_discount', label: 'Promotional campaign discount', tooltip: props.paymentTooltipEnum.DISCOUNT_REASON_LIST_PROMOTIONAL },
-  { value: 'loyalty_reward_discount', label: 'Loyalty reward discount', tooltip: props.paymentTooltipEnum.DISCOUNT_REASON_LIST_LOYALTY },
-  { value: 'competitive_pricing_discount', label: 'Competitive pricing discount', tooltip: props.paymentTooltipEnum.DISCOUNT_REASON_LIST_COMPETITIVE },
-  { value: 'discount_custom_reason', label: 'Custom discount reason', tooltip: props.paymentTooltipEnum.DISCOUNT_REASON_LIST_CUSTOM_REASON },  
-];
+// Define payment discount reasons
+const discountReasons = paymentLookups.paymentDiscountReasons.map(item => ({
+  value: item.code,  label: item.text,  tooltip: item.description,
+}));
+discountReasons.unshift({ value: '', label: 'Select a reason' });
 
 const handleDiscountReasonChange = () => {
   isDiscountReasonError.value=false

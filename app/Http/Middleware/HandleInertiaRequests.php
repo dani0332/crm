@@ -10,6 +10,7 @@ use App\Enums\quoteTypeCode;
 use App\Enums\RolesEnum;
 use App\Enums\TravelQuoteEnum;
 use App\Services\UserService;
+use App\Services\SplitPaymentService;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 use Spatie\Navigation\Navigation;
@@ -71,6 +72,7 @@ class HandleInertiaRequests extends Middleware
             'pusherKey' => config('constants.VITE_PUSHER_APP_KEY'),
             'epLink' => config('constants.AFIA_WEBSITE_DOMAIN'),
             'im_logo' => getIMLogo(),
+            'paymentLookups' => app(SplitPaymentService::class)->getPaymentLookups(),
         ];
     }
 
