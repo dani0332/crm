@@ -2,10 +2,12 @@
 
 namespace App\Http\Requests;
 
+use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Foundation\Http\FormRequest;
 
 class StorePaymentRequest extends FormRequest
 {
+    use GenericQueriesAllLobs;
     /**
      * Determine if the user is authorized to make this request.
      */
@@ -50,5 +52,18 @@ class StorePaymentRequest extends FormRequest
         }
 
         return $rules;
+    }
+
+    /**
+     * validate quote record
+     */
+    public function withValidator($validator)
+    {
+        $validator->after(function ($validator) {
+            $quoteModel = $this->getQuoteObject(request()->modelType, request()->quote_id);
+            if (! $quoteModel) {
+                $validator->errors()->add('value', 'Quote Not Exists');
+            }
+        });
     }
 }

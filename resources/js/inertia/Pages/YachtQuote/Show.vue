@@ -246,7 +246,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
             </Link>
           </div>
           <div class="text-sm">
-            <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
+        <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
               <div class="grid sm:grid-cols-2">
                 <div
                   class="grid sm:grid-cols-2"
@@ -288,12 +288,12 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
 
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">CREATED BY</dt>
-                <dd>{{ quote?.created_by?.email }}</dd>
+            <dd class="break-words">{{ quote?.created_by?.email }}</dd>
               </div>
 
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">UPDATED BY</dt>
-                <dd>{{ quote?.updated_by?.email }}</dd>
+            <dd class="break-words">{{ quote?.updated_by?.email }}</dd>
               </div>
 
               <div class="grid sm:grid-cols-2">
@@ -337,22 +337,26 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
             <x-divider class="mb-4 mt-1" />
           </div>
 
-          <div class="text-sm">
-            <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
-              <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">BOAT DETAILS</dt>
-                <dd>{{ quote?.yacht_quote?.boat_details }}</dd>
-              </div>
+      <div class="text-sm">
+        <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">BOAT DETAILS</dt>
+            <dd class="break-words">{{ quote?.yacht_quote?.boat_details }}</dd>
+          </div>
 
-              <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">ENGINE DETAILS</dt>
-                <dd>{{ quote?.yacht_quote?.engine_details }}</dd>
-              </div>
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">ENGINE DETAILS</dt>
+            <dd class="break-words">
+              {{ quote?.yacht_quote?.engine_details }}
+            </dd>
+          </div>
 
-              <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">CLAIM EXPERIENCE</dt>
-                <dd>{{ quote?.yacht_quote?.claim_experience }}</dd>
-              </div>
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">CLAIM EXPERIENCE</dt>
+            <dd class="break-words">
+              {{ quote?.yacht_quote?.claim_experience }}
+            </dd>
+          </div>
 
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">SUM INSURED</dt>
@@ -402,7 +406,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
                 v-if="
                   quote.customer_type === page.props.customerTypeEnum.Individual
                 "
-                class="grid md:grid-cols-2 gap-x-6 gap-y-4"
+            class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words"
               >
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">FIRST NAME</dt>
@@ -486,7 +490,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
                 v-if="
                   quote.customer_type === page.props.customerTypeEnum.Entity
                 "
-                class="grid md:grid-cols-2 gap-x-6 gap-y-4"
+            class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words"
               >
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">FIRST NAME</dt>
@@ -729,6 +733,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       :quoteId="quote.id"
       :paymentCode = "quote.code"
       :quoteType="quoteType"      
+      :payments="quote.payments"    
     />    
     <PaymentTableNew 
 			v-if="isNewPaymentStructure"
