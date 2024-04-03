@@ -538,7 +538,7 @@ class CarAllocationService extends AllocationService
             $advisors = $this->getUnavailableAdvisor();
             if (count($advisors) > 0) {
                 $advisorIds = $advisors->pluck('user_id');
-                info('Inside reassignment general run and selected advisors are: '.json_encode($advisorIds));
+                info('Inside reassignment general run and selected advisors are: '.json_encode($advisorIds->toArray()));
                 $leads->whereIn('advisor_id', $advisorIds);
             }
         }
