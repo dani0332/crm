@@ -39,7 +39,7 @@ class SendUpdateRequest extends FormRequest
             $sendUpdateLog = SendUpdateLog::where('id', request()->sendUpdateId ?? '')->firstOrFail();
 
             if ($sendUpdateLog->status == SendUpdateLogStatusEnum::UPDATE_BOOKED) {
-                $validator->errors()->add('error', 'Update already booked');
+                return $validator->errors()->add('error', 'Update already booked');
             }
 
             $sendUpdateCategoryCode = $sendUpdateLog?->category->code ?? '';
@@ -150,7 +150,8 @@ class SendUpdateRequest extends FormRequest
                     }
                 }
 
-                if ($sendUpdateCategoryCode == SendUpdateLogStatusEnum::EF && $sendUpdateLog->transaction_payment_status != SendUpdateLogStatusEnum::TRANSACTION_APPROVED &&
+                if ($sendUpdateCategoryCode == SendUpdateLogStatusEnum::EF &&
+                    in_array($sendUpdateLog->status, [SendUpdateLogStatusEnum::TRANSACTION_APPROVED, SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER]) &&
                     ! in_array($categorySubType, [
                         SendUpdateLogStatusEnum::MPC,
                         SendUpdateLogStatusEnum::MDOM,

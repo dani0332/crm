@@ -206,7 +206,7 @@ class SendUpdateLogController extends Controller
             'realQuote' => $realQuote,
             'isNegativeValue' => $this->sendUpdateLogService->isNegativeValue($sendUpdateLog),
             'bookingDetails' => $bookingDetails,
-            'updateBtn' => $this->sendUpdateLogService->getUpdateButtonStatus($sendUpdateLog, $quoteType),
+            'updateBtn' => $this->sendUpdateLogService->getUpdateButtonStatus($sendUpdateLog),
             'paymentInvoices' => $paymentInvoices ?? [],
             'uploadedDocuments' => $uploadedDocuments,
             'isPaymentVisible' => $this->sendUpdateLogService->isPaymentVisible($categoryCode, $optionCode),
@@ -391,11 +391,11 @@ class SendUpdateLogController extends Controller
 
         if (! isset($sendUpdateRequest->paymentValidated)) {
             // Add insuficient Payment Validations here
-            $insuficientPaymentCheck = false;
+            $insufficientPaymentCheck = false;
 
             return response()->json([
-                'insuficientPaymentCheck' => $insuficientPaymentCheck,
-                'parentPaymentStatus' => $sendUpdate->payment_status_id ?? null,
+                'insufficientPaymentCheck' => $insufficientPaymentCheck,
+                'parentPaymentStatus' => $sendUpdate->payments->first()?->payment_status_id ?? null,
             ], 200);
         }
 

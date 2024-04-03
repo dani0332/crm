@@ -420,11 +420,7 @@ function convertToNumber(value) {
 }
 
 const sendUpdateButton = computed(() => {
-  return (
-    (isEF.value || isCI.value || isCIR.value || isCPD.value) &&
-    props.updateBtn &&
-    can(page.props.permissionsEnum.SEND_UPDATE_TO_CUSTOMER)
-  );
+  return props.updateBtn && can(page.props.permissionsEnum.SEND_UPDATE_TO_CUSTOMER);
 });
 
 const modals = reactive({
@@ -461,9 +457,9 @@ const sendUpdateValidation = () => {
     .then((response) => {
       if (response.status == 200) {
         if (props.updateBtn === sendUpdateStatusEnum.SU) {
-          if(response.data.insuficientPaymentCheck == true) {
+          if(response.data.insufficientPaymentCheck == true) {
             insuficientPaymentConfirmation(response);
-          } else if(response.data.insuficientPaymentCheck == false) {
+          } else if(response.data.insufficientPaymentCheck == false) {
             attestRecord();
           }
         } else {
