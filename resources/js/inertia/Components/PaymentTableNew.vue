@@ -323,8 +323,7 @@ const validatePaymentOption = () => {
         } else {        
           isDiscountDocumentNotUploaded.value = false;
         } 
-        console.log("DISC==="+discountValue.value);
-        
+                
         if (discountValue.value === '' || parseFloat(discountValue.value)<=0) {
           issueFound = true; 
           isDiscountError.value = true;
@@ -1120,7 +1119,8 @@ const editPaymentModal = (payment,split_payment_id,sr_no,capture_approval) => {
     (payment.discount_type==='family_employee_discount' || payment.discount_type==='employee_discount')
     && payment.discount_value>0
     ){
-      discountValue.value = payment.discount_value;    
+      discountValue.value = payment.discount_value;
+      calculatedDiscount.value = payment.discount_value;  
   }
 
    //Assign plan for Travel
