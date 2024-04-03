@@ -150,7 +150,8 @@ class SendUpdateRequest extends FormRequest
                     }
                 }
 
-                if ($sendUpdateCategoryCode == SendUpdateLogStatusEnum::EF && $sendUpdateLog->status != SendUpdateLogStatusEnum::TRANSACTION_APPROVED &&
+                if ($sendUpdateCategoryCode == SendUpdateLogStatusEnum::EF &&
+                    in_array($sendUpdateLog->status, [SendUpdateLogStatusEnum::TRANSACTION_APPROVED, SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER]) &&
                     ! in_array($categorySubType, [
                         SendUpdateLogStatusEnum::MPC,
                         SendUpdateLogStatusEnum::MDOM,
