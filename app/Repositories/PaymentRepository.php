@@ -8,11 +8,13 @@ use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
+use App\Enums\SendUpdateLogStatusEnum;
 use App\Interfaces\PaymentRepositoryInterface;
 use App\Models\Payment;
 use App\Models\PaymentSplits;
 use App\Models\PaymentStatusLog;
 use App\Models\QuoteDocument;
+use App\Models\SendUpdateLog;
 use App\Services\ApplicationStorageService;
 use App\Services\CRUDService;
 use App\Services\PaymentLinkService;
@@ -508,6 +510,11 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
         }
         //Update parent payment status
         $this->setMasterPaymentStatus($masterPayment);
+        if ($masterPayment->send_update_log_id) {
+            SendUpdateLog::where('id', $masterPayment->send_update_log_id)->update([
+                'status' => SendUpdateLogStatusEnum::TRANSACTION_APPROVED,
+            ]);
+        }
 
         return $successMessage;
     }
