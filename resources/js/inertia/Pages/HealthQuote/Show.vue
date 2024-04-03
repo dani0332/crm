@@ -2499,74 +2499,72 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
         <template #body>
           <x-divider class="my-4" />
           <div class="flex flex-wrap md:flex-nowrap gap-6 w-full">
-        <div class="w-full md:w-50">
-              <div class="flex flex-col gap-4">
-                <x-select
-                  v-model="leadStatusForm.leadStatus"
-                  label="Status"
-                  :options="leadStatusOptions"
+            <div class="w-full md:w-50">
+                  <div class="flex flex-col gap-4">
+                    <x-select
+                      v-model="leadStatusForm.leadStatus"
+                      label="Status"
+                      :options="leadStatusOptions"
+                      :disabled="quote.quote_status_id == 15"
+                      placeholder="Lead Status"
+                      class="w-full"
+                    />
+                <x-textarea
+                  v-model="leadStatusForm.notes"
+                  type="text"
+                  label="Notes"
+                  placeholder="Lead Notes"
+                  class="w-full"
                   :disabled="quote.quote_status_id == 15"
-                  placeholder="Lead Status"
-                  class="w-full"
                 />
-            <x-textarea
-              v-model="leadStatusForm.notes"
-              type="text"
-              label="Notes"
-              placeholder="Lead Notes"
-              class="w-full"
-              :disabled="quote.quote_status_id == 15"
-            />
-          </div>
-        </div>
-        <div class="w-full md:w-50">
-          <div class="flex flex-col gap-4">
-                <x-input
-                  v-if="leadStatusForm.leadStatus == 15"
-                  v-model="leadStatusForm.trans_code"
-                  label="TransApp Code"
-                  placeholder="TransApp Code is required"
-                  class="w-full"
-                  :error="leadStatusForm.errors.trans_code"
-                />
-                <x-select
-                  v-if="leadStatusForm.leadStatus == 17"
-                  v-model="leadStatusForm.lostReason"
-                  label="Lost Reason"
-                  :options="
-                    lostReasons?.map(item => ({
-                      value: item.id,
-                      label: item.text,
-                    }))
-                  "
-                  placeholder="Lost Reason is required"
-                  class="w-full"
-                  :error="leadStatusForm.errors.lostReason"
-                />
-            <x-field class="" label="Transaction Type">
-              <x-input
-                type="text"
-                :value="quote.transaction_type_text"
-                class="w-full"
-                :disabled="true"
-              />
-            </x-field>
-              </div>
-        </div>
-      </div>
-      <x-divider class="mb-1 mt-10" />
-              <div class="flex justify-end">
-                <x-button
-                  class="mt-4"
-                  color="emerald"
-                  size="sm"
-                  :loading="leadStatusForm.processing"
-                  @click.prevent="onLeadStatus"
-                >
-                  Change Status
-                </x-button>
               </div>
             </div>
+            <div class="w-full md:w-50">
+              <div class="flex flex-col gap-4">
+                    <x-input
+                      v-if="leadStatusForm.leadStatus == 15"
+                      v-model="leadStatusForm.trans_code"
+                      label="TransApp Code"
+                      placeholder="TransApp Code is required"
+                      class="w-full"
+                      :error="leadStatusForm.errors.trans_code"
+                    />
+                    <x-select
+                      v-if="leadStatusForm.leadStatus == 17"
+                      v-model="leadStatusForm.lostReason"
+                      label="Lost Reason"
+                      :options="
+                        lostReasons?.map(item => ({
+                          value: item.id,
+                          label: item.text,
+                        }))
+                      "
+                      placeholder="Lost Reason is required"
+                      class="w-full"
+                      :error="leadStatusForm.errors.lostReason"
+                    />
+                <x-field class="" label="Transaction Type">
+                  <x-input
+                    type="text"
+                    :value="quote.transaction_type_text"
+                    class="w-full"
+                    :disabled="true"
+                  />
+                </x-field>
+                  </div>
+            </div>
+          </div>
+          <x-divider class="mb-1 mt-10" />
+          <div class="flex justify-end">
+            <x-button
+              class="mt-4"
+              color="emerald"
+              size="sm"
+              :loading="leadStatusForm.processing"
+              @click.prevent="onLeadStatus"
+            >
+              Change Status
+            </x-button>
           </div>
         </template>
       </Collapsible>
@@ -2703,17 +2701,16 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
               <template #content> {{ planFiltersCount }} </template>
             </x-badge>
 
-          <x-button
-            v-if="hasAnyRole([rolesEnum.BetaUser, rolesEnum.RMAdvisor, rolesEnum.HealthManager])"
-            size="sm"
-            color="emerald"
-            @click.prevent="modals.createPlan = true"
-          >
-            Add Plan
-          </x-button>
-        </div>
-      </div>
-      <DataTable
+            <x-button
+              v-if="hasAnyRole([rolesEnum.BetaUser, rolesEnum.RMAdvisor, rolesEnum.HealthManager])"
+              size="sm"
+              color="emerald"
+              @click.prevent="modals.createPlan = true"
+            >
+              Add Plan
+            </x-button>
+          </div>
+          <DataTable
         ref="planDataTable"
         v-model:items-selected="selectedPlans"
         table-class-name="tablefixed compact"
@@ -2854,6 +2851,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
           </DataTable>
         </template>
       </Collapsible>
+    </div>
 
       <LazyAvailablePlan
         v-model="modals.plan"
@@ -3407,5 +3405,4 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       :quoteCode="$page.props.quote.code"
       :expanded="sectionExpanded"
     />
-  </div>
 </template>
