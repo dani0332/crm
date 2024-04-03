@@ -532,12 +532,13 @@ class CarAllocationService extends AllocationService
         // Filter by advisor ID if provided , which mean reassignment is going to run for a single advisor
         if ($advisorId != 0) {
             $leads->where('advisor_id', $advisorId);
+            info('Inside reassignment single run and selected advisor is: '.$advisorId);
         } else {
             // If advisor ID is not provided, get unavailable advisors and filter leads by them
             $advisors = $this->getUnavailableAdvisor();
             if (count($advisors) > 0) {
                 $advisorIds = $advisors->pluck('user_id');
-                info('Inside reassignment general run');
+                info('Inside reassignment general run and selected advisors are: '.json_encode($advisorIds));
                 $leads->whereIn('advisor_id', $advisorIds);
             }
         }
