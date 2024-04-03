@@ -1,10 +1,13 @@
 <?php
 
 use App\Enums\IMCRMSearchTypesEnum;
+use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypes;
+use App\Models\BusinessQuote;
+use App\Models\CarQuote;
 use App\Models\CustomerAdditionalInfo;
 use App\Models\HealthQuote;
 use App\Services\HealthQuoteService;
@@ -635,6 +638,32 @@ if (! function_exists('getIMLogo')) {
         $imLogo = 'images/im_logo_21k-hi.png';
 
         return $isPDF ? public_path($imLogo) : asset($imLogo);
+    }
+}
+
+if (! function_exists('getAuthorisePaymentCount')) {
+    function getAuthorisePaymentCount()
+    {
+
+        if (! Auth::check()) {
+            return 0;
+        }
+
+        $CarCount = CarQuote::where('payment_status_id', PaymentStatusEnum::AUTHORISED)
+            ->where('car_quote_request.advisor_id', Auth::user()->id)
+            ->count();
+
+        $HealthCount = HealthQuote::where('payment_status_id', PaymentStatusEnum::AUTHORISED)
+            ->where('health_quote_request.advisor_id', Auth::user()->id)
+            ->count();
+
+        $BusinessCount = BusinessQuote::where('payment_status_id', PaymentStatusEnum::AUTHORISED)
+            ->where('business_quote_request.advisor_id', Auth::user()->id)
+            ->count();
+
+        $totalCount = $CarCount + $HealthCount + $BusinessCount;
+
+        return $totalCount;
     }
 }
 

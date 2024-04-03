@@ -71,6 +71,7 @@ class HandleInertiaRequests extends Middleware
             'pusherKey' => config('constants.VITE_PUSHER_APP_KEY'),
             'epLink' => config('constants.AFIA_WEBSITE_DOMAIN'),
             'im_logo' => getIMLogo(),
+            'getAuthorisePaymentCount' => getAuthorisePaymentCount(),
         ];
     }
 

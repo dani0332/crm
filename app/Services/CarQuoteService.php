@@ -172,7 +172,9 @@ class CarQuoteService extends BaseService
                 'ent.industry_type_code',
                 'cqr.prefill_plan_id',
                 'cqr.enquiry_count',
+                DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at'),
             )
+            ->leftJoin('payments as py', 'py.code', '=', 'cqr.code')
             ->leftJoin('nationality as n', 'n.id', '=', 'cqr.nationality_id')
             ->leftJoin('car_quote_request_detail as cqrd', 'cqrd.car_quote_request_id', '=', 'cqr.id')
             ->leftJoin('lost_reasons as ls', 'ls.id', '=', 'cqrd.lost_reason_id')

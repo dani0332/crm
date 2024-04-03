@@ -33,7 +33,9 @@ const tableHeader = [
   { text: 'BATCH', value: 'quote_batch_id_text' },
   { text: 'FIRST NAME', value: 'first_name' },
   { text: 'LAST NAME', value: 'last_name' },
-  { text: 'DATE OF BIRTH', value: 'dob' },
+    { text: 'PAYMENT AUTHORISED DATE', value: 'authorized_at' },
+    { text: 'PAYMENT EXPIRY', value: 'expiry_date' },
+    { text: 'DATE OF BIRTH', value: 'dob' },
   { text: 'LEAD SOURCE', value: 'source' },
   { text: 'NATIONALITY', value: 'nationality_id_text' },
   { text: 'UAE LICENCE HELD FOR', value: 'uae_license_held_for_id_text' },
@@ -300,6 +302,23 @@ const onConfirmCreateLead = () => {
   }
   createLead.modal = false;
 };
+
+function daysAgoFromAuthorizedDate(authorizedDate) {
+    const parsedDate = new Date(authorizedDate);
+    const newDate = new Date(parsedDate.setDate(parsedDate.getDate() + 7));
+    const currentDate = new Date();
+    const differenceInTime = newDate.getTime() - currentDate.getTime();
+    const differenceInDays = differenceInTime / (1000 * 3600 * 24);
+
+    if (differenceInDays <= 0) {
+        return "Expired";
+    }
+
+    return Math.floor(differenceInDays) + " days";
+}
+
+
+
 
 onMounted(() => {
   setQueryStringFilters();
@@ -660,6 +679,12 @@ onMounted(() => {
       <template #item-premium="item">
         <p v-if="item.premium != null">{{ fixedValue(item.premium) }}</p>
       </template>
+        <template #item-authorized_at="item">
+            <p v-if="item.payment_status_id_text === 'AUTHORISED'">{{item.authorized_at}}</p>
+        </template>
+        <template #item-expiry_date="item">
+            <p v-if="item.payment_status_id_text === 'AUTHORISED'">{{daysAgoFromAuthorizedDate(item.authorized_at)}}</p>
+        </template>
     </DataTable>
 
     <Pagination

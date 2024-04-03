@@ -5,6 +5,7 @@ import OnlineStatusToggle from "../Components/OnlineStatusToggle.vue";
 
 const page = usePage();
 const user = computed(() => page.props.auth.user);
+const getAuthorisePaymentCount = computed(()=>page.props.getAuthorisePaymentCount)
 const navLinks = computed(() => page.props.sidebar);
 const openSidebar = ref(false);
 
@@ -253,6 +254,16 @@ const onLogout = () => {
                 />
               <!-- <UserStatus /> -->
               <PaymentNotification />
+
+<!--                ADD BANER HERE-->
+                <x-button class="w-full"  size="sm">
+                <div class="items-center">
+                    <a href="/quotes/car?created_at_start=2024-04-03&created_at_end=2024-04-03&page=1&payment_status_id=4" style="text-decoration: underline dotted;">
+                        Payment Authorised: {{getAuthorisePaymentCount}}
+                    </a>
+                </div>
+                </x-button>
+
               <x-popover align="right" block>
                 <x-button size="sm" ghost>
                   <div class="flex gap-3 items-center">
@@ -312,6 +323,7 @@ const onLogout = () => {
             </div>
           </div>
         </header>
+
         <div class="flex-1 w-full p-4 mx-auto md:px-6 lg:px-8 max-w-full">
           <slot />
         </div>
