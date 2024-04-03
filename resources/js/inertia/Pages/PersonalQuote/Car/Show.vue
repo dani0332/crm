@@ -65,6 +65,7 @@ defineProps({
   planURL: String,
   storageUrl: String,
   insuranceProviders: Array,
+  insuranceProvidersByQuoteType: Object,
   advisor: Object,
   carMakeText: String,
   carModelText: String,
@@ -90,9 +91,9 @@ defineProps({
   carInsuranceProviders: Array,
   paymentTooltipEnum: Object,
   isNewPaymentStructure: Boolean,
+  vatPercentage: Number,
+  commercialRules: Object,
 });
-
-
 
 const page = usePage();
 const notification = useNotifications('toast');
@@ -1580,6 +1581,20 @@ const handlePlanSelected = plan => {
     only: ['payments','paymentEntityModel'],        
   });  
 };
+
+const isPlanDetailEnabled = computed(() => {
+
+  if(page.props.commercialRules?.length > 0) { // Check rules for commercial
+    return true;
+  }
+
+  if(page.props.record.source == page.props.leadSourceEnum.RENEWAL_UPLOAD) {
+      return (page.props.record.vehicle_type_id_text == 'BIKE') ? true : false;
+  }
+
+  return false;
+});
+
 </script>
 
 <template>
@@ -2745,7 +2760,15 @@ const handlePlanSelected = plan => {
       </div>
     </div>
 
-    <div class="p-4 rounded shadow mb-6 bg-white">
+    <PlanDetails
+        v-if="isPlanDetailEnabled"
+        :insuranceProviders="insuranceProvidersByQuoteType"
+        :quote="quote"
+        :quoteType="quoteType"
+        :vatPrice="vatPercentage"
+      />
+
+    <div v-else class="p-4 rounded shadow mb-6 bg-white">
       <div class="flex justify-between items-center mb-4">
         <h3 class="font-semibold text-primary-800 text-lg">
           Available Plans
