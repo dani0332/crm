@@ -2,10 +2,11 @@
 
 namespace App\Http\Requests;
 
+use Carbon\Carbon;
 use App\Models\Payment;
 use App\Models\PaymentSplits;
+use App\Enums\PaymentStatusEnum;
 use App\Traits\GenericQueriesAllLobs;
-use Carbon\Carbon;
 use Illuminate\Foundation\Http\FormRequest;
 
 class SendBookPolicyRequest extends FormRequest
@@ -62,10 +63,12 @@ class SendBookPolicyRequest extends FormRequest
                         if (empty($payment->commission_vat_not_applicable) && empty($payment->commission_vat_applicable)) {
                             $validator->errors()->add('value', 'Commmission (VAT NOT APPLICABLE) OR Commmission (VAT APPLICABLE) is required');
                         }
-                        if (! empty($splits)) {
-                            foreach ($splits as $item) {
-                                if (empty($item->sage_reciept_id)) {
-                                    $validator->errors()->add('value', 'Payment sage reciept id can not be null');
+                        if ((! in_array($payment->frequency, ['upfront', 'split_payments']) && in_array($splits[0]['payment_status_id'], [PaymentStatusEnum::PAID, PaymentStatusEnum::CAPTURED]) || (strtolower($payment->invoicePaymentStatus) == 'paid' && $payment->frequency == 'split_payments'))) {
+                            if (! empty($splits)) {
+                                foreach ($splits as $item) {
+                                    if (empty($item->sage_reciept_id)) {
+                                        $validator->errors()->add('value', 'Payment sage reciept id can not be null');
+                                    }
                                 }
                             }
                         }
