@@ -4,6 +4,7 @@ namespace App\Http\Controllers\V2;
 
 use App\Enums\CustomerTypeEnum;
 use App\Enums\GenericRequestEnum;
+use App\Enums\PaymentAllocationStatus;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Exports\AmtQuoteExport;
@@ -47,8 +48,6 @@ use App\Services\SplitPaymentService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
-use App\Enums\PaymentAllocationStatus;
-use App\Enums\PaymentStatusEnum;
 
 class CentralController extends Controller
 {
@@ -333,7 +332,7 @@ class CentralController extends Controller
             $payment->save();
         }
     }
-    
+
     // Update total price
     public function updateTotalPrice(UpdateTotalPriceRequest $request)
     {

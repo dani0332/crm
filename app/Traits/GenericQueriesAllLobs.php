@@ -2,16 +2,16 @@
 
 namespace App\Traits;
 
-use App\Models\Payment;
-use App\Enums\QuoteTypes;
-use App\Enums\quoteTypeCode;
-use App\Enums\QuoteStatusEnum;
-use App\Enums\PaymentStatusEnum;
 use App\Enums\GenericRequestEnum;
+use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteDocumentsEnum;
+use App\Enums\QuoteStatusEnum;
+use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypes;
+use App\Models\Payment;
+use App\Repositories\InsuranceProviderRepository;
 use App\Services\CapiRequestService;
 use App\Services\QuoteDocumentService;
-use App\Repositories\InsuranceProviderRepository;
 
 trait GenericQueriesAllLobs
 {
@@ -245,18 +245,18 @@ trait GenericQueriesAllLobs
         }
     }
 
-    
-    public function updatePriceAndDiscount($quoteModel) {
-        $payment = $quoteModel->payments()->first();   
+    public function updatePriceAndDiscount($quoteModel)
+    {
+        $payment = $quoteModel->payments()->first();
         $difference = $quoteModel->price_with_vat - ($payment->captured_amount + $payment->discount_value);
-    
+
         // Case 1 if difference is less than 1 and greater than 0 else set total price to price with vat
         if ($difference <= 0.99 && $difference > 0) {
-            $payment->system_adjusted_discount= $difference;
+            $payment->system_adjusted_discount = $difference;
             // If condition to check if discount value is not null & add difference to it else set difference as discount value
             if ($payment->discount_value != null) {
                 $payment->discount_value += $difference;
-            } else{
+            } else {
                 $payment->discount_value = $difference;
                 $payment->discount_type = 'system_adjusted_discount';
             }
