@@ -71,14 +71,14 @@ class SagePayloadFactory
 
     public static function createAPInvoicePrem($request)
     {
-
+        $premiumDescription = 'P'.$request->invoiceDescription;
         $payLoad = [
             'Invoices' => [
                 [
                     'VendorNumber' => $request->sageVenderId, // use vender api to create vender in sage
 
                     'DocumentNumber' => $request->insurerPremiumNumber,
-                    'InvoiceDescription' => $request->invoiceDescription,
+                    'InvoiceDescription' => $premiumDescription,
                     'DocumentDate' => $request->insurerInvoiceDate,
                     'CurrencyCode' => 'AED', // alway will be AED discussed with denber
                     'DueDate' => $request->paymentDueDate,
@@ -90,7 +90,7 @@ class SagePayloadFactory
                     'PostingDate' => $request->bookingDate,
                     'InvoiceDetails' => [
                         [
-                            'DistributionDescription' => $request->invoiceDescription,
+                            'DistributionDescription' => $premiumDescription,
                             'TaxClass1' => 5,
                             'GLAccount' => $request->insurerGlLiaiblityAccount,
                             'DistributedAmount' => $request->premiumWithoutTax,
@@ -116,12 +116,13 @@ class SagePayloadFactory
     public static function createARInvoiceDis($request)
     {
         // Payload creation logic for CreditNote scenario
+        $description = 'D'.$request->invoiceDescription;
         $payLoad = [
             'Invoices' => [
                 [
                     'CustomerNumber' => $request->customerId,
                     'DocumentNumber' => $request->insurerPremiumNumber.'-DIS',
-                    'InvoiceDescription' => $request->invoiceDescription,
+                    'InvoiceDescription' => $description,
                     'DocumentDate' => $request->insurerInvoiceDate,
                     'DocumentType' => 'CreditNote',
                     'CurrencyCode' => 'AED',
@@ -134,7 +135,7 @@ class SagePayloadFactory
                     'PostingDate' => $request->bookingDate,
                     'InvoiceDetails' => [
                         [
-                            'Description' => $request->invoiceDescription,
+                            'Description' => $description,
                             'TaxClass1' => 5,
                             'RevenueAccount' => $request->insurerGlLiaiblityAccount,
                             'ExtendedAmountWithTIP' => $request->discount,
@@ -166,12 +167,14 @@ class SagePayloadFactory
         } else {
             $taxClass = 2;
         }
+        $premiumDescription = 'P'.$request->invoiceDescription;
+        $commissionDescription = 'C'.$request->invoiceDescription;
         $payLoad = [
             'Invoices' => [
                 [
                     'CustomerNumber' => $request->customerId,
                     'DocumentNumber' => $request->insurerPremiumNumber,
-                    'InvoiceDescription' => $request->invoiceDescription.'-PREM',
+                    'InvoiceDescription' => $premiumDescription,
                     'DocumentDate' => $request->insurerInvoiceDate,
                     'CurrencyCode' => 'AED',
                     'DueDate' => $request->paymentDueDate,
@@ -183,7 +186,7 @@ class SagePayloadFactory
                     'PostingDate' => $request->bookingDate,
                     'InvoiceDetails' => [
                         [
-                            'Description' => $request->invoiceDescription,
+                            'Description' => $premiumDescription,
                             'TaxClass1' => 5,
                             'RevenueAccount' => $request->insurerGlLiaiblityAccount,
                             'ExtendedAmountWithTIP' => $request->premiumWithTax,
@@ -200,7 +203,7 @@ class SagePayloadFactory
                 [
                     'CustomerNumber' => $request->customerId,
                     'DocumentNumber' => $request->insurerCommissionNumber,
-                    'InvoiceDescription' => $request->invoiceDescription.'-COM',
+                    'InvoiceDescription' => $commissionDescription,
                     'DocumentDate' => $request->insurerInvoiceDate,
                     'CurrencyCode' => 'AED',
                     'DueDate' => $request->paymentDueDate,
@@ -212,7 +215,7 @@ class SagePayloadFactory
                     'PostingDate' => $request->bookingDate,
                     'InvoiceDetails' => [
                         [
-                            'Description' => $request->invoiceDescription,
+                            'Description' => $commissionDescription,
                             'TaxClass1' => $taxClass,
                             'TaxAmount1' => $request->vatOnCommission,
                             'RevenueAccount' => $request->insurerGlLiaiblityAccount,
@@ -244,12 +247,14 @@ class SagePayloadFactory
         } else {
             $taxClass = 2;
         }
+        $premiumDescription = 'P'.$request->invoiceDescription;
+        $commissionDescription = 'C'.$request->invoiceDescription;
         $payLoad = [
             'Invoices' => [
                 [
                     'CustomerNumber' => $request->customerId,
                     'DocumentNumber' => $request->insurerPremiumNumber,
-                    'InvoiceDescription' => $request->invoiceDescription.'-PREM',
+                    'InvoiceDescription' => $premiumDescription,
                     'DocumentDate' => $request->insurerInvoiceDate,
                     'CurrencyCode' => 'AED',
                     'DueDate' => $request->paymentDueDate ?? null,
@@ -262,7 +267,7 @@ class SagePayloadFactory
                     'Terms' => 'SPLIT'.count($splitPayments),
                     'InvoiceDetails' => [
                         [
-                            'Description' => $request->invoiceDescription,
+                            'Description' => $premiumDescription,
                             'TaxClass1' => 5,
                             'RevenueAccount' => $request->insurerGlLiaiblityAccount,
                             'ExtendedAmountWithTIP' => $request->premiumWithTax,
@@ -276,7 +281,7 @@ class SagePayloadFactory
                 [
                     'CustomerNumber' => $request->customerId,
                     'DocumentNumber' => $request->insurerCommissionNumber,
-                    'InvoiceDescription' => $request->invoiceDescription.'-COM',
+                    'InvoiceDescription' => $commissionDescription,
                     'DocumentDate' => $request->insurerInvoiceDate,
                     'CurrencyCode' => 'AED',
                     'DueDate' => $request->paymentDueDate ?? null,
@@ -288,7 +293,7 @@ class SagePayloadFactory
                     'PostingDate' => $request->bookingDate,
                     'InvoiceDetails' => [
                         [
-                            'Description' => $request->invoiceDescription,
+                            'Description' => $commissionDescription,
                             'TaxClass1' => $taxClass,
                             'TaxAmount1' => $request->vatOnCommission,
                             'RevenueAccount' => $request->insurerGlLiaiblityAccount,
