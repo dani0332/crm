@@ -28,7 +28,6 @@ const errorMsg = ref({});
 const successStatus = ref({});
 const can = permission => useCan(permission);
 const permissionEnum = page.props.permissionsEnum;
-
 const quoteDocumentsTable = reactive({
   isLoading: false,
   columns: [
@@ -48,6 +47,10 @@ const quoteDocumentsTable = reactive({
       text: 'Created By',
       value: 'created_by.email',
     },
+    {
+      text: 'Action',
+      value: 'action',
+    }
   ],
 });
 
@@ -118,6 +121,40 @@ const copyUploadURL = () => {
 const sendPolicyToClient = () => {
   emit('sendPolicyToClient');
 };
+
+const onDocDelete = name => {
+  modals.docConfirm = true;
+  confirmDeleteData.docs = name;
+};
+
+const confirmDeleteData = reactive({
+  docs: null,
+  member: null,
+  activity: null,
+  contact: null,
+});
+
+const confirmDeleteDoc = () => {
+  quoteDocumentsTable.isLoading = true;
+  router.post(
+    `/documents/delete`,
+    {
+      docName: confirmDeleteData.docs,
+      quoteId: page.props.quote.id,
+    },
+    {
+      preserveScroll: true,
+      onFinish: () => {
+        modals.docConfirm = false;
+        quoteDocumentsTable.isLoading = false;
+        notification.success({
+          title: 'File Deleted',
+          position: 'top',
+        });
+      },
+    },
+  );
+};
 </script>
 
 <template>
@@ -185,6 +222,18 @@ const sendPolicyToClient = () => {
             >
               {{ item.original_name }}
             </a>
+          </template>
+          <template #item-action="{ doc_name }">
+            <div>
+              <x-button
+                size="xs"
+                color="error"
+                outlined
+                @click.prevent="onDocDelete(doc_name)"
+              >
+                Delete
+              </x-button>
+            </div>
           </template>
         </DataTable>
       </template>
@@ -265,6 +314,25 @@ const sendPolicyToClient = () => {
           </div>
         </x-tab>
       </x-tab-group>
+    </x-modal>
+    <x-modal v-model="modals.docConfirm" show-close backdrop>
+      <template #header> Delete Document </template>
+      <p>Are you sure you want to delete this document?</p>
+      <template #actions>
+        <div class="text-right space-x-4">
+          <x-button size="sm" ghost @click.prevent="modals.docConfirm = false">
+            Cancel
+          </x-button>
+          <x-button
+            size="sm"
+            color="error"
+            @click.prevent="confirmDeleteDoc"
+            :loading="quoteDocumentsTable.isLoading"
+          >
+            Delete
+          </x-button>
+        </div>
+      </template>
     </x-modal>
   </div>
 </template>
