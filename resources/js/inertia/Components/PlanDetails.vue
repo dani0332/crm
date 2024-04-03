@@ -214,7 +214,7 @@ const rolesEnum = page.props.rolesEnum;
           <x-input
             v-model="planDetailsForm.insurer_quote_number"
             :error="planDetailsForm.errors.insurer_quote_number"
-            type="number"
+            type="text"
             label="Insurer Quote Number"
             class="w-full"
           />
