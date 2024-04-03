@@ -252,7 +252,7 @@ trait GenericQueriesAllLobs
     
         // Case 1 if difference is less than 1 and greater than 0 else set total price to price with vat
         if ($difference <= 0.99 && $difference > 0) {
-            $payment->system_applied_discount= $difference;
+            $payment->system_adjusted_discount= $difference;
             // If condition to check if discount value is not null & add difference to it else set difference as discount value
             if ($payment->discount_value != null) {
                 $payment->discount_value += $difference;

@@ -1004,7 +1004,7 @@ const editPaymentModal = (payment,split_payment_id,sr_no,capture_approval) => {
     paymentMethodsForm.collection_amount = '';
     paymentMethodsForm.bank_reference_number = '';
     splitPaymentRecord.value = payment.payment_splits.find(item => item.sr_no === sr_no);
-    paymentMethodsForm.system_applied_discount = payment.system_applied_discount;
+    paymentMethodsForm.system_adjusted_discount = payment.system_adjusted_discount;
   } 
 
   //paymentMethodsForm.masterPaymentStatus = payment.
@@ -1729,8 +1729,8 @@ watch(() => props.quoteRequest, (newValue, oldValue) => {
 const discountTypeLabel = computed(() => {
   let systemAplliedDiscount = '';
   if (paymentMethodsForm.status === 'view' && 
-      (paymentMethodsForm.discount === 'system_applied_discount' || 
-      paymentMethodsForm.system_applied_discount > 0))
+      (paymentMethodsForm.discount === 'system_adjusted_discount' || 
+      paymentMethodsForm.system_adjusted_discount > 0))
   {
     systemAplliedDiscount = 'System adjusted discount';
   }
