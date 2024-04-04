@@ -43,6 +43,7 @@ class UpdatePaymentRequest extends FormRequest
             'payment.payment_splits.*.payment_method' => 'required|string',
             'payment.payment_splits.*.due_date' => 'required|date',
         ];
+
         return $rules;
     }
 }

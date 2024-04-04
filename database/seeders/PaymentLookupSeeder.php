@@ -2,14 +2,10 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
-
 use App\Enums\LookupsEnum;
 use App\Enums\PaymentTooltip;
-use App\Models\Lookup;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
-
 
 class PaymentLookupSeeder extends Seeder
 {
@@ -21,7 +17,7 @@ class PaymentLookupSeeder extends Seeder
         if (! DB::table('lookups')->where('key', LookupsEnum::PAYMENT_COLLECTION_TYPE)->first()) {
             DB::table('lookups')->insert([
                 ['key' => LookupsEnum::PAYMENT_COLLECTION_TYPE, 'code' => 'broker', 'text' => 'Broker', 'description' => PaymentTooltip::COLLECTOR_LIST_BROKER],
-                ['key' => LookupsEnum::PAYMENT_COLLECTION_TYPE, 'code' => 'insurer', 'text' => 'Insurer', 'description' => PaymentTooltip::COLLECTOR_LIST_INSURER],                
+                ['key' => LookupsEnum::PAYMENT_COLLECTION_TYPE, 'code' => 'insurer', 'text' => 'Insurer', 'description' => PaymentTooltip::COLLECTOR_LIST_INSURER],
             ]);
         }
 
@@ -32,10 +28,10 @@ class PaymentLookupSeeder extends Seeder
                 ['key' => LookupsEnum::PAYMENT_FREQUENCY_TYPE, 'code' => 'quarterly', 'text' => 'Quarterly', 'description' => PaymentTooltip::FREQUENCY_LIST_QUARTERLY],
                 ['key' => LookupsEnum::PAYMENT_FREQUENCY_TYPE, 'code' => 'semi_annual', 'text' => 'Semi Annual', 'description' => PaymentTooltip::FREQUENCY_LIST_SEMI_ANNUAL],
                 ['key' => LookupsEnum::PAYMENT_FREQUENCY_TYPE, 'code' => 'split_payments', 'text' => 'Split Payments', 'description' => PaymentTooltip::FREQUENCY_LIST_SPLIT_PAYMENTS],
-                ['key' => LookupsEnum::PAYMENT_FREQUENCY_TYPE, 'code' => 'custom', 'text' => 'Custom', 'description' => PaymentTooltip::FREQUENCY_LIST_CUSTOM],                
+                ['key' => LookupsEnum::PAYMENT_FREQUENCY_TYPE, 'code' => 'custom', 'text' => 'Custom', 'description' => PaymentTooltip::FREQUENCY_LIST_CUSTOM],
             ]);
         }
-        
+
         if (! DB::table('lookups')->where('key', LookupsEnum::PAYMENT_DECLINE_REASON)->first()) {
             DB::table('lookups')->insert([
                 ['key' => LookupsEnum::PAYMENT_DECLINE_REASON, 'code' => '1', 'text' => 'Incorrect payment information, proof of payment or receipt provided'],
@@ -43,27 +39,27 @@ class PaymentLookupSeeder extends Seeder
                 ['key' => LookupsEnum::PAYMENT_DECLINE_REASON, 'code' => '3', 'text' => 'Insufficient documentation'],
                 ['key' => LookupsEnum::PAYMENT_DECLINE_REASON, 'code' => '4', 'text' => 'No proof of discount approval'],
                 ['key' => LookupsEnum::PAYMENT_DECLINE_REASON, 'code' => '5', 'text' => 'No proof of credit approval'],
-                ['key' => LookupsEnum::PAYMENT_DECLINE_REASON, 'code' => '6', 'text' => 'Other reasons'],           
+                ['key' => LookupsEnum::PAYMENT_DECLINE_REASON, 'code' => '6', 'text' => 'Other reasons'],
             ]);
         }
-    
+
         if (! DB::table('lookups')->where('key', LookupsEnum::PAYMENT_CREDIT_APPROVAL_REASON)->first()) {
             DB::table('lookups')->insert([
                 ['key' => LookupsEnum::PAYMENT_CREDIT_APPROVAL_REASON, 'code' => 'available_credit_balance', 'text' => 'Available credit balance', 'description' => PaymentTooltip::CREDIT_APPROVAL_LIST_AVAILABLE],
                 ['key' => LookupsEnum::PAYMENT_CREDIT_APPROVAL_REASON, 'code' => 'post_dated_cheque_payment', 'text' => 'Post-dated cheque payment', 'description' => PaymentTooltip::CREDIT_APPROVAL_LIST_POSTDATED],
                 ['key' => LookupsEnum::PAYMENT_CREDIT_APPROVAL_REASON, 'code' => 'cheque_under_clearance', 'text' => 'Cheque under clearance', 'description' => PaymentTooltip::CREDIT_APPROVAL_LIST_CLEARANCE],
-                ['key' => LookupsEnum::PAYMENT_CREDIT_APPROVAL_REASON, 'code' => 'other_reasons', 'text' => 'Other reasons', 'description' => PaymentTooltip::CREDIT_APPROVAL_LIST_REASON],    
+                ['key' => LookupsEnum::PAYMENT_CREDIT_APPROVAL_REASON, 'code' => 'other_reasons', 'text' => 'Other reasons', 'description' => PaymentTooltip::CREDIT_APPROVAL_LIST_REASON],
             ]);
-        }    
-    
+        }
+
         if (! DB::table('lookups')->where('key', LookupsEnum::PAYMENT_DISCOUNT_TYPE)->first()) {
             DB::table('lookups')->insert([
                 ['key' => LookupsEnum::PAYMENT_DISCOUNT_TYPE, 'code' => 'managerial_approval_discount', 'text' => 'Managerial approval discount', 'description' => PaymentTooltip::DISCOUNT_TYPE_LIST_MANAGERIAL],
                 ['key' => LookupsEnum::PAYMENT_DISCOUNT_TYPE, 'code' => 'employee_discount', 'text' => 'Employee discount', 'description' => PaymentTooltip::DISCOUNT_TYPE_LIST_EMPLOYEE],
-                ['key' => LookupsEnum::PAYMENT_DISCOUNT_TYPE, 'code' => 'family_employee_discount', 'text' => 'Employee family discount', 'description' => PaymentTooltip::DISCOUNT_TYPE_LIST_FAMILY],            
+                ['key' => LookupsEnum::PAYMENT_DISCOUNT_TYPE, 'code' => 'family_employee_discount', 'text' => 'Employee family discount', 'description' => PaymentTooltip::DISCOUNT_TYPE_LIST_FAMILY],
             ]);
         }
-    
+
         if (! DB::table('lookups')->where('key', LookupsEnum::PAYMENT_DISCOUNT_REASON)->first()) {
             DB::table('lookups')->insert([
                 ['key' => LookupsEnum::PAYMENT_DISCOUNT_REASON, 'code' => 'refer_a_friend', 'text' => 'Refer a friend', 'description' => PaymentTooltip::DISCOUNT_TYPE_LIST_REFER],
@@ -71,8 +67,8 @@ class PaymentLookupSeeder extends Seeder
                 ['key' => LookupsEnum::PAYMENT_DISCOUNT_REASON, 'code' => 'loyalty_reward_discount', 'text' => 'Loyalty reward discount', 'description' => PaymentTooltip::DISCOUNT_REASON_LIST_LOYALTY],
                 ['key' => LookupsEnum::PAYMENT_DISCOUNT_REASON, 'code' => 'competitive_pricing_discount', 'text' => 'Competitive pricing discount', 'description' => PaymentTooltip::DISCOUNT_REASON_LIST_COMPETITIVE],
                 ['key' => LookupsEnum::PAYMENT_DISCOUNT_REASON, 'code' => 'discount_custom_reason', 'text' => 'Custom discount reason', 'description' => PaymentTooltip::DISCOUNT_REASON_LIST_CUSTOM_REASON],
-                
+
             ]);
         }
-}
+    }
 }

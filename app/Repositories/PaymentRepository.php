@@ -113,7 +113,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
             //Add split payments start
             $this->addPaymentSplits($request, $paymentInformation['code']);
             //Add split payments ends
-           
+
             $paymentLog = new PaymentStatusLog([
                 'current_payment_status_id' => PaymentStatusEnum::NEW,
                 'payment_code' => $paymentInformation['code'],
@@ -124,10 +124,12 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
             $quoteModel->quote_status_id = QuoteStatusEnum::PaymentPending;
             $quoteModel->save();
             DB::commit();
-            return ['status' => 'success', 'message' => 'Payment Added'];            
+
+            return ['status' => 'success', 'message' => 'Payment Added'];
         } catch (Exception $exception) {
             DB::rollBack(); // Rollback changes if any error occurred
-            return ['status' => 'error', 'message' => $exception->getMessage()];            
+
+            return ['status' => 'error', 'message' => $exception->getMessage()];
         }
     }
 
@@ -176,11 +178,12 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
             }
             $this->updatePaymentSplits($request);
             DB::commit(); // Commit changes if everything went well
-            
-            return ['status' => 'success', 'message' => 'Payment Updated'];  
+
+            return ['status' => 'success', 'message' => 'Payment Updated'];
         } catch (Exception $exception) {
             DB::rollBack(); // Rollback changes if any error occurred
-            return ['status' => 'error', 'message' => $exception->getMessage()];            
+
+            return ['status' => 'error', 'message' => $exception->getMessage()];
         }
     }
     //Add split payments
@@ -384,7 +387,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                     ->count();
                 if ($totalPaidPayments == $firstPayment->total_payments) {
                     $masterPaymentStatus = PaymentStatusEnum::CAPTURED;
-                } else if ($totalPaidPayments>0) {
+                } elseif ($totalPaidPayments > 0) {
                     $masterPaymentStatus = PaymentStatusEnum::PARTIAL_CAPTURED;
                 }
                 $firstPayment->update([
