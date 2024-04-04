@@ -39,15 +39,15 @@ const maskedMobileNumber = computed(() => {
 });
 
 const maskedPhoneNumber = computed(() => {
-    let mobile_no = props.policy?.customer?.phone;
-    if (mobile_no) {
-        let masked = mobile_no
-            .split('')
-            .map((char, index) => (index < mobile_no.length / 2 ? char : '*'))
-            .join('');
-        return masked;
-    }
-    return '';
+  let mobile_no = props.policy?.customer?.phone;
+  if (mobile_no) {
+    let masked = mobile_no
+      .split('')
+      .map((char, index) => (index < mobile_no.length / 2 ? char : '*'))
+      .join('');
+    return masked;
+  }
+  return '';
 });
 
 const getS3TempUrl = async file => {
@@ -242,10 +242,12 @@ const dynamicTableHeader = computed(() => {
 
 const kycDetails = computed(() => {
   return props.policy.customer?.profile_data?.map(item => {
-    if (item.title.includes('Profession or Job Title ')) {
+    if (item.title.includes('Profession or Job Title')) {
       return { ...item, title: 'KYC Requirement - Profession or Job Title' };
     }
-    if (item.title.includes('Name of Organization ')) {
+    if (item.title.includes('Name of Organization')) {
+      return { ...item, title: 'KYC Requirement - Name of Organization' };
+    } else if (item.title.includes('Name of Organisation')) {
       return { ...item, title: 'KYC Requirement - Name of Organization' };
     }
     if (item.title.includes('Exact Job Title')) {
@@ -286,12 +288,9 @@ const moveToImcrm = async (policyNumber, validateAll = true) => {
   } catch (err) {}
 };
 
-
 const dateFormat = date => {
-    return useDateFormat(date, 'DD-MM-YYYY').value;
+  return useDateFormat(date, 'DD-MM-YYYY').value;
 };
-
-
 </script>
 
 <template>
@@ -351,8 +350,10 @@ const dateFormat = date => {
                   target="_blank"
                   rel="noopener noreferrer"
                 >
-                    {{ policy?.code || `REF-${policy?.imcrm_link?.match(/\/([^/]+)$/)?.[1]}` }}
-
+                  {{
+                    policy?.code ||
+                    `REF-${policy?.imcrm_link?.match(/\/([^/]+)$/)?.[1]}`
+                  }}
                 </a>
               </dd>
             </div>
@@ -404,7 +405,7 @@ const dateFormat = date => {
           </div> -->
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">Sales Person</dt>
-                <dd>{{ policy.policy?.renewer_person }}</dd>
+            <dd>{{ policy.policy?.renewer_person }}</dd>
           </div>
         </dl>
       </div>
