@@ -2496,15 +2496,15 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
           <x-divider class="my-4" />
           <div class="flex flex-wrap md:flex-nowrap gap-6 w-full">
             <div class="w-full md:w-50">
-              <div class="flex flex-col gap-4">
-                <x-select
-                  v-model="leadStatusForm.leadStatus"
-                  label="Status"
-                  :options="leadStatusOptions"
-                  :disabled="quote.quote_status_id == 15"
-                  placeholder="Lead Status"
-                  class="w-full"
-                />
+                  <div class="flex flex-col gap-4">
+                    <x-select
+                      v-model="leadStatusForm.leadStatus"
+                      label="Status"
+                      :options="leadStatusOptions"
+                      :disabled="quote.quote_status_id == 15"
+                      placeholder="Lead Status"
+                      class="w-full"
+                    />
                 <x-textarea
                   v-model="leadStatusForm.notes"
                   type="text"
@@ -2517,28 +2517,28 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
             </div>
             <div class="w-full md:w-50">
               <div class="flex flex-col gap-4">
-                <x-input
-                  v-if="leadStatusForm.leadStatus == 15"
-                  v-model="leadStatusForm.trans_code"
-                  label="TransApp Code"
-                  placeholder="TransApp Code is required"
-                  class="w-full"
-                  :error="leadStatusForm.errors.trans_code"
-                />
-                <x-select
-                  v-if="leadStatusForm.leadStatus == 17"
-                  v-model="leadStatusForm.lostReason"
-                  label="Lost Reason"
-                  :options="
-                    lostReasons?.map(item => ({
-                      value: item.id,
-                      label: item.text,
-                    }))
-                  "
-                  placeholder="Lost Reason is required"
-                  class="w-full"
-                  :error="leadStatusForm.errors.lostReason"
-                />
+                    <x-input
+                      v-if="leadStatusForm.leadStatus == 15"
+                      v-model="leadStatusForm.trans_code"
+                      label="TransApp Code"
+                      placeholder="TransApp Code is required"
+                      class="w-full"
+                      :error="leadStatusForm.errors.trans_code"
+                    />
+                    <x-select
+                      v-if="leadStatusForm.leadStatus == 17"
+                      v-model="leadStatusForm.lostReason"
+                      label="Lost Reason"
+                      :options="
+                        lostReasons?.map(item => ({
+                          value: item.id,
+                          label: item.text,
+                        }))
+                      "
+                      placeholder="Lost Reason is required"
+                      class="w-full"
+                      :error="leadStatusForm.errors.lostReason"
+                    />
                 <x-field class="" label="Transaction Type">
                   <x-input
                     type="text"
@@ -2547,7 +2547,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
                     :disabled="true"
                   />
                 </x-field>
-              </div>
+                  </div>
             </div>
           </div>
           <x-divider class="mb-1 mt-10" />
@@ -2862,6 +2862,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
           </DataTable>
         </template>
       </Collapsible>
+    </div>
 
       <LazyAvailablePlan
         v-model="modals.plan"
@@ -3415,5 +3416,4 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       :quoteCode="$page.props.quote.code"
       :expanded="sectionExpanded"
     />
-  </div>
 </template>
