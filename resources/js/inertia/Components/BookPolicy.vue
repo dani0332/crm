@@ -55,19 +55,21 @@ const currentDate = computed(() => {
 });
 
 const transactionPaymentStatus = computed(() => {
-  if (Number(page.props?.payments[0]?.captured_amount) === 0) {
+  let firstPayment = page.props?.payments[0];
+
+  let totalPrice = Number(firstPayment?.total_price);
+  let capturedAmount = Number(firstPayment?.captured_amount);
+  let discountValue = Number(firstPayment?.discount_value);
+
+  let capturedAmountWithDiscount = capturedAmount + discountValue;
+
+  if (capturedAmount === 0) {
     return 'Not Paid';
   }
-  if (
-    Number(page.props?.payments[0]?.total_price) >
-    Number(page.props?.payments[0]?.captured_amount)
-  ) {
+  if (totalPrice > capturedAmountWithDiscount) {
     return 'Partially Paid';
   }
-  if (
-    Number(page.props?.payments[0]?.captured_amount) >=
-    Number(page.props?.payments[0]?.total_price)
-  ) {
+  if (capturedAmountWithDiscount >= totalPrice) {
     return 'Paid';
   }
 });
