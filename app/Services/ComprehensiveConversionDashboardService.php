@@ -4,7 +4,6 @@ namespace App\Services;
 
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
-use App\Enums\RolesEnum;
 use App\Models\Team;
 use App\Models\Tier;
 use App\Traits\GetUserTreeTrait;
@@ -57,11 +56,6 @@ class ComprehensiveConversionDashboardService extends BaseService
             ->where('personal_quotes.quote_type_id', $lobId->id)
             ->groupBy('personal_quotes.advisor_id', 'personal_quotes.quote_batch_id')
             ->orderByDesc('quote_batches.start_date')->orderBy('users.email');
-
-        if (!auth()->user()->hasAnyRole([RolesEnum::LeadPool, RolesEnum::SeniorManagement])) {
-            $userIds = $this->walkTree(auth()->user()->id, $request->lob);
-            $records = $records->whereIn('personal_quotes.advisor_id', $userIds);
-        }
 
         $records = $this->applyFilters($records, $request->all());
         $records = $records->get();
