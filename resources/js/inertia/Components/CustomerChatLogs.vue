@@ -27,23 +27,6 @@ const renderMarkdown = markdownString => {
   return adjustedHtml;
 };
 
-// const markdownOptions = ref({
-//   html: true,
-//   linkify: true,
-//   typographer: true,
-//   breaks: true,
-//   link_open: function (tokens, idx, options, env, self) {
-//     console.log('here to get the link');
-//     const token = tokens[idx];
-//     const hrefIndex = token.attrIndex('href');
-//     if (hrefIndex !== -1) {
-//       // Add target="_blank" to the link
-//       token.attrs[hrefIndex][1] += ' " target="_blank"';
-//     }
-//     return self.renderToken(tokens, idx, options, env, self);
-//   },
-// });
-
 const formatted = date => useDateFormat(date, 'hh:mm:ss A').value;
 const loader = ref(false);
 const tableHeaders = reactive([
@@ -59,76 +42,10 @@ const tableHeaders = reactive([
 
 const tableData = ref([]);
 
-// const tableData = reactive([
-//   {
-//     created_at: '2022-03-15 08:30:00',
-//     action: 'View Details',
-//   },
-//   {
-//     created_at: '2022-03-16 11:45:00',
-//     action: 'View Details',
-//   },
-//   {
-//     created_at: '2022-03-17 14:15:00',
-//     action: 'View Details',
-//   },
-//   // Add more fake data as needed
-// ]);
-
 const chatMessages = ref({
   created_at: '',
   data: [],
 });
-
-// const chatMessages = ref({
-//   created_at: '2022-03-01 12:30:00',
-//   data: [
-//     {
-//       role: 'USER',
-//       customerName: 'John',
-//       msg: 'Hello there!',
-//       created_at: '2022-03-01 12:30:00',
-//     },
-//     {
-//       _id: '65dedc3a1e758b05af67f299',
-//       role: 'AI',
-//       msg: "For LIVA Insurance (previously known as RSA Insurance/Royal and Sun Alliance), we have the following Third Party Liability (TPL) plan available:\n\n- Third Party Only premium: 612 +VAT. [Payment Link](https://testing.alfred.ae/car-insurance/quote/Q5R9YUSG/payment/?planId=1&providerCode=RSA)\n\nTPL plans, also known as Third Party Insurance, cover damages to another person's vehicle or property or injuries to other people in an accident that you're found responsible for. They do not cover damages to your own vehicle. \n\nWould you like to proceed with this plan?",
-//       created_at: '28-Feb-2024 07:09am',
-//     },
-//     {
-//       role: 'USER',
-//       customerName: 'Alice',
-//       msg: 'I have a question.',
-//       created_at: '2022-03-01 12:35:00',
-//     },
-//     {
-//       role: 'AI',
-//       msg: 'Sure, go ahead and ask.',
-//       created_at: '2022-03-01 12:38:00',
-//     },
-//     // Add more fake data as needed
-//   ],
-// });
-
-const formatData = rawData => {
-  for (const data of rawData) {
-    // Find if the createddate already exists in formattedData
-    const existingEntry = tableData.value.find(
-      entry => entry.created_at === data.created_at.split(' ')[0],
-    );
-
-    if (existingEntry) {
-      // If exists, push the current data into the existing entry
-      existingEntry.data.push({ ...data });
-    } else {
-      // If not, create a new entry
-      tableData.value.push({
-        created_at: data.created_at.split(' ')[0],
-        data: [{ ...data }],
-      });
-    }
-  }
-};
 
 const getAllChat = () => {
   loader.value = true;
@@ -141,7 +58,6 @@ const getAllChat = () => {
       let { data } = { ...response.data };
       loader.value = false;
       tableData.value = data;
-      // if (data && data.length > 0) formatData(data);
     })
     .catch(error => {
       loader.value = false;
@@ -166,11 +82,6 @@ const showChat = item => {
     .catch(error => {
       loader.value = false;
     });
-  // chatMessages.value.created_at = item.created_at;
-  // chatMessages.value.data = tableData.value.find(
-  //   entry => entry.created_at === item.created_at,
-  // ).data;
-  // showChatLogs.value = true;
 };
 
 onMounted(async () => {
@@ -222,12 +133,14 @@ onMounted(async () => {
         <div v-for="(message, index) in chatMessages.data" :key="index">
           <div class="chat chat-start" v-if="message.role == 'USER'">
             <div class="chat-image avatar">
-              <div class="w-8 rounded-full">
-                <img
-                  class="rounded-full"
-                  alt="Tailwind CSS chat bubble component"
-                  src="/image/alfred-theme.png"
-                />
+              <div
+                v-show="customerName"
+                class="flex items-center justify-center border rounded-full h-10 w-10 bg-gray-600 text-white"
+              >
+                {{
+                  customerName.split(' ')[0].charAt(0) +
+                  customerName.split(' ')[1].charAt(0)
+                }}
               </div>
             </div>
             <div class="chat-header">
@@ -259,102 +172,8 @@ onMounted(async () => {
             </div>
           </div>
         </div>
-
-        <!-- <div class="flex flex-col space-y-4">
-          <div
-            v-for="(message, index) in chatMessages.data"
-            :key="index"
-            :class="{
-              'flex items-start': message.role == 'USER',
-              'flex justify-end': message.role == 'AI',
-            }"
-          >
-            <div>
-              <p
-                class="text-sm mb-2 text-gray-500"
-                v-if="message.role == 'USER'"
-              >
-                {{ customerName ?? message.role }}
-              </p>
-              <p class="text-sm mb-2 text-end text-gray-500" v-else>
-                InstantAlfred
-              </p>
-              <div
-                :class="{
-                  'bg-blue-500': message.role == 'USER',
-                  'bg-success-500 text-white': message.role == 'AI',
-                  'mr-16': message.role == 'USER',
-                }"
-                class="rounded-[20px] relative max-w-[45rem]"
-              >
-                <div class="text-sm text-white py-4 px-4">
-                  <vue-markdown :source="message.msg"></vue-markdown>
-                </div>
-
-                <p class="text-xs text-white text-right uppercase">
-                  {{ message.created_at.split(' ')[1] }}
-                </p>
-
-                <div
-                  :class="{
-                    'bg-blue-500 left-[-16px]': message.role == 'USER',
-                    'bg-success-500 right-[-16px] rotate-180':
-                      message.role == 'AI',
-                  }"
-                  class="absolute border-t-[6px] border-b-[6px] border-r-[17px] border-t-white border-b-white border-r-transparent h-0 w-0 top-3.5"
-                ></div>
-              </div>
-            </div>
-          </div>
-        </div> -->
       </template>
     </AppModal>
-    <!-- <x-modal v-model="showChatLogs" backdrop size="xl">
-      <template #header> Created At : {{ chatMessages.created_at.split(' ')[0] }} </template>
-
-      <div class="flex flex-col space-y-4">
-        <div
-          v-for="(message, index) in chatMessages.data"
-          :key="index"
-          :class="{
-            'flex items-start': message.role == 'USER',
-            'flex justify-end': message.role == 'AI',
-          }"
-        >
-          <div>
-            <p class="text-sm mb-2 text-gray-500" v-if="message.role == 'USER'">
-              {{ customerName ??  message.role }}
-            </p>
-            <p class="text-sm mb-2 text-end text-gray-500" v-else>
-              InstantAlfred
-            </p>
-            <div
-              :class="{
-                'bg-blue-500': message.role == 'USER',
-                'bg-success-500 text-white': message.role == 'AI',
-              }"
-              class="rounded-[20px] relative max-w-[45rem]"
-            >
-              <p class="text-sm text-white py-4 px-4">
-                {{ message.msg }}
-                <p class="text-xs text-white text-right uppercase">
-                {{ message.created_at.split(' ')[1] }}
-              </p>
-              </p>
-
-              <div
-                :class="{
-                  'bg-blue-500 left-[-16px]': message.role == 'USER',
-                  'bg-success-500 right-[-16px] rotate-180':
-                    message.role == 'AI',
-                }"
-                class="absolute border-t-[6px] border-b-[6px] border-r-[17px] border-t-white border-b-white border-r-transparent h-0 w-0 top-3.5"
-              ></div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </x-modal> -->
   </div>
 </template>
 <style>
