@@ -121,8 +121,8 @@ class InslyDetailRepository extends BaseRepository
         $policy = $this->where('policy_no', $policyNumber)->first();
 
         $email = $policy['customer']['email'] ?? null;
-        $phpDateTime = $policy['policy']['issue_date']->toDateTime();
-        $inslyPolicyIssueDate = $phpDateTime->format('Y-m-d');
+        $inslyPolicyIssueDate = $policy['policy']['issue_date'] ?? null;
+        $inslyPolicyIssueDate = Carbon::parse($inslyPolicyIssueDate)->format('Y-m-d');
         $appUrl = env('APP_URL');
 
         if (! empty($policy)) {
@@ -275,9 +275,10 @@ class InslyDetailRepository extends BaseRepository
         $insuredWith = InsuranceProviderRepository::where('code', 'like', '%'.$insurer.'%')
             ->orWhere('text', 'like', '%'.$insurer.'%')->first();
 
-        // $dataArr['currently_insured_with'] = !empty($insuredWith) ? $insuredWith->id : null;
-        // $dataArr['previousPolicyStartDate'] = $policy['policy']['start_date']->toDateTime()->format('Y-m-d') ?? null;
-        $dataArr['previous_policy_expiry_date'] = $policy['policy']['end_date']->toDateTime()->format('Y-m-d') ?? null;
+        $previousPolicyStartDate = $policy['policy']['end_date'] ?? null;
+        if ($previousPolicyStartDate) {
+            $dataArr['previous_policy_expiry_date'] = Carbon::parse($previousPolicyStartDate)->format('Y-m-d');
+        }
 
         $customerName = $policy['customer']['name'] ?? null;
         $arr = explode(' ', trim($customerName));
