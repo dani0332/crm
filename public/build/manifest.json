@@ -1,6 +1,7 @@
 {
   "resources/js/inertia/inertia.js": {
     "file": "assets/inertia-CA8dtO5c.js",
+
     "name": "inertia",
     "src": "resources/js/inertia/inertia.js",
     "isEntry": true,
