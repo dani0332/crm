@@ -67,6 +67,7 @@ class DatabaseSeeder extends Seeder
             GenericPermissionSeeder::class,
             InsuranceProviderNameSeeder::class,
             QuoteStatusMapSeeder::class,
+            SendUpdateDocumentTypesSeeder::class,
         ]);
     }
 }
