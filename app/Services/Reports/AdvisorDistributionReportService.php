@@ -311,8 +311,8 @@ class AdvisorDistributionReportService extends BaseService
             });
         }
 
-        if ((isset($filters->subeams) && count($filters->subeams) > 0)) {
-            $value = $filters->subeams;
+        if ((isset($filters->sub_teams) && count($filters->sub_teams) > 0)) {
+            $value = $filters->sub_teams;
             $query->whereIn('users.id', function ($query) use ($value) {
 
                 $query->distinct()
