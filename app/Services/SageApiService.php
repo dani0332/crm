@@ -270,8 +270,8 @@ class SageApiService
                     'policy_number' => $sendUpdateLog->policy_number,
                     'transaction_type_id' => $quote->transaction_type_id,
                     'advisor_id' => $sendUpdateLog->advisor_id,
-                    'price_without_vat' => $payment->total_price, // This column is not confirmed, check with the team
-                    'price_with_vat' => $payment->total_amount, // This column is not confirmed, check with the team
+                    'price_without_vat' => $payment->total_price,
+                    'price_with_vat' => $payment->total_amount, 
                 ];
             }
             
@@ -423,10 +423,6 @@ class SageApiService
     private function handleSendUpdateRevCorrCalls($quote, $payment, $splitPayments, $sageRequestPayload, $sageLogArray, $extras)
     {
         $sendUpdateLog = $extras['send_update_log'];
-        // Should be add split payment case here. Ex - 
-            // CREATE_PAY_REC_ONE_INV, 
-            // SRT_CREATE_AR_SPPAY_INV, 
-            // SRT_CREATE_AR_SP_PRE_PAYMENT
         $invoicesForReverse = collect($extras['sageLogArray'])->filter(function ($sageApiLog) {
             return in_array($sageApiLog['sage_request_type'], [
                 SageEnum::SRT_CREATE_AR_PREM_COMM_INV,
@@ -468,17 +464,17 @@ class SageApiService
             }
 
         } else {
-            // Create AR Reverse and Correction Invoice Split Payment and marked as posted
-            // $this->sageRecursiveCalls($quote, $sageRequestPayload, $sageLogArray, [
-            //     'iterator' => 0, 
-            //     'lastIteration' => 2,
-            //     'startingStep' => 2, 
-            //     'totalSteps' => 16, 
-            //     'entryType' => SageEnum::SCT_STRAIGHT,
-            //     'requestType' => SageEnum::SRT_CREATE_AR_SPPAY_INV,
-            //     'payment' => $payment,
-            //     'splitPayments' => $splitPayments
-            // ]);
+            // Create AR Invoice Split Payment and marked as posted
+            $this->sageRecursiveCalls($quote, $sageRequestPayload, $sageLogArray, [
+                'iterator' => 0, 
+                'lastIteration' => 2,
+                'startingStep' => 2, 
+                'totalSteps' => 16, 
+                'entryType' => SageEnum::SCT_STRAIGHT,
+                'requestType' => SageEnum::SRT_CREATE_AR_SPPAY_INV,
+                'payment' => $payment,
+                'splitPayments' => $splitPayments
+            ]);
         }
 
         // Reverse and Correct AR Invoice DIS
