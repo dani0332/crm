@@ -252,5 +252,89 @@ class GenericPermissionSeeder extends Seeder
                 }
             }
         }
+
+        $this->addComprehensiveConversionDashboardPermissions();
+    }
+
+    public function addComprehensiveConversionDashboardPermissions()
+    {
+        $permissionList = [
+            PermissionsEnum::COMPREHENSIVE_DASHBOARD_VIEW => [
+                RolesEnum::CarManager,
+                RolesEnum::SeniorManagement,
+                RolesEnum::Admin,
+                RolesEnum::Engineering,
+            ],
+            PermissionsEnum::BIKE_COMPREHENSIVE_DASHBOARD => [
+                RolesEnum::BikeManager,
+                RolesEnum::SeniorManagement,
+                RolesEnum::Admin,
+                RolesEnum::Engineering,
+            ],
+            PermissionsEnum::HEALTH_COMPREHENSIVE_DASHBOARD => [
+                RolesEnum::HealthManager,
+                RolesEnum::SeniorManagement,
+                RolesEnum::Admin,
+                RolesEnum::Engineering,
+            ],
+            PermissionsEnum::TRAVEL_COMPREHENSIVE_DASHBOARD => [
+                RolesEnum::TravelManager,
+                RolesEnum::SeniorManagement,
+                RolesEnum::Admin,
+                RolesEnum::Engineering,
+            ],
+            PermissionsEnum::LIFE_COMPREHENSIVE_DASHBOARD => [
+                RolesEnum::LifeManager,
+                RolesEnum::SeniorManagement,
+                RolesEnum::Admin,
+                RolesEnum::Engineering,
+            ],
+            PermissionsEnum::HOME_COMPREHENSIVE_DASHBOARD => [
+                RolesEnum::HomeManager,
+                RolesEnum::SeniorManagement,
+                RolesEnum::Admin,
+                RolesEnum::Engineering,
+            ],
+            PermissionsEnum::PET_COMPREHENSIVE_DASHBOARD => [
+                RolesEnum::PetManager,
+                RolesEnum::SeniorManagement,
+                RolesEnum::Admin,
+                RolesEnum::Engineering,
+            ],
+            PermissionsEnum::CYCLE_COMPREHENSIVE_DASHBOARD => [
+                RolesEnum::CycleManager,
+                RolesEnum::SeniorManagement,
+                RolesEnum::Admin,
+                RolesEnum::Engineering,
+            ],
+            PermissionsEnum::YACHT_COMPREHENSIVE_DASHBOARD => [
+                RolesEnum::YachtManager,
+                RolesEnum::SeniorManagement,
+                RolesEnum::Admin,
+                RolesEnum::Engineering,
+            ],
+            PermissionsEnum::BUSINESS_COMPREHENSIVE_DASHBOARD => [
+                RolesEnum::BusinessManager,
+                RolesEnum::SeniorManagement,
+                RolesEnum::Admin,
+                RolesEnum::Engineering,
+            ],
+            PermissionsEnum::GROUPMEDICAL_COMPREHENSIVE_DASHBOARD => [
+                RolesEnum::BusinessManager,
+                RolesEnum::SeniorManagement,
+                RolesEnum::Admin,
+                RolesEnum::Engineering,
+            ],
+        ];
+
+        foreach ($permissionList as $permission => $roles) {
+            Permission::firstOrCreate(['name' => $permission, 'guard_name' => 'web']);
+
+            foreach ($roles as $roleName) {
+                if (($role = Role::where('name', $roleName)->first()) && !$role->hasPermissionTo($permission)) {
+                    $role->givePermissionTo($permission);
+                }
+            }
+        }
     }
 }

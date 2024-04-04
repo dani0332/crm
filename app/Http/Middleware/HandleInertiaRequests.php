@@ -100,25 +100,18 @@ class HandleInertiaRequests extends Middleware
         $nav = app(Navigation::class)
             ->add('Home', url('/home'));
 
-        if (auth()->user()->hasAnyPermission([
-            PermissionsEnum::DashboardView,
-            PermissionsEnum::TPL_DASHBOARD_VIEW,
-            PermissionsEnum::COMPREHENSIVE_DASHBOARD_VIEW,
-            PermissionsEnum::MAIN_DASHBOARD_VIEW,
-            PermissionsEnum::UtmLeadsSalesReport,
-        ])) {
+        if (auth()->user()->hasAnyPermission(array_merge([
+                PermissionsEnum::DashboardView,
+                PermissionsEnum::TPL_DASHBOARD_VIEW,
+                PermissionsEnum::MAIN_DASHBOARD_VIEW,
+                PermissionsEnum::UtmLeadsSalesReport,
+        ], PermissionsEnum::getComprehensiveDashboardPermissions()))) {
             $nav = $nav->add('Dashboard', '', function (Section $section) {
                 $section
                     ->add('Car Conversion', url('dashboard/car-conversion'), fn ($s) => $s->attributes(['icon' => 'car']))
                     ->add('Travel Conversion', url('dashboard/travel-conversion'), fn ($s) => $s->attributes(['icon' => 'travel']))
                     ->addIf(
-                        auth()->user()->can(PermissionsEnum::TPL_DASHBOARD_VIEW),
-                        'TPL Conversion',
-                        url('/tpl-conversion-dashboard'),
-                        fn ($s) => $s->attributes(['icon' => 'graph'])
-                    )
-                    ->addIf(
-                        auth()->user()->can(PermissionsEnum::COMPREHENSIVE_DASHBOARD_VIEW),
+                        auth()->user()->hasAnyPermission(PermissionsEnum::getComprehensiveDashboardPermissions()),
                         'Comprehensive Conversion',
                         url('/comprehensive-conversion-dashboard'),
                         fn ($s) => $s->attributes(['icon' => 'graph'])

@@ -17,6 +17,11 @@ use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Services\ComprehensiveConversionDashboardService;
+use App\Enums\PermissionsEnum;
+use App\Enums\RolesEnum;
+use App\Models\User;
+use App\Enums\TeamNameEnum;
 
 class DashboardController extends Controller
 {
@@ -29,6 +34,9 @@ class DashboardController extends Controller
     {
         $this->dashboardService = $dashboardService;
         $this->tierService = $tierService;
+
+        $comprehensiveDashboardPermissions = implode('|', PermissionsEnum::getComprehensiveDashboardPermissions());
+        $this->middleware(['permission:' . $comprehensiveDashboardPermissions], ['only' => ['renderComprehensiveDashboard']]);
     }
 
     /**
@@ -420,23 +428,138 @@ class DashboardController extends Controller
         return (count($userTeams) > 0 && count($teamsByProduct) > 0) ? array_intersect($userTeams, $teamsByProduct) : [];
     }
 
-    public function renderComprehensiveDashboard(Request $request)
+    public function renderComprehensiveDashboard(Request $request, ComprehensiveConversionDashboardService $comprehensiveConversionDashboardService)
     {
-
-        $tiers = Tier::where('can_handle_tpl', 0)->orderBy('name', 'asc')->where('name', '!=', TiersEnum::TIER_R)->where('is_active', 1)->get();
-        $comprehensiveDashboardStats = $this->getComprehensiveDashboardStats($request, $tiers);
-        info('inside renderComprehensiveDashboard comp stats are : '.json_encode($comprehensiveDashboardStats));
-        $teams = $this->getTeamsByProductName(quoteTypeCode::Car);
-        $commonTeams = $this->getCommonTeamsForCurrentUserWithCar();
-        $teams = $teams->filter(function ($item) use ($commonTeams) {
-            return in_array($item->id, $commonTeams);
-        });
-
+        $comprehensiveDashboardStats = $comprehensiveConversionDashboardService->getReportData($request);
+        info('inside renderComprehensiveDashboard comp stats are : ' . json_encode($comprehensiveDashboardStats));
         return inertia('Dashboard/ComperhensiveConversion', [
-            'comprehensiveDashboardStats' => $comprehensiveDashboardStats,
-            'teams' => $teams,
-            'tiers' => $tiers,
+            'reportData' => $comprehensiveDashboardStats,
+            'filtersByLob' => $comprehensiveConversionDashboardService->getFiltersByLob(),
+            'filterOptions' => $comprehensiveConversionDashboardService->getFilterOptions(),
+            'defaultFilters' => $comprehensiveConversionDashboardService->getDefaultFilters(),
         ]);
+    }
+
+    /**
+     * Fetches the team list based on the line of business (LOB) requested.
+     *
+     * @param \Illuminate\Http\Request $request The HTTP request object.
+     * @return array The array of team names and IDs.
+     */
+    public function fetchTeamListByLob(Request $request)
+    {
+        $lobId = $this->getProductByName($request->lob)->id;
+        $allTeams = $this->getTeamsByProductId($lobId)->pluck('id')->toArray();
+
+        if (auth()->user()->hasRole(RolesEnum::SeniorManagement)) {
+            $commonteamIds = $allTeams;
+        } else {
+            $userTeams = $this->getUserTeams(auth()->user()->id)->pluck('id')->toArray();
+            $commonteamIds = array_intersect($allTeams, $userTeams);
+        }
+
+        $teams = Team::whereIn('id', $commonteamIds)
+            ->select('name', 'id')
+            ->orderBy('name')
+            ->where('is_active', 1);
+
+        return $teams->get()->toArray();
+    }
+
+
+    /**
+     * Fetches the list of advisors by line of business (LOB).
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return array
+     */
+    public function fetchAdvisorsListByLob(Request $request)
+    {
+        $loginUserId = auth()->user()->id;
+        if (auth()->user()->hasRole(RolesEnum::SeniorManagement)) {
+            $usersReportToLoggedInUser = $this->getUsersByProductName($request->lob)->pluck('id')->toArray();
+        } else {
+            $usersReportToLoggedInUser = $this->walkTree($loginUserId, $request->lob);
+        }
+
+        return User::whereIn('id', $usersReportToLoggedInUser)
+            ->select('name', 'id')
+            ->orderBy('name')
+            ->where('is_active', 1)
+            ->get()
+            ->toArray();
+    }
+
+
+    /**
+     * Fetches the list of sub-teams based on the given team IDs and the current user's teams and sub-teams.
+     *
+     * @param \Illuminate\Http\Request $request The HTTP request object.
+     * @return array The list of sub-teams as an array of associative arrays containing 'name' and 'id' keys.
+     */
+    public function fetchSubTeamListByTeam(Request $request)
+    {
+        $allowedSubTeams = [];
+        if ($request->lob === quoteTypeCode::Car) {
+            $allowedSubTeams = [
+                TeamNameEnum::VALUE,
+                TeamNameEnum::VOLUME
+            ];
+        } else if ($request->lob === quoteTypeCode::GroupMedical) {
+            $allowedSubTeams = [
+                TeamNameEnum::MICRO_SME
+            ];
+        }
+        $subTeams = $this->getSubTeamsByTeamIds($request->teamIds)->whereIn('name', $allowedSubTeams)->pluck('id')->toArray();
+        if (auth()->user()->hasRole(RolesEnum::SeniorManagement)) {
+            $ids = $subTeams;
+        } else {
+            $userTeams = $this->getCurrentUserTeamsAndSubTeams(Auth::user()->id)->pluck('id')->toArray();
+            $ids = array_intersect($subTeams, $userTeams);
+        }
+
+        return Team::whereIn('id', $ids)
+            ->select('name', 'id')
+            ->orderBy('name')
+            ->where('is_active', 1)
+            ->get()
+            ->toArray();
+    }
+
+    public function fetchAdvisorListByTeam(Request $request)
+    {
+        if (auth()->user()->hasRole(RolesEnum::SeniorManagement)) {
+            $advisorIdsByTeam = $this->getUsersByTeamIds($request->teamIds)->pluck('id')->toArray();
+        } else {
+            $usersReportToLoggedInUser = $this->walkTree(auth()->user()->id, $request->lob);
+            $teamUsers = $this->getUsersByTeamIds($request->teamIds)->pluck('id')->toArray();
+            $advisorIdsByTeam = array_intersect($teamUsers, $usersReportToLoggedInUser);
+        }
+
+        return User::whereIn('id', $advisorIdsByTeam)
+            ->select('name', 'id')
+            ->orderBy('name')
+            ->where('is_active', 1)
+            ->get()
+            ->toArray();
+    }
+
+    public function fetchAdvisorListBySubTeam(Request $request)
+    {
+        $teamUsers = $this->getUsersBySubTeamIds($request->teamIds)->pluck('id')->toArray();
+        if (auth()->user()->hasRole(RolesEnum::SeniorManagement)) {
+            $advisorIdsByTeam = $teamUsers;
+        } else {
+            $usersReportToLoggedInUser = $this->walkTree(auth()->user()->id, $request->lob);
+            $advisorIdsByTeam = array_intersect($teamUsers, $usersReportToLoggedInUser);
+        }
+
+        return User::whereIn('id', $advisorIdsByTeam)
+            ->select('name', 'id')
+            ->orderBy('name')
+            ->where('is_active', 1)
+            ->get()
+            ->toArray();
     }
 
     public function conversionStats($quoteType)
