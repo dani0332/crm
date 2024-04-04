@@ -1485,10 +1485,7 @@ const selectedProviderPlan = ref({
   premium: page.props.ecomDetails.priceWithVAT,
 });
 
-console.log(selectedProviderPlan, 'LLLKKKKJ', page.props.quote);
-
 const handlePlanSelected = plan => {
-  console.log('HHH', plan);
   //se.value = plan.id;
   selectedProviderPlan.value.id = plan.id;
   selectedProviderPlan.value.planName = plan.planName;
