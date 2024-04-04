@@ -2,7 +2,7 @@
 defineProps({
   policies: Array,
   legacyPolicyMapping: Array,
-  coveragePolicyMapping: Array
+  coveragePolicyMapping: Array,
 });
 
 const { isRequired } = useRules();
@@ -60,9 +60,8 @@ const tableHeader = [
 ];
 
 const dateFormat = date => {
-    return useDateFormat(date, 'DD-MM-YYYY').value;
+  return useDateFormat(date, 'DD-MM-YYYY').value;
 };
-
 </script>
 
 <template>
@@ -82,7 +81,7 @@ const dateFormat = date => {
           name="policy_number"
           label="Policy Number"
           class="w-full"
-          placeholder="Search by Last Name"
+          placeholder="Search by Policy Number"
         />
         <x-input
           v-model="filters.email"
@@ -127,10 +126,14 @@ const dateFormat = date => {
         </Link>
       </template>
       <template #item-product_name="item">
-          {{legacyPolicyMapping[ item?.product?.product ] ?? coveragePolicyMapping [item?.policy?.coverage] ?? ''}}
+        {{
+          legacyPolicyMapping[item?.product?.product] ??
+          coveragePolicyMapping[item?.policy?.coverage] ??
+          ''
+        }}
       </template>
       <template #item-policy_end_date="item">
-          {{ dateFormat(item?.policy?.end_date) ?? ''}}
+        {{ dateFormat(item?.policy?.end_date) ?? '' }}
       </template>
     </DataTable>
 
