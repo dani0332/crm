@@ -9,6 +9,7 @@ use App\Enums\carTypeInsuranceCode;
 use App\Enums\FetchPlansStatuses;
 use App\Enums\GenericRequestEnum;
 use App\Enums\InsuranceProvidersEnum;
+use App\Enums\LookupsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\ProcessStatusCode;
 use App\Enums\quoteStatusCode;
@@ -62,6 +63,7 @@ use App\Models\UAELicenseHeldFor;
 use App\Models\User;
 use App\Repositories\BusinessQuoteRepository;
 use App\Repositories\CarQuoteRepository;
+use App\Repositories\LookupRepository;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use DateTime;
@@ -768,7 +770,7 @@ class RenewalsUploadService
                 'email' => $customerData['email'],
                 'mobile_no' => $customerData['mobile_no'],
                 'uuid' => $quoteUuid,
-                'code' => $renewalQuoteProcess->quote_type.'-'.$quoteUuid,
+                'code' => strtoupper($renewalQuoteProcess->quote_type).'-'.$quoteUuid,
                 'source' => 'Renewal_upload',
                 'additional_notes' => $data['notes'].$customerData['notes'],
                 'advisor_id' => $advisorId,
@@ -781,6 +783,10 @@ class RenewalsUploadService
                 'previous_advisor_id' => $previousAdvisorId,
             ];
 
+            $lookup = LookupRepository::where('key', LookupsEnum::TRANSACTION_TYPES)->where('code', LookupsEnum::EXT_CUSTOMER_RENWAL)->first();
+            if ($lookup) {
+                $quoteData['transaction_type_id'] = $lookup->id;
+            }
             if ($quoteType->code == quoteTypeCode::Car) {
                 $model = null;
                 $make = CarMake::where('text', $data['make'])->first();
@@ -1305,7 +1311,7 @@ class RenewalsUploadService
                     Log::info('Renewals OCB Email sent to uuid: '.$carQuote->uuid.' ResponseCode: '.$responseCode);
                     RenewalsBatchEmails::where('id', $renewalsBatchEmail->id)->update(['total_sent' => DB::raw('total_sent+1')]);
                     RenewalQuoteProcess::where('id', $renewalQuoteProcess->id)->update(['email_sent' => 1]);
-                    //$this->updateRenewalQuoteEmailSent($batch, $carQuote->id);
+                //$this->updateRenewalQuoteEmailSent($batch, $carQuote->id);
                 } else {
                     Log::error('Renewals OCB Email failed for uuid: '.$carQuote->uuid.' ResponseCode: '.$responseCode.' batchEmailId:'.$renewalsBatchEmail->id.' Customer EmailAddress:'.$carQuote->email);
                     RenewalsBatchEmails::where('id', $renewalsBatchEmail->id)->update(['total_failed' => DB::raw('total_failed+1')]);
@@ -1338,7 +1344,7 @@ class RenewalsUploadService
     /**
      * //$modelName, $quoteRequestIdName.
      *
-     * @param  $quoteRequestIdName
+     * @param    $quoteRequestIdName
      * @return false|mixed
      */
     public function updateAdvisorAssignedDateTime($quoteType, $quoteId, $currentUserId, $advisorId)

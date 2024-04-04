@@ -6,11 +6,12 @@ import LazyCreatePlan from './Partials/CreatePlan.vue';
 import AssignTier from './Partials/AssignTier.vue';
 import FollowUpReasons from './Partials/FollowUpReasons.vue';
 import RiskRatingScoreDetails from '../../../Components/RiskRatingScoreDetails.vue';
+import { fileUploadErrorMessage } from '@/inertia/Composables/utilities.js';
 import { onMounted, watch } from 'vue';
 import { reactive } from 'vue';
 import MigratePayment from './../../../Components/MigratePayment.vue';
 
-import {fileUploadErrorMessage} from "@/inertia/Composables/utilities.js";
+
 
 defineProps({
   quote: Object,
@@ -1039,15 +1040,15 @@ const docForm = useForm({
 
 const uploadFile = (doc, filesWithInfo) => {
   let url = '/quotes/car/documents/store';
-  const { files, rejectReason} = filesWithInfo;
+  const { files, rejectReason } = filesWithInfo;
   if (files.length == 0) {
     notification.error({
       title: 'File upload failed',
       position: 'top',
     });
-    docForm.setError({error: fileUploadErrorMessage(doc, rejectReason)});
-    return false
-  };
+    docForm.setError({ error: fileUploadErrorMessage(doc, rejectReason) });
+    return false;
+  }
   isUploading.value = true;
   docForm
     .transform(data => ({
@@ -1292,12 +1293,9 @@ const confirmSendEmail = () => {
 const confirmSendOCBEmailNB = () => {
   processingOCBEmailNB.value = true;
   axios
-    .post(
-      `/quotes/car/${page.props.record.uuid}/send-email-ocb-nb`,
-      {
-        responseType: 'json',
-      },
-    )
+    .post(`/quotes/car/${page.props.record.uuid}/send-email-ocb-nb`, {
+      responseType: 'json',
+    })
     .then(response => {
       processingOCBEmailNB.value = false;
       notification.success({
@@ -1723,11 +1721,7 @@ const handlePlanSelected = plan => {
               Duplicate Lead
             </x-button>
             <x-button
-              v-if="
-                hasAnyRole([
-                  rolesEnum.LeadPool,
-                ])
-              "
+              v-if="hasAnyRole([rolesEnum.LeadPool])"
               class="mr-2"
               size="sm"
               color="#ff5e00"
@@ -2284,7 +2278,7 @@ const handlePlanSelected = plan => {
         <h3 class="font-semibold text-primary-800 text-lg">Lead Status</h3>
         <x-divider class="mb-4 mt-1" />
       </div>
-      <div class="flex flex-wrap md:flex-nowrap gap-6 w-full">
+      <div class="flex flex-wrap md:flex-nowrap gap-4 w-full">
         <div class="w-full md:w-50">
           <div class="flex flex-col gap-4">
             <ComboBox
@@ -2296,6 +2290,38 @@ const handlePlanSelected = plan => {
               :disabled="leadStatusDisabled"
               :options="leadStatusOptions"
             />
+            <x-field
+              label="Notes"
+              :required="
+                leadStatusForm.leadStatus == quoteStatusEnum.FollowupCall ||
+                leadStatusForm.leadStatus == quoteStatusEnum.Interested ||
+                leadStatusForm.leadStatus == quoteStatusEnum.NoAnswer
+              "
+            >
+              <x-textarea
+                v-model="leadStatusForm.notes"
+                type="text"
+                placeholder="Lead Notes"
+                class="w-full"
+                :rules="
+                  leadStatusForm.leadStatus == quoteStatusEnum.FollowupCall ||
+                  leadStatusForm.leadStatus == quoteStatusEnum.Interested ||
+                  leadStatusForm.leadStatus == quoteStatusEnum.NoAnswer
+                    ? [isRequired]
+                    : []
+                "
+                :error="leadStatusForm.errors.notes"
+                :disabled="
+                  record.quote_status_id ==
+                    quoteStatusEnum.TransactionApproved ||
+                  isCarLostStatus(record.quote_status_id)
+                "
+              />
+            </x-field>
+          </div>
+        </div>
+        <div class="w-full md:w-50">
+          <div class="flex flex-col gap-7">
             <x-field
               label="TransApp Code"
               required
@@ -2370,34 +2396,6 @@ const handlePlanSelected = plan => {
               :error="leadStatusForm.errors.tier_id"
             />
             <x-field
-              label="Notes"
-              :required="
-                leadStatusForm.leadStatus == quoteStatusEnum.FollowupCall ||
-                leadStatusForm.leadStatus == quoteStatusEnum.Interested ||
-                leadStatusForm.leadStatus == quoteStatusEnum.NoAnswer
-              "
-            >
-              <x-textarea
-                v-model="leadStatusForm.notes"
-                type="text"
-                placeholder="Lead Notes"
-                class="w-full"
-                :rules="
-                  leadStatusForm.leadStatus == quoteStatusEnum.FollowupCall ||
-                  leadStatusForm.leadStatus == quoteStatusEnum.Interested ||
-                  leadStatusForm.leadStatus == quoteStatusEnum.NoAnswer
-                    ? [isRequired]
-                    : []
-                "
-                :error="leadStatusForm.errors.notes"
-                :disabled="
-                  record.quote_status_id ==
-                    quoteStatusEnum.TransactionApproved ||
-                  isCarLostStatus(record.quote_status_id)
-                "
-              />
-            </x-field>
-            <x-field
               label="Car Sold / Uncontactable Proof"
               v-if="
                 leadStatusForm.leadStatus == quoteStatusEnum.CarSold ||
@@ -2413,6 +2411,14 @@ const handlePlanSelected = plan => {
                 "
                 placeholder="Car Sold / Uncontactable Proof"
                 class="form-control w-full"
+              />
+            </x-field>
+            <x-field class="" label="Transaction Type">
+              <x-input
+                type="text"
+                :value="record.transaction_type_text"
+                class="w-full"
+                :disabled="true"
               />
             </x-field>
           </div>
@@ -2852,7 +2858,7 @@ const handlePlanSelected = plan => {
             isManualUpdate,
             isRenewal,
             isDisabled,
-            puaPremium
+            puaPremium,
           }"
         >
           <p>{{ providerName }}</p>
@@ -2883,19 +2889,23 @@ const handlePlanSelected = plan => {
             </x-tag>
 
             <x-tag
-                v-if="puaPremium && puaPremium != null"
-                size="xs"
-                class="mt-0.5 text-[10px] text-white"
-                style="background-color: #E00000"
+              v-if="puaPremium && puaPremium != null"
+              size="xs"
+              class="mt-0.5 text-[10px] text-white"
+              style="background-color: #e00000"
             >
-                <x-tooltip  position="right">
-                    <template #tooltip>
-                      <span class="font-medium">
-                          Pending Underwriter Approval (PUA) indicates that this quote is prepared using our internal rating calculator. Please contact the client to get the required documents, to proceed with generating a quote on the insurer portal and connect with the underwriter to obtain their approval.
-                       </span>
-                    </template>
-                    PUA
-                </x-tooltip>
+              <x-tooltip position="right">
+                <template #tooltip>
+                  <span class="font-medium">
+                    Pending Underwriter Approval (PUA) indicates that this quote
+                    is prepared using our internal rating calculator. Please
+                    contact the client to get the required documents, to proceed
+                    with generating a quote on the insurer portal and connect
+                    with the underwriter to obtain their approval.
+                  </span>
+                </template>
+                PUA
+              </x-tooltip>
             </x-tag>
           </div>
         </template>
@@ -3156,15 +3166,15 @@ const handlePlanSelected = plan => {
         :showHeader="true"
         v-model:modelValue="modals.sendOCBConfirmNB"
         :backdrop-close="false"
-        >
+      >
         <template #header>
-        <p>Send Email OCB NB</p>
+          <p>Send Email OCB NB</p>
         </template>
         <template #default>
-        <p>Are you sure send email to customer?</p>
+          <p>Are you sure send email to customer?</p>
         </template>
         <template #actions>
-            <div class="text-right space-x-4">
+          <div class="text-right space-x-4">
             <x-button
               size="sm"
               ghost
@@ -3173,12 +3183,17 @@ const handlePlanSelected = plan => {
             >
               Cancel
             </x-button>
-            <x-button size="sm" color="error" :loading="processingOCBEmailNB" @click.prevent="confirmSendOCBEmailNB">
+            <x-button
+              size="sm"
+              color="error"
+              :loading="processingOCBEmailNB"
+              @click.prevent="confirmSendOCBEmailNB"
+            >
               Send
             </x-button>
           </div>
         </template>
-    </AppModal>
+      </AppModal>
       <x-modal v-model="modals.createPlan" size="xl" show-close backdrop>
         <template #header> Create Car Quote </template>
         <LazyCreatePlan
@@ -3857,11 +3872,23 @@ const handlePlanSelected = plan => {
         :hide-footer="historyData.length < 15"
       />
     </div>
+
+    <CustomerChatLogs
+      v-if="hasRole(rolesEnum.BetaUser)"
+      :customerName="record?.first_name + ' ' + record?.last_name"
+      :quoteId="quote.uuid"
+      :quoteType="'CAR'"
+    />
   </div>
   <AuditLogs :type="'App\\Models\\CarQuote'" :id="$page.props.record.id" :quoteCode="$page.props.record.code"/>
   <ApiLogs
     v-if="can(permissionEnum.API_LOG_VIEW)"
     :type="'App\\Models\\CarQuote'"
     :id="$page.props.record.id"
+  />
+
+  <ClientInquiryLogs
+    v-if="clientInquiryLogs.length > 0"
+    :logs="clientInquiryLogs"
   />
 </template>

@@ -607,32 +607,32 @@ const plansTable = reactive({
 });
 
 const onLoadAvailablePlansData = async () => {
-    let data = {
-        jsonData: true,
-    };
-    let url = `/quotes/health/available-plans/${page.props.quote.uuid}`;
-    axios
-        .post(url, data)
-        .then(res => {
-            plansTable.data = res.data.length > 0 ? res?.data[0] : [];
-            getSmallestCopayRateAsDefaultValue();
-            plansTable.data.forEach(plan => {
-                if (plan.isManualPlan) {
-                    isManualPlansCount.value++;
-                }
+  let data = {
+    jsonData: true,
+  };
+  let url = `/quotes/health/available-plans/${page.props.quote.uuid}`;
+  axios
+    .post(url, data)
+    .then(res => {
+      plansTable.data = res.data.length > 0 ? res?.data[0] : [];
+      getSmallestCopayRateAsDefaultValue();
+      plansTable.data.forEach(plan => {
+        if (plan.isManualPlan) {
+          isManualPlansCount.value++;
+        }
 
-                if (plan.id === selectedPlan.value?.id && !plan.needPriceUpdate) {
-                    selectedPlan.value.needPriceUpdate = false;
-                }
-            });
+        if (plan.id === selectedPlan.value?.id && !plan.needPriceUpdate) {
+          selectedPlan.value.needPriceUpdate = false;
+        }
+      });
 
-            setTimeout(() => {
-                onPlanFiltersSubmit();
-            }, 800);
-        })
-        .catch(err => {
-            console.log(err);
-        });
+      setTimeout(() => {
+        onPlanFiltersSubmit();
+      }, 800);
+    })
+    .catch(err => {
+      console.log(err);
+    });
 };
 
 const planClicked = plan => {
@@ -907,15 +907,16 @@ const getSmallestCopayRateAsDefaultValue = () => {
       }
     });
 
-    element.memberPremiumBreakdown?.forEach(
-      function callback(breakDown, index) {
-        breakDown.ratesPerCopay?.forEach(function callback(ratePerCopay) {
-          if (ratePerCopay.notifyAgent) {
-            element.needPriceUpdate = true;
-          }
-        });
-      },
-    );
+    element.memberPremiumBreakdown?.forEach(function callback(
+      breakDown,
+      index,
+    ) {
+      breakDown.ratesPerCopay?.forEach(function callback(ratePerCopay) {
+        if (ratePerCopay.notifyAgent) {
+          element.needPriceUpdate = true;
+        }
+      });
+    });
 
     if (isMounted.value && selectedCoPay.planId == element.id) {
       element.actualPremium = selectedCoPay.premium;
@@ -1490,7 +1491,7 @@ const handlePlanSelected = plan => {
   router.reload({
     preserveState: true,
     preserveScroll: true,
-    only: ['payments','quoteRequest','ecomDetails'],        
+    only: ['payments','quoteRequest','ecomDetails', 'coPayment'],        
   });  
 };
 
@@ -2426,17 +2427,7 @@ const handlePlanSelected = plan => {
         <x-divider class="mb-4 mt-1" />
       </div>
       <div class="flex flex-wrap md:flex-nowrap gap-6 w-full">
-        <div class="w-full md:w-2/3">
-          <x-textarea
-            v-model="leadStatusForm.notes"
-            type="text"
-            label="Notes"
-            placeholder="Lead Notes"
-            class="w-full"
-            :disabled="quote.quote_status_id == 15"
-          />
-        </div>
-        <div class="w-full md:w-1/3">
+        <div class="w-full md:w-50">
           <div class="flex flex-col gap-4">
             <x-select
               v-model="leadStatusForm.leadStatus"
@@ -2446,6 +2437,18 @@ const handlePlanSelected = plan => {
               placeholder="Lead Status"
               class="w-full"
             />
+            <x-textarea
+              v-model="leadStatusForm.notes"
+              type="text"
+              label="Notes"
+              placeholder="Lead Notes"
+              class="w-full"
+              :disabled="quote.quote_status_id == 15"
+            />
+          </div>
+        </div>
+        <div class="w-full md:w-50">
+          <div class="flex flex-col gap-4">
             <x-input
               v-if="leadStatusForm.leadStatus == 15"
               v-model="leadStatusForm.trans_code"
@@ -2468,20 +2471,28 @@ const handlePlanSelected = plan => {
               class="w-full"
               :error="leadStatusForm.errors.lostReason"
             />
-          </div>
-
-          <div class="flex justify-end">
-            <x-button
-              class="mt-4"
-              color="emerald"
-              size="sm"
-              :loading="leadStatusForm.processing"
-              @click.prevent="onLeadStatus"
-            >
-              Change Status
-            </x-button>
+            <x-field class="" label="Transaction Type">
+              <x-input
+                type="text"
+                :value="quote.transaction_type_text"
+                class="w-full"
+                :disabled="true"
+              />
+            </x-field>
           </div>
         </div>
+      </div>
+      <x-divider class="mb-1 mt-10" />
+      <div class="flex justify-end">
+        <x-button
+          class="mt-4"
+          color="emerald"
+          size="sm"
+          :loading="leadStatusForm.processing"
+          @click.prevent="onLeadStatus"
+        >
+          Change Status
+        </x-button>
       </div>
     </div>
 
@@ -2685,7 +2696,13 @@ const handlePlanSelected = plan => {
           </x-badge>
 
           <x-button
-            v-if="hasAnyRole([rolesEnum.BetaUser, rolesEnum.RMAdvisor, rolesEnum.HealthManager])"
+            v-if="
+              hasAnyRole([
+                rolesEnum.BetaUser,
+                rolesEnum.RMAdvisor,
+                rolesEnum.HealthManager,
+              ])
+            "
             size="sm"
             color="emerald"
             @click.prevent="modals.createPlan = true"
@@ -3230,12 +3247,19 @@ const handlePlanSelected = plan => {
       />
     </div>
 
+    <CustomerChatLogs
+      v-if="hasRole(rolesEnum.BetaUser)"
+      :customerName="quote?.first_name + ' ' + quote?.last_name"
+      :quoteId="quote.uuid"
+      :quoteType="'HEALTH'"
+    />
+    
     <AuditLogs :type="'App\\Models\\HealthQuote'" :id="$page.props.quote.id" :quoteCode="$page.props.quote.code"/>
     
 
     <ClientInquiryLogs
-      v-if="clientInquiryLogs.length > 0"
-      :logs="clientInquiryLogs"
+        v-if="clientInquiryLogs?.length > 0"
+        :logs="clientInquiryLogs"
     />
   </div>
 </template>

@@ -980,7 +980,7 @@ const linkEntity = () => {
         <x-divider class="mb-4 mt-1" />
       </div>
       <div class="flex flex-wrap md:flex-nowrap gap-6 w-full">
-        <div class="w-full md:w-1/3">
+        <div class="w-full md:w-1/2">
           <div class="flex flex-col gap-4">
             <x-field label="Status">
               <x-select
@@ -991,44 +991,48 @@ const linkEntity = () => {
                 class="w-full"
               />
             </x-field>
-            <x-field
-              label="TransApp Code"
-              v-if="leadStatusForm.leadStatus == 15"
-            >
-              <x-input
-                v-model="leadStatusForm.trans_code"
-                placeholder="TransApp Code is required"
+            <x-field label="NOTES">
+              <x-textarea
+                v-model="leadStatusForm.notes"
+                type="text"
+                placeholder="Lead Notes"
                 class="w-full"
-                :error="leadStatusForm.errors.trans_code"
-              />
-            </x-field>
-            <x-field label="Lost Reason" v-if="leadStatusForm.leadStatus == 17">
-              <x-select
-                v-model="leadStatusForm.lostReason"
-                :options="
-                  lostReasons?.map(item => ({
-                    value: item.id,
-                    label: item.text,
-                  }))
-                "
-                placeholder="Lost Reason is required"
-                class="w-full"
-                :error="leadStatusForm.errors.lostReason"
+                :disabled="quote.quote_status_id == 15"
               />
             </x-field>
           </div>
         </div>
-      </div>
-      <div class="flex flex-wrap md:flex-nowrap gap-6 w-full">
-        <div class="w-full md:w-1/3">
-          <x-textarea
-            v-model="leadStatusForm.notes"
-            type="text"
-            label="Notes"
-            placeholder="Lead Notes"
-            class="w-full"
-            :disabled="quote.quote_status_id == 15"
-          />
+        <div class="w-full md:w-2/3">
+          <x-field label="TransApp Code" v-if="leadStatusForm.leadStatus == 15">
+            <x-input
+              v-model="leadStatusForm.trans_code"
+              placeholder="TransApp Code is required"
+              class="w-full"
+              :error="leadStatusForm.errors.trans_code"
+            />
+          </x-field>
+          <x-field label="Lost Reason" v-if="leadStatusForm.leadStatus == 17">
+            <x-select
+              v-model="leadStatusForm.lostReason"
+              :options="
+                lostReasons?.map(item => ({
+                  value: item.id,
+                  label: item.text,
+                }))
+              "
+              placeholder="Lost Reason is required"
+              class="w-full"
+              :error="leadStatusForm.errors.lostReason"
+            />
+          </x-field>
+          <x-field label="Transaction Type">
+            <x-input
+              type="text"
+              :value="quote.transaction_type_text"
+              class="w-full"
+              :disabled="true"
+            />
+          </x-field>
         </div>
       </div>
       <div class="flex justify-end">
