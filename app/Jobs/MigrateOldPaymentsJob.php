@@ -65,7 +65,7 @@ class MigrateOldPaymentsJob implements ShouldQueue
                             $oldPayment = $modelObject->payments()->first();
                             if ($oldPayment->code == $modelObject->code) {
                                 info('MigratePaymentJob::Payment migrated for code= '.$modelObject->code.' id='.$modelObject->id);
-                                ////app(SplitPaymentService::class)->migratePayments($oldPayment, $modelType);
+                                app(SplitPaymentService::class)->migratePayments($oldPayment, $modelType);
                                 $totalMigrationCount++;
                             } else {
                                 info('MigratePaymentJob::Payment migration skipped for: '.$modelObject->code.',having no master payment');
