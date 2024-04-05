@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\DocumentTypeCode;
+use App\Enums\LookupsEnum;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\quoteTypeCode;
@@ -14,6 +15,7 @@ use App\Models\Payment;
 use App\Models\PaymentSplits;
 use App\Models\PersonalQuote;
 use App\Models\QuoteDocument;
+use App\Repositories\LookupRepository;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\SageLoggable;
 use Carbon\Carbon;
@@ -498,4 +500,19 @@ class SplitPaymentService
 
         }
     }
+    // function to get the payment lookups
+    public function getPaymentLookups()
+    {
+        $paymentLookups = [
+            'paymentCollectionTypes' => LookupRepository::where('key', LookupsEnum::PAYMENT_COLLECTION_TYPE)->get(),
+            'paymentFrequencyTypes' => LookupRepository::where('key', LookupsEnum::PAYMENT_FREQUENCY_TYPE)->get(),
+            'paymentDeclineReasons' => LookupRepository::where('key', LookupsEnum::PAYMENT_DECLINE_REASON)->get(),
+            'paymentCreditApprovalReasons' => LookupRepository::where('key', LookupsEnum::PAYMENT_CREDIT_APPROVAL_REASON)->get(),
+            'paymentDispountTypes' => LookupRepository::where('key', LookupsEnum::PAYMENT_DISCOUNT_TYPE)->get(),
+            'paymentDiscountReasons' => LookupRepository::where('key', LookupsEnum::PAYMENT_DISCOUNT_REASON)->get(),
+        ];
+
+        return $paymentLookups;
+    }
+
 }
