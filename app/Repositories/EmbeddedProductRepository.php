@@ -72,7 +72,14 @@ class EmbeddedProductRepository extends BaseRepository
 
             foreach ($prices as $price) {
                 if (! in_array($price->id, array_column($data['pricings'], 'id'))) {
-                    $price->delete();
+
+                    if (EmbeddedTransaction::where('product_id', $price->id)->exists()) {
+                        $price->is_active = 0;
+                        $price->save();
+                    } else {
+                        // only delete options which are not used in any transaction
+                        $price->delete();
+                    }
                 }
             }
 
@@ -93,7 +100,9 @@ class EmbeddedProductRepository extends BaseRepository
      */
     public function fetchGetBy($column, $value)
     {
-        return $this->where($column, $value)->with(['insuranceProvider', 'placements.quoteType', 'prices'])->firstOrFail();
+        return $this->where($column, $value)->with(['insuranceProvider', 'placements.quoteType', 'prices' => function ($query) {
+            $query->where('is_active', 1);
+        }])->firstOrFail();
     }
 
     /**
@@ -379,8 +388,13 @@ class EmbeddedProductRepository extends BaseRepository
      */
     public function fetchGetSoldTransactionList(EmbeddedProduct $ep, $filters = [])
     {
-        $dataset = DB::table('embedded_products')
-            ->where('embedded_products.id', $ep->id)
+        $dataset = EmbeddedTransaction::with('quoteRequest.customer', 'quoteRequest.carMake', 'quoteRequest.carModel', 'quoteRequest.quoteStatus')
+            ->join('embedded_product_options', function ($join) use ($ep) {
+                $join->on('embedded_product_options.id', '=', 'embedded_transactions.product_id')
+                    ->where('embedded_product_options.embedded_product_id', $ep->id);
+            })
+            ->where('embedded_transactions.payment_status_id', PaymentStatusEnum::CAPTURED)
+            ->where('embedded_transactions.is_selected', true)
             ->when(isset($filters['ref_id']), function ($query) use ($filters) {
                 $query->where('embedded_transactions.code', 'like', "%{$filters['ref_id']}%");
             })
@@ -389,67 +403,50 @@ class EmbeddedProductRepository extends BaseRepository
                 $endDate = Carbon::parse($filters['months'])->endOfMonth()->format('Y-m-d');
                 $query->whereBetween('embedded_transactions.paid_at', [$startDate, $endDate]);
             })
-            ->join('embedded_product_options', 'embedded_products.id', '=', 'embedded_product_options.embedded_product_id')
-            ->join('embedded_transactions', function ($join) {
-                $join->on('embedded_product_options.id', '=', 'embedded_transactions.product_id')
-                    ->where('embedded_transactions.payment_status_id', PaymentStatusEnum::CAPTURED)
-                    ->where('embedded_transactions.is_selected', true);
+            ->when(isset($filters['name']), function ($query) use ($filters) {
+                $query->whereHas('quoteRequest', function ($query) use ($filters) {
+                    $name = $filters['name'];
+                    $query->where('first_name', 'like', "%{$name}%")
+                        ->orWhere('last_name', 'like', "%{$name}%");
+                });
             })
-            ->join('quote_type', 'embedded_transactions.quote_type_id', '=', 'quote_type.id')
-            ->select(
-                'embedded_transactions.id',
-                'embedded_transactions.code',
-                'embedded_transactions.quote_request_id',
-                'embedded_transactions.paid_at',
-                'embedded_transactions.certificate_number',
-                'embedded_transactions.price_with_vat',
-                'quote_type.code as model_type',
-            )->get();
+            ->when(isset($filters['email']), function ($query) use ($filters) {
+                $query->whereHas('quoteRequest', function ($query) use ($filters) {
+                    $email = $filters['email'];
+                    $query->where('email', 'like', "%{$email}%");
+                });
+            })
+            ->when(isset($filters['date_of_purchase']), function ($query) use ($filters) {
+                $query->whereHas('quoteRequest', function ($query) use ($filters) {
+                    $startDate = Carbon::parse($filters['date_of_purchase'][0])->startOfDay();
+                    $endDate = Carbon::parse($filters['date_of_purchase'][1])->endOfDay();
+                    $query->whereBetween('policy_issuance_date', [$startDate, $endDate]);
+                });
+            });
+
+        $sortBy = 'embedded_transactions.id';
+        $sortOrder = 'desc';
+        if (! empty($filters['sortBy']) && ! empty($filters['sortType'])) {
+            $sortableColumns = [
+                'payment_date' => 'embedded_transactions.paid_at',
+                'contribution_amount' => 'embedded_transactions.price_with_vat',
+            ];
+            $sortBy = $sortableColumns[$filters['sortBy']] ?? 'embedded_transactions.id';
+            $sortOrder = $filters['sortType'] ?? 'desc';
+        }
+
+        $dataset = $dataset->orderBy($sortBy, $sortOrder);
+
+        if (isset($filters['excel_export']) && $filters['excel_export'] == true) {
+            $dataset = $dataset->get();
+        } else {
+            $dataset = $dataset->simplePaginate()->withQueryString();
+        }
 
         $strategy = $this->createStrategy($ep->short_code);
         $dataset = $strategy->getTransactionData($dataset);
 
-        if (isset($filters['date_of_purchase']) && ! empty($filters['date_of_purchase'])) {
-            $dataset = $dataset->filter(function ($item) use ($filters) {
-                if (! empty($item['policy_issuance_date'])) {
-                    $startDate = Carbon::parse($filters['date_of_purchase'][0])->startOfDay();
-                    $endDate = Carbon::parse($filters['date_of_purchase'][1])->endOfDay();
-                    $isBetween = Carbon::parse($item['policy_issuance_date'])->between($startDate, $endDate);
-
-                    return $isBetween;
-                }
-
-                return false;
-            });
-        }
-
-        if (isset($filters['email']) && ! empty($filters['email'])) {
-            $dataset = $dataset->filter(function ($item) use ($filters) {
-                if (! empty($item['email'])) {
-                    $emailMatch = stripos($item['email'], $filters['email']) !== false;
-
-                    return $emailMatch;
-                }
-
-                return false;
-            });
-        }
-
-        if (isset($filters['name']) && ! empty($filters['name'])) {
-            $dataset = $dataset->filter(function ($item) use ($filters) {
-                if (! empty($item['name'])) {
-                    $nameParts = explode(' ', $item['name']);
-                    $firstName = $nameParts[0];
-                    $lastName = $nameParts[1] ?? '';
-
-                    return stripos($firstName, $filters['name']) !== false || stripos($lastName, $filters['name']) !== false;
-                }
-
-                return false;
-            });
-        }
-
-        return $dataset->values()->all();
+        return $dataset;
     }
 
     public function createStrategy($shortCode)
