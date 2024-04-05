@@ -285,7 +285,6 @@ class HandleInertiaRequests extends Middleware
         //     });
         // }
 
-
         if (auth()->user()->can(PermissionsEnum::CustomersList)) {
             $nav = $nav->add('Customers', '', function (Section $section) {
                 $section
