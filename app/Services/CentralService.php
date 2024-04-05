@@ -274,10 +274,10 @@ class CentralService
                 $response = Ken::request($endpoint, 'post', $data);
                 info('car plan update response: '.json_encode($response));
 
-                if (isset($response['planProcessValue']['totalPremium'])) {
-                    $quote = CarQuote::where('uuid', $uuid)->first();
-                    $this->updateQuotePayment($quote, $response['planProcessValue']['totalPremium']);
-                }
+                // if (isset($response['planProcessValue']['totalPremium'])) {
+                //     $quote = CarQuote::where('uuid', $uuid)->first();
+                //     $this->updateQuotePayment($quote, $response['planProcessValue']['totalPremium']);
+                // }
                 break;
             case QuoteTypes::TRAVEL->value:
                 $endpoint = '/process-travel-quote-plan';
@@ -315,10 +315,10 @@ class CentralService
 
                 $response = Capi::request($endpoint, 'post', $data);
                 info('health plan update response: '.json_encode($response));
-                if (isset($response->totalPremium)) {
-                    $quote = HealthQuote::where('uuid', $uuid)->first();
-                    $this->updateQuotePayment($quote, $response->totalPremium);
-                }
+                // if (isset($response->totalPremium)) {
+                //     $quote = HealthQuote::where('uuid', $uuid)->first();
+                //     $this->updateQuotePayment($quote, $response->totalPremium);
+                // }
                 break;
         }
 
