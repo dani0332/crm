@@ -425,11 +425,18 @@ const travelCoverageOptions = computed(() => {
           :disabled="can(permissionsEnum.ViewTeamsFilters)" />
       </x-field>
       <x-field label="Sub Teams" v-if="canShow('sub_teams')">
-        <ComboBox v-model="filters.sub_teams" name="team_name" placeholder="Select Sub Teams" :options="subteamOptions"
-          @update:model-value="onSubTeamChange" select-all deselect-all :loading="loaders.subteamOptions" :disabled="
-            filters.teams.length == 0 ||
-            can(permissionsEnum.ViewTeamsFilters)
-          " />
+        <ComboBox
+          v-model="filters.sub_teams"
+          name="team_name"
+          placeholder="Select Sub Teams"
+          :options="subteamOptions"
+          @update:model-value="onSubTeamChange"
+          select-all
+          deselect-all
+          :loading="loaders.subteamOptions"
+          :disabled="can(permissionsEnum.ViewTeamsFilters)
+          "
+        />
 
       </x-field>
       <x-field :label="getAdvisorLabel()">
