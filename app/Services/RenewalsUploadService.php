@@ -1031,6 +1031,8 @@ class RenewalsUploadService
                 $quoteData['vehicle_type_id'] = $carModelDetail->vehicle_type_id;
             }
 
+            $quoteData['vehicle_type_id'] = !empty($data['vehicle_type_id'] ?? '') ? $data['vehicle_type_id'] : ($quoteData['vehicle_type_id'] ?? null);
+
             if ($quoteType->code == quoteTypeCode::Car && ! empty($data['year_of_first_registration'])) {
                 $quoteData['year_of_first_registration'] = $data['year_of_first_registration'];
             } elseif ($quoteType->code == quoteTypeCode::Car && ! empty($data['year'])) {
@@ -1461,16 +1463,12 @@ class RenewalsUploadService
                                 $leadValidationErrors->push('Invalid Car Make');
                             }
 
-                            if(!($renewalsUploadLead->skip_plans == 2 && $leadData->make == 'MOTOR BIKE')) {
-                                if ($leadData->model && ! CarModel::where('text', $leadData->model)->first()) {
-                                    $leadValidationErrors->push('Invalid Car Model');
-                                }
-                            } else {
-                                if (! VehicleType::where('text', 'BIKE')->first()) {
-                                    $leadValidationErrors->push('Invalid Car Model');
-                                } else {
-                                    $lead->vehicle_type_id = VehicleType::where('text', 'BIKE')->first()->id;
-                                }
+                            if ($leadData->model && ! CarModel::where('text', $leadData->model)->first()) {
+                                $leadValidationErrors->push('Invalid Car Model');
+                            }
+
+                            if($renewalsUploadLead->skip_plans == 2 && $leadData->make == 'MOTOR BIKE') {
+                                $lead->vehicle_type_id = VehicleType::where('text', 'BIKE')->first()->id ?? null;
                             }
 
                             if ($leadData->product_type != carTypeInsuranceCode::Comprehensive && $leadData->product_type != carTypeInsuranceCode::ThirdPartyOnly) {
