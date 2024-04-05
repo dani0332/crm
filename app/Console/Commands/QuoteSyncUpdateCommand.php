@@ -103,6 +103,8 @@ class QuoteSyncUpdateCommand extends Command
                 $quote->save();
             }
         }
+
+        $this->upsertPersonalQuoteDetail($quote, json_decode($entry->updated_fields, true));
     }
 
     private function processQuoteNotFound($entry)
@@ -115,7 +117,7 @@ class QuoteSyncUpdateCommand extends Command
                 $newValues = json_decode($entry->updated_fields, true);
                 $personalQuote = $this->createPersonalQuoteFromSource($sourceQuote, $entry);
                 $this->syncTable($personalQuote, $newValues, 'personal_quotes');
-                $this->createPersonalQuoteDetail($personalQuote, $newValues);
+                $this->upsertPersonalQuoteDetail($personalQuote, $newValues);
                 $entry->update(['is_synced' => true, 'synced_at' => now()]);
                 info('Entry for quote: '.$personalQuote->id.' saved in personal quotes table');
             } catch (Exception $e) {
@@ -174,7 +176,7 @@ class QuoteSyncUpdateCommand extends Command
         return $modelClassName;
     }
 
-    private function createPersonalQuoteDetail($personalQuote, $newValues)
+    private function upsertPersonalQuoteDetail($personalQuote, $newValues)
     {
         $personalQuoteDetail = PersonalQuoteDetail::where('personal_quote_id', $personalQuote->id)->first();
 
