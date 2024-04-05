@@ -1965,6 +1965,14 @@ const handleSelectionChange = (tableType, selectedItems) => {
               :error="leadStatusForm.errors.lostReason"
             />
           </x-field>
+          <x-field label="Transaction Type">
+            <x-input
+              type="text"
+              :value="quote.transaction_type_text"
+              class="w-full"
+              :disabled="true"
+            />
+          </x-field>
         </div>
       </div>
       <div class="flex justify-end">
@@ -2586,12 +2594,12 @@ const handleSelectionChange = (tableType, selectedItems) => {
         :hide-footer="historyData.length < 15"
       />
     </div>
-    
+
     <x-modal v-model="modals.mixInquiryConfirm" show-close backdrop>
-        <template #header> 
+        <template #header>
           <div class="text-center">
             SORRY!
-          </div>  
+          </div>
         </template>
         <p>Please choose quotes from the same age group for a correct comparison.</p>
         <template #actions>

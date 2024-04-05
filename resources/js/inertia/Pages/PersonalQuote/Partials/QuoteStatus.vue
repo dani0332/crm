@@ -50,8 +50,7 @@ const rules = {
 
 const allowStatusUpdate = computed(() => {
   return (
-    props.quote.quote_status_id ==
-    props.quoteStatusEnum.TransactionApproved
+    props.quote.quote_status_id == props.quoteStatusEnum.TransactionApproved
   );
 });
 </script>
@@ -87,29 +86,50 @@ const allowStatusUpdate = computed(() => {
         </div>
       </div>
       <div class="w-full md:w-2/3">
-        <!-- <x-field label="TransApp Code" required v-if="quoteStatusForm.quote_status_id == props.quoteStatusEnum.TransactionApproved">
-          <x-input
-            v-model="quoteStatusForm.transapp_code"
-            placeholder="TransApp Code is required"
-            class="w-full"
-            :disabled="allowStatusUpdate"
-            :error="quoteStatusForm.errors.transapp_code"
-          />
-        </x-field> -->
-        <x-field label="Lost Reason" required v-if="quoteStatusForm.quote_status_id == props.quoteStatusEnum.Lost">
-          <x-select
-            v-model="quoteStatusForm.lost_reason_id"
-            :options="
-              lostReasons?.map(item => ({
-                value: item.id,
-                label: item.text,
-              }))
+        <div class="flex flex-col gap-4">
+          <!-- <x-field
+            label="TransApp Code"
+            required
+            v-if="
+              quoteStatusForm.quote_status_id ==
+              props.quoteStatusEnum.TransactionApproved
             "
-            placeholder="Lost Reason is required"
-            class="w-full"
-            :error="quoteStatusForm.errors.lost_reason_id"
-          />
-        </x-field>
+          >
+            <x-input
+              v-model="quoteStatusForm.transapp_code"
+              placeholder="TransApp Code is required"
+              class="w-full"
+              :disabled="allowStatusUpdate"
+              :error="quoteStatusForm.errors.transapp_code"
+            />
+          </x-field> -->
+          <x-field
+            label="Lost Reason"
+            required
+            v-if="quoteStatusForm.quote_status_id == props.quoteStatusEnum.Lost"
+          >
+            <x-select
+              v-model="quoteStatusForm.lost_reason_id"
+              :options="
+                lostReasons?.map(item => ({
+                  value: item.id,
+                  label: item.text,
+                }))
+              "
+              placeholder="Lost Reason is required"
+              class="w-full"
+              :error="quoteStatusForm.errors.lost_reason_id"
+            />
+          </x-field>
+          <x-field label="Transaction Type">
+            <x-input
+              type="text"
+              :value="quote.transaction_type_text"
+              class="w-full"
+              :disabled="true"
+            />
+          </x-field>
+        </div>
       </div>
     </div>
     <div class="flex justify-end">

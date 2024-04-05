@@ -40,10 +40,10 @@ const filters = reactive({
   is_ecommerce: '',
   payment_status_id: '',
   page: 1,
-  direction_code:'',
-  coverage_code:'',
+  direction_code: '',
+  coverage_code: '',
   previous_quote_policy_number: '',
-  renewal_batch: ''
+  renewal_batch: '',
 });
 
 const loader = reactive({
@@ -52,11 +52,11 @@ const loader = reactive({
 });
 const inboundCoverageCode = [
   { value: 'singleTrip', label: 'Single Trip' },
-  { value: 'multiTrip', label: 'Multi Trip' }
+  { value: 'multiTrip', label: 'Multi Trip' },
 ];
 const outboundCoverageCode = [
   { value: 'singleTrip', label: 'Single Trip' },
-  { value: 'annualTrip', label: 'Annual Trip' }
+  { value: 'annualTrip', label: 'Annual Trip' },
 ];
 const tableHeader = [
   { text: 'Ref-ID', value: 'code' },
@@ -111,8 +111,8 @@ const leadsStatusOptions = computed(() => {
 });
 
 const subTeamOptions = [
-    { value: 'travelUaeInbound', label: 'To the UAE (Inbound)' },
-    { value: 'travelUaeOutbound', label: 'Outside UAE (OutBound)' }
+  { value: 'travelUaeInbound', label: 'To the UAE (Inbound)' },
+  { value: 'travelUaeOutbound', label: 'Outside UAE (OutBound)' },
 ];
 
 function filterQuotes(isValid) {
@@ -246,7 +246,9 @@ onMounted(() => {
       <h2 class="text-xl font-semibold">Lead List</h2>
       <div class="space-x-3">
         <Link :href="route('travel.expired.upload')" v-if="permissions.admin">
-          <x-button size="sm" color="#1d83bc" tag="div"> Upload Expired Leads </x-button>
+          <x-button size="sm" color="#1d83bc" tag="div">
+            Upload Expired Leads
+          </x-button>
         </Link>
         <Link :href="route('travel.cards')">
           <x-button size="sm" color="#1d83bc" tag="div"> Cards View </x-button>
@@ -356,48 +358,50 @@ onMounted(() => {
             placeholder="Search by Payment Status"
             :options="paymentStatusOptions"
             class="w-full"
-
           />
         </x-field>
         <x-field label="Travel Type" required>
           <x-select
-              v-model="filters.direction_code"
-              :options="subTeamOptions"
-              class="w-full"
-
+            v-model="filters.direction_code"
+            :options="subTeamOptions"
+            class="w-full"
           />
         </x-field>
         <x-field label="Travel Coverage" required>
-            <x-select
-                v-model="filters.coverage_code"
-                :options="filters.direction_code == 'travelUaeInbound'?inboundCoverageCode:outboundCoverageCode"
-                class="w-full"
-            />
+          <x-select
+            v-model="filters.coverage_code"
+            :options="
+              filters.direction_code == 'travelUaeInbound'
+                ? inboundCoverageCode
+                : outboundCoverageCode
+            "
+            class="w-full"
+          />
         </x-field>
         <x-field label="Source">
           <x-input
-              v-model="filters.source"
-              type="search"
-              name="source"
-              class="w-full"
-              placeholder="Search by Source"
+            v-model="filters.source"
+            type="search"
+            name="source"
+            class="w-full"
+            placeholder="Search by Source"
           />
         </x-field>
         <x-input
-            v-model="filters.previous_quote_policy_number"
-            type="text"
-            name="previous_quote_policy_number"
-            label="Previous Policy Number"
-            class="w-full"
-            placeholder="Search by Previous Policy Number"
+          v-model="filters.previous_quote_policy_number"
+          type="text"
+          name="previous_quote_policy_number"
+          label="Previous Policy Number"
+          class="w-full"
+          placeholder="Search by Previous Policy Number"
         />
         <x-input
-            v-model="filters.renewal_batch"
-            type="text"
-            name="renewal_batch"
-            label="Renewal Batch"
-            class="w-full"
-            placeholder="Search by Renewal Batch"
+          v-model="filters.renewal_batch"
+          type="text"
+          name="renewal_batch"
+          label="Renewal Batch"
+          class="w-full"
+          placeholder="Search by Renewal Batch"
         />
       </div>
       <div class="flex justify-between gap-3 mb-4 mt-1">
@@ -495,23 +499,47 @@ onMounted(() => {
           </x-tag>
         </div>
       </template>
-        <template #item-coverage_code="{ coverage_code,days_cover_for }">
-            <div class="text-center">
-                {{ coverage_code != null ? coverage_code : (days_cover_for <= 92 ? travelQuoteEnum.COVERAGE_CODE_SINGLE_TRIP : travelQuoteEnum.COVERAGE_CODE_ANNUAL_TRIP + '/' + travelQuoteEnum.COVERAGE_CODE_MULTI_TRIP) }}
-
-            </div>
-        </template>
-        <template
-            #item-direction_code="{currently_located_in_id, direction_code,currently_located_in_id_text,destination_id_text,region_cover_for_id_text,region_cover_for_id }">
-            <div class="text-center">
-                {{
-                    direction_code == travelQuoteEnum.TRAVEL_UAE_OUTBOUND ? 'Outbound' :
-                        (direction_code == travelQuoteEnum.TRAVEL_UAE_INBOUND ? 'Inbound' : ((currently_located_in_id_text == travelQuoteEnum.LOCATION_UAE_TEXT && region_cover_for_id != travelQuoteEnum.REGION_COVER_ID_UAE) ? 'Outbound' : (destination_id_text == travelQuoteEnum.LOCATION_UNITED_ARAB_EMIRATES_TEXT || region_cover_for_id == travelQuoteEnum.REGION_COVER_ID_UAE ? 'Inbound' : '')))
-                }}
-
-            </div>
-        </template>
-
+      <template #item-coverage_code="{ coverage_code, days_cover_for }">
+        <div class="text-center">
+          {{
+            coverage_code != null
+              ? coverage_code
+              : days_cover_for <= 92
+              ? travelQuoteEnum.COVERAGE_CODE_SINGLE_TRIP
+              : travelQuoteEnum.COVERAGE_CODE_ANNUAL_TRIP +
+                '/' +
+                travelQuoteEnum.COVERAGE_CODE_MULTI_TRIP
+          }}
+        </div>
+      </template>
+      <template
+        #item-direction_code="{
+          currently_located_in_id,
+          direction_code,
+          currently_located_in_id_text,
+          destination_id_text,
+          region_cover_for_id_text,
+          region_cover_for_id,
+        }"
+      >
+        <div class="text-center">
+          {{
+            direction_code == travelQuoteEnum.TRAVEL_UAE_OUTBOUND
+              ? 'Outbound'
+              : direction_code == travelQuoteEnum.TRAVEL_UAE_INBOUND
+              ? 'Inbound'
+              : currently_located_in_id_text ==
+                  travelQuoteEnum.LOCATION_UAE_TEXT &&
+                region_cover_for_id != travelQuoteEnum.REGION_COVER_ID_UAE
+              ? 'Outbound'
+              : destination_id_text ==
+                  travelQuoteEnum.LOCATION_UNITED_ARAB_EMIRATES_TEXT ||
+                region_cover_for_id == travelQuoteEnum.REGION_COVER_ID_UAE
+              ? 'Inbound'
+              : ''
+          }}
+        </div>
+      </template>
     </DataTable>
 
     <Pagination

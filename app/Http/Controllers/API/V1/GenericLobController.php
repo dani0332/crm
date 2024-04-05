@@ -18,7 +18,7 @@ class GenericLobController extends Controller
      */
     public function exportPlansPdf($quoteType, ExportPlansPdfRequest $request)
     {
-        $service = app('App\Services\\'.ucfirst($quoteType).'QuoteService');
+        $service = app('App\\Services\\'.ucfirst($quoteType).'QuoteService');
         $response = $service->exportPlansPdf($quoteType, $request->validated());
 
         if (isset($response['error'])) {

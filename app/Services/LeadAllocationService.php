@@ -63,6 +63,7 @@ class LeadAllocationService extends BaseService
                 'lead_allocation.max_capacity',
                 'lead_allocation.reset_cap',
                 'u.status as is_available',
+                'lead_allocation.reset_cap',
                 'lead_allocation.last_allocated',
                 't.name as teamName',
                 'u.name as userName',

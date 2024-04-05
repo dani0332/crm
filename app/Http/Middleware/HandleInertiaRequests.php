@@ -197,9 +197,11 @@ class HandleInertiaRequests extends Middleware
                         ),
                 )
                 ->addIf(
-                    auth()->user()->hasAnyPermission(PermissionsEnum::HealthQuotesList,
+                    auth()->user()->hasAnyPermission(
+                        PermissionsEnum::HealthQuotesList,
                         PermissionsEnum::HEALTH_QUOTES_MANAGER_ACCESS,
-                        PermissionsEnum::HEALTH_QUOTES_ACCESS),
+                        PermissionsEnum::HEALTH_QUOTES_ACCESS
+                    ),
                     'Health Quotes',
                     '/quotes/health',
                     fn ($s) => $s->attributes(['icon' => 'health'])
@@ -255,10 +257,11 @@ class HandleInertiaRequests extends Middleware
         if (auth()->user()->hasAnyPermission([
             PermissionsEnum::GMQuotesList,
             PermissionsEnum::CorpLineQuotesList,
+            PermissionsEnum::VehicleValuationList,
         ])) {
             $nav = $nav->add('Car', '', function (Section $section) {
                 $section
-                    ->add('Valuation', '/valuation/calculatevaluation', fn ($s) => $s->attributes(['icon' => 'car']))
+                    ->add('Valuation', '/valuation', fn ($s) => $s->attributes(['icon' => 'car']))
                     ->add('Vehicle Depreciation', '/valuation/vehicledepreciation', fn ($s) => $s->attributes(['icon' => 'car']));
             });
         }
@@ -367,54 +370,57 @@ class HandleInertiaRequests extends Middleware
             });
         }
 
-        if (auth()->user()->can(PermissionsEnum::ClaimList)) {
-            $nav = $nav->add('Claims', '', function (Section $section) {
-                $section
-                    ->add('Claims List', url('claim/claims'), fn ($s) => $s->attributes(['icon' => 'box']))
-                    ->addIf(
-                        auth()->user()->can(PermissionsEnum::CRMAdmin),
-                        'Type of Insurance',
-                        url('claim/typeofinsurance'),
-                        fn ($s) => $s->attributes(['icon' => 'box'])
-                    )
-                    ->addIf(
-                        auth()->user()->can(PermissionsEnum::CRMAdmin),
-                        'Sub Type of Insurance',
-                        url('claim/subtypeofinsurance'),
-                        fn ($s) => $s->attributes(['icon' => 'box'])
-                    )
-                    ->addIf(
-                        auth()->user()->can(PermissionsEnum::CRMAdmin),
-                        'Claim Status',
-                        url('claim/claimsstatus'),
-                        fn ($s) => $s->attributes(['icon' => 'box'])
-                    )
-                    ->addIf(
-                        auth()->user()->can(PermissionsEnum::CRMAdmin),
-                        'Car Repair Coverage',
-                        url('claim/carrepaircoverage'),
-                        fn ($s) => $s->attributes(['icon' => 'box'])
-                    )
-                    ->addIf(
-                        auth()->user()->can(PermissionsEnum::CRMAdmin),
-                        'Car Repair Type',
-                        url('claim/carrepairtype'),
-                        fn ($s) => $s->attributes(['icon' => 'box'])
-                    );
-            });
-        }
+        // Scheduled to delete 15th April 2024
+        // if (auth()->user()->can(PermissionsEnum::CRMAdmin)) {
+        //     $nav = $nav->add('Claims', '', function (Section $section) {
+        //         $section
+        //             ->add('Claims List', url('claim/claims'), fn ($s) => $s->attributes(['icon' => 'box']))
+        //             ->addIf(
+        //                 auth()->user()->can(PermissionsEnum::CRMAdmin),
+        //                 'Type of Insurance',
+        //                 url('claim/typeofinsurance'),
+        //                 fn ($s) => $s->attributes(['icon' => 'box'])
+        //             )
+        //             ->addIf(
+        //                 auth()->user()->can(PermissionsEnum::CRMAdmin),
+        //                 'Sub Type of Insurance',
+        //                 url('claim/subtypeofinsurance'),
+        //                 fn ($s) => $s->attributes(['icon' => 'box'])
+        //             )
+        //             ->addIf(
+        //                 auth()->user()->can(PermissionsEnum::CRMAdmin),
+        //                 'Claim Status',
+        //                 url('claim/claimsstatus'),
+        //                 fn ($s) => $s->attributes(['icon' => 'box'])
+        //             )
+        //             ->addIf(
+        //                 auth()->user()->can(PermissionsEnum::CRMAdmin),
+        //                 'Car Repair Coverage',
+        //                 url('claim/carrepaircoverage'),
+        //                 fn ($s) => $s->attributes(['icon' => 'box'])
+        //             )
+        //             ->addIf(
+        //                 auth()->user()->can(PermissionsEnum::CRMAdmin),
+        //                 'Car Repair Type',
+        //                 url('claim/carrepairtype'),
+        //                 fn ($s) => $s->attributes(['icon' => 'box'])
+        //             );
+        //     });
+        // }
 
         if (auth()->user()->can(PermissionsEnum::AMLList)) {
             $nav = $nav->add('AML', '', function (Section $section) {
                 $section
                     ->add('All Quotes', url('kyc/aml'), fn ($s) => $s->attributes(['icon' => 'box']));
-                // ->add('Downloaded Sanction Lists', url('kyc/aml/download/history'), fn ($s) => $s->attributes(['icon' => 'box']))
-                // ->add('Upload UAE List', url('kyc/aml/upload/uae'), fn ($s) => $s->attributes(['icon' => 'box']));
             });
         }
 
         if (auth()->user()->can(PermissionsEnum::EmbeddedProductView)) {
-            $nav = $nav->add('Embedded Products', url('embedded-products'));
+            $nav = $nav->add('Embedded Products', '', function (Section $section) {
+                $section
+                    ->add('All Products', route('embedded-products.index'), fn ($s) => $s->attributes(['icon' => 'box']))
+                    ->add('Reports', route('embedded-products.reports'), fn ($s) => $s->attributes(['icon' => 'bar']));
+            });
         }
 
         $nav = $nav->addIf(auth()->user()->hasRole(RolesEnum::BetaUser), 'Legacy Policy', url('legacy-policy'));
@@ -443,11 +449,19 @@ class HandleInertiaRequests extends Middleware
                     );
             });
         }
-        if (auth()->user()->hasAnyPermission([
+        $adminMenuPermissions = [
             PermissionsEnum::UsersList, PermissionsEnum::RoleList,
-            PermissionsEnum::TeamsList, PermissionsEnum::COMMERCIAL_KEYWORDS,
-            PermissionsEnum::CONFIGURE_COMMERCIAL_VEHICLES, PermissionsEnum::RENEWAL_BATCHES_LIST,
-        ])) {
+            PermissionsEnum::TeamsList, PermissionsEnum::RENEWAL_BATCHES_LIST,
+            PermissionsEnum::COMMERCIAL_KEYWORDS,
+            PermissionsEnum::CONFIGURE_COMMERCIAL_VEHICLES,
+            PermissionsEnum::RULE_CONFIG_LIST,
+            PermissionsEnum::QUAD_CONFIG_LIST,
+            PermissionsEnum::TIER_CONFIG_LIST,
+            PermissionsEnum::TeamThresholdView,
+            PermissionsEnum::COMMERCIAL_KEYWORDS,
+            PermissionsEnum::CONFIGURE_COMMERCIAL_VEHICLES,
+        ];
+        if (auth()->user()->hasAnyPermission($adminMenuPermissions)) {
             $nav = $nav->add('Admin', '', function (Section $section) {
                 $section
                     ->addIf(
