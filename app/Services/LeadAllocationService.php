@@ -92,6 +92,16 @@ class LeadAllocationService extends BaseService
 
     public function createLeadAllocationRecord($userId, $allocationRequest = null)
     {
+        $isAllocation = LeadAllocation::where('user_id', $userId);
+        if (!empty($allocationRequest->quoteTypeId)) {
+            $isAllocation =  $isAllocation->where('quote_type_id', $allocationRequest->quoteTypeId);
+        }
+
+        $isAllocation = $isAllocation->first();
+        if(!empty($isAllocation)) {
+            info('User is already allocated');
+            return false;
+        }
         try {
             DB::beginTransaction();
             $leadAllocation = new LeadAllocation();
