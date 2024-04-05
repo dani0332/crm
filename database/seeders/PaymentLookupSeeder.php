@@ -34,12 +34,12 @@ class PaymentLookupSeeder extends Seeder
 
         if (! DB::table('lookups')->where('key', LookupsEnum::PAYMENT_DECLINE_REASON)->first()) {
             DB::table('lookups')->insert([
-                ['key' => LookupsEnum::PAYMENT_DECLINE_REASON, 'code' => '1', 'text' => 'Incorrect payment information, proof of payment or receipt provided'],
-                ['key' => LookupsEnum::PAYMENT_DECLINE_REASON, 'code' => '2', 'text' => 'Payment proof or receipt is not readable'],
-                ['key' => LookupsEnum::PAYMENT_DECLINE_REASON, 'code' => '3', 'text' => 'Insufficient documentation'],
-                ['key' => LookupsEnum::PAYMENT_DECLINE_REASON, 'code' => '4', 'text' => 'No proof of discount approval'],
-                ['key' => LookupsEnum::PAYMENT_DECLINE_REASON, 'code' => '5', 'text' => 'No proof of credit approval'],
-                ['key' => LookupsEnum::PAYMENT_DECLINE_REASON, 'code' => '6', 'text' => 'Other reasons'],
+                ['key' => LookupsEnum::PAYMENT_DECLINE_REASON, 'code' => 'payment_decline_reason_1', 'text' => 'Incorrect payment information, proof of payment or receipt provided'],
+                ['key' => LookupsEnum::PAYMENT_DECLINE_REASON, 'code' => 'payment_decline_reason_2', 'text' => 'Payment proof or receipt is not readable'],
+                ['key' => LookupsEnum::PAYMENT_DECLINE_REASON, 'code' => 'payment_decline_reason_3', 'text' => 'Insufficient documentation'],
+                ['key' => LookupsEnum::PAYMENT_DECLINE_REASON, 'code' => 'payment_decline_reason_4', 'text' => 'No proof of discount approval'],
+                ['key' => LookupsEnum::PAYMENT_DECLINE_REASON, 'code' => 'payment_decline_reason_5', 'text' => 'No proof of credit approval'],
+                ['key' => LookupsEnum::PAYMENT_DECLINE_REASON, 'code' => 'payment_decline_reason_6', 'text' => 'Other reasons'],
             ]);
         }
 
