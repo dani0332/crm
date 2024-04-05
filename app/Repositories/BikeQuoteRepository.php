@@ -107,6 +107,7 @@ class BikeQuoteRepository extends BaseRepository
                 'quoteDetail.previousAdvisor',
                 'currentlyInsuredWith',
                 'transactionType',
+                'insuranceProvider',
                 'payments' => function ($q) {
                     $q->with([
                         'paymentStatus',
@@ -114,6 +115,9 @@ class BikeQuoteRepository extends BaseRepository
                         'paymentMethod',
                         'paymentStatusLogs',
                         'insuranceProvider',
+                        'paymentSplits.paymentStatus',
+                        'paymentSplits.paymentMethod',
+                        'paymentSplits.documents',
                     ]);
                 },
                 'createdBy',
