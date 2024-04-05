@@ -54,6 +54,7 @@ class DatabaseSeeder extends Seeder
             updateDocTypePayment::class,
             AddSageFlagApplicationStorage::class,
             AddTempUpdateTotalPricePermission::class,
+            CarMakeSeeder::class,
         ]);
     }
 }

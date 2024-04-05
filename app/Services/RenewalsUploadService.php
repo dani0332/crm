@@ -61,6 +61,7 @@ use App\Models\Tier;
 use App\Models\TravelQuote;
 use App\Models\UAELicenseHeldFor;
 use App\Models\User;
+use App\Models\VehicleType;
 use App\Repositories\BusinessQuoteRepository;
 use App\Repositories\CarQuoteRepository;
 use App\Repositories\LookupRepository;
@@ -1459,8 +1460,17 @@ class RenewalsUploadService
                             if ($leadData->make && ! CarMake::where('text', $leadData->make)->first()) {
                                 $leadValidationErrors->push('Invalid Car Make');
                             }
-                            if ($leadData->model && ! CarModel::where('text', $leadData->model)->first()) {
-                                $leadValidationErrors->push('Invalid Car Model');
+
+                            if(!($renewalsUploadLead->skip_plans == 2 && $leadData->make == 'MOTOR BIKE')) {
+                                if ($leadData->model && ! CarModel::where('text', $leadData->model)->first()) {
+                                    $leadValidationErrors->push('Invalid Car Model');
+                                }
+                            } else {
+                                if (! VehicleType::where('text', 'BIKE')->first()) {
+                                    $leadValidationErrors->push('Invalid Car Model');
+                                } else {
+                                    $lead->vehicle_type_id = VehicleType::where('text', 'BIKE')->first()->id;
+                                }
                             }
 
                             if ($leadData->product_type != carTypeInsuranceCode::Comprehensive && $leadData->product_type != carTypeInsuranceCode::ThirdPartyOnly) {

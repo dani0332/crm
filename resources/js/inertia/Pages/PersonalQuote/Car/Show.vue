@@ -3911,7 +3911,7 @@ const isPlanDetailEnabled = computed(() => {
   />
 
   <ClientInquiryLogs
-    v-if="clientInquiryLogs.length > 0"
+    v-if="clientInquiryLogs?.length > 0"
     :logs="clientInquiryLogs"
   />
 </template>
