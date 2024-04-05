@@ -275,7 +275,7 @@ class LeadAllocationController extends Controller
         $allocationRequest = (object) $request->validated();
         $isLead = $this->leadAllocationService->getLeadAllocationRecordByUserId($request->userId, $request->quoteTypeId);
         if (! empty($isLead)) {
-            return back()->with('error', 'Advisor already has an assigned capacity value for this quote type');
+            return back()->with('error', 'Advisor already has an assigned capacity value for this quote type.');
         }
         $this->leadAllocationService->createLeadAllocationRecord($request->userId, $allocationRequest);
 
