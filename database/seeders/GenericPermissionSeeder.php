@@ -43,5 +43,26 @@ class GenericPermissionSeeder extends Seeder
         if (! $role->hasPermissionTo(PermissionsEnum::HEALTH_QUOTES_ACCESS)) {
             $role->givePermissionTo(PermissionsEnum::HEALTH_QUOTES_ACCESS);
         }
+
+        // Plans Selection & Plan Details Section Permissions
+        $planDetailsAdd = Permission::where('name', PermissionsEnum::PLAN_DETAILS_ADD)->first();
+        if (! $planDetailsAdd) {
+            Permission::create([
+                'name' => PermissionsEnum::PLAN_DETAILS_ADD,
+                'guard_name' => 'web',
+            ]);
+
+            $role->givePermissionTo(PermissionsEnum::PLAN_DETAILS_ADD);
+        }
+
+        $availablePlanSelect = Permission::where('name', PermissionsEnum::AVAILABLE_PLANS_SELECT_BUTTON)->first();
+        if (! $availablePlanSelect) {
+            Permission::create([
+                'name' => PermissionsEnum::AVAILABLE_PLANS_SELECT_BUTTON,
+                'guard_name' => 'web',
+            ]);
+
+            $role->givePermissionTo(PermissionsEnum::AVAILABLE_PLANS_SELECT_BUTTON);
+        }
     }
 }
