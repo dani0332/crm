@@ -11,8 +11,12 @@ const props = defineProps({
 })
 
 
+const page = usePage();
 const notification = useNotifications('toast');
 const isLoading = ref(false);
+
+const can = permission => useCan(permission);
+const permissionEnum = page.props.permissionsEnum;
 
 const emit = defineEmits(['update:selectedPlanChanged']);
 
@@ -119,7 +123,7 @@ const updateSelectedPlan = () => {
         color="success"
         outlined
         :loading="isLoading"
-        v-if="props.plan.actualPremium > 0"
+        v-if="props.plan.actualPremium > 0  && can(permissionEnum.AVAILABLE_PLANS_SELECT_BUTTON)" 
         @click.prevent="updateSelectedPlan()"
     >
         Select
