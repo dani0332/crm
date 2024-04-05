@@ -93,10 +93,15 @@ class CarAllocationService extends AllocationService
         }
     }
 
-    public function getExcludedUserIds()
+    public function getExcludedUserIds($teamId)
     {
         // Define a list of excluded team names.
         $excludedTeams = [TeamNameEnum::AFFINITY];
+
+        // If the team ID is not null, add it to the list of excluded team names.
+        if (!empty($teamId) || $teamId != 0) {
+            $excludedTeams[] = TeamNameEnum::SIC_UNASSISTED;
+        }
 
         // Retrieve the IDs of excluded teams.
         $excludedTeamIds = Team::whereIn('name', $excludedTeams)->select('id')->get();
@@ -251,7 +256,7 @@ class CarAllocationService extends AllocationService
         // Iterate through user statuses in the specified order.
         foreach ($statusOrder as $status) {
             // Get eligible users with the specified status.
-            $eligibleUsers = $this->getAdvisorsByStatus($status, $tierUserIds, $advisorId);
+            $eligibleUsers = $this->getAdvisorsByStatus($status, $tierUserIds, $advisorId, $teamId);
 
             // If eligible users are found, log the results and return them.
             if ($eligibleUsers && count($eligibleUsers) > 0) {
@@ -263,9 +268,9 @@ class CarAllocationService extends AllocationService
         return [];
     }
 
-    public function getAdvisorsByStatus($status, $tierUserIds, $advisorId = null)
+    public function getAdvisorsByStatus($status, $tierUserIds, $advisorId = null, $teamId = null)
     {
-        $excludedUserIds = $this->getExcludedUserIds();
+        $excludedUserIds = $this->getExcludedUserIds($teamId);
 
         // Create a query to fetch lead allocations with their associated users.
         $query = LeadAllocation::with('leadAllocationUser')
