@@ -15,6 +15,8 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Throwable;
 
+use function Laravel\Prompts\error;
+
 class SendBookPolicyDocumentsJob implements ShouldQueue
 {
     use Dispatchable, GenericQueriesAllLobs, InteractsWithQueue, Queueable, SerializesModels;
@@ -40,15 +42,13 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
             $documentTypeCodes = app(DocumentTypeRepository::class)->getQuoteDocumentsSentToCustomerCode($this->data->model_type);
             $quoteDocuments = $docs = app(QuoteDocumentService::class)->getQuoteDocuments($this->data->model_type, $this->data->quote_id, $documentTypeCodes);
         } catch (Exception $ex) {
-            info('SendBookPolicyDocumentsJobError '.$ex->getMessage());
+            error('SendBookPolicyDocumentsJobError '.$ex->getMessage());
             $docs = [];
         }
 
-        info('SendBookPolicyDocumentsJobDocuments '.json_encode($quoteDocuments));
-
         $quote->load('advisor');
 
-        $templateId = ApplicationStorage::where('key_name', strtoupper($modelType).'_BOOK_POLICY_TEMPLATE')->first()->value ?? null;
+        $templateId = ApplicationStorage::where('key_name', strtoupper(str_replace(' ', '_', $modelType)).'_BOOK_POLICY_TEMPLATE')->first()->value ?? null;
 
         info('SendBookPolicyDocumentsJobData '.json_encode($quote));
 
@@ -57,9 +57,9 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
             // payload
             $dataArr = new \stdClass();
             $dataArr->code = $quote->code;
-            // $dataArr->customerEmail = 'wasim.abbas@myalfred.com';
+            $dataArr->customerEmail = 'muhammad.waris@myalfred.com';
             // $dataArr->customerEmail = 'nouman.hussain@myalfred.com';
-            $dataArr->customerEmail = $quote->email;
+            // $dataArr->customerEmail = $quote->email;
             $dataArr->clientFullName = $quote->first_name.' '.$quote->last_name;
             $dataArr->policy_number = $quote->policy_number;
             $dataArr->renewalDueDate = date('Y-m-d', strtotime($quote['renewal_expiry_date']));

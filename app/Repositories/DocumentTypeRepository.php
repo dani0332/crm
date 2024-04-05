@@ -2,6 +2,7 @@
 
 namespace App\Repositories;
 
+use App\Enums\DocumentTypeCode;
 use App\Enums\QuoteTypes;
 use App\Models\DocumentType;
 use App\Services\ActivitiesService;
@@ -17,7 +18,7 @@ class DocumentTypeRepository extends BaseRepository
     {
         $documentTypeCodes = DocumentType::requiredForSendPolicy()->where('quote_type_id', app(ActivitiesService::class)->getQuoteTypeId($quoteType))->pluck('code')->toArray();
         if ($quoteType == QuoteTypes::GROUP_MEDICAL->value) {
-            $documentTypeCodes = array_merge($documentTypeCodes, ['REC_GH', 'NL_GH']);
+            $documentTypeCodes = array_merge($documentTypeCodes, [DocumentTypeCode::Receipt_BUSINESS, DocumentTypeCode::NETWORK_LIST_BUSINESS]);
         }
 
         return $documentTypeCodes;

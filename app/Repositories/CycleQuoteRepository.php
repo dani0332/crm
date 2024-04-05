@@ -159,9 +159,9 @@ class CycleQuoteRepository extends BaseRepository
             ])
             ->select([
                 $this->getTable().'.*',
-                \DB::raw('DATE_FORMAT(renewal_expiry_date, "%d-%m-%Y") as renewal_expiry_date'),
-                \DB::raw('DATE_FORMAT(policy_start_date, "%d-%m-%Y") as policy_start_date'),
-                \DB::raw('DATE_FORMAT(policy_issuance_date, "%d-%m-%Y") as policy_issuance_date'),
+                'renewal_expiry_date',
+                'policy_start_date',
+                'policy_issuance_date',
                 \DB::raw('IF(EXISTS (
                     SELECT *
                     FROM quote_request_entity_mapping

@@ -191,6 +191,7 @@ trait GenericQueriesAllLobs
         $bPDetails['editButton'] = false;
         $bPDetails['sendPolicyType'] = null;
         $bPDetails['text'] = '';
+        // check if policy details are filled & all required documents are uploaded then show send policy button to customer & show edit button &  send policy to sage
         if ($this->isFilledPolicyDetails($quoteType, $record)) {
             if (! empty($quoteDocuments)) {
                 $documentTypeCodes = app(DocumentTypeRepository::class)->getSendPolicyDocumentCodes($quoteType);

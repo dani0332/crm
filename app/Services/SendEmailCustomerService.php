@@ -605,30 +605,6 @@ class SendEmailCustomerService extends BaseService
                 }
             }
 
-            // Get
-            $staticDocumentPaths = [
-                public_path('pdf/send-policy/myAlfred Offers.pdf'),
-                public_path('pdf/send-policy/Policy handbooks.pdf'),
-            ];
-
-            foreach ($staticDocumentPaths as $path) {
-                if (file_exists($path)) {
-                    $fileInfo = new finfo(FILEINFO_MIME_TYPE);
-
-                    $file = file_get_contents($path);
-                    $mimeType = $fileInfo->buffer($file);
-
-                    $ext = pathinfo($path, PATHINFO_EXTENSION);
-                    $name = pathinfo($path, PATHINFO_BASENAME);
-
-                    $attachments[] = [
-                        'Content' => base64_encode($file),
-                        'Name' => $name,
-                        'ContentType' => $mimeType,
-                    ];
-                }
-            }
-
             $headers = [
                 'Accept' => 'application/json',
                 'api-key' => config('constants.SENDINBLUE_KEY'),
