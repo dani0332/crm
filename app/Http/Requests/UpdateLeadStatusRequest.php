@@ -99,7 +99,6 @@ class UpdateLeadStatusRequest extends FormRequest
             $rules['lostReason'] = 'required';
         }
 
-
         if (strtolower(request()->modelType) == strtolower(quoteTypeCode::Car)) {
             if (in_array(request()->leadStatus, [QuoteStatusEnum::FollowupCall, QuoteStatusEnum::Interested, QuoteStatusEnum::NoAnswer])) {
                 $rules['next_followup_date'] = 'required|date_format:'.config('constants.DATETIME_DISPLAY_FORMAT').'|after_or_equal:'.date(config('constants.DATETIME_DISPLAY_FORMAT'));
