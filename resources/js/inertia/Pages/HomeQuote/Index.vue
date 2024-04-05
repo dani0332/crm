@@ -33,7 +33,6 @@ const tableHeader = [
   { text: 'ADVISOR', value: 'advisor_id_text' },
   { text: 'CREATED DATE', value: 'created_at' },
   { text: 'LAST MODIFIED DATE', value: 'updated_at' },
-//   { text: 'TRANSAPP CODE', value: 'transapp_code' },
   { text: 'SOURCE', value: 'source' },
   { text: 'LOST REASON', value: 'lost_reason' },
   { text: 'PRICE', value: 'premium' },

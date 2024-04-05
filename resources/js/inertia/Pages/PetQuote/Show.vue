@@ -430,10 +430,6 @@ const linkEntity = () => {
             <dt class="font-medium">POSSESION TYPE</dt>
             <dd>{{ quote?.pet_quote?.possession_type?.text }}</dd>
           </div>
-          <!-- <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">TRANSAPP CODE</dt>
-            <dd>{{ quote.quote_detail?.transapp_code }}</dd>
-          </div> -->
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">LOST REASON</dt>
             <dd>{{ quote.quote_detail?.lost_reason?.text }}</dd>

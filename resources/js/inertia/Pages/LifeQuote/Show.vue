@@ -577,11 +577,6 @@ const linkEntity = () => {
             <dt class="font-medium">NEXT FOLLOWUP DATE</dt>
             <dd>{{ quote.life_quote_request_detail?.next_followup_date }}</dd>
           </div>
-          <!-- <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">TRANSAPP CODE</dt>
-            <dd>{{ quote.life_quote_request_detail?.transapp_code }}</dd>
-            <dd></dd>
-          </div> -->
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">SOURCE</dt>
             <dd>{{ quote.source }}</dd>
@@ -1012,20 +1007,6 @@ const linkEntity = () => {
         </div>
         <div class="w-full md:w-2/3">
           <div class="flex flex-col gap-4">
-            <!-- <x-field
-              label="TransApp Code"
-              v-if="
-                leadStatusForm.leadStatus ==
-                page.props.quoteStatusEnum.TransactionApproved
-              "
-            >
-              <x-input
-                v-model="leadStatusForm.trans_code"
-                placeholder="TransApp Code is required"
-                class="w-full"
-                :error="leadStatusForm.errors.trans_code"
-              />
-            </x-field> -->
             <x-field
               label="Lost Reason"
               v-if="

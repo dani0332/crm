@@ -1935,24 +1935,6 @@ const handleSelectionChange = (tableType, selectedItems) => {
           </div>
         </div>
         <div class="w-full md:w-2/3">
-          <!-- <x-field
-            label="TRANSAPP CODE"
-            v-if="
-              leadStatusForm.leadStatus ==
-              enums.quoteStatusEnum.TransactionApproved
-            "
-          >
-            <x-input
-              :disabled="
-                quote.quote_status_id ==
-                enums.quoteStatusEnum.TransactionApproved
-              "
-              v-model="leadStatusForm.trans_code"
-              placeholder="TransApp Code is required"
-              class="w-full"
-              :error="leadStatusForm.errors.trans_code"
-            />
-          </x-field> -->
           <x-field
             label="LOST REASON"
             v-if="leadStatusForm.leadStatus == enums.quoteStatusEnum.Lost"

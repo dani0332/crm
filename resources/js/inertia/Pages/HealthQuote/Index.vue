@@ -48,7 +48,6 @@ const tableHeader = [
   { text: 'CREATED DATE', value: 'created_at' },
   { text: 'LAST MODIFIED DATE', value: 'updated_at' },
   { text: 'HEALTH TEAM TYPE', value: 'health_team_type' },
-//   { text: 'TRANSAPP CODE', value: 'transapp_code' },
   { text: 'LOST REASON', value: 'lost_reason' },
   { text: 'STARTING FROM', value: 'price_starting_from' },
   { text: 'PRICE', value: 'premium' },
