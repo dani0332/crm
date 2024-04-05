@@ -1003,14 +1003,6 @@ const linkEntity = () => {
           </div>
         </div>
         <div class="w-full md:w-2/3">
-          <x-field label="TransApp Code" v-if="leadStatusForm.leadStatus == 15">
-            <x-input
-              v-model="leadStatusForm.trans_code"
-              placeholder="TransApp Code is required"
-              class="w-full"
-              :error="leadStatusForm.errors.trans_code"
-            />
-          </x-field>
           <x-field label="Lost Reason" v-if="leadStatusForm.leadStatus == 17">
             <x-select
               v-model="leadStatusForm.lostReason"
