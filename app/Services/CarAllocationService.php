@@ -99,7 +99,7 @@ class CarAllocationService extends AllocationService
         $excludedTeams = [TeamNameEnum::AFFINITY];
 
         // If the team ID is not null, add it to the list of excluded team names.
-        if (!empty($teamId) || $teamId != 0) {
+        if (! empty($teamId) || $teamId != 0) {
             $excludedTeams[] = TeamNameEnum::SIC_UNASSISTED;
         }
 
