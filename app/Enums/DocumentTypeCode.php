@@ -24,4 +24,7 @@ class DocumentTypeCode extends Enum
     const SEND_UPDATE_NETWORK_LIST = 'SUNL'; // Send Update Network List -- TODO:: need to be created.
     const SEND_UPDATE_SIGNED_MED_APP_FORM = 'SUSMAFORM'; // Send Update Network List -- TODO:: need to be created.
     const SEND_UPDATE_APP_COPY = 'SUAPCOPY'; // Send Update Network List -- TODO:: need to be created.
+    const SEND_UPDATE_PAYMENT_PROOF = 'SUPP'; // Payment Proof
+    const SEND_UPDATE_CUSTOMER_DOCUMENTS = 'SUCD'; // Customer documents
+    const SEND_UPDATE_UW_EMAIL_CORRESPONDENCE = 'SUUWEC'; // UW email Correspondence
 }
