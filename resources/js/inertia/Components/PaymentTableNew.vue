@@ -409,7 +409,7 @@ const frequencyTypes = paymentLookups.paymentFrequencyTypes.map(item => ({
 
 // Define payment decline reasons
 const declinedReasons = paymentLookups.paymentDeclineReasons.map(item => ({
-  value: item.code,  label: item.text,
+  value: item.id,  label: item.text,
 }));
 declinedReasons.unshift({ value: '', label: 'Select Reason' });
 
