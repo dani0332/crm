@@ -79,6 +79,10 @@ class InslyDetailRepository extends BaseRepository
         }
 
         if (! empty($coverage)) {
+            // converted all values to lower case because some time data in mongodb have different case values.
+            $lowerCaseCoverageValues = array_map('strtolower', $coverage);
+            $coverage = array_merge($coverage, $lowerCaseCoverageValues);
+
             $query->whereIn('policy.coverage', $coverage);
         }
         $data = $query->simplePaginate()->withQueryString()->toArray();
