@@ -98,9 +98,9 @@ class LeadAllocationService extends BaseService
             $leadAllocation->user_id = $userId;
             $leadAllocation->allocation_count = 0;
             $leadAllocation->last_allocated = now()->timestamp;
-            $leadAllocation->max_capacity = $allocationRequest->max_capacity ?? 0;
-            $leadAllocation->quote_type_id = $allocationRequest->quote_type_id ?? null;
-            $leadAllocation->is_available = $allocationRequest->is_available ?? false;
+            $leadAllocation->max_capacity = $allocationRequest->maxCapacity ?? 0;
+            $leadAllocation->quote_type_id = $allocationRequest->quoteTypeId ?? null;
+            $leadAllocation->is_available = false;
             $leadAllocation->save();
 
             DB::commit();
