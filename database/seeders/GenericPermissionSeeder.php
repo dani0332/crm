@@ -52,7 +52,31 @@ class GenericPermissionSeeder extends Seeder
                 'guard_name' => 'web',
             ]);
 
-            $role->givePermissionTo(PermissionsEnum::PLAN_DETAILS_ADD);
+            $rolesForPlanDetails = [
+                RolesEnum::Admin,
+                RolesEnum::Production,
+                RolesEnum::PA,
+                RolesEnum::ServiceExecutive,
+                RolesEnum::SeniorManagement,
+                RolesEnum::LifeManager,
+                RolesEnum::HomeManager,
+                RolesEnum::PetManager,
+                RolesEnum::BikeManager,
+                RolesEnum::BikeAdvisor,
+                RolesEnum::CycleManager,
+                RolesEnum::CycleAdvisor,
+                RolesEnum::YachtManager,
+                RolesEnum::YachtAdvisor,
+                RolesEnum::GMManager,
+                RolesEnum::GMAdvisor,
+                RolesEnum::CorplineManager,
+                RolesEnum::CorpLineAdvisor,
+            ];
+
+            foreach ($rolesForPlanDetails as $roleForPlanDetails) {
+                $roleForPlanDetails = Role::findOrCreate($roleForPlanDetails, 'web');
+                $roleForPlanDetails->givePermissionTo(PermissionsEnum::PLAN_DETAILS_ADD);
+            }
         }
 
         $availablePlanSelect = Permission::where('name', PermissionsEnum::AVAILABLE_PLANS_SELECT_BUTTON)->first();
@@ -62,7 +86,23 @@ class GenericPermissionSeeder extends Seeder
                 'guard_name' => 'web',
             ]);
 
-            $role->givePermissionTo(PermissionsEnum::AVAILABLE_PLANS_SELECT_BUTTON);
+            $rolesForAvailablePlanSelect = [
+                RolesEnum::Admin,
+                RolesEnum::SeniorManagement,
+                RolesEnum::CarManager,
+                RolesEnum::CarAdvisor,
+                RolesEnum::HealthManager,
+                RolesEnum::RMAdvisor,
+                RolesEnum::TravelManager,
+                RolesEnum::TravelAdvisor,
+
+            ];
+
+            foreach ($rolesForAvailablePlanSelect as $roleForAvailablePlanSelect) {
+                $roleForAvailablePlanSelect = Role::findOrCreate($roleForAvailablePlanSelect, 'web');
+                $roleForAvailablePlanSelect->givePermissionTo(PermissionsEnum::AVAILABLE_PLANS_SELECT_BUTTON);
+            }
+            
         }
     }
 }
