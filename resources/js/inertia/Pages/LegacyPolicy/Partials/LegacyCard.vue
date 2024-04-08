@@ -7,14 +7,24 @@ const props = defineProps({
   policy: Object,
 });
 
-const skipFields = ['_id','email', 'phone', 'idcode', 'mobile_phone', 'profile_data','name','policy_no','policy_oid'];
+const skipFields = [
+  '_id',
+  'email',
+  'phone',
+  'idcode',
+  'mobile_phone',
+  'profile_data',
+  'name',
+  'policy_no',
+  'policy_oid',
+];
 
-if(props.title == 'CUSTOMER') {
+if (props.title == 'CUSTOMER') {
   skipFields.push('customer');
 }
 
 // Function to format the label
-const formatLabel = (inputString) => {
+const formatLabel = inputString => {
   const stringWithSpaces = inputString.replace(/_/g, ' ');
   const words = stringWithSpaces.split(' ');
   for (let i = 0; i < words.length; i++) {
@@ -22,6 +32,12 @@ const formatLabel = (inputString) => {
   }
   const camelCaseString = words.join(' ');
   return camelCaseString;
+};
+const dateFormat = date => {
+  if (date) {
+    return useDateFormat(date, 'DD-MM-YYYY').value;
+  }
+  return null;
 };
 </script>
 
@@ -40,54 +56,95 @@ const formatLabel = (inputString) => {
           <template v-if="!skipFields.includes(index)">
             <th>{{ formatLabel(index) }}</th>
             <td>
-              {{ index.toLowerCase().includes('date') ? formatDate(mainRecord) : (mainRecord ? mainRecord : '') }}
+              {{
+                index.toLowerCase().includes('date')
+                  ? dateFormat(mainRecord)
+                  : mainRecord
+                    ? mainRecord
+                    : ''
+              }}
             </td>
           </template>
         </tr>
 
         <template v-if="title == 'CUSTOMER'">
-          <tr><td colspan="2"></td></tr>
+          <tr>
+            <td colspan="2"></td>
+          </tr>
           <tr v-for="(mainRecord, index) in policy.policy" :key="index">
             <template v-if="!skipFields.includes(index)">
               <th>{{ formatLabel(index) }}</th>
               <td>
-                {{ index.toLowerCase().includes('date') ? formatDate(mainRecord) : (mainRecord ? mainRecord : '') }}
+                {{
+                  index.toLowerCase().includes('date')
+                    ? dateFormat(mainRecord)
+                    : mainRecord
+                      ? mainRecord
+                      : ''
+                }}
               </td>
             </template>
           </tr>
         </template>
 
         <template v-if="title == 'QUOTE'">
-          <tr><td colspan="2"></td></tr>
+          <tr>
+            <td colspan="2"></td>
+          </tr>
           <tr v-for="(mainRecord, index) in policy.vehicle" :key="index">
             <template v-if="!skipFields.includes(index)">
               <th>{{ formatLabel(index) }}</th>
               <td>
-                {{ index.toLowerCase().includes('date') ? formatDate(mainRecord) : (mainRecord ? mainRecord : '') }}
+                {{
+                  index.toLowerCase().includes('date')
+                    ? dateFormat(mainRecord)
+                    : mainRecord
+                      ? mainRecord
+                      : ''
+                }}
               </td>
             </template>
           </tr>
         </template>
 
         <template v-if="title == 'QUOTE'">
-          <tr><td colspan="2"></td></tr>
+          <tr>
+            <td colspan="2"></td>
+          </tr>
           <tr v-for="(mainRecord, index) in policy.casco" :key="index">
             <template v-if="!skipFields.includes(index)">
               <th>{{ formatLabel(index) }}</th>
               <td>
-                {{ index.toLowerCase().includes('date') ? formatDate(mainRecord) : (mainRecord ? mainRecord : '') }}
+                {{
+                  index.toLowerCase().includes('date')
+                    ? dateFormat(mainRecord)
+                    : mainRecord
+                      ? mainRecord
+                      : ''
+                }}
               </td>
             </template>
           </tr>
         </template>
 
         <template v-if="title == 'QUOTE'">
-          <tr><td colspan="2"></td></tr>
-          <tr v-for="(mainRecord, index) in policy.additional_information" :key="index">
+          <tr>
+            <td colspan="2"></td>
+          </tr>
+          <tr
+            v-for="(mainRecord, index) in policy.additional_information"
+            :key="index"
+          >
             <template v-if="!skipFields.includes(index)">
               <th>{{ formatLabel(index) }}</th>
               <td>
-                {{ index.toLowerCase().includes('date') ? formatDate(mainRecord) : (mainRecord ? mainRecord : '') }}
+                {{
+                  index.toLowerCase().includes('date')
+                    ? dateFormat(mainRecord)
+                    : mainRecord
+                      ? mainRecord
+                      : ''
+                }}
               </td>
             </template>
           </tr>
@@ -109,7 +166,13 @@ const formatLabel = (inputString) => {
               <template v-if="!skipFields.includes(subIndex)">
                 <th>{{ formatLabel(subIndex) }}</th>
                 <td>
-                  {{ subIndex.toLowerCase().includes('date') ? formatDate(subRecord) : (subRecord ? subRecord : '') }}
+                  {{
+                    subIndex.toLowerCase().includes('date')
+                      ? dateFormat(subRecord)
+                      : subRecord
+                        ? subRecord
+                        : ''
+                  }}
                 </td>
               </template>
             </tr>

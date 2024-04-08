@@ -91,6 +91,12 @@ const moveToImcrm = async policyNumber => {
     }
   } catch (err) {}
 };
+const dateFormat = date => {
+  if (date) {
+    return useDateFormat(date, 'DD-MM-YYYY').value;
+  }
+  return null;
+};
 </script>
 
 <template>
@@ -149,11 +155,11 @@ const moveToImcrm = async policyNumber => {
 
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">Policy Start Date</dt>
-            <dd>{{ formatDate(policy.policy?.start_date) }}</dd>
+            <dd>{{ dateFormat(policy.policy?.start_date) }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">Policy End Date</dt>
-            <dd>{{ formatDate(policy.policy?.end_date) }}</dd>
+            <dd>{{ dateFormat(policy.policy?.end_date) }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">Premium</dt>
@@ -235,13 +241,13 @@ const moveToImcrm = async policyNumber => {
             {{ comment ? comment : '' }}
           </template>
           <template #item-date_from="{ date_from }">
-            {{ formatDate(date_from) }}
+            {{ dateFormat(date_from) }}
           </template>
           <template #item-date_to="{ date_to }">
-            {{ formatDate(date_to) }}
+            {{ dateFormat(date_to) }}
           </template>
           <template #item-due_date="{ due_date }">
-            {{ formatDate(due_date) }}
+            {{ dateFormat(due_date) }}
           </template>
           <template #item-tax="{ tax }"> {{ tax }} AED </template>
           <template #item-comm="{ comm }"> {{ comm }}% </template>
