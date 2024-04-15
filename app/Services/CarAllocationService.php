@@ -93,7 +93,7 @@ class CarAllocationService extends AllocationService
         }
     }
 
-    public function getExcludedUserIds($teamId)
+    public function getExcludedUserIds($teamId = null)
     {
         // Define a list of excluded team names.
         $excludedTeams = [TeamNameEnum::AFFINITY];
