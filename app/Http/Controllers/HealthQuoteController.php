@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\GenericRequestEnum;
 use App\Http\Requests\InsurerProviderNetworkRequest;
+use App\Http\Requests\MemberDetailRequest;
 use App\Repositories\InsuranceProviderRepository;
 use App\Services\HealthQuoteService;
 use Illuminate\Http\Request;
@@ -19,17 +20,43 @@ class HealthQuoteController extends Controller
 
     public function healthPlanCreateQuote(Request $request)
     {
+        $request->validate([
+            'quoteUID' => 'required',
+            'formData' => 'required|array',
+            'membersPrice' => 'required',
+        ]);
+
+        $quoteUID = $request->quoteUID;
+        $planId = $request->formData['plan_id'];
+        $copayId = $request->formData['deductibles'];
+
+        $membersBreakDown = [];
+
+        foreach ($request->membersPrice as $member) {
+            $array = [
+                'healthPlanCoPaymentId' => (int) $copayId,
+                'basePrice' => (float) $member['base_price'],
+                'loadingPrice' => (float) $member['loading_price'],
+            ];
+
+            $membersBreakDown[] = [
+                'memberId' => $member['member_id'],
+                'ratesPerCopay' => [$array],
+            ];
+        }
+
         $planData = [
-            'quoteUID' => $request->quoteUID,
+            'quoteUID' => $quoteUID,
             'update' => false,
+            'healthBusinessType' => 'RM',
         ];
 
         $planData['plans'][] = [
-            'planId' => $request->planId,
-            'actualPremium' => (float) $request->actualPremium,
-            'discountPremium' => 0,
-            'isManualUpdate' => false,
-            'isManualPremium' => true,
+            'planId' => $planId,
+            'isManualUpdate' => true,
+            'isHidden' => false,
+            'selectedCopayId' => (int) $copayId,
+            'memberPremiumBreakdown' => $membersBreakDown,
         ];
 
         $response = $this->healthQuoteService->renewalCreatePlan($planData);
@@ -56,17 +83,158 @@ class HealthQuoteController extends Controller
         return $message;
     }
 
+    public function healthPlanUpdateManualProcessV2(Request $request)
+    {
+        $request->validate([
+            'quoteUID' => 'required',
+            'planId' => 'required',
+            'planDetails' => 'required|array',
+            'selectedCopay' => 'sometimes|nullable',
+            'defaultCopayId' => 'required_without:selectedCopay',
+        ]);
+
+        $response = $this->healthQuoteService->healthPlanModifyV2($request);
+
+        $message = '';
+        if ($response['message'] && $response['message'] === 'health quote plan updated successfully') {
+            $message = 'Plan has been updated';
+        } else {
+            if (isset($response->message)) {
+                $responseMessage = $response->message;
+            } else {
+                $responseMessage = $response;
+            }
+            $message = 'Plan has not been updated '.json_encode($responseMessage);
+        }
+
+        return $message;
+    }
+
+    public function healthPlanNotifyAgent(Request $request)
+    {
+        $request->validate([
+            'quoteUID' => 'required',
+            'planId' => 'required',
+            'memberId' => 'required',
+            'notifyAgent' => 'required',
+            'selectedCopay' => 'sometimes|nullable',
+            'defaultCopayId' => 'required_without:selectedCopay',
+        ]);
+
+        $response = $this->healthQuoteService->updateNotifyAgentFlag($request);
+
+        $message = '';
+        if (gettype($response) == GenericRequestEnum::INTEGER && ($response == 200 || $response == 201)) {
+            $message = 'Base Price has been revised';
+        } else {
+            if (isset($response->message)) {
+                $responseMessage = $response->message;
+            } else {
+                $responseMessage = $response;
+            }
+            $message = 'Base price has not been updated '.json_encode($responseMessage);
+        }
+
+        return $message;
+    }
+
+    public function healthQuoteAddMember(MemberDetailRequest $request)
+    {
+        $request->validated();
+
+        $response = $this->healthQuoteService->healthQuoteAddMember($request);
+
+        $message = '';
+        if (gettype($response) == GenericRequestEnum::INTEGER && ($response == 200 || $response == 201)) {
+            $message = 'Member Added.';
+        } else {
+            if (isset($response->message)) {
+                $responseMessage = $response->message;
+            } else {
+                $responseMessage = $response;
+            }
+            $message = 'Request not processed. '.json_encode($responseMessage);
+        }
+
+        return redirect()->back();
+    }
+
+    public function healthQuoteUpdateMember(MemberDetailRequest $request)
+    {
+        $request->validated();
+
+        $response = $this->healthQuoteService->healthQuoteUpdateMember($request);
+
+        $message = '';
+        if (gettype($response) == GenericRequestEnum::INTEGER && ($response == 200 || $response == 201)) {
+            $message = 'Member Updated.';
+        } else {
+            if (isset($response->message)) {
+                $responseMessage = $response->message;
+            } else {
+                $responseMessage = $response;
+            }
+            $message = 'Request not processed. '.json_encode($responseMessage);
+        }
+
+        return redirect()->back();
+    }
+
+    public function healthQuoteDeleteMember(Request $request)
+    {
+        $response = $this->healthQuoteService->healthQuoteDeleteMember($request);
+
+        $message = '';
+        if (gettype($response) == GenericRequestEnum::INTEGER && ($response == 200 || $response == 201)) {
+            $message = 'Member Updated.';
+        } else {
+            if (isset($response->message)) {
+                $responseMessage = $response->message;
+            } else {
+                $responseMessage = $response;
+            }
+            $message = 'Request not processed. '.json_encode($responseMessage);
+        }
+
+        return redirect()->back();
+    }
+
     public function plansByInsuranceProvider(Request $request)
     {
         $insuranceProviderId = $request->insuranceProviderId;
         $quoteUuId = $request->quoteUuId;
 
+        $networks = InsuranceProviderRepository::networksByInsuranceProviders([
+            'insuranceProviderId' => $insuranceProviderId,
+        ]);
+
+        $data = [
+            'networks' => $networks->toArray(),
+        ];
+
+        return response()->json($data);
+    }
+
+    public function plansByNetwork(Request $request)
+    {
+        $request->validate([
+            'network' => 'required',
+            'quoteUuId' => 'required',
+            'insuranceProviderId' => 'required',
+        ]);
+
+        $network = trim($request->network);
+        $quoteUuId = $request->quoteUuId;
+        $insuranceProviderId = $request->insuranceProviderId;
+
         $quotePlans = $this->healthQuoteService->getQuotePlans($quoteUuId);
 
         $quotePlanId = [];
+        $healthPlans = [];
         $listQuotePlans = [];
-        if (isset($quotePlans->quotes->plans)) {
-            $listQuotePlans = $quotePlans->quotes->plans;
+
+        if (isset($quotePlans->quote->plans)) {
+            $listQuotePlans = $quotePlans->quote->plans;
         }
 
         foreach ($listQuotePlans as $key => $quotePlan) {
@@ -74,12 +242,39 @@ class HealthQuoteController extends Controller
                 continue;
             }
 
-            $quotePlanId[] = $quotePlan->id;
+            if ($quotePlan->providerId == $insuranceProviderId) {
+
+                $quotePlanId[] = $quotePlan->id;
+
+            }
         }
 
-        $healthPlans = $this->healthQuoteService->getNonQuotedHealthPlans($insuranceProviderId, $quotePlanId);
+        $networkId = InsuranceProviderRepository::networksIdByInsuranceProvider($insuranceProviderId, $network);
 
-        return response()->json($healthPlans);
+        $healthPlans = $this->healthQuoteService->getNonQuotedHealthPlans($insuranceProviderId, $quotePlanId, $networkId);
+
+        $data = [
+            'healthPlans' => $healthPlans,
+        ];
+
+        return response()->json($data);
+    }
+
+    public function copaysByPlan(Request $request)
+    {
+        $request->validate([
+            'planId' => 'required',
+        ]);
+
+        $healthPlanId = $request->planId;
+
+        $copays = $this->healthQuoteService->getCopaysByPlanId($healthPlanId);
+
+        $data = [
+            'copays' => $copays,
+        ];
+
+        return response()->json($data);
     }
 
     public function networksByInsuranceProvider(InsurerProviderNetworkRequest $request)

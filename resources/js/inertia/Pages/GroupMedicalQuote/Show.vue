@@ -470,7 +470,7 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
             </Link>
           </div>
           <div class="text-sm">
-            <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
+        <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
               <div
                 class="grid sm:grid-cols-2"
                 v-if="hasAnyRole([rolesEnum.Admin, rolesEnum.Engineering])"
@@ -509,12 +509,12 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">EMAIL</dt>
-                <dd>{{ quote.email }}</dd>
+            <dd class="break-words">{{ quote.email }}</dd>
               </div>
 
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">COMPANY NAME</dt>
-                <dd>{{ quote.company_name }}</dd>
+            <dd class="break-words">{{ quote.company_name }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">NEXT FOLLOWUP DATE</dt>
@@ -562,10 +562,10 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
                 <dd>Group Medical</dd>
               </div>
 
-              <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">BRIEF DETAILS</dt>
-                <dd>{{ quote.brief_details }}</dd>
-              </div>
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">BRIEF DETAILS</dt>
+            <dd class="break-words">{{ quote.brief_details }}</dd>
+          </div>
 
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">RENEWAL EXPIRY DATE</dt>
@@ -673,7 +673,7 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
 
           <x-form @submit="updateProfileDetails" :auto-focus="false">
             <div class="text-sm">
-              <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
+          <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">FIRST NAME</dt>
                   <dd>{{ quote.first_name }}</dd>
@@ -968,6 +968,14 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
                 class="w-full"
                 :error="leadStatusForm.errors.lostReason"
               />
+          <x-field label="Transaction Type">
+            <x-input
+              type="text"
+              :value="quote.transaction_type_text"
+              class="w-full"
+              :disabled="true"
+            />
+          </x-field>
             </div>
           </div>
           <div class="flex justify-end">
@@ -999,7 +1007,8 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
       v-if="!isNewPaymentStructure"
       :quoteId="quote.id"
       :paymentCode = "quote.code"
-      :quoteType="page.props.quoteType"      
+      :quoteType="page.props.quoteType"
+      :payments="quote.payments"      
     />    
     <PaymentTableNew 
 			v-if="isNewPaymentStructure"

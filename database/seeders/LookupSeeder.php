@@ -77,6 +77,15 @@ class LookupSeeder extends Seeder
             ]);
         }
 
+        if (! DB::table('lookups')->where('key', LookupsEnum::TRANSACTION_TYPES)->first()) {
+            DB::table('lookups')->insert([
+                ['key' => LookupsEnum::TRANSACTION_TYPES, 'code' => LookupsEnum::NEW_BUSINESS, 'text' => 'New Business', 'created_at' => now(), 'updated_at' => now()],
+                ['key' => LookupsEnum::TRANSACTION_TYPES, 'code' => LookupsEnum::EXT_CUSTOMER_RENWAL, 'text' => "Existing Customer's Renewal", 'created_at' => now(), 'updated_at' => now()],
+                ['key' => LookupsEnum::TRANSACTION_TYPES, 'code' => LookupsEnum::EXT_CUSTOMER_NEW_BUSINESS, 'text' => "Existing Customer's New Business", 'created_at' => now(), 'updated_at' => now()],
+                ['key' => LookupsEnum::TRANSACTION_TYPES, 'code' => LookupsEnum::ENDORSEMENT, 'text' => 'Endorsement', 'created_at' => now(), 'updated_at' => now()],
+
+            ]);
+        }
         if (! DB::table('lookups')->where('key', LookupsEnum::COMPANY_TYPE)->first()) {
             DB::table('lookups')->insert([
                 ['key' => LookupsEnum::COMPANY_TYPE, 'code' => 'Consultancy', 'text' => 'Consultancy'],

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\PermissionsEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\TeamTypeEnum;
 use App\Models\Team;
@@ -9,6 +10,11 @@ use Illuminate\Http\Request;
 
 class AllocationThresholdController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware(['permission:'.PermissionsEnum::TeamThresholdView], ['only' => ['index', 'updateAllocation']]);
+    }
+
     /**
      * Display a listing of the resource   .
      *
@@ -39,5 +45,4 @@ class AllocationThresholdController extends Controller
 
         return true;
     }
-
 }

@@ -2044,8 +2044,8 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
             Delete
           </x-button>
         </div>
-      </template> </x-modal
-    >
+      </template>
+    </x-modal>
 
     <customerAdditionalContacts
       quoteType="Travel"
@@ -2137,6 +2137,14 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
                   :error="leadStatusForm.errors.lostReason"
                 />
               </x-field>
+          <x-field label="Transaction Type">
+            <x-input
+              type="text"
+              :value="quote.transaction_type_text"
+              class="w-full"
+              :disabled="true"
+            />
+          </x-field>
             </div>
           </div>
           <div class="flex justify-end">
@@ -2173,7 +2181,7 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
             <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">PRICE</dt>
-                <dd>{{ ecomDetails.premium }}</dd>
+            <dd>{{ selectedProviderPlan.premium }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">PAID AT</dt>
@@ -2185,8 +2193,12 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">PROVIDER NAME</dt>
-                <dd>{{ ecomDetails.planName }}</dd>
-              </div>
+            <dd>{{ selectedProviderPlan.providerName ?? '' }}</dd>
+          </div>
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">PLAN NAME</dt>
+            <dd>{{ selectedProviderPlan.planName ?? '' }}</dd>
+          </div>
             </dl>
           </div>
         </template>
@@ -2571,16 +2583,15 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
                     View
                   </x-button>
 
-                  <!-- v-if="hasRole(rolesEnum.TravelAdvisor)" hide for now -->
-                  <span v-if="true == false">
-                    <SelectPlan
-                      class="ml-1"
-                      v-if="prefillPlanId != item.id"
-                      @update:updatePlanId="handleChildUpdate"
-                      :plan="item"
-                      :quoteType="modelType"
-                      :uuid="quote.uuid"
-                    />
+              <span v-if="hasRole(rolesEnum.TravelAdvisor) && aboveAgeMembers == 0">
+                <SelectPlan
+                  class="ml-1"
+                  v-if="selectedProviderPlan.id != item.id"
+                  @update:selectedPlanChanged="handlePlanSelected"
+                  :plan="item"
+                  :quoteType="modelType"
+                  :uuid="quote.uuid"
+                />
 
                     <x-button
                       class="ml-1"
@@ -2666,7 +2677,8 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
       v-if="!isNewPaymentStructure"
       :quoteId="quote.id"
       :paymentCode = "quote.code"
-      quoteType="Travel"      
+      quoteType="Travel"
+      :payments="payments"    
     />
     <PaymentTableNew
 			v-if="isNewPaymentStructure"
