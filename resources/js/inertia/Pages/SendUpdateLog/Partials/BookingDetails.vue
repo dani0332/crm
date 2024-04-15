@@ -623,6 +623,15 @@ const submitToCustomer = () => {
       isNotConfirmed.value = false;
     });
 };
+
+const onCancel = () => {
+  state.isEdit = false;
+  bookingDetailsForm.invoice_date = props.bookingDetails?.invoice_date || null;
+  bookingDetailsForm.insurer_tax_invoice_number = props.bookingDetails?.insurer_tax_invoice_number || '';
+  bookingDetailsForm.insurer_commission_invoice_number = props.bookingDetails?.insurer_commission_invoice_number || '';
+  bookingDetailsForm.price_vat_applicable = props.bookingDetails?.price_vat_applicable || '';
+  bookingDetailsForm.commission_vat_applicable = props.bookingDetails?.commission_vat_applicable || '';
+}
 </script>
 
 <template>
@@ -1457,7 +1466,7 @@ const submitToCustomer = () => {
               <x-button
                 size="sm"
                 color="orange"
-                @click="state.isEdit = false"
+                @click="onCancel"
                 :loading="bookingDetailsForm.processing"
                 :disabled="bookingDetailsForm.processing"
               >
