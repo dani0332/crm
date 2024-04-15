@@ -533,6 +533,10 @@ class AdvisorConversionReportService extends BaseService
 
     public function getAdvisorsAssignedLeads($filters)
     {
+        $lob = $filters['lob'] ?? quoteTypeCode::Car;
+        $lob = $lob === quoteTypeCode::GroupMedical ? quoteTypeCode::Business : $lob;
+        $lobId = QuoteTypeRepository::where('code', $lob)->first();
+
         $query = PersonalQuote::query()
             ->select(
                 DB::raw("CONCAT(personal_quotes.first_name, ' ', personal_quotes.last_name) as fullName"),
@@ -545,6 +549,7 @@ class AdvisorConversionReportService extends BaseService
             ->join('quote_status', 'quote_status.id', 'personal_quotes.quote_status_id')
             ->whereNull('personal_quotes.renewal_import_code')
             ->where('personal_quotes.source', '!=', LeadSourceEnum::RENEWAL_UPLOAD)
+            ->where('personal_quotes.quote_type_id', $lobId->id)
             ->orderBy('personal_quote_details.advisor_assigned_date', 'desc');
 
         $query = $this->applyFilters($query, $filters);
