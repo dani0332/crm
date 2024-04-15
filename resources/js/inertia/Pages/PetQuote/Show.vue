@@ -9,6 +9,8 @@ import LeadHistory from '../PersonalQuote/Partials/LeadHistory.vue';
 import MemberDetails from '../../Components/MemberDetails.vue';
 import PlanDetails from '../../Components/PlanDetails.vue';
 import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue';
+import PaymentTableNew from '../../Components/PaymentTableNew.vue';
+import MigratePayment from '../../Components/MigratePayment.vue';
 
 defineProps({
   quote: Object,
@@ -36,6 +38,10 @@ defineProps({
   UBORelations: Array,
   UBOsDetails: Array,
   canAddBatchNumber: Boolean,
+  vatPercentage: Number,
+  paymentStatusEnum: Object,
+  paymentTooltipEnum: Object,
+  isNewPaymentStructure: Boolean,
 });
 
 const page = usePage();
@@ -47,6 +53,7 @@ const rolesEnum = page.props.rolesEnum;
 const historyLoading = ref(false);
 
 const { isRequired } = useRules();
+const hasRole = role => useHasRole(role);
 const notification = useNotifications('toast');
 
 const modals = reactive({
@@ -322,7 +329,7 @@ const linkEntity = () => {
 
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div class="text-sm">
-        <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
+        <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
           <div class="grid sm:grid-cols-2">
             <div
               class="grid sm:grid-cols-2"
@@ -375,7 +382,7 @@ const linkEntity = () => {
       </div>
 
       <div class="text-sm">
-        <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
+        <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">PRICE</dt>
             <dd>{{ quote?.pet_quote?.premium }}</dd>
@@ -440,10 +447,6 @@ const linkEntity = () => {
             <dd>{{ quote?.pet_quote?.possession_type?.text }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">TRANSAPP CODE</dt>
-            <dd>{{ quote.quote_detail?.transapp_code }}</dd>
-          </div>
-          <div class="grid sm:grid-cols-2">
             <dt class="font-medium">LOST REASON</dt>
             <dd>{{ quote.quote_detail?.lost_reason?.text }}</dd>
           </div>
@@ -474,7 +477,9 @@ const linkEntity = () => {
           }}
           Profile
         </h3>
-        <x-tag color="success" v-if="quote.kyc_decision === 'Complete'"> KYC - Complete </x-tag>
+        <x-tag color="success" v-if="quote.kyc_decision === 'Complete'">
+          KYC - Complete
+        </x-tag>
         <x-tag color="amber" v-else> KYC - Pending </x-tag>
       </div>
       <x-divider class="mb-4 mt-1" />
@@ -484,7 +489,7 @@ const linkEntity = () => {
             v-if="
               quote.customer_type === page.props.customerTypeEnum.Individual
             "
-            class="grid md:grid-cols-2 gap-x-6 gap-y-4"
+            class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words"
           >
             <div class="grid sm:grid-cols-2">
               <dt class="font-medium">FIRST NAME</dt>
@@ -524,7 +529,7 @@ const linkEntity = () => {
             </div>
             <div class="grid sm:grid-cols-2">
               <dt class="font-medium">EMAIL</dt>
-              <dd>{{ quote.email }}</dd>
+              <dd class="break-words">{{ quote.email }}</dd>
             </div>
             <div class="grid sm:grid-cols-2">
               <dt class="font-medium">NATIONALITY</dt>
@@ -565,7 +570,7 @@ const linkEntity = () => {
           </dl>
           <dl
             v-if="quote.customer_type === page.props.customerTypeEnum.Entity"
-            class="grid md:grid-cols-2 gap-x-6 gap-y-4"
+            class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words"
           >
             <div class="grid sm:grid-cols-2">
               <dt class="font-medium">FIRST NAME</dt>
@@ -581,11 +586,13 @@ const linkEntity = () => {
             </div>
             <div class="grid sm:grid-cols-2">
               <dt class="font-medium">EMAIL</dt>
-              <dd>{{ quote.email }}</dd>
+              <dd class="break-words">{{ quote.email }}</dd>
             </div>
             <div class="grid sm:grid-cols-2">
               <dt class="font-medium">COMPANY NAME</dt>
-              <dd>{{ customerProfileForm.company_name }}</dd>
+              <dd class="break-words">
+                {{ customerProfileForm.company_name }}
+              </dd>
             </div>
             <div class="grid sm:grid-cols-2">
               <dt class="font-medium">TRADE LICENSE NO</dt>
@@ -785,17 +792,7 @@ const linkEntity = () => {
       :activities="activities"
       :advisors="advisors"
       :quote-type="quoteType"
-    />
-
-    <QuotePayments
-      :can="can"
-      :payments="quote.payments"
-      :quote-type="quoteType"
-      :payment-methods="paymentMethods"
-      :insurance-providers="insuranceProviders"
-      :is-beta-user="isBetaUser"
-      :personal-plans="personalPlans"
-    />
+    />  
 
     <QuoteStatus
       :quote="quote"
@@ -803,6 +800,41 @@ const linkEntity = () => {
       :quote-statuses="quoteStatuses"
       :lost-reasons="lostReasons"
       :quoteStatusEnum="quoteStatusEnum"
+    />
+    <PlanDetails
+      :insuranceProviders="insuranceProviders"
+      :quote="quote"
+      :quoteType="quoteType"
+      :vatPrice="vatPercentage"
+    />
+
+    <MigratePayment
+      v-if="!isNewPaymentStructure"
+      :quoteId="quote.id"
+      :paymentCode = "quote.code"
+      :quoteType="quoteType"
+      :payments="quote.payments"   
+    />    
+    <PaymentTableNew 
+			v-if="isNewPaymentStructure"
+			:quoteType="quoteType"
+			:payments="quote.payments"
+			:paymentDocument="documentTypes.filter(item => item.code === 'PPD' || item.code === 'PPDR' || item.code === 'PDPDR')"
+			:quoteRequest="quote"
+			:paymentStatusEnum="paymentStatusEnum"
+			:paymentTooltipEnum="paymentTooltipEnum"
+			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name, tooltip: pm.tool_tip } })"
+			:storageUrl="storageUrl"
+		/>
+    <QuotePayments
+      v-else
+      :can="can"
+      :payments="quote.payments"
+      :quote-type="quoteType"
+      :payment-methods="paymentMethods"
+      :insurance-providers="insuranceProviders"
+      :is-beta-user="isBetaUser"
+      :personal-plans="personalPlans"
     />
 
     <QuoteDocuments
@@ -814,11 +846,7 @@ const linkEntity = () => {
 
     <QuotePolicy :quote="quote" :can="can" :quoteStatusEnum="quoteStatusEnum" />
 
-    <PlanDetails
-      :insuranceProviders="insuranceProviders"
-      :quote="quote"
-      :quoteType="quoteType"
-    />
+    
 
     <EmbeddedProducts
       :data="embeddedProducts"
@@ -830,6 +858,6 @@ const linkEntity = () => {
 
     <LeadHistory :quote="quote" />
 
-    <AuditLogs :quote-type="quoteType" :id="$page.props.quote.id" />
+    <AuditLogs :quote-type="quoteType" :id="$page.props.quote.id" :quoteCode="$page.props.quote.code" />
   </div>
 </template>

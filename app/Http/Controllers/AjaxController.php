@@ -177,6 +177,7 @@ class AjaxController extends Controller
 
             return response()->json(['success' => true, 'payment_link' => $paymentLinkURL]);
         }
+
     }
 
     public function commercialCarModelBasedOnCarMakeId(Request $request)
@@ -250,11 +251,12 @@ class AjaxController extends Controller
                         'pep' => $data['pep'] ?? null,
                         'financial_sanctions' => $data['financial_sanctions'] ?? null,
                         'dual_nationality' => $data['dual_nationality'] ?? null,
-                    ]);
+                    ]
+                );
 
                 $quote->first_name = $data['first_name'];
                 $quote->last_name = $data['last_name'];
-                $quote->dob = $data['dob'];
+                $quote->dob = date('Y-m-d', strtotime($data['dob']));
                 $quote->email = $data['email'];
                 $quote->mobile_no = $data['mobile_number'];
                 $quote->nationality_id = $data['nationality_id'];

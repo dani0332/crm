@@ -3,10 +3,14 @@
 namespace App\Http\Controllers\V2;
 
 use App\Enums\CustomerTypeEnum;
+use App\Enums\GenericRequestEnum;
 use App\Enums\QuoteTypes;
 use App\Exports\AmtQuoteExport;
 use App\Exports\BusinessQuoteExport;
 use App\Exports\CarQuoteExport;
+use App\Exports\CarQuoteExportWithEmailMobile;
+use App\Exports\CarQuoteExportWithMakeModelTrims;
+use App\Exports\CarQuoteExportWithPlans;
 use App\Exports\HealthQuotesExport;
 use App\Exports\HomeQuoteExport;
 use App\Exports\LifeQuotesExport;
@@ -15,17 +19,26 @@ use App\Exports\TravelQuoteExport;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\CustomerProfileRequest;
 use App\Http\Requests\DuplicateLobRequest;
+use App\Http\Requests\GeneratePaymentLinkRequest;
 use App\Http\Requests\LeadAssignRequest;
+use App\Http\Requests\MigratePaymentsRequest;
 use App\Http\Requests\PlanDetailsRequest;
+use App\Http\Requests\SplitPaymentApproveRequest;
+use App\Http\Requests\SplitPaymentUpdateRequest;
+use App\Http\Requests\StorePaymentRequest;
 use App\Http\Requests\UpdateLastYearPolicyRequest;
+use App\Http\Requests\UpdatePaymentRequest;
+use App\Http\Requests\UpdateSelectedPlanRequest;
+use App\Http\Requests\UpdateTotalPriceRequest;
 use App\Models\Customer;
 use App\Models\Entity;
 use App\Models\QuoteRequestEntityMapping;
+use App\Repositories\PaymentRepository;
 use App\Services\CentralService;
+use App\Services\SplitPaymentService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
-use Maatwebsite\Excel\Facades\Excel;
 
 class CentralController extends Controller
 {
@@ -41,29 +54,50 @@ class CentralController extends Controller
         return back()->with('message', 'Quote is created successfully.');
     }
 
-    public function exportLeads(Request $request, $quoteType)
+    public function exportLeads(Request $request, $quoteType, $exportTye = null)
     {
+        $diffInDays = 120;
+
         if (! $quoteType) {
             return abort(404);
         }
 
-        if (request()->has('created_at')) {
-            request()->merge(['created_at_start' => request()->get('created_at')]);
-            request()->query->remove('created_at');
-        }
+        if ($exportTye != GenericRequestEnum::EXPORT_MAKES_MODELS) {
+            if ($exportTye == GenericRequestEnum::EXPORT_PLAN_DETAIL) {
+                $error_fields = 'paid at';
 
-        $request->validate([
-            'created_at_start' => 'required',
-            'created_at_end' => 'required',
-        ]);
+                $request->validate([
+                    'paid_at_start' => 'required',
+                    'paid_at_end' => 'required',
+                ]);
+                $created_at_start = Carbon::parse($request->paid_at_start)->format('Y-m-d');
+                $created_at_end = Carbon::parse($request->paid_at_end)->format('Y-m-d');
+            } else {
+                $error_fields = 'created date';
 
-        $created_at_start = Carbon::parse($request->created_at_start)->format('Y-m-d');
-        $created_at_end = Carbon::parse($request->created_at_end)->format('Y-m-d');
+                if (request()->has('created_at')) {
+                    request()->merge(['created_at_start' => request()->get('created_at')]);
+                    request()->query->remove('created_at');
+                }
 
-        $diff = Carbon::parse($created_at_start)->diffInDays(Carbon::parse($created_at_end));
+                $request->validate([
+                    'created_at_start' => 'required',
+                    'created_at_end' => 'required',
+                ]);
 
-        if ($diff > 120) {
-            return back()->with('error', 'Maximum of 120 days (created date) are allowed to be exported.');
+                $created_at_start = Carbon::parse($request->created_at_start)->format('Y-m-d');
+                $created_at_end = Carbon::parse($request->created_at_end)->format('Y-m-d');
+            }
+
+            if (ucfirst($quoteType) == QuoteTypes::CAR->value) {
+                $diffInDays = 31;
+            }
+
+            $diff = Carbon::parse($created_at_start)->diffInDays(Carbon::parse($created_at_end));
+
+            if ($diff > $diffInDays) {
+                return back()->with('error', 'Maximum of '.$diffInDays.' days ('.$error_fields.') are allowed to be exported.');
+            }
         }
 
         // For Personal Quotes
@@ -74,30 +108,40 @@ class CentralController extends Controller
             QuoteTypes::CYCLE->value,
             QuoteTypes::JETSKI->value,
         ])) {
-            return Excel::download(new PersonalQuotesExport, $quoteType.'_leads.xlsx');
+            return app(PersonalQuotesExport::class)->download($quoteType.'_leads');
+        }
+
+        if (QuoteTypes::CAR->value == ucfirst($quoteType)) {
+            if ($exportTye == GenericRequestEnum::EXPORT_PLAN_DETAIL) {
+                return app(CarQuoteExportWithPlans::class)->download(ucfirst(GenericRequestEnum::EXPORT_PLAN_DETAIL));
+            } elseif ($exportTye == GenericRequestEnum::EXPORT_LEADS_DETAIL_WITH_EMAIL_MOBILE) {
+                return app(CarQuoteExportWithEmailMobile::class)->download(ucfirst(GenericRequestEnum::EXPORT_LEADS_DETAIL_WITH_EMAIL_MOBILE));
+            } elseif ($exportTye == GenericRequestEnum::EXPORT_MAKES_MODELS) {
+                return app(CarQuoteExportWithMakeModelTrims::class)->download(ucfirst(GenericRequestEnum::EXPORT_MAKES_MODELS));
+            }
         }
 
         switch (ucfirst($quoteType)) {
             case QuoteTypes::LIFE->value:
-                return Excel::download(new LifeQuotesExport, 'life_leads.xlsx');
+                return app(LifeQuotesExport::class)->download('life_leads');
 
             case QuoteTypes::HOME->value:
-                return Excel::download(new HomeQuoteExport, 'home_leads.xlsx');
+                return app(HomeQuoteExport::class)->download('home_leads');
 
             case QuoteTypes::AMT->value:
-                return Excel::download(new AmtQuoteExport, 'amt_leads.xlsx');
+                return app(AmtQuoteExport::class)->download('amt_leads');
 
             case QuoteTypes::BUSINESS->value:
-                return Excel::download(new BusinessQuoteExport, 'business_leads.xlsx');
+                return app(BusinessQuoteExport::class)->download('business_leads');
 
             case QuoteTypes::TRAVEL->value:
-                return Excel::download(new TravelQuoteExport, 'travel_leads.xlsx');
+                return app(TravelQuoteExport::class)->download('travel_leads');
 
             case QuoteTypes::CAR->value:
-                return Excel::download(new CarQuoteExport, 'Car-List.xlsx');
+                return app(CarQuoteExport::class)->download('Car-List');
 
             case QuoteTypes::HEALTH->value:
-                return Excel::download(new HealthQuotesExport, 'Health-List.xlsx');
+                return app(HealthQuotesExport::class)->download('Health-List');
 
             default:
                 return false;
@@ -158,25 +202,78 @@ class CentralController extends Controller
         return (new CentralService())->loadAvailablePlans($type, $id);
     }
 
+    /**
+     * @return \Illuminate\Http\RedirectResponse
+     */
     public function savePlanDetails($quoteType, $code, PlanDetailsRequest $request)
     {
-        $repository = getRepositoryObject($quoteType);
+        $response = (new CentralService())->savePlanDetails($quoteType, $code, $request->safe());
 
-        $quote = $repository::where('code', $code)->firstOrFail();
-        $quote->update($request->validated());
-
-        return redirect()->back()->with('success', 'updated successfully');
+        return redirect()->back();
     }
 
-    public function updateSelectedPlan($quoteType, $uuid, $planId)
+    public function updateSelectedPlan(UpdateSelectedPlanRequest $request, $quoteType, $uuid)
     {
-        $repository = getRepositoryObject($quoteType);
+        $response = (new CentralService())->updateSelectedPlan($quoteType, $uuid, $request->safe());
 
-        $quote = $repository::where('uuid', $uuid)->firstOrFail();
+        return response()->json(['plan' => $response]);
+    }
 
-        $quote->update(['prefill_plan_id' => $planId]);
+    // Migrate payments from old system to new system
+    public function migratePayment(MigratePaymentsRequest $request)
+    {
+        $successMessage = PaymentRepository::migratePayments($request);
 
-        return redirect()->back()->with('success', 'updated successfully');
+        return $successMessage;
+    }
+    // Update split payment status
+    public function splitPaymentUpdate(SplitPaymentUpdateRequest $request)
+    {
+        $successMessage = PaymentRepository::updatePaymentStatus($request);
+
+        return back()->with('success', $successMessage);
+    }
+    // Approve split payments
+    public function splitPaymentsApprove(SplitPaymentApproveRequest $request)
+    {
+        $successMessage = PaymentRepository::updateSplitPaymentsApprove($request);
+
+        return back()->with('success', $successMessage);
+    }
+
+    // Update total price
+    public function updateTotalPrice(UpdateTotalPriceRequest $request)
+    {
+        $successMessage = PaymentRepository::updateTotalPrice($request);
+
+        return $successMessage;
+    }
+    // Store new payment
+    public function storeNewPayment(StorePaymentRequest $request)
+    {
+        $response = PaymentRepository::createNewPayment($request);
+        if ($response['status'] == 'success') {
+            return redirect()->back()->with('success', $response['message']);
+        } else {
+            return redirect()->back()->with('error', $response['message']);
+        }
+    }
+
+    // Update payment
+    public function updateNewPayment(UpdatePaymentRequest $request)
+    {
+        $response = PaymentRepository::updateNewPayment($request);
+        if ($response['status'] == 'success') {
+            return redirect()->back()->with('success', $response['message']);
+        } else {
+            return redirect()->back()->with('error', $response['message']);
+        }
+    }
+
+    // Generate payment link for split payment
+    public function generatePaymentLink(GeneratePaymentLinkRequest $request)
+    {
+        return (new SplitPaymentService())->generateSplitPaymentLink($request);
     }
 
 }

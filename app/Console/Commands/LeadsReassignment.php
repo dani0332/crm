@@ -52,9 +52,15 @@ class LeadsReassignment extends Command
         $end_time = Carbon::createFromFormat('H:i', $applicationStorageService->getValueByKey(ApplicationStorageEnums::REASSIGNMENT_END_TIME));
         $enableLeadReassignment = $applicationStorageService->getValueByKey(ApplicationStorageEnums::ENABLE_LEAD_REASSIGNMENT);
         $shouldProceed = now()->between($start_time, $end_time) && ((int) config('constants.CAR_LEAD_ALLOCATION_MASTER_SWITCH') == 1) && ($enableLeadReassignment == 1);
+        info('shouldProceed for lead reassignment started at : '.$currentIteration.' and value is : '.$shouldProceed);
+
         if ($shouldProceed && ! now()->isWeekend()) {
             dispatch(new ReAssignCarLeadsJob(app(CarAllocationService::class), 0));
+            info('Car lead reassignment job  for '.$currentIteration.' is dispatched');
+
             dispatch(new ReAssignHealthLeadsJob(app(HealthAllocationService::class), 0));
+            info('Health lead reassignment job  for '.$currentIteration.' is dispatched');
+
             info('------------------- Lead reassignment Command Finished for '.$currentIteration.' -------------------');
         } else {
             info('Lead reassignment time is off');

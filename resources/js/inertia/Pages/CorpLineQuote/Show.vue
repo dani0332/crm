@@ -1,5 +1,7 @@
 <script setup>
 import QuoteDocuments from '@/inertia/Pages/PersonalQuote/Partials/QuoteDocuments.vue';
+import PaymentTableNew from '../../Components/PaymentTableNew.vue'; 
+import MigratePayment from '../../Components/MigratePayment.vue';
 
 defineProps({
   quote: Object,
@@ -28,6 +30,10 @@ defineProps({
   canAddBatchNumber: Boolean,
   documentTypes: Object,
   storageUrl: String,
+  vatPercentage: Number,
+  paymentStatusEnum: Object,
+  paymentTooltipEnum: Object,
+  isNewPaymentStructure: Boolean,
 });
 
 const page = usePage();
@@ -35,6 +41,7 @@ const { isRequired } = useRules();
 const hasAnyRole = roles => useHasAnyRole(roles);
 const rolesEnum = page.props.rolesEnum;
 const notification = useNotifications('toast');
+const hasRole = role => useHasRole(role);
 
 const { copy, copied } = useClipboard();
 
@@ -614,7 +621,7 @@ const linkEntity = () => {
 
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div class="text-sm">
-        <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
+        <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
           <div
             class="grid sm:grid-cols-2"
             v-if="hasAnyRole([rolesEnum.Admin, rolesEnum.Engineering])"
@@ -644,10 +651,6 @@ const linkEntity = () => {
             <dd>{{ quote.next_followup_date }}</dd>
           </div>
 
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">TRANSAPP CODE</dt>
-            <dd>{{ quote.transapp_code }}</dd>
-          </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">SOURCE</dt>
             <dd>{{ quote.source }}</dd>
@@ -695,7 +698,7 @@ const linkEntity = () => {
 
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">BRIEF DETAILS</dt>
-            <dd>{{ quote.brief_details }}</dd>
+            <dd class="break-words">{{ quote.brief_details }}</dd>
           </div>
 
           <div class="grid sm:grid-cols-2">
@@ -738,13 +741,15 @@ const linkEntity = () => {
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div class="flex justify-between items-center mb-4">
         <h3 class="font-semibold text-primary-800 text-lg">Entity Profile</h3>
-        <x-tag color="success" v-if="quote.kyc_decision === 'Complete'"> KYC - Complete </x-tag>
+        <x-tag color="success" v-if="quote.kyc_decision === 'Complete'">
+          KYC - Complete
+        </x-tag>
         <x-tag color="amber" v-else> KYC - Pending </x-tag>
       </div>
       <x-divider class="mb-4 mt-1" />
       <x-form @submit="updateProfileDetails" :auto-focus="false">
         <div class="text-sm">
-          <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
+          <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
             <div class="grid sm:grid-cols-2">
               <dt class="font-medium">FIRST NAME</dt>
               <dd>{{ quote.first_name }}</dd>
@@ -759,11 +764,13 @@ const linkEntity = () => {
             </div>
             <div class="grid sm:grid-cols-2">
               <dt class="font-medium">EMAIL</dt>
-              <dd>{{ quote.email }}</dd>
+              <dd class="break-words">{{ quote.email }}</dd>
             </div>
             <div class="grid sm:grid-cols-2">
               <dt class="font-medium">COMPANY NAME</dt>
-              <dd>{{ customerProfileForm.company_name }}</dd>
+              <dd class="break-words">
+                {{ customerProfileForm.company_name }}
+              </dd>
             </div>
             <div class="grid sm:grid-cols-2">
               <dt class="font-medium">TRADE LICENSE NO</dt>
@@ -936,7 +943,7 @@ const linkEntity = () => {
     />
 
     <!-- Additional Contact -->
-    <customerAdditionalContacts
+    <CustomerAdditionalContacts
       quoteType="Business"
       :customerId="quote.customer_id"
       :quoteId="quote.id"
@@ -985,20 +992,6 @@ const linkEntity = () => {
           </div>
         </div>
         <div class="w-full md:w-2/3">
-          <x-input
-            v-if="
-              leadStatusForm.leadStatus ==
-              enums.quoteStatusEnum.TransactionApproved
-            "
-            :disabled="
-              quote.quote_status_id == enums.quoteStatusEnum.TransactionApproved
-            "
-            v-model="leadStatusForm.trans_code"
-            label="TRANSAPP CODE"
-            placeholder="TransApp Code is required"
-            class="w-full"
-            :error="leadStatusForm.errors.trans_code"
-          />
           <x-select
             v-if="leadStatusForm.leadStatus == enums.quoteStatusEnum.Lost"
             v-model="leadStatusForm.lostReason"
@@ -1013,6 +1006,15 @@ const linkEntity = () => {
             class="w-full"
             :error="leadStatusForm.errors.lostReason"
           />
+
+          <x-field label="Transaction Type">
+            <x-input
+              type="text"
+              :value="quote.transaction_type_text"
+              class="w-full"
+              :disabled="true"
+            />
+          </x-field>
         </div>
       </div>
       <div class="flex justify-end">
@@ -1030,6 +1032,43 @@ const linkEntity = () => {
         </x-button>
       </div>
     </div>
+
+    <PlanDetails
+      :insuranceProviders="insuranceProvidersAll"
+      :quote="quote"
+      :quoteType="page.props.quoteType"
+    />  
+
+    <!-- Payments -->
+    <MigratePayment
+      v-if="!isNewPaymentStructure"
+      :quoteId="quote.id"
+      :paymentCode = "quote.code"
+      :quoteType="page.props.quoteType"
+      :payments="payments"    
+    />    
+    <PaymentTableNew 
+			v-if="isNewPaymentStructure"
+			:quoteType="page.props.quoteType"
+			:payments="payments"
+			:paymentDocument="documentTypes && documentTypes.filter && documentTypes.filter(item => item.code === 'CLPD' || item.code === 'CLPDR' || item.code === 'CLDPDR')"
+			:quoteRequest="quoteRequest"
+			:paymentStatusEnum="paymentStatusEnum"
+			:paymentTooltipEnum="paymentTooltipEnum"
+			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name, tooltip: pm.tool_tip } })"
+			:storageUrl="storageUrl"
+      quoteSubType="Corpline"
+		/>
+    <PaymentTable
+      v-else
+      :payments="payments"
+      :can="permissions"
+      :isBetaUser="isBetaUser"
+      :quoteRequest="quoteRequest"
+      :paymentMethods="paymentMethods"
+      :insuranceProviders="insuranceProviders"
+      :quote="quote"
+    />
 
     <QuoteDocuments
       :document-types="documentTypes"
@@ -1171,24 +1210,8 @@ const linkEntity = () => {
           </div>
         </template>
       </x-modal>
-    </div>
-
-    <PlanDetails
-      :insuranceProviders="insuranceProvidersAll"
-      :quote="quote"
-      :quoteType="page.props.quoteType"
-    />
-
-    <!-- Payments -->
-    <PaymentTable
-      :payments="payments"
-      :can="permissions"
-      :isBetaUser="isBetaUser"
-      :quoteRequest="quoteRequest"
-      :paymentMethods="paymentMethods"
-      :insuranceProviders="insuranceProviders"
-      :quote="quote"
-    />
+    </div> 
+    
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div>
         <h3 class="font-semibold text-primary-800 text-lg">Lead History</h3>
@@ -1220,6 +1243,7 @@ const linkEntity = () => {
     <AuditLogs
       :type="'App\\Models\\BusinessQuote'"
       :id="$page.props.quote.id"
+      :quoteCode="$page.props.quote.code"
     />
   </div>
 </template>

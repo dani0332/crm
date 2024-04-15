@@ -187,7 +187,7 @@ use App\Enums\PermissionsEnum;
                 <ul class="nav side-menu">
                     <li><a><i class="fa fa-car" aria-hidden="true"></i> Car <span class="fa fa-chevron-down"></span></a>
                         <ul class="nav child_menu">
-                            <li><a href="{{ route('calculatevaluation') }}">Valuation</a></li>
+                            <li><a href="{{ route('valuation') }}">Valuation</a></li>
                             <li><a href="{{ url('valuation/vehicledepreciation') }}">Vehicle Depreciation</a></li>
                         </ul>
                     </li>
@@ -275,10 +275,12 @@ use App\Enums\PermissionsEnum;
                             @can(PermissionsEnum::RenewalsBatches)
                             <li><a href="{{ route('renewals-batches') }}">Batches</a></li>
                             @endcan
+                              <li><a href="{{ route('renewals-batches-search') }}">Search</a></li>
                         </ul>
                     </li>
                 </ul>
                 @endcanany
+                <!-- // Scheduled to delete 15th April 2024
                 @can(PermissionsEnum::ClaimList)
                 <ul class="nav side-menu">
                     <li><a><i class="fa fa-quote-left"></i> Claims <span class="fa fa-chevron-down"></span></a>
@@ -310,14 +312,12 @@ use App\Enums\PermissionsEnum;
                         </ul>
                     </li>
                 </ul>
-                @endcan
+                @endcan -->
                 @can(PermissionsEnum::AMLList)
                 <ul class="nav side-menu">
                     <li><a><i class="fa fa-desktop"></i> AML <span class="fa fa-chevron-down"></span></a>
                         <ul class="nav child_menu">
                             <li><a href="{{ url('kyc/aml') }}">All Quotes</a></li>
-                            <!-- <li><a href="{{ url('kyc/aml/download/history') }}">Downloaded Sanction Lists</a></li>
-                            <li><a href="{{ url('kyc/aml/upload/uae') }}">Upload UAE List</a></li> -->
                         </ul>
                     </li>
                 </ul>
@@ -340,7 +340,7 @@ use App\Enums\PermissionsEnum;
                 </ul>
                 @endif --}}
                 @can(PermissionsEnum::TeleMarketingList)
-                <!-- <ul class="nav side-menu">
+                <ul class="nav side-menu">
                     <li><a><i class="fa fa-quote-left"></i> Telemarketing <span class="fa fa-chevron-down"></span></a>
                         <ul class="nav child_menu">
                             <li><a href="{{ url('telemarketing/tmleads') }}">TM Leads</a></li>
@@ -362,7 +362,7 @@ use App\Enums\PermissionsEnum;
                             @endcan
                         </ul>
                     </li>
-                </ul> -->
+                </ul>
                 @endcan
                 @canany([PermissionsEnum::UsersList, PermissionsEnum::RoleList, PermissionsEnum::TeamsList,
                 PermissionsEnum::InsuranceProviderList, PermissionsEnum::ApplicationStorageList,PermissionsEnum::RULE_CONFIG_LIST, PermissionsEnum::QUAD_CONFIG_LIST , PermissionsEnum::TIER_CONFIG_LIST, PermissionsEnum::TeamThresholdView,

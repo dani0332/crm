@@ -29,6 +29,8 @@ class LifeQuote extends Model implements AuditableContract
         'renewal_batch' => FilterTypes::EXACT,
         'quote_status_id' => FilterTypes::IN,
         'advisor_id' => FilterTypes::IN,
+        'source' => FilterTypes::EXACT,
+        'renewal_expiry_date' => FilterTypes::DATE_BETWEEN,
     ];
 
     public function getDobAttribute($value)
@@ -101,6 +103,10 @@ class LifeQuote extends Model implements AuditableContract
     {
         return $this->belongsTo(Customer::class);
     }
+    public function transactionType()
+    {
+        return $this->belongsTo(Lookup::class, 'transaction_type_id', 'id');
+    }
 
     public function quoteRequestEntityMapping()
     {
@@ -111,5 +117,10 @@ class LifeQuote extends Model implements AuditableContract
     public function documents()
     {
         return $this->morphMany(QuoteDocument::class, 'quote_documentable');
+    }
+
+    public function insuranceProvider()
+    {
+        return $this->belongsTo(InsuranceProvider::class, 'insurance_provider_id', 'id');
     }
 }

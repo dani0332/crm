@@ -11,7 +11,9 @@ use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Enums\TravelQuoteEnum;
 use App\Facades\Ken;
+use App\Models\CustomerMembers;
 use App\Models\InsuranceProvider;
+use App\Models\Payment;
 use App\Models\TravelMemberDetail;
 use App\Models\TravelQuote;
 use App\Models\TravelQuotePlan;
@@ -72,9 +74,11 @@ class TravelQuoteService extends BaseService
             'ps.text AS payment_status_id_text',
             'tqr.plan_id',
             'tp.text AS plan_id_text',
+            'tpip.text AS travel_plan_provider_text',
             'tqr.region_cover_for_id',
             'r.TEXT AS region_cover_for_id_text',
             DB::raw('DATE_FORMAT(tqrd.next_followup_date, "%d-%m-%Y %H:%i:%s") as next_followup_date'),
+            'lu.text as transaction_type_text',
             'tqrd.transapp_code',
             'tqrd.insly_id',
             'ls.text as lost_reason',
@@ -104,6 +108,7 @@ class TravelQuoteService extends BaseService
             'tqr.primary_member_id',
             'tqr.risk_score',
             'tqr.kyc_decision',
+            //'tqr.prefill_plan_id',
             DB::raw('IF(EXISTS (
                 SELECT *
                 FROM quote_request_entity_mapping
@@ -126,6 +131,7 @@ class TravelQuoteService extends BaseService
             ->leftJoin('travel_cover_for as tcf', 'tcf.id', '=', 'tqr.travel_cover_for_id')
             ->leftJoin('travel_quote_request_detail as tqrd', 'tqr.id', '=', 'tqrd.travel_quote_request_id')
             ->leftJoin('lost_reasons as ls', 'ls.id', '=', 'tqrd.lost_reason_id')
+            ->leftJoin('lookups as lu', 'lu.id', '=', 'tqr.transaction_type_id')
             ->leftJoin('nationality as n', 'n.id', '=', 'tqr.nationality_id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'tqr.quote_status_id')
             ->leftJoin('users as u', 'u.id', '=', 'tqr.advisor_id')
@@ -134,6 +140,7 @@ class TravelQuoteService extends BaseService
             ->leftJoin('currently_located_in as cli', 'cli.id', '=', 'tqr.currently_located_in_id')
             ->leftJoin('nationality', 'nationality.id', '=', 'tqr.destination_id')
             ->leftJoin('travel_plan as tp', 'tp.id', '=', 'tqr.plan_id')
+            ->leftJoin('insurance_provider as tpip', 'tpip.id', '=', 'tp.provider_id')
             ->leftJoin('payment_status as ps', 'ps.id', '=', 'tqr.payment_status_id')
             ->leftJoin('customer as c', 'tqr.customer_id', 'c.id')
             ->leftJoin('quote_request_entity_mapping as qrem', function ($entityMappingJoin) {
@@ -496,7 +503,9 @@ class TravelQuoteService extends BaseService
 
     public function getEntityPlain($id)
     {
-        return TravelQuote::where('id', $id)->first();
+        return TravelQuote::where('id', $id)->with(['payments.paymentSplits' => function ($query) {
+            $query->orderBy('sr_no', 'asc');
+        }, 'payments.paymentSplits.paymentStatus', 'payments.paymentSplits.paymentMethod', 'payments.paymentSplits.documents', 'child', 'parent'])->first();
     }
 
     public function getSelectedLostReason($id)
@@ -782,6 +791,13 @@ class TravelQuoteService extends BaseService
         return TravelMemberDetail::where('travel_quote_request_id', $id)->with('nationality', 'relation')->get();
     }
 
+    public function getAboveAgeMembers($id)
+    {
+        return CustomerMembers::where('quote_id', $id)
+            ->where('quote_type', 'App\Models\TravelQuote')
+            ->whereDate('dob', '<=', now()->subYears(65))->count();
+    }
+
     public function getDuplicateEntityByCode($code)
     {
         return TravelQuote::where('parent_duplicate_quote_id', $code)->first();
@@ -857,6 +873,22 @@ class TravelQuoteService extends BaseService
 
         return $listQuotePlans;
     }
+
+    public function sortedPlansList($id): array
+    {
+        $result = [];
+        $plans = $this->listQuotePlans($id);
+        $collection = collect($plans);
+
+        $seniorPlans = $collection->where('isSeniorPlan', true);
+        $normalPlans = $collection->where('isSeniorPlan', false);
+
+        $result['normalPlans'] = array_values($normalPlans->toArray());
+        $result['seniorPlans'] = array_values($seniorPlans->toArray());
+
+        return $result;
+    }
+
     public function listTravelQuotePlans($id)
     {
         $travelQuotePlans = TravelQuotePlan::where('travel_quote_request_id', $id)->first();
@@ -866,14 +898,36 @@ class TravelQuoteService extends BaseService
 
     public function updateManualPlansBulk($request)
     {
-        // api not available for now
+        if ($request->planIds && isset($request->toggle) && isset($request->quote_uuid)) {
+            $isDisabled = $request->toggle;
+            $plansArray = [];
+            foreach ($request->planIds as $planId) {
+                $apiArray = [
+                    'planId' => (int) $planId,
+                    'isDisabled' => filter_var($isDisabled, FILTER_VALIDATE_BOOLEAN),
+                ];
+                array_push($plansArray, $apiArray);
+            }
+
+            $dataArray = [
+                'quoteUID' => $request->quote_uuid,
+                'plans' => $plansArray,
+            ];
+            $response = Ken::request('/save-manual-travel-quote-plan', 'post', $dataArray);
+
+            return $response;
+        }
 
     }
+
     public function exportPlansPdf($quoteType, $data, $quotePlans = null)
     {
+
         $planIds = $data['plan_ids'];
         $addons = (isset($data['addons'])) ? $data['addons'] : null;
 
+        $selectedPlanIds = isset($data['selectedPlanIds']) ? $data['selectedPlanIds'] : [];
+        $hasAdultAndSeniorMember = isset($data['hasAdultAndSeniorMember']) ? $data['hasAdultAndSeniorMember'] : false;
         $quotePlans = $this->getQuotePlans($data['quote_uuid']);
         if (! isset($quotePlans->quotes->plans)) {
             return ['error' => 'Quote plans not available'];
@@ -887,7 +941,7 @@ class TravelQuoteService extends BaseService
             $q->select('id', 'email', 'mobile_no', 'name', 'landline_no', 'profile_photo_path');
         }, 'customer']);
         $pdf = PDF::setOption(['isHtml5ParserEnabled' => true, 'dpi' => 150])
-            ->loadView('pdf.travel_quote_plans', compact('quotePlans', 'planIds', 'quote', 'addons', 'providers'));
+            ->loadView('pdf.travel_quote_plans', compact('quotePlans', 'planIds', 'quote', 'addons', 'providers', 'selectedPlanIds', 'hasAdultAndSeniorMember'));
 
         // generate pdf with file name e.g. InsuranceMarket.ae™ Motor Insurance Comparison for Rahul.pdf
         $pdfName = 'InsuranceMarket.ae™ Travel Insurance Comparison for '.$quote->first_name.' '.$quote->last_name.'.pdf';
@@ -901,4 +955,38 @@ class TravelQuoteService extends BaseService
         $travelQuote->quote_updated_at = Carbon::now();
         $travelQuote->save();
     }
+
+    public function createDuplicateLead($leadModal)
+    {
+        if (! $leadModal) {
+            return false; // Add validation to avoid failure if $leadModal is null
+        }
+        $newLeadCode = $leadModal->code.'-1';
+        $leadExists = TravelQuote::where('code', $newLeadCode)->exists();
+        if ($leadExists) {
+            // Lead with the code already exists
+            return false;
+        }
+        $duplicateLead = $leadModal->replicate();
+        $duplicateLead->parent_id = $leadModal->id;
+        $duplicateLead->uuid = $leadModal->uuid.'-1';
+        $duplicateLead->code = $newLeadCode;
+        $duplicateLead->source = TravelQuoteEnum::IMCRM_BOOKING;
+        $duplicateLead->save();
+
+        if ($duplicateLead) {
+            //update morph relation in payments table
+            $leadModal->payments()->where('code', $newLeadCode)->update(['paymentable_id' => $duplicateLead->id]);
+
+            //update morph relation in quote_documents table,which are associated with split payments
+            Payment::where('code', $newLeadCode)->with('paymentSplits')->get()->each(function ($payment) use ($duplicateLead) {
+                $payment->paymentSplits->each(function ($split) use ($duplicateLead) {
+                    $split->documents()->update(['quote_documentable_id' => $duplicateLead->id]);
+                });
+            });
+        }
+
+        return true;
+    }
+
 }

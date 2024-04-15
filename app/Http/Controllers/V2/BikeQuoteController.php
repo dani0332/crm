@@ -2,13 +2,17 @@
 
 namespace App\Http\Controllers\V2;
 
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\LookupsEnum;
+use App\Enums\PaymentStatusEnum;
+use App\Enums\PaymentTooltip;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\BikeQuoteRequest;
+use App\Models\ApplicationStorage;
 use App\Models\Emirate;
 use App\Models\Nationality;
 use App\Repositories\ActivityRepository;
@@ -24,6 +28,7 @@ use App\Repositories\PersonalPlanRepository;
 use App\Repositories\QuoteStatusRepository;
 use App\Repositories\UserRepository;
 use App\Services\AMLService;
+use App\Services\SplitPaymentService;
 use App\Traits\GenericQueriesAllLobs;
 
 class BikeQuoteController extends Controller
@@ -57,7 +62,7 @@ class BikeQuoteController extends Controller
     }
 
     /**
-     * @param $quoteTypeCode
+     * @param  $quoteTypeCode
      * @return \Illuminate\Http\RedirectResponse
      */
     public function store(BikeQuoteRequest $request)
@@ -122,6 +127,8 @@ class BikeQuoteController extends Controller
             })->values();
         }
 
+        $vatPercentage = ApplicationStorage::where('key_name', ApplicationStorageEnums::VAT_VALUE)->first()->value ?? 0;
+
         return inertia('BikeQuote/Show', [
             'quoteType' => QuoteTypes::BIKE,
             'quote' => $quote,
@@ -146,12 +153,16 @@ class BikeQuoteController extends Controller
             'emirates' => $emirates,
             'UBOsDetails' => $uboDetails,
             'UBORelations' => $uboRelations,
+            'vatPercentage' => $vatPercentage,
+            'paymentTooltipEnum' => PaymentTooltip::asArray(),
+            'paymentStatusEnum' => PaymentStatusEnum::asArray(),
+            'isNewPaymentStructure' => app(SplitPaymentService::class)->isNewPaymentStructure($quote->payments),
         ]);
     }
 
     /**
-     * @param $quoteTypeCode
-     * @param $quoteId
+     * @param  $quoteTypeCode
+     * @param  $quoteId
      * @return void
      */
     public function update($uuid, BikeQuoteRequest $request)

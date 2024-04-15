@@ -66,7 +66,6 @@ const tableHeader = [
   { text: 'CREATED DATE', value: 'created_at' },
   { text: 'LAST MODIFIED DATE', value: 'updated_at' },
   { text: 'NATIONALITY', value: 'nationality' },
-  { text: 'TRANSAPP CODE', value: 'transapp_code' },
   { text: 'SOURCE', value: 'source' },
   { text: 'LOST REASON', value: 'lost_reason' },
   { text: 'PRICE', value: 'premium' },
@@ -336,7 +335,7 @@ onMounted(() => {
           </x-tooltip>
         </div>
         <div v-else />
-        <div class="flex justify-self-end gap-3">
+        <div class="flex gap-3 justify-self-end">
           <x-button size="sm" color="#ff5e00" type="submit">Search</x-button>
           <x-button size="sm" color="primary" @click.prevent="resetFilters">
             Reset

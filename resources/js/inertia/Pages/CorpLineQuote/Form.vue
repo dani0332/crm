@@ -7,15 +7,22 @@ const props = defineProps({
 
 const isEdit = computed(() => (props.quote.uuid ? true : false));
 
+const maxValidation = maxValue => {
+  return value => {
+    const isValid = value <= maxValue;
+    return isValid || `Value must be less than or equal to ${maxValue}.`;
+  };
+};
+
 const quoteForm = useForm({
   modelType: '"Business"',
-  gender: '',
+  gender: props.quote.gender,
   first_name: props.quote.first_name,
   last_name: props.quote.last_name,
   email: props.quote.email,
   mobile_no: props.quote.mobile_no,
   premium: props.quote.premium,
-  company_name: props.quote.company_name,
+  company_name: props.quote.business_company_name,
   number_of_employees: props.quote.number_of_employees,
   business_type_of_insurance_id: props.quote.business_type_of_insurance_id,
   group_medical_type_id: props.selectedGmType,
@@ -102,6 +109,7 @@ function onSubmit(isValid) {
             :rules="[isRequired]"
             class="w-full"
             :error="quoteForm.errors.first_name"
+            maxLength="20"
           />
         </x-field>
 
@@ -112,6 +120,7 @@ function onSubmit(isValid) {
             :rules="[isRequired]"
             class="w-full"
             :error="quoteForm.errors.last_name"
+            maxLength="50"
           />
         </x-field>
 
@@ -151,7 +160,7 @@ function onSubmit(isValid) {
           <x-input
             v-model="quoteForm.number_of_employees"
             type="number"
-            :rules="[isRequired, isNumber]"
+            :rules="[isRequired, isNumber, maxValidation(2147483645)]"
             class="w-full"
             :error="quoteForm.errors.number_of_employees"
           />

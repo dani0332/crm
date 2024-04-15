@@ -23,7 +23,7 @@ class CycleQuoteRepository extends BaseRepository
     /**
      * create new personal quote
      *
-     * @param $quoteTypeCode
+     * @param  $quoteTypeCode
      * @return mixed
      */
     public function fetchCreate($data)
@@ -74,6 +74,19 @@ class CycleQuoteRepository extends BaseRepository
         return ($forExport) ? $query->get() : $query->simplePaginate();
     }
 
+    public function fetchExport()
+    {
+        return $this->byQuoteTypeCode(QuoteTypes::CYCLE)->with(['quoteStatus', 'currentlyInsuredWith', 'advisor'])
+            ->when(\auth()->user()->hasRole(RolesEnum::CycleAdvisor), function ($query) {
+                $query->where(function ($query) {
+                    $query->where('advisor_id', \auth()->user()->id);
+                });
+            })
+            ->filter()
+            ->withFakeLeadCriteria()
+            ->orderBy('created_at', 'desc');
+    }
+
     /**
      * @return mixed
      */
@@ -122,8 +135,18 @@ class CycleQuoteRepository extends BaseRepository
                 'nationality',
                 'quoteDetail.lostReason',
                 'quoteDetail.previousAdvisor',
+                'transactionType',
+                'insuranceProvider',
                 'payments' => function ($q) {
-                    $q->with(['paymentStatus', 'personalPlan', 'paymentMethod', 'paymentStatusLogs', 'insuranceProvider']);
+                    $q->with([
+                        'paymentSplits' => function ($query) {
+                            $query->orderBy('sr_no', 'asc');
+                        },
+                        'paymentStatus', 'personalPlan', 'paymentMethod', 'paymentStatusLogs', 'insuranceProvider',
+                        'paymentSplits.paymentStatus',
+                        'paymentSplits.paymentMethod',
+                        'paymentSplits.documents',
+                    ]);
                 },
                 'customer',
                 'createdBy',
@@ -149,6 +172,7 @@ class CycleQuoteRepository extends BaseRepository
         $data = ! empty($quote) ? $quote->toArray() : [];
         $quote->lost_reason = $data['quote_detail']['lost_reason']['text'] ?? null;
         $quote->previous_advisor_id_text = $data['quote_detail']['previous_advisor']['name'] ?? null;
+        $quote->transaction_type_text = $data['transaction_type']['text'] ?? null;
 
         return $quote;
     }

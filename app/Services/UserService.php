@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\Enums\RolesEnum;
+use App\Enums\TeamNameEnum;
 use App\Models\User;
 use DB;
 use Illuminate\Http\Request;
@@ -27,10 +29,10 @@ class UserService extends BaseService
         $user->landline_no = $request->landline_no;
         $user->password = bcrypt($request->password);
         $user->is_active = true;
-        if ($request->sub_team_id != '0') {
+        if ((! empty($request->additionalTeams) && $request->sub_team_id != '0')) {
             $user->sub_team_id = $request->sub_team_id;
         }
-        if (isset($request->additionalTeams)) {
+        if (! empty($request->additionalTeams) && isset($request->additionalTeams)) {
             if (count((array) $request->additionalTeams) > 0) {
                 $user->additional_team_ids = implode(',', $request->additionalTeams);
             } else {
@@ -66,11 +68,36 @@ class UserService extends BaseService
             }
         }
 
+        // also add permissions for user
+        if (isset($request->permissions)) {
+            DB::table('model_has_permissions')->where('model_id', $user->id)->delete();
+            foreach ($request->permissions as $permissionId) {
+                DB::table('model_has_permissions')->insert([
+                    'model_id' => $user->id,
+                    'permission_id' => $permissionId,
+                    'model_type' => 'App\Models\User',
+                ]);
+            }
+        }
+
         return $user;
     }
 
     public function getUserById($userId)
     {
         return User::where('id', $userId)->first();
+    }
+
+    public function isAllowedToShowLeadListReport()
+    {
+        if (auth()->user()->hasAnyRole([RolesEnum::Admin])) {
+            return true;
+        } elseif (auth()->user()->hasAnyRole([RolesEnum::CarAdvisor, RolesEnum::CarManager])) {
+            if (in_array(TeamNameEnum::ORGANIC, app(User::class)->getUserTeams(auth()->user()->id)->toArray())) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

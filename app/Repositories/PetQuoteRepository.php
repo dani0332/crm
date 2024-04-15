@@ -87,6 +87,7 @@ class PetQuoteRepository extends BaseRepository
 
     public function fetchGetData($forExport = false)
     {
+
         $query = $this->byQuoteTypeCode(QuoteTypes::PET)->with([
             'quoteStatus',
             'quoteDetail',
@@ -106,7 +107,6 @@ class PetQuoteRepository extends BaseRepository
             ->orderBy('created_at', 'desc');
 
         return ($forExport) ? $query->get() : $query->simplePaginate()->withQueryString();
-
     }
 
     public function fetchGetBy($column, $value)
@@ -123,12 +123,14 @@ class PetQuoteRepository extends BaseRepository
                 'nationality',
                 'quoteDetail.lostReason',
                 'quoteDetail.previousAdvisor',
+                'transactionType',
                 'payments' => function ($q) {
-                    $q->with(['paymentStatus', 'personalPlan', 'paymentMethod', 'paymentStatusLogs', 'insuranceProvider']);
+                    $q->with(['paymentStatus', 'personalPlan', 'paymentMethod', 'paymentStatusLogs', 'insuranceProvider', 'paymentSplits.paymentStatus', 'paymentSplits.paymentMethod', 'paymentSplits.documents']);
                 },
                 'createdBy',
                 'updatedBy',
                 'customer.additionalContactInfo',
+                'insuranceProvider',
                 'documents' => function ($q) {
                     $q->with('createdBy')->orderBy('created_at', 'desc');
                 },
@@ -151,9 +153,9 @@ class PetQuoteRepository extends BaseRepository
         $data = ! empty($quote) ? $quote->toArray() : [];
         $quote->lost_reason = $data['quote_detail']['lost_reason']['text'] ?? null;
         $quote->previous_advisor_id_text = $data['quote_detail']['previous_advisor']['name'] ?? null;
+        $quote->transaction_type_text = $data['transaction_type']['text'] ?? null;
 
         return $quote;
-
     }
 
     /**
@@ -176,6 +178,12 @@ class PetQuoteRepository extends BaseRepository
         $dataArr['quoteTypeId'] = intval(QuoteTypes::PET->id());
 
         return Capi::request('/api/v1-save-personal-quote', 'post', $dataArr);
+    }
+
+    public function fetchExport()
+    {
+        return $this->filter()->with(
+            ['advisor', 'nationality', 'insuranceProvider'])->orderBy('created_at', 'desc');
     }
 
 }

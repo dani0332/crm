@@ -24,14 +24,17 @@ use Sammyjo20\LaravelHaystack\Models\Haystack;
 
 class HealthAllocationService extends AllocationService
 {
-    public function fetchLead($quoteId)
+    public function fetchLead($quoteId, $overrideAdvisorId)
     {
-        $query = HealthQuote::where('uuid', $quoteId)
-            ->where('quote_status_id', QuoteStatusEnum::Qualified)
-            ->whereNotNull('health_quote_request.price_starting_from')
-            ->whereNull('health_quote_request.advisor_id');
+        $healthQuoteQuery = HealthQuote::where('uuid', $quoteId)
+            ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate, QuoteStatusEnum::Lost])
+            ->whereNotNull('health_quote_request.price_starting_from');
 
-        return $query->first();
+        if (! $overrideAdvisorId) {
+            $healthQuoteQuery->whereNull('health_quote_request.advisor_id');
+        }
+
+        return $healthQuoteQuery->first();
     }
 
     public function fetchReAssignmentLead($advisorId)
@@ -147,8 +150,10 @@ class HealthAllocationService extends AllocationService
             ->addJob(new GetQuotePlansJob($lead))
             ->then(function () use ($lead, $isReassignment, $previousUserId) {
                 if (in_array($lead->health_team_type, [HealthTeamType::EBP, HealthTeamType::RM_NB, HealthTeamType::RM_SPEED])) {
-                    CammyJob::dispatch($lead, 'intro')->delay(now()->addSeconds(15));
                     IntroEmailJob::dispatch(quoteTypeCode::Health, 'Capi', $lead->uuid, 'send-rm-intro-email', $previousUserId, $isReassignment)->delay(now()->addSeconds(15));
+                    if ($lead->quote_status_id == QuoteStatusEnum::FollowedUp) {
+                        CammyJob::dispatch($lead, 'intro')->delay(now()->addSeconds(15));
+                    }
                 }
             })->dispatch();
     }

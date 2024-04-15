@@ -76,8 +76,7 @@ const tableHeader = [
   { text: 'Ref-ID', value: 'code' },
   { text: 'FIRST NAME', value: 'first_name' },
   { text: 'LAST NAME', value: 'last_name' },
-  { text: 'Company Name', value: 'company_name' },
-  { text: 'TRANSAPP CODE', value: 'transapp_code' },
+  { text: 'Company Name', value: 'business_company_name' },
   { text: 'SOURCE', value: 'source' },
   { text: 'POLICY NUMBER', value: 'policy_number' },
   { text: 'LOST REASON', value: 'lost_reason' },
@@ -162,9 +161,9 @@ function onAssignLead(isValid) {
       .post(route('manualLeadAssign', { quoteType: 'business' }), {
         preserveScroll: true,
         preserveState: true,
-        // onSuccess: res => {
-        //   displayNotification();
-        // },
+        onSuccess: res => {
+          quotesSelected.value = [];
+        },
       });
   }
 }
@@ -352,7 +351,6 @@ onMounted(() => {
           class="w-full"
           placeholder="Search by Renewal Batch"
         />
-
       </div>
       <div class="flex justify-between gap-3 mb-4 mt-1">
         <div v-if="can(permissionsEnum.DATA_EXTRACTION)">

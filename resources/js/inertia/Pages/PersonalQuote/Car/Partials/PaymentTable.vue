@@ -25,8 +25,9 @@ const insuranceProviderOptions = computed(() => {
         label: provider.text,
     }));
 });
-
+const enableManageOptions = ref(false);
 const createPaymentModal = ref(false);
+const isLoading = ref(false);
 
 const rules = {
   isRequired: v => !!v || 'This field is required',
@@ -141,6 +142,7 @@ const addPayment = isValid => {
   if (props.quoteRequest.plan && props.quoteRequest.plan.id) {
       plan_id = props.quoteRequest.plan.id
   }
+    isLoading.value = true;
   let data = {
     captured_amount: paymentMethodsForm.amount,
     code: paymentMethodsForm.payment_method,
@@ -169,12 +171,14 @@ const addPayment = isValid => {
             position: 'top',
           });
           createPaymentModal.value = false;
+          isLoading.value = false;
         },
         onError: () => {
           notification.error({
             title: 'Payment Update Failed',
             position: 'top',
           });
+          isLoading.value = false;
         },
       });
     return;
@@ -192,12 +196,14 @@ const addPayment = isValid => {
           position: 'top',
         });
         createPaymentModal.value = false;
+        isLoading.value = false;
       },
       onError: () => {
         notification.error({
           title: 'Payment Add Failed',
           position: 'top',
         });
+        isLoading.value = false;
       },
     });
 };
@@ -260,8 +266,8 @@ const providerId = computed(() => {
       <h3 class="font-semibold text-primary-800 text-lg">Payments</h3>
       <x-button
         v-if="(can(permissionEnum.PaymentsCreate) &&
-          !can(permissionEnum.ApprovePayments) &&
-          !hasRole(rolesEnum.PA) && quoteRequest.plan) || isCommercialVehicles"
+        !can(permissionEnum.ApprovePayments) &&
+        !hasRole(rolesEnum.PA) && quoteRequest.plan && enableManageOptions) || (isCommercialVehicles && enableManageOptions)"
         size="sm"
         color="orange"
         @click="addPaymentModal"
@@ -289,7 +295,7 @@ const providerId = computed(() => {
 
       <template #item-actions="item">
             <div class="flex gap-2">
-                <template v-if="!can(permissionEnum.ApprovePayments)">
+                <template v-if="!can(permissionEnum.ApprovePayments) && enableManageOptions">
                     <x-button v-if="(item.payment_methods_code == 'CC' || item.payment_methods_code == 'IN_PL') && item.payment_status_id != paymentStatusEnum.PAID && item.payment_status_id != paymentStatusEnum.CAPTURED && item.payment_status_id != paymentStatusEnum.AUTHORISED && !hasRole(rolesEnum.PA)"
                         size="xs"
                         color="primary"
@@ -302,7 +308,7 @@ const providerId = computed(() => {
                         Edit
                     </x-button>
                 </template>
-                <template v-if="can(permissionEnum.ApprovePayments)">
+                <template v-if="can(permissionEnum.ApprovePayments) && enableManageOptions">
                     <x-button v-if="item.payment_methods_code != 'CC' && ![paymentStatusEnum.PAID, paymentStatusEnum.CAPTURED].includes(item.payment_status_id) && !hasRole(rolesEnum.PA)"
                         size="xs"
                         color="primary"
@@ -393,7 +399,7 @@ const providerId = computed(() => {
               paymentMethodsForm.status == 'edit'
             "
           >
-            <x-button color="primary" type="submit">
+            <x-button color="primary" type="submit" :loading="isLoading">
               {{ paymentMethodsForm.status == 'create' ? 'Create' : 'Update' }}
               Payment
             </x-button>

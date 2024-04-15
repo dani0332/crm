@@ -20,6 +20,7 @@ const props = defineProps({
   customerDetails: Object,
   amlDecisionStatusEnum: Object,
   lookups: Object,
+    cardHolderName:Object,
 });
 
 const page = usePage();
@@ -607,6 +608,7 @@ const decisionStatus = {
       :lookups="lookups"
       :quote-aml-status="page.props.quoteAmlStatus"
       :customer-details="props.customerDetails"
+      :cardHolderName="cardHolderName"
     />
 
     <div class="p-4 rounded shadow mb-6 bg-white">
@@ -620,9 +622,9 @@ const decisionStatus = {
         :loading="loader.table"
         :items="kycLogs || []"
         border-cell
-        hide-rows-per-page
-        hide-footer
+        :rows-per-page="40"
         fixed-checkbox
+        :hide-footer="kycLogs.length < 40"
       >
         <template #item-insurance_type="{ quotetype }">
           {{ quoteType.text }}

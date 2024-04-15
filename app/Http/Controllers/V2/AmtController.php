@@ -2,8 +2,11 @@
 
 namespace App\Http\Controllers\V2;
 
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\LookupsEnum;
+use App\Enums\PaymentStatusEnum;
+use App\Enums\PaymentTooltip;
 use App\Enums\quoteBusinessTypeCode;
 use App\Enums\quoteStatusCode;
 use App\Enums\QuoteStatusEnum;
@@ -12,6 +15,7 @@ use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Http\Controllers\Controller;
+use App\Models\ApplicationStorage;
 use App\Models\BusinessInsuranceType;
 use App\Models\BusinessQuote;
 use App\Models\Emirate;
@@ -31,6 +35,7 @@ use App\Services\CRUDService;
 use App\Services\CustomerService;
 use App\Services\DropdownSourceService;
 use App\Services\LookupService;
+use App\Services\SplitPaymentService;
 use App\Traits\RolePermissionConditions;
 use Auth;
 use Carbon\Carbon;
@@ -191,13 +196,13 @@ class AmtController extends Controller
     public function store(Request $request)
     {
         $this->validate($request, [
-            'first_name' => 'required|max:150',
-            'last_name' => 'required|max:150',
+            'first_name' => 'required|between:1,20',
+            'last_name' => 'required|between:1,50',
             'email' => 'required|email:rfc,dns|max:150',
             'mobile_no' => 'required|regex:/(0)[0-9]/|not_regex:/[a-z]/|min:7|max:20',
             'business_type_of_insurance_id' => 'required',
             'company_name' => 'required|max:150',
-            'number_of_employees' => 'required',
+            'number_of_employees' => 'required|numeric|max:2147483645',
             'brief_details' => 'required',
         ]);
         $record = app(BusinessQuoteService::class)->saveBusinessQuote($request);
@@ -213,7 +218,7 @@ class AmtController extends Controller
     }
 
     /**
-     * @param $uuid
+     * @param  $uuid
      * @return \Inertia\Response|\Inertia\ResponseFactory
      */
     public function show($id)
@@ -228,6 +233,7 @@ class AmtController extends Controller
         $data = $record->toArray();
         $record->lost_reason = $data['business_quote_request_detail']['lost_reason']['text'] ?? null;
         $record->previous_advisor_id_text = $data['previous_advisor']['name'] ?? null;
+        $record->transaction_type_text = $data['transaction_type']['text'] ?? null;
         $quoteDetails = app(BusinessQuoteService::class)->getDetailEntity($record->id);
         $quoteStatuses = QuoteStatusRepository::byQuoteTypeId(QuoteTypes::BUSINESS->id())->get();
         $lostReasons = LostReasonRepository::orderBy('text', 'asc')->get();
@@ -245,17 +251,18 @@ class AmtController extends Controller
             })->values();
         }
 
-        $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypes::BUSINESS->id());
+        $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypes::GROUP_MEDICAL->id());
         $countries = Nationality::all();
         $amlQuoteStatus = $crudService->checkAmlQuoteStatus($record->quote_status_id);
         $entities = Entity::all();
         $lookupService = app(LookupService::class);
+        $paymentMethods = $lookupService->getPaymentMethods();
         $legalStructure = $lookupService->getLegalStructure();
         $idDocumentType = $lookupService->getEntityDocumentTypes();
         $issuancePlace = $lookupService->getIssuancePlaces();
         $issuanceAuthorities = $lookupService->getIssuanceAuthorities();
-
         $documentTypes = DocumentTypeRepository::byQuoteTypeId(QuoteTypes::BUSINESS->id())->active()->get();
+        $vatPercentage = ApplicationStorage::where('key_name', ApplicationStorageEnums::VAT_VALUE)->first()->value ?? 0;
 
         return inertia('GroupMedicalQuote/Show', [
             'documentTypes' => $documentTypes,
@@ -287,6 +294,12 @@ class AmtController extends Controller
             'nationalities' => $nationalities,
             'emirates' => $emirates,
             'insuranceProviders' => $insuranceProviders,
+            'vatPercentage' => $vatPercentage,
+            'paymentTooltipEnum' => PaymentTooltip::asArray(),
+            'paymentStatusEnum' => PaymentStatusEnum::asArray(),
+            'paymentMethods' => $paymentMethods,
+            'isNewPaymentStructure' => app(SplitPaymentService::class)->isNewPaymentStructure($record->payments),
+
         ]);
     }
 
@@ -332,7 +345,7 @@ class AmtController extends Controller
             'last_name' => 'required|max:150',
             'business_type_of_insurance_id' => 'required',
             'company_name' => 'required|max:150',
-            'number_of_employees' => 'required',
+            'number_of_employees' => 'required|numeric|max:2147483645',
             'brief_details' => 'required',
             'group_medical_type_id' => 'required',
             'premium' => 'required',

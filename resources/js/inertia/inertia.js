@@ -6,23 +6,26 @@ import UI, { colors } from '@indielayer/ui';
 import MainLayout from '@/inertia/Layouts/MainLayout.vue';
 import icons from './icons';
 import Vue3EasyDataTable from 'vue3-easy-data-table';
-import { ZiggyVue } from '../../../vendor/tightenco/ziggy/dist/vue.m';
+import { ZiggyVue } from '../../../vendor/tightenco/ziggy';
 
 const appName =
   window.document.getElementsByTagName('title')[0]?.innerText || 'IMCRM';
 
 createInertiaApp({
   title: title => `${title} - ${appName}`,
-  resolve: async name => {
+  resolve: async name =>
+  {
     const pages = import.meta.glob('./Pages/**/*.vue', { eager: true });
     let page = pages[`./Pages/${name}.vue`];
     page.default.layout = page.default?.layout || MainLayout;
     return page;
   },
-  setup({ el, App, props, plugin }) {
+  setup({ el, App, props, plugin })
+  {
     createApp({
       name: 'IMCRM',
-      mounted: () => {
+      mounted: () =>
+      {
         // Remove Data Page for Protection
         document.querySelector('[data-page]')?.removeAttribute('data-page');
       },
