@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Enums\PermissionsEnum;
 use App\Enums\RolesEnum;
+use App\Enums\QuoteTypes;
 use App\Models\Permission;
 use App\Models\Role;
 use Illuminate\Database\Seeder;
@@ -17,16 +18,26 @@ class AddTempUpdateTotalPricePermission extends Seeder
     public function run(): void
     {
         $permission = Permission::findOrCreate(PermissionsEnum::TEMP_UPDATE_TOTALPRICE, 'web');
+        $roles = ['_ADVISOR', '_MANAGER'];
+        $lobs = [
+            QuoteTypes::CAR->value,
+            QuoteTypes::HOME->value,
+            QuoteTypes::HEALTH->value,
+            QuoteTypes::LIFE->value,
+            QuoteTypes::BUSINESS->value,
+            QuoteTypes::BIKE->value,
+            QuoteTypes::YACHT->value,
+            QuoteTypes::TRAVEL->value,
+            QuoteTypes::PET->value,
+            QuoteTypes::CYCLE->value,
+            QuoteTypes::JETSKI->value,
+        ];
 
-        $adminRole = Role::where('name', RolesEnum::Admin)->first();
-        $rolePermission = DB::table('role_has_permissions')->where('role_id', $adminRole->id)->where('permission_id', $permission->id)->first();
-        if ($rolePermission === null) {
-            DB::table('role_has_permissions')->insert(
-                [
-                    'role_id' => $adminRole->id,
-                    'permission_id' => $permission->id,
-                ]
-            );
+        foreach ($lobs as $lob) {
+            foreach ($roles as $role) {
+                $role = Role::findOrCreate(strtoupper($lob).$role, 'web');
+                $role->givePermissionTo($permission->id);
+            }
         }
     }
 }
