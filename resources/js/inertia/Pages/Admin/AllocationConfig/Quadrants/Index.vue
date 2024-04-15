@@ -14,14 +14,23 @@ const filters = reactive({
   page: 1,
 });
 
+function formatQuadUsers(users) {
+  return users.map(user => user.name).join(', ');
+}
+
+function formatQuadTiers(tiers) {
+  return tiers.map(tier => tier.name).join(', ');
+}
+
 const tableHeader = [
   { text: 'ID', value: 'id' },
   { text: 'Name', value: 'name' },
   { text: 'Updated At', value: 'updated_at' },
-  { text: 'Tire Name', value: 'quad_tiers' },
-  { text: 'Quad Users', value: 'quad_users' },
+  { text: 'Tire Name', value: 'tiers' },
+  { text: 'Quad Users', value: 'users'},
   { text: 'Created At', value: 'created_at' },
   { text: 'Active', value: 'is_active' },
+  { text: "Actions", value: "actions" }
 ];
 
 function onSubmit(isValid) {
@@ -59,6 +68,19 @@ function setQueryStringFilters() {
 onMounted(() => {
   setQueryStringFilters();
 });
+
+const showDeleteModal = ref(false),
+    deleteAction = useForm({
+        id: null
+    }),
+    onConfirmDelete = () => {
+        deleteAction.delete(route("quadrants.destroy", deleteAction.id), {
+            onFinish: () => {
+                showDeleteModal.value = false;
+            }
+        });
+    };
+
 </script>
 <template>
   <Head title="Quadrants List" />
@@ -110,6 +132,40 @@ onMounted(() => {
         </x-tag>
       </div>
     </template>
+
+    <template #item-users="{ users }">
+    {{ formatQuadUsers(users) }}
+  </template>
+  <template #item-tiers="{ tiers }">
+    {{ formatQuadTiers(tiers) }}
+  </template>
+
+    <template #item-actions="{ id }">
+                    <div class="flex gap-1.5 justify-end">
+                        <Link :href="route('quadrants.show', id)">
+                            <x-button tag="div" size="xs" outlined>
+                                View
+                            </x-button>
+                        </Link>
+                        <Link :href="route('quadrants.edit', id)">
+                            <x-button color="primary" size="xs" outlined>
+                                Edit
+                            </x-button>
+                        </Link>
+                        <x-button
+                            color="red"
+                            size="xs"
+                            outlined
+                            @click.prevent="
+                                deleteAction.id = id;
+                                showDeleteModal = true;
+                            "
+                        >
+                            Delete
+                        </x-button>
+                    </div>
+                </template>
+
   </DataTable>
   <Pagination
     :links="{
@@ -120,4 +176,29 @@ onMounted(() => {
       to: quadrants.to,
     }"
   />
+
+
+  <x-modal v-model="showDeleteModal" size="md" show-close backdrop>
+                <template #header> Delete Resource </template>
+                <p>Are you sure you want to delete selected resource?</p>
+                <template #actions>
+                    <div class="text-right space-x-4">
+                        <x-button
+                            size="sm"
+                            ghost
+                            @click.prevent="showDeleteModal = false"
+                        >
+                            Cancel
+                        </x-button>
+                        <x-button
+                            size="sm"
+                            color="error"
+                            :loading="deleteAction.processing"
+                            @click.prevent="onConfirmDelete"
+                        >
+                            Delete
+                        </x-button>
+                    </div>
+                </template>
+            </x-modal>
 </template>

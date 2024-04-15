@@ -4,9 +4,6 @@ namespace App\Http\Controllers\V2;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\QuadrantRequest;
-use App\Models\Quadrant;
-use App\Models\Tier;
-use App\Models\User;
 use App\Repositories\QuadrantRepository;
 use App\Repositories\TierRepository;
 use App\Repositories\UserRepository;
@@ -22,7 +19,6 @@ class QuadrantController extends Controller
         $quadrants->load([
             'users' => function ($users) {
                 return $users->select('id', 'name');
-
             },
             'tiers' => function ($tier) {
                 return $tier->select('id', 'name');
@@ -53,7 +49,7 @@ class QuadrantController extends Controller
      */
     public function store(QuadrantRequest $request)
     {
-        $data = $request->except('quad_users','quad_tiers');
+        $data = $request->except('quad_users', 'quad_tiers');
 
         $response = QuadrantRepository::create($data);
 
@@ -68,11 +64,10 @@ class QuadrantController extends Controller
      */
     public function show(string $id)
     {
-        $quadrant = QuadrantRepository::where(['id'=>$id])->first();
+        $quadrant = QuadrantRepository::where(['id' => $id])->first();
         $quadrant->load([
             'users' => function ($users) {
                 return $users->select('id', 'name');
-
             },
             'tiers' => function ($tier) {
                 return $tier->select('id', 'name');
@@ -96,7 +91,6 @@ class QuadrantController extends Controller
         $quadrant = $quadrant->load([
             'users' => function ($users) {
                 return $users->select('id', 'name');
-
             },
             'tiers' => function ($tier) {
                 return $tier->select('id', 'name');
@@ -104,7 +98,7 @@ class QuadrantController extends Controller
         ]);
 
         return inertia('Admin/AllocationConfig/Quadrants/Form', [
-            'quadrant'=>$quadrant,
+            'quadrant' => $quadrant,
             'quad_users' => $quadUsers,
             'quad_tiers' => $quadTiers
         ]);
@@ -115,15 +109,14 @@ class QuadrantController extends Controller
      */
     public function update(QuadrantRequest $request, string $id)
     {
-        $data = $request->except('quad_users','quad_tiers');
+        $data = $request->except('quad_users', 'quad_tiers');
 
-        $response = QuadrantRepository::where(['id',$id])->update();
+        $quadrant = QuadrantRepository::find($id);
+        $quadrant->update($data);
+        $quadrant->users()->sync($request->quad_users);
+        $quadrant->tiers()->sync($request->quad_tiers);
 
-        $response->users()->sync($request->quad_users);
-        $response->tiers()->sync($request->quad_tiers);
-
-        return redirect(route('quadrants.show', $id))->with('success', 'Quadrant added successfully');
-   
+        return redirect(route('quadrants.show', $id))->with('success', 'Quadrant updated successfully');
     }
 
     /**
@@ -132,7 +125,7 @@ class QuadrantController extends Controller
     public function destroy(string $id)
     {
         $deleted = QuadrantRepository::deleteQuad($id);
-        if($deleted){
+        if ($deleted) {
             return redirect()->route('quadrants.index')->with('success', 'Quadrant deleted successfully');
         }
     }

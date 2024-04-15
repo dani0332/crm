@@ -16,7 +16,7 @@ const quadrantForm = useForm({
   name: props.quadrant?.name ?? null,
   quad_tiers: props.quadrant?.quad_tiers ?? [],
   quad_users: props.quadrant?.quad_users ?? [],
-  is_active: false,
+  is_active: props.quadrant?.is_active ? true : false,
 });
 
 const quad_users = computed(() => {
