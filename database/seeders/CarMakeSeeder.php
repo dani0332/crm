@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use App\Models\CarMake;
 use Illuminate\Database\Seeder;
 
@@ -15,7 +14,7 @@ class CarMakeSeeder extends Seeder
     {
         $carMakeDetails = CarMake::latest()->first();
         $carMakeCode = ($carMakeDetails->code + 1);
-        
+
         CarMake::updateOrCreate(['text' => 'MOTOR BIKE'], [
             'code' => $carMakeCode,
             'text_ar' => 'MOTOR BIKE',

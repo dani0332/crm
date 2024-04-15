@@ -2,11 +2,11 @@
 
 namespace App\Repositories;
 
-use App\Models\Rule;
-use App\Models\CommercialKeyword;
+use App\Enums\RuleTypeEnum;
 use App\Models\CarMake;
 use App\Models\CarModel;
-use App\Enums\RuleTypeEnum;
+use App\Models\CommercialKeyword;
+use App\Models\Rule;
 
 class RuleRepository extends BaseRepository
 {
