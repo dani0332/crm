@@ -1245,7 +1245,7 @@ class CarQuoteService extends BaseService
     /**
      * modify plan during upload & update process.
      *
-     * @param    $data
+     * @param  $data
      * @return false
      */
     public function renewalCreatePlan($planData)
@@ -1324,8 +1324,8 @@ class CarQuoteService extends BaseService
             $response = $this->httpService->processRequest($carPlanData, $apiCreds);
             if ($response == 200) {
                 $plan_id = CarQuote::where('uuid', '=', $request->car_quote_uuid)->value('plan_id');
-                if($plan_id == $request->car_plan_id ){
-                    $request->merge(['plan_id' => $request->car_plan_id]); 
+                if ($plan_id == $request->car_plan_id) {
+                    $request->merge(['plan_id' => $request->car_plan_id]);
                     (new CentralService())->updateSelectedPlan(quoteTypeCode::Car, $request->car_quote_uuid, $request);
                 }
                 $this->lockCarQuote($request->car_quote_uuid);

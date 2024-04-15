@@ -18,7 +18,7 @@ class AddSageFlagApplicationStorage extends Seeder
         if (count($sageFlag) == 0) {
             DB::table('application_storage')->insert([[
                 'key_name' => 'SAGE_ENABLED',
-                'value' => '1',
+                'value' => '0',
                 'is_active' => 1,
                 'created_at' => now(),
                 'updated_at' => now(),

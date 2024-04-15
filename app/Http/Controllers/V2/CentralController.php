@@ -251,13 +251,23 @@ class CentralController extends Controller
     // Store new payment
     public function storeNewPayment(StorePaymentRequest $request)
     {
-        return PaymentRepository::createNewPayment($request);
+        $response = PaymentRepository::createNewPayment($request);
+        if ($response['status'] == 'success') {
+            return redirect()->back()->with('success', $response['message']);
+        } else {
+            return redirect()->back()->with('error', $response['message']);
+        }
     }
 
     // Update payment
     public function updateNewPayment(UpdatePaymentRequest $request)
     {
-        return PaymentRepository::updateNewPayment($request);
+        $response = PaymentRepository::updateNewPayment($request);
+        if ($response['status'] == 'success') {
+            return redirect()->back()->with('success', $response['message']);
+        } else {
+            return redirect()->back()->with('error', $response['message']);
+        }
     }
 
     // Generate payment link for split payment

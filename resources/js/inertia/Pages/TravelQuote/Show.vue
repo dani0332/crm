@@ -176,6 +176,7 @@ const travelFields = computed(() => {
     'previous_policy_expiry_date',
     'policy_start_date',
     'renewal_batch',
+    'transapp_code'
   ];
   let fields = {};
   Object.keys(page.props.fieldsToDisplay).map(field => {
@@ -1989,24 +1990,6 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
           </div>
         </div>
         <div class="w-full md:w-2/3">
-          <x-field
-            label="TRANSAPP CODE"
-            v-if="
-              leadStatusForm.leadStatus ==
-              enums.quoteStatusEnum.TransactionApproved
-            "
-          >
-            <x-input
-              :disabled="
-                quote.quote_status_id ==
-                enums.quoteStatusEnum.TransactionApproved
-              "
-              v-model="leadStatusForm.trans_code"
-              placeholder="TransApp Code is required"
-              class="w-full"
-              :error="leadStatusForm.errors.trans_code"
-            />
-          </x-field>
           <x-field
             label="LOST REASON"
             v-if="leadStatusForm.leadStatus == enums.quoteStatusEnum.Lost"

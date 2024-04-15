@@ -2338,21 +2338,6 @@ const isPlanDetailEnabled = computed(() => {
         <div class="w-full md:w-50">
           <div class="flex flex-col gap-7">
             <x-field
-              label="TransApp Code"
-              required
-              v-if="
-                leadStatusForm.leadStatus == quoteStatusEnum.TransactionApproved
-              "
-            >
-              <x-input
-                v-model="leadStatusForm.trans_code"
-                placeholder="TransApp Code is required"
-                class="w-full"
-                :rules="[rules.isRequired]"
-                :error="leadStatusForm.errors.trans_code"
-              />
-            </x-field>
-            <x-field
               label="Lost Reason"
               required
               v-if="leadStatusForm.leadStatus == quoteStatusEnum.Lost"
@@ -3897,7 +3882,6 @@ const isPlanDetailEnabled = computed(() => {
     </div>
 
     <CustomerChatLogs
-      v-if="hasRole(rolesEnum.BetaUser)"
       :customerName="record?.first_name + ' ' + record?.last_name"
       :quoteId="quote.uuid"
       :quoteType="'CAR'"
