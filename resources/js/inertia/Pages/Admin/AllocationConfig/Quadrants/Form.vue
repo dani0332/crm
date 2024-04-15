@@ -1,8 +1,9 @@
 <script setup>
 const props = defineProps({
-  qurdant: Object,
+  quadrant: Object,
   id: String,
-  dropdownSource: Object,
+  quad_users: Object,
+  quad_tiers: Object,
 });
 const { isRequired } = useRules();
 
@@ -10,16 +11,16 @@ const isEdit = computed(() => {
   return route().current().includes('edit');
 });
 
-const qurdantForm = useForm({
-  id: props.qurdant?.id ?? null,
-  name: props.qurdant?.name ?? null,
-  tier_names: props.qurdant?.tier_names ?? [],
-  tier_users: props.qurdant?.tier_users ?? [],
+const quadrantForm = useForm({
+  id: props.quadrant?.id ?? null,
+  name: props.quadrant?.name ?? null,
+  quad_tiers: props.quadrant?.quad_tiers ?? [],
+  quad_users: props.quadrant?.quad_users ?? [],
   is_active: false,
 });
 
 const quad_users = computed(() => {
-  let { quad_users } = { ...props.dropdownSource };
+  let quad_users = Object.values(props.quad_users);
   return quad_users.map(users => {
     return {
       value: users.id,
@@ -29,11 +30,11 @@ const quad_users = computed(() => {
 });
 
 const quad_tiers = computed(() => {
-  let { quad_tiers } = { ...props.dropdownSource };
-  return quad_tiers.map(users => {
+  let quad_tiers = Object.values(props.quad_tiers);
+  return quad_tiers.map(tiers => {
     return {
-      value: users.id,
-      label: users.name,
+      value: tiers.id,
+      label: tiers.name,
     };
   });
 });
@@ -42,13 +43,13 @@ function onSubmit(isValid) {
   if (isValid) {
     let method = isEdit.value ? 'put' : 'post';
     let url = isEdit.value
-      ? route('quadrant.update', qurdantForm.id)
-      : route('quadrant.store');
+      ? route('quadrant-innertia.update', quadrantForm.id)
+      : route('quadrant-innertia.store');
 
-    qurdantForm.submit(method, url, {
+    quadrantForm.submit(method, url, {
       onError: errors => {
         Object.keys(errors).forEach(function (key) {
-          qurdantForm.setError(key, errors[key]);
+          quadrantForm.setError(key, errors[key]);
         });
         return false;
       },
@@ -63,7 +64,7 @@ function onSubmit(isValid) {
       {{ isEdit ? 'Edit' : 'Create' }} Quadrant
     </h2>
     <div>
-      <Link :href="route('quadrant.index')">
+      <Link :href="route('quadrant-innertia.index')">
         <x-button size="sm" color="#1d83bc" tag="div"> Quadrant List </x-button>
       </Link>
     </div>
@@ -72,25 +73,27 @@ function onSubmit(isValid) {
   <x-form @submit="onSubmit" :auto-focus="false">
     <div class="grid sm:grid-cols-2 gap-4">
       <x-field label="Quadrant Name" required>
-        <x-input v-model="qurdantForm.name" class="w-full" />
+        <x-input v-model="quadrantForm.name" class="w-full" :error="quadrantForm.errors.name"/>
       </x-field>
       <x-field label="Tiers Name">
         <ComboBox
-          v-model="qurdantForm.tier_names"
-          :single="true"
+          v-model="quadrantForm.quad_tiers"
           :options="quad_tiers"
+          :multiple="true"
+          :error="quadrantForm.errors.quad_tiers"
         />
       </x-field>
-      <x-field label="Tiers Users">
+      <x-field label="Quad Users">
         <ComboBox
-          v-model="qurdantForm.tier_users"
-          :single="true"
+          v-model="quadrantForm.quad_users"
           :options="quad_users"
+          :multiple="true"
+          :error="quadrantForm.errors.quad_users"
         />
       </x-field>
       <x-field label="Is Active">
         <x-select
-          v-model="qurdantForm.is_active"
+          v-model="quadrantForm.is_active"
           class="w-full"
           :options="[
             { value: true, label: 'Yes' },

@@ -8,12 +8,12 @@ const props = defineProps({
   <div class="flex justify-between items-center">
     <h2 class="text-xl font-semibold">Quadrant Detail</h2>
     <div class="flex gap-2">
-      <Link :href="route('quadrant.index')">
+      <Link :href="route('quadrant-innertia.index')">
         <x-button size="sm" color="#1d83bc" tag="div">
           Quadrant Detail List
         </x-button>
       </Link>
-      <Link :href="route('quadrant.edit', quadrant.id)">
+      <Link :href="route('quadrant-innertia.edit', quadrant.id)">
         <x-button size="sm" tag="div">Edit</x-button>
       </Link>
     </div>

@@ -26,7 +26,7 @@ const tableHeader = [
 
 function onSubmit(isValid) {
   filters.page = 1;
-  router.visit(route('quadrant.index'), {
+  router.visit(route('quadrant-innertia.index'), {
     method: 'get',
     data: useGenerateQueryString(filters),
     preserveState: true,
@@ -37,7 +37,7 @@ function onSubmit(isValid) {
 }
 
 function onReset() {
-  router.visit(route('quadrant.index'), {
+  router.visit(route('quadrant-innertia.index'), {
     method: 'get',
     data: { page: 1 },
     preserveScroll: true,
@@ -65,7 +65,7 @@ onMounted(() => {
   <div class="flex justify-between items-center">
     <h2 class="text-xl font-semibold">Quadrants List</h2>
     <div class="space-x-3">
-      <Link :href="route('quadrant.create')">
+      <Link :href="route('quadrant-innertia.create')">
         <x-button size="sm" color="#ff5e00" tag="div">
           Create Quadrants
         </x-button>
@@ -97,7 +97,7 @@ onMounted(() => {
   >
     <template #item-id="{ id }">
       <Link
-        :href="route('quadrant.show', id)"
+        :href="route('quadrant-innertia.show', id)"
         class="text-primary-500 hover:underline"
       >
         {{ id }}
