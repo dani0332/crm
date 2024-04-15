@@ -2,8 +2,10 @@
 
 namespace App\Factories;
 
+use App\Enums\PaymentMethodsEnum;
 use App\Enums\quoteStatusCode;
 use App\Enums\SageEnum;
+use App\Enums\SagePaymentMethodsEnum;
 use App\Models\Lookup;
 use App\Models\QuoteRequestEntityMapping;
 use App\Models\User;
@@ -13,8 +15,8 @@ class SagePayloadFactory
 {
     public static function instanceData()
     {
-        return (Object) [
-            'sage_api_date_format' => env('SAGE_300_API_DATE_FORMAT')
+        return (object) [
+            'sage_api_date_format' => env('SAGE_300_API_DATE_FORMAT'),
         ];
     }
 
@@ -79,7 +81,7 @@ class SagePayloadFactory
             'endPoint' => 'AR/ARReceiptAndAdjustmentBatches',
             'payload' => $payLoad,
             'sage_request_type' => SageEnum::SRT_CREATE_PAY_REC_ONE_INV,
-            'entry_type' => $entryType
+            'entry_type' => $entryType,
         ];
     }
 
@@ -226,16 +228,16 @@ class SagePayloadFactory
 
             if ($type == SageEnum::SCT_CORRECTION) {
 
-                $payLoad->Invoices[0]->DocumentNumber = $payLoad->Invoices[0]->DocumentNumber.'-NEW'; 
-                $payLoad->Invoices[0]->InvoiceDescription = $payLoad->Invoices[0]->InvoiceDescription.' - NEW'; 
+                $payLoad->Invoices[0]->DocumentNumber = $payLoad->Invoices[0]->DocumentNumber.'-NEW';
+                $payLoad->Invoices[0]->InvoiceDescription = $payLoad->Invoices[0]->InvoiceDescription.' - NEW';
                 $payLoad->Invoices[0]->DocumentDate = Carbon::parse($request->insurerInvoiceDate)->format(self::instanceData()->sage_api_date_format); //
                 $payLoad->Invoices[0]->DueDate = Carbon::parse($request->paymentDueDate)->format(self::instanceData()->sage_api_date_format); //
                 $payLoad->Invoices[0]->DocumentTotalBeforeTaxes = $request->premiumWithoutTax;
                 $payLoad->Invoices[0]->DocumentTotalIncludingTax = $request->premiumWithTax;
                 $payLoad->Invoices[0]->PostingDate = Carbon::parse($request->bookingDate)->format(self::instanceData()->sage_api_date_format); //
-                $payLoad->Invoices[0]->DocumentType = 'CreditNote'; 
+                $payLoad->Invoices[0]->DocumentType = 'CreditNote';
                 $payLoad->Invoices[0]->ApplytoDocument = $applyToDocument;
-                
+
                 $payLoad->Invoices[0]->InvoicePaymentSchedules[0]->DueDate = Carbon::parse($request->paymentDueDate)->format(self::instanceData()->sage_api_date_format); //
                 $payLoad->Invoices[0]->InvoiceOptionalFields = self::createOptionalFields($request);
 
@@ -475,7 +477,7 @@ class SagePayloadFactory
             'endPoint' => 'AR/ARInvoiceBatches',
             'payload' => $payLoad,
             'sage_request_type' => SageEnum::SRT_CREATE_AR_SPPAY_INV,
-            'entry_type' => $entryType
+            'entry_type' => $entryType,
         ];
     }
 
@@ -547,7 +549,7 @@ class SagePayloadFactory
                     'CustomerNumber' => $request->sage_customer_number,
                     'BankReceiptAmount' => floatval($request->collection_amount),
                     'CheckReceiptNumber' => '123456',
-                    'PaymentCode' => 'BT',
+                    'PaymentCode' => self::sagePaymentCodeMapping($request->sage_payment_code),
                     'ReceiptTransactionType' => 'Prepayment',
                     'AppliedReceiptsAdjustments' => [
                         [
@@ -577,7 +579,7 @@ class SagePayloadFactory
             'endPoint' => 'AR/ARReceiptAndAdjustmentBatches'.'(BatchRecordType=\'CA\',BatchNumber='.$batchNumber.')',
             'payload' => $payLoad,
             'sage_request_type' => SageEnum::SRT_RTP_PAY_REC_ONE_INV,
-            'entry_type' => $entryType
+            'entry_type' => $entryType,
         ];
     }
     public static function aRPostReceiptsPayment($batchNumber)
@@ -611,8 +613,8 @@ class SagePayloadFactory
             SageEnum::SRT_CREATE_PAY_REC_ONE_INV => SageEnum::SRT_RTP_PAY_REC_ONE_INV,
             SageEnum::SRT_CREATE_AR_SP_PRE_PAYMENT => SageEnum::SRT_RTP_AR_SP_PRE_PAYMENT,
         ];
-        
-        if(isset($extras['sage_request_type'])) {
+
+        if (isset($extras['sage_request_type'])) {
             $sageRequestType = $sageRequestTypes[$extras['sage_request_type']];
         }
 
@@ -620,7 +622,7 @@ class SagePayloadFactory
             'endPoint' => 'AR/ARReceiptAndAdjustmentBatches'.'(BatchRecordType=\'CA\',BatchNumber='.$batchNumber.')',
             'payload' => $payLoad,
             'sage_request_type' => $sageRequestType,
-            'entry_type' => SageEnum::SCT_STRAIGHT
+            'entry_type' => SageEnum::SCT_STRAIGHT,
         ];
     }
 
@@ -644,8 +646,8 @@ class SagePayloadFactory
             SageEnum::SRT_CREATE_PAY_REC_ONE_INV => SageEnum::SRT_POST_PAY_REC_ONE_INV,
             SageEnum::SRT_CREATE_AR_SP_PRE_PAYMENT => SageEnum::SRT_POST_AR_SP_PRE_PAYMENT,
         ];
-        
-        if(isset($extras['sage_request_type'])) {
+
+        if (isset($extras['sage_request_type'])) {
             $sageRequestType = $sageRequestTypes[$extras['sage_request_type']];
         }
 
@@ -653,7 +655,7 @@ class SagePayloadFactory
             'endPoint' => 'AR/ARPostReceiptsAndAdjustments'.$val,
             'payload' => $payLoad,
             'sage_request_type' => $sageRequestType,
-            'entry_type' => $entryType
+            'entry_type' => $entryType,
         ];
     }
     public static function readyToPostInvoiceAr($batchNumber, $type = SageEnum::SCT_STRAIGHT, $useFor = SageEnum::SCT_STRAIGHT, $extras = [])
@@ -669,8 +671,8 @@ class SagePayloadFactory
             SageEnum::SRT_CREATE_AR_DISC_INV => SageEnum::SRT_RTP_AR_DISC_INV,
 
         ];
-        
-        if(isset($extras['sage_request_type'])) {
+
+        if (isset($extras['sage_request_type'])) {
             $sageRequestType = $sageRequestTypes[$extras['sage_request_type']];
         }
 
@@ -763,8 +765,8 @@ class SagePayloadFactory
             SageEnum::SRT_CREATE_AR_SPPAY_INV => SageEnum::SRT_POST_AR_SPPAY_INV,
             SageEnum::SRT_CREATE_AR_DISC_INV => SageEnum::SRT_POST_AR_DISC_INV,
         ];
-        
-        if(isset($extras['sage_request_type'])) {
+
+        if (isset($extras['sage_request_type'])) {
             $sageRequestType = $sageRequestTypes[$extras['sage_request_type']];
         }
 
@@ -901,12 +903,12 @@ class SagePayloadFactory
                 ],
             ],
         ];
-        
+
         return [
             'endPoint' => 'AR/ARReceiptAndAdjustmentBatches',
             'payload' => $payLoad,
             'sage_request_type' => SageEnum::SRT_CREATE_AR_SP_PRE_PAYMENT,
-            'entry_type' => $entryType
+            'entry_type' => $entryType,
         ];
     }
 
@@ -1169,7 +1171,6 @@ class SagePayloadFactory
                 ];
                 break;
 
-            
             case SageEnum::SRT_REV_CORR_AR_PREM_COMM_INV:
                 $response = [
                     'recursiveCalls' => [
@@ -1389,4 +1390,21 @@ class SagePayloadFactory
         return $message;
     }
 
+    // Payment code mapping
+    private static function sagePaymentCodeMapping($paymentMethod)
+    {
+        $sagePaymentCodeMappingArray = [
+            PaymentMethodsEnum::BankTransfer => SagePaymentMethodsEnum::SAGE_BANK_TRANSFER,
+            PaymentMethodsEnum::Cash => SagePaymentMethodsEnum::SAGE_CASH,
+            PaymentMethodsEnum::Cheque => SagePaymentMethodsEnum::SAGE_CHEQUE,
+            PaymentMethodsEnum::PostDatedCheque => SagePaymentMethodsEnum::SAGE_POST_DATED_CHEQUE,
+            PaymentMethodsEnum::CreditCard => SagePaymentMethodsEnum::SAGE_CREDIT_CARD,
+            PaymentMethodsEnum::InsurerPayment => SagePaymentMethodsEnum::SAGE_INSURER_PAYMENT,
+        ];
+        if (array_key_exists($paymentMethod, $sagePaymentCodeMappingArray)) {
+            return $sagePaymentCodeMappingArray[$paymentMethod];
+        } else {
+            return SagePaymentMethodsEnum::SAGE_BANK_TRANSFER;
+        }
+    }
 }

@@ -27,4 +27,15 @@ class DocumentTypeCode extends Enum
     const SEND_UPDATE_PAYMENT_PROOF = 'SUPP'; // Payment Proof
     const SEND_UPDATE_CUSTOMER_DOCUMENTS = 'SUCD'; // Customer documents
     const SEND_UPDATE_UW_EMAIL_CORRESPONDENCE = 'SUUWEC'; // UW email Correspondence
+    const CPD = 'CPD';
+    const BPD = 'BPD';
+    const TPD = 'TPD';
+    const HPD = 'HPD';
+    const LPD = 'LPD';
+    const HOMPD = 'HOMPD';
+    const CYCPD = 'CYCPD';
+    const CLPD = 'CLPD';
+    const GMQPD = 'GMQPD';
+    const PPD = 'PPD';
+    const YPD = 'YPD';
 }

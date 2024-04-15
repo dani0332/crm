@@ -11,8 +11,8 @@ use App\Models\Customer;
 use App\Models\Lookup;
 use App\Models\Payment;
 use App\Models\PaymentSplits;
-use App\Models\User;
 use App\Models\SendUpdateLog;
+use App\Models\User;
 use App\Repositories\SageApiLogRepository;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\SageLoggable;
@@ -242,7 +242,7 @@ class SageApiService
         ];
 
         $isSageEnabled = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::SAGE_ENABLED);
-        if(!$isSageEnabled) {
+        if (! $isSageEnabled) {
             return ['status' => false, 'message' => 'Sage is not enabled'];
         }
 
@@ -261,8 +261,8 @@ class SageApiService
             $paymentFilterAsPerType = ($extras['type'] == SageEnum::PT_SEND_UPDATE) ? ['send_update_log_id' => $request->sendUpdateId] : ['code' => $quote['code']];
             $payment = Payment::where($paymentFilterAsPerType)->first();
             $splitPayments = PaymentSplits::where('code', $payment->code)->get();
-            
-            if($extras['type'] == SageEnum::PT_SEND_UPDATE) {
+
+            if ($extras['type'] == SageEnum::PT_SEND_UPDATE) {
                 $sendUpdateLog = SendUpdateLog::where('id', $request->sendUpdateId)->first();
                 $quoteDetails = [
                     'policy_booking_date' => $sendUpdateLog->booking_date,
@@ -271,10 +271,10 @@ class SageApiService
                     'transaction_type_id' => $quote->transaction_type_id,
                     'advisor_id' => $sendUpdateLog->advisor_id,
                     'price_without_vat' => $payment->total_price,
-                    'price_with_vat' => $payment->total_amount, 
+                    'price_with_vat' => $payment->total_amount,
                 ];
             }
-            
+
             $sageRequestPayload = SagePayloadFactory::sagePayLoad($request->quoteType, $quoteDetails, $payment, $splitPayments);
             $sageRequestPayload->customerId = $sageCustomerNumber;
 
@@ -326,7 +326,7 @@ class SageApiService
     private function handleSendUpdateNormalCalls($quote, $payment, $splitPayments, $sageRequestPayload, $sageLogArray)
     {
         // If upfront Payment
-        if($payment->frequency == SageEnum::SF_UPFRONT) {
+        if ($payment->frequency == SageEnum::SF_UPFRONT) {
             // Create AR Invoice and marked as posted
             $this->sageRecursiveCalls($quote, $sageRequestPayload, $sageLogArray, [
                 'iterator' => 0,
@@ -350,14 +350,14 @@ class SageApiService
         } else {
             // Create AR Invoice Split Payment and marked as posted
             $this->sageRecursiveCalls($quote, $sageRequestPayload, $sageLogArray, [
-                'iterator' => 0, 
+                'iterator' => 0,
                 'lastIteration' => 2,
-                'startingStep' => 2, 
-                'totalSteps' => 16, 
+                'startingStep' => 2,
+                'totalSteps' => 16,
                 'entryType' => SageEnum::SCT_STRAIGHT,
                 'requestType' => SageEnum::SRT_CREATE_AR_SPPAY_INV,
                 'payment' => $payment,
-                'splitPayments' => $splitPayments
+                'splitPayments' => $splitPayments,
             ]);
         }
 
@@ -373,7 +373,7 @@ class SageApiService
             ]);
         }
 
-        if(strtolower($sageRequestPayload->invoicePaymentStatus) == SageEnum::STATUS_PAID) {
+        if (strtolower($sageRequestPayload->invoicePaymentStatus) == SageEnum::STATUS_PAID) {
             if ($payment->frequency == SageEnum::SF_UPFRONT) {
                 // Apply Payment Invoices
                 $this->sageRecursiveCalls($quote, $sageRequestPayload, $sageLogArray, [
@@ -396,13 +396,13 @@ class SageApiService
                     'entryType' => SageEnum::SCT_STRAIGHT,
                     'requestType' => SageEnum::SRT_CREATE_AR_SP_PRE_PAYMENT,
                     'payment' => $payment,
-                    'splitPayments' => $splitPayments
+                    'splitPayments' => $splitPayments,
                 ]);
             }
 
         }
 
-        if (!in_array($payment->frequency, [SageEnum::SF_UPFRONT, SageEnum::SF_SPLIT_PAYMENT]) && in_array($splitPayments[0]['payment_status_id'], [PaymentStatusEnum::PAID, PaymentStatusEnum::CAPTURED])) {
+        if (! in_array($payment->frequency, [SageEnum::SF_UPFRONT, SageEnum::SF_SPLIT_PAYMENT]) && in_array($splitPayments[0]['payment_status_id'], [PaymentStatusEnum::PAID, PaymentStatusEnum::CAPTURED])) {
             $this->sageRecursiveCalls($quote, $sageRequestPayload, $sageLogArray, [
                 'iterator' => 0,
                 'lastIteration' => 2,
@@ -411,7 +411,7 @@ class SageApiService
                 'entryType' => SageEnum::SCT_STRAIGHT,
                 'requestType' => SageEnum::SRT_CREATE_AR_SP_PRE_PAYMENT,
                 'payment' => $payment,
-                'splitPayments' => $splitPayments
+                'splitPayments' => $splitPayments,
             ]);
         }
 
@@ -432,7 +432,7 @@ class SageApiService
         })->values()->toArray();
 
         // If upfront Payment
-        if($payment->frequency == SageEnum::SF_UPFRONT) {
+        if ($payment->frequency == SageEnum::SF_UPFRONT) {
             // Create AR Reverse and Correction Invoice
             if (isset($invoicesForReverse[0])) {
                 $invoiceResponse = json_decode($invoicesForReverse[0]['response']);
@@ -466,14 +466,14 @@ class SageApiService
         } else {
             // Create AR Invoice Split Payment and marked as posted
             $this->sageRecursiveCalls($quote, $sageRequestPayload, $sageLogArray, [
-                'iterator' => 0, 
+                'iterator' => 0,
                 'lastIteration' => 2,
-                'startingStep' => 2, 
-                'totalSteps' => 16, 
+                'startingStep' => 2,
+                'totalSteps' => 16,
                 'entryType' => SageEnum::SCT_STRAIGHT,
                 'requestType' => SageEnum::SRT_CREATE_AR_SPPAY_INV,
                 'payment' => $payment,
-                'splitPayments' => $splitPayments
+                'splitPayments' => $splitPayments,
             ]);
         }
 
@@ -518,8 +518,8 @@ class SageApiService
         // This case added for Split Payment patch
         if (isset($extraParams['payment']) && $extraParams['payment']->total_payments > 1 && $extraParams['requestType'] == SageEnum::SRT_CREATE_AR_SPPAY_INV) {
             $splitPaymentResponse = $this->splitPaymentsPatch($quote, $sageRequestPayload, $sageLogArray, $extraParams);
-            
-            if(isset($splitPaymentResponse['status']) && $splitPaymentResponse['status'] == false) {
+
+            if (isset($splitPaymentResponse['status']) && $splitPaymentResponse['status'] == false) {
                 $_REQUEST['status'] = false;
                 $_REQUEST['message'] = $splitPaymentResponse['message'];
                 $this->recursiveCallStatus = SageEnum::STATUS_FAIL;
@@ -547,7 +547,7 @@ class SageApiService
                     $sageInvResponse = isset($extraParams['invoiceType']) ? SageApiLogRepository::getInvoiceResponse([
                         'quoteTypeObject' => ltrim($quote->quoteTypeObject, '\\'),
                         'quote_id' => $quote->id,
-                        'invoiceType' => $extraParams['invoiceType']
+                        'invoiceType' => $extraParams['invoiceType'],
                     ]) : [];
                     $payLoadOptions = SagePayloadFactory::{$methodName}($requestParms, $sageEntryType, $sageInvResponse);
                     break;
@@ -555,7 +555,7 @@ class SageApiService
                 case 'arSplitPrepaymentPayload': // This add for Split Payment
                     $payLoadOptions = SagePayloadFactory::{$methodName}($quote, $sageRequestPayload->customerId, $extraParams['payment'], $extraParams['splitPayments']);
                     break;
-                
+
                 default:
                     if ($extraParams['requestType'] == SageEnum::SRT_CREATE_AR_DISC_INV) {
                         $payLoadOptions = SagePayloadFactory::{$methodName}($requestParms, $sageEntryType, SageEnum::SCT_DISCOUNT, ['sage_request_type' => $extraParams['requestType']]);
@@ -704,7 +704,7 @@ class SageApiService
                     $postedResponse['Invoices'][0]['InvoicePaymentSchedules'][$key]['AmountDue'] = $extras['splitPayments'][$key]['collection_amount'];
                     $postedResponse['Invoices'][0]['InvoicePaymentSchedules'][$key]['DueDate'] = date('Y-m-d', strtotime($extras['splitPayments'][$key]['due_date']));
                 }
-                
+
                 if (isset($sageLogArray[$extras['startingStep']]) && $sageLogArray[$extras['startingStep']]['status'] == SageEnum::STATUS_SUCCESS) {
                     $isLiveApiCall = false;
                     $postedResponse = json_decode($sageLogArray[$extras['startingStep']]['response'], true);
@@ -723,7 +723,7 @@ class SageApiService
                     $this->logSageApiCall($postedResponse, $resp, $quote, $extras['startingStep'], $extras['totalSteps'], SageEnum::STATUS_FAIL);
                     $returnMessage['status'] = false;
                     $returnMessage['message'] = 'Error while making AR2 Split paymets patch to sage';
-    
+
                     return $returnMessage;
                 }
 

@@ -298,35 +298,31 @@ const hasAnyRole = roles => useHasAnyRole(roles);
             <div v-if="prices.length > 0" class="flex gap-3">
               <x-tag color="primary" v-for="priceItem in prices">
                 <x-checkbox
-                  v-if="priceItem.transactions[0]?.is_selected == '1'"
-                  @change="toggleProduct(priceItem, $event)"
-                  :model-value="true"
-                  color="primary"
-                  :disabled="
-                    priceItem.transactions[0]?.payment_status_id == 4 ||
-                    priceItem.transactions[0]?.payment_status_id == 6 ||
-                    priceItem.transactions[0]?.payment_status_id == 12
-                  "
+
+                    v-if="priceItem.transactions[0]?.is_selected == '1'"
+                    @change="toggleProduct(priceItem, $event)"
+                    :model-value="true"
+                    color="primary"
+                    :disabled="priceItem.transactions[0]?.payment_status_id == paymentStatusEnum.AUTHORISED
+                    || priceItem.transactions[0]?.payment_status_id == paymentStatusEnum.CAPTURED
+                    || priceItem.transactions[0]?.payment_status_id == paymentStatusEnum.PARTIAL_CAPTURED"
+
                 />
                 <x-checkbox
-                  v-else
-                  @change="toggleProduct(priceItem, $event)"
-                  color="primary"
-                  :disabled="
-                    priceItem.transactions[0]?.payment_status_id == 4 ||
-                    priceItem.transactions[0]?.payment_status_id == 6 ||
-                    priceItem.transactions[0]?.payment_status_id == 12
-                  "
+
+                    v-else
+                    @change="toggleProduct(priceItem, $event)"
+                    color="primary"
+                    :disabled="priceItem.transactions[0]?.payment_status_id == paymentStatusEnum.AUTHORISED
+                    || priceItem.transactions[0]?.payment_status_id == paymentStatusEnum.CAPTURED
+                    || priceItem.transactions[0]?.payment_status_id == paymentStatusEnum.PARTIAL_CAPTURED"
                 />
-                {{
-                  (
-                    parseFloat(priceItem.price) +
-                    (priceItem.price * 5) / 100
-                  ).toFixed(2)
-                }}
-              </x-tag>
-            </div>
-          </template>
+              {{ (parseFloat(priceItem.price) + (priceItem.price * 5) / 100).toFixed(2) }}
+            </x-tag>
+
+        </div>
+
+      </template>
 
           <template #item-ep_status="{ ep_status }"> N/A </template>
 
@@ -350,6 +346,7 @@ const hasAnyRole = roles => useHasAnyRole(roles);
                 Send Documents
               </x-button>
               <x-button
+            v-if="item.canGenerateCerticate"
                 size="xs"
                 color="#ff5e00"
                 :disabled="!item.send_document_button"

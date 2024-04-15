@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\FilterTypes;
+use App\Enums\GenericRequestEnum;
 use App\Enums\QuoteTypeId;
 use App\Traits\FilterCriteria;
 use App\Traits\QuoteModelTrait;
@@ -166,5 +167,30 @@ class HealthQuote extends Model implements AuditableContract
     public function duplicateInquiryLog(): MorphMany
     {
         return $this->morphMany(DuplicateInquiryLog::class, 'loggable');
+    }
+
+    public static function getCustomerMemberName($id)
+    {
+        $customerMember = CustomerMembers::find($id);
+        if ($customerMember) {
+            if ($customerMember->first_name == null && $customerMember->last_name == null) {
+                $quoteMemberCount = CustomerMembers::where([
+                    'customer_type' => $customerMember->customer_type,
+                    'first_name' => GenericRequestEnum::MEMBER,
+                ])->count();
+                $customerMember->first_name = GenericRequestEnum::MEMBER;
+                $customerMember->last_name = (++$quoteMemberCount);
+                $customerMember->save();
+            }
+
+            return $customerMember->first_name.' '.$customerMember->last_name;
+        } else {
+            $healthQuote = HealthQuote::find($id);
+            if ($healthQuote) {
+                return $healthQuote->first_name.' '.$healthQuote->last_name;
+            }
+        }
+
+        return 'Price';
     }
 }

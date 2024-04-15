@@ -344,7 +344,7 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
           </div>
 
           <div class="text-sm">
-            <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
+        <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
               <div class="grid sm:grid-cols-2">
                 <div
                   class="grid sm:grid-cols-2"
@@ -397,7 +397,7 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
           </div>
 
           <div class="text-sm">
-            <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
+        <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">PRICE</dt>
                 <dd>{{ quote?.pet_quote?.premium }}</dd>
@@ -555,7 +555,7 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
                 v-if="
                   quote.customer_type === page.props.customerTypeEnum.Individual
                 "
-                class="grid md:grid-cols-2 gap-x-6 gap-y-4"
+            class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words"
               >
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">FIRST NAME</dt>
@@ -595,7 +595,7 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">EMAIL</dt>
-                  <dd>{{ quote.email }}</dd>
+              <dd class="break-words">{{ quote.email }}</dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">NATIONALITY</dt>
@@ -638,7 +638,7 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
                 v-if="
                   quote.customer_type === page.props.customerTypeEnum.Entity
                 "
-                class="grid md:grid-cols-2 gap-x-6 gap-y-4"
+            class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words"
               >
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">FIRST NAME</dt>
@@ -654,11 +654,13 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">EMAIL</dt>
-                  <dd>{{ quote.email }}</dd>
+              <dd class="break-words">{{ quote.email }}</dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">COMPANY NAME</dt>
-                  <dd>{{ customerProfileForm.company_name }}</dd>
+              <dd class="break-words">
+                {{ customerProfileForm.company_name }}
+              </dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">TRADE LICENSE NO</dt>

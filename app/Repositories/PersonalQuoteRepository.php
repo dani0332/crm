@@ -28,6 +28,7 @@ class PersonalQuoteRepository extends BaseRepository
 
     /**
      * function renamed from fetchUpdateStatus, because updateStatus named function already in GenericQueriesAllLobs
+     *
      * @return mixed
      */
     public function fetchUpdateStatuses($quoteType, $quoteId, $data)
