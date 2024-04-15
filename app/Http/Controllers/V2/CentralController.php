@@ -336,7 +336,7 @@ class CentralController extends Controller
 
         return $successMessage;
     }
-    
+
     // Store new payment
     public function storeNewPayment(StorePaymentRequest $request)
     {
