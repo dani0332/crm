@@ -102,7 +102,7 @@ class GenericPermissionSeeder extends Seeder
                 $roleForAvailablePlanSelect = Role::findOrCreate($roleForAvailablePlanSelect, 'web');
                 $roleForAvailablePlanSelect->givePermissionTo(PermissionsEnum::AVAILABLE_PLANS_SELECT_BUTTON);
             }
-            
+
         }
     }
 }
