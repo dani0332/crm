@@ -634,7 +634,7 @@ class SagePayloadFactory
         return $optionalArray;
     }
 
-    public static function arSplitPrepaymentPayload($quote, $sage_customer_number, $payment, $splitPayments, $isPosAllSplitPayment=false )
+    public static function arSplitPrepaymentPayload($quote, $sage_customer_number, $payment, $splitPayments, $isPosAllSplitPayment = false)
     {
         $payLoad = [
             'BatchRecordType' => 'CA',
@@ -654,7 +654,8 @@ class SagePayloadFactory
         ];
     }
 
-    private static function createReceiptData($item, $sage_customer_number, $payment, $paymentNumber = 1) {
+    private static function createReceiptData($item, $sage_customer_number, $payment, $paymentNumber = 1)
+    {
         $receiptData = [
             'BatchType' => 'CA',
             'CustomerNumber' => $sage_customer_number,
@@ -663,7 +664,7 @@ class SagePayloadFactory
             'ReceiptTransactionType' => 'Receipt',
             'CustomerReceiptAmount' => floatval($item->payment_amount),
         ];
-    
+
         $prePaymentData = [
             'BatchType' => 'CA',
             'CustomerNumber' => $sage_customer_number,
@@ -672,27 +673,27 @@ class SagePayloadFactory
             'ReceiptTransactionType' => 'Receipt',
             'CustomerReceiptAmount' => -$item->payment_amount,
         ];
-    
+
         return [$receiptData, $prePaymentData];
     }
-    
+
     public static function createAppliedReceiptsAdjustments($quote, $sage_customer_number, $payment, $splitPayments, $isPosAllSplitPayment)
     {
         $data = [];
-    
-        if($isPosAllSplitPayment){
+
+        if ($isPosAllSplitPayment) {
             foreach ($splitPayments as $key => $item) {
-                list($receiptData, $prePaymentData) = self::createReceiptData($item, $sage_customer_number, $payment, $key + 1);
+                [$receiptData, $prePaymentData] = self::createReceiptData($item, $sage_customer_number, $payment, $key + 1);
                 $data[] = $receiptData;
                 $data[] = $prePaymentData;
             }
         } else {
             $item = $splitPayments[0];
-            list($receiptData, $prePaymentData) = self::createReceiptData($item, $sage_customer_number, $payment);
+            [$receiptData, $prePaymentData] = self::createReceiptData($item, $sage_customer_number, $payment);
             $data[] = $receiptData;
             $data[] = $prePaymentData;
         }
-    
+
         return $data;
     }
 
