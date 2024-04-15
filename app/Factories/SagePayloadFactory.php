@@ -85,16 +85,16 @@ class SagePayloadFactory
                     'TaxGroup' => 'VAT', // alway will be VAT discussed with denber
                     'TaxClass1' => 5,
                     'TaxAmount1' => 0.000,
-                    'DocumentTotalBeforeTaxes' => $request->premiumWithoutTax,
-                    'DocumentTotalIncludingTax' => $request->premiumWithTax,
+                    'DocumentTotalBeforeTaxes' => $request->totalAmount,
+                    'DocumentTotalIncludingTax' => $request->totalAmount,
                     'PostingDate' => $request->bookingDate,
                     'InvoiceDetails' => [
                         [
                             'DistributionDescription' => $premiumDescription,
                             'TaxClass1' => 5,
                             'GLAccount' => $request->insurerGlLiaiblityAccount,
-                            'DistributedAmount' => $request->premiumWithoutTax,
-                            'DistributedAmountBeforeTaxes' => $request->premiumWithTax,
+                            'DistributedAmount' => $request->totalAmount,
+                            'DistributedAmountBeforeTaxes' => $request->totalAmount,
                         ],
                     ],
                     'InvoicePaymentSchedules' => [
@@ -137,7 +137,7 @@ class SagePayloadFactory
                         [
                             'Description' => $description,
                             'TaxClass1' => 5,
-                            'RevenueAccount' => $request->insurerGlLiaiblityAccount,
+                            'RevenueAccount' => '70010',
                             'ExtendedAmountWithTIP' => $request->discount,
                             'ExtendedAmountWithoutTIP' => $request->discount,
                         ],
@@ -181,16 +181,16 @@ class SagePayloadFactory
                     'TaxGroup' => 'VAT',
                     'TaxClass1' => 5,
                     'TaxAmount1' => 0.000,
-                    'DocumentTotalBeforeTax' => $request->premiumWithoutTax,
-                    'DocumentTotalIncludingTax' => $request->premiumWithTax,
+                    'DocumentTotalBeforeTax' => $request->totalAmount,
+                    'DocumentTotalIncludingTax' => $request->totalAmount,
                     'PostingDate' => $request->bookingDate,
                     'InvoiceDetails' => [
                         [
                             'Description' => $premiumDescription,
                             'TaxClass1' => 5,
                             'RevenueAccount' => $request->insurerGlLiaiblityAccount,
-                            'ExtendedAmountWithTIP' => $request->premiumWithTax,
-                            'ExtendedAmountWithoutTIP' => $request->premiumWithoutTax,
+                            'ExtendedAmountWithTIP' => $request->totalAmount,
+                            'ExtendedAmountWithoutTIP' => $request->totalAmount,
                         ],
                     ],
                     'InvoicePaymentSchedules' => [
@@ -218,7 +218,7 @@ class SagePayloadFactory
                             'Description' => $commissionDescription,
                             'TaxClass1' => $taxClass,
                             'TaxAmount1' => $request->vatOnCommission,
-                            'RevenueAccount' => $request->insurerGlLiaiblityAccount,
+                            'RevenueAccount' => '60010',
                             'ExtendedAmountWithTIP' => $request->commissionIncludingVat,
                             'ExtendedAmountWithoutTIP' => $request->commission,
                         ],
@@ -296,7 +296,7 @@ class SagePayloadFactory
                             'Description' => $commissionDescription,
                             'TaxClass1' => $taxClass,
                             'TaxAmount1' => $request->vatOnCommission,
-                            'RevenueAccount' => $request->insurerGlLiaiblityAccount,
+                            'RevenueAccount' => '60010',
                             'ExtendedAmountWithTIP' => $request->commissionIncludingVat > 0 ? $request->commissionIncludingVat : $request->commissionWithOutVat,
                             'ExtendedAmountWithoutTIP' => $request->commissionIncludingVat > 0 ? $request->commissionIncludingVat : $request->commissionWithOutVat,
                         ],

@@ -60,6 +60,7 @@ class SageApiService
         $sageRequest->premiumWithoutTax = floatval($quote->price_without_vat);
         $sageRequest->premiumWithTax = floatval($quote->price_with_vat);
         $sageRequest->vatOnCommission = floatval($payment->commission_vat);
+        $sageRequest->totalAmount = floatval($payment->total_amount);
         $sageRequest->commission = floatval($payment->commission);
         $sageRequest->commissionIncludingVat = floatval($payment->commission_vat_applicable);
         $sageRequest->commissionWithOutVat = floatval($payment->commission_vat_not_applicable);
