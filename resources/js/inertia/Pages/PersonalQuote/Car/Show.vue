@@ -1589,7 +1589,7 @@ const isPlanDetailEnabled = computed(() => {
   }
 
   if(page.props.record.source == page.props.leadSourceEnum.RENEWAL_UPLOAD) {
-      return (page.props.record.vehicle_type_id_text == 'BIKE') ? true : false;
+      return (page.props.record.vehicle_type_id_text == 'BIKE');
   }
 
   return false;

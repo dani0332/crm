@@ -19,8 +19,8 @@ class CarMakeSeeder extends Seeder
         CarMake::updateOrCreate(['text' => 'MOTOR BIKE'], [
             'code' => $carMakeCode,
             'text_ar' => 'MOTOR BIKE',
-            'is_commercial' => 1, // need to check with April,
             'axa_car_make' => 'MOTORBIKE',
+            'is_active' => 0,
         ]);
     }
 }
