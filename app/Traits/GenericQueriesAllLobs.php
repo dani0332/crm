@@ -248,7 +248,7 @@ trait GenericQueriesAllLobs
     public function updatePriceAndDiscount($quoteModel)
     {
         $payment = $quoteModel->payments()->first();
-        if($payment){
+        if ($payment) {
             $difference = $quoteModel->price_with_vat - ($payment->captured_amount + $payment->discount_value);
 
             // Case 1 if difference is less than 1 and greater than 0 else set total price to price with vat
@@ -263,7 +263,7 @@ trait GenericQueriesAllLobs
                 }
                 $payment->total_amount -= $difference;
             }
-    
+
             // If status is partially paid & total price is less than price with vat then set status to partially paid
             if ($payment->payment_status_id === PaymentStatusEnum::PAID && $payment->total_price < $quoteModel->price_with_vat && ($difference > 0.99)) {
                 $payment->payment_status_id = PaymentStatusEnum::PARTIALLY_PAID;
