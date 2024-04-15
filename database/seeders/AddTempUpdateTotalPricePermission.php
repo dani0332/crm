@@ -3,12 +3,10 @@
 namespace Database\Seeders;
 
 use App\Enums\PermissionsEnum;
-use App\Enums\RolesEnum;
 use App\Enums\QuoteTypes;
 use App\Models\Permission;
 use App\Models\Role;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
 
 class AddTempUpdateTotalPricePermission extends Seeder
 {
