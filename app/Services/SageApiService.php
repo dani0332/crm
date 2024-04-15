@@ -72,6 +72,10 @@ class SageApiService
             $sageRequest->collection_amount = $paymentSplits[0]['collection_amount'];
         }
 
+        //Insurer GL Account and Vendor Number
+        $sageRequest->insurerGlLiaiblityAccount = $payment->insuranceProvider?->gl_liaiblity_account;
+        $sageRequest->sageVenderId = $payment->insuranceProvider?->sage_vendor_id;
+
         return $sageRequest;
     }
 
@@ -192,11 +196,9 @@ class SageApiService
 
         $sageRequest->customerId = $sageCustomerNumber;
 
-        if (! $payment->insuranceProvider) {
+        if (! $sageRequest->insurerGlLiaiblityAccount) {
             return ['status' => false, 'message' => 'Insurance Provider not found'];
         }
-        $sageRequest->insurerGlLiaiblityAccount = $payment->insuranceProvider->gl_liaiblity_account;
-        $sageRequest->sageVenderId = $payment->insuranceProvider->sage_vendor_id;
 
         // frequency  is 'upfront'
         if ($payment->frequency == 'upfront') {
