@@ -43,8 +43,8 @@ function onSubmit(isValid) {
   if (isValid) {
     let method = isEdit.value ? 'put' : 'post';
     let url = isEdit.value
-      ? route('quadrant-innertia.update', quadrantForm.id)
-      : route('quadrant-innertia.store');
+      ? route('quadrants.update', quadrantForm.id)
+      : route('quadrants.store');
 
     quadrantForm.submit(method, url, {
       onError: errors => {
@@ -64,7 +64,7 @@ function onSubmit(isValid) {
       {{ isEdit ? 'Edit' : 'Create' }} Quadrant
     </h2>
     <div>
-      <Link :href="route('quadrant-innertia.index')">
+      <Link :href="route('quadrants.index')">
         <x-button size="sm" color="#1d83bc" tag="div"> Quadrant List </x-button>
       </Link>
     </div>

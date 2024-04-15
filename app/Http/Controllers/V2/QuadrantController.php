@@ -60,7 +60,7 @@ class QuadrantController extends Controller
         $response->users()->attach($request->quad_users);
         $response->tiers()->attach($request->quad_tiers);
 
-        return redirect(route('quadrant-innertia.show', $response->id))->with('success', 'Quadrant added successfully');
+        return redirect(route('quadrants.show', $response->id))->with('success', 'Quadrant added successfully');
     }
 
     /**
@@ -122,7 +122,7 @@ class QuadrantController extends Controller
         $response->users()->sync($request->quad_users);
         $response->tiers()->sync($request->quad_tiers);
 
-        return redirect(route('quadrant-innertia.show', $id))->with('success', 'Quadrant added successfully');
+        return redirect(route('quadrants.show', $id))->with('success', 'Quadrant added successfully');
    
     }
 
@@ -133,7 +133,7 @@ class QuadrantController extends Controller
     {
         $deleted = QuadrantRepository::deleteQuad($id);
         if($deleted){
-            return redirect()->route('quadrant-innertia.index')->with('success', 'Quadrant deleted successfully');
+            return redirect()->route('quadrants.index')->with('success', 'Quadrant deleted successfully');
         }
     }
 }
