@@ -37,7 +37,7 @@ class TiersController extends Controller
     public function store(TierRequest $request)
     {
 
-        $tier = TierRepository::create($request->validated());
+        $tier = TierRepository::create($request->except('tier_user'));
 
         // Attaching users
         $response = $tier->users()->attach($request->tier_user);
@@ -46,7 +46,7 @@ class TiersController extends Controller
             vAbort($response->msg);
         }
 
-        return redirect(route('tier-inertia.show', $tier->id))->with('message', 'Tier is created successfully.');
+        return redirect(route('tiers.show', $tier->id))->with('message', 'Tier is created successfully.');
     }
 
     /**
@@ -87,7 +87,7 @@ class TiersController extends Controller
             vAbort($response->msg);
         }
 
-        return redirect(route('tier-inertia.show', $id))->with('message', 'Tier is updated successfully.');
+        return redirect(route('tiers.show', $id))->with('message', 'Tier is updated successfully.');
     }
 
     /**

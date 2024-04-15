@@ -33,7 +33,7 @@ const tableHeader = [
 
 function onSubmit(isValid) {
   filters.page = 1;
-  router.visit(route('tier-inertia.index'), {
+  router.visit(route('tiers.index'), {
     method: 'get',
     data: useGenerateQueryString(filters),
     preserveState: true,
@@ -44,7 +44,7 @@ function onSubmit(isValid) {
 }
 
 function onReset() {
-  router.visit(route('tier-inertia.index'), {
+  router.visit(route('tiers.index'), {
     method: 'get',
     data: { page: 1 },
     preserveScroll: true,
@@ -58,7 +58,7 @@ const showDeleteModal = ref(false),
         id: null
     }),
     onConfirmDelete = () => {
-        deleteAction.delete(route("tier-inertia.destroy", deleteAction.id), {
+        deleteAction.delete(route("tiers.destroy", deleteAction.id), {
             onFinish: () => {
                 showDeleteModal.value = false;
             }
@@ -71,7 +71,7 @@ const showDeleteModal = ref(false),
   <div class="flex justify-between items-center">
     <h2 class="text-xl font-semibold">Tier List</h2>
     <div class="space-x-3">
-      <Link :href="route('tier-inertia.create')">
+      <Link :href="route('tiers.create')">
         <x-button size="sm" color="#ff5e00" tag="div"> Create Tier </x-button>
       </Link>
     </div>
@@ -119,7 +119,7 @@ const showDeleteModal = ref(false),
   >
     <template #item-id="{ id }">
       <Link
-        :href="route('tier.show', id)"
+        :href="route('tiers.show', id)"
         class="text-primary-500 hover:underline"
       >
         {{ id }}
@@ -165,12 +165,12 @@ const showDeleteModal = ref(false),
 
     <template #item-actions="{ id }">
                     <div class="flex gap-1.5 justify-end">
-                        <Link :href="route('tier-inertia.show', id)">
+                        <Link :href="route('tiers.show', id)">
                             <x-button tag="div" size="xs" outlined>
                                 View
                             </x-button>
                         </Link>
-                        <Link :href="route('tier-inertia.edit', id)">
+                        <Link :href="route('tiers.edit', id)">
                             <x-button color="primary" size="xs" outlined>
                                 Edit
                             </x-button>
