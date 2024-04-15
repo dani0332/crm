@@ -248,26 +248,28 @@ trait GenericQueriesAllLobs
     public function updatePriceAndDiscount($quoteModel)
     {
         $payment = $quoteModel->payments()->first();
-        $difference = $quoteModel->price_with_vat - ($payment->captured_amount + $payment->discount_value);
+        if($payment){
+            $difference = $quoteModel->price_with_vat - ($payment->captured_amount + $payment->discount_value);
 
-        // Case 1 if difference is less than 1 and greater than 0 else set total price to price with vat
-        if ($difference <= 0.99 && $difference > 0) {
-            $payment->system_adjusted_discount = $difference;
-            // If condition to check if discount value is not null & add difference to it else set difference as discount value
-            if ($payment->discount_value != null) {
-                $payment->discount_value += $difference;
-            } else {
-                $payment->discount_value = $difference;
-                $payment->discount_type = 'system_adjusted_discount';
+            // Case 1 if difference is less than 1 and greater than 0 else set total price to price with vat
+            if ($difference <= 0.99 && $difference > 0) {
+                $payment->system_adjusted_discount = $difference;
+                // If condition to check if discount value is not null & add difference to it else set difference as discount value
+                if ($payment->discount_value != null) {
+                    $payment->discount_value += $difference;
+                } else {
+                    $payment->discount_value = $difference;
+                    $payment->discount_type = 'system_adjusted_discount';
+                }
+                $payment->total_amount -= $difference;
             }
-            $payment->total_amount -= $difference;
+    
+            // If status is partially paid & total price is less than price with vat then set status to partially paid
+            if ($payment->payment_status_id === PaymentStatusEnum::PAID && $payment->total_price < $quoteModel->price_with_vat && ($difference > 0.99)) {
+                $payment->payment_status_id = PaymentStatusEnum::PARTIALLY_PAID;
+            }
+            $payment->total_price = $quoteModel->price_with_vat;
+            $payment->save();
         }
-
-        // If status is partially paid & total price is less than price with vat then set status to partially paid
-        if ($payment->payment_status_id === PaymentStatusEnum::PAID && $payment->total_price < $quoteModel->price_with_vat && ($difference > 0.99)) {
-            $payment->payment_status_id = PaymentStatusEnum::PARTIALLY_PAID;
-        }
-        $payment->total_price = $quoteModel->price_with_vat;
-        $payment->save();
     }
 }
