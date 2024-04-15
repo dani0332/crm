@@ -510,7 +510,7 @@ class HandleInertiaRequests extends Middleware
                             ->addIf(
                                 auth()->user()->can(PermissionsEnum::QUAD_CONFIG_LIST),
                                 'Quadrants',
-                                url('generic/quadrant'),
+                                url('generic/quadrants'),
                                 fn ($s) => $s->attributes(['icon' => 'box'])
                             )
                             ->addIf(
