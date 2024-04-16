@@ -10,6 +10,7 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\RolesEnum;
 use App\Interfaces\PaymentRepositoryInterface;
+use App\Jobs\MAWelcomeJob;
 use App\Models\Payment;
 use App\Models\PaymentSplits;
 use App\Models\PaymentStatusLog;
@@ -22,7 +23,6 @@ use App\Services\TravelQuoteService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use App\Jobs\MAWelcomeJob;
 
 class PaymentRepository extends BaseRepository implements PaymentRepositoryInterface
 {
