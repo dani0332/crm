@@ -1,9 +1,15 @@
 <script setup>
+import LegacyCard from '../LegacyPolicy/Partials/LegacyCard';
+import DocumentListing from './Partials/DocumentListing.vue';
+import { formatDate } from '../../Composables/utilities.js';
 const props = defineProps({
   policy: Object,
 });
 
+const page = usePage();
+const permissionEnum = page.props.permissionsEnum;
 const moveToImcrmModal = ref(false);
+const can = permission => useCan(permission);
 const itemCount = ref(false);
 
 const maskedEmail = computed(() => {
@@ -255,7 +261,38 @@ const kycDetails = computed(() => {
     }
   });
 });
-
+/* payments start */
+const calculateSum = (items, propertyName) => {
+  if (!items || items.length === 0) {
+    return 0;
+  }
+  return items.reduce((acc, item) => {
+    return acc + (item[propertyName] || 0);
+  }, 0);
+};
+const calculateTotalCustomerPayable = computed(() => {
+  return calculateSum(props.policy.installments, 'customer_payable');
+});
+const calculateTax = computed(() => {
+  return calculateSum(props.policy.installments, 'tax');
+});
+const calculateGrossPremium = computed(() => {
+  return calculateSum(props.policy.installments, 'gross_premium');
+});
+const installmentsTableHeader = [
+  { text: 'Description', value: 'comment' },
+  { text: 'Gross Premium', value: 'gross_premium' },
+  { text: 'Date From', value: 'date_from' },
+  { text: 'Date To', value: 'date_to' },
+  { text: 'Due Date', value: 'due_date' },
+  { text: 'Collects', value: 'collects' },
+  { text: 'COMM', value: 'comm' },
+  { text: 'Commision Sum', value: 'commission_sum' },
+  { text: 'Discount', value: 'discount' },
+  { text: 'Tax', value: 'tax' },
+  { text: 'Customer Payable', value: 'customer_payable' },
+];
+/* payments ends */
 const moveToImcrm = async (policyNumber, validateAll = true) => {
   try {
     const response = await axios.post('/legacy-policy/move-to-imcrm', {
@@ -287,9 +324,11 @@ const moveToImcrm = async (policyNumber, validateAll = true) => {
     }
   } catch (err) {}
 };
-
 const dateFormat = date => {
-  return useDateFormat(date, 'DD-MM-YYYY').value;
+  if (date) {
+    return useDateFormat(date, 'DD-MM-YYYY').value;
+  }
+  return null;
 };
 </script>
 
@@ -493,6 +532,133 @@ const dateFormat = date => {
         </ul>
       </div>
       <div class="text-sm"></div>
+
+      <!-- payments start -->
+      <template v-if="can(permissionEnum.LEGACY_INSTALLMENTS)">
+        <div class="mt-6">
+          <h3 class="font-semibold text-primary-800">Installments</h3>
+          <x-divider class="mb-4 mt-1" />
+        </div>
+        <DataTable
+          table-class-name="tablefixed"
+          :headers="installmentsTableHeader"
+          :items="policy.installments || []"
+          border-cell
+          hide-rows-per-page
+          hide-footer
+          fixed-checkbox
+        >
+          <template #item-comment="{ comment }">
+            {{ comment ? comment : '' }}
+          </template>
+          <template #item-date_from="{ date_from }">
+            {{ dateFormat(date_from) }}
+          </template>
+          <template #item-date_to="{ date_to }">
+            {{ dateFormat(date_to) }}
+          </template>
+          <template #item-due_date="{ due_date }">
+            {{ dateFormat(due_date) }}
+          </template>
+          <template #item-tax="{ tax }"> {{ tax }} AED </template>
+          <template #item-comm="{ comm }"> {{ comm }}% </template>
+          <template #item-commission_sum="{ commission_sum }">
+            {{ commission_sum }} AED
+          </template>
+          <template #item-discount="{ discount }">
+            {{ discount }} AED
+          </template>
+          <template #item-gross_premium="{ gross_premium }">
+            {{ gross_premium }} AED
+          </template>
+          <template #item-customer_payable="{ customer_payable }">
+            {{ customer_payable }} AED
+          </template>
+        </DataTable>
+        <!-- Display the total customer payable outside the DataTable -->
+        <table>
+          <tr>
+            <th>Total Gross Premium:</th>
+            <td class="custom-table">{{ calculateGrossPremium }} AED</td>
+            <th>Total Tax:</th>
+            <td class="custom-table">{{ calculateTax }} AED</td>
+            <th>Total Customer Payable:</th>
+            <td class="custom-table">
+              {{ calculateTotalCustomerPayable }} AED
+            </td>
+          </tr>
+        </table>
+      </template>
+      <!-- Invoices -->
+      <template v-if="can(permissionEnum.LEGACY_INVOICES)">
+        <div class="mt-6">
+          <h3 class="font-semibold text-primary-800">Invoices</h3>
+          <x-divider class="mb-4 mt-1" />
+        </div>
+        <div class="row-with-scroll">
+          <LegacyCard :legacy="policy.invoices" type="multiple" />
+        </div>
+      </template>
+
+      <!-- Payments -->
+      <template v-if="can(permissionEnum.LEGACY_PAYMENTS)">
+        <x-divider class="mb-4 mt-1" />
+        <div class="mt-6">
+          <h3 class="font-semibold text-primary-800">Payments</h3>
+          <x-divider class="mb-4 mt-1" />
+        </div>
+        <div class="row-with-scroll">
+          <LegacyCard :legacy="policy.payments" type="multiple" />
+        </div>
+      </template>
+
+      <!-- Other Legacy Details -->
+      <template v-if="can(permissionEnum.LEGACY_OTHER_DETAILS)">
+        <x-divider class="mb-4 mt-1" />
+        <div class="mt-6">
+          <h3 class="font-semibold text-primary-800">Other Legacy Details</h3>
+          <x-divider class="mb-4 mt-1" />
+        </div>
+        <div class="scrollable-container">
+          <LegacyCard
+            v-if="policy.customer && Object.keys(policy.customer).length > 0"
+            :legacy="policy.customer"
+            type="single"
+            title="CUSTOMER"
+            :policy="policy"
+          />
+
+          <LegacyCard
+            v-if="policy.quote && Object.keys(policy.quote).length > 0"
+            :legacy="policy.quote"
+            type="single"
+            title="QUOTE"
+            :policy="policy"
+          />
+          <LegacyCard
+            v-if="policy.renewal && Object.keys(policy.renewal).length > 0"
+            :legacy="policy.renewal"
+            type="single"
+            title="RENEWAL"
+            :policy="policy"
+          />
+          <LegacyCard
+            v-if="policy.claims && Object.keys(policy.claims).length > 0"
+            :legacy="policy.claims"
+            type="multiple"
+            title="CLAIM"
+            :policy="policy"
+          />
+
+          <LegacyCard
+            v-if="policy.objects && Object.keys(policy.objects).length > 0"
+            :legacy="policy.objects"
+            type="multiple"
+            title="OBJECT"
+            :policy="policy"
+          />
+        </div>
+      </template>
     </div>
 
     <x-modal v-model="moveToImcrmModal" size="lg" show-close backdrop>
@@ -565,3 +731,21 @@ const dateFormat = date => {
     </x-modal>
   </div>
 </template>
+<style scoped>
+.row-with-scroll {
+  display: flex;
+  overflow-x: auto;
+  white-space: nowrap;
+  width: 100%;
+}
+.scrollable-container {
+  max-height: 400px;
+  overflow-y: auto;
+  display: flex;
+  gap: 20px;
+}
+
+.custom-table {
+  padding-right: 20px;
+}
+</style>

@@ -92,7 +92,11 @@ class InslyDetailRepository extends BaseRepository
 
     public function fetchGetBy($column, $value)
     {
-        $policy = $this->where($column, $value)->firstOrFail();
+        $query = $this->where($column, $value);
+        if (! empty(request()->policy_oid)) {
+            $query->orWhere('policy_oid', (int) request()->policy_oid);
+        }
+        $policy = $query->firstOrFail();
         $data = $policy->toArray();
         $policy->quoteType = $this->getQuoteType($data['policy']['coverage']);
 

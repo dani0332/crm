@@ -330,7 +330,9 @@ use App\Enums\PermissionsEnum;
 
                 @if(auth()->user()->hasRole(RolesEnum::BetaUser))
                 <ul class="nav side-menu">
+                    @can(PermissionsEnum::VIEW_LEGACY_DETAILS)
                     <li><a href="{{ url('legacy-policy') }}"><i></i>Legacy Policies</a>
+                    @endcan
                 </ul>
                 @endif
 

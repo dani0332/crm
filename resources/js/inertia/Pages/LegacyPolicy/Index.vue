@@ -120,6 +120,7 @@ const dateFormat = date => {
       <template #item-_id="item">
         <Link
           :href="`/legacy-policy/${item._id}`"
+          :data="{ policy_oid: item.policy_oid }"
           class="text-primary-500 hover:underline"
         >
           {{ item._id }}
