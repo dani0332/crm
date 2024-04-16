@@ -25,14 +25,14 @@ class InsuranceQuoteTypeSeeder extends Seeder
                 InsuranceProvidersEnum::SI, InsuranceProvidersEnum::OIC,
             ]],
             ['quote_type_id' => QuoteTypes::PET->id(), 'providers' => [
-                InsuranceProvidersEnum::AIAW
-            ]]
+                InsuranceProvidersEnum::AIAW,
+            ]],
             ['quote_type_id' => QuoteTypes::YACHT->id(), 'providers' => [
                 InsuranceProvidersEnum::ALJALIL, InsuranceProvidersEnum::AXA, InsuranceProvidersEnum::OI2, InsuranceProvidersEnum::OUNB,
                 InsuranceProvidersEnum::QIC, InsuranceProvidersEnum::OIC, InsuranceProvidersEnum::STF, InsuranceProvidersEnum::UI,
             ]],
             ['quote_type_id' => QuoteTypes::CORPLINE->id(), 'providers' => [
-                InsuranceProvidersEnum::AIG, InsuranceProvidersEnum::AIAW, InsuranceProvidersEnum::ARAB
+                InsuranceProvidersEnum::AIG, InsuranceProvidersEnum::AIAW, InsuranceProvidersEnum::ARAB,
             ]],
         ];
 
@@ -44,7 +44,6 @@ class InsuranceQuoteTypeSeeder extends Seeder
                 if ($provider = InsuranceProvider::where('code', $provider)->first()) {
                     $provider->quoteTypes()->attach($quoteTypeId);
                 }
-
             }
         }
     }

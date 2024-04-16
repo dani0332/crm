@@ -2390,7 +2390,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
                     View
                   </x-button>
 
-                  <span v-if="hasRole(rolesEnum.TravelAdvisor)">
+                  <span>
                     <SelectPlan
                       class="ml-1"
                       v-if="!selectedPlanIds.includes(item.id)"
@@ -2462,7 +2462,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
                     >
                       View
                     </x-button>
-                    <span v-if="hasRole(rolesEnum.TravelAdvisor)">
+                    <span>
                       <SelectPlan
                         class="ml-1"
                         v-if="!selectedPlanIds.includes(item.id)"

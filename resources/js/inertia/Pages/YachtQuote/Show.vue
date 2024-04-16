@@ -748,13 +748,7 @@ const linkEntity = () => {
       :quoteStatusEnum="quoteStatusesEnum"
     />
 
-    <PlanDetails
-      :insuranceProviders="insuranceProviders"
-      :quote="quote"
-      :quoteType="quoteType"
-      :vatPrice="vatPercentage"
-    />
-
+    
     <EmbeddedProducts
       :data="embeddedProducts"
       :link="quote.uuid"

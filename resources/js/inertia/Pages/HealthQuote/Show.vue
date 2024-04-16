@@ -2825,7 +2825,7 @@ const handlePlanSelected = plan => {
               Copy
             </x-button>
 
-            <span v-if="hasRole(page.props.rolesEnum.HealthAdvisor)">
+            <span>
               <SelectPlan
                 v-if="selectedProviderPlan.id != item.id"
                 @update:selectedPlanChanged="handlePlanSelected"

@@ -3051,7 +3051,7 @@ const handlePlanSelected = plan => {
               </x-button>
             </template>
 
-            <span v-if="hasRole(rolesEnum.CarAdvisor)">
+            <span>
               <SelectPlan
                 v-if="selectedProviderPlan.id != item.id"
                 @update:selectedPlanChanged="handlePlanSelected"
