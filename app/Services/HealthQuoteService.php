@@ -13,6 +13,7 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\RolesEnum;
+use App\Facades\Ken;
 use App\Jobs\CammyJob;
 use App\Jobs\GetQuotePlansJob;
 use App\Jobs\IntroEmailJob;
@@ -126,6 +127,7 @@ class HealthQuoteService extends BaseService
             'hqr.is_ecommerce',
             'payment_status.text as payment_status_text',
             'hqr.price_starting_from',
+            'lu.text as transaction_type_text',
             'hqr.kyc_decision',
             'hqr.risk_score',
             'hqr.enquiry_count',
@@ -170,6 +172,7 @@ class HealthQuoteService extends BaseService
             ->leftJoin('lost_reasons as ls', 'ls.id', '=', 'hqrd.lost_reason_id')
             ->leftJoin('health_cover_for as hcf', 'hcf.id', '=', 'hqr.cover_for_id')
             ->leftJoin('nationality as n', 'n.id', '=', 'hqr.nationality_id')
+            ->leftJoin('lookups as lu', 'lu.id', '=', 'hqr.transaction_type_id')
             ->leftJoin('emirates as e', 'e.id', '=', 'hqr.emirate_of_your_visa_id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'hqr.quote_status_id')
             ->leftJoin('health_lead_type as lt', 'lt.id', '=', 'hqr.lead_type_id')
@@ -1386,6 +1389,169 @@ class HealthQuoteService extends BaseService
     }
 
     /**
+     * Health Plan Edit V2. New method to handle the new health plan edit.
+     */
+    public function healthPlanModifyV2($request)
+    {
+        $loadingPrices = $request->get('loadingPrice');
+        $manualPremiumPrices = $request->get('manualPremiumPrice');
+
+        if (empty($request->get('selectedCopay'))) {
+            $copayId = $request->get('defaultCopayId');
+        } else {
+            $selectedCopay = $request->get('selectedCopay');
+            $copayId = $selectedCopay['id'];
+        }
+
+        if ($request->planId && ! empty($request->planDetails)) {
+            $membersBreakDown = [];
+            $plansArray = [
+                'planId' => (int) $request->planId,
+                'isManualUpdate' => (bool) $request->tagAsManual,
+                'selectedCopayId' => (int) $copayId,
+                'memberPremiumBreakdown' => '',
+            ];
+            foreach ($request->planDetails as $key => $value) {
+                $toBeUpdatedCopay = [];
+                if (isset($value['ratesPerCopay'])) {
+                    foreach ($value['ratesPerCopay'] as $copay) {
+                        if ((int) $copay['healthPlanCoPaymentId'] == (int) $copayId) {
+
+                            if (
+                                (int) $loadingPrices[$key]['memberId'] == $value['memberId']
+                            ) {
+                                $copay['loadingPrice'] = (float) $loadingPrices[$key]['price'];
+                            }
+                            if (
+                                (int) $manualPremiumPrices[$key]['memberId'] == $value['memberId']
+                                && $manualPremiumPrices[$key]['premium'] != 0
+                            ) {
+                                $copay['basePrice'] = (float) $manualPremiumPrices[$key]['premium'];
+                            }
+
+                            array_push($toBeUpdatedCopay, $copay);
+                        }
+                    }
+                }
+
+                $array = [
+                    'memberId' => (int) $value['memberId'],
+                    'ratesPerCopay' => $toBeUpdatedCopay,
+                ];
+                array_push($membersBreakDown, $array);
+            }
+            $plansArray['memberPremiumBreakdown'] = $membersBreakDown;
+            $dataArray = [
+                'quoteUID' => $request->quoteUID,
+                'update' => true,
+                'plans' => [$plansArray],
+            ];
+
+            $response = Ken::request('/save-manual-health-quote-plans', 'POST', $dataArray);
+
+            return $response;
+        }
+    }
+
+    public function healthQuoteAddMember($request)
+    {
+        $quoteId = $request->quoteId;
+
+        if ($quoteId) {
+
+            $memberDetails = [
+                'firstName' => $request->first_name,
+                'lastName' => $request->last_name ?? null,
+                'emirateOfYourVisaId' => $request->emirate_of_your_visa_id,
+                'gender' => $request->gender,
+                'nationalityId' => $request->nationality_id,
+                'memberCategoryId' => $request->member_category_id,
+                'salaryBandId' => $request->salary_band_id,
+                'dob' => Carbon::parse($request->dob)->toDateString(),
+                'relationCode' => $request->relation_code,
+            ];
+
+            $dataArray = [
+                'quoteUID' => $quoteId,
+                'memberDetails' => [$memberDetails],
+            ];
+
+            $response = Ken::request('/add-health-quote-members', 'POST', $dataArray);
+        } else {
+            $response = [
+                'status' => false,
+                'message' => 'Quote Id not found',
+            ];
+        }
+
+        return $response;
+    }
+
+    public function healthQuoteUpdateMember($request)
+    {
+        $quoteId = $request->quoteId ?? null;
+        $memberId = $request->id ?? null;
+
+        if ($quoteId && $memberId) {
+
+            $memberDetails = [
+                'id' => $memberId,
+                'firstName' => $request->first_name,
+                'lastName' => $request->last_name ?? null,
+                'emirateOfYourVisaId' => $request->emirate_of_your_visa_id,
+                'gender' => $request->gender,
+                'nationalityId' => $request->nationality_id,
+                'memberCategoryId' => $request->member_category_id,
+                'salaryBandId' => $request->salary_band_id,
+                'dob' => Carbon::parse($request->dob)->toDateString(),
+                'relationCode' => $request->relation_code,
+            ];
+
+            $dataArray = [
+                'quoteUID' => $quoteId,
+                'memberDetails' => [$memberDetails],
+            ];
+
+            $response = Ken::request('/update-health-quote-members', 'POST', $dataArray);
+
+        } else {
+            $response = [
+                'status' => false,
+                'message' => 'Quote Id not found',
+            ];
+        }
+
+        return $response;
+    }
+
+    public function healthQuoteDeleteMember($request)
+    {
+        $quoteId = $request->quoteId ?? null;
+        $memberId = $request->customer_member_id ?? null;
+
+        if ($quoteId && $memberId) {
+
+            $memberDetails = [
+                'id' => $memberId,
+            ];
+
+            $dataArray = [
+                'quoteUID' => $quoteId,
+                'memberDetails' => [$memberDetails],
+            ];
+
+            $response = Ken::request('/delete-health-quote-members', 'POST', $dataArray);
+        } else {
+            $response = [
+                'status' => false,
+                'message' => 'Member not found',
+            ];
+        }
+
+        return $response;
+    }
+
+    /**
      * create health plan for upload & create process.
      *
      * @param  $data
@@ -1461,11 +1627,13 @@ class HealthQuoteService extends BaseService
         return $leadStatuses->whereNotIn('id', $statusesToRemove);
     }
 
-    public function getNonQuotedHealthPlans($insuranceProviderId, $quotePlanId)
+    public function getNonQuotedHealthPlans($insuranceProviderId, $quotePlanId, $networkId = null)
     {
         return HealthPlan::select('id', 'text')
             ->where('provider_id', $insuranceProviderId)
+            ->where('health_rating_eligibility_id', $networkId)
             ->whereNotIn('id', $quotePlanId)
+            ->where('is_active', true)
             ->get();
     }
 
@@ -1651,5 +1819,37 @@ class HealthQuoteService extends BaseService
             $quote->renewal_batch = $renewalBatch->name;
             $quote->save();
         }
+    }
+
+    public function getCopaysByPlanId($planId)
+    {
+        $copays = DB::table('health_plan_co_payments')
+            ->select('id', 'text')
+            ->where('health_plan_id', $planId)
+            ->get()->toArray();
+
+        return $copays;
+    }
+
+    public function updateNotifyAgentFlag($request)
+    {
+        if (empty($request->get('selectedCopay'))) {
+            $copayId = $request->get('defaultCopayId');
+        } else {
+            $selectedCopay = $request->get('selectedCopay');
+            $copayId = $selectedCopay['id'];
+        }
+
+        $dataArray = [
+            'quoteUID' => $request->quoteUID,
+            'planId' => $request->get('planId'),
+            'memberId' => $request->get('memberId'),
+            'healthPlanCoPaymentId' => $copayId,
+            'notifyAgent' => $request->get('notifyAgent'),
+        ];
+
+        $response = Ken::request('/update-notify-agent', 'POST', $dataArray);
+
+        return $response;
     }
 }

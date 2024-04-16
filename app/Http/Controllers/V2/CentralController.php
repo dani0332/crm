@@ -21,14 +21,18 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\BookPolicyRequest;
 use App\Http\Requests\CustomerProfileRequest;
 use App\Http\Requests\DuplicateLobRequest;
+use App\Http\Requests\GeneratePaymentLinkRequest;
 use App\Http\Requests\LeadAssignRequest;
 use App\Http\Requests\MigratePaymentsRequest;
 use App\Http\Requests\PlanDetailsRequest;
 use App\Http\Requests\SendBookPolicyRequest;
 use App\Http\Requests\SplitPaymentApproveRequest;
 use App\Http\Requests\SplitPaymentUpdateRequest;
+use App\Http\Requests\StorePaymentRequest;
 use App\Http\Requests\UpdateLastYearPolicyRequest;
+use App\Http\Requests\UpdatePaymentRequest;
 use App\Http\Requests\UpdateSelectedPlanRequest;
+use App\Http\Requests\UpdateTotalPriceRequest;
 use App\Jobs\SendBookPolicyDocumentsJob;
 use App\Models\Customer;
 use App\Models\Entity;
@@ -39,6 +43,7 @@ use App\Repositories\PaymentRepository;
 use App\Services\ActivitiesService;
 use App\Services\CentralService;
 use App\Services\SageApiService;
+use App\Services\SplitPaymentService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -318,4 +323,30 @@ class CentralController extends Controller
 
         return back()->with('success', $successMessage);
     }
+
+    // Update total price
+    public function updateTotalPrice(UpdateTotalPriceRequest $request)
+    {
+        $successMessage = PaymentRepository::updateTotalPrice($request);
+
+        return $successMessage;
+    }
+    // Store new payment
+    public function storeNewPayment(StorePaymentRequest $request)
+    {
+        return PaymentRepository::createNewPayment($request);
+    }
+
+    // Update payment
+    public function updateNewPayment(UpdatePaymentRequest $request)
+    {
+        return PaymentRepository::updateNewPayment($request);
+    }
+
+    // Generate payment link for split payment
+    public function generatePaymentLink(GeneratePaymentLinkRequest $request)
+    {
+        return (new SplitPaymentService())->generateSplitPaymentLink($request);
+    }
+
 }
