@@ -16,6 +16,7 @@ use App\Enums\LeadSourceEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
+use App\Enums\PaymentTooltip;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
@@ -25,10 +26,12 @@ use App\Enums\RolesEnum;
 use App\Enums\TiersEnum;
 use App\Facades\Capi;
 use App\Http\Requests\ExportPlansPdfRequest;
+use App\Http\Requests\StorePaymentRequest;
 use App\Http\Requests\UpdateLeadStatusRequest;
 use App\Jobs\CarRenewalEmailJob;
 use App\Jobs\SendOCBIntroEmailJob;
 use App\Jobs\SyncSIBContactJob;
+use App\Models\ApplicationStorage;
 use App\Models\CarMake;
 use App\Models\CarQuote;
 use App\Models\EmbeddedProductOption;
@@ -71,6 +74,7 @@ use App\Services\NotesForCustomerService;
 use App\Services\PetQuoteService;
 use App\Services\QuoteDocumentService;
 use App\Services\SendEmailCustomerService;
+use App\Services\SplitPaymentService;
 use App\Services\TeamService;
 use App\Services\TierService;
 use App\Services\TravelQuoteService;
@@ -334,6 +338,7 @@ class CRUDController extends Controller
      */
     public function create(Request $request)
     {
+
         $isRenewalUser = Auth::user()->isRenewalUser();
         if ($isRenewalUser && strtolower($this->genericModel->modelType) == strtolower(quoteTypeCode::Car)) {
             $renewalAdvisors = $this->crudService->fillRenewalData($this->genericModel);
@@ -367,6 +372,7 @@ class CRUDController extends Controller
         }
 
         if ($this->genericModel->modelType == quoteTypeCode::Car && in_array($this->genericModel->modelType, newUi())) {
+
             $dropdownSource['car_make_id'] = $this->getCarMakeDropdown();
 
             return inertia('PersonalQuote/Car/Form', [
@@ -490,6 +496,7 @@ class CRUDController extends Controller
         }
         $quoteType = strtolower($this->genericModel->modelType);
         $quoteTypeId = $this->activityService->getQuoteTypeId($quoteType);
+        $paymentTooltipEnum = PaymentTooltip::asArray();
         $record = $this->crudService->getEntity($this->genericModel->modelType, $id);
         abort_if(! $record, 404);
 
@@ -583,7 +590,9 @@ class CRUDController extends Controller
         $tiers = $this->lookupService->getTierR();
 
         $access = $this->carQuoteService->updatedAccessAgainstPaymentStatus($paymentEntityModel, $record);
+        $vatPercentage = ApplicationStorage::where('key_name', ApplicationStorageEnums::VAT_VALUE)->first()->value ?? 0;
 
+        $isNewPaymentStructure = app(SplitPaymentService::class)->isNewPaymentStructure($payments);
         if ($this->genericModel->modelType == quoteTypeCode::Car) { // Car plans to display on detail view
             $quote = $record;
             $isCommercialVehicles = false;
@@ -679,7 +688,6 @@ class CRUDController extends Controller
             $customerTypeEnum = CustomerTypeEnum::asArray();
             $industryType = LookupRepository::where('key', LookupsEnum::COMPANY_TYPE)->get();
             $nationalities = NationalityRepository::withActive()->get();
-            $clientInquiryLogs = $this->crudService->getInquiryLogs($this->genericModel->modelType, $record->uuid) ?? [];
 
             return inertia('PersonalQuote/Car/Show', compact([
                 'record', 'quote', 'model', 'customTitles', 'customTableList', 'paymentStatusEnum', 'quoteStatusEnum', 'leadSourceEnum', 'isBetaUser',
@@ -689,8 +697,8 @@ class CRUDController extends Controller
                 'yearsOfManufacture', 'notesForCustomers', 'quoteType', 'quoteTypeId', 'trimList', 'autoAllocationDisabled', 'embeddedProducts', 'genericRequestEnum',
                 'paymentEntityModel', 'payments', 'paymentMethods', 'isQuoteDocumentEnabled', 'quoteDocuments', 'displaySendPolicyButton', 'customerAdditionalContacts', 'lostApproveReasons', 'lostRejectReasons', 'allowQuoteLogAction', 'carLostChangeStatus',
                 'carMakeText', 'carModelText', 'advisor', 'tiers', 'daysAfterCapturedPayment', 'access', 'carPlanFeaturesCodeEnum', 'carPlanExclusionsCodeEnum', 'documentTypes', 'planURL', 'storageUrl', 'kyoEndPoint',
-                'carPlanTypeEnum', 'UBORelations', 'UBOsDetails', 'emirates', 'customerTypeEnum', 'memberRelations', 'membersDetails', 'industryType', 'nationalities',
-                'isCommercialVehicles', 'carInsuranceProviders', 'clientInquiryLogs',
+                'carPlanTypeEnum', 'UBORelations', 'UBOsDetails', 'emirates', 'customerTypeEnum', 'memberRelations', 'membersDetails', 'industryType', 'nationalities', 'paymentTooltipEnum',
+                'isCommercialVehicles', 'carInsuranceProviders', 'isNewPaymentStructure',
             ]));
         }
 
@@ -717,7 +725,7 @@ class CRUDController extends Controller
                 'isNewBusinessUser', 'ecomTravelInsuranceQuoteUrl', 'quoteType', 'autoAllocationDisabled',
                 'paymentEntityModel', 'payments', 'mainPayment', 'paymentMethods', 'insuranceProviders', 'emailStatuses',
                 'isQuoteDocumentEnabled', 'quoteDocuments', 'displaySendPolicyButton', 'customerAdditionalContacts',
-                'quoteTypeId', 'tiers', 'access',
+                'quoteTypeId', 'tiers', 'access', 'isNewPaymentStructure',
             ]));
         }
 
@@ -746,17 +754,22 @@ class CRUDController extends Controller
                 $payment->approved_button = $payment->payment_status_id == PaymentStatusEnum::PAID;
             });
 
-            $filteredPaymentMethods = $paymentMethods->filter(function ($paymentMethod) {
-                return $paymentMethod->code == PaymentMethodsEnum::CreditCard;
-            })->map(function ($paymentMethod) {
-                return [
-                    'value' => $paymentMethod->code,
-                    'label' => $paymentMethod->name,
-                ];
-            })->values();
-
+            $isNewPaymentStructure = app(SplitPaymentService::class)->isNewPaymentStructure($payments);
+            if ($isNewPaymentStructure) {
+                $filteredPaymentMethods = $this->lookupService->getPaymentMethods();
+            } else {
+                $filteredPaymentMethods = $paymentMethods->filter(function ($paymentMethod) {
+                    return $paymentMethod->code == PaymentMethodsEnum::CreditCard;
+                })->map(function ($paymentMethod) {
+                    return [
+                        'value' => $paymentMethod->code,
+                        'label' => $paymentMethod->name,
+                    ];
+                })->values();
+            }
             $filteredInsuranceProviders = [];
             if (! empty($insuranceProviders)) {
+
                 $filteredInsuranceProviders = $insuranceProviders->map(function ($paymentMethod) {
                     return [
                         'value' => $paymentMethod->id,
@@ -764,6 +777,7 @@ class CRUDController extends Controller
                     ];
                 })->sortBy('label')->values();
             }
+
             $documentTypes = $this->quoteDocumentService->getQuoteDocumentsForUpload(QuoteTypeId::Home);
 
             return inertia('HomeQuote/Show', [
@@ -808,7 +822,11 @@ class CRUDController extends Controller
                 'UBORelations' => $uboRelations,
                 'emirates' => $emirates,
                 'quoteType' => QuoteTypes::HOME,
+                'paymentTooltipEnum' => PaymentTooltip::asArray(),
+                'paymentStatusEnum' => PaymentStatusEnum::asArray(),
                 'documentTypes' => $documentTypes,
+                'vatPercentage' => $vatPercentage,
+                'isNewPaymentStructure' => $isNewPaymentStructure,
             ]);
         }
 
@@ -864,17 +882,21 @@ class CRUDController extends Controller
 
                 $payment->approved_button = $payment->payment_status_id == PaymentStatusEnum::PAID;
             });
-
-            $paymentMethods = $paymentMethods->filter(function ($paymentMethod) {
-                return $paymentMethod->code == PaymentMethodsEnum::CreditCard;
-            })->map(function ($paymentMethod) {
-                return [
-                    'value' => $paymentMethod->code,
-                    'label' => $paymentMethod->name,
-                ];
-            })->values();
-
+            $isNewPaymentStructure = app(SplitPaymentService::class)->isNewPaymentStructure($payments);
+            if ($isNewPaymentStructure) {
+                $paymentMethods = $this->lookupService->getPaymentMethods();
+            } else {
+                $paymentMethods = $paymentMethods->filter(function ($paymentMethod) {
+                    return $paymentMethod->code == PaymentMethodsEnum::CreditCard;
+                })->map(function ($paymentMethod) {
+                    return [
+                        'value' => $paymentMethod->code,
+                        'label' => $paymentMethod->name,
+                    ];
+                })->values();
+            }
             if (! empty($insuranceProviders)) {
+
                 $insuranceProviders = $insuranceProviders?->map(function ($paymentMethod) {
                     return [
                         'value' => $paymentMethod->id,
@@ -933,6 +955,8 @@ class CRUDController extends Controller
                 'canAddBatchNumber' => auth()->user()->hasRole(RolesEnum::HealthManager),
                 'embeddedProducts' => $embeddedProducts,
                 'quoteType' => QuoteTypes::HEALTH,
+                'paymentTooltipEnum' => PaymentTooltip::asArray(),
+                'storageUrl' => storageUrl(),
                 'can' => [
                     'approve_payments' => auth()->user()->can(PermissionsEnum::ApprovePayments),
                     'edit_payments' => auth()->user()->can(PermissionsEnum::PaymentsEdit),
@@ -944,7 +968,7 @@ class CRUDController extends Controller
                 'industryType' => $industryType,
                 'UBOsDetails' => $uboDetails,
                 'UBORelations' => $uboRelations,
-                'clientInquiryLogs' => $this->crudService->getInquiryLogs($this->genericModel->modelType, $record->uuid) ?? [],
+                'isNewPaymentStructure' => $isNewPaymentStructure,
             ]);
         } else {
             return view('shared.show', compact([
@@ -1008,6 +1032,7 @@ class CRUDController extends Controller
         }
 
         if ($this->genericModel->modelType == quoteTypeCode::Car && in_array($this->genericModel->modelType, newUi())) {
+
             $dropdownSource['car_make_id'] = $this->getCarMakeDropdown();
 
             return inertia('PersonalQuote/Car/Form', [
@@ -1157,11 +1182,14 @@ class CRUDController extends Controller
         if ($modelType == null) {
             $modelType = $request->get('modelType');
         }
-        $quoteTypes = 'Health,Car,Travel,Life,Home,Business,Pet';
-        $serviceType = str_contains($quoteTypes, ucwords($modelType)) ? strtolower($modelType).'QuoteService' : lcfirst(ucwords($modelType)).'Service';
-        $this->genericModel->properties = $this->{$serviceType}->fillModelProperties();
-        $this->genericModel->skipProperties = $this->{$serviceType}->fillModelSkipProperties();
-        $this->genericModel->searchProperties = $this->{$serviceType}->fillModelSearchProperties();
+        $ignoreModelTypes = [quoteTypeCode::Bike, quoteTypeCode::Cycle, quoteTypeCode::Yacht];
+        if (! in_array($modelType, $ignoreModelTypes) && $modelType != null) {
+            $quoteTypes = 'Health,Car,Travel,Life,Home,Business,Pet';
+            $serviceType = str_contains($quoteTypes, ucwords($modelType)) ? strtolower($modelType).'QuoteService' : lcfirst(ucwords($modelType)).'Service';
+            $this->genericModel->properties = $this->{$serviceType}->fillModelProperties();
+            $this->genericModel->skipProperties = $this->{$serviceType}->fillModelSkipProperties();
+            $this->genericModel->searchProperties = $this->{$serviceType}->fillModelSearchProperties();
+        }
     }
 
     public function getDropdownSourceNameForDisplay($modelType, $propertyName, $recordId)
@@ -1383,6 +1411,7 @@ class CRUDController extends Controller
 
                 if ($epTransaction->isNotEmpty()) {
                     foreach ($epTransaction as $item) {
+
                         $product_id = $item->product_id;
                         $embedded_product_id = EmbeddedProductOption::find($product_id)->embedded_product_id;
                         // EP Send documents
@@ -1607,6 +1636,7 @@ class CRUDController extends Controller
     public function manualPlanToggle(Request $request)
     {
         $response = $this->{strtolower($request->modelType).'QuoteService'}->updateManualPlansBulk($request);
+
         if (gettype($response) == GenericRequestEnum::INTEGER && ($response == 200 || $response == 201)) {
             return redirect()->back()->with('success', 'Plan has been updated');
         } else {
@@ -1671,7 +1701,7 @@ class CRUDController extends Controller
         return redirect()->back()->with('message', 'Document has been deleted.');
     }
 
-    public function storePayment(Request $request)
+    public function storePayment(StorePaymentRequest $request)
     {
         $quoteModel = $this->getQuoteObject($request->modelType, $request->quote_id);
         if (! $quoteModel) {
@@ -1731,6 +1761,7 @@ class CRUDController extends Controller
         $payment->update($paymentInformation);
 
         return back()->with('success', 'Payment has been updated');
+
     }
 
     public function sendEmailOneClickBuy(Request $request)
@@ -1835,7 +1866,6 @@ class CRUDController extends Controller
     {
         return CarMake::select('id', 'text', 'code')->where('is_active', true)->get();
     }
-
     public function riskRatingDetails($quoteType, $uuid)
     {
         $quoteModel = $this->getQuoteObject($quoteType, $uuid);

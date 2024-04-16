@@ -24,7 +24,7 @@ class PlanDetailsRequest extends FormRequest
     {
         $rules = [
             'insurance_provider_id' => 'required|integer',
-            'price_with_vat' => 'required|numeric',
+            'price_with_vat' => 'required',
             'insurer_quote_number' => 'nullable',
         ];
 
@@ -36,8 +36,8 @@ class PlanDetailsRequest extends FormRequest
 
         if (request()->quoteType == quoteTypeCode::Business) {
             //for business either price_vat_applicable or price_vat_not_applicable is required, and only one field should have value
-            $rules['price_vat_applicable'] = 'prohibited_unless:price_vat_not_applicable,null|required_without:price_vat_not_applicable|numeric';
-            $rules['price_vat_not_applicable'] = 'prohibited_unless:price_vat_applicable,null|required_without:price_vat_applicable|numeric';
+            $rules['price_vat_applicable'] = 'nullable|required_without:price_vat_not_applicable|numeric';
+            $rules['price_vat_not_applicable'] = 'nullable|required_without:price_vat_applicable|numeric';
         }
 
         return $rules;
