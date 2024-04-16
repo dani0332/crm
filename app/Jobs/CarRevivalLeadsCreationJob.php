@@ -93,12 +93,14 @@ class CarRevivalLeadsCreationJob implements ShouldQueue, StackableJob
             'referenceUrl' => config('constants.APP_URL'),
         ];
 
-        info('CarRevivalLeadsCreationJobParentLeadId  ' . $this->lead->id);
+        info('CarRevivalLeadsCreationJobParentLeadId -' . $this->lead->id);
+
+        info('CarRevivalLeadsCreationJobLeadPayLoad -' . json_encode($dataArr));
 
         $capiResponse = Capi::request('/api/v1-save-car-quote', 'post', $dataArr);
 
         if (!isset($capiResponse->errors) && !empty($capiResponse->quoteUID)) {
-            info('CarRevivalLeadsCreationJobLeadCreated -' . $capiResponse->quoteUID . ' - CAPI Response:');
+            info('CarRevivalLeadsCreationJobLeadCreated - ' . $capiResponse->quoteUID . ' - CAPI Response:');
 
             $carQuote = $this->getQuoteObject(QuoteTypes::CAR->value, $capiResponse->quoteUID);
 
@@ -149,7 +151,7 @@ class CarRevivalLeadsCreationJob implements ShouldQueue, StackableJob
             info('CarRevivalLeadsCreationJobemailResponse ' . json_encode($response));
             if ($response == 201) {
 
-                info('CarRevivalLeadsCreationJobEmailSent--' . $emailData->customerEmail . '-' . $capiResponse->quoteUID . '- Email Sent');
+                info('CarRevivalLeadsCreationJobEmailSent-- ' . $emailData->customerEmail . ' - ' . $capiResponse->quoteUID . ' - Email Sent');
 
                 DttRevival::create([
                     'quote_type_id' => QuoteTypes::CAR->id(),
@@ -158,17 +160,17 @@ class CarRevivalLeadsCreationJob implements ShouldQueue, StackableJob
                     'email_sent' => true,
                 ]);
 
-                info('CarRevivalLeadsCreationJobDttRevivalsInsertedUUID -' . $capiResponse->quoteUID);
+                info('CarRevivalLeadsCreationJobDttRevivalsInsertedUUID - ' . $capiResponse->quoteUID);
 
                 CarQuote::find($this->lead->id)->update(['is_revived' => true]);
 
-                info('CarRevivalLeadsCreationJobIs_revivedUpdated -' . $this->lead->id);
+                info('CarRevivalLeadsCreationJobIs_revivedUpdated - ' . $this->lead->id);
             } else {
-                info('CarRevivalLeadsCreationJobEmailIsNotSent -' . $emailData->customerEmail);
+                info('CarRevivalLeadsCreationJobEmailIsNotSent - ' . $emailData->customerEmail);
             }
         } else {
 
-            info('CarRevivalLeadsCreationJobLeadNotGeneratedCapiResponse' . json_encode($capiResponse));
+            info('CarRevivalLeadsCreationJobLeadNotGeneratedCapiResponse- ' . json_encode($capiResponse));
         }
     }
 
