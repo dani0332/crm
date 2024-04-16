@@ -368,6 +368,7 @@ watch(
               :rules="[isRequired]"
               placeholder="Date of Birth"
               class="w-full"
+              :exactMatch="true"
             />
           </x-field>
           <div
