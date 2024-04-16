@@ -70,6 +70,10 @@ class DashboardController extends Controller
         $totalLeadsReceivedEcommerce = count($todaysLeads->where('is_ecommerce', 1));
         $totalUnAssignedLeads = $this->dashboardService->getTotalUnAssignedLeads($filters);
         $totalUnAssignedLeadsReceived = count($totalUnAssignedLeads);
+        $totalUnAssignedOnlySICLeads = $this->dashboardService->getTotalUnAssignedOnlySICLeads($filters);
+        $totalUnAssignedOnlySICLeadsReceived = count($totalUnAssignedOnlySICLeads);
+        $totalUnAssignedOnlyPaidSICLeads = $this->dashboardService->getTotalUnAssignedOnlySICLeads($filters, true);
+        $totalUnAssignedOnlyPaidSICLeadsReceived = count($totalUnAssignedOnlyPaidSICLeads);
         $totalUnAssignedLeadsReceivedEcommerce = count($totalUnAssignedLeads->where('is_ecommerce', 1));
         $totalUnAssignedRevivalLeads = count($totalUnAssignedLeads->where('source', LeadSourceEnum::REVIVAL));
 
@@ -90,7 +94,7 @@ class DashboardController extends Controller
             ->groupBy('source')->get();
 
         $leadReceivedSummaryBySource = $leadReceivedSummaryBySource->map(function ($item) use ($totalLeadsReceived) {
-            $item->percentage = number_format((float) (($item->leadSourceCount / $totalLeadsReceived) * 100), 2, '.', '').'%';
+            $item->percentage = number_format((float) (($item->leadSourceCount / $totalLeadsReceived) * 100), 2, '.', '') . '%';
 
             return $item;
         });
@@ -99,6 +103,8 @@ class DashboardController extends Controller
             'totalLeadsReceived' => $totalLeadsReceived,
             'totalLeadsReceivedEcommerce' => $totalLeadsReceivedEcommerce,
             'totalUnAssignedLeadsReceived' => $totalUnAssignedLeadsReceived,
+            'totalUnAssignedOnlySICLeadsReceived' => $totalUnAssignedOnlySICLeadsReceived,
+            'totalUnAssignedOnlyPaidSICLeadsReceived' => $totalUnAssignedOnlyPaidSICLeadsReceived,
             'totalUnAssignedLeadsReceivedEcommerce' => $totalUnAssignedLeadsReceivedEcommerce,
             'teams' => $teams,
             'carAdvisors' => $carAdvisors,
@@ -111,7 +117,6 @@ class DashboardController extends Controller
             'assignedLeadsBySource' => $assignedLeadsBySource,
             'leadReceivedSummaryBySource' => $leadReceivedSummaryBySource,
         ]);
-
     }
 
     public function getRecentDailyStats(Request $request)
@@ -137,6 +142,10 @@ class DashboardController extends Controller
         $totalLeadsReceivedEcommerce = count($todaysLeads->where('is_ecommerce', 1));
         $totalUnAssignedLeads = $this->dashboardService->getTotalUnAssignedLeads($filters);
         $totalUnAssignedLeadsReceived = count($totalUnAssignedLeads);
+        $totalUnAssignedOnlySICLeads = $this->dashboardService->getTotalUnAssignedOnlySICLeads($filters);
+        $totalUnAssignedOnlySICLeadsReceived = count($totalUnAssignedOnlySICLeads);
+        $totalUnAssignedOnlyPaidSICLeads = $this->dashboardService->getTotalUnAssignedOnlySICLeads($filters, true);
+        $totalUnAssignedOnlyPaidSICLeadsReceived = count($totalUnAssignedOnlyPaidSICLeads);
         $totalUnAssignedLeadsReceivedEcommerce = count($totalUnAssignedLeads->where('is_ecommerce', 1));
         $totalUnAssignedRevivalLeads = count($totalUnAssignedLeads->where('source', LeadSourceEnum::REVIVAL));
         $leadsCountByTier = $this->dashboardService->getLeadsCountByTier($filters);
@@ -144,9 +153,12 @@ class DashboardController extends Controller
         $unAssignedLeadsByTier = $this->dashboardService->getUnAssignedLeadsCountByTier($filters);
         $advisorLeadsAssignedData = $this->dashboardService->getAdvisorLeadAssignedData($filters);
 
-        return ['totalLeadsReceived' => $totalLeadsReceived, 'totalLeadsReceivedEcommerce' => $totalLeadsReceivedEcommerce, 'totalUnAssignedLeadsReceived' => $totalUnAssignedLeadsReceived,
+        return [
+            'totalLeadsReceived' => $totalLeadsReceived, 'totalLeadsReceivedEcommerce' => $totalLeadsReceivedEcommerce, 'totalUnAssignedLeadsReceived' => $totalUnAssignedLeadsReceived,
+            'totalUnAssignedOnlySICLeadsReceived' => $totalUnAssignedOnlySICLeadsReceived, 'totalUnAssignedOnlyPaidSICLeadsReceived' => $totalUnAssignedOnlyPaidSICLeadsReceived,
             'totalUnAssignedLeadsReceivedEcommerce' => $totalUnAssignedLeadsReceivedEcommerce, 'teamWiseLeadsAssignedAverage' => $teamWiseLeadsAssignedAverage,
-            'totalUnAssignedRevivalLeads' => $totalUnAssignedRevivalLeads, 'leadsCountByTier' => $leadsCountByTier, 'revivalLeadsCount' => $revivalLeadsCount, 'advisorLeadsAssignedData' => $advisorLeadsAssignedData, 'unAssignedLeadsByTier' => $unAssignedLeadsByTier];
+            'totalUnAssignedRevivalLeads' => $totalUnAssignedRevivalLeads, 'leadsCountByTier' => $leadsCountByTier, 'revivalLeadsCount' => $revivalLeadsCount, 'advisorLeadsAssignedData' => $advisorLeadsAssignedData, 'unAssignedLeadsByTier' => $unAssignedLeadsByTier,
+        ];
     }
 
     public function renderTplDashboard(Request $request)
@@ -170,7 +182,6 @@ class DashboardController extends Controller
             'commonTeam' => $commonTeam,
             'tiers' => $tiers,
         ]);
-
     }
 
     public function getTPLDashboardStats(Request $request): array
@@ -185,16 +196,16 @@ class DashboardController extends Controller
                 'quote_batches.name as batch_name',
                 'users.name as advisor_name',
                 'quote_batches.id as quote_batch_id',
-                DB::raw('SUM(CASE WHEN car_quote_request.source != "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END) as total_leads'),
-                DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id = '.QuoteStatusEnum::NewLead.' and car_quote_request.source != "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END) as new_leads'),
-                DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in ('.QuoteStatusEnum::PriceTooHigh.', '.QuoteStatusEnum::PolicyPurchasedBeforeFirstCall.', '.QuoteStatusEnum::NotInterested.', '.QuoteStatusEnum::NotEligibleForInsurance.', '.QuoteStatusEnum::NotLookingForMotorInsurance.', '.QuoteStatusEnum::NonGccSpec.','.QuoteStatusEnum::AMLScreeningFailed.')  and car_quote_request.source != "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END) as not_interested'),
-                DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in ('.QuoteStatusEnum::NotContactablePe.', '.QuoteStatusEnum::FollowupCall.', '.QuoteStatusEnum::Interested.', '.QuoteStatusEnum::NoAnswer.', '.QuoteStatusEnum::Quoted.', '.QuoteStatusEnum::PaymentPending.','.QuoteStatusEnum::AMLScreeningCleared.','.QuoteStatusEnum::PendingQuote.')  and car_quote_request.source != "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END) as in_progress'),
-                DB::raw('SUM(CASE WHEN car_quote_request.source = "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END) as manual_created'),
-                DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in ('.QuoteStatusEnum::Duplicate.','.QuoteStatusEnum::Fake.')  and car_quote_request.source != "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END) as bad_leads'),
-                DB::raw('SUM(CASE WHEN (car_quote_request.payment_status_id = "'.PaymentStatusEnum::CAPTURED.'"  OR car_quote_request.quote_status_id in ('.QuoteStatusEnum::TransactionApproved.','.QuoteStatusEnum::PolicyIssued.'))  and car_quote_request.source != "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END) as sale_leads'),
-                DB::raw('SUM(CASE WHEN (car_quote_request.payment_status_id = "'.PaymentStatusEnum::CAPTURED.'"  OR car_quote_request.quote_status_id in ('.QuoteStatusEnum::TransactionApproved.','.QuoteStatusEnum::PolicyIssued.')) and car_quote_request.source = "'.LeadSourceEnum::IMCRM.'"  THEN 1 ELSE 0 END) as created_sale_leads'),
-                DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id = '.QuoteStatusEnum::IMRenewal.' THEN 1 ELSE 0 END)  and car_quote_request.source != "'.LeadSourceEnum::IMCRM.'" as afia_renewals_count'),
-                DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in ('.QuoteStatusEnum::Duplicate.','.QuoteStatusEnum::Fake.') and car_quote_request.source = "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END) as manual_created_bad_leads'),
+                DB::raw('SUM(CASE WHEN car_quote_request.source != "' . LeadSourceEnum::IMCRM . '" THEN 1 ELSE 0 END) as total_leads'),
+                DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id = ' . QuoteStatusEnum::NewLead . ' and car_quote_request.source != "' . LeadSourceEnum::IMCRM . '" THEN 1 ELSE 0 END) as new_leads'),
+                DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in (' . QuoteStatusEnum::PriceTooHigh . ', ' . QuoteStatusEnum::PolicyPurchasedBeforeFirstCall . ', ' . QuoteStatusEnum::NotInterested . ', ' . QuoteStatusEnum::NotEligibleForInsurance . ', ' . QuoteStatusEnum::NotLookingForMotorInsurance . ', ' . QuoteStatusEnum::NonGccSpec . ',' . QuoteStatusEnum::AMLScreeningFailed . ')  and car_quote_request.source != "' . LeadSourceEnum::IMCRM . '" THEN 1 ELSE 0 END) as not_interested'),
+                DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in (' . QuoteStatusEnum::NotContactablePe . ', ' . QuoteStatusEnum::FollowupCall . ', ' . QuoteStatusEnum::Interested . ', ' . QuoteStatusEnum::NoAnswer . ', ' . QuoteStatusEnum::Quoted . ', ' . QuoteStatusEnum::PaymentPending . ',' . QuoteStatusEnum::AMLScreeningCleared . ',' . QuoteStatusEnum::PendingQuote . ')  and car_quote_request.source != "' . LeadSourceEnum::IMCRM . '" THEN 1 ELSE 0 END) as in_progress'),
+                DB::raw('SUM(CASE WHEN car_quote_request.source = "' . LeadSourceEnum::IMCRM . '" THEN 1 ELSE 0 END) as manual_created'),
+                DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in (' . QuoteStatusEnum::Duplicate . ',' . QuoteStatusEnum::Fake . ')  and car_quote_request.source != "' . LeadSourceEnum::IMCRM . '" THEN 1 ELSE 0 END) as bad_leads'),
+                DB::raw('SUM(CASE WHEN (car_quote_request.payment_status_id = "' . PaymentStatusEnum::CAPTURED . '"  OR car_quote_request.quote_status_id in (' . QuoteStatusEnum::TransactionApproved . ',' . QuoteStatusEnum::PolicyIssued . '))  and car_quote_request.source != "' . LeadSourceEnum::IMCRM . '" THEN 1 ELSE 0 END) as sale_leads'),
+                DB::raw('SUM(CASE WHEN (car_quote_request.payment_status_id = "' . PaymentStatusEnum::CAPTURED . '"  OR car_quote_request.quote_status_id in (' . QuoteStatusEnum::TransactionApproved . ',' . QuoteStatusEnum::PolicyIssued . ')) and car_quote_request.source = "' . LeadSourceEnum::IMCRM . '"  THEN 1 ELSE 0 END) as created_sale_leads'),
+                DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id = ' . QuoteStatusEnum::IMRenewal . ' THEN 1 ELSE 0 END)  and car_quote_request.source != "' . LeadSourceEnum::IMCRM . '" as afia_renewals_count'),
+                DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in (' . QuoteStatusEnum::Duplicate . ',' . QuoteStatusEnum::Fake . ') and car_quote_request.source = "' . LeadSourceEnum::IMCRM . '" THEN 1 ELSE 0 END) as manual_created_bad_leads'),
             )
             ->join('users', 'users.id', 'car_quote_request.advisor_id')
             ->join('quote_batches', 'quote_batches.id', 'car_quote_request.quote_batch_id')
@@ -265,7 +276,7 @@ class DashboardController extends Controller
             $total = $denominator > 0 ? ($numerator / $denominator) : 0;
 
             $data[] = number_format((float) $total * 100, 2, '.', '');
-            $labels[] = $record['batch_name'].'-('.$record['start_date'].' to '.$record['end_date'].')';
+            $labels[] = $record['batch_name'] . '-(' . $record['start_date'] . ' to ' . $record['end_date'] . ')';
         }
 
         return isset($request->tier_filter) || isset($request->source) ? [json_encode($labels, JSON_OBJECT_AS_ARRAY), json_encode($data, JSON_OBJECT_AS_ARRAY)] : [$labels, $data];
@@ -274,13 +285,13 @@ class DashboardController extends Controller
     private function applyFilter($query, $column, $value, $searchType)
     {
         switch ($searchType) {
-            case IMCRMSearchTypesEnum::EQUAL_SEARCH :
+            case IMCRMSearchTypesEnum::EQUAL_SEARCH:
                 $query = $query->where($column, $value);
                 break;
-            case IMCRMSearchTypesEnum::LIKE_SEARCH :
-                $query = $query->where($column, 'like', '%'.$value.'%');
+            case IMCRMSearchTypesEnum::LIKE_SEARCH:
+                $query = $query->where($column, 'like', '%' . $value . '%');
                 break;
-            case IMCRMSearchTypesEnum::MULTI_SEARCH :
+            case IMCRMSearchTypesEnum::MULTI_SEARCH:
                 $query = $query->whereIn($column, $value);
                 break;
             case IMCRMSearchTypesEnum::NOT_EQUAL:
@@ -310,16 +321,16 @@ class DashboardController extends Controller
                 'quote_batches.name as batch_name',
                 'users.name as advisor_name',
                 'quote_batches.id as quote_batch_id',
-                DB::raw('SUM(CASE WHEN car_quote_request.source != "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END) as total_leads'),
-                DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id = '.QuoteStatusEnum::NewLead.' and car_quote_request.source != "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END) as new_leads'),
-                DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in ('.QuoteStatusEnum::PriceTooHigh.', '.QuoteStatusEnum::PolicyPurchasedBeforeFirstCall.', '.QuoteStatusEnum::NotInterested.', '.QuoteStatusEnum::NotEligibleForInsurance.', '.QuoteStatusEnum::NotLookingForMotorInsurance.', '.QuoteStatusEnum::NonGccSpec.','.QuoteStatusEnum::AMLScreeningFailed.')  and car_quote_request.source != "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END) as not_interested'),
-                DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in ('.QuoteStatusEnum::NotContactablePe.', '.QuoteStatusEnum::FollowupCall.', '.QuoteStatusEnum::Interested.', '.QuoteStatusEnum::NoAnswer.', '.QuoteStatusEnum::Quoted.', '.QuoteStatusEnum::PaymentPending.','.QuoteStatusEnum::AMLScreeningCleared.','.QuoteStatusEnum::PendingQuote.')  and car_quote_request.source != "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END) as in_progress'),
-                DB::raw('SUM(CASE WHEN car_quote_request.source = "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END) as manual_created'),
-                DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in ('.QuoteStatusEnum::Duplicate.','.QuoteStatusEnum::Fake.')  and car_quote_request.source != "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END) as bad_leads'),
-                DB::raw('SUM(CASE WHEN (car_quote_request.payment_status_id = "'.PaymentStatusEnum::CAPTURED.'"  OR car_quote_request.quote_status_id in ('.QuoteStatusEnum::TransactionApproved.','.QuoteStatusEnum::PolicyIssued.'))  and car_quote_request.source != "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END) as sale_leads'),
-                DB::raw('SUM(CASE WHEN (car_quote_request.payment_status_id = "'.PaymentStatusEnum::CAPTURED.'"  OR car_quote_request.quote_status_id in ('.QuoteStatusEnum::TransactionApproved.','.QuoteStatusEnum::PolicyIssued.')) and car_quote_request.source = "'.LeadSourceEnum::IMCRM.'"  THEN 1 ELSE 0 END) as created_sale_leads'),
-                DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id = '.QuoteStatusEnum::IMRenewal.' THEN 1 ELSE 0 END)  and car_quote_request.source != "'.LeadSourceEnum::IMCRM.'" as afia_renewals_count'),
-                DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in ('.QuoteStatusEnum::Duplicate.','.QuoteStatusEnum::Fake.') and car_quote_request.source = "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END) as manual_created_bad_leads'),
+                DB::raw('SUM(CASE WHEN car_quote_request.source != "' . LeadSourceEnum::IMCRM . '" THEN 1 ELSE 0 END) as total_leads'),
+                DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id = ' . QuoteStatusEnum::NewLead . ' and car_quote_request.source != "' . LeadSourceEnum::IMCRM . '" THEN 1 ELSE 0 END) as new_leads'),
+                DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in (' . QuoteStatusEnum::PriceTooHigh . ', ' . QuoteStatusEnum::PolicyPurchasedBeforeFirstCall . ', ' . QuoteStatusEnum::NotInterested . ', ' . QuoteStatusEnum::NotEligibleForInsurance . ', ' . QuoteStatusEnum::NotLookingForMotorInsurance . ', ' . QuoteStatusEnum::NonGccSpec . ',' . QuoteStatusEnum::AMLScreeningFailed . ')  and car_quote_request.source != "' . LeadSourceEnum::IMCRM . '" THEN 1 ELSE 0 END) as not_interested'),
+                DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in (' . QuoteStatusEnum::NotContactablePe . ', ' . QuoteStatusEnum::FollowupCall . ', ' . QuoteStatusEnum::Interested . ', ' . QuoteStatusEnum::NoAnswer . ', ' . QuoteStatusEnum::Quoted . ', ' . QuoteStatusEnum::PaymentPending . ',' . QuoteStatusEnum::AMLScreeningCleared . ',' . QuoteStatusEnum::PendingQuote . ')  and car_quote_request.source != "' . LeadSourceEnum::IMCRM . '" THEN 1 ELSE 0 END) as in_progress'),
+                DB::raw('SUM(CASE WHEN car_quote_request.source = "' . LeadSourceEnum::IMCRM . '" THEN 1 ELSE 0 END) as manual_created'),
+                DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in (' . QuoteStatusEnum::Duplicate . ',' . QuoteStatusEnum::Fake . ')  and car_quote_request.source != "' . LeadSourceEnum::IMCRM . '" THEN 1 ELSE 0 END) as bad_leads'),
+                DB::raw('SUM(CASE WHEN (car_quote_request.payment_status_id = "' . PaymentStatusEnum::CAPTURED . '"  OR car_quote_request.quote_status_id in (' . QuoteStatusEnum::TransactionApproved . ',' . QuoteStatusEnum::PolicyIssued . '))  and car_quote_request.source != "' . LeadSourceEnum::IMCRM . '" THEN 1 ELSE 0 END) as sale_leads'),
+                DB::raw('SUM(CASE WHEN (car_quote_request.payment_status_id = "' . PaymentStatusEnum::CAPTURED . '"  OR car_quote_request.quote_status_id in (' . QuoteStatusEnum::TransactionApproved . ',' . QuoteStatusEnum::PolicyIssued . ')) and car_quote_request.source = "' . LeadSourceEnum::IMCRM . '"  THEN 1 ELSE 0 END) as created_sale_leads'),
+                DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id = ' . QuoteStatusEnum::IMRenewal . ' THEN 1 ELSE 0 END)  and car_quote_request.source != "' . LeadSourceEnum::IMCRM . '" as afia_renewals_count'),
+                DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in (' . QuoteStatusEnum::Duplicate . ',' . QuoteStatusEnum::Fake . ') and car_quote_request.source = "' . LeadSourceEnum::IMCRM . '" THEN 1 ELSE 0 END) as manual_created_bad_leads'),
             )
             ->join('users', 'users.id', 'car_quote_request.advisor_id')
             ->join('quote_batches', 'quote_batches.id', 'car_quote_request.quote_batch_id')
@@ -395,7 +406,7 @@ class DashboardController extends Controller
             $total = $denominator > 0 ? ($numerator / $denominator) : 0;
 
             $data[] = number_format((float) $total * 100, 2, '.', '');
-            $labels[] = $record['batch_name'].'-('.$record['start_date'].' to '.$record['end_date'].')';
+            $labels[] = $record['batch_name'] . '-(' . $record['start_date'] . ' to ' . $record['end_date'] . ')';
         }
 
         return isset($request->tier_filter) || isset($request->userFilter) ? [json_encode($labels, JSON_OBJECT_AS_ARRAY), json_encode($data, JSON_OBJECT_AS_ARRAY)] : [$labels, $data];
@@ -405,9 +416,9 @@ class DashboardController extends Controller
     {
         $userId = auth()->user()->id;
         $userTeams = $this->getUserTeams($userId)->pluck('id')->toArray();
-        info('Inside getCommonTeamsForCurrentUserWithCar user teams are : '.json_encode($userTeams));
+        info('Inside getCommonTeamsForCurrentUserWithCar user teams are : ' . json_encode($userTeams));
         $teamsByProduct = $this->getTeamsByProductName(quoteTypeCode::Car)->pluck('id')->toArray();
-        info('Inside getCommonTeamsForCurrentUserWithCar teams by product are : '.json_encode($teamsByProduct));
+        info('Inside getCommonTeamsForCurrentUserWithCar teams by product are : ' . json_encode($teamsByProduct));
 
         return (count($userTeams) > 0 && count($teamsByProduct) > 0) ? array_intersect($userTeams, $teamsByProduct) : [];
     }
@@ -417,7 +428,7 @@ class DashboardController extends Controller
 
         $tiers = Tier::where('can_handle_tpl', 0)->orderBy('name', 'asc')->where('name', '!=', TiersEnum::TIER_R)->where('is_active', 1)->get();
         $comprehensiveDashboardStats = $this->getComprehensiveDashboardStats($request, $tiers);
-        info('inside renderComprehensiveDashboard comp stats are : '.json_encode($comprehensiveDashboardStats));
+        info('inside renderComprehensiveDashboard comp stats are : ' . json_encode($comprehensiveDashboardStats));
         $teams = $this->getTeamsByProductName(quoteTypeCode::Car);
         $commonTeams = $this->getCommonTeamsForCurrentUserWithCar();
         $teams = $teams->filter(function ($item) use ($commonTeams) {
@@ -429,7 +440,6 @@ class DashboardController extends Controller
             'teams' => $teams,
             'tiers' => $tiers,
         ]);
-
     }
 
     public function conversionStats($quoteType)
@@ -437,12 +447,11 @@ class DashboardController extends Controller
         $statsArray = $this->getWeeklyStats($quoteType);
         $headingArray = $this->getWeeklyHeading();
 
-        return inertia('Dashboard/'.ucwords($quoteType).'Conversion', [
+        return inertia('Dashboard/' . ucwords($quoteType) . 'Conversion', [
             'statsArray' => $statsArray,
             'headingArray' => $headingArray,
             'qouteType' => $quoteType,
         ]);
-
     }
 
     public function getWeeklyStats($type): array

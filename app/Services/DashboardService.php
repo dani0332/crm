@@ -3,14 +3,16 @@
 namespace App\Services;
 
 use App\Enums\LeadSourceEnum;
+use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\quoteTypeCode;
 use App\Enums\TiersEnum;
 use App\Models\ApplicationStorage;
 use App\Models\CarQuote;
 use App\Traits\GetUserTreeTrait;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
-use DB;
+use Illuminate\Support\Facades\DB;
 
 class DashboardService extends BaseService
 {
@@ -19,7 +21,7 @@ class DashboardService extends BaseService
 
     public function getDashboardStatsByDate($start, $end, $type)
     {
-        $tableName = $type.'_quote_request';
+        $tableName = $type . '_quote_request';
         $stats = DB::select('
                     SELECT *
                     FROM (
@@ -34,10 +36,10 @@ class DashboardService extends BaseService
                     SUM(CASE WHEN q.quote_status_id=15 THEN 1 ELSE 0 END) tran_approved_total,
                     SUM(CASE WHEN q.is_ecommerce THEN 1 ELSE 0 END) ecom_total,
                     u.email
-                    FROM '.$tableName." q
+                    FROM ' . $tableName . " q
                     LEFT OUTER JOIN users u on u.id = q.advisor_id
                     WHERE q.quote_status_id NOT IN (9,35)
-                    AND q.created_at BETWEEN '".$start."' and '".$end."'
+                    AND q.created_at BETWEEN '" . $start . "' and '" . $end . "'
                     AND q.renewal_import_code IS NULL
                     GROUP BY q.advisor_id)  a order by a.email;");
 
@@ -55,7 +57,7 @@ class DashboardService extends BaseService
     {
         $pastDate = Carbon::now()->subWeeks($noOfWeeksInPast);
 
-        return 'Week : '.$pastDate->startOfWeek()->format('d M Y').' - '.$pastDate->endOfWeek()->format('d M Y');
+        return 'Week : ' . $pastDate->startOfWeek()->format('d M Y') . ' - ' . $pastDate->endOfWeek()->format('d M Y');
     }
 
     public function getLeadsCountByTier($filters)
@@ -84,6 +86,14 @@ class DashboardService extends BaseService
             ->whereNotIn('car_quote_request.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
             ->whereNotIn('car_quote_request.source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD])
             ->where('tiers.name', '!=', TiersEnum::TIER_R)
+            ->whereNotIn('car_quote_request.uuid', function ($query) { // to remove from the query tags table to exlude SIC records from the result set
+                $query->distinct()
+                    ->select('quote_uuid')
+                    ->from('quote_tags')
+                    ->join('quote_type', 'quote_type.id', 'quote_tags.quote_type_id')
+                    ->where('quote_tags.name', 'SIC')
+                    ->where('quote_type.code', quoteTypeCode::Car);
+            })
             ->groupBy('tiers.name');
         if ($filters['applyUnAssignedLeadsCountByTierDateFilter'] == true && $filters['startDate'] != now()->startOfDay()->toDateTimeString()) {
             $query->whereBetween('car_quote_request.created_at', [$filters['startDate'], $filters['endDate']]);
@@ -98,8 +108,8 @@ class DashboardService extends BaseService
     public function getLeadsCountRevival($filters)
     {
         $query = CarQuote::select(
-            DB::raw('sum(CASE WHEN car_quote_request.source = "'.LeadSourceEnum::REVIVAL.'" THEN 1 ELSE 0 END) as revival_leads'),
-            DB::raw('sum(CASE WHEN car_quote_request.source != "'.LeadSourceEnum::REVIVAL.'" THEN 1 ELSE 0 END) as non_revival_leads'),
+            DB::raw('sum(CASE WHEN car_quote_request.source = "' . LeadSourceEnum::REVIVAL . '" THEN 1 ELSE 0 END) as revival_leads'),
+            DB::raw('sum(CASE WHEN car_quote_request.source != "' . LeadSourceEnum::REVIVAL . '" THEN 1 ELSE 0 END) as non_revival_leads'),
         )
             ->whereBetween('car_quote_request.created_at', [$filters['startDate'], $filters['endDate']])
             ->whereNull('advisor_id')
@@ -163,7 +173,7 @@ class DashboardService extends BaseService
             $usersCount = count($teamUserIds);
 
             $leadsCount = $todaysLeads->whereIn('advisor_id', array_unique($teamUserIds->toArray()))->count();
-            $stats = $leadsCount.' / '.$usersCount.' =  '.number_format((float) $usersCount == 0 ? 0 : $leadsCount / $usersCount, 2, '.', '');
+            $stats = $leadsCount . ' / ' . $usersCount . ' =  ' . number_format((float) $usersCount == 0 ? 0 : $leadsCount / $usersCount, 2, '.', '');
 
             $teamWiseLeadsAssignedAverage[] = [
                 'totalUsersUnderTeam' => $usersCount,
@@ -182,13 +192,49 @@ class DashboardService extends BaseService
             ->whereNull('advisor_id')
             ->whereNotIn('car_quote_request.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
             ->where('tiers.name', '!=', TiersEnum::TIER_R)
-            ->whereNotIn('car_quote_request.source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD]);
+            ->whereNotIn('car_quote_request.source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD])
+            ->whereNotIn('car_quote_request.uuid', function ($query) { // to remove from the query tags table to exlude SIC records from the result set
+                $query->distinct()
+                    ->select('quote_uuid')
+                    ->from('quote_tags')
+                    ->join('quote_type', 'quote_type.id', 'quote_tags.quote_type_id')
+                    ->where('quote_tags.name', 'SIC')
+                    ->where('quote_type.code', quoteTypeCode::Car);
+            });
 
         if ($filters['applyTotalUnAssignedLeadsDateFilter'] == true && $filters['startDate'] != now()->startOfDay()->toDateTimeString()) {
             $query->whereBetween('car_quote_request.created_at', [$filters['startDate'], $filters['endDate']]);
         } else {
             $from = ApplicationStorage::where('key_name', 'CAR_LEAD_ALLOCATION_START_DATE_FOR_LEADS')->first()->value;
             $query->whereBetween('car_quote_request.created_at', [$from, now()->endOfDay()]);
+        }
+
+        return $query->get();
+    }
+
+    public function getTotalUnAssignedOnlySICLeads($filters, $isPaid = false)
+    {
+        $query = CarQuote::leftJoin('quote_tags', 'quote_tags.quote_uuid', 'car_quote_request.uuid')
+            ->whereNull('advisor_id')
+            ->whereNotIn('car_quote_request.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
+            ->whereNotIn('car_quote_request.source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD]);
+
+        if ($filters['applyTotalUnAssignedLeadsDateFilter'] == true && $filters['startDate'] != now()->startOfDay()->toDateTimeString()) {
+            $query->whereBetween('car_quote_request.created_at', [$filters['startDate'], $filters['endDate']]);
+        } else {
+            $from = ApplicationStorage::where('key_name', 'CAR_LEAD_ALLOCATION_START_DATE_FOR_LEADS')->first()->value;
+            if (!$isPaid) {
+                $from = now()->startOfDay();
+            }
+            $query->whereBetween('car_quote_request.created_at', [$from, now()->endOfDay()]);
+        }
+
+        // fetch only records with SIC tag
+        $query = $query->where('quote_tags.name', 'SIC');
+
+        // fetch only paid records if isPaid is true
+        if ($isPaid) {
+            $query = $query->where('car_quote_request.payment_status_id', PaymentStatusEnum::AUTHORISED);
         }
 
         return $query->get();
