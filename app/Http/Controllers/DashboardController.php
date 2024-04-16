@@ -2,21 +2,21 @@
 
 namespace App\Http\Controllers;
 
-use App\Enums\IMCRMSearchTypesEnum;
-use App\Enums\LeadSourceEnum;
-use App\Enums\PaymentStatusEnum;
-use App\Enums\QuoteStatusEnum;
-use App\Enums\quoteTypeCode;
-use App\Enums\TiersEnum;
-use App\Models\CarQuote;
+use Carbon\Carbon;
 use App\Models\Team;
 use App\Models\Tier;
-use App\Services\DashboardService;
-use App\Services\TierService;
-use App\Traits\TeamHierarchyTrait;
-use Carbon\Carbon;
+use App\Enums\TiersEnum;
+use App\Models\CarQuote;
+use App\Enums\quoteTypeCode;
 use Illuminate\Http\Request;
+use App\Enums\LeadSourceEnum;
+use App\Services\TierService;
+use App\Enums\QuoteStatusEnum;
+use App\Enums\PaymentStatusEnum;
+use App\Services\DashboardService;
+use App\Traits\TeamHierarchyTrait;
 use Illuminate\Support\Facades\DB;
+use App\Enums\IMCRMSearchTypesEnum;
 
 class DashboardController extends Controller
 {
@@ -171,15 +171,10 @@ class DashboardController extends Controller
             return in_array($item->id, $commonTeams);
         });
         $tiers = $this->tierService->getTPLTiers();
-        $commonTeam = 0;
-        if (count($commonTeams) > 0) {
-            $commonTeam = $commonTeams[0];
-        }
 
         return inertia('Dashboard/TPLConversion', [
             'tplDashboardStats' => $tplDashboardStats,
             'teams' => $teams,
-            'commonTeam' => $commonTeam,
             'tiers' => $tiers,
         ]);
     }

@@ -2,7 +2,6 @@
 let props = defineProps({
   tplDashboardStats: Array,
   teams: Object,
-  commonTeam: Number,
   tiers: Object,
 });
 
