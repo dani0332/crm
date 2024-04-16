@@ -360,9 +360,10 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                         try {
                             $paymentSplit->collection_amount = $splitAmount;
                             $paymentSplit->save();
-                            if (Auth::user()->hasRole(RolesEnum::BetaUser)) { //Part of milestone 2
+                            /* Part of milestone 2
+                            if (Auth::user()->hasRole(RolesEnum::BetaUser)) {
                                 app(SplitPaymentService::class)->createReciept($request->modelType, $request->quote_id, $paymentSplit);
-                            }
+                            }*/
                             $parentPayment = $paymentSplit->payment;
                             $parentPayment->captured_amount = ($parentPayment->captured_amount + $splitAmount);
                             $parentPayment->save();
@@ -497,10 +498,10 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                     );
                 }
             }
-            if (Auth::user()->hasRole(RolesEnum::BetaUser)) { //Part of milestone 2
+            /* Part of milestone 2
+            if (Auth::user()->hasRole(RolesEnum::BetaUser)) {
                 app(SplitPaymentService::class)->createReciept($request->modelType, $request->quote_id, $splitPayment);
-            }
-
+            }*/
         } elseif ($request->is_declined) {
             $paymentInformation = [
                 'decline_reason_id' => $request->declined_reason,
