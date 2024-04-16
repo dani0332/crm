@@ -42,7 +42,8 @@ class InsuranceQuoteTypeSeeder extends Seeder
 
             foreach ($providers as $provider) {
                 if ($provider = InsuranceProvider::where('code', $provider)->first()) {
-                    $provider->quoteTypes()->attach($quoteTypeId);
+                    if(!$provider->quoteTypes->contains($quoteTypeId))
+                        $provider->quoteTypes()->attach($quoteTypeId);
                 }
             }
         }
