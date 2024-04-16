@@ -346,6 +346,7 @@ watch(
             { value: 'Cycle', label: 'Cycle' },
             { value: 'Home', label: 'Home' },
             { value: 'Corpline', label: 'Corpline' },
+            { value: 'Yacht', label: 'Yacht' },
           ]"
           class="w-full"
           @update:modelValue="onLobChange"
