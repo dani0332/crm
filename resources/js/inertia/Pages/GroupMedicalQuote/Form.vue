@@ -22,12 +22,12 @@ const formFields = computed(() => {
   }));
 });
 
-const maxValidation = (maxValue) => {
-    return (value) => {
-        const isValid = value <= maxValue;
-        return isValid || `Value must be less than or equal to ${maxValue}.`;
-    };
-}
+const maxValidation = maxValue => {
+  return value => {
+    const isValid = value <= maxValue;
+    return isValid || `Value must be less than or equal to ${maxValue}.`;
+  };
+};
 
 const quoteForm = useForm({
   modelType: '"Business"',
@@ -93,6 +93,7 @@ function onSubmit(isValid) {
             :rules="[isRequired]"
             class="w-full"
             :error="quoteForm.errors.first_name"
+            maxLength="20"
           />
         </x-field>
 
@@ -103,6 +104,7 @@ function onSubmit(isValid) {
             :rules="[isRequired]"
             class="w-full"
             :error="quoteForm.errors.last_name"
+            maxLength="20"
           />
         </x-field>
 
@@ -142,7 +144,7 @@ function onSubmit(isValid) {
           <x-input
             v-model="quoteForm.number_of_employees"
             type="number"
-            :rules="[isRequired, isNumber,  maxValidation(2147483645)]"
+            :rules="[isRequired, isNumber, maxValidation(2147483645)]"
             class="w-full"
             :error="quoteForm.errors.number_of_employees"
           />

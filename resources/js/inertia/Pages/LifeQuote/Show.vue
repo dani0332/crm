@@ -570,7 +570,7 @@ watch(
           </div>
 
           <div class="text-sm">
-            <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
+        <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
               <div
                 class="grid sm:grid-cols-2"
                 v-if="hasAnyRole([rolesEnum.Admin, rolesEnum.Engineering])"
@@ -707,7 +707,7 @@ watch(
                 v-if="
                   quote.customer_type === page.props.customerTypeEnum.Individual
                 "
-                class="grid md:grid-cols-2 gap-x-6 gap-y-4"
+            class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words"
               >
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">FIRST NAME</dt>
@@ -747,7 +747,7 @@ watch(
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">EMAIL</dt>
-                  <dd>{{ quote.email }}</dd>
+              <dd class="break-words">{{ quote.email }}</dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">NATIONALITY</dt>
@@ -803,7 +803,7 @@ watch(
                 v-if="
                   quote.customer_type === page.props.customerTypeEnum.Entity
                 "
-                class="grid md:grid-cols-2 gap-x-6 gap-y-4"
+            class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words"
               >
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">FIRST NAME</dt>
@@ -819,11 +819,13 @@ watch(
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">EMAIL</dt>
-                  <dd>{{ quote.email }}</dd>
+              <dd class="break-words">{{ quote.email }}</dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">COMPANY NAME</dt>
-                  <dd>{{ customerProfileForm.company_name }}</dd>
+              <dd class="break-words">
+                {{ customerProfileForm.company_name }}
+              </dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">TRADE LICENSE NO</dt>
@@ -916,7 +918,7 @@ watch(
       <h3 class="font-semibold text-center text-lg mb-10">
         Search Entity by Parent Entity Trade License No
       </h3>
-      <dl class="grid md:grid-cols-1 gap-x-6 gap-y-4">
+      <dl class="grid md:grid-cols-1 gap-x-6 gap-y-4 break-words">
         <div class="grid sm:grid-cols-2">
           <dt class="font-medium">Parent Entity Trade License No</dt>
           <dd>
@@ -1066,6 +1068,7 @@ watch(
               </div>
             </div>
             <div class="w-full md:w-2/3">
+          <div class="flex flex-col gap-4">
               <x-field
                 label="TransApp Code"
                 v-if="
@@ -1099,6 +1102,15 @@ watch(
                   :error="leadStatusForm.errors.lostReason"
                 />
               </x-field>
+            <x-field label="Transaction Type">
+              <x-input
+                type="text"
+                :value="quote.transaction_type_text"
+                class="w-full"
+                :disabled="true"
+              />
+            </x-field>
+          </div>
             </div>
           </div>
           <div class="flex justify-end">
@@ -1129,7 +1141,8 @@ watch(
       v-if="!isNewPaymentStructure"
       :quoteId="quote.id"
       :paymentCode = "quote.code"
-      :quoteType="quoteType"      
+      :quoteType="quoteType"
+      :payments="payments"    
     />    
 
     <PaymentTableNew 

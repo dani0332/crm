@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
+use App\Http\Requests\PaymentDocumentRequest;
 use App\Http\Requests\QuotesDocumentRequest;
 use App\Models\DocumentType;
 use App\Models\QuoteDocument;
@@ -114,7 +115,7 @@ class QuoteDocumentController extends Controller
         return redirect()->back()->with('success', 'File Uploaded');
     }
 
-    public function storeMultiple(Request $request, $quoteType)
+    public function storeMultiple(PaymentDocumentRequest $request, $quoteType)
     {
         if (
             ! count($request->file) ||

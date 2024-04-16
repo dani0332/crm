@@ -641,7 +641,7 @@ watch(
           </div>
 
           <div class="text-sm">
-            <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
+        <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
               <div
                 class="grid sm:grid-cols-2"
                 v-if="hasAnyRole([rolesEnum.Admin, rolesEnum.Engineering])"
@@ -720,10 +720,10 @@ watch(
             <dd>{{ quote.business_type_of_insurance_id_text }}</dd>
           </div>
 
-              <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">BRIEF DETAILS</dt>
-                <dd>{{ quote.brief_details }}</dd>
-              </div>
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">BRIEF DETAILS</dt>
+            <dd class="break-words">{{ quote.brief_details }}</dd>
+          </div>
 
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">RENEWAL EXPIRY DATE</dt>
@@ -784,7 +784,7 @@ watch(
 
           <x-form @submit="updateProfileDetails" :auto-focus="false">
             <div class="text-sm">
-              <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
+          <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">FIRST NAME</dt>
                   <dd>{{ quote.first_name }}</dd>
@@ -799,54 +799,56 @@ watch(
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">EMAIL</dt>
-                  <dd>{{ quote.email }}</dd>
-                </div>
-                <div class="grid sm:grid-cols-2">
-                  <dt class="font-medium">COMPANY NAME</dt>
-                  <dd>{{ customerProfileForm.company_name }}</dd>
-                </div>
-                <div class="grid sm:grid-cols-2">
-                  <dt class="font-medium">TRADE LICENSE NO</dt>
-                  <dd>
-                    <x-input
-                      v-model="customerProfileForm.trade_license_no"
-                      placeholder="TRADE LICENSE NO"
-                      type="text"
-                      class="w-full"
-                    />
-                    <x-button
-                      @click.prevent="searchByTradeLicense"
-                      size="xs"
-                      color="primary"
-                      class="mt-1"
-                    >
-                      Search
-                    </x-button>
-                  </dd>
-                </div>
-                <div class="grid sm:grid-cols-2">
-                  <dt class="font-medium">EMIRATES OF REGISTRATION</dt>
-                  <dd>
-                    <ComboBox
-                      v-model="customerProfileForm.emirate_of_registration_id"
-                      :single="true"
-                      placeholder="SELECT EMIRATES OF REGISTRATION"
-                      :options="emiratesOptions"
-                      class="w-full"
-                    />
-                  </dd>
-                </div>
-                <div class="grid sm:grid-cols-2">
-                  <dt class="font-medium">COMPANY ADDRESS</dt>
-                  <dd>
-                    <x-input
-                      v-model="customerProfileForm.company_address"
-                      placeholder="COMPANY ADDRESS"
-                      type="text"
-                      class="w-full"
-                    />
-                  </dd>
-                </div>
+              <dd class="break-words">{{ quote.email }}</dd>
+            </div>
+            <div class="grid sm:grid-cols-2">
+              <dt class="font-medium">COMPANY NAME</dt>
+              <dd class="break-words">
+                {{ customerProfileForm.company_name }}
+              </dd>
+            </div>
+            <div class="grid sm:grid-cols-2">
+              <dt class="font-medium">TRADE LICENSE NO</dt>
+              <dd>
+                <x-input
+                  v-model="customerProfileForm.trade_license_no"
+                  placeholder="TRADE LICENSE NO"
+                  type="text"
+                  class="w-full"
+                />
+                <x-button
+                  @click.prevent="searchByTradeLicense"
+                  size="xs"
+                  color="primary"
+                  class="mt-1"
+                >
+                  Search
+                </x-button>
+              </dd>
+            </div>
+            <div class="grid sm:grid-cols-2">
+              <dt class="font-medium">EMIRATES OF REGISTRATION</dt>
+              <dd>
+                <ComboBox
+                  v-model="customerProfileForm.emirate_of_registration_id"
+                  :single="true"
+                  placeholder="SELECT EMIRATES OF REGISTRATION"
+                  :options="emiratesOptions"
+                  class="w-full"
+                />
+              </dd>
+            </div>
+            <div class="grid sm:grid-cols-2">
+              <dt class="font-medium">COMPANY ADDRESS</dt>
+              <dd>
+                <x-input
+                  v-model="customerProfileForm.company_address"
+                  placeholder="COMPANY ADDRESS"
+                  type="text"
+                  class="w-full"
+                />
+              </dd>
+            </div>
 
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">INDUSTRY TYPE</dt>
@@ -1066,6 +1068,14 @@ watch(
                 class="w-full"
                 :error="leadStatusForm.errors.lostReason"
               />
+          <x-field label="Transaction Type">
+            <x-input
+              type="text"
+              :value="quote.transaction_type_text"
+              class="w-full"
+              :disabled="true"
+            />
+          </x-field>
             </div>
           </div>
           <div class="flex justify-end">
@@ -1099,7 +1109,8 @@ watch(
       v-if="!isNewPaymentStructure"
       :quoteId="quote.id"
       :paymentCode = "quote.code"
-      :quoteType="page.props.quoteType"      
+      :quoteType="page.props.quoteType"
+      :payments="payments"    
     />    
     <PaymentTableNew 
 			v-if="isNewPaymentStructure"
