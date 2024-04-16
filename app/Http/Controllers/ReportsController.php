@@ -174,6 +174,12 @@ class ReportsController extends Controller
             $usersReportToLoggedInUser = $this->getUsersByProductName($request->lob)->pluck('id')->toArray();
         } else {
             $usersReportToLoggedInUser = $this->walkTree($loginUserId, $request->lob);
+
+            if (auth()->user()->isManagerOrDeputy()) {
+                $usersReportToLoggedInUser = array_filter($usersReportToLoggedInUser, function ($userId) use ($loginUserId) {
+                    return $userId !== $loginUserId;
+                });
+            }
         }
 
         return User::whereIn('id', $usersReportToLoggedInUser)
@@ -227,6 +233,12 @@ class ReportsController extends Controller
             $usersReportToLoggedInUser = $this->walkTree(auth()->user()->id, $request->lob);
             $teamUsers = $this->getUsersByTeamIds($request->teamIds)->pluck('id')->toArray();
             $advisorIdsByTeam = array_intersect($teamUsers, $usersReportToLoggedInUser);
+
+            if (auth()->user()->isManagerOrDeputy()) {
+                $advisorIdsByTeam = array_filter($advisorIdsByTeam, function ($userId) {
+                    return $userId !== auth()->user()->id;
+                });
+            }
         }
 
         return User::whereIn('id', $advisorIdsByTeam)
@@ -245,6 +257,12 @@ class ReportsController extends Controller
         } else {
             $usersReportToLoggedInUser = $this->walkTree(auth()->user()->id, $request->lob);
             $advisorIdsByTeam = array_intersect($teamUsers, $usersReportToLoggedInUser);
+
+            if (auth()->user()->isManagerOrDeputy()) {
+                $advisorIdsByTeam = array_filter($advisorIdsByTeam, function ($userId) {
+                    return $userId !== auth()->user()->id;
+                });
+            }
         }
 
         return User::whereIn('id', $advisorIdsByTeam)
