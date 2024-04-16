@@ -102,4 +102,6 @@ final class RolesEnum extends Enum
     public const CallDesk = 'CALL_DESK';
     public const NRA = 'NON_RETAIL_ACCOUNTS';
     public const EpAdmin = 'EP_ADMIN';
+    public const ServiceExecutive = 'SERVICE_EXECUTIVE';
+    public const Production = 'PRODUCTION';
 }

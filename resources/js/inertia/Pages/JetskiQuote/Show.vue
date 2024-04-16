@@ -27,6 +27,7 @@ defineProps({
   quoteStatusEnum: Object,
   embeddedProducts: Array,
   canAddBatchNumber: Boolean,
+  vatPercentage: Number,
 });
 
 const page = usePage();
@@ -274,10 +275,11 @@ const permissionsEnum = page.props.permissionsEnum;
     />
 
     <PlanDetails
-      :insuranceProviders="insuranceProviders"
-      :quote="quote"
-      :quoteType="quoteType"
-    />
+    :insuranceProviders="insuranceProviders"
+    :quote="quote"
+    :quoteType="quoteType"
+    :vatPrice="vatPercentage"
+     />
 
     <EmbeddedProducts
       :data="embeddedProducts"
