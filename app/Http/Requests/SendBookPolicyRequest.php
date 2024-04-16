@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\QuoteStatusEnum;
 use App\Models\Payment;
 use App\Models\PaymentSplits;
 use App\Traits\GenericQueriesAllLobs;
@@ -78,6 +79,19 @@ class SendBookPolicyRequest extends FormRequest
                         }
                     } else {
                         $validator->errors()->add('value', 'Payment Not found');
+                    }
+
+                    // Check parent Lead Status not in Cancellation Pending state.
+                    $parentQuoteCode = count(explode('-', $quote->code)) > 2 ? $quote->parent_duplicate_quote_id : false;
+                    if ($parentQuoteCode) {
+                        $parentQuote = $this->getQuoteObjectBy(request()->model_type, $parentQuoteCode, 'code');
+                        if ($parentQuote) {
+                            if($parentQuote->quote_status_id == QuoteStatusEnum::CancellationPending) {
+                                $validator->errors()->add('value', 'Cancellation for '.$parentQuoteCode.' is still pending');
+                            }
+                        } else {
+                            $validator->errors()->add('value', 'Parent Quote Not found');
+                        }
                     }
                 } else {
                     $validator->errors()->add('value', 'Quote Not found');

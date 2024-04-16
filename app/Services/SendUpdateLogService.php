@@ -339,7 +339,7 @@ class SendUpdateLogService
     {
         $modelRelationDetails = $this->_getQuoteRelation($quoteModel, $quoteTypeCode);
         $quoteObject = $quoteModel::with(array_keys($modelRelationDetails['quoteRelations']))->find($requestData['ref_id']);
-
+       
         $countChildRecords = $quoteModel::where('code', 'like', '%'.$quoteObject->code.'-%')->count();
         $childLeadDetails = [
             'childLeadsCount' => $countChildRecords,
@@ -351,13 +351,19 @@ class SendUpdateLogService
         }
 
         if ($countChildRecords == 0) {
+
+            $countChildRecords++;
+            $explodeQuoteLink = explode('/', $quoteObject->quote_link);
+            $explodeQuoteLink[array_key_last($explodeQuoteLink)] = $quoteObject->code.'-'.$countChildRecords;
+
             $getRelations = $quoteObject->getRelations();
             $replicateObject = $quoteObject->replicate($modelRelationDetails['skipParentColumns']);
             $replicateObject->fill([
-                'code' => $quoteObject->code.'-'.++$countChildRecords,
+                'code' => $quoteObject->code.'-'.$countChildRecords,
                 'uuid' => $quoteObject->uuid.'-'.$countChildRecords,
                 'quote_status_id' => QuoteStatusEnum::NewLead,
                 'parent_duplicate_quote_id' => $quoteObject->code,
+                'quote_link' => implode('/', $explodeQuoteLink)
             ])->save();
 
             foreach ($getRelations as $relation => $relationObject) {
