@@ -14,8 +14,8 @@ const isEdit = computed(() => {
 const quadrantForm = useForm({
   id: props.quadrant?.id ?? null,
   name: props.quadrant?.name ?? null,
-  quad_tiers: props.quadrant?.quad_tiers ?? [],
-  quad_users: props.quadrant?.quad_users ?? [],
+  quad_tiers: props.quadrant?.tiers.map(x => x.id) ?? [],
+  quad_users: props.quadrant?.users.map(x => x.id) ?? [],
   is_active: props.quadrant?.is_active ? true : false,
 });
 
@@ -73,7 +73,11 @@ function onSubmit(isValid) {
   <x-form @submit="onSubmit" :auto-focus="false">
     <div class="grid sm:grid-cols-2 gap-4">
       <x-field label="Quadrant Name" required>
-        <x-input v-model="quadrantForm.name" class="w-full" :error="quadrantForm.errors.name"/>
+        <x-input
+          v-model="quadrantForm.name"
+          class="w-full"
+          :error="quadrantForm.errors.name"
+        />
       </x-field>
       <x-field label="Tiers Name">
         <ComboBox
