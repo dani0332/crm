@@ -10,6 +10,7 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\RolesEnum;
 use App\Interfaces\PaymentRepositoryInterface;
+use App\Jobs\MAWelcomeJob;
 use App\Models\Payment;
 use App\Models\PaymentSplits;
 use App\Models\PaymentStatusLog;
@@ -360,9 +361,10 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                         try {
                             $paymentSplit->collection_amount = $splitAmount;
                             $paymentSplit->save();
-                            if (Auth::user()->hasRole(RolesEnum::BetaUser)) { //Part of milestone 2
+                            /* Part of milestone 2
+                            if (Auth::user()->hasRole(RolesEnum::BetaUser)) {
                                 app(SplitPaymentService::class)->createReciept($request->modelType, $request->quote_id, $paymentSplit);
-                            }
+                            }*/
                             $parentPayment = $paymentSplit->payment;
                             $parentPayment->captured_amount = ($parentPayment->captured_amount + $splitAmount);
                             $parentPayment->save();
@@ -400,6 +402,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                 if ($totalApproved == $quoteModel->payments()->count()) {
                     $quoteModel->quote_status_id = QuoteStatusEnum::TransactionApproved;
                     $quoteModel->save();
+                    dispatch(new MAWelcomeJob($quoteModel->first_name, $quoteModel->last_name, $quoteModel->email, $quoteModel->mobile_no, 'IMCRM', ''));
                     //Create duplicate lead for TRAVEL
                     if ($quoteTypeId == QuoteTypeId::Travel && $quoteModel->payments()->count() > 1) {
                         if (app(TravelQuoteService::class)->createDuplicateLead($quoteModel)) {
@@ -497,10 +500,10 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                     );
                 }
             }
-            if (Auth::user()->hasRole(RolesEnum::BetaUser)) { //Part of milestone 2
+            /* Part of milestone 2
+            if (Auth::user()->hasRole(RolesEnum::BetaUser)) {
                 app(SplitPaymentService::class)->createReciept($request->modelType, $request->quote_id, $splitPayment);
-            }
-
+            }*/
         } elseif ($request->is_declined) {
             $paymentInformation = [
                 'decline_reason_id' => $request->declined_reason,
