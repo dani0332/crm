@@ -86,7 +86,7 @@ class SendBookPolicyRequest extends FormRequest
                     if ($parentQuoteCode) {
                         $parentQuote = $this->getQuoteObjectBy(request()->model_type, $parentQuoteCode, 'code');
                         if ($parentQuote) {
-                            if($parentQuote->quote_status_id == QuoteStatusEnum::CancellationPending) {
+                            if ($parentQuote->quote_status_id == QuoteStatusEnum::CancellationPending) {
                                 $validator->errors()->add('value', 'Cancellation for '.$parentQuoteCode.' is still pending');
                             }
                         } else {
