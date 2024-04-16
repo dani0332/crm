@@ -132,49 +132,24 @@ class ActivitiesService extends BaseService
 
     public function getQuoteTypeId($modelType)
     {
-        $quoteTypeId = null;
-        switch (strtolower($modelType)) {
-            case 'car':
-                $quoteTypeId = QuoteTypeId::Car;
-                break;
-            case 'home':
-                $quoteTypeId = QuoteTypeId::Home;
-                break;
-            case 'life':
-                $quoteTypeId = QuoteTypeId::Life;
-                break;
-            case 'travel':
-                $quoteTypeId = QuoteTypeId::Travel;
-                break;
-            case 'health':
-                $quoteTypeId = QuoteTypeId::Health;
-                break;
-            case 'business':
-                $quoteTypeId = QuoteTypeId::Business;
-                break;
-            case 'pet':
-                $quoteTypeId = QuoteTypeId::Pet;
-                break;
-            case 'cycle':
-                $quoteTypeId = QuoteTypeId::Cycle;
-                break;
-            case 'jetski':
-                $quoteTypeId = QuoteTypeId::Jetski;
-                break;
-            case 'bike':
-                $quoteTypeId = QuoteTypeId::Bike;
-                break;
-            case 'yacht':
-                $quoteTypeId = QuoteTypeId::Yacht;
-                break;
-            case 'group medical':
-                $quoteTypeId = QuoteTypeId::Business;
-                break;
-            default:
-                break;
-        }
-
-        return $quoteTypeId;
+        $quoteTypeIds = [
+            'car' => QuoteTypeId::Car,
+            'home' => QuoteTypeId::Home,
+            'life' => QuoteTypeId::Life,
+            'travel' => QuoteTypeId::Travel,
+            'health' => QuoteTypeId::Health,
+            'business' => QuoteTypeId::Business,
+            'pet' => QuoteTypeId::Pet,
+            'cycle' => QuoteTypeId::Cycle,
+            'jetski' => QuoteTypeId::Jetski,
+            'bike' => QuoteTypeId::Bike,
+            'yacht' => QuoteTypeId::Yacht,
+            'group medical' => QuoteTypeId::Business,
+        ];
+    
+        $modelType = strtolower($modelType);
+    
+        return $quoteTypeIds[$modelType] ?? null;
     }
 
     public function filterActivitiesByPeriod($activities, $period)
