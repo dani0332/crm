@@ -158,7 +158,7 @@ const bookingDetailsForm = useForm({
     props?.payments[0]?.insurer_tax_number ||
     "",
   discount:
-    props.bookingDetails?.discount || props?.payments[0]?.discount_value || 0.00,
+    props.bookingDetails?.discount || props?.payments[0]?.discount_value || '0.00',
   insurer_commission_invoice_number:
     props.bookingDetails?.insurer_commission_invoice_number ||
     props?.payments[0]?.insurer_commmission_invoice_number ||
@@ -170,19 +170,19 @@ const bookingDetailsForm = useForm({
   commission_vat_not_applicable:
     props.bookingDetails?.commission_vat_not_applicable ||
     props?.payments[0]?.commission_vat_not_applicable ||
-    0.00,
+    '0.00',
   vat_on_commission:
     props.bookingDetails?.vat_on_commission || props?.payments[0]?.commission_vat || "",
   commission_vat_applicable:
     props.bookingDetails?.commission_vat_applicable ||
     props?.payments[0]?.commission_vat_applicable ||
-    0.00,
+    '0.00',
   total_commission:
     props.bookingDetails?.total_commission || props?.payments[0]?.commission || "",
   total_vat_amount: props.bookingDetails?.total_vat_amount || null,
   price_vat_applicable: props.bookingDetails?.price_vat_applicable || "",
-  price_vat_not_applicable: props.bookingDetails?.price_vat_not_applicable || 0.00,
-  total_price: props.bookingDetails?.total_price || 0.00,
+  price_vat_not_applicable: props.bookingDetails?.price_vat_not_applicable || '0.00',
+  total_price: props.bookingDetails?.total_price || '0.00',
   // new entry section related.
   reversal_invoice: props.bookingDetails?.reversal_invoice || null,
 });
@@ -623,6 +623,15 @@ const submitToCustomer = () => {
       isNotConfirmed.value = false;
     });
 };
+
+const onCancel = () => {
+  state.isEdit = false;
+  bookingDetailsForm.invoice_date = props.bookingDetails?.invoice_date || null;
+  bookingDetailsForm.insurer_tax_invoice_number = props.bookingDetails?.insurer_tax_invoice_number || '';
+  bookingDetailsForm.insurer_commission_invoice_number = props.bookingDetails?.insurer_commission_invoice_number || '';
+  bookingDetailsForm.price_vat_applicable = props.bookingDetails?.price_vat_applicable || '';
+  bookingDetailsForm.commission_vat_applicable = props.bookingDetails?.commission_vat_applicable || '';
+}
 </script>
 
 <template>
@@ -1457,7 +1466,7 @@ const submitToCustomer = () => {
               <x-button
                 size="sm"
                 color="orange"
-                @click="state.isEdit = false"
+                @click="onCancel"
                 :loading="bookingDetailsForm.processing"
                 :disabled="bookingDetailsForm.processing"
               >

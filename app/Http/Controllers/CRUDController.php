@@ -1823,7 +1823,7 @@ class CRUDController extends Controller
             'created_at' => now(),
             'updated_at' => now(),
         ]);
-        
+
         $paymentLog->save();
         if (! $request->send_update_id) { // it will check if the payment is added from send update.
             $quoteModel->quote_status_id = QuoteStatusEnum::PaymentPending;
