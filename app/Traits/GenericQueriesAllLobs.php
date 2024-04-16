@@ -194,9 +194,7 @@ trait GenericQueriesAllLobs
         // check if policy details are filled & all required documents are uploaded then show send policy button to customer & show edit button &  send policy to sage
         if ($this->isFilledPolicyDetails($quoteType, $record)) {
             if (! empty($quoteDocuments)) {
-                $documentTypeCodes = app(DocumentTypeRepository::class)->getSendPolicyDocumentCodes($quoteType);
-                $quoteDocumentsCount = collect($quoteDocuments)->whereIn('document_type_code', $documentTypeCodes)->groupBy('document_type_code')->count();
-                if ($quoteDocumentsCount == count($documentTypeCodes)) {
+                if ($this->isAllRequiredDocumentAreUploaded($quoteDocuments, $quoteType)) {
                     $bPDetails['sendButton'] = true;
                     $bPDetails['text'] = 'Send Policy To Customer';
                     $bPDetails['sendPolicyType'] = 'customer';
@@ -238,9 +236,7 @@ trait GenericQueriesAllLobs
         if ($quote->quote_status_id != QuoteStatusEnum::PolicySentToCustomer) {
             if ($this->isFilledPolicyDetails($type, $quote)) {
                 $quoteDocuments = (new QuoteDocumentService())->getQuoteDocuments($type, $id);
-                $documentTypeCodes = app(DocumentTypeRepository::class)->getSendPolicyDocumentCodes($type);
-                $quoteDocumentsCount = collect($quoteDocuments)->whereIn('document_type_code', $documentTypeCodes)->groupBy('document_type_code')->count();
-                if ($quoteDocumentsCount == count($documentTypeCodes)) {
+                if ($this->isAllRequiredDocumentAreUploaded($quoteDocuments, $type)) {
                     $quote->update([
                         'quote_status_id' => QuoteStatusEnum::PolicyIssued,
                         'policy_issuance_status_id' => null,
@@ -264,5 +260,13 @@ trait GenericQueriesAllLobs
         }
 
         return false;
+    }
+
+    private function isAllRequiredDocumentAreUploaded($quoteDocuments, $quoteType)
+    {
+        $documentTypeCodes = app(DocumentTypeRepository::class)->getSendPolicyDocumentCodes($quoteType);
+        $quoteDocumentsCount = collect($quoteDocuments)->whereIn('document_type_code', $documentTypeCodes)->groupBy('document_type_code')->count();
+
+        return $quoteDocumentsCount == count($documentTypeCodes);
     }
 }
