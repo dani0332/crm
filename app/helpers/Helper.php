@@ -547,10 +547,11 @@ if (! function_exists('getBase64FileInfo')) {
 }
 
 if (! function_exists('sanitizeFileName')) {
-    function sanitizeFileName($fileName) {
+    function sanitizeFileName($fileName)
+    {
         // Remove any Unicode control characters
         $fileName = preg_replace('/[[:cntrl:]]/', '', $fileName);
-        
+
         // Remove any unwanted characters
         $fileName = preg_replace('/[^\p{L}\p{N}\s\-\_\.]/u', '', $fileName);
 
@@ -566,7 +567,6 @@ if (! function_exists('sanitizeFileName')) {
         return $fileName;
     }
 }
-
 
 if (! function_exists('getQueryForLogWithBindings')) {
     function getQueryForLogWithBindings(Builder $builder)
