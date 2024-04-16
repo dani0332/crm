@@ -210,23 +210,27 @@ function calculateNetConversion(row) {
   }
 }
 
-const filters = reactive({
-  lob: quoteTypeCodeEnum.Car,
-  advisorAssignedDates: [],
-  is_ecommerce: '',
-  batches: [],
-  tiers: [],
-  leadSources: [],
-  advisors: [],
-  teams: [],
-  sub_teams: [],
-  isCommercial: '',
-  page: 1,
-  vehicle_type: 'All',
-  insurance_type: '',
-  insurance_for: '',
-  travel_coverage: '',
-});
+const getFiltersObject = () => {
+  return {
+    lob: quoteTypeCodeEnum.Car,
+    advisorAssignedDates: [],
+    is_ecommerce: '',
+    batches: [],
+    tiers: [],
+    leadSources: [],
+    advisors: [],
+    teams: [],
+    sub_teams: [],
+    isCommercial: '',
+    page: 1,
+    vehicle_type: 'All',
+    insurance_type: '',
+    insurance_for: '',
+    travel_coverage: '',
+  }
+};
+
+let filters = reactive(getFiltersObject());
 
 function onSubmit(isValid) {
   if (isValid) {
@@ -273,6 +277,7 @@ function onSubmit(isValid) {
 }
 
 function onReset() {
+  filters = getFiltersObject();
   setDefaultValues();
 
   isDirty.value = false;
@@ -712,6 +717,8 @@ onMounted(() => {
   }
 
   isMounted.value = true;
+
+  onSubmit(true);
 });
 
 watch(
