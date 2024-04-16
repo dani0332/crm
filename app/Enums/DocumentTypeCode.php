@@ -15,6 +15,6 @@ class DocumentTypeCode extends Enum
     const ISSUING_DOCUMENTS = 'ISSUING_DOCUMENTS';
     const TAX_INVOICE = 'Tax Invoice';
     const TAX_INVOICE_RAISED_BY_BUYER = 'Tax Invoice Raised By Buyer';
-    CONST NETWORK_LIST_BUSINESS = 'NL_GH';
-    CONST Receipt_BUSINESS = 'REC_GH';
+    const NETWORK_LIST_BUSINESS = 'NL_GH';
+    const Receipt_BUSINESS = 'REC_GH';
 }
