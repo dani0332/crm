@@ -10,6 +10,7 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\RolesEnum;
 use App\Interfaces\PaymentRepositoryInterface;
+use App\Jobs\MAWelcomeJob;
 use App\Models\Payment;
 use App\Models\PaymentSplits;
 use App\Models\PaymentStatusLog;
@@ -401,6 +402,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                 if ($totalApproved == $quoteModel->payments()->count()) {
                     $quoteModel->quote_status_id = QuoteStatusEnum::TransactionApproved;
                     $quoteModel->save();
+                    dispatch(new MAWelcomeJob($quoteModel->first_name, $quoteModel->last_name, $quoteModel->email, $quoteModel->mobile_no, 'IMCRM', ''));
                     //Create duplicate lead for TRAVEL
                     if ($quoteTypeId == QuoteTypeId::Travel && $quoteModel->payments()->count() > 1) {
                         if (app(TravelQuoteService::class)->createDuplicateLead($quoteModel)) {
