@@ -146,9 +146,9 @@ class ActivitiesService extends BaseService
             'yacht' => QuoteTypeId::Yacht,
             'group medical' => QuoteTypeId::Business,
         ];
-    
+
         $modelType = strtolower($modelType);
-    
+
         return $quoteTypeIds[$modelType] ?? null;
     }
 
