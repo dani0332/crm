@@ -22,6 +22,7 @@ use App\Services\TravelQuoteService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use App\Jobs\MAWelcomeJob;
 
 class PaymentRepository extends BaseRepository implements PaymentRepositoryInterface
 {
@@ -400,6 +401,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                 if ($totalApproved == $quoteModel->payments()->count()) {
                     $quoteModel->quote_status_id = QuoteStatusEnum::TransactionApproved;
                     $quoteModel->save();
+                    dispatch(new MAWelcomeJob($quoteModel->first_name, $quoteModel->last_name, $quoteModel->email, $quoteModel->mobile_no, 'IMCRM', ''));
                     //Create duplicate lead for TRAVEL
                     if ($quoteTypeId == QuoteTypeId::Travel && $quoteModel->payments()->count() > 1) {
                         if (app(TravelQuoteService::class)->createDuplicateLead($quoteModel)) {
