@@ -9,7 +9,7 @@ import LeadHistory from '../PersonalQuote/Partials/LeadHistory';
 import AdditionalContacts from '../PersonalQuote/Partials/AdditionalContacts';
 import MemberDetails from '../../Components/MemberDetails.vue';
 import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue';
-import PaymentTableNew from '../../Components/PaymentTableNew.vue'; 
+import PaymentTableNew from '../../Components/PaymentTableNew.vue';
 import MigratePayment from '../../Components/MigratePayment.vue';
 
 defineProps({
@@ -746,9 +746,9 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       v-if="!isNewPaymentStructure"
       :quoteId="quote.id"
       :paymentCode = "quote.code"
-      :quoteType="quoteType"      
-    />    
-    <PaymentTableNew 
+      :quoteType="quoteType"
+    />
+    <PaymentTableNew
 			v-if="isNewPaymentStructure"
 			:quoteType="quoteType"
 			:payments="quote.payments"
@@ -769,7 +769,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       :is-beta-user="isBetaUser"
       :personal-plans="personalPlans"
     />
-    
+
     <SendUpdates
       v-if="hasPolicyIssuedStatus"
       :reportable="quote"
@@ -786,7 +786,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       modelType="Bike"
       :expanded="sectionExpanded"
     />
-    
+
     <QuoteDocuments
       :document-types="documentTypes"
       :quote-documents="quote.documents || []"

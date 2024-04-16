@@ -31,6 +31,11 @@ const productionProcessTooltipEnum = page.props.productionProcessTooltipEnum;
 
 const dateToYMD = date => {
   if (date) {
+    // Check if date is already in YMD format
+    const ymdRegex = /^\d{4}-\d{2}-\d{2}( \d{2}:\d{2}:\d{2})?$/;
+    if (ymdRegex.test(date)) {
+      return date.split(' ')[0]; // Return only the date part
+    }
     const [year, month, day] = date.split('-');
     return `${year}-${month}-${day}`;
   }
@@ -46,6 +51,19 @@ const dateToDMY = date => {
   }
   return '';
 };
+const dateToDMYWithTime = date => {
+  if (date) {
+    const d = new Date(date);
+    const year = d.getFullYear();
+    const month = `0${d.getMonth() + 1}`.slice(-2);
+    const day = `0${d.getDate()}`.slice(-2);
+    const hours = `0${d.getHours()}`.slice(-2);
+    const minutes = `0${d.getMinutes()}`.slice(-2);
+    const seconds = `0${d.getSeconds()}`.slice(-2);
+    return `${day}-${month}-${year} ${hours}:${minutes}:${seconds}`;
+  }
+  return '';
+};
 
 const bp = reactive({
   isEditing: false,
@@ -58,7 +76,16 @@ const currentDate = computed(() => {
   const day = `0${d.getDate()}`.slice(-2);
   return `${day}-${month}-${year}`;
 });
-
+const currentDateTime = computed(() => {
+  const d = new Date();
+  const year = d.getFullYear();
+  const month = `0${d.getMonth() + 1}`.slice(-2);
+  const day = `0${d.getDate()}`.slice(-2);
+  const hours = `0${d.getHours()}`.slice(-2);
+  const minutes = `0${d.getMinutes()}`.slice(-2);
+  const seconds = `0${d.getSeconds()}`.slice(-2);
+  return `${day}-${month}-${year} ${hours}:${minutes}:${seconds}`;
+});
 const transactionPaymentStatus = computed(() => {
   if (Number(page.props?.payments[0]?.captured_amount) === 0) {
     return 'Not Paid';
@@ -78,7 +105,8 @@ const transactionPaymentStatus = computed(() => {
 });
 const bpForm = useForm({
   booking_date:
-    dateToDMY(page.props.quote?.policy_booking_date) || currentDate.value,
+    dateToDMYWithTime(page.props.quote?.policy_booking_date) ||
+    currentDateTime.value,
   transaction_payment_status: transactionPaymentStatus.value,
   invoice_date: dateToYMD(page.props.payments[0]?.insurer_invoice_date) || '',
   invoice_description: page.props.bPDetails.invoiceDescription || '',
@@ -240,7 +268,7 @@ const caculateCommission = () => {
                   </template>
                 </x-tooltip>
 
-                <dd>{{ bpForm.booking_date }}</dd>
+                <dd>{{ bpForm.booking_date.split(' ')[0] }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <x-tooltip>

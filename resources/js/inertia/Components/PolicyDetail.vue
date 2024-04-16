@@ -29,6 +29,11 @@ const hasRole = role => useHasRole(role);
 const rolesEnum = page.props.rolesEnum;
 const dateToYMD = date => {
   if (date) {
+    // Check if date is already in YMD format
+    const ymdRegex = /^\d{4}-\d{2}-\d{2}( \d{2}:\d{2}:\d{2})?$/;
+    if (ymdRegex.test(date)) {
+      return date.split(' ')[0]; // Return only the date part
+    }
     const [day, month, year] = date.split('-');
     return `${year}-${month}-${day}`;
   }
@@ -72,7 +77,7 @@ const policyDetailsForm = useForm({
   quote_policy_start_date: dateToYMD(page.props.record.policy_start_date) || '',
   quote_policy_expiry_date:
     dateToYMD(page.props.record.renewal_expiry_date) || '',
-  amount_with_vat: page.props.record.price_with_vat || '',
+  amount_with_vat: '',
   quote_plan_insurer_quote_number:
     planQuoteInsurerNumber.value || page.props.record.insurer_quote_number,
   quote_policy_issuance_status: page.props.record.policy_issuance_status_id,
@@ -146,6 +151,9 @@ const onUpdatePolicyDetails = isValid => {
     },
   });
 };
+onBeforeMount(() => {
+  caculateVatAmount();
+});
 </script>
 
 <template>
@@ -153,23 +161,23 @@ const onUpdatePolicyDetails = isValid => {
     <Collapsible :expanded="expanded">
       <template #header>
         <div class="flex flex-wrap gap-4 justify-between items-center">
-          <h3 class="font-semibold text-primary-800 text-lg">
-            Policy Details
-          </h3>
+          <h3 class="font-semibold text-primary-800 text-lg">Policy Details</h3>
         </div>
       </template>
       <template #body>
         <x-form @submit="onUpdatePolicyDetails" :auto-focus="false">
           <div class="my-4">
-          
             <div class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5">
               <div class="w-full md:w-1/2">
                 <x-tooltip
-                  ><label class="font-medium text-gray-800 dark:text-gray-200 mb-1"
+                  ><label
+                    class="font-medium text-gray-800 dark:text-gray-200 mb-1"
                     >Policy Number</label
                   >
                   <template #tooltip>
-                    <span>{{ productionProcessTooltipEnum.POLICY_NUMBER }}</span>
+                    <span>{{
+                      productionProcessTooltipEnum.POLICY_NUMBER
+                    }}</span>
                   </template>
                 </x-tooltip>
                 <x-input
@@ -182,11 +190,14 @@ const onUpdatePolicyDetails = isValid => {
               </div>
               <div class="w-full md:w-1/2">
                 <x-tooltip
-                  ><label class="font-medium text-gray-800 dark:text-gray-200 mb-1"
+                  ><label
+                    class="font-medium text-gray-800 dark:text-gray-200 mb-1"
                     >ISSUANCE DATE</label
                   >
                   <template #tooltip>
-                    <span>{{ productionProcessTooltipEnum.ISSUANCE_DATE }}</span>
+                    <span>{{
+                      productionProcessTooltipEnum.ISSUANCE_DATE
+                    }}</span>
                   </template>
                 </x-tooltip>
                 <DatePicker
@@ -201,7 +212,8 @@ const onUpdatePolicyDetails = isValid => {
             <div class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5">
               <div class="w-full md:w-1/2">
                 <x-tooltip
-                  ><label class="font-medium text-gray-800 dark:text-gray-200 mb-1"
+                  ><label
+                    class="font-medium text-gray-800 dark:text-gray-200 mb-1"
                     >Price (VAT NOT APPLICABLE)</label
                   >
                   <template #tooltip>
@@ -217,13 +229,15 @@ const onUpdatePolicyDetails = isValid => {
                   placeholder="Price (VAT NOT APPLICABLE)"
                   class="w-full"
                   :disabled="
-                    !policyDetailsState.isEditing || policyDetailsForm.amount > 0
+                    !policyDetailsState.isEditing ||
+                    policyDetailsForm.amount > 0
                   "
                 />
               </div>
               <div class="w-full md:w-1/2">
                 <x-tooltip
-                  ><label class="font-medium text-gray-800 dark:text-gray-200 mb-1"
+                  ><label
+                    class="font-medium text-gray-800 dark:text-gray-200 mb-1"
                     >Start Date</label
                   >
                   <template #tooltip>
@@ -244,7 +258,8 @@ const onUpdatePolicyDetails = isValid => {
             <div class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5">
               <div class="w-full md:w-1/2">
                 <x-tooltip
-                  ><label class="font-medium text-gray-800 dark:text-gray-200 mb-1"
+                  ><label
+                    class="font-medium text-gray-800 dark:text-gray-200 mb-1"
                     >Price (VAT APPLICABLE)</label
                   >
                   <template #tooltip>
@@ -267,7 +282,8 @@ const onUpdatePolicyDetails = isValid => {
               </div>
               <div class="w-full md:w-1/2">
                 <x-tooltip
-                  ><label class="font-medium text-gray-800 dark:text-gray-200 mb-1"
+                  ><label
+                    class="font-medium text-gray-800 dark:text-gray-200 mb-1"
                     >Expiry Date</label
                   >
                   <template #tooltip>
@@ -277,7 +293,9 @@ const onUpdatePolicyDetails = isValid => {
                 <DatePicker
                   v-model="policyDetailsForm.quote_policy_expiry_date"
                   :custom-error="
-                    rules.expiry_date(policyDetailsForm.quote_policy_expiry_date)
+                    rules.expiry_date(
+                      policyDetailsForm.quote_policy_expiry_date,
+                    )
                   "
                   type="date"
                   placeholder="Expiry Date"
@@ -290,11 +308,14 @@ const onUpdatePolicyDetails = isValid => {
             <div class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5">
               <div class="w-full md:w-1/2">
                 <x-tooltip
-                  ><label class="font-medium text-gray-800 dark:text-gray-200 mb-1"
+                  ><label
+                    class="font-medium text-gray-800 dark:text-gray-200 mb-1"
                     >Total VAT Amount</label
                   >
                   <template #tooltip>
-                    <span>{{ productionProcessTooltipEnum.TOTAL_VAT_AMOUNT }}</span>
+                    <span>{{
+                      productionProcessTooltipEnum.TOTAL_VAT_AMOUNT
+                    }}</span>
                   </template>
                 </x-tooltip>
                 <x-input
@@ -308,7 +329,8 @@ const onUpdatePolicyDetails = isValid => {
               </div>
               <div class="w-full md:w-1/2">
                 <x-tooltip
-                  ><label class="font-medium text-gray-800 dark:text-gray-200 mb-1"
+                  ><label
+                    class="font-medium text-gray-800 dark:text-gray-200 mb-1"
                     >Total Price</label
                   >
                   <template #tooltip>
@@ -328,7 +350,8 @@ const onUpdatePolicyDetails = isValid => {
             <div class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5">
               <div class="w-full md:w-1/2">
                 <x-tooltip
-                  ><label class="font-medium text-gray-800 dark:text-gray-200 mb-1"
+                  ><label
+                    class="font-medium text-gray-800 dark:text-gray-200 mb-1"
                     >Insurer Quote Number</label
                   >
                   <template #tooltip>
@@ -347,11 +370,14 @@ const onUpdatePolicyDetails = isValid => {
               </div>
               <div class="w-full md:w-1/2">
                 <x-tooltip
-                  ><label class="font-medium text-gray-800 dark:text-gray-200 mb-1"
+                  ><label
+                    class="font-medium text-gray-800 dark:text-gray-200 mb-1"
                     >Issuance Status</label
                   >
                   <template #tooltip>
-                    <span>{{ productionProcessTooltipEnum.ISSURANEC_STATUS }}</span>
+                    <span>{{
+                      productionProcessTooltipEnum.ISSURANEC_STATUS
+                    }}</span>
                   </template>
                 </x-tooltip>
                 <x-select
@@ -388,7 +414,8 @@ const onUpdatePolicyDetails = isValid => {
               <template
                 class="flex justify-end"
                 v-if="
-                  record.quote_status_id == quoteStatusEnum.TransactionApproved ||
+                  record.quote_status_id ==
+                    quoteStatusEnum.TransactionApproved ||
                   record.quote_status_id == quoteStatusEnum.PolicyPending ||
                   record.quote_status_id == quoteStatusEnum.PolicyIssued ||
                   record.quote_status_id == quoteStatusEnum.PolicySentToCustomer
@@ -419,7 +446,9 @@ const onUpdatePolicyDetails = isValid => {
                   v-if="props.modelType === quoteTypeCodeEnum.Car.toLowerCase()"
                 >
                   <x-button
-                    v-if="!policyDetailsState.isEditing && hasRole(rolesEnum.PA)"
+                    v-if="
+                      !policyDetailsState.isEditing && hasRole(rolesEnum.PA)
+                    "
                     class="mt-4"
                     color="emerald"
                     size="sm"
@@ -430,7 +459,9 @@ const onUpdatePolicyDetails = isValid => {
                 >
                 <template v-else>
                   <x-button
-                    v-if="!policyDetailsState.isEditing && hasRole(rolesEnum.NRA)"
+                    v-if="
+                      !policyDetailsState.isEditing && hasRole(rolesEnum.NRA)
+                    "
                     class="mt-4"
                     color="emerald"
                     size="sm"
@@ -443,7 +474,9 @@ const onUpdatePolicyDetails = isValid => {
               <template v-else>
                 <x-tooltip>
                   <x-button
-                    v-if="record.quote_status_id == quoteStatusEnum.PolicyBooked"
+                    v-if="
+                      record.quote_status_id == quoteStatusEnum.PolicyBooked
+                    "
                     size="sm"
                     color="emerald"
                     :disabled="true"
@@ -461,5 +494,5 @@ const onUpdatePolicyDetails = isValid => {
         </x-form>
       </template>
     </Collapsible>
-  </div>   
+  </div>
 </template>

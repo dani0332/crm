@@ -223,7 +223,7 @@ class CentralController extends Controller
         $payment->update($paymentInformation);
 
         $quote = $this->getQuoteObject($validatedData['model_type'], $validatedData['quote_id']);
-        $quote->update(['policy_booking_date' => Carbon::parse($validatedData['booking_date'])->format('Y-m-d')]);
+        $quote->update(['policy_booking_date' => Carbon::parse($validatedData['booking_date'])]);
 
         return redirect()->back()->with('success', 'Booking Status has been updated.');
     }
