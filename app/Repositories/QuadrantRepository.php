@@ -17,7 +17,7 @@ class QuadrantRepository extends BaseRepository
 
         $data = self::orderBy('id');
         if (request()->name) {
-            $data->where('name', 'LIKE','%'.request()->name.'%');
+            $data->where('name', 'LIKE', '%'.request()->name.'%');
         }
 
         return $data->simplePaginate(10)->withQueryString();
@@ -31,6 +31,7 @@ class QuadrantRepository extends BaseRepository
         $quad->save();
         DB::table('quad_tiers')->where('quad_id', $quad->id)->delete();
         DB::table('quad_users')->where('quad_id', $quad->id)->delete();
+
         return $quad->delete();
     }
 }

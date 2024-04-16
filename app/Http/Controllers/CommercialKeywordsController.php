@@ -7,7 +7,6 @@ use App\Http\Requests\CommercialKeywordRequest;
 use App\Models\CommercialKeyword;
 use App\Services\CommercialKeywordsService;
 use Illuminate\Http\Request;
-use Yajra\DataTables\DataTables;
 
 class CommercialKeywordsController extends Controller
 {
@@ -36,14 +35,15 @@ class CommercialKeywordsController extends Controller
     {
         $gridData = CommercialKeyword::query();
 
-        if(isset($request->name) && ! empty($request->name)){
+        if (isset($request->name) && ! empty($request->name)) {
             $name = $request->name;
             $gridData = $gridData->where(function ($query) use ($name) {
                 $query->whereRaw('LOWER(name) LIKE ?', [strtolower("%{$name}%")]);
             });
         }
-        
+
         $gridData = $gridData->orderByDesc('id')->paginate();
+
         return inertia('Admin/AllocationConfig/CommercialKeywords/Index', [
             'data' => $gridData,
         ]);
@@ -57,7 +57,7 @@ class CommercialKeywordsController extends Controller
      */
     public function create()
     {
-        return inertia('Admin/AllocationConfig/CommercialKeywords/Form', );
+        return inertia('Admin/AllocationConfig/CommercialKeywords/Form');
         // return view('commercialkeywords.add');
     }
 

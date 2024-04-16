@@ -23,15 +23,15 @@ class TierRequest extends FormRequest
     public function rules(): array
     {
         return [
-            "name" => 'required|string',
-            "min_price" => 'required|integer',
-            "max_price" => 'required',
-            "cost_per_lead" => 'required|integer',
-            "can_handle_ecommerce" => 'boolean',
-            "can_handle_null_value" => 'boolean',
-            "is_tpl_renewals" => 'boolean',
-            "is_active" => 'boolean',
-            "tier_user" => 'required|array'
+            'name' => 'required|string',
+            'min_price' => 'required|integer',
+            'max_price' => 'required',
+            'cost_per_lead' => 'required|integer',
+            'can_handle_ecommerce' => 'boolean',
+            'can_handle_null_value' => 'boolean',
+            'is_tpl_renewals' => 'boolean',
+            'is_active' => 'boolean',
+            'tier_user' => 'required|array',
         ];
     }
 

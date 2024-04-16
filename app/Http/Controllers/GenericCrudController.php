@@ -106,7 +106,7 @@ class GenericCrudController extends Controller
         // }
 
         // dd('on route');
-        return inertia('Admin/AllocationConfig/Tiers/Index', [  
+        return inertia('Admin/AllocationConfig/Tiers/Index', [
             'model' => $model,
             'tiers' => $tiers,
             'dropdownSource' => $dropdownSource,

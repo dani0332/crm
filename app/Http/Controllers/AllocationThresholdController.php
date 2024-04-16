@@ -31,9 +31,9 @@ class AllocationThresholdController extends Controller
         });
         $teams = $sortedTeams;
 
-         return inertia('Admin/AllocationConfig/AllocationThreshold', [
+        return inertia('Admin/AllocationConfig/AllocationThreshold', [
             'teams' => $teams,
-           
+
         ]);
         // return view('allocationthreshold.view', compact('teams'));
     }

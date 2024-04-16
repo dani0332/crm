@@ -36,8 +36,7 @@ class CommercialVehicleConfigurationContoller extends Controller
     {
         $gridData = $this->commercialVehicleConfigurationService->getGridData();
 
-        
-        if(isset($request->text) && ! empty($request->text)){
+        if (isset($request->text) && ! empty($request->text)) {
             $text = $request->text;
             $gridData = $gridData->where(function ($query) use ($text) {
                 $query->whereRaw('LOWER(text) LIKE ?', [strtolower("%{$text}%")]);

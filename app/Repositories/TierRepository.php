@@ -4,7 +4,6 @@ namespace App\Repositories;
 
 class TierRepository extends BaseRepository
 {
-
     public function model()
     {
         return \App\Models\Tier::class;
@@ -15,9 +14,8 @@ class TierRepository extends BaseRepository
 
         $data = $this->orderBy('created_at', 'desc');
 
-
         $data->when(request()->name, function ($query, $name) {
-            return $query->where('name', 'LIKE', '%' . $name . '%');
+            return $query->where('name', 'LIKE', '%'.$name.'%');
         })
             ->when(request()->min_price, function ($query, $minPrice) {
                 return $query->where('min_price', $minPrice);
@@ -32,7 +30,6 @@ class TierRepository extends BaseRepository
                 return $query->whereBetween('created_at', [request()->created_at, request()->created_at_end]);
             });
 
-
         return $data->simplePaginate(10)->withQueryString();
     }
 
@@ -41,6 +38,7 @@ class TierRepository extends BaseRepository
         $tier = self::findOrFail($id);
         $tier->users()->detach();
         $tier->delete();
+
         return true;
     }
 }

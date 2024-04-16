@@ -9,13 +9,13 @@ use App\Repositories\UserRepository;
 
 class TiersController extends Controller
 {
-
     /**
      * Display a listing of the resource.
      */
     public function index()
     {
         $tiers = TierRepository::getData();
+
         return inertia('Admin/AllocationConfig/Tiers/Index', [
             'tiers' => $tiers,
         ]);
@@ -42,7 +42,7 @@ class TiersController extends Controller
         // Attaching users
         $response = $tier->users()->attach($request->tier_user);
 
-        if (!empty($response->errors) || !empty($response->msg)) {
+        if (! empty($response->errors) || ! empty($response->msg)) {
             vAbort($response->msg);
         }
 
@@ -52,23 +52,25 @@ class TiersController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(String $id)
+    public function show(string $id)
     {
         $tier = TierRepository::find($id);
+
         return inertia('Admin/AllocationConfig/Tiers/Show', [
-            'tier' => $tier
+            'tier' => $tier,
         ]);
     }
 
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(String $id)
+    public function edit(string $id)
     {
         $tier = TierRepository::find($id);
+
         return inertia('Admin/AllocationConfig/Tiers/Form', [
             'usersList' => UserRepository::select('id', 'name')->where('is_active', true)->get(),
-            'tier' => $tier->load('users')
+            'tier' => $tier->load('users'),
         ]);
     }
 
@@ -81,9 +83,9 @@ class TiersController extends Controller
         $tier->update($request->except('tier_user'));
 
         // Sync users
-        $response =  $tier->users()->sync($request->tier_user);
+        $response = $tier->users()->sync($request->tier_user);
 
-        if (!empty($response->errors) || !empty($response->msg)) {
+        if (! empty($response->errors) || ! empty($response->msg)) {
             vAbort($response->msg);
         }
 

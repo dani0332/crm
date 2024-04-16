@@ -22,11 +22,11 @@ class QuadrantController extends Controller
             },
             'tiers' => function ($tier) {
                 return $tier->select('id', 'name');
-            }
+            },
         ]);
 
         return inertia('Admin/AllocationConfig/Quadrants/Index', [
-            'quadrants' => $quadrants
+            'quadrants' => $quadrants,
         ]);
     }
 
@@ -35,7 +35,7 @@ class QuadrantController extends Controller
      */
     public function create()
     {
-        $quadUsers =  UserRepository::select('id', 'name')->where('is_active', true)->get();
+        $quadUsers = UserRepository::select('id', 'name')->where('is_active', true)->get();
         $quadTiers = TierRepository::select('id', 'name')->where('is_active', true)->get();
 
         return inertia('Admin/AllocationConfig/Quadrants/Form', [
@@ -71,11 +71,11 @@ class QuadrantController extends Controller
             },
             'tiers' => function ($tier) {
                 return $tier->select('id', 'name');
-            }
+            },
         ]);
 
         return inertia('Admin/AllocationConfig/Quadrants/Show', [
-            'quadrant' => $quadrant
+            'quadrant' => $quadrant,
         ]);
     }
 
@@ -85,7 +85,7 @@ class QuadrantController extends Controller
     public function edit(string $id)
     {
         $quadrant = QuadrantRepository::find($id);
-        $quadUsers =  UserRepository::select('id', 'name')->where('is_active', true)->get();
+        $quadUsers = UserRepository::select('id', 'name')->where('is_active', true)->get();
         $quadTiers = TierRepository::select('id', 'name')->where('is_active', true)->get();
 
         $quadrant = $quadrant->load([
@@ -94,13 +94,13 @@ class QuadrantController extends Controller
             },
             'tiers' => function ($tier) {
                 return $tier->select('id', 'name');
-            }
+            },
         ]);
 
         return inertia('Admin/AllocationConfig/Quadrants/Form', [
             'quadrant' => $quadrant,
             'quad_users' => $quadUsers,
-            'quad_tiers' => $quadTiers
+            'quad_tiers' => $quadTiers,
         ]);
     }
 

@@ -22,8 +22,8 @@ class QuadrantRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name'=>'required|string',
-            'is_active'=>'boolean',
+            'name' => 'required|string',
+            'is_active' => 'boolean',
         ];
     }
 }

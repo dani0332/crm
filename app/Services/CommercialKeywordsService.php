@@ -20,7 +20,6 @@ class CommercialKeywordsService extends BaseService
             'key' => strtoupper(str_replace(' ', '_', $attributes['name'])),
         ]);
 
-
         return redirect()->back()->with('success', 'Commercial Keyword has been stored');
     }
 

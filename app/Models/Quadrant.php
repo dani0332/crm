@@ -14,12 +14,13 @@ class Quadrant extends Model implements AuditableContract
     protected $table = 'quadrants';
     protected $fillable = ['name', 'is_active'];
 
-    function users(){
+    public function users()
+    {
         return $this->belongsToMany(User::class, 'quad_users', 'quad_id', 'user_id');
     }
-    
 
-    function tiers(){
+    public function tiers()
+    {
         return $this->belongsToMany(Tier::class, 'quad_tiers', 'quad_id', 'tier_id');
     }
 }
