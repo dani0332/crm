@@ -51,11 +51,11 @@ class CarLeadAllocationDashboardService extends BaseService
                     'la.auto_assignment_count as autoAllocationCount',
                     'la.reset_cap',
                 );
-            if (!auth()->user()->hasRole(RolesEnum::Admin)) {
+            if (! auth()->user()->hasRole(RolesEnum::Admin)) {
                 $userTeamIds = $this->getUserTeams(auth()->user()->id)->pluck('id')->toArray();
                 $users = $users->whereIn('teams.id', $userTeamIds);
             }
-            if (!auth()->user()->hasRole(RolesEnum::SuperManagerLeadAllocation)) {
+            if (! auth()->user()->hasRole(RolesEnum::SuperManagerLeadAllocation)) {
                 $users = $users->where('users.manager_id', auth()->user()->id);
             }
 
@@ -75,8 +75,8 @@ class CarLeadAllocationDashboardService extends BaseService
         while ($endDate <= now()) {
             $currentWeek = $startDate->format('Y-m-d');
             $nextWeek = $startDate->addWeek(1)->addDay(1)->format('Y-m-d');
-            $batchString = 'Batch-' . $batchCount . '-(' . $currentWeek . ' to ' . $nextWeek . ')';
-            array_push($batchList, [$currentWeek . ',' . $nextWeek => $batchString]);
+            $batchString = 'Batch-'.$batchCount.'-('.$currentWeek.' to '.$nextWeek.')';
+            array_push($batchList, [$currentWeek.','.$nextWeek => $batchString]);
             $endDate = $startDate;
             $batchCount++;
         }
