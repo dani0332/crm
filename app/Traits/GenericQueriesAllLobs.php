@@ -200,7 +200,7 @@ trait GenericQueriesAllLobs
                     $bPDetails['sendPolicyType'] = 'customer';
                 }
                 if ($bPDetails['sendButton']) {
-                    $taxDocuments = app(DocumentTypeRepository::class)->getTaxDocumentsCode($quoteType);
+                    $taxDocuments = DocumentTypeRepository::taxDocumentsCode($quoteType);
                     $taxDocumentsCount = collect($quoteDocuments)->whereIn('document_type_code', $taxDocuments)->groupBy('document_type_code')->count();
                     if ($taxDocumentsCount == count($taxDocuments)) {
                         $bPDetails['text'] = 'Send Policy';
@@ -264,7 +264,7 @@ trait GenericQueriesAllLobs
 
     private function isAllRequiredDocumentAreUploaded($quoteDocuments, $quoteType)
     {
-        $documentTypeCodes = app(DocumentTypeRepository::class)->getSendPolicyDocumentCodes($quoteType);
+        $documentTypeCodes = DocumentTypeRepository::sendPolicyDocumentCodes($quoteType);
         $quoteDocumentsCount = collect($quoteDocuments)->whereIn('document_type_code', $documentTypeCodes)->groupBy('document_type_code')->count();
 
         return $quoteDocumentsCount == count($documentTypeCodes);

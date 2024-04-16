@@ -14,7 +14,7 @@ class DocumentTypeRepository extends BaseRepository
         return DocumentType::class;
     }
 
-    public function getSendPolicyDocumentCodes($quoteType)
+    public function fetchSendPolicyDocumentCodes($quoteType)
     {
         $documentTypeCodes = DocumentType::requiredForSendPolicy()->where('quote_type_id', app(ActivitiesService::class)->getQuoteTypeId($quoteType))->pluck('code')->toArray();
         if ($quoteType == QuoteTypes::GROUP_MEDICAL->value) {
@@ -24,12 +24,12 @@ class DocumentTypeRepository extends BaseRepository
         return $documentTypeCodes;
     }
 
-    public function getTaxDocumentsCode($quoteType)
+    public function fetchTaxDocumentsCode($quoteType)
     {
         return DocumentType::taxDocument()->where('quote_type_id', app(ActivitiesService::class)->getQuoteTypeId($quoteType))->pluck('code')->toArray();
     }
 
-    public function getQuoteDocumentsSentToCustomerCode($quoteType)
+    public function fetchQuoteDocumentsSentToCustomerCode($quoteType)
     {
         return DocumentType::sendToCustomer()->where('quote_type_id', app(ActivitiesService::class)->getQuoteTypeId($quoteType))->pluck('code')->toArray();
     }
