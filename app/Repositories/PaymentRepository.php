@@ -8,6 +8,7 @@ use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
+use App\Enums\RolesEnum;
 use App\Interfaces\PaymentRepositoryInterface;
 use App\Models\Payment;
 use App\Models\PaymentSplits;
@@ -66,10 +67,11 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
         return $paymentLink;
     }
 
-    public function fetchCreateNewPayment($request, $quoteModel)
+    public function fetchCreateNewPayment($request)
     {
         DB::beginTransaction();
         try {
+            $quoteModel = $this->getQuoteObject($request->modelType, $request->quote_id);
             $masterPayment = (object) $request->payment;
             $masterPaymentStatus = PaymentStatusEnum::NEW;
             if ($masterPayment->payment_methods == PaymentMethodsEnum::CreditApproval) {
@@ -365,6 +367,9 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                         try {
                             $paymentSplit->collection_amount = $splitAmount;
                             $paymentSplit->save();
+                            if (Auth::user()->hasRole(RolesEnum::BetaUser)) { //Part of milestone 2
+                                app(SplitPaymentService::class)->createReciept($request->modelType, $request->quote_id, $paymentSplit);
+                            }
                             $parentPayment = $paymentSplit->payment;
                             $parentPayment->captured_amount = ($parentPayment->captured_amount + $splitAmount);
                             $parentPayment->save();
@@ -428,6 +433,23 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
         return response()->json(['error' => 'Payment Migration Failed']);
     }
 
+    //update total price
+    public function fetchUpdateTotalPrice($request)
+    {
+        $quoteModel = $this->getQuoteObject(request()->model_type, request()->quote_id);
+        $payment = $quoteModel->payments()->where('code', $request->payment_code)->first();
+        if ($payment) {
+            $payment->total_price = $request->total_price;
+            $payment->is_approved = 0;
+            $payment->payment_status_id = PaymentStatusEnum::PARTIAL_CAPTURED;
+            $payment->save();
+
+            return response()->json(['message' => 'Total Price Updated Successfully']);
+        }
+
+        return response()->json(['error' => 'Total Price Update Failed']);
+    }
+
     public function fetchUpdatePaymentStatus($request)
     {
         $successMessage = 'Payment Verified';
@@ -455,6 +477,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                     }
                 }
             }
+
             //create sage reciept
             $isSageEnabled = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::SAGE_ENABLED);
 
@@ -486,6 +509,10 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                     );
                 }
             }
+            if (Auth::user()->hasRole(RolesEnum::BetaUser)) { //Part of milestone 2
+                app(SplitPaymentService::class)->createReciept($request->modelType, $request->quote_id, $splitPayment);
+            }
+
         } elseif ($request->is_declined) {
             $paymentInformation = [
                 'decline_reason_id' => $request->declined_reason,

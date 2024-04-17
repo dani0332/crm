@@ -91,14 +91,14 @@ class LifeQuoteRepository extends BaseRepository
 
     public function fetchGetBy($column, $value)
     {
-
         $quote = $this->where($column, $value)->with(['advisor', 'quoteStatus', 'nationality', 'previousAdvisor', 'lifeQuoteRequestDetail.lostReason',
             'purposeOfInsurance', 'children', 'currency', 'insuranceTenure', 'numberOfYears', 'maritalStatus',
-            'paymentStatus', 'customer.additionalContactInfo', 'insuranceProvider',
+            'paymentStatus', 'customer.additionalContactInfo', 'transactionType', 'insuranceProvider',
             'payments.paymentMethod', 'payments.paymentStatus', 'payments.paymentSplits.paymentStatus', 'payments.paymentSplits.paymentMethod', 'payments.paymentSplits.documents',
             'quoteRequestEntityMapping' => function ($entityMapping) {
                 $entityMapping->with('entity');
-            }])
+            },
+        ])
             ->with([
                 'documents' => function ($q) {
                     $q->with('createdBy')->orderBy('created_at', 'desc');
@@ -111,9 +111,9 @@ class LifeQuoteRepository extends BaseRepository
             ])
             ->select([
                 'life_quote_request.*',
-                \DB::raw('DATE_FORMAT(renewal_expiry_date, "%d-%m-%Y") as renewal_expiry_date'),
-                \DB::raw('DATE_FORMAT(policy_start_date, "%d-%m-%Y") as policy_start_date'),
-                \DB::raw('DATE_FORMAT(policy_issuance_date, "%d-%m-%Y") as policy_issuance_date'),
+                'renewal_expiry_date',
+                'policy_start_date',
+                'policy_issuance_date',
                 \DB::raw('IF(EXISTS (
                     SELECT *
                     FROM quote_request_entity_mapping
@@ -125,6 +125,7 @@ class LifeQuoteRepository extends BaseRepository
         $data = ! empty($quote) ? $quote->toArray() : [];
         $quote->lost_reason = $data['quote_detail']['lost_reason']['text'] ?? null;
         $quote->previous_advisor_id_text = $data['quote_detail']['previous_advisor']['name'] ?? null;
+        $quote->transaction_type_text = $data['transaction_type']['text'] ?? null;
 
         return $quote;
     }
