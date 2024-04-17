@@ -28,6 +28,7 @@ class AlfredChatController extends Controller
                     '$group' => [
                         '_id' => [ // _id is a group operator to group the records
                             '$dateToString' => [ // $dateToString is an aggregation operator to convert date to string
+                                'timezone' => '+04:00',
                                 'format' => '%Y-%m-%d', // format of the date
                                 'date' => ['$toDate' => '$created_at'], // $toDate is an aggregation operator to convert string to date
                             ],
