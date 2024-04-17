@@ -1689,8 +1689,8 @@ class CRUDController extends Controller
     public function updateQuotePolicy(UpdatePolicyDetailRequest $policyDetailRequest)
     {
         $request = (object) $policyDetailRequest->validated();
-        if(in_array($request->modelType, ['Corpline', 'Group Medical'])){
-            $request->modelType= 'Business';
+        if (in_array($request->modelType, ['Corpline', 'Group Medical'])) {
+            $request->modelType = 'Business';
         }
         $quoteModel = $this->getQuoteObject($request->modelType, $request->quote_id);
         if (! $quoteModel) {
