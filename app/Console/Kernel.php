@@ -20,6 +20,7 @@ class Kernel extends ConsoleKernel
     protected $commands = [
         Commands\AddBatchNumber::class,
         Commands\Dtt::class,
+        Commands\DttFollowUp::class,
         Commands\TierAssignment::class,
         Commands\UpdateUserStatus::class,
         Commands\QuoteAllocation::class,
