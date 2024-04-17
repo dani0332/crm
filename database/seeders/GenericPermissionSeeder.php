@@ -104,6 +104,18 @@ class GenericPermissionSeeder extends Seeder
             }
         }
 
+        $instantAlfredChatLogsPermission = Permission::where('name', PermissionsEnum::INSTANT_ALFRED_CHAT_LOGS)->first();
+        if (! $instantAlfredChatLogsPermission) {
+            $instantAlfredChatLogsPermission = Permission::create([
+                'name' => PermissionsEnum::INSTANT_ALFRED_CHAT_LOGS,
+                'guard_name' => 'web',
+            ]);
+        }
+
+        if ($instantAlfredChatLogsPermission && ! $role->hasPermissionTo(PermissionsEnum::INSTANT_ALFRED_CHAT_LOGS)) {
+            $role->givePermissionTo(PermissionsEnum::INSTANT_ALFRED_CHAT_LOGS);
+        }
+
         $this->generateSegmentFilterPermission();
     }
 
