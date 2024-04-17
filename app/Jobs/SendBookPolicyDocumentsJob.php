@@ -39,7 +39,7 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
         $quote = $this->getQuoteObject($this->data->model_type, $this->data->quote_id);
 
         try {
-            $documentTypeCodes = DocumentTypeRepository::getQuoteDocumentsSentToCustomerCode($this->data->model_type);
+            $documentTypeCodes = DocumentTypeRepository::quoteDocumentsSentToCustomerCode($this->data->model_type);
             $quoteDocuments = $docs = app(QuoteDocumentService::class)->getQuoteDocuments($this->data->model_type, $this->data->quote_id, $documentTypeCodes);
         } catch (Exception $ex) {
             error('SendBookPolicyDocumentsJobError '.$ex->getMessage());
@@ -57,9 +57,9 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
             // payload
             $dataArr = new \stdClass();
             $dataArr->code = $quote->code;
-            $dataArr->customerEmail = 'muhammad.waris@myalfred.com';
+            // $dataArr->customerEmail = 'muhammad.waris@myalfred.com';
             // $dataArr->customerEmail = 'nouman.hussain@myalfred.com';
-            // $dataArr->customerEmail = $quote->email;
+            $dataArr->customerEmail = $quote->email;
             $dataArr->clientFullName = $quote->first_name.' '.$quote->last_name;
             $dataArr->policy_number = $quote->policy_number;
             $dataArr->renewalDueDate = date('Y-m-d', strtotime($quote['renewal_expiry_date']));
