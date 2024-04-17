@@ -900,6 +900,7 @@ watch(
       "
       :quote="record"
       quoteType="Business"
+      modelType="Group Medical"
       :bPDetails="bPDetails"
       :payments="payments"
       :expanded="sectionExpanded"

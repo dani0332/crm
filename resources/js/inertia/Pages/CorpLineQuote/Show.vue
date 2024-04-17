@@ -1162,6 +1162,7 @@ watch(
       "
       :quote="record"
       quoteType="Business"
+      modelType="Corpline"
       :bPDetails="bPDetails"
       :payments="payments"
       :expanded="sectionExpanded"

@@ -11,6 +11,10 @@ const props = defineProps({
     type: String,
     default: '',
   },
+  modelType: {
+    type: String,
+    default: '',
+  },
   bPDetails: {
     type: Array,
     default: [],
@@ -125,6 +129,7 @@ const bpForm = useForm({
   discount: page.props?.payments[0]?.discount_value || '',
   model_type: props.quoteType,
   quote_id: page.props.quote.id,
+  modelType: props.modelType,
 });
 
 const onUpdateBpDetails = isValid => {
@@ -168,6 +173,7 @@ const submitPolicy = () => {
     send_policy_type: props.bPDetails.sendPolicyType,
     model_type: props?.quoteType,
     quote_id: props?.quote?.id,
+    modelType: props.modelType,
   };
   axios
     .post(url, data)
