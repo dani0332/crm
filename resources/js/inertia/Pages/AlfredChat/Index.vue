@@ -113,9 +113,9 @@ onMounted(() => {
 </script>
 
 <template>
-  <Head title="Alfred Chat Logs" />
+  <Head title="InstantAlfred Chat Logs" />
   <div class="flex justify-between items-center">
-    <h2 class="text-xl font-semibold">Alfred Chat Logs</h2>
+    <h2 class="text-xl font-semibold">InstantAlfred Chat Logs</h2>
   </div>
   <x-divider class="my-4" />
   <x-form @submit="onSubmit" :auto-focus="false">
