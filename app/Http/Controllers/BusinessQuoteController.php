@@ -37,6 +37,7 @@ use App\Services\LookupService;
 use App\Traits\RolePermissionConditions;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use App\Enums\TeamNameEnum;
 
 class BusinessQuoteController extends Controller
 {
@@ -360,26 +361,43 @@ class BusinessQuoteController extends Controller
 
         $quoteStatusEnums = QuoteStatusEnum::asArray();
         $lostReasons = LostReasonRepository::orderBy('text', 'asc')->get();
-        $isManagerOrAdminAccess = auth()->user()->hasAnyRole([RolesEnum::CorplineManager, RolesEnum::Admin]);
 
-        if (! $isManagerOrAdminAccess) {
-            if (auth()->user()->hasAnyRole([RolesEnum::CorpLineNewBusinessAdvisor, RolesEnum::CorpLineNewBusinessManager])) {
-                $quotes = collect($quotes)->whereNotIn('id', [
-                    QuoteStatusEnum::Allocated,
-                    QuoteStatusEnum::PendingRenewalInformation,
+        $userId = auth()->id();
+        $userTeams = auth()->user()->getUserTeams($userId)->toArray();
+        if(array_intersect([TeamNameEnum::CORPLINE_TEAM], $userTeams)){
+            $quotes = collect($quotes)->whereNotIn('id', [
+                QuoteStatusEnum::Allocated,
+                QuoteStatusEnum::PendingRenewalInformation,
+            ])->values()->toArray();
+        }elseif(array_intersect([TeamNameEnum::CORPLINE_RENEWALS], $userTeams)) {
+            $quotes = collect($quotes)->whereNotIn('id', [
+                QuoteStatusEnum::NewLead,
+                QuoteStatusEnum::ProposalFormRequested,
+                QuoteStatusEnum::ProposalFormReceived,
+                QuoteStatusEnum::AdditionalInformationRequested,
                 ])->values()->toArray();
-
-            } elseif (auth()->user()->hasAnyRole([RolesEnum::CorpLineRenewalAdvisor, RolesEnum::CorpLineRenewalManager])) {
-                $quotes = collect($quotes)->whereNotIn('id', [
-                    QuoteStatusEnum::NewLead,
-                    QuoteStatusEnum::ProposalFormRequested,
-                    QuoteStatusEnum::ProposalFormReceived,
-                    QuoteStatusEnum::AdditionalInformationRequested,
-                ])->values()->toArray();
-            } else {
-                $quotes = [];
-            }
         }
+
+        // $isManagerOrAdminAccess = auth()->user()->hasAnyRole([RolesEnum::CorplineManager, RolesEnum::Admin]);
+
+        // if (! $isManagerOrAdminAccess) {
+        //     if (auth()->user()->hasAnyRole([RolesEnum::CorpLineNewBusinessAdvisor, RolesEnum::CorpLineNewBusinessManager])) {
+        //         $quotes = collect($quotes)->whereNotIn('id', [
+        //             QuoteStatusEnum::Allocated,
+        //             QuoteStatusEnum::PendingRenewalInformation,
+        //         ])->values()->toArray();
+
+        //     } elseif (auth()->user()->hasAnyRole([RolesEnum::CorpLineRenewalAdvisor, RolesEnum::CorpLineRenewalManager])) {
+        //         $quotes = collect($quotes)->whereNotIn('id', [
+        //             QuoteStatusEnum::NewLead,
+        //             QuoteStatusEnum::ProposalFormRequested,
+        //             QuoteStatusEnum::ProposalFormReceived,
+        //             QuoteStatusEnum::AdditionalInformationRequested,
+        //         ])->values()->toArray();
+        //     } else {
+        //         $quotes = [];
+        //     }
+        // }
 
         return inertia('CorpLineQuote/Cards', [
             'quotes' => $quotes,
