@@ -1124,6 +1124,7 @@ watch(
 			:storageUrl="storageUrl"
       quoteSubType="Corpline"
 		/>
+    
     <PaymentTable
       v-else
       :payments="payments"
@@ -1140,7 +1141,7 @@ watch(
       :record="record"
       :quoteStatusEnum="enums.quoteStatusEnum"
       :policyIssuanceStatus="policyIssuanceStatus"
-      modelType="Corpline"
+      modelType="Business"
       :expanded="sectionExpanded"
     />
 
@@ -1160,7 +1161,7 @@ watch(
         ])
       "
       :quote="record"
-      quoteType="Corpline"
+      quoteType="Business"
       :bPDetails="bPDetails"
       :payments="payments"
       :expanded="sectionExpanded"

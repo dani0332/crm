@@ -1689,10 +1689,6 @@ class CRUDController extends Controller
     public function updateQuotePolicy(UpdatePolicyDetailRequest $policyDetailRequest)
     {
         $request = (object) $policyDetailRequest->validated();
-        // We are using this line because we are getting data from business controller but need to send email to customer different email
-        if (in_array($request->modelType, ['Corpline', 'Group Medical'])) {
-            $request->modelType = 'Business';
-        }
         $quoteModel = $this->getQuoteObject($request->modelType, $request->quote_id);
         if (! $quoteModel) {
             return redirect()->back()->with('success', 'Error Updating Policy Details.');

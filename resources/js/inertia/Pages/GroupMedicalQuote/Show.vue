@@ -879,7 +879,7 @@ watch(
       :record="record"
       :quoteStatusEnum="enums.quoteStatusEnum"
       :policyIssuanceStatus="policyIssuanceStatus"
-      modelType="Group Medical"
+      modelType="Business"
       :expanded="sectionExpanded"
     />
 
@@ -899,7 +899,7 @@ watch(
         ])
       "
       :quote="record"
-      quoteType="Group Medical"
+      quoteType="Business"
       :bPDetails="bPDetails"
       :payments="payments"
       :expanded="sectionExpanded"

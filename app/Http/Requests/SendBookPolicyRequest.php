@@ -30,7 +30,6 @@ class SendBookPolicyRequest extends FormRequest
             'model_type' => 'required',
             'quote_id' => 'required',
             'send_policy_type' => 'required',
-
         ];
     }
 
