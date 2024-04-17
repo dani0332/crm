@@ -5,6 +5,7 @@ namespace App\Http\Controllers\V2;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypes;
 use App\Exports\AmtQuoteExport;
 use App\Exports\BusinessQuoteExport;
@@ -226,7 +227,10 @@ class CentralController extends Controller
             return back()->with('message', 'Payment record not found');
         }
         $payment->update($paymentInformation);
-
+        // We are using this line because we are getting data from business controller but need to send email to customer different email
+        if (in_array($validatedData['model_type'], ['Corpline', 'Group Medical'])) {
+            $validatedData['model_type'] = 'Business';
+        }
         $quote = $this->getQuoteObject($validatedData['model_type'], $validatedData['quote_id']);
         $quote->update(['policy_booking_date' => Carbon::parse($validatedData['booking_date'])]);
 
@@ -236,11 +240,13 @@ class CentralController extends Controller
     public function sendBookingPolicy(SendBookPolicyRequest $sendBookPolicyRequest)
     {
         $request = (object) $sendBookPolicyRequest->validated();
-
+        // We are using this line because we are getting data from business controller but need to send email to customer different email
+        if (in_array($request->modelType, ['Corpline', 'Group Medical'])) {
+            $request->modelType = 'Business';
+        }
         $quote = $this->getQuoteObject($request->model_type, $request->quote_id);
 
         if ($request->send_policy_type == 'customer') {
-
             // dispath job to send email
             dispatch(new SendBookPolicyDocumentsJob($request));
 
@@ -251,7 +257,6 @@ class CentralController extends Controller
             return response()->json(['message' => 'Policy sent to customer'], 200);
         }
         if ($request->send_policy_type == 'sage') {
-
             $quoteTypeId = app(ActivitiesService::class)->getQuoteTypeId(strtolower($request->model_type));
             $payment = Payment::where('code', $quote['code'])->first();
             $paymentSplits = PaymentSplits::where('code', $quote['code'])->get();

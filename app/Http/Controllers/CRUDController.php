@@ -1689,6 +1689,7 @@ class CRUDController extends Controller
     public function updateQuotePolicy(UpdatePolicyDetailRequest $policyDetailRequest)
     {
         $request = (object) $policyDetailRequest->validated();
+        // We are using this line because we are getting data from business controller but need to send email to customer different email
         if (in_array($request->modelType, ['Corpline', 'Group Medical'])) {
             $request->modelType = 'Business';
         }
