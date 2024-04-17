@@ -245,4 +245,5 @@ final class PermissionsEnum extends Enum
     public const HEALTH_QUOTES_MANAGER_ACCESS = 'health-quotes-manager-access';
     public const HEALTH_QUOTES_ACCESS = 'health-quotes-access';
     public const SEGMENT_FILTER = 'segment-filter';
+    public const INSTANT_ALFRED_CHAT_LOGS = 'instant-alfred-chat-logs';
 }

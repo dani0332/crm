@@ -1,9 +1,9 @@
 <script setup>
-import LazyDocumentUploader from './Partials/DocumentUploader.vue';
-import LazyAvailablePlan from './Partials/AvailablePlans.vue';
-import LazyCreatePlan from './Partials/CreatePlan.vue';
 import { computed } from 'vue';
 import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue';
+import LazyAvailablePlan from './Partials/AvailablePlans.vue';
+import LazyCreatePlan from './Partials/CreatePlan.vue';
+import LazyDocumentUploader from './Partials/DocumentUploader.vue';
 
 defineProps({
   quote: Object,
@@ -3197,7 +3197,6 @@ const handleChildUpdate = planId => {
     </div>
 
     <CustomerChatLogs
-      v-if="hasRole(rolesEnum.BetaUser)"
       :customerName="quote?.first_name + ' ' + quote?.last_name"
       :quoteId="quote.uuid"
       :quoteType="'HEALTH'"

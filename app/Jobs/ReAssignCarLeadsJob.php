@@ -136,6 +136,7 @@ class ReAssignCarLeadsJob implements ShouldQueue
         if ($this->advisorId) {
             return [(new WithoutOverlapping($this->advisorId))->dontRelease()];
         }
+
         return [];
     }
 }
