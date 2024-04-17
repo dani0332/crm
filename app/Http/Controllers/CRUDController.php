@@ -1236,7 +1236,7 @@ class CRUDController extends Controller
         if (strpos($url, 'home')) {
             $this->genericModel->modelType = 'Home';
         }
-        if (strpos($url, 'business')) {
+        if (strpos($url, 'business') || strpos(urldecode($url), 'Group Medical') || strpos($url, 'Corpline')) {
             $this->genericModel->modelType = 'Business';
         }
         if (strpos($url, 'leadstatus')) {
