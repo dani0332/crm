@@ -19,6 +19,7 @@ use App\Models\LifeQuote;
 use App\Models\Payment;
 use App\Models\PersonalQuote;
 use App\Models\PetQuote;
+use App\Models\SendUpdateLog;
 use App\Models\TravelQuote;
 use App\Models\YachtQuote;
 use App\Repositories\InsuranceProviderRepository;
@@ -675,7 +676,9 @@ class SendUpdateLogService
                         'policy_booking_date' => $sendUpdateLog->booking_date,
                     ]);
                 }
+            }
 
+            if (in_array($categoryCode, [SendUpdateLogStatusEnum::EF, SendUpdateLogStatusEnum::CI, SendUpdateLogStatusEnum::CIR, SendUpdateLogStatusEnum::CPD])) {
                 $sendUpdateLog->update(['status' => SendUpdateLogStatusEnum::UPDATE_BOOKED]);
             }
 
