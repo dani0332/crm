@@ -64,7 +64,7 @@ const removeUnusedFilters = filters => {
 function setQueryStringFilters() {
   for (const [key] of Object.entries(params)) {
     if (key.includes('[]')) {
-      filters[key.substring(0, key.length - 2)] = [params[key]];
+      filters[key.substring(0, key.length - 2)] = params[key];
     } else {
       filters[key] = params[key];
     }
