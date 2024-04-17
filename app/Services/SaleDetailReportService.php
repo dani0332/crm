@@ -23,9 +23,9 @@ class SaleDetailReportService extends ManagementReport
             ->select(
                 DB::raw('DISTINCT(personal_quotes.policy_number)'),
                 DB::raw("CONCAT(p.reference, ' ', p.tax_invoice_number) as transactions"),
-                'personal_quotes.policy_start_date',
-                'p.payment_due_date',
-                'ps.due_date',
+                DB::raw("DATE_FORMAT(personal_quotes.policy_start_date, '%Y-%m-%d') as policy_start_date"),
+                DB::raw("DATE_FORMAT(p.payment_due_date, '%Y-%m-%d') as payment_due_date"),
+                DB::raw("DATE_FORMAT(ps.due_date, '%Y-%m-%d') as due_date"),
                 'personal_quotes.source',
                 't.name as team',
                 'personal_quotes.price_vat_applicable',

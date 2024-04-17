@@ -369,7 +369,7 @@ function onReset() {
       <x-field label="UTM" v-if="!hideUmtGroup">
         <ComboBox
           :single="true"
-          v-model="filters.leadSources"
+          v-model="filters.utmGroupBy"
           placeholder="Search by Lead Source"
           :options="umtGroup"
           deselect-all
