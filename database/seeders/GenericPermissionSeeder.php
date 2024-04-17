@@ -57,7 +57,7 @@ class GenericPermissionSeeder extends Seeder
             ]);
         }
 
-        $roles = Role::whereIn('name', [RolesEnum::LeadPool, RolesEnum::CarManager])->get();
+        $roles = Role::whereIn('name', [RolesEnum::LeadPool, RolesEnum::CarManager, RolesEnum::Admin])->get();
 
         foreach ($roles as $role) {
             if (! $role->hasPermissionTo(PermissionsEnum::SEGMENT_FILTER)) {
