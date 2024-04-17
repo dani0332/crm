@@ -11,7 +11,6 @@ use Illuminate\Http\Request;
 
 class AlfredChatController extends Controller
 {
-
     public function __construct()
     {
         $this->middleware('permission:'.PermissionsEnum::INSTANT_ALFRED_CHAT_LOGS, ['only' => ['logs']]);
@@ -198,4 +197,3 @@ class AlfredChatController extends Controller
     }
 
 }
-

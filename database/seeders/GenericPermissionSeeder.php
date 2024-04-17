@@ -55,7 +55,7 @@ class GenericPermissionSeeder extends Seeder
         if ($instantAlfredChatLogsPermission && ! $role->hasPermissionTo(PermissionsEnum::INSTANT_ALFRED_CHAT_LOGS)) {
             $role->givePermissionTo(PermissionsEnum::INSTANT_ALFRED_CHAT_LOGS);
         }
-        
+
         $this->generateSegmentFilterPermission();
     }
 

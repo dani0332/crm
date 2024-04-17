@@ -546,7 +546,7 @@ class HandleInertiaRequests extends Middleware
         if (auth()->user()->can(PermissionsEnum::INSTANT_ALFRED_CHAT_LOGS)) {
             $nav = $nav->add('Instant Alfred Logs', route('instant-alfred.logs'));
         }
-        
+
         return $nav;
     }
 }
