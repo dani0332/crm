@@ -2,13 +2,21 @@
 
 namespace App\Http\Controllers\V2;
 
+use App\Enums\PermissionsEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\AlfredChatRequest;
 use App\Models\AlfredChat;
 use Carbon\Carbon;
+use Illuminate\Http\Request;
 
 class AlfredChatController extends Controller
 {
+
+    public function __construct()
+    {
+        $this->middleware('permission:'.PermissionsEnum::INSTANT_ALFRED_CHAT_LOGS, ['only' => ['logs']]);
+    }
+
     /**
      * Display a listing of the resource.
      *
@@ -68,4 +76,126 @@ class AlfredChatController extends Controller
 
         return response()->json(['data' => $chat]);
     }
+
+    public function logs(Request $request)
+    {
+        $quoteId = null;
+        $quoteType = null;
+        if ($request->has('quoteId')) {
+            if (strpos($request->quoteId, '-') !== false) {
+                $quote = explode('-', $request->quoteId);
+                $quoteId = $quote[1];
+            } else {
+                $quoteId = $request->quoteId;
+            }
+        }
+        if ($request->get('quoteType')) {
+            $quoteType = strtoupper($request->quoteType);
+        }
+
+        if (isset($quoteId)) {
+            $totalPipeline = [
+                ['$match' => ['quote_id' => $quoteId]],
+            ];
+        }
+
+        if (isset($quoteType)) {
+            $totalPipeline = [
+                ['$match' => ['quote_type' => $quoteType]],
+            ];
+        }
+
+        // Apply date range filter if provided
+        if ($request->has('start_date') && $request->has('end_date')) {
+            $start_date = Carbon::createFromFormat('Y-m-d', $request->start_date)->startOfDay()->toIso8601String();
+            $end_date = Carbon::createFromFormat('Y-m-d', $request->end_date)->endOfDay()->toIso8601String();
+
+            $totalPipeline[] = [
+                '$match' => [
+                    'created_at' => ['$gte' => $start_date, '$lte' => $end_date],
+                ],
+            ];
+        }
+
+        // Add a $group stage to count total documents
+        $totalPipeline[] = ['$group' => [
+            '_id' => ['$dateToString' => ['timezone' => '+04:00', 'format' => '%Y-%m-%d', 'date' => ['$toDate' => '$created_at']]],
+        ],
+        ];
+        $totalPipeline[] = ['$count' => 'total'];
+
+        // Execute the aggregation pipeline to get the total count
+        $totalDocuments = AlfredChat::raw(fn ($collection) => $collection->aggregate($totalPipeline))->toArray();
+
+        $totalDocumentsCount = empty($totalDocuments) ? 0 : $totalDocuments[0]['total'];
+
+        // Define pagination parameters
+        $perPage = 15; // Or any number of documents per page
+        $page = $request->has('page') ? max(1, (int) $request->page) : 1;
+        $skip = ($page - 1) * $perPage;
+
+        if (isset($quoteType)) {
+            $chatPipeline = [
+                ['$match' => ['quote_type' => $quoteType]],
+            ];
+        }
+
+        // Define the aggregation pipeline for fetching paginated chat records
+        if (isset($quoteId)) {
+            $chatPipeline = [
+                ['$match' => ['quote_id' => $quoteId]],
+            ];
+        }
+
+        // Apply date range filter if provided
+        if ($request->has('start_date') && $request->has('end_date')) {
+            $start_date = Carbon::createFromFormat('Y-m-d', $request->start_date)->startOfDay()->toIso8601String();
+            $end_date = Carbon::createFromFormat('Y-m-d', $request->end_date)->endOfDay()->toIso8601String();
+            $chatPipeline[] = [
+                '$match' => [
+                    'created_at' => ['$gte' => $start_date, '$lte' => $end_date],
+                ],
+            ];
+        }
+
+        // Add $group, $sort, $skip, and $limit stages for pagination
+        $chatPipeline[] = [
+            '$group' => [
+                '_id' => ['$dateToString' => ['timezone' => '+04:00', 'format' => '%Y-%m-%d', 'date' => ['$toDate' => '$created_at']]],
+                'role' => ['$first' => '$role'],
+                'msg' => ['$first' => '$msg'],
+                'quote_id' => ['$first' => '$quote_id'],
+                'quote_type' => ['$first' => '$quote_type'],
+                'count' => ['$sum' => 1],
+            ],
+        ];
+
+        $chatPipeline[] = ['$sort' => ['_id' => -1]];
+        $chatPipeline[] = ['$skip' => $skip];
+        $chatPipeline[] = ['$limit' => $perPage];
+
+        // Execute the aggregation pipeline to fetch paginated chat records
+        $chat = AlfredChat::raw(fn ($collection) => $collection->aggregate($chatPipeline));
+
+        // Calculate pagination indices
+        $startIndex = ($page - 1) * $perPage;
+        $endIndex = max($startIndex + $perPage, $totalDocumentsCount);
+        $prevPage = $page > 1 ? $page - 1 : null;
+        $nextPage = $totalDocumentsCount > $perPage ? $page + 1 : null;
+
+        // Create pagination object
+        $pagination = [
+            'data' => $chat,
+            'current_page' => $page,
+            'prev_page_url' => $prevPage ? $request->url().'?page='.$prevPage : null,
+            'next_page_url' => $nextPage ? $request->url().'?page='.$nextPage : null,
+            'from' => $startIndex + 1,
+            'to' => $endIndex,
+        ];
+
+        // Now you can pass these variables to your pagination component
+        return inertia('AlfredChat/Index', ['logs' => $pagination]);
+    }
+
 }
+

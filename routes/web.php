@@ -108,6 +108,8 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         return inertia('Home/Home', ['im_logo' => getIMLogo()]);
     });
 
+    Route::get('instant-alfred/logs', [AlfredChatController::class, 'logs'])->name('instant-alfred.logs');
+    
     Route::post('get-alfred-chat', [AlfredChatController::class, 'index']);
     Route::post('get-alfred-chat-by-date', [AlfredChatController::class, 'getChatByDate'])->name('getChatByDate');
 
