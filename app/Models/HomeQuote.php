@@ -95,4 +95,9 @@ class HomeQuote extends Model implements AuditableContract
     {
         return $this->morphMany(QuoteDocument::class, 'quote_documentable');
     }
+
+    public function insuranceProviderDetails()
+    {
+        return $this->belongsTo(InsuranceProvider::class, 'insurance_provider_id', 'id');
+    }
 }
