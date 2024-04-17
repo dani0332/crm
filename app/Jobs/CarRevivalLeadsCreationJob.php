@@ -99,6 +99,7 @@ class CarRevivalLeadsCreationJob implements ShouldQueue, StackableJob
 
         $capiResponse = Capi::request('/api/v1-save-car-quote', 'post', $dataArr);
 
+        info('CarRevivalLeadsCreationCapiResponse -' . json_encode($capiResponse));
         if (!isset($capiResponse->errors) && !empty($capiResponse->quoteUID)) {
             info('CarRevivalLeadsCreationJobLeadCreated - ' . $capiResponse->quoteUID . ' - CAPI Response:');
 
