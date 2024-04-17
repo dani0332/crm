@@ -7,6 +7,7 @@ use App\Enums\CustomerTypeEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentStatusEnum;
+use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
@@ -891,6 +892,10 @@ class CarQuoteService extends BaseService
             $dateFrom = $this->parseDate($request['created_at'], true);
             $dateTo = $this->parseDate($request['created_at_end'], false);
             $this->query->whereBetween('cqr.created_at', [$dateFrom, $dateTo]);
+        }
+
+        if (auth()->user()->can(PermissionsEnum::SEGMENT_FILTER) && $request->has('segment_filter')) {
+            CarQuote::applySegmentFilter($this->query, $request->segment_filter, 'cqr');
         }
 
         foreach ($searchProperties as $item) {
