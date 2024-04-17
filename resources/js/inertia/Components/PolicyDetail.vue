@@ -391,7 +391,12 @@ const onUpdatePolicyDetails = isValid => {
             color="emerald"
             size="sm"
             :loading="policyDetailsForm.processing"
-            @click.prevent="policyDetailsState.isEditing = false"
+            @click.prevent="
+              () => {
+                policyDetailsState.isEditing = false;
+                policyDetailsForm.reset();
+              }
+            "
           >
             Cancel
           </x-button>
