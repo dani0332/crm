@@ -24,9 +24,9 @@ class TransactionReportService extends ManagementReport
             ->select(
                 'personal_quotes.policy_number',
                 DB::raw('CONCAT(p.reference, " ", p.tax_invoice_number) as transactions'),
-                'personal_quotes.policy_start_date',
-                'p.payment_due_date',
-                'ps.due_date',
+                DB::raw("DATE_FORMAT(personal_quotes.policy_start_date, '%Y-%m-%d') as policy_start_date"),
+                DB::raw("DATE_FORMAT(p.payment_due_date, '%Y-%m-%d') as payment_due_date"),
+                DB::raw("DATE_FORMAT(ps.due_date, '%Y-%m-%d') as due_date"),
                 'personal_quotes.price_vat_applicable',
                 'personal_quotes.vat',
                 'personal_quotes.price_vat_not_applicable',
