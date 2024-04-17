@@ -15,6 +15,7 @@ use App\Enums\RolesEnum;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\SaveBookingDetailsRequest;
+use App\Http\Requests\SavePolicyDetailsRequest;
 use App\Http\Requests\SendUpdateCustomerRequest;
 use App\Http\Requests\SendUpdateRequest;
 use App\Models\PersonalQuote;
@@ -308,11 +309,9 @@ class SendUpdateLogController extends Controller
         return redirect()->back();
     }
 
-    public function savePolicyDetails(Request $request)
+    public function savePolicyDetails(SavePolicyDetailsRequest $savePolicyDetailsRequest)
     {
-        $data = $request->all();
-
-        SendUpdateLogRepository::savePolicyDetails($data);
+        SendUpdateLogRepository::savePolicyDetails($savePolicyDetailsRequest->validated());
 
         return redirect()->back();
     }

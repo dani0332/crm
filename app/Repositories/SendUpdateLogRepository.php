@@ -195,8 +195,8 @@ class SendUpdateLogRepository extends BaseRepository
                 'issuance_date' => $data['issuance_date'],
                 'start_date' => $data['start_date'],
                 'expiry_date' => $data['expiry_date'],
-                'insurer_quote_number' => $data['insurer_quote_number'],
-                'issuance_status_id' => $data['issuance_status_id'],
+                'insurer_quote_number' => $data['insurer_quote_number'] ?? null,
+                'issuance_status_id' => $data['issuance_status_id'] ?? null,
                 'status' => SendUpdateLogStatusEnum::REQUEST_IN_PROGRESS,
                 'is_policy_filled' => SendUpdateLogStatusEnum::POLICY_FILLED,
             ]);

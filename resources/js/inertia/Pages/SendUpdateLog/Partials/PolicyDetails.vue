@@ -297,7 +297,6 @@ watch(() => policyDetailsForm.insurance_provider_id, (providerId) => {
 									v-if="isCPD || isCIR"
 									:disabled="!state.isEdit"
 									v-model="policyDetailsForm.policy_number"
-									type="number"
                   placeholder="Enter policy number"
 								/>
 								<span v-else>{{ policyDetailsForm.policy_number }}</span>
