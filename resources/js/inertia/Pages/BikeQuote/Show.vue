@@ -3,7 +3,6 @@ import QuoteDocuments from '../PersonalQuote/Partials/QuoteDocuments';
 import QuoteStatus from '../PersonalQuote/Partials/QuoteStatus';
 import QuotePayments from '../PersonalQuote/Partials/QuotePayments';
 import QuoteActivities from '../PersonalQuote/Partials/QuoteActivities';
-import QuotePolicy from '../PersonalQuote/Partials/QuotePolicy';
 import PlanDetails from '../../Components/PlanDetails.vue';
 import LeadHistory from '../PersonalQuote/Partials/LeadHistory';
 import AdditionalContacts from '../PersonalQuote/Partials/AdditionalContacts';
@@ -14,6 +13,7 @@ import MigratePayment from '../../Components/MigratePayment.vue';
 
 defineProps({
   quote: Object,
+  record: Object,
   documentTypes: Object,
   quoteStatuses: Object,
   paymentMethods: Object,
@@ -41,6 +41,11 @@ defineProps({
   paymentStatusEnum: Object,
   paymentTooltipEnum: Object,
   isNewPaymentStructure: Boolean,
+  permissions: Object,
+  enums: Object,
+  policyIssuanceStatus: Array,
+  payments: Array,
+  bPDetails: Array,
   sendUpdateOptions: Array,
   sendUpdateLogs: Array,
   hasPolicyIssuedStatus: Boolean,
@@ -61,7 +66,6 @@ const hasRole = role => useHasRole(role);
 const rolesEnum = page.props.rolesEnum;
 const permissionsEnum = page.props.permissionsEnum;
 const notification = useToast();
-
 const permissionEnum = page.props.permissionsEnum;
 const canAny = permissions => useCanAny(permissions);
 
@@ -817,7 +821,20 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       :code="quote.code"
       :quote="quote"
       :modelType="quoteType"
-	:expanded="sectionExpanded"
+    	:expanded="sectionExpanded"
+    />
+    
+    <BookPolicy
+      v-if="
+        canAny([
+          permissionEnum.VIEW_INSLY_BOOK_POLICY,
+          permissionEnum.SEND_INSLY_BOOK_POLICY,
+        ])
+      "
+      :quote="record"
+      quoteType="Bike"
+      :bPDetails="bPDetails"
+      :payments="payments"
     />
 
     <AuditLogs :id="$page.props.quote.id" :quote-type="quoteType" :quoteCode="$page.props.quote.code" :expanded="sectionExpanded"/>

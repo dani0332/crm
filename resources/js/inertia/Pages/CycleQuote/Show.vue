@@ -43,6 +43,12 @@ defineProps({
   paymentStatusEnum: Object,
   paymentTooltipEnum: Object,
   isNewPaymentStructure: Boolean,
+  record: Object,
+  permissions: Object,
+  enums: Object,
+  policyIssuanceStatus: Array,
+  bPDetails: Array,
+  payments: Array,
   sendUpdateOptions: Array,
   sendUpdateLogs: Array,
   hasPolicyIssuedStatus: Boolean,
@@ -59,11 +65,11 @@ const notification = useToast();
 const hasAnyRole = roles => useHasAnyRole(roles);
 const hasRole = role => useHasRole(role);
 const rolesEnum = page.props.rolesEnum;
+const permissionEnum = page.props.permissionsEnum;
+const canAny = permissions => useCanAny(permissions);
 const modals = reactive({
   duplicate: false,
 });
-const permissionEnum = page.props.permissionsEnum;
-const canAny = permissions => useCanAny(permissions);
 
 const leadDuplicateForm = useForm({
   modelType: 'cycle',

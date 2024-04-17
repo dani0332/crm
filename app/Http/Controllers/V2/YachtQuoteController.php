@@ -41,7 +41,6 @@ use App\Traits\GenericQueriesAllLobs;
 class YachtQuoteController extends Controller
 {
     use GenericQueriesAllLobs;
-
     /**
      * @return \Inertia\Response|\Inertia\ResponseFactory
      */
@@ -186,7 +185,6 @@ class YachtQuoteController extends Controller
             'sendUpdateOptions' => $sendUpdateOptions,
             'sendUpdateLogs' => $sendUpdateLogs,
             'hasPolicyIssuedStatus' => $hasPolicyIssuedStatus,
-            'sendUpdateEnum' => $sendUpdateEnum,
             'sendUpdateEnum' => $sendUpdateEnum,
             'record' => $quote,
             'permissions' => [
