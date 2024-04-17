@@ -103,6 +103,7 @@ class ReAssignHealthLeadsJob implements ShouldQueue
         if ($this->advisorId) {
             return [(new WithoutOverlapping($this->advisorId))->dontRelease()];
         }
+
         return [];
     }
 }
