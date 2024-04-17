@@ -142,16 +142,6 @@ class ReportsController extends Controller
         ]);
     }
 
-    public function renderStaleLeadsReport(Request $request, ReportService $reportService)
-    {
-        $data = $reportService->getStaleLeadsReport($request, true)->simplePaginate(15)->appends(request()->query());
-
-        return inertia('Reports/StaleLeadsReport', [
-            'reportData' => $data,
-
-        ]);
-    }
-
     public function renderPipelineReport(Request $request, ReportService $reportService)
     {
         $data = $reportService->getStaleLeadsReport($request)->simplePaginate(15)->appends(request()->query());
@@ -221,6 +211,16 @@ class ReportsController extends Controller
             'filterOptions' => $renewalBatchReportService->getFilterOptions(),
             'defaultFilters' => $renewalBatchReportService->getDefaultFilters(),
             'renewalBatchesList' => $renewalBatches,
+        ]);
+    }
+
+    public function renderStaleLeadsReport(Request $request, ReportService $reportService)
+    {
+        $data = $reportService->getStaleLeadsReport($request, true)->simplePaginate(15)->appends(request()->query());
+
+        return inertia('Reports/StaleLeadsReport', [
+            'reportData' => $data,
+
         ]);
     }
 }
