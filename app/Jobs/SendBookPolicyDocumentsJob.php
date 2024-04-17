@@ -35,7 +35,7 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
      */
     public function handle(SendEmailCustomerService $sendEmailCustomerService, QuoteDocumentService $quoteDocumentService)
     {
-        $modelType = !empty($this->data->modelType) ? $this->data->modelType : $this->data->model_type;
+        $modelType = ! empty($this->data->modelType) ? $this->data->modelType : $this->data->model_type;
 
         $quote = $this->getQuoteObject($this->data->model_type, $this->data->quote_id);
 
