@@ -106,7 +106,7 @@ const advisorOptions = computed(() => {
   }));
 
   options.push({
-    value: '',
+    value: '-1',
     label: 'UnAssigned',
   });
 
