@@ -134,6 +134,7 @@ const bpForm = useForm({
 
 const onUpdateBpDetails = isValid => {
   if (isValid) {
+    bpForm.booking_date = currentDateTime;
     bpForm.post('/quotes/update-booking-policy', {
       preserveScroll: true,
       onSuccess: () => {
