@@ -37,7 +37,6 @@ const filters = reactive({
   isCommercial: 'All',
   insurance_type: '',
   insurance_for: '',
-  travel_coverage: '',
 });
 
 const cleanFilters = filters => {
@@ -157,7 +156,6 @@ const onLobChange = (e, isOnMounted = false) => {
 
         filters.insurance_type = '';
         filters.insurance_for = '';
-        filters.travel_coverage = '';
         filters.isCommercial = '';
 
         teamOptions.value = [];
@@ -335,10 +333,6 @@ axios
 });
 };
 
-const onInsuranceTypeChange = e => {
-filters.travel_coverage = '';
-}
-
 const canShow = (element) => {
     if(page.props.filtersByLob &&
     page.props.filtersByLob[element]) {
@@ -396,23 +390,11 @@ const insuranceForOptions = computed(() => {
   return [];
 });
 
-const travelCoverageOptions = computed(() => {
-    const types = page.props.filterOptions.travel_coverage;
-    if (types[filters.lob] && types[filters.lob][filters.insurance_type]) {
-        return types[filters.lob][filters.insurance_type].map(option => ({
-            value: option.value,
-            label: option.label,
-        }));
-    }
-
-  return [];
-});
-
 </script>
 <template>
 
   <Head title="Comprehensive Conversion" />
-  <div class="flex flex-col h-[85vh]">
+  <div class="flex flex-col h-[85vh] comprehensive-conversion-container">
     <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4 mb-5">
 
       <x-field label="LOB">
@@ -459,20 +441,17 @@ const travelCoverageOptions = computed(() => {
           ]" class="w-full" />
       </x-field>
       <x-field label="Insurance Type" v-if="canShow('insurance_type')">
-        <x-select v-model="filters.insurance_type" label="" placeholder="Select insurance type"
-          :options="[ { value: '', label: 'Select insurance type' }, ...insuranceTypeOptions ]" class="w-full"
-          @update:model-value="onInsuranceTypeChange" />
+        <x-select
+          v-model="filters.insurance_type"
+          label=""
+          placeholder="Select insurance type"
+          :options="[ { value: '', label: 'Select insurance type' }, ...insuranceTypeOptions ]"
+          class="w-full"
+        />
       </x-field>
       <x-field label="Insurance For" v-if="canShow('insurance_for')">
         <x-select v-model="filters.insurance_for" placeholder="Select insurance for"
           :options="[ { value: '', label: 'Select insurance for' }, ...insuranceForOptions ]" class="w-full" />
-      </x-field>
-      <x-field :label=" !filters.insurance_type
-                ? `Travel Coverage (Select Insurance Type first)`
-                : `Travel Coverage`" v-if="canShow('travel_coverage')">
-        <x-select v-model="filters.travel_coverage"
-          :options="[ { value: '', label: 'Select travel coverage' }, ...travelCoverageOptions ]"
-          placeholder="Select travel coverage" class="w-full" />
       </x-field>
     </div>
     <ChartsColumn :title="'COMPREHENSIVE CONVERSION REPORT'" :yAxisTitle="'Total Net Conversion'"

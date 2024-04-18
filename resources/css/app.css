@@ -481,3 +481,9 @@ border-primary animate-spin;
 .large-tip .arrow-t .x-popover-container::after {
     left: 63%;
 }
+
+@media (max-width: 1250px) {
+  .comprehensive-conversion-container {
+    height: auto !important;
+  } 
+}

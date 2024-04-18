@@ -135,11 +135,6 @@ class ComprehensiveConversionDashboardService extends BaseService
                     quoteTypeCode::Home,
                 ],
             ],
-            'travel_coverage' => [
-                'lobs' => [
-                    quoteTypeCode::Travel,
-                ],
-            ],
         ];
     }
 
@@ -189,19 +184,6 @@ class ComprehensiveConversionDashboardService extends BaseService
             quoteTypeCode::Home => $dropdownSourceService->getDropdownSource('iam_possesion_type_id'),
         ];
 
-        $travelCoverage = [
-            quoteTypeCode::Travel => [
-                TravelQuoteEnum::TRAVEL_UAE_INBOUND => [
-                    ["value" => TravelQuoteEnum::COVERAGE_CODE_SINGLE_TRIP, 'label' => 'Single Trip'],
-                    ["value" => TravelQuoteEnum::COVERAGE_CODE_MULTI_TRIP, 'label' => 'Multi Trip'],
-                ],
-                TravelQuoteEnum::TRAVEL_UAE_OUTBOUND => [
-                    ["value" => TravelQuoteEnum::COVERAGE_CODE_SINGLE_TRIP, 'label' => 'Single Trip'],
-                    ["value" => TravelQuoteEnum::COVERAGE_CODE_ANNUAL_TRIP, 'label' => 'Annual Trip'],
-                ],
-            ],
-        ];
-
         $lifeInsuranceType = $dropdownSourceService->getDropdownSource('tenure_of_insurance_id')->map(function ($type) {
             return ['value' => $type['id'], 'label' => $type['text']];
         })->toArray();
@@ -216,8 +198,9 @@ class ComprehensiveConversionDashboardService extends BaseService
         $businessInsuranceType = array_values($businessInsuranceType);
         $insuranceType = [
             quoteTypeCode::Travel => [
-                ["value" => TravelQuoteEnum::TRAVEL_UAE_INBOUND, 'label' => 'To the UAE (Inbound)'],
-                ["value" => TravelQuoteEnum::TRAVEL_UAE_OUTBOUND, 'label' => 'Outside UAE (OutBound)'],
+                ["value" => TravelQuoteEnum::COVERAGE_CODE_SINGLE_TRIP, 'label' => 'Single Trip'],
+                ["value" => TravelQuoteEnum::COVERAGE_CODE_MULTI_TRIP, 'label' => 'Multi Trip'],
+                ["value" => TravelQuoteEnum::COVERAGE_CODE_ANNUAL_TRIP, 'label' => 'Annual Trip'],
             ],
             quoteTypeCode::Life => $lifeInsuranceType,
             quoteTypeCode::Business => $businessInsuranceType,
@@ -227,7 +210,6 @@ class ComprehensiveConversionDashboardService extends BaseService
             'lob' => $lobs,
             'tiers' => $tiers,
             'insurance_for' => $insuranceFor,
-            'travel_coverage' => $travelCoverage,
             'insurance_type' => $insuranceType,
         ];
     }
@@ -329,16 +311,9 @@ class ComprehensiveConversionDashboardService extends BaseService
         }
 
         if($lob === quoteTypeCode::Travel) {
-            if((!empty($filters->insurance_type) && $filters->insurance_type != '') ||
-                (!empty($filters->travel_coverage) && $filters->travel_coverage != '')) {
+            if((!empty($filters->insurance_type) && $filters->insurance_type != '')) {
                 $query->join('travel_quote_request', 'travel_quote_request.uuid', 'personal_quotes.uuid');
-            }
-            if(!empty($filters->insurance_type) && $filters->insurance_type != '') {
-                $query->where('travel_quote_request.direction_code', $filters->insurance_type);
-            }
-
-            if(!empty($filters->travel_coverage) && $filters->travel_coverage != '') {
-                $query->where('travel_quote_request.coverage_code', $filters->travel_coverage);
+                $query->where('travel_quote_request.coverage_code', $filters->insurance_type);
             }
         }
 
