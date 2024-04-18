@@ -35,7 +35,6 @@ defineProps({
   UBOsDetails: Array,
   canAddBatchNumber: Boolean,
   vatPercentage: Number,
-  paymentStatusEnum: Object,
   paymentTooltipEnum: Object,
   isNewPaymentStructure: Boolean,
   sendUpdateOptions: Array,
@@ -746,7 +745,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
 			:payments="quote.payments"
 			:paymentDocument="documentTypes.filter(item => item.code === 'YPD' || item.code === 'YPDR' || item.code === 'YDPDR')"
 			:quoteRequest="quote"
-			:paymentStatusEnum="paymentStatusEnum"
+			:paymentStatusEnum="page.props.paymentStatusEnum"
 			:paymentTooltipEnum="paymentTooltipEnum"
 			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name, tooltip: pm.tool_tip } })"
 			:storageUrl="storageUrl"

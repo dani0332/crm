@@ -34,7 +34,6 @@ defineProps({
   carPlanFeaturesCodeEnum: Object,
   carPlanExclusionsCodeEnum: Object,
   carPlanAddonsCodeEnum: Object,
-  paymentStatusEnum: Object,
   modelType: String,
   notProductionApproval: Boolean,
   allowedDuplicateLOB: Array,
@@ -155,6 +154,7 @@ const processingOCBEmailNB = ref(false);
 const permissionEnum = page.props.permissionsEnum;
 const rolesEnum = page.props.rolesEnum;
 const quoteStatusEnum= page.props.quoteStatusEnum;
+const paymentStatusEnum = page.props.paymentStatusEnum;
 
 const dateFormat = date => {
   return useDateFormat(date, 'DD-MM-YYYY HH:mm:ss').value;

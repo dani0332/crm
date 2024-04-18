@@ -38,7 +38,6 @@ defineProps({
   documentTypes: Object,
   storageUrl: String,
   vatPercentage: Number,
-  paymentStatusEnum: Object,
   paymentTooltipEnum: Object,
   bookPolicyDetails: Array,
   isNewPaymentStructure: Boolean,
@@ -55,6 +54,7 @@ const rolesEnum = page.props.rolesEnum;
 const hasRole = role => useHasRole(role);
 const permissionEnum = page.props.permissionsEnum;
 const canAny = permissions => useCanAny(permissions);
+const paymentStatusEnum= page.props.paymentStatusEnum;
 
 const modals = reactive({
   duplicate: false,

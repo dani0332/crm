@@ -301,9 +301,6 @@ class BusinessQuoteController extends Controller
                 'isPA' => auth()->user()->hasRole(RolesEnum::PA),
 
             ],
-            'enums' => [
-                'paymentStatusEnum' => PaymentStatusEnum::asArray(),
-            ],
             'typeCode' => quoteTypeCode::CORPLINE,
             'customerTypeEnum' => CustomerTypeEnum::asArray(),
             'companyTypes' => $companyType,
@@ -314,7 +311,6 @@ class BusinessQuoteController extends Controller
             'canAddBatchNumber' => auth()->user()->hasRole(RolesEnum::CorplineManager),
             'vatPercentage' => $vatPercentage,
             'paymentTooltipEnum' => PaymentTooltip::asArray(),
-            'paymentStatusEnum' => PaymentStatusEnum::asArray(),
             'isNewPaymentStructure' => $isNewPaymentStructure,
             'sendUpdateOptions' => $sendUpdateOptions,
             'sendUpdateLogs' => $sendUpdateLogs,
@@ -349,9 +345,6 @@ class BusinessQuoteController extends Controller
                 'admin' => auth()->user()->hasAnyRole([RolesEnum::Admin]),
                 'notProductionApproval' => ! auth()->user()->hasRole(RolesEnum::PA),
                 'auditable' => auth()->user()->can(PermissionsEnum::Auditable),
-            ],
-            'enums' => [
-                'paymentStatusEnum' => PaymentStatusEnum::asArray(),
             ],
         ]);
     }

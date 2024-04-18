@@ -693,7 +693,6 @@ class CRUDController extends Controller
             $carPlanExclusionsCodeEnum = CarPlanExclusionsCode::asArray();
             $carPlanAddonsCodeEnum = CarPlanAddonsCode::asArray();
             $leadSourceEnum = LeadSourceEnum::asArray();
-            $paymentStatusEnum = PaymentStatusEnum::asArray();
             $genericRequestEnum = GenericRequestEnum::asArray();
             $carPlanTypeEnum = CarPlanType::asArray();
             $docUploadURL = config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$record->uuid.'/thankyou';
@@ -726,7 +725,7 @@ class CRUDController extends Controller
             $bookPolicyDetails = $this->bookPolicyPayload($record, $quoteType, $payments, $quoteDocuments);
 
             return inertia('PersonalQuote/Car/Show', compact([
-                'record', 'sendUpdateOptions', 'sendUpdateLogs', 'quote', 'model', 'customTitles', 'customTableList', 'paymentStatusEnum', 'leadSourceEnum', 'isBetaUser', 'sendUpdateEnum',
+                'record', 'sendUpdateOptions', 'sendUpdateLogs', 'quote', 'model', 'customTitles', 'customTableList', 'leadSourceEnum', 'isBetaUser', 'sendUpdateEnum',
                 'ecomCarInsuranceQuoteUrl', 'carQuotePlanAddons', 'vehicleTypes', 'leadStatuses', 'docUploadURL', 'isPlanUpdateActive', 'allowQuoteLogAction', 'carLostChangeStatus',
                 'lostReasons', 'selectedLostReasonId', 'model_name', 'allowedDuplicateLOB', 'audits', 'websiteURL', 'insuranceProviders', 'leadDocsStoragePath',
                 'activities', 'advisors', 'isRenewalUser', 'isNewBusinessUser', 'emailStatuses', 'carPlanAddonsCodeEnum', 'tiersExceptTierR', 'isTierRAssigned',
@@ -865,7 +864,6 @@ class CRUDController extends Controller
                 'emirates' => $emirates,
                 'quoteType' => QuoteTypes::HOME,
                 'paymentTooltipEnum' => PaymentTooltip::asArray(),
-                'paymentStatusEnum' => PaymentStatusEnum::asArray(),
                 'documentTypes' => $documentTypes,
                 'bookPolicyDetails' => $bookPolicyDetails,
                 'vatPercentage' => $vatPercentage,
@@ -1019,7 +1017,6 @@ class CRUDController extends Controller
                 'UBOsDetails' => $uboDetails,
                 'UBORelations' => $uboRelations,
                 'enums' => [
-                    'paymentStatusEnum' => PaymentStatusEnum::asArray(),
                     'travelQuoteEnum' => TravelQuoteEnum::asArray(),
                 ],
                 'bookPolicyDetails' => $bookPolicyDetails,

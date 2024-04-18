@@ -5,7 +5,6 @@ namespace App\Http\Controllers\V2;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\LookupsEnum;
-use App\Enums\PaymentStatusEnum;
 use App\Enums\PaymentTooltip;
 use App\Enums\quoteStatusCode;
 use App\Enums\QuoteStatusEnum;
@@ -193,7 +192,6 @@ class LifeQuoteController extends Controller
             'UBORelations' => $uboRelations,
             'paymentMethods' => (new LookupService())->getPaymentMethods(),
             'paymentTooltipEnum' => PaymentTooltip::asArray(),
-            'paymentStatusEnum' => PaymentStatusEnum::asArray(),
             'payments' => $payments,
             'insuranceProviders' => $insuranceProviders,
             'permissions' => [
@@ -201,7 +199,6 @@ class LifeQuoteController extends Controller
             ],
 
             'enums' => [
-                'paymentStatusEnum' => PaymentStatusEnum::asArray(),
                 'travelQuoteEnum' => TravelQuoteEnum::asArray(),
             ],
             'bookPolicyDetails' => $bookPolicyDetails,

@@ -275,7 +275,6 @@ class TravelController extends Controller
 
             ],
             'enums' => [
-                'paymentStatusEnum' => PaymentStatusEnum::asArray(),
                 'travelQuoteEnum' => TravelQuoteEnum::asArray(),
             ],
             'sendUpdateEnum' => $sendUpdateEnum,

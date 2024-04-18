@@ -22,7 +22,6 @@ defineProps({
   storageUrl: String,
   insuranceProviders: Object,
   vatPercentage: Number,
-  paymentStatusEnum: Object,
   paymentTooltipEnum: Object,
   paymentMethods: Array,
   isNewPaymentStructure: Boolean,
@@ -46,6 +45,7 @@ const hasRole = role => useHasRole(role);
 const permissionsEnum = page.props.permissionsEnum;
 const rolesEnum = page.props.rolesEnum;
 const quoteStatusEnum = page.props.quoteStatusEnum;
+const paymentStatusEnum = page.props.paymentStatusEnum;
 
 const permissionEnum = page.props.permissionsEnum;
 const canAny = permissions => useCanAny(permissions);

@@ -30,7 +30,6 @@ defineProps({
   insuranceProviders: Object,
   vatPercentage: Number,
   payments: Array,
-  paymentStatusEnum: Object,
   paymentTooltipEnum: Object,
   paymentMethods: Array,
   insuranceProviders: Array,
@@ -1149,7 +1148,7 @@ watch(
 			:payments="payments"
 			:paymentDocument="page.props.documentTypes.filter(item => item.code === 'LPD' || item.code === 'LPDR' || item.code === 'LDPDR')"
 			:quoteRequest="quote"
-			:paymentStatusEnum="paymentStatusEnum"
+			:paymentStatusEnum="page.props.paymentStatusEnum"
 			:paymentTooltipEnum="paymentTooltipEnum"
 			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name, tooltip: pm.tool_tip } })"
 			:storageUrl="storageUrl"

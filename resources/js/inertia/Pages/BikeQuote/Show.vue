@@ -37,7 +37,6 @@ defineProps({
   UBOsDetails: Array,
   canAddBatchNumber: Boolean,
   vatPercentage: Number,
-  paymentStatusEnum: Object,
   paymentTooltipEnum: Object,
   isNewPaymentStructure: Boolean,
   permissions: Object,
@@ -60,7 +59,6 @@ const permissionsEnum = page.props.permissionsEnum;
 const notification = useToast();
 const permissionEnum = page.props.permissionsEnum;
 const canAny = permissions => useCanAny(permissions);
-const quoteStatusEnum = page.props.quoteStatusEnum;
 
 const industryTypeOptions = computed(() => {
   return page.props.industryType?.map(indType => ({
@@ -751,7 +749,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
 			:payments="quote.payments"
 			:paymentDocument="documentTypes.filter(item => item.code === 'BPD' || item.code === 'BPDR' || item.code === 'BDPDR')"
 			:quoteRequest="quote"
-			:paymentStatusEnum="paymentStatusEnum"
+			:paymentStatusEnum="page.props.paymentStatusEnum"
 			:paymentTooltipEnum="paymentTooltipEnum"
 			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name, tooltip: pm.tool_tip } })"
 			:storageUrl="storageUrl"
