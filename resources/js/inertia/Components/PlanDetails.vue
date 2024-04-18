@@ -57,6 +57,11 @@ const rules = {
       return vatApplicable ? true : 'Price (VAT Applicable) is required';
     }
   },
+  isNegative: v => (Number(v)) < 0 ? 'Amount must be a positive number' : true,
+  lengthCheck: v => {
+    const pattern = /^\d{1,7}(\.\d{1,2})?$/;
+    return pattern.test(v) || 'Invalid number. Max 7 digits and 2 decimals allowed.';
+  }
 };
 
 const submitPlanDetailsForm = isValid => {
@@ -169,7 +174,7 @@ const permissionEnum = page.props.permissionsEnum;
             :rules="
               props.quoteType == quoteTypeCodeEnum.Life
                 ? []
-                : [rules.conditionalRequired, rules.isNumber]
+                : [rules.conditionalRequired, rules.isNumber, rules.lengthCheck, rules.isNegative]
             "
             :disabled="
               props.quoteType == quoteTypeCodeEnum.Life &&
@@ -178,7 +183,6 @@ const permissionEnum = page.props.permissionsEnum;
             label="Price (VAT Applicable)"
             class="w-full"
             type="text"
-            @keydown="$event.key === '-' ? $event.preventDefault() : null"
             @change="updatePriceWithVat"
           />
         </div>
@@ -189,7 +193,7 @@ const permissionEnum = page.props.permissionsEnum;
             :rules="
               props.quoteType == quoteTypeCodeEnum.Life ||
               props.quoteType == quoteTypeCodeEnum.Business
-                ? [rules.conditionalRequired, rules.isNumber]
+                ? [rules.conditionalRequired, rules.isNumber, rules.lengthCheck, rules.isNegative]
                 : []
             "
             :disabled="
@@ -199,7 +203,6 @@ const permissionEnum = page.props.permissionsEnum;
             type="text"
             label="Price (VAT not applicable)"
             class="w-full"
-            @keydown="$event.key === '-' ? $event.preventDefault() : null"
             @change="updatePriceWithVat"
           />
         </div>
@@ -212,7 +215,6 @@ const permissionEnum = page.props.permissionsEnum;
             type="text"
             label="Total Price"
             class="w-full"
-            @keydown="$event.key === '-' ? $event.preventDefault() : null"
           />
         </div>
 
