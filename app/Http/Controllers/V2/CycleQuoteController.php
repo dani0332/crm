@@ -170,7 +170,6 @@ class CycleQuoteController extends Controller
             'lostReasons' => $lostReasons,
             'advisors' => $advisors,
             'quoteTypeId' => QuoteTypes::CYCLE->id(),
-            'quoteStatusEnum' => QuoteStatusEnum::asArray(),
             'documentTypes' => $documentTypes,
             'quoteStatuses' => $quoteStatuses,
             'paymentMethods' => $paymentMethods,
@@ -196,9 +195,6 @@ class CycleQuoteController extends Controller
             'record' => fn () => $quote,
             'permissions' => [
                 'isQuoteDocumentEnabled' => $isQuoteDocumentEnabled,
-            ],
-            'enums' => [
-                'quoteStatusEnum' => QuoteStatusEnum::asArray(),
             ],
             'bookPolicyDetails' => $bookPolicyDetails,
             'payments' => $quote->payments->toArray() ?? [],

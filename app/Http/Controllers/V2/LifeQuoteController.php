@@ -180,7 +180,6 @@ class LifeQuoteController extends Controller
             'allowedDuplicateLOB' => $duplicateAllowedLobs,
             'customerAdditionalContacts' => CustomerRepository::GetAdditionalContacts($quote->customer_id, $quote->mobile_no),
             'lostReasons' => $lostReasons,
-            'quoteStatusEnum' => QuoteStatusEnum::asArray(),
             'modelType' => QuoteTypes::LIFE,
             'canAddBatchNumber' => auth()->user()->hasRole(RolesEnum::LifeManager),
             'embeddedProducts' => $embeddedProducts,
@@ -202,7 +201,6 @@ class LifeQuoteController extends Controller
             ],
 
             'enums' => [
-                'quoteStatusEnum' => QuoteStatusEnum::asArray(),
                 'paymentStatusEnum' => PaymentStatusEnum::asArray(),
                 'travelQuoteEnum' => TravelQuoteEnum::asArray(),
             ],

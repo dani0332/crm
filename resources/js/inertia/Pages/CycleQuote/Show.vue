@@ -28,7 +28,6 @@ defineProps({
   activities: Object,
   advisors: Object,
   lostReasons: Object,
-  quoteStatusEnum: Object,
   duplicateAllowedLobs: Array,
   embeddedProducts: Array,
   customerTypeEnum: Object,
@@ -63,7 +62,7 @@ const canAny = permissions => useCanAny(permissions);
 const modals = reactive({
   duplicate: false,
 });
-
+const quoteStatusEnum = page.props.quoteStatusEnum;
 const leadDuplicateForm = useForm({
   modelType: 'cycle',
   parentType: 'cycle',
@@ -821,7 +820,6 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       :quote-type="quoteType"
       :quote-statuses="quoteStatuses"
       :lost-reasons="lostReasons"
-      :quote-status-enum="quoteStatusEnum"
       :expanded="sectionExpanded"
     />
 
@@ -865,7 +863,6 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
     <PolicyDetail
       v-if="permissions.isQuoteDocumentEnabled"
       :record="record"
-      :quoteStatusEnum="enums.quoteStatusEnum"
       modelType="Cycle"
       :expanded="sectionExpanded"
     />

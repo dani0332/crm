@@ -11,7 +11,6 @@ defineProps({
   typeCode: String,
   lostReasons: Object,
   quoteStatuses: Object,
-  quoteStatusEnum: Object,
   customerAdditionalContacts: Array,
   customerTypeEnum: Object,
   companyTypes: Array,
@@ -46,6 +45,7 @@ const hasAnyRole = roles => useHasAnyRole(roles);
 const hasRole = role => useHasRole(role);
 const permissionsEnum = page.props.permissionsEnum;
 const rolesEnum = page.props.rolesEnum;
+const quoteStatusEnum = page.props.quoteStatusEnum;
 
 const permissionEnum = page.props.permissionsEnum;
 const canAny = permissions => useCanAny(permissions);
@@ -876,7 +876,6 @@ watch(
     <PolicyDetail
       v-if="permissions.isQuoteDocumentEnabled"
       :record="record"
-      :quoteStatusEnum="enums.quoteStatusEnum"
       modelType="Business"
       :expanded="sectionExpanded"
     />

@@ -275,7 +275,6 @@ class TravelController extends Controller
 
             ],
             'enums' => [
-                'quoteStatusEnum' => QuoteStatusEnum::asArray(),
                 'paymentStatusEnum' => PaymentStatusEnum::asArray(),
                 'travelQuoteEnum' => TravelQuoteEnum::asArray(),
             ],
@@ -288,7 +287,6 @@ class TravelController extends Controller
             'UBORelations' => $uboRelations,
             'emirates' => $emirates,
             'bookPolicyDetails' => $bookPolicyDetails,
-            'quoteStatusEnum' => QuoteStatusEnum::asArray(),
             'isNewPaymentStructure' => $isNewPaymentStructure,
             'sendUpdateOptions' => $sendUpdateOptions,
             'sendUpdateLogs' => $sendUpdateLogs,

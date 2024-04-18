@@ -27,7 +27,6 @@ defineProps({
   activities: Object,
   advisors: Object,
   lostReasons: Object,
-  quoteStatusEnum: Object,
   embeddedProducts: Array,
   customerTypeEnum: Object,
   nationalities: Array,
@@ -61,6 +60,7 @@ const permissionsEnum = page.props.permissionsEnum;
 const notification = useToast();
 const permissionEnum = page.props.permissionsEnum;
 const canAny = permissions => useCanAny(permissions);
+const quoteStatusEnum = page.props.quoteStatusEnum;
 
 const industryTypeOptions = computed(() => {
   return page.props.industryType?.map(indType => ({
@@ -727,7 +727,6 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       :quote-type="quoteType"
       :quote-statuses="quoteStatuses"
       :lost-reasons="lostReasons"
-      :quote-status-enum="quoteStatusEnum"
       :expanded="sectionExpanded"
     />
 
@@ -780,7 +779,6 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
     <PolicyDetail
       v-if="permissions.isQuoteDocumentEnabled"
       :record="record"
-      :quoteStatusEnum="enums.quoteStatusEnum"
       modelType="Bike"
       :expanded="sectionExpanded"
     />

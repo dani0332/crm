@@ -6,10 +6,6 @@ const props = defineProps({
     type: Object,
     default: {},
   },
-  quoteStatusEnum: {
-    type: Object,
-    default: {},
-  },
   modelType: {
     type: String,
     default: '',
@@ -38,6 +34,8 @@ const dateToYMD = date => {
 const productionProcessTooltipEnum = page.props.productionProcessTooltipEnum;
 const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
 const quoteIssuanceStatusEnum = page.props.quoteIssuanceStatusEnum;
+const quoteStatusEnum= page.props.quoteStatusEnum;
+
 const policyIssuanceStatusOptions = computed(() => {
   return page.props.policyIssuanceStatus.map(item => {
     return {

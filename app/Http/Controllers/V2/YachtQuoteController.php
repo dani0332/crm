@@ -159,7 +159,6 @@ class YachtQuoteController extends Controller
             'activities' => $activities,
             'lostReasons' => $lostReasons,
             'advisors' => $advisors,
-            'quoteStatusEnum' => QuoteStatusEnum::asArray(),
             'documentTypes' => $documentTypes,
             'quoteStatuses' => $quoteStatuses,
             'paymentMethods' => $paymentMethods,
@@ -187,9 +186,6 @@ class YachtQuoteController extends Controller
             'record' => $quote,
             'permissions' => [
                 'isQuoteDocumentEnabled' => $isQuoteDocumentEnabled,
-            ],
-            'enums' => [
-                'quoteStatusEnum' => QuoteStatusEnum::asArray(),
             ],
             'bookPolicyDetails' => $bookPolicyDetails,
             'payments' => $quote->payments->toArray() ?? [],

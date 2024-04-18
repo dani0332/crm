@@ -31,7 +31,6 @@ defineProps({
   customerAdditionalContacts: Array,
   lostReasons: Array,
   tiers: Array,
-  quoteStatusEnum: Object,
   carPlanFeaturesCodeEnum: Object,
   carPlanExclusionsCodeEnum: Object,
   carPlanAddonsCodeEnum: Object,
@@ -155,6 +154,7 @@ onMounted(() => {
 const processingOCBEmailNB = ref(false);
 const permissionEnum = page.props.permissionsEnum;
 const rolesEnum = page.props.rolesEnum;
+const quoteStatusEnum= page.props.quoteStatusEnum;
 
 const dateFormat = date => {
   return useDateFormat(date, 'DD-MM-YYYY HH:mm:ss').value;
@@ -2659,13 +2659,6 @@ watch(
         </template>
       </Collapsible>
     </div>
-    <!-- <QuoteStatus
-			:quoteStatuses="leadStatuses"
-			:lostReasons="lostReasons"
-			:quoteStatusEnum="quoteStatusEnum"
-			:quoteType="quoteType"
-			:quote="record"
-		/> -->
 
     <div class="p-4 rounded shadow mb-6 bg-white">
       <Collapsible :expanded="sectionExpanded">
@@ -3438,7 +3431,6 @@ watch(
     <PolicyDetail
       v-if="isQuoteDocumentEnabled"
       :record="record"
-      :quoteStatusEnum="quoteStatusEnum"
       :modelType="quoteType"
     />    
     

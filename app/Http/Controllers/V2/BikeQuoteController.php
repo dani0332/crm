@@ -155,7 +155,6 @@ class BikeQuoteController extends Controller
             'lostReasons' => $lostReasons,
             'quoteTypeId' => QuoteTypes::BIKE->id(),
             'advisors' => $advisors,
-            'quoteStatusEnum' => QuoteStatusEnum::asArray(),
             'documentTypes' => $documentTypes,
             'quoteStatuses' => $quoteStatuses,
             'paymentMethods' => $paymentMethods,
@@ -179,9 +178,6 @@ class BikeQuoteController extends Controller
             'isNewPaymentStructure' => app(SplitPaymentService::class)->isNewPaymentStructure($quote->payments),
             'permissions' => [
                 'isQuoteDocumentEnabled' => $isQuoteDocumentEnabled,
-            ],
-            'enums' => [
-                'quoteStatusEnum' => QuoteStatusEnum::asArray(),
             ],
             'bookPolicyDetails' => $bookPolicyDetails,
             'payments' => $quote->payments->toArray() ?? [],

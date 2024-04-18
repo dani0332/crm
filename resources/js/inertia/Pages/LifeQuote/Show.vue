@@ -16,7 +16,6 @@ defineProps({
   customerAdditionalContacts: Array,
   allowedDuplicateLOB: Array,
   lostReasons: Array,
-  quoteStatusEnum: Object,
   embeddedProducts: Array,
   customerTypeEnum: Object,
   nationalities: Array,
@@ -1168,7 +1167,6 @@ watch(
     <PolicyDetail
       v-if="permissions.isQuoteDocumentEnabled"
       :record="record"
-      :quoteStatusEnum="enums.quoteStatusEnum"
       modelType="life"
       :expanded="sectionExpanded"
     />

@@ -302,7 +302,6 @@ class BusinessQuoteController extends Controller
 
             ],
             'enums' => [
-                'quoteStatusEnum' => QuoteStatusEnum::asArray(),
                 'paymentStatusEnum' => PaymentStatusEnum::asArray(),
             ],
             'typeCode' => quoteTypeCode::CORPLINE,
@@ -324,7 +323,6 @@ class BusinessQuoteController extends Controller
             'record' => $record,
             'bookPolicyDetails' => $bookPolicyDetails,
             'payments' => $payments,
-            'quoteStatusEnum' => QuoteStatusEnum::asArray(),
         ]);
     }
 
@@ -353,7 +351,6 @@ class BusinessQuoteController extends Controller
                 'auditable' => auth()->user()->can(PermissionsEnum::Auditable),
             ],
             'enums' => [
-                'quoteStatusEnum' => QuoteStatusEnum::asArray(),
                 'paymentStatusEnum' => PaymentStatusEnum::asArray(),
             ],
         ]);

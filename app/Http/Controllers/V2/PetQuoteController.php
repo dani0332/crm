@@ -148,7 +148,6 @@ class PetQuoteController extends Controller
             'activities' => $activities,
             'lostReasons' => $lostReasons,
             'advisors' => $advisors,
-            'quoteStatusEnum' => QuoteStatusEnum::asArray(),
             'documentTypes' => $documentTypes,
             'quoteStatuses' => $quoteStatuses,
             'paymentMethods' => $paymentMethods,
@@ -175,9 +174,6 @@ class PetQuoteController extends Controller
             'record' => fn () => $quote,
             'permissions' => [
                 'isQuoteDocumentEnabled' => $isQuoteDocumentEnabled,
-            ],
-            'enums' => [
-                'quoteStatusEnum' => QuoteStatusEnum::asArray(),
             ],
             'bookPolicyDetails' => $bookPolicyDetails,
             'payments' => $quote->payments->toArray() ?? [],

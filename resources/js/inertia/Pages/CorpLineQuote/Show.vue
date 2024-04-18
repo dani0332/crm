@@ -47,7 +47,7 @@ const hasAnyRole = roles => useHasAnyRole(roles);
 const rolesEnum = page.props.rolesEnum;
 const notification = useNotifications('toast');
 const hasRole = role => useHasRole(role);
-
+const quoteStatusEnum = page.props.quoteStatusEnum;
 const permissionEnum = page.props.permissionsEnum;
 const canAny = permissions => useCanAny(permissions);
 
@@ -1016,7 +1016,7 @@ watch(
                   :options="leadStatusOptions"
                   :disabled="
                     quote.quote_status_id ==
-                    enums.quoteStatusEnum.TransactionApproved
+                    quoteStatusEnum.TransactionApproved
                   "
                   placeholder="Lead Status"
                   class="w-full"
@@ -1029,7 +1029,7 @@ watch(
                   class="w-full"
                   :disabled="
                     quote.quote_status_id ==
-                    enums.quoteStatusEnum.TransactionApproved
+                    quoteStatusEnum.TransactionApproved
                   "
                 />
               </div>
@@ -1038,11 +1038,11 @@ watch(
               <x-input
                 v-if="
                   leadStatusForm.leadStatus ==
-                  enums.quoteStatusEnum.TransactionApproved
+                  quoteStatusEnum.TransactionApproved
                 "
                 :disabled="
                   quote.quote_status_id ==
-                  enums.quoteStatusEnum.TransactionApproved
+                  quoteStatusEnum.TransactionApproved
                 "
                 v-model="leadStatusForm.trans_code"
                 label="TRANSAPP CODE"
@@ -1051,7 +1051,7 @@ watch(
                 :error="leadStatusForm.errors.trans_code"
               />
               <x-select
-                v-if="leadStatusForm.leadStatus == enums.quoteStatusEnum.Lost"
+                v-if="leadStatusForm.leadStatus == quoteStatusEnum.Lost"
                 v-model="leadStatusForm.lostReason"
                 label="LOST REASON"
                 :options="
@@ -1083,7 +1083,7 @@ watch(
               @click.prevent="onLeadStatus"
               :disabled="
                 quote.quote_status_id ==
-                enums.quoteStatusEnum.TransactionApproved
+                quoteStatusEnum.TransactionApproved
               "
             >
               Change Status
@@ -1135,7 +1135,6 @@ watch(
     <PolicyDetail
       v-if="permissions.isQuoteDocumentEnabled"
       :record="record"
-      :quoteStatusEnum="enums.quoteStatusEnum"
       modelType="Business"
       :expanded="sectionExpanded"
     />

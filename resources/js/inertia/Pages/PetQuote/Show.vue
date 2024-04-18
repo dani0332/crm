@@ -26,7 +26,6 @@ defineProps({
   activities: Object,
   advisors: Object,
   lostReasons: Object,
-  quoteStatusEnum: Object,
   duplicateAllowedLobs: Array,
   embeddedProducts: Array,
   customerTypeEnum: Object,
@@ -836,7 +835,6 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       :quote-type="quoteType"
       :quote-statuses="quoteStatuses"
       :lost-reasons="lostReasons"
-      :quoteStatusEnum="quoteStatusEnum"
       :expanded="sectionExpanded"
     />
     <PlanDetails
@@ -895,7 +893,6 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
     <PolicyDetail
       v-if="permissions.isQuoteDocumentEnabled"
       :record="record"
-      :quoteStatusEnum="enums.quoteStatusEnum"
       modelType="pet"
       :expanded="sectionExpanded"
     />

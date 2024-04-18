@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use App\Enums\LeadSourceEnum;
 use App\Services\UserService;
 use App\Enums\PermissionsEnum;
+use App\Enums\QuoteStatusEnum;
 use App\Enums\TravelQuoteEnum;
 use Spatie\Navigation\Section;
 use App\Enums\PaymentStatusEnum;
@@ -79,6 +80,7 @@ class HandleInertiaRequests extends Middleware
             'im_logo' => getIMLogo(),
             'productionProcessTooltipEnum' => ProductionProcessTooltipEnum::asArray(),
             'policyIssuanceStatus' =>  PolicyIssuanceStatus::active()->get(),
+            'quoteStatusEnum' => QuoteStatusEnum::asArray(),
         ];
     }
 

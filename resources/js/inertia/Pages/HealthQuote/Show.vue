@@ -28,7 +28,6 @@ defineProps({
   activities: Array,
   customerAdditionalContacts: Array,
   lostReasons: Array,
-  quoteStatusEnum: Object,
   modelType: String,
   quoteTypeId: Number,
   notProductionApproval: Boolean,
@@ -55,7 +54,6 @@ defineProps({
   quoteType: String,
   paymentTooltipEnum: Object,
   storageUrl: String,
-  enums: Object,
   bookPolicyDetails: Array,
   isNewPaymentStructure: Boolean,
   sendUpdateOptions: Array,
@@ -1269,7 +1267,7 @@ const policyDetails = useForm({
   quote_status_id: page.props.quote.quote_status_id,
   canEdit:
     page.props.quote.quote_status_id ==
-      page.props.quoteStatusEnum.TransactionApproved &&
+    page.props.quoteStatusEnum.TransactionApproved &&
     page.props.notProductionApproval,
   editMode: false,
   modelType: page.props.modelType,
@@ -3014,7 +3012,6 @@ watch(
     <PolicyDetail
       v-if="permissions.isQuoteDocumentEnabled"
       :record="record"
-      :quoteStatusEnum="enums.quoteStatusEnum"
       modelType="health"
       :expanded="sectionExpanded"
       :payments="payments"

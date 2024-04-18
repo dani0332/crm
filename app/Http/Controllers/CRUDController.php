@@ -692,7 +692,6 @@ class CRUDController extends Controller
             $carPlanFeaturesCodeEnum = CarPlanFeaturesCode::asArray();
             $carPlanExclusionsCodeEnum = CarPlanExclusionsCode::asArray();
             $carPlanAddonsCodeEnum = CarPlanAddonsCode::asArray();
-            $quoteStatusEnum = QuoteStatusEnum::asArray();
             $leadSourceEnum = LeadSourceEnum::asArray();
             $paymentStatusEnum = PaymentStatusEnum::asArray();
             $genericRequestEnum = GenericRequestEnum::asArray();
@@ -727,7 +726,7 @@ class CRUDController extends Controller
             $bookPolicyDetails = $this->bookPolicyPayload($record, $quoteType, $payments, $quoteDocuments);
 
             return inertia('PersonalQuote/Car/Show', compact([
-                'record', 'sendUpdateOptions', 'sendUpdateLogs', 'quote', 'model', 'customTitles', 'customTableList', 'paymentStatusEnum', 'quoteStatusEnum', 'leadSourceEnum', 'isBetaUser', 'sendUpdateEnum',
+                'record', 'sendUpdateOptions', 'sendUpdateLogs', 'quote', 'model', 'customTitles', 'customTableList', 'paymentStatusEnum', 'leadSourceEnum', 'isBetaUser', 'sendUpdateEnum',
                 'ecomCarInsuranceQuoteUrl', 'carQuotePlanAddons', 'vehicleTypes', 'leadStatuses', 'docUploadURL', 'isPlanUpdateActive', 'allowQuoteLogAction', 'carLostChangeStatus',
                 'lostReasons', 'selectedLostReasonId', 'model_name', 'allowedDuplicateLOB', 'audits', 'websiteURL', 'insuranceProviders', 'leadDocsStoragePath',
                 'activities', 'advisors', 'isRenewalUser', 'isNewBusinessUser', 'emailStatuses', 'carPlanAddonsCodeEnum', 'tiersExceptTierR', 'isTierRAssigned',
@@ -849,7 +848,6 @@ class CRUDController extends Controller
                     'isAdvisor' => auth()->user()->hasRole(RolesEnum::EBPAdvisor) || auth()->user()->hasRole(RolesEnum::HealthAdvisor) || auth()->user()->hasRole(RolesEnum::RMAdvisor),
                     'isQuoteDocumentEnabled' => $isQuoteDocumentEnabled,
                 ],
-                'quoteStatusEnum' => QuoteStatusEnum::asArray(),
                 'modelType' => $quoteType,
                 'quoteTypeId' => $quoteTypeId,
                 'notProductionApproval' => $notProductionApproval,
@@ -869,9 +867,6 @@ class CRUDController extends Controller
                 'paymentTooltipEnum' => PaymentTooltip::asArray(),
                 'paymentStatusEnum' => PaymentStatusEnum::asArray(),
                 'documentTypes' => $documentTypes,
-                'enums' => [
-                    'quoteStatusEnum' => QuoteStatusEnum::asArray(),
-                ],
                 'bookPolicyDetails' => $bookPolicyDetails,
                 'vatPercentage' => $vatPercentage,
                 'isNewPaymentStructure' => $isNewPaymentStructure,
@@ -996,7 +991,6 @@ class CRUDController extends Controller
                     'pa' => auth()->user()->hasRole(RolesEnum::PA),
                     'isQuoteDocumentEnabled' => $isQuoteDocumentEnabled,
                 ],
-                'quoteStatusEnum' => QuoteStatusEnum::asArray(),
                 'modelType' => $quoteType,
                 'quoteTypeId' => $quoteTypeId,
                 'notProductionApproval' => $notProductionApproval,
@@ -1025,12 +1019,10 @@ class CRUDController extends Controller
                 'UBOsDetails' => $uboDetails,
                 'UBORelations' => $uboRelations,
                 'enums' => [
-                    'quoteStatusEnum' => QuoteStatusEnum::asArray(),
                     'paymentStatusEnum' => PaymentStatusEnum::asArray(),
                     'travelQuoteEnum' => TravelQuoteEnum::asArray(),
                 ],
                 'bookPolicyDetails' => $bookPolicyDetails,
-                'quoteStatusEnum' => QuoteStatusEnum::asArray(),
                 'sendUpdateEnum' => $sendUpdateEnum,
                 'hasPolicyIssuedStatus' => $hasPolicyIssuedStatus,
                 'isNewPaymentStructure' => $isNewPaymentStructure,

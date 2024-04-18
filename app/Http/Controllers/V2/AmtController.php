@@ -315,7 +315,6 @@ class AmtController extends Controller
             'quoteStatuses' => $quoteStatuses,
             'modelType' => QuoteTypes::BUSINESS,
             'canAddBatchNumber' => auth()->user()->hasRole(RolesEnum::GMManager),
-            'quoteStatusEnum' => QuoteStatusEnum::asArray(),
             'customerAdditionalContacts' => $customerAdditionalContacts,
             'customerTypeEnum' => CustomerTypeEnum::asArray(),
             'companyTypes' => $companyType,
@@ -336,9 +335,6 @@ class AmtController extends Controller
             'record' => fn () => $record,
             'permissions' => [
                 'isQuoteDocumentEnabled' => $isQuoteDocumentEnabled,
-            ],
-            'enums' => [
-                'quoteStatusEnum' => QuoteStatusEnum::asArray(),
             ],
             'bookPolicyDetails' => $bookPolicyDetails,
             'payments' => $record->payments->toArray() ?? [],

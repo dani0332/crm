@@ -63,6 +63,7 @@ defineProps({
 const permissionEnum = page.props.permissionsEnum;
 const canAny = permissions => useCanAny(permissions);
 const hasAnyRole = roles => useHasAnyRole(roles);
+const quoteStatusEnum = page.props.quoteStatusEnum;
 const checkedItems = ref([]);
 const checkCheckedPlans = computed(() => {
     return true;
@@ -84,9 +85,6 @@ const updateCheckedCount = (id, event) => {
         }
     }
 };
-
-
-
 const dateFormat = date => {
   if (!date) return '';
   return useDateFormat(date, 'DD-MM-YYYY');
@@ -455,7 +453,7 @@ const policyDetails = useForm({
   quote_status_id: page.props.quote.quote_status_id,
   canEdit:
     page.props.quote.quote_status_id ==
-      page.props.enums.quoteStatusEnum.TransactionApproved &&
+    quoteStatusEnum.TransactionApproved &&
     page.props.permissions.notProductionApproval,
   editMode: false,
   modelType: page.props.modelType,
@@ -2039,7 +2037,7 @@ watch(
                     :options="leadStatusOptions"
                     :disabled="
                       quote.quote_status_id ==
-                      enums.quoteStatusEnum.TransactionApproved
+                      quoteStatusEnum.TransactionApproved
                     "
                     placeholder="Lead Status"
                     class="w-full"
@@ -2053,7 +2051,7 @@ watch(
                     class="w-full"
                     :disabled="
                       quote.quote_status_id ==
-                      enums.quoteStatusEnum.TransactionApproved
+                      quoteStatusEnum.TransactionApproved
                     "
                   />
                 </x-field>
@@ -2064,13 +2062,13 @@ watch(
                 label="TRANSAPP CODE"
                 v-if="
                   leadStatusForm.leadStatus ==
-                  enums.quoteStatusEnum.TransactionApproved
+                  quoteStatusEnum.TransactionApproved
                 "
               >
                 <x-input
                   :disabled="
                     quote.quote_status_id ==
-                    enums.quoteStatusEnum.TransactionApproved
+                    quoteStatusEnum.TransactionApproved
                   "
                   v-model="leadStatusForm.trans_code"
                   placeholder="TransApp Code is required"
@@ -2080,7 +2078,7 @@ watch(
               </x-field>
               <x-field
                 label="LOST REASON"
-                v-if="leadStatusForm.leadStatus == enums.quoteStatusEnum.Lost"
+                v-if="leadStatusForm.leadStatus == quoteStatusEnum.Lost"
               >
                 <x-select
                   v-model="leadStatusForm.lostReason"
@@ -2109,7 +2107,7 @@ watch(
               @click.prevent="onLeadStatus"
               :disabled="
                 quote.quote_status_id ==
-                enums.quoteStatusEnum.TransactionApproved
+                quoteStatusEnum.TransactionApproved
               "
             >
               Change Status
@@ -2192,7 +2190,6 @@ watch(
     <PolicyDetail
       v-if="permissions.isQuoteDocumentEnabled"
       :record="record"
-      :quoteStatusEnum="enums.quoteStatusEnum"
       modelType="travel"
       :expanded="sectionExpanded"
     />

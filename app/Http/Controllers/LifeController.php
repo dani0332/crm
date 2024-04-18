@@ -217,7 +217,6 @@ class LifeController extends Controller
                 'canEditQuote' => auth()->user()->can(strtolower($this->genericModel->modelType).'-quotes-edit'),
             ],
             'enums' => [
-                'quoteStatusEnum' => QuoteStatusEnum::asArray(),
                 'paymentStatusEnum' => PaymentStatusEnum::asArray(),
             ],
         ]);
