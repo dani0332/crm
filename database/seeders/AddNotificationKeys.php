@@ -58,6 +58,5 @@ class AddNotificationKeys extends Seeder
             ]);
         }
 
-
     }
 }
