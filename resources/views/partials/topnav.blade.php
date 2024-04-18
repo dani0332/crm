@@ -56,10 +56,10 @@
                     <div class="dropdown-menu dropdown-usermenu pull-right" aria-labelledby="navbarDropdown">
                         <form method="POST" action="{{ route('logout') }}">
                             @csrf
-                            <x-jet-dropdown-link class="dropdown-item" href="{{ route('logout') }}" onclick="event.preventDefault();
+                            <x-dropdown-link class="dropdown-item" href="{{ route('logout') }}" onclick="event.preventDefault();
                                     this.closest('form').submit();">
                                 <i class="fa fa-sign-out pull-right"></i> {{ __('Log Out') }}
-                            </x-jet-dropdown-link>
+                            </x-dropdown-link>
                         </form>
                     </div>
                 </li>
