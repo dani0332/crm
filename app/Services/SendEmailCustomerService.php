@@ -575,7 +575,6 @@ class SendEmailCustomerService extends BaseService
         } elseif ($response && isset($response->message)) {
             info('RM Intro Email Triggered to CAPI for HEA-'.$quoteUuid.' - Message: '.$response->message);
         }
-
     }
 
     public function sendNonAdvisorIntroEmail($emailData, $tag, $emailTemplateId)
@@ -671,7 +670,8 @@ class SendEmailCustomerService extends BaseService
 
             $roles = $user->usersroles->pluck('name');
 
-            $emailMapping = ['CAR_ADVISOR',
+            $emailMapping = [
+                'CAR_ADVISOR',
                 'HEALTH_ADVISOR',
             ];
 
