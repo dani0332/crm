@@ -1461,7 +1461,14 @@ const deleteDocument = (docName,count) => {
 
 const uploadDocument = (doc, files, count) => {
   files = files.files;
-  if (files.length == 0) return;  
+  // Error if invalid files are selected
+  if (files.length == 0) {
+    notification.error({
+            title: 'Document upload failed, invalid file selected',
+            position: 'top',
+          }); 
+    return;  
+  }
   let url = '/quotes/'+props.quoteType+'/documents/store-multiple';
   let splitPaymentDocType = null;  
   if (count===0) { // documents for master discount
@@ -2888,7 +2895,8 @@ const isMasterPaymentPaid = computed(() => {
       
       <template  v-if="isViewEnabled || isCreditApprovalView">
           <template v-if="isApproveConfirm">
-            <div class="w-full text-right">Do you wish to proceed with payment confirmation?</div>
+            <div class="w-full text-right" v-if="isViewEnabled">Do you wish to proceed with payment confirmation?</div>
+            <div class="w-full text-right" v-if="isCreditApprovalView">Would you like to continue with the approval?</div>
             <div class="w-full flex justify-end">
               <div class="mr-4">
                 <x-button size="sm" @click="handleNoButtonChange" tabindex="0" class="focus:outline-black">

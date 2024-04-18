@@ -7,14 +7,18 @@ use App\Enums\PaymentAllocationStatus;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\RolesEnum;
 use App\Interfaces\PaymentRepositoryInterface;
 use App\Jobs\MAWelcomeJob;
+use App\Models\CarQuote;
+use App\Models\HealthQuote;
 use App\Models\Payment;
 use App\Models\PaymentSplits;
 use App\Models\PaymentStatusLog;
 use App\Models\QuoteDocument;
+use App\Models\TravelQuote;
 use App\Services\ApplicationStorageService;
 use App\Services\CRUDService;
 use App\Services\PaymentLinkService;
@@ -410,6 +414,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                         }
                     }
                 }
+                $this->updateLeadStatus($firstPayment); //update lead status
                 DB::commit();
             } catch (Exception $exception) {
                 DB::rollBack();
@@ -441,6 +446,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
             $payment->is_approved = 0;
             $payment->payment_status_id = PaymentStatusEnum::PARTIAL_CAPTURED;
             $payment->save();
+            $this->updateLeadStatus($payment); //update lead status
 
             return response()->json(['message' => 'Total Price Updated Successfully']);
         }
@@ -574,6 +580,28 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                         );
                     }
                 }
+            }
+            $this->updateLeadStatus($payment); //update lead status
+        }
+    }
+
+    // Update lead status for ecomm quotes
+    private function updateLeadStatus($payment)
+    {
+        $quoteType = '';
+        if ($payment->paymentable_type == CarQuote::class) {
+            $quoteType = quoteTypeCode::Car;
+        } elseif ($payment->paymentable_type == HealthQuote::class) {
+            $quoteType = quoteTypeCode::Health;
+        } elseif ($payment->paymentable_type == TravelQuote::class) {
+            $quoteType = quoteTypeCode::Travel;
+        }
+        // If a quote type is found, get the corresponding quote object
+        if ($quoteType !== '') {
+            $quoteModel = $this->getQuoteObject($quoteType, $payment->paymentable_id);
+            if ($quoteModel) {
+                $quoteModel->payment_status_id = $payment->payment_status_id;
+                $quoteModel->save();
             }
         }
     }
