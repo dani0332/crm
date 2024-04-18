@@ -8,10 +8,8 @@ use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\ReportsLeadTypeEnum;
 use App\Enums\RolesEnum;
-use App\Models\CarQuote;
 use App\Models\LeadSource;
 use App\Models\QuoteBatches;
-use App\Models\Team;
 use App\Models\Tier;
 use App\Traits\GetUserTreeTrait;
 use App\Traits\TeamHierarchyTrait;
@@ -200,7 +198,7 @@ class AdvisorConversionReportService extends BaseService
             quoteTypeCode::Yacht => PermissionsEnum::YACHT_CONVERSION_REPORT,
             quoteTypeCode::Life => PermissionsEnum::LIFE_CONVERSION_REPORT,
             quoteTypeCode::Home => PermissionsEnum::HOME_CONVERSION_REPORT,
-            quoteTypeCode::Business => PermissionsEnum::BUSINESS_CONVERSION_REPORT,
+            quoteTypeCode::Business => PermissionsEnum::CORPLINE_CONVERSION_REPORT,
         ];
 
         $lobs = array_filter($lobs, function ($permission) {

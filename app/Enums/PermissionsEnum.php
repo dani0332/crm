@@ -252,7 +252,7 @@ final class PermissionsEnum extends Enum
     public const PET_CONVERSION_REPORT = 'pet-conversion-report';
     public const CYCLE_CONVERSION_REPORT = 'cycle-conversion-report';
     public const YACHT_CONVERSION_REPORT = 'yacht-conversion-report';
-    public const BUSINESS_CONVERSION_REPORT = 'business-conversion-report';
+    public const CORPLINE_CONVERSION_REPORT = 'corpline-conversion-report';
     public const GROUPMEDICAL_CONVERSION_REPORT = 'groupmedicals-conversion-report';
 
     public static function getAdvisorConverionReportPermissions()
@@ -267,7 +267,7 @@ final class PermissionsEnum extends Enum
             PermissionsEnum::PET_CONVERSION_REPORT,
             PermissionsEnum::CYCLE_CONVERSION_REPORT,
             PermissionsEnum::YACHT_CONVERSION_REPORT,
-            PermissionsEnum::BUSINESS_CONVERSION_REPORT,
+            PermissionsEnum::CORPLINE_CONVERSION_REPORT,
             PermissionsEnum::GROUPMEDICAL_CONVERSION_REPORT,
         ];
     }
