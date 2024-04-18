@@ -278,12 +278,12 @@ function calculateValuesAndHighlight() {
             item.total_allocated_leads = item.total_by_volume_segment_advisors
             item.renewed = item.renewed_by_volume_segment_advisors
             item.car_sold = item.car_sold_by_volume_segment
-            // item.early_renewal = item.early_renewal_by_volume_segment
+            // item.early_renewal = item.early_renewal_by_volume_segment    // tempory hidden don't remove
         } else if (segmentFilter == 'value') {
             item.total_allocated_leads = item.total_by_value_segment_advisors
             item.renewed = item.renewed_by_value_segment_advisors
             item.car_sold = item.car_sold_by_value_segment
-            // item.early_renewal = item.early_renewal_by_value_segment
+            // item.early_renewal = item.early_renewal_by_value_segment   // tempory hidden don't remove
         }
     });
     // process the data to get the correct values for the super retention report
@@ -306,7 +306,7 @@ function calculateValuesAndHighlight() {
                     (
                         parseInt(item.total_allocated_leads) -
                         parseInt(item.car_sold)
-                        // - parseInt(item.early_renewal)
+                        // - parseInt(item.early_renewal) // tempory hidden don't remove
                     )) * 100
 
             ).toFixed(2);
@@ -323,7 +323,7 @@ function calculateValuesAndHighlight() {
                     (
                         parseInt(item.total_allocated_leads_by_all_advisors) -
                         parseInt(item.car_sold_by_all_advisors)
-                        // - parseInt(item.early_renewal_by_all_advisors)
+                        // - parseInt(item.early_renewal_by_all_advisors) // tempory hidden don't remove
                     )) * 100
 
             ).toFixed(2);
@@ -337,7 +337,7 @@ function calculateValuesAndHighlight() {
                     (
                         parseInt(item.total_allocated_leads) -
                         parseInt(item.car_sold)
-                        // - parseInt(item.early_renewal)
+                        // - parseInt(item.early_renewal) // tempory hidden don't remove
                     )) * 100
 
             ).toFixed(2);
@@ -352,7 +352,7 @@ function calculateValuesAndHighlight() {
                 (
                     parseInt(item.total_by_value_segment_advisors) -
                     parseInt(item.car_sold_by_value_segment)
-                    // - parseInt(item.early_renewal_by_value_segment)
+                    // - parseInt(item.early_renewal_by_value_segment) // tempory hidden don't remove
                 )) * 100
         ).toFixed(2);
         valueSegmentConversion = valueSegmentConversion == 'NaN' ? '0.00' : valueSegmentConversion;
@@ -363,7 +363,7 @@ function calculateValuesAndHighlight() {
                 (
                     parseInt(item.total_by_volume_segment_advisors) -
                     parseInt(item.car_sold_by_volume_segment)
-                    // - parseInt(item.early_renewal_by_volume_segment)
+                    // - parseInt(item.early_renewal_by_volume_segment) // tempory hidden don't remove
                 )) * 100
         ).toFixed(2);
         volumeSegmentConversion = volumeSegmentConversion == 'NaN' ? '0.00' : volumeSegmentConversion;
@@ -524,7 +524,7 @@ const calculateMonthlySum = (data, index) => {
     let totalRenewed = 0;
     let totalAllocated = 0;
     let totalCarSold = 0;
-    let totalEarlyRenewal = 0;
+    // let totalEarlyRenewal = 0; // tempory hidden don't remove
     currentRowSpan = 0;
 
     let currentMonthValue = data[index].month;
@@ -535,7 +535,7 @@ const calculateMonthlySum = (data, index) => {
             totalRenewed = parseInt(totalRenewed) + parseInt(data[index].renewed);
             totalAllocated = parseInt(totalAllocated) + parseInt(data[index].total_allocated_leads);
             totalCarSold = parseInt(totalCarSold) + parseInt(data[index].car_sold);
-            // totalEarlyRenewal = parseInt(totalEarlyRenewal) + parseInt(data[index].early_renewal);
+            // totalEarlyRenewal = parseInt(totalEarlyRenewal) + parseInt(data[index].early_renewal); // tempory hidden don't remove
             index++;
             lastMonthSummedIndex = index;
             currentRowSpan++;
@@ -543,11 +543,11 @@ const calculateMonthlySum = (data, index) => {
 
         renewedCountsList[currentMonthValue] = totalRenewed;
         totalAllocationList[currentMonthValue] = ( totalAllocated - (totalCarSold
-        // + totalEarlyRenewal
+        // + totalEarlyRenewal // tempory hidden don't remove
         ) );
 
         let result = totalRenewed / (totalAllocated - totalCarSold
-        // - totalEarlyRenewal
+        // - totalEarlyRenewal // tempory hidden don't remove
         ) * 100;
 
         return (result).toFixed(2);
@@ -667,11 +667,9 @@ watch(
                                 <th class="py-2 font-semibold tracking-widest uppercase text-xs px-3 sticky top-0 text-left">
                                     Approved Car Sold
                                 </th>
-
                                 <!-- <th class="py-2 font-semibold tracking-widest uppercase text-xs px-3 sticky top-0 text-left">
-                                    Approved Early Renewals
+                                    Approved Early Renewals  // tempory hidden don't remove
                                 </th> -->
-
                                 <th v-if="hasAnyRole([rolesEnum.CarManager, rolesEnum.RenewalsManager, rolesEnum.SeniorManagement, rolesEnum.Accounts])"
                                     class="py-2 font-semibold tracking-widest uppercase text-xs px-3 sticky top-0 text-left">
                                     Ratio - Approved Car Sold
@@ -710,9 +708,12 @@ watch(
                                 <td class="x-table-cell px-3 py-4 align-middle">
                                     {{ item.car_sold.toLocaleString() }}
                                 </td>
+                                <!-- // tempory hidden don't remove -->
+
                                 <!-- <td class="x-table-cell px-3 py-4 align-middle">
-                                    {{ item.early_renewal.toLocaleString() }}
+                                    {{ item.early_renewal.toLocaleString() }} // tempory hidden don't remove
                                 </td> -->
+
                                 <td v-if="hasAnyRole([rolesEnum.CarManager, rolesEnum.RenewalsManager, rolesEnum.SeniorManagement, rolesEnum.Accounts])"
                                     class="x-table-cell px-3 py-4 align-middle">
                                     {{ item.ratioCarSoldUncontactable }}%
@@ -721,7 +722,7 @@ watch(
                                     <!-- Sum of allocations per batch  - (Approved Car Sold + Approved Uncontactable) -->
                                     <p v-if="item.total_allocated_leads == 0"> 0 </p>
                                     <p v-else>{{ (parseInt(item.total_allocated_leads) - (parseInt(item.car_sold)
-                                        // + parseInt(item.early_renewal)
+                                        // + parseInt(item.early_renewal) // tempory hidden don't remove
                                         )).toLocaleString() }} </p>
                                 </td>
                                 <td :class="item.advisorRetentionClass" class="x-table-cell px-3 py-4 align-middle">
