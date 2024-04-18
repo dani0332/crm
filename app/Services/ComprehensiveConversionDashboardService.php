@@ -233,7 +233,7 @@ class ComprehensiveConversionDashboardService extends BaseService
         $filters = (object) $filters;
         $lob = $filters->lob ?? '';
 
-        if (in_array($lob, [quoteTypeCode::Car, quoteTypeCode::Bike])) {
+        if (in_array($lob, [quoteTypeCode::Car])) {
             if (isset($filters->tiers) && $filters->tiers != 'undefined') {
                 $tiers = $filters->tiers;
             } else {

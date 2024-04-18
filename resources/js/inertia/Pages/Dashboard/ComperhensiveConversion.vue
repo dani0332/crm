@@ -425,14 +425,30 @@ const insuranceForOptions = computed(() => {
         <ComboBox v-model="filters.advisors" placeholder="Select Advisor" :options="advisorOptions" select-all
           deselect-all :loading="loaders.advisorOptions" />
       </x-field>
-      <x-field v-if="canShow('tiers')" label="Tiers">
-        <ComboBox v-model="filters.tiers" name="team_name" placeholder="Select Teams" :options="
-            Object.keys(filterOptions.tiers).map(key => ({
-              value: key,
-              label: filterOptions.tiers[key],
-            }))
-          " />
-      </x-field>
+      <x-tooltip position="top" v-if="canShow('tiers')">
+          <template #tooltip v-if="filters.lob === quoteTypeCodeEnum.Bike"> Development for Bike Tiers still in progress </template>
+          <template #tooltip v-else> Select Tiers </template>
+
+          <x-field 
+          class="w-full"
+            label="Tiers">
+              <ComboBox
+                :disabled="filters.lob === quoteTypeCodeEnum.Bike"
+                :class="{
+                    'opacity-50': filters.lob === quoteTypeCodeEnum.Bike,
+                }"
+                v-model="filters.tiers"
+                name="team_name"
+                placeholder="Select Teams"
+                :options="
+                  Object.keys(filterOptions.tiers).map(key => ({
+                    value: key,
+                    label: filterOptions.tiers[key],
+                  }))
+                "
+              />
+          </x-field>
+      </x-tooltip>
       <x-field label="Commercial" v-if="canShow('isCommercial')">
         <x-select v-model="filters.isCommercial" placeholder="Select any option" :options="[
             { value: 'All', label: 'All' },
