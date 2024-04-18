@@ -726,7 +726,7 @@ class CRUDController extends Controller
             $nationalities = NationalityRepository::withActive()->get();
 
             // book policy details
-            $bPDetails = $this->bookPolicyPayload($record, $quoteType, $payments, $quoteDocuments);
+            $bookPolicyDetails = $this->bookPolicyPayload($record, $quoteType, $payments, $quoteDocuments);
 
             return inertia('PersonalQuote/Car/Show', compact([
                 'record', 'sendUpdateOptions', 'sendUpdateLogs', 'quote', 'model', 'customTitles', 'customTableList', 'paymentStatusEnum', 'quoteStatusEnum', 'leadSourceEnum', 'isBetaUser', 'sendUpdateEnum',
@@ -737,7 +737,7 @@ class CRUDController extends Controller
                 'paymentEntityModel', 'payments', 'paymentMethods', 'isQuoteDocumentEnabled', 'quoteDocuments', 'displaySendPolicyButton', 'customerAdditionalContacts', 'lostApproveReasons', 'lostRejectReasons', 'allowQuoteLogAction', 'carLostChangeStatus',
                 'carMakeText', 'carModelText', 'advisor', 'tiers', 'daysAfterCapturedPayment', 'access', 'carPlanFeaturesCodeEnum', 'carPlanExclusionsCodeEnum', 'documentTypes', 'planURL', 'storageUrl', 'kyoEndPoint',
                 'carPlanTypeEnum', 'UBORelations', 'UBOsDetails', 'emirates', 'customerTypeEnum', 'memberRelations', 'membersDetails', 'industryType', 'nationalities', 'paymentTooltipEnum',
-                'isCommercialVehicles', 'carInsuranceProviders', 'isNewPaymentStructure', 'sendUpdateOptions', 'sendUpdateLogs', 'hasPolicyIssuedStatus', 'sendUpdateEnum', 'policyIssuanceStatus', 'bPDetails', 'listQuotePlans',
+                'isCommercialVehicles', 'carInsuranceProviders', 'isNewPaymentStructure', 'sendUpdateOptions', 'sendUpdateLogs', 'hasPolicyIssuedStatus', 'sendUpdateEnum', 'policyIssuanceStatus', 'bookPolicyDetails', 'listQuotePlans',
             ]));
         }
 
@@ -821,7 +821,7 @@ class CRUDController extends Controller
             $policyIssuanceStatus = PolicyIssuanceStatus::active()->get();
 
             $quoteDocument = (new QuoteDocumentService())->getQuoteDocuments(QuoteTypes::HOME->value, $record->id);
-            $bPDetails = $this->bookPolicyPayload($record, QuoteTypes::HOME->value, $payments, $quoteDocument);
+            $bookPolicyDetails = $this->bookPolicyPayload($record, QuoteTypes::HOME->value, $payments, $quoteDocument);
 
             return inertia('HomeQuote/Show', [
                 'storageUrl' => storageUrl(),
@@ -876,7 +876,7 @@ class CRUDController extends Controller
                     'quoteStatusEnum' => QuoteStatusEnum::asArray(),
                 ],
                 'policyIssuanceStatus' => $policyIssuanceStatus,
-                'bPDetails' => $bPDetails,
+                'bookPolicyDetails' => $bookPolicyDetails,
                 'vatPercentage' => $vatPercentage,
                 'isNewPaymentStructure' => $isNewPaymentStructure,
                 'sendUpdateEnum' => $sendUpdateEnum,
@@ -964,7 +964,7 @@ class CRUDController extends Controller
 
             $healthPlanTypes = HealthPlanType::where('is_active', 1)->select('id', 'text')->get();
             $policyIssuanceStatus = PolicyIssuanceStatus::active()->get();
-            $bPDetails = $this->bookPolicyPayload($record, $quoteType, $payments, $quoteDocuments);
+            $bookPolicyDetails = $this->bookPolicyPayload($record, $quoteType, $payments, $quoteDocuments);
 
             // Get user teams
             $teams = $this->crudService->getUserTeams(Auth::user()->id);
@@ -1035,7 +1035,7 @@ class CRUDController extends Controller
                     'travelQuoteEnum' => TravelQuoteEnum::asArray(),
                 ],
                 'policyIssuanceStatus' => $policyIssuanceStatus,
-                'bPDetails' => $bPDetails,
+                'bookPolicyDetails' => $bookPolicyDetails,
                 'quoteStatusEnum' => QuoteStatusEnum::asArray(),
                 'sendUpdateEnum' => $sendUpdateEnum,
                 'hasPolicyIssuedStatus' => $hasPolicyIssuedStatus,

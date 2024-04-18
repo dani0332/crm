@@ -190,33 +190,33 @@ trait GenericQueriesAllLobs
             $insuranceProviderCode = InsuranceProviderRepository::where('id', $insurance_provider_id)->value('code');
             $insuranceProviderLeadCount = Payment::where('insurance_provider_id', '=', $insurance_provider_id)->count();
         }
-        $bPDetails['brokerInvoiceNo'] = $insuranceProviderCode.$insuranceProviderLeadCount;
-        $bPDetails['invoiceDescription'] = $insuranceProviderCode.'-'.$quoteType.'-'.$record->policy_number;
-        $bPDetails['sendButton'] = false;
-        $bPDetails['editButton'] = false;
-        $bPDetails['sendPolicyType'] = null;
-        $bPDetails['text'] = '';
+        $bookPolicyDetails['brokerInvoiceNo'] = $insuranceProviderCode.$insuranceProviderLeadCount;
+        $bookPolicyDetails['invoiceDescription'] = $insuranceProviderCode.'-'.$quoteType.'-'.$record->policy_number;
+        $bookPolicyDetails['sendButton'] = false;
+        $bookPolicyDetails['editButton'] = false;
+        $bookPolicyDetails['sendPolicyType'] = null;
+        $bookPolicyDetails['text'] = '';
         // check if policy details are filled & all required documents are uploaded then show send policy button to customer & show edit button &  send policy to sage
         if ($this->isFilledPolicyDetails($quoteType, $record)) {
             if (! empty($quoteDocuments)) {
                 if ($this->isAllRequiredDocumentAreUploaded($quoteDocuments, $quoteType)) {
-                    $bPDetails['sendButton'] = true;
-                    $bPDetails['text'] = 'Send Policy To Customer';
-                    $bPDetails['sendPolicyType'] = 'customer';
+                    $bookPolicyDetails['sendButton'] = true;
+                    $bookPolicyDetails['text'] = 'Send Policy To Customer';
+                    $bookPolicyDetails['sendPolicyType'] = 'customer';
                 }
-                if ($bPDetails['sendButton']) {
+                if ($bookPolicyDetails['sendButton']) {
                     $taxDocuments = DocumentTypeRepository::taxDocumentsCode($quoteType);
                     $taxDocumentsCount = collect($quoteDocuments)->whereIn('document_type_code', $taxDocuments)->groupBy('document_type_code')->count();
                     if ($taxDocumentsCount == count($taxDocuments)) {
-                        $bPDetails['text'] = 'Send Policy';
-                        $bPDetails['editButton'] = true;
-                        $bPDetails['sendPolicyType'] = 'sage';
+                        $bookPolicyDetails['text'] = 'Send Policy';
+                        $bookPolicyDetails['editButton'] = true;
+                        $bookPolicyDetails['sendPolicyType'] = 'sage';
                     }
                 }
             }
         }
 
-        return $bPDetails;
+        return $bookPolicyDetails;
     }
 
     public function getQuoteCodeType($lead)

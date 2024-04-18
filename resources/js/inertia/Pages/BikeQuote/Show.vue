@@ -45,17 +45,11 @@ defineProps({
   enums: Object,
   policyIssuanceStatus: Array,
   payments: Array,
-  bPDetails: Array,
+  bookPolicyDetails: Array,
   sendUpdateOptions: Array,
   sendUpdateLogs: Array,
   hasPolicyIssuedStatus: Boolean,
-  record: Object,
-  permissions: Object,
-  enums: Object,
-  policyIssuanceStatus: Array,
-  payments: Array,
-  bPDetails: Array,
-});
+  });
 
 const page = usePage();
 const { isRequired } = useRules();
@@ -810,7 +804,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       "
       :quote="record"
       quoteType="Bike"
-      :bPDetails="bPDetails"
+      :bookPolicyDetails="bookPolicyDetails"
       :payments="payments"
       :expanded="sectionExpanded"
     />
@@ -833,7 +827,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       "
       :quote="record"
       quoteType="Bike"
-      :bPDetails="bPDetails"
+      :bookPolicyDetails="bookPolicyDetails"
       :payments="payments"
     />
 

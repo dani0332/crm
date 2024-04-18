@@ -57,7 +57,7 @@ defineProps({
   storageUrl: String,
   enums: Object,
   policyIssuanceStatus: Array,
-  bPDetails: Array,
+  bookPolicyDetails: Array,
   isNewPaymentStructure: Boolean,
   sendUpdateOptions: Array,
   sendUpdateLogs: Array,
@@ -3095,7 +3095,7 @@ watch(
       "
       :quote="record"
       quoteType="health"
-      :bPDetails="bPDetails"
+      :bookPolicyDetails="bookPolicyDetails"
       :payments="payments"
       :expanded="sectionExpanded"
     />

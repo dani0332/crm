@@ -53,7 +53,7 @@ defineProps({
   storageUrl: String,
   policyIssuanceStatus: Array,
   record: Object,
-  bPDetails: Array,
+  bookPolicyDetails: Array,
   isNewPaymentStructure: Boolean,
   sendUpdateOptions: Array,
   sendUpdateLogs: Array,
@@ -2277,7 +2277,7 @@ watch(
       "
       :quote="record"
       quoteType="travel"
-      :bPDetails="bPDetails"
+      :bookPolicyDetails="bookPolicyDetails"
       :payments="payments"
       :expanded="sectionExpanded"
     />

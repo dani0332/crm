@@ -198,7 +198,7 @@ class TravelController extends Controller
         $uboRelations = LookupRepository::where('key', LookupsEnum::UBO_RELATION)->get();
         $emirates = Emirate::where('is_active', 1)->select('id', 'text')->get();
         $policyIssuanceStatus = PolicyIssuanceStatus::active()->get();
-        $bPDetails = $this->bookPolicyPayload($record, $quoteType, $payments, $quoteDocuments);
+        $bookPolicyDetails = $this->bookPolicyPayload($record, $quoteType, $payments, $quoteDocuments);
 
         $sendUpdateOptions = [];
         $sendUpdateLogs = [];
@@ -290,7 +290,7 @@ class TravelController extends Controller
             'UBORelations' => $uboRelations,
             'emirates' => $emirates,
             'policyIssuanceStatus' => $policyIssuanceStatus,
-            'bPDetails' => $bPDetails,
+            'bookPolicyDetails' => $bookPolicyDetails,
             'quoteStatusEnum' => QuoteStatusEnum::asArray(),
             'isNewPaymentStructure' => $isNewPaymentStructure,
             'sendUpdateOptions' => $sendUpdateOptions,

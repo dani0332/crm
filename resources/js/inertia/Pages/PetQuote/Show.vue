@@ -44,7 +44,7 @@ defineProps({
   permissions: Object,
   enums: Object,
   policyIssuanceStatus: Array,
-  bPDetails: Array,
+  bookPolicyDetails: Array,
   payments: Array,
   isNewPaymentStructure: Boolean,
   sendUpdateOptions: Array,
@@ -919,7 +919,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       "
       :quote="record"
       quoteType="pet"
-      :bPDetails="bPDetails"
+      :bookPolicyDetails="bookPolicyDetails"
       :payments="payments"
       :expanded="sectionExpanded"
     />

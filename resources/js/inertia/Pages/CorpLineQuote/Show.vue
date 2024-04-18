@@ -41,7 +41,7 @@ defineProps({
   permissions: Object,
   enums: Object,
   policyIssuanceStatus: Array,
-  bPDetails: Array,
+  bookPolicyDetails: Array,
   payments: Array,
 });
 
@@ -1163,7 +1163,7 @@ watch(
       :quote="record"
       quoteType="Business"
       modelType="Corpline"
-      :bPDetails="bPDetails"
+      :bookPolicyDetails="bookPolicyDetails"
       :payments="payments"
       :expanded="sectionExpanded"
     />

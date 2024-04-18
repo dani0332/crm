@@ -43,7 +43,7 @@ defineProps({
   paymentTooltipEnum: Object,
   enums: Object,
   policyIssuanceStatus: Array,
-  bPDetails: Array,
+  bookPolicyDetails: Array,
   isNewPaymentStructure: Boolean,
   sendUpdateOptions: Array,
   sendUpdateLogs: Array,
@@ -1177,7 +1177,7 @@ watch(
       "
       :quote="record"
       quoteType="home"
-      :bPDetails="bPDetails"
+      :bookPolicyDetails="bookPolicyDetails"
       :payments="payments"
       :expanded="sectionExpanded"
     />

@@ -47,17 +47,11 @@ defineProps({
   permissions: Object,
   enums: Object,
   policyIssuanceStatus: Array,
-  bPDetails: Array,
+  bookPolicyDetails: Array,
   payments: Array,
   sendUpdateOptions: Array,
   sendUpdateLogs: Array,
-  hasPolicyIssuedStatus: Boolean,
-  record: Object,
-  permissions: Object,
-  enums: Object,
-  policyIssuanceStatus: Array,
-  bPDetails: Array,
-  payments: Array,
+  hasPolicyIssuedStatus: Boolean  
 });
 
 const page = usePage();
@@ -895,7 +889,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       "
       :quote="record"
       quoteType="Cycle"
-      :bPDetails="bPDetails"
+      :bookPolicyDetails="bookPolicyDetails"
       :payments="payments"
       :expanded="sectionExpanded"
     />

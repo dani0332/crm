@@ -38,7 +38,7 @@ defineProps({
   enums: Object,
   policyIssuanceStatus: Array,
   permissions: Object,
-  bPDetails: Array,
+  bookPolicyDetails: Array,
   isNewPaymentStructure: Boolean,
   sendUpdateOptions: Array,
   sendUpdateLogs: Array,
@@ -1192,7 +1192,7 @@ watch(
       "
       :quote="record"
       quoteType="life"
-      :bPDetails="bPDetails"
+      :bookPolicyDetails="bookPolicyDetails"
       :payments="payments"
       :expanded="sectionExpanded"
     />
