@@ -24,6 +24,7 @@ class SendUpdateDocumentTypesSeeder extends Seeder
             'max_size' => 25,
             'is_required' => 0,
             'category' => 'SEND_UPDATE',
+            'sort_order' => 1,
         ]);
 
         DocumentType::updateOrCreate(([
@@ -37,6 +38,7 @@ class SendUpdateDocumentTypesSeeder extends Seeder
             'max_size' => 25,
             'is_required' => 0,
             'category' => 'SEND_UPDATE',
+            'sort_order' => 2,
         ]);
 
         DocumentType::updateOrCreate(([
@@ -50,6 +52,7 @@ class SendUpdateDocumentTypesSeeder extends Seeder
             'max_size' => 25,
             'is_required' => 0,
             'category' => 'SEND_UPDATE',
+            'sort_order' => 3,
         ]);
 
         DocumentType::updateOrCreate(([
@@ -63,6 +66,7 @@ class SendUpdateDocumentTypesSeeder extends Seeder
             'max_size' => 25,
             'is_required' => 0,
             'category' => 'SEND_UPDATE',
+            'sort_order' => 4,
         ]);
 
         DocumentType::updateOrCreate(([
@@ -76,6 +80,7 @@ class SendUpdateDocumentTypesSeeder extends Seeder
             'max_size' => 25,
             'is_required' => 0,
             'category' => 'SEND_UPDATE',
+            'sort_order' => 5,
         ]);
 
         DocumentType::updateOrCreate(([
@@ -89,6 +94,7 @@ class SendUpdateDocumentTypesSeeder extends Seeder
             'max_size' => 25,
             'is_required' => 0,
             'category' => 'SEND_UPDATE',
+            'sort_order' => 6,
         ]);
 
         DocumentType::updateOrCreate(([
