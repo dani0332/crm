@@ -7,12 +7,14 @@ use App\Enums\quoteTypeCode;
 use App\Enums\TeamTypeEnum;
 use App\Enums\UserStatusEnum;
 use App\Events\UserStatusChanged;
+use App\Jobs\ActivityAlertEmailJob;
 use App\Jobs\ReAssignCarLeadsJob;
 use App\Jobs\ReAssignHealthLeadsJob;
 use App\Models\ApplicationStorage;
 use App\Models\Sessions;
 use App\Models\Team;
 use App\Models\User;
+use App\Models\UserStatusAuditLog;
 use App\Services\CarAllocationService;
 use App\Services\HealthAllocationService;
 use App\Traits\TeamHierarchyTrait;
@@ -72,6 +74,7 @@ class UpdateUserStatus extends Command
 
             if ($lastActivity < $inactiveThreshold) {
                 $unAvailableTime = now()->subHours(2);
+                $subtime = now()->subMinutes(90);
 
                 $offlineTime = now()->subSeconds($userInactiveThreshold);
 
@@ -98,6 +101,25 @@ class UpdateUserStatus extends Command
                             info('System triggered health reassignment job for user : '.$session->user->name);
                             ReAssignHealthLeadsJob::dispatch(new HealthAllocationService(), $userId);
                         }
+                    }
+                } else {
+                    if ($newStatus == UserStatusEnum::OFFLINE && $subtime > $lastActivity) {
+                        info('System triggered health reassignment job for user inside : '.$lastActivity);
+                        $currentDateTime = Carbon::now();
+                        $startDateTime = Carbon::parse('08:59:00'); // 6:30 PM
+                        $endDateTime = Carbon::parse('18:30:00'); // 8:59 AM of the next day
+                        if ($currentDateTime->isWeekday() && $currentDateTime->between($startDateTime, $endDateTime)) {
+                            $statusLog = UserStatusAuditLog::where('user_id', $userId)->where('status', UserStatusEnum::OFFLINE)->orderBy('id', 'desc')->first();
+                            if (isset($statusLog->is_mail_sent)) {
+                                if ($statusLog->is_mail_sent == 0) {
+                                    $user = User::where('id', $userId)->first();
+                                    ActivityAlertEmailJob::dispatch($user);
+                                    $statusLog->is_mail_sent = 1;
+                                    $statusLog->save();
+                                }
+                            }
+                        }
+
                     }
                 }
             } elseif ($lastActivity >= $inactiveThreshold && $currentUserStatus != UserStatusEnum::ONLINE && $currentUserStatus != UserStatusEnum::MANUAL_OFFLINE) {

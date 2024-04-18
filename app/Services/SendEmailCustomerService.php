@@ -653,4 +653,86 @@ class SendEmailCustomerService extends BaseService
 
         return $responseCode;
     }
+
+    public function sendActivityAlertEmail($user)
+    {
+        $emailTemplateId = ApplicationStorage::where('key_name', '=', 'ADVISOR_NOTIFICATION_TEMPLATE')->value('value');
+        try {
+            $tag = $this->appEnv == EnvEnum::PRODUCTION ? '' : $this->appEnv.'-';
+            info('sendActivityAlertEmail');
+            $headers = [
+                'Accept' => 'application/json',
+                'api-key' => $this->apiKey,
+                'Content-Type' => 'application/json',
+            ];
+
+            $user->advisor = [
+                'name' => $user->name,
+            ];
+
+            $roles = $user->usersroles->pluck('name');
+
+            $emailMapping = [
+                'CAR_ADVISOR' => ['email' => 'veeral.joshi@insurancemarket.ae', 'name' => 'Veeral Joshi'],
+                'HEALTH_ADVISOR' => ['email' => 'agatha.alicdan@insurancemarket.ae', 'name' => 'Agatha Alicdan'],
+            ];
+
+            $advisorEmail = '';
+            $advisorName = '';
+
+            foreach ($emailMapping as $role => $data) {
+                if ($roles->contains($role)) {
+                    $advisorEmail = $data['email'];
+                    $advisorName = $data['name'];
+                    break;
+                }
+            }
+            if ($advisorEmail == '') {
+                return;
+            }
+
+            //   $advisorCustomEmail = 'test@notify.insurancemarket.ae'; //strstr($emailData->advisorEmail, '@', true).'@notify.insurancemarket.ae';
+
+            $bccAdditional = [
+                ['email' => 'hr@insurancemarket.ae', 'name' => 'IM HR'],
+                ['email' => 'hitesh.motwani@insurancemarket.ae', 'name' => 'Hitesh Motwani'],
+                ['email' => 'fayaz.k@insurancemarket.ae', 'name' => 'Fayaz Kariyambath'],
+            ];
+
+            $body = json_encode([
+                'sender' => ['name' => $tag, 'Urgent: '.$user->name.' IMCRM Inactivity Alert', 'email' => $advisorEmail],
+                'to' => [[
+                    'email' => $advisorEmail,
+                    'name' => $advisorName,
+                ]],
+                'replyTo' => [
+                    'email' => $advisorEmail,
+                    'name' => $advisorName,
+                ],
+                'bcc' => array_merge($bccAdditional),  //    'bcc' => array_merge($bccAdditional, $bcc),
+                'templateId' => intval($emailTemplateId),
+                'params' => $user,
+            ], JSON_UNESCAPED_SLASHES);
+            $client = new \GuzzleHttp\Client();
+            $clientRequest = $client->post(
+                $this->url,
+                [
+                    'headers' => $headers,
+                    'body' => $body,
+                    'timeout' => 10,
+                ]
+            );
+            info('sendActivityAlertEmail ---- Request Sent');
+            $responseCode = $clientRequest->getStatusCode();
+            info('send activity email ---- Received Code : '.$responseCode);
+            info('send activity ---- response object : '.json_encode($clientRequest->getBody()->getContents()));
+        } catch (Exception $ex) {
+            $responseCode = $ex->getCode();
+            $responseDetail = 'activity send email: Code/Message: '.$responseCode.'/'.$ex->getMessage();
+            Log::error($responseDetail);
+            $response = json_encode($ex->getCode().' '.$ex->getMessage());
+        }
+
+        return $responseCode;
+    }
 }
