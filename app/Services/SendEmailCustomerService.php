@@ -697,7 +697,7 @@ class SendEmailCustomerService extends BaseService
             ];
 
             $body = json_encode([
-                'sender' => ['name' => $tag, 'Urgent: '.$user->name.' IMCRM Inactivity Alert', 'email' => $advisorEmail],
+                'sender' => ['name' => $tag.' '.' Urgent: '.$user->name.' IMCRM Inactivity Alert', 'email' => $advisorEmail],
                 'to' => [[
                     'email' => $advisorEmail,
                     'name' => $advisorName,
