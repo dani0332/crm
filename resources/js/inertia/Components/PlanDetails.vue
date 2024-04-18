@@ -178,6 +178,7 @@ const permissionEnum = page.props.permissionsEnum;
             label="Price (VAT Applicable)"
             class="w-full"
             type="text"
+            @keydown="$event.key === '-' ? $event.preventDefault() : null"
             @change="updatePriceWithVat"
           />
         </div>
@@ -198,6 +199,7 @@ const permissionEnum = page.props.permissionsEnum;
             type="text"
             label="Price (VAT not applicable)"
             class="w-full"
+            @keydown="$event.key === '-' ? $event.preventDefault() : null"
             @change="updatePriceWithVat"
           />
         </div>
@@ -210,6 +212,7 @@ const permissionEnum = page.props.permissionsEnum;
             type="text"
             label="Total Price"
             class="w-full"
+            @keydown="$event.key === '-' ? $event.preventDefault() : null"
           />
         </div>
 
