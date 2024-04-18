@@ -729,7 +729,7 @@ class SendEmailCustomerService extends BaseService
             info('sendActivityAlertEmail ---- response object : '.json_encode($clientRequest->getBody()->getContents()));
         } catch (Exception $ex) {
             $responseCode = $ex->getCode();
-            $responseDetail = 'activity send email: Code/Message: '.$responseCode.'/'.$ex->getMessage();
+            $responseDetail = 'sendActivityAlertEmail: Code/Message: '.$responseCode.'/'.$ex->getMessage();
             Log::error($responseDetail);
         }
 
