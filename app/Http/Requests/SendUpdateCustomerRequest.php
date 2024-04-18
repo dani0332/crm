@@ -118,7 +118,7 @@ class SendUpdateCustomerRequest extends FormRequest
                     } elseif ($this->sendUpdate->quoteType->code == quoteTypeCode::GroupMedical) {
                         if (in_array(
                             $option,
-                            [SendUpdateLogStatusEnum::CAA, SendUpdateLogStatusEnum::RFCOC, SendUpdateLogStatusEnum::RFCOI, SendUpdateLogStatusEnum::RTI]
+                            [SendUpdateLogStatusEnum::CAA, SendUpdateLogStatusEnum::RFCOC, SendUpdateLogStatusEnum::RFCOI, SendUpdateLogStatusEnum::RFTI]
                         )) {
                             if (! (in_array(DocumentTypeCode::SEND_UPDATE_POLICY_CERTIFICATE, $this->sendUpdateDocuemnts->toArray()) || in_array(
                                 DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE,
