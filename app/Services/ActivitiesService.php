@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Models\Activities;
 use App\Models\QuoteStatus;
@@ -133,21 +134,21 @@ class ActivitiesService extends BaseService
     public function getQuoteTypeId($modelType)
     {
         $quoteTypeIds = [
-            'car' => QuoteTypeId::Car,
-            'home' => QuoteTypeId::Home,
-            'life' => QuoteTypeId::Life,
-            'travel' => QuoteTypeId::Travel,
-            'health' => QuoteTypeId::Health,
-            'business' => QuoteTypeId::Business,
-            'pet' => QuoteTypeId::Pet,
-            'cycle' => QuoteTypeId::Cycle,
-            'jetski' => QuoteTypeId::Jetski,
-            'bike' => QuoteTypeId::Bike,
-            'yacht' => QuoteTypeId::Yacht,
-            'group medical' => QuoteTypeId::Business,
+            quoteTypeCode::Car => QuoteTypeId::Car,
+            quoteTypeCode::Home => QuoteTypeId::Home,
+            quoteTypeCode::Life => QuoteTypeId::Life,
+            quoteTypeCode::Travel => QuoteTypeId::Travel,
+            quoteTypeCode::Health => QuoteTypeId::Health,
+            quoteTypeCode::Business => QuoteTypeId::Business,
+            quoteTypeCode::Pet => QuoteTypeId::Pet,
+            quoteTypeCode::Cycle => QuoteTypeId::Cycle,
+            quoteTypeCode::Jetski => QuoteTypeId::Jetski,
+            quoteTypeCode::Bike => QuoteTypeId::Bike,
+            quoteTypeCode::Yacht => QuoteTypeId::Yacht,
+            quoteTypeCode::GroupMedical => QuoteTypeId::Business,
         ];
 
-        $modelType = strtolower($modelType);
+        $modelType = ucwords($modelType);
 
         return $quoteTypeIds[$modelType] ?? null;
     }

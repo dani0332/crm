@@ -35,6 +35,8 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
      */
     public function handle(SendEmailCustomerService $sendEmailCustomerService, QuoteDocumentService $quoteDocumentService)
     {
+        // In case of Group Medical & Corpline, modelType is used & for rest of the LOBs model_type is used
+        // Basically we are different to identify the template which will send to customer after policy booking
         $modelType = ! empty($this->data->modelType) ? $this->data->modelType : $this->data->model_type;
 
         $quote = $this->getQuoteObject($this->data->model_type, $this->data->quote_id);
@@ -54,30 +56,24 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
         info('SendBookPolicyDocumentsJobData '.json_encode($quote));
 
         if (! empty($templateId)) {
-
-            // payload
-            $dataArr = new \stdClass();
-            $dataArr->code = $quote->code;
-            // $dataArr->customerEmail = 'muhammad.waris@myalfred.com';
-            // $dataArr->customerEmail = 'nouman.hussain@myalfred.com';
-            $dataArr->customerEmail = $quote->email;
-            $dataArr->clientFullName = $quote->first_name.' '.$quote->last_name;
-            $dataArr->policy_number = $quote->policy_number;
-            $dataArr->renewalDueDate = date('Y-m-d', strtotime($quote['renewal_expiry_date']));
-            $dataArr->quoteDocuments = $docs;
-            $dataArr->advisorName = '';
-            $dataArr->advisorEmail = '';
+            $emailData = new \stdClass();
+            $emailData->code = $quote->code;
+            $emailData->customerEmail = $quote->email;
+            $emailData->clientFullName = $quote->first_name.' '.$quote->last_name;
+            $emailData->policy_number = $quote->policy_number;
+            $emailData->renewalDueDate = date('Y-m-d', strtotime($quote['renewal_expiry_date']));
+            $emailData->quoteDocuments = $docs;
+            $emailData->advisorName = '';
+            $emailData->advisorEmail = '';
             if (! empty($quote->advisor)) {
-                $dataArr->advisorName = $quote->advisor->name;
-                $dataArr->advisorEmail = $quote->advisor->email;
+                $emailData->advisorName = $quote->advisor->name;
+                $emailData->advisorEmail = $quote->advisor->email;
             }
+            $emailData->currentInsurer = 'Insurance market';
+            $emailData->emailTemplateId = $templateId;
 
-            $dataArr->currentInsurer = 'Insurance market';
-            $dataArr->emailTemplateId = $templateId;
-
-            info('SendBookPolicyDocumentsJobEmailData '.json_encode($dataArr));
-            $response = $sendEmailCustomerService->sendBookPolicyDocumentsEmail($dataArr, 'book-policy-document');
-
+            info('SendBookPolicyDocumentsJobEmailData '.json_encode($emailData));
+            $response = $sendEmailCustomerService->sendBookPolicyDocumentsEmail($emailData, 'book-policy-document');
             info('SendBookPolicyDocumentsJobResponse '.json_encode($response));
         }
     }
