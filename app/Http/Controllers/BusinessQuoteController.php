@@ -234,6 +234,7 @@ class BusinessQuoteController extends Controller
 
         if ($hasPolicyIssuedStatus) {
             $removeOptions = [
+                // Endorsement Financial.
                 SendUpdateLogStatusEnum::MAOM,
                 SendUpdateLogStatusEnum::MDOM,
                 SendUpdateLogStatusEnum::MD,
@@ -241,6 +242,18 @@ class BusinessQuoteController extends Controller
                 SendUpdateLogStatusEnum::MPC,
                 SendUpdateLogStatusEnum::PU,
                 SendUpdateLogStatusEnum::SC,
+                // Endorsement non Financial.
+                SendUpdateLogStatusEnum::EIU,
+                SendUpdateLogStatusEnum::MSCNFI,
+                SendUpdateLogStatusEnum::QR,
+                SendUpdateLogStatusEnum::RFAML,
+                SendUpdateLogStatusEnum::RFCOC,
+                SendUpdateLogStatusEnum::RFCOI,
+                SendUpdateLogStatusEnum::RFEC,
+                SendUpdateLogStatusEnum::RFSOA,
+                SendUpdateLogStatusEnum::RFTI,
+                SendUpdateLogStatusEnum::RFTC,
+                SendUpdateLogStatusEnum::WOWPA,
             ];
 
             $sendUpdateOptions = (new LookupService)->getSendUpdateOptions(QuoteTypes::BUSINESS->id(), $removeOptions);
