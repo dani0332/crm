@@ -12,12 +12,12 @@ use App\Enums\QuoteTypeId;
 use App\Enums\RolesEnum;
 use App\Interfaces\PaymentRepositoryInterface;
 use App\Jobs\MAWelcomeJob;
+use App\Models\CarQuote;
+use App\Models\HealthQuote;
 use App\Models\Payment;
 use App\Models\PaymentSplits;
 use App\Models\PaymentStatusLog;
 use App\Models\QuoteDocument;
-use App\Models\CarQuote;
-use App\Models\HealthQuote;
 use App\Models\TravelQuote;
 use App\Services\ApplicationStorageService;
 use App\Services\CRUDService;
@@ -588,13 +588,13 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
     // Update lead status for ecomm quotes
     private function updateLeadStatus($payment)
     {
-        $quoteType = '';        
-        if($payment->paymentable_type == CarQuote::class) {
+        $quoteType = '';
+        if ($payment->paymentable_type == CarQuote::class) {
             $quoteType = quoteTypeCode::Car;
-        } elseif($payment->paymentable_type == HealthQuote::class) {
+        } elseif ($payment->paymentable_type == HealthQuote::class) {
             $quoteType = quoteTypeCode::Health;
-        } elseif($payment->paymentable_type == TravelQuote::class) {
-            $quoteType = quoteTypeCode::Travel;  
+        } elseif ($payment->paymentable_type == TravelQuote::class) {
+            $quoteType = quoteTypeCode::Travel;
         }
         // If a quote type is found, get the corresponding quote object
         if ($quoteType !== '') {
