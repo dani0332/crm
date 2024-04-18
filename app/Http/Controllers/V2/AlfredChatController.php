@@ -118,7 +118,9 @@ class AlfredChatController extends Controller
 
         // Add a $group stage to count total documents
         $totalPipeline[] = ['$group' => [
-            '_id' => ['$dateToString' => ['timezone' => '+04:00', 'format' => '%Y-%m-%d', 'date' => ['$toDate' => '$created_at']]],
+            '_id' => ['quote_id' => '$quote_id',
+                ['$dateToString' => ['timezone' => '+04:00', 'format' => '%Y-%m-%d',
+                    'date' => ['$toDate' => '$created_at']]]],
         ],
         ];
         $totalPipeline[] = ['$count' => 'total'];
@@ -160,7 +162,10 @@ class AlfredChatController extends Controller
         // Add $group, $sort, $skip, and $limit stages for pagination
         $chatPipeline[] = [
             '$group' => [
-                '_id' => ['$dateToString' => ['timezone' => '+04:00', 'format' => '%Y-%m-%d', 'date' => ['$toDate' => '$created_at']]],
+                '_id' => ['quote_id' => '$quote_id',
+                    ['$dateToString' => ['timezone' => '+04:00', 'format' => '%Y-%m-%d',
+                        'date' => ['$toDate' => '$created_at']]]],
+                'created_at' => ['$first' => '$created_at'],
                 'role' => ['$first' => '$role'],
                 'msg' => ['$first' => '$msg'],
                 'quote_id' => ['$first' => '$quote_id'],
@@ -169,7 +174,7 @@ class AlfredChatController extends Controller
             ],
         ];
 
-        $chatPipeline[] = ['$sort' => ['_id' => -1]];
+        $chatPipeline[] = ['$sort' => ['created_at' => -1]];
         $chatPipeline[] = ['$skip' => $skip];
         $chatPipeline[] = ['$limit' => $perPage];
 
