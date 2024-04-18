@@ -444,6 +444,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
             $payment->payment_status_id = PaymentStatusEnum::PARTIAL_CAPTURED;
             $payment->save();
             $this->updateLeadStatus($payment); //update lead status
+
             return response()->json(['message' => 'Total Price Updated Successfully']);
         }
 
@@ -593,12 +594,12 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                 $quoteType = $code;
                 break;
             }
-        }        
+        }
         // If a quote type is found, get the corresponding quote object
         if ($quoteType !== '') {
             $quoteModel = $this->getQuoteObject($quoteType, $payment->paymentable_id);
             if ($quoteModel) {
-                $quoteModel -> payment_status_id = $payment->payment_status_id;
+                $quoteModel->payment_status_id = $payment->payment_status_id;
                 $quoteModel->save();
             }
         }
