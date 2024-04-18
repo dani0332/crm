@@ -85,6 +85,11 @@ class ComprehensiveConversionDashboardService extends BaseService
             $labels[] = $record['batch_name'].'-('.$record['start_date'].' to '.$record['end_date'].')';
         }
 
+        if(empty($data)) {
+            $data[] = ["0.00"];
+            $labels = [' '];
+        }
+
         return [$labels, $data];
     }
 
