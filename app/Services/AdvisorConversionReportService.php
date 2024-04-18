@@ -385,9 +385,7 @@ class AdvisorConversionReportService extends BaseService
                 $query->where('personal_quotes.source', '!=', LeadSourceEnum::IMCRM);
             }
         }
-        if (isset($filters->tiersFilter) && count($filters->tiersFilter) > 0) {
-            $query->whereIn('personal_quotes.tier_id', $filters->tiersFilter);
-        }
+        
         if (isset($filters->leadSourceFilter) && count($filters->leadSourceFilter) > 0) {
             $query->whereIn('personal_quotes.source', $filters->leadSourceFilter);
         }
@@ -454,6 +452,10 @@ class AdvisorConversionReportService extends BaseService
         }
 
         if($lob === quoteTypeCode::Car) {
+
+            if (isset($filters->tiersFilter) && count($filters->tiersFilter) > 0) {
+                $query->whereIn('personal_quotes.tier_id', $filters->tiersFilter);
+            }
 
             if((!empty($filters->vehicle_type) && $filters->vehicle_type != 'All') ||
             (isset($filters->isCommercial) && $filters->isCommercial != 'All')) {

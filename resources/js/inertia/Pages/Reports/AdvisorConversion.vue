@@ -841,20 +841,27 @@ const getAdvisorLabel = () => {
           deselect-all
         />
 
-        <ComboBox
-          v-if="canShow('tiers')"
-          v-model="filters.tiers"
-          label="Tiers"
-          placeholder="Search by Tiers"
-          :options="
-            Object.keys(filterOptions.tiers).map(key => ({
-              value: key,
-              label: filterOptions.tiers[key],
-            }))
-          "
-          select-all
-          deselect-all
-        />
+        <x-tooltip position="top" v-if="canShow('tiers')">
+          <template #tooltip v-if="filters.lob === quoteTypeCodeEnum.Bike"> Development for Bike Tiers still in progress </template>
+          <template #tooltip v-else> Select Tiers </template>
+          <ComboBox
+            :disabled="filters.lob === quoteTypeCodeEnum.Bike"
+            :class="{
+                'opacity-50': filters.lob === quoteTypeCodeEnum.Bike,
+            }"
+            v-model="filters.tiers"
+            label="Tiers"
+            placeholder="Search by Tiers"
+            :options="
+              Object.keys(filterOptions.tiers).map(key => ({
+                value: key,
+                label: filterOptions.tiers[key],
+              }))
+            "
+            select-all
+            deselect-all
+          />
+        </x-tooltip>
 
         <ComboBox
         v-model="filters.leadSources"
