@@ -44,7 +44,99 @@ class GenericPermissionSeeder extends Seeder
             $role->givePermissionTo(PermissionsEnum::HEALTH_QUOTES_ACCESS);
         }
 
+        // Plans Selection & Plan Details Section Permissions
+        $planDetailsAdd = Permission::where('name', PermissionsEnum::PLAN_DETAILS_ADD)->first();
+        if (! $planDetailsAdd) {
+            Permission::create([
+                'name' => PermissionsEnum::PLAN_DETAILS_ADD,
+                'guard_name' => 'web',
+            ]);
+
+            $rolesForPlanDetails = [
+                RolesEnum::Admin,
+                RolesEnum::Production,
+                RolesEnum::PA,
+                RolesEnum::ServiceExecutive,
+                RolesEnum::SeniorManagement,
+                RolesEnum::LifeManager,
+                RolesEnum::HomeManager,
+                RolesEnum::PetManager,
+                RolesEnum::BikeManager,
+                RolesEnum::BikeAdvisor,
+                RolesEnum::CycleManager,
+                RolesEnum::CycleAdvisor,
+                RolesEnum::YachtManager,
+                RolesEnum::YachtAdvisor,
+                RolesEnum::GMManager,
+                RolesEnum::GMAdvisor,
+                RolesEnum::CorplineManager,
+                RolesEnum::CorpLineAdvisor,
+            ];
+
+            foreach ($rolesForPlanDetails as $roleForPlanDetails) {
+                $roleForPlanDetails = Role::findOrCreate($roleForPlanDetails, 'web');
+                $roleForPlanDetails->givePermissionTo(PermissionsEnum::PLAN_DETAILS_ADD);
+            }
+        }
+
+        $availablePlanSelect = Permission::where('name', PermissionsEnum::AVAILABLE_PLANS_SELECT_BUTTON)->first();
+        if (! $availablePlanSelect) {
+            Permission::create([
+                'name' => PermissionsEnum::AVAILABLE_PLANS_SELECT_BUTTON,
+                'guard_name' => 'web',
+            ]);
+
+            $rolesForAvailablePlanSelect = [
+                RolesEnum::Admin,
+                RolesEnum::SeniorManagement,
+                RolesEnum::CarManager,
+                RolesEnum::CarAdvisor,
+                RolesEnum::HealthManager,
+                RolesEnum::RMAdvisor,
+                RolesEnum::TravelManager,
+                RolesEnum::TravelAdvisor,
+
+            ];
+
+            foreach ($rolesForAvailablePlanSelect as $roleForAvailablePlanSelect) {
+                $roleForAvailablePlanSelect = Role::findOrCreate($roleForAvailablePlanSelect, 'web');
+                $roleForAvailablePlanSelect->givePermissionTo(PermissionsEnum::AVAILABLE_PLANS_SELECT_BUTTON);
+            }
+        }
+
+        $instantAlfredChatLogsPermission = Permission::where('name', PermissionsEnum::INSTANT_ALFRED_CHAT_LOGS)->first();
+        if (! $instantAlfredChatLogsPermission) {
+            $instantAlfredChatLogsPermission = Permission::create([
+                'name' => PermissionsEnum::INSTANT_ALFRED_CHAT_LOGS,
+                'guard_name' => 'web',
+            ]);
+        }
+
+        if ($instantAlfredChatLogsPermission && ! $role->hasPermissionTo(PermissionsEnum::INSTANT_ALFRED_CHAT_LOGS)) {
+            $role->givePermissionTo(PermissionsEnum::INSTANT_ALFRED_CHAT_LOGS);
+        }
+
+        $this->generateSegmentFilterPermission();
         $this->embeddedProductSeeds();
+    }
+
+    private function generateSegmentFilterPermission()
+    {
+        $segmentFilterPermission = Permission::where('name', PermissionsEnum::SEGMENT_FILTER)->first();
+        if (! $segmentFilterPermission) {
+            Permission::create([
+                'name' => PermissionsEnum::SEGMENT_FILTER,
+                'guard_name' => 'web',
+            ]);
+        }
+
+        $roles = Role::whereIn('name', [RolesEnum::LeadPool, RolesEnum::CarManager, RolesEnum::Admin])->get();
+
+        foreach ($roles as $role) {
+            if (! $role->hasPermissionTo(PermissionsEnum::SEGMENT_FILTER)) {
+                $role->givePermissionTo(PermissionsEnum::SEGMENT_FILTER);
+            }
+        }
     }
 
     private function embeddedProductSeeds()
