@@ -539,18 +539,25 @@ const travelCoverageOptions = computed(() => {
           size="sm"
           model-type="yyyy-MM-dd"
         />
-        <ComboBox
-          v-if="canShow('tiers')"
-          v-model="filters.tiers"
-          label="Tiers"
-          placeholder="Search by Tiers"
-          :options="
-            Object.keys(filterOptions.tiers).map(key => ({
-              value: key,
-              label: filterOptions.tiers[key],
-            }))
-          "
-        />
+        <x-tooltip position="top" v-if="canShow('tiers')">
+          <template #tooltip v-if="filters.lob === quoteTypeCodeEnum.Bike"> Development for Bike Tiers still in progress </template>
+          <template #tooltip v-else> Select Tiers </template>
+          <ComboBox
+            :disabled="filters.lob === quoteTypeCodeEnum.Bike"
+            :class="{
+                'opacity-50': filters.lob === quoteTypeCodeEnum.Bike,
+            }"
+            v-model="filters.tiers"
+            label="Tiers"
+            placeholder="Search by Tiers"
+            :options="
+              Object.keys(filterOptions.tiers).map(key => ({
+                value: key,
+                label: filterOptions.tiers[key],
+              }))
+            "
+          />
+        </x-tooltip>
         <ComboBox
           v-if="canShow('teams')"
           :disabled="!isDisabled('teams')"

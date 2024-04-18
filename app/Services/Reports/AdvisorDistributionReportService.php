@@ -296,9 +296,6 @@ class AdvisorDistributionReportService extends BaseService
 
         $query->whereBetween('personal_quote_details.advisor_assigned_date', [$startDate, $endDate]);
 
-        if (isset($filters->tiers) && count($filters->tiers) > 0) {
-            $query->whereIn('personal_quotes.tier_id', $filters->tiers);
-        }
         if (isset($filters->teams) && count($filters->teams) > 0) {
             $value = $filters->teams;
             $query->whereIn('users.id', function ($query) use ($value) {
@@ -331,6 +328,10 @@ class AdvisorDistributionReportService extends BaseService
         }
 
         if($lob === quoteTypeCode::Car) {
+
+            if (isset($filters->tiers) && count($filters->tiers) > 0) {
+                $query->whereIn('personal_quotes.tier_id', $filters->tiers);
+            }
 
             if (isset($filters->isCommercial) && $filters->isCommercial != 'All') {
                 $filters->isCommercial = $filters->isCommercial == 'true' ? true : false;
