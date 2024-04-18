@@ -660,7 +660,7 @@ class CRUDService extends BaseService
                 $data = [
                     'uuid' => $quoteModel->uuid,
                     'type_id' => $quoteTypeId,
-                    'code' => $quoteModel->code.'-'.$paymentSplit->sr_no,
+                    'code' => $paymentSplit->code.'-'.$paymentSplit->sr_no,
                 ];
                 $processResponse = $this->processCapturePayment($data);
 

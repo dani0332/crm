@@ -6,6 +6,7 @@ use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\quoteBusinessTypeCode;
+use App\Enums\QuoteSegmentEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\RolesEnum;
 use App\Enums\TravelQuoteEnum;
@@ -72,6 +73,7 @@ class HandleInertiaRequests extends Middleware
             'pusherKey' => config('constants.VITE_PUSHER_APP_KEY'),
             'epLink' => config('constants.AFIA_WEBSITE_DOMAIN'),
             'im_logo' => getIMLogo(),
+            'quoteSegments' => QuoteSegmentEnum::withLabels(),
             'paymentLookups' => app(SplitPaymentService::class)->getPaymentLookups(),
         ];
     }
@@ -287,6 +289,42 @@ class HandleInertiaRequests extends Middleware
         //     });
         // }
 
+        if (auth()->user()->canAny([PermissionsEnum::TransAppList, PermissionsEnum::TransAppCreate, PermissionsEnum::TransAppEdit])) {
+            $nav = $nav->add('Trans App', '', function (Section $section) {
+                $section
+                    ->addIf(
+                        auth()->user()->can(PermissionsEnum::TransAppCreate),
+                        'Search Transaction',
+                        '/transapp/home',
+                        fn ($s) => $s->attributes(['icon' => 'box'])
+                    )
+                    ->addIf(
+                        auth()->user()->can(PermissionsEnum::TransAppCreate),
+                        'Create Transaction',
+                        '/transapp/transaction/create',
+                        fn ($s) => $s->attributes(['icon' => 'box'])
+                    )
+                    ->addIf(
+                        auth()->user()->can(PermissionsEnum::TransAppEdit),
+                        'Cancel & Re-Issue Transaction',
+                        '/transapp/re-issue-transaction',
+                        fn ($s) => $s->attributes(['icon' => 'box'])
+                    )
+                    ->addIf(
+                        auth()->user()->can(PermissionsEnum::TransAppEdit),
+                        'Cancel Transaction (without Re-Issue)',
+                        '/transapp/cancel-transaction',
+                        fn ($s) => $s->attributes(['icon' => 'box'])
+                    )
+                    ->addIf(
+                        auth()->user()->can(PermissionsEnum::TransAppList),
+                        'Transaction List',
+                        '/transapp/transaction',
+                        fn ($s) => $s->attributes(['icon' => 'box'])
+                    );
+            });
+        }
+
         if (auth()->user()->can(PermissionsEnum::CustomersList)) {
             $nav = $nav->add('Customers', '', function (Section $section) {
                 $section
@@ -480,6 +518,10 @@ class HandleInertiaRequests extends Middleware
                             )
                     );
             });
+        }
+
+        if (auth()->user()->can(PermissionsEnum::INSTANT_ALFRED_CHAT_LOGS)) {
+            $nav = $nav->add('InstantAlfred Chat Logs', route('instant-alfred.logs'));
         }
 
         return $nav;
