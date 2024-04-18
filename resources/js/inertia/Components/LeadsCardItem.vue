@@ -220,8 +220,10 @@ const getUrl = (url, quoteTypeId) => useGetShowPageRoute(url, quoteTypeId);
           <template #tooltip>
             <div class="max-w-[194px] text-xs">
               <span v-if="leadName == 'Health'">
-                The complete amount due including VAT and before any potential
-                discounts. Remember, VAT is exempt for Life Insurance policies.
+                Tooltip should be The 'Price Starting from' represents the
+                lowest premium amount that a client can pay to initiate
+                insurance coverage, giving you an overview of the potential
+                business to close.
               </span>
               <span v-else>
                 The complete amount due including VAT and before any potential
