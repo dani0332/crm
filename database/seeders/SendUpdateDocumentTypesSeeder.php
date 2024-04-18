@@ -101,7 +101,7 @@ class SendUpdateDocumentTypesSeeder extends Seeder
             'code' => DocumentTypeCode::SEND_UPDATE_PAYMENT_PROOF,
         ]), [
             'text' => 'Payment Proof',
-            'is_active' => 0,
+            'is_active' => 1,
             'folder_path' => 'send-update',
             'accepted_files' => '.pdf,.xlsx,.xls,.docx,.doc,.jpeg,.jpg,.png',
             'max_files' => 5,
@@ -114,7 +114,7 @@ class SendUpdateDocumentTypesSeeder extends Seeder
             'code' => DocumentTypeCode::SEND_UPDATE_CUSTOMER_DOCUMENTS,
         ]), [
             'text' => 'Customer documents',
-            'is_active' => 0,
+            'is_active' => 1,
             'folder_path' => 'send-update',
             'accepted_files' => '.pdf,.xlsx,.xls,.docx,.doc,.jpeg,.jpg,.png',
             'max_files' => 5,
@@ -127,7 +127,7 @@ class SendUpdateDocumentTypesSeeder extends Seeder
             'code' => DocumentTypeCode::SEND_UPDATE_UW_EMAIL_CORRESPONDENCE,
         ]), [
             'text' => 'UW email Correspondence',
-            'is_active' => 0,
+            'is_active' => 1,
             'folder_path' => 'send-update',
             'accepted_files' => '.pdf,.xlsx,.xls,.docx,.doc,.jpeg,.jpg,.png',
             'max_files' => 5,
