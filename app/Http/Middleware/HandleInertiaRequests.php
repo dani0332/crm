@@ -289,7 +289,7 @@ class HandleInertiaRequests extends Middleware
         //     });
         // }
 
-        if (auth()->user()->can(PermissionsEnum::TransAppList)) {
+        if (auth()->user()->canAny([PermissionsEnum::TransAppList, PermissionsEnum::TransAppCreate, PermissionsEnum::TransAppEdit])) {
             $nav = $nav->add('Trans App', '', function (Section $section) {
                 $section
                     ->addIf(
@@ -316,7 +316,12 @@ class HandleInertiaRequests extends Middleware
                         '/transapp/cancel-transaction',
                         fn ($s) => $s->attributes(['icon' => 'box'])
                     )
-                    ->add('Transaction List', '/transapp/transaction', fn ($s) => $s->attributes(['icon' => 'box']));
+                    ->addIf(
+                        auth()->user()->can(PermissionsEnum::TransAppList),
+                        'Transaction List',
+                        '/transapp/transaction',
+                        fn ($s) => $s->attributes(['icon' => 'box'])
+                    )
             });
         }
 
