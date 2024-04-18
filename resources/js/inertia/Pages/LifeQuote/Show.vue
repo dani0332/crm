@@ -571,6 +571,10 @@ const linkEntity = () => {
             <dt class="font-medium">ADVISOR</dt>
             <dd>{{ quote.advisor?.name }}</dd>
           </div>
+            <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">AML STATUS</dt>
+                <dd>{{ quote?.amlstatus.text ?? '' }}</dd>
+            </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">CREATED DATE</dt>
             <dd>{{ quote.created_at }}</dd>
@@ -980,7 +984,7 @@ const linkEntity = () => {
       :canAddBatchNumber="canAddBatchNumber"
     />
 
-   
+
 
     <div class="p-4 rounded shadow mb-6 bg-primary-50/25">
       <div>
@@ -1062,7 +1066,7 @@ const linkEntity = () => {
       :quote="quote"
       :quoteType="quoteType"
       :vatPrice="vatPercentage"
-      
+
     />
 
 <MigratePayment
@@ -1070,10 +1074,10 @@ const linkEntity = () => {
       :quoteId="quote.id"
       :paymentCode = "quote.code"
       :quoteType="quoteType"
-      :payments="payments"    
-    />    
+      :payments="payments"
+    />
 
-    <PaymentTableNew 
+    <PaymentTableNew
 			v-if="isNewPaymentStructure"
 			:quoteType="quoteType"
 			:payments="payments"

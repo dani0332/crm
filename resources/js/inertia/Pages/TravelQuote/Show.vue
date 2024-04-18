@@ -2498,10 +2498,10 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       :quoteId="quote.id"
       :paymentCode = "quote.code"
       quoteType="Travel"
-      :payments="payments"    
+      :payments="payments"
     />
 
-    <PaymentTableNew 
+    <PaymentTableNew
 			v-if="isNewPaymentStructure"
 			quoteType="Travel"
 			:payments="payments"

@@ -177,7 +177,10 @@ class CarQuoteService extends BaseService
                 //'cqr.prefill_plan_selected_at',
                 //'cqr.plan_selected_at'
                 'cqr.enquiry_count',
+                'cqr.aml_status_id',
+                'amlstatus.text as aml_status_text'
             )
+            ->leftJoin('aml_status as amlstatus', 'amlstatus.id', '=', 'cqr.aml_status_id')
             ->leftJoin('nationality as n', 'n.id', '=', 'cqr.nationality_id')
             ->leftJoin('car_quote_request_detail as cqrd', 'cqrd.car_quote_request_id', '=', 'cqr.id')
             ->leftJoin('lost_reasons as ls', 'ls.id', '=', 'cqrd.lost_reason_id')

@@ -1,0 +1,24 @@
+<?php
+
+namespace App\Models;
+
+use App\Traits\FilterCriteria;
+use App\Traits\QuoteModelTrait;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use OwenIt\Auditing\Auditable;
+use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
+
+class AmlStatus extends Model implements AuditableContract
+{
+    use Auditable, FilterCriteria, HasFactory, QuoteModelTrait;
+
+    protected $table = 'aml_status';
+    protected $guarded = [];
+
+    public function amlstatus()
+    {
+        return $this->hasOne(HealthQuote::class, 'aml_status_id', 'id');
+    }
+
+}

@@ -34,7 +34,7 @@ const riskRatingScore = quote => {
     <div class="grid sm:grid-cols-2">
         <dt class="font-medium">Risk Category</dt>
 
-        <dd @click.prevent="riskRatingScore(quote)">{{ quote.risk_score==null?'N/A':quote.risk_score <= 16?'Low Risk':((quote.risk_score <= 31)?'Medium Risk':(quote.risk_score >= 32?'High Risk':'N/A')) }}</dd>
+<!--        <dd @click.prevent="riskRatingScore(quote)">{{ quote.risk_score==null?'N/A':quote.risk_score <= 16?'Low Risk':((quote.risk_score <= 31)?'Medium Risk':(quote.risk_score >= 32?'High Risk':'N/A')) }}</dd>-->
             <x-modal v-model="modals.riskRatingScoreModal" show-close backdrop size="md">
                 <template #header> Risk Rating - Score </template>
                 <template #actions>

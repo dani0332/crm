@@ -44,6 +44,10 @@ class PersonalQuote extends Model implements AuditableContract
     {
         return $this->belongsTo(QuoteStatus::class);
     }
+    public function amlstatus()
+    {
+        return $this->belongsTo(AmlStatus::class, 'aml_status_id');
+    }
 
     /**
      * @return \Illuminate\Database\Eloquent\Relations\BelongsTo

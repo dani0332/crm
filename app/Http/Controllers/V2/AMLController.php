@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\V2;
 
 use App\Enums\AMLDecisionStatusEnum;
+use App\Enums\AMLStatusEnum;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\DatabaseColumnsString;
 use App\Enums\LookupsEnum;
@@ -144,7 +145,6 @@ class AMLController extends Controller
                 $quotes = $dataAml->simplePaginate(10)->withQueryString();
             }
         }
-
         return inertia('Aml/Index', [
             'quoteTypes' => $quoteTypes,
             'quoteStatuses' => $quoteStatuses,
@@ -239,7 +239,6 @@ class AMLController extends Controller
 
             $cardHolderName = $payment->getCustomerPaymentInstrument;
         }
-
         $data = [
             'quoteType' => $quoteType,
             'quoteRequest' => $quoteRequest,
@@ -604,15 +603,16 @@ class AMLController extends Controller
                 auth()->user()->email
             );
         }
-
         if (! in_array(true, session()->get('amlResponseCheck')) && ! AMLService::checkAMLStatusFailed($quoteTypeId, $quoteRequestId)) {
             $quoteDetails->quote_status_id = QuoteStatusEnum::AMLScreeningCleared;
+            $quoteDetails->aml_status_id = AMLStatusEnum::AMLScreeningCleared;
             $quoteDetails->save();
 
             info('AML Screening Bridger - Potential Matche(s) not Found, Quote Status changed to AML Screening Cleared');
 
         } else {
             $quoteDetails->quote_status_id = QuoteStatusEnum::AMLScreeningFailed;
+            $quoteDetails->aml_status_id = AMLStatusEnum::AMLScreeningFailed;
             $quoteDetails->save();
 
             info('AML Screening Bridger - Potential Matche(s) Found, Quote Status changed to AML Screening Failed');

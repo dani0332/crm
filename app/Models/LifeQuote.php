@@ -42,6 +42,10 @@ class LifeQuote extends Model implements AuditableContract
     {
         return $this->belongsTo(QuoteStatus::class, 'quote_status_id');
     }
+    public function amlstatus()
+    {
+        return $this->belongsTo(AmlStatus::class, 'aml_status_id');
+    }
 
     public function lifeQuoteRequestDetail()
     {

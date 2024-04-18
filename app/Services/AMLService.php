@@ -90,6 +90,7 @@ class AMLService
                 'carTypeInsurance',
                 'claimHistory',
                 'nationality',
+                'amlstatus',
             ])->where('id', $quoteRequestId)->firstOrFail();
         } elseif ($quoteTypeId == QuoteTypes::HOME->id()) {
             $quoteRequestDetails = HomeQuote::with([
@@ -100,6 +101,7 @@ class AMLService
                 'customer.detail',
                 'possessionType',
                 'accommodationType',
+                'amlstatus',
             ])->where('id', $quoteRequestId)->firstOrFail();
         } elseif ($quoteTypeId == QuoteTypes::HEALTH->id()) {
             $quoteRequestDetails = HealthQuote::with([
@@ -112,6 +114,7 @@ class AMLService
                 'maritalStatus',
                 'emirate',
                 'nationality',
+                'amlstatus',
             ])->where('id', $quoteRequestId)->firstOrFail();
         } elseif ($quoteTypeId == QuoteTypes::LIFE->id()) {
             $quoteRequestDetails = LifeQuote::with([
@@ -127,6 +130,7 @@ class AMLService
                 'numberOfYears',
                 'currency',
                 'nationality',
+                'amlstatus',
             ])->where('id', $quoteRequestId)->firstOrFail();
         } elseif ($quoteTypeId == QuoteTypes::BUSINESS->id()) {
             $quoteRequestDetails = BusinessQuote::with([
@@ -136,6 +140,7 @@ class AMLService
                 'paymentStatus',
                 'customer.detail',
                 'businessTypeOfInsurance',
+                'amlstatus',
             ])->where('id', $quoteRequestId)->firstOrFail();
         } elseif ($quoteTypeId == QuoteTypes::TRAVEL->id()) {
             $quoteRequestDetails = TravelQuote::with([
@@ -147,6 +152,7 @@ class AMLService
                 'regionCoverFor',
                 'travelCoverFor',
                 'nationality',
+                'amlstatus',
             ])->where('id', $quoteRequestId)->firstOrFail();
         } elseif ($quoteTypeId == QuoteTypes::PET->id()) {
             $quoteRequestDetails = PersonalQuote::byQuoteTypeId(QuoteTypes::PET->id())->with([
@@ -156,6 +162,7 @@ class AMLService
                 'payments.paymentMethod',
                 'payments.getCustomerPaymentInstrument',
                 'paymentStatus',
+                'amlstatus',
             ])->where('id', $quoteRequestId)->firstOrFail();
         } elseif ($quoteTypeId == QuoteTypes::BIKE->id()) {
             $quoteRequestDetails = PersonalQuote::byQuoteTypeId(QuoteTypes::BIKE->id())->with([
@@ -165,6 +172,7 @@ class AMLService
                 'payments.paymentMethod',
                 'payments.getCustomerPaymentInstrument',
                 'paymentStatus',
+                'amlstatus',
             ])->where('id', $quoteRequestId)->firstOrFail();
         } elseif ($quoteTypeId == QuoteTypes::CYCLE->id()) {
             $quoteRequestDetails = PersonalQuote::byQuoteTypeId(QuoteTypes::CYCLE->id())->with([
@@ -174,6 +182,7 @@ class AMLService
                 'payments.paymentMethod',
                 'payments.getCustomerPaymentInstrument',
                 'paymentStatus',
+                'amlstatus',
             ])->where('id', $quoteRequestId)->firstOrFail();
         } elseif ($quoteTypeId == QuoteTypes::YACHT->id()) {
             $quoteRequestDetails = PersonalQuote::byQuoteTypeId(QuoteTypes::YACHT->id())->with([
@@ -183,6 +192,7 @@ class AMLService
                 'payments.paymentMethod',
                 'payments.getCustomerPaymentInstrument',
                 'paymentStatus',
+                'amlstatus',
             ])->where('id', $quoteRequestId)->firstOrFail();
         } elseif ($quoteTypeId == QuoteTypes::JETSKI->id()) {
             $quoteRequestDetails = PersonalQuote::byQuoteTypeId(QuoteTypes::JETSKI->id())->with([
@@ -192,6 +202,7 @@ class AMLService
                 'payments.paymentMethod',
                 'payments.getCustomerPaymentInstrument',
                 'paymentStatus',
+                'amlstatus',
             ])->where('id', $quoteRequestId)->firstOrFail();
         }
 

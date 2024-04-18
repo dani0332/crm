@@ -542,6 +542,10 @@ const linkEntity = () => {
             <dt class="font-medium">CUSTOMER TYPE</dt>
             <dd>{{ quote.customer_type }}</dd>
           </div>
+            <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">AML STATUS</dt>
+                <dd>{{ quote?.aml_status_text ?? '' }}</dd>
+            </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">ADVISOR</dt>
             <dd>{{ quote.advisor_id_text }}</dd>
@@ -1051,9 +1055,9 @@ const linkEntity = () => {
       :quoteId="quote.id"
       :paymentCode = "quote.code"
       :quoteType="quoteType"
-      :payments="payments"     
-    />    
-    <PaymentTableNew 
+      :payments="payments"
+    />
+    <PaymentTableNew
 			v-if="isNewPaymentStructure"
 			:quoteType="quoteType"
 			:payments="payments"
@@ -1074,7 +1078,7 @@ const linkEntity = () => {
       :insuranceProviders="insuranceProviders"
       :quote="quote"
     />
-    
+
 
     <EmbeddedProducts
       :data="embeddedProducts"
@@ -1221,7 +1225,7 @@ const linkEntity = () => {
           </div>
         </template>
       </x-modal>
-    </div>  
+    </div>
 
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div>

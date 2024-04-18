@@ -88,7 +88,6 @@ class JetskiQuoteController extends Controller
     public function show($uuid)
     {
         $quote = JetskiQuoteRepository::getBy('uuid', $uuid);
-
         $quote->payments->each->setAppends(['allow', 'copy_link_button', 'edit_button', 'approve_button', 'approved_button']);
 
         $quoteStatuses = QuoteStatusRepository::byQuoteTypeId(QuoteTypes::JETSKI->id())->get();

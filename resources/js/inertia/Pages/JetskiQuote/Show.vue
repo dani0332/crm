@@ -39,7 +39,6 @@ const permissionsEnum = page.props.permissionsEnum;
 <template>
   <div>
     <Head title="Jetski Quotes" />
-
     <div class="flex justify-between items-center flex-wrap gap-2 mb-5">
       <h2 class="text-xl font-semibold">Jetski Detail</h2>
       <div class="flex gap-2">
@@ -83,6 +82,10 @@ const permissionsEnum = page.props.permissionsEnum;
             <dt class="font-medium">ADVISOR</dt>
             <dd class="break-words">{{ quote.advisor?.email }}</dd>
           </div>
+            <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">AML STATUS</dt>
+                <dd>{{ quote?.amlstatus.text ?? '' }}</dd>
+            </div>
 
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">SOURCE</dt>
@@ -214,12 +217,12 @@ const permissionsEnum = page.props.permissionsEnum;
             <dd>{{ quote.dob }}</dd>
           </div>
 
-          
+
           <RiskRatingScoreDetails
               :quote="quote.jetski_quote"
               :modelType="quoteType"
             />
-         
+
         </dl>
       </div>
     </div>

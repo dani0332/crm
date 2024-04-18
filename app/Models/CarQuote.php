@@ -43,6 +43,11 @@ class CarQuote extends BaseModel
         return $this->first_name.' '.$this->last_name;
     }
 
+    public function amlstatus()
+    {
+        return $this->belongsTo(AmlStatus::class, 'aml_status_id');
+    }
+
     public function fullName()
     {
         return $this->first_name.' '.$this->last_name;

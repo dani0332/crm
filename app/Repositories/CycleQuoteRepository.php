@@ -137,6 +137,7 @@ class CycleQuoteRepository extends BaseRepository
                 'quoteDetail.previousAdvisor',
                 'transactionType',
                 'insuranceProvider',
+                'amlstatus',
                 'payments' => function ($q) {
                     $q->with([
                         'paymentSplits' => function ($query) {

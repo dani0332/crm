@@ -1491,8 +1491,8 @@ const handlePlanSelected = plan => {
   router.reload({
     preserveState: true,
     preserveScroll: true,
-    only: ['payments','quoteRequest','ecomDetails', 'coPayment'],        
-  });  
+    only: ['payments','quoteRequest','ecomDetails', 'coPayment'],
+  });
 };
 
 </script>
@@ -1633,6 +1633,10 @@ const handlePlanSelected = plan => {
             </div>
             <div>{{ quote.code }}</div>
           </div>
+            <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">AML STATUS</dt>
+                <dd>{{ quote?.aml_status_text ?? '' }}</dd>
+            </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">CUSTOMER TYPE</dt>
             <dd>{{ quote.customer_type }}</dd>
@@ -2532,7 +2536,7 @@ const handlePlanSelected = plan => {
       </div>
     </div>
 
-    
+
 
     <!-- <div class="p-4 rounded shadow mb-6 bg-white" v-if="isQuoteDocumentEnabled">
       <div>
@@ -2953,10 +2957,10 @@ const handlePlanSelected = plan => {
       :quoteId="quote.id"
       :paymentCode = "quote.code"
       quoteType="Health"
-      :payments="payments"      
+      :payments="payments"
     />
 
-    <PaymentTableNew 
+    <PaymentTableNew
 			v-if="isNewPaymentStructure"
 			quoteType="Health"
 			:payments="payments"
@@ -3241,9 +3245,9 @@ const handlePlanSelected = plan => {
       :quoteId="quote.uuid"
       :quoteType="'HEALTH'"
     />
-    
+
     <AuditLogs :type="'App\\Models\\HealthQuote'" :id="$page.props.quote.id" :quoteCode="$page.props.quote.code"/>
-    
+
 
     <ClientInquiryLogs
         v-if="clientInquiryLogs?.length > 0"
