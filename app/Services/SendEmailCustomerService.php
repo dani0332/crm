@@ -690,9 +690,6 @@ class SendEmailCustomerService extends BaseService
             if ($advisorEmail == '') {
                 return;
             }
-
-            //   $advisorCustomEmail = 'test@notify.insurancemarket.ae'; //strstr($emailData->advisorEmail, '@', true).'@notify.insurancemarket.ae';
-
             $bccAdditional = [
                 ['email' => 'hr@insurancemarket.ae', 'name' => 'IM HR'],
                 ['email' => 'hitesh.motwani@insurancemarket.ae', 'name' => 'Hitesh Motwani'],
