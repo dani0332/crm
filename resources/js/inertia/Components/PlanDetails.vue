@@ -60,6 +60,7 @@ const rules = {
   isNegative: v => (Number(v)) < 0 ? 'Amount must be a positive number' : true,
   lengthCheck: v => {
     const pattern = /^\d{1,7}(\.\d{1,2})?$/;
+    if(v == null || v == '') return true;
     return pattern.test(v) || 'Invalid number. Max 7 digits and 2 decimals allowed.';
   }
 };
@@ -174,7 +175,7 @@ const permissionEnum = page.props.permissionsEnum;
             :rules="
               props.quoteType == quoteTypeCodeEnum.Life
                 ? []
-                : [rules.conditionalRequired, rules.isNumber, rules.lengthCheck, rules.isNegative]
+                : [rules.conditionalRequired, rules.isNumber, rules.isNegative, rules.lengthCheck]
             "
             :disabled="
               props.quoteType == quoteTypeCodeEnum.Life &&
@@ -193,7 +194,7 @@ const permissionEnum = page.props.permissionsEnum;
             :rules="
               props.quoteType == quoteTypeCodeEnum.Life ||
               props.quoteType == quoteTypeCodeEnum.Business
-                ? [rules.conditionalRequired, rules.isNumber, rules.lengthCheck, rules.isNegative]
+                ? [rules.conditionalRequired, rules.isNumber, rules.isNegative, rules.lengthCheck]
                 : []
             "
             :disabled="

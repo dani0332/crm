@@ -1028,6 +1028,7 @@ const linkEntity = () => {
       :insuranceProviders="insuranceProvidersAll"
       :quote="quote"
       :quoteType="page.props.quoteType"
+      :vatPrice="vatPercentage"
     />  
 
     <!-- Payments -->
