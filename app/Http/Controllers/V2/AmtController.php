@@ -275,6 +275,7 @@ class AmtController extends Controller
 
         if ($hasPolicyIssuedStatus) {
             $removeOptions = [
+                // Endorsement Financial.
                 SendUpdateLogStatusEnum::AOLOPFMP,
                 SendUpdateLogStatusEnum::AC,
                 SendUpdateLogStatusEnum::AL,
@@ -286,6 +287,10 @@ class AmtController extends Controller
                 SendUpdateLogStatusEnum::IISI,
                 SendUpdateLogStatusEnum::MPC,
                 SendUpdateLogStatusEnum::PPE,
+                // Endorsement non Financial.
+                SendUpdateLogStatusEnum::AAI,
+                SendUpdateLogStatusEnum::AOC,
+                SendUpdateLogStatusEnum::COA,
             ];
 
             $sendUpdateOptions = (new LookupService)->getSendUpdateOptions(QuoteTypes::BUSINESS->id(), $removeOptions);

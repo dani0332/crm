@@ -39,7 +39,7 @@ final class SendUpdateLogStatusEnum extends Enum
     const QR = 'QR'; // Quote request.
     const RFAML = 'RFAML'; // Request for active member list.
     const RFEC = 'RFEC'; // Request for ecard copy.
-    const RTI = 'RTI'; // Request for tax invoice.
+    const RFTI = 'RFTI'; // Request for tax invoice.
     const RFSOA = 'RFSOA'; // Request for statement of account (SOA).
 
     // send update log button.
@@ -62,4 +62,8 @@ final class SendUpdateLogStatusEnum extends Enum
     const ICOLOIALOLR = 'I/COLOIALOLR'; // Increase / Change of limit of indemnity and limit of liability required
     const IIEAFT = 'IIEAF/T'; // Increase in estimated annual fees / turnover
     const IISI = 'IISI'; // Increase in sum Insured
+    const RFTC = 'RFTC'; // Request for travel certificate
+    const AAI = 'AAI'; // Add additional insured
+    const AOC = 'AOC'; // Addition of clauses
+    const COA = 'COA'; // Change of address
 }
