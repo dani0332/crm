@@ -390,6 +390,7 @@ const handleRemoveFile = file => {
     v-model="showAddNotes"
     show-header
     show-close
+    :backdrop-close="false"
   >
     <template #header>
       <p class="font-bold m-0">{{ isEdit ? 'Update' : 'Add' }} Notes</p>
@@ -424,7 +425,7 @@ const handleRemoveFile = file => {
             icon="upload"
             @click.prevent="openImageDialog"
           >
-            Upload Documnets
+            Upload Documents
           </x-button>
           <template #tooltip>
             <span class="text-sm"
