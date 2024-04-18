@@ -119,8 +119,8 @@ class AlfredChatController extends Controller
         // Add a $group stage to count total documents
         $totalPipeline[] = ['$group' => [
             '_id' => ['quote_id' => '$quote_id',
-            ['$dateToString' => ['timezone' => '+04:00', 'format' => '%Y-%m-%d',
-            'date' => ['$toDate' => '$created_at']]]],
+                ['$dateToString' => ['timezone' => '+04:00', 'format' => '%Y-%m-%d',
+                    'date' => ['$toDate' => '$created_at']]]],
         ],
         ];
         $totalPipeline[] = ['$count' => 'total'];
@@ -163,8 +163,8 @@ class AlfredChatController extends Controller
         $chatPipeline[] = [
             '$group' => [
                 '_id' => ['quote_id' => '$quote_id',
-                ['$dateToString' => ['timezone' => '+04:00', 'format' => '%Y-%m-%d',
-                'date' => ['$toDate' => '$created_at']]]],
+                    ['$dateToString' => ['timezone' => '+04:00', 'format' => '%Y-%m-%d',
+                        'date' => ['$toDate' => '$created_at']]]],
                 'created_at' => ['$first' => '$created_at'],
                 'role' => ['$first' => '$role'],
                 'msg' => ['$first' => '$msg'],
