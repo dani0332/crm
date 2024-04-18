@@ -128,7 +128,7 @@ class QuoteDocumentService extends BaseService
                     return false;
                 }
             } else {
-                $originalName = $fileOrBase64->getClientOriginalName();
+                $originalName = sanitizeFileName($fileOrBase64->getClientOriginalName());
 
                 // Generate a unique filename
                 $docName = preg_replace('/\s+/', '', uniqid().'_'.$originalName);

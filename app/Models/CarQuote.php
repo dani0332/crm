@@ -3,6 +3,9 @@
 namespace App\Models;
 
 use App\Enums\FilterTypes;
+use App\Enums\PermissionsEnum;
+use App\Enums\QuoteSegmentEnum;
+use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Traits\FilterCriteria;
 use App\Traits\QuoteModelTrait;
@@ -298,6 +301,38 @@ class CarQuote extends BaseModel
         if (Auth::user()->hasRole('pa') && $isGetList) {
             $query->select(['car_quote_request.id', 'code', 'first_name', 'last_name', 'car_quote_request.updated_at', 'car_quote_request.created_at', 'pa_id', 'kyc_status_id', 'quote_status_id', 'aml_status', 'payment_id', 'car_value', 'currently_insured_with', 'car_type_insurance_id', 'plan_id']);
             $query->join('car_quote_insurance_coverage', 'car_quote_insurance_coverage.car_quote_id', '=', 'car_quote_request.id');
+        }
+    }
+
+    public function scopeFilterBySegment($query)
+    {
+        $segmentFilter = request()->input('segment_filter');
+        self::applySegmentFilter($query, $segmentFilter);
+    }
+
+    public static function applySegmentFilter($query, $segmentFilter, $alias = 'car_quote_request')
+    {
+        $user = auth()->user();
+        if ($user->can(PermissionsEnum::SEGMENT_FILTER) && $segmentFilter) {
+            $query->when($segmentFilter === QuoteSegmentEnum::SIC->value, function ($query) use ($alias) {
+                $query->whereIn("{$alias}.uuid", function ($query) {
+                    $query->distinct()
+                        ->select('quote_uuid')
+                        ->from('quote_tags')
+                        ->join('quote_type', 'quote_type.id', 'quote_tags.quote_type_id')
+                        ->where('quote_tags.name', QuoteSegmentEnum::SIC->tag())
+                        ->where('quote_type.code', quoteTypeCode::Car);
+                });
+            })->when($segmentFilter === QuoteSegmentEnum::NON_SIC->value, function ($query) use ($alias) {
+                $query->whereNotIn("{$alias}.uuid", function ($query) {
+                    $query->distinct()
+                        ->select('quote_uuid')
+                        ->from('quote_tags')
+                        ->join('quote_type', 'quote_type.id', 'quote_tags.quote_type_id')
+                        ->where('quote_tags.name', QuoteSegmentEnum::SIC->tag())
+                        ->where('quote_type.code', quoteTypeCode::Car);
+                });
+            });
         }
     }
 
