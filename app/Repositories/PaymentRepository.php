@@ -7,6 +7,7 @@ use App\Enums\PaymentAllocationStatus;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\RolesEnum;
 use App\Interfaces\PaymentRepositoryInterface;
@@ -410,6 +411,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                         }
                     }
                 }
+                $this->updateLeadStatus($firstPayment); //update lead status
                 DB::commit();
             } catch (Exception $exception) {
                 DB::rollBack();
@@ -441,7 +443,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
             $payment->is_approved = 0;
             $payment->payment_status_id = PaymentStatusEnum::PARTIAL_CAPTURED;
             $payment->save();
-
+            $this->updateLeadStatus($payment); //update lead status
             return response()->json(['message' => 'Total Price Updated Successfully']);
         }
 
@@ -574,6 +576,30 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                         );
                     }
                 }
+            }
+            $this->updateLeadStatus($payment); //update lead status
+        }
+    }
+
+    // Update lead status for ecomm quotes
+    private function updateLeadStatus($payment)
+    {
+        $quoteType = '';
+        // Mapping quote types to their respective codes
+        $ecomQuoteTypeMap = [quoteTypeCode::Car, quoteTypeCode::Health, quoteTypeCode::Travel];
+        // Iterating over the map to find a match
+        foreach ($ecomQuoteTypeMap as $code) {
+            if (stristr($payment->paymentable_type, $code)) {
+                $quoteType = $code;
+                break;
+            }
+        }        
+        // If a quote type is found, get the corresponding quote object
+        if ($quoteType !== '') {
+            $quoteModel = $this->getQuoteObject($quoteType, $payment->paymentable_id);
+            if ($quoteModel) {
+                $quoteModel -> payment_status_id = $payment->payment_status_id;
+                $quoteModel->save();
             }
         }
     }
