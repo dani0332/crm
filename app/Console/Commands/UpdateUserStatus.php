@@ -110,9 +110,9 @@ class UpdateUserStatus extends Command
                         $endDateTime = Carbon::parse('18:30:00'); // 8:59 AM of the next day
                         if ($currentDateTime->isWeekday() && $currentDateTime->between($startDateTime, $endDateTime)) {
                             $statusLog = UserStatusAuditLog::where('user_id', $userId)->where('status', UserStatusEnum::OFFLINE)->orderBy('id', 'desc')->first();
-                            if (isset($statusLog->is_mail_sent)) {
-                                if ($statusLog->is_mail_sent == 0) {
-                                    $user = User::where('id', $userId)->first();
+                            if (isset($statusLog->is_mail_sent) && $statusLog->is_mail_sent == 0) {
+                                $user = User::where('id', $userId)->first();
+                                if ($user->is_active == 1) {
                                     ActivityAlertEmailJob::dispatch($user);
                                     $statusLog->is_mail_sent = 1;
                                     $statusLog->save();

@@ -25,5 +25,39 @@ class AddNotificationKeys extends Seeder
             ]);
         }
 
+        $advisorNotificationCarAdvisor = ApplicationStorage::where('key_name', 'ADVISOR_NOTIFICATION_CAR_ADVISOR')->count();
+        if ($advisorNotificationCarAdvisor == 0) {
+            $advisorNotificationCarAdvisor = ApplicationStorage::create([
+                'key_name' => 'ADVISOR_NOTIFICATION_CAR_ADVISOR',
+                'value' => 'Veeral Joshi,veeral.joshi@insurancemarket.ae',
+                'is_active' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+
+        $advisorNotificationHealthAdvisor = ApplicationStorage::where('key_name', 'ADVISOR_NOTIFICATION_HEALTH_ADVISOR')->count();
+        if ($advisorNotificationHealthAdvisor == 0) {
+            $advisorNotificationHealthAdvisor = ApplicationStorage::create([
+                'key_name' => 'ADVISOR_NOTIFICATION_HEALTH_ADVISOR',
+                'value' => 'Agatha Alicdan,agatha.alicdan@insurancemarket.ae',
+                'is_active' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+
+        $advisorNotificationBccEmails = ApplicationStorage::where('key_name', 'ADVISOR_NOTIFICATION_BCC_EMAILS')->count();
+        if ($advisorNotificationBccEmails == 0) {
+            $advisorNotificationBccEmails = ApplicationStorage::create([
+                'key_name' => 'ADVISOR_NOTIFICATION_BCC_EMAILS',
+                'value' => 'IM HR,hr@insurancemarket.ae,Hitesh Motwani,hitesh.motwani@insurancemarket.ae,Fayaz Kariyambath,fayaz.k@insurancemarket.ae',
+                'is_active' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+
+
     }
 }

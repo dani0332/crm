@@ -14,6 +14,9 @@ class ActivityAlertEmailJob implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     private $user = null;
+    public $tries = 1;
+    public $timeout = 30;
+    public $backoff = 10;
 
     /**
      * Create a new job instance.

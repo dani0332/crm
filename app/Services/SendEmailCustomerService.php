@@ -659,7 +659,6 @@ class SendEmailCustomerService extends BaseService
         $emailTemplateId = ApplicationStorage::where('key_name', '=', 'ADVISOR_NOTIFICATION_TEMPLATE')->value('value');
         try {
             $tag = $this->appEnv == EnvEnum::PRODUCTION ? '' : $this->appEnv.'-';
-            info('sendActivityAlertEmail');
             $headers = [
                 'Accept' => 'application/json',
                 'api-key' => $this->apiKey,
@@ -672,30 +671,37 @@ class SendEmailCustomerService extends BaseService
 
             $roles = $user->usersroles->pluck('name');
 
-            $emailMapping = [
-                'CAR_ADVISOR' => ['email' => 'veeral.joshi@insurancemarket.ae', 'name' => 'Veeral Joshi'],
-                'HEALTH_ADVISOR' => ['email' => 'agatha.alicdan@insurancemarket.ae', 'name' => 'Agatha Alicdan'],
+            $emailMapping = ['CAR_ADVISOR',
+                'HEALTH_ADVISOR',
             ];
 
             $advisorEmail = '';
             $advisorName = '';
 
-            foreach ($emailMapping as $role => $data) {
+            foreach ($emailMapping as $role) {
                 if ($roles->contains($role)) {
-                    $advisorEmail = $data['email'];
-                    $advisorName = $data['name'];
+                    $HealthEmail = ApplicationStorage::where('key_name', '=', 'ADVISOR_NOTIFICATION_'.$role)->value('value');
+                    $health = explode(',', $HealthEmail);
+                    $advisorEmail = $health[1];
+                    $advisorName = $health[0];
                     break;
                 }
             }
             if ($advisorEmail == '') {
                 return;
             }
-            $bccAdditional = [
-                ['email' => 'hr@insurancemarket.ae', 'name' => 'IM HR'],
-                ['email' => 'hitesh.motwani@insurancemarket.ae', 'name' => 'Hitesh Motwani'],
-                ['email' => 'fayaz.k@insurancemarket.ae', 'name' => 'Fayaz Kariyambath'],
-            ];
+            $BccEmail = ApplicationStorage::where('key_name', '=', 'ADVISOR_NOTIFICATION_BCC_EMAILS')->value('value');
+            $bcc = explode(',', $BccEmail);
+            $bccAdditional = [];
 
+            $i = 0;
+            foreach ($bcc as $pair) {
+                if (isset($bcc[$i])) {
+                    $bccAdditional[] = ['email' => $bcc[$i + 1], 'name' => $bcc[$i]];
+                    $i++;
+                }
+                $i++;
+            }
             $body = json_encode([
                 'sender' => ['name' => $tag.' '.' Urgent: '.$user->name.' IMCRM Inactivity Alert', 'email' => $advisorEmail],
                 'to' => [[
@@ -719,15 +725,12 @@ class SendEmailCustomerService extends BaseService
                     'timeout' => 10,
                 ]
             );
-            info('sendActivityAlertEmail ---- Request Sent');
             $responseCode = $clientRequest->getStatusCode();
-            info('send activity email ---- Received Code : '.$responseCode);
-            info('send activity ---- response object : '.json_encode($clientRequest->getBody()->getContents()));
+            info('sendActivityAlertEmail ---- response object : '.json_encode($clientRequest->getBody()->getContents()));
         } catch (Exception $ex) {
             $responseCode = $ex->getCode();
             $responseDetail = 'activity send email: Code/Message: '.$responseCode.'/'.$ex->getMessage();
             Log::error($responseDetail);
-            $response = json_encode($ex->getCode().' '.$ex->getMessage());
         }
 
         return $responseCode;
