@@ -321,7 +321,7 @@ class HandleInertiaRequests extends Middleware
                         'Transaction List',
                         '/transapp/transaction',
                         fn ($s) => $s->attributes(['icon' => 'box'])
-                    )
+                    );
             });
         }
 
