@@ -1,6 +1,4 @@
 <script setup>
-import { useDateFormat } from '@vueuse/core';
-
 const props = defineProps({
   logs: Object,
 });
@@ -31,7 +29,7 @@ const chatMessages = ref({
 
 const tableHeader = reactive([
   { text: 'Ref-ID', value: 'quote_id' },
-  { text: 'Created At', value: '_id' },
+  { text: 'Created At', value: 'created_at' },
   { text: 'Actions', value: 'action' },
 ]);
 
@@ -93,12 +91,13 @@ const showChat = item => {
     .post('/get-alfred-chat-by-date', {
       quoteId: item.quote_id,
       quoteType: item.quote_type,
-      created_at: item._id,
+      created_at: useDateFormat(item.created_at.split(' ')[0], 'YYYY-MM-DD')
+        .value,
     })
     .then(response => {
       let { data } = { ...response.data };
       loader.view = false;
-      chatMessages.value.created_at = item._id;
+      chatMessages.value.created_at = item.created_at;
       chatMessages.value.data = data;
       showChatLogs.value = true;
     })
@@ -183,8 +182,8 @@ onMounted(() => {
         {{ quote_type + '-' + quote_id }}
       </span>
     </template>
-    <template #item-_id="{ _id }">
-      {{ dateFormat(_id) }}
+    <template #item-created_at="{ created_at }">
+      {{ dateFormat(created_at.split(' ')[0]) }}
     </template>
     <template #item-action="item">
       <x-button
