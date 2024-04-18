@@ -4704,23 +4704,23 @@
         },
         {
             "name": "mongodb/mongodb",
-            "version": "1.17.1",
+            "version": "1.18.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/mongodb/mongo-php-library.git",
-                "reference": "01d0840bf0678f519e72dc71b69c8a50a0856c2d"
+                "reference": "d421c418ef56a96f3dfa6b2828f936df6848ccf9"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/mongodb/mongo-php-library/zipball/01d0840bf0678f519e72dc71b69c8a50a0856c2d",
-                "reference": "01d0840bf0678f519e72dc71b69c8a50a0856c2d",
+                "url": "https://api.github.com/repos/mongodb/mongo-php-library/zipball/d421c418ef56a96f3dfa6b2828f936df6848ccf9",
+                "reference": "d421c418ef56a96f3dfa6b2828f936df6848ccf9",
                 "shasum": ""
             },
             "require": {
+                "composer-runtime-api": "^2.0",
                 "ext-hash": "*",
                 "ext-json": "*",
-                "ext-mongodb": "^1.17.0",
-                "jean85/pretty-package-versions": "^2.0.1",
+                "ext-mongodb": "^1.18.0",
                 "php": "^7.4 || ^8.0",
                 "psr/log": "^1.1.4|^2|^3",
                 "symfony/polyfill-php80": "^1.27",
@@ -4736,7 +4736,7 @@
             "type": "library",
             "extra": {
                 "branch-alias": {
-                    "dev-master": "1.17.x-dev"
+                    "dev-master": "1.18.x-dev"
                 }
             },
             "autoload": {
@@ -4775,9 +4775,9 @@
             ],
             "support": {
                 "issues": "https://github.com/mongodb/mongo-php-library/issues",
-                "source": "https://github.com/mongodb/mongo-php-library/tree/1.17.1"
+                "source": "https://github.com/mongodb/mongo-php-library/tree/1.18.0"
             },
-            "time": "2024-03-14T10:33:11+00:00"
+            "time": "2024-03-27T17:04:50+00:00"
         },
         {
             "name": "monolog/monolog",
