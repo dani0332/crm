@@ -9,6 +9,7 @@ use App\Enums\QuoteTypes;
 use App\Facades\Capi;
 use App\Models\BusinessQuote;
 use App\Traits\CentralTrait;
+use Illuminate\Support\Facades\DB;
 
 class BusinessQuoteRepository extends BaseRepository
 {
@@ -93,10 +94,10 @@ class BusinessQuoteRepository extends BaseRepository
             ])
             ->select([
                 $this->getTable().'.*',
-                \DB::raw('DATE_FORMAT(renewal_expiry_date, "%d-%m-%Y") as renewal_expiry_date'),
-                \DB::raw('DATE_FORMAT(policy_start_date, "%d-%m-%Y") as policy_start_date'),
-                \DB::raw('DATE_FORMAT(policy_issuance_date, "%d-%m-%Y") as policy_issuance_date'),
-                \DB::raw('("'.CustomerTypeEnum::Entity.'") as customer_type'),
+                DB::raw('DATE_FORMAT(renewal_expiry_date, "%d-%m-%Y") as renewal_expiry_date'),
+                DB::raw('DATE_FORMAT(policy_start_date, "%d-%m-%Y") as policy_start_date'),
+                DB::raw('DATE_FORMAT(policy_issuance_date, "%d-%m-%Y") as policy_issuance_date'),
+                DB::raw('("'.CustomerTypeEnum::Entity.'") as customer_type'),
             ])
             ->firstOrFail();
 
