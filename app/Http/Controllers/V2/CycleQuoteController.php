@@ -16,7 +16,6 @@ use App\Http\Requests\CycleQuoteRequest;
 use App\Models\ApplicationStorage;
 use App\Models\Emirate;
 use App\Models\Nationality;
-use App\Models\PolicyIssuanceStatus;
 use App\Repositories\ActivityRepository;
 use App\Repositories\CustomerMembersRepository;
 use App\Repositories\CycleQuoteRepository;
@@ -151,7 +150,6 @@ class CycleQuoteController extends Controller
         $vatPercentage = ApplicationStorage::where('key_name', ApplicationStorageEnums::VAT_VALUE)->first()->value ?? 0;
 
         $isQuoteDocumentEnabled = app(QuoteDocumentService::class)->isEnabled(QuoteTypes::CYCLE->value);
-        $policyIssuanceStatus = PolicyIssuanceStatus::active()->get();
         $quoteDocuments = (new QuoteDocumentService())->getQuoteDocuments(QuoteTypes::CYCLE->value, $quote->id);
         $bookPolicyDetails = $this->bookPolicyPayload($quote, QuoteTypes::PET->value, $quote->payments, $quoteDocuments);
         $sendUpdateOptions = [];
@@ -202,21 +200,12 @@ class CycleQuoteController extends Controller
             'enums' => [
                 'quoteStatusEnum' => QuoteStatusEnum::asArray(),
             ],
-            'policyIssuanceStatus' => $policyIssuanceStatus,
             'bookPolicyDetails' => $bookPolicyDetails,
             'payments' => $quote->payments->toArray() ?? [],
             'sendUpdateOptions' => $sendUpdateOptions,
             'sendUpdateLogs' => $sendUpdateLogs,
             'sendUpdateEnum' => $sendUpdateEnum,
             'hasPolicyIssuedStatus' => $hasPolicyIssuedStatus,
-            'record' => fn () => $quote,
-            'permissions' => [
-                'isQuoteDocumentEnabled' => $isQuoteDocumentEnabled,
-            ],
-            'enums' => [
-                'quoteStatusEnum' => QuoteStatusEnum::asArray(),
-            ],
-            'policyIssuanceStatus' => $policyIssuanceStatus,
         ]);
     }
 }

@@ -21,7 +21,6 @@ use App\Http\Requests\StoreTravelRequest;
 use App\Http\Requests\TravelRenewalsUploadRequest;
 use App\Http\Requests\UpdateTravelRequest;
 use App\Models\Emirate;
-use App\Models\PolicyIssuanceStatus;
 use App\Repositories\CustomerMembersRepository;
 use App\Repositories\EmbeddedProductRepository;
 use App\Repositories\InsuranceProviderRepository;
@@ -197,7 +196,6 @@ class TravelController extends Controller
         $uboDetails = CustomerMembersRepository::getBy($record->id, QuoteTypes::TRAVEL->name, CustomerTypeEnum::Entity);
         $uboRelations = LookupRepository::where('key', LookupsEnum::UBO_RELATION)->get();
         $emirates = Emirate::where('is_active', 1)->select('id', 'text')->get();
-        $policyIssuanceStatus = PolicyIssuanceStatus::active()->get();
         $bookPolicyDetails = $this->bookPolicyPayload($record, $quoteType, $payments, $quoteDocuments);
 
         $sendUpdateOptions = [];
@@ -289,7 +287,6 @@ class TravelController extends Controller
             'UBOsDetails' => $uboDetails,
             'UBORelations' => $uboRelations,
             'emirates' => $emirates,
-            'policyIssuanceStatus' => $policyIssuanceStatus,
             'bookPolicyDetails' => $bookPolicyDetails,
             'quoteStatusEnum' => QuoteStatusEnum::asArray(),
             'isNewPaymentStructure' => $isNewPaymentStructure,

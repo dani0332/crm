@@ -24,7 +24,6 @@ use App\Models\BusinessQuote;
 use App\Models\Emirate;
 use App\Models\Entity;
 use App\Models\Nationality;
-use App\Models\PolicyIssuanceStatus;
 use App\Repositories\CustomerMembersRepository;
 use App\Repositories\InsuranceProviderRepository;
 use App\Repositories\LookupRepository;
@@ -248,7 +247,6 @@ class BusinessQuoteController extends Controller
             $sendUpdateEnum = SendUpdateLogStatusEnum::asArray();
         }
 
-        $policyIssuanceStatus = PolicyIssuanceStatus::active()->get();
         $bookPolicyDetails = $this->bookPolicyPayload($record, QuoteTypes::BUSINESS->value, $payments, $quoteDocuments);
 
         return inertia('CorpLineQuote/Show', [
@@ -324,7 +322,6 @@ class BusinessQuoteController extends Controller
             'sendUpdateEnum' => $sendUpdateEnum,
             'hasPolicyIssuedStatus' => $hasPolicyIssuedStatus,
             'record' => $record,
-            'policyIssuanceStatus' => $policyIssuanceStatus,
             'bookPolicyDetails' => $bookPolicyDetails,
             'payments' => $payments,
             'quoteStatusEnum' => QuoteStatusEnum::asArray(),

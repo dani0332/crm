@@ -38,11 +38,7 @@ defineProps({
   sendUpdateLogs: Array,
   hasPolicyIssuedStatus: Boolean,
   record: Object,
-  permissions: Object,
-  enums: Object,
-  policyIssuanceStatus: Array,
   bookPolicyDetails: Array,
-  payments: Array,
 });
 
 const page = usePage();
@@ -1140,7 +1136,6 @@ watch(
       v-if="permissions.isQuoteDocumentEnabled"
       :record="record"
       :quoteStatusEnum="enums.quoteStatusEnum"
-      :policyIssuanceStatus="policyIssuanceStatus"
       modelType="Business"
       :expanded="sectionExpanded"
     />

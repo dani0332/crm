@@ -36,7 +36,6 @@ defineProps({
   paymentMethods: Array,
   insuranceProviders: Array,
   enums: Object,
-  policyIssuanceStatus: Array,
   permissions: Object,
   bookPolicyDetails: Array,
   isNewPaymentStructure: Boolean,
@@ -1170,7 +1169,6 @@ watch(
       v-if="permissions.isQuoteDocumentEnabled"
       :record="record"
       :quoteStatusEnum="enums.quoteStatusEnum"
-      :policyIssuanceStatus="policyIssuanceStatus"
       modelType="life"
       :expanded="sectionExpanded"
     />

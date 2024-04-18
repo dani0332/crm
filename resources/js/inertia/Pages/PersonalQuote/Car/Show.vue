@@ -79,7 +79,6 @@ defineProps({
   tiersExceptTierR: Array,
   leadSourceEnum: Object,
   carPlanTypeEnum: Object,
-  policyIssuanceStatus: Array,
   bookPolicyDetails: Array,
   documentTypesByCategory: Array,
   customerTypeEnum: Object,
@@ -3440,7 +3439,6 @@ watch(
       v-if="isQuoteDocumentEnabled"
       :record="record"
       :quoteStatusEnum="quoteStatusEnum"
-      :policyIssuanceStatus="policyIssuanceStatus"
       :modelType="quoteType"
     />    
     

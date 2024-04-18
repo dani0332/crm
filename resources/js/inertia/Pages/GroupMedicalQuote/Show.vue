@@ -33,7 +33,6 @@ defineProps({
   record: Object,
   permissions: Object,
   enums: Object,
-  policyIssuanceStatus: Array,
   bookPolicyDetails: Array,
   payments: Array,
 });
@@ -878,7 +877,6 @@ watch(
       v-if="permissions.isQuoteDocumentEnabled"
       :record="record"
       :quoteStatusEnum="enums.quoteStatusEnum"
-      :policyIssuanceStatus="policyIssuanceStatus"
       modelType="Business"
       :expanded="sectionExpanded"
     />

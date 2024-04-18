@@ -43,7 +43,6 @@ defineProps({
   record: Object,
   permissions: Object,
   enums: Object,
-  policyIssuanceStatus: Array,
   bookPolicyDetails: Array,
   payments: Array,
   isNewPaymentStructure: Boolean,
@@ -897,7 +896,6 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       v-if="permissions.isQuoteDocumentEnabled"
       :record="record"
       :quoteStatusEnum="enums.quoteStatusEnum"
-      :policyIssuanceStatus="policyIssuanceStatus"
       modelType="pet"
       :expanded="sectionExpanded"
     />

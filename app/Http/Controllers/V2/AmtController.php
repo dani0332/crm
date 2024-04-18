@@ -23,7 +23,6 @@ use App\Models\Emirate;
 use App\Models\Entity;
 use App\Models\GroupMedicalType;
 use App\Models\Nationality;
-use App\Models\PolicyIssuanceStatus;
 use App\Repositories\BusinessQuoteRepository;
 use App\Repositories\CustomerMembersRepository;
 use App\Repositories\DocumentTypeRepository;
@@ -292,7 +291,6 @@ class AmtController extends Controller
         }
 
         $isQuoteDocumentEnabled = app(QuoteDocumentService::class)->isEnabled(QuoteTypes::BUSINESS->value);
-        $policyIssuanceStatus = PolicyIssuanceStatus::active()->get();
         $quoteDocuments = (new QuoteDocumentService())->getQuoteDocuments(QuoteTypes::BUSINESS->value, $record->id);
         $bookPolicyDetails = $this->bookPolicyPayload($record, QuoteTypes::GROUP_MEDICAL->value, $record->payments, $quoteDocuments);
 
@@ -342,7 +340,6 @@ class AmtController extends Controller
             'enums' => [
                 'quoteStatusEnum' => QuoteStatusEnum::asArray(),
             ],
-            'policyIssuanceStatus' => $policyIssuanceStatus,
             'bookPolicyDetails' => $bookPolicyDetails,
             'payments' => $record->payments->toArray() ?? [],
         ]);

@@ -46,7 +46,6 @@ use App\Models\HealthPlanType;
 use App\Models\Nationality;
 use App\Models\Payment;
 use App\Models\PaymentStatusLog;
-use App\Models\PolicyIssuanceStatus;
 use App\Models\QuoteDocument;
 use App\Models\Tier;
 use App\Models\User;
@@ -715,7 +714,6 @@ class CRUDController extends Controller
             $leadDocsStoragePath = createCdnUrl('');
             $kyoEndPoint = config('constants.KYO_END_POINT');
             $isBetaUser = auth()->user()->hasRole(RolesEnum::BetaUser);
-            $policyIssuanceStatus = PolicyIssuanceStatus::active()->get();
             $UBOsDetails = CustomerMembersRepository::getBy($record->id, QuoteTypes::CAR->name, CustomerTypeEnum::Entity);
             $UBORelations = LookupRepository::where('key', LookupsEnum::UBO_RELATION)->get();
             $emirates = Emirate::where('is_active', 1)->select('id', 'text')->get();
@@ -737,7 +735,7 @@ class CRUDController extends Controller
                 'paymentEntityModel', 'payments', 'paymentMethods', 'isQuoteDocumentEnabled', 'quoteDocuments', 'displaySendPolicyButton', 'customerAdditionalContacts', 'lostApproveReasons', 'lostRejectReasons', 'allowQuoteLogAction', 'carLostChangeStatus',
                 'carMakeText', 'carModelText', 'advisor', 'tiers', 'daysAfterCapturedPayment', 'access', 'carPlanFeaturesCodeEnum', 'carPlanExclusionsCodeEnum', 'documentTypes', 'planURL', 'storageUrl', 'kyoEndPoint',
                 'carPlanTypeEnum', 'UBORelations', 'UBOsDetails', 'emirates', 'customerTypeEnum', 'memberRelations', 'membersDetails', 'industryType', 'nationalities', 'paymentTooltipEnum',
-                'isCommercialVehicles', 'carInsuranceProviders', 'isNewPaymentStructure', 'sendUpdateOptions', 'sendUpdateLogs', 'hasPolicyIssuedStatus', 'sendUpdateEnum', 'policyIssuanceStatus', 'bookPolicyDetails', 'listQuotePlans',
+                'isCommercialVehicles', 'carInsuranceProviders', 'isNewPaymentStructure', 'sendUpdateOptions', 'sendUpdateLogs', 'hasPolicyIssuedStatus', 'sendUpdateEnum', 'bookPolicyDetails', 'listQuotePlans',
             ]));
         }
 
@@ -818,7 +816,6 @@ class CRUDController extends Controller
             }
 
             $documentTypes = $this->quoteDocumentService->getQuoteDocumentsForUpload(QuoteTypeId::Home);
-            $policyIssuanceStatus = PolicyIssuanceStatus::active()->get();
 
             $quoteDocument = (new QuoteDocumentService())->getQuoteDocuments(QuoteTypes::HOME->value, $record->id);
             $bookPolicyDetails = $this->bookPolicyPayload($record, QuoteTypes::HOME->value, $payments, $quoteDocument);
@@ -875,7 +872,6 @@ class CRUDController extends Controller
                 'enums' => [
                     'quoteStatusEnum' => QuoteStatusEnum::asArray(),
                 ],
-                'policyIssuanceStatus' => $policyIssuanceStatus,
                 'bookPolicyDetails' => $bookPolicyDetails,
                 'vatPercentage' => $vatPercentage,
                 'isNewPaymentStructure' => $isNewPaymentStructure,
@@ -963,7 +959,6 @@ class CRUDController extends Controller
             $embeddedProducts = EmbeddedProductRepository::byQuoteType(QuoteTypes::HEALTH->id(), $record->id);
 
             $healthPlanTypes = HealthPlanType::where('is_active', 1)->select('id', 'text')->get();
-            $policyIssuanceStatus = PolicyIssuanceStatus::active()->get();
             $bookPolicyDetails = $this->bookPolicyPayload($record, $quoteType, $payments, $quoteDocuments);
 
             // Get user teams
@@ -1034,7 +1029,6 @@ class CRUDController extends Controller
                     'paymentStatusEnum' => PaymentStatusEnum::asArray(),
                     'travelQuoteEnum' => TravelQuoteEnum::asArray(),
                 ],
-                'policyIssuanceStatus' => $policyIssuanceStatus,
                 'bookPolicyDetails' => $bookPolicyDetails,
                 'quoteStatusEnum' => QuoteStatusEnum::asArray(),
                 'sendUpdateEnum' => $sendUpdateEnum,

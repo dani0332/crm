@@ -42,7 +42,6 @@ defineProps({
   paymentStatusEnum: Object,
   paymentTooltipEnum: Object,
   enums: Object,
-  policyIssuanceStatus: Array,
   bookPolicyDetails: Array,
   isNewPaymentStructure: Boolean,
   sendUpdateOptions: Array,
@@ -1155,7 +1154,6 @@ watch(
       v-if="permissions.isQuoteDocumentEnabled"
       :record="record"
       :quoteStatusEnum="enums.quoteStatusEnum"
-      :policyIssuanceStatus="policyIssuanceStatus"
       modelType="home"
       :expanded="sectionExpanded"
     />

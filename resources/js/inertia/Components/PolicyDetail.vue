@@ -10,10 +10,6 @@ const props = defineProps({
     type: Object,
     default: {},
   },
-  policyIssuanceStatus: {
-    type: Array,
-    default: [],
-  },
   modelType: {
     type: String,
     default: '',

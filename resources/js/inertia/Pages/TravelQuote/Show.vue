@@ -51,7 +51,6 @@ defineProps({
   canAddBatchNumber: Boolean,
   paymentTooltipEnum: Object,
   storageUrl: String,
-  policyIssuanceStatus: Array,
   record: Object,
   bookPolicyDetails: Array,
   isNewPaymentStructure: Boolean,
@@ -2194,7 +2193,6 @@ watch(
       v-if="permissions.isQuoteDocumentEnabled"
       :record="record"
       :quoteStatusEnum="enums.quoteStatusEnum"
-      :policyIssuanceStatus="policyIssuanceStatus"
       modelType="travel"
       :expanded="sectionExpanded"
     />
