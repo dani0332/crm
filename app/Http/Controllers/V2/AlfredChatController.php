@@ -98,14 +98,12 @@ class AlfredChatController extends Controller
             ];
         }
 
-
         if (isset($quoteId)) {
             $totalPipeline = [
                 ['$match' => ['quote_id' => $quoteId]],
             ];
         }
 
-      
         // Apply date range filter if provided
         if ($request->has('start_date') && $request->has('end_date')) {
             $start_date = Carbon::createFromFormat('Y-m-d', $request->start_date)->startOfDay()->toIso8601String();
@@ -123,8 +121,8 @@ class AlfredChatController extends Controller
             '_id' => ['quote_id' => '$quote_id',
                 ['$dateToString' => ['timezone' => '+04:00', 'format' => '%Y-%m-%d',
                     'date' => ['$toDate' => '$created_at']]]],
-                    'quote_type' => ['$first' => '$quote_type'],
-                    'quote_id' => ['$first' => '$quote_id'],
+            'quote_type' => ['$first' => '$quote_type'],
+            'quote_id' => ['$first' => '$quote_id'],
         ],
         ];
         $totalPipeline[] = ['$count' => 'total'];
@@ -133,7 +131,6 @@ class AlfredChatController extends Controller
         $totalDocuments = AlfredChat::raw(fn ($collection) => $collection->aggregate($totalPipeline))->toArray();
 
         $totalDocumentsCount = empty($totalDocuments) ? 0 : $totalDocuments[0]['total'];
-
 
         // Define pagination parameters
         $perPage = 15; // Or any number of documents per page
@@ -192,7 +189,6 @@ class AlfredChatController extends Controller
         $prevPage = $page > 1 ? $page - 1 : null;
         $nextPage = $endIndex <= $totalDocumentsCount ? $page + 1 : null;
 
-
         // Create pagination object
         $pagination = [
             'data' => $chat,
@@ -211,7 +207,7 @@ class AlfredChatController extends Controller
                 ($request->quoteType ? '&quoteType='.$request->quoteType : '').
                 ($request->quoteId ? '&quoteId='.$request->quoteId : '')
                 : null,
-        
+
             'from' => $startIndex + 1,
             'to' => $endIndex,
         ];
