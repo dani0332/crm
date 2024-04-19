@@ -408,8 +408,7 @@ onBeforeMount(() => {
               <template
                 class="flex justify-end"
                 v-if="
-                  record.quote_status_id ==
-                    quoteStatusEnum.TransactionApproved ||
+                  record.quote_status_id == quoteStatusEnum.TransactionApproved ||
                   record.quote_status_id == quoteStatusEnum.PolicyPending ||
                   record.quote_status_id == quoteStatusEnum.PolicyIssued ||
                   record.quote_status_id == quoteStatusEnum.PolicySentToCustomer
@@ -421,7 +420,12 @@ onBeforeMount(() => {
                   color="emerald"
                   size="sm"
                   :loading="policyDetailsForm.processing"
-                  @click.prevent="policyDetailsState.isEditing = false"
+                  @click.prevent="
+                    () => {
+                      policyDetailsState.isEditing = false;
+                      policyDetailsForm.reset();
+                    }
+                  "
                 >
                   Cancel
                 </x-button>
