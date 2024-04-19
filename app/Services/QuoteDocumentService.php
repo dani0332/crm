@@ -209,6 +209,16 @@ class QuoteDocumentService extends BaseService
         ->get();
 
         $documentTypesByCategory= $documentTypes->groupBy('category');
-        return [$documentTypesByCategory, $documentTypes];
+        $orderedDocumentTypesByCategory = collect();
+        if ($documentTypesByCategory->has('QUOTE')) {
+            $orderedDocumentTypesByCategory->put('QUOTE', $documentTypesByCategory->get('QUOTE'));
+        }
+        if ($documentTypesByCategory->has('MEMBER')) {
+            $orderedDocumentTypesByCategory->put('MEMBER', $documentTypesByCategory->get('MEMBER'));
+        }
+        if ($documentTypesByCategory->has('ISSUING_DOCUMENTS')) {
+            $orderedDocumentTypesByCategory->put('ISSUING_DOCUMENTS', $documentTypesByCategory->get('ISSUING_DOCUMENTS'));
+        }
+        return [$orderedDocumentTypesByCategory, $documentTypes];
     }
 }
