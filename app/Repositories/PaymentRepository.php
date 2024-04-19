@@ -359,7 +359,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                             }
                             //Marshal Service to capture split payment
                             $response = app(CRUDService::class)->capturePayment($quoteModel, $paymentSplit, $quoteTypeId, $splitAmount);
-                            $paymentSplit->payment_status_id = PaymentStatusEnum::CAPTURED;
+                            //$paymentSplit->payment_status_id = PaymentStatusEnum::CAPTURED; //Temporarily commented on API request
                         }
                         DB::beginTransaction();
                         try {
