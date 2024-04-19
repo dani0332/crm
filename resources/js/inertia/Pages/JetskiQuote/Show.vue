@@ -8,6 +8,7 @@ import QuotePolicy from '../PersonalQuote/Partials/QuotePolicy';
 import LeadHistory from '../PersonalQuote/Partials/LeadHistory';
 import AdditionalContacts from '../PersonalQuote/Partials/AdditionalContacts';
 import PlanDetails from '../../Components/PlanDetails.vue';
+import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue';
 
 defineProps({
   quote: Object,
@@ -26,6 +27,7 @@ defineProps({
   quoteStatusEnum: Object,
   embeddedProducts: Array,
   canAddBatchNumber: Boolean,
+  vatPercentage: Number,
 });
 
 const page = usePage();
@@ -173,11 +175,14 @@ const permissionsEnum = page.props.permissionsEnum;
         </dl>
       </div>
 
-      <div class="mt-6">
-        <h3 class="font-semibold text-primary-800">Customer Profile</h3>
-        <x-divider class="mb-4 mt-1" />
+      <div class="flex justify-between items-center mt-6 mb-4">
+        <h3 class="font-semibold text-primary-800 text-lg">
+            Customer Profile
+        </h3>
+        <x-tag color="success" v-if="quote.kyc_decision === 'Complete'"> KYC - Complete </x-tag>
+        <x-tag color="amber" v-else> KYC - Pending </x-tag>
       </div>
-
+      <x-divider class="mb-4 mt-1" />
       <div class="text-sm">
         <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
           <div class="grid sm:grid-cols-2">
@@ -208,6 +213,13 @@ const permissionsEnum = page.props.permissionsEnum;
             <dt class="font-medium">DATE OF BIRTH</dt>
             <dd>{{ quote.dob }}</dd>
           </div>
+
+          
+          <RiskRatingScoreDetails
+              :quote="quote.jetski_quote"
+              :modelType="quoteType"
+            />
+         
         </dl>
       </div>
     </div>
@@ -263,10 +275,11 @@ const permissionsEnum = page.props.permissionsEnum;
     />
 
     <PlanDetails
-      :insuranceProviders="insuranceProviders"
-      :quote="quote"
-      :quoteType="quoteType"
-    />
+    :insuranceProviders="insuranceProviders"
+    :quote="quote"
+    :quoteType="quoteType"
+    :vatPrice="vatPercentage"
+     />
 
     <EmbeddedProducts
       :data="embeddedProducts"

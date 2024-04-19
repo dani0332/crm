@@ -107,7 +107,7 @@ class ReAssignCarLeadsJob implements ShouldQueue
 
     protected function findAvailableUsers($tierId, $leadSource)
     {
-        return $this->carAllocationService->getEligibleUserForAllocation($tierId, $this->advisorId, true, $leadSource);
+        return $this->carAllocationService->getEligibleUserForAllocation($tierId, $this->advisorId, true, $leadSource, null);
     }
 
     protected function findRules($lead)
@@ -117,7 +117,7 @@ class ReAssignCarLeadsJob implements ShouldQueue
 
     protected function finalizeAdvisors($lead, $tier, $users, $rules)
     {
-        return $this->carAllocationService->determineFinalUserId($lead, $users, $rules);
+        return $this->carAllocationService->determineFinalUserId($lead, $users, $rules, null);
     }
 
     protected function assignLead($lead, $userId, $tier)
@@ -132,6 +132,11 @@ class ReAssignCarLeadsJob implements ShouldQueue
 
     public function middleware()
     {
-        return [(new WithoutOverlapping($this->advisorId))->dontRelease()];
+        // Lock Job in storage session only if advisor id is not zero
+        if ($this->advisorId) {
+            return [(new WithoutOverlapping($this->advisorId))->dontRelease()];
+        }
+
+        return [];
     }
 }
