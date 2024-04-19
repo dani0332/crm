@@ -104,7 +104,6 @@ class UpdateUserStatus extends Command
                     }
                 } else {
                     if ($newStatus == UserStatusEnum::OFFLINE && $subtime > $lastActivity) {
-                        info('System triggered health reassignment job for user inside : '.$lastActivity);
                         $currentDateTime = Carbon::now();
                         $startDateTime = Carbon::parse('08:59:00'); // 6:30 PM
                         $endDateTime = Carbon::parse('18:30:00'); // 8:59 AM of the next day
