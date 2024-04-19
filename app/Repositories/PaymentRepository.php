@@ -8,6 +8,7 @@ use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
+use App\Enums\RolesEnum;
 use App\Interfaces\PaymentRepositoryInterface;
 use App\Models\Payment;
 use App\Models\PaymentSplits;
@@ -66,10 +67,11 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
         return $paymentLink;
     }
 
-    public function fetchCreateNewPayment($request, $quoteModel)
+    public function fetchCreateNewPayment($request)
     {
         DB::beginTransaction();
         try {
+            $quoteModel = $this->getQuoteObject($request->modelType, $request->quote_id);
             $masterPayment = (object) $request->payment;
             $masterPaymentStatus = PaymentStatusEnum::NEW;
             if ($masterPayment->payment_methods == PaymentMethodsEnum::CreditApproval) {
@@ -241,10 +243,12 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
         //Skipping paid payments and deleting extra payments
         if ($paymentSplits) {
             foreach ($paymentSplits as $paymentSplit) {
-                if ($paymentSplit->payment_status_id == PaymentStatusEnum::PAID ||
+                if (
+                    $paymentSplit->payment_status_id == PaymentStatusEnum::PAID ||
                     $paymentSplit->payment_status_id == PaymentStatusEnum::PARTIAL_CAPTURED ||
                     $paymentSplit->payment_status_id == PaymentStatusEnum::CAPTURED ||
-                    $paymentSplit->payment_status_id == PaymentStatusEnum::AUTHORISED) {
+                    $paymentSplit->payment_status_id == PaymentStatusEnum::AUTHORISED
+                ) {
                     $paymentPaidSerialNo[] = $paymentSplit->sr_no;
 
                     continue;
@@ -294,7 +298,8 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                     $paymentSplitRecord->update($splitPaymentInformation);
                 }
                 //add document references
-                if (isset($splitPayment['document_detail'])
+                if (
+                    isset($splitPayment['document_detail'])
                     && $paymentSplitRecord
                     && count($splitPayment['document_detail'])
                 ) {
@@ -362,6 +367,9 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                         try {
                             $paymentSplit->collection_amount = $splitAmount;
                             $paymentSplit->save();
+                            if (Auth::user()->hasRole(RolesEnum::BetaUser)) { //Part of milestone 2
+                                app(SplitPaymentService::class)->createReciept($request->modelType, $request->quote_id, $paymentSplit);
+                            }
                             $parentPayment = $paymentSplit->payment;
                             $parentPayment->captured_amount = ($parentPayment->captured_amount + $splitAmount);
                             $parentPayment->save();
@@ -425,6 +433,23 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
         return response()->json(['error' => 'Payment Migration Failed']);
     }
 
+    //update total price
+    public function fetchUpdateTotalPrice($request)
+    {
+        $quoteModel = $this->getQuoteObject(request()->model_type, request()->quote_id);
+        $payment = $quoteModel->payments()->where('code', $request->payment_code)->first();
+        if ($payment) {
+            $payment->total_price = $request->total_price;
+            $payment->is_approved = 0;
+            $payment->payment_status_id = PaymentStatusEnum::PARTIAL_CAPTURED;
+            $payment->save();
+
+            return response()->json(['message' => 'Total Price Updated Successfully']);
+        }
+
+        return response()->json(['error' => 'Total Price Update Failed']);
+    }
+
     public function fetchUpdatePaymentStatus($request)
     {
         $successMessage = 'Payment Verified';
@@ -440,8 +465,10 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
             ];
 
             //associate approved documents with payment split
-            if (isset($request->approved_document_model[$splitPayment->sr_no])
-                && count($request->approved_document_model[$splitPayment->sr_no]) > 0) {
+            if (
+                isset($request->approved_document_model[$splitPayment->sr_no])
+                && count($request->approved_document_model[$splitPayment->sr_no]) > 0
+            ) {
                 foreach ($request->approved_document_model[$splitPayment->sr_no] as $document) {
                     $quoteDocumentRec = QuoteDocument::find($document['id']);
                     if ($quoteDocumentRec) {
@@ -450,8 +477,10 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                     }
                 }
             }
+
             //create sage reciept
             $isSageEnabled = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::SAGE_ENABLED);
+
             if ($isSageEnabled) {
                 $sageResponse = app(SplitPaymentService::class)->createSageRecipt($request, $splitPayment);
                 if ($sageResponse['status'] == 'success') {
@@ -459,8 +488,10 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                     $splitPayment->update($paymentInformation);
                     if ($masterPayment) {
                         $masterPayment->update(
-                            ['captured_amount' => ($masterPayment->captured_amount + $request->collection_amount),
-                                'payment_allocation_status' => PaymentAllocationStatus::NOT_ALLOCATED]
+                            [
+                                'captured_amount' => ($masterPayment->captured_amount + $request->collection_amount),
+                                'payment_allocation_status' => PaymentAllocationStatus::NOT_ALLOCATED,
+                            ]
                         );
                     }
                 } else {
@@ -471,10 +502,15 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                 $splitPayment->update($paymentInformation);
                 if ($masterPayment) {
                     $masterPayment->update(
-                        ['captured_amount' => ($masterPayment->captured_amount + $request->collection_amount),
-                            'payment_allocation_status' => PaymentAllocationStatus::NOT_ALLOCATED]
+                        [
+                            'captured_amount' => ($masterPayment->captured_amount + $request->collection_amount),
+                            'payment_allocation_status' => PaymentAllocationStatus::NOT_ALLOCATED,
+                        ]
                     );
                 }
+            }
+            if (Auth::user()->hasRole(RolesEnum::BetaUser)) { //Part of milestone 2
+                app(SplitPaymentService::class)->createReciept($request->modelType, $request->quote_id, $splitPayment);
             }
 
         } elseif ($request->is_declined) {
@@ -511,7 +547,6 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                         ['payment_status_id' => $payment->paymentSplits[0]->payment_status_id]
                     );
                 }
-
             } else {
 
                 $totalPaidPayments = PaymentSplits::whereIn('payment_status_id', [
@@ -523,8 +558,10 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                     ->where('code', $payment->code)
                     ->count();
 
-                if ($totalPaidPayments == $payment->total_payments
-                    && $payment->captured_amount >= ($payment->total_price - $payment->discount_value)) {
+                if (
+                    $totalPaidPayments == $payment->total_payments
+                    && $payment->captured_amount >= ($payment->total_price - $payment->discount_value)
+                ) {
                     $payment->update(
                         ['payment_status_id' => PaymentStatusEnum::CAPTURED]
                     );

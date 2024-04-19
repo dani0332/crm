@@ -1548,7 +1548,7 @@ const copyUploadURL = () => {
             <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">PRICE</dt>
-                <dd>{{ record.premium ?? '' }}</dd>
+            <dd>{{ selectedProviderPlan.premium ?? '' }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">PAID AT</dt>
@@ -1560,7 +1560,7 @@ const copyUploadURL = () => {
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">PROVIDER NAME</dt>
-                <dd>{{ record.car_plan_provider_id_text ?? '' }}</dd>
+            <dd>{{ selectedProviderPlan.providerName ?? '' }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">PAYMENT METHOD</dt>
@@ -1574,7 +1574,7 @@ const copyUploadURL = () => {
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">PLAN NAME</dt>
-                <dd>{{ record.plan_id_text }}</dd>
+            <dd>{{ selectedProviderPlan.planName }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">ECOMMERCE</dt>
@@ -1855,6 +1855,10 @@ const copyUploadURL = () => {
                 <dt class="font-medium">ID</dt>
                 <dd>{{ record.id }}</dd>
               </div>
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">ENQUIRY COUNT</dt>
+            <dd>{{ record.enquiry_count }}</dd>
+          </div>
             </dl>
           </div>
           <x-divider class="mb-4 mt-4" />

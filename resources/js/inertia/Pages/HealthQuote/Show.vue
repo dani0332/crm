@@ -66,6 +66,8 @@ defineProps({
   documentTypeCodes: Array
 });
 
+const isManualPlansCount = ref(0);
+
 const page = usePage();
 const permissionEnum = page.props.permissionsEnum;
 const canAny = permissions => useCanAny(permissions);
@@ -181,7 +183,6 @@ const memberCategoryText = memberCategoryId =>
       category => category.id === memberCategoryId,
     )?.text;
   });
-
 
 // const subTeamOptions = computed(() => {
 //     let subteamArray = page.props.teams?.map(team => ({
@@ -416,10 +417,13 @@ const memberForm = useForm({
   quote_request_id: page.props.quote.id,
   update_lead_against_member: null,
   first_name: null,
+  last_name: null,
   relation_code: null,
   quote_type: page.props.modelType,
   customer_id: page.props.quote.customer_id,
   customer_type: page.props.quote.customer_type,
+  customer_member_id: null,
+  quoteId: page.props.quote.uuid,
 });
 
 const rules = {
@@ -445,6 +449,7 @@ function onEditMember(data) {
   memberForm.member_category_id = data.member_category_id;
   memberForm.salary_band_id = data.salary_band_id;
   memberForm.first_name = data.first_name;
+  memberForm.last_name = data.last_name;
   memberForm.relation_code = data.relation_code;
   memberForm.update_lead_against_member = data.index === 1;
 }
@@ -460,6 +465,9 @@ const memberFieldReq = reactive({
   nationality: false,
   dob: false,
 });
+
+const membersDetailsUpdated = ref(false);
+
 const onMemberSubmit = isValid => {
   if (memberForm.nationality_id == null) {
     memberFieldReq.nationality = true;
@@ -473,7 +481,7 @@ const onMemberSubmit = isValid => {
   }
   if (!isValid) return;
   if (memberActionEdit.value) {
-    memberForm.put(`/members/${memberForm.id}`, {
+    memberForm.put(`/health-quote-update-member`, {
       preserveScroll: true,
       onSuccess: () => {
         notification.success({
@@ -482,13 +490,22 @@ const onMemberSubmit = isValid => {
         });
         memberForm.reset();
         onLoadAvailablePlansData();
+        // location.reload();
+      },
+      onError: errors => {
+        notification.error({
+          title: errors.error || 'Data not saved',
+          position: 'top',
+        });
       },
       onFinish: () => {
         modals.member = false;
+        membersDetailsUpdated.value = true;
       },
     });
   } else {
-    memberForm.post(`/members`, {
+    memberForm.post(`/health-quote-add-member`, {
+      // new mavonic endpoint
       preserveScroll: true,
       onSuccess: () => {
         notification.success({
@@ -496,9 +513,17 @@ const onMemberSubmit = isValid => {
           position: 'top',
         });
         onLoadAvailablePlansData();
+        // location.reload();
+      },
+      onError: errors => {
+        notification.error({
+          title: errors.error || 'Data not saved',
+          position: 'top',
+        });
       },
       onFinish: () => {
         modals.member = false;
+        membersDetailsUpdated.value = true;
       },
     });
   }
@@ -507,11 +532,13 @@ const onMemberSubmit = isValid => {
 const memberDelete = id => {
   modals.memberConfirm = true;
   confirmDeleteData.member = id;
+  memberForm.customer_member_id = id;
 };
 
 const memberDeleteConfirmed = () => {
-  memberForm.delete(
-    `/members/${page.props.quote.customer_type}-${page.props.modelType}-${confirmDeleteData.member}`,
+  memberForm.post(
+    `/health-quote-delete-member`,
+    // `/members/${page.props.quote.customer_type}-${page.props.modelType}-${confirmDeleteData.member}`,
     {
       preserveScroll: true,
       onSuccess: () => {
@@ -520,12 +547,17 @@ const memberDeleteConfirmed = () => {
           position: 'top',
         });
         onLoadAvailablePlansData();
+        // location.reload();
       },
       onFinish: () => {
         modals.memberConfirm = false;
       },
     },
   );
+};
+
+const onRecieveMembersDetailsReview = () => {
+  membersDetailsUpdated.value = false;
 };
 
 const memberDataDocs = membersDetail => {
@@ -594,6 +626,19 @@ const onLoadAvailablePlansData = async () => {
     .then(res => {
       plansTable.data = res.data.length > 0 ? res?.data[0] : [];
       getSmallestCopayRateAsDefaultValue();
+      plansTable.data.forEach(plan => {
+        if (plan.isManualPlan) {
+          isManualPlansCount.value++;
+        }
+
+        if (plan.id === selectedPlan.value?.id && !plan.needPriceUpdate) {
+          selectedPlan.value.needPriceUpdate = false;
+        }
+      });
+
+      setTimeout(() => {
+        onPlanFiltersSubmit();
+      }, 800);
     })
     .catch(err => {
       console.log(err);
@@ -711,14 +756,15 @@ const onCreatePlan = () => {
         title: 'Plan Created',
         position: 'top',
       });
+      location.reload();
     },
   });
 };
 
-const onPlanError = () => {
+const onPlanError = data => {
   modals.createPlan = false;
   notification.error({
-    title: 'Plan Creation Failed',
+    title: data ?? 'Plan Creation Failed',
     position: 'top',
   });
 };
@@ -835,27 +881,68 @@ const getSmallestCopayRateAsDefaultValue = () => {
   let smallestCopayValue = 0;
   let defaultCopayId = 0;
   let smallestCopayVAT = 0;
+  let smallestCopayLoadingPrice = 0;
   plansTable.data.forEach(element => {
-    element.ratesPerCopay.forEach(function callback(value, index) {
-      if (index == 0) {
+    defaultCopayId = element.selectedCopayId;
+    element.ratesPerCopay?.forEach(function callback(value, index) {
+      if (
+        element.selectedCopayId &&
+        defaultCopayId == value.healthPlanCoPaymentId
+      ) {
         smallestCopayValue = Number(value.premium);
         smallestCopayVAT = Number(value.vat);
-        defaultCopayId = value.healthPlanCoPaymentId;
-      } else if (value.premium < smallestCopayValue) {
-        smallestCopayValue = Number(value.premium);
-        smallestCopayVAT = Number(value.vat);
-        defaultCopayId = value.healthPlanCoPaymentId;
+        smallestCopayLoadingPrice = Number(
+          value.loadingPrice ? value.loadingPrice : 0,
+        );
+        defaultCopayId = element.selectedCopayId;
+      } else if (
+        element.selectedCopayId == undefined ||
+        element.selectedCopayId == null
+      ) {
+        if (index == 0) {
+          smallestCopayValue = Number(value.premium);
+          smallestCopayVAT = Number(value.vat);
+          smallestCopayLoadingPrice = Number(
+            value.loadingPrice ? value.loadingPrice : 0,
+          );
+          defaultCopayId = value.healthPlanCoPaymentId;
+        } else if (value.premium < smallestCopayValue) {
+          smallestCopayValue = Number(value.premium);
+          smallestCopayVAT = Number(value.vat);
+          smallestCopayLoadingPrice = Number(
+            value.loadingPrice ? value.loadingPrice : 0,
+          );
+          defaultCopayId = value.healthPlanCoPaymentId;
+        }
       }
     });
 
+    element.memberPremiumBreakdown?.forEach(
+      function callback(breakDown, index) {
+        breakDown.ratesPerCopay?.forEach(function callback(ratePerCopay) {
+          if (ratePerCopay.notifyAgent) {
+            element.needPriceUpdate = true;
+          }
+        });
+      },
+    );
+
     if (isMounted.value && selectedCoPay.planId == element.id) {
       element.actualPremium = selectedCoPay.premium;
-      element.vat = selectedCoPay.vat;
+      if (smallestCopayLoadingPrice != 0) {
+        element.vat = Number(
+          (selectedCoPay.premium + smallestCopayLoadingPrice) * 0.05,
+        );
+      } else {
+        element.vat = selectedCoPay.vat;
+      }
       element.selectedCopayId = selectedCoPay.id;
+      element.loadingPrice = smallestCopayLoadingPrice;
     } else {
       element.selectedCopayId = defaultCopayId;
       element.actualPremium = smallestCopayValue;
       element.vat = smallestCopayVAT;
+      element.loadingPrice = smallestCopayLoadingPrice;
     }
     element.coPayments.forEach(function callback(value, index) {
       if (value.id == element.selectedCopayId) {
@@ -871,6 +958,76 @@ const onSelectedCopay = data => {
   selectedCoPay.vat = Number(data.vat);
   selectedCoPay.planId = data.planId;
   getSmallestCopayRateAsDefaultValue();
+};
+
+const onMarkPlanAsManual = (plan, loadingPrice) => {
+  listQuotePlansFiltered.value = listQuotePlansFiltered.value.map(element => {
+    if (element.id == plan.id) {
+      element.isManualPlan = true;
+      // LOADING PRICE UPDTAE
+      let vat =
+        (element.actualPremium +
+          (element.policyFee || 0) +
+          (element.basmah || 0) +
+          (loadingPrice || 0)) *
+        0.05;
+      element.loadingPrice = Number(loadingPrice);
+      element.vat = Number(vat);
+    }
+    return element;
+  });
+  onLoadAvailablePlansData();
+};
+
+// quoteDocuments
+
+const quoteDocumentsTable = reactive({
+  isLoading: false,
+  columns: [
+    {
+      text: 'Document Type',
+      value: 'document_type_text',
+    },
+    {
+      text: 'Document Name',
+      value: 'original_name',
+    },
+    {
+      text: 'Created At',
+      value: 'created_at',
+    },
+    {
+      text: 'Created By',
+      value: 'created_by_name',
+    },
+  ],
+});
+
+const onDocDelete = name => {
+  modals.docConfirm = true;
+  confirmDeleteData.docs = name;
+};
+
+const confirmDeleteDoc = () => {
+  quoteDocumentsTable.isLoading = true;
+  router.post(
+    `/documents/delete`,
+    {
+      docName: confirmDeleteData.docs,
+      quoteId: page.props.quote.id,
+    },
+    {
+      preserveScroll: true,
+      onFinish: () => {
+        modals.docConfirm = false;
+        quoteDocumentsTable.isLoading = false;
+        notification.error({
+          title: 'File Deleted',
+          position: 'top',
+        });
+      },
+    },
+  );
 };
 
 //activities
@@ -1312,7 +1469,7 @@ onMounted(() => {
   onLoadAvailablePlansData();
   const isHealthAdvisor = page.props.advisors.find(
     a => a.id == page.props.quote.advisor_id,
-  );
+  ) || { id: null };
   if (isHealthAdvisor) assignLead.value = isHealthAdvisor.id;
   isMounted.value = true;
 });
@@ -1327,23 +1484,19 @@ const selectedProviderPlan = ref({
   id: page.props.quote.plan_id,
   planName: page.props.quote.health_plan_name_text,
   providerName: page.props.quote.plan_provider_name_text,
-  premium: page.props.ecomDetails.priceWithVAT
-
+  premium: page.props.ecomDetails.priceWithVAT,
 });
 
-console.log(selectedProviderPlan, "LLLKKKKJ", page.props.quote)
-
 const handlePlanSelected = plan => {
-  console.log("HHH", plan);
   //se.value = plan.id;
-  selectedProviderPlan.value.id = plan.id
-  selectedProviderPlan.value.planName = plan.planName
-  selectedProviderPlan.value.providerName = plan.providerName
-  selectedProviderPlan.value.premium = plan.premium
+  selectedProviderPlan.value.id = plan.id;
+  selectedProviderPlan.value.planName = plan.planName;
+  selectedProviderPlan.value.providerName = plan.providerName;
+  selectedProviderPlan.value.premium = plan.premium;
   router.reload({
     preserveState: true,
     preserveScroll: true,
-    only: ['payments','quoteRequest','ecomDetails'],
+    only: ['payments', 'quoteRequest', 'ecomDetails'],
   });
 };
 
@@ -1486,7 +1639,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
             </Link>
           </div>
           <div class="text-sm">
-            <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
+            <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
               <div
                 v-if="hasAnyRole([rolesEnum.Admin, rolesEnum.Engineering])"
                 class="grid sm:grid-cols-2"
@@ -1573,7 +1726,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
           </div>
 
           <div class="text-sm">
-            <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
+            <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">
                   FOR WHOM DO YOU REQUIRE HEALTH INSURANCE?
@@ -1638,7 +1791,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
                 v-if="
                   quote.customer_type === page.props.customerTypeEnum.Individual
                 "
-                class="grid md:grid-cols-2 gap-x-6 gap-y-4"
+                class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words"
               >
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">FIRST NAME</dt>
@@ -1678,7 +1831,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">EMAIL</dt>
-                  <dd>{{ quote.email }}</dd>
+                  <dd class="break-words">{{ quote.email }}</dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">NATIONALITY</dt>
@@ -1735,7 +1888,9 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
                 <RiskRatingScoreDetails :quote="quote" :modelType="quoteType" />
               </dl>
               <dl
-                v-if="quote.customer_type === page.props.customerTypeEnum.Entity"
+                v-if="
+                  quote.customer_type === page.props.customerTypeEnum.Entity
+                "
                 class="grid md:grid-cols-2 gap-x-6 gap-y-4"
               >
                 <div class="grid sm:grid-cols-2">
@@ -1756,7 +1911,9 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">COMPANY NAME</dt>
-                  <dd>{{ customerProfileForm.company_name }}</dd>
+                  <dd class="break-words">
+                    {{ customerProfileForm.company_name }}
+                  </dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">TRADE LICENSE NO</dt>
@@ -1953,13 +2110,12 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
             table-class-name="tablefixed compact"
             :headers="memberDetailsTable.columns"
             :items="membersDetail || []"
-            show-index
             border-cell
             hide-rows-per-page
             hide-footer
           >
-            <template #item-index="{ index, code }">
-              <div>{{ code ?? 'Member ' + index }}</div>
+            <template #item-first_name="{ first_name, last_name }">
+              {{ first_name + ' ' + (last_name == null ? '' : last_name) }}
             </template>
             <template #item-gender="{ gender }">
               {{ genderText(gender).value }}
@@ -2009,12 +2165,46 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
         </template>
 
         <x-form @submit="onMemberSubmit" :auto-focus="false">
+          <div
+            v-if="isManualPlansCount > 0"
+            class="bg-red-100 border border-red-400 text-red-700 rounded-b px-4 py-3 shadow-md mb-4"
+            role="alert"
+          >
+            <div class="flex">
+              <div class="py-1">
+                <svg
+                  class="fill-current h-6 w-6 text-read-900 mr-4"
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 20 20"
+                >
+                  <path
+                    d="M2.93 17.07A10 10 0 1 1 17.07 2.93 10 10 0 0 1 2.93 17.07zm12.73-1.41A8 8 0 1 0 4.34 4.34a8 8 0 0 0 11.32 11.32zM9 11V9h2v6H9v-4zm0-6h2v2H9V5z"
+                  />
+                </svg>
+              </div>
+              <div>
+                <p class="font-bold">ALERT! Manual Plan(s) exists.</p>
+                <p class="text-sm">
+                  Please revist all manual plan(s) and update the per member
+                  price
+                </p>
+              </div>
+            </div>
+          </div>
           <div class="grid md:grid-cols-2 gap-4 md:pb-16">
             <input type="hidden" :value="memberForm.id" />
             <x-input
+              maxLength="60"
               v-model="memberForm.first_name"
-              label="Member Name*"
-              placeholder="Member Name"
+              label="First Name"
+              placeholder="First Name"
+              :rules="[isRequired]"
+            />
+            <x-input
+              maxLength="60"
+              v-model="memberForm.last_name"
+              label="Last Name"
+              placeholder="Last Name"
               :rules="[isRequired]"
             />
             <ComboBox
@@ -2035,14 +2225,14 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
               class="w-full"
             />
 
-            <x-select
+            <!-- <x-select
               v-model="memberForm.member_category_id"
               label="Member Category*"
               :options="memberCategoriesOptions"
               :rules="[isRequired]"
               placeholder="Select Member Category"
               class="w-full"
-            />
+            /> -->
 
             <x-select
               v-model="memberForm.gender"
@@ -2054,7 +2244,9 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
             />
             <DatePicker
               v-model="memberForm.dob"
-              label="DOB"
+              label="DOB*"
+              :max-date="new Date()"
+              :rules="[isRequired]"
               :hasError="memberFieldReq.dob"
             />
             <x-select
@@ -2101,6 +2293,31 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
 
       <x-modal v-model="modals.memberConfirm" show-close backdrop>
         <template #header> Delete Member Detail </template>
+        <div
+          v-if="isManualPlansCount > 0"
+          class="w-full bg-red-100 border border-red-400 text-red-700 rounded-b px-4 py-3 shadow-md mb-4"
+          role="alert"
+        >
+          <div class="flex">
+            <div class="py-1">
+              <svg
+                class="fill-current h-6 w-6 text-read-900 mr-4"
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 20 20"
+              >
+                <path
+                  d="M2.93 17.07A10 10 0 1 1 17.07 2.93 10 10 0 0 1 2.93 17.07zm12.73-1.41A8 8 0 1 0 4.34 4.34a8 8 0 0 0 11.32 11.32zM9 11V9h2v6H9v-4zm0-6h2v2H9V5z"
+                />
+              </svg>
+            </div>
+            <div>
+              <p class="font-bold">ALERT! Manual Plan(s) exists.</p>
+              <p class="text-sm">
+                Please revist all manual plan(s) and update the per member price
+              </p>
+            </div>
+          </div>
+        </div>
         <p>Are you sure you want to delete this?</p>
         <template #actions>
           <div class="text-right space-x-4">
@@ -2280,62 +2497,72 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
         <template #body>
           <x-divider class="my-4" />
           <div class="flex flex-wrap md:flex-nowrap gap-6 w-full">
-            <div class="w-full md:w-2/3">
-              <x-textarea
-                v-model="leadStatusForm.notes"
-                type="text"
-                label="Notes"
-                placeholder="Lead Notes"
-                class="w-full"
-                :disabled="quote.quote_status_id == 15"
-              />
-            </div>
-            <div class="w-full md:w-1/3">
-              <div class="flex flex-col gap-4">
-                <x-select
-                  v-model="leadStatusForm.leadStatus"
-                  label="Status"
-                  :options="leadStatusOptions"
+            <div class="w-full md:w-50">
+                  <div class="flex flex-col gap-4">
+                    <x-select
+                      v-model="leadStatusForm.leadStatus"
+                      label="Status"
+                      :options="leadStatusOptions"
+                      :disabled="quote.quote_status_id == 15"
+                      placeholder="Lead Status"
+                      class="w-full"
+                    />
+                <x-textarea
+                  v-model="leadStatusForm.notes"
+                  type="text"
+                  label="Notes"
+                  placeholder="Lead Notes"
+                  class="w-full"
                   :disabled="quote.quote_status_id == 15"
-                  placeholder="Lead Status"
-                  class="w-full"
                 />
-                <x-input
-                  v-if="leadStatusForm.leadStatus == 15"
-                  v-model="leadStatusForm.trans_code"
-                  label="TransApp Code"
-                  placeholder="TransApp Code is required"
-                  class="w-full"
-                  :error="leadStatusForm.errors.trans_code"
-                />
-                <x-select
-                  v-if="leadStatusForm.leadStatus == 17"
-                  v-model="leadStatusForm.lostReason"
-                  label="Lost Reason"
-                  :options="
-                    lostReasons?.map(item => ({
-                      value: item.id,
-                      label: item.text,
-                    }))
-                  "
-                  placeholder="Lost Reason is required"
-                  class="w-full"
-                  :error="leadStatusForm.errors.lostReason"
-                />
-              </div>
-
-              <div class="flex justify-end">
-                <x-button
-                  class="mt-4"
-                  color="emerald"
-                  size="sm"
-                  :loading="leadStatusForm.processing"
-                  @click.prevent="onLeadStatus"
-                >
-                  Change Status
-                </x-button>
               </div>
             </div>
+            <div class="w-full md:w-50">
+              <div class="flex flex-col gap-4">
+                    <x-input
+                      v-if="leadStatusForm.leadStatus == 15"
+                      v-model="leadStatusForm.trans_code"
+                      label="TransApp Code"
+                      placeholder="TransApp Code is required"
+                      class="w-full"
+                      :error="leadStatusForm.errors.trans_code"
+                    />
+                    <x-select
+                      v-if="leadStatusForm.leadStatus == 17"
+                      v-model="leadStatusForm.lostReason"
+                      label="Lost Reason"
+                      :options="
+                        lostReasons?.map(item => ({
+                          value: item.id,
+                          label: item.text,
+                        }))
+                      "
+                      placeholder="Lost Reason is required"
+                      class="w-full"
+                      :error="leadStatusForm.errors.lostReason"
+                    />
+                <x-field class="" label="Transaction Type">
+                  <x-input
+                    type="text"
+                    :value="quote.transaction_type_text"
+                    class="w-full"
+                    :disabled="true"
+                  />
+                </x-field>
+                  </div>
+            </div>
+          </div>
+          <x-divider class="mb-1 mt-10" />
+          <div class="flex justify-end">
+            <x-button
+              class="mt-4"
+              color="emerald"
+              size="sm"
+              :loading="leadStatusForm.processing"
+              @click.prevent="onLeadStatus"
+            >
+              Change Status
+            </x-button>
           </div>
         </template>
       </Collapsible>
@@ -2356,11 +2583,11 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
             <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">PLAN NAME</dt>
-                <dd>{{ ecomDetails.planName }}</dd>
+                <dd>{{ selectedProviderPlan.planName }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">PROVIDER NAME</dt>
-                <dd>{{ ecomDetails.providerName }}</dd>
+                <dd>{{ selectedProviderPlan.providerName }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">PAYMENT STATUS</dt>
@@ -2386,7 +2613,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">TOTAL PRICE (with VAT)</dt>
-                <dd>{{ fixedValue(ecomDetails.priceWithVAT) }}</dd>
+                <dd>{{ selectedProviderPlan.premium }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">CO-PAY / CO-INSURANCE</dt>
@@ -2473,7 +2700,13 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
             </x-badge>
 
             <x-button
-              v-if="isBetaUser"
+              v-if="
+                hasAnyRole([
+                  rolesEnum.BetaUser,
+                  rolesEnum.RMAdvisor,
+                  rolesEnum.HealthManager,
+                ])
+              "
               size="sm"
               color="emerald"
               @click.prevent="modals.createPlan = true"
@@ -2481,6 +2714,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
               Add Plan
             </x-button>
           </div>
+
           <DataTable
             ref="planDataTable"
             v-model:items-selected="selectedPlans"
@@ -2496,7 +2730,9 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
             <template #item-copayName="item">
               <span class="copay-max">{{ item.copayName }}</span>
             </template>
-            <template #item-providerName="{ providerName, isManualPlan, isHidden }">
+            <template
+              #item-providerName="{ providerName, isManualPlan, isHidden }"
+            >
               <p>{{ providerName }}</p>
               <div class="flex gap-1">
                 <x-tag
@@ -2525,22 +2761,70 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
                 </x-tag>
               </div>
             </template>
-
-            <template #item-total="{ actualPremium, policyFee, basmah, vat }">
+            <template
+              #item-total="{
+                actualPremium,
+                policyFee,
+                basmah,
+                vat,
+                loadingPrice,
+              }"
+            >
               {{
-                fixedValue(actualPremium + (policyFee || 0) + (basmah || 0) + vat)
+                fixedValue(
+                  actualPremium +
+                    (policyFee || 0) +
+                    (basmah || 0) +
+                    vat +
+                    (loadingPrice || 0),
+                )
               }}
             </template>
             <template #item-action="item">
               <div class="flex gap-2 pr-2">
-                <x-button
-                  size="xs"
-                  color="primary"
-                  outlined
-                  @click.prevent="planClicked(item)"
+                <!-- put here -->
+                <!-- don't remove this commented code anyone please -->
+                <template
+                  v-if="
+                    (item.isManualPlan && membersDetailsUpdated) ||
+                    item.needPriceUpdate
+                  "
                 >
-                  View
-                </x-button>
+                  <!-- always false temporarily -->
+                  <x-tooltip position="top" class="arrow-b">
+                    <x-badge
+                      size="xs"
+                      color="error"
+                      outlined
+                      offset-x="-8"
+                      offset-y="-10"
+                    >
+                      <x-button
+                        size="xs"
+                        color="primary"
+                        outlined
+                        @click.prevent="planClicked(item)"
+                      >
+                        View
+                      </x-button>
+                      <template #content>!</template>
+                    </x-badge>
+                    <template #tooltip>
+                      Price outdated! <br />
+                      Please update
+                    </template>
+                  </x-tooltip>
+                </template>
+                <template v-else>
+                  <x-button
+                    size="xs"
+                    color="primary"
+                    outlined
+                    @click.prevent="planClicked(item)"
+                  >
+                    View
+                  </x-button>
+                </template>
                 <x-button
                   size="xs"
                   color="emerald"
@@ -2580,21 +2864,23 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
           </DataTable>
         </template>
       </Collapsible>
+    </div>
 
-      <x-modal v-model="modals.plan" size="xl" show-close backdrop>
-        <template #header>
-          {{ selectedPlan.providerName }} - {{ selectedPlan.name }}
-        </template>
-        <LazyAvailablePlan
-          :plan="selectedPlan"
-          :genders="genderOptions"
-          @copay-update="onSelectedCopay"
-          @onLoadAvailablePlansData="onLoadAvailablePlansData"
-        />
-      </x-modal>
+      <LazyAvailablePlan
+        v-model="modals.plan"
+        :plan="selectedPlan"
+        :genders="genderOptions"
+        :members="membersDetail"
+        :memberCategories="memberCategories"
+        :memebersDetailsChanged="membersDetailsUpdated"
+        @copay-update="onSelectedCopay"
+        @onLoadAvailablePlansData="onLoadAvailablePlansData"
+        @membersDetailsReviewed="onRecieveMembersDetailsReview"
+        @markPlanAsManual="onMarkPlanAsManual"
+      />
 
       <x-modal v-model="modals.createPlan" size="xl" show-close backdrop>
-        <template #header> Create Heath Quote </template>
+        <template #header> Add Plan </template>
         <LazyCreatePlan
           :uuid="quote.uuid"
           :members="membersDetail"
@@ -2692,21 +2978,27 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
     <MigratePayment
       v-if="!isNewPaymentStructure"
       :quoteId="quote.id"
-      :paymentCode = "quote.code"
-      quoteType="Health"      
+      :paymentCode="quote.code"
+      quoteType="Health"
+      :payments="payments"
     />
     <PaymentTableNew
-			v-if="isNewPaymentStructure"
-			quoteType="Health"
-			:payments="payments"
+      v-if="isNewPaymentStructure"
+      quoteType="Health"
+      :payments="payments"
       :paymentDocument="documentTypeCodes.filter(item => ['HPD', 'HPDR', 'HDPDR'].includes(item.code))"
-			:quoteRequest="quoteRequest"
-			:paymentStatusEnum="paymentStatusEnum"
-			:paymentTooltipEnum="paymentTooltipEnum"
-			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name, tooltip: pm.tool_tip } })"
-			:storageUrl="storageUrl"
-      :eCommercePrice="ecomDetails.priceWithVAT?ecomDetails.priceWithVAT:0"
-		/>
+      :quoteRequest="quoteRequest"
+      :paymentStatusEnum="paymentStatusEnum"
+      :paymentTooltipEnum="paymentTooltipEnum"
+      :paymentMethods="
+        paymentMethods.map(pm => {
+          return { value: pm.code, label: pm.name, tooltip: pm.tool_tip };
+        })
+      "
+      :storageUrl="storageUrl"
+      :eCommercePrice="ecomDetails.priceWithVAT ? ecomDetails.priceWithVAT : 0"
+    />
+    
     <PaymentTable
       v-else
       :payments="payments"
@@ -2726,7 +3018,6 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       :paymentLink="paymentLink"
       :expanded="sectionExpanded"
     />
-
 
     <BookPolicy
       v-if="
@@ -2902,7 +3193,6 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
         </div>
       </template>
     </x-modal>
-    
 
     <div class="p-4 rounded shadow mb-6 bg-white">
       <Collapsible :expanded="sectionExpanded">
@@ -2941,7 +3231,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
     <ClientInquiryLogs
       v-if="clientInquiryLogs?.length > 0"
       :logs="clientInquiryLogs"
-      />
+    />
 
     <div class="p-4 rounded shadow mb-6 bg-white">
       <Collapsible :expanded="sectionExpanded">
@@ -2977,6 +3267,10 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       </Collapsible>
     </div>
 
-    <AuditLogs :type="'App\\Models\\HealthQuote'" :id="$page.props.quote.id" :quoteCode="$page.props.quote.code" :expanded="sectionExpanded"/>
-  </div>
+    <AuditLogs
+      :type="'App\\Models\\HealthQuote'"
+      :id="$page.props.quote.id"
+      :quoteCode="$page.props.quote.code"
+      :expanded="sectionExpanded"
+    />
 </template>

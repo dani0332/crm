@@ -1944,8 +1944,8 @@ const handleSelectionChange = (tableType, selectedItems) => {
             Delete
           </x-button>
         </div>
-      </template> </x-modal
-    >2
+      </template>
+    </x-modal>
 
     <customerAdditionalContacts
       quoteType="Travel"
@@ -2037,6 +2037,14 @@ const handleSelectionChange = (tableType, selectedItems) => {
                   :error="leadStatusForm.errors.lostReason"
                 />
               </x-field>
+          <x-field label="Transaction Type">
+            <x-input
+              type="text"
+              :value="quote.transaction_type_text"
+              class="w-full"
+              :disabled="true"
+            />
+          </x-field>
             </div>
           </div>
           <div class="flex justify-end">
@@ -2073,7 +2081,7 @@ const handleSelectionChange = (tableType, selectedItems) => {
             <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">PRICE</dt>
-                <dd>{{ ecomDetails.premium }}</dd>
+            <dd>{{ selectedProviderPlan.premium }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">PAID AT</dt>
@@ -2085,8 +2093,12 @@ const handleSelectionChange = (tableType, selectedItems) => {
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">PROVIDER NAME</dt>
-                <dd>{{ ecomDetails.planName }}</dd>
-              </div>
+            <dd>{{ selectedProviderPlan.providerName ?? '' }}</dd>
+          </div>
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">PLAN NAME</dt>
+            <dd>{{ selectedProviderPlan.planName ?? '' }}</dd>
+          </div>
             </dl>
           </div>
         </template>
@@ -2369,16 +2381,15 @@ const handleSelectionChange = (tableType, selectedItems) => {
                     View
                   </x-button>
 
-                  <!-- v-if="hasRole(rolesEnum.TravelAdvisor)" hide for now -->
-                  <span v-if="true == false">
-                    <SelectPlan
-                      class="ml-1"
-                      v-if="prefillPlanId != item.id"
-                      @update:updatePlanId="handleChildUpdate"
-                      :plan="item"
-                      :quoteType="modelType"
-                      :uuid="quote.uuid"
-                    />
+              <span v-if="hasRole(rolesEnum.TravelAdvisor) && aboveAgeMembers == 0">
+                <SelectPlan
+                  class="ml-1"
+                  v-if="selectedProviderPlan.id != item.id"
+                  @update:selectedPlanChanged="handlePlanSelected"
+                  :plan="item"
+                  :quoteType="modelType"
+                  :uuid="quote.uuid"
+                />
 
                     <x-button
                       class="ml-1"
@@ -2464,7 +2475,8 @@ const handleSelectionChange = (tableType, selectedItems) => {
       v-if="!isNewPaymentStructure"
       :quoteId="quote.id"
       :paymentCode = "quote.code"
-      quoteType="Travel"      
+      quoteType="Travel"
+      :payments="payments"    
     />
     <PaymentTableNew
 			v-if="isNewPaymentStructure"
