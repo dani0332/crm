@@ -7,6 +7,7 @@ use App\Enums\GenericRequestEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\PlanTypeEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
@@ -197,6 +198,12 @@ class CentralService
                 } else {
                     if (gettype($quotePlans) != 'string') {
                         $listQuotePlans[] = $quotePlans->quote->plans;
+
+                        foreach ($listQuotePlans as $plans) {
+                            foreach ($plans as $plan) {
+                                $plan->plan_type = PlanTypeEnum::typeName($plan->planTypeId)?->label();
+                            }
+                        }
                     }
                 }
 
