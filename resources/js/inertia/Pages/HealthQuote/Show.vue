@@ -1493,6 +1493,14 @@ const handlePlanSelected = plan => {
   });  
 };
 
+watch(
+  () => page.props.ecomDetails,
+  value => {
+    selectedProviderPlan.value.premium = value.priceWithVAT;
+  },
+  { deep: true },
+);
+
 </script>
 
 <template>

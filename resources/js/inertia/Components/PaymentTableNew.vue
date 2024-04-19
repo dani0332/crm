@@ -18,7 +18,7 @@ const props = defineProps({
   quoteType: String,
   storageUrl: String,
   eCommercePrice: {
-    type: String,
+    type: [String, Number],
     default: '0',
   },
   quoteSubType: {
@@ -93,19 +93,19 @@ const modal2Ref = ref(null);
 const familyEmployeDiscount = ['Car', 'Health', 'Home', 'Travel'];
 // Array of quote types to check against
 const quoteTypesToCheck = ['Car', 'Health', 'Travel']; //Ecommerce LOBs
-// Declare initialAmount variable
-let initialAmount;
+// Declare initialAmount.value variable
+const initialAmount = ref(0);
 
-// Check quoteType and set initialAmount accordingly
+// Check quoteType and set initialAmount.value accordingly
 if (props.quoteType === 'Health') {
-  initialAmount = props.eCommercePrice;
+  initialAmount.value = props.eCommercePrice;
 } else {
-  initialAmount = quoteTypesToCheck.includes(props.quoteType)
+  initialAmount.value = quoteTypesToCheck.includes(props.quoteType)
     ? props.quoteRequest.premium
     : props.quoteRequest.price_with_vat;
 }
-const totalPrice = ref(initialAmount); // Initial total price
-const totalAmount = ref(initialAmount); // Initial total price
+const totalPrice = ref(initialAmount.value); // Initial total price
+const totalAmount = ref(initialAmount.value); // Initial total price
 
 const discountProofDocument = props.paymentDocument.find(item => item.text === "Discount Proof");
 const paymentProofDocument  = props.paymentDocument.find(item => item.text === "Payment Proof");
@@ -1738,13 +1738,13 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
 watch(() => props.quoteRequest, (newValue, oldValue) => {
   //refresh premium
   if (props.quoteType === 'Health') {
-    initialAmount = props.eCommercePrice;
+    initialAmount.value = props.eCommercePrice;
   } else {
-    initialAmount = quoteTypesToCheck.includes(props.quoteType)
+    initialAmount.value = quoteTypesToCheck.includes(props.quoteType)
       ? props.quoteRequest.premium
       : props.quoteRequest.price_with_vat;
   }
-  totalPrice.value = initialAmount;
+  totalPrice.value = initialAmount.value;
   //refresh plan
   if (quoteTypesToCheck.includes(props.quoteType)) {
     initalPlanDetails = props.quoteRequest.plan;
@@ -1755,6 +1755,15 @@ watch(() => props.quoteRequest, (newValue, oldValue) => {
   }
   planDetail.value = initalPlanDetails;
 });
+
+// Watch for Ecommerce Price changes
+watch(
+  () => props.eCommercePrice,
+  (newValue, oldValue) => {
+    initialAmount.value = newValue;
+    totalPrice.value = newValue;
+  },
+);
 
 // verify if master payment is paid
 const isMasterPaymentPaid = computed(() => {  
