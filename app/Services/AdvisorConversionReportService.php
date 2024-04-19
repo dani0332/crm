@@ -486,7 +486,9 @@ class AdvisorConversionReportService extends BaseService
                 });
             }
 
-            $query = $query->filterBySegment($filters->segment_filter, quoteTypeCode::Car);
+            if (isset($filters->segment_filter) && $filters->segment_filter != 'all') {
+                $query = $query->filterBySegment($filters->segment_filter, quoteTypeCode::Car);
+            }
         }
 
         if($lob === quoteTypeCode::Health) {
