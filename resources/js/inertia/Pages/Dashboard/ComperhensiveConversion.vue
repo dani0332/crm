@@ -131,6 +131,9 @@ watch(
 );
 
 onMounted(() => {
+  window.addEventListener('resize', function(event) {
+    setState();
+}, true);
   setDefaultValues();
   setQueryStringFilters();
   onLobChange(filters.lob, true);
