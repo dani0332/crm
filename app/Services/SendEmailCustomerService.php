@@ -566,7 +566,7 @@ class SendEmailCustomerService extends BaseService
                 'subject' => $emailData->subject,
                 'sender' => [
                     'email' => 'no-reply@alert.insurancemarket.email',
-                    'name' => 'insurance market',
+                    'name' => 'InsuranceMarket.ae',
                 ],
                 'params' => $emailData,
                 'to' => [[
