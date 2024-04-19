@@ -362,7 +362,7 @@ const onLoadingPricesUpdate = (member, updateManual = 1) => {
           title: res.data,
           position: 'top',
         });
-        router.reload({ only: ['payments'] });
+        router.reload({ only: ['payments', 'ecomDetails'] });
       } else {
         notification.error({
           title: res.data,
