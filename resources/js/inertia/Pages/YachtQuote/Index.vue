@@ -489,13 +489,14 @@ watch(
       hide-footer
       fixed-checkbox
     >
-      <template #item-uuid="{ code, uuid }">
+      <template #item-uuid="{ code, uuid, stale_at }">
         <Link
           v-if="can(permissionsEnum.YachtQuotesShow)"
           :href="route('yacht-quotes-show', uuid)"
-          class="text-primary-500 hover:underline"
+          class="text-primary-500 hover:underline flex items-center space-x-1"
         >
-          {{ code }}
+          <span>{{ code }}</span>
+          <StaleLeadsBadge :date="stale_at" :align="`left`" />
         </Link>
         <span v-else>{{ code }}</span>
       </template>
