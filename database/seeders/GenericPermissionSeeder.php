@@ -66,7 +66,7 @@ class GenericPermissionSeeder extends Seeder
                 RolesEnum::Engineering,
             ],
             PermissionsEnum::HEALTH_CONVERSION_REPORT => [
-                RolesEnum::HealthAdvisor,
+                RolesEnum::RMAdvisor,
                 RolesEnum::HealthManager,
                 RolesEnum::SeniorManagement,
                 RolesEnum::Admin,
