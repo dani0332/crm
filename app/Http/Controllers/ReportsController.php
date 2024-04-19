@@ -142,7 +142,11 @@ class ReportsController extends Controller
         $lobId = $this->getProductByName($request->lob)->id;
         $allTeams = $this->getTeamsByProductId($lobId)->pluck('id')->toArray();
         
-        if (auth()->user()->hasRole(RolesEnum::SeniorManagement)) {
+        if (auth()->user()->hasAnyRole([
+            RolesEnum::SeniorManagement,
+            RolesEnum::Admin,
+            RolesEnum::Engineering,
+            ])) {
             $commonteamIds = $allTeams;
         } else {
             $userTeams = $this->getUserTeams(auth()->user()->id)->pluck('id')->toArray();
@@ -170,7 +174,13 @@ class ReportsController extends Controller
     public function fetchAdvisorsListByLob(Request $request)
     {
         $loginUserId = auth()->user()->id;
-        if (auth()->user()->hasRole(RolesEnum::SeniorManagement)) {
+        if (
+            auth()->user()->hasAnyRole([
+                RolesEnum::SeniorManagement,
+                RolesEnum::Admin,
+                RolesEnum::Engineering,
+            ])
+        ) {
             $usersReportToLoggedInUser = $this->getUsersByProductName($request->lob)->pluck('id')->toArray();
         } else {
             $usersReportToLoggedInUser = $this->walkTree($loginUserId, $request->lob);
@@ -210,7 +220,13 @@ class ReportsController extends Controller
             ];
         }
         $subTeams = $this->getSubTeamsByTeamIds($request->teamIds)->whereIn('name', $allowedSubTeams)->pluck('id')->toArray();
-        if (auth()->user()->hasRole(RolesEnum::SeniorManagement)) {
+        if (
+            auth()->user()->hasAnyRole([
+                RolesEnum::SeniorManagement,
+                RolesEnum::Admin,
+                RolesEnum::Engineering,
+            ])
+        ) {
             $ids = $subTeams;
         } else {
             $userTeams = $this->getCurrentUserTeamsAndSubTeams(Auth::user()->id)->pluck('id')->toArray();
@@ -227,7 +243,13 @@ class ReportsController extends Controller
 
     public function fetchAdvisorListByTeam(Request $request)
     {
-        if (auth()->user()->hasRole(RolesEnum::SeniorManagement)) {
+        if (
+            auth()->user()->hasAnyRole([
+                RolesEnum::SeniorManagement,
+                RolesEnum::Admin,
+                RolesEnum::Engineering,
+            ])
+        ) {
             $advisorIdsByTeam = $this->getUsersByTeamIds($request->teamIds)->pluck('id')->toArray();
         } else {
             $usersReportToLoggedInUser = $this->walkTree(auth()->user()->id, $request->lob);
@@ -252,7 +274,13 @@ class ReportsController extends Controller
     public function fetchAdvisorListBySubTeam(Request $request)
     {
         $teamUsers = $this->getUsersBySubTeamIds($request->teamIds)->pluck('id')->toArray();
-        if (auth()->user()->hasRole(RolesEnum::SeniorManagement)) {
+        if (
+            auth()->user()->hasAnyRole([
+                RolesEnum::SeniorManagement,
+                RolesEnum::Admin,
+                RolesEnum::Engineering,
+            ])
+        ) {
             $advisorIdsByTeam = $teamUsers;
         } else {
             $usersReportToLoggedInUser = $this->walkTree(auth()->user()->id, $request->lob);
