@@ -10,6 +10,7 @@ use App\Enums\QuoteSegmentEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\RolesEnum;
 use App\Enums\TravelQuoteEnum;
+use App\Services\SplitPaymentService;
 use App\Services\UserService;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
@@ -73,6 +74,7 @@ class HandleInertiaRequests extends Middleware
             'epLink' => config('constants.AFIA_WEBSITE_DOMAIN'),
             'im_logo' => getIMLogo(),
             'quoteSegments' => QuoteSegmentEnum::withLabels(),
+            'paymentLookups' => app(SplitPaymentService::class)->getPaymentLookups(),
         ];
     }
 
@@ -287,7 +289,7 @@ class HandleInertiaRequests extends Middleware
         //     });
         // }
 
-        if (auth()->user()->can(PermissionsEnum::TransAppList)) {
+        if (auth()->user()->canAny([PermissionsEnum::TransAppList, PermissionsEnum::TransAppCreate, PermissionsEnum::TransAppEdit])) {
             $nav = $nav->add('Trans App', '', function (Section $section) {
                 $section
                     ->addIf(
@@ -314,36 +316,11 @@ class HandleInertiaRequests extends Middleware
                         '/transapp/cancel-transaction',
                         fn ($s) => $s->attributes(['icon' => 'box'])
                     )
-                    ->add('Transaction List', '/transapp/transaction', fn ($s) => $s->attributes(['icon' => 'box']))
                     ->addIf(
-                        auth()->user()->can(PermissionsEnum::CRMAdmin),
-                        'Admin',
-                        route('insurancecompany.index'),
-                        fn ($s) => $s
-                            ->addIf(
-                                auth()->user()->can(PermissionsEnum::InsuranceCompanyList),
-                                'Insurance Companies',
-                                route('insurancecompany.index'),
-                                fn ($s) => $s->attributes(['icon' => 'box'])
-                            )
-                            ->addIf(
-                                auth()->user()->can(PermissionsEnum::ReasonList),
-                                'Reasons',
-                                route('reason.index'),
-                                fn ($s) => $s->attributes(['icon' => 'box'])
-                            )
-                            ->addIf(
-                                auth()->user()->can(PermissionsEnum::StatusList),
-                                'Status',
-                                route('status.index'),
-                                fn ($s) => $s->attributes(['icon' => 'box'])
-                            )
-                            ->addIf(
-                                auth()->user()->can(PermissionsEnum::PaymentModeList),
-                                'Payment Modes',
-                                route('paymentmode.index'),
-                                fn ($s) => $s->attributes(['icon' => 'box'])
-                            )
+                        auth()->user()->can(PermissionsEnum::TransAppList),
+                        'Transaction List',
+                        '/transapp/transaction',
+                        fn ($s) => $s->attributes(['icon' => 'box'])
                     );
             });
         }

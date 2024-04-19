@@ -25,7 +25,7 @@ const insuranceProviderOptions = computed(() => {
         label: provider.text,
     }));
 });
-
+const enableManageOptions = ref(false);
 const createPaymentModal = ref(false);
 const isLoading = ref(false);
 
@@ -267,7 +267,7 @@ const providerId = computed(() => {
       <x-button
         v-if="(can(permissionEnum.PaymentsCreate) &&
         !can(permissionEnum.ApprovePayments) &&
-        !hasRole(rolesEnum.PA) && quoteRequest.plan) || isCommercialVehicles"
+        !hasRole(rolesEnum.PA) && quoteRequest.plan && enableManageOptions) || (isCommercialVehicles && enableManageOptions)"
         size="sm"
         color="orange"
         @click="addPaymentModal"
@@ -295,7 +295,7 @@ const providerId = computed(() => {
 
       <template #item-actions="item">
             <div class="flex gap-2">
-                <template v-if="!can(permissionEnum.ApprovePayments)">
+                <template v-if="!can(permissionEnum.ApprovePayments) && enableManageOptions">
                     <x-button v-if="(item.payment_methods_code == 'CC' || item.payment_methods_code == 'IN_PL') && item.payment_status_id != paymentStatusEnum.PAID && item.payment_status_id != paymentStatusEnum.CAPTURED && item.payment_status_id != paymentStatusEnum.AUTHORISED && !hasRole(rolesEnum.PA)"
                         size="xs"
                         color="primary"
@@ -308,7 +308,7 @@ const providerId = computed(() => {
                         Edit
                     </x-button>
                 </template>
-                <template v-if="can(permissionEnum.ApprovePayments)">
+                <template v-if="can(permissionEnum.ApprovePayments) && enableManageOptions">
                     <x-button v-if="item.payment_methods_code != 'CC' && ![paymentStatusEnum.PAID, paymentStatusEnum.CAPTURED].includes(item.payment_status_id) && !hasRole(rolesEnum.PA)"
                         size="xs"
                         color="primary"

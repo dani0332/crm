@@ -120,7 +120,7 @@ class PersonalQuote extends Model implements AuditableContract
     }
 
     /**
-     * @param    $date
+     * @param  $date
      * @return string
      */
     public function getDobAttribute($value)
@@ -248,5 +248,10 @@ class PersonalQuote extends Model implements AuditableContract
     {
         return $this->hasOne(QuoteRequestEntityMapping::class, 'quote_request_id')
             ->whereIn('quote_type_id', [QuoteTypeId::Cycle, QuoteTypeId::Bike, QuoteTypeId::Pet, QuoteTypeId::Yacht, QuoteTypeId::Jetski]);
+    }
+
+    public function insuranceProvider()
+    {
+        return $this->belongsTo(InsuranceProvider::class, 'insurance_provider_id', 'id');
     }
 }
