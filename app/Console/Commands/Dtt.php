@@ -77,8 +77,8 @@ class Dtt extends Command
                 ->orderBy('id', 'DESC')
                 ->get();
 
-            // dd($leads->pluck('uuid')->toArray());
-            info('------CarRevivalLeadsCreationJobCount --' . count($leads));
+            info('------CarRevivalLeadsCreationJobCount --' . count($leads) . '------' . json_encode($leads->pluck('uuid')->toArray()));
+
             foreach ($leads as $carLead) {
                 $isTierR = $this->leadAllocationService->checkIfLeadIsRenewal($carLead);
                 info('------isTierR --' . !$isTierR);
