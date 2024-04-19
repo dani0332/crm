@@ -337,7 +337,7 @@ class AdvisorConversionReportService extends BaseService
 
         $lobs = $this->getLobByPermissions();
         return [
-            'lob' => reset($lobs),
+            'lob' => count($lobs) == 1 ? reset($lobs) : '',
             'advisorAssignedDates' => $advisorAssignedDates,
             'isCommercial' => 'All',
         ];

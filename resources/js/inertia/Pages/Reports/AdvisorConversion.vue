@@ -28,6 +28,7 @@ const advisorOptions = ref([]);
 const isDirty = ref(false);
 const isMounted = ref(false);
 const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
+const toast = useToast();
 
 const {
   currentPageFirstIndex,
@@ -236,8 +237,17 @@ const getFiltersObject = () => {
 
 let filters = reactive(getFiltersObject());
 
-function onSubmit(isValid) {
-  if (isValid) {
+function onSubmit(isValid, isMounted = false) {
+
+  if (!filters.lob && isMounted === false) {
+    toast.error({
+      title: 'Please select LOB',
+      position: 'top',
+    });
+    return;
+  }
+
+  if (isValid && filters.lob) {
     isDirty.value = false;
     filters.page = 1;
     const payLoad = cleanFilters(filters);
@@ -722,7 +732,7 @@ onMounted(() => {
 
   isMounted.value = true;
 
-  onSubmit(true);
+  onSubmit(true, true);
 });
 
 watch(
@@ -794,6 +804,7 @@ const getAdvisorLabel = () => {
         <x-select
             label="LOB"
             v-model="filters.lob"
+            placeholder="Select LOB"
             :options="quoteTypesOptions"
             size="sm"
             @update:model-value="onLobChange"
