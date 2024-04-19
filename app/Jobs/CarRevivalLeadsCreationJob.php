@@ -101,7 +101,7 @@ class CarRevivalLeadsCreationJob implements ShouldQueue, StackableJob
 
         info('carRevivalParentLead-' . $this->lead->uuid . '-capiResponse -' . json_encode($capiResponse));
         if (!isset($capiResponse->errors) && !empty($capiResponse->quoteUID)) {
-            info('carRevivalParentLead-' . $this->lead->uuid .  '-childLeadCreated - ' . $capiResponse->quoteUID . ' - CAPI Response:');
+            info('carRevivalParentLead-' . $this->lead->uuid .  '-childLeadCreated - ' . $capiResponse->quoteUID . ' - CAPI Response-'. json_encode($capiResponse));
 
             $carQuote = $this->getQuoteObject(QuoteTypes::CAR->value, $capiResponse->quoteUID);
 
