@@ -40,16 +40,10 @@ export const useObjToUrl = obj =>
     .join('&');
 };
 
-export const useGetShowPageRoute = (
-  uuid,
-  quoteTypeId,
-  business_type_of_insurance_id,
-) =>
+export const useGetShowPageRoute = (uuid, quoteTypeId, business_type_of_insurance_id) =>
 {
-  let business_route =
-    business_type_of_insurance_id == 5
-      ? route('amt.show', uuid)
-      : route('business.show', uuid);
+
+  let business_route = (business_type_of_insurance_id == 5) ? route('amt.show', uuid) : route('business.show', uuid);
 
   const routesObj = {
     1: route('car.show', uuid),
@@ -65,7 +59,7 @@ export const useGetShowPageRoute = (
   };
 
   return routesObj[quoteTypeId];
-};
+}
 
 export const useGenerateQueryString = filters =>
 {
@@ -128,7 +122,27 @@ export const fileUploadErrorMessage = (doc, rejectReason) =>
       doc.text;
   }
   return errorMessage;
-};
+}
+
+// export const fileUploadErrorMessage = (doc, rejectReason) => {
+//   let errorMessage = "";
+//   if (rejectReason.code == "file-too-large")
+//   {
+//     errorMessage = "File size must be less than " + doc.max_size + " MB for " + doc.text;
+//   } else if (rejectReason.code == "file-invalid-type")
+//   {
+//     errorMessage = "You can only upload a " + doc.accepted_files + " for " + doc.text;
+//   } else
+//   {
+//     errorMessage = "You can only upload a " + doc.accepted_files + " or File size must be less than " + doc.max_size + " MB for " + doc.text;
+//   }
+//   return errorMessage;
+// };
+
+export const useFormatPrice = (price, thousandSeparator = false) =>
+{
+  return (thousandSeparator ? parseFloat(price).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : parseFloat(price).toFixed(2));
+}
 
 export const useCompareDueDate = dueDateString =>
 {
@@ -152,8 +166,9 @@ export const useCalculateTotalSum = (data, key) =>
     if (key in currentItem)
     {
       // Parse the value to a number and add it to the accumulator
-      let value = currentItem[key] != null ? currentItem[key] : 0;
-      accumulator += +parseFloat(value.toString().replace(/,/g, '')) || 0;
+      let value = currentItem[key] != null ? currentItem[key] : 0
+      accumulator += +parseFloat((value.toString()).replace(/,/g, '')) || 0;
+
     }
     return accumulator;
   }, 0);

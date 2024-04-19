@@ -2,10 +2,13 @@
 
 namespace App\Http\Controllers\V2;
 
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\DocumentTypeCode;
 use App\Enums\LookupsEnum;
 use App\Enums\quoteStatusCode;
+use App\Enums\PaymentStatusEnum;
+use App\Enums\PaymentTooltip;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypes;
@@ -13,6 +16,7 @@ use App\Enums\RolesEnum;
 use App\Events\LeadsCount;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\CycleQuoteRequest;
+use App\Models\ApplicationStorage;
 use App\Models\Emirate;
 use App\Models\Nationality;
 use App\Repositories\ActivityRepository;
@@ -32,6 +36,7 @@ use App\Services\AMLService;
 use App\Services\CentralService;
 use Illuminate\Http\Request;
 use App\Enums\TeamNameEnum;
+use App\Services\SplitPaymentService;
 
 class CycleQuoteController extends Controller
 {
@@ -66,7 +71,7 @@ class CycleQuoteController extends Controller
     }
 
     /**
-     * @param    $quoteTypeCode
+     * @param  $quoteTypeCode
      * @return \Illuminate\Http\RedirectResponse
      */
     public function store(CycleQuoteRequest $request)
@@ -100,8 +105,8 @@ class CycleQuoteController extends Controller
     }
 
     /**
-     * @param    $quoteTypeCode
-     * @param    $quoteId
+     * @param  $quoteTypeCode
+     * @param  $quoteId
      * @return void
      */
     public function update($uuid, CycleQuoteRequest $request)
@@ -150,6 +155,7 @@ class CycleQuoteController extends Controller
         $emirates = Emirate::where('is_active', 1)->select('id', 'text')->get();
         $quoteNotes = QuoteNoteRepository::getBy($quote->id, quoteTypeCode::Cycle);
         $cdnPath = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
+        $vatPercentage = ApplicationStorage::where('key_name', ApplicationStorageEnums::VAT_VALUE)->first()->value ?? 0;
 
         return inertia('CycleQuote/Show', [
             'quoteType' => QuoteTypes::CYCLE,
@@ -236,6 +242,10 @@ class CycleQuoteController extends Controller
             'quoteTypeId' => QuoteTypes::CYCLE->id(),
             'quoteType' => QuoteTypes::CYCLE->value,
             'totalCount' => CycleQuoteRepository::getData(true, true),
+            // 'vatPercentage' => $vatPercentage,
+            'paymentTooltipEnum' => PaymentTooltip::asArray(),
+            'paymentStatusEnum' => PaymentStatusEnum::asArray(),
+            // 'isNewPaymentStructure' => app(SplitPaymentService::class)->isNewPaymentStructure($quote->payments),
         ]);
     }
 }

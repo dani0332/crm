@@ -209,9 +209,9 @@ function onAssignLead(isValid) {
       .post(route('manualLeadAssign', { quoteType: 'business' }), {
         preserveScroll: true,
         preserveState: true,
-        // onSuccess: res => {
-        //   displayNotification();
-        // },
+        onSuccess: res => {
+          quotesSelected.value = [];
+        },
       });
   }
 }

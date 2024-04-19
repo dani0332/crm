@@ -80,6 +80,10 @@ class HomeQuote extends Model implements AuditableContract
     {
         return $this->morphMany(Payment::class, 'paymentable');
     }
+    public function transactionType()
+    {
+        return $this->belongsTo(Lookup::class, 'transaction_type_id', 'id');
+    }
 
     public function quoteRequestEntityMapping()
     {
@@ -101,5 +105,10 @@ class HomeQuote extends Model implements AuditableContract
     public function notes()
     {
         return $this->morphMany(QuoteNote::class, 'quote_noteable');
+    }
+    
+    public function insuranceProviderDetails()
+    {
+        return $this->belongsTo(InsuranceProvider::class, 'insurance_provider_id', 'id');
     }
 }

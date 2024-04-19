@@ -58,13 +58,14 @@ class ResetLeadAllocationCounts extends Command
 
         DB::table('sessions')->truncate(); // truncate sessions table
 
-        User::query()->where('is_active', 1)->update([
-            'status' => UserStatusEnum::UNAVAILABLE,
-        ]);
+        User::query()->where('is_active', 1)
+            ->whereNotIn('status', [UserStatusEnum::LEAVE, UserStatusEnum::SICK])
+            ->update([
+                'status' => UserStatusEnum::UNAVAILABLE,
+            ]);
 
         info('Scheduler has reset counts for all users where reset_cap was true');
 
         return 0;
     }
-
 }

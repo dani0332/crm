@@ -13,6 +13,11 @@ enum LookupsEnum: string
     case COMPANY_TYPE = 'company-type';
     case CAR_LOST_REJECT_REASONS = 'car-lost-reject-reasons';
     case CAR_LOST_APPROVE_REASONS = 'car-lost-approve-reasons';
+    case TRANSACTION_TYPES = 'transaction-types';
+    case NEW_BUSINESS = 'newBusiness';
+    case EXT_CUSTOMER_RENWAL = 'extCustomerRenewal';
+    case EXT_CUSTOMER_NEW_BUSINESS = 'extCustomerNewBusiness';
+    case ENDORSEMENT = 'endorsement';
     case ENTITY_TYPE = 'entity-type';
     case PARENT_ENTITY = 'Parent';
     case SUB_ENTITY = 'SubEntity';
@@ -28,4 +33,10 @@ enum LookupsEnum: string
     case MODE_OF_DELIVERY = 'mode-of-delivery';
     case DELETED_MODE_OF_DELIVERY = 'mode-of-delivery-deleted';
     case PROFESSIONAL_TITLE = 'professional-title';
+    case PAYMENT_COLLECTION_TYPE = 'payment_collection_type';
+    case PAYMENT_FREQUENCY_TYPE = 'payment_frequency_type';
+    case PAYMENT_DECLINE_REASON = 'payment_decline_reason';
+    case PAYMENT_CREDIT_APPROVAL_REASON = 'payment_credit_approval_reason';
+    case PAYMENT_DISCOUNT_TYPE = 'payment_discount_type';
+    case PAYMENT_DISCOUNT_REASON = 'payment_discount_reason';
 }

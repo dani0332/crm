@@ -1,15 +1,16 @@
 <script setup>
-import QuoteDocuments from '../PersonalQuote/Partials/QuoteDocuments';
-import QuoteStatus from '../PersonalQuote/Partials/QuoteStatus';
-import QuotePayments from '../PersonalQuote/Partials/QuotePayments';
-import QuoteActivities from '../PersonalQuote/Partials/QuoteActivities';
-import QuotePolicy from '../PersonalQuote/Partials/QuotePolicy';
-import LeadHistory from '../PersonalQuote/Partials/LeadHistory';
 import MemberDetails from '../../Components/MemberDetails.vue';
-import AdditionalContacts from '../PersonalQuote/Partials/AdditionalContacts.vue';
-import KycForm from '@/inertia/Components/KycForm.vue';
+import MigratePayment from '../../Components/MigratePayment.vue';
+import PaymentTableNew from '../../Components/PaymentTableNew.vue';
 import PlanDetails from '../../Components/PlanDetails.vue';
 import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue';
+import AdditionalContacts from '../PersonalQuote/Partials/AdditionalContacts.vue';
+import LeadHistory from '../PersonalQuote/Partials/LeadHistory';
+import QuoteActivities from '../PersonalQuote/Partials/QuoteActivities';
+import QuoteDocuments from '../PersonalQuote/Partials/QuoteDocuments';
+import QuotePayments from '../PersonalQuote/Partials/QuotePayments';
+import QuotePolicy from '../PersonalQuote/Partials/QuotePolicy';
+import QuoteStatus from '../PersonalQuote/Partials/QuoteStatus';
 
 const props = defineProps({
   quote: Object,
@@ -41,11 +42,16 @@ const props = defineProps({
   quoteRequest: Object,
   quoteNotes: Object,
   cdnPath: String,
+  vatPercentage: Number,
+  paymentStatusEnum: Object,
+  paymentTooltipEnum: Object,
+  isNewPaymentStructure: Boolean,
 });
 
 const page = usePage();
 const notification = useToast();
 const hasAnyRole = roles => useHasAnyRole(roles);
+const hasRole = role => useHasRole(role);
 const rolesEnum = page.props.rolesEnum;
 const modals = reactive({
   duplicate: false,
@@ -392,7 +398,7 @@ const linkEntity = () => {
 
     <div class="p-4 rounded shadow mb-6 bg-white mt-4">
       <div class="text-sm">
-        <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
+        <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
           <div class="grid sm:grid-cols-2">
             <div
               class="grid sm:grid-cols-2"
@@ -435,12 +441,12 @@ const linkEntity = () => {
 
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">CREATED BY</dt>
-            <dd>{{ quote?.created_by?.email }}</dd>
+            <dd class="break-words">{{ quote?.created_by?.email }}</dd>
           </div>
 
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">UPDATED BY</dt>
-            <dd>{{ quote?.updated_by?.email }}</dd>
+            <dd class="break-words">{{ quote?.updated_by?.email }}</dd>
           </div>
 
           <div class="grid sm:grid-cols-2">
@@ -480,7 +486,7 @@ const linkEntity = () => {
       </div>
 
       <div class="text-sm">
-        <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
+        <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">CYCLE MAKE</dt>
             <dd>{{ quote?.cycle_quote?.cycle_make }}</dd>
@@ -541,7 +547,7 @@ const linkEntity = () => {
             v-if="
               quote.customer_type === page.props.customerTypeEnum.Individual
             "
-            class="grid md:grid-cols-2 gap-x-6 gap-y-4"
+            class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words"
           >
             <div class="grid sm:grid-cols-2">
               <dt class="font-medium">FIRST NAME</dt>
@@ -832,7 +838,52 @@ const linkEntity = () => {
       :quote-type="quoteType"
     />
 
+    <QuoteStatus
+      :quote="quote"
+      :quote-type="quoteType"
+      :quote-statuses="quoteStatuses"
+      :lost-reasons="lostReasons"
+      :quote-status-enum="quoteStatusEnum"
+    />
+
+    <PlanDetails
+      :insuranceProviders="insuranceProviders"
+      :quote="quote"
+      :quoteType="quoteType"
+      :vatPrice="vatPercentage"
+    />
+
+    <MigratePayment
+      v-if="!isNewPaymentStructure"
+      :quoteId="quote.id"
+      :paymentCode="quote.code"
+      :quoteType="quoteType"
+      :payments="quote.payments"
+    />
+    <PaymentTableNew
+      v-if="isNewPaymentStructure"
+      :quoteType="quoteType"
+      :payments="quote.payments"
+      :paymentDocument="
+        documentTypes.filter(
+          item =>
+            item.code === 'CYCPD' ||
+            item.code === 'CYCPDR' ||
+            item.code === 'CYCDPDR',
+        )
+      "
+      :quoteRequest="quote"
+      :paymentStatusEnum="paymentStatusEnum"
+      :paymentTooltipEnum="paymentTooltipEnum"
+      :paymentMethods="
+        paymentMethods.map(pm => {
+          return { value: pm.code, label: pm.name, tooltip: pm.tool_tip };
+        })
+      "
+      :storageUrl="storageUrl"
+    />
     <QuotePayments
+      v-else
       :can="can"
       :payments="quote.payments"
       :quote-type="quoteType"
@@ -840,14 +891,6 @@ const linkEntity = () => {
       :insurance-providers="insuranceProviders"
       :is-beta-user="isBetaUser"
       :personal-plans="personalPlans"
-    />
-
-    <QuoteStatus
-      :quote="quote"
-      :quote-type="quoteType"
-      :quote-statuses="quoteStatuses"
-      :lost-reasons="lostReasons"
-      :quote-status-enum="quoteStatusEnum"
     />
 
     <QuoteDocuments
@@ -863,12 +906,6 @@ const linkEntity = () => {
       :quoteStatusesEnum="quoteStatusesEnum"
     />
 
-    <PlanDetails
-      :insuranceProviders="insuranceProviders"
-      :quote="quote"
-      :quoteType="quoteType"
-    />
-
     <EmbeddedProducts
       :data="embeddedProducts"
       :link="quote.uuid"
@@ -877,7 +914,11 @@ const linkEntity = () => {
       :modelType="quoteType"
     />
 
-    <AuditLogs :quote-type="quoteType" :id="$page.props.quote.id" />
+    <AuditLogs
+      :quote-type="quoteType"
+      :id="$page.props.quote.id"
+      :quoteCode="$page.props.quote.code"
+    />
 
     <LeadHistory :quote="$page.props.quote" />
   </div>

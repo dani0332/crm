@@ -2,12 +2,18 @@
 
 namespace App\Services;
 
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\GenericRequestEnum;
+use App\Enums\PaymentStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
+use App\Enums\QuoteTypes;
 use App\Facades\Capi;
 use App\Models\Activities;
 use App\Models\ActivitySchedule;
+use App\Facades\Ken;
+use App\Models\ApplicationStorage;
+use App\Models\CarQuote;
 use App\Models\PersonalQuote;
 use App\Models\PersonalQuoteDetail;
 use App\Repositories\PersonalQuoteRepository;
@@ -25,7 +31,6 @@ use App\Enums\TeamTypeEnum;
 use App\Models\HomeQuote;
 use App\Models\LifeQuote;
 use App\Models\BusinessQuote;
-use App\Models\CarQuote;
 use App\Models\CycleQuote;
 use App\Models\PetQuote;
 use App\Models\TravelQuote;
@@ -153,7 +158,7 @@ class CentralService
     public function assignLeadToAdvisor($request)
     {
         $leadsIds = $request->assigned_lead_id;
-        $personalQuotes = [quoteTypeCode::Bike, quoteTypeCode::Cycle, quoteTypeCode::Pet, quoteTypeCode::Yacht];
+        $personalQuotes = [quoteTypeCode::Bike, quoteTypeCode::Cycle, quoteTypeCode::Pet, quoteTypeCode::Yacht, quoteTypeCode::Jetski];
         Log::info('Leads ids to assign: '.json_encode($leadsIds));
 
         if (str_starts_with($leadsIds, ',')) {
@@ -171,6 +176,7 @@ class CentralService
 
         return DB::transaction(function () use ($leadsIds, $model, $request, $personalQuotes) {
             foreach ($leadsIds as $leadId) {
+
                 $getQuoteLead = $model['parent']::findOrfail($leadId);
                 $getQuoteLead->advisor_id = (int) $request->assigned_advisor_id;
                 $getQuoteLead->save();
@@ -188,6 +194,7 @@ class CentralService
 
     public function loadAvailablePlans($type, $id)
     {
+        
         $type = ucfirst($type);
         switch ($type) {
             case quoteTypeCode::Car:
@@ -196,6 +203,7 @@ class CentralService
                 return app(TravelQuoteService::class)->sortedPlansList($id);
             case quoteTypeCode::Health:
                 $listQuotePlans = [];
+                
                 $quotePlans = app(HealthQuoteService::class)->getQuotePlans($id);
                 if (isset($quotePlans->message) && $quotePlans->message != '') {
                     $listQuotePlans = [];
@@ -211,9 +219,125 @@ class CentralService
         }
     }
 
-    public function savePlanDetails()
+    public function updateQuotePayment($quote, $priceWithVat)
     {
+        info('fn: updateQuotePayment called');
 
+        if ($quote->payments()->count() > 0) {
+            info('fn: updateQuotePayment payment found to be updated for quote uuid: '.$quote->uuid);
+
+            $payment = $quote->payments->first();
+
+            $paymentData = ['total_price' => $priceWithVat];
+
+            if ($priceWithVat > $payment->total_price && in_array($payment->payment_status_id, [PaymentStatusEnum::PAID, PaymentStatusEnum::CAPTURED])) {
+                $paymentData['payment_status_id'] = PaymentStatusEnum::PARTIALLY_PAID;
+            }
+
+            $payment->update($paymentData);
+
+            info('fn: updateQuotePayment payment updated for quote uuid: '.$quote->uuid);
+        }
+    }
+
+    /**
+     * @return true
+     */
+    public function savePlanDetails($quoteType, $code, $data)
+    {
+        return DB::transaction(function () use ($quoteType, $code, $data) {
+
+            $vatPercentage = ApplicationStorage::where('key_name', ApplicationStorageEnums::VAT_VALUE)->first()->value ?? 0;
+            $repository = getRepositoryObject($quoteType);
+
+            $priceVatApp = $data->price_vat_applicable ?? 0;
+            $priceVatNotApp = $data->price_vat_not_applicable ?? 0;
+
+            if ($quoteType == QuoteTypes::BUSINESS->value) {
+                $data->price_with_vat = ($priceVatApp + $priceVatNotApp) + (($priceVatApp / 100) * $vatPercentage);
+            } else {
+                $data->price_with_vat = $priceVatApp ? ($priceVatApp + (($priceVatApp / 100) * $vatPercentage)) : $priceVatNotApp;
+            }
+
+            $quote = $repository::where('code', $code)->firstOrFail();
+
+            $quote->update($data->toArray());
+
+            $this->updateQuotePayment($quote, $data->price_with_vat);
+
+            return true;
+
+        });
+    }
+
+    public function updateSelectedPlan($quoteType, $uuid, $data)
+    {
+        $response = [];
+        $requestData = $data;
+
+        //switch for quote type
+        switch (ucfirst($quoteType)) {
+            case QuoteTypes::CAR->value:
+                $endpoint = '/process-car-quote-plan';
+                $data = [
+                    'planId' => intval($data->plan_id),
+                    'quoteTypeId' => QuoteTypeId::Car,
+                    'quoteUID' => $uuid,
+                    'callSource' => strtolower(LeadSourceEnum::IMCRM),
+                ];
+
+                $response = Ken::request($endpoint, 'post', $data);
+                info('car plan update response: '.json_encode($response));
+
+                // if (isset($response['planProcessValue']['totalPremium'])) {
+                //     $quote = CarQuote::where('uuid', $uuid)->first();
+                //     $this->updateQuotePayment($quote, $response['planProcessValue']['totalPremium']);
+                // }
+                break;
+            case QuoteTypes::TRAVEL->value:
+                $endpoint = '/process-travel-quote-plan';
+                $data = [
+                    'quoteTypeId' => QuoteTypeId::Car,
+                    'quoteUID' => $uuid,
+                    'callSource' => strtolower(LeadSourceEnum::IMCRM),
+                    'plans' => [
+                        ['id' => intval($data->plan_id), 'addonOptionIds' => []],
+                    ],
+                ];
+
+                if (isset($requestData->selected_plan_id)) {
+                    $data['plans'][] = ['id' => intval($requestData->selected_plan_id), 'addonOptionIds' => []];
+                }
+
+                $response = Ken::request($endpoint, 'post', $data);
+                info('travel plan update response: '.json_encode($response));
+
+                // if (isset($response['planProcessValue'])) {
+                //     $quote = TravelQuote::where('uuid', $uuid)->first();
+                //     $this->updateQuotePayment($quote, collect($response['planProcessValue'])->sum('totalPremium'));
+                // }
+                break;
+            case QuoteTypes::HEALTH->value:
+                $endpoint = '/api/v1-process-booking';
+                $data = [
+                    'planId' => intval($data->plan_id),
+                    'quoteTypeId' => QuoteTypeId::Health,
+                    'addonOptionIds' => [],
+                    'healthPlanCoPaymentId' => intval($data->copay_id),
+                    'quoteUID' => $uuid,
+                    'callSource' => strtolower(LeadSourceEnum::IMCRM),
+                ];
+
+                $response = Capi::request($endpoint, 'post', $data);
+                info('health plan update response: '.json_encode($response));
+                // if (isset($response->totalPremium)) {
+                //     $quote = HealthQuote::where('uuid', $uuid)->first();
+                //     $this->updateQuotePayment($quote, $response->totalPremium);
+                // }
+                break;
+        }
+
+        return $response;
     }
 
     public function saveAndAssignActivitesToAdvisor($quoteDetails, $quoteTypeId)

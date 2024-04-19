@@ -13,6 +13,7 @@ defineProps({
 });
 
 const createPaymentModal = ref(false);
+const enableManageOptions = ref(false);
 
 const can = permission => useCan(permission);
 const hasRole = role => useHasRole(role);
@@ -341,7 +342,7 @@ const approvePayment = payment => {
         v-if="
           can(permissionsEnum.PaymentsCreate) &&
           !can(permissionsEnum.ApprovePayments) &&
-          !hasRole(rolesEnum.PA)
+          !hasRole(rolesEnum.PA) && enableManageOptions
         "
         size="sm"
         color="orange"
@@ -367,7 +368,7 @@ const approvePayment = payment => {
             <x-button
               size="xs"
               color="error"
-              v-if="item.approve_button"
+              v-if="item.approve_button && enableManageOptions"
               @click="approvePayment(item)"
             >
               Approve
@@ -385,7 +386,7 @@ const approvePayment = payment => {
             <x-button
               size="xs"
               color="orange"
-              v-if="item.copy_link_button"
+              v-if="item.copy_link_button && enableManageOptions"
               @click="generateCCLink(item.code)"
             >
               Copy Link
@@ -393,7 +394,7 @@ const approvePayment = payment => {
             <x-button
               size="xs"
               color="emerald"
-              v-if="can(permissionsEnum.PaymentsEdit) && item.edit_button"
+              v-if="can(permissionsEnum.PaymentsEdit) && item.edit_button && enableManageOptions"
               @click="editPaymentModal(item)"
             >
               Edit

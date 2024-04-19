@@ -11,7 +11,9 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\RuleTypeEnum;
 use App\Enums\TeamNameEnum;
 use App\Enums\TiersEnum;
+use App\Enums\TiersIdEnum;
 use App\Enums\UserStatusEnum;
+use App\Jobs\SendOCBIntroEmailJob;
 use App\Models\CarMake;
 use App\Models\CarModel;
 use App\Models\CarQuote;
@@ -91,10 +93,15 @@ class CarAllocationService extends AllocationService
         }
     }
 
-    public function getExcludedUserIds()
+    public function getExcludedUserIds($teamId = null)
     {
         // Define a list of excluded team names.
-        $excludedTeams = [TeamNameEnum::AFFINITY, TeamNameEnum::RENEWALS];
+        $excludedTeams = [TeamNameEnum::AFFINITY];
+
+        // If team is not available, it should not be assigned.
+        if (empty($teamId) || $teamId == 0) {
+            $excludedTeams[] = TeamNameEnum::SIC_UNASSISTED;
+        }
 
         // Retrieve the IDs of excluded teams.
         $excludedTeamIds = Team::whereIn('name', $excludedTeams)->select('id')->get();
@@ -132,6 +139,26 @@ class CarAllocationService extends AllocationService
         info('yearOfManufacture is: '.$yearOfManufacture.' and number of plans found are: '.count($plans));
 
         return [$plans, $yearOfManufacture];
+    }
+
+    public function shouldEnforceSICCheck($lead, $tier): bool
+    {
+        [$plans, $yearOfManufacture] = $this->getPlanAndYear($lead);
+        if ($tier->id == TiersIdEnum::TIER_5 && count($plans) > 0) {
+            return true;
+        }
+
+        return false;
+    }
+
+    public function processSICFlow($lead, $tier): void
+    {
+        $lead->sic_flow_enabled = 1;
+        $lead->tier_id = $tier->id;
+        $lead->save();
+        info('SIC flow is enabled for lead : '.$lead->uuid.' , the updated field : '.$lead->sic_flow_enabled);
+        SendOCBIntroEmailJob::dispatch($lead->uuid, null, true);
+        info('SIC flow is email is dispatched for lead : '.$lead->uuid);
     }
 
     /**
@@ -200,11 +227,21 @@ class CarAllocationService extends AllocationService
         return null;
     }
 
-    public function getEligibleUserForAllocation($tierId, $advisorId, $isReassignmentJob, $leadSource)
+    public function getEligibleUserForAllocation($tierId, $advisorId, $isReassignmentJob, $leadSource, $teamId)
     {
         $tierUserIds = $this->getTierUserIds($tierId, $advisorId);
 
         $tierUserIds = $this->executeRevivalCheck($leadSource, $tierUserIds);
+
+        if ($teamId) {
+            $teamUserIds = UserTeams::where('team_id', $teamId)->select('user_id')->get();
+            if ($teamUserIds->count() > 0) {
+                $teamUserIds = $teamUserIds->pluck('user_id')->toArray();
+            } else {
+                $teamUserIds = [];
+            }
+            $tierUserIds = array_intersect($tierUserIds->toArray(), $teamUserIds);
+        }
 
         // Define the order in which user statuses should be considered.
         $statusOrder = [
@@ -219,7 +256,7 @@ class CarAllocationService extends AllocationService
         // Iterate through user statuses in the specified order.
         foreach ($statusOrder as $status) {
             // Get eligible users with the specified status.
-            $eligibleUsers = $this->getAdvisorsByStatus($status, $tierUserIds, $advisorId);
+            $eligibleUsers = $this->getAdvisorsByStatus($status, $tierUserIds, $advisorId, $teamId);
 
             // If eligible users are found, log the results and return them.
             if ($eligibleUsers && count($eligibleUsers) > 0) {
@@ -231,9 +268,9 @@ class CarAllocationService extends AllocationService
         return [];
     }
 
-    public function getAdvisorsByStatus($status, $tierUserIds, $advisorId = null)
+    public function getAdvisorsByStatus($status, $tierUserIds, $advisorId = null, $teamId = null)
     {
-        $excludedUserIds = $this->getExcludedUserIds();
+        $excludedUserIds = $this->getExcludedUserIds($teamId);
 
         // Create a query to fetch lead allocations with their associated users.
         $query = LeadAllocation::with('leadAllocationUser')
@@ -288,7 +325,6 @@ class CarAllocationService extends AllocationService
                 ($commercialCarMake && $commercialCarModel)
             ) {
                 return $this->getCommercialRule();
-
             }
         }
 
@@ -327,7 +363,7 @@ class CarAllocationService extends AllocationService
             )->get();
     }
 
-    public function determineFinalUserId($lead, $eligibleUsers, $rules): mixed
+    public function determineFinalUserId($lead, $eligibleUsers, $rules, $teamId): mixed
     {
         // Extract user IDs from the eligible user data and convert them to an array.
         $availableUserIds = collect($eligibleUsers)->pluck('user_id')->toArray();
@@ -344,9 +380,9 @@ class CarAllocationService extends AllocationService
             info('Rule found, and users against the rule are: '.json_encode($finalEligibleUserIds));
         } else {
             // If no rules are found, get user IDs from rule lead sources.
-            $ruleUsers = $this->getRuleUsers();
+            $ruleUsers = (empty($teamId) || $teamId == 0) ? $this->getRuleUsers() : [];
 
-            info('No rule found against this lead ('.$lead->uuid.'), so filtering rule users: '.json_encode($ruleUsers));
+            info('No rule found against this lead ('.$lead->uuid.'), so filtering rule users: '.json_encode($ruleUsers).' and teamId is : '.$teamId);
 
             // Find the difference between available user IDs and rule users.
             $finalEligibleUserIds = array_diff($availableUserIds, $ruleUsers);
@@ -500,12 +536,13 @@ class CarAllocationService extends AllocationService
         // Filter by advisor ID if provided , which mean reassignment is going to run for a single advisor
         if ($advisorId != 0) {
             $leads->where('advisor_id', $advisorId);
+            info('Inside reassignment single run and selected advisor is: '.$advisorId);
         } else {
             // If advisor ID is not provided, get unavailable advisors and filter leads by them
             $advisors = $this->getUnavailableAdvisor();
             if (count($advisors) > 0) {
                 $advisorIds = $advisors->pluck('user_id');
-                info('Inside reassignment general run');
+                info('Inside reassignment general run and selected advisors are: '.json_encode($advisorIds->toArray()));
                 $leads->whereIn('advisor_id', $advisorIds);
             }
         }
@@ -545,5 +582,4 @@ class CarAllocationService extends AllocationService
 
         info('Tier with name : '.$tier->name.' is assigned to car lead with uuid : '.$lead->uuid);
     }
-
 }

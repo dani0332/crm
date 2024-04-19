@@ -2,10 +2,13 @@
 
 namespace App\Http\Controllers\V2;
 
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\DocumentTypeCode;
 use App\Enums\LookupsEnum;
 use App\Enums\quoteStatusCode;
+use App\Enums\PaymentStatusEnum;
+use App\Enums\PaymentTooltip;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
@@ -14,6 +17,7 @@ use App\Enums\RolesEnum;
 use App\Events\LeadsCount;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\PetQuoteRequest;
+use App\Models\ApplicationStorage;
 use App\Models\Emirate;
 use App\Models\Nationality;
 use App\Repositories\ActivityRepository;
@@ -33,6 +37,7 @@ use App\Services\AMLService;
 use App\Services\CentralService;
 use Illuminate\Http\Request;
 use App\Enums\TeamNameEnum;
+use App\Services\SplitPaymentService;
 
 class PetQuoteController extends Controller
 {
@@ -127,6 +132,7 @@ class PetQuoteController extends Controller
                 return $value['id'] != QuoteStatusEnum::TransactionApproved;
             })->values();
         }
+        $vatPercentage = ApplicationStorage::where('key_name', ApplicationStorageEnums::VAT_VALUE)->first()->value ?? 0;
 
         $cdnPath = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
         $quoteNotes = QuoteNoteRepository::getBy($quote->id, quoteTypeCode::Pet);
@@ -161,6 +167,10 @@ class PetQuoteController extends Controller
             'noteDocumentType' => $noteDocumentType,
             'quoteNotes' => $quoteNotes,
             'cdnPath' => $cdnPath,
+            'vatPercentage' => $vatPercentage,
+            'paymentStatusEnum' => PaymentStatusEnum::asArray(),
+            'paymentTooltipEnum' => PaymentTooltip::asArray(),
+            'isNewPaymentStructure' => app(SplitPaymentService::class)->isNewPaymentStructure($quote->payments),
         ]);
     }
 

@@ -33,4 +33,5 @@ final class TeamNameEnum extends Enum
     public const YACHT_TEAM = 'Yacht - Team';
     public const YACHT_RENEWALS = 'Yacht - Renewals';
     public const CYCLE_RENEWALS = 'Cycle - Renewals';
+    public const SIC_UNASSISTED = 'SIC UNASSISTED';
 }

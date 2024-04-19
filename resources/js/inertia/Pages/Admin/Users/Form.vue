@@ -113,7 +113,7 @@ const loadManagerByTeam = async () => {
   loader.managers = true;
   try {
     let response = await axios.post('/get-team-managers', {
-      teamId: userForm.teams ?? userForm.products,
+      teamId: userForm.products,
     });
     if (response.data.length > 0) managers.value = [...response.data];
     else managers.value = [];
@@ -186,6 +186,24 @@ const setInitialState = async () => {
 };
 
 onMounted(() => setInitialState());
+
+watch(
+  () => userForm.products,
+  () => {
+    loadTeamsByProduct();
+    loadManagerByTeam()
+  },
+  { deep: true },
+);
+
+watch(
+  () => userForm.teams,
+  () => {
+    loadSubTeams();
+  },
+  { deep: true },
+);
+
 </script>
 <template>
   <Head :title="isEdit ? 'Edit Users' : 'Create Users'" />
@@ -300,7 +318,6 @@ onMounted(() => setInitialState());
               label: item.name,
             }))
           "
-          @update:modelValue="loadTeamsByProduct($event), loadManagerByTeam()"
           autocomplete
         />
 
@@ -326,7 +343,6 @@ onMounted(() => setInitialState());
           :loading="loader.teamLoader"
           :rules="[isRequired]"
           :hasError="validTeams"
-          @update:modelValue="loadSubTeams($event)"
           autocomplete
         />
 

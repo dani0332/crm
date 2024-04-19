@@ -32,6 +32,7 @@ class InsuranceProviderRepository extends BaseRepository
             ->where('insurance_provider.is_active', 1)
             ->where('insurance_provider.is_deleted', 0)
             ->join('insurance_provider', 'insurance_provider.id', '=', 'insurance_provider_quote_type.insurance_provider_id')
+            ->orderBy('text')
             ->get();
     }
 
@@ -51,6 +52,16 @@ class InsuranceProviderRepository extends BaseRepository
         }
 
         return $networks;
+    }
+
+    public function fetchNetworksIdByInsuranceProvider($providerId, $network)
+    {
+        $networkId = HealthRatingEligibility::where('insurance_provider_id', $providerId)
+            ->select('id')
+            ->where('text', $network)
+            ->first();
+
+        return $networkId->id ?? 0;
     }
 
     public function fetchIsCommercialVehicles($record)

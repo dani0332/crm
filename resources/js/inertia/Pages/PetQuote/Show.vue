@@ -1,14 +1,16 @@
 <script setup>
-import QuoteDocuments from '../PersonalQuote/Partials/QuoteDocuments';
-import QuoteStatus from '../PersonalQuote/Partials/QuoteStatus';
-import QuotePayments from '../PersonalQuote/Partials/QuotePayments';
-import QuoteActivities from '../PersonalQuote/Partials/QuoteActivities';
-import QuotePolicy from '../PersonalQuote/Partials/QuotePolicy';
-import AdditionalContacts from '../PersonalQuote/Partials/AdditionalContacts.vue';
-import LeadHistory from '../PersonalQuote/Partials/LeadHistory.vue';
 import MemberDetails from '../../Components/MemberDetails.vue';
+import MigratePayment from '../../Components/MigratePayment.vue';
+import PaymentTableNew from '../../Components/PaymentTableNew.vue';
 import PlanDetails from '../../Components/PlanDetails.vue';
 import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue';
+import AdditionalContacts from '../PersonalQuote/Partials/AdditionalContacts.vue';
+import LeadHistory from '../PersonalQuote/Partials/LeadHistory.vue';
+import QuoteActivities from '../PersonalQuote/Partials/QuoteActivities';
+import QuoteDocuments from '../PersonalQuote/Partials/QuoteDocuments';
+import QuotePayments from '../PersonalQuote/Partials/QuotePayments';
+import QuotePolicy from '../PersonalQuote/Partials/QuotePolicy';
+import QuoteStatus from '../PersonalQuote/Partials/QuoteStatus';
 
 const props = defineProps({
   quote: Object,
@@ -40,6 +42,10 @@ const props = defineProps({
   quoteRequest: Object,
   quoteNotes: Object,
   cdnPath: String,
+  vatPercentage: Number,
+  paymentStatusEnum: Object,
+  paymentTooltipEnum: Object,
+  isNewPaymentStructure: Boolean,
 });
 
 const page = usePage();
@@ -53,6 +59,7 @@ const countDays = daysSinceStale(props.quoteRequest?.stale_at);
 const historyLoading = ref(false);
 
 const { isRequired } = useRules();
+const hasRole = role => useHasRole(role);
 const notification = useNotifications('toast');
 
 const modals = reactive({
@@ -371,7 +378,7 @@ const linkEntity = () => {
 
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div class="text-sm">
-        <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
+        <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
           <div class="grid sm:grid-cols-2">
             <div
               class="grid sm:grid-cols-2"
@@ -424,7 +431,7 @@ const linkEntity = () => {
       </div>
 
       <div class="text-sm">
-        <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
+        <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">PRICE</dt>
             <dd>{{ quote?.pet_quote?.premium }}</dd>
@@ -489,10 +496,6 @@ const linkEntity = () => {
             <dd>{{ quote?.pet_quote?.possession_type?.text }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">TRANSAPP CODE</dt>
-            <dd>{{ quote.quote_detail?.transapp_code }}</dd>
-          </div>
-          <div class="grid sm:grid-cols-2">
             <dt class="font-medium">LOST REASON</dt>
             <dd>{{ quote.quote_detail?.lost_reason?.text }}</dd>
           </div>
@@ -535,7 +538,7 @@ const linkEntity = () => {
             v-if="
               quote.customer_type === page.props.customerTypeEnum.Individual
             "
-            class="grid md:grid-cols-2 gap-x-6 gap-y-4"
+            class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words"
           >
             <div class="grid sm:grid-cols-2">
               <dt class="font-medium">FIRST NAME</dt>
@@ -575,7 +578,7 @@ const linkEntity = () => {
             </div>
             <div class="grid sm:grid-cols-2">
               <dt class="font-medium">EMAIL</dt>
-              <dd>{{ quote.email }}</dd>
+              <dd class="break-words">{{ quote.email }}</dd>
             </div>
             <div class="grid sm:grid-cols-2">
               <dt class="font-medium">NATIONALITY</dt>
@@ -616,7 +619,7 @@ const linkEntity = () => {
           </dl>
           <dl
             v-if="quote.customer_type === page.props.customerTypeEnum.Entity"
-            class="grid md:grid-cols-2 gap-x-6 gap-y-4"
+            class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words"
           >
             <div class="grid sm:grid-cols-2">
               <dt class="font-medium">FIRST NAME</dt>
@@ -632,11 +635,13 @@ const linkEntity = () => {
             </div>
             <div class="grid sm:grid-cols-2">
               <dt class="font-medium">EMAIL</dt>
-              <dd>{{ quote.email }}</dd>
+              <dd class="break-words">{{ quote.email }}</dd>
             </div>
             <div class="grid sm:grid-cols-2">
               <dt class="font-medium">COMPANY NAME</dt>
-              <dd>{{ customerProfileForm.company_name }}</dd>
+              <dd class="break-words">
+                {{ customerProfileForm.company_name }}
+              </dd>
             </div>
             <div class="grid sm:grid-cols-2">
               <dt class="font-medium">TRADE LICENSE NO</dt>
@@ -838,7 +843,51 @@ const linkEntity = () => {
       :quote-type="quoteType"
     />
 
+    <QuoteStatus
+      :quote="quote"
+      :quote-type="quoteType"
+      :quote-statuses="quoteStatuses"
+      :lost-reasons="lostReasons"
+      :quoteStatusEnum="quoteStatusEnum"
+    />
+    <PlanDetails
+      :insuranceProviders="insuranceProviders"
+      :quote="quote"
+      :quoteType="quoteType"
+      :vatPrice="vatPercentage"
+    />
+
+    <MigratePayment
+      v-if="!isNewPaymentStructure"
+      :quoteId="quote.id"
+      :paymentCode="quote.code"
+      :quoteType="quoteType"
+      :payments="quote.payments"
+    />
+    <PaymentTableNew
+      v-if="isNewPaymentStructure"
+      :quoteType="quoteType"
+      :payments="quote.payments"
+      :paymentDocument="
+        documentTypes.filter(
+          item =>
+            item.code === 'PPD' ||
+            item.code === 'PPDR' ||
+            item.code === 'PDPDR',
+        )
+      "
+      :quoteRequest="quote"
+      :paymentStatusEnum="paymentStatusEnum"
+      :paymentTooltipEnum="paymentTooltipEnum"
+      :paymentMethods="
+        paymentMethods.map(pm => {
+          return { value: pm.code, label: pm.name, tooltip: pm.tool_tip };
+        })
+      "
+      :storageUrl="storageUrl"
+    />
     <QuotePayments
+      v-else
       :can="can"
       :payments="quote.payments"
       :quote-type="quoteType"
@@ -846,14 +895,6 @@ const linkEntity = () => {
       :insurance-providers="insuranceProviders"
       :is-beta-user="isBetaUser"
       :personal-plans="personalPlans"
-    />
-
-    <QuoteStatus
-      :quote="quote"
-      :quote-type="quoteType"
-      :quote-statuses="quoteStatuses"
-      :lost-reasons="lostReasons"
-      :quoteStatusEnum="quoteStatusEnum"
     />
 
     <QuoteDocuments
@@ -865,12 +906,6 @@ const linkEntity = () => {
 
     <QuotePolicy :quote="quote" :can="can" :quoteStatusEnum="quoteStatusEnum" />
 
-    <PlanDetails
-      :insuranceProviders="insuranceProviders"
-      :quote="quote"
-      :quoteType="quoteType"
-    />
-
     <EmbeddedProducts
       :data="embeddedProducts"
       :link="quote.uuid"
@@ -881,6 +916,10 @@ const linkEntity = () => {
 
     <LeadHistory :quote="quote" />
 
-    <AuditLogs :quote-type="quoteType" :id="$page.props.quote.id" />
+    <AuditLogs
+      :quote-type="quoteType"
+      :id="$page.props.quote.id"
+      :quoteCode="$page.props.quote.code"
+    />
   </div>
 </template>

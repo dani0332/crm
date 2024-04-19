@@ -34,6 +34,7 @@ const props = defineProps({
   },
 });
 
+const paymentStatusEnum = page.props.paymentStatusEnum;
 const modals = reactive({
   cancelPayment: false,
 });
@@ -161,15 +162,19 @@ const ppDoc = str => {
 const checkTransactionExist = item => {
   for (let price of item.prices) {
     for (let transaction of price.transactions) {
-      var timeStart = new Date(transaction.created_at);
-      var timeEnd = new Date();
-      var hourDiff = timeEnd - timeStart;
-      if (
-        (transaction.payment_status_id == 6 ||
-          transaction.payment_status_id == 4) &&
-        hourDiff <= 172800000
-      ) {
-        return false;
+      const paymentStatusDate = transaction.payment_status_date;
+      if (paymentStatusDate) {
+        var timeStart = new Date(paymentStatusDate);
+        var timeEnd = new Date();
+        var timeDifferenceInMiliseconds =
+          timeEnd.getTime() - timeStart.getTime();
+        if (
+          (transaction.payment_status_id == 6 ||
+            transaction.payment_status_id == 4) &&
+          timeDifferenceInMiliseconds <= 259200000
+        ) {
+          return false;
+        }
       }
     }
   }
@@ -196,7 +201,7 @@ const onCopyText = () => {
 };
 
 const paymentStatus = id => {
-  const enums = props.paymentStatusEnum || {};
+  const enums = paymentStatusEnum || {};
   const item = Object.keys(enums).find(key => enums[key] === id);
   return item ? item : 'N/A';
 };
@@ -449,35 +454,32 @@ const hasAnyRole = roles => useHasAnyRole(roles);
 
       <template #item-prices="{ prices }">
         <div v-if="prices.length > 0" class="flex gap-3">
-          <x-tag color="primary" v-for="priceItem in prices">
-            <x-checkbox
-              v-if="priceItem.transactions[0]?.is_selected == '1'"
-              @change="toggleProduct(priceItem, $event)"
-              :model-value="true"
-              color="primary"
-              :disabled="
-                priceItem.transactions[0]?.payment_status_id == 4 ||
-                priceItem.transactions[0]?.payment_status_id == 6 ||
-                priceItem.transactions[0]?.payment_status_id == 12
-              "
-            />
-            <x-checkbox
-              v-else
-              @change="toggleProduct(priceItem, $event)"
-              color="primary"
-              :disabled="
-                priceItem.transactions[0]?.payment_status_id == 4 ||
-                priceItem.transactions[0]?.payment_status_id == 6 ||
-                priceItem.transactions[0]?.payment_status_id == 12
-              "
-            />
-            {{
-              (
-                parseFloat(priceItem.price) +
-                (priceItem.price * 5) / 100
-              ).toFixed(2)
-            }}
-          </x-tag>
+
+
+            <x-tag color="primary" v-for="priceItem  in prices">
+                <x-checkbox
+
+                    v-if="priceItem.transactions[0]?.is_selected == '1'"
+                    @change="toggleProduct(priceItem, $event)"
+                    :model-value="true"
+                    color="primary"
+                    :disabled="priceItem.transactions[0]?.payment_status_id == paymentStatusEnum.AUTHORISED
+                    || priceItem.transactions[0]?.payment_status_id == paymentStatusEnum.CAPTURED
+                    || priceItem.transactions[0]?.payment_status_id == paymentStatusEnum.PARTIAL_CAPTURED"
+
+                />
+                <x-checkbox
+
+                    v-else
+                    @change="toggleProduct(priceItem, $event)"
+                    color="primary"
+                    :disabled="priceItem.transactions[0]?.payment_status_id == paymentStatusEnum.AUTHORISED
+                    || priceItem.transactions[0]?.payment_status_id == paymentStatusEnum.CAPTURED
+                    || priceItem.transactions[0]?.payment_status_id == paymentStatusEnum.PARTIAL_CAPTURED"
+                />
+              {{ (parseFloat(priceItem.price) + (priceItem.price * 5) / 100).toFixed(2) }}
+            </x-tag>
+
         </div>
       </template>
 
@@ -503,6 +505,7 @@ const hasAnyRole = roles => useHasAnyRole(roles);
             Send Documents
           </x-button>
           <x-button
+            v-if="item.canGenerateCerticate"
             size="xs"
             color="#ff5e00"
             :disabled="!item.send_document_button"

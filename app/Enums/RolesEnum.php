@@ -108,4 +108,6 @@ final class RolesEnum extends Enum
     public const HomeSalesCoordinator = 'HOME_SALES_COORDINATOR';
     public const PetSalesCoordinator = 'PET_SALES_COORDINATOR';
     public const CycleSalesCoordinator = 'CYCLE_SALES_COORDINATOR';
+    public const ServiceExecutive = 'SERVICE_EXECUTIVE';
+    public const Production = 'PRODUCTION';
 }
