@@ -156,6 +156,11 @@ class AdvisorDistributionReportService extends BaseService
                     quoteTypeCode::Travel,
                 ],
             ],
+            'segment_filter' => [
+                'lobs' => [
+                    quoteTypeCode::Car,
+                ],
+            ],
         ];
     }
 

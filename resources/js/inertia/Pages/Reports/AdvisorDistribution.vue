@@ -655,6 +655,13 @@ const travelCoverageOptions = computed(() => {
 
           class="w-full"
         />
+        <x-select
+          v-if="can(permissionsEnum.SEGMENT_FILTER) && canShow('segment_filter')"
+          v-model="filters.segment_filter"
+          label="Segment"
+          placeholder="Select Segment"
+          :options="quoteSegments"
+        />
       </div>
       <div class="flex justify-end gap-3 mb-4">
         <x-button size="sm" color="#ff5e00" type="submit">Search</x-button>
