@@ -1166,6 +1166,16 @@ const validateViewPayment = (isValid) => {
     amountExceeded = true;
     //return true;
   }
+  // document validdation for insurer
+  if (paymentMethodsForm.collection_type==='insurer') {  
+    if (approvedDocumentModel.value[splitPaymentNo.value]===undefined 
+    || approvedDocumentModel.value[splitPaymentNo.value].length===0 ) {
+        isApprovedDocumentNotUploaded.value = true;
+        return true;
+      } else {        
+        isApprovedDocumentNotUploaded.value = false;
+      }      
+  }
   
   if(isApproveConfirm.value === false && isValid) {
     if (!amountExceeded) {
@@ -2850,7 +2860,7 @@ const isMasterPaymentPaid = computed(() => {
               </div>
               <div class="w-1/3 px-2">
                 <x-tooltip>
-                  <span class="border-b-2 border-dotted border-black text-sm">DOCUMENT</span>   
+                  <span class="border-b-2 border-dotted border-black text-sm">DOCUMENT <sup v-if="paymentMethodsForm.collection_type==='insurer'" class="text-red-500">*</sup></span>
                 <template #tooltip>
                       <span>{{ paymentTooltipEnum.PAYMENT_VIEW_DOCUMENTS }}</span>
                 </template>
