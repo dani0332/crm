@@ -17,6 +17,9 @@ const loaders = reactive({
 });
 
 const page = usePage();
+const can = permission => useCan(permission);
+const permissionsEnum = page.props.permissionsEnum;
+const quoteSegments = page.props.quoteSegments;
 const params = useUrlSearchParams('history');
 const dataTableRef = ref();
 const teamOptions = ref([]);
@@ -227,6 +230,7 @@ const getFiltersObject = () => {
     insurance_type: '',
     insurance_for: '',
     travel_coverage: '',
+    segment_filter: 'all',
   }
 };
 
@@ -960,6 +964,13 @@ const getAdvisorLabel = () => {
           placeholder="Select travel coverage"
 
           class="w-full"
+        />
+        <x-select
+          v-if="can(permissionsEnum.SEGMENT_FILTER)"
+          v-model="filters.segment_filter"
+          label="Segment"
+          placeholder="Select Segment"
+          :options="quoteSegments"
         />
       </div>
       <div class="flex justify-between gap-3 mb-4 items-center">

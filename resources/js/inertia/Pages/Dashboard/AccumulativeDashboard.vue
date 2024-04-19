@@ -3,6 +3,8 @@ const props = defineProps({
   totalLeadsReceived: Number,
   totalLeadsReceivedEcommerce: Number,
   totalUnAssignedLeadsReceived: Number,
+  totalUnAssignedOnlySICLeadsReceived: Number,
+  totalUnAssignedOnlyPaidSICLeadsReceived: Number,
   totalUnAssignedLeadsReceivedEcommerce: Number,
   teams: Object,
   carAdvisors: Array,
@@ -21,6 +23,8 @@ const { isActive, pasue, resume } = useTimeoutPoll(fetchData, 60000);
 const totalLeadsReceived = ref(props.totalLeadsReceived);
 const totalLeadsReceivedEcommerce = ref(props.totalLeadsReceivedEcommerce);
 const totalUnAssignedLeadsReceived = ref(props.totalUnAssignedLeadsReceived);
+const totalUnAssignedOnlySICLeadsReceived = ref(props.totalUnAssignedOnlySICLeadsReceived);
+const totalUnAssignedOnlyPaidSICLeadsReceived = ref(props.totalUnAssignedOnlyPaidSICLeadsReceived);
 const totalUnAssignedLeadsReceivedEcommerce = ref(
   props.totalUnAssignedLeadsReceivedEcommerce,
 );
@@ -66,6 +70,10 @@ async function fetchData() {
       response.data.totalLeadsReceivedEcommerce;
     totalUnAssignedLeadsReceived.value =
       response.data.totalUnAssignedLeadsReceived;
+    totalUnAssignedOnlySICLeadsReceived.value =
+      response.data.totalUnAssignedOnlySICLeadsReceived;
+    totalUnAssignedOnlyPaidSICLeadsReceived.value =
+      response.data.totalUnAssignedOnlyPaidSICLeadsReceived;
     totalUnAssignedLeadsReceivedEcommerce.value =
       response.data.totalUnAssignedLeadsReceivedEcommerce;
     totalUnAssignedRevivalLeads.value =
@@ -210,6 +218,18 @@ onUnmounted(() => (isActive.value = false));
           >TOTAL UNASSIGNED REVIVAL LEADS</span
         >
         <b class="block">{{ totalUnAssignedRevivalLeads }}</b>
+      </x-card>
+      <x-card class="text-center h-auto shadow-md border p-2">
+        <span class="text-[#308BCA] uppercase font-bold"
+          >TOTAL UNASSIGNED SIC LEADS</span
+        >
+        <b class="block">{{ totalUnAssignedOnlySICLeadsReceived }}</b>
+      </x-card>
+      <x-card class="text-center h-auto shadow-md border p-2">
+        <span class="text-[#308BCA] uppercase font-bold"
+          >TOTAL PAID UNASSIGNED SIC LEADS</span
+        >
+        <b class="block">{{ totalUnAssignedOnlyPaidSICLeadsReceived }}</b>
       </x-card>
     </div>
     <h2 class="text-center text-[#308BCA] font-bold text-2xl mt-12 mb-3">

@@ -7,6 +7,7 @@ use App\Enums\CustomerTypeEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentStatusEnum;
+use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
@@ -103,6 +104,8 @@ class CarQuoteService extends BaseService
                 'cp.text AS plan_id_text',
                 'cp.provider_id AS car_plan_provider_id',
                 'cpip.text AS car_plan_provider_id_text',
+                //'ppip.text AS prefill_plan_provider_id_text',
+                //'prefill_plan.text AS prefill_plan_id_text',
                 'cqr.quote_status_id',
                 'qs.text AS quote_status_id_text',
                 'cqr.year_of_manufacture AS year_of_manufacture_text',
@@ -170,7 +173,9 @@ class CarQuoteService extends BaseService
                 'ent.company_address',
                 'qrem.entity_type_code',
                 'ent.industry_type_code',
-                'cqr.prefill_plan_id',
+                //'cqr.prefill_plan_id',
+                //'cqr.prefill_plan_selected_at',
+                //'cqr.plan_selected_at'
                 'cqr.enquiry_count',
             )
             ->leftJoin('nationality as n', 'n.id', '=', 'cqr.nationality_id')
@@ -188,6 +193,8 @@ class CarQuoteService extends BaseService
             ->leftJoin('users as pra', 'pra.id', '=', 'cqr.previous_advisor_id')
             ->leftJoin('car_plan as cp', 'cp.id', '=', 'cqr.plan_id')
             ->leftJoin('insurance_provider as cpip', 'cpip.id', '=', 'cp.provider_id')
+            //->leftJoin('car_plan as prefill_plan', 'prefill_plan.id', '=', 'cqr.prefill_plan_id')
+            //->leftJoin('insurance_provider as ppip', 'ppip.id', '=', 'prefill_plan.provider_id')
             ->leftJoin('payment_status as ps', 'ps.id', '=', 'cqr.payment_status_id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'cqr.quote_status_id')
             ->leftJoin('vehicle_type as vt', 'vt.id', '=', 'cqr.vehicle_type_id')
@@ -547,7 +554,9 @@ class CarQuoteService extends BaseService
 
     public function getEntityPlain($id)
     {
-        return CarQuote::where('id', $id)->first();
+        return CarQuote::where('id', $id)->with(['payments.paymentSplits' => function ($query) {
+            $query->orderBy('sr_no', 'asc');
+        }, 'payments.paymentSplits.paymentStatus', 'payments.paymentSplits.paymentMethod', 'payments.paymentSplits.documents'])->first();
     }
 
     public function fillModelProperties()
@@ -885,12 +894,16 @@ class CarQuoteService extends BaseService
             $this->query->whereBetween('cqr.created_at', [$dateFrom, $dateTo]);
         }
 
+        if (auth()->user()->can(PermissionsEnum::SEGMENT_FILTER) && $request->has('segment_filter')) {
+            CarQuote::applySegmentFilter($this->query, $request->segment_filter, 'cqr');
+        }
+
         foreach ($searchProperties as $item) {
             if (! empty($request[$item]) && $item != 'created_at' && $item != 'renewal_expiry_date' && $item != 'advisor_assigned_date') {
                 if ($request[$item] == 'null') {
                     $this->query->whereNull($item);
                 } elseif ($item == 'advisor_id' && is_array($request[$item]) && ! empty($request[$item])) {
-                    if ($request[$item][0] == null) {
+                    if (in_array('-1', $request[$item]) || in_array(-1, $request[$item])) {
                         $this->query->whereNull('cqr.advisor_id');
                     } else {
                         $this->query->whereIn('cqr.advisor_id', $request[$item]);
@@ -1231,7 +1244,7 @@ class CarQuoteService extends BaseService
     /**
      * modify plan during upload & update process.
      *
-     * @param    $data
+     * @param  $data
      * @return false
      */
     public function renewalCreatePlan($planData)
@@ -1309,6 +1322,11 @@ class CarQuoteService extends BaseService
 
             $response = $this->httpService->processRequest($carPlanData, $apiCreds);
             if ($response == 200) {
+                $plan_id = CarQuote::where('uuid', '=', $request->car_quote_uuid)->value('plan_id');
+                if ($plan_id == $request->car_plan_id) {
+                    $request->merge(['plan_id' => $request->car_plan_id]);
+                    (new CentralService())->updateSelectedPlan(quoteTypeCode::Car, $request->car_quote_uuid, $request);
+                }
                 $this->lockCarQuote($request->car_quote_uuid);
             }
         }

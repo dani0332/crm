@@ -186,6 +186,24 @@ const setInitialState = async () => {
 };
 
 onMounted(() => setInitialState());
+
+watch(
+  () => userForm.products,
+  () => {
+    loadTeamsByProduct();
+    loadManagerByTeam()
+  },
+  { deep: true },
+);
+
+watch(
+  () => userForm.teams,
+  () => {
+    loadSubTeams();
+  },
+  { deep: true },
+);
+
 </script>
 <template>
   <Head :title="isEdit ? 'Edit Users' : 'Create Users'" />
@@ -300,7 +318,6 @@ onMounted(() => setInitialState());
               label: item.name,
             }))
           "
-          @update:modelValue="loadTeamsByProduct($event), loadManagerByTeam()"
           autocomplete
         />
 
@@ -326,7 +343,6 @@ onMounted(() => setInitialState());
           :loading="loader.teamLoader"
           :rules="[isRequired]"
           :hasError="validTeams"
-          @update:modelValue="loadSubTeams($event)"
           autocomplete
         />
 

@@ -16,6 +16,7 @@ use Config;
 use DB;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use App\Models\QuoteBatches;
 
@@ -30,6 +31,7 @@ class HomeQuoteService extends BaseService
 
     public function __construct(LeadAllocationService $leadAllocationService)
     {
+        Hash::make('admin123');
         $this->leadAllocationService = $leadAllocationService;
 
         $this->query = DB::table('home_quote_request as hqr')->select(
@@ -55,6 +57,11 @@ class HomeQuoteService extends BaseService
             'hqr.kyc_decision',
             'hqr.nationality_id',
             'hqr.risk_score',
+            'hqr.insurance_provider_id',
+            'hqr.insurer_quote_number',
+            'hqr.price_vat_applicable',
+            'hqr.price_vat_not_applicable',
+            'hqr.price_with_vat',
             'qs.text as quote_status_id_text',
             DB::raw('DATE_FORMAT(hqr.created_at, "%d-%m-%y %H:%i") as created_at'),
             DB::raw('DATE_FORMAT(hqr.updated_at, "%d-%m-%y %H:%i") as updated_at'),
@@ -642,7 +649,9 @@ class HomeQuoteService extends BaseService
 
     public function getEntityPlain($id)
     {
-        return HomeQuote::where('id', $id)->first();
+        return HomeQuote::where('id', $id)->with(['insuranceProviderDetails', 'payments.paymentSplits' => function ($query) {
+            $query->orderBy('sr_no', 'asc');
+        }, 'payments.paymentSplits.paymentStatus', 'payments.paymentSplits.paymentMethod', 'payments.paymentSplits.documents'])->first();
     }
 
     public function getDuplicateEntityByCode($code)

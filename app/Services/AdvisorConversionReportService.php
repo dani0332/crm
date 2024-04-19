@@ -56,6 +56,7 @@ class AdvisorConversionReportService extends BaseService
                 DB::raw('SUM(CASE WHEN personal_quotes.quote_status_id = '.QuoteStatusEnum::IMRenewal.' THEN 1 ELSE 0 END)  and personal_quotes.source != "'.LeadSourceEnum::IMCRM.'" as afia_renewals_count'),
                 DB::raw('SUM(CASE WHEN personal_quotes.quote_status_id in ('.QuoteStatusEnum::Duplicate.','.QuoteStatusEnum::Fake.') and personal_quotes.source = "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END) as manual_created_bad_leads'),
             )
+            ->filterBySegment()
             ->join('users', 'users.id', 'personal_quotes.advisor_id')
             ->join('quote_batches', 'quote_batches.id', 'personal_quotes.quote_batch_id')
             ->join('personal_quote_details', 'personal_quote_details.personal_quote_id', 'personal_quotes.id')

@@ -19,13 +19,23 @@ use App\Exports\TravelQuoteExport;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\CustomerProfileRequest;
 use App\Http\Requests\DuplicateLobRequest;
+use App\Http\Requests\GeneratePaymentLinkRequest;
 use App\Http\Requests\LeadAssignRequest;
+use App\Http\Requests\MigratePaymentsRequest;
 use App\Http\Requests\PlanDetailsRequest;
+use App\Http\Requests\SplitPaymentApproveRequest;
+use App\Http\Requests\SplitPaymentUpdateRequest;
+use App\Http\Requests\StorePaymentRequest;
 use App\Http\Requests\UpdateLastYearPolicyRequest;
+use App\Http\Requests\UpdatePaymentRequest;
+use App\Http\Requests\UpdateSelectedPlanRequest;
+use App\Http\Requests\UpdateTotalPriceRequest;
 use App\Models\Customer;
 use App\Models\Entity;
 use App\Models\QuoteRequestEntityMapping;
+use App\Repositories\PaymentRepository;
 use App\Services\CentralService;
+use App\Services\SplitPaymentService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -192,25 +202,78 @@ class CentralController extends Controller
         return (new CentralService())->loadAvailablePlans($type, $id);
     }
 
+    /**
+     * @return \Illuminate\Http\RedirectResponse
+     */
     public function savePlanDetails($quoteType, $code, PlanDetailsRequest $request)
     {
-        $repository = getRepositoryObject($quoteType);
+        $response = (new CentralService())->savePlanDetails($quoteType, $code, $request->safe());
 
-        $quote = $repository::where('code', $code)->firstOrFail();
-        $quote->update($request->validated());
-
-        return redirect()->back()->with('success', 'updated successfully');
+        return redirect()->back();
     }
 
-    public function updateSelectedPlan($quoteType, $uuid, $planId)
+    public function updateSelectedPlan(UpdateSelectedPlanRequest $request, $quoteType, $uuid)
     {
-        $repository = getRepositoryObject($quoteType);
+        $response = (new CentralService())->updateSelectedPlan($quoteType, $uuid, $request->safe());
 
-        $quote = $repository::where('uuid', $uuid)->firstOrFail();
+        return response()->json(['plan' => $response]);
+    }
 
-        $quote->update(['prefill_plan_id' => $planId]);
+    // Migrate payments from old system to new system
+    public function migratePayment(MigratePaymentsRequest $request)
+    {
+        $successMessage = PaymentRepository::migratePayments($request);
 
-        return redirect()->back()->with('success', 'updated successfully');
+        return $successMessage;
+    }
+    // Update split payment status
+    public function splitPaymentUpdate(SplitPaymentUpdateRequest $request)
+    {
+        $successMessage = PaymentRepository::updatePaymentStatus($request);
+
+        return back()->with('success', $successMessage);
+    }
+    // Approve split payments
+    public function splitPaymentsApprove(SplitPaymentApproveRequest $request)
+    {
+        $successMessage = PaymentRepository::updateSplitPaymentsApprove($request);
+
+        return back()->with('success', $successMessage);
+    }
+
+    // Update total price
+    public function updateTotalPrice(UpdateTotalPriceRequest $request)
+    {
+        $successMessage = PaymentRepository::updateTotalPrice($request);
+
+        return $successMessage;
+    }
+    // Store new payment
+    public function storeNewPayment(StorePaymentRequest $request)
+    {
+        $response = PaymentRepository::createNewPayment($request);
+        if ($response['status'] == 'success') {
+            return redirect()->back()->with('success', $response['message']);
+        } else {
+            return redirect()->back()->with('error', $response['message']);
+        }
+    }
+
+    // Update payment
+    public function updateNewPayment(UpdatePaymentRequest $request)
+    {
+        $response = PaymentRepository::updateNewPayment($request);
+        if ($response['status'] == 'success') {
+            return redirect()->back()->with('success', $response['message']);
+        } else {
+            return redirect()->back()->with('error', $response['message']);
+        }
+    }
+
+    // Generate payment link for split payment
+    public function generatePaymentLink(GeneratePaymentLinkRequest $request)
+    {
+        return (new SplitPaymentService())->generateSplitPaymentLink($request);
     }
 
 }
