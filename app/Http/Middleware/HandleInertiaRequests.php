@@ -2,23 +2,23 @@
 
 namespace App\Http\Middleware;
 
-use Inertia\Middleware;
-use App\Enums\RolesEnum;
-use App\Enums\quoteTypeCode;
-use Illuminate\Http\Request;
-use App\Enums\LeadSourceEnum;
-use App\Services\UserService;
-use App\Enums\PermissionsEnum;
-use App\Enums\QuoteStatusEnum;
-use App\Enums\TravelQuoteEnum;
-use Spatie\Navigation\Section;
-use App\Enums\PaymentStatusEnum;
-use Spatie\Navigation\Navigation;
-use App\Enums\quoteBusinessTypeCode;
-use App\Models\PolicyIssuanceStatus;
 use App\Enums\ApplicationStorageEnums;
-use App\Enums\QuoteIssuanceStatusEnum;
+use App\Enums\LeadSourceEnum;
+use App\Enums\PaymentStatusEnum;
+use App\Enums\PermissionsEnum;
 use App\Enums\ProductionProcessTooltipEnum;
+use App\Enums\quoteBusinessTypeCode;
+use App\Enums\QuoteIssuanceStatusEnum;
+use App\Enums\QuoteStatusEnum;
+use App\Enums\quoteTypeCode;
+use App\Enums\RolesEnum;
+use App\Enums\TravelQuoteEnum;
+use App\Models\PolicyIssuanceStatus;
+use App\Services\UserService;
+use Illuminate\Http\Request;
+use Inertia\Middleware;
+use Spatie\Navigation\Navigation;
+use Spatie\Navigation\Section;
 
 class HandleInertiaRequests extends Middleware
 {
@@ -79,7 +79,7 @@ class HandleInertiaRequests extends Middleware
             'vat' => ApplicationStorageEnums::VAT,
             'im_logo' => getIMLogo(),
             'productionProcessTooltipEnum' => ProductionProcessTooltipEnum::asArray(),
-            'policyIssuanceStatus' =>  PolicyIssuanceStatus::active()->get(),
+            'policyIssuanceStatus' => PolicyIssuanceStatus::active()->get(),
             'quoteStatusEnum' => QuoteStatusEnum::asArray(),
         ];
     }
