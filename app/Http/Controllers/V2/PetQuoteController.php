@@ -20,7 +20,6 @@ use App\Models\Nationality;
 use App\Models\PolicyIssuanceStatus;
 use App\Repositories\ActivityRepository;
 use App\Repositories\CustomerMembersRepository;
-use App\Repositories\DocumentTypeRepository;
 use App\Repositories\EmbeddedProductRepository;
 use App\Repositories\InsuranceProviderRepository;
 use App\Repositories\LookupRepository;

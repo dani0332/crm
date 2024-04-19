@@ -66,15 +66,15 @@ class PersonalQuoteRepository extends BaseRepository
      */
     public function fetchUploadDocument($id, $file, $data)
     {
-        $quoteType= '';
+        $quoteType = '';
         $query = DocumentTypeRepository::where('code', $data['document_type_code']);
         if (request()->quote_type_id) {
             $query->where('quote_type_id', request()->quote_type_id);
         }
         if (isset(request()->quote_type)) {
             $quoteType = request()->quote_type;
-        } 
-    
+        }
+
         $documentType = $query->first();
         $quote = $this->getQuoteObject($quoteType ?? '', $id);
 

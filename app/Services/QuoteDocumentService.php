@@ -211,16 +211,16 @@ class QuoteDocumentService extends BaseService
 
         return $quote ? $quote->documents()->with('createdBy:id,name,email')->latest()->get() : [];
     }
-    
+
     public function getDocumentTypes($quoteTypeId)
     {
-        $documentTypes= DocumentType::active()
-        ->whereNotIn('category', ['SEND_UPDATE', 'ENDORSEMENT_DOCUMENTS'])
-        ->byQuoteTypeId($quoteTypeId)
-        ->sortDocumentType()
-        ->get();
+        $documentTypes = DocumentType::active()
+            ->whereNotIn('category', ['SEND_UPDATE', 'ENDORSEMENT_DOCUMENTS'])
+            ->byQuoteTypeId($quoteTypeId)
+            ->sortDocumentType()
+            ->get();
 
-        $documentTypesByCategory= $documentTypes->groupBy('category');
+        $documentTypesByCategory = $documentTypes->groupBy('category');
         $orderedDocumentTypesByCategory = collect();
         if ($documentTypesByCategory->has('QUOTE')) {
             $orderedDocumentTypesByCategory->put('QUOTE', $documentTypesByCategory->get('QUOTE'));
@@ -231,6 +231,7 @@ class QuoteDocumentService extends BaseService
         if ($documentTypesByCategory->has('ISSUING_DOCUMENTS')) {
             $orderedDocumentTypesByCategory->put('ISSUING_DOCUMENTS', $documentTypesByCategory->get('ISSUING_DOCUMENTS'));
         }
+
         return [$orderedDocumentTypesByCategory, $documentTypes];
     }
 }

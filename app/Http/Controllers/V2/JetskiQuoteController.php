@@ -2,29 +2,28 @@
 
 namespace App\Http\Controllers\V2;
 
-use App\Enums\RolesEnum;
-use App\Enums\QuoteTypes;
-use App\Services\CRUDService;
-use App\Enums\QuoteStatusEnum;
-use App\Enums\CustomerTypeEnum;
-use App\Services\LookupService;
-use App\Models\ApplicationStorage;
-use App\Http\Controllers\Controller;
-use App\Repositories\UserRepository;
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\CustomerTypeEnum;
+use App\Enums\QuoteStatusEnum;
+use App\Enums\QuoteTypes;
+use App\Enums\RolesEnum;
 use App\Enums\SendUpdateLogStatusEnum;
-use App\Services\QuoteDocumentService;
-use App\Repositories\ActivityRepository;
+use App\Http\Controllers\Controller;
 use App\Http\Requests\JetskiQuoteRequest;
-use App\Repositories\LostReasonRepository;
-use App\Repositories\JetskiQuoteRepository;
-use App\Repositories\QuoteStatusRepository;
-use App\Repositories\DocumentTypeRepository;
-use App\Repositories\PersonalPlanRepository;
-use App\Repositories\PaymentMethodRepository;
-use App\Repositories\SendUpdateLogRepository;
+use App\Models\ApplicationStorage;
+use App\Repositories\ActivityRepository;
 use App\Repositories\EmbeddedProductRepository;
 use App\Repositories\InsuranceProviderRepository;
+use App\Repositories\JetskiQuoteRepository;
+use App\Repositories\LostReasonRepository;
+use App\Repositories\PaymentMethodRepository;
+use App\Repositories\PersonalPlanRepository;
+use App\Repositories\QuoteStatusRepository;
+use App\Repositories\SendUpdateLogRepository;
+use App\Repositories\UserRepository;
+use App\Services\CRUDService;
+use App\Services\LookupService;
+use App\Services\QuoteDocumentService;
 
 class JetskiQuoteController extends Controller
 {

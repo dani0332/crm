@@ -725,7 +725,7 @@ class CRUDController extends Controller
                 'paymentEntityModel', 'payments', 'paymentMethods', 'isQuoteDocumentEnabled', 'quoteDocuments', 'displaySendPolicyButton', 'customerAdditionalContacts', 'lostApproveReasons', 'lostRejectReasons', 'allowQuoteLogAction', 'carLostChangeStatus',
                 'carMakeText', 'carModelText', 'advisor', 'tiers', 'daysAfterCapturedPayment', 'access', 'carPlanFeaturesCodeEnum', 'carPlanExclusionsCodeEnum', 'documentTypes', 'planURL', 'storageUrl', 'kyoEndPoint',
                 'carPlanTypeEnum', 'UBORelations', 'UBOsDetails', 'emirates', 'customerTypeEnum', 'memberRelations', 'membersDetails', 'industryType', 'nationalities', 'paymentTooltipEnum',
-                'isCommercialVehicles', 'carInsuranceProviders', 'isNewPaymentStructure', 'sendUpdateOptions', 'sendUpdateLogs', 'hasPolicyIssuedStatus', 'sendUpdateEnum', 'policyIssuanceStatus', 'bPDetails', 'listQuotePlans', 'documentTypeCodes'
+                'isCommercialVehicles', 'carInsuranceProviders', 'isNewPaymentStructure', 'sendUpdateOptions', 'sendUpdateLogs', 'hasPolicyIssuedStatus', 'sendUpdateEnum', 'policyIssuanceStatus', 'bPDetails', 'listQuotePlans', 'documentTypeCodes',
             ]));
         }
 
@@ -869,7 +869,7 @@ class CRUDController extends Controller
                 'isNewPaymentStructure' => $isNewPaymentStructure,
                 'sendUpdateEnum' => $sendUpdateEnum,
                 'hasPolicyIssuedStatus' => $hasPolicyIssuedStatus,
-                'documentTypeCodes' => $documentTypeCodes
+                'documentTypeCodes' => $documentTypeCodes,
             ]);
         }
 
@@ -1027,7 +1027,7 @@ class CRUDController extends Controller
                 'sendUpdateEnum' => $sendUpdateEnum,
                 'hasPolicyIssuedStatus' => $hasPolicyIssuedStatus,
                 'isNewPaymentStructure' => $isNewPaymentStructure,
-                'documentTypeCodes' => $documentTypeCodes
+                'documentTypeCodes' => $documentTypeCodes,
             ]);
         } else {
             return view('shared.show', compact([

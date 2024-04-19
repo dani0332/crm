@@ -176,11 +176,10 @@ class TravelController extends Controller
         $isQuoteDocumentEnabled = $this->travelQuoteService->quoteDocumentEnabled($this->genericModel->modelType);
         $quoteDocuments = (new QuoteDocumentService())->getQuoteDocuments($this->genericModel->modelType, $record->id);
         $displaySendPolicyButton = $this->travelQuoteService->displaySendPolicyButton($record, $quoteDocuments, self::TYPE_ID);
-        $documentTypes= $documentType = $this->travelQuoteService->getQuoteDocumentsForUpload(self::TYPE_ID);
+        $documentTypes = $documentType = $this->travelQuoteService->getQuoteDocumentsForUpload(self::TYPE_ID);
         $documentTypes = collect($documentTypes)->groupBy('category');
 
         @[$documentTypes, $documentTypeCodes] = app(QuoteDocumentService::class)->getDocumentTypes(QuoteTypeId::Travel);
-
 
         $memberRelations = LookupRepository::where('key', LookupsEnum::MEMBER_RELATION)->get();
         $activities = $this->travelQuoteService->getActivityByLeadId($record->id, strtolower($this->genericModel->modelType));
