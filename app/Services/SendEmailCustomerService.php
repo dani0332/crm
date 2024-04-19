@@ -575,7 +575,6 @@ class SendEmailCustomerService extends BaseService
         } elseif ($response && isset($response->message)) {
             info('RM Intro Email Triggered to CAPI for HEA-'.$quoteUuid.' - Message: '.$response->message);
         }
-
     }
 
     public function sendNonAdvisorIntroEmail($emailData, $tag, $emailTemplateId)
@@ -648,6 +647,89 @@ class SendEmailCustomerService extends BaseService
         } catch (Exception $ex) {
             $responseCode = $ex->getCode();
             $responseDetail = 'SIB Send sendNonAdvisorIntroEmail: Code/Message: '.$responseCode.'/'.$ex->getMessage();
+            Log::error($responseDetail);
+        }
+
+        return $responseCode;
+    }
+
+    public function sendActivityAlertEmail($user)
+    {
+        $emailTemplateId = ApplicationStorage::where('key_name', '=', 'ADVISOR_NOTIFICATION_TEMPLATE')->value('value');
+        try {
+            $tag = $this->appEnv == EnvEnum::PRODUCTION ? '' : $this->appEnv.'-';
+            $headers = [
+                'Accept' => 'application/json',
+                'api-key' => $this->apiKey,
+                'Content-Type' => 'application/json',
+            ];
+
+            $user->advisor = [
+                'name' => $user->name,
+            ];
+
+            $roles = $user->usersroles->pluck('name');
+
+            $emailMapping = [
+                'CAR_ADVISOR',
+                'HEALTH_ADVISOR',
+            ];
+
+            $advisorEmail = '';
+            $advisorName = '';
+
+            foreach ($emailMapping as $role) {
+                if ($roles->contains($role)) {
+                    $HealthEmail = ApplicationStorage::where('key_name', '=', 'ADVISOR_NOTIFICATION_'.$role)->value('value');
+                    $health = explode(',', $HealthEmail);
+                    $advisorEmail = $health[1];
+                    $advisorName = $health[0];
+                    break;
+                }
+            }
+            if ($advisorEmail == '') {
+                return;
+            }
+            $BccEmail = ApplicationStorage::where('key_name', '=', 'ADVISOR_NOTIFICATION_BCC_EMAILS')->value('value');
+            $bcc = explode(',', $BccEmail);
+            $bccAdditional = [];
+
+            $i = 0;
+            foreach ($bcc as $pair) {
+                if (isset($bcc[$i])) {
+                    $bccAdditional[] = ['email' => $bcc[$i + 1], 'name' => $bcc[$i]];
+                    $i++;
+                }
+                $i++;
+            }
+            $body = json_encode([
+                'sender' => ['name' => $tag.' '.' Urgent: '.$user->name.' IMCRM Inactivity Alert', 'email' => $advisorEmail],
+                'to' => [[
+                    'email' => $advisorEmail,
+                    'name' => $advisorName,
+                ]],
+                'replyTo' => [
+                    'email' => $advisorEmail,
+                    'name' => $advisorName,
+                ],
+                'bcc' => array_merge($bccAdditional),  //    'bcc' => array_merge($bccAdditional, $bcc),
+                'templateId' => intval($emailTemplateId),
+                'params' => $user,
+            ], JSON_UNESCAPED_SLASHES);
+            $client = new \GuzzleHttp\Client();
+            $clientRequest = $client->post(
+                $this->url,
+                [
+                    'headers' => $headers,
+                    'body' => $body,
+                    'timeout' => 10,
+                ]
+            );
+            $responseCode = $clientRequest->getStatusCode();
+            info('sendActivityAlertEmail ---- response object : '.json_encode($clientRequest->getBody()->getContents()));
+        } catch (Exception $ex) {
+            $responseCode = $ex->getCode();
+            $responseDetail = 'sendActivityAlertEmail: Code/Message: '.$responseCode.'/'.$ex->getMessage();
             Log::error($responseDetail);
         }
 
