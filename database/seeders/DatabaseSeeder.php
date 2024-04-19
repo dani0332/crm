@@ -43,6 +43,7 @@ class DatabaseSeeder extends Seeder
             LookupSeeder::class,
             GenericPermissionSeeder::class,
             addSICWorkflow::class,
+            ApplicationStorageSeeder::class,
             addDubaiNowEmailGroup::class,
             DubaiLeadSource::class,
             // AddNewDocumentTypesSeeder::class,
