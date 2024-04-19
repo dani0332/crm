@@ -34,7 +34,7 @@ class AdvisorDistributionReportPermissionSeeder extends Seeder
                 RolesEnum::Engineering,
             ],
             PermissionsEnum::HEALTH_DISTRIBUTION_REPORT => [
-                RolesEnum::HealthAdvisor,
+                RolesEnum::RMAdvisor,
                 RolesEnum::HealthManager,
                 RolesEnum::SeniorManagement,
                 RolesEnum::Admin,
