@@ -84,7 +84,7 @@ const permissionsEnum = page.props.permissionsEnum;
           </div>
             <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">AML STATUS</dt>
-                <dd>{{ quote?.amlstatus.text ?? '' }}</dd>
+                <dd>{{ quote?.aml_status?.text ?? '' }}</dd>
             </div>
 
           <div class="grid sm:grid-cols-2">

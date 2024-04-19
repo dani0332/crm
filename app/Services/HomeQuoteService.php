@@ -109,9 +109,9 @@ class HomeQuoteService extends BaseService
             'ent.industry_type_code',
             'ent.emirate_of_registration_id',
             'hqr.aml_status_id',
-            'amlstatus.text as aml_status_text'
+            'amlStatus.text as aml_status_text'
         )
-            ->leftJoin('aml_status as amlstatus', 'amlstatus.id', '=', 'hqr.aml_status_id')
+            ->leftJoin('aml_status as amlStatus', 'amlStatus.id', '=', 'hqr.aml_status_id')
             ->leftJoin('nationality as n', 'n.id', '=', 'hqr.nationality_id')
             ->leftJoin('home_quote_request_detail as hqrd', 'hqrd.home_quote_request_id', '=', 'hqr.id')
             ->leftJoin('lost_reasons as ls', 'ls.id', '=', 'hqrd.lost_reason_id')

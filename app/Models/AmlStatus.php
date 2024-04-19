@@ -16,9 +16,6 @@ class AmlStatus extends Model implements AuditableContract
     protected $table = 'aml_status';
     protected $guarded = [];
 
-    public function amlstatus()
-    {
-        return $this->hasOne(HealthQuote::class, 'aml_status_id', 'id');
-    }
+
 
 }

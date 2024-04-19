@@ -16,7 +16,7 @@ class JetskiQuote extends Model
      * @return array
      */
 
-    public function amlstatus()
+    public function amlStatus()
     {
         return $this->belongsTo(AmlStatus::class, 'aml_status_id');
     }

@@ -127,9 +127,9 @@ class TravelQuoteService extends BaseService
             'ent.industry_type_code',
             'ent.emirate_of_registration_id',
             'tqr.aml_status_id',
-            'amlstatus.text as aml_status_text'
+            'amlStatus.text as aml_status_text'
         )
-            ->leftJoin('aml_status as amlstatus', 'amlstatus.id', '=', 'tqr.aml_status_id')
+            ->leftJoin('aml_status as amlStatus', 'amlStatus.id', '=', 'tqr.aml_status_id')
             ->leftJoin('travel_cover_for as tcf', 'tcf.id', '=', 'tqr.travel_cover_for_id')
             ->leftJoin('travel_quote_request_detail as tqrd', 'tqr.id', '=', 'tqrd.travel_quote_request_id')
             ->leftJoin('lost_reasons as ls', 'ls.id', '=', 'tqrd.lost_reason_id')

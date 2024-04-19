@@ -30,7 +30,7 @@ class HealthQuote extends Model implements AuditableContract
     ];
     protected $guarded = [];
 
-    public function amlstatus()
+    public function amlStatus()
     {
         return $this->belongsTo(AmlStatus::class, 'aml_status_id');
     }

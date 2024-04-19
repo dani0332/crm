@@ -36,7 +36,7 @@ class HomeQuote extends Model implements AuditableContract
     {
         return $this->belongsTo(QuoteStatus::class);
     }
-    public function amlstatus()
+    public function amlStatus()
     {
         return $this->belongsTo(AmlStatus::class, 'aml_status_id');
     }
