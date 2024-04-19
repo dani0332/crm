@@ -966,7 +966,7 @@ const getAdvisorLabel = () => {
           class="w-full"
         />
         <x-select
-          v-if="can(permissionsEnum.SEGMENT_FILTER)"
+          v-if="can(permissionsEnum.SEGMENT_FILTER) && canShow('segment_filter')"
           v-model="filters.segment_filter"
           label="Segment"
           placeholder="Select Segment"
