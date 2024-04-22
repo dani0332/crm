@@ -9,8 +9,6 @@ const props = defineProps({
   cdn: String,
 });
 
-console.log(props.notes);
-
 const notification = useNotifications('toast');
 const { isRequired } = useRules();
 
@@ -116,10 +114,6 @@ const onNoteSubmit = isValid => {
             position: 'top',
           });
         });
-        // notification.error({
-        //   title: 'Notes has not been updated',
-        //   position: 'top',
-        // });
       })
       .finally(() => {
         loader.value.button = false;
@@ -145,11 +139,6 @@ const onNoteSubmit = isValid => {
             position: 'top',
           });
         });
-        // console.log(err);
-        // notification.error({
-        //   title: 'Notes has not been saved',
-        //   position: 'top',
-        // });
       })
       .finally(() => {
         loader.value.button = false;
@@ -215,11 +204,33 @@ const url = file => {
   return URL.createObjectURL(file);
 };
 
+const fileValidation = file => {
+  const maxSize = 10 * 1024 * 1024; // 10 MB
+
+  console.log(file);
+  // Check if file size exceeds the maximum size
+  if (file.size > maxSize) {
+    notification.error({
+      title: 'File size exceeds the maximum allowed size.',
+      position: 'top',
+    });
+    return false;
+  }
+  return true;
+};
+
+const handleDrop = event => {
+  event.preventDefault();
+  const files = event.dataTransfer.files;
+  let isValid = fileValidation(files[0]);
+  if (isValid) uploadedFiles.value.push(files[0]);
+};
+
 const uploadFile = event => {
   if (event) {
-    uploadedFiles.value.push(event.target.files[0]);
+    let isValid = fileValidation(event.target.files[0]);
+    if (isValid) uploadedFiles.value.push(event.target.files[0]);
   }
-  return;
 };
 
 const handleRemoveFile = file => {
@@ -269,10 +280,6 @@ const handleRemoveFile = file => {
 //   accept: 'image/*', // Set to accept only image files
 //   directory: false, // Select directories instead of files if set true
 // });
-
-// onChange(files => {
-//   console.log(files);
-// });
 </script>
 <template>
   <div>
@@ -299,7 +306,6 @@ const handleRemoveFile = file => {
           Add Notes
         </x-button>
       </div>
-      <!-- :items="notes.data || []" -->
       <DataTable
         table-class-name=""
         :headers="tableHeader"
@@ -410,7 +416,7 @@ const handleRemoveFile = file => {
       <p class="text-xs ml-auto flex justify-end mt-2">
         {{ notesLength }}/1000
       </p>
-      <div class="mt-2">
+      <div class="mt-2 h-12" @drop.prevent="handleDrop" @dragover.prevent>
         <input
           @change.prevent="uploadFile"
           ref="fileInput"
