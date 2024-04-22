@@ -56,6 +56,7 @@ class DatabaseSeeder extends Seeder
             AddTempUpdateTotalPricePermission::class,
             PaymentLookupSeeder::class,
             InsuranceQuoteTypeSeeder::class,
+            AddPaymentPermissionsSeeder::class,
         ]);
     }
 }
