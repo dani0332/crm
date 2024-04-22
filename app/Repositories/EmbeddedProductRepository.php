@@ -7,6 +7,7 @@ use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Jobs\SendEPDocumentsJob;
 use App\Models\EmbeddedProduct;
+use App\Models\EmbeddedProductOption;
 use App\Models\EmbeddedTransaction;
 use App\Models\GenericDocument;
 use App\Models\QuoteType;
@@ -17,7 +18,6 @@ use Carbon\Carbon;
 use finfo;
 use Illuminate\Support\Facades\DB;
 use PDF;
-use App\Models\EmbeddedProductOption;
 
 class EmbeddedProductRepository extends BaseRepository
 {
@@ -247,7 +247,7 @@ class EmbeddedProductRepository extends BaseRepository
     public function fetchSendDocumentsByLead($leadId, $modelType)
     {
         $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
-        if($quoteTypeId !== QuoteTypeId::Car) {
+        if ($quoteTypeId !== QuoteTypeId::Car) {
             return false;
         }
 
