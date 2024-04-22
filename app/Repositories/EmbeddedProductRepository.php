@@ -246,7 +246,7 @@ class EmbeddedProductRepository extends BaseRepository
 
     public function fetchSendDocumentsByLead($leadId, $modelType)
     {
-        $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType->modelType));
+        $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
         if($quoteTypeId !== QuoteTypeId::Car) {
             return false;
         }
