@@ -87,7 +87,34 @@ function changeIncomeSource(val) {
 const isNationalityEmpty = ref(false);
 const isPlaceOfBirthEmpty = ref(false);
 
+function validateName(value) {
+    const regex = /^[a-zA-Z0-9]+$/;
+    if (!regex.test(value)) {
+        return 'Special characters are not allowed in Name'
+    }
+    return true;
+}
+
 const onKycSubmit = isValid => {
+
+    const isValidFirstName = validateName(kycForm.first_name);
+    const isValidLastName = validateName(kycForm.last_name);
+    if (isValidFirstName !== true) {
+        notification.error({
+            title: isValidFirstName,
+            position: 'top',
+        });
+        return;
+    }
+    if (isValidLastName !== true) {
+        notification.error({
+            title: isValidLastName,
+            position: 'top',
+        });
+        return;
+    }
+
+
   if (!kycForm.nationality_id) isNationalityEmpty.value = true;
   else isNationalityEmpty.value = false;
 

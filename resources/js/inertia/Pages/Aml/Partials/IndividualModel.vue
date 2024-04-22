@@ -123,7 +123,38 @@ const insuredFormDetails = useForm({
     props.entityDetails?.entity?.emirate_of_registration_id ?? null,
 });
 
+function validateName(value) {
+    const regex = /^[a-zA-Z0-9]+$/;
+    if (!regex.test(value)) {
+        return 'Special characters are not allowed in Insured Name';
+    }
+    return true;
+}
+
 const submitQuoteUpdateForm = isValid => {
+
+    const isValidFirstName = validateName(insuredFormDetails.insured_first_name);
+    const isValidLastName = validateName(insuredFormDetails.insured_last_name);
+
+    if (isValidFirstName !== true) {
+        notification.error({
+            title: isValidFirstName,
+            position: 'top',
+        });
+        modals.insuredDetailConfirmation = false;
+        return;
+    }
+
+    if (isValidLastName !== true) {
+        notification.error({
+            title: isValidLastName,
+            position: 'top',
+        });
+        modals.insuredDetailConfirmation = false;
+
+        return;
+    }
+
   insuredFormDetails.get(`${props.quoteDetails.id}/quoteUpdate`, {
     preserveScroll: true,
     onError: errors => {

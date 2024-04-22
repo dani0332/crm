@@ -85,8 +85,26 @@ const memberForm = useForm({
   from_aml_model: true,
 });
 
+function validateName(value) {
+    const regex = /^[a-zA-Z0-9]+$/;
+    if (!regex.test(value)) {
+        return 'Special characters are not allowed in Payer Name'
+    }
+    return true;
+}
+
 function onMemberSubmit(isValid) {
-  if (!isValid) return;
+    const isValidPayerName = validateName(memberForm.first_name);
+
+    if (isValidPayerName !== true) {
+        notification.error({
+            title: isValidPayerName,
+            position: 'top',
+        });
+        return;
+    }
+
+    if (!isValid) return;
 
   isLoading.value = true;
   if (editMemberDetails.value) {
