@@ -71,7 +71,7 @@ class SagePayloadFactory
 
     public static function createAPInvoicePrem($request)
     {
-        $premiumDescription = 'P'.$request->invoiceDescription;
+        $premiumDescription = 'P.'.$request->invoiceDescription;
         $payLoad = [
             'Invoices' => [
                 [
@@ -116,7 +116,7 @@ class SagePayloadFactory
     public static function createARInvoiceDis($request)
     {
         // Payload creation logic for CreditNote scenario
-        $description = 'D'.$request->invoiceDescription;
+        $description = 'D.'.$request->invoiceDescription;
         $payLoad = [
             'Invoices' => [
                 [
@@ -167,8 +167,8 @@ class SagePayloadFactory
         } else {
             $taxClass = 2;
         }
-        $premiumDescription = 'P'.$request->invoiceDescription;
-        $commissionDescription = 'C'.$request->invoiceDescription;
+        $premiumDescription = 'P.'.$request->invoiceDescription;
+        $commissionDescription = 'C.'.$request->invoiceDescription;
         $payLoad = [
             'Invoices' => [
                 [
@@ -247,8 +247,8 @@ class SagePayloadFactory
         } else {
             $taxClass = 2;
         }
-        $premiumDescription = 'P'.$request->invoiceDescription;
-        $commissionDescription = 'C'.$request->invoiceDescription;
+        $premiumDescription = 'P.'.$request->invoiceDescription;
+        $commissionDescription = 'C.'.$request->invoiceDescription;
         $payLoad = [
             'Invoices' => [
                 [
