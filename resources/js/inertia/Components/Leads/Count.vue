@@ -1,4 +1,6 @@
 <script setup>
+import { watch } from 'vue';
+
 const props = defineProps({
   leadsCount: {
     type: Number,
@@ -32,6 +34,13 @@ onUnmounted(() => {
   channel.unbind('leads.count');
   channel.unsubscribe('public.' + page.props.appEnv + '.total-leads-count');
 });
+
+watch(
+  () => props.leadsCount,
+  () => {
+    leadsCount.value = props.leadsCount;
+  },
+);
 </script>
 
 <template>

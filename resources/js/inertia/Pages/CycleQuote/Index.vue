@@ -213,7 +213,10 @@ watch(
     <StickyHeader>
       <template v-slot:header>
         <h2 class="text-xl font-semibold">Cycle Quotes List</h2>
-        <LeadsCount :leadsCount="$page.props.totalCount" />
+        <LeadsCount
+          :leadsCount="$page.props.totalCount"
+          :key="$page.props.totalCount"
+        />
       </template>
       <template #default>
         <ColumnSelection

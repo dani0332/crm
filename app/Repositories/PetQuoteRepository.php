@@ -103,11 +103,11 @@ class PetQuoteRepository extends BaseRepository
             })
             ->filter(! $forExport, $forTotalLeadsCount)
             ->withFakeLeadCriteria($forTotalLeadsCount)
-            ->orderBy('created_at', 'desc');
+            ->orderBy(request()->sortBy ?? 'created_at', request()->sortType ?? 'desc');
 
-        if ($forTotalLeadsCount) {
-            return $query->count();
-        }
+            if ($forTotalLeadsCount) {
+                return $query->count();
+            }
 
         return ($forExport) ? $query->get() : $query->simplePaginate()->withQueryString();
     }
