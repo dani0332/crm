@@ -102,6 +102,13 @@ const onUpdate = () => {
     },
   });
 };
+
+const onKeyPress = (event) => {
+  if (event.key === 'e' || event.key === 'E') {
+    event.preventDefault();
+    planDetailsForm.price_with_vat = null;
+  }
+};
 </script>
 
 <template>
@@ -232,6 +239,7 @@ const onUpdate = () => {
                   type="number"
                   min="0"
                   @change="updatePriceWithVat"
+                  @keypress="onKeyPress"
                   class="w-full"
                 />
               </dd>
