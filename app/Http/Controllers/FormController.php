@@ -33,6 +33,7 @@ class FormController extends ApiController
             $Model = '\\App\\Models\\'.$parentFormModel;
             $modelInstance = new $Model;
             $modelInstance->APIController = $this;
+
             return $modelInstance->saveForm($request, true);
         } catch (Exception $e) {
             return $this->respondError($e->getMessage());

@@ -74,7 +74,7 @@ class LeadAllocationController extends Controller
             abort(403, 'Unauthorized action.');
         }
     }
- 
+
     public function updateAvailability(Request $request)
     {
         $updateLogString = '----- Update done successfully to change the';

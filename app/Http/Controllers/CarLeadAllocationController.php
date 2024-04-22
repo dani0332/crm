@@ -48,7 +48,7 @@ class CarLeadAllocationController extends Controller
                 $totalAssignedLeadCount = $totalAssignedLeadCount + $value->allocationCount;
                 $value->isAvailable == 1 ? $availableUsers++ : $unAvailableUsers++;
             }
-            
+
             return inertia('LeadAllocation/Car', [
                 'totalAssignedLeadCount' => $totalAssignedLeadCount,
                 'availableUsers' => $availableUsers,
