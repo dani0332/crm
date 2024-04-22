@@ -14,14 +14,10 @@ class QuoteTypeRepository extends BaseRepository
         return QuoteType::class;
     }
 
-    public function fetchGetList($codes = [])
+    public function fetchGetList()
     {
         $query = $this->withActive()
                     ->orderBy('sort_order');
-
-        if(!empty($codes)) {
-            $query = $query->whereIn('code', $codes);
-        }
 
         return $query->get();
     }

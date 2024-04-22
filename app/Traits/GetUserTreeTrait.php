@@ -33,7 +33,8 @@ trait GetUserTreeTrait
             RolesEnum::YachtManager,
             RolesEnum::LifeManager,
             RolesEnum::HomeManager,
-            RolesEnum::BusinessManager,
+            RolesEnum::CorplineManager,
+            RolesEnum::GMManager,
             RolesEnum::LeadPool,
         ];
         if (auth()->user()->hasAnyRole($rolesArray)) {

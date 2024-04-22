@@ -23,6 +23,6 @@ final class TeamNameEnum extends Enum
     public const VOLUME = 'Volume';
     public const AMT = 'AMT';
     public const MICRO_SME = 'Micro SME';
-    public const NEW_BUSINESS = 'New Business';
-    public const BUSINESS_RENEWALS = 'Business Renewal';
+    public const CORPLINE_NEW = 'Corpline - Team';
+    public const CORPLINE_RENEWALS = 'Corpline - Renewals';
 }

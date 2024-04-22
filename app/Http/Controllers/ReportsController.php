@@ -113,33 +113,6 @@ class ReportsController extends Controller
      */
     public function fetchTeamListByLob(Request $request)
     {
-        $names = [];
-        if($request->lob === quoteTypeCode::Car) {
-            $names = [
-                TeamNameEnum::ORGANIC,
-                TeamNameEnum::BDM,
-                TeamNameEnum::SBDM,
-                TeamNameEnum::RENEWALS,
-                TeamNameEnum::MOTOR_CORPORATE_NB_COMMERCIAL,
-                TeamNameEnum::MOTOR_COOPERATE_RENEWALS,
-            ];
-        } else if($request->lob === quoteTypeCode::Health) {
-            $names = [
-                TeamNameEnum::RM_NB,
-                TeamNameEnum::RM_SPEED,
-                TeamNameEnum::EBP,
-            ];
-        } else if($request->lob === quoteTypeCode::Business) {
-            $names = [
-                TeamNameEnum::NEW_BUSINESS,
-                TeamNameEnum::BUSINESS_RENEWALS,
-            ];
-        } else if($request->lob === quoteTypeCode::GroupMedical) {
-            $names = [
-                TeamNameEnum::AMT,
-            ];
-        }
-
         $lobId = $this->getProductByName($request->lob)->id;
         $allTeams = $this->getTeamsByProductId($lobId)->pluck('id')->toArray();
         
@@ -158,10 +131,6 @@ class ReportsController extends Controller
             ->select('name', 'id')
             ->orderBy('name')
             ->where('is_active', 1);
-
-        if (count($names) > 0) {
-            $teams = $teams->whereIn('name', $names);
-        }
 
         return $teams->get()->toArray();
     }
@@ -209,18 +178,7 @@ class ReportsController extends Controller
      */
     public function fetchSubTeamListByTeam(Request $request)
     {
-        $allowedSubTeams = [];
-        if ($request->lob === quoteTypeCode::Car) {
-            $allowedSubTeams = [
-                TeamNameEnum::VALUE,
-                TeamNameEnum::VOLUME
-            ];
-        } else if ($request->lob === quoteTypeCode::GroupMedical) {
-            $allowedSubTeams = [
-                TeamNameEnum::MICRO_SME
-            ];
-        }
-        $subTeams = $this->getSubTeamsByTeamIds($request->teamIds)->whereIn('name', $allowedSubTeams)->pluck('id')->toArray();
+        $subTeams = $this->getSubTeamsByTeamIds($request->teamIds)->pluck('id')->toArray();
         if (
             auth()->user()->hasAnyRole([
                 RolesEnum::SeniorManagement,
