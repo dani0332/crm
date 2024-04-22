@@ -1,4 +1,6 @@
 <script setup>
+import { formatDate } from '@/inertia/Composables/utilities.js';
+
 defineProps({
   policies: Array,
   legacyPolicyMapping: Array,
@@ -60,7 +62,13 @@ const tableHeader = [
 ];
 
 const dateFormat = date => {
-  return useDateFormat(date, 'DD-MM-YYYY').value;
+  if (date) {
+    if (date.$date && date.$date.$numberLong) {
+      date = formatDate(date);
+    }
+    return useDateFormat(date, 'DD-MM-YYYY').value;
+  }
+  return null;
 };
 </script>
 

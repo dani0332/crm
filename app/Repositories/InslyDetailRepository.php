@@ -22,7 +22,13 @@ class InslyDetailRepository extends BaseRepository
     }
     public function fetchGetData()
     {
+        $coverage = $this->getCoverageList(auth()->user());
+
         $query = InslyDetail::query();
+
+        /*if (! empty($coverage)) {
+            $query->whereIn('policy.coverage', $coverage);
+        }*/
 
         if (! empty(request()->policy_number)) {
             $query->where('policy_no', '=', request()->policy_number);
@@ -33,15 +39,13 @@ class InslyDetailRepository extends BaseRepository
         }
 
         if (! empty(request()->mobile_no)) {
-            $query->where('customer.mobile_phone', '=', request()->mobile_no);
+            $phoneNumber = str_replace(' ', '', request()->mobile_no);
+            $regexPattern = implode('.*', str_split($phoneNumber)); // Creating a regex pattern to match phone numbers ignoring spaces
+            $regex = new \MongoDB\BSON\Regex("^$regexPattern$", 'i');
+            $query->where('customer.mobile_phone', '=', request()->mobile_no)
+                ->orWhere('customer.mobile_phone', 'regex', $regex);
         }
 
-        $coverage = $this->getCoverageList(auth()->user());
-
-        if (! empty($coverage)) {
-
-            $query->whereIn('policy.coverage', $coverage);
-        }
         $data = $query->simplePaginate()->withQueryString()->toArray();
 
         return $data;
@@ -87,11 +91,8 @@ class InslyDetailRepository extends BaseRepository
 
         $email = $policy['customer']['email'] ?? null;
         $inslyPolicyIssueDate = $policy['policy']['issue_date'] ?? null;
-
-        if ($inslyPolicyIssueDate instanceof \MongoDB\BSON\UTCDateTime) {
-            $inslyPolicyIssueDate = $inslyPolicyIssueDate->toDateTime()->format('Y-m-d');
-        } else {
-            $inslyPolicyIssueDate = Carbon::parse($inslyPolicyIssueDate)->format('Y-m-d');
+        if ($inslyPolicyIssueDate) {
+            $inslyPolicyIssueDate = $this->formatDate($inslyPolicyIssueDate);
         }
 
         $appUrl = env('APP_URL');
@@ -248,12 +249,7 @@ class InslyDetailRepository extends BaseRepository
 
         $previousPolicyStartDate = $policy['policy']['end_date'] ?? null;
         if ($previousPolicyStartDate) {
-            if ($previousPolicyStartDate instanceof \MongoDB\BSON\UTCDateTime) {
-                $dataArr['previous_policy_expiry_date'] = $previousPolicyStartDate->toDateTime()->format('Y-m-d');
-            } else {
-                $dataArr['previous_policy_expiry_date'] = Carbon::parse($previousPolicyStartDate)->format('Y-m-d');
-            }
-
+            $dataArr['previous_policy_expiry_date'] = $this->formatDate($previousPolicyStartDate);
         }
 
         $customerName = $policy['customer']['name'] ?? null;
@@ -341,5 +337,14 @@ class InslyDetailRepository extends BaseRepository
         }
 
         return $coverage;
+    }
+
+    private function formatDate($date)
+    {
+        if ($date instanceof \MongoDB\BSON\UTCDateTime) {
+            return $date->toDateTime()->format('Y-m-d');
+        } else {
+            return Carbon::parse($date)->format('Y-m-d');
+        }
     }
 }
