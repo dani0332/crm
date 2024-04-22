@@ -35,6 +35,9 @@ const formatLabel = inputString => {
 };
 const dateFormat = date => {
   if (date) {
+    if (date.$date && date.$date.$numberLong) {
+      date = formatDate(date);
+    }
     return useDateFormat(date, 'DD-MM-YYYY').value;
   }
   return null;

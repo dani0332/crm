@@ -87,7 +87,13 @@ class InslyDetailRepository extends BaseRepository
 
         $email = $policy['customer']['email'] ?? null;
         $inslyPolicyIssueDate = $policy['policy']['issue_date'] ?? null;
-        $inslyPolicyIssueDate = Carbon::parse($inslyPolicyIssueDate)->format('Y-m-d');
+
+        if ($inslyPolicyIssueDate instanceof \MongoDB\BSON\UTCDateTime) {
+            $inslyPolicyIssueDate = $inslyPolicyIssueDate->toDateTime()->format('Y-m-d');
+        } else {
+            $inslyPolicyIssueDate = Carbon::parse($inslyPolicyIssueDate)->format('Y-m-d');
+        }
+
         $appUrl = env('APP_URL');
 
         if (! empty($policy)) {
@@ -242,7 +248,12 @@ class InslyDetailRepository extends BaseRepository
 
         $previousPolicyStartDate = $policy['policy']['end_date'] ?? null;
         if ($previousPolicyStartDate) {
-            $dataArr['previous_policy_expiry_date'] = Carbon::parse($previousPolicyStartDate)->format('Y-m-d');
+            if ($previousPolicyStartDate instanceof \MongoDB\BSON\UTCDateTime) {
+                $dataArr['previous_policy_expiry_date'] = $previousPolicyStartDate->toDateTime()->format('Y-m-d');
+            } else {
+                $dataArr['previous_policy_expiry_date'] = Carbon::parse($previousPolicyStartDate)->format('Y-m-d');
+            }
+
         }
 
         $customerName = $policy['customer']['name'] ?? null;
