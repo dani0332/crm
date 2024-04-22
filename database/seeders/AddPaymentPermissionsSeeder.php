@@ -52,7 +52,7 @@ class AddPaymentPermissionsSeeder extends Seeder
                     $role->givePermissionTo($permissionApprovePayments->id);
                 }                               
             }
-        }
+        }s
 
         $productionApprovalRole = Role::findOrCreate('PRODUCTION_APPROVAL', 'web');
         $productionApprovalRole->givePermissionTo($permissionPaymentsEdit->id);
