@@ -8,19 +8,15 @@ use App\Http\Controllers\AjaxController;
 use App\Http\Controllers\AllocationThresholdController;
 use App\Http\Controllers\AMTController;
 use App\Http\Controllers\AuditableController;
-use App\Http\Controllers\BulkEmailProcessController;
 use App\Http\Controllers\BusinessQuoteController;
 use App\Http\Controllers\CarLeadAllocationController;
 use App\Http\Controllers\ClaimController;
-use App\Http\Controllers\ClaimsAttachmentsController;
-use App\Http\Controllers\ClaimsStatusController;
 use App\Http\Controllers\CommercialKeywordsController;
 use App\Http\Controllers\CommercialVehicleConfigurationContoller;
 use App\Http\Controllers\CRUDController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\FailedJobsController;
-use App\Http\Controllers\FormController;
 use App\Http\Controllers\GenericCrudController;
 use App\Http\Controllers\HandlerController;
 use App\Http\Controllers\HealthQuoteController;
@@ -33,14 +29,11 @@ use App\Http\Controllers\PaymentModeController;
 use App\Http\Controllers\QuoteDocumentController;
 use App\Http\Controllers\ReasonController;
 use App\Http\Controllers\RenewalBatchController;
-use App\Http\Controllers\RenewalDataProcessingController;
 use App\Http\Controllers\RenewalsUploadController;
-use App\Http\Controllers\RentACarController;
 use App\Http\Controllers\ReportsController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\SageApi;
 use App\Http\Controllers\StatusController;
-use App\Http\Controllers\SubTypeOfInsuranceController;
 use App\Http\Controllers\TeamController;
 use App\Http\Controllers\TmCallStatusController;
 use App\Http\Controllers\TmInsuranceTypeController;
@@ -50,8 +43,6 @@ use App\Http\Controllers\TmUploadLeadController;
 use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\TravelController;
 use App\Http\Controllers\TravelMembersDetailController;
-use App\Http\Controllers\TypeOfInsuranceController;
-use App\Http\Controllers\UploadResourceController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\V2\ActivityController;
 use App\Http\Controllers\V2\AlfredChatController;
@@ -217,7 +208,6 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::post('/payments/{quoteType}/update-new', [CentralController::class, 'updateNewPayment'])->name('payment-edit')->middleware('check_route_access');
 
     Route::get('/quotes/car/post-sage-data', [SageApi::class, 'processSagePostTest'])->name('post-sage-data');
-    // Route::post('/quotes/car/post-sage-data', [\App\Http\Controllers\V2\CarQuoteController::class, 'processSagePost'])->name('post-sage-data');
 
     Route::resource('leadassignment', LeadAssignmentController::class)->names([
         'index' => 'leadassignment.index',
@@ -234,7 +224,6 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::patch('activities/v2/{id}/update-status', [ActivityController::class, 'updateStatus']);
     Route::delete('activities/v2/{id}/', [ActivityController::class, 'destroy']);
 
-    //Route::get('activities', [ActivitesController::class, 'index'])->name('activities.index');
     Route::get('activities', [ActivityController::class, 'index'])->name('activities.index');
     Route::get('activities/create', [ActivityController::class, 'create'])->name('activities.create');
 
@@ -445,18 +434,6 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::get('car-model-detail', [ValuationController::class, 'carTrimBasedOnCarModel'])->name('valuation.carmodeldetail');
     });
 
-    // Scheduled to delete 15th April 2024
-    // Route::group(['prefix' => 'claim'], function () {
-    //     Route::resource('claims', ClaimController::class);
-    //     Route::resource('typeofinsurance', TypeOfInsuranceController::class);
-    //     Route::resource('subtypeofinsurance', SubTypeOfInsuranceController::class);
-    //     Route::resource('claimsstatus', ClaimsStatusController::class);
-    //     Route::resource('carrepaircoverage', CarRepairCoverageController::class);
-    //     Route::resource('carrepairtype', CarRepairTypeController::class);
-    //     Route::resource('rentacar', RentACarController::class);
-    //     Route::resource('claims.claim-attachment', ClaimsAttachmentsController::class);
-    // });
-
     Route::group(['prefix' => 'kyc'], function () {
         Route::resource('aml', AMLController::class);
         Route::get('aml/{quoteTypeId}/details/{quoteRequestId}', [AMLController::class, 'amlQuoteDetails']);
@@ -467,10 +444,6 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::post('aml/{quoteTypeId}/details/{quoteRequestId}/update-customer-details', [AMLController::class, 'updateCustomerDetails'])->name('aml-update-customer-details');
         Route::post('aml/{quoteTypeId}/details/{quoteRequestId}/update-entity-details', [AMLController::class, 'updateEntityDetails'])->name('aml-update-entity-details');
         Route::post('link-entity-details', [AMLController::class, 'linkEntityDetails'])->name('link-entity-details');
-
-        //        Route::get('aml/download/history', [AMLController::class, 'sanctionListHistory'])->name('sanctionListHistory');
-        //        Route::get('aml/upload/uae', [AMLController::class, 'uploadUaeSanctionList'])->name('uploadUaeSanctionList');
-        //        Route::post('aml/upload/uae-list', [AMLController::class, 'uaeSanctionListUpload'])->name('uaeSanctionListUpload');
     });
 
     Route::group(['prefix' => 'medical'], function () {
@@ -514,7 +487,6 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::post('/update-payment-status', [AjaxController::class, 'updatePaymentStatus']);
     Route::post('/{quoteType}/upload-individual-kycdoc', [AjaxController::class, 'uploadKycIndividualDocument']);
     Route::post('/{quoteType}/upload-entity-kycdoc', [AjaxController::class, 'uploadKycEntityDocument']);
-    // Route::get('/insurance-provider-plans', [ClaimController::class, 'carPlansBasedOnInsuranceProvider']); to be removed
     Route::post('/generate-payment-link', [AjaxController::class, 'generatePaymentLink']);
     Route::post('update-car-plan-details', [CarQuoteController::class, 'updateCarPlanDetails']);
     Route::post('/generate-payment-link-new', [CentralController::class, 'generatePaymentLink']);
@@ -550,31 +522,3 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::post('followups/emails/events', [FollowupController::class, 'getEmailEvents']);
     Route::post('/update-user-status', [UserController::class, 'updateUserStatus']);
 });
-
-// Route::POST('/sendBulkWelcomeEmails', [BulkEmailProcessController::class, 'ProcessBulkWelcomeEmails'])
-// ->withoutMiddleware([App\Http\Middleware\VerifyCsrfToken::class]);
-
-//Scheduled to delete 1st April 2024
-/***** RestAPI */
-// Route::group(['middleware' => ['auth.rest']], function () {
-//     Route::group(['prefix' => 'form'], function () {
-//         Route::GET('/{form}', [FormController::class, 'index']);
-//         Route::GET('/{form}/{form_id}', [FormController::class, 'getFormDetail']);
-//         Route::PUT('/{form}/{form_id}', [FormController::class, 'update']);
-//         Route::DELETE('/{form}/{form_id}', [FormController::class, 'delete']);
-//         Route::POST('/{form}', [FormController::class, 'save']);
-//     });
-//     // Route::POST('/sendReviewEmail', [FormController::class,'sendReviewEmail'])
-//     //         ->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class]);;
-
-//     Route::group(['prefix' => 'users'], function () {
-//         Route::GET('/me', [UserController::class, 'me']);
-//     });
-
-//     Route::group(['prefix' => 'resource'], function () {
-//         Route::POST('/store', [UploadResourceController::class, 'store']);
-//     });
-// });
-
-// Route::POST('/processInslyRenewalData', [RenewalDataProcessingController::class, 'FetchAndProcessInslyData'])
-//     ->withoutMiddleware([App\Http\Middleware\VerifyCsrfToken::class]);
