@@ -236,9 +236,11 @@ class ComprehensiveConversionDashboardService extends BaseService
     public function getDefaultFilters()
     {
         $lobs = $this->getLobByPermissions();
+        $organicTeam = strval(Team::where('name', 'Organic')->first()->id);
         return [
             'lob' => reset($lobs),
             'isCommercial' => 'All',
+            'car_team_id' => $organicTeam,
         ];
     }
 

@@ -166,6 +166,10 @@ const onLobChange = (e, isOnMounted = false) => {
         advisorOptions.value = [];
     }
 
+    if (filters.lob === quoteTypeCodeEnum.Car && filters.teams.length == 0) {
+      filters.teams = [page.props.defaultFilters.car_team_id];
+    }
+
     if(filters.lob !== quoteTypeCodeEnum.Bike) {
         loadTeams(e);
     } else {
