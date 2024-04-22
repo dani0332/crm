@@ -517,18 +517,7 @@ class DashboardController extends Controller
      */
     public function fetchSubTeamListByTeam(Request $request)
     {
-        $allowedSubTeams = [];
-        if ($request->lob === quoteTypeCode::Car) {
-            $allowedSubTeams = [
-                TeamNameEnum::VALUE,
-                TeamNameEnum::VOLUME
-            ];
-        } else if ($request->lob === quoteTypeCode::GroupMedical) {
-            $allowedSubTeams = [
-                TeamNameEnum::MICRO_SME
-            ];
-        }
-        $subTeams = $this->getSubTeamsByTeamIds($request->teamIds)->whereIn('name', $allowedSubTeams)->pluck('id')->toArray();
+        $subTeams = $this->getSubTeamsByTeamIds($request->teamIds)->pluck('id')->toArray();
         if (
             auth()->user()->hasAnyRole([
                 RolesEnum::SeniorManagement,
