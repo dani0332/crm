@@ -239,7 +239,7 @@ trait GenericQueriesAllLobs
             $type = request()->quote_type;
         }
         $quote = $this->getQuoteObject($type, $id);
-        if ($quote->quote_status_id != QuoteStatusEnum::PolicySentToCustomer) {
+        if ($quote->quote_status_id != QuoteStatusEnum::PolicySentToCustomer || $quote->policy_issuance_status_id != PolicyIssuanceStatusEnum::PolicyIssued) {
             if ($this->isFilledPolicyDetails($type, $quote)) {
                 $quoteDocuments = (new QuoteDocumentService())->getQuoteDocuments($type, $id);
                 if ($this->isAllRequiredDocumentAreUploaded($quoteDocuments, $type)) {
