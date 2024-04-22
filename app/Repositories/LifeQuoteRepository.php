@@ -91,16 +91,22 @@ class LifeQuoteRepository extends BaseRepository
 
     public function fetchGetBy($column, $value)
     {
-        $quote = $this->where($column, $value)->with([
-            'advisor', 'quoteStatus', 'nationality', 'previousAdvisor', 'lifeQuoteRequestDetail.lostReason',
+        $quote = $this->where($column, $value)->with(['advisor', 'quoteStatus', 'nationality', 'previousAdvisor', 'lifeQuoteRequestDetail.lostReason',
             'purposeOfInsurance', 'children', 'currency', 'insuranceTenure', 'numberOfYears', 'maritalStatus',
-            'paymentStatus', 'customer.additionalContactInfo', 'transactionType', 'quoteRequestEntityMapping' => function ($entityMapping) {
+            'paymentStatus', 'customer.additionalContactInfo', 'transactionType', 'insuranceProvider',
+            'payments.paymentMethod', 'payments.paymentStatus', 'payments.paymentSplits.paymentStatus', 'payments.paymentSplits.paymentMethod', 'payments.paymentSplits.documents',
+            'quoteRequestEntityMapping' => function ($entityMapping) {
                 $entityMapping->with('entity');
             },
         ])
             ->with([
                 'documents' => function ($q) {
                     $q->with('createdBy')->orderBy('created_at', 'desc');
+                },
+            ])
+            ->with([
+                'payments.paymentSplits' => function ($q) {
+                    $q->orderBy('sr_no', 'asc');
                 },
             ])
             ->select([
