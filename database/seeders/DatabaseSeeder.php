@@ -55,7 +55,7 @@ class DatabaseSeeder extends Seeder
             AddSageFlagApplicationStorage::class,
             PaymentsMoveInNewTableStructure::class,
             AddTempUpdateTotalPricePermission::class,
-            PolicyIssuanceStatusSeeder::class
+            PolicyIssuanceStatusSeeder::class,
 
         ]);
     }

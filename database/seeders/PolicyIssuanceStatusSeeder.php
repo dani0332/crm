@@ -25,6 +25,6 @@ class PolicyIssuanceStatusSeeder extends Seeder
         ];
 
         DB::table('policy_issuance_status')->insert($statuses);
-   
+
     }
 }
