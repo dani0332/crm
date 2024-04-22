@@ -267,7 +267,7 @@ class EmbeddedProductRepository extends BaseRepository
                 $data['quoteId'] = $leadId;
                 $data['modelType'] = $modelType;
                 $data['epId'] = $embedded_product_id;
-                self::sendDocument($data);
+                $this->fetchSendDocument($data);
             }
         }
     }
