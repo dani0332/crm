@@ -37,13 +37,18 @@ const quoteIssuanceStatusEnum = page.props.quoteIssuanceStatusEnum;
 const quoteStatusEnum= page.props.quoteStatusEnum;
 
 const policyIssuanceStatusOptions = computed(() => {
-  return page.props.policyIssuanceStatus.map(item => {
+  let policyIssuanceStatus= page.props.policyIssuanceStatus;
+  if( props.record.quote_status_id != quoteStatusEnum.PolicyIssued){
+    policyIssuanceStatus = policyIssuanceStatus.filter(item => item.text !== "Policy Issued");
+  }
+  return policyIssuanceStatus.map(item => {
     return {
       value: item.id,
       label: item.text,
     };
   });
-});
+  
+ });
 
 const planQuoteInsurerNumber = computed(() => {
   let obj = page.props?.listQuotePlans?.filter(
@@ -80,6 +85,15 @@ const policyDetailsForm = useForm({
   modelType: props.modelType,
   quote_id: page.props.record.id,
 });
+
+watch(
+  () => page.props.record.policy_issuance_status_id,
+  (newValue, oldValue) => {
+    if (newValue !== oldValue) {
+      policyDetailsForm.quote_policy_issuance_status = newValue;
+    }
+  },
+);
 
 const caculateVatAmount = () => {
   if (policyDetailsForm.amount > 0) {

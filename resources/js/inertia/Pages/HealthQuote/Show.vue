@@ -343,6 +343,7 @@ const onLeadStatus = () => {
     `/quotes/Health/${page.props.quote.id}/update-lead-status`,
     {
       preserveScroll: true,
+      preserveState: true,
       onError: errors => {
         notification.error({ title: errors.value, position: 'top' });
       },

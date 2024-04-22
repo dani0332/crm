@@ -3,6 +3,7 @@
 namespace App\Traits;
 
 use App\Enums\GenericRequestEnum;
+use App\Enums\PolicyIssuanceStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypes;
@@ -244,7 +245,7 @@ trait GenericQueriesAllLobs
                 if ($this->isAllRequiredDocumentAreUploaded($quoteDocuments, $type)) {
                     $quote->update([
                         'quote_status_id' => QuoteStatusEnum::PolicyIssued,
-                        'policy_issuance_status_id' => null,
+                        'policy_issuance_status_id' => PolicyIssuanceStatusEnum::PolicyIssued,
                         'policy_issuance_status_other' => '',
                     ]);
                 }
