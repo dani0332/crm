@@ -26,9 +26,9 @@ class InslyDetailRepository extends BaseRepository
 
         $query = InslyDetail::query();
 
-        /*if (! empty($coverage)) {
+        if (! empty($coverage)) {
             $query->whereIn('policy.coverage', $coverage);
-        }*/
+        }
 
         if (! empty(request()->policy_number)) {
             $query->where('policy_no', '=', request()->policy_number);
