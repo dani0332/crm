@@ -1938,7 +1938,7 @@ const isMasterPaymentPaid = computed(() => {
                 </td>
                 <td>{{ item.code }}</td>             
                 <td>{{ formatDate(item.collection_date) }}</td>
-                <td>{{ formatDate(item.collection_date) }}</td>
+                <td>{{ formatDate(item.payment_splits[0].due_date) }}</td>
                 <td>{{ item.payment_method.name }}</td>
                 <td>{{ formatAmount(item.total_price) }}</td>
                 <td>{{ formatAmount(item.discount_value) }}</td>
