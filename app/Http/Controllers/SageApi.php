@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Factories\SagePayloadFactory;
 use App\Services\SageApiService;
-use Inertia\Inertia; // Import Inertia class
 
 class SageApi extends Controller
 {
@@ -12,10 +11,6 @@ class SageApi extends Controller
     public function __construct(SageApiService $sageApi)
     {
         $this->sageApiService = $sageApi;
-    }
-
-    public function index()
-    {
     }
 
     private function processRequest($request, $leadStatus)

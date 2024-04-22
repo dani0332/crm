@@ -255,7 +255,5 @@ class QuoteDocumentController extends Controller
             return redirect()->back()->with('message', 'Document not found');
         }
         $document->delete();
-
-        // return response()->json(['message' => 'Document has been deleted.']);
     }
 }

@@ -7,7 +7,6 @@ use App\Enums\QuoteStatusEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\FollowupStartedRequest;
 use App\Http\Requests\Api\UpdateLeadStatusRequest;
-use App\Http\Resources\CarQuoteResource;
 use App\Models\CarQuote;
 use App\Repositories\CarQuoteRepository;
 use App\Services\CarQuoteService;

@@ -11,7 +11,6 @@ use App\Models\User;
 use App\Services\LeadAllocationService;
 use App\Services\UserService;
 use App\Traits\TeamHierarchyTrait;
-use Auth;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -310,12 +309,6 @@ class UserController extends Controller
     {
         return $this->getTeamsByProductIds($request->productIds);
     }
-
-    //Scheduled to delete 1st April 2024
-    // public function me(Request $request)
-    // {
-    //     return ['name' => Auth::user()->name, 'email' => Auth::user()->email, 'id' => Auth::user()->id, 'role' => strtolower(Auth::user()->usersroles[0]->name)];
-    // }
 
     public function getSubTeams(Request $request)
     {
