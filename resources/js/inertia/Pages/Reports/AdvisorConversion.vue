@@ -508,7 +508,7 @@ const onLobChange = (e, isOnMounted = false) => {
 
     if([quoteTypeCodeEnum.Car,
         quoteTypeCodeEnum.Health,
-        quoteTypeCodeEnum.Business,
+        quoteTypeCodeEnum.CORPLINE,
         quoteTypeCodeEnum.GroupMedical
     ].includes(filters.lob)) {
         loadTeams(e);
@@ -779,7 +779,7 @@ const getAdvisorLabel = () => {
     let label = 'Advisors'
     if ([quoteTypeCodeEnum.Car,
         quoteTypeCodeEnum.Health,
-        quoteTypeCodeEnum.Business,
+        quoteTypeCodeEnum.CORPLINE,
         quoteTypeCodeEnum.GroupMedical].includes(filters.lob) &&
     (!filters.teams || filters.teams.length == 0)) {
         label = 'Advisors (select teams first)';

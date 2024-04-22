@@ -34,7 +34,7 @@ class AdvisorConversionReportService extends BaseService
     public function getReportData($request)
     {
         $lob = $request->lob ?? quoteTypeCode::Car;
-        $lob = $lob === quoteTypeCode::GroupMedical ? quoteTypeCode::Business : $lob;
+        $lob = in_array($lob, [quoteTypeCode::GroupMedical, quoteTypeCode::CORPLINE]) ? quoteTypeCode::Business : $lob;
         $lobId = QuoteTypeRepository::where('code', $lob)->first();
 
         $query = PersonalQuote::query()
@@ -136,7 +136,7 @@ class AdvisorConversionReportService extends BaseService
                 'lobs' => [
                     quoteTypeCode::Car,
                     quoteTypeCode::Health,
-                    quoteTypeCode::Business,
+                    quoteTypeCode::CORPLINE,
                     quoteTypeCode::GroupMedical,
                 ],
             ],
@@ -175,7 +175,7 @@ class AdvisorConversionReportService extends BaseService
                 'lobs' => [
                     quoteTypeCode::Travel,
                     quoteTypeCode::Life,
-                    quoteTypeCode::Business,
+                    quoteTypeCode::CORPLINE,
                 ],
             ],
             'insurance_for' => [
@@ -209,14 +209,23 @@ class AdvisorConversionReportService extends BaseService
             quoteTypeCode::Yacht => PermissionsEnum::YACHT_CONVERSION_REPORT,
             quoteTypeCode::Life => PermissionsEnum::LIFE_CONVERSION_REPORT,
             quoteTypeCode::Home => PermissionsEnum::HOME_CONVERSION_REPORT,
-            quoteTypeCode::Business => PermissionsEnum::CORPLINE_CONVERSION_REPORT,
         ];
 
         $lobs = array_filter($lobs, function ($permission) {
             return Auth::user()->can($permission);
         });
 
-        $lobs = QuoteTypeRepository::GetList(array_keys($lobs))->pluck('code', 'text')->toArray();
+        $lobs = QuoteTypeRepository::GetList()
+        ->filter(function ($lob) use ($lobs) {
+            return array_key_exists($lob->code, $lobs);
+        })
+        ->pluck('code', 'text')
+        ->toArray();
+
+        if (Auth::user()->can(PermissionsEnum::CORPLINE_CONVERSION_REPORT)) {
+            $lobs = array_merge(['CorpLine Insurance' => quoteTypeCode::CORPLINE], $lobs);
+        }
+
         if(Auth::user()->can(PermissionsEnum::GROUPMEDICAL_CONVERSION_REPORT)) {
             $lobs = array_merge(['Group Medical Insurance' => quoteTypeCode::GroupMedical], $lobs);
         }
@@ -302,7 +311,7 @@ class AdvisorConversionReportService extends BaseService
                 ["value" => TravelQuoteEnum::TRAVEL_UAE_OUTBOUND, 'label' => 'Outside UAE (OutBound)'],
             ],
             quoteTypeCode::Life => $lifeInsuranceType,
-            quoteTypeCode::Business => $businessInsuranceType,
+            quoteTypeCode::CORPLINE => $businessInsuranceType,
         ];
 
         $vehicleCategories = $this->getVehicleTypes()->pluck('text')->map(function ($category) {
@@ -531,7 +540,7 @@ class AdvisorConversionReportService extends BaseService
             }
         }
 
-        if($lob === quoteTypeCode::Business) {
+        if($lob === quoteTypeCode::CORPLINE) {
             if(!empty($filters->insurance_type) && $filters->insurance_type != '') {
                 $query->join('business_quote_request', 'business_quote_request.uuid', 'personal_quotes.uuid');
                 $query->where('business_quote_request.business_type_of_insurance_id', $filters->insurance_type);
@@ -549,7 +558,7 @@ class AdvisorConversionReportService extends BaseService
     public function getAdvisorsAssignedLeads($filters)
     {
         $lob = $filters['lob'] ?? quoteTypeCode::Car;
-        $lob = $lob === quoteTypeCode::GroupMedical ? quoteTypeCode::Business : $lob;
+        $lob = in_array($lob, [quoteTypeCode::GroupMedical, quoteTypeCode::CORPLINE]) ? quoteTypeCode::Business : $lob;
         $lobId = QuoteTypeRepository::where('code', $lob)->first();
 
         $query = PersonalQuote::query()
