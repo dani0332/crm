@@ -2,13 +2,11 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
-use Illuminate\Database\Seeder;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteTypes;
 use App\Models\Permission;
 use App\Models\Role;
-
+use Illuminate\Database\Seeder;
 
 class AddPaymentPermissionsSeeder extends Seeder
 {
@@ -20,7 +18,7 @@ class AddPaymentPermissionsSeeder extends Seeder
         $permissionPaymentsCreate = Permission::findOrCreate(PermissionsEnum::PaymentsCreate, 'web');
         $permissionPaymentsEdit = Permission::findOrCreate(PermissionsEnum::PaymentsEdit, 'web');
         $permissionApprovePayments = Permission::findOrCreate(PermissionsEnum::ApprovePayments, 'web');
-        
+
         $roles = ['_ADVISOR', '_MANAGER'];
         $lobs = [
             QuoteTypes::CAR->value,
@@ -41,9 +39,9 @@ class AddPaymentPermissionsSeeder extends Seeder
                 $role = Role::findOrCreate(strtoupper($lob).$role, 'web');
                 $role->givePermissionTo($permissionPaymentsCreate->id);
                 $role->givePermissionTo($permissionPaymentsEdit->id);
-                if($role == '_MANAGER'){
+                if ($role == '_MANAGER') {
                     $role->givePermissionTo($permissionApprovePayments->id);
-                }                               
+                }
             }
         }
 
