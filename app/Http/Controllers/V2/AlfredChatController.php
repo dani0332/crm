@@ -92,15 +92,15 @@ class AlfredChatController extends Controller
             $quoteType = strtoupper($request->quoteType);
         }
 
-        if (isset($quoteId)) {
-            $totalPipeline = [
-                ['$match' => ['quote_id' => $quoteId]],
-            ];
-        }
-
         if (isset($quoteType)) {
             $totalPipeline = [
                 ['$match' => ['quote_type' => $quoteType]],
+            ];
+        }
+
+        if (isset($quoteId)) {
+            $totalPipeline = [
+                ['$match' => ['quote_id' => $quoteId]],
             ];
         }
 
@@ -121,6 +121,8 @@ class AlfredChatController extends Controller
             '_id' => ['quote_id' => '$quote_id',
                 ['$dateToString' => ['timezone' => '+04:00', 'format' => '%Y-%m-%d',
                     'date' => ['$toDate' => '$created_at']]]],
+            'quote_type' => ['$first' => '$quote_type'],
+            'quote_id' => ['$first' => '$quote_id'],
         ],
         ];
         $totalPipeline[] = ['$count' => 'total'];
@@ -185,14 +187,27 @@ class AlfredChatController extends Controller
         $startIndex = ($page - 1) * $perPage;
         $endIndex = max($startIndex + $perPage, $totalDocumentsCount);
         $prevPage = $page > 1 ? $page - 1 : null;
-        $nextPage = $totalDocumentsCount > $perPage ? $page + 1 : null;
+        $nextPage = $endIndex <= $totalDocumentsCount ? $page + 1 : null;
 
         // Create pagination object
         $pagination = [
             'data' => $chat,
             'current_page' => $page,
-            'prev_page_url' => $prevPage ? $request->url().'?page='.$prevPage : null,
-            'next_page_url' => $nextPage ? $request->url().'?page='.$nextPage : null,
+
+            'prev_page_url' => $prevPage ? $request->url().'?page='.$prevPage.
+            ($request->start_date ? '&start_date='.$request->start_date : '').
+            ($request->end_date ? '&end_date='.$request->end_date : '').
+            ($request->quoteType ? '&quoteType='.$request->quoteType : '').
+            ($request->quoteId ? '&quoteId='.$request->quoteId : '')
+            : null,
+
+            'next_page_url' => $nextPage ? $request->url().'?page='.$nextPage.
+                ($request->start_date ? '&start_date='.$request->start_date : '').
+                ($request->end_date ? '&end_date='.$request->end_date : '').
+                ($request->quoteType ? '&quoteType='.$request->quoteType : '').
+                ($request->quoteId ? '&quoteId='.$request->quoteId : '')
+                : null,
+
             'from' => $startIndex + 1,
             'to' => $endIndex,
         ];

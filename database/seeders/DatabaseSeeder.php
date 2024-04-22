@@ -46,6 +46,7 @@ class DatabaseSeeder extends Seeder
             DttOCBNewBusinessSeeder::class,
             GenericPermissionSeeder::class,
             addSICWorkflow::class,
+            ApplicationStorageSeeder::class,
             addDubaiNowEmailGroup::class,
             DubaiLeadSource::class,
             // AddNewDocumentTypesSeeder::class,
