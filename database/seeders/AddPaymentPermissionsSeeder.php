@@ -21,8 +21,8 @@ class AddPaymentPermissionsSeeder extends Seeder
         $permissionPaymentsEdit = Permission::findOrCreate(PermissionsEnum::PaymentsEdit, 'web');
         $permissionApprovePayments = Permission::findOrCreate(PermissionsEnum::ApprovePayments, 'web');
 
-        $permissionPlanDetailsAdd = Permission::findOrCreate(PermissionsEnum::PLAN_DETAILS_ADD, 'web');
-        $permissionAvailablePlanSelect = Permission::findOrCreate(PermissionsEnum::AVAILABLE_PLANS_SELECT_BUTTON, 'web');
+        //$permissionPlanDetailsAdd = Permission::findOrCreate(PermissionsEnum::PLAN_DETAILS_ADD, 'web');
+        //$permissionAvailablePlanSelect = Permission::findOrCreate(PermissionsEnum::AVAILABLE_PLANS_SELECT_BUTTON, 'web');
         $permissionTempUpdate = Permission::findOrCreate(PermissionsEnum::TEMP_UPDATE_TOTALPRICE, 'web');
 
         $roles = ['_ADVISOR', '_MANAGER'];
@@ -52,12 +52,12 @@ class AddPaymentPermissionsSeeder extends Seeder
                     $role->givePermissionTo($permissionApprovePayments->id);
                 }
             }
-        }s
+        }
 
         $productionApprovalRole = Role::findOrCreate('PRODUCTION_APPROVAL', 'web');
         $productionApprovalRole->givePermissionTo($permissionPaymentsEdit->id);
         $productionApprovalRole->givePermissionTo($permissionApprovePayments->id);
-        $productionApprovalRole->givePermissionTo($permissionPlanDetailsAdd->id);
+        //$productionApprovalRole->givePermissionTo($permissionPlanDetailsAdd->id);
 
         $nonRetailAccountsRole = Role::findOrCreate('NON_RETAIL_ACCOUNTS', 'web');
         // Get all permissions assigned to the PRODUCTION_APPROVAL role
