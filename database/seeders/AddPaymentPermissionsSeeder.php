@@ -2,13 +2,11 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
-use Illuminate\Database\Seeder;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteTypes;
 use App\Models\Permission;
 use App\Models\Role;
-
+use Illuminate\Database\Seeder;
 
 class AddPaymentPermissionsSeeder extends Seeder
 {
@@ -48,7 +46,7 @@ class AddPaymentPermissionsSeeder extends Seeder
                 //$role->givePermissionTo($permissionPlanDetailsAdd->id);
                 //$role->givePermissionTo($permissionAvailablePlanSelect->id);
                 $role->givePermissionTo($permissionTempUpdate->id);
-                if($role == '_MANAGER'){
+                if ($role == '_MANAGER') {
                     $role->givePermissionTo($permissionApprovePayments->id);
                 }
             }

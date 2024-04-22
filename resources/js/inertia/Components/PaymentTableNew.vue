@@ -1737,14 +1737,16 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
 
 watch(() => props.quoteRequest, (newValue, oldValue) => {
   //refresh premium
-  if (props.quoteType === 'Health') {
-    initialAmount.value = props.eCommercePrice;
-  } else {
-    initialAmount.value = quoteTypesToCheck.includes(props.quoteType)
-      ? props.quoteRequest.premium
-      : props.quoteRequest.price_with_vat;
+  if ( !(paymentMethodsForm.status === 'edit' && isTotalPriceUpdated.value === true) ) {
+    if (props.quoteType === 'Health') {
+      initialAmount.value = props.eCommercePrice;
+    } else {
+      initialAmount.value = quoteTypesToCheck.includes(props.quoteType)
+        ? props.quoteRequest.premium
+        : props.quoteRequest.price_with_vat;
+    }
+    totalPrice.value = initialAmount.value;
   }
-  totalPrice.value = initialAmount.value;
   //refresh plan
   if (quoteTypesToCheck.includes(props.quoteType)) {
     initalPlanDetails = props.quoteRequest.plan;
