@@ -274,7 +274,7 @@ watch(() => policyDetailsForm.insurance_provider_id, (providerId) => {
                     :single="true"
                     :disabled="!state.isEdit"
                 />
-								<span v-else>{{ policyDetailsForm.plan_name }}</span>
+								<span v-else>{{ policyDetailsForm.plan_name ?? 'N/A' }}</span>
 							</dd>
             </div>
 
@@ -424,14 +424,14 @@ watch(() => policyDetailsForm.insurance_provider_id, (providerId) => {
               </dt>
               <dd>
 								<x-select
-									v-if="!isCPD"
+									v-if="isCPD"
 									:disabled="!state.isEdit"
                   :options="issuanceStatusOptions"
                   v-model="policyDetailsForm.issuance_status_id"
                   placeholder="Select Status"
                   class="w-1/2"
 								/>
-                <span v-else>{{ issuanceStatusText(policyDetailsForm.issuance_status_id) }}</span>
+                <span v-else>{{ issuanceStatusText(policyDetailsForm.issuance_status_id) ?? 'N/A' }}</span>
 							</dd>
             </div>
           </dl>
