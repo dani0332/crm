@@ -45,12 +45,12 @@ class AddPaymentPermissionsSeeder extends Seeder
                 $role = Role::findOrCreate(strtoupper($lob).$role, 'web');
                 $role->givePermissionTo($permissionPaymentsCreate->id);
                 $role->givePermissionTo($permissionPaymentsEdit->id);
-                $role->givePermissionTo($permissionPlanDetailsAdd->id);
-                $role->givePermissionTo($permissionAvailablePlanSelect->id);
+                //$role->givePermissionTo($permissionPlanDetailsAdd->id);
+                //$role->givePermissionTo($permissionAvailablePlanSelect->id);
                 $role->givePermissionTo($permissionTempUpdate->id);
                 if($role == '_MANAGER'){
                     $role->givePermissionTo($permissionApprovePayments->id);
-                }                               
+                }
             }
         }s
 
