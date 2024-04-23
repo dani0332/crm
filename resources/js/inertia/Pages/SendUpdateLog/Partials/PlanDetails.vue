@@ -176,6 +176,7 @@ const onKeyPress = (event) => {
                   type="number"
                   min="0"
                   @change="updatePriceWithVat"
+                  @keypress="onKeyPress"
                   class="w-full"
                 />
               </dd>
