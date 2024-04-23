@@ -10,6 +10,7 @@ use App\Models\CarQuote;
 use App\Services\LeadAllocationService;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\DB;
 use Sammyjo20\LaravelHaystack\Models\Haystack;
 
 class Dtt extends Command
@@ -56,7 +57,7 @@ class Dtt extends Command
             $datethirtyDaysBefore = Carbon::now()->subDays(30)->toDateString();
 
             $jobs = [];
-
+            // DB::enableQueryLog();
             $leads = CarQuote::where('is_revived', '=', false)
                 ->where(function ($q) use ($dateOne, $dateTwo) {
                     $q->whereDate('created_at', '=', $dateOne);
@@ -69,8 +70,8 @@ class Dtt extends Command
                         ->where('created_at', '<=', $datethirtyDaysBefore);
                 })
                 ->where('source', '!=', LeadSourceEnum::RENEWAL_UPLOAD)
-                ->where('renewal_batch', '=', '')
-                ->where('previous_quote_policy_number', '=', '')
+                ->whereNull('renewal_batch')
+                ->whereNull('previous_quote_policy_number')
 
                 ->whereNotIn('quote_status_id', [QuoteStatusEnum::PolicyIssued, QuoteStatusEnum::TransactionApproved])
                 ->where('payment_status_id', '!=', PaymentStatusEnum::CAPTURED)
@@ -78,6 +79,8 @@ class Dtt extends Command
                 ->groupBy(['email', 'car_make_id', 'car_model_id', 'year_of_manufacture'])
                 ->orderBy('id', 'DESC')
                 ->get();
+
+                // dd(DB::getQueryLog());
 
             info('------CarRevivalLeadsCreationJobCount --' . count($leads) . '------' . json_encode($leads->pluck('uuid')->toArray()));
 
