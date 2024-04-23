@@ -695,6 +695,8 @@ const linkEntity = () => {
       :insuranceProviders="insuranceProviders"
       :quote="quote"
       :quoteType="quoteType"
+      :vatPrice="vatPercentage"
+      
     />
     <MigratePayment
       v-if="!isNewPaymentStructure"
