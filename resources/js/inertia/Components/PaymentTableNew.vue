@@ -1196,7 +1196,8 @@ const validateCapturePayment = (isValid) => {
       for (let i = 1; i <= paymentMethodsForm.payment_no; i++) { 
         //isCreditPaymentInvalid.value[i] = false;
         if (paymentMethodsModels.value[i] === 'CC'){
-          if (collectionAmountModels.value[i]===null || collectionAmountModels.value[i]===undefined){
+
+          if (collectionAmountModels.value[i]===null || collectionAmountModels.value[i]===undefined || collectionAmountModels.value[i]===0){
             isCreditPaymentInvalid.value[i] = true;
             isCreditPaymentInvalidError.value[i] = "This field is required";
           }
@@ -1737,14 +1738,16 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
 
 watch(() => props.quoteRequest, (newValue, oldValue) => {
   //refresh premium
-  if (props.quoteType === 'Health') {
-    initialAmount.value = props.eCommercePrice;
-  } else {
-    initialAmount.value = quoteTypesToCheck.includes(props.quoteType)
-      ? props.quoteRequest.premium
-      : props.quoteRequest.price_with_vat;
+  if ( !(paymentMethodsForm.status === 'edit' && isTotalPriceUpdated.value === true) ) {
+    if (props.quoteType === 'Health') {
+      initialAmount.value = props.eCommercePrice;
+    } else {
+      initialAmount.value = quoteTypesToCheck.includes(props.quoteType)
+        ? props.quoteRequest.premium
+        : props.quoteRequest.price_with_vat;
+    }
+    totalPrice.value = initialAmount.value;
   }
-  totalPrice.value = initialAmount.value;
   //refresh plan
   if (quoteTypesToCheck.includes(props.quoteType)) {
     initalPlanDetails = props.quoteRequest.plan;

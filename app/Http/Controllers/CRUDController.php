@@ -34,8 +34,6 @@ use App\Jobs\SyncSIBContactJob;
 use App\Models\ApplicationStorage;
 use App\Models\CarMake;
 use App\Models\CarQuote;
-use App\Models\EmbeddedProductOption;
-use App\Models\EmbeddedTransaction;
 use App\Models\Emirate;
 use App\Models\GenericModel;
 use App\Models\HealthPlanType;
@@ -1402,26 +1400,7 @@ class CRUDController extends Controller
                 SyncSIBContactJob::dispatch($lead);
 
                 // Ep send documents
-                $quoteTypeId = $this->activityService->getQuoteTypeId(strtolower($request->modelType));
-                $epTransaction = EmbeddedTransaction::where([
-                    ['quote_type_id',   $quoteTypeId],
-                    ['quote_request_id', $request->leadId],
-                    ['is_selected', 1],
-                ])->whereIn('payment_status_id', [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PARTIAL_CAPTURED])->get();
-
-                if ($epTransaction->isNotEmpty()) {
-                    foreach ($epTransaction as $item) {
-
-                        $product_id = $item->product_id;
-                        $embedded_product_id = EmbeddedProductOption::find($product_id)->embedded_product_id;
-                        // EP Send documents
-                        $data = [];
-                        $data['quoteId'] = $request->leadId;
-                        $data['modelType'] = $request->modelType;
-                        $data['epId'] = $embedded_product_id;
-                        EmbeddedProductRepository::sendDocument($data);
-                    }
-                }
+                EmbeddedProductRepository::sendDocumentsByLead($request->leadId, $request->modelType);
             }
 
             if (in_array($request->leadStatus, [QuoteStatusEnum::FollowupCall, QuoteStatusEnum::Interested, QuoteStatusEnum::NoAnswer])) {
