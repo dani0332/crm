@@ -120,7 +120,6 @@ const onUpdate = () => {
 const onKeyPress = (event) => {
   if (event.key === 'e' || event.key === 'E') {
     event.preventDefault();
-    planDetailsForm.price_with_vat = null;
   }
 };
 </script>
