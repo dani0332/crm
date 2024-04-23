@@ -85,25 +85,16 @@ const memberForm = useForm({
   from_aml_model: true,
 });
 
-function validateName(value) {
-    const regex = /^[a-zA-Z0-9]+$/;
-    if (!regex.test(value)) {
-        return 'Special characters are not allowed in Payer Name'
+
+const rules = {
+    nameCheck: v => {
+        const pattern = /^[a-zA-Z0-9]+$/;
+        if(v == null || v == '') return true;
+        return pattern.test(v) || 'Special characters are not allowed in Payer Name';
     }
-    return true;
-}
+};
 
 function onMemberSubmit(isValid) {
-    const isValidPayerName = validateName(memberForm.first_name);
-
-    if (isValidPayerName !== true) {
-        notification.error({
-            title: isValidPayerName,
-            position: 'top',
-        });
-        return;
-    }
-
     if (!isValid) return;
 
   isLoading.value = true;
@@ -232,7 +223,7 @@ function onMemberSubmit(isValid) {
           <x-field label="Payer Name" required>
             <x-input
               v-model="memberForm.first_name"
-              :rules="[isRequired]"
+              :rules="[isRequired , rules.nameCheck]"
               placeholder="Payer Name"
               type="text"
               class="w-full"

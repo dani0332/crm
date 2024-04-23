@@ -101,27 +101,16 @@ const memberForm = useForm({
   from_aml_model: true
 });
 
-function validateName(value) {
-    const regex = /^[a-zA-Z0-9]+$/;
-    if (!regex.test(value)) {
-        return 'Special characters are not allowed in Member Name';
+
+const rules = {
+    nameCheck: v => {
+        const pattern = /^[a-zA-Z0-9]+$/;
+        if(v == null || v == '') return true;
+        return pattern.test(v) || 'Special characters are not allowed in Member Name';
     }
-    return true;
-}
+};
 
 function onMemberSubmit(isValid) {
-
-    const isValidMemberName = validateName(memberForm.first_name);
-
-    if (isValidMemberName !== true) {
-        notification.error({
-            title: isValidMemberName,
-            position: 'top',
-        });
-        return;
-    }
-
-
   if (memberForm.nationality_id == null) isEmptyField.value = true;
   else isEmptyField.value = false;
 
@@ -213,7 +202,7 @@ function onMemberSubmit(isValid) {
             v-model="memberForm.first_name"
             placeholder="Member Name"
             class="w-full"
-            :rules="[isRequired]"
+            :rules="[isRequired , rules.nameCheck]"
           />
         </x-field>
         <x-field label="Nationality" required>

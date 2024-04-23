@@ -123,38 +123,15 @@ const insuredFormDetails = useForm({
     props.entityDetails?.entity?.emirate_of_registration_id ?? null,
 });
 
-function validateName(value) {
-    const regex = /^[a-zA-Z0-9]+$/;
-    if (!regex.test(value)) {
-        return 'Special characters are not allowed in Insured Name';
+const rules = {
+    nameCheck: v => {
+        const pattern = /^[a-zA-Z0-9]+$/;
+        if(v == null || v == '') return true;
+        return pattern.test(v) || 'Special characters are not allowed in Insured Name';
     }
-    return true;
-}
+};
 
 const submitQuoteUpdateForm = isValid => {
-
-    const isValidFirstName = validateName(insuredFormDetails.insured_first_name);
-    const isValidLastName = validateName(insuredFormDetails.insured_last_name);
-
-    if (isValidFirstName !== true) {
-        notification.error({
-            title: isValidFirstName,
-            position: 'top',
-        });
-        modals.insuredDetailConfirmation = false;
-        return;
-    }
-
-    if (isValidLastName !== true) {
-        notification.error({
-            title: isValidLastName,
-            position: 'top',
-        });
-        modals.insuredDetailConfirmation = false;
-
-        return;
-    }
-
   insuredFormDetails.get(`${props.quoteDetails.id}/quoteUpdate`, {
     preserveScroll: true,
     onError: errors => {
@@ -365,7 +342,7 @@ watch(
           >
             <x-input
               v-model="insuredFormDetails.insured_first_name"
-              :rules="[isRequired]"
+              :rules="[isRequired , rules.nameCheck]"
               placeholder="Insured First Name"
               type="text"
               class="w-full"
@@ -376,7 +353,7 @@ watch(
           >
             <x-input
               v-model="insuredFormDetails.insured_last_name"
-              :rules="[isRequired]"
+              :rules="[isRequired , rules.nameCheck]"
               placeholder="Insured Last Name"
               type="text"
               class="w-full"
