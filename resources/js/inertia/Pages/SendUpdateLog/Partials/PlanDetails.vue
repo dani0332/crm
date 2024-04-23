@@ -73,7 +73,11 @@ const insuranceProvidersOptions = computed(() => {
 });
 
 const updatePriceWithVat = () => {
-  if (planDetailsForm.price_with_vat) {
+  if (planDetailsForm.price_with_vat && planDetailsForm.price_without_vat) {
+    let priceWithVat = parseFloat(planDetailsForm.price_with_vat);
+    let priceWithoutVat = parseFloat(planDetailsForm.price_without_vat);
+    planDetailsForm.total_price = ((priceWithVat / 100) * 5) + priceWithVat + priceWithoutVat;
+  } else if (planDetailsForm.price_with_vat) {
     let price = parseFloat(planDetailsForm.price_with_vat);
     planDetailsForm.total_price = (price / 100) * 5 + price;
   } else if (planDetailsForm.price_without_vat) {
@@ -83,6 +87,14 @@ const updatePriceWithVat = () => {
 };
 
 const onUpdate = () => {
+  if (!planDetailsForm.price_with_vat && !planDetailsForm.price_without_vat) {
+    notification.error({
+      title: 'Please enter price.',
+      position: 'top',
+    });
+    planDetailsForm.total_price = null;
+    return;
+  }
   planDetailsForm.post(route('send-update-logs.save-price-details'), {
     preserverScroll: true,
     onSuccess: ({ props }) => {
@@ -168,6 +180,7 @@ const onKeyPress = (event) => {
                   type="number"
                   min="0"
                   @change="updatePriceWithVat"
+                  @keypress="onKeyPress"
                   class="w-full"
                 />
               </dd>
