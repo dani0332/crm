@@ -116,6 +116,36 @@ class GenericPermissionSeeder extends Seeder
             $role->givePermissionTo(PermissionsEnum::INSTANT_ALFRED_CHAT_LOGS);
         }
 
+        $manageQuoteNotes = Permission::where('name', PermissionsEnum::MANAGE_QUOTE_NOTES)->first();
+        if (! $manageQuoteNotes) {
+            $manageQuoteNotes = Permission::create([
+                'name' => PermissionsEnum::MANAGE_QUOTE_NOTES,
+                'guard_name' => 'web',
+            ]);
+
+            $rolesForManageQuote = [
+                RolesEnum::Admin,
+                RolesEnum::HealthManager,
+                RolesEnum::HealthAdvisor,
+                RolesEnum::HomeManager,
+                RolesEnum::HomeAdvisor,
+                RolesEnum::PetManager,
+                RolesEnum::PetAdvisor,
+                RolesEnum::CycleManager,
+                RolesEnum::CycleAdvisor,
+                RolesEnum::YachtManager,
+                RolesEnum::YachtAdvisor,
+                RolesEnum::CorplineManager,
+                RolesEnum::CorpLineAdvisor,
+            ];
+
+            
+        foreach ($rolesForManageQuote as $roleForManageQuote) {
+            $roleForManageQuote = Role::findOrCreate($roleForManageQuote, 'web');
+            $roleForManageQuote->givePermissionTo(PermissionsEnum::MANAGE_QUOTE_NOTES);
+        }
+    }
+
         $this->generateSegmentFilterPermission();
     }
 

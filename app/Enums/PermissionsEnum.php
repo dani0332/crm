@@ -258,4 +258,5 @@ final class PermissionsEnum extends Enum
     public const PLAN_DETAILS_ADD = 'plan-details-add';
     public const AVAILABLE_PLANS_SELECT_BUTTON = 'available-plans-select-button';
     public const INSTANT_ALFRED_CHAT_LOGS = 'instant-alfred-chat-logs';
+    public const MANAGE_QUOTE_NOTES = 'save-quote-notes';
 }

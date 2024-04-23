@@ -1,4 +1,5 @@
 <script setup>
+import { usePage } from '@inertiajs/vue3';
 import AppModal from './AppModal.vue';
 
 const props = defineProps({
@@ -11,6 +12,10 @@ const props = defineProps({
 
 const notification = useNotifications('toast');
 const { isRequired } = useRules();
+
+const page = usePage();
+const can = permission => useCan(permission);
+const permissionsEnum = page.props.permissionsEnum;
 
 const showModal = ref(false);
 const showAddNotes = ref(false);
@@ -282,7 +287,7 @@ const handleRemoveFile = file => {
 // });
 </script>
 <template>
-  <div>
+  <div v-if="can(permissionsEnum.MANAGE_QUOTE_NOTES)">
     <x-tooltip>
       <x-button size="sm" color="emerald" @click="showModal = true">
         Notes
