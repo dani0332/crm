@@ -83,6 +83,13 @@ const updatePriceWithVat = () => {
 };
 
 const onUpdate = () => {
+  if (!planDetailsForm.price_with_vat && !planDetailsForm.price_without_vat) {
+    notification.error({
+      title: 'Please enter price.',
+      position: 'top',
+    });
+    return;
+  }
   planDetailsForm.post(route('send-update-logs.save-price-details'), {
     preserverScroll: true,
     onSuccess: ({ props }) => {
