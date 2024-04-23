@@ -757,6 +757,9 @@ const  formatDate = (date) =>  {
   }
 
 function formatString(input) {
+  if (input === '') {
+    return '';
+  }
   const lowercaseString = input.toLowerCase();
   const words = lowercaseString.replace(/_/g, ' ').split(' ');
   for (let i = 0; i < words.length; i++) {
@@ -1899,8 +1902,8 @@ const paymentAllocationStatusTooltip= payment_allocation_status  => {
                 <td>{{ formatAmount(item.captured_amount) }}</td>
                 <td>{{ formatString(item.payment_status.text) }}</td>
                 <td>  
-                  <x-tooltip >
-                    <span class="border-b-0 ">
+                  <x-tooltip position="left">
+                    <span class="border-b border-dotted border-black ">
                       {{ item.payment_allocation_status !== null ? formatString(item.payment_allocation_status) : '' }}
                     </span>
                     <template #tooltip>
@@ -1940,7 +1943,18 @@ const paymentAllocationStatusTooltip= payment_allocation_status  => {
                 <td>{{ formatAmount(splitPayment.payment_amount) }}</td>
                 <td>{{ (splitPayment.collection_amount>0) ? formatAmount(splitPayment.collection_amount):'' }}</td>
                 <td>{{ formatString(splitPayment.payment_status.text) }}</td>
-                <td>{{ splitPayment.payment_allocation_status !== null ? formatString(splitPayment.payment_allocation_status) : ''}}</td>
+                <td>
+                <x-tooltip position="top">
+                    <span class="border-b border-dotted border-black ">
+                      {{ splitPayment.payment_allocation_status !== null ? formatString(splitPayment.payment_allocation_status) : ''}}
+                    </span>
+                    <template #tooltip>
+                      <span class="custom-tooltip-content">
+                        {{ paymentAllocationStatusTooltip(item.payment_allocation_status) }}
+                      </span>
+                    </template>
+                  </x-tooltip>
+                </td>
                 <td>
                   <x-button size="xs" color="primary" @click="editPaymentModal(item,splitPayment.id,splitPayment.sr_no,0)" outlined >View</x-button>                
                   <x-button v-if="splitPayment.payment_method.code=='CC'" class="ml-2" size="xs" color="emerald"  @click.prevent="generateCCLink(splitPayment.code,splitPayment.sr_no,splitPayment.payment_status_id);" outlined >Copy Payment Link</x-button>                

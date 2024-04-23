@@ -280,12 +280,12 @@ const caculateCommission = () => {
               </template>
             </x-tooltip>
             <x-tooltip position="center">
-              <dd>{{ bpForm.transaction_payment_status }}</dd>
+              <dd class="border-b border-dotted border-black"> {{ bpForm.transaction_payment_status }}</dd>
               <template #tooltip> {{ bpForm.transaction_payment_status_tool_tip }}</template>
             </x-tooltip>
           </div>
           <div class="grid sm:grid-cols-2">
-            <x-tooltip>
+            <x-tooltip >
               <dt class="font-medium">Sub Type</dt>
 
               <template #tooltip>
