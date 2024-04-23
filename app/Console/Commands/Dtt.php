@@ -70,6 +70,7 @@ class Dtt extends Command
                 })
                 ->where('source', '!=', LeadSourceEnum::RENEWAL_UPLOAD)
                 ->where('renewal_batch', '=', '')
+                ->where('previous_quote_policy_number', '=', '')
 
                 ->whereNotIn('quote_status_id', [QuoteStatusEnum::PolicyIssued, QuoteStatusEnum::TransactionApproved])
                 ->where('payment_status_id', '!=', PaymentStatusEnum::CAPTURED)
