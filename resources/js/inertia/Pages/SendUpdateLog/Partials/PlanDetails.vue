@@ -73,17 +73,19 @@ const insuranceProvidersOptions = computed(() => {
 });
 
 const updatePriceWithVat = () => {
-  if (planDetailsForm.price_with_vat && planDetailsForm.price_without_vat) {
-    let priceWithVat = parseFloat(planDetailsForm.price_with_vat);
-    let priceWithoutVat = parseFloat(planDetailsForm.price_without_vat);
-    planDetailsForm.total_price = ((priceWithVat / 100) * 5) + priceWithVat + priceWithoutVat;
-  } else if (planDetailsForm.price_with_vat) {
-    let price = parseFloat(planDetailsForm.price_with_vat);
-    planDetailsForm.total_price = (price / 100) * 5 + price;
-  } else if (planDetailsForm.price_without_vat) {
-    let price = parseFloat(planDetailsForm.price_without_vat);
-    planDetailsForm.total_price = Number(price);
+  let totalPrice = 0;
+  const priceWithVat = parseFloat(planDetailsForm.price_with_vat);
+  const priceWithoutVat = parseFloat(planDetailsForm.price_without_vat);
+
+  if (priceWithVat && priceWithoutVat) {
+    totalPrice = ((priceWithVat / 100) * 5) + priceWithVat + priceWithoutVat;
+  } else if (priceWithVat) {
+    totalPrice = (priceWithVat / 100) * 5 + priceWithVat;
+  } else if (priceWithoutVat) {
+    totalPrice = priceWithoutVat;
   }
+
+  planDetailsForm.total_price = parseFloat(totalPrice.toFixed(2));
 };
 
 const onUpdate = () => {
@@ -118,9 +120,15 @@ const onUpdate = () => {
 const onKeyPress = (event) => {
   if (event.key === 'e' || event.key === 'E') {
     event.preventDefault();
-    planDetailsForm.price_with_vat = null;
   }
 };
+
+const onCancel = () => {
+  state.isEdit = false;
+  planDetailsForm.price_with_vat = props.sendUpdateLog?.price_with_vat || null;
+  planDetailsForm.price_without_vat = props.sendUpdateLog?.price_without_vat || null;
+  planDetailsForm.total_price = props.sendUpdateLog?.total_price || null;
+}
 </script>
 
 <template>
@@ -320,7 +328,7 @@ const onKeyPress = (event) => {
             <x-button
               size="sm"
               color="orange"
-              @click="state.isEdit = false"
+              @click="onCancel"
               :loading="planDetailsForm.processing"
               :disabled="planDetailsForm.processing"
               >Cancel</x-button
