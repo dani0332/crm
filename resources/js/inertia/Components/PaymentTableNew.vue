@@ -25,6 +25,10 @@ const props = defineProps({
     type: String,
     default: '',
   },
+  isAmlClearedForPayment: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 const createPaymentModal = ref(false);

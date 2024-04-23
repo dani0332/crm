@@ -90,6 +90,7 @@ defineProps({
   carInsuranceProviders: Array,
   paymentTooltipEnum: Object,
   isNewPaymentStructure: Boolean,
+  isAmlClearedForPayment: Boolean,
 });
 
 
