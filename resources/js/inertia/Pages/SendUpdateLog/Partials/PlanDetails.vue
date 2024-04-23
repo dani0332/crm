@@ -122,6 +122,13 @@ const onKeyPress = (event) => {
     event.preventDefault();
   }
 };
+
+const onCancel = () => {
+  state.isEdit = false;
+  planDetailsForm.price_with_vat = props.sendUpdateLog?.price_with_vat || null;
+  planDetailsForm.price_without_vat = props.sendUpdateLog?.price_without_vat || null;
+  planDetailsForm.total_price = props.sendUpdateLog?.total_price || null;
+}
 </script>
 
 <template>
@@ -321,7 +328,7 @@ const onKeyPress = (event) => {
             <x-button
               size="sm"
               color="orange"
-              @click="state.isEdit = false"
+              @click="onCancel"
               :loading="planDetailsForm.processing"
               :disabled="planDetailsForm.processing"
               >Cancel</x-button
