@@ -88,6 +88,7 @@ const onUpdate = () => {
       title: 'Please enter price.',
       position: 'top',
     });
+    planDetailsForm.total_price = null;
     return;
   }
   planDetailsForm.post(route('send-update-logs.save-price-details'), {
