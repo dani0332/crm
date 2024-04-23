@@ -69,6 +69,7 @@ class Dtt extends Command
                         ->where('created_at', '<=', $datethirtyDaysBefore);
                 })
                 ->where('source', '!=', LeadSourceEnum::RENEWAL_UPLOAD)
+                ->where('renewal_batch', '=', '')
 
                 ->whereNotIn('quote_status_id', [QuoteStatusEnum::PolicyIssued, QuoteStatusEnum::TransactionApproved])
                 ->where('payment_status_id', '!=', PaymentStatusEnum::CAPTURED)
