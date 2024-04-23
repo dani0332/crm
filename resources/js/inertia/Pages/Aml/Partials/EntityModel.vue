@@ -172,26 +172,28 @@ const linkEntity = () => {
     .post(route('link-entity-details'), entityDetails)
     .then(res => {
       entityFound.value = false;
-      insuredFormDetails.company_name = res.data.response.company_name;
-        insuredFormDetails.company_address = res.data.response.company_address;
+       const response =  res.data.response
+      insuredFormDetails.company_name = response.company_name;
+        insuredFormDetails.company_address = response.company_address;
        props.entityDetails.entity.company_name = res.data.response.company_name;
-        props.entityDetails.entity.email = res.data.response.email;
-        props.entityDetails.entity.registered_address = res.data.response.registered_address;
-        props.entityDetails.entity.communication_address = res.data.response.communication_address;
-        props.entityDetails.entity.legal_structure = res.data.response.legal_structure;
-        props.entityDetails.entity.industry_type_code = res.data.response.industry_type_code;
-        props.entityDetails.entity.country_of_corporation = res.data.response.country_of_corporation;
-        props.entityDetails.entity.mobile_no = res.data.response.mobile_no;
-        props.entityDetails.entity.website = res.data.response.website;
-        props.entityDetails.entity.id_type = res.data.response.id_type;
-        props.entityDetails.entity.id_number = res.data.response.id_number;
-        props.entityDetails.entity.id_issuance_date = res.data.response.id_issuance_date;
-        props.entityDetails.entity.id_expiry_date = res.data.response.id_expiry_date;
-        props.entityDetails.entity.issuance_place = res.data.response.issuance_place;
-        props.entityDetails.entity.id_issuance_authority = res.data.response.id_issuance_authority;
-        props.entityDetails.entity.pep = res.data.response.pep;
-        props.entityDetails.entity.financial_sanctions = res.data.response.financial_sanctions;
-        props.entityDetails.entity.dual_nationality = res.data.response.dual_nationality;
+        props.entityDetails.entity.email = response.email;
+        props.entityDetails.entity.registered_address = response.registered_address;
+        props.entityDetails.entity.communication_address = response.communication_address;
+        props.entityDetails.entity.legal_structure = response.legal_structure;
+        props.entityDetails.entity.industry_type_code = response.industry_type_code;
+        props.entityDetails.entity.country_of_corporation = response.country_of_corporation;
+        props.entityDetails.entity.mobile_no = response.mobile_no;
+        props.entityDetails.entity.website = response.website;
+        props.entityDetails.entity.id_type = response.id_type;
+        props.entityDetails.entity.id_number = response.id_number;
+        props.entityDetails.entity.id_issuance_date = response.id_issuance_date;
+        props.entityDetails.entity.id_expiry_date = response.id_expiry_date;
+        props.entityDetails.entity.issuance_place = response.issuance_place;
+        props.entityDetails.entity.id_issuance_authority = response.id_issuance_authority;
+        props.entityDetails.entity.pep = response.pep;
+        props.entityDetails.entity.financial_sanctions = response.financial_sanctions;
+        props.entityDetails.entity.dual_nationality = response.dual_nationality;
+        props.entityDetails.entity.quote_member = response.quote_member;
         componentKey.value += 1
 
       notification.success({

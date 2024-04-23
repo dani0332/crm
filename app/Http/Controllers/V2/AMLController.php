@@ -532,7 +532,7 @@ class AMLController extends Controller
                 'quoteRequestEntityMapping' => function ($mappedEntity) use ($request) {
                     $mappedEntity->where(['quote_type_id' => $request->quote_type_id, 'quote_request_id' => $request->quote_request_id]);
                 },
-            ]
+            'quoteMember']
         )->where('id', $request->entity_id)->first();
 
         return response()->json(['status' => true, 'response' => $entity, 'message' => 'Entity Linked Successfully']);
