@@ -407,6 +407,10 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                     $quoteModel->quote_status_id = QuoteStatusEnum::TransactionApproved;
                     $quoteModel->save();
                     dispatch(new MAWelcomeJob($quoteModel->first_name, $quoteModel->last_name, $quoteModel->email, $quoteModel->mobile_no, 'IMCRM', ''));
+
+                    // send EP documents
+                    EmbeddedProductRepository::sendDocumentsByLead($request->quote_id, $request->modelType);
+
                     //Create duplicate lead for TRAVEL
                     if ($quoteTypeId == QuoteTypeId::Travel && $quoteModel->payments()->count() > 1) {
                         if (app(TravelQuoteService::class)->createDuplicateLead($quoteModel)) {
