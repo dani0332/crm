@@ -307,6 +307,7 @@ const fixedValue = numberString => {
     });
   }
 };
+
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
 
