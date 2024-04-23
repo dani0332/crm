@@ -73,7 +73,11 @@ const insuranceProvidersOptions = computed(() => {
 });
 
 const updatePriceWithVat = () => {
-  if (planDetailsForm.price_with_vat) {
+  if (planDetailsForm.price_with_vat && planDetailsForm.price_without_vat) {
+    let priceWithVat = parseFloat(planDetailsForm.price_with_vat);
+    let priceWithoutVat = parseFloat(planDetailsForm.price_without_vat);
+    planDetailsForm.total_price = ((priceWithVat / 100) * 5) + priceWithVat + priceWithoutVat;
+  } else if (planDetailsForm.price_with_vat) {
     let price = parseFloat(planDetailsForm.price_with_vat);
     planDetailsForm.total_price = (price / 100) * 5 + price;
   } else if (planDetailsForm.price_without_vat) {
