@@ -120,19 +120,26 @@ class AdvisorConversionReportService extends BaseService
 
     public function getFiltersByLob()
     {
-        $isAdvisor = Auth::user()->isAdvisor() &&
-            !Auth::user()->isManagerOrDeputy() &&
-            !Auth::user()->isLeadPool() &&
-            !Auth::user()->isAdmin() &&
-            !Auth::user()->isEngineer() &&
-            !Auth::user()->isSeniorManagement();
+        $canView = [
+            quoteTypeCode::Car => !Auth::user()->hasRole(RolesEnum::CarAdvisor),
+            quoteTypeCode::Bike => !Auth::user()->hasRole(RolesEnum::BikeAdvisor),
+            quoteTypeCode::Health => !Auth::user()->hasRole(RolesEnum::RMAdvisor),
+            quoteTypeCode::Travel => !Auth::user()->hasRole(RolesEnum::TravelAdvisor),
+            quoteTypeCode::Pet => !Auth::user()->hasRole(RolesEnum::PetAdvisor),
+            quoteTypeCode::Cycle => !Auth::user()->hasRole(RolesEnum::CycleAdvisor),
+            quoteTypeCode::Yacht => !Auth::user()->hasRole(RolesEnum::YachtAdvisor),
+            quoteTypeCode::Life => !Auth::user()->hasRole(RolesEnum::LifeAdvisor),
+            quoteTypeCode::Home => !Auth::user()->hasRole(RolesEnum::HomeAdvisor),
+            quoteTypeCode::CORPLINE => !Auth::user()->hasRole(RolesEnum::CorpLineAdvisor),
+            quoteTypeCode::GroupMedical => !Auth::user()->hasRole(RolesEnum::GMAdvisor),
+        ];
 
         return [
             'advisors' => [
-                'can_view' => !$isAdvisor,
+                'can_view' => $canView,
             ],
             'teams' => [
-                'can_view' => !$isAdvisor,
+                'can_view' => $canView,
                 'lobs' => [
                     quoteTypeCode::Car,
                     quoteTypeCode::Health,
@@ -141,7 +148,7 @@ class AdvisorConversionReportService extends BaseService
                 ],
             ],
             'sub_teams' => [
-                'can_view' => !$isAdvisor,
+                'can_view' => $canView,
                 'lobs' => [
                     quoteTypeCode::Car,
                     quoteTypeCode::GroupMedical,
