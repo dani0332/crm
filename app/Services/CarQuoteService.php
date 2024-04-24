@@ -28,7 +28,6 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use PDF;
-use App\Facades\Ken;
 
 class CarQuoteService extends BaseService
 {
@@ -322,9 +321,6 @@ class CarQuoteService extends BaseService
         $carQuote = CarQuote::where('uuid', $id)->first();
 
         $oldCarValue = $carQuote->car_value;
-        $oldCarMakeId = $carQuote->car_make_id;
-        $oldCarModelId = $carQuote->car_model_id;
-        $oldCarTypeId = $carQuote->vehicle_type_id;
         info('Update triggered from IMCRM for Car Quote request with uuid : '.$carQuote->code);
 
         if ($request->first_name) {
@@ -423,13 +419,6 @@ class CarQuoteService extends BaseService
 
         $carQuote->updated_by = auth()->user()->email;
         $deleteValuationResponse = $this->deleteValuationAPI($oldCarValue, $request->car_value, $carQuote->uuid);
-
-        // update embedded products list
-        if ((isset($request->car_make_id) && $oldCarMakeId !== $request->car_make_id) || 
-        (isset($request->car_model_id) && $oldCarModelId !== $request->car_model_id) ||
-        (isset($request->vehicle_type_id) && $oldCarTypeId !== $request->vehicle_type_id)) {
-            Ken::request('/save-embedded-transaction', 'post', ['quoteUID' => $id]);
-        }
 
         if ($deleteValuationResponse) {
             $carQuote->save();
