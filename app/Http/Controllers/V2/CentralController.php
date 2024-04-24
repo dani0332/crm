@@ -331,6 +331,7 @@ class CentralController extends Controller
      */
     private function straightforwardPayments($payment, $paymentSplits, $quote)
     {
+        $paymentSplit = $paymentSplits->first();
         // Need to confrim this wether need to change
         // $payment->payment_status_id = PaymentStatusEnum::PAID;
     
@@ -347,15 +348,11 @@ class CentralController extends Controller
             $payment->save();
         }
         
-        foreach ($paymentSplits as $paymentSplit) {
-            if (!empty($paymentSplit->collection_amount)){
-                if ($paymentSplit->collection_amount >= $paymentSplit->payment_amount) {
-                    $paymentSplit->payment_allocation_status = PaymentAllocationStatus::FULLY_ALLOCATED;
-                } else {
-                    $paymentSplit->payment_allocation_status = PaymentAllocationStatus::PARTIALLY_ALLOCATED;
-                }
-                $paymentSplit->save();
+        if (!empty($paymentSplit->collection_amount)){
+            if ($paymentSplit->collection_amount < $quote->price_with_vat ) {
+                $paymentSplit->payment_allocation_status = PaymentAllocationStatus::FULLY_ALLOCATED;
             }
+            $paymentSplit->save();
         }
     }
 
