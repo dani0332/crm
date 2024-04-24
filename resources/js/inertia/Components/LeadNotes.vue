@@ -211,8 +211,6 @@ const url = file => {
 
 const fileValidation = file => {
   const maxSize = 10 * 1024 * 1024; // 10 MB
-
-  console.log(file);
   // Check if file size exceeds the maximum size
   if (file.size > maxSize) {
     notification.error({
@@ -308,7 +306,7 @@ const handleRemoveFile = file => {
     <div>
       <div class="flex justify-end">
         <x-button size="sm" color="orange" @click="showAddNotesModal()">
-          Add Notes
+          {{ isEdit ? 'Edit' : 'Add' }} Notes
         </x-button>
       </div>
       <DataTable
@@ -421,14 +419,19 @@ const handleRemoveFile = file => {
       <p class="text-xs ml-auto flex justify-end mt-2">
         {{ notesLength }}/1000
       </p>
-      <div class="mt-2 h-12" @drop.prevent="handleDrop" @dragover.prevent>
+      <div
+        class="mt-2 h-12 relative"
+        @drop.prevent="handleDrop"
+        @dragover.prevent
+      >
         <input
           @change.prevent="uploadFile"
           ref="fileInput"
           type="file"
           hidden
         />
-        <x-tooltip position="right">
+
+        <x-tooltip position="top" align="top">
           <x-button
             size="sm"
             color="primary"
@@ -439,12 +442,11 @@ const handleRemoveFile = file => {
             Upload Documents
           </x-button>
           <template #tooltip>
-            <span class="text-sm"
-              >Use this button to attach and save documents that support your
+            <span class="text-sm">
+              Use this button to attach and save documents that support your
               notes. You can drag and drop files or browse to upload them into
-              the system, making it easy to store and access important
-              files</span
-            >
+              the system, making it easy to store and access important files
+            </span>
           </template>
         </x-tooltip>
         <template v-if="uploadedFiles.length > 0">
