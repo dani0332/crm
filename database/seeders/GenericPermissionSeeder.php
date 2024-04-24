@@ -157,7 +157,7 @@ class GenericPermissionSeeder extends Seeder
                 $role->givePermissionTo($permissionName);
             }
         }
-        
+
         $this->generateSegmentFilterPermission();
     }
 
