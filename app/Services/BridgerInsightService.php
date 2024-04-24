@@ -89,7 +89,7 @@ class BridgerInsightService
                     $customerOrEntityName = '';
             }
 
-            info('searchAMLResult: Bridger Insight Service - Quote Ref-ID: '.$quoteDetails->code.' - Customer Type: '.$customerType.' - Code: '.$memberUboDetails['code'].' - AML Search API Payload : '.json_encode($amlSearchData).'. Triggered By: '.$loginCustomerEmail);
+            info('Bridger Insight Service - Quote Ref-ID: '.$quoteDetails->code.' - Customer Type: '.$customerType.' - Code: '.$memberUboDetails['code'].' - AML Search API Payload : '.json_encode($amlSearchData).'. Triggered By: '.$loginCustomerEmail);
 
             try {
                 $bridgerRequest = $bridgerClient->post(
@@ -127,7 +127,7 @@ class BridgerInsightService
                         $amlDataForEmail .= '<pre>';
                     }
 
-                    info('searchAMLResult: Bridger Insight Service - Quote Ref-ID: '.$quoteDetails->code.' - Error Email Send to Engineering Team');
+                    info('Bridger Insight Service - Quote Ref-ID: '.$quoteDetails->code.' - Error Email Send to Engineering Team');
                     AMLService::sendAMLErrorEmailtoEngTeam($amlQuoteUrl, $apiResponseMessage, $amlDataForEmail, $getStatusCode);
                 } else {
                     if ($getDecodeContents) {
@@ -167,13 +167,13 @@ class BridgerInsightService
 
                             if (isset($getDecodeContents->Records)) {
                                 AMLService::sendAMLMatchedEmailtoComplianceTeam($amlQuoteUrl, $quoteRefId, $amlResultCount, $customerOrEntityName, $quoteType->text, $loginCustomerEmail);
-                                info('searchAMLResult: Bridger Insight Service - Quote Ref-ID: '.$quoteDetails->code.' - AML Screening Matched Email triggered to Compliance Team. Triggered By: '.$loginCustomerEmail);
+                                info('Bridger Insight Service - Quote Ref-ID: '.$quoteDetails->code.' - AML Screening Matched Email triggered to Compliance Team. Triggered By: '.$loginCustomerEmail);
                             }
                         }
                     }
                 }
             } catch (Exception $exception) {
-                logger()->error('Bridger Insight Service - Failed - Error : '.$exception->getMessage());
+                logger()->error('Bridger Insight Service - Failed - Ref-ID: '.$quoteDetails->code.' - Error : '.$exception->getMessage());
             }
         }
     }
