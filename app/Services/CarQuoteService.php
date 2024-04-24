@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\AssignmentTypeEnum;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\GenericRequestEnum;
@@ -12,6 +13,7 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\RolesEnum;
+use App\Models\ApplicationStorage;
 use App\Models\CarQuote;
 use App\Models\CarQuoteRequestDetail;
 use App\Models\Payment;
@@ -1340,6 +1342,14 @@ class CarQuoteService extends BaseService
      */
     public function isPlanModifyAllowed($data)
     {
+        if ($enablePlanValidation = ApplicationStorage::where('key_name', ApplicationStorageEnums::ENABLE_PLAN_MODIFY_VALIDATION)->first()) {
+            if (! $enablePlanValidation->value) {
+                info('plan modification validation is disabled from backend');
+
+                return true;
+            }
+        }
+
         $logPrefix = 'fn: isPlanModifyAllowed ';
         $quote = CarQuote::where('uuid', $data['car_quote_uuid'])->with('paymentStatus')->first();
 
