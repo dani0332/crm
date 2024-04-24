@@ -20,7 +20,7 @@ trait RolePermissionConditions
         $isCarManager = Auth::user()->isCarManager();
         $isCarAdvisor = Auth::user()->isCarAdvisor();
         $isAdvisor = Auth::user()->isAdvisor();
-
+        
         if ($isRenewalAdvisor) {
             $query->whereNotNull($prefix.'.'.'previous_quote_policy_number');
             $query->where($prefix.'.'.'advisor_id', Auth::user()->id);
@@ -52,11 +52,20 @@ trait RolePermissionConditions
                     $carUserIds = array_merge($carUserIds, $this->getUsersByTeamId($carTeam)->pluck('id')->toArray());
                 }
             }
-
-            $query->where(function ($qry) use ($prefix, $carUserIds) {
-                $qry->whereNotIn($prefix.'.'.'advisor_id', $carUserIds)
-                    ->OrWhereNull($prefix.'.'.'advisor_id');
-            });
+            // This condition allows cross-LOB access if a user possesses two roles, such as health manager and car manager.
+            if (!($isHealthManager && $isCarManager && $restrictedQuoteType == quoteTypeCode::Health)) {
+                $query->where(function ($qry) use ($prefix, $carUserIds) {
+                    $qry->whereNotIn($prefix.'.'.'advisor_id', $carUserIds)
+                        ->OrWhereNull($prefix.'.'.'advisor_id');
+                });
+            }
+            // This condition allows cross-LOB access if a user possesses two roles, such as health manager and car manager.
+            if($isHealthManager && $isCarManager && $restrictedQuoteType == quoteTypeCode::Health){
+                $ids = $this->associateAdvisorsWithManager(Auth::user()->id);
+                if(count($ids) > 0){
+                    $query->whereIn($prefix.'.'.'advisor_id', $ids);
+                }
+            }
         }
         if ($isCarManager && $restrictedQuoteType == quoteTypeCode::Health && Auth::user()->can(PermissionsEnum::HEALTH_QUOTES_MANAGER_ACCESS)) {
             $ids = $this->walkTree(Auth::user()->id, quoteTypeCode::Car);
