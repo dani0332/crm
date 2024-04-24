@@ -69,6 +69,7 @@ use App\Services\ApplicationStorageService;
 use App\Services\BusinessQuoteService;
 use App\Services\CarEmailService;
 use App\Services\CarQuoteService;
+use App\Services\CentralService;
 use App\Services\CRUDService;
 use App\Services\CustomerService;
 use App\Services\DropdownSourceService;
@@ -526,6 +527,8 @@ class CRUDController extends Controller
         $record = $this->crudService->getEntity($this->genericModel->modelType, $id);
         abort_if(! $record, 404);
 
+        $isAmlClearedForPayment = app(CentralService::class)->amlClearedFromLog($record->id, $quoteType);
+
         $autoAllocationDisabled = $this->lookupService->getApplicationStorageValue('LEAD_ALLOCATION_JOB_SWITCH');
         if (strtolower($this->genericModel->modelType) == strtolower(quoteTypeCode::Health) && Auth::user()->isHealthWCUAdvisor() && $record->wcu_id != Auth::user()->id && $autoAllocationDisabled == '1') {
             abort(403, 'Unauthorized action.');
@@ -724,7 +727,7 @@ class CRUDController extends Controller
                 'paymentEntityModel', 'payments', 'paymentMethods', 'isQuoteDocumentEnabled', 'quoteDocuments', 'displaySendPolicyButton', 'customerAdditionalContacts', 'lostApproveReasons', 'lostRejectReasons', 'allowQuoteLogAction', 'carLostChangeStatus',
                 'carMakeText', 'carModelText', 'advisor', 'tiers', 'daysAfterCapturedPayment', 'access', 'carPlanFeaturesCodeEnum', 'carPlanExclusionsCodeEnum', 'documentTypes', 'planURL', 'storageUrl', 'kyoEndPoint',
                 'carPlanTypeEnum', 'UBORelations', 'UBOsDetails', 'emirates', 'customerTypeEnum', 'memberRelations', 'membersDetails', 'industryType', 'nationalities', 'paymentTooltipEnum',
-                'isCommercialVehicles', 'carInsuranceProviders', 'isNewPaymentStructure',
+                'isCommercialVehicles', 'carInsuranceProviders', 'isNewPaymentStructure', 'isAmlClearedForPayment',
             ]));
         }
 
@@ -857,6 +860,7 @@ class CRUDController extends Controller
                 'quoteNotes' => $quoteNotes,
                 'vatPercentage' => $vatPercentage,
                 'isNewPaymentStructure' => $isNewPaymentStructure,
+                'isAmlClearedForPayment' => $isAmlClearedForPayment,
             ]);
         }
 
@@ -1002,6 +1006,7 @@ class CRUDController extends Controller
                 'quoteNotes' => $quoteNotes,
                 'clientInquiryLogs' => $this->crudService->getInquiryLogs($this->genericModel->modelType, $record->uuid) ?? [],
                 'isNewPaymentStructure' => $isNewPaymentStructure,
+                'isAmlClearedForPayment' => $isAmlClearedForPayment,
             ]);
         } else {
             return view('shared.show', compact([

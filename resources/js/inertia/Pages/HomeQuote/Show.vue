@@ -42,6 +42,7 @@ const props = defineProps({
   paymentStatusEnum: Object,
   paymentTooltipEnum: Object,
   isNewPaymentStructure: Boolean,
+  isAmlClearedForPayment: Boolean,
 });
 
 const page = usePage();
@@ -1176,6 +1177,43 @@ const linkEntity = () => {
         </x-button>
       </div>
     </div> -->
+    <PlanDetails
+      :insuranceProviders="insuranceProviders"
+      :quote="quote"
+      :quoteType="quoteType"
+      :vatPrice="vatPercentage"
+    />
+
+    <MigratePayment
+      v-if="!isNewPaymentStructure"
+      :quoteId="quote.id"
+      :paymentCode = "quote.code"
+      :quoteType="quoteType"
+      :payments="payments"     
+    />    
+    <PaymentTableNew 
+			v-if="isNewPaymentStructure"
+			:quoteType="quoteType"
+			:payments="payments"
+			:paymentDocument="documentTypes.filter(item => item.code === 'HOMPD' || item.code === 'HOMPDR' || item.code === 'HOMDPDR')"
+			:quoteRequest="quoteRequest"
+			:paymentStatusEnum="paymentStatusEnum"
+			:paymentTooltipEnum="paymentTooltipEnum"
+			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name, tooltip: pm.tool_tip } })"
+			:storageUrl="storageUrl"
+      :isAmlClearedForPayment="isAmlClearedForPayment"
+		/>
+    <PaymentTable
+      v-else
+      :payments="payments"
+      :can="can"
+      :isBetaUser="isBetaUser"
+      :quoteRequest="quoteRequest"
+      :paymentMethods="paymentMethods"
+      :insuranceProviders="insuranceProviders"
+      :quote="quote"
+    />
+    
 
     <EmbeddedProducts
       :data="embeddedProducts"

@@ -37,6 +37,7 @@ const props = defineProps({
   paymentStatusEnum: Object,
   paymentTooltipEnum: Object,
   isNewPaymentStructure: Boolean,
+  isAmlClearedForPayment: Boolean,
 });
 
 const page = usePage();
@@ -1235,7 +1236,8 @@ const linkEntity = () => {
       "
       :storageUrl="storageUrl"
       quoteSubType="Corpline"
-    />
+      :isAmlClearedForPayment="isAmlClearedForPayment"
+		/>
     <PaymentTable
       v-else
       :payments="payments"

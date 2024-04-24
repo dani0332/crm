@@ -6,13 +6,14 @@ use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\DocumentTypeCode;
 use App\Enums\LookupsEnum;
-use App\Enums\quoteStatusCode;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PaymentTooltip;
+use App\Enums\quoteStatusCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
+use App\Enums\TeamNameEnum;
 use App\Events\LeadsCount;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\CycleQuoteRequest;
@@ -34,9 +35,8 @@ use App\Repositories\QuoteStatusRepository;
 use App\Repositories\UserRepository;
 use App\Services\AMLService;
 use App\Services\CentralService;
-use Illuminate\Http\Request;
-use App\Enums\TeamNameEnum;
 use App\Services\SplitPaymentService;
+use Illuminate\Http\Request;
 
 class CycleQuoteController extends Controller
 {
@@ -141,6 +141,8 @@ class CycleQuoteController extends Controller
             'quote_request_id' => $quote->id,
         ])->with('assignee')->orderBy('created_at', 'desc')->get();
 
+        $isAmlClearedForPayment = app(CentralService::class)->amlClearedFromLog($quote->id, QuoteTypes::CYCLE->name);
+
         if (AMLService::checkAMLStatusFailed(QuoteTypes::CYCLE->id(), $quote->id)) {
             $quoteStatuses = collect($quoteStatuses)->filter(function ($value) {
                 return $value['id'] != QuoteStatusEnum::TransactionApproved;
@@ -182,6 +184,11 @@ class CycleQuoteController extends Controller
             'emirates' => $emirates,
             'UBOsDetails' => $uboDetails,
             'UBORelations' => $uboRelations,
+            'vatPercentage' => $vatPercentage,
+            'paymentTooltipEnum' => PaymentTooltip::asArray(),
+            'paymentStatusEnum' => PaymentStatusEnum::asArray(),
+            'isNewPaymentStructure' => app(SplitPaymentService::class)->isNewPaymentStructure($quote->payments),
+            'isAmlClearedForPayment' => $isAmlClearedForPayment,
             'noteDocumentType' => $noteDocumentType,
             'quoteNotes' => $quoteNotes,
             'cdnPath' => $cdnPath,
@@ -206,15 +213,15 @@ class CycleQuoteController extends Controller
 
         $userId = auth()->id();
         $userTeams = auth()->user()->getUserTeams($userId)->toArray();
-        if(array_intersect([TeamNameEnum::CYCLE], $userTeams)){
+        if (array_intersect([TeamNameEnum::CYCLE], $userTeams)) {
             $quotes = collect($quotes)->whereNotIn('id', [
                 QuoteStatusEnum::Allocated,
                 QuoteStatusEnum::InNegotiation,
             ])->values()->toArray();
-        }elseif(array_intersect([TeamNameEnum::CYCLE_RENEWALS], $userTeams)) {
+        } elseif (array_intersect([TeamNameEnum::CYCLE_RENEWALS], $userTeams)) {
             $quotes = collect($quotes)->whereNotIn('id', [
                 QuoteStatusEnum::NewLead,
-                QuoteStatusEnum::InNegotiation,])->values()->toArray();
+                QuoteStatusEnum::InNegotiation, ])->values()->toArray();
         }
         // $isManagerOrAdminAccess = auth()->user()->hasAnyRole([RolesEnum::CycleManager, RolesEnum::Admin]);
 

@@ -197,11 +197,6 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::post('embedded-products/{id}/toggle-status', [EmbeddedProductController::class, 'toggleStatus'])->name('embedded-products.toggle-status');
 
     Route::post('updateLeadStatusDragDrop', [CentralController::class, 'updateLeadStatusDragDrop'])->name('update-lead-status-drag-drop');
-    Route::get('/temp-migrate-payment', function () {
-        if (auth()->user()->hasRole(App\Enums\RolesEnum::Admin)) {
-            App\Jobs\MigrateOldPaymentsJob::dispatch();
-        }
-    });
 
     Route::get('/clear-cache', function () {
         if (request()->has('info')) {

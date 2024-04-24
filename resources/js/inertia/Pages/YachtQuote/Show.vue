@@ -44,6 +44,7 @@ const props = defineProps({
   paymentStatusEnum: Object,
   paymentTooltipEnum: Object,
   isNewPaymentStructure: Boolean,
+  isAmlClearedForPayment: Boolean,
 });
 
 const page = usePage();
@@ -758,30 +759,20 @@ const linkEntity = () => {
       :quoteId="quote.id"
       :paymentCode="quote.code"
       :quoteType="quoteType"
-      :payments="quote.payments"
-    />
-    <PaymentTableNew
-      v-if="isNewPaymentStructure"
-      :quoteType="quoteType"
-      :payments="quote.payments"
-      :paymentDocument="
-        documentTypes.filter(
-          item =>
-            item.code === 'YPD' ||
-            item.code === 'YPDR' ||
-            item.code === 'YDPDR',
-        )
-      "
-      :quoteRequest="quote"
-      :paymentStatusEnum="paymentStatusEnum"
-      :paymentTooltipEnum="paymentTooltipEnum"
-      :paymentMethods="
-        paymentMethods.map(pm => {
-          return { value: pm.code, label: pm.name, tooltip: pm.tool_tip };
-        })
-      "
-      :storageUrl="storageUrl"
-    />
+      :payments="quote.payments"    
+    />    
+    <PaymentTableNew 
+			v-if="isNewPaymentStructure"
+			:quoteType="quoteType"
+			:payments="quote.payments"
+			:paymentDocument="documentTypes.filter(item => item.code === 'YPD' || item.code === 'YPDR' || item.code === 'YDPDR')"
+			:quoteRequest="quote"
+			:paymentStatusEnum="paymentStatusEnum"
+			:paymentTooltipEnum="paymentTooltipEnum"
+			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name, tooltip: pm.tool_tip } })"
+			:storageUrl="storageUrl"
+      :isAmlClearedForPayment="isAmlClearedForPayment"
+		/>
     <QuotePayments
       v-else
       :can="can"

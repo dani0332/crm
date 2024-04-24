@@ -53,6 +53,7 @@ const props = defineProps({
   paymentTooltipEnum: Object,
   storageUrl: String,
   isNewPaymentStructure: Boolean,
+  isAmlClearedForPayment: Boolean,
   noteDocumentType: Object,
   quoteNotes: Object,
 });
@@ -2993,29 +2994,19 @@ watch(
       :payments="payments"
     />
 
-    <PaymentTableNew
-      v-if="isNewPaymentStructure"
-      quoteType="Health"
-      :payments="payments"
-      :paymentDocument="
-        documentTypes.QUOTE.filter(
-          item =>
-            item.code === 'HPD' ||
-            item.code === 'HPDR' ||
-            item.code === 'HDPDR',
-        )
-      "
-      :quoteRequest="quoteRequest"
-      :paymentStatusEnum="paymentStatusEnum"
-      :paymentTooltipEnum="paymentTooltipEnum"
-      :paymentMethods="
-        paymentMethods.map(pm => {
-          return { value: pm.code, label: pm.name, tooltip: pm.tool_tip };
-        })
-      "
-      :storageUrl="storageUrl"
-      :eCommercePrice="ecomDetails.priceWithVAT ? ecomDetails.priceWithVAT : 0"
-    />
+    <PaymentTableNew 
+			v-if="isNewPaymentStructure"
+			quoteType="Health"
+			:payments="payments"
+			:paymentDocument="documentTypes.QUOTE.filter(item => item.code === 'HPD' || item.code === 'HPDR' || item.code === 'HDPDR')"
+			:quoteRequest="quoteRequest"
+			:paymentStatusEnum="paymentStatusEnum"
+			:paymentTooltipEnum="paymentTooltipEnum"
+			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name, tooltip: pm.tool_tip } })"
+			:storageUrl="storageUrl"
+      :eCommercePrice="ecomDetails.priceWithVAT?ecomDetails.priceWithVAT:0"
+      :isAmlClearedForPayment="isAmlClearedForPayment"
+		/>
     <PaymentTable
       v-else
       :payments="payments"

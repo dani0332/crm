@@ -4,37 +4,39 @@ namespace App\Services;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\GenericRequestEnum;
+use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentStatusEnum;
+use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
+use App\Enums\TeamNameEnum;
+use App\Enums\TeamTypeEnum;
 use App\Facades\Capi;
+use App\Facades\Ken;
 use App\Models\Activities;
 use App\Models\ActivitySchedule;
-use App\Facades\Ken;
 use App\Models\ApplicationStorage;
+use App\Models\BusinessQuote;
 use App\Models\CarQuote;
+use App\Models\CycleQuote;
+use App\Models\HealthQuote;
+use App\Models\HomeQuote;
+use App\Models\LifeQuote;
 use App\Models\PersonalQuote;
 use App\Models\PersonalQuoteDetail;
+use App\Models\PetQuote;
+use App\Models\QuoteStatusLog;
+use App\Models\Team;
+use App\Models\TravelQuote;
+use App\Models\User;
+use App\Models\YachtQuote;
 use App\Repositories\PersonalQuoteRepository;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Log;
-use App\Models\User;
-use App\Enums\LeadSourceEnum;
-use App\Models\HealthQuote;
-use App\Models\Team;
-use App\Enums\TeamNameEnum;
-use App\Enums\TeamTypeEnum;
-use App\Models\HomeQuote;
-use App\Models\LifeQuote;
-use App\Models\BusinessQuote;
-use App\Models\CycleQuote;
-use App\Models\PetQuote;
-use App\Models\TravelQuote;
-use App\Models\YachtQuote;
 
 class CentralService
 {
@@ -176,7 +178,6 @@ class CentralService
 
         return DB::transaction(function () use ($leadsIds, $model, $request, $personalQuotes) {
             foreach ($leadsIds as $leadId) {
-
                 $getQuoteLead = $model['parent']::findOrfail($leadId);
                 $getQuoteLead->advisor_id = (int) $request->assigned_advisor_id;
                 $getQuoteLead->save();
@@ -194,7 +195,6 @@ class CentralService
 
     public function loadAvailablePlans($type, $id)
     {
-        
         $type = ucfirst($type);
         switch ($type) {
             case quoteTypeCode::Car:
@@ -203,7 +203,7 @@ class CentralService
                 return app(TravelQuoteService::class)->sortedPlansList($id);
             case quoteTypeCode::Health:
                 $listQuotePlans = [];
-                
+
                 $quotePlans = app(HealthQuoteService::class)->getQuotePlans($id);
                 if (isset($quotePlans->message) && $quotePlans->message != '') {
                     $listQuotePlans = [];
@@ -246,7 +246,6 @@ class CentralService
     public function savePlanDetails($quoteType, $code, $data)
     {
         return DB::transaction(function () use ($quoteType, $code, $data) {
-
             $vatPercentage = ApplicationStorage::where('key_name', ApplicationStorageEnums::VAT_VALUE)->first()->value ?? 0;
             $repository = getRepositoryObject($quoteType);
 
@@ -266,7 +265,6 @@ class CentralService
             $this->updateQuotePayment($quote, $data->price_with_vat);
 
             return true;
-
         });
     }
 
@@ -340,9 +338,34 @@ class CentralService
         return $response;
     }
 
+    //check if aml cleared from log
+    public function amlClearedFromLog($quoteId, $quoteType)
+    {
+        $quoteType = strtolower($quoteType);
+        $quoteTypeId = app(ActivitiesService::class)->getQuoteTypeId($quoteType);
+        $isAmlClearedForPayment = false;
+        $quoteStatusLog = QuoteStatusLog::where('quote_request_id', $quoteId)
+            ->where('quote_type_id', $quoteTypeId)
+            ->where(function ($q) {
+                $q->where('current_quote_status_id', QuoteStatusEnum::AMLScreeningCleared);
+                $q->orWhere('previous_quote_status_id', QuoteStatusEnum::AMLScreeningCleared);
+            })->orderBy('id', 'desc')->first();
+        if ($quoteStatusLog) {
+            $amlScreenFailed = QuoteStatusLog::where('quote_request_id', $quoteId)
+                ->where('quote_type_id', $quoteTypeId)
+                ->where('current_quote_status_id', QuoteStatusEnum::AMLScreeningFailed)
+                ->where('id', '>', $quoteStatusLog->id)
+                ->first();
+            if (! $amlScreenFailed) {
+                $isAmlClearedForPayment = true;
+            }
+        }
+
+        return $isAmlClearedForPayment;
+    }
+
     public function saveAndAssignActivitesToAdvisor($quoteDetails, $quoteTypeId)
     {
-       
         $quoteDetails['quote_type_id'] = $quoteTypeId;
         $quoteTypeDetails = [
             CarQuote::class => [
@@ -414,25 +437,24 @@ class CentralService
                 $quoteTypeDetail = $quoteTypeDetails[CycleQuote::class];
                 break;
             default:
-                $quoteTypeDetail =  null;
+                $quoteTypeDetail = null;
                 break;
         }
 
-
         $advisorDetails = User::with('usersroles', 'teams')->where('id', $quoteDetails->advisor_id)->first();
 
-        
         $lastActivity = Activities::where(
-            'quote_request_id', $quoteDetails->id,
+            'quote_request_id',
+            $quoteDetails->id,
         )->orderBy('created_at', 'desc')->first();
-        
+
         $lastActivityDueDateIsGreater = false;
 
-        if($lastActivity && $lastActivity->due_date > now()->format('d-m-Y')){
+        if ($lastActivity && $lastActivity->due_date > now()->format('d-m-Y')) {
             $lastActivityDueDateIsGreater = true;
         }
 
-        if($lastActivity && $lastActivity->is_cold && $lastActivity->due_date < now()->format('d-m-Y')){
+        if ($lastActivity && $lastActivity->is_cold && $lastActivity->due_date < now()->format('d-m-Y')) {
             Activities::where(['quote_request_id' => $quoteDetails->id])->update(['status' => 1]);
         }
 
@@ -455,14 +477,14 @@ class CentralService
             $previousSchedule->whereNotIn('id', $scheduledActivitiesIDs);
         })
         ->when($quoteDetails->source == LeadSourceEnum::RENEWAL_UPLOAD, function ($query) use ($quoteDetails, $quoteTypeDetail) {
-            $renewalTeamID =  $quoteTypeDetail['renewal_team'];
-            
+            $renewalTeamID = $quoteTypeDetail['renewal_team'];
+
             $query->where('team_id', $renewalTeamID ?? null);
         })
         ->orderBy('sorting_order')
         ->first();
 
-        if ($getActivitySchedule && $quoteDetails->advisor_id && !$lastActivityDueDateIsGreater) {
+        if ($getActivitySchedule && $quoteDetails->advisor_id && ! $lastActivityDueDateIsGreater) {
             $activity = Activities::create([
                 'title' => $getActivitySchedule->name,
                 'description' => $getActivitySchedule->description,
@@ -477,7 +499,7 @@ class CentralService
                 'client_name' => $quoteDetails->first_name.' '.$quoteDetails->last_name,
                 'client_email' => $quoteDetails->email,
                 'quote_uuid' => $quoteDetails->uuid,
-                'activity_schedule_id' => $getActivitySchedule->id
+                'activity_schedule_id' => $getActivitySchedule->id,
             ]);
 
             return $activity;
@@ -485,5 +507,4 @@ class CentralService
 
         return false;
     }
-
 }
