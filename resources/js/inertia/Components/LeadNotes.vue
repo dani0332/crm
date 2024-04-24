@@ -243,6 +243,13 @@ const handleRemoveFile = file => {
   }
 };
 
+watch(
+  () => props.notes,
+  () => {
+    notes.value = props.notes;
+  },
+);
+
 // const uploadData = () => {
 //   let url = `/quotes/${props.modelType}/documents/store`;
 //   const { files, rejectReason } = filesWithInfo;
