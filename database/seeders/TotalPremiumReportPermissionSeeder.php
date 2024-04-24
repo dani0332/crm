@@ -3,12 +3,11 @@
 namespace Database\Seeders;
 
 use App\Enums\PermissionsEnum;
-use App\Models\Role;
 use App\Enums\RolesEnum;
 use App\Models\Permission;
+use App\Models\Role;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 
 class TotalPremiumReportPermissionSeeder extends Seeder
 {
@@ -18,7 +17,7 @@ class TotalPremiumReportPermissionSeeder extends Seeder
     public function run(): void
     {
         //
-        $roles = Role::whereIn('name', [RolesEnum::Admin, RolesEnum::SeniorManagement,RolesEnum::CarManager,RolesEnum::Engineering])->get();
+        $roles = Role::whereIn('name', [RolesEnum::Admin, RolesEnum::SeniorManagement, RolesEnum::CarManager, RolesEnum::Engineering])->get();
         $permission = Permission::firstOrCreate([
             'name' => PermissionsEnum::TOTAL_PREMIUM_LEADS_SALES_REPORT ?? 'total-premium-leads-sales-report',
             'guard_name' => 'web',
@@ -43,6 +42,6 @@ class TotalPremiumReportPermissionSeeder extends Seeder
                 ]);
             }
         }
-        
+
     }
 }

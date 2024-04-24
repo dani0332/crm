@@ -286,7 +286,8 @@ class ReportService extends BaseService
         ];
     }
 
-    public function totalPremiumReport($request){
+    public function totalPremiumReport($request)
+    {
 
         $query = DB::table('personal_quotes');
 
@@ -300,30 +301,30 @@ class ReportService extends BaseService
 
         $endDate = isset($request->transactionApprovedDates) ?
         Carbon::parse($request->transactionApprovedDates[1])->endOfDay()->format($dateFormat) : Carbon::parse(now())->endOfDay()->format($dateFormat);
-        
+
         $query->whereBetween('personal_quotes.transaction_approved_at', [$startDate, $endDate]);
-        
-        if(!empty($request->quote_type_id)){
+
+        if (! empty($request->quote_type_id)) {
             $query->where('personal_quotes.quote_type_id', $request->quote_type_id);
         }
 
-        if( isset($request->teams) && count($request->teams) > 0){
+        if (isset($request->teams) && count($request->teams) > 0) {
             $teamIds = $request->teams;
-            $query->join('users','personal_quotes.advisor_id', '=', 'users.id')->whereIn('users.id', function ($query) use ($teamIds) {
-                    $query->distinct()
-                        ->select('users.id')
-                        ->from('users')
-                        ->join('user_team', 'user_team.user_id', 'users.id')
-                        ->join('teams', 'teams.id', 'user_team.team_id')
-                        ->whereIn('teams.id', $teamIds);
+            $query->join('users', 'personal_quotes.advisor_id', '=', 'users.id')->whereIn('users.id', function ($query) use ($teamIds) {
+                $query->distinct()
+                    ->select('users.id')
+                    ->from('users')
+                    ->join('user_team', 'user_team.user_id', 'users.id')
+                    ->join('teams', 'teams.id', 'user_team.team_id')
+                    ->whereIn('teams.id', $teamIds);
             });
         }
 
-        $records = $query->join('quote_type', 'personal_quotes.quote_type_id', '=', 'quote_type.id') 
-                        ->select('quote_type.code as quote_type_name',DB::raw('DATE(personal_quotes.transaction_approved_at) as transaction_date'), DB::raw('COALESCE(SUM(personal_quotes.premium), 0) as total_premium'))
-                        ->groupBy(DB::raw('DATE(personal_quotes.transaction_approved_at)'))
-                        ->orderBy(DB::raw('DATE(personal_quotes.transaction_approved_at)')) 
-                        ->get();
+        $records = $query->join('quote_type', 'personal_quotes.quote_type_id', '=', 'quote_type.id')
+            ->select('quote_type.code as quote_type_name', DB::raw('DATE(personal_quotes.transaction_approved_at) as transaction_date'), DB::raw('COALESCE(SUM(personal_quotes.premium), 0) as total_premium'))
+            ->groupBy(DB::raw('DATE(personal_quotes.transaction_approved_at)'))
+            ->orderBy(DB::raw('DATE(personal_quotes.transaction_approved_at)'))
+            ->get();
 
         return $records;
     }
