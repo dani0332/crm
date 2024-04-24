@@ -18,6 +18,7 @@ const loader = ref(false);
 const quoteStatusEnum = inject('quoteStatusEnum');
 const quoteTypeId = inject('quoteTypeId');
 const lostReasons = inject('lostReasons');
+const quoteType = inject('quoteType');
 
 const { isRequired } = useRules();
 
@@ -219,11 +220,10 @@ const getUrl = (url, quoteTypeId) => useGetShowPageRoute(url, quoteTypeId);
           <x-icon icon="money" size="sm" class="text-primary-400" />
           <template #tooltip>
             <div class="max-w-[194px] text-xs">
-              <span v-if="leadName == 'Health'">
-                Tooltip should be The 'Price Starting from' represents the
-                lowest premium amount that a client can pay to initiate
-                insurance coverage, giving you an overview of the potential
-                business to close.
+              <span v-if="quoteType == 'Health'">
+                'Price Starting from' represents the lowest premium amount that
+                a client can pay to initiate insurance coverage, giving you an
+                overview of the potential business to close.
               </span>
               <span v-else>
                 The complete amount due including VAT and before any potential
