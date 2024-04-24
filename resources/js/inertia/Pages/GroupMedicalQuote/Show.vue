@@ -27,6 +27,7 @@ defineProps({
   paymentTooltipEnum: Object,
   paymentMethods: Array,
   isNewPaymentStructure: Boolean,
+  isAmlClearedForPayment: Boolean,
 });
 
 const page = usePage();
@@ -928,6 +929,7 @@ const linkEntity = () => {
 			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name, tooltip: pm.tool_tip } })"
 			:storageUrl="storageUrl"
       quoteSubType="Group Medical"
+      :isAmlClearedForPayment="isAmlClearedForPayment"
 		/>
 
     <div class="p-4 rounded shadow mb-6 bg-white">
