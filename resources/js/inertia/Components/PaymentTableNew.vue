@@ -1196,7 +1196,8 @@ const validateCapturePayment = (isValid) => {
       for (let i = 1; i <= paymentMethodsForm.payment_no; i++) { 
         //isCreditPaymentInvalid.value[i] = false;
         if (paymentMethodsModels.value[i] === 'CC'){
-          if (collectionAmountModels.value[i]===null || collectionAmountModels.value[i]===undefined){
+
+          if (collectionAmountModels.value[i]===null || collectionAmountModels.value[i]===undefined || collectionAmountModels.value[i]===0){
             isCreditPaymentInvalid.value[i] = true;
             isCreditPaymentInvalidError.value[i] = "This field is required";
           }
