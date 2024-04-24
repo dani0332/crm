@@ -16,6 +16,12 @@ class HealthQuoteRepository extends BaseRepository
     }
     public function fetchGetData($forExport = false, $forTotalLeadsCount = false)
     {
+        $request = request();
+
+        $sort_by = isset($request->sortBy) && $request->sortBy != '' ? $request->sortBy : 'created_at';
+        $sort_type = isset($request->sortType) && $request->sortType != '' ? $request->sortType : 'desc';
+
+
         $query = $this->with([
             'advisor',
             'nationality',
@@ -23,7 +29,7 @@ class HealthQuoteRepository extends BaseRepository
         ])
             ->filter(! $forExport, $forTotalLeadsCount)
             ->withFakeLeadCriteria($forTotalLeadsCount)
-            ->orderBy('created_at', 'desc');
+            ->orderBy($sort_by, $sort_type);
 
         if ($forTotalLeadsCount) {
             return $query->count();
