@@ -41,6 +41,7 @@ defineProps({
   paymentStatusEnum: Object,
   paymentTooltipEnum: Object,
   isNewPaymentStructure: Boolean,
+  isAmlClearedForPayment: Boolean,
 });
 
 const page = usePage();
@@ -714,6 +715,7 @@ const linkEntity = () => {
 			:paymentTooltipEnum="paymentTooltipEnum"
 			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name, tooltip: pm.tool_tip } })"
 			:storageUrl="storageUrl"
+      :isAmlClearedForPayment="isAmlClearedForPayment"
 		/>
     <QuotePayments
       v-else
