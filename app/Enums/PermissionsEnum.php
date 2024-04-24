@@ -3,6 +3,7 @@
 namespace App\Enums;
 
 use BenSampo\Enum\Enum;
+use PhpParser\Node\Stmt\Const_;
 
 final class PermissionsEnum extends Enum
 {
@@ -258,5 +259,7 @@ final class PermissionsEnum extends Enum
     public const PLAN_DETAILS_ADD = 'plan-details-add';
     public const AVAILABLE_PLANS_SELECT_BUTTON = 'available-plans-select-button';
     public const INSTANT_ALFRED_CHAT_LOGS = 'instant-alfred-chat-logs';
-    public const MANAGE_QUOTE_NOTES = 'save-quote-notes';
+    public const SAVE_QUOTE_NOTES = 'save-quote-notes';
+    public const UPDATE_QUOTE_NOTES = 'update-quote-notes';
+    public const DELETE_QUOTE_NOTES = 'delete-quote-notes';
 }

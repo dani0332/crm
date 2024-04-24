@@ -287,7 +287,7 @@ const handleRemoveFile = file => {
 // });
 </script>
 <template>
-  <div v-if="can(permissionsEnum.MANAGE_QUOTE_NOTES)">
+  <div v-if="can(permissionsEnum.SAVE_QUOTE_NOTES)">
     <x-tooltip>
       <x-button size="sm" color="emerald" @click="showModal = true">
         Notes
