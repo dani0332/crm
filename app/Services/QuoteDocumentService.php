@@ -208,11 +208,11 @@ class QuoteDocumentService extends BaseService
     public function getQuoteDocuments($quoteType, $recordId, $documentTypeCodes = null)
     {
         $quote = $this->getQuoteObject($quoteType, $recordId);
-
-        if ($documentTypeCodes) {
-            $quote->documents()->whereIn('document_type_code', $documentTypeCodes);
+    
+        if ($quote && $documentTypeCodes) {
+            return $quote->documents()->whereIn('document_type_code', $documentTypeCodes)->with('createdBy:id,name,email')->latest()->get();
         }
-
+    
         return $quote ? $quote->documents()->with('createdBy:id,name,email')->latest()->get() : [];
     }
 
