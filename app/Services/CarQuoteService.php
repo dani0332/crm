@@ -1342,9 +1342,10 @@ class CarQuoteService extends BaseService
      */
     public function isPlanModifyAllowed($data)
     {
-        if($enablePlanValidation = ApplicationStorage::where('key_name', ApplicationStorageEnums::ENABLE_PLAN_MODIFY_VALIDATION)->first()) {
-            if(!$enablePlanValidation->value) {
+        if ($enablePlanValidation = ApplicationStorage::where('key_name', ApplicationStorageEnums::ENABLE_PLAN_MODIFY_VALIDATION)->first()) {
+            if (! $enablePlanValidation->value) {
                 info('plan modification validation is disabled from backend');
+
                 return true;
             }
         }
