@@ -6,6 +6,7 @@ use App\Enums\ApplicationStorageEnums;
 use App\Enums\GenericRequestEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentStatusEnum;
+use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
@@ -16,6 +17,7 @@ use App\Models\CarQuote;
 use App\Models\HealthQuote;
 use App\Models\PersonalQuote;
 use App\Models\PersonalQuoteDetail;
+use App\Models\QuoteStatusLog;
 use App\Models\TravelQuote;
 use App\Repositories\PersonalQuoteRepository;
 use App\Traits\GenericQueriesAllLobs;
@@ -324,5 +326,23 @@ class CentralService
 
         return $response;
     }
+    //check if aml cleared from log
+    public function amlClearedFromLog($quoteId, $quoteType)
+    {
+        $quoteType = strtolower($quoteType);
+        $quoteTypeId = app(ActivitiesService::class)->getQuoteTypeId($quoteType);
 
+        $isAmlClearedForPayment = false;
+        $quoteStatusLog = QuoteStatusLog::where('quote_request_id', $quoteId)
+            ->where('quote_type_id', $quoteTypeId)
+            ->where(function ($q) {
+                $q->where('current_quote_status_id', QuoteStatusEnum::AMLScreeningCleared);
+                $q->orWhere('previous_quote_status_id', QuoteStatusEnum::AMLScreeningCleared);
+            })->first();
+        if ($quoteStatusLog) {
+            $isAmlClearedForPayment = true;
+        }
+
+        return $isAmlClearedForPayment;
+    }
 }
