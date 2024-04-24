@@ -444,8 +444,9 @@ const canShow = (element) => {
 
 const isDisabled = (element) => {
     if(page.props.filtersByLob &&
-    page.props.filtersByLob[element]) {
-        const canView = page.props.filtersByLob[element]['can_view'] ?? true;
+      page.props.filtersByLob[element] &&
+      filters.lob) {
+      const canView = page.props.filtersByLob[element]['can_view'][[filters.lob]] ?? true;
 
         if(canView) {
             return true;
