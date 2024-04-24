@@ -5,7 +5,7 @@ import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 import LazyCreatePlan from './Partials/CreatePlan.vue';
 import LazyDocumentUploader from './Partials/DocumentUploader.vue';
 
-defineProps({
+const props = defineProps({
   quote: Object,
   leadStatuses: Array,
   ecomDetails: Object,
@@ -58,6 +58,8 @@ defineProps({
 const isManualPlansCount = ref(0);
 
 const page = usePage();
+
+let countDays = ref(daysSinceStale(props.quoteRequest?.stale_at));
 
 const notification = useToast();
 const hasRole = role => useHasRole(role);
@@ -341,6 +343,8 @@ const onLeadStatus = () => {
       },
       onSuccess: response => {
         const flash_messages = response.props.flash;
+        countDays.value = daysSinceStale(response.props.quoteRequest?.stale_at);
+        router.reload({ only: ['quoteRequest'] });
         if (!flash_messages) {
           notification.success({
             title: 'Lead Status Updated',
@@ -1496,7 +1500,38 @@ const handlePlanSelected = plan => {
 <template>
   <div>
     <Head title="Health Detail" />
-    <div class="flex justify-between items-center flex-wrap gap-2">
+    <StickyHeader>
+      <template v-slot:header>
+        <h2 class="text-xl font-semibold">Health Detail</h2>
+        <p
+          class="bg-red-600 px-2 py-1 rounded text-sm text-white"
+          v-if="countDays !== false"
+        >
+          Stale for {{ countDays }} days
+        </p>
+      </template>
+      <template #default>
+        <!-- <LeadNotes
+          :documentType="noteDocumentType"
+          :notes="quoteNotes"
+          :modelType="modelType"
+          :quote="quote"
+          :cdn="cdnPath"
+        /> -->
+        <x-button size="sm" color="#ff5e00" @click.prevent="openDuplicate">
+          Duplicate Lead
+        </x-button>
+
+        <Link :href="route('health.index')" preserve-scroll>
+          <x-button size="sm" color="primary" tag="div"> Health List </x-button>
+        </Link>
+
+        <Link :href="route('health.edit', quote.uuid)">
+          <x-button size="sm" tag="div">Edit</x-button>
+        </Link>
+      </template>
+    </StickyHeader>
+    <!-- <div class="flex justify-between items-center flex-wrap gap-2">
       <h2 class="text-xl font-semibold">Health Detail</h2>
       <div class="flex gap-2">
         <x-button size="sm" color="#ff5e00" @click.prevent="openDuplicate">
@@ -1511,7 +1546,7 @@ const handlePlanSelected = plan => {
           <x-button size="sm" tag="div">Edit</x-button>
         </Link>
       </div>
-    </div>
+    </div> -->
 
     <x-modal v-model="modals.duplicate" size="lg" show-close backdrop>
       <template #header> Duplicate Lead </template>

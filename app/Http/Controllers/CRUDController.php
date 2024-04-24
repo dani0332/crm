@@ -1499,7 +1499,7 @@ class CRUDController extends Controller
         }
 
         if($result['activityResponse']){
-            return back()->with('message', 'Status updated successfully & Activity has been created');
+            return redirect()->to('/quotes/'.strtolower($request->modelType).'/'.$entity->uuid)->with('success', 'Status updated successfully & Activity has been created');
         }
         return redirect()->to('/quotes/'.strtolower($request->modelType).'/'.$entity->uuid)->with('success', ' Lead Status has been Updated');
     }
