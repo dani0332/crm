@@ -37,7 +37,7 @@ const rules = {
     /^[\+]?[(]?[0-9]{3}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{4,10}$/im.test(v) ||
     'Phone must be valid',
     nameCheck: v => {
-        const pattern = /^[a-zA-Z0-9]+$/;
+        const pattern = /^[a-zA-Z0-9\s]+$/;
         if(v == null || v == '') return true;
         return pattern.test(v) || 'Special characters are not allowed in Name';
     }

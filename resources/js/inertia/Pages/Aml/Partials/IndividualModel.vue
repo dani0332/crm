@@ -125,7 +125,7 @@ const insuredFormDetails = useForm({
 
 const rules = {
     nameCheck: v => {
-        const pattern = /^[a-zA-Z0-9]+$/;
+        const pattern = /^[a-zA-Z0-9\s]+$/;
         if(v == null || v == '') return true;
         return pattern.test(v) || 'Special characters are not allowed in Insured Name';
     }
