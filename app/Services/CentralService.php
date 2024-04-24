@@ -341,14 +341,15 @@ class CentralService
             })->orderBy('id', 'desc')->first();
         if ($quoteStatusLog) {
             $amlScreenFailed = QuoteStatusLog::where('quote_request_id', $quoteId)
-            ->where('quote_type_id', $quoteTypeId)
-            ->where('current_quote_status_id', QuoteStatusEnum::AMLScreeningFailed)
-            ->where('id','>',$quoteStatusLog->id)
-            ->first();
-            if (!$amlScreenFailed){
+                ->where('quote_type_id', $quoteTypeId)
+                ->where('current_quote_status_id', QuoteStatusEnum::AMLScreeningFailed)
+                ->where('id', '>', $quoteStatusLog->id)
+                ->first();
+            if (! $amlScreenFailed) {
                 $isAmlClearedForPayment = true;
-            }            
+            }
         }
+
         return $isAmlClearedForPayment;
     }
 }

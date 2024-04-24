@@ -607,7 +607,7 @@ class AMLController extends Controller
         }
 
         if (! in_array(true, session()->get('amlResponseCheck')) && ! AMLService::checkAMLStatusFailed($quoteTypeId, $quoteRequestId)) {
-            
+
             QuoteStatusLog::create([
                 'quote_type_id' => $quoteTypeId,
                 'quote_request_id' => $quoteRequestId,
