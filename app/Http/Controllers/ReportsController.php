@@ -172,4 +172,15 @@ class ReportsController extends Controller
             'renewalBatchesList' => $renewalBatches,
         ]);
     }
+    
+    public function totalPremiumLeadsSaleReport(Request $request, ReportService $reportService)
+    {
+        $resp = $reportService->totalPremiumReport($request);
+
+        return inertia('Reports/TotalPremiumLeadsSale', [
+            'reportData' => $resp ?? null,
+            'filterOptions' => $reportService->getDefaultFiltersForTotalPremium()
+        ]);
+    }
+    
 }
