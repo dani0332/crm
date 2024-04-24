@@ -2,10 +2,11 @@
 
 namespace App\Repositories;
 
-use App\Enums\DocumentTypeCode;
 use App\Enums\QuoteTypes;
 use App\Models\DocumentType;
+use App\Enums\DocumentTypeCode;
 use App\Services\ActivitiesService;
+use App\Enums\quoteBusinessTypeCode;
 
 class DocumentTypeRepository extends BaseRepository
 {
@@ -29,9 +30,21 @@ class DocumentTypeRepository extends BaseRepository
         return DocumentType::taxDocument()->where('quote_type_id', app(ActivitiesService::class)->getQuoteTypeId($quoteType))->pluck('code')->toArray();
     }
 
-    public function fetchQuoteDocumentsSentToCustomerCode($quoteType)
+    public function fetchQuoteDocumentsSentToCustomerCode($quoteType, $quote)
     {
-        return DocumentType::sendToCustomer()->where('quote_type_id', app(ActivitiesService::class)->getQuoteTypeId($quoteType))->pluck('code')->toArray();
+        $documentTypes = DocumentType::sendToCustomer()
+            ->where('quote_type_id', app(ActivitiesService::class)->getQuoteTypeId($quoteType));
+
+        // If the quote is a business quote and the business type is car fleet, return all document types. 
+        if ($quoteType === QuoteTypes::BUSINESS->value 
+            && $quote->business_type_of_insurance_id === quoteBusinessTypeCode::getId(quoteBusinessTypeCode::carFleet)) {
+            return $documentTypes->pluck('code')->toArray();
+        }
+
+        // If the quote is a business quote, exclude the tax invoice document type.
+        $documentTypes->where('text', '!=', DocumentTypeCode::TAX_INVOICE);
+
+        return $documentTypes->pluck('code')->toArray();
     }
 
 }
