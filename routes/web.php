@@ -99,7 +99,7 @@ if (config('constants.APP_ENV') == EnvEnum::STAGING || config('constants.APP_ENV
 }
 
 Route::get('/get-tier-users/{tierId}', [LeadAllocationController::class, 'getTierUsers']);
-Route::post('/update-quote', [CarRevivalQuoteController::class, 'updateQuote']);
+Route::post('car-revival/update', [CarRevivalQuoteController::class, 'updateQuote']);
 
 Route::get('auth/google', 'App\Http\Controllers\GoogleSocialiteController@redirectToGoogle');
 Route::get('google/callback', 'App\Http\Controllers\GoogleSocialiteController@handleCallback');
@@ -156,8 +156,8 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
             Route::resource('personal-quotes/jetski', JetskiQuoteController::class)->names(generateRouteNames('jetski-quotes'));
         }
 
-        Route::group(['prefix' => 'quotes'], function () {
-            Route::resource('carrevival', CarRevivalQuoteController::class)->names(generateRouteNames('carrevival-quotes'))->except('show');
+        Route::group(['prefix' => 'quotes/'], function () {
+            Route::resource('car-revival', CarRevivalQuoteController::class)->names(generateRouteNames('car-revival-quotes'))->except('show');
         });
 
         if (in_array(quoteTypeCode::Life, newUi())) {
@@ -214,7 +214,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Artisan::call('config:clear');
         Artisan::call('view:clear');
 
-        return '<h1>All cache cleared. LARAVEL Version='.app()->version().'</h1>';
+        return '<h1>All cache cleared. LARAVEL Version=' . app()->version() . '</h1>';
     });
     Route::post('/payments/{quoteType}/store', [CRUDController::class, 'storePayment']);
     Route::post('/payments/{quoteType}/update', [CRUDController::class, 'updatePayment']);
@@ -335,7 +335,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::group(['prefix' => 'quotes'], function () {
         Route::resource('health', CRUDController::class);
         Route::resource('car', CRUDController::class);
-        Route::get('carrevival/{uuid}', [CRUDController::class, 'show']);
+        Route::get('car-revival/{uuid}', [CarRevivalQuoteController::class, 'show']);
 
         Route::get('health-cards', [HealthQuoteController::class, 'cardsView'])->name('health.cards');
 
@@ -347,7 +347,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
             Route::resource('business', BusinessQuoteController::class);
         }
         Route::resource('travel', CRUDController::class);
-        if (! in_array(quoteTypeCode::Pet, newUi())) {
+        if (!in_array(quoteTypeCode::Pet, newUi())) {
             Route::resource('pet', CRUDController::class);
         }
         Route::post('save', [CRUDController::class, 'store'])->name('saveQuote');
@@ -388,7 +388,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::post('{quoteType}/toggle-product', [CRUDController::class, 'toggleEmbeddedProduct'])->name('toggleEmbeddedProduct');
         Route::get('{quoteType}/risk-rating-details/{quoteId}', [CRUDController::class, 'riskRatingDetails'])->name('risk-rating-details');
 
-        if (! in_array(quoteTypeCode::Life, newUi())) {
+        if (!in_array(quoteTypeCode::Life, newUi())) {
             Route::resource('life', CRUDController::class);
         }
 

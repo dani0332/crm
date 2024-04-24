@@ -9,7 +9,7 @@ defineProps({
 
 <template>
     <QuoteForm
-        dynamic_route="carrevival"
+        dynamic_route="car-revival"
         :quote="quote"
     />
 </template>

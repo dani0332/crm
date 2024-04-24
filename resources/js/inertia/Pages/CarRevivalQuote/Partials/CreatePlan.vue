@@ -17,11 +17,6 @@ const createForm = reactive({
   loading: false,
 });
 
-const rules = {
-  isRequired: v => !!v || 'This field is required',
-  isNumber: v => !isNaN(v) || 'This field must be a number',
-};
-
 const onSubmit = isValid => {
   if (!isValid) {
     return;
@@ -101,7 +96,7 @@ watch(
           }))
         "
         :loading="options.loading"
-        :rules="[rules.isRequired]"
+        :rules="[isRequired]"
       />
       <x-input
         v-model="createForm.premium"
@@ -109,7 +104,7 @@ watch(
         label="Premium"
         placeholder="Enter Premium (inclusive of VAT, Basmah and Policy fee)"
         class="w-full"
-        :rules="[rules.isRequired, rules.isNumber]"
+        :rules="[isRequired, isNumber]"
       />
       <x-button
         type="submit"

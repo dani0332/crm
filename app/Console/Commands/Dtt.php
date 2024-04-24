@@ -2,13 +2,17 @@
 
 namespace App\Console\Commands;
 
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Jobs\CarRevivalLeadsCreationJob;
 use App\Models\CarQuote;
+use App\Services\ApplicationStorageService;
 use App\Services\LeadAllocationService;
 use Carbon\Carbon;
+use Exception;
+use Illuminate\Console\Application;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Sammyjo20\LaravelHaystack\Models\Haystack;
@@ -51,13 +55,17 @@ class Dtt extends Command
     public function handle()
     {
         try {
+
+            $isDttEnabled = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::DTT_ENABLED);
+            if (!$isDttEnabled) {
+                throw new Exception('Dtt is not enabled from cms');
+            }
             $dateOne = Carbon::now()->subMonths(11)->toDateString();
             $dateTwo = Carbon::now()->subYear(1)->subMonths(11)->toDateString();
 
             $datethirtyDaysBefore = Carbon::now()->subDays(30)->toDateString();
 
             $jobs = [];
-            // DB::enableQueryLog();
             $leads = CarQuote::where('is_revived', '=', false)
                 ->where(function ($q) use ($dateOne, $dateTwo) {
                     $q->whereDate('created_at', '=', $dateOne);
@@ -79,8 +87,6 @@ class Dtt extends Command
                 ->groupBy(['email', 'car_make_id', 'car_model_id', 'year_of_manufacture'])
                 ->orderBy('id', 'DESC')
                 ->get();
-
-                // dd(DB::getQueryLog());
 
             info('------CarRevivalLeadsCreationJobCount --' . count($leads) . '------' . json_encode($leads->pluck('uuid')->toArray()));
 

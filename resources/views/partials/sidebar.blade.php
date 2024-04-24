@@ -129,7 +129,7 @@ use App\Enums\PermissionsEnum;
                             <li><a href="{{ url('quotes/home') }}">Home Quotes</a></li>
                             @endcan
                             @hasanyrole([RolesEnum::Admin .'|'. RolesEnum::BetaUser .'|'. RolesEnum::Engineering])
-                                <li><a href="{{ url('quotes/carrevival') }}">Car Revival Quotes</a></li>
+                                <li><a href="{{ url('quotes/car-revival') }}">Car Revival Quotes</a></li>
                             @endhasanyrole
                             @can(PermissionsEnum::PetQuotesList)
                             @if(in_array(quoteTypeCode::Pet, newUi()))

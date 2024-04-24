@@ -205,7 +205,7 @@ class HandleInertiaRequests extends Middleware
                 ->addIf(
                     auth()->user()->can(PermissionsEnum::CarRevivalQuoteList),
                     'Car Revival Quotes',
-                    '/quotes/carrevival',
+                    '/quotes/car-revival',
                     fn ($s) => $s->attributes(['icon' => 'car'])
                 )
                 ->addIf(

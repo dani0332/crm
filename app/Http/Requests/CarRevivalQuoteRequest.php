@@ -26,7 +26,7 @@ class CarRevivalQuoteRequest extends FormRequest
         return [
             'first_name' => 'required',
             'last_name' => 'required',
-            'dob' => 'required|date_format:Y-m-d|before:today',
+            'dob' => 'required|before:today',
             'email' => 'required|email:rfc,dns',
             'mobile_no' => 'required',
             'nationality_id' => 'required|exists:nationality,id',

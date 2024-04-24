@@ -73,7 +73,7 @@ const advisorOptions = computed(() => {
 </script>
 
 <template>
-  <QuoteFilters dynamic_route="carrevival" :lead-statuses="leadStatuses" />
+  <QuoteFilters dynamic_route="car-revival" :lead-statuses="leadStatuses" />
 
   <Transition name="fade">
     <div v-if="quotesSelected.length > 0" class="mb-4">
@@ -82,21 +82,6 @@ const advisorOptions = computed(() => {
         :advisors="advisorOptions"
         model_type="car"
       />
-      <!-- <ExportExcel
-        :data="quotesSelected"
-        :columns="tableHeader"
-        :filename="'CarRevival-List'"
-        :sheetname="'Leads'"
-      >
-        <x-button
-
-            size="sm" color="emerald">
-          Export -
-          <span class="lining-nums">
-            Selected: {{ quotesSelected.length }}
-          </span>
-        </x-button>
-      </ExportExcel> -->
     </div>
   </Transition>
 
@@ -113,7 +98,7 @@ const advisorOptions = computed(() => {
   >
     <template #item-code="{ code, uuid }">
       <Link
-        :href="`/quotes/carrevival/${uuid}`"
+        :href="`/quotes/car-revival/${uuid}`"
         class="text-primary-500 hover:underline"
       >
         {{ code }}
