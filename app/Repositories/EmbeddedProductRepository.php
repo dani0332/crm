@@ -210,6 +210,9 @@ class EmbeddedProductRepository extends BaseRepository
                     $query->where('quote_request_id', $quoteRequestId);
                 },
             ])
+            ->whereHas('prices.transactions', function ($query) use ($quoteRequestId) { 
+                $query->where('quote_request_id', $quoteRequestId);
+            })
             ->get();
         $modelType = QuoteType::where('id', '=', $quoteTypeId)->value('code');
         $ep->each(function ($item) use ($modelType, $quoteTypeId, $quoteRequestId) {
