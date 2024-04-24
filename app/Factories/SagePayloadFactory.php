@@ -384,8 +384,8 @@ class SagePayloadFactory
                 [
                     'BatchType' => 'CA',
                     'CustomerNumber' => $request->sage_customer_number,
-                    'BankReceiptAmount' => floatval($request->collection_amount),
-                    'CheckReceiptNumber' => '123456',
+                    'BankReceiptAmount' => floatval($request->collection_amount) + floatval($request->disc),
+                    'CheckReceiptNumber' => $request->checkDetails,
                     'PaymentCode' => 'BT',
                     'ReceiptTransactionType' => 'Prepayment',
                     'AppliedReceiptsAdjustments' => [

@@ -55,6 +55,7 @@ class SageApiService
         $sageRequest->subClass = '';
         $sageRequest->ccCode = $firstChildPayment->cc_payment_id;
         $sageRequest->isPostDatedCheck = $firstChildPayment->payment_method == PaymentMethodsEnum::PostDatedCheque ? 'Yes' : 'No';
+        $sageRequest->checkDetails = $firstChildPayment->check_detail;
         $sageRequest->endorsementNumber = '';
         $sageRequest->insured = $quote->first_name.' '.$quote->last_name;
         $sageRequest->policyHolder = $quote->first_name.' '.$quote->last_name;
