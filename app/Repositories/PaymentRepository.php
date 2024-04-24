@@ -463,7 +463,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
         $successMessage = 'Payment Verified';
         $splitPayment = PaymentSplits::find($request->splitPaymentId);
         $masterPayment = $splitPayment->payment;
-        if ($request->is_approved && $splitPayment->payment_status_id!=PaymentStatusEnum::PAID) {
+        if ($request->is_approved && $splitPayment->payment_status_id != PaymentStatusEnum::PAID) {
             $paymentInformation = [
                 'collection_amount' => $request->collection_amount,
                 'bank_reference_number' => $request->bank_reference_number,
@@ -501,24 +501,24 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                     $failMessage = $sageResponse['response'];
                     vAbort($failMessage);
                 }
-            } else {                
-                
-                    $splitPayment->update($paymentInformation);
-                    
-                    if ($masterPayment) {
-                        $masterCapturedAmount = $masterPayment->captured_amount + $request->collection_amount;
-                        $masterPayment->update(
-                            ['captured_amount' => $masterCapturedAmount,
-                             'payment_allocation_status' => PaymentAllocationStatus::NOT_ALLOCATED]
-                        );
-                    }
-                
+            } else {
+
+                $splitPayment->update($paymentInformation);
+
+                if ($masterPayment) {
+                    $masterCapturedAmount = $masterPayment->captured_amount + $request->collection_amount;
+                    $masterPayment->update(
+                        ['captured_amount' => $masterCapturedAmount,
+                            'payment_allocation_status' => PaymentAllocationStatus::NOT_ALLOCATED]
+                    );
+                }
+
             }
             /* Part of milestone 2
             if (Auth::user()->hasRole(RolesEnum::BetaUser)) {
                 app(SplitPaymentService::class)->createReciept($request->modelType, $request->quote_id, $splitPayment);
             }*/
-        } elseif ($request->is_declined && $splitPayment->payment_status_id!=PaymentStatusEnum::PAID) {
+        } elseif ($request->is_declined && $splitPayment->payment_status_id != PaymentStatusEnum::PAID) {
             $paymentInformation = [
                 'decline_reason_id' => $request->declined_reason,
                 'decline_custom_reason' => $request->declined_custom_reason,
