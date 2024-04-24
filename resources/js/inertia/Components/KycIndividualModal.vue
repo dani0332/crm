@@ -107,6 +107,11 @@ const onKycSubmit = isValid => {
             title: 'KYC Document uploaded.',
             position: 'top',
           });
+             router.reload({
+                replace: true,
+                preserveScroll: true,
+                preserveState: true,
+            });
         } else {
           notification.error({
             title: 'Document not uploaded.',
