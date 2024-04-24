@@ -1950,7 +1950,7 @@ const paymentAllocationStatusTooltip= payment_allocation_status  => {
                     </span>
                     <template #tooltip>
                       <span class="custom-tooltip-content">
-                        {{ paymentAllocationStatusTooltip(item.payment_allocation_status) }}
+                        {{ paymentAllocationStatusTooltip(splitPayment.payment_allocation_status) }}
                       </span>
                     </template>
                   </x-tooltip>
