@@ -201,7 +201,7 @@ onMounted(() => {
   <Pagination
     :links="{
       next: logs.next_page_url,
-      prev: logs.next_page_url,
+      prev: logs.prev_page_url,
       current: logs.current_page,
       from: logs.from,
       to: logs.to,

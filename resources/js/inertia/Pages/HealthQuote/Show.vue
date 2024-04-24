@@ -719,9 +719,7 @@ const onTogglePlans = toggle => {
         title: 'Plans has been updated',
         position: 'top',
       });
-      router.reload({
-        preserveScroll: true,
-      });
+      onLoadAvailablePlansData();
     })
     .catch(error => {
       notification.error({
@@ -1495,6 +1493,14 @@ const handlePlanSelected = plan => {
     only: ['payments', 'quoteRequest', 'ecomDetails', 'coPayment'],
   });
 };
+
+watch(
+  () => page.props.ecomDetails,
+  value => {
+    selectedProviderPlan.value.premium = value.priceWithVAT;
+  },
+  { deep: true },
+);
 </script>
 
 <template>

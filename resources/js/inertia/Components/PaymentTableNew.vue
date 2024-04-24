@@ -18,7 +18,7 @@ const props = defineProps({
   quoteType: String,
   storageUrl: String,
   eCommercePrice: {
-    type: String,
+    type: [String, Number],
     default: '0',
   },
   quoteSubType: {
@@ -93,19 +93,19 @@ const modal2Ref = ref(null);
 const familyEmployeDiscount = ['Car', 'Health', 'Home', 'Travel'];
 // Array of quote types to check against
 const quoteTypesToCheck = ['Car', 'Health', 'Travel']; //Ecommerce LOBs
-// Declare initialAmount variable
-let initialAmount;
+// Declare initialAmount.value variable
+const initialAmount = ref(0);
 
-// Check quoteType and set initialAmount accordingly
+// Check quoteType and set initialAmount.value accordingly
 if (props.quoteType === 'Health') {
-  initialAmount = props.eCommercePrice;
+  initialAmount.value = props.eCommercePrice;
 } else {
-  initialAmount = quoteTypesToCheck.includes(props.quoteType)
+  initialAmount.value = quoteTypesToCheck.includes(props.quoteType)
     ? props.quoteRequest.premium
     : props.quoteRequest.price_with_vat;
 }
-const totalPrice = ref(initialAmount); // Initial total price
-const totalAmount = ref(initialAmount); // Initial total price
+const totalPrice = ref(initialAmount.value); // Initial total price
+const totalAmount = ref(initialAmount.value); // Initial total price
 
 const discountProofDocument = props.paymentDocument.find(item => item.text === "Discount Proof");
 const paymentProofDocument  = props.paymentDocument.find(item => item.text === "Payment Proof");
@@ -1166,6 +1166,16 @@ const validateViewPayment = (isValid) => {
     amountExceeded = true;
     //return true;
   }
+  // document validdation for insurer
+  if (paymentMethodsForm.collection_type==='insurer') {  
+    if (approvedDocumentModel.value[splitPaymentNo.value]===undefined 
+    || approvedDocumentModel.value[splitPaymentNo.value].length===0 ) {
+        isApprovedDocumentNotUploaded.value = true;
+        return true;
+      } else {        
+        isApprovedDocumentNotUploaded.value = false;
+      }      
+  }
   
   if(isApproveConfirm.value === false && isValid) {
     if (!amountExceeded) {
@@ -1186,7 +1196,8 @@ const validateCapturePayment = (isValid) => {
       for (let i = 1; i <= paymentMethodsForm.payment_no; i++) { 
         //isCreditPaymentInvalid.value[i] = false;
         if (paymentMethodsModels.value[i] === 'CC'){
-          if (collectionAmountModels.value[i]===null || collectionAmountModels.value[i]===undefined){
+
+          if (collectionAmountModels.value[i]===null || collectionAmountModels.value[i]===undefined || collectionAmountModels.value[i]===0){
             isCreditPaymentInvalid.value[i] = true;
             isCreditPaymentInvalidError.value[i] = "This field is required";
           }
@@ -1727,14 +1738,16 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
 
 watch(() => props.quoteRequest, (newValue, oldValue) => {
   //refresh premium
-  if (props.quoteType === 'Health') {
-    initialAmount = props.eCommercePrice;
-  } else {
-    initialAmount = quoteTypesToCheck.includes(props.quoteType)
-      ? props.quoteRequest.premium
-      : props.quoteRequest.price_with_vat;
+  if ( !(paymentMethodsForm.status === 'edit' && isTotalPriceUpdated.value === true) ) {
+    if (props.quoteType === 'Health') {
+      initialAmount.value = props.eCommercePrice;
+    } else {
+      initialAmount.value = quoteTypesToCheck.includes(props.quoteType)
+        ? props.quoteRequest.premium
+        : props.quoteRequest.price_with_vat;
+    }
+    totalPrice.value = initialAmount.value;
   }
-  totalPrice.value = initialAmount;
   //refresh plan
   if (quoteTypesToCheck.includes(props.quoteType)) {
     initalPlanDetails = props.quoteRequest.plan;
@@ -1745,6 +1758,15 @@ watch(() => props.quoteRequest, (newValue, oldValue) => {
   }
   planDetail.value = initalPlanDetails;
 });
+
+// Watch for Ecommerce Price changes
+watch(
+  () => props.eCommercePrice,
+  (newValue, oldValue) => {
+    initialAmount.value = newValue;
+    totalPrice.value = newValue;
+  },
+);
 
 // verify if master payment is paid
 const isMasterPaymentPaid = computed(() => {  
@@ -1919,7 +1941,7 @@ const isMasterPaymentPaid = computed(() => {
                 </td>
                 <td>{{ item.code }}</td>             
                 <td>{{ formatDate(item.collection_date) }}</td>
-                <td>{{ formatDate(item.collection_date) }}</td>
+                <td>{{ formatDate(item.payment_splits[0].due_date) }}</td>
                 <td>{{ item.payment_method.name }}</td>
                 <td>{{ formatAmount(item.total_price) }}</td>
                 <td>{{ formatAmount(item.discount_value) }}</td>
@@ -2850,7 +2872,7 @@ const isMasterPaymentPaid = computed(() => {
               </div>
               <div class="w-1/3 px-2">
                 <x-tooltip>
-                  <span class="border-b-2 border-dotted border-black text-sm">DOCUMENT</span>   
+                  <span class="border-b-2 border-dotted border-black text-sm">DOCUMENT <sup v-if="paymentMethodsForm.collection_type==='insurer'" class="text-red-500">*</sup></span>
                 <template #tooltip>
                       <span>{{ paymentTooltipEnum.PAYMENT_VIEW_DOCUMENTS }}</span>
                 </template>

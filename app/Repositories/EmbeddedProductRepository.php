@@ -7,6 +7,7 @@ use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Jobs\SendEPDocumentsJob;
 use App\Models\EmbeddedProduct;
+use App\Models\EmbeddedProductOption;
 use App\Models\EmbeddedTransaction;
 use App\Models\GenericDocument;
 use App\Models\QuoteType;
@@ -241,6 +242,34 @@ class EmbeddedProductRepository extends BaseRepository
         });
 
         return $ep;
+    }
+
+    public function fetchSendDocumentsByLead($leadId, $modelType)
+    {
+        $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
+        if ($quoteTypeId !== QuoteTypeId::Car) {
+            return false;
+        }
+
+        $epTransaction = EmbeddedTransaction::where([
+            ['quote_type_id', $quoteTypeId],
+            ['quote_request_id', $leadId],
+            ['is_selected', 1],
+        ])->whereIn('payment_status_id', [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PARTIAL_CAPTURED])->get();
+
+        if ($epTransaction->isNotEmpty()) {
+            foreach ($epTransaction as $item) {
+
+                $product_id = $item->product_id;
+                $embedded_product_id = EmbeddedProductOption::find($product_id)->embedded_product_id;
+                // EP Send documents
+                $data = [];
+                $data['quoteId'] = $leadId;
+                $data['modelType'] = $modelType;
+                $data['epId'] = $embedded_product_id;
+                $this->fetchSendDocument($data);
+            }
+        }
     }
 
     public function fetchSendDocument($data)
