@@ -53,6 +53,8 @@ const props = defineProps({
   paymentTooltipEnum: Object,
   storageUrl: String,
   isNewPaymentStructure: Boolean,
+  noteDocumentType: Object,
+  quoteNotes: Object,
 });
 
 const isManualPlansCount = ref(0);
@@ -1517,13 +1519,13 @@ watch(
         </p>
       </template>
       <template #default>
-        <!-- <LeadNotes
+        <LeadNotes
           :documentType="noteDocumentType"
           :notes="quoteNotes"
           :modelType="modelType"
           :quote="quote"
           :cdn="cdnPath"
-        /> -->
+        />
         <x-button size="sm" color="#ff5e00" @click.prevent="openDuplicate">
           Duplicate Lead
         </x-button>
