@@ -1586,7 +1586,7 @@ const uploadDocument = (doc, files, count) => {
 const getCaptureValidation = computed(() => {  
   return (payment) => {
     //6 =AML Screening Cleared , 32 = Transaction Declined , 15 = Transaction Approved
-    if ( props.payments.length>0 && (payment.total_price === (payment.total_amount + payment.discount_value)) && 
+    if ( props.payments.length>0 && (payment.total_price <= (payment.total_amount + payment.discount_value)) && 
       (
       ((props.quoteRequest.quote_status_id === 6 || props.quoteRequest.quote_status_id === 32 || props.quoteRequest.quote_status_id === 15) 
       && props.quoteRequest.kyc_decision === 'Complete'
