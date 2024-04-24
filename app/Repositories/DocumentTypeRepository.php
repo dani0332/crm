@@ -37,7 +37,7 @@ class DocumentTypeRepository extends BaseRepository
 
         // If the quote is a business quote and the business type is car fleet, return all document types.
         if ($quoteType === QuoteTypes::BUSINESS->value
-            && $quote->business_type_of_insurance_id === quoteBusinessTypeCode::getId(quoteBusinessTypeCode::carFleet)) {
+            && ($quote->business_type_of_insurance_id === quoteBusinessTypeCode::getId(quoteBusinessTypeCode::carFleet) || ($quote->business_type_of_insurance_id === quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical)))) {
             return $documentTypes->pluck('code')->toArray();
         }
 
