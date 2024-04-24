@@ -6,14 +6,15 @@ use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\DocumentTypeCode;
 use App\Enums\LookupsEnum;
-use App\Enums\quoteStatusCode;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PaymentTooltip;
+use App\Enums\quoteStatusCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
+use App\Enums\TeamNameEnum;
 use App\Events\LeadsCount;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\PetQuoteRequest;
@@ -35,9 +36,8 @@ use App\Repositories\QuoteStatusRepository;
 use App\Repositories\UserRepository;
 use App\Services\AMLService;
 use App\Services\CentralService;
-use Illuminate\Http\Request;
-use App\Enums\TeamNameEnum;
 use App\Services\SplitPaymentService;
+use Illuminate\Http\Request;
 
 class PetQuoteController extends Controller
 {
@@ -222,20 +222,20 @@ class PetQuoteController extends Controller
 
         $quoteStatusEnums = QuoteStatusEnum::asArray();
         $lostReasons = LostReasonRepository::orderBy('text', 'asc')->get();
-        
+
         $userId = auth()->id();
         $userTeams = auth()->user()->getUserTeams($userId)->toArray();
-        if(array_intersect([TeamNameEnum::PET_TEAM,], $userTeams)){
+        if (array_intersect([TeamNameEnum::PET_TEAM], $userTeams)) {
             $quotes = collect($quotes)->whereNotIn('id', [
                 QuoteStatusEnum::Allocated,
                 QuoteStatusEnum::InNegotiation,
-                ])->values()->toArray();
-            }elseif(array_intersect([TeamNameEnum::PET_RENEWALS], $userTeams)) {
-                $quotes = collect($quotes)->whereNotIn('id', [
-                    QuoteStatusEnum::NewLead,
-                    QuoteStatusEnum::InNegotiation])->values()->toArray();
-                }
-                
+            ])->values()->toArray();
+        } elseif (array_intersect([TeamNameEnum::PET_RENEWALS], $userTeams)) {
+            $quotes = collect($quotes)->whereNotIn('id', [
+                QuoteStatusEnum::NewLead,
+                QuoteStatusEnum::InNegotiation])->values()->toArray();
+        }
+
         // $isManagerOrAdminAccess = auth()->user()->hasAnyRole([RolesEnum::PetManager, RolesEnum::Admin]);
         // if (! $isManagerOrAdminAccess) {
         //     if (auth()->user()->hasRole(RolesEnum::PetNewBusinessAdvisor)) {

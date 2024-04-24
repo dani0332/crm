@@ -149,24 +149,24 @@ class AutomateActivitiesCommand extends Command
                                         $query->where('team_id', $renewalTeamID ?? null);
                                     })->first();
 
-                                    if($activitySchedules){
-                                        Activities::create([
-                                            'title' => $activitySchedules->name,
-                                            'description' => $activitySchedules->description,
-                                            'quote_request_id' => $quoteDetail->id,
-                                            'quote_type_id' => $getQuoteType,
-                                            'status' => 0,
-                                            'created_at' => now(),
-                                            'updated_at' => now(),
-                                            'assignee_id' => $quoteDetail->advisor_id,
-                                            'uuid' => generateUuid(),
-                                            'due_date' => addDaysExcludeWeekend($activitySchedules->due_days, $quoteDetail->activities->first()->created_at ?? now()),
-                                            'client_name' => $quoteDetail->first_name.' '.$quoteDetail->last_name,
-                                            'client_email' => $quoteDetail->email,
-                                            'quote_uuid' => $quoteDetail->uuid,
-                                            'activity_schedule_id' => $activitySchedules->id,
-                                        ]);
-                                    }
+                                if ($activitySchedules) {
+                                    Activities::create([
+                                        'title' => $activitySchedules->name,
+                                        'description' => $activitySchedules->description,
+                                        'quote_request_id' => $quoteDetail->id,
+                                        'quote_type_id' => $getQuoteType,
+                                        'status' => 0,
+                                        'created_at' => now(),
+                                        'updated_at' => now(),
+                                        'assignee_id' => $quoteDetail->advisor_id,
+                                        'uuid' => generateUuid(),
+                                        'due_date' => addDaysExcludeWeekend($activitySchedules->due_days, $quoteDetail->activities->first()->created_at ?? now()),
+                                        'client_name' => $quoteDetail->first_name.' '.$quoteDetail->last_name,
+                                        'client_email' => $quoteDetail->email,
+                                        'quote_uuid' => $quoteDetail->uuid,
+                                        'activity_schedule_id' => $activitySchedules->id,
+                                    ]);
+                                }
                             }
                         }
                     });

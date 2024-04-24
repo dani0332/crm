@@ -35,7 +35,6 @@ class CheckRouteAccess
             $routeName = str_replace($methodName, $methodMapping[$methodName], $routeName);
         }
 
-
         if (auth()->user()->can($routeName)) {
             return $next($request);
         }

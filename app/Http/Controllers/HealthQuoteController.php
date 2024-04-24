@@ -9,8 +9,8 @@ use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Enums\TeamNameEnum;
 use App\Http\Requests\InsurerProviderNetworkRequest;
-use App\Repositories\HealthQuoteRepository;
 use App\Http\Requests\MemberDetailRequest;
+use App\Repositories\HealthQuoteRepository;
 use App\Repositories\InsuranceProviderRepository;
 use App\Repositories\LostReasonRepository;
 use App\Services\HealthQuoteService;
@@ -312,13 +312,13 @@ class HealthQuoteController extends Controller
         // $isManagerOrAdminAccess = auth()->user()->hasAnyRole([RolesEnum::HealthManager, RolesEnum::Admin]);
         $userId = auth()->id();
         $userTeams = auth()->user()->getUserTeams($userId)->toArray();
-        if(array_intersect([TeamNameEnum::EBP, TeamNameEnum::RM_NB, TeamNameEnum::RM_SPEED], $userTeams)){
+        if (array_intersect([TeamNameEnum::EBP, TeamNameEnum::RM_NB, TeamNameEnum::RM_SPEED], $userTeams)) {
             $quotes = collect($quotes)->whereNotIn('id', [
                 QuoteStatusEnum::Lost,
                 QuoteStatusEnum::Allocated,
                 QuoteStatusEnum::RenewalTermsReceived,
             ])->values()->toArray();
-        }elseif(array_intersect([TeamNameEnum::RM_RENEWALS], $userTeams)) {
+        } elseif (array_intersect([TeamNameEnum::RM_RENEWALS], $userTeams)) {
             $quotes = collect($quotes)->whereNotIn('id', [
                 QuoteStatusEnum::FollowedUp,
                 QuoteStatusEnum::ApplicationSubmitted,

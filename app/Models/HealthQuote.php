@@ -19,7 +19,6 @@ class HealthQuote extends Model implements AuditableContract
 
     protected $table = 'health_quote_request';
     protected $fillable = ['quote_status_id', 'quote_status_date'];
-
     public $filterables = [
         'first_name' => FilterTypes::FREE,
         'last_name' => FilterTypes::FREE,

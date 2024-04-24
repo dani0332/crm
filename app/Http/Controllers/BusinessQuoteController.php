@@ -17,6 +17,7 @@ use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
+use App\Enums\TeamNameEnum;
 use App\Events\LeadsCount;
 use App\Http\Requests\StoreBusinessQuoteRequest;
 use App\Http\Requests\UpdateBusinessQuoteRequest;
@@ -42,7 +43,6 @@ use App\Services\SplitPaymentService;
 use App\Traits\RolePermissionConditions;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
-use App\Enums\TeamNameEnum;
 
 class BusinessQuoteController extends Controller
 {
@@ -383,18 +383,18 @@ class BusinessQuoteController extends Controller
 
         $userId = auth()->id();
         $userTeams = auth()->user()->getUserTeams($userId)->toArray();
-        if(array_intersect([TeamNameEnum::CORPLINE_TEAM], $userTeams)){
+        if (array_intersect([TeamNameEnum::CORPLINE_TEAM], $userTeams)) {
             $quotes = collect($quotes)->whereNotIn('id', [
                 QuoteStatusEnum::Allocated,
                 QuoteStatusEnum::PendingRenewalInformation,
             ])->values()->toArray();
-        }elseif(array_intersect([TeamNameEnum::CORPLINE_RENEWALS], $userTeams)) {
+        } elseif (array_intersect([TeamNameEnum::CORPLINE_RENEWALS], $userTeams)) {
             $quotes = collect($quotes)->whereNotIn('id', [
                 QuoteStatusEnum::NewLead,
                 QuoteStatusEnum::ProposalFormRequested,
                 QuoteStatusEnum::ProposalFormReceived,
                 QuoteStatusEnum::AdditionalInformationRequested,
-                ])->values()->toArray();
+            ])->values()->toArray();
         }
 
         // $isManagerOrAdminAccess = auth()->user()->hasAnyRole([RolesEnum::CorplineManager, RolesEnum::Admin]);

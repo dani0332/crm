@@ -262,7 +262,7 @@ class PersonalQuote extends Model implements AuditableContract
     {
         return $this->morphMany(QuoteNote::class, 'quote_noteable');
     }
-    
+
     public function insuranceProvider()
     {
         return $this->belongsTo(InsuranceProvider::class, 'insurance_provider_id', 'id');

@@ -148,7 +148,6 @@ function getDataAgainstStatus($modelType, $statusId, Request $request)
         return $result;
     }
 
-
     $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
     $nameSpace = 'App\\Models\\';
     $modelType = (in_array(ucwords($modelType), newUi()) && checkPersonalQuotes(ucwords($modelType))) ? $nameSpace.'PersonalQuote' : $nameSpace.ucwords($modelType).'Quote';
@@ -162,11 +161,11 @@ function getDataAgainstStatus($modelType, $statusId, Request $request)
     })->when($modelType == HealthQuote::class, function ($healthQuery) {
         $healthQuery->with('healthCoverFor');
     })
-    ->when($modelType == PersonalQuote::class, function($query, ) use ($quoteTypeId){
-        $query->where('quote_type_id', $quoteTypeId);
-    })
-    ->where('quote_status_id', $statusId)
-    ->where(function ($query) use ($request) {
+        ->when($modelType == PersonalQuote::class, function ($query) use ($quoteTypeId) {
+            $query->where('quote_type_id', $quoteTypeId);
+        })
+        ->where('quote_status_id', $statusId)
+        ->where(function ($query) use ($request) {
             getCardViewRequestFilters($query, $request);
         });
 
@@ -175,15 +174,14 @@ function getDataAgainstStatus($modelType, $statusId, Request $request)
     })->when($modelType == HealthQuote::class, function ($healthQuery) {
         $healthQuery->with('healthCoverFor');
     })
-    ->when($modelType == PersonalQuote::class, function($query) use ($quoteTypeId){
-        $query->where('quote_type_id', $quoteTypeId);
-    })
-    ->where('quote_status_id', $statusId)->where('advisor_id', auth()->user()->id)
+        ->when($modelType == PersonalQuote::class, function ($query) use ($quoteTypeId) {
+            $query->where('quote_type_id', $quoteTypeId);
+        })
+        ->where('quote_status_id', $statusId)->where('advisor_id', auth()->user()->id)
         ->where(function ($query) use ($request) {
             getCardViewRequestFilters($query, $request);
         });
 
-    
     if (auth()->user()->isRenewalAdvisor()) {
         $result['total_leads'] = $modelQuery->whereNotNull('previous_quote_id')->count();
         $result['total_premium'] = $modelQuery->whereNotNull('previous_quote_id')->sum('premium');
@@ -216,7 +214,6 @@ function getDataAgainstStatus($modelType, $statusId, Request $request)
         }
     }
 
-   
     return $result;
 }
 

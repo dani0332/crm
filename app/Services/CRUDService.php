@@ -243,7 +243,6 @@ class CRUDService extends BaseService
                 $quoteDetailEntity->next_followup_date = date('Y-m-d H:i:s', strtotime($request->next_followup_date));
             }
 
-           
             $quoteDetailEntity->save();
 
             $entity = $this->{strtolower($request->modelType).'QuoteService'}->getEntityPlain($request->leadId);
@@ -265,7 +264,7 @@ class CRUDService extends BaseService
             if (in_array(strtolower($request->modelType), [strtolower(quoteTypeCode::Health), strtolower(quoteTypeCode::Home), strtolower(quoteTypeCode::Business)])) {
                 $entity->activities()->where('status', 0)->update(['status' => 1]);
                 $entity->quote_status_date = now();
-                if($entity->stale_at){
+                if ($entity->stale_at) {
                     $entity->stale_at = null;
                 }
             }
@@ -360,11 +359,9 @@ class CRUDService extends BaseService
             $activityResponse = false;
             if (in_array(strtolower($request->modelType), [strtolower(quoteTypeCode::Health), strtolower(quoteTypeCode::Home), strtolower(quoteTypeCode::Business)])) {
                 $quoteTypeId = [strtolower(quoteTypeCode::Home) => QuoteTypeId::Home, strtolower(quoteTypeCode::Health) => QuoteTypeId::Health, strtolower(quoteTypeCode::Business) => QuoteTypeId::Business];
-                $activityResponse =  (new CentralService())->saveAndAssignActivitesToAdvisor($entity, $quoteTypeId[strtolower($request->modelType)], );
+                $activityResponse = (new CentralService())->saveAndAssignActivitesToAdvisor($entity, $quoteTypeId[strtolower($request->modelType)]);
             }
 
-
-            
             // ========= assign renewal batch to HEALTH LOB leads upon transaction approved =========
 
             if (strtolower($request->modelType) == strtolower(quoteTypeCode::Health) && $request->leadStatus == QuoteStatusEnum::TransactionApproved) {

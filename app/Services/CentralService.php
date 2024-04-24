@@ -459,30 +459,30 @@ class CentralService
         }
 
         $scheduledActivitiesIDs = Activities::where([
-            'quote_request_id'=> $quoteDetails->id,
+            'quote_request_id' => $quoteDetails->id,
             'status' => true,
         ])->where('due_date', '<', now())
-        ->orderBy('created_at', 'desc')->pluck('activity_schedule_id')
-        ->unique()->filter(function ($filter) {
-            return ! is_null($filter);
-        })->toArray();
+            ->orderBy('created_at', 'desc')->pluck('activity_schedule_id')
+            ->unique()->filter(function ($filter) {
+                return ! is_null($filter);
+            })->toArray();
 
         $getActivitySchedule = ActivitySchedule::where([
             'quote_type_id' => $quoteTypeId,
             'quote_status_id' => $quoteDetails->quote_status_id,
         ])
-        ->whereIn('role_id', $advisorDetails->usersroles->pluck('id'))
-        ->whereIn('team_id', $advisorDetails->teams->pluck('id'))
-        ->when(! empty($scheduledActivitiesIDs), function ($previousSchedule) use ($scheduledActivitiesIDs) {
-            $previousSchedule->whereNotIn('id', $scheduledActivitiesIDs);
-        })
-        ->when($quoteDetails->source == LeadSourceEnum::RENEWAL_UPLOAD, function ($query) use ($quoteDetails, $quoteTypeDetail) {
-            $renewalTeamID = $quoteTypeDetail['renewal_team'];
+            ->whereIn('role_id', $advisorDetails->usersroles->pluck('id'))
+            ->whereIn('team_id', $advisorDetails->teams->pluck('id'))
+            ->when(! empty($scheduledActivitiesIDs), function ($previousSchedule) use ($scheduledActivitiesIDs) {
+                $previousSchedule->whereNotIn('id', $scheduledActivitiesIDs);
+            })
+            ->when($quoteDetails->source == LeadSourceEnum::RENEWAL_UPLOAD, function ($query) use ($quoteTypeDetail) {
+                $renewalTeamID = $quoteTypeDetail['renewal_team'];
 
-            $query->where('team_id', $renewalTeamID ?? null);
-        })
-        ->orderBy('sorting_order')
-        ->first();
+                $query->where('team_id', $renewalTeamID ?? null);
+            })
+            ->orderBy('sorting_order')
+            ->first();
 
         if ($getActivitySchedule && $quoteDetails->advisor_id && ! $lastActivityDueDateIsGreater) {
             $activity = Activities::create([

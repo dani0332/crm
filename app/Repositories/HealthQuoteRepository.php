@@ -21,7 +21,6 @@ class HealthQuoteRepository extends BaseRepository
         $sort_by = isset($request->sortBy) && $request->sortBy != '' ? $request->sortBy : 'created_at';
         $sort_type = isset($request->sortType) && $request->sortType != '' ? $request->sortType : 'desc';
 
-
         $query = $this->with([
             'advisor',
             'nationality',

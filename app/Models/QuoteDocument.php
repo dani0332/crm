@@ -51,7 +51,7 @@ class QuoteDocument extends Model
     {
         return $this->belongsToMany(QuoteNote::class, 'document_note', 'document_id', 'note_id');
     }
-    
+
     public function paymentDocuments()
     {
         return $this->belongsTo(PaymentSplits::class, 'payment_split_id', 'id');

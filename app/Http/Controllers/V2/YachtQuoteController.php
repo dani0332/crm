@@ -6,13 +6,14 @@ use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\DocumentTypeCode;
 use App\Enums\LookupsEnum;
-use App\Enums\quoteStatusCode;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PaymentTooltip;
+use App\Enums\quoteStatusCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
+use App\Enums\TeamNameEnum;
 use App\Events\LeadsCount;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\BikeQuoteRequest;
@@ -36,9 +37,8 @@ use App\Repositories\YachtQuoteRepository;
 use App\Services\AMLService;
 use App\Services\CentralService;
 use App\Services\LookupService;
-use Illuminate\Http\Request;
-use App\Enums\TeamNameEnum;
 use App\Services\SplitPaymentService;
+use Illuminate\Http\Request;
 
 class YachtQuoteController extends Controller
 {
@@ -204,15 +204,15 @@ class YachtQuoteController extends Controller
 
         $userId = auth()->id();
         $userTeams = auth()->user()->getUserTeams($userId)->toArray();
-        if(array_intersect([TeamNameEnum::YACHT], $userTeams)){
+        if (array_intersect([TeamNameEnum::YACHT], $userTeams)) {
             $quotes = collect($quotes)->whereNotIn('id', [
                 QuoteStatusEnum::Allocated,
                 QuoteStatusEnum::InNegotiation,
             ])->values()->toArray();
-        }elseif(array_intersect([TeamNameEnum::YACHT_RENEWALS], $userTeams)) {
+        } elseif (array_intersect([TeamNameEnum::YACHT_RENEWALS], $userTeams)) {
             $quotes = collect($quotes)->whereNotIn('id', [
                 QuoteStatusEnum::NewLead,
-                QuoteStatusEnum::InNegotiation,])->values()->toArray();
+                QuoteStatusEnum::InNegotiation, ])->values()->toArray();
         }
 
         // $isManagerOrAdminAccess = auth()->user()->hasAnyRole([RolesEnum::YachtManager, RolesEnum::Admin]);

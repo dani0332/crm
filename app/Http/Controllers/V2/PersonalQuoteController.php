@@ -19,7 +19,7 @@ class PersonalQuoteController extends Controller
     {
         $response = PersonalQuoteRepository::updateStatus($quoteType, $quoteId, $request->validated());
 
-        if(!$response['activity_created']) {
+        if (! $response['activity_created']) {
             return back()->with('message', 'Status updated successfully');
         }
 

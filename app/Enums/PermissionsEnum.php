@@ -3,7 +3,6 @@
 namespace App\Enums;
 
 use BenSampo\Enum\Enum;
-use PhpParser\Node\Stmt\Const_;
 
 final class PermissionsEnum extends Enum
 {

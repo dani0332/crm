@@ -25,6 +25,7 @@ use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
+use App\Enums\TeamNameEnum;
 use App\Enums\TiersEnum;
 use App\Events\LeadsCount;
 use App\Facades\Capi;
@@ -38,8 +39,6 @@ use App\Models\ApplicationStorage;
 use App\Models\CarMake;
 use App\Models\CarQuote;
 use App\Models\DocumentType;
-use App\Models\EmbeddedProductOption;
-use App\Models\EmbeddedTransaction;
 use App\Models\Emirate;
 use App\Models\GenericModel;
 use App\Models\HealthPlanType;
@@ -96,7 +95,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redirect;
-use App\Enums\TeamNameEnum;
 
 class CRUDController extends Controller
 {
@@ -1147,18 +1145,18 @@ class CRUDController extends Controller
 
         $userId = auth()->id();
         $userTeams = auth()->user()->getUserTeams($userId)->toArray();
-        if(array_intersect([TeamNameEnum::HOME], $userTeams)){
+        if (array_intersect([TeamNameEnum::HOME], $userTeams)) {
             $quotes = collect($quotes)->whereNotIn('id', [
                 QuoteStatusEnum::Allocated,
                 QuoteStatusEnum::InNegotiation,
             ])->values()->toArray();
-        }elseif(array_intersect([TeamNameEnum::HOME_RENEWALS], $userTeams)) {
+        } elseif (array_intersect([TeamNameEnum::HOME_RENEWALS], $userTeams)) {
             $quotes = collect($quotes)->whereNotIn('id', [
                 QuoteStatusEnum::NewLead,
                 QuoteStatusEnum::InNegotiation,
-                ])->values()->toArray();
+            ])->values()->toArray();
         }
-        
+
         // if (! $isManagerOrAdminAccess) {
         //     if (auth()->user()->hasRole(RolesEnum::HomeNewBusinessAdvisor)) {
         //         $quotes = collect($quotes)->whereNotIn('id', [
@@ -1484,9 +1482,10 @@ class CRUDController extends Controller
             return redirect()->to('/quotes/health')->with('success', ' Lead status has been updated successfully');
         }
 
-        if($result['activityResponse']){
+        if ($result['activityResponse']) {
             return redirect()->to('/quotes/'.strtolower($request->modelType).'/'.$entity->uuid)->with('success', 'Status updated successfully & Activity has been created');
         }
+
         return redirect()->to('/quotes/'.strtolower($request->modelType).'/'.$entity->uuid)->with('success', ' Lead Status has been Updated');
     }
 

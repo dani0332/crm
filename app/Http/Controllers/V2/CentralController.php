@@ -355,7 +355,7 @@ class CentralController extends Controller
         try {
             DB::beginTransaction();
 
-            if(!$repository->advisor_id){
+            if (! $repository->advisor_id) {
                 return response()->json(['message' => 'Current Lead has no advisor. Please assign advisor to this Lead'], 500);
             }
             $repository->activities()->where('status', 0)->update(['status' => 1]);
@@ -368,7 +368,7 @@ class CentralController extends Controller
             $repository->refresh();
 
             $activity = (new CentralService())->saveAndAssignActivitesToAdvisor($repository, $dataFrom['quoteTypeId']);
-           
+
             if ($activity) {
                 $responseMessage[] = 'Activity has been created';
             }
