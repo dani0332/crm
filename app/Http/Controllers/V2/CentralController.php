@@ -331,7 +331,6 @@ class CentralController extends Controller
      */
     private function straightforwardPayments($payment, $paymentSplits, $quote)
     {
-        $paymentSplit = $paymentSplits->first();
         // Need to confrim this wether need to change
         // $payment->payment_status_id = PaymentStatusEnum::PAID;
     
@@ -347,12 +346,43 @@ class CentralController extends Controller
     
             $payment->save();
         }
-        
-        if (!empty($paymentSplit->collection_amount)){
-            if ($paymentSplit->collection_amount < $quote->price_with_vat ) {
-                $paymentSplit->payment_allocation_status = PaymentAllocationStatus::FULLY_ALLOCATED;
+
+        if (in_array($payment->frequency, ['split_payments', 'upfront'])){
+            foreach($paymentSplits as $paymentSplit){
+                if (!empty($paymentSplit->collection_amount)){
+                    if ($paymentSplit->collection_amount <= $quote->price_with_vat ) {
+                        $paymentSplit->payment_allocation_status = PaymentAllocationStatus::FULLY_ALLOCATED;
+                    }
+                    else if ($paymentSplit->collection_amount > $quote->price_with_vat ) {
+                        $paymentSplit->payment_allocation_status = PaymentAllocationStatus::PARTIALLY_ALLOCATED;
+                    }
+                    else {
+                        $paymentSplit->payment_allocation_status = PaymentAllocationStatus::NOT_ALLOCATED;
+                    }
+                    $paymentSplit->save();
+                }
             }
-            $paymentSplit->save();
+        }
+
+        if (in_array($payment->frequency, ['semi_annual', 'quarterly', 'monthly', 'custom'])){
+            $paymentSplit = $paymentSplits->first();
+            $isFirstIteration = true;
+            foreach($paymentSplits as $paymentSplit){
+                if ($isFirstIteration){
+                    if (!empty($paymentSplit->collection_amount)){
+                        if ($paymentSplit->collection_amount <= $quote->price_with_vat ) {
+                            $paymentSplit->payment_allocation_status = PaymentAllocationStatus::FULLY_ALLOCATED;
+                        }
+                        if ($paymentSplit->collection_amount > $quote->price_with_vat ) {
+                            $paymentSplit->payment_allocation_status = PaymentAllocationStatus::PARTIALLY_ALLOCATED;
+                        }
+                    }
+                } else{
+                    $paymentSplit->payment_allocation_status = PaymentAllocationStatus::NOT_ALLOCATED;
+                }
+                $paymentSplit->save();
+                $isFirstIteration= false;
+            }
         }
     }
 

@@ -73,17 +73,16 @@ const transactionPaymentStatus = computed(() => {
 });
 
 const transactionPaymentStatusTooltip= computed(() => {
-  if(transactionPaymentStatus.value == 'Unpaid'){
-    return productionProcessTooltipEnum.TRANSACTION_PAYMENT_STATUS_NOT_PAID;
-  }
-  else if(transactionPaymentStatus.value == 'Partially Paid'){
-    return productionProcessTooltipEnum.TRANSACTION_PAYMENT_STATUS_PARTIALLY_PAID;
-  }
-  else if(transactionPaymentStatus.value == 'Fully Paid'){
-    return productionProcessTooltipEnum.TRANSACTION_PAYMENT_STATUS_PAID;
-  }
+    if(transactionPaymentStatus.value == 'Unpaid'){
+        return productionProcessTooltipEnum.TRANSACTION_PAYMENT_STATUS_NOT_PAID;
+    }
+    else if(transactionPaymentStatus.value == 'Partially Paid'){
+        return productionProcessTooltipEnum.TRANSACTION_PAYMENT_STATUS_PARTIALLY_PAID;
+    }
+    else if(transactionPaymentStatus.value == 'Fully Paid' || transactionPaymentStatus.value == 'Paid'){
+        return productionProcessTooltipEnum.TRANSACTION_PAYMENT_STATUS_PAID;
+    }
 });
-
 
 const bpForm = useForm({
   booking_date:
