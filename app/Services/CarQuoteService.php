@@ -14,7 +14,6 @@ use App\Enums\QuoteTypeId;
 use App\Enums\RolesEnum;
 use App\Models\CarQuote;
 use App\Models\CarQuoteRequestDetail;
-use App\Models\Payment;
 use App\Models\QuoteBatches;
 use App\Models\QuoteViewCount;
 use App\Models\Tier;
