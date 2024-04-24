@@ -87,7 +87,7 @@ class BridgerInsightService
                 default:
                     $amlSearchData = [];
                     $customerOrEntityName = '';
-            }$amlSearchData
+            }
 
             info('searchAMLResult: Bridger Insight Service - Quote ID: '.$quoteId.' - Quote Ref-ID: '.$quoteDetails->code.' - Customer Type: '.$customerType.' - Code: '.$memberUboDetails['code'].' - AML Search API Payload : '.json_encode($amlSearchData).'. Triggered By: '.$loginCustomerEmail);
 
