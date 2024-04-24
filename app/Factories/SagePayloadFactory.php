@@ -8,6 +8,7 @@ class SagePayloadFactory
 {
     public static function createPayload($request, $leadStatus)
     {
+        dd($request);
         $request->discount = floatval($request->discount);
         $request->insurerInvoiceDate = date('Y-m-d', strtotime($request->insurerInvoiceDate));
         $request->paymentDueDate = date('Y-m-d', strtotime($request->paymentDueDate));
@@ -127,7 +128,7 @@ class SagePayloadFactory
                     'DocumentType' => 'CreditNote',
                     'CurrencyCode' => 'AED',
                     'DueDate' => $request->paymentDueDate,
-                    'ApplytoDocument' => $request->insurerPremiumNumber,
+                    'ApplytoDocument' => '',
                     'TaxGroup' => 'VAT',
                     'TaxClass1' => 5,
                     'DocumentTotalBeforeTax' => $request->discount,
@@ -554,11 +555,11 @@ class SagePayloadFactory
         $optionalArray = [
             [
                 'OptionalField' => 'CCCODE',
-                'Value' => 'sample cc code',
+                'Value' => $request->ccCode,
             ],
             [
                 'OptionalField' => 'ENDORSEMENT',
-                'Value' => 'sample endorsement number',
+                'Value' => $request->endorsementNumber,
             ],
             [
                 'OptionalField' => 'EXPIRY',
@@ -566,11 +567,11 @@ class SagePayloadFactory
             ],
             [
                 'OptionalField' => 'INCEPTION',
-                'Value' => '20230505',
+                'Value' => $request->policyBookingDate,
             ],
             [
                 'OptionalField' => 'INSURED',
-                'Value' => 'sample insured',
+                'Value' => $request->insured,
             ],
             [
                 'OptionalField' => 'MAINCLASS',
@@ -578,11 +579,11 @@ class SagePayloadFactory
             ],
             [
                 'OptionalField' => 'MANAGER',
-                'Value' => 'sample manager',
+                'Value' => $request->manager,
             ],
             [
                 'OptionalField' => 'PDC',
-                'Value' => '0',
+                'Value' => $request->isPostDatedCheck,
             ],
             [
                 'OptionalField' => 'POLICY',
@@ -590,7 +591,7 @@ class SagePayloadFactory
             ],
             [
                 'OptionalField' => 'POLICYHOLDER',
-                'Value' => 'sample policy holder',
+                'Value' => $request->policyHolder,
             ],
             [
                 'OptionalField' => 'POLICYISSUER',
@@ -602,7 +603,7 @@ class SagePayloadFactory
             ],
             [
                 'OptionalField' => 'PREMIUMVAT',
-                'Value' => '0.000',
+                'Value' => '0.000', // check with ahsan
             ],
             [
                 'OptionalField' => 'REQUESTTYPE',
@@ -622,11 +623,11 @@ class SagePayloadFactory
             ],
             [
                 'OptionalField' => 'COLLECTS',
-                'Value' => '',
+                'Value' => $request->premiumCollectedBy,
             ],
             [
                 'OptionalField' => 'COMMRATE',
-                'Value' => '',
+                'Value' => $request->commissionPercentage,
             ],
             [
                 'OptionalField' => 'STATE',

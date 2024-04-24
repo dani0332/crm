@@ -3,17 +3,19 @@
 namespace App\Services;
 
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Factories\SagePayloadFactory;
 use App\Models\Customer;
 use App\Models\Lookup;
 use App\Models\User;
 use App\Traits\SageLoggable;
+use App\Traits\TeamHierarchyTrait;
 use Illuminate\Support\Facades\Auth;
 
 class SageApiService
 {
-    use SageLoggable;
+    use SageLoggable, TeamHierarchyTrait;
 
     protected $sageLogin;
     protected $sagePassword;
@@ -29,12 +31,15 @@ class SageApiService
 
     public static function sagePayLoad($modelType, $payment, $quote, $paymentSplits)
     {
+        $firstChildPayment = $paymentSplits->first();
+
         $sageRequest = new \stdClass();
 
         // $sageRequest->discount = 2;
         $sageRequest->discount = floatval($payment->discount_value);
         $sageRequest->invoiceDescription = $payment->invoice_description;
         $sageRequest->bookingDate = date('Y-m-d', strtotime($quote['policy_booking_date']));
+        $sageRequest->policyBookingDate = date('Ymd', strtotime($quote['policy_booking_date']));
         $sageRequest->policyExpiryDate = date('Ymd', strtotime($quote['renewal_expiry_date']));
         $sageRequest->insurerInvoiceDate = date('Y-m-d', strtotime($payment->insurer_invoice_date));
 
@@ -48,15 +53,25 @@ class SageApiService
         $sageRequest->policyIssuer = Auth::user()->name;
         $sageRequest->requestType = Lookup::where('id', $quote->transaction_type_id)->first()->text ?? '';
         $sageRequest->subClass = '';
+        $sageRequest->ccCode = $firstChildPayment->cc_payment_id;
+        $sageRequest->isPostDatedCheck = $firstChildPayment->payment_method == PaymentMethodsEnum::PostDatedCheque ? 'Yes' : 'No';
+        $sageRequest->endorsementNumber = '';
+        $sageRequest->insured = $quote->first_name.' '.$quote->last_name;
+        $sageRequest->policyHolder = $quote->first_name.' '.$quote->last_name;
+        $sageRequest->premiumCollectedBy = ucfirst($payment->collection_type);
 
         $sageRequest->invoicePaymentStatus = $payment->transaction_payment_status;
         // $sageRequest->invoicePaymentStatus = 'paid';
         $advisorName = '';
+        $managerName = '';
         if (! empty($quote->advisor_id)) {
-
-            $advisorName = User::where('id', $quote->advisor_id)->value('name');
+            $advisor = User::where('id', $quote->advisor_id)->first();
+            $advisorName = $advisor->name;
+            $managerName = implode(',', getManagerName($advisor->id)->pluck('name')->toArray());
         }
         $sageRequest->advisorName = $advisorName;
+        $sageRequest->manager = $managerName;
+
         $sageRequest->premiumWithoutTax = floatval($quote->price_without_vat);
         $sageRequest->premiumWithTax = floatval($quote->price_with_vat);
         $sageRequest->vatOnCommission = floatval($payment->commission_vat);
@@ -64,6 +79,7 @@ class SageApiService
         $sageRequest->commission = floatval($payment->commission);
         $sageRequest->commissionIncludingVat = floatval($payment->commission_vat_applicable);
         $sageRequest->commissionWithOutVat = floatval($payment->commission_vat_not_applicable);
+        $sageRequest->commissionPercentage = strval($payment->commmission_percentage);
 
         $sageRequest->insurerPremiumNumber = (string) $payment['insurer_tax_number'];
         $sageRequest->insurerCommissionNumber = (string) $payment['insurer_commmission_invoice_number'];
@@ -177,6 +193,8 @@ class SageApiService
 
         // payload
         $sageRequest = $this->sagePayLoad($request->model_type, $payment, $quote, $paymentSplits);
+
+        //dd($sageRequest);
 
         // check sage is enabled or not
         $isSageEnabled = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::SAGE_ENABLED);
