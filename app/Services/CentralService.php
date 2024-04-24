@@ -338,11 +338,17 @@ class CentralService
             ->where(function ($q) {
                 $q->where('current_quote_status_id', QuoteStatusEnum::AMLScreeningCleared);
                 $q->orWhere('previous_quote_status_id', QuoteStatusEnum::AMLScreeningCleared);
-            })->first();
+            })->orderBy('id', 'desc')->first();
         if ($quoteStatusLog) {
-            $isAmlClearedForPayment = true;
+            $amlScreenFailed = QuoteStatusLog::where('quote_request_id', $quoteId)
+            ->where('quote_type_id', $quoteTypeId)
+            ->where('current_quote_status_id', QuoteStatusEnum::AMLScreeningFailed)
+            ->where('id','>',$quoteStatusLog->id)
+            ->first();
+            if (!$amlScreenFailed){
+                $isAmlClearedForPayment = true;
+            }            
         }
-
         return $isAmlClearedForPayment;
     }
 }
