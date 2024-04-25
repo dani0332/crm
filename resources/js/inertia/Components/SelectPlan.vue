@@ -14,6 +14,7 @@ const props = defineProps({
 const page = usePage();
 const notification = useNotifications('toast');
 const isLoading = ref(false);
+const isPlanSelectionEnable = ref(false);
 
 const can = permission => useCan(permission);
 const permissionEnum = page.props.permissionsEnum;
@@ -76,7 +77,7 @@ const updateSelectedPlan = () => {
                     premium = res.data.plan.planProcessValue.totalPremium
                     break;
                 case 'health' :
-                    premium = (props.plan?.actualPremium + (props.plan?.policyFee || 0) + (props.plan?.basmah || 0) + props.plan?.vat)
+                    premium = (props.plan?.actualPremium + (props.plan?.policyFee || 0) + (props.plan?.basmah || 0) + props.plan?.vat + (props.plan?.loadingPrice || 0))
                     break;
                 default:
                     break;
@@ -115,6 +116,16 @@ const updateSelectedPlan = () => {
             });
         });
 }
+
+watch(() => props.plan, () => {
+    if(props.quoteType.toLowerCase() == 'health') {
+        let premiumCalculate = (props.plan?.actualPremium + (props.plan?.policyFee || 0) + (props.plan?.basmah || 0) + props.plan?.vat + (props.plan?.loadingPrice || 0));
+        isPlanSelectionEnable.value = premiumCalculate > 0 && can(permissionEnum.AVAILABLE_PLANS_SELECT_BUTTON);
+    } else {
+        isPlanSelectionEnable.value = props.plan?.actualPremium > 0 && can(permissionEnum.AVAILABLE_PLANS_SELECT_BUTTON);
+    }
+});
+
 </script>
 
 <template>
@@ -123,7 +134,7 @@ const updateSelectedPlan = () => {
         color="success"
         outlined
         :loading="isLoading"
-        v-if="props.plan.actualPremium > 0  && can(permissionEnum.AVAILABLE_PLANS_SELECT_BUTTON)" 
+        v-if="isPlanSelectionEnable" 
         @click.prevent="updateSelectedPlan()"
     >
         Select

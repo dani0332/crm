@@ -34,6 +34,7 @@ defineProps({
   paymentStatusEnum: Object,
   paymentTooltipEnum: Object,
   isNewPaymentStructure: Boolean,
+  isAmlClearedForPayment: Boolean,
 });
 
 const page = usePage();
@@ -1038,6 +1039,7 @@ const linkEntity = () => {
       :insuranceProviders="insuranceProvidersAll"
       :quote="quote"
       :quoteType="page.props.quoteType"
+      :vatPrice="vatPercentage"
     />  
 
     <!-- Payments -->
@@ -1059,6 +1061,7 @@ const linkEntity = () => {
 			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name, tooltip: pm.tool_tip } })"
 			:storageUrl="storageUrl"
       quoteSubType="Corpline"
+      :isAmlClearedForPayment="isAmlClearedForPayment"
 		/>
     <PaymentTable
       v-else

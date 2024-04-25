@@ -57,9 +57,12 @@ use App\Enums\PermissionsEnum;
                             @can(PermissionsEnum::LEAD_DISTRIBUTION_REPORT_VIEW)
                             <li><a href="{{ url('reports/lead-distribution') }}">Lead Distribution</a></li>
                             @endcan
-                                @can(PermissionsEnum::UtmLeadsSalesReport)
+                            @can(PermissionsEnum::UtmLeadsSalesReport)
                                     <li><a href="{{ url('reports/utm-report') }}">UTM Report</a></li>
-                                @endcan
+                            @endcan
+                            @can(PermissionsEnum::TOTAL_PREMIUM_LEADS_SALES_REPORT)
+                                    <li><a href="{{ url('/reports/total-premium') }}">Total Premium Report</a></li>
+                            @endcan
                             @can(PermissionsEnum::RENEWAL_BATCH_REPORT)
                                 <li><a href="{{ url('reports/renewal-report') }}">Daily Renewal Report</a></li>
                             @endcan

@@ -45,6 +45,7 @@ class DatabaseSeeder extends Seeder
             addSICWorkflow::class,
             UpdateRenewalTemplateStorageSeeder::class,
             AddLegacyPaymentsPermssion::class,
+            ApplicationStorageSeeder::class,
             addDubaiNowEmailGroup::class,
             DubaiLeadSource::class,
             // AddNewDocumentTypesSeeder::class,
@@ -57,6 +58,8 @@ class DatabaseSeeder extends Seeder
             AddTempUpdateTotalPricePermission::class,
             PaymentLookupSeeder::class,
             InsuranceQuoteTypeSeeder::class,
+            AddPaymentPermissionsSeeder::class,
+            TotalPremiumReportPermissionSeeder::class,
         ]);
     }
 }
