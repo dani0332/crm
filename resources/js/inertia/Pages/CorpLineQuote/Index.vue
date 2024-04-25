@@ -157,7 +157,10 @@ function onSubmit(isValid) {
 
     router.visit(route('business.index'), {
       method: 'get',
-      data: filters,
+      data: {
+        ...filtersCleaned,
+        ...serverOptions.value,
+      },
       preserveState: true,
       preserveScroll: true,
       onFinish: () => {
