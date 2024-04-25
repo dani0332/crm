@@ -83,7 +83,7 @@ onMounted(() => {
 
 <template>
   <div>
-    <Head title="Utm Report" />
+    <Head title="Total Premium Report" />
     <h1 class="text-2xl font-bold text-center text-primary-500 mb-4">
         Total Premium Report
     </h1>
@@ -94,7 +94,7 @@ onMounted(() => {
       <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
         <DatePicker
           v-model="filters.transaction_approved_dates"
-          label="Transaction Date Range"
+          label="Transaction Approved Date"
           :rules="[isRequired]"
           class="w-full"
           range
