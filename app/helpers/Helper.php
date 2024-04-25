@@ -700,8 +700,8 @@ if (! function_exists('apiResponse')) {
     }
 }
 
-if (! function_exists('getManagerName')) {
-    function getManagerName($userId)
+if (! function_exists('getManagersByUser')) {
+    function getManagersByUser($userId)
     {
         $managerIds = DB::table('user_manager')->where('user_id', $userId)->get()->pluck('manager_id');
         return User::whereIn('id', $managerIds)->where('is_active', 1)->get();

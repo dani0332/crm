@@ -6,12 +6,13 @@ use App\Enums\ApplicationStorageEnums;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Factories\SagePayloadFactory;
+use App\Models\BusinessInsuranceType;
 use App\Models\Customer;
 use App\Models\Lookup;
 use App\Models\User;
+use App\Repositories\SendUpdateLogRepository;
 use App\Traits\SageLoggable;
 use App\Traits\TeamHierarchyTrait;
-use Illuminate\Support\Facades\Auth;
 
 class SageApiService
 {
@@ -32,6 +33,17 @@ class SageApiService
     public static function sagePayLoad($modelType, $payment, $quote, $paymentSplits)
     {
         $firstChildPayment = $paymentSplits->first();
+        $latestEndorsementCode = '';
+        if ($quote->personal_quote_id) {
+            $latestEndorsement = SendUpdateLogRepository::endorsementsByPersonalQuoteId($quote->personal_quote_id)->first();
+            $latestEndorsementCode = $latestEndorsement->code;
+        }
+
+        $businessTypeOfInsuranceCode = '';
+        if ($quote->business_type_of_insurance_id) {
+            $businessTypeOfInsurance = BusinessInsuranceType::find($quote->business_type_of_insurance_id);
+            $businessTypeOfInsuranceCode = $businessTypeOfInsurance->code;
+        }
 
         $sageRequest = new \stdClass();
 
@@ -50,13 +62,13 @@ class SageApiService
         $sageRequest->mainClassInsurance = $modelType;
         $sageRequest->policyNumber = $quote->policy_number;
 
-        $sageRequest->policyIssuer = Auth::user()->name;
+        $sageRequest->policyIssuer = $payment->policyIssuer?->name;
         $sageRequest->requestType = Lookup::where('id', $quote->transaction_type_id)->first()->text ?? '';
-        $sageRequest->subClass = '';
-        $sageRequest->ccCode = $firstChildPayment->cc_payment_id;
+        $sageRequest->subClass = $businessTypeOfInsuranceCode;
+        $sageRequest->ccCode = $firstChildPayment->cc_payment_id ?? '';
         $sageRequest->isPostDatedCheck = $firstChildPayment->payment_method == PaymentMethodsEnum::PostDatedCheque ? 'Yes' : 'No';
-        $sageRequest->checkDetails = $firstChildPayment->check_detail;
-        $sageRequest->endorsementNumber = '';
+        $sageRequest->checkDetails = $firstChildPayment->check_detail ?? '';
+        $sageRequest->endorsementNumber = $latestEndorsementCode;
         $sageRequest->insured = $quote->first_name.' '.$quote->last_name;
         $sageRequest->policyHolder = $quote->first_name.' '.$quote->last_name;
         $sageRequest->premiumCollectedBy = ucfirst($payment->collection_type);
@@ -68,10 +80,15 @@ class SageApiService
         if (! empty($quote->advisor_id)) {
             $advisor = User::where('id', $quote->advisor_id)->first();
             $advisorName = $advisor->name;
-            $managerName = implode(',', getManagerName($advisor->id)->pluck('name')->toArray());
+            $managerName = implode(',', getManagersByUser($advisor->id)->pluck('name')->toArray());
         }
         $sageRequest->advisorName = $advisorName;
         $sageRequest->manager = $managerName;
+
+        //calculate vat
+        $subTotal = $quote->price_vat_applicable ?? $quote->price_vat_not_applicable;
+        $totalAmount = $quote->price_with_vat ?? $quote->price_without_vat;
+        $sageRequest->vatOnPremium = $quote->vat ?: ($quote->price_with_vat ? floatval($totalAmount - $subTotal) : 0);
 
         $sageRequest->premiumWithoutTax = floatval($quote->price_without_vat);
         $sageRequest->premiumWithTax = floatval($quote->price_with_vat);

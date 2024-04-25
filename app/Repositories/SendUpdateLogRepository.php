@@ -128,4 +128,11 @@ class SendUpdateLogRepository extends BaseRepository
 
         return $result;
     }
+
+    public function fetchEndorsementsByPersonalQuoteId($personalQuoteId)
+    {
+        return $this->where('personal_quote_id', $personalQuoteId)->where(function ($q) {
+            $q->where('code', 'like', '%EF%')->orWhere('code', 'like', '%EN%');
+        })->orderBy('id', 'desc')->get();
+    }
 }

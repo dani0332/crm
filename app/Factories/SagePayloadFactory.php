@@ -603,7 +603,7 @@ class SagePayloadFactory
             ],
             [
                 'OptionalField' => 'PREMIUMVAT',
-                'Value' => '0.000', // check with ahsan
+                'Value' => $request->vatOnPremium
             ],
             [
                 'OptionalField' => 'REQUESTTYPE',
