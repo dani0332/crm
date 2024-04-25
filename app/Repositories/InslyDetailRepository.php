@@ -228,14 +228,14 @@ class InslyDetailRepository extends BaseRepository
                     'message' => 'Lead Created Successfully',
                     'data' => $data,
                 ];
-            }else{
+            } else {
                 return [
                     'status' => 400,
                     'message' => 'Quote Type not found.',
                     'data' => '',
                 ];
             }
-        }else{
+        } else {
             return [
                 'status' => 400,
                 'message' => 'Quote not found.',
