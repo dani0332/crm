@@ -113,6 +113,9 @@ use App\Enums\PermissionsEnum;
                                     <li><a href="{{ url('/personal-quotes/car/car-quotes-search') }}">Search</a></li>
                                     @endcan
                                     <li><a href="{{ url('quotes/car') }}">Lead List</a></li>
+                                    @hasanyrole([RolesEnum::Admin .'|'. RolesEnum::BetaUser .'|'. RolesEnum::Engineering])
+                                    <li><a href="{{ url('quotes/car-revival') }}">Car Revival Quotes</a></li>
+                                @endhasanyrole
                                 </ul>
                             </li>
                             @endcanany
@@ -128,9 +131,6 @@ use App\Enums\PermissionsEnum;
                             @can(PermissionsEnum::HomeQuotesList)
                             <li><a href="{{ url('quotes/home') }}">Home Quotes</a></li>
                             @endcan
-                            @hasanyrole([RolesEnum::Admin .'|'. RolesEnum::BetaUser .'|'. RolesEnum::Engineering])
-                                <li><a href="{{ url('quotes/car-revival') }}">Car Revival Quotes</a></li>
-                            @endhasanyrole
                             @can(PermissionsEnum::PetQuotesList)
                             @if(in_array(quoteTypeCode::Pet, newUi()))
                             <li><a href="{{ url('personal-quotes/pet') }}">Pet Quotes</a></li>

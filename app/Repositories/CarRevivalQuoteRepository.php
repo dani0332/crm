@@ -179,7 +179,8 @@ class CarRevivalQuoteRepository extends BaseRepository
                 DB::raw('COUNT(CASE  WHEN reply_received = 1 THEN 1 ELSE NULL END) as reply_received_count'),
             )
             ->leftjoin('dtt_revivals', 'dtt_revivals.quote_id', 'car_quote_request.id')
-            ->whereNotNull(['quote_batch_id', 'payment_status_id']);
+            ->whereNotNull(['quote_batch_id', 'payment_status_id'])
+            ->orderBy('quote_batch_id','desc');
 
         if (!empty($leadSource)) {
             $query->where('source', $leadSource);
