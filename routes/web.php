@@ -157,11 +157,11 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         }
 
         Route::group(['prefix' => 'quotes/'], function () {
-            Route::get('car-revival', [CarRevivalQuoteController::class, 'index'])->name('car-revival-quotes-list');
-            Route::get('car-revival/{uuid}/edit', [CarRevivalQuoteController::class, 'edit'])->name('car-revival-quotes-edit');
-            Route::put('car-revival/{uuid}', [CarRevivalQuoteController::class, 'update'])->name('car-revival-quotes-update');
+            Route::get('revival', [CarRevivalQuoteController::class, 'index'])->name('revival-quotes-list');
+            Route::get('revival/{uuid}/edit', [CarRevivalQuoteController::class, 'edit'])->name('revival-quotes-edit');
+            Route::put('revival/{uuid}', [CarRevivalQuoteController::class, 'update'])->name('revival-quotes-update');
 
-            Route::get('car-revival/{uuid}', [CarRevivalQuoteController::class, 'show'])->name('car-revival-quotes-show');
+            Route::get('revival/{uuid}', [CarRevivalQuoteController::class, 'show'])->name('revival-quotes-show');
         });
 
         if (in_array(quoteTypeCode::Life, newUi())) {

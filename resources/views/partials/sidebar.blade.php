@@ -114,7 +114,7 @@ use App\Enums\PermissionsEnum;
                                     @endcan
                                     <li><a href="{{ url('quotes/car') }}">Lead List</a></li>
                                     @hasanyrole([RolesEnum::Admin .'|'. RolesEnum::BetaUser .'|'. RolesEnum::Engineering])
-                                    <li><a href="{{ url('quotes/car-revival') }}">Car Revival Quotes</a></li>
+                                    <li><a href="{{ route('revival-quotes-list') }}">Car Revival Quotes</a></li>
                                 @endhasanyrole
                                 </ul>
                             </li>

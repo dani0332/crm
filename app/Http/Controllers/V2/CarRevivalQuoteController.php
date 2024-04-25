@@ -221,7 +221,7 @@ class CarRevivalQuoteController extends Controller
     {
         $url = strpos($request->fullUrl(), '?') ? explode('?', $request->fullUrl())[0] : $request->fullUrl();
 
-        if (strpos($url, 'car')) {
+        if (strpos($url, 'revival')) {
             $this->genericModel->modelType = 'Car';
         }
     }

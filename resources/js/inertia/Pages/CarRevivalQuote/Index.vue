@@ -73,7 +73,7 @@ const advisorOptions = computed(() => {
 </script>
 
 <template>
-  <QuoteFilters dynamic_route="car-revival" :lead-statuses="leadStatuses" />
+  <QuoteFilters dynamic_route="revival" :lead-statuses="leadStatuses" />
 
   <Transition name="fade">
     <div v-if="quotesSelected.length > 0" class="mb-4">
@@ -98,7 +98,7 @@ const advisorOptions = computed(() => {
   >
     <template #item-code="{ code, uuid }">
       <Link
-        :href="`/quotes/car-revival/${uuid}`"
+        :href="`/quotes/revival/${uuid}`"
         class="text-primary-500 hover:underline"
       >
         {{ code }}

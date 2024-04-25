@@ -621,7 +621,7 @@ const sendPolicyToClient = () => {
     <div class="flex justify-between items-center flex-wrap gap-2">
       <h2 class="text-xl font-semibold">Car Revival Detail</h2>
       <div class="flex gap-2">
-        <Link href="/quotes/car-revival" preserve-scroll>
+        <Link href="/quotes/revival" preserve-scroll>
           <x-button size="sm" color="primary" tag="div">
             Car Revival List
           </x-button>
