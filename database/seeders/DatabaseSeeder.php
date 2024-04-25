@@ -61,6 +61,7 @@ class DatabaseSeeder extends Seeder
             InsuranceQuoteTypeSeeder::class,
             AddPaymentPermissionsSeeder::class,
             AddDttFlagApplicationStorage::class,
+            TotalPremiumReportPermissionSeeder::class,
         ]);
     }
 }
