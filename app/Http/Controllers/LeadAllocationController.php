@@ -138,7 +138,7 @@ class LeadAllocationController extends Controller
     {
         //
     }
-    
+
     public function updateAvailability(Request $request)
     {
         $updateLogString = '----- Update done successfully to change the';
