@@ -57,6 +57,12 @@ function onReset() {
   }
 }
 
+watchEffect(() => {
+  if (props.withoutStorage) {
+    headers.value = props.columns;
+  }
+});
+
 onMounted(() => {
   if (storedState.value?.headers?.length > 0) {
     headers.value = storedState.value.headers;
@@ -64,12 +70,6 @@ onMounted(() => {
       'update:columns',
       headers.value.filter(c => c.is_active),
     );
-  }
-});
-
-watchEffect(() => {
-  if (props.withoutStorage) {
-    headers.value = props.columns;
   }
 });
 </script>
