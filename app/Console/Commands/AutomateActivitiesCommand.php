@@ -126,8 +126,10 @@ class AutomateActivitiesCommand extends Command
                             if (! empty($quoteDetail->advisor_id)) {
                                 $advisorDetails = User::with('usersroles', 'teams')->where('id', $quoteDetail->advisor_id)->first();
                                 $getQuoteType = isset($quoteTypeDetail['multiple_lobs']) ?
-                                    $quoteTypeDetail['quote_type_details'][$quoteDetail->quote_type_id]['quote_type_id'] : $quoteTypeDetail['quote_type_id'];
-
+                                    (isset($quoteTypeDetail['quote_type_details'][$quoteDetail->quote_type_id]) ?
+                                        $quoteTypeDetail['quote_type_details'][$quoteDetail->quote_type_id]['quote_type_id'] :
+                                        null) :
+                                    $quoteTypeDetail['quote_type_id'];
                                 $scheduledActivitiesIDs = collect($quoteDetail->activities->pluck('activity_schedule_id'))
                                     ->unique()->filter(function ($filter) {
                                         return ! is_null($filter);
