@@ -22,7 +22,7 @@ let storedState = ref({ headers: [] });
 
 if (!props.withoutStorage) {
   storedState = useStorage(props.storageKey, {
-    headers: [],
+    headers: props.columns,
   });
 }
 
@@ -67,23 +67,11 @@ onMounted(() => {
   }
 });
 
-watch(
-  () => props.storageKey,
-  () => {
-    if (props.withoutStorage) {
-      headers.value = props.columns;
-    }
-  },
-);
-
-watchOnce(
-  () => props.columns,
-  () => {
-    if (props.withoutStorage) {
-      headers.value = props.columns;
-    }
-  },
-);
+watchEffect(() => {
+  if (props.withoutStorage) {
+    headers.value = props.columns;
+  }
+});
 </script>
 <template>
   <div class="select-none">
