@@ -296,11 +296,11 @@ class ReportService extends BaseService
         $freshLoad = ! isset($request->page);
 
         $startDate = isset($request->transaction_approved_dates) ?
-        Carbon::parse($request->transactionApprovedDates[0])->startOfDay()->format($dateFormat) :
+        Carbon::parse($request->transaction_approved_dates[0])->startOfDay()->format($dateFormat) :
             ($freshLoad ? Carbon::parse(now())->startOfDay()->format($dateFormat) : Carbon::parse(now()->subDays($maxDays))->startOfDay()->format($dateFormat));
 
-        $endDate = isset($request->transactionApprovedDates) ?
-        Carbon::parse($request->transactionApprovedDates[1])->endOfDay()->format($dateFormat) : Carbon::parse(now())->endOfDay()->format($dateFormat);
+        $endDate = isset($request->transaction_approved_dates) ?
+        Carbon::parse($request->transaction_approved_dates[1])->endOfDay()->format($dateFormat) : Carbon::parse(now())->endOfDay()->format($dateFormat);
 
         $query->whereBetween('personal_quotes.transaction_approved_at', [$startDate, $endDate]);
 
