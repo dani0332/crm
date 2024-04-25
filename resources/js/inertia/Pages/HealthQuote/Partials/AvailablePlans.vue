@@ -362,6 +362,7 @@ const onLoadingPricesUpdate = (member, updateManual = 1) => {
           title: res.data,
           position: 'top',
         });
+        router.reload({ only: ['payments', 'ecomDetails'] });
       } else {
         notification.error({
           title: res.data,
@@ -979,7 +980,7 @@ onUpdated(() => {
                       :disabled="true"
                       size="sm"
                     />
-                    <x-button
+                    <!-- <x-button
                       v-if="$page.props.permissions.pa"
                       color="primary"
                       class="ml-2"
@@ -989,7 +990,7 @@ onUpdated(() => {
                       @click.prevent="onMemberUpdate(item)"
                     >
                       Update
-                    </x-button>
+                    </x-button> -->
                   </section>
                 </template>
 

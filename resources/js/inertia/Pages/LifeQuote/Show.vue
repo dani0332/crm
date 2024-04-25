@@ -35,6 +35,7 @@ defineProps({
   paymentMethods: Array,
   insuranceProviders: Array,
   isNewPaymentStructure: Boolean,
+  isAmlClearedForPayment: Boolean,
 });
 
 const { isRequired } = useRules();
@@ -1083,6 +1084,7 @@ const linkEntity = () => {
 			:paymentTooltipEnum="paymentTooltipEnum"
 			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name, tooltip: pm.tool_tip } })"
 			:storageUrl="storageUrl"
+      :isAmlClearedForPayment="isAmlClearedForPayment"
 		/>
     <EmbeddedProducts
       :data="embeddedProducts"

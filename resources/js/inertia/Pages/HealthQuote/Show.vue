@@ -53,6 +53,7 @@ defineProps({
   paymentTooltipEnum: Object,
   storageUrl: String,
   isNewPaymentStructure: Boolean,
+  isAmlClearedForPayment: Boolean,
 });
 
 const isManualPlansCount = ref(0);
@@ -715,9 +716,7 @@ const onTogglePlans = toggle => {
         title: 'Plans has been updated',
         position: 'top',
       });
-      router.reload({
-        preserveScroll: true,
-      });
+      onLoadAvailablePlansData();
     })
     .catch(error => {
       notification.error({
@@ -1492,6 +1491,14 @@ const handlePlanSelected = plan => {
     only: ['payments','quoteRequest','ecomDetails', 'coPayment'],        
   });  
 };
+
+watch(
+  () => page.props.ecomDetails,
+  value => {
+    selectedProviderPlan.value.premium = value.priceWithVAT;
+  },
+  { deep: true },
+);
 
 </script>
 
@@ -2965,6 +2972,7 @@ const handlePlanSelected = plan => {
 			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name, tooltip: pm.tool_tip } })"
 			:storageUrl="storageUrl"
       :eCommercePrice="ecomDetails.priceWithVAT?ecomDetails.priceWithVAT:0"
+      :isAmlClearedForPayment="isAmlClearedForPayment"
 		/>
     <PaymentTable
       v-else
