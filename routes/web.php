@@ -157,7 +157,11 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         }
 
         Route::group(['prefix' => 'quotes/'], function () {
-            Route::resource('car-revival', CarRevivalQuoteController::class)->names(generateRouteNames('car-revival-quotes'))->except('show');
+            Route::get('car-revival', [CarRevivalQuoteController::class, 'index'])->name('car-revival-quotes-list');
+            Route::get('car-revival/{uuid}/edit', [CarRevivalQuoteController::class, 'edit'])->name('car-revival-quotes-edit');
+            Route::put('car-revival/{uuid}', [CarRevivalQuoteController::class, 'update'])->name('car-revival-quotes-update');
+
+            Route::get('car-revival/{uuid}', [CarRevivalQuoteController::class, 'show'])->name('car-revival-quotes-show');
         });
 
         if (in_array(quoteTypeCode::Life, newUi())) {
@@ -329,7 +333,6 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::group(['prefix' => 'quotes'], function () {
         Route::resource('health', CRUDController::class);
         Route::resource('car', CRUDController::class);
-        Route::get('car-revival/{uuid}', [CarRevivalQuoteController::class, 'show']);
 
         Route::get('health-cards', [HealthQuoteController::class, 'cardsView'])->name('health.cards');
 
