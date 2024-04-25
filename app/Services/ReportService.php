@@ -301,7 +301,7 @@ class ReportService extends BaseService
 
         $query->whereBetween('personal_quotes.transaction_approved_at', [$startDate, $endDate]);
 
-        if (!empty($request->quote_type_id)) {
+        if (! empty($request->quote_type_id)) {
             $query->where('personal_quotes.quote_type_id', $request->quote_type_id);
         }
 
