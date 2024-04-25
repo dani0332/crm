@@ -589,39 +589,6 @@ class CRUDController extends Controller
         $customerAdditionalContacts = $this->customerService->getAdditionalContacts($record->customer_id, $record->mobile_no);
         $tiers = $this->lookupService->getTierR();
 
-        if ($this->genericModel->modelType == quoteTypeCode::Car && str_contains(request()->url(), 'carrevival')) {
-            $documentTypes = $this->quoteDocumentService->getQuoteDocumentsForUpload(QuoteTypeId::Car);
-            $documentTypes = collect($documentTypes)->groupBy('category');
-            $listQuotePlans = $this->carQuoteService->getPlans($id);
-            $cdnPath = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
-            $ecomCarInsuranceQuoteUrl = config('constants.ECOM_CAR_INSURANCE_QUOTE_URL');
-
-            return inertia('CarRevivalQuote/Show', [
-                'quote' => $record,
-                'leadStatuses' => array_values($leadStatuses->toArray()),
-                'advisors' => $advisors,
-                'documentTypes' => $documentTypes,
-                'lostReasons' => $lostReasons,
-                'quoteStatusEnum' => QuoteStatusEnum::asArray(),
-                'carPlanFeaturesCode' => CarPlanFeaturesCode::asArray(),
-                'carPlanExclusionsCode' => CarPlanExclusionsCode::asArray(),
-                'carPlanAddonsCode' => CarPlanAddonsCode::asArray(),
-                'quoteType' => quoteTypeCode::Car,
-                'can' => [
-                    'create_payments' => auth()->user()->can(PermissionsEnum::PaymentsCreate) && $paymentEntityModel->plan && ! auth()->user()->hasRole(RolesEnum::PA),
-                ],
-                'payments' => $payments,
-                'quoteRequest' => $paymentEntityModel,
-                'paymentMethods' => $paymentMethods,
-                'listQuotePlans' => $listQuotePlans,
-                'quoteDocuments' => $quoteDocuments,
-                'sendPolicy' => (bool) $displaySendPolicyButton,
-                'cdnPath' => $cdnPath,
-                'activities' => $activities,
-                'customerAdditionalContacts' => $customerAdditionalContacts,
-                'ecomCarInsuranceQuoteUrl' => $ecomCarInsuranceQuoteUrl,
-            ]);
-        }
         $access = $this->carQuoteService->updatedAccessAgainstPaymentStatus($paymentEntityModel, $record);
         $vatPercentage = ApplicationStorage::where('key_name', ApplicationStorageEnums::VAT_VALUE)->first()->value ?? 0;
 
