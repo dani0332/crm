@@ -12,9 +12,7 @@ use App\Services\ApplicationStorageService;
 use App\Services\LeadAllocationService;
 use Carbon\Carbon;
 use Exception;
-use Illuminate\Console\Application;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\DB;
 use Sammyjo20\LaravelHaystack\Models\Haystack;
 
 class Dtt extends Command
@@ -57,7 +55,7 @@ class Dtt extends Command
         try {
 
             $isDttEnabled = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::DTT_ENABLED);
-            if (!$isDttEnabled) {
+            if (! $isDttEnabled) {
                 throw new Exception('Dtt is not enabled from cms');
             }
             $dateOne = Carbon::now()->subMonths(11)->toDateString();
@@ -88,12 +86,12 @@ class Dtt extends Command
                 ->orderBy('id', 'DESC')
                 ->get();
 
-            info('------CarRevivalLeadsCreationJobCount --' . count($leads) . '------' . json_encode($leads->pluck('uuid')->toArray()));
+            info('------CarRevivalLeadsCreationJobCount --'.count($leads).'------'.json_encode($leads->pluck('uuid')->toArray()));
 
             foreach ($leads as $carLead) {
                 $isTierR = $this->leadAllocationService->checkIfLeadIsRenewal($carLead);
-                info('------isTierR --' . !$isTierR);
-                if (!$isTierR) {
+                info('------isTierR --'.! $isTierR);
+                if (! $isTierR) {
                     $jobs[] = new CarRevivalLeadsCreationJob($carLead);
                 }
             }
@@ -105,13 +103,13 @@ class Dtt extends Command
                     ->addJobs($jobs)
 
                     ->then(function () use ($logPrefix) {
-                        info('------' . $logPrefix . ' all jobs completed successfully ------');
+                        info('------'.$logPrefix.' all jobs completed successfully ------');
                     })
                     ->catch(function () use ($logPrefix) {
-                        info('------' . $logPrefix . ' one of batch is failed.------');
+                        info('------'.$logPrefix.' one of batch is failed.------');
                     })
                     ->finally(function () use ($logPrefix) {
-                        info('------' . $logPrefix . ' everything done ------');
+                        info('------'.$logPrefix.' everything done ------');
                     })
                     ->allowFailures()
                     ->withDelay(2)
@@ -120,7 +118,7 @@ class Dtt extends Command
                 info('------No lead Found------');
             }
         } catch (\Exception $exception) {
-            info('DTT Exception : ' . $exception->getMessage());
+            info('DTT Exception : '.$exception->getMessage());
         }
     }
 }

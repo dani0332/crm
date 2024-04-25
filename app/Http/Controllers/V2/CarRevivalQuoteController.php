@@ -2,11 +2,6 @@
 
 namespace App\Http\Controllers\V2;
 
-use App\Http\Controllers\Controller;
-use App\Http\Requests\CarRevivalQuoteRequest;
-use App\Repositories\CarRevivalQuoteRepository;
-use Illuminate\Http\Request;
-
 use App\Enums\CarPlanAddonsCode;
 use App\Enums\CarPlanExclusionsCode;
 use App\Enums\CarPlanFeaturesCode;
@@ -18,8 +13,11 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\RolesEnum;
+use App\Http\Controllers\Controller;
+use App\Http\Requests\CarRevivalQuoteRequest;
 use App\Models\GenericModel;
 use App\Models\User;
+use App\Repositories\CarRevivalQuoteRepository;
 use App\Services\ActivitiesService;
 use App\Services\AMLService;
 use App\Services\CarQuoteService;
@@ -29,6 +27,7 @@ use App\Services\DropdownSourceService;
 use App\Services\LookupService;
 use App\Services\QuoteDocumentService;
 use App\Traits\GenericQueriesAllLobs;
+use Illuminate\Http\Request;
 
 class CarRevivalQuoteController extends Controller
 {
@@ -107,7 +106,7 @@ class CarRevivalQuoteController extends Controller
 
         $record = $this->crudService->getEntity($this->genericModel->modelType, $id);
 
-        abort_if(!$record, 404);
+        abort_if(! $record, 404);
         $leadStatuses = $this->dropdownSourceService->getDropdownSource('quote_status_id', $quoteTypeId);
         $model = $this->genericModel;
         if (AMLService::checkAMLStatusFailed($quoteTypeId, $record->id)) {
@@ -117,7 +116,7 @@ class CarRevivalQuoteController extends Controller
         }
         $advisors = [];
         if (
-            !(auth()->user()->hasAnyRole([RolesEnum::CarManager, RolesEnum::CarAdvisor])) &&
+            ! (auth()->user()->hasAnyRole([RolesEnum::CarManager, RolesEnum::CarAdvisor])) &&
             strtolower($this->genericModel->modelType) == strtolower(quoteTypeCode::Health) && ($record->health_team_type == HealthTeamType::EBP ||
                 $record->health_team_type == HealthTeamType::RM_NB || $record->health_team_type == HealthTeamType::RM_SPEED)
         ) {
@@ -132,7 +131,7 @@ class CarRevivalQuoteController extends Controller
 
         $lostReasons = $this->lookupService->getLostReasons();
 
-        $paymentEntityModel = $this->{strtolower($this->genericModel->modelType) . 'QuoteService'}->getEntityPlain($record->id);
+        $paymentEntityModel = $this->{strtolower($this->genericModel->modelType).'QuoteService'}->getEntityPlain($record->id);
         $payments = $paymentEntityModel->payments;
 
         $paymentMethods = $this->lookupService->getPaymentMethods();
@@ -142,7 +141,7 @@ class CarRevivalQuoteController extends Controller
 
         $displaySendPolicyButton = (bool) $this->quoteDocumentService->showSendPolicyButton($record, $quoteDocuments, $quoteTypeId);
 
-        $cdnPath = config('constants.AZURE_IM_STORAGE_URL') . config('constants.AZURE_IM_STORAGE_CONTAINER') . '/';
+        $cdnPath = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
         $ecomCarInsuranceQuoteUrl = config('constants.ECOM_CAR_INSURANCE_QUOTE_URL');
 
         $activitiesData = $this->activityService->getActivityByLeadId($record->id, strtolower($model->modelType));
@@ -168,6 +167,7 @@ class CarRevivalQuoteController extends Controller
         $customerAdditionalContacts = $this->customerService->getAdditionalContacts($record->customer_id, $record->mobile_no);
         $storageUrl = storageUrl();
         $paymentStatusEnum = PaymentStatusEnum::asArray();
+
         return inertia('CarRevivalQuote/Show', [
             'quote' => $record,
             'leadStatuses' => array_values($leadStatuses->toArray()),
@@ -180,7 +180,7 @@ class CarRevivalQuoteController extends Controller
             'carPlanAddonsCode' => CarPlanAddonsCode::asArray(),
             'quoteType' => quoteTypeCode::Car,
             'can' => [
-                'create_payments' => auth()->user()->can(PermissionsEnum::PaymentsCreate) && $paymentEntityModel->plan && !auth()->user()->hasRole(RolesEnum::PA),
+                'create_payments' => auth()->user()->can(PermissionsEnum::PaymentsCreate) && $paymentEntityModel->plan && ! auth()->user()->hasRole(RolesEnum::PA),
             ],
             'payments' => $payments,
             'quoteRequest' => $paymentEntityModel,
@@ -200,8 +200,8 @@ class CarRevivalQuoteController extends Controller
     }
 
     /**
-     * @param $quoteTypeCode
-     * @param $quoteId
+     * @param  $quoteTypeCode
+     * @param  $quoteId
      * @return void
      */
     public function update($uuid, CarRevivalQuoteRequest $carRevivalQuoteRequest)
@@ -233,9 +233,9 @@ class CarRevivalQuoteController extends Controller
             $modelType = $request->get('modelType');
         }
         $ignoreModelTypes = [quoteTypeCode::Bike, quoteTypeCode::Cycle, quoteTypeCode::Yacht];
-        if (!in_array($modelType, $ignoreModelTypes) && $modelType != null) {
+        if (! in_array($modelType, $ignoreModelTypes) && $modelType != null) {
             $quoteTypes = 'Health,Car,Travel,Life,Home,Business,Pet';
-            $serviceType = str_contains($quoteTypes, ucwords($modelType)) ? strtolower($modelType) . 'QuoteService' : lcfirst(ucwords($modelType)) . 'Service';
+            $serviceType = str_contains($quoteTypes, ucwords($modelType)) ? strtolower($modelType).'QuoteService' : lcfirst(ucwords($modelType)).'Service';
             $this->genericModel->properties = $this->{$serviceType}->fillModelProperties();
             $this->genericModel->skipProperties = $this->{$serviceType}->fillModelSkipProperties();
             $this->genericModel->searchProperties = $this->{$serviceType}->fillModelSearchProperties();
