@@ -366,7 +366,7 @@ class CentralService
 
     public function saveAndAssignActivitesToAdvisor($quoteDetails, $quoteTypeId)
     {
-       
+
         $quoteDetails['quote_type_id'] = $quoteTypeId;
         $quoteTypeDetails = [
             CarQuote::class => [
@@ -455,27 +455,27 @@ class CentralService
             $lastActivityDueDateIsGreater = true;
         }
 
-        if($quoteDetails->previousStatusIdChanged){
+        if ($quoteDetails->previousStatusIdChanged) {
             Activities::where(['quote_request_id' => $quoteDetails->id])->update(['status' => 1]);
             $lastActivityDueDateIsGreater = false;
         }
-        
-        if($lastActivity && $lastActivity->status){
+
+        if ($lastActivity && $lastActivity->status) {
             $lastActivityDueDateIsGreater = false;
         }
-        
+
         if (($lastActivity && $lastActivity->is_cold) || ($lastActivity && Carbon::parse($lastActivity->due_date)->format('d-m-Y') <= now()->format('d-m-Y'))) {
             Activities::where(['quote_request_id' => $quoteDetails->id])->update(['status' => 1]);
         }
 
         // ->where('due_date', '<', now())
-       
+
         $scheduledActivitiesIDs = Activities::where([
             'quote_request_id' => $quoteDetails->id,
             'status' => true,
-            ])
-        ->orderBy('created_at', 'desc')->pluck('activity_schedule_id')
-        ->unique()->filter(function ($filter) {
+        ])
+            ->orderBy('created_at', 'desc')->pluck('activity_schedule_id')
+            ->unique()->filter(function ($filter) {
                 return ! is_null($filter);
             })->toArray();
 
