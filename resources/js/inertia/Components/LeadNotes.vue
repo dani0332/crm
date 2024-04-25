@@ -214,7 +214,7 @@ const fileValidation = file => {
   // Check if file size exceeds the maximum size
   if (file.size > maxSize) {
     notification.error({
-      title: 'File size exceeds the maximum allowed size.',
+      title: 'File size must be less than 10 MB',
       position: 'top',
     });
     return false;
@@ -306,7 +306,7 @@ watch(
       </template>
     </x-tooltip>
   </div>
-  <AppModal class="md:min-w-[900px]" v-model="showModal" show-close show-header>
+  <AppModal class="lg:min-w-[900px]" v-model="showModal" show-close show-header>
     <template #header>
       <p class="font-bold m-0">Notes</p>
     </template>

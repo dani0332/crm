@@ -8,7 +8,7 @@ use OwenIt\Auditing\Auditable;
 
 class QuoteNote extends Model
 {
-    use HasFactory, Auditable;
+    use HasFactory;
 
     protected $fillable = ['quote_status_id', 'note', 'created_by', 'updated_by'];
 

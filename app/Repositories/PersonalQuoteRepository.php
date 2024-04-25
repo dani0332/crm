@@ -43,9 +43,12 @@ class PersonalQuoteRepository extends BaseRepository
                 $quoteData['notes'] = $data['notes'];
             }
 
-            $quote->activities()->where('status', 0)->update(['status' => 1]);
+            // $quote->activities()->where('status', 0)->update(['status' => 1]);
             $quote->update($quoteData);
 
+            if($previousStatusId != $data['quote_status_id']){
+                $quote['previousStatusIdChanged'] = true;
+            }
             $detailData = array_filter(Arr::only($data, ['lost_reason_id', 'transapp_code']));
             if (count($detailData)) {
                 $quote->quoteDetail()->updateOrCreate(['personal_quote_id' => $quote->id], $detailData);
