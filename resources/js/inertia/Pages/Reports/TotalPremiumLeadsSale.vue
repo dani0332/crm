@@ -11,7 +11,7 @@ const page = usePage();
 
 let availableFilters = {
   transaction_approved_dates:  ref([new Date(), new Date()]),
-  quote_type_id: '',
+  quote_type_id:'1',
   teams:[],
 };
 const { isRequired, isEmail } = useRules();
@@ -104,7 +104,7 @@ onMounted(() => {
         />
         <x-select
           v-model="filters.quote_type_id"
-          label=" Quote Type"
+          label="Quote Type"
           :rules="[isRequired]"
           placeholder="Search by Quote Type"
           :options="quoteTypesOptions"

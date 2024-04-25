@@ -288,13 +288,10 @@ class ReportService extends BaseService
 
     public function totalPremiumReport($request)
     {
-
         $query = DB::table('personal_quotes');
-
         $dateFormat = config('constants.DB_DATE_FORMAT_MATCH');
         $maxDays = ApplicationStorageService::getValueByKeyName(GenericRequestEnum::MAX_DAYS);
         $freshLoad = ! isset($request->page);
-
         $startDate = isset($request->transaction_approved_dates) ?
         Carbon::parse($request->transaction_approved_dates[0])->startOfDay()->format($dateFormat) :
             ($freshLoad ? Carbon::parse(now())->startOfDay()->format($dateFormat) : Carbon::parse(now()->subDays($maxDays))->startOfDay()->format($dateFormat));
@@ -304,13 +301,14 @@ class ReportService extends BaseService
 
         $query->whereBetween('personal_quotes.transaction_approved_at', [$startDate, $endDate]);
 
-        if (! empty($request->quote_type_id)) {
-            $query->where('personal_quotes.quote_type_id', $request->quote_type_id);
+        if ($request->filled('quote_type_ids')) {
+           
+            $query->whereIn('personal_quotes.quote_type_id', $request->quote_type_ids);
         }
 
-        if (isset($request->teams) && count($request->teams) > 0) {
+        if (isset($request->teams) && $request->filled('teams')) {
             $teamIds = $request->teams;
-            $query->join('users', 'personal_quotes.advisor_id', '=', 'users.id')->whereIn('users.id', function ($query) use ($teamIds) {
+            $query->whereIn('users.id', function ($query) use ($teamIds) {
                 $query->distinct()
                     ->select('users.id')
                     ->from('users')
@@ -321,6 +319,7 @@ class ReportService extends BaseService
         }
 
         $records = $query->join('quote_type', 'personal_quotes.quote_type_id', '=', 'quote_type.id')
+            ->join('users', 'personal_quotes.advisor_id', '=', 'users.id')
             ->select('quote_type.code as quote_type_name', DB::raw('DATE(personal_quotes.transaction_approved_at) as transaction_date'), DB::raw('COALESCE(SUM(personal_quotes.premium), 0) as total_premium'))
             ->groupBy(DB::raw('DATE(personal_quotes.transaction_approved_at)'))
             ->orderBy(DB::raw('DATE(personal_quotes.transaction_approved_at)'))
