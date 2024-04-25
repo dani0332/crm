@@ -309,6 +309,14 @@ const moveToImcrm = async (policyNumber, validateAll = true) => {
       router.reload({
         preserveScroll: true,
       });
+    } else if (response?.data.status == 400) {
+      notification.error({
+        title: response.data.message,
+        position: 'top',
+      });
+      router.reload({
+        preserveScroll: true,
+      });
     } else {
       if (response?.data.type == 'policy_number') {
         console.log(response?.data.data[0].code);
@@ -316,10 +324,15 @@ const moveToImcrm = async (policyNumber, validateAll = true) => {
         lobLink.value = response?.data.data[0].link;
         lobCode.value = response?.data.data[0].code;
         single.value = true;
-      } else {
+      } else if (response?.data.type == 'email') {
         single.value = false;
         data.value = response.data.data;
         moveToImcrmModal.value = true;
+      } else {
+        notification.success({
+          title: response.data,
+          position: 'top',
+        });
       }
     }
   } catch (err) {}

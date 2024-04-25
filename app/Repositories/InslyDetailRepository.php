@@ -74,6 +74,8 @@ class InslyDetailRepository extends BaseRepository
         $inslyCoverageArray = $this->inslyInsurances();
         $quoteType = null;
         foreach ($inslyCoverageArray as $key => $item) {
+            $lowerCaseCoverageValues = array_map('strtolower', $item);
+            $item = array_merge($item, $lowerCaseCoverageValues);
             if (in_array($coverage, $item)) {
                 $quoteType = $key;
             }
@@ -223,10 +225,22 @@ class InslyDetailRepository extends BaseRepository
 
                 return [
                     'status' => 201,
-                    'message' => 'Lead Created Successully',
+                    'message' => 'Lead Created Successfully',
                     'data' => $data,
                 ];
+            }else{
+                return [
+                    'status' => 400,
+                    'message' => 'Quote Type not found.',
+                    'data' => '',
+                ];
             }
+        }else{
+            return [
+                'status' => 400,
+                'message' => 'Quote not found.',
+                'data' => '',
+            ];
         }
     }
 
