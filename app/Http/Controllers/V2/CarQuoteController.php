@@ -11,6 +11,8 @@ use App\Http\Requests\UpdateCarQuotePlanDetailsRequest;
 use App\Models\QuoteBatches;
 use App\Repositories\CarQuoteRepository;
 use App\Repositories\UserRepository;
+use App\Services\CarPlanService;
+use App\Services\CarQuoteService;
 use Illuminate\Http\Request;
 
 class CarQuoteController extends Controller
@@ -157,5 +159,40 @@ class CarQuoteController extends Controller
         return inertia('CarQuote/Index', [
             'quotes' => $personalQuotes,
         ]);
+    }
+
+    /**
+     * moved this method here from claimController because that was deleted
+     * get car plans by insurance providers
+     *
+     * @param Request $request
+     * @param CarQuoteService $carQuoteService
+     * @param CarPlanService $carPlanService
+     * @return void
+     */
+    public function carPlansByInsuranceProvider(Request $request, CarQuoteService $carQuoteService, CarPlanService $carPlanService)
+    {
+        $insuranceProviderId = $request->insuranceProviderId;
+        $quoteUuId = $request->quoteUuId;
+
+        $quotePlans = $carQuoteService->getQuotePlans($quoteUuId);
+
+        $quotePlanId = [];
+        $listQuotePlans = [];
+        if (isset($quotePlans->quotes->plans)) {
+            $listQuotePlans = $quotePlans->quotes->plans;
+        }
+
+        foreach ($listQuotePlans as $key => $quotePlan) {
+            if (! isset($quotePlan->id)) {
+                continue;
+            }
+
+            $quotePlanId[] = $quotePlan->id;
+        }
+
+        $carPlans = $carPlanService->getNonQuotedCarPlans($insuranceProviderId, $quotePlanId);
+
+        return response()->json($carPlans);
     }
 }
