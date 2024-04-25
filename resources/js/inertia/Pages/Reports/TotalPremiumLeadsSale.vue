@@ -10,7 +10,7 @@ const loader = reactive({
 const page = usePage();
 
 let availableFilters = {
-  date_range:  ref([new Date(), new Date()]),
+  transaction_approved_dates:  ref([new Date(), new Date()]),
   quote_type_id: '',
   teams:[],
 };
@@ -93,7 +93,7 @@ onMounted(() => {
     <x-form @submit="onSubmit" :auto-focus="false">
       <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
         <DatePicker
-          v-model="filters.date_range"
+          v-model="filters.transaction_approved_dates"
           label="Transaction Date Range"
           :rules="[isRequired]"
           class="w-full"
