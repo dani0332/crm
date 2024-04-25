@@ -165,9 +165,6 @@ class CarQuoteController extends Controller
      * moved this method here from claimController because that was deleted
      * get car plans by insurance providers
      *
-     * @param Request $request
-     * @param CarQuoteService $carQuoteService
-     * @param CarPlanService $carPlanService
      * @return void
      */
     public function carPlansByInsuranceProvider(Request $request, CarQuoteService $carQuoteService, CarPlanService $carPlanService)
