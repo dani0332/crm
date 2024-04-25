@@ -406,5 +406,64 @@ class ReportService extends BaseService
         }
 
         return $query;
+    public function getDefaultFiltersForTotalPremium()
+    {
+        $loginUserId = auth()->user()->id;
+        $teamIds = $this->getUserTeams($loginUserId);
+        $teams = Team::whereIn('id', $teamIds->pluck('id'))
+            ->select('name', 'id')
+            ->orderBy('name')
+            ->where('is_active', 1)
+            ->get()
+            ->keyBy('id')
+            ->map(fn ($users) => $users->name)
+            ->toArray();
+        $lobs = QuoteTypeRepository::whereIn('code', [quoteTypeCode::Car, quoteTypeCode::Home, quoteTypeCode::Health, quoteTypeCode::Travel, quoteTypeCode::Life, quoteTypeCode::Pet, quoteTypeCode::Business])->get();
+
+        return [
+            'teams' => $teams,
+            'quoteTypes' => $lobs,
+        ];
+    }
+
+    public function totalPremiumReport($request)
+    {
+        $query = DB::table('personal_quotes');
+        $dateFormat = config('constants.DB_DATE_FORMAT_MATCH');
+        $maxDays = ApplicationStorageService::getValueByKeyName(GenericRequestEnum::MAX_DAYS);
+        $freshLoad = ! isset($request->page);
+        $startDate = isset($request->transaction_approved_dates) ?
+        Carbon::parse($request->transaction_approved_dates[0])->startOfDay()->format($dateFormat) :
+            ($freshLoad ? Carbon::parse(now())->startOfDay()->format($dateFormat) : Carbon::parse(now()->subDays($maxDays))->startOfDay()->format($dateFormat));
+
+        $endDate = isset($request->transaction_approved_dates) ?
+        Carbon::parse($request->transaction_approved_dates[1])->endOfDay()->format($dateFormat) : Carbon::parse(now())->endOfDay()->format($dateFormat);
+
+        $query->whereBetween('personal_quotes.transaction_approved_at', [$startDate, $endDate]);
+
+        if (! empty($request->quote_type_id)) {
+            $query->where('personal_quotes.quote_type_id', $request->quote_type_id);
+        }
+
+        if (isset($request->teams) && $request->filled('teams')) {
+            $teamIds = $request->teams;
+            $query->whereIn('users.id', function ($query) use ($teamIds) {
+                $query->distinct()
+                    ->select('users.id')
+                    ->from('users')
+                    ->join('user_team', 'user_team.user_id', 'users.id')
+                    ->join('teams', 'teams.id', 'user_team.team_id')
+                    ->whereIn('teams.id', $teamIds);
+            });
+        }
+
+        $records = $query->join('quote_type', 'personal_quotes.quote_type_id', '=', 'quote_type.id')
+            ->join('users', 'personal_quotes.advisor_id', '=', 'users.id')
+            ->select('quote_type.code as quote_type_name', DB::raw('DATE(personal_quotes.transaction_approved_at) as transaction_date'), DB::raw('COALESCE(SUM(personal_quotes.premium), 0) as total_premium'))
+            ->groupBy(DB::raw('DATE(personal_quotes.transaction_approved_at)'))
+            ->orderBy(DB::raw('DATE(personal_quotes.transaction_approved_at)'))
+            ->get();
+
+        return $records;
     }
 }

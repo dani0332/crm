@@ -64,6 +64,7 @@ class DatabaseSeeder extends Seeder
             PaymentLookupSeeder::class,
             InsuranceQuoteTypeSeeder::class,
             AddPaymentPermissionsSeeder::class,
+            TotalPremiumReportPermissionSeeder::class,
         ]);
     }
 }

@@ -261,4 +261,5 @@ final class PermissionsEnum extends Enum
     public const SAVE_QUOTE_NOTES = 'save-quote-notes';
     public const UPDATE_QUOTE_NOTES = 'update-quote-notes';
     public const DELETE_QUOTE_NOTES = 'delete-quote-notes';
+    public const TOTAL_PREMIUM_LEADS_SALES_REPORT = 'total-premium-leads-sales-report';
 }
