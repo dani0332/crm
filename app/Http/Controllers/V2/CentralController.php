@@ -272,7 +272,7 @@ class CentralController extends Controller
 
             $quote->update([
                 'quote_status_id' => QuoteStatusEnum::PolicyBooked,
-            ]);
+            ]);https://app.clickup.com/t/86ep012c9
             $this->straightforwardPayments($payment, $paymentSplits, $quote);
 
             return response()->json(['message' => $response['message']], 200);
@@ -322,114 +322,63 @@ class CentralController extends Controller
         return back()->with('success', $successMessage);
     }
 
-    /**
-     * Update the payment allocation status based on the payment and quote details.
-     *
-     * @param  Payment $payment The payment object.
-     * @param  Quote $quote The quote object.
-     * @return void
-     */
-    private function straightforwardPayments($payment, $paymentSplits, $quote)
+    private function updatePaymentAllocationStatus($payment, $quote)
     {
-        // Need to confrim this wether need to change
-        // $payment->payment_status_id = PaymentStatusEnum::PAID;
-    
         if (in_array($payment->payment_status_id, [PaymentStatusEnum::PENDING, PaymentStatusEnum::CREDIT_APPROVED])) {
             $payment->payment_allocation_status = PaymentAllocationStatus::NOT_ALLOCATED;
         } else {
             $totalAmount = $payment->captured_amount + $payment->discount_value;
-            if ($payment->captured_amount > 0){
+            if ($payment->captured_amount > 0) {
                 if ($totalAmount <= $quote->price_with_vat) {
                     $payment->payment_allocation_status = PaymentAllocationStatus::FULLY_ALLOCATED;
-                }
-                if($totalAmount > $quote->price_with_vat){
+                } else {
                     $payment->payment_allocation_status = PaymentAllocationStatus::PARTIALLY_ALLOCATED;
                 }
-            } else{
+            } else {
                 $payment->payment_allocation_status = PaymentAllocationStatus::UNPAID;
             }
         }
         $payment->save();
+    }
 
-        if ($payment->frequency == 'upfront') {
-            $paymentSplit= $paymentSplits->first();
-            if (in_array($payment->payment_status_id, [PaymentStatusEnum::PENDING, PaymentStatusEnum::CREDIT_APPROVED])) {
-                $paymentSplit->payment_allocation_status = PaymentAllocationStatus::NOT_ALLOCATED;
-            } else{
-                if ($paymentSplit->collection_amount > 0){
-                    if ($paymentSplit->collection_amount < $quote->price_with_vat ) {
-                        $paymentSplit->payment_allocation_status = PaymentAllocationStatus::FULLY_ALLOCATED;
-                    }
-                    else if ($paymentSplit->collection_amount > $quote->price_with_vat ) {
-                        $paymentSplit->payment_allocation_status = PaymentAllocationStatus::PARTIALLY_ALLOCATED;
-                    }
-                    else {
-                        $paymentSplit->payment_allocation_status = PaymentAllocationStatus::NOT_ALLOCATED;
-                    }
-                } else{
+    private function updatePaymentSplitAllocationStatus($paymentSplit, $quote)
+    {
+        if (in_array($paymentSplit->payment_status_id, [PaymentStatusEnum::PENDING, PaymentStatusEnum::CREDIT_APPROVED])) {
+            $paymentSplit->payment_allocation_status = PaymentAllocationStatus::NOT_ALLOCATED;
+        } else {
+            if ($paymentSplit->collection_amount > 0) {
+                if ($paymentSplit->collection_amount < $quote->price_with_vat) {
+                    $paymentSplit->payment_allocation_status = PaymentAllocationStatus::FULLY_ALLOCATED;
+                } elseif ($paymentSplit->collection_amount > $quote->price_with_vat) {
+                    $paymentSplit->payment_allocation_status = PaymentAllocationStatus::PARTIALLY_ALLOCATED;
+                } else {
                     $paymentSplit->payment_allocation_status = PaymentAllocationStatus::UNPAID;
                 }
+            } else {
+                $paymentSplit->payment_allocation_status = PaymentAllocationStatus::UNPAID;
             }
-            $paymentSplit->save();
+        }
+        $paymentSplit->save();
+    }
+
+    private function straightforwardPayments($payment, $paymentSplits, $quote)
+    {
+        $this->updatePaymentAllocationStatus($payment, $quote);
+
+        if ($payment->frequency == 'upfront') {
+            $paymentSplit = $paymentSplits->first();
+            $this->updatePaymentSplitAllocationStatus($paymentSplit, $quote);
         }
 
-        if ($payment->frequency == "split_payments"){
-            $isFirstIteration= true;
-            foreach($paymentSplits as $paymentSplit){
-                if (in_array($payment->payment_status_id, [PaymentStatusEnum::PENDING, PaymentStatusEnum::CREDIT_APPROVED])) {
-                    $paymentSplit->payment_allocation_status = PaymentAllocationStatus::NOT_ALLOCATED;
-                } else {
-                    if( $isFirstIteration || $payment->payment_status_id == PaymentStatusEnum::PARTIALLY_PAID || $payment->payment_status_id == PaymentStatusEnum::PARTIAL_CAPTURED){
-                        if ($paymentSplit->collection_amount > 0){
-                            if ($paymentSplit->collection_amount < $quote->price_with_vat ) {
-                                $paymentSplit->payment_allocation_status = PaymentAllocationStatus::FULLY_ALLOCATED;
-                            }
-                            elseif ($paymentSplit->collection_amount > $quote->price_with_vat ) {
-                                $paymentSplit->payment_allocation_status = PaymentAllocationStatus::PARTIALLY_ALLOCATED;
-                            }
-                            elseif($paymentSplit->collection_amount <= 0 || empty($paymentSplit->collection_amount)){
-                                $paymentSplit->payment_allocation_status = PaymentAllocationStatus::UNPAID;
-                            }
-                            else {
-                                $paymentSplit->payment_allocation_status = PaymentAllocationStatus::NOT_ALLOCATED;
-                            }
-                            $paymentSplit->save();
-                        }
-                    }
-                }
-                
+        if ($payment->frequency == "split_payments") {
+            foreach ($paymentSplits as $paymentSplit) {
+                $this->updatePaymentSplitAllocationStatus($paymentSplit, $quote);
             }
-            $isFirstIteration = false;
         }
 
-        if (in_array($payment->frequency, ['semi_annual', 'quarterly', 'monthly', 'custom'])){
-            $isFirstIteration = true;
-            foreach($paymentSplits as $paymentSplit){
-                if (in_array($payment->payment_status_id, [PaymentStatusEnum::PENDING, PaymentStatusEnum::CREDIT_APPROVED])) {
-                    $paymentSplit->payment_allocation_status = PaymentAllocationStatus::NOT_ALLOCATED;
-                } else {
-                    if ($isFirstIteration || $payment->payment_status_id == PaymentStatusEnum::PARTIALLY_PAID  || $payment->payment_status_id == PaymentStatusEnum::PARTIAL_CAPTURED){
-                        if ($paymentSplit->collection_amount > 0){
-                            if ($paymentSplit->collection_amount <= $quote->price_with_vat ) {
-                                $paymentSplit->payment_allocation_status = PaymentAllocationStatus::FULLY_ALLOCATED;
-                            }
-                            if ($paymentSplit->collection_amount > $quote->price_with_vat ) {
-                                $paymentSplit->payment_allocation_status = PaymentAllocationStatus::PARTIALLY_ALLOCATED;
-                            }
-                        }
-                        elseif($paymentSplit->collection_amount <= 0 || empty($paymentSplit->collection_amount)){
-                            $paymentSplit->payment_allocation_status = PaymentAllocationStatus::UNPAID;
-                        }
-                    }
-                    elseif($paymentSplit->collection_amount <= 0 || empty($paymentSplit->collection_amount)){
-                        $paymentSplit->payment_allocation_status = PaymentAllocationStatus::UNPAID;
-                    }
-                    else{
-                        $paymentSplit->payment_allocation_status = PaymentAllocationStatus::NOT_ALLOCATED;
-                    }
-                }
-                $isFirstIteration= false;
-                $paymentSplit->save();
+        if (in_array($payment->frequency, ['semi_annual', 'quarterly', 'monthly', 'custom'])) {
+            foreach ($paymentSplits as $paymentSplit) {
+                $this->updatePaymentSplitAllocationStatus($paymentSplit, $quote);
             }
         }
     }
