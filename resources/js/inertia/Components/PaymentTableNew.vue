@@ -111,7 +111,7 @@ const initialAmount = ref(0);
 
 // Check quoteType and set initialAmount.value accordingly
 if (props.sendUpdate) {
-  initialAmount = props.sendUpdate.total_price;
+  initialAmount.value = props.sendUpdate.total_price;
 } else if (props.quoteType === 'Health') {
   initialAmount.value = props.eCommercePrice;
 } else {
@@ -2087,11 +2087,11 @@ watch(
                   {{ formatDate(paymentMethodsForm.collection_date)}}
                 </span>
                 <DatePicker
-                v-if="!isFieldReadonly"
-                name="collection_date"                
-                v-model="paymentMethodsForm.collection_date"
-                :rules="[rules.isRequired]"                
-              />
+                  v-if="!isFieldReadonly"
+                  name="collection_date"                
+                  v-model="paymentMethodsForm.collection_date"
+                  :rules="[rules.isRequired]"            
+                />
             </x-field>
           </div>
           <div>

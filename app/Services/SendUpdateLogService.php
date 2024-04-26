@@ -580,7 +580,7 @@ class SendUpdateLogService
     {
         $payments = $sendUpdateLog->payments;
         if ($payments) {
-            $payments->load(['paymentSplits', 'paymentStatus', 'paymentMethod', 'insuranceProvider', 'paymentStatusLog', 'paymentSplits.paymentStatus', 'paymentSplits.documents']);
+            $payments->load(['paymentSplits', 'paymentStatus', 'paymentMethod', 'insuranceProvider', 'paymentStatusLog', 'paymentSplits.paymentStatus', 'paymentSplits.documents', 'paymentSplits.paymentMethod']);
         }
 
         return $payments;
