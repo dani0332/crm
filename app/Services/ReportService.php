@@ -2,24 +2,23 @@
 
 namespace App\Services;
 
-use Carbon\Carbon;
-use App\Models\Team;
-use App\Models\Tier;
-use App\Models\CarQuote;
-use App\Models\QuoteType;
+use App\Enums\GenericRequestEnum;
+use App\Enums\PaymentStatusEnum;
+use App\Enums\QuoteStatusEnum;
+use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
+use App\Models\CarQuote;
 use App\Models\LeadSource;
-use App\Enums\quoteTypeCode;
 use App\Models\PaymentStatus;
-use App\Enums\QuoteStatusEnum;
-use App\Enums\PaymentStatusEnum;
-use App\Traits\GetUserTreeTrait;
-use App\Enums\GenericRequestEnum;
-use App\Traits\TeamHierarchyTrait;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
+use App\Models\QuoteType;
+use App\Models\Team;
+use App\Models\Tier;
 use App\Repositories\QuoteTypeRepository;
+use App\Traits\GetUserTreeTrait;
+use App\Traits\TeamHierarchyTrait;
+use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class ReportService extends BaseService
 {
@@ -305,8 +304,7 @@ class ReportService extends BaseService
 
         if (! empty($request->quote_type_id)) {
             $query->where('personal_quotes.quote_type_id', $request->quote_type_id);
-        }
-        else {
+        } else {
             $query->whereIn('personal_quotes.quote_type_id', [QuoteTypes::CAR->id()]);
         }
 
