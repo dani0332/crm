@@ -101,7 +101,7 @@ class SageApiService
         $sageRequest->insurerCommissionNumber = (string) $payment['insurer_commmission_invoice_number'];
         if (count($paymentSplits) == 1) {
             $sageRequest->sage_reciept_id = $paymentSplits[0]['sage_reciept_id'];
-            $sageRequest->collection_amount = $paymentSplits[0]['collection_amount'];
+            $sageRequest->collection_amount = $paymentSplits[0]['collection_amount'] + $sageRequest->discount;
         }
 
         //Insurer GL Account and Vendor Number
