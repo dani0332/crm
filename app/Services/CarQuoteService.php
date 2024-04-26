@@ -323,6 +323,7 @@ class CarQuoteService extends BaseService
 
         $oldCarValue = $carQuote->car_value;
         $oldDob = $carQuote->dob;
+        $oldBodyType = $carQuote->vehicle_type_id;
         info('Update triggered from IMCRM for Car Quote request with uuid : '.$carQuote->code);
 
         if ($request->first_name) {
@@ -423,7 +424,8 @@ class CarQuoteService extends BaseService
         $deleteValuationResponse = $this->deleteValuationAPI($oldCarValue, $request->car_value, $carQuote->uuid);
 
         // update embedded products list
-        if (isset($request->dob) && $oldDob !== $request->dob) {
+        if ((isset($request->dob) && $oldDob->format('Y-m-d') != $request->dob) || 
+            (isset($request->vehicle_type_id) && $oldBodyType != $request->vehicle_type_id)) {
             Ken::request('/save-embedded-transaction', 'post', ['quoteUID' => $id]);
         }
 
