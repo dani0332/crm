@@ -186,7 +186,7 @@ class Payment extends Model implements Auditable
 
     public function policyIssuer()
     {
-        return $this->hasMany(User::class, 'policy_issuer_id', 'id');
+        return $this->belongsTo(User::class, 'policy_issuer_id', 'id')->select(['id', 'name', 'email']);
     }
 
     // render payment status PAID if payment status is CAPTURED

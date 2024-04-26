@@ -33,6 +33,7 @@ class SageApiService
     public static function sagePayLoad($modelType, $payment, $quote, $paymentSplits)
     {
         $firstChildPayment = $paymentSplits->first();
+        $insuredFullName = $quote?->customer?->insured_first_name.' '.$quote?->customer?->insured_last_name;
         $latestEndorsementCode = '';
         if ($quote->personal_quote_id) {
             $latestEndorsement = SendUpdateLogRepository::endorsementsByPersonalQuoteId($quote->personal_quote_id)->first();
@@ -61,16 +62,15 @@ class SageApiService
 
         $sageRequest->mainClassInsurance = $modelType;
         $sageRequest->policyNumber = $quote->policy_number;
-
-        $sageRequest->policyIssuer = $payment->policyIssuer?->name;
+        $sageRequest->policyIssuer = $payment->policyIssuer?->name ?? '';
         $sageRequest->requestType = Lookup::where('id', $quote->transaction_type_id)->first()->text ?? '';
         $sageRequest->subClass = $businessTypeOfInsuranceCode;
         $sageRequest->ccCode = $firstChildPayment->cc_payment_id ?? '';
         $sageRequest->isPostDatedCheck = $firstChildPayment->payment_method == PaymentMethodsEnum::PostDatedCheque ? 'Yes' : 'No';
         $sageRequest->checkDetails = $firstChildPayment->check_detail ?? '';
         $sageRequest->endorsementNumber = $latestEndorsementCode;
-        $sageRequest->insured = $quote->first_name.' '.$quote->last_name;
-        $sageRequest->policyHolder = $quote->first_name.' '.$quote->last_name;
+        $sageRequest->insured = $insuredFullName;
+        $sageRequest->policyHolder = $insuredFullName;
         $sageRequest->premiumCollectedBy = ucfirst($payment->collection_type);
 
         $sageRequest->invoicePaymentStatus = $payment->transaction_payment_status;
@@ -86,9 +86,7 @@ class SageApiService
         $sageRequest->manager = $managerName;
 
         //calculate vat
-        $subTotal = $quote->price_vat_applicable ?? $quote->price_vat_not_applicable;
-        $totalAmount = $quote->price_with_vat ?? $quote->price_without_vat;
-        $sageRequest->vatOnPremium = $quote->vat ?: ($quote->price_with_vat ? floatval($totalAmount - $subTotal) : 0);
+        $sageRequest->vatOnPremium = $quote->vat ?: ($quote->price_with_vat ? (floatval($quote->price_with_vat) - floatval($quote->price_vat_applicable)) : 0);
 
         $sageRequest->premiumWithoutTax = floatval($quote->price_without_vat);
         $sageRequest->premiumWithTax = floatval($quote->price_with_vat);
@@ -208,11 +206,8 @@ class SageApiService
 
     public function postBookPolicyToSage($request, $payment, $quote, $paymentSplits, $data)
     {
-
         // payload
         $sageRequest = $this->sagePayLoad($request->model_type, $payment, $quote, $paymentSplits);
-
-        //dd($sageRequest);
 
         // check sage is enabled or not
         $isSageEnabled = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::SAGE_ENABLED);
