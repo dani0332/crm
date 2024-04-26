@@ -40,7 +40,7 @@ const props = defineProps({
   UBOsDetails: Array,
   canAddBatchNumber: Boolean,
   quoteRequest: Object,
-  quoteNotes: Object,
+  quoteDocuments: Object,
   cdnPath: String,
   vatPercentage: Number,
   paymentStatusEnum: Object,
@@ -293,7 +293,7 @@ const linkEntity = () => {
       <template #default>
         <LeadNotes
           :documentType="noteDocumentType"
-          :notes="quoteNotes"
+          :notes="quoteDocuments"
           :modelType="quoteType"
           :quote="quote"
           :cdn="cdnPath"
@@ -331,7 +331,7 @@ const linkEntity = () => {
       <div class="flex gap-2">
         <LeadNotes
           :documentType="noteDocumentType"
-          :notes="quoteNotes"
+          :notes="quoteDocuments"
           :modelType="quoteType"
           :quote="quote"
           :cdn="cdnPath"
@@ -859,20 +859,31 @@ const linkEntity = () => {
       :quoteId="quote.id"
       :paymentCode="quote.code"
       :quoteType="quoteType"
-      :payments="quote.payments"      
-    />    
-    <PaymentTableNew 
-			v-if="isNewPaymentStructure"
-			:quoteType="quoteType"
-			:payments="quote.payments"
-			:paymentDocument="documentTypes.filter(item => item.code === 'CYCPD' || item.code === 'CYCPDR' || item.code === 'CYCDPDR')"
-			:quoteRequest="quote"
-			:paymentStatusEnum="paymentStatusEnum"
-			:paymentTooltipEnum="paymentTooltipEnum"
-			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name, tooltip: pm.tool_tip } })"
-			:storageUrl="storageUrl"
+      :payments="quote.payments"
+    />
+    <PaymentTableNew
+      v-if="isNewPaymentStructure"
+      :quoteType="quoteType"
+      :payments="quote.payments"
+      :paymentDocument="
+        documentTypes.filter(
+          item =>
+            item.code === 'CYCPD' ||
+            item.code === 'CYCPDR' ||
+            item.code === 'CYCDPDR',
+        )
+      "
+      :quoteRequest="quote"
+      :paymentStatusEnum="paymentStatusEnum"
+      :paymentTooltipEnum="paymentTooltipEnum"
+      :paymentMethods="
+        paymentMethods.map(pm => {
+          return { value: pm.code, label: pm.name, tooltip: pm.tool_tip };
+        })
+      "
+      :storageUrl="storageUrl"
       :isAmlClearedForPayment="isAmlClearedForPayment"
-		/>
+    />
     <QuotePayments
       v-else
       :can="can"

@@ -31,7 +31,7 @@ const props = defineProps({
   documentTypes: Object,
   noteDocumentType: Object,
   storageUrl: String,
-  quoteNotes: Object,
+  quoteDocuments: Object,
   cdnPath: String,
   vatPercentage: Number,
   paymentStatusEnum: Object,
@@ -595,7 +595,7 @@ const linkEntity = () => {
       <template #default>
         <LeadNotes
           :documentType="noteDocumentType"
-          :notes="quoteNotes"
+          :notes="quoteDocuments"
           modelType="Business"
           :quote="quote"
           :cdn="cdnPath"
@@ -636,7 +636,7 @@ const linkEntity = () => {
       <div class="flex gap-2">
         <LeadNotes
           :documentType="noteDocumentType"
-          :notes="quoteNotes"
+          :notes="quoteDocuments"
           modelType="Business"
           :quote="quote"
           :cdn="cdnPath"
@@ -1237,7 +1237,7 @@ const linkEntity = () => {
       :storageUrl="storageUrl"
       quoteSubType="Corpline"
       :isAmlClearedForPayment="isAmlClearedForPayment"
-		/>
+    />
     <PaymentTable
       v-else
       :payments="payments"
@@ -1251,7 +1251,7 @@ const linkEntity = () => {
 
     <QuoteDocuments
       :document-types="documentTypes"
-      :quote-documents="page.props.quoteDocuments || []"
+      :quote-documents="page.props.documents || []"
       :storageUrl="storageUrl"
       :quote="quote"
     />

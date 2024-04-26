@@ -128,7 +128,7 @@ const onNoteSubmit = isValid => {
     axios
       .post('/save-quote-notes', formData)
       .then(response => {
-        notes.value.data.unshift(response.data.response);
+        // notes.value.data.unshift(response.data.response);
         notification.success({
           title: 'Notes has been saved',
           position: 'top',
@@ -181,10 +181,13 @@ const onDeleteNote = item => {
   axios
     .delete(`/delete-quote-notes/${item.id}`)
     .then(response => {
-      let index = notes.value.data.findIndex(note => note.id == item.id);
-      if (index != -1) {
-        notes.value.data.splice(index, 1);
-      }
+      router.reload({
+        only: ['quoteDocuments', 'quote'],
+      });
+      // let index = notes.value.data.findIndex(note => note.id == item.id);
+      // if (index != -1) {
+      //   notes.value.data.splice(index, 1);
+      // }
       notification.success({
         title: 'Notes has been deleted',
         position: 'top',

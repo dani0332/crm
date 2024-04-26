@@ -163,7 +163,7 @@ class YachtQuoteController extends Controller
             'industryType' => $industryType,
             'emirates' => $emirates,
             'noteDocumentType' => $noteDocumentType,
-            'quoteNotes' => $quoteNotes,
+            'quoteDocuments' => $quoteNotes,
             'cdnPath' => $cdnPath,
             'vatPercentage' => $vatPercentage,
             'paymentTooltipEnum' => PaymentTooltip::asArray(),

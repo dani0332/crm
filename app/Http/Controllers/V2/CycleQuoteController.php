@@ -190,7 +190,7 @@ class CycleQuoteController extends Controller
             'isNewPaymentStructure' => app(SplitPaymentService::class)->isNewPaymentStructure($quote->payments),
             'isAmlClearedForPayment' => $isAmlClearedForPayment,
             'noteDocumentType' => $noteDocumentType,
-            'quoteNotes' => $quoteNotes,
+            'quoteDocuments' => $quoteNotes,
             'cdnPath' => $cdnPath,
         ]);
     }
