@@ -15,6 +15,7 @@ const props = defineProps({
   quoteType: String,
 });
 
+const notification = useToast();
 const quotes = ref(props.quotes);
 const quote = ref(props.quote);
 const page = usePage();
@@ -46,7 +47,7 @@ const onLoadMore = id => {
     .post(
       route('loadMoreRecords', {
         page: quotes.value.pages[id],
-        modelType: quoteType,
+        modelType: props.quoteType,
         status: id,
       }),
     )
@@ -236,8 +237,9 @@ watch(
         <x-icon icon="box" class="text-secondary-600 mb-2" />
         <p>No Leads Found</p>
       </div>
+<!--        quote.title.split(' ').join('')-->
       <leads-card-item
-        :title="quote.title.split(' ').join('')"
+        :title="quote.title ? quote.title.split(' ').join('') : quote.text.split(' ').join('') "
         :id="quote.id"
         :leads="computedLeads"
         @UpdateLeadsCount="data => UpdateLeadsCount(data)"

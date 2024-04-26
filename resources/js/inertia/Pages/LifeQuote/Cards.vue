@@ -3,6 +3,7 @@ const props = defineProps({
   quoteStatusEnum: Object,
   quoteTypeId: String,
   lostReasons: Object,
+    quoteType: String,
 });
 const page = usePage();
 const dateFormat = date => {
@@ -140,6 +141,7 @@ const onSearch = id => {
         :key="quote.id"
         :quote="quote"
         :quotes="quotes"
+        :quoteType="quoteType"
         :quoteTypeId="quoteTypeId"
         :lostReasons="props.lostReasons"
         :quoteStatusEnum="props.quoteStatusEnum"

@@ -9,6 +9,7 @@ use App\Enums\PaymentStatusEnum;
 use App\Enums\PaymentTooltip;
 use App\Enums\quoteStatusCode;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
@@ -212,14 +213,17 @@ class LifeQuoteController extends Controller
             ->whereIn('text', [quoteStatusCode::NEWLEAD, quoteStatusCode::QUOTED, quoteStatusCode::FOLLOWEDUP, quoteStatusCode::NEGOTIATION])
             ->get()->toArray();
 
-        $leadStatuses = array_map(function ($item) {
-            $item['data'] = getDataAgainstStatus(QuoteTypes::LIFE->value, $item['id']);
+        $leadStatuses = array_map(function ($item) use ($request) {
+            $item['data'] = getDataAgainstStatus(QuoteTypes::LIFE->value, $item['id'] , $request);
 
             return $item;
         }, $leadStatuses);
 
         return inertia('LifeQuote/Cards', [
             'quotes' => array_values($leadStatuses),
+            'quoteType' => QuoteTypes::LIFE->value,
+
+
         ]);
     }
 }

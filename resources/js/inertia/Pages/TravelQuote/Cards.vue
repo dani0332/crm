@@ -5,6 +5,7 @@ const props = defineProps({
   quoteStatusEnum: Object,
   quoteTypeId: String,
   lostReasons: Object,
+    quoteType: String,
 });
 const page = usePage();
 const dateFormat = date => {
@@ -115,6 +116,7 @@ const onSearch = id => {
     });
 };
 
+
 onMounted(() => {
   console.log(quotes.data);
 });
@@ -146,6 +148,7 @@ onMounted(() => {
         :key="quote.id"
         :quote="quote"
         :quotes="quotes"
+        :quoteType="quoteType"
         :quoteTypeId="quoteTypeId"
         :lostReasons="props.lostReasons"
         :quoteStatusEnum="props.quoteStatusEnum"

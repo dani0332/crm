@@ -1340,7 +1340,7 @@ class HealthQuoteService extends BaseService
                                 }
                             }
                         }
-                        $response['priceWithVAT'] = ((float) $response['priceWithVAT'] ?? 0) + ((float) $plan['basmah'] ?? 0) + ((float) $plan['policyFee'] ?? 0);
+                        $response['priceWithVAT'] = ((float) $response['priceWithVAT'] ?? 0) + ((isset($plan['basmah']) ? (float) $plan['basmah'] : 0)) + ((isset($plan['policyFee']) ? (float) $plan['policyFee'] : 0));
                         if (isset($plan['benefits'], $plan['benefits']['feature'])) {
                             foreach ($plan['benefits']['feature'] as $value) {
                                 if ($value['code'] == GenericRequestEnum::TPA_Code) {
