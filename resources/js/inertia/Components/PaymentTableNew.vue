@@ -1729,13 +1729,14 @@ watch(() => props.quoteRequest, (newValue, oldValue) => {
   planDetail.value = initalPlanDetails;
 });
 const paymentAllocationStatusTooltip= payment_allocation_status  => {
-  if(payment_allocation_status == 'not_allocated'){
+  console.log(payment_allocation_status);
+  if(payment_allocation_status == 'not_allocated' || payment_allocation_status == 'Not Allocated'){
     return productionProcessTooltipEnum.PAYMENT_ALLOCATION_STATUS_NOT_ALLOCATED;
   }
-  else if(payment_allocation_status == 'partially_allocated'){
+  else if(payment_allocation_status == 'partially_allocated' || payment_allocation_status == 'Partially Allocated'){
     return productionProcessTooltipEnum.PAYMENT_ALLOCATION_STATUS_PARTIALLY_ALLOCATED;
   }
-  else if(payment_allocation_status == 'fully_allocated'){
+  else if(payment_allocation_status == 'fully_allocated' || payment_allocation_status == 'Fully Allocated'){
     return productionProcessTooltipEnum.PAYMENT_ALLOCATION_STATUS_FULLY_ALLOCATED;
   }
 }
