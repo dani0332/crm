@@ -8,6 +8,7 @@ use App\Enums\DatabaseColumnsString;
 use App\Enums\DefaultAdvisorEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\HealthTeamType;
+use App\Enums\LeadSourceEnum;
 use App\Enums\LeadSourceTypes;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
@@ -1438,7 +1439,7 @@ class HealthQuoteService extends BaseService
                 'quoteUID' => $request->quoteUID,
                 'update' => true,
                 'plans' => [$plansArray],
-                'callSource' => 'IMCRM'
+                'callSource' => LeadSourceEnum::IMCRM,
             ];
 
             $response = Ken::request('/save-manual-health-quote-plans', 'POST', $dataArray);
