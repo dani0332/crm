@@ -219,6 +219,8 @@ final class PermissionsEnum extends Enum
     public const UtmLeadsSalesReport = 'utm-leads-sales-report';
     public const TeamThresholdView = 'team-allocation-threshold-view';
     public const CarRevivalQuoteList = 'carrevival-quotes-list';
+    public const CAR_REVIVAL_QUOTES_EDIT = 'carrevival-quotes-edit';
+    public const CAR_REVIVAL_QUOTES_SHOW = 'carrevival-quotes-show';
     public const ViewTeamsFilters = 'view-teams-filters';
     public const EXPORT_NO_CONTACTINFO = 'export-no-contactinfo';
     public const COMMERCIAL_KEYWORDS = 'admin-commercial-keywords';
