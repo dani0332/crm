@@ -493,7 +493,7 @@ const dateFormat = date => {
               <dt class="font-medium">
                 {{ profile_data?.title }}
               </dt>
-              <dd>{{ profile_data?.value }}</dd>
+              <dd class="break-words">{{ profile_data?.value }}</dd>
             </div>
           </div>
         </dl>
