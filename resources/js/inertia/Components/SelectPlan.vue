@@ -117,7 +117,7 @@ const updateSelectedPlan = () => {
         });
 }
 
-watch(() => props.plan, () => {
+watch(() => {
     if(props.quoteType.toLowerCase() == 'health') {
         let premiumCalculate = (props.plan?.actualPremium + (props.plan?.policyFee || 0) + (props.plan?.basmah || 0) + props.plan?.vat + (props.plan?.loadingPrice || 0));
         isPlanSelectionEnable.value = premiumCalculate > 0 && can(permissionEnum.AVAILABLE_PLANS_SELECT_BUTTON);
