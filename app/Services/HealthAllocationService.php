@@ -75,14 +75,12 @@ class HealthAllocationService extends AllocationService
 
         if ($healthTeam) {
             info('assignHealthTeamBasedOnStartingPrice filtered team is : '.$healthTeam->name);
-            $lead->update([
-                'health_team_type' => $healthTeam->name,
-            ]);
+            $lead->health_team_type = $healthTeam->name;
+            $lead->save();
         } else {
             info('assignHealthTeamBasedOnStartingPrice team not found against : '.$lead->uuid);
-            $lead->update([
-                'is_error_email_sent' => true,
-            ]);
+            $lead->is_error_email_sent = true;
+            $lead->save();
             Mail::send(new HealthAssignmentIssueEmail($lead->code, $priceStartingFrom));
         }
     }

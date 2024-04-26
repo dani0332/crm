@@ -20,7 +20,8 @@ trait RolePermissionConditions
         $isCarManager = Auth::user()->isCarManager();
         $isCarAdvisor = Auth::user()->isCarAdvisor();
         $isAdvisor = Auth::user()->isAdvisor();
-        
+        $isAdmin = Auth::user()->isAdmin();
+
         if ($isRenewalAdvisor) {
             $query->whereNotNull($prefix.'.'.'previous_quote_policy_number');
             $query->where($prefix.'.'.'advisor_id', Auth::user()->id);
@@ -31,6 +32,10 @@ trait RolePermissionConditions
             $query->whereIn($prefix.'.'.'advisor_id', $ids);
         }
         if ($isNewAdvisor) {
+            $query->where($prefix.'.'.'advisor_id', Auth::user()->id);
+            $query->whereNull($prefix.'.'.'previous_quote_policy_number');
+        }
+        if($isAdvisor ){
             $query->where($prefix.'.'.'advisor_id', Auth::user()->id);
             $query->whereNull($prefix.'.'.'previous_quote_policy_number');
         }
@@ -53,15 +58,16 @@ trait RolePermissionConditions
                 }
             }
             // This condition allows cross-LOB access if a user possesses two roles, such as health manager and car manager.
-            if (!($isHealthManager && $isCarManager && $restrictedQuoteType == quoteTypeCode::Health)) {
+            if (!($isHealthManager && $restrictedQuoteType == quoteTypeCode::Health)) {
                 $query->where(function ($qry) use ($prefix, $carUserIds) {
                     $qry->whereNotIn($prefix.'.'.'advisor_id', $carUserIds)
                         ->OrWhereNull($prefix.'.'.'advisor_id');
                 });
             }
             // This condition allows cross-LOB access if a user possesses two roles, such as health manager and car manager.
-            if($isHealthManager && $isCarManager && $restrictedQuoteType == quoteTypeCode::Health){
+            if($isHealthManager  && $restrictedQuoteType == quoteTypeCode::Health && !$isAdmin){
                 $ids = $this->associateAdvisorsWithManager(Auth::user()->id);
+                $ids[] = Auth::user()->id;
                 $query->whereIn($prefix.'.'.'advisor_id', $ids);
             }
         }
