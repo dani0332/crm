@@ -92,8 +92,8 @@ const onSubmit = isValid => {
     </template>
     <template #item-is_active="{ is_active }">
       <div class="text-center">
-        <x-tag size="sm" :color="is_active ? 'success' : 'error'">
-          {{ is_active ? 'Yes' : 'No' }}
+        <x-tag size="sm" :color="is_active == 'True' ? 'success' : 'error'">
+          {{ is_active == 'True' ? 'Yes' : 'No' }}
         </x-tag>
       </div>
     </template>

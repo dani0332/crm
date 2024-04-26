@@ -56,7 +56,6 @@ use App\Repositories\EmbeddedProductRepository;
 use App\Repositories\InsuranceProviderRepository;
 use App\Repositories\LookupRepository;
 use App\Repositories\NationalityRepository;
-use App\Repositories\PaymentRepository;
 use App\Repositories\RenewalBatchRepository;
 use App\Repositories\SendUpdateLogRepository;
 use App\Repositories\UserRepository;
@@ -420,19 +419,22 @@ class CRUDController extends Controller
         }
         $request->dob = isset($request->dob) ? Carbon::parse($request->dob)->format('Y-m-d') : null;
 
-        // new ui enabled
-        if ($modelType == quoteTypeCode::Home && in_array($modelType, newUi())) {
+        if ($modelType == quoteTypeCode::Health || $modelType == quoteTypeCode::Car || $modelType == quoteTypeCode::Travel || $modelType == quoteTypeCode::Home) {
             $validateArray = [];
             if ($request->has('first_name')) {
                 $this->validate($request, [
-                    'first_name' => 'required|max:255',
+                    'first_name' => 'required|between:1,20',
                 ]);
             }
             if ($request->has('last_name')) {
                 $this->validate($request, [
-                    'last_name' => 'required|max:255',
+                    'last_name' => 'required|between:1,50',
                 ]);
             }
+        }
+        // new ui enabled
+        if ($modelType == quoteTypeCode::Home && in_array($modelType, newUi())) {
+            $validateArray = [];
             if ($request->has('ilivein_accommodation_type_id')) {
                 $this->validate($request, [
                     'ilivein_accommodation_type_id' => 'required|exists:home_accommodation_type,id',
@@ -654,7 +656,7 @@ class CRUDController extends Controller
 
             [$allowQuoteLogAction, $carLostChangeStatus, $leadStatuses] = $this->carQuoteService->checkCarLostPermissions($record, $paymentEntityModel, $leadStatuses);
 
-            if ($record->source != LeadSourceEnum::RENEWAL_UPLOAD || auth()->user()->hasRole(RolesEnum::CarManager)) {
+            if (($record->source != LeadSourceEnum::RENEWAL_UPLOAD || auth()->user()->hasRole(RolesEnum::CarManager)) && $leadStatuses != null) {
                 $leadStatuses = $leadStatuses->whereNotIn('id', [QuoteStatusEnum::CarSold, QuoteStatusEnum::Uncontactable])->all();
             }
 
@@ -1789,74 +1791,61 @@ class CRUDController extends Controller
         if (! $quoteModel) {
             return response()->json(['success' => false]);
         }
-        if ($request->new_payment_structure) {
-            if (! (auth()->user()->can(PermissionsEnum::PaymentsCreate))) {
-                return;
-            }
-            PaymentRepository::createNewPayment($request, $quoteModel);
-        } else {
-            $paymentInformation = [
-                'collection_type' => $request->collection_type,
-                'captured_amount' => $request->captured_amount,
-                'payment_methods_code' => $request->payment_methods,
-                'payment_status_id' => PaymentStatusEnum::DRAFT,
-                'plan_id' => ! empty($request->plan_id) ? $request->plan_id : null,
-                'insurance_provider_id' => ! empty($request->insurance_provider_id) ? $request->insurance_provider_id : null,
-                'created_by' => $request->user()->id,
-                'updated_by' => $request->user()->id,
-            ];
+        $paymentInformation = [
+            'collection_type' => $request->collection_type,
+            'captured_amount' => $request->captured_amount,
+            'payment_methods_code' => $request->payment_methods,
+            'payment_status_id' => PaymentStatusEnum::DRAFT,
+            'plan_id' => ! empty($request->plan_id) ? $request->plan_id : null,
+            'insurance_provider_id' => ! empty($request->insurance_provider_id) ? $request->insurance_provider_id : null,
+            'created_by' => $request->user()->id,
+            'updated_by' => $request->user()->id,
+        ];
 
-            $count = $quoteModel->payments->count();
-            $paymentInformation['code'] = ($count > 0) ? $quoteModel->code.'-'.$count : $quoteModel->code;
+        $count = $quoteModel->payments->count();
+        $paymentInformation['code'] = ($count > 0) ? $quoteModel->code.'-'.$count : $quoteModel->code;
 
-            if ($request->reference) {
-                $paymentInformation['reference'] = $request->reference;
-            }
-            if ($request->payment_methods != PaymentMethodsEnum::CreditCard && $request->payment_methods != PaymentMethodsEnum::InsureNowPayLater) {
-                $paymentInformation['authorized_at'] = now();
-            }
-            $payment = Payment::create($paymentInformation);
-            $quoteModel->payments()->save($payment);
-            $paymentLog = new PaymentStatusLog([
-                'current_payment_status_id' => PaymentStatusEnum::DRAFT,
-                'payment_code' => $paymentInformation['code'],
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
-            $paymentLog->save();
-            $quoteModel->quote_status_id = QuoteStatusEnum::PaymentPending;
-            $quoteModel->save();
-
-            return back()->with('success', 'Payment has been created');
+        if ($request->reference) {
+            $paymentInformation['reference'] = $request->reference;
         }
+        if ($request->payment_methods != PaymentMethodsEnum::CreditCard && $request->payment_methods != PaymentMethodsEnum::InsureNowPayLater) {
+            $paymentInformation['authorized_at'] = now();
+        }
+        $payment = Payment::create($paymentInformation);
+        $quoteModel->payments()->save($payment);
+        $paymentLog = new PaymentStatusLog([
+            'current_payment_status_id' => PaymentStatusEnum::DRAFT,
+            'payment_code' => $paymentInformation['code'],
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        $paymentLog->save();
+        $quoteModel->quote_status_id = QuoteStatusEnum::PaymentPending;
+        $quoteModel->save();
+
+        return back()->with('success', 'Payment has been created');
     }
 
     public function updatePayment(UpdatePaymentRequest $request)
     {
-        if ($request->new_payment_structure) {
-            if (! (auth()->user()->can(PermissionsEnum::PaymentsEdit))) {
-                return;
-            }
-            PaymentRepository::updateNewPayment($request);
-        } else {
-            $paymentInformation = [
-                'collection_type' => $request->collection_type,
-                'captured_amount' => $request->captured_amount,
-                'payment_methods_code' => $request->payment_methods,
-                'insurance_provider_id' => $request->insurance_provider_id,
-                'updated_by' => $request->user()->id,
-            ];
-            if ($request->reference) {
-                $paymentInformation['reference'] = $request->reference;
-            }
-            $payment = Payment::where('code', $request->paymentCode)->first();
-            if (! $payment) {
-                return back()->with('message', 'Payment record not found');
-            }
-            $payment->update($paymentInformation);
-
-            return back()->with('success', 'Payment has been updated');
+        $paymentInformation = [
+            'collection_type' => $request->collection_type,
+            'captured_amount' => $request->captured_amount,
+            'payment_methods_code' => $request->payment_methods,
+            'insurance_provider_id' => $request->insurance_provider_id,
+            'updated_by' => $request->user()->id,
+        ];
+        if ($request->reference) {
+            $paymentInformation['reference'] = $request->reference;
         }
+        $payment = Payment::where('code', $request->paymentCode)->first();
+        if (! $payment) {
+            return back()->with('message', 'Payment record not found');
+        }
+        $payment->update($paymentInformation);
+
+        return back()->with('success', 'Payment has been updated');
+
     }
 
     public function sendEmailOneClickBuy(Request $request)
@@ -1915,7 +1904,6 @@ class CRUDController extends Controller
 
             return response()->json(['error' => 'OCB email sending failed, please try again.'], 500);
         }
-
     }
 
     public function manualTierAssignment(Request $request)

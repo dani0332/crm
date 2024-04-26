@@ -8,6 +8,7 @@ use App\Models\ClaimsStatus;
 use DataTables;
 use Illuminate\Http\Request;
 
+// Scheduled to delete 15th April 2024
 class ClaimsStatusController extends Controller
 {
     public function __construct()
@@ -53,7 +54,7 @@ class ClaimsStatusController extends Controller
     /**
      * Store a newly created resource in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
+     * @param  Request  $request
      * @return \Illuminate\Http\Response
      */
     public function store(ClaimStatusRequest $request, ClaimsStatus $claimsstatus)
@@ -71,7 +72,7 @@ class ClaimsStatusController extends Controller
     /**
      * Display the specified resource.
      *
-     * @param  \App\Models\ClaimsStatus  $claimsStatus
+     * @param  ClaimsStatus  $claimsStatus
      * @return \Illuminate\Http\Response
      */
     public function show(ClaimsStatus $claimsstatus)
@@ -84,7 +85,7 @@ class ClaimsStatusController extends Controller
     /**
      * Show the form for editing the specified resource.
      *
-     * @param  \App\Models\ClaimsStatus  $claimsStatus
+     * @param  ClaimsStatus  $claimsStatus
      * @return \Illuminate\Http\Response
      */
     public function edit(ClaimsStatus $claimsstatus)
@@ -97,8 +98,8 @@ class ClaimsStatusController extends Controller
     /**
      * Update the specified resource in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \App\Models\ClaimsStatus  $claimsStatus
+     * @param  Request  $request
+     * @param  ClaimsStatus  $claimsStatus
      * @return \Illuminate\Http\Response
      */
     public function update(ClaimStatusRequest $request, ClaimsStatus $claimsstatus)
@@ -116,7 +117,7 @@ class ClaimsStatusController extends Controller
     /**
      * Remove the specified resource from storage.
      *
-     * @param  \App\Models\ClaimsStatus  $claimsStatus
+     * @param  ClaimsStatus  $claimsStatus
      * @return \Illuminate\Http\Response
      */
     public function destroy(ClaimsStatus $claimsstatus)

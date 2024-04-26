@@ -5,12 +5,14 @@ namespace App\Listeners;
 use App\Enums\LeadSourceEnum;
 use App\Events\CarQuoteAdvisorUpdated;
 use App\Jobs\SendOCBIntroEmailJob;
+use App\Models\ApplicationStorage;
 use App\Models\Customer;
 use App\Models\User;
 use App\Services\CarAllocationService;
 use App\Services\CarEmailService;
 use App\Services\HttpRequestService;
 use App\Services\SendSmsCustomerService;
+use App\Services\SIBService;
 
 class HandleCarAdvisorUpdated
 {
@@ -54,6 +56,23 @@ class HandleCarAdvisorUpdated
         $previousAdvisor = User::where('id', $oldAdvisorId)->first();
 
         info('about to trigger intro email job for lead uuid : '.$lead->uuid.' and previous advisor id : '.$oldAdvisorId);
+
+        if ($lead->sic_flow_enabled) {
+
+            $lead->sic_flow_enabled = 0;
+            $lead->save();
+            info('SIC flow is disabled for lead uuid : '.$lead->uuid);
+
+            // We need to trigger stop workflow event for SIC if the lead is in SIC workflow
+            $sicEventName = ApplicationStorage::where('key_name', 'SIC_END_WORKFLOW_NAME')->first();
+            if ($sicEventName) {
+                SIBService::createWorkflowEvent($sicEventName->value, $lead);
+                info('SIC workflow stopped for lead uuid : '.$lead->uuid);
+            } else {
+                info('SIC workflow key not found');
+            }
+
+        }
 
         SendOCBIntroEmailJob::dispatch($lead->uuid, $previousAdvisor);
 
