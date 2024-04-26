@@ -8,7 +8,6 @@ class SagePayloadFactory
 {
     public static function createPayload($request, $leadStatus)
     {
-        dd($request);
         $request->discount = floatval($request->discount);
         $request->insurerInvoiceDate = date('Y-m-d', strtotime($request->insurerInvoiceDate));
         $request->paymentDueDate = date('Y-m-d', strtotime($request->paymentDueDate));
