@@ -112,7 +112,7 @@ class SendUpdateLogRepository extends BaseRepository
     public function fetchUpdateLog($id, $data)
     {
         try {
-            $log = $this->where('id', $id)->update([
+            $log = $this->find($id)->update([
                 'notes' => $data['notes'],
                 'option_id' => $data['option_id'],
             ]);
@@ -139,7 +139,7 @@ class SendUpdateLogRepository extends BaseRepository
     public function fetchUpdateLogPriceDetails($data)
     {
         try {
-            $result = $this->where('id', $data['id'])->update([
+            $result = $this->find($data['id'])->update([
                 'total_price' => $data['total_price'],
                 'price_with_vat' => $data['price_with_vat'],
                 'price_without_vat' => $data['price_without_vat'],
@@ -252,7 +252,7 @@ class SendUpdateLogRepository extends BaseRepository
             if ($request['send_update_type'] == SendUpdateLogStatusEnum::CPD) {
                 $data = array_merge($data, ['reversal_invoice' => $request['reversal_invoice']]);
             }
-            $res = $this->where('id', $request['id'])->update($data);
+            $res = $this->find($request['id'])->update($data);
         } catch (\Exception $ex) {
             $res = (object) [
                 'message' => $ex->getMessage(),
