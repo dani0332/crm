@@ -358,8 +358,8 @@ class CentralController extends Controller
             if (! $repository->advisor_id) {
                 return response()->json(['message' => 'Current Lead has no advisor. Please assign advisor to this Lead'], 500);
             }
-            $repository->activities()->where('status', 0)->update(['status' => 1]);
-            $repository->update(['quote_status_id' => $dataTo['quote_status_id'], 'quote_status_date' => now()]);
+            
+            $repository->update(['quote_status_id' => $dataTo['quote_status_id'], 'quote_status_date' => now(), 'stale_at' => null]);
 
             if ($dataTo['quote_status_id'] == QuoteStatusEnum::Lost && $dataFrom['quoteTypeId'] == QuoteTypeId::Health) {
                 HealthQuoteRequestDetail::updateOrCreate(['health_quote_request_id' => $repository->id], ['lost_reason_id' => $dragAndDropUpdateLeadStatusRequest->get('data')['to']['lost_reason']]);

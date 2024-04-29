@@ -444,6 +444,7 @@ class CentralService
 
         $advisorDetails = User::with('usersroles', 'teams')->where('id', $quoteDetails->advisor_id)->first();
 
+        
         $lastActivity = Activities::where(
             'quote_request_id',
             $quoteDetails->id,
@@ -451,21 +452,22 @@ class CentralService
 
         $lastActivityDueDateIsGreater = false;
 
-        if ($lastActivity && Carbon::parse($lastActivity->due_date)->format('d-m-Y') > now()->format('d-m-Y')) {
-            $lastActivityDueDateIsGreater = true;
-        }
-
-        if ($quoteDetails->previousStatusIdChanged) {
-            Activities::where(['quote_request_id' => $quoteDetails->id])->update(['status' => 1]);
-            $lastActivityDueDateIsGreater = false;
-        }
-
-        if ($lastActivity && $lastActivity->status) {
-            $lastActivityDueDateIsGreater = false;
-        }
-
-        if (($lastActivity && $lastActivity->is_cold) || ($lastActivity && Carbon::parse($lastActivity->due_date)->format('d-m-Y') <= now()->format('d-m-Y'))) {
-            Activities::where(['quote_request_id' => $quoteDetails->id])->update(['status' => 1]);
+        if ($lastActivity) {
+            // Check if the due date is greater than today's date
+            if (Carbon::parse($lastActivity->due_date)->greaterThan(now()->format('d-m-Y'))) {
+                $lastActivityDueDateIsGreater = true;
+            }
+        
+            // If the status ID has changed, update all activities' status for the current quote
+            if ($quoteDetails->previousStatusIdChanged || !$lastActivity->status) {
+                Activities::where('quote_request_id', $quoteDetails->id)->update(['status' => 1]);
+                $lastActivityDueDateIsGreater = false;
+            }
+        
+            // Check if the activity is cold or its due date is not greater than today's date
+            if ($lastActivity->is_cold || Carbon::parse($lastActivity->due_date)->lessThanOrEqualTo(now()->format('d-m-Y'))) {
+                Activities::where('quote_request_id', $quoteDetails->id)->update(['status' => 1]);
+            }
         }
 
         // ->where('due_date', '<', now())
@@ -498,6 +500,7 @@ class CentralService
                 })
                 ->orderBy('sorting_order')
                 ->first();
+               
         }
 
         if ($getActivitySchedule && $quoteDetails->advisor_id && !$lastActivityDueDateIsGreater) {
@@ -517,10 +520,8 @@ class CentralService
                 'quote_uuid' => $quoteDetails->uuid,
                 'activity_schedule_id' => $getActivitySchedule->id,
             ]);
-
             return $activity;
         }
-
         return false;
     }
 }
