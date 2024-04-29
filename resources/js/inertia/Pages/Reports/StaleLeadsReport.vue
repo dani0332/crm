@@ -152,6 +152,7 @@ const onSubmit = isValid => {
 
   const filtersCleaned = cleanObj(filters);
 
+  tableHeader.value = [];
   router.visit(route('stale-leads-report'), {
     method: 'get',
     data: {
@@ -404,7 +405,7 @@ watch(
       <ColumnSelection
         v-model:columns="tableHeader"
         :storage-key="`staleleads-report-${selectedLob}`"
-        withoutStorage
+        v-if="tableHeader.length > 0"
       />
       <x-button size="sm" color="#ff5e00" type="submit">Search</x-button>
       <x-button size="sm" color="primary" @click.prevent="onReset">
