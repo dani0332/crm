@@ -162,6 +162,10 @@ watch(() => policyDetailsForm.insurance_provider_id, (providerId) => {
   }
 });
 
+const isMobile = computed(() => {
+  return window.innerWidth <= 768; // Adjust the breakpoint as needed
+});
+
 </script>
 
 <template>
@@ -175,10 +179,10 @@ watch(() => policyDetailsForm.insurance_provider_id, (providerId) => {
       <template #body>
         <x-divider class="my-4" />
         <div class="text-sm">
-          <dl class="grid md:grid-cols-2 gap-y-4">
+          <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
             <!-- First name -->
             <div class="grid sm:grid-cols-2">
-              <dt class="flex justify-end mr-10">
+              <dt>
                 <x-tooltip position="left">
                   <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
@@ -195,14 +199,15 @@ watch(() => policyDetailsForm.insurance_provider_id, (providerId) => {
 									v-if="isCPD"
                   v-model="policyDetailsForm.first_name"
 									:disabled="!state.isEdit"
+                  class="w-full"
 								/>
 								<span v-else>{{ policyDetailsForm.first_name }}</span>
 							</dd>
             </div>
 
             <!-- Last name -->
-            <div class="grid sm:grid-cols-2 ml-[-250px]">
-              <dt class="flex justify-end mr-10">
+            <div class="grid sm:grid-cols-2">
+              <dt>
                 <x-tooltip position="left">
                   <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
@@ -219,6 +224,7 @@ watch(() => policyDetailsForm.insurance_provider_id, (providerId) => {
 									v-if="isCPD"
                   v-model="policyDetailsForm.last_name"
 									:disabled="!state.isEdit"
+                  class="w-full"
 								/>
 								<span v-else>{{ policyDetailsForm.last_name }}</span>
 							</dd>
@@ -226,7 +232,7 @@ watch(() => policyDetailsForm.insurance_provider_id, (providerId) => {
 
             <!-- Provider Name -->
             <div class="grid sm:grid-cols-2">
-              <dt class="flex justify-end mr-10">
+              <dt>
                 <x-tooltip position="left">
                   <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
@@ -252,8 +258,8 @@ watch(() => policyDetailsForm.insurance_provider_id, (providerId) => {
             </div>
 
             <!-- Plan Name -->
-            <div class="grid sm:grid-cols-2 ml-[-250px]">
-              <dt class="flex justify-end mr-10">
+            <div class="grid sm:grid-cols-2">
+              <dt>
                 <x-tooltip position="left">
                   <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
@@ -280,7 +286,7 @@ watch(() => policyDetailsForm.insurance_provider_id, (providerId) => {
 
             <!-- Policy Number -->
             <div class="grid sm:grid-cols-2">
-              <dt class="flex justify-end mr-10">
+              <dt>
                 <x-tooltip position="left">
                   <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
@@ -299,14 +305,15 @@ watch(() => policyDetailsForm.insurance_provider_id, (providerId) => {
 									v-model="policyDetailsForm.policy_number"
 									type="number"
                   placeholder="Enter policy number"
+                  class="w-full"
 								/>
 								<span v-else>{{ policyDetailsForm.policy_number }}</span>
 							</dd>
             </div>
 
 						<!-- Issuance Date -->
-            <div class="grid sm:grid-cols-2 ml-[-250px]">
-              <dt class="flex justify-end mr-10">
+            <div class="grid sm:grid-cols-2">
+              <dt>
                 <x-tooltip position="left">
                   <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
@@ -325,7 +332,7 @@ watch(() => policyDetailsForm.insurance_provider_id, (providerId) => {
                   name="issuance_date"
                   :disabled="!state.isEdit"
                   placeholder="dd-mm-yyyy"
-                  class="w-1/2"
+                  class="w-full"
                 />
 								<span v-else>{{ policyDetailsForm.issuance_date }}</span>
 							</dd>
@@ -333,7 +340,7 @@ watch(() => policyDetailsForm.insurance_provider_id, (providerId) => {
 
 						<!-- Start Date -->
             <div class="grid sm:grid-cols-2">
-              <dt class="flex justify-end mr-10">
+              <dt>
                 <x-tooltip position="left">
                   <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
@@ -352,15 +359,15 @@ watch(() => policyDetailsForm.insurance_provider_id, (providerId) => {
                   name="start_date"
                   :disabled="!state.isEdit"
                   placeholder="dd-mm-yyyy"
-                  class="w-[69%]"
+                  class="w-full"
                 />
 								<span v-else>{{ policyDetailsForm.start_date }}</span>
 							</dd>
             </div>
 
 						<!-- Expiry Date -->
-            <div class="grid sm:grid-cols-2 ml-[-250px]">
-              <dt class="flex justify-end mr-10">
+            <div class="grid sm:grid-cols-2">
+              <dt>
                 <x-tooltip position="left">
                   <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
@@ -378,14 +385,14 @@ watch(() => policyDetailsForm.insurance_provider_id, (providerId) => {
                   name="expiry_date"
                   :disabled="!state.isEdit"
                   placeholder="dd-mm-yyyy"
-                  class="w-1/2"
+                  class="w-full"
                 />
 							</dd>
             </div>
 
 						<!-- Insurer Quote Number -->
             <div class="grid sm:grid-cols-2">
-              <dt class="flex justify-end mr-10">
+              <dt>
                 <x-tooltip position="left">
                   <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
@@ -403,14 +410,15 @@ watch(() => policyDetailsForm.insurance_provider_id, (providerId) => {
                     :disabled="!state.isEdit"
                     v-model="policyDetailsForm.insurer_quote_number"
                     placeholder="Enter Insurer Quote number"
+                    class="w-full"
                 />
                 <span v-else>{{ policyDetailsForm.insurer_quote_number }}</span>
               </dd>
             </div>
 
 						<!-- Issuance Status -->
-            <div class="grid sm:grid-cols-2 ml-[-250px]">
-              <dt class="flex justify-end mr-10">
+            <div class="grid sm:grid-cols-2">
+              <dt>
                 <x-tooltip position="left">
                   <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
@@ -423,14 +431,15 @@ watch(() => policyDetailsForm.insurance_provider_id, (providerId) => {
                 </x-tooltip>
               </dt>
               <dd>
-								<x-select
-									v-if="isCPD"
-									:disabled="!state.isEdit"
-                  :options="issuanceStatusOptions"
-                  v-model="policyDetailsForm.issuance_status_id"
-                  placeholder="Select Status"
-                  class="w-1/2"
-								/>
+                <ComboBox
+                    v-if="isCPD"
+                    v-model="policyDetailsForm.issuance_status_id"
+                    :options="issuanceStatusOptions"
+                    placeholder="Select Status"
+                    :single="true"
+                    :disabled="!state.isEdit"
+                    class="w-fit"
+                />
                 <span v-else>{{ issuanceStatusText(policyDetailsForm.issuance_status_id) ?? 'N/A' }}</span>
 							</dd>
             </div>
