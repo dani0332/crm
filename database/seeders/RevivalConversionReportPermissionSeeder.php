@@ -20,7 +20,7 @@ class RevivalConversionReportPermissionSeeder extends Seeder
     {
         // revival section permission
 
-        $revivalPermissions = [PermissionsEnum::CarRevivalQuoteList, PermissionsEnum::CAR_REVIVAL_QUOTES_EDIT, PermissionsEnum::CAR_REVIVAL_QUOTES_SHOW, PermissionsEnum::RevivalConversionReportView];
+        $revivalPermissions = [PermissionsEnum::CarRevivalQuoteList, PermissionsEnum::CAR_REVIVAL_QUOTES_EDIT, PermissionsEnum::CAR_REVIVAL_QUOTES_SHOW, PermissionsEnum::REVIVAL_CONVERSION_REPORT_VIEW];
 
         foreach ($revivalPermissions as $item) {
 
@@ -40,10 +40,37 @@ class RevivalConversionReportPermissionSeeder extends Seeder
             $permissionId = Permission::where('name', $item)->first()->id;
 
             if ($permissionId) {
-                // assign permission to admin and beta user
+
+                // assign permission to admin car-arevival advisor/manager and beta user
+
+                $carRevivalAdvisor = Role::where('name', RolesEnum::CarRevivalAdvisor)->first();
+                if (!empty($carRevivalAdvisor)) {
+                    $record = DB::table('role_has_permissions')->where('role_id', $carRevivalAdvisor->id)->where('permission_id', $permissionId)->first();
+                    if (empty($record)) {
+                        DB::table('role_has_permissions')->insert(
+                            [
+                                'role_id' => $carRevivalAdvisor->id,
+                                'permission_id' => $permissionId,
+                            ]
+                        );
+                    }
+                }
+
+                $carRevivalManager = Role::where('name', RolesEnum::CarRevivalManager)->first();
+                if (!empty($carRevivalManager)) {
+                    $record = DB::table('role_has_permissions')->where('role_id', $carRevivalManager->id)->where('permission_id', $permissionId)->first();
+                    if (empty($record)) {
+                        DB::table('role_has_permissions')->insert(
+                            [
+                                'role_id' => $carRevivalManager->id,
+                                'permission_id' => $permissionId,
+                            ]
+                        );
+                    }
+                }
 
                 $adminRole = Role::where('name', RolesEnum::Admin)->first();
-                if (! empty($adminRole)) {
+                if (!empty($adminRole)) {
                     $record = DB::table('role_has_permissions')->where('role_id', $adminRole->id)->where('permission_id', $permissionId)->first();
                     if (empty($record)) {
                         DB::table('role_has_permissions')->insert(
@@ -56,7 +83,7 @@ class RevivalConversionReportPermissionSeeder extends Seeder
                 }
 
                 $betaUserRole = Role::where('name', RolesEnum::BetaUser)->first();
-                if (! empty($betaUserRole)) {
+                if (!empty($betaUserRole)) {
                     $record = DB::table('role_has_permissions')->where('role_id', $betaUserRole->id)->where('permission_id', $permissionId)->first();
                     if (empty($record)) {
                         DB::table('role_has_permissions')->insert(

@@ -15,7 +15,6 @@ use App\Enums\QuoteTypeId;
 use App\Enums\RolesEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\CarRevivalQuoteRequest;
-use App\Models\GenericModel;
 use App\Models\User;
 use App\Repositories\CarRevivalQuoteRepository;
 use App\Services\ActivitiesService;
@@ -31,37 +30,11 @@ use Illuminate\Http\Request;
 
 class CarRevivalQuoteController extends Controller
 {
-    protected $genericModel;
-    protected $dropdownSourceService;
-    protected $carQuoteService;
-    protected $crudService;
-    protected $activityService;
-    protected $customerService;
-    protected $quoteDocumentService;
-    protected $lookupService;
 
     use GenericQueriesAllLobs;
 
-    public function __construct(
-        CRUDService $crudService,
-        DropdownSourceService $dropdownSourceService,
-        CarQuoteService $carQuoteService,
-        Request $request,
-        ActivitiesService $activityService,
-        CustomerService $customerService,
-        QuoteDocumentService $quoteDocumentService,
-        LookupService $lookupService,
-    ) {
-        $this->genericModel = new GenericModel();
-        $this->crudService = $crudService;
-        $this->dropdownSourceService = $dropdownSourceService;
-        $this->carQuoteService = $carQuoteService;
-        $this->activityService = $activityService;
-        $this->customerService = $customerService;
-        $this->quoteDocumentService = $quoteDocumentService;
-        $this->lookupService = $lookupService;
-        $this->setModelType($request);
-        $this->fillModelByModelType(ucwords($this->genericModel->modelType), $request);
+    public function __construct()
+    {
     }
 
     /**
@@ -97,54 +70,42 @@ class CarRevivalQuoteController extends Controller
 
     public function show($id, Request $request)
     {
-        if (strrpos(request()->getRequestUri(), '/') === strlen(request()->getRequestUri()) - 1) {
-            return redirect(request()->url());
-        }
-        $quoteType = strtolower($this->genericModel->modelType);
-        $quoteTypeId = $this->activityService->getQuoteTypeId($quoteType);
+        $quoteType = quoteTypeCode::Car;
+
+        $quoteTypeId = app(ActivitiesService::class)->getQuoteTypeId($quoteType);
         $paymentTooltipEnum = PaymentTooltip::asArray();
 
-        $record = $this->crudService->getEntity($this->genericModel->modelType, $id);
+        $record = app(CRUDService::class)->getEntity($quoteType, $id);
+        abort_if(!$record, 404);
+        $leadStatuses = app(DropdownSourceService::class)->getDropdownSource('quote_status_id', $quoteTypeId);
 
-        abort_if(! $record, 404);
-        $leadStatuses = $this->dropdownSourceService->getDropdownSource('quote_status_id', $quoteTypeId);
-        $model = $this->genericModel;
+
         if (AMLService::checkAMLStatusFailed($quoteTypeId, $record->id)) {
             $leadStatuses = collect($leadStatuses)->filter(function ($value) {
                 return $value['id'] != QuoteStatusEnum::TransactionApproved;
             })->values();
         }
         $advisors = [];
-        if (
-            ! (auth()->user()->hasAnyRole([RolesEnum::CarManager, RolesEnum::CarAdvisor])) &&
-            strtolower($this->genericModel->modelType) == strtolower(quoteTypeCode::Health) && ($record->health_team_type == HealthTeamType::EBP ||
-                $record->health_team_type == HealthTeamType::RM_NB || $record->health_team_type == HealthTeamType::RM_SPEED)
-        ) {
-            $advisors = $this->crudService->getEBPAndRMAdvisors();
-        } elseif (strtolower($this->genericModel->modelType) == 'business') {
-            $advisors = $this->crudService->getRMAndBusinessAdvisors();
-        } else {
-            $advisors = $this->crudService->getAdvisorsByModelType($this->genericModel->modelType);
-        }
+        $advisors = app(CRUDService::class)->getAdvisorsByModelType($quoteType);
 
-        $documentTypes = $this->quoteDocumentService->getQuoteDocumentsForUpload(QuoteTypeId::Car);
+        $documentTypes = app(QuoteDocumentService::class)->getQuoteDocumentsForUpload(QuoteTypeId::Car);
 
-        $lostReasons = $this->lookupService->getLostReasons();
+        $lostReasons = app(LookupService::class)->getLostReasons();
 
-        $paymentEntityModel = $this->{strtolower($this->genericModel->modelType).'QuoteService'}->getEntityPlain($record->id);
+        $paymentEntityModel = app(CarQuoteService::class)->getEntityPlain($record->id);
         $payments = $paymentEntityModel->payments;
 
-        $paymentMethods = $this->lookupService->getPaymentMethods();
+        $paymentMethods = app(LookupService::class)->getPaymentMethods();
 
-        $listQuotePlans = $this->carQuoteService->getPlans($id);
-        $quoteDocuments = $this->quoteDocumentService->getQuoteDocuments($model->modelType, $record->id);
+        $listQuotePlans = app(CarQuoteService::class)->getPlans($id);
+        $quoteDocuments = app(QuoteDocumentService::class)->getQuoteDocuments($quoteType, $record->id);
 
-        $displaySendPolicyButton = (bool) $this->quoteDocumentService->showSendPolicyButton($record, $quoteDocuments, $quoteTypeId);
+        $displaySendPolicyButton = (bool) app(QuoteDocumentService::class)->showSendPolicyButton($record, $quoteDocuments, $quoteTypeId);
 
-        $cdnPath = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
+        $cdnPath = config('constants.AZURE_IM_STORAGE_URL') . config('constants.AZURE_IM_STORAGE_CONTAINER') . '/';
         $ecomCarInsuranceQuoteUrl = config('constants.ECOM_CAR_INSURANCE_QUOTE_URL');
 
-        $activitiesData = $this->activityService->getActivityByLeadId($record->id, strtolower($model->modelType));
+        $activitiesData = app(ActivitiesService::class)->getActivityByLeadId($record->id, strtolower($quoteType));
         $activities = [];
         foreach ($activitiesData as $activity) {
             $updatedActivity = [
@@ -164,7 +125,7 @@ class CarRevivalQuoteController extends Controller
             array_push($activities, $updatedActivity);
         }
 
-        $customerAdditionalContacts = $this->customerService->getAdditionalContacts($record->customer_id, $record->mobile_no);
+        $customerAdditionalContacts = app(CustomerService::class)->getAdditionalContacts($record->customer_id, $record->mobile_no);
         $storageUrl = storageUrl();
         $paymentStatusEnum = PaymentStatusEnum::asArray();
 
@@ -180,7 +141,7 @@ class CarRevivalQuoteController extends Controller
             'carPlanAddonsCode' => CarPlanAddonsCode::asArray(),
             'quoteType' => quoteTypeCode::Car,
             'can' => [
-                'create_payments' => auth()->user()->can(PermissionsEnum::PaymentsCreate) && $paymentEntityModel->plan && ! auth()->user()->hasRole(RolesEnum::PA),
+                'create_payments' => auth()->user()->can(PermissionsEnum::PaymentsCreate) && $paymentEntityModel->plan && !auth()->user()->hasRole(RolesEnum::PA),
             ],
             'payments' => $payments,
             'quoteRequest' => $paymentEntityModel,
@@ -215,30 +176,5 @@ class CarRevivalQuoteController extends Controller
     {
 
         CarRevivalQuoteRepository::updateQuote($request);
-    }
-
-    private function setModelType(Request $request)
-    {
-        $url = strpos($request->fullUrl(), '?') ? explode('?', $request->fullUrl())[0] : $request->fullUrl();
-
-        if (strpos($url, 'revival')) {
-            $this->genericModel->modelType = 'Car';
-        }
-    }
-
-    private function fillModelByModelType($type, Request $request)
-    {
-        $modelType = json_decode($request->get('modelType'), true) ?? $type;
-        if ($modelType == null) {
-            $modelType = $request->get('modelType');
-        }
-        $ignoreModelTypes = [quoteTypeCode::Bike, quoteTypeCode::Cycle, quoteTypeCode::Yacht];
-        if (! in_array($modelType, $ignoreModelTypes) && $modelType != null) {
-            $quoteTypes = 'Health,Car,Travel,Life,Home,Business,Pet';
-            $serviceType = str_contains($quoteTypes, ucwords($modelType)) ? strtolower($modelType).'QuoteService' : lcfirst(ucwords($modelType)).'Service';
-            $this->genericModel->properties = $this->{$serviceType}->fillModelProperties();
-            $this->genericModel->skipProperties = $this->{$serviceType}->fillModelSkipProperties();
-            $this->genericModel->searchProperties = $this->{$serviceType}->fillModelSearchProperties();
-        }
     }
 }

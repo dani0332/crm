@@ -14,7 +14,6 @@ use App\Models\DttRevival;
 use App\Models\Tier;
 use App\Services\CarEmailService;
 use App\Services\CarQuoteService;
-use App\Services\CRUDService;
 use App\Services\SendEmailCustomerService;
 use App\Services\UserService;
 use App\Traits\GenericQueriesAllLobs;
@@ -31,14 +30,7 @@ class CarRevivalLeadsCreationJob implements ShouldQueue, StackableJob
     use Dispatchable, InteractsWithQueue, Queueable, Stackable;
     use GenericQueriesAllLobs;
 
-    public $tries = 3;
-    public $timeout = 60;
-    public $backoff = 300;
     private $lead = null;
-    protected $sendEmailCustomerService;
-    protected $carQuoteService;
-    protected $crudService;
-    protected $userService;
     /**
      * Create a new job instance.
      *
@@ -54,129 +46,130 @@ class CarRevivalLeadsCreationJob implements ShouldQueue, StackableJob
      *
      * @return void
      */
-    public function handle(SendEmailCustomerService $sendEmailCustomerService, CarQuoteService $carQuoteService, CRUDService $crudService, UserService $userService)
+    public function handle()
     {
-        $this->carQuoteService = $carQuoteService;
-        $this->sendEmailCustomerService = $sendEmailCustomerService;
-        $this->crudService = $crudService;
+        try {
+            $dataArr = [
+                'firstName' => $this->lead->first_name,
+                'lastName' => $this->lead->last_name,
+                'email' => $this->lead->email,
+                // 'email' => 'nouman.hussain@myalfred.com',
+                'address' => $this->lead->address,
+                'mobileNo' => $this->lead->mobile_no,
+                'dob' => $this->lead->dob,
+                'nationalityId' => $this->lead->nationality_id,
+                'uaeLicenseHeldForId' => $this->lead->uae_license_held_for_id,
+                'backHomeLicenseHeldForId' => $this->lead->back_home_license_held_for_id,
+                'yearOfManufacture' => $this->lead->year_of_manufacture,
+                'emirateOfRegistrationId' => $this->lead->emirate_of_registration_id,
+                'carTypeInsuranceId' => $this->lead->car_type_insurance_id,
+                'claimHistoryId' => $this->lead->claim_history_id,
+                'hasNcdSupportingDocuments' => $this->lead->has_ncd_supporting_documents == GenericRequestEnum::Yes ? true : false,
+                'additionalNotes' => $this->lead->additional_notes,
+                'carValue' => (int) $this->lead->car_value,
+                'carValueTier' => $this->lead->car_value_tier,
+                'seatCapacity' => $this->lead->seat_capacity,
+                'cylinder' => $this->lead->cylinder,
+                'vehicleTypeId' => $this->lead->vehicle_type_id,
+                'trim' => $this->lead->trim,
+                'premium' => $this->lead->premium,
+                'carMakeId' => $this->lead->car_make_id,
+                'carModelId' => $this->lead->car_model_id,
+                'currentlyInsuredWith' => $this->lead->currently_insured_with,
+                'source' => LeadSourceEnum::REVIVAL,
+                'isEmailSkip' => true,
+                'referenceUrl' => config('constants.APP_URL'),
+            ];
 
-        $this->userService = $userService;
-        $dataArr = [
-            'firstName' => $this->lead->first_name,
-            'lastName' => $this->lead->last_name,
-            'email' => $this->lead->email,
-            // 'email' => 'nouman.hussain@myalfred.com',
-            'address' => $this->lead->address,
-            'mobileNo' => $this->lead->mobile_no,
-            'dob' => $this->lead->dob,
-            'nationalityId' => $this->lead->nationality_id,
-            'uaeLicenseHeldForId' => $this->lead->uae_license_held_for_id,
-            'backHomeLicenseHeldForId' => $this->lead->back_home_license_held_for_id,
-            'yearOfManufacture' => $this->lead->year_of_manufacture,
-            'emirateOfRegistrationId' => $this->lead->emirate_of_registration_id,
-            'carTypeInsuranceId' => $this->lead->car_type_insurance_id,
-            'claimHistoryId' => $this->lead->claim_history_id,
-            'hasNcdSupportingDocuments' => $this->lead->has_ncd_supporting_documents == GenericRequestEnum::Yes ? true : false,
-            'additionalNotes' => $this->lead->additional_notes,
-            'carValue' => (int) $this->lead->car_value,
-            'carValueTier' => $this->lead->car_value_tier,
-            'seatCapacity' => $this->lead->seat_capacity,
-            'cylinder' => $this->lead->cylinder,
-            'vehicleTypeId' => $this->lead->vehicle_type_id,
-            'trim' => $this->lead->trim,
-            'premium' => $this->lead->premium,
-            'carMakeId' => $this->lead->car_make_id,
-            'carModelId' => $this->lead->car_model_id,
-            'currentlyInsuredWith' => $this->lead->currently_insured_with,
-            'source' => LeadSourceEnum::REVIVAL,
-            'isEmailSkip' => true,
-            'referenceUrl' => config('constants.APP_URL'),
-        ];
+            info('carRevivalParentLead -' . $this->lead->uuid . '- capiPayload - ' . json_encode($dataArr));
 
-        info('carRevivalParentLead-'.$this->lead->uuid);
+            $capiResponse = Capi::request('/api/v1-save-car-quote', 'post', $dataArr);
 
-        info('carRevivalParentLead-'.$this->lead->uuid.'-capiPayload- '.json_encode($dataArr));
+            info('carRevivalParentLead -' . $this->lead->uuid . '- capiResponse -' . json_encode($capiResponse));
+            if (!isset($capiResponse->errors) && !empty($capiResponse->quoteUID)) {
+                info('carRevivalParentLead -' . $this->lead->uuid . '- childLeadCreated - ' . $capiResponse->quoteUID . ' - CAPI Response-' . json_encode($capiResponse));
 
-        $capiResponse = Capi::request('/api/v1-save-car-quote', 'post', $dataArr);
+                $carQuote = $this->getQuoteObject(QuoteTypes::CAR->value, $capiResponse->quoteUID);
 
-        info('carRevivalParentLead-'.$this->lead->uuid.'-capiResponse -'.json_encode($capiResponse));
-        if (! isset($capiResponse->errors) && ! empty($capiResponse->quoteUID)) {
-            info('carRevivalParentLead-'.$this->lead->uuid.'-childLeadCreated - '.$capiResponse->quoteUID.' - CAPI Response-'.json_encode($capiResponse));
+                $listQuotePlans = app(CarQuoteService::class)->getPlans($capiResponse->quoteUID, true, true);
 
-            $carQuote = $this->getQuoteObject(QuoteTypes::CAR->value, $capiResponse->quoteUID);
+                $quotePlansCount = is_countable($listQuotePlans) ? count($listQuotePlans) : 0;
 
-            $listQuotePlans = $this->carQuoteService->getPlans($capiResponse->quoteUID, true, true);
+                info('carRevivalParentLead -' . $this->lead->uuid . '- childLead - ' . $capiResponse->quoteUID . '- quotePlansCount ' . $quotePlansCount);
 
-            $quotePlansCount = is_countable($listQuotePlans) ? count($listQuotePlans) : 0;
+                if ($quotePlansCount == 0) {
 
-            info('carRevivalParentLead-'.$this->lead->uuid.'-childLead - '.$capiResponse->quoteUID.'-quotePlansCount '.$quotePlansCount);
+                    $key = ApplicationStorageEnums::OCB_NEW_BUSINESS_ZERO_PLAN;
+                } elseif ($quotePlansCount == 1) {
 
-            if ($quotePlansCount == 0) {
+                    $key = ApplicationStorageEnums::OCB_NEW_BUSINESS_SINGLE_PLAN;
+                } else {
 
-                $key = ApplicationStorageEnums::OCB_NEW_BUSINESS_ZERO_PLAN;
-            } elseif ($quotePlansCount == 1) {
+                    $key = ApplicationStorageEnums::OCB_NEW_BUSINESS_MULTIPLE_PLANS;
+                }
+                $emailTemplateId = ApplicationStorage::where('key_name', $key)->value('value');
 
-                $key = ApplicationStorageEnums::OCB_NEW_BUSINESS_SINGLE_PLAN;
+                info('carRevivalParentLead-' . $this->lead->uuid . '-childLead - ' . $capiResponse->quoteUID . '-emailTemplateId ' . json_encode($emailTemplateId));
+                $previousAdvisor = null;
+                if (!empty($carQuote->previous_advisor_id)) {
+                    $previousAdvisor = app(UserService::class)->getUserById($carQuote->previous_advisor_id);
+                }
+
+                info('carRevivalParentLead -' . $this->lead->uuid . '- childLead - ' . $capiResponse->quoteUID . '- previousAdvisor ' . json_encode($previousAdvisor));
+                $tierR = Tier::where('name', TiersEnum::TIER_R)->where('is_active', 1)->first();
+
+                $listQuotePlans = (is_string($listQuotePlans)) ? [] : $listQuotePlans;
+
+                $emailData = (new CarEmailService(app(SendEmailCustomerService::class)))->buildEmailData($carQuote, $listQuotePlans, $previousAdvisor, $tierR->id);
+
+                $customerName = $carQuote->first_name . ' ' . $carQuote->last_name;
+
+                $emailData->subject = $customerName . "'s" . ' Car Insurance with Alfred ' . $carQuote->code;
+
+                $emailData->templateId = (int) $emailTemplateId;
+
+                $dttAdvisor = ApplicationStorage::where('key_name', '=', ApplicationStorageEnums::DTT_ADVISOR)->value('value');
+
+                $advisor = explode(',', $dttAdvisor);
+
+                $emailData->advisorName = $advisor[0];
+                $emailData->advisorEmail = $advisor[1];
+
+                info('carRevivalParentLead -' . $this->lead->uuid . '- childLead - ' . $capiResponse->quoteUID . '- emailData ' . json_encode($emailData));
+
+                $response = app(SendEmailCustomerService::class)->sendDttEmail($emailData, 'car-quote-one-click-buy-batch');
+
+                info('carRevivalParentLead -' . $this->lead->uuid . '- childLead - ' . $capiResponse->quoteUID . '- emailResponse ' . json_encode($response));
+                if ($response == 201) {
+
+                    info('carRevivalParentLead -' . $this->lead->uuid . '-childLead - ' . $capiResponse->quoteUID . '- emailSent -- ' . $emailData->customerEmail);
+
+                    DttRevival::create([
+                        'quote_type_id' => QuoteTypes::CAR->id(),
+                        'quote_id' => $carQuote->id,
+                        'uuid' => $capiResponse->quoteUID,
+                        'email_sent' => true,
+                    ]);
+
+                    info('carRevivalParentLead -' . $this->lead->uuid . '- childLead - ' . $capiResponse->quoteUID . '-dttRevivalsInsertedUUID - ' . $capiResponse->quoteUID);
+
+                    CarQuote::find($this->lead->id)->update(['is_revived' => true]);
+
+                    info('carRevivalParentLead -' . $this->lead->uuid . '- childLead - ' . $capiResponse->quoteUID . '- parentLeadIsRevived - ' . $this->lead->id);
+                } else {
+                    info('carRevivalParentLead -' . $this->lead->uuid . '- childLead - ' . $capiResponse->quoteUID . 'emailIsNotSent - ' . $emailData->customerEmail);
+                }
             } else {
 
-                $key = ApplicationStorageEnums::OCB_NEW_BUSINESS_MULTIPLE_PLANS;
+                info('carRevivalParentLead -' . $this->lead->uuid . '- capiResponseError - ' . json_encode($capiResponse));
             }
-            $emailTemplateId = ApplicationStorage::where('key_name', $key)->value('value');
-
-            info('carRevivalParentLead-'.$this->lead->uuid.'-childLead - '.$capiResponse->quoteUID.'-emailTemplateId '.json_encode($emailTemplateId));
-            $previousAdvisor = null;
-            if (! empty($carQuote->previous_advisor_id)) {
-                $previousAdvisor = $this->userService->getUserById($carQuote->previous_advisor_id);
-            }
-
-            info('carRevivalParentLead-'.$this->lead->uuid.'-childLead - '.$capiResponse->quoteUID.'-previousAdvisor '.json_encode($previousAdvisor));
-            $tierR = Tier::where('name', TiersEnum::TIER_R)->where('is_active', 1)->first();
-
-            $listQuotePlans = (is_string($listQuotePlans)) ? [] : $listQuotePlans;
-
-            $emailData = (new CarEmailService($this->sendEmailCustomerService))->buildEmailData($carQuote, $listQuotePlans, $previousAdvisor, $tierR->id);
-
-            $customerName = $carQuote->first_name.' '.$carQuote->last_name;
-
-            $emailData->subject = $customerName."'s".' Car Insurance with Alfred '.$carQuote->code;
-
-            $emailData->templateId = (int) $emailTemplateId;
-
-            $emailData->advisorName = 'Alfred';
-            $emailData->advisorEmail = 'askalfred@insurancemarket.ae';
-
-            info('carRevivalParentLead-'.$this->lead->uuid.'-childLead - '.$capiResponse->quoteUID.'-emailData '.json_encode($emailData));
-
-            $response = $this->sendEmailCustomerService->sendDttEmail($emailData, 'car-quote-one-click-buy-batch');
-
-            info('carRevivalParentLead-'.$this->lead->uuid.'-childLead - '.$capiResponse->quoteUID.'-emailResponse '.json_encode($response));
-            if ($response == 201) {
-
-                info('carRevivalParentLead-'.$this->lead->uuid.'-childLead - '.$capiResponse->quoteUID.'-emailSent-- '.$emailData->customerEmail);
-
-                DttRevival::create([
-                    'quote_type_id' => QuoteTypes::CAR->id(),
-                    'quote_id' => $carQuote->id,
-                    'uuid' => $capiResponse->quoteUID,
-                    'email_sent' => true,
-                ]);
-
-                info('carRevivalParentLead-'.$this->lead->uuid.'-childLead - '.$capiResponse->quoteUID.'dttRevivalsInsertedUUID - '.$capiResponse->quoteUID);
-
-                CarQuote::find($this->lead->id)->update(['is_revived' => true]);
-
-                info('carRevivalParentLead-'.$this->lead->uuid.'-childLead - '.$capiResponse->quoteUID.'-parentLeadIsRevived - '.$this->lead->id);
-            } else {
-                info('carRevivalParentLead-'.$this->lead->uuid.'-childLead - '.$capiResponse->quoteUID.'emailIsNotSent - '.$emailData->customerEmail);
-            }
-        } else {
-
-            info('carRevivalParentLead-'.$this->lead->uuid.'capiResponseError- '.json_encode($capiResponse));
+        } catch (\Exception $exception) {
+            info('DTT Exception : ' . $exception->getMessage());
         }
     }
 
     public function failed(Throwable $exception)
     {
-        info('CarRevivalLeadsCreationJob -: '.$this->lead->id.' Error: '.$exception->getMessage());
+        info('CarRevivalLeadsCreationJob - : ' . $this->lead->id . ' Error: ' . $exception->getMessage());
     }
 }

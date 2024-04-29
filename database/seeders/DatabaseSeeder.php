@@ -61,7 +61,6 @@ class DatabaseSeeder extends Seeder
             AddPaymentPermissionsSeeder::class,
 
             // dtt seeder
-            PersonalQuoteRolesPermissionSeeder::class,
             AddDttFlagApplicationStorage::class,
             DttOCBNewBusinessSeeder::class,
             RevivalConversionReportPermissionSeeder::class,

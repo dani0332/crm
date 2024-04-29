@@ -7,9 +7,18 @@ use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
+use App\Models\CarMake;
 use App\Models\CarQuote;
+use App\Models\CarTypeInsurance;
+use App\Models\ClaimHistory;
 use App\Models\DttRevival;
+use App\Models\Emirate;
+use App\Models\PaymentStatus;
 use App\Models\QuoteBatches;
+use App\Models\Tier;
+use App\Models\UAELicenseHeldFor;
+use App\Models\VehicleType;
+use App\Models\YearOfManufacture;
 use Illuminate\Support\Facades\DB;
 
 class CarRevivalQuoteRepository extends BaseRepository
@@ -124,22 +133,22 @@ class CarRevivalQuoteRepository extends BaseRepository
     {
         $result = [
             'nationalities' => NationalityRepository::withActive()->get(),
-            'vehicle_types' => VehicleTypeRepository::withActive()->get(),
-            'types_of_insurance' => CarTypeInsuranceRepository::withActive()->get(),
+            'vehicle_types' => VehicleType::withActive()->get(),
+            'types_of_insurance' => CarTypeInsurance::withActive()->get(),
             'currently_insured_with_options' => InsuranceProviderRepository::select('id', 'text')->orderBy('text', 'asc')->withActive()->get(),
-            'uae_license_help_for' => UaeLicenseHeldRepository::withActive()->get(),
-            'emirate_of_visa' => EmirateRepository::withActive()->get(),
-            'car_make' => CarMakeRepository::active()->get(),
-            'year_of_manufacture' => YearOfManufactureRepository::get(),
-            'claim_history' => ClaimHistoryRepository::withActive()->get(),
+            'uae_license_help_for' => UAELicenseHeldFor::withActive()->get(),
+            'emirate_of_visa' => Emirate::withActive()->get(),
+            'car_make' => CarMake::active()->get(),
+            'year_of_manufacture' => YearOfManufacture::get(),
+            'claim_history' => ClaimHistory::withActive()->get(),
         ];
 
         if ($isForListView) {
             $result = array_merge($result, [
-                'batches' => QuoteBatchRepository::get(),
-                'payment_statuses' => PaymentStatusRepository::withActive()->get(),
+                'batches' => QuoteBatches::get(),
+                'payment_statuses' => PaymentStatus::withActive()->get(),
                 'lead_statuses' => LeadStatusRepository::getList(QuoteTypeId::Car),
-                'tiers' => TierRepository::active()->get(),
+                'tiers' => Tier::active()->get(),
                 'advisors' => UserRepository::getList(quoteTypeCode::Car_Revival),
             ]);
         }

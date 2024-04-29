@@ -15,9 +15,6 @@ class CarRevivalFollowUpEmailJob implements ShouldQueue, StackableJob
 {
     use Dispatchable, InteractsWithQueue, Queueable, Stackable;
 
-    public $tries = 3;
-    public $timeout = 60;
-    public $backoff = 300;
     private $data = null;
     protected $sendEmailCustomerService;
     /**
@@ -35,10 +32,9 @@ class CarRevivalFollowUpEmailJob implements ShouldQueue, StackableJob
      *
      * @return void
      */
-    public function handle(SendEmailCustomerService $sendEmailCustomerService)
+    public function handle()
     {
-        $this->sendEmailCustomerService = $sendEmailCustomerService;
-        $response = $this->sendEmailCustomerService->sendDttEmail($this->data);
+        $response = app(SendEmailCustomerService::class)->sendDttEmail($this->data);
         if ($response == 201) {
             DttRevival::where('id', $this->data->id)->increment('follow_up_email_count');
             info('carRevivalFollowUp email is sent  -'.$this->data->customerEmail);

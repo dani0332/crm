@@ -41,7 +41,7 @@ use App\Enums\PermissionsEnum;
                     </li>
                 </ul>
                 @endcanany
-                @canany([PermissionsEnum::ADVISOR_CONVERSION_REPORT_VIEW, PermissionsEnum::ADVISOR_PERFORMANCE_REPORT_VIEW, PermissionsEnum::ADVISOR_DISTRIBUTION_REPORT_VIEW, PermissionsEnum::LEAD_DISTRIBUTION_REPORT_VIEW,PermissionsEnum::UtmLeadsSalesReport, PermissionsEnum::RENEWAL_BATCH_REPORT, PermissionsEnum::RevivalConversionReportView])
+                @canany([PermissionsEnum::ADVISOR_CONVERSION_REPORT_VIEW, PermissionsEnum::ADVISOR_PERFORMANCE_REPORT_VIEW, PermissionsEnum::ADVISOR_DISTRIBUTION_REPORT_VIEW, PermissionsEnum::LEAD_DISTRIBUTION_REPORT_VIEW,PermissionsEnum::UtmLeadsSalesReport, PermissionsEnum::RENEWAL_BATCH_REPORT, PermissionsEnum::REVIVAL_CONVERSION_REPORT_VIEW])
                 <ul class="nav side-menu">
                     <li><a><i class="fa fa-line-chart" aria-hidden="true"></i>Reports <span class="fa fa-chevron-down"></span></a>
                         <ul class="nav child_menu">
@@ -56,7 +56,7 @@ use App\Enums\PermissionsEnum;
                             @endcan
                             @can(PermissionsEnum::LEAD_DISTRIBUTION_REPORT_VIEW)
                             <li><a href="{{ url('reports/lead-distribution') }}">Lead Distribution</a></li>
-                            @can(PermissionsEnum::RevivalConversionReportView)
+                            @can(PermissionsEnum::REVIVAL_CONVERSION_REPORT_VIEW)
                             <li><a href="{{ url('reports/revival-conversion') }}">Revival Conversion</a></li>
                             @endcan
                             @endcan

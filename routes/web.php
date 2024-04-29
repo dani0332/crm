@@ -99,7 +99,6 @@ if (config('constants.APP_ENV') == EnvEnum::STAGING || config('constants.APP_ENV
 }
 
 Route::get('/get-tier-users/{tierId}', [LeadAllocationController::class, 'getTierUsers']);
-Route::post('car-revival/update', [CarRevivalQuoteController::class, 'updateQuote']);
 
 Route::get('auth/google', 'App\Http\Controllers\GoogleSocialiteController@redirectToGoogle');
 Route::get('google/callback', 'App\Http\Controllers\GoogleSocialiteController@handleCallback');

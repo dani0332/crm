@@ -239,7 +239,7 @@ final class PermissionsEnum extends Enum
     public const RENEWAL_BATCHES_LIST = 'renewal-batches-list';
     public const RENEWAL_BATCHES_EDIT = 'renewal-batches-edit';
     public const RENEWAL_BATCH_REPORT = 'renewal-batch-report';
-    const RevivalConversionReportView = 'revival-conversion-report-view';
+    public const REVIVAL_CONVERSION_REPORT_VIEW = 'revival-conversion-report-view';
     public const PAUSE_AUTO_FOLLOWUPS = 'pause-auto-followups';
     public const EmbeddedProductView = 'embedded-product-view';
     public const EXPORT_PLAN_DETAIL = 'export-plan-detail';
