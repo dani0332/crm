@@ -31,6 +31,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use App\Enums\PaymentStatusEnum;
 
 class CRUDService extends BaseService
 {
@@ -595,7 +596,17 @@ class CRUDService extends BaseService
                 $transaction = $embededTransaction[0];
 
                 $payment = $transaction['payments'][0];
-                $maxAmount = $payment->premium_captured - $payment->premium_refunded;
+                $paymentStatus = $payment['payment_status_id'];
+
+                $maxAmount = 0;
+                $errorMessage = 'Cancel amount should not exceeded from transaction amount';
+                if ($paymentStatus === PaymentStatusEnum::CAPTURED) {
+                    $maxAmount = $payment->premium_captured - $payment->premium_refunded;
+                } else if($paymentStatus === PaymentStatusEnum::AUTHORISED) {
+                    $maxAmount = $payment->premium_authorized - $payment->premium_refunded;
+                } else {
+                    $errorMessage = 'Invalid Payment status';
+                }
 
                 if ($maxAmount >= $request->amount) {
                     PaymentAction::create([
@@ -618,7 +629,7 @@ class CRUDService extends BaseService
 
                     return response($processResponse, 200);
                 } else {
-                    return response(['Cancel amount should not exceeded from transaction amount'], 403);
+                    return response([$errorMessage], 403);
                 }
             } else {
                 return response(['Payment not exist'], 403);
