@@ -48,4 +48,5 @@ final class ApplicationStorageEnums extends Enum
     public const ENABLE_LEAD_REASSIGNMENT = 'ENABLE_LEAD_REASSIGNMENT';
     public const DUBAI_NOW_CC_GROUP = 'DUBAI_NOW_CC_GROUP';
     public const SAGE_ENABLED = 'SAGE_ENABLED';
+    public const ENABLE_PLAN_MODIFY_VALIDATION = 'ENABLE_PLAN_MODIFY_VALIDATION';
 }

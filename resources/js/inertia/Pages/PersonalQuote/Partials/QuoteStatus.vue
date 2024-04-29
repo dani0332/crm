@@ -9,8 +9,9 @@ const props = defineProps({
   quoteType: String,
 });
 
-const notification = useNotifications('toast');
+const page = usePage();
 
+const notification = useNotifications('toast');
 const quoteStatusOptions = computed(() => {
   return props.quoteStatuses.map(status => ({
     value: status.id,
@@ -50,7 +51,7 @@ const rules = {
 
 const allowStatusUpdate = computed(() => {
   return (
-    props.quote.quote_status_id == props.quoteStatusEnum.TransactionApproved
+    props.quote.quote_status_id == page.props.quoteStatusEnum.TransactionApproved
   );
 });
 </script>

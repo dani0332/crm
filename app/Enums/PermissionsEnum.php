@@ -250,4 +250,10 @@ final class PermissionsEnum extends Enum
     public const PLAN_DETAILS_ADD = 'plan-details-add';
     public const AVAILABLE_PLANS_SELECT_BUTTON = 'available-plans-select-button';
     public const INSTANT_ALFRED_CHAT_LOGS = 'instant-alfred-chat-logs';
+    public const TOTAL_PREMIUM_LEADS_SALES_REPORT = 'total-premium-leads-sales-report';
+    public const LEGACY_INSTALLMENTS = 'legacy-installments';
+    public const LEGACY_INVOICES = 'legacy-invoices';
+    public const LEGACY_PAYMENTS = 'legacy-payments';
+    public const LEGACY_OTHER_DETAILS = 'legacy-other-details';
+    public const VIEW_LEGACY_DETAILS = 'view-legacy-details';
 }
