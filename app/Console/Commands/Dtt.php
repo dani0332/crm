@@ -60,7 +60,7 @@ class Dtt extends Command
         $datethirtyDaysBefore = Carbon::now()->subDays(30)->toDateString();
 
         $jobs = [];
-        $logPrefix = 'CarRevivalLeadsCreationJo -';
+        $logPrefix = 'CarRevivalLeadsCreationJob -';
         $leads = CarQuote::where('is_revived', '=', false)
             ->where(function ($q) use ($dateOne, $dateTwo) {
                 $q->whereDate('created_at', '=', $dateOne);
@@ -82,7 +82,7 @@ class Dtt extends Command
             ->groupBy(['email', 'car_make_id', 'car_model_id', 'year_of_manufacture'])
             ->get();
 
-        info($logPrefix . 'coun -' . count($leads) . '-' . json_encode($leads->pluck('uuid')->toArray()));
+        info($logPrefix . 'count -' . count($leads) . '-' . json_encode($leads->pluck('uuid')->toArray()));
 
         foreach ($leads as $carLead) {
             $isTierR = app(LeadAllocationService::class)->checkIfLeadIsRenewal($carLead);
