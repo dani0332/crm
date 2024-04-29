@@ -2,13 +2,22 @@
 
 namespace App\Observers;
 
-use App\Enums\QuoteStatusEnum;
 use App\Models\HealthQuote;
+use App\Enums\LeadSourceEnum;
+use App\Enums\QuoteStatusEnum;
+use App\Services\HealthQuoteService;
 use App\Traits\PersonalQuoteSyncTrait;
 
 class HealthQuoteObserver
 {
     use PersonalQuoteSyncTrait;
+
+    protected $healthQuoteService;
+
+    public function __construct(HealthQuoteService $healthQuoteService)
+    {
+        $this->healthQuoteService = $healthQuoteService;
+    }
 
     /**
      * Handle the HealthQuote "updated" event.
@@ -19,6 +28,12 @@ class HealthQuoteObserver
             HealthQuote::withoutEvents(function () use ($healthQuote) {
                 $healthQuote->update(['transaction_approved_at' => now()]);
             });
+
+            if ($healthQuote->source === LeadSourceEnum::IMCRM)
+            {
+                $this->healthQuoteService->assignRenewalBatch($healthQuote);
+            }
+
         }
 
         $this->syncQuote($healthQuote, $healthQuote->getDirty());
