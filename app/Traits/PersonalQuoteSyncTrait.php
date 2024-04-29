@@ -105,7 +105,7 @@ trait PersonalQuoteSyncTrait
 
         foreach ($entries as $entry) {
 
-            info('Syncing entry: '.$entry->quote_uuid);
+            info('quote_sync Syncing entry: '.$entry->quote_uuid.' - id '.$entry->id);
             $quote = PersonalQuote::where('uuid', $entry->quote_uuid)->where('quote_type_id', $entry->quote_type_id)->first();
 
             if ($quote) {
