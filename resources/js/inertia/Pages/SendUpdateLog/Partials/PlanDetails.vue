@@ -72,6 +72,10 @@ const insuranceProvidersOptions = computed(() => {
   }));
 });
 
+const roundDecimal = (value) => {
+  return value ? parseFloat(value.toFixed(2)) : '';
+};
+
 const updatePriceWithVat = () => {
   let totalPrice = 0;
   const priceWithVat = parseFloat(planDetailsForm.price_with_vat);
@@ -85,7 +89,9 @@ const updatePriceWithVat = () => {
     totalPrice = priceWithoutVat;
   }
 
-  planDetailsForm.total_price = parseFloat(totalPrice.toFixed(2));
+  planDetailsForm.total_price = roundDecimal(totalPrice);
+  planDetailsForm.price_with_vat = roundDecimal(priceWithVat);
+  planDetailsForm.price_without_vat = roundDecimal(priceWithoutVat);
 };
 
 const onUpdate = () => {
