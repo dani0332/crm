@@ -20,7 +20,7 @@ class RevivalConversionReportPermissionSeeder extends Seeder
     {
         // revival section permission
 
-        $revivalPermissions = [PermissionsEnum::CarRevivalQuoteList, PermissionsEnum::CAR_REVIVAL_QUOTES_EDIT, PermissionsEnum::CAR_REVIVAL_QUOTES_SHOW, PermissionsEnum::REVIVAL_CONVERSION_REPORT_VIEW];
+        $revivalPermissions = [PermissionsEnum::CAR_REVIVAL_QUOTE_LIST, PermissionsEnum::CAR_REVIVAL_QUOTES_EDIT, PermissionsEnum::CAR_REVIVAL_QUOTES_SHOW, PermissionsEnum::REVIVAL_CONVERSION_REPORT_VIEW];
 
         foreach ($revivalPermissions as $item) {
 

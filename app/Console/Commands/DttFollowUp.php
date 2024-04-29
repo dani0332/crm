@@ -100,6 +100,7 @@ class DttFollowUp extends Command
 
                     $advisor = explode(',', $dttAdvisor);
 
+                    $emailData->uuid =  $item->uuid;
                     $emailData->advisorName = $advisor[0];
                     $emailData->advisorEmail = $advisor[1];
                     $emailData->id = $item->id;

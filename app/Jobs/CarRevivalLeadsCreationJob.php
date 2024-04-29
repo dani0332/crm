@@ -127,6 +127,7 @@ class CarRevivalLeadsCreationJob implements ShouldQueue, StackableJob
                 $emailData->subject = $customerName . "'s" . ' Car Insurance with Alfred ' . $carQuote->code;
 
                 $emailData->templateId = (int) $emailTemplateId;
+                $emailData->uuid = $carQuote->uuid;
 
                 $dttAdvisor = ApplicationStorage::where('key_name', '=', ApplicationStorageEnums::DTT_ADVISOR)->value('value');
 

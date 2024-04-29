@@ -185,7 +185,7 @@ class HandleInertiaRequests extends Middleware
         $nav = $nav->add('Personal Quotes', '', function (Section $section) {
             $section
                 ->addIf(
-                    auth()->user()->hasAnyPermission([PermissionsEnum::CarQuotesList, PermissionsEnum::CarQuoteSearch, PermissionsEnum::CarRevivalQuoteList]),
+                    auth()->user()->hasAnyPermission([PermissionsEnum::CarQuotesList, PermissionsEnum::CarQuoteSearch, PermissionsEnum::CAR_REVIVAL_QUOTE_LIST]),
                     'Car',
                     '/quotes/car',
                     fn ($s) => $s
@@ -203,7 +203,7 @@ class HandleInertiaRequests extends Middleware
                             fn ($s) => $s->attributes(['icon' => 'car'])
                         )
                         ->addIf(
-                            auth()->user()->can(PermissionsEnum::CarRevivalQuoteList),
+                            auth()->user()->can(PermissionsEnum::CAR_REVIVAL_QUOTE_LIST),
                             'Revival Quotes',
                             route('revival-quotes-list'),
 

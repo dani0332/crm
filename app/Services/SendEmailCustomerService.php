@@ -598,7 +598,7 @@ class SendEmailCustomerService extends BaseService
             }
         } catch (Exception $ex) {
             $responseCode = $ex->getCode();
-            $responseDetail = 'Dtt Send Email: Code/Message: ' . $responseCode . '/' . $ex->getMessage() . ' CustomerEmail: ' . $emailData->customerEmail;
+            $responseDetail = 'Dtt Send Email: Code/Message: ' . $responseCode . '/' . $ex->getMessage() . ' uuid: ' . $emailData->uuid. ' CustomerEmail: ' . $emailData->customerEmail;
             info($responseDetail);
             $response = json_encode($ex->getCode() . ' ' . $ex->getMessage());
             $isEmailSent = 0;

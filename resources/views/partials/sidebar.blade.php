@@ -109,7 +109,7 @@ use App\Enums\PermissionsEnum;
                 <ul class="nav side-menu">
                     <li><a><i class="fa fa-quote-left"></i> Personal Quotes <span class="fa fa-chevron-down"></span></a>
                         <ul class="nav child_menu">
-                            @canany([PermissionsEnum::CarQuotesList, PermissionsEnum::CarQuoteSearch,PermissionsEnum::CarRevivalQuoteList])
+                            @canany([PermissionsEnum::CarQuotesList, PermissionsEnum::CarQuoteSearch,PermissionsEnum::CAR_REVIVAL_QUOTE_LIST])
                             <li><a>Car<span class="fa fa-chevron-down" style="color: white;"></span></a>
                                 <ul class="nav child_menu">
                                     @can(PermissionsEnum::CarQuoteSearch)
@@ -117,7 +117,7 @@ use App\Enums\PermissionsEnum;
                                     @endcan
                                     <li><a href="{{ url('quotes/car') }}">Lead List</a></li>
 
-                                    @can(PermissionsEnum::CarRevivalQuoteList)
+                                    @can(PermissionsEnum::CAR_REVIVAL_QUOTE_LIST)
                                     <li><a href="{{ route('revival-quotes-list') }}">Revival Quotes</a></li>
                                     @endcan
                                 </ul>
