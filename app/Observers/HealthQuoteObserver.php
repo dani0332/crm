@@ -12,13 +12,6 @@ class HealthQuoteObserver
 {
     use PersonalQuoteSyncTrait;
 
-    protected $healthQuoteService;
-
-    public function __construct()
-    {
-        $this->healthQuoteService = app(HealthQuoteService::class);
-    }
-
     /**
      * Handle the HealthQuote "updated" event.
      */
@@ -30,9 +23,8 @@ class HealthQuoteObserver
             });
 
             if ($healthQuote->source === LeadSourceEnum::IMCRM) {
-                $this->healthQuoteService->assignRenewalBatch($healthQuote);
+                app(HealthQuoteService::class)->assignRenewalBatch($healthQuote);
             }
-
         }
 
         $this->syncQuote($healthQuote, $healthQuote->getDirty());
