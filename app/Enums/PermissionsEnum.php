@@ -262,4 +262,9 @@ final class PermissionsEnum extends Enum
     public const UPDATE_QUOTE_NOTES = 'update-quote-notes';
     public const DELETE_QUOTE_NOTES = 'delete-quote-notes';
     public const TOTAL_PREMIUM_LEADS_SALES_REPORT = 'total-premium-leads-sales-report';
+    public const LEGACY_INSTALLMENTS = 'legacy-installments';
+    public const LEGACY_INVOICES = 'legacy-invoices';
+    public const LEGACY_PAYMENTS = 'legacy-payments';
+    public const LEGACY_OTHER_DETAILS = 'legacy-other-details';
+    public const VIEW_LEGACY_DETAILS = 'view-legacy-details';
 }

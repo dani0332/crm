@@ -9,8 +9,9 @@ const props = defineProps({
   quoteType: String,
 });
 
-const notification = useNotifications('toast');
+const page = usePage();
 
+const notification = useNotifications('toast');
 const quoteStatusOptions = computed(() => {
   return props.quoteStatuses.map(status => ({
     value: status.id,

@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\GenericRequestEnum;
 use App\Enums\HealthTeamType;
 use App\Enums\Kyc;
+use App\Enums\LeadSourceEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
@@ -367,7 +368,8 @@ class CRUDService extends BaseService
 
             // ========= assign renewal batch to HEALTH LOB leads upon transaction approved =========
 
-            if (strtolower($request->modelType) == strtolower(quoteTypeCode::Health) && $request->leadStatus == QuoteStatusEnum::TransactionApproved) {
+            if (strtolower($request->modelType) == strtolower(quoteTypeCode::Health) && $request->leadStatus == QuoteStatusEnum::TransactionApproved
+                && $entity->source == LeadSourceEnum::IMCRM) {
                 $this->healthQuoteService->assignRenewalBatch($entity);
                 $this->updatePaymentStatus($entity);
             }

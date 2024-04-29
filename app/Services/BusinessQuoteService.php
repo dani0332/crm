@@ -57,6 +57,7 @@ class BusinessQuoteService extends BaseService
                 'bqrd.next_followup_date',
                 'bqrd.notes',
                 'bqrd.transapp_code',
+                'bqrd.insly_id',
                 'ls.text as lost_reason',
                 'lu.text as transaction_type_text',
                 'bqr.source',
