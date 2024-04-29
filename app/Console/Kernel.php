@@ -26,7 +26,6 @@ class Kernel extends ConsoleKernel
         Commands\ResetLeadAllocationCounts::class,
         Commands\UpdateHealthStatus::class,
         Commands\QuoteSyncUpdateCommand::class,
-        Commands\UpdateLostStatus::class,
         Commands\UpdateStaleLeads::class,
         Commands\AutomateActivitiesCommand::class,
         Commands\PaymentOverdueStatus::class,
@@ -79,8 +78,6 @@ class Kernel extends ConsoleKernel
             ->onOneServer()
             ->withoutOverlapping(1);
 
-        // This command need to be remove after deployment, because it's not required anymore.
-        // $schedule->command('UpdateLostStatus:cron')->timezone('Asia/Dubai')->tuesdays()->withoutOverlapping(1)->onOneServer()->at('17:00');
 
         $schedule->command('UpdateStaleLeads:cron')->timezone('Asia/Dubai')->dailyAt('23:59')->onOneServer()->withoutOverlapping(1);
 
