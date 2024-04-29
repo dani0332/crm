@@ -61,6 +61,7 @@ class HomeQuoteService extends BaseService
             'hqr.price_vat_applicable',
             'hqr.price_vat_not_applicable',
             'hqr.price_with_vat',
+            'hqr.stale_at',
             'qs.text as quote_status_id_text',
             DB::raw('DATE_FORMAT(hqr.created_at, "%d-%m-%y %H:%i") as created_at'),
             DB::raw('DATE_FORMAT(hqr.updated_at, "%d-%m-%y %H:%i") as updated_at'),
