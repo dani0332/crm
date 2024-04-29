@@ -462,7 +462,7 @@ class TravelController extends Controller
             return $item->text == quoteStatusCode::NEWLEAD || $item->text == quoteStatusCode::QUOTED || $item->text == quoteStatusCode::FOLLOWEDUP || $item->text == quoteStatusCode::NEGOTIATION || $item->text == quoteStatusCode::PAYMENTPENDING;
         })->toArray();
         $leadStatuses = array_map(function ($item) use ($request) {
-            $item['data'] = getDataAgainstStatus(self::TYPE, $item['id'] , $request);
+            $item['data'] = getDataAgainstStatus(self::TYPE, $item['id'], $request);
 
             return $item;
         }, $leadStatuses);

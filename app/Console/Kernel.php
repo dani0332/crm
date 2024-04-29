@@ -78,7 +78,6 @@ class Kernel extends ConsoleKernel
             ->onOneServer()
             ->withoutOverlapping(1);
 
-
         $schedule->command('UpdateStaleLeads:cron')->timezone('Asia/Dubai')->dailyAt('23:59')->onOneServer()->withoutOverlapping(1);
 
         $schedule->command('ActivitiesAutomate:cron')->timezone('Asia/Dubai')->dailyAt('23:59')->onOneServer()->withoutOverlapping(1);
