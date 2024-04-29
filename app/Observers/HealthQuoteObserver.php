@@ -14,9 +14,9 @@ class HealthQuoteObserver
 
     protected $healthQuoteService;
 
-    public function __construct(HealthQuoteService $healthQuoteService)
+    public function __construct()
     {
-        $this->healthQuoteService = $healthQuoteService;
+        $this->healthQuoteService = app(HealthQuoteService::class);
     }
 
     /**
