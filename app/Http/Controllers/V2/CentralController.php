@@ -352,7 +352,7 @@ class CentralController extends Controller
             $paymentSplit->payment_allocation_status = PaymentAllocationStatus::NOT_ALLOCATED;
         } else {
             if ($paymentSplit->collection_amount > 0) {
-                if ($paymentSplit->collection_amount < $quote->price_with_vat) {
+                if ($paymentSplit->collection_amount <= $quote->price_with_vat) {
                     $paymentSplit->payment_allocation_status = PaymentAllocationStatus::FULLY_ALLOCATED;
                 } elseif ($paymentSplit->collection_amount > $quote->price_with_vat) {
                     $paymentSplit->payment_allocation_status = PaymentAllocationStatus::PARTIALLY_ALLOCATED;
