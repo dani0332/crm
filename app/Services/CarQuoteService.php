@@ -423,14 +423,16 @@ class CarQuoteService extends BaseService
         $carQuote->updated_by = auth()->user()->email;
         $deleteValuationResponse = $this->deleteValuationAPI($oldCarValue, $request->car_value, $carQuote->uuid);
 
-        // update embedded products list
-        if ((isset($request->dob) && $oldDob->format('Y-m-d') != $request->dob) || 
-            (isset($request->vehicle_type_id) && $oldBodyType != $request->vehicle_type_id)) {
-            Ken::request('/save-embedded-transaction', 'post', ['quoteUID' => $id]);
-        }
-
         if ($deleteValuationResponse) {
             $carQuote->save();
+
+            // update embedded products list
+            if (
+                (isset($request->dob) && $oldDob->format('Y-m-d') != $request->dob) ||
+                (isset($request->vehicle_type_id) && $oldBodyType != $request->vehicle_type_id)
+            ) {
+                Ken::request('/save-embedded-transaction', 'post', ['quoteUID' => $id]);
+            }
 
             if (isset($request->return_to_view)) {
                 return redirect('quote/car/'.$carQuote->id)->with('success', 'Car Quote has been updated');
