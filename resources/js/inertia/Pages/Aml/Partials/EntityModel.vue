@@ -172,9 +172,10 @@ const linkEntity = () => {
     .post(route('link-entity-details'), entityDetails)
     .then(res => {
       entityFound.value = false;
-       const response =  res.data.response
+       const response =  res.data.response;
       insuredFormDetails.company_name = response.company_name;
         insuredFormDetails.company_address = response.company_address;
+        insuredFormDetails.industry_type_code = response.industry_type_code;
        props.entityDetails.entity.company_name = res.data.response.company_name;
         props.entityDetails.entity.email = response.email;
         props.entityDetails.entity.registered_address = response.registered_address;
