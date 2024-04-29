@@ -38,7 +38,6 @@ class DatabaseSeeder extends Seeder
             // AutofollowupSeeder::class,
             // addReassignmentTime::class,
             // GenericPermissionSeeder::class,
-            // EmbeddedProductRoleAndPermissionSeeder::class,
             // addDubaiNowLeadSourceExemptionInAppStorage::class,
             LookupSeeder::class,
             GenericPermissionSeeder::class,
