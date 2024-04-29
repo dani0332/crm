@@ -167,7 +167,7 @@ class PetQuoteController extends Controller
             'UBOsDetails' => $uboDetails,
             'UBORelations' => $uboRelations,
             'noteDocumentType' => $noteDocumentType,
-            'quoteNotes' => $quoteNotes,
+            'quoteDocuments' => $quoteNotes,
             'cdnPath' => $cdnPath,
             'vatPercentage' => $vatPercentage,
             'paymentStatusEnum' => PaymentStatusEnum::asArray(),

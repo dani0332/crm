@@ -134,7 +134,7 @@ const onNoteSubmit = isValid => {
           position: 'top',
         });
         router.reload({
-          only: ['quoteDocuments', 'quote'],
+          only: ['quoteDocuments', 'quote', 'quoteNotes'],
         });
       })
       .catch(errors => {
@@ -182,7 +182,7 @@ const onDeleteNote = item => {
     .delete(`/delete-quote-notes/${item.id}`)
     .then(response => {
       router.reload({
-        only: ['quoteDocuments', 'quote'],
+        only: ['quoteDocuments', 'quote', 'quoteNotes'],
       });
       // let index = notes.value.data.findIndex(note => note.id == item.id);
       // if (index != -1) {
