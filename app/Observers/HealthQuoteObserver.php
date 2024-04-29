@@ -17,7 +17,11 @@ class HealthQuoteObserver
      */
     public function updated(HealthQuote $healthQuote): void
     {
-        if ($healthQuote->isDirty('quote_status_id') && $healthQuote->quote_status_id === QuoteStatusEnum::TransactionApproved) {
+        $dirty = $healthQuote->getDirty();
+        if (
+            $healthQuote->isDirty('quote_status_id') &&
+            $healthQuote->quote_status_id === QuoteStatusEnum::TransactionApproved
+        ) {
             HealthQuote::withoutEvents(function () use ($healthQuote) {
                 $healthQuote->update(['transaction_approved_at' => now()]);
             });
@@ -25,8 +29,9 @@ class HealthQuoteObserver
             if ($healthQuote->source === LeadSourceEnum::IMCRM) {
                 app(HealthQuoteService::class)->assignRenewalBatch($healthQuote);
             }
+            $dirty = [...$dirty, 'transaction_approved_at' => $healthQuote->transaction_approved_at];
         }
 
-        $this->syncQuote($healthQuote, $healthQuote->getDirty());
+        $this->syncQuote($healthQuote, $dirty);
     }
 }

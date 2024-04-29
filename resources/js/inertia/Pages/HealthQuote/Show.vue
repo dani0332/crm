@@ -2527,7 +2527,7 @@ watch(
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">TOTAL PRICE (with VAT)</dt>
-            <dd>{{ (selectedProviderPlan.premium) }}</dd>
+            <dd>{{ fixedValue(selectedProviderPlan.premium) }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">CO-PAY / CO-INSURANCE</dt>
