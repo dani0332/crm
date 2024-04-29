@@ -8,8 +8,11 @@ const props = defineProps({
   },
   canAddBatchNumber: Boolean,
   modelType: String,
+  inslyId: String,
 });
 
+const can = permission => useCan(permission);
+const permissionsEnum = page.props.permissionsEnum;
 const dateFormat = date => {
   return date ? useDateFormat(date, 'DD-MM-YYYY').value : '-';
 };
@@ -59,6 +62,17 @@ const rolesEnum = page.props.rolesEnum;
       <h3 class="font-semibold text-primary-800 text-lg">
         Last Year's Policy Details
       </h3>
+        <div>
+            <Link
+                v-if="inslyId && can(permissionsEnum.VIEW_LEGACY_DETAILS)"
+                :href="`/legacy-policy/${inslyId}`"
+                preserve-scroll
+            >
+                <x-button size="sm" color="#ff5e00" tag="div">
+                    View Legacy policy
+                </x-button>
+            </Link>
+        </div>
     </div>
     <x-form @submit="onSubmit" :auto-focus="false">
       <div class="p-4 rounded shadow mb-6 bg-white">
