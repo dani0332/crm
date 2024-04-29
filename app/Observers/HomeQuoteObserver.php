@@ -15,12 +15,17 @@ class HomeQuoteObserver
      */
     public function updated(HomeQuote $homeQuote): void
     {
-        if ($homeQuote->isDirty('quote_status_id') && $homeQuote->quote_status_id === QuoteStatusEnum::TransactionApproved) {
+        $dirty = $homeQuote->getDirty();
+        if (
+            $homeQuote->isDirty('quote_status_id') &&
+            $homeQuote->quote_status_id === QuoteStatusEnum::TransactionApproved
+        ) {
             HomeQuote::withoutEvents(function () use ($homeQuote) {
                 $homeQuote->update(['transaction_approved_at' => now()]);
             });
+            $dirty = [...$dirty, 'transaction_approved_at' => $homeQuote->transaction_approved_at];
         }
 
-        $this->syncQuote($homeQuote, $homeQuote->getDirty());
+        $this->syncQuote($homeQuote, $dirty);
     }
 }

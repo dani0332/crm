@@ -444,6 +444,8 @@ class ReportService extends BaseService
 
         if (! empty($request->quote_type_id)) {
             $query->where('personal_quotes.quote_type_id', $request->quote_type_id);
+        } else {
+            $query->whereIn('personal_quotes.quote_type_id', [QuoteTypes::CAR->id()]);
         }
 
         if (isset($request->teams) && $request->filled('teams')) {

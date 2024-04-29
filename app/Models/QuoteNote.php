@@ -9,7 +9,7 @@ use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
 class QuoteNote extends Model implements AuditableContract
 {
-    use HasFactory , Auditable;
+    use Auditable , HasFactory;
 
     protected $fillable = ['quote_status_id', 'note', 'created_by', 'updated_by'];
 

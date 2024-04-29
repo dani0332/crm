@@ -238,7 +238,8 @@ final class PermissionsEnum extends Enum
     public const RENEWAL_BATCHES_EDIT = 'renewal-batches-edit';
     public const RENEWAL_BATCH_REPORT = 'renewal-batch-report';
     public const PAUSE_AUTO_FOLLOWUPS = 'pause-auto-followups';
-    public const EmbeddedProductView = 'embedded-product-view';
+    public const EMBEDDED_PRODUCT_ADVISOR = 'embedded-product-advisor';
+    public const EMBEDDED_PRODUCT_ADMIN = 'embedded-product-admin';
     public const EXPORT_PLAN_DETAIL = 'export-plan-detail';
     public const EXPORT_LEADS_DETAIL_WITH_EMAIL_MOBILE = 'export-leads-detail-with-email-mobile';
     public const EXPORT_MAKES_MODELS = 'export-makes-models';
@@ -262,4 +263,9 @@ final class PermissionsEnum extends Enum
     public const UPDATE_QUOTE_NOTES = 'update-quote-notes';
     public const DELETE_QUOTE_NOTES = 'delete-quote-notes';
     public const TOTAL_PREMIUM_LEADS_SALES_REPORT = 'total-premium-leads-sales-report';
+    public const LEGACY_INSTALLMENTS = 'legacy-installments';
+    public const LEGACY_INVOICES = 'legacy-invoices';
+    public const LEGACY_PAYMENTS = 'legacy-payments';
+    public const LEGACY_OTHER_DETAILS = 'legacy-other-details';
+    public const VIEW_LEGACY_DETAILS = 'view-legacy-details';
 }

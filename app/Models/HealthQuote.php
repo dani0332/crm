@@ -74,7 +74,7 @@ class HealthQuote extends Model implements AuditableContract
 
     public function healthQuoteRequestDetail()
     {
-        return $this->hasOne(HealthQuoteRequestDetail::class, 'id', 'health_quote_request_id');
+        return $this->hasOne(HealthQuoteRequestDetail::class, 'health_quote_request_id', 'id');
     }
 
     public function currentProvider()

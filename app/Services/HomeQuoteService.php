@@ -16,7 +16,6 @@ use Config;
 use DB;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 
 class HomeQuoteService extends BaseService
@@ -30,7 +29,6 @@ class HomeQuoteService extends BaseService
 
     public function __construct(LeadAllocationService $leadAllocationService)
     {
-        Hash::make('admin123');
         $this->leadAllocationService = $leadAllocationService;
 
         $this->query = DB::table('home_quote_request as hqr')->select(
@@ -80,6 +78,7 @@ class HomeQuoteService extends BaseService
             'n.TEXT AS nationality_id_text',
             'hqrd.transapp_code',
             'hqrd.notes',
+            'hqrd.insly_id',
             'lu.text as transaction_type_text',
             'ls.text as lost_reason',
             'ls.id as lost_reason_id',

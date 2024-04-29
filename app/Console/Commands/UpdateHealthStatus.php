@@ -2,8 +2,6 @@
 
 namespace App\Console\Commands;
 
-use App\Enums\QuoteStatusEnum;
-use App\Models\HealthQuote;
 use Illuminate\Console\Command;
 
 class UpdateHealthStatus extends Command
@@ -40,6 +38,7 @@ class UpdateHealthStatus extends Command
     public function handle()
     {
         info('UpdateHealthStatus Command Commented as per new FR');
+
         return 0;
     }
 }
