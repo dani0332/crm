@@ -38,11 +38,13 @@ class DatabaseSeeder extends Seeder
             // AutofollowupSeeder::class,
             // addReassignmentTime::class,
             // GenericPermissionSeeder::class,
-            // EmbeddedProductRoleAndPermissionSeeder::class,
             // addDubaiNowLeadSourceExemptionInAppStorage::class,
             LookupSeeder::class,
             GenericPermissionSeeder::class,
             addSICWorkflow::class,
+            UpdateRenewalTemplateStorageSeeder::class,
+            AddLegacyPaymentsPermssion::class,
+            ApplicationStorageSeeder::class,
             addDubaiNowEmailGroup::class,
             DubaiLeadSource::class,
             // AddNewDocumentTypesSeeder::class,
@@ -55,6 +57,8 @@ class DatabaseSeeder extends Seeder
             AddTempUpdateTotalPricePermission::class,
             PaymentLookupSeeder::class,
             InsuranceQuoteTypeSeeder::class,
+            AddPaymentPermissionsSeeder::class,
+            TotalPremiumReportPermissionSeeder::class,
         ]);
     }
 }

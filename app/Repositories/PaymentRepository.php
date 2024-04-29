@@ -407,6 +407,10 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                     $quoteModel->quote_status_id = QuoteStatusEnum::TransactionApproved;
                     $quoteModel->save();
                     dispatch(new MAWelcomeJob($quoteModel->first_name, $quoteModel->last_name, $quoteModel->email, $quoteModel->mobile_no, 'IMCRM', ''));
+
+                    // send EP documents
+                    EmbeddedProductRepository::sendDocumentsByLead($request->quote_id, $request->modelType);
+
                     //Create duplicate lead for TRAVEL
                     if ($quoteTypeId == QuoteTypeId::Travel && $quoteModel->payments()->count() > 1) {
                         if (app(TravelQuoteService::class)->createDuplicateLead($quoteModel)) {
@@ -459,7 +463,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
         $successMessage = 'Payment Verified';
         $splitPayment = PaymentSplits::find($request->splitPaymentId);
         $masterPayment = $splitPayment->payment;
-        if ($request->is_approved) {
+        if ($request->is_approved && $splitPayment->payment_status_id != PaymentStatusEnum::PAID) {
             $paymentInformation = [
                 'collection_amount' => $request->collection_amount,
                 'bank_reference_number' => $request->bank_reference_number,
@@ -498,19 +502,23 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                     vAbort($failMessage);
                 }
             } else {
+
                 $splitPayment->update($paymentInformation);
+
                 if ($masterPayment) {
+                    $masterCapturedAmount = $masterPayment->captured_amount + $request->collection_amount;
                     $masterPayment->update(
-                        ['captured_amount' => ($masterPayment->captured_amount + $request->collection_amount),
+                        ['captured_amount' => $masterCapturedAmount,
                             'payment_allocation_status' => PaymentAllocationStatus::NOT_ALLOCATED]
                     );
                 }
+
             }
             /* Part of milestone 2
             if (Auth::user()->hasRole(RolesEnum::BetaUser)) {
                 app(SplitPaymentService::class)->createReciept($request->modelType, $request->quote_id, $splitPayment);
             }*/
-        } elseif ($request->is_declined) {
+        } elseif ($request->is_declined && $splitPayment->payment_status_id != PaymentStatusEnum::PAID) {
             $paymentInformation = [
                 'decline_reason_id' => $request->declined_reason,
                 'decline_custom_reason' => $request->declined_custom_reason,
