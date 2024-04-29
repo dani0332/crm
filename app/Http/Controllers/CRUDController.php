@@ -1709,6 +1709,11 @@ class CRUDController extends Controller
                 'quote_status_id' => QuoteStatusEnum::PolicyPending,
             ]);
         }
+        // store policy issuer
+        $payment = $quoteModel->payments->first();
+        $payment->policy_issuer_id = auth()->id();
+        $payment->save();
+
         // update status policy issued of req fulfilled
         $this->updateStatus($request->modelType, $request->quote_id);
 
