@@ -95,13 +95,13 @@ class CentralService
         $repository = $this->getRepositoryObject($parentType);
         $parentRecord = $repository::where('id', $entityId)->first();
 
-        if (! empty($data['lob_team_sub_selection'])) {
+        if (!empty($data['lob_team_sub_selection'])) {
             $parentRecord['enquiryType'] = $data['lob_team_sub_selection'];
         } else {
             $parentRecord['enquiryType'] = 'record_only';
         }
 
-        if (! empty($lobTeams)) {
+        if (!empty($lobTeams)) {
             $dataArr = [
                 'firstName' => $parentRecord->first_name,
                 'lastName' => $parentRecord->last_name,
@@ -124,16 +124,16 @@ class CentralService
 
                 $repository = $this->getRepositoryObject(ucfirst($lob));
 
-                if (! class_exists($repository)) {
+                if (!class_exists($repository)) {
                     return false;
                 }
 
                 $response = in_array(ucfirst($lob), newUi()) ?
-                    ((method_exists($repository, 'fetchCreateDuplicate') && ! checkPersonalQuotes(ucfirst($lob))) ? $repository::createDuplicate($dataArr) : PersonalQuoteRepository::createDuplicate($dataArr, ucfirst($lob))) :
-                    Capi::request('/api/v1-save-'.strtolower($lob).'-quote', 'post', $dataArr);
+                ((method_exists($repository, 'fetchCreateDuplicate') && !checkPersonalQuotes(ucfirst($lob))) ? $repository::createDuplicate($dataArr) : PersonalQuoteRepository::createDuplicate($dataArr, ucfirst($lob))) :
+                Capi::request('/api/v1-save-' . strtolower($lob) . '-quote', 'post', $dataArr);
 
                 if (empty($response) || (isset($response->message) && str_contains($response->message, 'Error'))) {
-                    $resp['errors'][] = 'Something went wrong while duplicating '.$lob.' quotes';
+                    $resp['errors'][] = 'Something went wrong while duplicating ' . $lob . ' quotes';
                 } elseif (isset($response->quoteUID) && isset($parentRecord->enquiryType) && $parentRecord->enquiryType == GenericRequestEnum::RECORD_PURPOSE) {
                     $record = $repository::where('uuid', $response->quoteUID)->first();
                     if ($record) {
@@ -161,7 +161,7 @@ class CentralService
     {
         $leadsIds = $request->assigned_lead_id;
         $personalQuotes = [quoteTypeCode::Bike, quoteTypeCode::Cycle, quoteTypeCode::Pet, quoteTypeCode::Yacht, quoteTypeCode::Jetski];
-        Log::info('Leads ids to assign: '.json_encode($leadsIds));
+        Log::info('Leads ids to assign: ' . json_encode($leadsIds));
 
         if (str_starts_with($leadsIds, ',')) {
             $leadsIds = substr($leadsIds, 1);
@@ -169,10 +169,10 @@ class CentralService
 
         $leadsIds = array_map('intval', explode(',', $leadsIds));
         $model = (in_array(ucfirst($request->modelType), $personalQuotes) && in_array(ucfirst($request->modelType), newUi())) ?
-            ['parent' => PersonalQuote::class, 'child' => PersonalQuoteDetail::class] :
-            ['parent' => (ucfirst($request->modelType).'Quote'), 'child' => (ucfirst($request->modelType).'QuoteRequestDetail')];
+        ['parent' => PersonalQuote::class, 'child' => PersonalQuoteDetail::class] :
+        ['parent' => (ucfirst($request->modelType) . 'Quote'), 'child' => (ucfirst($request->modelType) . 'QuoteRequestDetail')];
 
-        if (! class_exists($model['parent'])) {
+        if (!class_exists($model['parent'])) {
             vAbort('Something went wrong');
         }
 
@@ -183,7 +183,7 @@ class CentralService
                 $getQuoteLead->save();
 
                 $parentFieldName = (in_array(ucfirst($request->modelType), $personalQuotes) && in_array(ucfirst($request->modelType), newUi())) ?
-                    'personal_quote_id' : strtolower($request->modelType).'_quote_request_id';
+                'personal_quote_id' : strtolower($request->modelType) . '_quote_request_id';
 
                 $model['child']::updateOrCreate(
                     [$parentFieldName => $getQuoteLead->id],
@@ -224,7 +224,7 @@ class CentralService
         info('fn: updateQuotePayment called');
 
         if ($quote->payments()->count() > 0) {
-            info('fn: updateQuotePayment payment found to be updated for quote uuid: '.$quote->uuid);
+            info('fn: updateQuotePayment payment found to be updated for quote uuid: ' . $quote->uuid);
 
             $payment = $quote->payments->first();
 
@@ -236,7 +236,7 @@ class CentralService
 
             $payment->update($paymentData);
 
-            info('fn: updateQuotePayment payment updated for quote uuid: '.$quote->uuid);
+            info('fn: updateQuotePayment payment updated for quote uuid: ' . $quote->uuid);
         }
     }
 
@@ -285,7 +285,7 @@ class CentralService
                 ];
 
                 $response = Ken::request($endpoint, 'post', $data);
-                info('car plan update response: '.json_encode($response));
+                info('car plan update response: ' . json_encode($response));
 
                 // if (isset($response['planProcessValue']['totalPremium'])) {
                 //     $quote = CarQuote::where('uuid', $uuid)->first();
@@ -308,7 +308,7 @@ class CentralService
                 }
 
                 $response = Ken::request($endpoint, 'post', $data);
-                info('travel plan update response: '.json_encode($response));
+                info('travel plan update response: ' . json_encode($response));
 
                 // if (isset($response['planProcessValue'])) {
                 //     $quote = TravelQuote::where('uuid', $uuid)->first();
@@ -327,7 +327,7 @@ class CentralService
                 ];
 
                 $response = Capi::request($endpoint, 'post', $data);
-                info('health plan update response: '.json_encode($response));
+                info('health plan update response: ' . json_encode($response));
                 // if (isset($response->totalPremium)) {
                 //     $quote = HealthQuote::where('uuid', $uuid)->first();
                 //     $this->updateQuotePayment($quote, $response->totalPremium);
@@ -356,7 +356,7 @@ class CentralService
                 ->where('current_quote_status_id', QuoteStatusEnum::AMLScreeningFailed)
                 ->where('id', '>', $quoteStatusLog->id)
                 ->first();
-            if (! $amlScreenFailed) {
+            if (!$amlScreenFailed) {
                 $isAmlClearedForPayment = true;
             }
         }
@@ -476,27 +476,31 @@ class CentralService
         ])
             ->orderBy('created_at', 'desc')->pluck('activity_schedule_id')
             ->unique()->filter(function ($filter) {
-                return ! is_null($filter);
-            })->toArray();
+            return !is_null($filter);
+        })->toArray();
 
-        $getActivitySchedule = ActivitySchedule::where([
-            'quote_type_id' => $quoteTypeId,
-            'quote_status_id' => $quoteDetails->quote_status_id,
-        ])
-            ->whereIn('role_id', $advisorDetails->usersroles->pluck('id'))
-            ->whereIn('team_id', $advisorDetails->teams->pluck('id'))
-            ->when(! empty($scheduledActivitiesIDs), function ($previousSchedule) use ($scheduledActivitiesIDs) {
-                $previousSchedule->whereNotIn('id', $scheduledActivitiesIDs);
-            })
-            ->when($quoteDetails->source == LeadSourceEnum::RENEWAL_UPLOAD, function ($query) use ($quoteTypeDetail) {
-                $renewalTeamID = $quoteTypeDetail['renewal_team'];
+        $getActivitySchedule = null;
 
-                $query->where('team_id', $renewalTeamID ?? null);
-            })
-            ->orderBy('sorting_order')
-            ->first();
+        if ($advisorDetails) {
+            $getActivitySchedule = ActivitySchedule::where([
+                'quote_type_id' => $quoteTypeId,
+                'quote_status_id' => $quoteDetails->quote_status_id,
+            ])
+                ->whereIn('role_id', $advisorDetails->usersroles->pluck('id'))
+                ->whereIn('team_id', $advisorDetails->teams->pluck('id'))
+                ->when(!empty($scheduledActivitiesIDs), function ($previousSchedule) use ($scheduledActivitiesIDs) {
+                    $previousSchedule->whereNotIn('id', $scheduledActivitiesIDs);
+                })
+                ->when($quoteDetails->source == LeadSourceEnum::RENEWAL_UPLOAD, function ($query) use ($quoteTypeDetail) {
+                    $renewalTeamID = $quoteTypeDetail['renewal_team'];
 
-        if ($getActivitySchedule && $quoteDetails->advisor_id && ! $lastActivityDueDateIsGreater) {
+                    $query->where('team_id', $renewalTeamID ?? null);
+                })
+                ->orderBy('sorting_order')
+                ->first();
+        }
+
+        if ($getActivitySchedule && $quoteDetails->advisor_id && !$lastActivityDueDateIsGreater) {
             $activity = Activities::create([
                 'title' => $getActivitySchedule->name,
                 'description' => $getActivitySchedule->description,
@@ -508,7 +512,7 @@ class CentralService
                 'assignee_id' => $quoteDetails->advisor_id ?? auth()->user()->id,
                 'uuid' => generateUuid(),
                 'due_date' => addDaysExcludeWeekend($getActivitySchedule->due_days),
-                'client_name' => $quoteDetails->first_name.' '.$quoteDetails->last_name,
+                'client_name' => $quoteDetails->first_name . ' ' . $quoteDetails->last_name,
                 'client_email' => $quoteDetails->email,
                 'quote_uuid' => $quoteDetails->uuid,
                 'activity_schedule_id' => $getActivitySchedule->id,
