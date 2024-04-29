@@ -142,17 +142,17 @@ class GenericPermissionSeeder extends Seeder
     private function embeddedProductSeeds()
     {
         // update name of existing permission
-        Permission::where(['name' => 'embedded-product-view'])->update(['name' => PermissionsEnum::EmbeddedProductAdvisor]);
+        Permission::where(['name' => 'embedded-product-view'])->update(['name' => PermissionsEnum::EMBEDDED_PRODUCT_ADVISOR]);
 
         $permissionList = [
-            PermissionsEnum::EmbeddedProductAdvisor => [
+            PermissionsEnum::EMBEDDED_PRODUCT_ADVISOR => [
                 RolesEnum::CarAdvisor,
                 RolesEnum::Admin,
                 RolesEnum::Engineering,
                 RolesEnum::BetaUser,
                 RolesEnum::EpAdmin,
             ],
-            PermissionsEnum::EmbeddedProductAdmin => [
+            PermissionsEnum::EMBEDDED_PRODUCT_ADMIN => [
                 RolesEnum::Admin,
                 RolesEnum::Engineering,
                 RolesEnum::BetaUser,

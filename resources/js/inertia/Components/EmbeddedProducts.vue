@@ -246,7 +246,7 @@ const hasAnyRole = roles => useHasAnyRole(roles);
 </script>
 
 <template>
-  <div v-if="useCanAny([permissionsEnum.EmbeddedProductAdvisor, permissionsEnum.EmbeddedProductAdmin])">
+  <div v-if="useCanAny([permissionsEnum.EMBEDDED_PRODUCT_ADVISOR, permissionsEnum.EMBEDDED_PRODUCT_ADMIN])">
     <x-collapse class="p-4 rounded shadow mb-6 bg-white" show-icon>
 
       <div class="flex flex-wrap gap-4 justify-between items-center">
@@ -312,15 +312,15 @@ const hasAnyRole = roles => useHasAnyRole(roles);
                 :disabled="ppDoc(item.company_documents) === ''">
                 Download Product Wordings
               </x-button>
-              <x-button v-if="useCan(permissionsEnum.EmbeddedProductAdmin)" size="xs" color="#ff5e00"
+              <x-button v-if="useCan(permissionsEnum.EMBEDDED_PRODUCT_ADMIN)" size="xs" color="#ff5e00"
                 :disabled="checkTransactionExist(item)" @click.prevent="cancelPaymentForm(item)">
                 Cancel Payments
               </x-button>
             </div>
           </template>
         </DataTable>
-        <x-modal v-if="useCan(permissionsEnum.EmbeddedProductAdmin)" v-model="modals.cancelPayment" size="lg" show-close
-          backdrop>
+        <x-modal v-if="useCan(permissionsEnum.EMBEDDED_PRODUCT_ADMIN)" v-model="modals.cancelPayment" size="lg"
+          show-close backdrop>
           <template #header> Cancel Payment </template>
 
           <x-form @submit="onActivitySubmit" :auto-focus="false">
