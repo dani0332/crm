@@ -346,7 +346,7 @@ class CentralController extends Controller
         $payment->save();
     }
 
-    private function updatePaymentSplitAllocationStatus($paymentSplit, $quote)
+    private function firstSplitAllocationStatus($paymentSplit, $quote)
     {
         if (in_array($paymentSplit->payment_status_id, [PaymentStatusEnum::PENDING, PaymentStatusEnum::CREDIT_APPROVED])) {
             $paymentSplit->payment_allocation_status = PaymentAllocationStatus::NOT_ALLOCATED;
@@ -366,26 +366,45 @@ class CentralController extends Controller
         $paymentSplit->save();
     }
 
+    private function updatePaymentSplitAllocationStatus($paymentSplits, $quote)
+    {
+        $collectedAmount = 0;
+        foreach ($paymentSplits as $paymentSplit) {
+            $collectedAmount += $paymentSplit->collection_amount;
+            if (in_array($paymentSplit->payment_status_id, [PaymentStatusEnum::PENDING, PaymentStatusEnum::CREDIT_APPROVED])) {
+                $paymentSplit->payment_allocation_status = PaymentAllocationStatus::NOT_ALLOCATED;
+            } else {
+                if ($paymentSplit->collection_amount > 0) {
+                    if ($collectedAmount <= $quote->price_with_vat) {
+                        $paymentSplit->payment_allocation_status = PaymentAllocationStatus::FULLY_ALLOCATED;
+                    } elseif ($collectedAmount > $quote->price_with_vat) {
+                        $paymentSplit->payment_allocation_status = PaymentAllocationStatus::PARTIALLY_ALLOCATED;
+                    } else {
+                        $paymentSplit->payment_allocation_status = PaymentAllocationStatus::UNPAID;
+                    }
+                } else {
+                    $paymentSplit->payment_allocation_status = PaymentAllocationStatus::UNPAID;
+                }
+            }
+            $paymentSplit->save();
+        }
+
+    }
+
     private function straightforwardPayments($payment, $paymentSplits, $quote)
     {
         $this->updatePaymentAllocationStatus($payment, $quote);
 
-        if ($payment->frequency == 'upfront') {
+        if (in_array($payment->frequency, ['upfront', 'semi_annual', 'quarterly', 'monthly', 'custom'])) {
             $paymentSplit = $paymentSplits->first();
-            $this->updatePaymentSplitAllocationStatus($paymentSplit, $quote);
+            $this->firstSplitAllocationStatus($paymentSplit, $quote);
         }
-
+        
         if ($payment->frequency == "split_payments") {
-            foreach ($paymentSplits as $paymentSplit) {
-                $this->updatePaymentSplitAllocationStatus($paymentSplit, $quote);
-            }
+            $this->updatePaymentSplitAllocationStatus($paymentSplits, $quote);
         }
 
-        if (in_array($payment->frequency, ['semi_annual', 'quarterly', 'monthly', 'custom'])) {
-            foreach ($paymentSplits as $paymentSplit) {
-                $this->updatePaymentSplitAllocationStatus($paymentSplit, $quote);
-            }
-        }
+        
     }
     
     // Update total price
