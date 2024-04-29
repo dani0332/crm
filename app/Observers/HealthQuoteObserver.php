@@ -2,9 +2,9 @@
 
 namespace App\Observers;
 
-use App\Models\HealthQuote;
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
+use App\Models\HealthQuote;
 use App\Services\HealthQuoteService;
 use App\Traits\PersonalQuoteSyncTrait;
 
@@ -29,8 +29,7 @@ class HealthQuoteObserver
                 $healthQuote->update(['transaction_approved_at' => now()]);
             });
 
-            if ($healthQuote->source === LeadSourceEnum::IMCRM)
-            {
+            if ($healthQuote->source === LeadSourceEnum::IMCRM) {
                 $this->healthQuoteService->assignRenewalBatch($healthQuote);
             }
 
