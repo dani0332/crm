@@ -399,7 +399,12 @@ class HandleInertiaRequests extends Middleware
             });
         }
 
-        if (auth()->user()->can(PermissionsEnum::EmbeddedProductView)) {
+        if (
+            auth()->user()->hasAnyPermission([
+                PermissionsEnum::EMBEDDED_PRODUCT_ADVISOR,
+                PermissionsEnum::EMBEDDED_PRODUCT_ADMIN,
+            ])
+        ) {
             $nav = $nav->add('Embedded Products', '', function (Section $section) {
                 $section
                     ->add('All Products', route('embedded-products.index'), fn ($s) => $s->attributes(['icon' => 'box']))
