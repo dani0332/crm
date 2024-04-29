@@ -417,7 +417,7 @@ class AMLController extends Controller
                     $fetchEntity->industry_type_code = $AMLCheckRequest->industry_type_code;
                     $fetchEntity->emirate_of_registration_id = $AMLCheckRequest->emirate_of_registration_id;
 
-                    $isEntityDetailUpdated = $fetchEntity->isDirty();
+                    $isEntityDetailUpdated = $fetchEntity;    //$isEntityDetailUpdated = $fetchEntity->isDirty();
 
                     if ($isEntityDetailUpdated) {
                         $fetchEntity->save();
