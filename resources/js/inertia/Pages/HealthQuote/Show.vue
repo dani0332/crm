@@ -53,6 +53,7 @@ defineProps({
   paymentTooltipEnum: Object,
   storageUrl: String,
   isNewPaymentStructure: Boolean,
+  isAmlClearedForPayment: Boolean,
 });
 
 const isManualPlansCount = ref(0);
@@ -2971,6 +2972,7 @@ watch(
 			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name, tooltip: pm.tool_tip } })"
 			:storageUrl="storageUrl"
       :eCommercePrice="ecomDetails.priceWithVAT?ecomDetails.priceWithVAT:0"
+      :isAmlClearedForPayment="isAmlClearedForPayment"
 		/>
     <PaymentTable
       v-else
