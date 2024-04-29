@@ -115,6 +115,7 @@ class CarQuoteService extends BaseService
                 'cqrd.notes',
                 'cqrd.lost_approval_status',
                 'cqrd.lost_approval_reason',
+                'cqrd.insly_id',
                 'vt.text as vehicle_type_id_text',
                 'cqr.currently_insured_with',
                 'cqr.currently_insured_with as currently_insured_with_text',
