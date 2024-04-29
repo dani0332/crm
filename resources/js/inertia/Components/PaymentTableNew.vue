@@ -759,7 +759,7 @@ const  formatDate = (date) =>  {
   }
 
 function formatString(input) {
-  if (input === '') {
+  if (input === '' || input === undefined || input === null) {
     return '';
   }
   const lowercaseString = input.toLowerCase();
@@ -1755,14 +1755,14 @@ watch(() => props.quoteRequest, (newValue, oldValue) => {
   planDetail.value = initalPlanDetails;
 });
 const paymentAllocationStatusTooltip= payment_allocation_status  => {
-  console.log(payment_allocation_status);
-  if(payment_allocation_status == 'not_allocated' || payment_allocation_status == 'Not Allocated'){
+  payment_allocation_status = formatString(payment_allocation_status);
+  if(payment_allocation_status == 'Not Allocated'){
     return productionProcessTooltipEnum.PAYMENT_ALLOCATION_STATUS_NOT_ALLOCATED;
   }
-  else if(payment_allocation_status == 'partially_allocated' || payment_allocation_status == 'Partially Allocated'){
+  else if(payment_allocation_status == 'Partially Allocated'){
     return productionProcessTooltipEnum.PAYMENT_ALLOCATION_STATUS_PARTIALLY_ALLOCATED;
   }
-  else if(payment_allocation_status == 'fully_allocated' || payment_allocation_status == 'Fully Allocated'){
+  else if(payment_allocation_status == 'Fully Allocated'){
     return productionProcessTooltipEnum.PAYMENT_ALLOCATION_STATUS_FULLY_ALLOCATED;
   }
 }
@@ -1947,7 +1947,7 @@ const isMasterPaymentPaid = computed(() => {
                 <td>  
                   <x-tooltip position="left">
                     <span class="border-b border-dotted border-black ">
-                      {{ item.payment_allocation_status !== null ? formatString(item.payment_allocation_status) : '' }}
+                     {{ item.payment_allocation_status !== null ? formatString(item.payment_allocation_status) : '' }}
                     </span>
                     <template #tooltip>
                       <span class="custom-tooltip-content">

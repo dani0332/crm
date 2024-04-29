@@ -3,11 +3,14 @@
 namespace App\Traits;
 
 use App\Enums\GenericRequestEnum;
+use App\Enums\PaymentStatusEnum;
+use App\Enums\ProductionProcessTooltipEnum;
 use App\Enums\QuoteDocumentsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypes;
 use App\Models\Payment;
+use App\Models\PaymentStatus;
 use App\Repositories\InsuranceProviderRepository;
 use App\Services\CapiRequestService;
 use App\Services\QuoteDocumentService;
@@ -184,17 +187,22 @@ trait GenericQueriesAllLobs
     public function bookPolicyPayload($record, $quoteType, $payments, $quoteDocuments)
     {
         $insuranceProviderLeadCount = $insuranceProviderCode = '';
-        if ($payments->first()) {
+        $payment= $payments->first();
+        if ($payment) {
             $insurance_provider_id = $payments[0]['insurance_provider_id'];
             $insuranceProviderCode = InsuranceProviderRepository::where('id', $insurance_provider_id)->value('code');
             $insuranceProviderLeadCount = Payment::where('insurance_provider_id', '=', $insurance_provider_id)->count();
         }
+        $bPDetails = [];
         $bPDetails['brokerInvoiceNo'] = $insuranceProviderCode.$insuranceProviderLeadCount;
         $bPDetails['invoiceDescription'] = $insuranceProviderCode.'-'.$quoteType.'-'.$record->policy_number;
         $bPDetails['sendButton'] = false;
         $bPDetails['editButton'] = false;
         $bPDetails['sendPolicyType'] = null;
         $bPDetails['text'] = '';
+        @[$transactionPaymentStatus, $paymentStatusTooltip]= $this->transactionPaymentStatus($payment, $record);
+        $bPDetails['transactionPaymentStatus'] = $transactionPaymentStatus;
+        $bPDetails['paymentStatusTooltip'] = $paymentStatusTooltip;
         if (! empty($quoteDocuments)) {
             $document_type_codes = collect($quoteDocuments)->pluck('document_type_code')->toArray();
 
@@ -212,7 +220,6 @@ trait GenericQueriesAllLobs
                 $bPDetails['sendPolicyType'] = 'sage';
             }
         }
-
         return $bPDetails;
     }
 
@@ -247,5 +254,30 @@ trait GenericQueriesAllLobs
                 }
             }
         }
+    }
+
+    private function transactionPaymentStatus($payment, $quote)
+    {
+        if (!$payment) {
+            return [
+                'status' => PaymentStatusEnum::UNPAID_TEXT,
+                'tooltip' => ProductionProcessTooltipEnum::TRANSACTION_PAYMENT_STATUS_NOT_PAID
+            ];
+        }
+    
+        $totalAmount = $payment->captured_amount + $payment->discount_value;
+    
+        if ($payment->captured_amount == 0) {
+            $paymentStatus = PaymentStatusEnum::UNPAID_TEXT;
+            $paymentStatusTooltip = ProductionProcessTooltipEnum::TRANSACTION_PAYMENT_STATUS_NOT_PAID;
+        } elseif ($totalAmount >= $quote->price_with_vat) {
+            $paymentStatus = PaymentStatusEnum::FULLY_PAID_TEXT;
+            $paymentStatusTooltip = ProductionProcessTooltipEnum::TRANSACTION_PAYMENT_STATUS_PAID;
+        } else {
+            $paymentStatus = PaymentStatusEnum::PARTIALLY_PAID_TEXT;
+            $paymentStatusTooltip = ProductionProcessTooltipEnum::TRANSACTION_PAYMENT_STATUS_PARTIALLY_PAID;
+        }
+    
+        return [$paymentStatus, $paymentStatusTooltip];
     }
 }

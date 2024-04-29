@@ -54,40 +54,10 @@ const currentDate = computed(() => {
   return `${day}-${month}-${year}`;
 });
 
-const transactionPaymentStatus = computed(() => {
-  if (Number(page.props?.payments[0]?.captured_amount) === 0) {
-    return 'Unpaid';
-  }
-  if (
-    (Number(page.props?.payments[0]?.total_price) >
-    Number(page.props?.payments[0]?.captured_amount)  || (Number(props?.quote?.price_with_vat) > Number(page.props.payments[0]?.captured_amount)))
-  ) {
-    return 'Partially Paid';
-  }
-  if (
-   ( Number(page.props?.payments[0]?.captured_amount) >=
-    Number(page.props?.payments[0]?.total_price) || (Number(props?.quote?.price_with_vat) < Number(page.props.payments[0]?.captured_amount)))
-  ) {
-    return 'Fully Paid';
-  }
-});
-
-const transactionPaymentStatusTooltip= computed(() => {
-    if(transactionPaymentStatus.value == 'Unpaid'){
-        return productionProcessTooltipEnum.TRANSACTION_PAYMENT_STATUS_NOT_PAID;
-    }
-    else if(transactionPaymentStatus.value == 'Partially Paid'){
-        return productionProcessTooltipEnum.TRANSACTION_PAYMENT_STATUS_PARTIALLY_PAID;
-    }
-    else if(transactionPaymentStatus.value == 'Fully Paid' || transactionPaymentStatus.value == 'Paid'){
-        return productionProcessTooltipEnum.TRANSACTION_PAYMENT_STATUS_PAID;
-    }
-});
-
 const bpForm = useForm({
   booking_date:
     dateToDMY(page.props.quote?.policy_booking_date) || currentDate.value,
-  transaction_payment_status: transactionPaymentStatus.value,
+  transaction_payment_status: page.props.bPDetails.transactionPaymentStatus,
   invoice_date: dateToYMD(page.props.payments[0]?.insurer_invoice_date) || '',
   invoice_description: page.props.bPDetails.invoiceDescription || '',
   broker_invoice_number: page.props.bPDetails.brokerInvoiceNo || '',
@@ -105,7 +75,7 @@ const bpForm = useForm({
   discount: page.props?.payments[0]?.discount_value || '',
   model_type: props.quoteType,
   quote_id: page.props.quote.id,
-  transaction_payment_status_tool_tip: transactionPaymentStatusTooltip.value
+  transaction_payment_status_tool_tip: page.props.bPDetails.paymentStatusTooltip
 });
 
 const onUpdateBpDetails = isValid => {
