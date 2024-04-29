@@ -192,6 +192,16 @@ const caculateCommission = () => {
     bpForm.total_commission = '';
   }
 };
+
+// Watch for changes in paymentMethodsForm.collection_date
+watch(() => page.props.bPDetails.transactionPaymentStatus, (newValue, oldValue) => {
+  if (newValue && oldValue) {
+    bpForm.transaction_payment_status_tool_tip= props.bPDetails.paymentStatusTooltip;
+    bpForm.transaction_payment_status= props.bPDetails.transactionPaymentStatus;
+
+  }  
+});
+
 </script>
 
 <template>
