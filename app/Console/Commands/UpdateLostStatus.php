@@ -66,7 +66,7 @@ class UpdateLostStatus extends Command
 
         foreach ($eligibleQuoteTypes as $eligibleQuoteType) {
 
-            info('------------------- Updating : '.$eligibleQuoteType.' -------------------');
+            info('------------------- Update Lost Status Command - Updating : '.$eligibleQuoteType.' -------------------');
             $eligibleQuoteType::whereNotIn('quote_status_id', $skipStatus)
                 ->where('quote_status_date', '<', date(config('constants.DATE_FORMAT_ONLY'), strtotime('-120 days')))
                 ->chunkById(1000, function ($quoteDetails) use ($eligibleQuoteType, $lostReasonId) {
@@ -120,7 +120,7 @@ class UpdateLostStatus extends Command
                         }
                     }
                 });
-            info('------------------- Updated : '.$eligibleQuoteType.' -------------------');
+            info('------------------- Update Lost Status Command - Updated : '.$eligibleQuoteType.' -------------------');
         }
     }
 }
