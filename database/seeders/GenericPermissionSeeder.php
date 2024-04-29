@@ -150,20 +150,20 @@ class GenericPermissionSeeder extends Seeder
                 RolesEnum::Admin,
                 RolesEnum::Engineering,
                 RolesEnum::BetaUser,
-                RolesEnum::EpAdmin
+                RolesEnum::EpAdmin,
             ],
             PermissionsEnum::EmbeddedProductAdmin => [
                 RolesEnum::Admin,
                 RolesEnum::Engineering,
                 RolesEnum::BetaUser,
-                RolesEnum::EpAdmin
+                RolesEnum::EpAdmin,
             ],
         ];
 
         foreach ($permissionList as $permission => $roles) {
             $dataset = Permission::firstOrCreate(['name' => $permission, 'guard_name' => 'web']);
             foreach ($roles as $roleName) {
-                if (($role = Role::where('name', $roleName)->first()) && !$role->hasPermissionTo($dataset->id)) {
+                if (($role = Role::where('name', $roleName)->first()) && ! $role->hasPermissionTo($dataset->id)) {
                     $role->givePermissionTo($dataset->id);
                 }
             }
