@@ -331,13 +331,11 @@ use App\Enums\PermissionsEnum;
                 </ul>
                 @endcan
 
-                @if(auth()->user()->hasRole(RolesEnum::BetaUser))
                 <ul class="nav side-menu">
                     @can(PermissionsEnum::VIEW_LEGACY_DETAILS)
                     <li><a href="{{ url('legacy-policy') }}"><i></i>Legacy Policies</a>
                     @endcan
                 </ul>
-                @endif
 
                 {{-- @if (auth()->check() && auth()->user()->isAdmin())
                 <ul class="nav side-menu">
