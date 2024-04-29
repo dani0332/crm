@@ -506,7 +506,7 @@ watch(
           color="emerald"
           :loading="loader.button"
         >
-          {{ isEdit ? 'Update' : 'Save' }}
+          Save
         </x-button>
       </div>
     </x-form>
