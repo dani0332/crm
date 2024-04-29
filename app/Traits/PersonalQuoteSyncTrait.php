@@ -32,7 +32,12 @@ trait PersonalQuoteSyncTrait
         $personalQuote = PersonalQuoteRepository::where('uuid', $quote->uuid)->first();
         if (! $personalQuote) {
             $this->syncEntry($quote->uuid);
+            
             $personalQuote = PersonalQuoteRepository::where('uuid', $quote->uuid)->first();
+            if (! $personalQuote) {
+                Log::warning("Quote not synced from quote_sync table, uuid: {$quote->uuid}");
+                return;
+            }
         }
 
         $this->syncTable($personalQuote, $updatedFields, 'personal_quotes');
@@ -45,7 +50,12 @@ trait PersonalQuoteSyncTrait
         $personalQuote = PersonalQuoteRepository::where('uuid', $quote->uuid)->first();
         if (! $personalQuote) {
             $this->syncEntry($quote->uuid);
+            
             $personalQuote = PersonalQuoteRepository::where('uuid', $quote->uuid)->first();
+            if (!$personalQuote) {
+                Log::warning("Quote not synced from quote_sync table, uuid: {$quote->uuid}");
+                return;
+            }
         }
 
         // update personal quote details
