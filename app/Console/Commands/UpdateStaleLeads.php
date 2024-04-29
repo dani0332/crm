@@ -65,17 +65,6 @@ class UpdateStaleLeads extends Command
         $lostReasonId = 34; //Stale for more than 90 days
         foreach ($eligibleQuoteTypes as $eligibleQuoteType) {
 
-            // info("------------------- Updating Revert: " . $eligibleQuoteType . " -------------------");
-            // $eligibleQuoteType::whereNotNull('stale_at')->chunkById(1000, function($quoteDetailsForUpdate){
-            //     foreach($quoteDetailsForUpdate as $quoteDetailForUpdate){
-            //         $quoteDetailForUpdate->update([
-            //             'stale_at' => null,
-            //             'updated_at' => '2023-05-01 14:00:00'
-            //         ]);
-            //     }
-            // });
-            // info("------------------- Revert Updated : " . $eligibleQuoteType . " -------------------");
-
             info('------------------- Updating : '.$eligibleQuoteType.' -------------------');
             $eligibleQuoteType::whereNotIn('quote_status_id', $skipStatus)
                 // ->where('quote_status_date', '<', date(config('constants.DATE_FORMAT_ONLY'), strtotime('-30 days')))
