@@ -65,7 +65,7 @@ class UpdateStaleLeads extends Command
         $lostReasonId = 34; //Stale for more than 90 days
         foreach ($eligibleQuoteTypes as $eligibleQuoteType) {
 
-            info('------------------- Updating : '.$eligibleQuoteType.' -------------------');
+            info('------------------- Update Stale Leads Command - Updating - '.now().' : '.$eligibleQuoteType.' -------------------');
             $eligibleQuoteType::whereNotIn('quote_status_id', $skipStatus)
                 // ->where('quote_status_date', '<', date(config('constants.DATE_FORMAT_ONLY'), strtotime('-30 days')))
                 ->where('quote_status_date', '<', date(config('constants.DATE_FORMAT_ONLY'), strtotime('-3 days')))
@@ -81,7 +81,7 @@ class UpdateStaleLeads extends Command
                         ]);
                     }
                 });
-            info('------------------- Updated : '.$eligibleQuoteType.' -------------------');
+            info('------------------- Update Stale Leads Command - Updated - '.now().' : '.$eligibleQuoteType.' -------------------');
 
             info('------------------- Updating Lost Status on Stale Leads for: '.$eligibleQuoteType.' -------------------');
             $eligibleQuoteType::with('activities')
