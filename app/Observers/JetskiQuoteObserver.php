@@ -15,12 +15,17 @@ class JetskiQuoteObserver
      */
     public function updated(JetskiQuote $jetskiQuote): void
     {
-        if ($jetskiQuote->isDirty('quote_status_id') && $jetskiQuote->quote_status_id === QuoteStatusEnum::TransactionApproved) {
+        $dirty = $jetskiQuote->getDirty();
+        if (
+            $jetskiQuote->isDirty('quote_status_id') &&
+            $jetskiQuote->quote_status_id === QuoteStatusEnum::TransactionApproved
+        ) {
             JetskiQuote::withoutEvents(function () use ($jetskiQuote) {
                 $jetskiQuote->update(['transaction_approved_at' => now()]);
             });
+            $dirty = [...$dirty, 'transaction_approved_at' => $jetskiQuote->transaction_approved_at];
         }
 
-        $this->syncQuote($jetskiQuote, $jetskiQuote->getDirty());
+        $this->syncQuote($jetskiQuote, $dirty);
     }
 }

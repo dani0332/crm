@@ -65,7 +65,7 @@ trait PersonalQuoteSyncTrait
 
     private function formatColumnValue($columnType, $value)
     {
-        if (in_array($columnType, ['date', 'datetime'])) {
+        if ($value && in_array($columnType, ['date', 'datetime'])) {
             return Carbon::parse($value)->toDateTimeString();
         }
 
