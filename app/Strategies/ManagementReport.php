@@ -72,7 +72,7 @@ class ManagementReport
     public function applyFilters($query, $request)
     {
         //secondOptionalFieldName to be used in case of transaction due date, coming from a different table 'payment_splits'
-        $dateFilter = function ($fieldName, $filterKey, $secondOptionalFieldName=null) use ($query, $request) {
+        $dateFilter = function ($fieldName, $filterKey, $secondOptionalFieldName = null) use ($query, $request) {
 
             if ($request[$filterKey] != null) {
                 if (is_array($request[$filterKey])) {
@@ -180,21 +180,24 @@ class ManagementReport
 
     public function getUtmGroup($request, $query)
     {
-        if (isset($request['utmGroupBy']) && !empty($request['utmGroupBy'])) {
+        if (isset($request['utmGroupBy']) && ! empty($request['utmGroupBy'])) {
             switch ($request['utmGroupBy']) {
                 case 'UTM Campaign':
                     $query->addSelect('pqd.utm_campaign');
                     $query->whereNotNull('pqd.utm_campaign');
+
                     return 'pqd.utm_campaign';
                     break;
                 case 'UTM Source':
                     $query->addSelect('pqd.utm_source');
                     $query->whereNotNull('pqd.utm_source');
+
                     return 'pqd.utm_source';
                     break;
                 case 'UTM Medium':
                     $query->addSelect('pqd.utm_medium');
                     $query->whereNotNull('pqd.utm_medium');
+
                     return 'pqd.utm_medium';
                     break;
             }

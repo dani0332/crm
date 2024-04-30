@@ -2,11 +2,9 @@
 
 namespace Database\Seeders;
 
-use App\Models\CarQuote;
 use App\Models\HealthQuote;
 use App\Models\LeadSource;
 use Illuminate\Database\Seeder;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 
 class LeadSourceSyncSeeder extends Seeder
 {
@@ -25,7 +23,7 @@ class LeadSourceSyncSeeder extends Seeder
                     $leadSource = LeadSource::where('name', $source)
                         ->first();
                     // sync new lead sources
-                    if (!$leadSource) {
+                    if (! $leadSource) {
                         $leadSource = new LeadSource();
                         $leadSource->name = $source;
                         $leadSource->is_active = 1;
