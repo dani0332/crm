@@ -7,12 +7,12 @@ use App\Enums\ManagementReportCategoriesEnum;
 use App\Enums\ManagementReportGroupByEnum;
 use App\Models\LeadSource;
 use App\Models\Team;
-use App\Services\ActivePoliciesReportService;
 use App\Services\ApplicationStorageService;
-use App\Services\EndingPoliciesReportService;
-use App\Services\SaleDetailReportService;
-use App\Services\SaleSummaryReportService;
-use App\Services\TransactionReportService;
+use App\Services\Reports\ActivePoliciesReportService;
+use App\Services\Reports\EndingPoliciesReportService;
+use App\Services\Reports\SaleDetailReportService;
+use App\Services\Reports\SaleSummaryReportService;
+use App\Services\Reports\TransactionReportService;
 use App\Traits\TeamHierarchyTrait;
 
 class ManagementReportServiceFactory
