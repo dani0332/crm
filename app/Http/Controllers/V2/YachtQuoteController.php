@@ -215,25 +215,6 @@ class YachtQuoteController extends Controller
                 QuoteStatusEnum::InNegotiation, ])->values()->toArray();
         }
 
-        // $isManagerOrAdminAccess = auth()->user()->hasAnyRole([RolesEnum::YachtManager, RolesEnum::Admin]);
-
-        // if (! $isManagerOrAdminAccess) {
-        //     if (auth()->user()->hasRole(RolesEnum::YachtNewBusinessAdvisor)) {
-        //         $quotes = collect($quotes)->whereNotIn('id', [
-        //             QuoteStatusEnum::Allocated,
-        //             QuoteStatusEnum::InNegotiation,
-        //         ])->values()->toArray();
-
-        //     } elseif (auth()->user()->hasRole(RolesEnum::YachtRenewalAdvisor)) {
-        //         $quotes = collect($quotes)->whereNotIn('id', [
-        //             QuoteStatusEnum::NewLead,
-        //             QuoteStatusEnum::InNegotiation,
-        //         ])->values()->toArray();
-        //     } else {
-        //         $quotes = [];
-        //     }
-        // }
-
         return inertia('YachtQuote/Cards', [
             'quotes' => $quotes,
             'quoteStatusEnum' => $quoteStatusEnums,

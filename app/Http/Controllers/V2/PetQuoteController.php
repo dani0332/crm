@@ -236,23 +236,6 @@ class PetQuoteController extends Controller
                 QuoteStatusEnum::InNegotiation])->values()->toArray();
         }
 
-        // $isManagerOrAdminAccess = auth()->user()->hasAnyRole([RolesEnum::PetManager, RolesEnum::Admin]);
-        // if (! $isManagerOrAdminAccess) {
-        //     if (auth()->user()->hasRole(RolesEnum::PetNewBusinessAdvisor)) {
-        //         $quotes = collect($quotes)->whereNotIn('id', [
-        //             QuoteStatusEnum::Allocated,
-        //             QuoteStatusEnum::InNegotiation,
-        //         ])->values()->toArray();
-
-        //     } elseif (auth()->user()->hasRole(RolesEnum::PetRenewalAdvisor)) {
-        //         $quotes = collect($quotes)->whereNotIn('id', [
-        //             QuoteStatusEnum::NewLead,
-        //             QuoteStatusEnum::InNegotiation,
-        //         ])->values()->toArray();
-        //     } else {
-        //         $quotes = [];
-        //     }
-        // }
 
         // Todo:: Need to send total Counts and Oppurtunity Counts
         return inertia('PetQuote/Cards', [

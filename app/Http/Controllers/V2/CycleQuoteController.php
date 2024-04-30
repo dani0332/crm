@@ -223,24 +223,6 @@ class CycleQuoteController extends Controller
                 QuoteStatusEnum::NewLead,
                 QuoteStatusEnum::InNegotiation, ])->values()->toArray();
         }
-        // $isManagerOrAdminAccess = auth()->user()->hasAnyRole([RolesEnum::CycleManager, RolesEnum::Admin]);
-
-        // if (! $isManagerOrAdminAccess) {
-        //     if (auth()->user()->hasRole(RolesEnum::CycleNewBusinessAdvisor)) {
-        //         $quotes = collect($quotes)->whereNotIn('id', [
-        //             QuoteStatusEnum::Allocated,
-        //             QuoteStatusEnum::InNegotiation,
-        //         ])->values()->toArray();
-
-        //     } elseif (auth()->user()->hasRole(RolesEnum::CycleRenewalAdvisor)) {
-        //         $quotes = collect($quotes)->whereNotIn('id', [
-        //             QuoteStatusEnum::NewLead,
-        //             QuoteStatusEnum::InNegotiation,
-        //         ])->values()->toArray();
-        //     } else {
-        //         $quotes = [];
-        //     }
-        // }
 
         return inertia('CycleQuote/Cards', [
             'quotes' => $quotes,
