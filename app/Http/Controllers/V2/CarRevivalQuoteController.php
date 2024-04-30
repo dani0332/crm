@@ -5,7 +5,6 @@ namespace App\Http\Controllers\V2;
 use App\Enums\CarPlanAddonsCode;
 use App\Enums\CarPlanExclusionsCode;
 use App\Enums\CarPlanFeaturesCode;
-use App\Enums\HealthTeamType;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PaymentTooltip;
 use App\Enums\PermissionsEnum;
@@ -30,7 +29,6 @@ use Illuminate\Http\Request;
 
 class CarRevivalQuoteController extends Controller
 {
-
     use GenericQueriesAllLobs;
 
     public function __construct()
@@ -76,9 +74,8 @@ class CarRevivalQuoteController extends Controller
         $paymentTooltipEnum = PaymentTooltip::asArray();
 
         $record = app(CRUDService::class)->getEntity($quoteType, $id);
-        abort_if(!$record, 404);
+        abort_if(! $record, 404);
         $leadStatuses = app(DropdownSourceService::class)->getDropdownSource('quote_status_id', $quoteTypeId);
-
 
         if (AMLService::checkAMLStatusFailed($quoteTypeId, $record->id)) {
             $leadStatuses = collect($leadStatuses)->filter(function ($value) {
@@ -102,7 +99,7 @@ class CarRevivalQuoteController extends Controller
 
         $displaySendPolicyButton = (bool) app(QuoteDocumentService::class)->showSendPolicyButton($record, $quoteDocuments, $quoteTypeId);
 
-        $cdnPath = config('constants.AZURE_IM_STORAGE_URL') . config('constants.AZURE_IM_STORAGE_CONTAINER') . '/';
+        $cdnPath = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
         $ecomCarInsuranceQuoteUrl = config('constants.ECOM_CAR_INSURANCE_QUOTE_URL');
 
         $activitiesData = app(ActivitiesService::class)->getActivityByLeadId($record->id, strtolower($quoteType));
@@ -141,7 +138,7 @@ class CarRevivalQuoteController extends Controller
             'carPlanAddonsCode' => CarPlanAddonsCode::asArray(),
             'quoteType' => quoteTypeCode::Car,
             'can' => [
-                'create_payments' => auth()->user()->can(PermissionsEnum::PaymentsCreate) && $paymentEntityModel->plan && !auth()->user()->hasRole(RolesEnum::PA),
+                'create_payments' => auth()->user()->can(PermissionsEnum::PaymentsCreate) && $paymentEntityModel->plan && ! auth()->user()->hasRole(RolesEnum::PA),
             ],
             'payments' => $payments,
             'quoteRequest' => $paymentEntityModel,

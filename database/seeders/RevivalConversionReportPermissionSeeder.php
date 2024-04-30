@@ -44,7 +44,7 @@ class RevivalConversionReportPermissionSeeder extends Seeder
                 // assign permission to admin car-arevival advisor/manager and beta user
 
                 $carRevivalAdvisor = Role::where('name', RolesEnum::CarRevivalAdvisor)->first();
-                if (!empty($carRevivalAdvisor)) {
+                if (! empty($carRevivalAdvisor)) {
                     $record = DB::table('role_has_permissions')->where('role_id', $carRevivalAdvisor->id)->where('permission_id', $permissionId)->first();
                     if (empty($record)) {
                         DB::table('role_has_permissions')->insert(
@@ -57,7 +57,7 @@ class RevivalConversionReportPermissionSeeder extends Seeder
                 }
 
                 $carRevivalManager = Role::where('name', RolesEnum::CarRevivalManager)->first();
-                if (!empty($carRevivalManager)) {
+                if (! empty($carRevivalManager)) {
                     $record = DB::table('role_has_permissions')->where('role_id', $carRevivalManager->id)->where('permission_id', $permissionId)->first();
                     if (empty($record)) {
                         DB::table('role_has_permissions')->insert(
@@ -70,7 +70,7 @@ class RevivalConversionReportPermissionSeeder extends Seeder
                 }
 
                 $adminRole = Role::where('name', RolesEnum::Admin)->first();
-                if (!empty($adminRole)) {
+                if (! empty($adminRole)) {
                     $record = DB::table('role_has_permissions')->where('role_id', $adminRole->id)->where('permission_id', $permissionId)->first();
                     if (empty($record)) {
                         DB::table('role_has_permissions')->insert(
@@ -83,7 +83,7 @@ class RevivalConversionReportPermissionSeeder extends Seeder
                 }
 
                 $betaUserRole = Role::where('name', RolesEnum::BetaUser)->first();
-                if (!empty($betaUserRole)) {
+                if (! empty($betaUserRole)) {
                     $record = DB::table('role_has_permissions')->where('role_id', $betaUserRole->id)->where('permission_id', $permissionId)->first();
                     if (empty($record)) {
                         DB::table('role_has_permissions')->insert(

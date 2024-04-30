@@ -50,8 +50,9 @@ class Dtt extends Command
     {
 
         $isDttEnabled = app(ApplicationStorageService::class)->getIsActiveByKey(ApplicationStorageEnums::DTT_ENABLED);
-        if (!$isDttEnabled) {
+        if (! $isDttEnabled) {
             info('Dtt is not enabled from cms');
+
             return false;
         }
         $dateOne = Carbon::now()->subMonths(11)->toDateString();
@@ -82,12 +83,12 @@ class Dtt extends Command
             ->groupBy(['email', 'car_make_id', 'car_model_id', 'year_of_manufacture'])
             ->get();
 
-        info($logPrefix . 'count -' . count($leads) . '-' . json_encode($leads->pluck('uuid')->toArray()));
+        info($logPrefix.'count -'.count($leads).'-'.json_encode($leads->pluck('uuid')->toArray()));
 
         foreach ($leads as $carLead) {
             $isTierR = app(LeadAllocationService::class)->checkIfLeadIsRenewal($carLead);
-            info($logPrefix . 'isTierR-' . !$isTierR);
-            if (!$isTierR) {
+            info($logPrefix.'isTierR-'.! $isTierR);
+            if (! $isTierR) {
                 $jobs[] = new CarRevivalLeadsCreationJob($carLead);
             }
         }
@@ -98,13 +99,13 @@ class Dtt extends Command
                 ->addJobs($jobs)
 
                 ->then(function () use ($logPrefix) {
-                    info($logPrefix . ' all jobs completed successfully');
+                    info($logPrefix.' all jobs completed successfully');
                 })
                 ->catch(function () use ($logPrefix) {
-                    info($logPrefix . ' one of batch is failed.');
+                    info($logPrefix.' one of batch is failed.');
                 })
                 ->finally(function () use ($logPrefix) {
-                    info($logPrefix . ' everything done');
+                    info($logPrefix.' everything done');
                 })
                 ->allowFailures()
                 ->withDelay(2)

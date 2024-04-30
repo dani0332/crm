@@ -28,7 +28,7 @@ class AddDttFlagApplicationStorage extends Seeder
         if (count($value) == 0) {
             DB::table('application_storage')->insert([[
                 'key_name' => ApplicationStorageEnums::DTT_ADVISOR,
-                'value' => implode(',',['name' => 'Alfred', 'email' => 'askalfred@insurancemarket.ae']),
+                'value' => implode(',', ['name' => 'Alfred', 'email' => 'askalfred@insurancemarket.ae']),
                 'is_active' => 1,
                 'created_at' => now(),
                 'updated_at' => now(),
