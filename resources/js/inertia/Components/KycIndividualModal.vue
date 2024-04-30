@@ -25,6 +25,7 @@ const props = defineProps({
   residentialStatus: Array,
   companyPosition: Array,
   customerDetails: Object,
+
 });
 
 const rules = {
@@ -112,6 +113,11 @@ const onKycSubmit = isValid => {
             title: 'KYC Document uploaded.',
             position: 'top',
           });
+             router.reload({
+                replace: true,
+                preserveScroll: true,
+                preserveState: true,
+            });
         } else {
           notification.error({
             title: 'Document not uploaded.',
@@ -213,6 +219,7 @@ onMounted(() => {
 </script>
 
 <template>
+
   <x-form @submit="onKycSubmit" :auto-focus="false">
     <div class="grid md:grid-cols-4 gap-4">
       <x-input

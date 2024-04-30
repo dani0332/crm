@@ -300,6 +300,7 @@ const linkEntity = () => {
         insuredFormDetails.industry_type_code = response.industry_type_code;
         insuredFormDetails.emirate_of_registration_id =
           response.emirate_of_registration_id;
+
         notification.success({
           title: res.data.message,
           position: 'top',
