@@ -4,6 +4,8 @@ namespace App\Http\Controllers\V2;
 
 use App\Enums\CustomerTypeEnum;
 use App\Enums\GenericRequestEnum;
+use App\Enums\PaymentAllocationStatus;
+use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Exports\AmtQuoteExport;
@@ -47,8 +49,6 @@ use App\Services\SplitPaymentService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
-use App\Enums\PaymentAllocationStatus;
-use App\Enums\PaymentStatusEnum;
 
 class CentralController extends Controller
 {
@@ -399,13 +399,13 @@ class CentralController extends Controller
                 $paymentSplit = $paymentSplits->first();
                 $this->firstSplitAllocationStatus($paymentSplit, $quote);
             }
-            
-            if ($payment->frequency == "split_payments") {
+
+            if ($payment->frequency == 'split_payments') {
                 $this->updatePaymentSplitAllocationStatus($paymentSplits, $quote);
             }
         }
     }
-    
+
     // Update total price
     public function updateTotalPrice(UpdateTotalPriceRequest $request)
     {
@@ -432,10 +432,10 @@ class CentralController extends Controller
     }
 
     // This method is used to update payment allocation status when lead status is updated
-    
+
     public function updatePaymentAllocation($modelType, $quote_uuid)
     {
-        $quote =$this->getQuoteObject($modelType, $quote_uuid);
+        $quote = $this->getQuoteObject($modelType, $quote_uuid);
         if ($quote->quote_status_id == QuoteStatusEnum::PolicyBooked) {
             $payment = Payment::where('code', $quote->code)->first();
             $paymentSplits = PaymentSplits::where('code', $quote->code)->get();

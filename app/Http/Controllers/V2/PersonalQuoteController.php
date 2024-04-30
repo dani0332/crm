@@ -21,6 +21,7 @@ class PersonalQuoteController extends Controller
 
         // Update payment allocation status
         app(CentralController::class)->updatePaymentAllocation($quoteType, $quoteId);
+
         return back()->with('message', 'Status updated successfully');
     }
 

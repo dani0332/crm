@@ -10,7 +10,6 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypes;
 use App\Models\Payment;
-use App\Models\PaymentStatus;
 use App\Repositories\InsuranceProviderRepository;
 use App\Services\CapiRequestService;
 use App\Services\QuoteDocumentService;
@@ -187,7 +186,7 @@ trait GenericQueriesAllLobs
     public function bookPolicyPayload($record, $quoteType, $payments, $quoteDocuments)
     {
         $insuranceProviderLeadCount = $insuranceProviderCode = '';
-        $payment= $payments->first();
+        $payment = $payments->first();
         if ($payment) {
             $insurance_provider_id = $payments[0]['insurance_provider_id'];
             $insuranceProviderCode = InsuranceProviderRepository::where('id', $insurance_provider_id)->value('code');
@@ -200,7 +199,7 @@ trait GenericQueriesAllLobs
         $bPDetails['editButton'] = false;
         $bPDetails['sendPolicyType'] = null;
         $bPDetails['text'] = '';
-        @[$transactionPaymentStatus, $paymentStatusTooltip]= $this->transactionPaymentStatus($payment, $record);
+        @[$transactionPaymentStatus, $paymentStatusTooltip] = $this->transactionPaymentStatus($payment, $record);
         $bPDetails['transactionPaymentStatus'] = $transactionPaymentStatus;
         $bPDetails['paymentStatusTooltip'] = $paymentStatusTooltip;
         if (! empty($quoteDocuments)) {
@@ -220,6 +219,7 @@ trait GenericQueriesAllLobs
                 $bPDetails['sendPolicyType'] = 'sage';
             }
         }
+
         return $bPDetails;
     }
 
@@ -258,15 +258,15 @@ trait GenericQueriesAllLobs
 
     private function transactionPaymentStatus($payment, $quote)
     {
-        if (!$payment) {
+        if (! $payment) {
             return [
                 'status' => PaymentStatusEnum::UNPAID_TEXT,
-                'tooltip' => ProductionProcessTooltipEnum::TRANSACTION_PAYMENT_STATUS_NOT_PAID
+                'tooltip' => ProductionProcessTooltipEnum::TRANSACTION_PAYMENT_STATUS_NOT_PAID,
             ];
         }
-    
+
         $totalAmount = $payment->captured_amount + $payment->discount_value;
-    
+
         if ($payment->captured_amount == 0) {
             $paymentStatus = PaymentStatusEnum::UNPAID_TEXT;
             $paymentStatusTooltip = ProductionProcessTooltipEnum::TRANSACTION_PAYMENT_STATUS_NOT_PAID;
@@ -277,7 +277,7 @@ trait GenericQueriesAllLobs
             $paymentStatus = PaymentStatusEnum::PARTIALLY_PAID_TEXT;
             $paymentStatusTooltip = ProductionProcessTooltipEnum::TRANSACTION_PAYMENT_STATUS_PARTIALLY_PAID;
         }
-    
+
         return [$paymentStatus, $paymentStatusTooltip];
     }
 }
