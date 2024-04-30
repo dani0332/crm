@@ -600,7 +600,7 @@ class CRUDService extends BaseService
 
                 $maxAmount = 0;
                 $errorMessage = 'Cancel amount should not exceeded from transaction amount';
-                if ($paymentStatus === PaymentStatusEnum::CAPTURED) {
+                if (in_array($paymentStatus, [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PAID])) {
                     $maxAmount = $payment->premium_captured - $payment->premium_refunded;
                 } elseif ($paymentStatus === PaymentStatusEnum::AUTHORISED) {
                     $maxAmount = $payment->premium_authorized - $payment->premium_refunded;
