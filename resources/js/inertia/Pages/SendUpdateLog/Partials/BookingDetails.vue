@@ -684,8 +684,8 @@ const onCancel = () => {
               <dd></dd>
             </div>
 
-            <div class="grid sm:grid-cols-2 ml-[-50px] mt-4">
-              <dt class="flex justify-end mr-10">
+            <div class="grid sm:grid-cols-2 mt-4">
+              <dt>
                 <x-tooltip position="left">
                   <label
                       class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
@@ -703,7 +703,7 @@ const onCancel = () => {
             </div>
 
             <div class="grid sm:grid-cols-2">
-              <dt class="flex justify-end mr-10">
+              <dt>
                 <x-tooltip position="left">
                   <label
                       class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
@@ -720,8 +720,8 @@ const onCancel = () => {
               </dd>
             </div>
 
-            <div class="grid sm:grid-cols-2 ml-[-50px]">
-              <dt class="font-bold text-right mr-10">
+            <div class="grid sm:grid-cols-2">
+              <dt class="font-bold">
                 <span>MAIN CLASS OF INSURANCE</span>
               </dt>
               <dd>
@@ -730,7 +730,7 @@ const onCancel = () => {
             </div>
 
             <div class="grid sm:grid-cols-2">
-              <dt class="flex justify-end mr-10">
+              <dt>
                 <x-tooltip position="left">
                   <label
                       class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
@@ -747,8 +747,8 @@ const onCancel = () => {
               </dd>
             </div>
 
-            <div class="grid sm:grid-cols-2 ml-[-50px]">
-              <dt class="flex justify-end mr-10">
+            <div class="grid sm:grid-cols-2">
+              <dt>
                 <x-tooltip position="left">
                   <label
                       class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
@@ -764,7 +764,7 @@ const onCancel = () => {
             </div>
 
             <div class="grid sm:grid-cols-2">
-              <dt class="flex justify-end mr-10">
+              <dt>
                 <x-tooltip position="left">
                   <label
                       class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
@@ -781,8 +781,8 @@ const onCancel = () => {
               </dd>
             </div>
 
-            <div class="grid sm:grid-cols-2 ml-[-50px]">
-              <dt class="flex justify-end mr-10">
+            <div class="grid sm:grid-cols-2">
+              <dt>
                 <x-tooltip position="left">
                   <label
                       class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
@@ -800,7 +800,7 @@ const onCancel = () => {
             </div>
 
             <div class="grid sm:grid-cols-2">
-              <dt class="flex justify-end mr-10">
+              <dt>
                 <x-tooltip position="left">
                   <label
                       class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
@@ -817,8 +817,8 @@ const onCancel = () => {
               </dd>
             </div>
 
-            <div class="grid sm:grid-cols-2 ml-[-50px]">
-              <dt class="flex justify-end mr-10">
+            <div class="grid sm:grid-cols-2">
+              <dt>
                 <x-tooltip position="left">
                   <label
                       class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
@@ -836,7 +836,7 @@ const onCancel = () => {
             </div>
 
             <div class="grid sm:grid-cols-2">
-              <dt class="flex justify-end mr-10">
+              <dt>
                 <x-tooltip position="left">
                   <label
                       class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
@@ -853,8 +853,8 @@ const onCancel = () => {
               </dd>
             </div>
 
-            <div class="grid sm:grid-cols-2 ml-[-50px]">
-              <dt class="flex justify-end mr-10">
+            <div class="grid sm:grid-cols-2">
+              <dt>
                 <x-tooltip position="left">
                   <label
                       class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
@@ -872,7 +872,7 @@ const onCancel = () => {
             </div>
 
             <div class="grid sm:grid-cols-2">
-              <dt class="flex justify-end mr-10">
+              <dt>
                 <x-tooltip position="left">
                   <label
                       class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
@@ -889,8 +889,8 @@ const onCancel = () => {
               </dd>
             </div>
 
-            <div class="grid sm:grid-cols-2 ml-[-50px]">
-              <dt class="flex justify-end mr-10">
+            <div class="grid sm:grid-cols-2">
+              <dt>
                 <x-tooltip position="left">
                   <label
                       class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
@@ -908,7 +908,7 @@ const onCancel = () => {
             </div>
 
             <div class="grid sm:grid-cols-2">
-              <dt class="flex justify-end mr-10">
+              <dt>
                 <x-tooltip position="left">
                   <label
                       class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
@@ -925,8 +925,8 @@ const onCancel = () => {
               </dd>
             </div>
 
-            <div class="grid sm:grid-cols-2 ml-[-50px]">
-              <dt class="flex justify-end mr-10">
+            <div class="grid sm:grid-cols-2">
+              <dt>
                 <x-tooltip position="left">
                   <label
                       class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
@@ -944,7 +944,7 @@ const onCancel = () => {
             </div>
 
             <div class="grid sm:grid-cols-2">
-              <dt class="flex justify-end mr-10">
+              <dt>
                 <x-tooltip position="left">
                   <label
                       class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
@@ -961,8 +961,8 @@ const onCancel = () => {
               </dd>
             </div>
 
-            <div class="grid sm:grid-cols-2 ml-[-50px]">
-              <dt class="flex justify-end mr-10">
+            <div class="grid sm:grid-cols-2">
+              <dt>
                 <x-tooltip position="left">
                   <label
                       class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
@@ -980,7 +980,7 @@ const onCancel = () => {
             </div>
 
             <div class="grid sm:grid-cols-2">
-              <dt class="flex justify-end mr-10">
+              <dt>
                 <x-tooltip position="left">
                   <label
                       class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
@@ -997,8 +997,8 @@ const onCancel = () => {
               </dd>
             </div>
 
-            <div class="grid sm:grid-cols-2 ml-[-50px]">
-              <dt class="flex justify-end mr-10">
+            <div class="grid sm:grid-cols-2">
+              <dt>
                 <x-tooltip position="left">
                   <label
                       class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
@@ -1070,8 +1070,8 @@ const onCancel = () => {
                 <dd></dd>
               </div>
 
-              <div class="grid sm:grid-cols-2 ml-[-50px] mt-4">
-                <dt class="font-bold text-right mr-10">
+              <div class="grid sm:grid-cols-2 mt-4">
+                <dt class="font-bold">
                   <x-tooltip position="left">
                     <label
                       class="text-xs text-gray-800 underline decoration-dotted decoration-primary-700"
@@ -1089,7 +1089,7 @@ const onCancel = () => {
               </div>
 
               <div class="grid sm:grid-cols-2">
-                <dt class="flex justify-end mr-10">
+                <dt>
                   <x-tooltip position="left">
                     <label
                         class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
@@ -1106,8 +1106,8 @@ const onCancel = () => {
                 </dd>
               </div>
 
-              <div class="grid sm:grid-cols-2 ml-[-50px]">
-                <dt class="font-bold text-right mr-10">
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-bold">
                   <span>MAIN CLASS OF INSURANCE</span>
                 </dt>
                 <dd>
@@ -1116,7 +1116,7 @@ const onCancel = () => {
               </div>
 
               <div class="grid sm:grid-cols-2">
-                <dt class="flex justify-end mr-10">
+                <dt>
                   <x-tooltip position="left">
                     <label
                         class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
@@ -1133,8 +1133,8 @@ const onCancel = () => {
                 </dd>
               </div>
 
-              <div class="grid sm:grid-cols-2 ml-[-50px]">
-                <dt class="flex justify-end mr-10">
+              <div class="grid sm:grid-cols-2">
+                <dt>
                   <x-tooltip position="left">
                     <label
                         class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
@@ -1150,7 +1150,7 @@ const onCancel = () => {
               </div>
 
               <div class="grid sm:grid-cols-2">
-                <dt class="flex justify-end mr-10">
+                <dt>
                   <x-tooltip position="left">
                     <label
                         class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
@@ -1170,13 +1170,14 @@ const onCancel = () => {
                     placeholder="Enter Insurer Invoice date"
                     :rules="[isRequired]"
                     size="xs"
+                    class="w-fit"
                   />
                   <!-- <span>{{ bookingDetailsForm.invoice_date }}</span> -->
                 </dd>
               </div>
 
-              <div class="grid sm:grid-cols-2 ml-[-50px]">
-                <dt class="flex justify-end mr-10">
+              <div class="grid sm:grid-cols-2">
+                <dt>
                   <x-tooltip position="left">
                     <label
                         class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
@@ -1194,7 +1195,7 @@ const onCancel = () => {
               </div>
 
               <div class="grid sm:grid-cols-2">
-                <dt class="flex justify-end mr-10">
+                <dt>
                   <x-tooltip position="left">
                     <label
                         class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
@@ -1210,7 +1211,7 @@ const onCancel = () => {
                   <x-input
                     maxlength="60"
                     v-model="bookingDetailsForm.insurer_tax_invoice_number"
-                    class="w-full"
+                    class="w-fit"
                     :disabled="!state.isEdit"
                     placeholder="Enter insurer Tax Invoice Number"
                     :rules="[isRequired]"
@@ -1220,8 +1221,8 @@ const onCancel = () => {
                 </dd>
               </div>
 
-              <div class="grid sm:grid-cols-2 ml-[-50px]">
-                <dt class="flex justify-end mr-10">
+              <div class="grid sm:grid-cols-2">
+                <dt>
                   <x-tooltip position="left">
                     <label
                         class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
@@ -1239,7 +1240,7 @@ const onCancel = () => {
               </div>
 
               <div class="grid sm:grid-cols-2">
-                <dt class="flex justify-end mr-10">
+                <dt>
                   <x-tooltip position="left">
                     <label
                         class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
@@ -1255,7 +1256,7 @@ const onCancel = () => {
                   <x-input
                     maxlength="60"
                     v-model="bookingDetailsForm.insurer_commission_invoice_number"
-                    class="w-full"
+                    class="w-fit"
                     :disabled="!state.isEdit"
                     placeholder="Enter Commission Tax Invoice No"
                     :rules="[isRequired]"
@@ -1265,8 +1266,8 @@ const onCancel = () => {
                 </dd>
               </div>
 
-              <div class="grid sm:grid-cols-2 ml-[-50px]">
-                <dt class="flex justify-end mr-10">
+              <div class="grid sm:grid-cols-2">
+                <dt>
                   <x-tooltip position="left">
                     <label
                         class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
@@ -1284,7 +1285,7 @@ const onCancel = () => {
               </div>
 
               <div class="grid sm:grid-cols-2">
-                <dt class="flex justify-end mr-10">
+                <dt>
                   <x-tooltip position="left">
                     <label
                         class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
@@ -1301,7 +1302,7 @@ const onCancel = () => {
                     type="number"
                     v-model="bookingDetailsForm.price_vat_applicable"
                     @change="calculateCommission"
-                    class="w-full"
+                    class="w-fit"
                     :disabled="!state.isEdit"
                     placeholder="Enter Price"
                     :rules="[isRequired]"
@@ -1311,8 +1312,8 @@ const onCancel = () => {
                 </dd>
               </div>
 
-              <div class="grid sm:grid-cols-2 ml-[-50px]">
-                <dt class="flex justify-end mr-10">
+              <div class="grid sm:grid-cols-2">
+                <dt>
                   <x-tooltip position="left">
                     <label
                         class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
@@ -1330,7 +1331,7 @@ const onCancel = () => {
               </div>
 
               <div class="grid sm:grid-cols-2">
-                <dt class="flex justify-end mr-10">
+                <dt>
                   <x-tooltip position="left">
                     <label
                         class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
@@ -1347,8 +1348,8 @@ const onCancel = () => {
                 </dd>
               </div>
 
-              <div class="grid sm:grid-cols-2 ml-[-50px]">
-                <dt class="flex justify-end mr-10">
+              <div class="grid sm:grid-cols-2">
+                <dt>
                   <x-tooltip position="left">
                     <label
                         class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
@@ -1366,7 +1367,7 @@ const onCancel = () => {
               </div>
 
               <div class="grid sm:grid-cols-2">
-                <dt class="flex justify-end mr-10">
+                <dt>
                   <x-tooltip position="left">
                     <label
                         class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
@@ -1383,7 +1384,7 @@ const onCancel = () => {
                     type="number"
                     v-model="bookingDetailsForm.commission_vat_applicable"
                     @change="calculateCommission"
-                    class="w-full"
+                    class="w-fit"
                     :disabled="!state.isEdit"
                     placeholder="Enter Commission Amount"
                     :rules="[isRequired]"
@@ -1393,8 +1394,8 @@ const onCancel = () => {
                 </dd>
               </div>
 
-              <div class="grid sm:grid-cols-2 ml-[-50px]">
-                <dt class="flex justify-end mr-10">
+              <div class="grid sm:grid-cols-2">
+                <dt>
                   <x-tooltip position="left">
                     <label
                         class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
@@ -1412,7 +1413,7 @@ const onCancel = () => {
               </div>
 
               <div class="grid sm:grid-cols-2">
-                <dt class="flex justify-end mr-10">
+                <dt>
                   <x-tooltip position="left">
                     <label
                         class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
@@ -1429,8 +1430,8 @@ const onCancel = () => {
                 </dd>
               </div>
 
-              <div class="grid sm:grid-cols-2 ml-[-50px]">
-                <dt class="flex justify-end mr-10">
+              <div class="grid sm:grid-cols-2">
+                <dt>
                   <x-tooltip position="left">
                     <label
                         class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
