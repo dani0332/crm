@@ -15,12 +15,17 @@ class BusinessQuoteObserver
      */
     public function updated(BusinessQuote $businessQuote): void
     {
-        if ($businessQuote->isDirty('quote_status_id') && $businessQuote->quote_status_id === QuoteStatusEnum::TransactionApproved) {
+        $dirty = $businessQuote->getDirty();
+        if (
+            $businessQuote->isDirty('quote_status_id') &&
+            $businessQuote->quote_status_id === QuoteStatusEnum::TransactionApproved
+        ) {
             BusinessQuote::withoutEvents(function () use ($businessQuote) {
                 $businessQuote->update(['transaction_approved_at' => now()]);
             });
+            $dirty = [...$dirty, 'transaction_approved_at' => $businessQuote->transaction_approved_at];
         }
 
-        $this->syncQuote($businessQuote, $businessQuote->getDirty());
+        $this->syncQuote($businessQuote, $dirty);
     }
 }
