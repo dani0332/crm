@@ -357,7 +357,7 @@ class AMLController extends Controller
                 $customer->dob = $AMLCheckRequest->dob;
                 $customer->insured_first_name = $AMLCheckRequest->insured_first_name;
                 $customer->insured_last_name = $AMLCheckRequest->insured_last_name;
-                if ($customer->isDirty() || (Carbon::parse($customer->updated_at) >= Carbon::parse($getLastScreening->created_at ?? '') || !isset($getLastScreening->created_at))) {
+                if ($customer->isDirty() || (Carbon::parse($customer->updated_at) >= Carbon::parse($getLastScreening->created_at ?? '') || ! isset($getLastScreening->created_at))) {
                     $customer->save();
                     $customer->refresh();
 
