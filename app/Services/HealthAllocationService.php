@@ -116,7 +116,8 @@ class HealthAllocationService extends AllocationService
         return User::join('lead_allocation as la', 'la.user_id', '=', 'users.id')
             ->join('model_has_roles as mhr', 'mhr.model_id', '=', 'users.id')
             ->join('roles as r', 'r.id', '=', 'mhr.role_id')
-            ->join('teams as t', 't.id', '=', 'users.sub_team_id')
+            ->join('user_team as ut', 'ut.user_id', '=', 'users.id')
+            ->join('teams as t', 't.id', '=', 'ut.team_id')
             ->where('users.status', $status)
             ->where(function ($query) {
                 $query->whereRaw('la.allocation_count < la.max_capacity')
