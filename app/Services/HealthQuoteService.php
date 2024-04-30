@@ -1443,6 +1443,7 @@ class HealthQuoteService extends BaseService
                 'callSource' => LeadSourceEnum::IMCRM,
             ];
 
+            info('Health Plan Modify V2 Request Data: '.json_encode($dataArray));
             $response = Ken::request('/save-manual-health-quote-plans', 'POST', $dataArray);
 
             return $response;
