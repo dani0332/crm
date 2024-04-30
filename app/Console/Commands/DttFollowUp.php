@@ -87,7 +87,6 @@ class DttFollowUp extends Command
 
                     $quotePlansCount = is_countable($listQuotePlans) ? count($listQuotePlans) : 0;
 
-
                     $tierR = Tier::where('name', TiersEnum::TIER_R)->where('is_active', 1)->first();
 
                     $listQuotePlans = (is_string($listQuotePlans)) ? [] : $listQuotePlans;

@@ -3,7 +3,6 @@
 namespace App\Repositories;
 
 use App\Models\QuoteStatus;
-use App\Models\QuoteStatusMap;
 
 class LeadStatusRepository extends BaseRepository
 {
