@@ -18,6 +18,8 @@ use Carbon\Carbon;
 use finfo;
 use Illuminate\Support\Facades\DB;
 use PDF;
+use App\Facades\Marshall;
+use App\Models\PaymentAction;
 
 class EmbeddedProductRepository extends BaseRepository
 {
@@ -493,5 +495,100 @@ class EmbeddedProductRepository extends BaseRepository
         }
 
         return $strategy;
+    }
+
+    public function fetchCancelPayment($data)
+    {
+        $embeddedProductOptionsIds = EmbeddedProductOption::where('embedded_product_id', $data['embedded_id'])->pluck('id');
+        $type = QuoteType::where('code', $data['modelType'])->first();
+
+        $embededTransaction = EmbeddedTransaction::with(['payments'])->where('quote_request_id', $data['quote_id'])
+            ->where('quote_type_id', $type->id)
+            ->where('is_selected', true)
+            ->whereIn('product_id', $embeddedProductOptionsIds)
+            ->get();
+
+        if ($embededTransaction->isNotEmpty()) {
+            if (!empty($embededTransaction[0]['payments'][0])) {
+                $transaction = $embededTransaction[0];
+
+                $payment = $transaction['payments'][0];
+                $paymentStatus = $payment['payment_status_id'];
+
+                $maxAmount = 0;
+                $errorMessage = 'Cancel amount should not exceeded from transaction amount';
+                if (in_array($paymentStatus, [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PAID])) {
+                    $maxAmount = $payment->premium_captured - $payment->premium_refunded;
+                } elseif ($paymentStatus === PaymentStatusEnum::AUTHORISED) {
+                    $maxAmount = $payment->premium_authorized - $payment->premium_refunded;
+                } else {
+                    $errorMessage = 'Invalid Payment status';
+                }
+
+                if ($maxAmount >= $data['amount']) {
+
+                    // Remove all previous refund actions
+                    PaymentAction::where('payment_code', $transaction->code)
+                        ->where('is_fulfilled', 0)
+                        ->where('action_type', 'REFUND')
+                        ->delete();
+
+                    PaymentAction::create([
+                        'payment_code' => $transaction->code,
+                        'is_fulfilled' => 0,
+                        'action_type' => 'REFUND',
+                        'reason' => $data['reason'],
+                        'amount' => $data['amount'],
+                        'created_by' => auth()->user()->email,
+                        'is_manager_approved' => 1,
+
+                    ]);
+                    $data = [
+                        'uuid' => $data['uuid'],
+                        'type_id' => $type->id,
+                        'code' => $transaction->code,
+
+                    ];
+                    $processResponse = $this->processCancelPayment($data);
+
+                    return [
+                        'data' => $processResponse,
+                        'code' => 200,
+                    ];
+                } else {
+                    return [
+                        'data' => [$errorMessage],
+                        'code' => 403,
+                    ];
+                }
+            } else {
+                return [
+                    'data' => ['Payment not exist'],
+                    'code' => 403,
+                ];
+            }
+        }
+
+        return [
+            'data' => ['Transaction does not exist'],
+            'code' => 403,
+        ];
+    }
+
+    private function processCancelPayment($data)
+    {
+        $planData = [
+            'quoteUID' => $data['uuid'],
+            'quoteTypeId' => $data['type_id'],
+            'payments' => [
+                [
+                    'codeRef' => $data['code'],
+                ],
+            ],
+        ];
+
+        $response = Marshall::request('/payment/checkout/cancel', 'post', $planData);
+
+        return $response;
     }
 }
