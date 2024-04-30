@@ -416,17 +416,10 @@ class AMLController extends Controller
                     $fetchEntity->company_address = $AMLCheckRequest->company_address;
                     $fetchEntity->industry_type_code = $AMLCheckRequest->industry_type_code;
                     $fetchEntity->emirate_of_registration_id = $AMLCheckRequest->emirate_of_registration_id;
-
-                    $isEntityDetailUpdated = $fetchEntity;    //$isEntityDetailUpdated = $fetchEntity->isDirty();
-
-                    if ($isEntityDetailUpdated) {
-                        $fetchEntity->save();
-                        $fetchEntity->refresh();
-
-                        $entityDetailsForApi = ['company_name' => $fetchEntity->company_name, 'code' => $fetchEntity->code];
-                        BridgerAMLJob::dispatchSync($bridgerAPIToken, $entityDetailsForApi, $updateQuote, $quoteTypeId, CustomerTypeEnum::Entity, auth()->user()->email);
-                    }
-
+                    $fetchEntity->save();
+                    $fetchEntity->refresh();
+                    $entityDetailsForApi = ['company_name' => $fetchEntity->company_name, 'code' => $fetchEntity->code];
+                    BridgerAMLJob::dispatchSync($bridgerAPIToken, $entityDetailsForApi, $updateQuote, $quoteTypeId, CustomerTypeEnum::Entity, auth()->user()->email);
                     QuoteRequestEntityMapping::updateOrCreate([
                         'quote_type_id' => $quoteType->id,
                         'quote_request_id' => $quoteRequestId,
