@@ -126,7 +126,7 @@ class LifeQuote extends Model implements AuditableContract
         return $this->belongsTo(InsuranceProvider::class, 'insurance_provider_id', 'id');
     }
 
-    public function sageLog()
+    public function sageLogs()
     {
         return $this->morphMany(SageApiLog::class, 'section');
     }
