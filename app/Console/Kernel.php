@@ -2,7 +2,7 @@
 
 namespace App\Console;
 
-use App\Console\Commands\UpdateHealthStatus;
+
 use App\Console\Commands\UpdateManualOffline;
 use App\Jobs\CarLost\CarSoldResubmissions;
 use App\Jobs\CarLost\UnconSubmissionReminder;
@@ -24,7 +24,6 @@ class Kernel extends ConsoleKernel
         Commands\QuoteAllocation::class,
         Commands\LeadsReassignment::class,
         Commands\ResetLeadAllocationCounts::class,
-        Commands\UpdateHealthStatus::class,
         Commands\QuoteSyncUpdateCommand::class,
         Commands\UpdateStaleLeads::class,
         Commands\AutomateActivitiesCommand::class,
@@ -58,8 +57,6 @@ class Kernel extends ConsoleKernel
         $schedule
             ->command('AddBatchNumber:cron')->timezone('Asia/Dubai')->weeklyOn(1, '0:00')->onOneServer()->withoutOverlapping(1);
 
-        $schedule
-            ->command(UpdateHealthStatus::class)->timezone('Asia/Dubai')->dailyAt('01:00')->onOneServer()->withoutOverlapping(1);
 
         $schedule->command('QuoteAllocation:cron')->everyFiveMinutes()->onOneServer()->withoutOverlapping(1);
 
