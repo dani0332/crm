@@ -187,4 +187,15 @@ class ReportsController extends Controller
             'reportName' => $reportCategory,
         ]);
     }
+
+    public function totalPremiumLeadsSaleReport(Request $request, ReportService $reportService)
+    {
+        $resp = $reportService->totalPremiumReport($request);
+
+        return inertia('Reports/TotalPremiumLeadsSale', [
+            'reportData' => $resp ?? null,
+            'filterOptions' => $reportService->getDefaultFiltersForTotalPremium(),
+        ]);
+    }
+
 }

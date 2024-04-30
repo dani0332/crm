@@ -6,9 +6,11 @@ use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\quoteBusinessTypeCode;
+use App\Enums\QuoteSegmentEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\RolesEnum;
 use App\Enums\TravelQuoteEnum;
+use App\Services\SplitPaymentService;
 use App\Services\UserService;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
@@ -71,6 +73,8 @@ class HandleInertiaRequests extends Middleware
             'pusherKey' => config('constants.VITE_PUSHER_APP_KEY'),
             'epLink' => config('constants.AFIA_WEBSITE_DOMAIN'),
             'im_logo' => getIMLogo(),
+            'quoteSegments' => QuoteSegmentEnum::withLabels(),
+            'paymentLookups' => app(SplitPaymentService::class)->getPaymentLookups(),
         ];
     }
 
@@ -145,9 +149,10 @@ class HandleInertiaRequests extends Middleware
                     ->addIf(auth()->user()->can(PermissionsEnum::LEAD_DISTRIBUTION_REPORT_VIEW), 'Lead Distribution', route('lead-distribution-report-view', [], false), fn ($s) => $s->attributes(['icon' => 'bar']))
                     ->addIf(auth()->user()->can(PermissionsEnum::UtmLeadsSalesReport), 'UTM Report', route('utm-leads-sales-report', [], false), fn ($s) => $s->attributes(['icon' => 'bar']))
                     ->addIf(auth()->user()->can(PermissionsEnum::RENEWAL_BATCH_REPORT), 'Daily Renewal Report', route('renewal-batch-report', [], false), fn ($s) => $s->attributes(['icon' => 'bar']))
-                    ->addIf(auth()->user()->can(PermissionsEnum::RENEWAL_BATCH_REPORT), 'Lead List Report', route('lead-list-report', [], false), fn ($s) => $s->attributes(['icon' => 'bar']))
                     ->addIf(auth()->user()->can(PermissionsEnum::REPORT_MANAGEMENT), 'Management Report', route('report-management', [], false), fn ($s) => $s->attributes(['icon' => 'bar']))
-                    ->addIf(app(UserService::class)->isAllowedToShowLeadListReport(), 'Lead List Report', route('lead-list-report', [], false), fn ($s) => $s->attributes(['icon' => 'bar']));
+                    ->addIf(app(UserService::class)->isAllowedToShowLeadListReport(), 'Lead List Report', route('lead-list-report', [], false), fn ($s) => $s->attributes(['icon' => 'bar']))
+                    ->addIf(auth()->user()->can(PermissionsEnum::TOTAL_PREMIUM_LEADS_SALES_REPORT), 'Total Premium Report', route('total-premium-leads-sales-report', [], false), fn ($s) => $s->attributes(['icon' => 'bar']));
+
             });
         }
 
@@ -288,7 +293,7 @@ class HandleInertiaRequests extends Middleware
         //     });
         // }
 
-        if (auth()->user()->can(PermissionsEnum::TransAppList)) {
+        if (auth()->user()->canAny([PermissionsEnum::TransAppList, PermissionsEnum::TransAppCreate, PermissionsEnum::TransAppEdit])) {
             $nav = $nav->add('Trans App', '', function (Section $section) {
                 $section
                     ->addIf(
@@ -315,36 +320,11 @@ class HandleInertiaRequests extends Middleware
                         '/transapp/cancel-transaction',
                         fn ($s) => $s->attributes(['icon' => 'box'])
                     )
-                    ->add('Transaction List', '/transapp/transaction', fn ($s) => $s->attributes(['icon' => 'box']))
                     ->addIf(
-                        auth()->user()->can(PermissionsEnum::CRMAdmin),
-                        'Admin',
-                        route('insurancecompany.index'),
-                        fn ($s) => $s
-                            ->addIf(
-                                auth()->user()->can(PermissionsEnum::InsuranceCompanyList),
-                                'Insurance Companies',
-                                route('insurancecompany.index'),
-                                fn ($s) => $s->attributes(['icon' => 'box'])
-                            )
-                            ->addIf(
-                                auth()->user()->can(PermissionsEnum::ReasonList),
-                                'Reasons',
-                                route('reason.index'),
-                                fn ($s) => $s->attributes(['icon' => 'box'])
-                            )
-                            ->addIf(
-                                auth()->user()->can(PermissionsEnum::StatusList),
-                                'Status',
-                                route('status.index'),
-                                fn ($s) => $s->attributes(['icon' => 'box'])
-                            )
-                            ->addIf(
-                                auth()->user()->can(PermissionsEnum::PaymentModeList),
-                                'Payment Modes',
-                                route('paymentmode.index'),
-                                fn ($s) => $s->attributes(['icon' => 'box'])
-                            )
+                        auth()->user()->can(PermissionsEnum::TransAppList),
+                        'Transaction List',
+                        '/transapp/transaction',
+                        fn ($s) => $s->attributes(['icon' => 'box'])
                     );
             });
         }
@@ -418,7 +398,12 @@ class HandleInertiaRequests extends Middleware
             });
         }
 
-        if (auth()->user()->can(PermissionsEnum::EmbeddedProductView)) {
+        if (
+            auth()->user()->hasAnyPermission([
+                PermissionsEnum::EMBEDDED_PRODUCT_ADVISOR,
+                PermissionsEnum::EMBEDDED_PRODUCT_ADMIN,
+            ])
+        ) {
             $nav = $nav->add('Embedded Products', '', function (Section $section) {
                 $section
                     ->add('All Products', route('embedded-products.index'), fn ($s) => $s->attributes(['icon' => 'box']))
@@ -426,7 +411,7 @@ class HandleInertiaRequests extends Middleware
             });
         }
 
-        $nav = $nav->addIf(auth()->user()->hasRole(RolesEnum::BetaUser), 'Legacy Policy', url('legacy-policy'));
+        $nav = $nav->addIf(auth()->user()->can(PermissionsEnum::VIEW_LEGACY_DETAILS), 'Legacy Policies', url('legacy-policy'));
 
         if (auth()->user()->can(PermissionsEnum::TeleMarketingList)) {
             $nav = $nav->add('Telemarketing', '', function (Section $section) {
@@ -542,6 +527,10 @@ class HandleInertiaRequests extends Middleware
                             )
                     );
             });
+        }
+
+        if (auth()->user()->can(PermissionsEnum::INSTANT_ALFRED_CHAT_LOGS)) {
+            $nav = $nav->add('InstantAlfred Chat Logs', route('instant-alfred.logs'));
         }
 
         return $nav;

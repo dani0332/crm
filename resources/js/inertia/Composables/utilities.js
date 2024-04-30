@@ -61,6 +61,18 @@ export const useGetShowPageRoute = (uuid, quoteTypeId, business_type_of_insuranc
   return routesObj[quoteTypeId];
 }
 
+// Function to format the date
+export const formatDate = (dateObject) => {
+  if (dateObject && dateObject.$date && dateObject.$date.$numberLong) {
+    const timestamp = parseInt(dateObject.$date.$numberLong);
+    const formattedDate = new Date(timestamp);
+    const options = { year: 'numeric', month: '2-digit', day: '2-digit' };
+    return formattedDate.toLocaleDateString('en-US', options);
+  }else if(dateObject && dateObject.includes('-')){
+    return dateObject;
+  }
+  return null;
+}
 export const useGenerateQueryString = filters =>
 {
   const query = {};
@@ -94,8 +106,11 @@ export const useConvertDate = date =>
   return `${year}-${month}-${day}`;
 };
 
-export const fileUploadErrorMessage = (doc, rejectReason) =>
-{
+export const useFormatPrice = (price, thousandSeparator = false) => {
+  return (thousandSeparator ? parseFloat(price).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}) : parseFloat(price).toFixed(2));
+}
+
+export const fileUploadErrorMessage = (doc, rejectReason) => {
   let errorMessage = "";
   if (rejectReason.code == "file-too-large")
   {

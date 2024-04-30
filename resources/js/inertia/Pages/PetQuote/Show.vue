@@ -9,6 +9,8 @@ import LeadHistory from '../PersonalQuote/Partials/LeadHistory.vue';
 import MemberDetails from '../../Components/MemberDetails.vue';
 import PlanDetails from '../../Components/PlanDetails.vue';
 import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue';
+import PaymentTableNew from '../../Components/PaymentTableNew.vue';
+import MigratePayment from '../../Components/MigratePayment.vue';
 
 defineProps({
   quote: Object,
@@ -36,6 +38,11 @@ defineProps({
   UBORelations: Array,
   UBOsDetails: Array,
   canAddBatchNumber: Boolean,
+  vatPercentage: Number,
+  paymentStatusEnum: Object,
+  paymentTooltipEnum: Object,
+  isNewPaymentStructure: Boolean,
+  isAmlClearedForPayment: Boolean,
 });
 
 const page = usePage();
@@ -47,6 +54,7 @@ const rolesEnum = page.props.rolesEnum;
 const historyLoading = ref(false);
 
 const { isRequired } = useRules();
+const hasRole = role => useHasRole(role);
 const notification = useNotifications('toast');
 
 const modals = reactive({
@@ -250,6 +258,15 @@ const linkEntity = () => {
     <div class="flex justify-between items-center flex-wrap gap-2 mb-5">
       <h2 class="text-xl font-semibold">Pet Detail</h2>
       <div class="flex gap-2">
+        <Link
+          v-if="quote.quote_detail?.insly_id"
+          :href="`/legacy-policy/${quote.quote_detail?.insly_id}`"
+          preserve-scroll
+        >
+          <x-button size="sm" color="#ff5e00" tag="div">
+            View Legacy policy
+          </x-button>
+        </Link>
         <x-button size="sm" color="#ff5e00" @click.prevent="openDuplicate">
           Duplicate Lead
         </x-button>
@@ -429,10 +446,6 @@ const linkEntity = () => {
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">POSSESION TYPE</dt>
             <dd>{{ quote?.pet_quote?.possession_type?.text }}</dd>
-          </div>
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">TRANSAPP CODE</dt>
-            <dd>{{ quote.quote_detail?.transapp_code }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">LOST REASON</dt>
@@ -771,6 +784,7 @@ const linkEntity = () => {
       "
       modelType="Pet"
       :quote="quote"
+      :insly-id="quote?.quote_detail?.insly_id"
       :canAddBatchNumber="canAddBatchNumber"
     />
 
@@ -780,9 +794,43 @@ const linkEntity = () => {
       :activities="activities"
       :advisors="advisors"
       :quote-type="quoteType"
+    />  
+
+    <QuoteStatus
+      :quote="quote"
+      :quote-type="quoteType"
+      :quote-statuses="quoteStatuses"
+      :lost-reasons="lostReasons"
+      :quoteStatusEnum="quoteStatusEnum"
+    />
+    <PlanDetails
+      :insuranceProviders="insuranceProviders"
+      :quote="quote"
+      :quoteType="quoteType"
+      :vatPrice="vatPercentage"
     />
 
+    <MigratePayment
+      v-if="!isNewPaymentStructure"
+      :quoteId="quote.id"
+      :paymentCode = "quote.code"
+      :quoteType="quoteType"
+      :payments="quote.payments"   
+    />    
+    <PaymentTableNew 
+			v-if="isNewPaymentStructure"
+			:quoteType="quoteType"
+			:payments="quote.payments"
+			:paymentDocument="documentTypes.filter(item => item.code === 'PPD' || item.code === 'PPDR' || item.code === 'PDPDR')"
+			:quoteRequest="quote"
+			:paymentStatusEnum="paymentStatusEnum"
+			:paymentTooltipEnum="paymentTooltipEnum"
+			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name, tooltip: pm.tool_tip } })"
+			:storageUrl="storageUrl"
+      :isAmlClearedForPayment="isAmlClearedForPayment"
+		/>
     <QuotePayments
+      v-else
       :can="can"
       :payments="quote.payments"
       :quote-type="quoteType"
@@ -792,28 +840,17 @@ const linkEntity = () => {
       :personal-plans="personalPlans"
     />
 
-    <QuoteStatus
-      :quote="quote"
-      :quote-type="quoteType"
-      :quote-statuses="quoteStatuses"
-      :lost-reasons="lostReasons"
-      :quoteStatusEnum="quoteStatusEnum"
-    />
-
     <QuoteDocuments
       :document-types="documentTypes"
       :quote-documents="quote.documents || []"
       :storageUrl="storageUrl"
       :quote="quote"
+      :insly-id="quote?.quote_detail?.insly_id"
     />
 
     <QuotePolicy :quote="quote" :can="can" :quoteStatusEnum="quoteStatusEnum" />
 
-    <PlanDetails
-      :insuranceProviders="insuranceProviders"
-      :quote="quote"
-      :quoteType="quoteType"
-    />
+    
 
     <EmbeddedProducts
       :data="embeddedProducts"
@@ -825,6 +862,6 @@ const linkEntity = () => {
 
     <LeadHistory :quote="quote" />
 
-    <AuditLogs :quote-type="quoteType" :id="$page.props.quote.id" />
+    <AuditLogs :quote-type="quoteType" :id="$page.props.quote.id" :quoteCode="$page.props.quote.code" />
   </div>
 </template>
