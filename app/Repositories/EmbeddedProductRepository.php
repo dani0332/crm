@@ -531,6 +531,7 @@ class EmbeddedProductRepository extends BaseRepository
                     PaymentAction::where('payment_code', $transaction->code)
                         ->where('is_fulfilled', 0)
                         ->where('action_type', 'REFUND')
+                        ->where('is_manager_approved', 1)
                         ->delete();
 
                     PaymentAction::create([
