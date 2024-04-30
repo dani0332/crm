@@ -1440,7 +1440,7 @@ class HealthQuoteService extends BaseService
                 'quoteUID' => $request->quoteUID,
                 'update' => true,
                 'plans' => [$plansArray],
-                'callSource' => LeadSourceEnum::IMCRM,
+                'callSource' => strtolower(LeadSourceEnum::IMCRM),
             ];
 
             info('Health Plan Modify V2 Request Data: '.json_encode($dataArray));
