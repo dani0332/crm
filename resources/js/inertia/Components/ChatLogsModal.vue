@@ -50,7 +50,7 @@ const renderMarkdown = markdownString => {
     @update:modelValue="$emit('update:showChatLogs', $event)"
   >
     <template #header>
-      Ref ID : {{ chatMessages.id }} - Created At :
+      Ref ID: {{ chatMessages.id }} - Created At:
       {{ chatMessages.created_at.split(' ')[0] }}
     </template>
     <template #default>
