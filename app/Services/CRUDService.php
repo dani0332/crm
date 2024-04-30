@@ -6,6 +6,7 @@ use App\Enums\GenericRequestEnum;
 use App\Enums\HealthTeamType;
 use App\Enums\Kyc;
 use App\Enums\LeadSourceEnum;
+use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
@@ -31,7 +32,6 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use App\Enums\PaymentStatusEnum;
 
 class CRUDService extends BaseService
 {
@@ -602,7 +602,7 @@ class CRUDService extends BaseService
                 $errorMessage = 'Cancel amount should not exceeded from transaction amount';
                 if ($paymentStatus === PaymentStatusEnum::CAPTURED) {
                     $maxAmount = $payment->premium_captured - $payment->premium_refunded;
-                } else if($paymentStatus === PaymentStatusEnum::AUTHORISED) {
+                } elseif ($paymentStatus === PaymentStatusEnum::AUTHORISED) {
                     $maxAmount = $payment->premium_authorized - $payment->premium_refunded;
                 } else {
                     $errorMessage = 'Invalid Payment status';
