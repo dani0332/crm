@@ -23,7 +23,7 @@ class BikeQuoteRepository extends BaseRepository
     /**
      * create new personal quote
      *
-     * @param    $quoteTypeCode
+     * @param  $quoteTypeCode
      * @return mixed
      */
     public function fetchCreate($data)
@@ -106,6 +106,8 @@ class BikeQuoteRepository extends BaseRepository
                 'quoteDetail.lostReason',
                 'quoteDetail.previousAdvisor',
                 'currentlyInsuredWith',
+                'transactionType',
+                'insuranceProvider',
                 'payments' => function ($q) {
                     $q->with([
                         'paymentStatus',
@@ -113,6 +115,9 @@ class BikeQuoteRepository extends BaseRepository
                         'paymentMethod',
                         'paymentStatusLogs',
                         'insuranceProvider',
+                        'paymentSplits.paymentStatus',
+                        'paymentSplits.paymentMethod',
+                        'paymentSplits.documents',
                     ]);
                 },
                 'createdBy',
@@ -141,6 +146,7 @@ class BikeQuoteRepository extends BaseRepository
         $data = ! empty($quote) ? $quote->toArray() : [];
         $quote->lost_reason = $data['quote_detail']['lost_reason']['text'] ?? null;
         $quote->previous_advisor_id_text = $data['quote_detail']['previous_advisor']['name'] ?? null;
+        $quote->transaction_type_text = $data['transaction_type']['text'] ?? null;
 
         return $quote;
     }

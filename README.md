@@ -1,11 +1,11 @@
 <p align="center"><a href="https://insurancemarket.ae" target="_blank"><img src="https://insurancemarket.ae/_next/image/?url=%2Fassets%2Fimg%2Flogo%2Flogo.png&w=2048&q=75" width="400"></a> </p>  
 
-## About Blanka  - IMCRM  
+## About Blanka  - IMCRM 
 Insurance Market CRM (IMCRM) is the CRM used by internal team to handle the incoming leads, transactions, view or generate quotes for customers, generate car valuation, and manage customers. Basically its a complete solution for the back office to handle incoming customer inquiries and process their insurnace quotes.
 
 IMCRM is developed on Laravel using PHP 8.0.1 or above, MariaDB 10.x or above.
 
-URLs:
+URLs: 
 
 - [Live](https://imcrm.alfred.ae/) 
 - [Stage](https://imcrmstage.alfred.ae/)
@@ -25,7 +25,7 @@ Please make sure to go through the last two lines to familiarize yourself with t
 - Ask for a dump of stage DB which you will need to import.
 - Run ```composer install``` to install the laravel required files..
 
-**Doppler Configuration** 
+**Doppler Configuration**
 
 Once you have doppler CLI installed on your local machine, run the following command to initiate the login setup.
 - ```doppler setup``` This will initiate the login process, use Google login. Once logged in you will be prompted to select the profile you want to use the environment variables. You can run the command again to switch profile.
@@ -61,7 +61,7 @@ If any deployment fails on any environment, make sure to check the deployment lo
 - DEV02 - 8
 - Test - 9
 
-## Contributing 
+## Contributing
 - ```develop``` branch is the main coding branch where new branches will be generated from, and PRs will be merged into. Same branch is connected with stage for testing and QA.
 - ```main``` branch is used for production deployments.
 
@@ -123,7 +123,6 @@ PHPMYADMIN_PORT=2600
 ```
 
 
-
 ## Container Names
 - mailhogblanka
 - dbblanka
@@ -174,5 +173,4 @@ I have created separate Docker files and configurations for local environments. 
 
 ## Conclusion
 By following these steps, you can easily run the project locally on Docker. Docker provides a convenient and isolated environment for development, ensuring consistency across different systems. If you encounter any issues, refer to the Docker documentation or seek assistance from the project team.
-
 

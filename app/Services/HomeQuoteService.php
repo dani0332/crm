@@ -54,6 +54,11 @@ class HomeQuoteService extends BaseService
             'hqr.kyc_decision',
             'hqr.nationality_id',
             'hqr.risk_score',
+            'hqr.insurance_provider_id',
+            'hqr.insurer_quote_number',
+            'hqr.price_vat_applicable',
+            'hqr.price_vat_not_applicable',
+            'hqr.price_with_vat',
             'qs.text as quote_status_id_text',
             DB::raw('DATE_FORMAT(hqr.created_at, "%d-%m-%y %H:%i") as created_at'),
             DB::raw('DATE_FORMAT(hqr.updated_at, "%d-%m-%y %H:%i") as updated_at'),
@@ -72,6 +77,8 @@ class HomeQuoteService extends BaseService
             'n.TEXT AS nationality_id_text',
             'hqrd.transapp_code',
             'hqrd.notes',
+            'hqrd.insly_id',
+            'lu.text as transaction_type_text',
             'ls.text as lost_reason',
             'ls.id as lost_reason_id',
             'hqr.previous_quote_id',
@@ -104,6 +111,7 @@ class HomeQuoteService extends BaseService
             ->leftJoin('nationality as n', 'n.id', '=', 'hqr.nationality_id')
             ->leftJoin('home_quote_request_detail as hqrd', 'hqrd.home_quote_request_id', '=', 'hqr.id')
             ->leftJoin('lost_reasons as ls', 'ls.id', '=', 'hqrd.lost_reason_id')
+            ->leftJoin('lookups as lu', 'lu.id', '=', 'hqr.transaction_type_id')
             ->leftJoin('users as uadv', 'uadv.id', '=', 'hqr.previous_advisor_id')
             ->leftJoin('home_accommodation_type as hat', 'hat.id', '=', 'hqr.ilivein_accommodation_type_id')
             ->leftJoin('home_possession_type as hpt', 'hpt.id', '=', 'hqr.iam_possesion_type_id')
@@ -639,7 +647,9 @@ class HomeQuoteService extends BaseService
 
     public function getEntityPlain($id)
     {
-        return HomeQuote::where('id', $id)->first();
+        return HomeQuote::where('id', $id)->with(['insuranceProviderDetails', 'payments.paymentSplits' => function ($query) {
+            $query->orderBy('sr_no', 'asc');
+        }, 'payments.paymentSplits.paymentStatus', 'payments.paymentSplits.paymentMethod', 'payments.paymentSplits.documents'])->first();
     }
 
     public function getDuplicateEntityByCode($code)

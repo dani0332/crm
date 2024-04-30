@@ -2,12 +2,14 @@
 
 namespace App\Http\Controllers\V2;
 
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\JetskiQuoteRequest;
+use App\Models\ApplicationStorage;
 use App\Repositories\ActivityRepository;
 use App\Repositories\DocumentTypeRepository;
 use App\Repositories\EmbeddedProductRepository;
@@ -18,6 +20,7 @@ use App\Repositories\PaymentMethodRepository;
 use App\Repositories\PersonalPlanRepository;
 use App\Repositories\QuoteStatusRepository;
 use App\Repositories\UserRepository;
+use App\Services\CentralService;
 
 class JetskiQuoteController extends Controller
 {
@@ -27,12 +30,13 @@ class JetskiQuoteController extends Controller
     public function index()
     {
         $quotes = JetskiQuoteRepository::getData();
-
         $quoteStatuses = QuoteStatusRepository::byQuoteTypeId(QuoteTypes::JETSKI->id())->get();
+        $advisors = UserRepository::getPersonalQuoteAdvisors(QuoteTypes::JETSKI->value);
 
         return inertia('JetskiQuote/Index', [
             'quotes' => $quotes,
             'quoteStatuses' => $quoteStatuses,
+            'advisors' => $advisors,
         ]);
     }
 
@@ -99,6 +103,7 @@ class JetskiQuoteController extends Controller
         $personalPlans = PersonalPlanRepository::get();
         $advisors = UserRepository::getPersonalQuoteAdvisors(QuoteTypes::JETSKI->value);
 
+        $isAmlClearedForPayment = app(CentralService::class)->amlClearedFromLog($quote->id, QuoteTypes::JETSKI->name);
         $activities = ActivityRepository::where([
             'quote_type_id' => QuoteTypes::JETSKI->id(),
             'quote_request_id' => $quote->id,
@@ -107,6 +112,7 @@ class JetskiQuoteController extends Controller
         $lostReasons = LostReasonRepository::orderBy('text', 'asc')->get();
 
         $embeddedProducts = EmbeddedProductRepository::byQuoteType(QuoteTypes::JETSKI->id(), $quote->id);
+        $vatPercentage = ApplicationStorage::where('key_name', ApplicationStorageEnums::VAT_VALUE)->first()->value ?? 0;
 
         return inertia('JetskiQuote/Show', [
             'quoteType' => QuoteTypes::JETSKI,
@@ -126,6 +132,8 @@ class JetskiQuoteController extends Controller
             'customerTypeEnum' => CustomerTypeEnum::asArray(),
             'modelType' => QuoteTypes::JETSKI,
             'canAddBatchNumber' => auth()->user()->hasRole(RolesEnum::JetskiManager),
+            'vatPercentage' => $vatPercentage,
+            'isAmlClearedForPayment' => $isAmlClearedForPayment,
         ]);
     }
 

@@ -5,7 +5,10 @@ namespace App\Traits;
 use App\Enums\GenericRequestEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypes;
+use App\Models\Customer;
 use App\Services\CapiRequestService;
+use App\Services\CustomerService;
+use Illuminate\Support\Arr;
 
 trait GenericQueriesAllLobs
 {
@@ -36,14 +39,13 @@ trait GenericQueriesAllLobs
         }
 
         return $model;
-
     }
 
     /**
      * get quote object by quote type.
      *
-     * @param    $quoteType  e.g car, health etc
-     * @param    $id  can be id or uuid
+     * @param  $quoteType  e.g car, health etc
+     * @param  $id  can be id or uuid
      * @return false|mixed
      */
     public function getQuoteObject($quoteType, $id)
@@ -148,21 +150,48 @@ trait GenericQueriesAllLobs
         }
     }
 
+    public function getCustomer($customerData)
+    {
+        $customer = CustomerService::getCustomerByEmail($customerData['email']);
+
+        //create new customer if not exists
+        if (! isset($customer->id)) {
+            $customer = Customer::create(Arr::only($customerData, ['first_name', 'last_name', 'email', 'mobile_no']));
+
+            // create additional emails
+            if (isset($customerData['additional_emails']) && count($customerData['additional_emails'])) {
+                foreach ($customerData['additional_emails'] as $additionalEmail) {
+                    $customer->additionalContactInfo()->create(['key' => 'email', 'value' => $additionalEmail]);
+                }
+            }
+
+            // create additional mobile nos
+            if (isset($customerData['additional_mobiles']) && count($customerData['additional_mobiles'])) {
+                foreach ($customerData['additional_mobiles'] as $additionalMobile) {
+                    $customer->additionalContactInfo()->create(['key' => 'mobile_no', 'value' => $additionalMobile]);
+                }
+            }
+        }
+
+        return $customer;
+    }
+
     public function inslyInsurances()
     {
         return [
             QuoteTypes::BIKE->value => ['Bike insurance'],
-            QuoteTypes::BUSINESS->value => ['Business interruption insurance', 'Contractors all risks', 'Cyber liability', 'Directors and officers liability insurance',
-                'Engineering and plant insurance', 'Fidelity guarantee', 'Group life', 'Group medical insurance', 'Holiday homes',
-                'Livestock insurance', 'Machinery breakdown insurance', 'Marine cargo (individual shipment) insurance',
-                'Marine hull insurance', 'Medical malpractice insurance', 'Money insurance', 'Motor fleet',
-                'Open cover - marine cargo insurance', 'Professional indemnity insurance,Property insurance',
-                'Public liability insurance', 'Road transit (international)', 'Road transit (UAE only)',
-                'SME packaged insurance', 'Trade credit insurance', 'Workmens compensation insurance',
+            QuoteTypes::BUSINESS->value => [
+                'business interruption insurance', 'contractors all risks', 'Cyber liability', 'directors and officers liability insurance',
+                'Engineering and plant insurance', 'fidelity guarantee', 'group life', 'group medical insurance', 'holiday homes',
+                'livestock insurance', 'machinery breakdown insurance', 'marine cargo (individual shipment) insurance',
+                'marine hull insurance', 'medical malpractice insurance', 'money insurance', 'motor fleet',
+                'open cover - marine cargo insurance', 'professional indemnity insurance,property insurance',
+                'public liability insurance', 'road transit (international)', 'road transit (UAE only)',
+                'sme packaged insurance', 'trade credit insurance', 'workmens compensation insurance',
             ],
-            QuoteTypes::CAR->value => ['Casco', 'Motor insurance - Comprehensive', 'Motor insurance - TPL'],
+            QuoteTypes::CAR->value => ['casco', 'motor insurance - Comprehensive', 'motor insurance - TPL'],
             QuoteTypes::LIFE->value => ['Critical illness', 'Individual life insurance'],
-            QuoteTypes::HOME->value => ['Home insurance', 'Personal accident'],
+            QuoteTypes::HOME->value => ['Home insurance', 'personal accident', 'home insurance'],
             QuoteTypes::TRAVEL->value => ['Inbound travel insurance', 'Outbound travel insurance'],
             QuoteTypes::HEALTH->value => ['Individual or family medical'],
             QuoteTypes::CYCLE->value => ['Pedal cycle insurance'],

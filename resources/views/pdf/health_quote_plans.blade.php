@@ -207,9 +207,9 @@
             font-size: 12px;
         }
         .provider-logo {
-            width: 100px;
+            width: 150px;
             position: absolute;
-            top: 50%;
+            top: 55%;
             left: 50%;
             transform: translate(-50%, -50%);
             max-width: 100%;
@@ -403,25 +403,30 @@
             foreach ($quotePlan->memberPremiumBreakdown as $key => $memberPremiumBreakdown) {
                 $key = "discountPremium".$key;
                 $discountPremiumValue= 0;
-
-                if(isset($quotePlan->addons['coPayment'])) {
+                if (isset($quotePlan->addons['coPayment'])) {
                     $coPayId = $quotePlan->addons['coPayment']['id'];
-                    foreach ($memberPremiumBreakdown->ratesPerCopay as $coPayKey => $coPayVal) {
-                        if( $coPayVal->healthPlanCoPaymentId == $coPayId) {
-                            $discountPremiumValue = $coPayVal->premium + $coPayVal->basmah + ($coPayVal->loadingPrice??0);
-                            $vatValue += $coPayVal->vat;
-                            $totalValue += $discountPremiumValue;
+                    // Check if ratesPerCopay exists and is an array
+                    if (isset($memberPremiumBreakdown->ratesPerCopay) && is_array($memberPremiumBreakdown->ratesPerCopay)) {
+                        foreach ($memberPremiumBreakdown->ratesPerCopay as $coPayKey => $coPayVal) {
+                            if ($coPayVal->healthPlanCoPaymentId == $coPayId) {
+                                $discountPremiumValue = $coPayVal->premium + $coPayVal->basmah + ($coPayVal->loadingPrice ?? 0);
+                                $vatValue += $coPayVal->vat;
+                                $totalValue += $discountPremiumValue;
+                            }
                         }
                     }
                 } else {
-                    $discountPremium = $vat =[];
-                    foreach ($memberPremiumBreakdown->ratesPerCopay as $coPayKey => $coPayVal) {
-                        $discountPremium[] =  $coPayVal->premium + $coPayVal->basmah + ($coPayVal->loadingPrice??0);
-                        $vat[] = $coPayVal->vat;
+                    $discountPremium = $vat = [];
+                    // Check if ratesPerCopay exists and is an array
+                    if (isset($memberPremiumBreakdown->ratesPerCopay) && is_array($memberPremiumBreakdown->ratesPerCopay)) {
+                        foreach ($memberPremiumBreakdown->ratesPerCopay as $coPayKey => $coPayVal) {
+                            $discountPremium[] = $coPayVal->premium + $coPayVal->basmah + ($coPayVal->loadingPrice ?? 0);
+                            $vat[] = $coPayVal->vat;
+                        }
+                        $discountPremiumValue = collect($discountPremium)->min();
+                        $vatValue += collect($vat)->min();
+                        $totalValue += $discountPremiumValue;
                     }
-                    $discountPremiumValue = collect($discountPremium)->min();
-                    $vatValue += collect($vat)->min();
-                    $totalValue += $discountPremiumValue;
                 }
                 if ($firstMember){
                     $discountPremiumValue += $quotePlan->policyFee;

@@ -1,7 +1,9 @@
 <script setup>
-import MemberDetails from '../../Components/MemberDetails.vue';
+import PaymentTableNew from '../../Components/PaymentTableNew.vue';
+import MemberDetails from "../../Components/MemberDetails.vue";
 import QuoteDocuments from '../PersonalQuote/Partials/QuoteDocuments';
 import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue';
+import MigratePayment from '../../Components/MigratePayment.vue';
 
 defineProps({
   quote: Object,
@@ -25,6 +27,15 @@ defineProps({
   canAddBatchNumber: Boolean,
   documentTypes: Object,
   storageUrl: String,
+  insuranceProviders: Object,
+  vatPercentage: Number,
+  payments: Array,
+  paymentStatusEnum: Object,
+  paymentTooltipEnum: Object,
+  paymentMethods: Array,
+  insuranceProviders: Array,
+  isNewPaymentStructure: Boolean,
+  isAmlClearedForPayment: Boolean,
 });
 
 const { isRequired } = useRules();
@@ -470,6 +481,15 @@ const linkEntity = () => {
     <div class="flex justify-between items-center flex-wrap gap-2 mb-5">
       <h2 class="text-xl font-semibold">Life Detail</h2>
       <div class="flex gap-2">
+        <Link
+          v-if="quote.life_quote_request_detail?.insly_id"
+          :href="`/legacy-policy/${quote.life_quote_request_detail.insly_id}`"
+          preserve-scroll
+        >
+          <x-button size="sm" color="#ff5e00" tag="div">
+            View Legacy policy
+          </x-button>
+        </Link>
         <x-button size="sm" color="#ff5e00" @click.prevent="openDuplicate">
           Duplicate Lead
         </x-button>
@@ -576,10 +596,6 @@ const linkEntity = () => {
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">NEXT FOLLOWUP DATE</dt>
             <dd>{{ quote.life_quote_request_detail?.next_followup_date }}</dd>
-          </div>
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">TRANSAPP CODE</dt>
-            <dd>{{ quote.life_quote_request_detail?.transapp_code }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">SOURCE</dt>
@@ -971,20 +987,18 @@ const linkEntity = () => {
       "
       modelType="Life"
       :quote="quote"
+      :insly-id="quote?.life_quote_request_detail?.insly_id"
       :canAddBatchNumber="canAddBatchNumber"
     />
 
-    <PlanDetails
-      :insuranceProviders="insuranceProviders"
-      :quote="quote"
-      :quoteType="quoteType"
-    />
+   
 
     <div class="p-4 rounded shadow mb-6 bg-primary-50/25">
       <div>
         <h3 class="font-semibold text-primary-800 text-lg">Lead Status</h3>
         <x-divider class="mb-4 mt-1" />
       </div>
+
       <div class="flex flex-wrap md:flex-nowrap gap-6 w-full">
         <div class="w-full md:w-1/2">
           <div class="flex flex-col gap-4">
@@ -1009,37 +1023,35 @@ const linkEntity = () => {
           </div>
         </div>
         <div class="w-full md:w-2/3">
-          <x-field
-            label="TransApp Code"
-            v-if="
-              leadStatusForm.leadStatus ==
-              page.props.quoteStatusEnum.TransactionApproved
-            "
-          >
-            <x-input
-              v-model="leadStatusForm.trans_code"
-              placeholder="TransApp Code is required"
-              class="w-full"
-              :error="leadStatusForm.errors.trans_code"
-            />
-          </x-field>
-          <x-field
-            label="Lost Reason"
-            v-if="leadStatusForm.leadStatus == page.props.quoteStatusEnum.Lost"
-          >
-            <x-select
-              v-model="leadStatusForm.lostReason"
-              :options="
-                lostReasons?.map(item => ({
-                  value: item.id,
-                  label: item.text,
-                }))
+          <div class="flex flex-col gap-4">
+            <x-field
+              label="Lost Reason"
+              v-if="
+                leadStatusForm.leadStatus == page.props.quoteStatusEnum.Lost
               "
-              placeholder="Lost Reason is required"
-              class="w-full"
-              :error="leadStatusForm.errors.lostReason"
-            />
-          </x-field>
+            >
+              <x-select
+                v-model="leadStatusForm.lostReason"
+                :options="
+                  lostReasons?.map(item => ({
+                    value: item.id,
+                    label: item.text,
+                  }))
+                "
+                placeholder="Lost Reason is required"
+                class="w-full"
+                :error="leadStatusForm.errors.lostReason"
+              />
+            </x-field>
+            <x-field label="Transaction Type">
+              <x-input
+                type="text"
+                :value="quote.transaction_type_text"
+                class="w-full"
+                :disabled="true"
+              />
+            </x-field>
+          </div>
         </div>
       </div>
       <div class="flex justify-end">
@@ -1056,6 +1068,34 @@ const linkEntity = () => {
       </div>
     </div>
 
+    <PlanDetails
+      :insuranceProviders="insuranceProviders"
+      :quote="quote"
+      :quoteType="quoteType"
+      :vatPrice="vatPercentage"
+      
+    />
+
+<MigratePayment
+      v-if="!isNewPaymentStructure"
+      :quoteId="quote.id"
+      :paymentCode = "quote.code"
+      :quoteType="quoteType"
+      :payments="payments"    
+    />    
+
+    <PaymentTableNew 
+			v-if="isNewPaymentStructure"
+			:quoteType="quoteType"
+			:payments="payments"
+			:paymentDocument="page.props.documentTypes.filter(item => item.code === 'LPD' || item.code === 'LPDR' || item.code === 'LDPDR')"
+			:quoteRequest="quote"
+			:paymentStatusEnum="paymentStatusEnum"
+			:paymentTooltipEnum="paymentTooltipEnum"
+			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name, tooltip: pm.tool_tip } })"
+			:storageUrl="storageUrl"
+      :isAmlClearedForPayment="isAmlClearedForPayment"
+		/>
     <EmbeddedProducts
       :data="embeddedProducts"
       :link="quote.uuid"
@@ -1069,6 +1109,7 @@ const linkEntity = () => {
       :quote-documents="quote.documents || []"
       :storageUrl="storageUrl"
       :quote="quote"
+      :insly-id="quote?.life_quote_request_detail?.insly_id"
     />
 
     <div class="p-4 rounded shadow mb-6 bg-white">
@@ -1236,6 +1277,6 @@ const linkEntity = () => {
         :hide-footer="historyData.length < 15"
       />
     </div>
-    <AuditLogs :type="'App\\Models\\LifeQuote'" :id="$page.props.quote.id" />
+    <AuditLogs :type="'App\\Models\\LifeQuote'" :id="$page.props.quote.id" :quoteCode="$page.props.quote.code" />
   </div>
 </template>
