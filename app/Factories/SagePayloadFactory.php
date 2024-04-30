@@ -169,6 +169,7 @@ class SagePayloadFactory
         }
         $premiumDescription = 'P.'.$request->invoiceDescription;
         $commissionDescription = 'C.'.$request->invoiceDescription;
+        $premiumWithDiscount = $request->totalAmount + $request->discount;
         $payLoad = [
             'Invoices' => [
                 [
@@ -181,16 +182,16 @@ class SagePayloadFactory
                     'TaxGroup' => 'VAT',
                     'TaxClass1' => 5,
                     'TaxAmount1' => 0.000,
-                    'DocumentTotalBeforeTax' => $request->totalAmount,
-                    'DocumentTotalIncludingTax' => $request->totalAmount,
+                    'DocumentTotalBeforeTax' => $premiumWithDiscount,
+                    'DocumentTotalIncludingTax' => $premiumWithDiscount,
                     'PostingDate' => $request->bookingDate,
                     'InvoiceDetails' => [
                         [
                             'Description' => $premiumDescription,
                             'TaxClass1' => 5,
                             'RevenueAccount' => $request->insurerGlLiaiblityAccount,
-                            'ExtendedAmountWithTIP' => $request->totalAmount,
-                            'ExtendedAmountWithoutTIP' => $request->totalAmount,
+                            'ExtendedAmountWithTIP' => $premiumWithDiscount,
+                            'ExtendedAmountWithoutTIP' => $premiumWithDiscount,
                         ],
                     ],
                     'InvoicePaymentSchedules' => [
