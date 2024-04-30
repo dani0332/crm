@@ -168,7 +168,7 @@ const onCancel = () => {
           <dl class="grid md:grid-cols-2 gap-y-4">
             <!-- price VAT not applicable -->
             <div class="grid sm:grid-cols-2 gap-2">
-              <dt class="flex justify-end">
+              <dt>
                 <x-tooltip position="left">
                   <label
                     class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
@@ -206,7 +206,7 @@ const onCancel = () => {
                   isPlanDetails && selectedCategory.subCategory.slug !== 'CPD'
                 "
               >
-                <dt class="flex justify-end">
+                <dt>
                   <x-tooltip position="left">
                     <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
@@ -237,7 +237,7 @@ const onCancel = () => {
 
             <!-- price VAT applicable -->
             <div class="grid sm:grid-cols-2 gap-2">
-              <dt class="flex justify-end">
+              <dt>
                 <x-tooltip position="left">
                   <label
                     class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
@@ -279,7 +279,7 @@ const onCancel = () => {
                   isPlanDetails && selectedCategory.subCategory.slug !== 'CPD'
                 "
               >
-                <dt class="flex justify-end">
+                <dt>
                   <x-tooltip position="left">
                     <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
@@ -310,7 +310,7 @@ const onCancel = () => {
 
             <!-- Total price -->
             <div class="grid sm:grid-cols-2 gap-2">
-              <dt class="flex justify-end">
+              <dt>
                 <x-tooltip position="left">
                   <label
                     class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
