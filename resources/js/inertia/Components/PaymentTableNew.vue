@@ -1764,7 +1764,10 @@ const paymentAllocationStatusTooltip= payment_allocation_status  => {
   }
   else if(payment_allocation_status == 'Fully Allocated'){
     return productionProcessTooltipEnum.PAYMENT_ALLOCATION_STATUS_FULLY_ALLOCATED;
+  } else if (payment_allocation_status == 'Unpaid') {
+    return productionProcessTooltipEnum.TRANSACTION_PAYMENT_STATUS_NOT_PAID;
   }
+  return '';
 }
 
 // verify if master payment is paid

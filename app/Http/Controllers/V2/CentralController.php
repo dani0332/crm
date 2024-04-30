@@ -277,7 +277,7 @@ class CentralController extends Controller
 
             $quote->update([
                 'quote_status_id' => QuoteStatusEnum::PolicyBooked,
-            ]);https://app.clickup.com/t/86ep012c9
+            ]);
             $this->straightforwardPayments($payment, $paymentSplits, $quote);
 
             return response()->json(['message' => $response['message']], 200);
@@ -391,20 +391,19 @@ class CentralController extends Controller
 
     }
 
-    private function straightforwardPayments($payment, $paymentSplits, $quote)
+    public function straightforwardPayments($payment, $paymentSplits, $quote)
     {
-        $this->updatePaymentAllocationStatus($payment, $quote);
-
-        if (in_array($payment->frequency, ['upfront', 'semi_annual', 'quarterly', 'monthly', 'custom'])) {
-            $paymentSplit = $paymentSplits->first();
-            $this->firstSplitAllocationStatus($paymentSplit, $quote);
+        if ($payment && $payment->payment_status_id == PaymentStatusEnum::PAID) {
+            $this->updatePaymentAllocationStatus($payment, $quote);
+            if (in_array($payment->frequency, ['upfront', 'semi_annual', 'quarterly', 'monthly', 'custom'])) {
+                $paymentSplit = $paymentSplits->first();
+                $this->firstSplitAllocationStatus($paymentSplit, $quote);
+            }
+            
+            if ($payment->frequency == "split_payments") {
+                $this->updatePaymentSplitAllocationStatus($paymentSplits, $quote);
+            }
         }
-        
-        if ($payment->frequency == "split_payments") {
-            $this->updatePaymentSplitAllocationStatus($paymentSplits, $quote);
-        }
-
-        
     }
     
     // Update total price
@@ -432,4 +431,15 @@ class CentralController extends Controller
         return (new SplitPaymentService())->generateSplitPaymentLink($request);
     }
 
+    // This method is used to update payment allocation status when lead status is updated
+    
+    public function updatePaymentAllocation($modelType, $quote_uuid)
+    {
+        $quote =$this->getQuoteObject($modelType, $quote_uuid);
+        if ($quote->quote_status_id == QuoteStatusEnum::PolicyBooked) {
+            $payment = Payment::where('code', $quote->code)->first();
+            $paymentSplits = PaymentSplits::where('code', $quote->code)->get();
+            $this->straightforwardPayments($payment, $paymentSplits, $quote);
+        }
+    }
 }
