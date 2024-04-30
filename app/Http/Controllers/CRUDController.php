@@ -1157,22 +1157,6 @@ class CRUDController extends Controller
             ])->values()->toArray();
         }
 
-        // if (! $isManagerOrAdminAccess) {
-        //     if (auth()->user()->hasRole(RolesEnum::HomeNewBusinessAdvisor)) {
-        //         $quotes = collect($quotes)->whereNotIn('id', [
-        //             QuoteStatusEnum::Allocated,
-        //             QuoteStatusEnum::InNegotiation,
-        //         ])->values()->toArray();
-
-        //     } elseif (auth()->user()->hasRole(RolesEnum::HomeRenewalAdvisor)) {
-        //         $quotes = collect($quotes)->whereNotIn('id', [
-        //             QuoteStatusEnum::NewLead,
-        //             QuoteStatusEnum::InNegotiation,
-        //         ])->values()->toArray();
-        //     } else {
-        //         $quotes = [];
-        //     }
-        // }
 
         return inertia('HomeQuote/Cards', [
             'quotes' => $quotes,

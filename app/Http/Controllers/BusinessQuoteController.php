@@ -397,27 +397,6 @@ class BusinessQuoteController extends Controller
             ])->values()->toArray();
         }
 
-        // $isManagerOrAdminAccess = auth()->user()->hasAnyRole([RolesEnum::CorplineManager, RolesEnum::Admin]);
-
-        // if (! $isManagerOrAdminAccess) {
-        //     if (auth()->user()->hasAnyRole([RolesEnum::CorpLineNewBusinessAdvisor, RolesEnum::CorpLineNewBusinessManager])) {
-        //         $quotes = collect($quotes)->whereNotIn('id', [
-        //             QuoteStatusEnum::Allocated,
-        //             QuoteStatusEnum::PendingRenewalInformation,
-        //         ])->values()->toArray();
-
-        //     } elseif (auth()->user()->hasAnyRole([RolesEnum::CorpLineRenewalAdvisor, RolesEnum::CorpLineRenewalManager])) {
-        //         $quotes = collect($quotes)->whereNotIn('id', [
-        //             QuoteStatusEnum::NewLead,
-        //             QuoteStatusEnum::ProposalFormRequested,
-        //             QuoteStatusEnum::ProposalFormReceived,
-        //             QuoteStatusEnum::AdditionalInformationRequested,
-        //         ])->values()->toArray();
-        //     } else {
-        //         $quotes = [];
-        //     }
-        // }
-
         return inertia('CorpLineQuote/Cards', [
             'quotes' => $quotes,
             'quoteStatusEnum' => $quoteStatusEnums,

@@ -309,7 +309,6 @@ class HealthQuoteController extends Controller
 
         $quoteStatusEnums = QuoteStatusEnum::asArray();
         $lostReasons = LostReasonRepository::orderBy('text', 'asc')->get();
-        // $isManagerOrAdminAccess = auth()->user()->hasAnyRole([RolesEnum::HealthManager, RolesEnum::Admin]);
         $userId = auth()->id();
         $userTeams = auth()->user()->getUserTeams($userId)->toArray();
         if (array_intersect([TeamNameEnum::EBP, TeamNameEnum::RM_NB, TeamNameEnum::RM_SPEED], $userTeams)) {
@@ -324,24 +323,6 @@ class HealthQuoteController extends Controller
                 QuoteStatusEnum::ApplicationSubmitted,
                 QuoteStatusEnum::TransactionApproved])->values()->toArray();
         }
-        // dd($userTeams);
-        // if (! $isManagerOrAdminAccess) {
-        //     if (auth()->user()->hasAnyRole([RolesEnum::HealthNewBusinessAdvisor, RolesEnum::HealthNewBusinessManager])) {
-        //         $quotes = collect($quotes)->whereNotIn('id', [
-        //             QuoteStatusEnum::Lost,
-        //             QuoteStatusEnum::Allocated,
-        //             QuoteStatusEnum::RenewalTermsReceived,
-        //         ])->values()->toArray();
-
-        //     } elseif (auth()->user()->hasAnyRole([RolesEnum::HealthRenewalAdvisor, RolesEnum::HealthRenewalManager])) {
-        //         $quotes = collect($quotes)->whereNotIn('id', [
-        //             QuoteStatusEnum::FollowedUp,
-        //             QuoteStatusEnum::ApplicationSubmitted,
-        //             QuoteStatusEnum::TransactionApproved])->values()->toArray();
-        //     } else {
-        //         $quotes = [];
-        //     }
-        // }
 
         return inertia('HealthQuote/Cards', [
             'quotes' => $quotes,
