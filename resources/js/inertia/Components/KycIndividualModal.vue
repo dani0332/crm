@@ -37,6 +37,11 @@ const rules = {
   isPhone: v =>
     /^[\+]?[(]?[0-9]{3}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{4,10}$/im.test(v) ||
     'Phone must be valid',
+    nameCheck: v => {
+        const pattern = /^[a-zA-Z0-9\s]+$/;
+        if(v == null || v == '') return true;
+        return pattern.test(v) || 'Special characters are not allowed in Name';
+    }
 };
 
 const kycForm = reactive({
@@ -87,6 +92,7 @@ function changeIncomeSource(val) {
 
 const isNationalityEmpty = ref(false);
 const isPlaceOfBirthEmpty = ref(false);
+
 
 const onKycSubmit = isValid => {
   if (!kycForm.nationality_id) isNationalityEmpty.value = true;
@@ -230,7 +236,7 @@ onMounted(() => {
         label="First Name"
         placeholder="First Name"
         class="w-full"
-        :rules="[isRequired]"
+        :rules="[isRequired , rules.nameCheck]"
       />
 
       <x-input
@@ -238,7 +244,7 @@ onMounted(() => {
         label="Last Name"
         placeholder="Last Name"
         class="w-full"
-        :rules="[isRequired]"
+        :rules="[isRequired , rules.nameCheck]"
       />
 
       <DatePicker

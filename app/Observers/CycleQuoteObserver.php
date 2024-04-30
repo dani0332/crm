@@ -15,12 +15,17 @@ class CycleQuoteObserver
      */
     public function updated(CycleQuote $cycleQuote): void
     {
-        if ($cycleQuote->isDirty('quote_status_id') && $cycleQuote->quote_status_id === QuoteStatusEnum::TransactionApproved) {
+        $dirty = $cycleQuote->getDirty();
+        if (
+            $cycleQuote->isDirty('quote_status_id') &&
+            $cycleQuote->quote_status_id === QuoteStatusEnum::TransactionApproved
+        ) {
             CycleQuote::withoutEvents(function () use ($cycleQuote) {
                 $cycleQuote->update(['transaction_approved_at' => now()]);
             });
+            $dirty = [...$dirty, 'transaction_approved_at' => $cycleQuote->transaction_approved_at];
         }
 
-        $this->syncQuote($cycleQuote, $cycleQuote->getDirty());
+        $this->syncQuote($cycleQuote, $dirty);
     }
 }

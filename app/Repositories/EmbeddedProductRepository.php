@@ -210,6 +210,9 @@ class EmbeddedProductRepository extends BaseRepository
                     $query->where('quote_request_id', $quoteRequestId);
                 },
             ])
+            ->whereHas('prices.transactions', function ($query) use ($quoteRequestId) {
+                $query->where('quote_request_id', $quoteRequestId);
+            })
             ->get();
         $modelType = QuoteType::where('id', '=', $quoteTypeId)->value('code');
         $ep->each(function ($item) use ($modelType, $quoteTypeId, $quoteRequestId) {
@@ -355,6 +358,7 @@ class EmbeddedProductRepository extends BaseRepository
             'From' => config('constants.MA_FROM_EMAIL'),
             'ReplyTo' => isset($advisorData['email']) ? $advisorData['email'] : null,
             'To' => $quoteObject->email,
+            'Cc' => isset($advisorData['email']) ? $advisorData['email'] : '',
             'Tag' => '',
             'TemplateAlias' => 'embedded-products-payment-auth',
             'Attachments' => isset($attachments) ? $attachments : null,

@@ -2593,7 +2593,7 @@ const isMasterPaymentPaid = computed(() => {
             </div>
             <div class="flex w-full custombreak pb-5" >
               <div class="w-1/6 px-2 text-center"></div>
-              <div class="w-1/5 px-2">{{ splitPaymentRecord.cc_payment_id !== null ? splitPaymentRecord.cc_payment_id : 'N/A' }}</div>              
+              <div class="w-1/5 px-2">{{ splitPaymentRecord.reference !== null ? splitPaymentRecord.reference : 'N/A' }}</div>              
             </div> 
             <div class="flex w-full custombreak" >
               <div class="w-1/6 px-2 text-center"></div>              

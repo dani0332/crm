@@ -117,6 +117,7 @@ class GenericPermissionSeeder extends Seeder
         }
 
         $this->generateSegmentFilterPermission();
+        $this->embeddedProductSeeds();
     }
 
     private function generateSegmentFilterPermission()
@@ -134,6 +135,37 @@ class GenericPermissionSeeder extends Seeder
         foreach ($roles as $role) {
             if (! $role->hasPermissionTo(PermissionsEnum::SEGMENT_FILTER)) {
                 $role->givePermissionTo(PermissionsEnum::SEGMENT_FILTER);
+            }
+        }
+    }
+
+    private function embeddedProductSeeds()
+    {
+        // update name of existing permission
+        Permission::where(['name' => 'embedded-product-view'])->update(['name' => PermissionsEnum::EMBEDDED_PRODUCT_ADVISOR]);
+
+        $permissionList = [
+            PermissionsEnum::EMBEDDED_PRODUCT_ADVISOR => [
+                RolesEnum::CarAdvisor,
+                RolesEnum::Admin,
+                RolesEnum::Engineering,
+                RolesEnum::BetaUser,
+                RolesEnum::EpAdmin,
+            ],
+            PermissionsEnum::EMBEDDED_PRODUCT_ADMIN => [
+                RolesEnum::Admin,
+                RolesEnum::Engineering,
+                RolesEnum::BetaUser,
+                RolesEnum::EpAdmin,
+            ],
+        ];
+
+        foreach ($permissionList as $permission => $roles) {
+            $dataset = Permission::firstOrCreate(['name' => $permission, 'guard_name' => 'web']);
+            foreach ($roles as $roleName) {
+                if (($role = Role::where('name', $roleName)->first()) && ! $role->hasPermissionTo($dataset->id)) {
+                    $role->givePermissionTo($dataset->id);
+                }
             }
         }
     }

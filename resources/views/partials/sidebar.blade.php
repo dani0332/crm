@@ -325,17 +325,17 @@ use App\Enums\PermissionsEnum;
                     </li>
                 </ul>
                 @endcan
-                @can(PermissionsEnum::EmbeddedProductView)
+                @can(PermissionsEnum::EMBEDDED_PRODUCT_ADVISOR)
                 <ul class="nav side-menu">
                     <li><a href="{{ url('embedded-products') }}"><i></i> Embedded Products </a>
                 </ul>
                 @endcan
 
-                @if(auth()->user()->hasRole(RolesEnum::BetaUser))
                 <ul class="nav side-menu">
-                    <li><a href="{{ url('legacy-policy') }}"><i></i>Legacy policy</a>
+                    @can(PermissionsEnum::VIEW_LEGACY_DETAILS)
+                    <li><a href="{{ url('legacy-policy') }}"><i></i>Legacy Policies</a>
+                    @endcan
                 </ul>
-                @endif
 
                 {{-- @if (auth()->check() && auth()->user()->isAdmin())
                 <ul class="nav side-menu">
