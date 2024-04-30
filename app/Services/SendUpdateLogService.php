@@ -681,7 +681,7 @@ class SendUpdateLogService
             if (in_array($categoryCode, [SendUpdateLogStatusEnum::EF, SendUpdateLogStatusEnum::CI, SendUpdateLogStatusEnum::CIR, SendUpdateLogStatusEnum::CPD])) {
                 $sendUpdateLog->update([
                     'booking_date' => now(),
-                    'status' => SendUpdateLogStatusEnum::UPDATE_BOOKED
+                    'status' => SendUpdateLogStatusEnum::UPDATE_BOOKED,
                 ]);
             }
 
