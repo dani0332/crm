@@ -307,7 +307,7 @@ class BusinessQuoteController extends Controller
             'emirates' => $emirates,
             'canAddBatchNumber' => auth()->user()->hasRole(RolesEnum::CorplineManager),
             'noteDocumentType' => $noteDocumentType,
-            'quoteDocuments' => $quoteNotes,
+            'quoteNotes' => $quoteNotes,
             'vatPercentage' => $vatPercentage,
             'paymentTooltipEnum' => PaymentTooltip::asArray(),
             'paymentStatusEnum' => PaymentStatusEnum::asArray(),

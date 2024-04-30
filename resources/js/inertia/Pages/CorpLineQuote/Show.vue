@@ -31,7 +31,7 @@ const props = defineProps({
   documentTypes: Object,
   noteDocumentType: Object,
   storageUrl: String,
-  quoteDocuments: Object,
+  quoteNotes: Object,
   cdnPath: String,
   vatPercentage: Number,
   paymentStatusEnum: Object,
@@ -595,7 +595,7 @@ const linkEntity = () => {
       <template #default>
         <LeadNotes
           :documentType="noteDocumentType"
-          :notes="quoteDocuments"
+          :notes="quoteNotes"
           modelType="Business"
           :quote="quote"
           :cdn="cdnPath"
