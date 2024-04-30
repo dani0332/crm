@@ -576,9 +576,12 @@ class SendEmailCustomerService extends BaseService
             'templateId' => $emailData->templateId,
         ];
 
+
+        $appEnv = config('constants.APP_ENV');
+        $replyToEmail = ($appEnv == EnvEnum::PRODUCTION ? 'buy@insurancemarket.ae' : 'b6eb50415ef5751212bee3b17240ee7c@inbound.postmarkapp.com');
         $body['replyTo'] = [
-            'email' => 'b6eb50415ef5751212bee3b17240ee7c@inbound.postmarkapp.com',
-            'name' => 'Post mark',
+            'email' => $replyToEmail,
+            'name' => 'InsuranceMarket.ae',
         ];
         try {
             $client = new \GuzzleHttp\Client();
