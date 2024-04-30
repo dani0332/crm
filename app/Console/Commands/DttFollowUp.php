@@ -11,6 +11,7 @@ use App\Models\ApplicationStorage;
 use App\Models\CarQuote;
 use App\Models\DttRevival;
 use App\Models\Tier;
+use App\Services\ApplicationStorageService;
 use App\Services\CarEmailService;
 use App\Services\CarQuoteService;
 use App\Services\SendEmailCustomerService;
@@ -53,16 +54,18 @@ class DttFollowUp extends Command
     {
 
         try {
+
+            $isDttEnabled = app(ApplicationStorageService::class)->getIsActiveByKey(ApplicationStorageEnums::DTT_ENABLED);
+            if (!$isDttEnabled) {
+                info('Dtt is not enabled from cms');
+                return false;
+            }
+
             $today = Carbon::today();
             $leads = [];
-            // $unreplied = DttRevival::where([
-            //     ['reply_received', 0],
-            //     ['is_assigned', 0],
-            // ])->get();
-
-
             $unreplied = DttRevival::where([
-                ['uuid', 'WZY8DYMJ'],
+                ['reply_received', 0],
+                ['is_assigned', 0],
             ])->get();
 
             $logPrefix = 'carRevivalFollowUpEmailJob-';
