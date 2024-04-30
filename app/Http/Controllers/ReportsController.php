@@ -20,6 +20,11 @@ class ReportsController extends Controller
     use GetUserTreeTrait;
     use TeamHierarchyTrait;
 
+    public function __construct()
+    {
+        $this->middleware('permission:stale-leads-report-view', ['only' => ['renderPipelineReport']]);
+    }
+
     public function renderAdvisorConversionReport(Request $request, AdvisorConversionReportService $advisorConversionReportService)
     {
         return inertia('Reports/AdvisorConversion', [
