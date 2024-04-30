@@ -15,6 +15,7 @@ use App\Models\DttRevival;
 use App\Models\Emirate;
 use App\Models\PaymentStatus;
 use App\Models\QuoteBatches;
+use App\Models\QuoteStatus;
 use App\Models\Tier;
 use App\Models\UAELicenseHeldFor;
 use App\Models\VehicleType;
@@ -147,7 +148,11 @@ class CarRevivalQuoteRepository extends BaseRepository
             $result = array_merge($result, [
                 'batches' => QuoteBatches::get(),
                 'payment_statuses' => PaymentStatus::withActive()->get(),
-                'lead_statuses' => LeadStatusRepository::getList(QuoteTypeId::Car),
+                'lead_statuses' => QuoteStatus::whereHas('quoteStatusMap', function ($q) {
+                    $q->where('quote_type_id', '=', QuoteTypeId::Car);
+                })
+                    ->withActive()
+                    ->get(),
                 'tiers' => Tier::active()->get(),
                 'advisors' => UserRepository::getList(quoteTypeCode::Car_Revival),
             ]);
