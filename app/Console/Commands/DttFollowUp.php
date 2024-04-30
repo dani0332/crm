@@ -53,9 +53,8 @@ class DttFollowUp extends Command
     public function handle()
     {
 
-
         $isDttEnabled = app(ApplicationStorageService::class)->getIsActiveByKey(ApplicationStorageEnums::DTT_ENABLED);
-        if (!$isDttEnabled) {
+        if (! $isDttEnabled) {
             info('Dtt is not enabled from cms');
 
             return false;
@@ -86,7 +85,7 @@ class DttFollowUp extends Command
             $created_at = $item->created_at;
             $lead = CarQuote::where('uuid', $item->uuid)->first();
 
-            if (!empty($created_at) && !in_array($lead->payment_status_id, $paymentStatusArray) && !in_array($lead->source, $leadSourceArray)) {
+            if (! empty($created_at) && ! in_array($lead->payment_status_id, $paymentStatusArray) && ! in_array($lead->source, $leadSourceArray)) {
 
                 $afterTwoDays = Carbon::parse($created_at)->addDays(2)->startOfDay();
                 $afterSevenDays = Carbon::parse($created_at)->addDays(7)->startOfDay();
@@ -97,7 +96,8 @@ class DttFollowUp extends Command
                 try {
                     $listQuotePlans = app(CarQuoteService::class)->getPlans($item->uuid, true, true);
                 } catch (\Exception $exception) {
-                    info('DTTFolloupListQuotePlansException: ' . $exception->getMessage());
+                    info('DTTFolloupListQuotePlansException: '.$exception->getMessage());
+
                     return false;
                 }
 
@@ -108,7 +108,7 @@ class DttFollowUp extends Command
                 $listQuotePlans = (is_string($listQuotePlans)) ? [] : $listQuotePlans;
 
                 $previousAdvisor = null;
-                if (!empty($lead->previous_advisor_id)) {
+                if (! empty($lead->previous_advisor_id)) {
                     $previousAdvisor = app(userService::class)->getUserById($lead->previous_advisor_id);
                 }
                 $emailData = (new CarEmailService(app(SendEmailCustomerService::class)))->buildEmailData($lead, $listQuotePlans, $previousAdvisor, $tierR->id);
@@ -134,7 +134,7 @@ class DttFollowUp extends Command
                     }
                     $emailTemplateId = ApplicationStorage::where('key_name', $key)->value('value');
                     $emailData->templateId = (int) $emailTemplateId;
-                    $emailData->subject = 'Reminder: Purchase Your Motor Policy ' . $lead->code;
+                    $emailData->subject = 'Reminder: Purchase Your Motor Policy '.$lead->code;
                     $leads[] = $emailData;
                 }
                 // after seven days
@@ -146,7 +146,7 @@ class DttFollowUp extends Command
                     }
                     $emailTemplateId = ApplicationStorage::where('key_name', $key)->value('value');
                     $emailData->templateId = (int) $emailTemplateId;
-                    $emailData->subject = 'Reminder: Purchase Your Motor Policy ' . $lead->code;
+                    $emailData->subject = 'Reminder: Purchase Your Motor Policy '.$lead->code;
                     $leads[] = $emailData;
                 }
                 // after thirteen days
@@ -158,7 +158,7 @@ class DttFollowUp extends Command
                     }
                     $emailTemplateId = ApplicationStorage::where('key_name', $key)->value('value');
                     $emailData->templateId = (int) $emailTemplateId;
-                    $emailData->subject = 'Friendly Reminder: Secure Your Motor Policy Today ' . $lead->code;
+                    $emailData->subject = 'Friendly Reminder: Secure Your Motor Policy Today '.$lead->code;
                     $leads[] = $emailData;
                 }
                 // after twenty days
@@ -170,7 +170,7 @@ class DttFollowUp extends Command
                     }
                     $emailTemplateId = ApplicationStorage::where('key_name', $key)->value('value');
                     $emailData->templateId = (int) $emailTemplateId;
-                    $emailData->subject = 'Gentle Reminder: Secure Your Motor Policy Today ' . $lead->code;
+                    $emailData->subject = 'Gentle Reminder: Secure Your Motor Policy Today '.$lead->code;
                     $leads[] = $emailData;
                 }
                 // after twentyeight days
@@ -182,18 +182,18 @@ class DttFollowUp extends Command
                     }
                     $emailTemplateId = ApplicationStorage::where('key_name', $key)->value('value');
                     $emailData->templateId = (int) $emailTemplateId;
-                    $emailData->subject = 'Final Reminder: Secure Your Motor Policy Now ' . $lead->code;
+                    $emailData->subject = 'Final Reminder: Secure Your Motor Policy Now '.$lead->code;
                     $leads[] = $emailData;
                 }
             }
         }
 
-        info($logPrefix . 'count-' . count($leads) . '-leads-' . json_encode(array_column($leads, 'uuid')));
+        info($logPrefix.'count-'.count($leads).'-leads-'.json_encode(array_column($leads, 'uuid')));
 
         $jobs = [];
         foreach ($leads as $item) {
 
-            info($logPrefix . '-' . $item->uuid . '-email-' . $item->customerEmail);
+            info($logPrefix.'-'.$item->uuid.'-email-'.$item->customerEmail);
             $jobs[] = new CarRevivalFollowUpEmailJob($item);
         }
 
@@ -202,19 +202,19 @@ class DttFollowUp extends Command
                 ->addJobs($jobs)
 
                 ->then(function () use ($logPrefix) {
-                    info($logPrefix . ' all jobs completed successfully');
+                    info($logPrefix.' all jobs completed successfully');
                 })
                 ->catch(function () use ($logPrefix) {
-                    info($logPrefix . ' one of batch is failed.');
+                    info($logPrefix.' one of batch is failed.');
                 })
                 ->finally(function () use ($logPrefix) {
-                    info($logPrefix . ' everything done');
+                    info($logPrefix.' everything done');
                 })
                 ->allowFailures()
                 ->withDelay(2)
                 ->dispatch();
         } else {
-            info($logPrefix . 'No lead Found');
+            info($logPrefix.'No lead Found');
         }
     }
 }
