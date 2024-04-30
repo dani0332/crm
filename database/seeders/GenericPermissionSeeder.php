@@ -25,7 +25,7 @@ class GenericPermissionSeeder extends Seeder
             ]);
         }
 
-        // Add Compliance Permission to Admin
+        // Add Permission to Admin
         $role = Role::where('name', RolesEnum::Admin)->first();
 
         if (! $role->hasPermissionTo(PermissionsEnum::REPORT_MANAGEMENT)) {
