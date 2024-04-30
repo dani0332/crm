@@ -177,8 +177,8 @@ const caculateCommission = () => {
         bpForm.commission_vat_applicable * page.props.vat
       ).toFixed(2);
       bpForm.total_commission =
-        Number(bpForm.vat_on_commission) +
-        Number(bpForm.commission_vat_applicable);
+        Number(bpForm.vat_on_commission).toFixed(2) +
+        Number(bpForm.commission_vat_applicable).toFixed(2);
     } else {
       bpForm.commission_vat_applicable = '';
       notification.error({
@@ -194,7 +194,9 @@ const caculateCommission = () => {
         100
       ).toFixed(2);
 
-      bpForm.total_commission = bpForm.commission_vat_not_applicable;
+      bpForm.total_commission = Number(
+        bpForm.commission_vat_not_applicable,
+      ).toFixed(2);
     } else {
       bpForm.commission_vat_not_applicable = '';
       notification.error({
