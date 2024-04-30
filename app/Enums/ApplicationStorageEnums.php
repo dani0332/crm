@@ -64,6 +64,5 @@ final class ApplicationStorageEnums extends Enum
     public const DTT_ENABLED = 'DTT_ENABLED';
     public const DTT_ADVISOR = 'DTT_ADVISOR';
     public const DTT_REPLY_TO_PROD = 'DTT_REPLY_TO_PROD';
-    public const DTT_REPLY_TO_NONPROD = 'DTT_REPLY_TO_NONPROD';
     public const ENABLE_PLAN_MODIFY_VALIDATION = 'ENABLE_PLAN_MODIFY_VALIDATION';
 }
