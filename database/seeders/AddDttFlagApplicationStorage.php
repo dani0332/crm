@@ -34,5 +34,25 @@ class AddDttFlagApplicationStorage extends Seeder
                 'updated_at' => now(),
             ]]);
         }
+        $dttReplyToProd = ApplicationStorage::where('key_name', ApplicationStorageEnums::DTT_REPLY_TO_PROD)->get();
+        if (count($dttReplyToProd) == 0) {
+            DB::table('application_storage')->insert([[
+                'key_name' => ApplicationStorageEnums::DTT_REPLY_TO_PROD,
+                'value' => 'buy@insurancemarket.ae',
+                'is_active' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]]);
+        }
+        $dttReplyToNonProd = ApplicationStorage::where('key_name', ApplicationStorageEnums::DTT_REPLY_TO_NONPROD)->get();
+        if (count($dttReplyToNonProd) == 0) {
+            DB::table('application_storage')->insert([[
+                'key_name' => ApplicationStorageEnums::DTT_REPLY_TO_NONPROD,
+                'value' => 'b6eb50415ef5751212bee3b17240ee7c@inbound.postmarkapp.com',
+                'is_active' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]]);
+        }
     }
 }

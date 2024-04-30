@@ -576,9 +576,12 @@ class SendEmailCustomerService extends BaseService
             'templateId' => $emailData->templateId,
         ];
 
-
         $appEnv = config('constants.APP_ENV');
-        $replyToEmail = ($appEnv == EnvEnum::PRODUCTION ? 'buy@insurancemarket.ae' : 'b6eb50415ef5751212bee3b17240ee7c@inbound.postmarkapp.com');
+        if ($appEnv == EnvEnum::PRODUCTION) {
+            $replyToEmail = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::DTT_REPLY_TO_PROD);
+        } else {
+            $replyToEmail = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::DTT_REPLY_TO_NONPROD);
+        }
         $body['replyTo'] = [
             'email' => $replyToEmail,
             'name' => 'InsuranceMarket.ae',
