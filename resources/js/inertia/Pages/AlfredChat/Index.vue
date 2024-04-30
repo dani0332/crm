@@ -99,6 +99,7 @@ const showChat = item => {
       loader.view = false;
       chatMessages.value.created_at = item.created_at;
       chatMessages.value.data = data;
+      chatMessages.value.id = item.quote_type + '-' + item.quote_id;
       showChatLogs.value = true;
     })
     .catch(error => {
