@@ -141,10 +141,7 @@ const transactionPaymentStatus = computed(() => {
 const bookingDetailsForm = useForm({
   id: props.sendUpdateLog.id,
   send_update_type: props.selectedCategory.subCategory.slug,
-  booking_date:
-    props.bookingDetails?.booking_date ||
-    dateToYMD(props.quote?.policy_booking_date) ||
-    new Date().toJSON().slice(0, 10),
+  booking_date: props.bookingDetails?.booking_date,
   invoice_description: props.bookingDetails?.invoice_description || "",
   broker_invoice_number: props.bookingDetails?.broker_invoice_number || "",
   transaction_payment_status:

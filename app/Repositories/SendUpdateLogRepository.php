@@ -229,7 +229,7 @@ class SendUpdateLogRepository extends BaseRepository
         try {
             $data = [
                 'is_booking_filled' => SendUpdateLogStatusEnum::BOOKING_FILLED,
-                'booking_date' => $request['booking_date'],
+                // 'booking_date' => $request['booking_date'], // commented this because it will update when Sage Invoice created through Send Update
                 'invoice_description' => $request['invoice_description'],
                 'broker_invoice_number' => $request['broker_invoice_number'],
                 'transaction_payment_status' => $request['transaction_payment_status'],
