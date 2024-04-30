@@ -576,7 +576,7 @@ class SendEmailCustomerService extends BaseService
             'templateId' => $emailData->templateId,
         ];
 
-        $replyToEmail = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::DTT_REPLY_TO_PROD);
+        $replyToEmail = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::DTT_REPLY_TO);
         $body['replyTo'] = [
             'email' => $replyToEmail,
             'name' => 'InsuranceMarket.ae',

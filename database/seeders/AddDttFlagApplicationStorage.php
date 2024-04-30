@@ -34,10 +34,10 @@ class AddDttFlagApplicationStorage extends Seeder
                 'updated_at' => now(),
             ]]);
         }
-        $dttReplyToProd = ApplicationStorage::where('key_name', ApplicationStorageEnums::DTT_REPLY_TO_PROD)->get();
+        $dttReplyToProd = ApplicationStorage::where('key_name', ApplicationStorageEnums::DTT_REPLY_TO)->get();
         if (count($dttReplyToProd) == 0) {
             DB::table('application_storage')->insert([[
-                'key_name' => ApplicationStorageEnums::DTT_REPLY_TO_PROD,
+                'key_name' => ApplicationStorageEnums::DTT_REPLY_TO,
                 'value' => 'buy@insurancemarket.ae',
                 'is_active' => 1,
                 'created_at' => now(),
