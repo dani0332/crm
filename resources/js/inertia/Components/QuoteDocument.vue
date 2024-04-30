@@ -155,6 +155,12 @@ const confirmDeleteDoc = () => {
     },
   );
 };
+
+const uploadDocumentModal = () => {
+  modals.doc = true;
+  successStatus.value = {};
+  errorMsg.value = {};
+}
 </script>
 
 <template>
@@ -193,7 +199,7 @@ const confirmDeleteDoc = () => {
           >
             Copy upload Link
           </x-button>
-          <x-button @click.prevent="modals.doc = true" size="sm" color="orange">
+          <x-button @click.prevent="uploadDocumentModal" size="sm" color="orange">
             Upload Documents
           </x-button>
           <x-button
