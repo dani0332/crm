@@ -32,7 +32,6 @@ class GenericPermissionSeeder extends Seeder
             $role->givePermissionTo(PermissionsEnum::REPORT_MANAGEMENT);
         }
 
-
         // Plans Selection & Plan Details Section Permissions
         $planDetailsAdd = Permission::where('name', PermissionsEnum::PLAN_DETAILS_ADD)->first();
         if (! $planDetailsAdd) {

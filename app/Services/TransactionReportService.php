@@ -67,7 +67,6 @@ class TransactionReportService extends ManagementReport
             ->leftJoin('business_quote_request as bqr', 'bqr.code', '=', 'personal_quotes.code')
             ->leftJoin('business_type_of_insurance as btoi', 'btoi.id', '=', 'bqr.business_type_of_insurance_id');
 
-
         $this->applyFilters($query, $request);
 
         $utmGroupBy = $this->getUtmGroup($request, $query);
