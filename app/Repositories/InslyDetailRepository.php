@@ -60,6 +60,7 @@ class InslyDetailRepository extends BaseRepository
         $policy = $query->firstOrFail();
         $data = $policy->toArray();
         $policy->quoteType = $this->getQuoteType($data['policy']['coverage']);
+        $policy->imcrm_link = $this->replaceStoredAppURLWithCurrentAppURL($policy->imcrm_link);
 
         if (! empty($data['installments'])) {
             $policy->premium = collect($data['installments'])->sum('gross_premium');
@@ -212,9 +213,9 @@ class InslyDetailRepository extends BaseRepository
                     }
                     $policy->moved_to_imcrm = true;
                     if (in_array($quoteType, [quoteTypeCode::Pet, quoteTypeCode::Bike, quoteTypeCode::Cycle, quoteTypeCode::Yacht, quoteTypeCode::Jetski])) {
-                        $policy->imcrm_link = $appUrl.'/personal-quotes/'.strtolower($quoteType).'/'.$obj->uuid;
+                        $policy->imcrm_link = '/personal-quotes/'.strtolower($quoteType).'/'.$obj->uuid;
                     } else {
-                        $policy->imcrm_link = $appUrl.'/quotes/'.strtolower($quoteType).'/'.$obj->uuid;
+                        $policy->imcrm_link = '/quotes/'.strtolower($quoteType).'/'.$obj->uuid;
                     }
                     $policy->moved_to_imcrm_date = date('Y-m-d H:i:s');
                     $policy->moved_to_imcrm_by = auth()->user()->name;
@@ -360,5 +361,17 @@ class InslyDetailRepository extends BaseRepository
         } else {
             return Carbon::parse($date)->format('Y-m-d');
         }
+    }
+    private function replaceStoredAppURLWithCurrentAppURL($url)
+    {
+        $hostUrl = env('APP_URL');
+        if ($url) {
+            $parsedUrl = parse_url($url);
+
+            return $hostUrl.$parsedUrl['path'];
+        }
+
+        return null;
+
     }
 }
