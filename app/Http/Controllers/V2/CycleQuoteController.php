@@ -34,8 +34,8 @@ use App\Services\AMLService;
 use App\Services\CentralService;
 use App\Services\CRUDService;
 use App\Services\LookupService;
-use App\Services\SendUpdateLogService;
 use App\Services\QuoteDocumentService;
+use App\Services\SendUpdateLogService;
 use App\Services\SplitPaymentService;
 use App\Traits\GenericQueriesAllLobs;
 

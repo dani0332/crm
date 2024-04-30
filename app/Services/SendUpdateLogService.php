@@ -19,7 +19,6 @@ use App\Models\LifeQuote;
 use App\Models\Payment;
 use App\Models\PersonalQuote;
 use App\Models\PetQuote;
-use App\Models\SendUpdateLog;
 use App\Models\TravelQuote;
 use App\Models\YachtQuote;
 use App\Repositories\InsuranceProviderRepository;
