@@ -1,7 +1,6 @@
 <script setup>
 // const emit = defineEmits(["update:uploadedFiles"]);
 defineProps({
-  members: Array,
   docTypes: Object,
   docs: Array,
   cdn: String,
@@ -77,50 +76,6 @@ const uploadFile = (doc, memberId, files) => {
               <a
                 v-for="doc in docs.filter(
                   d => d.document_type_code == docType.code,
-                )"
-                :key="doc.id"
-                :href="cdn + doc.doc_url"
-                target="_blank"
-                class="block px-2 py-1 border rounded mt-1 text-xs hover:text-primary-600 truncate"
-              >
-                {{ doc.original_name || doc.doc_name }}
-              </a>
-            </div>
-          </div>
-        </x-tab>
-        <x-tab
-          v-for="member in members"
-          :key="member.id"
-          :value="`member-${member.id}`"
-          :label="member.name"
-        >
-          <div
-            v-for="docType in docTypes['MEMBER']"
-            :key="docType.id"
-            class="grid md:grid-cols-2 gap-2 my-4 border-b"
-          >
-            <div class="flex flex-col gap-1">
-              <h5 class="text-sm font-semibold">
-                {{ docType.text }}
-              </h5>
-              <p class="text-xs">Max files: {{ docType.max_files }}</p>
-              <p class="text-xs">Supported: {{ docType.accepted_files }}</p>
-              <p class="text-xs">Max file size: {{ docType.max_size }} MB</p>
-            </div>
-            <div class="pb-4">
-              <Dropzone
-                :id="docType.id"
-                :accept="docType.accepted_files"
-                :max-files="docType.max_files"
-                :max-size="docType.max_size"
-                :loading="docForm.processing"
-                @change="uploadFile(docType, member.id, $event)"
-              />
-              <a
-                v-for="doc in docs.filter(
-                  d =>
-                    d.document_type_code == docType.code &&
-                    d.member_detail_id == member.id,
                 )"
                 :key="doc.id"
                 :href="cdn + doc.doc_url"
