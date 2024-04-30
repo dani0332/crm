@@ -237,7 +237,6 @@ class AMLController extends Controller
             ->first();
         $cardHolderName = '';
         if (isset($payment->getCustomerPaymentInstrument->card_holder_name)) {
-
             $cardHolderName = $payment->getCustomerPaymentInstrument;
         }
         $data = [
@@ -357,7 +356,7 @@ class AMLController extends Controller
                 $customer->dob = $AMLCheckRequest->dob;
                 $customer->insured_first_name = $AMLCheckRequest->insured_first_name;
                 $customer->insured_last_name = $AMLCheckRequest->insured_last_name;
-                if ($customer->isDirty() || (Carbon::parse($customer->updated_at) >= Carbon::parse($getLastScreening->created_at ?? '') || ! isset($getLastScreening->created_at))) {
+                if ($customer->isDirty() || ! isset($getLastScreening->created_at) || Carbon::parse($customer->updated_at) >= Carbon::parse($getLastScreening->created_at ?? '')) {
                     $customer->save();
                     $customer->refresh();
 
@@ -382,7 +381,6 @@ class AMLController extends Controller
             }
 
             if ($AMLCheckRequest->customer_type == CustomerTypeEnum::Entity) {
-
                 $entityDetailsForApi = [];
                 $bridgerInsightService = new BridgerInsightService();
                 $bridgerAPIToken = $bridgerInsightService->getJWTToken();
@@ -406,9 +404,7 @@ class AMLController extends Controller
 
                     $entityDetailsForApi = ['company_name' => $entity->company_name, 'code' => CustomerTypeEnum::EntityShort.'-'.$entity->id];
                     BridgerAMLJob::dispatchSync($bridgerAPIToken, $entityDetailsForApi, $updateQuote, $quoteTypeId, CustomerTypeEnum::Entity, auth()->user()->email);
-
                 } else {
-
                     $fetchEntity->trade_license_no = $AMLCheckRequest->trade_license_no;
                     $fetchEntity->company_name = $AMLCheckRequest->company_name;
                     $fetchEntity->company_address = $AMLCheckRequest->company_address;
@@ -431,7 +427,6 @@ class AMLController extends Controller
 
                 if (empty($entityDetailsForApi) && empty($getMemberOrUBODetails->toArray())) {
                     return redirect()->back()->with('success', 'AML Screening Completed');
-
                 }
 
                 // Job dispatch for all UBO members
@@ -444,7 +439,7 @@ class AMLController extends Controller
         return redirect()->back()->with('error', 'Something went wrong');
     }
 
-    public function sanctionListHistory(Request $request, SanctionListDownloads $sanctionListDownloads, Datatables $datatables)
+    public function sanctionListHistory(Request $request, SanctionListDownloads $sanctionListDownloads, DataTables $datatables)
     {
         $url = env('AZURE_RYU_STORAGE_URL').env('AZURE_AML_HISTORY');
 
@@ -603,7 +598,6 @@ class AMLController extends Controller
         }
 
         if (! in_array(true, session()->get('amlResponseCheck')) && ! AMLService::checkAMLStatusFailed($quoteTypeId, $quoteRequestId)) {
-
             QuoteStatusLog::create([
                 'quote_type_id' => $quoteTypeId,
                 'quote_request_id' => $quoteRequestId,
@@ -617,9 +611,7 @@ class AMLController extends Controller
             $quoteDetails->save();
 
             info('AML Screening Bridger - Potential Matche(s) not Found, Quote Status changed to AML Screening Cleared');
-
         } else {
-
             QuoteStatusLog::create([
                 'quote_type_id' => $quoteTypeId,
                 'quote_request_id' => $quoteRequestId,
