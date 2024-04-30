@@ -415,9 +415,7 @@ class AMLController extends Controller
                     $fetchEntity->company_address = $AMLCheckRequest->company_address;
                     $fetchEntity->industry_type_code = $AMLCheckRequest->industry_type_code;
                     $fetchEntity->emirate_of_registration_id = $AMLCheckRequest->emirate_of_registration_id;
-
                     $isEntityDetailUpdated = $fetchEntity->isDirty();
-
                     $kycExist = KycLog::withTrashed()->where(['quote_request_id' => $quoteRequestId, 'quote_type_id' => $quoteTypeId, 'input' => $fetchEntity->company_name])->first();
                     if ($isEntityDetailUpdated || ! isset($kycExist->id)) {
                         $fetchEntity->save();
