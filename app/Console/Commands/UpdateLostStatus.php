@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Enums\QuoteStatusEnum;
+use App\Enums\QuoteStatusId;
 use App\Models\BusinessQuote;
 use App\Models\BusinessQuoteRequestDetail;
 use App\Models\CarQuote;
@@ -41,7 +42,7 @@ class UpdateLostStatus extends Command
      */
     public function handle()
     {
-        $lostReasonId = 34; //Stale for more than 90 days
+        $lostReasonId = QuoteStatusId::Lost; //Stale for more than 90 days
         $eligibleQuoteTypes = [
             CarQuote::class,
             HomeQuote::class,
