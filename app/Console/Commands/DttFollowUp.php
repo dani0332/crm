@@ -53,167 +53,168 @@ class DttFollowUp extends Command
     public function handle()
     {
 
-        try {
 
-            $isDttEnabled = app(ApplicationStorageService::class)->getIsActiveByKey(ApplicationStorageEnums::DTT_ENABLED);
-            if (! $isDttEnabled) {
-                info('Dtt is not enabled from cms');
+        $isDttEnabled = app(ApplicationStorageService::class)->getIsActiveByKey(ApplicationStorageEnums::DTT_ENABLED);
+        if (!$isDttEnabled) {
+            info('Dtt is not enabled from cms');
 
-                return false;
-            }
+            return false;
+        }
 
-            $today = Carbon::today();
-            $leads = [];
-            $twoDaysBefore = Carbon::now()->subDays(2)->toDateString();
-            $sevenDaysBefore = Carbon::now()->subDays(7)->toDateString();
-            $thirteenDaysBefore = Carbon::now()->subDays(13)->toDateString();
-            $twentyDaysBefore = Carbon::now()->subDays(20)->toDateString();
-            $twentyEightDaysBefore = Carbon::now()->subDays(28)->toDateString();
+        $today = Carbon::today();
+        $leads = [];
+        $twoDaysBefore = Carbon::now()->subDays(2)->toDateString();
+        $sevenDaysBefore = Carbon::now()->subDays(7)->toDateString();
+        $thirteenDaysBefore = Carbon::now()->subDays(13)->toDateString();
+        $twentyDaysBefore = Carbon::now()->subDays(20)->toDateString();
+        $twentyEightDaysBefore = Carbon::now()->subDays(28)->toDateString();
 
-            $unreplied = DttRevival::where(function ($q) use ($twoDaysBefore, $sevenDaysBefore, $thirteenDaysBefore, $twentyDaysBefore, $twentyEightDaysBefore) {
-                $q->whereDate('created_at', '=', $twoDaysBefore);
-                $q->orWhereDate('created_at', '=', $sevenDaysBefore);
-                $q->orWhereDate('created_at', '=', $thirteenDaysBefore);
-                $q->orWhereDate('created_at', '=', $twentyDaysBefore);
-                $q->orWhereDate('created_at', '=', $twentyEightDaysBefore);
-            })->where('reply_received', 0)
-                ->where('is_assigned', 0)
-                ->get();
+        $unreplied = DttRevival::where(function ($q) use ($twoDaysBefore, $sevenDaysBefore, $thirteenDaysBefore, $twentyDaysBefore, $twentyEightDaysBefore) {
+            $q->whereDate('created_at', '=', $twoDaysBefore);
+            $q->orWhereDate('created_at', '=', $sevenDaysBefore);
+            $q->orWhereDate('created_at', '=', $thirteenDaysBefore);
+            $q->orWhereDate('created_at', '=', $twentyDaysBefore);
+            $q->orWhereDate('created_at', '=', $twentyEightDaysBefore);
+        })->where('reply_received', 0)
+            ->where('is_assigned', 0)
+            ->get();
 
-            $logPrefix = 'carRevivalFollowUpEmailJob-';
-            $paymentStatusArray = [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PARTIAL_CAPTURED, PaymentStatusEnum::AUTHORISED];
-            $leadSourceArray = [LeadSourceEnum::REVIVAL_PAID];
-            foreach ($unreplied as $item) {
-                $created_at = $item->created_at;
-                $lead = CarQuote::where('uuid', $item->uuid)->first();
+        $logPrefix = 'carRevivalFollowUpEmailJob-';
+        $paymentStatusArray = [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PARTIAL_CAPTURED, PaymentStatusEnum::AUTHORISED];
+        $leadSourceArray = [LeadSourceEnum::REVIVAL_PAID];
+        foreach ($unreplied as $item) {
+            $created_at = $item->created_at;
+            $lead = CarQuote::where('uuid', $item->uuid)->first();
 
-                if (! empty($created_at) && ! in_array($lead->payment_status_id, $paymentStatusArray) && ! in_array($lead->source, $leadSourceArray)) {
+            if (!empty($created_at) && !in_array($lead->payment_status_id, $paymentStatusArray) && !in_array($lead->source, $leadSourceArray)) {
 
-                    $afterTwoDays = Carbon::parse($created_at)->addDays(2)->startOfDay();
-                    $afterSevenDays = Carbon::parse($created_at)->addDays(7)->startOfDay();
-                    $aftertThirteenDays = Carbon::parse($created_at)->addDays(13)->startOfDay();
-                    $afterTwentyDays = Carbon::parse($created_at)->addDays(20)->startOfDay();
-                    $afterTwentyeightDays = Carbon::parse($created_at)->addDays(28)->startOfDay();
+                $afterTwoDays = Carbon::parse($created_at)->addDays(2)->startOfDay();
+                $afterSevenDays = Carbon::parse($created_at)->addDays(7)->startOfDay();
+                $aftertThirteenDays = Carbon::parse($created_at)->addDays(13)->startOfDay();
+                $afterTwentyDays = Carbon::parse($created_at)->addDays(20)->startOfDay();
+                $afterTwentyeightDays = Carbon::parse($created_at)->addDays(28)->startOfDay();
 
+                try {
                     $listQuotePlans = app(CarQuoteService::class)->getPlans($item->uuid, true, true);
+                } catch (\Exception $exception) {
+                    info('DTTFolloupListQuotePlansException: ' . $exception->getMessage());
+                    return false;
+                }
 
-                    $quotePlansCount = is_countable($listQuotePlans) ? count($listQuotePlans) : 0;
+                $quotePlansCount = is_countable($listQuotePlans) ? count($listQuotePlans) : 0;
 
-                    $tierR = Tier::where('name', TiersEnum::TIER_R)->where('is_active', 1)->first();
+                $tierR = Tier::where('name', TiersEnum::TIER_R)->where('is_active', 1)->first();
 
-                    $listQuotePlans = (is_string($listQuotePlans)) ? [] : $listQuotePlans;
+                $listQuotePlans = (is_string($listQuotePlans)) ? [] : $listQuotePlans;
 
-                    $previousAdvisor = null;
-                    if (! empty($lead->previous_advisor_id)) {
-                        $previousAdvisor = app(userService::class)->getUserById($lead->previous_advisor_id);
+                $previousAdvisor = null;
+                if (!empty($lead->previous_advisor_id)) {
+                    $previousAdvisor = app(userService::class)->getUserById($lead->previous_advisor_id);
+                }
+                $emailData = (new CarEmailService(app(SendEmailCustomerService::class)))->buildEmailData($lead, $listQuotePlans, $previousAdvisor, $tierR->id);
+
+                $emailData->customer = (object) ['firstName' => $lead->first_name, 'lastName' => $lead->last_name];
+                $dttAdvisor = ApplicationStorage::where('key_name', '=', ApplicationStorageEnums::DTT_ADVISOR)->value('value');
+
+                $advisor = explode(',', $dttAdvisor);
+
+                $emailData->uuid = $item->uuid;
+                $emailData->advisorName = $advisor[0];
+                $emailData->advisorEmail = $advisor[1];
+                $emailData->id = $item->id;
+                // info($logPrefix.'emailData-'.json_encode($emailData));
+
+                // after two days
+                if ($today->eq($afterTwoDays)) {
+
+                    if ($quotePlansCount > 0) {
+                        $key = ApplicationStorageEnums::DTT_AFTER_TWO_DAYS_FOLLOWUP_WITH_PLAN;
+                    } else {
+                        $key = ApplicationStorageEnums::DTT_AFTER_TWO_DAYS_FOLLOWUP_WITHOUT_PLAN;
                     }
-                    $emailData = (new CarEmailService(app(SendEmailCustomerService::class)))->buildEmailData($lead, $listQuotePlans, $previousAdvisor, $tierR->id);
-
-                    $emailData->customer = (object) ['firstName' => $lead->first_name, 'lastName' => $lead->last_name];
-                    $dttAdvisor = ApplicationStorage::where('key_name', '=', ApplicationStorageEnums::DTT_ADVISOR)->value('value');
-
-                    $advisor = explode(',', $dttAdvisor);
-
-                    $emailData->uuid = $item->uuid;
-                    $emailData->advisorName = $advisor[0];
-                    $emailData->advisorEmail = $advisor[1];
-                    $emailData->id = $item->id;
-                    // info($logPrefix.'emailData-'.json_encode($emailData));
-
-                    // after two days
-                    if ($today->eq($afterTwoDays)) {
-
-                        if ($quotePlansCount > 0) {
-                            $key = ApplicationStorageEnums::DTT_AFTER_TWO_DAYS_FOLLOWUP_WITH_PLAN;
-                        } else {
-                            $key = ApplicationStorageEnums::DTT_AFTER_TWO_DAYS_FOLLOWUP_WITHOUT_PLAN;
-                        }
-                        $emailTemplateId = ApplicationStorage::where('key_name', $key)->value('value');
-                        $emailData->templateId = (int) $emailTemplateId;
-                        $emailData->subject = 'Reminder: Purchase Your Motor Policy '.$lead->code;
-                        $leads[] = $emailData;
+                    $emailTemplateId = ApplicationStorage::where('key_name', $key)->value('value');
+                    $emailData->templateId = (int) $emailTemplateId;
+                    $emailData->subject = 'Reminder: Purchase Your Motor Policy ' . $lead->code;
+                    $leads[] = $emailData;
+                }
+                // after seven days
+                if ($today->eq($afterSevenDays)) {
+                    if ($quotePlansCount > 0) {
+                        $key = ApplicationStorageEnums::DTT_AFTER_SEVEN_DAYS_FOLLOWUP_WITH_PLAN;
+                    } else {
+                        $key = ApplicationStorageEnums::DTT_AFTER_SEVEN_DAYS_FOLLOWUP_WITHOUT_PLAN;
                     }
-                    // after seven days
-                    if ($today->eq($afterSevenDays)) {
-                        if ($quotePlansCount > 0) {
-                            $key = ApplicationStorageEnums::DTT_AFTER_SEVEN_DAYS_FOLLOWUP_WITH_PLAN;
-                        } else {
-                            $key = ApplicationStorageEnums::DTT_AFTER_SEVEN_DAYS_FOLLOWUP_WITHOUT_PLAN;
-                        }
-                        $emailTemplateId = ApplicationStorage::where('key_name', $key)->value('value');
-                        $emailData->templateId = (int) $emailTemplateId;
-                        $emailData->subject = 'Reminder: Purchase Your Motor Policy '.$lead->code;
-                        $leads[] = $emailData;
+                    $emailTemplateId = ApplicationStorage::where('key_name', $key)->value('value');
+                    $emailData->templateId = (int) $emailTemplateId;
+                    $emailData->subject = 'Reminder: Purchase Your Motor Policy ' . $lead->code;
+                    $leads[] = $emailData;
+                }
+                // after thirteen days
+                if ($today->eq($aftertThirteenDays)) {
+                    if ($quotePlansCount > 0) {
+                        $key = ApplicationStorageEnums::DTT_AFTER_THIRTEEN_DAYS_FOLLOWUP_WITH_PLAN;
+                    } else {
+                        $key = ApplicationStorageEnums::DTT_AFTER_THIRTEEN_DAYS_FOLLOWUP_WITHOUT_PLAN;
                     }
-                    // after thirteen days
-                    if ($today->eq($aftertThirteenDays)) {
-                        if ($quotePlansCount > 0) {
-                            $key = ApplicationStorageEnums::DTT_AFTER_THIRTEEN_DAYS_FOLLOWUP_WITH_PLAN;
-                        } else {
-                            $key = ApplicationStorageEnums::DTT_AFTER_THIRTEEN_DAYS_FOLLOWUP_WITHOUT_PLAN;
-                        }
-                        $emailTemplateId = ApplicationStorage::where('key_name', $key)->value('value');
-                        $emailData->templateId = (int) $emailTemplateId;
-                        $emailData->subject = 'Friendly Reminder: Secure Your Motor Policy Today '.$lead->code;
-                        $leads[] = $emailData;
+                    $emailTemplateId = ApplicationStorage::where('key_name', $key)->value('value');
+                    $emailData->templateId = (int) $emailTemplateId;
+                    $emailData->subject = 'Friendly Reminder: Secure Your Motor Policy Today ' . $lead->code;
+                    $leads[] = $emailData;
+                }
+                // after twenty days
+                if ($today->eq($afterTwentyDays)) {
+                    if ($quotePlansCount > 0) {
+                        $key = ApplicationStorageEnums::DTT_AFTER_TWENTY_DAYS_FOLLOWUP_WITH_PLAN;
+                    } else {
+                        $key = ApplicationStorageEnums::DTT_AFTER_TWENTY_DAYS_FOLLOWUP_WITHOUT_PLAN;
                     }
-                    // after twenty days
-                    if ($today->eq($afterTwentyDays)) {
-                        if ($quotePlansCount > 0) {
-                            $key = ApplicationStorageEnums::DTT_AFTER_TWENTY_DAYS_FOLLOWUP_WITH_PLAN;
-                        } else {
-                            $key = ApplicationStorageEnums::DTT_AFTER_TWENTY_DAYS_FOLLOWUP_WITHOUT_PLAN;
-                        }
-                        $emailTemplateId = ApplicationStorage::where('key_name', $key)->value('value');
-                        $emailData->templateId = (int) $emailTemplateId;
-                        $emailData->subject = 'Gentle Reminder: Secure Your Motor Policy Today '.$lead->code;
-                        $leads[] = $emailData;
+                    $emailTemplateId = ApplicationStorage::where('key_name', $key)->value('value');
+                    $emailData->templateId = (int) $emailTemplateId;
+                    $emailData->subject = 'Gentle Reminder: Secure Your Motor Policy Today ' . $lead->code;
+                    $leads[] = $emailData;
+                }
+                // after twentyeight days
+                if ($today->eq($afterTwentyeightDays)) {
+                    if ($quotePlansCount > 0) {
+                        $key = ApplicationStorageEnums::DTT_AFTER_TWENTYEIGHT_DAYS_FOLLOWUP_WITH_PLAN;
+                    } else {
+                        $key = ApplicationStorageEnums::DTT_AFTER_TWENTYEIGHT_DAYS_FOLLOWUP_WITHOUT_PLAN;
                     }
-                    // after twentyeight days
-                    if ($today->eq($afterTwentyeightDays)) {
-                        if ($quotePlansCount > 0) {
-                            $key = ApplicationStorageEnums::DTT_AFTER_TWENTYEIGHT_DAYS_FOLLOWUP_WITH_PLAN;
-                        } else {
-                            $key = ApplicationStorageEnums::DTT_AFTER_TWENTYEIGHT_DAYS_FOLLOWUP_WITHOUT_PLAN;
-                        }
-                        $emailTemplateId = ApplicationStorage::where('key_name', $key)->value('value');
-                        $emailData->templateId = (int) $emailTemplateId;
-                        $emailData->subject = 'Final Reminder: Secure Your Motor Policy Now '.$lead->code;
-                        $leads[] = $emailData;
-                    }
+                    $emailTemplateId = ApplicationStorage::where('key_name', $key)->value('value');
+                    $emailData->templateId = (int) $emailTemplateId;
+                    $emailData->subject = 'Final Reminder: Secure Your Motor Policy Now ' . $lead->code;
+                    $leads[] = $emailData;
                 }
             }
+        }
 
-            info($logPrefix.'count-'.count($leads).'-leads-'.json_encode(array_column($leads, 'uuid')));
+        info($logPrefix . 'count-' . count($leads) . '-leads-' . json_encode(array_column($leads, 'uuid')));
 
-            $jobs = [];
-            foreach ($leads as $item) {
+        $jobs = [];
+        foreach ($leads as $item) {
 
-                info($logPrefix.'-'.$item->uuid.'-email-'.$item->customerEmail);
-                $jobs[] = new CarRevivalFollowUpEmailJob($item);
-            }
+            info($logPrefix . '-' . $item->uuid . '-email-' . $item->customerEmail);
+            $jobs[] = new CarRevivalFollowUpEmailJob($item);
+        }
 
-            if ($jobs != null && count($jobs)) {
-                Haystack::build()
-                    ->addJobs($jobs)
+        if ($jobs != null && count($jobs)) {
+            Haystack::build()
+                ->addJobs($jobs)
 
-                    ->then(function () use ($logPrefix) {
-                        info($logPrefix.' all jobs completed successfully');
-                    })
-                    ->catch(function () use ($logPrefix) {
-                        info($logPrefix.' one of batch is failed.');
-                    })
-                    ->finally(function () use ($logPrefix) {
-                        info($logPrefix.' everything done');
-                    })
-                    ->allowFailures()
-                    ->withDelay(2)
-                    ->dispatch();
-            } else {
-                info($logPrefix.'No lead Found');
-            }
-        } catch (\Exception $exception) {
-            info('DTT folloup Exception : '.$exception->getMessage());
+                ->then(function () use ($logPrefix) {
+                    info($logPrefix . ' all jobs completed successfully');
+                })
+                ->catch(function () use ($logPrefix) {
+                    info($logPrefix . ' one of batch is failed.');
+                })
+                ->finally(function () use ($logPrefix) {
+                    info($logPrefix . ' everything done');
+                })
+                ->allowFailures()
+                ->withDelay(2)
+                ->dispatch();
+        } else {
+            info($logPrefix . 'No lead Found');
         }
     }
 }
