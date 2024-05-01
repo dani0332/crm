@@ -17,6 +17,8 @@ use App\Services\CapiRequestService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use Illuminate\Support\Arr;
+use MongoDB\BSON\Regex;
+use MongoDB\BSON\UTCDateTime;
 
 class InslyDetailRepository extends BaseRepository
 {
@@ -44,12 +46,8 @@ class InslyDetailRepository extends BaseRepository
         }
 
         if (! empty(request()->mobile_no)) {
-            $phoneNumber = str_replace(' ', '', request()->mobile_no);
-            // Creating a regex pattern to match phone numbers ignoring spaces
-            $regexPattern = implode('.*', str_split($phoneNumber));
-            $regex = new \MongoDB\BSON\Regex("$regexPattern", 'i');
             $query->where('customer.mobile_phone', 'like', '%'.request()->mobile_no.'%')
-                ->orWhere('customer.mobile_phone', 'regex', $regex);
+                ->orWhere('customer.mobile_phone', 'regex', $this->searchPhoneNumberRegexPattern(request()->mobile_no));
         }
 
         $data = $query->simplePaginate()->withQueryString()->toArray();
@@ -104,7 +102,7 @@ class InslyDetailRepository extends BaseRepository
             $inslyPolicyIssueDate = $this->formatDate($inslyPolicyIssueDate);
         }
 
-        $appUrl = env('APP_URL');
+        $appUrl = config('constants.APP_URL');
 
         if (! empty($policy)) {
             $coverage = $policy['policy']['coverage'];
@@ -383,7 +381,7 @@ class InslyDetailRepository extends BaseRepository
 
     private function formatDate($date)
     {
-        if ($date instanceof \MongoDB\BSON\UTCDateTime) {
+        if ($date instanceof UTCDateTime) {
             return $date->toDateTime()->format('Y-m-d');
         } else {
             return Carbon::parse($date)->format('Y-m-d');
@@ -391,7 +389,7 @@ class InslyDetailRepository extends BaseRepository
     }
     private function replaceStoredAppURLWithCurrentAppURL($url)
     {
-        $hostUrl = env('APP_URL');
+        $hostUrl = config('constants.APP_URL');
         if ($url) {
             $parsedUrl = parse_url($url);
 
@@ -400,5 +398,14 @@ class InslyDetailRepository extends BaseRepository
 
         return null;
 
+    }
+
+    private function searchPhoneNumberRegexPattern($mobileNo)
+    {
+        $phoneNumber = str_replace(' ', '', $mobileNo);
+        // Creating a regex pattern to match phone numbers ignoring spaces
+        $regexPattern = implode('.*', str_split($phoneNumber));
+
+        return new Regex("$regexPattern", 'i');
     }
 }
