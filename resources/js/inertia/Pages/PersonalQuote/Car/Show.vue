@@ -6,11 +6,11 @@ import LazyCreatePlan from './Partials/CreatePlan.vue';
 import AssignTier from './Partials/AssignTier.vue';
 import FollowUpReasons from './Partials/FollowUpReasons.vue';
 import RiskRatingScoreDetails from '../../../Components/RiskRatingScoreDetails.vue';
+import { fileUploadErrorMessage } from '@/inertia/Composables/utilities.js';
 import { onMounted, watch } from 'vue';
 import { reactive } from 'vue';
 import MigratePayment from './../../../Components/MigratePayment.vue';
 
-import { fileUploadErrorMessage } from '@/inertia/Composables/utilities.js';
 
 defineProps({
   quote: Object,
@@ -92,6 +92,7 @@ defineProps({
   carInsuranceProviders: Array,
   paymentTooltipEnum: Object,
   isNewPaymentStructure: Boolean,
+  isAmlClearedForPayment: Boolean,
   sendUpdateOptions: Array,
   sendUpdateLogs: Array,
   hasPolicyIssuedStatus: Boolean,
@@ -1328,12 +1329,9 @@ const confirmSendEmail = () => {
 const confirmSendOCBEmailNB = () => {
   processingOCBEmailNB.value = true;
   axios
-    .post(
-      `/quotes/car/${page.props.record.uuid}/send-email-ocb-nb`,
-      {
-        responseType: 'json',
-      },
-    )
+    .post(`/quotes/car/${page.props.record.uuid}/send-email-ocb-nb`, {
+      responseType: 'json',
+    })
     .then(response => {
       processingOCBEmailNB.value = false;
       notification.success({
@@ -1758,6 +1756,15 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
         <template #body>
           <x-divider class="my-4" />
           <div class="flex mb-4 justify-end">
+            <Link
+                v-if="record?.insly_id && can(permissionEnum.VIEW_LEGACY_DETAILS)"
+                :href="`/legacy-policy/${record.insly_id}`"
+                preserve-scroll
+            >
+                <x-button size="sm" color="#ff5e00" tag="div">
+                    View Legacy policy
+                </x-button>
+            </Link>
             <template
               v-if="
                 !can(permissionEnum.ApprovePayments) &&
@@ -1765,11 +1772,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
               "
             >
             <x-button
-              v-if="
-                hasAnyRole([
-                  rolesEnum.LeadPool,
-                ])
-              "
+              v-if="hasAnyRole([rolesEnum.LeadPool])"
               class="mr-2"
               size="sm"
               color="#ff5e00"
@@ -2350,6 +2353,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       :expanded="sectionExpanded"
       :quote="record"
       modelType="Car"
+      :insly-id="record?.insly_id"
       v-if="
         record.source == page.props.leadSourceEnum.RENEWAL_UPLOAD ||
         record.source == page.props.leadSourceEnum.INSLY
@@ -2498,6 +2502,14 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
                     "
                     placeholder="Car Sold / Uncontactable Proof"
                     class="form-control w-full"
+                  />
+                </x-field>
+                <x-field class="" label="Transaction Type">
+                  <x-input
+                    type="text"
+                    :value="record.transaction_type_text"
+                    class="w-full"
+                    :disabled="true"
                   />
                 </x-field>
               </div>
@@ -2907,6 +2919,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
               v-if="
                 (access.carManagerCanEdit || access.carAdvisorCanEdit) &&
                 can(permissionEnum.CarQuotesPlansCreate)
+                
               "
             >
               Add Plan
@@ -3157,7 +3170,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
                   </x-button>
                 </template>
 
-                <span v-if="hasRole(rolesEnum.CarAdvisor)">
+                <span>
                   <SelectPlan
                     v-if="selectedProviderPlan.id != item.id"
                     @update:selectedPlanChanged="handlePlanSelected"
@@ -3269,15 +3282,15 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
         :showHeader="true"
         v-model:modelValue="modals.sendOCBConfirmNB"
         :backdrop-close="false"
-        >
+      >
         <template #header>
-        <p>Send Email OCB NB</p>
+          <p>Send Email OCB NB</p>
         </template>
         <template #default>
-        <p>Are you sure send email to customer?</p>
+          <p>Are you sure send email to customer?</p>
         </template>
         <template #actions>
-            <div class="text-right space-x-4">
+          <div class="text-right space-x-4">
             <x-button
               size="sm"
               ghost
@@ -3286,12 +3299,17 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
             >
               Cancel
             </x-button>
-            <x-button size="sm" color="error" :loading="processingOCBEmailNB" @click.prevent="confirmSendOCBEmailNB">
+            <x-button
+              size="sm"
+              color="error"
+              :loading="processingOCBEmailNB"
+              @click.prevent="confirmSendOCBEmailNB"
+            >
               Send
             </x-button>
           </div>
         </template>
-    </AppModal>
+      </AppModal>
       <x-modal v-model="modals.createPlan" size="xl" show-close backdrop>
         <template #header> Create Car Quote </template>
         <LazyCreatePlan
@@ -3312,28 +3330,19 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       :paymentCode = "record.code"
       :quoteType="quoteType"      
     />    
-    <PaymentTableNew
-      v-if="isNewPaymentStructure"
-      quoteType="Car"
-      :payments="payments"
-      :paymentDocument="
-        page.props.documentTypes.filter(
-          item =>
-            item.code === 'CPD' ||
-            item.code === 'CPDR' ||
-            item.code === 'CDPDR',
-        )
-      "
-      :quoteRequest="paymentEntityModel"
-      :paymentStatusEnum="paymentStatusEnum"
-      :paymentTooltipEnum="paymentTooltipEnum"
-      :paymentMethods="
-        paymentMethods.map(pm => {
-          return { value: pm.code, label: pm.name, tooltip: pm.tool_tip };
-        })
-      "
-      :storageUrl="storageUrl"
-    />
+
+    <PaymentTableNew 
+			v-if="isNewPaymentStructure"
+			quoteType="Car"
+			:payments="payments"
+			:paymentDocument="page.props.documentTypes.filter(item => item.code === 'CPD' || item.code === 'CPDR' || item.code === 'CDPDR')"
+			:quoteRequest="paymentEntityModel"
+			:paymentStatusEnum="paymentStatusEnum"
+			:paymentTooltipEnum="paymentTooltipEnum"
+			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name, tooltip: pm.tool_tip } })"
+			:storageUrl="storageUrl"
+      :isAmlClearedForPayment="isAmlClearedForPayment"
+		/>
     <PaymentTable
       v-else
       :payments="payments"
@@ -3448,10 +3457,13 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
           <div class="my-2 flex justify-end">
             <x-button
               class="mr-2"
-              v-if="record.payment_status_id === paymentStatusEnum.AUTHORISED"
+              v-if="
+                record.payment_status_id === paymentStatusEnum.AUTHORISED &&
+                !hasRole(rolesEnum.PA)
+              "
               @click.prevent="copyUploadURL"
               size="sm"
-              color="orange"
+              color="primary"
             >
               Copy upload Link
             </x-button>
@@ -3934,6 +3946,12 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
         </template>
       </Collapsible>
     </div>
+
+    <CustomerChatLogs
+      :customerName="record?.first_name + ' ' + record?.last_name"
+      :quoteId="quote.uuid"
+      :quoteType="'CAR'"
+    />
   </div>
 
   <AuditLogs
@@ -3948,5 +3966,10 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
     :type="'App\\Models\\CarQuote'"
     :id="$page.props.record.id"
     :expanded="sectionExpanded"
+  />
+
+  <ClientInquiryLogs
+    v-if="clientInquiryLogs?.length > 0"
+    :logs="clientInquiryLogs"
   />
 </template>

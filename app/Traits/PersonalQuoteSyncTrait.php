@@ -23,6 +23,17 @@ trait PersonalQuoteSyncTrait
 
         $this->syncTable($personalQuote, $updatedFields, 'personal_quotes');
         $personalQuote->save();
+    }
+
+    public function syncQuoteDetail($quote, $updatedFields)
+    {
+        // get personal quote
+        $personalQuote = PersonalQuoteRepository::where('uuid', $quote->uuid)->first();
+        if (! $personalQuote) {
+            Log::warning("Quote not found in personal quotes table, uuid: {$quote->uuid}");
+
+            return;
+        }
 
         // update personal quote details
         $personalQuoteDetail = PersonalQuoteDetail::where('personal_quote_id', $personalQuote->id)->first();
@@ -54,7 +65,7 @@ trait PersonalQuoteSyncTrait
 
     private function formatColumnValue($columnType, $value)
     {
-        if (in_array($columnType, ['date', 'datetime'])) {
+        if ($value && in_array($columnType, ['date', 'datetime'])) {
             return Carbon::parse($value)->toDateTimeString();
         }
 
