@@ -550,7 +550,7 @@ class EmbeddedProductRepository extends BaseRepository
                     $data = [
                         'uuid' => $data['uuid'],
                         'type_id' => $type->id,
-                        'code' => $transaction->code . '-' . $sr,
+                        'code' => $transaction->code,
 
                     ];
                     $processResponse = $this->processCancelPayment($data);
