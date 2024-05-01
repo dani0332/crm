@@ -4,6 +4,7 @@ namespace App\Repositories;
 
 use App\Enums\EpCategoryEnum;
 use App\Enums\PaymentStatusEnum;
+use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Jobs\SendEPDocumentsJob;
 use App\Models\EmbeddedProduct;
@@ -18,6 +19,7 @@ use Carbon\Carbon;
 use finfo;
 use Illuminate\Support\Facades\DB;
 use PDF;
+use Illuminate\Support\Facades\Log;
 
 class EmbeddedProductRepository extends BaseRepository
 {
@@ -227,24 +229,30 @@ class EmbeddedProductRepository extends BaseRepository
                 ['payment_status_id',  '=', PaymentStatusEnum::CAPTURED],
             ])->whereIn('product_id', $optionsIds)->get();
 
-            if ($item->product_category == EpCategoryEnum::BOLT_ON) {
-                $quoteObject = $this->getQuoteObject($modelType, $quoteRequestId);
-
-                if ($quoteObject->payment_status_id == PaymentStatusEnum::CAPTURED) {
-
-                    if ($transaction->isNotEmpty()) {
-                        $item->send_document_button = true;
-                    }
-                }
-            } elseif ($item->product_category == EpCategoryEnum::STAND_ALONE) {
-
-                if ($transaction->isNotEmpty()) {
-                    $item->send_document_button = true;
-                }
-            }
+            $quoteObject = $this->getQuoteObject($modelType, $quoteRequestId);
+            $item->send_document_button = $this->canSendDocuments($item->product_category, $quoteObject->quote_status_id, $transaction);
         });
 
         return $ep;
+    }
+
+    private function canSendDocuments($productCategory, $quoteStatusId, $transaction)
+    {
+        $canSend = false;
+        if ($productCategory == EpCategoryEnum::BOLT_ON) {
+            if ($quoteStatusId == QuoteStatusEnum::TransactionApproved) {
+                if ($transaction->isNotEmpty()) {
+                    $canSend = true;
+                }
+            }
+        } elseif ($productCategory == EpCategoryEnum::STAND_ALONE) {
+
+            if ($transaction->isNotEmpty()) {
+                $canSend = true;
+            }
+        }
+
+        return $canSend;
     }
 
     public function fetchSendDocumentsByLead($leadId, $modelType)
@@ -338,6 +346,13 @@ class EmbeddedProductRepository extends BaseRepository
             ['is_selected',  '=', true],
             ['payment_status_id',  '=', PaymentStatusEnum::CAPTURED],
         ])->whereIn('product_id', $optionsIds)->get();
+
+        $canSendDocuments = $this->canSendDocuments($ep->product_category, $quoteObject->quote_status_id, $transaction);
+        if(!$canSendDocuments) {
+            // This is triggered if there is difference in conditions for sending documents in IMCRM and Marshal API
+            Log::info('Documents cannot be sent ' . json_encode(['uuid' => $quoteObject->uuid, 'ep category' => $ep->product_category, 'quote status' => $quoteObject->quote_status_id, 'transaction' => $transaction]));
+            return 'Documents cannot be sent';
+        }
 
         $certificate_number = '';
         if ($transaction->isNotEmpty()) {
