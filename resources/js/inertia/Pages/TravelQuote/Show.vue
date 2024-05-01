@@ -62,6 +62,7 @@ defineProps({
   aboveAgeMembers: Number,
 });
 
+const permissionEnum = page.props.permissionsEnum;
 const permissionsEnum = page.props.permissionsEnum;
 const can = permission => useCan(permission);
 const canAny = permissions => useCanAny(permissions);

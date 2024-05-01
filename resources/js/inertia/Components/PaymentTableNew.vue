@@ -748,6 +748,9 @@ const  formatDate = (date) =>  {
   }
 
 function formatString(input) {
+  if (input === '' || input === undefined || input === null) {
+    return '';
+  }
   const lowercaseString = input.toLowerCase();
   const words = lowercaseString.replace(/_/g, ' ').split(' ');
   for (let i = 0; i < words.length; i++) {
