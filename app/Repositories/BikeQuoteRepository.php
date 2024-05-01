@@ -72,7 +72,7 @@ class BikeQuoteRepository extends BaseRepository
 
             $quote->bikeQuote()->updateOrCreate(
                 ['personal_quote_id' => $quote->id],
-                Arr::only($data, (new BikeQuote())->fillableColumns())
+                Arr::only($data, (new BikeQuote())->allowedColumns())
             );
 
             return $quote;

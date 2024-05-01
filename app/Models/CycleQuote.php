@@ -42,7 +42,7 @@ class CycleQuote extends Model
         return $this->belongsTo(InsuranceProvider::class, 'insurance_provider_id', 'id');
     }
 
-    public function fillableColumns()
+    public function allowedColumns()
     {
         return $this->allowedColumns;
     }

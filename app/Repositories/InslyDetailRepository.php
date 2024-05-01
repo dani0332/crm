@@ -210,28 +210,28 @@ class InslyDetailRepository extends BaseRepository
                         case QuoteTypes::PET->value:
                             $obj->petQuote()->updateOrCreate(
                                 ['personal_quote_id' => $id],
-                                Arr::only($payLoad, (new PetQuote())->fillableColumns())
+                                Arr::only($payLoad, (new PetQuote())->allowedColumns())
                             );
                             $obj->quoteDetail()->create(['insly_id' => $policy->_id]);
                             break;
                         case QuoteTypes::BIKE->value:
                             $obj->bikeQuote()->updateOrCreate(
                                 ['personal_quote_id' => $id],
-                                Arr::only($payLoad, (new BikeQuote())->fillableColumns())
+                                Arr::only($payLoad, (new BikeQuote())->allowedColumns())
                             );
                             $obj->quoteDetail()->create(['insly_id' => $policy->_id]);
                             break;
                         case QuoteTypes::CYCLE->value:
                             $obj->cycleQuote()->updateOrCreate(
                                 ['personal_quote_id' => $id],
-                                Arr::only($payLoad, (new CycleQuote())->fillableColumns())
+                                Arr::only($payLoad, (new CycleQuote())->allowedColumns())
                             );
                             $obj->quoteDetail()->create(['insly_id' => $policy->_id]);
                             break;
                         case QuoteTypes::YACHT->value:
                             $obj->yachtQuote()->updateOrCreate(
                                 ['personal_quote_id' => $id],
-                                Arr::only($payLoad, (new YachtQuote())->fillableColumns())
+                                Arr::only($payLoad, (new YachtQuote())->allowedColumns())
                             );
                             $obj->quoteDetail()->create(['insly_id' => $policy->_id]);
                             break;
