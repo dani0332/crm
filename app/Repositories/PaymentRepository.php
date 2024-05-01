@@ -246,10 +246,15 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
         //Skipping paid payments and deleting extra payments
         if ($paymentSplits) {
             foreach ($paymentSplits as $paymentSplit) {
-                if ($paymentSplit->payment_status_id == PaymentStatusEnum::PAID ||
-                    $paymentSplit->payment_status_id == PaymentStatusEnum::PARTIAL_CAPTURED ||
-                    $paymentSplit->payment_status_id == PaymentStatusEnum::CAPTURED ||
-                    $paymentSplit->payment_status_id == PaymentStatusEnum::AUTHORISED) {
+                if (
+                    in_array($paymentSplit->payment_status_id, [
+                        PaymentStatusEnum::PAID,
+                        PaymentStatusEnum::PARTIAL_CAPTURED,
+                        PaymentStatusEnum::PARTIALLY_PAID,
+                        PaymentStatusEnum::CAPTURED,
+                        PaymentStatusEnum::AUTHORISED,
+                    ])
+                ) {
                     $paymentPaidSerialNo[] = $paymentSplit->sr_no;
 
                     continue;
