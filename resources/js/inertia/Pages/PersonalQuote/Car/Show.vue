@@ -1700,6 +1700,15 @@ const handlePlanSelected = plan => {
       <div class="flex justify-between items-center mb-4">
         <h3 class="font-semibold text-primary-800 text-lg">Car Details</h3>
         <div>
+          <Link
+            v-if="record?.insly_id"
+            :href="`/legacy-policy/${record.insly_id}`"
+            preserve-scroll
+          >
+            <x-button size="sm" color="#ff5e00" tag="div">
+              View Legacy policy
+            </x-button>
+          </Link>
           <template
             v-if="
               !can(permissionEnum.ApprovePayments) &&
@@ -2268,6 +2277,7 @@ const handlePlanSelected = plan => {
       :canAddBatchNumber="hasRole(rolesEnum.CarManager)"
       :quote="record"
       modelType="Car"
+      :insly-id="record?.insly_id"
       v-if="
         record.source == page.props.leadSourceEnum.RENEWAL_UPLOAD ||
         record.source == page.props.leadSourceEnum.INSLY
@@ -3406,6 +3416,15 @@ const handlePlanSelected = plan => {
       <div class="flex justify-between items-center mb-4">
         <h3 class="font-semibold text-primary-800 text-lg">Documents</h3>
         <div>
+            <Link
+                v-if="record?.insly_id && can(permissionEnum.VIEW_LEGACY_DETAILS)"
+                :href="`/legacy-policy/${record.insly_id}`"
+                preserve-scroll
+            >
+                <x-button size="sm" color="#ff5e00" tag="div">
+                    View Legacy policy
+                </x-button>
+            </Link>
           <x-button
             class="mr-2"
             v-if="
@@ -3414,7 +3433,7 @@ const handlePlanSelected = plan => {
             "
             @click.prevent="copyUploadURL"
             size="sm"
-            color="orange"
+            color="primary"
           >
             Copy upload Link
           </x-button>
