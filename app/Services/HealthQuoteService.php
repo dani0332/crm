@@ -100,6 +100,7 @@ class HealthQuoteService extends BaseService
             'hqrd.next_followup_date',
             'hqrd.transapp_code',
             'hqrd.notes',
+            'hqrd.insly_id',
             'hqr.lead_type_id',
             'lt.TEXT AS lead_type_id_text',
             'ls.text as lost_reason',
@@ -1439,9 +1440,10 @@ class HealthQuoteService extends BaseService
                 'quoteUID' => $request->quoteUID,
                 'update' => true,
                 'plans' => [$plansArray],
-                'callSource' => LeadSourceEnum::IMCRM,
+                'callSource' => strtolower(LeadSourceEnum::IMCRM),
             ];
 
+            info('Health Plan Modify V2 Request Data: '.json_encode($dataArray));
             $response = Ken::request('/save-manual-health-quote-plans', 'POST', $dataArray);
 
             return $response;
