@@ -41,15 +41,15 @@ class DatabaseSeeder extends Seeder
             // addDubaiNowLeadSourceExemptionInAppStorage::class,
             LookupSeeder::class,
             GenericPermissionSeeder::class,
-            addSICWorkflow::class,
-            UpdateRenewalTemplateStorageSeeder::class,
             AddLegacyPaymentsPermssion::class,
+            /*addSICWorkflow::class,
+            UpdateRenewalTemplateStorageSeeder::class,
             ApplicationStorageSeeder::class,
             addDubaiNowEmailGroup::class,
-            DubaiLeadSource::class,
+            DubaiLeadSource::class,*/
             // AddNewDocumentTypesSeeder::class,
             // UpdateCustomerToHealthAndTravelMemberDetails::class,
-            PaymentMethodsAddSeeder::class,
+            /* PaymentMethodsAddSeeder::class,
             AddNewDocumentTypeSeeder::class,
             PaymentStatusAddSeeder::class,
             updateDocTypePayment::class,
@@ -58,7 +58,7 @@ class DatabaseSeeder extends Seeder
             PaymentLookupSeeder::class,
             InsuranceQuoteTypeSeeder::class,
             AddPaymentPermissionsSeeder::class,
-            TotalPremiumReportPermissionSeeder::class,
+            TotalPremiumReportPermissionSeeder::class,*/
         ]);
     }
 }
