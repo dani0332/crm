@@ -174,11 +174,12 @@ class CarRevivalQuoteRepository extends BaseRepository
                 $lead = CarQuote::where('uuid', $uuid)->first();
                 if (! $lead) {
                     info('UpdateLeadSource - UUID - '.$uuid.' - not found');
-                }else{
-                    $lead->update(['source' => LeadSourceEnum::REVIVAL_REPLIED]);
-                    DttRevival::where('uuid', $uuid)->update(['reply_received' => 1]);
-                    info('Lead  - UUID - '.$uuid.' - source updated to Revival');
+
+                    return false;
                 }
+                $lead->update(['source' => LeadSourceEnum::REVIVAL_REPLIED]);
+                DttRevival::where('uuid', $uuid)->update(['reply_received' => 1]);
+                info('Lead  - UUID - '.$uuid.' - source updated to Revival');
             }
         }
     }
