@@ -79,7 +79,7 @@ class BikeQuote extends Model implements AuditableContract
         return $this->belongsTo(InsuranceProvider::class, 'insurance_provider_id', 'id');
     }
 
-    public function fillableColumns()
+    public function allowedColumns()
     {
         return $this->allowedColumns;
     }
