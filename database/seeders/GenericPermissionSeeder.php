@@ -33,6 +33,38 @@ class GenericPermissionSeeder extends Seeder
             ]);
         }
 
+        // Book policy permissions & roles
+        $bookPolicyPermissions = [
+            ['name' => PermissionsEnum::BOOK_POLICY_EDIT, 'role' => RolesEnum::PRODUCTION],
+            ['name' => PermissionsEnum::BOOK_POLICY_EDIT, 'role' => RolesEnum::NRA],
+            ['name' => PermissionsEnum::BOOK_POLICY_EDIT, 'role' => RolesEnum::FINANCE],
+        ];
+
+        foreach ($bookPolicyPermissions as $permission) {
+            $permissionRecord = Permission::where('name', $permission['name'])->first();
+
+            if (! $permissionRecord) {
+                $permissionRecord = Permission::create([
+                    'name' => $permission['name'],
+                    'guard_name' => 'web',
+                ]);
+            }
+
+            if (! empty($permission['role'])) {
+                $role = Role::where('name', $permission['role'])->first();
+
+                if (! $role) {
+                    $role = Role::create([
+                        'name' => $permission['role'],
+                        'guard_name' => 'web',
+                    ]);
+                }
+
+                if (! $role->hasPermissionTo($permissionRecord->id)) {
+                    $role->givePermissionTo($permissionRecord->id);
+                }
+            }
+        }
         // Add Compliance Permission to Admin
         $role = Role::where('name', RolesEnum::Admin)->first();
 

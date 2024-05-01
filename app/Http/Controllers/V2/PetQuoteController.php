@@ -11,11 +11,13 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
+use App\Enums\SendUpdateLogStatusEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\PetQuoteRequest;
 use App\Models\ApplicationStorage;
 use App\Models\Emirate;
 use App\Models\Nationality;
+use App\Models\PolicyIssuanceStatus;
 use App\Repositories\ActivityRepository;
 use App\Repositories\CustomerMembersRepository;
 use App\Repositories\DocumentTypeRepository;
@@ -27,13 +29,19 @@ use App\Repositories\PaymentMethodRepository;
 use App\Repositories\PersonalPlanRepository;
 use App\Repositories\PetQuoteRepository;
 use App\Repositories\QuoteStatusRepository;
+use App\Repositories\SendUpdateLogRepository;
 use App\Repositories\UserRepository;
 use App\Services\AMLService;
 use App\Services\CentralService;
+use App\Services\CRUDService;
+use App\Services\LookupService;
+use App\Services\QuoteDocumentService;
 use App\Services\SplitPaymentService;
+use App\Traits\GenericQueriesAllLobs;
 
 class PetQuoteController extends Controller
 {
+    use GenericQueriesAllLobs;
     /**
      * Display a listing of the resource.
      *
@@ -92,7 +100,7 @@ class PetQuoteController extends Controller
         $quote = PetQuoteRepository::getBy('uuid', $uuid);
         $quoteStatuses = QuoteStatusRepository::byQuoteTypeId(QuoteTypes::PET->id())->get();
 
-        $documentTypes = DocumentTypeRepository::byQuoteTypeId(QuoteTypes::PET->id())->get();
+        $documentTypes = DocumentTypeRepository::byQuoteTypeId(QuoteTypes::PET->id())->active()->get();
         $membersDetail = CustomerMembersRepository::getBy($quote->id, QuoteTypes::PET->name);
         $paymentMethods = PaymentMethodRepository::orderBy('name')->get();
         $nationalities = Nationality::where('is_active', 1)->select('id', 'text')->get();
@@ -112,6 +120,17 @@ class PetQuoteController extends Controller
             'quote_request_id' => $quote->id,
         ])->with('assignee')->orderBy('created_at', 'desc')->get();
 
+        $sendUpdateOptions = [];
+        $sendUpdateLogs = [];
+        $sendUpdateEnum = (object) [];
+        $hasPolicyIssuedStatus = app(CRUDService::class)->hasAtleastOneStatusPolicyIssued(QuoteTypes::PET->id(), $quote->id);
+
+        if ($hasPolicyIssuedStatus) {
+            $sendUpdateOptions = (new LookupService)->getSendUpdateOptions(QuoteTypes::PET->id());
+            $sendUpdateLogs = SendUpdateLogRepository::findByQuoteUuid($quote->uuid);
+            $sendUpdateEnum = SendUpdateLogStatusEnum::asArray();
+        }
+
         $lostReasons = LostReasonRepository::orderBy('text', 'asc')->get();
         $duplicateAllowedLobs = (new CentralService())->duplicateAllowedLobsList(QuoteTypes::PET->value, $quote->code);
         $embeddedProducts = EmbeddedProductRepository::byQuoteType(QuoteTypes::PET->id(), $quote->id);
@@ -120,6 +139,11 @@ class PetQuoteController extends Controller
                 return $value['id'] != QuoteStatusEnum::TransactionApproved;
             })->values();
         }
+        $isQuoteDocumentEnabled = app(QuoteDocumentService::class)->isEnabled(QuoteTypes::PET->value);
+        $policyIssuanceStatus = PolicyIssuanceStatus::active()->get();
+        $quoteDocuments = (new QuoteDocumentService())->getQuoteDocuments(QuoteTypes::PET->value, $quote->id);
+        $bPDetails = $this->bookPolicyPayload($quote, QuoteTypes::PET->value, $quote->payments, $quoteDocuments);
+
         $vatPercentage = ApplicationStorage::where('key_name', ApplicationStorageEnums::VAT_VALUE)->first()->value ?? 0;
 
         return inertia('PetQuote/Show', [
@@ -152,8 +176,22 @@ class PetQuoteController extends Controller
             'vatPercentage' => $vatPercentage,
             'paymentStatusEnum' => PaymentStatusEnum::asArray(),
             'paymentTooltipEnum' => PaymentTooltip::asArray(),
+            'record' => fn () => $quote,
+            'permissions' => [
+                'isQuoteDocumentEnabled' => $isQuoteDocumentEnabled,
+            ],
+            'enums' => [
+                'quoteStatusEnum' => QuoteStatusEnum::asArray(),
+            ],
+            'policyIssuanceStatus' => $policyIssuanceStatus,
+            'bPDetails' => $bPDetails,
+            'payments' => $quote->payments->toArray() ?? [],
             'isNewPaymentStructure' => app(SplitPaymentService::class)->isNewPaymentStructure($quote->payments),
             'isAmlClearedForPayment' => $isAmlClearedForPayment,
+            'sendUpdateOptions' => $sendUpdateOptions,
+            'sendUpdateLogs' => $sendUpdateLogs,
+            'sendUpdateEnum' => $sendUpdateEnum,
+            'hasPolicyIssuedStatus' => $hasPolicyIssuedStatus,
         ]);
     }
 

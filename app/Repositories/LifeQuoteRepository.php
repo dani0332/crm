@@ -111,6 +111,9 @@ class LifeQuoteRepository extends BaseRepository
             ])
             ->select([
                 'life_quote_request.*',
+                'renewal_expiry_date',
+                'policy_start_date',
+                'policy_issuance_date',
                 \DB::raw('IF(EXISTS (
                     SELECT *
                     FROM quote_request_entity_mapping

@@ -32,18 +32,16 @@ class QuoteDocumentService extends BaseService
 
     public function isEnabled($quoteModelType)
     {
-        $enabledLOBs = [quoteTypeCode::Car, quoteTypeCode::Health, quoteTypeCode::Travel, quoteTypeCode::Life, quoteTypeCode::Home];
-        if (in_array($quoteModelType, $enabledLOBs)) {
-            return true;
-        }
+        $enabledLOBs = [quoteTypeCode::Car, quoteTypeCode::Health, quoteTypeCode::Travel, quoteTypeCode::Life, quoteTypeCode::Home, quoteTypeCode::Pet, quoteTypeCode::Bike, quoteTypeCode::Cycle, quoteTypeCode::Yacht];
 
-        return false;
+        return in_array($quoteModelType, $enabledLOBs);
     }
 
     public function getQuoteDocumentsForUpload($quoteTypeId)
     {
         return DocumentType::where(['quote_type_id' => $quoteTypeId, 'is_active' => true])
             ->orderBy('sort_order', 'asc')
+            ->active()
             ->get();
     }
 

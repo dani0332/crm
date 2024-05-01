@@ -82,7 +82,7 @@ class SplitPaymentService
         $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($request->modelType));
         $customerData = ['quoteTypeId' => $quoteTypeId, 'id' => $quote->id];
 
-        $sageLogArray = $splitPayment->sageLog->keyBy('step')->toArray();
+        $sageLogArray = $splitPayment->sageLogs->keyBy('step')->toArray();
 
         $sageApiService = new SageApiService();
         $sageCustomerNumber = $sageApiService->verifySageCustomer($request->customer_id, $customerData, $splitPayment, $sageLogArray);

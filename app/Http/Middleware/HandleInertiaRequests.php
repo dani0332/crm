@@ -2,10 +2,13 @@
 
 namespace App\Http\Middleware;
 
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
+use App\Enums\ProductionProcessTooltipEnum;
 use App\Enums\quoteBusinessTypeCode;
+use App\Enums\QuoteIssuanceStatusEnum;
 use App\Enums\QuoteSegmentEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\RolesEnum;
@@ -64,6 +67,7 @@ class HandleInertiaRequests extends Middleware
             'paymentStatusEnum' => PaymentStatusEnum::asArray(),
             'quoteTypeCodeEnum' => quoteTypeCode::asArray(),
             'travelQuoteEnum' => TravelQuoteEnum::asArray(),
+            'quoteIssuanceStatusEnum' => QuoteIssuanceStatusEnum::asArray(),
             'quoteBusinessTypeCode' => quoteBusinessTypeCode::asArray(),
             'leadSource' => LeadSourceEnum::asArray(),
             'flash' => fn () => $this->shareFlashData($request),
@@ -72,9 +76,11 @@ class HandleInertiaRequests extends Middleware
             'appEnv' => config('constants.APP_ENV'),
             'pusherKey' => config('constants.VITE_PUSHER_APP_KEY'),
             'epLink' => config('constants.AFIA_WEBSITE_DOMAIN'),
+            'vat' => ApplicationStorageEnums::VAT,
             'im_logo' => getIMLogo(),
             'quoteSegments' => QuoteSegmentEnum::withLabels(),
             'paymentLookups' => app(SplitPaymentService::class)->getPaymentLookups(),
+            'productionProcessTooltipEnum' => ProductionProcessTooltipEnum::asArray(),
         ];
     }
 

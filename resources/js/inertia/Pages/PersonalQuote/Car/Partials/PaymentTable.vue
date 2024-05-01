@@ -16,14 +16,14 @@ const props = defineProps({
   paymentMethods: Array,
   quote: Object,
   isCommercialVehicles: Boolean,
-  carInsuranceProviders: Array
+  carInsuranceProviders: Array,
 });
 
 const insuranceProviderOptions = computed(() => {
-    return page.props.carInsuranceProviders.map(provider => ({
-        value: provider.id,
-        label: provider.text,
-    }));
+  return page.props.carInsuranceProviders.map(provider => ({
+    value: provider.id,
+    label: provider.text,
+  }));
 });
 const enableManageOptions = ref(false);
 const createPaymentModal = ref(false);
@@ -51,12 +51,12 @@ const paymentTableHeaders = [
   { text: 'Payment Status', value: 'payment_status.code' },
   { text: 'Provider Name', value: 'insurance_provider.text' },
   { text: 'Plan Name', value: 'plan_name' },
-  { text: 'Authorize Amount', value: 'captured_amount'},
+  { text: 'Authorize Amount', value: 'captured_amount' },
   { text: 'Status Change Date', value: 'status_changed_at' },
   { text: 'Authorized At', value: 'authorized_at' },
   { text: 'Captured At', value: 'captured_at' },
   { text: 'Payment method', value: 'payment_method.name' },
-  { text: 'Captured Amount', value: 'premium_captured'},
+  { text: 'Captured Amount', value: 'premium_captured' },
   { text: 'Reference', value: 'reference' },
   { text: 'Status Details', value: 'payment_status_message' },
   { text: 'Actions', value: 'actions', sortable: false },
@@ -126,21 +126,21 @@ const editPaymentModal = payment => {
   createPaymentModal.value = true;
 };
 
-const insurance_provider_id= ref('')
+const insurance_provider_id = ref('');
 const paymentMethodsForm = useForm({
   payment_method: '',
   collection_type: '',
   amount: '',
   payment_reference: '',
   paymentCode: '',
-  status: 'create'
+  status: 'create',
 });
 
 const addPayment = isValid => {
   if (!isValid) return;
-  let plan_id= null;
+  let plan_id = null;
   if (props.quoteRequest.plan && props.quoteRequest.plan.id) {
-      plan_id = props.quoteRequest.plan.id
+    plan_id = props.quoteRequest.plan.id;
   }
     isLoading.value = true;
   let data = {
@@ -149,7 +149,9 @@ const addPayment = isValid => {
     modelType: 'Car',
     quote_id: props.quoteRequest.id,
     plan_id: plan_id,
-    insurance_provider_id: props.isCommercialVehicles ? insurance_provider_id.value : providerId.value,
+    insurance_provider_id: props.isCommercialVehicles
+      ? insurance_provider_id.value
+      : providerId.value,
     collection_type: paymentMethodsForm.collection_type,
     payment_methods: paymentMethodsForm.payment_method,
     reference: paymentMethodsForm.payment_reference,
@@ -245,10 +247,10 @@ const providerName = computed(() => {
 });
 
 onMounted(() => {
-    const plan = props.quoteRequest.plan;
-    if (plan && plan.insurance_provider) {
-        insurance_provider_id.value=  plan.insurance_provider.id;
-    }
+  const plan = props.quoteRequest.plan;
+  if (plan && plan.insurance_provider) {
+    insurance_provider_id.value = plan.insurance_provider.id;
+  }
 });
 
 const providerId = computed(() => {
@@ -262,38 +264,45 @@ const providerId = computed(() => {
 
 <template>
   <div class="p-4 rounded shadow mb-6 bg-white">
-    <div class="flex justify-between gap-4 items-center mb-4">
-      <h3 class="font-semibold text-primary-800 text-lg">Payments</h3>
-      <x-button
-        v-if="(can(permissionEnum.PaymentsCreate) &&
-        !can(permissionEnum.ApprovePayments) &&
-        !hasRole(rolesEnum.PA) && quoteRequest.plan && enableManageOptions) || (isCommercialVehicles && enableManageOptions)"
-        size="sm"
-        color="orange"
-        @click="addPaymentModal"
-      >
-        Add Payment
-      </x-button>
-    </div>
-    <DataTable
-      table-class-name="tablefixed compact"
-      :headers="paymentTableHeaders"
-      :items="payments || []"
-      border-cell
-      hide-rows-per-page
-      hide-footer
-    >
-      <template #item-code="{ code }">
-        {{ code.toUpperCase() }}
+    <Collapsible expanded>
+      <template #header>
+        <div class="flex justify-between gap-4 items-center">
+          <h3 class="font-semibold text-primary-800 text-lg">Payments</h3>
+        </div>
       </template>
-      <template #item-plan_name="item">
-        {{ quoteRequest.plan ? quoteRequest.plan.text : '' }}
-      </template>
-      <template #item-status_changed_at="item">
-        {{ item.payment_status_logs.length > 0 ? item.payment_status_logs.at(-1).created_at : '' }}
-      </template>
-
-      <template #item-actions="item">
+      <template #body>
+        <x-divider class="my-4" />
+        <div class="mb-4 flex justify-end">
+          <x-button
+            v-if="(can(permissionEnum.PaymentsCreate) &&
+            !can(permissionEnum.ApprovePayments) &&
+            !hasRole(rolesEnum.PA) && quoteRequest.plan && enableManageOptions) || (isCommercialVehicles && enableManageOptions)"
+            size="sm"
+            color="orange"
+            @click="addPaymentModal"
+          >
+            Add Payment
+          </x-button>
+        </div>
+        <DataTable
+          table-class-name="tablefixed compact"
+          :headers="paymentTableHeaders"
+          :items="payments || []"
+          border-cell
+          hide-rows-per-page
+          hide-footer
+        >
+          <template #item-code="{ code }">
+            {{ code.toUpperCase() }}
+          </template>
+          <template #item-plan_name="item">
+            {{ quoteRequest.plan ? quoteRequest.plan.text : '' }}
+          </template>
+          <template #item-status_changed_at="item">
+            {{ item.payment_status_logs.length > 0 ? item.payment_status_logs.at(-1).created_at : '' }}
+          </template>
+    
+          <template #item-actions="item">
             <div class="flex gap-2">
                 <template v-if="!can(permissionEnum.ApprovePayments) && enableManageOptions">
                     <x-button v-if="(item.payment_methods_code == 'CC' || item.payment_methods_code == 'IN_PL') && item.payment_status_id != paymentStatusEnum.PAID && item.payment_status_id != paymentStatusEnum.CAPTURED && item.payment_status_id != paymentStatusEnum.AUTHORISED && !hasRole(rolesEnum.PA)"
@@ -325,7 +334,9 @@ const providerId = computed(() => {
                 </template>
             </div>
         </template>
-    </DataTable>
+        </DataTable>
+      </template>
+    </Collapsible>
     <x-modal v-model="createPaymentModal" size="lg" show-close backdrop>
       <template #header>
         <span class="text-primary-800 font-semibold">
@@ -365,7 +376,11 @@ const providerId = computed(() => {
             >
             </x-select>
           </x-field>
-          <x-field v-if="isCommercialVehicles" label="Insurance Provider" required>
+          <x-field
+            v-if="isCommercialVehicles"
+            label="Insurance Provider"
+            required
+          >
             <x-select
               class="w-full md:col-span-2"
               v-model="insurance_provider_id"
@@ -384,7 +399,11 @@ const providerId = computed(() => {
             Plan Name :
             <span class="text-primary-800">{{ getPlanName }}</span>
           </p>
-          <x-field label="Payment Reference" required v-if="paymentMethodsForm.payment_method != 'CC'">
+          <x-field
+            label="Payment Reference"
+            required
+            v-if="paymentMethodsForm.payment_method != 'CC'"
+          >
             <x-input
               class="w-full md:col-span-2"
               :rules="[rules.isRequired, rules.reference]"
