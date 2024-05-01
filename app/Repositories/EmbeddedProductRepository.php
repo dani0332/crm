@@ -20,6 +20,7 @@ use Illuminate\Support\Facades\DB;
 use PDF;
 use App\Facades\Marshall;
 use App\Models\PaymentAction;
+use App\Models\PaymentSplits;
 
 class EmbeddedProductRepository extends BaseRepository
 {
@@ -534,6 +535,8 @@ class EmbeddedProductRepository extends BaseRepository
                         ->where('is_manager_approved', 1)
                         ->delete();
 
+                    $paymentSplit = PaymentSplits::where('code', $transaction->code)->orderBy('sr_no', 'desc')->first();
+                    $sr = !empty($paymentSplit) ? $paymentSplit->sr_no : 1;
                     PaymentAction::create([
                         'payment_code' => $transaction->code,
                         'is_fulfilled' => 0,
@@ -542,12 +545,12 @@ class EmbeddedProductRepository extends BaseRepository
                         'amount' => $data['amount'],
                         'created_by' => auth()->user()->email,
                         'is_manager_approved' => 1,
-
+                        'sr_no' => $sr,
                     ]);
                     $data = [
                         'uuid' => $data['uuid'],
                         'type_id' => $type->id,
-                        'code' => $transaction->code,
+                        'code' => $transaction->code . '-' . $sr,
 
                     ];
                     $processResponse = $this->processCancelPayment($data);
