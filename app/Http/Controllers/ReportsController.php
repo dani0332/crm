@@ -22,7 +22,15 @@ class ReportsController extends Controller
 
     public function __construct()
     {
-        $this->middleware('permission:stale-leads-report-view', ['only' => ['renderPipelineReport']]);
+        $this->verifyPermissions([
+            'renderAdvisorConversionReport' => 'ADVISOR_CONVERSION_REPORT_VIEW',
+            'renderAdvisorPerformanceReport' => 'ADVISOR_PERFORMANCE_REPORT_VIEW',
+            'renderAdvisorDistributionReport' => 'ADVISOR_DISTRIBUTION_REPORT_VIEW, BIKE_DISTRIBUTION_REPORT, HEALTH_DISTRIBUTION_REPORT, TRAVEL_DISTRIBUTION_REPORT, LIFE_DISTRIBUTION_REPORT, HOME_DISTRIBUTION_REPORT, PET_DISTRIBUTION_REPORT, CYCLE_DISTRIBUTION_REPORT, YACHT_DISTRIBUTION_REPORT, BUSINESS_DISTRIBUTION_REPORT, GROUPMEDICAL_DISTRIBUTION_REPORT',
+            'renderLeadDistributionReport' => 'LEAD_DISTRIBUTION_REPORT_VIEW',
+            'utmLeadsSaleReport' => 'UtmLeadsSalesReport',
+            'renderRenewalReport' => 'RENEWAL_BATCH_REPORT',
+            'renderStaleLeadsReport' => 'STALE_LEADS_REPORT'
+        ]);
     }
 
     public function renderAdvisorConversionReport(Request $request, AdvisorConversionReportService $advisorConversionReportService)
