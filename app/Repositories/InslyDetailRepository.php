@@ -7,11 +7,16 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
+use App\Models\BikeQuote;
+use App\Models\CycleQuote;
 use App\Models\InslyDetail;
+use App\Models\PetQuote;
 use App\Models\QuoteType;
+use App\Models\YachtQuote;
 use App\Services\CapiRequestService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
+use Illuminate\Support\Arr;
 
 class InslyDetailRepository extends BaseRepository
 {
@@ -116,7 +121,6 @@ class InslyDetailRepository extends BaseRepository
                     } else {
                         $quote->link = $appUrl.'/quotes/'.strtolower($quoteType).'/'.$quote->uuid;
                     }
-                    $quote->link = $appUrl.'/quotes/'.strtolower($quoteType).'/'.$quote->uuid;
                     $quote->modelType = $quoteType;
                     $data[] = $quote;
 
@@ -206,9 +210,31 @@ class InslyDetailRepository extends BaseRepository
                             $obj->healthQuoteRequestDetail()->create(['insly_id' => $policy->_id]);
                             break;
                         case QuoteTypes::PET->value:
+                            $obj->petQuote()->updateOrCreate(
+                                ['personal_quote_id' => $id],
+                                Arr::only($payLoad, (new PetQuote())->fillableColumns())
+                            );
+                            $obj->quoteDetail()->create(['insly_id' => $policy->_id]);
+                            break;
                         case QuoteTypes::BIKE->value:
+                            $obj->bikeQuote()->updateOrCreate(
+                                ['personal_quote_id' => $id],
+                                Arr::only($payLoad, (new BikeQuote())->fillableColumns())
+                            );
+                            $obj->quoteDetail()->create(['insly_id' => $policy->_id]);
+                            break;
                         case QuoteTypes::CYCLE->value:
+                            $obj->cycleQuote()->updateOrCreate(
+                                ['personal_quote_id' => $id],
+                                Arr::only($payLoad, (new CycleQuote())->fillableColumns())
+                            );
+                            $obj->quoteDetail()->create(['insly_id' => $policy->_id]);
+                            break;
                         case QuoteTypes::YACHT->value:
+                            $obj->yachtQuote()->updateOrCreate(
+                                ['personal_quote_id' => $id],
+                                Arr::only($payLoad, (new YachtQuote())->fillableColumns())
+                            );
                             $obj->quoteDetail()->create(['insly_id' => $policy->_id]);
                             break;
                     }
