@@ -216,8 +216,8 @@ class LeadAllocationController extends Controller
     {
         if (isset($request->resetCap)) {
             $leadAllocationObj = LeadAllocation::latest()->with(['leadAllocationUser']);
-            if (isset($request->lead_id)) {
-                $leadAllocationObj = $leadAllocationObj->where('id', $request->lead_id);
+            if (isset($request->leadId)) {
+                $leadAllocationObj = $leadAllocationObj->where('id', $request->leadId);
             } else {
                 $leadAllocationObj = $leadAllocationObj->where('user_id', $request->userId);
             }

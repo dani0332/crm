@@ -236,10 +236,10 @@ const onSubmitChanges = async () => {
     });
 };
 
-const onToggleResetCap = async (active, userId) => {
+const onToggleResetCap = async (active, userId, leadId) => {
   loader.submit = true;
   await axios
-    .post('/lead-allocation/toggle-reset-cap', { userId, resetCap: active })
+    .post('/lead-allocation/toggle-reset-cap', {leadId, userId, resetCap: active })
     .finally(() => {
       loader.submit = false;
     });
@@ -394,7 +394,7 @@ onMounted(() => {
         <ItemToggler
           :is-active="reset_cap"
           :id="id"
-          @toggle="onToggleResetCap($event.active, userId)"
+          @toggle="onToggleResetCap($event.active, userId, id)"
         />
       </div>
     </template>
