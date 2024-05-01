@@ -37,7 +37,7 @@ if (! function_exists('vAbort')) {
     /**
      * abort script execution and return errors in validation format with http status 422.
      *
-     * @param    $messages  message string or array of messages
+     * @param  $messages  message string or array of messages
      *
      * @throws ValidationException
      */
@@ -543,6 +543,28 @@ if (! function_exists('getBase64FileInfo')) {
         @[, $extension] = explode('/', $fileMimeType);
 
         return [$extension, $fileMimeType, $file_data, $fileSize];
+    }
+}
+
+if (! function_exists('sanitizeFileName')) {
+    function sanitizeFileName($fileName)
+    {
+        // Remove any Unicode control characters
+        $fileName = preg_replace('/[[:cntrl:]]/', '', $fileName);
+
+        // Remove any unwanted characters
+        $fileName = preg_replace('/[^\p{L}\p{N}\s\-\_\.]/u', '', $fileName);
+
+        // Remove leading and trailing whitespaces
+        $fileName = trim($fileName);
+
+        // Replace whitespace with underscores
+        $fileName = preg_replace('/\s+/', '_', $fileName);
+
+        // Replace multiple underscores with a single underscore
+        $fileName = preg_replace('/_+/', '_', $fileName);
+
+        return $fileName;
     }
 }
 

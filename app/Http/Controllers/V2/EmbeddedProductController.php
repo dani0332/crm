@@ -15,7 +15,7 @@ class EmbeddedProductController extends Controller
 {
     public function __construct()
     {
-        $this->middleware(['permission:'.PermissionsEnum::EmbeddedProductView]);
+        $this->middleware('permission:'.PermissionsEnum::EMBEDDED_PRODUCT_ADVISOR.'|'.PermissionsEnum::EMBEDDED_PRODUCT_ADMIN);
     }
 
     /**
@@ -41,7 +41,7 @@ class EmbeddedProductController extends Controller
     }
 
     /**
-     * @param    $quoteTypeCode
+     * @param  $quoteTypeCode
      * @return \Illuminate\Http\RedirectResponse
      */
     public function store(EmbeddedProductRequest $request)

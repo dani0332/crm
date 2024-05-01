@@ -177,6 +177,7 @@ class AjaxController extends Controller
 
             return response()->json(['success' => true, 'payment_link' => $paymentLinkURL]);
         }
+
     }
 
     public function commercialCarModelBasedOnCarMakeId(Request $request)
@@ -344,6 +345,7 @@ class AjaxController extends Controller
 
                 $quote->first_name = $data['first_name'];
                 $quote->last_name = $data['last_name'];
+                $quote->company_name = $data['company_name'];
                 $quote->kyc_decision = Kyc::COMPLETE;
                 $quote->save();
 

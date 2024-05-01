@@ -1,9 +1,9 @@
 <script setup>
-import LazyDocumentUploader from './Partials/DocumentUploader.vue';
-import LazyAvailablePlan from './Partials/AvailablePlans.vue';
-import LazyCreatePlan from './Partials/CreatePlan.vue';
 import { computed } from 'vue';
 import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue';
+import LazyAvailablePlan from './Partials/AvailablePlans.vue';
+import LazyCreatePlan from './Partials/CreatePlan.vue';
+import LazyDocumentUploader from './Partials/DocumentUploader.vue';
 
 defineProps({
   quote: Object,
@@ -50,12 +50,18 @@ defineProps({
   canAddBatchNumber: Boolean,
   paymentLink: String,
   quoteType: String,
-  clientInquiryLogs: Array,
+  paymentTooltipEnum: Object,
+  storageUrl: String,
+  isNewPaymentStructure: Boolean,
+  isAmlClearedForPayment: Boolean,
 });
 
 const isManualPlansCount = ref(0);
 
 const page = usePage();
+
+const permissionsEnum = page.props.permissionsEnum;
+const can = permission => useCan(permission);
 
 const notification = useToast();
 const hasRole = role => useHasRole(role);
@@ -580,7 +586,7 @@ const plansTable = reactive({
       width: 100,
     },
     {
-      text: 'Base Price',
+      text: 'Price',
       value: 'actualPremium',
     },
     {
@@ -713,9 +719,7 @@ const onTogglePlans = toggle => {
         title: 'Plans has been updated',
         position: 'top',
       });
-      router.reload({
-        preserveScroll: true,
-      });
+      onLoadAvailablePlansData();
     })
     .catch(error => {
       notification.error({
@@ -1466,6 +1470,39 @@ const prefillPlanId = ref(page.props.quote.prefill_plan_id);
 const handleChildUpdate = planId => {
   prefillPlanId.value = planId;
 };
+
+const selectedProviderPlan = ref({
+  id: page.props.quote.plan_id,
+  planName: page.props.quote.health_plan_name_text,
+  providerName: page.props.quote.plan_provider_name_text,
+  premium: page.props.ecomDetails.priceWithVAT
+
+});
+
+console.log(selectedProviderPlan, "LLLKKKKJ", page.props.quote)
+
+const handlePlanSelected = plan => {
+  console.log("HHH", plan);
+  //se.value = plan.id;
+  selectedProviderPlan.value.id = plan.id
+  selectedProviderPlan.value.planName = plan.planName
+  selectedProviderPlan.value.providerName = plan.providerName
+  selectedProviderPlan.value.premium = plan.premium
+  router.reload({
+    preserveState: true,
+    preserveScroll: true,
+    only: ['payments','quoteRequest','ecomDetails', 'coPayment'],        
+  });  
+};
+
+watch(
+  () => page.props.ecomDetails,
+  value => {
+    selectedProviderPlan.value.premium = value.priceWithVAT;
+  },
+  { deep: true },
+);
+
 </script>
 
 <template>
@@ -1474,6 +1511,15 @@ const handleChildUpdate = planId => {
     <div class="flex justify-between items-center flex-wrap gap-2">
       <h2 class="text-xl font-semibold">Health Detail</h2>
       <div class="flex gap-2">
+        <Link
+          v-if="quote?.insly_id"
+          :href="`/legacy-policy/${quote.insly_id}`"
+          preserve-scroll
+        >
+          <x-button size="sm" color="#ff5e00" tag="div">
+            View Legacy policy
+          </x-button>
+        </Link>
         <x-button size="sm" color="#ff5e00" @click.prevent="openDuplicate">
           Duplicate Lead
         </x-button>
@@ -1652,10 +1698,6 @@ const handleChildUpdate = planId => {
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">LOST REASON</dt>
             <dd>{{ quote.lost_reason }}</dd>
-          </div>
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">TRANSAPP CODE</dt>
-            <dd>{{ quote.transapp_code }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">DEVICE</dt>
@@ -2389,6 +2431,7 @@ const handleChildUpdate = planId => {
       "
       modelType="Health"
       :quote="quote"
+      :insly-id="quote?.insly_id"
       :canAddBatchNumber="canAddBatchNumber"
     />
 
@@ -2420,14 +2463,6 @@ const handleChildUpdate = planId => {
         </div>
         <div class="w-full md:w-50">
           <div class="flex flex-col gap-4">
-            <x-input
-              v-if="leadStatusForm.leadStatus == 15"
-              v-model="leadStatusForm.trans_code"
-              label="TransApp Code"
-              placeholder="TransApp Code is required"
-              class="w-full"
-              :error="leadStatusForm.errors.trans_code"
-            />
             <x-select
               v-if="leadStatusForm.leadStatus == 17"
               v-model="leadStatusForm.lostReason"
@@ -2476,11 +2511,11 @@ const handleChildUpdate = planId => {
         <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">PLAN NAME</dt>
-            <dd>{{ ecomDetails.planName }}</dd>
+            <dd>{{ selectedProviderPlan.planName }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">PROVIDER NAME</dt>
-            <dd>{{ ecomDetails.providerName }}</dd>
+            <dd>{{ selectedProviderPlan.providerName }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">PAYMENT STATUS</dt>
@@ -2505,7 +2540,7 @@ const handleChildUpdate = planId => {
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">TOTAL PRICE (with VAT)</dt>
-            <dd>{{ fixedValue(ecomDetails.priceWithVAT) }}</dd>
+            <dd>{{ fixedValue(selectedProviderPlan.premium) }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">CO-PAY / CO-INSURANCE</dt>
@@ -2515,15 +2550,7 @@ const handleChildUpdate = planId => {
       </div>
     </div>
 
-    <!-- <PaymentTable
-      :payments="payments"
-      :can="can"
-      :isBetaUser="isBetaUser"
-      :quoteRequest="quoteRequest"
-      :paymentMethods="paymentMethods"
-      :insuranceProviders="insuranceProviders"
-      :quote="quote"
-    /> -->
+    
 
     <!-- <div class="p-4 rounded shadow mb-6 bg-white" v-if="isQuoteDocumentEnabled">
       <div>
@@ -2807,11 +2834,10 @@ const handleChildUpdate = planId => {
               Copy
             </x-button>
 
-            <!-- v-if="hasRole(page.props.rolesEnum.HealthAdvisor)", hide it for now -->
-            <span v-if="true == false">
+            <span>
               <SelectPlan
-                v-if="prefillPlanId != item.id"
-                @update:updatePlanId="handleChildUpdate"
+                v-if="selectedProviderPlan.id != item.id"
+                @update:selectedPlanChanged="handlePlanSelected"
                 :plan="item"
                 :quoteType="quoteType"
                 :uuid="quote.uuid"
@@ -2939,6 +2965,38 @@ const handleChildUpdate = planId => {
         </div>
       </x-modal>
     </div>
+
+    <MigratePayment
+      v-if="!isNewPaymentStructure"
+      :quoteId="quote.id"
+      :paymentCode = "quote.code"
+      quoteType="Health"
+      :payments="payments"      
+    />
+
+    <PaymentTableNew 
+			v-if="isNewPaymentStructure"
+			quoteType="Health"
+			:payments="payments"
+			:paymentDocument="documentTypes.QUOTE.filter(item => item.code === 'HPD' || item.code === 'HPDR' || item.code === 'HDPDR')"
+			:quoteRequest="quoteRequest"
+			:paymentStatusEnum="paymentStatusEnum"
+			:paymentTooltipEnum="paymentTooltipEnum"
+			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name, tooltip: pm.tool_tip } })"
+			:storageUrl="storageUrl"
+      :eCommercePrice="ecomDetails.priceWithVAT?ecomDetails.priceWithVAT:0"
+      :isAmlClearedForPayment="isAmlClearedForPayment"
+		/>
+    <PaymentTable
+      v-else
+      :payments="payments"
+      :can="can"
+      :isBetaUser="isBetaUser"
+      :quoteRequest="quoteRequest"
+      :paymentMethods="paymentMethods"
+      :insuranceProviders="insuranceProviders"
+      :quote="quote"
+    />
     <EmbeddedProducts
       :data="embeddedProducts"
       :link="quote.uuid"
@@ -2955,7 +3013,16 @@ const handleChildUpdate = planId => {
           <x-tag size="sm">{{ quoteDocuments.length || 0 }}</x-tag>
         </h3>
         <div class="flex gap-2">
-          <x-button @click.prevent="modals.doc = true" size="sm" color="orange">
+            <Link
+                v-if="quote?.insly_id && can(permissionsEnum.VIEW_LEGACY_DETAILS)"
+                :href="`/legacy-policy/${quote.insly_id}`"
+                preserve-scroll
+            >
+                <x-button size="sm" color="#ff5e00" tag="div">
+                    View Legacy policy
+                </x-button>
+            </Link>
+          <x-button @click.prevent="modals.doc = true" size="sm" color="primary">
             Upload Documents
           </x-button>
           <x-button
@@ -3197,16 +3264,17 @@ const handleChildUpdate = planId => {
     </div>
 
     <CustomerChatLogs
-      v-if="hasRole(rolesEnum.BetaUser)"
       :customerName="quote?.first_name + ' ' + quote?.last_name"
       :quoteId="quote.uuid"
       :quoteType="'HEALTH'"
     />
-    <AuditLogs :type="'App\\Models\\HealthQuote'" :id="$page.props.quote.id" />
+    
+    <AuditLogs :type="'App\\Models\\HealthQuote'" :id="$page.props.quote.id" :quoteCode="$page.props.quote.code"/>
+    
 
     <ClientInquiryLogs
-      v-if="clientInquiryLogs.length > 0"
-      :logs="clientInquiryLogs"
+        v-if="clientInquiryLogs?.length > 0"
+        :logs="clientInquiryLogs"
     />
   </div>
 </template>

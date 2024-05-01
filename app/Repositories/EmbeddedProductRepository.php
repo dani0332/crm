@@ -7,6 +7,7 @@ use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Jobs\SendEPDocumentsJob;
 use App\Models\EmbeddedProduct;
+use App\Models\EmbeddedProductOption;
 use App\Models\EmbeddedTransaction;
 use App\Models\GenericDocument;
 use App\Models\QuoteType;
@@ -41,7 +42,7 @@ class EmbeddedProductRepository extends BaseRepository
     }
 
     /**
-     * @param    $quoteType
+     * @param  $quoteType
      * @return mixed
      */
     public function fetchCreate($data)
@@ -209,6 +210,9 @@ class EmbeddedProductRepository extends BaseRepository
                     $query->where('quote_request_id', $quoteRequestId);
                 },
             ])
+            ->whereHas('prices.transactions', function ($query) use ($quoteRequestId) {
+                $query->where('quote_request_id', $quoteRequestId);
+            })
             ->get();
         $modelType = QuoteType::where('id', '=', $quoteTypeId)->value('code');
         $ep->each(function ($item) use ($modelType, $quoteTypeId, $quoteRequestId) {
@@ -241,6 +245,34 @@ class EmbeddedProductRepository extends BaseRepository
         });
 
         return $ep;
+    }
+
+    public function fetchSendDocumentsByLead($leadId, $modelType)
+    {
+        $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
+        if ($quoteTypeId !== QuoteTypeId::Car) {
+            return false;
+        }
+
+        $epTransaction = EmbeddedTransaction::where([
+            ['quote_type_id', $quoteTypeId],
+            ['quote_request_id', $leadId],
+            ['is_selected', 1],
+        ])->whereIn('payment_status_id', [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PARTIAL_CAPTURED])->get();
+
+        if ($epTransaction->isNotEmpty()) {
+            foreach ($epTransaction as $item) {
+
+                $product_id = $item->product_id;
+                $embedded_product_id = EmbeddedProductOption::find($product_id)->embedded_product_id;
+                // EP Send documents
+                $data = [];
+                $data['quoteId'] = $leadId;
+                $data['modelType'] = $modelType;
+                $data['epId'] = $embedded_product_id;
+                $this->fetchSendDocument($data);
+            }
+        }
     }
 
     public function fetchSendDocument($data)
@@ -326,6 +358,7 @@ class EmbeddedProductRepository extends BaseRepository
             'From' => config('constants.MA_FROM_EMAIL'),
             'ReplyTo' => isset($advisorData['email']) ? $advisorData['email'] : null,
             'To' => $quoteObject->email,
+            'Cc' => isset($advisorData['email']) ? $advisorData['email'] : '',
             'Tag' => '',
             'TemplateAlias' => 'embedded-products-payment-auth',
             'Attachments' => isset($attachments) ? $attachments : null,
