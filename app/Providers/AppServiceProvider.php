@@ -2,41 +2,43 @@
 
 namespace App\Providers;
 
-use App\Models\BikeQuote;
-use App\Models\BusinessQuote;
-use App\Models\BusinessQuoteRequestDetail;
 use App\Models\CarQuote;
-use App\Models\CarQuoteRequestDetail;
-use App\Models\CycleQuote;
-use App\Models\HealthQuote;
-use App\Models\HealthQuoteRequestDetail;
-use App\Models\HomeQuote;
-use App\Models\HomeQuoteRequestDetail;
-use App\Models\LifeQuote;
-use App\Models\LifeQuoteRequestDetail;
 use App\Models\PetQuote;
-use App\Models\TravelQuote;
-use App\Models\TravelQuoteRequestDetail;
+use App\Models\BikeQuote;
+use App\Models\HomeQuote;
+use App\Models\LifeQuote;
+use App\Models\CycleQuote;
 use App\Models\YachtQuote;
-use App\Observers\BikeQuoteObserver;
-use App\Observers\BusinessQuoteDetailObserver;
-use App\Observers\BusinessQuoteObserver;
-use App\Observers\CarQuoteDetailObserver;
+use App\Models\HealthQuote;
+use App\Models\TravelQuote;
+use App\Models\BusinessQuote;
+use App\Models\PersonalQuote;
 use App\Observers\CarQuoteObserver;
-use App\Observers\CycleQuoteObserver;
-use App\Observers\HealthQuoteDetailObserver;
-use App\Observers\HealthQuoteObserver;
-use App\Observers\HomeQuoteDetailObserver;
-use App\Observers\HomeQuoteObserver;
-use App\Observers\LifeQuoteDetailObserver;
-use App\Observers\LifeQuoteObserver;
 use App\Observers\PetQuoteObserver;
-use App\Observers\TravelQuoteDetailObserver;
-use App\Observers\TravelQuoteObserver;
+use App\Observers\BikeQuoteObserver;
+use App\Observers\HomeQuoteObserver;
+use App\Observers\LifeQuoteObserver;
+use App\Models\CarQuoteRequestDetail;
+use App\Observers\CycleQuoteObserver;
 use App\Observers\YachtQuoteObserver;
+use App\Models\HomeQuoteRequestDetail;
+use App\Models\LifeQuoteRequestDetail;
+use App\Observers\HealthQuoteObserver;
+use App\Observers\TravelQuoteObserver;
 use App\Services\CarAllocationService;
-use App\Services\HealthAllocationService;
 use Illuminate\Support\ServiceProvider;
+use App\Models\HealthQuoteRequestDetail;
+use App\Models\TravelQuoteRequestDetail;
+use App\Observers\BusinessQuoteObserver;
+use App\Observers\PersonalQuoteObserver;
+use App\Observers\CarQuoteDetailObserver;
+use App\Services\HealthAllocationService;
+use App\Models\BusinessQuoteRequestDetail;
+use App\Observers\HomeQuoteDetailObserver;
+use App\Observers\LifeQuoteDetailObserver;
+use App\Observers\HealthQuoteDetailObserver;
+use App\Observers\TravelQuoteDetailObserver;
+use App\Observers\BusinessQuoteDetailObserver;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -79,6 +81,7 @@ class AppServiceProvider extends ServiceProvider
         YachtQuote::observe(YachtQuoteObserver::class);
         CycleQuote::observe(CycleQuoteObserver::class);
         BikeQuote::observe(BikeQuoteObserver::class);
+        PersonalQuote::observe(PersonalQuoteObserver::class);
 
         // DB::listen(function($query) {
         //     info(
