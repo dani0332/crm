@@ -75,7 +75,6 @@ class DttFollowUp extends Command
             $q->orWhereDate('created_at', '=', $twentyDaysBefore);
             $q->orWhereDate('created_at', '=', $twentyEightDaysBefore);
         })->where('reply_received', 0)
-            ->where('is_assigned', 0)
             ->get();
 
         $logPrefix = 'carRevivalFollowUpEmailJob-';
@@ -85,7 +84,9 @@ class DttFollowUp extends Command
             $created_at = $item->created_at;
             $lead = CarQuote::where('uuid', $item->uuid)->first();
 
-            if (! empty($created_at) && ! in_array($lead->payment_status_id, $paymentStatusArray) && ! in_array($lead->source, $leadSourceArray)) {
+            //Follow-up emails will not dispatched if the payment status is either Authorised, Captured, Partial Captured
+            //or if the source is Revival Paid or if the lead is assigned to an advisor
+            if (! empty($created_at) && ! in_array($lead->payment_status_id, $paymentStatusArray) && ! in_array($lead->source, $leadSourceArray) && empty($lead->advisor_id)) {
 
                 $afterTwoDays = Carbon::parse($created_at)->addDays(2)->startOfDay();
                 $afterSevenDays = Carbon::parse($created_at)->addDays(7)->startOfDay();
