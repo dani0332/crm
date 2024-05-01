@@ -11,7 +11,6 @@ class CycleQuote extends Model
 
     protected $table = 'cycle_quote_request';
     protected $fillable = ['cycle_make', 'cycle_model', 'year_of_manufacture_id', 'accessories', 'has_accident', 'has_good_condition'];
-
     public $allowedColumns = ['cycle_make', 'cycle_model', 'year_of_manufacture_id', 'accessories', 'has_accident', 'has_good_condition'];
 
     /**

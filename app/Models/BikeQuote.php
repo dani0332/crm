@@ -13,7 +13,6 @@ class BikeQuote extends Model implements AuditableContract
 
     protected $table = 'bike_quote_request';
     protected $guarded = [];
-
     public $allowedColumns = ['bike_company_to_insure', 'year_of_manufacture', 'uae_license_held_for_id'];
 
     /**
