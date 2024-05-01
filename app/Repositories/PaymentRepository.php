@@ -20,12 +20,12 @@ use App\Models\PaymentStatusLog;
 use App\Models\QuoteDocument;
 use App\Models\TravelQuote;
 use App\Services\ApplicationStorageService;
+use App\Services\BerlinService;
 use App\Services\CRUDService;
+use App\Services\CustomerService;
 use App\Services\PaymentLinkService;
 use App\Services\SplitPaymentService;
 use App\Services\TravelQuoteService;
-use App\Services\BerlinService;
-use App\Services\CustomerService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -394,17 +394,17 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                     PaymentStatusEnum::PAID,
                     PaymentStatusEnum::CAPTURED,
                 ])->where('code', $firstPayment->code)->count();
-                
+
                 $totalPartialPaidPayments = PaymentSplits::whereIn('payment_status_id', [
                     PaymentStatusEnum::PARTIAL_CAPTURED,
-                    PaymentStatusEnum::PARTIALLY_PAID,                    
+                    PaymentStatusEnum::PARTIALLY_PAID,
                 ])->where('code', $firstPayment->code)->count();
-                
+
                 if ($totalPaidPayments == $firstPayment->total_payments) {
                     $masterPaymentStatus = PaymentStatusEnum::CAPTURED;
-                } else if ($totalPartialPaidPayments > 0) {
+                } elseif ($totalPartialPaidPayments > 0) {
                     $masterPaymentStatus = PaymentStatusEnum::PARTIAL_CAPTURED;
-                }                
+                }
                 $firstPayment->update([
                     'is_approved' => 1,
                     'payment_status_id' => $masterPaymentStatus,
@@ -417,10 +417,10 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                     $quoteModel->save();
                     // Berlin Service - Extend Customer Subscription on Shaji request
                     $customerData = app(CustomerService::class)->getCustomerById($quoteModel->customer_id);
-                    if ($customerData) { 
+                    if ($customerData) {
                         $quoteOptions = QuoteTypeId::getOptions();
-                        $responseExtend = app(BerlinService::class)->extendCustomerSubscription($customerData->id, $customerData->email, strtoupper($quoteOptions[$quoteTypeId]).'-QUOTE', $quoteOptions[$quoteTypeId].'-quote-myalfred-we');
-                        info('Transaction Approved responseExtend: '.$responseExtend);                    
+                        $responseExtend = app(BerlinService::class)->extendCustomerSubscription($customerData->id, $customerData->email, strtoupper($quoteOptions[$quoteTypeId]).'-QUOTE', strtolower($quoteOptions[$quoteTypeId]).'-quote-myalfred-we');
+                        info('Transaction Approved responseExtend: '.$responseExtend);
                     }
                     dispatch(new MAWelcomeJob($quoteModel->first_name, $quoteModel->last_name, $quoteModel->email, $quoteModel->mobile_no, 'IMCRM', ''));
 

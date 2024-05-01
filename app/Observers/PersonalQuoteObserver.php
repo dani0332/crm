@@ -2,8 +2,8 @@
 
 namespace App\Observers;
 
-use App\Models\PersonalQuote;
 use App\Enums\QuoteStatusEnum;
+use App\Models\PersonalQuote;
 
 class PersonalQuoteObserver
 {
