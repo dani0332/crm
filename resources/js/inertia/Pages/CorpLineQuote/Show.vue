@@ -33,6 +33,7 @@ defineProps({
   vatPercentage: Number,
   paymentTooltipEnum: Object,
   isNewPaymentStructure: Boolean,
+  isAmlClearedForPayment: Boolean,
   sendUpdateOptions: Array,
   sendUpdateLogs: Array,
   hasPolicyIssuedStatus: Boolean,
@@ -557,7 +558,6 @@ watch(
 <template>
   <div>
     <Head title="Business Quote Detail" />
-
     <x-modal v-model="modals.duplicate" size="lg" show-close backdrop>
       <template #header> Duplicate Lead </template>
       <x-form @submit="onCreateDuplicate" :auto-focus="false">
@@ -612,6 +612,15 @@ watch(
         <template #body>
           <x-divider class="my-4" />
           <div class="flex gap-2 my-4 justify-end">
+            <Link
+              v-if="quote?.insly_id"
+              :href="`/legacy-policy/${quote.insly_id}`"
+              preserve-scroll
+            >
+              <x-button size="sm" color="#ff5e00" tag="div">
+                View Legacy policy
+              </x-button>
+            </Link>
             <x-button
               v-if="isDuplicateAllowed"
               size="sm"
@@ -666,10 +675,6 @@ watch(
                 <dd>{{ quote.next_followup_date }}</dd>
               </div>
 
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">TRANSAPP CODE</dt>
-            <dd>{{ quote.transapp_code }}</dd>
-          </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">SOURCE</dt>
             <dd>{{ quote.source }}</dd>
@@ -993,6 +998,7 @@ watch(
       "
       modelType="Business"
       :quote="quote"
+      :insly-id="quoteDetails?.insly_id"
       :canAddBatchNumber="canAddBatchNumber"
       :expanded="sectionExpanded"
     />
@@ -1096,6 +1102,7 @@ watch(
       :insuranceProviders="insuranceProvidersAll"
       :quote="quote"
       :quoteType="page.props.quoteType"
+      :vatPrice="vatPercentage"
       :expanded="sectionExpanded"
     />  
 
@@ -1118,6 +1125,7 @@ watch(
 			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name, tooltip: pm.tool_tip } })"
 			:storageUrl="storageUrl"
       quoteSubType="Corpline"
+      :isAmlClearedForPayment="isAmlClearedForPayment"
 		/>
     
     <PaymentTable
@@ -1143,6 +1151,7 @@ watch(
       :quote-documents="page.props.quoteDocuments || []"
       :storageUrl="storageUrl"
       :quote="quote"
+      :insly-id="quoteDetails?.insly_id"
       :expanded="sectionExpanded"
     />
 

@@ -59,11 +59,13 @@ const tableHeader = [
       </template>
 
       <template #item-is_active="{ is_active }">
-        <x-icon
-          :icon="is_active ? 'true' : 'false'"
-          :color="is_active ? 'green' : 'red'"
-          size="lg"
-        />
+        <div class="text-center">
+            <x-icon
+            :icon="is_active ? 'roundchecked' : 'roundcross'"
+            :color="is_active ? 'green' : 'red'"
+            size="lg"
+            />
+        </div>
       </template>
 
       <template #item-updated_at="{ updated_at }">

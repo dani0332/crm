@@ -1,6 +1,5 @@
 <script setup>
 import { usePage } from '@inertiajs/vue3';
-const page = usePage();
 
 const props = defineProps({
   quote: Object,
@@ -15,8 +14,9 @@ const props = defineProps({
     default: true
   }
 });
-const notification = useNotifications('toast');
 
+const page = usePage();
+const notification = useNotifications('toast');
 const quoteStatusOptions = computed(() => {
   return props.quoteStatuses.map(status => ({
     value: status.id,
@@ -130,6 +130,14 @@ watch(
                 :error="quoteStatusForm.errors.lost_reason_id"
               />
             </x-field>
+            <x-field label="Transaction Type">
+              <x-input
+                type="text"
+                :value="quote.transaction_type_text"
+                class="w-full"
+                :disabled="true"
+              />
+          </x-field>
           </div>
         </div>
         <div class="flex justify-end">

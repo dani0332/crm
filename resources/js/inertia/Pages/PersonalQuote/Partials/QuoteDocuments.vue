@@ -6,6 +6,7 @@ defineProps({
   quoteDocuments: Object,
   documentTypes: Object,
   storageUrl: String,
+  inslyId: String,
   expanded: {
     type: Boolean,
     required: false,
@@ -14,6 +15,9 @@ defineProps({
 });
 
 const page = usePage();
+
+const can = permission => useCan(permission);
+const permissionsEnum = page.props.permissionsEnum;
 
 const quoteDocumentsTable = reactive({
   isLoading: false,
@@ -139,12 +143,21 @@ const uploadFile = (doc, filesWithInfo) => {
       <template #body>
         <x-divider class="my-4" />
         <div class="flex gap-2 mb-4 justify-end">
+          <Link
+            v-if="inslyId && can(permissionsEnum.VIEW_LEGACY_DETAILS)"
+            :href="`/legacy-policy/${inslyId}`"
+            preserve-scroll
+          >
+            <x-button size="sm" color="#ff5e00" tag="div">
+                View Legacy policy
+            </x-button>
+          </Link>
           <x-button @click.prevent="modals.doc = true" size="sm" color="orange">
             Upload Documents
           </x-button>
         </div>
         
-        <DataTable
+      <DataTable
       table-class-name="compact"
       :headers="quoteDocumentsTable.columns"
       :items="quoteDocuments || []"
