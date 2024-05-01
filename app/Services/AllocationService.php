@@ -84,7 +84,8 @@ class AllocationService
     {
         try {
             $leadAllocation = LeadAllocation::latest();
-            if (! empty($quoteTypeId)) {
+            info('Allocation Quote Type Id : '.$quoteTypeId);
+            if (!empty($quoteTypeId)) {
                 $leadAllocation = $leadAllocation->where('quote_type_id', $quoteTypeId);
             }
             $leadAllocation = $leadAllocation->where('user_id', $userId)->first();
@@ -97,7 +98,9 @@ class AllocationService
 
     public function addAllocationCounts($userId, $quoteTypeId = null)
     {
+      
         $allocationRecord = $this->getLeadAllocationRecordByUserId($userId, $quoteTypeId);
+        info('Allocation Quote Type Id : '.$allocationRecord->quote_type_id .'  Quote Type Id : '.$quoteTypeId);
         if (! empty($allocationRecord)) {
             $allocationRecord->auto_assignment_count = $allocationRecord->auto_assignment_count + 1;
             $allocationRecord->allocation_count = $allocationRecord->allocation_count + 1;
@@ -163,6 +166,7 @@ class AllocationService
         $systemAssignedTypes = [AssignmentTypeEnum::SYSTEM_ASSIGNED, AssignmentTypeEnum::SYSTEM_REASSIGNED];
 
         // Get the allocation record for the new advisor
+        info('adjust Allocation Quote Type Id : '.$quoteTypeId);
         $newAdvisorAllocationRecord = $this->getLeadAllocationRecordByUserId($newAdvisorId, $quoteTypeId);
 
         // Update allocation counts for the new advisor
@@ -170,6 +174,7 @@ class AllocationService
 
         // Get the allocation record for the previous advisor (if applicable)
         if ($previousAdvisorId !== null) {
+
             $previousAdvisorAllocationRecord = $this->getLeadAllocationRecordByUserId($previousAdvisorId, $quoteTypeId);
 
             // Update allocation counts for the previous advisor (if applicable)
