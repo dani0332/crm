@@ -35,6 +35,7 @@ class DttFollowUp extends Command
      * @var string
      */
     protected $description = 'This cron will send follow-up email to customer when revival email is not replied OR lead is not assigned';
+
     /**
      * Create a new command instance.
      *
@@ -52,9 +53,8 @@ class DttFollowUp extends Command
      */
     public function handle()
     {
-
-        $isDttEnabled = app(ApplicationStorageService::class)->getIsActiveByKey(ApplicationStorageEnums::DTT_ENABLED);
-        if (! $isDttEnabled) {
+        $isDttEnabled = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::DTT_ENABLED);
+        if ($isDttEnabled == false || $isDttEnabled == 0) {
             info('Dtt is not enabled from cms');
 
             return false;
@@ -77,7 +77,7 @@ class DttFollowUp extends Command
         })->where('reply_received', 0)
             ->get();
 
-        $logPrefix = 'carRevivalFollowUpEmailJob-';
+        $logPrefix = 'carRevivalFollowUpEmailJob -';
         $paymentStatusArray = [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PARTIAL_CAPTURED, PaymentStatusEnum::AUTHORISED];
         $leadSourceArray = [LeadSourceEnum::REVIVAL_PAID];
         foreach ($unreplied as $item) {
@@ -87,7 +87,6 @@ class DttFollowUp extends Command
             //Follow-up emails will not dispatched if the payment status is either Authorised, Captured, Partial Captured
             //or if the source is Revival Paid or if the lead is assigned to an advisor
             if (! empty($created_at) && ! in_array($lead->payment_status_id, $paymentStatusArray) && ! in_array($lead->source, $leadSourceArray) && empty($lead->advisor_id)) {
-
                 $afterTwoDays = Carbon::parse($created_at)->addDays(2)->startOfDay();
                 $afterSevenDays = Carbon::parse($created_at)->addDays(7)->startOfDay();
                 $aftertThirteenDays = Carbon::parse($created_at)->addDays(13)->startOfDay();
@@ -110,7 +109,7 @@ class DttFollowUp extends Command
 
                 $previousAdvisor = null;
                 if (! empty($lead->previous_advisor_id)) {
-                    $previousAdvisor = app(userService::class)->getUserById($lead->previous_advisor_id);
+                    $previousAdvisor = app(UserService::class)->getUserById($lead->previous_advisor_id);
                 }
                 $emailData = (new CarEmailService(app(SendEmailCustomerService::class)))->buildEmailData($lead, $listQuotePlans, $previousAdvisor, $tierR->id);
 
@@ -127,7 +126,6 @@ class DttFollowUp extends Command
 
                 // after two days
                 if ($today->eq($afterTwoDays)) {
-
                     if ($quotePlansCount > 0) {
                         $key = ApplicationStorageEnums::DTT_AFTER_TWO_DAYS_FOLLOWUP_WITH_PLAN;
                     } else {
@@ -193,7 +191,6 @@ class DttFollowUp extends Command
 
         $jobs = [];
         foreach ($leads as $item) {
-
             info($logPrefix.'-'.$item->uuid.'-email-'.$item->customerEmail);
             $jobs[] = new CarRevivalFollowUpEmailJob($item);
         }

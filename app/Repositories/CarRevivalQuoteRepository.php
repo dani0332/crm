@@ -167,22 +167,23 @@ class CarRevivalQuoteRepository extends BaseRepository
 
         $subject = $inbound->Subject();
 
-        if (str_contains($subject, 'CAR-')) {
-            $strings = explode('-', $subject);
-            if (! empty($strings[1])) {
-                $uuid = $strings[1];
-                $lead = CarQuote::where('uuid', $uuid)->first();
-                if (! $lead) {
-                    info('UpdateLeadSource - UUID - '.$uuid.' - not found');
+        preg_match('/(?<=CAR-)\w+/', $subject, $matches);
+        if (! empty($matches[0])) {
+            $uuid = $matches[0];
+            $lead = CarQuote::where('uuid', $uuid)->first();
+            if (! $lead) {
+                info('UpdateLeadSource - UUID - '.$uuid.' - not found');
 
-                    return false;
-                }
-                $lead->update(['source' => LeadSourceEnum::REVIVAL_REPLIED]);
-                DttRevival::where('uuid', $uuid)->update(['reply_received' => 1]);
-                info('Lead  - UUID - '.$uuid.' - source updated to Revival');
+                return false;
             }
+            $lead->update(['source' => LeadSourceEnum::REVIVAL_REPLIED]);
+            DttRevival::where('uuid', $uuid)->update(['reply_received' => 1]);
+            info('UpdateLeadSource  - UUID - '.$uuid.' - source updated to Revival');
+        } else {
+            info('UpdateLeadSource uuid not found in subject');
         }
     }
+
     public function fetchGetReportsData($request)
     {
         $source = [LeadSourceEnum::REVIVAL, LeadSourceEnum::REVIVAL_REPLIED, LeadSourceEnum::REVIVAL_PAID];
