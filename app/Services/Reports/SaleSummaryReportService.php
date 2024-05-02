@@ -35,12 +35,16 @@ class SaleSummaryReportService extends ManagementReport
             (CAST(SUM(CASE WHEN personal_quotes.policy_issuance_date IS NOT NULL AND personal_quotes.policy_number IS NOT NULL THEN 1 ELSE 0 END) / COUNT(DISTINCT(user_team.team_id)) AS UNSIGNED)) as total_policies,
             (CAST(SUM(CASE WHEN sul.id IS NOT NULL AND l.code = 'EF' THEN 1 ELSE 0 END) / COUNT(DISTINCT(user_team.team_id)) AS UNSIGNED)) as total_endorsements,
             (CAST((SUM(CASE WHEN personal_quotes.policy_issuance_date IS NOT NULL AND personal_quotes.policy_number IS NOT NULL THEN 1 ELSE 0 END) + SUM(CASE WHEN sul.id IS NOT NULL AND l.code = 'EF' THEN 1 ELSE 0 END)) / COUNT(DISTINCT(user_team.team_id)) AS UNSIGNED)) as total_transaction,
-            FORMAT(IFNULL((CAST(SUM(personal_quotes.price_vat_applicable) / COUNT(DISTINCT(user_team.team_id)) AS UNSIGNED)),0), 2) as price_vat_applicable,
-            FORMAT(IFNULL((CAST(SUM(personal_quotes.price_vat_applicable) / COUNT(DISTINCT(user_team.team_id)) AS UNSIGNED)) * 0.05,0), 2) as total_vat,
-            FORMAT(IFNULL((CAST(SUM(personal_quotes.price_vat_not_applicable) / COUNT(DISTINCT(user_team.team_id)) AS UNSIGNED)), 0), 2) as price_vat_not_applicable,
-            FORMAT(IFNULL((CAST(SUM(p.discount_value) / COUNT(DISTINCT(user_team.team_id)) AS UNSIGNED)), 0), 2) as discount,
-            FORMAT(IFNULL((CAST(SUM(p.commission_vat_applicable) / COUNT(DISTINCT(user_team.team_id)) AS UNSIGNED)), 0), 2) as commission_vat_applicable,
-            FORMAT(IFNULL((CAST(SUM(personal_quotes.price_vat_applicable) / COUNT(DISTINCT(user_team.team_id)) AS UNSIGNED)), 0) + IFNULL((CAST(SUM(personal_quotes.price_vat_not_applicable) / COUNT(DISTINCT(user_team.team_id)) AS UNSIGNED)), 0) + IFNULL((CAST(SUM(personal_quotes.price_vat_applicable) / COUNT(DISTINCT(user_team.team_id)) AS UNSIGNED)) * 0.05, 0) - IFNULL((CAST(SUM(p.discount_value) / COUNT(DISTINCT(user_team.team_id)) AS UNSIGNED)), 0), 2) as total_price
+            FORMAT(IFNULL(SUM(personal_quotes.price_vat_applicable) / COUNT(DISTINCT(user_team.team_id)) ,0), 2) as price_vat_applicable,
+            FORMAT(IFNULL(SUM(personal_quotes.price_vat_applicable) / COUNT(DISTINCT(user_team.team_id)) * 0.05,0), 2) as total_vat,
+            FORMAT(IFNULL(SUM(personal_quotes.price_vat_not_applicable) / COUNT(DISTINCT(user_team.team_id)),0), 2) as price_vat_not_applicable,
+            FORMAT(IFNULL(SUM(p.discount_value) / COUNT(DISTINCT(user_team.team_id)),0), 2) as discount,
+            FORMAT(IFNULL(SUM(p.commission_vat_applicable) / COUNT(DISTINCT(user_team.team_id)),0), 2) as commission_vat_applicable,
+            FORMAT(
+                IFNULL( ( SUM(personal_quotes.price_vat_applicable) / COUNT(DISTINCT(user_team.team_id)) ), 0) +
+                IFNULL( ( SUM(personal_quotes.price_vat_not_applicable) / COUNT(DISTINCT(user_team.team_id)) ), 0) +
+                IFNULL( ( SUM(personal_quotes.price_vat_applicable) / COUNT(DISTINCT(user_team.team_id)) ) * 0.05, 0) -
+                IFNULL( ( SUM(p.discount_value) / COUNT(DISTINCT(user_team.team_id)) ), 0), 2) as total_price
             ")
             ->when($request->groupBy, function ($query, $groupBy) use ($request) {
                 $groupByArray = [];

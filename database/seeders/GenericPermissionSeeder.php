@@ -17,10 +17,10 @@ class GenericPermissionSeeder extends Seeder
      */
     public function run()
     {
-        $reportManagement = Permission::where('name', PermissionsEnum::REPORT_MANAGEMENT)->first();
-        if (! $reportManagement) {
+        $managementReport = Permission::where('name', PermissionsEnum::MANAGEMENT_REPORT)->first();
+        if (! $managementReport) {
             Permission::create([
-                'name' => PermissionsEnum::REPORT_MANAGEMENT,
+                'name' => PermissionsEnum::MANAGEMENT_REPORT,
                 'guard_name' => 'web',
             ]);
         }
@@ -28,8 +28,8 @@ class GenericPermissionSeeder extends Seeder
         // Add Permission to Admin
         $role = Role::where('name', RolesEnum::Admin)->first();
 
-        if (! $role->hasPermissionTo(PermissionsEnum::REPORT_MANAGEMENT)) {
-            $role->givePermissionTo(PermissionsEnum::REPORT_MANAGEMENT);
+        if (! $role->hasPermissionTo(PermissionsEnum::MANAGEMENT_REPORT)) {
+            $role->givePermissionTo(PermissionsEnum::MANAGEMENT_REPORT);
         }
 
         // Plans Selection & Plan Details Section Permissions

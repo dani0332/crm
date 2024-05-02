@@ -214,7 +214,7 @@ const onSubmit = isValid => {
   filterkeys();
   if (!isValid) return;
   filters.page = 1;
-  router.visit(route('report-management'), {
+  router.visit(route('management-report'), {
     method: 'get',
     data: useGenerateQueryString(filters),
     preserveState: true,
@@ -225,7 +225,7 @@ const onSubmit = isValid => {
 };
 
 function onReset() {
-  router.visit(route('report-management'), {
+  router.visit(route('management-report'), {
     method: 'get',
     data: { page: 1 },
     preserveScroll: true,
