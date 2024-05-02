@@ -512,8 +512,8 @@ class SendEmailCustomerService extends BaseService
 
             $advisorCustomEmail = strstr($emailData->advisorEmail, '@', true).'@notify.insurancemarket.ae';
             $emailData->env = $subjectEnvTag;
-            $body = json_encode([
-                'sender' => ['name' => $emailData->advisorName, 'email' => $advisorCustomEmail],
+
+            $body = [
                 'to' => [[
                     'email' => $emailData->customerEmail,
                     'name' => $emailData->clientFullName,
@@ -526,15 +526,20 @@ class SendEmailCustomerService extends BaseService
                     $tag,
                 ],
                 'attachment' => isset($attachments) ? $attachments : null,
-            ], JSON_UNESCAPED_SLASHES);
+            ];
+
+            // Conditionally add 'sender' key if advisorName and $advisorCustomEmail are not null
+            if ($emailData->advisorName !== null && $advisorCustomEmail !== null) {
+                $body['sender'] = ['name' => $emailData->advisorName, 'email' => $advisorCustomEmail];
+            }
 
             $client = new \GuzzleHttp\Client();
             $clientRequest = $client->post(
                 $this->url,
                 [
                     'headers' => $headers,
-                    'body' => $body,
-                    'timeout' => 10,
+                    'body' => json_encode($body, JSON_UNESCAPED_SLASHES),
+                    'timeout' => config('constants.LMS_EMAILS_TIMEOUT'),
                 ]
             );
             info('sendLMSIntroEmail ---- Request Sent');
@@ -545,7 +550,6 @@ class SendEmailCustomerService extends BaseService
             $responseCode = $ex->getCode();
             $responseDetail = 'SIB Send sendLMSIntroEmail: Code/Message: '.$responseCode.'/'.$ex->getMessage();
             Log::error($responseDetail);
-            $response = json_encode($ex->getCode().' '.$ex->getMessage());
         }
 
         return $responseCode;
@@ -571,6 +575,162 @@ class SendEmailCustomerService extends BaseService
             info('RM Intro Email Error for HEA-'.$quoteUuid.' - Response Code: '.$response->status.' - Message: '.$msg);
         } elseif ($response && isset($response->message)) {
             info('RM Intro Email Triggered to CAPI for HEA-'.$quoteUuid.' - Message: '.$response->message);
+        }
+    }
+
+    public function sendNonAdvisorIntroEmail($emailData, $tag, $emailTemplateId)
+    {
+        try {
+            $appEnv = config('constants.APP_ENV');
+
+            info('sendNonAdvisorIntroEmail  , emailTemplateId: '.$emailTemplateId);
+            $tag = $appEnv == EnvEnum::PRODUCTION ? $tag : $appEnv.'-'.$tag;
+
+            $headers = [
+                'Accept' => 'application/json',
+                'api-key' => $this->apiKey,
+                'Content-Type' => 'application/json',
+            ];
+
+            $emailAttachments = isset($emailData->documentUrl) ? $emailData->documentUrl : null;
+
+            if ($emailAttachments) {
+                $attachments = [];
+                foreach ($emailAttachments as $emailAttachment) {
+                    $attachments[] = [
+                        'url' => $emailAttachment,
+                        'name' => basename($emailAttachment),
+                    ];
+                }
+            }
+            $additionalBcc = ApplicationStorage::where('key_name', ApplicationStorageEnums::LMS_INTRO_EMAIL_BCC)->first()->value;
+            foreach (explode(',', $additionalBcc) as $additionalContact) {
+                $bccAdditional[] = [
+                    'email' => $additionalContact,
+                ];
+            }
+            if (! empty($emailData->pdfAttachment->pdf) && ! empty($emailData->pdfAttachment->name)) {
+                $attachments[] = [
+                    'content' => chunk_split(base64_encode($emailData->pdfAttachment->pdf->stream())),
+                    'name' => $emailData->pdfAttachment->name,
+                ];
+            }
+            $subjectEnvTag = $this->appEnv == EnvEnum::PRODUCTION ? '' : $this->appEnv.' - ';
+            $emailData->env = $subjectEnvTag;
+
+            $body = json_encode([
+                'to' => [[
+                    'email' => $emailData->customerEmail,
+                    'name' => $emailData->clientFullName,
+                ]],
+                'templateId' => $emailTemplateId,
+                'params' => $emailData,
+                'bcc' => $bccAdditional,
+                'tags' => [
+                    $tag,
+                ],
+                'attachment' => isset($attachments) ? $attachments : null,
+            ], JSON_UNESCAPED_SLASHES);
+
+            $client = new \GuzzleHttp\Client();
+            $clientRequest = $client->post(
+                $this->url,
+                [
+                    'headers' => $headers,
+                    'body' => $body,
+                    'timeout' => config('constants.LMS_EMAILS_TIMEOUT'),
+                ]
+            );
+            info('sendNonAdvisorIntroEmail ---- Request Sent');
+            $responseCode = $clientRequest->getStatusCode();
+            info('sendNonAdvisorIntroEmail ---- Received Code : '.$responseCode);
+            info('sendNonAdvisorIntroEmail ---- response object : '.json_encode($clientRequest->getBody()->getContents()));
+        } catch (Exception $ex) {
+            $responseCode = $ex->getCode();
+            $responseDetail = 'SIB Send sendNonAdvisorIntroEmail: Code/Message: '.$responseCode.'/'.$ex->getMessage();
+            Log::error($responseDetail);
+        }
+
+        return $responseCode;
+    }
+
+    public function sendActivityAlertEmail($user)
+    {
+        $emailTemplateId = ApplicationStorage::where('key_name', '=', 'ADVISOR_NOTIFICATION_TEMPLATE')->value('value');
+        try {
+            $tag = $this->appEnv == EnvEnum::PRODUCTION ? '' : $this->appEnv.'-';
+            $headers = [
+                'Accept' => 'application/json',
+                'api-key' => $this->apiKey,
+                'Content-Type' => 'application/json',
+            ];
+
+            $user->advisor = [
+                'name' => $user->name,
+            ];
+
+            $roles = $user->usersroles->pluck('name');
+
+            $emailMapping = [
+                'CAR_ADVISOR',
+                'HEALTH_ADVISOR',
+            ];
+
+            $advisorEmail = '';
+            $advisorName = '';
+
+            foreach ($emailMapping as $role) {
+                if ($roles->contains($role)) {
+                    $HealthEmail = ApplicationStorage::where('key_name', '=', 'ADVISOR_NOTIFICATION_'.$role)->value('value');
+                    $health = explode(',', $HealthEmail);
+                    $advisorEmail = $health[1];
+                    $advisorName = $health[0];
+                    break;
+                }
+            }
+            if ($advisorEmail == '') {
+                return;
+            }
+            $BccEmail = ApplicationStorage::where('key_name', '=', 'ADVISOR_NOTIFICATION_BCC_EMAILS')->value('value');
+            $bcc = explode(',', $BccEmail);
+            $bccAdditional = [];
+
+            $i = 0;
+            foreach ($bcc as $pair) {
+                if (isset($bcc[$i])) {
+                    $bccAdditional[] = ['email' => $bcc[$i + 1], 'name' => $bcc[$i]];
+                    $i++;
+                }
+                $i++;
+            }
+            $body = json_encode([
+                'sender' => ['name' => $tag.' '.' Urgent: '.$user->name.' IMCRM Inactivity Alert', 'email' => $advisorEmail],
+                'to' => [[
+                    'email' => $advisorEmail,
+                    'name' => $advisorName,
+                ]],
+                'replyTo' => [
+                    'email' => $advisorEmail,
+                    'name' => $advisorName,
+                ],
+                'bcc' => array_merge($bccAdditional),  //    'bcc' => array_merge($bccAdditional, $bcc),
+                'templateId' => intval($emailTemplateId),
+                'params' => $user,
+            ], JSON_UNESCAPED_SLASHES);
+            $client = new \GuzzleHttp\Client();
+            $clientRequest = $client->post(
+                $this->url,
+                [
+                    'headers' => $headers,
+                    'body' => $body,
+                    'timeout' => 10,
+                ]
+            );
+            $responseCode = $clientRequest->getStatusCode();
+            info('sendActivityAlertEmail ---- response object : '.json_encode($clientRequest->getBody()->getContents()));
+        } catch (Exception $ex) {
+            $responseCode = $ex->getCode();
+            $responseDetail = 'sendActivityAlertEmail: Code/Message: '.$responseCode.'/'.$ex->getMessage();
         }
     }
 

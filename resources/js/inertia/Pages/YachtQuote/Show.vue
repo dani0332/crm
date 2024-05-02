@@ -3,7 +3,6 @@ import QuoteDocuments from '../PersonalQuote/Partials/QuoteDocuments';
 import QuoteStatus from '../PersonalQuote/Partials/QuoteStatus';
 import QuotePayments from '../PersonalQuote/Partials/QuotePayments';
 import QuoteActivities from '../PersonalQuote/Partials/QuoteActivities';
-import QuotePolicy from '../PersonalQuote/Partials/QuotePolicy';
 import LeadHistory from '../PersonalQuote/Partials/LeadHistory';
 import AdditionalContacts from '../PersonalQuote/Partials/AdditionalContacts.vue';
 import PlanDetails from '../../Components/PlanDetails.vue';
@@ -40,9 +39,16 @@ defineProps({
   paymentStatusEnum: Object,
   paymentTooltipEnum: Object,
   isNewPaymentStructure: Boolean,
+  isAmlClearedForPayment: Boolean,
   sendUpdateOptions: Array,
   sendUpdateLogs: Array,
   hasPolicyIssuedStatus: Boolean,
+  record: Object,
+  permissions: Object,
+  enums: Object,
+  policyIssuanceStatus: Array,
+  bPDetails: Array,
+  payments: Array,
 });
 
 const page = usePage();
@@ -53,6 +59,8 @@ const permissionsEnum = page.props.permissionsEnum;
 const hasAnyRole = roles => useHasAnyRole(roles);
 const hasRole = role => useHasRole(role);
 const rolesEnum = page.props.rolesEnum;
+const permissionEnum = page.props.permissionsEnum;
+const canAny = permissions => useCanAny(permissions);
 
 const industryTypeOptions = computed(() => {
   return page.props.industryType.map(indType => ({
@@ -81,11 +89,11 @@ const customerProfileForm = useForm({
   quote_type_id: page.props.quoteTypeId,
   quote_request_id: page.props.quote.id,
 
-  insured_first_name: page.props.quote?.customer.insured_first_name || '',
-  insured_last_name: page.props.quote?.customer.insured_last_name || '',
-  emirates_id_number: page.props.quote?.customer.emirates_id_number || null,
+  insured_first_name: page.props.quote?.customer?.insured_first_name || '',
+  insured_last_name: page.props.quote?.customer?.insured_last_name || '',
+  emirates_id_number: page.props.quote?.customer?.emirates_id_number || null,
   emirates_id_expiry_date:
-    page.props.quote?.customer.emirates_id_expiry_date || null,
+    page.props.quote?.customer?.emirates_id_expiry_date || null,
 
   entity_id: page.props.quote?.quote_request_entity_mapping?.entity_id ?? null,
   trade_license_no:
@@ -218,6 +226,38 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
   <div>
     <Head title="Yacht Quotes" />
 
+    <div class="flex justify-between items-center flex-wrap gap-2 mb-5">
+      <h2 class="text-xl font-semibold">Yacht Detail</h2>
+      <div class="flex gap-2">
+        <Link
+          v-if="quote.quote_detail?.insly_id"
+          :href="`/legacy-policy/${quote.quote_detail?.insly_id}`"
+          preserve-scroll
+        >
+          <x-button size="sm" color="#ff5e00" tag="div">
+            View Legacy policy
+          </x-button>
+        </Link>
+
+        <Link
+          v-if="can(permissionsEnum.YachtQuotesEdit)"
+          :href="route('yacht-quotes-edit', quote.uuid)"
+        >
+          <x-button size="sm" tag="div">Edit</x-button>
+        </Link>
+
+        <Link
+          v-if="can(permissionsEnum.YachtQuotesList)"
+          :href="route('yacht-quotes-list')"
+          preserve-scroll
+        >
+          <x-button size="sm" color="primary" tag="div">
+            Yacht Quotes
+          </x-button>
+        </Link>
+      </div>
+    </div>
+
     <div class="p-4 rounded shadow mb-6 bg-white">
       <Collapsible :expanded="sectionExpanded">
         <template #header>
@@ -227,26 +267,9 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
         </template>
         <template #body>
           <x-divider class="my-4" />
-          <div class="flex gap-2 justify-end mb-4">
-            <Link
-              v-if="can(permissionsEnum.YachtQuotesEdit)"
-              :href="route('yacht-quotes-edit', quote.uuid)"
-            >
-              <x-button size="sm" tag="div">Edit</x-button>
-            </Link>
 
-            <Link
-              v-if="can(permissionsEnum.YachtQuotesList)"
-              :href="route('yacht-quotes-list')"
-              preserve-scroll
-            >
-              <x-button size="sm" color="primary" tag="div">
-                Yacht Quotes
-              </x-button>
-            </Link>
-          </div>
           <div class="text-sm">
-            <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
+        <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
               <div class="grid sm:grid-cols-2">
                 <div
                   class="grid sm:grid-cols-2"
@@ -288,12 +311,12 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
 
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">CREATED BY</dt>
-                <dd>{{ quote?.created_by?.email }}</dd>
+            <dd class="break-words">{{ quote?.created_by?.email }}</dd>
               </div>
 
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">UPDATED BY</dt>
-                <dd>{{ quote?.updated_by?.email }}</dd>
+            <dd class="break-words">{{ quote?.updated_by?.email }}</dd>
               </div>
 
               <div class="grid sm:grid-cols-2">
@@ -337,22 +360,26 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
             <x-divider class="mb-4 mt-1" />
           </div>
 
-          <div class="text-sm">
-            <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
-              <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">BOAT DETAILS</dt>
-                <dd>{{ quote?.yacht_quote?.boat_details }}</dd>
-              </div>
+      <div class="text-sm">
+        <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">BOAT DETAILS</dt>
+            <dd class="break-words">{{ quote?.yacht_quote?.boat_details }}</dd>
+          </div>
 
-              <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">ENGINE DETAILS</dt>
-                <dd>{{ quote?.yacht_quote?.engine_details }}</dd>
-              </div>
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">ENGINE DETAILS</dt>
+            <dd class="break-words">
+              {{ quote?.yacht_quote?.engine_details }}
+            </dd>
+          </div>
 
-              <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">CLAIM EXPERIENCE</dt>
-                <dd>{{ quote?.yacht_quote?.claim_experience }}</dd>
-              </div>
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">CLAIM EXPERIENCE</dt>
+            <dd class="break-words">
+              {{ quote?.yacht_quote?.claim_experience }}
+            </dd>
+          </div>
 
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">SUM INSURED</dt>
@@ -402,7 +429,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
                 v-if="
                   quote.customer_type === page.props.customerTypeEnum.Individual
                 "
-                class="grid md:grid-cols-2 gap-x-6 gap-y-4"
+            class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words"
               >
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">FIRST NAME</dt>
@@ -486,7 +513,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
                 v-if="
                   quote.customer_type === page.props.customerTypeEnum.Entity
                 "
-                class="grid md:grid-cols-2 gap-x-6 gap-y-4"
+            class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words"
               >
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">FIRST NAME</dt>
@@ -696,6 +723,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       "
       modelType="Yacht"
       :quote="quote"
+      :insly-id="quote?.quote_detail?.insly_id"
       :canAddBatchNumber="canAddBatchNumber"
       :expanded="sectionExpanded"
     />
@@ -722,13 +750,16 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       :insuranceProviders="insuranceProviders"
       :quote="quote"
       :quoteType="quoteType"
+      :vatPrice="vatPercentage"
       :expanded="sectionExpanded"
     />
+    
     <MigratePayment
       v-if="!isNewPaymentStructure"
       :quoteId="quote.id"
       :paymentCode = "quote.code"
       :quoteType="quoteType"      
+      :payments="quote.payments"    
     />    
     <PaymentTableNew 
 			v-if="isNewPaymentStructure"
@@ -740,7 +771,9 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
 			:paymentTooltipEnum="paymentTooltipEnum"
 			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name, tooltip: pm.tool_tip } })"
 			:storageUrl="storageUrl"
+      :isAmlClearedForPayment="isAmlClearedForPayment"
 		/>
+    
     <QuotePayments
       v-else
       :can="can"
@@ -752,6 +785,20 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       :personal-plans="personalPlans"
     />
 
+    <QuotePolicy
+      :quote="quote"
+      :can="can"
+      :quoteStatusEnum="quoteStatusesEnum"
+    />
+
+    <PolicyDetail
+      v-if="permissions.isQuoteDocumentEnabled"
+      :record="record"
+      :quoteStatusEnum="enums.quoteStatusEnum"
+      :policyIssuanceStatus="policyIssuanceStatus"
+      modelType="Yacht"
+    />
+
     <EmbeddedProducts
       :data="embeddedProducts"
       :link="quote.uuid"
@@ -761,13 +808,19 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       :expanded="sectionExpanded"
     />
 
-    <QuotePolicy
-      :quote="quote"
-      :can="can"
-      :quoteStatusEnum="quoteStatusesEnum"
-      :expanded="sectionExpanded"
+    <BookPolicy
+      v-if="
+        canAny([
+          permissionEnum.VIEW_INSLY_BOOK_POLICY,
+          permissionEnum.SEND_INSLY_BOOK_POLICY,
+        ])
+      "
+      :quote="record"
+      quoteType="Yacht"
+      :bPDetails="bPDetails"
+      :payments="payments"
     />
-
+    
     <QuoteDocuments
       :document-types="documentTypes"
       :quote-documents="quote.documents || []"
@@ -776,6 +829,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       :quoteType="quoteType"
       :vatPrice="vatPercentage"
       :expanded="sectionExpanded"
+      :insly-id="quote?.quote_detail?.insly_id"
     />
 
     <SendUpdates

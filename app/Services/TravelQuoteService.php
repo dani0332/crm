@@ -78,7 +78,9 @@ class TravelQuoteService extends BaseService
             'tqr.region_cover_for_id',
             'r.TEXT AS region_cover_for_id_text',
             DB::raw('DATE_FORMAT(tqrd.next_followup_date, "%d-%m-%Y %H:%i:%s") as next_followup_date'),
+            'lu.text as transaction_type_text',
             'tqrd.transapp_code',
+            'tqrd.insly_id',
             'ls.text as lost_reason',
             'tqrd.notes',
             'tqr.currently_located_in_id',
@@ -93,8 +95,8 @@ class TravelQuoteService extends BaseService
             DB::raw('DATE_FORMAT(tqr.renewal_expiry_date, "%d-%m-%Y") as renewal_expiry_date'),
             'tqr.device',
             'tqr.previous_quote_policy_premium',
-            DB::raw('DATE_FORMAT(tqr.policy_issuance_date, "%d-%m-%Y") as policy_issuance_date'),
-            DB::raw('DATE_FORMAT(tqr.policy_start_date, "%d-%m-%Y") as policy_start_date'),
+            'tqr.policy_issuance_date',
+            'tqr.policy_start_date',
             'tqr.customer_id',
             'tqr.parent_duplicate_quote_id',
             'tqr.has_arrived_destination',
@@ -136,6 +138,7 @@ class TravelQuoteService extends BaseService
             ->leftJoin('travel_cover_for as tcf', 'tcf.id', '=', 'tqr.travel_cover_for_id')
             ->leftJoin('travel_quote_request_detail as tqrd', 'tqr.id', '=', 'tqrd.travel_quote_request_id')
             ->leftJoin('lost_reasons as ls', 'ls.id', '=', 'tqrd.lost_reason_id')
+            ->leftJoin('lookups as lu', 'lu.id', '=', 'tqr.transaction_type_id')
             ->leftJoin('nationality as n', 'n.id', '=', 'tqr.nationality_id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'tqr.quote_status_id')
             ->leftJoin('users as u', 'u.id', '=', 'tqr.advisor_id')
@@ -216,7 +219,6 @@ class TravelQuoteService extends BaseService
             $response = Ken::request('/get-revised-travel-quote-plans', 'post', $travelQuote);
 
             return $response;
-
         }
         $response = CapiRequestService::sendCAPIRequest('/api/v1-save-travel-quote', $travelQuote);
 
@@ -281,7 +283,6 @@ class TravelQuoteService extends BaseService
                         if ($request->coverage_code == TravelQuoteEnum::COVERAGE_CODE_ANNUAL_TRIP || $request->coverage_code == TravelQuoteEnum::COVERAGE_CODE_MULTI_TRIP) {
                             $qInner->where('days_cover_for', '>', 92);
                         }
-
                     });
             });
         }

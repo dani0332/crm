@@ -40,7 +40,7 @@ const closeModal = () => emit('update:modelValue', !props.backdropClose);
 </script>
 <template>
   <div
-    class="fixed w-full h-full flex justify-center items-center left-0 top-0 z-30"
+    class="fixed w-full h-full flex justify-center items-center left-0 top-0 z-40"
     v-if="modelValue"
   >
     <div
