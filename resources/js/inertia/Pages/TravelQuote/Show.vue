@@ -2297,7 +2297,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
         </template>
         <template #body>
           <x-divider class="my-4" />
-          <div class="flex justify-end items-center flex-wrap gap-2">
+          <div class="flex justify-start items-center flex-wrap gap-2">
             <h6 v-if="aboveAgeMembers > 0 && availablePlansTable.data.length > 0" class="font-semibold text-primary-600 text-ms mb-1">
               Travel plans for {{ travelers.length - aboveAgeMembers }} member
               age 0-64
@@ -2444,6 +2444,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
             </div>
             <div>
               <DataTable
+                  v-model:items-selected="selectedPlans"
                 table-class-name="tablefixed compact"
                 :headers="availableSeniorPlansTable.columns"
                 :items="availableSeniorPlansTable.data || []"
