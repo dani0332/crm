@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\RenewalBatch;
 use App\Models\User;
+use App\Repositories\CarRevivalQuoteRepository;
 use App\Services\AdvisorConversionReportService;
 use App\Services\AdvisorDistributionReportService;
 use App\Services\AdvisorPerformanceReportService;
@@ -81,6 +82,15 @@ class ReportsController extends Controller
         return inertia('Reports/LeadListReport', [
             'reportData' => $reportService->getLeadsListReport($request),
             'defaultFilters' => $reportService->getDefaultFiltersForLeadsList(),
+        ]);
+    }
+
+    public function renderRevivalConversionReport(Request $request)
+    {
+        $reportData = CarRevivalQuoteRepository::getReportsData($request);
+
+        return inertia('Reports/RevivalConversion', [
+            'reportsData' => $reportData,
         ]);
     }
 
