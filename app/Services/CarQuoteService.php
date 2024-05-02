@@ -13,6 +13,7 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\RolesEnum;
+use App\Facades\Ken;
 use App\Models\ApplicationStorage;
 use App\Models\CarQuote;
 use App\Models\CarQuoteRequestDetail;
@@ -115,6 +116,7 @@ class CarQuoteService extends BaseService
                 'cqrd.notes',
                 'cqrd.lost_approval_status',
                 'cqrd.lost_approval_reason',
+                'cqrd.insly_id',
                 'vt.text as vehicle_type_id_text',
                 'cqr.currently_insured_with',
                 'cqr.currently_insured_with as currently_insured_with_text',
@@ -322,6 +324,8 @@ class CarQuoteService extends BaseService
         $carQuote = CarQuote::where('uuid', $id)->first();
 
         $oldCarValue = $carQuote->car_value;
+        $oldDob = $carQuote->dob;
+        $oldBodyType = $carQuote->vehicle_type_id;
         info('Update triggered from IMCRM for Car Quote request with uuid : '.$carQuote->code);
 
         if ($request->first_name) {
@@ -423,6 +427,15 @@ class CarQuoteService extends BaseService
 
         if ($deleteValuationResponse) {
             $carQuote->save();
+
+            $oldFormattedDate = ! empty($oldDob) ? $oldDob->format('Y-m-d') : '';
+            // update embedded products list
+            if (
+                (isset($request->dob) && $oldFormattedDate != $request->dob) ||
+                (isset($request->vehicle_type_id) && $oldBodyType != $request->vehicle_type_id)
+            ) {
+                Ken::request('/save-embedded-transaction', 'post', ['quoteUID' => $id]);
+            }
 
             if (isset($request->return_to_view)) {
                 return redirect('quote/car/'.$carQuote->id)->with('success', 'Car Quote has been updated');
@@ -1100,7 +1113,7 @@ class CarQuoteService extends BaseService
     }
 
     /**
-     * get car quote details, quote plans and pdf
+     * get car quote details, quote plans and pdf.
      *
      * @return mixed
      */
@@ -1897,8 +1910,18 @@ class CarQuoteService extends BaseService
     {
         $request = request();
         $results = DB::table('car_quote_request AS cqr')
-            ->select('cqr.code', 'qb.name AS batch_no', 'cqr.first_name', 'cqr.last_name', 'cqr.email', 'cqr.mobile_no',
-                'cqr.created_at', 'qs.text AS status', 'tr.name AS tier', 'u.name AS assigned_to')
+            ->select(
+                'cqr.code',
+                'qb.name AS batch_no',
+                'cqr.first_name',
+                'cqr.last_name',
+                'cqr.email',
+                'cqr.mobile_no',
+                'cqr.created_at',
+                'qs.text AS status',
+                'tr.name AS tier',
+                'u.name AS assigned_to'
+            )
             ->leftJoin('quote_status AS qs', 'qs.id', '=', 'cqr.quote_status_id')
             ->leftJoin('users AS u', 'u.id', '=', 'cqr.advisor_id')
             ->leftJoin('quote_batches AS qb', 'qb.id', '=', 'cqr.quote_batch_id')
