@@ -99,6 +99,7 @@ class UpdateStaleLeads extends Command
                             $staleLead->update([
                                 'quote_status_id' => QuoteStatusEnum::Lost,
                                 'quote_status_date' => now(),
+                                'stale_at' => null
                             ]);
 
                             info('Quote Found - '.$eligibleQuoteType." - Quote Ref-ID: $staleLead->code - Old Status: $staleLead->quote_status_id - New Status: ".QuoteStatusEnum::Lost." - Updated At: $staleLead->updated_at");
