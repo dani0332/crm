@@ -34,7 +34,7 @@ const { isRequired } = useRules();
 const objToUrl = obj => useObjToUrl(obj);
 const quotesSelected = ref([]);
 
-const params = useUrlSearchParams('history');
+let params = useUrlSearchParams('history');
 const cleanObj = obj => useCleanObj(obj);
 const showFilters = ref(true);
 const filtersCount = ref(0);
@@ -285,11 +285,11 @@ function onAssignLead(isValid) {
 }
 
 function setQueryStringFilters() {
-  for (const [key] of Object.entries(params)) {
+  for (const [key, value] of Object.entries(params)) {
     if (key.includes('[]')) {
-      filters[key.substring(0, key.length - 2)] = params[key];
+      filters[key.substring(0, key.length - 2)] = params[key] ?? value;
     } else {
-      filters[key] = params[key];
+      filters[key] = params[key] ?? value;
     }
   }
 }
@@ -312,6 +312,7 @@ const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
 
 onMounted(() => {
+  params = getSavedQueryParams() || params;
   setQueryStringFilters();
 
   let filtersCleaned = cleanObj(filters);

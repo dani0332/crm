@@ -1,3 +1,5 @@
+
+
 export const useRoundIt = (num, decimalPlaces = 2) =>
 {
   const p = Math.pow(10, decimalPlaces);
@@ -62,13 +64,16 @@ export const useGetShowPageRoute = (uuid, quoteTypeId, business_type_of_insuranc
 }
 
 // Function to format the date
-export const formatDate = (dateObject) => {
-  if (dateObject && dateObject.$date && dateObject.$date.$numberLong) {
+export const formatDate = (dateObject) =>
+{
+  if (dateObject && dateObject.$date && dateObject.$date.$numberLong)
+  {
     const timestamp = parseInt(dateObject.$date.$numberLong);
     const formattedDate = new Date(timestamp);
     const options = { year: 'numeric', month: '2-digit', day: '2-digit' };
     return formattedDate.toLocaleDateString('en-US', options);
-  }else if(dateObject && dateObject.includes('-')){
+  } else if (dateObject && dateObject.includes('-'))
+  {
     return dateObject;
   }
   return null;
@@ -220,4 +225,42 @@ export const setQueryStringFilters = (params, filters) =>
       filters[key] = params[key];
     }
   }
+}
+
+
+export const saveQueryParams = () =>
+{
+  let { component, url } = router.page
+  let routes = ['HealthQuote/Index', 'PetQuote/Index', 'CycleQuote/Index', 'HealthQuote/Index', 'YachtQuote/Index', 'HomeQuote/Index']
+
+  if (routes.includes(component))
+  {
+    const urlWithParams = { url: component, params: url };
+    // Serialize the object to JSON
+    localStorage.setItem(component, JSON.stringify(urlWithParams));
+  }
+
+}
+
+
+export const getSavedQueryParams = () =>
+{
+  let { component } = router.page
+  const savedParams = localStorage.getItem(component);
+  if (savedParams)
+  {
+    let routerInfo = JSON.parse(savedParams);
+    const params = new URLSearchParams(routerInfo.params.split("?")[1]);
+
+    // Convert the URLSearchParams object into an object
+    const queryParams = {};
+    for (const [key, value] of params.entries())
+    {
+      queryParams[key] = value;
+    }
+
+    router.reload({ method: 'get', data: queryParams })
+    return queryParams
+  }
+  return false
 }

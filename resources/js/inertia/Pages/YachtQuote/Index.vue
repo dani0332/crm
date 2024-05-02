@@ -45,7 +45,7 @@ const filters = reactive(availableFilters);
 const canExport = ref(false);
 const hasRole = role => useHasRole(role);
 
-const params = useUrlSearchParams('history');
+let params = useUrlSearchParams('history');
 const cleanObj = obj => useCleanObj(obj);
 const showFilters = ref(true);
 const filtersCount = ref(0);
@@ -187,6 +187,7 @@ function setQueryStringFilters() {
 }
 
 onMounted(() => {
+  params = getSavedQueryParams() || params;
   setQueryStringFilters();
 
   if (hasRole(rolesEnum.YachtManager) || hasRole(rolesEnum.Admin)) {

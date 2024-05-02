@@ -1,5 +1,5 @@
 <script setup>
-import OnlineStatusToggle from "../Components/OnlineStatusToggle.vue";
+import OnlineStatusToggle from '../Components/OnlineStatusToggle.vue';
 
 const page = usePage();
 const user = computed(() => page.props.auth.user);
@@ -18,7 +18,10 @@ router.on('navigate', () => {
   openSidebar.value = false;
 });
 
+const params = useUrlSearchParams('history');
+
 const onLogout = () => {
+  saveQueryParams();
   axios.post('/logout').then(() => {
     window.location.href = '/login';
   });
@@ -254,9 +257,7 @@ const onLogout = () => {
             </div>
 
             <div class="flex gap-3 items-center">
-                <OnlineStatusToggle
-                    :user="user"
-                />
+              <OnlineStatusToggle :user="user" />
               <!-- <UserStatus /> -->
               <x-popover align="right" block>
                 <x-button size="sm" ghost>
