@@ -173,6 +173,7 @@ class CarRevivalQuoteRepository extends BaseRepository
             $lead = CarQuote::where('uuid', $uuid)->first();
             if (! $lead) {
                 info('UpdateLeadSource - UUID - '.$uuid.' - not found');
+
                 return false;
             }
             $lead->update(['source' => LeadSourceEnum::REVIVAL_REPLIED]);
@@ -182,7 +183,7 @@ class CarRevivalQuoteRepository extends BaseRepository
             info('UpdateLeadSource uuid not found in subject');
         }
     }
-    
+
     public function fetchGetReportsData($request)
     {
         $source = [LeadSourceEnum::REVIVAL, LeadSourceEnum::REVIVAL_REPLIED, LeadSourceEnum::REVIVAL_PAID];
