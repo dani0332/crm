@@ -6,6 +6,7 @@ use App\Enums\ManagementReportCategoriesEnum;
 use App\Factories\ManagementReportServiceFactory;
 use App\Models\RenewalBatch;
 use App\Models\User;
+use App\Repositories\CarRevivalQuoteRepository;
 use App\Services\Reports\AdvisorConversionReportService;
 use App\Services\Reports\AdvisorDistributionReportService;
 use App\Services\Reports\AdvisorPerformanceReportService;
@@ -83,6 +84,15 @@ class ReportsController extends Controller
         return inertia('Reports/LeadListReport', [
             'reportData' => $reportService->getLeadsListReport($request),
             'defaultFilters' => $reportService->getDefaultFiltersForLeadsList(),
+        ]);
+    }
+
+    public function renderRevivalConversionReport(Request $request)
+    {
+        $reportData = CarRevivalQuoteRepository::getReportsData($request);
+
+        return inertia('Reports/RevivalConversion', [
+            'reportsData' => $reportData,
         ]);
     }
 

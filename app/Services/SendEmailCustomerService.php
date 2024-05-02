@@ -480,7 +480,6 @@ class SendEmailCustomerService extends BaseService
             ];
             $subjectEnvTag = $this->appEnv == EnvEnum::PRODUCTION ? '' : $this->appEnv.' - ';
             $emailAttachments = isset($emailData->documentUrl) ? $emailData->documentUrl : null;
-
             if ($emailAttachments) {
                 $attachments = [];
                 foreach ($emailAttachments as $emailAttachment) {
@@ -550,6 +549,63 @@ class SendEmailCustomerService extends BaseService
             $responseDetail = 'SIB Send sendLMSIntroEmail: Code/Message: '.$responseCode.'/'.$ex->getMessage();
             Log::error($responseDetail);
         }
+
+        return $responseCode;
+    }
+
+    public function sendDttEmail($emailData)
+    {
+
+        $headers = [
+            'Accept' => 'application/json',
+            'api-key' => $this->apiKey,
+            'Content-Type' => 'application/json',
+        ];
+
+        $body = [
+            'subject' => $emailData->subject,
+            'sender' => [
+                'email' => 'no-reply@alert.insurancemarket.email',
+                'name' => 'InsuranceMarket.ae',
+            ],
+            'params' => $emailData,
+            'to' => [[
+                'email' => $emailData->customerEmail,
+                'name' => $emailData->customerName,
+            ]],
+            'templateId' => $emailData->templateId,
+        ];
+
+        $replyToEmail = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::DTT_REPLY_TO);
+        $body['replyTo'] = [
+            'email' => $replyToEmail,
+            'name' => 'InsuranceMarket.ae',
+        ];
+        try {
+            $client = new \GuzzleHttp\Client();
+            $clientRequest = $client->post(
+                $this->url,
+                [
+                    'headers' => $headers,
+                    'body' => json_encode($body),
+                    'timeout' => 10000,
+                ]
+            );
+            $response = json_decode(json_encode($clientRequest->getStatusCode().' '.$clientRequest->getBody()->getContents()), true);
+            $responseCode = $clientRequest->getStatusCode();
+
+            if ($responseCode == 201) {
+                $isEmailSent = 1;
+            }
+        } catch (Exception $ex) {
+            $responseCode = $ex->getCode();
+            $responseDetail = 'Dtt Send Email: Code/Message: '.$responseCode.'/'.$ex->getMessage().' uuid: '.$emailData->uuid.' CustomerEmail: '.$emailData->customerEmail;
+            info($responseDetail);
+            $response = json_encode($ex->getCode().' '.$ex->getMessage());
+            $isEmailSent = 0;
+        }
+
+        $this->emailActivityService->addEmailActivity($response, $isEmailSent, $emailData->customerEmail);
 
         return $responseCode;
     }
