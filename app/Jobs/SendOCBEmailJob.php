@@ -33,7 +33,7 @@ class SendOCBEmailJob implements ShouldQueue
     protected $lookupService;
     protected $sendEmailCustomerService;
     public $tries = 3;
-    public $timeout = 30;
+    public $timeout = 60;
     public $backoff = 10;
 
     /**

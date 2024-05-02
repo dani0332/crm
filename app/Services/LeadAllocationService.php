@@ -507,6 +507,11 @@ class LeadAllocationService extends BaseService
 
                     $loginAndAvailableUserIds = $this->getTierUsersWithLeadAllocationRecord($selectedTier->id); // now we will try to find users based on selected tier
 
+                    if ($carLead->source == LeadSourceEnum::REVIVAL_REPLIED) {
+                        info('Lead source is '.LeadSourceEnum::REVIVAL_REPLIED.' for uuid : '.$carLead->uuid);
+                        $loginAndAvailableUserIds = $this->getUsersForRevivalReplied($loginAndAvailableUserIds);
+                    }
+
                     info('Available and Login users against selected tier are : '.json_encode($loginAndAvailableUserIds));
 
                     $matchedRuleRecords = $this->getRulesByLeadSource($carLead);

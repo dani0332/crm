@@ -40,6 +40,8 @@ class DatabaseSeeder extends Seeder
             // GenericPermissionSeeder::class,
             // addDubaiNowLeadSourceExemptionInAppStorage::class,
             LookupSeeder::class,
+            //            AddNewDocumentTypesSeeder::class,
+            // UpdateCustomerToHealthAndTravelMemberDetails::class,
             GenericPermissionSeeder::class,
             AddLegacyPaymentsPermssion::class,
             /*addSICWorkflow::class,
@@ -59,6 +61,12 @@ class DatabaseSeeder extends Seeder
             InsuranceQuoteTypeSeeder::class,
             AddPaymentPermissionsSeeder::class,
             TotalPremiumReportPermissionSeeder::class,*/
+
+            // dtt seeder
+            AddDttFlagApplicationStorage::class,
+            DttOCBNewBusinessSeeder::class,
+            RevivalConversionReportPermissionSeeder::class,
+            // end
         ]);
     }
 }
