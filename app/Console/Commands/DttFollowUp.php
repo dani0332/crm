@@ -54,7 +54,7 @@ class DttFollowUp extends Command
     {
 
         $isDttEnabled = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::DTT_ENABLED);
-        if (! $isDttEnabled) {
+        if (! empty($isDttEnabled) && $isDttEnabled == '1') {
             info('Dtt is not enabled from cms');
 
             return false;
