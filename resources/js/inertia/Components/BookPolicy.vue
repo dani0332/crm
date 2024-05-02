@@ -497,7 +497,12 @@ const caculateCommission = () => {
                   color="emerald"
                   size="sm"
                   :loading="bpForm.processing"
-                  @click.prevent="bp.isEditing = false"
+                  @click.prevent="
+                    () => {
+                      bp.isEditing = false;
+                      bpForm.reset();
+                    }
+                  "
                 >
                   Cancel
                 </x-button>

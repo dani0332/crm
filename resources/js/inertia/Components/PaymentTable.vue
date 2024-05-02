@@ -18,6 +18,7 @@ defineProps({
 });
 
 const createPaymentModal = ref(false);
+const enableManageOptions = ref(false);
 
 const can = permission => useCan(permission);
 const hasRole = role => useHasRole(role);
@@ -215,7 +216,7 @@ const approvePayment = payment => {
             v-if="
               can(permissionsEnum.PaymentsCreate) &&
               !can(permissionsEnum.ApprovePayments) &&
-              !hasRole(rolesEnum.PA)
+              !hasRole(rolesEnum.PA) && enableManageOptions
             "
             size="sm"
             color="orange"

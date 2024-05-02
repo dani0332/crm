@@ -72,7 +72,7 @@ class HealthQuote extends Model implements AuditableContract
 
     public function healthQuoteRequestDetail()
     {
-        return $this->hasOne(HealthQuoteRequestDetail::class, 'id', 'health_quote_request_id');
+        return $this->hasOne(HealthQuoteRequestDetail::class, 'health_quote_request_id', 'id');
     }
 
     public function currentProvider()
@@ -159,7 +159,7 @@ class HealthQuote extends Model implements AuditableContract
         return $this->morphMany(CustomerMembers::class, 'quote');
     }
 
-    public function sageLog()
+    public function sageLogs()
     {
         return $this->morphMany(SageApiLog::class, 'section');
     }

@@ -1,11 +1,9 @@
 <script setup>
-import PaymentTableNew from './../../Components/PaymentTableNew.vue';
-import MigratePayment from './../../Components/MigratePayment.vue';
-import LazyDocumentUploader from './Partials/DocumentUploader.vue';
-import LazyAvailablePlan from './Partials/AvailablePlans.vue';
-import LazyCreatePlan from './Partials/CreatePlan.vue';
 import { computed } from 'vue';
 import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue';
+import LazyAvailablePlan from './Partials/AvailablePlans.vue';
+import LazyCreatePlan from './Partials/CreatePlan.vue';
+import LazyDocumentUploader from './Partials/DocumentUploader.vue';
 
 defineProps({
   quote: Object,
@@ -59,6 +57,7 @@ defineProps({
   policyIssuanceStatus: Array,
   bPDetails: Array,
   isNewPaymentStructure: Boolean,
+  isAmlClearedForPayment: Boolean,
   sendUpdateOptions: Array,
   sendUpdateLogs: Array,
   hasPolicyIssuedStatus: Boolean,
@@ -67,8 +66,11 @@ defineProps({
 const isManualPlansCount = ref(0);
 
 const page = usePage();
+const permissionsEnum = page.props.permissionsEnum;
 const permissionEnum = page.props.permissionsEnum;
 const canAny = permissions => useCanAny(permissions);
+const can = permission => useCan(permission);
+
 const notification = useToast();
 const hasRole = role => useHasRole(role);
 const hasAnyRole = roles => useHasAnyRole(roles);
@@ -725,9 +727,7 @@ const onTogglePlans = toggle => {
         title: 'Plans has been updated',
         position: 'top',
       });
-      router.reload({
-        preserveScroll: true,
-      });
+      onLoadAvailablePlansData();
     })
     .catch(error => {
       notification.error({
@@ -915,15 +915,16 @@ const getSmallestCopayRateAsDefaultValue = () => {
       }
     });
 
-    element.memberPremiumBreakdown?.forEach(
-      function callback(breakDown, index) {
-        breakDown.ratesPerCopay?.forEach(function callback(ratePerCopay) {
-          if (ratePerCopay.notifyAgent) {
-            element.needPriceUpdate = true;
-          }
-        });
-      },
-    );
+    element.memberPremiumBreakdown?.forEach(function callback(
+      breakDown,
+      index,
+    ) {
+      breakDown.ratesPerCopay?.forEach(function callback(ratePerCopay) {
+        if (ratePerCopay.notifyAgent) {
+          element.needPriceUpdate = true;
+        }
+      });
+    });
 
     if (isMounted.value && selectedCoPay.planId == element.id) {
       element.actualPremium = selectedCoPay.premium;
@@ -1494,11 +1495,20 @@ const handlePlanSelected = plan => {
   router.reload({
     preserveState: true,
     preserveScroll: true,
-    only: ['payments', 'quoteRequest', 'ecomDetails'],
+    only: ['payments','quoteRequest','ecomDetails', 'coPayment'],
   });
 };
 
+watch(
+  () => page.props.ecomDetails,
+  value => {
+    selectedProviderPlan.value.premium = value.priceWithVAT;
+  },
+  { deep: true },
+);
+
 const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
+
 </script>
 
 <template>
@@ -1622,6 +1632,15 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
         <template #body>
           <x-divider class="my-4" />
           <div class="flex gap-2 mb-3 justify-end">
+            <Link
+                v-if="quote?.insly_id && can(permissionsEnum.VIEW_LEGACY_DETAILS)"
+                :href="`/legacy-policy/${quote.insly_id}`"
+                preserve-scroll
+            >
+                <x-button size="sm" color="#ff5e00" tag="div">
+                    View Legacy policy
+                </x-button>
+            </Link>
             <x-button size="sm" color="#ff5e00" @click.prevent="openDuplicate">
               Duplicate Lead
             </x-button>
@@ -2481,6 +2500,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       "
       modelType="Health"
       :quote="quote"
+      :insly-id="quote?.insly_id"
       :canAddBatchNumber="canAddBatchNumber"
       :expanded="sectionExpanded"
     />
@@ -2496,15 +2516,15 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
           <x-divider class="my-4" />
           <div class="flex flex-wrap md:flex-nowrap gap-6 w-full">
             <div class="w-full md:w-50">
-              <div class="flex flex-col gap-4">
-                <x-select
-                  v-model="leadStatusForm.leadStatus"
-                  label="Status"
-                  :options="leadStatusOptions"
-                  :disabled="quote.quote_status_id == 15"
-                  placeholder="Lead Status"
-                  class="w-full"
-                />
+                  <div class="flex flex-col gap-4">
+                    <x-select
+                      v-model="leadStatusForm.leadStatus"
+                      label="Status"
+                      :options="leadStatusOptions"
+                      :disabled="quote.quote_status_id == 15"
+                      placeholder="Lead Status"
+                      class="w-full"
+                    />
                 <x-textarea
                   v-model="leadStatusForm.notes"
                   type="text"
@@ -2517,28 +2537,28 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
             </div>
             <div class="w-full md:w-50">
               <div class="flex flex-col gap-4">
-                <x-input
-                  v-if="leadStatusForm.leadStatus == 15"
-                  v-model="leadStatusForm.trans_code"
-                  label="TransApp Code"
-                  placeholder="TransApp Code is required"
-                  class="w-full"
-                  :error="leadStatusForm.errors.trans_code"
-                />
-                <x-select
-                  v-if="leadStatusForm.leadStatus == 17"
-                  v-model="leadStatusForm.lostReason"
-                  label="Lost Reason"
-                  :options="
-                    lostReasons?.map(item => ({
-                      value: item.id,
-                      label: item.text,
-                    }))
-                  "
-                  placeholder="Lost Reason is required"
-                  class="w-full"
-                  :error="leadStatusForm.errors.lostReason"
-                />
+                    <x-input
+                      v-if="leadStatusForm.leadStatus == 15"
+                      v-model="leadStatusForm.trans_code"
+                      label="TransApp Code"
+                      placeholder="TransApp Code is required"
+                      class="w-full"
+                      :error="leadStatusForm.errors.trans_code"
+                    />
+                    <x-select
+                      v-if="leadStatusForm.leadStatus == 17"
+                      v-model="leadStatusForm.lostReason"
+                      label="Lost Reason"
+                      :options="
+                        lostReasons?.map(item => ({
+                          value: item.id,
+                          label: item.text,
+                        }))
+                      "
+                      placeholder="Lost Reason is required"
+                      class="w-full"
+                      :error="leadStatusForm.errors.lostReason"
+                    />
                 <x-field class="" label="Transaction Type">
                   <x-input
                     type="text"
@@ -2547,7 +2567,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
                     :disabled="true"
                   />
                 </x-field>
-              </div>
+                  </div>
             </div>
           </div>
           <x-divider class="mb-1 mt-10" />
@@ -2711,7 +2731,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
             >
               Add Plan
             </x-button>
-          </div>
+
           <DataTable
             ref="planDataTable"
             v-model:items-selected="selectedPlans"
@@ -2729,8 +2749,8 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
             </template>
             <template
               #item-providerName="{ providerName, isManualPlan, isHidden }"
-            >
-              <p>{{ providerName }}</p>
+
+              ><p>{{ providerName }}</p>
               <div class="flex gap-1">
                 <x-tag
                   v-if="isManualPlan"
@@ -2837,14 +2857,14 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
                   Copy
                 </x-button>
 
-                <span v-if="hasRole(page.props.rolesEnum.HealthAdvisor)">
-                  <SelectPlan
-                    v-if="selectedProviderPlan.id != item.id"
-                    @update:selectedPlanChanged="handlePlanSelected"
-                    :plan="item"
-                    :quoteType="quoteType"
-                    :uuid="quote.uuid"
-                  />
+            <span>
+              <SelectPlan
+                v-if="selectedProviderPlan.id != item.id"
+                @update:selectedPlanChanged="handlePlanSelected"
+                :plan="item"
+                :quoteType="quoteType"
+                :uuid="quote.uuid"
+              />
 
                   <x-button
                     v-else
@@ -2861,6 +2881,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
           </DataTable>
         </template>
       </Collapsible>
+    </div>
 
       <LazyAvailablePlan
         v-model="modals.plan"
@@ -3000,7 +3021,10 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       "
       :storageUrl="storageUrl"
       :eCommercePrice="ecomDetails.priceWithVAT ? ecomDetails.priceWithVAT : 0"
+      :isAmlClearedForPayment="isAmlClearedForPayment"
+
     />
+
     <PaymentTable
       v-else
       :payments="payments"
@@ -3408,11 +3432,16 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       </Collapsible>
     </div>
 
+    <CustomerChatLogs
+      :customerName="quote?.first_name + ' ' + quote?.last_name"
+      :quoteId="quote.uuid"
+      :quoteType="'HEALTH'"
+    />
+
     <AuditLogs
       :type="'App\\Models\\HealthQuote'"
       :id="$page.props.quote.id"
       :quoteCode="$page.props.quote.code"
       :expanded="sectionExpanded"
     />
-  </div>
 </template>

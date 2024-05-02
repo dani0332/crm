@@ -169,5 +169,38 @@ class SendPolicyApplicationStorageSeeder extends Seeder
                 'updated_at' => now(),
             ]);
         }
+
+        $bikeBookPolicy = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIKE_BOOK_POLICY_TEMPLATE)->first();
+        if (! $bikeBookPolicy) {
+            DB::table('application_storage')->insert([
+                'key_name' => ApplicationStorageEnums::BIKE_BOOK_POLICY_TEMPLATE,
+                'value' => '592',
+                'is_active' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+
+        $cycleBookPolicy = ApplicationStorage::where('key_name', ApplicationStorageEnums::CYCLE_BOOK_POLICY_TEMPLATE)->first();
+        if (! $cycleBookPolicy) {
+            DB::table('application_storage')->insert([
+                'key_name' => ApplicationStorageEnums::CYCLE_BOOK_POLICY_TEMPLATE,
+                'value' => '618',
+                'is_active' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+
+        $yachtBookPolicy = ApplicationStorage::where('key_name', ApplicationStorageEnums::YACHT_BOOK_POLICY_TEMPLATE)->first();
+        if (! $yachtBookPolicy) {
+            DB::table('application_storage')->insert([
+                'key_name' => ApplicationStorageEnums::YACHT_BOOK_POLICY_TEMPLATE,
+                'value' => '618',
+                'is_active' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
     }
 }

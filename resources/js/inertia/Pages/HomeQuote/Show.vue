@@ -45,6 +45,7 @@ defineProps({
   policyIssuanceStatus: Array,
   bPDetails: Array,
   isNewPaymentStructure: Boolean,
+  isAmlClearedForPayment: Boolean,
   sendUpdateOptions: Array,
   sendUpdateLogs: Array,
   hasPolicyIssuedStatus: Boolean,
@@ -518,6 +519,15 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
         <template #body>
           <x-divider class="my-4" />
           <div class="flex gap-2 mb-3 justify-end">
+            <Link
+              v-if="quote?.insly_id"
+              :href="`/legacy-policy/${quote.insly_id}`"
+              preserve-scroll
+            >
+              <x-button size="sm" color="#ff5e00" tag="div">
+                View Legacy policy
+              </x-button>
+            </Link>
             <x-button size="sm" color="#ff5e00" @click.prevent="openDuplicate">
               Duplicate Lead
             </x-button>
@@ -1013,6 +1023,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       "
       modelType="Home"
       :quote="quote"
+      :insly-id="quote?.insly_id"
       :canAddBatchNumber="canAddBatchNumber"
       :expanded="sectionExpanded"
     />
@@ -1080,7 +1091,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
                 :disabled="quote.quote_status_id == 15"
               />
 	      
-	      <x-field label="Transaction Type">
+	        <x-field label="Transaction Type">
             <x-input
               type="text"
               :value="quote.transaction_type_text"
@@ -1129,6 +1140,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
 			:paymentTooltipEnum="paymentTooltipEnum"
 			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name, tooltip: pm.tool_tip } })"
 			:storageUrl="storageUrl"
+      :isAmlClearedForPayment="isAmlClearedForPayment"
 		/>
     <PaymentTable
       v-else
@@ -1169,6 +1181,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       :quote-documents="quoteDocuments || []"
       :storageUrl="storageUrl"
       :quote="quote"
+      :insly-id="quote?.insly_id"
       :expanded="sectionExpanded"
     />
 

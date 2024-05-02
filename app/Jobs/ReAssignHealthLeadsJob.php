@@ -99,6 +99,11 @@ class ReAssignHealthLeadsJob implements ShouldQueue
 
     public function middleware()
     {
-        return [(new WithoutOverlapping($this->advisorId))->dontRelease()];
+        // Lock Job in storage session only if advisor id is not zero
+        if ($this->advisorId) {
+            return [(new WithoutOverlapping($this->advisorId))->dontRelease()];
+        }
+
+        return [];
     }
 }
