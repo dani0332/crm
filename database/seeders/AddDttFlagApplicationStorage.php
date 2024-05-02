@@ -19,7 +19,7 @@ class AddDttFlagApplicationStorage extends Seeder
             DB::table('application_storage')->insert([[
                 'key_name' => ApplicationStorageEnums::DTT_ENABLED,
                 'value' => '0',
-                'is_active' => 1,
+                'is_active' => 0,
                 'created_at' => now(),
                 'updated_at' => now(),
             ]]);

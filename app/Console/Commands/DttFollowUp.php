@@ -53,7 +53,7 @@ class DttFollowUp extends Command
     public function handle()
     {
 
-        $isDttEnabled = app(ApplicationStorageService::class)->getIsActiveByKey(ApplicationStorageEnums::DTT_ENABLED);
+        $isDttEnabled = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::DTT_ENABLED);
         if (! $isDttEnabled) {
             info('Dtt is not enabled from cms');
 
