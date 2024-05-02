@@ -15,12 +15,17 @@ class PetQuoteObserver
      */
     public function updated(PetQuote $petQuote): void
     {
-        if ($petQuote->isDirty('quote_status_id') && $petQuote->quote_status_id === QuoteStatusEnum::TransactionApproved) {
+        $dirty = $petQuote->getDirty();
+        if (
+            $petQuote->isDirty('quote_status_id') &&
+            $petQuote->quote_status_id === QuoteStatusEnum::TransactionApproved
+        ) {
             PetQuote::withoutEvents(function () use ($petQuote) {
                 $petQuote->update(['transaction_approved_at' => now()]);
             });
+            $dirty = [...$dirty, 'transaction_approved_at' => $petQuote->transaction_approved_at];
         }
 
-        $this->syncQuote($petQuote, $petQuote->getDirty());
+        $this->syncQuote($petQuote, $dirty);
     }
 }
