@@ -54,4 +54,6 @@ final class InsuranceProvidersEnum extends Enum
     public const FPIL = 'FPIL';
     public const ZILL = 'ZILL';
     public const STF = 'STF';
+    public const AIAW = 'AIAW';
+    public const ARAB = 'ARAB';
 }
