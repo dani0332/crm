@@ -109,6 +109,7 @@ function onSubmit(isValid) {
 }
 
 function onReset() {
+  removedSavedParams();
   router.visit(route('cycle-quotes-list'), {
     method: 'get',
     data: { page: 1 },

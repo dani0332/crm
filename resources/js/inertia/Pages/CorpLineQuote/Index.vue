@@ -133,6 +133,7 @@ const tableHeader = ref([
 ]);
 
 function resetFilters() {
+  removedSavedParams();
   router.visit(route('business.index'), {
     method: 'get',
     preserveState: true,

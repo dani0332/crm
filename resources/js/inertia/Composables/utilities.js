@@ -242,6 +242,11 @@ export const saveQueryParams = () =>
 
 }
 
+export const removedSavedParams = () =>
+{
+  let { component } = router.page
+  localStorage.removeItem(component);
+}
 
 export const getSavedQueryParams = () =>
 {

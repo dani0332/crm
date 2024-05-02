@@ -121,6 +121,7 @@ function onSubmit(isValid) {
 }
 
 function onReset() {
+  removedSavedParams();
   router.visit(route('yacht-quotes-list'), {
     method: 'get',
     data: { page: 1 },

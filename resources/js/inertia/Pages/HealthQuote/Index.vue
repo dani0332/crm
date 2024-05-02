@@ -249,6 +249,7 @@ const handleSelectedFilters = selectedFilters => {
 };
 
 function onReset() {
+  removedSavedParams();
   router.visit(route('health.index'), {
     method: 'get',
     data: { page: 1 },

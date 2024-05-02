@@ -130,6 +130,7 @@ function onSubmit(isValid) {
 }
 
 function onReset() {
+  removedSavedParams();
   router.visit(route('home.index'), {
     method: 'get',
     data: { page: 1 },
