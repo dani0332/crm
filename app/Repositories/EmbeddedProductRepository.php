@@ -387,7 +387,7 @@ class EmbeddedProductRepository extends BaseRepository
                 ],
                 'subject' => 'Thank you for your purchase of '.$product_name.' with InsuranceMarket.ae - '.$short_code.'-'.$quoteObject->code,
             ],
-            'MessageStream' => config('constants.MA_POSTMARK_STREAM'),
+            'MessageStream' => config('constants.EMBEDDED_PRODUCTS_POSTMARK_STREAM'),
         ], JSON_UNESCAPED_SLASHES);
 
         SendEPDocumentsJob::dispatch($body);
