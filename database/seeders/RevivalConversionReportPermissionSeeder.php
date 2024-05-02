@@ -43,20 +43,37 @@ class RevivalConversionReportPermissionSeeder extends Seeder
 
                 // assign permission to admin car-arevival advisor/manager and beta user
 
+                $carRevivalAdvisorCount = Role::where('name', RolesEnum::CarRevivalAdvisor)->count();
+                if ($carRevivalAdvisorCount == 0) {
+                    Role::create([
+                        'name' => RolesEnum::CarRevivalAdvisor,
+                        'guard_name' => 'web',
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
+                }
                 $carRevivalAdvisor = Role::where('name', RolesEnum::CarRevivalAdvisor)->first();
-                if (! empty($carRevivalAdvisor)) {
-                    $record = DB::table('role_has_permissions')->where('role_id', $carRevivalAdvisor->id)->where('permission_id', $permissionId)->first();
-                    if (empty($record)) {
-                        DB::table('role_has_permissions')->insert(
-                            [
-                                'role_id' => $carRevivalAdvisor->id,
-                                'permission_id' => $permissionId,
-                            ]
-                        );
-                    }
+                $record = DB::table('role_has_permissions')->where('role_id', $carRevivalAdvisor->id)->where('permission_id', $permissionId)->first();
+                if (empty($record)) {
+                    DB::table('role_has_permissions')->insert(
+                        [
+                            'role_id' => $carRevivalAdvisor->id,
+                            'permission_id' => $permissionId,
+                        ]
+                    );
                 }
 
+                $carRevivalManagerCount = Role::where('name', RolesEnum::CarRevivalManager)->count();
+                if ($carRevivalManagerCount == 0) {
+                    Role::create([
+                        'name' => RolesEnum::CarRevivalManager,
+                        'guard_name' => 'web',
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
+                }
                 $carRevivalManager = Role::where('name', RolesEnum::CarRevivalManager)->first();
+
                 if (! empty($carRevivalManager)) {
                     $record = DB::table('role_has_permissions')->where('role_id', $carRevivalManager->id)->where('permission_id', $permissionId)->first();
                     if (empty($record)) {
