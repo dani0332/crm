@@ -69,6 +69,15 @@ const modals = reactive({
   show: false,
 });
 
+watch(
+  () => modals.show,
+  value => {
+    if (!value) {
+      resetForm();
+    }
+  }
+);
+
 const form = useForm({
   parentCategory: null,
   childCategory: null,
