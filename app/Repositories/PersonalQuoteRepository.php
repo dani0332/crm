@@ -27,9 +27,11 @@ class PersonalQuoteRepository extends BaseRepository
     }
 
     /**
+     * function renamed from fetchUpdateStatus, because updateStatus named function already in GenericQueriesAllLobs
+     *
      * @return mixed
      */
-    public function fetchUpdateStatus($quoteType, $quoteId, $data)
+    public function fetchUpdateStatuses($quoteType, $quoteId, $data)
     {
         return DB::transaction(function () use ($quoteId, $data) {
             $quote = $this->where('id', $quoteId)->firstOrFail();

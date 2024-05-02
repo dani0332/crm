@@ -477,7 +477,7 @@ class SageApiService
                 'entryType' => SageEnum::SCT_STRAIGHT,
                 'requestType' => SageEnum::SRT_CREATE_AR_SPPAY_INV,
                 'payment' => $payment,
-                'splitPayments' => $splitPayments
+                'splitPayments' => $splitPayments,
             ]);
         }
 
@@ -759,7 +759,7 @@ class SageApiService
             $returnMessage['message'] = 'Sage is not enabled';
         }
 
-        $sageLogArray = $quote->sageLog->keyBy('step')->toArray();
+        $sageLogArray = $quote->sageLogs->keyBy('step')->toArray();
         // sape customer number generation
         $sageCustomerNumber = $this->verifySageCustomer($quote->customer_id, $data, $quote, $sageLogArray, 13);
 

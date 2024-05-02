@@ -271,7 +271,7 @@ class CarQuote extends BaseModel
         return $this->morphMany(CustomerMembers::class, 'quote');
     }
 
-    public function sageLog()
+    public function sageLogs()
     {
         return $this->morphMany(SageApiLog::class, 'section');
     }

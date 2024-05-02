@@ -16,6 +16,7 @@ use App\Http\Requests\CycleQuoteRequest;
 use App\Models\ApplicationStorage;
 use App\Models\Emirate;
 use App\Models\Nationality;
+use App\Models\PolicyIssuanceStatus;
 use App\Repositories\ActivityRepository;
 use App\Repositories\CustomerMembersRepository;
 use App\Repositories\CycleQuoteRepository;
@@ -33,11 +34,15 @@ use App\Services\AMLService;
 use App\Services\CentralService;
 use App\Services\CRUDService;
 use App\Services\LookupService;
+use App\Services\QuoteDocumentService;
 use App\Services\SendUpdateLogService;
 use App\Services\SplitPaymentService;
+use App\Traits\GenericQueriesAllLobs;
 
 class CycleQuoteController extends Controller
 {
+    use GenericQueriesAllLobs;
+
     /**
      * @return \Inertia\Response|\Inertia\ResponseFactory
      */
@@ -120,7 +125,7 @@ class CycleQuoteController extends Controller
 
         $quote->load('documents.createdBy:id,name,email');
 
-        $documentTypes = DocumentTypeRepository::byQuoteTypeId(QuoteTypes::CYCLE->id())->get();
+        $documentTypes = DocumentTypeRepository::byQuoteTypeId(QuoteTypes::CYCLE->id())->active()->get();
         $paymentMethods = PaymentMethodRepository::orderBy('name')->get();
         $membersDetail = CustomerMembersRepository::getBy($quote->id, QuoteTypes::CYCLE->name);
         $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypes::CYCLE->id());
@@ -147,6 +152,10 @@ class CycleQuoteController extends Controller
         $emirates = Emirate::where('is_active', 1)->select('id', 'text')->get();
         $vatPercentage = ApplicationStorage::where('key_name', ApplicationStorageEnums::VAT_VALUE)->first()->value ?? 0;
 
+        $isQuoteDocumentEnabled = app(QuoteDocumentService::class)->isEnabled(QuoteTypes::CYCLE->value);
+        $policyIssuanceStatus = PolicyIssuanceStatus::active()->get();
+        $quoteDocuments = (new QuoteDocumentService())->getQuoteDocuments(QuoteTypes::CYCLE->value, $quote->id);
+        $bPDetails = $this->bookPolicyPayload($quote, QuoteTypes::PET->value, $quote->payments, $quoteDocuments);
         $sendUpdateOptions = [];
         $sendUpdateLogs = [];
         $sendUpdateEnum = (object) [];
@@ -188,6 +197,16 @@ class CycleQuoteController extends Controller
             'paymentTooltipEnum' => PaymentTooltip::asArray(),
             'paymentStatusEnum' => PaymentStatusEnum::asArray(),
             'isNewPaymentStructure' => app(SplitPaymentService::class)->isNewPaymentStructure($quote->payments),
+            'record' => fn () => $quote,
+            'permissions' => [
+                'isQuoteDocumentEnabled' => $isQuoteDocumentEnabled,
+            ],
+            'enums' => [
+                'quoteStatusEnum' => QuoteStatusEnum::asArray(),
+            ],
+            'policyIssuanceStatus' => $policyIssuanceStatus,
+            'bPDetails' => $bPDetails,
+            'payments' => $quote->payments->toArray() ?? [],
             'sendUpdateOptions' => $sendUpdateOptions,
             'sendUpdateLogs' => $sendUpdateLogs,
             'sendUpdateEnum' => $sendUpdateEnum,

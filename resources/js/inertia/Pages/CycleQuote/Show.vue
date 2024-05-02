@@ -43,6 +43,12 @@ defineProps({
   paymentStatusEnum: Object,
   paymentTooltipEnum: Object,
   isNewPaymentStructure: Boolean,
+  record: Object,
+  permissions: Object,
+  enums: Object,
+  policyIssuanceStatus: Array,
+  bPDetails: Array,
+  payments: Array,
   sendUpdateOptions: Array,
   sendUpdateLogs: Array,
   hasPolicyIssuedStatus: Boolean,
@@ -54,6 +60,8 @@ const notification = useToast();
 const hasAnyRole = roles => useHasAnyRole(roles);
 const hasRole = role => useHasRole(role);
 const rolesEnum = page.props.rolesEnum;
+const permissionEnum = page.props.permissionsEnum;
+const canAny = permissions => useCanAny(permissions);
 const modals = reactive({
   duplicate: false,
 });
@@ -355,7 +363,7 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
           </div>
 
           <div class="text-sm">
-            <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
+        <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
               <div class="grid sm:grid-cols-2">
             <div
               class="grid sm:grid-cols-2"
@@ -398,12 +406,12 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
     
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">CREATED BY</dt>
-                <dd>{{ quote?.created_by?.email }}</dd>
+            <dd class="break-words">{{ quote?.created_by?.email }}</dd>
               </div>
     
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">UPDATED BY</dt>
-                <dd>{{ quote?.updated_by?.email }}</dd>
+            <dd class="break-words">{{ quote?.updated_by?.email }}</dd>
               </div>
     
               <div class="grid sm:grid-cols-2">
@@ -481,7 +489,7 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
           </div>
     
           <div class="text-sm">
-            <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
+        <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">CYCLE MAKE</dt>
                 <dd>{{ quote?.cycle_quote?.cycle_make }}</dd>
@@ -548,7 +556,7 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
                 v-if="
                   quote.customer_type === page.props.customerTypeEnum.Individual
                 "
-                class="grid md:grid-cols-2 gap-x-6 gap-y-4"
+            class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words"
               >
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">FIRST NAME</dt>
@@ -870,7 +878,8 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
       v-if="!isNewPaymentStructure"
       :quoteId="quote.id"
       :paymentCode = "quote.code"
-      :quoteType="quoteType"      
+      :quoteType="quoteType"
+      :payments="quote.payments"      
     />    
     <PaymentTableNew 
 			v-if="isNewPaymentStructure"
@@ -910,11 +919,13 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
       :data="sendUpdateLogs"
     />
 
-    <QuotePolicy
-      :quote="quote"
-      :can="can"
-      :quoteStatusesEnum="quoteStatusesEnum"
-    />    
+    <PolicyDetail
+      v-if="permissions.isQuoteDocumentEnabled"
+      :record="record"
+      :quoteStatusEnum="enums.quoteStatusEnum"
+      :policyIssuanceStatus="policyIssuanceStatus"
+      modelType="Cycle"
+    />
 
     <EmbeddedProducts
       :data="embeddedProducts"
@@ -923,6 +934,19 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
       :quote="quote"
       :modelType="quoteType"
       :expanded="sectionExpanded"
+    />
+
+    <BookPolicy
+      v-if="
+        canAny([
+          permissionEnum.VIEW_INSLY_BOOK_POLICY,
+          permissionEnum.SEND_INSLY_BOOK_POLICY,
+        ])
+      "
+      :quote="record"
+      quoteType="Cycle"
+      :bPDetails="bPDetails"
+      :payments="payments"
     />
 
     <AuditLogs :quote-type="quoteType" :id="$page.props.quote.id" :quoteCode="$page.props.quote.code" :expanded="sectionExpanded" />

@@ -65,6 +65,8 @@ defineProps({
   linkedQuoteDetails: Object,
 });
 
+const isManualPlansCount = ref(0);
+
 const page = usePage();
 const permissionEnum = page.props.permissionsEnum;
 const canAny = (permissions) => useCanAny(permissions);
@@ -410,10 +412,13 @@ const memberForm = useForm({
   quote_request_id: page.props.quote.id,
   update_lead_against_member: null,
   first_name: null,
+  last_name: null,
   relation_code: null,
   quote_type: page.props.modelType,
   customer_id: page.props.quote.customer_id,
   customer_type: page.props.quote.customer_type,
+  customer_member_id: null,
+  quoteId: page.props.quote.uuid,
 });
 
 const rules = {
@@ -438,6 +443,7 @@ function onEditMember(data) {
   memberForm.member_category_id = data.member_category_id;
   memberForm.salary_band_id = data.salary_band_id;
   memberForm.first_name = data.first_name;
+  memberForm.last_name = data.last_name;
   memberForm.relation_code = data.relation_code;
   memberForm.update_lead_against_member = data.index === 1;
 }
@@ -453,7 +459,10 @@ const memberFieldReq = reactive({
   nationality: false,
   dob: false,
 });
-const onMemberSubmit = (isValid) => {
+
+const membersDetailsUpdated = ref(false);
+
+const onMemberSubmit = isValid => {
   if (memberForm.nationality_id == null) {
     memberFieldReq.nationality = true;
   } else {
@@ -466,7 +475,7 @@ const onMemberSubmit = (isValid) => {
   }
   if (!isValid) return;
   if (memberActionEdit.value) {
-    memberForm.put(`/members/${memberForm.id}`, {
+    memberForm.put(`/health-quote-update-member`, {
       preserveScroll: true,
       onSuccess: () => {
         notification.success({
@@ -475,13 +484,22 @@ const onMemberSubmit = (isValid) => {
         });
         memberForm.reset();
         onLoadAvailablePlansData();
+        // location.reload();
+      },
+      onError: errors => {
+        notification.error({
+          title: errors.error || 'Data not saved',
+          position: 'top',
+        });
       },
       onFinish: () => {
         modals.member = false;
+        membersDetailsUpdated.value = true;
       },
     });
   } else {
-    memberForm.post(`/members`, {
+    memberForm.post(`/health-quote-add-member`, {
+      // new mavonic endpoint
       preserveScroll: true,
       onSuccess: () => {
         notification.success({
@@ -489,9 +507,17 @@ const onMemberSubmit = (isValid) => {
           position: "top",
         });
         onLoadAvailablePlansData();
+        // location.reload();
+      },
+      onError: errors => {
+        notification.error({
+          title: errors.error || 'Data not saved',
+          position: 'top',
+        });
       },
       onFinish: () => {
         modals.member = false;
+        membersDetailsUpdated.value = true;
       },
     });
   }
@@ -500,11 +526,13 @@ const onMemberSubmit = (isValid) => {
 const memberDelete = (id) => {
   modals.memberConfirm = true;
   confirmDeleteData.member = id;
+  memberForm.customer_member_id = id;
 };
 
 const memberDeleteConfirmed = () => {
-  memberForm.delete(
-    `/members/${page.props.quote.customer_type}-${page.props.modelType}-${confirmDeleteData.member}`,
+  memberForm.post(
+    `/health-quote-delete-member`,
+    // `/members/${page.props.quote.customer_type}-${page.props.modelType}-${confirmDeleteData.member}`,
     {
       preserveScroll: true,
       onSuccess: () => {
@@ -513,6 +541,7 @@ const memberDeleteConfirmed = () => {
           position: "top",
         });
         onLoadAvailablePlansData();
+        // location.reload();
       },
       onFinish: () => {
         modals.memberConfirm = false;
@@ -521,7 +550,11 @@ const memberDeleteConfirmed = () => {
   );
 };
 
-const memberDataDocs = (membersDetail) => {
+const onRecieveMembersDetailsReview = () => {
+  membersDetailsUpdated.value = false;
+};
+
+const memberDataDocs = membersDetail => {
   return membersDetail
     .map((member) => ({
       id: member.id,
@@ -584,11 +617,24 @@ const onLoadAvailablePlansData = async () => {
   let url = `/quotes/health/available-plans/${page.props.quote.uuid}`;
   axios
     .post(url, data)
-    .then((res) => {
+    .then(res => {
       plansTable.data = res.data.length > 0 ? res?.data[0] : [];
       getSmallestCopayRateAsDefaultValue();
+      plansTable.data.forEach(plan => {
+        if (plan.isManualPlan) {
+          isManualPlansCount.value++;
+        }
+
+        if (plan.id === selectedPlan.value?.id && !plan.needPriceUpdate) {
+          selectedPlan.value.needPriceUpdate = false;
+        }
+      });
+
+      setTimeout(() => {
+        onPlanFiltersSubmit();
+      }, 800);
     })
-    .catch((err) => {
+    .catch(err => {
       console.log(err);
     });
 };
@@ -704,15 +750,16 @@ const onCreatePlan = () => {
         title: "Plan Created",
         position: "top",
       });
+      location.reload();
     },
   });
 };
 
-const onPlanError = () => {
+const onPlanError = data => {
   modals.createPlan = false;
   notification.error({
-    title: "Plan Creation Failed",
-    position: "top",
+    title: data ?? 'Plan Creation Failed',
+    position: 'top',
   });
 };
 
@@ -828,27 +875,68 @@ const getSmallestCopayRateAsDefaultValue = () => {
   let smallestCopayValue = 0;
   let defaultCopayId = 0;
   let smallestCopayVAT = 0;
-  plansTable.data.forEach((element) => {
-    element.ratesPerCopay.forEach(function callback(value, index) {
-      if (index == 0) {
+  let smallestCopayLoadingPrice = 0;
+  plansTable.data.forEach(element => {
+    defaultCopayId = element.selectedCopayId;
+    element.ratesPerCopay?.forEach(function callback(value, index) {
+      if (
+        element.selectedCopayId &&
+        defaultCopayId == value.healthPlanCoPaymentId
+      ) {
         smallestCopayValue = Number(value.premium);
         smallestCopayVAT = Number(value.vat);
-        defaultCopayId = value.healthPlanCoPaymentId;
-      } else if (value.premium < smallestCopayValue) {
-        smallestCopayValue = Number(value.premium);
-        smallestCopayVAT = Number(value.vat);
-        defaultCopayId = value.healthPlanCoPaymentId;
+        smallestCopayLoadingPrice = Number(
+          value.loadingPrice ? value.loadingPrice : 0,
+        );
+        defaultCopayId = element.selectedCopayId;
+      } else if (
+        element.selectedCopayId == undefined ||
+        element.selectedCopayId == null
+      ) {
+        if (index == 0) {
+          smallestCopayValue = Number(value.premium);
+          smallestCopayVAT = Number(value.vat);
+          smallestCopayLoadingPrice = Number(
+            value.loadingPrice ? value.loadingPrice : 0,
+          );
+          defaultCopayId = value.healthPlanCoPaymentId;
+        } else if (value.premium < smallestCopayValue) {
+          smallestCopayValue = Number(value.premium);
+          smallestCopayVAT = Number(value.vat);
+          smallestCopayLoadingPrice = Number(
+            value.loadingPrice ? value.loadingPrice : 0,
+          );
+          defaultCopayId = value.healthPlanCoPaymentId;
+        }
       }
     });
 
+    element.memberPremiumBreakdown?.forEach(
+      function callback(breakDown, index) {
+        breakDown.ratesPerCopay?.forEach(function callback(ratePerCopay) {
+          if (ratePerCopay.notifyAgent) {
+            element.needPriceUpdate = true;
+          }
+        });
+      },
+    );
+
     if (isMounted.value && selectedCoPay.planId == element.id) {
       element.actualPremium = selectedCoPay.premium;
-      element.vat = selectedCoPay.vat;
+      if (smallestCopayLoadingPrice != 0) {
+        element.vat = Number(
+          (selectedCoPay.premium + smallestCopayLoadingPrice) * 0.05,
+        );
+      } else {
+        element.vat = selectedCoPay.vat;
+      }
       element.selectedCopayId = selectedCoPay.id;
+      element.loadingPrice = smallestCopayLoadingPrice;
     } else {
       element.selectedCopayId = defaultCopayId;
       element.actualPremium = smallestCopayValue;
       element.vat = smallestCopayVAT;
+      element.loadingPrice = smallestCopayLoadingPrice;
     }
     element.coPayments.forEach(function callback(value, index) {
       if (value.id == element.selectedCopayId) {
@@ -864,6 +952,25 @@ const onSelectedCopay = (data) => {
   selectedCoPay.vat = Number(data.vat);
   selectedCoPay.planId = data.planId;
   getSmallestCopayRateAsDefaultValue();
+};
+
+const onMarkPlanAsManual = (plan, loadingPrice) => {
+  listQuotePlansFiltered.value = listQuotePlansFiltered.value.map(element => {
+    if (element.id == plan.id) {
+      element.isManualPlan = true;
+      // LOADING PRICE UPDTAE
+      let vat =
+        (element.actualPremium +
+          (element.policyFee || 0) +
+          (element.basmah || 0) +
+          (loadingPrice || 0)) *
+        0.05;
+      element.loadingPrice = Number(loadingPrice);
+      element.vat = Number(vat);
+    }
+    return element;
+  });
+  onLoadAvailablePlansData();
 };
 
 // quoteDocuments
@@ -1352,8 +1459,8 @@ const linkEntity = () => {
 onMounted(() => {
   onLoadAvailablePlansData();
   const isHealthAdvisor = page.props.advisors.find(
-    (a) => a.id == page.props.quote.advisor_id
-  );
+    a => a.id == page.props.quote.advisor_id,
+  ) || { id: null };
   if (isHealthAdvisor) assignLead.value = isHealthAdvisor.id;
   isMounted.value = true;
 });
@@ -1371,10 +1478,7 @@ const selectedProviderPlan = ref({
   premium: page.props.ecomDetails.priceWithVAT,
 });
 
-console.log(selectedProviderPlan, 'LLLKKKKJ', page.props.quote);
-
 const handlePlanSelected = plan => {
-  console.log('HHH', plan);
   //se.value = plan.id;
   selectedProviderPlan.value.id = plan.id;
   selectedProviderPlan.value.planName = plan.planName;
@@ -1390,6 +1494,15 @@ const handlePlanSelected = plan => {
 const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
 const getDetailPageRoute = (uuid, quote_type_id) =>
   useGetShowPageRoute(uuid, quote_type_id, null);
+
+watch(
+  () => page.props.ecomDetails,
+  value => {
+    selectedProviderPlan.value.premium = value.priceWithVAT;
+  },
+  { deep: true },
+);
+
 </script>
 
 <template>
@@ -1518,7 +1631,7 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
             </Link>
           </div>
           <div class="text-sm">
-            <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
+            <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
               <div
                 v-if="hasAnyRole([rolesEnum.Admin, rolesEnum.Engineering])"
                 class="grid sm:grid-cols-2"
@@ -1643,7 +1756,7 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
           </div>
 
           <div class="text-sm">
-            <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
+            <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">FOR WHOM DO YOU REQUIRE HEALTH INSURANCE?</dt>
                 <dd>{{ quote.cover_for_id_text }}</dd>
@@ -1703,8 +1816,10 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
           <x-form @submit="updateProfileDetails" :auto-focus="false">
             <div class="text-sm">
               <dl
-                v-if="quote.customer_type === page.props.customerTypeEnum.Individual"
-                class="grid md:grid-cols-2 gap-x-6 gap-y-4"
+                v-if="
+                  quote.customer_type === page.props.customerTypeEnum.Individual
+                "
+                class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words"
               >
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">FIRST NAME</dt>
@@ -1744,7 +1859,7 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">EMAIL</dt>
-                  <dd>{{ quote.email }}</dd>
+                  <dd class="break-words">{{ quote.email }}</dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">NATIONALITY</dt>
@@ -1824,7 +1939,9 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">COMPANY NAME</dt>
-                  <dd>{{ customerProfileForm.company_name }}</dd>
+                  <dd class="break-words">
+                    {{ customerProfileForm.company_name }}
+                  </dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">TRADE LICENSE NO</dt>
@@ -2015,13 +2132,12 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
             table-class-name="tablefixed compact"
             :headers="memberDetailsTable.columns"
             :items="membersDetail || []"
-            show-index
             border-cell
             hide-rows-per-page
             hide-footer
           >
-            <template #item-index="{ index, code }">
-              <div>{{ code ?? "Member " + index }}</div>
+            <template #item-first_name="{ first_name, last_name }">
+              {{ first_name + ' ' + (last_name == null ? '' : last_name) }}
             </template>
             <template #item-gender="{ gender }">
               {{ genderText(gender).value }}
@@ -2069,12 +2185,46 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
         <template #header> {{ memberActionEdit ? "Edit" : "Add" }} Member </template>
 
         <x-form @submit="onMemberSubmit" :auto-focus="false">
+          <div
+            v-if="isManualPlansCount > 0"
+            class="bg-red-100 border border-red-400 text-red-700 rounded-b px-4 py-3 shadow-md mb-4"
+            role="alert"
+          >
+            <div class="flex">
+              <div class="py-1">
+                <svg
+                  class="fill-current h-6 w-6 text-read-900 mr-4"
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 20 20"
+                >
+                  <path
+                    d="M2.93 17.07A10 10 0 1 1 17.07 2.93 10 10 0 0 1 2.93 17.07zm12.73-1.41A8 8 0 1 0 4.34 4.34a8 8 0 0 0 11.32 11.32zM9 11V9h2v6H9v-4zm0-6h2v2H9V5z"
+                  />
+                </svg>
+              </div>
+              <div>
+                <p class="font-bold">ALERT! Manual Plan(s) exists.</p>
+                <p class="text-sm">
+                  Please revist all manual plan(s) and update the per member
+                  price
+                </p>
+              </div>
+            </div>
+          </div>
           <div class="grid md:grid-cols-2 gap-4 md:pb-16">
             <input type="hidden" :value="memberForm.id" />
             <x-input
+              maxLength="60"
               v-model="memberForm.first_name"
-              label="Member Name*"
-              placeholder="Member Name"
+              label="First Name"
+              placeholder="First Name"
+              :rules="[isRequired]"
+            />
+            <x-input
+              maxLength="60"
+              v-model="memberForm.last_name"
+              label="Last Name"
+              placeholder="Last Name"
               :rules="[isRequired]"
             />
             <ComboBox
@@ -2095,14 +2245,14 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
               class="w-full"
             />
 
-            <x-select
+            <!-- <x-select
               v-model="memberForm.member_category_id"
               label="Member Category*"
               :options="memberCategoriesOptions"
               :rules="[isRequired]"
               placeholder="Select Member Category"
               class="w-full"
-            />
+            /> -->
 
             <x-select
               v-model="memberForm.gender"
@@ -2114,7 +2264,9 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
             />
             <DatePicker
               v-model="memberForm.dob"
-              label="DOB"
+              label="DOB*"
+              :max-date="new Date()"
+              :rules="[isRequired]"
               :hasError="memberFieldReq.dob"
             />
             <x-select
@@ -2159,6 +2311,31 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
 
       <x-modal v-model="modals.memberConfirm" show-close backdrop>
         <template #header> Delete Member Detail </template>
+        <div
+          v-if="isManualPlansCount > 0"
+          class="w-full bg-red-100 border border-red-400 text-red-700 rounded-b px-4 py-3 shadow-md mb-4"
+          role="alert"
+        >
+          <div class="flex">
+            <div class="py-1">
+              <svg
+                class="fill-current h-6 w-6 text-read-900 mr-4"
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 20 20"
+              >
+                <path
+                  d="M2.93 17.07A10 10 0 1 1 17.07 2.93 10 10 0 0 1 2.93 17.07zm12.73-1.41A8 8 0 1 0 4.34 4.34a8 8 0 0 0 11.32 11.32zM9 11V9h2v6H9v-4zm0-6h2v2H9V5z"
+                />
+              </svg>
+            </div>
+            <div>
+              <p class="font-bold">ALERT! Manual Plan(s) exists.</p>
+              <p class="text-sm">
+                Please revist all manual plan(s) and update the per member price
+              </p>
+            </div>
+          </div>
+        </div>
         <p>Are you sure you want to delete this?</p>
         <template #actions>
           <div class="text-right space-x-4">
@@ -2332,62 +2509,72 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
         <template #body>
           <x-divider class="my-4" />
           <div class="flex flex-wrap md:flex-nowrap gap-6 w-full">
-            <div class="w-full md:w-2/3">
-              <x-textarea
-                v-model="leadStatusForm.notes"
-                type="text"
-                label="Notes"
-                placeholder="Lead Notes"
-                class="w-full"
-                :disabled="quote.quote_status_id == 15"
-              />
-            </div>
-            <div class="w-full md:w-1/3">
-              <div class="flex flex-col gap-4">
-                <x-select
-                  v-model="leadStatusForm.leadStatus"
-                  label="Status"
-                  :options="leadStatusOptions"
+            <div class="w-full md:w-50">
+                  <div class="flex flex-col gap-4">
+                    <x-select
+                      v-model="leadStatusForm.leadStatus"
+                      label="Status"
+                      :options="leadStatusOptions"
+                      :disabled="quote.quote_status_id == 15"
+                      placeholder="Lead Status"
+                      class="w-full"
+                    />
+                <x-textarea
+                  v-model="leadStatusForm.notes"
+                  type="text"
+                  label="Notes"
+                  placeholder="Lead Notes"
+                  class="w-full"
                   :disabled="quote.quote_status_id == 15"
-                  placeholder="Lead Status"
-                  class="w-full"
                 />
-                <x-input
-                  v-if="leadStatusForm.leadStatus == 15"
-                  v-model="leadStatusForm.trans_code"
-                  label="TransApp Code"
-                  placeholder="TransApp Code is required"
-                  class="w-full"
-                  :error="leadStatusForm.errors.trans_code"
-                />
-                <x-select
-                  v-if="leadStatusForm.leadStatus == 17"
-                  v-model="leadStatusForm.lostReason"
-                  label="Lost Reason"
-                  :options="
-                    lostReasons?.map((item) => ({
-                      value: item.id,
-                      label: item.text,
-                    }))
-                  "
-                  placeholder="Lost Reason is required"
-                  class="w-full"
-                  :error="leadStatusForm.errors.lostReason"
-                />
-              </div>
-
-              <div class="flex justify-end">
-                <x-button
-                  class="mt-4"
-                  color="emerald"
-                  size="sm"
-                  :loading="leadStatusForm.processing"
-                  @click.prevent="onLeadStatus"
-                >
-                  Change Status
-                </x-button>
               </div>
             </div>
+            <div class="w-full md:w-50">
+              <div class="flex flex-col gap-4">
+                    <x-input
+                      v-if="leadStatusForm.leadStatus == 15"
+                      v-model="leadStatusForm.trans_code"
+                      label="TransApp Code"
+                      placeholder="TransApp Code is required"
+                      class="w-full"
+                      :error="leadStatusForm.errors.trans_code"
+                    />
+                    <x-select
+                      v-if="leadStatusForm.leadStatus == 17"
+                      v-model="leadStatusForm.lostReason"
+                      label="Lost Reason"
+                      :options="
+                        lostReasons?.map(item => ({
+                          value: item.id,
+                          label: item.text,
+                        }))
+                      "
+                      placeholder="Lost Reason is required"
+                      class="w-full"
+                      :error="leadStatusForm.errors.lostReason"
+                    />
+                <x-field class="" label="Transaction Type">
+                  <x-input
+                    type="text"
+                    :value="quote.transaction_type_text"
+                    class="w-full"
+                    :disabled="true"
+                  />
+                </x-field>
+                  </div>
+            </div>
+          </div>
+          <x-divider class="mb-1 mt-10" />
+          <div class="flex justify-end">
+            <x-button
+              class="mt-4"
+              color="emerald"
+              size="sm"
+              :loading="leadStatusForm.processing"
+              @click.prevent="onLeadStatus"
+            >
+              Change Status
+            </x-button>
           </div>
         </template>
       </Collapsible>
@@ -2406,11 +2593,11 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
             <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">PLAN NAME</dt>
-                <dd>{{ ecomDetails.planName }}</dd>
+                <dd>{{ selectedProviderPlan.planName }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">PROVIDER NAME</dt>
-                <dd>{{ ecomDetails.providerName }}</dd>
+                <dd>{{ selectedProviderPlan.providerName }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">PAYMENT STATUS</dt>
@@ -2433,7 +2620,7 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">TOTAL PRICE (with VAT)</dt>
-                <dd>{{ fixedValue(ecomDetails.priceWithVAT) }}</dd>
+                <dd>{{ selectedProviderPlan.premium }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">CO-PAY / CO-INSURANCE</dt>
@@ -2512,7 +2699,13 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
             </x-badge>
 
             <x-button
-              v-if="isBetaUser"
+              v-if="
+                hasAnyRole([
+                  rolesEnum.BetaUser,
+                  rolesEnum.RMAdvisor,
+                  rolesEnum.HealthManager,
+                ])
+              "
               size="sm"
               color="emerald"
               @click.prevent="modals.createPlan = true"
@@ -2520,6 +2713,7 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
               Add Plan
             </x-button>
           </div>
+
           <DataTable
             ref="planDataTable"
             v-model:items-selected="selectedPlans"
@@ -2548,7 +2742,12 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
                 >
                   Manual Plan
                 </x-tag>
-                <x-tag v-if="isHidden" size="xs" color="error" class="mt-0.5 text-[10px]">
+                <x-tag
+                  v-if="isHidden"
+                  size="xs"
+                  color="error"
+                  class="mt-0.5 text-[10px]"
+                >
                   Hidden
                 </x-tag>
                 <x-tag
@@ -2561,24 +2760,70 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
                 </x-tag>
               </div>
             </template>
-
-            <template #item-total="{ actualPremium, policyFee, basmah, vat }">
+            <template
+              #item-total="{
+                actualPremium,
+                policyFee,
+                basmah,
+                vat,
+                loadingPrice,
+              }"
+            >
               {{
                 fixedValue(
-                  actualPremium + (policyFee || 0) + (basmah || 0) + vat,
+                  actualPremium +
+                    (policyFee || 0) +
+                    (basmah || 0) +
+                    vat +
+                    (loadingPrice || 0),
                 )
               }}
             </template>
             <template #item-action="item">
               <div class="flex gap-2 pr-2">
-                <x-button
-                  size="xs"
-                  color="primary"
-                  outlined
-                  @click.prevent="planClicked(item)"
+                <!-- put here -->
+                <!-- don't remove this commented code anyone please -->
+                <template
+                  v-if="
+                    (item.isManualPlan && membersDetailsUpdated) ||
+                    item.needPriceUpdate
+                  "
                 >
-                  View
-                </x-button>
+                  <!-- always false temporarily -->
+                  <x-tooltip position="top" class="arrow-b">
+                    <x-badge
+                      size="xs"
+                      color="error"
+                      outlined
+                      offset-x="-8"
+                      offset-y="-10"
+                    >
+                      <x-button
+                        size="xs"
+                        color="primary"
+                        outlined
+                        @click.prevent="planClicked(item)"
+                      >
+                        View
+                      </x-button>
+                      <template #content>!</template>
+                    </x-badge>
+                    <template #tooltip>
+                      Price outdated! <br />
+                      Please update
+                    </template>
+                  </x-tooltip>
+                </template>
+                <template v-else>
+                  <x-button
+                    size="xs"
+                    color="primary"
+                    outlined
+                    @click.prevent="planClicked(item)"
+                  >
+                    View
+                  </x-button>
+                </template>
                 <x-button
                   size="xs"
                   color="emerald"
@@ -2587,7 +2832,7 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
                     onCopyText(
                       ecomHealthInsuranceQuoteUrl +
                         quote.uuid +
-                        `/payment/?providerCode=${item.providerCode}&planId=${item.id}&selectedCopayId=${item.selectedCopayId}`
+                        `/payment/?providerCode=${item.providerCode}&planId=${item.id}&selectedCopayId=${item.selectedCopayId}`,
                     )
                   "
                 >
@@ -2612,21 +2857,23 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
           </DataTable>
         </template>
       </Collapsible>
+    </div>
 
-      <x-modal v-model="modals.plan" size="xl" show-close backdrop>
-        <template #header>
-          {{ selectedPlan.providerName }} - {{ selectedPlan.name }}
-        </template>
-        <LazyAvailablePlan
-          :plan="selectedPlan"
-          :genders="genderOptions"
-          @copay-update="onSelectedCopay"
-          @onLoadAvailablePlansData="onLoadAvailablePlansData"
-        />
-      </x-modal>
+      <LazyAvailablePlan
+        v-model="modals.plan"
+        :plan="selectedPlan"
+        :genders="genderOptions"
+        :members="membersDetail"
+        :memberCategories="memberCategories"
+        :memebersDetailsChanged="membersDetailsUpdated"
+        @copay-update="onSelectedCopay"
+        @onLoadAvailablePlansData="onLoadAvailablePlansData"
+        @membersDetailsReviewed="onRecieveMembersDetailsReview"
+        @markPlanAsManual="onMarkPlanAsManual"
+      />
 
       <x-modal v-model="modals.createPlan" size="xl" show-close backdrop>
-        <template #header> Create Heath Quote </template>
+        <template #header> Add Plan </template>
         <LazyCreatePlan
           :uuid="quote.uuid"
           :members="membersDetail"
@@ -2717,6 +2964,7 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
       :quoteId="quote.id"
       :paymentCode="quote.code"
       quoteType="Health"
+      :payments="payments"
     />
     <PaymentTableNew
       v-if="isNewPaymentStructure"
@@ -3126,5 +3374,4 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
       :quoteCode="$page.props.quote.code"
       :expanded="sectionExpanded"
     />
-  </div>
 </template>

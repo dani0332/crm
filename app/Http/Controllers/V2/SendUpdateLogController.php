@@ -15,6 +15,7 @@ use App\Enums\RolesEnum;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\SaveBookingDetailsRequest;
+use App\Http\Requests\SavePolicyDetailsRequest;
 use App\Http\Requests\SendUpdateCustomerRequest;
 use App\Http\Requests\SendUpdateRequest;
 use App\Models\PersonalQuote;
@@ -208,7 +209,7 @@ class SendUpdateLogController extends Controller
             'realQuote' => $realQuote,
             'isNegativeValue' => $this->sendUpdateLogService->isNegativeValue($sendUpdateLog),
             'bookingDetails' => $bookingDetails,
-            'updateBtn' => $this->sendUpdateLogService->getUpdateButtonStatus($sendUpdateLog, $quoteType),
+            'updateBtn' => $this->sendUpdateLogService->getUpdateButtonStatus($sendUpdateLog),
             'paymentInvoices' => $paymentInvoices ?? [],
             'uploadedDocuments' => $uploadedDocuments,
             'isPaymentVisible' => $this->sendUpdateLogService->isPaymentVisible($categoryCode, $optionCode),
@@ -311,11 +312,9 @@ class SendUpdateLogController extends Controller
         return redirect()->back();
     }
 
-    public function savePolicyDetails(Request $request)
+    public function savePolicyDetails(SavePolicyDetailsRequest $savePolicyDetailsRequest)
     {
-        $data = $request->all();
-
-        SendUpdateLogRepository::savePolicyDetails($data);
+        SendUpdateLogRepository::savePolicyDetails($savePolicyDetailsRequest->validated());
 
         return redirect()->back();
     }
@@ -394,11 +393,11 @@ class SendUpdateLogController extends Controller
 
         if (! isset($sendUpdateRequest->paymentValidated)) {
             // Add insuficient Payment Validations here
-            $insuficientPaymentCheck = false;
+            $insufficientPaymentCheck = false;
 
             return response()->json([
-                'insuficientPaymentCheck' => $insuficientPaymentCheck,
-                'parentPaymentStatus' => $sendUpdate->payment_status_id ?? null,
+                'insufficientPaymentCheck' => $insufficientPaymentCheck,
+                'parentPaymentStatus' => $sendUpdate->payments->first()?->payment_status_id ?? null,
             ], 200);
         }
 

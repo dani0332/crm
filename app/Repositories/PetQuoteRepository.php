@@ -107,7 +107,6 @@ class PetQuoteRepository extends BaseRepository
             ->orderBy('created_at', 'desc');
 
         return ($forExport) ? $query->get() : $query->simplePaginate()->withQueryString();
-
     }
 
     public function fetchGetBy($column, $value)
@@ -124,6 +123,7 @@ class PetQuoteRepository extends BaseRepository
                 'nationality',
                 'quoteDetail.lostReason',
                 'quoteDetail.previousAdvisor',
+                'transactionType',
                 'payments' => function ($q) {
                     $q->with(['paymentStatus', 'personalPlan', 'paymentMethod', 'paymentStatusLogs', 'insuranceProvider', 'paymentSplits.paymentStatus', 'paymentSplits.paymentMethod', 'paymentSplits.documents']);
                 },
@@ -141,9 +141,9 @@ class PetQuoteRepository extends BaseRepository
             ])
             ->select([
                 $this->getTable().'.*',
-                \DB::raw('DATE_FORMAT(renewal_expiry_date, "%d-%m-%Y") as renewal_expiry_date'),
-                \DB::raw('DATE_FORMAT(policy_start_date, "%d-%m-%Y") as policy_start_date'),
-                \DB::raw('DATE_FORMAT(policy_issuance_date, "%d-%m-%Y") as policy_issuance_date'),
+                'renewal_expiry_date',
+                'policy_start_date',
+                'policy_issuance_date',
                 \DB::raw('IF(EXISTS (
                     SELECT *
                     FROM quote_request_entity_mapping
@@ -158,9 +158,9 @@ class PetQuoteRepository extends BaseRepository
         $data = ! empty($quote) ? $quote->toArray() : [];
         $quote->lost_reason = $data['quote_detail']['lost_reason']['text'] ?? null;
         $quote->previous_advisor_id_text = $data['quote_detail']['previous_advisor']['name'] ?? null;
+        $quote->transaction_type_text = $data['transaction_type']['text'] ?? null;
 
         return $quote;
-
     }
 
     /**

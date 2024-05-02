@@ -270,7 +270,7 @@ const sendUpdateValidation = () => {
 
       <div
         v-for="documentType in documentTypes"
-        :key="documentType.id"
+        :key="documentType.id" 
         class="grid md:grid-cols-2 gap-2 my-4 border-b"
       >
         <div class="flex flex-col gap-1">
@@ -288,7 +288,7 @@ const sendUpdateValidation = () => {
             :max-files="documentType.max_files"
             :max-size="documentType.max_size"
             :loading="docForm.processing"
-            @change="uploadFile(documentType, $event)"
+            @change="uploadFile(documentType, $event)" 
           />
           <a
             v-for="quoteDocument in quoteDocuments.filter(

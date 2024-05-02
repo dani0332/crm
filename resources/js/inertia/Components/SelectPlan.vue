@@ -39,7 +39,7 @@ const updateSelectedPlan = () => {
                     premium = res.data.plan.planProcessValue.totalPremium
                     break;
                 case 'health' :
-                    premium = (props.plan?.actualPremium + (props.plan?.policyFee || 0) + (props.plan?.basmah || 0) + props.plan?.vat)
+                premium = (props.plan?.actualPremium + (props.plan?.policyFee || 0) + (props.plan?.basmah || 0) + props.plan?.vat + (props.plan?.loadingPrice || 0))
                     break;
                 default:
                     break;

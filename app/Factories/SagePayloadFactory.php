@@ -2,8 +2,10 @@
 
 namespace App\Factories;
 
+use App\Enums\PaymentMethodsEnum;
 use App\Enums\quoteStatusCode;
 use App\Enums\SageEnum;
+use App\Enums\SagePaymentMethodsEnum;
 use App\Models\Lookup;
 use App\Models\QuoteRequestEntityMapping;
 use App\Models\User;
@@ -13,8 +15,8 @@ class SagePayloadFactory
 {
     public static function instanceData()
     {
-        return (Object) [
-            'sage_api_date_format' => env('SAGE_300_API_DATE_FORMAT')
+        return (object) [
+            'sage_api_date_format' => env('SAGE_300_API_DATE_FORMAT'),
         ];
     }
 
@@ -547,7 +549,7 @@ class SagePayloadFactory
                     'CustomerNumber' => $request->sage_customer_number,
                     'BankReceiptAmount' => floatval($request->collection_amount),
                     'CheckReceiptNumber' => '123456',
-                    'PaymentCode' => 'BT',
+                    'PaymentCode' => self::sagePaymentCodeMapping($request->sage_payment_code),
                     'ReceiptTransactionType' => 'Prepayment',
                     'AppliedReceiptsAdjustments' => [
                         [
@@ -1388,4 +1390,21 @@ class SagePayloadFactory
         return $message;
     }
 
+    // Payment code mapping
+    private static function sagePaymentCodeMapping($paymentMethod)
+    {
+        $sagePaymentCodeMappingArray = [
+            PaymentMethodsEnum::BankTransfer => SagePaymentMethodsEnum::SAGE_BANK_TRANSFER,
+            PaymentMethodsEnum::Cash => SagePaymentMethodsEnum::SAGE_CASH,
+            PaymentMethodsEnum::Cheque => SagePaymentMethodsEnum::SAGE_CHEQUE,
+            PaymentMethodsEnum::PostDatedCheque => SagePaymentMethodsEnum::SAGE_POST_DATED_CHEQUE,
+            PaymentMethodsEnum::CreditCard => SagePaymentMethodsEnum::SAGE_CREDIT_CARD,
+            PaymentMethodsEnum::InsurerPayment => SagePaymentMethodsEnum::SAGE_INSURER_PAYMENT,
+        ];
+        if (array_key_exists($paymentMethod, $sagePaymentCodeMappingArray)) {
+            return $sagePaymentCodeMappingArray[$paymentMethod];
+        } else {
+            return SagePaymentMethodsEnum::SAGE_BANK_TRANSFER;
+        }
+    }
 }

@@ -141,10 +141,7 @@ const transactionPaymentStatus = computed(() => {
 const bookingDetailsForm = useForm({
   id: props.sendUpdateLog.id,
   send_update_type: props.selectedCategory.subCategory.slug,
-  booking_date:
-    props.bookingDetails?.booking_date ||
-    dateToYMD(props.quote?.policy_booking_date) ||
-    new Date().toJSON().slice(0, 10),
+  booking_date: props.bookingDetails?.booking_date,
   invoice_description: props.bookingDetails?.invoice_description || "",
   broker_invoice_number: props.bookingDetails?.broker_invoice_number || "",
   transaction_payment_status:
@@ -158,7 +155,7 @@ const bookingDetailsForm = useForm({
     props?.payments[0]?.insurer_tax_number ||
     "",
   discount:
-    props.bookingDetails?.discount || props?.payments[0]?.discount_value || 0.00,
+    props.bookingDetails?.discount || props?.payments[0]?.discount_value || '0.00',
   insurer_commission_invoice_number:
     props.bookingDetails?.insurer_commission_invoice_number ||
     props?.payments[0]?.insurer_commmission_invoice_number ||
@@ -170,19 +167,19 @@ const bookingDetailsForm = useForm({
   commission_vat_not_applicable:
     props.bookingDetails?.commission_vat_not_applicable ||
     props?.payments[0]?.commission_vat_not_applicable ||
-    0.00,
+    '0.00',
   vat_on_commission:
     props.bookingDetails?.vat_on_commission || props?.payments[0]?.commission_vat || "",
   commission_vat_applicable:
     props.bookingDetails?.commission_vat_applicable ||
     props?.payments[0]?.commission_vat_applicable ||
-    0.00,
+    '0.00',
   total_commission:
     props.bookingDetails?.total_commission || props?.payments[0]?.commission || "",
   total_vat_amount: props.bookingDetails?.total_vat_amount || null,
   price_vat_applicable: props.bookingDetails?.price_vat_applicable || "",
-  price_vat_not_applicable: props.bookingDetails?.price_vat_not_applicable || 0.00,
-  total_price: props.bookingDetails?.total_price || 0.00,
+  price_vat_not_applicable: props.bookingDetails?.price_vat_not_applicable || '0.00',
+  total_price: props.bookingDetails?.total_price || '0.00',
   // new entry section related.
   reversal_invoice: props.bookingDetails?.reversal_invoice || null,
 });
@@ -190,7 +187,7 @@ const bookingDetailsForm = useForm({
 // convertToNegative function will replace all values in negative if the isNegativeValue is true.
 const calculateCommission = () => {
   if (bookingDetailsForm.commission_vat_applicable > 0) {
-    if (Number(props.sendUpdateLog?.price_with_vat > 0)) {
+    if (Number(bookingDetailsForm.price_vat_applicable > 0)) {
       let vat_on_commission = bookingDetailsForm.commission_vat_applicable * Number(5 / 100);
       bookingDetailsForm.vat_on_commission = convertToNegative(vat_on_commission);
 
@@ -420,11 +417,7 @@ function convertToNumber(value) {
 }
 
 const sendUpdateButton = computed(() => {
-  return (
-    (isEF.value || isCI.value || isCIR.value || isCPD.value) &&
-    props.updateBtn &&
-    can(page.props.permissionsEnum.SEND_UPDATE_TO_CUSTOMER)
-  );
+  return props.updateBtn && can(page.props.permissionsEnum.SEND_UPDATE_TO_CUSTOMER);
 });
 
 const modals = reactive({
@@ -461,9 +454,9 @@ const sendUpdateValidation = () => {
     .then((response) => {
       if (response.status == 200) {
         if (props.updateBtn === sendUpdateStatusEnum.SU) {
-          if(response.data.insuficientPaymentCheck == true) {
+          if(response.data.insufficientPaymentCheck == true) {
             insuficientPaymentConfirmation(response);
-          } else if(response.data.insuficientPaymentCheck == false) {
+          } else if(response.data.insufficientPaymentCheck == false) {
             attestRecord();
           }
         } else {
@@ -627,6 +620,15 @@ const submitToCustomer = () => {
       isNotConfirmed.value = false;
     });
 };
+
+const onCancel = () => {
+  state.isEdit = false;
+  bookingDetailsForm.invoice_date = props.bookingDetails?.invoice_date || null;
+  bookingDetailsForm.insurer_tax_invoice_number = props.bookingDetails?.insurer_tax_invoice_number || '';
+  bookingDetailsForm.insurer_commission_invoice_number = props.bookingDetails?.insurer_commission_invoice_number || '';
+  bookingDetailsForm.price_vat_applicable = props.bookingDetails?.price_vat_applicable || '';
+  bookingDetailsForm.commission_vat_applicable = props.bookingDetails?.commission_vat_applicable || '';
+}
 </script>
 
 <template>
@@ -679,8 +681,8 @@ const submitToCustomer = () => {
               <dd></dd>
             </div>
 
-            <div class="grid sm:grid-cols-2 ml-[-50px] mt-4">
-              <dt class="flex justify-end mr-10">
+            <div class="grid sm:grid-cols-2 mt-4">
+              <dt>
                 <x-tooltip position="left">
                   <label
                       class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
@@ -698,7 +700,7 @@ const submitToCustomer = () => {
             </div>
 
             <div class="grid sm:grid-cols-2">
-              <dt class="flex justify-end mr-10">
+              <dt>
                 <x-tooltip position="left">
                   <label
                       class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
@@ -715,8 +717,8 @@ const submitToCustomer = () => {
               </dd>
             </div>
 
-            <div class="grid sm:grid-cols-2 ml-[-50px]">
-              <dt class="font-bold text-right mr-10">
+            <div class="grid sm:grid-cols-2">
+              <dt class="font-bold">
                 <span>MAIN CLASS OF INSURANCE</span>
               </dt>
               <dd>
@@ -725,7 +727,7 @@ const submitToCustomer = () => {
             </div>
 
             <div class="grid sm:grid-cols-2">
-              <dt class="flex justify-end mr-10">
+              <dt>
                 <x-tooltip position="left">
                   <label
                       class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
@@ -742,8 +744,8 @@ const submitToCustomer = () => {
               </dd>
             </div>
 
-            <div class="grid sm:grid-cols-2 ml-[-50px]">
-              <dt class="flex justify-end mr-10">
+            <div class="grid sm:grid-cols-2">
+              <dt>
                 <x-tooltip position="left">
                   <label
                       class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
@@ -759,7 +761,7 @@ const submitToCustomer = () => {
             </div>
 
             <div class="grid sm:grid-cols-2">
-              <dt class="flex justify-end mr-10">
+              <dt>
                 <x-tooltip position="left">
                   <label
                       class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
@@ -776,8 +778,8 @@ const submitToCustomer = () => {
               </dd>
             </div>
 
-            <div class="grid sm:grid-cols-2 ml-[-50px]">
-              <dt class="flex justify-end mr-10">
+            <div class="grid sm:grid-cols-2">
+              <dt>
                 <x-tooltip position="left">
                   <label
                       class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
@@ -795,7 +797,7 @@ const submitToCustomer = () => {
             </div>
 
             <div class="grid sm:grid-cols-2">
-              <dt class="flex justify-end mr-10">
+              <dt>
                 <x-tooltip position="left">
                   <label
                       class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
@@ -812,8 +814,8 @@ const submitToCustomer = () => {
               </dd>
             </div>
 
-            <div class="grid sm:grid-cols-2 ml-[-50px]">
-              <dt class="flex justify-end mr-10">
+            <div class="grid sm:grid-cols-2">
+              <dt>
                 <x-tooltip position="left">
                   <label
                       class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
@@ -831,7 +833,7 @@ const submitToCustomer = () => {
             </div>
 
             <div class="grid sm:grid-cols-2">
-              <dt class="flex justify-end mr-10">
+              <dt>
                 <x-tooltip position="left">
                   <label
                       class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
@@ -848,8 +850,8 @@ const submitToCustomer = () => {
               </dd>
             </div>
 
-            <div class="grid sm:grid-cols-2 ml-[-50px]">
-              <dt class="flex justify-end mr-10">
+            <div class="grid sm:grid-cols-2">
+              <dt>
                 <x-tooltip position="left">
                   <label
                       class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
@@ -867,7 +869,7 @@ const submitToCustomer = () => {
             </div>
 
             <div class="grid sm:grid-cols-2">
-              <dt class="flex justify-end mr-10">
+              <dt>
                 <x-tooltip position="left">
                   <label
                       class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
@@ -884,8 +886,8 @@ const submitToCustomer = () => {
               </dd>
             </div>
 
-            <div class="grid sm:grid-cols-2 ml-[-50px]">
-              <dt class="flex justify-end mr-10">
+            <div class="grid sm:grid-cols-2">
+              <dt>
                 <x-tooltip position="left">
                   <label
                       class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
@@ -903,7 +905,7 @@ const submitToCustomer = () => {
             </div>
 
             <div class="grid sm:grid-cols-2">
-              <dt class="flex justify-end mr-10">
+              <dt>
                 <x-tooltip position="left">
                   <label
                       class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
@@ -920,8 +922,8 @@ const submitToCustomer = () => {
               </dd>
             </div>
 
-            <div class="grid sm:grid-cols-2 ml-[-50px]">
-              <dt class="flex justify-end mr-10">
+            <div class="grid sm:grid-cols-2">
+              <dt>
                 <x-tooltip position="left">
                   <label
                       class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
@@ -939,7 +941,7 @@ const submitToCustomer = () => {
             </div>
 
             <div class="grid sm:grid-cols-2">
-              <dt class="flex justify-end mr-10">
+              <dt>
                 <x-tooltip position="left">
                   <label
                       class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
@@ -956,8 +958,8 @@ const submitToCustomer = () => {
               </dd>
             </div>
 
-            <div class="grid sm:grid-cols-2 ml-[-50px]">
-              <dt class="flex justify-end mr-10">
+            <div class="grid sm:grid-cols-2">
+              <dt>
                 <x-tooltip position="left">
                   <label
                       class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
@@ -975,7 +977,7 @@ const submitToCustomer = () => {
             </div>
 
             <div class="grid sm:grid-cols-2">
-              <dt class="flex justify-end mr-10">
+              <dt>
                 <x-tooltip position="left">
                   <label
                       class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
@@ -992,8 +994,8 @@ const submitToCustomer = () => {
               </dd>
             </div>
 
-            <div class="grid sm:grid-cols-2 ml-[-50px]">
-              <dt class="flex justify-end mr-10">
+            <div class="grid sm:grid-cols-2">
+              <dt>
                 <x-tooltip position="left">
                   <label
                       class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
@@ -1065,8 +1067,8 @@ const submitToCustomer = () => {
                 <dd></dd>
               </div>
 
-              <div class="grid sm:grid-cols-2 ml-[-50px] mt-4">
-                <dt class="font-bold text-right mr-10">
+              <div class="grid sm:grid-cols-2 mt-4">
+                <dt class="font-bold">
                   <x-tooltip position="left">
                     <label
                       class="text-xs text-gray-800 underline decoration-dotted decoration-primary-700"
@@ -1084,7 +1086,7 @@ const submitToCustomer = () => {
               </div>
 
               <div class="grid sm:grid-cols-2">
-                <dt class="flex justify-end mr-10">
+                <dt>
                   <x-tooltip position="left">
                     <label
                         class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
@@ -1101,8 +1103,8 @@ const submitToCustomer = () => {
                 </dd>
               </div>
 
-              <div class="grid sm:grid-cols-2 ml-[-50px]">
-                <dt class="font-bold text-right mr-10">
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-bold">
                   <span>MAIN CLASS OF INSURANCE</span>
                 </dt>
                 <dd>
@@ -1111,7 +1113,7 @@ const submitToCustomer = () => {
               </div>
 
               <div class="grid sm:grid-cols-2">
-                <dt class="flex justify-end mr-10">
+                <dt>
                   <x-tooltip position="left">
                     <label
                         class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
@@ -1128,8 +1130,8 @@ const submitToCustomer = () => {
                 </dd>
               </div>
 
-              <div class="grid sm:grid-cols-2 ml-[-50px]">
-                <dt class="flex justify-end mr-10">
+              <div class="grid sm:grid-cols-2">
+                <dt>
                   <x-tooltip position="left">
                     <label
                         class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
@@ -1145,7 +1147,7 @@ const submitToCustomer = () => {
               </div>
 
               <div class="grid sm:grid-cols-2">
-                <dt class="flex justify-end mr-10">
+                <dt>
                   <x-tooltip position="left">
                     <label
                         class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
@@ -1165,13 +1167,14 @@ const submitToCustomer = () => {
                     placeholder="Enter Insurer Invoice date"
                     :rules="[isRequired]"
                     size="xs"
+                    class="w-fit"
                   />
                   <!-- <span>{{ bookingDetailsForm.invoice_date }}</span> -->
                 </dd>
               </div>
 
-              <div class="grid sm:grid-cols-2 ml-[-50px]">
-                <dt class="flex justify-end mr-10">
+              <div class="grid sm:grid-cols-2">
+                <dt>
                   <x-tooltip position="left">
                     <label
                         class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
@@ -1189,7 +1192,7 @@ const submitToCustomer = () => {
               </div>
 
               <div class="grid sm:grid-cols-2">
-                <dt class="flex justify-end mr-10">
+                <dt>
                   <x-tooltip position="left">
                     <label
                         class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
@@ -1205,7 +1208,7 @@ const submitToCustomer = () => {
                   <x-input
                     maxlength="60"
                     v-model="bookingDetailsForm.insurer_tax_invoice_number"
-                    class="w-full"
+                    class="w-fit"
                     :disabled="!state.isEdit"
                     placeholder="Enter insurer Tax Invoice Number"
                     :rules="[isRequired]"
@@ -1215,8 +1218,8 @@ const submitToCustomer = () => {
                 </dd>
               </div>
 
-              <div class="grid sm:grid-cols-2 ml-[-50px]">
-                <dt class="flex justify-end mr-10">
+              <div class="grid sm:grid-cols-2">
+                <dt>
                   <x-tooltip position="left">
                     <label
                         class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
@@ -1234,7 +1237,7 @@ const submitToCustomer = () => {
               </div>
 
               <div class="grid sm:grid-cols-2">
-                <dt class="flex justify-end mr-10">
+                <dt>
                   <x-tooltip position="left">
                     <label
                         class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
@@ -1250,7 +1253,7 @@ const submitToCustomer = () => {
                   <x-input
                     maxlength="60"
                     v-model="bookingDetailsForm.insurer_commission_invoice_number"
-                    class="w-full"
+                    class="w-fit"
                     :disabled="!state.isEdit"
                     placeholder="Enter Commission Tax Invoice No"
                     :rules="[isRequired]"
@@ -1260,8 +1263,8 @@ const submitToCustomer = () => {
                 </dd>
               </div>
 
-              <div class="grid sm:grid-cols-2 ml-[-50px]">
-                <dt class="flex justify-end mr-10">
+              <div class="grid sm:grid-cols-2">
+                <dt>
                   <x-tooltip position="left">
                     <label
                         class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
@@ -1279,7 +1282,7 @@ const submitToCustomer = () => {
               </div>
 
               <div class="grid sm:grid-cols-2">
-                <dt class="flex justify-end mr-10">
+                <dt>
                   <x-tooltip position="left">
                     <label
                         class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
@@ -1296,7 +1299,7 @@ const submitToCustomer = () => {
                     type="number"
                     v-model="bookingDetailsForm.price_vat_applicable"
                     @change="calculateCommission"
-                    class="w-full"
+                    class="w-fit"
                     :disabled="!state.isEdit"
                     placeholder="Enter Price"
                     :rules="[isRequired]"
@@ -1306,8 +1309,8 @@ const submitToCustomer = () => {
                 </dd>
               </div>
 
-              <div class="grid sm:grid-cols-2 ml-[-50px]">
-                <dt class="flex justify-end mr-10">
+              <div class="grid sm:grid-cols-2">
+                <dt>
                   <x-tooltip position="left">
                     <label
                         class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
@@ -1325,7 +1328,7 @@ const submitToCustomer = () => {
               </div>
 
               <div class="grid sm:grid-cols-2">
-                <dt class="flex justify-end mr-10">
+                <dt>
                   <x-tooltip position="left">
                     <label
                         class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
@@ -1342,8 +1345,8 @@ const submitToCustomer = () => {
                 </dd>
               </div>
 
-              <div class="grid sm:grid-cols-2 ml-[-50px]">
-                <dt class="flex justify-end mr-10">
+              <div class="grid sm:grid-cols-2">
+                <dt>
                   <x-tooltip position="left">
                     <label
                         class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
@@ -1361,7 +1364,7 @@ const submitToCustomer = () => {
               </div>
 
               <div class="grid sm:grid-cols-2">
-                <dt class="flex justify-end mr-10">
+                <dt>
                   <x-tooltip position="left">
                     <label
                         class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
@@ -1378,7 +1381,7 @@ const submitToCustomer = () => {
                     type="number"
                     v-model="bookingDetailsForm.commission_vat_applicable"
                     @change="calculateCommission"
-                    class="w-full"
+                    class="w-fit"
                     :disabled="!state.isEdit"
                     placeholder="Enter Commission Amount"
                     :rules="[isRequired]"
@@ -1388,8 +1391,8 @@ const submitToCustomer = () => {
                 </dd>
               </div>
 
-              <div class="grid sm:grid-cols-2 ml-[-50px]">
-                <dt class="flex justify-end mr-10">
+              <div class="grid sm:grid-cols-2">
+                <dt>
                   <x-tooltip position="left">
                     <label
                         class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
@@ -1407,7 +1410,7 @@ const submitToCustomer = () => {
               </div>
 
               <div class="grid sm:grid-cols-2">
-                <dt class="flex justify-end mr-10">
+                <dt>
                   <x-tooltip position="left">
                     <label
                         class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
@@ -1424,8 +1427,8 @@ const submitToCustomer = () => {
                 </dd>
               </div>
 
-              <div class="grid sm:grid-cols-2 ml-[-50px]">
-                <dt class="flex justify-end mr-10">
+              <div class="grid sm:grid-cols-2">
+                <dt>
                   <x-tooltip position="left">
                     <label
                         class="text-xs font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
@@ -1461,7 +1464,7 @@ const submitToCustomer = () => {
               <x-button
                 size="sm"
                 color="orange"
-                @click="state.isEdit = false"
+                @click="onCancel"
                 :loading="bookingDetailsForm.processing"
                 :disabled="bookingDetailsForm.processing"
               >

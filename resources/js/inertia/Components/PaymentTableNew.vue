@@ -1,6 +1,7 @@
 <script setup>
 import ToolTip from './../Components/ToolTip.vue';
 import {computed} from "vue";
+import UpdateTotalPrice from './../Components/UpdateTotalPrice.vue';
 const notification = useNotifications('toast');
 const page = usePage();
 
@@ -18,7 +19,7 @@ const props = defineProps({
   quoteType: String,
   storageUrl: String,
   eCommercePrice: {
-    type: String,
+    type: [String, Number],
     default: '0',
   },
   quoteSubType: {
@@ -83,6 +84,7 @@ const collectionAmountModels = ref([]);
 const fileUploadModels = ref([]);
 const checkDetailModels = ref([]);
 const readOnlyPayments = ref([]);
+const authorizedPayments = ref([]);
 const splitPaymentRecord = ref([]);
 const filesTest = ref([]);
 const isCreditPaymentInvalid = ref([]);
@@ -104,21 +106,21 @@ const modal2Ref = ref(null);
 const familyEmployeDiscount = ['Car', 'Health', 'Home', 'Travel'];
 // Array of quote types to check against
 const quoteTypesToCheck = ['Car', 'Health', 'Travel']; //Ecommerce LOBs
-// Declare initialAmount variable
-let initialAmount;
+// Declare initialAmount.value variable
+const initialAmount = ref(0);
 
-// Check quoteType and set initialAmount accordingly
+// Check quoteType and set initialAmount.value accordingly
 if (props.sendUpdate) {
-  initialAmount = props.sendUpdate.total_price;
+  initialAmount.value = props.sendUpdate.total_price;
 } else if (props.quoteType === 'Health') {
-  initialAmount = props.eCommercePrice;
+  initialAmount.value = props.eCommercePrice;
 } else {
-  initialAmount = quoteTypesToCheck.includes(props.quoteType)
+  initialAmount.value = quoteTypesToCheck.includes(props.quoteType)
     ? props.quoteRequest.premium
     : props.quoteRequest.price_with_vat;
 }
-const totalPrice = ref(initialAmount); // Initial total price
-const totalAmount = ref(initialAmount); // Initial total price
+const totalPrice = ref(initialAmount.value); // Initial total price
+const totalAmount = ref(initialAmount.value); // Initial total price
 
 const discountProofDocument = props.paymentDocument.find(item => item.text === "Discount Proof");
 const paymentProofDocument  = props.paymentDocument.find(item => item.text === "Payment Proof");
@@ -642,7 +644,6 @@ const handleDiscountChange = (editDiscountValue=0) => {
     } else if( props.quoteType === 'Home' || props.quoteType === 'Travel' ) {
       discountValue.value = (totalPrice.value * (12.5 / 100)).toFixed(2);
     } else {
-      console.log("DISC==="+totalPrice.value);
       discountValue.value = (totalPrice.value * (7.5 / 100)).toFixed(2); // for car
     }
   }
@@ -675,7 +676,7 @@ const calculateDueDates = () => {
       }
     }
   } else if(paymentMethodsForm.frequency === 'custom'){
-    for (let i = 2; i <= paymentMethodsForm.payment_no; i++) {
+    for (let i = 2; i <= paymentMethodsForm.payment_no; i++) {if(i>12) continue;
         const currentDueDate = dueDateModels.value[i - 1];
         const nextDueDate = new Date(currentDueDate);
         // Set the month to the next month
@@ -806,7 +807,7 @@ const handleFrequencyChange = (noPaymentUpdate=true) => {
   isCustomReasonEnabled.value = false;
   handleApprovalReasonChange();
 
-  for (let i = 1; i <= 12; i++) { // Append 7 more values to totalPayments
+  for (let i = 1; i <= 20; i++) { // Append 7 more values to totalPayments
     totalPayments.value.push({ value: i.toString(), label: i.toString() });
   }
   calculatePaymentBreakup();
@@ -825,7 +826,7 @@ const handleFrequencyChange = (noPaymentUpdate=true) => {
     if(noPaymentUpdate){
       paymentMethodsForm.payment_no = '2';
     }
-    totalPayments.value.splice(-7);
+    totalPayments.value.splice(-15);
     totalPayments.value.splice(0, 1);
   } else if (paymentMethodsForm.frequency === 'custom') {
     isPaymentNoEnabled.value = true;
@@ -862,7 +863,7 @@ const generateCCLink = async (code,splitPaymentId,paymentStatus) => {
       });
   } else {
     try {
-      const response = await axios.post('/generate-payment-link', {
+      const response = await axios.post('/generate-payment-link-new', {
         quoteId: props.quoteRequest.id,
         modelType: props.quoteType,
         paymentCode: code,
@@ -1036,6 +1037,7 @@ const editPaymentModal = (payment,split_payment_id,sr_no,capture_approval) => {
   isDiscountEnabled.value = false;
   isTotalPriceUpdated.value = false;
   isGalleryModelOpen.value = false;
+  authorizedPayments.value = [];
   if(sr_no>0){
     splitPaymentNo.value = sr_no;
     isFieldReadonly.value = true;
@@ -1112,6 +1114,12 @@ const editPaymentModal = (payment,split_payment_id,sr_no,capture_approval) => {
     } else {
       readOnlyPayments.value[i] = false;
     }
+    if(payment.payment_splits[i-1].payment_status_id === props.paymentStatusEnum.AUTHORISED){
+      authorizedPayments.value[i] = true;
+    } else {
+      authorizedPayments.value[i] = false;
+    }
+
     fileUploadModels.value[i] = [];
     paymentMethodsModels.value[i] = payment.payment_splits[i-1].payment_method.code;
     splitAmountModels.value[i] = payment.payment_splits[i-1].payment_amount;
@@ -1145,11 +1153,9 @@ const editPaymentModal = (payment,split_payment_id,sr_no,capture_approval) => {
   }
 
   if (paymentMethodsForm.status == 'edit') {
-    //if ( isAnyPaid && (totalPrice.value <= payment.total_price) ) { //FOR EDIT
-    ////if ( isAnyPaid ) {
     totalPrice.value = payment.total_price;
     totalAmount.value = payment.total_price-payment.discount_value;
-    handleDiscountChange(payment.discount_value);
+
     if  ( isAnyPaid
           && (payment.total_price<=(payment.total_amount+payment.discount_value))
         ) { //FOR EDIT
@@ -1162,10 +1168,17 @@ const editPaymentModal = (payment,split_payment_id,sr_no,capture_approval) => {
     }
   }
 
+  if(
+    (payment.discount_type==='family_employee_discount' || payment.discount_type==='employee_discount')
+    && payment.discount_value>0
+    ){
+      discountValue.value = payment.discount_value;
+  }
+
    //Assign plan for Travel
    if (props.quoteType === 'Travel' && (paymentMethodsForm.status == 'edit' || paymentMethodsForm.status == 'view')) {
       planDetail.value =  payment.travel_plan;
-      planDetail.value['insurance_provider'] =  payment.insurance_provider;
+      if (planDetail.value) {planDetail.value['insurance_provider'] =  payment.insurance_provider;}
     }
 
   if(capture_approval>0) {
@@ -1278,7 +1291,7 @@ const addPayment = isValid => {
   }
   if (!isValid) return;
   //define main payment method
-  let mainPaymentMethod = 'CR';
+  let mainPaymentMethod = paymentMethodsModels.value[0]?paymentMethodsModels.value[0]:paymentMethodsModels.value[1];
   if(paymentMethodsForm.credit_approval!=='' && paymentMethodsForm.credit_approval!==null){
     mainPaymentMethod = 'CA';
   } else if(paymentMethodsForm.frequency === 'custom' || paymentMethodsForm.frequency === 'monthly'
@@ -1287,8 +1300,10 @@ const addPayment = isValid => {
     mainPaymentMethod = 'PP';
   } else if(paymentMethodsForm.frequency === 'split_payments'){
     mainPaymentMethod = 'MP';
-  } else if(splitAmountModels.value.length===2){
-    mainPaymentMethod = paymentMethodsModels.value[1];
+  }
+
+  if(mainPaymentMethod==='' || mainPaymentMethod===null){
+    mainPaymentMethod = 'CSH';
   }
 
   let data = {
@@ -1434,7 +1449,7 @@ const addPayment = isValid => {
     };
     paymentMethodsForm
       .transform(data => editData)
-      .post('/payments/'+props.quoteType+'/update', {
+      .post('/payments/'+props.quoteType+'/update-new', {
         preserveScroll: true,
         onSuccess: () => {
           createPaymentModal.value = false;
@@ -1453,7 +1468,7 @@ const addPayment = isValid => {
   };
   paymentMethodsForm
     .transform(data => storeData)
-    .post('/payments/'+props.quoteType+'/store', {
+    .post('/payments/'+props.quoteType+'/store-new', {
       preserveScroll: true,
       onSuccess: () => {
         createPaymentModal.value = false;
@@ -1616,11 +1631,12 @@ const uploadDocument = (doc, files, count) => {
 
 const getCaptureValidation = computed(() => {
   return (payment) => {
-    //6 =AML Screening Cleared , 32 = Transaction Declined
+    //6 =AML Screening Cleared , 32 = Transaction Declined , 15 = Transaction Approved
     if ( props.payments.length>0 &&
       (
-      ((props.quoteRequest.quote_status_id === 6 || props.quoteRequest.quote_status_id === 32)
-      && props.quoteRequest.kyc_decision === 'Complete')
+      ((props.quoteRequest.quote_status_id === 6 || props.quoteRequest.quote_status_id === 32 || props.quoteRequest.quote_status_id === 15)
+      && props.quoteRequest.kyc_decision === 'Complete' && (payment.total_price === (payment.total_amount + payment.discount_value))
+      )
       ||
       props.quoteType === 'Travel' //skip AML & KYC for travel
       )
@@ -1759,19 +1775,27 @@ const providerName = computed(() => {
 
 // Watch for changes in paymentMethodsForm.collection_date
 watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
-  calculateDueDates();
+  if (newValue && oldValue) {
+      // Get the date part without the time from the newValue and oldValue
+      const newDate = new Date(newValue).toISOString().split('T')[0];
+      const oldDate = new Date(oldValue).toISOString().split('T')[0];
+      // Compare the dates
+      if (newDate !== oldDate) {
+          calculateDueDates();
+      }
+  }
 });
 
 watch(() => props.quoteRequest, (newValue, oldValue) => {
   //refresh premium
   if (props.quoteType === 'Health') {
-    initialAmount = props.eCommercePrice;
+    initialAmount.value = props.eCommercePrice;
   } else {
-    initialAmount = quoteTypesToCheck.includes(props.quoteType)
+    initialAmount.value = quoteTypesToCheck.includes(props.quoteType)
       ? props.quoteRequest.premium
       : props.quoteRequest.price_with_vat;
   }
-  totalPrice.value = initialAmount;
+  totalPrice.value = initialAmount.value;
   //refresh plan
   if (quoteTypesToCheck.includes(props.quoteType)) {
     initalPlanDetails = props.quoteRequest.plan;
@@ -1783,9 +1807,27 @@ watch(() => props.quoteRequest, (newValue, oldValue) => {
   planDetail.value = initalPlanDetails;
 });
 
+// verify if master payment is paid
+const isMasterPaymentPaid = computed(() => {
+  if (props.payments[0].payment_status_id===props.paymentStatusEnum.PAID) {
+    return true;
+  }
+  return false;
+});
+
 watch(() => props.sendUpdate?.total_price, (newValue, oldValue) => {
   totalPrice.value = newValue;
 });
+
+// Watch for Ecommerce Price changes
+
+watch(
+  () => props.eCommercePrice,
+  (newValue, oldValue) => {
+    initialAmount.value = newValue;
+    totalPrice.value = newValue;
+  },
+);
 
 </script>
 
@@ -1795,7 +1837,14 @@ watch(() => props.sendUpdate?.total_price, (newValue, oldValue) => {
       <h3 class="font-semibold text-primary-800 text-lg">Manage Payments</h3>
         <div v-if="page.props.linkedQuoteDetails.childLeadsCount == 0">
             <template v-if="payments.length>0">
-                <x-button
+                <UpdateTotalPrice
+          v-if="can(permissionEnum.TEMP_UPDATE_TOTALPRICE) && quoteRequest.quote_status_id === 15 && isMasterPaymentPaid"
+          :quoteId="quoteRequest.id"
+          :paymentCode = "payments[0].code"
+          :quoteType="quoteType"
+          :totalPrice="payments[0].total_price"
+        />
+        <x-button
                     v-if="can(permissionEnum.PaymentsCreate)"
                     size="sm"
                     color="emerald"
@@ -1820,7 +1869,6 @@ watch(() => props.sendUpdate?.total_price, (newValue, oldValue) => {
                 </x-tooltip>
             </template>
         </div>
-
     </div>
     <div class="vue3-easy-data-table tablefixed custom-height">
       <div class="vue3-easy-data-table__main fixed-header hoverable border-cell custom-height">
@@ -2707,7 +2755,7 @@ watch(() => props.sendUpdate?.total_price, (newValue, oldValue) => {
                     </template>
                     <template v-else >
                       <x-input
-                        v-if="paymentMethodsModels[count]==='CC'"
+                        v-if="paymentMethodsModels[count]==='CC' && authorizedPayments[count]"
                         v-model="collectionAmountModels[count]"
                         class="w-full"
                         :class="{'custom-select-error': isCreditPaymentInvalid[count]}"
@@ -2725,6 +2773,7 @@ watch(() => props.sendUpdate?.total_price, (newValue, oldValue) => {
                         v-model="dueDateModels[count]"
                         class="w-full"
                         :rules="[rules.isRequired]"
+                        placeholder="dd-mm-yyyy"
                       />
                     </template>
                   </div>

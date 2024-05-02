@@ -112,7 +112,7 @@ class SendUpdateLogRepository extends BaseRepository
     public function fetchUpdateLog($id, $data)
     {
         try {
-            $log = $this->where('id', $id)->update([
+            $log = $this->find($id)->update([
                 'notes' => $data['notes'],
                 'option_id' => $data['option_id'],
             ]);
@@ -139,7 +139,7 @@ class SendUpdateLogRepository extends BaseRepository
     public function fetchUpdateLogPriceDetails($data)
     {
         try {
-            $result = $this->where('id', $data['id'])->update([
+            $result = $this->find($data['id'])->update([
                 'total_price' => $data['total_price'],
                 'price_with_vat' => $data['price_with_vat'],
                 'price_without_vat' => $data['price_without_vat'],
@@ -195,8 +195,8 @@ class SendUpdateLogRepository extends BaseRepository
                 'issuance_date' => $data['issuance_date'],
                 'start_date' => $data['start_date'],
                 'expiry_date' => $data['expiry_date'],
-                'insurer_quote_number' => $data['insurer_quote_number'],
-                'issuance_status_id' => $data['issuance_status_id'],
+                'insurer_quote_number' => $data['insurer_quote_number'] ?? null,
+                'issuance_status_id' => $data['issuance_status_id'] ?? null,
                 'status' => SendUpdateLogStatusEnum::REQUEST_IN_PROGRESS,
                 'is_policy_filled' => SendUpdateLogStatusEnum::POLICY_FILLED,
             ]);
@@ -229,7 +229,7 @@ class SendUpdateLogRepository extends BaseRepository
         try {
             $data = [
                 'is_booking_filled' => SendUpdateLogStatusEnum::BOOKING_FILLED,
-                'booking_date' => $request['booking_date'],
+                // 'booking_date' => $request['booking_date'], // commented this because it will update when Sage Invoice created through Send Update
                 'invoice_description' => $request['invoice_description'],
                 'broker_invoice_number' => $request['broker_invoice_number'],
                 'transaction_payment_status' => $request['transaction_payment_status'],
@@ -252,7 +252,7 @@ class SendUpdateLogRepository extends BaseRepository
             if ($request['send_update_type'] == SendUpdateLogStatusEnum::CPD) {
                 $data = array_merge($data, ['reversal_invoice' => $request['reversal_invoice']]);
             }
-            $res = $this->where('id', $request['id'])->update($data);
+            $res = $this->find($request['id'])->update($data);
         } catch (\Exception $ex) {
             $res = (object) [
                 'message' => $ex->getMessage(),

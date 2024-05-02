@@ -204,7 +204,7 @@ const isBookingDetailsVisible = computed(() => {
       <div class="text-sm">
         <dl class="grid md:grid-cols-2 gap-y-4">
           <div class="grid sm:grid-cols-2">
-            <dt class="flex justify-end mr-10">
+            <dt>
               <x-tooltip position="left">
                 <label
                     class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
@@ -218,8 +218,8 @@ const isBookingDetailsVisible = computed(() => {
             </dt>
             <dd>{{ sendUpdateLog.code }}</dd>
           </div>
-          <div class="grid sm:grid-cols-2 ml-[-250px]">
-            <dt class="font-bold text-right mr-10">Notes</dt>
+          <div class="grid md:grid-cols-2 gap-y-4">
+            <dt>Notes</dt>
             <dd>
               <x-input
                 v-model="sendUpdateForm.notes"
@@ -230,7 +230,7 @@ const isBookingDetailsVisible = computed(() => {
           </div>
           <div class="grid sm:grid-cols-2">
             <template v-if="selectedCategory.subCategory.slug !== 'EN' && selectedCategory.subCategory.slug !== 'CPU'">
-              <dt class="flex justify-end mr-10">
+              <dt>
                 <x-tooltip position="left">
                   <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
@@ -245,8 +245,8 @@ const isBookingDetailsVisible = computed(() => {
               <dd>{{ transactionType || selectedCategory.title }}</dd>
             </template>
           </div>
-          <div class="grid sm:grid-cols-2 ml-[-250px]">
-            <dt class="flex justify-end mr-10">
+          <div class="grid md:grid-cols-2 gap-y-4">
+            <dt>
               <x-tooltip position="left">
                 <label
                     class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
@@ -262,7 +262,7 @@ const isBookingDetailsVisible = computed(() => {
           </div>
           <div class="grid sm:grid-cols-2">
             <template v-if="selectedCategory.subCategory.slug !== 'CI' && selectedCategory.subCategory.slug !== 'CIR' && selectedCategory.subCategory.slug !== 'CPU' && selectedCategory.subCategory.slug !== 'CPD'">
-              <dt class="flex justify-end mr-10">
+              <dt>
                 <x-tooltip position="left">
                   <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"

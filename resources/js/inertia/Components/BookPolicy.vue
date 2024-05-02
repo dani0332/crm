@@ -55,19 +55,21 @@ const currentDate = computed(() => {
 });
 
 const transactionPaymentStatus = computed(() => {
-  if (Number(page.props?.payments[0]?.captured_amount) === 0) {
+  let firstPayment = page.props?.payments[0];
+
+  let totalPrice = Number(firstPayment?.total_price);
+  let capturedAmount = Number(firstPayment?.captured_amount);
+  let discountValue = Number(firstPayment?.discount_value);
+
+  let capturedAmountWithDiscount = capturedAmount + discountValue;
+
+  if (capturedAmount === 0) {
     return 'Not Paid';
   }
-  if (
-    Number(page.props?.payments[0]?.total_price) >
-    Number(page.props?.payments[0]?.captured_amount)
-  ) {
+  if (totalPrice > capturedAmountWithDiscount) {
     return 'Partially Paid';
   }
-  if (
-    Number(page.props?.payments[0]?.captured_amount) >=
-    Number(page.props?.payments[0]?.total_price)
-  ) {
+  if (capturedAmountWithDiscount >= totalPrice) {
     return 'Paid';
   }
 });
@@ -474,7 +476,12 @@ const caculateCommission = () => {
                   color="emerald"
                   size="sm"
                   :loading="bpForm.processing"
-                  @click.prevent="bp.isEditing = false"
+                  @click.prevent="
+                    () => {
+                      bp.isEditing = false;
+                      bpForm.reset();
+                    }
+                  "
                 >
                   Cancel
                 </x-button>
@@ -634,7 +641,7 @@ const caculateCommission = () => {
       </x-alert>
       <x-checkbox
         v-model="modals.isConfirmed"
-        label="I confirm and attest that all the information is correct"
+        label="I confirm and attest that all information recorded is correct."
       />
       <template #actions>
         <div class="text-right space-x-4">

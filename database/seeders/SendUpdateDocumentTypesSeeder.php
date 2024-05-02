@@ -16,7 +16,7 @@ class SendUpdateDocumentTypesSeeder extends Seeder
         DocumentType::updateOrCreate([
             'code' => DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE,
         ], [
-            'text' => 'Send Update Policy Schedule',
+            'text' => 'Endorsed Schedule',
             'is_active' => 1,
             'folder_path' => 'send-update',
             'accepted_files' => '.pdf,.xlsx,.xls,.docx,.doc,.jpeg,.jpg,.png',
@@ -24,12 +24,13 @@ class SendUpdateDocumentTypesSeeder extends Seeder
             'max_size' => 25,
             'is_required' => 0,
             'category' => 'SEND_UPDATE',
+            'sort_order' => 1,
         ]);
 
         DocumentType::updateOrCreate(([
             'code' => DocumentTypeCode::SEND_UPDATE_POLICY_CERTIFICATE,
         ]), [
-            'text' => 'Send Update Policy Certificate',
+            'text' => 'Endorsed Certificate',
             'is_active' => 1,
             'folder_path' => 'send-update',
             'accepted_files' => '.pdf,.xlsx,.xls,.docx,.doc,.jpeg,.jpg,.png',
@@ -37,12 +38,13 @@ class SendUpdateDocumentTypesSeeder extends Seeder
             'max_size' => 25,
             'is_required' => 0,
             'category' => 'SEND_UPDATE',
+            'sort_order' => 2,
         ]);
 
         DocumentType::updateOrCreate(([
             'code' => DocumentTypeCode::SEND_UPDATE_ECARD,
         ]), [
-            'text' => 'Send Update E-Card',
+            'text' => 'E-Card',
             'is_active' => 1,
             'folder_path' => 'send-update',
             'accepted_files' => '.pdf,.xlsx,.xls,.docx,.doc,.jpeg,.jpg,.png',
@@ -50,12 +52,13 @@ class SendUpdateDocumentTypesSeeder extends Seeder
             'max_size' => 25,
             'is_required' => 0,
             'category' => 'SEND_UPDATE',
+            'sort_order' => 3,
         ]);
 
         DocumentType::updateOrCreate(([
             'code' => DocumentTypeCode::SEND_UPDATE_TAX_INVOICE,
         ]), [
-            'text' => 'Send Update Tax Invoice',
+            'text' => 'Tax Invoice',
             'is_active' => 1,
             'folder_path' => 'send-update',
             'accepted_files' => '.pdf,.xlsx,.xls,.docx,.doc,.jpeg,.jpg,.png',
@@ -63,12 +66,13 @@ class SendUpdateDocumentTypesSeeder extends Seeder
             'max_size' => 25,
             'is_required' => 0,
             'category' => 'SEND_UPDATE',
+            'sort_order' => 4,
         ]);
 
         DocumentType::updateOrCreate(([
             'code' => DocumentTypeCode::SEND_UPDATE_TAX_INVOICE_RAISED_BUYER,
         ]), [
-            'text' => 'Send Update Tax Invoice Raised Buyer',
+            'text' => 'Tax Invoice Raised Buyer',
             'is_active' => 1,
             'folder_path' => 'send-update',
             'accepted_files' => '.pdf,.xlsx,.xls,.docx,.doc,.jpeg,.jpg,.png',
@@ -76,12 +80,27 @@ class SendUpdateDocumentTypesSeeder extends Seeder
             'max_size' => 25,
             'is_required' => 0,
             'category' => 'SEND_UPDATE',
+            'sort_order' => 5,
         ]);
 
         DocumentType::updateOrCreate(([
             'code' => DocumentTypeCode::SEND_UPDATE_RECEIPT,
         ]), [
-            'text' => 'Send Update Receipt',
+            'text' => 'Receipt',
+            'is_active' => 1,
+            'folder_path' => 'send-update',
+            'accepted_files' => '.pdf,.xlsx,.xls,.docx,.doc,.jpeg,.jpg,.png',
+            'max_files' => 5,
+            'max_size' => 25,
+            'is_required' => 0,
+            'category' => 'SEND_UPDATE',
+            'sort_order' => 6,
+        ]);
+
+        DocumentType::updateOrCreate(([
+            'code' => DocumentTypeCode::SEND_UPDATE_PAYMENT_PROOF,
+        ]), [
+            'text' => 'Payment Proof',
             'is_active' => 1,
             'folder_path' => 'send-update',
             'accepted_files' => '.pdf,.xlsx,.xls,.docx,.doc,.jpeg,.jpg,.png',
@@ -92,22 +111,9 @@ class SendUpdateDocumentTypesSeeder extends Seeder
         ]);
 
         DocumentType::updateOrCreate(([
-            'code' => DocumentTypeCode::SEND_UPDATE_ADDITIONAL_EMAIL_ATTACHEMENTS,
+            'code' => DocumentTypeCode::SEND_UPDATE_CUSTOMER_DOCUMENTS,
         ]), [
-            'text' => 'Send Update Additional Email Attachments',
-            'is_active' => 1,
-            'folder_path' => 'send-update',
-            'accepted_files' => '.pdf,.xlsx,.xls,.docx,.doc,.jpeg,.jpg,.png',
-            'max_files' => 20,
-            'max_size' => 25,
-            'is_required' => 0,
-            'category' => 'SEND_UPDATE',
-        ]);
-
-        DocumentType::updateOrCreate(([
-            'code' => DocumentTypeCode::SEND_UPDATE_GARAGE_LIST,
-        ]), [
-            'text' => 'Send Update Garage List',
+            'text' => 'Customer documents',
             'is_active' => 1,
             'folder_path' => 'send-update',
             'accepted_files' => '.pdf,.xlsx,.xls,.docx,.doc,.jpeg,.jpg,.png',
@@ -118,22 +124,9 @@ class SendUpdateDocumentTypesSeeder extends Seeder
         ]);
 
         DocumentType::updateOrCreate(([
-            'code' => DocumentTypeCode::SEND_UPDATE_GARAGE_LIST,
+            'code' => DocumentTypeCode::SEND_UPDATE_UW_EMAIL_CORRESPONDENCE,
         ]), [
-            'text' => 'Send Update Garage List',
-            'is_active' => 1,
-            'folder_path' => 'send-update',
-            'accepted_files' => '.pdf,.xlsx,.xls,.docx,.doc,.jpeg,.jpg,.png',
-            'max_files' => 5,
-            'max_size' => 25,
-            'is_required' => 0,
-            'category' => 'SEND_UPDATE',
-        ]);
-
-        DocumentType::updateOrCreate(([
-            'code' => DocumentTypeCode::SEND_UPDATE_POLICY_HANDBOOK,
-        ]), [
-            'text' => 'Send Update Policy Handbook',
+            'text' => 'UW email Correspondence',
             'is_active' => 1,
             'folder_path' => 'send-update',
             'accepted_files' => '.pdf,.xlsx,.xls,.docx,.doc,.jpeg,.jpg,.png',

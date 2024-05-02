@@ -8,6 +8,7 @@ use Auth;
 use Config;
 use Illuminate\Http\Request;
 
+// Scheduled to delete 15th April 2024
 class ClaimsAttachmentsController extends Controller
 {
     /**
@@ -69,7 +70,7 @@ class ClaimsAttachmentsController extends Controller
     /**
      * Display the specified resource.
      *
-     * @param  \App\Models\ClaimsAttachments  $claimsAttachments
+     * @param  ClaimsAttachments  $claimsAttachments
      * @return \Illuminate\Http\Response
      */
     public function show(Claim $claim, ClaimsAttachments $claimAttachment)
@@ -80,7 +81,7 @@ class ClaimsAttachmentsController extends Controller
     /**
      * Show the form for editing the specified resource.
      *
-     * @param  \App\Models\ClaimsAttachments  $claimsAttachments
+     * @param  ClaimsAttachments  $claimsAttachments
      * @return \Illuminate\Http\Response
      */
     public function edit(Claim $claim, ClaimsAttachments $claimAttachment)
@@ -91,7 +92,7 @@ class ClaimsAttachmentsController extends Controller
     /**
      * Update the specified resource in storage.
      *
-     * @param  \App\Models\ClaimsAttachments  $claimsAttachments
+     * @param  ClaimsAttachments  $claimsAttachments
      * @return \Illuminate\Http\Response
      */
     public function update(Request $request, Claim $claim, ClaimsAttachments $claimAttachment)
@@ -122,7 +123,7 @@ class ClaimsAttachmentsController extends Controller
     /**
      * Remove the specified resource from storage.
      *
-     * @param  \App\Models\ClaimsAttachments  $claimsAttachments
+     * @param  ClaimsAttachments  $claimsAttachments
      * @return \Illuminate\Http\Response
      */
     public function destroy(Claim $claim, ClaimsAttachments $claimAttachment)

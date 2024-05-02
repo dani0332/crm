@@ -17,7 +17,7 @@ class PersonalQuoteController extends Controller
      */
     public function updateStatus($quoteType, $quoteId, PersonalQuoteStatusRequest $request)
     {
-        PersonalQuoteRepository::updateStatus($quoteType, $quoteId, $request->validated());
+        PersonalQuoteRepository::updateStatuses($quoteType, $quoteId, $request->validated());
 
         return back()->with('message', 'Status updated successfully');
     }

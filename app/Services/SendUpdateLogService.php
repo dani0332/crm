@@ -351,13 +351,19 @@ class SendUpdateLogService
         }
 
         if ($countChildRecords == 0) {
+
+            $countChildRecords++;
+            $explodeQuoteLink = explode('/', $quoteObject->quote_link);
+            $explodeQuoteLink[array_key_last($explodeQuoteLink)] = $quoteObject->code.'-'.$countChildRecords;
+
             $getRelations = $quoteObject->getRelations();
             $replicateObject = $quoteObject->replicate($modelRelationDetails['skipParentColumns']);
             $replicateObject->fill([
-                'code' => $quoteObject->code.'-'.++$countChildRecords,
+                'code' => $quoteObject->code.'-'.$countChildRecords,
                 'uuid' => $quoteObject->uuid.'-'.$countChildRecords,
                 'quote_status_id' => QuoteStatusEnum::NewLead,
                 'parent_duplicate_quote_id' => $quoteObject->code,
+                'quote_link' => implode('/', $explodeQuoteLink),
             ])->save();
 
             foreach ($getRelations as $relation => $relationObject) {
@@ -456,6 +462,7 @@ class SendUpdateLogService
             'broker_invoice_number' => $insuranceProviderCode.$insuranceProviderLeadCount,
             'invoice_description' => $invoiceDescription,
             'reversal_invoice_description' => $reversalInvoiceDescription ?? '',
+            'transaction_payment_status' => $sendUpdateLog->transaction_payment_status ?? '',
         ];
     }
 
@@ -487,43 +494,22 @@ class SendUpdateLogService
         return $sendUpdateLog->documents()->pluck('document_type_code')->toArray();
     }
 
-    public function getUpdateButtonStatus($sendUpdateLog, $quoteType): string
+    public function getUpdateButtonStatus($sendUpdateLog): string
     {
+        $sendUpdateCode = $sendUpdateLog->category->code;
         $uploadedDocuments = $this->getUploadedDocuments($sendUpdateLog);
         $requiredDocuments = [DocumentTypeCode::SEND_UPDATE_TAX_INVOICE, DocumentTypeCode::SEND_UPDATE_TAX_INVOICE_RAISED_BUYER];
 
-        // check if required documents not uploaded then show Send Update to Customer
-        $requiredDocumentsCheck = count(array_diff($requiredDocuments, $uploadedDocuments)) > 0;
+        // check if required documents not uploaded then show Send Update to Customer.
+        $requiredDocumentsCheck = count(array_diff($requiredDocuments, $uploadedDocuments));
 
-        if ($sendUpdateLog->is_booking_filled) { // Check if all booking details uploaded.
-            if ($sendUpdateLog->category->code == SendUpdateLogStatusEnum::EF) {
-                if ($sendUpdateLog->option->code == SendUpdateLogStatusEnum::PPE && $sendUpdateLog->transaction_payment_status == SendUpdateLogStatusEnum::TRANSACTION_APPROVED && $sendUpdateLog->is_policy_filled) { // Check if all policy details uploaded.
-                    return SendUpdateLogStatusEnum::SU;
-                }
-
-                if (! in_array($sendUpdateLog->option->code, [
-                    SendUpdateLogStatusEnum::MPC,
-                    SendUpdateLogStatusEnum::MDOM,
-                    SendUpdateLogStatusEnum::MDOV,
-                    SendUpdateLogStatusEnum::ED,
-                    SendUpdateLogStatusEnum::DM,
-                ]) && $sendUpdateLog->transaction_payment_status == SendUpdateLogStatusEnum::TRANSACTION_APPROVED) {
-                    return SendUpdateLogStatusEnum::SU;
-                }
-            } elseif ($sendUpdateLog->category->code == SendUpdateLogStatusEnum::CPD && $sendUpdateLog->is_policy_filled) { // Check if all policy details uploaded.
-                return SendUpdateLogStatusEnum::SU;
-            } elseif (in_array($sendUpdateLog->category->code, [SendUpdateLogStatusEnum::CI, SendUpdateLogStatusEnum::CIR])) {
-                return SendUpdateLogStatusEnum::SU;
-            }
-
-            if ($requiredDocumentsCheck) {
-                return SendUpdateLogStatusEnum::SUC;
-            }
+        // send update to customer button visibility validations.
+            if ($sendUpdateCode != SendUpdateLogStatusEnum::CPD && $requiredDocumentsCheck == count($requiredDocuments)) {
+            return SendUpdateLogStatusEnum::SUC;
         }
-        if (in_array($sendUpdateLog->category->code, [SendUpdateLogStatusEnum::EN, SendUpdateLogStatusEnum::CPU])) {
-            if ($requiredDocumentsCheck) {
-                return SendUpdateLogStatusEnum::SUC;
-            }
+
+        if ($sendUpdateCode != SendUpdateLogStatusEnum::CPU && $requiredDocumentsCheck == 0) {
+            return SendUpdateLogStatusEnum::SU;
         }
 
         return false;
@@ -599,7 +585,7 @@ class SendUpdateLogService
     {
         $payments = $sendUpdateLog->payments;
         if ($payments) {
-            $payments->load(['paymentSplits', 'paymentStatus', 'paymentMethod', 'insuranceProvider', 'paymentStatusLog', 'paymentSplits.paymentStatus', 'paymentSplits.documents']);
+            $payments->load(['paymentSplits', 'paymentStatus', 'paymentMethod', 'insuranceProvider', 'paymentStatusLog', 'paymentSplits.paymentStatus', 'paymentSplits.documents', 'paymentSplits.paymentMethod']);
         }
 
         return $payments;
@@ -620,7 +606,7 @@ class SendUpdateLogService
             'commission_vat_applicable' => $sendUpdateLog->commission_vat_applicable,
             'commission' => $sendUpdateLog->total_commission,
             'insurer_invoice_date' => $sendUpdateLog->invoice_date,
-            // 'commission_vat' => $sendUpdateLog->commission_vat_applicable, // Didn't find respective column in send_update_log table
+            // 'commission_vat' => $sendUpdateLog->vat_on_commission, // Didn't find respective column in send_update_log table
             // 'commission_without_vat' => $sendUpdateLog->commission_vat_applicable, // Didn't find respective column in send_update_log table
             // 'policy_due_date' => $sendUpdateLog->commission_vat_applicable, // Didn't find respective column in send_update_log table
         ];
@@ -695,8 +681,13 @@ class SendUpdateLogService
                         'policy_booking_date' => $sendUpdateLog->booking_date,
                     ]);
                 }
+            }
 
-                $sendUpdateLog->update(['status' => SendUpdateLogStatusEnum::UPDATE_BOOKED]);
+            if (in_array($categoryCode, [SendUpdateLogStatusEnum::EF, SendUpdateLogStatusEnum::CI, SendUpdateLogStatusEnum::CIR, SendUpdateLogStatusEnum::CPD])) {
+                $sendUpdateLog->update([
+                    'booking_date' => now(),
+                    'status' => SendUpdateLogStatusEnum::UPDATE_BOOKED,
+                ]);
             }
 
             \DB::commit();
