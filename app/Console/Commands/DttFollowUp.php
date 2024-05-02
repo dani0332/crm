@@ -54,7 +54,7 @@ class DttFollowUp extends Command
     public function handle()
     {
         $isDttEnabled = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::DTT_ENABLED);
-        if ($isDttEnabled && $isDttEnabled == 1) {
+        if ($isDttEnabled == false || $isDttEnabled == 0) {
             info('Dtt is not enabled from cms');
 
             return false;
@@ -77,7 +77,7 @@ class DttFollowUp extends Command
         })->where('reply_received', 0)
             ->get();
 
-        $logPrefix = 'carRevivalFollowUpEmailJob-';
+        $logPrefix = 'carRevivalFollowUpEmailJob -';
         $paymentStatusArray = [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PARTIAL_CAPTURED, PaymentStatusEnum::AUTHORISED];
         $leadSourceArray = [LeadSourceEnum::REVIVAL_PAID];
         foreach ($unreplied as $item) {

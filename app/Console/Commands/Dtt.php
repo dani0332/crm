@@ -49,7 +49,7 @@ class Dtt extends Command
     public function handle()
     {
         $isDttEnabled = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::DTT_ENABLED);
-        if ($isDttEnabled && $isDttEnabled == 1) {
+        if ($isDttEnabled == false || $isDttEnabled == 0) {
             info('DTT is not enabled from cms');
 
             return false;
@@ -82,11 +82,11 @@ class Dtt extends Command
             ->groupBy(['email', 'car_make_id', 'car_model_id', 'year_of_manufacture'])
             ->get();
 
-        info($logPrefix.'count -'.count($leads).'-'.json_encode($leads->pluck('uuid')->toArray()));
+        info($logPrefix.' count - '.count($leads).' - '.json_encode($leads->pluck('uuid')->toArray()));
 
         foreach ($leads as $carLead) {
             $isTierR = app(LeadAllocationService::class)->checkIfLeadIsRenewal($carLead);
-            info($logPrefix.'isTierR-'.! $isTierR);
+            info($logPrefix.'isTierR - '.! $isTierR);
             if (! $isTierR) {
                 $jobs[] = new CarRevivalLeadsCreationJob($carLead);
             }
