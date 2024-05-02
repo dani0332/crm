@@ -83,7 +83,13 @@ function onSubmit(isValid) {
     </div>
     <x-divider class="my-4" />
     <x-form @submit="onSubmit" :auto-focus="false">
-      <x-alert color="error" class="mb-5" v-if="$page.props?.errors">
+      <x-alert
+        color="error"
+        class="mb-5"
+        v-if="
+          $page.props?.errors && Object.keys($page.props?.errors).length > 0
+        "
+      >
         {{ $page.props?.errors }}
       </x-alert>
 
@@ -95,6 +101,7 @@ function onSubmit(isValid) {
             :rules="[isRequired]"
             class="w-full"
             :error="quoteForm.errors.first_name"
+            maxLength="20"
           />
         </x-field>
         <x-field label="Last Name" required>
@@ -104,6 +111,7 @@ function onSubmit(isValid) {
             :rules="[isRequired]"
             class="w-full"
             :error="quoteForm.errors.last_name"
+            maxLength="50"
           />
         </x-field>
         <x-field label="Email" required>

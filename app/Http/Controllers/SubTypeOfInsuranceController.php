@@ -8,6 +8,7 @@ use App\Models\SubTypeOfInsurance;
 use DataTables;
 use Illuminate\Http\Request;
 
+// Scheduled to delete 15th April 2024
 class SubTypeOfInsuranceController extends Controller
 {
     public function __construct()
@@ -53,7 +54,7 @@ class SubTypeOfInsuranceController extends Controller
     /**
      * Store a newly created resource in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
+     * @param  Request  $request
      * @return \Illuminate\Http\Response
      */
     public function store(SubTypeInsuranceRequest $request, SubTypeOfInsurance $subtypeofinsurance)
@@ -71,7 +72,7 @@ class SubTypeOfInsuranceController extends Controller
     /**
      * Display the specified resource.
      *
-     * @param  \App\Models\SubTypeOfInsurance  $subTypeOfInsurance
+     * @param  SubTypeOfInsurance  $subTypeOfInsurance
      * @return \Illuminate\Http\Response
      */
     public function show(SubTypeOfInsurance $subtypeofinsurance)
@@ -84,7 +85,7 @@ class SubTypeOfInsuranceController extends Controller
     /**
      * Show the form for editing the specified resource.
      *
-     * @param  \App\Models\SubTypeOfInsurance  $subTypeOfInsurance
+     * @param  SubTypeOfInsurance  $subTypeOfInsurance
      * @return \Illuminate\Http\Response
      */
     public function edit(SubTypeOfInsurance $subtypeofinsurance)
@@ -97,8 +98,8 @@ class SubTypeOfInsuranceController extends Controller
     /**
      * Update the specified resource in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \App\Models\SubTypeOfInsurance  $subTypeOfInsurance
+     * @param  Request  $request
+     * @param  SubTypeOfInsurance  $subTypeOfInsurance
      * @return \Illuminate\Http\Response
      */
     public function update(SubTypeInsuranceRequest $request, SubTypeOfInsurance $subtypeofinsurance)
@@ -116,7 +117,7 @@ class SubTypeOfInsuranceController extends Controller
     /**
      * Remove the specified resource from storage.
      *
-     * @param  \App\Models\SubTypeOfInsurance  $subTypeOfInsurance
+     * @param  SubTypeOfInsurance  $subTypeOfInsurance
      * @return \Illuminate\Http\Response
      */
     public function destroy(SubTypeOfInsurance $subtypeofinsurance)

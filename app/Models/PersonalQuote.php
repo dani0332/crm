@@ -239,6 +239,10 @@ class PersonalQuote extends Model implements AuditableContract
     {
         return $this->hasMany(QuoteStatusLog::class, 'quote_request_id');
     }
+    public function transactionType()
+    {
+        return $this->belongsTo(Lookup::class, 'transaction_type_id', 'id');
+    }
 
     public function quoteRequestEntityMapping()
     {
@@ -251,7 +255,7 @@ class PersonalQuote extends Model implements AuditableContract
         return $this->belongsTo(InsuranceProvider::class, 'insurance_provider_id', 'id');
     }
 
-    public function sageLog()
+    public function sageLogs()
     {
         return $this->morphMany(SageApiLog::class, 'section');
     }

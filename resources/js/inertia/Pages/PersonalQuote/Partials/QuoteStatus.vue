@@ -14,8 +14,9 @@ const props = defineProps({
   }
 });
 
-const notification = useNotifications('toast');
+const page = usePage();
 
+const notification = useNotifications('toast');
 const quoteStatusOptions = computed(() => {
   return props.quoteStatuses.map(status => ({
     value: status.id,
@@ -55,8 +56,7 @@ const rules = {
 
 const allowStatusUpdate = computed(() => {
   return (
-    props.quote.quote_status_id ==
-    props.quoteStatusEnum.TransactionApproved
+    props.quote.quote_status_id == page.props.quoteStatusEnum.TransactionApproved
   );
 });
 </script>
@@ -119,6 +119,14 @@ const allowStatusUpdate = computed(() => {
                 :error="quoteStatusForm.errors.lost_reason_id"
               />
             </x-field>
+            <x-field label="Transaction Type">
+              <x-input
+                type="text"
+                :value="quote.transaction_type_text"
+                class="w-full"
+                :disabled="true"
+              />
+          </x-field>
           </div>
         </div>
         <div class="flex justify-end">

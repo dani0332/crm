@@ -33,6 +33,7 @@ use App\Repositories\QuoteStatusRepository;
 use App\Repositories\SendUpdateLogRepository;
 use App\Services\AMLService;
 use App\Services\BusinessQuoteService;
+use App\Services\CentralService;
 use App\Services\CRUDService;
 use App\Services\CustomerService;
 use App\Services\DropdownSourceService;
@@ -198,8 +199,8 @@ class AmtController extends Controller
     public function store(Request $request)
     {
         $this->validate($request, [
-            'first_name' => 'required|max:150',
-            'last_name' => 'required|max:150',
+            'first_name' => 'required|between:1,20',
+            'last_name' => 'required|between:1,50',
             'email' => 'required|email:rfc,dns|max:150',
             'mobile_no' => 'required|regex:/(0)[0-9]/|not_regex:/[a-z]/|min:7|max:20',
             'business_type_of_insurance_id' => 'required',
@@ -235,6 +236,7 @@ class AmtController extends Controller
         $data = $record->toArray();
         $record->lost_reason = $data['business_quote_request_detail']['lost_reason']['text'] ?? null;
         $record->previous_advisor_id_text = $data['previous_advisor']['name'] ?? null;
+        $record->transaction_type_text = $data['transaction_type']['text'] ?? null;
         $quoteDetails = app(BusinessQuoteService::class)->getDetailEntity($record->id);
         $quoteStatuses = QuoteStatusRepository::byQuoteTypeId(QuoteTypes::BUSINESS->id())->get();
         $lostReasons = LostReasonRepository::orderBy('text', 'asc')->get();
@@ -245,6 +247,8 @@ class AmtController extends Controller
         $nationalities = Nationality::where('is_active', 1)->select('id', 'text')->get();
         $UBORelations = LookupRepository::where('key', LookupsEnum::UBO_RELATION)->get();
         $emirates = Emirate::where('is_active', 1)->select('id', 'text')->get();
+
+        $isAmlClearedForPayment = app(CentralService::class)->amlClearedFromLog($record->id, QuoteTypes::BUSINESS->name);
 
         if (AMLService::checkAMLStatusFailed(QuoteTypes::BUSINESS->id(), $record->id)) {
             $quoteStatuses = collect($quoteStatuses)->filter(function ($value) {
@@ -264,17 +268,6 @@ class AmtController extends Controller
         $issuanceAuthorities = $lookupService->getIssuanceAuthorities();
         $documentTypes = DocumentTypeRepository::byQuoteTypeId(QuoteTypes::BUSINESS->id())->active()->get();
         $vatPercentage = ApplicationStorage::where('key_name', ApplicationStorageEnums::VAT_VALUE)->first()->value ?? 0;
-
-        $sendUpdateOptions = [];
-        $sendUpdateLogs = [];
-        $sendUpdateEnum = (object) [];
-        $hasPolicyIssuedStatus = $crudService->hasAtleastOneStatusPolicyIssued(QuoteTypes::BUSINESS->id(), $record->id);
-
-        if ($hasPolicyIssuedStatus) {
-            $sendUpdateOptions = (new LookupService)->getSendUpdateOptions(QuoteTypes::BUSINESS->id());
-            $sendUpdateLogs = SendUpdateLogRepository::findByQuoteUuid($record->uuid);
-            $sendUpdateEnum = SendUpdateLogStatusEnum::asArray();
-        }
 
         $sendUpdateOptions = [];
         $sendUpdateLogs = [];
@@ -322,6 +315,7 @@ class AmtController extends Controller
             'paymentStatusEnum' => PaymentStatusEnum::asArray(),
             'paymentMethods' => $paymentMethods,
             'isNewPaymentStructure' => app(SplitPaymentService::class)->isNewPaymentStructure($record->payments),
+            'isAmlClearedForPayment' => $isAmlClearedForPayment,
             'sendUpdateOptions' => $sendUpdateOptions,
             'sendUpdateLogs' => $sendUpdateLogs,
             'sendUpdateEnum' => $sendUpdateEnum,

@@ -57,9 +57,12 @@ use App\Enums\PermissionsEnum;
                             @can(PermissionsEnum::LEAD_DISTRIBUTION_REPORT_VIEW)
                             <li><a href="{{ url('reports/lead-distribution') }}">Lead Distribution</a></li>
                             @endcan
-                                @can(PermissionsEnum::UtmLeadsSalesReport)
+                            @can(PermissionsEnum::UtmLeadsSalesReport)
                                     <li><a href="{{ url('reports/utm-report') }}">UTM Report</a></li>
-                                @endcan
+                            @endcan
+                            @can(PermissionsEnum::TOTAL_PREMIUM_LEADS_SALES_REPORT)
+                                    <li><a href="{{ url('/reports/total-premium') }}">Total Premium Report</a></li>
+                            @endcan
                             @can(PermissionsEnum::RENEWAL_BATCH_REPORT)
                                 <li><a href="{{ url('reports/renewal-report') }}">Daily Renewal Report</a></li>
                             @endcan
@@ -280,6 +283,7 @@ use App\Enums\PermissionsEnum;
                     </li>
                 </ul>
                 @endcanany
+                <!-- // Scheduled to delete 15th April 2024
                 @can(PermissionsEnum::ClaimList)
                 <ul class="nav side-menu">
                     <li><a><i class="fa fa-quote-left"></i> Claims <span class="fa fa-chevron-down"></span></a>
@@ -311,29 +315,27 @@ use App\Enums\PermissionsEnum;
                         </ul>
                     </li>
                 </ul>
-                @endcan
+                @endcan -->
                 @can(PermissionsEnum::AMLList)
                 <ul class="nav side-menu">
                     <li><a><i class="fa fa-desktop"></i> AML <span class="fa fa-chevron-down"></span></a>
                         <ul class="nav child_menu">
                             <li><a href="{{ url('kyc/aml') }}">All Quotes</a></li>
-                            <!-- <li><a href="{{ url('kyc/aml/download/history') }}">Downloaded Sanction Lists</a></li>
-                            <li><a href="{{ url('kyc/aml/upload/uae') }}">Upload UAE List</a></li> -->
                         </ul>
                     </li>
                 </ul>
                 @endcan
-                @can(PermissionsEnum::EmbeddedProductView)
+                @can(PermissionsEnum::EMBEDDED_PRODUCT_ADVISOR)
                 <ul class="nav side-menu">
                     <li><a href="{{ url('embedded-products') }}"><i></i> Embedded Products </a>
                 </ul>
                 @endcan
 
-                @if(auth()->user()->hasRole(RolesEnum::BetaUser))
                 <ul class="nav side-menu">
-                    <li><a href="{{ url('legacy-policy') }}"><i></i>Legacy policy</a>
+                    @can(PermissionsEnum::VIEW_LEGACY_DETAILS)
+                    <li><a href="{{ url('legacy-policy') }}"><i></i>Legacy Policies</a>
+                    @endcan
                 </ul>
-                @endif
 
                 {{-- @if (auth()->check() && auth()->user()->isAdmin())
                 <ul class="nav side-menu">

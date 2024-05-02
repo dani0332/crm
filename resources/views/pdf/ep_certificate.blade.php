@@ -7,8 +7,12 @@
 
     <style>
         @page {
-            margin: 0;
-            padding: 0;
+            margin: 200px 0;
+            padding: 150px 0 0 0;
+        }
+
+        .page-break {
+            page-break-after: always;
         }
 
         html {
@@ -109,21 +113,28 @@
         }
 
         header {
-            padding-top: 32px;
+            padding: 50px;
             max-width: 90%;
             width: 100%;
+            left: 3%;
+            top: 0
             margin: 0px auto;
+            position: fixed;
         }
 
         main {
-            max-width: 80%;
+            max-width: 75%;
             width: 100%;
-            margin: 0px auto;
-            font-size: 17px;
+            margin: 0 auto;
+            font-size: 18px;
+        }
+
+        main,
+        .mt-p {
+            margin-top: 240px;
         }
 
         footer {
-            position: fixed;
             bottom: 0px;
             left: 0px;
             right: 0px;
@@ -131,6 +142,7 @@
             max-width: 90%;
             width: 100%;
             margin: 0px auto;
+            position: fixed;
         }
 
         .text-center {
@@ -151,6 +163,19 @@
         .table-fixed {
             width: 100%;
         }
+
+        table thead th {
+            color: white;
+            background: #00af00;
+            text-align: left;
+            font-weight: normal;
+            padding: 5px 8px;
+        }
+
+        ol, ul {
+            margin: 0 20px 0 35px;
+            text-align: justify;
+        }
     </style>
 </head>
 
@@ -162,124 +187,282 @@
         </div>
     </header>
 
-    <main>
-        <div class="title">
-            <h3>CERTIFICATE</h3>
-            <p>This is to certify that the below member is an eligible customer under the Personal Accident and Medical Expenses cover for holders of an Individual Motor Policy sold via Insurancemarket.ae.</p>
-        </div>
-
-        <h4 style="margin-bottom: 5px;">Details</h4>
-
-        <table class="bordered">
-            <tbody>
-                <tr>
-                    <td width="150">
-                        <p>Policy Number</p>
-                        <p class="text-red">(Master Policy issued by Salama)</p>
-                    </td>
-                    <td colspan="2">{{$viewData['master_policy_number'] ?? ""}}</td>
-                </tr>
-                <tr>
-                    <td>
-                        <p>Certificate Number</p>
-                        <p class="text-red">(Issued by Insurancemarket.ae)
-                        </p>
-                    </td>
-                    <td colspan="2">{{$viewData['certificate_number'] ?? ""}}</td>
-                </tr>
-                <tr>
-                    <td>Full Name of Covered Member</td>
-                    <td colspan="2">{{$viewData['name'] ?? ""}}</td>
-                </tr>
-                <tr>
-                    <td>Date of Birth</td>
-                    <td colspan="2">{{$viewData['dob'] ?? ""}}</td>
-                </tr>
-                <tr>
-                    <td>Emirates ID</td>
-                    <td colspan="2"></td>
-                </tr>
-                <tr>
-                    <td>Date of Enrollment</td>
-                    <td colspan="2">{{$viewData['date_of_enrollment'] ?? ""}}</td>
-                </tr>
-                <tr>
-                    <td>Covered Benefits</td>
-                    <td>
-                        <ul>
-                            <li>Accidental Death Benefit</li>
-                            <li>Medical Expense (as an RTA extension)</li>
-                        </ul>
-                    </td>
-                    <td>
-                        <ul>
-                            <li>AED 10,000</li>
-                            <li>AED 50,000</li>
-                        </ul>
-                    </td>
-                </tr>
-                <tr>
-                    <td>Age Limit</td>
-                    <td colspan="2">
-                        <ul>
-                            <li>Minimum Entry Age: 18 years</li>
-                            <li>Maximum Entry Age: 59 years</li>
-                            <li>Maximum Expiry Age: 60 years</li>
-                        </ul>
-                    </td>
-                </tr>
-                <tr>
-                    <td>Type of Vehicle</td>
-                    <td colspan="2">{{$viewData['type'] ?? ""}}</td>
-
-                </tr>
-                <tr>
-                    <td>Annual Contribution Amount*</td>
-                    <td colspan="2">{{$viewData['premium'] ?? ""}}</td>
-                </tr>
-            </tbody>
-        </table>
-
-        <p class="my-4 italic">* Kindly note that no refunds apply for mid-term cancellations</p>
-
-        <div style="margin: 2rem 0 3rem;">
-            <strong>Signed on behalf of SALAMA Islamic Arab Insurance Co. (P.S.C.)</strong>
-        </div>
-
-        <div class="mb-3">
-            <p>__________________________</p>
-            Signature Authorized
-        </div>
-        <div class="italic mb-2">Subject to the terms and conditions and exclusions as laid out in the Master Plan No. _________________________ issued by SALAMA which is considered renewed every year unless advised otherwise.</div>
-    </main>
-
     <footer>
         <table>
             <tr>
                 <td>
-                    <div style="font-size: 14px;">
-                        SALAMA - Islamic Arab Insurance Co. (PJC) <br />
-                        Family Takaful Division <br />
-                        P.O. Box 10214, Dubai, UAE
-                    </div>
-                </td>
-                <td>
-                    <div style="text-align: center; font-size: 16px; vertical-align: bottom;">SALAMA - Internal</div>
-                </td>
-                <td>
-                    <div style="font-size: 14px; text-align: right;">
-                        Call Center No.: 800-SALAMA (725262) <br />
-                        Customer Service: cs.ft@salamalife.ae <br />
-                        Claims Department: claims@salamalife.ae</div>
+                    <div style="font-size: 16px; vertical-align: bottom;">SALAMA - Confidential</div>
                 </td>
             </tr>
         </table>
 
-        <div style="margin-top: 2rem;">
+        <div style="margin-top: 0.3rem;">
             <span style="background-color: #246b71; width: 500px; height: 20px; display: inline-block;"></span>
             <span style="background-color: #fdcc00; width: 100px; height: 20px;  display: inline-block; margin-left: -5px;"></span>
         </div>
     </footer>
+
+    <main>
+        <table class="bordered">
+            <thead>
+                <tr>
+                    <th colspan="2">
+                        <p><b>Plan Holders Details</b></p>
+                    </th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td width="30%">
+                        <p><b>Full Name</b></p>
+                    </td>
+                    <td >{{ $viewData['name'] }}</td>
+                </tr>
+                <tr>
+                    <td>
+                        <p><b>Date of Birth/Age</b></p>
+                    </td>
+                    <td>{{ $viewData['dob'] }}</td>
+                </tr>
+                <tr>
+                    <td><b>Emirates ID No</b></td>
+                    <td>{{ $viewData['emirates_id'] }}</td>
+                </tr>
+            </tbody>
+        </table>
+        <br />
+
+        <table class="bordered">
+            <thead>
+                <tr>
+                    <th colspan="3">
+                        <p><b>Plan Holders Details</b></p>
+                    </th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td width="15%">
+                        <p><b>S. No</b></p>
+                    </td>
+                    <td width="60%">
+                        <p><b>Benefits</b></p>
+                    </td>
+                    <td width="25%">
+                        <p><b>Aggregate Limit</b></p>
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="3">
+                        <p><b>SECTION 1 - Injury</b></p>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <p>1</p>
+                    </td>
+                    <td>
+                        <p>Accidental Death Benefit (due to accident)</p>
+                    </td>
+                    <td>
+                        <p>AED 10,000/-</p>
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="3">
+                        <p><b>SECTION 2 – Medical Expenses & Hospitalization</b></p>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <p>1</p>
+                    </td>
+                    <td>
+                        <p>Accidental Medical Expenses ‐ Expenses incurred for emergency admission and at a hospital following a covered accident</p>
+                    </td>
+                    <td>
+                        <p>AED 50,000/-</p>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+        <br />
+
+        <table class="bordered">
+            <tbody>
+                <tr>
+                    <td width="30%">
+                        <p><b>Plan Type</b></p>
+                    </td>
+                    <td>
+                        <p>{{ $viewData['plan_type'] }}</p>
+                    </td>
+                </tr>
+                <tr>
+                    <td width="30%">
+                        <p><b>Plan No</b></p>
+                    </td>
+                    <td>
+                        <p>{{ $viewData['certificate_number'] }}</p>
+                    </td>
+                </tr>
+                <tr>
+                    <td width="30%">
+                        <p><b>Plan Currency</b></p>
+                    </td>
+                    <td>
+                        <p>{{ $viewData['plan_currency'] }}</p>
+                    </td>
+                </tr>
+                <tr>
+                    <td width="30%">
+                        <p><b>Contribution Amount</b></p>
+                    </td>
+                    <td>
+                        <p>{{ $viewData['contribution_amount'] }}</p>
+                    </td>
+                </tr>
+                <tr>
+                    <td width="30%">
+                        <p><b>Plan Term</b></p>
+                    </td>
+                    <td>
+                        <p>{{ $viewData['plan_term'] }}</p>
+                    </td>
+                </tr>
+                <tr>
+                    <td width="30%">
+                        <p><b>Plan Commencement Date</b></p>
+                    </td>
+                    <td>
+                        <p>{{ $viewData['date_of_enrollment'] }}</p>
+                    </td>
+                </tr>
+                <tr>
+                    <td width="30%">
+                        <p><b>Plan Beneficiary</b></p>
+                    </td>
+                    <td>
+                        <p>{{ $viewData['plan_beneficiary'] }}</p>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+        <br />
+
+        <table class="bordered page-break">
+            <tbody>
+                <tr>
+                    <td width="30%" valign="top">
+                        <p><b>Exclusions</b></p>
+                    </td>
+                    <td>
+                        <ol>
+                            <li>
+                                Insured Persons engaging in food delivery or other delivery services on motorbikes are specifically excluded from this policy regardless of their visa type (be they direct employees or on outsourced contracts). Insured persons are however covered for any accidents that may fall outside of their login hours into the delivery company’s applications, subject to other terms and conditions for claiming benefits under this policy.
+                            </li>
+                            <li>
+                                Physiotherapy is covered only for fracture of bone and not covered for soft tissue injuries.
+                            </li>
+                            <li>
+                                This policy shall not cover injuries sustained due to Accidents arising because of:
+                                <ol type="a">
+                                    <li>
+                                        use of vehicles for racing (speed, endurance, drag‐racing or other) professional or amateur, dune‐bashing, driving in the desert, quad‐biking, driving outside roads built‐up specifically for driving such vehicles, testing speed, stunt‐ driving, rallies, experimenting with loading capacity or while towing a trailer (unless the vehicle used for the purpose was fitted and licensed for towing;
+                                    </li>
+                                </ol>
+                            </li>
+                        </ol>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+
+        <table class="bordered mt-p">
+            <tbody>
+                <tr>
+                    <td width="30%" valign="top"></td>
+                    <td>
+                        <ol start="3">
+                            <li style="list-style: none;">
+                                <ol type="a">
+                                    <li style="list-style: none;"></li>
+                                    <li>
+                                        use of bicycles, e‐bikes, e‐scooters, or any vehicle that does not bear a mandatory number plate issued by the Roads and Traffics Authority;
+                                    </li>
+                                    <li>
+                                        the driver’s non‐compliance with the road safety guidelines and traffic rules issued by the Roads and Traffics Authority such as but not limited to exceeding speed limits, driving in the opposite direction of traffic, not wearing seat belts, helmets and other equipment mandated for safety by the local authorities and injuries sustained while parking in a non‐parking area;
+                                    </li>
+                                    <li>
+                                        driving without a valid driving license;
+                                    </li>
+                                    <li>
+                                        driving while under the influence of alcohol or under the influence of drugs that are not prescribed by a physician;
+                                    </li>
+                                    <li>
+                                        any civil liability concerning the indirect damages befalling a third party;
+                                    </li>
+                                    <li>
+                                        driving a vehicle outside the territorial limits of the United Arab Emirates.
+                                    </li>
+                                </ol>
+                            </li>
+                            <li>
+                                Excludes Nuclear, Chemical, Biological and Mass Destruction Risks.
+                            </li>
+                        </ol>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+        <br />
+
+        <table class="bordered">
+            <thead>
+                <tr>
+                    <th>
+                        <p><b>Declaration</b></p>
+                    </th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>
+                        <ol>
+                            <li>
+                                I acknowledge that SALAMA- Islamic Arab Insurance Company will manage my contribution under Wakala Principles as defined by the Operator and in accordance with Plan Terms & Conditions.
+                            </li>
+                            <li>
+                                I also understand that SALAMA - Islamic Arab Insurance Company has the right to cancel my application for insurance if the first contribution is not received by the Company within the first 3 days or if any of the requirements asked by the Company is not provided by me within the time frame specified by the Company.
+                            </li>
+                            <li>
+                                I Authorize any person, physician, hospital, clinic, institution, insurance company or any other organizations, having any records, application, or knowledge of my health to provide the operator any and all information needed about me with reference to my health, medical history, hospitalization, advise, diagnosis, treatment, disease or ailment.
+                            </li>
+                            <li>
+                                A photocopy of this authorization shall be suitable evidence of this authority and legally original.
+                            </li>
+                            <li>
+                                I also understand that there will be no refund of Plan Contribution after the date of issuance.
+                            </li>
+                            <li>
+                                I further acknowledge and confirm that I have received and read the Terms and Conditions of the Plan.
+                            </li>
+                        </ol>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+        <br />
+
+        <div>
+            <p>
+                <b>Signed on behalf of SALAMA Islamic Arab Insurance Co. (P.S.C.)</b>
+            </p>
+            <p style="margin-top: 5px;">
+                <p> <b>Date:</b> {{ $viewData['date_of_enrollment'] }} </p>
+            </p>
+        </div>
+    </main>
 </body>
 
 </html>

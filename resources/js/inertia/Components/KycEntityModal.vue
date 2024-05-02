@@ -1,4 +1,6 @@
 <script setup>
+
+
 const page = usePage();
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
@@ -21,7 +23,7 @@ const props = defineProps({
   issuancePlace: Array,
   issuingAuthority: Array,
   uboRelation: Array,
-  entityDetails: Array,
+  entityDetails: Object,
   industryType: Array,
 });
 
@@ -36,12 +38,14 @@ const rules = {
     'Phone must be valid',
 };
 
+
+
 const kycForm = reactive({
   quote_uuid: props.quote.uuid,
   customer_id: props.quote.customer_id,
   first_name: props.quote.first_name,
   last_name: props.quote.last_name,
-  company_name: props.quote.company_name,
+  company_name: props.entityDetails?.entity?.company_name ?? null, // props.quote.company_name
   legal_structure: props.entityDetails?.entity?.legal_structure ?? null,
   industry_type: props.entityDetails?.entity?.industry_type_code ?? null,
   country_of_corporation: props.entityDetails?.entity?.country_of_corporation ?? 56, //Default UAE
@@ -64,6 +68,11 @@ const kycForm = reactive({
   financial_sanctions: props.entityDetails?.entity?.financial_sanctions ?? props.amlQuoteStatus,
   dual_nationality: props.entityDetails?.entity?.dual_nationality ?? props.amlQuoteStatus,
 });
+
+
+
+
+
 
 const isNationalityEmpty = ref(false);
 const isPositionEmpty = ref(false);
@@ -91,6 +100,11 @@ const onKycSubmit = isValid => {
             title: 'KYC Document uploaded.',
             position: 'top',
           });
+            router.reload({
+                replace: true,
+                preserveScroll: true,
+                preserveState: true,
+            });
         } else {
           notification.error({
             title: response.data.message,
@@ -172,6 +186,9 @@ const complianceRules = computed(() => {
     : [];
 });
 
+
+
+
 onMounted(() => {
   complianceDisable.isDisable = !(
     can(permissionsEnum.AMLDecisionUpdate) ||
@@ -181,6 +198,7 @@ onMounted(() => {
 </script>
 
 <template>
+
   <x-form @submit="onKycSubmit" :auto-focus="false">
     <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
       <x-input
@@ -193,7 +211,7 @@ onMounted(() => {
       />
 
       <x-input
-        v-model="quote.first_name"
+        v-model="kycForm.first_name"
         label="First Name"
         placeholder="First Name"
         class="w-full"
@@ -201,7 +219,7 @@ onMounted(() => {
       />
 
       <x-input
-        v-model="quote.last_name"
+        v-model="kycForm.last_name"
         label="Last Name"
         placeholder="Last Name"
         class="w-full"
@@ -213,6 +231,7 @@ onMounted(() => {
         label="Employer / Company name"
         placeholder="Employer / Company name"
         :rules="[rules.isRequired]"
+        :disabled="true"
       />
 
       <div>

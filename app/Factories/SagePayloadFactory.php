@@ -2,6 +2,8 @@
 
 namespace App\Factories;
 
+use App\Enums\PaymentMethodsEnum;
+use App\Enums\SagePaymentMethodsEnum;
 use App\Models\QuoteRequestEntityMapping;
 
 class SagePayloadFactory
@@ -386,7 +388,7 @@ class SagePayloadFactory
                     'CustomerNumber' => $request->sage_customer_number,
                     'BankReceiptAmount' => floatval($request->collection_amount),
                     'CheckReceiptNumber' => $request->checkDetails,
-                    'PaymentCode' => 'BT',
+                    'PaymentCode' => self::sagePaymentCodeMapping($request->sage_payment_code),
                     'ReceiptTransactionType' => 'Prepayment',
                     'AppliedReceiptsAdjustments' => [
                         [
@@ -682,5 +684,23 @@ class SagePayloadFactory
         }
 
         return $data;
+    }
+
+    // Payment code mapping
+    private static function sagePaymentCodeMapping($paymentMethod)
+    {
+        $sagePaymentCodeMappingArray = [
+            PaymentMethodsEnum::BankTransfer => SagePaymentMethodsEnum::SAGE_BANK_TRANSFER,
+            PaymentMethodsEnum::Cash => SagePaymentMethodsEnum::SAGE_CASH,
+            PaymentMethodsEnum::Cheque => SagePaymentMethodsEnum::SAGE_CHEQUE,
+            PaymentMethodsEnum::PostDatedCheque => SagePaymentMethodsEnum::SAGE_POST_DATED_CHEQUE,
+            PaymentMethodsEnum::CreditCard => SagePaymentMethodsEnum::SAGE_CREDIT_CARD,
+            PaymentMethodsEnum::InsurerPayment => SagePaymentMethodsEnum::SAGE_INSURER_PAYMENT,
+        ];
+        if (array_key_exists($paymentMethod, $sagePaymentCodeMappingArray)) {
+            return $sagePaymentCodeMappingArray[$paymentMethod];
+        } else {
+            return SagePaymentMethodsEnum::SAGE_BANK_TRANSFER;
+        }
     }
 }
