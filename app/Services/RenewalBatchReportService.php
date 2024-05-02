@@ -581,14 +581,14 @@ class RenewalBatchReportService extends BaseService
         $startDate = $endDate = null;
         $dateFormat = config('constants.DATE_FORMAT_ONLY');
         $dateTimeFormat = config('constants.DB_DATE_FORMAT_MATCH');
+        $monthDigitFormat = config('constants.MONTH_DIGIT_FORMAT');
         $reportDate = Carbon::today()->format($dateFormat);
-        $previousMonth = Carbon::parse($reportDate)->subMonth(1)->startOfMonth()->format($dateFormat);
-        $nextMonth = Carbon::parse($reportDate)->addMonth(1)->endOfMonth()->format($dateFormat);
+        $previousMonth = ltrim(Carbon::parse($reportDate)->subMonth(1)->startOfMonth()->format($monthDigitFormat), '0');
+        $nextMonth = ltrim(Carbon::parse($reportDate)->addMonth(1)->endOfMonth()->format($monthDigitFormat), '0');
 
         $defaultBatchRange = RenewalBatch::query()
             ->select('name', 'start_date', 'end_date', 'id')
-            ->whereDate('start_date', '>=', $previousMonth)
-            ->whereDate('end_date', '<=', $nextMonth)
+            ->whereBetween('month', [$previousMonth, $nextMonth])
             ->orderByDesc('end_date')
             ->get();
 
@@ -761,20 +761,20 @@ class RenewalBatchReportService extends BaseService
      * update query bases on segment type filter function
      *
      * @param [type] $query
-     * @param [type] $volumeSegmentAdvisorsIdString
+     * @param [type] $segmentAdvisorsIdString
      * @param [type] $reportDateEnd
      * @param [type] $renewedAsColumn
      * @param [type] $totalAsColumn
      * @return void
      */
-    public function queryForSegmentType($query, $volumeSegmentAdvisorsIdString, $reportDateEnd, $renewedAsColumn, $totalAsColumn)
+    public function queryForSegmentType($query, $segmentAdvisorsIdString, $reportDateEnd, $renewedAsColumn, $totalAsColumn)
     {
         return $query->addSelect(
             DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in ('.QuoteStatusEnum::TransactionApproved.', '.QuoteStatusEnum::PolicyDocumentsPending.'
             , '.QuoteStatusEnum::PolicyIssued.', '.QuoteStatusEnum::PolicySentToCustomer.', '.QuoteStatusEnum::PolicyBooked.')
-            and car_quote_request.advisor_id in ('.$volumeSegmentAdvisorsIdString.')
+            and car_quote_request.advisor_id in ('.$segmentAdvisorsIdString.')
             and car_quote_request.quote_status_date <= "'.$reportDateEnd.'"  THEN 1 ELSE 0 END) as "'.$renewedAsColumn.'"'),
-            DB::raw('SUM(CASE WHEN car_quote_request.advisor_id in ('.$volumeSegmentAdvisorsIdString.')
+            DB::raw('SUM(CASE WHEN car_quote_request.advisor_id in ('.$segmentAdvisorsIdString.')
             THEN 1 ELSE 0 END) as "'.$totalAsColumn.'"'),
         );
     }
