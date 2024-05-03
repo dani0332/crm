@@ -94,9 +94,6 @@ class BusinessQuoteRepository extends BaseRepository
             ])
             ->select([
                 $this->getTable().'.*',
-                'renewal_expiry_date',
-                'policy_start_date',
-                'policy_issuance_date',
                 DB::raw('("'.CustomerTypeEnum::Entity.'") as customer_type'),
             ])
             ->firstOrFail();
