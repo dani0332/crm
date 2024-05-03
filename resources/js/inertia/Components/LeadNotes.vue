@@ -1,5 +1,6 @@
 <script setup>
 import { usePage } from '@inertiajs/vue3';
+import { watchEffect } from 'vue';
 import AppModal from './AppModal.vue';
 
 const props = defineProps({
@@ -76,6 +77,10 @@ const notesForm = reactive({
   quote_status_id: props.quote?.quote_status_id,
   document_type_code: props.documentType?.code,
   quote_uuid: props.quote?.code,
+});
+
+watchEffect(() => {
+  notesForm.quote_status_id = props.quote?.quote_status_id;
 });
 
 const onNoteSubmit = isValid => {
