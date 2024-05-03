@@ -40,6 +40,7 @@ defineProps({
   permissions: Object,
   bPDetails: Array,
   isNewPaymentStructure: Boolean,
+  isAmlClearedForPayment: Boolean,
   sendUpdateOptions: Array,
   sendUpdateLogs: Array,
   hasPolicyIssuedStatus: Boolean,
@@ -541,6 +542,15 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
         <template #body>
           <x-divider class="my-4" />
           <div class="flex gap-2 mb-3 justify-end">
+            <Link
+              v-if="quote.life_quote_request_detail?.insly_id"
+              :href="`/legacy-policy/${quote.life_quote_request_detail.insly_id}`"
+              preserve-scroll
+            >
+              <x-button size="sm" color="#ff5e00" tag="div">
+                View Legacy policy
+              </x-button>
+            </Link>
             <x-button size="sm" color="#ff5e00" @click.prevent="openDuplicate">
               Duplicate Lead
             </x-button>
@@ -1068,6 +1078,7 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
       "
       modelType="Life"
       :quote="quote"
+      :insly-id="quote?.life_quote_request_detail?.insly_id"
       :canAddBatchNumber="canAddBatchNumber"
       :expanded="sectionExpanded"
     />
@@ -1194,6 +1205,7 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
 			:paymentTooltipEnum="paymentTooltipEnum"
 			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name, tooltip: pm.tool_tip } })"
 			:storageUrl="storageUrl"
+      :isAmlClearedForPayment="isAmlClearedForPayment"
 		/>
 
     <BookPolicy
@@ -1223,6 +1235,7 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
       :quote-documents="quote.documents || []"
       :storageUrl="storageUrl"
       :quote="quote"
+      :insly-id="quote?.life_quote_request_detail?.insly_id"
       :expanded="sectionExpanded"
     />
 

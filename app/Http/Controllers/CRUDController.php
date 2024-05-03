@@ -30,7 +30,6 @@ use App\Facades\Capi;
 use App\Http\Requests\ExportPlansPdfRequest;
 use App\Http\Requests\StorePaymentRequest;
 use App\Http\Requests\UpdateLeadStatusRequest;
-use App\Http\Requests\UpdatePaymentRequest;
 use App\Http\Requests\UpdatePolicyDetailRequest;
 use App\Jobs\CarRenewalEmailJob;
 use App\Jobs\SendOCBIntroEmailJob;
@@ -38,8 +37,6 @@ use App\Jobs\SyncSIBContactJob;
 use App\Models\ApplicationStorage;
 use App\Models\CarMake;
 use App\Models\CarQuote;
-use App\Models\EmbeddedProductOption;
-use App\Models\EmbeddedTransaction;
 use App\Models\Emirate;
 use App\Models\GenericModel;
 use App\Models\HealthPlanType;
@@ -66,6 +63,7 @@ use App\Services\ApplicationStorageService;
 use App\Services\BusinessQuoteService;
 use App\Services\CarEmailService;
 use App\Services\CarQuoteService;
+use App\Services\CentralService;
 use App\Services\CRUDService;
 use App\Services\CustomerService;
 use App\Services\DropdownSourceService;
@@ -508,6 +506,8 @@ class CRUDController extends Controller
         abort_if(! $record, 404);
 
         $linkedQuoteDetails = app(SendUpdateLogService::class)->linkedQuoteDetails($this->genericModel->modelType, $record);
+        $isAmlClearedForPayment = app(CentralService::class)->amlClearedFromLog($record->id, $quoteType);
+
         $autoAllocationDisabled = $this->lookupService->getApplicationStorageValue('LEAD_ALLOCATION_JOB_SWITCH');
         if (strtolower($this->genericModel->modelType) == strtolower(quoteTypeCode::Health) && Auth::user()->isHealthWCUAdvisor() && $record->wcu_id != Auth::user()->id && $autoAllocationDisabled == '1') {
             abort(403, 'Unauthorized action.');
@@ -730,7 +730,7 @@ class CRUDController extends Controller
                 'carMakeText', 'carModelText', 'advisor', 'tiers', 'daysAfterCapturedPayment', 'access', 'carPlanFeaturesCodeEnum', 'carPlanExclusionsCodeEnum', 'documentTypes', 'planURL', 'storageUrl', 'kyoEndPoint',
                 'carPlanTypeEnum', 'UBORelations', 'UBOsDetails', 'emirates', 'customerTypeEnum', 'memberRelations', 'membersDetails', 'industryType', 'nationalities', 'paymentTooltipEnum',
                 'isCommercialVehicles', 'carInsuranceProviders', 'isNewPaymentStructure', 'hasPolicyIssuedStatus',
-                'bPDetails', 'clientInquiryLogs', 'linkedQuoteDetails', 'policyIssuanceStatus', 'listQuotePlans',
+                'bPDetails', 'clientInquiryLogs', 'linkedQuoteDetails', 'policyIssuanceStatus', 'listQuotePlans', 'isAmlClearedForPayment'
             ]));
         }
 
@@ -872,9 +872,9 @@ class CRUDController extends Controller
                 'bPDetails' => $bPDetails,
                 'vatPercentage' => $vatPercentage,
                 'isNewPaymentStructure' => $isNewPaymentStructure,
+                'isAmlClearedForPayment' => $isAmlClearedForPayment,
                 'sendUpdateEnum' => $sendUpdateEnum,
                 'hasPolicyIssuedStatus' => $hasPolicyIssuedStatus,
-                'documentTypes' => $documentTypes,
                 'linkedQuoteDetails' => $linkedQuoteDetails,
             ]);
         }
@@ -1036,6 +1036,7 @@ class CRUDController extends Controller
                 'clientInquiryLogs' => $this->crudService->getInquiryLogs($this->genericModel->modelType, $record->uuid) ?? [],
                 'isNewPaymentStructure' => $isNewPaymentStructure,
                 'linkedQuoteDetails' => $linkedQuoteDetails,
+                'isAmlClearedForPayment' => $isAmlClearedForPayment,
             ]);
         } else {
             return view('shared.show', compact([
@@ -1469,26 +1470,7 @@ class CRUDController extends Controller
                 SyncSIBContactJob::dispatch($lead);
 
                 // Ep send documents
-                $quoteTypeId = $this->activityService->getQuoteTypeId(strtolower($request->modelType));
-                $epTransaction = EmbeddedTransaction::where([
-                    ['quote_type_id',   $quoteTypeId],
-                    ['quote_request_id', $request->leadId],
-                    ['is_selected', 1],
-                ])->whereIn('payment_status_id', [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PARTIAL_CAPTURED])->get();
-
-                if ($epTransaction->isNotEmpty()) {
-                    foreach ($epTransaction as $item) {
-
-                        $product_id = $item->product_id;
-                        $embedded_product_id = EmbeddedProductOption::find($product_id)->embedded_product_id;
-                        // EP Send documents
-                        $data = [];
-                        $data['quoteId'] = $request->leadId;
-                        $data['modelType'] = $request->modelType;
-                        $data['epId'] = $embedded_product_id;
-                        EmbeddedProductRepository::sendDocument($data);
-                    }
-                }
+                EmbeddedProductRepository::sendDocumentsByLead($request->leadId, $request->modelType);
             }
 
             if (in_array($request->leadStatus, [QuoteStatusEnum::FollowupCall, QuoteStatusEnum::Interested, QuoteStatusEnum::NoAnswer])) {
@@ -1833,7 +1815,7 @@ class CRUDController extends Controller
         return back()->with('success', 'Payment has been created');
     }
 
-    public function updatePayment(UpdatePaymentRequest $request)
+    public function updatePayment(Request $request)
     {
         $paymentInformation = [
             'collection_type' => $request->collection_type,
