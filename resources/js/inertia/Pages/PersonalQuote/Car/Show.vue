@@ -31,11 +31,9 @@ defineProps({
   customerAdditionalContacts: Array,
   lostReasons: Array,
   tiers: Array,
-  quoteStatusEnum: Object,
   carPlanFeaturesCodeEnum: Object,
   carPlanExclusionsCodeEnum: Object,
   carPlanAddonsCodeEnum: Object,
-  paymentStatusEnum: Object,
   modelType: String,
   notProductionApproval: Boolean,
   allowedDuplicateLOB: Array,
@@ -79,8 +77,7 @@ defineProps({
   tiersExceptTierR: Array,
   leadSourceEnum: Object,
   carPlanTypeEnum: Object,
-  policyIssuanceStatus: Array,
-  bPDetails: Array,
+  bookPolicyDetails: Array,
   documentTypesByCategory: Array,
   customerTypeEnum: Object,
   memberRelations: Array,
@@ -92,6 +89,7 @@ defineProps({
   carInsuranceProviders: Array,
   paymentTooltipEnum: Object,
   isNewPaymentStructure: Boolean,
+  isAmlClearedForPayment: Boolean,
   sendUpdateOptions: Array,
   sendUpdateLogs: Array,
   hasPolicyIssuedStatus: Boolean,
@@ -157,6 +155,8 @@ onMounted(() => {
 const processingOCBEmailNB = ref(false);
 const permissionEnum = page.props.permissionsEnum;
 const rolesEnum = page.props.rolesEnum;
+const quoteStatusEnum= page.props.quoteStatusEnum;
+const paymentStatusEnum = page.props.paymentStatusEnum;
 
 const dateFormat = date => {
   return useDateFormat(date, 'DD-MM-YYYY HH:mm:ss').value;
@@ -1214,12 +1214,9 @@ const confirmSendEmail = () => {
 const confirmSendOCBEmailNB = () => {
   processingOCBEmailNB.value = true;
   axios
-    .post(
-      `/quotes/car/${page.props.record.uuid}/send-email-ocb-nb`,
-      {
-        responseType: 'json',
-      },
-    )
+    .post(`/quotes/car/${page.props.record.uuid}/send-email-ocb-nb`, {
+      responseType: 'json',
+    })
     .then(response => {
       processingOCBEmailNB.value = false;
       notification.success({
@@ -1506,6 +1503,7 @@ const handlePlanSelected = plan => {
 };
 
 const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
+
 const copyUploadURL = () => {
   copy(page.props.docUploadURL);
   if (copied)
@@ -1514,6 +1512,15 @@ const copyUploadURL = () => {
       position: 'top',
     });
 };
+
+watch(
+  () => page.props.record.quote_status_id,
+  (newValue, oldValue) => {
+    if (newValue !== oldValue) {
+      leadStatusForm.leadStatus = newValue;
+    }
+  },
+);
 </script>
 
 <template>
@@ -1652,6 +1659,15 @@ const copyUploadURL = () => {
         <template #body>
           <x-divider class="my-4" />
           <div class="flex mb-4 justify-end">
+            <Link
+                v-if="record?.insly_id && can(permissionEnum.VIEW_LEGACY_DETAILS)"
+                :href="`/legacy-policy/${record.insly_id}`"
+                preserve-scroll
+            >
+                <x-button size="sm" color="#ff5e00" tag="div">
+                    View Legacy policy
+                </x-button>
+            </Link>
             <template
               v-if="
                 !can(permissionEnum.ApprovePayments) &&
@@ -1659,11 +1675,7 @@ const copyUploadURL = () => {
               "
             >
             <x-button
-              v-if="
-                hasAnyRole([
-                  rolesEnum.LeadPool,
-                ])
-              "
+              v-if="hasAnyRole([rolesEnum.LeadPool])"
               class="mr-2"
               size="sm"
               color="#ff5e00"
@@ -2244,6 +2256,7 @@ const copyUploadURL = () => {
       :expanded="sectionExpanded"
       :quote="record"
       modelType="Car"
+      :insly-id="record?.insly_id"
       v-if="
         record.source == page.props.leadSourceEnum.RENEWAL_UPLOAD ||
         record.source == page.props.leadSourceEnum.INSLY
@@ -2392,6 +2405,14 @@ const copyUploadURL = () => {
                     "
                     placeholder="Car Sold / Uncontactable Proof"
                     class="form-control w-full"
+                  />
+                </x-field>
+                <x-field class="" label="Transaction Type">
+                  <x-input
+                    type="text"
+                    :value="record.transaction_type_text"
+                    class="w-full"
+                    :disabled="true"
                   />
                 </x-field>
               </div>
@@ -2794,6 +2815,7 @@ const copyUploadURL = () => {
               v-if="
                 (access.carManagerCanEdit || access.carAdvisorCanEdit) &&
                 can(permissionEnum.CarQuotesPlansCreate)
+                
               "
             >
               Add Plan
@@ -3044,7 +3066,7 @@ const copyUploadURL = () => {
                   </x-button>
                 </template>
 
-                <span v-if="hasRole(rolesEnum.CarAdvisor)">
+                <span>
                   <SelectPlan
                     v-if="selectedProviderPlan.id != item.id"
                     @update:selectedPlanChanged="handlePlanSelected"
@@ -3156,15 +3178,15 @@ const copyUploadURL = () => {
         :showHeader="true"
         v-model:modelValue="modals.sendOCBConfirmNB"
         :backdrop-close="false"
-        >
+      >
         <template #header>
-        <p>Send Email OCB NB</p>
+          <p>Send Email OCB NB</p>
         </template>
         <template #default>
-        <p>Are you sure send email to customer?</p>
+          <p>Are you sure send email to customer?</p>
         </template>
         <template #actions>
-            <div class="text-right space-x-4">
+          <div class="text-right space-x-4">
             <x-button
               size="sm"
               ghost
@@ -3173,12 +3195,17 @@ const copyUploadURL = () => {
             >
               Cancel
             </x-button>
-            <x-button size="sm" color="error" :loading="processingOCBEmailNB" @click.prevent="confirmSendOCBEmailNB">
+            <x-button
+              size="sm"
+              color="error"
+              :loading="processingOCBEmailNB"
+              @click.prevent="confirmSendOCBEmailNB"
+            >
               Send
             </x-button>
           </div>
         </template>
-    </AppModal>
+      </AppModal>
       <x-modal v-model="modals.createPlan" size="xl" show-close backdrop>
         <template #header> Create Car Quote </template>
         <LazyCreatePlan
@@ -3213,7 +3240,9 @@ const copyUploadURL = () => {
         })
       "
       :storageUrl="storageUrl"
+      :isAmlClearedForPayment="isAmlClearedForPayment"
     />
+
     <PaymentTable
       v-else
       :payments="payments"
@@ -3311,8 +3340,6 @@ const copyUploadURL = () => {
     <PolicyDetail
       v-if="isQuoteDocumentEnabled"
       :record="record"
-      :quoteStatusEnum="quoteStatusEnum"
-      :policyIssuanceStatus="policyIssuanceStatus"
       :modelType="quoteType"
     />
   
@@ -3327,14 +3354,6 @@ const copyUploadURL = () => {
       :paymentStatusEnum="paymentStatusEnum"
     />
 
-    <SendUpdates
-      v-if="hasPolicyIssuedStatus"
-      :reportable="record"
-      :quote_type_id="$page.props.quoteTypeId"
-      :options="sendUpdateOptions"
-      :data="sendUpdateLogs"
-    />
-
     <BookPolicy
       v-if="
         canAny([
@@ -3344,8 +3363,16 @@ const copyUploadURL = () => {
       "
       :quote="record"
       :quoteType="quoteType"
-      :bPDetails="bPDetails"
+      :bookPolicyDetails="bookPolicyDetails"
       :payments="payments"
+    />
+
+    <SendUpdates
+      v-if="hasPolicyIssuedStatus"
+      :reportable="record"
+      :quote_type_id="$page.props.quoteTypeId"
+      :options="sendUpdateOptions"
+      :data="sendUpdateLogs"
     />
 
     <div class="p-4 rounded shadow mb-6 bg-white">
@@ -3680,6 +3707,12 @@ const copyUploadURL = () => {
         </template>
       </Collapsible>
     </div>
+
+    <CustomerChatLogs
+      :customerName="record?.first_name + ' ' + record?.last_name"
+      :quoteId="quote.uuid"
+      :quoteType="'CAR'"
+    />
   </div>
 
   <AuditLogs
@@ -3694,5 +3727,10 @@ const copyUploadURL = () => {
     :type="'App\\Models\\CarQuote'"
     :id="$page.props.record.id"
     :expanded="sectionExpanded"
+  />
+
+  <ClientInquiryLogs
+    v-if="clientInquiryLogs?.length > 0"
+    :logs="clientInquiryLogs"
   />
 </template>

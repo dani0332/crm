@@ -26,7 +26,7 @@ class SplitPaymentApproveRequest extends FormRequest
             'collection_amount.*' => 'nullable|numeric',
             'customer_id' => 'required|integer',
             'declined_custom_reason' => 'nullable|string',
-            'declined_reason' => 'nullable|string',
+            'declined_reason' => 'nullable|integer',
             'is_approved' => 'required|boolean',
             'is_capture' => 'required|boolean',
             'is_declined' => 'required|boolean',

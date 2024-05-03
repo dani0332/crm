@@ -3,14 +3,18 @@
 namespace App\Traits;
 
 use App\Enums\GenericRequestEnum;
-use App\Enums\QuoteDocumentsEnum;
+use App\Enums\PolicyIssuanceStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypes;
+use App\Models\Customer;
 use App\Models\Payment;
+use App\Repositories\DocumentTypeRepository;
 use App\Repositories\InsuranceProviderRepository;
 use App\Services\CapiRequestService;
+use App\Services\CustomerService;
 use App\Services\QuoteDocumentService;
+use Illuminate\Support\Arr;
 
 trait GenericQueriesAllLobs
 {
@@ -152,22 +156,48 @@ trait GenericQueriesAllLobs
         }
     }
 
+    public function getCustomer($customerData)
+    {
+        $customer = CustomerService::getCustomerByEmail($customerData['email']);
+
+        //create new customer if not exists
+        if (! isset($customer->id)) {
+            $customer = Customer::create(Arr::only($customerData, ['first_name', 'last_name', 'email', 'mobile_no']));
+
+            // create additional emails
+            if (isset($customerData['additional_emails']) && count($customerData['additional_emails'])) {
+                foreach ($customerData['additional_emails'] as $additionalEmail) {
+                    $customer->additionalContactInfo()->create(['key' => 'email', 'value' => $additionalEmail]);
+                }
+            }
+
+            // create additional mobile nos
+            if (isset($customerData['additional_mobiles']) && count($customerData['additional_mobiles'])) {
+                foreach ($customerData['additional_mobiles'] as $additionalMobile) {
+                    $customer->additionalContactInfo()->create(['key' => 'mobile_no', 'value' => $additionalMobile]);
+                }
+            }
+        }
+
+        return $customer;
+    }
+
     public function inslyInsurances()
     {
         return [
             QuoteTypes::BIKE->value => ['Bike insurance'],
             QuoteTypes::BUSINESS->value => [
-                'Business interruption insurance', 'Contractors all risks', 'Cyber liability', 'Directors and officers liability insurance',
-                'Engineering and plant insurance', 'Fidelity guarantee', 'Group life', 'Group medical insurance', 'Holiday homes',
-                'Livestock insurance', 'Machinery breakdown insurance', 'Marine cargo (individual shipment) insurance',
-                'Marine hull insurance', 'Medical malpractice insurance', 'Money insurance', 'Motor fleet',
-                'Open cover - marine cargo insurance', 'Professional indemnity insurance,Property insurance',
-                'Public liability insurance', 'Road transit (international)', 'Road transit (UAE only)',
-                'SME packaged insurance', 'Trade credit insurance', 'Workmens compensation insurance',
+                'business interruption insurance', 'contractors all risks', 'Cyber liability', 'directors and officers liability insurance',
+                'Engineering and plant insurance', 'fidelity guarantee', 'group life', 'group medical insurance', 'holiday homes',
+                'livestock insurance', 'machinery breakdown insurance', 'marine cargo (individual shipment) insurance',
+                'marine hull insurance', 'medical malpractice insurance', 'money insurance', 'motor fleet',
+                'open cover - marine cargo insurance', 'professional indemnity insurance,property insurance',
+                'public liability insurance', 'road transit (international)', 'road transit (UAE only)',
+                'sme packaged insurance', 'trade credit insurance', 'workmens compensation insurance',
             ],
-            QuoteTypes::CAR->value => ['Casco', 'Motor insurance - Comprehensive', 'Motor insurance - TPL'],
+            QuoteTypes::CAR->value => ['casco', 'motor insurance - Comprehensive', 'motor insurance - TPL'],
             QuoteTypes::LIFE->value => ['Critical illness', 'Individual life insurance'],
-            QuoteTypes::HOME->value => ['Home insurance', 'Personal accident'],
+            QuoteTypes::HOME->value => ['Home insurance', 'personal accident', 'home insurance'],
             QuoteTypes::TRAVEL->value => ['Inbound travel insurance', 'Outbound travel insurance'],
             QuoteTypes::HEALTH->value => ['Individual or family medical'],
             QuoteTypes::CYCLE->value => ['Pedal cycle insurance'],
@@ -189,31 +219,33 @@ trait GenericQueriesAllLobs
             $insuranceProviderCode = InsuranceProviderRepository::where('id', $insurance_provider_id)->value('code');
             $insuranceProviderLeadCount = Payment::where('insurance_provider_id', '=', $insurance_provider_id)->count();
         }
-        $bPDetails['brokerInvoiceNo'] = $insuranceProviderCode.$insuranceProviderLeadCount;
-        $bPDetails['invoiceDescription'] = $insuranceProviderCode.'-'.$quoteType.'-'.$record->policy_number;
-        $bPDetails['sendButton'] = false;
-        $bPDetails['editButton'] = false;
-        $bPDetails['sendPolicyType'] = null;
-        $bPDetails['text'] = '';
-        if (! empty($quoteDocuments)) {
-            $document_type_codes = collect($quoteDocuments)->pluck('document_type_code')->toArray();
-
-            if (in_array(QuoteDocumentsEnum::CAR_POLICY_CERTIFICATE, $document_type_codes) && in_array(QuoteDocumentsEnum::POLICY_SCHEDULE, $document_type_codes) && in_array(QuoteDocumentsEnum::POLICY_HANDBOOK, $document_type_codes)) {
-
-                $bPDetails['sendButton'] = true;
-                $bPDetails['text'] = 'Sending Policy To Customer';
-                $bPDetails['sendPolicyType'] = 'customer';
-            }
-            $taxDocuments = (in_array(QuoteDocumentsEnum::CAR_TAX_INVOICE, $document_type_codes) && in_array(QuoteDocumentsEnum::CAR_TAX_INVOICE_RAISE_BY_BUYER, $document_type_codes));
-
-            if ($bPDetails['sendButton'] && $taxDocuments) {
-                $bPDetails['text'] = 'Send Policy';
-                $bPDetails['editButton'] = true;
-                $bPDetails['sendPolicyType'] = 'sage';
+        $bookPolicyDetails['brokerInvoiceNo'] = $insuranceProviderCode.$insuranceProviderLeadCount;
+        $bookPolicyDetails['invoiceDescription'] = $insuranceProviderCode.'-'.$quoteType.'-'.$record->policy_number;
+        $bookPolicyDetails['sendButton'] = false;
+        $bookPolicyDetails['editButton'] = false;
+        $bookPolicyDetails['sendPolicyType'] = null;
+        $bookPolicyDetails['text'] = '';
+        // check if policy details are filled & all required documents are uploaded then show send policy button to customer & show edit button &  send policy to sage
+        if ($this->isFilledPolicyDetails($quoteType, $record)) {
+            if (! empty($quoteDocuments)) {
+                if ($this->isAllRequiredDocumentAreUploaded($quoteDocuments, $quoteType)) {
+                    $bookPolicyDetails['sendButton'] = true;
+                    $bookPolicyDetails['text'] = 'Send Policy To Customer';
+                    $bookPolicyDetails['sendPolicyType'] = 'customer';
+                }
+                if ($bookPolicyDetails['sendButton']) {
+                    $taxDocuments = DocumentTypeRepository::taxDocumentsCode($quoteType);
+                    $taxDocumentsCount = collect($quoteDocuments)->whereIn('document_type_code', $taxDocuments)->groupBy('document_type_code')->count();
+                    if ($taxDocumentsCount == count($taxDocuments)) {
+                        $bookPolicyDetails['text'] = 'Send Policy';
+                        $bookPolicyDetails['editButton'] = true;
+                        $bookPolicyDetails['sendPolicyType'] = 'sage';
+                    }
+                }
             }
         }
 
-        return $bPDetails;
+        return $bookPolicyDetails;
     }
 
     public function getQuoteCodeType($lead)
@@ -226,26 +258,49 @@ trait GenericQueriesAllLobs
         return $leadCodeArray[0];
     }
 
-    public function updateStatus($type, $id)
+    public function updateQuoteStatus($type, $id)
     {
+        if ($type == 'send-update') {
+            return true;
+        }
+        if (request()->has('quote_type')) {
+            $type = request()->quote_type;
+        }
         $quote = $this->getQuoteObject($type, $id);
-        if (! empty($quote->policy_number) && ! empty($quote->policy_issuance_date) && ! empty($quote->policy_start_date) && ! empty($quote->renewal_expiry_date) && $quote->price_with_vat > 0 && ! empty($quote->insurer_quote_number)) {
-            if (ucfirst($type) == QuoteTypes::CAR->value) {
-                $quoteDocuments = (new QuoteDocumentService())->getQuoteDocuments(QuoteTypes::CAR->value, $id);
-                $quoteDocuments = array_values($quoteDocuments->toArray());
-                $document_type_codes = collect($quoteDocuments)->pluck('document_type_code')->toArray();
-                if (in_array(QuoteDocumentsEnum::CAR_POLICY_CERTIFICATE, $document_type_codes) && in_array(QuoteDocumentsEnum::POLICY_SCHEDULE, $document_type_codes) && in_array(QuoteDocumentsEnum::POLICY_HANDBOOK, $document_type_codes)) {
-
-                    if ($quote->quote_status_id != QuoteStatusEnum::PolicySentToCustomer) {
-
-                        $quote->update([
-                            'quote_status_id' => QuoteStatusEnum::PolicyIssued,
-                            'policy_issuance_status_id' => null,
-                            'policy_issuance_status_other' => '',
-                        ]);
-                    }
+        if ($quote->quote_status_id != QuoteStatusEnum::PolicySentToCustomer || $quote->policy_issuance_status_id != PolicyIssuanceStatusEnum::PolicyIssued) {
+            if ($this->isFilledPolicyDetails($type, $quote)) {
+                $quoteDocuments = (new QuoteDocumentService())->getQuoteDocuments($type, $id);
+                if ($this->isAllRequiredDocumentAreUploaded($quoteDocuments, $type)) {
+                    $quote->update([
+                        'quote_status_id' => QuoteStatusEnum::PolicyIssued,
+                        'policy_issuance_status_id' => PolicyIssuanceStatusEnum::PolicyIssued,
+                        'policy_issuance_status_other' => '',
+                    ]);
                 }
             }
         }
+    }
+
+    private function isFilledPolicyDetails($type, $quote)
+    {
+        if (! empty($quote->policy_number) && ! empty($quote->policy_issuance_date) && ! empty($quote->policy_start_date) && ! empty($quote->renewal_expiry_date) && $quote->price_with_vat > 0) {
+            if (in_array(ucfirst($type), [QuoteTypes::CAR->value, QuoteTypes::BIKE->value])) {
+                if (! empty($quote->insurer_quote_number)) {
+                    return true;
+                }
+            } else {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private function isAllRequiredDocumentAreUploaded($quoteDocuments, $quoteType)
+    {
+        $documentTypeCodes = DocumentTypeRepository::sendPolicyDocumentCodes($quoteType);
+        $quoteDocumentsCount = collect($quoteDocuments)->whereIn('document_type_code', $documentTypeCodes)->groupBy('document_type_code')->count();
+
+        return $quoteDocumentsCount == count($documentTypeCodes);
     }
 }

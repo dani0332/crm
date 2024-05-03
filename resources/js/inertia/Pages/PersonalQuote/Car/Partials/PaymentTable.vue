@@ -25,7 +25,7 @@ const insuranceProviderOptions = computed(() => {
     label: provider.text,
   }));
 });
-
+const enableManageOptions = ref(false);
 const createPaymentModal = ref(false);
 const isLoading = ref(false);
 
@@ -275,8 +275,8 @@ const providerId = computed(() => {
         <div class="mb-4 flex justify-end">
           <x-button
             v-if="(can(permissionEnum.PaymentsCreate) &&
-              !can(permissionEnum.ApprovePayments) &&
-              !hasRole(rolesEnum.PA) && quoteRequest.plan) || isCommercialVehicles"
+            !can(permissionEnum.ApprovePayments) &&
+            !hasRole(rolesEnum.PA) && quoteRequest.plan && enableManageOptions) || (isCommercialVehicles && enableManageOptions)"
             size="sm"
             color="orange"
             @click="addPaymentModal"
@@ -303,37 +303,37 @@ const providerId = computed(() => {
           </template>
     
           <template #item-actions="item">
-                <div class="flex gap-2">
-                    <template v-if="!can(permissionEnum.ApprovePayments)">
-                        <x-button v-if="(item.payment_methods_code == 'CC' || item.payment_methods_code == 'IN_PL') && item.payment_status_id != paymentStatusEnum.PAID && item.payment_status_id != paymentStatusEnum.CAPTURED && item.payment_status_id != paymentStatusEnum.AUTHORISED && !hasRole(rolesEnum.PA)"
-                            size="xs"
-                            color="primary"
-                            outlined
-                            @click.prevent="generateCCLink(item.code)"
-                        >
-                            Copy Link
-                        </x-button>
-                        <x-button v-if="item.payment_status_id != paymentStatusEnum.PAID && item.payment_status_id != paymentStatusEnum.CAPTURED && item.payment_status_id != paymentStatusEnum.AUTHORISED && !hasRole(rolesEnum.PA) && can(permissionEnum.PaymentsEdit)"  size="xs" color="error" @click="editPaymentModal(item)">
-                            Edit
-                        </x-button>
-                    </template>
-                    <template v-if="can(permissionEnum.ApprovePayments)">
-                        <x-button v-if="item.payment_methods_code != 'CC' && ![paymentStatusEnum.PAID, paymentStatusEnum.CAPTURED].includes(item.payment_status_id) && !hasRole(rolesEnum.PA)"
-                            size="xs"
-                            color="primary"
-                            outlined
-                            @click="approvePayment(item)"
-                        >
-                            Approve
-                        </x-button>
-                    </template>
-                    <template v-if="item.payment_status_id == paymentStatusEnum.PAID">
-                        <x-button size="xs" color="primary" outlined disabled>
-                            Approve
-                        </x-button>
-                    </template>
-                </div>
-            </template>
+            <div class="flex gap-2">
+                <template v-if="!can(permissionEnum.ApprovePayments) && enableManageOptions">
+                    <x-button v-if="(item.payment_methods_code == 'CC' || item.payment_methods_code == 'IN_PL') && item.payment_status_id != paymentStatusEnum.PAID && item.payment_status_id != paymentStatusEnum.CAPTURED && item.payment_status_id != paymentStatusEnum.AUTHORISED && !hasRole(rolesEnum.PA)"
+                        size="xs"
+                        color="primary"
+                        outlined
+                        @click.prevent="generateCCLink(item.code)"
+                    >
+                        Copy Link
+                    </x-button>
+                    <x-button v-if="item.payment_status_id != paymentStatusEnum.PAID && item.payment_status_id != paymentStatusEnum.CAPTURED && item.payment_status_id != paymentStatusEnum.AUTHORISED && !hasRole(rolesEnum.PA) && can(permissionEnum.PaymentsEdit)"  size="xs" color="error" @click="editPaymentModal(item)">
+                        Edit
+                    </x-button>
+                </template>
+                <template v-if="can(permissionEnum.ApprovePayments) && enableManageOptions">
+                    <x-button v-if="item.payment_methods_code != 'CC' && ![paymentStatusEnum.PAID, paymentStatusEnum.CAPTURED].includes(item.payment_status_id) && !hasRole(rolesEnum.PA)"
+                        size="xs"
+                        color="primary"
+                        outlined
+                        @click="approvePayment(item)"
+                    >
+                        Approve
+                    </x-button>
+                </template>
+                <template v-if="item.payment_status_id == paymentStatusEnum.PAID">
+                    <x-button size="xs" color="primary" outlined disabled>
+                        Approve
+                    </x-button>
+                </template>
+            </div>
+        </template>
         </DataTable>
       </template>
     </Collapsible>

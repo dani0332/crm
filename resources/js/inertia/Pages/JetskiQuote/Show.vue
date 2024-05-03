@@ -24,7 +24,6 @@ defineProps({
   activities: Object,
   advisors: Object,
   lostReasons: Object,
-  quoteStatusEnum: Object,
   embeddedProducts: Array,
   canAddBatchNumber: Boolean,
   vatPercentage: Number,
@@ -52,6 +51,15 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
         </div>
         <template #body>
           <div class="flex gap-2 mb-4 justify-end">
+            <Link
+              v-if="quote.quote_detail?.insly_id"
+              :href="`/legacy-policy/${quote.quote_detail?.insly_id}`"
+              preserve-scroll
+            >
+              <x-button size="sm" color="#ff5e00" tag="div">
+                View Legacy policy
+              </x-button>
+            </Link>
             <Link
               v-if="can(permissionsEnum.JetskiQuotesEdit)"
               :href="route('jetski-quotes-edit', quote.uuid)"
@@ -267,7 +275,6 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       :quote-type="quoteType"
       :quote-statuses="quoteStatuses"
       :lost-reasons="lostReasons"
-      :quote-status-enum="quoteStatusEnum"
       :expanded="sectionExpanded"
     />
 
@@ -291,7 +298,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
     <QuotePolicy
       :quote="quote"
       :can="can"
-      :quoteStatusEnum="quoteStatusesEnum"
+      :quoteStatusEnum="page.props.quoteStatusEnum"
     />
 
     <PlanDetails
