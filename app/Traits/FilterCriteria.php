@@ -10,7 +10,9 @@ trait FilterCriteria
 {
     public function scopeFilter($query, $paginate = true, $forTotalLeadsCount = false)
     {
-        $filters = $forTotalLeadsCount ? request()->merge([
+
+  
+        $filters = ($forTotalLeadsCount && request()->all() === []) || count(request()->all()) === 1 && isset(request()->all()['page'])  ? request()->merge([
             'created_at_start' => date(config('constants.DATE_FORMAT_ONLY'), strtotime('-30 days')),
             'created_at_end' => now()->format(config('constants.DATE_FORMAT_ONLY')),
         ])->all() : request()->all();
