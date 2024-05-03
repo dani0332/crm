@@ -1617,7 +1617,8 @@ const getCaptureValidation = computed(() => {
         const paymentMethodCC = paymentRecord.payment_splits.filter(item => item.payment_method.code === "CC");      
         if (paymentMethodCC.length > 0) {
           let totalSplitPayments = paymentRecord.payment_splits.length;
-          let paidPaymentStatus = paymentRecord.payment_splits.filter(item => item.payment_status_id===props.paymentStatusEnum.PAID);
+          let paidPaymentStatus = paymentRecord.payment_splits.filter(item => (
+            item.payment_status_id===props.paymentStatusEnum.PAID || item.payment_status_id===props.paymentStatusEnum.PARTIALLY_PAID));
           let ccPaymentStatus = paymentMethodCC.filter(item => item.payment_status_id===props.paymentStatusEnum.AUTHORISED);
           if( totalSplitPayments == (ccPaymentStatus.length + paidPaymentStatus.length) ) {
             return true;
@@ -1655,7 +1656,8 @@ const getCaptureValidation = computed(() => {
           return true;
         } else if (
             paymentRecord.payment_splits[0].payment_status_id===props.paymentStatusEnum.PAID ||
-            paymentRecord.payment_splits[0].payment_status_id===props.paymentStatusEnum.AUTHORISED        
+            paymentRecord.payment_splits[0].payment_status_id===props.paymentStatusEnum.AUTHORISED ||
+            paymentRecord.payment_splits[0].payment_status_id===props.paymentStatusEnum.PARTIALLY_PAID      
           ){
           return true;
         }        
