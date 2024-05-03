@@ -31,11 +31,9 @@ defineProps({
   customerAdditionalContacts: Array,
   lostReasons: Array,
   tiers: Array,
-  quoteStatusEnum: Object,
   carPlanFeaturesCodeEnum: Object,
   carPlanExclusionsCodeEnum: Object,
   carPlanAddonsCodeEnum: Object,
-  paymentStatusEnum: Object,
   modelType: String,
   notProductionApproval: Boolean,
   allowedDuplicateLOB: Array,
@@ -79,8 +77,7 @@ defineProps({
   tiersExceptTierR: Array,
   leadSourceEnum: Object,
   carPlanTypeEnum: Object,
-  policyIssuanceStatus: Array,
-  bPDetails: Array,
+  bookPolicyDetails: Array,
   documentTypesByCategory: Array,
   customerTypeEnum: Object,
   memberRelations: Array,
@@ -158,6 +155,8 @@ onMounted(() => {
 const processingOCBEmailNB = ref(false);
 const permissionEnum = page.props.permissionsEnum;
 const rolesEnum = page.props.rolesEnum;
+const quoteStatusEnum= page.props.quoteStatusEnum;
+const paymentStatusEnum = page.props.paymentStatusEnum;
 
 const dateFormat = date => {
   return useDateFormat(date, 'DD-MM-YYYY HH:mm:ss').value;
@@ -1624,6 +1623,15 @@ const getDetailPageRoute = (
   uuid,
   quote_type_id,
 ) => useGetShowPageRoute(uuid, quote_type_id, null);
+
+watch(
+  () => page.props.record.quote_status_id,
+  (newValue, oldValue) => {
+    if (newValue !== oldValue) {
+      leadStatusForm.leadStatus = newValue;
+    }
+  },
+);
 </script>
 
 <template>
@@ -2708,13 +2716,6 @@ const getDetailPageRoute = (
         </template>
       </Collapsible>
     </div>
-    <!-- <QuoteStatus
-			:quoteStatuses="leadStatuses"
-			:lostReasons="lostReasons"
-			:quoteStatusEnum="quoteStatusEnum"
-			:quoteType="quoteType"
-			:quote="record"
-		/> -->
 
     <div class="p-4 rounded shadow mb-6 bg-white">
       <Collapsible :expanded="sectionExpanded">
@@ -3484,11 +3485,9 @@ const getDetailPageRoute = (
     <PolicyDetail
       v-if="isQuoteDocumentEnabled"
       :record="record"
-      :quoteStatusEnum="quoteStatusEnum"
-      :policyIssuanceStatus="policyIssuanceStatus"
       :modelType="quoteType"
-    />
-
+    />    
+    
     <div class="p-4 rounded shadow mb-6 bg-white" v-if="isQuoteDocumentEnabled">
       <Collapsible :expanded="sectionExpanded">
         <template #header>
@@ -3607,7 +3606,7 @@ const getDetailPageRoute = (
       >
         <div class="flex flex-col gap-1">
           <h5 class="text-sm font-semibold">
-            {{ documentType.text }}
+            {{ documentType.text }} {{ documentType.is_required ? '*' : ''}} 
           </h5>
           <p class="text-xs">Max files: {{ documentType.max_files }}</p>
           <p class="text-xs">Supported: {{ documentType.accepted_files }}</p>
@@ -3646,16 +3645,16 @@ const getDetailPageRoute = (
       "
       :quote="record"
       :quoteType="quoteType"
-      :bPDetails="bPDetails"
+      :bookPolicyDetails="bookPolicyDetails"
       :payments="payments"
     />
 
     <SendUpdates
-        v-if="hasPolicyIssuedStatus"
-        :reportable="record"
-        :quote_type_id="$page.props.quoteTypeId"
-        :options="sendUpdateOptions"
-        :data="sendUpdateLogs"
+      v-if="hasPolicyIssuedStatus"
+      :reportable="record"
+      :quote_type_id="$page.props.quoteTypeId"
+      :options="sendUpdateOptions"
+      :data="sendUpdateLogs"
     />
 
     <div class="p-4 rounded shadow mb-6 bg-white">

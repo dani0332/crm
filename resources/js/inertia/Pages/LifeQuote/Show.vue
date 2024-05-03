@@ -16,7 +16,6 @@ defineProps({
   customerAdditionalContacts: Array,
   allowedDuplicateLOB: Array,
   lostReasons: Array,
-  quoteStatusEnum: Object,
   embeddedProducts: Array,
   customerTypeEnum: Object,
   nationalities: Array,
@@ -31,14 +30,12 @@ defineProps({
   insuranceProviders: Object,
   vatPercentage: Number,
   payments: Array,
-  paymentStatusEnum: Object,
   paymentTooltipEnum: Object,
   paymentMethods: Array,
   insuranceProviders: Array,
   enums: Object,
-  policyIssuanceStatus: Array,
   permissions: Object,
-  bPDetails: Array,
+  bookPolicyDetails: Array,
   isNewPaymentStructure: Boolean,
   isAmlClearedForPayment: Boolean,
   sendUpdateOptions: Array,
@@ -485,6 +482,15 @@ const linkEntity = () => {
 const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
 const getDetailPageRoute = (uuid, quote_type_id) =>
   useGetShowPageRoute(uuid, quote_type_id, null);
+
+watch(
+  () => page.props.quote.quote_status_id,
+  (newValue, oldValue) => {
+    if (newValue !== oldValue) {
+      leadStatusForm.leadStatus = newValue;
+    }
+  },
+);
 </script>
 
 <template>
@@ -1042,15 +1048,6 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
       :expanded="sectionExpanded"
     />
 
-    <PolicyDetail
-      v-if="permissions.isQuoteDocumentEnabled"
-      :record="record"
-      :quoteStatusEnum="enums.quoteStatusEnum"
-      :policyIssuanceStatus="policyIssuanceStatus"
-      modelType="life"
-      :expanded="sectionExpanded"
-    />
-
     <UBODetails
       v-if="quote.customer_type == page.props.customerTypeEnum.Entity"
       :quote="quote"
@@ -1201,25 +1198,12 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
 			:payments="payments"
 			:paymentDocument="page.props.documentTypes.filter(item => item.code === 'LPD' || item.code === 'LPDR' || item.code === 'LDPDR')"
 			:quoteRequest="quote"
-			:paymentStatusEnum="paymentStatusEnum"
+			:paymentStatusEnum="page.props.paymentStatusEnum"
 			:paymentTooltipEnum="paymentTooltipEnum"
 			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name, tooltip: pm.tool_tip } })"
 			:storageUrl="storageUrl"
       :isAmlClearedForPayment="isAmlClearedForPayment"
 		/>
-
-    <BookPolicy
-      v-if="
-        canAny([
-          permissionsEnum.VIEW_INSLY_BOOK_POLICY,
-          permissionsEnum.SEND_INSLY_BOOK_POLICY,
-        ])
-      "
-      :quote="record"
-      quoteType="life"
-      :bPDetails="bPDetails"
-      :payments="payments"
-    />
 
     <EmbeddedProducts
       :data="embeddedProducts"
@@ -1230,12 +1214,33 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
       :expanded="sectionExpanded"
     />
 
+    <PolicyDetail
+      v-if="permissions.isQuoteDocumentEnabled"
+      :record="record"
+      modelType="life"
+      :expanded="sectionExpanded"
+    />
+
     <QuoteDocuments
       :document-types="documentTypes"
       :quote-documents="quote.documents || []"
       :storageUrl="storageUrl"
       :quote="quote"
       :insly-id="quote?.life_quote_request_detail?.insly_id"
+      :expanded="sectionExpanded"
+    />
+
+    <BookPolicy
+      v-if="
+        canAny([
+          permissionEnum.VIEW_INSLY_BOOK_POLICY,
+          permissionEnum.SEND_INSLY_BOOK_POLICY,
+        ])
+      "
+      :quote="record"
+      quoteType="life"
+      :bookPolicyDetails="bookPolicyDetails"
+      :payments="payments"
       :expanded="sectionExpanded"
     />
 

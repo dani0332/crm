@@ -27,6 +27,12 @@ class DocumentTypeCode extends Enum
     const SEND_UPDATE_PAYMENT_PROOF = 'SUPP'; // Payment Proof
     const SEND_UPDATE_CUSTOMER_DOCUMENTS = 'SUCD'; // Customer documents
     const SEND_UPDATE_UW_EMAIL_CORRESPONDENCE = 'SUUWEC'; // UW email Correspondence
+    const ISSUING_DOCUMENTS = 'ISSUING_DOCUMENTS';
+
+    // This is the same as the one in the database and we are using this as a text not it's code
+    // The reason behind this code is different for all lob's but text is sames that's why we are using this as a text
+    const NETWORK_LIST_BUSINESS = 'NL_GH';
+    const Receipt_BUSINESS = 'REC_GH';
     const CPD = 'CPD';
     const BPD = 'BPD';
     const TPD = 'TPD';
@@ -38,4 +44,6 @@ class DocumentTypeCode extends Enum
     const GMQPD = 'GMQPD';
     const PPD = 'PPD';
     const YPD = 'YPD';
+    const CTIRBB= 'CTIRBB'; // Tax Invoice Raised By Buyer
+    const TI = 'TI'; // Tax Invoice
 }

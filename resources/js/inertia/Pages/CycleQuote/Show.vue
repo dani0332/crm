@@ -28,7 +28,6 @@ defineProps({
   activities: Object,
   advisors: Object,
   lostReasons: Object,
-  quoteStatusEnum: Object,
   duplicateAllowedLobs: Array,
   embeddedProducts: Array,
   customerTypeEnum: Object,
@@ -40,15 +39,13 @@ defineProps({
   UBOsDetails: Array,
   canAddBatchNumber: Boolean,
   vatPercentage: Number,
-  paymentStatusEnum: Object,
   paymentTooltipEnum: Object,
   isNewPaymentStructure: Boolean,
   isAmlClearedForPayment: Boolean,
   record: Object,
   permissions: Object,
   enums: Object,
-  policyIssuanceStatus: Array,
-  bPDetails: Array,
+  bookPolicyDetails: Array,
   payments: Array,
   sendUpdateOptions: Array,
   sendUpdateLogs: Array,
@@ -66,7 +63,7 @@ const canAny = permissions => useCanAny(permissions);
 const modals = reactive({
   duplicate: false,
 });
-
+const quoteStatusEnum = page.props.quoteStatusEnum;
 const leadDuplicateForm = useForm({
   modelType: 'cycle',
   parentType: 'cycle',
@@ -874,7 +871,6 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
       :quote-type="quoteType"
       :quote-statuses="quoteStatuses"
       :lost-reasons="lostReasons"
-      :quote-status-enum="quoteStatusEnum"
       :expanded="sectionExpanded"
     />
 
@@ -899,12 +895,13 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
 			:payments="quote.payments"
 			:paymentDocument="documentTypes.filter(item => item.code === 'CYCPD' || item.code === 'CYCPDR' || item.code === 'CYCDPDR')"
 			:quoteRequest="quote"
-			:paymentStatusEnum="paymentStatusEnum"
+			:paymentStatusEnum="page.props.paymentStatusEnum"
 			:paymentTooltipEnum="paymentTooltipEnum"
 			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name, tooltip: pm.tool_tip } })"
 			:storageUrl="storageUrl"
       :isAmlClearedForPayment="isAmlClearedForPayment"
 		/>
+    
     <QuotePayments
       v-else
       :can="can"
@@ -939,6 +936,8 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
       :quote-documents="quote.documents || []"
       :storageUrl="storageUrl"
       :quote="quote"
+      :modelType="quoteType"
+      :insly-id="quote?.quote_detail?.insly_id"
       :expanded="sectionExpanded"
     />
 
@@ -951,8 +950,9 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
       "
       :quote="record"
       quoteType="Cycle"
-      :bPDetails="bPDetails"
+      :bookPolicyDetails="bookPolicyDetails"
       :payments="payments"
+      :expanded="sectionExpanded"
     />
 
     <SendUpdates
@@ -963,6 +963,13 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
       :data="sendUpdateLogs"
     />
 
+    <!-- Need to verify, is it necessary or not? -->
+    <QuotePolicy
+      :quote="quote"
+      :can="can"
+      :quoteStatusesEnum="quoteStatusesEnum"
+    />
+    
     <AuditLogs :quote-type="quoteType" :id="$page.props.quote.id" :quoteCode="$page.props.quote.code" :expanded="sectionExpanded" />
 
     <LeadHistory :quote="$page.props.quote" :expanded="sectionExpanded" />

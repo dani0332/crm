@@ -26,7 +26,6 @@ defineProps({
   activities: Array,
   customerAdditionalContacts: Array,
   lostReasons: Array,
-  quoteStatusEnum: Object,
   modelType: String,
   quoteTypeId: Number,
   notProductionApproval: Boolean,
@@ -53,9 +52,7 @@ defineProps({
   quoteType: String,
   paymentTooltipEnum: Object,
   storageUrl: String,
-  enums: Object,
-  policyIssuanceStatus: Array,
-  bPDetails: Array,
+  bookPolicyDetails: Array,
   isNewPaymentStructure: Boolean,
   isAmlClearedForPayment: Boolean,
   sendUpdateOptions: Array,
@@ -344,10 +341,23 @@ const leadStatusForm = useForm({
 });
 
 const onLeadStatus = () => {
-  leadStatusForm.post(`/quotes/Health/${page.props.quote.id}/update-lead-status`, {
-    preserveScroll: true,
-    onError: (errors) => {
-      notification.error({ title: errors.value, position: "top" });
+  leadStatusForm.post(
+    `/quotes/Health/${page.props.quote.id}/update-lead-status`,
+    {
+      preserveScroll: true,
+      preserveState: true,
+      onError: errors => {
+        notification.error({ title: errors.value, position: 'top' });
+      },
+      onSuccess: response => {
+        const flash_messages = response.props.flash;
+        if (!flash_messages) {
+          notification.success({
+            title: 'Lead Status Updated',
+            position: 'top',
+          });
+        }
+      },
     },
     onSuccess: (response) => {
       const flash_messages = response.props.flash;
@@ -1266,7 +1276,8 @@ const policyDetails = useForm({
   policy_issuance_date: dateToYMD(page.props.quote.policy_issuance_date) || "",
   quote_status_id: page.props.quote.quote_status_id,
   canEdit:
-    page.props.quote.quote_status_id == page.props.quoteStatusEnum.TransactionApproved &&
+    page.props.quote.quote_status_id ==
+    page.props.quoteStatusEnum.TransactionApproved &&
     page.props.notProductionApproval,
   editMode: false,
   modelType: page.props.modelType,
@@ -1510,6 +1521,15 @@ watch(
     selectedProviderPlan.value.premium = value.priceWithVAT;
   },
   { deep: true },
+);
+
+watch(
+  () => page.props.quote.quote_status_id,
+  (newValue, oldValue) => {
+    if (newValue !== oldValue) {
+      leadStatusForm.leadStatus = newValue;
+    }
+  },
 );
 
 </script>
@@ -2651,14 +2671,6 @@ watch(
       </Collapsible>
     </div>
 
-    <PolicyDetail
-      v-if="permissions.isQuoteDocumentEnabled"
-      :record="record"
-      :quoteStatusEnum="enums.quoteStatusEnum"
-      :policyIssuanceStatus="policyIssuanceStatus"
-      modelType="health"
-    />
-
     <div class="p-4 rounded shadow mb-6 bg-white">
       <Collapsible :expanded="sectionExpanded">
         <template #header>
@@ -3031,18 +3043,12 @@ watch(
       :expanded="sectionExpanded"
     />
 
-    <BookPolicy
-      v-if="
-        canAny([
-          permissionEnum.VIEW_INSLY_BOOK_POLICY,
-          permissionEnum.SEND_INSLY_BOOK_POLICY,
-        ])
-      "
-      :quote="record"
-      quoteType="health"
-      :bPDetails="bPDetails"
-      :payments="payments"
+    <PolicyDetail
+      v-if="permissions.isQuoteDocumentEnabled"
+      :record="record"
+      modelType="health"
       :expanded="sectionExpanded"
+      :payments="payments"
     />
 
     <div class="p-4 rounded shadow mb-6 bg-white">
@@ -3095,6 +3101,21 @@ watch(
         </template>
       </Collapsible>
     </div>
+    
+    <BookPolicy
+      v-if="
+        canAny([
+          permissionEnum.VIEW_INSLY_BOOK_POLICY,
+          permissionEnum.SEND_INSLY_BOOK_POLICY,
+        ])
+      "
+      :quote="record"
+      quoteType="health"
+      :bookPolicyDetails="bookPolicyDetails"
+      :payments="payments"
+      :expanded="sectionExpanded"
+    />
+
     <x-modal v-model="modals.doc" size="xl" show-close backdrop>
       <template #header> Upload Documents </template>
       <LazyDocumentUploader

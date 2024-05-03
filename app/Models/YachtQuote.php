@@ -58,7 +58,7 @@ class YachtQuote extends Model implements AuditableContract
         return $this->hasOne(YachtQuoteRequestDetail::class, 'yacht_quote_request_id', 'id');
     }
 
-    public function sageLogs()
+    public function sageApiLogs()
     {
         return $this->morphMany(SageApiLog::class, 'section');
     }

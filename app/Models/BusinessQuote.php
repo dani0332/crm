@@ -118,4 +118,10 @@ class BusinessQuote extends Model implements AuditableContract
     {
         return $this->morphMany(CustomerMembers::class, 'quote');
     }
+
+    public function sageApiLogs()
+    {
+        return $this->morphMany(SageApiLog::class, 'section');
+    }
+
 }

@@ -740,6 +740,7 @@ class SendEmailCustomerService extends BaseService
 
             $websiteURL = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
             $documents = $emailData->quoteDocuments;
+
             if (! empty($documents)) {
                 foreach ($documents as $item) {
 
@@ -763,6 +764,7 @@ class SendEmailCustomerService extends BaseService
                     }
                 }
             }
+
             $headers = [
                 'Accept' => 'application/json',
                 'api-key' => config('constants.SENDINBLUE_KEY'),
