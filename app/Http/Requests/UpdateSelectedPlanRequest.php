@@ -30,6 +30,10 @@ class UpdateSelectedPlanRequest extends FormRequest
             $rules['copay_id'] = 'required';
         }
 
+        if (strtolower(request()->quoteType) == strtolower(QuoteTypes::TRAVEL->value)) {
+            $rules['selected_plan_id'] = 'sometimes';
+        }
+
         return $rules;
     }
 }
