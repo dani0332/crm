@@ -33,38 +33,36 @@ class CarEmailService extends BaseService
         $emailData = $this->buildEmailData($lead, $plans, $previousAdvisorId, $tierR->id);
         $quotePlansCount = is_countable($plans) ? count($plans) : 0;
         if ($quotePlansCount > 0) {
-            info('Inside plans of count: '.$lead->uuid.'    ');
+            info('Inside plans of count: ' . $lead->uuid . '    ');
             $pdfData = [
                 'plan_ids' => collect($plans)->take(5)->pluck('id')->toArray(),
                 'quote_uuid' => $lead->uuid,
             ];
             $pdf = $carQuoteService->exportPlansPdf(quoteTypeCode::Car, $pdfData, json_decode(json_encode(['quotes' => ['plans' => $plans], 'isDataSorted' => true])));
             if (isset($pdf['error'])) {
-                info('Failed to generate PDF for UUID in car email service: '.$lead->uuid.' Error: '.$pdf['error']);
+                info('Failed to generate PDF for UUID in car email service: ' . $lead->uuid . ' Error: ' . $pdf['error']);
             } else {
                 $emailData->pdfAttachment = (object) $pdf;
-                info('attaching pdf: '.$lead->uuid.'    ');
+                info('attaching pdf: ' . $lead->uuid . '    ');
             }
         }
 
         // trigger SIC workflow
         if ($triggerSICWorkFlow) {
-            if (! $lead->sic_flow_enabled) {
+            if (!$lead->sic_flow_enabled) {
                 $sicEventName = ApplicationStorage::where('key_name', 'SIC_WORKFLOW_NAME')->first();
                 if ($sicEventName) {
                     $apiResponse = SIBService::createWorkflowEvent($sicEventName->value, $lead, [], $emailData);
                     $lead->sic_flow_enabled = true;
                     $lead->save();
-                    info('SIC workflow event triggered for lead: '.$lead->uuid.' and sic_flow_enabled: '.$lead->sic_flow_enabled);
-                    info('SIC workflow response: '.$apiResponse);
+                    info('SIC workflow event triggered for lead: ' . $lead->uuid . ' and sic_flow_enabled: ' . $lead->sic_flow_enabled);
+                    info('SIC workflow response: ' . $apiResponse);
                 } else {
                     info('SIC workflow key not found');
                 }
-
             } else {
-                info('SIC workflow already enabled for lead: '.$lead->uuid);
+                info('SIC workflow already enabled for lead: ' . $lead->uuid);
             }
-
         }
 
         if ($lead->advisor_id) {
@@ -81,7 +79,7 @@ class CarEmailService extends BaseService
         $advisor = User::where('id', $carQuote->advisor_id)->first();
 
         $emailData = $this->buildCommonEmailData($carQuote, $advisor, $previousAdvisor);
-        $emailData->isReAssignment = ! empty($previousAdvisor);
+        $emailData->isReAssignment = !empty($previousAdvisor);
         if ($carQuote->tier_id == $tierRId) {
             $emailData->isRenewal = true;
             $emailData->policyNumber = $carQuote->previous_quote_policy_number;
@@ -101,7 +99,7 @@ class CarEmailService extends BaseService
                 'carValue' => $plan->repairType == CarPlanType::TPL ? 'N/A' : (empty($plan->carValue) ? 'N/A' : $plan->carValue),
                 'excessAed' => empty($plan->excess) ? 'N/A' : $plan->excess,
                 'repairType' => $this->getUpdateRepairType($plan->repairType, $plan->providerCode),
-                'discountPremium' => ! empty($plan->discountPremium) ? number_format($plan->discountPremium, 2) : '',
+                'discountPremium' => !empty($plan->discountPremium) ? number_format($plan->discountPremium, 2) : '',
                 'planName' => $plan->name,
                 'providerCode' => strtolower($plan->providerCode),
                 'benefits' => $this->getPlanBenefits($plan),
@@ -113,7 +111,7 @@ class CarEmailService extends BaseService
         $emailData = $this->buildCommonEmailData($carQuote, $advisor, $previousAdvisor);
         $emailData->plans = $insurerPlans;
         $emailData->totalPlans = count($insurerPlans);
-        $emailData->isReAssignment = ! empty($previousAdvisor);
+        $emailData->isReAssignment = !empty($previousAdvisor);
 
         if ($carQuote->tier_id == $tierRId) {
             $emailData->isRenewal = true;
@@ -128,27 +126,27 @@ class CarEmailService extends BaseService
     private function buildCommonEmailData($carQuote, $advisor, $previousAdvisor)
     {
         $documentUrl = $this->getAppStorageValueByKey(ApplicationStorageEnums::LMS_INTRO_EMAIL_ATTACHMENT_URL);
-        $whatsAppNumber = ! empty($advisor->mobile_no) ? formatMobileNo($advisor->mobile_no) : '';
+        $whatsAppNumber = !empty($advisor->mobile_no) ? formatMobileNo($advisor->mobile_no) : '';
         $emailData = (object) [
-            'clientFullName' => $carQuote->first_name.' '.$carQuote->last_name,
-            'customerName' => $carQuote->first_name.' '.$carQuote->last_name,
+            'clientFullName' => $carQuote->first_name . ' ' . $carQuote->last_name,
+            'customerName' => $carQuote->first_name . ' ' . $carQuote->last_name,
             'customerEmail' => $carQuote->email,
-            'mobilePhone' => (! empty($advisor->mobile_no) ? formatMobileNoDisplay($advisor->mobile_no) : ''),
+            'mobilePhone' => (!empty($advisor->mobile_no) ? formatMobileNoDisplay($advisor->mobile_no) : ''),
             'whatsAppNumber' => $whatsAppNumber,
-            'landLine' => (! empty($advisor->landline_no) ? formatLandlineDisplay($advisor->landline_no) : ''),
-            'advisorEmail' => (! empty($advisor->email) ? $advisor->email : ''),
-            'advisorName' => (! empty($advisor->name) ? $advisor->name : ''),
+            'landLine' => (!empty($advisor->landline_no) ? formatLandlineDisplay($advisor->landline_no) : ''),
+            'advisorEmail' => (!empty($advisor->email) ? $advisor->email : ''),
+            'advisorName' => (!empty($advisor->name) ? $advisor->name : ''),
             'documentUrl' => [$documentUrl],
             'carQuoteId' => $carQuote->code,
             'yearOfManufacture' => $carQuote->year_of_manufacture,
             'vehicleName' => $this->getVehicleName($carQuote),
             'currentInsurer' => $carQuote->currently_insured_with,
-            'quoteLink' => config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$carQuote->uuid,
-            'requestAdvisorLink' => config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$carQuote->uuid.'/?assignAdvisor=true',
+            'quoteLink' => config('constants.ECOM_CAR_INSURANCE_QUOTE_URL') . $carQuote->uuid,
+            'requestAdvisorLink' => config('constants.ECOM_CAR_INSURANCE_QUOTE_URL') . $carQuote->uuid . '/?assignAdvisor=true',
             'assignmentType' => $this->getAssignmentTypeText($carQuote->assignment_type),
-            'previousAdvisorName' => ! empty($previousAdvisor) ? $previousAdvisor->name : '',
-            'previousAdvisorStatus' => ! empty($previousAdvisor) ? UserStatusEnum::getUserStatusText($previousAdvisor->status) : '',
-            'isReAssignment' => ! empty($previousAdvisor),
+            'previousAdvisorName' => !empty($previousAdvisor) ? $previousAdvisor->name : '',
+            'previousAdvisorStatus' => !empty($previousAdvisor) ? UserStatusEnum::getUserStatusText($previousAdvisor->status) : '',
+            'isReAssignment' => !empty($previousAdvisor),
         ];
 
         return $emailData;
@@ -201,7 +199,7 @@ class CarEmailService extends BaseService
 
     private function getPlanBuyNowLink($plan, $uuid)
     {
-        $buyNowLink = config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$uuid.'/payment/?planId='.$plan->id.'&providerCode='.$plan->providerCode;
+        $buyNowLink = config('constants.ECOM_CAR_INSURANCE_QUOTE_URL') . $uuid . '/payment/?planId=' . $plan->id . '&providerCode=' . $plan->providerCode;
 
         return $buyNowLink;
     }
@@ -212,7 +210,7 @@ class CarEmailService extends BaseService
             ->where('key_name', $keyName)
             ->first();
 
-        if (! $query) {
+        if (!$query) {
             return false;
         }
 
@@ -235,7 +233,7 @@ class CarEmailService extends BaseService
 
             if ($carModel) {
                 // Update $vehicleName with car model text
-                $vehicleName .= ' '.$carModel->text;
+                $vehicleName .= ' ' . $carModel->text;
             }
         }
         if ($lead->car_model_detail_id != null) {
@@ -243,7 +241,7 @@ class CarEmailService extends BaseService
 
             if ($carModelDetail) {
                 // Update $vehicleName with car model detail text
-                $vehicleName .= ' '.$carModelDetail->text;
+                $vehicleName .= ' ' . $carModelDetail->text;
             }
         }
 
@@ -272,7 +270,7 @@ class CarEmailService extends BaseService
     private function getEmailTemplateId($lead, $plans, $tierR, $triggerSICWorkFlow = false)
     {
         if ($triggerSICWorkFlow) {
-            info('Inside sic flow enabled: '.$lead->uuid);
+            info('Inside sic flow enabled: ' . $lead->uuid);
             $noAdvisorTemplateId = ApplicationStorage::where('key_name', 'SIC_NO_ADVISOR_TEMPLATE_ID')->first();
             if ($noAdvisorTemplateId) {
                 return (int) $noAdvisorTemplateId->value;
@@ -329,6 +327,11 @@ class CarEmailService extends BaseService
         }
 
         // return $top6Plans if $top6Plans is not empty otherwise return $plans
-        return ! empty($top6Plans) ? $top6Plans : [];
+        return !empty($top6Plans) ? $top6Plans : [];
+    }
+
+    public function sendSICNotificationToAdvisor($lead, $user)
+    {
+        return $this->sendEmailCustomerService->sendSICNotificationToAdvisor($lead, $user);
     }
 }
