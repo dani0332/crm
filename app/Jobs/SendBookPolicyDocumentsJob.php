@@ -2,21 +2,21 @@
 
 namespace App\Jobs;
 
-use Exception;
-use Throwable;
-use Illuminate\Bus\Queueable;
 use App\Models\ApplicationStorage;
-use function Laravel\Prompts\error;
-use App\Traits\GenericQueriesAllLobs;
+use App\Repositories\DocumentTypeRepository;
 use App\Services\QuoteDocumentService;
-use Illuminate\Queue\SerializesModels;
-use Illuminate\Queue\InteractsWithQueue;
 use App\Services\SendEmailCustomerService;
+use App\Traits\GenericQueriesAllLobs;
+use Exception;
+use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
-
-use App\Repositories\DocumentTypeRepository;
+use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
+use Illuminate\Queue\SerializesModels;
+use Throwable;
+
+use function Laravel\Prompts\error;
 
 class SendBookPolicyDocumentsJob implements ShouldQueue
 {
@@ -86,7 +86,7 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
     {
         info('SendBookPolicyDocumentsJob -: '.$this->data->quote_id.' Error: '.$exception->getMessage());
     }
-    
+
     public function middleware()
     {
         return [(new WithoutOverlapping($this->data->quote_id))->dontRelease()];
