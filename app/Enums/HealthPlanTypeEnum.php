@@ -2,7 +2,7 @@
 
 namespace App\Enums;
 
-enum PlanTypeEnum: int
+enum HealthPlanTypeEnum: int
 {
     use Enumable;
 

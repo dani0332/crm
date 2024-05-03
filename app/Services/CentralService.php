@@ -4,9 +4,9 @@ namespace App\Services;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\GenericRequestEnum;
+use App\Enums\HealthPlanTypeEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentStatusEnum;
-use App\Enums\PlanTypeEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
@@ -201,7 +201,7 @@ class CentralService
 
                         foreach ($listQuotePlans as $plans) {
                             foreach ($plans as $plan) {
-                                $plan->plan_type = PlanTypeEnum::typeName($plan->planTypeId)?->label();
+                                $plan->plan_type = HealthPlanTypeEnum::typeName($plan->planTypeId)?->label();
                             }
                         }
                     }
