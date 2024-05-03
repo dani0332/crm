@@ -2063,7 +2063,7 @@ const isMasterPaymentPaid = computed(() => {
         </div>
       </template>
       <template #body>
-        <div class="flex justify-end">
+        <div class="flex justify-end mt-4">
           <template v-if="payments.length > 0">
             <div
               class="flex justify-between items-center gap-2"
