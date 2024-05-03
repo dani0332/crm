@@ -7,6 +7,7 @@ const props = defineProps({
   quoteDocuments: Object,
   documentTypes: Object,
   storageUrl: String,
+  inslyId: String,
   expanded: {
     type: Boolean,
     required: false,
@@ -29,15 +30,16 @@ const props = defineProps({
 
 const page = usePage();
 const notification = useNotifications('toast');
-const permissionEnum = page.props.permissionsEnum;
 const sendUpdateStatusEnum = page.props.sendUpdateStatusEnum;
-const can = permission => useCan(permission);
 
 const rowsPerPage = props.extras?.pageType === 'send-update-log' ? 10 : 15;
 const isSendUpdatePage =
   props.extras?.pageType === 'send-update-log' ? true : false;
 const isUploading = ref(false);
 const memberTabs = ref('quote-documents');
+
+const can = permission => useCan(permission);
+const permissionsEnum = page.props.permissionsEnum;
 
 const quoteDocumentsTable = reactive({
   isLoading: false,
@@ -164,7 +166,7 @@ const isCPU = computed(() => {
 });
 
 const sendUpdateButton = computed(() => {
-  return (isEN.value || isCPU.value) && (props.updateBtn && props.updateBtn !== 'Send Update') && can(permissionEnum.SEND_UPDATE_TO_CUSTOMER);
+  return (isEN.value || isCPU.value) && (props.updateBtn && props.updateBtn !== 'Send Update') && can(permissionsEnum.SEND_UPDATE_TO_CUSTOMER);
 });
 const sendUpdateValidation = () => {
   axios
@@ -205,12 +207,21 @@ const sendUpdateValidation = () => {
       <template #body>
         <x-divider class="my-4" />
         <div class="flex gap-2 mb-4 justify-end">
+          <Link
+            v-if="inslyId && can(permissionsEnum.VIEW_LEGACY_DETAILS)"
+            :href="`/legacy-policy/${inslyId}`"
+            preserve-scroll
+          >
+            <x-button size="sm" color="#ff5e00" tag="div">
+                View Legacy policy
+            </x-button>
+          </Link>
           <x-button @click.prevent="modals.doc = true" size="sm" color="orange">
             Upload Documents
           </x-button>
         </div>
         
-        <DataTable
+      <DataTable
       table-class-name="compact"
       :headers="quoteDocumentsTable.columns"
       :items="quoteDocuments || []"
