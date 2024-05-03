@@ -30,9 +30,7 @@ const props = defineProps({
 
 const page = usePage();
 const notification = useNotifications('toast');
-const permissionEnum = page.props.permissionsEnum;
 const sendUpdateStatusEnum = page.props.sendUpdateStatusEnum;
-const can = permission => useCan(permission);
 
 const rowsPerPage = props.extras?.pageType === 'send-update-log' ? 10 : 15;
 const isSendUpdatePage =
@@ -168,7 +166,7 @@ const isCPU = computed(() => {
 });
 
 const sendUpdateButton = computed(() => {
-  return (isEN.value || isCPU.value) && (props.updateBtn && props.updateBtn !== 'Send Update') && can(permissionEnum.SEND_UPDATE_TO_CUSTOMER);
+  return (isEN.value || isCPU.value) && (props.updateBtn && props.updateBtn !== 'Send Update') && can(permissionsEnum.SEND_UPDATE_TO_CUSTOMER);
 });
 const sendUpdateValidation = () => {
   axios
