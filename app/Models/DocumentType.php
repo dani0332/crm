@@ -61,7 +61,7 @@ class DocumentType extends Model implements AuditableContract
 
     public function scopeTaxDocument($query)
     {
-        $query->whereIn('text', [DocumentTypeCode::TI, DocumentTypeCode::CTIRBB])->issuingDocument()->active();
+        $query->whereIn('code', [DocumentTypeCode::TI, DocumentTypeCode::CTIRBB])->issuingDocument()->active();
     }
 
     public function scopeRequiredForSendPolicy($query)
@@ -71,6 +71,6 @@ class DocumentType extends Model implements AuditableContract
 
     public function scopeSendToCustomer($query)
     {
-        $query->whereNotIn('text', [DocumentTypeCode::CTIRBB])->where('send_to_customer', 1)->active();
+        $query->whereNotIn('code', [DocumentTypeCode::CTIRBB])->where('send_to_customer', 1)->active();
     }
 }

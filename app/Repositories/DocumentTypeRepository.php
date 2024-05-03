@@ -42,7 +42,7 @@ class DocumentTypeRepository extends BaseRepository
         }
 
         // If the quote is a business quote, exclude the tax invoice document type.
-        $documentTypes->where('text', '!=', DocumentTypeCode::TI);
+        $documentTypes->where('code', '!=', DocumentTypeCode::TI);
 
         return $documentTypes->pluck('code')->toArray();
     }
