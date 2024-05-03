@@ -3,7 +3,6 @@
 namespace App\Repositories;
 
 use App\Enums\DocumentTypeCode;
-use App\Enums\DocumentTypeText;
 use App\Enums\quoteBusinessTypeCode;
 use App\Enums\QuoteTypes;
 use App\Models\DocumentType;
@@ -43,7 +42,7 @@ class DocumentTypeRepository extends BaseRepository
         }
 
         // If the quote is a business quote, exclude the tax invoice document type.
-        $documentTypes->where('text', '!=', DocumentTypeText::TAX_INVOICE);
+        $documentTypes->where('text', '!=', DocumentTypeCode::TI);
 
         return $documentTypes->pluck('code')->toArray();
     }

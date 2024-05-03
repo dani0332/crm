@@ -3,7 +3,6 @@
 namespace App\Models;
 
 use App\Enums\DocumentTypeCode;
-use App\Enums\DocumentTypeText;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use OwenIt\Auditing\Auditable;
@@ -62,7 +61,7 @@ class DocumentType extends Model implements AuditableContract
 
     public function scopeTaxDocument($query)
     {
-        $query->whereIn('text', [DocumentTypeText::TAX_INVOICE, DocumentTypeText::TAX_INVOICE_RAISED_BY_BUYER])->issuingDocument()->active();
+        $query->whereIn('text', [DocumentTypeCode::TI, DocumentTypeCode::CTIRBB])->issuingDocument()->active();
     }
 
     public function scopeRequiredForSendPolicy($query)
@@ -72,6 +71,6 @@ class DocumentType extends Model implements AuditableContract
 
     public function scopeSendToCustomer($query)
     {
-        $query->whereNotIn('text', [DocumentTypeText::TAX_INVOICE_RAISED_BY_BUYER])->where('send_to_customer', 1)->active();
+        $query->whereNotIn('text', [DocumentTypeCode::CTIRBB])->where('send_to_customer', 1)->active();
     }
 }
