@@ -262,9 +262,13 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                     continue;
                 }
                 if (($masterPayment->payment_no < $paymentSplits->count()) && $paymentSplit->sr_no > $masterPayment->payment_no) {
-                    QuoteDocument::where('payment_split_id', $paymentSplit->id)->delete();
+
+                    // Delete QuoteDocuments referencing the payment split
+                    $paymentSplit->documents()->delete();
+                    // Then delete the payment split
                     $paymentSplit->delete();
-                    //// Unset/remove the element with sr_no from the split payment object
+
+                    // Unset/remove the element with sr_no from the split payment object
                     foreach ($masterPayment->payment_splits as $key => $payment_split) {
                         if ($payment_split['sr_no'] === $paymentSplit->sr_no) {
                             unset($masterPayment->payment_splits[$key]);
