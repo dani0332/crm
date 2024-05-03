@@ -16,8 +16,6 @@ class DocumentTypeCode extends Enum
 
     // This is the same as the one in the database and we are using this as a text not it's code
     // The reason behind this code is different for all lob's but text is sames that's why we are using this as a text
-    const TAX_INVOICE = 'Tax Invoice';
-    const TAX_INVOICE_RAISED_BY_BUYER = 'Tax Invoice Raised By Buyer';
     const NETWORK_LIST_BUSINESS = 'NL_GH';
     const Receipt_BUSINESS = 'REC_GH';
     const CPD = 'CPD';
