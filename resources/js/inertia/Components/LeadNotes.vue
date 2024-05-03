@@ -101,15 +101,12 @@ const onNoteSubmit = isValid => {
     axios
       .post('/update-quote-notes', formData)
       .then(response => {
-        let index = notes.value.data.findIndex(
-          note => note.id == response.data.response.id,
-        );
-        if (index != -1) {
-          notes.value.data.splice(index, 1, response.data.response);
-        }
         notification.success({
           title: 'Notes has been Updated',
           position: 'top',
+        });
+        router.reload({
+          only: ['quoteDocuments', 'quote', 'quoteNotes'],
         });
       })
       .catch(errors => {
