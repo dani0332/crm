@@ -763,7 +763,7 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
       :quote-type="quoteType"
       :expanded="sectionExpanded"
     />
-  <QuoteStatus
+    <QuoteStatus
       :quote="quote"
       :quote-type="quoteType"
       :quote-statuses="quoteStatuses"
@@ -771,6 +771,7 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
       :quote-status-enum="quoteStatusEnum"
       :expanded="sectionExpanded"
     />
+
     <PlanDetails
       :insuranceProviders="insuranceProviders"
       :quote="quote"
@@ -808,11 +809,12 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
       :personal-plans="personalPlans"
     />
 
-    <QuoteDocuments
-      :document-types="documentTypes"
-      :quote-documents="quote.documents || []"
-      :storageUrl="storageUrl"
+    <EmbeddedProducts
+      :data="embeddedProducts"
+      :link="quote.uuid"
+      :code="quote.code"
       :quote="quote"
+      :modelType="quoteType"
       :expanded="sectionExpanded"
     />
 
@@ -824,13 +826,12 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
       modelType="Bike"
     />
 
-   <EmbeddedProducts
-      :data="embeddedProducts"
-      :link="quote.uuid"
-      :code="quote.code"
+    <QuoteDocuments
+      :document-types="documentTypes"
+      :quote-documents="quote.documents || []"
+      :storageUrl="storageUrl"
       :quote="quote"
-      :modelType="quoteType"
-    	:expanded="sectionExpanded"
+      :expanded="sectionExpanded"
     />
     
     <BookPolicy

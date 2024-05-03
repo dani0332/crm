@@ -886,25 +886,6 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
       :expanded="sectionExpanded"
     />
 
-    <LastYearPolicyDetail
-      v-if="
-        quote.source == $page.props.leadSource.RENEWAL_UPLOAD ||
-        quote.source == $page.props.leadSource.INSLY
-      "
-      modelType="Business"
-      :quote="quote"
-      :canAddBatchNumber="canAddBatchNumber"
-      :expanded="sectionExpanded"
-    />
-
-    <QuoteDocuments
-      :document-types="documentTypes"
-      :quote-documents="quote.documents || []"
-      :storageUrl="storageUrl"
-      :quote="quote"
-      :expanded="sectionExpanded"
-    />
-
     <div class="p-4 rounded shadow mb-6 bg-primary-50/25">
       <Collapsible :expanded="sectionExpanded">
         <template #header>
@@ -1022,6 +1003,25 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
 			:storageUrl="storageUrl"
       quoteSubType="Group Medical"
 		/>
+
+    <LastYearPolicyDetail
+      v-if="
+        quote.source == $page.props.leadSource.RENEWAL_UPLOAD ||
+        quote.source == $page.props.leadSource.INSLY
+      "
+      modelType="Business"
+      :quote="quote"
+      :canAddBatchNumber="canAddBatchNumber"
+      :expanded="sectionExpanded"
+    />
+
+    <QuoteDocuments
+      :document-types="documentTypes"
+      :quote-documents="quote.documents || []"
+      :storageUrl="storageUrl"
+      :quote="quote"
+      :expanded="sectionExpanded"
+    />
 		
     <SendUpdates
       v-if="hasPolicyIssuedStatus"

@@ -903,20 +903,13 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
       :personal-plans="personalPlans"
     />
 
-    <QuoteDocuments
-      :document-types="documentTypes"
-      :quote-documents="quote.documents || []"
-      :storageUrl="storageUrl"
+    <EmbeddedProducts
+      :data="embeddedProducts"
+      :link="quote.uuid"
+      :code="quote.code"
       :quote="quote"
+      :modelType="quoteType"
       :expanded="sectionExpanded"
-    />
-
-    <SendUpdates
-      v-if="hasPolicyIssuedStatus"
-      :reportable="quote"
-      :quote_type_id="$page.props.quoteTypeId"
-      :options="sendUpdateOptions"
-      :data="sendUpdateLogs"
     />
 
     <PolicyDetail
@@ -927,12 +920,11 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
       modelType="Cycle"
     />
 
-    <EmbeddedProducts
-      :data="embeddedProducts"
-      :link="quote.uuid"
-      :code="quote.code"
+    <QuoteDocuments
+      :document-types="documentTypes"
+      :quote-documents="quote.documents || []"
+      :storageUrl="storageUrl"
       :quote="quote"
-      :modelType="quoteType"
       :expanded="sectionExpanded"
     />
 
@@ -947,6 +939,14 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
       quoteType="Cycle"
       :bPDetails="bPDetails"
       :payments="payments"
+    />
+
+    <SendUpdates
+      v-if="hasPolicyIssuedStatus"
+      :reportable="quote"
+      :quote_type_id="$page.props.quoteTypeId"
+      :options="sendUpdateOptions"
+      :data="sendUpdateLogs"
     />
 
     <AuditLogs :quote-type="quoteType" :id="$page.props.quote.id" :quoteCode="$page.props.quote.code" :expanded="sectionExpanded" />

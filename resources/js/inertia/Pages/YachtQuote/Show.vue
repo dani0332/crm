@@ -805,6 +805,15 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
       :personal-plans="personalPlans"
     />
 
+    <EmbeddedProducts
+      :data="embeddedProducts"
+      :link="quote.uuid"
+      :code="quote.code"
+      :quote="quote"
+      :modelType="quoteType"
+      :expanded="sectionExpanded"
+    />
+
     <PolicyDetail
       v-if="permissions.isQuoteDocumentEnabled"
       :record="record"
@@ -813,12 +822,13 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
       modelType="Yacht"
     />
 
-    <EmbeddedProducts
-      :data="embeddedProducts"
-      :link="quote.uuid"
-      :code="quote.code"
+    <QuoteDocuments
+      :document-types="documentTypes"
+      :quote-documents="quote.documents || []"
+      :storageUrl="storageUrl"
       :quote="quote"
-      :modelType="quoteType"
+      :quoteType="quoteType"
+      :vatPrice="vatPercentage"
       :expanded="sectionExpanded"
     />
 
@@ -841,16 +851,6 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
       :quote_type_id="page.props.quoteTypeId"
       :options="sendUpdateOptions"
       :data="sendUpdateLogs"
-    />
-
-    <QuoteDocuments
-      :document-types="documentTypes"
-      :quote-documents="quote.documents || []"
-      :storageUrl="storageUrl"
-      :quote="quote"
-      :quoteType="quoteType"
-      :vatPrice="vatPercentage"
-      :expanded="sectionExpanded"
     />
 
     <AuditLogs
