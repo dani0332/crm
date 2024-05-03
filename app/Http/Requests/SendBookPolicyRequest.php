@@ -33,6 +33,7 @@ class SendBookPolicyRequest extends FormRequest
             'send_policy_type' => 'required',
             'is_send_policy' => 'nullable',
             'transaction_payment_status' => 'nullable',
+            'modelType' => 'nullable',
         ];
     }
 

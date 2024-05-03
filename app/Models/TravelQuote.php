@@ -153,7 +153,7 @@ class TravelQuote extends Model implements AuditableContract
             ->where('quote_type_id', QuoteTypeId::Travel);
     }
 
-    public function sageLog()
+    public function sageApiLogs()
     {
         return $this->morphMany(SageApiLog::class, 'section');
     }

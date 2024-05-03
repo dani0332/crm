@@ -227,9 +227,8 @@ class CentralController extends Controller
             return back()->with('message', 'Payment record not found');
         }
         $payment->update($paymentInformation);
-
         $quote = $this->getQuoteObject($validatedData['model_type'], $validatedData['quote_id']);
-        $quote->update(['policy_booking_date' => Carbon::parse($validatedData['booking_date'])->format('Y-m-d')]);
+        $quote->update(['policy_booking_date' => Carbon::parse($validatedData['booking_date'])]);
 
         return redirect()->back()->with('success', 'Booking Status has been updated.');
     }
@@ -240,7 +239,6 @@ class CentralController extends Controller
         $quote = $this->getQuoteObject($request->model_type, $request->quote_id);
 
         if ($request->send_policy_type == 'customer') {
-
             // dispath job to send email
             dispatch(new SendBookPolicyDocumentsJob($request));
 
@@ -343,13 +341,23 @@ class CentralController extends Controller
     // Store new payment
     public function storeNewPayment(StorePaymentRequest $request)
     {
-        return PaymentRepository::createNewPayment($request);
+        $response = PaymentRepository::createNewPayment($request);
+        if ($response['status'] == 'success') {
+            return redirect()->back()->with('success', $response['message']);
+        } else {
+            return redirect()->back()->with('error', $response['message']);
+        }
     }
 
     // Update payment
     public function updateNewPayment(UpdatePaymentRequest $request)
     {
-        return PaymentRepository::updateNewPayment($request);
+        $response = PaymentRepository::updateNewPayment($request);
+        if ($response['status'] == 'success') {
+            return redirect()->back()->with('success', $response['message']);
+        } else {
+            return redirect()->back()->with('error', $response['message']);
+        }
     }
 
     // Generate payment link for split payment

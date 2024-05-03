@@ -1,11 +1,9 @@
 <script setup>
-import PaymentTableNew from './../../Components/PaymentTableNew.vue';
-import MigratePayment from './../../Components/MigratePayment.vue';
-import LazyDocumentUploader from './Partials/DocumentUploader.vue';
-import LazyAvailablePlan from './Partials/AvailablePlans.vue';
-import LazyCreatePlan from './Partials/CreatePlan.vue';
 import { computed } from 'vue';
 import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue';
+import LazyAvailablePlan from './Partials/AvailablePlans.vue';
+import LazyCreatePlan from './Partials/CreatePlan.vue';
+import LazyDocumentUploader from './Partials/DocumentUploader.vue';
 
 defineProps({
   quote: Object,
@@ -28,7 +26,6 @@ defineProps({
   activities: Array,
   customerAdditionalContacts: Array,
   lostReasons: Array,
-  quoteStatusEnum: Object,
   modelType: String,
   quoteTypeId: Number,
   notProductionApproval: Boolean,
@@ -55,10 +52,9 @@ defineProps({
   quoteType: String,
   paymentTooltipEnum: Object,
   storageUrl: String,
-  enums: Object,
-  policyIssuanceStatus: Array,
-  bPDetails: Array,
+  bookPolicyDetails: Array,
   isNewPaymentStructure: Boolean,
+  isAmlClearedForPayment: Boolean,
   sendUpdateOptions: Array,
   sendUpdateLogs: Array,
   hasPolicyIssuedStatus: Boolean,
@@ -67,8 +63,11 @@ defineProps({
 const isManualPlansCount = ref(0);
 
 const page = usePage();
+const permissionsEnum = page.props.permissionsEnum;
 const permissionEnum = page.props.permissionsEnum;
 const canAny = permissions => useCanAny(permissions);
+const can = permission => useCan(permission);
+
 const notification = useToast();
 const hasRole = role => useHasRole(role);
 const hasAnyRole = roles => useHasAnyRole(roles);
@@ -346,6 +345,7 @@ const onLeadStatus = () => {
     `/quotes/Health/${page.props.quote.id}/update-lead-status`,
     {
       preserveScroll: true,
+      preserveState: true,
       onError: errors => {
         notification.error({ title: errors.value, position: 'top' });
       },
@@ -615,32 +615,32 @@ const plansTable = reactive({
 });
 
 const onLoadAvailablePlansData = async () => {
-    let data = {
-        jsonData: true,
-    };
-    let url = `/quotes/health/available-plans/${page.props.quote.uuid}`;
-    axios
-        .post(url, data)
-        .then(res => {
-            plansTable.data = res.data.length > 0 ? res?.data[0] : [];
-            getSmallestCopayRateAsDefaultValue();
-            plansTable.data.forEach(plan => {
-                if (plan.isManualPlan) {
-                    isManualPlansCount.value++;
-                }
+  let data = {
+    jsonData: true,
+  };
+  let url = `/quotes/health/available-plans/${page.props.quote.uuid}`;
+  axios
+    .post(url, data)
+    .then(res => {
+      plansTable.data = res.data.length > 0 ? res?.data[0] : [];
+      getSmallestCopayRateAsDefaultValue();
+      plansTable.data.forEach(plan => {
+        if (plan.isManualPlan) {
+          isManualPlansCount.value++;
+        }
 
-                if (plan.id === selectedPlan.value?.id && !plan.needPriceUpdate) {
-                    selectedPlan.value.needPriceUpdate = false;
-                }
-            });
+        if (plan.id === selectedPlan.value?.id && !plan.needPriceUpdate) {
+          selectedPlan.value.needPriceUpdate = false;
+        }
+      });
 
-            setTimeout(() => {
-                onPlanFiltersSubmit();
-            }, 800);
-        })
-        .catch(err => {
-            console.log(err);
-        });
+      setTimeout(() => {
+        onPlanFiltersSubmit();
+      }, 800);
+    })
+    .catch(err => {
+      console.log(err);
+    });
 };
 
 const planClicked = plan => {
@@ -725,9 +725,7 @@ const onTogglePlans = toggle => {
         title: 'Plans has been updated',
         position: 'top',
       });
-      router.reload({
-        preserveScroll: true,
-      });
+      onLoadAvailablePlansData();
     })
     .catch(error => {
       notification.error({
@@ -915,15 +913,16 @@ const getSmallestCopayRateAsDefaultValue = () => {
       }
     });
 
-    element.memberPremiumBreakdown?.forEach(
-      function callback(breakDown, index) {
-        breakDown.ratesPerCopay?.forEach(function callback(ratePerCopay) {
-          if (ratePerCopay.notifyAgent) {
-            element.needPriceUpdate = true;
-          }
-        });
-      },
-    );
+    element.memberPremiumBreakdown?.forEach(function callback(
+      breakDown,
+      index,
+    ) {
+      breakDown.ratesPerCopay?.forEach(function callback(ratePerCopay) {
+        if (ratePerCopay.notifyAgent) {
+          element.needPriceUpdate = true;
+        }
+      });
+    });
 
     if (isMounted.value && selectedCoPay.planId == element.id) {
       element.actualPremium = selectedCoPay.premium;
@@ -1270,7 +1269,7 @@ const policyDetails = useForm({
   quote_status_id: page.props.quote.quote_status_id,
   canEdit:
     page.props.quote.quote_status_id ==
-      page.props.quoteStatusEnum.TransactionApproved &&
+    page.props.quoteStatusEnum.TransactionApproved &&
     page.props.notProductionApproval,
   editMode: false,
   modelType: page.props.modelType,
@@ -1482,27 +1481,41 @@ const selectedProviderPlan = ref({
   id: page.props.quote.plan_id,
   planName: page.props.quote.health_plan_name_text,
   providerName: page.props.quote.plan_provider_name_text,
-  premium: page.props.ecomDetails.priceWithVAT
-
+  premium: page.props.ecomDetails.priceWithVAT,
 });
 
-console.log(selectedProviderPlan, "LLLKKKKJ", page.props.quote)
-
 const handlePlanSelected = plan => {
-  console.log("HHH", plan);
   //se.value = plan.id;
-  selectedProviderPlan.value.id = plan.id
-  selectedProviderPlan.value.planName = plan.planName
-  selectedProviderPlan.value.providerName = plan.providerName
-  selectedProviderPlan.value.premium = plan.premium
+  selectedProviderPlan.value.id = plan.id;
+  selectedProviderPlan.value.planName = plan.planName;
+  selectedProviderPlan.value.providerName = plan.providerName;
+  selectedProviderPlan.value.premium = plan.premium;
   router.reload({
     preserveState: true,
     preserveScroll: true,
-    only: ['payments', 'quoteRequest', 'ecomDetails'],
-  });
+    only: ['payments','quoteRequest','ecomDetails', 'coPayment'],        
+  });  
 };
 
+watch(
+  () => page.props.ecomDetails,
+  value => {
+    selectedProviderPlan.value.premium = value.priceWithVAT;
+  },
+  { deep: true },
+);
+
 const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
+
+watch(
+  () => page.props.quote.quote_status_id,
+  (newValue, oldValue) => {
+    if (newValue !== oldValue) {
+      leadStatusForm.leadStatus = newValue;
+    }
+  },
+);
+
 </script>
 
 <template>
@@ -1626,6 +1639,15 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
         <template #body>
           <x-divider class="my-4" />
           <div class="flex gap-2 mb-3 justify-end">
+            <Link
+                v-if="quote?.insly_id && can(permissionsEnum.VIEW_LEGACY_DETAILS)"
+                :href="`/legacy-policy/${quote.insly_id}`"
+                preserve-scroll
+            >
+                <x-button size="sm" color="#ff5e00" tag="div">
+                    View Legacy policy
+                </x-button>
+            </Link>
             <x-button size="sm" color="#ff5e00" @click.prevent="openDuplicate">
               Duplicate Lead
             </x-button>
@@ -1641,7 +1663,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
             </Link>
           </div>
           <div class="text-sm">
-        <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
+            <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
               <div
                 v-if="hasAnyRole([rolesEnum.Admin, rolesEnum.Engineering])"
                 class="grid sm:grid-cols-2"
@@ -1728,7 +1750,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
           </div>
 
           <div class="text-sm">
-        <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
+            <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">
                   FOR WHOM DO YOU REQUIRE HEALTH INSURANCE?
@@ -1793,7 +1815,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
                 v-if="
                   quote.customer_type === page.props.customerTypeEnum.Individual
                 "
-            class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words"
+                class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words"
               >
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">FIRST NAME</dt>
@@ -1833,7 +1855,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">EMAIL</dt>
-              <dd class="break-words">{{ quote.email }}</dd>
+                  <dd class="break-words">{{ quote.email }}</dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">NATIONALITY</dt>
@@ -1913,9 +1935,9 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">COMPANY NAME</dt>
-              <dd class="break-words">
-                {{ customerProfileForm.company_name }}
-              </dd>
+                  <dd class="break-words">
+                    {{ customerProfileForm.company_name }}
+                  </dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">TRADE LICENSE NO</dt>
@@ -2108,16 +2130,16 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
             </x-button>
           </div>
 
-      <DataTable
-        table-class-name="tablefixed compact"
-        :headers="memberDetailsTable.columns"
-        :items="membersDetail || []"
-        border-cell
-        hide-rows-per-page
-        hide-footer
-      >
-        <template #item-first_name="{ first_name, last_name }">
-          {{ first_name + ' ' + (last_name == null ? '' : last_name) }}
+          <DataTable
+            table-class-name="tablefixed compact"
+            :headers="memberDetailsTable.columns"
+            :items="membersDetail || []"
+            border-cell
+            hide-rows-per-page
+            hide-footer
+          >
+            <template #item-first_name="{ first_name, last_name }">
+              {{ first_name + ' ' + (last_name == null ? '' : last_name) }}
             </template>
             <template #item-gender="{ gender }">
               {{ genderText(gender).value }}
@@ -2485,6 +2507,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       "
       modelType="Health"
       :quote="quote"
+      :insly-id="quote?.insly_id"
       :canAddBatchNumber="canAddBatchNumber"
       :expanded="sectionExpanded"
     />
@@ -2585,11 +2608,11 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
             <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">PLAN NAME</dt>
-            <dd>{{ selectedProviderPlan.planName }}</dd>
+                <dd>{{ selectedProviderPlan.planName }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">PROVIDER NAME</dt>
-            <dd>{{ selectedProviderPlan.providerName }}</dd>
+                <dd>{{ selectedProviderPlan.providerName }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">PAYMENT STATUS</dt>
@@ -2615,7 +2638,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">TOTAL PRICE (with VAT)</dt>
-            <dd>{{ (selectedProviderPlan.premium) }}</dd>
+                <dd>{{ selectedProviderPlan.premium }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">CO-PAY / CO-INSURANCE</dt>
@@ -2626,14 +2649,6 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
         </template>
       </Collapsible>
     </div>
-
-    <PolicyDetail
-      v-if="permissions.isQuoteDocumentEnabled"
-      :record="record"
-      :quoteStatusEnum="enums.quoteStatusEnum"
-      :policyIssuanceStatus="policyIssuanceStatus"
-      modelType="health"
-    />
 
     <div class="p-4 rounded shadow mb-6 bg-white">
       <Collapsible :expanded="sectionExpanded">
@@ -2702,7 +2717,13 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
             </x-badge>
 
             <x-button
-              v-if="hasAnyRole([rolesEnum.BetaUser, rolesEnum.RMAdvisor, rolesEnum.HealthManager])"
+              v-if="
+                hasAnyRole([
+                  rolesEnum.BetaUser,
+                  rolesEnum.RMAdvisor,
+                  rolesEnum.HealthManager,
+                ])
+              "
               size="sm"
               color="emerald"
               @click.prevent="modals.createPlan = true"
@@ -2710,82 +2731,108 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
               Add Plan
             </x-button>
           </div>
+
           <DataTable
-        ref="planDataTable"
-        v-model:items-selected="selectedPlans"
-        table-class-name="tablefixed compact"
-        :headers="plansTable.columns"
-        :items="listQuotePlansFiltered || []"
-        border-cell
-        hide-rows-per-page
-        :rows-per-page="15"
-        class="flex-wrap"
-        :hide-footer="listQuotePlansFiltered.length < 15"
-      >
-        <template #item-copayName="item">
-          <span class="copay-max">{{ item.copayName }}</span>
-        </template>
-        <template #item-providerName="{ providerName, isManualPlan, isHidden }">
-          <p>{{ providerName }}</p>
-          <div class="flex gap-1">
-            <x-tag
-              v-if="isManualPlan"
-              size="xs"
-              color="primary"
-              class="mt-0.5 text-[10px]"
-            >
-              Manual Plan
-            </x-tag>
-            <x-tag
-              v-if="isHidden"
-              size="xs"
-              color="error"
-              class="mt-0.5 text-[10px]"
-            >
-              Hidden
-            </x-tag>
-            <x-tag
-              v-if="!isHidden"
-              size="xs"
-              color="success"
-              class="mt-0.5 text-[10px]"
-            >
-              Currently Online
-            </x-tag>
-          </div>
-        </template>
-        <template
-          #item-total="{ actualPremium, policyFee, basmah, vat, loadingPrice }"
-        >
-          {{
-            fixedValue(
-              actualPremium +
-                (policyFee || 0) +
-                (basmah || 0) +
-                vat +
-                (loadingPrice || 0),
-            )
-          }}
-        </template>
-        <template #item-action="item">
-          <div class="flex gap-2 pr-2">
-            <!-- put here -->
-            <!-- don't remove this commented code anyone please -->
+            ref="planDataTable"
+            v-model:items-selected="selectedPlans"
+            table-class-name="tablefixed compact"
+            :headers="plansTable.columns"
+            :items="listQuotePlansFiltered || []"
+            border-cell
+            hide-rows-per-page
+            :rows-per-page="15"
+            class="flex-wrap"
+            :hide-footer="listQuotePlansFiltered.length < 15"
+          >
+            <template #item-copayName="item">
+              <span class="copay-max">{{ item.copayName }}</span>
+            </template>
             <template
-              v-if="
-                (item.isManualPlan && membersDetailsUpdated) ||
-                item.needPriceUpdate
-              "
+              #item-providerName="{ providerName, isManualPlan, isHidden }"
             >
-              <!-- always false temporarily -->
-              <x-tooltip position="top" class="arrow-b">
-                <x-badge
+              <p>{{ providerName }}</p>
+              <div class="flex gap-1">
+                <x-tag
+                  v-if="isManualPlan"
+                  size="xs"
+                  color="primary"
+                  class="mt-0.5 text-[10px]"
+                >
+                  Manual Plan
+                </x-tag>
+                <x-tag
+                  v-if="isHidden"
                   size="xs"
                   color="error"
-                  outlined
-                  offset-x="-8"
-                  offset-y="-10"
+                  class="mt-0.5 text-[10px]"
                 >
+                  Hidden
+                </x-tag>
+                <x-tag
+                  v-if="!isHidden"
+                  size="xs"
+                  color="success"
+                  class="mt-0.5 text-[10px]"
+                >
+                  Currently Online
+                </x-tag>
+              </div>
+            </template>
+            <template
+              #item-total="{
+                actualPremium,
+                policyFee,
+                basmah,
+                vat,
+                loadingPrice,
+              }"
+            >
+              {{
+                fixedValue(
+                  actualPremium +
+                    (policyFee || 0) +
+                    (basmah || 0) +
+                    vat +
+                    (loadingPrice || 0),
+                )
+              }}
+            </template>
+            <template #item-action="item">
+              <div class="flex gap-2 pr-2">
+                <!-- put here -->
+                <!-- don't remove this commented code anyone please -->
+                <template
+                  v-if="
+                    (item.isManualPlan && membersDetailsUpdated) ||
+                    item.needPriceUpdate
+                  "
+                >
+                  <!-- always false temporarily -->
+                  <x-tooltip position="top" class="arrow-b">
+                    <x-badge
+                      size="xs"
+                      color="error"
+                      outlined
+                      offset-x="-8"
+                      offset-y="-10"
+                    >
+                      <x-button
+                        size="xs"
+                        color="primary"
+                        outlined
+                        @click.prevent="planClicked(item)"
+                      >
+                        View
+                      </x-button>
+                      <template #content>!</template>
+                    </x-badge>
+                    <template #tooltip>
+                      Price outdated! <br />
+                      Please update
+                    </template>
+                  </x-tooltip>
+                </template>
+                <template v-else>
                   <x-button
                     size="xs"
                     color="primary"
@@ -2794,47 +2841,30 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
                   >
                     View
                   </x-button>
-                  <template #content>!</template>
-                </x-badge>
-                <template #tooltip>
-                  Price outdated! <br />
-                  Please update
                 </template>
-              </x-tooltip>
-            </template>
-            <template v-else>
-              <x-button
-                size="xs"
-                color="primary"
-                outlined
-                @click.prevent="planClicked(item)"
-              >
-                View
-              </x-button>
-            </template>
-            <x-button
-              size="xs"
-              color="emerald"
-              outlined
-              @click.prevent="
-                onCopyText(
-                  ecomHealthInsuranceQuoteUrl +
-                    quote.uuid +
-                    `/payment/?providerCode=${item.providerCode}&planId=${item.id}&selectedCopayId=${item.selectedCopayId}`,
-                )
-              "
-            >
-              Copy
-            </x-button>
+                <x-button
+                  size="xs"
+                  color="emerald"
+                  outlined
+                  @click.prevent="
+                    onCopyText(
+                      ecomHealthInsuranceQuoteUrl +
+                        quote.uuid +
+                        `/payment/?providerCode=${item.providerCode}&planId=${item.id}&selectedCopayId=${item.selectedCopayId}`,
+                    )
+                  "
+                >
+                  Copy
+                </x-button>
 
-                <span v-if="hasRole(page.props.rolesEnum.HealthAdvisor)">
-                  <SelectPlan
-                    v-if="selectedProviderPlan.id != item.id"
-                    @update:selectedPlanChanged="handlePlanSelected"
-                    :plan="item"
-                    :quoteType="quoteType"
-                    :uuid="quote.uuid"
-                  />
+            <span>
+              <SelectPlan
+                v-if="selectedProviderPlan.id != item.id"
+                @update:selectedPlanChanged="handlePlanSelected"
+                :plan="item"
+                :quoteType="quoteType"
+                :uuid="quote.uuid"
+              />
 
                   <x-button
                     v-else
@@ -2967,7 +2997,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       :quoteId="quote.id"
       :paymentCode="quote.code"
       quoteType="Health"
-      :payments="payments"      
+      :payments="payments"
     />
     <PaymentTableNew
       v-if="isNewPaymentStructure"
@@ -2991,7 +3021,10 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       "
       :storageUrl="storageUrl"
       :eCommercePrice="ecomDetails.priceWithVAT ? ecomDetails.priceWithVAT : 0"
+      :isAmlClearedForPayment="isAmlClearedForPayment"
+
     />
+
     <PaymentTable
       v-else
       :payments="payments"
@@ -3012,18 +3045,12 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       :expanded="sectionExpanded"
     />
 
-    <BookPolicy
-      v-if="
-        canAny([
-          permissionEnum.VIEW_INSLY_BOOK_POLICY,
-          permissionEnum.SEND_INSLY_BOOK_POLICY,
-        ])
-      "
-      :quote="record"
-      quoteType="health"
-      :bPDetails="bPDetails"
-      :payments="payments"
+    <PolicyDetail
+      v-if="permissions.isQuoteDocumentEnabled"
+      :record="record"
+      modelType="health"
       :expanded="sectionExpanded"
+      :payments="payments"
     />
 
     <div class="p-4 rounded shadow mb-6 bg-white">
@@ -3089,6 +3116,21 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
         </template>
       </Collapsible>
     </div>
+    
+    <BookPolicy
+      v-if="
+        canAny([
+          permissionEnum.VIEW_INSLY_BOOK_POLICY,
+          permissionEnum.SEND_INSLY_BOOK_POLICY,
+        ])
+      "
+      :quote="record"
+      quoteType="health"
+      :bookPolicyDetails="bookPolicyDetails"
+      :payments="payments"
+      :expanded="sectionExpanded"
+    />
+
     <x-modal v-model="modals.doc" size="xl" show-close backdrop>
       <template #header> Upload Documents </template>
       <LazyDocumentUploader
@@ -3398,6 +3440,12 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
         </template>
       </Collapsible>
     </div>
+
+    <CustomerChatLogs
+      :customerName="quote?.first_name + ' ' + quote?.last_name"
+      :quoteId="quote.uuid"
+      :quoteType="'HEALTH'"
+    />
 
     <AuditLogs
       :type="'App\\Models\\HealthQuote'"

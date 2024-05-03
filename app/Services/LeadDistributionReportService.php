@@ -23,6 +23,7 @@ class LeadDistributionReportService extends BaseService
         $query = CarQuote::leftJoin('tiers', 'tiers.id', '=', 'car_quote_request.tier_id')
             ->leftJoin('car_make', 'car_make.id', '=', 'car_quote_request.car_make_id')
             ->leftJoin('car_model', 'car_model.id', '=', 'car_quote_request.car_model_id')
+            ->filterBySegment()
             ->whereNotIn('car_quote_request.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
             ->select(DB::raw('(
 

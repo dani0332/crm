@@ -88,7 +88,7 @@ class SageApiService
                 $sageCustomerNumber = $customer->sage_customer_number;
             } else {
                 $isLiveApiCallStep1 = true;
-                if (isset($sageLogArray[1]) && $sageLogArray[1]['status'] == 'success') {
+                if (isset($sageLogArray[1]) && $sageLogArray[1]['status'] == config('constants.SAGE_LOG_SUCCESS_STATUS')) {
                     $isLiveApiCallStep1 = false;
                     $response = json_decode($sageLogArray[1]['response'], true);
                 } else {
@@ -96,7 +96,7 @@ class SageApiService
                     $jsonResponse = $this->postToSage300($payLoadOptions['endPoint'], $payLoadOptions['payload']);
                     $response = json_decode($jsonResponse, true);
                 }
-                if (isset($response['error']['code']) && $response['error']['code'] == 'RecordDuplicate') {
+                if (isset($response['error']['code']) && $response['error']['code'] == config('constants.SAGE_ERROR_DUPLICATE_CLIENT')) {
                     $sageCustomerNumber = $payLoadOptions['customerNumber'];
                 } elseif (isset($response['CustomerNumber'])) {
                     $sageCustomerNumber = $response['CustomerNumber'];
@@ -181,7 +181,7 @@ class SageApiService
             $returnMessage['message'] = 'Sage is not enabled';
         }
 
-        $sageLogArray = $quote->sageLog->keyBy('step')->toArray();
+        $sageLogArray = $quote->sageApiLogs->keyBy('step')->toArray();
         // sape customer number generation
         $sageCustomerNumber = $this->verifySageCustomer($quote->customer_id, $data, $quote, $sageLogArray, 13);
 
