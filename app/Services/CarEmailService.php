@@ -60,11 +60,9 @@ class CarEmailService extends BaseService
                 } else {
                     info('SIC workflow key not found');
                 }
-
             } else {
                 info('SIC workflow already enabled for lead: '.$lead->uuid);
             }
-
         }
 
         if ($lead->advisor_id) {
@@ -330,5 +328,10 @@ class CarEmailService extends BaseService
 
         // return $top6Plans if $top6Plans is not empty otherwise return $plans
         return ! empty($top6Plans) ? $top6Plans : [];
+    }
+
+    public function sendSICNotificationToAdvisor($lead, $user)
+    {
+        return $this->sendEmailCustomerService->sendSICNotificationToAdvisor($lead, $user);
     }
 }

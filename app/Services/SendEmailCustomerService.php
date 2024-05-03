@@ -19,6 +19,7 @@ class SendEmailCustomerService extends BaseService
     protected $apiKey = '';
     protected $url = '';
     protected $appEnv = '';
+    protected $appUrl = '';
 
     public function __construct(
         EmailActivityService $emailActivityService,
@@ -31,6 +32,7 @@ class SendEmailCustomerService extends BaseService
         $this->apiKey = config('constants.SENDINBLUE_KEY');
         $this->url = config('constants.SIB_URL');
         $this->appEnv = config('constants.APP_ENV');
+        $this->appUrl = config('constants.APP_URL');
     }
 
     public function sendEmail($emailTemplateId, $emailData, $tag)
@@ -786,6 +788,72 @@ class SendEmailCustomerService extends BaseService
         } catch (Exception $ex) {
             $responseCode = $ex->getCode();
             $responseDetail = 'sendActivityAlertEmail: Code/Message: '.$responseCode.'/'.$ex->getMessage();
+            Log::error($responseDetail);
+        }
+
+        return $responseCode;
+    }
+
+    public function sendSICNotificationToAdvisor($lead, $user)
+    {
+        info('sendSICNotificationToAdvisor ---- Start');
+
+        try {
+            $headers = [
+                'Accept' => 'application/json',
+                'api-key' => $this->apiKey,
+                'Content-Type' => 'application/json',
+            ];
+            $subjectEnvTag = $this->appEnv == EnvEnum::PRODUCTION ? '' : $this->appEnv.' - ';
+
+            $subject = $subjectEnvTag.'CALL NOW! Customer with REF-ID '.$lead->code.' has requested for an advisor right now!';
+
+            $htmlContent = '<html>
+            <head></head>
+            <body>
+              <p>Dear Advisor <b>'.$user->name.'</b>,</p>
+              <p>
+                  A customer with REF-ID <a href="'.$this->appUrl.'/quotes/car/'.$lead->uuid.'"><b>'.$lead->code.'</b></a> has requested for an advisor and we need you to contact them urgently.
+              </p>
+              <p>
+                Please call the customer urgently as they have requested for an advisor right now.
+              </p>
+              <p>
+                Regards,<br>
+                Alfred
+              </p>
+            </body>
+          </html>';
+
+            $body = [
+                'to' => [(object) [
+                    'email' => $user->email, // advsior email
+                    'name' => $user->name, // advsior name
+                ]],
+                'sender' => [
+                    'email' => 'no-reply@alert.insurancemarket.email',
+                    'name' => 'InsuranceMarket.ae',
+                ],
+                'subject' => $subject,
+                'htmlContent' => $htmlContent,
+            ];
+
+            $client = new \GuzzleHttp\Client();
+            $clientRequest = $client->post(
+                $this->url,
+                [
+                    'headers' => $headers,
+                    'body' => json_encode($body),
+                    'timeout' => config('constants.LMS_EMAILS_TIMEOUT'),
+                ]
+            );
+            info('sendSICNotificationToAdvisor ---- Request Sent');
+            $responseCode = $clientRequest->getStatusCode();
+            info('sendSICNotificationToAdvisor ---- Received Code : '.$responseCode);
+            info('sendSICNotificationToAdvisor ---- response object : '.json_encode($clientRequest->getBody()->getContents()));
+        } catch (Exception $ex) {
+            $responseCode = $ex->getCode();
+            $responseDetail = 'sendSICNotificationToAdvisor: Code/Message: '.$responseCode.'/'.$ex->getMessage();
             Log::error($responseDetail);
         }
 
