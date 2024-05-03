@@ -1,5 +1,4 @@
 <script setup>
-import markdownit from 'markdown-it';
 const props = defineProps({
   quoteId: {
     type: [Number, String],
@@ -14,18 +13,6 @@ const props = defineProps({
 });
 
 const showChatLogs = ref(false);
-
-const md = new markdownit();
-
-const renderMarkdown = markdownString => {
-  // Parse the markdown string
-  const initialHtml = md.render(markdownString);
-
-  // Adjust links to open in a new tab
-  const adjustedHtml = initialHtml.replace(/<a /g, '<a target="_blank" ');
-
-  return adjustedHtml;
-};
 
 const formatted = date => useDateFormat(date, 'hh:mm:ss A').value;
 const loader = ref(false);
@@ -77,6 +64,7 @@ const showChat = item => {
       loader.value = false;
       chatMessages.value.created_at = item._id;
       chatMessages.value.data = data;
+      chatMessages.value.id = item.quote_type + '-' + item.quote_id;
       showChatLogs.value = true;
     })
     .catch(error => {
@@ -118,62 +106,12 @@ onMounted(async () => {
         </template>
       </DataTable>
     </div>
-
-    <AppModal
-      class="max-w-6xl"
-      v-model="showChatLogs"
-      show-close
-      :backdropClose="false"
-      show-header
-    >
-      <template #header>
-        Created At : {{ chatMessages.created_at.split(' ')[0] }}
-      </template>
-      <template #default>
-        <div v-for="(message, index) in chatMessages.data" :key="index">
-          <div class="chat chat-start" v-if="message.role == 'USER'">
-            <div class="chat-image avatar">
-              <div
-                v-show="customerName"
-                class="flex items-center justify-center border rounded-full h-10 w-10 bg-gray-600 text-white"
-              >
-                {{
-                  customerName.split(' ')[0].charAt(0) +
-                  customerName.split(' ')[1].charAt(0)
-                }}
-              </div>
-            </div>
-            <div class="chat-header">
-              {{ customerName ?? message.role }}
-            </div>
-            <div class="chat-bubble text-sm">
-              <div v-html="renderMarkdown(message.msg)"></div>
-            </div>
-            <div class="chat-footer opacity-50 text-right">
-              {{ message.created_at.split(' ')[1] }}
-            </div>
-          </div>
-          <div class="chat chat-end" v-else>
-            <div class="chat-image avatar">
-              <div class="w-8 rounded-full">
-                <img
-                  class="rounded-full"
-                  alt="Tailwind CSS chat bubble component"
-                  src="/image/alfred-theme.png"
-                />
-              </div>
-            </div>
-            <div class="chat-header">InstantAlfred</div>
-            <div class="chat-bubble text-sm">
-              <div v-html="renderMarkdown(message.msg)"></div>
-            </div>
-            <div class="chat-footer opacity-50">
-              {{ message.created_at.split(' ')[1] }}
-            </div>
-          </div>
-        </div>
-      </template>
-    </AppModal>
+    <chat-logs-modal
+      :showChatLogs="showChatLogs"
+      :chatMessages="chatMessages"
+      :customerName="customerName"
+      @update:showChatLogs="showChatLogs = $event"
+    ></chat-logs-modal>
   </div>
 </template>
 <style>

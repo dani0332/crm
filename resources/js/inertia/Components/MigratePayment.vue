@@ -13,13 +13,9 @@ const isLoading = ref(false);
 
 // Check if the component should be visible
 const isVisible = computed(() => {
-    if (props.payments.length > 5) {
+    if (props.payments.length > 5 || props.payments.length === 0) {
         return false; 
-    }
-
-    if(isAllCancelled(props.payments)){
-        return false; 
-    }
+    }   
 
     if(isSameInsuranceProviderId(props.payments)){
         return true; 

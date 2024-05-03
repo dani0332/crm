@@ -23,6 +23,7 @@ const hasRole = role => useHasRole(role);
 const rolesEnum = page.props.rolesEnum;
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
+const quoteSegments = page.props.quoteSegments;
 const createLead = reactive({
   modal: false,
   type: '',
@@ -105,7 +106,7 @@ const advisorOptions = computed(() => {
   }));
 
   options.push({
-    value: '',
+    value: '-1',
     label: 'UnAssigned',
   });
 
@@ -208,7 +209,8 @@ const filters = reactive({
   created_at_end: page.props.createdAtEnd || '',
   page: 1,
   paid_at_start: '',
-  paid_at_end: ''
+  paid_at_end: '',
+  segment_filter: 'all',
 });
 
 const loader = reactive({
@@ -545,6 +547,14 @@ onMounted(() => {
           v-if="can(permissionsEnum.EXPORT_PLAN_DETAIL)"
           v-model="filters.paid_at_end"
           label="Paid Date End"
+        />
+
+        <x-select
+          v-if="can(permissionsEnum.SEGMENT_FILTER)"
+          v-model="filters.segment_filter"
+          label="Segment"
+          placeholder="Select Segment"
+          :options="quoteSegments"
         />
       </div>
       <div class="flex justify-between gap-3 mb-4 mt-1">

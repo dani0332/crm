@@ -93,6 +93,7 @@ defineProps({
   isNewPaymentStructure: Boolean,
   vatPercentage: Number,
   commercialRules: Object,
+  isAmlClearedForPayment: Boolean,
 });
 
 const page = usePage();
@@ -1714,6 +1715,15 @@ const isPlanDetailEnabled = computed(() => {
       <div class="flex justify-between items-center mb-4">
         <h3 class="font-semibold text-primary-800 text-lg">Car Details</h3>
         <div>
+          <Link
+            v-if="record?.insly_id"
+            :href="`/legacy-policy/${record.insly_id}`"
+            preserve-scroll
+          >
+            <x-button size="sm" color="#ff5e00" tag="div">
+              View Legacy policy
+            </x-button>
+          </Link>
           <template
             v-if="
               !can(permissionEnum.ApprovePayments) &&
@@ -2282,6 +2292,7 @@ const isPlanDetailEnabled = computed(() => {
       :canAddBatchNumber="hasRole(rolesEnum.CarManager)"
       :quote="record"
       modelType="Car"
+      :insly-id="record?.insly_id"
       v-if="
         record.source == page.props.leadSourceEnum.RENEWAL_UPLOAD ||
         record.source == page.props.leadSourceEnum.INSLY
@@ -3065,7 +3076,7 @@ const isPlanDetailEnabled = computed(() => {
               </x-button>
             </template>
 
-            <span v-if="hasRole(rolesEnum.CarAdvisor)">
+            <span>
               <SelectPlan
                 v-if="selectedProviderPlan.id != item.id"
                 @update:selectedPlanChanged="handlePlanSelected"
@@ -3234,6 +3245,7 @@ const isPlanDetailEnabled = computed(() => {
 			:paymentTooltipEnum="paymentTooltipEnum"
 			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name, tooltip: pm.tool_tip } })"
 			:storageUrl="storageUrl"
+      :isAmlClearedForPayment="isAmlClearedForPayment"
 		/>
     <PaymentTable
 		v-else
@@ -3427,6 +3439,15 @@ const isPlanDetailEnabled = computed(() => {
       <div class="flex justify-between items-center mb-4">
         <h3 class="font-semibold text-primary-800 text-lg">Documents</h3>
         <div>
+            <Link
+                v-if="record?.insly_id && can(permissionEnum.VIEW_LEGACY_DETAILS)"
+                :href="`/legacy-policy/${record.insly_id}`"
+                preserve-scroll
+            >
+                <x-button size="sm" color="#ff5e00" tag="div">
+                    View Legacy policy
+                </x-button>
+            </Link>
           <x-button
             class="mr-2"
             v-if="
@@ -3435,7 +3456,7 @@ const isPlanDetailEnabled = computed(() => {
             "
             @click.prevent="copyUploadURL"
             size="sm"
-            color="orange"
+            color="primary"
           >
             Copy upload Link
           </x-button>

@@ -5,6 +5,8 @@ namespace App\Services;
 use App\Enums\GenericRequestEnum;
 use App\Enums\HealthTeamType;
 use App\Enums\Kyc;
+use App\Enums\LeadSourceEnum;
+use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
@@ -348,7 +350,8 @@ class CRUDService extends BaseService
 
             // ========= assign renewal batch to HEALTH LOB leads upon transaction approved =========
 
-            if (strtolower($request->modelType) == strtolower(quoteTypeCode::Health) && $request->leadStatus == QuoteStatusEnum::TransactionApproved) {
+            if (strtolower($request->modelType) == strtolower(quoteTypeCode::Health) && $request->leadStatus == QuoteStatusEnum::TransactionApproved
+                && $entity->source == LeadSourceEnum::IMCRM) {
                 $this->healthQuoteService->assignRenewalBatch($entity);
                 $this->updatePaymentStatus($entity);
             }
@@ -593,7 +596,17 @@ class CRUDService extends BaseService
                 $transaction = $embededTransaction[0];
 
                 $payment = $transaction['payments'][0];
-                $maxAmount = $payment->premium_captured - $payment->premium_refunded;
+                $paymentStatus = $payment['payment_status_id'];
+
+                $maxAmount = 0;
+                $errorMessage = 'Cancel amount should not exceeded from transaction amount';
+                if (in_array($paymentStatus, [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PAID])) {
+                    $maxAmount = $payment->premium_captured - $payment->premium_refunded;
+                } elseif ($paymentStatus === PaymentStatusEnum::AUTHORISED) {
+                    $maxAmount = $payment->premium_authorized - $payment->premium_refunded;
+                } else {
+                    $errorMessage = 'Invalid Payment status';
+                }
 
                 if ($maxAmount >= $request->amount) {
                     PaymentAction::create([
@@ -616,7 +629,7 @@ class CRUDService extends BaseService
 
                     return response($processResponse, 200);
                 } else {
-                    return response(['Cancel amount should not exceeded from transaction amount'], 403);
+                    return response([$errorMessage], 403);
                 }
             } else {
                 return response(['Payment not exist'], 403);
@@ -659,7 +672,7 @@ class CRUDService extends BaseService
                 $data = [
                     'uuid' => $quoteModel->uuid,
                     'type_id' => $quoteTypeId,
-                    'code' => $quoteModel->code.'-'.$paymentSplit->sr_no,
+                    'code' => $paymentSplit->code.'-'.$paymentSplit->sr_no,
                 ];
                 $processResponse = $this->processCapturePayment($data);
 

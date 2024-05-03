@@ -29,6 +29,7 @@ use App\Repositories\QuoteStatusRepository;
 use App\Repositories\UserRepository;
 use App\Repositories\YachtQuoteRepository;
 use App\Services\AMLService;
+use App\Services\CentralService;
 use App\Services\LookupService;
 use App\Services\SplitPaymentService;
 
@@ -103,6 +104,8 @@ class YachtQuoteController extends Controller
         $personalPlans = PersonalPlanRepository::get();
         $advisors = UserRepository::getPersonalQuoteAdvisors(QuoteTypes::YACHT->value);
 
+        $isAmlClearedForPayment = app(CentralService::class)->amlClearedFromLog($quote->id, QuoteTypes::YACHT->name);
+
         $activities = ActivityRepository::where([
             'quote_type_id' => QuoteTypes::YACHT->id(),
             'quote_request_id' => $quote->id,
@@ -148,6 +151,7 @@ class YachtQuoteController extends Controller
             'paymentTooltipEnum' => PaymentTooltip::asArray(),
             'paymentStatusEnum' => PaymentStatusEnum::asArray(),
             'isNewPaymentStructure' => app(SplitPaymentService::class)->isNewPaymentStructure($quote->payments),
+            'isAmlClearedForPayment' => $isAmlClearedForPayment,
         ]);
     }
 
