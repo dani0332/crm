@@ -5,7 +5,6 @@ namespace App\Http\Controllers\V2;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\LookupsEnum;
-use App\Enums\PaymentStatusEnum;
 use App\Enums\PaymentTooltip;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
@@ -17,7 +16,6 @@ use App\Http\Requests\PetQuoteRequest;
 use App\Models\ApplicationStorage;
 use App\Models\Emirate;
 use App\Models\Nationality;
-use App\Models\PolicyIssuanceStatus;
 use App\Repositories\ActivityRepository;
 use App\Repositories\CustomerMembersRepository;
 use App\Repositories\DocumentTypeRepository;
@@ -140,9 +138,8 @@ class PetQuoteController extends Controller
             })->values();
         }
         $isQuoteDocumentEnabled = app(QuoteDocumentService::class)->isEnabled(QuoteTypes::PET->value);
-        $policyIssuanceStatus = PolicyIssuanceStatus::active()->get();
         $quoteDocuments = (new QuoteDocumentService())->getQuoteDocuments(QuoteTypes::PET->value, $quote->id);
-        $bPDetails = $this->bookPolicyPayload($quote, QuoteTypes::PET->value, $quote->payments, $quoteDocuments);
+        $bookPolicyDetails = $this->bookPolicyPayload($quote, QuoteTypes::PET->value, $quote->payments, $quoteDocuments);
 
         $vatPercentage = ApplicationStorage::where('key_name', ApplicationStorageEnums::VAT_VALUE)->first()->value ?? 0;
 
@@ -152,7 +149,6 @@ class PetQuoteController extends Controller
             'activities' => $activities,
             'lostReasons' => $lostReasons,
             'advisors' => $advisors,
-            'quoteStatusEnum' => QuoteStatusEnum::asArray(),
             'documentTypes' => $documentTypes,
             'quoteStatuses' => $quoteStatuses,
             'paymentMethods' => $paymentMethods,
@@ -174,17 +170,12 @@ class PetQuoteController extends Controller
             'UBOsDetails' => $uboDetails,
             'UBORelations' => $uboRelations,
             'vatPercentage' => $vatPercentage,
-            'paymentStatusEnum' => PaymentStatusEnum::asArray(),
             'paymentTooltipEnum' => PaymentTooltip::asArray(),
             'record' => fn () => $quote,
             'permissions' => [
                 'isQuoteDocumentEnabled' => $isQuoteDocumentEnabled,
             ],
-            'enums' => [
-                'quoteStatusEnum' => QuoteStatusEnum::asArray(),
-            ],
-            'policyIssuanceStatus' => $policyIssuanceStatus,
-            'bPDetails' => $bPDetails,
+            'bookPolicyDetails' => $bookPolicyDetails,
             'payments' => $quote->payments->toArray() ?? [],
             'isNewPaymentStructure' => app(SplitPaymentService::class)->isNewPaymentStructure($quote->payments),
             'isAmlClearedForPayment' => $isAmlClearedForPayment,
