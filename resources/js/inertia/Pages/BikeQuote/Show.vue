@@ -807,14 +807,6 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
       :is-beta-user="isBetaUser"
       :personal-plans="personalPlans"
     />
-    
-    <SendUpdates
-      v-if="hasPolicyIssuedStatus"
-      :reportable="quote"
-      :quote_type_id="$page.props.quoteTypeId"
-      :options="sendUpdateOptions"
-      :data="sendUpdateLogs"
-    />
 
     <QuoteDocuments
       :document-types="documentTypes"
@@ -852,6 +844,14 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
       quoteType="Bike"
       :bPDetails="bPDetails"
       :payments="payments"
+    />
+    
+    <SendUpdates
+      v-if="hasPolicyIssuedStatus"
+      :reportable="quote"
+      :quote_type_id="$page.props.quoteTypeId"
+      :options="sendUpdateOptions"
+      :data="sendUpdateLogs"
     />
 
     <AuditLogs :id="$page.props.quote.id" :quote-type="quoteType" :quoteCode="$page.props.quote.code" :expanded="sectionExpanded"/>

@@ -835,6 +835,14 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
       :payments="payments"
     />
 
+    <SendUpdates
+      v-if="hasPolicyIssuedStatus"
+      :reportable="quote"
+      :quote_type_id="page.props.quoteTypeId"
+      :options="sendUpdateOptions"
+      :data="sendUpdateLogs"
+    />
+
     <QuoteDocuments
       :document-types="documentTypes"
       :quote-documents="quote.documents || []"
@@ -845,13 +853,6 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
       :expanded="sectionExpanded"
     />
 
-    <SendUpdates
-      v-if="hasPolicyIssuedStatus"
-      :reportable="quote"
-      :quote_type_id="page.props.quoteTypeId"
-      :options="sendUpdateOptions"
-      :data="sendUpdateLogs"
-    />
     <AuditLogs
       :quote-type="quoteType"
       :id="$page.props.quote.id"
