@@ -18,7 +18,6 @@ use App\Models\ApplicationStorage;
 use App\Models\CarQuote;
 use App\Models\CarQuoteRequestDetail;
 use App\Models\QuoteBatches;
-use App\Models\QuoteViewCount;
 use App\Models\Tier;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\TeamHierarchyTrait;
@@ -1476,31 +1475,13 @@ class CarQuoteService extends BaseService
 
             $this->addManualAllocationCountAndUpdate($userId, $lead, $previousAdvisorId, $oldAdvisorAssignedDate, $oldAssignmentType); // update new and previous (if applicable) advisor counts in lead allocation table
 
-            $this->updateExistingQuoteViewCount($userId, $lead->id); // update existing record of quote view count if exists and reset count to zero
-
+            $this->addOrUpdateQuoteViewCount($lead, QuoteTypeId::Car, $userId);
             $lead->auto_assigned = false;
 
             $lead->save();
         }
 
         return [];
-    }
-
-    private function updateExistingQuoteViewCount($userId, $leadId)
-    {
-        $quoteViewCount = QuoteViewCount::where('quote_id', $leadId)->where('user_id', $userId)->first();
-        if ($quoteViewCount) {
-            $quoteViewCount->user_id = $userId;
-            $quoteViewCount->visit_count = 0;
-            $quoteViewCount->save();
-        } else {
-            QuoteViewCount::create([
-                'quote_id' => $leadId,
-                'quote_type_id' => 1,
-                'user_id' => $userId,
-                'visit_count' => 1,
-            ]);
-        }
     }
 
     public function updateTierAndCost($lead)
@@ -1637,29 +1618,6 @@ class CarQuoteService extends BaseService
         $pdfName = 'InsuranceMarket.ae™ Motor Insurance Comparison for '.$quote->first_name.' '.$quote->last_name.'.pdf';
 
         return ['pdf' => $pdf, 'name' => $pdfName];
-    }
-
-    public function addOrUpdateQuoteViewCount($record)
-    {
-        if ($record->advisor_id != null && $record->advisor_id == Auth::user()->id) {
-            // Search for an existing record with the same quote_id and user_id
-            $quoteViewCount = QuoteViewCount::where('quote_id', $record->id)
-                ->where('user_id', Auth::user()->id)
-                ->first();
-
-            if ($quoteViewCount) {
-                // If the record exists, increment its visit_count
-                $quoteViewCount->increment('visit_count');
-            } else {
-                // If the record does not exist, create a new one
-                QuoteViewCount::create([
-                    'quote_id' => $record->id,
-                    'quote_type_id' => 1,
-                    'user_id' => Auth::user()->id,
-                    'visit_count' => 1,
-                ]);
-            }
-        }
     }
 
     private function deleteValuationAPI($oldValue, $currentValue, $quoteUuId)
