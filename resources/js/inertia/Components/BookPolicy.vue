@@ -165,7 +165,7 @@ const submitPolicy = () => {
     });
 };
 
-const caculateCommission = () => {
+const calculateCommission = () => {
   if (bpForm.commission_vat_applicable > 0) {
     if (Number(props.quote?.price_without_vat > 0)) {
       bpForm.commission_percentage = (
@@ -176,9 +176,10 @@ const caculateCommission = () => {
       bpForm.vat_on_commission = (
         bpForm.commission_vat_applicable * page.props.vat
       ).toFixed(2);
-      bpForm.total_commission =
-        Number(bpForm.vat_on_commission).toFixed(2) +
-        Number(bpForm.commission_vat_applicable).toFixed(2);
+      bpForm.total_commission = (
+        Number(bpForm.vat_on_commission) +
+        Number(bpForm.commission_vat_applicable)
+      ).toFixed(2);
     } else {
       bpForm.commission_vat_applicable = '';
       notification.error({
@@ -400,7 +401,7 @@ const caculateCommission = () => {
                 <dd>
                   <x-input
                     v-model="bpForm.commission_vat_not_applicable"
-                    @change="caculateCommission"
+                    @change="calculateCommission"
                     placeholder="Commission VAT NOT APPLICABLE"
                     class="w-full"
                     :disabled="
@@ -434,7 +435,7 @@ const caculateCommission = () => {
                 <dd>
                   <x-input
                     v-model="bpForm.commission_vat_applicable"
-                    @change="caculateCommission"
+                    @change="calculateCommission"
                     placeholder="Commission VAT APPLICABLE"
                     class="w-full"
                     :disabled="
