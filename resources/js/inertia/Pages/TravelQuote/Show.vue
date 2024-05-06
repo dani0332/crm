@@ -2350,6 +2350,7 @@ watch(
       :policyIssuanceStatus="policyIssuanceStatus"
       modelType="travel"
       :expanded="sectionExpanded"
+      :payments="payments"
     />
     
     <div class="p-4 rounded shadow mb-6 bg-white">

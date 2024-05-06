@@ -41,7 +41,7 @@ const dateToYMD = date => {
       return date.split(' ')[0]; // Return only the date part
     }
     const [year, month, day] = date.split('-');
-    return `${year}-${month}-${day}`;
+    return `${year}-${month}-${day}`;3
   }
   return '';
 };
@@ -118,6 +118,7 @@ const bpForm = useForm({
 });
 
 const onUpdatebookPolicyDetails = isValid => {
+  showInsufficientPaymentAlert();
   if (isValid) {
     bpForm.booking_date = currentDateTime;
     bpForm.post('/quotes/update-booking-policy', {
@@ -144,12 +145,20 @@ const onUpdatebookPolicyDetails = isValid => {
   }
 };
 
+const isAllowToSendPolicy = ref(false);
+
 const modals = reactive({
   sendPolicyConfirm: false,
   isConfirmed: false,
+  sendPolicyPopup: false
 });
+
 const confirmSendPolicy = () => {
-  modals.sendPolicyConfirm = true;
+  if (isPending() || isPartiallyPaid() || isCreditApproved()) {
+      modals.sendPolicyPopup = true;
+  } else {
+      modals.sendPolicyConfirm = true;
+  }
 };
 
 const submitPolicy = () => {
@@ -159,6 +168,8 @@ const submitPolicy = () => {
     send_policy_type: props.bookPolicyDetails.sendPolicyType,
     model_type: props?.quoteType,
     quote_id: props?.quote?.id,
+    is_send_policy: isAllowToSendPolicy.value,
+    transaction_payment_status: bpForm.transaction_payment_status,
     modelType: props.modelType,
   };
   axios
@@ -242,6 +253,46 @@ watch(() => page.props.bookPolicyDetails.transactionPaymentStatus, (newValue, ol
   }  
 });
 
+const sendPolicyConfirmation = () => {
+  if (isPartiallyPaid() || isPending() || isCreditApproved()){
+    isAllowToSendPolicy.value = true;
+  }
+  modals.sendPolicyPopup = false;
+  modals.sendPolicyConfirm = true;
+}
+const isUpfrontOrSplitPayments = () => {
+  return getPayment()?.frequency == 'upfront' || getPayment()?.frequency == 'split_payments';
+}
+const isPartiallyPaid = () => {
+  return getPayment()?.payment_status?.text == 'PARTIALLY_PAID';
+}
+const isPending = () => {
+  return getPayment()?.payment_status?.text == 'PENDING';
+}
+const isCreditApproved = () => {
+  return getPayment()?.payment_status?.text == 'CREDIT_APPROVED';
+}
+const getPayment = () => {
+  return page.props?.payments[0] ?? null;
+}
+const showInsufficientPaymentAlert = () => {
+  if (isUpfrontOrSplitPayments() && isPartiallyPaid()) {
+    notification.error({
+      title: 'Insufficient payment',
+      position: 'top',
+      timeout: 30000
+    });
+  }
+}
+const sendPolicyConfirmationHeading = computed(() => {
+    if(isPartiallyPaid()) {
+        return 'Insufficient payment received';
+    } else if (isPending()) {
+        return 'Payment not yet completed';
+    } else if (isCreditApproved()){
+        return "Pending payment under 'Credit approval'";
+    }
+});
 </script>
 
 <template>
@@ -674,10 +725,13 @@ watch(() => page.props.bookPolicyDetails.transactionPaymentStatus, (newValue, ol
         Please be aware that your current action involves sending the policy to
         the customer only.
       </x-alert>
-      <x-checkbox
-        v-model="modals.isConfirmed"
-        label="I confirm and attest that all information recorded is correct."
-      />
+      <div class="multilabel-checkbox">
+        <x-checkbox v-model="modals.isConfirmed" />
+          <div class="multiline-label">
+            <p>I confirm and attest that all the information is correct.</p>
+            <p>I confirm I am in compliance with the COC.</p>
+          </div>
+      </div>
       <template #actions>
         <div class="text-right space-x-4">
           <x-button
@@ -701,5 +755,39 @@ watch(() => page.props.bookPolicyDetails.transactionPaymentStatus, (newValue, ol
         </div>
       </template>
     </x-modal>
+    <x-modal v-model="modals.sendPolicyPopup" show-close backdrop>
+      <template #header>  Are you sure you want to continue? </template>
+       <div class="text-center">
+          <p class="font-semibold pt-3">{{  sendPolicyConfirmationHeading  }}</p>
+          <p>Unpaid policies breach our Code of Conduct and will be escalated to management. Do you still want to continue?</p>
+       </div>
+      <template #actions>
+        <div class="text-center space-x-4">
+          <x-button
+            size="sm"
+            ghost
+            @click.prevent="modals.sendPolicyPopup = false"
+          >
+            Go Back
+          </x-button>
+          <x-button
+            size="sm"
+            color="error"
+            @click.prevent="sendPolicyConfirmation"
+          >
+            Continue
+          </x-button>
+        </div>
+      </template>
+    </x-modal>
   </div>
 </template>
+<style scoped>
+.multilabel-checkbox {
+  display: flex;
+  align-items: center;
+}
+.multiline-label {
+  margin-left: 10px;
+}
+</style>

@@ -1178,8 +1178,11 @@ watch(
     <PolicyDetail
       v-if="permissions.isQuoteDocumentEnabled"
       :record="record"
+      :quoteStatusEnum="enums.quoteStatusEnum"
+      :policyIssuanceStatus="policyIssuanceStatus"
       modelType="life"
       :expanded="sectionExpanded"
+      :payments="payments"
     />
 
     <QuoteDocuments

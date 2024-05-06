@@ -275,6 +275,8 @@ class CentralController extends Controller
             ]);
             $this->straightforwardPayments($payment, $paymentSplits, $quote);
 
+            $this->handleInSufficientPayment($request, $payment);
+
             return response()->json(['message' => $response['message']], 200);
         }
     }
@@ -398,6 +400,15 @@ class CentralController extends Controller
             if ($payment->frequency == 'split_payments') {
                 $this->updatePaymentSplitAllocationStatus($paymentSplits, $quote);
             }
+        }
+    }
+    
+    private function handleInsufficientPayment($request, $payment)
+    {
+        if ($request->is_send_policy && $payment) {
+            $payment->payment_allocation_status = PaymentAllocationStatus::FULLY_ALLOCATED;
+            $payment->transaction_payment_status = $request->transaction_payment_status;
+            $payment->save();
         }
     }
 

@@ -905,8 +905,11 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
     <PolicyDetail
       v-if="permissions.isQuoteDocumentEnabled"
       :record="record"
+      :quoteStatusEnum="enums.quoteStatusEnum"
+      :policyIssuanceStatus="policyIssuanceStatus"
       modelType="pet"
       :expanded="sectionExpanded"
+      :payments="payments"
     />
 
     <QuoteDocuments

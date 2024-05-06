@@ -1165,6 +1165,9 @@ watch(
       :record="record"
       modelType="home"
       :expanded="sectionExpanded"
+      :quoteStatusEnum="enums.quoteStatusEnum"
+      :policyIssuanceStatus="policyIssuanceStatus"
+      :payments="payments"
     />
 
     <QuoteDocuments

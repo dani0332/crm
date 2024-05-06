@@ -1003,6 +1003,7 @@ const editPaymentModal = (payment,split_payment_id,sr_no,capture_approval) => {
     paymentMethodsForm.collection_amount = '';
     paymentMethodsForm.bank_reference_number = '';
     splitPaymentRecord.value = payment.payment_splits.find(item => item.sr_no === sr_no);
+    paymentMethodsForm.system_adjusted_discount = payment.system_adjusted_discount;
   } 
 
   //paymentMethodsForm.masterPaymentStatus = payment.
@@ -1783,6 +1784,27 @@ const paymentAllocationStatusTooltip= payment_allocation_status  => {
   return '';
 }
 
+const discountTypeLabel = computed(() => {
+  let systemAplliedDiscount = '';
+  if (paymentMethodsForm.status === 'view' && 
+      (paymentMethodsForm.discount === 'system_adjusted_discount' || 
+      paymentMethodsForm.system_adjusted_discount > 0))
+  {
+    systemAplliedDiscount = 'System adjusted discount';
+  }
+  let discountType = discountTypes.find(item => item.value === paymentMethodsForm.discount);
+  if (discountType) {
+    if (systemAplliedDiscount !== '') {
+      return discountType.label+' + '+systemAplliedDiscount;
+    } else {
+      return discountType.label;
+    }    
+  } else if (systemAplliedDiscount !== '') {
+    return systemAplliedDiscount;
+  } else {
+    return 'N/A';
+  }  
+});
 // Watch for Ecommerce Price changes
 watch(
   () => props.eCommercePrice,
@@ -2278,7 +2300,7 @@ const isMasterPaymentPaid = computed(() => {
             </x-tooltip>            
             <x-field class="w-full">
             <span v-if="isFieldReadonly">              
-              {{ discountTypes.find(item => item.value === paymentMethodsForm.discount)?.label  || 'N/A'}}          
+              {{ discountTypeLabel }}          
             </span>
               <div v-if="!isFieldReadonly" class="custom-dropdown">
                 <span v-if="paymentMethodsForm.discount!=''" class="close-icon"  @mousedown.stop="resetDiscount()">

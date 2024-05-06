@@ -296,7 +296,7 @@ class SageApiService
                 return $returnMessage;
             }
             foreach ($postedResponse['Invoices'][0]['InvoicePaymentSchedules'] as $key => $value) {
-                $postedResponse['Invoices'][0]['InvoicePaymentSchedules'][$key]['AmountDue'] = $paymentSplits[$key]['collection_amount'];
+                $postedResponse['Invoices'][0]['InvoicePaymentSchedules'][$key]['AmountDue'] = $paymentSplits[$key]['payment_amount'];
                 $postedResponse['Invoices'][0]['InvoicePaymentSchedules'][$key]['DueDate'] = date('Y-m-d', strtotime($paymentSplits[$key]['due_date']));
             }
             //3
@@ -305,11 +305,9 @@ class SageApiService
                 $isLiveApiCallStep3 = false;
                 $postedResponse = json_decode($sageLogArray[3]['response'], true);
             } else {
-
                 $resp = $this->postToSage300($url, $postedResponse, 'PATCH');
                 $postedResponse = json_decode($resp, true);
             }
-
             $postedResponse['endPoint'] = $url;
             $postedResponse['payload'] = $postedResponse;
             if (isset($postedResponse['error'])) {
@@ -599,7 +597,7 @@ class SageApiService
                 $isLiveApiCallStep11 = false;
                 $response = json_decode($sageLogArray[$currentStep]['response'], true);
             } else {
-                $readyToPostReceiptAr = SagePayloadFactory::arSplitPrepaymentPayload($quote, $sageCustomerNumber, $payment, $paymentSplits);
+                $readyToPostReceiptAr = SagePayloadFactory::arSplitPrepaymentPayload($quote, $sageCustomerNumber, $payment, $paymentSplits, true);
 
                 $resp = $this->postToSage300($readyToPostReceiptAr['endPoint'], $readyToPostReceiptAr['payload'], 'POST');
                 $response = json_decode($resp, true);
@@ -675,7 +673,7 @@ class SageApiService
                 $isLiveApiCallStep11 = false;
                 $response = json_decode($sageLogArray[$currentStep]['response'], true);
             } else {
-                $readyToPostReceiptAr = SagePayloadFactory::arSplitPrepaymentPayload($quote, $sageCustomerNumber, $payment, $paymentSplits);
+                $readyToPostReceiptAr = SagePayloadFactory::arSplitPrepaymentPayload($quote, $sageCustomerNumber, $payment, $paymentSplits, false);
 
                 $resp = $this->postToSage300($readyToPostReceiptAr['endPoint'], $readyToPostReceiptAr['payload'], 'POST');
                 $response = json_decode($resp, true);
