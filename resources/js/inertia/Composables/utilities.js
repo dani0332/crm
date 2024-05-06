@@ -206,14 +206,6 @@ export const getPreviousDate = (days = 30, format = 'DD-MMM-YYYY') =>
   return useDateFormat(previousDate, format).value;
 };
 
-// export const useDaysSinceStale = payload =>
-// {
-//   const quoteRequest = payload;
-//   const stale_days = quoteRequest
-//     ? Math.floor((new Date() - new Date(quoteRequest)) / (1000 * 60 * 60 * 24))
-//     : false;
-//   return stale_days !== false && stale_days <= 90 ? stale_days : false;
-// };
 
 export const setQueryStringFilters = (params, filters) =>
 {
