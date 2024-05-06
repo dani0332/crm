@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\CarPlanType;
+use App\Enums\LeadSourceEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\UserStatusEnum;
 use App\Models\ApplicationStorage;
@@ -127,6 +128,7 @@ class CarEmailService extends BaseService
     {
         $documentUrl = $this->getAppStorageValueByKey(ApplicationStorageEnums::LMS_INTRO_EMAIL_ATTACHMENT_URL);
         $whatsAppNumber = ! empty($advisor->mobile_no) ? formatMobileNo($advisor->mobile_no) : '';
+        $isRevivalLead = $carQuote->source == LeadSourceEnum::REVIVAL || $carQuote->source == LeadSourceEnum::REVIVAL_PAID || $carQuote->source == LeadSourceEnum::REVIVAL_REPLIED;
         $emailData = (object) [
             'clientFullName' => $carQuote->first_name.' '.$carQuote->last_name,
             'customerName' => $carQuote->first_name.' '.$carQuote->last_name,
@@ -141,7 +143,7 @@ class CarEmailService extends BaseService
             'yearOfManufacture' => $carQuote->year_of_manufacture,
             'vehicleName' => $this->getVehicleName($carQuote),
             'currentInsurer' => $carQuote->currently_insured_with,
-            'quoteLink' => config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$carQuote->uuid,
+            'quoteLink' => config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$carQuote->uuid. ($isRevivalLead ? '?DLA=true' : ''), // DLA = Disable Lead Assignment
             'requestAdvisorLink' => config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$carQuote->uuid.'/?assignAdvisor=true',
             'assignmentType' => $this->getAssignmentTypeText($carQuote->assignment_type),
             'previousAdvisorName' => ! empty($previousAdvisor) ? $previousAdvisor->name : '',
