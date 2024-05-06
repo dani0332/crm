@@ -4,6 +4,7 @@ namespace App\Repositories;
 
 use App\Enums\EpCategoryEnum;
 use App\Enums\PaymentStatusEnum;
+use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Jobs\SendEPDocumentsJob;
 use App\Models\EmbeddedProduct;
@@ -73,7 +74,6 @@ class EmbeddedProductRepository extends BaseRepository
 
             foreach ($prices as $price) {
                 if (! in_array($price->id, array_column($data['pricings'], 'id'))) {
-
                     if (EmbeddedTransaction::where('product_id', $price->id)->exists()) {
                         $price->is_active = 0;
                         $price->save();
@@ -216,7 +216,6 @@ class EmbeddedProductRepository extends BaseRepository
             ->get();
         $modelType = QuoteType::where('id', '=', $quoteTypeId)->value('code');
         $ep->each(function ($item) use ($modelType, $quoteTypeId, $quoteRequestId) {
-
             $item->send_document_button = false;
             $optionsIds = $item->prices->pluck('id');
 
@@ -227,24 +226,29 @@ class EmbeddedProductRepository extends BaseRepository
                 ['payment_status_id',  '=', PaymentStatusEnum::CAPTURED],
             ])->whereIn('product_id', $optionsIds)->get();
 
-            if ($item->product_category == EpCategoryEnum::BOLT_ON) {
-                $quoteObject = $this->getQuoteObject($modelType, $quoteRequestId);
-
-                if ($quoteObject->payment_status_id == PaymentStatusEnum::CAPTURED) {
-
-                    if ($transaction->isNotEmpty()) {
-                        $item->send_document_button = true;
-                    }
-                }
-            } elseif ($item->product_category == EpCategoryEnum::STAND_ALONE) {
-
-                if ($transaction->isNotEmpty()) {
-                    $item->send_document_button = true;
-                }
-            }
+            $quoteObject = $this->getQuoteObject($modelType, $quoteRequestId);
+            $item->send_document_button = $this->canSendDocuments($item->product_category, $quoteObject->quote_status_id, $transaction);
         });
 
         return $ep;
+    }
+
+    private function canSendDocuments($productCategory, $quoteStatusId, $transaction)
+    {
+        $canSend = false;
+        if ($productCategory == EpCategoryEnum::BOLT_ON) {
+            if ($quoteStatusId == QuoteStatusEnum::TransactionApproved) {
+                if ($transaction->isNotEmpty()) {
+                    $canSend = true;
+                }
+            }
+        } elseif ($productCategory == EpCategoryEnum::STAND_ALONE) {
+            if ($transaction->isNotEmpty()) {
+                $canSend = true;
+            }
+        }
+
+        return $canSend;
     }
 
     public function fetchSendDocumentsByLead($leadId, $modelType)
@@ -262,7 +266,6 @@ class EmbeddedProductRepository extends BaseRepository
 
         if ($epTransaction->isNotEmpty()) {
             foreach ($epTransaction as $item) {
-
                 $product_id = $item->product_id;
                 $embedded_product_id = EmbeddedProductOption::find($product_id)->embedded_product_id;
                 // EP Send documents
@@ -291,11 +294,9 @@ class EmbeddedProductRepository extends BaseRepository
             $documents = json_decode($ep->company_documents);
             if (! empty($documents)) {
                 foreach ($documents as $item) {
-
                     $path = $item->path;
                     $pwDoc = $path !== '' ? $websiteURL.$path : '';
                     if (! empty($path)) {
-
                         $fileInfo = new finfo(FILEINFO_MIME_TYPE);
 
                         $file = file_get_contents($pwDoc);
@@ -339,6 +340,13 @@ class EmbeddedProductRepository extends BaseRepository
             ['payment_status_id',  '=', PaymentStatusEnum::CAPTURED],
         ])->whereIn('product_id', $optionsIds)->get();
 
+        $canSendDocuments = $this->canSendDocuments($ep->product_category, $quoteObject->quote_status_id, $transaction);
+        if (! $canSendDocuments) {
+            info('Documents cannot be sent '.json_encode(['uuid' => $quoteObject->uuid, 'ep category' => $ep->product_category, 'quote status' => $quoteObject->quote_status_id, 'transaction' => $transaction]));
+
+            return 'Documents cannot be sent';
+        }
+
         $certificate_number = '';
         if ($transaction->isNotEmpty()) {
             $certificate_number = $transaction[0]['certificate_number'];
@@ -373,7 +381,7 @@ class EmbeddedProductRepository extends BaseRepository
                 ],
                 'subject' => 'Thank you for your purchase of '.$product_name.' with InsuranceMarket.ae - '.$short_code.'-'.$quoteObject->code,
             ],
-            'MessageStream' => config('constants.MA_POSTMARK_STREAM'),
+            'MessageStream' => config('constants.EMBEDDED_PRODUCTS_POSTMARK_STREAM'),
         ], JSON_UNESCAPED_SLASHES);
 
         SendEPDocumentsJob::dispatch($body);
@@ -388,7 +396,7 @@ class EmbeddedProductRepository extends BaseRepository
      * @param  object  $quoteObject
      * @param  string  $certificate_number
      * @param  float  $premium
-     * @return \PDF|null The PDF document or null if the short code is not defined in config.
+     * @return PDF|null The PDF document or null if the short code is not defined in config.
      */
     private function getPDF(
         $short_code,
