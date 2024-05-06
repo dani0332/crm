@@ -172,6 +172,7 @@ class EmbeddedProductController extends Controller
     public function cancelPayment(Request $request)
     {
         $response = EmbeddedProductRepository::cancelPayment($request->all());
+
         return response($response['data'], $response['code']);
     }
 }

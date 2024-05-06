@@ -5,11 +5,14 @@ namespace App\Repositories;
 use App\Enums\EpCategoryEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteTypeId;
+use App\Facades\Marshall;
 use App\Jobs\SendEPDocumentsJob;
 use App\Models\EmbeddedProduct;
 use App\Models\EmbeddedProductOption;
 use App\Models\EmbeddedTransaction;
 use App\Models\GenericDocument;
+use App\Models\PaymentAction;
+use App\Models\PaymentSplits;
 use App\Models\QuoteType;
 use App\Strategies\EmbeddedProducts\EmbeddedProduct as EmbeddedProductStrategy;
 use App\Strategies\EmbeddedProducts\MDX;
@@ -18,9 +21,6 @@ use Carbon\Carbon;
 use finfo;
 use Illuminate\Support\Facades\DB;
 use PDF;
-use App\Facades\Marshall;
-use App\Models\PaymentAction;
-use App\Models\PaymentSplits;
 
 class EmbeddedProductRepository extends BaseRepository
 {
@@ -510,7 +510,7 @@ class EmbeddedProductRepository extends BaseRepository
             ->get();
 
         if ($embededTransaction->isNotEmpty()) {
-            if (!empty($embededTransaction[0]['payments'][0])) {
+            if (! empty($embededTransaction[0]['payments'][0])) {
                 $transaction = $embededTransaction[0];
 
                 $payment = $transaction['payments'][0];
@@ -536,7 +536,7 @@ class EmbeddedProductRepository extends BaseRepository
                         ->delete();
 
                     $paymentSplit = PaymentSplits::where('code', $transaction->code)->orderBy('sr_no', 'desc')->first();
-                    $sr = !empty($paymentSplit) ? $paymentSplit->sr_no : 1;
+                    $sr = ! empty($paymentSplit) ? $paymentSplit->sr_no : 1;
                     PaymentAction::create([
                         'payment_code' => $transaction->code,
                         'is_fulfilled' => 0,
