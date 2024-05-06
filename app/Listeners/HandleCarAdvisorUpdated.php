@@ -13,6 +13,8 @@ use App\Services\CarEmailService;
 use App\Services\HttpRequestService;
 use App\Services\SendSmsCustomerService;
 use App\Services\SIBService;
+use App\Services\UserService;
+use Illuminate\Support\Facades\Log;
 
 class HandleCarAdvisorUpdated
 {
@@ -59,6 +61,16 @@ class HandleCarAdvisorUpdated
 
         if ($lead->sic_flow_enabled) {
 
+            info('Lead is SIC enabled so send SIC notification to advisor against: '.$lead->uuid);
+            $user = (new UserService)->getUserById($lead->advisor_id);
+            $responseCode = $this->carEmailService->sendSICNotificationToAdvisor($lead, $user);
+
+            if (in_array($responseCode, [200, 201])) {
+                info('SIC Notification to Advisor: '.$user->email.' Sent Successfully against Quote UuId: '.$lead->uuid);
+            } else {
+                Log::error('SIC Notification to Advisor Not Sent: '.$responseCode.' Advisor EmailAddress: '.$user->email.' Quote UuId: '.$lead->uuid);
+            }
+
             $lead->sic_flow_enabled = 0;
             $lead->save();
             info('SIC flow is disabled for lead uuid : '.$lead->uuid);
@@ -71,13 +83,11 @@ class HandleCarAdvisorUpdated
             } else {
                 info('SIC workflow key not found');
             }
-
         }
 
         SendOCBIntroEmailJob::dispatch($lead->uuid, $previousAdvisor);
 
         info('SMS sending code reached');
-
     }
     public function buildSMS($lead)
     {
