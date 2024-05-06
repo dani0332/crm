@@ -47,7 +47,7 @@ const rolesEnum = page.props.rolesEnum;
 const notification = useNotifications('toast');
 const hasRole = role => useHasRole(role);
 
-const countDays = daysSinceStale(props.quoteRequest?.stale_at);
+const countDays = useDaysSinceStale(props.quoteRequest?.stale_at);
 const compareDueDate = useCompareDueDate;
 
 const { copy, copied } = useClipboard();

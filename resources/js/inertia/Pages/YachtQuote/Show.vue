@@ -56,7 +56,7 @@ const hasAnyRole = roles => useHasAnyRole(roles);
 const hasRole = role => useHasRole(role);
 const rolesEnum = page.props.rolesEnum;
 
-const countDays = daysSinceStale(props.quoteRequest?.stale_at);
+const countDays = useDaysSinceStale(props.quoteRequest?.stale_at);
 
 const industryTypeOptions = computed(() => {
   return page.props.industryType.map(indType => ({

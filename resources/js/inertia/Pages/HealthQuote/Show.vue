@@ -62,7 +62,7 @@ const isManualPlansCount = ref(0);
 
 const page = usePage();
 
-let countDays = ref(daysSinceStale(props.quoteRequest?.stale_at));
+let countDays = ref(useDaysSinceStale(props.quoteRequest?.stale_at));
 const permissionsEnum = page.props.permissionsEnum;
 const can = permission => useCan(permission);
 
@@ -348,7 +348,9 @@ const onLeadStatus = () => {
       },
       onSuccess: response => {
         const flash_messages = response.props.flash;
-        countDays.value = daysSinceStale(response.props.quoteRequest?.stale_at);
+        countDays.value = useDaysSinceStale(
+          response.props.quoteRequest?.stale_at,
+        );
         router.reload({ only: ['quoteRequest'] });
         if (!flash_messages) {
           notification.success({
