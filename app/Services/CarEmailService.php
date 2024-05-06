@@ -311,9 +311,9 @@ class CarEmailService extends BaseService
         $compPlans = array_filter($plans, function ($plan) {
             // Check if the 'repairType' and 'isRatingAvailable' properties exist and meet the conditions.
             return property_exists($plan, 'repairType') &&
-                   property_exists($plan, 'isRatingAvailable') &&
-                   ($plan->repairType === CarPlanType::COMP || $plan->repairType === CarPlanType::AGENCY) &&
-                   $plan->isRatingAvailable === true;
+                property_exists($plan, 'isRatingAvailable') &&
+                ($plan->repairType === CarPlanType::COMP || $plan->repairType === CarPlanType::AGENCY) &&
+                $plan->isRatingAvailable === true;
         });
 
         if (count($compPlans) > 0) {

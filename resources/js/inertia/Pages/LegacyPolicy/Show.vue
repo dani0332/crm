@@ -576,31 +576,33 @@ const dateFormat = date => {
           <template #item-due_date="{ due_date }">
             {{ dateFormat(due_date) }}
           </template>
-          <template #item-tax="{ tax }"> {{ tax }} AED </template>
-          <template #item-comm="{ comm }"> {{ comm }}% </template>
+          <template #item-tax="{ tax }"> {{ tax.toFixed(2) }} AED </template>
+          <template #item-comm="{ comm }"> {{ comm.toFixed(2) }}% </template>
           <template #item-commission_sum="{ commission_sum }">
-            {{ commission_sum }} AED
+            {{ commission_sum.toFixed(2) }} AED
           </template>
           <template #item-discount="{ discount }">
-            {{ discount }} AED
+            {{ discount.toFixed(2) }} AED
           </template>
           <template #item-gross_premium="{ gross_premium }">
-            {{ gross_premium }} AED
+            {{ gross_premium.toFixed(2) }} AED
           </template>
           <template #item-customer_payable="{ customer_payable }">
-            {{ customer_payable }} AED
+            {{ customer_payable.toFixed(2) }} AED
           </template>
         </DataTable>
         <!-- Display the total customer payable outside the DataTable -->
         <table>
           <tr>
             <th>Total Gross Premium:</th>
-            <td class="custom-table">{{ calculateGrossPremium }} AED</td>
+            <td class="custom-table">
+              {{ calculateGrossPremium.toFixed(2) }} AED
+            </td>
             <th>Total Tax:</th>
-            <td class="custom-table">{{ calculateTax }} AED</td>
+            <td class="custom-table">{{ calculateTax.toFixed(2) }} AED</td>
             <th>Total Customer Payable:</th>
             <td class="custom-table">
-              {{ calculateTotalCustomerPayable }} AED
+              {{ calculateTotalCustomerPayable.toFixed(2) }} AED
             </td>
           </tr>
         </table>
