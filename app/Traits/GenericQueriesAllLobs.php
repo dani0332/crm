@@ -290,7 +290,7 @@ trait GenericQueriesAllLobs
             $difference = $quoteModel->price_with_vat - ($payment->captured_amount + $payment->discount_value);
 
             // Case 1 if difference is less than 1 and greater than 0 else set total price to price with vat
-            if ($difference <= 0.99 && $difference > 0) {
+            if ($difference <= 0.99 && $difference > 0 && $payment->payment_status_id === PaymentStatusEnum::PAID) {
                 $payment->system_adjusted_discount = $difference;
                 // If condition to check if discount value is not null & add difference to it else set difference as discount value
                 if ($payment->discount_value != null) {
