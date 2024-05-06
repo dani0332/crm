@@ -1583,8 +1583,7 @@ const handlePlanSelected = plan => {
   });  
 };
 
-const isPlanDetailEnabled = computed(() => {
-
+const isPlanDetailEnabled = computed(() => {  
   if(page.props.commercialRules?.length > 0) { // Check rules for commercial
     return true;
   }
@@ -3246,6 +3245,7 @@ const isPlanDetailEnabled = computed(() => {
 			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name, tooltip: pm.tool_tip } })"
 			:storageUrl="storageUrl"
       :isAmlClearedForPayment="isAmlClearedForPayment"
+      :isPlanDetailEnabled="isPlanDetailEnabled"
 		/>
     <PaymentTable
 		v-else
