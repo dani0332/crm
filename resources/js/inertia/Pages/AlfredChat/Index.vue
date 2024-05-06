@@ -99,6 +99,7 @@ const showChat = item => {
       loader.view = false;
       chatMessages.value.created_at = item.created_at;
       chatMessages.value.data = data;
+      chatMessages.value.id = item.quote_type + '-' + item.quote_id;
       showChatLogs.value = true;
     })
     .catch(error => {
@@ -201,7 +202,7 @@ onMounted(() => {
   <Pagination
     :links="{
       next: logs.next_page_url,
-      prev: logs.next_page_url,
+      prev: logs.prev_page_url,
       current: logs.current_page,
       from: logs.from,
       to: logs.to,

@@ -41,6 +41,7 @@ defineProps({
   paymentMethods: Object,
   sendPolicy: Boolean,
   insuranceProviders: Array,
+  planTypes: Array,
   embeddedProducts: Array,
   healthPlanTypes: Array,
   customerTypeEnum: Object,
@@ -53,11 +54,16 @@ defineProps({
   paymentTooltipEnum: Object,
   storageUrl: String,
   isNewPaymentStructure: Boolean,
+  isAmlClearedForPayment: Boolean,
+  clientInquiryLogs: Array,
 });
 
 const isManualPlansCount = ref(0);
 
 const page = usePage();
+
+const permissionsEnum = page.props.permissionsEnum;
+const can = permission => useCan(permission);
 
 const notification = useToast();
 const hasRole = role => useHasRole(role);
@@ -567,10 +573,16 @@ const plansTable = reactive({
     {
       text: 'Provider Name',
       value: 'providerName',
+      sortable: true,
     },
     {
       text: 'Plan Name',
       value: 'name',
+    },
+    {
+      text: 'Plan Type',
+      value: 'planTypeId',
+      sortable: true,
     },
     {
       text: 'Network Provider',
@@ -584,6 +596,7 @@ const plansTable = reactive({
     {
       text: 'Price',
       value: 'actualPremium',
+      sortable: true,
     },
     {
       text: 'Basmah',
@@ -715,9 +728,7 @@ const onTogglePlans = toggle => {
         title: 'Plans has been updated',
         position: 'top',
       });
-      router.reload({
-        preserveScroll: true,
-      });
+      onLoadAvailablePlansData();
     })
     .catch(error => {
       notification.error({
@@ -762,6 +773,7 @@ const planFilters = reactive({
   network: [],
   manual_plan: null,
   current_online: null,
+  plan_types: [],
 });
 const planFiltersCount = ref(0);
 const options = reactive({
@@ -819,6 +831,7 @@ const onPlanFiltersSubmit = () => {
     let insurerMatch = false;
     let networkMatch = false;
     let onlineMatch = false;
+    let planTypeMatch = false;
     if (isManualPlan != null) {
       manualMatch = plan.isManualPlan == isManualPlan;
     } else {
@@ -828,6 +841,11 @@ const onPlanFiltersSubmit = () => {
       onlineMatch = !plan.isHidden == isCurrentlyOnline;
     } else {
       onlineMatch = true;
+    }
+    if (planFilters.plan_types && planFilters.plan_types.length > 0) {
+        planTypeMatch = planFilters.plan_types.includes(plan.planTypeId);
+    } else {
+      planTypeMatch = true;
     }
     if (insurerIds?.length > 0) {
       insurerMatch = insurerIds.includes(plan.providerId);
@@ -839,7 +857,7 @@ const onPlanFiltersSubmit = () => {
     } else {
       networkMatch = true;
     }
-    return manualMatch && insurerMatch && networkMatch && onlineMatch;
+      return manualMatch && insurerMatch && networkMatch && onlineMatch && planTypeMatch;
   });
   modals.planFilters = false;
   planDataTable.value.updatePage(1);
@@ -1489,9 +1507,17 @@ const handlePlanSelected = plan => {
   router.reload({
     preserveState: true,
     preserveScroll: true,
-    only: ['payments','quoteRequest','ecomDetails', 'coPayment'],        
-  });  
+    only: ['payments','quoteRequest','ecomDetails', 'coPayment'],
+  });
 };
+
+watch(
+  () => page.props.ecomDetails,
+  value => {
+    selectedProviderPlan.value.premium = value.priceWithVAT;
+  },
+  { deep: true },
+);
 
 </script>
 
@@ -1501,6 +1527,15 @@ const handlePlanSelected = plan => {
     <div class="flex justify-between items-center flex-wrap gap-2">
       <h2 class="text-xl font-semibold">Health Detail</h2>
       <div class="flex gap-2">
+        <Link
+          v-if="quote?.insly_id"
+          :href="`/legacy-policy/${quote.insly_id}`"
+          preserve-scroll
+        >
+          <x-button size="sm" color="#ff5e00" tag="div">
+            View Legacy policy
+          </x-button>
+        </Link>
         <x-button size="sm" color="#ff5e00" @click.prevent="openDuplicate">
           Duplicate Lead
         </x-button>
@@ -2412,6 +2447,7 @@ const handlePlanSelected = plan => {
       "
       modelType="Health"
       :quote="quote"
+      :insly-id="quote?.insly_id"
       :canAddBatchNumber="canAddBatchNumber"
     />
 
@@ -2520,7 +2556,7 @@ const handlePlanSelected = plan => {
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">TOTAL PRICE (with VAT)</dt>
-            <dd>{{ (selectedProviderPlan.premium) }}</dd>
+            <dd>{{ fixedValue(selectedProviderPlan.premium) }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">CO-PAY / CO-INSURANCE</dt>
@@ -2530,7 +2566,7 @@ const handlePlanSelected = plan => {
       </div>
     </div>
 
-    
+
 
     <!-- <div class="p-4 rounded shadow mb-6 bg-white" v-if="isQuoteDocumentEnabled">
       <div>
@@ -2707,10 +2743,15 @@ const handlePlanSelected = plan => {
         hide-rows-per-page
         :rows-per-page="15"
         class="flex-wrap"
+        :sort-by="'actualPremium'"
+        :sort-type="'asc'"
         :hide-footer="listQuotePlansFiltered.length < 15"
       >
         <template #item-copayName="item">
           <span class="copay-max">{{ item.copayName }}</span>
+        </template>
+        <template #item-planTypeId="item">
+          <span class="copay-max">{{ item.plan_type }}</span>
         </template>
         <template #item-providerName="{ providerName, isManualPlan, isHidden }">
           <p>{{ providerName }}</p>
@@ -2924,6 +2965,16 @@ const handlePlanSelected = plan => {
               class="w-full"
             />
           </div>
+
+
+          <ComboBox
+            v-model="planFilters.plan_types"
+            :label="'Plan Type'"
+            :options="planTypes"
+            :disabled="planFilters.plan_types?.length == 0"
+            select-all
+            deselect-all
+          />
         </div>
 
         <div class="flex justify-end gap-3 mb-4">
@@ -2951,10 +3002,10 @@ const handlePlanSelected = plan => {
       :quoteId="quote.id"
       :paymentCode = "quote.code"
       quoteType="Health"
-      :payments="payments"      
+      :payments="payments"
     />
 
-    <PaymentTableNew 
+    <PaymentTableNew
 			v-if="isNewPaymentStructure"
 			quoteType="Health"
 			:payments="payments"
@@ -2965,6 +3016,7 @@ const handlePlanSelected = plan => {
 			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name, tooltip: pm.tool_tip } })"
 			:storageUrl="storageUrl"
       :eCommercePrice="ecomDetails.priceWithVAT?ecomDetails.priceWithVAT:0"
+      :isAmlClearedForPayment="isAmlClearedForPayment"
 		/>
     <PaymentTable
       v-else
@@ -2992,7 +3044,16 @@ const handlePlanSelected = plan => {
           <x-tag size="sm">{{ quoteDocuments.length || 0 }}</x-tag>
         </h3>
         <div class="flex gap-2">
-          <x-button @click.prevent="modals.doc = true" size="sm" color="orange">
+            <Link
+                v-if="quote?.insly_id && can(permissionsEnum.VIEW_LEGACY_DETAILS)"
+                :href="`/legacy-policy/${quote.insly_id}`"
+                preserve-scroll
+            >
+                <x-button size="sm" color="#ff5e00" tag="div">
+                    View Legacy policy
+                </x-button>
+            </Link>
+          <x-button @click.prevent="modals.doc = true" size="sm" color="primary">
             Upload Documents
           </x-button>
           <x-button
@@ -3238,9 +3299,9 @@ const handlePlanSelected = plan => {
       :quoteId="quote.uuid"
       :quoteType="'HEALTH'"
     />
-    
+
     <AuditLogs :type="'App\\Models\\HealthQuote'" :id="$page.props.quote.id" :quoteCode="$page.props.quote.code"/>
-    
+
 
     <ClientInquiryLogs
         v-if="clientInquiryLogs?.length > 0"

@@ -170,13 +170,13 @@ class CarAllocationService extends AllocationService
             // if lead source is revival replied then we should only assign to organic advisors
 
             // Retrieve the ID of Organic team.
-            $organicId = Team::whereIn('name', TeamNameEnum::ORGANIC)->select('id')->get();
+            $organicId = Team::whereIn('name', [TeamNameEnum::ORGANIC])->pluck('id')->toArray();
 
             // Retrieve the user IDs associated with organic team.
-            $organicUserIds = UserTeams::whereIn('team_id', $organicId)->select('user_id')->get();
+            $organicUserIds = UserTeams::whereIn('team_id', $organicId)->pluck('user_id')->toArray();
 
             // Getting common to get only organic advisors
-            $tierUserIds = array_intersect($tierUserIds, $organicUserIds);
+            $tierUserIds = array_intersect($tierUserIds->toArray(), $organicUserIds);
         }
 
         return $tierUserIds;
@@ -517,7 +517,7 @@ class CarAllocationService extends AllocationService
         $shouldIncludeDubaiNow = $this->getAppStorageValueByKey(ApplicationStorageEnums::APPLY_DUBAI_NOW_EXCLUSION) == 1;
 
         // List of exempted lead sources
-        $exemptedLeadSources = [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD];
+        $exemptedLeadSources = [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD, LeadSourceEnum::INSLY];
 
         // Add Dubai Now to exempted lead sources if $shouldIncludeDubaiNow is true
         if ($shouldIncludeDubaiNow) {

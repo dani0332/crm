@@ -20,7 +20,9 @@ use App\Models\PaymentStatusLog;
 use App\Models\QuoteDocument;
 use App\Models\TravelQuote;
 use App\Services\ApplicationStorageService;
+use App\Services\BerlinService;
 use App\Services\CRUDService;
+use App\Services\CustomerService;
 use App\Services\PaymentLinkService;
 use App\Services\SplitPaymentService;
 use App\Services\TravelQuoteService;
@@ -246,18 +248,27 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
         //Skipping paid payments and deleting extra payments
         if ($paymentSplits) {
             foreach ($paymentSplits as $paymentSplit) {
-                if ($paymentSplit->payment_status_id == PaymentStatusEnum::PAID ||
-                    $paymentSplit->payment_status_id == PaymentStatusEnum::PARTIAL_CAPTURED ||
-                    $paymentSplit->payment_status_id == PaymentStatusEnum::CAPTURED ||
-                    $paymentSplit->payment_status_id == PaymentStatusEnum::AUTHORISED) {
+                if (
+                    in_array($paymentSplit->payment_status_id, [
+                        PaymentStatusEnum::PAID,
+                        PaymentStatusEnum::PARTIAL_CAPTURED,
+                        PaymentStatusEnum::PARTIALLY_PAID,
+                        PaymentStatusEnum::CAPTURED,
+                        PaymentStatusEnum::AUTHORISED,
+                    ])
+                ) {
                     $paymentPaidSerialNo[] = $paymentSplit->sr_no;
 
                     continue;
                 }
                 if (($masterPayment->payment_no < $paymentSplits->count()) && $paymentSplit->sr_no > $masterPayment->payment_no) {
-                    QuoteDocument::where('payment_split_id', $paymentSplit->id)->delete();
+
+                    // Delete QuoteDocuments referencing the payment split
+                    $paymentSplit->documents()->delete();
+                    // Then delete the payment split
                     $paymentSplit->delete();
-                    //// Unset/remove the element with sr_no from the split payment object
+
+                    // Unset/remove the element with sr_no from the split payment object
                     foreach ($masterPayment->payment_splits as $key => $payment_split) {
                         if ($payment_split['sr_no'] === $paymentSplit->sr_no) {
                             unset($masterPayment->payment_splits[$key]);
@@ -359,7 +370,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                             }
                             //Marshal Service to capture split payment
                             $response = app(CRUDService::class)->capturePayment($quoteModel, $paymentSplit, $quoteTypeId, $splitAmount);
-                            $paymentSplit->payment_status_id = PaymentStatusEnum::CAPTURED;
+                            //$paymentSplit->payment_status_id = PaymentStatusEnum::CAPTURED; //Temporarily commented on API request
                         }
                         DB::beginTransaction();
                         try {
@@ -385,15 +396,17 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                 $masterPaymentStatus = $firstPayment->payment_status_id;
                 $totalPaidPayments = PaymentSplits::whereIn('payment_status_id', [
                     PaymentStatusEnum::PAID,
+                    PaymentStatusEnum::CAPTURED,
+                ])->where('code', $firstPayment->code)->count();
+
+                $totalPartialPaidPayments = PaymentSplits::whereIn('payment_status_id', [
                     PaymentStatusEnum::PARTIAL_CAPTURED,
                     PaymentStatusEnum::PARTIALLY_PAID,
-                    PaymentStatusEnum::CAPTURED,
-                ])
-                    ->where('code', $firstPayment->code)
-                    ->count();
+                ])->where('code', $firstPayment->code)->count();
+
                 if ($totalPaidPayments == $firstPayment->total_payments) {
                     $masterPaymentStatus = PaymentStatusEnum::CAPTURED;
-                } elseif ($totalPaidPayments > 0) {
+                } elseif ($totalPartialPaidPayments > 0) {
                     $masterPaymentStatus = PaymentStatusEnum::PARTIAL_CAPTURED;
                 }
                 $firstPayment->update([
@@ -406,7 +419,18 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                 if ($totalApproved == $quoteModel->payments()->count()) {
                     $quoteModel->quote_status_id = QuoteStatusEnum::TransactionApproved;
                     $quoteModel->save();
-                    dispatch(new MAWelcomeJob($quoteModel->first_name, $quoteModel->last_name, $quoteModel->email, $quoteModel->mobile_no, 'IMCRM', ''));
+                    // Berlin Service - Extend Customer Subscription on Shaji request
+                    $customerData = app(CustomerService::class)->getCustomerById($quoteModel->customer_id);
+                    if ($customerData) {
+                        $quoteOptions = QuoteTypeId::getOptions();
+                        $responseExtend = app(BerlinService::class)->extendCustomerSubscription($customerData->id, $customerData->email, strtoupper($quoteOptions[$quoteTypeId]).'-QUOTE', strtolower($quoteOptions[$quoteTypeId]).'-quote-myalfred-we');
+                        info('Transaction Approved responseExtend: '.$responseExtend);
+                    }
+                    //dispatch(new MAWelcomeJob($quoteModel->first_name, $quoteModel->last_name, $quoteModel->email, $quoteModel->mobile_no, 'IMCRM', ''));
+
+                    // send EP documents
+                    EmbeddedProductRepository::sendDocumentsByLead($request->quote_id, $request->modelType);
+
                     //Create duplicate lead for TRAVEL
                     if ($quoteTypeId == QuoteTypeId::Travel && $quoteModel->payments()->count() > 1) {
                         if (app(TravelQuoteService::class)->createDuplicateLead($quoteModel)) {
@@ -459,7 +483,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
         $successMessage = 'Payment Verified';
         $splitPayment = PaymentSplits::find($request->splitPaymentId);
         $masterPayment = $splitPayment->payment;
-        if ($request->is_approved) {
+        if ($request->is_approved && $splitPayment->payment_status_id != PaymentStatusEnum::PAID) {
             $paymentInformation = [
                 'collection_amount' => $request->collection_amount,
                 'bank_reference_number' => $request->bank_reference_number,
@@ -498,19 +522,23 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                     vAbort($failMessage);
                 }
             } else {
+
                 $splitPayment->update($paymentInformation);
+
                 if ($masterPayment) {
+                    $masterCapturedAmount = $masterPayment->captured_amount + $request->collection_amount;
                     $masterPayment->update(
-                        ['captured_amount' => ($masterPayment->captured_amount + $request->collection_amount),
+                        ['captured_amount' => $masterCapturedAmount,
                             'payment_allocation_status' => PaymentAllocationStatus::NOT_ALLOCATED]
                     );
                 }
+
             }
             /* Part of milestone 2
             if (Auth::user()->hasRole(RolesEnum::BetaUser)) {
                 app(SplitPaymentService::class)->createReciept($request->modelType, $request->quote_id, $splitPayment);
             }*/
-        } elseif ($request->is_declined) {
+        } elseif ($request->is_declined && $splitPayment->payment_status_id != PaymentStatusEnum::PAID) {
             $paymentInformation = [
                 'decline_reason_id' => $request->declined_reason,
                 'decline_custom_reason' => $request->declined_custom_reason,

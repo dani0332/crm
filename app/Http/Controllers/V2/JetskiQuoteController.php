@@ -20,6 +20,7 @@ use App\Repositories\PaymentMethodRepository;
 use App\Repositories\PersonalPlanRepository;
 use App\Repositories\QuoteStatusRepository;
 use App\Repositories\UserRepository;
+use App\Services\CentralService;
 
 class JetskiQuoteController extends Controller
 {
@@ -102,6 +103,7 @@ class JetskiQuoteController extends Controller
         $personalPlans = PersonalPlanRepository::get();
         $advisors = UserRepository::getPersonalQuoteAdvisors(QuoteTypes::JETSKI->value);
 
+        $isAmlClearedForPayment = app(CentralService::class)->amlClearedFromLog($quote->id, QuoteTypes::JETSKI->name);
         $activities = ActivityRepository::where([
             'quote_type_id' => QuoteTypes::JETSKI->id(),
             'quote_request_id' => $quote->id,
@@ -131,6 +133,7 @@ class JetskiQuoteController extends Controller
             'modelType' => QuoteTypes::JETSKI,
             'canAddBatchNumber' => auth()->user()->hasRole(RolesEnum::JetskiManager),
             'vatPercentage' => $vatPercentage,
+            'isAmlClearedForPayment' => $isAmlClearedForPayment,
         ]);
     }
 

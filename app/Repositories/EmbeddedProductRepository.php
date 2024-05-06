@@ -4,11 +4,16 @@ namespace App\Repositories;
 
 use App\Enums\EpCategoryEnum;
 use App\Enums\PaymentStatusEnum;
+use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
+use App\Facades\Marshall;
 use App\Jobs\SendEPDocumentsJob;
 use App\Models\EmbeddedProduct;
+use App\Models\EmbeddedProductOption;
 use App\Models\EmbeddedTransaction;
 use App\Models\GenericDocument;
+use App\Models\PaymentAction;
+use App\Models\PaymentSplits;
 use App\Models\QuoteType;
 use App\Strategies\EmbeddedProducts\EmbeddedProduct as EmbeddedProductStrategy;
 use App\Strategies\EmbeddedProducts\MDX;
@@ -72,7 +77,6 @@ class EmbeddedProductRepository extends BaseRepository
 
             foreach ($prices as $price) {
                 if (! in_array($price->id, array_column($data['pricings'], 'id'))) {
-
                     if (EmbeddedTransaction::where('product_id', $price->id)->exists()) {
                         $price->is_active = 0;
                         $price->save();
@@ -209,10 +213,12 @@ class EmbeddedProductRepository extends BaseRepository
                     $query->where('quote_request_id', $quoteRequestId);
                 },
             ])
+            ->whereHas('prices.transactions', function ($query) use ($quoteRequestId) {
+                $query->where('quote_request_id', $quoteRequestId);
+            })
             ->get();
         $modelType = QuoteType::where('id', '=', $quoteTypeId)->value('code');
         $ep->each(function ($item) use ($modelType, $quoteTypeId, $quoteRequestId) {
-
             $item->send_document_button = false;
             $optionsIds = $item->prices->pluck('id');
 
@@ -223,24 +229,56 @@ class EmbeddedProductRepository extends BaseRepository
                 ['payment_status_id',  '=', PaymentStatusEnum::CAPTURED],
             ])->whereIn('product_id', $optionsIds)->get();
 
-            if ($item->product_category == EpCategoryEnum::BOLT_ON) {
-                $quoteObject = $this->getQuoteObject($modelType, $quoteRequestId);
-
-                if ($quoteObject->payment_status_id == PaymentStatusEnum::CAPTURED) {
-
-                    if ($transaction->isNotEmpty()) {
-                        $item->send_document_button = true;
-                    }
-                }
-            } elseif ($item->product_category == EpCategoryEnum::STAND_ALONE) {
-
-                if ($transaction->isNotEmpty()) {
-                    $item->send_document_button = true;
-                }
-            }
+            $quoteObject = $this->getQuoteObject($modelType, $quoteRequestId);
+            $item->send_document_button = $this->canSendDocuments($item->product_category, $quoteObject->quote_status_id, $transaction);
         });
 
         return $ep;
+    }
+
+    private function canSendDocuments($productCategory, $quoteStatusId, $transaction)
+    {
+        $canSend = false;
+        if ($productCategory == EpCategoryEnum::BOLT_ON) {
+            if ($quoteStatusId == QuoteStatusEnum::TransactionApproved) {
+                if ($transaction->isNotEmpty()) {
+                    $canSend = true;
+                }
+            }
+        } elseif ($productCategory == EpCategoryEnum::STAND_ALONE) {
+            if ($transaction->isNotEmpty()) {
+                $canSend = true;
+            }
+        }
+
+        return $canSend;
+    }
+
+    public function fetchSendDocumentsByLead($leadId, $modelType)
+    {
+        $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
+        if ($quoteTypeId !== QuoteTypeId::Car) {
+            return false;
+        }
+
+        $epTransaction = EmbeddedTransaction::where([
+            ['quote_type_id', $quoteTypeId],
+            ['quote_request_id', $leadId],
+            ['is_selected', 1],
+        ])->whereIn('payment_status_id', [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PARTIAL_CAPTURED])->get();
+
+        if ($epTransaction->isNotEmpty()) {
+            foreach ($epTransaction as $item) {
+                $product_id = $item->product_id;
+                $embedded_product_id = EmbeddedProductOption::find($product_id)->embedded_product_id;
+                // EP Send documents
+                $data = [];
+                $data['quoteId'] = $leadId;
+                $data['modelType'] = $modelType;
+                $data['epId'] = $embedded_product_id;
+                $this->fetchSendDocument($data);
+            }
+        }
     }
 
     public function fetchSendDocument($data)
@@ -259,11 +297,9 @@ class EmbeddedProductRepository extends BaseRepository
             $documents = json_decode($ep->company_documents);
             if (! empty($documents)) {
                 foreach ($documents as $item) {
-
                     $path = $item->path;
                     $pwDoc = $path !== '' ? $websiteURL.$path : '';
                     if (! empty($path)) {
-
                         $fileInfo = new finfo(FILEINFO_MIME_TYPE);
 
                         $file = file_get_contents($pwDoc);
@@ -307,6 +343,13 @@ class EmbeddedProductRepository extends BaseRepository
             ['payment_status_id',  '=', PaymentStatusEnum::CAPTURED],
         ])->whereIn('product_id', $optionsIds)->get();
 
+        $canSendDocuments = $this->canSendDocuments($ep->product_category, $quoteObject->quote_status_id, $transaction);
+        if (! $canSendDocuments) {
+            info('Documents cannot be sent '.json_encode(['uuid' => $quoteObject->uuid, 'ep category' => $ep->product_category, 'quote status' => $quoteObject->quote_status_id, 'transaction' => $transaction]));
+
+            return 'Documents cannot be sent';
+        }
+
         $certificate_number = '';
         if ($transaction->isNotEmpty()) {
             $certificate_number = $transaction[0]['certificate_number'];
@@ -326,6 +369,7 @@ class EmbeddedProductRepository extends BaseRepository
             'From' => config('constants.MA_FROM_EMAIL'),
             'ReplyTo' => isset($advisorData['email']) ? $advisorData['email'] : null,
             'To' => $quoteObject->email,
+            'Cc' => isset($advisorData['email']) ? $advisorData['email'] : '',
             'Tag' => '',
             'TemplateAlias' => 'embedded-products-payment-auth',
             'Attachments' => isset($attachments) ? $attachments : null,
@@ -340,7 +384,7 @@ class EmbeddedProductRepository extends BaseRepository
                 ],
                 'subject' => 'Thank you for your purchase of '.$product_name.' with InsuranceMarket.ae - '.$short_code.'-'.$quoteObject->code,
             ],
-            'MessageStream' => config('constants.MA_POSTMARK_STREAM'),
+            'MessageStream' => config('constants.EMBEDDED_PRODUCTS_POSTMARK_STREAM'),
         ], JSON_UNESCAPED_SLASHES);
 
         SendEPDocumentsJob::dispatch($body);
@@ -355,7 +399,7 @@ class EmbeddedProductRepository extends BaseRepository
      * @param  object  $quoteObject
      * @param  string  $certificate_number
      * @param  float  $premium
-     * @return \PDF|null The PDF document or null if the short code is not defined in config.
+     * @return PDF|null The PDF document or null if the short code is not defined in config.
      */
     private function getPDF(
         $short_code,
@@ -460,5 +504,103 @@ class EmbeddedProductRepository extends BaseRepository
         }
 
         return $strategy;
+    }
+
+    public function fetchCancelPayment($data)
+    {
+        $embeddedProductOptionsIds = EmbeddedProductOption::where('embedded_product_id', $data['embedded_id'])->pluck('id');
+        $type = QuoteType::where('code', $data['modelType'])->first();
+
+        $embededTransaction = EmbeddedTransaction::with(['payments'])->where('quote_request_id', $data['quote_id'])
+            ->where('quote_type_id', $type->id)
+            ->where('is_selected', true)
+            ->whereIn('product_id', $embeddedProductOptionsIds)
+            ->get();
+
+        if ($embededTransaction->isNotEmpty()) {
+            if (! empty($embededTransaction[0]['payments'][0])) {
+                $transaction = $embededTransaction[0];
+
+                $payment = $transaction['payments'][0];
+                $paymentStatus = $payment['payment_status_id'];
+
+                $maxAmount = 0;
+                $errorMessage = 'Cancel amount should not exceeded from transaction amount';
+                if (in_array($paymentStatus, [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PAID])) {
+                    $maxAmount = $payment->premium_captured - $payment->premium_refunded;
+                } elseif ($paymentStatus === PaymentStatusEnum::AUTHORISED) {
+                    $maxAmount = $payment->premium_authorized - $payment->premium_refunded;
+                } else {
+                    $errorMessage = 'Invalid Payment status';
+                }
+
+                if ($maxAmount >= $data['amount']) {
+
+                    // Remove all previous refund actions
+                    PaymentAction::where('payment_code', $transaction->code)
+                        ->where('is_fulfilled', 0)
+                        ->where('action_type', 'REFUND')
+                        ->where('is_manager_approved', 1)
+                        ->delete();
+
+                    $paymentSplit = PaymentSplits::where('code', $transaction->code)->orderBy('sr_no', 'desc')->first();
+                    $sr = ! empty($paymentSplit) ? $paymentSplit->sr_no : 1;
+                    PaymentAction::create([
+                        'payment_code' => $transaction->code,
+                        'is_fulfilled' => 0,
+                        'action_type' => 'REFUND',
+                        'reason' => $data['reason'],
+                        'amount' => $data['amount'],
+                        'created_by' => auth()->user()->email,
+                        'is_manager_approved' => 1,
+                        'sr_no' => $sr,
+                    ]);
+                    $data = [
+                        'uuid' => $data['uuid'],
+                        'type_id' => $type->id,
+                        'code' => $transaction->code,
+
+                    ];
+                    $processResponse = $this->processCancelPayment($data);
+
+                    return [
+                        'data' => $processResponse,
+                        'code' => 200,
+                    ];
+                } else {
+                    return [
+                        'data' => [$errorMessage],
+                        'code' => 403,
+                    ];
+                }
+            } else {
+                return [
+                    'data' => ['Payment not exist'],
+                    'code' => 403,
+                ];
+            }
+        }
+
+        return [
+            'data' => ['Transaction does not exist'],
+            'code' => 403,
+        ];
+    }
+
+    private function processCancelPayment($data)
+    {
+        $planData = [
+            'quoteUID' => $data['uuid'],
+            'quoteTypeId' => $data['type_id'],
+            'payments' => [
+                [
+                    'codeRef' => $data['code'],
+                ],
+            ],
+        ];
+
+        $response = Marshall::request('/payment/checkout/cancel', 'post', $planData);
+
+        return $response;
     }
 }

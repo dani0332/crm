@@ -218,7 +218,9 @@ final class PermissionsEnum extends Enum
     public const CarQuoteSearch = 'car-quotes-search';
     public const UtmLeadsSalesReport = 'utm-leads-sales-report';
     public const TeamThresholdView = 'team-allocation-threshold-view';
-    public const CarRevivalQuoteList = 'carrevival-quotes-list';
+    public const CAR_REVIVAL_QUOTE_LIST = 'carrevival-quotes-list';
+    public const CAR_REVIVAL_QUOTES_EDIT = 'carrevival-quotes-edit';
+    public const CAR_REVIVAL_QUOTES_SHOW = 'carrevival-quotes-show';
     public const ViewTeamsFilters = 'view-teams-filters';
     public const EXPORT_NO_CONTACTINFO = 'export-no-contactinfo';
     public const COMMERCIAL_KEYWORDS = 'admin-commercial-keywords';
@@ -237,8 +239,10 @@ final class PermissionsEnum extends Enum
     public const RENEWAL_BATCHES_LIST = 'renewal-batches-list';
     public const RENEWAL_BATCHES_EDIT = 'renewal-batches-edit';
     public const RENEWAL_BATCH_REPORT = 'renewal-batch-report';
+    public const REVIVAL_CONVERSION_REPORT_VIEW = 'revival-conversion-report-view';
     public const PAUSE_AUTO_FOLLOWUPS = 'pause-auto-followups';
-    public const EmbeddedProductView = 'embedded-product-view';
+    public const EMBEDDED_PRODUCT_ADVISOR = 'embedded-product-view';
+    public const EMBEDDED_PRODUCT_ADMIN = 'embedded-product-payment-cancel';
     public const EXPORT_PLAN_DETAIL = 'export-plan-detail';
     public const EXPORT_LEADS_DETAIL_WITH_EMAIL_MOBILE = 'export-leads-detail-with-email-mobile';
     public const EXPORT_MAKES_MODELS = 'export-makes-models';
@@ -249,4 +253,10 @@ final class PermissionsEnum extends Enum
     public const PLAN_DETAILS_ADD = 'plan-details-add';
     public const AVAILABLE_PLANS_SELECT_BUTTON = 'available-plans-select-button';
     public const INSTANT_ALFRED_CHAT_LOGS = 'instant-alfred-chat-logs';
+    public const TOTAL_PREMIUM_LEADS_SALES_REPORT = 'total-premium-leads-sales-report';
+    public const LEGACY_INSTALLMENTS = 'legacy-installments';
+    public const LEGACY_INVOICES = 'legacy-invoices';
+    public const LEGACY_PAYMENTS = 'legacy-payments';
+    public const LEGACY_OTHER_DETAILS = 'legacy-other-details';
+    public const VIEW_LEGACY_DETAILS = 'view-legacy-details';
 }

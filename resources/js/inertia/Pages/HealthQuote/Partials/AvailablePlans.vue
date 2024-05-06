@@ -362,7 +362,7 @@ const onLoadingPricesUpdate = (member, updateManual = 1) => {
           title: res.data,
           position: 'top',
         });
-        router.reload({ only: ['payments'] });
+        router.reload({ only: ['payments', 'ecomDetails'] });
       } else {
         notification.error({
           title: res.data,
@@ -980,7 +980,7 @@ onUpdated(() => {
                       :disabled="true"
                       size="sm"
                     />
-                    <x-button
+                    <!-- <x-button
                       v-if="$page.props.permissions.pa"
                       color="primary"
                       class="ml-2"
@@ -990,7 +990,7 @@ onUpdated(() => {
                       @click.prevent="onMemberUpdate(item)"
                     >
                       Update
-                    </x-button>
+                    </x-button> -->
                   </section>
                 </template>
 
@@ -1367,13 +1367,15 @@ onUpdated(() => {
               Update & Save
             </x-button>
           </div> -->
+
+          <!-- Set Manual plan modification true for CoPay, Requested from API Team-->
             <div class="grid md:grid-cols-1 gap-5 p-4 float-right">
               <x-button
                 :disabled="!isManual"
                 color="primary"
                 size="sm"
                 @click="
-                  onLoadingPricesUpdate(props.plan.memberPremiumBreakdown, 0)
+                  onLoadingPricesUpdate(props.plan.memberPremiumBreakdown)
                 "
               >
                 Update & Save
