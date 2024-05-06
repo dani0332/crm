@@ -55,7 +55,9 @@ const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
 const rolesEnum = page.props.rolesEnum;
 
-const countDays = useDaysSinceStale(props.quoteRequest?.stale_at);
+const countDays = useDaysSinceStale(
+  props.quoteRequest?.stale_at ?? props.quote?.stale_at,
+);
 
 const historyLoading = ref(false);
 

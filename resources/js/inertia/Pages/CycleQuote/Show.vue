@@ -58,7 +58,9 @@ const modals = reactive({
   duplicate: false,
 });
 
-const countDays = useDaysSinceStale(props.quoteRequest?.stale_at);
+const countDays = useDaysSinceStale(
+  props.quoteRequest?.stale_at ?? props.quote?.stale_at,
+);
 
 const leadDuplicateForm = useForm({
   modelType: 'cycle',
