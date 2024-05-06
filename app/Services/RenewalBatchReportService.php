@@ -236,6 +236,34 @@ class RenewalBatchReportService extends BaseService
          */
         $renewalBatches = RenewalBatch::select('name');
 
+        // date filter
+        if (isset($filters->reportDate)) {
+            $reportDateEnd = Carbon::parse($filters->reportDate)
+                ->endOfDay()->format($dateFormat);
+            // set previous and next month as per report date
+            $previousMonth = Carbon::parse($reportDateEnd)->subMonth(1)->startOfMonth()->format($dateFormat);
+            $nextMonth = Carbon::parse($reportDateEnd)->addMonth(1)->endOfMonth()->format($dateFormat);
+
+            $monthDigitFormat = config('constants.MONTH_DIGIT_FORMAT');
+            $previousMonthDigitWise = ltrim(Carbon::parse($reportDateEnd)->subMonth(1)->startOfMonth()->format($monthDigitFormat), '0');
+            $nextMonthDigitWise = ltrim(Carbon::parse($reportDateEnd)->addMonth(1)->endOfMonth()->format($monthDigitFormat), '0');
+
+            $dataBatches = RenewalBatch::query()
+                ->select('name', 'start_date', 'end_date', 'id')
+                ->whereBetween('month', [$previousMonthDigitWise, $nextMonthDigitWise])
+                ->orderByDesc('end_date')
+                ->get()
+                ->pluck('name', 'id')
+                ->toArray();
+
+        } else {
+            //  get 3 months range batches
+            $data = $this->getBatchRangeForDefaultView();
+            $reportDateEnd = $nextMonth = $data['endDate'];
+            $previousMonth = $data['startDate'];
+            $dataBatches = $data['batches'];
+        }
+
         /**
          * Get volume and value segment advisors list
          */
@@ -248,6 +276,9 @@ class RenewalBatchReportService extends BaseService
         // to be used in case of car advisor role
         $teamUsersIds = array_unique(array_merge($volumeSegmentAdvisorsId, $valueSegmentAdvisorsId));
         $teamUsersIdsString = ! empty($teamUsersIds) ? implode(',', $teamUsersIds) : '0';
+
+        // get batch wise segmented advisors
+        $batchWiseSegmentedAdvisors = $this->batchwiseSegmentedAdvisors($dataBatches);
 
         /**
          * get whole team users
@@ -278,21 +309,6 @@ class RenewalBatchReportService extends BaseService
         if (in_array($renewalsTeamId, $authUserTeamsIds)) {
             $teamUsersIds = $this->getUsersByTeamIds([$renewalsTeamId])->pluck('id')->toArray();
             $teamUsersIdsString = ! empty($teamUsersIds) ? implode(',', $teamUsersIds) : '0';
-        }
-
-        // date filter
-        if (isset($filters->reportDate)) {
-            $reportDateEnd = Carbon::parse($filters->reportDate)
-                ->endOfDay()->format($dateFormat);
-            // set previous and next month as per report date
-            $previousMonth = Carbon::parse($reportDateEnd)->subMonth()->startOfMonth()->format($dateFormat);
-            $nextMonth = Carbon::parse($reportDateEnd)->addMonth()->endOfMonth()->format($dateFormat);
-        } else {
-            //  get 3 months range batches
-            $data = $this->getBatchRangeForDefaultView();
-            $reportDateEnd = $nextMonth = $data['endDate'];
-            $previousMonth = $data['startDate'];
-            $dataBatches = $data['batches'];
         }
 
         /**
@@ -343,10 +359,10 @@ class RenewalBatchReportService extends BaseService
 
             // segment wise advisors filter
             if (isset($filters->segment) && $filters->segment === RenewalBatch::SEGMENT_TYPE_VOLUME) {
-                $this->queryForSegmentType($query, $volumeSegmentAdvisorsIdString, $reportDateEnd,
+                $this->queryForSegmentType($query, $batchWiseSegmentedAdvisors, RenewalBatch::SEGMENT_TYPE_VOLUME, $reportDateEnd,
                     'renewed_by_volume_segment_advisors', 'total_by_volume_segment_advisors');
             } elseif (isset($filters->segment) && $filters->segment === RenewalBatch::SEGMENT_TYPE_VALUE) {
-                $this->queryForSegmentType($query, $valueSegmentAdvisorsIdString, $reportDateEnd,
+                $this->queryForSegmentType($query, $batchWiseSegmentedAdvisors, RenewalBatch::SEGMENT_TYPE_VALUE, $reportDateEnd,
                     'renewed_by_value_segment_advisors', 'total_by_value_segment_advisors');
             }
 
@@ -377,10 +393,10 @@ class RenewalBatchReportService extends BaseService
         // segment wise advisors filter
         if (! isset($filters->segment) || $filters->segment === 'all') {
 
-            $this->queryForSegmentType($query, $volumeSegmentAdvisorsIdString, $reportDateEnd,
+            $this->queryForSegmentType($query, $volumeSegmentAdvisorsIdString, null, $reportDateEnd,
                 'renewed_by_volume_segment_advisors', 'total_by_volume_segment_advisors');
 
-            $this->queryForSegmentType($query, $valueSegmentAdvisorsIdString, $reportDateEnd,
+            $this->queryForSegmentType($query, $valueSegmentAdvisorsIdString, null, $reportDateEnd,
                 'renewed_by_value_segment_advisors', 'total_by_value_segment_advisors');
         }
 
@@ -390,7 +406,6 @@ class RenewalBatchReportService extends BaseService
         $this->queryForSegmentWiseCarsoldAndEarlyRenewal($query, $volumeSegmentAdvisorsIdString,
             $valueSegmentAdvisorsIdString, $reportDateEnd);
 
-        // $query->where('car_quote_request.created_at', '<=', $reportDateEnd);
         if (isset($filters->reportDate)) {
             $query->whereBetween('car_quote_request.created_at', [$previousMonth, $nextMonth]);
         }
@@ -434,6 +449,33 @@ class RenewalBatchReportService extends BaseService
         $renewalBatches = RenewalBatch::select('name');
         $renewalBatches = $renewalBatches->pluck('name')->toArray();
 
+        // date filter
+        if (isset($filters->reportDate)) {
+            $reportDateEnd = Carbon::parse($filters->reportDate)
+                ->endOfDay()->format($dateFormat);
+            // set previous and next month as per report date
+            $previousMonth = Carbon::parse($reportDateEnd)->subMonth()->startOfMonth()->format($dateFormat);
+            $nextMonth = Carbon::parse($reportDateEnd)->addMonth()->endOfMonth()->format($dateFormat);
+
+            $monthDigitFormat = config('constants.MONTH_DIGIT_FORMAT');
+            $previousMonthDigitWise = ltrim(Carbon::parse($reportDateEnd)->subMonth(1)->startOfMonth()->format($monthDigitFormat), '0');
+            $nextMonthDigitWise = ltrim(Carbon::parse($reportDateEnd)->addMonth(1)->endOfMonth()->format($monthDigitFormat), '0');
+
+            $dataBatches = RenewalBatch::query()
+                ->select('name', 'start_date', 'end_date', 'id')
+                ->whereBetween('month', [$previousMonthDigitWise, $nextMonthDigitWise])
+                ->orderByDesc('end_date')
+                ->get()
+                ->pluck('name', 'id')
+                ->toArray();
+        } else {
+            //  get 3 months range batches
+            $data = $this->getBatchRangeForDefaultView();
+            $reportDateEnd = $nextMonth = $data['endDate'];
+            $previousMonth = $data['startDate'];
+            $dataBatches = $data['batches'];
+        }
+
         /**
          * Get volume and value segment advisors list
          */
@@ -446,20 +488,8 @@ class RenewalBatchReportService extends BaseService
         // to be used in case of car advisor role
         $teamUsersIds = array_unique(array_merge($volumeSegmentAdvisorsId, $valueSegmentAdvisorsId));
 
-        // date filter
-        if (isset($filters->reportDate)) {
-            $reportDateEnd = Carbon::parse($filters->reportDate)
-                ->endOfDay()->format($dateFormat);
-            // set previous and next month as per report date
-            $previousMonth = Carbon::parse($reportDateEnd)->subMonth()->startOfMonth()->format($dateFormat);
-            $nextMonth = Carbon::parse($reportDateEnd)->addMonth()->endOfMonth()->format($dateFormat);
-        } else {
-            //  get 3 months range batches
-            $data = $this->getBatchRangeForDefaultView();
-            $reportDateEnd = $nextMonth = $data['endDate'];
-            $previousMonth = $data['startDate'];
-            $dataBatches = $data['batches'];
-        }
+        // get batch wise segmented advisors
+        $batchWiseSegmentedAdvisors = $this->batchwiseSegmentedAdvisors($dataBatches);
 
         /**
          * query as per auth roles
@@ -515,17 +545,12 @@ class RenewalBatchReportService extends BaseService
 
             // segment wise advisors filter
             if (isset($filters->segment) && $filters->segment === RenewalBatch::SEGMENT_TYPE_VOLUME) {
-                $query->addSelect(
-                    DB::raw('SUM(CASE WHEN health_quote_request.quote_status_id = '.QuoteStatusEnum::TransactionApproved.'
-                    and health_quote_request.advisor_id in ('.$volumeSegmentAdvisorsIdString.')
-                    THEN 1 ELSE 0 END) as health_converted_by_volume_segment_advisors')
-                );
+
+                $this->superRetentionQueryForSegmentType($query, $batchWiseSegmentedAdvisors, RenewalBatch::SEGMENT_TYPE_VOLUME,
+                'health_converted_by_volume_segment_advisors');
             } elseif (isset($filters->segment) && $filters->segment === RenewalBatch::SEGMENT_TYPE_VALUE) {
-                $query->addSelect(
-                    DB::raw('SUM(CASE WHEN health_quote_request.quote_status_id = '.QuoteStatusEnum::TransactionApproved.'
-                    and health_quote_request.advisor_id in ('.$valueSegmentAdvisorsIdString.')
-                    THEN 1 ELSE 0 END) as health_converted_by_value_segment_advisors')
-                );
+                $this->superRetentionQueryForSegmentType($query, $batchWiseSegmentedAdvisors, RenewalBatch::SEGMENT_TYPE_VALUE,
+                'health_converted_by_value_segment_advisors');
             }
 
             $advisors = ! empty($advisorsFilter) ? implode(',', $advisorsFilter) : '0';
@@ -553,7 +578,6 @@ class RenewalBatchReportService extends BaseService
             $query->whereIn('health_quote_request.renewal_batch', $dataBatches ?? $renewalBatches);
         }
 
-        // $query->where('health_quote_request.created_at', '<=', $reportDateEnd);
         if (isset($filters->reportDate)) {
             $query->whereBetween('health_quote_request.created_at', [$previousMonth, $nextMonth]);
         }
@@ -600,7 +624,7 @@ class RenewalBatchReportService extends BaseService
         return [
             'startDate' => $startDate,
             'endDate' => $endDate,
-            'batches' => $defaultBatchRange->pluck('name')->toArray(),
+            'batches' => $defaultBatchRange->pluck('name', 'id')->toArray(),
         ];
     }
 
@@ -618,6 +642,21 @@ class RenewalBatchReportService extends BaseService
             ->select('id')
             ->pluck('id')
             ->toArray();
+    }
+
+    public function batchwiseSegmentedAdvisors($batches)
+    {
+        foreach ($batches as $id => $batch) {
+            $data[$batch] = DB::table('renewal_batch_segment_user')
+                ->select('id', 'advisor_id', 'renewal_batch_id', 'segment_type')
+                ->where('renewal_batch_id', $id)
+                ->groupBy('segment_type')
+                ->get()
+                ->pluck('advisor_id', 'segment_type')
+                ->toArray();
+        }
+
+        return $data;
     }
 
     /**
@@ -767,16 +806,50 @@ class RenewalBatchReportService extends BaseService
      * @param [type] $totalAsColumn
      * @return void
      */
-    public function queryForSegmentType($query, $segmentAdvisorsIdString, $reportDateEnd, $renewedAsColumn, $totalAsColumn)
+    public function queryForSegmentType($query, $batchWiseSegmentedAdvisors, $filter, $reportDateEnd, $renewedAsColumn, $totalAsColumn)
     {
-        return $query->addSelect(
-            DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in ('.QuoteStatusEnum::TransactionApproved.', '.QuoteStatusEnum::PolicyDocumentsPending.'
-            , '.QuoteStatusEnum::PolicyIssued.', '.QuoteStatusEnum::PolicySentToCustomer.', '.QuoteStatusEnum::PolicyBooked.')
-            and car_quote_request.advisor_id in ('.$segmentAdvisorsIdString.')
-            and car_quote_request.quote_status_date <= "'.$reportDateEnd.'"  THEN 1 ELSE 0 END) as "'.$renewedAsColumn.'"'),
-            DB::raw('SUM(CASE WHEN car_quote_request.advisor_id in ('.$segmentAdvisorsIdString.')
-            THEN 1 ELSE 0 END) as "'.$totalAsColumn.'"'),
-        );
+        if ($filter){
+            foreach($batchWiseSegmentedAdvisors as $batchName => $segmentedAdvisors) {
+                $advisors = is_array($segmentedAdvisors[$filter]) ? $segmentedAdvisors[$filter] : [$segmentedAdvisors[$filter]];
+                $segmentAdvisorsIdString = implode(',', $advisors);
+                return $query->addSelect(
+                    DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in ('.QuoteStatusEnum::TransactionApproved.', '.QuoteStatusEnum::PolicyDocumentsPending.'
+                    , '.QuoteStatusEnum::PolicyIssued.', '.QuoteStatusEnum::PolicySentToCustomer.', '.QuoteStatusEnum::PolicyBooked.')
+                    and car_quote_request.advisor_id in ('.$segmentAdvisorsIdString.')
+                    and car_quote_request.quote_status_date <= "'.$reportDateEnd.'"  THEN 1 ELSE 0 END) as "'.$renewedAsColumn.'"'),
+
+                    DB::raw('SUM(CASE WHEN car_quote_request.advisor_id in ('.$segmentAdvisorsIdString.')
+                    THEN 1 ELSE 0 END) as "'.$totalAsColumn.'"'),
+                );
+
+            }
+        } else {
+            return $query->addSelect(
+                DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in ('.QuoteStatusEnum::TransactionApproved.', '.QuoteStatusEnum::PolicyDocumentsPending.'
+                , '.QuoteStatusEnum::PolicyIssued.', '.QuoteStatusEnum::PolicySentToCustomer.', '.QuoteStatusEnum::PolicyBooked.')
+                and car_quote_request.advisor_id in ('.$batchWiseSegmentedAdvisors.')
+                and car_quote_request.quote_status_date <= "'.$reportDateEnd.'"  THEN 1 ELSE 0 END) as "'.$renewedAsColumn.'"'),
+                DB::raw('SUM(CASE WHEN car_quote_request.advisor_id in ('.$batchWiseSegmentedAdvisors.')
+                THEN 1 ELSE 0 END) as "'.$totalAsColumn.'"'),
+            );
+        }
+    }
+
+    public function superRetentionQueryForSegmentType($query, $batchWiseSegmentedAdvisors, $filter, $renewedAsColumn)
+    {
+        if ($filter)
+        {
+            foreach($batchWiseSegmentedAdvisors as $batchName => $segmentedAdvisors) {
+                $advisors = is_array($segmentedAdvisors[$filter]) ? $segmentedAdvisors[$filter] : [$segmentedAdvisors[$filter]];
+                $segmentAdvisorsIdString = implode(',', $advisors);
+                return $query->addSelect(
+                    DB::raw('SUM(CASE WHEN health_quote_request.quote_status_id = '.QuoteStatusEnum::TransactionApproved.'
+                    and health_quote_request.advisor_id in ('.$segmentAdvisorsIdString.')
+                    THEN 1 ELSE 0 END) as "'.$renewedAsColumn.'"')
+                );
+            }
+
+        }
     }
 
     /**
