@@ -139,27 +139,17 @@ export const useCalculateTotalSum = (data, key) => {
 };
 
 export const maskEmail = emails => {
-  if (emails) {
-    let emailArray = emails.split(',');
-    let maskedEmails = [];
-    if (emailArray.length > 0) {
-      emailArray.forEach(email => {
-        // Split the email address into local part and domain part
-        const [localPart, domainPart] = email.split('@');
-        // Mask the local part (characters before '@')
-        let maskedLocalPart = localPart
-          .split('')
-          .map((char, index) => (index < localPart.length / 2 ? char : '*'))
-          .join('');
-
-        // Combine the masked local part with the domain part
-        maskedEmails.push(`${maskedLocalPart}` + '@' + `${domainPart}`);
-      });
-      return maskedEmails.toString();
-    }
-    return null;
-  }
-  return null;
+  if (!emails) return null;
+  return emails
+    .split(',')
+    .map(email => {
+      const [localPart, domainPart] = email.split('@');
+      const maskedLocalPart =
+        localPart.substring(0, Math.ceil(localPart.length / 2)) +
+        '*'.repeat(localPart.length - Math.ceil(localPart.length / 2));
+      return `${maskedLocalPart}@${domainPart}`;
+    })
+    .join(',');
 };
 
 export const maskPhone = mobile_no => {
