@@ -811,7 +811,7 @@ class SendEmailCustomerService extends BaseService
             $htmlContent = '<html>
             <head></head>
             <body>
-              <p>Dear Advisor <b>'.$user->name.'</b>,</p>
+              <p>Dear <b>'.$user->name.'</b>,</p>
               <p>
                   A customer with REF-ID <a href="'.$this->appUrl.'/quotes/car/'.$lead->uuid.'"><b>'.$lead->code.'</b></a> has requested for an advisor and we need you to contact them urgently.
               </p>
