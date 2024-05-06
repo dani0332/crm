@@ -53,6 +53,42 @@ const quoteForm = useForm({
   has_home: props.quote?.has_home || null,
 });
 
+const memberCategorySalaryMapping = {
+  'Investor or Partner': 2,
+  'Golden Visa': 2,
+  'Self-employed or Freelancer': 2,
+  'Domestic worker': 1,
+  'Dependent spouse': 2,
+  'Dependent child': 2,
+  'Dependent parent': 2,
+  'Dependent sibling or Other relatives': 2,
+  'Employee with salary AED 4000 and below': 1,
+  'Employee with salary above AED 4000': 2,
+};
+
+const salaryBrandMapping = {
+    1: 'AED 4000 and below',
+    2: 'More than AED 4000',
+}
+
+const selectedSalaryBand = computed(() => {
+  return route().current().includes('edit');
+});
+
+watch(
+    () => quoteForm.member_category_id,
+    newValue => {
+        const selectedCategory = props.dropdownSource.member_category_id.find(
+      (item) => item.id === newValue
+    );
+        const salaryBandId = memberCategorySalaryMapping[selectedCategory.text];
+        quoteForm.salary_band_id = salaryBandId;
+
+        console.log("🚀 ~ salaryBandId:", salaryBandId)
+    },
+);
+
+
 function onSubmit(isValid) {
   if (quoteForm.nationality_id == null) {
     isEmptyField.value = true;
@@ -248,9 +284,10 @@ function onSubmit(isValid) {
           />
         </x-field>
 
-        <x-field label="MEMBER CATEGORY">
+        <x-field label="MEMBER CATEGORY" required>
           <x-select
             v-model="quoteForm.member_category_id"
+            :rules="[isRequired]"
             :options="
               dropdownSource.member_category_id.map(item => ({
                 value: item.id,
@@ -274,9 +311,10 @@ function onSubmit(isValid) {
           />
         </x-field>
 
-        <x-field label="GENDER">
+        <x-field label="GENDER" required>
           <x-select
             v-model="quoteForm.gender"
+            :rules="[isRequired]"
             :options="genderSelect"
             class="w-full"
           />
