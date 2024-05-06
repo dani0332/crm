@@ -267,6 +267,14 @@ class BusinessQuoteService extends BaseService
             $dateTo = $request['created_at_end'];
             $this->query->whereBetween('bqr.created_at', [$dateFrom, $dateTo]);
         }
+
+        if (! empty($request->created_at_start) && ! empty($request->created_at_end)) {
+            $dateFrom = date('Y-m-d 00:00:00', strtotime($request['created_at_start']));
+            $dateTo = date('Y-m-d 23:59:59', strtotime($request['created_at_end']));
+
+            $this->query->whereBetween('bqr.created_at', [$dateFrom, $dateTo]);
+        }
+
         if (Auth::user()->isSpecificTeamAdvisor(quoteTypeCode::CORPLINE) || Auth::user()->isSpecificTeamAdvisor(quoteTypeCode::Business) || Auth::user()->isSpecificTeamAdvisor(quoteTypeCode::Amt) || Auth::user()->isSpecificTeamAdvisor(quoteTypeCode::GM)) {
             // if user has advisor Role then fetch leads assigned to the user only
             $this->query->where('bqr.advisor_id', Auth::user()->id);    // fetch leads assigned to the user
