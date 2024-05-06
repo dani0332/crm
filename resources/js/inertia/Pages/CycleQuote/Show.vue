@@ -287,7 +287,7 @@ const linkEntity = () => {
           class="bg-red-600 px-2 py-1 rounded text-sm text-white"
           v-if="countDays !== false"
         >
-          Stale for {{ countDays }} days
+          Stale for {{ countDays }}
         </p>
       </template>
       <template #default>

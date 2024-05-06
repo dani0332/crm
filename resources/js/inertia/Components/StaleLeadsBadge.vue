@@ -20,7 +20,6 @@ const props = defineProps({
     <x-tooltip :align="align" :position="position">
       <p class="bg-red-600 px-1 rounded text-[10px] text-white">
         {{ daysSinceStale(date) }}
-        days
       </p>
       <template #tooltip>
         <div class="max-w-[160px] text-xs">

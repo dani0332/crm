@@ -477,7 +477,7 @@ const linkEntity = () => {
           class="bg-red-600 px-2 py-1 rounded text-sm text-white"
           v-if="countDays !== false"
         >
-          Stale for {{ countDays }} days
+          Stale for {{ countDays }}
         </p>
       </template>
       <template #default>
@@ -1197,22 +1197,33 @@ const linkEntity = () => {
     <MigratePayment
       v-if="!isNewPaymentStructure"
       :quoteId="quote.id"
-      :paymentCode = "quote.code"
+      :paymentCode="quote.code"
       :quoteType="quoteType"
-      :payments="payments"     
-    />    
-    <PaymentTableNew 
-			v-if="isNewPaymentStructure"
-			:quoteType="quoteType"
-			:payments="payments"
-			:paymentDocument="documentTypes.filter(item => item.code === 'HOMPD' || item.code === 'HOMPDR' || item.code === 'HOMDPDR')"
-			:quoteRequest="quoteRequest"
-			:paymentStatusEnum="paymentStatusEnum"
-			:paymentTooltipEnum="paymentTooltipEnum"
-			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name, tooltip: pm.tool_tip } })"
-			:storageUrl="storageUrl"
+      :payments="payments"
+    />
+    <PaymentTableNew
+      v-if="isNewPaymentStructure"
+      :quoteType="quoteType"
+      :payments="payments"
+      :paymentDocument="
+        documentTypes.filter(
+          item =>
+            item.code === 'HOMPD' ||
+            item.code === 'HOMPDR' ||
+            item.code === 'HOMDPDR',
+        )
+      "
+      :quoteRequest="quoteRequest"
+      :paymentStatusEnum="paymentStatusEnum"
+      :paymentTooltipEnum="paymentTooltipEnum"
+      :paymentMethods="
+        paymentMethods.map(pm => {
+          return { value: pm.code, label: pm.name, tooltip: pm.tool_tip };
+        })
+      "
+      :storageUrl="storageUrl"
       :isAmlClearedForPayment="isAmlClearedForPayment"
-		/>
+    />
     <PaymentTable
       v-else
       :payments="payments"
@@ -1223,7 +1234,6 @@ const linkEntity = () => {
       :insuranceProviders="insuranceProviders"
       :quote="quote"
     />
-    
 
     <EmbeddedProducts
       :data="embeddedProducts"
