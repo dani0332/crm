@@ -16,7 +16,7 @@ class CarRevivalFollowUpEmailJob implements ShouldQueue, StackableJob
     use Dispatchable, InteractsWithQueue, Queueable, Stackable;
 
     private $data = null;
-    protected $sendEmailCustomerService;
+
     /**
      * Create a new job instance.
      *
