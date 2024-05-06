@@ -18,8 +18,8 @@ use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use finfo;
 use Illuminate\Support\Facades\DB;
-use PDF;
 use Illuminate\Support\Facades\Log;
+use PDF;
 
 class EmbeddedProductRepository extends BaseRepository
 {
@@ -348,8 +348,9 @@ class EmbeddedProductRepository extends BaseRepository
         ])->whereIn('product_id', $optionsIds)->get();
 
         $canSendDocuments = $this->canSendDocuments($ep->product_category, $quoteObject->quote_status_id, $transaction);
-        if(!$canSendDocuments) {
-            Log::info('Documents cannot be sent ' . json_encode(['uuid' => $quoteObject->uuid, 'ep category' => $ep->product_category, 'quote status' => $quoteObject->quote_status_id, 'transaction' => $transaction]));
+        if (! $canSendDocuments) {
+            Log::info('Documents cannot be sent '.json_encode(['uuid' => $quoteObject->uuid, 'ep category' => $ep->product_category, 'quote status' => $quoteObject->quote_status_id, 'transaction' => $transaction]));
+
             return 'Documents cannot be sent';
         }
 
