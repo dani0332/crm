@@ -95,7 +95,7 @@ class CarRevivalQuoteController extends Controller
 
         $paymentMethods = app(LookupService::class)->getPaymentMethods();
 
-        $listQuotePlans= app(CentralService::class)->getPlans(quoteTypeCode::Car, $id, true, true);
+        $listQuotePlans = app(CarQuoteService::class)->getPlans($id);
         $quoteDocuments = app(QuoteDocumentService::class)->getQuoteDocuments($quoteType, $record->id);
 
         $displaySendPolicyButton = (bool) app(QuoteDocumentService::class)->showSendPolicyButton($record, $quoteDocuments, $quoteTypeId);
