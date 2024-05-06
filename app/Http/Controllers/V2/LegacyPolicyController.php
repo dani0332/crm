@@ -58,8 +58,8 @@ class LegacyPolicyController extends Controller
         $expiryDate = now()->addMinutes(40);
         $fileName = $request->fileName;
         $temporaryUrl = null;
-        if (Storage::disk('s3')->has($fileName)) {
-            $temporaryUrl = Storage::disk('s3')->temporaryUrl($fileName, $expiryDate);
+        if (Storage::disk('insly_documents')->has($fileName)) {
+            $temporaryUrl = Storage::disk('insly_documents')->temporaryUrl($fileName, $expiryDate);
         }
         // Check if a temporary URL was generated
         if ($temporaryUrl) {

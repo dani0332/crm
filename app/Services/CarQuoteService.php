@@ -428,9 +428,10 @@ class CarQuoteService extends BaseService
         if ($deleteValuationResponse) {
             $carQuote->save();
 
+            $oldFormattedDate = ! empty($oldDob) ? $oldDob->format('Y-m-d') : '';
             // update embedded products list
             if (
-                (isset($request->dob) && $oldDob->format('Y-m-d') != $request->dob) ||
+                (isset($request->dob) && $oldFormattedDate != $request->dob) ||
                 (isset($request->vehicle_type_id) && $oldBodyType != $request->vehicle_type_id)
             ) {
                 Ken::request('/save-embedded-transaction', 'post', ['quoteUID' => $id]);
@@ -1112,7 +1113,7 @@ class CarQuoteService extends BaseService
     }
 
     /**
-     * get car quote details, quote plans and pdf
+     * get car quote details, quote plans and pdf.
      *
      * @return mixed
      */
@@ -1909,8 +1910,18 @@ class CarQuoteService extends BaseService
     {
         $request = request();
         $results = DB::table('car_quote_request AS cqr')
-            ->select('cqr.code', 'qb.name AS batch_no', 'cqr.first_name', 'cqr.last_name', 'cqr.email', 'cqr.mobile_no',
-                'cqr.created_at', 'qs.text AS status', 'tr.name AS tier', 'u.name AS assigned_to')
+            ->select(
+                'cqr.code',
+                'qb.name AS batch_no',
+                'cqr.first_name',
+                'cqr.last_name',
+                'cqr.email',
+                'cqr.mobile_no',
+                'cqr.created_at',
+                'qs.text AS status',
+                'tr.name AS tier',
+                'u.name AS assigned_to'
+            )
             ->leftJoin('quote_status AS qs', 'qs.id', '=', 'cqr.quote_status_id')
             ->leftJoin('users AS u', 'u.id', '=', 'cqr.advisor_id')
             ->leftJoin('quote_batches AS qb', 'qb.id', '=', 'cqr.quote_batch_id')
