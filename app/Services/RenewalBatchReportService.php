@@ -547,10 +547,10 @@ class RenewalBatchReportService extends BaseService
             if (isset($filters->segment) && $filters->segment === RenewalBatch::SEGMENT_TYPE_VOLUME) {
 
                 $this->superRetentionQueryForSegmentType($query, $batchWiseSegmentedAdvisors, RenewalBatch::SEGMENT_TYPE_VOLUME,
-                'health_converted_by_volume_segment_advisors');
+                    'health_converted_by_volume_segment_advisors');
             } elseif (isset($filters->segment) && $filters->segment === RenewalBatch::SEGMENT_TYPE_VALUE) {
                 $this->superRetentionQueryForSegmentType($query, $batchWiseSegmentedAdvisors, RenewalBatch::SEGMENT_TYPE_VALUE,
-                'health_converted_by_value_segment_advisors');
+                    'health_converted_by_value_segment_advisors');
             }
 
             $advisors = ! empty($advisorsFilter) ? implode(',', $advisorsFilter) : '0';
@@ -808,10 +808,11 @@ class RenewalBatchReportService extends BaseService
      */
     public function queryForSegmentType($query, $batchWiseSegmentedAdvisors, $filter, $reportDateEnd, $renewedAsColumn, $totalAsColumn)
     {
-        if ($filter){
-            foreach($batchWiseSegmentedAdvisors as $batchName => $segmentedAdvisors) {
+        if ($filter) {
+            foreach ($batchWiseSegmentedAdvisors as $batchName => $segmentedAdvisors) {
                 $advisors = is_array($segmentedAdvisors[$filter]) ? $segmentedAdvisors[$filter] : [$segmentedAdvisors[$filter]];
                 $segmentAdvisorsIdString = implode(',', $advisors);
+
                 return $query->addSelect(
                     DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in ('.QuoteStatusEnum::TransactionApproved.', '.QuoteStatusEnum::PolicyDocumentsPending.'
                     , '.QuoteStatusEnum::PolicyIssued.', '.QuoteStatusEnum::PolicySentToCustomer.', '.QuoteStatusEnum::PolicyBooked.')
@@ -837,11 +838,11 @@ class RenewalBatchReportService extends BaseService
 
     public function superRetentionQueryForSegmentType($query, $batchWiseSegmentedAdvisors, $filter, $renewedAsColumn)
     {
-        if ($filter)
-        {
-            foreach($batchWiseSegmentedAdvisors as $batchName => $segmentedAdvisors) {
+        if ($filter) {
+            foreach ($batchWiseSegmentedAdvisors as $batchName => $segmentedAdvisors) {
                 $advisors = is_array($segmentedAdvisors[$filter]) ? $segmentedAdvisors[$filter] : [$segmentedAdvisors[$filter]];
                 $segmentAdvisorsIdString = implode(',', $advisors);
+
                 return $query->addSelect(
                     DB::raw('SUM(CASE WHEN health_quote_request.quote_status_id = '.QuoteStatusEnum::TransactionApproved.'
                     and health_quote_request.advisor_id in ('.$segmentAdvisorsIdString.')
