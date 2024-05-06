@@ -550,13 +550,6 @@ watch(
           <span>{{ code }}</span>
           <StaleLeadsBadge :date="stale_at" :align="`left`" />
         </Link>
-        <!-- <a
-          :href="route('business.show', uuid)"
-          class="text-primary-500 hover:underline"
-        >
-          <span>{{ code }}</span>
-          <StaleLeadsBadge :date="stale_at" :align="`left`" />
-        </a> -->
       </template>
 
       <template #item-source="{ source }">
