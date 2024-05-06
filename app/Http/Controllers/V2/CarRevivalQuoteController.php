@@ -19,6 +19,7 @@ use App\Repositories\CarRevivalQuoteRepository;
 use App\Services\ActivitiesService;
 use App\Services\AMLService;
 use App\Services\CarQuoteService;
+use App\Services\CentralService;
 use App\Services\CRUDService;
 use App\Services\CustomerService;
 use App\Services\DropdownSourceService;
@@ -94,7 +95,7 @@ class CarRevivalQuoteController extends Controller
 
         $paymentMethods = app(LookupService::class)->getPaymentMethods();
 
-        $listQuotePlans = app(CarQuoteService::class)->getPlans($id);
+        $listQuotePlans= app(CentralService::class)->getPlans(quoteTypeCode::Car, $id, true, true);
         $quoteDocuments = app(QuoteDocumentService::class)->getQuoteDocuments($quoteType, $record->id);
 
         $displaySendPolicyButton = (bool) app(QuoteDocumentService::class)->showSendPolicyButton($record, $quoteDocuments, $quoteTypeId);
