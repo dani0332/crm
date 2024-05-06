@@ -572,6 +572,7 @@ const plansTable = reactive({
     {
       text: 'Provider Name',
       value: 'providerName',
+      sortable: true,
     },
     {
       text: 'Plan Name',
