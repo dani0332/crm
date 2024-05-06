@@ -80,6 +80,7 @@ class TravelQuoteService extends BaseService
             DB::raw('DATE_FORMAT(tqrd.next_followup_date, "%d-%m-%Y %H:%i:%s") as next_followup_date'),
             'lu.text as transaction_type_text',
             'tqrd.transapp_code',
+            'tqrd.insly_id',
             'ls.text as lost_reason',
             'tqrd.notes',
             'tqr.currently_located_in_id',
@@ -200,8 +201,8 @@ class TravelQuoteService extends BaseService
             }
         }
 
-        if (! Auth::user()->hasRole(RolesEnum::Admin) && ! Auth::user()->hasRole(RolesEnum::CallDesk)) {
-            $travelQuote['advisorId'] = Auth::user()->id;
+        if (! auth()->user()->hasRole(RolesEnum::Admin) && ! auth()->user()->hasRole(RolesEnum::CallDesk)) {
+            $travelQuote['advisorId'] = auth()->user()->id;
         }
 
         if ($request->uuid != null) {

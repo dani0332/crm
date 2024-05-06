@@ -4,8 +4,10 @@ namespace App\Services;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\GenericRequestEnum;
+use App\Enums\HealthPlanTypeEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentStatusEnum;
+use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
@@ -16,6 +18,7 @@ use App\Models\CarQuote;
 use App\Models\HealthQuote;
 use App\Models\PersonalQuote;
 use App\Models\PersonalQuoteDetail;
+use App\Models\QuoteStatusLog;
 use App\Models\TravelQuote;
 use App\Repositories\PersonalQuoteRepository;
 use App\Traits\GenericQueriesAllLobs;
@@ -195,6 +198,12 @@ class CentralService
                 } else {
                     if (gettype($quotePlans) != 'string') {
                         $listQuotePlans[] = $quotePlans->quote->plans;
+
+                        foreach ($listQuotePlans as $plans) {
+                            foreach ($plans as $plan) {
+                                $plan->plan_type = HealthPlanTypeEnum::typeName($plan->planTypeId)?->label();
+                            }
+                        }
                     }
                 }
 
@@ -324,5 +333,30 @@ class CentralService
 
         return $response;
     }
+    //check if aml cleared from log
+    public function amlClearedFromLog($quoteId, $quoteType)
+    {
+        $quoteType = strtolower($quoteType);
+        $quoteTypeId = app(ActivitiesService::class)->getQuoteTypeId($quoteType);
 
+        $isAmlClearedForPayment = false;
+        $quoteStatusLog = QuoteStatusLog::where('quote_request_id', $quoteId)
+            ->where('quote_type_id', $quoteTypeId)
+            ->where(function ($q) {
+                $q->where('current_quote_status_id', QuoteStatusEnum::AMLScreeningCleared);
+                $q->orWhere('previous_quote_status_id', QuoteStatusEnum::AMLScreeningCleared);
+            })->orderBy('id', 'desc')->first();
+        if ($quoteStatusLog) {
+            $amlScreenFailed = QuoteStatusLog::where('quote_request_id', $quoteId)
+                ->where('quote_type_id', $quoteTypeId)
+                ->where('current_quote_status_id', QuoteStatusEnum::AMLScreeningFailed)
+                ->where('id', '>', $quoteStatusLog->id)
+                ->first();
+            if (! $amlScreenFailed) {
+                $isAmlClearedForPayment = true;
+            }
+        }
+
+        return $isAmlClearedForPayment;
+    }
 }

@@ -15,6 +15,7 @@ const onLogout = () => {
     window.location.href = '/login';
   });
 };
+
 </script>
 
 <template>

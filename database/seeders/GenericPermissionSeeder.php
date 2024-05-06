@@ -104,7 +104,20 @@ class GenericPermissionSeeder extends Seeder
             }
         }
 
+        $instantAlfredChatLogsPermission = Permission::where('name', PermissionsEnum::INSTANT_ALFRED_CHAT_LOGS)->first();
+        if (! $instantAlfredChatLogsPermission) {
+            $instantAlfredChatLogsPermission = Permission::create([
+                'name' => PermissionsEnum::INSTANT_ALFRED_CHAT_LOGS,
+                'guard_name' => 'web',
+            ]);
+        }
+
+        if ($instantAlfredChatLogsPermission && ! $role->hasPermissionTo(PermissionsEnum::INSTANT_ALFRED_CHAT_LOGS)) {
+            $role->givePermissionTo(PermissionsEnum::INSTANT_ALFRED_CHAT_LOGS);
+        }
+
         $this->generateSegmentFilterPermission();
+        $this->embeddedProductSeeds();
     }
 
     private function generateSegmentFilterPermission()
@@ -122,6 +135,38 @@ class GenericPermissionSeeder extends Seeder
         foreach ($roles as $role) {
             if (! $role->hasPermissionTo(PermissionsEnum::SEGMENT_FILTER)) {
                 $role->givePermissionTo(PermissionsEnum::SEGMENT_FILTER);
+            }
+        }
+    }
+
+    private function embeddedProductSeeds()
+    {
+        // update name of existing permission
+        Permission::where(['name' => 'embedded-product-advisor'])->update(['name' => PermissionsEnum::EMBEDDED_PRODUCT_ADVISOR]);
+        Permission::where(['name' => 'embedded-product-admin'])->update(['name' => PermissionsEnum::EMBEDDED_PRODUCT_ADMIN]);
+
+        $permissionList = [
+            PermissionsEnum::EMBEDDED_PRODUCT_ADVISOR => [
+                RolesEnum::CarAdvisor,
+                RolesEnum::Admin,
+                RolesEnum::Engineering,
+                RolesEnum::BetaUser,
+                RolesEnum::EpAdmin,
+            ],
+            PermissionsEnum::EMBEDDED_PRODUCT_ADMIN => [
+                RolesEnum::Admin,
+                RolesEnum::Engineering,
+                RolesEnum::BetaUser,
+                RolesEnum::EpAdmin,
+            ],
+        ];
+
+        foreach ($permissionList as $permission => $roles) {
+            $dataset = Permission::firstOrCreate(['name' => $permission, 'guard_name' => 'web']);
+            foreach ($roles as $roleName) {
+                if (($role = Role::where('name', $roleName)->first()) && ! $role->hasPermissionTo($dataset->id)) {
+                    $role->givePermissionTo($dataset->id);
+                }
             }
         }
     }

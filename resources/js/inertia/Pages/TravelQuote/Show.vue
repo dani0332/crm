@@ -57,6 +57,9 @@ defineProps({
   aboveAgeMembers: Number,
 });
 
+const permissionsEnum = page.props.permissionsEnum;
+const can = permission => useCan(permission);
+
 const hasAnyRole = roles => useHasAnyRole(roles);
 const checkedItems = ref([]);
 const checkCheckedPlans = computed(() => {
@@ -92,7 +95,6 @@ const notification = useNotifications('toast');
 
 const rolesEnum = page.props.rolesEnum;
 const hasRole = role => useHasRole(role);
-const can = permission => useCan(permission);
 
 const {
   isRequired,
@@ -113,10 +115,12 @@ const memberActionEdit = ref(false),
   activityActionEdit = ref(false),
   selectedPlan = ref(null),
   selectedPlans = ref([]),
-  toggleLoader = ref(false),
+  selectedAdultPlans = ref([]),
+  selectedSeniorPlans = ref([]),
   selectedPlansPdf = ref([]),
   exportLoader = ref(false),
   historyLoading = ref(false),
+  toggleLoader = ref(false),
   lostReasonId = ref(
     page.props.lostReasons.find(
       reason => reason.text === page.props.quote.lost_reason,
@@ -168,6 +172,7 @@ const modals = reactive({
   activity: false,
   activityConfirm: false,
   planDetails: false,
+  mixInquiryConfirm: false,
 });
 const travelFields = computed(() => {
   let skipFields = [
@@ -1195,6 +1200,15 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
     <div class="flex justify-between items-center flex-wrap gap-2">
       <h2 class="text-xl font-semibold">Travel Detail</h2>
       <div class="flex gap-2">
+        <Link
+          v-if="quote?.insly_id"
+          :href="`/legacy-policy/${quote.insly_id}`"
+          preserve-scroll
+        >
+          <x-button size="sm" color="#ff5e00" tag="div">
+            View Legacy policy
+          </x-button>
+        </Link>
         <x-button
           size="sm"
           color="#ff5e00"
@@ -1952,6 +1966,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       "
       modelType="Travel"
       :quote="quote"
+      :insly-id="quote?.insly_id"
       :canAddBatchNumber="canAddBatchNumber"
     />
 
@@ -2179,7 +2194,16 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
           <x-tag size="sm">{{ quoteDocuments.length || 0 }}</x-tag>
         </h3>
         <div class="flex gap-2">
-          <x-button @click.prevent="modals.doc = true" size="sm" color="orange">
+            <Link
+                v-if="quote?.insly_id && can(permissionsEnum.VIEW_LEGACY_DETAILS)"
+                :href="`/legacy-policy/${quote.insly_id}`"
+                preserve-scroll
+            >
+                <x-button size="sm" color="#ff5e00" tag="div">
+                    View Legacy policy
+                </x-button>
+            </Link>
+          <x-button @click.prevent="modals.doc = true" size="sm" color="primary">
             Upload Documents
           </x-button>
           <x-button
@@ -2274,10 +2298,12 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
         <template #body>
           <x-divider class="my-4" />
           <div class="flex justify-between items-center flex-wrap gap-2">
-            <h6 v-if="aboveAgeMembers > 0 && availablePlansTable.data.length > 0" class="font-semibold text-primary-600 text-ms mb-1">
-              Travel plans for {{ travelers.length - aboveAgeMembers }} member
-              age 0-64
-            </h6>
+              <div>
+                <h6 v-if="aboveAgeMembers > 0 && availablePlansTable.data.length > 0" class="font-semibold text-primary-600 text-ms mb-1">
+                  Travel plans for {{ travelers.length - aboveAgeMembers }} member
+                  age 0-64
+                </h6>
+              </div>
             <div class="flex gap-2 mb-4">
               <x-button-group
                 v-if="selectedPlans.length > 0"
@@ -2337,8 +2363,8 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
             </p>
           </div>
           <div v-else>
-            <!-- for future use  v-model:items-selected="selectedPlans" -->
             <DataTable
+                v-model:items-selected="selectedPlans"
               table-class-name="tablefixed compact"
               :headers="availablePlansTable.columns"
               :items="availablePlansTable.data || []"
@@ -2420,6 +2446,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
             </div>
             <div>
               <DataTable
+                  v-model:items-selected="selectedPlans"
                 table-class-name="tablefixed compact"
                 :headers="availableSeniorPlansTable.columns"
                 :items="availableSeniorPlansTable.data || []"

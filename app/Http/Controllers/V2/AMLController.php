@@ -31,6 +31,7 @@ use App\Models\Payment;
 use App\Models\PersonalQuote;
 use App\Models\QuoteRequestEntityMapping;
 use App\Models\QuoteStatus;
+use App\Models\QuoteStatusLog;
 use App\Models\QuoteType;
 use App\Models\SanctionListDownloads;
 use App\Models\UAEAMLListUploads;
@@ -237,7 +238,6 @@ class AMLController extends Controller
             ->first();
         $cardHolderName = '';
         if (isset($payment->getCustomerPaymentInstrument->card_holder_name)) {
-
             $cardHolderName = $payment->getCustomerPaymentInstrument;
         }
         $data = [
@@ -357,8 +357,7 @@ class AMLController extends Controller
                 $customer->dob = $AMLCheckRequest->dob;
                 $customer->insured_first_name = $AMLCheckRequest->insured_first_name;
                 $customer->insured_last_name = $AMLCheckRequest->insured_last_name;
-
-                if ($customer->isDirty() || ($customer->updated_at >= ($getLastScreening->created_at ?? ''))) {
+                if ($customer->isDirty() || ! isset($getLastScreening->created_at) || Carbon::parse($customer->updated_at) >= Carbon::parse($getLastScreening->created_at ?? '')) {
                     $customer->save();
                     $customer->refresh();
 
@@ -383,7 +382,6 @@ class AMLController extends Controller
             }
 
             if ($AMLCheckRequest->customer_type == CustomerTypeEnum::Entity) {
-
                 $entityDetailsForApi = [];
                 $bridgerInsightService = new BridgerInsightService();
                 $bridgerAPIToken = $bridgerInsightService->getJWTToken();
@@ -407,25 +405,21 @@ class AMLController extends Controller
 
                     $entityDetailsForApi = ['company_name' => $entity->company_name, 'code' => CustomerTypeEnum::EntityShort.'-'.$entity->id];
                     BridgerAMLJob::dispatchSync($bridgerAPIToken, $entityDetailsForApi, $updateQuote, $quoteTypeId, CustomerTypeEnum::Entity, auth()->user()->email);
-
                 } else {
-
                     $fetchEntity->trade_license_no = $AMLCheckRequest->trade_license_no;
                     $fetchEntity->company_name = $AMLCheckRequest->company_name;
                     $fetchEntity->company_address = $AMLCheckRequest->company_address;
                     $fetchEntity->industry_type_code = $AMLCheckRequest->industry_type_code;
                     $fetchEntity->emirate_of_registration_id = $AMLCheckRequest->emirate_of_registration_id;
-
                     $isEntityDetailUpdated = $fetchEntity->isDirty();
-
-                    if ($isEntityDetailUpdated) {
+                    $kycExist = KycLog::withTrashed()->where(['quote_request_id' => $quoteRequestId, 'quote_type_id' => $quoteTypeId, 'input' => $fetchEntity->company_name])->first();
+                    if ($isEntityDetailUpdated || ! isset($kycExist->id)) {
                         $fetchEntity->save();
                         $fetchEntity->refresh();
 
                         $entityDetailsForApi = ['company_name' => $fetchEntity->company_name, 'code' => $fetchEntity->code];
                         BridgerAMLJob::dispatchSync($bridgerAPIToken, $entityDetailsForApi, $updateQuote, $quoteTypeId, CustomerTypeEnum::Entity, auth()->user()->email);
                     }
-
                     QuoteRequestEntityMapping::updateOrCreate([
                         'quote_type_id' => $quoteType->id,
                         'quote_request_id' => $quoteRequestId,
@@ -434,7 +428,6 @@ class AMLController extends Controller
 
                 if (empty($entityDetailsForApi) && empty($getMemberOrUBODetails->toArray())) {
                     return redirect()->back()->with('success', 'AML Screening Completed');
-
                 }
 
                 // Job dispatch for all UBO members
@@ -447,7 +440,7 @@ class AMLController extends Controller
         return redirect()->back()->with('error', 'Something went wrong');
     }
 
-    public function sanctionListHistory(Request $request, SanctionListDownloads $sanctionListDownloads, Datatables $datatables)
+    public function sanctionListHistory(Request $request, SanctionListDownloads $sanctionListDownloads, DataTables $datatables)
     {
         $url = env('AZURE_RYU_STORAGE_URL').env('AZURE_AML_HISTORY');
 
@@ -532,7 +525,7 @@ class AMLController extends Controller
                 'quoteRequestEntityMapping' => function ($mappedEntity) use ($request) {
                     $mappedEntity->where(['quote_type_id' => $request->quote_type_id, 'quote_request_id' => $request->quote_request_id]);
                 },
-            ]
+                'quoteMember']
         )->where('id', $request->entity_id)->first();
 
         return response()->json(['status' => true, 'response' => $entity, 'message' => 'Entity Linked Successfully']);
@@ -605,13 +598,30 @@ class AMLController extends Controller
             );
         }
         if (! in_array(true, session()->get('amlResponseCheck')) && ! AMLService::checkAMLStatusFailed($quoteTypeId, $quoteRequestId)) {
+            QuoteStatusLog::create([
+                'quote_type_id' => $quoteTypeId,
+                'quote_request_id' => $quoteRequestId,
+                'current_quote_status_id' => QuoteStatusEnum::AMLScreeningCleared,
+                'previous_quote_status_id' => $quoteDetails->quote_status_id,
+                'created_at' => Carbon::now(),
+                'updated_at' => Carbon::now(),
+            ]);
+
             $quoteDetails->quote_status_id = QuoteStatusEnum::AMLScreeningCleared;
             $quoteDetails->aml_status_id = AMLStatusEnum::AMLScreeningCleared;
             $quoteDetails->save();
 
             info('AML Screening Bridger - Potential Matche(s) not Found, Quote Status changed to AML Screening Cleared');
-
         } else {
+            QuoteStatusLog::create([
+                'quote_type_id' => $quoteTypeId,
+                'quote_request_id' => $quoteRequestId,
+                'current_quote_status_id' => QuoteStatusEnum::AMLScreeningFailed,
+                'previous_quote_status_id' => $quoteDetails->quote_status_id,
+                'created_at' => Carbon::now(),
+                'updated_at' => Carbon::now(),
+            ]);
+
             $quoteDetails->quote_status_id = QuoteStatusEnum::AMLScreeningFailed;
             $quoteDetails->aml_status_id = AMLStatusEnum::AMLScreeningFailed;
             $quoteDetails->save();
