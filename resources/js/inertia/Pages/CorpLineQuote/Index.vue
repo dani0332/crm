@@ -542,13 +542,21 @@ watch(
       hide-footer
       fixed-checkbox
     >
-      <template #item-code="{ code, uuid }">
-        <a
+      <template #item-code="{ code, uuid, stale_at }">
+        <Link
+          :href="route('business.show', uuid)"
+          class="text-primary-500 hover:underline flex items-center space-x-1 min-w-48"
+        >
+          <span>{{ code }}</span>
+          <StaleLeadsBadge :date="stale_at" :align="`left`" />
+        </Link>
+        <!-- <a
           :href="route('business.show', uuid)"
           class="text-primary-500 hover:underline"
         >
-          {{ code }}
-        </a>
+          <span>{{ code }}</span>
+          <StaleLeadsBadge :date="stale_at" :align="`left`" />
+        </a> -->
       </template>
 
       <template #item-source="{ source }">
