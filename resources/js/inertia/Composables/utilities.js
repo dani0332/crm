@@ -108,13 +108,15 @@ export const useConvertDate = date =>
   return `${year}-${month}-${day}`;
 };
 
-export const daysSinceStale = payload =>
+export const useDaysSinceStale = payload =>
 {
   const quoteRequest = payload;
   const stale_days = quoteRequest
     ? Math.floor((new Date() - new Date(quoteRequest)) / (1000 * 60 * 60 * 24))
     : false;
-  return stale_days !== false && stale_days <= 90 ? stale_days : false;
+
+  return (typeof stale_days === 'number' && stale_days <= 90) ? (stale_days === 0 ? 1 + ' day' : stale_days + ' days') : false;
+
 };
 
 export const fileUploadErrorMessage = (doc, rejectReason) =>
@@ -204,14 +206,14 @@ export const getPreviousDate = (days = 30, format = 'DD-MMM-YYYY') =>
   return useDateFormat(previousDate, format).value;
 };
 
-export const useDaysSinceStale = payload =>
-{
-  const quoteRequest = payload;
-  const stale_days = quoteRequest
-    ? Math.floor((new Date() - new Date(quoteRequest)) / (1000 * 60 * 60 * 24))
-    : false;
-  return stale_days !== false && stale_days <= 90 ? stale_days : false;
-};
+// export const useDaysSinceStale = payload =>
+// {
+//   const quoteRequest = payload;
+//   const stale_days = quoteRequest
+//     ? Math.floor((new Date() - new Date(quoteRequest)) / (1000 * 60 * 60 * 24))
+//     : false;
+//   return stale_days !== false && stale_days <= 90 ? stale_days : false;
+// };
 
 export const setQueryStringFilters = (params, filters) =>
 {
@@ -231,7 +233,7 @@ export const setQueryStringFilters = (params, filters) =>
 export const saveQueryParams = () =>
 {
   let { component, url } = router.page
-  let routes = ['HealthQuote/Index', 'PetQuote/Index', 'CycleQuote/Index', 'HealthQuote/Index', 'YachtQuote/Index', 'HomeQuote/Index']
+  let routes = ['HealthQuote/Index', 'PetQuote/Index', 'CycleQuote/Index', 'CorpLineQuote/Index', 'YachtQuote/Index', 'HomeQuote/Index']
 
   if (routes.includes(component))
   {
