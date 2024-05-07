@@ -2,23 +2,28 @@
 
 namespace App\Jobs;
 
-use App\Enums\ApplicationStorageEnums;
-use App\Enums\QuoteDocumentsEnum;
-use App\Enums\QuoteTypes;
 use App\Models\ApplicationStorage;
+use App\Repositories\DocumentTypeRepository;
 use App\Services\QuoteDocumentService;
 use App\Services\SendEmailCustomerService;
 use App\Traits\GenericQueriesAllLobs;
+use Exception;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Queue\SerializesModels;
 use Throwable;
+
+use function Laravel\Prompts\error;
 
 class SendBookPolicyDocumentsJob implements ShouldQueue
 {
     use Dispatchable, GenericQueriesAllLobs, InteractsWithQueue, Queueable, SerializesModels;
+
+    public $timeout = 100;
+    public $tries = 3;
 
     /**
      * Create a new job instance.
@@ -34,88 +39,45 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
      */
     public function handle(SendEmailCustomerService $sendEmailCustomerService, QuoteDocumentService $quoteDocumentService)
     {
+        // In case of Group Medical & Corpline, modelType is used & for rest of the LOBs model_type is used
+        // Basically we are different to identify the template which will send to customer after policy booking
+        $modelType = ! empty($this->data->modelType) ? $this->data->modelType : $this->data->model_type;
 
         $quote = $this->getQuoteObject($this->data->model_type, $this->data->quote_id);
-        $quoteDocuments = $quoteDocumentService->getQuoteDocuments($this->data->model_type, $this->data->quote_id);
-        $filtered = $quoteDocuments->filter(function ($value, $key) {
-            return in_array($value->document_type_code, [QuoteDocumentsEnum::CAR_POLICY_CERTIFICATE, QuoteDocumentsEnum::POLICY_SCHEDULE, QuoteDocumentsEnum::POLICY_HANDBOOK]);
-        });
 
-        $docs = $filtered->all();
-        info('SendBookPolicyDocumentsJobDocuments '.json_encode($quoteDocuments));
+        try {
+            $documentTypeCodes = DocumentTypeRepository::quoteDocumentsSentToCustomerCode($this->data->model_type, $quote);
+            $quoteDocuments = $docs = app(QuoteDocumentService::class)->getQuoteDocuments($this->data->model_type, $this->data->quote_id, $documentTypeCodes);
+        } catch (Exception $ex) {
+            error('SendBookPolicyDocumentsJobError '.$ex->getMessage());
+            $docs = [];
+        }
 
         $quote->load('advisor');
 
-        $templateId = null;
+        $templateId = ApplicationStorage::where('key_name', strtoupper(str_replace(' ', '_', $modelType)).'_BOOK_POLICY_TEMPLATE')->first()->value ?? null;
 
-        switch (ucfirst($this->data->model_type)) {
-            case QuoteTypes::CAR->value:
-                $templateId = ApplicationStorage::where('key_name', ApplicationStorageEnums::CAR_BOOK_POLICY_TEMPLATE)->first()->value;
-                break;
-
-            case QuoteTypes::BIKE->value:
-                $templateId = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIKE_BOOK_POLICY_TEMPLATE)->first()->value;
-                break;
-
-            case QuoteTypes::TRAVEL->value:
-                $templateId = ApplicationStorage::where('key_name', ApplicationStorageEnums::TRAVEL_BOOK_POLICY_TEMPLATE)->first()->value;
-                break;
-
-            case QuoteTypes::HEALTH->value:
-                $templateId = ApplicationStorage::where('key_name', ApplicationStorageEnums::HEALTH_BOOK_POLICY_TEMPLATE)->first()->value;
-                break;
-
-            case QuoteTypes::LIFE->value:
-                $templateId = ApplicationStorage::where('key_name', ApplicationStorageEnums::LIFE_BOOK_POLICY_TEMPLATE)->first()->value;
-                break;
-
-            case QuoteTypes::HOME->value:
-                $templateId = ApplicationStorage::where('key_name', ApplicationStorageEnums::HOME_BOOK_POLICY_TEMPLATE)->first()->value;
-                break;
-
-            case QuoteTypes::PET->value:
-                $templateId = ApplicationStorage::where('key_name', ApplicationStorageEnums::PET_BOOK_POLICY_TEMPLATE)->first()->value;
-                break;
-
-            case QuoteTypes::CYCLE->value:
-                $templateId = ApplicationStorage::where('key_name', ApplicationStorageEnums::CYCLE_BOOK_POLICY_TEMPLATE)->first()->value;
-                break;
-
-            case QuoteTypes::YACHT->value:
-                $templateId = ApplicationStorage::where('key_name', ApplicationStorageEnums::YACHT_BOOK_POLICY_TEMPLATE)->first()->value;
-                break;
-
-            default:
-                $templateId = null;
-                break;
-        }
         info('SendBookPolicyDocumentsJobData '.json_encode($quote));
 
         if (! empty($templateId)) {
-
-            // payload
-            $dataArr = new \stdClass();
-            $dataArr->code = $quote->code;
-            // $dataArr->customerEmail = 'wasim.abbas@myalfred.com';
-            // $dataArr->customerEmail = 'nouman.hussain@myalfred.com';
-            $dataArr->customerEmail = $quote->email;
-            $dataArr->clientFullName = $quote->first_name.' '.$quote->last_name;
-            $dataArr->policy_number = $quote->policy_number;
-            $dataArr->renewalDueDate = date('Y-m-d', strtotime($quote['renewal_expiry_date']));
-            $dataArr->quoteDocuments = $docs;
-            $dataArr->advisorName = '';
-            $dataArr->advisorEmail = '';
+            $emailData = new \stdClass();
+            $emailData->code = $quote->code;
+            $emailData->customerEmail = $quote->email;
+            $emailData->clientFullName = $quote->first_name.' '.$quote->last_name;
+            $emailData->policy_number = $quote->policy_number;
+            $emailData->renewalDueDate = date('Y-m-d', strtotime($quote['renewal_expiry_date']));
+            $emailData->quoteDocuments = $docs;
+            $emailData->advisorName = '';
+            $emailData->advisorEmail = '';
             if (! empty($quote->advisor)) {
-                $dataArr->advisorName = $quote->advisor->name;
-                $dataArr->advisorEmail = $quote->advisor->email;
+                $emailData->advisorName = $quote->advisor->name;
+                $emailData->advisorEmail = $quote->advisor->email;
             }
+            $emailData->currentInsurer = 'Insurance market';
+            $emailData->emailTemplateId = $templateId;
 
-            $dataArr->currentInsurer = 'Insurance market';
-            $dataArr->emailTemplateId = $templateId;
-
-            info('SendBookPolicyDocumentsJobEmailData '.json_encode($dataArr));
-            $response = $sendEmailCustomerService->sendBookPolicyDocumentsEmail($dataArr, 'book-policy-document');
-
+            info('SendBookPolicyDocumentsJobEmailData '.json_encode($emailData));
+            $response = $sendEmailCustomerService->sendBookPolicyDocumentsEmail($emailData, 'book-policy-document');
             info('SendBookPolicyDocumentsJobResponse '.json_encode($response));
         }
     }
@@ -123,5 +85,10 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
     public function failed(Throwable $exception)
     {
         info('SendBookPolicyDocumentsJob -: '.$this->data->quote_id.' Error: '.$exception->getMessage());
+    }
+
+    public function middleware()
+    {
+        return [(new WithoutOverlapping($this->data->quote_id))->dontRelease()];
     }
 }

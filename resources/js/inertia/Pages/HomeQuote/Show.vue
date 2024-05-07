@@ -15,7 +15,6 @@ defineProps({
   activities: Array,
   customerAdditionalContacts: Array,
   lostReasons: Array,
-  quoteStatusEnum: Object,
   modelType: String,
   notProductionApproval: Boolean,
   allowedDuplicateLOB: Array,
@@ -39,11 +38,8 @@ defineProps({
   documentTypes: Object,
   storageUrl: String,
   vatPercentage: Number,
-  paymentStatusEnum: Object,
   paymentTooltipEnum: Object,
-  enums: Object,
-  policyIssuanceStatus: Array,
-  bPDetails: Array,
+  bookPolicyDetails: Array,
   isNewPaymentStructure: Boolean,
   isAmlClearedForPayment: Boolean,
   sendUpdateOptions: Array,
@@ -59,6 +55,7 @@ const rolesEnum = page.props.rolesEnum;
 const hasRole = role => useHasRole(role);
 const permissionEnum = page.props.permissionsEnum;
 const canAny = permissions => useCanAny(permissions);
+const paymentStatusEnum= page.props.paymentStatusEnum;
 
 const modals = reactive({
   duplicate: false,
@@ -322,7 +319,7 @@ const policyDetails = useForm({
   quote_status_id: page.props.quote.quote_status_id,
   canEdit:
     page.props.quote.quote_status_id ==
-      page.props.quoteStatusEnum.TransactionApproved &&
+    page.props.quoteStatusEnum.TransactionApproved &&
     page.props.notProductionApproval,
   editMode: false,
   modelType: page.props.modelType,
@@ -463,6 +460,15 @@ const linkEntity = () => {
 };
 
 const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
+
+watch(
+  () => page.props.quote.quote_status_id,
+  (newValue, oldValue) => {
+    if (newValue !== oldValue) {
+      leadStatusForm.leadStatus = newValue;
+    }
+  },
+);
 </script>
 
 <template>
@@ -978,14 +984,6 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       </dl>
     </x-modal>
 
-    <PolicyDetail
-      v-if="permissions.isQuoteDocumentEnabled"
-      :record="record"
-      :quoteStatusEnum="enums.quoteStatusEnum"
-      :policyIssuanceStatus="policyIssuanceStatus"
-      modelType="home"
-    />
-
     <MemberDetails
       v-if="quote.customer_type == page.props.customerTypeEnum.Individual"
       :quote="quote"
@@ -1153,20 +1151,6 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       :quote="quote"
     />
 
-    <BookPolicy
-      v-if="
-        canAny([
-          permissionEnum.VIEW_INSLY_BOOK_POLICY,
-          permissionEnum.SEND_INSLY_BOOK_POLICY,
-        ])
-      "
-      :quote="record"
-      quoteType="home"
-      :bPDetails="bPDetails"
-      :payments="payments"
-      :expanded="sectionExpanded"
-    />
-
     <EmbeddedProducts
       :data="embeddedProducts"
       :link="quote.uuid"
@@ -1176,12 +1160,33 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       :expanded="sectionExpanded"
     />
 
+    <PolicyDetail
+      v-if="permissions.isQuoteDocumentEnabled"
+      :record="record"
+      modelType="home"
+      :expanded="sectionExpanded"
+    />
+
     <QuoteDocuments
       :document-types="documentTypes"
       :quote-documents="quoteDocuments || []"
       :storageUrl="storageUrl"
       :quote="quote"
       :insly-id="quote?.insly_id"
+      :expanded="sectionExpanded"
+    />
+    
+    <BookPolicy
+      v-if="
+        canAny([
+          permissionEnum.VIEW_INSLY_BOOK_POLICY,
+          permissionEnum.SEND_INSLY_BOOK_POLICY,
+        ])
+      "
+      :quote="record"
+      quoteType="home"
+      :bookPolicyDetails="bookPolicyDetails"
+      :payments="payments"
       :expanded="sectionExpanded"
     />
 

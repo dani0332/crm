@@ -24,7 +24,6 @@ defineProps({
   activities: Object,
   advisors: Object,
   lostReasons: Object,
-  quoteStatusEnum: Object,
   embeddedProducts: Array,
   canAddBatchNumber: Boolean,
   vatPercentage: Number,
@@ -276,7 +275,6 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       :quote-type="quoteType"
       :quote-statuses="quoteStatuses"
       :lost-reasons="lostReasons"
-      :quote-status-enum="quoteStatusEnum"
       :expanded="sectionExpanded"
     />
 
@@ -299,7 +297,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
     <QuotePolicy
       :quote="quote"
       :can="can"
-      :quoteStatusEnum="quoteStatusesEnum"
+      :quoteStatusEnum="page.props.quoteStatusEnum"
     />
 
     <PlanDetails
