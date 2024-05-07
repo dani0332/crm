@@ -9,6 +9,7 @@ use App\Facades\Capi;
 use App\Jobs\UpdateSendPolicySubjectJob;
 use App\Models\ApplicationStorage;
 use Exception;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 class SendEmailCustomerService extends BaseService
@@ -533,19 +534,15 @@ class SendEmailCustomerService extends BaseService
                 $body['sender'] = ['name' => $emailData->advisorName, 'email' => $advisorCustomEmail];
             }
 
-            $client = new \GuzzleHttp\Client();
-            $clientRequest = $client->post(
-                $this->url,
-                [
-                    'headers' => $headers,
-                    'body' => json_encode($body, JSON_UNESCAPED_SLASHES),
-                    'timeout' => config('constants.LMS_EMAILS_TIMEOUT'),
-                ]
-            );
+            $response = Http::withHeaders($headers)
+                ->timeout(config('constants.LMS_EMAILS_TIMEOUT'))
+                ->retry(3, 1000)
+                ->post($this->url, $body);
+
             info('sendLMSIntroEmail ---- Request Sent');
-            $responseCode = $clientRequest->getStatusCode();
+            $responseCode = $response->status();
             info('sendLMSIntroEmail ---- Received Code : '.$responseCode);
-            info('sendLMSIntroEmail ---- response object : '.json_encode($clientRequest->getBody()->getContents()));
+            info('sendLMSIntroEmail ---- response object : '.json_encode($response->object()));
         } catch (Exception $ex) {
             $responseCode = $ex->getCode();
             $responseDetail = 'SIB Send sendLMSIntroEmail: Code/Message: '.$responseCode.'/'.$ex->getMessage();
@@ -689,19 +686,15 @@ class SendEmailCustomerService extends BaseService
                 'attachment' => isset($attachments) ? $attachments : null,
             ], JSON_UNESCAPED_SLASHES);
 
-            $client = new \GuzzleHttp\Client();
-            $clientRequest = $client->post(
-                $this->url,
-                [
-                    'headers' => $headers,
-                    'body' => $body,
-                    'timeout' => config('constants.LMS_EMAILS_TIMEOUT'),
-                ]
-            );
+            $response = Http::withHeaders($headers)
+                ->timeout(config('constants.LMS_EMAILS_TIMEOUT'))
+                ->retry(3, 1000)
+                ->post($this->url, $body);
+
             info('sendNonAdvisorIntroEmail ---- Request Sent');
-            $responseCode = $clientRequest->getStatusCode();
+            $responseCode = $response->status();
             info('sendNonAdvisorIntroEmail ---- Received Code : '.$responseCode);
-            info('sendNonAdvisorIntroEmail ---- response object : '.json_encode($clientRequest->getBody()->getContents()));
+            info('sendNonAdvisorIntroEmail ---- response object : '.json_encode($response->object()));
         } catch (Exception $ex) {
             $responseCode = $ex->getCode();
             $responseDetail = 'SIB Send sendNonAdvisorIntroEmail: Code/Message: '.$responseCode.'/'.$ex->getMessage();
