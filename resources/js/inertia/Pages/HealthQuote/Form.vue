@@ -55,7 +55,7 @@ const quoteForm = useForm({
 
 const memberCategorySalaryMapping = {
   'Investor or Partner': 2,
-  'Golden Visa': 2,
+  'Golden visa': 2,
   'Self-employed or Freelancer': 2,
   'Domestic worker': 1,
   'Dependent spouse': 2,
@@ -67,27 +67,31 @@ const memberCategorySalaryMapping = {
 };
 
 const salaryBrandMapping = {
-    1: 'AED 4000 and below',
-    2: 'More than AED 4000',
-}
+  1: 'AED 4000 and below',
+  2: 'More than AED 4000',
+};
 
 const selectedSalaryBand = computed(() => {
   return route().current().includes('edit');
 });
 
 watch(
-    () => quoteForm.member_category_id,
-    newValue => {
-        const selectedCategory = props.dropdownSource.member_category_id.find(
-      (item) => item.id === newValue
+  () => quoteForm.member_category_id,
+  newValue => {
+    // fetch category text
+    const selectedCategory = props.dropdownSource.member_category_id.find(
+      item => item.id === newValue,
     );
-        const salaryBandId = memberCategorySalaryMapping[selectedCategory.text];
-        quoteForm.salary_band_id = salaryBandId;
 
-        console.log("🚀 ~ salaryBandId:", salaryBandId)
-    },
+    // fetch salary band id based on category text
+    const salaryBandId = memberCategorySalaryMapping[selectedCategory.text];
+
+    // if quote status is Transaction Approved do not auto-popualte salary band automatically
+    if (props.quote.quote_status_id != 15) {
+      quoteForm.salary_band_id = salaryBandId;
+    }
+  },
 );
-
 
 function onSubmit(isValid) {
   if (quoteForm.nationality_id == null) {
