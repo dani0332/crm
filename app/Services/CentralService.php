@@ -364,7 +364,7 @@ class CentralService
         return $isAmlClearedForPayment;
     }
 
-    public function saveAndAssignActivitesToAdvisor($quoteDetails, $quoteTypeId)
+    public function saveAndAssignActivitesToAdvisor($quoteDetails, $quoteTypeId, $previousStatusIdChanged = false)
     {
 
         $quoteDetails['quote_type_id'] = $quoteTypeId;
@@ -450,7 +450,7 @@ class CentralService
         )->orderBy('created_at', 'desc')->first();
 
         $lastActivityDueDateIsGreater = false;
-
+        
         if ($lastActivity) {
             // Check if the due date is greater than today's date
             if (Carbon::parse($lastActivity->due_date)->greaterThan(now()->format('d-m-Y'))) {
@@ -458,7 +458,7 @@ class CentralService
             }
 
             // If the status ID has changed, update all activities' status for the current quote
-            if ($quoteDetails->previousStatusIdChanged || ! $lastActivity->status) {
+            if ($previousStatusIdChanged || ! $lastActivity->status) {
                 Activities::where('quote_request_id', $quoteDetails->id)->update(['status' => 1]);
                 $lastActivityDueDateIsGreater = false;
             }

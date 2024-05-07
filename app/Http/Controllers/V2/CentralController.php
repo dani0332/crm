@@ -359,6 +359,11 @@ class CentralController extends Controller
                 return response()->json(['message' => 'Current Lead has no advisor. Please assign advisor to this Lead'], 200);
             }
 
+            $previousStatusIdChanged = false;
+            if($repository->quote_status_id != (int)$dataTo['quote_status_id']){
+                $previousStatusIdChanged = true;
+            }
+
             $repository->update(['quote_status_id' => $dataTo['quote_status_id'], 'quote_status_date' => now(), 'stale_at' => null]);
 
             if ($dataTo['quote_status_id'] == QuoteStatusEnum::Lost && $dataFrom['quoteTypeId'] == QuoteTypeId::Health) {
@@ -367,7 +372,7 @@ class CentralController extends Controller
 
             $repository->refresh();
 
-            $activity = (new CentralService())->saveAndAssignActivitesToAdvisor($repository, $dataFrom['quoteTypeId']);
+            $activity = (new CentralService())->saveAndAssignActivitesToAdvisor($repository, $dataFrom['quoteTypeId'], $previousStatusIdChanged);
 
             if ($activity) {
                 $responseMessage[] = 'Activity has been created';
