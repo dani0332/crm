@@ -187,6 +187,12 @@ trait PersonalQuoteSyncTrait
         return $sourceQuote;
     }
 
+    /**
+     * Create a new personal quote from source quote
+     * 
+     * @param $sourceQuote - Existing object of car/heath/travel/... quote
+     * @param $entry - Entry from quote_sync table
+     */
     private function createPersonalQuoteFromSource($sourceQuote, $entry)
     {
         $personalQuote = new PersonalQuote();
@@ -201,6 +207,9 @@ trait PersonalQuoteSyncTrait
 
             return $existingQuote;
         } else {
+
+            // update missing required fields
+            $this->updateMissingFields($personalQuote, 'personal_quotes', $entry->quote_uuid);
             $personalQuote->save();
 
             return $personalQuote;
@@ -232,16 +241,96 @@ trait PersonalQuoteSyncTrait
     private function upsertPersonalQuoteDetail($personalQuote, $newValues)
     {
         $personalQuoteDetail = PersonalQuoteDetail::where('personal_quote_id', $personalQuote->id)->first();
-
+        $isNewInsert = false;
         if (! $personalQuoteDetail) {
+            $isNewInsert = true;
             $personalQuoteDetail = new PersonalQuoteDetail();
         }
 
         $this->syncTable($personalQuoteDetail, $newValues, 'personal_quote_details');
 
         $personalQuoteDetail->personal_quote_id = $personalQuote->id;
+        
+        if($isNewInsert) {
+            // update missing required fields
+            $this->updateMissingFields($personalQuoteDetail, 'personal_quote_details', $personalQuote->id);
+        }
+
         $personalQuoteDetail->save();
 
         return $personalQuoteDetail;
+    }
+
+    private function updateMissingFields($quote, $table, $identifier)
+    {
+
+        $requiredFields = $this->getRequiredColumns($table);
+        if (!empty($requiredFields)) {
+            $personalQuoteKeys = $quote->getAttributes();
+            foreach ($requiredFields as $column => $detail) {
+                if (!array_key_exists($column, $personalQuoteKeys)) {
+                    $type = $detail['type_name'];
+                    $value = $this->generateDefaultValue($type);
+                    $quote->$column = $value;
+                    Log::warning("Column not found in source quote, table: {$table} - identifier: {$identifier} - column: {$column}, setting default value");
+                }
+            }
+        }
+    }
+
+    /**
+     * Retrieve required columns for a table without defaults and excluding foreign keys
+     * 
+     * @param $table - Table name
+     */
+    private function getRequiredColumns($table)
+    {
+        $skipColumns = ['id'];
+        $columns = Schema::getColumns($table);
+        $foreignKeys = Schema::getForeignKeys($table);
+        if (!empty($foreignKeys)) {
+            $foreignKeys = collect($foreignKeys)->map(function ($foreignKey) {
+                return $foreignKey['columns'];
+            })->flatten()->all();
+        }
+
+        if (!empty($columns)) {
+            $columns = collect($columns)->filter(function ($column) use ($skipColumns, $foreignKeys) {
+                if (
+                    $column['nullable'] === false &&
+                    $column['default'] == null &&
+                    !in_array($column['name'], $skipColumns) &&
+                    !in_array($column['name'], $foreignKeys)
+                ) {
+                    return true;
+                }
+
+                return false;
+            })->keyBy('name')->all();
+        }
+
+        return $columns;
+    }
+
+    private function generateDefaultValue($columnType)
+    {
+        switch ($columnType) {
+            case 'int':
+            case 'bigint':
+            case 'decimal':
+            case 'tinyint':
+            case 'smallint':
+                return 0;
+            case 'varchar':
+            case 'text':
+                return '';
+            case 'boolean':
+                return false;
+            case 'date':
+            case 'datetime':
+                return Carbon::now();
+            default:
+                return null;
+        }
     }
 }
