@@ -2,6 +2,18 @@
 const props = defineProps({
   quadrant: Array,
 });
+
+const dateFormat = date => useDateFormat(date, 'DD-MM-YYYY hh:mm:ss').value;
+
+const tires = computed(() => {
+  if (props.quadrant)
+    return props.quadrant.tiers.map(tier => tier.name).join(', ');
+});
+
+const users = computed(() => {
+  if (props.quadrant)
+    return props.quadrant.users.map(user => user.name).join(', ');
+});
 </script>
 <template>
   <Head title="Quadrant Detail" />
@@ -28,8 +40,18 @@ const props = defineProps({
         </div>
 
         <div class="grid sm:grid-cols-2">
-          <dt class="font-medium">Quad Name</dt>
+          <dt class="font-medium">Quadrant Name</dt>
           <dd>{{ quadrant.name }}</dd>
+        </div>
+
+        <div class="grid sm:grid-cols-2">
+          <dt class="font-medium">Quadrant Tiers</dt>
+          <dd>{{ tires }}</dd>
+        </div>
+
+        <div class="grid sm:grid-cols-2">
+          <dt class="font-medium">Quadrant Users</dt>
+          <dd>{{ users }}</dd>
         </div>
         <div class="grid sm:grid-cols-2">
           <dt class="font-medium">Is Active</dt>
@@ -40,8 +62,12 @@ const props = defineProps({
           </dd>
         </div>
         <div class="grid sm:grid-cols-2">
-          <dt class="font-medium">CREATED DATE</dt>
-          <dd>{{ quadrant.created_at }}</dd>
+          <dt class="font-medium">Created At</dt>
+          <dd>{{ dateFormat(quadrant.created_at) }}</dd>
+        </div>
+        <div class="grid sm:grid-cols-2">
+          <dt class="font-medium">Updated At</dt>
+          <dd>{{ dateFormat(quadrant.updated_at) }}</dd>
         </div>
       </dl>
     </div>

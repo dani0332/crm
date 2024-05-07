@@ -2,6 +2,8 @@
 const props = defineProps({
   tier: Object,
 });
+
+const dateFormat = date => useDateFormat(date, 'DD-MM-YYYY hh:mm:ss').value;
 </script>
 <template>
   <Head title="Tier Detail" />
@@ -41,10 +43,10 @@ const props = defineProps({
         </div>
         <div class="grid sm:grid-cols-2">
           <dt class="font-medium">Cost Per Lead</dt>
-          <dd>{{ tier.cost_per_lead }}</dd>
+          <dd>{{ tier.cost_per_lead ?? 'N/A' }}</dd>
         </div>
         <div class="grid sm:grid-cols-2">
-          <dt class="font-medium">Is Ecommerce</dt>
+          <dt class="font-medium">Is Ecommerce?</dt>
           <dd>
             <x-tag
               size="sm"
@@ -55,7 +57,7 @@ const props = defineProps({
           </dd>
         </div>
         <div class="grid sm:grid-cols-2">
-          <dt class="font-medium">Null Value</dt>
+          <dt class="font-medium">Null Value?</dt>
           <dd>
             <x-tag
               size="sm"
@@ -66,7 +68,7 @@ const props = defineProps({
           </dd>
         </div>
         <div class="grid sm:grid-cols-2">
-          <dt class="font-medium">Is TPL</dt>
+          <dt class="font-medium">Is TPL?</dt>
           <dd>
             <x-tag size="sm" :color="tier.can_handle_tpl ? 'success' : 'error'">
               {{ tier.can_handle_tpl ? 'Yes' : 'No' }}
@@ -74,7 +76,7 @@ const props = defineProps({
           </dd>
         </div>
         <div class="grid sm:grid-cols-2">
-          <dt class="font-medium">Renewal (TPL_RENEWALS)</dt>
+          <dt class="font-medium">Renewal (TPL_RENEWALS)?</dt>
           <dd>
             <x-tag
               size="sm"
@@ -85,12 +87,20 @@ const props = defineProps({
           </dd>
         </div>
         <div class="grid sm:grid-cols-2">
-          <dt class="font-medium">Is Active</dt>
+          <dt class="font-medium">Is Active?</dt>
           <dd>
             <x-tag size="sm" :color="tier.is_active ? 'success' : 'error'">
               {{ tier.is_active ? 'Yes' : 'No' }}
             </x-tag>
           </dd>
+        </div>
+        <div class="grid sm:grid-cols-2">
+          <dt class="font-medium">Created At</dt>
+          <dd>{{ dateFormat(tier.created_at) }}</dd>
+        </div>
+        <div class="grid sm:grid-cols-2">
+          <dt class="font-medium">Updated At</dt>
+          <dd>{{ dateFormat(tier.updated_at) }}</dd>
         </div>
       </dl>
     </div>

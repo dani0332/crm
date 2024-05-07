@@ -80,39 +80,6 @@ function onSubmit(isValid) {
   <x-divider class="my-4" />
   <x-form @submit="onSubmit" :auto-focus="false">
     <div class="grid sm:grid-cols-2 gap-4">
-      <x-field label="Tier Name" required>
-        <x-input
-          v-model="tierForm.name"
-          class="w-full"
-          :error="tierForm.errors.name"
-        />
-      </x-field>
-      <x-field label="Min Price">
-        <x-input
-          v-model="tierForm.min_price"
-          :rule="[isNumber]"
-          type="number"
-          class="w-full"
-          :error="tierForm.errors.min_price"
-        />
-      </x-field>
-      <x-field label="Max Price">
-        <x-input
-          v-model="tierForm.max_price"
-          class="w-full"
-          :rule="[isNumber]"
-          type="number"
-          :error="tierForm.errors.max_price"
-        />
-      </x-field>
-      <x-field label="Cost Per Lead">
-        <x-input
-          v-model="tierForm.cost_per_lead"
-          class="w-full"
-          type="number"
-          :error="tierForm.errors.cost_per_lead"
-        />
-      </x-field>
       <x-field label="Tiers Users">
         <ComboBox
           v-model="tierForm.tier_user"
@@ -145,7 +112,7 @@ function onSubmit(isValid) {
         />
       </x-field>
 
-      <x-field label="IS TPL ?">
+      <x-field label="IS TPL?">
         <x-select
           v-model="tierForm.can_handle_tpl"
           class="w-full"
@@ -157,7 +124,7 @@ function onSubmit(isValid) {
         />
       </x-field>
 
-      <x-field label="Renewal">
+      <x-field label="Renewal?">
         <x-select
           v-model="tierForm.is_tpl_renewals"
           class="w-full"
@@ -177,6 +144,39 @@ function onSubmit(isValid) {
             { value: false, label: 'No' },
           ]"
           :error="tierForm.errors.is_active"
+        />
+      </x-field>
+      <x-field label="Tier Name" required>
+        <x-input
+          v-model="tierForm.name"
+          class="w-full"
+          :error="tierForm.errors.name"
+        />
+      </x-field>
+      <x-field label="Min Price">
+        <x-input
+          v-model="tierForm.min_price"
+          :rule="[isNumber]"
+          type="number"
+          class="w-full"
+          :error="tierForm.errors.min_price"
+        />
+      </x-field>
+      <x-field label="Max Price">
+        <x-input
+          v-model="tierForm.max_price"
+          class="w-full"
+          :rule="[isNumber]"
+          type="number"
+          :error="tierForm.errors.max_price"
+        />
+      </x-field>
+      <x-field label="Cost Per Lead">
+        <x-input
+          v-model="tierForm.cost_per_lead"
+          class="w-full"
+          type="number"
+          :error="tierForm.errors.cost_per_lead"
         />
       </x-field>
     </div>

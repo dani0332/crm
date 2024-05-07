@@ -5,6 +5,8 @@ const props = defineProps({
 
 const params = useUrlSearchParams('history');
 
+const dateFormat = date => useDateFormat(date, 'DD-MM-YYYY hh:mm:ss').value;
+
 const loader = ref({
   table: false,
 });
@@ -27,10 +29,10 @@ const tableHeader = [
   { text: 'Name', value: 'name' },
   { text: 'Updated At', value: 'updated_at' },
   { text: 'Tire Name', value: 'tiers' },
-  { text: 'Quad Users', value: 'users'},
+  { text: 'Quad Users', value: 'users' },
   { text: 'Created At', value: 'created_at' },
   { text: 'Active', value: 'is_active' },
-  { text: "Actions", value: "actions" }
+  { text: 'Actions', value: 'actions' },
 ];
 
 function onSubmit(isValid) {
@@ -70,17 +72,16 @@ onMounted(() => {
 });
 
 const showDeleteModal = ref(false),
-    deleteAction = useForm({
-        id: null
-    }),
-    onConfirmDelete = () => {
-        deleteAction.delete(route("quadrants.destroy", deleteAction.id), {
-            onFinish: () => {
-                showDeleteModal.value = false;
-            }
-        });
-    };
-
+  deleteAction = useForm({
+    id: null,
+  }),
+  onConfirmDelete = () => {
+    deleteAction.delete(route('quadrants.destroy', deleteAction.id), {
+      onFinish: () => {
+        showDeleteModal.value = false;
+      },
+    });
+  };
 </script>
 <template>
   <Head title="Quadrants List" />
@@ -125,6 +126,12 @@ const showDeleteModal = ref(false),
         {{ id }}
       </Link>
     </template>
+    <template #item-created_at="{ created_at }">
+      {{ dateFormat(created_at) }}
+    </template>
+    <template #item-updated_at="{ updated_at }">
+      {{ dateFormat(updated_at) }}
+    </template>
     <template #item-is_active="{ is_active }">
       <div class="text-center">
         <x-tag size="sm" :color="is_active ? 'success' : 'error'">
@@ -134,38 +141,33 @@ const showDeleteModal = ref(false),
     </template>
 
     <template #item-users="{ users }">
-    {{ formatQuadUsers(users) }}
-  </template>
-  <template #item-tiers="{ tiers }">
-    {{ formatQuadTiers(tiers) }}
-  </template>
+      {{ formatQuadUsers(users) }}
+    </template>
+    <template #item-tiers="{ tiers }">
+      {{ formatQuadTiers(tiers) }}
+    </template>
 
     <template #item-actions="{ id }">
-                    <div class="flex gap-1.5 justify-end">
-                        <Link :href="route('quadrants.show', id)">
-                            <x-button tag="div" size="xs" outlined>
-                                View
-                            </x-button>
-                        </Link>
-                        <Link :href="route('quadrants.edit', id)">
-                            <x-button color="primary" size="xs" outlined>
-                                Edit
-                            </x-button>
-                        </Link>
-                        <x-button
-                            color="red"
-                            size="xs"
-                            outlined
-                            @click.prevent="
-                                deleteAction.id = id;
-                                showDeleteModal = true;
-                            "
-                        >
-                            Delete
-                        </x-button>
-                    </div>
-                </template>
-
+      <div class="flex gap-1.5 justify-end">
+        <Link :href="route('quadrants.show', id)">
+          <x-button tag="div" size="xs" outlined> View </x-button>
+        </Link>
+        <Link :href="route('quadrants.edit', id)">
+          <x-button color="primary" size="xs" outlined> Edit </x-button>
+        </Link>
+        <x-button
+          color="red"
+          size="xs"
+          outlined
+          @click.prevent="
+            deleteAction.id = id;
+            showDeleteModal = true;
+          "
+        >
+          Delete
+        </x-button>
+      </div>
+    </template>
   </DataTable>
   <Pagination
     :links="{
@@ -177,28 +179,23 @@ const showDeleteModal = ref(false),
     }"
   />
 
-
   <x-modal v-model="showDeleteModal" size="md" show-close backdrop>
-                <template #header> Delete Resource </template>
-                <p>Are you sure you want to delete selected resource?</p>
-                <template #actions>
-                    <div class="text-right space-x-4">
-                        <x-button
-                            size="sm"
-                            ghost
-                            @click.prevent="showDeleteModal = false"
-                        >
-                            Cancel
-                        </x-button>
-                        <x-button
-                            size="sm"
-                            color="error"
-                            :loading="deleteAction.processing"
-                            @click.prevent="onConfirmDelete"
-                        >
-                            Delete
-                        </x-button>
-                    </div>
-                </template>
-            </x-modal>
+    <template #header> Delete Resource </template>
+    <p>Are you sure you want to delete selected resource?</p>
+    <template #actions>
+      <div class="text-right space-x-4">
+        <x-button size="sm" ghost @click.prevent="showDeleteModal = false">
+          Cancel
+        </x-button>
+        <x-button
+          size="sm"
+          color="error"
+          :loading="deleteAction.processing"
+          @click.prevent="onConfirmDelete"
+        >
+          Delete
+        </x-button>
+      </div>
+    </template>
+  </x-modal>
 </template>
