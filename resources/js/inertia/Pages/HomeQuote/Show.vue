@@ -52,7 +52,9 @@ const hasAnyRole = roles => useHasAnyRole(roles);
 const rolesEnum = page.props.rolesEnum;
 const hasRole = role => useHasRole(role);
 
-const countDays = useDaysSinceStale(props.quoteRequest?.stale_at);
+const countDays = computed(() =>
+  useDaysSinceStale(props.quoteRequest?.stale_at),
+);
 const compareDueDate = useCompareDueDate;
 
 const modals = reactive({
@@ -160,6 +162,9 @@ const onLeadStatus = () => {
     }),
     {
       preserveScroll: true,
+      onSuccess: response => {
+        router.reload({ only: ['quoteRequest'] });
+      },
       onError: errors => {
         notification.error({ title: errors.value, position: 'top' });
       },

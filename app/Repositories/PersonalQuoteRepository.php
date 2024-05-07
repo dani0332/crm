@@ -38,12 +38,12 @@ class PersonalQuoteRepository extends BaseRepository
 
             $quoteData['quote_status_id'] = $data['quote_status_id'];
             $quoteData['quote_status_date'] = now();
+            $quote->stale_at = null;
 
             if (! empty($data['notes'])) {
                 $quoteData['notes'] = $data['notes'];
             }
 
-            // $quote->activities()->where('status', 0)->update(['status' => 1]);
             $quote->update($quoteData);
 
             if ($previousStatusId != $data['quote_status_id']) {

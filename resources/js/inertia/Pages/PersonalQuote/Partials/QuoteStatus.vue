@@ -37,6 +37,7 @@ const onLeadStatus = () => {
         notification.error({ title: errors.value, position: 'top' });
       },
       onSuccess: () => {
+        router.reload({ only: ['quote'] });
         notification.success({
           title: 'Quote status is updated',
           position: 'top',
