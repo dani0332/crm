@@ -2,13 +2,22 @@
 
 namespace App\Http\Controllers\V2;
 
+use App\Enums\PermissionsEnum;
+use App\Exports\EmbeddedProductReport;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\EmbeddedProducDocumentRequest;
 use App\Http\Requests\EmbeddedProductRequest;
+use App\Models\EmbeddedProduct;
 use App\Repositories\EmbeddedProductRepository;
+use Illuminate\Http\Request;
 
 class EmbeddedProductController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('permission:'.PermissionsEnum::EMBEDDED_PRODUCT_ADVISOR.'|'.PermissionsEnum::EMBEDDED_PRODUCT_ADMIN);
+    }
+
     /**
      * @return \Inertia\Response|\Inertia\ResponseFactory
      */
@@ -115,5 +124,47 @@ class EmbeddedProductController extends Controller
     public function downloadDocument(EmbeddedProducDocumentRequest $request)
     {
         return EmbeddedProductRepository::downloadCertificate($request->validated());
+    }
+
+    /**
+     * Get the list of reports for embedded products.
+     *
+     * @return \Inertia\Response
+     */
+    public function reportsList()
+    {
+        $data = EmbeddedProductRepository::getData('all');
+
+        return inertia('EmbeddedProducts/ReportsList', [
+            'embeddedProducts' => $data,
+        ]);
+    }
+
+    /**
+     * Report transactions for an embedded product.
+     *
+     * @return \Inertia\Response
+     */
+    public function reportTransactions(EmbeddedProduct $ep, Request $request)
+    {
+        $filters = $request->all();
+        $dataset = EmbeddedProductRepository::getSoldTransactionList($ep, $filters);
+
+        return inertia('EmbeddedProducts/Transactions', [
+            'embeddedProduct' => [
+                'detail' => $ep,
+                'transactions' => $dataset,
+            ],
+        ]);
+    }
+
+    /**
+     * Export a report for the given EmbeddedProduct and request filters.
+     */
+    public function reportExport(EmbeddedProduct $ep, Request $request)
+    {
+        $filters = $request->all();
+
+        return (new EmbeddedProductReport($ep, $filters))->download("Export-{$ep->short_code}-Report");
     }
 }

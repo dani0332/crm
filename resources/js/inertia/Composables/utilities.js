@@ -40,26 +40,39 @@ export const useObjToUrl = obj =>
     .join('&');
 };
 
-export const useGetShowPageRoute = (uuid, quoteTypeId, business_type_of_insurance_id) => {
+export const useGetShowPageRoute = (uuid, quoteTypeId, business_type_of_insurance_id) =>
+{
 
-    let business_route = (business_type_of_insurance_id == 5) ? route('amt.show', uuid) : route('business.show', uuid);
+  let business_route = (business_type_of_insurance_id == 5) ? route('amt.show', uuid) : route('business.show', uuid);
 
-    const routesObj = {
-        1: route('car.show', uuid),
-        2: route('home.show', uuid),
-        3: route('health.show', uuid),
-        4: route('life-quotes-show', uuid),
-        5: business_route,
-        6: route('bike-quotes-show', uuid),
-        7: route('yacht-quotes-show', uuid),
-        8: route('travel.show', uuid),
-        9: route('pet-quotes-show', uuid),
-        10: route('cycle-quotes-show', uuid),
-    };
+  const routesObj = {
+    1: route('car.show', uuid),
+    2: route('home.show', uuid),
+    3: route('health.show', uuid),
+    4: route('life-quotes-show', uuid),
+    5: business_route,
+    6: route('bike-quotes-show', uuid),
+    7: route('yacht-quotes-show', uuid),
+    8: route('travel.show', uuid),
+    9: route('pet-quotes-show', uuid),
+    10: route('cycle-quotes-show', uuid),
+  };
 
-    return routesObj[quoteTypeId];
+  return routesObj[quoteTypeId];
+}
+
+// Function to format the date
+export const formatDate = (dateObject) => {
+  if (dateObject && dateObject.$date && dateObject.$date.$numberLong) {
+    const timestamp = parseInt(dateObject.$date.$numberLong);
+    const formattedDate = new Date(timestamp);
+    const options = { year: 'numeric', month: '2-digit', day: '2-digit' };
+    return formattedDate.toLocaleDateString('en-US', options);
+  }else if(dateObject && dateObject.includes('-')){
+    return dateObject;
   }
-
+  return null;
+}
 export const useGenerateQueryString = filters =>
 {
   const query = {};
@@ -73,13 +86,16 @@ export const useGenerateQueryString = filters =>
   return query;
 };
 
-export const useConvertDate = date => {
-  if (date == null) {
+export const useConvertDate = date =>
+{
+  if (date == null)
+  {
     return null;
   }
 
   const splitedDate = date.split('-');
-  if (splitedDate[0].length === 4) {
+  if (splitedDate[0].length === 4)
+  {
     return date;
   }
 
@@ -90,14 +106,37 @@ export const useConvertDate = date => {
 export const useFormatPrice = (price, thousandSeparator = false) => {
   return (thousandSeparator ? parseFloat(price).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}) : parseFloat(price).toFixed(2));
 }
+
 export const fileUploadErrorMessage = (doc, rejectReason) => {
   let errorMessage = "";
-  if (rejectReason.code == "file-too-large") {
+  if (rejectReason.code == "file-too-large")
+  {
     errorMessage = "File size must be less than " + doc.max_size + " MB for " + doc.text;
-  } else if (rejectReason.code == "file-invalid-type") {
+  } else if (rejectReason.code == "file-invalid-type")
+  {
     errorMessage = "You can only upload a " + doc.accepted_files + " for " + doc.text;
-  } else {
-    errorMessage= "You can only upload a " + doc.accepted_files + " or File size must be less than " + doc.max_size + " MB for " + doc.text;
+  } else
+  {
+    errorMessage = "You can only upload a " + doc.accepted_files + " or File size must be less than " + doc.max_size + " MB for " + doc.text;
   }
   return errorMessage;
+};
+
+export const useCalculateTotalSum = (data, key) =>
+{
+  const totalSum = data.reduce((accumulator, currentItem) =>
+  {
+    // Ensure the current item has the specified key
+    if (key in currentItem)
+    {
+      // Parse the value to a number and add it to the accumulator
+      let value = currentItem[key] != null ? currentItem[key] : 0
+      accumulator += +parseFloat((value.toString()).replace(/,/g, '')) || 0;
+
+    }
+    return accumulator;
+  }, 0);
+
+
+  return totalSum.toFixed(2);
 };

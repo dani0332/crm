@@ -32,14 +32,16 @@ class SendOCBIntroEmailJob implements ShouldQueue
     public $backoff = 300;
     private $quoteUuid;
     private $previousAdvisor;
+    private $triggerSICWorkflow;
 
     /**
      * Create a new job instance.
      */
-    public function __construct($quoteUuid, $previousAdvisor)
+    public function __construct($quoteUuid, $previousAdvisor, $triggerSICWorkflow = false)
     {
         $this->quoteUuid = $quoteUuid;
         $this->previousAdvisor = $previousAdvisor;
+        $this->triggerSICWorkflow = $triggerSICWorkflow;
     }
 
     /**
@@ -54,10 +56,15 @@ class SendOCBIntroEmailJob implements ShouldQueue
                 info('SendOCBIntroEmailJob - Lead not found for uuid: '.$this->quoteUuid);
 
                 return;
+            }
+            if ($lead->sic_flow_enabled) {
+                info('SendOCBIntroEmailJob - SIC work flow is enabled on this lead already : '.$this->quoteUuid);
+
+                return;
             } else {
                 info('SendOCBIntroEmailJob - Lead found for uuid: '.$this->quoteUuid);
 
-                if (($lead->assignment_type = AssignmentTypeEnum::MANUAL_ASSIGNED || $lead->assignment_type == AssignmentTypeEnum::MANUAL_REASSIGNED) && $lead->source == LeadSourceEnum::DUBAI_NOW) {
+                if (($lead->assignment_type == AssignmentTypeEnum::MANUAL_ASSIGNED || $lead->assignment_type == AssignmentTypeEnum::MANUAL_REASSIGNED) && $lead->source == LeadSourceEnum::DUBAI_NOW) {
                     $this->sendDubaiNowEmail($lead);
                 } else {
 
@@ -65,7 +72,7 @@ class SendOCBIntroEmailJob implements ShouldQueue
                     // Retrieve plans with available ratings for the given lead
                     $plans = $httpService->getPlans($lead->uuid, false, false, false);
 
-                    $responseCode = $carEmailService->sendCarOCBIntroEmail($plans, $lead, $tierR, $this->previousAdvisor, $carQuoteService);
+                    $responseCode = $carEmailService->sendCarOCBIntroEmail($plans, $lead, $tierR, $this->previousAdvisor, $carQuoteService, $this->triggerSICWorkflow);
                     if (in_array($responseCode, [200, 201])) {
                         info('SendOCBIntroEmailJob - OCB INTRO Email Sent: '.$responseCode.' Customer Email Address: '.$lead->email.' Quote UuId: '.$this->quoteUuid);
                     } else {

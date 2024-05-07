@@ -57,7 +57,9 @@ class BusinessQuoteService extends BaseService
                 'bqrd.next_followup_date',
                 'bqrd.notes',
                 'bqrd.transapp_code',
+                'bqrd.insly_id',
                 'ls.text as lost_reason',
+                'lu.text as transaction_type_text',
                 'bqr.source',
                 'bqr.policy_number',
                 'bqr.previous_quote_id',
@@ -91,10 +93,19 @@ class BusinessQuoteService extends BaseService
                 'bqr.price_vat_not_applicable',
                 'bqr.price_with_vat',
                 'bqr.company_name as business_company_name',
+                'ent.emirate_of_registration_id',
+                'bqr.price_without_vat',
+                'bqr.vat',
+                'bqr.insurer_quote_number',
+                'bqr.policy_issuance_status_id',
+                'bqr.policy_issuance_status_other',
+                'policy_start_date',
+                'policy_issuance_date',
             )
             ->leftJoin('business_type_of_insurance as bti', 'bti.id', '=', 'bqr.business_type_of_insurance_id')
             ->leftJoin('business_quote_request_detail as bqrd', 'bqrd.business_quote_request_id', '=', 'bqr.id')
             ->leftJoin('lost_reasons as ls', 'ls.id', '=', 'bqrd.lost_reason_id')
+            ->leftJoin('lookups as lu', 'lu.id', '=', 'bqr.transaction_type_id')
             ->leftJoin('users as u', 'u.id', '=', 'bqr.advisor_id')
             ->leftJoin('users as uadv', 'uadv.id', '=', 'bqr.previous_advisor_id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'bqr.quote_status_id')
@@ -242,8 +253,10 @@ class BusinessQuoteService extends BaseService
             $searchProperties = $model->searchProperties;
         }
         // if ($request->ajax()) {
-        if (empty($request->email) && empty($request->code) && empty($request->first_name) &&
-                empty($request->last_name) && empty($request->quote_status_id) && empty($request->mobile_no)) {
+        if (
+            empty($request->email) && empty($request->code) && empty($request->first_name) &&
+            empty($request->last_name) && empty($request->quote_status_id) && empty($request->mobile_no)
+        ) {
             $this->query->where('bqr.quote_status_id', '!=', QuoteStatusEnum::Fake);
         }
         if (isset($request->assigned_to_date_start) && $request->assigned_to_date_start != '') {

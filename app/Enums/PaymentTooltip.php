@@ -74,7 +74,7 @@ final class PaymentTooltip extends Enum
     const FREQUENCY_LIST_QUARTERLY = 'Under this payment term, the total amount is divided into four parts. Payments are expected every three months, which means four times in a year.';
     const FREQUENCY_LIST_SEMI_ANNUAL = 'This payment structure requires the customer to make payments twice a year. It breaks down the total amount into two equal parts, usually made every six months.';
     const FREQUENCY_LIST_SPLIT_PAYMENTS = 'This allows the customer flexibility in settling the total amount. They can pay in multiple, divided amounts or use different payment methods for each portion. It\'s especially useful when coordinating payments from multiple sources or for larger amounts.';
-    const FREQUENCY_LIST_CUSTOM = 'Gain flexibility in settling the total amount. You can make payments in multiple, divided amounts using various payment terms and methods. Adjust the number of payments needed, ranging from 1 to 12, and customize due dates for each payment number to suit customers preferences';
+    const FREQUENCY_LIST_CUSTOM = 'Gain flexibility in settling the total amount. You can make payments in multiple, divided amounts using various payment terms and methods. Adjust the number of payments needed, ranging from 2 to 12, and customize due dates for each payment number to suit customers preferences';
 
     // Credit approval dropdown list
     const CREDIT_APPROVAL_LIST_AVAILABLE = 'This indicates that the customer already has a credit balance with us, perhaps from overpayments or prior arrangements. This credit balance can be used against the current total amount due, thereby not requiring immediate additional payment.';

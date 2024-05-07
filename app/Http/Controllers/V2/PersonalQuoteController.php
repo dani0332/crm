@@ -9,9 +9,11 @@ use App\Http\Requests\PersonalQuotePolicyRequest;
 use App\Http\Requests\PersonalQuoteStatusRequest;
 use App\Http\Requests\QuotesDocumentRequest;
 use App\Repositories\PersonalQuoteRepository;
+use App\Traits\GenericQueriesAllLobs;
 
 class PersonalQuoteController extends Controller
 {
+    use GenericQueriesAllLobs;
     /**
      * @return \Illuminate\Http\RedirectResponse
      */
@@ -25,6 +27,9 @@ class PersonalQuoteController extends Controller
     public function uploadDocument($quoteId, QuotesDocumentRequest $request)
     {
         PersonalQuoteRepository::uploadDocument($quoteId, request()->file('file'), $request->validated());
+
+        // update status policy issued of req fulfilled
+        $this->updateQuoteStatus($request->folder_path, $quoteId);
 
         return back()->with('message', 'File Uploaded');
     }

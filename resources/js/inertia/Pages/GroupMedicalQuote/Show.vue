@@ -1,6 +1,7 @@
 <script setup>
 import QuoteDocuments from '@/inertia/Pages/PersonalQuote/Partials/QuoteDocuments.vue';
-import PaymentTableNew from '../../Components/PaymentTableNew.vue';import MigratePayment from '../../Components/MigratePayment.vue';
+import PaymentTableNew from '../../Components/PaymentTableNew.vue';
+import MigratePayment from '../../Components/MigratePayment.vue';
 
 defineProps({
   quote: Object,
@@ -10,7 +11,6 @@ defineProps({
   typeCode: String,
   lostReasons: Object,
   quoteStatuses: Object,
-  quoteStatusEnum: Object,
   customerAdditionalContacts: Array,
   customerTypeEnum: Object,
   companyTypes: Array,
@@ -22,13 +22,18 @@ defineProps({
   storageUrl: String,
   insuranceProviders: Object,
   vatPercentage: Number,
-  paymentStatusEnum: Object,
   paymentTooltipEnum: Object,
   paymentMethods: Array,
   isNewPaymentStructure: Boolean,
+  isAmlClearedForPayment: Boolean,
   sendUpdateOptions: Array,
   sendUpdateLogs: Array,
   hasPolicyIssuedStatus: Boolean,
+  record: Object,
+  permissions: Object,
+  enums: Object,
+  bookPolicyDetails: Array,
+  payments: Array,
 });
 
 const page = usePage();
@@ -40,6 +45,11 @@ const hasAnyRole = roles => useHasAnyRole(roles);
 const hasRole = role => useHasRole(role);
 const permissionsEnum = page.props.permissionsEnum;
 const rolesEnum = page.props.rolesEnum;
+const quoteStatusEnum = page.props.quoteStatusEnum;
+const paymentStatusEnum = page.props.paymentStatusEnum;
+
+const permissionEnum = page.props.permissionsEnum;
+const canAny = permissions => useCanAny(permissions);
 
 const historyData = ref(null),
   historyLoading = ref(false);
@@ -351,50 +361,19 @@ const linkEntity = () => {
 };
 
 const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
+watch(
+  () => page.props.quote.quote_status_id,
+  (newValue, oldValue) => {
+    if (newValue !== oldValue) {
+      leadStatusForm.leadStatus = newValue;
+    }
+  },
+);
 </script>
 
 <template>
   <div>
     <Head title="Group Medical Lead Detail" />
-
-    <x-modal v-model="modals.duplicate" size="lg" show-close backdrop>
-      <template #header> Duplicate Lead </template>
-      <x-form @submit="onCreateDuplicate" :auto-focus="false">
-        <div class="grid gap-4">
-          <x-select
-            v-model="leadDuplicateForm.lob_team"
-            label="LOBs"
-            :options="
-              allowedDuplicateLOB.map(lob => ({
-                value: lob,
-                label: lob,
-              }))
-            "
-            :rules="[isRequired]"
-            placeholder="Select LOB For Duplication"
-            class="w-full"
-            multiple
-          />
-          <x-select
-            v-model="leadDuplicateForm.lob_team_sub_selection"
-            label="Reason"
-            :rules="[isRequired]"
-            class="w-full"
-            :options="[
-              { value: 'new_enquiry', label: 'New enquiry' },
-              { value: 'record_only', label: 'Record purposes only' },
-            ]"
-          />
-          <x-button
-            color="orange"
-            type="submit"
-            :loading="leadDuplicateForm.processing"
-          >
-            Create Duplicate
-          </x-button>
-        </div>
-      </x-form>
-    </x-modal>
 
     <x-modal v-model="modals.duplicate" size="lg" show-close backdrop>
       <template #header> Duplicate Lead </template>
@@ -466,7 +445,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
             </Link>
           </div>
           <div class="text-sm">
-            <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
+        <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
               <div
                 class="grid sm:grid-cols-2"
                 v-if="hasAnyRole([rolesEnum.Admin, rolesEnum.Engineering])"
@@ -505,12 +484,12 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">EMAIL</dt>
-                <dd>{{ quote.email }}</dd>
+            <dd class="break-words">{{ quote.email }}</dd>
               </div>
 
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">COMPANY NAME</dt>
-                <dd>{{ quote.company_name }}</dd>
+            <dd class="break-words">{{ quote.company_name }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">NEXT FOLLOWUP DATE</dt>
@@ -558,10 +537,10 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
                 <dd>Group Medical</dd>
               </div>
 
-              <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">BRIEF DETAILS</dt>
-                <dd>{{ quote.brief_details }}</dd>
-              </div>
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">BRIEF DETAILS</dt>
+            <dd class="break-words">{{ quote.brief_details }}</dd>
+          </div>
 
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">RENEWAL EXPIRY DATE</dt>
@@ -632,7 +611,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
 
           <x-form @submit="updateProfileDetails" :auto-focus="false">
             <div class="text-sm">
-              <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
+          <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">FIRST NAME</dt>
                   <dd>{{ quote.first_name }}</dd>
@@ -852,7 +831,15 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       "
       modelType="Business"
       :quote="quote"
+      :insly-id="quoteDetails?.insly_id"
       :canAddBatchNumber="canAddBatchNumber"
+      :expanded="sectionExpanded"
+    />
+
+    <PolicyDetail
+      v-if="permissions.isQuoteDocumentEnabled"
+      :record="record"
+      modelType="Business"
       :expanded="sectionExpanded"
     />
 
@@ -861,6 +848,22 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       :quote-documents="quote.documents || []"
       :storageUrl="storageUrl"
       :quote="quote"
+      :insly-id="quoteDetails?.insly_id"
+      :expanded="sectionExpanded"
+    />
+
+    <BookPolicy
+      v-if="
+        canAny([
+          permissionEnum.VIEW_INSLY_BOOK_POLICY,
+          permissionEnum.SEND_INSLY_BOOK_POLICY,
+        ])
+      "
+      :quote="record"
+      quoteType="Business"
+      modelType="Group Medical"
+      :bookPolicyDetails="bookPolicyDetails"
+      :payments="payments"
       :expanded="sectionExpanded"
     />
 
@@ -927,6 +930,14 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
                 class="w-full"
                 :error="leadStatusForm.errors.lostReason"
               />
+          <x-field label="Transaction Type">
+            <x-input
+              type="text"
+              :value="quote.transaction_type_text"
+              class="w-full"
+              :disabled="true"
+            />
+          </x-field>
             </div>
           </div>
           <div class="flex justify-end">
@@ -959,6 +970,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       :quoteId="quote.id"
       :paymentCode = "quote.code"
       :quoteType="page.props.quoteType"
+      :payments="quote.payments"
     />
     <PaymentTableNew
 			v-if="isNewPaymentStructure"
@@ -972,15 +984,16 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
 			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name, tooltip: pm.tool_tip } })"
 			:storageUrl="storageUrl"
       quoteSubType="Group Medical"
+      :isAmlClearedForPayment="isAmlClearedForPayment"
 		/>
-		
+
     <SendUpdates
       v-if="hasPolicyIssuedStatus"
       :reportable="quote"
       :quote_type_id="$page.props.quoteTypeId"
       :options="sendUpdateOptions"
       :data="sendUpdateLogs"
-    />		
+    />
 
     <div class="p-4 rounded shadow mb-6 bg-white">
       <Collapsible :expanded="sectionExpanded">

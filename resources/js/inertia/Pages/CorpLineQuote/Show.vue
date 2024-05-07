@@ -31,12 +31,14 @@ defineProps({
   documentTypes: Object,
   storageUrl: String,
   vatPercentage: Number,
-  paymentStatusEnum: Object,
   paymentTooltipEnum: Object,
   isNewPaymentStructure: Boolean,
+  isAmlClearedForPayment: Boolean,
   sendUpdateOptions: Array,
   sendUpdateLogs: Array,
   hasPolicyIssuedStatus: Boolean,
+  record: Object,
+  bookPolicyDetails: Array,
 });
 
 const page = usePage();
@@ -45,6 +47,9 @@ const hasAnyRole = roles => useHasAnyRole(roles);
 const rolesEnum = page.props.rolesEnum;
 const notification = useNotifications('toast');
 const hasRole = role => useHasRole(role);
+const quoteStatusEnum = page.props.quoteStatusEnum;
+const permissionEnum = page.props.permissionsEnum;
+const canAny = permissions => useCanAny(permissions);
 
 const { copy, copied } = useClipboard();
 
@@ -539,12 +544,20 @@ const linkEntity = () => {
 };
 
 const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
+
+watch(
+  () => page.props.quote.quote_status_id,
+  (newValue, oldValue) => {
+    if (newValue !== oldValue) {
+      leadStatusForm.leadStatus = newValue;
+    }
+  },
+);
 </script>
 
 <template>
   <div>
     <Head title="Business Quote Detail" />
-
     <x-modal v-model="modals.duplicate" size="lg" show-close backdrop>
       <template #header> Duplicate Lead </template>
       <x-form @submit="onCreateDuplicate" :auto-focus="false">
@@ -599,6 +612,15 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
         <template #body>
           <x-divider class="my-4" />
           <div class="flex gap-2 my-4 justify-end">
+            <Link
+              v-if="quote?.insly_id"
+              :href="`/legacy-policy/${quote.insly_id}`"
+              preserve-scroll
+            >
+              <x-button size="sm" color="#ff5e00" tag="div">
+                View Legacy policy
+              </x-button>
+            </Link>
             <x-button
               v-if="isDuplicateAllowed"
               size="sm"
@@ -623,7 +645,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
           </div>
 
           <div class="text-sm">
-            <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
+        <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
               <div
                 class="grid sm:grid-cols-2"
                 v-if="hasAnyRole([rolesEnum.Admin, rolesEnum.Engineering])"
@@ -653,10 +675,6 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
                 <dd>{{ quote.next_followup_date }}</dd>
               </div>
 
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">TRANSAPP CODE</dt>
-            <dd>{{ quote.transapp_code }}</dd>
-          </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">SOURCE</dt>
             <dd>{{ quote.source }}</dd>
@@ -702,10 +720,10 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
             <dd>{{ quote.business_type_of_insurance_id_text }}</dd>
           </div>
 
-              <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">BRIEF DETAILS</dt>
-                <dd>{{ quote.brief_details }}</dd>
-              </div>
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">BRIEF DETAILS</dt>
+            <dd class="break-words">{{ quote.brief_details }}</dd>
+          </div>
 
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">RENEWAL EXPIRY DATE</dt>
@@ -766,7 +784,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
 
           <x-form @submit="updateProfileDetails" :auto-focus="false">
             <div class="text-sm">
-              <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
+          <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">FIRST NAME</dt>
                   <dd>{{ quote.first_name }}</dd>
@@ -781,54 +799,56 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">EMAIL</dt>
-                  <dd>{{ quote.email }}</dd>
-                </div>
-                <div class="grid sm:grid-cols-2">
-                  <dt class="font-medium">COMPANY NAME</dt>
-                  <dd>{{ customerProfileForm.company_name }}</dd>
-                </div>
-                <div class="grid sm:grid-cols-2">
-                  <dt class="font-medium">TRADE LICENSE NO</dt>
-                  <dd>
-                    <x-input
-                      v-model="customerProfileForm.trade_license_no"
-                      placeholder="TRADE LICENSE NO"
-                      type="text"
-                      class="w-full"
-                    />
-                    <x-button
-                      @click.prevent="searchByTradeLicense"
-                      size="xs"
-                      color="primary"
-                      class="mt-1"
-                    >
-                      Search
-                    </x-button>
-                  </dd>
-                </div>
-                <div class="grid sm:grid-cols-2">
-                  <dt class="font-medium">EMIRATES OF REGISTRATION</dt>
-                  <dd>
-                    <ComboBox
-                      v-model="customerProfileForm.emirate_of_registration_id"
-                      :single="true"
-                      placeholder="SELECT EMIRATES OF REGISTRATION"
-                      :options="emiratesOptions"
-                      class="w-full"
-                    />
-                  </dd>
-                </div>
-                <div class="grid sm:grid-cols-2">
-                  <dt class="font-medium">COMPANY ADDRESS</dt>
-                  <dd>
-                    <x-input
-                      v-model="customerProfileForm.company_address"
-                      placeholder="COMPANY ADDRESS"
-                      type="text"
-                      class="w-full"
-                    />
-                  </dd>
-                </div>
+              <dd class="break-words">{{ quote.email }}</dd>
+            </div>
+            <div class="grid sm:grid-cols-2">
+              <dt class="font-medium">COMPANY NAME</dt>
+              <dd class="break-words">
+                {{ customerProfileForm.company_name }}
+              </dd>
+            </div>
+            <div class="grid sm:grid-cols-2">
+              <dt class="font-medium">TRADE LICENSE NO</dt>
+              <dd>
+                <x-input
+                  v-model="customerProfileForm.trade_license_no"
+                  placeholder="TRADE LICENSE NO"
+                  type="text"
+                  class="w-full"
+                />
+                <x-button
+                  @click.prevent="searchByTradeLicense"
+                  size="xs"
+                  color="primary"
+                  class="mt-1"
+                >
+                  Search
+                </x-button>
+              </dd>
+            </div>
+            <div class="grid sm:grid-cols-2">
+              <dt class="font-medium">EMIRATES OF REGISTRATION</dt>
+              <dd>
+                <ComboBox
+                  v-model="customerProfileForm.emirate_of_registration_id"
+                  :single="true"
+                  placeholder="SELECT EMIRATES OF REGISTRATION"
+                  :options="emiratesOptions"
+                  class="w-full"
+                />
+              </dd>
+            </div>
+            <div class="grid sm:grid-cols-2">
+              <dt class="font-medium">COMPANY ADDRESS</dt>
+              <dd>
+                <x-input
+                  v-model="customerProfileForm.company_address"
+                  placeholder="COMPANY ADDRESS"
+                  type="text"
+                  class="w-full"
+                />
+              </dd>
+            </div>
 
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">INDUSTRY TYPE</dt>
@@ -978,6 +998,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       "
       modelType="Business"
       :quote="quote"
+      :insly-id="quoteDetails?.insly_id"
       :canAddBatchNumber="canAddBatchNumber"
       :expanded="sectionExpanded"
     />
@@ -1000,7 +1021,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
                   :options="leadStatusOptions"
                   :disabled="
                     quote.quote_status_id ==
-                    enums.quoteStatusEnum.TransactionApproved
+                    quoteStatusEnum.TransactionApproved
                   "
                   placeholder="Lead Status"
                   class="w-full"
@@ -1013,7 +1034,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
                   class="w-full"
                   :disabled="
                     quote.quote_status_id ==
-                    enums.quoteStatusEnum.TransactionApproved
+                    quoteStatusEnum.TransactionApproved
                   "
                 />
               </div>
@@ -1022,11 +1043,11 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
               <x-input
                 v-if="
                   leadStatusForm.leadStatus ==
-                  enums.quoteStatusEnum.TransactionApproved
+                  quoteStatusEnum.TransactionApproved
                 "
                 :disabled="
                   quote.quote_status_id ==
-                  enums.quoteStatusEnum.TransactionApproved
+                  quoteStatusEnum.TransactionApproved
                 "
                 v-model="leadStatusForm.trans_code"
                 label="TRANSAPP CODE"
@@ -1035,7 +1056,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
                 :error="leadStatusForm.errors.trans_code"
               />
               <x-select
-                v-if="leadStatusForm.leadStatus == enums.quoteStatusEnum.Lost"
+                v-if="leadStatusForm.leadStatus == quoteStatusEnum.Lost"
                 v-model="leadStatusForm.lostReason"
                 label="LOST REASON"
                 :options="
@@ -1048,6 +1069,14 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
                 class="w-full"
                 :error="leadStatusForm.errors.lostReason"
               />
+          <x-field label="Transaction Type">
+            <x-input
+              type="text"
+              :value="quote.transaction_type_text"
+              class="w-full"
+              :disabled="true"
+            />
+          </x-field>
             </div>
           </div>
           <div class="flex justify-end">
@@ -1059,7 +1088,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
               @click.prevent="onLeadStatus"
               :disabled="
                 quote.quote_status_id ==
-                enums.quoteStatusEnum.TransactionApproved
+                quoteStatusEnum.TransactionApproved
               "
             >
               Change Status
@@ -1073,6 +1102,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       :insuranceProviders="insuranceProvidersAll"
       :quote="quote"
       :quoteType="page.props.quoteType"
+      :vatPrice="vatPercentage"
       :expanded="sectionExpanded"
     />
 
@@ -1082,6 +1112,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       :quoteId="quote.id"
       :paymentCode = "quote.code"
       :quoteType="page.props.quoteType"
+      :payments="payments"
     />
     <PaymentTableNew
 			v-if="isNewPaymentStructure"
@@ -1090,12 +1121,14 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
             :proformaPayment="payments.find(item => item.payment_methods_code === 'PPR')"
 			:paymentDocument="documentTypes && documentTypes.filter && documentTypes.filter(item => item.code === 'CLPD' || item.code === 'CLPDR' || item.code === 'CLDPDR')"
 			:quoteRequest="quoteRequest"
-			:paymentStatusEnum="paymentStatusEnum"
+			:paymentStatusEnum="page.props.paymentStatusEnum"
 			:paymentTooltipEnum="paymentTooltipEnum"
 			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name, tooltip: pm.tool_tip } })"
 			:storageUrl="storageUrl"
       quoteSubType="Corpline"
+      :isAmlClearedForPayment="isAmlClearedForPayment"
 		/>
+
     <PaymentTable
       v-else
       :payments="payments"
@@ -1107,11 +1140,34 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       :quote="quote"
     />
 
+    <PolicyDetail
+      v-if="permissions.isQuoteDocumentEnabled"
+      :record="record"
+      modelType="Business"
+      :expanded="sectionExpanded"
+    />
+
     <QuoteDocuments
       :document-types="documentTypes"
       :quote-documents="page.props.quoteDocuments || []"
       :storageUrl="storageUrl"
       :quote="quote"
+      :insly-id="quoteDetails?.insly_id"
+      :expanded="sectionExpanded"
+    />
+
+    <BookPolicy
+      v-if="
+        canAny([
+          permissionEnum.VIEW_INSLY_BOOK_POLICY,
+          permissionEnum.SEND_INSLY_BOOK_POLICY,
+        ])
+      "
+      :quote="record"
+      quoteType="Business"
+      modelType="Corpline"
+      :bookPolicyDetails="bookPolicyDetails"
+      :payments="payments"
       :expanded="sectionExpanded"
     />
 

@@ -21,14 +21,18 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\BookPolicyRequest;
 use App\Http\Requests\CustomerProfileRequest;
 use App\Http\Requests\DuplicateLobRequest;
+use App\Http\Requests\GeneratePaymentLinkRequest;
 use App\Http\Requests\LeadAssignRequest;
 use App\Http\Requests\MigratePaymentsRequest;
 use App\Http\Requests\PlanDetailsRequest;
 use App\Http\Requests\SendBookPolicyRequest;
 use App\Http\Requests\SplitPaymentApproveRequest;
 use App\Http\Requests\SplitPaymentUpdateRequest;
+use App\Http\Requests\StorePaymentRequest;
 use App\Http\Requests\UpdateLastYearPolicyRequest;
+use App\Http\Requests\UpdatePaymentRequest;
 use App\Http\Requests\UpdateSelectedPlanRequest;
+use App\Http\Requests\UpdateTotalPriceRequest;
 use App\Jobs\SendBookPolicyDocumentsJob;
 use App\Models\Customer;
 use App\Models\Entity;
@@ -39,6 +43,7 @@ use App\Repositories\PaymentRepository;
 use App\Services\ActivitiesService;
 use App\Services\CentralService;
 use App\Services\SageApiService;
+use App\Services\SplitPaymentService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -221,9 +226,8 @@ class CentralController extends Controller
             return back()->with('message', 'Payment record not found');
         }
         $payment->update($paymentInformation);
-
         $quote = $this->getQuoteObject($validatedData['model_type'], $validatedData['quote_id']);
-        $quote->update(['policy_booking_date' => Carbon::parse($validatedData['booking_date'])->format('Y-m-d')]);
+        $quote->update(['policy_booking_date' => Carbon::parse($validatedData['booking_date'])]);
 
         return redirect()->back()->with('success', 'Booking Status has been updated.');
     }
@@ -231,11 +235,9 @@ class CentralController extends Controller
     public function sendBookingPolicy(SendBookPolicyRequest $sendBookPolicyRequest)
     {
         $request = (object) $sendBookPolicyRequest->validated();
-
         $quote = $this->getQuoteObject($request->model_type, $request->quote_id);
 
         if ($request->send_policy_type == 'customer') {
-
             // dispath job to send email
             dispatch(new SendBookPolicyDocumentsJob($request));
 
@@ -246,7 +248,6 @@ class CentralController extends Controller
             return response()->json(['message' => 'Policy sent to customer'], 200);
         }
         if ($request->send_policy_type == 'sage') {
-
             $quoteTypeId = app(ActivitiesService::class)->getQuoteTypeId(strtolower($request->model_type));
             $payment = Payment::where('code', $quote['code'])->first();
             $paymentSplits = PaymentSplits::where('code', $quote['code'])->get();
@@ -263,7 +264,6 @@ class CentralController extends Controller
             }
 
             if ($quote->quote_status_id != QuoteStatusEnum::PolicySentToCustomer) {
-
                 // dispath job to send email
                 dispatch(new SendBookPolicyDocumentsJob($request));
             }
@@ -318,4 +318,40 @@ class CentralController extends Controller
 
         return back()->with('success', $successMessage);
     }
+
+    // Update total price
+    public function updateTotalPrice(UpdateTotalPriceRequest $request)
+    {
+        $successMessage = PaymentRepository::updateTotalPrice($request);
+
+        return $successMessage;
+    }
+    // Store new payment
+    public function storeNewPayment(StorePaymentRequest $request)
+    {
+        $response = PaymentRepository::createNewPayment($request);
+        if ($response['status'] == 'success') {
+            return redirect()->back()->with('success', $response['message']);
+        } else {
+            return redirect()->back()->with('error', $response['message']);
+        }
+    }
+
+    // Update payment
+    public function updateNewPayment(UpdatePaymentRequest $request)
+    {
+        $response = PaymentRepository::updateNewPayment($request);
+        if ($response['status'] == 'success') {
+            return redirect()->back()->with('success', $response['message']);
+        } else {
+            return redirect()->back()->with('error', $response['message']);
+        }
+    }
+
+    // Generate payment link for split payment
+    public function generatePaymentLink(GeneratePaymentLinkRequest $request)
+    {
+        return (new SplitPaymentService())->generateSplitPaymentLink($request);
+    }
+
 }

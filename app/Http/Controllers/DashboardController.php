@@ -70,6 +70,10 @@ class DashboardController extends Controller
         $totalLeadsReceivedEcommerce = count($todaysLeads->where('is_ecommerce', 1));
         $totalUnAssignedLeads = $this->dashboardService->getTotalUnAssignedLeads($filters);
         $totalUnAssignedLeadsReceived = count($totalUnAssignedLeads);
+        $totalUnAssignedOnlySICLeads = $this->dashboardService->getTotalUnAssignedOnlySICLeads($filters);
+        $totalUnAssignedOnlySICLeadsReceived = count($totalUnAssignedOnlySICLeads);
+        $totalUnAssignedOnlyPaidSICLeads = $this->dashboardService->getTotalUnAssignedOnlySICLeads($filters, true);
+        $totalUnAssignedOnlyPaidSICLeadsReceived = count($totalUnAssignedOnlyPaidSICLeads);
         $totalUnAssignedLeadsReceivedEcommerce = count($totalUnAssignedLeads->where('is_ecommerce', 1));
         $totalUnAssignedRevivalLeads = count($totalUnAssignedLeads->where('source', LeadSourceEnum::REVIVAL));
 
@@ -79,9 +83,40 @@ class DashboardController extends Controller
         $assignedLeadsBySource = $this->dashboardService->getAssignedLeadsCountBySource($filters);
         $advisorLeadsAssignedData = $this->dashboardService->getAdvisorLeadAssignedData($filters);
 
-        return view('dashboard.main_dashboard', compact(['totalLeadsReceived', 'totalLeadsReceivedEcommerce', 'totalUnAssignedLeadsReceived', 'totalUnAssignedLeadsReceivedEcommerce',
-            'teams', 'carAdvisors', 'teamWiseLeadsAssignedAverage', 'totalUnAssignedRevivalLeads', 'leadsCountByTier', 'unAssignedLeadsByTier',
-            'revivalLeadsCount', 'advisorLeadsAssignedData', 'assignedLeadsBySource', ]));
+        $leadReceivedSummaryBySource = CarQuote::query()
+            ->select(
+                DB::raw('count(*) as leadSourceCount'),
+                'car_quote_request.source as source',
+            )
+            ->whereBetween('created_at', [now()->startOfDay(), now()->endOfDay()])
+            ->whereNotIn('car_quote_request.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
+            ->whereNotIn('car_quote_request.source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD])
+            ->groupBy('source')->get();
+
+        $leadReceivedSummaryBySource = $leadReceivedSummaryBySource->map(function ($item) use ($totalLeadsReceived) {
+            $item->percentage = number_format((float) (($item->leadSourceCount / $totalLeadsReceived) * 100), 2, '.', '').'%';
+
+            return $item;
+        });
+
+        return inertia('Dashboard/AccumulativeDashboard', [
+            'totalLeadsReceived' => $totalLeadsReceived,
+            'totalLeadsReceivedEcommerce' => $totalLeadsReceivedEcommerce,
+            'totalUnAssignedLeadsReceived' => $totalUnAssignedLeadsReceived,
+            'totalUnAssignedOnlySICLeadsReceived' => $totalUnAssignedOnlySICLeadsReceived,
+            'totalUnAssignedOnlyPaidSICLeadsReceived' => $totalUnAssignedOnlyPaidSICLeadsReceived,
+            'totalUnAssignedLeadsReceivedEcommerce' => $totalUnAssignedLeadsReceivedEcommerce,
+            'teams' => $teams,
+            'carAdvisors' => $carAdvisors,
+            'teamWiseLeadsAssignedAverage' => $teamWiseLeadsAssignedAverage,
+            'totalUnAssignedRevivalLeads' => $totalUnAssignedRevivalLeads,
+            'leadsCountByTier' => $leadsCountByTier,
+            'unAssignedLeadsByTier' => $unAssignedLeadsByTier,
+            'revivalLeadsCount' => $revivalLeadsCount,
+            'advisorLeadsAssignedData' => $advisorLeadsAssignedData,
+            'assignedLeadsBySource' => $assignedLeadsBySource,
+            'leadReceivedSummaryBySource' => $leadReceivedSummaryBySource,
+        ]);
     }
 
     public function getRecentDailyStats(Request $request)
@@ -107,6 +142,10 @@ class DashboardController extends Controller
         $totalLeadsReceivedEcommerce = count($todaysLeads->where('is_ecommerce', 1));
         $totalUnAssignedLeads = $this->dashboardService->getTotalUnAssignedLeads($filters);
         $totalUnAssignedLeadsReceived = count($totalUnAssignedLeads);
+        $totalUnAssignedOnlySICLeads = $this->dashboardService->getTotalUnAssignedOnlySICLeads($filters);
+        $totalUnAssignedOnlySICLeadsReceived = count($totalUnAssignedOnlySICLeads);
+        $totalUnAssignedOnlyPaidSICLeads = $this->dashboardService->getTotalUnAssignedOnlySICLeads($filters, true);
+        $totalUnAssignedOnlyPaidSICLeadsReceived = count($totalUnAssignedOnlyPaidSICLeads);
         $totalUnAssignedLeadsReceivedEcommerce = count($totalUnAssignedLeads->where('is_ecommerce', 1));
         $totalUnAssignedRevivalLeads = count($totalUnAssignedLeads->where('source', LeadSourceEnum::REVIVAL));
         $leadsCountByTier = $this->dashboardService->getLeadsCountByTier($filters);
@@ -114,9 +153,12 @@ class DashboardController extends Controller
         $unAssignedLeadsByTier = $this->dashboardService->getUnAssignedLeadsCountByTier($filters);
         $advisorLeadsAssignedData = $this->dashboardService->getAdvisorLeadAssignedData($filters);
 
-        return ['totalLeadsReceived' => $totalLeadsReceived, 'totalLeadsReceivedEcommerce' => $totalLeadsReceivedEcommerce, 'totalUnAssignedLeadsReceived' => $totalUnAssignedLeadsReceived,
+        return [
+            'totalLeadsReceived' => $totalLeadsReceived, 'totalLeadsReceivedEcommerce' => $totalLeadsReceivedEcommerce, 'totalUnAssignedLeadsReceived' => $totalUnAssignedLeadsReceived,
+            'totalUnAssignedOnlySICLeadsReceived' => $totalUnAssignedOnlySICLeadsReceived, 'totalUnAssignedOnlyPaidSICLeadsReceived' => $totalUnAssignedOnlyPaidSICLeadsReceived,
             'totalUnAssignedLeadsReceivedEcommerce' => $totalUnAssignedLeadsReceivedEcommerce, 'teamWiseLeadsAssignedAverage' => $teamWiseLeadsAssignedAverage,
-            'totalUnAssignedRevivalLeads' => $totalUnAssignedRevivalLeads, 'leadsCountByTier' => $leadsCountByTier, 'revivalLeadsCount' => $revivalLeadsCount, 'advisorLeadsAssignedData' => $advisorLeadsAssignedData, 'unAssignedLeadsByTier' => $unAssignedLeadsByTier];
+            'totalUnAssignedRevivalLeads' => $totalUnAssignedRevivalLeads, 'leadsCountByTier' => $leadsCountByTier, 'revivalLeadsCount' => $revivalLeadsCount, 'advisorLeadsAssignedData' => $advisorLeadsAssignedData, 'unAssignedLeadsByTier' => $unAssignedLeadsByTier,
+        ];
     }
 
     public function renderTplDashboard(Request $request)
@@ -130,7 +172,11 @@ class DashboardController extends Controller
         });
         $tiers = $this->tierService->getTPLTiers();
 
-        return view('dashboard.tpl_dashboard', compact('tplDashboardStats', 'teams', 'tiers'));
+        return inertia('Dashboard/TPLConversion', [
+            'tplDashboardStats' => $tplDashboardStats,
+            'teams' => $teams,
+            'tiers' => $tiers,
+        ]);
     }
 
     public function getTPLDashboardStats(Request $request): array
@@ -156,6 +202,7 @@ class DashboardController extends Controller
                 DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id = '.QuoteStatusEnum::IMRenewal.' THEN 1 ELSE 0 END)  and car_quote_request.source != "'.LeadSourceEnum::IMCRM.'" as afia_renewals_count'),
                 DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in ('.QuoteStatusEnum::Duplicate.','.QuoteStatusEnum::Fake.') and car_quote_request.source = "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END) as manual_created_bad_leads'),
             )
+            ->filterBySegment()
             ->join('users', 'users.id', 'car_quote_request.advisor_id')
             ->join('quote_batches', 'quote_batches.id', 'car_quote_request.quote_batch_id')
             ->join('tiers', 'tiers.id', 'car_quote_request.tier_id')
@@ -234,13 +281,13 @@ class DashboardController extends Controller
     private function applyFilter($query, $column, $value, $searchType)
     {
         switch ($searchType) {
-            case IMCRMSearchTypesEnum::EQUAL_SEARCH :
+            case IMCRMSearchTypesEnum::EQUAL_SEARCH:
                 $query = $query->where($column, $value);
                 break;
-            case IMCRMSearchTypesEnum::LIKE_SEARCH :
+            case IMCRMSearchTypesEnum::LIKE_SEARCH:
                 $query = $query->where($column, 'like', '%'.$value.'%');
                 break;
-            case IMCRMSearchTypesEnum::MULTI_SEARCH :
+            case IMCRMSearchTypesEnum::MULTI_SEARCH:
                 $query = $query->whereIn($column, $value);
                 break;
             case IMCRMSearchTypesEnum::NOT_EQUAL:
@@ -281,6 +328,7 @@ class DashboardController extends Controller
                 DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id = '.QuoteStatusEnum::IMRenewal.' THEN 1 ELSE 0 END)  and car_quote_request.source != "'.LeadSourceEnum::IMCRM.'" as afia_renewals_count'),
                 DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in ('.QuoteStatusEnum::Duplicate.','.QuoteStatusEnum::Fake.') and car_quote_request.source = "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END) as manual_created_bad_leads'),
             )
+            ->filterBySegment()
             ->join('users', 'users.id', 'car_quote_request.advisor_id')
             ->join('quote_batches', 'quote_batches.id', 'car_quote_request.quote_batch_id')
             ->join('tiers', 'tiers.id', 'car_quote_request.tier_id')
@@ -374,7 +422,7 @@ class DashboardController extends Controller
 
     public function renderComprehensiveDashboard(Request $request)
     {
-        // $carUsers = $this->getUsersByProductName(quoteTypeCode::Car);
+
         $tiers = Tier::where('can_handle_tpl', 0)->orderBy('name', 'asc')->where('name', '!=', TiersEnum::TIER_R)->where('is_active', 1)->get();
         $comprehensiveDashboardStats = $this->getComprehensiveDashboardStats($request, $tiers);
         info('inside renderComprehensiveDashboard comp stats are : '.json_encode($comprehensiveDashboardStats));
@@ -384,7 +432,11 @@ class DashboardController extends Controller
             return in_array($item->id, $commonTeams);
         });
 
-        return view('dashboard.comprehensive_dashboard', compact('tiers', 'comprehensiveDashboardStats', 'teams'));
+        return inertia('Dashboard/ComperhensiveConversion', [
+            'comprehensiveDashboardStats' => $comprehensiveDashboardStats,
+            'teams' => $teams,
+            'tiers' => $tiers,
+        ]);
     }
 
     public function conversionStats($quoteType)
@@ -392,7 +444,11 @@ class DashboardController extends Controller
         $statsArray = $this->getWeeklyStats($quoteType);
         $headingArray = $this->getWeeklyHeading();
 
-        return view('dashboard.'.$quoteType.'-conversion', compact('statsArray', 'headingArray'));
+        return inertia('Dashboard/'.ucwords($quoteType).'Conversion', [
+            'statsArray' => $statsArray,
+            'headingArray' => $headingArray,
+            'qouteType' => $quoteType,
+        ]);
     }
 
     public function getWeeklyStats($type): array
@@ -424,16 +480,15 @@ class DashboardController extends Controller
     public function getWeeklyHeading(): array
     {
         return [
-            '1WeekHeadingDate' => $this->dashboardService->getWeekHeadingDate(0),
-            '2WeekHeadingDate' => $this->dashboardService->getWeekHeadingDate(1),
-            '3WeekHeadingDate' => $this->dashboardService->getWeekHeadingDate(2),
-            '4WeekHeadingDate' => $this->dashboardService->getWeekHeadingDate(3),
+            '1Week' => $this->dashboardService->getWeekHeadingDate(0),
+            '2Week' => $this->dashboardService->getWeekHeadingDate(1),
+            '3Week' => $this->dashboardService->getWeekHeadingDate(2),
+            '4Week' => $this->dashboardService->getWeekHeadingDate(3),
         ];
     }
 
     public function getTeamAdvisorConversionStats(Request $request)
     {
-
         $dateFormat = config('constants.DB_DATE_FORMAT_MATCH');
         $startDate = null;
         $endDate = null;

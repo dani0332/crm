@@ -2,6 +2,8 @@
 
 namespace App\Factories;
 
+use App\Enums\PaymentMethodsEnum;
+use App\Enums\SagePaymentMethodsEnum;
 use App\Models\QuoteRequestEntityMapping;
 
 class SagePayloadFactory
@@ -256,7 +258,7 @@ class SagePayloadFactory
                     'TaxGroup' => 'VAT',
                     'TaxClass1' => 5,
                     'TaxAmount1' => 0.000,
-                    'DocumentTotalBeforeTax' => $request->premiumWithoutTax,
+                    'DocumentTotalBeforeTax' => $request->premiumWithTax,
                     'DocumentTotalIncludingTax' => $request->premiumWithTax,
                     'PostingDate' => $request->bookingDate,
                     'Terms' => 'SPLIT'.count($splitPayments),
@@ -266,7 +268,7 @@ class SagePayloadFactory
                             'TaxClass1' => 5,
                             'RevenueAccount' => '55020',
                             'ExtendedAmountWithTIP' => $request->premiumWithTax,
-                            'ExtendedAmountWithoutTIP' => $request->premiumWithoutTax,
+                            'ExtendedAmountWithoutTIP' => $request->premiumWithTax,
                         ],
                     ],
 
@@ -283,8 +285,8 @@ class SagePayloadFactory
                     'TaxGroup' => 'VAT',
                     'TaxClass1' => $taxClass,
                     'TaxAmount1' => $request->vatOnCommission,
-                    'DocumentTotalBeforeTax' => $request->commission,
-                    'DocumentTotalIncludingTax' => $request->commissionIncludingVat,
+                    'DocumentTotalBeforeTax' => $request->commissionIncludingVat > 0 ? $request->commissionIncludingVat : $request->commissionWithOutVat,
+                    'DocumentTotalIncludingTax' => $request->commissionIncludingVat > 0 ? $request->commissionIncludingVat : $request->commissionWithOutVat,
                     'PostingDate' => $request->bookingDate,
                     'InvoiceDetails' => [
                         [
@@ -292,8 +294,8 @@ class SagePayloadFactory
                             'TaxClass1' => $taxClass,
                             'TaxAmount1' => $request->vatOnCommission,
                             'RevenueAccount' => '60010',
-                            'ExtendedAmountWithTIP' => $request->commissionIncludingVat,
-                            'ExtendedAmountWithoutTIP' => $request->commission,
+                            'ExtendedAmountWithTIP' => $request->commissionIncludingVat > 0 ? $request->commissionIncludingVat : $request->commissionWithOutVat,
+                            'ExtendedAmountWithoutTIP' => $request->commissionIncludingVat > 0 ? $request->commissionIncludingVat : $request->commissionWithOutVat,
                         ],
                     ],
                     'InvoicePaymentSchedules' => [
@@ -380,7 +382,7 @@ class SagePayloadFactory
                     'CustomerNumber' => $request->sage_customer_number,
                     'BankReceiptAmount' => floatval($request->collection_amount),
                     'CheckReceiptNumber' => '123456',
-                    'PaymentCode' => 'BT',
+                    'PaymentCode' => self::sagePaymentCodeMapping($request->sage_payment_code),
                     'ReceiptTransactionType' => 'Prepayment',
                     'AppliedReceiptsAdjustments' => [
                         [
@@ -655,21 +657,44 @@ class SagePayloadFactory
     private static function createAppliedReceiptsAdjustments($quote, $sage_customer_number, $payment, $splitPayments)
     {
         $data = [];
-        $data['BatchType'] = 'CA';
-        $data['CustomerNumber'] = $sage_customer_number;
-        $data['DocumentNumber'] = $payment->insurer_tax_number;
-        $data['ReceiptTransactionType'] = 'Receipt';
-        $data['CustomerReceiptAmount'] = floatval($quote->price_with_vat);
 
         foreach ($splitPayments as $key => $item) {
-            $temp['BatchType'] = 'CA';
-            $temp['CustomerNumber'] = $sage_customer_number;
-            $temp['DocumentNumber'] = $item->sage_reciept_id;
-            $temp['ReceiptTransactionType'] = 'Receipt';
-            $temp['CustomerReceiptAmount'] = -$item->payment_amount;
-            $data[] = $temp;
+
+            $receiptData['BatchType'] = 'CA';
+            $receiptData['CustomerNumber'] = $sage_customer_number;
+            $receiptData['DocumentNumber'] = $payment->insurer_tax_number;
+            $receiptData['PaymentNumber'] = $key + 1;
+            $receiptData['ReceiptTransactionType'] = 'Receipt';
+            $receiptData['CustomerReceiptAmount'] = floatval($item->payment_amount);
+            $data[] = $receiptData;
+
+            $prePaymentData['BatchType'] = 'CA';
+            $prePaymentData['CustomerNumber'] = $sage_customer_number;
+            $prePaymentData['DocumentNumber'] = $item->sage_reciept_id;
+            $prePaymentData['PaymentNumber'] = 1;
+            $prePaymentData['ReceiptTransactionType'] = 'Receipt';
+            $prePaymentData['CustomerReceiptAmount'] = -$item->payment_amount;
+            $data[] = $prePaymentData;
         }
 
         return $data;
+    }
+
+    // Payment code mapping
+    private static function sagePaymentCodeMapping($paymentMethod)
+    {
+        $sagePaymentCodeMappingArray = [
+            PaymentMethodsEnum::BankTransfer => SagePaymentMethodsEnum::SAGE_BANK_TRANSFER,
+            PaymentMethodsEnum::Cash => SagePaymentMethodsEnum::SAGE_CASH,
+            PaymentMethodsEnum::Cheque => SagePaymentMethodsEnum::SAGE_CHEQUE,
+            PaymentMethodsEnum::PostDatedCheque => SagePaymentMethodsEnum::SAGE_POST_DATED_CHEQUE,
+            PaymentMethodsEnum::CreditCard => SagePaymentMethodsEnum::SAGE_CREDIT_CARD,
+            PaymentMethodsEnum::InsurerPayment => SagePaymentMethodsEnum::SAGE_INSURER_PAYMENT,
+        ];
+        if (array_key_exists($paymentMethod, $sagePaymentCodeMappingArray)) {
+            return $sagePaymentCodeMappingArray[$paymentMethod];
+        } else {
+            return SagePaymentMethodsEnum::SAGE_BANK_TRANSFER;
+        }
     }
 }
