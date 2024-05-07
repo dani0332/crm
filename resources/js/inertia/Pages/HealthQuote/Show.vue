@@ -55,6 +55,7 @@ defineProps({
   storageUrl: String,
   isNewPaymentStructure: Boolean,
   isAmlClearedForPayment: Boolean,
+  clientInquiryLogs: Array,
 });
 
 const isManualPlansCount = ref(0);

@@ -91,6 +91,7 @@ defineProps({
   paymentTooltipEnum: Object,
   isNewPaymentStructure: Boolean,
   isAmlClearedForPayment: Boolean,
+  clientInquiryLogs: Array,
 });
 
 
