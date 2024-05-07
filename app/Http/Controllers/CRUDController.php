@@ -10,6 +10,7 @@ use App\Enums\CarPlanType;
 use App\Enums\CarTeamType;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\GenericRequestEnum;
+use App\Enums\HealthPlanTypeEnum;
 use App\Enums\HealthTeamType;
 use App\Enums\HomePossessionType;
 use App\Enums\LeadSourceEnum;
@@ -591,6 +592,11 @@ class CRUDController extends Controller
         $tiers = $this->lookupService->getTierR();
 
         $access = $this->carQuoteService->updatedAccessAgainstPaymentStatus($paymentEntityModel, $record);
+
+        if (in_array($this->genericModel->modelType, [quoteTypeCode::Health, quoteTypeCode::Car])) {
+            $clientInquiryLogs = $this->crudService->getInquiryLogs($this->genericModel->modelType, $record->uuid) ?? [];
+        }
+
         $vatPercentage = ApplicationStorage::where('key_name', ApplicationStorageEnums::VAT_VALUE)->first()->value ?? 0;
 
         $isNewPaymentStructure = app(SplitPaymentService::class)->isNewPaymentStructure($payments);
@@ -701,7 +707,7 @@ class CRUDController extends Controller
                 'paymentEntityModel', 'payments', 'paymentMethods', 'isQuoteDocumentEnabled', 'quoteDocuments', 'displaySendPolicyButton', 'customerAdditionalContacts', 'lostApproveReasons', 'lostRejectReasons', 'allowQuoteLogAction', 'carLostChangeStatus',
                 'carMakeText', 'carModelText', 'advisor', 'tiers', 'daysAfterCapturedPayment', 'access', 'carPlanFeaturesCodeEnum', 'carPlanExclusionsCodeEnum', 'documentTypes', 'planURL', 'storageUrl', 'kyoEndPoint',
                 'carPlanTypeEnum', 'UBORelations', 'UBOsDetails', 'emirates', 'customerTypeEnum', 'memberRelations', 'membersDetails', 'industryType', 'nationalities', 'paymentTooltipEnum',
-                'isCommercialVehicles', 'carInsuranceProviders', 'isNewPaymentStructure', 'insuranceProvidersByQuoteType', 'vatPercentage', 'commercialRules', 'isAmlClearedForPayment',
+                'isCommercialVehicles', 'carInsuranceProviders', 'isNewPaymentStructure', 'insuranceProvidersByQuoteType', 'vatPercentage', 'commercialRules', 'isAmlClearedForPayment', 'clientInquiryLogs',
             ]));
         }
 
@@ -940,6 +946,7 @@ class CRUDController extends Controller
                 'activities' => $activities,
                 'customerAdditionalContacts' => $customerAdditionalContacts,
                 'insuranceProviders' => $insuranceProviders,
+                'planTypes' => HealthPlanTypeEnum::withLabels(),
                 'lostReasons' => $lostReasons,
                 'permissions' => [
                     'pa' => auth()->user()->hasRole(RolesEnum::PA),
@@ -974,6 +981,7 @@ class CRUDController extends Controller
                 'UBORelations' => $uboRelations,
                 'isNewPaymentStructure' => $isNewPaymentStructure,
                 'isAmlClearedForPayment' => $isAmlClearedForPayment,
+                'clientInquiryLogs' => $clientInquiryLogs,
             ]);
         } else {
             return view('shared.show', compact([
@@ -1828,11 +1836,6 @@ class CRUDController extends Controller
             'quote_status_id' => QuoteStatusEnum::NewLead,
             'is_renewal_tier_email_sent' => 0,
         ]);
-    }
-
-    public function cancelPayment(Request $request)
-    {
-        return $this->crudService->cancelPayment($request);
     }
 
     public function toggleEmbeddedProduct(Request $request)

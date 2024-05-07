@@ -94,6 +94,7 @@ defineProps({
   vatPercentage: Number,
   commercialRules: Object,
   isAmlClearedForPayment: Boolean,
+  clientInquiryLogs: Array,
 });
 
 const page = usePage();
@@ -2877,6 +2878,7 @@ const isPlanDetailEnabled = computed(() => {
             isRenewal,
             isDisabled,
             puaPremium,
+            puaType
           }"
         >
           <p>{{ providerName }}</p>
@@ -2907,7 +2909,7 @@ const isPlanDetailEnabled = computed(() => {
             </x-tag>
 
             <x-tag
-              v-if="puaPremium && puaPremium != null"
+              v-if="puaPremium && puaPremium != null && puaType"
               size="xs"
               class="mt-0.5 text-[10px] text-white"
               style="background-color: #e00000"
@@ -2922,7 +2924,7 @@ const isPlanDetailEnabled = computed(() => {
                     with the underwriter to obtain their approval.
                   </span>
                 </template>
-                PUA
+                {{ puaType }}
               </x-tooltip>
             </x-tag>
           </div>
