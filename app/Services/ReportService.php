@@ -282,7 +282,6 @@ class ReportService extends BaseService
             ->groupBy('users.id', 'users.name')
             ->orderBy('car_quote_request.created_at', 'desc');
 
-
         return $query->simplePaginate(5)->withQueryString();
 
     }
