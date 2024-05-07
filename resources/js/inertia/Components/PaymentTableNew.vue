@@ -108,6 +108,7 @@ if (props.quoteType === 'Health') {
     ? props.quoteRequest.premium
     : props.quoteRequest.price_with_vat;
 }
+
 const totalPrice = ref(initialAmount.value); // Initial total price
 const totalAmount = ref(initialAmount.value); // Initial total price
 
@@ -1122,7 +1123,10 @@ const editPaymentModal = (payment,split_payment_id,sr_no,capture_approval) => {
       isFieldReadonly.value = false;
     }
   }
-
+  if (paymentMethodsForm.status == 'view'){
+    totalPrice.value = payment.total_price;
+    totalAmount.value = payment.total_price-payment.discount_value;
+    }
   if(
     (payment.discount_type==='family_employee_discount' || payment.discount_type==='employee_discount')
     && payment.discount_value>0
