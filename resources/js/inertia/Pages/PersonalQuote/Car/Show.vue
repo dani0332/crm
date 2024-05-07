@@ -3372,7 +3372,8 @@ const getDetailPageRoute = (
       v-if="!isNewPaymentStructure"
       :quoteId="record.id"
       :paymentCode = "record.code"
-      :quoteType="quoteType"      
+      :quoteType="quoteType"
+      :payments="payments"
     />    
 
     <PaymentTableNew 
