@@ -66,7 +66,7 @@ enum QuoteTypes: string
 
     public static function getIdFromValue(string $value): ?int
     {
-        return self::getId(match ($value) {
+        return self::getId(match (ucfirst($value)) {
             'Car' => QuoteTypes::CAR,
             'Home' => QuoteTypes::HOME,
             'Health' => QuoteTypes::HEALTH,
