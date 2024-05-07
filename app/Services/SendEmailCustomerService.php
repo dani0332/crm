@@ -637,7 +637,7 @@ class SendEmailCustomerService extends BaseService
         try {
             $appEnv = config('constants.APP_ENV');
 
-            info('sendNonAdvisorIntroEmail  , emailTemplateId: '.$emailTemplateId. ' ' .$emailData->carQuoteId);
+            info('sendNonAdvisorIntroEmail  , emailTemplateId: '.$emailTemplateId.' '.$emailData->carQuoteId);
             $tag = $appEnv == EnvEnum::PRODUCTION ? $tag : $appEnv.'-'.$tag;
 
             $headers = [
@@ -685,7 +685,7 @@ class SendEmailCustomerService extends BaseService
                 ],
                 'attachment' => isset($attachments) ? $attachments : null,
             ], JSON_UNESCAPED_SLASHES);
-            info('sendNonAdvisorIntroEmail ---- Request about to send : '. $emailData->carQuoteId);
+            info('sendNonAdvisorIntroEmail ---- Request about to send : '.$emailData->carQuoteId);
             $response = Http::withHeaders($headers)
                 ->timeout(config('constants.LMS_EMAILS_TIMEOUT'))
                 ->retry(3, 10000)
@@ -693,7 +693,7 @@ class SendEmailCustomerService extends BaseService
 
             info('sendNonAdvisorIntroEmail ---- Request Sent '.$emailData->carQuoteId);
             $responseCode = $response->status();
-            info('sendNonAdvisorIntroEmail ---- Received Code : '.$responseCode . ' '.$emailData->carQuoteId);
+            info('sendNonAdvisorIntroEmail ---- Received Code : '.$responseCode.' '.$emailData->carQuoteId);
             info('sendNonAdvisorIntroEmail ---- response object : '.json_encode($response->object()));
         } catch (Exception $ex) {
             $responseCode = $ex->getCode();
