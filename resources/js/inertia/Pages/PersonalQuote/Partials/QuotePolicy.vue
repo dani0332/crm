@@ -3,7 +3,6 @@ import {useCan} from "../../../Composables/can";
 
 defineProps({
   quote: Object,
-  quoteStatusEnum: Object,
   can: Object,
   expanded: {
     type: Boolean,
