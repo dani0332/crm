@@ -297,9 +297,6 @@ class ReportService extends BaseService
                     ->whereIn('teams.id', $teamIds);
             });
         }
-
-
-
         return $query->simplePaginate(5)->withQueryString();
 
     }

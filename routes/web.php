@@ -312,8 +312,6 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
 //        ->middleware('check_lead_report_access')
         ->name('authorized-payment-summary');
 
-
-
     Route::get('/dashboard/{quoteType}-conversion', [DashboardController::class, 'conversionStats']);
     Route::get('failed-jobs', [FailedJobsController::class, 'index'])->name('failed-jobs.index');
 
