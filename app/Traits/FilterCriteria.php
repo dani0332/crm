@@ -12,8 +12,8 @@ trait FilterCriteria
     {
        
         $filters = $forTotalLeadsCount  ? request()->merge([
-            'created_at_start' => request()-> created_at_start ?? date(config('constants.DATE_FORMAT_ONLY'), strtotime('-30 days')),
-            'created_at_end' => request()-> created_at_end ?? now()->format(config('constants.DATE_FORMAT_ONLY')),
+            'created_at_start' =>  date(config('constants.DATE_FORMAT_ONLY'), strtotime('-30 days')),
+            'created_at_end' => now()->format(config('constants.DATE_FORMAT_ONLY')),
         ])->all() : request()->all();
 
        

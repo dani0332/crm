@@ -5,6 +5,8 @@ namespace App\Repositories;
 use App\Enums\QuoteTypes;
 use App\Facades\Capi;
 use App\Models\HomeQuote;
+use App\Enums\quoteTypeCode;
+use App\Enums\QuoteStatusEnum;
 
 class HomeQuoteRepository extends BaseRepository
 {
@@ -30,8 +32,7 @@ class HomeQuoteRepository extends BaseRepository
             'insuranceProvider',
         ])
             ->filter(! $forExport, $forTotalLeadsCount)
-            ->withFakeLeadCriteria($forTotalLeadsCount)
-            ->orderBy('created_at', 'desc');
+            ->withFakeLeadCriteria($forTotalLeadsCount)->orderBy('created_at', 'desc');
 
         if ($forTotalLeadsCount) {
             return $query->count();
