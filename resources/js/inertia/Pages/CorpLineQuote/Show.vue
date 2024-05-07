@@ -1,6 +1,6 @@
 <script setup>
 import QuoteDocuments from '@/inertia/Pages/PersonalQuote/Partials/QuoteDocuments.vue';
-import PaymentTableNew from '../../Components/PaymentTableNew.vue'; 
+import PaymentTableNew from '../../Components/PaymentTableNew.vue';
 import MigratePayment from '../../Components/MigratePayment.vue';
 
 defineProps({
@@ -643,6 +643,10 @@ const linkEntity = () => {
             </div>
             <div>{{ quote.code }}</div>
           </div>
+            <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">AML STATUS</dt>
+                <dd>{{ quote?.aml_status_text ?? '' }}</dd>
+            </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">CUSTOMER TYPE</dt>
             <dd>{{ quote.customer_type }}</dd>
@@ -1040,7 +1044,7 @@ const linkEntity = () => {
       :quote="quote"
       :quoteType="page.props.quoteType"
       :vatPrice="vatPercentage"
-    />  
+    />
 
     <!-- Payments -->
     <MigratePayment
@@ -1048,9 +1052,9 @@ const linkEntity = () => {
       :quoteId="quote.id"
       :paymentCode = "quote.code"
       :quoteType="page.props.quoteType"
-      :payments="payments"    
-    />    
-    <PaymentTableNew 
+      :payments="payments"
+    />
+    <PaymentTableNew
 			v-if="isNewPaymentStructure"
 			:quoteType="page.props.quoteType"
 			:payments="payments"
@@ -1215,8 +1219,8 @@ const linkEntity = () => {
           </div>
         </template>
       </x-modal>
-    </div> 
-    
+    </div>
+
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div>
         <h3 class="font-semibold text-primary-800 text-lg">Lead History</h3>

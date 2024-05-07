@@ -456,6 +456,10 @@ const linkEntity = () => {
             <dt class="font-medium">MOBILE NUMBER</dt>
             <dd>{{ quote.mobile_no }}</dd>
           </div>
+            <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">AML STATUS</dt>
+                <dd>{{ quote?.aml_status?.text ?? '' }}</dd>
+            </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">EMAIL</dt>
             <dd class="break-words">{{ quote.email }}</dd>
@@ -879,9 +883,9 @@ const linkEntity = () => {
       :quoteId="quote.id"
       :paymentCode = "quote.code"
       :quoteType="page.props.quoteType"
-      :payments="quote.payments"      
-    />    
-    <PaymentTableNew 
+      :payments="quote.payments"
+    />
+    <PaymentTableNew
 			v-if="isNewPaymentStructure"
 			:quoteType="page.props.quoteType"
 			:payments="quote.payments"
