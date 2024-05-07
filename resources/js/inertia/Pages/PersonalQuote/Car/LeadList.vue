@@ -23,6 +23,7 @@ const hasRole = role => useHasRole(role);
 const rolesEnum = page.props.rolesEnum;
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
+const quoteSegments = page.props.quoteSegments;
 const createLead = reactive({
   modal: false,
   type: '',
@@ -107,7 +108,7 @@ const advisorOptions = computed(() => {
   }));
 
   options.push({
-    value: '',
+    value: '-1',
     label: 'UnAssigned',
   });
 
@@ -158,11 +159,31 @@ const batchOptions = computed(() => {
   }));
 });
 
+function formatString(input) {
+  const lowercaseString = input.toLowerCase();
+  const words = lowercaseString.replace(/_/g, ' ').split(' ');
+  for (let i = 0; i < words.length; i++) {
+    words[i] = words[i][0].toUpperCase() + words[i].slice(1);
+  }
+  const formattedString = words.join(' ');
+  return formattedString;
+}
 const paymentStatusOptions = computed(() => {
-  return page.props.dropdownSource.payment_status_id.map(status => ({
-    value: status.id,
-    label: status.text,
-  }));
+  if ( hasRole(rolesEnum.BetaUser) ) { //FOR NEW PAYMENTS SECTION
+    return page.props.dropdownSource.payment_status_id.
+      filter(status => status.text !== "STARTED" && status.text !== "FAILED" 
+      && status.text !== "DRAFT" && status.text !== "CAPTURED" && status.text !== "PARTIAL CAPTURED").
+      sort((a, b) => a.text.localeCompare(b.text)).
+        map(status => ({
+        value: status.id,
+        label: formatString(status.text),
+      }));
+  } else {  
+    return page.props.dropdownSource.payment_status_id.map(status => ({
+      value: status.id,
+      label: status.text,
+    }));  
+  }
 });
 
 const filters = reactive({
@@ -190,7 +211,8 @@ const filters = reactive({
   created_at_end: page.props.createdAtEnd || '',
   page: 1,
   paid_at_start: '',
-  paid_at_end: ''
+  paid_at_end: '',
+  segment_filter: 'all',
 });
 
 const loader = reactive({
@@ -544,6 +566,14 @@ onMounted(() => {
           v-if="can(permissionsEnum.EXPORT_PLAN_DETAIL)"
           v-model="filters.paid_at_end"
           label="Paid Date End"
+        />
+
+        <x-select
+          v-if="can(permissionsEnum.SEGMENT_FILTER)"
+          v-model="filters.segment_filter"
+          label="Segment"
+          placeholder="Select Segment"
+          :options="quoteSegments"
         />
       </div>
       <div class="flex justify-between gap-3 mb-4 mt-1">

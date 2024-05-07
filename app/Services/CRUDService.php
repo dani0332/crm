@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\GenericRequestEnum;
 use App\Enums\HealthTeamType;
 use App\Enums\Kyc;
+use App\Enums\LeadSourceEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
@@ -17,12 +18,9 @@ use App\Jobs\CarLost\CarLostStatusRejected;
 use App\Jobs\IntroEmailJob;
 use App\Jobs\SyncSIBContactJob;
 use App\Models\CarLostQuoteLog;
-use App\Models\EmbeddedProductOption;
-use App\Models\EmbeddedTransaction;
 use App\Models\GenericModel;
 use App\Models\PaymentAction;
 use App\Models\QuoteStatusLog;
-use App\Models\QuoteType;
 use App\Models\User;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\TeamHierarchyTrait;
@@ -348,7 +346,8 @@ class CRUDService extends BaseService
 
             // ========= assign renewal batch to HEALTH LOB leads upon transaction approved =========
 
-            if (strtolower($request->modelType) == strtolower(quoteTypeCode::Health) && $request->leadStatus == QuoteStatusEnum::TransactionApproved) {
+            if (strtolower($request->modelType) == strtolower(quoteTypeCode::Health) && $request->leadStatus == QuoteStatusEnum::TransactionApproved
+                && $entity->source == LeadSourceEnum::IMCRM) {
                 $this->healthQuoteService->assignRenewalBatch($entity);
                 $this->updatePaymentStatus($entity);
             }
@@ -577,47 +576,28 @@ class CRUDService extends BaseService
         return $response;
     }
 
-    public function cancelPayment($request)
+    public function capturePayment($quoteModel, $paymentSplit, $quoteTypeId, $amount)
     {
-        $embeddedProductOptionsIds = EmbeddedProductOption::where('embedded_product_id', $request->embedded_id)->pluck('id');
-        $type = QuoteType::where('code', $request->modelType)->first();
-
-        $embededTransaction = EmbeddedTransaction::with(['payments'])->where('quote_request_id', $request->quote_id)
-            ->where('quote_type_id', $type->id)
-            ->where('is_selected', true)
-            ->whereIn('product_id', $embeddedProductOptionsIds)
-            ->get();
-
-        if ($embededTransaction->isNotEmpty()) {
-            if (! empty($embededTransaction[0]['payments'][0])) {
-                $transaction = $embededTransaction[0];
-
-                $payment = $transaction['payments'][0];
-                $maxAmount = $payment->premium_captured - $payment->premium_refunded;
-
-                if ($maxAmount >= $request->amount) {
-                    PaymentAction::create([
-                        'payment_code' => $transaction->code,
+        if ($paymentSplit) {
+            if ($amount > 0) {
+                PaymentAction::updateOrInsert(
+                    ['payment_code' => $paymentSplit->code, 'sr_no' => $paymentSplit->sr_no],
+                    [
                         'is_fulfilled' => 0,
-                        'action_type' => 'REFUND',
-                        'reason' => $request->reason,
-                        'amount' => $request->amount,
+                        'action_type' => 'CAPTURE',
+                        'amount' => $amount,
                         'created_by' => auth()->user()->email,
                         'is_manager_approved' => 1,
-
                     ]);
-                    $data = [
-                        'uuid' => $request->uuid,
-                        'type_id' => $type->id,
-                        'code' => $transaction->code,
+                $data = [
+                    'uuid' => $quoteModel->uuid,
+                    'type_id' => $quoteTypeId,
+                    'code' => $paymentSplit->code.'-'.$paymentSplit->sr_no,
+                ];
+                $processResponse = $this->processCapturePayment($data);
 
-                    ];
-                    $processResponse = $this->processCancelPayment($data);
+                return response($processResponse, 200);
 
-                    return response($processResponse, 200);
-                } else {
-                    return response(['Cancel amount should not exceeded from transaction amount'], 403);
-                }
             } else {
                 return response(['Payment not exist'], 403);
             }
@@ -625,8 +605,7 @@ class CRUDService extends BaseService
 
         return response(['Transaction does not exist'], 403);
     }
-
-    public function processCancelPayment($data)
+    public function processCapturePayment($data)
     {
         $planData = [
             'quoteUID' => $data['uuid'],
@@ -638,7 +617,7 @@ class CRUDService extends BaseService
             ],
         ];
 
-        $response = Marshall::request('/payment/checkout/cancel', 'post', $planData);
+        $response = Marshall::request('/payment/checkout/capture', 'post', $planData);
 
         return $response;
     }

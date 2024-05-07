@@ -60,6 +60,17 @@ class TravelQuote extends Model implements AuditableContract
     {
         return $this->belongsTo(TravelPlan::class, 'plan_id');
     }
+
+    public function parent()
+    {
+        return $this->belongsTo(TravelQuote::class, 'parent_id');
+    }
+
+    public function child()
+    {
+        return $this->hasOne(TravelQuote::class, 'parent_id');
+    }
+
     public function quotePlan()
     {
         return $this->hasMany(TravelQuotePlan::class, 'travel_quote_request_id');

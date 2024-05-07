@@ -7,6 +7,7 @@ use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Facades\Capi;
+use App\Models\CycleQuote;
 use App\Models\PersonalQuote;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
@@ -23,7 +24,7 @@ class CycleQuoteRepository extends BaseRepository
     /**
      * create new personal quote
      *
-     * @param    $quoteTypeCode
+     * @param  $quoteTypeCode
      * @return mixed
      */
     public function fetchCreate($data)
@@ -100,7 +101,10 @@ class CycleQuoteRepository extends BaseRepository
 
             $quote->update($quoteData);
 
-            $quote->cycleQuote->update(Arr::only($data, ['cycle_make', 'cycle_model', 'year_of_manufacture_id', 'accessories', 'has_accident', 'has_good_condition']));
+            $quote->cycleQuote()->updateOrCreate(
+                ['personal_quote_id' => $quote->id],
+                Arr::only($data, (new CycleQuote())->allowedColumns())
+            );
 
             return $quote;
         });
@@ -136,8 +140,17 @@ class CycleQuoteRepository extends BaseRepository
                 'quoteDetail.lostReason',
                 'quoteDetail.previousAdvisor',
                 'transactionType',
+                'insuranceProvider',
                 'payments' => function ($q) {
-                    $q->with(['paymentStatus', 'personalPlan', 'paymentMethod', 'paymentStatusLogs', 'insuranceProvider']);
+                    $q->with([
+                        'paymentSplits' => function ($query) {
+                            $query->orderBy('sr_no', 'asc');
+                        },
+                        'paymentStatus', 'personalPlan', 'paymentMethod', 'paymentStatusLogs', 'insuranceProvider',
+                        'paymentSplits.paymentStatus',
+                        'paymentSplits.paymentMethod',
+                        'paymentSplits.documents',
+                    ]);
                 },
                 'customer',
                 'createdBy',

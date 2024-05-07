@@ -27,6 +27,7 @@ defineProps({
   quoteStatusEnum: Object,
   embeddedProducts: Array,
   canAddBatchNumber: Boolean,
+  vatPercentage: Number,
 });
 
 const page = usePage();
@@ -42,6 +43,15 @@ const permissionsEnum = page.props.permissionsEnum;
     <div class="flex justify-between items-center flex-wrap gap-2 mb-5">
       <h2 class="text-xl font-semibold">Jetski Detail</h2>
       <div class="flex gap-2">
+        <Link
+          v-if="quote.quote_detail?.insly_id"
+          :href="`/legacy-policy/${quote.quote_detail?.insly_id}`"
+          preserve-scroll
+        >
+          <x-button size="sm" color="#ff5e00" tag="div">
+            View Legacy policy
+          </x-button>
+        </Link>
         <Link
           v-if="can(permissionsEnum.JetskiQuotesEdit)"
           :href="route('jetski-quotes-edit', quote.uuid)"
@@ -274,10 +284,11 @@ const permissionsEnum = page.props.permissionsEnum;
     />
 
     <PlanDetails
-      :insuranceProviders="insuranceProviders"
-      :quote="quote"
-      :quoteType="quoteType"
-    />
+    :insuranceProviders="insuranceProviders"
+    :quote="quote"
+    :quoteType="quoteType"
+    :vatPrice="vatPercentage"
+     />
 
     <EmbeddedProducts
       :data="embeddedProducts"

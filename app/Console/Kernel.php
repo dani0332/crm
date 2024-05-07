@@ -19,6 +19,8 @@ class Kernel extends ConsoleKernel
      */
     protected $commands = [
         Commands\AddBatchNumber::class,
+        Commands\Dtt::class,
+        Commands\DttFollowUp::class,
         Commands\TierAssignment::class,
         Commands\UpdateUserStatus::class,
         Commands\QuoteAllocation::class,
@@ -26,6 +28,7 @@ class Kernel extends ConsoleKernel
         Commands\ResetLeadAllocationCounts::class,
         Commands\UpdateHealthStatus::class,
         Commands\QuoteSyncUpdateCommand::class,
+        Commands\PaymentOverdueStatus::class,
     ];
 
     /**
@@ -37,6 +40,8 @@ class Kernel extends ConsoleKernel
     {
         $schedule
             ->command('UpdateUserStatus:cron')->everyMinute()->onOneServer()->withoutOverlapping(1);
+
+        $schedule->command('PaymentOverdueStatus:cron')->everyMinute()->onOneServer()->withoutOverlapping(1);
 
         /*$schedule->job(new UnconSubmissionReminder)
             ->tuesdays()
@@ -62,7 +67,7 @@ class Kernel extends ConsoleKernel
         $schedule
             ->command('LeadsReassignment:cron')->everyFiveMinutes()->onOneServer()->withoutOverlapping(1);
 
-        $schedule->command('ResetLeadAllocationCounts:cron')->timezone('Asia/Dubai')->dailyAt('23:59')->onOneServer()->withoutOverlapping(1);
+        $schedule->command('ResetLeadAllocationCounts:cron')->timezone('Asia/Dubai')->dailyAt('23:55')->onOneServer()->withoutOverlapping();
 
         $schedule->command('QuoteSyncUpdate:cron')->everyFiveMinutes()->onOneServer()->withoutOverlapping(1);
         $schedule->command(UpdateManualOffline::class)
@@ -75,6 +80,11 @@ class Kernel extends ConsoleKernel
             ->onOneServer()
             ->withoutOverlapping(1);
 
+        $schedule->command('Dtt')->timezone('Asia/Dubai')->everyThirtyMinutes()->onOneServer()->withoutOverlapping(1);
+        // disable for now , will enable after testing at stage
+        // $schedule->command('Dtt:followup')->timezone('Asia/Dubai')->daily()->onOneServer()->withoutOverlapping(1)->at('11:45');
+        // for testting on stage
+        $schedule->command('Dtt:followup')->timezone('Asia/Dubai')->everyTenMinutes()->onOneServer()->withoutOverlapping(1);
     }
 
     /**

@@ -7,7 +7,7 @@ const props = defineProps({
   modelValue: { type: Boolean, default: false },
   quoteType: Object,
   quoteDetails: Object,
-  entityDetails: Object,
+    entityDetails: {type: Object},
   nationalities: Object,
   membersDetails: Object,
   uboDetails: Object,
@@ -17,6 +17,11 @@ const props = defineProps({
   quoteAmlStatus: Number,
   customerDetails: Object,
 });
+
+
+if (props.entityDetails.entity === undefined) {
+    props.entityDetails.entity = {company_name:null};
+}
 
 const loader = ref({
   search: false,
@@ -127,13 +132,11 @@ const searchByTradeLicense = () => {
     .then(res => {
       if (res.data.status) {
         let response = res.data.response;
-
         entityFound.value = true;
         tradeLicenseEntity.entity_id = response.id;
         tradeLicenseEntity.trade_license = response.trade_license_no;
         tradeLicenseEntity.company_name = response.company_name;
         tradeLicenseEntity.company_address = response.company_address;
-
         notification.success({
           title: res.data.message,
           position: 'top',
@@ -153,6 +156,11 @@ const searchByTradeLicense = () => {
     .finally(() => (loader.value.search = false));
 };
 
+const componentKey = ref(0);
+
+
+
+
 const linkEntity = () => {
   loader.value.link = true;
   let entityDetails = {
@@ -164,6 +172,31 @@ const linkEntity = () => {
     .post(route('link-entity-details'), entityDetails)
     .then(res => {
       entityFound.value = false;
+       const response =  res.data.response;
+      insuredFormDetails.company_name = response.company_name;
+        insuredFormDetails.company_address = response.company_address;
+        insuredFormDetails.industry_type_code = response.industry_type_code;
+       props.entityDetails.entity.company_name = res.data.response.company_name;
+        props.entityDetails.entity.email = response.email;
+        props.entityDetails.entity.registered_address = response.registered_address;
+        props.entityDetails.entity.communication_address = response.communication_address;
+        props.entityDetails.entity.legal_structure = response.legal_structure;
+        props.entityDetails.entity.industry_type_code = response.industry_type_code;
+        props.entityDetails.entity.country_of_corporation = response.country_of_corporation;
+        props.entityDetails.entity.mobile_no = response.mobile_no;
+        props.entityDetails.entity.website = response.website;
+        props.entityDetails.entity.id_type = response.id_type;
+        props.entityDetails.entity.id_number = response.id_number;
+        props.entityDetails.entity.id_issuance_date = response.id_issuance_date;
+        props.entityDetails.entity.id_expiry_date = response.id_expiry_date;
+        props.entityDetails.entity.issuance_place = response.issuance_place;
+        props.entityDetails.entity.id_issuance_authority = response.id_issuance_authority;
+        props.entityDetails.entity.pep = response.pep;
+        props.entityDetails.entity.financial_sanctions = response.financial_sanctions;
+        props.entityDetails.entity.dual_nationality = response.dual_nationality;
+        props.entityDetails.entity.quote_member = response.quote_member;
+        componentKey.value += 1
+
       notification.success({
         title: res.data.message,
         position: 'top',
@@ -182,6 +215,7 @@ const show = ref(true);
 </script>
 
 <template>
+
   <AppModal
     :showClose="true"
     :showHeader="true"
@@ -327,6 +361,8 @@ const show = ref(true);
           :ubo-relation="props.lookups.ubo_relation"
           :entity-details="props.entityDetails"
           :industry-type="props.lookups.company_type"
+          :key="componentKey"
+
         />
       </x-form>
     </template>
@@ -475,6 +511,7 @@ const show = ref(true);
         :residentialStatus="props.lookups.resident_status"
         :companyPosition="props.lookups.company_position"
         :modeOfDelivery="props.lookups.mode_of_delivery"
+
       />
     </x-form>
   </x-modal>
