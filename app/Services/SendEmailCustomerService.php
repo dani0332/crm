@@ -535,7 +535,7 @@ class SendEmailCustomerService extends BaseService
 
             $response = Http::withHeaders($headers)
                 ->timeout(config('constants.LMS_EMAILS_TIMEOUT'))
-                ->retry(3, 1000)
+                ->retry(3, 10000)
                 ->post($this->url, $body);
 
             info('sendLMSIntroEmail ---- Request Sent');
@@ -630,7 +630,7 @@ class SendEmailCustomerService extends BaseService
 
             $response = Http::withHeaders($headers)
                 ->timeout(config('constants.LMS_EMAILS_TIMEOUT'))
-                ->retry(3, 1000)
+                ->retry(3, 10000)
                 ->post($this->url, $body);
 
             info('sendNonAdvisorIntroEmail ---- Request Sent');
