@@ -186,6 +186,7 @@ class CarQuoteService extends BaseService
                 'cqr.price_vat_applicable',
                 'cqr.price_vat_not_applicable',
                 'cqr.price_with_vat',
+                'cpdip.text as insurer_name',
             )
             ->leftJoin('nationality as n', 'n.id', '=', 'cqr.nationality_id')
             ->leftJoin('car_quote_request_detail as cqrd', 'cqrd.car_quote_request_id', '=', 'cqr.id')
@@ -202,6 +203,7 @@ class CarQuoteService extends BaseService
             ->leftJoin('users as pra', 'pra.id', '=', 'cqr.previous_advisor_id')
             ->leftJoin('car_plan as cp', 'cp.id', '=', 'cqr.plan_id')
             ->leftJoin('insurance_provider as cpip', 'cpip.id', '=', 'cp.provider_id')
+            ->leftJoin('insurance_provider as cpdip', 'cpdip.id', '=', 'cqr.insurance_provider_id')
             //->leftJoin('car_plan as prefill_plan', 'prefill_plan.id', '=', 'cqr.prefill_plan_id')
             //->leftJoin('insurance_provider as ppip', 'ppip.id', '=', 'prefill_plan.provider_id')
             ->leftJoin('payment_status as ps', 'ps.id', '=', 'cqr.payment_status_id')
