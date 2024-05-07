@@ -76,9 +76,12 @@ class UpdateStaleLeads extends Command
                     $personalQuote->whereIn('quote_type_id', [QuoteTypeId::Yacht, QuoteTypeId::Pet, QuoteTypeId::Cycle]);
                 })->chunkById(1000, function ($quoteDetails) {
                     foreach ($quoteDetails as $quoteDetail) {
-                        $quoteDetail->update([
-                            'stale_at' => now(),
-                        ]);
+                        if(!isset($quoteDetail->stale_at)){
+                            $quoteDetail->update([
+                                'stale_at' => now(),
+                            ]);
+                        }
+               
                     }
                 });
             info('------------------- Update Stale Leads Command - Updated - '.now().' : '.$eligibleQuoteType.' -------------------');
