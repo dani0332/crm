@@ -34,7 +34,7 @@ class QuoteDocumentService extends BaseService
 
     public function isEnabled($quoteModelType)
     {
-        $enabledLOBs = [quoteTypeCode::Car, quoteTypeCode::Health, quoteTypeCode::Travel, quoteTypeCode::Life, quoteTypeCode::Home, quoteTypeCode::Pet, quoteTypeCode::Bike, quoteTypeCode::Cycle, quoteTypeCode::Yacht];
+        $enabledLOBs = [quoteTypeCode::Car, quoteTypeCode::Health, quoteTypeCode::Travel, quoteTypeCode::Life, quoteTypeCode::Home, quoteTypeCode::Pet, quoteTypeCode::Bike, quoteTypeCode::Cycle, quoteTypeCode::Yacht, quoteTypeCode::GroupMedical, quoteTypeCode::Business];
 
         return in_array($quoteModelType, $enabledLOBs);
     }
@@ -135,7 +135,7 @@ class QuoteDocumentService extends BaseService
                     return false;
                 }
             } else {
-                $originalName = $fileOrBase64->getClientOriginalName();
+                $originalName = sanitizeFileName($fileOrBase64->getClientOriginalName());
 
                 // Generate a unique filename
                 $docName = preg_replace('/\s+/', '', uniqid().'_'.$originalName);
@@ -214,9 +214,13 @@ class QuoteDocumentService extends BaseService
         return $displaySendPolicyButton;
     }
 
-    public function getQuoteDocuments($quoteType, $recordId)
+    public function getQuoteDocuments($quoteType, $recordId, $documentTypeCodes = null)
     {
         $quote = $this->getQuoteObject($quoteType, $recordId);
+
+        if ($quote && $documentTypeCodes) {
+            return $quote->documents()->whereIn('document_type_code', $documentTypeCodes)->with('createdBy:id,name,email')->latest()->get();
+        }
 
         return $quote ? $quote->documents()->with('createdBy:id,name,email')->latest()->get() : [];
     }

@@ -6,6 +6,7 @@ use App\Enums\ApplicationStorageEnums;
 use App\Enums\GenericRequestEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentStatusEnum;
+use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
@@ -16,6 +17,8 @@ use App\Models\CarQuote;
 use App\Models\HealthQuote;
 use App\Models\PersonalQuote;
 use App\Models\PersonalQuoteDetail;
+use App\Models\QuoteStatusLog;
+use App\Models\TravelQuote;
 use App\Repositories\PersonalQuoteRepository;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
@@ -257,6 +260,7 @@ class CentralService
     public function updateSelectedPlan($quoteType, $uuid, $data)
     {
         $response = [];
+        $requestData = $data;
 
         //switch for quote type
         switch (ucfirst($quoteType)) {
@@ -272,10 +276,10 @@ class CentralService
                 $response = Ken::request($endpoint, 'post', $data);
                 info('car plan update response: '.json_encode($response));
 
-                if (isset($response['planProcessValue']['totalPremium'])) {
-                    $quote = CarQuote::where('uuid', $uuid)->first();
-                    $this->updateQuotePayment($quote, $response['planProcessValue']['totalPremium']);
-                }
+                // if (isset($response['planProcessValue']['totalPremium'])) {
+                //     $quote = CarQuote::where('uuid', $uuid)->first();
+                //     $this->updateQuotePayment($quote, $response['planProcessValue']['totalPremium']);
+                // }
                 break;
             case QuoteTypes::TRAVEL->value:
                 $endpoint = '/process-travel-quote-plan';
@@ -288,8 +292,17 @@ class CentralService
                     ],
                 ];
 
+                if (isset($requestData->selected_plan_id)) {
+                    $data['plans'][] = ['id' => intval($requestData->selected_plan_id), 'addonOptionIds' => []];
+                }
+
                 $response = Ken::request($endpoint, 'post', $data);
                 info('travel plan update response: '.json_encode($response));
+
+                // if (isset($response['planProcessValue'])) {
+                //     $quote = TravelQuote::where('uuid', $uuid)->first();
+                //     $this->updateQuotePayment($quote, collect($response['planProcessValue'])->sum('totalPremium'));
+                // }
                 break;
             case QuoteTypes::HEALTH->value:
                 $endpoint = '/api/v1-process-booking';
@@ -304,14 +317,40 @@ class CentralService
 
                 $response = Capi::request($endpoint, 'post', $data);
                 info('health plan update response: '.json_encode($response));
-                if (isset($response->totalPremium)) {
-                    $quote = HealthQuote::where('uuid', $uuid)->first();
-                    $this->updateQuotePayment($quote, $response->totalPremium);
-                }
+                // if (isset($response->totalPremium)) {
+                //     $quote = HealthQuote::where('uuid', $uuid)->first();
+                //     $this->updateQuotePayment($quote, $response->totalPremium);
+                // }
                 break;
         }
 
         return $response;
+    }
+    //check if aml cleared from log
+    public function amlClearedFromLog($quoteId, $quoteType)
+    {
+        $quoteType = strtolower($quoteType);
+        $quoteTypeId = app(ActivitiesService::class)->getQuoteTypeId($quoteType);
+
+        $isAmlClearedForPayment = false;
+        $quoteStatusLog = QuoteStatusLog::where('quote_request_id', $quoteId)
+            ->where('quote_type_id', $quoteTypeId)
+            ->where(function ($q) {
+                $q->where('current_quote_status_id', QuoteStatusEnum::AMLScreeningCleared);
+                $q->orWhere('previous_quote_status_id', QuoteStatusEnum::AMLScreeningCleared);
+            })->orderBy('id', 'desc')->first();
+        if ($quoteStatusLog) {
+            $amlScreenFailed = QuoteStatusLog::where('quote_request_id', $quoteId)
+                ->where('quote_type_id', $quoteTypeId)
+                ->where('current_quote_status_id', QuoteStatusEnum::AMLScreeningFailed)
+                ->where('id', '>', $quoteStatusLog->id)
+                ->first();
+            if (! $amlScreenFailed) {
+                $isAmlClearedForPayment = true;
+            }
+        }
+
+        return $isAmlClearedForPayment;
     }
 
     public function getQuoteWiseProviderPlans($quoteType, $providerId): object

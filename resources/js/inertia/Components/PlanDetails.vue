@@ -57,6 +57,12 @@ const rules = {
       return vatApplicable ? true : 'Price (VAT Applicable) is required';
     }
   },
+  isNegative: v => (Number(v)) < 0 ? 'Amount must be a positive number' : true,
+  lengthCheck: v => {
+    const pattern = /^\d{1,7}(\.\d{1,2})?$/;
+    if(v == null || v == '') return true;
+    return pattern.test(v) || 'Invalid number. Max 7 digits and 2 decimals allowed.';
+  }
 };
 
 const submitPlanDetailsForm = isValid => {
@@ -114,7 +120,6 @@ const updatePriceWithVat = () => {
   if (props.quoteType == quoteTypeCodeEnum.Business) {
     //let priceVatApp = parseFloat( (planDetailsForm.price_vat_applicable ! ?? 0.00) );
     //let priceVatNotApp = parseFloat(planDetailsForm.price_vat_not_applicable ?? 0.00);
-    console.log('TOTAL', priceVatApp, priceVatNotApp);
     let totalPrice = parseFloat(
       priceVatApp + priceVatNotApp + (priceVatApp / 100) * props.vatPrice,
     );
@@ -136,12 +141,15 @@ const updatePriceWithVat = () => {
 };
 
 const hasRole = role => useHasRole(role);
+const can = permission => useCan(permission);
+
 const rolesEnum = page.props.rolesEnum;
+const permissionEnum = page.props.permissionsEnum;
 
 </script>
 
 <template>
-  <div class="p-4 rounded shadow mb-6 bg-white">
+  <div class="p-4 rounded shadow mb-6 bg-white" v-if="can(permissionEnum.PLAN_DETAILS_ADD)">
     <div>
       <h3 class="font-semibold text-primary-800 text-lg">Plan Details</h3>
       <x-divider class="mb-4 mt-1" />
@@ -166,7 +174,7 @@ const rolesEnum = page.props.rolesEnum;
             :rules="
               props.quoteType == quoteTypeCodeEnum.Life
                 ? []
-                : [rules.conditionalRequired, rules.isNumber]
+                : [rules.conditionalRequired, rules.isNumber, rules.isNegative, rules.lengthCheck]
             "
             :disabled="
               props.quoteType == quoteTypeCodeEnum.Life &&
@@ -185,7 +193,7 @@ const rolesEnum = page.props.rolesEnum;
             :rules="
               props.quoteType == quoteTypeCodeEnum.Life ||
               props.quoteType == quoteTypeCodeEnum.Business
-                ? [rules.conditionalRequired, rules.isNumber]
+                ? [rules.conditionalRequired, rules.isNumber, rules.isNegative, rules.lengthCheck]
                 : []
             "
             :disabled="
@@ -214,7 +222,7 @@ const rolesEnum = page.props.rolesEnum;
           <x-input
             v-model="planDetailsForm.insurer_quote_number"
             :error="planDetailsForm.errors.insurer_quote_number"
-            type="number"
+            type="text"
             label="Insurer Quote Number"
             class="w-full"
           />

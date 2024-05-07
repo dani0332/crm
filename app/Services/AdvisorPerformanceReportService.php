@@ -37,6 +37,7 @@ class AdvisorPerformanceReportService extends BaseService
                 DB::raw('CAST(SUM(CASE WHEN (car_quote_request.payment_status_id = "'.PaymentStatusEnum::CAPTURED.'"  OR car_quote_request.quote_status_id in ('.QuoteStatusEnum::TransactionApproved.','.QuoteStatusEnum::PolicyIssued.')) and car_quote_request.source != "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END) / COUNT(DISTINCT(user_team.team_id)) AS UNSIGNED) as sale_leads'),
                 DB::raw('IFNULL(CAST(SUM(quote_view_count.visit_count) / COUNT(DISTINCT(user_team.team_id)) AS UNSIGNED), 0) as view_count'),
             )
+            ->filterBySegment()
             ->join('users', 'users.id', 'car_quote_request.advisor_id')
             ->join('car_quote_request_detail', 'car_quote_request_detail.car_quote_request_id', 'car_quote_request.id')
             ->leftJoin('quote_view_count', 'quote_view_count.quote_id', 'car_quote_request.id')

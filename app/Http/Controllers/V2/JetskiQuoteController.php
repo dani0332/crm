@@ -4,7 +4,6 @@ namespace App\Http\Controllers\V2;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerTypeEnum;
-use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Enums\SendUpdateLogStatusEnum;
@@ -22,6 +21,7 @@ use App\Repositories\PersonalPlanRepository;
 use App\Repositories\QuoteStatusRepository;
 use App\Repositories\SendUpdateLogRepository;
 use App\Repositories\UserRepository;
+use App\Services\CentralService;
 use App\Services\CRUDService;
 use App\Services\LookupService;
 
@@ -106,6 +106,7 @@ class JetskiQuoteController extends Controller
         $personalPlans = PersonalPlanRepository::get();
         $advisors = UserRepository::getPersonalQuoteAdvisors(QuoteTypes::JETSKI->value);
 
+        $isAmlClearedForPayment = app(CentralService::class)->amlClearedFromLog($quote->id, QuoteTypes::JETSKI->name);
         $activities = ActivityRepository::where([
             'quote_type_id' => QuoteTypes::JETSKI->id(),
             'quote_request_id' => $quote->id,
@@ -133,7 +134,6 @@ class JetskiQuoteController extends Controller
             'activities' => $activities,
             'lostReasons' => $lostReasons,
             'advisors' => $advisors,
-            'quoteStatusEnum' => QuoteStatusEnum::asArray(),
             'documentTypes' => $documentTypes,
             'quoteStatuses' => $quoteStatuses,
             'paymentMethods' => $paymentMethods,
@@ -147,6 +147,7 @@ class JetskiQuoteController extends Controller
             'quoteTypeId' => QuoteTypes::JETSKI->id(),
             'canAddBatchNumber' => auth()->user()->hasRole(RolesEnum::JetskiManager),
             'vatPercentage' => $vatPercentage,
+            'isAmlClearedForPayment' => $isAmlClearedForPayment,
             'sendUpdateOptions' => $sendUpdateOptions,
             'sendUpdateLogs' => $sendUpdateLogs,
             'hasPolicyIssuedStatus' => $hasPolicyIssuedStatus,

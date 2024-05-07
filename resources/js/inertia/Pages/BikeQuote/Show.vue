@@ -8,7 +8,7 @@ import LeadHistory from '../PersonalQuote/Partials/LeadHistory';
 import AdditionalContacts from '../PersonalQuote/Partials/AdditionalContacts';
 import MemberDetails from '../../Components/MemberDetails.vue';
 import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue';
-import PaymentTableNew from '../../Components/PaymentTableNew.vue'; 
+import PaymentTableNew from '../../Components/PaymentTableNew.vue';
 import MigratePayment from '../../Components/MigratePayment.vue';
 
 defineProps({
@@ -27,7 +27,6 @@ defineProps({
   activities: Object,
   advisors: Object,
   lostReasons: Object,
-  quoteStatusEnum: Object,
   embeddedProducts: Array,
   customerTypeEnum: Object,
   nationalities: Array,
@@ -38,14 +37,13 @@ defineProps({
   UBOsDetails: Array,
   canAddBatchNumber: Boolean,
   vatPercentage: Number,
-  paymentStatusEnum: Object,
   paymentTooltipEnum: Object,
   isNewPaymentStructure: Boolean,
+  isAmlClearedForPayment: Boolean,
   permissions: Object,
   enums: Object,
-  policyIssuanceStatus: Array,
   payments: Array,
-  bPDetails: Array,
+  bookPolicyDetails: Array,
   sendUpdateOptions: Array,
   sendUpdateLogs: Array,
   hasPolicyIssuedStatus: Boolean,
@@ -91,11 +89,11 @@ const customerProfileForm = useForm({
   quote_type_id: page.props.quoteTypeId,
   quote_request_id: page.props.quote.id,
 
-  insured_first_name: page.props.quote?.customer.insured_first_name || '',
-  insured_last_name: page.props.quote?.customer.insured_last_name || '',
-  emirates_id_number: page.props.quote?.customer.emirates_id_number || null,
+  insured_first_name: page.props.quote?.customer?.insured_first_name || '',
+  insured_last_name: page.props.quote?.customer?.insured_last_name || '',
+  emirates_id_number: page.props.quote?.customer?.emirates_id_number || null,
   emirates_id_expiry_date:
-    page.props.quote?.customer.emirates_id_expiry_date || null,
+    page.props.quote?.customer?.emirates_id_expiry_date || null,
 
   entity_id: page.props.quote?.quote_request_entity_mapping?.entity_id ?? null,
   trade_license_no:
@@ -240,6 +238,15 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
         <template #body>
           <x-divider class="my-4" />
           <div class="flex gap-2 mb-4 justify-end">
+            <Link
+              v-if="quote.quote_detail?.insly_id"
+              :href="`/legacy-policy/${quote.quote_detail?.insly_id}`"
+              preserve-scroll
+            >
+              <x-button size="sm" color="#ff5e00" tag="div">
+                View Legacy policy
+              </x-button>
+            </Link>
             <Link
               v-if="can(permissionsEnum.BikeQuotesEdit)"
               :href="route('bike-quotes-edit', quote.uuid)"
@@ -751,6 +758,7 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
       "
       :quote="quote"
       modelType="Bike"
+      :insly-id="quote?.quote_detail?.insly_id"
       :canAddBatchNumber="canAddBatchNumber"
       :expanded="sectionExpanded"
     />
@@ -763,14 +771,15 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
       :quote-type="quoteType"
       :expanded="sectionExpanded"
     />
-  <QuoteStatus
+
+    <QuoteStatus
       :quote="quote"
       :quote-type="quoteType"
       :quote-statuses="quoteStatuses"
       :lost-reasons="lostReasons"
-      :quote-status-enum="quoteStatusEnum"
       :expanded="sectionExpanded"
     />
+
     <PlanDetails
       :insuranceProviders="insuranceProviders"
       :quote="quote"
@@ -784,19 +793,21 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
       :quoteId="quote.id"
       :paymentCode = "quote.code"
       :quoteType="quoteType"
-      :payments="quote.payments"      
-    />    
-    <PaymentTableNew 
+    />
+
+    <PaymentTableNew
 			v-if="isNewPaymentStructure"
 			:quoteType="quoteType"
 			:payments="quote.payments"
 			:paymentDocument="documentTypes.filter(item => item.code === 'BPD' || item.code === 'BPDR' || item.code === 'BDPDR')"
 			:quoteRequest="quote"
-			:paymentStatusEnum="paymentStatusEnum"
+			:paymentStatusEnum="page.props.paymentStatusEnum"
 			:paymentTooltipEnum="paymentTooltipEnum"
 			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name, tooltip: pm.tool_tip } })"
 			:storageUrl="storageUrl"
+      :isAmlClearedForPayment="isAmlClearedForPayment"
 		/>
+    
     <QuotePayments
       v-else
       :can="can"
@@ -807,13 +818,22 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
       :is-beta-user="isBetaUser"
       :personal-plans="personalPlans"
     />
-    
-    <SendUpdates
-      v-if="hasPolicyIssuedStatus"
-      :reportable="quote"
-      :quote_type_id="$page.props.quoteTypeId"
-      :options="sendUpdateOptions"
-      :data="sendUpdateLogs"
+
+    <EmbeddedProducts
+      :data="embeddedProducts"
+      :link="quote.uuid"
+      :code="quote.code"
+      :quote="quote"
+      :modelType="quoteType"
+      :insly-id="quote?.quote_detail?.insly_id"
+      :expanded="sectionExpanded"
+    />
+
+    <PolicyDetail
+      v-if="permissions.isQuoteDocumentEnabled"
+      :record="record"
+      modelType="Bike"
+      :expanded="sectionExpanded"
     />
 
     <QuoteDocuments
@@ -821,26 +841,11 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
       :quote-documents="quote.documents || []"
       :storageUrl="storageUrl"
       :quote="quote"
+      :modelType="quoteType"
+      :insly-id="quote?.quote_detail?.insly_id"
       :expanded="sectionExpanded"
     />
 
-    <PolicyDetail
-      v-if="permissions.isQuoteDocumentEnabled"
-      :record="record"
-      :quoteStatusEnum="enums.quoteStatusEnum"
-      :policyIssuanceStatus="policyIssuanceStatus"
-      modelType="Bike"
-    />
-
-   <EmbeddedProducts
-      :data="embeddedProducts"
-      :link="quote.uuid"
-      :code="quote.code"
-      :quote="quote"
-      :modelType="quoteType"
-    	:expanded="sectionExpanded"
-    />
-    
     <BookPolicy
       v-if="
         canAny([
@@ -850,8 +855,17 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
       "
       :quote="record"
       quoteType="Bike"
-      :bPDetails="bPDetails"
+      :bookPolicyDetails="bookPolicyDetails"
       :payments="payments"
+      :expanded="sectionExpanded"
+    />
+    
+    <SendUpdates
+      v-if="hasPolicyIssuedStatus"
+      :reportable="quote"
+      :quote_type_id="$page.props.quoteTypeId"
+      :options="sendUpdateOptions"
+      :data="sendUpdateLogs"
     />
 
     <AuditLogs :id="$page.props.quote.id" :quote-type="quoteType" :quoteCode="$page.props.quote.code" :expanded="sectionExpanded"/>

@@ -30,7 +30,6 @@ use App\Facades\Capi;
 use App\Http\Requests\ExportPlansPdfRequest;
 use App\Http\Requests\StorePaymentRequest;
 use App\Http\Requests\UpdateLeadStatusRequest;
-use App\Http\Requests\UpdatePaymentRequest;
 use App\Http\Requests\UpdatePolicyDetailRequest;
 use App\Jobs\CarRenewalEmailJob;
 use App\Jobs\SendOCBIntroEmailJob;
@@ -38,15 +37,12 @@ use App\Jobs\SyncSIBContactJob;
 use App\Models\ApplicationStorage;
 use App\Models\CarMake;
 use App\Models\CarQuote;
-use App\Models\EmbeddedProductOption;
-use App\Models\EmbeddedTransaction;
 use App\Models\Emirate;
 use App\Models\GenericModel;
 use App\Models\HealthPlanType;
 use App\Models\Nationality;
 use App\Models\Payment;
 use App\Models\PaymentStatusLog;
-use App\Models\PolicyIssuanceStatus;
 use App\Models\QuoteDocument;
 use App\Models\Tier;
 use App\Models\User;
@@ -66,6 +62,7 @@ use App\Services\ApplicationStorageService;
 use App\Services\BusinessQuoteService;
 use App\Services\CarEmailService;
 use App\Services\CarQuoteService;
+use App\Services\CentralService;
 use App\Services\CRUDService;
 use App\Services\CustomerService;
 use App\Services\DropdownSourceService;
@@ -508,6 +505,8 @@ class CRUDController extends Controller
         abort_if(! $record, 404);
 
         $linkedQuoteDetails = app(SendUpdateLogService::class)->linkedQuoteDetails($this->genericModel->modelType, $record);
+        $isAmlClearedForPayment = app(CentralService::class)->amlClearedFromLog($record->id, $quoteType);
+
         $autoAllocationDisabled = $this->lookupService->getApplicationStorageValue('LEAD_ALLOCATION_JOB_SWITCH');
         if (strtolower($this->genericModel->modelType) == strtolower(quoteTypeCode::Health) && Auth::user()->isHealthWCUAdvisor() && $record->wcu_id != Auth::user()->id && $autoAllocationDisabled == '1') {
             abort(403, 'Unauthorized action.');
@@ -684,9 +683,7 @@ class CRUDController extends Controller
             $carPlanFeaturesCodeEnum = CarPlanFeaturesCode::asArray();
             $carPlanExclusionsCodeEnum = CarPlanExclusionsCode::asArray();
             $carPlanAddonsCodeEnum = CarPlanAddonsCode::asArray();
-            $quoteStatusEnum = QuoteStatusEnum::asArray();
             $leadSourceEnum = LeadSourceEnum::asArray();
-            $paymentStatusEnum = PaymentStatusEnum::asArray();
             $genericRequestEnum = GenericRequestEnum::asArray();
             $carPlanTypeEnum = CarPlanType::asArray();
             $docUploadURL = config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$record->uuid.'/thankyou';
@@ -706,7 +703,6 @@ class CRUDController extends Controller
             $leadDocsStoragePath = createCdnUrl('');
             $kyoEndPoint = config('constants.KYO_END_POINT');
             $isBetaUser = auth()->user()->hasRole(RolesEnum::BetaUser);
-            $policyIssuanceStatus = PolicyIssuanceStatus::active()->get();
             $UBOsDetails = CustomerMembersRepository::getBy($record->id, QuoteTypes::CAR->name, CustomerTypeEnum::Entity);
             $UBORelations = LookupRepository::where('key', LookupsEnum::UBO_RELATION)->get();
             $emirates = Emirate::where('is_active', 1)->select('id', 'text')->get();
@@ -718,10 +714,10 @@ class CRUDController extends Controller
             $clientInquiryLogs = $this->crudService->getInquiryLogs($this->genericModel->modelType, $record->uuid) ?? [];
 
             // book policy details
-            $bPDetails = $this->bookPolicyPayload($record, $quoteType, $payments, $quoteDocuments);
+            $bookPolicyDetails = $this->bookPolicyPayload($record, $quoteType, $payments, $quoteDocuments);
 
             return inertia('PersonalQuote/Car/Show', compact([
-                'record', 'sendUpdateOptions', 'sendUpdateLogs', 'quote', 'model', 'customTitles', 'customTableList', 'paymentStatusEnum', 'quoteStatusEnum', 'leadSourceEnum', 'isBetaUser', 'sendUpdateEnum',
+                'record', 'sendUpdateOptions', 'sendUpdateLogs', 'quote', 'model', 'customTitles', 'customTableList', 'leadSourceEnum', 'isBetaUser', 'sendUpdateEnum',
                 'ecomCarInsuranceQuoteUrl', 'carQuotePlanAddons', 'vehicleTypes', 'leadStatuses', 'docUploadURL', 'isPlanUpdateActive', 'allowQuoteLogAction', 'carLostChangeStatus',
                 'lostReasons', 'selectedLostReasonId', 'model_name', 'allowedDuplicateLOB', 'audits', 'websiteURL', 'insuranceProviders', 'leadDocsStoragePath',
                 'activities', 'advisors', 'isRenewalUser', 'isNewBusinessUser', 'emailStatuses', 'carPlanAddonsCodeEnum', 'tiersExceptTierR', 'isTierRAssigned',
@@ -730,7 +726,7 @@ class CRUDController extends Controller
                 'carMakeText', 'carModelText', 'advisor', 'tiers', 'daysAfterCapturedPayment', 'access', 'carPlanFeaturesCodeEnum', 'carPlanExclusionsCodeEnum', 'documentTypes', 'planURL', 'storageUrl', 'kyoEndPoint',
                 'carPlanTypeEnum', 'UBORelations', 'UBOsDetails', 'emirates', 'customerTypeEnum', 'memberRelations', 'membersDetails', 'industryType', 'nationalities', 'paymentTooltipEnum',
                 'isCommercialVehicles', 'carInsuranceProviders', 'isNewPaymentStructure', 'hasPolicyIssuedStatus',
-                'bPDetails', 'clientInquiryLogs', 'linkedQuoteDetails', 'policyIssuanceStatus', 'listQuotePlans',
+                'bookPolicyDetails', 'clientInquiryLogs', 'linkedQuoteDetails', 'policyIssuanceStatus', 'listQuotePlans', 'isAmlClearedForPayment'
             ]));
         }
 
@@ -811,10 +807,9 @@ class CRUDController extends Controller
             }
 
             $documentTypes = $this->quoteDocumentService->getQuoteDocumentsForUpload(QuoteTypeId::Home);
-            $policyIssuanceStatus = PolicyIssuanceStatus::active()->get();
 
             $quoteDocument = (new QuoteDocumentService())->getQuoteDocuments(QuoteTypes::HOME->value, $record->id);
-            $bPDetails = $this->bookPolicyPayload($record, QuoteTypes::HOME->value, $payments, $quoteDocument);
+            $bookPolicyDetails = $this->bookPolicyPayload($record, QuoteTypes::HOME->value, $payments, $quoteDocument);
 
             return inertia('HomeQuote/Show', [
                 'storageUrl' => storageUrl(),
@@ -845,7 +840,6 @@ class CRUDController extends Controller
                     'isAdvisor' => auth()->user()->hasRole(RolesEnum::EBPAdvisor) || auth()->user()->hasRole(RolesEnum::HealthAdvisor) || auth()->user()->hasRole(RolesEnum::RMAdvisor),
                     'isQuoteDocumentEnabled' => $isQuoteDocumentEnabled,
                 ],
-                'quoteStatusEnum' => QuoteStatusEnum::asArray(),
                 'modelType' => $quoteType,
                 'quoteTypeId' => $quoteTypeId,
                 'notProductionApproval' => $notProductionApproval,
@@ -863,18 +857,13 @@ class CRUDController extends Controller
                 'emirates' => $emirates,
                 'quoteType' => QuoteTypes::HOME,
                 'paymentTooltipEnum' => PaymentTooltip::asArray(),
-                'paymentStatusEnum' => PaymentStatusEnum::asArray(),
                 'documentTypes' => $documentTypes,
-                'enums' => [
-                    'quoteStatusEnum' => QuoteStatusEnum::asArray(),
-                ],
-                'policyIssuanceStatus' => $policyIssuanceStatus,
-                'bPDetails' => $bPDetails,
+                'bookPolicyDetails' => $bookPolicyDetails,
                 'vatPercentage' => $vatPercentage,
                 'isNewPaymentStructure' => $isNewPaymentStructure,
+                'isAmlClearedForPayment' => $isAmlClearedForPayment,
                 'sendUpdateEnum' => $sendUpdateEnum,
                 'hasPolicyIssuedStatus' => $hasPolicyIssuedStatus,
-                'documentTypes' => $documentTypes,
                 'linkedQuoteDetails' => $linkedQuoteDetails,
             ]);
         }
@@ -904,9 +893,9 @@ class CRUDController extends Controller
             $emirates = Emirate::where('is_active', 1)->select('id', 'text')->get();
             $industryType = LookupRepository::where('key', LookupsEnum::COMPANY_TYPE)->get();
             $documentTypes = $this->quoteDocumentService->getQuoteDocumentsForUpload(QuoteTypeId::Health);
+
             $uboRelations = LookupRepository::where('key', LookupsEnum::UBO_RELATION)->get();
             $documentTypes = collect($documentTypes)->groupBy('category');
-
             $quoteDocuments = $quoteDocuments->map(function ($quoteDocument) {
                 $quoteDocument->created_by_name = isset($quoteDocument->createdBy->name) ? $quoteDocument->createdBy->name : null;
 
@@ -957,8 +946,7 @@ class CRUDController extends Controller
             $embeddedProducts = EmbeddedProductRepository::byQuoteType(QuoteTypes::HEALTH->id(), $record->id);
 
             $healthPlanTypes = HealthPlanType::where('is_active', 1)->select('id', 'text')->get();
-            $policyIssuanceStatus = PolicyIssuanceStatus::active()->get();
-            $bPDetails = $this->bookPolicyPayload($record, $quoteType, $payments, $quoteDocuments);
+            $bookPolicyDetails = $this->bookPolicyPayload($record, $quoteType, $payments, $quoteDocuments);
 
             // Get user teams
             $teams = $this->crudService->getUserTeams(Auth::user()->id);
@@ -995,7 +983,6 @@ class CRUDController extends Controller
                     'pa' => auth()->user()->hasRole(RolesEnum::PA),
                     'isQuoteDocumentEnabled' => $isQuoteDocumentEnabled,
                 ],
-                'quoteStatusEnum' => QuoteStatusEnum::asArray(),
                 'modelType' => $quoteType,
                 'quoteTypeId' => $quoteTypeId,
                 'notProductionApproval' => $notProductionApproval,
@@ -1024,18 +1011,15 @@ class CRUDController extends Controller
                 'UBOsDetails' => $uboDetails,
                 'UBORelations' => $uboRelations,
                 'enums' => [
-                    'quoteStatusEnum' => QuoteStatusEnum::asArray(),
-                    'paymentStatusEnum' => PaymentStatusEnum::asArray(),
                     'travelQuoteEnum' => TravelQuoteEnum::asArray(),
                 ],
-                'policyIssuanceStatus' => $policyIssuanceStatus,
-                'bPDetails' => $bPDetails,
-                'quoteStatusEnum' => QuoteStatusEnum::asArray(),
+                'bookPolicyDetails' => $bookPolicyDetails,
                 'sendUpdateEnum' => $sendUpdateEnum,
                 'hasPolicyIssuedStatus' => $hasPolicyIssuedStatus,
                 'clientInquiryLogs' => $this->crudService->getInquiryLogs($this->genericModel->modelType, $record->uuid) ?? [],
                 'isNewPaymentStructure' => $isNewPaymentStructure,
                 'linkedQuoteDetails' => $linkedQuoteDetails,
+                'isAmlClearedForPayment' => $isAmlClearedForPayment,
             ]);
         } else {
             return view('shared.show', compact([
@@ -1246,6 +1230,7 @@ class CRUDController extends Controller
     private function fillModelByModelType($type, Request $request)
     {
         $modelType = json_decode($request->get('modelType'), true) ?? $type;
+
         if ($modelType == null) {
             $modelType = $request->get('modelType');
         }
@@ -1469,26 +1454,7 @@ class CRUDController extends Controller
                 SyncSIBContactJob::dispatch($lead);
 
                 // Ep send documents
-                $quoteTypeId = $this->activityService->getQuoteTypeId(strtolower($request->modelType));
-                $epTransaction = EmbeddedTransaction::where([
-                    ['quote_type_id',   $quoteTypeId],
-                    ['quote_request_id', $request->leadId],
-                    ['is_selected', 1],
-                ])->whereIn('payment_status_id', [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PARTIAL_CAPTURED])->get();
-
-                if ($epTransaction->isNotEmpty()) {
-                    foreach ($epTransaction as $item) {
-
-                        $product_id = $item->product_id;
-                        $embedded_product_id = EmbeddedProductOption::find($product_id)->embedded_product_id;
-                        // EP Send documents
-                        $data = [];
-                        $data['quoteId'] = $request->leadId;
-                        $data['modelType'] = $request->modelType;
-                        $data['epId'] = $embedded_product_id;
-                        EmbeddedProductRepository::sendDocument($data);
-                    }
-                }
+                EmbeddedProductRepository::sendDocumentsByLead($request->leadId, $request->modelType);
             }
 
             if (in_array($request->leadStatus, [QuoteStatusEnum::FollowupCall, QuoteStatusEnum::Interested, QuoteStatusEnum::NoAnswer])) {
@@ -1702,13 +1668,8 @@ class CRUDController extends Controller
             'policy_issuance_status_other' => $request->quote_policy_issuance_status_other ?? '',
         ]);
 
-        if (! empty(request()->quote_policy_issuance_status) && request()->price_with_vat <= 0 && empty(request()->quote_policy_number)) {
-            $quoteModel->update([
-                'quote_status_id' => QuoteStatusEnum::PolicyPending,
-            ]);
-        }
         // update status policy issued of req fulfilled
-        $this->updateStatus($request->modelType, $request->quote_id);
+        $this->updateQuoteStatus($request->modelType, $request->quote_id);
 
         return redirect()->back()->with('success', 'Quote Policy Detail has been updated.');
     }
@@ -1833,7 +1794,7 @@ class CRUDController extends Controller
         return back()->with('success', 'Payment has been created');
     }
 
-    public function updatePayment(UpdatePaymentRequest $request)
+    public function updatePayment(Request $request)
     {
         $paymentInformation = [
             'collection_type' => $request->collection_type,

@@ -14,6 +14,9 @@ const loaders = reactive({
 });
 
 const page = usePage();
+const can = permission => useCan(permission);
+const permissionsEnum = page.props.permissionsEnum;
+const quoteSegments = page.props.quoteSegments;
 const params = useUrlSearchParams('history');
 const dataTableRef = ref();
 const advisorOptions = ref([]);
@@ -212,6 +215,7 @@ const filters = reactive({
   leadSources: [],
   advisors: [],
   teams: [],
+  segment_filter: 'all',
   isCommercial: 'All',
   page: 1,
 });
@@ -558,6 +562,13 @@ watch(
             { value: true, label: 'Yes' },
             { value: false, label: 'No' },
           ]"
+        />
+        <x-select
+          v-if="can(permissionsEnum.SEGMENT_FILTER)"
+          v-model="filters.segment_filter"
+          label="Segment"
+          placeholder="Select Segment"
+          :options="quoteSegments"
         />
       </div>
       <div class="flex justify-between gap-3 mb-4 items-center">

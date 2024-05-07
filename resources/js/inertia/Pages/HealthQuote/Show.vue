@@ -1,11 +1,9 @@
 <script setup>
-import PaymentTableNew from './../../Components/PaymentTableNew.vue';
-import MigratePayment from './../../Components/MigratePayment.vue';
-import LazyDocumentUploader from './Partials/DocumentUploader.vue';
-import LazyAvailablePlan from './Partials/AvailablePlans.vue';
-import LazyCreatePlan from './Partials/CreatePlan.vue';
 import { computed } from 'vue';
 import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue';
+import LazyAvailablePlan from './Partials/AvailablePlans.vue';
+import LazyCreatePlan from './Partials/CreatePlan.vue';
+import LazyDocumentUploader from './Partials/DocumentUploader.vue';
 
 defineProps({
   quote: Object,
@@ -28,7 +26,6 @@ defineProps({
   activities: Array,
   customerAdditionalContacts: Array,
   lostReasons: Array,
-  quoteStatusEnum: Object,
   modelType: String,
   quoteTypeId: Number,
   notProductionApproval: Boolean,
@@ -55,10 +52,9 @@ defineProps({
   quoteType: String,
   paymentTooltipEnum: Object,
   storageUrl: String,
-  enums: Object,
-  policyIssuanceStatus: Array,
-  bPDetails: Array,
+  bookPolicyDetails: Array,
   isNewPaymentStructure: Boolean,
+  isAmlClearedForPayment: Boolean,
   sendUpdateOptions: Array,
   sendUpdateLogs: Array,
   hasPolicyIssuedStatus: Boolean,
@@ -68,8 +64,11 @@ defineProps({
 const isManualPlansCount = ref(0);
 
 const page = usePage();
+const permissionsEnum = page.props.permissionsEnum;
 const permissionEnum = page.props.permissionsEnum;
-const canAny = (permissions) => useCanAny(permissions);
+const canAny = permissions => useCanAny(permissions);
+const can = permission => useCan(permission);
+
 const notification = useToast();
 const hasRole = (role) => useHasRole(role);
 const hasAnyRole = (roles) => useHasAnyRole(roles);
@@ -342,21 +341,24 @@ const leadStatusForm = useForm({
 });
 
 const onLeadStatus = () => {
-  leadStatusForm.post(`/quotes/Health/${page.props.quote.id}/update-lead-status`, {
-    preserveScroll: true,
-    onError: (errors) => {
-      notification.error({ title: errors.value, position: "top" });
-    },
-    onSuccess: (response) => {
-      const flash_messages = response.props.flash;
-      if (!flash_messages) {
-        notification.success({
-          title: "Lead Status Updated",
-          position: "top",
-        });
-      }
-    },
-  });
+  leadStatusForm.post(
+    `/quotes/Health/${page.props.quote.id}/update-lead-status`,
+    {
+      preserveScroll: true,
+      preserveState: true,
+      onError: errors => {
+        notification.error({ title: errors.value, position: 'top' });
+      },
+      onSuccess: response => {
+        const flash_messages = response.props.flash;
+        if (!flash_messages) {
+          notification.success({
+            title: 'Lead Status Updated',
+            position: 'top',
+          });
+        }
+      },
+    });
 };
 
 const memberDetailsTable = reactive({
@@ -721,9 +723,7 @@ const onTogglePlans = (toggle) => {
         title: "Plans has been updated",
         position: "top",
       });
-      router.reload({
-        preserveScroll: true,
-      });
+      onLoadAvailablePlansData();
     })
     .catch((error) => {
       notification.error({
@@ -911,15 +911,16 @@ const getSmallestCopayRateAsDefaultValue = () => {
       }
     });
 
-    element.memberPremiumBreakdown?.forEach(
-      function callback(breakDown, index) {
-        breakDown.ratesPerCopay?.forEach(function callback(ratePerCopay) {
-          if (ratePerCopay.notifyAgent) {
-            element.needPriceUpdate = true;
-          }
-        });
-      },
-    );
+    element.memberPremiumBreakdown?.forEach(function callback(
+      breakDown,
+      index,
+    ) {
+      breakDown.ratesPerCopay?.forEach(function callback(ratePerCopay) {
+        if (ratePerCopay.notifyAgent) {
+          element.needPriceUpdate = true;
+        }
+      });
+    });
 
     if (isMounted.value && selectedCoPay.planId == element.id) {
       element.actualPremium = selectedCoPay.premium;
@@ -1265,7 +1266,8 @@ const policyDetails = useForm({
   policy_issuance_date: dateToYMD(page.props.quote.policy_issuance_date) || "",
   quote_status_id: page.props.quote.quote_status_id,
   canEdit:
-    page.props.quote.quote_status_id == page.props.quoteStatusEnum.TransactionApproved &&
+    page.props.quote.quote_status_id ==
+    page.props.quoteStatusEnum.TransactionApproved &&
     page.props.notProductionApproval,
   editMode: false,
   modelType: page.props.modelType,
@@ -1487,9 +1489,17 @@ const handlePlanSelected = plan => {
   router.reload({
     preserveState: true,
     preserveScroll: true,
-    only: ['payments', 'quoteRequest', 'ecomDetails'],
-  });
+    only: ['payments','quoteRequest','ecomDetails', 'coPayment'],        
+  });  
 };
+
+watch(
+  () => page.props.ecomDetails,
+  value => {
+    selectedProviderPlan.value.premium = value.priceWithVAT;
+  },
+  { deep: true },
+);
 
 const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
 const getDetailPageRoute = (uuid, quote_type_id) =>
@@ -1501,6 +1511,15 @@ watch(
     selectedProviderPlan.value.premium = value.priceWithVAT;
   },
   { deep: true },
+);
+
+watch(
+  () => page.props.quote.quote_status_id,
+  (newValue, oldValue) => {
+    if (newValue !== oldValue) {
+      leadStatusForm.leadStatus = newValue;
+    }
+  },
 );
 
 </script>
@@ -1618,6 +1637,15 @@ watch(
         <template #body>
           <x-divider class="my-4" />
           <div class="flex gap-2 mb-3 justify-end">
+            <Link
+                v-if="quote?.insly_id && can(permissionsEnum.VIEW_LEGACY_DETAILS)"
+                :href="`/legacy-policy/${quote.insly_id}`"
+                preserve-scroll
+            >
+                <x-button size="sm" color="#ff5e00" tag="div">
+                    View Legacy policy
+                </x-button>
+            </Link>
             <x-button size="sm" color="#ff5e00" @click.prevent="openDuplicate">
               Duplicate Lead
             </x-button>
@@ -2495,6 +2523,7 @@ watch(
       "
       modelType="Health"
       :quote="quote"
+      :insly-id="quote?.insly_id"
       :canAddBatchNumber="canAddBatchNumber"
       :expanded="sectionExpanded"
     />
@@ -2631,14 +2660,6 @@ watch(
         </template>
       </Collapsible>
     </div>
-
-    <PolicyDetail
-      v-if="permissions.isQuoteDocumentEnabled"
-      :record="record"
-      :quoteStatusEnum="enums.quoteStatusEnum"
-      :policyIssuanceStatus="policyIssuanceStatus"
-      modelType="health"
-    />
 
     <div class="p-4 rounded shadow mb-6 bg-white">
       <Collapsible :expanded="sectionExpanded">
@@ -2839,14 +2860,14 @@ watch(
                   Copy
                 </x-button>
 
-                <span v-if="hasRole(page.props.rolesEnum.HealthAdvisor)">
-                  <SelectPlan
-                    v-if="selectedProviderPlan.id != item.id"
-                    @update:selectedPlanChanged="handlePlanSelected"
-                    :plan="item"
-                    :quoteType="quoteType"
-                    :uuid="quote.uuid"
-                  />
+            <span>
+              <SelectPlan
+                v-if="selectedProviderPlan.id != item.id"
+                @update:selectedPlanChanged="handlePlanSelected"
+                :plan="item"
+                :quoteType="quoteType"
+                :uuid="quote.uuid"
+              />
 
                   <x-button v-else size="xs" color="orange" outlined :disabled="true">
                     Selected
@@ -2988,7 +3009,10 @@ watch(
       "
       :storageUrl="storageUrl"
       :eCommercePrice="ecomDetails.priceWithVAT ? ecomDetails.priceWithVAT : 0"
+      :isAmlClearedForPayment="isAmlClearedForPayment"
+
     />
+
     <PaymentTable
       v-else
       :payments="payments"
@@ -3009,18 +3033,12 @@ watch(
       :expanded="sectionExpanded"
     />
 
-    <BookPolicy
-      v-if="
-        canAny([
-          permissionEnum.VIEW_INSLY_BOOK_POLICY,
-          permissionEnum.SEND_INSLY_BOOK_POLICY,
-        ])
-      "
-      :quote="record"
-      quoteType="health"
-      :bPDetails="bPDetails"
-      :payments="payments"
+    <PolicyDetail
+      v-if="permissions.isQuoteDocumentEnabled"
+      :record="record"
+      modelType="health"
       :expanded="sectionExpanded"
+      :payments="payments"
     />
 
     <div class="p-4 rounded shadow mb-6 bg-white">
@@ -3073,6 +3091,21 @@ watch(
         </template>
       </Collapsible>
     </div>
+    
+    <BookPolicy
+      v-if="
+        canAny([
+          permissionEnum.VIEW_INSLY_BOOK_POLICY,
+          permissionEnum.SEND_INSLY_BOOK_POLICY,
+        ])
+      "
+      :quote="record"
+      quoteType="health"
+      :bookPolicyDetails="bookPolicyDetails"
+      :payments="payments"
+      :expanded="sectionExpanded"
+    />
+
     <x-modal v-model="modals.doc" size="xl" show-close backdrop>
       <template #header> Upload Documents </template>
       <LazyDocumentUploader
@@ -3367,6 +3400,12 @@ watch(
         </template>
       </Collapsible>
     </div>
+
+    <CustomerChatLogs
+      :customerName="quote?.first_name + ' ' + quote?.last_name"
+      :quoteId="quote.uuid"
+      :quoteType="'HEALTH'"
+    />
 
     <AuditLogs
       :type="'App\\Models\\HealthQuote'"

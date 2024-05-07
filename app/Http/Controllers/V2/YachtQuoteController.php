@@ -5,7 +5,6 @@ namespace App\Http\Controllers\V2;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\LookupsEnum;
-use App\Enums\PaymentStatusEnum;
 use App\Enums\PaymentTooltip;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
@@ -17,7 +16,6 @@ use App\Http\Requests\YachtQuoteRequest;
 use App\Models\ApplicationStorage;
 use App\Models\Emirate;
 use App\Models\Nationality;
-use App\Models\PolicyIssuanceStatus;
 use App\Repositories\ActivityRepository;
 use App\Repositories\CustomerMembersRepository;
 use App\Repositories\DocumentTypeRepository;
@@ -32,6 +30,7 @@ use App\Repositories\SendUpdateLogRepository;
 use App\Repositories\UserRepository;
 use App\Repositories\YachtQuoteRepository;
 use App\Services\AMLService;
+use App\Services\CentralService;
 use App\Services\CRUDService;
 use App\Services\LookupService;
 use App\Services\QuoteDocumentService;
@@ -111,6 +110,8 @@ class YachtQuoteController extends Controller
         $personalPlans = PersonalPlanRepository::get();
         $advisors = UserRepository::getPersonalQuoteAdvisors(QuoteTypes::YACHT->value);
 
+        $isAmlClearedForPayment = app(CentralService::class)->amlClearedFromLog($quote->id, QuoteTypes::YACHT->name);
+
         $activities = ActivityRepository::where([
             'quote_type_id' => QuoteTypes::YACHT->id(),
             'quote_request_id' => $quote->id,
@@ -140,10 +141,9 @@ class YachtQuoteController extends Controller
             $sendUpdateEnum = SendUpdateLogStatusEnum::asArray();
         }
 
-        $isQuoteDocumentEnabled = app(QuoteDocumentService::class)->isEnabled(QuoteTypes::CYCLE->value);
-        $policyIssuanceStatus = PolicyIssuanceStatus::active()->get();
-        $quoteDocuments = (new QuoteDocumentService())->getQuoteDocuments(QuoteTypes::CYCLE->value, $quote->id);
-        $bPDetails = $this->bookPolicyPayload($quote, QuoteTypes::PET->value, $quote->payments, $quoteDocuments);
+        $isQuoteDocumentEnabled = app(QuoteDocumentService::class)->isEnabled(QuoteTypes::YACHT->value);
+        $quoteDocuments = (new QuoteDocumentService())->getQuoteDocuments(QuoteTypes::YACHT->value, $quote->id);
+        $bookPolicyDetails = $this->bookPolicyPayload($quote, QuoteTypes::YACHT->value, $quote->payments, $quoteDocuments);
 
         return inertia('YachtQuote/Show', [
             'quoteType' => QuoteTypes::YACHT,
@@ -152,7 +152,6 @@ class YachtQuoteController extends Controller
             'lostReasons' => $lostReasons,
             'quoteTypeId' => QuoteTypes::YACHT->id(),
             'advisors' => $advisors,
-            'quoteStatusEnum' => QuoteStatusEnum::asArray(),
             'documentTypes' => $documentTypes,
             'quoteStatuses' => $quoteStatuses,
             'paymentMethods' => $paymentMethods,
@@ -171,8 +170,8 @@ class YachtQuoteController extends Controller
             'emirates' => $emirates,
             'vatPercentage' => $vatPercentage,
             'paymentTooltipEnum' => PaymentTooltip::asArray(),
-            'paymentStatusEnum' => PaymentStatusEnum::asArray(),
             'isNewPaymentStructure' => app(SplitPaymentService::class)->isNewPaymentStructure($quote->payments),
+            'isAmlClearedForPayment' => $isAmlClearedForPayment,
             'sendUpdateOptions' => $sendUpdateOptions,
             'sendUpdateLogs' => $sendUpdateLogs,
             'hasPolicyIssuedStatus' => $hasPolicyIssuedStatus,
@@ -182,11 +181,7 @@ class YachtQuoteController extends Controller
             'permissions' => [
                 'isQuoteDocumentEnabled' => $isQuoteDocumentEnabled,
             ],
-            'enums' => [
-                'quoteStatusEnum' => QuoteStatusEnum::asArray(),
-            ],
-            'policyIssuanceStatus' => $policyIssuanceStatus,
-            'bPDetails' => $bPDetails,
+            'bookPolicyDetails' => $bookPolicyDetails,
             'payments' => $quote->payments->toArray() ?? [],
         ]);
     }
