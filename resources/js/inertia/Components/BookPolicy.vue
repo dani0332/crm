@@ -501,7 +501,7 @@ const caculateCommission = () => {
               <div class="w-full md:w-1/2"></div>
               <div class="w-full md:w-1/2" />
             </div>
-            <div class="flex justify-end">
+            <div v-if="page.props.linkedQuoteDetails.childLeadsCount == 0" class="flex justify-end">
               <template
                 v-if="
                   props.quote.quote_status_id ==
