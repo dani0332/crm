@@ -10,16 +10,16 @@ const loaders = reactive({
 
 // const { isRequired } = useRules();
 
-// const filters = reactive({
-//     uuid: '',
-//     advisorAssignedDates: props.defaultFilters.advisorAssignedDates,
-//     tiers: [],
-//     leadSources: [],
-//     teams: [],
-//     is_ecommerce: '',
-//     payment_status: '',
-//     page: 1,
-// });
+const filters = reactive({
+  //  uuid: '',
+   // advisorAssignedDates: props.defaultFilters.advisorAssignedDates,
+   //  tiers: [],
+   //  leadSources: [],
+    teams: [],
+    // is_ecommerce: '',
+    // payment_status: '',
+    // page: 1,
+});
 
 // const leadSource = computed(() => {
 //     return Object.keys(props.defaultFilters.leadSource).map(key => ({
@@ -28,12 +28,12 @@ const loaders = reactive({
 //     }));
 // });
 //
-// const teams = computed(() => {
-//     return Object.keys(props.defaultFilters.teams).map(key => ({
-//         value: key,
-//         label: props.defaultFilters.teams[key],
-//     }));
-// });
+const teams = computed(() => {
+    return Object.keys(props.defaultFilters.teams).map(key => ({
+        value: key,
+        label: props.defaultFilters.teams[key],
+    }));
+});
 
 // const tiers = computed(() => {
 //     return Object.keys(props.defaultFilters.tiers).map(key => ({
@@ -49,33 +49,33 @@ const loaders = reactive({
 //     }));
 // });
 
-// const onSubmit = isValid => {
-//     if (!isValid) return;
-//     filters.page = 1;
-//     router.visit(route('lead-list-report'), {
-//         method: 'get',
-//         data: useGenerateQueryString(filters),
-//         preserveState: true,
-//         preserveScroll: true,
-//         onBefore: () => (loaders.table = true),
-//         onFinish: () => (loaders.table = false),
-//     });
-// };
+const onSubmit = isValid => {
+    if (!isValid) return;
+    filters.page = 1;
+    router.visit(route('authorized-payment-summary'), {
+        method: 'get',
+        data: useGenerateQueryString(filters),
+        preserveState: true,
+        preserveScroll: true,
+        onBefore: () => (loaders.table = true),
+        onFinish: () => (loaders.table = false),
+    });
+};
 
-// function onReset() {
-//     router.visit(route('lead-list-report'), {
-//         method: 'get',
-//         data: { page: 1 },
-//         preserveScroll: true,
-//         onBefore: () => (loaders.table = true),
-//         onSuccess: () => (loaders.table = false),
-//     });
-// }
+function onReset() {
+    router.visit(route('authorized-payment-summary'), {
+        method: 'get',
+        data: { page: 1 },
+        preserveScroll: true,
+        onBefore: () => (loaders.table = true),
+        onSuccess: () => (loaders.table = false),
+    });
+}
 
 const tableHeader = reactive([
     {
         text: 'TOTAL AUTHORISED PAYMENT',
-        value: 'payment_status_id',
+        value: 'total_leads',
     },
     {
         text: 'ADVISOR',
@@ -83,7 +83,7 @@ const tableHeader = reactive([
     },
     {
         text: 'TOTAL PREMIUM',
-        value: 'source',
+        value: 'total_premium',
     }
 
 ]);
@@ -94,8 +94,8 @@ const tableHeader = reactive([
         Authorised Payment Summary
     </h1>
     <x-divider class="my-4" />
-<!--    <x-form @submit="onSubmit" :auto-focus="false">-->
-<!--        <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">-->
+    <x-form @submit="onSubmit" :auto-focus="false">
+        <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
 <!--            <x-field label="Search">-->
 <!--                <x-input-->
 <!--                    v-model="filters.uuid"-->
@@ -133,17 +133,17 @@ const tableHeader = reactive([
 <!--                    deselect-all-->
 <!--                />-->
 <!--            </x-field>-->
-<!--        </div>-->
-<!--        <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">-->
-<!--            <x-field label="Teams">-->
-<!--                <ComboBox-->
-<!--                    v-model="filters.teams"-->
-<!--                    placeholder="Search By Teams"-->
-<!--                    :options="teams"-->
-<!--                    :max-limit="3"-->
-<!--                    deselect-all-->
-<!--                />-->
-<!--            </x-field>-->
+        </div>
+        <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
+            <x-field label="Teams">
+                <ComboBox
+                    v-model="filters.teams"
+                    placeholder="Search By Teams"
+                    :options="teams"
+                    :max-limit="3"
+                    deselect-all
+                />
+            </x-field>
 <!--            <x-field label="Is Ecommerce">-->
 <!--                <x-select-->
 <!--                    v-model="filters.is_ecommerce"-->
@@ -165,14 +165,14 @@ const tableHeader = reactive([
 <!--                    deselect-all-->
 <!--                />-->
 <!--            </x-field>-->
-<!--        </div>-->
-<!--        <div class="flex gap-3 justify-end">-->
-<!--            <x-button size="sm" color="#ff5e00" type="submit">Search</x-button>-->
-<!--            <x-button size="sm" color="primary" @click.prevent="onReset">-->
-<!--                Reset-->
-<!--            </x-button>-->
-<!--        </div>-->
-<!--    </x-form>-->
+        </div>
+        <div class="flex gap-3 justify-end">
+            <x-button size="sm" color="#ff5e00" type="submit">Search</x-button>
+            <x-button size="sm" color="primary" @click.prevent="onReset">
+                Reset
+            </x-button>
+        </div>
+    </x-form>
     <DataTable
         class="mt-4"
         table-class-name=""

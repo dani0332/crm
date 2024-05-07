@@ -270,17 +270,34 @@ class ReportService extends BaseService
 
     public function getPaymentAuthorisedSummary($request)
     {
-        $query = CarQuote::query()
+        $query = DB::table('car_quote_request');
+
+        $query
             ->select(
                 'users.id as advisor_id',
                 'users.name as advisor',
-                DB::raw('COUNT(payment_status.text) as payment_status_id')
+                DB::raw('COUNT(*) as total_leads'),
+                DB::raw('SUM(car_quote_request.premium) as total_premium')
             )
             ->join('users', 'users.id', 'car_quote_request.advisor_id')
             ->join('payment_status', 'payment_status.id', 'car_quote_request.payment_status_id')
             ->where('payment_status_id', PaymentStatusEnum::AUTHORISED)
             ->groupBy('users.id', 'users.name')
             ->orderBy('car_quote_request.created_at', 'desc');
+
+        if (isset($request->teams)) {
+            $teamIds = $request->teams;
+            $query->whereIn('users.id', function ($subQuery) use ($teamIds) {
+                $subQuery
+                    ->select('users.id')
+                    ->distinct()
+                    ->from('users')
+                    ->join('user_team', 'users.id', '=', 'user_team.user_id')
+                    ->join('teams', 'teams.id', '=', 'user_team.team_id')
+                    ->whereIn('teams.id', $teamIds);
+            });
+        }
+
 
 
         return $query->simplePaginate(5)->withQueryString();
