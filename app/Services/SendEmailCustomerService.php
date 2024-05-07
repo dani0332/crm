@@ -473,7 +473,7 @@ class SendEmailCustomerService extends BaseService
     {
         try {
             $tag = $this->appEnv == EnvEnum::PRODUCTION ? $tag : $this->appEnv.'-'.$tag;
-            info('sendLMSIntroEmail ---- Tag : '.$tag);
+            info('sendLMSIntroEmail ---- Tag : '.$tag. ' for ID : '. $emailData->carQuoteId);
             $headers = [
                 'Accept' => 'application/json',
                 'api-key' => $this->apiKey,
@@ -538,9 +538,9 @@ class SendEmailCustomerService extends BaseService
                 ->retry(3, 10000)
                 ->post($this->url, $body);
 
-            info('sendLMSIntroEmail ---- Request Sent');
+            info('sendLMSIntroEmail ---- Request Sent '. $emailData->carQuoteId);
             $responseCode = $response->status();
-            info('sendLMSIntroEmail ---- Received Code : '.$responseCode);
+            info('sendLMSIntroEmail ---- Received Code : '.$responseCode .' '. $emailData->carQuoteId);
             info('sendLMSIntroEmail ---- response object : '.json_encode($response->object()));
         } catch (Exception $ex) {
             $responseCode = $ex->getCode();
