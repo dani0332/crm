@@ -7,6 +7,8 @@ const loader = ref({
   table: false,
 });
 
+const dateFormat = date => useDateFormat(date, 'DD-MM-YYYY hh:mm:ss').value;
+
 const filters = reactive({
   name: '',
   min_price: '',
@@ -28,11 +30,14 @@ const tableHeader = [
   { text: 'Is TPL', value: 'can_handle_tpl' },
   { text: 'Renewal (TPL_RENEWALS)', value: 'is_tpl_renewals' },
   { text: 'IsActive', value: 'is_active' },
-  { text: "Actions", value: "actions" }
+  { text: 'Actions', value: 'actions' },
 ];
 
 function onSubmit(isValid) {
   filters.page = 1;
+  if (filters.created_at) filters.created_at = filters.created_at.split('T')[0];
+  if (filters.created_at_end)
+    filters.created_at_end = filters.created_at_end.split('T')[0];
   router.visit(route('tiers.index'), {
     method: 'get',
     data: useGenerateQueryString(filters),
@@ -54,17 +59,16 @@ function onReset() {
 }
 
 const showDeleteModal = ref(false),
-    deleteAction = useForm({
-        id: null
-    }),
-    onConfirmDelete = () => {
-        deleteAction.delete(route("tiers.destroy", deleteAction.id), {
-            onFinish: () => {
-                showDeleteModal.value = false;
-            }
-        });
-    };
-
+  deleteAction = useForm({
+    id: null,
+  }),
+  onConfirmDelete = () => {
+    deleteAction.delete(route('tiers.destroy', deleteAction.id), {
+      onFinish: () => {
+        showDeleteModal.value = false;
+      },
+    });
+  };
 </script>
 <template>
   <Head title="Tier List" />
@@ -126,6 +130,10 @@ const showDeleteModal = ref(false),
       </Link>
     </template>
 
+    <template #item-created_at="{ created_at }">
+      {{ dateFormat(created_at) }}
+    </template>
+
     <template #item-can_handle_ecommerce="{ can_handle_ecommerce }">
       <div class="text-center">
         <x-tag size="sm" :color="can_handle_ecommerce ? 'success' : 'error'">
@@ -164,31 +172,26 @@ const showDeleteModal = ref(false),
     </template>
 
     <template #item-actions="{ id }">
-                    <div class="flex gap-1.5 justify-end">
-                        <Link :href="route('tiers.show', id)">
-                            <x-button tag="div" size="xs" outlined>
-                                View
-                            </x-button>
-                        </Link>
-                        <Link :href="route('tiers.edit', id)">
-                            <x-button color="primary" size="xs" outlined>
-                                Edit
-                            </x-button>
-                        </Link>
-                        <x-button
-                            color="red"
-                            size="xs"
-                            outlined
-                            @click.prevent="
-                                deleteAction.id = id;
-                                showDeleteModal = true;
-                            "
-                        >
-                            Delete
-                        </x-button>
-                    </div>
-                </template>
-                
+      <div class="flex gap-1.5 justify-end">
+        <Link :href="route('tiers.show', id)">
+          <x-button tag="div" size="xs" outlined> View </x-button>
+        </Link>
+        <Link :href="route('tiers.edit', id)">
+          <x-button color="primary" size="xs" outlined> Edit </x-button>
+        </Link>
+        <x-button
+          color="red"
+          size="xs"
+          outlined
+          @click.prevent="
+            deleteAction.id = id;
+            showDeleteModal = true;
+          "
+        >
+          Delete
+        </x-button>
+      </div>
+    </template>
   </DataTable>
   <Pagination
     :links="{
@@ -201,26 +204,22 @@ const showDeleteModal = ref(false),
   />
 
   <x-modal v-model="showDeleteModal" size="md" show-close backdrop>
-                <template #header> Delete Resource </template>
-                <p>Are you sure you want to delete selected resource?</p>
-                <template #actions>
-                    <div class="text-right space-x-4">
-                        <x-button
-                            size="sm"
-                            ghost
-                            @click.prevent="showDeleteModal = false"
-                        >
-                            Cancel
-                        </x-button>
-                        <x-button
-                            size="sm"
-                            color="error"
-                            :loading="deleteAction.processing"
-                            @click.prevent="onConfirmDelete"
-                        >
-                            Delete
-                        </x-button>
-                    </div>
-                </template>
-            </x-modal>
+    <template #header> Delete Resource </template>
+    <p>Are you sure you want to delete selected resource?</p>
+    <template #actions>
+      <div class="text-right space-x-4">
+        <x-button size="sm" ghost @click.prevent="showDeleteModal = false">
+          Cancel
+        </x-button>
+        <x-button
+          size="sm"
+          color="error"
+          :loading="deleteAction.processing"
+          @click.prevent="onConfirmDelete"
+        >
+          Delete
+        </x-button>
+      </div>
+    </template>
+  </x-modal>
 </template>

@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Repositories;
+use Carbon\Carbon;
 
 class TierRepository extends BaseRepository
 {
@@ -27,7 +28,9 @@ class TierRepository extends BaseRepository
                 return $query->where('cost_per_lead', $costPerLead);
             })
             ->when(request()->created_at && request()->created_at_end, function ($query) {
-                return $query->whereBetween('created_at', [request()->created_at, request()->created_at_end]);
+                $dateFrom = Carbon::createFromFormat('Y-m-d', request()->created_at)->startOfDay();
+                $dateTo = Carbon::createFromFormat('Y-m-d', request()->created_at)->endOfDay();
+                return $query->whereBetween('created_at', [$dateFrom, $dateTo]);
             });
 
         return $data->simplePaginate(10)->withQueryString();
