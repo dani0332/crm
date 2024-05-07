@@ -189,9 +189,9 @@ trait PersonalQuoteSyncTrait
 
     /**
      * Create a new personal quote from source quote
-     * 
-     * @param $sourceQuote - Existing object of car/heath/travel/... quote
-     * @param $entry - Entry from quote_sync table
+     *
+     * @param  $sourceQuote  - Existing object of car/heath/travel/... quote
+     * @param  $entry  - Entry from quote_sync table
      */
     private function createPersonalQuoteFromSource($sourceQuote, $entry)
     {
@@ -250,8 +250,8 @@ trait PersonalQuoteSyncTrait
         $this->syncTable($personalQuoteDetail, $newValues, 'personal_quote_details');
 
         $personalQuoteDetail->personal_quote_id = $personalQuote->id;
-        
-        if($isNewInsert) {
+
+        if ($isNewInsert) {
             // update missing required fields
             $this->updateMissingFields($personalQuoteDetail, 'personal_quote_details', $personalQuote->id);
         }
@@ -265,10 +265,10 @@ trait PersonalQuoteSyncTrait
     {
 
         $requiredFields = $this->getRequiredColumns($table);
-        if (!empty($requiredFields)) {
+        if (! empty($requiredFields)) {
             $personalQuoteKeys = $quote->getAttributes();
             foreach ($requiredFields as $column => $detail) {
-                if (!array_key_exists($column, $personalQuoteKeys)) {
+                if (! array_key_exists($column, $personalQuoteKeys)) {
                     $type = $detail['type_name'];
                     $value = $this->generateDefaultValue($type);
                     $quote->$column = $value;
@@ -280,27 +280,27 @@ trait PersonalQuoteSyncTrait
 
     /**
      * Retrieve required columns for a table without defaults and excluding foreign keys
-     * 
-     * @param $table - Table name
+     *
+     * @param  $table  - Table name
      */
     private function getRequiredColumns($table)
     {
         $skipColumns = ['id'];
         $columns = Schema::getColumns($table);
         $foreignKeys = Schema::getForeignKeys($table);
-        if (!empty($foreignKeys)) {
+        if (! empty($foreignKeys)) {
             $foreignKeys = collect($foreignKeys)->map(function ($foreignKey) {
                 return $foreignKey['columns'];
             })->flatten()->all();
         }
 
-        if (!empty($columns)) {
+        if (! empty($columns)) {
             $columns = collect($columns)->filter(function ($column) use ($skipColumns, $foreignKeys) {
                 if (
                     $column['nullable'] === false &&
                     $column['default'] == null &&
-                    !in_array($column['name'], $skipColumns) &&
-                    !in_array($column['name'], $foreignKeys)
+                    ! in_array($column['name'], $skipColumns) &&
+                    ! in_array($column['name'], $foreignKeys)
                 ) {
                     return true;
                 }
