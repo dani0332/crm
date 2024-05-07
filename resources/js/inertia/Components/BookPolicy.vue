@@ -11,13 +11,22 @@ const props = defineProps({
     type: String,
     default: '',
   },
-  bPDetails: {
+  modelType: {
+    type: String,
+    default: '',
+  },
+  bookPolicyDetails: {
     type: Array,
     default: [],
   },
   payments: {
     type: Array,
     default: [],
+  },
+  expanded: {
+    required: false,
+    type: Boolean,
+    default: true,
   },
 });
 
@@ -26,6 +35,11 @@ const productionProcessTooltipEnum = page.props.productionProcessTooltipEnum;
 
 const dateToYMD = date => {
   if (date) {
+    // Check if date is already in YMD format
+    const ymdRegex = /^\d{4}-\d{2}-\d{2}( \d{2}:\d{2}:\d{2})?$/;
+    if (ymdRegex.test(date)) {
+      return date.split(' ')[0]; // Return only the date part
+    }
     const [year, month, day] = date.split('-');
     return `${year}-${month}-${day}`;
   }
@@ -41,6 +55,19 @@ const dateToDMY = date => {
   }
   return '';
 };
+const dateToDMYWithTime = date => {
+  if (date) {
+    const d = new Date(date);
+    const year = d.getFullYear();
+    const month = `0${d.getMonth() + 1}`.slice(-2);
+    const day = `0${d.getDate()}`.slice(-2);
+    const hours = `0${d.getHours()}`.slice(-2);
+    const minutes = `0${d.getMinutes()}`.slice(-2);
+    const seconds = `0${d.getSeconds()}`.slice(-2);
+    return `${day}-${month}-${year} ${hours}:${minutes}:${seconds}`;
+  }
+  return '';
+};
 
 const bp = reactive({
   isEditing: false,
@@ -53,7 +80,16 @@ const currentDate = computed(() => {
   const day = `0${d.getDate()}`.slice(-2);
   return `${day}-${month}-${year}`;
 });
-
+const currentDateTime = computed(() => {
+  const d = new Date();
+  const year = d.getFullYear();
+  const month = `0${d.getMonth() + 1}`.slice(-2);
+  const day = `0${d.getDate()}`.slice(-2);
+  const hours = `0${d.getHours()}`.slice(-2);
+  const minutes = `0${d.getMinutes()}`.slice(-2);
+  const seconds = `0${d.getSeconds()}`.slice(-2);
+  return `${day}-${month}-${year} ${hours}:${minutes}:${seconds}`;
+});
 const transactionPaymentStatus = computed(() => {
   if (Number(page.props?.payments[0]?.captured_amount) === 0) {
     return 'Not Paid';
@@ -73,11 +109,12 @@ const transactionPaymentStatus = computed(() => {
 });
 const bpForm = useForm({
   booking_date:
-    dateToDMY(page.props.quote?.policy_booking_date) || currentDate.value,
+    dateToDMYWithTime(page.props.quote?.policy_booking_date) ||
+    currentDateTime.value,
   transaction_payment_status: transactionPaymentStatus.value,
   invoice_date: dateToYMD(page.props.payments[0]?.insurer_invoice_date) || '',
-  invoice_description: page.props.bPDetails.invoiceDescription || '',
-  broker_invoice_number: page.props.bPDetails.brokerInvoiceNo || '',
+  invoice_description: page.props.bookPolicyDetails.invoiceDescription || '',
+  broker_invoice_number: page.props.bookPolicyDetails.brokerInvoiceNo || '',
   insurer_tax_invoice_number: page.props?.payments[0]?.insurer_tax_number || '',
   insurer_commmission_invoice_number:
     page.props?.payments[0]?.insurer_commmission_invoice_number || '',
@@ -92,10 +129,12 @@ const bpForm = useForm({
   discount: page.props?.payments[0]?.discount_value || '',
   model_type: props.quoteType,
   quote_id: page.props.quote.id,
+  modelType: props.modelType,
 });
 
-const onUpdateBpDetails = isValid => {
+const onUpdatebookPolicyDetails = isValid => {
   if (isValid) {
+    bpForm.booking_date = currentDateTime;
     bpForm.post('/quotes/update-booking-policy', {
       preserveScroll: true,
       onSuccess: () => {
@@ -132,9 +171,10 @@ const submitPolicy = () => {
   isLoading.value = true;
   let url = '/quotes/send-booking-policy';
   let data = {
-    send_policy_type: props.bPDetails.sendPolicyType,
+    send_policy_type: props.bookPolicyDetails.sendPolicyType,
     model_type: props?.quoteType,
     quote_id: props?.quote?.id,
+    modelType: props.modelType,
   };
   axios
     .post(url, data)
@@ -222,7 +262,7 @@ const caculateCommission = () => {
       </template>
       <template #body>
         <x-divider class="my-4" />
-        <x-form @submit="onUpdateBpDetails" :auto-focus="false">
+        <x-form @submit="onUpdatebookPolicyDetails" :auto-focus="false">
           <div class="text-sm">
             <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
               <div class="grid sm:grid-cols-2">
@@ -236,7 +276,7 @@ const caculateCommission = () => {
                       </template>
                     </x-tooltip>
                   </dt>
-                <dd>{{ bpForm.booking_date }}</dd>
+                <dd>{{ bpForm.booking_date.split(' ')[0] }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">
@@ -517,7 +557,7 @@ const caculateCommission = () => {
                   Update
                 </x-button>
                 <x-button
-                  v-if="!bp.isEditing && props.bPDetails?.editButton"
+                  v-if="!bp.isEditing && props.bookPolicyDetails?.editButton"
                   class="mt-4 mr-2"
                   color="emerald"
                   size="sm"
@@ -531,9 +571,9 @@ const caculateCommission = () => {
                   class="mt-4"
                   @click.prevent="confirmSendPolicy"
                   :disabled="bp.isEditing"
-                  v-if="props.bPDetails?.sendButton"
+                  v-if="props.bookPolicyDetails?.sendButton"
                 >
-                  {{ props.bPDetails?.text }}
+                  {{ props.bookPolicyDetails?.text }}
                 </x-button></template
               >
 
@@ -601,24 +641,24 @@ const caculateCommission = () => {
                   >
                     Update
                   </x-button>
-                  <div v-if="!bp.isEditing && props.bPDetails?.editButton">
+                  <div v-if="!bp.isEditing && props.bookPolicyDetails?.editButton">
                     <x-button
                       class="mt-4 mr-2"
                       color="emerald"
                       size="sm"
-                      :disabled="!props.bPDetails?.editButton"
+                      :disabled="!props.bookPolicyDetails?.editButton"
                       @click.prevent="bp.isEditing = true"
                     >
                       Edit
                     </x-button>
                   </div>
 
-                  <template v-if="props.bPDetails?.editButton">
+                  <template v-if="props.bookPolicyDetails?.editButton">
                     <x-button
                       size="sm"
                       class="mt-4 mr-2"
                       color="orange"
-                      :disabled="!props.bPDetails?.editButton || bp.isEditing"
+                      :disabled="!props.bookPolicyDetails?.editButton || bp.isEditing"
                       @click.prevent="confirmSendPolicy"
                     >
                       Send Policy
@@ -630,7 +670,7 @@ const caculateCommission = () => {
                         size="sm"
                         class="mt-4 mr-2"
                         color="orange"
-                        :disabled="!props.bPDetails?.editButton"
+                        :disabled="!props.bookPolicyDetails?.editButton"
                       >
                         Sending Policy To Customer
                       </x-button>
@@ -655,7 +695,7 @@ const caculateCommission = () => {
         light
         type="error"
         class="text-sm mb-4"
-        v-if="bPDetails.sendPolicyType == 'customer'"
+        v-if="bookPolicyDetails.sendPolicyType == 'customer'"
       >
         Please be aware that your current action involves sending the policy to
         the customer only.
