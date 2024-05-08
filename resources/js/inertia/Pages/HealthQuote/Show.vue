@@ -55,6 +55,7 @@ defineProps({
   storageUrl: String,
   isNewPaymentStructure: Boolean,
   isAmlClearedForPayment: Boolean,
+  clientInquiryLogs: Array,
 });
 
 const isManualPlansCount = ref(0);
@@ -572,6 +573,7 @@ const plansTable = reactive({
     {
       text: 'Provider Name',
       value: 'providerName',
+      sortable: true,
     },
     {
       text: 'Plan Name',
