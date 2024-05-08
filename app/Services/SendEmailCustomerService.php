@@ -425,7 +425,7 @@ class SendEmailCustomerService extends BaseService
                 'Content-Type' => 'application/json',
             ];
 
-            $body = json_encode([
+            $body = [
                 'to' => [[
                     'email' => $emailData->customerEmail,
                     'name' => $emailData->customerFirstName.' '.$emailData->customerLastName,
@@ -440,20 +440,18 @@ class SendEmailCustomerService extends BaseService
                 'tags' => [
                     $tag,
                 ],
-            ], JSON_UNESCAPED_SLASHES);
+            ];
 
-            $client = new \GuzzleHttp\Client();
-            $clientRequest = $client->post(
-                config('constants.SIB_URL'),
-                [
-                    'headers' => $headers,
-                    'body' => $body,
-                    'timeout' => 20,
-                ]
-            );
+            $response = Http::withHeaders($headers)
+                ->beforeSending(function () {
+                    info('sendMyAlfredWelcomeEmail ---- Request is Sending ');
+                })
+                ->timeout(20)
+                ->retry(3, 90000)
+                ->post($this->url, $body);
 
-            $response = json_decode(json_encode($clientRequest->getStatusCode().' '.$clientRequest->getBody()->getContents()), true);
-            $responseCode = $clientRequest->getStatusCode();
+            $responseCode = $response->status();
+            $response = json_decode(json_encode($responseCode.' '.$response->body()), true);
 
             if ($responseCode == 201) {
                 $isEmailSent = 1;
