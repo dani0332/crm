@@ -25,6 +25,7 @@ use App\Models\SanctionListDownloads;
 use App\Models\TravelQuote;
 use App\Models\UAEAMLListUploads;
 use App\Models\YachtQuote;
+use App\Services\AMLService;
 use App\Services\QuoteStatusService;
 use App\Services\SanctionListService;
 use App\Traits\GenericQueriesAllLobs;
@@ -32,7 +33,6 @@ use Auth;
 use Carbon\Carbon;
 use DataTables;
 use Illuminate\Http\Request;
-use App\Services\AMLService;
 
 class AMLController extends Controller
 {

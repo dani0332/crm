@@ -25,19 +25,16 @@ use App\Models\User;
 use App\Models\YachtQuote;
 use App\Repositories\CustomerMembersRepository;
 use App\Traits\GenericQueriesAllLobs;
+use Auth;
 use Carbon\Carbon;
+use Config;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
-use Config;
-use Auth;
-
-
 
 class AMLService
 {
     use GenericQueriesAllLobs;
-
 
     public static function isDataMigrated($quoteTypeId, $quoteRequestId = '', $parseDate = ''): bool
     {
@@ -348,7 +345,6 @@ class AMLService
             return in_array($value, $failedScreeningDecisions);
         });
     }
-
 
     public function checkAml($firstName, $lastName, $quoteRequestId, $quoteTypeId, $isEmailSendingEnabled, $yob, $companyName)
     {
