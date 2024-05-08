@@ -337,11 +337,17 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
 
     public function fetchUpdateSplitPaymentsApprove($request)
     {
+        $parentQuoteModel = 
         $quoteModel = $this->getQuoteObject($request->modelType, $request->quote_id);
+
         if (! $quoteModel) {
             return response()->json(['success' => false]);
         }
 
+        if ($request->send_update_id) {
+            $quoteModel = SendUpdateLogRepository::getLogById($request->send_update_id);
+        }
+        
         $firstPayment = $quoteModel->payments()->where('code', $request->payment_code)->first();
         if ($request->is_declined) {
             $firstPayment->update([
@@ -349,7 +355,11 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                 'decline_custom_reason' => $request->declined_custom_reason,
                 'updated_by' => Auth::user()->id,
             ]);
-            $quoteModel->quote_status_id = QuoteStatusEnum::TransactionDeclined;
+            if($request->send_update_id){
+                $quoteModel->status = SendUpdateLogStatusEnum::TRANSACTION_DECLINE;
+            } else {
+                $quoteModel->quote_status_id = QuoteStatusEnum::TransactionDeclined;
+            }
             $quoteModel->save();
             $successMessage = 'Transaction declined';
         } else {
@@ -419,21 +429,29 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                 $successMessage = 'Transaction approved';
                 $totalApproved = $quoteModel->payments()->where('is_approved', 1)->count();
                 if ($totalApproved == $quoteModel->payments()->count()) {
-                    $quoteModel->quote_status_id = QuoteStatusEnum::TransactionApproved;
+                    if($request->send_update_id){
+                        $quoteModel->status = SendUpdateLogStatusEnum::TRANSACTION_APPROVED;
+                    } else {
+                        $quoteModel->quote_status_id = QuoteStatusEnum::TransactionApproved;
+                    }
                     $quoteModel->save();
-                    dispatch(new MAWelcomeJob($quoteModel->first_name, $quoteModel->last_name, $quoteModel->email, $quoteModel->mobile_no, 'IMCRM', ''));
+                    dispatch(new MAWelcomeJob($parentQuoteModel->first_name, $parentQuoteModel->last_name, $parentQuoteModel->email, $parentQuoteModel->mobile_no, 'IMCRM', ''));
 
                     // send EP documents
-                    EmbeddedProductRepository::sendDocumentsByLead($request->quote_id, $request->modelType);
+                    if (!$request->send_update_id) {
+                        EmbeddedProductRepository::sendDocumentsByLead($request->quote_id, $request->modelType);
+                    }
 
                     //Create duplicate lead for TRAVEL
-                    if ($quoteTypeId == QuoteTypeId::Travel && $quoteModel->payments()->count() > 1) {
+                    if ($quoteTypeId == QuoteTypeId::Travel && $quoteModel->payments()->count() > 1 && !$request->send_update_id) {
                         if (app(TravelQuoteService::class)->createDuplicateLead($quoteModel)) {
                             $successMessage .= ', '.$quoteModel->code.'-1 Created For Booking The Additional Policy';
                         }
                     }
                 }
-                $this->updateLeadStatus($firstPayment); //update lead status
+                if (!$request->send_update_id) {
+                    $this->updateLeadStatus($firstPayment); //update lead status
+                }
                 DB::commit();
             } catch (Exception $exception) {
                 DB::rollBack();
@@ -442,6 +460,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
 
         return $successMessage;
     }
+    
     //migrate payments
     public function fetchMigratePayments($request)
     {

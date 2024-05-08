@@ -131,9 +131,7 @@ const paymentProofDocument  = props.paymentDocument.find(item => item.text === "
 const approveProofDocument  = props.paymentDocument.find(item => item.text === "Receipt");
 
 let initalPlanDetails = [];
-if (props.sendUpdate) {
-  initalPlanDetails = 'Test Plan';
-} else if (quoteTypesToCheck.includes(props.quoteType)) {
+if (quoteTypesToCheck.includes(props.quoteType)) {
   initalPlanDetails = props.quoteRequest.plan;
 } else if(props.quoteType=='Business' || props.quoteType=='Home'){
   initalPlanDetails = props.quoteRequest.insurance_provider_details;
@@ -1376,6 +1374,7 @@ const addPayment = isValid => {
       is_approved: isApproveClicked.value,
       declined_reason: paymentMethodsForm.declined_reason,
       declined_custom_reason: declinedCustomReason,
+      send_update_id: props.sendUpdate?.id || null,
     };
     paymentMethodsForm
       .transform(data => viewData)
@@ -1411,6 +1410,7 @@ const addPayment = isValid => {
       declined_reason: paymentMethodsForm.declined_reason,
       approved_document_model: approvedDocumentModel.value,
       declined_custom_reason: declinedCustomReason,
+      send_update_id: props.sendUpdate?.id || null,
     };
     paymentMethodsForm
       .transform(data => viewData)
@@ -1631,34 +1631,35 @@ const uploadDocument = (doc, files, count) => {
 
 const getCaptureValidation = computed(() => {
   return (payment) => {
-    //6 =AML Screening Cleared , 32 = Transaction Declined , 15 = Transaction Approved
-    if ( props.payments.length>0 &&(payment.total_price <= (payment.total_amount + payment.discount_value)) &&
-      (
-      ((props.isAmlClearedForPayment || props.quoteRequest.quote_status_id === 6 || props.quoteRequest.quote_status_id === 32 || props.quoteRequest.quote_status_id === 15)
-      && props.quoteRequest.kyc_decision === 'Complete'
-      )
-      ||
-      props.quoteType === 'Travel' //skip AML & KYC for travel
-      )
-    ) {
-      if(payment.is_approved===1){
+    // 6:AML Screening Cleared, 32:Transaction Declined, 15:Transaction Approved
+    if ( props.payments.length > 0 && (payment.total_price <= (payment.total_amount + payment.discount_value)) && ((( 
+      props.isAmlClearedForPayment || 
+      props.quoteRequest.quote_status_id === page.props.quoteStatusEnum.AMLScreeningCleared || 
+      props.quoteRequest.quote_status_id === page.props.quoteStatusEnum.TransactionDeclined || 
+      props.quoteRequest.quote_status_id === page.props.quoteStatusEnum.TransactionApproved
+    ) && props.quoteRequest.kyc_decision === 'Complete' ) ||
+      props.quoteType === 'Travel' || //skip AML & KYC for travel
+      validateAccessForSendUpdate
+    )) {
+      if(payment.is_approved === 1){
         return false;
       }
+
       let paymentRecord = payment
       if ( paymentRecord.frequency==='upfront' ){
-          let paymentSplitRec = paymentRecord.payment_splits[0];
+        let paymentSplitRec = paymentRecord.payment_splits[0];
           if (paymentSplitRec.payment_method.code==='CC' ) {
             if (paymentSplitRec.payment_status_id===props.paymentStatusEnum.AUTHORISED) {
-              return true;
-            }
-            return false;
-          } else if (paymentSplitRec.payment_method.code==='IP' &&  paymentSplitRec.payment_status_id===props.paymentStatusEnum.PENDING) {
-            return true;
-          } else if (paymentSplitRec.payment_method.code==='CA' &&  paymentSplitRec.payment_status_id===props.paymentStatusEnum.CREDIT_APPROVED) {
-            return true;
-          } else if (paymentSplitRec.payment_status_id===props.paymentStatusEnum.PAID) {
             return true;
           }
+          return false;
+          } else if (paymentSplitRec.payment_method.code==='IP' &&  paymentSplitRec.payment_status_id===props.paymentStatusEnum.PENDING) {
+          return true;
+          } else if (paymentSplitRec.payment_method.code==='CA' &&  paymentSplitRec.payment_status_id===props.paymentStatusEnum.CREDIT_APPROVED) {
+          return true;
+          } else if (paymentSplitRec.payment_status_id===props.paymentStatusEnum.PAID) {
+          return true;
+        }
       } else if ( paymentRecord.frequency==='split_payments' ){
         const paymentMethodCC = paymentRecord.payment_splits.filter(item => item.payment_method.code === "CC");
         if (paymentMethodCC.length > 0) {
@@ -1852,15 +1853,20 @@ watch(
 
 // Payment's approve or capture button logic enhancements only for Send update
 // Payment status is 'Authorised', 'Paid', 'Pending' (when collected by insurer} and 'Credit approved' - Approve or Capture button should be available
-const allowApproveCapture = ref(false);
+const validateAccessForSendUpdate = ref(false);
 if (props.sendUpdate) { 
+  const paymentsDetails = props.payments.length > 0 ? props.payments[0] : [];
   const allowedPaymentStatus = [
     props.paymentStatusEnum.AUTHORISED,
     props.paymentStatusEnum.PAID,
     props.paymentStatusEnum.PENDING,
   ]; 
-  const paymentsDetails = props.payments.length > 0 ? props.payments[0] : [];
-  allowApproveCapture.value = props.payments.length > 0 && allowedPaymentStatus.includes(paymentsDetails.payment_status_id) && paymentsDetails.collection_type == 'insurer' && paymentsDetails.credit_approval !== null;
+
+  if (props.payments.length > 0 && paymentsDetails.collection_type == 'insurer') {
+    validateAccessForSendUpdate.value = allowedPaymentStatus.includes(paymentsDetails.payment_status_id) && paymentsDetails.credit_approval !== null;
+  } else if(props.payments.length > 0 && paymentsDetails.collection_type == 'broker') {
+    validateAccessForSendUpdate.value = paymentsDetails.payment_status_id == props.paymentStatusEnum.PAID;
+  }
 }
 
 </script>
@@ -1870,39 +1876,41 @@ if (props.sendUpdate) {
     <div class="flex justify-between gap-4 items-center mb-4">
       <h3 class="font-semibold text-primary-800 text-lg">Manage Payments</h3>
         <div v-if="page.props.linkedQuoteDetails.childLeadsCount == 0">
-            <template v-if="payments.length>0">
-                <div class="flex justify-between items-center gap-2" style="margin-left:auto">
-          <UpdateTotalPrice
-            v-if="can(permissionEnum.TEMP_UPDATE_TOTALPRICE) && quoteRequest.quote_status_id === 15"
-          :quoteId="quoteRequest.id"
-          :paymentCode = "payments[0].code"
-          :quoteType="quoteType"
-          :totalPrice="payments[0].total_price"
-        :totalPaidPrice="payments[0].total_amount+payments[0].discount_value"/>
-        <x-button
-                    v-if="can(permissionEnum.PaymentsCreate)"
-                    size="sm"
-                    color="emerald"
-                    @click="addPaymentModal"
-                >
-                    Add Manual Payment
-                </x-button></div>
+        <template v-if="payments.length>0">
+          <div class="flex justify-between items-center gap-2" style="margin-left:auto">
+            <UpdateTotalPrice
+              v-if="can(permissionEnum.TEMP_UPDATE_TOTALPRICE) && quoteRequest.quote_status_id === 15"
+              :quoteId="quoteRequest.id"
+              :paymentCode = "payments[0].code"
+              :quoteType="quoteType"
+              :totalPrice="payments[0].total_price"
+              :totalPaidPrice="payments[0].total_amount+payments[0].discount_value"
+              />
+            <x-button
+              v-if="can(permissionEnum.PaymentsCreate)"
+              size="sm"
+              color="emerald"
+              @click="addPaymentModal"
+            >
+              Add Manual Payment
+            </x-button>
+          </div>
+        </template>
+        <template v-else>
+          <x-tooltip>
+            <x-button
+              v-if="can(permissionEnum.PaymentsCreate)"
+              size="sm"
+              color="emerald"
+              @click="addPaymentModal"
+            >
+              <span class="border-b border-dotted">Add Manual Payment</span>
+            </x-button>
+            <template #tooltip>
+                <span>{{ paymentTooltipEnum.PAYMENT_MANAGEMENT_ADD_PAYMENT }}</span>
             </template>
-            <template v-else>
-                <x-tooltip>
-                    <x-button
-                        v-if="can(permissionEnum.PaymentsCreate)"
-                        size="sm"
-                        color="emerald"
-                        @click="addPaymentModal"
-                    >
-                        <span class="border-b border-dotted">Add Manual Payment</span>
-                    </x-button>
-                    <template #tooltip>
-                        <span>{{ paymentTooltipEnum.PAYMENT_MANAGEMENT_ADD_PAYMENT }}</span>
-                    </template>
-                </x-tooltip>
-            </template>
+          </x-tooltip>
+        </template>
         </div>
     </div>
     <div class="vue3-easy-data-table tablefixed custom-height">
@@ -3034,7 +3042,7 @@ if (props.sendUpdate) {
             </div>
           </template>
           <template v-else-if="isCreditApprovalView || (paymentMethodsModels[splitPaymentNo]!=='CA' && paymentMethodsModels[splitPaymentNo]!=='CC')" >
-            <div v-if="isCreditApprovalView || ((splitPaymentRecord.payment_status_id!=paymentStatusEnum.PAID || allowApproveCapture) && can(permissionEnum.ApprovePayments))" class="w-full flex justify-end">
+            <div v-if="isCreditApprovalView || (splitPaymentRecord.payment_status_id!=paymentStatusEnum.PAID && can(permissionEnum.ApprovePayments))" class="w-full flex justify-end">
               <div v-if="isDeclineClicked" class="mr-4">
                 <x-button size="sm" @click="handleCancelChanges" tabindex="0" class="focus:outline-black">
                   Cancel
