@@ -403,7 +403,7 @@ class EmbeddedProductRepository extends BaseRepository
      * @param  object  $quoteObject
      * @param  string  $certificate_number
      * @param  float  $premium
-     * @param  NULL|Carbon  capturedAt
+     * @param  null|Carbon  capturedAt
      * @return PDF|null The PDF document or null if the short code is not defined in config.
      */
     private function getPDF(
@@ -418,8 +418,8 @@ class EmbeddedProductRepository extends BaseRepository
         if (isset($certificatesConfig[$short_code])) {
             $viewFile = $certificatesConfig[$short_code]['view_file'];
             $v2Config = $certificatesConfig[$short_code]['v2'];
-            if(!empty($v2Config['from']) && 
-            !empty($capturedAt) && 
+            if (! empty($v2Config['from']) &&
+            ! empty($capturedAt) &&
             Carbon::parse($capturedAt)->gte(Carbon::parse($v2Config['from']))) {
                 $viewFile = $v2Config['view_file'];
             }
