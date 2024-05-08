@@ -274,30 +274,49 @@ function calculateValuesAndHighlight() {
 
     // process the data to get the correct values for the retention report
     reportDataRef.forEach((item, index) => {
+        let dynamicIndexForRenewedByVolumeSegment = 'renewed_by_volume_segment_advisors_for_' + item.name;
+        let dynamicIndexForRenewedByValueSegment = 'renewed_by_value_segment_advisors_for_' + item.name;
+        let dynamicIndexForTotalByVolumeSegment = 'total_by_volume_segment_advisors_for_' + item.name;
+        let dynamicIndexForTotalByValueSegment = 'total_by_value_segment_advisors_for_' + item.name;
+
+        let dynamicIndexForCarSoldByVolumeSegment = 'car_sold_by_volume_segment_for_' + item.name;
+        let dynamicIndexForCarSoldByValueSegment = 'car_sold_by_value_segment_for_' + item.name;
+
         if (segmentFilter == 'volume') {
-            item.total_allocated_leads = item.total_by_volume_segment_advisors
-            item.renewed = item.renewed_by_volume_segment_advisors
-            item.car_sold = item.car_sold_by_volume_segment
+            item.total_allocated_leads = item[dynamicIndexForTotalByVolumeSegment]
+            item.renewed = item[dynamicIndexForRenewedByVolumeSegment]
+            item.car_sold = item[dynamicIndexForCarSoldByVolumeSegment]
             // item.early_renewal = item.early_renewal_by_volume_segment    // tempory hidden don't remove
         } else if (segmentFilter == 'value') {
-            item.total_allocated_leads = item.total_by_value_segment_advisors
-            item.renewed = item.renewed_by_value_segment_advisors
-            item.car_sold = item.car_sold_by_value_segment
+            item.total_allocated_leads = item[dynamicIndexForTotalByValueSegment]
+            item.renewed = item[dynamicIndexForRenewedByValueSegment]
+            item.car_sold = item[dynamicIndexForCarSoldByValueSegment]
             // item.early_renewal = item.early_renewal_by_value_segment   // tempory hidden don't remove
         }
     });
     // process the data to get the correct values for the super retention report
     superRetentionDataRef.forEach((superItem, superIndex) => {
+        let dynamicIndexForConvertedByVolumeSegment = 'health_converted_by_volume_segment_advisors_for_' + superItem.name;
+        let dynamicIndexForConvertedByValueSegment = 'health_converted_by_value_segment_advisors_for_' + superItem.name;
+
         if (segmentFilter == 'volume') {
-            superItem.health_converted = superItem.health_converted_by_volume_segment_advisors
+            superItem.health_converted = superItem[dynamicIndexForConvertedByVolumeSegment]
         } else if (segmentFilter == 'value') {
-            superItem.health_converted = superItem.health_converted_by_value_segment_advisors
+            superItem.health_converted = superItem[dynamicIndexForConvertedByValueSegment]
         }
         superItem.monthlyHealthRenewed = calculateMonthlyHealthRenewed(superRetentionDataRef, superIndex);
         superItem.rowSpan = currentRowSpanForSuperRetention;
     });
 
     reportDataRef.forEach((item, index) => {
+        let dynamicIndexForRenewedByVolumeSegment = 'renewed_by_volume_segment_advisors_for_' + item.name;
+        let dynamicIndexForRenewedByValueSegment = 'renewed_by_value_segment_advisors_for_' + item.name;
+        let dynamicIndexForTotalByVolumeSegment = 'total_by_volume_segment_advisors_for_' + item.name;
+        let dynamicIndexForTotalByValueSegment = 'total_by_value_segment_advisors_for_' + item.name;
+
+        let dynamicIndexForCarSoldByVolumeSegment = 'car_sold_by_volume_segment_for_' + item.name;
+        let dynamicIndexForCarSoldByValueSegment = 'car_sold_by_value_segment_for_' + item.name;
+
         let fontColorAssigned = false;
         let advisorRetention =
             (
@@ -348,10 +367,11 @@ function calculateValuesAndHighlight() {
 
         let valueSegmentConversion = (
             (
-                parseInt(item.renewed_by_value_segment_advisors) /
+                parseInt(item[dynamicIndexForRenewedByValueSegment]
+                ) /
                 (
-                    parseInt(item.total_by_value_segment_advisors) -
-                    parseInt(item.car_sold_by_value_segment)
+                    parseInt(item[dynamicIndexForTotalByValueSegment]) -
+                    parseInt(item[dynamicIndexForCarSoldByValueSegment])
                     // - parseInt(item.early_renewal_by_value_segment) // tempory hidden don't remove
                 )) * 100
         ).toFixed(2);
@@ -359,10 +379,10 @@ function calculateValuesAndHighlight() {
 
         let volumeSegmentConversion = (
             (
-                parseInt(item.renewed_by_volume_segment_advisors) /
+                parseInt(item[dynamicIndexForRenewedByVolumeSegment]) /
                 (
-                    parseInt(item.total_by_volume_segment_advisors) -
-                    parseInt(item.car_sold_by_volume_segment)
+                    parseInt(item[dynamicIndexForTotalByVolumeSegment]) -
+                    parseInt(item[dynamicIndexForCarSoldByVolumeSegment])
                     // - parseInt(item.early_renewal_by_volume_segment) // tempory hidden don't remove
                 )) * 100
         ).toFixed(2);
