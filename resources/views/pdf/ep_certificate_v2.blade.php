@@ -113,13 +113,12 @@
         }
 
         header {
-            padding: 50px;
-            max-width: 90%;
-            width: 100%;
-            left: 3%;
-            top: 0
-            margin: 0px auto;
+            width: 95%;
+            left: 5%;
+            top: 75px;
+            margin: 0px;
             position: fixed;
+            z-index: -10;
         }
 
         main {
@@ -131,18 +130,7 @@
 
         main,
         .mt-p {
-            margin-top: 240px;
-        }
-
-        footer {
-            bottom: 0px;
-            left: 0px;
-            right: 0px;
-            z-index: 10;
-            max-width: 90%;
-            width: 100%;
-            margin: 0px auto;
-            position: fixed;
+            margin-top: 340px;
         }
 
         .text-center {
@@ -176,6 +164,10 @@
             margin: 0 20px 0 35px;
             text-align: justify;
         }
+
+        .text-danger {
+            color: red;
+        }
     </style>
 </head>
 
@@ -183,26 +175,11 @@
 
     <header>
         <div>
-            <img src="{{public_path('images/ep/logos/salama.png')}}" width="300" height="172" alt="Salama Logo">
+            <img src="{{public_path('images/ep/logos/bg.png')}}" width="100%" height="100%" alt="Salama Logo">
         </div>
     </header>
 
-    <footer>
-        <table>
-            <tr>
-                <td>
-                    <div style="font-size: 16px; vertical-align: bottom;">SALAMA - Confidential</div>
-                </td>
-            </tr>
-        </table>
-
-        <div style="margin-top: 0.3rem;">
-            <span style="background-color: #246b71; width: 500px; height: 20px; display: inline-block;"></span>
-            <span style="background-color: #fdcc00; width: 100px; height: 20px;  display: inline-block; margin-left: -5px;"></span>
-        </div>
-    </footer>
-
-    <main>
+    <main style="position: relative; z-index: 10">
         <table class="bordered">
             <thead>
                 <tr>
@@ -216,7 +193,9 @@
                     <td width="30%">
                         <p><b>Full Name</b></p>
                     </td>
-                    <td >{{ $viewData['name'] }}</td>
+                    <td >
+                        {{ $viewData['name'] }}
+                    </td>
                 </tr>
                 <tr>
                     <td>
@@ -225,7 +204,7 @@
                     <td>{{ $viewData['dob'] }}</td>
                 </tr>
                 <tr>
-                    <td><b>Emirates ID No</b></td>
+                    <td><b>Passport No/Emirates ID No</b></td>
                     <td>{{ $viewData['emirates_id'] }}</td>
                 </tr>
             </tbody>
@@ -270,7 +249,7 @@
                 </tr>
                 <tr>
                     <td colspan="3">
-                        <p><b>SECTION 2 – Medical Expenses & Hospitalization</b></p>
+                        <p><b>SECTION 2 – Medical Treatment Expenses & Hospitalization</b></p>
                     </td>
                 </tr>
                 <tr>
@@ -278,10 +257,15 @@
                         <p>1</p>
                     </td>
                     <td>
-                        <p>Accidental Medical Expenses ‐ Expenses incurred for emergency admission and at a hospital following a covered accident</p>
+                        <p>Accidental Medical Treatment Expenses ‐ Expenses incurred for emergency admission and treatment at a hospital following a covered accident</p>
                     </td>
                     <td>
                         <p>AED 50,000/-</p>
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="3">
+                        <p>The Liability of the Company for all damages in respect of any one claim or series of claims arising from one occurrence shall not exceed the Limit of Indemnity specified in the certificate/ schedule</p>
                     </td>
                 </tr>
             </tbody>
@@ -350,7 +334,7 @@
         </table>
         <br />
 
-        <table class="bordered page-break">
+        <table class="bordered page-break text-danger">
             <tbody>
                 <tr>
                     <td width="30%" valign="top">
@@ -359,7 +343,82 @@
                     <td>
                         <ol>
                             <li>
-                                Insured Persons engaging in food delivery or other delivery services on motorbikes are specifically excluded from this policy regardless of their visa type (be they direct employees or on outsourced contracts). Insured persons are however covered for any accidents that may fall outside of their login hours into the delivery company’s applications, subject to other terms and conditions for claiming benefits under this policy.
+                                Claims arising from War or warlike operations (whether war is declared or not, conventional, biological, chemical or nuclear), invasion, acts of foreign enemies, hostilities, acts of terrorism, terrorist sabotage, rebellion, mutiny, civil commotion, civil war, revolution, insurrection, military or usurped power, martial law, embargo or any act committed by any person or persons for the purpose of overthrowing a government by violent force or to influence political decision making. Terrorism (suspected or proven)
+                            </li>
+                        </ol>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+
+        <table class="bordered mt-p page-break text-danger">
+            <tbody>
+                <tr>
+                    <td width="30%" valign="top"></td>
+                    <td>
+                        <ol>
+                            <li style="list-style: none;">
+                                 shall be understood to include the consequences of hostage taking, drive-by shooting, planting of bombs and any other form of physical violence.
+                            </li>
+                            <li>
+                                 In the event of loss, damage, cost or expense directly or indirectly caused by, contributed to by, resulting from or arising out of or in connection with biological, chemical or nuclear explosion, pollution, contamination and/or fire following thereon.
+                            </li>
+                            <li>
+                                Aviation, gliding or any other form of aerial flight other than as a fare paying passenger of a recognized airline or charter service.
+                            </li>
+                            <li>
+                                The misuse of drugs or alcohol.
+                            </li>
+                            <li>
+                                Ingestion of poison or drugs, or inhalation of fumes, voluntarily, except in the case of an Accident admitted by any occupational health and safety board or failure to seek medical advice.
+                            </li>
+                            <li>
+                                The exercise of dangerous sports including but not limited to: -
+                            </li>
+                            <li>
+                                polo, boxing, climbing/mountaineering requiring ropes or guide or free climbing, gliding, ballooning, racing of any kind other than on foot (including but not limited to horse or motor racing), participation in speed or endurance tests or record breaking feats, any underwater activity involving breathing apparatus, such as deep sea diving, skydiving or parachuting, bungee jumping, show jumping, steeple chasing, evening or fiat racing with horse, potholing, sailing outside territorial waters.
+                            </li>
+                            <li>
+                                Participation in any sports in a professional capacity.
+                            </li>
+                            <li>
+                                Any breach of law by the life assured or any assault provoked by him.
+                            </li>
+                            <li>
+                                Infection from any Human Immuno-deficiency Virus (HIV), Acquired lmmuno deficiency Syndrome (AIDS) or any AIDS related condition.
+                            </li>
+                            <li>
+                                Mental illness or mental disease or nervous conditions.
+                            </li>
+                            <li>
+                                Pregnancy, childbirth or abortion or any complications arising there from.
+                            </li>
+                            <li>
+                                Injury caused by nuclear fission, nuclear fusion or radioactive contamination.
+                            </li>
+                            <li>
+                                Insured engaging in or taking part in any naval, military or air force operation.
+                            </li>
+                            <li>
+                                Pre-Existing Conditions
+                            </li>
+                            <li>
+                                Insured Persons engaging in food delivery or other delivery services on motorbikes are specifically excluded from this policy regardless of their visa type (be they direct employees or on outsourced contracts).
+                            </li>
+                        </ol>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+
+        <table class="bordered mt-p page-break text-danger">
+            <tbody>
+                <tr>
+                    <td width="30%" valign="top"></td>
+                    <td>
+                        <ol start="16">
+                            <li style="list-style: none;">
+                                Insured persons are however covered for any accidents that may fall outside of their login hours into the delivery company’s applications, subject to other terms and conditions for claiming benefits under this policy.
                             </li>
                             <li>
                                 Physiotherapy is covered only for fracture of bone and not covered for soft tissue injuries.
@@ -368,25 +427,8 @@
                                 This policy shall not cover injuries sustained due to Accidents arising because of:
                                 <ol type="a">
                                     <li>
-                                        use of vehicles for racing (speed, endurance, drag‐racing or other) professional or amateur, dune‐bashing, driving in the desert, quad‐biking, driving outside roads built‐up specifically for driving such vehicles, testing speed, stunt‐ driving, rallies, experimenting with loading capacity or while towing a trailer (unless the vehicle used for the purpose was fitted and licensed for towing;
+                                        use of vehicles for racing (speed, endurance, drag‐racing or other) professional or amateur, dune‐bashing, driving in the desert, quad‐ biking, driving outside roads built‐up specifically for driving such vehicles, testing speed, stunt‐ driving, rallies, experimenting with loading capacity or while towing a trailer (unless the vehicle used for the purpose was fitted and licensed for towing;
                                     </li>
-                                </ol>
-                            </li>
-                        </ol>
-                    </td>
-                </tr>
-            </tbody>
-        </table>
-
-        <table class="bordered mt-p">
-            <tbody>
-                <tr>
-                    <td width="30%" valign="top"></td>
-                    <td>
-                        <ol start="3">
-                            <li style="list-style: none;">
-                                <ol type="a">
-                                    <li style="list-style: none;"></li>
                                     <li>
                                         use of bicycles, e‐bikes, e‐scooters, or any vehicle that does not bear a mandatory number plate issued by the Roads and Traffics Authority;
                                     </li>
@@ -410,6 +452,32 @@
                             <li>
                                 Excludes Nuclear, Chemical, Biological and Mass Destruction Risks.
                             </li>
+                            <li>
+                                Sanction Exclusion Clause
+                                <br>
+                                SALAMA shall not be deemed to provide cover and SALAMA shall not be liable to pay any claim or pay any benefit hereunder to the extent that the provision of such cover, payment of such claim or provision of such benefit would expose SALAMA any sanction, prohibition or restriction under United Nations resolutions or the trade or economic sanctions, laws or regulations of the European Union,
+                            </li>
+                        </ol>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+
+        <table class="bordered mt-p text-danger">
+            <tbody>
+                <tr>
+                    <td width="30%" valign="top"></td>
+                    <td>
+                        <ol start="20">
+                            <li style="list-style: none">
+                                United Kingdom or United States of America, or any of its states.
+                            </li>
+                            <li>
+                                Excluding Fines and Penalties
+                            </li>
+                            <li>
+                                Deliberate Acts: caused by or arising from any deliberate act or omission by or on behalf of the Insured and which could reasonably have been expected by the insured having regard to the nature and circumstances of such act or omission
+                            </li>
                         </ol>
                     </td>
                 </tr>
@@ -431,18 +499,23 @@
                         <ol>
                             <li>
                                 I acknowledge that SALAMA- Islamic Arab Insurance Company will manage my contribution under Wakala Principles as defined by the Operator and in accordance with Plan Terms & Conditions.
+                                <br /> <br />
                             </li>
                             <li>
                                 I also understand that SALAMA - Islamic Arab Insurance Company has the right to cancel my application for insurance if the first contribution is not received by the Company within the first 3 days or if any of the requirements asked by the Company is not provided by me within the time frame specified by the Company.
+                                <br /> <br />
                             </li>
                             <li>
                                 I Authorize any person, physician, hospital, clinic, institution, insurance company or any other organizations, having any records, application, or knowledge of my health to provide the operator any and all information needed about me with reference to my health, medical history, hospitalization, advise, diagnosis, treatment, disease or ailment.
+                                <br /> <br />
                             </li>
                             <li>
                                 A photocopy of this authorization shall be suitable evidence of this authority and legally original.
+                                <br /> <br />
                             </li>
                             <li>
                                 I also understand that there will be no refund of Plan Contribution after the date of issuance.
+                                <br /> <br />
                             </li>
                             <li>
                                 I further acknowledge and confirm that I have received and read the Terms and Conditions of the Plan.
@@ -454,9 +527,53 @@
         </table>
         <br />
 
-        <div>
+        <table class="bordered page-break">
+            <thead>
+                <tr>
+                    <th>
+                        <p><b>Claim Procedure</b></p>
+                    </th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>
+                        <p>
+                            Write to the Operator, call the Operator or send a Email
+                        </p>
+                        <br />
+                        <ul>
+                            <li>
+                                Address: Islamic Arab Insurance Co – SALAMA, Spectrum building, A Block, Oud Metha, Dubai, UAE
+                            </li>
+                            <li>
+                                Tel No: 800 SALAMA (800 725262)
+                            </li>
+                            <li>
+                                Email: general.claims@salama.ae
+                            </li>
+                        </ul>
+                        <br />
+                        <p>
+                            The Operator will issue a Statement of Claim Form.
+                        </p>
+                        <br />
+                        <p>
+                            The Claimant should complete the Statement of Claim Form issued by the Operator and produce such evidence to substantiate the claim and the title of the claimant as the Operator might require.
+                        </p>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+        <br />
+
+        <div class="mt-p" style="position: relative">
             <p>
-                <b>Signed on behalf of SALAMA Islamic Arab Insurance Co. (P.S.C.)</b>
+                Terms & conditions mentioned on this certificate shall hold precedence over terms and conditions mentioned elsewhere on the policy document.
+                <br> <br> <br>
+
+                <b>For and on behalf of SALAMA – ISLAMIC ARAB INSURANCE CO PSC</b>
+                <img style="position: absolute; z-index:0; left: 42%; top: 40px;" width="150" height="auto" src="{{public_path('images/ep/logos/sign.png')}}" alt="signature">
             </p>
             <p style="margin-top: 5px;">
                 <p> <b>Date:</b> {{ $viewData['date_of_enrollment'] }} </p>
