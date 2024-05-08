@@ -1,6 +1,7 @@
 <script setup>
 const props = defineProps({
-  carMakes: Array,
+  carMakes: [Array, Object],
+  commercialModels: Object,
 });
 const { isRequired } = useRules();
 
@@ -14,11 +15,12 @@ const commercialForm = useForm({
   car_model_id: null,
 });
 
+const carMake = ref([]);
 const carModels = ref([]);
 const loader = ref(false);
 
 const getCarModel = () => {
-  let carCode = props.carMakes.find(
+  let carCode = carMake.value.find(
     x => x.id == commercialForm.car_make_id,
   ).code;
   axios.get(`/car-model?make_code=${carCode}`).then(response => {
@@ -30,7 +32,7 @@ const getCarModel = () => {
 function onSubmit(isValid) {
   if (isValid) {
     loader.value = true;
-    let method = isEdit.value ? 'put' : 'post';
+    let method = 'post';
     let url = isEdit.value
       ? route('admin.configure.commerical.vehicles.update', commercialForm.id)
       : route('admin.configure.commerical.vehicles.store');
@@ -49,6 +51,23 @@ function onSubmit(isValid) {
     });
   }
 }
+
+const setInitialState = () => {
+  if (isEdit.value) {
+    commercialForm.id = props.carMakes.id;
+    commercialForm.car_make_id = props.carMakes.id;
+    commercialForm.car_model_id = props.commercialModels;
+    carModels.value = props.carMakes.car_models;
+    carMake.value = [props.carMakes];
+    // getCarModel();
+  } else {
+    carMake.value = props.carMakes;
+  }
+};
+
+onMounted(() => {
+  setInitialState();
+});
 </script>
 <template>
   <Head title="Configure Commercial car make & model" />
@@ -71,7 +90,7 @@ function onSubmit(isValid) {
         <x-select
           class="w-full"
           :options="
-            carMakes.map(x => {
+            carMake.map(x => {
               return { label: x.text, value: x.id };
             })
           "

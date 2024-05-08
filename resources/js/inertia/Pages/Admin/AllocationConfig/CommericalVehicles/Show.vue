@@ -1,6 +1,11 @@
 <script setup>
 const props = defineProps({
-  carMake: Array,
+  carMake: Object,
+});
+
+const models = computed(() => {
+  if (props.carMake)
+    return props.carMake.car_models.map(car => car.text).join(', ');
 });
 </script>
 <template>
@@ -21,5 +26,21 @@ const props = defineProps({
     </div>
   </div>
   <x-divider class="my-4" />
-  <div class="p-4 rounded shadow mb-6 bg-primary-50/50"></div>
+  <div class="p-4 rounded shadow mb-6 bg-white text-sm">
+    <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
+      <div class="grid sm:grid-cols-2">
+        <dt class="font-medium">Car Make</dt>
+        <dd>{{ carMake.text }}</dd>
+      </div>
+
+      <div class="grid sm:grid-cols-2">
+        <dt class="font-medium">Code Key</dt>
+        <dd>{{ carMake.code }}</dd>
+      </div>
+      <div class="grid sm:grid-cols-2">
+        <dt class="font-medium">Commercial Car Models</dt>
+        <dd>{{ models }}</dd>
+      </div>
+    </dl>
+  </div>
 </template>
