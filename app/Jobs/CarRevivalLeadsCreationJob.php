@@ -79,6 +79,7 @@ class CarRevivalLeadsCreationJob implements ShouldQueue, StackableJob
                 'source' => LeadSourceEnum::REVIVAL,
                 'isEmailSkip' => true,
                 'referenceUrl' => config('constants.APP_URL'),
+                'sic_flow_enabled' => false,
             ];
 
             info('carRevivalParentLead -'.$this->lead->uuid.'- capiPayload - '.json_encode($dataArr));
