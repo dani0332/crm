@@ -112,7 +112,7 @@ export const useDaysSinceStale = payload =>
 {
   const quoteRequest = payload;
   const stale_days = quoteRequest
-    ? Math.floor((new Date() - new Date(quoteRequest)) / (1000 * 60 * 60 * 24))
+    ? Math.round((new Date() - new Date(quoteRequest)) / (1000 * 60 * 60 * 24))
     : false;
 
   return (typeof stale_days === 'number' && stale_days <= 90) ? (stale_days === 0 ? 1 + ' day' : stale_days + ' days') : false;
