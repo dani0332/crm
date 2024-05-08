@@ -1,5 +1,5 @@
 <script setup>
-// const emit = defineEmits(["update:uploadedFiles"]);
+const emit = defineEmits(["updateQuoteStatus"]);
 import {fileUploadErrorMessage} from "@/inertia/Composables/utilities.js";
 
 defineProps({
@@ -24,7 +24,7 @@ const docForm = useForm({
 
 
 const uploadFile = (doc, memberId, filesWithInfo) => {
-    const { files, rejectReason} = filesWithInfo;
+  const { files, rejectReason} = filesWithInfo;
     if (files.length == 0) {
         notification.error({
             title: 'File upload failed',
@@ -53,8 +53,8 @@ const uploadFile = (doc, memberId, filesWithInfo) => {
           position: 'top',
         });
       },
-
       onFinish: () => {
+        emit('updateQuoteStatus');
         isUploading.value = false;
       },
     });
@@ -79,7 +79,7 @@ const uploadFile = (doc, memberId, filesWithInfo) => {
                 >
                     <div class="flex flex-col gap-1">
                         <h5 class="text-sm font-semibold">
-                            {{ docType.text }}
+                            {{ docType.text }} {{ docType.is_required ? '*' : ''}}
                         </h5>
                         <p class="text-xs">Max files: {{ docType.max_files }}</p>
                         <p class="text-xs">Supported: {{ docType.accepted_files }}</p>
@@ -122,7 +122,7 @@ const uploadFile = (doc, memberId, filesWithInfo) => {
           >
             <div class="flex flex-col gap-1">
               <h5 class="text-sm font-semibold">
-                {{ docType.text }}
+                {{ docType.text }} {{ docType.is_required ? '*' : ''}}
               </h5>
               <p class="text-xs">Max files: {{ docType.max_files }}</p>
               <p class="text-xs">Supported: {{ docType.accepted_files }}</p>

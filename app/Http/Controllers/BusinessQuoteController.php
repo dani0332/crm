@@ -36,6 +36,7 @@ use App\Services\DropdownSourceService;
 use App\Services\LookupService;
 use App\Services\SendUpdateLogService;
 use App\Services\SplitPaymentService;
+use App\Traits\GenericQueriesAllLobs;
 use App\Traits\RolePermissionConditions;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -51,7 +52,7 @@ class BusinessQuoteController extends Controller
     public const TYPE = quoteTypeCode::Business;
     public const TYPE_ID = QuoteTypeId::Business;
 
-    use RolePermissionConditions;
+    use GenericQueriesAllLobs, RolePermissionConditions;
 
     public function __construct(
         BusinessQuoteService $businessQuoteService,
@@ -264,6 +265,8 @@ class BusinessQuoteController extends Controller
             $sendUpdateEnum = SendUpdateLogStatusEnum::asArray();
         }
 
+        $bookPolicyDetails = $this->bookPolicyPayload($record, QuoteTypes::BUSINESS->value, $payments, $quoteDocuments);
+
         return inertia('CorpLineQuote/Show', [
             'storageUrl' => storageUrl(),
             'amlQuoteStatus' => $amlQuoteStatus,
@@ -316,10 +319,6 @@ class BusinessQuoteController extends Controller
                 'isPA' => auth()->user()->hasRole(RolesEnum::PA),
 
             ],
-            'enums' => [
-                'quoteStatusEnum' => QuoteStatusEnum::asArray(),
-                'paymentStatusEnum' => PaymentStatusEnum::asArray(),
-            ],
             'typeCode' => quoteTypeCode::CORPLINE,
             'customerTypeEnum' => CustomerTypeEnum::asArray(),
             'companyTypes' => $companyType,
@@ -330,7 +329,6 @@ class BusinessQuoteController extends Controller
             'canAddBatchNumber' => auth()->user()->hasRole(RolesEnum::CorplineManager),
             'vatPercentage' => $vatPercentage,
             'paymentTooltipEnum' => PaymentTooltip::asArray(),
-            'paymentStatusEnum' => PaymentStatusEnum::asArray(),
             'isNewPaymentStructure' => $isNewPaymentStructure,
             'isAmlClearedForPayment' => $isAmlClearedForPayment,
             'sendUpdateOptions' => $sendUpdateOptions,
@@ -338,6 +336,9 @@ class BusinessQuoteController extends Controller
             'sendUpdateEnum' => $sendUpdateEnum,
             'hasPolicyIssuedStatus' => $hasPolicyIssuedStatus,
             'linkedQuoteDetails' => $linkedQuoteDetails,
+            'record' => $record,
+            'bookPolicyDetails' => $bookPolicyDetails,
+            'payments' => $payments,
         ]);
     }
 
@@ -364,10 +365,6 @@ class BusinessQuoteController extends Controller
                 'admin' => auth()->user()->hasAnyRole([RolesEnum::Admin]),
                 'notProductionApproval' => ! auth()->user()->hasRole(RolesEnum::PA),
                 'auditable' => auth()->user()->can(PermissionsEnum::Auditable),
-            ],
-            'enums' => [
-                'quoteStatusEnum' => QuoteStatusEnum::asArray(),
-                'paymentStatusEnum' => PaymentStatusEnum::asArray(),
             ],
         ]);
     }

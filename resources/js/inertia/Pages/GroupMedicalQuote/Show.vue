@@ -11,7 +11,6 @@ defineProps({
   typeCode: String,
   lostReasons: Object,
   quoteStatuses: Object,
-  quoteStatusEnum: Object,
   customerAdditionalContacts: Array,
   customerTypeEnum: Object,
   companyTypes: Array,
@@ -23,7 +22,6 @@ defineProps({
   storageUrl: String,
   insuranceProviders: Object,
   vatPercentage: Number,
-  paymentStatusEnum: Object,
   paymentTooltipEnum: Object,
   paymentMethods: Array,
   isNewPaymentStructure: Boolean,
@@ -32,6 +30,11 @@ defineProps({
   sendUpdateLogs: Array,
   hasPolicyIssuedStatus: Boolean,
   linkedQuoteDetails: Object,
+  record: Object,
+  permissions: Object,
+  enums: Object,
+  bookPolicyDetails: Array,
+  payments: Array,
 });
 
 const page = usePage();
@@ -43,6 +46,11 @@ const hasAnyRole = roles => useHasAnyRole(roles);
 const hasRole = role => useHasRole(role);
 const permissionsEnum = page.props.permissionsEnum;
 const rolesEnum = page.props.rolesEnum;
+const quoteStatusEnum = page.props.quoteStatusEnum;
+const paymentStatusEnum = page.props.paymentStatusEnum;
+
+const permissionEnum = page.props.permissionsEnum;
+const canAny = permissions => useCanAny(permissions);
 
 const historyData = ref(null),
   historyLoading = ref(false);
@@ -356,6 +364,15 @@ const linkEntity = () => {
 const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
 const getDetailPageRoute = (uuid, quote_type_id) =>
   useGetShowPageRoute(uuid, quote_type_id, page.props.quote.business_type_of_insurance_id);
+
+watch(
+  () => page.props.quote.quote_status_id,
+  (newValue, oldValue) => {
+    if (newValue !== oldValue) {
+      leadStatusForm.leadStatus = newValue;
+    }
+  },
+);
 </script>
 
 <template>
@@ -848,6 +865,18 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
       :expanded="sectionExpanded"
     />
 
+    <LastYearPolicyDetail
+      v-if="
+        quote.source == $page.props.leadSource.RENEWAL_UPLOAD ||
+        quote.source == $page.props.leadSource.INSLY
+      "
+      modelType="Business"
+      :quote="quote"
+      :insly-id="quoteDetails?.insly_id"
+      :canAddBatchNumber="canAddBatchNumber"
+      :expanded="sectionExpanded"
+    />
+    
     <div class="p-4 rounded shadow mb-6 bg-primary-50/25">
       <Collapsible :expanded="sectionExpanded">
         <template #header>
@@ -967,15 +996,10 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
       :isAmlClearedForPayment="isAmlClearedForPayment"
 		/>
 
-    <LastYearPolicyDetail
-      v-if="
-        quote.source == $page.props.leadSource.RENEWAL_UPLOAD ||
-        quote.source == $page.props.leadSource.INSLY
-      "
+    <PolicyDetail
+      v-if="permissions.isQuoteDocumentEnabled"
+      :record="record"
       modelType="Business"
-      :quote="quote"
-      :insly-id="quoteDetails?.insly_id"
-      :canAddBatchNumber="canAddBatchNumber"
       :expanded="sectionExpanded"
     />
 
@@ -987,14 +1011,29 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
       :insly-id="quoteDetails?.insly_id"
       :expanded="sectionExpanded"
     />
-		
+
+    <BookPolicy
+      v-if="
+        canAny([
+          permissionEnum.VIEW_INSLY_BOOK_POLICY,
+          permissionEnum.SEND_INSLY_BOOK_POLICY,
+        ])
+      "
+      :quote="record"
+      quoteType="Business"
+      modelType="Group Medical"
+      :bookPolicyDetails="bookPolicyDetails"
+      :payments="payments"
+      :expanded="sectionExpanded"
+    />
+
     <SendUpdates
       v-if="hasPolicyIssuedStatus"
       :reportable="quote"
       :quote_type_id="$page.props.quoteTypeId"
       :options="sendUpdateOptions"
       :data="sendUpdateLogs"
-    />		
+    />	
 
     <div class="p-4 rounded shadow mb-6 bg-white">
       <Collapsible :expanded="sectionExpanded">

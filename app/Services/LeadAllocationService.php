@@ -997,4 +997,5 @@ class LeadAllocationService extends BaseService
     {
         return HealthQuote::whereNull('advisor_id')->where('health_team_type', $teamType)->count() ?? 0;
     }
+
 }

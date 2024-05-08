@@ -31,11 +31,9 @@ defineProps({
   customerAdditionalContacts: Array,
   lostReasons: Array,
   tiers: Array,
-  quoteStatusEnum: Object,
   carPlanFeaturesCodeEnum: Object,
   carPlanExclusionsCodeEnum: Object,
   carPlanAddonsCodeEnum: Object,
-  paymentStatusEnum: Object,
   modelType: String,
   notProductionApproval: Boolean,
   allowedDuplicateLOB: Array,
@@ -79,8 +77,7 @@ defineProps({
   tiersExceptTierR: Array,
   leadSourceEnum: Object,
   carPlanTypeEnum: Object,
-  policyIssuanceStatus: Array,
-  bPDetails: Array,
+  bookPolicyDetails: Array,
   documentTypesByCategory: Array,
   customerTypeEnum: Object,
   memberRelations: Array,
@@ -158,6 +155,8 @@ onMounted(() => {
 const processingOCBEmailNB = ref(false);
 const permissionEnum = page.props.permissionsEnum;
 const rolesEnum = page.props.rolesEnum;
+const quoteStatusEnum= page.props.quoteStatusEnum;
+const paymentStatusEnum = page.props.paymentStatusEnum;
 
 const dateFormat = date => {
   return useDateFormat(date, 'DD-MM-YYYY HH:mm:ss').value;
@@ -1624,6 +1623,15 @@ const getDetailPageRoute = (
   uuid,
   quote_type_id,
 ) => useGetShowPageRoute(uuid, quote_type_id, null);
+
+watch(
+  () => page.props.record.quote_status_id,
+  (newValue, oldValue) => {
+    if (newValue !== oldValue) {
+      leadStatusForm.leadStatus = newValue;
+    }
+  },
+);
 </script>
 
 <template>
@@ -2015,9 +2023,9 @@ const getDetailPageRoute = (
             </dl>
           </div>
           <x-divider class="mb-4 mt-4" />
-          <div class="flex justify-end mb-4">
+          <div v-if="linkedQuoteDetails.childLeadsCount == 0" class="flex justify-end mb-4" >
             <Link :href="route('car.edit', record.uuid)">
-              <x-button size="sm" color="primary" tag="div">Edit</x-button>
+              <x-button size="sm" color="primary" tag="div">Edit </x-button>
             </Link>
           </div>
         </template>
@@ -2113,7 +2121,7 @@ const getDetailPageRoute = (
                       :rules="[isRequired]"
                       placeholder="INSURED FIRST NAME"
                       class="w-full"
-                      :disabled="!isProfileUpdateAllow"
+                      :disabled="!isProfileUpdateAllow || linkedQuoteDetails.childLeadsCount > 0"
                     />
                   </dd>
                 </div>
@@ -2125,7 +2133,7 @@ const getDetailPageRoute = (
                       :rules="[isRequired]"
                       placeholder="INSURED LAST NAME"
                       class="w-full"
-                      :disabled="!isProfileUpdateAllow"
+                      :disabled="!isProfileUpdateAllow  || linkedQuoteDetails.childLeadsCount > 0"
                     />
                   </dd>
                 </div>
@@ -2153,7 +2161,7 @@ const getDetailPageRoute = (
                       :rules="[isRequired]"
                       placeholder="EMIRATES ID NUMBER"
                       class="w-full"
-                      :disabled="!isProfileUpdateAllow"
+                      :disabled="!isProfileUpdateAllow  || linkedQuoteDetails.childLeadsCount > 0"
                     />
                   </dd>
                 </div>
@@ -2164,7 +2172,7 @@ const getDetailPageRoute = (
                       v-model="customerProfileForm.emirates_id_expiry_date"
                       :rules="[isRequired]"
                       placeholder="EMIRATES ID EXPIRY DATE"
-                      :disabled="!isProfileUpdateAllow"
+                      :disabled="!isProfileUpdateAllow || linkedQuoteDetails.childLeadsCount > 0"
                       :min-date="new Date()"
                     />
                   </dd>
@@ -2275,7 +2283,7 @@ const getDetailPageRoute = (
                   </dd>
                 </div>
               </dl>
-              <div class="flex justify-end">
+              <div v-if="linkedQuoteDetails.childLeadsCount == 0" class="flex justify-end">
                 <x-button
                   v-if="isProfileUpdateAllow"
                   class="mt-4"
@@ -2708,13 +2716,6 @@ const getDetailPageRoute = (
         </template>
       </Collapsible>
     </div>
-    <!-- <QuoteStatus
-			:quoteStatuses="leadStatuses"
-			:lostReasons="lostReasons"
-			:quoteStatusEnum="quoteStatusEnum"
-			:quoteType="quoteType"
-			:quote="record"
-		/> -->
 
     <div class="p-4 rounded shadow mb-6 bg-white">
       <Collapsible :expanded="sectionExpanded">
@@ -2845,46 +2846,48 @@ const getDetailPageRoute = (
               </div>
             </div>
           </div>
-          <div
-            class="flex justify-end"
-            v-if="!hasRole(rolesEnum.PA) && can(permissionEnum.CarQuotesEdit)"
-          >
-            <x-button
-              v-if="assumptionState.isEditing"
-              class="mt-4 mr-2"
-              color="orange"
-              size="sm"
-              @click.prevent="assumptionState.isEditing = false"
-            >
-              Cancel
-            </x-button>
-            <template v-if="!can(permissionEnum.ApprovePayments)">
-              <x-button
-                v-if="assumptionState.isEditing"
-                class="mt-4"
-                color="primary"
-                size="sm"
-                :loading="assumptionsForm.processing"
-                @click.prevent="onUpdateAssumption"
-              >
-                Update
-              </x-button>
-              <x-button
-                v-if="
+            <div v-if="page.props.linkedQuoteDetails.childLeadsCount == 0">
+                <div
+                    class="flex justify-end"
+                    v-if="!hasRole(rolesEnum.PA) && can(permissionEnum.CarQuotesEdit)"
+                >
+                    <x-button
+                        v-if="assumptionState.isEditing"
+                        class="mt-4 mr-2"
+                        color="orange"
+                        size="sm"
+                        @click.prevent="assumptionState.isEditing = false"
+                    >
+                        Cancel
+                    </x-button>
+                    <template v-if="!can(permissionEnum.ApprovePayments)">
+                        <x-button
+                            v-if="assumptionState.isEditing"
+                            class="mt-4"
+                            color="primary"
+                            size="sm"
+                            :loading="assumptionsForm.processing"
+                            @click.prevent="onUpdateAssumption"
+                        >
+                            Update
+                        </x-button>
+                        <x-button
+                            v-if="
                   !assumptionState.isEditing &&
                   (access.carManagerCanEdit ||
                     access.carAdvisorCanEdit ||
                     !hasAnyRole([rolesEnum.CarAdvisor, rolesEnum.CarManager]))
                 "
-                class="mt-4"
-                color="emerald"
-                size="sm"
-                @click.prevent="assumptionState.isEditing = true"
-              >
-                Edit Assumptions
-              </x-button>
-            </template>
-          </div>
+                            class="mt-4"
+                            color="emerald"
+                            size="sm"
+                            @click.prevent="assumptionState.isEditing = true"
+                        >
+                            Edit Assumptions
+                        </x-button>
+                    </template>
+                </div>
+            </div>
         </template>
       </Collapsible>
     </div>
@@ -2924,6 +2927,7 @@ const getDetailPageRoute = (
             <x-button-group v-if="selectedPlans.length > 0" size="sm">
               <x-button
                 @click.prevent="onTogglePlans(false)"
+                :disabled="page.props.linkedQuoteDetails.childLeadsCount > 0"
                 :loading="toggleLoader"
               >
                 Show
@@ -2942,6 +2946,7 @@ const getDetailPageRoute = (
               class="ml-2 mr-2"
               @click.prevent="onExportPlans"
               :loading="exportLoader"
+              :disabled="page.props.linkedQuoteDetails.childLeadsCount > 0"
             >
               Download PDF
             </x-button>
@@ -2950,7 +2955,7 @@ const getDetailPageRoute = (
               size="sm"
               color="orange"
               class="mr-2"
-              :disabled="record.advisor_id != $page.props.auth.user.id"
+              :disabled="record.advisor_id != $page.props.auth.user.id || page.props.linkedQuoteDetails.childLeadsCount > 0"
             >
               Send OCB Email to Customer
             </x-button>
@@ -2963,8 +2968,9 @@ const getDetailPageRoute = (
               v-if="
                 (access.carManagerCanEdit || access.carAdvisorCanEdit) &&
                 can(permissionEnum.CarQuotesPlansCreate)
-                
+
               "
+              :disabled="page.props.linkedQuoteDetails.childLeadsCount > 0"
             >
               Add Plan
             </x-button>
@@ -2977,6 +2983,7 @@ const getDetailPageRoute = (
               size="sm"
               color="orange"
               class="mr-2"
+              :disabled="page.props.linkedQuoteDetails.childLeadsCount > 0"
             >
               Add Plan
             </x-button>
@@ -2988,6 +2995,7 @@ const getDetailPageRoute = (
                 typeof availablePlansTable.data !== 'string' &&
                 availablePlansTable.data.length > 0
               "
+              :disabled="page.props.linkedQuoteDetails.childLeadsCount > 0"
             >
               Copy Link
             </x-button>
@@ -3180,6 +3188,7 @@ const getDetailPageRoute = (
             <template #item-action="item">
               <div class="flex gap-2">
                 <x-button
+                  v-if="page.props.linkedQuoteDetails.childLeadsCount == 0"
                   size="xs"
                   color="primary"
                   outlined
@@ -3193,6 +3202,7 @@ const getDetailPageRoute = (
                   outlined
                   @click.prevent="copyPlanURL(item)"
                   v-if="item.discountPremium + item.vat + totalPriceVAT > 0"
+                  :disabled="page.props.linkedQuoteDetails.childLeadsCount > 0"
                 >
                   Copy
                 </x-button>
@@ -3209,6 +3219,7 @@ const getDetailPageRoute = (
                     color="error"
                     outlined
                     @click="confirmChangeInsurer(item)"
+                    :disabled="page.props.linkedQuoteDetails.childLeadsCount > 0"
                   >
                     Change Insurer
                   </x-button>
@@ -3220,7 +3231,8 @@ const getDetailPageRoute = (
                     @update:selectedPlanChanged="handlePlanSelected"
                     :plan="item"
                     :quoteType="quoteType"
-                    :uuid="quote.uuid"
+                    :has-child-lead="page.props.linkedQuoteDetails.childLeadsCount > 0"
+                :uuid="quote.uuid"
                   />
 
                   <x-button
@@ -3376,7 +3388,7 @@ const getDetailPageRoute = (
       :payments="payments"
     />    
 
-    <PaymentTableNew 
+    <PaymentTableNew
 			v-if="isNewPaymentStructure"
 			quoteType="Car"
 			:payments="payments"
@@ -3485,8 +3497,6 @@ const getDetailPageRoute = (
     <PolicyDetail
       v-if="isQuoteDocumentEnabled"
       :record="record"
-      :quoteStatusEnum="quoteStatusEnum"
-      :policyIssuanceStatus="policyIssuanceStatus"
       :modelType="quoteType"
     />
 
@@ -3499,7 +3509,7 @@ const getDetailPageRoute = (
         </template>
         <template #body>
           <x-divider class="my-4" />
-          <div class="my-2 flex justify-end">
+          <div v-if="page.props.linkedQuoteDetails.childLeadsCount == 0" class="my-2 flex justify-end">
             <x-button
               class="mr-2"
               v-if="
@@ -3608,7 +3618,7 @@ const getDetailPageRoute = (
       >
         <div class="flex flex-col gap-1">
           <h5 class="text-sm font-semibold">
-            {{ documentType.text }}
+            {{ documentType.text }} {{ documentType.is_required ? '*' : ''}}
           </h5>
           <p class="text-xs">Max files: {{ documentType.max_files }}</p>
           <p class="text-xs">Supported: {{ documentType.accepted_files }}</p>
@@ -3647,16 +3657,16 @@ const getDetailPageRoute = (
       "
       :quote="record"
       :quoteType="quoteType"
-      :bPDetails="bPDetails"
+      :bookPolicyDetails="bookPolicyDetails"
       :payments="payments"
     />
 
     <SendUpdates
-        v-if="hasPolicyIssuedStatus"
-        :reportable="record"
-        :quote_type_id="$page.props.quoteTypeId"
-        :options="sendUpdateOptions"
-        :data="sendUpdateLogs"
+      v-if="hasPolicyIssuedStatus"
+      :reportable="record"
+      :quote_type_id="$page.props.quoteTypeId"
+      :options="sendUpdateOptions"
+      :data="sendUpdateLogs"
     />
 
     <div class="p-4 rounded shadow mb-6 bg-white">
@@ -3955,6 +3965,7 @@ const getDetailPageRoute = (
       :quoteEmail="record.email"
       :quoteMobile="record.mobile_no"
       :canDelete="false"
+      :has-child-lead="page.props.linkedQuoteDetails.childLeadsCount > 0"
       :expanded="sectionExpanded"
     />
 
@@ -4004,8 +4015,7 @@ const getDetailPageRoute = (
     :id="$page.props.record.id"
     :quoteCode="$page.props.record.code"
     :expanded="sectionExpanded"
-  />
-
+/>
   <ApiLogs
     v-if="can(permissionEnum.API_LOG_VIEW)"
     :type="'App\\Models\\CarQuote'"

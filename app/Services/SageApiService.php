@@ -423,6 +423,10 @@ class SageApiService
     private function handleSendUpdateRevCorrCalls($quote, $payment, $splitPayments, $sageRequestPayload, $sageLogArray, $extras)
     {
         $sendUpdateLog = $extras['send_update_log'];
+        // Should be add split payment case here. Ex -
+        // CREATE_PAY_REC_ONE_INV,
+        // SRT_CREATE_AR_SPPAY_INV,
+        // SRT_CREATE_AR_SP_PRE_PAYMENT
         $invoicesForReverse = collect($extras['sageLogArray'])->filter(function ($sageApiLog) {
             return in_array($sageApiLog['sage_request_type'], [
                 SageEnum::SRT_CREATE_AR_PREM_COMM_INV,
@@ -755,7 +759,7 @@ class SageApiService
             $returnMessage['message'] = 'Sage is not enabled';
         }
 
-        $sageLogArray = $quote->sageLogs->keyBy('step')->toArray();
+        $sageLogArray = $quote->sageApiLogs->keyBy('step')->toArray();
         // sape customer number generation
         $sageCustomerNumber = $this->verifySageCustomer($quote->customer_id, $data, $quote, $sageLogArray, 13);
 
