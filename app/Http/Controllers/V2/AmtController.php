@@ -133,9 +133,6 @@ class AmtController extends Controller
         if (isset($request->leadStatus) && $request->leadStatus != '') {
             $data->where('qs.id', '=', $request->leadStatus);
         }
-        // if (isset($request->advisor_id) && $request->advisor_id != '') {
-        //     $request->advisor_id == '-1' ? $data->whereNull('bqr.advisor_id') : $data->where('bqr.advisor_id', '=', $request->advisor_id);
-        // }
         if (isset($request->advisor_id) && is_array($request->advisor_id) && count($request->advisor_id) > 0) {
             if (count($request->advisor_id) === 1 && $request->advisor_id[0] == '-1') {
                 $data->whereNull('bqr.advisor_id');
