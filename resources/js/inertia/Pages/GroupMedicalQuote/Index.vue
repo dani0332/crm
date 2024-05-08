@@ -299,7 +299,6 @@ onMounted(() => {
         </x-field>
         <x-field label="Advisor">
           <ComboBox
-            :single="true"
             v-model="filters.advisor_id"
             placeholder="Search by Advisor"
             :options="advisorOptions"
