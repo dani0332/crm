@@ -2,7 +2,7 @@
 
 namespace App\Jobs;
 
-use App\Services\CheckAmlService;
+use App\Services\AMLService;
 use DB;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -37,7 +37,7 @@ class CheckAMLJob implements ShouldQueue
         $this->isEmailSendingEnabled = $isEmailSendingEnabled;
         $this->yob = $yob;
         $this->companyName = $companyName;
-        $this->amlService = new CheckAmlService();
+        $this->amlService = new AMLService();
     }
 
     /**

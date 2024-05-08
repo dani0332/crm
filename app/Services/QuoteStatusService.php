@@ -15,13 +15,13 @@ class QuoteStatusService
     use GenericQueriesAllLobs;
     public function updateQuoteStatus($quoteTypeId, $quoteRequestId, $quoteStatusType, $request = [])
     {
-        $checkAMlService = new CheckAmlService();
+        $AMlService = new AMLService();
         $quoteType = QuoteType::where('id', $quoteTypeId)->firstOrFail();
         $quoteStatus = QuoteStatus::where('code', $quoteStatusType)->firstOrFail();
 
-        if (checkPersonalQuotes($quoteType->code) && (! $checkAMlService->isDataMigrated($quoteTypeId, $quoteRequestId))) {
-            $quoteRequestId = $checkAMlService->getPersonalQuoteId($quoteTypeId, $quoteRequestId);
-            $checkAMlService->updatePaIdForPersonalQuotes($quoteTypeId, $quoteRequestId, true, ['quote_status_id' => $quoteStatus->id]);
+        if (checkPersonalQuotes($quoteType->code) && (! app(AMLService::class)->isDataMigrated($quoteTypeId, $quoteRequestId))) {
+            $quoteRequestId = $AMlService->getPersonalQuoteId($quoteTypeId, $quoteRequestId);
+            $AMlService->updatePaIdForPersonalQuotes($quoteTypeId, $quoteRequestId, true, ['quote_status_id' => $quoteStatus->id]);
         }
 
         if (! empty($request)) {
