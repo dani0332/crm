@@ -1,4 +1,5 @@
 <script setup>
+import { router } from '@inertiajs/vue3';
 import { useSortable } from '@vueuse/integrations/useSortable';
 
 const page = usePage();
@@ -48,16 +49,23 @@ const updateList = async data => {
       data,
     });
     emit('UpdateLeadsCount', data);
-    notification.success({
-      title: response.data.message[0],
-      position: 'top',
-    });
+    if (response && response.data) {
+      notification.success({
+        title: response.data.message[0],
+        position: 'top',
+      });
+    }
+
+    router.reload();
     return true;
   } catch ({ response }) {
-    notification.error({
-      title: response.data.message,
-      position: 'top',
-    });
+    if (response) {
+      notification.error({
+        title: response.data.message,
+        position: 'top',
+      });
+    }
+
     return false;
   }
 };

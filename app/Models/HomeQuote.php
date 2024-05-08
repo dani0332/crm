@@ -16,6 +16,7 @@ class HomeQuote extends Model implements AuditableContract
     use Auditable, FilterCriteria, HasFactory, QuoteModelTrait;
 
     protected $table = 'home_quote_request';
+    protected $fillable = ['quote_status_id', 'quote_status_date', 'stale_at'];
     protected $guarded = [];
     public $filterables = [
         'first_name' => FilterTypes::FREE,
