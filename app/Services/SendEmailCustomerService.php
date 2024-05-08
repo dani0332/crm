@@ -582,17 +582,17 @@ class SendEmailCustomerService extends BaseService
             'name' => 'InsuranceMarket.ae',
         ];
         try {
-            $client = new \GuzzleHttp\Client();
-            $clientRequest = $client->post(
-                $this->url,
-                [
-                    'headers' => $headers,
-                    'body' => json_encode($body),
-                    'timeout' => 10000,
-                ]
-            );
-            $response = json_decode(json_encode($clientRequest->getStatusCode().' '.$clientRequest->getBody()->getContents()), true);
-            $responseCode = $clientRequest->getStatusCode();
+            $response = Http::withHeaders($headers)
+                ->beforeSending(function () {
+                    info('sendDttEmail ---- Request is Sending ');
+                })
+                ->timeout(20)
+                ->retry(3, 90000)
+                ->post($this->url, $body);
+            info('sendDttEmail ---- Request Sent');
+
+            $responseCode = $response->status();
+            $response = json_decode(json_encode($responseCode.' '.$response->body()), true);
 
             if ($responseCode == 201) {
                 $isEmailSent = 1;
