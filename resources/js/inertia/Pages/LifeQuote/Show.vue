@@ -27,7 +27,6 @@ defineProps({
   canAddBatchNumber: Boolean,
   documentTypes: Object,
   storageUrl: String,
-  insuranceProviders: Object,
   vatPercentage: Number,
   payments: Array,
   paymentTooltipEnum: Object,
@@ -1189,10 +1188,10 @@ watch(
       :quoteId="quote.id"
       :paymentCode = "quote.code"
       :quoteType="quoteType"
-      :payments="payments"    
-    />    
+      :payments="payments"
+    />
 
-    <PaymentTableNew 
+    <PaymentTableNew
 			v-if="isNewPaymentStructure"
 			:quoteType="quoteType"
 			:payments="payments"
