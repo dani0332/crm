@@ -184,6 +184,11 @@ class Payment extends Model implements Auditable
         return $this->hasMany(PaymentSplits::class, 'code', 'code');
     }
 
+    public function policyIssuer()
+    {
+        return $this->belongsTo(User::class, 'policy_issuer_id', 'id')->select(['id', 'name', 'email']);
+    }
+
     // render payment status PAID if payment status is CAPTURED
     public function getPaymentStatusIdAttribute($value)
     {

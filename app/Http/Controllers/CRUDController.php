@@ -1661,6 +1661,16 @@ class CRUDController extends Controller
             'policy_issuance_status_other' => $request->quote_policy_issuance_status_other ?? '',
         ]);
 
+        if (! empty(request()->quote_policy_issuance_status) && request()->price_with_vat <= 0 && empty(request()->quote_policy_number)) {
+            $quoteModel->update([
+                'quote_status_id' => QuoteStatusEnum::PolicyPending,
+            ]);
+        }
+        // store policy issuer
+        $payment = $quoteModel->payments->first();
+        $payment->policy_issuer_id = auth()->id();
+        $payment->save();
+
         // update status policy issued of req fulfilled
         $this->updateQuoteStatus($request->modelType, $request->quote_id);
 

@@ -43,7 +43,7 @@ class QuoteDocumentController extends Controller
         ExportDocumentService $exportDocumentService,
         ApplicationStorageService $applicationStorageService,
     ) {
-        $this->middleware('permission:'.PermissionsEnum::ENABLE_PROFORMA_PDF_DOWNLOAD_BUTTON, ['only' => ['createProformaPaymentRequest','downloadProformaPaymentRequest']]);
+        $this->middleware('permission:'.PermissionsEnum::ENABLE_PROFORMA_PDF_DOWNLOAD_BUTTON, ['only' => ['createProformaPaymentRequest', 'downloadProformaPaymentRequest']]);
 
         $this->crudService = $crudService;
         $this->activityService = $activityService;

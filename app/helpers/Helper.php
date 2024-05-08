@@ -7,6 +7,7 @@ use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypes;
 use App\Models\CustomerAdditionalInfo;
 use App\Models\HealthQuote;
+use App\Models\User;
 use App\Services\HealthQuoteService;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
@@ -720,4 +721,14 @@ if (! function_exists('apiResponse')) {
             'status' => $statusCode,
         ], $statusCode);
     }
+}
+
+if (! function_exists('getManagersByUser')) {
+    function getManagersByUser($userId)
+    {
+        $managerIds = DB::table('user_manager')->where('user_id', $userId)->get()->pluck('manager_id');
+
+        return User::whereIn('id', $managerIds)->where('is_active', 1)->get();
+    }
+
 }
