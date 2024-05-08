@@ -750,18 +750,19 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       :vatPrice="vatPercentage"
       :expanded="sectionExpanded"
     />
-    
+
     <MigratePayment
       v-if="!isNewPaymentStructure"
       :quoteId="quote.id"
       :paymentCode = "quote.code"
-      :quoteType="quoteType"      
-      :payments="quote.payments"    
-    />    
-    <PaymentTableNew 
+      :quoteType="quoteType"
+      :payments="quote.payments"
+    />
+    <PaymentTableNew
 			v-if="isNewPaymentStructure"
 			:quoteType="quoteType"
 			:payments="quote.payments"
+            :proformaPayment="quote.payments.find(item => item.payment_methods_code === 'PPR')"
 			:paymentDocument="documentTypes.filter(item => item.code === 'YPD' || item.code === 'YPDR' || item.code === 'YDPDR')"
 			:quoteRequest="quote"
 			:paymentStatusEnum="page.props.paymentStatusEnum"
@@ -770,7 +771,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
 			:storageUrl="storageUrl"
       :isAmlClearedForPayment="isAmlClearedForPayment"
 		/>
-    
+
     <QuotePayments
       v-else
       :can="can"
@@ -827,7 +828,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       :bookPolicyDetails="bookPolicyDetails"
       :payments="payments"
     />
-    
+
     <SendUpdates
       v-if="hasPolicyIssuedStatus"
       :reportable="quote"

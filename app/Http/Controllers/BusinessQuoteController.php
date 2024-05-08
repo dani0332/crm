@@ -322,7 +322,7 @@ class BusinessQuoteController extends Controller
             'hasPolicyIssuedStatus' => $hasPolicyIssuedStatus,
             'record' => $record,
             'bookPolicyDetails' => $bookPolicyDetails,
-            'payments' => $payments,
+            'quoteStatusEnum' => QuoteStatusEnum::asArray(),
         ]);
     }
 
