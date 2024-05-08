@@ -535,8 +535,11 @@ class SendEmailCustomerService extends BaseService
             }
 
             $response = Http::withHeaders($headers)
+                ->beforeSending(function ($request) use ($emailData) {
+                    info('sendLMSIntroEmail ---- Request is Sending '.$emailData->carQuoteId);
+                })
                 ->timeout(config('constants.LMS_EMAILS_TIMEOUT'))
-                ->retry(3, 10000)
+                ->retry(3, 90000)
                 ->post($this->url, $body);
 
             info('sendLMSIntroEmail ---- Request Sent '.$emailData->carQuoteId);
@@ -545,7 +548,7 @@ class SendEmailCustomerService extends BaseService
             info('sendLMSIntroEmail ---- response object : '.json_encode($response->object()));
         } catch (Exception $ex) {
             $responseCode = $ex->getCode();
-            $responseDetail = 'SIB Send sendLMSIntroEmail: Code/Message: '.$responseCode.'/'.$ex->getMessage();
+            $responseDetail = 'SIB Send sendLMSIntroEmail: Code/Message: '.$responseCode.'/'.$ex->getMessage().' '.$emailData->carQuoteId;
             Log::error($responseDetail);
         }
 
@@ -672,7 +675,7 @@ class SendEmailCustomerService extends BaseService
             $subjectEnvTag = $this->appEnv == EnvEnum::PRODUCTION ? '' : $this->appEnv.' - ';
             $emailData->env = $subjectEnvTag;
 
-            $body = json_encode([
+            $body = [
                 'to' => [[
                     'email' => $emailData->customerEmail,
                     'name' => $emailData->clientFullName,
@@ -684,11 +687,14 @@ class SendEmailCustomerService extends BaseService
                     $tag,
                 ],
                 'attachment' => isset($attachments) ? $attachments : null,
-            ], JSON_UNESCAPED_SLASHES);
-            info('sendNonAdvisorIntroEmail ---- Request about to send : '.$emailData->carQuoteId);
+            ];
+
             $response = Http::withHeaders($headers)
+                ->beforeSending(function ($request) use ($emailData) {
+                    info('sendNonAdvisorIntroEmail ---- Request is Sending '.$emailData->carQuoteId);
+                })
                 ->timeout(config('constants.LMS_EMAILS_TIMEOUT'))
-                ->retry(3, 10000)
+                ->retry(3, 90000)
                 ->post($this->url, $body);
 
             info('sendNonAdvisorIntroEmail ---- Request Sent '.$emailData->carQuoteId);
@@ -697,7 +703,7 @@ class SendEmailCustomerService extends BaseService
             info('sendNonAdvisorIntroEmail ---- response object : '.json_encode($response->object()));
         } catch (Exception $ex) {
             $responseCode = $ex->getCode();
-            $responseDetail = 'SIB Send sendNonAdvisorIntroEmail: Code/Message: '.$responseCode.'/'.$ex->getMessage();
+            $responseDetail = 'SIB Send sendNonAdvisorIntroEmail: Code/Message: '.$responseCode.'/'.$ex->getMessage().' '.$emailData->carQuoteId;
             Log::error($responseDetail);
         }
 
