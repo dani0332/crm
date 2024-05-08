@@ -122,6 +122,13 @@ class CarRevivalQuoteController extends Controller
             array_push($activities, $updatedActivity);
         }
 
+        foreach ($payments as $payment) {
+            $payment->payment_status_text = $payment->paymentStatus->text;
+            $payment->last_payment_status_created_at = $payment->paymentStatusLogs->last() != null ? $payment->paymentStatusLogs->last()->created_at : '';
+            $payment->payment_method_name = $payment->paymentMethod->name;
+            $payment->insurance_provider_id_text = $payment->insuranceProvider->text;
+        }
+
         $customerAdditionalContacts = app(CustomerService::class)->getAdditionalContacts($record->customer_id, $record->mobile_no);
         $storageUrl = storageUrl();
         $paymentStatusEnum = PaymentStatusEnum::asArray();

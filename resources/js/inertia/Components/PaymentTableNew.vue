@@ -1130,7 +1130,7 @@ const editPaymentModal = (payment,split_payment_id,sr_no,capture_approval) => {
    //Assign plan for Travel
    if (props.quoteType === 'Travel' && (paymentMethodsForm.status == 'edit' || paymentMethodsForm.status == 'view')) {
       planDetail.value =  payment.travel_plan;
-      planDetail.value['insurance_provider'] =  payment.insurance_provider;   
+      planDetail.value['insurance_provider'] =  payment.travel_plan.insurance_provider;   
     }
   
   if(capture_approval>0) {
