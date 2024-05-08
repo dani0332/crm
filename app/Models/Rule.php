@@ -15,7 +15,7 @@ class Rule extends Model implements AuditableContract
     use Auditable, HasFactory;
 
     protected $table = 'rules';
-    protected $fillable = ['name', 'rule_start_date', 'rule_end_date', 'is_active'];
+    protected $fillable = ['name', 'rule_start_date', 'rule_end_date', 'is_active', 'rule_type'];
 
     public function users()
     {
@@ -65,6 +65,18 @@ class Rule extends Model implements AuditableContract
             'rule_type',
             'id',
             'ruleType'
+        );
+    }
+
+    public function leadSource()
+    {
+        return $this->hasOneThrough(
+            LeadSource::class,
+            RuleDetail::class,
+            'rule_id', // Foreign key on the RuleDetail table
+            'id', // Local key on the LeadSource table
+            'id', // Local key on the Rule table
+            'lead_source_id' // Foreign key on the LeadSource table
         );
     }
 }

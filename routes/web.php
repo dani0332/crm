@@ -39,6 +39,7 @@ use App\Http\Controllers\RenewalsUploadController;
 use App\Http\Controllers\RentACarController;
 use App\Http\Controllers\ReportsController;
 use App\Http\Controllers\RoleController;
+use App\Http\Controllers\RulesController;
 use App\Http\Controllers\SageApi;
 use App\Http\Controllers\StatusController;
 use App\Http\Controllers\SubTypeOfInsuranceController;
@@ -430,7 +431,8 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::resource('tiers', TiersController::class);
         // Route::resource('quadrant', GenericCrudController::class);
         Route::resource('quadrants', QuadrantController::class);
-        Route::resource('rule', GenericCrudController::class);
+        // Route::resource('rule', GenericCrudController::class);
+        Route::resource('rule', RulesController::class);
         Route::post('save', [GenericCrudController::class, 'store'])->name('save');
         Route::post('update', [GenericCrudController::class, 'update'])->name('update');
     });
