@@ -81,7 +81,8 @@ class CommercialKeywordsController extends Controller
      */
     public function show(CommercialKeyword $commercialKeyword)
     {
-        return view('commercialkeywords.show', compact('commercialKeyword'));
+        return inertia('Admin/AllocationConfig/CommercialKeywords/Show', ['keyword' => $commercialKeyword]);
+        // return view('commercialkeywords.show', compact('commercialKeyword'));
     }
 
     /**
@@ -92,7 +93,9 @@ class CommercialKeywordsController extends Controller
      */
     public function edit(CommercialKeyword $commercialKeyword)
     {
-        return view('commercialkeywords.edit', compact('commercialKeyword'));
+
+        return inertia('Admin/AllocationConfig/CommercialKeywords/Form', ['keyword' => $commercialKeyword]);
+        // return view('commercialkeywords.edit', compact('commercialKeyword'));
     }
 
     /**

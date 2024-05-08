@@ -1,4 +1,7 @@
 <script setup>
+const props = defineProps({
+  keyword: Object,
+});
 const { isRequired } = useRules();
 
 const isEdit = computed(() => {
@@ -6,7 +9,8 @@ const isEdit = computed(() => {
 });
 
 const commercialForm = useForm({
-  name: null,
+  id: props.keyword.id ?? null,
+  name: props.keyword.name ?? null,
 });
 
 function onSubmit(isValid) {

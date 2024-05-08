@@ -19,7 +19,7 @@ const tableHeader = reactive([
   { text: 'Key', value: 'key' },
   { text: 'Name', value: 'name' },
   { text: 'Created At', value: 'created_at' },
-  { text: 'Update At', value: 'updated_at' },
+  { text: 'Updated At', value: 'updated_at' },
 ]);
 
 const onReset = () => {
