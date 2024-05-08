@@ -536,7 +536,7 @@ class SendEmailCustomerService extends BaseService
 
             $response = Http::withHeaders($headers)
                 ->beforeSending(function ($request) use ($emailData) {
-                    info('sendLMSIntroEmail ---- Request is Sending '. $emailData->carQuoteId);
+                    info('sendLMSIntroEmail ---- Request is Sending '.$emailData->carQuoteId);
                 })
                 ->timeout(config('constants.LMS_EMAILS_TIMEOUT'))
                 ->retry(3, 90000)
@@ -548,7 +548,7 @@ class SendEmailCustomerService extends BaseService
             info('sendLMSIntroEmail ---- response object : '.json_encode($response->object()));
         } catch (Exception $ex) {
             $responseCode = $ex->getCode();
-            $responseDetail = 'SIB Send sendLMSIntroEmail: Code/Message: '.$responseCode.'/'.$ex->getMessage()  . ' ' . $emailData->carQuoteId;
+            $responseDetail = 'SIB Send sendLMSIntroEmail: Code/Message: '.$responseCode.'/'.$ex->getMessage().' '.$emailData->carQuoteId;
             Log::error($responseDetail);
         }
 
@@ -691,7 +691,7 @@ class SendEmailCustomerService extends BaseService
 
             $response = Http::withHeaders($headers)
                 ->beforeSending(function ($request) use ($emailData) {
-                    info('sendNonAdvisorIntroEmail ---- Request is Sending '. $emailData->carQuoteId);
+                    info('sendNonAdvisorIntroEmail ---- Request is Sending '.$emailData->carQuoteId);
                 })
                 ->timeout(config('constants.LMS_EMAILS_TIMEOUT'))
                 ->retry(3, 90000)
@@ -703,7 +703,7 @@ class SendEmailCustomerService extends BaseService
             info('sendNonAdvisorIntroEmail ---- response object : '.json_encode($response->object()));
         } catch (Exception $ex) {
             $responseCode = $ex->getCode();
-            $responseDetail = 'SIB Send sendNonAdvisorIntroEmail: Code/Message: '.$responseCode.'/'.$ex->getMessage() . ' ' . $emailData->carQuoteId;
+            $responseDetail = 'SIB Send sendNonAdvisorIntroEmail: Code/Message: '.$responseCode.'/'.$ex->getMessage().' '.$emailData->carQuoteId;
             Log::error($responseDetail);
         }
 
