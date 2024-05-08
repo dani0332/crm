@@ -143,7 +143,7 @@ class CarEmailService extends BaseService
             'yearOfManufacture' => $carQuote->year_of_manufacture,
             'vehicleName' => $this->getVehicleName($carQuote),
             'currentInsurer' => $carQuote->currently_insured_with,
-            'quoteLink' => config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$carQuote->uuid. ($isRevivalLead ? '?DLA=true' : ''), // DLA = Disable Lead Assignment
+            'quoteLink' => config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$carQuote->uuid. ($isRevivalLead ? '?dla=true' : ''), // DLA = Disable Lead Assignment
             'requestAdvisorLink' => config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$carQuote->uuid.'/?assignAdvisor=true',
             'assignmentType' => $this->getAssignmentTypeText($carQuote->assignment_type),
             'previousAdvisorName' => ! empty($previousAdvisor) ? $previousAdvisor->name : '',
