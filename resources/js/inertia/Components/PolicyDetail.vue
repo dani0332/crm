@@ -36,12 +36,14 @@ const dateToYMD = date => {
 const productionProcessTooltipEnum = page.props.productionProcessTooltipEnum;
 const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
 const quoteIssuanceStatusEnum = page.props.quoteIssuanceStatusEnum;
-const quoteStatusEnum= page.props.quoteStatusEnum;
+const quoteStatusEnum = page.props.quoteStatusEnum;
 
 const policyIssuanceStatusOptions = computed(() => {
-  let policyIssuanceStatus= page.props.policyIssuanceStatus;
-  if( props.record.quote_status_id != quoteStatusEnum.PolicyIssued){
-    policyIssuanceStatus = policyIssuanceStatus.filter(item => item.text !== "Policy Issued");
+  let policyIssuanceStatus = page.props.policyIssuanceStatus;
+  if (props.record.quote_status_id != quoteStatusEnum.PolicyIssued) {
+    policyIssuanceStatus = policyIssuanceStatus.filter(
+      item => item.text !== 'Policy Issued',
+    );
   }
   return policyIssuanceStatus.map(item => {
     return {
@@ -49,13 +51,12 @@ const policyIssuanceStatusOptions = computed(() => {
       label: item.text,
     };
   });
-
- });
+});
 
 const planQuoteInsurerNumber = computed(() => {
-  let obj = page.props?.listQuotePlans?.filter(
-    item => item.id == page.props.record.plan_id,
-  );
+  let quotePlanList = page.props?.listQuotePlans;
+  if (!quotePlanList || typeof quotePlanList === 'string') return null;
+  let obj = quotePlanList?.filter(item => item.id == page.props.record.plan_id);
 
   return obj === undefined ? null : obj[0]?.insurerQuoteNo || null;
 });
@@ -452,7 +453,8 @@ watch(
               <template
                 class="flex justify-end"
                 v-if="
-                  record.quote_status_id == quoteStatusEnum.TransactionApproved ||
+                  record.quote_status_id ==
+                    quoteStatusEnum.TransactionApproved ||
                   record.quote_status_id == quoteStatusEnum.PolicyPending ||
                   record.quote_status_id == quoteStatusEnum.PolicyIssued ||
                   record.quote_status_id == quoteStatusEnum.PolicySentToCustomer
