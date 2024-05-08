@@ -843,7 +843,7 @@ const onPlanFiltersSubmit = () => {
       onlineMatch = true;
     }
     if (planFilters.plan_types && planFilters.plan_types.length > 0) {
-        planTypeMatch = planFilters.plan_types.includes(plan.planTypeId);
+      planTypeMatch = planFilters.plan_types.includes(plan.planTypeId);
     } else {
       planTypeMatch = true;
     }
@@ -857,7 +857,13 @@ const onPlanFiltersSubmit = () => {
     } else {
       networkMatch = true;
     }
-      return manualMatch && insurerMatch && networkMatch && onlineMatch && planTypeMatch;
+    return (
+      manualMatch &&
+      insurerMatch &&
+      networkMatch &&
+      onlineMatch &&
+      planTypeMatch
+    );
   });
   modals.planFilters = false;
   planDataTable.value.updatePage(1);
@@ -923,16 +929,15 @@ const getSmallestCopayRateAsDefaultValue = () => {
       }
     });
 
-    element.memberPremiumBreakdown?.forEach(function callback(
-      breakDown,
-      index,
-    ) {
-      breakDown.ratesPerCopay?.forEach(function callback(ratePerCopay) {
-        if (ratePerCopay.notifyAgent) {
-          element.needPriceUpdate = true;
-        }
-      });
-    });
+    element.memberPremiumBreakdown?.forEach(
+      function callback(breakDown, index) {
+        breakDown.ratesPerCopay?.forEach(function callback(ratePerCopay) {
+          if (ratePerCopay.notifyAgent) {
+            element.needPriceUpdate = true;
+          }
+        });
+      },
+    );
 
     if (isMounted.value && selectedCoPay.planId == element.id) {
       element.actualPremium = selectedCoPay.premium;
@@ -1491,23 +1496,22 @@ const selectedProviderPlan = ref({
   id: page.props.quote.plan_id,
   planName: page.props.quote.health_plan_name_text,
   providerName: page.props.quote.plan_provider_name_text,
-  premium: page.props.ecomDetails.priceWithVAT
-
+  premium: page.props.ecomDetails.priceWithVAT,
 });
 
-console.log(selectedProviderPlan, "LLLKKKKJ", page.props.quote)
+console.log(selectedProviderPlan, 'LLLKKKKJ', page.props.quote);
 
 const handlePlanSelected = plan => {
-  console.log("HHH", plan);
+  console.log('HHH', plan);
   //se.value = plan.id;
-  selectedProviderPlan.value.id = plan.id
-  selectedProviderPlan.value.planName = plan.planName
-  selectedProviderPlan.value.providerName = plan.providerName
-  selectedProviderPlan.value.premium = plan.premium
+  selectedProviderPlan.value.id = plan.id;
+  selectedProviderPlan.value.planName = plan.planName;
+  selectedProviderPlan.value.providerName = plan.providerName;
+  selectedProviderPlan.value.premium = plan.premium;
   router.reload({
     preserveState: true,
     preserveScroll: true,
-    only: ['payments','quoteRequest','ecomDetails', 'coPayment'],
+    only: ['payments', 'quoteRequest', 'ecomDetails', 'coPayment'],
   });
 };
 
@@ -1519,6 +1523,51 @@ watch(
   { deep: true },
 );
 
+const memberCategorySalaryMapping = {
+  'Investor or Partner': 2,
+  'Golden visa': 2,
+  'Self-employed or Freelancer': 2,
+  'Domestic worker': 1,
+  'Dependent spouse': 2,
+  'Dependent child': 2,
+  'Dependent parent': 2,
+  'Dependent sibling or Other relatives': 2,
+  'Employee with salary AED 4000 and below': 1,
+  'Employee with salary above AED 4000': 2,
+};
+
+const salaryBrandMapping = {
+  1: 'AED 4000 and below',
+  2: 'More than AED 4000',
+};
+
+watch(
+  () => memberForm.member_category_id,
+  newValue => {
+    console.log('🚀 ~ WATCHER:', newValue);
+    console.log('🚀 ~ memberActionEdit:', memberActionEdit.value);
+
+    // for Add Member Form
+    if (!memberActionEdit.value) {
+      // fetch category text
+      const selectedCategory = page.props.memberCategories.find(
+        item => item.id === newValue,
+      );
+
+      // fetch salary band id based on category text
+      const salaryBandId = memberCategorySalaryMapping[selectedCategory.text];
+
+      // if quote status is Transaction Approved do not auto-popualte salary band automatically
+      if (page.props.quote.quote_status_id != 15) {
+        memberForm.salary_band_id = salaryBandId;
+      }
+      console.log('🚀 ~ selectedCategory:', selectedCategory.text);
+      console.log('🚀 ~ salaryBandId:', salaryBandId);
+    } else {
+      // for Edit Member Form
+    }
+  },
+);
 </script>
 
 <template>
@@ -2566,8 +2615,6 @@ watch(
       </div>
     </div>
 
-
-
     <!-- <div class="p-4 rounded shadow mb-6 bg-white" v-if="isQuoteDocumentEnabled">
       <div>
         <h3 class="font-semibold text-primary-800 text-lg">Policy Details</h3>
@@ -2966,7 +3013,6 @@ watch(
             />
           </div>
 
-
           <ComboBox
             v-model="planFilters.plan_types"
             :label="'Plan Type'"
@@ -3000,24 +3046,35 @@ watch(
     <MigratePayment
       v-if="!isNewPaymentStructure"
       :quoteId="quote.id"
-      :paymentCode = "quote.code"
+      :paymentCode="quote.code"
       quoteType="Health"
       :payments="payments"
     />
 
     <PaymentTableNew
-			v-if="isNewPaymentStructure"
-			quoteType="Health"
-			:payments="payments"
-			:paymentDocument="documentTypes.QUOTE.filter(item => item.code === 'HPD' || item.code === 'HPDR' || item.code === 'HDPDR')"
-			:quoteRequest="quoteRequest"
-			:paymentStatusEnum="paymentStatusEnum"
-			:paymentTooltipEnum="paymentTooltipEnum"
-			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name, tooltip: pm.tool_tip } })"
-			:storageUrl="storageUrl"
-      :eCommercePrice="ecomDetails.priceWithVAT?ecomDetails.priceWithVAT:0"
+      v-if="isNewPaymentStructure"
+      quoteType="Health"
+      :payments="payments"
+      :paymentDocument="
+        documentTypes.QUOTE.filter(
+          item =>
+            item.code === 'HPD' ||
+            item.code === 'HPDR' ||
+            item.code === 'HDPDR',
+        )
+      "
+      :quoteRequest="quoteRequest"
+      :paymentStatusEnum="paymentStatusEnum"
+      :paymentTooltipEnum="paymentTooltipEnum"
+      :paymentMethods="
+        paymentMethods.map(pm => {
+          return { value: pm.code, label: pm.name, tooltip: pm.tool_tip };
+        })
+      "
+      :storageUrl="storageUrl"
+      :eCommercePrice="ecomDetails.priceWithVAT ? ecomDetails.priceWithVAT : 0"
       :isAmlClearedForPayment="isAmlClearedForPayment"
-		/>
+    />
     <PaymentTable
       v-else
       :payments="payments"
@@ -3044,16 +3101,20 @@ watch(
           <x-tag size="sm">{{ quoteDocuments.length || 0 }}</x-tag>
         </h3>
         <div class="flex gap-2">
-            <Link
-                v-if="quote?.insly_id && can(permissionsEnum.VIEW_LEGACY_DETAILS)"
-                :href="`/legacy-policy/${quote.insly_id}`"
-                preserve-scroll
-            >
-                <x-button size="sm" color="#ff5e00" tag="div">
-                    View Legacy policy
-                </x-button>
-            </Link>
-          <x-button @click.prevent="modals.doc = true" size="sm" color="primary">
+          <Link
+            v-if="quote?.insly_id && can(permissionsEnum.VIEW_LEGACY_DETAILS)"
+            :href="`/legacy-policy/${quote.insly_id}`"
+            preserve-scroll
+          >
+            <x-button size="sm" color="#ff5e00" tag="div">
+              View Legacy policy
+            </x-button>
+          </Link>
+          <x-button
+            @click.prevent="modals.doc = true"
+            size="sm"
+            color="primary"
+          >
             Upload Documents
           </x-button>
           <x-button
@@ -3300,12 +3361,15 @@ watch(
       :quoteType="'HEALTH'"
     />
 
-    <AuditLogs :type="'App\\Models\\HealthQuote'" :id="$page.props.quote.id" :quoteCode="$page.props.quote.code"/>
-
+    <AuditLogs
+      :type="'App\\Models\\HealthQuote'"
+      :id="$page.props.quote.id"
+      :quoteCode="$page.props.quote.code"
+    />
 
     <ClientInquiryLogs
-        v-if="clientInquiryLogs?.length > 0"
-        :logs="clientInquiryLogs"
+      v-if="clientInquiryLogs?.length > 0"
+      :logs="clientInquiryLogs"
     />
   </div>
 </template>
