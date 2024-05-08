@@ -3330,11 +3330,11 @@ watch(
       :paymentCode = "record.code"
       :quoteType="quoteType"
     />
-
     <PaymentTableNew
 			v-if="isNewPaymentStructure"
 			quoteType="Car"
 			:payments="payments"
+            :proformaPayment="payments.find(item => item.payment_methods_code === 'PPR')"
 			:paymentDocument="page.props.documentTypes.filter(item => item.code === 'CPD' || item.code === 'CPDR' || item.code === 'CDPDR')"
 			:quoteRequest="paymentEntityModel"
 			:paymentStatusEnum="paymentStatusEnum"
@@ -3441,8 +3441,8 @@ watch(
       v-if="isQuoteDocumentEnabled"
       :record="record"
       :modelType="quoteType"
-    />    
-    
+    />
+
     <div class="p-4 rounded shadow mb-6 bg-white" v-if="isQuoteDocumentEnabled">
       <Collapsible :expanded="sectionExpanded">
         <template #header>
@@ -3561,7 +3561,7 @@ watch(
       >
         <div class="flex flex-col gap-1">
           <h5 class="text-sm font-semibold">
-            {{ documentType.text }} {{ documentType.is_required ? '*' : ''}} 
+            {{ documentType.text }} {{ documentType.is_required ? '*' : ''}}
           </h5>
           <p class="text-xs">Max files: {{ documentType.max_files }}</p>
           <p class="text-xs">Supported: {{ documentType.accepted_files }}</p>
@@ -3957,8 +3957,7 @@ watch(
     :id="$page.props.record.id"
     :quoteCode="$page.props.record.code"
     :expanded="sectionExpanded"
-  />
-
+/>
   <ApiLogs
     v-if="can(permissionEnum.API_LOG_VIEW)"
     :type="'App\\Models\\CarQuote'"

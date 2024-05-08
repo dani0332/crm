@@ -1156,6 +1156,7 @@ watch(
 			v-if="isNewPaymentStructure"
 			:quoteType="quoteType"
 			:payments="payments"
+            :proformaPayment="payments.find(item => item.payment_methods_code === 'PPR')"
 			:paymentDocument="page.props.documentTypes.filter(item => item.code === 'LPD' || item.code === 'LPDR' || item.code === 'LDPDR')"
 			:quoteRequest="quote"
 			:paymentStatusEnum="page.props.paymentStatusEnum"

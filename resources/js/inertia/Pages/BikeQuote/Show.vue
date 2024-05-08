@@ -758,6 +758,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
 			v-if="isNewPaymentStructure"
 			:quoteType="quoteType"
 			:payments="quote.payments"
+            :proformaPayment="quote.payments.find(item => item.payment_methods_code === 'PPR')"
 			:paymentDocument="documentTypes.filter(item => item.code === 'BPD' || item.code === 'BPDR' || item.code === 'BDPDR')"
 			:quoteRequest="quote"
 			:paymentStatusEnum="page.props.paymentStatusEnum"
@@ -766,7 +767,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
 			:storageUrl="storageUrl"
       :isAmlClearedForPayment="isAmlClearedForPayment"
 		/>
-    
+
     <QuotePayments
       v-else
       :can="can"
@@ -824,7 +825,7 @@ const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
       :modelType="quoteType"
     	:expanded="sectionExpanded"
     />
-    
+
     <BookPolicy
       v-if="
         canAny([
