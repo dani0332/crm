@@ -1850,6 +1850,19 @@ watch(
   },
 );
 
+// Payment's approve or capture button logic enhancements only for Send update
+// Payment status is 'Authorised', 'Paid', 'Pending' (when collected by insurer} and 'Credit approved' - Approve or Capture button should be available
+const allowApproveCapture = ref(false);
+if (props.sendUpdate) { 
+  const allowedPaymentStatus = [
+    props.paymentStatusEnum.AUTHORISED,
+    props.paymentStatusEnum.PAID,
+    props.paymentStatusEnum.PENDING,
+  ]; 
+  const paymentsDetails = props.payments.length > 0 ? props.payments[0] : [];
+  allowApproveCapture.value = props.payments.length > 0 && allowedPaymentStatus.includes(paymentsDetails.payment_status_id) && paymentsDetails.collection_type == 'insurer' && paymentsDetails.credit_approval !== null;
+}
+
 </script>
 
 <template>
@@ -3021,7 +3034,7 @@ watch(
             </div>
           </template>
           <template v-else-if="isCreditApprovalView || (paymentMethodsModels[splitPaymentNo]!=='CA' && paymentMethodsModels[splitPaymentNo]!=='CC')" >
-            <div v-if="isCreditApprovalView || (splitPaymentRecord.payment_status_id!=paymentStatusEnum.PAID && can(permissionEnum.ApprovePayments))" class="w-full flex justify-end">
+            <div v-if="isCreditApprovalView || ((splitPaymentRecord.payment_status_id!=paymentStatusEnum.PAID || allowApproveCapture) && can(permissionEnum.ApprovePayments))" class="w-full flex justify-end">
               <div v-if="isDeclineClicked" class="mr-4">
                 <x-button size="sm" @click="handleCancelChanges" tabindex="0" class="focus:outline-black">
                   Cancel

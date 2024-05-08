@@ -231,7 +231,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                     //add document references
                     if (isset($splitPayment['document_detail']) && count($splitPayment['document_detail'])) {
                         foreach ($splitPayment['document_detail'] as $document) {
-                            $quoteDocumentRec = QuoteDocument::find($document['id']);
+                            $quoteDocumentRec = QuoteDocument::find($document['id'] ?? '');
                             if ($quoteDocumentRec) {
                                 $quoteDocumentRec->payment_split_id = $paymentSplitRecord->id;
                                 $quoteDocumentRec->save();
@@ -493,7 +493,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                 && count($request->approved_document_model[$splitPayment->sr_no]) > 0
             ) {
                 foreach ($request->approved_document_model[$splitPayment->sr_no] as $document) {
-                    $quoteDocumentRec = QuoteDocument::find($document['id']);
+                    $quoteDocumentRec = QuoteDocument::find($document['id'] ?? '');
                     if ($quoteDocumentRec) {
                         $quoteDocumentRec->payment_split_id = $splitPayment->id;
                         $quoteDocumentRec->save();
