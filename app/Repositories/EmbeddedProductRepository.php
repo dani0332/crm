@@ -22,6 +22,8 @@ use Carbon\Carbon;
 use finfo;
 use Illuminate\Support\Facades\DB;
 use PDF;
+use App\Models\ApplicationStorage;
+use App\Enums\ApplicationStorageEnums;
 
 class EmbeddedProductRepository extends BaseRepository
 {
@@ -414,14 +416,14 @@ class EmbeddedProductRepository extends BaseRepository
         $capturedAt
     ) {
         $pdf = null;
+        $epMdxV2From = ApplicationStorage::where('key_name', ApplicationStorageEnums::EP_MDX_V2_FROM)->first();
         $certificatesConfig = config('embedded-products.certificates');
         if (isset($certificatesConfig[$short_code])) {
             $viewFile = $certificatesConfig[$short_code]['view_file'];
-            $v2Config = $certificatesConfig[$short_code]['v2'];
-            if (! empty($v2Config['from']) &&
+            if (! empty($epMdxV2From) &&
             ! empty($capturedAt) &&
-            Carbon::parse($capturedAt)->gte(Carbon::parse($v2Config['from']))) {
-                $viewFile = $v2Config['view_file'];
+            Carbon::parse($capturedAt)->gte(Carbon::parse($epMdxV2From))) {
+                $viewFile = $certificatesConfig[$short_code]['view_file_v2'];
             }
 
             $strategy = $this->createStrategy($short_code);
