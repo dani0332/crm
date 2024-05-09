@@ -713,6 +713,12 @@ class SendEmailCustomerService extends BaseService
 
     public function sendActivityAlertEmail($user)
     {
+        $emailEnable = ApplicationStorage::where('key_name', '=', ApplicationStorageEnums::ADVISOR_ONLINE_NOTIFICATION_EMAILS_ENABLE)->first();
+        if ($emailEnable && $emailEnable->value == 0) {
+            info('sendActivityAlertEmail is Disable');
+
+            return false;
+        }
         $emailTemplateId = ApplicationStorage::where('key_name', '=', 'ADVISOR_NOTIFICATION_TEMPLATE')->value('value');
         try {
             $tag = $this->appEnv == EnvEnum::PRODUCTION ? '' : $this->appEnv.'-';

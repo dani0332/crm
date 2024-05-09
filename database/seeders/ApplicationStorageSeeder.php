@@ -70,6 +70,17 @@ class ApplicationStorageSeeder extends Seeder
             ]);
         }
 
+        $advisorNotificationEnable = ApplicationStorage::where('key_name', ApplicationStorageEnums::ADVISOR_ONLINE_NOTIFICATION_EMAILS_ENABLE)->count();
+        if ($advisorNotificationEnable == 0) {
+            $advisorNotificationEnable = ApplicationStorage::create([
+                'key_name' => ApplicationStorageEnums::ADVISOR_ONLINE_NOTIFICATION_EMAILS_ENABLE,
+                'value' => '0',
+                'is_active' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+
         $epMdxV2From = ApplicationStorage::where('key_name', ApplicationStorageEnums::EP_MDX_V2_FROM)->first();
         if (! $epMdxV2From) {
             ApplicationStorage::insert([
