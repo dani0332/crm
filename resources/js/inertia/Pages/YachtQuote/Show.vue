@@ -790,18 +790,19 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
       :vatPrice="vatPercentage"
       :expanded="sectionExpanded"
     />
-    
+
     <MigratePayment
       v-if="!isNewPaymentStructure"
       :quoteId="quote.id"
       :paymentCode = "quote.code"
-      :quoteType="quoteType"      
-      :payments="quote.payments"    
-    />    
-    <PaymentTableNew 
+      :quoteType="quoteType"
+      :payments="quote.payments"
+    />
+    <PaymentTableNew
 			v-if="isNewPaymentStructure"
 			:quoteType="quoteType"
 			:payments="quote.payments"
+            :proformaPayment="quote.payments.find(item => item.payment_methods_code === 'PPR')"
 			:paymentDocument="documentTypes.filter(item => item.code === 'YPD' || item.code === 'YPDR' || item.code === 'YDPDR')"
 			:quoteRequest="quote"
 			:paymentStatusEnum="page.props.paymentStatusEnum"
@@ -810,7 +811,7 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
 			:storageUrl="storageUrl"
       :isAmlClearedForPayment="isAmlClearedForPayment"
 		/>
-    
+
     <QuotePayments
       v-else
       :can="can"
@@ -861,7 +862,7 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
       :bookPolicyDetails="bookPolicyDetails"
       :payments="payments"
     />
-    
+
     <SendUpdates
       v-if="hasPolicyIssuedStatus"
       :reportable="quote"

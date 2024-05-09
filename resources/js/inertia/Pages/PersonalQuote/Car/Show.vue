@@ -3421,7 +3421,8 @@ watch(
       v-if="isNewPaymentStructure"
       quoteType="Car"
       :payments="payments"
-      :paymentDocument="
+      :proformaPayment="payments.find(item => item.payment_methods_code === 'PPR')"
+			:paymentDocument="
         page.props.documentTypes.filter(
           item =>
             item.code === 'CPD' ||

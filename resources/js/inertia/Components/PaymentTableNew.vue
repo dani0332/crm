@@ -1,18 +1,23 @@
 <script setup>
+import moment from 'moment';
 import ToolTip from './../Components/ToolTip.vue';
 import { computed } from 'vue';
 import UpdateTotalPrice from './../Components/UpdateTotalPrice.vue';
+import NProgress from 'nprogress';
 const notification = useNotifications('toast');
 const page = usePage();
 
 const permissionEnum = page.props.permissionsEnum;
 const paymentLookups = page.props.paymentLookups;
+const documentTypeEnum = page.props.documentTypeEnum;
+const quoteDocuments = page.props.quoteDocuments;
 const can = permission => useCan(permission);
 const props = defineProps({
   payments: Array,
   can: Object,
   paymentStatusEnum: Object,
   paymentTooltipEnum: Object,
+  proformaPayment: Object,
   paymentDocument: Object,
   quoteRequest: Object,
   paymentMethods: Array,
@@ -254,7 +259,8 @@ const rules = {
   isBankReferenceRequird: v => {
     if (
       paymentMethodsForm.collection_type === 'insurer' &&
-      paymentMethodsModels.value[splitPaymentNo.value] === 'CHQ' &&
+      paymentMethodsModels.value[splitPaymentNo.value] ===
+        page.props.paymentMethodsEnum?.Cheque &&
       paymentMethodsForm.credit_approval != ''
     ) {
       return true;
@@ -264,7 +270,10 @@ const rules = {
     return true;
   },
   reference: v => {
-    if (paymentMethodsForm.payment_method !== 'CC') {
+    if (
+      paymentMethodsForm.payment_method !==
+      page.props.paymentMethodsEnum?.CreditCard
+    ) {
       return !!v || 'This field is required';
     }
     return true;
@@ -447,7 +456,13 @@ const totalPayments = ref([{ value: '1', label: '1' }]);
 
 const paymentTypes = ref(
   props.paymentMethods.filter(
-    item => !['CR_FAYAZ', 'CR_HITESH', 'CR_MAHESH', 'CR'].includes(item.value),
+    item =>
+      ![
+        page.props.paymentMethodsEnum?.GMApproval,
+        page.props.paymentMethodsEnum?.CMOApproval,
+        page.props.paymentMethodsEnum?.COOApproval,
+        page.props.paymentMethodsEnum?.Credit,
+      ].includes(item.value),
   ),
 );
 paymentTypes.value.unshift({ value: '', label: 'Select Payment' });
@@ -478,7 +493,7 @@ const frequencyTypes = paymentLookups.paymentFrequencyTypes.map(item => ({
 const declinedReasons = paymentLookups.paymentDeclineReasons.map(item => ({
   value: item.id,
   label: item.text,
-}));
+ }));
 declinedReasons.unshift({ value: '', label: 'Select Reason' });
 
 // Define payment approval reasons
@@ -551,11 +566,18 @@ const handleNoButtonChange = () => {
   isApprovePaymentError.value = false;
 };
 
+const isProformaPaymentRequest = computed(() => {
+  return (
+    paymentMethodsForm.payment_method ===
+    page.props.paymentMethodsEnum?.ProformaPaymentRequest
+  );
+});
+
 const handlePaymentOptions = count => {
   isPaymentMetodNotSelected.value[count] = false;
   if (
-    paymentMethodsModels.value[count] === 'CHQ' ||
-    paymentMethodsModels.value[count] === 'PDC'
+    paymentMethodsModels.value[count] === page.props.paymentMethodsEnum?.Cheque ||
+    paymentMethodsModels.value[count] === page.props.paymentMethodsEnum?.PostDatedCheque
   ) {
     isCheckDetailsEnabled.value[count] = true;
   } else {
@@ -566,18 +588,44 @@ const handlePaymentOptions = count => {
 const handleCollectionTypeChange = () => {
   //customize payment method based on collection type
   paymentTypesFiltered.value = paymentTypes.value;
-
+  let excludedPaymentTypes = [
+    page.props.paymentMethodsEnum?.InsureNowPayLater,
+    page.props.paymentMethodsEnum?.CreditApproval,
+    page.props.paymentMethodsEnum?.MultiplePayment,
+    page.props.paymentMethodsEnum?.PartialPayment,
+  ];
+  if (paymentMethodsForm.frequency != 'upfront') {
+    /*Add Proforma Payment Request to excluded Payment Methods if Payment frequency is not UpFront*/
+    excludedPaymentTypes.push(
+      page.props.paymentMethodsEnum?.ProformaPaymentRequest,
+    );
+  } else if (
+    can(permissionEnum.ADD_PROFORMA_PAYMENT_REQUEST_DROPDOWN_OPTION) == false
+  ) {
+    /*Add Proforma Payment Request to excluded Payment Methods When dont have ADD_PROFORMA_PAYMENT_REQUEST_DROPDOWN_OPTION permission */
+    excludedPaymentTypes.push(
+      page.props.paymentMethodsEnum?.ProformaPaymentRequest,
+    );
+  }
   paymentTypesFiltered.value = paymentTypesFiltered.value.filter(
-    item => !['IN_PL', 'PPR', 'CA', 'MP', 'PP'].includes(item.value),
+    item => !excludedPaymentTypes.includes(item.value),
   );
   if (paymentMethodsForm.collection_type === 'insurer') {
     paymentTypesFiltered.value = paymentTypesFiltered.value.filter(
-      item => !['CC', 'BT', 'CHQ', 'CSH'].includes(item.value),
+      item =>
+        ![
+          page.props.paymentMethodsEnum?.CreditCard,
+          page.props.paymentMethodsEnum?.BankTransfer,
+          page.props.paymentMethodsEnum?.Cheque,
+          page.props.paymentMethodsEnum?.Cash,
+        ].includes(item.value),
     );
-    paymentMethodsModels.value[1] = 'IP';
+    paymentMethodsModels.value[1] =
+      page.props.paymentMethodsEnum?.InsurerPayment;
   } else {
     paymentTypesFiltered.value = paymentTypesFiltered.value.filter(
-      item => !['IP'].includes(item.value),
+      item =>
+        ![page.props.paymentMethodsEnum?.InsurerPayment].includes(item.value),
     );
     paymentMethodsModels.value[1] = '';
   }
@@ -593,7 +641,10 @@ const handlePaymentTypes = count => {
       paymentMethodsForm.frequency === 'custom')
   ) {
     paymentTypesWithoutCheck = paymentTypesFiltered.value.filter(
-      item => !['CHQ', 'CC'].includes(item.value),
+      item => ![
+          page.props.paymentMethodsEnum?.Cheque,
+          page.props.paymentMethodsEnum?.CreditCard,
+        ].includes(item.value),
     );
   }
 
@@ -602,7 +653,7 @@ const handlePaymentTypes = count => {
     paymentMethodsForm.frequency === 'split_payments'
   ) {
     paymentTypesWithoutCheck = paymentTypesWithoutCheck.filter(
-      item => !['PDC'].includes(item.value),
+      item => ![page.props.paymentMethodsEnum?.PostDatedCheque].includes(item.value),
     );
   }
 
@@ -619,32 +670,76 @@ const handleApprovalReasonChange = () => {
   if (paymentMethodsForm.credit_approval !== '') {
     paymentTypesFiltered.value = paymentTypes.value;
     paymentTypesFiltered.value = paymentTypesFiltered.value.filter(
-      item => !['IN_PL', 'PPR', 'MP', 'PP'].includes(item.value),
+      item =>
+        ![
+          page.props.paymentMethodsEnum?.InsureNowPayLater,
+          page.props.paymentMethodsEnum?.ProformaPaymentRequest,
+          page.props.paymentMethodsEnum?.MultiplePayment,
+          page.props.paymentMethodsEnum?.PartialPayment,
+        ].includes(item.value),
     );
     if (paymentMethodsForm.collection_type === 'insurer') {
-      if (
-        paymentMethodsForm.frequency === 'upfront' ||
-        paymentMethodsForm.frequency === 'split_payments'
-      ) {
+      if (paymentMethodsForm.frequency === 'upfront') {
+        /*Add Proforma Payment Request to excluded Payment Methods if Payment frequency is  UpFront*/
         paymentTypesFiltered.value = paymentTypesFiltered.value.filter(
-          item => !['PDC', 'CHQ', 'CSH', 'CC', 'BT'].includes(item.value),
+          item =>
+            ![
+              page.props.paymentMethodsEnum?.PostDatedCheque,
+              page.props.paymentMethodsEnum?.Cheque,
+              page.props.paymentMethodsEnum?.Cash,
+              page.props.paymentMethodsEnum?.CreditCard,
+              page.props.paymentMethodsEnum?.BankTransfer,
+            ].includes(item.value),
+        );
+      } else if (paymentMethodsForm.frequency === 'split_payments') {
+        /*Add Proforma Payment Request to excluded Payment Methods if Payment frequency is split_payments*/
+        paymentTypesFiltered.value = paymentTypesFiltered.value.filter(
+          item =>
+            ![
+              page.props.paymentMethodsEnum?.PostDatedCheque,
+              page.props.paymentMethodsEnum?.ProformaPaymentRequest,
+              page.props.paymentMethodsEnum?.Cheque,
+              page.props.paymentMethodsEnum?.Cash,
+              page.props.paymentMethodsEnum?.CreditCard,
+              page.props.paymentMethodsEnum?.BankTransfer,
+            ].includes(item.value),
         );
       } else {
         paymentTypesFiltered.value = paymentTypesFiltered.value.filter(
-          item => !['CHQ', 'CSH', 'CC', 'BT'].includes(item.value),
+          item => ![
+              page.props.paymentMethodsEnum?.Cheque,
+              page.props.paymentMethodsEnum?.Cash,
+              page.props.paymentMethodsEnum?.CreditCard,
+              page.props.paymentMethodsEnum?.BankTransfer,
+            ].includes(item.value),
         );
       }
     } else {
-      if (
-        paymentMethodsForm.frequency === 'upfront' ||
-        paymentMethodsForm.frequency === 'split_payments'
-      ) {
+      if (paymentMethodsForm.frequency === 'upfront') {
+        /*Add Proforma Payment Request to excluded Payment Methods if Payment frequency is upfront*/
         paymentTypesFiltered.value = paymentTypesFiltered.value.filter(
-          item => !['PDC', 'IP'].includes(item.value),
+          item =>
+            ![
+              page.props.paymentMethodsEnum?.PostDatedCheque,
+              page.props.paymentMethodsEnum?.InsurerPayment,
+            ].includes(item.value),
+        );
+      } else if (paymentMethodsForm.frequency === 'split_payments') {
+        /*Add Proforma Payment Request to excluded Payment Methods if Payment frequency is split_payments*/
+        paymentTypesFiltered.value = paymentTypesFiltered.value.filter(
+          item =>
+            ![
+              page.props.paymentMethodsEnum?.PostDatedCheque,
+              page.props.paymentMethodsEnum?.ProformaPaymentRequest,
+              page.props.paymentMethodsEnum?.InsurerPayment,
+            ].includes(item.value),
         );
       } else {
         paymentTypesFiltered.value = paymentTypesFiltered.value.filter(
-          item => !['IP'].includes(item.value),
+          item =>
+            ![page.props.paymentMethodsEnum?.InsurerPayment].includes(
+              item.value,
+            ),
         );
       }
     }
@@ -652,7 +747,8 @@ const handleApprovalReasonChange = () => {
       if (readOnlyPayments.value[i] === true) {
         continue;
       }
-      paymentMethodsModels.value[i] = 'CA';
+      paymentMethodsModels.value[i] =
+        page.props.paymentMethodsEnum?.CreditApproval;
     }
   } else {
     if (isTotalPriceUpdated.value === false) {
@@ -938,13 +1034,14 @@ const handleFrequencyChange = (noPaymentUpdate = true) => {
     paymentMethodsForm.payment_no = '1';
   }
   calculatePaymentBreakup();
-
+  // readOnlyPayments.value[1]===undefined this condition is missed from incoming (feat/insly-project-central), that's why added.
   if (
-    paymentMethodsModels.value[1] === 'CC' &&
+    paymentMethodsModels.value[1] === page.props.paymentMethodsEnum?.CreditCard &&
     resetPaymentMethod &&
     readOnlyPayments.value[1] === undefined
+
   ) {
-    paymentMethodsModels.value[1] = 'BT';
+    paymentMethodsModels.value[1] = page.props.paymentMethodsEnum?.BankTransfer;
   }
 };
 
@@ -1001,6 +1098,137 @@ const generateCCLink = async (code, splitPaymentId, paymentStatus) => {
       });
     }
   }
+};
+
+const isProformaPaymentRequestExportable = (payment, documents) => {
+  if (!documents && !quoteDocuments) return true;
+  let proformaPaymentRequestDocuments = null;
+  if (documents) {
+    proformaPaymentRequestDocuments = documents.filter(
+      doc => doc.document_type_text === documentTypeEnum.ProformaPaymentRequest,
+    );
+  } else if (!proformaPaymentRequestDocuments) {
+    // For some LOBs, Documents are not available in the quote object, so we need to check the quoteDocuments object
+    proformaPaymentRequestDocuments = quoteDocuments.filter(
+      doc => doc.document_type_text === documentTypeEnum.ProformaPaymentRequest,
+    );
+  }
+  if (proformaPaymentRequestDocuments.length == 0) return true;
+
+  proformaPaymentRequestDocuments.sort((a, b) => b.id - a.id);
+  let latestProformaPaymentRequestDocument = proformaPaymentRequestDocuments[0];
+
+  let paymentUpdateAt = moment(payment.updated_at);
+  let latestProformaRequestDocumentCreatedAt = moment(
+    latestProformaPaymentRequestDocument.created_at,
+    'DD-MM-YYYY HH:mm:s',
+  ).format('YYYY-MM-DD HH:mm:ss');
+
+  return paymentUpdateAt.isAfter(latestProformaRequestDocumentCreatedAt);
+};
+
+const downloadProformaPayment = async () => {
+  let errorMsg = '';
+  if (
+    props.paymentStatusEnum.PAID == props.proformaPayment?.payment_status_id
+  ) {
+    errorMsg =
+      props.paymentTooltipEnum
+        .PAYMENT_MANAGEMENT_NO_ACTION_ALLOWED_TO_PAID_PAYMENTS;
+    notification.error({
+      title: errorMsg,
+      position: 'top',
+    });
+    return;
+  }
+  /* Proforma Payment Request is exportable if payment's updated_at is greated then the lasted generated Proforma Payment pdf's created_at in quote documents */
+  let exportProformaRequest = isProformaPaymentRequestExportable(
+    props.proformaPayment,
+    props.quoteRequest.documents,
+  );
+  if (!exportProformaRequest) {
+    notification.error({
+      title: 'Please update the Payment details for this Proforma Request.',
+      position: 'top',
+    });
+    return;
+  }
+  if (totalPrice.value < 0 && planDetail.value) {
+    errorMsg = 'Please update the Total Price in the Plan Details section.';
+    if (quoteTypesToCheck.includes(props.quoteType)) {
+      errorMsg = 'Please select a plan.';
+    }
+    notification.error({
+      title: errorMsg,
+      position: 'top',
+    });
+    return;
+  }
+  if (props.proformaPayment) {
+    try {
+      NProgress.start();
+      const response = await axios.get(
+        route('create.proforma.payment.request', [
+          props.quoteType,
+          props.quoteRequest.uuid,
+        ]),
+      );
+      NProgress.done();
+      if (response.data.success) {
+        if (response.data?.proforma_request) {
+          let proforma_request = response.data.proforma_request;
+          let proforma_request_id = proforma_request.id;
+          /* Create the link and download Proforma Request document*/
+          const a = document.createElement('a');
+          a.href = route('download.proforma.payment.request', [
+            proforma_request_id,
+          ]);
+          a.target = '_blank';
+          a.download = proforma_request.original_name;
+          document.body.appendChild(a);
+          await a.click();
+          /* Remove Link */
+          document.body.removeChild(a);
+
+          notification.success({
+            title: 'Proforma payment request has been saved',
+            position: 'top',
+          });
+          notification.success({
+            title: 'File exported',
+            position: 'top',
+          });
+          router.visit(location.href);
+        }
+      } else {
+        notification.error({
+          title: 'Proforma Payment Request Generation Failed',
+          position: 'top',
+        });
+      }
+    } catch (err) {
+      notification.error({
+        title: err,
+        position: 'top',
+      });
+      notification.error({
+        title: 'Proforma Payment Request Generation Failed',
+        position: 'top',
+      });
+    }
+    return;
+  } else {
+    errorMsg = 'No Proforma Payment found';
+    notification.error({
+      title: errorMsg,
+      position: 'top',
+    });
+    return;
+  }
+};
+
+const showMessages = () => {
+  console.log('showMessages');
 };
 
 const sendUpdateStatusEnum = props.sendUpdateStatusEnum;
@@ -1170,6 +1398,7 @@ const editPaymentModal = (
     paymentMethodsForm.splitPaymentId = split_payment_id;
     paymentMethodsForm.status = 'view';
     paymentMethodsForm.collection_amount = '';
+    paymentMethodsForm.payment_method = payment.payment_method.code;
     paymentMethodsForm.bank_reference_number = '';
     splitPaymentRecord.value = payment.payment_splits.find(
       item => item.sr_no === sr_no,
@@ -1338,7 +1567,7 @@ const editPaymentModal = (
     (paymentMethodsForm.status == 'edit' || paymentMethodsForm.status == 'view')
   ) {
     planDetail.value = payment.travel_plan;
-    if (planDetail.value) {
+
       planDetail.value['insurance_provider'] = payment.insurance_provider;
     }
   }
@@ -1422,7 +1651,8 @@ const validateCapturePayment = isValid => {
         if (paymentMethodsModels.value[i] === 'CC') {
           if (
             collectionAmountModels.value[i] === null ||
-            collectionAmountModels.value[i] === undefined ||
+            collectionAmountModels.value[i] === undefined
+          ||
             collectionAmountModels.value[i] === 0
           ) {
             isCreditPaymentInvalid.value[i] = true;
@@ -2166,7 +2396,47 @@ watch(
   <div class="p-4 rounded shadow mb-6 bg-white">
     <div class="flex justify-between gap-4 items-center mb-4">
       <h3 class="font-semibold text-primary-800 text-lg">Manage Payments</h3>
-      <div
+      <div class="flex gap-2">
+        <templete
+          v-if="can(permissionEnum.ENABLE_PROFORMA_PDF_DOWNLOAD_BUTTON)"
+        >
+          <template
+            v-if="proformaPayment?.payment_status_id == paymentStatusEnum.PAID"
+          >
+            <x-button
+              v-if="proformaPayment"
+              size="sm"
+              color="primary"
+              target="_blank"
+              @click="downloadProformaPayment"
+            >
+              <span class="border-b border-dotted"
+                >Download Proforma Payment Request</span
+              >
+            </x-button>
+          </template>
+          <template v-else>
+            <x-tooltip position="right">
+              <x-button
+                v-if="proformaPayment"
+                size="sm"
+                color="primary"
+                target="_blank"
+                @click="downloadProformaPayment"
+              >
+                <span class="border-b border-dotted"
+                  >Download Proforma Payment Request</span
+                >
+              </x-button>
+              <template #tooltip>
+                <span>{{
+                  paymentTooltipEnum.PAYMENT_MANAGEMENT_DOWNLOAD_PROFORMA_PAYMENT
+                }}</span>
+              </template>
+            </x-tooltip>
+          </template>
+        </templete>
+        <div
         v-if="
           !page.props.linkedQuoteDetails ||
           page.props.linkedQuoteDetails?.childLeadsCount == 0
@@ -2189,8 +2459,7 @@ watch(
               :totalPaidPrice="
                 payments[0].total_amount + payments[0].discount_value
               "
-            />
-            <x-button
+            /><x-button
               v-if="can(permissionEnum.PaymentsCreate)"
               size="sm"
               color="emerald"
@@ -2212,7 +2481,7 @@ watch(
             </template>
           </x-tooltip>
         </template>
-      </div>
+      </div></div>
     </div>
     <div class="vue3-easy-data-table tablefixed custom-height">
       <div
@@ -2384,13 +2653,7 @@ watch(
                     }}
                   </td>
                   <td>
-                    <div
-                      v-if="
-                        !page.props.linkedQuoteDetails ||
-                        page.props.linkedQuoteDetails?.childLeadsCount == 0
-                      "
-                      class="flex gap-2"
-                    >
+                    <div class="flex gap-2">
                       <x-button
                         v-if="can(permissionEnum.PaymentsEdit)"
                         size="xs"
@@ -2490,8 +2753,7 @@ watch(
                         >
                         <x-button
                           v-if="
-                            splitPayment.payment_method.code === 'CC' ||
-                            splitPayment.payment_method === 'CC'
+                            splitPayment.payment_method.code == 'CC'
                           "
                           class="ml-2"
                           size="xs"
@@ -2503,15 +2765,14 @@ watch(
                               splitPayment.payment_status_id,
                             )
                           "
-                          outlined
+                          outlined>Copy Payment Link</x-button
                         >
-                          Copy Payment Link
-                        </x-button>
+
                       </div>
                     </td>
                   </tr>
-                </template>
-              </template>
+                </template
+              ></template>
             </template>
           </tbody>
         </table>
@@ -3504,10 +3765,7 @@ watch(
                   </template>
                   <template v-else>
                     <x-input
-                      v-if="
-                        paymentMethodsModels[count] === 'CC' &&
-                        authorizedPayments[count]
-                      "
+                      v-if="paymentMethodsModels[count] === 'CC'&& authorizedPayments[count]"
                       v-model="collectionAmountModels[count]"
                       class="w-full"
                       :class="{
@@ -3532,8 +3790,7 @@ watch(
                     <DatePicker
                       v-model="dueDateModels[count]"
                       class="w-full"
-                      :rules="[rules.isRequired]"
-                      placeholder="dd-mm-yyyy"
+                      :rules="[rules.isRequired]"placeholder="dd-mm-yyyy"
                     />
                   </template>
                 </div>
@@ -3886,7 +4143,7 @@ watch(
                 class="mr-4"
               >
                 <x-button
-                  size="sm"
+                 v-if="!isProformaPaymentRequest" size="sm"
                   @click="handleDeclinedChange"
                   tabindex="0"
                   class="focus:outline-black"
@@ -3913,7 +4170,9 @@ watch(
                 "
               >
                 <x-button
-                  v-if="!isApproveClicked && isViewEnabled"
+                  v-if="!isApproveClicked && isViewEnabled&&
+                    !isProformaPaymentRequest
+                  "
                   class="mr-2 focus:outline-black"
                   size="sm"
                   color="#ff5e00"

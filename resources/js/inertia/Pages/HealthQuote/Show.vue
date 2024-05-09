@@ -2989,18 +2989,18 @@ watch(
     </x-modal>
   </div>
 
-  <MigratePayment
-    v-if="!isNewPaymentStructure"
-    :quoteId="quote.id"
-    :paymentCode="quote.code"
-    quoteType="Health"
-    :payments="payments"
-  />
-  <PaymentTableNew
-    v-if="isNewPaymentStructure"
-    quoteType="Health"
-    :payments="payments"
-    :paymentDocument="
+    <MigratePayment
+      v-if="!isNewPaymentStructure"
+      :quoteId="quote.id"
+      :paymentCode = "quote.code"
+      quoteType="Health"
+    :payments="payments"/>
+    <PaymentTableNew
+			v-if="isNewPaymentStructure"
+			quoteType="Health"
+			:payments="payments"
+            :proformaPayment="payments.find(item => item.payment_methods_code === 'PPR')"
+			:paymentDocument="
       documentTypes.QUOTE.filter(
         item =>
           item.code === 'HPD' || item.code === 'HPDR' || item.code === 'HDPDR',
@@ -3186,19 +3186,20 @@ watch(
     <template #actions>
       <div class="text-right space-x-4">
         <x-button size="sm" ghost @click.prevent="modals.docConfirm = false">
-          Cancel
-        </x-button>
-        <x-button
-          size="sm"
-          color="error"
-          @click.prevent="confirmDeleteDoc"
-          :loading="quoteDocumentsTable.isLoading"
-        >
-          Delete
-        </x-button>
-      </div>
-    </template>
-  </x-modal>
+
+            Cancel
+          </x-button>
+          <x-button
+            size="sm"
+            color="error"
+            @click.prevent="confirmDeleteDoc"
+            :loading="quoteDocumentsTable.isLoading"
+          >
+            Delete
+          </x-button>
+        </div>
+      </template>
+    </x-modal>
 
   <SendUpdates
     v-if="hasPolicyIssuedStatus"
@@ -3314,40 +3315,40 @@ watch(
           Cancel
         </x-button>
 
-        <x-button
-          size="sm"
-          color="emerald"
-          :loading="activityForm.processing"
-          type="submit"
-        >
-          {{ activityActionEdit ? 'Update' : 'Save' }}
-        </x-button>
-      </div>
-    </x-form>
-  </x-modal>
-  <x-modal v-model="modals.activityConfirm" show-close backdrop>
-    <template #header> Delete Activity </template>
-    <p>Are you sure you want to delete this activity?</p>
-    <template #actions>
-      <div class="text-right space-x-4">
-        <x-button
-          size="sm"
-          ghost
-          @click.prevent="modals.activityConfirm = false"
-        >
-          Cancel
-        </x-button>
-        <x-button
-          size="sm"
-          color="error"
-          :loading="activityForm.processing"
-          @click.prevent="activityDeleteConfirmed"
-        >
-          Delete
-        </x-button>
-      </div>
-    </template>
-  </x-modal>
+          <x-button
+            size="sm"
+            color="emerald"
+            :loading="activityForm.processing"
+            type="submit"
+          >
+            {{ activityActionEdit ? 'Update' : 'Save' }}
+          </x-button>
+        </div>
+      </x-form>
+    </x-modal>
+    <x-modal v-model="modals.activityConfirm" show-close backdrop>
+      <template #header> Delete Activity </template>
+      <p>Are you sure you want to delete this activity?</p>
+      <template #actions>
+        <div class="text-right space-x-4">
+          <x-button
+            size="sm"
+            ghost
+            @click.prevent="modals.activityConfirm = false"
+          >
+            Cancel
+          </x-button>
+          <x-button
+            size="sm"
+            color="error"
+            :loading="activityForm.processing"
+            @click.prevent="activityDeleteConfirmed"
+          >
+            Delete
+          </x-button>
+        </div>
+      </template>
+    </x-modal>
 
   <div class="p-4 rounded shadow mb-6 bg-white">
     <Collapsible :expanded="sectionExpanded">

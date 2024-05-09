@@ -900,12 +900,13 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
       v-if="!isNewPaymentStructure"
       :quoteId="quote.id"
       :paymentCode = "quote.code"
-      :quoteType="quoteType"      
-    />    
+      :quoteType="quoteType"
+    />
     <PaymentTableNew
 			v-if="isNewPaymentStructure"
 			:quoteType="quoteType"
 			:payments="quote.payments"
+            :proformaPayment="quote.payments.find(item => item.payment_methods_code === 'PPR')"
 			:paymentDocument="documentTypes.filter(item => item.code === 'PPD' || item.code === 'PPDR' || item.code === 'PDPDR')"
 			:quoteRequest="quote"
 			:paymentStatusEnum="page.props.paymentStatusEnum"
@@ -933,6 +934,8 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
       :insly-id="quote?.quote_detail?.insly_id"
       :expanded="sectionExpanded"
     />
+
+<!-- <QuotePolicy :quote="quote" :can="can" :quoteStatusEnum="quoteStatusEnum" /> -->
 
     <EmbeddedProducts
       :data="embeddedProducts"
