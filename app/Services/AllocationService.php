@@ -85,7 +85,7 @@ class AllocationService
         try {
             $leadAllocation = LeadAllocation::latest();
             info('Allocation Quote Type Id : '.$quoteTypeId);
-            if (!empty($quoteTypeId)) {
+            if (! empty($quoteTypeId)) {
                 $leadAllocation = $leadAllocation->where('quote_type_id', $quoteTypeId);
             }
             $leadAllocation = $leadAllocation->where('user_id', $userId)->first();
@@ -98,9 +98,9 @@ class AllocationService
 
     public function addAllocationCounts($userId, $quoteTypeId = null)
     {
-      
+
         $allocationRecord = $this->getLeadAllocationRecordByUserId($userId, $quoteTypeId);
-        info('Allocation Quote Type Id : '.$allocationRecord->quote_type_id .'  Quote Type Id : '.$quoteTypeId);
+        info('Allocation Quote Type Id : '.$allocationRecord->quote_type_id.'  Quote Type Id : '.$quoteTypeId);
         if (! empty($allocationRecord)) {
             $allocationRecord->auto_assignment_count = $allocationRecord->auto_assignment_count + 1;
             $allocationRecord->allocation_count = $allocationRecord->allocation_count + 1;
