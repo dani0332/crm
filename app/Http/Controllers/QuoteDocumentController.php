@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Http\Requests\PaymentDocumentRequest;
@@ -12,6 +13,7 @@ use App\Services\ActivitiesService;
 use App\Services\ApplicationStorageService;
 use App\Services\CRUDService;
 use App\Services\CustomerService;
+use App\Services\ExportDocumentService;
 use App\Services\QuoteDocumentService;
 use App\Services\SendEmailCustomerService;
 use App\Services\UserService;
@@ -29,6 +31,7 @@ class QuoteDocumentController extends Controller
     protected $sendEmailCustomerService;
     protected $customerService;
     protected $userService;
+    protected $exportDocumentService;
 
     public function __construct(
         CRUDService $crudService,
@@ -37,14 +40,18 @@ class QuoteDocumentController extends Controller
         SendEmailCustomerService $sendEmailCustomerService,
         CustomerService $customerService,
         UserService $userService,
+        ExportDocumentService $exportDocumentService,
         ApplicationStorageService $applicationStorageService,
     ) {
+        $this->middleware('permission:'.PermissionsEnum::ENABLE_PROFORMA_PDF_DOWNLOAD_BUTTON, ['only' => ['createProformaPaymentRequest', 'downloadProformaPaymentRequest']]);
+
         $this->crudService = $crudService;
         $this->activityService = $activityService;
         $this->quoteDocumentService = $quoteDocumentService;
         $this->sendEmailCustomerService = $sendEmailCustomerService;
         $this->customerService = $customerService;
         $this->userService = $userService;
+        $this->exportDocumentService = $exportDocumentService;
         $this->applicationStorageService = $applicationStorageService;
     }
 
@@ -262,5 +269,35 @@ class QuoteDocumentController extends Controller
         $document->delete();
 
         // return response()->json(['message' => 'Document has been deleted.']);
+    }
+
+    /**
+     * Create Proforma Payment Request PDF.
+     */
+    public function createProformaPaymentRequest($quoteType, $quote)
+    {
+        $response = $this->exportDocumentService->createProformaPaymentRequestPdf($quoteType, $quote);
+
+        if (isset($response['error'])) {
+            return redirect()->back()->with('message', $response['error']);
+        }
+
+        return response()->json(['success' => true, 'proforma_request' => $response]);
+    }
+
+    /**
+     * download Proforma Payment Request PDF.
+     */
+    public function downloadProformaPaymentRequest(QuoteDocument $quoteDocument)
+    {
+        $disk = Storage::disk('azureIM');
+
+        if ($disk->exists($quoteDocument->doc_url)) {
+            $contents = $disk->get($quoteDocument->doc_url);
+
+            return response($contents)->header('content-type', $quoteDocument->doc_mime_type);
+        } else {
+            abort(404);
+        }
     }
 }

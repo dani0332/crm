@@ -166,7 +166,7 @@ const isCPU = computed(() => {
 });
 
 const sendUpdateButton = computed(() => {
-  return (isEN.value || isCPU.value) && (props.updateBtn && props.updateBtn !== 'Send Update') && can(permissionsEnum.SEND_UPDATE_TO_CUSTOMER);
+  return (isEN.value || isCPU.value) && (props.updateBtn && props.updateBtn !== 'Send Update') && can(permissionsEnum.SEND_UPDATE_TO_CUSTOMER_BUTTON);
 });
 const sendUpdateValidation = () => {
   axios
@@ -224,7 +224,7 @@ const sendUpdateValidation = () => {
       <DataTable
       table-class-name="compact"
       :headers="quoteDocumentsTable.columns"
-      :items="quoteDocuments || []"
+      :items="quoteDocuments.sort((a, b) => b.id - a.id) || []"
       border-cell
       hide-rows-per-page
       :rows-per-page="15"

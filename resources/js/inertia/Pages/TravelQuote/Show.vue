@@ -1818,7 +1818,7 @@ watch(
         </template>
       </Collapsible>
     </div>
-    
+
     <x-modal v-model="getParentEntityModel" size="lg" show-close backdrop>
       <h3 class="font-semibold text-center text-lg mb-10">
         Search Entity by Parent Entity Trade License No
@@ -2388,7 +2388,7 @@ watch(
           </x-button>
         </div>
       </template>
-    </x-modal>    
+    </x-modal>
 
     <SendUpdates
       v-if="hasPolicyIssuedStatus"
@@ -2406,7 +2406,7 @@ watch(
       modelType="travel"
       :expanded="sectionExpanded"
     />
-    
+
     <div class="p-4 rounded shadow mb-6 bg-white">
       <Collapsible :expanded="sectionExpanded">
         <template #header>
@@ -2649,6 +2649,7 @@ watch(
 			v-if="isNewPaymentStructure"
 			quoteType="Travel"
 			:payments="payments"
+            :proformaPayment="payments.find(item => item.payment_methods_code === 'PPR')"
 			:paymentDocument="documentTypes.QUOTE.filter(item => item.code === 'TPD' || item.code === 'TPDR' || item.code === 'TDPDR')"
 			:quoteRequest="quoteRequest"
 			:paymentStatusEnum="page.props.paymentStatusEnum"
