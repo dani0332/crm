@@ -4,7 +4,6 @@ namespace Database\Seeders;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Models\ApplicationStorage;
-use Carbon\Carbon;
 use Illuminate\Database\Seeder;
 
 class ApplicationStorageSeeder extends Seeder
@@ -72,7 +71,7 @@ class ApplicationStorageSeeder extends Seeder
         }
 
         $epMdxV2From = ApplicationStorage::where('key_name', ApplicationStorageEnums::EP_MDX_V2_FROM)->first();
-        if (!$epMdxV2From) {
+        if (! $epMdxV2From) {
             ApplicationStorage::insert([
                 'key_name' => ApplicationStorageEnums::EP_MDX_V2_FROM,
                 'value' => now(),

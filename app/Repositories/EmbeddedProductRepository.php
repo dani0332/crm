@@ -2,12 +2,14 @@
 
 namespace App\Repositories;
 
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\EpCategoryEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Facades\Marshall;
 use App\Jobs\SendEPDocumentsJob;
+use App\Models\ApplicationStorage;
 use App\Models\EmbeddedProduct;
 use App\Models\EmbeddedProductOption;
 use App\Models\EmbeddedTransaction;
@@ -22,8 +24,6 @@ use Carbon\Carbon;
 use finfo;
 use Illuminate\Support\Facades\DB;
 use PDF;
-use App\Models\ApplicationStorage;
-use App\Enums\ApplicationStorageEnums;
 
 class EmbeddedProductRepository extends BaseRepository
 {
