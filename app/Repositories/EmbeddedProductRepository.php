@@ -2,12 +2,14 @@
 
 namespace App\Repositories;
 
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\EpCategoryEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Facades\Marshall;
 use App\Jobs\SendEPDocumentsJob;
+use App\Models\ApplicationStorage;
 use App\Models\EmbeddedProduct;
 use App\Models\EmbeddedProductOption;
 use App\Models\EmbeddedTransaction;
@@ -414,14 +416,14 @@ class EmbeddedProductRepository extends BaseRepository
         $capturedAt
     ) {
         $pdf = null;
+        $epMdxV2From = ApplicationStorage::where('key_name', ApplicationStorageEnums::EP_MDX_V2_FROM)->first();
         $certificatesConfig = config('embedded-products.certificates');
         if (isset($certificatesConfig[$short_code])) {
             $viewFile = $certificatesConfig[$short_code]['view_file'];
-            $v2Config = $certificatesConfig[$short_code]['v2'];
-            if (! empty($v2Config['from']) &&
+            if ($epMdxV2From &&
             ! empty($capturedAt) &&
-            Carbon::parse($capturedAt)->gte(Carbon::parse($v2Config['from']))) {
-                $viewFile = $v2Config['view_file'];
+            Carbon::parse($capturedAt)->gte(Carbon::parse($epMdxV2From->value))) {
+                $viewFile = $certificatesConfig[$short_code]['view_file_v2'];
             }
 
             $strategy = $this->createStrategy($short_code);
