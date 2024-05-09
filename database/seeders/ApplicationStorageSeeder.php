@@ -91,5 +91,25 @@ class ApplicationStorageSeeder extends Seeder
                 'is_active' => 1,
             ]);
         }
+
+        if (! ApplicationStorage::where('key_name', ApplicationStorageEnums::EMAIL_CAMPAIGN)->exists()) {
+            ApplicationStorage::create([
+                'key_name' => ApplicationStorageEnums::EMAIL_CAMPAIGN,
+                'value' => 'WIN-FOR-SURE',
+                'is_active' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+
+        if (! ApplicationStorage::where('key_name', ApplicationStorageEnums::INVITATION_EMAIL_TEMPLATE_FOR_CAMPAIGN)->exists()) {
+            ApplicationStorage::create([
+                'key_name' => ApplicationStorageEnums::INVITATION_EMAIL_TEMPLATE_FOR_CAMPAIGN,
+                'value' => '651',
+                'is_active' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
     }
 }
