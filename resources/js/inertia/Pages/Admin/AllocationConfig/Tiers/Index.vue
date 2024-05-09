@@ -3,6 +3,8 @@ const props = defineProps({
   tiers: Object,
 });
 
+const params = useUrlSearchParams('history');
+
 const loader = ref({
   table: false,
 });
