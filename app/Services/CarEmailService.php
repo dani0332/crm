@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\CarPlanType;
+use App\Enums\LeadSourceEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\UserStatusEnum;
 use App\Models\ApplicationStorage;
@@ -60,11 +61,9 @@ class CarEmailService extends BaseService
                 } else {
                     info('SIC workflow key not found');
                 }
-
             } else {
                 info('SIC workflow already enabled for lead: '.$lead->uuid);
             }
-
         }
 
         if ($lead->advisor_id) {
@@ -129,6 +128,7 @@ class CarEmailService extends BaseService
     {
         $documentUrl = $this->getAppStorageValueByKey(ApplicationStorageEnums::LMS_INTRO_EMAIL_ATTACHMENT_URL);
         $whatsAppNumber = ! empty($advisor->mobile_no) ? formatMobileNo($advisor->mobile_no) : '';
+        $isRevivalLead = $carQuote->source == LeadSourceEnum::REVIVAL || $carQuote->source == LeadSourceEnum::REVIVAL_PAID || $carQuote->source == LeadSourceEnum::REVIVAL_REPLIED;
         $emailData = (object) [
             'clientFullName' => $carQuote->first_name.' '.$carQuote->last_name,
             'customerName' => $carQuote->first_name.' '.$carQuote->last_name,
@@ -143,7 +143,7 @@ class CarEmailService extends BaseService
             'yearOfManufacture' => $carQuote->year_of_manufacture,
             'vehicleName' => $this->getVehicleName($carQuote),
             'currentInsurer' => $carQuote->currently_insured_with,
-            'quoteLink' => config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$carQuote->uuid,
+            'quoteLink' => config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$carQuote->uuid.($isRevivalLead ? '?dla=true' : ''), // DLA = Disable Lead Assignment
             'requestAdvisorLink' => config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$carQuote->uuid.'/?assignAdvisor=true',
             'assignmentType' => $this->getAssignmentTypeText($carQuote->assignment_type),
             'previousAdvisorName' => ! empty($previousAdvisor) ? $previousAdvisor->name : '',
@@ -311,9 +311,9 @@ class CarEmailService extends BaseService
         $compPlans = array_filter($plans, function ($plan) {
             // Check if the 'repairType' and 'isRatingAvailable' properties exist and meet the conditions.
             return property_exists($plan, 'repairType') &&
-                   property_exists($plan, 'isRatingAvailable') &&
-                   ($plan->repairType === CarPlanType::COMP || $plan->repairType === CarPlanType::AGENCY) &&
-                   $plan->isRatingAvailable === true;
+                property_exists($plan, 'isRatingAvailable') &&
+                ($plan->repairType === CarPlanType::COMP || $plan->repairType === CarPlanType::AGENCY) &&
+                $plan->isRatingAvailable === true;
         });
 
         if (count($compPlans) > 0) {
@@ -330,5 +330,10 @@ class CarEmailService extends BaseService
 
         // return $top6Plans if $top6Plans is not empty otherwise return $plans
         return ! empty($top6Plans) ? $top6Plans : [];
+    }
+
+    public function sendSICNotificationToAdvisor($lead, $user)
+    {
+        return $this->sendEmailCustomerService->sendSICNotificationToAdvisor($lead, $user);
     }
 }

@@ -8,6 +8,7 @@ use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Facades\Capi;
 use App\Models\PersonalQuote;
+use App\Models\YachtQuote;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -23,7 +24,7 @@ class YachtQuoteRepository extends BaseRepository
     /**
      * create new personal quote
      *
-     * @param    $quoteTypeCode
+     * @param  $quoteTypeCode
      * @return mixed
      */
     public function fetchCreate($data)
@@ -66,7 +67,10 @@ class YachtQuoteRepository extends BaseRepository
 
             $quote->update($quoteData);
 
-            $quote->yachtQuote->update(Arr::only($data, ['boat_details', 'engine_details', 'claim_experience', 'use', 'operator_experience']));
+            $quote->yachtQuote()->updateOrCreate(
+                ['personal_quote_id' => $quote->id],
+                Arr::only($data, (new YachtQuote())->allowedColumns())
+            );
 
             return $quote;
         });
@@ -86,8 +90,13 @@ class YachtQuoteRepository extends BaseRepository
                 'nationality',
                 'quoteDetail.lostReason',
                 'quoteDetail.previousAdvisor',
+                'insuranceProvider',
                 'payments' => function ($q) {
-                    $q->with(['paymentStatus', 'personalPlan', 'paymentMethod']);
+                    $q->with(['paymentStatus', 'personalPlan', 'paymentMethod',
+                        'paymentSplits.paymentStatus',
+                        'paymentSplits.paymentMethod',
+                        'paymentSplits.documents',
+                    ]);
                 },
                 'createdBy',
                 'updatedBy',

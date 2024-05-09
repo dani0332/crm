@@ -17,6 +17,7 @@ class quoteTypeCode extends Enum
     const Pet = 'Pet';
     const RM_NB = 'Best';
     const RM_SPEED = 'Good';
+    const Car_Revival = 'CarRevival';
     const RetailMedical = 'Retail Medical';
     const EBP = 'Entry-Level';
     const CORPLINE = 'Corpline';

@@ -9,8 +9,9 @@ const props = defineProps({
   quoteType: String,
 });
 
-const notification = useNotifications('toast');
+const page = usePage();
 
+const notification = useNotifications('toast');
 const quoteStatusOptions = computed(() => {
   return props.quoteStatuses.map(status => ({
     value: status.id,
@@ -50,7 +51,7 @@ const rules = {
 
 const allowStatusUpdate = computed(() => {
   return (
-    props.quote.quote_status_id == props.quoteStatusEnum.TransactionApproved
+    props.quote.quote_status_id == page.props.quoteStatusEnum.TransactionApproved
   );
 });
 </script>
@@ -87,22 +88,6 @@ const allowStatusUpdate = computed(() => {
       </div>
       <div class="w-full md:w-2/3">
         <div class="flex flex-col gap-4">
-          <x-field
-            label="TransApp Code"
-            required
-            v-if="
-              quoteStatusForm.quote_status_id ==
-              props.quoteStatusEnum.TransactionApproved
-            "
-          >
-            <x-input
-              v-model="quoteStatusForm.transapp_code"
-              placeholder="TransApp Code is required"
-              class="w-full"
-              :disabled="allowStatusUpdate"
-              :error="quoteStatusForm.errors.transapp_code"
-            />
-          </x-field>
           <x-field
             label="Lost Reason"
             required

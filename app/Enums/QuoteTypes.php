@@ -19,6 +19,7 @@ enum QuoteTypes: string
     case PERSONAL = 'Personal';
     case GROUP_MEDICAL = 'Group Medical';
     case CORPLINE = 'Corpline';
+    case CAR_REVIVAL = 'CarRevival';
 
     public function id(): string
     {

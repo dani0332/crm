@@ -1,6 +1,10 @@
 <script setup>
+import { formatDate } from '@/inertia/Composables/utilities.js';
+
 defineProps({
   policies: Array,
+  legacyPolicyMapping: Array,
+  coveragePolicyMapping: Array,
 });
 
 const { isRequired } = useRules();
@@ -53,9 +57,36 @@ const tableHeader = [
   { text: 'Policy Number', value: 'policy_no' },
   { text: 'Customer name', value: 'customer.name' },
   { text: 'Currently insured with', value: 'policy.insurer' },
-  { text: 'Product', value: 'product.product' },
-  { text: 'Policy expiry date', value: 'policy.end_date' },
+  { text: 'Product', value: 'product_name' },
+  { text: 'Policy expiry date', value: 'policy_end_date' },
 ];
+
+const dateFormat = date => {
+  if (date) {
+    if (date.$date && date.$date.$numberLong) {
+      date = formatDate(date);
+    }
+    return useDateFormat(date, 'DD-MM-YYYY').value;
+  }
+  return null;
+};
+
+const productName = item => {
+  let product = item?.product?.product;
+  let coverage = item?.policy?.coverage;
+  if (product) {
+    let productKey = product.toLowerCase().trim();
+    return page.props.legacyPolicyMapping[productKey] ?? '';
+  } else if (coverage) {
+    let coverageKey = coverage.toLowerCase().trim();
+    return (
+      page.props.coveragePolicyMapping[coverageKey] ??
+      page.props.legacyPolicyMapping[coverageKey] ??
+      ''
+    );
+  }
+  return '-';
+};
 </script>
 
 <template>
@@ -75,7 +106,7 @@ const tableHeader = [
           name="policy_number"
           label="Policy Number"
           class="w-full"
-          placeholder="Search by Last Name"
+          placeholder="Search by Policy Number"
         />
         <x-input
           v-model="filters.email"
@@ -114,10 +145,17 @@ const tableHeader = [
       <template #item-_id="item">
         <Link
           :href="`/legacy-policy/${item._id}`"
+          :data="{ policy_oid: item.policy_oid }"
           class="text-primary-500 hover:underline"
         >
           {{ item._id }}
         </Link>
+      </template>
+      <template #item-product_name="item">
+        {{ productName(item) }}
+      </template>
+      <template #item-policy_end_date="item">
+        {{ dateFormat(item?.policy?.end_date) ?? '' }}
       </template>
     </DataTable>
 
