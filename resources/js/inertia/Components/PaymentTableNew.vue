@@ -493,7 +493,7 @@ const frequencyTypes = paymentLookups.paymentFrequencyTypes.map(item => ({
 const declinedReasons = paymentLookups.paymentDeclineReasons.map(item => ({
   value: item.id,
   label: item.text,
- }));
+}));
 declinedReasons.unshift({ value: '', label: 'Select Reason' });
 
 // Define payment approval reasons
@@ -576,8 +576,10 @@ const isProformaPaymentRequest = computed(() => {
 const handlePaymentOptions = count => {
   isPaymentMetodNotSelected.value[count] = false;
   if (
-    paymentMethodsModels.value[count] === page.props.paymentMethodsEnum?.Cheque ||
-    paymentMethodsModels.value[count] === page.props.paymentMethodsEnum?.PostDatedCheque
+    paymentMethodsModels.value[count] ===
+      page.props.paymentMethodsEnum?.Cheque ||
+    paymentMethodsModels.value[count] ===
+      page.props.paymentMethodsEnum?.PostDatedCheque
   ) {
     isCheckDetailsEnabled.value[count] = true;
   } else {
@@ -641,7 +643,8 @@ const handlePaymentTypes = count => {
       paymentMethodsForm.frequency === 'custom')
   ) {
     paymentTypesWithoutCheck = paymentTypesFiltered.value.filter(
-      item => ![
+      item =>
+        ![
           page.props.paymentMethodsEnum?.Cheque,
           page.props.paymentMethodsEnum?.CreditCard,
         ].includes(item.value),
@@ -653,7 +656,8 @@ const handlePaymentTypes = count => {
     paymentMethodsForm.frequency === 'split_payments'
   ) {
     paymentTypesWithoutCheck = paymentTypesWithoutCheck.filter(
-      item => ![page.props.paymentMethodsEnum?.PostDatedCheque].includes(item.value),
+      item =>
+        ![page.props.paymentMethodsEnum?.PostDatedCheque].includes(item.value),
     );
   }
 
@@ -706,7 +710,8 @@ const handleApprovalReasonChange = () => {
         );
       } else {
         paymentTypesFiltered.value = paymentTypesFiltered.value.filter(
-          item => ![
+          item =>
+            ![
               page.props.paymentMethodsEnum?.Cheque,
               page.props.paymentMethodsEnum?.Cash,
               page.props.paymentMethodsEnum?.CreditCard,
@@ -1036,10 +1041,10 @@ const handleFrequencyChange = (noPaymentUpdate = true) => {
   calculatePaymentBreakup();
   // readOnlyPayments.value[1]===undefined this condition is missed from incoming (feat/insly-project-central), that's why added.
   if (
-    paymentMethodsModels.value[1] === page.props.paymentMethodsEnum?.CreditCard &&
+    paymentMethodsModels.value[1] ===
+      page.props.paymentMethodsEnum?.CreditCard &&
     resetPaymentMethod &&
     readOnlyPayments.value[1] === undefined
-
   ) {
     paymentMethodsModels.value[1] = page.props.paymentMethodsEnum?.BankTransfer;
   }
@@ -1568,8 +1573,7 @@ const editPaymentModal = (
   ) {
     planDetail.value = payment.travel_plan;
 
-      planDetail.value['insurance_provider'] = payment.insurance_provider;
-    }
+    planDetail.value['insurance_provider'] = payment.insurance_provider;
   }
 
   if (capture_approval > 0) {
@@ -1651,8 +1655,7 @@ const validateCapturePayment = isValid => {
         if (paymentMethodsModels.value[i] === 'CC') {
           if (
             collectionAmountModels.value[i] === null ||
-            collectionAmountModels.value[i] === undefined
-          ||
+            collectionAmountModels.value[i] === undefined ||
             collectionAmountModels.value[i] === 0
           ) {
             isCreditPaymentInvalid.value[i] = true;
@@ -2437,51 +2440,52 @@ watch(
           </template>
         </templete>
         <div
-        v-if="
-          !page.props.linkedQuoteDetails ||
-          page.props.linkedQuoteDetails?.childLeadsCount == 0
-        "
-      >
-        <template v-if="payments.length > 0">
-          <div
-            class="flex justify-between items-center gap-2"
-            style="margin-left: auto"
-          >
-            <UpdateTotalPrice
-              v-if="
-                can(permissionEnum.TEMP_UPDATE_TOTALPRICE) &&
-                quoteRequest.quote_status_id === 15
-              "
-              :quoteId="quoteRequest.id"
-              :paymentCode="payments[0].code"
-              :quoteType="quoteType"
-              :totalPrice="payments[0].total_price"
-              :totalPaidPrice="
-                payments[0].total_amount + payments[0].discount_value
-              "
-            /><x-button
-              v-if="can(permissionEnum.PaymentsCreate)"
-              size="sm"
-              color="emerald"
-              @click="addPaymentModal"
+          v-if="
+            !page.props.linkedQuoteDetails ||
+            page.props.linkedQuoteDetails?.childLeadsCount == 0
+          "
+        >
+          <template v-if="payments.length > 0">
+            <div
+              class="flex justify-between items-center gap-2"
+              style="margin-left: auto"
             >
-              Add Manual Payment
-            </x-button>
-          </div>
-        </template>
-        <template v-else>
-          <x-tooltip>
-            <x-button size="sm" color="emerald" @click="addPaymentModal">
-              <span class="border-b border-dotted">Add Manual Payment</span>
-            </x-button>
-            <template #tooltip>
-              <span>{{
-                paymentTooltipEnum.PAYMENT_MANAGEMENT_ADD_PAYMENT
-              }}</span>
-            </template>
-          </x-tooltip>
-        </template>
-      </div></div>
+              <UpdateTotalPrice
+                v-if="
+                  can(permissionEnum.TEMP_UPDATE_TOTALPRICE) &&
+                  quoteRequest.quote_status_id === 15
+                "
+                :quoteId="quoteRequest.id"
+                :paymentCode="payments[0].code"
+                :quoteType="quoteType"
+                :totalPrice="payments[0].total_price"
+                :totalPaidPrice="
+                  payments[0].total_amount + payments[0].discount_value
+                "
+              /><x-button
+                v-if="can(permissionEnum.PaymentsCreate)"
+                size="sm"
+                color="emerald"
+                @click="addPaymentModal"
+              >
+                Add Manual Payment
+              </x-button>
+            </div>
+          </template>
+          <template v-else>
+            <x-tooltip>
+              <x-button size="sm" color="emerald" @click="addPaymentModal">
+                <span class="border-b border-dotted">Add Manual Payment</span>
+              </x-button>
+              <template #tooltip>
+                <span>{{
+                  paymentTooltipEnum.PAYMENT_MANAGEMENT_ADD_PAYMENT
+                }}</span>
+              </template>
+            </x-tooltip>
+          </template>
+        </div>
+      </div>
     </div>
     <div class="vue3-easy-data-table tablefixed custom-height">
       <div
@@ -2752,9 +2756,7 @@ watch(
                           >View</x-button
                         >
                         <x-button
-                          v-if="
-                            splitPayment.payment_method.code == 'CC'
-                          "
+                          v-if="splitPayment.payment_method.code == 'CC'"
                           class="ml-2"
                           size="xs"
                           color="emerald"
@@ -2765,14 +2767,14 @@ watch(
                               splitPayment.payment_status_id,
                             )
                           "
-                          outlined>Copy Payment Link</x-button
+                          outlined
+                          >Copy Payment Link</x-button
                         >
-
                       </div>
                     </td>
                   </tr>
-                </template
-              ></template>
+                </template></template
+              >
             </template>
           </tbody>
         </table>
@@ -3765,7 +3767,10 @@ watch(
                   </template>
                   <template v-else>
                     <x-input
-                      v-if="paymentMethodsModels[count] === 'CC'&& authorizedPayments[count]"
+                      v-if="
+                        paymentMethodsModels[count] === 'CC' &&
+                        authorizedPayments[count]
+                      "
                       v-model="collectionAmountModels[count]"
                       class="w-full"
                       :class="{
@@ -3790,7 +3795,8 @@ watch(
                     <DatePicker
                       v-model="dueDateModels[count]"
                       class="w-full"
-                      :rules="[rules.isRequired]"placeholder="dd-mm-yyyy"
+                      :rules="[rules.isRequired]"
+                      placeholder="dd-mm-yyyy"
                     />
                   </template>
                 </div>
@@ -4143,7 +4149,8 @@ watch(
                 class="mr-4"
               >
                 <x-button
-                 v-if="!isProformaPaymentRequest" size="sm"
+                  v-if="!isProformaPaymentRequest"
+                  size="sm"
                   @click="handleDeclinedChange"
                   tabindex="0"
                   class="focus:outline-black"
@@ -4170,7 +4177,9 @@ watch(
                 "
               >
                 <x-button
-                  v-if="!isApproveClicked && isViewEnabled&&
+                  v-if="
+                    !isApproveClicked &&
+                    isViewEnabled &&
                     !isProformaPaymentRequest
                   "
                   class="mr-2 focus:outline-black"
