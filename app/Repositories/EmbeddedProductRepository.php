@@ -420,7 +420,7 @@ class EmbeddedProductRepository extends BaseRepository
         $certificatesConfig = config('embedded-products.certificates');
         if (isset($certificatesConfig[$short_code])) {
             $viewFile = $certificatesConfig[$short_code]['view_file'];
-            if (! empty($epMdxV2From) &&
+            if ($epMdxV2From &&
             ! empty($capturedAt) &&
             Carbon::parse($capturedAt)->gte(Carbon::parse($epMdxV2From->value))) {
                 $viewFile = $certificatesConfig[$short_code]['view_file_v2'];
