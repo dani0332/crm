@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\EnvEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\TiersEnum;
@@ -193,7 +194,7 @@ class DttFollowUp extends Command
                     }
                     $emailTemplateId = ApplicationStorage::where('key_name', $key)->value('value');
                     $emailData->templateId = (int) $emailTemplateId;
-                    $emailData->subject = 'Final Reminder: Secure Your Motor Policy Now '.$lead->code;
+                    $emailData->subject = config('constants.APP_ENV') == EnvEnum::PRODUCTION ? '' : config('constants.APP_ENV').' - '.'Final Reminder: Secure Your Motor Policy Now '.$lead->code;
                     $emailData->tag = 'final-reminder-secure-your-motor-policy';
                     if ($item->follow_up_email_count == 4) {
                         $leads[] = $emailData;
