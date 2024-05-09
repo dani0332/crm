@@ -1543,28 +1543,42 @@ const salaryBrandMapping = {
 
 watch(
   () => memberForm.member_category_id,
-  newValue => {
-    console.log('🚀 ~ WATCHER:', newValue);
+  (newValue, oldValue) => {
+    console.log('🚀 ~ WATCHER');
+    console.log('🚀 ~ newValue:', newValue);
+    console.log('🚀 ~ oldValue:', oldValue);
     console.log('🚀 ~ memberActionEdit:', memberActionEdit.value);
 
+    // const selectedCategory = memberCategoriesOptions.value.find(
+    //   option => option.value === newValue,
+    // );
+
+    // console.log('🚀 ~ memberCategoriesOptions:', memberCategoriesOptions);
+
+    // console.log('🚀 ~ selectedCategory:', selectedCategory);
+
     // for Add Member Form
-    if (!memberActionEdit.value) {
-      // fetch category text
-      const selectedCategory = page.props.memberCategories.find(
-        item => item.id === newValue,
-      );
+    if (newValue) {
+      if (!memberActionEdit.value && modals.member) {
+        console.log('🚀 ~ IF');
+        // fetch category text
+        //   const selectedCategory = memberCategoriesOptions.value.find(
+        //     option => option.value === newValue,
+        //   );
 
-      // fetch salary band id based on category text
-      const salaryBandId = memberCategorySalaryMapping[selectedCategory.text];
+        //   // fetch salary band id based on category text
+        //   const salaryBandId = memberCategorySalaryMapping[selectedCategory.label];
 
-      // if quote status is Transaction Approved do not auto-popualte salary band automatically
-      if (page.props.quote.quote_status_id != 15) {
-        memberForm.salary_band_id = salaryBandId;
+        //   // if quote status is Transaction Approved do not auto-popualte salary band automatically
+        //   if (page.props.quote.quote_status_id != 15) {
+        //     memberForm.salary_band_id = salaryBandId;
+        //   }
+        //   console.log('🚀 ~ selectedCategory:', selectedCategory.label);
+        //   console.log('🚀 ~ salaryBandId:', salaryBandId);
+      } else if (memberActionEdit.value && modals.member) {
+        console.log('🚀 ~ ELSE IF');
+        // for Edit Member Form
       }
-      console.log('🚀 ~ selectedCategory:', selectedCategory.text);
-      console.log('🚀 ~ salaryBandId:', salaryBandId);
-    } else {
-      // for Edit Member Form
     }
   },
 );
