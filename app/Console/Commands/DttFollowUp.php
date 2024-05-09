@@ -135,7 +135,9 @@ class DttFollowUp extends Command
                     $emailData->templateId = (int) $emailTemplateId;
                     $emailData->subject = 'Reminder: Purchase Your Motor Policy '.$lead->code;
                     $emailData->tag = 'reminder-purchase-your-motor-policy';
-                    $leads[] = $emailData;
+                    if ($item->follow_up_email_count == 0) {
+                        $leads[] = $emailData;
+                    }
                 }
                 // after seven days
                 if ($today->eq($afterSevenDays)) {
@@ -148,7 +150,9 @@ class DttFollowUp extends Command
                     $emailData->templateId = (int) $emailTemplateId;
                     $emailData->subject = 'Reminder: Purchase Your Motor Policy '.$lead->code;
                     $emailData->tag = 'reminder-purchase-your-motor-policy';
-                    $leads[] = $emailData;
+                    if ($item->follow_up_email_count == 1) {
+                        $leads[] = $emailData;
+                    }
                 }
                 // after thirteen days
                 if ($today->eq($aftertThirteenDays)) {
@@ -161,7 +165,9 @@ class DttFollowUp extends Command
                     $emailData->templateId = (int) $emailTemplateId;
                     $emailData->subject = 'Friendly Reminder: Secure Your Motor Policy Today '.$lead->code;
                     $emailData->tag = 'friendly-reminder-secure-your-motor-policy';
-                    $leads[] = $emailData;
+                    if ($item->follow_up_email_count == 2) {
+                        $leads[] = $emailData;
+                    }
                 }
                 // after twenty days
                 if ($today->eq($afterTwentyDays)) {
@@ -174,7 +180,9 @@ class DttFollowUp extends Command
                     $emailData->templateId = (int) $emailTemplateId;
                     $emailData->subject = 'Gentle Reminder: Secure Your Motor Policy Today '.$lead->code;
                     $emailData->tag = 'gentle-reminder-secure-your-motor-policy';
-                    $leads[] = $emailData;
+                    if ($item->follow_up_email_count == 3) {
+                        $leads[] = $emailData;
+                    }
                 }
                 // after twentyeight days
                 if ($today->eq($afterTwentyeightDays)) {
@@ -187,7 +195,9 @@ class DttFollowUp extends Command
                     $emailData->templateId = (int) $emailTemplateId;
                     $emailData->subject = 'Final Reminder: Secure Your Motor Policy Now '.$lead->code;
                     $emailData->tag = 'final-reminder-secure-your-motor-policy';
-                    $leads[] = $emailData;
+                    if ($item->follow_up_email_count == 4) {
+                        $leads[] = $emailData;
+                    }
                 }
             }
         }

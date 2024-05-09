@@ -562,7 +562,6 @@ class SendEmailCustomerService extends BaseService
             'Content-Type' => 'application/json',
         ];
 
-
         $tag = $this->appEnv == EnvEnum::PRODUCTION ? $emailData->tag : $this->appEnv.'-'.$emailData->tag;
         $body = [
             'subject' => $emailData->subject,
