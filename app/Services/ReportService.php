@@ -275,15 +275,18 @@ class ReportService extends BaseService
         $query
             ->select(
                 'users.id as advisor_id',
-                'users.name as advisor',
+                'users.name as advisor_name',
                 DB::raw('COUNT(*) as total_leads'),
-                DB::raw('SUM(car_quote_request.premium) as total_premium')
+                DB::raw('SUM(car_quote_request.premium) as total_premium'),
+                DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at')
             )
+            ->leftJoin('payments as py', 'py.code', '=', 'car_quote_request.code')
             ->join('users', 'users.id', 'car_quote_request.advisor_id')
-            ->join('payment_status', 'payment_status.id', 'car_quote_request.payment_status_id')
-            ->where('payment_status_id', PaymentStatusEnum::AUTHORISED)
+            ->join('user_team', 'users.id', '=', 'user_team.user_id')
+            ->join('teams', 'teams.id', '=', 'user_team.team_id')
+            ->where('car_quote_request.payment_status_id', PaymentStatusEnum::AUTHORISED)
             ->groupBy('users.id', 'users.name')
-            ->orderBy('car_quote_request.created_at', 'desc');
+            ->orderBy('total_leads', 'desc');
 
         if (isset($request->teams)) {
             $teamIds = $request->teams;
@@ -297,6 +300,25 @@ class ReportService extends BaseService
                     ->whereIn('teams.id', $teamIds);
             });
         }
+        if (isset($request->expireDate)) {
+            $query->whereDate('py.authorized_at', '<=', $request->expireDate);
+        }
+        if (isset($request->todayDate)) {
+            $query->whereBetween('py.authorized_at', $request->todayDate);
+        }
+        if (isset($request->tomorrowDate)) {
+            $query->whereDate('py.authorized_at', '=', $request->tomorrowDate);
+        }
+        if (isset($request->thisWeek)) {
+            $startOfWeek = $request->thisWeek[0];
+            $endOfWeek = $request->thisWeek[1];
+
+            $query->whereBetween('py.authorized_at', [$startOfWeek, $endOfWeek]);
+        }
+        if (isset($request->customDate)) {
+            $query->whereBetween('py.authorized_at', $request->customDate);
+        }
+
         return $query->simplePaginate(5)->withQueryString();
 
     }

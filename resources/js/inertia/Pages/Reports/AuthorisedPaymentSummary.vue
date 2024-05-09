@@ -11,43 +11,21 @@ const loaders = reactive({
 // const { isRequired } = useRules();
 
 const filters = reactive({
-  //  uuid: '',
-   // advisorAssignedDates: props.defaultFilters.advisorAssignedDates,
-   //  tiers: [],
-   //  leadSources: [],
+    expireDate: '',
+    todayDate: [],
+    tomorrowDate : '',
+    thisWeek : [],
+    customDate :[],
     teams: [],
-    // is_ecommerce: '',
-    // payment_status: '',
-    // page: 1,
+    page: 1,
 });
 
-// const leadSource = computed(() => {
-//     return Object.keys(props.defaultFilters.leadSource).map(key => ({
-//         value: key,
-//         label: props.defaultFilters.leadSource[key],
-//     }));
-// });
-//
 const teams = computed(() => {
     return Object.keys(props.defaultFilters.teams).map(key => ({
         value: key,
         label: props.defaultFilters.teams[key],
     }));
 });
-
-// const tiers = computed(() => {
-//     return Object.keys(props.defaultFilters.tiers).map(key => ({
-//         value: key,
-//         label: props.defaultFilters.tiers[key],
-//     }));
-// });
-
-// const paymentStatus = computed(() => {
-//     return Object.keys(props.defaultFilters.paymentStatus).map(key => ({
-//         value: key,
-//         label: props.defaultFilters.paymentStatus[key],
-//     }));
-// });
 
 const onSubmit = isValid => {
     if (!isValid) return;
@@ -79,7 +57,7 @@ const tableHeader = reactive([
     },
     {
         text: 'ADVISOR',
-        value: 'advisor',
+        value: 'advisor_name',
     },
     {
         text: 'TOTAL PREMIUM',
@@ -87,54 +65,82 @@ const tableHeader = reactive([
     }
 
 ]);
+function formatNumber(number) {
+    return parseFloat(number).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+}
+const activeButton = ref('');
+function setExpireDate() {
+    activeButton.value = 'expire';
+    const currentDate = new Date();
+    const expireDate = new Date(currentDate.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const formattedExpireDate = expireDate.toISOString();
+    filters.expireDate = formattedExpireDate;
+    filters.todayDate = [];
+    filters.tomorrowDate = '';
+    filters.thisWeek = [];
+
+}
+function setTodayDate(){
+    activeButton.value = 'today';
+    const currentDate = new Date();
+    const startOfDay = new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate(), 0, 0, 0); // Set time to 00:00:00
+    const endOfDay = new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate(), 23, 59, 59); // Set time to 23:59:59
+    const formattedStartOfDay = startOfDay.toISOString();
+    const formattedEndOfDay = endOfDay.toISOString();
+    filters.todayDate = [formattedStartOfDay , formattedEndOfDay];
+    filters.tomorrowDate = '';
+    filters.expireDate = '';
+    filters.thisWeek = [];
+}
+function setTomorrowDate(){
+    activeButton.value = 'tomorrow';
+    const currentDate = new Date();
+    const tomorrowDate = new Date(currentDate.getTime() + 24 * 60 * 60 * 1000); // Add 1 day
+    const formattedTomorrowDate = tomorrowDate.toISOString();
+  filters.tomorrowDate = formattedTomorrowDate;
+    filters.todayDate = [];
+    filters.expireDate = '';
+    filters.thisWeek = [];
+
+}
+function setThisWeek(){
+    activeButton.value = 'thisWeek';
+    const currentDate = new Date();
+    const currentDay = currentDate.getDay();
+    const startOfWeekDate = new Date(currentDate);
+    startOfWeekDate.setDate(currentDate.getDate() - currentDay);
+    const endOfWeekDate = new Date(currentDate);
+    endOfWeekDate.setDate(currentDate.getDate() + (6 - currentDay));
+    const formattedStartWeek = startOfWeekDate.toISOString();
+    const formattedEndWeek = endOfWeekDate.toISOString();
+
+    filters.thisWeek = [formattedStartWeek, formattedEndWeek];
+    filters.tomorrowDate = '';
+    filters.todayDate = [];
+    filters.expireDate = '';
+
+}
+const currentDate = new Date().toISOString().split('T')[0];
+
 </script>
 <template>
-    <Head title="Lead List Report" />
+    <Head title="Authorised Payment Report" />
     <h1 class="text-2xl font-bold text-center text-primary-500 mb-4">
         Authorised Payment Summary
     </h1>
     <x-divider class="my-4" />
     <x-form @submit="onSubmit" :auto-focus="false">
         <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
-<!--            <x-field label="Search">-->
-<!--                <x-input-->
-<!--                    v-model="filters.uuid"-->
-<!--                    type="text"-->
-<!--                    class="w-full"-->
-<!--                    placeholder="Search By Ref i.e CAR-12345678"-->
-<!--                />-->
-<!--            </x-field>-->
-<!--            <x-field label="Advisor Assigned Date" required>-->
-<!--                <DatePicker-->
-<!--                    v-model="filters.advisorAssignedDates"-->
-<!--                    placeholder="Select Start & End Date"-->
-<!--                    range-->
-<!--                    :max-range="92"-->
-<!--                    size="sm"-->
-<!--                    model-type="yyyy-MM-dd"-->
-<!--                    :rules="[isRequired]"-->
-<!--                />-->
-<!--            </x-field>-->
-<!--            <x-field label="Tiers">-->
-<!--                <ComboBox-->
-<!--                    v-model="filters.tiers"-->
-<!--                    placeholder="Search by Tiers"-->
-<!--                    :options="tiers"-->
-<!--                    :max-limit="3"-->
-<!--                    deselect-all-->
-<!--                />-->
-<!--            </x-field>-->
-<!--            <x-field label="Lead Source">-->
-<!--                <ComboBox-->
-<!--                    v-model="filters.leadSources"-->
-<!--                    placeholder="Search by Lead Source"-->
-<!--                    :options="leadSource"-->
-<!--                    :max-limit="3"-->
-<!--                    deselect-all-->
-<!--                />-->
-<!--            </x-field>-->
-        </div>
-        <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
+            <x-field label="Custom Date">
+                <DatePicker
+                    v-model="filters.customDate"
+                    placeholder="Select Start & End Date"
+                    range
+                    :max-range="92"
+                    size="sm"
+                    model-type="yyyy-MM-dd"
+                />
+            </x-field>
             <x-field label="Teams">
                 <ComboBox
                     v-model="filters.teams"
@@ -144,28 +150,14 @@ const tableHeader = reactive([
                     deselect-all
                 />
             </x-field>
-<!--            <x-field label="Is Ecommerce">-->
-<!--                <x-select-->
-<!--                    v-model="filters.is_ecommerce"-->
-<!--                    placeholder="Search by Ecommerce"-->
-<!--                    :options="[-->
-<!--            { value: 'All', label: 'All' },-->
-<!--            { value: 'Yes', label: 'Yes' },-->
-<!--            { value: 'No', label: 'No' },-->
-<!--          ]"-->
-<!--                    class="w-full"-->
-<!--                />-->
-<!--            </x-field>-->
-<!--            <x-field label="Payment Status">-->
-<!--                <ComboBox-->
-<!--                    v-model="filters.payment_status"-->
-<!--                    placeholder="Search By Payment Status"-->
-<!--                    :options="paymentStatus"-->
-<!--                    :max-limit="3"-->
-<!--                    deselect-all-->
-<!--                />-->
-<!--            </x-field>-->
         </div>
+        <div class="flex gap-3">
+            <x-button size="sm" :color="activeButton === 'expire' ? 'black' : 'primary'" @click="setExpireDate" type="submit">Expired</x-button>
+            <x-button size="sm" :color="activeButton === 'today' ? 'black' : 'primary'" @click="setTodayDate" type="submit">Today</x-button>
+            <x-button size="sm" :color="activeButton === 'tomorrow' ? 'black' : 'primary'" @click="setTomorrowDate" type="submit">Tomorrow</x-button>
+            <x-button size="sm" :color="activeButton === 'thisWeek' ? 'black' : 'primary'" @click="setThisWeek" type="submit">ThisWeek</x-button>
+        </div>
+
         <div class="flex gap-3 justify-end">
             <x-button size="sm" color="#ff5e00" type="submit">Search</x-button>
             <x-button size="sm" color="primary" @click.prevent="onReset">
@@ -185,21 +177,22 @@ const tableHeader = reactive([
         :sort-type="'desc'"
         hide-footer
     >
-<!--        <template #item-uuid="{ uuid }">-->
-<!--            <Link-->
-<!--                :href="route('car.show', uuid)"-->
-<!--                class="text-primary-500 hover:underline"-->
-<!--            >-->
-<!--                {{ uuid }}-->
-<!--            </Link>-->
-<!--        </template>-->
-<!--        <template #item-is_ecommerce="{ is_ecommerce }">-->
-<!--            <div class="text-center">-->
-<!--                <x-tag size="sm" :color="is_ecommerce ? 'success' : 'error'">-->
-<!--                    {{ is_ecommerce ? 'Yes' : 'No' }}-->
-<!--                </x-tag>-->
-<!--            </div>-->
-<!--        </template>-->
+        <template #item-total_premium="{ total_premium }">
+            <div class="text-left">
+              {{formatNumber(total_premium)}}
+            </div>
+        </template>
+        <template #item-advisor_name="{ advisor_name, advisor_id }">
+            <div class="text-left">
+                <Link
+                    :href="`/quotes/car?created_at_start=${currentDate}&created_at_end=${currentDate}&page=1&segment_filter=all&payment_status_id=4&advisor_id[]=${[advisor_id]}`"
+                    class="text-black underline"
+                >
+                    {{ advisor_name }}
+                </Link>
+            </div>
+        </template>
+
     </DataTable>
     <Pagination
         :links="{
