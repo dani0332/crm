@@ -563,7 +563,7 @@ class SendEmailCustomerService extends BaseService
 
         $tag = $this->appEnv == EnvEnum::PRODUCTION ? $emailData->tag : $this->appEnv.'-'.$emailData->tag;
         $body = [
-            'subject' => $this->appEnv == EnvEnum::PRODUCTION ? '' : $this->appEnv.' - '.$emailData->subject,
+            'subject' => $this->appEnv == EnvEnum::PRODUCTION ? $emailData->subject : $this->appEnv.' - '.$emailData->subject,
             'sender' => [
                 'email' => 'no-reply@alert.insurancemarket.email',
                 'name' => 'InsuranceMarket.ae',
