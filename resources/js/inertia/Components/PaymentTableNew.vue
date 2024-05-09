@@ -2024,7 +2024,7 @@ const uploadDocument = (doc, files, count) => {
 
 const getCaptureValidation = computed(() => {
   return payment => {
-    //6 =AML Screening Cleared , 32 = Transaction Declined , 15 = Transaction Approved
+    // 6:AML Screening Cleared, 32:Transaction Declined, 15:Transaction Approved
     if ( props.payments.length > 0 && (payment.total_price <= (payment.total_amount + payment.discount_value)) && ((( 
       props.isAmlClearedForPayment || 
       props.quoteRequest.quote_status_id === page.props.quoteStatusEnum.AMLScreeningCleared || 
@@ -2333,6 +2333,11 @@ if (props.sendUpdate) {
                 target="_blank"
                 @click="downloadProformaPayment"
               >
+                <span class="border-b border-dotted"
+                  >Download Proforma Payment Request</span
+                >
+              </x-button>
+              <template #tooltip>
                 <span>{{
                   paymentTooltipEnum.PAYMENT_MANAGEMENT_DOWNLOAD_PROFORMA_PAYMENT
                 }}</span>
