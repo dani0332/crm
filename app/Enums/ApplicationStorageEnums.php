@@ -3,6 +3,7 @@
 namespace App\Enums;
 
 use BenSampo\Enum\Enum;
+use PhpParser\Node\Stmt\Const_;
 
 /**
  * @method static static OptionOne()
@@ -66,4 +67,5 @@ final class ApplicationStorageEnums extends Enum
     public const DTT_REPLY_TO = 'DTT_REPLY_TO';
     public const ENABLE_PLAN_MODIFY_VALIDATION = 'ENABLE_PLAN_MODIFY_VALIDATION';
     public const EP_MDX_V2_FROM = 'EP_MDX_V2_FROM';
+    public Const ADVISOR_ONLINE_NOTIFICATION_EMAILS_ENABLE = 'ADVISOR_ONLINE_NOTIFICATION_EMAILS_ENABLE'
 }
