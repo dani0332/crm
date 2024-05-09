@@ -69,5 +69,16 @@ class ApplicationStorageSeeder extends Seeder
                 'updated_at' => now(),
             ]);
         }
+
+        $epMdxV2From = ApplicationStorage::where('key_name', ApplicationStorageEnums::EP_MDX_V2_FROM)->first();
+        if (! $epMdxV2From) {
+            ApplicationStorage::insert([
+                'key_name' => ApplicationStorageEnums::EP_MDX_V2_FROM,
+                'value' => now(),
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ]);
+        }
     }
 }

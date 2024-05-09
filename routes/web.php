@@ -1,7 +1,6 @@
 <?php
 
 use App\Enums\EnvEnum;
-use App\Enums\PermissionsEnum;
 use App\Enums\quoteTypeCode;
 use App\Http\Controllers\ActivitesController;
 use App\Http\Controllers\AgeDiscountController;
@@ -353,7 +352,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         }
         Route::post('save', [CRUDController::class, 'store'])->name('saveQuote');
         Route::post('update', [CRUDController::class, 'update'])->name('updateQuote');
-        Route::post('cancel-payment', [CRUDController::class, 'cancelPayment'])->name('cancelPayment')->middleware('permission:'.PermissionsEnum::EMBEDDED_PRODUCT_ADMIN);
+        Route::post('cancel-payment', [EmbeddedProductController::class, 'cancelPayment'])->name('cancel-payment');
         Route::post('createDuplicate', [CentralController::class, 'createDuplicate'])->name('createDuplicate');
         Route::post('{quoteType}/leadAssign', [CentralController::class, 'manualLeadAssign'])->name('manual-lead-assignment');
         Route::post('/{quoteType}/available-plans/{id}', [CentralController::class, 'loadAvailablePlans']);
