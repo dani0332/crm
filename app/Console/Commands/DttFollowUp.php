@@ -134,6 +134,7 @@ class DttFollowUp extends Command
                     $emailTemplateId = ApplicationStorage::where('key_name', $key)->value('value');
                     $emailData->templateId = (int) $emailTemplateId;
                     $emailData->subject = 'Reminder: Purchase Your Motor Policy '.$lead->code;
+                    $emailData->tag = 'reminder-purchase-your-motor-policy';
                     $leads[] = $emailData;
                 }
                 // after seven days
@@ -146,6 +147,7 @@ class DttFollowUp extends Command
                     $emailTemplateId = ApplicationStorage::where('key_name', $key)->value('value');
                     $emailData->templateId = (int) $emailTemplateId;
                     $emailData->subject = 'Reminder: Purchase Your Motor Policy '.$lead->code;
+                    $emailData->tag = 'reminder-purchase-your-motor-policy';
                     $leads[] = $emailData;
                 }
                 // after thirteen days
@@ -158,6 +160,7 @@ class DttFollowUp extends Command
                     $emailTemplateId = ApplicationStorage::where('key_name', $key)->value('value');
                     $emailData->templateId = (int) $emailTemplateId;
                     $emailData->subject = 'Friendly Reminder: Secure Your Motor Policy Today '.$lead->code;
+                    $emailData->tag = 'friendly-reminder-secure-your-motor-policy';
                     $leads[] = $emailData;
                 }
                 // after twenty days
@@ -170,6 +173,7 @@ class DttFollowUp extends Command
                     $emailTemplateId = ApplicationStorage::where('key_name', $key)->value('value');
                     $emailData->templateId = (int) $emailTemplateId;
                     $emailData->subject = 'Gentle Reminder: Secure Your Motor Policy Today '.$lead->code;
+                    $emailData->tag = 'gentle-reminder-secure-your-motor-policy';
                     $leads[] = $emailData;
                 }
                 // after twentyeight days
@@ -182,6 +186,7 @@ class DttFollowUp extends Command
                     $emailTemplateId = ApplicationStorage::where('key_name', $key)->value('value');
                     $emailData->templateId = (int) $emailTemplateId;
                     $emailData->subject = 'Final Reminder: Secure Your Motor Policy Now '.$lead->code;
+                    $emailData->tag = 'final-reminder-secure-your-motor-policy';
                     $leads[] = $emailData;
                 }
             }
