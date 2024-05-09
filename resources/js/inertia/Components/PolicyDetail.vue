@@ -40,7 +40,10 @@ const quoteStatusEnum = page.props.quoteStatusEnum;
 
 const policyIssuanceStatusOptions = computed(() => {
   let policyIssuanceStatus = page.props.policyIssuanceStatus;
-  if (props.record.quote_status_id != quoteStatusEnum.PolicyIssued) {
+  if (
+    page.props.record.policy_issuance_status_id !=
+    page.props.policyIssuanceStatusEnum.PolicyIssued
+  ) {
     policyIssuanceStatus = policyIssuanceStatus.filter(
       item => item.text !== 'Policy Issued',
     );

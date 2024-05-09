@@ -8,6 +8,7 @@ use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
+use App\Enums\PolicyIssuanceStatusEnum;
 use App\Enums\ProductionProcessTooltipEnum;
 use App\Enums\quoteBusinessTypeCode;
 use App\Enums\QuoteIssuanceStatusEnum;
@@ -89,6 +90,7 @@ class HandleInertiaRequests extends Middleware
             'paymentLookups' => app(SplitPaymentService::class)->getPaymentLookups(),
             'productionProcessTooltipEnum' => ProductionProcessTooltipEnum::asArray(),
             'policyIssuanceStatus' => PolicyIssuanceStatus::active()->get(),
+            'policyIssuanceStatusEnum'=> PolicyIssuanceStatusEnum::asArray(),
         ];
     }
 
