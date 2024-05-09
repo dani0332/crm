@@ -688,6 +688,17 @@ class ActivitySchedulesSeeder extends Seeder
                         'teams' => [
                             TeamNameEnum::CORPLINE_TEAM => [
                                 'quote_status' => [
+                                    QuoteStatusEnum::ProposalFormRequested => [
+                                        'activities' => [
+                                            // ['name' => '1st Follow-up', 'due_days' => 1],
+                                            // ['name' => '2nd Follow-up', 'due_days' => 2],
+                                            // ['name' => '3rd Follow-up', 'due_days' => 2],
+
+                                            ['name' => '1st Follow-up', 'due_days' => 1],
+                                            ['name' => '2nd Follow-up', 'due_days' => 1],
+                                            ['name' => '3rd Follow-up', 'due_days' => 1],
+                                        ],
+                                    ],
                                     QuoteStatusEnum::AdditionalInformationRequested => [
                                         'activities' => [
                                             // ['name' => 'Additional Information 1st Follow-up', 'due_days' => 1],
@@ -695,6 +706,15 @@ class ActivitySchedulesSeeder extends Seeder
 
                                             ['name' => 'Additional Information 1st Follow-up', 'due_days' => 1],
                                             ['name' => 'Additional Information 2nd Follow-up', 'due_days' => 1],
+                                        ],
+                                    ],
+                                    QuoteStatusEnum::QuoteRequested => [
+                                        'activities' => [
+                                            // ['name' => 'Follow-up Quotes 1', 'due_days' => 2],
+                                            // ['name' => 'Follow-up Quotes 2', 'due_days' => 2],
+
+                                            ['name' => 'Follow-up Quotes 1', 'due_days' => 1],
+                                            ['name' => 'Follow-up Quotes 2', 'due_days' => 1],
                                         ],
                                     ],
                                     QuoteStatusEnum::Quoted => [
