@@ -274,9 +274,9 @@ class QuoteDocumentController extends Controller
     /**
      * Create Proforma Payment Request PDF.
      */
-    public function createProformaPaymentRequest($quoteType, $quote)
+    public function createProformaPaymentRequest(Request $request, $quoteType, $quote)
     {
-        $response = $this->exportDocumentService->createProformaPaymentRequestPdf($quoteType, $quote);
+        $response = $this->exportDocumentService->createProformaPaymentRequestPdf($quoteType, $quote, $request);
 
         if (isset($response['error'])) {
             return redirect()->back()->with('message', $response['error']);

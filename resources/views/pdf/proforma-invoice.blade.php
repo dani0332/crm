@@ -372,22 +372,23 @@
 
     $quoteType = $quote->quoteType;
     $insuranceProvider = $quote->insuranceProvider;
-
-    $paidPayments = $quote->payments()->where('payment_status_id', PaymentStatusEnum::PAID)->get();
-
     $advisor = $quote->advisor;
-
-    $proformaPaymentRequest = $quote->payments()->where('payment_methods_code', PaymentMethodsEnum::ProformaPaymentRequest)->first();
-
     $invoiceDate = Carbon\Carbon::parse($proformaPaymentRequest->created_at)->format($dateFormat);
-
     $customer = $quote->customer;
     $customerName =  ucwords($customer->first_name .' '. $customer->last_name);
     $customerDetail =  $customer->detail;
+    $vat = 0;
 
-    $subTotal =  $quote->price_vat_applicable ?? $quote->price_vat_not_applicable;
-    $totalAmount =  $quote->price_with_vat ?? $quote->price_without_vat;
-    $vat =  $quote->vat ?: ($quote->price_with_vat ? $totalAmount - $subTotal : 0); // if amount with vat then vat = total - subTotal else 0
+    if($isRequestFromSendUpdateLogPage){
+        $subTotal =  $proformaPaymentRequest->total_price;
+        $totalAmount =  $proformaPaymentRequest->total_price;
+    }else{
+        $paidPayments = $quote->payments()->where('payment_status_id', PaymentStatusEnum::PAID)->get();
+        $subTotal =  $quote->price_vat_applicable ?? $quote->price_vat_not_applicable;
+        $totalAmount =  $quote->price_with_vat ?? $quote->price_without_vat;
+        $vat =  $quote->vat ?: ($quote->price_with_vat ? $totalAmount - $subTotal : 0); // if amount with vat then vat = total - subTotal else 0
+    }
+
 
 @endphp
 
@@ -608,7 +609,7 @@
                     {{ $quoteType?->text }} <br /> {{ $insuranceProvider?->text }}
                 </td>
                 <td>
-                    {{ $totalAmount }}
+                    {{ number_format($totalAmount, 2 , '.', '') }}
                 </td>
             </tr>
 

@@ -142,9 +142,10 @@ const approveProofDocument = props.paymentDocument.find(
 );
 
 let initalPlanDetails = [];
-if (props.sendUpdate) {
+//commenting send update condition because this condition is only present in child-insly-project-central, but not in parent or test branch
+/*if (props.sendUpdate) {
   initalPlanDetails = 'Test Plan';
-} else if (quoteTypesToCheck.includes(props.quoteType)) {
+} else */ if (quoteTypesToCheck.includes(props.quoteType)) {
   initalPlanDetails = props.quoteRequest.plan;
 } else if (props.quoteType == 'Business' || props.quoteType == 'Home') {
   initalPlanDetails = props.quoteRequest.insurance_provider_details;
@@ -1170,6 +1171,7 @@ const downloadProformaPayment = async () => {
     return;
   }
   if (props.proformaPayment) {
+    let isSendUpdateLogRoute = route().current() == 'send-update-logs.show';
     try {
       NProgress.start();
       const response = await axios.get(
@@ -1177,6 +1179,12 @@ const downloadProformaPayment = async () => {
           props.quoteType,
           props.quoteRequest.uuid,
         ]),
+        {
+          params: {
+            paymentCode: props.proformaPayment.code,
+            isSendUpdateLogRoute: isSendUpdateLogRoute,
+          },
+        },
       );
       NProgress.done();
       if (response.data.success) {
@@ -1252,6 +1260,7 @@ const isCPD = computed(() => {
 });
 
 const addPaymentModal = () => {
+  console.log(planDetail);
   if (props.sendUpdate) {
     if (isEF.value && !props.sendUpdate?.total_price) {
       notification.error({
@@ -1735,7 +1744,7 @@ const addPayment = isValid => {
     code: paymentMethodsForm.payment_method,
     modelType: props.quoteType,
     quote_id: props.quoteRequest.id,
-    plan_id: planDetail.value.id,
+    plan_id: planDetail?.value?.id ?? null, // handling null exception when plan is not found
     captured_amount: paymentMethodsForm.amount,
     insurance_provider_id: providerId.value,
     new_payment_structure: true,
