@@ -1158,10 +1158,15 @@ class CRUDController extends Controller
         }
 
 
+        $advisors = $this->crudService->getAdvisorsByModelType(quoteTypeCode::Home);
+        $leadStatuses = app(DropdownSourceService::class)->getDropdownSource('quote_status_id', QuoteTypeId::Home);
         return inertia('HomeQuote/Cards', [
             'quotes' => $quotes,
             'quoteStatusEnum' => $quoteStatusEnums,
             'lostReasons' => $lostReasons,
+            'leadStatuses' => $leadStatuses,
+            'advisors' => $advisors,
+            'teams' =>$userTeams,
             'quoteTypeId' => QuoteTypes::HOME->id(),
             'quoteType' => QuoteTypes::HOME->value,
             'totalCount' => HomeQuoteRepository::getData(true, true),

@@ -38,7 +38,7 @@ onUnmounted(() => {
 watch(
   () => props.leadsCount,
   () => {
-    leadsCount.value = props.leadsCount;
+    totalCount.value = props.leadsCount;
   },
 );
 </script>

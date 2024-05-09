@@ -397,10 +397,17 @@ class BusinessQuoteController extends Controller
             ])->values()->toArray();
         }
 
+        $advisors = app(CRUDService::class)->getAdvisorsByModelType(quoteTypeCode::CORPLINE);
+        $leadStatuses = app(DropdownSourceService::class)->getDropdownSource('quote_status_id', QuoteTypeId::Corpline);
+        $insuranceTypeOptions = app(DropdownSourceService::class)->getDropdownSource('business_type_of_insurance_id', QuoteTypeId::Corpline);
+
         return inertia('CorpLineQuote/Cards', [
             'quotes' => $quotes,
             'quoteStatusEnum' => $quoteStatusEnums,
             'lostReasons' => $lostReasons,
+            'leadStatuses' => $leadStatuses,
+            'advisors' => $advisors,
+            'insuranceTypeOptions' => $insuranceTypeOptions,
             'quoteTypeId' => QuoteTypes::BUSINESS->id(),
             'quoteType' => QuoteTypes::BUSINESS->value,
             'totalCount' => BusinessQuoteRepository::getData(quoteTypeCode::CORPLINE, true, true),

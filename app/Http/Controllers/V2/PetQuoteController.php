@@ -38,6 +38,8 @@ use App\Services\AMLService;
 use App\Services\CentralService;
 use App\Services\SplitPaymentService;
 use Illuminate\Http\Request;
+use App\Services\CRUDService;
+use App\Services\DropdownSourceService;
 
 class PetQuoteController extends Controller
 {
@@ -237,11 +239,16 @@ class PetQuoteController extends Controller
         }
 
 
+        $advisors = app(CRUDService::class)->getAdvisorsByModelType(quoteTypeCode::Pet);
+        $leadStatuses = app(DropdownSourceService::class)->getDropdownSource('quote_status_id', QuoteTypeId::Pet);
         // Todo:: Need to send total Counts and Oppurtunity Counts
         return inertia('PetQuote/Cards', [
             'quotes' => $quotes,
             'quoteStatusEnum' => $quoteStatusEnums,
             'lostReasons' => $lostReasons,
+            'leadStatuses' => $leadStatuses,
+            'advisors' => $advisors,
+            'teams' =>$userTeams,
             'quoteTypeId' => QuoteTypes::PET->id(),
             'quoteType' => QuoteTypes::PET->value,
             'totalCount' => PetQuoteRepository::getData(true, true),

@@ -11,6 +11,7 @@ use App\Enums\PaymentTooltip;
 use App\Enums\quoteStatusCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Enums\TeamNameEnum;
@@ -35,6 +36,8 @@ use App\Repositories\QuoteStatusRepository;
 use App\Repositories\UserRepository;
 use App\Services\AMLService;
 use App\Services\CentralService;
+use App\Services\CRUDService;
+use App\Services\DropdownSourceService;
 use App\Services\SplitPaymentService;
 use Illuminate\Http\Request;
 
@@ -224,6 +227,9 @@ class CycleQuoteController extends Controller
                 QuoteStatusEnum::InNegotiation, ])->values()->toArray();
         }
 
+        $advisors = app(CRUDService::class)->getAdvisorsByModelType(quoteTypeCode::Cycle);
+        $leadStatuses = app(DropdownSourceService::class)->getDropdownSource('quote_status_id', QuoteTypeId::Cycle);
+
         return inertia('CycleQuote/Cards', [
             'quotes' => $quotes,
             'quoteStatusEnum' => $quoteStatusEnums,
@@ -231,6 +237,8 @@ class CycleQuoteController extends Controller
             'quoteTypeId' => QuoteTypes::CYCLE->id(),
             'quoteType' => QuoteTypes::CYCLE->value,
             'totalCount' => CycleQuoteRepository::getData(true, true),
+            'leadStatuses' => $leadStatuses,
+            'advisors' => $advisors,
             // 'vatPercentage' => $vatPercentage,
             'paymentTooltipEnum' => PaymentTooltip::asArray(),
             'paymentStatusEnum' => PaymentStatusEnum::asArray(),

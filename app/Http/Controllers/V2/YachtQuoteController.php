@@ -11,6 +11,7 @@ use App\Enums\PaymentTooltip;
 use App\Enums\quoteStatusCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Enums\TeamNameEnum;
@@ -36,6 +37,8 @@ use App\Repositories\UserRepository;
 use App\Repositories\YachtQuoteRepository;
 use App\Services\AMLService;
 use App\Services\CentralService;
+use App\Services\CRUDService;
+use App\Services\DropdownSourceService;
 use App\Services\LookupService;
 use App\Services\SplitPaymentService;
 use Illuminate\Http\Request;
@@ -215,10 +218,15 @@ class YachtQuoteController extends Controller
                 QuoteStatusEnum::InNegotiation, ])->values()->toArray();
         }
 
+        $advisors = app(CRUDService::class)->getAdvisorsByModelType(quoteTypeCode::Yacht);
+        $leadStatuses = app(DropdownSourceService::class)->getDropdownSource('quote_status_id', QuoteTypeId::Yacht);
+
         return inertia('YachtQuote/Cards', [
             'quotes' => $quotes,
             'quoteStatusEnum' => $quoteStatusEnums,
             'lostReasons' => $lostReasons,
+            'leadStatuses' => $leadStatuses,
+            'advisors' => $advisors,
             'quoteTypeId' => QuoteTypes::YACHT->id(),
             'quoteType' => QuoteTypes::YACHT->value,
             'totalCount' => YachtQuoteRepository::getData(true, true),

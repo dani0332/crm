@@ -5,24 +5,30 @@ namespace App\Http\Controllers;
 use App\Enums\GenericRequestEnum;
 use App\Enums\quoteStatusCode;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Enums\TeamNameEnum;
 use App\Http\Requests\InsurerProviderNetworkRequest;
 use App\Http\Requests\MemberDetailRequest;
+use App\Models\HealthQuote;
 use App\Repositories\HealthQuoteRepository;
 use App\Repositories\InsuranceProviderRepository;
 use App\Repositories\LostReasonRepository;
 use App\Services\HealthQuoteService;
 use Illuminate\Http\Request;
-
+use App\Services\CRUDService;
+use App\Services\DropdownSourceService;
 class HealthQuoteController extends Controller
 {
     protected $healthQuoteService;
+    protected $crudService;
 
-    public function __construct(HealthQuoteService $healthQuoteService)
+    public function __construct(HealthQuoteService $healthQuoteService, CRUDService $crudService,)
     {
         $this->healthQuoteService = $healthQuoteService;
+        $this->crudService = $crudService;
     }
 
     public function healthPlanCreateQuote(Request $request)
@@ -324,10 +330,16 @@ class HealthQuoteController extends Controller
                 QuoteStatusEnum::TransactionApproved])->values()->toArray();
         }
 
+        $advisors = $this->crudService->getAdvisorsByModelType(quoteTypeCode::Health);
+        $leadStatuses = app(DropdownSourceService::class)->getDropdownSource('quote_status_id', QuoteTypeId::Health);
+
         return inertia('HealthQuote/Cards', [
             'quotes' => $quotes,
             'quoteStatusEnum' => $quoteStatusEnums,
             'lostReasons' => $lostReasons,
+            'leadStatuses' => $leadStatuses,
+            'advisors' => $advisors,
+            'teams' =>$userTeams,
             'quoteTypeId' => QuoteTypes::HEALTH->id(),
             'quoteType' => QuoteTypes::HEALTH->value,
             'totalCount' => HealthQuoteRepository::getData(true, true),

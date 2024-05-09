@@ -8,6 +8,9 @@ const props = defineProps({
     type: Number,
     default: 0,
   },
+  leadStatuses: Array,
+  advisors: Array,
+  teams: Object,
 });
 
 const page = usePage();
@@ -31,14 +34,96 @@ const leadsCount = ref(props.totalCount);
 const loader = reactive({
   request: false,
 });
+
 const params = useUrlSearchParams('history');
 const cleanObj = obj => useCleanObj(obj);
 const showFilters = ref(true);
 const filtersCount = ref(0);
+
+const hasAnyRole = roles => useHasAnyRole(roles);
+const rolesEnum = page.props.rolesEnum;
+
+const isAllowed = computed(() => {
+  return hasAnyRole([
+    rolesEnum.RMAdvisor,
+    rolesEnum.EBPAdvisor,
+    rolesEnum.HEALTH_RENEWAL_ADVISOR,
+    rolesEnum.HEALTH_NEW_BUSINESS_ADVISOR,
+    rolesEnum.HEALTH_ADVISOR,
+  ]);
+});
+
 const filters = reactive({
+  code: '',
+  first_name: '',
+  last_name: '',
+  email: '',
+  mobile_no: '',
+  created_at_start: '',
+  created_at_end: '',
+  sub_team: '',
+  quote_status: [],
+  advisors: [],
+  is_ecommerce: '',
+  is_renewal: '',
+  previous_quote_policy_number: '',
+  renewal_batch: '',
   date: null,
+  assigned_to_date_start: '',
+  assigned_to_date_end: '',
+  payment_status: [],
+  is_cold: false,
+  is_stale: false,
   status_filters: null,
 });
+
+const leadStatusOptions = computed(() => {
+  return page.props.leadStatuses.map(status => ({
+    value: status.id,
+    label: status.text,
+  }));
+});
+
+const advisorOptions = computed(() => {
+  return page.props.advisors.map(advisor => ({
+    value: advisor.id,
+    label: advisor.name,
+  }));
+});
+
+const modifiedAdvisorOptions = ref([]);
+
+modifiedAdvisorOptions.value = advisorOptions.value;
+
+modifiedAdvisorOptions.value.push({
+  value: 'unassigned',
+  label: 'Unassigned',
+});
+
+const subTeamOptions = [
+  { value: '', label: 'All' },
+  { value: 'RM-NB', label: 'RM-NB' },
+  { value: 'RM-Speed', label: 'RM-Speed' },
+  { value: 'EBP', label: 'EBP' },
+  { value: 'Wow-Call', label: 'Wow-Call' },
+  { value: 'No-Type', label: 'No-Type' },
+];
+
+const assignmentTypeOptions = [
+  { value: '', label: 'Please select is assignment type' },
+  { value: 1, label: 'System Assigned' },
+  { value: 2, label: 'System ReAssigned' },
+  { value: 3, label: 'Manual Assigned' },
+  { value: 4, label: 'Manual ReAssigned' },
+];
+
+const subTeamsOptions = [
+  { value: 'RM-NB', label: 'RM-NB' },
+  { value: 'RM-SPEED', label: 'RM-SPEED' },
+  { value: 'EBP', label: 'EBP' },
+  { value: 'Wow-Call', label: 'Wow-Call' },
+  { value: 'No-Type', label: 'No-Type' },
+];
 
 const serverOptions = ref({
   page: 1,
@@ -123,6 +208,17 @@ watch(
   },
   { deep: true },
 );
+
+function onReset() {
+  removedSavedParams();
+  router.visit(route('health.cards'), {
+    method: 'get',
+    data: { page: 1 },
+    preserveScroll: true,
+    onBefore: () => (loader.table = true),
+    onSuccess: () => (loader.table = false),
+  });
+}
 </script>
 
 <template>
@@ -153,6 +249,167 @@ watch(
       </div>
     </div>
     <x-divider class="my-4" />
+    <x-form v-show="showFilters" @submit="onSubmit" :auto-focus="false">
+      <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
+        <div>
+          <x-tooltip position="bottom">
+            <label
+              class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600"
+            >
+              Ref-ID
+            </label>
+            <template #tooltip> Reference ID </template>
+          </x-tooltip>
+          <x-input
+            v-model="filters.code"
+            type="search"
+            name="code"
+            class="w-full"
+            placeholder="Search by Ref-ID"
+          />
+        </div>
+        <x-input
+          v-model="filters.first_name"
+          type="search"
+          name="first_name"
+          label="First Name"
+          class="w-full"
+          placeholder="Search by First Name"
+        />
+        <x-input
+          v-model="filters.last_name"
+          type="search"
+          name="last_name"
+          label="Last Name"
+          class="w-full"
+          placeholder="Search by Last Name"
+        />
+        <x-input
+          v-model="filters.email"
+          type="search"
+          name="email"
+          label="Email"
+          class="w-full"
+          placeholder="Search by Email"
+        />
+        <x-input
+          v-model="filters.mobile_no"
+          type="search"
+          name="mobile_no"
+          label="Mobile Number"
+          class="w-full"
+          placeholder="Search by Mobile Number"
+        />
+        <DatePicker
+          v-model="filters.created_at_start"
+          name="created_at_start"
+          label="Created Date Start"
+        />
+        <DatePicker
+          v-model="filters.created_at_end"
+          name="created_at_end"
+          label="Created Date End"
+        />
+        <x-select
+          v-if="isAllowed"
+          v-model="filters.sub_team"
+          label="Sub Team"
+          placeholder="Search by Sub Team"
+          class="w-full"
+          :options="subTeamOptions"
+        />
+
+        <ComboBox
+          v-if="isAllowed"
+          v-model="filters.quote_status"
+          label="Lead Status"
+          name="quote_status"
+          placeholder="Search by Lead Status"
+          :options="leadStatusOptions"
+        />
+        <ComboBox
+          v-if="isAllowed"
+          v-model="filters.advisors"
+          label="Advisor"
+          placeholder="Search by Advisor"
+          :options="modifiedAdvisorOptions"
+        />
+        <x-select
+          v-model="filters.is_ecommerce"
+          label="Is Ecommerce"
+          placeholder="Search by Ecommerce"
+          :options="[
+            { value: '', label: 'All' },
+            { value: 'Yes', label: 'Yes' },
+            { value: 'No', label: 'No' },
+          ]"
+          class="w-full"
+        />
+        <x-select
+          v-model="filters.is_renewal"
+          label="Is Renewal"
+          placeholder="Search by Renewal"
+          :options="[
+            { value: '', label: 'All' },
+            { value: 'Yes', label: 'Yes' },
+            { value: 'No', label: 'No' },
+          ]"
+          class="w-full"
+        />
+        <x-select
+          v-if="
+            !hasAnyRole([
+              rolesEnum.RMAdvisor,
+              rolesEnum.EBPAdvisor,
+              rolesEnum.CarAdvisor,
+            ])
+          "
+          v-model="filters.assignment_type"
+          label="Assignment Type"
+          name="assignment_type"
+          placeholder="Please select assignment type"
+          class="w-full"
+          :options="assignmentTypeOptions"
+        />
+        <x-input
+          v-model="filters.previous_quote_policy_number"
+          type="text"
+          name="previous_quote_policy_number"
+          label="Previous Policy Number"
+          class="w-full"
+          placeholder="Search by Previous Policy Number"
+        />
+        <x-input
+          v-model="filters.renewal_batch"
+          type="text"
+          name="renewal_batch"
+          label="Renewal Batch"
+          class="w-full"
+          placeholder="Search by Renewal Batch"
+        />
+
+        <DatePicker
+          v-if="!hasAnyRole([rolesEnum.CarAdvisor])"
+          v-model="filters.assigned_to_date_start"
+          name="assigned_to_date_start"
+          label="Advisor Assigned Date Start"
+        />
+        <DatePicker
+          v-if="!hasAnyRole([rolesEnum.CarAdvisor])"
+          v-model="filters.assigned_to_date_end"
+          name="assigned_to_date_end"
+          label="Advisor Assigned Date End"
+        />
+      </div>
+      <div class="flex justify-end gap-3 mb-4 mt-1">
+        <div class="flex justify-self-end gap-3">
+          <x-button size="sm" color="#ff5e00" type="submit"> Search </x-button>
+          <x-button size="sm" color="primary" @click.prevent="onReset">
+            Reset
+          </x-button>
+        </div>
+      </div>
+    </x-form>
     <div
       v-if="quotes.data.length > 0"
       class="flex w-full h-[85vh] space-x-4 overflow-auto"

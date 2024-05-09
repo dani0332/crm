@@ -8,9 +8,22 @@ const props = defineProps({
     type: Number,
     default: 0,
   },
+  leadStatuses: Array,
+  advisors: Array,
+  insuranceTypeOptions: Array,
 });
 
 const page = usePage();
+const hasAnyRole = roles => useHasAnyRole(roles);
+const rolesEnum = page.props.rolesEnum;
+
+const isAllowed = computed(() => {
+  return hasAnyRole([
+    rolesEnum.CORPLINE_RENEWAL_ADVISOR,
+    rolesEnum.CORPLINE_NEW_BUSINESS_ADVISOR,
+    rolesEnum.CORPLINE_ADVISOR,
+  ]);
+});
 
 provide('quoteStatusEnum', props.quoteStatusEnum);
 provide('quoteTypeId', props.quoteTypeId);
@@ -61,11 +74,50 @@ const filtersCount = ref(0);
 const filters = reactive({
   date: null,
   status_filters: null,
+  code: '',
+  first_name: '',
+  last_name: '',
+  email: '',
+  mobile_no: '',
+  created_at_start: '',
+  created_at_end: '',
+  quote_status_id: '',
+  advisor_id: '',
+  business_type_of_insurance_id: '',
+  company_name: '',
+  page: 1,
+  previous_quote_policy_number: '',
+  renewal_batch: '',
+  payment_status: [],
+  is_cold: false,
+  is_stale: false,
 });
+
 const serverOptions = ref({
   page: 1,
   sortBy: 'created_at',
   sortType: 'desc',
+});
+
+const leadStatusOptions = computed(() => {
+  return page.props.leadStatuses.map(status => ({
+    value: status.id,
+    label: status.text,
+  }));
+});
+
+const advisorOptions = computed(() => {
+  return page.props.advisors.map(advisor => ({
+    value: advisor.id,
+    label: advisor.name,
+  }));
+});
+
+const insuranceTypeOptions = computed(() => {
+  return page.props.insuranceTypeOptions.map(advisor => ({
+    value: advisor.id,
+    label: advisor.text,
+  }));
 });
 
 const handleSelectedFilters = selectedFilters => {
@@ -110,6 +162,22 @@ function onSubmit(isValid) {
   } else {
     console.log('Invalid');
   }
+}
+
+function resetFilters() {
+  removedSavedParams();
+  router.visit(route('business.cards'), {
+    method: 'get',
+    preserveState: true,
+    preserveScroll: true,
+    onFinish: () => {
+      // loader.table = false;
+    },
+    onBefore: () => {
+      filters.page = 1;
+      // loader.table = true;
+    },
+  });
 }
 
 onMounted(() => {
@@ -176,6 +244,137 @@ onUnmounted(() => {
       </div>
     </div>
     <x-divider class="my-4" />
+    <x-form v-show="showFilters" @submit="onSubmit" :auto-focus="false">
+      <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
+        <div>
+          <x-tooltip position="bottom">
+            <label
+              class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600"
+            >
+              Ref-ID
+            </label>
+            <template #tooltip> Reference ID </template>
+          </x-tooltip>
+          <x-input
+            v-model="filters.code"
+            type="search"
+            name="code"
+            class="w-full"
+            placeholder="Search by Ref-ID"
+          />
+        </div>
+        <x-field label="First Name">
+          <x-input
+            v-model="filters.first_name"
+            type="search"
+            name="first_name"
+            class="w-full"
+            placeholder="Search by First Name"
+          />
+        </x-field>
+        <x-field label="Last Name">
+          <x-input
+            v-model="filters.last_name"
+            type="search"
+            name="last_name"
+            class="w-full"
+            placeholder="Search by Last Name"
+          />
+        </x-field>
+        <x-field label="Email">
+          <x-input
+            v-model="filters.email"
+            type="search"
+            name="email"
+            class="w-full"
+            placeholder="Search by Email"
+          />
+        </x-field>
+        <x-field label="Mobile Number">
+          <x-input
+            v-model="filters.mobile_no"
+            type="search"
+            name="mobile_no"
+            class="w-full"
+            placeholder="Search by Mobile Number"
+          />
+        </x-field>
+        <x-field label="Company Name">
+          <x-input
+            v-model="filters.company_name"
+            type="search"
+            name="company_name"
+            class="w-full"
+            placeholder="Search by Company Name"
+          />
+        </x-field>
+        <x-field label="Created Date Start">
+          <DatePicker
+            v-model="filters.created_at_start"
+            name="created_at_start"
+          />
+        </x-field>
+        <x-field label="Created Date End">
+          <DatePicker v-model="filters.created_at_end" name="created_at_end" />
+        </x-field>
+        <x-field label="Lead Status" v-if="isAllowed">
+          <x-select
+            v-model="filters.quote_status_id"
+            name="quote_status_id"
+            placeholder="Search by Lead Status"
+            :options="leadStatusOptions"
+            class="w-full"
+          />
+        </x-field>
+        <x-field label="Business Insurance Type">
+          <x-select
+            v-model="filters.business_type_of_insurance_id"
+            placeholder="INSURANCE TYPE"
+            :options="insuranceTypeOptions"
+            class="w-full"
+          />
+        </x-field>
+        <x-field label="Advisor" v-if="isAllowed">
+          <x-select
+            v-model="filters.advisor_id"
+            placeholder="Search by Advisor"
+            :options="advisorOptions"
+            class="w-full"
+          />
+        </x-field>
+        <x-input
+          v-model="filters.previous_quote_policy_number"
+          type="text"
+          name="previous_quote_policy_number"
+          label="Previous Policy Number"
+          class="w-full"
+          placeholder="Search by Previous Policy Number"
+        />
+        <x-input
+          v-model="filters.renewal_batch"
+          type="text"
+          name="renewal_batch"
+          label="Renewal Batch"
+          class="w-full"
+          placeholder="Search by Renewal Batch"
+        />
+      </div>
+      <div class="flex justify-end gap-3 mb-4 mt-1">
+        <div class="flex justify-self-end gap-3">
+          <x-button
+            size="sm"
+            color="#ff5e00"
+            type="submit"
+            :loading="loader.table"
+          >
+            Search
+          </x-button>
+          <x-button size="sm" color="primary" @click.prevent="resetFilters">
+            Reset
+          </x-button>
+        </div>
+      </div>
+    </x-form>
     <div
       v-if="quotes.data.length > 0"
       class="flex w-full h-[85vh] space-x-4 overflow-auto"
@@ -191,109 +390,6 @@ onUnmounted(() => {
         :lostReasons="props.lostReasons"
         :quoteStatusEnum="props.quoteStatusEnum"
       />
-      <!-- <div
-        v-for="quote in quotes.data"
-        :key="quote.id"
-        class="flex flex-col flex-shrink-0 w-64 bg-gray-200 border border-gray-300"
-      >
-        <div
-          class="flex flex-col flex-shrink-0 gap-1.5 p-3 border-b border-gray-300 bg-white text-xs"
-        >
-          <h4 class="font-semibold text-sm">{{ quote.text }}</h4>
-          <div class="flex justify-between gap-1">
-            <span>Total Leads</span>
-            <span>{{ quote.data.total_leads }}</span>
-          </div>
-          <div class="flex justify-between gap-1">
-            <span>Total Premium</span>
-            <span>{{ Number(quote.data.total_premium).toLocaleString() }}</span>
-          </div>
-          <div>
-            <x-input
-              v-model="quotes.queries[quote.id]"
-              type="search"
-              size="xs"
-              class="w-full"
-              placeholder="Search"
-              @change.prevent="onSearch(quote.id)"
-              :disabled="quotes.searching"
-            />
-          </div>
-        </div>
-        <div class="flex flex-col px-2 pb-2 overflow-auto">
-          <div
-            v-if="quotes.queries[quote.id] && quotes.searching"
-            class="text-center p-4"
-          >
-            <x-spinner class="text-primary-500" />
-          </div>
-          <div
-            v-if="quote.data.leads_list.data == 0 && quote.data.total_leads > 0"
-            class="text-center text-xs text-gray-800 p-4"
-          >
-            <x-icon icon="box" class="text-secondary-600 mb-2" />
-            <p>No Leads Found</p>
-          </div>
-          <a
-            v-for="{
-              id,
-              uuid,
-              code,
-              first_name,
-              last_name,
-              premium,
-              updated_at,
-              company_name,
-            } in quote.data.leads_list.data"
-            :key="id"
-            :href="route('business.edit', uuid)"
-            target="_blank"
-            title="View Lead"
-            class="block p-3 mt-2 border border-gray-300 bg-white space-y-2 hover:transition hover:border-primary-500 rounded"
-          >
-            <div class="font-semibold text-sm">{{ code }}</div>
-            <div class="flex items-center gap-2">
-              <x-icon icon="person" size="sm" class="text-primary-400" />
-              <p class="text-xs">{{ first_name }} {{ last_name }}</p>
-            </div>
-
-            <div v-if="company_name" class="flex items-center gap-2">
-              <x-icon icon="company" size="sm" class="text-primary-400" />
-              <p class="text-xs">{{ company_name }}</p>
-            </div>
-
-            <div class="flex items-center gap-2">
-              <x-icon icon="money" size="sm" class="text-primary-400" />
-              <p class="text-xs">{{ Number(premium).toLocaleString() }}</p>
-            </div>
-
-            <div class="flex items-center gap-2">
-              <x-icon icon="calendar" size="sm" class="text-primary-400" />
-              <p class="text-xs">{{ updated_at }}</p>
-            </div>
-          </a>
-
-          <div
-            class="mt-3"
-            v-if="
-              quote.data.total_leads > 0 &&
-              quote.data.leads_list.next_page_url !== null
-            "
-          >
-            <x-button
-              size="xs"
-              color="#1d83bc"
-              class="w-full"
-              outlined
-              @click.prevent="onLoadMore(quote.id)"
-              :disabled="quotes.loader"
-              :loading="quotes.loader"
-            >
-              Load More
-            </x-button>
-          </div>
-        </div>
-      </div> -->
     </div>
   </div>
 </template>
