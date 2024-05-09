@@ -64,6 +64,8 @@ class DatabaseSeeder extends Seeder
             InsuranceProviderNameSeeder::class,
             QuoteStatusMapSeeder::class,
             SendUpdateDocumentTypesSeeder::class,
+            InslyRoles::class,
+            InslyPermissions::class,
         ]);
     }
 }

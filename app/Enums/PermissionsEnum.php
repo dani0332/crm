@@ -250,7 +250,6 @@ final class PermissionsEnum extends Enum
     public const SEND_INSLY_BOOK_POLICY = 'send-insly-book-policy';
     public const HEALTH_QUOTES_MANAGER_ACCESS = 'health-quotes-manager-access';
     public const HEALTH_QUOTES_ACCESS = 'health-quotes-access';
-    public const SEND_UPDATE_TO_CUSTOMER = 'send-update-to-customer';
     public const SEGMENT_FILTER = 'segment-filter';
     public const TEMP_UPDATE_TOTALPRICE = 'temp-update-totalprice';
     public const PLAN_DETAILS_ADD = 'plan-details-add';
@@ -262,4 +261,11 @@ final class PermissionsEnum extends Enum
     public const LEGACY_PAYMENTS = 'legacy-payments';
     public const LEGACY_OTHER_DETAILS = 'legacy-other-details';
     public const VIEW_LEGACY_DETAILS = 'view-legacy-details';
+    public const SEND_UPDATE_ENDO_FIN_ADD = 'send-update-endo-fin-add';
+    public const SEND_UPDATE_ENDO_NON_FIN_ADD = 'send-update-endo-non-fin-add';
+    public const SEND_UPDATE_CANCEL_FROM_INCEPTION_ADD = 'send-update-cancel-from-inception-add';
+    public const SEND_UPDATE_CANCEL_FROM_INCEPTION_AND_REISSUE_ADD = 'send-update-cancel-from-inception-and-reissue-add';
+    public const SEND_UPDATE_CORRECT_POLICY_UPLOAD_ADD = 'send-update-correct-policy-upload-add';
+    public const SEND_UPDATE_CORRECT_POLICY_DETAILS_ADD = 'send-update-correct-policy-details-add';
+    public const SEND_UPDATE_TO_CUSTOMER_BUTTON = 'send-update-to-customer-button';
 }

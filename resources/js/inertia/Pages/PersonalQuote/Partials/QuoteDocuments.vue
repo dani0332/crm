@@ -166,7 +166,7 @@ const isCPU = computed(() => {
 });
 
 const sendUpdateButton = computed(() => {
-  return (isEN.value || isCPU.value) && (props.updateBtn && props.updateBtn !== 'Send Update') && can(permissionsEnum.SEND_UPDATE_TO_CUSTOMER);
+  return (isEN.value || isCPU.value) && (props.updateBtn && props.updateBtn !== 'Send Update') && can(permissionsEnum.SEND_UPDATE_TO_CUSTOMER_BUTTON);
 });
 const sendUpdateValidation = () => {
   axios

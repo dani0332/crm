@@ -417,7 +417,7 @@ function convertToNumber(value) {
 }
 
 const sendUpdateButton = computed(() => {
-  return props.updateBtn && can(page.props.permissionsEnum.SEND_UPDATE_TO_CUSTOMER);
+  return props.updateBtn && can(page.props.permissionsEnum.SEND_UPDATE_TO_CUSTOMER_BUTTON);
 });
 
 const modals = reactive({
