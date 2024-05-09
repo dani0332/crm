@@ -136,10 +136,11 @@ class CarRevivalLeadsCreationJob implements ShouldQueue, StackableJob
 
                 $emailData->advisorName = $advisor[0];
                 $emailData->advisorEmail = $advisor[1];
+                $emailData->tag = 'dtt-initial-email';
 
                 info('carRevivalParentLead -'.$this->lead->uuid.'- childLead - '.$capiResponse->quoteUID.'- emailData '.json_encode($emailData));
 
-                $response = app(SendEmailCustomerService::class)->sendDttEmail($emailData, 'car-quote-one-click-buy-batch');
+                $response = app(SendEmailCustomerService::class)->sendDttEmail($emailData);
 
                 info('carRevivalParentLead -'.$this->lead->uuid.'- childLead - '.$capiResponse->quoteUID.'- emailResponse '.json_encode($response));
                 if ($response == 201) {

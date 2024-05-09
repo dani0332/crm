@@ -555,20 +555,23 @@ class SendEmailCustomerService extends BaseService
 
     public function sendDttEmail($emailData)
     {
-
         $headers = [
             'Accept' => 'application/json',
             'api-key' => $this->apiKey,
             'Content-Type' => 'application/json',
         ];
 
+        $tag = $this->appEnv == EnvEnum::PRODUCTION ? $emailData->tag : $this->appEnv.'-'.$emailData->tag;
         $body = [
-            'subject' => $emailData->subject,
+            'subject' => $this->appEnv == EnvEnum::PRODUCTION ? $emailData->subject : $this->appEnv.' - '.$emailData->subject,
             'sender' => [
                 'email' => 'no-reply@alert.insurancemarket.email',
                 'name' => 'InsuranceMarket.ae',
             ],
             'params' => $emailData,
+            'tags' => [
+                $tag,
+            ],
             'to' => [[
                 'email' => $emailData->customerEmail,
                 'name' => $emailData->customerName,
