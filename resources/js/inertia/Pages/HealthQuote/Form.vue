@@ -75,23 +75,57 @@ const selectedSalaryBand = computed(() => {
   return route().current().includes('edit');
 });
 
-watch(
-  () => quoteForm.member_category_id,
-  newValue => {
-    // fetch category text
-    const selectedCategory = props.dropdownSource.member_category_id.find(
-      item => item.id === newValue,
-    );
+// watch(
+//   () => quoteForm.member_category_id,
+//   newValue => {
+//     // fetch category text
+//     const selectedCategory = props.dropdownSource.member_category_id.find(
+//       item => item.id === newValue,
+//     );
 
-    // fetch salary band id based on category text
-    const salaryBandId = memberCategorySalaryMapping[selectedCategory.text];
+//     // fetch salary band id based on category text
+//     const salaryBandId = memberCategorySalaryMapping[selectedCategory.text];
 
-    // if quote status is Transaction Approved do not auto-popualte salary band automatically
-    if (props.quote.quote_status_id != 15) {
-      quoteForm.salary_band_id = salaryBandId;
-    }
-  },
-);
+//     // if quote status is Transaction Approved do not auto-popualte salary band automatically
+//     if (props.quote.quote_status_id != 15) {
+//       quoteForm.salary_band_id = salaryBandId;
+//     }
+//   },
+// );
+
+// watch(
+//   () => quoteForm.member_category_id,
+//   (newValue, oldValue) => {
+//     if (newValue) {
+//         console.log('🚀 ~ newValue:', newValue);
+//         console.log('🚀 ~ quoteForm.member_category_id:', quoteForm.member_category_id);
+//         console.log('🚀 ~ isEdit:', isEdit.value);
+//         console.log('🚀 ~ member_category_id:', props.dropdownSource.member_category_id);
+
+//       if (
+//         (!isEdit.value) ||
+//         (isEdit.value && newValue != quoteForm.member_category_id)
+//       ) {
+//         //fetch category text
+//         const selectedCategory = props.dropdownSource.member_category_id.find(
+//           option => option.id === newValue,
+//         );
+
+//         // fetch salary band id based on category text
+//         const salaryBandId =
+//           memberCategorySalaryMapping[selectedCategory.text];
+
+//         // if quote status is Transaction Approved do not auto-popualte salary band automatically
+//         if (props.quote.quote_status_id != 15) {
+//             quoteForm.salary_band_id = salaryBandId;
+//         }
+//         console.log('🚀 ~ selectedCategory:', selectedCategory.text);
+//         console.log('🚀 ~ salaryBandId:', salaryBandId);
+//       }
+//     }
+//   },
+//   { immediate: true },
+// );
 
 function onSubmit(isValid) {
   if (quoteForm.nationality_id == null) {

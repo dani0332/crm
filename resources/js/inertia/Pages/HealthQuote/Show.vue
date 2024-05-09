@@ -1,5 +1,5 @@
 <script setup>
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue';
 import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 import LazyCreatePlan from './Partials/CreatePlan.vue';
@@ -431,6 +431,8 @@ const rules = {
     'Phone must be valid',
 };
 
+const initialEditCategoryId = ref(null);
+
 function onEditMember(data) {
   memberActionEdit.value = true;
   modals.member = true;
@@ -446,6 +448,9 @@ function onEditMember(data) {
   memberForm.last_name = data.last_name;
   memberForm.relation_code = data.relation_code;
   memberForm.update_lead_against_member = data.index === 1;
+
+  // set initialEditCategoryId to member_category_id when any member is edited
+  initialEditCategoryId.value = data.member_category_id;
 }
 
 const onAddMemberModal = () => {
@@ -1544,43 +1549,30 @@ const salaryBrandMapping = {
 watch(
   () => memberForm.member_category_id,
   (newValue, oldValue) => {
-    console.log('🚀 ~ WATCHER');
-    console.log('🚀 ~ newValue:', newValue);
-    console.log('🚀 ~ oldValue:', oldValue);
-    console.log('🚀 ~ memberActionEdit:', memberActionEdit.value);
-
-    // const selectedCategory = memberCategoriesOptions.value.find(
-    //   option => option.value === newValue,
-    // );
-
-    // console.log('🚀 ~ memberCategoriesOptions:', memberCategoriesOptions);
-
-    // console.log('🚀 ~ selectedCategory:', selectedCategory);
-
-    // for Add Member Form
     if (newValue) {
-      if (!memberActionEdit.value && modals.member) {
-        console.log('🚀 ~ IF');
-        // fetch category text
-        //   const selectedCategory = memberCategoriesOptions.value.find(
-        //     option => option.value === newValue,
-        //   );
+      if (
+        (!memberActionEdit.value && modals.member) ||
+        (memberActionEdit.value && newValue != initialEditCategoryId.value)
+      ) {
+        //fetch category text
+        const selectedCategory = memberCategoriesOptions.value.find(
+          option => option.value === newValue,
+        );
 
-        //   // fetch salary band id based on category text
-        //   const salaryBandId = memberCategorySalaryMapping[selectedCategory.label];
+        // fetch salary band id based on category text
+        const salaryBandId =
+          memberCategorySalaryMapping[selectedCategory.label];
 
-        //   // if quote status is Transaction Approved do not auto-popualte salary band automatically
-        //   if (page.props.quote.quote_status_id != 15) {
-        //     memberForm.salary_band_id = salaryBandId;
-        //   }
-        //   console.log('🚀 ~ selectedCategory:', selectedCategory.label);
-        //   console.log('🚀 ~ salaryBandId:', salaryBandId);
-      } else if (memberActionEdit.value && modals.member) {
-        console.log('🚀 ~ ELSE IF');
-        // for Edit Member Form
+        // if quote status is Transaction Approved do not auto-popualte salary band automatically
+        if (page.props.quote.quote_status_id != 15) {
+          memberForm.salary_band_id = salaryBandId;
+        }
+        console.log('🚀 ~ selectedCategory:', selectedCategory.label);
+        console.log('🚀 ~ salaryBandId:', salaryBandId);
       }
     }
   },
+  { immediate: true },
 );
 </script>
 
