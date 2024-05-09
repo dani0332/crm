@@ -224,7 +224,7 @@ const sendUpdateValidation = () => {
       <DataTable
       table-class-name="compact"
       :headers="quoteDocumentsTable.columns"
-      :items="quoteDocuments || []"
+      :items="quoteDocuments.sort((a, b) => b.id - a.id) || []"
       border-cell
       hide-rows-per-page
       :rows-per-page="15"

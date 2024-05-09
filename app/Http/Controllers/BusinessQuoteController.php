@@ -338,7 +338,7 @@ class BusinessQuoteController extends Controller
             'linkedQuoteDetails' => $linkedQuoteDetails,
             'record' => $record,
             'bookPolicyDetails' => $bookPolicyDetails,
-            'payments' => $payments,
+            'quoteStatusEnum' => QuoteStatusEnum::asArray(),
         ]);
     }
 

@@ -799,6 +799,7 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
 			v-if="isNewPaymentStructure"
 			:quoteType="quoteType"
 			:payments="quote.payments"
+            :proformaPayment="quote.payments.find(item => item.payment_methods_code === 'PPR')"
 			:paymentDocument="documentTypes.filter(item => item.code === 'BPD' || item.code === 'BPDR' || item.code === 'BDPDR')"
 			:quoteRequest="quote"
 			:paymentStatusEnum="page.props.paymentStatusEnum"
@@ -807,7 +808,7 @@ const getDetailPageRoute = (uuid, quote_type_id) =>
 			:storageUrl="storageUrl"
       :isAmlClearedForPayment="isAmlClearedForPayment"
 		/>
-    
+
     <QuotePayments
       v-else
       :can="can"
