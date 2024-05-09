@@ -247,7 +247,7 @@ const onLogout = () => {
             </div>
 
             <div class="flex gap-3 items-center">
-                <OnlineStatusToggle
+               <OnlineStatusToggle
                     :user="user"
                 />
               <!-- <UserStatus /> -->

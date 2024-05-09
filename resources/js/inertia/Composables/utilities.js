@@ -73,8 +73,11 @@ export const formatDate = dateObject => {
 };
 export const useGenerateQueryString = filters => {
   const query = {};
-  Object.keys(filters).forEach(key => {
-    if (filters[key] !== '' && filters[key] != null) {
+  Object.keys(filters).forEach((key) => {
+    if (Array.isArray(filters[key]) && filters[key].length > 0)
+    {
+      query[key] = filters[key];
+    } else if (filters[key] !== '' && filters[key] != null) {
       query[key] = filters[key];
     }
   });

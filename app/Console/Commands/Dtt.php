@@ -91,7 +91,6 @@ class Dtt extends Command
                 $jobs[] = new CarRevivalLeadsCreationJob($carLead);
             }
         }
-        info($logPrefix);
 
         if ($jobs != null && count($jobs)) {
             Haystack::build()
