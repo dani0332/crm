@@ -16,6 +16,14 @@ const isEdit = computed(() => {
   return route().current().includes('edit');
 });
 
+const initialEditCategoryId = computed(() => {
+  if (route().current().includes('edit')) {
+    return props.quote.member_category_id;
+  }
+});
+
+let previouslySelectedCategoryId = ref(initialEditCategoryId.value)
+
 const genderSelect = computed(() => {
   return Object.keys(props.genderOptions).map(status => ({
     value: status,
@@ -93,39 +101,35 @@ const selectedSalaryBand = computed(() => {
 //   },
 // );
 
-// watch(
-//   () => quoteForm.member_category_id,
-//   (newValue, oldValue) => {
-//     if (newValue) {
-//         console.log('🚀 ~ newValue:', newValue);
-//         console.log('🚀 ~ quoteForm.member_category_id:', quoteForm.member_category_id);
-//         console.log('🚀 ~ isEdit:', isEdit.value);
-//         console.log('🚀 ~ member_category_id:', props.dropdownSource.member_category_id);
+watch(
+  () => quoteForm.member_category_id,
+  (newValue, oldValue) => {
+    if (newValue) {
+      if (
+        !isEdit.value ||
+        (isEdit.value &&
+          (newValue !== initialEditCategoryId.value ||
+            (newValue === initialEditCategoryId.value &&
+              newValue !== previouslySelectedCategoryId.value)))
+      ) {
+        //fetch category text
+        const selectedCategory = props.dropdownSource.member_category_id.find(
+          option => option.id === newValue,
+        );
 
-//       if (
-//         (!isEdit.value) ||
-//         (isEdit.value && newValue != quoteForm.member_category_id)
-//       ) {
-//         //fetch category text
-//         const selectedCategory = props.dropdownSource.member_category_id.find(
-//           option => option.id === newValue,
-//         );
+        // fetch salary band id based on category text
+        const salaryBandId = memberCategorySalaryMapping[selectedCategory.text];
 
-//         // fetch salary band id based on category text
-//         const salaryBandId =
-//           memberCategorySalaryMapping[selectedCategory.text];
-
-//         // if quote status is Transaction Approved do not auto-popualte salary band automatically
-//         if (props.quote.quote_status_id != 15) {
-//             quoteForm.salary_band_id = salaryBandId;
-//         }
-//         console.log('🚀 ~ selectedCategory:', selectedCategory.text);
-//         console.log('🚀 ~ salaryBandId:', salaryBandId);
-//       }
-//     }
-//   },
-//   { immediate: true },
-// );
+        // if quote status is Transaction Approved do not auto-popualte salary band automatically
+        if (props.quote.quote_status_id != 15) {
+          quoteForm.salary_band_id = salaryBandId;
+        }
+        previouslySelectedCategoryId.value = newValue;
+      }
+    }
+  },
+  { immediate: true },
+);
 
 function onSubmit(isValid) {
   if (quoteForm.nationality_id == null) {

@@ -432,6 +432,7 @@ const rules = {
 };
 
 const initialEditCategoryId = ref(null);
+const previouslySelectedCategoryId = ref(null);
 
 function onEditMember(data) {
   memberActionEdit.value = true;
@@ -451,6 +452,9 @@ function onEditMember(data) {
 
   // set initialEditCategoryId to member_category_id when any member is edited
   initialEditCategoryId.value = data.member_category_id;
+
+  // set previouslySelectedCategoryId for the refernece of initialEditCategoryId
+  previouslySelectedCategoryId.value = initialEditCategoryId.value;
 }
 
 const onAddMemberModal = () => {
@@ -1551,8 +1555,11 @@ watch(
   (newValue, oldValue) => {
     if (newValue) {
       if (
-        (!memberActionEdit.value && modals.member) ||
-        (memberActionEdit.value && newValue != initialEditCategoryId.value)
+        (!memberActionEdit.value && modals.member) || // Add case
+        (memberActionEdit.value &&
+          (newValue !== initialEditCategoryId.value ||
+            (newValue === initialEditCategoryId.value &&
+              newValue !== previouslySelectedCategoryId.value)))
       ) {
         //fetch category text
         const selectedCategory = memberCategoriesOptions.value.find(
@@ -1567,8 +1574,7 @@ watch(
         if (page.props.quote.quote_status_id != 15) {
           memberForm.salary_band_id = salaryBandId;
         }
-        console.log('🚀 ~ selectedCategory:', selectedCategory.label);
-        console.log('🚀 ~ salaryBandId:', salaryBandId);
+        previouslySelectedCategoryId.value = newValue;
       }
     }
   },
