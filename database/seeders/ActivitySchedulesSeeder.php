@@ -886,6 +886,17 @@ class ActivitySchedulesSeeder extends Seeder
                         'teams' => [
                             TeamNameEnum::HOME => [
                                 'quote_status' => [
+                                    QuoteStatusEnum::Allocated => [
+                                        'activities' => [
+                                            // ['name' => '1st Follow-up', 'due_days' => 1],
+                                            // ['name' => '2nd Follow-up', 'due_days' => 2],
+                                            // ['name' => '3rd Follow-up', 'due_days' => 2],
+
+                                            ['name' => '1st Follow-up', 'due_days' => 1],
+                                            ['name' => '2nd Follow-up', 'due_days' => 1],
+                                            ['name' => '3rd Follow-up', 'due_days' => 1],
+                                        ],
+                                    ],
                                     QuoteStatusEnum::Quoted => [
                                         'activities' => [
                                             // ['name' => '1st Follow-up', 'due_days' => 1],
@@ -1001,6 +1012,11 @@ class ActivitySchedulesSeeder extends Seeder
                             ],
                             TeamNameEnum::PET_RENEWALS => [
                                 'quote_status' => [
+                                    QuoteStatusEnum::Allocated => [
+                                        'activities' => [
+                                            ['name' => 'Follow-up', 'due_days' => 1],
+                                        ],
+                                    ],
                                     QuoteStatusEnum::RenewalTermsSent => [
                                         'activities' => [
                                             // ['name' => '1st Follow-up', 'due_days' => 1],
@@ -1029,6 +1045,17 @@ class ActivitySchedulesSeeder extends Seeder
                         'teams' => [
                             TeamNameEnum::PET_TEAM => [
                                 'quote_status' => [
+                                    QuoteStatusEnum::Allocated => [
+                                        'activities' => [
+                                            // ['name' => '1st Follow-up', 'due_days' => 1],
+                                            // ['name' => '2nd Follow-up', 'due_days' => 2],
+                                            // ['name' => '3rd Follow-up', 'due_days' => 2],
+
+                                            ['name' => '1st Follow-up', 'due_days' => 1],
+                                            ['name' => '2nd Follow-up', 'due_days' => 1],
+                                            ['name' => '3rd Follow-up', 'due_days' => 1],
+                                        ],
+                                    ],
                                     QuoteStatusEnum::Quoted => [
                                         'activities' => [
                                             // ['name' => '1st Follow-up', 'due_days' => 1],
@@ -1062,6 +1089,11 @@ class ActivitySchedulesSeeder extends Seeder
                             ],
                             TeamNameEnum::PET_RENEWALS => [
                                 'quote_status' => [
+                                    QuoteStatusEnum::Allocated => [
+                                        'activities' => [
+                                            ['name' => 'Follow-up', 'due_days' => 1],
+                                        ],
+                                    ],
                                     QuoteStatusEnum::RenewalTermsSent => [
                                         'activities' => [
                                             // ['name' => '1st Follow-up', 'due_days' => 1],
@@ -1139,6 +1171,11 @@ class ActivitySchedulesSeeder extends Seeder
                             ],
                             TeamNameEnum::CYCLE_RENEWALS => [
                                 'quote_status' => [
+                                    QuoteStatusEnum::Allocated => [
+                                        'activities' => [
+                                            ['name' => 'Follow-up', 'due_days' => 1],
+                                        ],
+                                    ],
                                     QuoteStatusEnum::RenewalTermsSent => [
                                         'activities' => [
                                             // ['name' => '1st Follow-up', 'due_days' => 1],
@@ -1167,6 +1204,17 @@ class ActivitySchedulesSeeder extends Seeder
                         'teams' => [
                             TeamNameEnum::CYCLE => [
                                 'quote_status' => [
+                                    QuoteStatusEnum::Allocated => [
+                                        'activities' => [
+                                            // ['name' => '1st Follow-up', 'due_days' => 1],
+                                            // ['name' => '2nd Follow-up', 'due_days' => 2],
+                                            // ['name' => '3rd Follow-up', 'due_days' => 2],
+
+                                            ['name' => '1st Follow-up', 'due_days' => 1],
+                                            ['name' => '2nd Follow-up', 'due_days' => 1],
+                                            ['name' => '3rd Follow-up', 'due_days' => 1],
+                                        ],
+                                    ],
                                     QuoteStatusEnum::Quoted => [
                                         'activities' => [
                                             // ['name' => '1st Follow-up', 'due_days' => 1],
@@ -1200,6 +1248,11 @@ class ActivitySchedulesSeeder extends Seeder
                             ],
                             TeamNameEnum::CYCLE_RENEWALS => [
                                 'quote_status' => [
+                                    QuoteStatusEnum::Allocated => [
+                                        'activities' => [
+                                            ['name' => 'Follow-up', 'due_days' => 1],
+                                        ],
+                                    ],
                                     QuoteStatusEnum::RenewalTermsSent => [
                                         'activities' => [
                                             // ['name' => '1st Follow-up', 'due_days' => 1],
@@ -1277,6 +1330,11 @@ class ActivitySchedulesSeeder extends Seeder
                             ],
                             TeamNameEnum::YACHT_RENEWALS => [
                                 'quote_status' => [
+                                    QuoteStatusEnum::Allocated => [
+                                        'activities' => [
+                                            ['name' => 'Follow-up', 'due_days' => 1],
+                                        ],
+                                    ],
                                     QuoteStatusEnum::RenewalTermsSent => [
                                         'activities' => [
                                             // ['name' => '1st Follow-up', 'due_days' => 1],
@@ -1305,6 +1363,17 @@ class ActivitySchedulesSeeder extends Seeder
                         'teams' => [
                             TeamNameEnum::YACHT_TEAM => [
                                 'quote_status' => [
+                                    QuoteStatusEnum::Allocated => [
+                                        'activities' => [
+                                            // ['name' => '1st Follow-up', 'due_days' => 1],
+                                            // ['name' => '2nd Follow-up', 'due_days' => 2],
+                                            // ['name' => '3rd Follow-up', 'due_days' => 2],
+
+                                            ['name' => '1st Follow-up', 'due_days' => 1],
+                                            ['name' => '2nd Follow-up', 'due_days' => 1],
+                                            ['name' => '3rd Follow-up', 'due_days' => 1],
+                                        ],
+                                    ],
                                     QuoteStatusEnum::Quoted => [
                                         'activities' => [
                                             // ['name' => '1st Follow-up', 'due_days' => 1],
@@ -1338,6 +1407,11 @@ class ActivitySchedulesSeeder extends Seeder
                             ],
                             TeamNameEnum::YACHT_RENEWALS => [
                                 'quote_status' => [
+                                    QuoteStatusEnum::Allocated => [
+                                        'activities' => [
+                                            ['name' => 'Follow-up', 'due_days' => 1],
+                                        ],
+                                    ],
                                     QuoteStatusEnum::RenewalTermsSent => [
                                         'activities' => [
                                             // ['name' => '1st Follow-up', 'due_days' => 1],
