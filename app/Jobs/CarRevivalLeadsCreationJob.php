@@ -30,6 +30,9 @@ class CarRevivalLeadsCreationJob implements ShouldQueue, StackableJob
     use Dispatchable, InteractsWithQueue, Queueable, Stackable;
     use GenericQueriesAllLobs;
 
+    public $tries = 3;
+    public $timeout = 90;
+    public $backoff = 300;
     private $lead = null;
 
     /**
