@@ -30,7 +30,9 @@ trait PersonalQuoteSyncTrait
     {
         // update personal quote
         $personalQuote = PersonalQuoteRepository::where('uuid', $quote->uuid)->first();
-        if (! $personalQuote) {
+        $quoteSyncEntries = QuoteSync::where('is_synced', false)->where('quote_uuid', $quote->uuid)->count();
+        
+        if(!$personalQuote || $quoteSyncEntries > 0) {
             $this->syncEntry($quote->uuid);
 
             $personalQuote = PersonalQuoteRepository::where('uuid', $quote->uuid)->first();
@@ -49,7 +51,9 @@ trait PersonalQuoteSyncTrait
     {
         // get personal quote
         $personalQuote = PersonalQuoteRepository::where('uuid', $quote->uuid)->first();
-        if (! $personalQuote) {
+        $quoteSyncEntries = QuoteSync::where('is_synced', false)->where('quote_uuid', $quote->uuid)->count();
+
+        if (! $personalQuote || $quoteSyncEntries > 0) {
             $this->syncEntry($quote->uuid);
 
             $personalQuote = PersonalQuoteRepository::where('uuid', $quote->uuid)->first();
