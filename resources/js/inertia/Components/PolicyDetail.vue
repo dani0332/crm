@@ -145,6 +145,13 @@ const onUpdatePolicyDetails = isValid => {
   policyDetailsForm.post(`/quotes/${props.modelType}/update-quote-policy`, {
     preserveScroll: true,
     onSuccess: () => {
+      if (page.props.flash?.isSplitPayment){
+        notification.error({
+          title: 'Action Needed: Please revise payment details to reflect plan changes.',
+          position: 'top',
+          timeout: 5000
+        });
+      }
       policyDetailsState.isEditing = false;
     },
     onError: errors => {

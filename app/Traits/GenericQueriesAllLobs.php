@@ -285,12 +285,12 @@ trait GenericQueriesAllLobs
 
     public function updatePriceAndDiscount($quoteModel)
     {
+        $isSplitPayment = false;
         $payment = $quoteModel->payments()->first();
-        if ($payment) {
+        if ($payment && $quoteModel->price_with_vat != $payment->total_price) {
             $difference = $quoteModel->price_with_vat - ($payment->captured_amount + $payment->discount_value);
-
             // Case 1 if difference is less than 1 and greater than 0 else set total price to price with vat
-            if ($difference <= 0.99 && $difference > 0 && $payment->payment_status_id === PaymentStatusEnum::PAID) {
+            if ($difference <= 0.99 && $difference > 0) {
                 $payment->system_adjusted_discount = $difference;
                 // If condition to check if discount value is not null & add difference to it else set difference as discount value
                 if ($payment->discount_value != null) {
@@ -301,14 +301,25 @@ trait GenericQueriesAllLobs
                 }
                 $payment->total_amount -= $difference;
             }
-
             // If status is partially paid & total price is less than price with vat then set status to partially paid
             if ($payment->payment_status_id === PaymentStatusEnum::PAID && $payment->total_price < $quoteModel->price_with_vat && ($difference > 0.99)) {
                 $payment->payment_status_id = PaymentStatusEnum::PARTIALLY_PAID;
             }
+            // total price is actual price without discount
             $payment->total_price = $quoteModel->price_with_vat;
+            // total total_amount is after subtracting from discount
+            $payment->total_amount = $payment->discount_value ? ($quoteModel->price_with_vat - $payment->discount_value) : $quoteModel->price_with_vat;
             $payment->save();
+            
+            if ($payment->frequency == 'upfront') {
+                $splitPayment= $payment->paymentSplits()->first();
+                $splitPayment->payment_amount = $payment->total_amount;
+                $splitPayment->save();
+            } else {
+                $isSplitPayment = true;
+            }
         }
+        return $isSplitPayment;
     }
     
     private function isFilledPolicyDetails($type, $quote)

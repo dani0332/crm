@@ -96,6 +96,7 @@ class HandleInertiaRequests extends Middleware
             'success' => $request->session()->get('success'),
             'warning' => $request->session()->get('warning'),
             'info' => $request->session()->get('info'),
+            'isSplitPayment' => $request->session()->get('isSplitPayment'),
         ];
 
         return array_filter($flash, fn ($value) => $value !== null);
