@@ -219,7 +219,7 @@ onUnmounted(() => {
         </x-tooltip>
       </div>
 
-      <div class="flex space-x-2">
+      <div class="flex space-x-2 relative">
         <!-- <SortButton :options="serverOptions" @handleSorting="onSubmit(true)" /> -->
         <FiltersButton
           :is-shown="showFilters"
