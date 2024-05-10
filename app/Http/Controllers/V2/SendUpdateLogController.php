@@ -194,6 +194,7 @@ class SendUpdateLogController extends Controller
         } else {
             $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping($quoteTypeId);
         }
+        $linkedQuoteDetails = app(SendUpdateLogService::class)->linkedQuoteDetails($quoteType, $quote);
 
         return inertia('SendUpdateLog/Show', [
             'quote' => $quote,
@@ -223,6 +224,7 @@ class SendUpdateLogController extends Controller
             'paymentMethods' => $filteredPaymentMethods,
             'quoteRequest' => $paymentEntityModel ?? $realQuote,
             'isPolicyDetailsEnabled' => $this->sendUpdateLogService->isPolicyDetailsVisible($categoryCode, $optionCode),
+            'linkedQuoteDetails' => $linkedQuoteDetails,
         ]);
     }
 
