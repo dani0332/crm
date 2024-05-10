@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Enums\DocumentTypeCode;
 use App\Models\DocumentType;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
@@ -96,5 +97,17 @@ class DocumentTypeSeeder extends Seeder
                 'is_required' => 0,
             ]]);
         }
+        DocumentType::updateOrCreate(([
+            'code' => DocumentTypeCode::PPR,
+        ]), [
+            'text' => 'Payment Proforma Request',
+            'is_active' => 1,
+            'folder_path' => 'quote_notes',
+            'accepted_files' => '.pdf,.xlsx,.xls,.docx,.doc,.jpeg,.jpg,.png',
+            'max_files' => 5,
+            'max_size' => 25,
+            'is_required' => 0,
+            'category' => 'QUOTE',
+        ]);
     }
 }
