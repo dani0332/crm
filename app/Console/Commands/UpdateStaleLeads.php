@@ -90,7 +90,7 @@ class UpdateStaleLeads extends Command
             $eligibleQuoteType::with('activities')
                 ->whereNotNull('stale_at')
                 // ->where('stale_at', '<', date(config('constants.DATE_FORMAT_ONLY'), strtotime('-90 days')))
-                ->where('stale_at', '<=', Carbon::parse(date(config('constants.DATE_FORMAT_ONLY'), strtotime('-1 days')))->endOfDay())
+                ->where('stale_at', '<=', Carbon::parse(date(config('constants.DATE_FORMAT_ONLY'), strtotime('-2 days')))->endOfDay())
                 ->chunkById(1000, function ($staleLeads) use ($eligibleQuoteType, $lostReasonId) {
                     foreach ($staleLeads as $staleLead) {
 

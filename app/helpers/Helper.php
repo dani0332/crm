@@ -184,17 +184,21 @@ function getDataAgainstStatus($modelType, $statusId, Request $request)
             getCardViewRequestFilters($query, $request, $modelType);
         });
 
-    if (auth()->user()->isRenewalAdvisor()) {
-        $result['total_leads'] = $modelQuery->whereNotNull('previous_quote_id')->count();
-        $result['total_premium'] = $modelQuery->whereNotNull('previous_quote_id')->sum('premium');
-        $result['leads_list'] = $modelQuery->whereNotNull('previous_quote_id')->paginate(10);
+        // Reminder: previous quote id is not available in personal quote 
 
-    } elseif (auth()->user()->isNewBusinessAdvisor()) {
-        $result['total_leads'] = $modelQuery->whereNull('previous_quote_id')->count();
-        $result['total_premium'] = $modelQuery->whereNull('previous_quote_id')->sum('premium');
-        $result['leads_list'] = $modelQuery->whereNull('previous_quote_id')->paginate(10);
+    // if (auth()->user()->isRenewalAdvisor()) {
+    //     $result['total_leads'] = $modelQuery->whereNotNull('previous_quote_id')->count();
+    //     $result['total_premium'] = $modelQuery->whereNotNull('previous_quote_id')->sum('premium');
+    //     $result['leads_list'] = $modelQuery->whereNotNull('previous_quote_id')->paginate(10);
 
-    } elseif ($modelType == HealthQuote::class && auth()->user()->isCarAdvisor() && auth()->user()->can(PermissionsEnum::HEALTH_QUOTES_ACCESS)) {
+    // } elseif (auth()->user()->isNewBusinessAdvisor()) {
+    //     $result['total_leads'] = $modelQuery->whereNull('previous_quote_id')->count();
+    //     $result['total_premium'] = $modelQuery->whereNull('previous_quote_id')->sum('premium');
+    //     $result['leads_list'] = $modelQuery->whereNull('previous_quote_id')->paginate(10);
+
+    // } else
+    
+    if ($modelType == HealthQuote::class && auth()->user()->isCarAdvisor() && auth()->user()->can(PermissionsEnum::HEALTH_QUOTES_ACCESS)) {
         $result['total_leads'] = $modelQuery->count();
         $result['total_premium'] = $modelQuery->sum('premium');
         $result['leads_list'] = $modelQuery->paginate(10);
@@ -207,7 +211,7 @@ function getDataAgainstStatus($modelType, $statusId, Request $request)
         $result['leads_list'] = $modelQueryWithOutAdvisor->whereIn('advisor_id', $ids)->paginate(10);
         $result['total_opportunity'] = $modelQueryWithOutAdvisor->sum('price_starting_from');
 
-    } elseif (auth()->user()->isAdvisor()) {
+    } elseif (auth()->user()->isAdvisor() || auth()->user()->isRenewalAdvisor() || auth()->user()->isNewBusinessAdvisor()) {
         $result['total_leads'] = $modelQuery->count();
         $result['total_premium'] = $modelQuery->sum('premium');
         $result['leads_list'] = $modelQuery->paginate(10);
