@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\DocumentTypeCode;
 use App\Enums\DocumentTypeEnum;
 use App\Enums\PaymentMethodsEnum;
 use App\Http\Resources\ProformaPaymentRequestResource;
@@ -74,6 +75,7 @@ class ExportDocumentService extends BaseService implements ExportDocumentInterfa
             'original_name' => $originalName,
             'doc_url' => $filePathAzure,
             'doc_mime_type' => $fileMimeType,
+            'document_type_code' => DocumentTypeCode::PPR,
             'document_type_text' => DocumentTypeEnum::ProformaPaymentRequest,
             'doc_uuid' => $this->helperService->generateUUID(),
             'created_by_id' => auth()->id(),

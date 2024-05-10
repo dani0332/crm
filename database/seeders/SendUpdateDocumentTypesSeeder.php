@@ -137,6 +137,7 @@ class SendUpdateDocumentTypesSeeder extends Seeder
         ]);
         DocumentType::updateOrCreate(([
             'code' => DocumentTypeCode::PPR,
+            'category' => 'SEND_UPDATE',
         ]), [
             'text' => 'Payment Proforma Request',
             'is_active' => 1,
