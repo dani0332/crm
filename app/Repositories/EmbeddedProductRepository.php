@@ -2,12 +2,14 @@
 
 namespace App\Repositories;
 
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\EpCategoryEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Facades\Marshall;
 use App\Jobs\SendEPDocumentsJob;
+use App\Models\ApplicationStorage;
 use App\Models\EmbeddedProduct;
 use App\Models\EmbeddedProductOption;
 use App\Models\EmbeddedTransaction;
@@ -155,12 +157,14 @@ class EmbeddedProductRepository extends BaseRepository
         ])->whereIn('product_id', $optionsIds)->get();
 
         $certificate_number = '';
+        $capturedAt = null;
         if ($transaction->isNotEmpty()) {
             $certificate_number = $transaction[0]['certificate_number'];
             $premium = $transaction[0]['price_with_vat'];
+            $capturedAt = $transaction[0]['payment_status_date'];
         }
         $short_code = $ep->short_code;
-        $pdf = $this->getPDF($short_code, $quoteObject, $certificate_number, $premium);
+        $pdf = $this->getPDF($short_code, $quoteObject, $certificate_number, $premium, $capturedAt);
 
         return response()->json(['data' => 'data:application/pdf;base64,'.base64_encode($pdf->stream()), 'name' => 'Salama_Certificate']);
     }
@@ -351,12 +355,14 @@ class EmbeddedProductRepository extends BaseRepository
         }
 
         $certificate_number = '';
+        $capturedAt = null;
         if ($transaction->isNotEmpty()) {
             $certificate_number = $transaction[0]['certificate_number'];
             $premium = $transaction[0]['price_with_vat'];
+            $capturedAt = $transaction[0]['payment_status_date'];
         }
         // send certificate only for medex
-        $pdf = $this->getPDF($short_code, $quoteObject, $certificate_number, $premium);
+        $pdf = $this->getPDF($short_code, $quoteObject, $certificate_number, $premium, $capturedAt);
         if ($pdf) {
             $attachments[] = [
                 'Content' => base64_encode($pdf->output()),
@@ -399,17 +405,27 @@ class EmbeddedProductRepository extends BaseRepository
      * @param  object  $quoteObject
      * @param  string  $certificate_number
      * @param  float  $premium
+     * @param  null|Carbon  capturedAt
      * @return PDF|null The PDF document or null if the short code is not defined in config.
      */
     private function getPDF(
         $short_code,
         $quoteObject,
         $certificate_number,
-        $premium
+        $premium,
+        $capturedAt
     ) {
         $pdf = null;
+        $epMdxV2From = ApplicationStorage::where('key_name', ApplicationStorageEnums::EP_MDX_V2_FROM)->first();
         $certificatesConfig = config('embedded-products.certificates');
         if (isset($certificatesConfig[$short_code])) {
+            $viewFile = $certificatesConfig[$short_code]['view_file'];
+            if ($epMdxV2From &&
+            ! empty($capturedAt) &&
+            Carbon::parse($capturedAt)->gte(Carbon::parse($epMdxV2From->value))) {
+                $viewFile = $certificatesConfig[$short_code]['view_file_v2'];
+            }
+
             $strategy = $this->createStrategy($short_code);
             $viewData = $strategy->getPDFData($quoteObject, $certificate_number, $premium);
             $pdf = PDF::setOption(
@@ -418,7 +434,7 @@ class EmbeddedProductRepository extends BaseRepository
                     'dpi' => 150,
                 ]
             )
-                ->loadView($certificatesConfig[$short_code]['view_file'], compact('viewData'));
+                ->loadView($viewFile, compact('viewData'));
         }
 
         return $pdf;
