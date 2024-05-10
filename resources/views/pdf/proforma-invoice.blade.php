@@ -611,7 +611,7 @@
                     {{ $quoteType?->text }} <br /> {{ $insuranceProvider?->text }}
                 </td>
                 <td>
-                    {{ number_format($totalAmount, 2 , '.', '') }}
+                    {{ number_format($subTotal, 2 , '.', '') }}
                 </td>
             </tr>
 
