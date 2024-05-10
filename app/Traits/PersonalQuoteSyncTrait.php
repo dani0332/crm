@@ -201,23 +201,28 @@ trait PersonalQuoteSyncTrait
     {
         $personalQuote = new PersonalQuote();
         $sourceAttributes = $sourceQuote->getAttributes();
+        $quoteUuid = $entry->quote_uuid;
+        $quoteTypeId = $entry->quote_type_id;
         $this->syncTable($personalQuote, $sourceAttributes, 'personal_quotes');
         $personalQuote->quote_type_id = $entry->quote_type_id;
-        $existingQuote = PersonalQuote::where('uuid', $entry->quote_uuid)->where('quote_type_id', $entry->quote_type_id)->first();
-        if ($existingQuote) {
-            $this->syncTable($existingQuote, $sourceAttributes, 'personal_quotes');
-            $existingQuote->quote_type_id = $entry->quote_type_id;
-            $existingQuote->save();
+        
+        return DB::transaction(function () use ($personalQuote, $sourceAttributes, $quoteUuid, $quoteTypeId) {
+            $existingQuote = PersonalQuote::where('uuid', $quoteUuid)->where('quote_type_id', $quoteTypeId)->first();
+            if ($existingQuote) {
+                $this->syncTable($existingQuote, $sourceAttributes, 'personal_quotes');
+                $existingQuote->quote_type_id = $quoteTypeId;
+                $existingQuote->save();
 
-            return $existingQuote;
-        } else {
+                return $existingQuote;
+            } else {
 
-            // update missing required fields
-            $this->updateMissingFields($personalQuote, 'personal_quotes', $entry->quote_uuid);
-            $personalQuote->save();
+                // update missing required fields
+                $this->updateMissingFields($personalQuote, 'personal_quotes', $quoteTypeId);
+                $personalQuote->save();
 
-            return $personalQuote;
-        }
+                return $personalQuote;
+            }
+        });   
     }
 
     public function getQuoteType($quoteTypeId)
