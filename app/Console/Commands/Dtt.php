@@ -105,7 +105,7 @@ class Dtt extends Command
                     info($logPrefix.' everything done');
                 })
                 ->allowFailures()
-                ->withDelay(2)
+                ->withDelay(10)
                 ->dispatch();
         } else {
             info($logPrefix.'------No lead Found------');
